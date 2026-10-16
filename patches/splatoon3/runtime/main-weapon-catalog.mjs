@@ -10,6 +10,7 @@ import { validateCanonicalKits } from './canonical-kits.mjs';
 import { CANONICAL_KITS } from './canonical-kits-data.mjs';
 
 import { catalogueAttackRow, withObjectDamageCause } from './sub-resistance.mjs';
+import { withBlasterSplashHit } from './audio/blaster-hit.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
@@ -730,14 +731,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(a===skip)continue;
       base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(p.pos);
       if(distance>radius||!G.physics.los(p.pos,base))continue;
-      const damage=damageBands(bands,distance);if(damage>0)withObjectDamageCause({...p,type:'area'},()=>system.applyHit(p.owner,a,damage,p.wid));
+      const damage=damageBands(bands,distance);if(damage>0)withObjectDamageCause({...p,type:'area'},()=>withBlasterSplashHit(p.owner,()=>system.applyHit(p.owner,a,damage,p.wid)));
     }
     const area={...p,type:'area'},cause=catalogueAttackRow(area);
     system.s3DamageSubObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
     system.s3DamageSpecialObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
     G.boss?.splash(p.owner,p.pos,radius,bands[0]?.Damage/10||0,0,p.wid);
     G.fx?.explosion(p.pos,p.owner.color,radius);
-    emit('weapon:impact',{pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
+    emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
   }
 
   function impactDamage(p,a) {
