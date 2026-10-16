@@ -1,0 +1,61 @@
+name: Sorella sampling budget native A/B
+on:
+  push:
+    branches: [review/sorella-budget-ab-20261016]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: fbdcacb690ec5c9abd10e14d6b623a6f4206aab0
+          path: old-source
+      - uses: actions/checkout@v4
+        with:
+          ref: e31d490732b3e1cefd19898811f985949d814b21
+          path: new-source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned diagnostic tools
+        run: |
+          cd diagnostic
+          npm install --no-save --package-lock=false esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Exact source and diagnostic preflight
+        run: |
+          mkdir -p evidence
+          node diagnostic/preflight.mjs
+          node --test diagnostic/*.test.mjs > evidence/controls.tap
+      - name: Existing candidate source geometry gates
+        run: |
+          cd new-source
+          timeout 300 node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/weapon-variant-sorella.test.mjs > ../evidence/source.tap
+          node ../diagnostic/test-count.mjs ../evidence/source.tap 4
+      - name: Build old and new production graphs
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd old-source && node scripts/build-inkwave.mjs inkwave-public ../old-site)
+          (cd new-source && node scripts/build-inkwave.mjs inkwave-public ../new-site)
+      - name: Existing candidate emitted geometry gates
+        run: |
+          cd new-source
+          INKWAVE_BUILT_SITE="$PWD/../new-site" timeout 300 node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/weapon-variant-sorella.test.mjs > ../evidence/emitted.tap
+          node ../diagnostic/test-count.mjs ../evidence/emitted.tap 4
+      - name: Actual native old and new folded/open browser comparison
+        run: |
+          timeout 300 node --max-old-space-size=1024 diagnostic/capture-integration.mjs --plan diagnostic/acceptance-plan.json --old-source old-source --new-source new-source --old-site old-site --new-site new-site --out evidence/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sorella-budget-ab
+          path: evidence
+          if-no-files-found: error
