@@ -1,0 +1,27 @@
+{
+  "files": {
+    ".github/workflows/mini-weapon-acceptance.yml": "c5248f2821b9ac019cc9c85d82345439876faa0b85d982da25de05f79c30620c",
+    "ACCEPTANCE_SCOPE.txt": "70a44435e4a8d49c718784508095a19f650fcbbe0df338b52dc846b96844b3c2",
+    "acceptance-plan.json": "aefdf553d27dcac20e4321a4cb212c5b7c329c2c62978722b9d3bc33f54893b7",
+    "build-binding.mjs": "d39ac0d873875e60798c736f2b35c4371cd73531c96eae240e79a5069003ab02",
+    "build-binding.test.mjs": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+    "capture-checkpoint-order.test.mjs": "5f47087e8eac87e8712fb2638369d2e06afd143b7e3091cef01488051fc6bd22",
+    "capture-checkpoint.mjs": "e33c0873d46a9befebfab54180c98bce74a31cba3837918ab1459d92d3138765",
+    "capture-checkpoint.test.mjs": "cf6b2cdcb15be8779487ba9944558d4963c7af525c3fdda7f2c76eb9187af95a",
+    "capture-mini-integration.mjs": "7753cb34d8a980569df34915caeed2f772fdd7d0eb6439c2b26fba51cca953e6",
+    "capture-mini-two.mjs": "a8c3efdde384049e1c98355ccf4cb24236aa7a0ebf6a37669ccc62190d3b1b54",
+    "capture-mini-two.test.mjs": "a8c9a86a3ab8206657d6eebb2f4c3130da20e158880cb52ecc36f6820792db87",
+    "check-source-plan.mjs": "cc1f38ebaa8eef8f508d7ce5dd3052dbe16884fc54acf6b06b30eb6a1a39a25d",
+    "compare-native-weapon-work.mjs": "be9fb3594de750c139969c191ffa7da2c80af5898a9a8cb9339fd9bfb2cd4123",
+    "mini-capture-contract.mjs": "5605a40e5bc53f44b96f8b11075c8154c5ecf45820cbde383a1ca4641e6bfb53",
+    "mini-capture-contract.test.mjs": "8a93f3db4cfba7db50bb73c34074dc6111e149c20e324988e0dbc60a9cea4f8c",
+    "mini-capture-integrity.test.mjs": "01f9d713d6d510ea75c81840206e0e5f0dc592e621a403560923b78c3d6df3bb",
+    "native-work-controls.test.mjs": "5ce32fa627b8f4aa3c7b40142adbbd29a4590cf0df4731874b62481efe559733",
+    "run-owner-tests.mjs": "5ff02e465754745f691ba89f2a1bc04d9072aaa99da20f848cafafc32c6c3266",
+    "select-candidate.mjs": "8c4909cd550f1b0ea496d68d9b6a7d84599ef023fe218cf60e2e3441332baff5",
+    "select-candidate.test.mjs": "e0c5ef43ede1733c216f345c30871888f366f26a09f10c8de036310250ff6564",
+    "test-plan.test.mjs": "ce550f4d0243cc77588f434e695392c8ec094790de8531c4b37c37f7cdacc852",
+    "variant-plan.mjs": "8f81c919699eec6173aaca8c23cc957930911caebfebf02d5b6a8bca965bce39",
+    "variant-plan.test.mjs": "c9b245fc229fa9cd21267218d4348e1042be4a303872ab5c0d1e47ff68796fa1"
+  }
+}

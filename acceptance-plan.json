@@ -1,0 +1,142 @@
+{
+  "candidateHead": "fabf1b815e837029f3d605e42a69edaf2c02a1b0",
+  "candidateTree": "ba8e9510cb4602a93f34be11daf545ca92dc3767",
+  "baseHead": "7d124b3860e4a07867a31e94b8dd1a80163d0467",
+  "baseTree": "d137ed03bf8850576cb01ff9703850d089a92e2d",
+  "variantIds": [
+    "Charger_Quick_01",
+    "Maneuver_Short_02",
+    "Roller_Heavy_01",
+    "Roller_Hunter_01",
+    "Saber_Heavy_01",
+    "Saber_Lite_02",
+    "Saber_Normal_01",
+    "Saber_Normal_02",
+    "Shelter_Focus_01",
+    "Shelter_Normal_01",
+    "Shelter_Wide_01",
+    "Shelter_Wide_02",
+    "Shooter_Blaze_01",
+    "Shooter_Precision_01",
+    "Shooter_QuickMiddle_01",
+    "Shooter_Short_01",
+    "Slosher_Bathtub_01",
+    "Slosher_Diffusion_01",
+    "Slosher_Launcher_01",
+    "Slosher_Strong_01",
+    "Slosher_Washtub_01",
+    "Spinner_Quick_01",
+    "Spinner_Quick_02",
+    "Stringer_Explosion_01",
+    "Stringer_Normal_01",
+    "Stringer_Normal_02",
+    "Stringer_Short_01",
+    "Stringer_Short_02"
+  ],
+  "baseModelCount": 65,
+  "payload": [
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-mini-followup.mjs",
+      "sha256": "c9bd00e97a8eab32a029cde973dff4e45f2525eb10608a43b3254e9b55ab898f",
+      "blob": "c75f3ecd15f61a53ed0d4d223f54a5d5bebbf009"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "sha256": "44f5544e351ed6bec60aa1977fe5d30d53816e7a774267a69c3f1c9d4f56dbdc",
+      "blob": "6fd38b1fadd3e7ce99dfbc3922b2df3a169803e9"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-variant-mini-two.test.mjs",
+      "sha256": "963a2e0f2181b40b8c7ce489daa394ab050afb1475c51393fd64a41e7a713661",
+      "blob": "24a9e53bba0ad4e235857d53b8f0e18ff64a782a"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-variant-mini-two-actor.test.mjs",
+      "sha256": "dc3c110c7048563526a60931c45d38f1dfc49841f1fae50150e3a1b5b0124c2c",
+      "blob": "1ec8548463d250ad4abea171297f9900b86871f3"
+    },
+    {
+      "path": "scripts/build-inkwave.mjs",
+      "sha256": "7c3018e93703389343e466da515130b59f0ee29b17c051c721d058e280c21c8f",
+      "blob": "eebeee145a3f6648d161b57034668fe030444226"
+    }
+  ],
+  "registrySHA256": "47d69d527dc12c6a4b8eb16ec4e22e5f34c928e1ffadea3c58be3941c28b4963",
+  "testGates": {
+    "source": {
+      "files": [
+        "patches/splatoon3/tests/custom-explosher-finish.test.mjs",
+        "patches/splatoon3/tests/milk-nock-attachment.test.mjs",
+        "patches/splatoon3/tests/reviewed-second-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/reviewed-third-ac-native-character.test.mjs",
+        "patches/splatoon3/tests/reviewed-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/weapon-bulbz-flat-print.test.mjs",
+        "patches/splatoon3/tests/weapon-limited-variants.test.mjs",
+        "patches/splatoon3/tests/weapon-splatana-canonical-actor.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-splatana-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-stringer-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-brella-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-bulbz.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-third.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-fixed-shooter-finish.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-neo-marker-finish.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-sorella.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-next.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-next-native-actor.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-mini-two.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-mini-two-actor.test.mjs"
+      ],
+      "pass": 130,
+      "skipped": 0
+    },
+    "emitted": {
+      "files": [
+        "patches/splatoon3/tests/custom-explosher-finish.test.mjs",
+        "patches/splatoon3/tests/milk-nock-attachment.test.mjs",
+        "patches/splatoon3/tests/reviewed-second-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/reviewed-third-ac-native-character.test.mjs",
+        "patches/splatoon3/tests/reviewed-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/weapon-bulbz-flat-print.test.mjs",
+        "patches/splatoon3/tests/weapon-limited-variants.test.mjs",
+        "patches/splatoon3/tests/weapon-splatana-canonical-actor.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-splatana-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-stringer-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-brella-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-bulbz.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-third.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-fixed-shooter-finish.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-neo-marker-finish.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-sorella.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-next.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-next-native-actor.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-mini-two.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-mini-two-actor.test.mjs"
+      ],
+      "pass": 130,
+      "skipped": 0
+    },
+    "settings": {
+      "files": [
+        "patches/splatoon3/tests/issue-287-settings-reset.test.mjs"
+      ],
+      "pass": 2,
+      "skipped": 0
+    },
+    "shared": {
+      "files": [
+        "patches/splatoon3/tests/alternate-weapon-kits.test.mjs",
+        "patches/splatoon3/tests/weapon-models-bow-shape-pass2.test.mjs"
+      ],
+      "pass": 13,
+      "skipped": 1,
+      "skipReason": "Existing optional raw Leanny11.3.0 reference root absent"
+    }
+  },
+  "registrySourceSHA256": "91cfbd0d4090b28500904c66d6131d1a9eafe9e86aee2ac013a4ae635ccd5b72"
+}

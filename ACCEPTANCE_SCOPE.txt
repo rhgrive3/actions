@@ -1,0 +1,1 @@
+Mini2 fixed palette evaluation. PR1483 fabf1b, stack base PR1482 7d124. Same production geometry/owner ink/animation; saved broad color regions only. Source130 and emitted130 model tests required, settings2 and shared13+optional1 separate. Native Actor full charge and real released stream, 16 images, 8 processing rows. All browser results pending.
