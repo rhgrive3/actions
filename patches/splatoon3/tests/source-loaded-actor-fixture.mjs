@@ -10,7 +10,7 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const adaptProduction = (await import(pathToFileURL(path.join(ROOT,'scripts/inkwave-source-composition.mjs')).href)).adaptBuildSource;
 const RealmBlob = function(parts = [], options) { return new Blob(parts.map(p => ArrayBuffer.isView(p) ? Buffer.from(p.buffer, p.byteOffset, p.byteLength) : p), options); };
 
-export async function sourceLoadedActorFixture({ transform = adaptProduction, random = null, sourceOnly = false } = {}) {
+export async function sourceLoadedActorFixture({ transform = adaptProduction, emittedTransform = null, random = null, sourceOnly = false } = {}) {
   const EMITTED = !!process.env.INKWAVE_BUILT_SITE && !sourceOnly;
   const SITE = EMITTED ? path.resolve(process.env.INKWAVE_BUILT_SITE) : path.join(ROOT,'inkwave-public');
   const context = vm.createContext({ console, performance, URL, URLSearchParams, TextEncoder, TextDecoder, Blob: RealmBlob,
@@ -28,7 +28,7 @@ export async function sourceLoadedActorFixture({ transform = adaptProduction, ra
     if (!EMITTED && file.startsWith(path.join(SITE,'patches')+path.sep)) file=path.join(ROOT,path.relative(SITE,file));
     if (!EMITTED && file.startsWith(path.join(ROOT,'src')+path.sep)) file=path.join(SITE,path.relative(ROOT,file));
     if (modules.has(file)) return modules.get(file);
-    const raw=fs.readFileSync(file,'utf8'), source=!EMITTED&&file.startsWith(SITE+path.sep)?transform(path.relative(SITE,file),raw):raw;
+    const raw=fs.readFileSync(file,'utf8'), source=EMITTED&&emittedTransform?emittedTransform(path.relative(SITE,file),raw):!EMITTED&&file.startsWith(SITE+path.sep)?transform(path.relative(SITE,file),raw):raw;
     const m = new vm.SourceTextModule(source, { context, identifier:file,
       initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; },
       importModuleDynamically: async spec => { const dep = load(resolve(spec,file)); if (dep.status === 'unlinked') await dep.link((s,from) => load(resolve(s,from.identifier))); if (dep.status === 'linked') await dep.evaluate(); return dep; } });
