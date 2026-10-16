@@ -1187,7 +1187,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function slosh(runner,r,input,s) {
     if(!input.fire||runner.cooldown>EPS||s.pending)return;
-    const t=weaponParam(r);
+    const a=runner.a,t=weaponParam(r);
     if(pay(runner,finite(t.InkConsume,.076)*100*inkMod(runner.a))) {
       beginPending(s,finite(t.SwingLiftFrame,12),()=>{emitUnits(runner,r,'slosh');runner.firingT=.35;});
       // The source-funded SwingLiftFrame also owns the original Slosher heave.
