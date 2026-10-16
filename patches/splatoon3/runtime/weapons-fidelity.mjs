@@ -1296,7 +1296,13 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
     speed=60*sampledSourceSpeed*speedRate;
     angle=actor.yaw+radians(rollerSpeedSwerveDegrees(unit,offset,count,sampledSourceSpeed));
     pitch+=radians(b.horizontalPitchDegrees); // retained calibrated launch angle, NOT extracted
-    const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnPositionRandomCube||0;
+    // #285: the extracted SpawnPositionWidth is the entire lateral unit-group
+    // span, not the distance from centre to each edge. The 11.3.0 main value
+    // 0.8 m is listed as 0.16 range lines (5 m/line) in splatoon3mix; Carbon
+    // 0.6/0.12, Dynamo 0.8/0.16 and Big Swig 1.9/0.38 agree. The source
+    // does not publish the exact per-glob placement or random-cube PDF, so
+    // keep the existing deterministic fan and seeded independent jitter.
+    const side=fan*(unit.SpawnPositionWidth||0)*0.5,j=unit.SpawnPositionRandomCube||0;
     p.pos.x+=Math.cos(actor.yaw)*side+(Math.random()*2-1)*j;
     p.pos.z-=Math.sin(actor.yaw)*side-(Math.random()*2-1)*j;
     p.pos.y+=(Math.random()*2-1)*j;
