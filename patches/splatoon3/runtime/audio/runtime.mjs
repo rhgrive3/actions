@@ -1,6 +1,6 @@
 import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
-import { withBlasterSplashHit, blasterHitCuePitch } from './blaster-hit.mjs';
+import { withBlasterSplashHit } from './blaster-hit.mjs';
 const INSTALL=Symbol.for('inkwave.weapon-audio.runtime.v1');
 // Exactly one runtime owns each admitted shot. The old native/catalogue
 // family SFX never layer over real weapon audio or substitute missing MP3s.
@@ -18,7 +18,6 @@ const finite3=p=>!!p&&[p.x,p.y,p.z].every(Number.isFinite);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function installWeaponAudioRuntime(api){
   const {G,on,Actor,WeaponRunner,Projectiles}=api,R=WeaponRunner.prototype;
-  if(G.audio) G.audio.blasterHitCuePitch=blasterHitCuePitch;
   stopLegacyShotDoublePlay(G.audio);
   if(R[INSTALL])return R[INSTALL];
   // The direct body hit precedes _blastBurst; only the radius damage executed
