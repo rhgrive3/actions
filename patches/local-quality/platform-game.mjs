@@ -146,6 +146,27 @@ export function installPlatformGame(Game, G, env = globalThis) {
   function ensure(game) {
     if (game.platform) return game.platform;
     const r = game.platform = { owner, driver: null, off: null, canvas: null, disposers: [], rendererLost: false };
+    // #878: a follower can become the authoritative host while its tab was
+    // already hidden. There is no new visibility/suspend edge at migration,
+    // so the ordinary visibility listener cannot arm a host deadline.
+    // NetMatch.onLeave calls this hook AFTER promoting its follower state.
+    r.onHostAcquired = () => {
+      if (!env.document?.hidden || !ownsPlatformRuntime(game, r)) return false;
+      const existing = r.hiddenHostClock;
+      if (existing && existing.session === G.net && existing.net === G.netm &&
+          existing.hostId === G.net?.hostId && existing.match === game.match) return false;
+      r.hiddenHostClock = null;
+      clearHiddenHostDeadline(r, env); clearHiddenHostResult(r, env);
+      const saved = captureHiddenHostClock(game, G, env);
+      if (saved) {
+        r.hiddenHostClock = saved;
+        scheduleHiddenHostDeadline(saved, game, G, env, r);
+        return true;
+      }
+      const finishing = captureHiddenHostResult(game, G, env);
+      if (finishing) { scheduleHiddenHostResult(finishing, game, G, env, r); return true; }
+      return false;
+    };
     // The platform driver replaces Game._loop. Install the opt-in frame
     // profiler on this REAL frame owner, not on the unreachable legacy loop.
     if (game._rangeFrameProbe === undefined) {
