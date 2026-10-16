@@ -1,4 +1,5 @@
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
+import { adaptNavHeuristic } from './nav-heuristic-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
 import { adaptMaterialHandoff } from './material-handoff-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
@@ -74,6 +75,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptFrameOrder } from './frame-order-adapter.mjs';
 import { adaptRangeFramePacing } from './range-frame-pacing-adapter.mjs';
 import { adaptPaintHotpath } from './paint-hotpath-adapter.mjs';
+import { adaptDistanceHotpath } from './distance-hotpath-adapter.mjs';
 import { adaptPerfReadout } from './perf-readout-adapter.mjs';
 import { adaptFxEmptyPools } from './fx-empty-pools-adapter.mjs';
 import { adaptCollisionHotpath } from './collision-hotpath-adapter.mjs';
@@ -135,6 +137,8 @@ const IDENTITY_FILES = [
   'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
   'paint-hotpath-adapter.mjs',
+  'distance-hotpath-adapter.mjs',
+  'nav-heuristic-adapter.mjs',
   'collision-hotpath-adapter.mjs',
   'runtime-frame-scratch-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
@@ -150,6 +154,7 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  code = adaptNavHeuristic(rel, code, replaceOnce);
   code = adaptLobbySlotTransform(rel, code);
   code = adaptMaterialHandoff(rel, code);
   code = adaptCameraFovCache(rel, code);
@@ -162,7 +167,7 @@ export function adaptQualitySource(rel, code) {
   const paced = adaptRangeFramePacing(rel, framed);
   const broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
   const painted = adaptFxEmptyPools(rel, adaptPerfReadout(rel, adaptPaintHotpath(rel, broadphased, replaceOnce), replaceOnce), replaceOnce);
-  const lazy = adaptComposerTarget(rel, painted, replaceOnce);
+  const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
   return adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce);
 }

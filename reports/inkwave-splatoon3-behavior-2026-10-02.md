@@ -4740,3 +4740,7 @@ The current-main Core candidate retains S3 reference11.3.0 and changes no source
 ### 2026-10-16: menu preview retains a weapon selected during emergence
 
 Reference remains S3 Ver.11.3.0 weapon/kit identity; retail menu animation frame timing is unmeasured. Actual emitted Showcase/Character reproduction at30/60/120Hz finds six queued/latest-selection cases retaining the old Shooter after3s of native updates: phase=pose but hopWeapon still holds the new kit. Nine controls selected after emergence, during an existing hop, or without any change succeed. The new adapter promotes that pending selection into the existing native hop once pose is ready. It preserves native hop/emergence timing constants, source kit slots, gameplay, geometry and single preview ownership; no forced Character.setWeapon or new animation is used by the test. The browser regression exercises actual update/render at all three rates. See reports/inkwave-showcase-queue-before-2026-10-16.json for the old behavior; the repaired emitted build passes all15 cases in reports/inkwave-showcase-queue-after-2026-10-16.json.
+## 2026-10-16 UTC: ボット経路探索の推定距離計算を再利用
+
+比較基準は Splatoon 3 11.3.0 の通常移動・射撃を維持する INKWAVE 公開版 main `9c070329`。今回はゲーム仕様の変更を行わず、同じ探索内の同じノードに対する推定距離だけを再利用する。両チーム・複層・到達不能・探索上限・通行可否コールバックの条件で、変更前の経路・全探索状態・判定呼び出し順を照合し、ソースと生成物それぞれ800件が一致した。生成物をロードした Chromium でも256件が一致し、距離計算回数は84,329→60,509。本家AIの経路選択一致・実機フレーム時間・端末クラッシュ解消は未確認。詳細は [経路探索の検証記録](inkwave-nav-heuristic-2026-10-16.md)。
+
