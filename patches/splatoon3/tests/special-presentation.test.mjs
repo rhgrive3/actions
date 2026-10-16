@@ -135,3 +135,21 @@ test('accepted remote volleys produce one shell without network or damage author
     assert.equal(f.specialPresentationSnapshot(peer.ch).kind,null);assert.equal(model(peer.ch,'trizooka').visible,false);
   }finally{f.G.netm=previous;system.clear();owner.close();peer.close();}
 });
+
+test('Kraken Royale lies with its belly on the floor in every phase (S3 footage: not upright, not hovering)',async()=>{
+  const f=await boot(),r=rig(f);
+  try{
+    for(const phase of ['active','charge','dash']){
+      mapped(r,'krakenRoyale',phase);
+      for(let i=0;i<50;i++)r.step();                     // past the emerge pop
+      const d=(r.ch.s3SpecialDevices?.()||[]).find(x=>x.spec?.model==='spKraken');
+      assert.ok(d,'the Kraken model is drawn');
+      d.holder.updateWorldMatrix(true,true);
+      let min=Infinity;const v=new f.THREE.Vector3(),box=new f.THREE.Box3().setFromObject(d.holder);
+      d.holder.traverse(o=>{const p=o.isMesh&&o.geometry?.attributes?.position;if(!p)return;for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);min=Math.min(min,v.y);}});
+      const feet=r.a.pos.y,h=box.max.y-box.min.y,len=Math.max(box.max.x-box.min.x,box.max.z-box.min.z);
+      assert.ok(min-feet>-0.01&&min-feet<0.03,`${phase}: belly ${(min-feet).toFixed(3)} from the floor`);
+      assert.ok(len>h*1.5,`${phase}: lying along the floor (length ${len.toFixed(2)} vs height ${h.toFixed(2)})`);
+    }
+  }finally{r.a.specialActive=null;r.step();r.close();}
+});
