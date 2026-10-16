@@ -150,7 +150,9 @@ test('S3 face look: no socket bowl outside the mask, closed lids cover the ball 
     if (face.visorSD(az, el) > -0.01) continue;                        // under the mask the lids may sit lower
     face.headSurfFace(az, el, 0, s);
     // flush with the face; only past the outer corner may the skin rise a little over the wide eyeball
-    assert.ok(Math.abs(r - s.sub(face.HEAD_C).length()) < 0.0025, `skin dips ${(r - s.length()).toFixed(4)} m at ${az.toFixed(3)},${el.toFixed(3)}`);
+    // (the tilted ball lifts the skin up to ~2.6 mm just above its outer-top edge; a socket bowl or the old lid shell
+    // ridge was 4–5 mm)
+    assert.ok(Math.abs(r - s.sub(face.HEAD_C).length()) < 0.003, `skin dips ${(r - s.length()).toFixed(4)} m at ${az.toFixed(3)},${el.toFixed(3)}`);
     checked++;
   }
   assert.ok(checked > 100);

@@ -3,12 +3,13 @@
 // References (official Nintendo artwork mirrored on Inkipedia, fetched 2026-10-16): the Splatoon 3 Inkling amiibo
 // (Yellow) product photo, the "Inkling Models" sheet, the Yellow/Purple Inkling key-art renders, the hairstyle
 // promotional 3D renders and the shooter promo. Measured on those images, not on game data:
-//  * eye opening wider than tall (about 1.3 : 1), spanning most of the face width; the irises rest toward the
+//  * eye opening wider than tall (about 1.3 : 1), spanning most of the face width, outer corner a little higher; the irises rest toward the
 //    inner corners; iris about as tall as the opening, round, with a large black pupil (~0.6 of the iris) and a
 //    thin warm rim;
 //  * the mask is a thin goggle band: its top edge is one smooth line, high over the outer half of each eye and
 //    sloping down past the inner corners to the low middle of the nose bridge (no step); fuller below the eyes,
 //    a rounded end just past the outer corner; no long wings;
+//  * the white runs right up to the mask (only a thin contact shade);
 //  * blinking lids are mask-black and move inside a fixed mask outline (the upper lid comes down to the lower);
 //  * brows: short thick beans, inner end low near the mask, outer end higher;
 //  * the face is flush around the eyes (no visible socket bowl), one skin tone from the eyes to the cheeks;
@@ -28,15 +29,15 @@ function once(code, before, after, label) {
 
 const EDITS = {
   'src/game/character-face.js': [
-    ["eye placement",
+    ["eye placement and tilt",
       "export const EYE = { az: 0.355, el: 0.14, daz: 0.172, del: 0.222, tilt: 0.1 };\n",
-      "export const EYE = { az: 0.52, el: 0.05, daz: 0.172, del: 0.222, tilt: 0.06 };\n"],
+      "export const EYE = { az: 0.52, el: 0.05, daz: 0.172, del: 0.222, tilt: 0.12 };\n"],
     ["brow placement",
       "export const BROW = { az0: 0.19, az1: 0.54, el: 0.455 };\n",
       "export const BROW = { az0: 0.16, az1: 0.57, el: 0.345 };\n"],
     ["goggle mask doc",
       "/** Mask (Inkling eye mask) signed distance in the head's (az, el): > 0 inside. Same shape as the skin shader's pigment. */\n",
-      "/** Mask (Inkling eye mask) signed distance in the head's (az, el): > 0 inside. Same shape as the skin shader's pigment.\n *  Splatoon 3 goggle: one band between a top and a bottom edge. The top edge is a single smooth line: high over the outer\n *  half of each eye, sloping down past the inner corners to the low middle of the nose bridge (no step where the eye\n *  part meets the bridge). The bottom edge is fuller under the eyes, rises to the bridge and toward the outer corner,\n *  and the band ends in a rounded cap just past the outer corner. */\nexport const MASK = { top: 0.305, tLo: 0.03, t0: 0.06, t1: 0.48, tOut: 0.035, bot: -0.205, bLo: -0.13, b0: 0.1, b1: 0.45,\n  bRise: 0.09, r0: 0.62, r1: 0.95, cap: 0.93, capK: 1.2, capEl: 0.05, k: 0.04 };\n"],
+      "/** Mask (Inkling eye mask) signed distance in the head's (az, el): > 0 inside. Same shape as the skin shader's pigment.\n *  Splatoon 3 goggle: one band between a top and a bottom edge. The top edge is a single smooth line: high over the outer\n *  half of each eye, sloping down past the inner corners to the low middle of the nose bridge (no step where the eye\n *  part meets the bridge). The bottom edge is fuller under the eyes, rises to the bridge and toward the outer corner,\n *  and the band ends in a rounded cap just past the outer corner. */\nexport const MASK = { top: 0.28, tLo: 0.05, t0: 0.06, t1: 0.53, tOut: 0.035, bot: -0.205, bLo: -0.13, b0: 0.1, b1: 0.45,\n  bRise: 0.09, r0: 0.62, r1: 0.95, cap: 0.93, capK: 1.2, capEl: 0.05, k: 0.04 };\n"],
     ["goggle mask shape",
       "  const lobe = (1 - Math.hypot((ax - 0.355) / 0.3, (el - 0.15) / 0.29)) * 0.26;\n  const bridge = ax < 0.42 ? 0.1 + 0.1 * sstep(0, 0.36, ax) - Math.abs(el - 0.17) : -1;\n  const s = (ax - 0.42) / 0.9;\n  const wc = 0.16 + 0.2 * Math.pow(clamp(s, 0, 1), 1.35);\n  const wh = 0.205 * Math.pow(clamp(1 - s, 0, 1), 0.8);\n  const wing = s > -0.1 && s <= 1 ? wh - Math.abs(el - wc) : -1;\n  return smaxK(smaxK(lobe, bridge, 0.06), wing, 0.07);\n",
       "  const top = MASK.tLo + (MASK.top - MASK.tLo) * sstep(MASK.t0, MASK.t1, ax) - MASK.tOut * sstep(0.7, 0.95, ax);\n  const bot = MASK.bLo + (MASK.bot - MASK.bLo) * sstep(MASK.b0, MASK.b1, ax) + MASK.bRise * sstep(MASK.r0, MASK.r1, ax);\n  const cap = MASK.cap - ax - MASK.capK * (el - MASK.capEl) ** 2;\n  return sminK(sminK(top - el, el - bot, MASK.k), cap, 2 * MASK.k);\n"],
@@ -108,6 +109,12 @@ const EDITS = {
     ["crisp mask edge",
       "          iwVisor = smoothstep(-0.008 - w, 0.008 + w, sd);\n",
       "          iwVisor = smoothstep(-0.003 - w, 0.003 + w, sd);\n"],
+    ["lid cover flag",
+      "        vec3 iwEyeEmit = vec3(0.0); float iwEyeRim = 0.0; float iwCat = 0.0;\n",
+      "        vec3 iwEyeEmit = vec3(0.0); float iwEyeRim = 0.0; float iwCat = 0.0; float iwLidCov = 0.0;\n"],
+    ["thin lid contact shade (white up to the mask)",
+      "          float shade = mix(0.3, 1.0, smoothstep(0.0, 0.2, dU)) * mix(0.55, 1.0, smoothstep(0.0, 0.12, dL));\n",
+      "          // S3: the white runs right up to the mask; only a thin contact shade under the lids\n          float shade = mix(0.55, 1.0, smoothstep(0.0, 0.07, dU)) * mix(0.7, 1.0, smoothstep(0.0, 0.06, dL));\n"],
     ["lash contact shadow follows LASHES",
       "              vec3 L = k == 0 ? vec3(${(0.91 * Math.cos(0.58)).toFixed(4)}, ${(0.91 * Math.sin(0.58)).toFixed(4)}, 0.155) : vec3(${(0.93 * Math.cos(0.24)).toFixed(4)}, ${(0.93 * Math.sin(0.24)).toFixed(4)}, 0.115);\n              float tipA = k == 0 ? -1.2 : -0.7;\n",
       "              vec3 L = k == 0 ? vec3(${(LASHES[0].e * Math.cos(LASHES[0].phi)).toFixed(4)}, ${(LASHES[0].e * Math.sin(LASHES[0].phi)).toFixed(4)}, ${LASHES[0].r.toFixed(4)}) : vec3(${(LASHES[1].e * Math.cos(LASHES[1].phi)).toFixed(4)}, ${(LASHES[1].e * Math.sin(LASHES[1].phi)).toFixed(4)}, ${LASHES[1].r.toFixed(4)});\n              float tipA = k == 0 ? ${LASHES[0].tip.toFixed(2)} : ${LASHES[1].tip.toFixed(2)};\n"],
@@ -122,13 +129,19 @@ const EDITS = {
       "          ic *= mix(1.0, 0.86, smoothstep(0.72, 0.9, r));                                                   // a little darker outside\n          ic = mix(ic, mix(uIris2 * 0.8, vec3(0.86, 0.24, 0.13), 0.65), smoothstep(0.885, 0.935, r));          // thin warm rim\n          float pr = 0.55 * (0.88 + 0.24 * clamp(uPupil, 0.0, 1.0));\n          float pd = length(iq) - pr;\n"],
     ["lid cover: matte like the lid",
       "          iwEyeRim = 1.0 - shade;\n",
-      "          // S3 lids are mask-black: whatever of the ball lies past a lid line reads as the lid itself, so a closing lid\n          // never shows the eye through the stretched fold\n          float lidCover = max(1.0 - smoothstep(-0.03, 0.0, dU), 1.0 - smoothstep(-0.03, 0.0, dL));\n          col = mix(col, vec3(0.012, 0.0135, 0.02), lidCover);\n          iwEyeRim = max(1.0 - shade, lidCover);\n"],
+      "          // S3 lids are mask-black: whatever of the ball lies past a lid line reads as the lid itself, so a closing lid\n          // never shows the eye through the stretched fold\n          float lidCover = max(1.0 - smoothstep(-0.03, 0.0, dU), 1.0 - smoothstep(-0.03, 0.0, dL)); iwLidCov = lidCover;\n          col = mix(col, vec3(0.012, 0.0135, 0.02), lidCover);\n          iwEyeRim = max(1.0 - shade, lidCover);\n"],
     ["lid cover: no iris glow",
       "          iwEyeEmit = ic * irisM * (1.0 - pupil) * 0.07 * shade;\n",
       "          iwEyeEmit = ic * irisM * (1.0 - pupil) * 0.07 * shade * (1.0 - lidCover);\n"],
     ["lid cover: no catch-light",
       "          iwCat = (c1 * 1.6 + c2 * 0.7) * mix(1.0, 0.35, spread) * smoothstep(0.02, 0.12, dU);\n",
       "          iwCat = (c1 * 1.6 + c2 * 0.7) * mix(1.0, 0.35, spread) * smoothstep(0.02, 0.12, dU) * (1.0 - lidCover);\n"],
+    ["lid cover: satin roughness",
+      "      fRough: 'roughnessFactor = mix(roughnessFactor, 0.35, iwEyeRim);',\n",
+      "      fRough: 'roughnessFactor = mix(roughnessFactor, 0.35, iwEyeRim); roughnessFactor = mix(roughnessFactor, 0.48, iwLidCov);',\n"],
+    ["lid cover: no clearcoat",
+      "          material.clearcoat *= mix(1.0, 0.35, iwEyeRim);\n",
+      "          material.clearcoat *= mix(1.0, 0.35, iwEyeRim) * (1.0 - iwLidCov);   // a closed lid is satin like the mask\n"],
   ],
   'src/game/character-geo.js': [
     ["classic brow: short bean, inner end low",
