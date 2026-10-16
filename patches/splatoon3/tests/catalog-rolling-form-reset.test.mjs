@@ -47,7 +47,8 @@ test('catalog Rollers use their own horizontal/vertical SwingMoveSpeed through p
   assert.ok(wr.catalogState.pending,rec.id+' is winding');
   assert.ok(Math.abs(wr.moveSpeed()-target)<1e-8,rec.id+' '+key+' windup');
   let released=false,recovery=false;
-  for(let frame=0;frame<Math.ceil(wr.cooldown*60)+2;frame++){
+  const totalFrames=Math.ceil(wr.cooldown*60)+2;
+  for(let frame=0;frame<totalFrames;frame++){
    wr.update(1/60,{fire:false,firePressed:false});
    if(wr.catalogState.pending||wr.cooldown>1e-8){
     assert.ok(Math.abs(wr.moveSpeed()-target)<1e-8,rec.id+' '+key+' frame '+frame);
