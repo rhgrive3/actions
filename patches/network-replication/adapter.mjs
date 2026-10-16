@@ -2463,6 +2463,43 @@ ${bombHit}`;
       aC[i4] = C[i3]; aC[i4 + 1] = C[i3 + 1]; aC[i4 + 2] = C[i3 + 2]; aC[i4 + 3] = a;`, 'puff presentation belongs to source');
 
   }
+  if (rel === 'src/boss/boss.js') {
+    code = "import { NETWORK_BOSS_CRABLET_LIMIT, NETWORK_BOSS_CRABLET_SCENE_LIMIT, NETWORK_BOSS_CRABLET_SPAWNS_PER_SECOND } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    patch(`    const seen = n.crabSeen || (n.crabSeen = new Set());
+    seen.clear();
+    for (const k of S.crabs || []) {
+      seen.add(k[0]);
+      let c = this.crabs.get(k[0]);
+      if (!c) { c = { id: k[0], x: k[1], y: k[2], z: k[3], yaw: k[4], hp: k[5], dead: false }; this.crabs.set(k[0], c); }`,
+      `    // A legal host publishes at most 16 live IDs. An alternating set of
+    // new IDs must not allocate a fresh mesh for each entry at every 20Hz tick.
+    const rows = Array.isArray(S.crabs) && S.crabs.length <= NETWORK_BOSS_CRABLET_LIMIT ? S.crabs : [];
+    const seen = n.crabSeen || (n.crabSeen = new Set());
+    seen.clear();
+    for (const k of rows) seen.add(k[0]);
+    n.crabTokens = Math.min(NETWORK_BOSS_CRABLET_SPAWNS_PER_SECOND,
+      (n.crabTokens ?? NETWORK_BOSS_CRABLET_SPAWNS_PER_SECOND)
+      + Math.max(0, Number.isFinite(dt) ? dt : 0) * NETWORK_BOSS_CRABLET_SPAWNS_PER_SECOND);
+    for (const k of rows) {
+      let c = this.crabs.get(k[0]);
+      if (!c) {
+        if (n.crabTokens < 1) continue;
+        if (this.crabs.size >= NETWORK_BOSS_CRABLET_SCENE_LIMIT) {
+          // Replace only an ID absent from the current authoritative sample.
+          for (const [id, old] of this.crabs) {
+            if (seen.has(id)) continue;
+            old.model?.dispose?.();
+            old.model?.root?.removeFromParent();
+            this.crabs.delete(id);
+            break;
+          }
+        }
+        if (this.crabs.size >= NETWORK_BOSS_CRABLET_SCENE_LIMIT) continue;
+        n.crabTokens -= 1;
+        c = { id: k[0], x: k[1], y: k[2], z: k[3], yaw: k[4], hp: k[5], dead: false };
+        this.crabs.set(k[0], c);
+      }`, 'bounded guest crablet lifetime and visual admission');
+  }
   if (rel === 'src/net/netmatch.js') {
     code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, validForwardedEventPayload, allowGhostBombBirth, validNetworkBombBirth, validNetworkProjectileCosmetics, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     // #1311: count only active ghost rounds; do not keep lifecycle counters.
@@ -2487,6 +2524,9 @@ function canAllocateNetworkGhost(projectiles, actor) {
     patch('if (d.B && from === this.s.hostId && boss && !boss.sim) {',
       'if (d.B && from === this.s.hostId && boss && !boss.sim && validBossSnapshotRow(d.B, d.ts)) {',
       'validate host Boss snapshot before unpacking and buffering');
+    patch('    for (const c of s0.crabs || []) {\n      const c1 = s1 && s1.crabs ? s1.crabs.find((q) => q[0] === c[0]) : null;',
+      '    const nextCrabs = n.crabLookup || (n.crabLookup = new Map());\n    nextCrabs.clear();\n    for (const c of s1?.crabs || []) nextCrabs.set(c[0], c);\n    for (const c of s0.crabs || []) {\n      const c1 = nextCrabs.get(c[0]);',
+      'linear-time Boss crablet interpolation');
     patch('      const s = t > last.t ? last : s0;',
       '      const s = t >= last.t ? last : s0;',
       'Boss exact latest timestamp selects the latest snapshot');
