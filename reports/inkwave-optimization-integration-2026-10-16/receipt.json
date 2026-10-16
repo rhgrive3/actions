@@ -17,5 +17,7 @@
   },
   "exactPostPixelCasesPerEngine": 78,
   "sourceGameVerifiedResponses": 476,
-  "scope": "Targeted integration qualification of the predicted final merge tree, supplementing both PR-head CI and accepted main. Includes new main RNG/Stealth Jump tests, exact poses and actual Game/Renderer/ScreenFX. No whole-game performance or physical-iPad claim."
+  "scope": "Targeted integration qualification of the predicted final merge tree, supplementing both PR-head CI and accepted main. Includes new main RNG/Stealth Jump tests, exact poses and actual Game/Renderer/ScreenFX. No whole-game performance or physical-iPad claim.",
+  "additionalShadowPixelCasesPerEngine": 78,
+  "shadowScope": "Same emitted product and strict pixel gate, MeshStandardMaterial plus shadow-casting DirectionalLight; shadow depth texture remains present, composer renderbuffers still 2 -> 1."
 }

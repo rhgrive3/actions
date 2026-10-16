@@ -1,0 +1,4084 @@
+{
+  "status": "passed",
+  "engine": "webkit",
+  "browser": "27.2",
+  "contentHash": "bdf3f02436095bffbdd647f2f26cc8eebf2729b66f0128b66b9de064b591d2db",
+  "revision": "d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113",
+  "scope": "Actual emitted Renderer and ScreenFX; baseline restores only the old post-depth flag before first WebGL binding. Exact completed RGBA pixel comparison and live renderbuffer/attachment counts. No physical-iPad GPU memory, RSS or FPS claim.",
+  "rows": [
+    {
+      "quality": "low",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "idle",
+      "pixelHash": "0223bb8deeabd700981b8e8951f1eedd79dc5b886441bdc25221945a71e32a64",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          240,
+          135
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 1
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          240,
+          135
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 1
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "damage",
+      "pixelHash": "998135bea4f9f58c98a443b9736ae09f4963e51b8452cdf84c9d473994a735ff",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          240,
+          135
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 2
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          240,
+          135
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 2
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "heart",
+      "pixelHash": "5f66f65b539a243b12fdd3e1c9a3a70a82eb68f608cb21dc762edf93bc3cc001",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          240,
+          135
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 3
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          240,
+          135
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 3
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "swim",
+      "pixelHash": "ae49f80c72ad78d6ad81f74463f3f11747e5dbd2e397ef007c48d6f43f1a9ec6",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          240,
+          135
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 4
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          240,
+          135
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 4
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "aura",
+      "pixelHash": "d61cc2c8fb065a97ab1ca92ada5eee863c7057372439292ad1b21552f4cde2a4",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          240,
+          135
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 5
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          240,
+          135
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 5
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "flood",
+      "pixelHash": "c77ffa6a177659b937555ee90ac2b576f4828545fa03d8c0750fb95deb1ca1a1",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          240,
+          135
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 6
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          240,
+          135
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 6
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "reveal",
+      "pixelHash": "17e3fcf6846adae618121733fff178c988045abfa93dbdd66ab96274361fef78",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          240,
+          135
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 7
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          240,
+          135
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 7
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "splat",
+      "pixelHash": "29f7b7fa57921365257e4d5545090376db1ec1a4f583420ea9b6ddf75a6b935d",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          240,
+          135
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 8
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          240,
+          135
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 8
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "idle",
+      "pixelHash": "31c48f7cb31c7cf09d063a3443832fc0c2873da0d96fdf2d447ddbba8e1ced5c",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 9
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 9
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "damage",
+      "pixelHash": "26bd37f093cfb682b5d9d0b4f766abc4106041a63dd257c04485102cd5302af0",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 10
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 10
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "heart",
+      "pixelHash": "33f65db0d002f1368101ed253321b5ed2349a93b35da0aff7a8322c0e7029c63",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 11
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 11
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "swim",
+      "pixelHash": "6108fa8e42c4f9288464590b397c899a9eb70a21cb3105975ceb4b6a676813df",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 12
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 12
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "aura",
+      "pixelHash": "58111ec01879a2418c08009110c43c33b69be5592972a2c3fbd23dc44a6461df",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 13
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 13
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "flood",
+      "pixelHash": "eb33b054ea6eef835456790d01c089f1d39e81305bd46be3cef8e3a0aedd9077",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 14
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 14
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "reveal",
+      "pixelHash": "a589b06e1d8b08b13094aca50a7331908e05459ef2f065dd0815683f0cad5d81",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 15
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 15
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "splat",
+      "pixelHash": "ad14a5c390ad8b03f2563f512f12596155be0f3c406b22f052377e554982f595",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 16
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          98.55,
+          175.2
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 16
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "idle",
+      "pixelHash": "eb5f7fb2b9f8487658607dffb01530399df951b4e041a1ac066c996c3fd154cf",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 17
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 17
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "damage",
+      "pixelHash": "2a622c76ddcf89139e57decdb41f68690763d0267ee3eba7652f0d48ecc72cbe",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 18
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 18
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "heart",
+      "pixelHash": "ff9dea9c401e16feeb0dbd73dd12bd5f20b8b58129cdf2ad70821b681397f66b",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 19
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 19
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "swim",
+      "pixelHash": "47ad79a5c62286d0f6832593c08c3c5032491365068204ba9550f92bcf4181fe",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 20
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 20
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "aura",
+      "pixelHash": "5f92bcbdf7f8b1e336a0f52468c9852052e0d9b4d017e3b50d43b6e35585fc48",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 21
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 21
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "flood",
+      "pixelHash": "d66b4285e930a5514436435b68d7deafa5abdab4a43d5a11e344342310dcab00",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 22
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 22
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "reveal",
+      "pixelHash": "928cb36962b5bdc77a78bb7d3395e83859214eaee4b0ada33ced3e4e23ef45fc",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 23
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 23
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "splat",
+      "pixelHash": "251941e96742ecfd5bae5a41e07d652e6ef4d80b1c279795996c87417a2fa7a1",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 24
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 24
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "low",
+      "fxaa": false,
+      "effect": "idle",
+      "pixelHash": "c5791bdaa37b493c50cacdcadd56597df1258373c2c0ca09efd854160ea916cf",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 25
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 25
+      },
+      "changedChannels": 0
+    },
+    {
+      "quality": "low",
+      "fxaa": false,
+      "effect": "damage",
+      "pixelHash": "a7e94eeb9006c7a42e195f961aaf7de5a1f9bbf8a07a49b3a08d3ce6efbe85fa",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 26
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 26
+      },
+      "changedChannels": 0
+    },
+    {
+      "quality": "medium",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "idle",
+      "pixelHash": "8e926592aea8e279292b0fb405a11972e1a248afe7c1eb608cc653e4ba4aff37",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          320,
+          180
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 1
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          320,
+          180
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 1
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "damage",
+      "pixelHash": "299c385f0b60e532a9877eec408a45cbc14a2e12327d46066c80aee6f3d18492",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          320,
+          180
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 2
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          320,
+          180
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 2
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "heart",
+      "pixelHash": "cec22c90382bac056bc398cc70cf8f5b61a8c220563ae03cb1ac56839726d791",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          320,
+          180
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 3
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          320,
+          180
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 3
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "swim",
+      "pixelHash": "d019aa20e2823b9d7e47d768d0076f83569dd13eb89de4281eedb5246f1d442d",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          320,
+          180
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 4
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          320,
+          180
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 4
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "aura",
+      "pixelHash": "17121d42c49e4892c2210ce75f82d69619cd32e7273afaf8fe8094f0a45f1f1a",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          320,
+          180
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 5
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          320,
+          180
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 5
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "flood",
+      "pixelHash": "f4fcb795b72556c8bb1f345bdd356ecd8334e70cf003ddb7acf9ae82169d261a",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          320,
+          180
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 6
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          320,
+          180
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 6
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "reveal",
+      "pixelHash": "7592f36dd0c8d5752b033eed7259b580b3a595130b44d3287dd79003ad2115c9",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          320,
+          180
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 7
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          320,
+          180
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 7
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "splat",
+      "pixelHash": "6804d922201813b8f3ef5239ff75734112513f33ca4d7bfa293c0c4e379e0aa8",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          320,
+          180
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 8
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          320,
+          180
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 8
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "idle",
+      "pixelHash": "a121185ac8b0ffc6a58e321daeedabc7b4ecd1f967a38fbaf83b8e97d7524b8d",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 9
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 9
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "damage",
+      "pixelHash": "e75b5d9da5628c5b0593d6bdcb4cfba7345a2bd77dc09ed05b2f8d79e1061934",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 10
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 10
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "heart",
+      "pixelHash": "78a291b9dc385e05bf487ce745236d6f1b0b8a222874e8ba93c42ef1babe8adb",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 11
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 11
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "swim",
+      "pixelHash": "9ad16d49e02afd6569af05dd66294d917cc731ad809bc94dec4299fddb4b7808",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 12
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 12
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "aura",
+      "pixelHash": "1086620de2724aa2195cc242b806d5f14a2eeaf54d7cc354e571910e8f6b222c",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 13
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 13
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "flood",
+      "pixelHash": "32dccc640aa182ad2a1d7b70e8b40de2c3649c50eab41ae830e6cc1418785988",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 14
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 14
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "reveal",
+      "pixelHash": "a6852fe76a1406d43750739e1514372ed8277a0d438ef57a1c6283c4f2559706",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 15
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 15
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "splat",
+      "pixelHash": "248492e57f6b748b5da1baec06d1d217a655cb92a6b35c34fa371bd843463fe0",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 16
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          131.4,
+          233.6
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 16
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "idle",
+      "pixelHash": "fcef2b382447f4a80520eeac4c84a09dde617a6638c743512f9949227350771a",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 17
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 17
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "damage",
+      "pixelHash": "9bdbcb4613478a9c99927a55459e76de52710d7b8b6c1ae79c3fc9666d43049b",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 18
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 18
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "heart",
+      "pixelHash": "6c10cd46596a3addbd4cb0b05ab4fd17b57ef40cb41a01e11754be9e8d61abc2",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 19
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 19
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "swim",
+      "pixelHash": "d912be1b39193ceb435e56827b06cd123aaa1c7e14ad845863585c376ead38ff",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 20
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 20
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "aura",
+      "pixelHash": "053cf53c65eddd2cc273861811821eeb6dd5d2baf45fab38fbe2712059932f84",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 21
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 21
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "flood",
+      "pixelHash": "1becccc75bd6f85da9a27950b23863523f034c74e721b101a0ad4a215bdb30b8",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 22
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 22
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "reveal",
+      "pixelHash": "63ac0098ff40ad31b1e03c0ddbc02b14d62259f148a9c043c8528e130b13dee1",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 23
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 23
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "splat",
+      "pixelHash": "af18ad1748d3be10cec12c8bc13b26bdf406e0da08e04914e5b3b2590e323d05",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 24
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 24
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "medium",
+      "fxaa": false,
+      "effect": "idle",
+      "pixelHash": "496292c5909c4344d34fa9d2a4bcabf0f23179f226bd5876f15efaaef4c7f14e",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 25
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 25
+      },
+      "changedChannels": 0
+    },
+    {
+      "quality": "medium",
+      "fxaa": false,
+      "effect": "damage",
+      "pixelHash": "ef3cb8036bcd7bf4fa6a81d64d0091cc0b7631aa2eec15810277347383254ee3",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 26
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 26
+      },
+      "changedChannels": 0
+    },
+    {
+      "quality": "high",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "idle",
+      "pixelHash": "0e4ef0c931a8bdb001b53a79786354d59c5f86d7061cb810189a14bb8f2e40dd",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          384,
+          216
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 1
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          384,
+          216
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 1
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "damage",
+      "pixelHash": "693322c0f124695f4af5b963951dbf55c6fee7cadc08714b5bff8149c66f29a7",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          384,
+          216
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 2
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          384,
+          216
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 2
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "heart",
+      "pixelHash": "500c5dae8c7ddc293cd979acc82c00e89c1d2495de6f77049afbfefbd854ecee",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          384,
+          216
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 3
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          384,
+          216
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 3
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "swim",
+      "pixelHash": "35a73d81b81907599e2f1e28c2a7f3cc0199d0a368608b55ce8fbb0705394917",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          384,
+          216
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 4
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          384,
+          216
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 4
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "aura",
+      "pixelHash": "0ddcaa423e54efd42b2da12e45e5382e62bb5a4b8e84c49d1145f85ae6592556",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          384,
+          216
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 5
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          384,
+          216
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 5
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "flood",
+      "pixelHash": "06a665a12d57294e9b9dd9cb31947b9c8cb155e1697026fb426b4cdf74f8ff47",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          384,
+          216
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 6
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          384,
+          216
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 6
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "reveal",
+      "pixelHash": "3d89f221605fe31277c227182424a9798983984b8ed1447a2058279fd66df1fa",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          384,
+          216
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 7
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          384,
+          216
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 7
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 320,
+      "height": 180,
+      "scale": 1,
+      "effect": "splat",
+      "pixelHash": "2958d692e1a79510c46699ce68f47f0a77153ddbf6129a72971aae789b415e3d",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          384,
+          216
+        ],
+        "created": 3,
+        "deleted": 1,
+        "sceneDraws": 8
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          384,
+          216
+        ],
+        "created": 2,
+        "deleted": 1,
+        "sceneDraws": 8
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "idle",
+      "pixelHash": "cce9995b553486998e78bd512bb6805b06ee2f1ef1d7c475650427d47fda782a",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 9
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 9
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "damage",
+      "pixelHash": "9a1eaca8010f17bfd9e8cc1b5838c2b9bca3a8d1f842f84fc73f60496ad5dde1",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 10
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 10
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "heart",
+      "pixelHash": "a0cfbd12d68fb851be53dce6997ca283d3a9683ddb38cc3732ccb9808503ad27",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 11
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 11
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "swim",
+      "pixelHash": "13d2db248724d013f0cf40d3532edccfdf7850bfbcc33093367372082e3f3c32",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 12
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 12
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "aura",
+      "pixelHash": "5f4e5f50c1677fce35312322f566b7f0124ec759a5d7bc11b93c599f4ff8bace",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 13
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 13
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "flood",
+      "pixelHash": "94320951c790862348c34803a5e4d2e55d18435d7d4f323b5b498cfd6f37973f",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 14
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 14
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "reveal",
+      "pixelHash": "f4bf3d2e8ecbfc773aec238521212bbe37cb184dc5f6c34951121566b5c07625",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 15
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 15
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 180,
+      "height": 320,
+      "scale": 0.73,
+      "effect": "splat",
+      "pixelHash": "38d9cc43f33e6b90376f5f171cdb048a568b52286f7fd856bbf467e0f9b0c9c0",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 5,
+        "deleted": 3,
+        "sceneDraws": 16
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          157.68,
+          280.32
+        ],
+        "created": 3,
+        "deleted": 2,
+        "sceneDraws": 16
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "idle",
+      "pixelHash": "7b8342c33c26e3f6e875de46a5639e3e488f4b72bb619d36394e6144afd1e4d0",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 17
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 17
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "damage",
+      "pixelHash": "f3d97865e36a20d6bb39b4b311b34e947286a83ab31301bb46a7ddb21f271408",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 18
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 18
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "heart",
+      "pixelHash": "8989322cad45e0b89a1cac97070f8e8e2085dd73177c67e549a35da9749ff6c7",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 19
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 19
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "swim",
+      "pixelHash": "209e6d88105256e339dd3efec6bda23c5b000f020efd38496727a83773cb383e",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 20
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 20
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "aura",
+      "pixelHash": "8fde4fe37f9798235fd06dc4077d11ceb6c0fe5243b3d13c0241e6ca99e9f900",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 21
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 21
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "flood",
+      "pixelHash": "88e2ad971287cf999a583cf47985a16898bd9a896a12dc59f895d82dfd32a408",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 22
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 22
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "reveal",
+      "pixelHash": "b3d014550a6e65318a96d5552b60a28efc41e380e46d318ad7999c6cd990b113",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 23
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 23
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "effect": "splat",
+      "pixelHash": "9c710bf30191591998b08723a0e883a4b25606e3dd6d9814c5be3f6741e4ab86",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 24
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 24
+      },
+      "changedChannels": 0,
+      "depthBefore": [
+        36161,
+        36161
+      ],
+      "depthAfter": [
+        0,
+        36161
+      ]
+    },
+    {
+      "quality": "high",
+      "fxaa": false,
+      "effect": "idle",
+      "pixelHash": "b4c102427579e30219e582d8e708ee4e7fb531ec38b119195ea533ced7139aa5",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 25
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 25
+      },
+      "changedChannels": 0
+    },
+    {
+      "quality": "high",
+      "fxaa": false,
+      "effect": "damage",
+      "pixelHash": "7c73ed3ceb08d5133c4bdc6eea3305d530fb91ff83664af739fa47caa1ef4d74",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 26
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 4,
+        "deleted": 3,
+        "sceneDraws": 26
+      },
+      "changedChannels": 0
+    }
+  ],
+  "lifecycle": [
+    {
+      "quality": "low",
+      "lift": -0.1,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 10,
+        "deleted": 8,
+        "sceneDraws": 27
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 27
+      }
+    },
+    {
+      "quality": "low",
+      "lift": -0.1,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 10,
+        "deleted": 8,
+        "sceneDraws": 28
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 28
+      }
+    },
+    {
+      "quality": "low",
+      "lift": 0,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 13,
+        "deleted": 11,
+        "sceneDraws": 29
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 9,
+        "deleted": 8,
+        "sceneDraws": 29
+      }
+    },
+    {
+      "quality": "low",
+      "lift": 0,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 13,
+        "deleted": 11,
+        "sceneDraws": 30
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 9,
+        "deleted": 8,
+        "sceneDraws": 30
+      }
+    },
+    {
+      "quality": "low",
+      "visibility": "hidden release / visible rebuild",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 16,
+        "deleted": 14,
+        "sceneDraws": 31
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 11,
+        "deleted": 10,
+        "sceneDraws": 31
+      }
+    },
+    {
+      "quality": "low",
+      "operation": "native composer reset",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 18,
+        "deleted": 16,
+        "sceneDraws": 32
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 12,
+        "deleted": 11,
+        "sceneDraws": 32
+      }
+    },
+    {
+      "quality": "medium",
+      "lift": -0.1,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 10,
+        "deleted": 8,
+        "sceneDraws": 27
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 27
+      }
+    },
+    {
+      "quality": "medium",
+      "lift": -0.1,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 10,
+        "deleted": 8,
+        "sceneDraws": 28
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 28
+      }
+    },
+    {
+      "quality": "medium",
+      "lift": 0,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 13,
+        "deleted": 11,
+        "sceneDraws": 29
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 9,
+        "deleted": 8,
+        "sceneDraws": 29
+      }
+    },
+    {
+      "quality": "medium",
+      "lift": 0,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 13,
+        "deleted": 11,
+        "sceneDraws": 30
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 9,
+        "deleted": 8,
+        "sceneDraws": 30
+      }
+    },
+    {
+      "quality": "medium",
+      "visibility": "hidden release / visible rebuild",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 16,
+        "deleted": 14,
+        "sceneDraws": 31
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 11,
+        "deleted": 10,
+        "sceneDraws": 31
+      }
+    },
+    {
+      "quality": "medium",
+      "operation": "native composer reset",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 18,
+        "deleted": 16,
+        "sceneDraws": 32
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 12,
+        "deleted": 11,
+        "sceneDraws": 32
+      }
+    },
+    {
+      "quality": "high",
+      "lift": -0.1,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 10,
+        "deleted": 8,
+        "sceneDraws": 27
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 27
+      }
+    },
+    {
+      "quality": "high",
+      "lift": -0.1,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 10,
+        "deleted": 8,
+        "sceneDraws": 28
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 28
+      }
+    },
+    {
+      "quality": "high",
+      "lift": 0,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 13,
+        "deleted": 11,
+        "sceneDraws": 29
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 9,
+        "deleted": 8,
+        "sceneDraws": 29
+      }
+    },
+    {
+      "quality": "high",
+      "lift": 0,
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 13,
+        "deleted": 11,
+        "sceneDraws": 30
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 9,
+        "deleted": 8,
+        "sceneDraws": 30
+      }
+    },
+    {
+      "quality": "high",
+      "visibility": "hidden release / visible rebuild",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 16,
+        "deleted": 14,
+        "sceneDraws": 31
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 11,
+        "deleted": 10,
+        "sceneDraws": 31
+      }
+    },
+    {
+      "quality": "high",
+      "operation": "native composer reset",
+      "before": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 18,
+        "deleted": 16,
+        "sceneDraws": 32
+      },
+      "after": {
+        "shadowDepthTexture": true,
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 12,
+        "deleted": 11,
+        "sceneDraws": 32
+      }
+    },
+    {
+      "desktop": true,
+      "after": {
+        "shadowDepthTexture": true,
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 2,
+        "deleted": 0,
+        "sceneDraws": 1
+      }
+    }
+  ],
+  "negativeControl": true,
+  "frameCount": 195,
+  "disposedLiveRenderbuffers": 0,
+  "artifacts": [
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/patches/native-stages/runtime/build-config.mjs",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/patches/native-stages/runtime/registry.mjs",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/patches/splatoon3/runtime/battle-framing.mjs",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/src/config.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/src/core/ctx.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/src/core/device.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/src/core/renderer.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/src/fx/screenfx.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/src/game/inkFlight.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/build/three.module.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/math/SimplexNoise.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/postprocessing/EffectComposer.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/postprocessing/GTAOPass.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/postprocessing/MaskPass.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/postprocessing/OutputPass.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/postprocessing/Pass.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/postprocessing/RenderPass.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/postprocessing/ShaderPass.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/shaders/CopyShader.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/shaders/GTAOShader.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/shaders/OutputShader.js",
+    "_versions/d1d734ff2a1d6ea45a985d26005cf04367ce27c9a2de155694452fd42aecd113/vendor/three/jsm/shaders/PoissonDenoiseShader.js"
+  ]
+}
