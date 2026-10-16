@@ -67,7 +67,7 @@ function adaptIssue460Actor(code) {
 function adaptIssue460Net(code) {
   code = replaceOnce(code,
     `import { BotBrain } from '../game/bots.js';`,
-    `import { BotBrain } from '../game/bots.js';\nimport { remoteJumpProgress, jumpMarkerSnapshot, liveJumpMarker } from '../../patches/splatoon3/issue-460-marker.mjs';\nimport { renderJumpGauge460, clearJumpGauge460 } from '../../patches/splatoon3/issue-460-gauge.mjs';`,
+    `import { BotBrain } from '../game/bots.js';\nimport { remoteJumpProgress, jumpMarkerSnapshot, liveJumpMarker, superJumpSignHiddenFrom } from '../../patches/splatoon3/issue-460-marker.mjs';\nimport { renderJumpGauge460, clearJumpGauge460 } from '../../patches/splatoon3/issue-460-gauge.mjs';`,
     'issue-460 remote marker + gauge helpers');
   code = replaceOnce(code,
     `    if (!a.net) a.net = { buf: [], err: new THREE.Vector3(), tp: -1, lastRaw: null, rendered: new THREE.Vector3(), has: false, prevGrounded: true, prevVy: 0, yawPrev: 0, loops: {}, sjTo: null, sjRing: 0 };`,
@@ -90,8 +90,14 @@ function adaptIssue460Net(code) {
   // every flight frame: snapshot from the event-seeded clock + gauge at n.sjTo
   code = replaceOnce(code,
     `    if (a.superJumpState?.phase === 'flight' && n.sjTo) {\n      n.sjRing += dt;`,
-    `    if (a.superJumpState?.phase !== 'flight' && n.sjMarker460) { n.sjMarker460 = null; n.sjTo = null; n.sjDur460 = 0; n.sjT460 = 0; clearJumpGauge460(a); }\n    if (a.superJumpState?.phase === 'flight' && n.sjTo) {\n      n.sjT460 = (Number(n.sjT460) || 0) + dt;\n      n.sjMarker460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: remoteJumpProgress(n.sjT460, n.sjDur460), dur: n.sjDur460, jumper: a.name }));\n      renderJumpGauge460(G, a, n.sjMarker460, n.sjTo, a.color, THREE);\n      n.sjRing += dt;`,
+    `    if (a.superJumpState?.phase !== 'flight' && n.sjMarker460) { n.sjMarker460 = null; n.sjTo = null; n.sjDur460 = 0; n.sjT460 = 0; clearJumpGauge460(a); }\n    if (a.superJumpState?.phase === 'flight' && n.sjTo) {\n      n.sjT460 = (Number(n.sjT460) || 0) + dt;\n      n.sjMarker460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: remoteJumpProgress(n.sjT460, n.sjDur460), dur: n.sjDur460, jumper: a.name, concealed: superJumpSignHiddenFrom(a, G.local, n.sjTo) }));\n      renderJumpGauge460(G, a, n.sjMarker460, n.sjTo, a.color, THREE);\n      n.sjRing += dt;`,
     'issue-460 remote gauge render');
+  // #272: the remote landing ring is the same destination cue; far opponents
+  // of a replicated Stealth Jump loadout do not see it either.
+  code = replaceOnce(code,
+    `      if (n.sjRing > 0.12) { n.sjRing = 0; G.fx?.ring(`,
+    `      if (n.sjRing > 0.12) { n.sjRing = 0; if (!superJumpSignHiddenFrom(a, G.local, n.sjTo)) G.fx?.ring(`,
+    'issue-272 remote landing ring concealment');
   code = replaceOnce(code,
     `        if (e.phase === 'flight') { a.net.sjTo = e.to ? e.to.clone() : null; G.fx?.burst(`,
     `        if (e.phase === 'flight') { const sameFlight460 = a.net.sjTo && e.to && a.net.sjTo.equals(e.to); a.net.sjTo = e.to ? e.to.clone() : null; if (!sameFlight460) { a.net.sjDur460 = Number(e.dur) > 0 ? Number(e.dur) : 0; a.net.sjT460 = 0; a.net.sjMarker460 = null; clearJumpGauge460(a); } G.fx?.burst(`,

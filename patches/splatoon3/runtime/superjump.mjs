@@ -12,15 +12,20 @@ export { SUPERJUMP_MAIN_PROGRESS };
 
 // Splatoon 3 Ver. 11.0.0 Stealth Jump flight-only penalty (#272).
 // Current public measurement resolves the stage-forward travel coordinate from
-// the difference of XZ distances to two stage-specific reference foci. Their
-// exact placement is not published and is not equivalent to ordinary spawn pads,
-// so only an explicitly calibrated level.stealthJumpFoci pair is accepted. This
-// deliberately fails closed rather than guessing anchors for INKWAVE stages.
+// the difference of XZ distances to two stage-specific reference foci. Nintendo
+// only states that front<->back jumps gain up to ~1 s of flight. The community
+// fit (note.com/ccopedia n214e07447235, ~358 frame-counted recordings) places
+// each focus at, or slightly behind, that team's initial Squid Spawn launch
+// position; ordinary home Super Jump points are not foci. An explicitly
+// calibrated level.stealthJumpFoci pair still wins. Otherwise the two team
+// spawn pads are used so the Ver. 11 change is active on every shipped stage
+// instead of silently disabled (未確認: exact per-stage focus placement).
 // The 0F through 60 unit, linear to +60F at 100 unit, then capped curve is NOT
 // verified against Ver. 11.3.0 (未確認): only the 60F maximum is backed by the
 // pinned ExtraMove_FrmMax, and the 100 unit value is ExtraMove_DistXZMax. The
-// 60 unit lower threshold and the linear interpolation are unpublished. Vertical
-// displacement is intentionally excluded.
+// 60 unit lower threshold and the linear interpolation come from the same
+// community fit (12 / 20 test lines of 5 units). Vertical displacement is
+// intentionally excluded.
 export const STEALTH_JUMP_DISTANCE_MIN = 60;
 export const STEALTH_JUMP_DISTANCE_MAX = 100;
 export const STEALTH_JUMP_EXTRA_FRAMES_MAX = 60;
@@ -29,9 +34,19 @@ function xzDistance(a, b) {
   return Math.hypot((a?.x || 0) - (b?.x || 0), (a?.z || 0) - (b?.z || 0));
 }
 
+const finitePoint = p => !!p && Number.isFinite(p.x) && Number.isFinite(p.z);
+export function stealthJumpFoci(level = G.level) {
+  const calibrated = level?.stealthJumpFoci;
+  if (calibrated?.[0] && calibrated?.[1]) return calibrated;
+  const pads = level?.spawnPads;
+  if (pads?.length === 2 && finitePoint(pads[0]) && finitePoint(pads[1]) &&
+      xzDistance(pads[0], pads[1]) > 1e-6) return pads;
+  return null;
+}
+
 export function stealthJumpLongitudinalDistance(from, to, level = G.level) {
-  const refs = level?.stealthJumpFoci;
-  if (!from || !to || !refs?.[0] || !refs?.[1]) return 0;
+  const refs = stealthJumpFoci(level);
+  if (!from || !to || !refs) return 0;
   const axis = p => (xzDistance(p, refs[0]) - xzDistance(p, refs[1])) * 0.5;
   return Math.abs(axis(to) - axis(from));
 }

@@ -24,15 +24,27 @@ const clamp01 = (x) => {
 };
 
 // #272: Stealth Jump (pinned trait SuperJumpSign_Hide, shoes main) conceals the
-// super-jump landing sign from the opposing team. The jumper always sees their
-// own sign and teammates still see it. Without a known local viewer the sign is
-// treated as hidden, the conservative choice so the destination does not leak.
-// Network peers are not covered: remote Actors carry no replicated loadout, so
-// their stealthJump flag is unknown here (未対応, recorded in the report).
-export function superJumpSignHiddenFrom(jumper, viewer) {
+// super-jump landing sign from opponents who are FAR from it. Nintendo's own
+// gear guide (nintendo.com/jp/ichikara/av5ja/02.html): 「遠くにいる相手からは、
+// 『スーパージャンプ』の着地地点を示すマーカーが見えなくなる」 — an opponent near
+// the landing point still sees it. The near radius is not published for
+// Splatoon 3 (未確認). Community observation (Splatoon 2 era: fully visible
+// within ~0.5 test line, fully transparent beyond ~1 line; Splatoon 3 guides:
+// "about Sploosh-o-matic range") is approximated by a spherical 1 test line =
+// 5 unit boundary; the opacity fade between those distances is not modelled.
+// The jumper always sees their own sign and teammates still see it. Without a
+// known local viewer position or landing point the sign is treated as hidden,
+// the conservative choice so the destination does not leak to the far field.
+export const STEALTH_JUMP_SIGN_VISIBLE_DISTANCE = 5;
+const finiteXYZ = p => !!p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z);
+export function superJumpSignHiddenFrom(jumper, viewer, landing = jumper?.superJumpState?.to) {
   if (!jumper?.s3?.modifiers?.stealthJump) return false;
   if (viewer && viewer === jumper) return false;
-  return jumper.team !== viewer?.team;
+  if (jumper.team === viewer?.team) return false;
+  const eye = viewer?.pos;
+  if (!finiteXYZ(eye) || !finiteXYZ(landing)) return true;
+  const d = Math.hypot(eye.x - landing.x, eye.y - landing.y, eye.z - landing.z);
+  return !(d <= STEALTH_JUMP_SIGN_VISIBLE_DISTANCE);
 }
 
 // Owner-side normalized flight progress from the live native flight state.
