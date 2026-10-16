@@ -1,0 +1,342 @@
+{
+  "date": "2026-10-16 JST",
+  "sourceHead": "a4b4f63629017a848aefa31c22fb8277ffe01fd1",
+  "sourceNetworkSuite": {
+    "node": "22.23.3",
+    "tests": 517,
+    "pass": 517,
+    "fail": 0,
+    "skipped": 0
+  },
+  "emittedCapabilityCases": {
+    "tests": 5,
+    "pass": 5,
+    "fail": 0,
+    "skipped": 0
+  },
+  "scope": "Same portable capability cases overlap the complete source suite. Browser trials use actual emitted network/physics modules, two Chromium contexts, real loopback WebSockets and the production RoomDurableObject session handler; Cloudflare upgrade is adapted to Node. UI/character meshes/audio and physical-device/deployed-service proof are excluded. These valid-event compatibility runs do not close the broader unbacked plain-paint provenance issue#522.",
+  "browserTrials": [
+    {
+      "status": "passed",
+      "bombAuthority": [
+        {
+          "direction": "host-to-guest",
+          "source": {
+            "nid": 0,
+            "owner": "p_848hvdx",
+            "ink": 30,
+            "kind": "bomb"
+          },
+          "sides": [
+            {
+              "sender": true,
+              "victimRemote": true,
+              "hp": 100,
+              "damage": [],
+              "nativeReplicaClock": true
+            },
+            {
+              "sender": false,
+              "victimRemote": false,
+              "hp": 0,
+              "damage": [
+                {
+                  "nid": 1,
+                  "remote": false,
+                  "amount": 180
+                }
+              ],
+              "nativeReplicaClock": true
+            }
+          ]
+        },
+        {
+          "direction": "guest-to-host",
+          "source": {
+            "nid": 1,
+            "owner": "p_ekhh2ih",
+            "ink": 30,
+            "kind": "bomb"
+          },
+          "sides": [
+            {
+              "sender": false,
+              "victimRemote": false,
+              "hp": 0,
+              "damage": [
+                {
+                  "nid": 0,
+                  "remote": false,
+                  "amount": 180
+                }
+              ],
+              "nativeReplicaClock": true
+            },
+            {
+              "sender": true,
+              "victimRemote": true,
+              "hp": 100,
+              "damage": [],
+              "nativeReplicaClock": true
+            }
+          ]
+        }
+      ],
+      "baseline": false,
+      "delayFrames": 0,
+      "sourceSha": "a4b4f63629017a848aefa31c22fb8277ffe01fd1",
+      "contentHash": "82535ea43ddc75ef0add920e7d510aa0a0b4fd49e94703ec6037155e3d10fa2c",
+      "fixtureHash": "d523056b7772f5260eb40ce8f49b2148bb43d3dca5976e4e87c83e945c8125a3",
+      "transport": "real WebSocket + production RoomDurableObject.handleSession",
+      "arena": "native replication modules and physics; UI/character meshes/audio omitted",
+      "players": 2,
+      "attacksPerPlayer": 5,
+      "paired": 130,
+      "maxSpawnError": 0.008264855366827849,
+      "maxVelocityError": 0,
+      "maxPositionError": 0.008264855366828442,
+      "virtualSeconds": 6.833333333333333,
+      "tickPackets": 274,
+      "tickBytes": 221665,
+      "traces": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "owner": "p_848hvdx",
+              "remote": false
+            },
+            {
+              "nid": 1,
+              "owner": "p_ekhh2ih",
+              "remote": true
+            }
+          ],
+          "remaining": 0,
+          "stats": {
+            "in": 137,
+            "out": 137,
+            "extrap": 31,
+            "snaps": 1
+          },
+          "puffSourceSlots": 130,
+          "puffGenerationBytes": 520,
+          "maxProjectiles": 26,
+          "maxFx": 122,
+          "maxPuffs": 32,
+          "maxRemote": 13,
+          "projectileAllocations": 26,
+          "puffLinkedFrames": 690,
+          "remoteDropLinks": 1930,
+          "remotePuffLinks": 345,
+          "curtains": 10,
+          "unboundCurtains": 0,
+          "puffEnvelopeError": 5.987016615682341e-07,
+          "invalidPuffVisible": 0,
+          "linkedFrames": 4012,
+          "maxEnvelopeError": 5.470454834559545e-07
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "owner": "p_848hvdx",
+              "remote": true
+            },
+            {
+              "nid": 1,
+              "owner": "p_ekhh2ih",
+              "remote": false
+            }
+          ],
+          "remaining": 0,
+          "stats": {
+            "in": 137,
+            "out": 137,
+            "extrap": 33,
+            "snaps": 1
+          },
+          "puffSourceSlots": 130,
+          "puffGenerationBytes": 520,
+          "maxProjectiles": 26,
+          "maxFx": 126,
+          "maxPuffs": 32,
+          "maxRemote": 13,
+          "projectileAllocations": 26,
+          "puffLinkedFrames": 690,
+          "remoteDropLinks": 1924,
+          "remotePuffLinks": 345,
+          "curtains": 10,
+          "unboundCurtains": 0,
+          "puffEnvelopeError": 6.486463003936167e-07,
+          "invalidPuffVisible": 0,
+          "linkedFrames": 4058,
+          "maxEnvelopeError": 5.747523244717139e-07
+        }
+      ],
+      "errors": [],
+      "loadedArtifactCount": 299
+    },
+    {
+      "status": "passed",
+      "bombAuthority": [
+        {
+          "direction": "host-to-guest",
+          "source": {
+            "nid": 0,
+            "owner": "p_pyturry",
+            "ink": 30,
+            "kind": "bomb"
+          },
+          "sides": [
+            {
+              "sender": true,
+              "victimRemote": true,
+              "hp": 100,
+              "damage": [],
+              "nativeReplicaClock": true
+            },
+            {
+              "sender": false,
+              "victimRemote": false,
+              "hp": 0,
+              "damage": [
+                {
+                  "nid": 1,
+                  "remote": false,
+                  "amount": 180
+                }
+              ],
+              "nativeReplicaClock": true
+            }
+          ]
+        },
+        {
+          "direction": "guest-to-host",
+          "source": {
+            "nid": 1,
+            "owner": "p_c28byya",
+            "ink": 30,
+            "kind": "bomb"
+          },
+          "sides": [
+            {
+              "sender": false,
+              "victimRemote": false,
+              "hp": 0,
+              "damage": [
+                {
+                  "nid": 0,
+                  "remote": false,
+                  "amount": 180
+                }
+              ],
+              "nativeReplicaClock": true
+            },
+            {
+              "sender": true,
+              "victimRemote": true,
+              "hp": 100,
+              "damage": [],
+              "nativeReplicaClock": true
+            }
+          ]
+        }
+      ],
+      "baseline": false,
+      "delayFrames": 2,
+      "sourceSha": "a4b4f63629017a848aefa31c22fb8277ffe01fd1",
+      "contentHash": "82535ea43ddc75ef0add920e7d510aa0a0b4fd49e94703ec6037155e3d10fa2c",
+      "fixtureHash": "d523056b7772f5260eb40ce8f49b2148bb43d3dca5976e4e87c83e945c8125a3",
+      "transport": "real WebSocket + production RoomDurableObject.handleSession",
+      "arena": "native replication modules and physics; UI/character meshes/audio omitted",
+      "players": 2,
+      "attacksPerPlayer": 5,
+      "paired": 130,
+      "maxSpawnError": 0.008263679452686632,
+      "maxVelocityError": 0,
+      "maxPositionError": 0.008263679452687182,
+      "virtualSeconds": 6.833333333333333,
+      "tickPackets": 274,
+      "tickBytes": 221002,
+      "traces": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "owner": "p_pyturry",
+              "remote": false
+            },
+            {
+              "nid": 1,
+              "owner": "p_c28byya",
+              "remote": true
+            }
+          ],
+          "remaining": 0,
+          "stats": {
+            "in": 137,
+            "out": 137,
+            "extrap": 3,
+            "snaps": 1
+          },
+          "puffSourceSlots": 130,
+          "puffGenerationBytes": 520,
+          "maxProjectiles": 26,
+          "maxFx": 122,
+          "maxPuffs": 31,
+          "maxRemote": 13,
+          "projectileAllocations": 26,
+          "puffLinkedFrames": 690,
+          "remoteDropLinks": 1939,
+          "remotePuffLinks": 345,
+          "curtains": 10,
+          "unboundCurtains": 0,
+          "puffEnvelopeError": 6.000586283218392e-07,
+          "invalidPuffVisible": 0,
+          "linkedFrames": 4061,
+          "maxEnvelopeError": 5.639078457953475e-07
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "owner": "p_pyturry",
+              "remote": true
+            },
+            {
+              "nid": 1,
+              "owner": "p_c28byya",
+              "remote": false
+            }
+          ],
+          "remaining": 0,
+          "stats": {
+            "in": 137,
+            "out": 137,
+            "extrap": 8,
+            "snaps": 1
+          },
+          "puffSourceSlots": 130,
+          "puffGenerationBytes": 520,
+          "maxProjectiles": 26,
+          "maxFx": 127,
+          "maxPuffs": 31,
+          "maxRemote": 13,
+          "projectileAllocations": 26,
+          "puffLinkedFrames": 690,
+          "remoteDropLinks": 1900,
+          "remotePuffLinks": 345,
+          "curtains": 10,
+          "unboundCurtains": 0,
+          "puffEnvelopeError": 5.784988934775525e-07,
+          "invalidPuffVisible": 0,
+          "linkedFrames": 3967,
+          "maxEnvelopeError": 5.604161320209459e-07
+        }
+      ],
+      "errors": [],
+      "loadedArtifactCount": 299
+    }
+  ]
+}
