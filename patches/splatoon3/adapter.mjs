@@ -85,10 +85,11 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '   if(isUpper&&upper)this.q.premultiply(this.aim);', '   sourcePostureBone(this,target,this.q,dir,isUpper&&upper);\n   if(isUpper&&upper)this.q.premultiply(this.aim);', 'source torso/neck posture');
     // S3 gait: lower the Wii U swing-ankle height before leg IK; contacts are solved later in ground().
     code = replaceOnce(code, "   this.v3.add(c.rest['foot'+label]);\n", "   this.v3.add(c.rest['foot'+label]);\n   sourceFootLift(this,this.v3,label);\n", 'source swing foot lift');
-    // S3 ready stance: a compact idle stagger (feet under the body) and the footage's knee bob amplitude.
-    code = replaceOnce(code, "   sourceFootLift(this,this.v3,label);\n", "   sourceFootLift(this,this.v3,label);\n   sourceIdleStance(this,this.v3);\n", 'source idle stance');
+    // S3 ready stance: front shin vertical under the pelvis, rear foot back on its toes, and the footage's knee bob.
+    code = replaceOnce(code, "   sourceFootLift(this,this.v3,label);\n", "   sourceFootLift(this,this.v3,label);\n   sourceIdleStance(this,this.v3,label);\n", 'source idle stance');
     code = replaceOnce(code, '   c.bones.hips.position.y-=drop;\n  }\n', '   c.bones.hips.position.y-=drop;\n  }\n  sourceIdleBob(this,c.bones.hips.position);\n', 'source idle bob');
-    return "import { sourcePostureBone, sourceFootLift, sourceIdleStance, sourceIdleBob } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
+    code = replaceOnce(code, "   this.q.copy(pose.wq[footIdx]).multiply(this.byTarget.get('foot'+label).restSourceQ);\n", "   this.q.copy(pose.wq[footIdx]).multiply(this.byTarget.get('foot'+label).restSourceQ);\n   sourceIdleFoot(this,this.q,label);\n", 'source idle flat front sole');
+    return "import { sourcePostureBone, sourceFootLift, sourceIdleStance, sourceIdleBob, sourceIdleFoot } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
   code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);

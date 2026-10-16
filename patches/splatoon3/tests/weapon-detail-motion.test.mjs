@@ -197,22 +197,22 @@ const issue1096Tuning = {
 // change in the drawn grip correction; its fire events are unchanged.
 const issue1096BaselineOutputs = {
   "shooter": {
-    "pose": "6f0842d7ddaf7b97b6a73ea7a47973c799621f4f95349cd66b430814194e2402",
-    "recoilTrigger": "a1a52664f59c0d3041177a8fe0a42246f6cc002ddca29273778a9cb945124de7",
+    "pose": "c9c2276f3ee5ded38a971a488b00cf2ca5226957d8741e039d8a16489e53d2c9",
+    "recoilTrigger": "c7b74d403f06ea1ea7d6db344f94184b4d0411d40faa7a0fb79f891e2abb10f5",
     "breath": "ee90765bb7397f23b02406e461a0ee4e585f12b49e5aa781809705cb62f46631",
     "layerOutputs": "26ec4aedabdf3af1aa1b34efadc36a71f390ac40ab1e2b324f7e47869d551b05"
   },
   "blaster": {
-    "pose": "c7e41fe8421d0dfd29b49216703c8bd181e7f5ae14e2defa911cd03d70b03324",
-    "recoilTrigger": "b60ad06cad494f6f3a7ef31985a24522a4beec4c87e068d3eba02fe68c43d33a",
+    "pose": "0cadaab3b66c35d354f6918c7e65cdcbb18bea423e76a19d9dacde8b22360ffe",
+    "recoilTrigger": "f11b5948efc68f59d85e4ce2e70be4f351d47efd5d6777577fe9a18e18ef06a0",
     "breath": "8c93ebe1f00af866bbd0224bf845ef5bab4a9e1f70aca86e30c425e7c2ae26e3",
     // Per-weapon Blaster model (weapon-models/blasters.mjs) moves the muzzle socket to its real nozzle, which the
     // recorded fire events carry; pose, recoil and breath digests are unchanged.
     "layerOutputs": "078c7babd05a9399c2c36f7d84ebf587dbc38890c49d3f4b150d7d8d6547c59a"
   },
   "charger": {
-    "pose": "6f8b88fa013490052e84c407dc9b9fd915a9a2b73d93faaa3991601872833a16",
-    "recoilTrigger": "fbe9a3192e31f4d6fcf2d61fc471c129c624bb656e48b0420ba561768a5f0810",
+    "pose": "dcd30b88c7584351f63527a289fca448e1dd6e591f0ee1e5e4eb7d6f766e7e68",
+    "recoilTrigger": "b45f215fc28a30f21b4cc6a6fc5ef30ea678ea5c27750ca44b6699aee59fd80a",
     "breath": "032a83c35d476343a5ccfae4b2014ab4a6a5f0b27d83265df7c4176a485a588a",
     "layerOutputs": "4fe3c1c75672827883d3ae7ed0cb63cb847af318569f3199e85b7c89496fa325"
   },
@@ -224,8 +224,8 @@ const issue1096BaselineOutputs = {
   // digests; independent 41-shot reservation/timing regression suites are
   // still required and may not be replaced by these hash expectations.
   "splatling": {
-    "pose": "6061425ff724870bef0f696ae31ea8e50b0e1127c8a5247334ae49a53bafd0fe",
-    "recoilTrigger": "602e1605280c165b1b1192a2ee61a6d1327089e00b82176d562687745890ee75",
+    "pose": "95efec3ea8df02e958f8adc924e6c3d0d1d2c22a9dff92790ad6bf4144217a00",
+    "recoilTrigger": "f4c7e2e99ac2ab613d24b5c772e4a6a2548206ab0ea88c555f88499d2e50ce5c",
     "breath": "0186ceeb0c0284dbd6e9d12efba6ec36c0ee37d8897902cc470abef2b73c9c14",
     "layerOutputs": "16b9abd4d781ed48bc0bb6c623482f229025afa8468440b5ea7ebf73cb51c59d"
   }

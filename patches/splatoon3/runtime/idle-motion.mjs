@@ -6,12 +6,15 @@ import { specialMotionAllowsAction, bombMotionAllowsAction, dualiesMotionLock } 
 export const IDLE_MOTION_CALIBRATION = Object.freeze({
   lookWeight: .20,
   // Native (non-source) ready stance, matched to the Splatoon 3 footage of a
-  // standing shooter (media y7Zl26Zl12n, n=596-668): knees bent to about the
-  // source WaitHold depth and a continuous knee bob of about 30 frames whose
-  // head travel is ~5-6 % of the crouched height. The native stance keeps its
-  // own small stagger: a wider one makes the native feet re-plant (settle
+  // standing shooter (media y7Zl26Zl12n, n=366-402 and n=596-668): the legs
+  // stand nearly straight (the front shin perpendicular to the ground) and the
+  // torso bobs about every 30 frames by about 4 % of the height. `crouch` is
+  // the extra pelvis drop over the native ready stance (negative = raise the
+  // native 3.6 cm drop back toward nearly straight legs at the top of the
+  // bob); `bob` is the half peak-to-peak dip. The native stance keeps its own
+  // small stagger: a wider one makes the native feet re-plant (settle
   // threshold 6.8 cm). Values are INKWAVE calibrations in metres / seconds.
-  ready: Object.freeze({ crouch: .09, bob: .032, period: .5, response: 8 }),
+  ready: Object.freeze({ crouch: -.02, bob: .0225, period: .5, response: 8 }),
   status: 'visual calibration; original idle frequencies and joint curves unknown',
 });
 const INSTALL = Symbol.for('inkwave.s3.idle-motion.install.v1');
