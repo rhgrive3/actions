@@ -3,6 +3,16 @@ const pos3=p=>Array.isArray(p)?{x:p[0],y:p[1],z:p[2]}:p;
 const eventOfAction=Object.freeze({activate:'open',end:'release',return:'release',shot:'fire',cannon:'fire',launch:'fire',throw:'fire',
  impact:'explosion',block:'shield_hit',swing:'impact',jumpSwing:'impact',zip:'dodge',hookImpact:'impact',jump:'impact',
  marker:'ready',balloon:'fire',screen:'open',device:'open',laser:'fire',pulse:'impact',cross:'impact',cheer:'ready'});
+// Event names are gameplay actions; the real MP3 manifest uses articulation
+// names. Do not play an unrelated sound when the proper sample is absent.
+export function specialActionAudioEvent(id,action){
+ if(id==='crabTank'&&action==='cannon')return 'fire_alt'; // actual cannon, not short gun
+ if(id==='zipcaster'&&action==='zip')return 'fire'; // recorded hook-launch shot, not absent dodge
+ if(id==='ultraStamp'&&action==='swing')return 'fire'; // regular stamp swing
+ if(id==='ultraStamp'&&action==='jumpSwing')return 'impact'; // heavy swing
+ if(id==='tripleInkstrike'&&action==='marker')return 'fire'; // throw/launch marker
+ return eventOfAction[action]||null;
+}
 export function installKitAudio(api,{listen,options}){
  const {G,Actor,Projectiles}=api,active=new Map(),recent=new WeakMap();
  function sound(a,kind,id,event,pos,volume=.7){
@@ -17,8 +27,12 @@ export function installKitAudio(api,{listen,options}){
    if(a.isLocal)G.audio?.duck?.(.25,.38);
  }
  listen('special:use',e=>activation(e?.actor,e?.id||e?.actor?.weapon?.special));
- listen('all:special',e=>{if(e?.action==='activate')activation(e.actor,e.id);else if(eventOfAction[e?.action])sound(e.actor,'special',e.id,e.id==='crabTank'&&e.action==='cannon'?'fire_alt':eventOfAction[e.action],e.pos,.64);});
- listen('audio:special-replay',e=>{if(e?.action==='activate')activation(e.actor,e.id);else if(eventOfAction[e?.action])sound(e.actor,'special',e.id,e.id==='crabTank'&&e.action==='cannon'?'fire_alt':eventOfAction[e.action],e.pos,.64);});
+ const specialEvent=e=>{if(!e)return;if(e.action==='activate'){activation(e.actor,e.id);return;}
+   const event=specialActionAudioEvent(e.id,e.action);
+   if(event)sound(e.actor,'special',e.id,event,e.pos,.64);
+ };
+ listen('all:special',specialEvent);
+ listen('audio:special-replay',specialEvent);
  const phase={spawn:'fire',deploy:'open',burst:'explosion',bounce:'impact',fizzyHop:'ready',destroy:'break'};
  const subEvent=e=>{if(phase[e?.phase])sound(e.actor,'sub',e.subId,phase[e.phase],{x:e.x,y:e.y,z:e.z},.68);};
  listen('all:sub',subEvent);listen('audio:sub-replay',subEvent);
