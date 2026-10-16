@@ -11,7 +11,7 @@ import { adaptS3FaceLook } from '../s3-face-look-adapter.mjs';
 import { readSource, UPSTREAM } from '../../reliability/tests/hud-fixture.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../../../scripts/lib/inkwave-build-only-modules.mjs';
 
-const S3_FACE_EYES_FILES = ['src/game/character-face.js', 'src/game/character-mats.js', 'src/game/character-geo.js'];
+const S3_FACE_EYES_FILES = ['src/game/character-face.js', 'src/game/character-mats.js', 'src/game/character-geo.js', 'src/game/character.js'];
 const compose = (rel, input = readSource(rel)) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, input))));
 
 // The composed face + material modules in one realm (three from the vendored build), as the site serves them.
@@ -85,7 +85,7 @@ test('S3 face look: the mask top is one smooth line falling from over the eye to
   // top edge elevation per azimuth (bisection on the signed distance, searching down from the forehead)
   const topAt = (az) => { let lo = -0.1, hi = 0.6; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (face.visorSD(az, m) > 0) lo = m; else hi = m; } return lo; };
   const xs = [], ts = [];
-  for (let az = 0; az <= 0.62; az += 0.02) { xs.push(az); ts.push(topAt(az)); }
+  for (let az = 0; az <= 0.54; az += 0.02) { xs.push(az); ts.push(topAt(az)); }   // bridge → middle of the eye
   for (let i = 1; i < ts.length; i++) assert.ok(ts[i] >= ts[i - 1] - 1e-6, `top keeps rising outward at az ${xs[i].toFixed(2)}`);
   // no step: the slope changes gradually everywhere between the bridge and the eye
   for (let i = 2; i < ts.length; i++) {
@@ -103,7 +103,7 @@ test('S3 face look: the shader mask is the same shape as the geometry mask', asy
   const js = body
     .replace('float iwVisorSD(float az, float el){', 'return (az, el) => {')
     .replace(/\bfloat\b/g, 'let').replace(/\babs\(/g, 'Math.abs(').replace(/\bpow\(/g, 'Math.pow(').replace(/\bexp\(/g, 'Math.exp(')
-    .replace(/\bmin\(/g, 'Math.min(').replace(/iwSmax\(/g, 'smax(');
+    .replace(/\bmin\(/g, 'Math.min(').replace(/\bmax\(/g, 'Math.max(').replace(/iwSmax\(/g, 'smax(');
   const smoothstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const smax = (a, b, k) => { const h = Math.min(1, Math.max(0, 0.5 + 0.5 * (a - b) / k)); return b + (a - b) * h + k * h * (1 - h); };
   const shaderSD = new Function('smax', 'smoothstep', js)(smax, smoothstep);
@@ -119,6 +119,28 @@ test('S3 face look: every face detail level builds finite geometry', async () =>
     assert.ok(P.length > 0 && P.every(Number.isFinite), `level ${lv}`);
     assert.ok(geo.index.array.every((i) => i < P.length / 3), `level ${lv} indices`);
   }
+});
+
+test('S3 face look: a thin, even mask border over each eye and a thin bridge', async () => {
+  const { face } = await realm();
+  const { acc } = face.buildFaceSkin(4);
+  const topAt = (az) => { let lo = -0.2, hi = 0.6; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (face.visorSD(az, m) > 0) lo = m; else hi = m; } return lo; };
+  const botAt = (az) => { let lo = -0.6, hi = 0.05; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (face.visorSD(az, m) > 0) hi = m; else lo = m; } return hi; };
+  // upper lid edge (margin roll) of the left eye, binned by azimuth
+  const edge = new Map();
+  for (let i = 0; i < acc.P.length; i++) {
+    if (acc.part[i] !== 3 || acc.uv[i][0] <= 0.5 || acc.P[i].x <= 0 || !(acc.lid[i][0] > 0)) continue;
+    const q = acc.P[i].clone().sub(face.HEAD_C), az = Math.atan2(q.x, q.z), el = Math.asin(q.y / q.length());
+    const k = Math.round(az * 50); edge.set(k, Math.max(edge.get(k) ?? -9, el));
+  }
+  let n = 0;
+  for (const [k, el] of edge) {
+    const az = k / 50; if (az < 0.36 || az > 0.74) continue;     // over the eye (the inner end slopes into the bridge)
+    const gap = topAt(az) - el; n++;
+    assert.ok(gap > 0.008 && gap < 0.035, `mask margin over the lid edge ${gap.toFixed(3)} at az ${az.toFixed(2)}`);
+  }
+  assert.ok(n > 10);
+  assert.ok(topAt(0) - botAt(0) < 0.12, `bridge thickness ${(topAt(0) - botAt(0)).toFixed(3)}`);
 });
 
 test('S3 face look: lids move only inside the mask, so a blink closes black within a fixed outline', async () => {
@@ -144,15 +166,16 @@ test('S3 face look: no socket bowl outside the mask, closed lids cover the ball 
   const s = new face.HEAD_C.constructor();
   let checked = 0;
   for (let i = 0; i < acc.P.length; i++) {
-    if (acc.part[i] !== 3) continue;                                   // eye ring patches
+    if (acc.part[i] !== 3 || acc.uv[i][0] > 0) continue;             // eye ring patches (not the lid's inner wall)
     const q = acc.P[i].clone().sub(face.HEAD_C), r = q.length();
     const az = Math.atan2(q.x, q.z), el = Math.asin(q.y / r);
     if (face.visorSD(az, el) > -0.01) continue;                        // under the mask the lids may sit lower
     face.headSurfFace(az, el, 0, s);
     // flush with the face; only past the outer corner may the skin rise a little over the wide eyeball
-    // (the tilted ball lifts the skin up to ~2.6 mm just above its outer-top edge; a socket bowl or the old lid shell
-    // ridge was 4–5 mm)
-    assert.ok(Math.abs(r - s.sub(face.HEAD_C).length()) < 0.003, `skin dips ${(r - s.length()).toFixed(4)} m at ${az.toFixed(3)},${el.toFixed(3)}`);
+    // (above its outer-top corner the tilted ball sits up to ~4.6 mm proud of the head sphere, so the skin follows it in a
+    // broad, gentle rise; a socket bowl dipped instead)
+    const off = r - s.sub(face.HEAD_C).length();
+    assert.ok(off > -0.001 && off < 0.005, `skin off the face by ${off.toFixed(4)} m at ${az.toFixed(3)},${el.toFixed(3)}`);
     checked++;
   }
   assert.ok(checked > 100);
