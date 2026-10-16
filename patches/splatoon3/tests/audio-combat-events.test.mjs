@@ -5,6 +5,7 @@ import { adaptWeaponAudio } from '../audio-adapter.mjs';
 import { withBlasterSplashHit, blasterHitCueKind, blasterHitCuePitch, BLASTER_HIT_PITCH } from '../runtime/audio/blaster-hit.mjs';
 import { specialActionAudioEvent } from '../runtime/audio/kit-runtime.mjs';
 import { installWeaponAudioRuntime } from '../runtime/audio/runtime.mjs';
+import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
 
 const manifest=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
 const clip=(id,event)=>manifest.clips.some(c=>c.id===id&&c.event===event);
@@ -55,6 +56,19 @@ test('actual final native burst wrapper scopes only splash damage, never ghosts'
   P._blastBurst({owner:b,wid:'blaster',type:'blast',ghost:true});
   emit('hit',{attacker:a,weaponId:'blaster'});
   assert.deepEqual(heard,[BLASTER_HIT_PITCH.direct,BLASTER_HIT_PITCH.indirect,BLASTER_HIT_PITCH.direct,BLASTER_HIT_PITCH.direct]);
+});
+
+test('real AudioEngine prototype owns the hit-cue even when Game assigns G.audio after patch install',()=>{
+  class Engine { _def(){return null;} }
+  installWeaponAudioEngine(Engine);
+  const G={audio:null};
+  G.audio=new Engine();
+  const blaster={weapon:{kind:'blaster',id:'blaster'}};
+  assert.equal(G.audio.blasterHitCuePitch(blaster,'blaster'),BLASTER_HIT_PITCH.direct);
+  withBlasterSplashHit(blaster,()=>{
+    assert.equal(G.audio.blasterHitCuePitch(blaster,'blaster'),BLASTER_HIT_PITCH.indirect);
+  });
+  assert.equal(G.audio.blasterHitCuePitch(blaster,'blaster'),BLASTER_HIT_PITCH.direct);
 });
 
 test('production HUD keeps one hit marker; damage/death/kill sounds remain connected',()=>{
