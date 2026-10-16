@@ -126,7 +126,7 @@ test('kit IDs retain gameplay APIs with73 reviewed defaults and22 base fallbacks
   assert.equal(WEAPONS[kit.id].special,kit.special);assert.equal(WEAPONS[kit.id].specialCost,kit.specialCost);
   assert.ok(AP.weaponAppearanceOptions(kit.id).some(o=>o.id===kit.baseId));
  }
- assert.equal(implemented,75);assert.equal(fallback,20);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
+ assert.equal(implemented,79);assert.equal(fallback,16);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
  assert.equal(AP.selectedWeaponAppearance('unknown-kit',memoryStorage()),'unknown-kit');
 });
 test('explicit Base persists separately from absent kit default and does not leak to peers',async()=>{
