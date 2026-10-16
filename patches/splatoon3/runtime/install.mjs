@@ -169,10 +169,6 @@ export function install(profile) {
   installMuzzleFeedback(api);
   installMinimapDirty(api);
   installWeaponDetailMotion(api, profile);
-  // Registering S3 mains alone does not connect their shooting, collision and paint
-  // owners. Install after native fidelity and detailed motion, exactly once in
-  // the normal production boot (not only in standalone test fixtures).
-  installMainWeaponCatalogRuntime(api, profile);
   installChargerSurface(api);
   // The S3 ShotGuideFrame guide reads the installed projectile motion records, so
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.
@@ -216,5 +212,10 @@ export function install(profile) {
   installSpecialModels(api);
   // Outermost weapon pose layer: per-weapon / per-family offsets over every native and patched hold.
   installWeaponFamilyMotion(api);
+  // Validate and bind catalogue gameplay only after all supported sub/special
+  // slots and alternative weapon identities are registered. Early validation
+  // fails even valid source kits because their registry entries do not exist.
+  // Retain all previously installed legacy wrappers (this is deliberately last).
+  installMainWeaponCatalogRuntime(api, profile);
   return api;
 }
