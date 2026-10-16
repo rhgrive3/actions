@@ -112,6 +112,7 @@ export function createArrivalGauge(opts = {}) {
     group, track, arc, label, texture,
     labelText: '',      // name + countdown seconds currently drawn (or '')
     countdown: 1,       // uProgress mirror, 0..1
+    opacity: 1,         // Stealth Jump near-field fade applied to every cue
     _canvas: canvas, _ctx: ctx,
     update(snapshot, color) { return updateGauge(gauge, snapshot, color); },
     clear() { clearGauge(gauge); },
@@ -162,6 +163,12 @@ function updateGauge(gauge, snapshot, color) {
     return false;
   }
   gauge.group.visible = true;
+  // Stealth Jump near-field fade (#272): scale every cue by the sign opacity.
+  const alpha = snapshot.opacity === undefined ? 1 : clamp01(snapshot.opacity);
+  gauge.opacity = alpha;
+  gauge.arc.material.uniforms.uAlpha.value = 0.95 * alpha;
+  gauge.track.material.opacity = 0.22 * alpha;
+  if (gauge.label) gauge.label.material.opacity = alpha;
   const secs = Math.max(0, Number(snapshot.remaining) || 0).toFixed(1);
   const name = String(snapshot.label ?? '');
   setText(gauge, name ? `${name} · ${secs}s` : `${secs}s`);
