@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-17",
+  "baseCommit": "9fe55aa056d6b5c31773254a4796c7db50df02f8",
+  "referenceVersion": "11.3.0",
+  "buildContentHash": "2ef3223cfa46c584c87009a8a0ec191518f29ca38841d994d7ce26d16bd7eb2d",
+  "buildRevision": "e4af92fcc5e65de547bcdbb2a6d81e3a2f5acb32514ae0cd19fe8f600aeca98c",
+  "tests": {
+    "source": {
+      "tests": 80,
+      "pass": 79,
+      "fail": 0,
+      "skipped": 1
+    },
+    "built": {
+      "tests": 27,
+      "pass": 27,
+      "fail": 0,
+      "skipped": 0
+    },
+    "beforeSpiralFix": {
+      "tests": 9,
+      "pass": 5,
+      "fail": 4,
+      "skipped": 0
+    }
+  },
+  "browser": {
+    "originCases": 12,
+    "maxPositionError": 0,
+    "errors": [],
+    "catalogEmittedWeapons": 58,
+    "catalogProjectiles": 887
+  },
+  "paintAttributeResearch": {
+    "repository": "nvnprogram/ToolboxPaintFix",
+    "commit": "a135901547ee854d826eb018a66b049a3ed76657",
+    "parameters": [
+      "blitz_paint_type",
+      "_pu0",
+      "_pu1",
+      "_pu2"
+    ],
+    "sampleMtl": {
+      "repository": "kirakira-dev/KiTrix",
+      "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "path": "stages/Vss_Yagara/Vss_Yagara.mtl",
+      "bytes": 11457,
+      "sha256": "3533c36d79c5da2fefc36c74a2f3437313054deea2c224e8988dda8e90a25625",
+      "keys": [
+        "Kd",
+        "map_Kd",
+        "newmtl"
+      ],
+      "containsBlitzPaintType": false
+    }
+  },
+  "limits": [
+    "One original-asset test skipped: no local Bluefin source assets",
+    "No Switch hardware comparison",
+    "Detached falling-splash damage remains unverified and was not added",
+    "Original paint masks, native stage collision and moving/ranked placements remain unavailable in inspected sources",
+    "No merge or deployment"
+  ]
+}
