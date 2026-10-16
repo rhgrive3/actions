@@ -202,6 +202,40 @@ test('S3 face look: a projecting nose, and the face stays upright through the mo
   assert.ok(tip.z - cheek.z > 0.02, `nose stands ${(tip.z - cheek.z).toFixed(4)} m proud of the cheeks`);
   face.headSurfFace(0, face.MOUTH.el, 0, new V(), n);
   assert.ok(n.y > -0.42 && n.z > 0.9, `mouth surface normal ${n.y.toFixed(3)},${n.z.toFixed(3)}`);
+  // a rounded tip and underside: walking the midline profile down over the nose, the direction turns gradually
+  // (the old button nose had a flat shelf under the tip with a sharp corner into the upper lip)
+  const pts = []; for (let el = -0.06; el >= -0.34; el -= 0.004) pts.push(face.headSurfFace(0, el, 0, new V()));
+  const ang = pts.slice(1).map((q, i) => Math.atan2(q.y - pts[i].y, q.z - pts[i].z));
+  for (let i = 1; i < ang.length; i++) {
+    let da = ang[i] - ang[i - 1]; da = Math.atan2(Math.sin(da), Math.cos(da));
+    assert.ok(Math.abs(da) < 0.45, `nose profile turns ${da.toFixed(2)} rad in one step at el ${(-0.06 - 0.004 * (i + 1)).toFixed(3)}`);
+  }
+});
+
+test('S3 face look: a round outline from the front (no point at the ear line), ears out to the side', async () => {
+  const { face, matsSource } = await realm();
+  const V = face.HEAD_C.constructor, p = new V();
+  // front silhouette: outermost x per height band
+  const N = 160, y0 = 1.08, y1 = 1.34, xs = new Array(N + 1).fill(0);
+  for (let el = -1.2; el <= 1.2; el += 0.003) for (let az = 0.8; az <= 2.2; az += 0.006) {
+    face.headSurfFace(az, el, 0, p); const t = (p.y - y0) / ((y1 - y0) / N), i = Math.round(t);
+    if (i >= 0 && i <= N && Math.abs(t - i) < 0.25) xs[i] = Math.max(xs[i], p.x);
+  }
+  const h = (y1 - y0) / N, ks = [];
+  for (let i = 6; i <= N - 6; i++) {           // local quadratic fit → curvature
+    let sx = 0, sx2 = 0, sx3 = 0, sx4 = 0, sy = 0, sxy = 0, sx2y = 0, n = 0;
+    for (let j = -6; j <= 6; j++) { const u = j * h, v = xs[i + j]; n++; sx += u; sx2 += u * u; sx3 += u ** 3; sx4 += u ** 4; sy += v; sxy += u * v; sx2y += u * u * v; }
+    const det = (m) => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+    const M = [[sx4, sx3, sx2], [sx3, sx2, sx], [sx2, sx, n]], D = det(M);
+    const a = det([[sx2y, sx3, sx2], [sxy, sx2, sx], [sy, sx, n]]) / D, b = det([[sx4, sx2y, sx2], [sx3, sxy, sx], [sx2, sy, n]]) / D;
+    ks.push(-2 * a / (1 + b * b) ** 1.5);
+  }
+  const iMax = xs.indexOf(Math.max(...xs)), kMax = Math.max(...ks);
+  assert.ok(kMax < 14, `sharpest bend of the side outline ${kMax.toFixed(1)} 1/m`);
+  assert.ok(Math.abs(y0 + iMax * h - face.HEAD_C.y) < 0.03, 'widest at the ear line');
+  const F = face.earFrame(1);
+  assert.ok(F.A.x > 0.75 && F.A.y < 0.3 && F.A.z < 0, `ear points out ${F.A.x.toFixed(2)}, up ${F.A.y.toFixed(2)}, back ${F.A.z.toFixed(2)}`);
+  assert.match(matsSource, /lineK = 0\.0;/);
 });
 
 test('S3 face look: missing or duplicated anchors fail closed; other files pass through', () => {

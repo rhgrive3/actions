@@ -16,8 +16,12 @@
 //  * blinking lids are mask-black and move inside a fixed mask outline (the upper lid comes down to the lower);
 //  * brows: short thick beans, inner end low near the mask, outer end higher;
 //  * the face is flush around the eyes (no visible socket bowl), one skin tone from the eyes to the cheeks;
-//  * a broad, clearly projecting nose that emerges from under the mask bridge, no visible nostrils from the front;
-//  * a round, soft jaw and chin; the face stays upright down to the mouth instead of turning toward the neck early.
+//  * a rounded button nose: the bridge rises from under the mask to a ball tip with a short underside rolling back
+//    into the upper lip (no shelf, no nostrils);
+//  * the closed mouth is one clean line (subtle lips, no painted second stroke);
+//  * a round head outline from the front, widest at the ear line without a point there; a round, soft jaw and chin;
+//    the lower face stays upright down to the chin;
+//  * pointed ears that stick out to the side and back, only a little up, on a short root.
 // No original model, texture or numeric value is imported; every number is an INKWAVE calibration. Gameplay, hit
 // volumes, face motion clocks and expression curves are untouched.
 //
@@ -44,18 +48,21 @@ const EDITS = {
     ["goggle mask shape",
       "  const lobe = (1 - Math.hypot((ax - 0.355) / 0.3, (el - 0.15) / 0.29)) * 0.26;\n  const bridge = ax < 0.42 ? 0.1 + 0.1 * sstep(0, 0.36, ax) - Math.abs(el - 0.17) : -1;\n  const s = (ax - 0.42) / 0.9;\n  const wc = 0.16 + 0.2 * Math.pow(clamp(s, 0, 1), 1.35);\n  const wh = 0.205 * Math.pow(clamp(1 - s, 0, 1), 0.8);\n  const wing = s > -0.1 && s <= 1 ? wh - Math.abs(el - wc) : -1;\n  return smaxK(smaxK(lobe, bridge, 0.06), wing, 0.07);\n",
       "  const u = (ax - MASK.ac) / (ax < MASK.ac ? MASK.hwi : MASK.hwo);\n  const base = MASK.a0 + (MASK.a1 - MASK.a0) * (ax - MASK.ac + MASK.hwi) / (MASK.hwi + MASK.hwo);\n  const arch = base + MASK.ah * Math.pow(Math.max(0, 1 - u * u), u < 0 ? MASK.qi : MASK.qo) + MASK.m;\n  const slope = MASK.tLo + (MASK.sTop - MASK.tLo) * sstep(MASK.t0, MASK.t1, ax) - MASK.sOut * sstep(MASK.o0, MASK.o1, ax);\n  const top = smaxK(arch, slope, MASK.tk);\n  const x2 = ax * ax, B = MASK.bot;\n  const bot = B[0] + x2 * (B[1] + x2 * (B[2] + x2 * B[3]));   // one even curve: no kink at the bridge, no bumps\n  const cap = MASK.cap - ax - MASK.capK * (el - MASK.capEl) ** 2;\n  return sminK(sminK(top - el, el - bot, MASK.k), cap, 2 * MASK.k);\n"],
-    ["softer, lower under-jaw blend",
+    ["nose constants; softer, lower under-jaw blend",
       "const JAW_PLANE = { n: new V3(0, -1, 0.35).normalize(), d: 0, k: 0.016 };\nJAW_PLANE.d = 0.152 / Math.hypot(1, 0.35);                         // plane through (0, −0.152, 0) from HEAD_C, rising 35 % forward\n",
-      "const JAW_PLANE = { n: new V3(0, -1, 0.2).normalize(), d: 0, k: 0.11 };\nJAW_PLANE.d = 0.162 / Math.hypot(1, 0.2);                          // plane through (0, −0.162, 0) from HEAD_C, rising 20 % forward\n"],
-    ["rounder jaw taper; lower face stays upright",
+      "export const NOSE = { el: -0.19, h: 0.02, up: 0.1, dn: 0.1, wTip: 0.098, wTop: 0.07 };\nconst JAW_PLANE = { n: new V3(0, -1, 0.2).normalize(), d: 0, k: 0.11 };\nJAW_PLANE.d = 0.162 / Math.hypot(1, 0.2);                          // plane through (0, −0.162, 0) from HEAD_C, rising 20 % forward\n"],
+    ["round side contour and jaw taper (no point at the ear line)",
       "    x *= 1 - 0.235 * k - 0.1 * sstep(-0.3, -0.66, el) - 0.19 * sstep(-0.6, -1.05, el);\n    if (dz > 0) z *= 1 - 0.04 * k - 0.085 * sstep(-0.55, -0.95, el) * front;  // chin tucks back under the mouth\n",
-      "    x *= 1 - 0.16 * k - 0.1 * sstep(-0.25, -0.8, el) - 0.1 * sstep(-0.55, -1.15, el);\n    if (dz > 0) z *= 1 - 0.02 * k - 0.05 * sstep(-0.7, -1.05, el) * front;   // the lower face stays upright; the chin tucks only underneath\n"],
-    ["cheeks, chin and a forward mouth front",
+      "    x *= 1 - 0.1 * dy * dy - 0.08 * sstep(-0.1, -0.9, el) - 0.2 * sstep(-0.45, -1.1, el);\n    if (dz > 0) z *= 1 - 0.02 * k - 0.05 * sstep(-0.7, -1.05, el) * front;   // the lower face stays upright; the chin tucks only underneath\n"],
+    ["cheek-line fullness on the face only (round side outline)",
+      "  x *= 1 + 0.04 * gauss(el + 0.1, 0.32) * sstep(-0.45, 0.25, dz);   // widest across the cheek line (face half only)\n",
+      "   // widest across the cheek line (face half only)\n  x *= 1 + 0.04 * gauss(el + 0.1, 0.32) * sstep(0.25, 0.7, dz);   // full across the cheek line on the face only (the side outline stays round)\n"],
+    ["cheeks, chin and an upright lower face",
       "  off += 0.0085 * Math.exp(-(((aa - 0.6) / 0.36) ** 2) - (((el + 0.3) / 0.22) ** 2));    // cheek volume\n  off += 0.0048 * Math.exp(-(((aa - 0.42) / 0.17) ** 2) - (((el + 0.2) / 0.12) ** 2));   // cheek apples\n  off += 0.0019 * Math.exp(-(((aa - 0.8) / 0.2) ** 2) - (((el + 0.03) / 0.12) ** 2));    // cheekbone under the outer eye\n  off += 0.0072 * Math.exp(-(((aa - 1.0) / 0.34) ** 2) - (((el + 0.27) / 0.2) ** 2));    // mochi cheeks round out the silhouette\n  off += 0.0022 * Math.exp(-((az / 0.19) ** 2) - (((el + 0.76) / 0.1) ** 2));            // small soft chin\n",
-      "  off += 0.007 * Math.exp(-(((aa - 0.6) / 0.38) ** 2) - (((el + 0.27) / 0.24) ** 2));    // cheek volume\n  off += 0.0032 * Math.exp(-(((aa - 0.45) / 0.22) ** 2) - (((el + 0.32) / 0.13) ** 2));  // cheek apples (below the mask, not against its edge)\n  off += 0.0014 * Math.exp(-(((aa - 0.85) / 0.24) ** 2) - (((el + 0.3) / 0.13) ** 2));   // cheekbone under the outer eye\n  off += 0.0056 * Math.exp(-(((aa - 1.0) / 0.36) ** 2) - (((el + 0.22) / 0.24) ** 2));   // mochi cheeks round out the silhouette\n  off += 0.004 * Math.exp(-((az / 0.24) ** 2) - (((el + 0.74) / 0.13) ** 2));            // small, round chin\n  off += 0.0065 * Math.exp(-((az / 0.4) ** 2) - (((el + 0.48) / 0.18) ** 2));           // mouth and chin front kept forward (no early turn to the neck)\n"],
-    ["taller, broader nose",
+      "  off += 0.007 * Math.exp(-(((aa - 0.6) / 0.38) ** 2) - (((el + 0.27) / 0.24) ** 2));    // cheek volume\n  off += 0.0032 * Math.exp(-(((aa - 0.45) / 0.22) ** 2) - (((el + 0.32) / 0.13) ** 2));  // cheek apples (below the mask, not against its edge)\n  off += 0.0014 * Math.exp(-(((aa - 0.85) / 0.24) ** 2) - (((el + 0.3) / 0.13) ** 2));   // cheekbone under the outer eye\n  off += 0.004 * Math.exp(-(((aa - 1.0) / 0.36) ** 2) - (((el + 0.4) / 0.35) ** 2));   // mochi cheeks round out the silhouette\n  off += 0.004 * Math.exp(-((az / 0.24) ** 2) - (((el + 0.74) / 0.13) ** 2));            // small, round chin\n  off += 0.012 * Math.exp(-((az / 0.36) ** 2) - (((el + 0.62) / 0.2) ** 2));            // lower face upright: lips and chin stand forward\n  off += 0.0065 * Math.exp(-((az / 0.4) ** 2) - (((el + 0.48) / 0.18) ** 2));           // mouth and chin front kept forward (no early turn to the neck)\n"],
+    ["rounded button nose",
       "  off += 0.0064 * Math.exp(-((az / 0.052) ** 2) - (((el + 0.13) / 0.056) ** 2));         // nose: button tip\n  off += 0.0019 * Math.exp(-(((aa - 0.05) / 0.03) ** 2) - (((el + 0.156) / 0.034) ** 2)); // nose wings\n  off -= 0.0012 * Math.exp(-(((aa - 0.027) / 0.015) ** 2) - (((el + 0.177) / 0.011) ** 2)); // nostrils\n  off -= 0.0008 * Math.exp(-((az / 0.07) ** 2) - (((el + 0.215) / 0.022) ** 2));         // subnasal tuck\n  off += 0.0012 * Math.exp(-((az / 0.1) ** 2) - (((el + 0.06) / 0.07) ** 2));            // nose bridge\n",
-      "  off += 0.021 * Math.exp(-((az / 0.1) ** 2) - (((el + 0.182) / 0.062) ** 2));           // nose: broad rounded tip, well forward\n  off += 0.0024 * Math.exp(-(((aa - 0.085) / 0.04) ** 2) - (((el + 0.196) / 0.036) ** 2)); // nose wings\n  off -= 0.0004 * Math.exp(-(((aa - 0.03) / 0.016) ** 2) - (((el + 0.222) / 0.011) ** 2)); // nostrils: a hint under the tip (S3 shows none from the front)\n  off -= 0.0008 * Math.exp(-((az / 0.07) ** 2) - (((el + 0.252) / 0.022) ** 2));         // subnasal tuck\n  off += 0.012 * Math.exp(-((az / 0.095) ** 2) - (((el + 0.11) / 0.075) ** 2));         // nose bridge rising from under the mask\n"],
+      "  // nose (S3): one rounded wedge — the bridge rises out from under the mask, a ball tip, and a short underside that\n  // rolls back into the upper lip (no shelf, no nostrils)\n  { const t = el - NOSE.el, wEl = t > 0 ? NOSE.up : NOSE.dn, wAz = lerp(NOSE.wTip, NOSE.wTop, sstep(0, 0.12, t));\n    off += NOSE.h * Math.exp(-((az / wAz) ** 2) - ((t / wEl) ** 2)); }\n  off += 0.0018 * Math.exp(-(((aa - 0.075) / 0.045) ** 2) - (((el + 0.205) / 0.04) ** 2)); // soft nose wings\n"],
     ["shallow mask plane",
       "  off -= 0.0024 * Math.exp(-((az / 0.55) ** 2) - (((el - 0.14) / 0.2) ** 2));            // mask plane\n",
       "  off -= 0.0012 * Math.exp(-((az / 0.9) ** 2) - (((el - EYE.el) / 0.26) ** 2));         // mask plane (shallow, so the eye band blends into the face)\n"],
@@ -86,6 +93,12 @@ const EDITS = {
     ["eye patch bounds",
       "const EYE_RECT = { az0: 0.085, az1: 0.625, el0: -0.25, el1: 0.44 };\n",
       "const EYE_RECT = { az0: 0.1, az1: 1.0, el0: -0.245, el1: 0.4 };\n"],
+    ["ears out to the side and back",
+      "  const A = new V3(sx * 0.63, 0.43, -0.65).normalize();\n",
+      "  const A = new V3(sx * 0.82, 0.2, -0.54).normalize();   // S3: out to the side and back, only a little up\n"],
+    ["short ear root",
+      "    const w = width(uc) * (1 + 0.45 * br);\n",
+      "    const w = width(uc) * (1 + 0.2 * br);   // a short root: the ear sits on the head rather than flaring out of it\n"],
     ["carrier knots around the wider eye patch",
       "  const half = piecewise([0, EYE_RECT.az0, MOUTH_RECT.az, EYE_RECT.az1, 0.95, 1.3, 1.75, 2.3, Math.PI], rhoAz, R.step);\n",
       "  const half = piecewise([0, EYE_RECT.az0, MOUTH_RECT.az, EYE_RECT.az1, 1.3, 1.75, 2.3, Math.PI], rhoAz, R.step);\n"],
@@ -98,6 +111,9 @@ const EDITS = {
     ["lash tabs inside the thin mask border",
       "export const LASHES = [{ e: 0.91, phi: 0.58, r: 0.155, tip: -1.2 }, { e: 0.93, phi: 0.24, r: 0.115, tip: -0.7 }];\n",
       "export const LASHES = [{ e: 0.93, phi: 0.5, r: 0.085, tip: -1.2 }, { e: 0.95, phi: 0.2, r: 0.06, tip: -0.7 }];\n"],
+    ["subtle lips (one clean closed line)",
+      "  off += 0.0017 * Math.pow(aw, 0.6) * gauss(b - 0.014, 0.011) * (1 - 0.25 * gauss(a, 0.12) * gauss(b - 0.024, 0.006)); // upper lip + cupid's bow\n  off += 0.0025 * Math.pow(aw, 0.5) * gauss(b + 0.02, 0.014);                                                         // fuller lower lip\n  off -= 0.0013 * Math.pow(aw, 0.3) * gauss(b, 0.0065);                                                              // lip line groove\n",
+      "  off += 0.0007 * Math.pow(aw, 0.6) * gauss(b - 0.014, 0.011) * (1 - 0.25 * gauss(a, 0.12) * gauss(b - 0.024, 0.006)); // upper lip + cupid's bow\n  off += 0.0009 * Math.pow(aw, 0.5) * gauss(b + 0.02, 0.016);                                                         // fuller lower lip\n  off -= 0.0006 * Math.pow(aw, 0.3) * gauss(b, 0.0065);                                                              // lip line groove\n"],
     ["nostril and nose-wing AO",
       "      a *= 1 - 0.45 * gauss(Math.abs(az) - 0.027, 0.016) * gauss(el + 0.178, 0.013);   // nostrils\n      a *= 1 - 0.12 * gauss(Math.abs(az) - 0.058, 0.03) * gauss(el + 0.17, 0.02);     // nose-wing crease\n",
       "      a *= 1 - 0.08 * gauss(Math.abs(az) - 0.03, 0.017) * gauss(el + 0.222, 0.013);    // nostrils\n      a *= 1 - 0.05 * gauss(Math.abs(az) - 0.068, 0.032) * gauss(el + 0.205, 0.02);    // nose-wing crease\n"],
@@ -118,6 +134,9 @@ const EDITS = {
     ["nose tint follows the nose",
       "          float nose = exp(-pow(az / 0.06, 2.0) - pow((el + 0.13) / 0.06, 2.0)) + 0.6 * exp(-pow((abs(az) - 0.045) / 0.03, 2.0) - pow((el + 0.165) / 0.025, 2.0));\n",
       "          float nose = exp(-pow(az / 0.065, 2.0) - pow((el + 0.165) / 0.065, 2.0)) + 0.6 * exp(-pow((abs(az) - 0.05) / 0.03, 2.0) - pow((el + 0.2) / 0.025, 2.0));\n"],
+    ["no painted second lip line",
+      "          float lineK = iwStroke(el - mEl + 0.002, lineW) * (1.0 - smoothstep(0.98, 1.12, lx)) * (1.0 - smoothstep(0.04, 0.2, uMouth.z)); // the opening takes over\n          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.42, 0.26, 0.28), lineK * 0.85);\n",
+      "          float lineK = iwStroke(el - mEl + 0.002, lineW) * (1.0 - smoothstep(0.98, 1.12, lx)) * (1.0 - smoothstep(0.04, 0.2, uMouth.z)); // the opening takes over\n          // (S3: one clean line — the lips' own contact seam draws it; a painted stroke sat on the upper lip's face and\n          // read as a second line above it)\n          lineK = 0.0;\n          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.42, 0.26, 0.28), lineK * 0.85);\n"],
     ["crisp mask edge",
       "          iwVisor = smoothstep(-0.008 - w, 0.008 + w, sd);\n",
       "          iwVisor = smoothstep(-0.003 - w, 0.003 + w, sd);\n"],
