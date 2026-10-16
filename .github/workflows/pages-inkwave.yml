@@ -45,6 +45,7 @@ jobs:
           ref: ${{ github.sha }}
           filter: blob:none
           sparse-checkout: |
+            .github/workflows
             inkwave-public
             patches
             scripts
