@@ -3,7 +3,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
 import {fixture} from './source-fixture.mjs';
 const code=fs.readFileSync(new URL('../../../scripts/render-inkwave-brella-gallery.mjs',import.meta.url),'utf8');
-const start='    const row = await page.evaluate(',end='\n    }, { id, held, crowd });';const pos=code.indexOf(start);assert(pos>=0&&code.indexOf(start,pos+1)<0);const close=code.indexOf(end,pos);assert(close>=0);const callback=code.slice(pos+start.length,close)+'\n    }';
+const start='    const row = await page.evaluate(',end='\n    }, { id, held, crowd, focusPaper });';const pos=code.indexOf(start);assert(pos>=0&&code.indexOf(start,pos+1)<0);const close=code.indexOf(end,pos);assert(close>=0);const callback=code.slice(pos+start.length,close)+'\n    }';
 const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,includeCharacter:true,vmMathRandom:()=>.5,extraExports:`export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';export {installWeaponsFidelity} from './patches/splatoon3/runtime/weapons-fidelity.mjs';export * as W from './inkwave-public/src/game/character-weapons.js';export * as Mt from './inkwave-public/src/game/character-mats.js';export * as R from './patches/splatoon3/runtime/weapon-models/registry.mjs';`});
 f.installWeaponsFidelity(f.installedRuntime,f.profile);f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
 const {THREE,G}=f;
