@@ -12,7 +12,7 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
  const sc=G.game.showcase,key=AP.WEAPON_APPEARANCE_STORAGE_KEY;
  const original={storage:storage.getItem(key),weapon:sc.weapon,color:sc.color,style:sc.style};
  const out={selectedCount:R.registeredWeaponVariantModels().length,manualCount:R.registeredWeaponVariants().length,rows:[]};
- check(out.selectedCount===57&&out.manualCount===94,'registry denominator');
+ check(out.selectedCount===59&&out.manualCount===94,'registry denominator');
  check(sc.mode==='loadout'&&sc.chars.length===1,'native loadout owner');
  let primary;
  try {
