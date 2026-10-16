@@ -8,6 +8,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { runTouchTransitionCases, withWindowFocusRestored, runHybridKeyboardMapCases } from './inkwave-touch-transition-cases.mjs';
 import { runFocusLossCase } from './inkwave-focus-loss-case.mjs';
 import { waitForNativePadMap, readPadMapScreenshot, assertPadMapEvidence } from './lib/inkwave-pad-map-evidence.mjs';
@@ -17,7 +18,8 @@ const site = option('--site'), evidence = option('--evidence-dir'), cache = opti
 const focusedOnly = process.argv.includes('--focused-touch-transitions');
 const negativeControl = process.argv.includes('--negative-control');
 const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
-for (const dir of [evidence, cache]) { assert(physical(dir).startsWith('/mnt/workspace/'), 'Persistent workspace required'); fs.mkdirSync(dir, { recursive: true }); }
+const persistentRoots=['/mnt/workspace',fileURLToPath(new URL('../',import.meta.url))].map(physical);
+for (const dir of [evidence, cache]) { const resolved=physical(dir); assert(!['/tmp','/var/tmp','/dev/shm'].some(p=>resolved===p||resolved.startsWith(p+'/'))&&persistentRoots.some(p=>resolved.startsWith(p+path.sep)), 'Persistent workspace required'); fs.mkdirSync(dir, { recursive: true }); }
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'), 'utf8'));
 assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash);
@@ -76,6 +78,7 @@ try {
     });
     try {
       const page = context.pages()[0] || await context.newPage(); page.setDefaultTimeout(10000);
+      await page.bringToFront();
       page.on('pageerror', error => errors.push(engineName + ': ' + error.message));
       await page.goto(url); await page.waitForFunction(() => window.ready);
       const entry = { engine: engineName, viewport: { width: 1024, height: 768 }, checks: [], dragEvents: engineName === 'chromium' ? 'native-CDP-touch' : 'DOM-PointerEvent', evidenceClass: engineName === 'chromium' ? 'native-CDP-touch' : 'DOM-PointerEvent' }; report.cases.push(entry);
@@ -342,6 +345,7 @@ try {
       }
       await page.evaluate(() => { mobile.gyro.enabled = false; mobile.gyro.discard(); });
       entry.checks.push('native-touch-camera-reset-shares-controller-path-and-rebases-next-sensor-sample');
+      await page.bringToFront();
       await page.evaluate(() => {
         window.navigationPrevious = { match:G.match, actors:G.actors, input:G.input, pad:input.pad, device:input.lastDevice, pressed:[...input.padPressed], controllerDescriptors:Object.fromEntries(['mapHeld','padJumpTarget','padJumpIndex','pendingRespawnJump','_mapGyroYaw','_mapGyroPitch','_mapGyroCursor','mapGyroTarget'].map(key=>[key,Object.getOwnPropertyDescriptor(controller,key)])) };
         input.pad = { mapping:'standard', buttons:Array.from({length:17},()=>({pressed:false,value:0})) }; input.lastDevice='pad'; G.input=input; input.padPressed.clear();
