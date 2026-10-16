@@ -175,8 +175,9 @@ test('production: 95 variants select the original model, and both legacy/catalog
     actor.form='kid';actor.ink=100;actor.intent.fire=true;
     f.tick(actor,140);
     assert.ok(Number.isFinite(actor.ink) && actor.ink>=0 && actor.ink<=100,kit.main+' finite ink');
+    const baseWeapon=f.WEAPONS[kit.baseId];
     assert.ok(f.G.projectiles.list.some(p=>p.owner===actor&&
-      (b.catalogRecord ? p.catalog?.r===b.catalogRecord : !p.catalog)),
+      (baseWeapon.catalogRecord ? p.catalog?.r?.id===baseWeapon.catalogRecord.id : !p.catalog)),
       kit.main+' must inherit the base weapon projectile owner');
   }
 });
