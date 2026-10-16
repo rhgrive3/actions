@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from '../../network-replication/tests/robustness-fixture.mjs';
-import {tickTripleSlamFists,tripleSlamFistCenters,FIST_STAMP_RADIUS} from '../runtime/triple-slam-fists.mjs';
+import {tickTripleSlamFists,tripleSlamFistCenters,FIST_STAMP_RADIUS,FIST_FLAT_IMPACT} from '../runtime/triple-slam-fists.mjs';
 function level(T,height) {
  const V=(...a)=>new T.Vector3(...a), faces=[],blocks=[];
  function floor(x,y,width) {
@@ -27,9 +27,14 @@ async function client(id,height,blocked=false) {
  return {f,nm,paint,owner};
 }
 function fire(c) {
- const origin={x:0,y:0,z:0};
- c.owner._s3TripleSlamFists={origin,centers:tripleSlamFistCenters(origin,0),remaining:0,scale:1};
- assert.equal(tickTripleSlamFists(c.owner,1/60,c.f.G,c.f.THREE),true);
+ const origin={x:0,y:0,z:0},fistFrames=Math.round(FIST_FLAT_IMPACT*60);
+ assert.equal(fistFrames,87,'flat-ground fist impact remains activation-relative 87F');
+ c.owner._s3TripleSlamFists={origin,centers:tripleSlamFistCenters(origin,0),age:0,scale:1};
+ for(let frame=1;frame<fistFrames;frame++) {
+  assert.equal(tickTripleSlamFists(c.owner,1/60,c.f.G,c.f.THREE),false,'no fist splash before 87F');
+ }
+ assert.equal(c.nm.out.filter(e=>e[1]==='s').length,0,'fist network paint cannot arrive early');
+ assert.equal(tickTripleSlamFists(c.owner,1/60,c.f.G,c.f.THREE),true,'fists impact at their own 87F deadline');
  return c.nm.out.filter(e=>e[1]==='s');
 }
 function copyEvent(e) {const c=JSON.parse(JSON.stringify(e));if(Number.isSafeInteger(e._netTick)){c._netTick=e._netTick;c._netSeq=e._netSeq;}return c;}
