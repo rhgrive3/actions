@@ -48,7 +48,7 @@ export function installWeaponAudioEngine(Engine){
       // shot, but let this admitted MAIN-weapon shot remain audible using its
       // own authored INKWAVE articulation (never a generic family sound).
       this._realS3Loader?.ensure(id,event);
-      if(!bank.audibleShotFallback||!bank.has(id,event)||id.includes(':')||!/^fire(?:_[a-z0-9]+)?$/.test(event)){
+      if(!bank.audibleShotFallback||options.actor?.isLocal!==true||!bank.has(id,event)||id.includes(':')||!/^fire(?:_[a-z0-9]+)?$/.test(event)){
         this._realAudioSuppressed=(this._realAudioSuppressed||0)+1;
         return null;
       }
