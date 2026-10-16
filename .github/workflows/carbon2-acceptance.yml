@@ -1,0 +1,66 @@
+name: Review Carbon2 native manual appearances
+on:
+  push:
+    branches: [review/carbon2-main9fe-20261016]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: 9fe55aa056d6b5c31773254a4796c7db50df02f8
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Literal root package and controls
+        run: |
+          node diagnostic/preflight.mjs
+          node --test diagnostic/carbon-result-output.test.mjs
+          node --test diagnostic/build-binding.test.mjs diagnostic/capture-checkpoint.test.mjs diagnostic/capture-resources.test.mjs diagnostic/capture-carbon-manual.test.mjs diagnostic/carbon-contract.test.mjs diagnostic/preflight.test.mjs
+      - name: Exact source six mode cases and24 role summaries
+        run: |
+          mkdir -p evidence/carbon/source
+          for row in Roller_Compact_01 Roller_Compact_02; do
+            for mode in horizontal vertical rolling; do
+              CARBON_SOURCE="$PWD/candidate" CARBON_ROW="$row" CARBON_MODE="$mode" CARBON_RESULT_PATH="$PWD/evidence/carbon/source/$row-$mode.json" node --max-old-space-size=512 --experimental-vm-modules diagnostic/carbon-actor.mjs > "evidence/carbon/source/$row-$mode.log" 2>&1
+            done
+          done
+          node diagnostic/actor-results.mjs evidence/carbon/source
+      - name: One production build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: Exact emitted six mode cases and24 role summaries
+        run: |
+          mkdir -p evidence/carbon/emitted
+          for row in Roller_Compact_01 Roller_Compact_02; do
+            for mode in horizontal vertical rolling; do
+              CARBON_SOURCE="$PWD/candidate" CARBON_ROW="$row" CARBON_MODE="$mode" CARBON_RESULT_PATH="$PWD/evidence/carbon/emitted/$row-$mode.json" INKWAVE_BUILT_SITE="$PWD/candidate-site" node --max-old-space-size=512 --experimental-vm-modules diagnostic/carbon-actor.mjs > "evidence/carbon/emitted/$row-$mode.log" 2>&1
+            done
+          done
+          node diagnostic/actor-results.mjs evidence/carbon/emitted
+          node diagnostic/compare-carbon-results.mjs evidence/carbon/source evidence/carbon/emitted
+      - name: Normal-light eighteen native Carbon views
+        run: node diagnostic/capture-carbon-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: carbon2-main9fe-acceptance
+          path: evidence
+          if-no-files-found: error
