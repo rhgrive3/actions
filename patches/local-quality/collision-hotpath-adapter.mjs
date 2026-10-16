@@ -1,6 +1,6 @@
-// Build-only lossless collision broadphase: skip impossible heights before
-// expensive oriented-box slabs, and scan single spatial-hash buckets in place.
-// Exact near-boundary queries still use native multi-cell deduplication.
+// Build-only collision broadphase + segment-capsule distance hotpath.
+// Skip XZ-disjoint blocks; compare squared distances before the last sqrt.
+// Native collision geometry, step cadence and query order remain unchanged.
 // Neither geometry, physics time step, result ordering nor hit tolerances change.
 export function adaptCollisionHotpath(rel, code, replaceOnce) {
   // Reject duplicate builds before their retained native anchors can match again.
@@ -28,6 +28,82 @@ export function adaptCollisionHotpath(rel, code, replaceOnce) {
       if (b.aabbMin?.y > yHi || b.aabbMax?.y < yLo) continue;
       // AABB precheck along the segment (cheap)`,
       'discard vertically disjoint raycast blocks');
+    // The spatial hash can admit many blocks whose XZ AABB is farther away
+    // than the capsule radius. Reject them before four OBB closest-point calls.
+    change(
+      '        if (pos.y + height < b.aabbMin.y - 0.05 || pos.y > b.aabbMax.y + 0.05) continue;',
+      '        if (pos.y + height < b.aabbMin.y - 0.05 || pos.y > b.aabbMax.y + 0.05 || pos.x + radius < b.aabbMin.x - 0.05 || pos.x - radius > b.aabbMax.x + 0.05 || pos.z + radius < b.aabbMin.z - 0.05 || pos.z - radius > b.aabbMax.z + 0.05) continue;',
+      'skip XZ-disjoint collideCapsule blocks');
+    change(
+      '        if (pos.y + height < b.aabbMin.y - 0.05 || pos.y + lift > b.aabbMax.y + 0.05) continue;',
+      '        if (pos.y + height < b.aabbMin.y - 0.05 || pos.y + lift > b.aabbMax.y + 0.05 || pos.x + radius < b.aabbMin.x - 0.05 || pos.x - radius > b.aabbMax.x + 0.05 || pos.z + radius < b.aabbMin.z - 0.05 || pos.z - radius > b.aabbMax.z + 0.05) continue;',
+      'skip XZ-disjoint collideBody blocks');
+    // bodyFits accepts a caller-supplied margin. The original squared test
+    // treats negative radii as positive, so retain that conservative range.
+    change(
+      '      if (pos.y + height < b.aabbMin.y || pos.y + lift > b.aabbMax.y) continue;',
+      '      if (pos.y + height < b.aabbMin.y || pos.y + lift > b.aabbMax.y || pos.x + Math.max(radius, Math.abs(radius - margin)) < b.aabbMin.x || pos.x - Math.max(radius, Math.abs(radius - margin)) > b.aabbMax.x || pos.z + Math.max(radius, Math.abs(radius - margin)) < b.aabbMin.z || pos.z - Math.max(radius, Math.abs(radius - margin)) > b.aabbMax.z) continue;',
+      'skip XZ-disjoint bodyFits blocks');
+    // Preserve authored 7-sample + 8-ternary search, but avoid 23 square roots
+    // and temporary Vector3 mutations. Near a rounded-distance tie, compare
+    // sqrt values to retain the old branch direction and contact time.
+    change(
+      `  static segmentCapsuleDist(a, b, base, radius, height, res) {
+    // sample-based closest point (short segments; robust enough for projectiles)
+    let best = Infinity, bt = 0;
+    const steps = 6;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      _p.copy(a).lerp(b, t);
+      const d = Physics.pointCapsuleDist(_p, base, radius, height);
+      if (d < best) { best = d; bt = t; }
+    }
+    // refine
+    let lo = Math.max(0, bt - 1 / steps), hi = Math.min(1, bt + 1 / steps);
+    for (let k = 0; k < 8; k++) {
+      const m1 = lo + (hi - lo) / 3, m2 = hi - (hi - lo) / 3;
+      _p.copy(a).lerp(b, m1); const d1 = Physics.pointCapsuleDist(_p, base, radius, height);
+      _p.copy(a).lerp(b, m2); const d2 = Physics.pointCapsuleDist(_p, base, radius, height);
+      if (d1 < d2) hi = m2; else lo = m1;
+    }
+    res.t = (lo + hi) / 2;
+    _p.copy(a).lerp(b, res.t);
+    res.dist = Physics.pointCapsuleDist(_p, base, radius, height);
+    return res;
+  }`,
+      `  static segmentCapsuleDist(a, b, base, radius, height, res) {
+    const yLo = base.y + radius, yHi = base.y + Math.max(radius, height - radius);
+    const ax = a.x, ay = a.y, az = a.z, abx = b.x - ax, aby = b.y - ay, abz = b.z - az;
+    const bx = base.x, bz = base.z;
+    const distance2 = (t) => {
+      const px = ax + abx * t, py = ay + aby * t, pz = az + abz * t;
+      const y = py < yLo ? yLo : py > yHi ? yHi : py;
+      const dx = px - bx, dy = py - y, dz = pz - bz;
+      return dx * dx + dy * dy + dz * dz;
+    };
+    let best = Infinity, bt = 0;
+    const steps = 6;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps, d2 = distance2(t);
+      // Math.sqrt can round distinct squared distances to a tie.
+      const better = d2 < best && (best - d2 > 8 * Number.EPSILON * Math.max(best, d2) ||
+        Math.sqrt(d2) < Math.sqrt(best));
+      if (better) { best = d2; bt = t; }
+    }
+    let lo = Math.max(0, bt - 1 / steps), hi = Math.min(1, bt + 1 / steps);
+    for (let k = 0; k < 8; k++) {
+      const m1 = lo + (hi - lo) / 3, m2 = hi - (hi - lo) / 3;
+      const d1 = distance2(m1), d2 = distance2(m2);
+      const closer = d1 < d2 && (d2 - d1 > 8 * Number.EPSILON * Math.max(d1, d2) ||
+        Math.sqrt(d1) < Math.sqrt(d2));
+      if (closer) hi = m2; else lo = m1;
+    }
+    res.t = (lo + hi) / 2;
+    _p.copy(a).lerp(b, res.t);
+    res.dist = Physics.pointCapsuleDist(_p, base, radius, height);
+    return res;
+  }`,
+      'inline squared-distance segmentCapsuleDist probes');
   }
   if (rel === 'src/world/level.js') {
     change(
