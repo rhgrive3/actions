@@ -1,0 +1,163 @@
+{
+  "type": "module",
+  "private": true,
+  "sourceHead": "9fe55aa056d6b5c31773254a4796c7db50df02f8",
+  "scope": "Explicit catalog install diagnostic; production boot not qualified",
+  "files": [
+    {
+      "path": "compact-receipt.mjs",
+      "sha256": "39764c4d5ad68d0f69bc26a77f7da54635c967ff52996262cc03fa1f70e98a79",
+      "bytes": 381
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "8489c6c48b0920bf8fc5eae956db21a8c87cbfdaf4a3faa21ed717fad4f52187",
+      "bytes": 1292
+    },
+    {
+      "path": "build-binding.mjs",
+      "sha256": "d402e6f9d278bf589c4540d966ceaba6ad7e8ba011be0d975a3774581b237a2a",
+      "bytes": 2832
+    },
+    {
+      "path": "capture-resources.mjs",
+      "sha256": "1d81047ab52414c60495bacf744db5985846ecdd1651913f7f6185379442c270",
+      "bytes": 478
+    },
+    {
+      "path": "capture-gpu-lifecycle.mjs",
+      "sha256": "dada4755abe1cf88e2e985e35f8ff16ac031dddf6f5249b470a93954069ffa57",
+      "bytes": 1012
+    },
+    {
+      "path": "capture-gpu-lifecycle.test.mjs",
+      "sha256": "bbccb80cb9ed24a2a7a2b888aeb27d768694091e845ef24d8e051e0ec79eb655",
+      "bytes": 2984
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "bytes": 2896
+    },
+    {
+      "path": "capture-resources.test.mjs",
+      "sha256": "05048eed03677f582f1b6984e3922cd36bfa0eb659d58e1eca401947bf3a0d80",
+      "bytes": 1036
+    },
+    {
+      "path": "test-count.mjs",
+      "sha256": "e454e5b9eda4074757eab0f92c32bd47ba4e1d4f9cfc25a5a38fce9226d29ba0",
+      "bytes": 708
+    },
+    {
+      "path": "test-count.test.mjs",
+      "sha256": "907d6897ed12c66b28a287022ac619d0f9dd6f0997977b707e07178ef4313190",
+      "bytes": 863
+    },
+    {
+      "path": "preflight.mjs",
+      "sha256": "4fb8daae3688528000b7a569a53202bc9e4885d57719ae6c7dc6f3fe91a08d13",
+      "bytes": 2053
+    },
+    {
+      "path": "capture-brush-integration.mjs",
+      "sha256": "c643b541ce9654a68e1452b9378329a269e9eb5a770a254797abb9ba00479c65",
+      "bytes": 13923
+    },
+    {
+      "path": "capture-slosher-integration.mjs",
+      "sha256": "a8951b461edb6a7ce3ed853d832382d46779005aa5e8d3e6a33418752e4ea8f3",
+      "bytes": 13921
+    },
+    {
+      "path": "brush-actor.test.mjs",
+      "sha256": "c5046a1a22b8f8d0bf881d85f52dedefacee2c9c2adf9430803eea962c3b5afa",
+      "bytes": 5664
+    },
+    {
+      "path": "slosher-actor.test.mjs",
+      "sha256": "cef29e321009b51de6772c2faafb67206612ff9bbd42dae90496cd4ccfae1f64",
+      "bytes": 10552
+    },
+    {
+      "path": "compare-slosher.mjs",
+      "sha256": "c5915fb2deafdcb9ace752585a66ecf6664ad7b8e01111c3b62d425955b6586c",
+      "bytes": 606
+    },
+    {
+      "path": "combined-receipt.mjs",
+      "sha256": "c72887376191bfb107ff1eb24ca490fbeed8755922fb18b5d7b42c7fc7c84dbc",
+      "bytes": 1074
+    },
+    {
+      "path": "shared.test.mjs",
+      "sha256": "a01910d3b25aa75e03ecba820d2a6ff8bac2a4950db2467ee53232464e3ebe7b",
+      "bytes": 4618
+    },
+    {
+      "path": "acceptance-plan.json",
+      "sha256": "08630f53254b814bd51bcfeec6393b29bc9900f5471d894864de4c81b1bf6c26",
+      "bytes": 4903
+    },
+    {
+      "path": "README.txt",
+      "sha256": "d5671dd1f2449f649e1cfd8684256d043fbdf56041dc5da30c40d95b1c73dd11",
+      "bytes": 1775
+    },
+    {
+      "path": ".github/workflows/brush-slosher-native-acceptance.yml",
+      "sha256": "0f55e87bc01976e4a82a4d0346f90bd1138eae778af9d86082e06138cd990f20",
+      "bytes": 4754
+    },
+    {
+      "path": "brush/capture-brush-heavy.mjs",
+      "sha256": "3e83b36c8b63bf93e6b29bc503667731ec613c34964ea3794ba49f43fd7b5a19",
+      "bytes": 15665
+    },
+    {
+      "path": "brush/capture-contract.mjs",
+      "sha256": "2558b765f220a2ee81149fb7f728b3472e52eee4f4b7dfd7e1c75d034bda739d",
+      "bytes": 2973
+    },
+    {
+      "path": "brush/visible-pairs.mjs",
+      "sha256": "14cf85084e09789cdfb53c5c3c0617f5fcb4e1d23dd6b5648b9d6c066cf50058",
+      "bytes": 1352
+    },
+    {
+      "path": "brush/capture.test.mjs",
+      "sha256": "ef0ac9e3d5ddbc45c6ba49357e809c81fcb312641b22c830634787caefc13a6d",
+      "bytes": 6672
+    },
+    {
+      "path": "brush/contracts.test.mjs",
+      "sha256": "710e881bf118caf3132fb9ff0d009b23ee9bf2445f67c7370e0ee1fe39189f74",
+      "bytes": 2859
+    },
+    {
+      "path": "slosher/capture-slosher-two.mjs",
+      "sha256": "3630e30889e3f046045b3252fe4d3e96885136702aba208a72b06f1f4c9d5480",
+      "bytes": 16919
+    },
+    {
+      "path": "slosher/capture-contract.mjs",
+      "sha256": "a7d3b666bde6aa83dace614a14a47eefb9f6c144b9c2e0d2ecc8f6d236a33ce9",
+      "bytes": 3622
+    },
+    {
+      "path": "slosher/visible-pairs.mjs",
+      "sha256": "325df3af6999993ded66c05fb4205511f8ba8944634b96e326ec9f3c7ff882de",
+      "bytes": 1379
+    },
+    {
+      "path": "slosher/capture.test.mjs",
+      "sha256": "f9ad32f4ad1ef5b150a042a07304f040c66ea0e2eacef9332c3697eb06352925",
+      "bytes": 6657
+    },
+    {
+      "path": "slosher/contracts.test.mjs",
+      "sha256": "1e05636fda92f89834cfbc51a3af91339f38c8ea1363797eccf1995d2d6249d6",
+      "bytes": 3620
+    }
+  ]
+}

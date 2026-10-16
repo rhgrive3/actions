@@ -1,0 +1,3 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import {pathToFileURL} from 'node:url';
+export function compareSlosher(source,emitted){assert.equal(source.length,8);assert.equal(emitted.length,8);const key=r=>[r.row,r.team,r.id].join(':');assert.equal(new Set(source.map(key)).size,8);assert.deepEqual(emitted.slice().sort((a,b)=>key(a).localeCompare(key(b))),source.slice().sort((a,b)=>key(a).localeCompare(key(b))));return true;}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)compareSlosher(...process.argv.slice(2,4).map(p=>JSON.parse(fs.readFileSync(p))));

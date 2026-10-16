@@ -1,0 +1,74 @@
+name: Review four manual brush and slosher appearances
+on:
+  push:
+    branches: [review/brush-slosher-native-main9fe-20261016]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    if: github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/review/brush-slosher-native-main9fe-20261016'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: 9fe55aa056d6b5c31773254a4796c7db50df02f8
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools once
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Exact source and diagnostic preflight
+        run: |
+          mkdir -p evidence
+          node diagnostic/preflight.mjs
+          node --test diagnostic/brush/*.test.mjs diagnostic/slosher/*.test.mjs diagnostic/capture-gpu-lifecycle.test.mjs diagnostic/build-binding.test.mjs diagnostic/capture-resources.test.mjs diagnostic/test-count.test.mjs diagnostic/shared.test.mjs
+      - name: Both actual source families
+        run: |
+          SOURCE_ROOT="$PWD/candidate" BRUSH_EVIDENCE="$PWD/evidence" timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/brush-actor.test.mjs > evidence/brush-source.tap
+          node diagnostic/test-count.mjs evidence/brush-source.tap 2
+          SOURCE_ROOT="$PWD/candidate" SLOSHER_SUMMARY="$PWD/evidence/slosher-source-summary.json" timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/slosher-actor.test.mjs > evidence/slosher-source.tap
+          node diagnostic/test-count.mjs evidence/slosher-source.tap 2
+      - name: One production build
+        id: build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: Brush actual emitted Actor
+        id: brush
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          SOURCE_ROOT="$PWD/candidate" BRUSH_EVIDENCE="$PWD/evidence" BRUSH_SOURCE_SIGNATURES="$PWD/evidence/source-signatures.json" INKWAVE_BUILT_SITE="$PWD/candidate-site" timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/brush-actor.test.mjs > evidence/brush-emitted.tap
+          node diagnostic/test-count.mjs evidence/brush-emitted.tap 2
+      - name: Slosher actual emitted Actor
+        id: slosher
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          SOURCE_ROOT="$PWD/candidate" SLOSHER_SUMMARY="$PWD/evidence/slosher-emitted-summary.json" INKWAVE_BUILT_SITE="$PWD/candidate-site" timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/slosher-actor.test.mjs > evidence/slosher-emitted.tap
+          node diagnostic/test-count.mjs evidence/slosher-emitted.tap 2
+          node diagnostic/compare-slosher.mjs evidence/slosher-source-summary.json evidence/slosher-emitted-summary.json
+      - name: Brush twelve native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.brush.outcome == 'success' }}
+        run: timeout --signal=TERM --kill-after=10s 600s node diagnostic/capture-brush-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/brush
+      - name: Slosher sixteen native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.slosher.outcome == 'success' }}
+        run: timeout --signal=TERM --kill-after=10s 600s node diagnostic/capture-slosher-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/slosher
+      - name: Require both image lanes
+        run: node diagnostic/combined-receipt.mjs evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: brush-slosher-native-main9fe
+          path: evidence
+          if-no-files-found: error
