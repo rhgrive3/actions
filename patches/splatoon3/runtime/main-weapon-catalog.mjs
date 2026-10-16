@@ -258,7 +258,7 @@ function initialState(r,actor) {
     stream:0, streamF:0, streamCharge:0, streamTime:0, rounds:0, burst:0, burstWait:0,
     turret:0, rolls:0, roll:null, lunge:null, melee:null, stored:null, swingCount:0, canopy:null, naked:0,
     accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0,
-    rollingFrames:0, rollingDash:false, bowTilt:0,
+    rollingFrames:0, rollingDash:false, bowTilt:0, saberShotOrdinal:0,
     jumpSerial:actor?.s3JumpSerial || 0, jumpAge:null };
 }
 
@@ -350,11 +350,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       G.fx?.muzzle(origin,direction,a.color,r.family==='blaster'?'blaster':'shooter');
     }
   }
-  function origin(a, hand=null) {
+  function origin(a, hand=null, offset=null) {
     // Catalogue Dualies must release the round from the same real hand socket
     // that the native two-pistol renderer and trigger animation own.
-    // All non-Dualies retain the original one-muzzle/aim path.
-    if(hand===null)G.projectiles._muzzle(a,muzzle);
+    // Splatana offsets are player-local and feet-relative, independent of
+    // the rendered weapon socket. Aim from the resulting collision-safe birth.
+    if(offset){
+      const yaw=Math.atan2(a.aimDir.x,a.aimDir.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
+      const x=finite(offset.X,0),z=finite(offset.Z,0);
+      muzzle.copy(a.pos).add(new THREE.Vector3(x*cy+z*sy,finite(offset.Y,0),-x*sy+z*cy));
+      base.copy(a.pos);base.y+=a.form==='squid'?.4:1.05;
+      constrainMuzzle(G.physics,base,muzzle);
+    }else if(hand===null)G.projectiles._muzzle(a,muzzle);
     else {
       G.projectiles._muzzleHand(a,hand,muzzle);
       if(hand){base.copy(a.pos);base.y+=a.form==='squid'?.4:1.05;constrainMuzzle(G.physics,base,muzzle);}
@@ -596,7 +603,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
     // Peek without consuming the next hand: denied shots must not rotate it.
     const hand=r.family==='dualies' ? (runner.hand^1) : null;
-    origin(a,hand);
+    // Consume the horizontal side only when a wave is actually emitted; a
+    // cancelled windup or an unfunded input must not rotate the next side.
+    const horizontal=key==='saber-horizontal',saber=horizontal||key==='saber-vertical';
+    const swing=saber?r.parameters.spl__WeaponSaberParam?.SwingParam:null;
+    const offset=swing?.[horizontal?(s.saberShotOrdinal%2===0?'ShotBulletOffset_L':'ShotBulletOffset_R'):'ShotBulletOffset_Vertical'];
+    origin(a,hand,offset);
     const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
     const jumpAge=r.family==='splatling' && Number.isFinite(a.s3SplatlingJumpAgeFrames)
       ? a.s3SplatlingJumpAgeFrames/HZ : s.jumpAge;
@@ -614,18 +626,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,s.jumpAge);
     }
     runner.spread=spread;
-    // The charged Splatana slash is born at the sourced ShotBulletOffset_Vertical
-    // (player-local, feet origin), not at the gun muzzle: its collider chain
-    // spans Y -1.6..+1.6, so a muzzle-height birth buried the lower lobes in
-    // the floor and the round died on its first tick.
-    let at=muzzle;
-    const vertical=key==='saber-vertical'?r.parameters.spl__WeaponSaberParam?.SwingParam?.ShotBulletOffset_Vertical:null;
-    if(vertical){
-      const yaw=Math.atan2(aim.x,aim.z),cy=Math.cos(yaw),sy=Math.sin(yaw),x=finite(vertical.X,0),z=finite(vertical.Z,0);
-      at=a.pos.clone().add(new THREE.Vector3(x*cy+z*sy,finite(vertical.Y,0),-x*sy+z*cy));
-    }
-    spawn(a,r,desc,aim,at,{volley,
+    spawn(a,r,desc,aim,muzzle,{volley,
       speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
+    if(horizontal)s.saberShotOrdinal++;
     // Only an admitted, spawned catalogue round consumes the chosen hand.
     // Hand-specific physics muzzle, network birth and visual trigger agree.
     if(hand!==null){runner.hand=hand;runner.sinceHand[hand]=0;}
@@ -790,6 +793,23 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       q.to.set(p.pos.x+ox,p.pos.y+y,p.pos.z+oz);q.param=params[i];
     }return s.lobes;
   }
+  function spiralContactClear(p,q,actor,t){
+    const s=p.catalog;
+    // Machine's outer, damage-only units have no terrain radius. A clear
+    // central flight path therefore cannot establish visibility to a victim
+    // beside it. Test lateral cover at the actual swept capsule contact.
+    if(s.r.sourceActor!=='WeaponSlosherLauncher'||s.descriptor.unit===0)return true;
+    const c=s.spiralCover||(s.spiralCover={from:new THREE.Vector3(),to:new THREE.Vector3(),hit:new Hit()});
+    c.from.lerpVectors(q.from,q.to,t);
+    const radius=hurtboxRadius(actor,PLAYER),height=hurtboxHeight(actor,PLAYER);
+    c.to.set(actor.pos.x,clamp(c.from.y,actor.pos.y+radius,actor.pos.y+Math.max(radius,height-radius)),actor.pos.z);
+    const distance=c.from.distanceTo(c.to);
+    if(distance<=radius+EPS)return true;
+    // End at the nearest capsule surface, rather than at the feet or centre:
+    // a low obstacle must not hide an exposed upper-body contact.
+    c.to.lerp(c.from,radius/distance);
+    return !G.physics.segment(c.from,c.to,c.hit,true).hit;
+  }
   function advance(p) {
     const s=p.catalog,d=s.descriptor,m=d.m;
     p.prev.copy(p.pos);p.age+=DT;
@@ -901,6 +921,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         for(const q of shapes){
           const pr0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale),radius=collisionRadius(q.param,'Player',p.age*HZ,s.index,bounceScale);
           const contact=capsuleEntry(q.from,q.to,a.pos,hurtboxRadius(a,PLAYER),hurtboxHeight(a,PLAYER),pr0,radius);
+          if(contact!=null&&!spiralContactClear(p,q,a,contact))continue;
           if(contact!=null&&(entry==null||contact<entry))entry=contact;
         }
         if(friendly&&entry!=null&&((p.age-DT)+DT*entry)*HZ<d.c.FriendThroughFrameForPlayer)continue;
@@ -915,16 +936,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       // Admit every crossed release distance on the unobstructed part of this
       // fixed simulation step, including the final segment before a collision.
-      // Restrict this to records with explicit falling-splash physics; other
-      // families keep their existing unverified projection path.
-      if(!p.ghost&&d.splashDropSpec&&len>EPS){
+      // Include Slosher falling drops: they used to skip crossed thresholds
+      // on a contact frame, and at most emit one drop at a later endpoint.
+      // Other families keep their existing unverified projection path.
+      if(!p.ghost&&(d.splashDropSpec||d.sloshFall)&&len>EPS){
         const lifeTravel=travelBefore+p.vel.length()*clamp(p.life-(p.age-DT),0,DT);
         const endTravel=Math.min(s.travel,lifeTravel,travelBefore+len*clamp(Math.min(1,stop)));
         const direction=p.vel.clone().setY(0).normalize();
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
           const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
-          spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
-            from,direction,radius:d.splashRadius,spec:d.splashDropSpec,depth:true});
+          const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
+            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true});
+          if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
           s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
         }
       }
@@ -947,13 +970,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           s.travel=travelBefore+len*Math.max(0,Math.min(1,stop));
         if(finishContact(this,p,world))return true;
       }
-      if(!p.ghost&&!d.splashDropSpec&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){
+      if(!p.ghost&&!d.splashDropSpec&&!d.sloshFall&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){
         const direction=p.vel.clone().setY(0).normalize();
-        if(d.sloshFall){
-          const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,from:p.pos.clone(),
-            direction,radius:d.splashRadius,spec:d.sloshFall.spec,depth:true,kind:'drop'});
-          if(drop){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
-        }else floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction);
+        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction);
         s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
       }
       if(p.age+EPS>=p.life||s.travel+EPS>=s.range){
