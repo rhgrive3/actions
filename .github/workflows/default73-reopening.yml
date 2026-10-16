@@ -1,7 +1,7 @@
 name: Verify fourteen saved default appearances reopen
 on:
   push:
-    branches: [review/default73-reopening-fix-20261016]
+    branches: [review/default73-reopening-testfix-20261016]
 permissions:
   contents: read
 jobs:
@@ -16,7 +16,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 97c1b517182846f6abf9007b2b3315ad2aa8e1a8
+          ref: b469fac67670605a790e0649d904cd4521c87185
           path: candidate
           persist-credentials: false
       - uses: actions/setup-node@v4

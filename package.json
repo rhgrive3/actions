@@ -5,22 +5,22 @@
   "frozenFiles": [
     {
       "path": "files/scripts/lib/inkwave-default-reopening.mjs",
-      "sha256": "ccbe367312081a1e25c03e477e44a9e0d3a0d9e3928bf3e0e0173f3804799f2f",
+      "sha256": "6e037d8f2ff04b4f285f4e9356557c16763965fb99b2dafcc03537d9bcf57b14",
       "bytes": 8075
     },
     {
       "path": "files/scripts/check-default-reopening.mjs",
-      "sha256": "786401de7c431e5c6c7f2b610b88122200f9da8d1619136cf048de1cd5c3643d",
+      "sha256": "c9af8bdf68b74b6baeec992cd5ccdb5d3d54357c3b148575a2bf1c5bcf879f21",
       "bytes": 37422
     },
     {
       "path": "files/scripts/tests/inkwave-default-reopening.test.mjs",
-      "sha256": "e6c310435c178803985cece71ef6f53f37706b20cc3e2932d9d8005e11919454",
+      "sha256": "222153c7308be901970e604777efc0aa7df37aac78baaa68c0d7322b71d79d84",
       "bytes": 7541
     },
     {
       "path": "prepare.mjs",
-      "sha256": "fc9f4e9d73a44d881432d8b5115289b8a71cd7c44e7a6710763cbc46ceb6983e",
+      "sha256": "01c8f426fc76204d89c65e7d78eeddd87444171619bf0c99978e4f04d94ac9dd",
       "bytes": 3036
     },
     {
@@ -30,18 +30,18 @@
     },
     {
       "path": "workflow.test.mjs",
-      "sha256": "9ce767f377bd5ce4081f1f96a6fbb68f1158be18b2b2a137c738145486152908",
+      "sha256": "2cdc17fa1f19d414caa304b913d43ef525e5f0a63980a3f03289709ef495ddd7",
       "bytes": 3847
     },
     {
       "path": "plan.json",
-      "sha256": "e074d94bd02c20c07ad3c45a98e1919dd873eb12cbeea95ff270e60fbee4d775",
+      "sha256": "6804581c6ef7001f58cfc18327e7ca75e0ee7384eed835338a27cb0cae2f8b81",
       "bytes": 574
     },
     {
       "path": ".github/workflows/default73-reopening.yml",
-      "sha256": "a3caff25583adef69c8d7f409a792e600310a49b3350ef176fe6bc6663f0a11b",
-      "bytes": 2540
+      "sha256": "7f1b7d30dd38608b8326908e6a383a2b1391c0fbfcebcc09ecba85dc5f429d21",
+      "bytes": 2544
     }
   ],
   "version": "1.0.0"

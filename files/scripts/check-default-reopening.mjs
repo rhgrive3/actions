@@ -27,7 +27,7 @@ const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'
 if(hash(JSON.stringify(manifest.artifacts))!==manifest.contentHash) throw new Error('Build identity mismatch');
 for(const [file,expected] of Object.entries(manifest.artifacts)) if(hash(fs.readFileSync(path.join(site,file)))!==expected) throw new Error('Artifact mismatch: '+file);
 const sourceSha=process.argv.includes('--exact-source') ? execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim() : null;
-if(sourceSha!=='97c1b517182846f6abf9007b2b3315ad2aa8e1a8')throw Error('Reopening diagnostic requires exact PR1533 head');
+if(sourceSha!=='b469fac67670605a790e0649d904cd4521c87185')throw Error('Reopening diagnostic requires exact PR1533 head');
 // Bind every build input to the actual checkout commit when --exact-source is used.
 if(process.argv.includes('--exact-source')) {
   const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:ROOT,encoding:'utf8'}).split('\0').filter(Boolean).map(row=>{ const [meta,file]=row.split('\t'); return [file,meta.split(' ')[2]]; }));

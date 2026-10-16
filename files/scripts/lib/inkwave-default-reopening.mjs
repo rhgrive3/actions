@@ -78,7 +78,7 @@ export function observeReopenedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
  }
 }
 export async function checkDefaultReopening({page,evidence,manifest,sourceSha}) {
- if(sourceSha!=='97c1b517182846f6abf9007b2b3315ad2aa8e1a8')throw Error('Default reopen source head mismatch');
+ if(sourceSha!=='b469fac67670605a790e0649d904cd4521c87185')throw Error('Default reopen source head mismatch');
  const revision=manifest?.build?.revision;
  if(!/^[a-f0-9]{64}$/.test(revision??''))throw Error('Default probe revision missing');
  const required=['src/core/ctx.js','src/config.js','patches/splatoon3/runtime/weapon-appearance.mjs','patches/splatoon3/runtime/weapon-models/registry.mjs','patches/splatoon3/runtime/alternate-weapon-kits-data.mjs'];

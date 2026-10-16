@@ -1,5 +1,5 @@
 import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {execFileSync}from'node:child_process';import{fileURLToPath}from'node:url';
-export const HEAD='97c1b517182846f6abf9007b2b3315ad2aa8e1a8',TREE='ec97b71f10c09ec49753dbe9ce30d137bd3a88dd';
+export const HEAD='b469fac67670605a790e0649d904cd4521c87185',TREE='6d53a2c3ff7c6da89fee6f36091b6caa8ee28d9c';
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 export function validatePackage(root){const plan=JSON.parse(fs.readFileSync(path.join(root,'plan.json')));if(plan.head!==HEAD||plan.tree!==TREE)throw Error('Game pin mismatch');const pack=JSON.parse(fs.readFileSync(path.join(root,'package.json')));for(const r of pack.frozenFiles){if(r.path.startsWith('/')||r.path.split('/').includes('..'))throw Error('Unsafe package path');const b=fs.readFileSync(path.join(root,r.path));if(hash(b)!==r.sha256||b.length!==r.bytes)throw Error('Package mismatch '+r.path);}return plan;}
 export function prepare(root,source,target,git=(args)=>execFileSync('git',args,{cwd:source,encoding:'utf8'}).trim()){
