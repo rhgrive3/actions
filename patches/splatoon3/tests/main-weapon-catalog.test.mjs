@@ -75,6 +75,32 @@ test('catalog Shooter live reticle retains its sourced cone on cooldown/idle fra
   assert.ok(Math.abs(actor.weaponRunner.spread-expected)<1e-9,'cooldown must not erase the live cone');
 });
 
+test('all added Sloshers inherit funded heave and true-birth release without Shooter recoil',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+  for(const row of MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&r.family==='slosher')){
+    f.G.projectiles.clear();f.G.actors.length=0;
+    const actor=f.make(row.id);
+    actor.form='kid';actor.ink=100;actor.intent.fire=true;
+    const events=[],oldTrigger=actor.character.trigger.bind(actor.character);
+    actor.character.trigger=(name,...args)=>{events.push(name);return oldTrigger(name,...args);};
+    const windup=row.parameters.WeaponParam.SwingLiftFrame;
+    assert.equal(actor.weapon.windup,windup/60,row.id+' sourced windup');
+    f.tick(actor);
+    assert.equal(events.filter(name=>name==='slosh').length,1,row.id+' funded heave begins immediately');
+    assert.equal(events.filter(name=>name==='shoot').length,0,row.id+' no Shooter recoil before release');
+    assert.ok(actor.weaponRunner.slosh>=0,row.id+' heave clock active');
+    assert.ok(actor.weaponRunner.catalogState.pending,row.id+' actual birth remains pending');
+    f.tick(actor,Math.ceil(windup)+1);
+    assert.ok(f.G.projectiles.list.some(p=>p.catalog?.r?.id===row.id),row.id+' true-release source rounds');
+    assert.equal(actor.weaponRunner.slosh,-1,row.id+' visual heave clock completes');
+    assert.equal(events.filter(name=>name==='slosh').length,1,row.id+' no duplicate heave at birth');
+    assert.equal(events.filter(name=>name==='shoot').length,0,row.id+' no conflicting generic recoil');
+    actor.intent.sub=true;f.tick(actor);
+    assert.equal(actor.weaponRunner.slosh,-1,row.id+' sub cancels heave');
+  }
+});
+
 test('all 58 additions admit finite native main shots through Actor input', async () => {
   const f = await setup();
   assert.equal(f.WEAPON_ORDER.length,160); // 65 base mains + 95 playable alternate kits

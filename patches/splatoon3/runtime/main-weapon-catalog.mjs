@@ -153,6 +153,7 @@ function definition(r, api) {
     matchmakingRange:r.matchmakingRange, damage:damageMax(r), damageMin:finite(p.DamageParam?.ValueMin,0)/10,
     damageMax:damageMax(r), projSpeed:speed, straightTime:finite(move.GoStraightToBrakeStateFrame,4)/HZ,
     fireInterval:Math.max(1,rate)/HZ, chargeTime:charge?chargeFrames(r)/HZ:0,
+    ...(r.family==='slosher'?{windup:finite(t.SwingLiftFrame,12)/HZ}:{}),
     moveSpeedFiring:(r.family==='splatana'?finite(p.spl__WeaponSaberParam.SwingParam.WeakSwingMoveVelLimit,.06):finite(t.MoveSpeed, finite(t.SwingMoveSpeed, finite(t.MoveSpeedFullCharge,.072))))*HZ,
     // Saber charge uses DU/frame while simple-family speed fields use source
     // world-units/frame (10 DU/world-unit), hence its separate conversion.
@@ -298,6 +299,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.rollingFrames=0;s.rollingDash=false;
     if (s.canopy && !s.canopy.launched) { s.canopy.open = false; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
+    runner.slosh = -1;
   }
   R.reset = function(...args) { this.catalogState = null; return legacyReset.apply(this,args); };
   R.busy = function() {
@@ -339,7 +341,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   const catalogHands = [0,1].map(hand => Object.freeze({hand,valueOf(){return 1;}}));
   function notify(a, r, origin, direction, charge = 0, hand = null) {
     const trigger=r.family==='charger'||r.family==='stringer'?'charge_release':'shoot';
-    if(hand===null)a.character.trigger(trigger);else a.character.trigger(trigger,catalogHands[hand]);
+    // Added Sloshers initiate their heave when ink is paid. Do not overwrite
+    // it with Shooter recoil at the later actual projectile birth.
+    if(r.family!=='slosher'){
+      if(hand===null)a.character.trigger(trigger);else a.character.trigger(trigger,catalogHands[hand]);
+    }
     const event={actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge};
     if(hand!==null)event.hand=hand;
     emit('weapon:fire',event);
@@ -1184,6 +1190,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const t=weaponParam(r);
     if(pay(runner,finite(t.InkConsume,.076)*100*inkMod(runner.a))) {
       beginPending(s,finite(t.SwingLiftFrame,12),()=>{emitUnits(runner,r,'slosh');runner.firingT=.35;});
+      // The source-funded SwingLiftFrame also owns the original Slosher heave.
+      runner.slosh=0;runner.firingT=.35;a.fireFacing=.5;
+      a.character?.trigger('slosh');
       runner.cooldown=finite(t.RepeatFrame,29)/HZ;
     }
   }
@@ -1359,6 +1368,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(s.lunge){s.lunge.remaining-=dt;if(s.lunge.remaining<=EPS)s.lunge=null;}
     if(s.melee){s.melee.remaining-=dt;if(s.melee.remaining<=EPS){const melee=s.melee;s.melee=null;melee.fire();}}
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){const pending=s.pending;s.pending=null;pending.fire();}}
+    if(r.family==='slosher')this.slosh=s.pending?Math.max(0,a.weapon.windup-s.pending.remaining):-1;
     if(a.form!=='kid'||input.sub||this.aimingSub){
       this.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;
       s.pressed=!!input.fire;return;

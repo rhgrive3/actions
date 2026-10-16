@@ -79,7 +79,8 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
   // Presentation must not wait for a later remote slosh-flag snapshot.
   on?.('weapon:fire', ({ actor, weapon }) => {
     const ch = actor?.character, w = actor?.weapon;
-    if (weapon !== 'slosher' || !ch || ch.s3WeaponMotionEnabled === false || ch.weaponKind !== 'slosher' ||
+    const sourcedSlosh = w?.catalogRecord?.family === 'slosher' && weapon === w.catalogRecord.id;
+    if ((weapon !== 'slosher' && !sourcedSlosh) || !ch || ch.s3WeaponMotionEnabled === false || ch.weaponKind !== 'slosher' ||
         !actor.alive || actor.form !== 'kid' || actor.weaponRunner?.aimingSub || actor.specialActive) return;
     if (!(w.windup > 0 && w.fireInterval > w.windup)) return;
     const m = state(ch);
