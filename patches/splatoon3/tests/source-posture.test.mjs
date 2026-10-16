@@ -495,7 +495,7 @@ test('actual Player00 source gait exits Shoot clips when a shooter releases whil
   const api = await production(), ch = await rig(api), dt=1/60, st=state();
   const owner = { character:ch, alive:true, remote:false, form:'kid',
     weapon:{kind:'shooter'}, aimYaw:0, intent:{fire:true,sub:false,move:{x:0,z:-1}},
-    weaponRunner:{slosh:-1, firingT:.35, s3ShooterMoveRemaining:4/60}, fireFacing:.5 };
+    weaponRunner:{slosh:-1, firingT:.35, s3ShooterMoveRemaining:4/60, firingPose(){return this.firingT>0;}}, fireFacing:.5 };
   ch.actor = owner;
   st.speed = 2.88;st.localMove = {x:0,z:-1};st.firing = true;
   const step = () => {
