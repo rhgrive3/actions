@@ -27,7 +27,7 @@ import { installMovementMotion } from './movement-motion.mjs';
 import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
-import { registerMainWeaponCatalog } from './main-weapon-catalog.mjs';
+import { registerMainWeaponCatalog, installMainWeaponCatalogRuntime } from './main-weapon-catalog.mjs';
 import { registerAlternateWeaponKits } from './alternate-weapon-kits.mjs';
 import { installRollerBodyKnockback } from './roller-body-knockback.mjs';
 import { installMuzzleFeedback } from './muzzle-feedback.mjs';
@@ -212,5 +212,10 @@ export function install(profile) {
   installSpecialModels(api);
   // Outermost weapon pose layer: per-weapon / per-family offsets over every native and patched hold.
   installWeaponFamilyMotion(api);
+  // Validate and bind catalogue gameplay only after all supported sub/special
+  // slots and alternative weapon identities are registered. Early validation
+  // fails even valid source kits because their registry entries do not exist.
+  // Retain all previously installed legacy wrappers (this is deliberately last).
+  installMainWeaponCatalogRuntime(api, profile);
   return api;
 }

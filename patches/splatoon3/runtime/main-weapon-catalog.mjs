@@ -153,6 +153,7 @@ function definition(r, api) {
     matchmakingRange:r.matchmakingRange, damage:damageMax(r), damageMin:finite(p.DamageParam?.ValueMin,0)/10,
     damageMax:damageMax(r), projSpeed:speed, straightTime:finite(move.GoStraightToBrakeStateFrame,4)/HZ,
     fireInterval:Math.max(1,rate)/HZ, chargeTime:charge?chargeFrames(r)/HZ:0,
+    ...(r.family==='slosher'?{windup:finite(t.SwingLiftFrame,12)/HZ}:{}),
     moveSpeedFiring:(r.family==='splatana'?finite(p.spl__WeaponSaberParam.SwingParam.WeakSwingMoveVelLimit,.06):finite(t.MoveSpeed, finite(t.SwingMoveSpeed, finite(t.MoveSpeedFullCharge,.072))))*HZ,
     // Saber charge uses DU/frame while simple-family speed fields use source
     // world-units/frame (10 DU/world-unit), hence its separate conversion.
@@ -298,6 +299,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.rollingFrames=0;s.rollingDash=false;
     if (s.canopy && !s.canopy.launched) { s.canopy.open = false; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
+    runner.slosh = -1;
   }
   R.reset = function(...args) { this.catalogState = null; return legacyReset.apply(this,args); };
   R.busy = function() {
@@ -339,7 +341,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   const catalogHands = [0,1].map(hand => Object.freeze({hand,valueOf(){return 1;}}));
   function notify(a, r, origin, direction, charge = 0, hand = null) {
     const trigger=r.family==='charger'||r.family==='stringer'?'charge_release':'shoot';
-    if(hand===null)a.character.trigger(trigger);else a.character.trigger(trigger,catalogHands[hand]);
+    // Added Sloshers initiate their heave when ink is paid. Do not overwrite
+    // it with Shooter recoil at the later actual projectile birth.
+    if(r.family!=='slosher'){
+      if(hand===null)a.character.trigger(trigger);else a.character.trigger(trigger,catalogHands[hand]);
+    }
     const event={actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge};
     if(hand!==null)event.hand=hand;
     emit('weapon:fire',event);
@@ -1181,16 +1187,19 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function slosh(runner,r,input,s) {
     if(!input.fire||runner.cooldown>EPS||s.pending)return;
-    const t=weaponParam(r);
+    const a=runner.a,t=weaponParam(r);
     if(pay(runner,finite(t.InkConsume,.076)*100*inkMod(runner.a))) {
       beginPending(s,finite(t.SwingLiftFrame,12),()=>{emitUnits(runner,r,'slosh');runner.firingT=.35;});
+      // The source-funded SwingLiftFrame also owns the original Slosher heave.
+      runner.slosh=0;runner.firingT=.35;a.fireFacing=.5;
+      a.character?.trigger('slosh');
       runner.cooldown=finite(t.RepeatFrame,29)/HZ;
     }
   }
   function dualies(runner,r,input,s,dt) {
     const a=runner.a,t=r.parameters.SideStepParam||{};
     if(s.roll){
-      const roll=s.roll;roll.remaining-=dt;
+      const roll=s.roll;roll.remaining-=dt;roll.t=Math.min(roll.dur,roll.t+dt);
       a.vel.x=roll.direction.x*roll.speed;a.vel.z=roll.direction.z*roll.speed;
       if(roll.remaining<=EPS)s.roll=null;
       if(!t.IsShootableInMove)return;
@@ -1207,12 +1216,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=state(this),t=r.parameters.SideStepParam||{};
     if(s.roll||s.rolls>=finite(t.RepeatCnt,2)||!pay(this,finite(t.InkConsume,.07)*100*inkMod(a)))return false;
     const duration=finite(t.MoveFrame,12)/HZ,direction=move.clone().setY(0).normalize();
-    s.roll={remaining:duration,speed:finite(t.MoveDist,5)/duration,direction};s.rolls++;
+    s.roll={remaining:duration,t:0,dur:duration,speed:finite(t.MoveDist,5)/duration,direction};s.rolls++;
     s.turret=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameMove_Last:t.UnrelaxFrameMove,32)/HZ;
     s.stop=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameNoSquid_Last:t.UnrelaxFrameNoSquid,32)/HZ+duration;
     a.vel.x=direction.x*s.roll.speed;a.vel.z=direction.z*s.roll.speed;
     this.cooldown=finite(t.UnrelaxFrameNoWeapon,0)/HZ;
-    a.character.trigger('dodge');emit('weapon:dodge',{actor:a,dir:direction.clone()});return true;
+    // The native Character expects the world move transformed to root space
+    // and this weapon's sourced MoveFrame. The gameplay roll above is unchanged.
+    const cy=Math.cos(a.yaw),sy=Math.sin(a.yaw);
+    a.character.trigger('dodge',{x:direction.x*cy-direction.z*sy,z:direction.x*sy+direction.z*cy,t:duration});
+    emit('weapon:dodge',{actor:a,dir:direction.clone()});return true;
   };
   Actor.prototype._horizontal=function(dt,...args){
     const s=this.weaponRunner?.catalogState,motion=s?.roll||s?.lunge;
@@ -1344,9 +1357,22 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.accuracy.advance(dt);
       if(ANGULAR_FAMILIES.has(r.family))advanceCatalogJumpClock(s,a,r.family,dt);
     }
+    // The legacy runner's _spreadDeg returns zero for kind='catalog'.
+    // Restore the sourced per-family cone on idle and cooldown frames so the
+    // reticle/shot guide does not flicker to perfect accuracy between rounds.
+    // The firing branch may still replace this with a mode-specific shot cone.
+    if(ANGULAR_FAMILIES.has(r.family)){
+      const t=weaponParam(r),ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
+      const age=r.family==='splatling'&&Number.isFinite(a.s3SplatlingJumpAgeFrames)
+        ?a.s3SplatlingJumpAgeFrames/HZ:s.jumpAge;
+      this.spread=r.family==='dualies'&&s.turret>0?finite(t.LapOver_DegSwerve,0)
+        :catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,age,
+          a.s3?.modifiers?.actionAirSpread??0,t);
+    }
     if(s.lunge){s.lunge.remaining-=dt;if(s.lunge.remaining<=EPS)s.lunge=null;}
     if(s.melee){s.melee.remaining-=dt;if(s.melee.remaining<=EPS){const melee=s.melee;s.melee=null;melee.fire();}}
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){const pending=s.pending;s.pending=null;pending.fire();}}
+    if(r.family==='slosher')this.slosh=s.pending?Math.max(0,a.weapon.windup-s.pending.remaining):-1;
     if(a.form!=='kid'||input.sub||this.aimingSub){
       this.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;
       s.pressed=!!input.fire;return;
