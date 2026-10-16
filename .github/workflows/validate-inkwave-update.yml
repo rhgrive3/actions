@@ -478,6 +478,11 @@ jobs:
         run: |
           node scripts/benchmark-inkwave-motion-caches.mjs --site .built-site/_site --browser chromium --out "$CI_STORAGE/evidence/motion-cache-chromium.json"
           node scripts/benchmark-inkwave-motion-caches.mjs --site .built-site/_site --browser webkit --out "$CI_STORAGE/evidence/motion-cache-webkit.json"
+      - name: Verify mobile post depth allocation and exact pixels in Chromium and WebKit
+        if: matrix.suite == 'active'
+        run: |
+          node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser chromium --out "$CI_STORAGE/evidence/post-depth-chromium.json"
+          node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser webkit --out "$CI_STORAGE/evidence/post-depth-webkit.json"
       - name: Verify browser movement speed across directions and native firing/rolling transitions
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-movement-speed.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/movement-speed" --profile-dir "$CI_STORAGE/cache/movement-speed"
@@ -604,6 +609,7 @@ jobs:
             'startup':['startup/startup-browser-result.json'],
           }[suite]
           if suite=='active': checks.extend(['motion-cache-chromium.json','motion-cache-webkit.json','native-normal-webkit/native-normal-browser.json'])
+          if suite=='active': checks.extend(['post-depth-chromium.json','post-depth-webkit.json'])
           runtime_performance=os.environ['RUNTIME_PERFORMANCE']=='true'
           if suite=='active' and runtime_performance:
             checks.extend(['runtime-before/runtime-result.json','runtime-after/runtime-result.json','runtime-comparison.json'])
