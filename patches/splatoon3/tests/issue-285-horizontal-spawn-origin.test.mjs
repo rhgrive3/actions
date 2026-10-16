@@ -30,7 +30,7 @@ test('#285 twelve main horizontal globs have seeded spatial width before integra
 test('#285 pinned horizontal SpawnPositionWidth is a total source span',async()=>{
  const f=await fixture({fidelity:true,floor:false}),a=f.make('roller',{x:1,y:4,z:1});
  a.weaponRunner.s3FlickVertical=false;
- const raw=a.weapon.ballistics?.raw ?? f.profile?.weaponsFidelityCompletion?.weapons?.roller;
+ const raw=f.profile.weaponsFidelityCompletion.weapons.roller;
  const units=raw?.WideSwingUnitGroupParam?.Unit;
  assert.equal(units?.[0]?.SpawnPositionWidth,0.8);
  assert.equal(units[0].SpawnPositionWidth/5,0.16);
