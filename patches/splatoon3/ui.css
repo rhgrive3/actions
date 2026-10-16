@@ -517,3 +517,5 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results > :is(.iw-res__head, .iw-res__body) { position: relative; z-index: 1; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns > .iw-btn--wide { height: auto; min-height: 56px; }
+/* the key hints sit top-right on results: at the bottom they covered the end of the action row */
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results > .iw-prompts { top: calc(var(--u) * 2.2 + var(--sat)); bottom: auto; }
