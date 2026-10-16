@@ -5,12 +5,14 @@ import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
 import {build} from 'esbuild';
 import {NATIVE_RUNTIME_EXTERNALS} from './lib/inkwave-native-stages.mjs';
 import {fileURLToPath} from 'node:url';
 const option=n=>{const i=process.argv.indexOf(n);assert.ok(i>=0&&process.argv[i+1],n+' required');return path.resolve(process.argv[i+1]);};
 const site=option('--site'),out=option('--evidence-dir');fs.mkdirSync(out,{recursive:true});
+const browserIndex=process.argv.indexOf('--browser'),engine=browserIndex<0?'chromium':process.argv[browserIndex+1];
+assert.ok(['chromium','webkit'].includes(engine),'--browser chromium or webkit');
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
@@ -43,7 +45,7 @@ const server=http.createServer((req,res)=>{try{
 }catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 try{
- browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ browser=await ({chromium,webkit}[engine]).launch({headless:true,...(engine==='chromium'&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:engine==='chromium'?['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']:[]});
  const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));
  await page.goto('http://127.0.0.1:'+server.address().port+'/');
  const result=await page.evaluate(async({base,baselinePath,candidatePath})=>{
@@ -97,6 +99,6 @@ try{
   assert.equal(after.counts.pixelBytes* (reconstruct?2:1),before.counts.pixelBytes);
   for(const side of [before,after]){assert.equal(side.counts.bitmaps,side.counts.closed);assert.equal(side.counts.disposed,1);}
  }
- const report={status:'passed',browser:browser.version(),contentHash:manifest.contentHash,revision:manifest.build.revision,baselineHash,candidateHash:hash(candidate),nativeInputCount:Object.keys(nativeInputs).length,nativeInputsHash:hash(JSON.stringify(nativeInputs)),emissionHashes:{before:hash(beforeModule),after:hash(afterModule)},scope:'Controlled PNG data through a separately emitted loader entry bound to production inputs, with real ImageBitmap, OffscreenCanvas and WebGL normal-map rendering; exact decoded and rendered pixel hashes. Not a full-site stage-loading run, browser RSS, whole-game FPS or physical-device evidence.',...result,artifacts:[...receipts].sort()};
+ const report={status:'passed',engine,browser:browser.version(),contentHash:manifest.contentHash,revision:manifest.build.revision,baselineHash,candidateHash:hash(candidate),nativeInputCount:Object.keys(nativeInputs).length,nativeInputsHash:hash(JSON.stringify(nativeInputs)),emissionHashes:{before:hash(beforeModule),after:hash(afterModule)},scope:'Controlled PNG data through a separately emitted loader entry bound to production inputs, with real ImageBitmap, OffscreenCanvas and WebGL normal-map rendering; exact decoded and rendered pixel hashes. Not a full-site stage-loading run, browser RSS, whole-game FPS or physical-device evidence.',...result,artifacts:[...receipts].sort()};
  fs.writeFileSync(path.join(out,'native-normal-browser.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({status:report.status,cases:report.rows.length,browser:report.browser}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

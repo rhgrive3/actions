@@ -1,0 +1,81 @@
+{
+  "scope": "Diagnostic only: random RGBA PNG, same flipY/high resize options; not adopted in production",
+  "engines": [
+    {
+      "name": "chromium",
+      "browser": "156.0.8078.4",
+      "result": [
+        {
+          "w": 257,
+          "h": 129,
+          "rw": 64,
+          "rh": 32,
+          "changed": 0,
+          "max": 0
+        },
+        {
+          "w": 511,
+          "h": 127,
+          "rw": 127,
+          "rh": 32,
+          "changed": 0,
+          "max": 0
+        },
+        {
+          "w": 1024,
+          "h": 1024,
+          "rw": 256,
+          "rh": 256,
+          "changed": 0,
+          "max": 0
+        },
+        {
+          "w": 1025,
+          "h": 31,
+          "rw": 256,
+          "rh": 8,
+          "changed": 0,
+          "max": 0
+        }
+      ]
+    },
+    {
+      "name": "webkit",
+      "browser": "27.2",
+      "result": [
+        {
+          "w": 257,
+          "h": 129,
+          "rw": 64,
+          "rh": 32,
+          "changed": 785,
+          "max": 32
+        },
+        {
+          "w": 511,
+          "h": 127,
+          "rw": 127,
+          "rh": 32,
+          "changed": 1592,
+          "max": 36
+        },
+        {
+          "w": 1024,
+          "h": 1024,
+          "rw": 256,
+          "rh": 256,
+          "changed": 11792,
+          "max": 19
+        },
+        {
+          "w": 1025,
+          "h": 31,
+          "rw": 256,
+          "rh": 8,
+          "changed": 423,
+          "max": 13
+        }
+      ]
+    }
+  ]
+}
