@@ -57,8 +57,8 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
       "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
-      "G.audio?.play('hit_marker', { volume: 0.6, pitch: blasterHitCuePitch(attacker, weaponId) });",'Blaster hit marker articulation');
-    code="import { blasterHitCuePitch } from '../../patches/splatoon3/runtime/audio/blaster-hit.mjs';\n"+code;
+      "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
+    // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
     code="import { installOriginalAudioScore } from '../../patches/splatoon3/runtime/audio/music-score.mjs';\n"+code;
