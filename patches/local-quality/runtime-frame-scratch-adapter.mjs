@@ -1,4 +1,4 @@
-// Build-time-only allocation elimination in unconditional frame work.
+// Build-time-only allocation and loop-invariant elimination in unconditional frame work.
 // Keeps frame cadence, visual output, draw ordering and control flow unchanged.
 // Source anchors are protected; unknown upstream revisions fail the build.
 export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
@@ -86,6 +86,120 @@ export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
     }
     return null;`,
       'scan squad fallback without allocating a filtered actor list');
+  }
+
+  if (rel === 'src/game/character.js') {
+    // The zero-force fixed point is invariant for ordinary finite time steps.
+    patch(
+      `function spr(S, i, target, hz, zeta, dt) {
+  const w = TAU * hz, k = w * w, c = 2 * zeta * w;
+  let x = S[i], v = S[i + 1];`,
+      `function spr(S, i, target, hz, zeta, dt) {
+  let x = S[i], v = S[i + 1];
+  if (x === target && v === 0 && Number.isFinite(dt) && Number.isFinite(hz) && Number.isFinite(zeta)) return x;
+  const w = TAU * hz, k = w * w, c = 2 * zeta * w;`,
+      'short-circuit settled Euler spring');
+    patch(
+      `function sprA(S, i, target, hz, zeta, dt) {
+  const w = TAU * hz, x0 = S[i] - target, v0 = S[i + 1];`,
+      `function sprA(S, i, target, hz, zeta, dt) {
+  const x0 = S[i] - target, v0 = S[i + 1];
+  if (x0 === 0 && v0 === 0 && Number.isFinite(dt) && Number.isFinite(hz) && Number.isFinite(zeta)) return S[i];
+  const w = TAU * hz;`,
+      'short-circuit settled analytic spring');
+    patch(
+      `      const breeze = HBR * (0.03 * Math.sin(t * 1.7 + si * 1.3) + 0.012 * Math.sin(t * 4.3 + si * 2.1));
+      for (let k = 0; k < HAIR_SEGS; k++) {
+        const i = (si * HAIR_SEGS + k) * 3;
+        const gain = k === 0 ? GAIN : k === 1 ? GAIN1 : GAIN2;
+        const ine = (k === 0 ? 0.55 : k === 1 ? 0.3 : 0.15) * clamp(1.2 - m.K * 0.3, 0.3, 1) * HINE;
+        hx[i] -= rx * ine; hx[i + 1] -= ry * ine * 0.5; hx[i + 2] -= rz * ine;
+        const K = 170 * HK * m.K * (k === 0 ? 1 : k === 1 ? 0.75 : 0.55) / clamp(m.len / 0.22, 0.6, 1.6); const D = 2 * HZ * Math.sqrt(K);
+        let gx = tx * gain + breeze * 0.3, gy = ty * gain, gz = tz * gain + breeze * 0.5;
+        const j = (si * (HAIR_SEGS + 1) + k) * 3;
+        if (idleL > 0.01) {
+          const w = idleL * 0.03 * Math.sin(wv - 0.6 * k + this.hairPh[si]) * clamp(1.6 - m.K * 0.4, 0.3, 1);`,
+      `      const breeze = HBR * (0.03 * Math.sin(t * 1.7 + si * 1.3) + 0.012 * Math.sin(t * 4.3 + si * 2.1));
+      const ineClamp = clamp(1.2 - m.K * 0.3, 0.3, 1), lenRatio = clamp(m.len / 0.22, 0.6, 1.6);
+      const kBase = 170 * HK * m.K, idleClamp = clamp(1.6 - m.K * 0.4, 0.3, 1), phaseSi = this.hairPh[si];
+      for (let k = 0; k < HAIR_SEGS; k++) {
+        const i = (si * HAIR_SEGS + k) * 3;
+        const gain = k === 0 ? GAIN : k === 1 ? GAIN1 : GAIN2;
+        const ine = (k === 0 ? 0.55 : k === 1 ? 0.3 : 0.15) * ineClamp * HINE;
+        hx[i] -= rx * ine; hx[i + 1] -= ry * ine * 0.5; hx[i + 2] -= rz * ine;
+        const K = kBase * (k === 0 ? 1 : k === 1 ? 0.75 : 0.55) / lenRatio; const D = 2 * HZ * Math.sqrt(K);
+        let gx = tx * gain + breeze * 0.3, gy = ty * gain, gz = tz * gain + breeze * 0.5;
+        const j = (si * (HAIR_SEGS + 1) + k) * 3;
+        if (idleL > 0.01) {
+          const w = idleL * 0.03 * Math.sin(wv - 0.6 * k + phaseSi) * idleClamp;`,
+      'hoist hair strand invariants');
+    patch(
+      `        const K = 95 * 0.7 * m.K / clamp(m.len / 0.22, 0.6, 1.6), D = 2 * 0.24 * Math.sqrt(K);
+        const jt = (si * (HAIR_SEGS + 1) + HAIR_SEGS) * 3, coil = idleL * 0.08 * Math.sin(wv * 0.95 + this.hairPh[si] * 1.7 - 1.8);`,
+      `        const K = 95 * 0.7 * m.K / lenRatio, D = 2 * 0.24 * Math.sqrt(K);
+        const jt = (si * (HAIR_SEGS + 1) + HAIR_SEGS) * 3, coil = idleL * 0.08 * Math.sin(wv * 0.95 + phaseSi * 1.7 - 1.8);`,
+      'reuse tip length ratio and phase');
+    // kid scale/quaternion/position are authored together before face and hair.
+    patch(
+      '    this.kid.position.y += this.kidLift;\n    // inverse kid transform (root space → kid space)',
+      '    this.kid.position.y += this.kidLift;\n    this.kid.updateMatrix();\n    // inverse kid transform (root space → kid space)',
+      'compose local kid matrix after pose transform');
+    patch(
+      '    if (A.on) {\n      this.kid.updateMatrix();',
+      '    if (A.on) {',
+      'reuse matrix for face');
+    patch(
+      '    this.model.updateWorldMatrix(true, false);\n    this.kid.updateMatrix(); this.kid.matrixWorld.multiplyMatrices(this.model.matrixWorld, this.kid.matrix);',
+      '    this.model.updateWorldMatrix(true, false);\n    this.kid.matrixWorld.multiplyMatrices(this.model.matrixWorld, this.kid.matrix);',
+      'reuse matrix for hair');
+    patch(
+      '    this._headQW.copy(B.head.quaternion); this._headSet = true;\n    // ---- remember where the feet actually are (world) for seamless replanting after air / dances\n    this.kid.updateMatrix();',
+      '    this._headQW.copy(B.head.quaternion); this._headSet = true;\n    // ---- remember where the feet actually are (world) for seamless replanting after air / dances',
+      'reuse matrix for foot projection');
+  }
+  if (rel === 'src/game/motion/source-controller.js') {
+    patch(
+      ` directionClips(family,shooting,run){
+  const mode=run?'Run':'Walk',suffix=shooting?'Shoot':'Hold';
+  return SIDES.map((side,index)=>{
+   const exact=\`\${mode}\${side}\${suffix}_\${family}\`;
+   if(this.bank.clips.has(exact))return {name:exact,sourceDirection:side,rot:0};
+   const generic=\`\${mode}\${side}\${suffix}_Nrml\`;
+   // Missing directional family: use the observed full-body direction with a sourced weapon upper-body layer.
+   if(this.bank.clips.has(generic)){this.fallbacks.add(exact+' -> '+generic);return{name:generic,sourceDirection:side,rot:0};}
+   const walk=\`Walk\${side}\${suffix}_\${family}\`;
+   if(this.bank.clips.has(walk))return{name:walk,sourceDirection:side,rot:0};
+   const final=this.choose([\`Walk\${side}Hold_Nrml\`,'WalkHold_Nrml']);this.fallbacks.add(exact+' -> '+final);return{name:final,sourceDirection:side,rot:0};
+  });
+ }`,
+      ` directionClips(family,shooting,run){
+  const key=\`\${family}:\${shooting?1:0}:\${run?1:0}\`;
+  let cache=this._dirClipsCache;
+  if(!cache||this._dirClipsBank!==this.bank){this._dirClipsCache=cache=new Map();this._dirClipsBank=this.bank;}
+  const cached=cache.get(key);if(cached)return cached;
+  const mode=run?'Run':'Walk',suffix=shooting?'Shoot':'Hold';
+  const resolved=SIDES.map((side,index)=>{
+   const exact=\`\${mode}\${side}\${suffix}_\${family}\`;
+   if(this.bank.clips.has(exact))return {name:exact,sourceDirection:side,rot:0};
+   const generic=\`\${mode}\${side}\${suffix}_Nrml\`;
+   // Missing directional family: use the observed full-body direction with a sourced weapon upper-body layer.
+   if(this.bank.clips.has(generic)){this.fallbacks.add(exact+' -> '+generic);return{name:generic,sourceDirection:side,rot:0};}
+   const walk=\`Walk\${side}\${suffix}_\${family}\`;
+   if(this.bank.clips.has(walk))return{name:walk,sourceDirection:side,rot:0};
+   const final=this.choose([\`Walk\${side}Hold_Nrml\`,'WalkHold_Nrml']);this.fallbacks.add(exact+' -> '+final);return{name:final,sourceDirection:side,rot:0};
+  });
+  cache.set(key,resolved);return resolved;
+ }`,
+      'cache directional motion clips by bank and family');
+    patch(
+      `  this.directionTarget.set(this.pivoting?
+   (this.turnRate>=0?[0,0,1,0]:[0,0,0,1]):
+   [Math.max(0,this.localZ),Math.max(0,-this.localZ),Math.max(0,this.localX),Math.max(0,-this.localX)]);
+  let sum=this.directionTarget.reduce((a,b)=>a+b,0);if(sum<1e-10){this.directionTarget.set([1,0,0,0]);sum=1;}`,
+      `  if(this.pivoting){this.directionTarget[0]=0;this.directionTarget[1]=0;this.directionTarget[2]=this.turnRate>=0?1:0;this.directionTarget[3]=this.turnRate>=0?0:1;}
+  else{this.directionTarget[0]=Math.max(0,this.localZ);this.directionTarget[1]=Math.max(0,-this.localZ);this.directionTarget[2]=Math.max(0,this.localX);this.directionTarget[3]=Math.max(0,-this.localX);}
+  let sum=this.directionTarget[0]+this.directionTarget[1]+this.directionTarget[2]+this.directionTarget[3];if(sum<1e-10){this.directionTarget[0]=1;this.directionTarget[1]=0;this.directionTarget[2]=0;this.directionTarget[3]=0;sum=1;}`,
+      'populate directional target without arrays');
   }
   return code;
 }
