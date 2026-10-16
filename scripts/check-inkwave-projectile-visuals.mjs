@@ -161,20 +161,26 @@ async function openGameContext({ mobile = false } = {}) {
     // In SwiftShader an intro frame can take over a second to render. Finish
     // only the noninteractive 4.2s native Turf intro through Game._frame while
     // suppressing those cinematic renders. Never fast-forward live gameplay.
-    await page.waitForFunction(() => {
+    const admissionReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return G?.mode === 'match' && m === G.match &&
         (m?.state === 'intro' || m?.state === 'playing') &&
         !m.attract && m.local?.isLocal && m.controller && g.debug &&
         G.projectiles && G.renderer;
-    }, null, { timeout: NATIVE_BOOT_TIMEOUT_MS, polling: 250 });
+    };
+    // SwiftShader may finish the transition between timer ticks. Probe once
+    // synchronously first, then retain the identical strict timed gate.
+    if (!(await page.evaluate(admissionReady)))
+      await page.waitForFunction(admissionReady, null, { timeout: NATIVE_BOOT_TIMEOUT_MS, polling: 250 });
     const introTransition = await page.evaluate(completeNativeTurfIntro);
     (report.provenance.introTransitions ||= []).push({ mobile, ...introTransition });
-    await page.waitForFunction(() => {
+    const playingReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
         !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer;
-    }, null, { timeout: NATIVE_BOOT_TIMEOUT_MS, polling: 250 });
+    };
+    if (!(await page.evaluate(playingReady)))
+      await page.waitForFunction(playingReady, null, { timeout: NATIVE_BOOT_TIMEOUT_MS, polling: 250 });
   } catch (error) {
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
@@ -1096,7 +1102,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
       fireCalls: 0, renderSamples: 0, renderCalls: [], triangles: [], raf: [], maxProjectiles: 0,
       firstFrame: null, frameStates: [], blurEvents: 0, focusEvents: 0, visibilityChanges: [] };
     window.__inkwavePerf = { active: false, warming: false, raf: [], frames: [], loopTimestamps: [], projectileMs: [], renderMs: [], calls: [], triangles: [],
-      visualGeometryMs: [], visualBodies: [], visualVertices: [], nonemptyVisualRenders: 0,
+      visualGeometryMs: [], visualBodies: [], visualVertices: [], visualOwnerCounts: [], nonemptyVisualRenders: 0,
       projectileUpdates: 0, nonemptyProjectileUpdates: 0, fireCalls: 0, maxProjectiles: 0, gpuQueries: [], timer: null };
     const perf = window.__inkwavePerf;
     perf.warmup = warmup;
@@ -1230,7 +1236,17 @@ async function runFiringPerformance({ mobile = false } = {}) {
         if (perf.active) {
           perf.renderMs.push(performance.now() - t); perf.calls.push(G.renderer.info.render.calls); perf.triangles.push(G.renderer.info.render.triangles);
           const visuals = P.projectileVisuals;
-          const bodies = visuals ? visuals.mesh.visible ? visuals.bodies : 0 : P.blobs?.count ?? 0;
+          const history = visuals?.mesh?.visible ? visuals.bodies : 0;
+          // Current S3 projectile silhouettes and installed VTF volumes are
+          // legitimate GPU presentation owners. A present history renderer
+          // often intentionally owns zero heads while those meshes draw them.
+          const shape = P.s3ShapeCounts || {};
+          const s3 = ['body','slashH','slashV','shell','core','sparkles','sheets','drills']
+            .reduce((sum, key) => sum + (Number.isFinite(shape[key]) && shape[key] > 0 ? shape[key] : 0), 0);
+          const volume = G.fx?.inkVolumes?.isInkVolumes ? Math.max(0, G.fx.inkVolumes.metrics?.active ?? 0) : 0;
+          const legacy = Math.max(0, P.blobs?.count ?? 0);
+          const bodies = history + s3 + volume + legacy;
+          perf.visualOwnerCounts.push({ history, s3, volume, legacy });
           perf.visualBodies.push(bodies);
           perf.visualVertices.push(visuals?.stats.vertexCount ?? null);
           if (bodies > 0) perf.nonemptyVisualRenders++;
@@ -1354,6 +1370,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
       visualGeometryCpuMs: perf.visualGeometryMs,
       visualBodies: perf.visualBodies,
       visualVertices: perf.visualVertices,
+      visualOwnerCounts: perf.visualOwnerCounts,
       nonemptyVisualRenders: perf.nonemptyVisualRenders,
       visualBackend: G.projectiles.projectileVisuals ? 'source-aware-history' : 'legacy-native',
       renderCalls: perf.calls,
