@@ -110,6 +110,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
         // only to Character pose reads, never mutate the gameplay runner.
         const cs=target.a?.weapon?.catalogRecord?.family === 'dualies' ? target.catalogState : null;
         if (name === 'dodge' && cs?.roll) return cs.roll;
+        if (name === '_dodgeDir' && cs?.roll) return cs.roll.direction;
         if (name === 's3Turret' && (character.s3RemoteTurretPose === true || cs?.turret > 0)) return true;
         return name === 'lockT' && (target.s3Turret || character.s3RemoteTurretPose === true || cs?.turret > 0)
           ? Math.max(EPS, value || 0) : value;

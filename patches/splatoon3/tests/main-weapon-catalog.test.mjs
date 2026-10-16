@@ -172,7 +172,12 @@ test('catalog Dualies pass sourced root-space roll direction and duration to nat
   assert.ok(Math.abs(opts.x)<1e-9 && Math.abs(opts.z-1)<1e-9,'world right becomes root forward');
   assert.equal(opts.t,r.parameters.SideStepParam.MoveFrame/60,'animation uses source roll duration');
   assert.equal(a.weaponRunner.dodge,null,'physical native dodge state is not modified');
-  assert.ok(a.weaponRunner.catalogState.roll,'existing sourced physical roll is preserved');
+  const roll=a.weaponRunner.catalogState.roll;
+  assert.ok(roll,'existing sourced physical roll is preserved');
+  assert.equal(roll.dur,r.parameters.SideStepParam.MoveFrame/60);
+  assert.equal(roll.t,0,'source roll presentation starts with a zero-age clock');
+  f.tick(a);
+  assert.ok(Math.abs(roll.t-1/60)<1e-9,'actual fixed tick advances animation age');
   assert.ok(a.ink<ink,'existing sourced ink charge is preserved');
 });
 

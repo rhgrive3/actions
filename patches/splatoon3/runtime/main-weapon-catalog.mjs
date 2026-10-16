@@ -1199,7 +1199,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function dualies(runner,r,input,s,dt) {
     const a=runner.a,t=r.parameters.SideStepParam||{};
     if(s.roll){
-      const roll=s.roll;roll.remaining-=dt;
+      const roll=s.roll;roll.remaining-=dt;roll.t=Math.min(roll.dur,roll.t+dt);
       a.vel.x=roll.direction.x*roll.speed;a.vel.z=roll.direction.z*roll.speed;
       if(roll.remaining<=EPS)s.roll=null;
       if(!t.IsShootableInMove)return;
@@ -1216,7 +1216,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=state(this),t=r.parameters.SideStepParam||{};
     if(s.roll||s.rolls>=finite(t.RepeatCnt,2)||!pay(this,finite(t.InkConsume,.07)*100*inkMod(a)))return false;
     const duration=finite(t.MoveFrame,12)/HZ,direction=move.clone().setY(0).normalize();
-    s.roll={remaining:duration,speed:finite(t.MoveDist,5)/duration,direction};s.rolls++;
+    s.roll={remaining:duration,t:0,dur:duration,speed:finite(t.MoveDist,5)/duration,direction};s.rolls++;
     s.turret=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameMove_Last:t.UnrelaxFrameMove,32)/HZ;
     s.stop=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameNoSquid_Last:t.UnrelaxFrameNoSquid,32)/HZ+duration;
     a.vel.x=direction.x*s.roll.speed;a.vel.z=direction.z*s.roll.speed;
