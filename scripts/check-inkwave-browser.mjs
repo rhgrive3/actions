@@ -116,7 +116,7 @@ try {
   result.weaponAppearancePicker = await checkWeaponAppearancePicker({page,evidence});
   console.error('active browser: appearance picker passed');
   result.acceptedDefaultConsumption = await checkAcceptedDefaultConsumption({page,evidence,manifest});
-  console.error('active browser: twelve accepted defaults passed');
+  console.error('active browser: fourteen accepted defaults passed');
   const kitMenu=await page.evaluate(async()=>{
     const {CANONICAL_KITS}=await import(new URL('patches/splatoon3/runtime/canonical-kits-data.mjs',document.baseURI).href);
     localStorage.removeItem('inkwave.catalogue-kit.v1');

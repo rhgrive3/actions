@@ -4,6 +4,7 @@ export const ACCEPTED_DEFAULT_ROWS = Object.freeze([
  'Shooter_Expert_01','Shooter_QuickLong_01','Shooter_Long_01',
  'Maneuver_Gallon_01','Maneuver_Normal_02','Shelter_Compact_01',
  'Spinner_Downpour_01','Spinner_HyperShort_01','Spinner_Standard_01',
+ 'Spinner_Quick_01','Spinner_Quick_02',
 ]);
 // Called with the actual loaded game's public appearance/registry modules and
 // native Showcase. No replacement Character, renderer, geometry or selection.
@@ -49,7 +50,7 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
    out.rows.push({row,kit:kit.id,base:kit.baseId,preference:AP.weaponAppearancePreference(kit.id,storage),selected:AP.selectedWeaponAppearance(kit.id,storage),weaponModel:ch.weaponModel,appearance:ch.weaponAppearanceModel,modelId:w.def.modelId,modelVariantId:w.def.modelVariantId,drawn,poseFinite:true});
    delete out.current;
   }
-  check(out.rows.length===12&&new Set(out.rows.map(x=>x.row)).size===12,'twelve default receipts');
+  check(out.rows.length===14&&new Set(out.rows.map(x=>x.row)).size===14,'fourteen default receipts');
   return out;
  }catch(error){primary=error;error.defaultPartial=out;throw error;}
  finally{
