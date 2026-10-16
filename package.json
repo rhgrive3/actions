@@ -1,0 +1,167 @@
+{
+  "type": "module",
+  "private": true,
+  "sourceHead": "9fe55aa056d6b5c31773254a4796c7db50df02f8",
+  "files": [
+    {
+      "path": ".github/workflows/a4-remaining-native-acceptance.yml",
+      "sha256": "6e9c0c9c3277c539d8d6f743840c70071ebe9cb49b58e054382189e47b7782cf",
+      "bytes": 4078
+    },
+    {
+      "path": "a4-remaining-actor.test.mjs",
+      "sha256": "8556e07e42aab3cce22add0f9f8167c09225887524754669c08135be03a9abee",
+      "bytes": 10928
+    },
+    {
+      "path": "acceptance-plan.json",
+      "sha256": "46c8c42c8b3ddb571fae4b276c5bf98b729bcbf6db3a01fe0e2fec0d41424c27",
+      "bytes": 4574
+    },
+    {
+      "path": "build-binding.mjs",
+      "sha256": "d402e6f9d278bf589c4540d966ceaba6ad7e8ba011be0d975a3774581b237a2a",
+      "bytes": 2832
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "bytes": 2896
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "8489c6c48b0920bf8fc5eae956db21a8c87cbfdaf4a3faa21ed717fad4f52187",
+      "bytes": 1292
+    },
+    {
+      "path": "capture-gpu-lifecycle.mjs",
+      "sha256": "dada4755abe1cf88e2e985e35f8ff16ac031dddf6f5249b470a93954069ffa57",
+      "bytes": 1012
+    },
+    {
+      "path": "capture-gpu-lifecycle.test.mjs",
+      "sha256": "ac5bafa041823c95d4ee397b50430a456e0b23a82a8bdf28197c188a5dfa1642",
+      "bytes": 2931
+    },
+    {
+      "path": "capture-integration.mjs",
+      "sha256": "9308fbf3aeaa29e81751b73d0ac8c217000cf979ee6e0564d3a95b20705b1e71",
+      "bytes": 13852
+    },
+    {
+      "path": "capture-resources.mjs",
+      "sha256": "1d81047ab52414c60495bacf744db5985846ecdd1651913f7f6185379442c270",
+      "bytes": 478
+    },
+    {
+      "path": "capture-resources.test.mjs",
+      "sha256": "05048eed03677f582f1b6984e3922cd36bfa0eb659d58e1eca401947bf3a0d80",
+      "bytes": 1036
+    },
+    {
+      "path": "compact-receipt.mjs",
+      "sha256": "39764c4d5ad68d0f69bc26a77f7da54635c967ff52996262cc03fa1f70e98a79",
+      "bytes": 381
+    },
+    {
+      "path": "gcko/capture-contract.mjs",
+      "sha256": "bda9b6c54479d6c3b68327269e9d190a30821d72a7f8c101e25ba25157ccd5ea",
+      "bytes": 2858
+    },
+    {
+      "path": "gcko/capture-gcko.mjs",
+      "sha256": "d57ea0b18a200063854c1a70f0c708a1a9c92d9220353235ba87433abb8f44ba",
+      "bytes": 16089
+    },
+    {
+      "path": "gcko/capture.test.mjs",
+      "sha256": "ce29adbe183a02516d7e7f87e823ca3f736320af672406e924e669d3600056aa",
+      "bytes": 6871
+    },
+    {
+      "path": "gcko/contracts.test.mjs",
+      "sha256": "6e29a2891ddca49650ffdb84710c187d4b2b6d4d0fc60d65e930f21b92cd13d3",
+      "bytes": 2681
+    },
+    {
+      "path": "gcko/visible-pairs.mjs",
+      "sha256": "28d10ceef8d1ba6b4945117e891262a1665bac51be4b4b187a4434375a3f51b3",
+      "bytes": 1333
+    },
+    {
+      "path": "glitterz/capture-contract.mjs",
+      "sha256": "0c211d9e3e1b1b7bf3065b8ceade2d99f1904ebe8e8f4409555c2540fd3d7898",
+      "bytes": 3038
+    },
+    {
+      "path": "glitterz/capture-glitterz.mjs",
+      "sha256": "025873ccbdcd650b953e21897e2ce2587d5001e7788de89f62bc7ae33a938e07",
+      "bytes": 16470
+    },
+    {
+      "path": "glitterz/capture.test.mjs",
+      "sha256": "ecfbf0e8e8a955721fe05312ded33df64f5de26f542d955b862e6c49d2e92537",
+      "bytes": 7537
+    },
+    {
+      "path": "glitterz/contracts.test.mjs",
+      "sha256": "66025d753725dcb3f500d09b4ffe31e45c39a267c6417601e27b131af430ed01",
+      "bytes": 2695
+    },
+    {
+      "path": "glitterz/visible-pairs.mjs",
+      "sha256": "53fd1a21718afa09d6b046b88220dde925c656827c23ac3cde6e64e71b9bcc63",
+      "bytes": 1341
+    },
+    {
+      "path": "lanes.mjs",
+      "sha256": "1abea940fdd78fe0b89d6a9222e564bed311ec69dbbc2ca12b6805e8b8d1dba3",
+      "bytes": 1193
+    },
+    {
+      "path": "preflight.mjs",
+      "sha256": "7f7946bd138a4a22a1d11cb7cb128ca66b2321cf4b05ed4e1bf702d9f0c37af0",
+      "bytes": 1972
+    },
+    {
+      "path": "shared.test.mjs",
+      "sha256": "9b6bdeee0262af91159800a12abda197c028a19e8b66ad684b622eacf97c1f3f",
+      "bytes": 3399
+    },
+    {
+      "path": "test-count.mjs",
+      "sha256": "e454e5b9eda4074757eab0f92c32bd47ba4e1d4f9cfc25a5a38fce9226d29ba0",
+      "bytes": 708
+    },
+    {
+      "path": "test-count.test.mjs",
+      "sha256": "907d6897ed12c66b28a287022ac619d0f9dd6f0997977b707e07178ef4313190",
+      "bytes": 863
+    },
+    {
+      "path": "vipr/capture-contract.mjs",
+      "sha256": "2766cb65b9ee3ffb9d3f35a8858c1f2f25d532689684d3c444f1b6716010f52e",
+      "bytes": 2619
+    },
+    {
+      "path": "vipr/capture-vipr.mjs",
+      "sha256": "1ccb03b13fed9d7003b1838195b123578d51992ef44240ab2dea695268bd5da8",
+      "bytes": 15342
+    },
+    {
+      "path": "vipr/capture.test.mjs",
+      "sha256": "ebff5ec5ca66a500863b65ef2bff3e7c16668b9f2e3cca6901fc79bc94a49aaf",
+      "bytes": 6572
+    },
+    {
+      "path": "vipr/contracts.test.mjs",
+      "sha256": "c84a347eaf84355472b2d42061a2caaebe7975c602b0193be8be419c61854708",
+      "bytes": 2165
+    },
+    {
+      "path": "vipr/visible-pairs.mjs",
+      "sha256": "77a98201a0a54bb497407daaa9f374dd5c97d980a879dcd11ebd6a5b88dbc601",
+      "bytes": 1339
+    }
+  ]
+}

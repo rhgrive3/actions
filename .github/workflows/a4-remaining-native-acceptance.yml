@@ -1,0 +1,66 @@
+name: Review three remaining A4 native manual appearances
+on:
+  push:
+    branches: [review/a4-remaining-native-main9fe-20261016]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    if: github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/review/a4-remaining-native-main9fe-20261016'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: 9fe55aa056d6b5c31773254a4796c7db50df02f8
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools once
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Exact source and diagnostic preflight
+        run: |
+          mkdir -p evidence
+          node diagnostic/preflight.mjs
+          node --test diagnostic/build-binding.test.mjs diagnostic/capture-resources.test.mjs diagnostic/test-count.test.mjs diagnostic/shared.test.mjs diagnostic/capture-gpu-lifecycle.test.mjs diagnostic/vipr/capture.test.mjs diagnostic/vipr/contracts.test.mjs diagnostic/gcko/capture.test.mjs diagnostic/gcko/contracts.test.mjs diagnostic/glitterz/capture.test.mjs diagnostic/glitterz/contracts.test.mjs
+      - name: A4 existing actual source Actor acceptance
+        run: |
+          HEAVY_SOURCE="$PWD/candidate" HEAVY_EVIDENCE="$PWD/evidence" timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/a4-remaining-actor.test.mjs > evidence/source.tap
+          node diagnostic/test-count.mjs evidence/source.tap 6
+      - name: One production build
+        id: build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: A4 actual emitted Actor acceptance
+        id: emitted
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          HEAVY_SOURCE="$PWD/candidate" HEAVY_EVIDENCE="$PWD/evidence" INKWAVE_BUILT_SITE="$PWD/candidate-site" timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/a4-remaining-actor.test.mjs > evidence/emitted.tap
+          node diagnostic/test-count.mjs evidence/emitted.tap 6
+      - name: vipr eight native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.emitted.outcome == 'success' }}
+        run: timeout --signal=TERM --kill-after=10s 600s node diagnostic/capture-integration.mjs --lane vipr --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/vipr/images
+      - name: gcko eight native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.emitted.outcome == 'success' }}
+        run: timeout --signal=TERM --kill-after=10s 600s node diagnostic/capture-integration.mjs --lane gcko --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/gcko/images
+      - name: glitterz eight native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.emitted.outcome == 'success' }}
+        run: timeout --signal=TERM --kill-after=10s 600s node diagnostic/capture-integration.mjs --lane glitterz --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/glitterz/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a4-remaining-native-1491
+          path: evidence
+          if-no-files-found: error
