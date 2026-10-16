@@ -161,6 +161,34 @@ async function openGameContext({ mobile = false } = {}) {
     // In SwiftShader an intro frame can take over a second to render. Finish
     // only the noninteractive 4.2s native Turf intro through Game._frame while
     // suppressing those cinematic renders. Never fast-forward live gameplay.
+    // Playwright's browser-side waitForFunction timer can be starved by a
+    // long native SwiftShader render even after the game has reached "playing".
+    // Probe the exact same predicate from Node, with the same strict wall-clock
+    // budget, without relying on a browser timer/rAF callback.
+    const requireNativePhase = async (predicate, label) => {
+      const deadline = Date.now() + NATIVE_BOOT_TIMEOUT_MS;
+      let lastFailure = null;
+      while (Date.now() < deadline) {
+        let timeoutId;
+        try {
+          const observed = await Promise.race([
+            page.evaluate(predicate),
+            new Promise((_, reject) => {
+              timeoutId = setTimeout(() => reject(new Error('native phase evaluation budget exceeded')),
+                Math.max(1, deadline - Date.now()));
+            }),
+          ]);
+          if (observed && Date.now() <= deadline) return;
+        } catch (error) {
+          lastFailure = String(error);
+          if (page.isClosed()) break;
+        } finally { clearTimeout(timeoutId); }
+        const remaining = deadline - Date.now();
+        if (remaining > 0) await new Promise(resolve => setTimeout(resolve, Math.min(250, remaining)));
+      }
+      throw new Error(label + ' did not meet the full native match predicate within ' +
+        NATIVE_BOOT_TIMEOUT_MS + 'ms' + (lastFailure ? ': ' + lastFailure : ''));
+    };
     const admissionReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return G?.mode === 'match' && m === G.match &&
@@ -170,8 +198,7 @@ async function openGameContext({ mobile = false } = {}) {
     };
     // SwiftShader may finish the transition between timer ticks. Probe once
     // synchronously first, then retain the identical strict timed gate.
-    if (!(await page.evaluate(admissionReady)))
-      await page.waitForFunction(admissionReady, null, { timeout: NATIVE_BOOT_TIMEOUT_MS, polling: 250 });
+    await requireNativePhase(admissionReady, 'native Turf actor/controller admission');
     const introTransition = await page.evaluate(completeNativeTurfIntro);
     (report.provenance.introTransitions ||= []).push({ mobile, ...introTransition });
     const playingReady = () => {
@@ -179,8 +206,7 @@ async function openGameContext({ mobile = false } = {}) {
       return G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
         !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer;
     };
-    if (!(await page.evaluate(playingReady)))
-      await page.waitForFunction(playingReady, null, { timeout: NATIVE_BOOT_TIMEOUT_MS, polling: 250 });
+    await requireNativePhase(playingReady, 'native Turf playing transition');
   } catch (error) {
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
