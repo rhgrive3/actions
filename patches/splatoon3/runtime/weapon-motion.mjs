@@ -44,7 +44,9 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     const muzzle = Projectiles.prototype._muzzle, origin = new THREE.Vector3(), delta = new THREE.Vector3(), hit = new Hit();
     Projectiles.prototype._muzzle = function (actor, out) {
       muzzle.call(this, actor, out);
-      if (actor.weapon?.kind !== 'slosher') return out;
+      // Added Sloshers use kind='catalog' but need the same last-segment
+      // obstruction guard. Preserve the original legacy-only pose timing.
+      if (actor.weapon?.kind !== 'slosher' && actor.weapon?.catalogRecord?.family !== 'slosher') return out;
       // Native LOS omits its last .05 WU. The retimed bucket may otherwise
       // spawn inside that omitted wall sliver. Use the actual full segment,
       // keeping the native emitter and its existing fallback in free space.
@@ -77,7 +79,8 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
   // Presentation must not wait for a later remote slosh-flag snapshot.
   on?.('weapon:fire', ({ actor, weapon }) => {
     const ch = actor?.character, w = actor?.weapon;
-    if (weapon !== 'slosher' || !ch || ch.s3WeaponMotionEnabled === false || ch.weaponKind !== 'slosher' ||
+    const sourcedSlosh = w?.catalogRecord?.family === 'slosher' && weapon === w.catalogRecord.id;
+    if ((weapon !== 'slosher' && !sourcedSlosh) || !ch || ch.s3WeaponMotionEnabled === false || ch.weaponKind !== 'slosher' ||
         !actor.alive || actor.form !== 'kid' || actor.weaponRunner?.aimingSub || actor.specialActive) return;
     if (!(w.windup > 0 && w.fireInterval > w.windup)) return;
     const m = state(ch);
@@ -91,7 +94,9 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
   C._runner = function (s) {
     const r = runner.call(this, s);
     const remoteTurret = this.s3RemoteTurretPose === true;
-    if (this.s3WeaponMotionEnabled === false || !this.dual || !r || !(r.s3Turret || remoteTurret)) return r;
+    const catalog = r?.a?.weapon?.catalogRecord?.family === 'dualies' ? r.catalogState : null;
+    if (this.s3WeaponMotionEnabled === false || !this.dual || !r ||
+        !(r.s3Turret || remoteTurret || catalog?.roll || catalog?.turret > 0)) return r;
     // Character already has the correct stationary dualies stance. Its old
     // lockT-only input misses continued turret fire after movement unlocks.
     // Remote state is a Character-only view, never a gameplay-runner mutation.
@@ -101,8 +106,13 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
       const character = this;
       view = new Proxy(r, { get(target, name) {
         const value = Reflect.get(target, name, target);
-        if (name === 's3Turret' && character.s3RemoteTurretPose === true) return true;
-        return name === 'lockT' && (target.s3Turret || character.s3RemoteTurretPose === true)
+        // Catalogue Dualies own a separate physical roll/turret state. Expose it
+        // only to Character pose reads, never mutate the gameplay runner.
+        const cs=target.a?.weapon?.catalogRecord?.family === 'dualies' ? target.catalogState : null;
+        if (name === 'dodge' && cs?.roll) return cs.roll;
+        if (name === '_dodgeDir' && cs?.roll) return cs.roll.direction;
+        if (name === 's3Turret' && (character.s3RemoteTurretPose === true || cs?.turret > 0)) return true;
+        return name === 'lockT' && (target.s3Turret || character.s3RemoteTurretPose === true || cs?.turret > 0)
           ? Math.max(EPS, value || 0) : value;
       } });
       views.set(this, { runner: r, view });
@@ -149,7 +159,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     finally { this._dt = dt; }
   };
   C._poseDodge = function (P, elapsed) {
-    const r = runner.call(this);
+    const r = this._runner();
     if (this.s3WeaponMotionEnabled !== false && r && !r.dodge && !(r.lockT > 0) && !r.s3Turret
         && this.s3RemoteTurretPose !== true) {
       this.tumble = this.tumbleDrop = 0; return;
@@ -157,7 +167,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     return dodge.call(this, P, elapsed);
   };
   C._poseWeapon = function (dt, s) {
-    const result = poseWeapon.call(this, dt, s), r = runner.call(this, s);
+    const result = poseWeapon.call(this, dt, s), r = this._runner(s);
     if (this.s3WeaponMotionEnabled === false || !this.dual || !this.kidForm || !this.grounded || this.dance || r?.dodge) return result;
     // Nintendo's stationary post-slide pose is a deep planted crouch. The
     // public curve only drops the hips 0.05 world units. Calibrate the extra
