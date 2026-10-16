@@ -852,6 +852,24 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         }
       }
     }
+    // An upright vertical release can place the actual drum below the floor
+    // even after orientation search. Recover the remaining penetration from
+    // the live drum geometry, not a weapon-wide guessed height offset. Lift
+    // only the presentation wrist target, in character-local coordinates,
+    // and retain the native finite arm reach and left-hand alignment.
+    if (neededGround) {
+      const penetration = -.002 - bottom(bestQ);
+      if (penetration > .00001) {
+        delta.set(0, 1, 0).applyQuaternion(inverseHandQ.copy(this.kid.quaternion).invert());
+        const scale = this.kid.scale;
+        target.x += penetration * delta.x / scale.x;
+        target.y += penetration * delta.y / scale.y;
+        target.z += penetration * delta.z / scale.z;
+        delta.subVectors(target, rightOrigin);
+        if (delta.length() > reachR) target.copy(rightOrigin).add(delta.setLength(reachR));
+        alignLeft(bestQ);
+      }
+    }
     orientation.copy(bestQ);
     return solve.call(this, limb, target, pole, orientation, weight, index);
   };
