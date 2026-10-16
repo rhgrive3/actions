@@ -56,7 +56,10 @@ test('vertical release retains source swing speed until 56F recovery, including 
     r.update(dt,{fire:false});
     near(r.moveSpeed(),2.88);
     a.vel.set(0,0,0);
-    for(let j=0;j<8;j++)a._horizontal(dt,false,false);
+    // Air steering accelerates by one fixed increment each tick; 8 ticks
+    // produce 2.666... WU/s, while the 9th reaches the sourced 2.88 target.
+    // Preserve native acceleration rather than snapping to the target early.
+    for(let j=0;j<9;j++)a._horizontal(dt,false,false);
     near(a.vel.x,2.88); // P.airMinSpeed=4.6 must not erase Roller attack speed.
   }
   for(let i=0;i<5;i++)r.update(dt,{fire:false});
