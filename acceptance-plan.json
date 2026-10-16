@@ -1,0 +1,115 @@
+{
+  "head": "fd82e9fc65986e207d8939869f4a5687e2962fc7",
+  "tree": "aadfc9ea81df43cc755a9cfb85d95cafeccdd71d",
+  "registrySHA256": "de6ff82ad77e5def27b19aee6013992c29cb94bb25550795d5a16a9bf2b275a0",
+  "payload": [
+    {
+      "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+      "blob": "3425c3e0a9e3296e0770a08e37b4d87d17ad2a22",
+      "sha256": "398bf573c5609a2140f5ad8d799c8154d9bf6ac24a21593edc213a966f405e13"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "blob": "fbc6258ae783455a3b977e7472358f8a6ec1ad9f",
+      "sha256": "6288d695c6a8493e9b183a33317fd8b6a3963faeb1635ea2519d4cd94df88e8c"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/kit.mjs",
+      "blob": "c29be833c719915d9db1c2f5da9c3f6f74621e33",
+      "sha256": "b91c581e911399a515955cdcbc95565c0a7040cb29f530142bb7b68a8f103fc1"
+    },
+    {
+      "path": "scripts/build-inkwave.mjs",
+      "blob": "46135304625847c1afb02c236cbf40e2f5db6c49",
+      "sha256": "54adcae53173c0dea58b36e4715fa0afe8f096f1dea586b250933dc53cd0542e"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/shooter-blaster-variants.mjs",
+      "blob": "099fec1b3ff7625eb43fbda9f626fcfa5c237fb2",
+      "sha256": "94a846196199d702e53aebf150972ef769fd6cf688f2c1715f1d28767d553812"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variant-shooter-surfaces.mjs",
+      "blob": "fea0205a4280314f110fe28f75e26240d39b2472",
+      "sha256": "bcb8cecdf20a55bfeb208603f812a814f074da2fb2fcbdd63fd5bbe71eca1681"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/shooters-b.mjs",
+      "blob": "b028f7d676f984775cb831c557006a23b457800b",
+      "sha256": "217ce3248e0370019fe9c6d33a7c15d56276f452877cffde94cbc3be460e5ed3"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-appearance.mjs",
+      "blob": "74655f396a22240b31c3a27258f8fcbd21c9a8f4",
+      "sha256": "4fef8568c3735a8e26d375a0d0c184cfdd22fcbf42937704c5dc4a2417b18bfc"
+    }
+  ],
+  "variantIds": [
+    "Stringer_Normal_02",
+    "Charger_Quick_01",
+    "Maneuver_Short_02",
+    "Stringer_Short_02",
+    "Shelter_Normal_01",
+    "Slosher_Washtub_01",
+    "Shelter_Wide_01",
+    "Shelter_Wide_02",
+    "Shelter_Focus_01",
+    "Stringer_Short_01",
+    "Stringer_Normal_01",
+    "Stringer_Explosion_01",
+    "Roller_Heavy_01",
+    "Slosher_Diffusion_01",
+    "Shooter_Blaze_01",
+    "Shooter_QuickMiddle_01",
+    "Shooter_Short_01",
+    "Shooter_Precision_01",
+    "Saber_Heavy_01",
+    "Saber_Normal_01",
+    "Saber_Normal_02",
+    "Saber_Lite_02",
+    "Slosher_Launcher_01",
+    "Slosher_Bathtub_01",
+    "Shooter_TripleQuick_01",
+    "Shooter_TripleMiddle_01",
+    "Maneuver_Short_01",
+    "Maneuver_Normal_01",
+    "Maneuver_Stepper_01",
+    "Maneuver_Long_01",
+    "Blaster_LightShort_01",
+    "Blaster_Precision_01",
+    "Blaster_Middle_01",
+    "Blaster_Light_01",
+    "Charger_Normal_01",
+    "Charger_NormalScope_01",
+    "Charger_Long_01",
+    "Charger_LongScope_01",
+    "Charger_Keeper_01",
+    "Charger_Light_01",
+    "Charger_Pencil_01",
+    "Charger_Normal_02",
+    "Charger_NormalScope_02",
+    "Slosher_Strong_01",
+    "Roller_Hunter_01",
+    "Spinner_Serein_01",
+    "Spinner_Hyper_01",
+    "Spinner_Hyper_02",
+    "Shooter_Expert_01",
+    "Shooter_QuickLong_01",
+    "Shooter_Long_01",
+    "Maneuver_Gallon_01",
+    "Maneuver_Normal_02",
+    "Shelter_Compact_01",
+    "Spinner_Downpour_01",
+    "Spinner_HyperShort_01",
+    "Spinner_Standard_01",
+    "Spinner_Quick_01",
+    "Spinner_Quick_02"
+  ],
+  "baseModelCount": 65,
+  "scope": "Existing unselected manual Colorz/FRZN/Foil, normal local Actor and two real Foil modes;16 minimal paired frames. No default adoption.",
+  "rawDeclaredTriangleDeltas": {
+    "Shooter_Blaze_02": 288,
+    "Shooter_Expert_02": 237,
+    "Shooter_Flash_01": 0
+  }
+}

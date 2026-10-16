@@ -1,0 +1,56 @@
+name: Review existing Colorz FRZN Foil manual appearances
+on:
+  push:
+    branches: [review/colorz-frzn-foil-native-20261016]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: fd82e9fc65986e207d8939869f4a5687e2962fc7
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Frozen package and controls
+        run: |
+          node diagnostic/preflight.mjs candidate
+          node --test diagnostic/test-count.test.mjs diagnostic/capture-resources.test.mjs diagnostic/capture.test.mjs diagnostic/contract.test.mjs diagnostic/entry.test.mjs diagnostic/capture-gpu-lifecycle.test.mjs diagnostic/summary.test.mjs diagnostic/workflow.test.mjs diagnostic/build-binding.test.mjs diagnostic/capture-checkpoint.test.mjs
+      - name: Exact source local Actor firing and paint ownership
+        run: |
+          mkdir -p evidence
+          SHOOTER_SOURCE="$PWD/candidate" SHOOTER_SIGNATURES="$PWD/evidence/source-summary.json" node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap diagnostic/actor.test.mjs > evidence/source.tap
+          node diagnostic/test-count.mjs evidence/source.tap
+      - name: One production build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: Exact emitted local Actor firing and paint ownership
+        run: |
+          SHOOTER_SIGNATURES="$PWD/evidence/emitted-summary.json" SHOOTER_SOURCE="$PWD/candidate" INKWAVE_BUILT_SITE="$PWD/candidate-site" node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap diagnostic/actor.test.mjs > evidence/emitted.tap
+          node diagnostic/test-count.mjs evidence/emitted.tap
+          node diagnostic/summary.mjs evidence/source-summary.json evidence/emitted-summary.json
+      - name: Normal-light sixteen native mode views
+        run: node diagnostic/capture-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: colorz-frzn-foil-manual-acceptance
+          path: evidence
+          if-no-files-found: error
