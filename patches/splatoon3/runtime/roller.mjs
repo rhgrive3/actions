@@ -859,9 +859,11 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     // and retain the native finite arm reach and left-hand alignment.
     if (neededGround) {
       const penetration = -.002 - bottom(bestQ);
-      if (penetration > .00001) {
+      const scale = this.kid.scale;
+      // During a form transition the source skeleton can scale kid to zero.
+      // A visible roller grip never divides by a collapsed or invalid axis.
+      if (penetration > .00001 && [scale.x, scale.y, scale.z].every(v => Number.isFinite(v) && Math.abs(v) > 1e-4)) {
         delta.set(0, 1, 0).applyQuaternion(inverseHandQ.copy(this.kid.quaternion).invert());
-        const scale = this.kid.scale;
         target.x += penetration * delta.x / scale.x;
         target.y += penetration * delta.y / scale.y;
         target.z += penetration * delta.z / scale.z;
