@@ -104,7 +104,7 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
       const mist=isSquid?1:toxicMistScale(this);
       // Squid airborne momentum remains unchanged until its retail Mist
       // rule is established; do not introduce an inferred velocity cap.
-      const target = isSquid ? Math.max(P.squidDrySpeed,sp) : Math.max(this.weaponRunner.moveSpeed(), P.airMinSpeed*mist);
+      const target = isSquid ? Math.max(P.squidDrySpeed,sp) : airborneHumanTargetSpeed(this, P, mist);
       const tvx = mh > 0.01 ? (mv.x / mh) * target * mag : 0, tvz = mh > 0.01 ? (mv.z / mh) * target * mag : 0;
       const dvx = tvx - vx, dvz = tvz - vz, dl = Math.hypot(dvx, dvz);
       const rate = P.airAccel * attackAirRateScale(this, P) * dt;
@@ -126,7 +126,7 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     if (onEnemy) vt = Math.min(vt, P.enemyInkSpeed*mist); // enemy ink limits target speed, not the selected S3 acceleration
     if (!isSquid) shedFormExitOverspeed(this, vt, dt); // swim speed carried out of a surfacing squid
     stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);`, 'S3 grounded vector acceleration');
-    return "import { toxicMistScale } from '../../patches/splatoon3/runtime/toxic-mist.mjs';\nimport { attackAirRateScale, groundAcceleration, integrateMovement, rollingMovementActive, shedFormExitOverspeed, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
+    return "import { toxicMistScale } from '../../patches/splatoon3/runtime/toxic-mist.mjs';\nimport { airborneHumanTargetSpeed, attackAirRateScale, groundAcceleration, integrateMovement, rollingMovementActive, shedFormExitOverspeed, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
     replace('    if (this.rolling) return lerp(w.rollSpeed * 0.5, w.rollSpeed, smoothstep(0, 0.45, this.rollT));',
