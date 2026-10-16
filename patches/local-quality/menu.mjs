@@ -34,14 +34,19 @@ export function installMenuQuality(Menus, env=globalThis){
   const SCROLL_Y=/(auto|scroll)/;
   const scrollers=(m,f,root)=>{
     const c=m._ringHosts;
-    if(c&&c.f===f&&c.root===root&&c.input===m._input)return c.list;
+    // Responsive breakpoints and touch-layout classes can change which
+    // ancestors scroll while focus remains unchanged. Read only these cheap
+    // layout tokens each tick; recompute ancestor styles only when they change.
+    const width=env.innerWidth,height=env.innerHeight;
+    const uiClass=m.el?.className,htmlClass=env.document?.documentElement?.className;
+    if(c&&c.f===f&&c.root===root&&c.input===m._input&&c.width===width&&c.height===height&&c.uiClass===uiClass&&c.htmlClass===htmlClass)return c.list;
     const list=[];
     for(let e=f.parentElement;e;e=e.parentElement){
       const cs=env.getComputedStyle?.(e);
       if(cs&&(SCROLL_Y.test(cs.overflowY)||SCROLL_Y.test(cs.overflowX)))list.push(e);
       if(e===root)break;
     }
-    m._ringHosts={f,root,input:m._input,list};
+    m._ringHosts={f,root,input:m._input,width,height,uiClass,htmlClass,list};
     return list;
   };
   const home=m=>{
