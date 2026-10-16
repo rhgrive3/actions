@@ -42,7 +42,8 @@ export function observeReopenedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
    out.current={row,kit:kit.id,phase:sc.phase,pending:sc.hopWeapon,weapon:sc.weapon,model:ch?.weaponModel,appearance:ch?.weaponAppearanceModel,modelId:w?.def?.modelId,modelVariantId:w?.def?.modelVariantId,mounted:ch?.root?.parent===sc.scene,bodyMatches:w?.body?.geometry===w?.def?.body,staticBodyMatches:w?.body?.geometry===w?.def?.bodyStatic};
    check(sc.weapon===kit.id&&ch?.weaponAppearancePreview===true,'preview routing '+row);
    check(ch!==retired,'fresh native owner '+row);
-   check(ch.weaponModel===expected&&ch.weaponAppearanceModel===expected&&w?.def?.modelId===kit.baseId&&(phase==='base'?w.def.modelVariantId==null:w.def.modelVariantId===row),'Character consumed '+phase+' '+row);
+   check(R.weaponModelKey(kit.id)===row,'canonical kit model '+row);
+   check(ch.weaponModel===row&&ch.weaponAppearanceModel===expected&&w?.def?.modelId===kit.baseId&&(phase==='base'?w.def.modelVariantId==null:w.def.modelVariantId===row),'Character consumed '+phase+' '+row);
    // Native _buildWeapon uses the authored stationary channel near the camera;
    // def.body additionally merges animated parts for the far/tool representation.
    check(ch.root.parent===sc.scene&&w.body?.geometry===(w.def.bodyStatic||w.def.body),'mounted native geometry '+row);

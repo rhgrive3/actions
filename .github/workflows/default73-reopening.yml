@@ -1,7 +1,7 @@
 name: Verify fourteen saved default appearances reopen
 on:
   push:
-    branches: [review/default73-reopening-20261016]
+    branches: [review/default73-reopening-fix-20261016]
 permissions:
   contents: read
 jobs:
@@ -31,7 +31,7 @@ jobs:
         run: |
           node diagnostic/prepare.mjs candidate execution evidence
           node --max-old-space-size=128 --test diagnostic/workflow.test.mjs > evidence/workflow-controls.tap
-      - name: Thirteen reopening controls
+      - name: Eighteen reopening controls
         run: |
           node --max-old-space-size=128 --preserve-symlinks --preserve-symlinks-main --test --test-reporter=tap execution/scripts/tests/inkwave-default-reopening.test.mjs > evidence/controls.tap
           node diagnostic/test-count.mjs evidence/controls.tap

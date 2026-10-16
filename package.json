@@ -5,8 +5,8 @@
   "frozenFiles": [
     {
       "path": "files/scripts/lib/inkwave-default-reopening.mjs",
-      "sha256": "971e3a3c695b8a804966050d2b29e42e594fe6c22e930382f4636bf63242effb",
-      "bytes": 8011
+      "sha256": "ccbe367312081a1e25c03e477e44a9e0d3a0d9e3928bf3e0e0173f3804799f2f",
+      "bytes": 8075
     },
     {
       "path": "files/scripts/check-default-reopening.mjs",
@@ -15,8 +15,8 @@
     },
     {
       "path": "files/scripts/tests/inkwave-default-reopening.test.mjs",
-      "sha256": "764ea12edab15155c04c5678dce46e4d3423b100ab05058afb0ca54f2b09a940",
-      "bytes": 5715
+      "sha256": "e6c310435c178803985cece71ef6f53f37706b20cc3e2932d9d8005e11919454",
+      "bytes": 7541
     },
     {
       "path": "prepare.mjs",
@@ -25,12 +25,12 @@
     },
     {
       "path": "test-count.mjs",
-      "sha256": "cf9c9a56a83411d13a25c992a72dd8ef3bf1ac8fc06747ccaa0e9c538411a519",
+      "sha256": "7a19c312d698ff50d1b1113286e83d7a4b03cf1dfc02c2680028db7e114a2d2b",
       "bytes": 260
     },
     {
       "path": "workflow.test.mjs",
-      "sha256": "9955c9ddc73d411a7f41955a3c465b571861ad5af37b28911ab25afa0758503d",
+      "sha256": "9ce767f377bd5ce4081f1f96a6fbb68f1158be18b2b2a137c738145486152908",
       "bytes": 3847
     },
     {
@@ -40,8 +40,8 @@
     },
     {
       "path": ".github/workflows/default73-reopening.yml",
-      "sha256": "074f880b82f05e7167195e6c95ce93b0b8a4719c041ea58972e7ea456bb5e374",
-      "bytes": 2536
+      "sha256": "a3caff25583adef69c8d7f409a792e600310a49b3350ef176fe6bc6663f0a11b",
+      "bytes": 2540
     }
   ],
   "version": "1.0.0"

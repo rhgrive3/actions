@@ -1,1 +1,1 @@
-import fs from'node:fs';const s=fs.readFileSync(process.argv[2],'utf8');for(const[k,n]of[['tests',13],['pass',13],['fail',0],['skipped',0],['cancelled',0],['todo',0]])if(!new RegExp('^# '+k+' '+n+'$','m').test(s))throw Error('Required thirteen controls: '+k);
+import fs from'node:fs';const s=fs.readFileSync(process.argv[2],'utf8');for(const[k,n]of[['tests',18],['pass',18],['fail',0],['skipped',0],['cancelled',0],['todo',0]])if(!new RegExp('^# '+k+' '+n+'$','m').test(s))throw Error('Required eighteen controls: '+k);
