@@ -27,6 +27,7 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - name: Verify native DOM lobby transform write equivalence
         run: |
+          node --test scripts/tests/inkwave-lobby-slot-browser-fixture.test.mjs
           node --test patches/local-quality/tests/lobby-slot-transform.test.mjs
           node scripts/check-inkwave-lobby-slot-browser.mjs .ci-scratch/lobby-slot-browser
       - uses: actions/upload-artifact@v4

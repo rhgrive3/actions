@@ -72,6 +72,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/collision-hotpath-adapter.mjs',
   'patches/local-quality/paint-hotpath-adapter.mjs',
   'patches/local-quality/distance-hotpath-adapter.mjs',
+  'patches/local-quality/nav-heuristic-adapter.mjs',
   'patches/local-quality/perf-readout-adapter.mjs',
   'patches/local-quality/fx-empty-pools-adapter.mjs',
   'patches/local-quality/platform-adapter.mjs',

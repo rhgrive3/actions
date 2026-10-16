@@ -1,0 +1,186 @@
+{
+  "revision": "bf4b8f0a9181a8f4224f8348c1d1ef9a5a9423e5c80ba42b98018b5f1712cf73",
+  "compareClearcoat": false,
+  "rows": [
+    {
+      "id": "s3-spinner-quick-01",
+      "family": "splatling",
+      "modelKind": "splatling",
+      "own": true,
+      "size": [
+        0.1605,
+        0.2598,
+        0.522
+      ],
+      "muzzle": [
+        0,
+        0.07,
+        0.334
+      ],
+      "tris": 6624,
+      "buildMs": 305.1,
+      "geometryKB": 310,
+      "maxGrip": 0,
+      "nonFinite": false,
+      "firingFrames": 170,
+      "weaponKind": "splatling",
+      "weaponModel": "Spinner_Quick_01",
+      "hostBefore": {
+        "utc": "2026-10-16T01:36:56.523Z",
+        "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+        "logicalCpus": 3,
+        "cpuMHz": [
+          0,
+          0,
+          0
+        ],
+        "cpuTimes": {
+          "user": 15360140,
+          "nice": 7141250,
+          "sys": 1461410,
+          "idle": 186462710,
+          "irq": 0
+        },
+        "loadAverage": [
+          2.78,
+          3.33,
+          3.39
+        ],
+        "freeMemory": 8588722176,
+        "totalMemory": 10452496384
+      },
+      "hostAfter": {
+        "utc": "2026-10-16T01:37:26.055Z",
+        "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+        "logicalCpus": 3,
+        "cpuMHz": [
+          0,
+          0,
+          0
+        ],
+        "cpuTimes": {
+          "user": 15388140,
+          "nice": 7169410,
+          "sys": 1463230,
+          "idle": 186492110,
+          "irq": 0
+        },
+        "loadAverage": [
+          4.19,
+          3.62,
+          3.48
+        ],
+        "freeMemory": 8537686016,
+        "totalMemory": 10452496384
+      }
+    },
+    {
+      "id": "s3-spinner-quick-02",
+      "family": "splatling",
+      "modelKind": "splatling",
+      "own": true,
+      "size": [
+        0.1605,
+        0.2598,
+        0.522
+      ],
+      "muzzle": [
+        0,
+        0.07,
+        0.334
+      ],
+      "tris": 6624,
+      "buildMs": 103.7,
+      "geometryKB": 310,
+      "maxGrip": 0,
+      "nonFinite": false,
+      "firingFrames": 170,
+      "weaponKind": "splatling",
+      "weaponModel": "Spinner_Quick_02",
+      "hostBefore": {
+        "utc": "2026-10-16T01:37:26.057Z",
+        "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+        "logicalCpus": 3,
+        "cpuMHz": [
+          0,
+          0,
+          0
+        ],
+        "cpuTimes": {
+          "user": 15388140,
+          "nice": 7169410,
+          "sys": 1463230,
+          "idle": 186492110,
+          "irq": 0
+        },
+        "loadAverage": [
+          4.19,
+          3.62,
+          3.48
+        ],
+        "freeMemory": 8537837568,
+        "totalMemory": 10452496384
+      },
+      "hostAfter": {
+        "utc": "2026-10-16T01:37:44.615Z",
+        "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+        "logicalCpus": 3,
+        "cpuMHz": [
+          0,
+          0,
+          0
+        ],
+        "cpuTimes": {
+          "user": 15407790,
+          "nice": 7184760,
+          "sys": 1464280,
+          "idle": 186510660,
+          "irq": 0
+        },
+        "loadAverage": [
+          4.45,
+          3.7,
+          3.51
+        ],
+        "freeMemory": 8409972736,
+        "totalMemory": 10452496384
+      }
+    }
+  ],
+  "errors": [],
+  "sourceSha": "ad332752cfed368106a24059b48aec2bd6c7982b",
+  "scope": "Actual emitted production modules, shared normal-day review, two saved Mini variants; not a retail palette or hardware performance claim.",
+  "review": "Viewed Quick_01 held fireSide and Quick_02 perspective: grip attached, visible barrel/handle/ink channels, no obvious clipping or missing parts.",
+  "sourceAcceptance": {
+    "miniSource": {
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "appearanceSource": {
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    "currentMainEmittedMiniAndAppearance": {
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0
+    },
+    "currentMainActor": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    "nativeShowcaseQueueBrowser": {
+      "passed": 15,
+      "failed": 0
+    }
+  },
+  "selectedCount": 47,
+  "manualCount": 94,
+  "baseCount": 65,
+  "queueReceipt": {
+    "log": "passed, 15 cases"
+  }
+}
