@@ -175,6 +175,12 @@ export function validNetworkProjectileTiming(delay, life) {
   return bounded(delay, 0, NETWORK_PROJECTILE_DELAY_MAX)
     && bounded(life, Number.EPSILON, NETWORK_PROJECTILE_LIFE_MAX);
 }
+// BossBrain starts a 3- or 5-crablet wave only when fewer than 3 are alive:
+// at most 2 survivors + 5 new crablets. Reserve 16 wire slots for host
+// migration and future legitimate variants; none can demand thousands of meshes.
+export const NETWORK_BOSS_CRABLET_LIMIT = 16;
+export const NETWORK_BOSS_CRABLET_SCENE_LIMIT = 48;
+export const NETWORK_BOSS_CRABLET_SPAWNS_PER_SECOND = 16;
 // Native Boss.pack has 18 fields, plus an optional full move record. Match the
 // producer's structural contract before Boss.unpack/Hermite/guest follow.
 export function validBossSnapshotRow(row, timestamp) {
@@ -187,9 +193,11 @@ export function validBossSnapshotRow(row, timestamp) {
   if (!integer(row[8], 1, 3) || !integer(row[9], 0, 15) || !integer(row[11], 0, 2)) return false;
   if (row[10] !== -1 && !validSnapshotTimestamp(row[10])) return false;
   for (const i of [13, 14]) if (!integer(row[i], 0, Number.MAX_SAFE_INTEGER)) return false;
-  if (!integer(row[15], -1, Number.MAX_SAFE_INTEGER) || !Array.isArray(row[16])) return false;
+  if (!integer(row[15], -1, Number.MAX_SAFE_INTEGER) || !Array.isArray(row[16]) || row[16].length > NETWORK_BOSS_CRABLET_LIMIT) return false;
+  const crabIds = new Set();
   for (const crab of row[16]) {
-    if (!Array.isArray(crab) || crab.length !== 6 || !integer(crab[0], 0, Number.MAX_SAFE_INTEGER)) return false;
+    if (!Array.isArray(crab) || crab.length !== 6 || !integer(crab[0], 0, Number.MAX_SAFE_INTEGER) || crabIds.has(crab[0])) return false;
+    crabIds.add(crab[0]);
     for (const i of [1, 2, 3]) if (!bounded(crab[i], -1e6, 1e6)) return false;
     if (!bounded(crab[4], -1e5, 1e5) || !finite(crab[5])) return false;
   }
@@ -210,7 +218,7 @@ export function validBossMove(move) {
       && p.b.every(b => Array.isArray(b) && b.length === 4 && b.every(wireScalar));
     case 'sweep': return move.d[1] > 0 && fields(['ox', 'oy', 'oz', 'y', 'a0', 'a1', 'c']);
     case 'charge': return fields(['x', 'y', 'z', 'yaw', 'L', 'v', 'wall', 'stun']) && p.L >= 0 && p.v > 0;
-    case 'crablets': return integer(p.n, 0, Number.MAX_SAFE_INTEGER);
+    case 'crablets': return integer(p.n, 0, 5);
     case 'frenzy': return fields(['x', 'y', 'z', 'rot0', 'spin', 'stun']);
     default: return false;
   }

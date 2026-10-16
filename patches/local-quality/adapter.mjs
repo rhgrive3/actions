@@ -1,7 +1,9 @@
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
+import { adaptNavHeuristic } from './nav-heuristic-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
 import { adaptMaterialHandoff } from './material-handoff-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
+import { adaptMotionFkHotpath } from './motion-fk-hotpath-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
 import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
@@ -73,6 +75,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptFrameOrder } from './frame-order-adapter.mjs';
 import { adaptRangeFramePacing } from './range-frame-pacing-adapter.mjs';
 import { adaptPaintHotpath } from './paint-hotpath-adapter.mjs';
+import { adaptDistanceHotpath } from './distance-hotpath-adapter.mjs';
 import { adaptPerfReadout } from './perf-readout-adapter.mjs';
 import { adaptFxEmptyPools } from './fx-empty-pools-adapter.mjs';
 import { adaptCollisionHotpath } from './collision-hotpath-adapter.mjs';
@@ -89,6 +92,7 @@ const IDENTITY_FILES = [
   'camera-fov-cache-adapter.mjs',
   'cloth-derivative-adapter.mjs',
   'retarget-branch-update-adapter.mjs',
+  'motion-fk-hotpath-adapter.mjs',
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
   'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
@@ -133,6 +137,8 @@ const IDENTITY_FILES = [
   'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
   'paint-hotpath-adapter.mjs',
+  'distance-hotpath-adapter.mjs',
+  'nav-heuristic-adapter.mjs',
   'collision-hotpath-adapter.mjs',
   'runtime-frame-scratch-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
@@ -148,6 +154,7 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  code = adaptNavHeuristic(rel, code, replaceOnce);
   code = adaptLobbySlotTransform(rel, code);
   code = adaptMaterialHandoff(rel, code);
   code = adaptCameraFovCache(rel, code);
@@ -160,7 +167,7 @@ export function adaptQualitySource(rel, code) {
   const paced = adaptRangeFramePacing(rel, framed);
   const broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
   const painted = adaptFxEmptyPools(rel, adaptPerfReadout(rel, adaptPaintHotpath(rel, broadphased, replaceOnce), replaceOnce), replaceOnce);
-  const lazy = adaptComposerTarget(rel, painted, replaceOnce);
+  const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
   return adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce);
 }
@@ -193,6 +200,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptIssue461Source(rel, code);
   code = adaptAudioListener(rel, code);
   code = adaptRetargetBranchUpdates(rel, code);
+  code = adaptMotionFkHotpath(rel, code, replaceOnce);
   code = adaptAimProfiles(rel, code);
   code = adaptMedalSource(rel, code);
   code = adaptResourceSource(rel, code, replaceOnce);

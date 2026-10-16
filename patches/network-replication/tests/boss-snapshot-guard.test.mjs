@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
-import { validBossSnapshotRow } from '../snapshot-guard.mjs';
+import { validBossSnapshotRow, validBossMove, NETWORK_BOSS_CRABLET_LIMIT, NETWORK_BOSS_CRABLET_SCENE_LIMIT, NETWORK_BOSS_CRABLET_SPAWNS_PER_SECOND } from '../snapshot-guard.mjs';
 const exports = `
   export { Boss } from './inkwave-public/src/boss/boss.js';
+  export { BossModel } from './inkwave-public/src/boss/bossModel.js';
   export { BossHazards } from './inkwave-public/src/boss/bossHazards.js';
   export { BossBrain } from './inkwave-public/src/boss/bossBrain.js';
   export { installIssueFiveHotfixA } from './patches/splatoon3/runtime/issue-five-hotfix-a.mjs';
@@ -162,5 +163,77 @@ test('#569 all native move generators reach the real host-event hazard consumer'
     f.nm.onMessage('host',{k:'t',ts,a:[],e:[[ts,'bm',move]]});f.nm.peers.get('host').tr=ts;f.nm._playEvents();
     assert.equal(b.hz.moves.length,1,id);assert.equal(b.hz.moves[0].id,id);
     assert.doesNotThrow(()=>b.hz.update(1/60,ts+.1,{live:false}));
+  }
+});
+
+test('network Boss crablet admission rejects over-budget and duplicate IDs before native replay',async()=>{
+  const f=await rig(), b=f.boss, template=b.pack(false);
+  const makeRows=n=>Array.from({length:n},(_,id)=>[id,id*.2,0,0,0,20]);
+  const valid=structuredClone(template);valid[16]=makeRows(NETWORK_BOSS_CRABLET_LIMIT);
+  assert.equal(validBossSnapshotRow(valid,1000),true);
+  f.send(valid,1000);assert.equal(b.net.buf.length,1);
+  const lastValid=structuredClone(b.net.buf);
+  const invalid=[structuredClone(valid),structuredClone(valid),structuredClone(valid)];
+  invalid[0][16]=makeRows(NETWORK_BOSS_CRABLET_LIMIT+1);
+  invalid[1][16][1][0]=invalid[1][16][0][0];
+  invalid[2][16]=makeRows(10000);
+  for(let i=0;i<invalid.length;i++){
+    assert.equal(validBossSnapshotRow(invalid[i],1001+i),false);
+    f.send(invalid[i],1001+i);
+    assert.deepEqual(structuredClone(b.net.buf),lastValid,'malformed Boss B entered the replay buffer');
+  }
+  const recovered=structuredClone(template);recovered[1]=7;recovered[16]=makeRows(7);
+  f.send(recovered,1004);assert.equal(b.net.buf.length,2);
+  f.sample(1004);assert.equal(b.pos.x,7);
+  assert.equal(b.crabs.size,7,'normal producer-sized snapshot must survive a rejected flood');
+  const nativeBurst={id:'crablets',t0:1,s:1,d:[1,1,1],p:{n:5}};
+  assert.equal(validBossMove(nativeBurst),true);
+  assert.equal(validBossMove({...nativeBurst,p:{n:10000}}),false,'native move cannot request unbounded children');
+});
+
+test('guest interpolation uses an O(N) crablet lookup, even if buffers are preloaded past wire limits',async()=>{
+  const f=await rig(),b=f.boss,base=b.pack(false);
+  f.send(base,1000);f.send(base,1001);
+  assert.equal(b.net.buf.length,2);
+  const count=320;
+  let lookups=0;
+  b.net.buf[0].crabs=Array.from({length:count},(_,i)=>[i,0,0,0,0,20]);
+  b.net.buf[1].crabs=Array.from({length:count},(_,i)=>new Proxy([i+count,1,0,0,0,20],{
+    get(target,key,receiver){if(key==='0')lookups++;return Reflect.get(target,key,receiver);}
+  }));
+  f.nm.peers.get('host').tr=1000.5;
+  f.nm._sampleBoss(1/60);
+  assert.equal(b.net.cur.crabs.length,count);
+  assert.ok(lookups<=count*3,`per-frame cross-product search detected: ${lookups} lookups`);
+});
+
+test('composed guest Boss._follow bounds alternating-ID visual churn and disposes spawned models',async()=>{
+  const f=await rig(), b=f.boss,base=b.pack(false);
+  const previousScene=f.G.scene,previousFactory=f.BossModel.makeCrablet;
+  let created=0,disposed=0;
+  f.G.scene=new f.THREE.Scene();
+  f.BossModel.makeCrablet=()=>{created++;return {
+    root:new f.THREE.Group(),update(){},pop(){},dispose(){disposed++;}
+  };};
+  try{
+    for(let frame=0;frame<100;frame++){
+      const row=structuredClone(base),ts=1000+frame*.05;
+      row[16]=Array.from({length:NETWORK_BOSS_CRABLET_LIMIT},(_,i)=>
+        [frame*NETWORK_BOSS_CRABLET_LIMIT+i,i*.2,0,0,0,20]);
+      f.send(row,ts);f.sample(ts);
+      b._crabVisuals(1/60);
+      assert.ok(b.crabs.size<=NETWORK_BOSS_CRABLET_SCENE_LIMIT,'guest crablet map over budget');
+      assert.ok(created<=NETWORK_BOSS_CRABLET_SPAWNS_PER_SECOND*(1+(frame+1)/60)+2,
+        'legal-sized ID churn exhausted the model allocator');
+    }
+    assert.ok(created>=NETWORK_BOSS_CRABLET_LIMIT,'normal first snapshot was not modeled');
+    b.unsubs=[];b.hz.dispose=()=>{};b.model.dispose=()=>{};
+    b.dispose();
+    assert.equal(b.crabs.size,0);
+    assert.equal(disposed,created,'all allocated crablet models are released');
+    assert.equal(f.G.scene.children.length,0,'disposed models retain scene nodes');
+  }finally{
+    f.BossModel.makeCrablet=previousFactory;
+    f.G.scene=previousScene;
   }
 });
