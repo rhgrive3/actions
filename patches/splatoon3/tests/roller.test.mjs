@@ -163,12 +163,19 @@ test('actual moving roller geometry and both grips stay synchronized through lif
       s.speed = r.rolling ? a.weapon.rollSpeed : 2; s.localMove = { x: 0, z: 1 };
       c.root.position.z += s.speed * dt; a.pos.copy(c.root.position); a.vel.z = s.speed;
       c.update(dt, s); c.root.updateMatrixWorld(true);
-      rows.push({ t, bottom: drumMinimum(c, THREE), gripL: gripError(c, THREE, 'handL'), gripR: gripError(c, THREE, 'handR'), rolling: r.rolling, roll: c.wRoll, axis: c.P[C.ANCR + 2] });
+      rows.push({ t, grounded: s.grounded, bottom: drumMinimum(c, THREE), gripL: gripError(c, THREE, 'handL'), gripR: gripError(c, THREE, 'handR'), rolling: r.rolling, roll: c.wRoll, axis: c.P[C.ANCR + 2] });
       if (vertical && r.s3RollerAttack && !restart && t < .78) assert.equal(r.s3RollerAttack.vertical, true);
       if (t + 1e-10 < (vertical ? 31 : 21) / 60) assert.equal(c.weapon.drumW, 0, 'lift does not spin the drum before release');
     }
     const label = `${hz}Hz ${vertical ? `vertical land ${landAt}s` : 'horizontal'} ${held ? 'held/restart' : 'released'}`;
-    assert.ok(rows.every(x => x.bottom >= -.006), `${label}: actual vertices clear the floor (${JSON.stringify(rows.reduce((a,b)=>a.bottom<b.bottom?a:b))})`);
+    // This pose-only fixture advances root.z but never integrates an airborne root.y.
+    // A world-floor comparison before the synthetic landing would mistake a
+    // midair pose at y=0 for actual terrain penetration. Keep strict real-vertex
+    // clearance on every *grounded* frame, including the entire landing recovery;
+    // grip/animation assertions below still cover all airborne frames.
+    const groundedRows = rows.filter(x => x.grounded);
+    assert.ok(groundedRows.length > 0, `${label}: sampled actual grounded frames`);
+    assert.ok(groundedRows.every(x => x.bottom >= -.006), `${label}: grounded vertices clear the floor (${JSON.stringify(groundedRows.reduce((a,b)=>a.bottom<b.bottom?a:b))})`);
     assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002), `${label}: arms reach the weapon grips (${Math.max(...rows.map(x => x.gripL))})`);
     if (held) {
       // Allow the late landing at 40F and the lowering spring to finish before
