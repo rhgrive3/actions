@@ -1,0 +1,70 @@
+{
+  "build": "ce10d89dc245044d02e6358328eced9e4e3bba1b7cabd1fdee52aecca8ca113f",
+  "workerBundleSha256": "819c51d7016fcb70b68e1c7c0fd087e5d15f6d1c9f77f677eabb912389ba0f31",
+  "browser": "154.0.8037.57",
+  "synthetic": true,
+  "diagnosticWorker": true,
+  "normal": {
+    "first": [
+      0,
+      0,
+      0
+    ],
+    "triangles": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0
+    ],
+    "maskCells": 10,
+    "diagnostic": false,
+    "receipt": null
+  },
+  "placed": {
+    "first": [
+      10,
+      3,
+      2
+    ],
+    "triangles": [
+      10,
+      3,
+      2,
+      13,
+      3,
+      2,
+      10,
+      3,
+      0
+    ],
+    "maskCells": 56,
+    "diagnostic": true,
+    "receipt": {
+      "schema": 1,
+      "diagnosticOnly": true,
+      "versionVerified": false,
+      "sourceObjSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "placementSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "referenceVersion": "11.3.0",
+      "stageId": "synthetic",
+      "rule": "turf",
+      "layer": "Pnt",
+      "objectSpace": "actor-local",
+      "eulerOrder": "XYZ",
+      "vertexScale": 1,
+      "translationScale": 1,
+      "boundObjects": 1,
+      "instances": 1,
+      "movementSimulated": false,
+      "unboundSourceGeometry": "preserved with existing classification",
+      "collisionStatus": "transformed display geometry; native collision unverified",
+      "paintStatus": "inferred masks; native masks unavailable"
+    }
+  },
+  "errors": []
+}

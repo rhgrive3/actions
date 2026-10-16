@@ -22,6 +22,8 @@ INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" node scripts/b
 
 検証内容と残件は `reports/inkwave-native-stage5-2026-10-12.md` に記録する。
 
+原典 Banc のデコード済み JSON を私的に検証する場合は [配置取り込み手順](tools/README-placement.md) を参照。配置後の表示・衝突・推定塗り面へ同じ変換を適用する診断用ツールであり、原典の実配置・可動条件の入手やステージの利用可能化は行わない。
+
 表示メッシュの法線マップは RGB / UNORM RG / signed-byte RG を PNG の統計から判別する。BFRES の元シェーダーとの一致は未確認。コピー元 MTL/PNG は固定 Git tree と照合できる:
 
 ```sh
