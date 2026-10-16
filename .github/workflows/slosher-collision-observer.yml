@@ -1,0 +1,82 @@
+name: Fixed Slosher9 collision observation
+on:
+  push:
+    branches: [review/slosher9-collision-observer-20261016]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: a262d8bcd2c8e95d6fef76e6081d89c33aea25de
+          path: before
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 8e55bfcbcdf9cd82df76dbf1a6948f9a075b6719
+          path: after
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tools
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Pins and observer controls
+        run: |
+          test "$(git -C diagnostic rev-parse HEAD)" = "$GITHUB_SHA"
+          git -C diagnostic diff --exit-code HEAD --
+          node --test diagnostic/diagnostics/slosher-observer/observe.test.mjs diagnostic/diagnostics/slosher-observer/workflow.test.mjs
+          node diagnostic/diagnostics/slosher-observer/prepare.mjs before after execution
+      - name: Original regression gates
+        working-directory: after
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs
+          python3 scripts/tests/inkwave-projectile-captures.test.py
+          node --test scripts/tests/inkwave-projectile-ci-intro.test.mjs
+      - name: Exact two production builds
+        id: builds
+        run: |
+          node after/scripts/build-inkwave.mjs after/inkwave-public built/after
+          node before/scripts/build-inkwave.mjs before/inkwave-public built/before
+          git -C before diff --exit-code HEAD --
+          git -C after diff --exit-code HEAD --
+      - name: Original emitted packaging
+        id: packaging
+        working-directory: after
+        run: INKWAVE_BUILT_SITE=../built/after node --test scripts/tests/inkwave-build-packaging.test.mjs
+      - name: Baseline native capture
+        if: ${{ !cancelled() && steps.packaging.outcome == 'success' }}
+        run: node execution/scripts/check-inkwave-projectile-visuals.mjs --site built/before --evidence-dir evidence/before --mode baseline
+      - name: Candidate native capture
+        if: ${{ !cancelled() && steps.packaging.outcome == 'success' }}
+        run: node execution/scripts/check-inkwave-projectile-visuals.mjs --site built/after --evidence-dir evidence/after --mode candidate
+      - name: Original physical comparison (known differences remain failures)
+        if: ${{ !cancelled() && steps.packaging.outcome == 'success' }}
+        run: python3 after/scripts/compare-inkwave-projectile-captures.py --before evidence/before --after evidence/after --output evidence/paired-verification.json --require-complete
+      - name: Original synthetic comparison gates
+        if: ${{ !cancelled() && steps.packaging.outcome == 'success' }}
+        run: python3 after/scripts/tests/inkwave-projectile-captures-synthetic.py --before evidence/before/projectile-visuals-result.json --after evidence/after/projectile-visuals-result.json --out evidence/comparator-synthetic-gates.json
+      - name: Final source integrity
+        if: always()
+        run: |
+          git -C before diff --exit-code HEAD --
+          git -C after diff --exit-code HEAD --
+          git -C diagnostic diff --exit-code HEAD --
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: slosher9-collision-${{ github.sha }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 14

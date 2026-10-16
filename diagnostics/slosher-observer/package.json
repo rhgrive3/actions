@@ -1,0 +1,60 @@
+{
+  "files": [
+    {
+      "path": ".github/workflows/slosher-collision-observer.yml",
+      "sourceFile": "/tmp/pr1512-observer-hosted/files/.github/workflows/slosher-collision-observer.yml",
+      "sha256": "8a81faf0c2c8b21abaa336004b2ef4435afe15a548c5e1289e3b31efd1dde324",
+      "blob": "d7eb3dbf93bd22f05f88747517a83fe397734f03",
+      "bytes": 4021,
+      "mode": "100644"
+    },
+    {
+      "path": "diagnostics/slosher-observer/README.md",
+      "sourceFile": "/tmp/pr1512-observer-hosted/files/diagnostics/slosher-observer/README.md",
+      "sha256": "62a7d3a3a98cdacdf3562f2543ea8317834779c90fa571fe636a67aeb93e3d2e",
+      "blob": "3d682ad5fb768ea1e76435841f26264086aa2388",
+      "bytes": 1042,
+      "mode": "100644"
+    },
+    {
+      "path": "diagnostics/slosher-observer/check-inkwave-projectile-visuals.mjs",
+      "sourceFile": "/tmp/pr1512-observer-hosted/files/diagnostics/slosher-observer/check-inkwave-projectile-visuals.mjs",
+      "sha256": "76c1dd9ac279a4b8fa7b21eb0c7be2746d05167b9f66822c6a07a97bdfc72203",
+      "blob": "cc6b7d5dfa686e4f58b4db0f19b27b85f0806fa8",
+      "bytes": 94759,
+      "mode": "100644"
+    },
+    {
+      "path": "diagnostics/slosher-observer/observe.mjs",
+      "sourceFile": "/tmp/pr1512-observer-hosted/files/diagnostics/slosher-observer/observe.mjs",
+      "sha256": "f3916288af2751c29bd99a4da9a535711e09ebcc91b4223e6a4df3da7e7ed036",
+      "blob": "9d8775ccfab41f34bea4099cc61f4ca49848057d",
+      "bytes": 3630,
+      "mode": "100644"
+    },
+    {
+      "path": "diagnostics/slosher-observer/observe.test.mjs",
+      "sourceFile": "/tmp/pr1512-observer-hosted/files/diagnostics/slosher-observer/observe.test.mjs",
+      "sha256": "eb73ca2fba95f772a530f394e71e08e0c8e3f5afec81f85a625a6df55875de38",
+      "blob": "176f5d2f1575c58fb997cf10057a0a69c1faddb2",
+      "bytes": 3576,
+      "mode": "100644"
+    },
+    {
+      "path": "diagnostics/slosher-observer/prepare.mjs",
+      "sourceFile": "/tmp/pr1512-observer-hosted/files/diagnostics/slosher-observer/prepare.mjs",
+      "sha256": "56e8d42409aaf7c421c274d47a7773ae1be10f018552e88bf1cd40d1445487c5",
+      "blob": "39acdffb06dcf77447941b70773328e0d097d872",
+      "bytes": 2038,
+      "mode": "100644"
+    },
+    {
+      "path": "diagnostics/slosher-observer/workflow.test.mjs",
+      "sourceFile": "/tmp/pr1512-observer-hosted/files/diagnostics/slosher-observer/workflow.test.mjs",
+      "sha256": "4489b22249315c3b306895ed874d71048051926f1841a6532a74d439e331a28d",
+      "blob": "aa721733157c039defc634dfa2356319a5a7a3ab",
+      "bytes": 1905,
+      "mode": "100644"
+    }
+  ]
+}
