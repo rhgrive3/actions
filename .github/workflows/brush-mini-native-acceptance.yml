@@ -1,0 +1,60 @@
+name: Review existing Inkbrush Nouveau appearance
+on:
+  push:
+    branches: [review/brush-mini-native-1533-20261016]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    if: github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/review/brush-mini-native-1533-20261016'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: 97c1b517182846f6abf9007b2b3315ad2aa8e1a8
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools once
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Exact source and diagnostic preflight
+        run: |
+          mkdir -p evidence
+          node diagnostic/preflight.mjs
+          node --test diagnostic/capture.test.mjs diagnostic/contracts.test.mjs diagnostic/capture-gpu-lifecycle.test.mjs diagnostic/build-binding.test.mjs diagnostic/capture-resources.test.mjs diagnostic/test-count.test.mjs diagnostic/entry.test.mjs diagnostic/preflight.test.mjs
+      - name: Actual source brush
+        run: |
+          SOURCE_ROOT="$PWD/candidate" BRUSH_EVIDENCE="$PWD/evidence" timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/brush-mini-actor.test.mjs > evidence/brush-source.tap
+          node diagnostic/test-count.mjs evidence/brush-source.tap 1
+      - name: One production build
+        id: build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: Brush actual emitted Actor
+        id: brush
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          SOURCE_ROOT="$PWD/candidate" BRUSH_EVIDENCE="$PWD/evidence" BRUSH_SOURCE_SIGNATURES="$PWD/evidence/source-signatures.json" INKWAVE_BUILT_SITE="$PWD/candidate-site" timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/brush-mini-actor.test.mjs > evidence/brush-emitted.tap
+          node diagnostic/test-count.mjs evidence/brush-emitted.tap 1
+      - name: Brush eight native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.brush.outcome == 'success' }}
+        run: timeout --signal=TERM --kill-after=10s 600s node diagnostic/capture-brush-mini-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/brush
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: brush-mini-native-1533
+          path: evidence
+          if-no-files-found: error

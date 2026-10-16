@@ -1,0 +1,137 @@
+{
+  "scope": "Literal diagnostic root payload, exact PR1533 runtime; existing single manual Mini only",
+  "payload": [
+    {
+      "path": "capture-brush-mini.mjs",
+      "sha256": "b6936c9ad98e37d66b58fad4e5d4fcf07e3b5d7ab635febbef4c23a5b58e5c7a",
+      "blob": "1b48109ca337edfbdc847fb219463b6a72699ef2",
+      "bytes": 15650
+    },
+    {
+      "path": "capture-contract.mjs",
+      "sha256": "ac750bf3448a025b0d4fc0e8b06d225c84bea76488c391e1cee232a218e415dc",
+      "blob": "7d496cd12c6078f120262a37902d58133427dfdc",
+      "bytes": 2901
+    },
+    {
+      "path": "visible-pairs.mjs",
+      "sha256": "0035f4f3512c88f2bf8805c06843a30c5269f389d3b3648b6243641592a0742a",
+      "blob": "5408cc11051ab8908bcea5a14c891eafc9ff5ef5",
+      "bytes": 1311
+    },
+    {
+      "path": "capture.test.mjs",
+      "sha256": "102b97af2d9635af5b29bf83564589c6a5f3aa57fa69b1f644baef167ee2f36f",
+      "blob": "b5578504bbc0b04529057eef7616d87185c05601",
+      "bytes": 6666
+    },
+    {
+      "path": "contracts.test.mjs",
+      "sha256": "04e8d157a70c29c5ba5312158e8e8044b3be34949bd097de514acf714b4319f3",
+      "blob": "ba5d3c775874990a3f99998f1ca9d2d0d51fc63b",
+      "bytes": 2798
+    },
+    {
+      "path": "brush-mini-actor.test.mjs",
+      "sha256": "679a0ccd41982be73058c246a543804d11ed94d31beddf79e302fad8e9a6710d",
+      "blob": "3c6dac786c809eef7581bfedb6a9b6b21500b0fa",
+      "bytes": 6034
+    },
+    {
+      "path": "capture-brush-mini-integration.mjs",
+      "sha256": "cd9bd2ef11ef71fd551b7c5139ac41ddad95c48d7fef2552ccbdfe345f8aab26",
+      "blob": "270e6bf3a112a2249c9373f69f600c5b9344ce1a",
+      "bytes": 13739
+    },
+    {
+      "path": "acceptance-plan.json",
+      "sha256": "1e336fff94ab6649f12b6008b0318da8692f49a75b42d143bdcc0ca347739b65",
+      "blob": "778e0a898ed298a5750d7e2380afd2223222e678",
+      "bytes": 4997
+    },
+    {
+      "path": "build-binding.mjs",
+      "sha256": "d402e6f9d278bf589c4540d966ceaba6ad7e8ba011be0d975a3774581b237a2a",
+      "blob": "20260c451b8e2417da7ff52f81fd40472156b850",
+      "bytes": 2832
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "blob": "ea2b357a4151e2238224853aee5abe369a18deef",
+      "bytes": 2896
+    },
+    {
+      "path": "capture-gpu-lifecycle.mjs",
+      "sha256": "dada4755abe1cf88e2e985e35f8ff16ac031dddf6f5249b470a93954069ffa57",
+      "blob": "a3b359743cab1bcfd46cc0de2af43fb2dc9c3db0",
+      "bytes": 1012
+    },
+    {
+      "path": "capture-gpu-lifecycle.test.mjs",
+      "sha256": "5258fb59c84c15f2be70a1bc11ee56c5207116dd4e16a87fd78e3fbb89ca58ab",
+      "blob": "e7e5db7f4f0966506f4cb84a3fd153386a296872",
+      "bytes": 2979
+    },
+    {
+      "path": "capture-resources.mjs",
+      "sha256": "1d81047ab52414c60495bacf744db5985846ecdd1651913f7f6185379442c270",
+      "blob": "f2ace9aecc10d285bfa630d4497072513f769efd",
+      "bytes": 478
+    },
+    {
+      "path": "capture-resources.test.mjs",
+      "sha256": "05048eed03677f582f1b6984e3922cd36bfa0eb659d58e1eca401947bf3a0d80",
+      "blob": "c81cfce0217ce3187eb6dcc71d7591512ae2818b",
+      "bytes": 1036
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "8489c6c48b0920bf8fc5eae956db21a8c87cbfdaf4a3faa21ed717fad4f52187",
+      "blob": "fe2d73329fdf3895e280606dc43e542e47f66623",
+      "bytes": 1292
+    },
+    {
+      "path": "compact-receipt.mjs",
+      "sha256": "39764c4d5ad68d0f69bc26a77f7da54635c967ff52996262cc03fa1f70e98a79",
+      "blob": "965d94e90e6f7b0225395b9b3bcc2657f03f1046",
+      "bytes": 381
+    },
+    {
+      "path": "entry.test.mjs",
+      "sha256": "6071a84381de25c576cbb2e829260ea8a9ea77dbc1e7a2255cda07b213278f4a",
+      "blob": "ab703694735f6aa6759018672dc038164a723183",
+      "bytes": 1478
+    },
+    {
+      "path": "test-count.mjs",
+      "sha256": "e454e5b9eda4074757eab0f92c32bd47ba4e1d4f9cfc25a5a38fce9226d29ba0",
+      "blob": "07291b11023e2ab38a732f594e0002ee3213e17a",
+      "bytes": 708
+    },
+    {
+      "path": "test-count.test.mjs",
+      "sha256": "907d6897ed12c66b28a287022ac619d0f9dd6f0997977b707e07178ef4313190",
+      "blob": "7e57b0e41f0752b130353c12eadc1da537a1645a",
+      "bytes": 863
+    },
+    {
+      "path": "preflight.mjs",
+      "sha256": "540048f15d4b9b9b3e0a68e5001b50a211e13a77b41f11751b8fafe8bbc8e086",
+      "blob": "3bd6cec1de224186516bc9a3918381d2ae4abb97",
+      "bytes": 1504
+    },
+    {
+      "path": "preflight.test.mjs",
+      "sha256": "283653a427d9780b06b03899ad7bf05b40f102c853d1cafaa2e300d3b5a0fba6",
+      "blob": "78b28ede01ae4dcfe2ee6efe309c70f006de0ba7",
+      "bytes": 1431
+    },
+    {
+      "path": ".github/workflows/brush-mini-native-acceptance.yml",
+      "sha256": "ec9005cdd48b0e7e2b459967fd00cff2d5b68e795cf240d91aed4e340869c0d8",
+      "blob": "9a58bafa6d1ccbd3deba44f9c49fbcb4582edaba",
+      "bytes": 3239
+    }
+  ]
+}
