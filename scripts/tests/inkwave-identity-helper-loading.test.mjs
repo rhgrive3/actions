@@ -15,13 +15,15 @@ const scratch=path.join(repo,'.dev-state','agent-work','identity-helper-regressi
 const root=fs.mkdtempSync(path.join(scratch,'fixture-'));
 const write=(name,bytes)=>{const p=path.join(root,name);fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,bytes);};
 // Only import-time dependencies are inert. The exact production checker and
-// real Git identity comparison run in a child; no browser helper is installed.
+// real Git identity comparison run in a child; the mandatory minimap helper is absent.
 write('package.json','{"type":"module"}');
 write('patches/local-quality/quality-probe.mjs','export const runQualityBrowserProbe=()=>{throw Error("Unexpected probe")};');
 write('patches/local-quality/paint-mipmap-probe.mjs','export const runPaintMipmapBrowserProbe=()=>{throw Error("Unexpected probe")};');
-write('scripts/lib/inkwave-weapon-appearance-probe.mjs','export const checkWeaponAppearancePicker=()=>{throw Error("Unexpected appearance probe")};');
-write('scripts/lib/inkwave-accepted-default-probe.mjs','export const checkAcceptedDefaultConsumption=()=>{throw Error("Unexpected default probe")};');
 write('scripts/check-inkwave-hud-authority.mjs','export const checkHudAuthority=()=>{},checkUiVisualProbes=()=>{};');
+// Keep the checker's real import-time appearance helpers available. Their
+// browser functions must not run before source-identity validation.
+for(const [,relative] of checker.matchAll(/^import .* from '(\.\/lib\/[^']+\.mjs)';$/gm))
+ write(path.join('scripts',relative),fs.readFileSync(new URL(relative,new URL('../check-inkwave-browser.mjs',import.meta.url))));
 write('scripts/build-inkwave.mjs','// fixed build\n');
 const rows=[['touch-layout/mobile.js','patches/touch-layout/mobile.js'],['network-replication/adapter.mjs','patches/network-replication/adapter.mjs'],['reliability/input-adapter.mjs','patches/reliability/input-adapter.mjs']];
 for(const [,file]of rows)write(file,'// clean overlay\n');
