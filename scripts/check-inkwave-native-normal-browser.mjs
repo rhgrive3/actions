@@ -75,7 +75,13 @@ try{
    else{const c=new NativeCanvas(image.width,image.height),context=c.getContext('2d');context.drawImage(image,0,0);imageBytes=context.getImageData(0,0,c.width,c.height).data;}
    const material=new THREE.MeshStandardMaterial({color:0xdddddd,normalMap:texture,roughness:.7}),mesh=new THREE.Mesh(geometry,material);scene.add(mesh);renderer.render(scene,camera);
    const rendered=new Uint8Array(64*64*4),gl=renderer.getContext();gl.readPixels(0,0,64,64,gl.RGBA,gl.UNSIGNED_BYTE,rendered);
-   const output={width:image.width,height:image.height,encoding:data.manifest.materials.probe.normalEncoding,imageHash:await digest(imageBytes),renderHash:await digest(rendered)};
+   let renderedPixels=0;for(let i=0;i<rendered.length;i+=4)if(rendered[i]>16||rendered[i+1]>16||rendered[i+2]>16)renderedPixels++;
+   if(renderedPixels<100)throw Error('Normal-map frame is blank');
+   const renderHash=await digest(rendered),control=new THREE.DataTexture(new Uint8Array([255,128,128,255]),1,1);control.needsUpdate=true;
+   try{material.normalMap=control;material.needsUpdate=true;renderer.render(scene,camera);gl.readPixels(0,0,64,64,gl.RGBA,gl.UNSIGNED_BYTE,rendered);
+    if(await digest(rendered)===renderHash)throw Error('Perturbing the normal did not change rendered output');
+   }finally{control.dispose();}
+   const output={width:image.width,height:image.height,encoding:data.manifest.materials.probe.normalEncoding,imageHash:await digest(imageBytes),renderHash,renderedPixels,normalPerturbationRejected:true};
    scene.remove(mesh);material.dispose();if(image instanceof ImageBitmap)image.close();texture.dispose();return{counts,output};
   };
   try{for(const[name,pixel,size,limit,abort]of cases){rows.push({name,before:await run(before,pixel,size,limit,abort),after:await run(after,pixel,size,limit,abort)});}}
