@@ -1,0 +1,81 @@
+{
+  "sourceSha": "1f0678ac592abfd8e712530fc61a66b5e7642bde",
+  "sourceTree": "325dba0fb61cc027e245cbc7cb116984ae231cd5",
+  "branch": "diagnostic/inkwave-a4-default70-fullsite-20261016",
+  "registrySHA256": "a29fcf0dd2b4840318d47b5075a21041db7f1ae4113cf3b5846d1000eb0f4c32",
+  "test": "patches/splatoon3/tests/weapon-accepted-a4.test.mjs",
+  "tests": 6,
+  "roles": 18,
+  "payload": [
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "blob": "f621988a1466ebbcb98cbbc70ff21ea71b98b4ae",
+      "sha256": "1d028b47ef54fc89ee5a81edefaf3d25b64b1eb2c4d59976b98f4916fcc8c09e"
+    },
+    {
+      "path": "scripts/build-inkwave.mjs",
+      "blob": "4c9bc9681494d641d26a34efcadbe4ac642c0f8d",
+      "sha256": "06083ef427ae1215baf4536b7f3e865dfcb52a2c1872cb0fdc264e8573d4cd7d"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-accepted-a4-followup.mjs",
+      "blob": "6ac65b30487b936fdf79bb009c39bdfa9b140f35",
+      "sha256": "f85737e685c8b4f3aca1a317ef93b1d0916c998dfe6ca7d3a8feea18c527ae9c"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-limited-variants.test.mjs",
+      "blob": "dd68b1d269cc752ea681450d664d23586584063c",
+      "sha256": "13d872319a7fbff2faac68f8765e47cd6c5843889b45d9bd5718761c2628a7c2"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-accepted-brush-heavy.test.mjs",
+      "blob": "4704d79ded8330553ccb393e2451e5729b2d3ab2",
+      "sha256": "182cea6cf83573a19b9acaa3ef6abd499bd182c4816a5eee110d4f45f4188622"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-accepted-slosher-two.test.mjs",
+      "blob": "9b17b6c2ba49459c2771db0eec3447c1de19c3f6",
+      "sha256": "d1ca441ee328fa93093b16adc0112834b63f64f58dcefb609b48b8513c9ca872"
+    },
+    {
+      "path": "scripts/tests/inkwave-accepted-default-probe.test.mjs",
+      "blob": "25374520c785978fd9903672c382499e3070a2ec",
+      "sha256": "fe9bc6077272975ecc72e5389a9cf2dfbeef6ed42e93ed2f8cb296e898e3e0be"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-appearance-selection.test.mjs",
+      "blob": "5a882aa05bfcc74ac695e77347cf7632709ea0fd",
+      "sha256": "617807c908f10ccf8350092d17acd74ae99060645276fb2e65549ad9f0b01931"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-heavy02-default.test.mjs",
+      "blob": "9f41fbf6c2c79e7b2ea7b43b148cbb87cea6ca66",
+      "sha256": "43ecc556659ca6a5edfdb92056a5a14086c39d98712fb172e07e5cb8bb230cc5"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-accepted-manual-three.test.mjs",
+      "blob": "c61c744eedfd2bc069c7c8492843ba820febed58",
+      "sha256": "4025c3c1fbdad009338d3973ff1c7608e97061328da827f7c4f41565b9902ea5"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-brush-slosher-storage.test.mjs",
+      "blob": "6041d6b08c38bc578f1425ac8d12d1386fc77940",
+      "sha256": "6c8dedb73001ceda74407c4bddf75395f4ec757867405b8c1e3db9828dce809d"
+    },
+    {
+      "path": "scripts/lib/inkwave-accepted-default-probe.mjs",
+      "blob": "784a547bac3bcc132c04e0fa23d21cb4aff36040",
+      "sha256": "6d23f91340fd1789189f15a64e5641f6a669664eb89f88c33c5efdb2c66bbfe9"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-a4-storage.test.mjs",
+      "blob": "31bf3103edea516ca4b9bcde59e70fcdc420a0fd",
+      "sha256": "aa7c2e854b95739f2f786263e908fc400b36fa9fb49fe9c94b533dfc409c6770"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-accepted-a4.test.mjs",
+      "blob": "7aec5ba4be44d6214117002a3085dd6734ef2868",
+      "sha256": "f77e7478ee5e0766e4546a215a403329f855e2bff141504a2b35ab9c153eddb1"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+name: A4 default70 fullsite Actor acceptance
+on:
+  push:
+    branches: [diagnostic/inkwave-a4-default70-fullsite-20261016]
+permissions:
+  contents: read
+concurrency:
+  group: a4-default70-fullsite-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: 1f0678ac592abfd8e712530fc61a66b5e7642bde
+          persist-credentials: false
+          path: source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Exact source and diagnostic controls
+        run: |
+          set -euo pipefail
+          node diagnostic/verify.mjs preflight source
+          node --test --test-reporter=tap diagnostic/*.test.mjs | tee controls.tap
+          node diagnostic/test-count.mjs controls.tap 20
+      - name: Dependencies and persistent fixtures
+        run: |
+          set -euo pipefail
+          npm --prefix source install --no-save --no-package-lock --silent esbuild@0.28.2
+          scratch=/mnt/workspace/.dev-state/agent-work/scratch/a4-fullsite-${{ github.run_id }}
+          sudo mkdir -p "$scratch"
+          sudo chown "$(id -u):$(id -g)" "$scratch"
+          echo "INKWAVE_TEST_SCRATCH=$scratch" >> "$GITHUB_ENV"
+          echo "HEAVY_SOURCE=$GITHUB_WORKSPACE/source" >> "$GITHUB_ENV"
+          echo "HEAVY_EVIDENCE=$GITHUB_WORKSPACE/evidence" >> "$GITHUB_ENV"
+          mkdir evidence
+      - name: Source six actual local cases
+        run: |
+          set -euo pipefail
+          node --max-old-space-size=1024 --experimental-vm-modules --test --test-reporter=tap source/patches/splatoon3/tests/weapon-accepted-a4.test.mjs | tee evidence/source.tap
+          node diagnostic/test-count.mjs evidence/source.tap 6
+      - name: One production build and complete input output binding
+        run: |
+          set -euo pipefail
+          (cd source && node scripts/build-inkwave.mjs inkwave-public "$GITHUB_WORKSPACE/site")
+          node diagnostic/verify.mjs build source site evidence
+      - name: Fullsite emitted six with mandatory source signatures
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/site
+          HEAVY_SOURCE_SIGNATURES: ${{ github.workspace }}/evidence/emission-source-signatures.json
+        run: |
+          set -euo pipefail
+          node --max-old-space-size=1024 --experimental-vm-modules --test --test-reporter=tap source/patches/splatoon3/tests/weapon-accepted-a4.test.mjs | tee evidence/emitted.tap
+          node diagnostic/test-count.mjs evidence/emitted.tap 6
+          node diagnostic/verify.mjs final source site evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a4-default70-fullsite-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            evidence/
+            controls.tap
