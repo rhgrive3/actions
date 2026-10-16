@@ -155,6 +155,9 @@ export function configureComposerColorTargets(THREE, composer, selection) {
   // HalfFloat regardless of the preceding frame's enabled-pass swap count.
   const sceneTarget = composer?.renderTarget2;
   if (!sceneTarget?.texture) throw new TypeError('composer read target is unavailable');
+  // This target receives fullscreen color passes only; the forced scene role
+  // below keeps all geometry/depth writes on target2, including after swaps.
+  composer.renderTarget1.depthBuffer = false;
   sceneTarget.texture.format = THREE.RGBAFormat;
   sceneTarget.texture.type = THREE.HalfFloatType;
   // Pass enablement changes swap parity. Restore the semantic target roles

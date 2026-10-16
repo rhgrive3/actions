@@ -141,6 +141,8 @@ test('#642 acceptance: mobile uses a renderable packed HDR pair and frees it on 
     configureComposerColorTargets(ns.THREE, composer, decision);
     composer.setPixelRatio(ratio);
     composer.setSize(profile.css[0], profile.css[1]);
+    assert.equal(composer.renderTarget1.depthBuffer, false, 'fullscreen packed target needs no depth attachment');
+    assert.equal(composer.renderTarget2.depthBuffer, true, 'scene retains its depth attachment');
     const renderPass = new ns.RenderPass(new ns.THREE.Scene(), new ns.THREE.Camera());
     const gradePass = new ns.ShaderPass({
       uniforms: { tDiffuse: { value: null } },
@@ -234,6 +236,7 @@ test('#642 acceptance: unsupported WebGL, incomplete FBO and unproven ScreenFX f
     configureComposerColorTargets(ns.THREE, composer, decision);
     assert.deepEqual([composer.renderTarget1.texture.type, composer.renderTarget2.texture.type],
       [ns.THREE.HalfFloatType, ns.THREE.HalfFloatType], `${scenario.name} keeps both targets HalfFloat`);
+    assert.deepEqual([composer.renderTarget1.depthBuffer, composer.renderTarget2.depthBuffer], [true, true], `${scenario.name} keeps native depth roles`);
     composer.dispose();
     if (state.probes.length) assert.equal(state.probeDisposals, 1, `${scenario.name} disposes its attempted probe`);
     assert.equal(state.bound, priorTarget, `${scenario.name} restores the previous target`);
