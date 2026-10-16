@@ -45,6 +45,7 @@ import { adaptPortraitGuard } from './portrait-guard-adapter.mjs';
 import { adaptHudAuthority } from './hud-authority-adapter.mjs';
 import { adaptS3HudLook } from './s3-hud-look-adapter.mjs';
 import { adaptS3SquidLook } from './s3-squid-look-adapter.mjs';
+import { adaptS3FaceEyes } from './s3-face-eyes-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
@@ -108,7 +109,7 @@ const IDENTITY_FILES = [
   'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
-  'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
+  'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 's3-face-eyes-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
   'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs', 'showcase-alpha-adapter.mjs',
   'team-wipeout.mjs', 'team-wipeout-adapter.mjs',
@@ -284,6 +285,7 @@ function adaptQualityLayer(rel, code) {
   // Splatoon 3 HUD look composes on the finished gauge/roster markup.
   code = adaptS3HudLook(rel, code);
   code = adaptS3SquidLook(rel, code);
+  code = adaptS3FaceEyes(rel, code);
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
     code = adaptTouchRelayout(rel, code);
