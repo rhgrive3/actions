@@ -12,6 +12,7 @@ async function rejectsWithSavedFailure(source,args,c,pattern){
  let result;
  await assert.rejects(runMinimapCanvasProbe({async evaluate(){result=await vm.runInNewContext('('+source+')(args)',{...c.globals,args});return result;}},{root,evidence,sourceSha:'controlled',contentHash:'controlled',manifest}),pattern);
  assert.equal(result.failed,true,'browser failure envelope required');assert.match(result.error,pattern);
+ assert.equal(result.cases.length,0);assert.equal(result.images.length,0);
  const saved=JSON.parse(fs.readFileSync(path.join(evidence,'minimap-canvas-failure.json'),'utf8'));
  assert.equal(saved.failed,true);assert.equal(saved.error,result.error);assert.equal(saved.sourceSha,'controlled');
  assert.deepEqual(saved.images,[]);assert.equal(c.removed,true,'iframe cleanup before outer rejection');
