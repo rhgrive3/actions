@@ -4730,3 +4730,12 @@ Current main `ee06c87fc623cc793ebf9aaffd3ffc3a5081c60a` retains normal0.21 HP/fi
 ## 2026-10-15 UTC: 日本語・ガチルールと並行 PR の最終統合
 
 Splatoon 3 11.3.0 を比較基準とし、#401 を除く既存 PR 24 本を統合。日本語ラベル・通知・説明を補完し、ヤグラの戦闘/乗車とエリア範囲を原典形状のナビへ接続した。最終 VM/CPU 通信回帰 512/512、生成物の通常ゲーム起動・操作・HUD・外観・Canvas 比較、および Chromium/WebKit のソース/生成物の塗り検証を通過。Canvas の検証自体で生成先のドキュメント差を解消し、全画素の厳密な照合と負の対照を維持。CPU・SwiftShader/ソフトウェア描画の確認であり、本家実機・物理端末の速度、姿勢、性能、原典ガチ配置の完全一致は未確認。詳細と検証範囲は [統合記録](inkwave-pr-integration-2026-10-15.md)。
+
+
+### 2026-10-16: native normal-map readback browser qualification
+
+The current-main Core candidate retains S3 reference11.3.0 and changes no source gameplay values. Seven controlled PNG scenarios run through separately emitted loader entries bound to production inputs, using real Chromium ImageBitmap, OffscreenCanvas and WebGL normal-map rendering. UNORM, signed RG, RGB,1024px, resize and two cancellation cases retain exact output/ownership; reconstructed normal readback and pixel-array allocation halve (1024px8,388,608→4,194,304 bytes). All decoded and rendered output hashes agree with frozen Core994 preimage. This is component browser evidence, not an independently shipped loader, full stage-selection run, browser RSS/GPU allocation/FPS or measured Nintendo behavior. See reports/inkwave-native-normal-browser-2026-10-16.json.
+## 2026-10-16 UTC: ボット経路探索の推定距離計算を再利用
+
+比較基準は Splatoon 3 11.3.0 の通常移動・射撃を維持する INKWAVE 公開版 main `9c070329`。今回はゲーム仕様の変更を行わず、同じ探索内の同じノードに対する推定距離だけを再利用する。両チーム・複層・到達不能・探索上限・通行可否コールバックの条件で、変更前の経路・全探索状態・判定呼び出し順を照合し、ソースと生成物それぞれ800件が一致した。生成物をロードした Chromium でも256件が一致し、距離計算回数は84,329→60,509。本家AIの経路選択一致・実機フレーム時間・端末クラッシュ解消は未確認。詳細は [経路探索の検証記録](inkwave-nav-heuristic-2026-10-16.md)。
+

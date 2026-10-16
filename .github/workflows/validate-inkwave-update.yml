@@ -155,8 +155,12 @@ jobs:
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
       - name: Verify source-guided ink flight model
         run: node --test tests/ink-flight/model.test.mjs
+      - name: Verify cancelled native texture ownership
+        run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-texture-cancellation.test.mjs patches/native-stages/tests/native-normal-readback.test.mjs
+      - name: Verify cancelled native world preparation
+        run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-world-cancellation.test.mjs
       - name: Verify native BVH query lifetime and collision parity
-        run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs
+        run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs patches/native-stages/tests/bvh-browser-baseline.test.mjs
       - name: Verify deterministic network replication
         run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs
       - name: Compare authoritative and reconstructed attacks
@@ -326,7 +330,7 @@ jobs:
       - name: Verify emitted native BVH query lifetime and collision parity
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
-        run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs
+        run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs patches/native-stages/tests/bvh-browser-baseline.test.mjs
       - name: Verify emitted tap gesture continuity and practice range feedback
         env:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
@@ -450,13 +454,16 @@ jobs:
         run: node scripts/check-inkwave-tap-gestures-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/tap-gestures"
       - name: Verify minimap observation symmetry and strict failure controls
         if: matrix.suite == 'active'
-        run: node --test scripts/lib/minimap-canvas-observation.test.mjs
+        run: node --test scripts/lib/minimap-canvas-observation.test.mjs scripts/lib/inkwave-canonical-kit-input.test.mjs
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
       - name: Verify emitted BVH query equivalence and work reduction in Chromium
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-bvh-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/bvh-queries"
+      - name: Verify native normal browser pixels bound to production sources
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/native-normal"
       - name: Verify browser movement speed across directions and native firing/rolling transitions
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-movement-speed.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/movement-speed" --profile-dir "$CI_STORAGE/cache/movement-speed"
@@ -574,7 +581,7 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json'],
             'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json'],
             'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],

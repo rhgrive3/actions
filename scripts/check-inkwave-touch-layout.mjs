@@ -18,7 +18,8 @@ const built = !!option('--site');
 const evidence = path.resolve(option('--evidence-dir') || '/mnt/workspace/.dev-state/agent-work/evidence/inkwave-touch-layout-20261002');
 const cache = path.resolve(option('--profile-dir') || '/mnt/workspace/.dev-state/agent-work/cache/inkwave-touch-layout-20261002');
 const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
-for (const dir of [evidence, cache]) { assert(physical(dir).startsWith('/mnt/workspace/'), 'Persistent workspace required'); fs.mkdirSync(dir, { recursive: true }); }
+const persistentRoots=['/mnt/workspace',repo].map(physical);
+for (const dir of [evidence, cache]) { const resolved=physical(dir); assert(!['/tmp','/var/tmp','/dev/shm'].some(p=>resolved===p||resolved.startsWith(p+'/'))&&persistentRoots.some(p=>resolved.startsWith(p+path.sep)), 'Persistent workspace required'); fs.mkdirSync(dir, { recursive: true }); }
 const { chromium, webkit, devices } = createRequire(import.meta.url)('playwright');
 const fixture = `<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="/styles/ui.css"><link rel="stylesheet" href="/styles/mobile.css">

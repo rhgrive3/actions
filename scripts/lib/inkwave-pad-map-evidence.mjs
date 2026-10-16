@@ -11,7 +11,7 @@ export function waitForNativePadMap({index,timeoutMs=10000}){
   const beacon=hud.beacons[index],row=hud.legendRows[index],label=beacon.querySelector('.iw-bcn__label'),labelText=label.querySelector('b'),disc=beacon.querySelector('.iw-bcn__disc'),icon=beacon.querySelector('.iw-bcn__icon'),guide=hud.mapLegend.querySelector('.iw-lg__foot');
   const iconBox=rect(icon),iconRegion={x:iconBox.x+iconBox.width*.1,y:iconBox.y+iconBox.height*.1,width:iconBox.width*.8,height:iconBox.height*.8};
   const finiteRunning=hud.map.getAnimations({subtree:true}).filter(a=>Number.isFinite(a.effect.getComputedTiming().iterations)&&(a.pending||a.playState!=='finished')).length;
-  return {index,frames,elapsedMs:performance.now()-started,mapT:hud._mapT,mapV:hud._mapV,finiteRunning,
+  return {index,frames,elapsedMs:performance.now()-started,visibility:document.visibilityState,focused:document.hasFocus?.(),mapT:hud._mapT,mapV:hud._mapV,finiteRunning,
    entrance:entrance.map(a=>({name:a.animationName,playState:a.playState,currentTime:a.currentTime,endTime:a.effect.getComputedTiming().endTime})),
    mapOpacity:visible(hud.map),rowOpacity:visible(row),labelOpacity:visible(label),labelTextOpacity:visible(labelText),labelText:labelText.textContent,iconOpacity:visible(icon),discOpacity:visible(disc),guideOpacity:visible(guide),
    beaconIndices:hud.beacons.flatMap((b,i)=>b.classList.contains('is-hover')?[i]:[]),rowIndices:hud.legendRows.flatMap((r,i)=>r.classList.contains('is-hover')?[i]:[]),

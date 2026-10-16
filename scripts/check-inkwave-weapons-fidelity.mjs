@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { fixture } from './weapons-fixture.mjs';
 import { CASES, reset, launch, finish, paintMetrics, measure } from './measure-weapons-fidelity.mjs';
@@ -11,34 +13,21 @@ const site = path.resolve(at >= 0 ? process.argv[at + 1] : path.join(root, '_sit
 const near = (a,b,t=1e-7) => assert.ok(Math.abs(a-b) <= t, `${a} != ${b} ±${t}`);
 
 const data = await measure({ site, fidelity: true, detail: false });
-// Deterministic integrated-world receipts, not Nintendo meter measurements.
-// Sourced shot/splash bodies use the source ellipse instead of generic edge
-// wobble/drips. A producer-only legacy-kind control restores all fifteen prior
-// maxZ receipts with the native Shooter height selector preserved. Hit/full
-// ranges, source dimensions, flight/RNG and projectile counts stay guarded.
-// Shooter retains native paintShape's existing height-dependent BreakFree
-// interpolation; the new phase-only overwrite was an unintended regression.
-// The height/angle selector is an existing app contract, not verified retail
-// policy. Keep the .1 collision sweep and .25 scoring grid exact.
-const golden = {
-  shooter:[12.6,12.2,14.375,1],
-  'dualies-normal':[12.2,11.5,14.125,1],
-  'dualies-post':[12.3,11.5,14.125,1],
-  blaster:[13.5,10.7,13.375,1],
-  'splatling-partial':[14.7,14,16.625,1],
-  'splatling-first':[20.1,19.4,21.875,1],
-  'splatling-full':[20.1,19.4,21.875,1],
-  'charger-0':[9.8,9.8,13.375,0],
-  'charger-0.25':[11.8,11.8,15.125,0],
-  'charger-0.5':[16.1,16.1,18.875,0],
-  'charger-0.75':[20.4,20.4,22.625,0],
-  'charger-1':[24.8,24.8,26.625,0],
-  'roller-horizontal':[11.1,6.1,13.875,13],
-  'roller-vertical':[16.3,6.9,18.625,5],
-  slosher:[13.5,13.5,16.125,9],
-};
+// Deterministic main-baseline fixtures, not Nintendo meter measurements.
+// The old roller/Slosher rows predated native terminal-contact corrections and
+// falling splash paint. Record the actual clean main build separately; require
+// every hit sample, initial projectile and scoring cell to remain exact.
+const baselineBytes = fs.readFileSync(new URL('./fixtures/weapons-fidelity-9c070329.json', import.meta.url));
+assert.equal(createHash('sha256').update(baselineBytes).digest('hex'), 'b79883e3c0e14e0a4ba9577d01d162dbcfe530a7d03c75b22187df18c0ea1259');
+const baseline = JSON.parse(baselineBytes);
+assert.equal(baseline.baselineCommit, '9c0703298aed297667837533c32454cc60980603');
+const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const golden = Object.fromEntries(Object.entries(baseline.cases).map(([key, row]) => [key, row.golden]));
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
-  const c = data.cases[key];
+  const c = data.cases[key], expected = baseline.cases[key];
+  assert.equal(digest(c.paint.cellsXZ), expected.cellsHash, key + ' main scoring cells');
+  assert.equal(digest(c.hitSamples), expected.hitSamplesHash, key + ' main full hit sweep');
+  assert.equal(digest(c.initialProjectiles), expected.initialProjectilesHash, key + ' main projectile births');
   near(c.practicalHitRange,hit); near(c.fullDamageRange,full);
   near(c.paint.bounds.maxZ,paint,.001); assert.equal(c.projectileCount,count,key);
 }
