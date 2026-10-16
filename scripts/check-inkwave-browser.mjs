@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { checkWeaponAppearancePicker } from './lib/inkwave-weapon-appearance-probe.mjs';
+import { clickNativeKitCard } from './lib/inkwave-canonical-kit-input.mjs';
 import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
 import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
 import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
@@ -83,6 +84,7 @@ try {
   await page.goto(address, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.evaluate(async () => { globalThis.s3ProbeG = (await import(new URL('src/core/ctx.js',document.baseURI).href)).G; });
   await page.waitForFunction(() => (!!globalThis.s3ProbeG?.game?.menus && globalThis.s3ProbeG.s3?.installed && globalThis.s3ProbeG.mode !== 'boot') || !!document.getElementById('boot-error')?.textContent, null, { timeout: 180000 });
+  console.error('active browser: native boot ready');
   if (await page.locator('#boot-error').textContent()) throw new Error('Game boot error');
   result = await page.evaluate(async () => {
     const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href);
@@ -111,6 +113,7 @@ try {
     return m.current==='loadout'&&el?.isConnected&&!el.classList.contains('is-leaving')&&!m._modal;
   });
   result.weaponAppearancePicker = await checkWeaponAppearancePicker({page,evidence});
+  console.error('active browser: appearance picker passed');
   const kitMenu=await page.evaluate(async()=>{
     const {CANONICAL_KITS}=await import(new URL('patches/splatoon3/runtime/canonical-kits-data.mjs',document.baseURI).href);
     localStorage.removeItem('inkwave.catalogue-kit.v1');
@@ -126,24 +129,29 @@ try {
     },true);
   });
   for(const [id,k]of Object.entries(kitMenu.kits)){
-    const card=page.locator('.iw-loadout:not(.is-leaving) [data-id="w-'+id+'"]');
+    // Restore the real viewport after the appearance probe recreated loadout.
+    // Scroll before waiting for the selected card's entrance/hit admission.
+    await page.locator('.iw-loadout:not(.is-leaving) [data-id="w-'+id+'"]').evaluate(c=>c.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'}));
     // Native input ownership rejects presses during the staggered opacity entrance.
     // Playwright's visible/stable admission does not include opacity.
-    await page.waitForFunction(id=>{
+    let nativeInput;
+    try { await page.waitForFunction(id=>{
       const m=globalThis.s3ProbeG.game.menus,root=m._scr?.el;
       const c=root?.querySelector('[data-id="w-'+id+'"]');
       if(!c||m.current!==m._scr.name||root.inert)return false;
       let opacity=1;for(let e=c;e&&e!==root.parentNode;e=e.parentElement){opacity*=+getComputedStyle(e).opacity;if(e===root)break;}
       return opacity>0.6;
     },id);
-    await card.click();
-    try { await page.waitForFunction(id=>globalThis.s3ProbeG.game.api.getLoadout().weapon===id,id,{timeout:5000}); }
+    nativeInput=await clickNativeKitCard(page,id);
+    await page.waitForFunction(id=>globalThis.s3ProbeG.game.api.getLoadout().weapon===id,id,{timeout:5000}); }
     catch(error){
       result.canonicalInputFailure=await page.evaluate(id=>{
         const g=globalThis.s3ProbeG.game,m=g.menus,c=document.querySelector('[data-id="w-'+id+'"]');
         return {id,trace:globalThis.s3KitInputTrace,gameWeapon:g.api.getLoadout(),menuWeapon:m.api.getLoadout(),
           sameApi:g.api===m.api,registered:!!m.api.weapons[id],bound:!!m._binds.get(c),
-          focus:m._focus?.dataset.id,modal:!!m._modal,current:m.current,screenName:m._scr?.name,inert:m._scr?.el?.inert,cardClass:c?.className,opacity:c?getComputedStyle(c).opacity:null};
+          focus:m._focus?.dataset.id,modal:!!m._modal,current:m.current,screenName:m._scr?.name,inert:m._scr?.el?.inert,cardClass:c?.className,opacity:c?getComputedStyle(c).opacity:null,
+          ancestors:c?Array.from((function*(el){while(el){const s=getComputedStyle(el);yield{className:el.className,opacity:s.opacity,display:s.display,visibility:s.visibility};el=el.parentElement;}})(c)):[],
+          animations:c?.getAnimations().map(a=>({name:a.animationName,state:a.playState,pending:a.pending,time:a.currentTime})),frozen:g.frozen,platformDriven:m._platformDriven};
       },id);throw error;
     }
     const pair=await page.locator('.iw-loadout:not(.is-leaving) .s3-catalogue').evaluate(el=>({
@@ -151,7 +159,8 @@ try {
       special:el.querySelector('select[aria-label="スペシャル"]').value,
     }));
     if(pair.sub!==k.sub||pair.special!==k.special)throw Error('Canonical menu pair mismatch '+id);
-    result.canonicalLoadout.push({id,...pair,points:k.specialCost});
+    result.canonicalLoadout.push({id,...pair,points:k.specialCost,nativeInput});
+    if(result.canonicalLoadout.length%10===0)console.error('active browser: canonical kits '+result.canonicalLoadout.length+'/'+Object.keys(kitMenu.kits).length);
   }
   await page.screenshot({path:path.join(evidence,'canonical-65-loadout.png'),animations:'disabled',timeout:90000});
   await page.locator('.iw-loadout:not(.is-leaving) [data-id="w-'+kitMenu.original+'"]').click();
