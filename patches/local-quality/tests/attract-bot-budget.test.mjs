@@ -51,21 +51,21 @@ test('eight menu bots split thinking across alternating 60 Hz frames without los
   }
 });
 
-test('touch and LOW menu keep 20-Hz simulation but budget bot thinking to staggered 10 Hz', () => {
+test('touch and LOW menu budget bot thinking to staggered 30 Hz over 60-Hz physics', () => {
   for (const tier of ['touch','low']) {
     const f = brainFixture();
     if (tier === 'touch') f.G.game.mobile = { touch: true };
     else f.G.game.settings = { quality: 'low' };
     assert.equal(attractAiStep(f.G), ATTRACT_AI_TOUCH_STEP);
     const decisions = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 60; i++) {
       let count = 0;
-      for (const b of f.brains) { const before = b.calls.length; b.update(1 / 20); count += b.calls.length - before; }
+      for (const b of f.brains) { const before = b.calls.length; b.update(1 / 60); count += b.calls.length - before; }
       decisions.push(count);
     }
-    assert.deepEqual(decisions, Array(20).fill(4), tier + ': no all-bot CPU spikes');
+    assert.deepEqual(decisions, Array(60).fill(4), tier + ': no all-bot CPU spikes');
     for (const b of f.brains) {
-      assert.equal(b.calls.length, 10, tier + ': half as many decisions');
+      assert.equal(b.calls.length, 30, tier + ': half as many decisions');
       assert.ok(Math.abs(b.calls.reduce((a, t) => a + t, 0) + (b._menuAttractPending || 0) - 1) < 1e-9);
     }
   }

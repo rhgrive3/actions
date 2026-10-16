@@ -67,22 +67,24 @@ function fixture({ mode = 'menu', attract = true, touch = true, quality = 'high'
   };
 }
 
-test('touch/LOW ordinary menu attract simulation and 3D world run at 20 Hz across render cadences', () => {
-  for (const fps of [30, 60, 120]) {
+test('touch/LOW menu keeps 60 Hz physics while drawing the 3D world at 20 Hz across render cadences', () => {
+  for (const fps of [20, 30, 60, 120]) {
     const h = fixture({ mode: 'menu', attract: true, touch: true, quality: 'high' });
     for (let i = 0; i < fps; i++) h.frame(1 / fps);
-    assert.equal(h.calls.matchDt.length, 20, `${fps} Hz render: Match cadence`);
-    assert.equal(h.calls.controllerDt.length, 20, `${fps} Hz render: controller cadence`);
-    assert.equal(h.calls.projectileDt.length, 20, `${fps} Hz render: projectile cadence`);
-    assert.equal(h.calls.attractDt.length, 20, `${fps} Hz render: attract timer cadence`);
+    assert.equal(h.calls.matchDt.length, 60, `${fps} Hz render: Match cadence`);
+    assert.equal(h.calls.controllerDt.length, 60, `${fps} Hz render: controller cadence`);
+    assert.equal(h.calls.projectileDt.length, 60, `${fps} Hz render: projectile cadence`);
+    assert.equal(h.calls.attractDt.length, 60, `${fps} Hz render: attract timer cadence`);
+    for (const key of ['matchDt', 'controllerDt', 'projectileDt', 'attractDt'])
+      assert.ok(h.calls[key].every(dt => Math.abs(dt - 1 / 60) < 1e-10), key + ' uses the stable physical step');
     assert.equal(h.calls.worldRender, 20, `${fps} Hz render: world render cadence`);
     assert.equal(h.calls.arc, 20, `${fps} Hz render: projectile arc presentation cadence`);
     for (const key of ['fx', 'environment', 'paint', 'screenfx', 'decor', 'props', 'rig']) {
       assert.equal(h.calls[key].length, 20, `${fps} Hz render: ${key} cadence`);
       assert.ok(Math.abs(h.calls[key].reduce((a, b) => a + b, 0) - 1) < 1e-9, `${fps} Hz render: ${key} receives elapsed time`);
     }
-    assert.equal(h.calls.actorUpdates, 160, `${fps} Hz render: eight actor updates per Match step`);
-    assert.equal(h.calls.botUpdates, 160, `${fps} Hz render: eight bot updates per Match step`);
+    assert.equal(h.calls.actorUpdates, 480, `${fps} Hz render: eight actor updates per Match step`);
+    assert.equal(h.calls.botUpdates, 480, `${fps} Hz render: eight bot updates per Match step`);
     assert.equal(h.calls.menuUpdate, fps, 'DOM menu still updates at render cadence');
     assert.equal(h.calls.showcaseUpdate, fps, 'showcase/menu presentation updates at render cadence');
     assert.equal(h.calls.showcaseRender, fps, 'showcase render remains at render cadence');
@@ -101,7 +103,7 @@ test('only touch or LOW menu backdrops are budgeted; live matches and desktop HI
   for (const { opts, expected } of cases) {
     const h = fixture(opts);
     for (let i = 0; i < 60; i++) h.frame(1 / 60);
-    assert.equal(h.calls.matchDt.length, expected, JSON.stringify(opts));
+    assert.equal(h.calls.matchDt.length, 60, JSON.stringify(opts));
     assert.equal(h.calls.worldRender, expected, JSON.stringify(opts));
     assert.equal(h.calls.menuUpdate, 60, 'menu presentation cadence is unaffected');
     assert.ok(Math.abs(h.G.time - 1) < 1e-9);
@@ -111,6 +113,20 @@ test('only touch or LOW menu backdrops are budgeted; live matches and desktop HI
   assert.equal(idleAttractMenuBudget({ match: { attract: false }, mobile: { touch: true }, settings: { quality: 'low' } }, { mode: 'menu' }), false);
   assert.equal(idleAttractMenuBudget({ match: { attract: true }, mobile: { touch: true }, showcase: { fullFrame: true } }, { mode: 'menu' }), false);
   assert.equal(idleAttractMenuBudget({ match: { attract: true }, mobile: { touch: true } }, { mode: 'match' }), false);
+});
+
+test('menu frame hitches and quality changes never pass a larger interval to actors or projectiles', () => {
+  const h = fixture({ touch: false, quality: 'low' });
+  const intervals = [1 / 120, 1 / 120, 1 / 30, 0.15, 1 / 60, 1 / 20];
+  for (const quality of ['low', 'high', 'low']) {
+    h.game.settings.quality = quality;
+    for (const dt of intervals) h.frame(dt);
+  }
+  const elapsed = 3 * intervals.reduce((a, b) => a + b, 0);
+  assert.equal(h.calls.matchDt.length, Math.round(elapsed * 60));
+  for (const key of ['matchDt', 'controllerDt', 'projectileDt', 'attractDt'])
+    assert.ok(h.calls[key].every(dt => Math.abs(dt - 1 / 60) < 1e-10), key);
+  assert.ok(Math.abs(h.G.time - elapsed) < 1e-9, 'no elapsed time is lost or applied twice');
 });
 
 test('composed offline pause compares fixed controls without enumerating settings and invalidates through real settings writes', () => {
