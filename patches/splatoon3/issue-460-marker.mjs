@@ -24,15 +24,34 @@ const clamp01 = (x) => {
 };
 
 // #272: Stealth Jump (pinned trait SuperJumpSign_Hide, shoes main) conceals the
-// super-jump landing sign from the opposing team. The jumper always sees their
-// own sign and teammates still see it. Without a known local viewer the sign is
-// treated as hidden, the conservative choice so the destination does not leak.
-// Network peers are not covered: remote Actors carry no replicated loadout, so
-// their stealthJump flag is unknown here (未対応, recorded in the report).
-export function superJumpSignHiddenFrom(jumper, viewer) {
-  if (!jumper?.s3?.modifiers?.stealthJump) return false;
-  if (viewer && viewer === jumper) return false;
-  return jumper.team !== viewer?.team;
+// super-jump landing sign from opponents who are FAR from it. Nintendo's own
+// gear guide (nintendo.com/jp/ichikara/av5ja/02.html): 「遠くにいる相手からは、
+// 『スーパージャンプ』の着地地点を示すマーカーが見えなくなる」 — an opponent near
+// the landing point still sees it. The radius is not published for Splatoon 3
+// (未確認). Community observation (Splatoon 2 era: fully visible within ~0.5
+// test line, fading to fully transparent at ~1 line; Splatoon 3 guides: "about
+// Sploosh-o-matic range") is modelled as a spherical fade from 2.5 to 5 units
+// (one test line = 5 units). The jumper always sees their own sign and
+// teammates still see it. Without a known local viewer position or landing
+// point the sign is treated as hidden, the conservative choice so the
+// destination does not leak to the far field.
+export const STEALTH_JUMP_SIGN_FULL_DISTANCE = 2.5;
+export const STEALTH_JUMP_SIGN_VISIBLE_DISTANCE = 5;
+const finiteXYZ = p => !!p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z);
+export function superJumpSignOpacityFor(jumper, viewer, landing = jumper?.superJumpState?.to) {
+  if (!jumper?.s3?.modifiers?.stealthJump) return 1;
+  if (viewer && viewer === jumper) return 1;
+  if (jumper.team === viewer?.team) return 1;
+  const eye = viewer?.pos;
+  if (!finiteXYZ(eye) || !finiteXYZ(landing)) return 0;
+  const d = Math.hypot(eye.x - landing.x, eye.y - landing.y, eye.z - landing.z);
+  const near = STEALTH_JUMP_SIGN_FULL_DISTANCE, far = STEALTH_JUMP_SIGN_VISIBLE_DISTANCE;
+  if (d <= near) return 1;
+  if (!(d < far)) return 0;
+  return (far - d) / (far - near);
+}
+export function superJumpSignHiddenFrom(jumper, viewer, landing = jumper?.superJumpState?.to) {
+  return !(superJumpSignOpacityFor(jumper, viewer, landing) > 0);
 }
 
 // Owner-side normalized flight progress from the live native flight state.
@@ -62,18 +81,21 @@ export function jumpRemaining(dur, progress) {
 
 // Presentation snapshot shared by owner and remote render paths. `concealed`
 // is the Stealth Jump visibility hook: when true the marker keeps its bound
-// lifecycle but exposes no countdown cue.
-export function jumpMarkerSnapshot({ progress = 0, dur = 0, jumper = '', concealed = false } = {}) {
+// lifecycle but exposes no countdown cue. `opacity` (0..1) fades a partially
+// visible Stealth Jump sign; opacity 0 is the same as concealed.
+export function jumpMarkerSnapshot({ progress = 0, dur = 0, jumper = '', concealed = false, opacity = 1 } = {}) {
   const p = clamp01(progress);
   const remaining = jumpRemaining(dur, p);
-  const visible = concealed !== true;
+  const alpha = concealed === true ? 0 : clamp01(opacity);
+  const visible = alpha > 0;
   return {
     progress: p,
     remaining,
     // Countdown drains toward landing (1 -> 0), matching the reference arrow gauge.
     countdown: visible ? 1 - p : 0,
     label: visible ? String(jumper ?? '') : '',
-    concealed: concealed === true,
+    concealed: !visible,
+    opacity: alpha,
   };
 }
 

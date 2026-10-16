@@ -4,6 +4,38 @@ import { idleAttractMenuBudget, MENU_ATTRACT_STEP } from '../../local-quality/id
 import { beginActorMotionTick } from './actor-motion.mjs';
 
 export const STEP = 1 / 60;
+
+// Gameplay randomness (shot spread, splash scatter, …) is drawn inside fixed
+// ticks; presentation (FX, camera shake, menus, net polling) also calls
+// Math.random once per rendered frame. Sharing one stream made the gameplay
+// draws depend on how many frames were rendered, so the same inputs at 20/30
+// vs 60 Hz produced different spread and paint. While Game._frame runs, the
+// non-tick part draws from a separate presentation stream and every fixed tick
+// restores the caller's Math.random, so tick count alone decides gameplay draws.
+// The presentation stream has its own fixed seed and never draws from the
+// caller's generator, so a seeded Math.random still reproduces gameplay exactly.
+const PRESENTATION_SEED = 0x9E3779B9;
+let presentationState = PRESENTATION_SEED, tickRandom = null;
+function presentationRandom() {
+  let t = (presentationState = (presentationState + 0x6D2B79F5) >>> 0);
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+export function withSeparatedPresentationRandom(run) {
+  const base = Math.random;
+  if (base === presentationRandom) return run();
+  tickRandom = base; Math.random = presentationRandom;
+  try { return run(); }
+  finally { if (Math.random === presentationRandom) Math.random = base; tickRandom = null; }
+}
+function runTickWithGameplayRandom(tick, step) {
+  if (Math.random !== presentationRandom || !tickRandom) return tick(step);
+  Math.random = tickRandom;
+  try { return tick(step); }
+  finally { if (Math.random === tickRandom) Math.random = presentationRandom; }
+}
+
 export class FixedClock {
   constructor() { this.accumulator = 0; this.ticks = 0; this.advancing = false; this.finalTick = true; }
   advance(elapsed, tick, budget = 240) {
@@ -15,7 +47,7 @@ export class FixedClock {
       // further tick follows). Presentation-only work may defer earlier ticks.
       this.finalTick = !(Math.max(0, this.accumulator - STEP) + 1e-10 >= STEP && count + 1 < budget);
       this.advancing = true;
-      try { tick(STEP); } finally { this.advancing = false; }
+      try { runTickWithGameplayRandom(tick, STEP); } finally { this.advancing = false; }
       this.accumulator = Math.max(0, this.accumulator - STEP);
       this.ticks++; count++;
     }
@@ -116,6 +148,12 @@ export function installGame(Game) {
       G.game?.netMatchAborted?.('Disconnected while backgrounded');
     });
     hiddenGuestListenerInstalled = true;
+  }
+  const frame = Game.prototype._frame;
+  if (typeof frame === 'function' && !frame.s3SeparatedRandom) {
+    const separated = function (dt) { return withSeparatedPresentationRandom(() => frame.call(this, dt)); };
+    separated.s3SeparatedRandom = true;
+    Game.prototype._frame = separated;
   }
   const original = Game.prototype._loop;
   Game.prototype._loop = function () {
