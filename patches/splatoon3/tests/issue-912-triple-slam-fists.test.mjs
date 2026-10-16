@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   tripleSlamFistCenters, tripleSlamFistDamage, tickTripleSlamFists,
-  installTripleSlamFists, FIST_TRAVEL, FIST_ORPHAN_DEADLINE, FIST_STAMP_RADIUS, tripleSlamFistStamps,
+  installTripleSlamFists, FIST_TRAVEL, FIST_EMISSION_GAP, FIST_LANDING_DELAY, FIST_ORPHAN_DEADLINE, FIST_STAMP_RADIUS, tripleSlamFistStamps,
 } from '../runtime/triple-slam-fists.mjs';
 import { getBoot } from './tidal-slam-fixture.mjs';
 
@@ -59,7 +59,9 @@ test('#912 pinned 11.3.0 symmetric fist centers and near/far damage endpoints', 
   assert.equal(tripleSlamFistDamage(6.4), 220);
   assert.equal(tripleSlamFistDamage(9.6), 60);
   assert.equal(tripleSlamFistDamage(9.600001), 0);
-  assert.equal(FIST_TRAVEL, 15 / 60);
+  assert.equal(FIST_TRAVEL, 15 / 60, 'raw Pogo MoveFrame remains 15F');
+  assert.equal(FIST_EMISSION_GAP, 2 / 60, 'community 87F - 70F - raw 15F');
+  assert.equal(FIST_LANDING_DELAY, 17 / 60);
 });
 
 test('#912 fist stamps are inside the 10-radius cluster and each stays under the remote admission ceiling', () => {
@@ -71,13 +73,13 @@ test('#912 fist stamps are inside the 10-radius cluster and each stays under the
   assert.deepEqual(tripleSlamFistStamps(0), []);
 });
 
-test('#912 native impact is separate from the two fists, delayed by exactly 15F, and emits no boss-visible special:slam', () => {
+test('#912 player at 70F and independent fists at 87F include a 2F emission gap plus raw 15F travel', () => {
   const w = world(), a = new w.Actor();
   a._startSpecial(); assert.equal(a.mainImpacts, 0); assert.equal(w.hits.length, 0);
   for (let i = 0; i < 70; i++) a.update(1 / 60);
   assert.equal(w.hits.length, 0, 'fists must not damage before the owner lands');
   a._slamImpact(); assert.equal(a.mainImpacts, 1);
-  for (let i = 0; i < 14; i++) a.update(1 / 60);
+  for (let i = 0; i < 16; i++) a.update(1 / 60);
   assert.equal(w.hits.length, 0);
   a.update(1 / 60);
   assert.equal(w.hits.length, 2, 'both fist contact zones independently damage');
@@ -95,7 +97,7 @@ test('#912 native impact is separate from the two fists, delayed by exactly 15F,
 test('#912 wall cover suppresses the blocked fist while the other fist remains active', () => {
   const w = world({ wall: true }), a = new w.Actor();
   a._startSpecial(); a._slamImpact();
-  for (let i = 0; i < 15; i++) a.update(1 / 60);
+  for (let i = 0; i < 17; i++) a.update(1 / 60);
   assert.equal(w.hits.length, 1);
   assert.equal(w.paint.length, tripleSlamFistStamps(10).length, 'only the uncovered fist paints');
 });
@@ -113,8 +115,8 @@ test('#912 Super Jump Slam and remotely presented actors never instantiate fists
 
 test('#912 surviving fists still detonate after the owner is splatted before landing', () => {
   const w = world(), a = new w.Actor(); a._startSpecial(); a.alive = false;
-  assert.equal(FIST_ORPHAN_DEADLINE, 85 / 60, 'documented approximate pre-landing-death fallback');
-  for (let i = 0; i < 84; i++) a.update(1 / 60);
+  assert.equal(FIST_ORPHAN_DEADLINE, 87 / 60, 'community activation-to-fist deadline');
+  for (let i = 0; i < 86; i++) a.update(1 / 60);
   assert.equal(w.hits.length, 0, 'never invent early fist damage before the independent deadline');
   a.update(1 / 60);
   assert.equal(w.hits.length, 2, 'both surviving fists independently hit despite player death');
@@ -128,32 +130,32 @@ test('#912 surviving fists still detonate after the owner is splatted before lan
 test('#912 splatting the player after landing cannot cancel either already scheduled fist', () => {
   const w = world(), a = new w.Actor(); a._startSpecial(); a._slamImpact();
   a.alive = false;
-  for (let i = 0; i < 14; i++) a.update(1 / 60);
+  for (let i = 0; i < 16; i++) a.update(1 / 60);
   assert.equal(w.hits.length, 0);
   a.update(1 / 60);
-  assert.equal(w.hits.length, 2, 'the original 15F post-landing timing persists through death');
+  assert.equal(w.hits.length, 2, 'the independent 17F post-landing timing persists through death');
 });
 
-test('#912 fist delay is time-based: 30 sub-steps of 1/120 s fire at the same 0.25 s as 15 ticks of 1/60 s', () => {
+test('#912 17F landing-to-fist delay is identical at 60Hz and 120Hz subdivisions', () => {
   const w = world(), a = new w.Actor();
   a._startSpecial(); a._slamImpact();
-  for (let i = 0; i < 29; i++) a.update(1 / 120);
-  assert.equal(w.hits.length, 0, 'not before 0.25 s');
+  for (let i = 0; i < 33; i++) a.update(1 / 120);
+  assert.equal(w.hits.length, 0, 'before 17/60s');
   a.update(1 / 120);
-  assert.equal(w.hits.length, 2, 'fires at 0.25 s');
+  assert.equal(w.hits.length, 2, 'fires at 17/60s');
 });
 
 test('#912 overlapping fist explosions stack: a victim between both fists takes 440 (above the 100+ overlap threshold)', () => {
   const w = world({ victim: [0, 0, 5.664] }), a = new w.Actor();
   a._startSpecial(); a._slamImpact();
-  for (let i = 0; i < 15; i++) a.update(1 / 60);
+  for (let i = 0; i < 17; i++) a.update(1 / 60);
   const total = w.hits.reduce((sum, h) => sum + h.damage, 0);
   assert.equal(w.hits.length, 2);
   assert.ok(total >= 100, `stacked overlap ${total}`);
   assert.equal(total, 440);
 });
 
-test('#912 composed production Tidal Slam: fists explode 15F after landing, separate from the player blast', async () => {
+test('#912 composed production Tidal Slam: fists explode 17F after landing, separate from the player blast', async () => {
   const f = await getBoot();
   f.G.actors = [];
   const a = f.make();
@@ -171,11 +173,11 @@ test('#912 composed production Tidal Slam: fists explode 15F after landing, sepa
     assert.equal(playerHits.length, 1, 'player blast hits the behind-victim once, at landing');
     const landingHits = hits.filter(h => h.victim === fistVictim).length;
     assert.equal(landingHits, 1, 'the 9.6u main blast already reaches this victim at landing');
-    f.tick(a, 14);
-    assert.equal(hits.filter(h => h.victim === fistVictim).length, landingHits, 'no additional fist damage at 14F');
+    f.tick(a, 16);
+    assert.equal(hits.filter(h => h.victim === fistVictim).length, landingHits, 'no additional fist damage at 16F');
     f.tick(a, 1);
     const fistHits = hits.filter(h => h.victim === fistVictim).slice(landingHits);
-    assert.equal(fistHits.length, 2, 'both fists damage the victim independently after 15F');
+    assert.equal(fistHits.length, 2, 'both fists damage the victim independently after 17F');
     assert.ok(fistHits.every(h => h.cause === 'slam' && h.amount > 60 && h.amount <= 220));
     assert.ok(fistHits.reduce((s, h) => s + h.amount, 0) >= 100);
     assert.equal(hits.filter(h => h.victim === playerVictim).length, 1, 'player blast is not duplicated');
@@ -238,7 +240,7 @@ test('#912 actual composed Actor.splat before landing preserves two damaging fis
     owner.splat(attacker, 'shooter');
     assert.equal(owner.alive, false);
     assert.equal(owner.specialActive, null, 'native death cancels only the user action');
-    f.tick(owner, 84);
+    f.tick(owner, 86);
     assert.equal(hits.length, 0, 'no early after-death fist hit');
     f.tick(owner);
     assert.equal(hits.length, 2, 'both live fists finish despite native death');
