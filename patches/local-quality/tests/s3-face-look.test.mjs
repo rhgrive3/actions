@@ -141,6 +141,17 @@ test('S3 face look: a thin, even mask border over each eye and a thin bridge', a
   }
   assert.ok(n > 10);
   assert.ok(topAt(0) - botAt(0) < 0.12, `bridge thickness ${(topAt(0) - botAt(0)).toFixed(3)}`);
+  // the bottom edge is one smooth curve from the bridge to the outer corner: it falls, then rises, with no bumps
+  const bs = []; for (let az = 0; az <= 0.82; az += 0.02) bs.push(botAt(az));
+  const sl = bs.slice(1).map((v, i) => v - bs[i]);
+  let turns = 0; for (let i = 1; i < sl.length; i++) if (Math.sign(sl[i]) !== Math.sign(sl[i - 1]) && Math.abs(sl[i]) > 1e-5) turns++;
+  assert.equal(turns, 1, 'bottom edge has exactly one low point under the eye');
+  // and it stays under the lower lid's inner wall, which would otherwise break the line
+  for (let i = 0; i < acc.P.length; i++) {
+    if (acc.part[i] !== 3 || !(acc.uv[i][0] > 0) || acc.P[i].x <= 0) continue;
+    const q = acc.P[i].clone().sub(face.HEAD_C), az = Math.atan2(q.x, q.z), el = Math.asin(q.y / q.length());
+    if (az > 0.2 && az < 0.82) assert.ok(el >= botAt(az) - 0.002, `lid wall below the mask line at az ${az.toFixed(2)}`);
+  }
 });
 
 test('S3 face look: lids move only inside the mask, so a blink closes black within a fixed outline', async () => {
