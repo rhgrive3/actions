@@ -1,7 +1,7 @@
 name: Review existing Rapid Blaster Pro manual appearances
 on:
   push:
-    branches: [review/manual-lightlong-mainf063-20261016]
+    branches: [review/manual-lightlong-signatures-f063-20261016]
 permissions:
   contents: read
 jobs:
@@ -31,7 +31,7 @@ jobs:
         run: |
           node diagnostic/check-diagnostic-layout.mjs
           node diagnostic/preflight.mjs
-          node --test diagnostic/page-cleanup.test.mjs diagnostic/capture-resources.test.mjs diagnostic/capture.test.mjs diagnostic/lightlong-capture-contract.test.mjs diagnostic/build-binding.test.mjs diagnostic/capture-checkpoint.test.mjs diagnostic/test-count.test.mjs diagnostic/diagnostic-layout.test.mjs
+          node --test diagnostic/page-cleanup.test.mjs diagnostic/capture-resources.test.mjs diagnostic/capture.test.mjs diagnostic/lightlong-capture-contract.test.mjs diagnostic/build-binding.test.mjs diagnostic/capture-checkpoint.test.mjs diagnostic/test-count.test.mjs diagnostic/diagnostic-layout.test.mjs diagnostic/actor-signatures.test.mjs
       - name: Exact source Actor firing
         run: |
           mkdir -p evidence
@@ -46,6 +46,7 @@ jobs:
         run: |
           LIGHTLONG_SOURCE="$PWD/candidate" INKWAVE_BUILT_SITE="$PWD/candidate-site" node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap diagnostic/lightlong-actor.test.mjs > evidence/emitted.tap 2>&1
           node diagnostic/test-count.mjs evidence/emitted.tap 2
+          node diagnostic/actor-signatures.mjs evidence/source.tap evidence/emitted.tap > evidence/source-fullsite-signatures.json
       - name: Normal-light twelve native views
         run: node diagnostic/capture-lightlong-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/images
       - uses: actions/upload-artifact@v4

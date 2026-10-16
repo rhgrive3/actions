@@ -1,5 +1,5 @@
 {
-  "scope": "Current fixed f063 manual-only R Blaster Elite Deco/WNTR; base65/default59/manual94, explicit native catalog installer, not automatic production-boot qualification. Source2/limited registry emitted2 and12 synthetic-raster sourceframes passed. Full-site emitted2/normal-light12images pending. No runtime/model/default modifications.",
+  "scope": "Exact f063 manual LightLong2 rerun: preserve prior source2/fullsite2 and twelve normal-light views, additionally require eight cross-process geometry/trace/shot/cleanup signatures. Explicit installer remains; no default adoption or model change.",
   "files": [
     {
       "path": "capture-lightlong.mjs",
@@ -87,9 +87,9 @@
     },
     {
       "path": "lightlong-actor.test.mjs",
-      "sha256": "092e22864f137047691cce0b072966d50733840672ebb91bf298e280cd810cd3",
-      "gitBlob": "bdc1e028983667205fa8f90e33134ac9d814d2ad",
-      "bytes": 7681
+      "sha256": "965e10ebedb196d9d6f60368be946198b616d804ad5a38e10e8d7f0227d989f1",
+      "gitBlob": "2da4a5083e48ff57c55d19499581655e18fba2af",
+      "bytes": 7824
     },
     {
       "path": "source-frames.json",
@@ -123,15 +123,27 @@
     },
     {
       "path": ".github/workflows/manual-lightlong-acceptance.yml",
-      "sha256": "ff5a9855fdf3fe6ca9f9da252255da91140e492009c31077728c43a1a6a82ef1",
-      "gitBlob": "ba3fa87425c9ad08255ba9bbab371582c32c0eb7",
-      "bytes": 2711
+      "sha256": "0b3595d4df0319608d85d487f860ff6557b18a74acebbdcc594c23d874610ede",
+      "gitBlob": "5493c093c71640b0764f9b66b7bb24b2e3953e83",
+      "bytes": 2886
     },
     {
       "path": "page-cleanup.test.mjs",
       "sha256": "0cc460ce5d1a0c7d0cd2ef75ec89d558b02e7774b4227eb81c28784bd751a636",
       "gitBlob": "07d39effae249668cfbe9a887573025b2fdffb51",
       "bytes": 7134
+    },
+    {
+      "path": "actor-signatures.mjs",
+      "sha256": "6d83dbab70de5fa555d3874d6a21b0b06936153b4feb2f81c5e0d1b2bcf839d5",
+      "gitBlob": "0f2c06b7286cf1cd8c04fb881fdecc29971beda7",
+      "bytes": 2233
+    },
+    {
+      "path": "actor-signatures.test.mjs",
+      "sha256": "c4a573832bf52e74a4ca9f8acaf909c741c17f95c4088f14458fa91a285808a8",
+      "gitBlob": "5856c2a5c861a3576ba2e577c55e1e9ff929796a",
+      "bytes": 2548
     }
   ]
 }

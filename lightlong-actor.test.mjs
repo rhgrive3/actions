@@ -1,3 +1,4 @@
+import {actorSignature} from './actor-signatures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {isDeepStrictEqual} from 'node:util';
@@ -32,7 +33,7 @@ for(const[row,baseId]of cases)test(row+' current main actual local Actor manual 
     for(let i=0;i<240;i++){const near=i<80||i>=160;if(i===0||i===80||i===160)ch.setLod(near?'game':'far');G.camera.position.set(0,2,near?2:40);G.camera.updateMatrixWorld();a.intent.fire=i>=15&&i<220;G.time+=1/60;a.update(1/60);ch.root.updateMatrixWorld(true);assert.equal(ch.inWorld,true);near?nearTicks++:farTicks++;
      const ws=[ch.weapon,ch.weapon.left].filter(Boolean);for(let n=0;n<ws.length;n++)moved[n] ||= !isDeepStrictEqual(initial[n],vec(ws[n].parts.trigger.quaternion));const pose=Array.from(ch.P);assert.ok(pose.length&&pose.every(Number.isFinite));trace.push({pose,weapon:snapshot(ch.weapon,color,near),ink:a.ink,born,sinceShoot:a.weaponRunner.sinceShoot,sinceHand:Array.from(a.weaponRunner.sinceHand||[]),hand:a.weaponRunner.hand});
     }
-    assert.ok(born>0,'actual admitted projectile births');assert.ok(moved.every(Boolean),'all held triggers really move');assert.ok(trace.some(x=>x.pose.some(v=>v!==0)));assert.equal(nearTicks,160);assert.equal(farTicks,80);a.weaponRunner.reset();a._finishFrame(0);ch.root.updateMatrixWorld(true);trace.push({reset:snapshot(ch.weapon,color,true)});traces.push({trace,shots});console.log(JSON.stringify({row,kit:kit.id,id,team,ticks:240,born,moved,nearTicks,farTicks}));
+    assert.ok(born>0,'actual admitted projectile births');assert.ok(moved.every(Boolean),'all held triggers really move');assert.ok(trace.some(x=>x.pose.some(v=>v!==0)));assert.equal(nearTicks,160);assert.equal(farTicks,80);a.weaponRunner.reset();a._finishFrame(0);ch.root.updateMatrixWorld(true);trace.push({reset:snapshot(ch.weapon,color,true)});traces.push({trace,shots});console.log(JSON.stringify(actorSignature({row,id,team,trace,shots,weapon:ch.weapon})));console.log(JSON.stringify({row,kit:kit.id,id,team,ticks:240,born,moved,nearTicks,farTicks}));
    }finally{G.projectiles._push=push;G.scene.remove(ch.root);ch.dispose();G.projectiles.clear();G.actors=[];assert.equal(ch.root.parent,null);assert.equal(G.projectiles.list.length,0);if(cleanup)console.log(JSON.stringify({row,id,team,cleanup:cleanup()}));f.setWeaponAppearance(kit.id,'',null);assert.equal(f.selectedWeaponAppearance(kit.id,null),baseId);}
   }assertSame(traces[0],traces[1],'base/manual entire native trace');
  }
