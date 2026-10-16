@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {pathToFileURL,fileURLToPath}from'node:url';
+const source=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../candidate');
+const {fixture}=await import(pathToFileURL(path.join(source,'patches/splatoon3/tests/source-fixture.mjs')));
+const f=await fixture({extraExports:`export {createSmallClamResources} from './patches/splatoon3/runtime/ranked/small-clam-model.mjs';export {createPowerClamResources} from './patches/splatoon3/runtime/ranked/power-clam-model.mjs';export {createRainmakerModel as createRainmakerResources} from './patches/splatoon3/runtime/ranked/rainmaker-model.mjs';`});
+const hash=b=>crypto.createHash('sha256').update(b).digest('hex'),rows={};
+for(const[name,triangles]of[['SmallClam',128],['PowerClam',288],['Rainmaker',444]])test(name+' actual source/emitted geometry and material identity',()=>{
+ const r=f['create'+name+'Resources'](f.THREE);try{const g=r.geometry;assert.equal((g.index?.count||g.attributes.position.count)/3,triangles);const attrs=Object.fromEntries(Object.entries(g.attributes).map(([k,a])=>[k,{itemSize:a.itemSize,normalized:a.normalized,type:a.array.constructor.name,length:a.array.length,sha256:hash(Buffer.from(a.array.buffer,a.array.byteOffset,a.array.byteLength))}]));const index=g.index?{type:g.index.array.constructor.name,length:g.index.array.length,sha256:hash(Buffer.from(g.index.array.buffer,g.index.array.byteOffset,g.index.array.byteLength))}:null;
+ rows[name]={attrs,index,material:{type:r.material.type,color:r.material.color.getHex(),roughness:r.material.roughness,metalness:r.material.metalness,vertexColors:r.material.vertexColors,side:r.material.side,transparent:r.material.transparent,opacity:r.material.opacity}};
+ const out=path.resolve(process.env.OBJECTIVE_EVIDENCE||'../evidence');fs.mkdirSync(out,{recursive:true});if(process.env.INKWAVE_BUILT_SITE){const baseline=JSON.parse(fs.readFileSync(path.join(out,'models-source.json')));assert.deepEqual(rows[name],baseline[name],'emitted geometry/material differs');}fs.writeFileSync(path.join(out,process.env.INKWAVE_BUILT_SITE?'models-emitted.json':'models-source.json'),JSON.stringify(rows,null,2));
+ }finally{r.geometry.dispose();r.material.dispose();}
+});

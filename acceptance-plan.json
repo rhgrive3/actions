@@ -1,0 +1,71 @@
+{
+  "baseHead": "9fe55aa056d6b5c31773254a4796c7db50df02f8",
+  "baseTree": "8d18203f847d6215ac1cf5d5141a6fc75ed11528",
+  "candidateTree": "31e760fe02e3f9f3c9174c7d26a6ddaf0f9fd123",
+  "leaves": 4383,
+  "payloadCount": 9,
+  "scope": "Direct browser-created objective states; actual delivered model modules, ClamsRule and native Actors; synthetic flat floor; software WebGL normal-day. No full-stage, network, device or character model comparison qualification. Rainmaker captures rest/charge/attachment visuals with projectile sinks, not firing physics. Clam throws use actual ClamsRule projectiles.",
+  "head": "6c212c39978c51bc21e90ae0e9e7628b74627298",
+  "tree": "31e760fe02e3f9f3c9174c7d26a6ddaf0f9fd123",
+  "payload": [
+    {
+      "path": "patches/splatoon3/runtime/ranked/power-clam-model.mjs",
+      "blob": "d42fce89e9d2c65b78e0835bb4373edf39e2a146",
+      "sha256": "1b80b60f030253c5f51c835e6ae9676be2d2519b1eadc49b6f037317c44aa360",
+      "bytes": 2648
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/rainmaker-model.mjs",
+      "blob": "9238a295ed3a093d3c782021c96f5dc09a5d3a42",
+      "sha256": "bd91dafb3a67ad3b86ef7f687837358823f0ff686be5cf56ead9238283464b98",
+      "bytes": 6910
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/small-clam-model.mjs",
+      "blob": "31aab9fcdbd1a5354764eee5e0296f86b547b79d",
+      "sha256": "80373cb84a73ad54cebbd73e70919037d3a4f45111bef892e0998d23ae7ee737",
+      "bytes": 2965
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/world.mjs",
+      "blob": "76a9215d287d21a86553de49d5c4ba3578a158f0",
+      "sha256": "b70bfd41f4b56a0d65a443f2a4a83cc69e5c7153bdeaf225658a74685cbb0040",
+      "bytes": 45743
+    },
+    {
+      "path": "patches/splatoon3/tests/rainmaker-model-actor.test.mjs",
+      "blob": "2cc9c1aee1ca0a9adba1ec6f5576851566764a2c",
+      "sha256": "ed0383e65d63c030aed695f1571bac4f82a6567cf198210dbb42c27850d79a24",
+      "bytes": 3667
+    },
+    {
+      "path": "patches/splatoon3/tests/rainmaker-model.test.mjs",
+      "blob": "ba53ef390b9256cf76b7c42e58d271a7a9175fae",
+      "sha256": "3b09b7b0e265c92f7d89d07f0ea749fe4c62b162ff9b0d31fd0f59c48a409f6f",
+      "bytes": 5118
+    },
+    {
+      "path": "patches/splatoon3/tests/ranked-clam-model-lifecycle.test.mjs",
+      "blob": "1e638d2d940ee140aeedbeb52aa0d19728a326fb",
+      "sha256": "9811265b365d800d258bd006333e9be659012ceadbd17f69b268b6f7b47e106c",
+      "bytes": 4434
+    },
+    {
+      "path": "patches/splatoon3/tests/ranked-power-clam-model.test.mjs",
+      "blob": "6f769c8ec17401804d823b7d654ce2dd267c299e",
+      "sha256": "4db5b07a116bd5a5d45c64f3c939d628ac6de13bdea09abbb05c7a1f51a3b031",
+      "bytes": 5430
+    },
+    {
+      "path": "patches/splatoon3/tests/ranked-small-clam-model.test.mjs",
+      "blob": "2e3f07b02a8d884fcef2ad24094baf2af86aae6e",
+      "sha256": "68e6b5af6d4fe0c4c5f509c06eb0ed38efe15c131852564becfe3bd8a831c815",
+      "bytes": 3390
+    }
+  ],
+  "expectedFrames": {
+    "clams": 24,
+    "carriers": 4,
+    "rainmaker": 18
+  }
+}

@@ -1,62 +1,18 @@
-# Actions
+# Ranked objective model acceptance
 
-汎用 GitHub Actions worker。対象リポジトリを runner 上へ clone / checkout し、調査・テスト・任意コマンド・同一 branch への安全な push・artifact 保存を行う。
+Fixed game source: 6c212c39978c51bc21e90ae0e9e7628b74627298, tree 31e760fe02e3f9f3c9174c7d26a6ddaf0f9fd123.
 
-## Workflow
+The diagnostic performs one ordinary production build. It validates all build input hashes and all generated artifact hashes, serves only that build's immutable content revision, and requires delivery of the actual objective modules, native game context, character/weapon entry points and Three.js. No source-frame or pose dataset is an input.
 
-`.github/workflows/pr-worker.yml`
+Source acceptance is 21 objective component cases, 3 actual Rainmaker Actor cases, 6 existing ranked-world cases and 3 model geometry/material signatures. The same 3 Actor cases and 3 model signatures run against the emitted build. Signatures compare every geometry attribute/index byte and material settings; they are not a substitute for raster acceptance.
 
-### 主な用途
+The browser uses software WebGL and the existing production day environment with 256-pixel PMREM and exposure 0.94. It creates states directly from delivered public game code:
+- 24 Clam component images: both teams, six field/inventory/conversion/throw states, near and far.
+- 4 actual local carrier images: both teams, seven small clams and a Power Clam. Native clocks and pose ownership, visible inventory pixels, projected bounds and objective draw/triangle increments are required. These images permit inspection of rear attachment and scale with an unchanged character.
+- 18 Rainmaker images: model-only states and two real-carrier views. The final helper's strict tuple and native-clock contract is mandatory.
 
-- `inspect`: clone / fetch / checkout、HEAD / base、status / log、差分一覧を取得
-- `test`: 指定した test command を実行
-- `command`: runner 上で指定 command を実行
-- `command-and-test`: command 実行後に test command を実行
-- `fix-and-push`: command → test → HEAD競合確認 → commit → 同じ branch へ push
+Clam conversion and throws use the actual ClamsRule. The flat floor and component-only carrier records in the 24 Clam images are synthetic. Actual native local Actors are used for the separate carrier views and Rainmaker. Rainmaker projectile sinks mean these captures qualify rest, charge and attachment presentation, not firing physics. Full-stage performance, network, device crash behavior, RSS and character asset quality remain outside this diagnostic.
 
-### Push の安全策
+Every image is saved before final receipt validation. Partial checkpoints are saved after each lane and on failure. Lane failures do not prevent later lanes from running, but any failure fails the entire job. Page exceptions, console errors, network failures, shader errors, context loss, blank images, wrong tuples, wrong model work or clipping fail closed. Cleanup attempts all owned resources and preserves the original failure. Artifacts upload on failure too.
 
-`fix-and-push` で `push=true` の場合だけ push する。
-
-push 前に checkout 時点の branch HEAD と remote branch HEAD を比較する。不一致なら中止する。force-push は行わない。working tree に変更がなければ commit / push もしない。
-
-### Cross-repository push
-
-`rhgrive3/actions` の `GITHUB_TOKEN` だけでは別 repository の branch push に使えないため、Actions repository に `GH_PAT` secret を登録する。
-
-必要権限は対象 repository の branch を push できる範囲だけに絞る。Fork PR など、token の権限モデルが異なる対象は別途確認する。
-
-## 例
-
-### 調査
-
-- repository: `rhgrive3/hex-ida`
-- ref: `codex/...`
-- operation: `inspect`
-
-### テスト
-
-- operation: `test`
-- test_command: `npm test -- --runInBand`
-
-### 修正 + 検証 + push
-
-- operation: `fix-and-push`
-- command: 修正スクリプト / patch 適用コマンド
-- test_command: 対象テスト
-- push: `true`
-
-実行結果は artifact に `inspect.txt`, `command.log`, `test.log`, `push.txt`, `final.txt` として保存される。
-
-
-## Hex parallel lanes
-
-Hex completion work has three bounded measurement lanes that can run concurrently against an exact `rhgrive3/hex-ida` SHA:
-
-- `.github/workflows/hex-lane-perf.yml`
-- `.github/workflows/hex-lane-realgames.yml`
-- `.github/workflows/hex-lane-quality.yml`
-
-All three use `.github/workflows/hex-lane-worker-reusable.yml`, enforce a finite hard watchdog, verify the exact target SHA, and upload only bounded evidence (structured JSON plus the last 200 command lines). See `lanes/README.md`.
-
-A one-shot bootstrap for permanent worker repositories is also present at `.github/workflows/bootstrap-hex-worker-repos.yml` with its requested repository list in `bootstrap/worker-repos.json`.
+Successful CI does not replace visual inspection of the final 46 PNGs for silhouette, clipping, ground burial and body/hand interference. No model, rule, throw timing, damage, hair or character asset is modified by the diagnostic.
