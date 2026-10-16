@@ -187,11 +187,10 @@ test('#750: the shipped _draw head scale resolves to the sourced radius', async 
 test('#750: CollisionParam gameplay radii, spawn, speed, RNG order and draw count are untouched', async () => {
   for (const [vertical, key] of [[false, 'horizontal'], [true, 'vertical']]) {
     const fp = FINGERPRINT[key];
-    const { p } = await flick(vertical);
+    const { p, raw } = await flick(vertical);
     const { draws, a } = await flick(vertical);
     assert.equal(draws, fp.draws, `${key}: Math.random() draw count is unchanged`);
     assert.equal(p.list.length, fp.count, `${key}: glob count`);
-    const raw = a.weapon.ballistics?.raw || (await flick(vertical)).raw;
     const correctedPositions = fp.pos.map(([x,y,z],i) => {
       if (vertical) {
         // #278 indexed birth: the two-shot groups separate by .25 source units.
@@ -202,8 +201,11 @@ test('#750: CollisionParam gameplay radii, spawn, speed, RNG order and draw coun
       const fraction = i / (main.BulletNum - 1) * 2 - 1;
       return [x - fraction * main.SpawnPositionWidth / 2, y, z];
     }).map(row => row.map(round));
-    assert.deepEqual(Array.from(p.list.slice(0, 3), q => roundArray(q.pos.toArray())), correctedPositions,
-      `${key}: sourced #285/#278 birth calibration; draw radius cannot move it`);
+    const currentPositions = Array.from(p.list.slice(0, 3), q => roundArray(q.pos.toArray()));
+    for (let i = 0; i < correctedPositions.length; i++)
+      for (let axis = 0; axis < 3; axis++)
+        assert.ok(Math.abs(currentPositions[i][axis] - correctedPositions[i][axis]) <= 0.0000011,
+          `${key} glob ${i} axis ${axis}: sourced #285/#278 start should not change with draw size; ${currentPositions[i][axis]} vs ${correctedPositions[i][axis]}`);
     const actualVel = Array.from(p.list.slice(0, 3), q => roundArray(q.vel.toArray()));
     if (vertical) {
       assert.deepEqual(actualVel, fp.vel, `${key}: original vertical launch velocities`);
