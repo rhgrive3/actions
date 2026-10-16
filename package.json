@@ -1,0 +1,359 @@
+{
+  "scope": "Private5 existing manual appearances; one build;42 images; source/emitted gates remain distinct",
+  "files": [
+    {
+      "path": "carbon/capture-carbon-manual.mjs",
+      "sha256": "4fff68b0ffd57d0114a8e52060dc480ea5d055c718564af6bd1e43e36b524331",
+      "gitBlob": "13b75065a90e1cdd01301d62ce5aa664dabb17f4",
+      "bytes": 15401
+    },
+    {
+      "path": "carbon/capture-carbon-manual.test.mjs",
+      "sha256": "e3f8b65d3ba927aaf54fddd3358cf358ab1f32b52e61972d6abc6cbff30db673",
+      "gitBlob": "9e3874e8f3b817352b55700b14e91e0f08ec4231",
+      "bytes": 7218
+    },
+    {
+      "path": "carbon/capture-carbon-integration.mjs",
+      "sha256": "2cdd1c480d78fe6aac7ff3f9064b0b2c9e2e73b8cd248d6d77ccbff09f425278",
+      "gitBlob": "6859bc4478f388d08143536f97eb7dbd79afd995",
+      "bytes": 13579
+    },
+    {
+      "path": "carbon/carbon-contract.mjs",
+      "sha256": "37f4abbba627af29601656a7a69f04f331c77f38ff19c2a47388fc31cf25c641",
+      "gitBlob": "688ebeb311cb5979082d1a368e00b8511432b7ac",
+      "bytes": 3098
+    },
+    {
+      "path": "carbon/carbon-contract.test.mjs",
+      "sha256": "a5b9818223d541189955da804f18be44049f0916a68e0cd47c72551eb1bb1e5e",
+      "gitBlob": "a0763bb12e2e16df0db57f56a6281faa5c1c6284",
+      "bytes": 2670
+    },
+    {
+      "path": "carbon/actor-results.mjs",
+      "sha256": "9f5949b04a6f08f184c444c2cb5e72b7c3186047d9aa16008b57f9e87fc0c8b8",
+      "gitBlob": "b7197da86cbf7e2fca5bcb96e2cdf89657fdf475",
+      "bytes": 966
+    },
+    {
+      "path": "carbon/carbon-actor.mjs",
+      "sha256": "af04f8abe15e48fa52164c8effa9c1d955b7f242dbea10c24fe9599a88a85024",
+      "gitBlob": "0088b165a010ca1d63a9f125e1ebe125d29b31e1",
+      "bytes": 6192
+    },
+    {
+      "path": "carbon/source-frames.json",
+      "sha256": "66dfdec5cd9e8279748c5ec81b1761bb24bf43319e6e18334ddb9ec917d6974b",
+      "gitBlob": "f29c94c71ca79bbcc70b1a9d817fd4f1f0174cb3",
+      "bytes": 90000
+    },
+    {
+      "path": "carbon/build-plan.json",
+      "sha256": "d1d5568862dc377379e14121b5a0b7c66732ce5995fe1f88b47202f4c242103f",
+      "gitBlob": "bd6d779788ccdf6fb95e14edfd55ec36a7725109",
+      "bytes": 3042
+    },
+    {
+      "path": "carbon/build-binding.mjs",
+      "sha256": "d402e6f9d278bf589c4540d966ceaba6ad7e8ba011be0d975a3774581b237a2a",
+      "gitBlob": "20260c451b8e2417da7ff52f81fd40472156b850",
+      "bytes": 2832
+    },
+    {
+      "path": "carbon/build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "gitBlob": "ea2b357a4151e2238224853aee5abe369a18deef",
+      "bytes": 2896
+    },
+    {
+      "path": "carbon/capture-checkpoint.mjs",
+      "sha256": "e33c0873d46a9befebfab54180c98bce74a31cba3837918ab1459d92d3138765",
+      "gitBlob": "7d0fbcbaafbc6d8f0c726dba85ad6c20cbc83ebc",
+      "bytes": 1243
+    },
+    {
+      "path": "carbon/capture-checkpoint.test.mjs",
+      "sha256": "cf6b2cdcb15be8779487ba9944558d4963c7af525c3fdda7f2c76eb9187af95a",
+      "gitBlob": "58704315e5c958673b7739ad5d148150b574d538",
+      "bytes": 2719
+    },
+    {
+      "path": "carbon/capture-resources.mjs",
+      "sha256": "1d81047ab52414c60495bacf744db5985846ecdd1651913f7f6185379442c270",
+      "gitBlob": "f2ace9aecc10d285bfa630d4497072513f769efd",
+      "bytes": 478
+    },
+    {
+      "path": "carbon/capture-resources.test.mjs",
+      "sha256": "05048eed03677f582f1b6984e3922cd36bfa0eb659d58e1eca401947bf3a0d80",
+      "gitBlob": "c81cfce0217ce3187eb6dcc71d7591512ae2818b",
+      "bytes": 1036
+    },
+    {
+      "path": "carbon/preflight.mjs",
+      "sha256": "2fe95556d0cb885ef8c0435e6507b388478e48cda2b8510434c11a8d11f3ec23",
+      "gitBlob": "088a6e2a998806210ffae766ae0694563b8820c9",
+      "bytes": 1213
+    },
+    {
+      "path": "carbon/package.json",
+      "sha256": "1d33a3139b0eb686e99c5acf4613fb686f659439348eff400b11676a95c1ac62",
+      "gitBlob": "03df7f20e250e2b5a13a353464d476e8614e4917",
+      "bytes": 2523
+    },
+    {
+      "path": "luna/capture-luna-neo.mjs",
+      "sha256": "28cb55c2e696c0e8a906fec476dfe602dbc2e5588a178ef14a7b829572af9576",
+      "gitBlob": "20886c254676f0f69b5e8ec4015708fae52d74ad",
+      "bytes": 15012
+    },
+    {
+      "path": "luna/capture.test.mjs",
+      "sha256": "8511b4b2aa4784c4879ab6f0fe08a935fef4709c1b92cb16de217a10b71f7ac1",
+      "gitBlob": "63e7b8366cadae682f43b51c0b0ad519af4badf4",
+      "bytes": 6635
+    },
+    {
+      "path": "luna/capture-luna-integration.mjs",
+      "sha256": "a84e136944f9ba2f8702f11c3884a219bd09f95ab587271de8aca8476add94c0",
+      "gitBlob": "c40162b472e300b30b0f45d8efe315ea948a0f3a",
+      "bytes": 13303
+    },
+    {
+      "path": "luna/luna-capture-contract.mjs",
+      "sha256": "30312036fab6b78a747d095162bc5375643520f18d9b8dd6f61f8a6eb83a45d1",
+      "gitBlob": "b5e69b1d4c3483a1fdc953af67822983872636b7",
+      "bytes": 2789
+    },
+    {
+      "path": "luna/luna-capture-contract.test.mjs",
+      "sha256": "7085cac6fe42e4cb1b673719e819de9e7e9974474212bbf227ef22a0ee1efc43",
+      "gitBlob": "d90b9ff6d303743bf6992f3767f1e3cdf69b0375",
+      "bytes": 1681
+    },
+    {
+      "path": "luna/source-frames.json",
+      "sha256": "6cb90f0c20004a4bc3ed085b02b84a2bd4f80f79a3cd281b9fa3e47a4914f8ba",
+      "gitBlob": "f95471aef27cecee1aaefd497a78efdbf5d8779d",
+      "bytes": 37831
+    },
+    {
+      "path": "luna/luna-actor.test.mjs",
+      "sha256": "19b30695d89e8d254d6509c911f200e50423ad7665551de34a50f5e43ecee1ef",
+      "gitBlob": "ec188a2e4db97b3c74c0e429ab88d6365a3befd0",
+      "bytes": 6401
+    },
+    {
+      "path": "luna/build-binding.mjs",
+      "sha256": "d402e6f9d278bf589c4540d966ceaba6ad7e8ba011be0d975a3774581b237a2a",
+      "gitBlob": "20260c451b8e2417da7ff52f81fd40472156b850",
+      "bytes": 2832
+    },
+    {
+      "path": "luna/build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "gitBlob": "ea2b357a4151e2238224853aee5abe369a18deef",
+      "bytes": 2896
+    },
+    {
+      "path": "luna/capture-checkpoint.mjs",
+      "sha256": "e33c0873d46a9befebfab54180c98bce74a31cba3837918ab1459d92d3138765",
+      "gitBlob": "7d0fbcbaafbc6d8f0c726dba85ad6c20cbc83ebc",
+      "bytes": 1243
+    },
+    {
+      "path": "luna/capture-checkpoint.test.mjs",
+      "sha256": "cf6b2cdcb15be8779487ba9944558d4963c7af525c3fdda7f2c76eb9187af95a",
+      "gitBlob": "58704315e5c958673b7739ad5d148150b574d538",
+      "bytes": 2719
+    },
+    {
+      "path": "luna/acceptance-plan.json",
+      "sha256": "477ceff73b9dd96f29e1e3f90fafc49fb95e582368a2b6f0d8be348d989fa765",
+      "gitBlob": "8d1da881718025b7ea1b18f3f2090d5fc925bd51",
+      "bytes": 3833
+    },
+    {
+      "path": "luna/preflight.mjs",
+      "sha256": "2d23cb1ceec9bac909e6bf06094b626070f1a46fc1927f1018233230e48da1cb",
+      "gitBlob": "acb4913bf6294ab9a6fe6c121221e844a14ff15e",
+      "bytes": 1218
+    },
+    {
+      "path": "luna/.github/workflows/luna-neo-acceptance.yml",
+      "sha256": "e42167e4f67740c619a8ba3c63a4c6edf2f75a6197b03973ed24ed538c766898",
+      "gitBlob": "4d26d9027732905a542aea2ebd6d07940626fc48",
+      "bytes": 2583
+    },
+    {
+      "path": "luna/capture-resources.mjs",
+      "sha256": "1d81047ab52414c60495bacf744db5985846ecdd1651913f7f6185379442c270",
+      "gitBlob": "f2ace9aecc10d285bfa630d4497072513f769efd",
+      "bytes": 478
+    },
+    {
+      "path": "luna/capture-resources.test.mjs",
+      "sha256": "05048eed03677f582f1b6984e3922cd36bfa0eb659d58e1eca401947bf3a0d80",
+      "gitBlob": "c81cfce0217ce3187eb6dcc71d7591512ae2818b",
+      "bytes": 1036
+    },
+    {
+      "path": "luna/test-count.mjs",
+      "sha256": "ee2c9fddb7e39f553576d5cfccd10fc8a23d3f32863f292e3fda186c00807748",
+      "gitBlob": "4856780cd0393fb9aa835a04c0492942c8e444f3",
+      "bytes": 513
+    },
+    {
+      "path": "luna/test-count.test.mjs",
+      "sha256": "93769425ce8261478965eabe841c373f54249678358dc197b6a6d5435fc12333",
+      "gitBlob": "fced97ae005be2d0d2196575cd23605d7c898113",
+      "bytes": 577
+    },
+    {
+      "path": "luna/package.json",
+      "sha256": "5b08aa4f2a84b6f98257fdec600ffe1638728b118a0a2b469d450682c347f815",
+      "gitBlob": "2a04ceeced94e3e8bff74cf62044bae162dcdfcf",
+      "bytes": 3021
+    },
+    {
+      "path": "gal/acceptance-plan.json",
+      "sha256": "86b642ed7ec07808d4827eec6c88136038a09e7dc558e06eb9e96adde52c10c1",
+      "gitBlob": "194f854d507cb205f413d132527861df23b8e811",
+      "bytes": 3368
+    },
+    {
+      "path": "gal/capture-gal-deco.mjs",
+      "sha256": "a399b9b3d62a982f5d04826130b9a72e37f7f906269a408ecfca56d46bedb157",
+      "gitBlob": "c8ec5bfdbe81471fd117f975f1803641a14e6d72",
+      "bytes": 15457
+    },
+    {
+      "path": "gal/capture-gal-integration.mjs",
+      "sha256": "4e3321ed166fc453c6a885fb436a9e92c966b01a78c6258216b766fc46b593ba",
+      "gitBlob": "12d15384e8afb4735ab935d005b1fa606c1c2c39",
+      "bytes": 13384
+    },
+    {
+      "path": "gal/capture.test.mjs",
+      "sha256": "99fc283e8a2fc63f0718f6bad1234fbb90742a64b5492d43d9ab0f3a428b51d4",
+      "gitBlob": "85ae5ba11246a6a55e8d07a75220eb1fd051228a",
+      "bytes": 6733
+    },
+    {
+      "path": "gal/gal-capture-contract.mjs",
+      "sha256": "3ee41dfeb984038d7ac4b2d463f9f35329f40fcecba06611f3f2033553421f77",
+      "gitBlob": "71dee3a3db6caa1c3af6ffb24d2308a2301a7f20",
+      "bytes": 2711
+    },
+    {
+      "path": "gal/gal-capture-contract.test.mjs",
+      "sha256": "1ec27fe331c95606d12cb6a80f4d5fb1babdba07d2924cf7aa609244480e67ab",
+      "gitBlob": "a9ca861dd2983fe14902891f2a236fc000f1881f",
+      "bytes": 3214
+    },
+    {
+      "path": "gal/visible-pairs.mjs",
+      "sha256": "74b1801f33c742cfd58f32cc9aba1bd3804ae0d698331c70b771c6ac1581c605",
+      "gitBlob": "25edc000533fa4ac29507d46b80338b524a91823",
+      "bytes": 1369
+    },
+    {
+      "path": "gal/gal-actor.test.mjs",
+      "sha256": "21f20ff664014fe2eb872bc54367a401efac787f89c54d754a0f4297f9cd86cd",
+      "gitBlob": "866699d53624c14f04ed57e372105aa6fa7c8c68",
+      "bytes": 8011
+    },
+    {
+      "path": "gal/build-binding.mjs",
+      "sha256": "d402e6f9d278bf589c4540d966ceaba6ad7e8ba011be0d975a3774581b237a2a",
+      "gitBlob": "20260c451b8e2417da7ff52f81fd40472156b850",
+      "bytes": 2832
+    },
+    {
+      "path": "gal/build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "gitBlob": "ea2b357a4151e2238224853aee5abe369a18deef",
+      "bytes": 2896
+    },
+    {
+      "path": "gal/capture-checkpoint.mjs",
+      "sha256": "e33c0873d46a9befebfab54180c98bce74a31cba3837918ab1459d92d3138765",
+      "gitBlob": "7d0fbcbaafbc6d8f0c726dba85ad6c20cbc83ebc",
+      "bytes": 1243
+    },
+    {
+      "path": "gal/capture-checkpoint.test.mjs",
+      "sha256": "cf6b2cdcb15be8779487ba9944558d4963c7af525c3fdda7f2c76eb9187af95a",
+      "gitBlob": "58704315e5c958673b7739ad5d148150b574d538",
+      "bytes": 2719
+    },
+    {
+      "path": "gal/capture-resources.mjs",
+      "sha256": "1d81047ab52414c60495bacf744db5985846ecdd1651913f7f6185379442c270",
+      "gitBlob": "f2ace9aecc10d285bfa630d4497072513f769efd",
+      "bytes": 478
+    },
+    {
+      "path": "gal/capture-resources.test.mjs",
+      "sha256": "05048eed03677f582f1b6984e3922cd36bfa0eb659d58e1eca401947bf3a0d80",
+      "gitBlob": "c81cfce0217ce3187eb6dcc71d7591512ae2818b",
+      "bytes": 1036
+    },
+    {
+      "path": "gal/preflight.mjs",
+      "sha256": "2d23cb1ceec9bac909e6bf06094b626070f1a46fc1927f1018233230e48da1cb",
+      "gitBlob": "acb4913bf6294ab9a6fe6c121221e844a14ff15e",
+      "bytes": 1218
+    },
+    {
+      "path": "gal/source-frames.json",
+      "sha256": "76dc0ef91a69f319ba8aacc38be30986a1d038afd61626fd5d9460e5e5aaaae2",
+      "gitBlob": "f8091a4b482bfde419468ab5719beafecef98105",
+      "bytes": 68109
+    },
+    {
+      "path": "gal/package.json",
+      "sha256": "8dc2b306ecf76271912d696ce5bca81624867e69d73488122669e2db9be76d8d",
+      "gitBlob": "a4c1f5427bf4af423c93ea1221da5ded6eaa306d",
+      "bytes": 3598
+    },
+    {
+      "path": "shared-preflight.mjs",
+      "sha256": "bd97ce146377cffb0335b9be3c66c1174462b92a65dd61af58a0473fc4080b31",
+      "gitBlob": "64e4c8420a70d7d2226cf17a652473425cc612f1",
+      "bytes": 1785
+    },
+    {
+      "path": "shared-preflight.test.mjs",
+      "sha256": "5e7f6234424aad04f63804f9751fa1410fe92555ded83915dc372c4b79edac94",
+      "gitBlob": "a92a01f793711c68cc6231fe65de6b6a3c915684",
+      "bytes": 1129
+    },
+    {
+      "path": "test-count.mjs",
+      "sha256": "e454e5b9eda4074757eab0f92c32bd47ba4e1d4f9cfc25a5a38fce9226d29ba0",
+      "gitBlob": "07291b11023e2ab38a732f594e0002ee3213e17a",
+      "bytes": 708
+    },
+    {
+      "path": "test-count.test.mjs",
+      "sha256": "907d6897ed12c66b28a287022ac619d0f9dd6f0997977b707e07178ef4313190",
+      "gitBlob": "7e57b0e41f0752b130353c12eadc1da537a1645a",
+      "bytes": 863
+    },
+    {
+      "path": "workflow.test.mjs",
+      "sha256": "49916454e37594ae98a3e09e14a06e58a9200ed4b5d1c5b2392711a15021ec08",
+      "gitBlob": "480f7ac633d8a249b8846f428d3c5753b3396cc5",
+      "bytes": 1268
+    },
+    {
+      "path": ".github/workflows/manual-next-shared-acceptance.yml",
+      "sha256": "004764fe1e384305bc0bf369f6d20ced9b01d303766a7fd6ae91d3707b473be6",
+      "gitBlob": "a20fee573268773f93d49b958e52782f2a80268c",
+      "bytes": 6743
+    }
+  ]
+}

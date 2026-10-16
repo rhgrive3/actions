@@ -1,0 +1,55 @@
+name: Review existing manual Luna Neo appearance
+on:
+  push:
+    branches: [review/manual-luna-neo-acceptance-20261015]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: fbdcacb690ec5c9abd10e14d6b623a6f4206aab0
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Frozen package and controls
+        run: |
+          node diagnostic/preflight.mjs
+          node --test diagnostic/test-count.test.mjs diagnostic/capture-resources.test.mjs diagnostic/capture.test.mjs diagnostic/luna-capture-contract.test.mjs diagnostic/build-binding.test.mjs diagnostic/capture-checkpoint.test.mjs
+      - name: Exact source local Actor firing and paint ownership
+        run: |
+          mkdir -p evidence
+          LUNA_SOURCE="$PWD/candidate" node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap diagnostic/luna-actor.test.mjs > evidence/source.tap
+          node diagnostic/test-count.mjs evidence/source.tap
+      - name: One production build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: Exact emitted local Actor firing and paint ownership
+        run: |
+          LUNA_SOURCE="$PWD/candidate" INKWAVE_BUILT_SITE="$PWD/candidate-site" node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap diagnostic/luna-actor.test.mjs > evidence/emitted.tap
+          node diagnostic/test-count.mjs evidence/emitted.tap
+      - name: Normal-light eight native views
+        run: node diagnostic/capture-luna-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: manual-luna-neo-acceptance
+          path: evidence
+          if-no-files-found: error

@@ -1,0 +1,107 @@
+name: Review existing manual weapon appearances together
+on:
+  push:
+    branches: [review/manual-next-shared-acceptance-20261015]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: fbdcacb690ec5c9abd10e14d6b623a6f4206aab0
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools once
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Bind all frozen components to one checkout
+        run: |
+          ln -s "$GITHUB_WORKSPACE/candidate" diagnostic/candidate
+          mkdir -p evidence/{carbon,luna,gal}
+          node diagnostic/shared-preflight.mjs
+          node --test diagnostic/shared-preflight.test.mjs diagnostic/test-count.test.mjs diagnostic/workflow.test.mjs
+          node diagnostic/carbon/preflight.mjs
+          node diagnostic/luna/preflight.mjs
+          node diagnostic/gal/preflight.mjs
+      - name: carbon frozen controls
+        run: node --test diagnostic/carbon/capture-resources.test.mjs diagnostic/carbon/capture-carbon-manual.test.mjs diagnostic/carbon/carbon-contract.test.mjs diagnostic/carbon/build-binding.test.mjs diagnostic/carbon/capture-checkpoint.test.mjs
+      - name: carbon exact source Actor cases
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/carbon/source
+          for row in Roller_Compact_01 Roller_Compact_02; do
+            for mode in horizontal vertical rolling; do
+              CARBON_SOURCE="$PWD/candidate" CARBON_ROW="$row" CARBON_MODE="$mode" flock -x /tmp/inkwave-heavy-source.lock node --max-old-space-size=512 --experimental-vm-modules diagnostic/carbon/carbon-actor.mjs > "evidence/carbon/source/$row-$mode.json"
+            done
+          done
+          node diagnostic/carbon/actor-results.mjs evidence/carbon/source
+      - name: luna frozen controls
+        run: node --test diagnostic/luna/capture-resources.test.mjs diagnostic/luna/capture.test.mjs diagnostic/luna/luna-capture-contract.test.mjs diagnostic/luna/build-binding.test.mjs diagnostic/luna/capture-checkpoint.test.mjs
+      - name: luna exact source Actor tests
+        run: |
+          LUNA_SOURCE="$PWD/candidate" flock -x /tmp/inkwave-heavy-source.lock node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/luna/luna-actor.test.mjs > evidence/luna/source.tap
+          node diagnostic/test-count.mjs evidence/luna/source.tap 2
+      - name: gal frozen controls
+        run: node --test diagnostic/gal/capture-resources.test.mjs diagnostic/gal/capture.test.mjs diagnostic/gal/gal-capture-contract.test.mjs diagnostic/gal/build-binding.test.mjs diagnostic/gal/capture-checkpoint.test.mjs
+      - name: gal exact source Actor tests
+        run: |
+          GAL_SOURCE="$PWD/candidate" flock -x /tmp/inkwave-heavy-source.lock node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/gal/gal-actor.test.mjs > evidence/gal/source.tap
+          node diagnostic/test-count.mjs evidence/gal/source.tap 2
+      - name: One shared production build
+        id: build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: carbon exact emitted Actor cases
+        id: carbon_emitted
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/carbon/emitted
+          for row in Roller_Compact_01 Roller_Compact_02; do
+            for mode in horizontal vertical rolling; do
+              CARBON_SOURCE="$PWD/candidate" CARBON_ROW="$row" CARBON_MODE="$mode" INKWAVE_BUILT_SITE="$PWD/candidate-site" flock -x /tmp/inkwave-heavy-source.lock node --max-old-space-size=512 --experimental-vm-modules diagnostic/carbon/carbon-actor.mjs > "evidence/carbon/emitted/$row-$mode.json"
+            done
+          done
+          node diagnostic/carbon/actor-results.mjs evidence/carbon/emitted
+      - name: carbon native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.carbon_emitted.outcome == 'success' }}
+        run: node diagnostic/carbon/capture-carbon-integration.mjs --plan diagnostic/carbon/build-plan.json --source candidate --site candidate-site --out evidence/carbon/images
+      - name: luna exact emitted Actor tests
+        id: luna_emitted
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          LUNA_SOURCE="$PWD/candidate" INKWAVE_BUILT_SITE="$PWD/candidate-site" flock -x /tmp/inkwave-heavy-source.lock node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/luna/luna-actor.test.mjs > evidence/luna/emitted.tap
+          node diagnostic/test-count.mjs evidence/luna/emitted.tap 2
+      - name: luna native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.luna_emitted.outcome == 'success' }}
+        run: node diagnostic/luna/capture-luna-integration.mjs --plan diagnostic/luna/acceptance-plan.json --source candidate --site candidate-site --out evidence/luna/images
+      - name: gal exact emitted Actor tests
+        id: gal_emitted
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          GAL_SOURCE="$PWD/candidate" INKWAVE_BUILT_SITE="$PWD/candidate-site" flock -x /tmp/inkwave-heavy-source.lock node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/gal/gal-actor.test.mjs > evidence/gal/emitted.tap
+          node diagnostic/test-count.mjs evidence/gal/emitted.tap 2
+      - name: gal native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.gal_emitted.outcome == 'success' }}
+        run: node diagnostic/gal/capture-gal-integration.mjs --plan diagnostic/gal/acceptance-plan.json --source candidate --site candidate-site --out evidence/gal/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: manual-next-shared-acceptance
+          path: evidence
+          if-no-files-found: error
