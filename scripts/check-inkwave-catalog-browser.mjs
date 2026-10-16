@@ -60,11 +60,9 @@ try {
       });
       const { install } = await import('/patches/splatoon3/runtime/install.mjs');
       const api = install(profile);
-      const [{ installMainWeaponCatalogRuntime }, { MAIN_WEAPON_CATALOG }] = await Promise.all([
-        import('/patches/splatoon3/runtime/main-weapon-catalog.mjs'),
-        import('/patches/splatoon3/runtime/main-weapon-catalog-data.mjs'),
-      ]);
-      const runtime = installMainWeaponCatalogRuntime(api, profile);
+      // Exercise the actual production installer, not a second test-only install.
+      // Reinstalling an idempotent owner returns undefined after its first boot.
+      const { MAIN_WEAPON_CATALOG } = await import('/patches/splatoon3/runtime/main-weapon-catalog-data.mjs');
       const { THREE, G, PLAYER: Player, WEAPONS, WEAPON_ORDER, Actor, Projectiles, NetMatch } = api;
       check(Player.inkMax === 100, 'catalog probe starts at 100 ink');
 
@@ -75,7 +73,8 @@ try {
       const ids = records.map(record => record.id);
       check(records.length === 65, `expected 65 records, got ${records.length}`);
       check(new Set(ids).size === records.length, 'catalog IDs are unique');
-      check(runtime.records === records.length, 'runtime registered all catalog records');
+      check(Object.hasOwn(api.WeaponRunner.prototype, Symbol.for('inkwave.main-weapon-catalog.v1')),
+        'production bootstrap installed the catalogue runtime exactly once');
 
       const familyCounts = {};
       const newRecords = [];

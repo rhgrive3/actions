@@ -187,7 +187,7 @@ export function FAMILY_TRIGGER(ch, name) {
 
 const _anc = new Float64Array(3), _rot = new Float64Array(3);
 export function FAMILY_POSE(ch, dt, s, C) {
-  const cfg = BRUSH[ch.weaponModel];
+  const cfg = BRUSH[ch.weapon?.def?.modelId] || BRUSH[ch.weaponModel];
   if (!cfg) return;
   const m = brushState(ch), r = ch._runner?.(s), cs = r?.catalogState;
   dt = Math.min(0.1, Math.max(0, dt || 0));

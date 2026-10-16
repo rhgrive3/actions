@@ -20,7 +20,7 @@ export function adaptChargerSurface(rel, code, replace) {
   }
   if (rel === 'src/game/cameraRig.js') {
     patch('const charging = a.weaponRunner?.charging ? a.weaponRunner.charge : 0;',
-      "const charging = a.weaponRunner?.charging && (a.weapon?.kind !== 'charger' || a.weapon.scopedCharge === true) ? a.weaponRunner.charge : 0;",
+      "const charging = a.weaponRunner?.charging && ((a.weapon?.behaviorKind || a.weapon?.kind) !== 'charger' || a.weapon.scopedCharge === true) ? a.weaponRunner.charge : 0;",
       'explicit scope capability');
   }
   return code;

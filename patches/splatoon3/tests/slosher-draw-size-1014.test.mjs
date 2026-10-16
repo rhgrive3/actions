@@ -139,8 +139,15 @@ test('#1014 recycled non-Slosher rounds have their own native material and no st
   const {f,a,ps}=await volley();ps.clear();a.weapon=f.WEAPONS.shooter;a.weaponId='shooter';ps.fireShooter(a,a.weapon);
   assert.ok(ps.list.length>0);assert.ok(ps.list.every(p=>p.fidelitySloshDraw===null));
   const p=ps.list[0];ps.list=[p];p.delay=0;p.sats=0;p.age=.025;
-  const [head]=visualHeads(f,ps);
-  assert.equal(head.p,p);assert.equal(p._iwVisualKind,'shooter','recycled round selects shooter VFX');
-  assert.ok(head.radius>0,'actual shooter rod has finite width');
-  assert.ok(ps.projectileVisuals.geometry.drawRange.count>0,'shooter remains visible without old Slosher records');
+  // The catalogue installer now enables the native S3 shot-shape owner.
+  // For a recycled Shooter round, that owner wins over the shared fallback
+  // instead of drawing a second body or reusing old Slosher history.
+  ps._draw();ps.syncVisuals(1);
+  assert.equal(p.s3Shape,'shot','recycled round is reclassified every draw');
+  assert.equal(ps.s3ShapeCounts?.body,1,'one native shooter rod is submitted');
+  assert.ok(ps._s3Shapes?.body?.visible && ps._s3Shapes.body.count===1,
+    'native shooter mesh has one visible instance');
+  assert.equal(ps.projectileVisuals.handles(p),false,'old shared bucket body cannot double-render');
+  assert.equal(p._iwVisualHistory ?? null,null,'no stale Slosher trail remains on the recycled round');
+  assert.ok(p.vis>0&&Number.isFinite(p.vis),'shooter retains its finite source visual radius');
 });

@@ -32,6 +32,25 @@ export function stones(d) {
   }
   append(d, 'body', p);
 }
+// Gravity-only existing decoration mounted to the native can; no new geometry.
+export function gravityStones(d) {
+  const p = new Pieces(), z0 = d.parts.can.pivot.z - .022, y0 = d.parts.can.pivot.y;
+  const sideCenters = [0.04375657445925615, 0.036440905776610674, 0.0395522617772004, 0.042127325344592174, 0.05257580174927114];
+  for (const side of [-1, 1]) for (let i = 0; i < 5; i++) for (const sign of [-1, 1]) {
+    p.add(sphere(.0035, .0035, .0035, side * sideCenters[i], y0 + sign * (4 - i) * .007, z0 + i * .011, 6, 4), i % 2 ? '#f4f1ef' : '#f26da9', M.gloss);
+  }
+  d.parts.variantCharm = part(p.build(), d.parts.can.pivot, 'body');
+}
+// Heavy-only relocation of the same20 stones into the existing can label part.
+// Native Heavy animate already follows can; no extra mesh or animation callback.
+export function heavyStones(d) {
+  const p = new Pieces(), z0 = d.parts.can.pivot.z - .022, y0 = d.parts.can.pivot.y;
+  const sideCenters = [0.04733516539322082, 0.049717948492180586, 0.052117270456055485, 0.053941942944893795, 0.060007144597114065];
+  for (const side of [-1, 1]) for (let i = 0; i < 5; i++) for (const sign of [-1, 1]) {
+    p.add(sphere(.0035, .0035, .0035, side * sideCenters[i], y0 + sign * (4 - i) * .007, z0 + i * .011, 6, 4), i % 2 ? '#f4f1ef' : '#f26da9', M.gloss);
+  }
+  append(d, 'canLabel', p);
+}
 // Move only explicitly sourced triangles from team-ink shading to a fixed
 // surface. No coincident cover, position changes or shared-material mutation.
 // The caller gives a triangle predicate so a partial partition cannot cut faces.
