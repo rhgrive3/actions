@@ -5,7 +5,16 @@ const eventOfAction=Object.freeze({activate:'open',end:'release',return:'release
  marker:'ready',balloon:'fire',screen:'open',device:'open',laser:'fire',pulse:'impact',cross:'impact',cheer:'ready'});
 // Event names are gameplay actions; the real MP3 manifest uses articulation
 // names. Do not play an unrelated sound when the proper sample is absent.
+// Activation happens at the admitted special transition, not a raw button.
+// The source library has different start labels for each kit family.
+export function specialActivationAudioEvent(id){
+  if(id==='slam')return 'charge';
+  if(id==='storm')return 'fire'; // this native owner immediately throws the storm
+  if(id==='ultraStamp')return 'ready';
+  return 'open';
+}
 export function specialActionAudioEvent(id,action){
+ if(action==='target'&&(id==='tentaMissiles'||id==='killerWail'))return 'ready'; // acquired target cue
  if(id==='crabTank'&&action==='cannon')return 'fire_alt'; // actual cannon, not short gun
  if(id==='zipcaster'&&action==='zip')return 'fire'; // recorded hook-launch shot, not absent dodge
  if(id==='ultraStamp'&&action==='swing')return 'fire'; // regular stamp swing
@@ -23,7 +32,7 @@ export function installKitAudio(api,{listen,options}){
  }
  function activation(a,id){if(!a||!SPECIAL_AUDIO_IDS.includes(id))return;
    const now=G.time||0,last=recent.get(a);if(last?.id===id&&Math.abs(now-last.at)<.075)return;
-   recent.set(a,{id,at:now});sound(a,'special',id,'open',a.pos,.82);
+   recent.set(a,{id,at:now});sound(a,'special',id,specialActivationAudioEvent(id),a.pos,.82);
    if(a.isLocal)G.audio?.duck?.(.25,.38);
  }
  listen('special:use',e=>activation(e?.actor,e?.id||e?.actor?.weapon?.special));
