@@ -75,6 +75,7 @@ jobs:
           if [ "${{ steps.esbuild-cache.outputs.cache-hit }}" != "true" ]; then
             npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
           fi
+          node --test scripts/tests/inkwave-pages-source-identity.test.mjs
           node scripts/check-inkwave-patches.mjs --quick
           node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
           node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
