@@ -45,9 +45,12 @@ for (const [key, expected] of Object.entries(identity.files)) {
 // Keep every static module imported by the browser verifier available in
 // this isolated negative fixture. Otherwise Node fails with ERR_MODULE_NOT_FOUND
 // before the exact-source comparison gets to reject the forged dirty overlay.
-for (const file of ['scripts/build-inkwave.mjs', 'scripts/check-inkwave-browser.mjs',
-  'scripts/check-inkwave-hud-authority.mjs', 'scripts/lib/inkwave-weapon-appearance-probe.mjs',
-  'scripts/lib/inkwave-canonical-kit-input.mjs']) {
+const verifierFiles = new Set(['scripts/build-inkwave.mjs', 'scripts/check-inkwave-browser.mjs',
+  'scripts/check-inkwave-hud-authority.mjs']);
+const browserChecker = fs.readFileSync(path.join(repo, 'scripts/check-inkwave-browser.mjs'), 'utf8');
+for (const [, relative] of browserChecker.matchAll(/^import .* from '(\.\/lib\/[^']+\.mjs)';$/gm))
+  verifierFiles.add(path.posix.join('scripts', relative));
+for (const file of verifierFiles) {
   const target = path.join(checkout, file); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.copyFileSync(path.join(repo, file), target);
 }
 assert(identity.files[input], 'Overlay source is bound to the build');
