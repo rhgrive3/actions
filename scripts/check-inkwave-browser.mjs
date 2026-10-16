@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { checkWeaponAppearancePicker } from './lib/inkwave-weapon-appearance-probe.mjs';
+import { clickNativeKitCard } from './lib/inkwave-canonical-kit-input.mjs';
 import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
 import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
 import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
@@ -83,6 +84,7 @@ try {
   await page.goto(address, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.evaluate(async () => { globalThis.s3ProbeG = (await import(new URL('src/core/ctx.js',document.baseURI).href)).G; });
   await page.waitForFunction(() => (!!globalThis.s3ProbeG?.game?.menus && globalThis.s3ProbeG.s3?.installed && globalThis.s3ProbeG.mode !== 'boot') || !!document.getElementById('boot-error')?.textContent, null, { timeout: 180000 });
+  console.error('active browser: native boot ready');
   if (await page.locator('#boot-error').textContent()) throw new Error('Game boot error');
   result = await page.evaluate(async () => {
     const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href);
@@ -111,6 +113,7 @@ try {
     return m.current==='loadout'&&el?.isConnected&&!el.classList.contains('is-leaving')&&!m._modal;
   });
   result.weaponAppearancePicker = await checkWeaponAppearancePicker({page,evidence});
+  console.error('active browser: appearance picker passed');
   const kitMenu=await page.evaluate(async()=>{
     const {CANONICAL_KITS}=await import(new URL('patches/splatoon3/runtime/canonical-kits-data.mjs',document.baseURI).href);
     localStorage.removeItem('inkwave.catalogue-kit.v1');
@@ -126,7 +129,6 @@ try {
     },true);
   });
   for(const [id,k]of Object.entries(kitMenu.kits)){
-    const card=page.locator('.iw-loadout:not(.is-leaving) [data-id="w-'+id+'"]');
     // Native input ownership rejects presses during the staggered opacity entrance.
     // Playwright's visible/stable admission does not include opacity.
     await page.waitForFunction(id=>{
@@ -136,7 +138,7 @@ try {
       let opacity=1;for(let e=c;e&&e!==root.parentNode;e=e.parentElement){opacity*=+getComputedStyle(e).opacity;if(e===root)break;}
       return opacity>0.6;
     },id);
-    await card.click();
+    const nativeInput=await clickNativeKitCard(page,id);
     try { await page.waitForFunction(id=>globalThis.s3ProbeG.game.api.getLoadout().weapon===id,id,{timeout:5000}); }
     catch(error){
       result.canonicalInputFailure=await page.evaluate(id=>{
@@ -151,7 +153,8 @@ try {
       special:el.querySelector('select[aria-label="スペシャル"]').value,
     }));
     if(pair.sub!==k.sub||pair.special!==k.special)throw Error('Canonical menu pair mismatch '+id);
-    result.canonicalLoadout.push({id,...pair,points:k.specialCost});
+    result.canonicalLoadout.push({id,...pair,points:k.specialCost,nativeInput});
+    if(result.canonicalLoadout.length%10===0)console.error('active browser: canonical kits '+result.canonicalLoadout.length+'/'+Object.keys(kitMenu.kits).length);
   }
   await page.screenshot({path:path.join(evidence,'canonical-65-loadout.png'),animations:'disabled',timeout:90000});
   await page.locator('.iw-loadout:not(.is-leaving) [data-id="w-'+kitMenu.original+'"]').click();
