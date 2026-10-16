@@ -490,3 +490,35 @@ test('reacquires shooter carry without a grounded ToHuman weapon snap', async ()
     'steady moving source carry reaches original full strength');
   ch.dispose();
 });
+
+test('actual Player00 source gait exits Shoot clips when a shooter releases while walking backwards', async () => {
+  const api = await production(), ch = await rig(api), dt=1/60, st=state();
+  const owner = { character:ch, alive:true, remote:false, form:'kid',
+    weapon:{kind:'shooter'}, aimYaw:0, intent:{fire:true,sub:false,move:{x:0,z:-1}},
+    weaponRunner:{slosh:-1, firingT:.35, s3ShooterMoveRemaining:4/60}, fireFacing:.5 };
+  ch.actor = owner;
+  st.speed = 2.88;st.localMove = {x:0,z:-1};st.firing = true;
+  const step = () => {
+    ch.root.position.z -= 2.88*dt;
+    api.G.time += dt;ch.update(dt,st);ch.root.updateMatrixWorld(true);
+  };
+  try {
+    for(let i=0;i<50;i++){if(i%6===0)ch.trigger('shoot');step();}
+    assert.ok(ch.sourceMotion.active && ch.sourceMotion.shootBlend>.95, 'source Shoot walk fully admitted');
+    const shooting=ch.sourceMotion.shootBlend;
+    owner.intent.fire=false;step();
+    assert.ok(ch.sourceMotion.shootBlend<shooting,'last frame is already blending toward normal backward Hold');
+    assert.ok(ch.sourceMotion.shootUntil<=ch.sourceMotion.time,'the old 0.18s source shoot grace is cancelled');
+    assert.equal(ch.sourceMotion.sourceUpper,false,'real four-frame shot gate still owns upper body');
+    owner.weaponRunner.s3ShooterMoveRemaining=0;
+    for(let i=0;i<12;i++)step();
+    assert.equal(ch.sourceMotion.sourceUpper,true,'ordinary sourced upper body resumes after actual shot gate');
+    assert.ok(ch.sourceMotion.shootBlend<.05,'old 0.35s firing flag no longer forces Shoot clips');
+    assert.ok(ch.wAim<.07,'native weapon aim also releases at the same transition');
+    assert.ok(ch.sourceMotion.currentClips?.some(x=>x.name.includes('Hold')),
+      'gait moves into source Hold clips without resetting foot phase');
+    assert.ok(ch.feet.every(f=>Number.isFinite(f.cw.x+f.cw.y+f.cw.z)));
+    owner.intent.fire=true;step();
+    assert.ok(ch.sourceMotion.shootBlend>.05,'a new admitted held ZR shot restores the shooting gait');
+  } finally {ch.dispose();}
+});
