@@ -157,6 +157,25 @@ test('charged Stamper slash uses its independent 3F contact before its 6F bullet
   f.tick(a,3);assert.equal(f.G.projectiles.list.length,1);assert.equal(f.G.projectiles.list[0].damage,70);
 });
 
+test('catalog Dualies pass sourced root-space roll direction and duration to native Character',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const r=f.MAIN_WEAPON_CATALOG?.records?.find(r=>!r.legacy&&r.family==='dualies') ||
+    MAIN_WEAPON_CATALOG.records.find(r=>!r.legacy&&r.family==='dualies');
+  assert.ok(r);
+  const a=f.make(r.id), v=a.intent.move;
+  a.form='kid';a.intent.fire=true;a.yaw=Math.PI/2;v.set(1,0,0);
+  const ink=a.ink;
+  assert.equal(a.weaponRunner.tryDodge(v),true);
+  const note=a.character.events.find(x=>x[0]==='dodge');
+  assert.ok(note,'native Character receives exactly the accepted dodge');
+  const opts=note[1];
+  assert.ok(Math.abs(opts.x)<1e-9 && Math.abs(opts.z-1)<1e-9,'world right becomes root forward');
+  assert.equal(opts.t,r.parameters.SideStepParam.MoveFrame/60,'animation uses source roll duration');
+  assert.equal(a.weaponRunner.dodge,null,'physical native dodge state is not modified');
+  assert.ok(a.weaponRunner.catalogState.roll,'existing sourced physical roll is preserved');
+  assert.ok(a.ink<ink,'existing sourced ink charge is preserved');
+});
+
 test('additional dualies replace jump with sourced roll distance and ink cost',async()=>{
   const f=await setup(),r=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor==='WeaponManeuverDual');
   const a=f.make(r.id);a.form='kid';a.intent.fire=true;a.intent.move.set(1,0,0);

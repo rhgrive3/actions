@@ -1221,7 +1221,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.stop=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameNoSquid_Last:t.UnrelaxFrameNoSquid,32)/HZ+duration;
     a.vel.x=direction.x*s.roll.speed;a.vel.z=direction.z*s.roll.speed;
     this.cooldown=finite(t.UnrelaxFrameNoWeapon,0)/HZ;
-    a.character.trigger('dodge');emit('weapon:dodge',{actor:a,dir:direction.clone()});return true;
+    // The native Character expects the world move transformed to root space
+    // and this weapon's sourced MoveFrame. The gameplay roll above is unchanged.
+    const cy=Math.cos(a.yaw),sy=Math.sin(a.yaw);
+    a.character.trigger('dodge',{x:direction.x*cy-direction.z*sy,z:direction.x*sy+direction.z*cy,t:duration});
+    emit('weapon:dodge',{actor:a,dir:direction.clone()});return true;
   };
   Actor.prototype._horizontal=function(dt,...args){
     const s=this.weaponRunner?.catalogState,motion=s?.roll||s?.lunge;

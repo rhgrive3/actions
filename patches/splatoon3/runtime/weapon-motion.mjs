@@ -94,7 +94,9 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
   C._runner = function (s) {
     const r = runner.call(this, s);
     const remoteTurret = this.s3RemoteTurretPose === true;
-    if (this.s3WeaponMotionEnabled === false || !this.dual || !r || !(r.s3Turret || remoteTurret)) return r;
+    const catalog = r?.a?.weapon?.catalogRecord?.family === 'dualies' ? r.catalogState : null;
+    if (this.s3WeaponMotionEnabled === false || !this.dual || !r ||
+        !(r.s3Turret || remoteTurret || catalog?.roll || catalog?.turret > 0)) return r;
     // Character already has the correct stationary dualies stance. Its old
     // lockT-only input misses continued turret fire after movement unlocks.
     // Remote state is a Character-only view, never a gameplay-runner mutation.
@@ -104,8 +106,12 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
       const character = this;
       view = new Proxy(r, { get(target, name) {
         const value = Reflect.get(target, name, target);
-        if (name === 's3Turret' && character.s3RemoteTurretPose === true) return true;
-        return name === 'lockT' && (target.s3Turret || character.s3RemoteTurretPose === true)
+        // Catalogue Dualies own a separate physical roll/turret state. Expose it
+        // only to Character pose reads, never mutate the gameplay runner.
+        const cs=target.a?.weapon?.catalogRecord?.family === 'dualies' ? target.catalogState : null;
+        if (name === 'dodge' && cs?.roll) return cs.roll;
+        if (name === 's3Turret' && (character.s3RemoteTurretPose === true || cs?.turret > 0)) return true;
+        return name === 'lockT' && (target.s3Turret || character.s3RemoteTurretPose === true || cs?.turret > 0)
           ? Math.max(EPS, value || 0) : value;
       } });
       views.set(this, { runner: r, view });
@@ -152,7 +158,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     finally { this._dt = dt; }
   };
   C._poseDodge = function (P, elapsed) {
-    const r = runner.call(this);
+    const r = this._runner();
     if (this.s3WeaponMotionEnabled !== false && r && !r.dodge && !(r.lockT > 0) && !r.s3Turret
         && this.s3RemoteTurretPose !== true) {
       this.tumble = this.tumbleDrop = 0; return;
@@ -160,7 +166,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     return dodge.call(this, P, elapsed);
   };
   C._poseWeapon = function (dt, s) {
-    const result = poseWeapon.call(this, dt, s), r = runner.call(this, s);
+    const result = poseWeapon.call(this, dt, s), r = this._runner(s);
     if (this.s3WeaponMotionEnabled === false || !this.dual || !this.kidForm || !this.grounded || this.dance || r?.dodge) return result;
     // Nintendo's stationary post-slide pose is a deep planted crouch. The
     // public curve only drops the hips 0.05 world units. Calibrate the extra

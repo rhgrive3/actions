@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 const f=await fixture({fullRuntime:true,productionComposition:true,includeCharacter:true,realProjectiles:true,vmMathRandom:()=>.5,extraExports:`export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';`});
-const {G,Actor,Character,THREE,Projectiles,Physics}=f.installedRuntime;f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
+const {G,Actor,Character,THREE,Projectiles,Physics}=f.installedRuntime; // production installer owns catalogue
 function finiteWeapon(w){assert.ok(w&&w.ps);assert.ok(Object.keys(w.ps).length);for(const v of Object.values(w.ps))assert.ok(Number.isFinite(v));for(const p of Object.values(w.parts)){p.updateMatrixWorld(true);assert.ok(p.matrixWorld.elements.every(Number.isFinite));}assert.ok(w.muzzle.getWorldPosition(new THREE.Vector3()).toArray().every(Number.isFinite));}
 for(const id of ['s3-maneuver-short','s3-maneuver-gallon','s3-maneuver-dual','s3-maneuver-stepper','s3-maneuver-long'])test(id+' native Actor advances both hand triggers through near/far and reset',()=>{
  for(const team of [0,1]){
@@ -28,4 +28,32 @@ for(const id of ['s3-maneuver-short','s3-maneuver-gallon','s3-maneuver-dual','s3
    assert.ok(shots>1);assert.deepEqual([...hands].sort(),[0,1]);assert.deepEqual([...near].sort(),[false,true]);assert.deepEqual(moved,[true,true]);r.reset();assert.equal(r.hand,0);assert.deepEqual(Array.from(r.sinceHand),[99,99]);a._finishFrame(0);finiteWeapon(ch.weapon);finiteWeapon(ch.weapon.left);console.log('BASE_DUALIES_ACTOR',JSON.stringify({id,team,shots,ticks:180,moved,near:[...near]}));
   }finally{ch.trigger=trigger;ps.clear();G.scene.remove(ch.root);ch.dispose();G.scene.remove(ps.blobs,ps.arcLine,ps.arcRing);G.actors=[];}
  }
+});
+
+test('catalog Dualies feed native roll and turret Character pose without mutating gameplay runner',()=>{
+  G.scene=new THREE.Scene();G.camera=new THREE.PerspectiveCamera(60,1,.1,100);
+  G.camera.position.set(0,2,2);G.camera.updateMatrixWorld();
+  G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};
+  G.physics=new Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.actors=[];G.time=0;
+  const a=new Actor({team:0,weapon:'s3-maneuver-dual',isLocal:false,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
+  const ch=a.character,r=a.weaponRunner;ch.actor=a;ch.onEvent=null;ch.inWorld=true;
+  a.grounded=a.ground.hit=true;a.form='kid';a.intent.fire=true;
+  a.yaw=Math.PI/2;a.intent.move.set(1,0,0);G.actors=[a];
+  try{
+    assert.equal(r.tryDodge(a.intent.move),true);
+    assert.equal(r.dodge,null,'native dodge physics was not overwritten');
+    assert.equal(r.s3Turret??false,false,'native turret clock was not overwritten');
+    const view=ch._runner();
+    assert.notStrictEqual(view,r,'Character receives read-only catalogue view');
+    assert.ok(view.dodge,'render view sees the actual source roll');
+    assert.ok(view.lockT>0&&view.s3Turret,'render view sees the source post-roll turret');
+    assert.equal(ch.dodgeDur,a.weapon.catalogRecord.parameters.SideStepParam.MoveFrame/60);
+    assert.ok(Math.abs(ch.dodgeX)<1e-8&&Math.abs(ch.dodgeZ-1)<1e-8,'animation direction is root-relative');
+    ch._poseDodge(ch.P,Math.min(.1,ch.dodgeDur*.5));
+    assert.ok(ch.tumble>0,'the native tumble must not be suppressed');
+    assert.ok(Array.from(ch.P).every(Number.isFinite));
+    assert.ok(r.catalogState.roll,'real gameplay roll unchanged by presentation');
+    r.catalogState.roll=null;r.catalogState.turret=0;
+    assert.strictEqual(ch._runner(),r,'render view retires at the actual end');
+  }finally{ch.dispose();G.actors=[];}
 });
