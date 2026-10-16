@@ -46,6 +46,14 @@ export const SOURCE_POSTURE = Object.freeze({
   // silhouette with S3 as the body tipping over on every left-right ("rerere") reversal. Scaled by the
   // controller's own smoothed |sideways travel| so forward/back gaits keep their natural per-step sway.
   lateralKeep: 0.2,
+  // Standing ready stance. Splatoon 3 footage (media y7Zl26Zl12n, n=596-668, a
+  // standing shooter after firing): knees bent, one foot ahead, the rear knee
+  // under the hip rather than far behind it, and the head bobbing about every
+  // 30 frames by about 6 % of the crouched height while the soles stay still.
+  // The Wii U WaitHold clips stagger the feet 0.65 leg lengths front-back and
+  // bob the head only 2.8 % at the same period. INKWAVE calibrations, not
+  // extracted joint values.
+  idle: Object.freeze({ staggerKeep: 0.55, bob: 2.0, meanSeconds: 1.5 }),
 });
 const CORRECTED_STATES = new Set(['idle', 'move']);
 let enabled = true;
@@ -248,4 +256,37 @@ export function sourceFootLift(retarget, ankle, side) {
   const k = SOURCE_POSTURE.footLift, run = clamp(c.runBlend || 0, 0, 1);
   const keep = k.walkKeep + (k.runKeep - k.walkKeep) * run;
   ankle.y = rest.y + dy * (1 - (1 - keep) * w);
+}
+
+/** 0..1 weight of the standing ready-stance corrections (ground idle only). */
+function idleWeight(retarget) {
+  const c = controllerOf(retarget);
+  if (!enabled || !c || c.manual || c.formKid === false) return 0;
+  const st = postureState(retarget);
+  // Firing stands still on the sourced shoot clip and the native upper body:
+  // its shot origin and stance stay the existing ones.
+  return st.weight * clamp(1 - st.move, 0, 1) * clamp(1 - (c.shootBlend || 0), 0, 1);
+}
+/** Called by HumanRetarget.adaptLegFootpaths with a leg's kid-space ankle target before leg IK.
+ *  Pulls the standing front-back stagger toward the pelvis so the rear knee stays under the body. */
+export function sourceIdleStance(retarget, ankle) {
+  if (!retarget.locomotion) return;
+  const w = idleWeight(retarget);
+  if (w <= 1e-4) return;
+  const hz = retarget.character.bones.hips.position.z;
+  ankle.z = hz + (ankle.z - hz) * (1 - (1 - SOURCE_POSTURE.idle.staggerKeep) * w);
+}
+/** Called at the end of HumanRetarget.adaptPelvis with the kid-space pelvis position.
+ *  Scales the standing clip's vertical pelvis bob about its running mean; the planted
+ *  ankles keep their targets, so the knees take up the larger dip. */
+export function sourceIdleBob(retarget, hips) {
+  const c = controllerOf(retarget);
+  if (!c) return;
+  const st = postureState(retarget), now = c.time;
+  if (st.bobMean === undefined || st.bobTime === undefined || now < st.bobTime || now - st.bobTime > 0.25) st.bobMean = hips.y;
+  else if (now > st.bobTime) st.bobMean += (hips.y - st.bobMean) * (1 - Math.exp(-(now - st.bobTime) / SOURCE_POSTURE.idle.meanSeconds));
+  st.bobTime = now;
+  const w = idleWeight(retarget);
+  if (w <= 1e-4) return;
+  hips.y = st.bobMean + (hips.y - st.bobMean) * (1 + (SOURCE_POSTURE.idle.bob - 1) * w);
 }

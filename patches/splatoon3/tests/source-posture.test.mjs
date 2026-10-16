@@ -117,7 +117,10 @@ function measure(api, ch) {
   const hips = w('hips'), chest = w('chest'), neck = w('neck'), head = w('head'), hand = w('handR'), handL = w('handL');
   const muzzle = ch.getMuzzle(new THREE.Vector3()).sub(ch.root.position), m = muzzle.clone().sub(hand).normalize();
   const tilt = v => Math.atan2(v.z, v.y) * DEG;
-  return { handL, hands: hand.distanceTo(handL), reach: hand.z - chest.z, torso: tilt(chest.clone().sub(hips)), neck: tilt(head.clone().sub(neck)), pitch: Math.asin(m.y) * DEG, yaw: Math.atan2(m.x, m.z) * DEG, hand, muzzle };
+  // Neck lean from the neck bone's own axis: the S3 body proportion shortens the
+  // neck, so the head-minus-neck position no longer has a stable direction.
+  const neckAxis = new THREE.Vector3(0, 1, 0).applyQuaternion(ch.bones.neck.getWorldQuaternion(new THREE.Quaternion()));
+  return { handL, hands: hand.distanceTo(handL), reach: hand.z - chest.z, torso: tilt(chest.clone().sub(hips)), neck: tilt(neckAxis), headPos: head, neckPos: neck, pitch: Math.asin(m.y) * DEG, yaw: Math.atan2(m.x, m.z) * DEG, hand, muzzle };
 }
 function maxOver(api, ch, st, opts, fn) {
   let best = -Infinity;
@@ -161,7 +164,7 @@ test('the Wii U hold clips lean forward; the corrected stance, walk and run stay
   api.posture.setSourcePostureEnabled(true);
   drive(api, ch, st, { frames: 120 });
   const idle = measure(api, ch);
-  assert.ok(raw.torso > 10 && raw.neck > 15, `baseline stance hunches (${raw.torso.toFixed(1)}°, neck ${raw.neck.toFixed(1)}°)`);
+  assert.ok(raw.torso > 10 && raw.neck > 10, `baseline stance hunches (${raw.torso.toFixed(1)}°, neck ${raw.neck.toFixed(1)}°)`);
   assert.ok(Math.abs(idle.torso) < 8 && Math.abs(idle.neck) < 8, `upright stance (${idle.torso.toFixed(1)}°, neck ${idle.neck.toFixed(1)}°)`);
   for (const speed of [1.6, 6]) {
     const torso = maxOver(api, ch, st, { speed, frames: 150 }, () => measure(api, ch).torso);

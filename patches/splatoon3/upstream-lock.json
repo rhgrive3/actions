@@ -23,7 +23,8 @@
     "src/core/mobile.js": "4d8de2a521522a96edae3b026545adf3cd39631bd6edfef1349325b450eb7044",
     "src/game/cameraRig.js": "c00a66368c0f2175a53db212bb8fdd8bc812d15958119bd5927bcad5a726c7c7",
     "src/game/motion/retarget.js": "3e35c49ace95b6548d09b188cfb439cf50b9bb9013897fa3ad092a8938af6459",
-    "src/game/motion/source-controller.js": "1b9c098b4835bcf6dc1e3216cb2d39197b50c13edae45a78ff4fbd37f94d6074"
+    "src/game/motion/source-controller.js": "1b9c098b4835bcf6dc1e3216cb2d39197b50c13edae45a78ff4fbd37f94d6074",
+    "src/game/character-geo.js": "c5540b2e6dcecd7278d47f6e62bd62906b12ff976445d4aac0eb1ebe88e7b693"
   },
   "integrationNote": "Three upstream-file overrides from INKWAVE PR #1142 are reviewed and pinned here; base sourceCommit describes the imported upstream snapshot, not these local overrides. Motion ContactPolish: src/game/character.js hash updated after reviewing additive source-motion lifecycle hooks, preserving issue-483 exact disposal anchor and all existing upstream pins. Optional source motion now imports dynamically so its ~70KB of JS and 10MiB of cold coefficient packs never increase the immutable 5MiB startup precache; runtime URLs remain versioned and on-demand integrity checked. Reviewed PR #1463 additive legacy Slam damage-radius source change separately against the unchanged S3 adapter actor insertion anchors, native old-radius fallback and tests. Only src/game/actor.js source checksum changes; new 6.4/9.6 local-calibration fields are independently recorded in numeric-status.json."
 }
