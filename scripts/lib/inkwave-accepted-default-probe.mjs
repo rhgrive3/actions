@@ -28,9 +28,12 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
    // Advance its existing owner, never force Character.setWeapon or visibility.
    for(let i=0;i<180;i++)sc.update(1/60);
    const ch=sc.chars[0],w=ch?.weapon;
+   out.current={row,kit:kit.id,phase:sc.phase,pending:sc.hopWeapon,weapon:sc.weapon,model:ch?.weaponModel,appearance:ch?.weaponAppearanceModel,modelId:w?.def?.modelId,modelVariantId:w?.def?.modelVariantId,mounted:ch?.root?.parent===sc.scene,bodyMatches:w?.body?.geometry===w?.def?.body,staticBodyMatches:w?.body?.geometry===w?.def?.bodyStatic};
    check(sc.weapon===kit.id&&ch?.weaponAppearancePreview===true,'preview routing '+row);
    check(ch.weaponModel===row&&ch.weaponAppearanceModel===row&&w?.def?.modelId===kit.baseId&&w.def.modelVariantId===row,'Character consumed default '+row);
-   check(ch.root.parent===sc.scene&&w.body?.geometry===w.def.body,'mounted native geometry '+row);
+   // Native _buildWeapon uses the authored stationary channel near the camera;
+   // def.body additionally merges animated parts for the far/tool representation.
+   check(ch.root.parent===sc.scene&&w.body?.geometry===(w.def.bodyStatic||w.def.body),'mounted native geometry '+row);
    check(ch.P?.length>0&&Array.from(ch.P).every(Number.isFinite),'finite native pose '+row);
    const hooks=[],drawn=[];let renderFailure;
    try {
@@ -44,6 +47,7 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
    finally{const errors=[];for(const[mesh,old]of hooks)try{mesh.onBeforeRender=old;}catch(error){errors.push(error);}if(errors.length)throw new AggregateError([...(renderFailure?[renderFailure]:[]),...errors],'default render cleanup',{cause:renderFailure});}
    check(drawn.some(x=>x.body&&x.vertices>0),'native weapon actually rendered '+row);
    out.rows.push({row,kit:kit.id,base:kit.baseId,preference:AP.weaponAppearancePreference(kit.id,storage),selected:AP.selectedWeaponAppearance(kit.id,storage),weaponModel:ch.weaponModel,appearance:ch.weaponAppearanceModel,modelId:w.def.modelId,modelVariantId:w.def.modelVariantId,drawn,poseFinite:true});
+   delete out.current;
   }
   check(out.rows.length===12&&new Set(out.rows.map(x=>x.row)).size===12,'twelve default receipts');
   return out;
