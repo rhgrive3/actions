@@ -1307,12 +1307,16 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
     p.pos.z-=Math.sin(actor.yaw)*side-(Math.random()*2-1)*j;
     p.pos.y+=(Math.random()*2-1)*j;
   }
-  // Only offsets are extracted. Native body +1.3 anchor is not claimed as Switch height.
-  // #278: the two pinned height fields are summed as raw INKWAVE world units (scale 1).
-  // The additive combination and per-field engine meaning are unverified: the pinned
-  // Leanny table carries no field semantics. This is an INKWAVE assumption, not a
-  // sourced engine law, and makes no SI-metre claim (profile.json models.rollerVerticalSpawnHeight).
-  p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(unit.SpawnPositionHeight||0);
+  // #278: separate group height offset and indexed per-glob position height.
+  // Each two-round vertical group has SpawnPositionHeight=.25; summing it as a
+  // shared offset collapsed that pair into the same birth position even though
+  // its speed/pitch already uses AfterOffset* at offset=0/1. The community
+  // projectile reference describes vertically distinct starts per glob.
+  // Mapping offsetHeight + offset*positionHeight uses the existing local
+  // world scale 1; Nintendo's native coordinate transform is not recovered.
+  const baseHeight=unit.SpawnPositionOffsetHeight||0;
+  const perGlobHeight=unit.SpawnPositionHeight||0;
+  p.pos.y+=vertical ? baseHeight+offset*perGlobHeight : baseHeight+perGlobHeight;
   p.prev.copy(p.pos);p.start.copy(p.pos);p.fidelityMaxY=p.pos.y;p.fidelityImpactHeight=null;
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
