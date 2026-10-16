@@ -22,6 +22,7 @@ import { rollerSpeedSwerveDegrees, GLOB_GRAZE, globGrazePaint, startCatalogWallD
 import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
+import { reverseShotRelease } from './shooter-movement.mjs';
 import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
 
@@ -330,6 +331,21 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const swing = s.s3SwingMode === 'vertical' ? p.WeaponVerticalSwingParam : p.WeaponWideSwingParam;
       const sourceSpeed = swing?.SwingMoveSpeed;
       return Number.isFinite(sourceSpeed) && sourceSpeed >= 0 ? sourceSpeed * HZ : w.moveSpeedFiring;
+    }
+    // A 0.35s firingT is an animation/recoil signal, not an exported Shooter
+    // walking gate. During reverse-input release, the last admitted round owns
+    // a bounded post-shot action tail. PostDelayFrame is the source action
+    // delay (2-4F where exported); treating it as the movement tail is an
+    // explicit INKWAVE interpretation, NOT a recovered engine rule. In sparse
+    // rows retain the established four-frame Splat Shooter calibration.
+    // This does not shorten burst streams (reverseShotRelease refuses those).
+    if (r.family === 'shooter' && reverseShotRelease(this.a)) {
+      const post = Number.isFinite(t.PostDelayFrame) && t.PostDelayFrame >= 0
+        ? t.PostDelayFrame : 4;
+      const shotGate = Number.isFinite(this.a.lastFire) &&
+        this.a.lastFire + EPS < post / HZ;
+      return shotGate ? w.moveSpeedFiring * mod
+        : PLAYER.runSpeed * (this.a.grounded ? (this.a.s3?.modifiers?.runSpeed ?? 1) : 1);
     }
     if (this.charging) return w.moveSpeedCharging*mod;
     if (r.sourceActor==='WeaponSpinnerDownpour'&&s?.streamElapsed+EPS>=.5)

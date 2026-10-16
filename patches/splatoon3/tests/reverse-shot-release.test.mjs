@@ -109,3 +109,30 @@ test('fixed 60Hz backwards-release facing trace is independent of 30/60/120Hz pr
   }
   assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);
 });
+
+test('added Shooter kits recover reverse walking at sourced short shot tail, not the 0.35s visual pose', async () => {
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
+   extraExports:"export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';"});
+ f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
+ const shooters=f.MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&r.family==='shooter');
+ assert.ok(shooters.length>=10);
+ for(const record of shooters){
+   const a=f.make(record.id),runner=a.weaponRunner;
+   a.form='kid';a.grounded=true;a.intent.move.set(0,0,-1);a.aimYaw=0;
+   runner.firingT=.35; // stale animation timer deliberately remains set
+   const post=record.parameters.WeaponParam.PostDelayFrame??4;
+   const firingFactor=a.s3?.modifiers?.runSpeedFiring??1;
+   const runFactor=a.s3?.modifiers?.runSpeed??1;
+   a.lastFire=Math.max(0,post-.25)/60;
+   near(runner.moveSpeed(),a.weapon.moveSpeedFiring*firingFactor);
+   a.lastFire=(post+.25)/60;
+   near(runner.moveSpeed(),f.PLAYER.runSpeed*runFactor);
+   near(runner.firingT,.35); // movement must not clear real recoil
+   a.intent.fire=true;
+   near(runner.moveSpeed(),a.weapon.moveSpeedFiring*firingFactor);
+   a.intent.fire=false;
+   runner.catalogState={burst:2};
+   near(runner.moveSpeed(),a.weapon.moveSpeedFiring*firingFactor);
+   runner.catalogState=null;
+ }
+});

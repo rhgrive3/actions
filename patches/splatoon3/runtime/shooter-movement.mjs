@@ -49,7 +49,7 @@ export function reverseShotRelease(a) {
       r.s3ShooterPendingFirst || r.s3DualiesStart > 1e-10) return false;
   const catalog = r.catalogState;
   if (catalog?.pending || catalog?.melee || catalog?.roll || catalog?.lunge ||
-      catalog?.stream > 0 || catalog?.chargeF > 0) return false;
+      catalog?.stream > 0 || catalog?.chargeF > 0 || catalog?.burst > 0) return false;
   const length = Math.hypot(move.x, move.z), yaw = a.aimYaw;
   return length > .2 && Number.isFinite(yaw) &&
     (move.x * Math.sin(yaw) + move.z * Math.cos(yaw)) < -.2 * length;
