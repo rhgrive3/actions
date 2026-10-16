@@ -158,16 +158,27 @@ test('Curling flight drag and BaseSpeed law are per elapsed time, not per contac
   near(curlingRollSpeed(24, 13.2, CURLING, 1 / 30), curlingRollSpeed(curlingRollSpeed(24, 13.2, CURLING, 1 / 60), 13.2, CURLING, 1 / 60), 1e-12, 'ComeOverRate compounds per step');
 });
 
-test('Curling guide ends where the bomb bursts, including a wall reflection', async () => {
+test('Curling hides both aim arc and predicted blast ring while real ground roll and wall bounce still resolve', async () => {
   for (const wallZ of [null, 6]) {
     const f = await world({ wallZ });
     const { b, p, preview } = throwSub(f, 'roller', 90, { arc: true });
+    assert.equal(preview.visible, false, 'no predicted explosion marker while aiming Curling');
+    assert.equal(p.arcRing.visible, false, 'no explosion radius circle');
+    assert.equal(p.arcLine.visible, false, 'no meaningless parabolic throw arc');
     const burst = run(p, b);
-    assert.ok(preview.visible, 'marker shown at the predicted burst point');
-    near(preview.ring.x, burst.pos.x, 1e-6, 'x'); near(preview.ring.z, burst.pos.z, 1e-6, 'z');
-    near(preview.ring.y, burst.pos.y - 0.21 + 0.03, 1e-6, 'marker on the floor');
-    if (wallZ != null) assert.ok(burst.pos.z < wallZ, 'reflected back off the wall');
+    assert.ok(burst && Number.isFinite(burst.pos.z), 'real Curling still detonates');
+    if (wallZ != null) assert.ok(burst.pos.z < wallZ, 'real roll still reflects off the wall');
   }
+  // A previous sub can leave its guides visible; selecting Curling clears both.
+  const f = await world(), p = f.G.projectiles, actor = f.make('roller');
+  p.arcLine.visible = p.arcRing.visible = true;
+  p.updateArc(actor, true);
+  assert.equal(p.arcLine.visible, false);
+  assert.equal(p.arcRing.visible, false);
+  // Suction and regular Splat Bomb still retain their useful projectile preview.
+  const suction = await world();
+  const other = throwSub(suction, 'shooter', 6, { arc: true });
+  assert.equal(other.p.arcLine.visible, true);
 });
 
 test('Splat Bomb ground resistance applies while resting between swept hits (bounded slide)', async () => {

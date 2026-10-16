@@ -294,6 +294,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))))
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
+    s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
     s.roll = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;
     s.rollingFrames=0;s.rollingDash=false;
@@ -322,6 +323,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       return finite(s?.rollingDash?(dashTurnBreakActive(this.a)?roll.SpeedDashTurnBreak:roll.SpeedDash):normal,normal)*HZ;
     }
     if (s?.canopy?.open && !s.canopy.launched) return finite(t.MoveSpeedCharge,.055)*HZ*mod;
+    // The swing's own source row owns movement through recovery as well as
+    // startup. firingT is only a short animation hint (0.35 s) and ends before
+    // the longer Roller repeat gate, especially the vertical Flingza/Dynamo.
+    if (r.family === 'roller' && s?.s3SwingMode && (s.pending || this.cooldown > EPS)) {
+      const swing = s.s3SwingMode === 'vertical' ? p.WeaponVerticalSwingParam : p.WeaponWideSwingParam;
+      const sourceSpeed = swing?.SwingMoveSpeed;
+      return Number.isFinite(sourceSpeed) && sourceSpeed >= 0 ? sourceSpeed * HZ : w.moveSpeedFiring;
+    }
     if (this.charging) return w.moveSpeedCharging*mod;
     if (r.sourceActor==='WeaponSpinnerDownpour'&&s?.streamElapsed+EPS>=.5)
       return lerp(finite(t.MoveSpeed,.086),finite(p.VariableShotParam?.MoveSpeed,.05),
@@ -1167,6 +1176,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const vertical=!brush&&selectRollerFlickVertical(a,runner),key=brush?'brush':vertical?'vertical':'horizontal';
       const t=brush?p.WeaponSwingParam:vertical?p.WeaponVerticalSwingParam:p.WeaponWideSwingParam;
       if(pay(runner,finite(t.InkConsume,.085)*100*inkMod(a),finite(t.InkRecoverStop,43)/HZ)){
+        if (!brush) s.s3SwingMode = key; // immutable mode through post-release recovery
         // Individual Wiki tables v11.0/v11.1: sustained cadence is 7/11/14F,
         // with the first interval one frame shorter. These defaults are sparse.
         const communityRepeat=brush?({WeaponBrushMini:7,WeaponBrushNormal:11,WeaponBrushHeavy:14}[r.sourceActor]):null;

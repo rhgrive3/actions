@@ -313,13 +313,19 @@ export function installGear(api, tuning) {
     const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
     if (this.a.grounded && (this.aimingSub || throwingStorm)) return tuning.bomb.holdMoveSpeed;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger' && this.a.onEnemy;
-    const attacking = (w.kind === 'shooter' ? shooterMovementActive(this) : this.firingT > 0) || this.flick >= 0 || this.flickRecover > 0 || this.slosh >= 0 || this.charging || this.streaming;
+    // Keep the firing gear curve through the authoritative Roller recovery,
+    // which outlives flickRecover/firingT; catalog Rollers retain their
+    // source-defined SwingMoveSpeed and kit-specific repeat clock too.
+    const swingActive = (w.kind === 'roller' && !!this.s3RollerAttack && !this.rolling) ||
+      (w.catalogRecord?.family === 'roller' && !!this.catalogState?.s3SwingMode &&
+        (this.catalogState?.pending || this.cooldown > 1e-10) && !this.rolling);
+    const attacking = (w.kind === 'shooter' ? shooterMovementActive(this) : this.firingT > 0) || this.flick >= 0 || this.flickRecover > 0 || this.slosh >= 0 || this.charging || this.streaming || swingActive;
     // Ordinary airborne steering must not acquire extra reach from the ground
     // run-speed ability. Keep attack/ready/action-specific speed owners separate;
     // this only changes the target multiplier, never the velocity at takeoff.
     const ordinaryAir = !this.a.grounded && this.a.form === 'kid' &&
       !this.a.specialActive && !this.a.superJumpState && !this.a.s3?.roll && !this.a.s3?.surge &&
-      !this.busy() && !(w.kind === 'shooter' ? shooterMovementActive(this) : this.firingPose()) && !this.aimingSub && !(this.flickRecover > 0);
+      !this.busy() && !swingActive && !(w.kind === 'shooter' ? shooterMovementActive(this) : this.firingPose()) && !this.aimingSub && !(this.flickRecover > 0);
     const gear = lockedMode || ordinaryAir ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear;
   };

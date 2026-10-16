@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './weapon-edgecases-fixture.mjs';
 import {FixedClock} from '../runtime/clock.mjs';
+import {verticalRollerPose, horizontalRollerPose} from '../runtime/roller.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
 const dt=1/60;
 async function setup(vertical=false){const f=await fixture(),a=f.make('roller');a.grounded=!vertical;return {...f,a,r:a.weaponRunner};}
@@ -42,4 +43,35 @@ test('#373 fixed 60Hz traces are equal at 30/60/120 render schedules',async()=>{
  for(const hz of [30,60,120]){const f=await setup(true),clock=new FixedClock(),trace=[];let tick=0;
   for(let frame=0;frame<hz;frame++)clock.advance(1/hz,delta=>{f.r.update(delta,{fire:tick===0,firePressed:tick===0});trace.push([f.r.flick,f.r.moveSpeed(),f.a.ink,f.shots.length]);tick++;});traces.push(trace);}
  assert.deepEqual(traces[1],traces[0]);assert.deepEqual(traces[2],traces[0]);
+});
+
+test('vertical release retains source swing speed until 56F recovery, including airborne steering',async()=>{
+  const f=await setup(true),{a,r}=f;
+  a.intent.move.set(1,0,0);a.vel.set(0,0,0);
+  r.update(dt,{fire:true,firePressed:true});
+  for(let i=0;i<31;i++)r.update(dt,{fire:false});
+  assert.equal(f.shots.length,1);
+  assert.equal(r.s3RollerAttack.vertical,true);
+  for(let i=0;i<21;i++){
+    r.update(dt,{fire:false});
+    near(r.moveSpeed(),2.88);
+    a.vel.set(0,0,0);
+    for(let j=0;j<8;j++)a._horizontal(dt,false,false);
+    near(a.vel.x,2.88); // P.airMinSpeed=4.6 must not erase Roller attack speed.
+  }
+  for(let i=0;i<5;i++)r.update(dt,{fire:false});
+  assert.equal(r.s3RollerAttack,null);
+  near(r.moveSpeed(),f.PLAYER.runSpeed);
+});
+
+test('vertical ink-release key stays upright through follow-through, never replays the horizontal flick',()=>{
+ const release=31/60,interval=56/60;
+ const before=verticalRollerPose(release-1/60,release,interval);
+ const at=verticalRollerPose(release,release,interval);
+ const follow=verticalRollerPose(release+3/60,release,interval);
+ const horizontal=horizontalRollerPose(21/60,21/60,42/60);
+ assert.ok(before.rotation[2]>1.25,'upright before emission');
+ near(at.rotation[2],Math.PI/2);
+ near(follow.rotation[2],Math.PI/2);
+ assert.ok(Math.abs(at.rotation[2]-horizontal.rotation[2])>.6,'vertical release is not horizontal release');
 });
