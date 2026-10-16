@@ -32,16 +32,19 @@ export function installMenuQuality(Menus, env=globalThis){
   // becomes a child of that scroller, in its content coordinates, so it
   // scrolls in the same composited layer as the focused item.
   const SCROLL_Y=/(auto|scroll)/;
+  // The ancestor walk is cached per selection. Responsive CSS can turn an
+  // ancestor into a scroller (or back) without a focus/input change, so the
+  // viewport size is part of the key: a resize or rotation re-walks once.
   const scrollers=(m,f,root)=>{
-    const c=m._ringHosts;
-    if(c&&c.f===f&&c.root===root&&c.input===m._input)return c.list;
+    const c=m._ringHosts,vw=env.innerWidth,vh=env.innerHeight;
+    if(c&&c.f===f&&c.root===root&&c.input===m._input&&c.vw===vw&&c.vh===vh)return c.list;
     const list=[];
     for(let e=f.parentElement;e;e=e.parentElement){
       const cs=env.getComputedStyle?.(e);
       if(cs&&(SCROLL_Y.test(cs.overflowY)||SCROLL_Y.test(cs.overflowX)))list.push(e);
       if(e===root)break;
     }
-    m._ringHosts={f,root,input:m._input,list};
+    m._ringHosts={f,root,input:m._input,vw,vh,list};
     return list;
   };
   const home=m=>{
