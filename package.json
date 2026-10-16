@@ -5,13 +5,13 @@
   "files": [
     {
       "path": "README.md",
-      "sha256": "7b1495f29d3d22f8bcb9434105122e4de89c56980b186b6c270913a8fc967664",
+      "sha256": "926e372a305aefbb1cca1b094a211cd7c24bb26087c7ba4292f12461ec86836c",
       "bytes": 2725
     },
     {
       "path": "acceptance-plan.json",
-      "sha256": "8b6bfdec8b1cfa5d92fb9a2cd82bdd5aeab8cae1d295fca698b9a50ffbc34dad",
-      "bytes": 3024
+      "sha256": "1426794da6f9e9be4b6ca0da326075e3d976586905a1582f1252af7561f0c3f5",
+      "bytes": 5184
     },
     {
       "path": "capture-objectives-integration.mjs",
@@ -70,7 +70,7 @@
     },
     {
       "path": "preflight.mjs",
-      "sha256": "190c856da1df1143b5e76b26519c5838837593bc1912fbe6278b2357d6746764",
+      "sha256": "b36902a9c58ae90ad6c028c16fa92d4d9a92b62c5d68b6e74643c8a4021fe15c",
       "bytes": 1901
     },
     {
@@ -110,12 +110,12 @@
     },
     {
       "path": "preflight.test.mjs",
-      "sha256": "082381634682e8768217a1c29906fba5795783f81c3dfbb48511551077195a4d",
+      "sha256": "bc99b3c7b73c51898aff7a8484a06cb64a79f5d1982c3cf72a0531a4629e8f31",
       "bytes": 1261
     },
     {
       "path": "wiring.test.mjs",
-      "sha256": "7640ea0a6daad821dc131018e057a57f0640bca716e668d61ca19588e5145a0a",
+      "sha256": "bd0da4249e5cd866b08a9a420579308e6c4af0868040f12504c6506f7c488ee4",
       "bytes": 5449
     },
     {
@@ -140,7 +140,7 @@
     },
     {
       "path": ".github/workflows/ranked-objective-native-acceptance.yml",
-      "sha256": "793ce7d79440633895a75383a9a0181b1fecc447628cb6bf89d3db1811675cc7",
+      "sha256": "52bd9f7ac58c685a9fff2dab8a428a035dc5f86222abc0d2fff987d9af048ce9",
       "bytes": 4906
     },
     {

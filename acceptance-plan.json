@@ -1,13 +1,37 @@
 {
-  "baseHead": "9fe55aa056d6b5c31773254a4796c7db50df02f8",
-  "baseTree": "8d18203f847d6215ac1cf5d5141a6fc75ed11528",
-  "candidateTree": "cfafdf6394f040f17ed6e088ae0bd3f53eb0c08e",
-  "leaves": 4383,
-  "payloadCount": 9,
+  "baseHead": "7ea9410d9aaca46ddb864b96ca4af4ea475f82d6",
+  "baseTree": "bc487680cb5ca412de68ba96f21027ba4e52763b",
+  "candidateTree": "7c3d533e01394d0733ab55476803e66a36cd20d7",
+  "leaves": 4396,
+  "payloadCount": 18,
   "scope": "Direct browser-created objective states; actual delivered model modules, ClamsRule and native Actors; synthetic flat floor; software WebGL normal-day. No full-stage, network, device or character model comparison qualification. Rainmaker captures rest/charge/attachment visuals with projectile sinks, not firing physics. Clam throws use actual ClamsRule projectiles.",
-  "head": "cd18eefdfd5b537eaba0b701e232c4b6d0c93666",
-  "tree": "cfafdf6394f040f17ed6e088ae0bd3f53eb0c08e",
+  "head": "e649b794cf2fc042b410ee8ef67c6668698d5df1",
+  "tree": "7c3d533e01394d0733ab55476803e66a36cd20d7",
   "payload": [
+    {
+      "path": "patches/native-stages/adapter.mjs",
+      "blob": "fda82cfd159318d95707c717058265bcec6304f3",
+      "sha256": "d1d631054ec92d6c13c957fb4022ab2569fa009999dc1d0b0d7571cf740e1266",
+      "bytes": 21852
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/CONTRACT.md",
+      "blob": "ced7f7ca4921e1c9b2345a0f37118a08f878fc8f",
+      "sha256": "e04cf7b48dcfe480b0de6a73e93a886215576ae96fd344343f6555717be85bd2",
+      "bytes": 4144
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+      "blob": "d6c4cb38058c4f7bd11024740b3063b18a461850",
+      "sha256": "302b64a8603f659b29d9054852f339b9bc2e1596b7399cacf4d57dc89e5845c9",
+      "bytes": 39370
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/install.mjs",
+      "blob": "12fc92dfd88b390a163e59233dd3916eeaa71482",
+      "sha256": "cf4002f3b1415c7c293e0e9904bc6fd7c147238a847c5993547118af94c7f2d6",
+      "bytes": 9855
+    },
     {
       "path": "patches/splatoon3/runtime/ranked/power-clam-model.mjs",
       "blob": "d42fce89e9d2c65b78e0835bb4373edf39e2a146",
@@ -21,6 +45,12 @@
       "bytes": 7328
     },
     {
+      "path": "patches/splatoon3/runtime/ranked/rainmaker.mjs",
+      "blob": "49c708f9b23b6d6bb1a0911b453fbae618ddc148",
+      "sha256": "c7a5409a14d638d46f2aab0b2ccc81f5cfdf69b35e33c5038e66994337a49cb7",
+      "bytes": 34618
+    },
+    {
       "path": "patches/splatoon3/runtime/ranked/small-clam-model.mjs",
       "blob": "31aab9fcdbd1a5354764eee5e0296f86b547b79d",
       "sha256": "80373cb84a73ad54cebbd73e70919037d3a4f45111bef892e0998d23ae7ee737",
@@ -28,9 +58,9 @@
     },
     {
       "path": "patches/splatoon3/runtime/ranked/world.mjs",
-      "blob": "76a9215d287d21a86553de49d5c4ba3578a158f0",
-      "sha256": "b70bfd41f4b56a0d65a443f2a4a83cc69e5c7153bdeaf225658a74685cbb0040",
-      "bytes": 45743
+      "blob": "1e1e53e02b73fafab87a062c3de8b78f12339255",
+      "sha256": "f7e0c9c6d98e0ecb030f32b6003f5b4b603baa380eb13da5fc375703f652dcab",
+      "bytes": 45755
     },
     {
       "path": "patches/splatoon3/tests/rainmaker-model-actor.test.mjs",
@@ -51,16 +81,40 @@
       "bytes": 4434
     },
     {
+      "path": "patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs",
+      "blob": "a78b8c67671e53b893df5ca356f2d5992e44cc01",
+      "sha256": "42d7759da7a6ae4c6d8e08bf550390acdadac6910aff2e7b92eaa8f6bdef15cf",
+      "bytes": 8926
+    },
+    {
       "path": "patches/splatoon3/tests/ranked-power-clam-model.test.mjs",
       "blob": "6f769c8ec17401804d823b7d654ce2dd267c299e",
       "sha256": "4db5b07a116bd5a5d45c64f3c939d628ac6de13bdea09abbb05c7a1f51a3b031",
       "bytes": 5430
     },
     {
+      "path": "patches/splatoon3/tests/ranked-scoring-delivery.test.mjs",
+      "blob": "d5c579e3398e7135baf51a11adc15fe61b148e09",
+      "sha256": "e9f08c6d7cae649fd4c7108c51beb2886d0eeb80a15ae5b3caaa7cd792484591",
+      "bytes": 7208
+    },
+    {
       "path": "patches/splatoon3/tests/ranked-small-clam-model.test.mjs",
       "blob": "2e3f07b02a8d884fcef2ad24094baf2af86aae6e",
       "sha256": "68e6b5af6d4fe0c4c5f509c06eb0ed38efe15c131852564becfe3bd8a831c815",
       "bytes": 3390
+    },
+    {
+      "path": "reports/inkwave-splatoon3-behavior-2026-10-02.md",
+      "blob": "6e57894f3a6a48e5892e82503de5236a29b17b00",
+      "sha256": "015d1bf368bb4058fea70df01d69afe09f09cd44c49af9c9f5415cf5d9e0c4db",
+      "bytes": 1099156
+    },
+    {
+      "path": "scripts/check-inkwave-ranked-scoring.mjs",
+      "blob": "87a9f4944e9d02e6954a3315eb35ba8779cbdd0e",
+      "sha256": "db78aacaae76b1fbd1e6ad1904a72dc5f25c026ce87dea314a60a942b86d9dc5",
+      "bytes": 8517
     }
   ],
   "expectedFrames": {

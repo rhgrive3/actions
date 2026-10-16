@@ -17,7 +17,7 @@ jobs:
           path: diagnostic
       - uses: actions/checkout@v4
         with:
-          ref: cd18eefdfd5b537eaba0b701e232c4b6d0c93666
+          ref: e649b794cf2fc042b410ee8ef67c6668698d5df1
           persist-credentials: false
           path: candidate
       - uses: actions/setup-node@v4
