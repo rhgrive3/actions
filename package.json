@@ -45,8 +45,8 @@
     },
     {
       "path": "build-binding.mjs",
-      "sha256": "83efe84e65d2aa4bb3afcf61d4903855eb8a2c81cf2618568371abc761c5a7ac",
-      "bytes": 2879
+      "sha256": "8d79bf06b86bfac20e6ea6fef6d1a085990960a6f38bdcae5b2876cab743299c",
+      "bytes": 3464
     },
     {
       "path": "capture-checkpoint.mjs",
@@ -105,8 +105,8 @@
     },
     {
       "path": "build-binding.test.mjs",
-      "sha256": "773f9ce3358ba8a1fdc0afa904684ea6073df6b8238ce00148370657eb0fad51",
-      "bytes": 2608
+      "sha256": "abdffa773c82cc852dd7dbe630b5332de5c49f69b84f292b7ccb3e511b7e9a21",
+      "bytes": 5222
     },
     {
       "path": "preflight.test.mjs",
