@@ -101,6 +101,26 @@ test('all added Sloshers inherit funded heave and true-birth release without Sho
   }
 });
 
+test('added Charger sight and scoped-only zoom use the sourced family, not kind=catalog',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const {chargerSightVisible}=await import('../runtime/charger-surface.mjs');
+  const records=MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&r.family==='charger');
+  const plain=records.find(r=>!r.parameters.WeaponScopeParam),scoped=records.find(r=>r.parameters.WeaponScopeParam);
+  assert.ok(plain&&scoped,'both source-backed scoped and ordinary Chargers exist');
+  f.G.physics.cameraProbe=(_p,_b,d,_radius,out)=>Object.assign(out,{soft:d,hard:d});
+  f.G.settings={fov:82,cameraShake:0};
+  for(const [r,shouldZoom] of [[plain,false],[scoped,true]]){
+    const a=f.make(r.id);
+    a.weaponRunner.charging=true;a.weaponRunner.charge=1;
+    assert.equal(chargerSightVisible(a),true,r.id+' must show actual charged sight');
+    const cam=new f.THREE.PerspectiveCamera(60,16/9),rig=new f.CameraRig(cam);
+    rig.follow(a,true);
+    for(let i=0;i<90;i++)rig.update(1/60);
+    if(shouldZoom)assert.ok(rig.zoom>10,r.id+' scoped view zooms');
+    else assert.ok(Math.abs(rig.zoom)<1e-8,r.id+' unscoped view stays at native FOV');
+  }
+});
+
 test('all 58 additions admit finite native main shots through Actor input', async () => {
   const f = await setup();
   assert.equal(f.WEAPON_ORDER.length,160); // 65 base mains + 95 playable alternate kits
