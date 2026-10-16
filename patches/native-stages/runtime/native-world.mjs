@@ -43,11 +43,13 @@ export async function buildNativeWorld(game,map,current){
   try { r.setRenderTarget(paint.rt);paint.dryMesh.visible=true;warmed=r.compileAsync(paint.scene,paint.cam); }
   finally { r.setRenderTarget(previousTarget);paint.dryMesh.visible=dryVisible; }
   await warmed;
+  if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   const shaderWarmMilliseconds=performance.now()-warmStart;
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
   inkMesh=new NativeInkMesh(inkGeometry,inkMat);
   status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
+  if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   const navStart=performance.now(),nav=new NavGraph(level,physics);
   // Minimap preparation must use this detached world's navigation, not G.nav
   // which still belongs to the current world until publication below.

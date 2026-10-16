@@ -1,0 +1,753 @@
+{
+  "status": "passed",
+  "contentHash": "e1708fb34e29b5af4f8372314fae0beb2608e387276745b1f3dc78a9d07cd848",
+  "inputHash": "f6e031f1b4cb00a720000ef3a77f5fb55f8014f22cbddf588b658f428d48c28c",
+  "reliability": {
+    "session-admission.mjs": "2d291e7495b8d4fe1de7162b46104fa1506bcf6b6f8856c3b16108c707344de2",
+    "home-jump-adapter.mjs": "836ce4ea2f7ed8ec04163e204d78665e13dc5dd149e262712ffcc641d79512f0",
+    "superjump-chain-adapter.mjs": "f7da7a0c194f4b44c1c25142e341fea372c2e17f4e33379a02997c436d965055",
+    "map-toggle-adapter.mjs": "ad6dbe51b3a891e7ab930fc5bddb9057ea086b3ef8c67e83d15f70f0ac0ce9d9",
+    "menu-takeover.mjs": "bdbff9a944d7cd565b9c7767b83e1c643dbf5af1a789eae0e4ff0dd0371f5819",
+    "net-hit-payload-adapter.mjs": "b26743cbec560b13513b2fd9d98e6905d1f712b15596f6da8358414a35280119",
+    "issue-464-adapter.mjs": "4ddaece66de08be3906197d1a0cca651c2b556b6ca7e12d8dc7f9e827f0b51ec",
+    "adapter.mjs": "f38d40c15af9904af3079b5dce2f59e28337b51f33e27346803c0590804340d8",
+    "special-water-adapter.mjs": "e9870a349ecba50a0f8fb3f473c71cf969cd683312e98513a0c25aefa9f3e778",
+    "special-barrier-adapter.mjs": "e840a872eed2d6ed457c31e2c383084dc6e863119441927d8f74a17824a5ef26",
+    "sub-action-adapter.mjs": "7afe4515dde2ac42c011d4f13a27220a8af26ca29b49d7bbd49a30f27b2211e4",
+    "input-ownership-adapter.mjs": "f5bcaba95a81a4a1aa9c4fe2edc58361da9443294285e210e78ac78a97cac028",
+    "controls-adapter.mjs": "3ce043e930f615b6e6719dd5c8902b3609095fc0815617e0ec70fc67dc06937d",
+    "navigation-adapter.mjs": "cdbdad4b75d0b40ea480bcc82371798d764b7ef7149f4cb8db0c36fb9908f33d",
+    "respawn-navigation-adapter.mjs": "6570ca7a3aed26d5221bd55721f3abcc3726576b06b7a3a4cde7933d0e7979d8",
+    "map-gyro-adapter.mjs": "05ac28d613b5fec87290fe9f0cb19341c7123d73e0f0b365975cf029a48ab6ab",
+    "touch-pointerlock-adapter.mjs": "74af2d55f1bf1cb1d8455f31b9e618f7d00f2dc4c45fb98dcb847c3348068fcd",
+    "input-adapter.mjs": "246404e644fa065535517cd1012fb5c3c7baeb63095d1d57c1d4202806558cbd",
+    "joycon-pair-adapter.mjs": "8d0c3c30355e0e2b109bee7345aa6d8c249b5e7a784eaf1552065eda6c46b214",
+    "net-adapter.mjs": "e49eb085990e85f24c284e2d2c9d2d5c25b760286603a52340dbe6f0010054a2",
+    "results-adapter.mjs": "ad3ee4cdbb0a34df6033613115d436378756c362dab8a8bccdff01fcc31a6abc",
+    "mobile-adapter.mjs": "1f2d069977103a4b51465bed27e2bfdc831a1581017eb2344ece5e89652aa264",
+    "touch-edge-adapter.mjs": "25a40c3c5376d2f5d441454133187070355454c6df333e3737942675734659c1",
+    "intro-adapter.mjs": "59a1a791c3f80e76d754d0853963bf93e8e55e89042453883a55dacb3913f217",
+    "start-adapter.mjs": "a3e762bb276ea60f4c2ec926353d541513222951159ed4af86abd890d75a6793",
+    "attract-adapter.mjs": "8b198b26f7d5cb645959a3afeddd799c3a27c480640cb9ba2b9d2285d7bf4393",
+    "hud-adapter.mjs": "3962efbd7c505014f8577d7dac25366250978c2c7ac31b957c58624069e7b5ff",
+    "gyro-adapter.mjs": "cb55d63f2a216cd530df955f65af2291674ddca24035b98f0697d2b6ff9c33c0",
+    "gyro-invert-adapter.mjs": "d710d4b3aed1caf4ee7f9ffbba18cbef4fa3b1617dfb751010c4a96df89c2afa",
+    "pause-adapter.mjs": "5614b30cd4428ac80077546a7dfba4dc44e79e8f9df5912dbb652483bbf44242",
+    "combat-life-adapter.mjs": "c5e49dfda1d68594991752375e5162e79488ccac0e4bdd56f0d4bd59db10fce8",
+    "combat-credit-adapter.mjs": "bf33f23a53a0bcbd4ec98eed6de3d0bbe8a4aae5f3e51a0cb7adc4675cf7a4fc",
+    "touch-gyro-owner-adapter.mjs": "81b94fa3a60e1a701b91710eec24636bab667f24a70df69a1e346c80c7e3c1e6",
+    "pad-handoff-adapter.mjs": "38a3ae4c530b6e5fbc056e4c02c0ea19566aee333aba7dc85a7f8f25227782f8",
+    "hold-cancel-adapter.mjs": "d0af673825b8ee7155ffe97d22e415f1ba01e90929949452c48d99e5af5109c2",
+    "pin-tap-adapter.mjs": "e17506bca7cc51564b1a7f9e8a6eb9595d0d7a3c0c982acaff0c511e00dae573",
+    "map-look.mjs": "7bcf74931d78a2d466314eb1477d38592f66b9b9b7accaedc11f0591cdcdb6c5",
+    "inkwave-six-followup-adapter.mjs": "8e67f3779573b7f2af2239c32ec25dd131c1dc50c82380e540517b2d90ca8cef",
+    "inkwave-eight-followup-adapter.mjs": "44dc3a98f5434b8a4338f710f44174852595dad3b4b942c44ec99650658b76a6",
+    "menu-raf-adapter.mjs": "bd2152d9f6ebc287fbc21cb3cd74c961a3430b7075d07203a3eaf94ecc5269e4"
+  },
+  "physicalIPadVerified": false,
+  "liveRelayVerified": false,
+  "fullGameRendererVerified": false,
+  "scope": "Existing unchanged full reliability assertions in foreground Chromium and WebKit; native touch/pointer, actual emitted Actor/Runner/Character, native HUD pixels and cancellation. Not physical controllers/iPad, full-game renderer, a proof of original intermittent failure cause, or general live-relay evidence.",
+  "cases": [
+    {
+      "engine": "chromium",
+      "checks": [
+        "right-half-start-ownership-across-center",
+        "left-stick-and-second-left-finger-isolation",
+        "held-fire-drag-capture-and-controller-aim-with-stick",
+        "fire-aim-setting-and-relocated-button-exception",
+        "native-five-button-taps-survive-render-only-frame-and-consume-once",
+        "focus-loss-cancels-pending-touch-action-and-jump-target",
+        "actual-built-network-modules-cancel-rejoin-and-saved-stale-callbacks",
+        "actual-built-HUD-cancels-obsolete-judging-elements-sounds-and-promises",
+        "overlapping-judge-preserves-new-effect-and-normal-result",
+        "actual-built-gyro-late-permission-cannot-undo-disable-or-newer-grant",
+        "actual-built-Match-keeps-online-menu-input-blocked-and-resumes",
+        "actual-built-Input-menu-pad-edge-and-hold-ownership-through-144Hz-clock",
+        "actual-built-gyro-no-data-stops-ON-state-and-explicit-retry-recovers",
+        "actual-built-late-START-grant-and-device-specific-default",
+        "native-touch-camera-reset-shares-controller-path-and-rebases-next-sensor-sample",
+        "actual-built-HUD-native-entry-and-D-pad-selection-have-visible-screenshot-pixels",
+        "actual-built-Match-HUD-diorama-dead-map-selection-and-deferred-respawn-admission",
+        "actual-built-controller-queued-superjump-target-combat-life-fence",
+        "actual-built-gyro-map-cursor-single-consumption-and-camera-ownership",
+        "actual-built-Shooter-measured-diagonal-corners-expand-and-contract",
+        "native-taps-and-DOM-touch-repress-reach-actual-Actor-Runner-Character-once",
+        "native-DOM-sub-hold-and-release-exclude-simultaneous-main-and-phantom-replay",
+        "native-touch-fire-with-keyboard-preserves-contact-and-fresh-takeover",
+        "native-touch-map-latch-closes-on-fresh-keyboard-input",
+        "portrait-guard-visible-native-DOM-routing-neutral-landscape-restored",
+        "first-touch-canvas-from-kbm-activates-fire-with-subsequent-aim-and-release",
+        "first-touch-canvas-from-pad-activates-jump-and-release",
+        "first-touch-canvas-from-kbm-activates-stick-with-subsequent-move-and-release",
+        "first-touch-canvas-from-pad-activates-look-with-subsequent-drag-and-cancel",
+        "visible-overlay-touch-does-not-duplicate-edges",
+        "reject-noncanvas-menu-hud-targets-and-hidden-gameplay-controls",
+        "same-angle-viewport-resize-and-storm-preserve-held-fire-stick-look-ownership",
+        "fixed-stick-same-coordinate-movement-after-same-angle-relayout",
+        "portrait-rejects-controls-fixed-angle-recovery-needs-fresh-touch-no-gyro-resync",
+        "true-rotation-clears-all-old-ownership",
+        "DOM-forced-capture-failure-canvas-move-cancel-and-up-with-one-router-edge",
+        "native-lostpointercapture-cleans-up-holds-edges-and-pointers",
+        "repeated-device-transitions-and-post-destroy-cleanup"
+      ],
+      "dragEvents": "native-CDP-touch",
+      "evidenceClass": "native-CDP-touch",
+      "padMapSamples": [
+        {
+          "image": "chromium-pad-map-selection.png",
+          "state": {
+            "index": 1,
+            "frames": 39,
+            "elapsedMs": 851.7999999970198,
+            "visibility": "visible",
+            "focused": true,
+            "mapT": 1,
+            "mapV": 0,
+            "finiteRunning": 0,
+            "entrance": [
+              {
+                "name": "iw-hud-slide",
+                "playState": "finished",
+                "currentTime": 799.9999999999999,
+                "endTime": 799.9999999999999
+              }
+            ],
+            "mapOpacity": 1,
+            "rowOpacity": 1,
+            "labelOpacity": 1,
+            "labelTextOpacity": 1,
+            "labelText": "Target 1",
+            "iconOpacity": 1,
+            "discOpacity": 1,
+            "guideOpacity": 1,
+            "beaconIndices": [
+              1
+            ],
+            "rowIndices": [
+              1
+            ],
+            "controllerIndex": 1,
+            "targetMatches": true,
+            "cursor": false,
+            "guide": "\u5341\u5b57\u30ad\u30fc\u3067\u9078\u629e \u00b7 LB/RB\u3067\u30d0\u30ea\u30a2\u3092\u9078\u629e \u00b7 \u53f3\u306eA\u30dc\u30bf\u30f3\u3067\u78ba\u5b9a \u00b7 X\u3067\u9589\u3058\u308b",
+            "regions": {
+              "map": {
+                "x": 212.5,
+                "y": 96.80000305175781,
+                "width": 599,
+                "height": 599
+              },
+              "disc": {
+                "x": 429.47186279296875,
+                "y": 253.8718719482422,
+                "width": 45.256256103515625,
+                "height": 45.25624084472656
+              },
+              "label": {
+                "x": 412.3890686035156,
+                "y": 301.5625,
+                "width": 79.421875,
+                "height": 33.296875
+              },
+              "labelText": {
+                "x": 426.6546936035156,
+                "y": 316.6875,
+                "width": 50.890625,
+                "height": 11.78125
+              },
+              "icon": {
+                "x": 438.7099884033203,
+                "y": 263.110009765625,
+                "width": 26.780004882812502,
+                "height": 26.77998046875
+              },
+              "row": {
+                "x": 239.11163330078125,
+                "y": 235.0187530517578,
+                "width": 149.515625,
+                "height": 35.82810974121094
+              },
+              "unselectedRow": {
+                "x": 235.015625,
+                "y": 194.5968780517578,
+                "width": 149.515625,
+                "height": 35.828125
+              },
+              "guide": {
+                "x": 235.015625,
+                "y": 360.89373779296875,
+                "width": 149.515625,
+                "height": 23.9375
+              }
+            },
+            "viewport": {
+              "width": 1024,
+              "height": 768
+            },
+            "status": "ready"
+          },
+          "pixels": {
+            "width": 2048,
+            "height": 1536,
+            "scaleX": 2,
+            "scaleY": 2,
+            "map": {
+              "pixels": 1435204,
+              "bright": 31588,
+              "orange": 15376,
+              "borderOrange": 0
+            },
+            "disc": {
+              "pixels": 8281,
+              "bright": 2174,
+              "orange": 4237,
+              "borderOrange": 669
+            },
+            "label": {
+              "pixels": 10653,
+              "bright": 1463,
+              "orange": 249,
+              "borderOrange": 0
+            },
+            "labelText": {
+              "pixels": 2448,
+              "bright": 1028,
+              "orange": 0,
+              "borderOrange": 0
+            },
+            "icon": {
+              "pixels": 2916,
+              "bright": 812,
+              "orange": 1199,
+              "borderOrange": 125
+            },
+            "row": {
+              "pixels": 21600,
+              "bright": 3018,
+              "orange": 4342,
+              "borderOrange": 2196
+            },
+            "unselectedRow": {
+              "pixels": 21600,
+              "bright": 3135,
+              "orange": 1787,
+              "borderOrange": 0
+            },
+            "guide": {
+              "pixels": 14400,
+              "bright": 1834,
+              "orange": 0,
+              "borderOrange": 0
+            }
+          }
+        },
+        {
+          "image": "chromium-pad-map-selection-next.png",
+          "state": {
+            "index": 2,
+            "frames": 18,
+            "elapsedMs": 377.1000000014901,
+            "visibility": "visible",
+            "focused": true,
+            "mapT": 1,
+            "mapV": 0,
+            "finiteRunning": 0,
+            "entrance": [
+              {
+                "name": "iw-hud-slide",
+                "playState": "finished",
+                "currentTime": 799.9999999999999,
+                "endTime": 799.9999999999999
+              }
+            ],
+            "mapOpacity": 1,
+            "rowOpacity": 1,
+            "labelOpacity": 1,
+            "labelTextOpacity": 1,
+            "labelText": "Target 2",
+            "iconOpacity": 1,
+            "discOpacity": 1,
+            "guideOpacity": 1,
+            "beaconIndices": [
+              2
+            ],
+            "rowIndices": [
+              2
+            ],
+            "controllerIndex": 2,
+            "targetMatches": true,
+            "cursor": false,
+            "guide": "\u5341\u5b57\u30ad\u30fc\u3067\u9078\u629e \u00b7 LB/RB\u3067\u30d0\u30ea\u30a2\u3092\u9078\u629e \u00b7 \u53f3\u306eA\u30dc\u30bf\u30f3\u3067\u78ba\u5b9a \u00b7 X\u3067\u9589\u3058\u308b",
+            "regions": {
+              "map": {
+                "x": 212.5,
+                "y": 96.80000305175781,
+                "width": 599,
+                "height": 599
+              },
+              "disc": {
+                "x": 549.2718505859375,
+                "y": 253.8718719482422,
+                "width": 45.2562255859375,
+                "height": 45.25624084472656
+              },
+              "label": {
+                "x": 532.1890869140625,
+                "y": 301.5625,
+                "width": 79.421875,
+                "height": 33.296875
+              },
+              "labelText": {
+                "x": 545.5015869140625,
+                "y": 316.6875,
+                "width": 52.78125,
+                "height": 11.78125
+              },
+              "icon": {
+                "x": 558.5099731445313,
+                "y": 263.110009765625,
+                "width": 26.77998046875,
+                "height": 26.77998046875
+              },
+              "row": {
+                "x": 239.11163330078125,
+                "y": 275.44061279296875,
+                "width": 149.515625,
+                "height": 35.828125
+              },
+              "unselectedRow": {
+                "x": 235.015625,
+                "y": 194.5968780517578,
+                "width": 149.515625,
+                "height": 35.828125
+              },
+              "guide": {
+                "x": 235.015625,
+                "y": 360.89373779296875,
+                "width": 149.515625,
+                "height": 23.9375
+              }
+            },
+            "viewport": {
+              "width": 1024,
+              "height": 768
+            },
+            "status": "ready"
+          },
+          "pixels": {
+            "width": 2048,
+            "height": 1536,
+            "scaleX": 2,
+            "scaleY": 2,
+            "map": {
+              "pixels": 1435204,
+              "bright": 31691,
+              "orange": 15355,
+              "borderOrange": 0
+            },
+            "disc": {
+              "pixels": 8281,
+              "bright": 2196,
+              "orange": 4251,
+              "borderOrange": 681
+            },
+            "label": {
+              "pixels": 10653,
+              "bright": 1524,
+              "orange": 254,
+              "borderOrange": 0
+            },
+            "labelText": {
+              "pixels": 2544,
+              "bright": 1095,
+              "orange": 0,
+              "borderOrange": 0
+            },
+            "icon": {
+              "pixels": 2916,
+              "bright": 836,
+              "orange": 1188,
+              "borderOrange": 124
+            },
+            "row": {
+              "pixels": 21600,
+              "bright": 3091,
+              "orange": 4225,
+              "borderOrange": 2196
+            },
+            "unselectedRow": {
+              "pixels": 21600,
+              "bright": 3135,
+              "orange": 1787,
+              "borderOrange": 0
+            },
+            "guide": {
+              "pixels": 14400,
+              "bright": 1834,
+              "orange": 0,
+              "borderOrange": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "checks": [
+        "right-half-start-ownership-across-center",
+        "left-stick-and-second-left-finger-isolation",
+        "held-fire-drag-capture-and-controller-aim-with-stick",
+        "fire-aim-setting-and-relocated-button-exception",
+        "native-five-button-taps-survive-render-only-frame-and-consume-once",
+        "focus-loss-cancels-pending-touch-action-and-jump-target",
+        "actual-built-network-modules-cancel-rejoin-and-saved-stale-callbacks",
+        "actual-built-HUD-cancels-obsolete-judging-elements-sounds-and-promises",
+        "overlapping-judge-preserves-new-effect-and-normal-result",
+        "actual-built-gyro-late-permission-cannot-undo-disable-or-newer-grant",
+        "actual-built-Match-keeps-online-menu-input-blocked-and-resumes",
+        "actual-built-Input-menu-pad-edge-and-hold-ownership-through-144Hz-clock",
+        "actual-built-gyro-no-data-stops-ON-state-and-explicit-retry-recovers",
+        "actual-built-late-START-grant-and-device-specific-default",
+        "native-touch-camera-reset-shares-controller-path-and-rebases-next-sensor-sample",
+        "actual-built-HUD-native-entry-and-D-pad-selection-have-visible-screenshot-pixels",
+        "actual-built-Match-HUD-diorama-dead-map-selection-and-deferred-respawn-admission",
+        "actual-built-controller-queued-superjump-target-combat-life-fence",
+        "actual-built-gyro-map-cursor-single-consumption-and-camera-ownership",
+        "actual-built-Shooter-measured-diagonal-corners-expand-and-contract",
+        "native-taps-and-DOM-touch-repress-reach-actual-Actor-Runner-Character-once",
+        "native-DOM-sub-hold-and-release-exclude-simultaneous-main-and-phantom-replay",
+        "native-touch-fire-with-keyboard-preserves-contact-and-fresh-takeover",
+        "native-touch-map-latch-closes-on-fresh-keyboard-input",
+        "portrait-guard-visible-native-DOM-routing-neutral-landscape-restored",
+        "first-touch-canvas-from-kbm-activates-fire-with-subsequent-aim-and-release",
+        "first-touch-canvas-from-pad-activates-jump-and-release",
+        "first-touch-canvas-from-kbm-activates-stick-with-subsequent-move-and-release",
+        "first-touch-canvas-from-pad-activates-look-with-subsequent-drag-and-cancel",
+        "visible-overlay-touch-does-not-duplicate-edges",
+        "reject-noncanvas-menu-hud-targets-and-hidden-gameplay-controls",
+        "same-angle-viewport-resize-and-storm-preserve-held-fire-stick-look-ownership",
+        "fixed-stick-same-coordinate-movement-after-same-angle-relayout",
+        "portrait-rejects-controls-fixed-angle-recovery-needs-fresh-touch-no-gyro-resync",
+        "true-rotation-clears-all-old-ownership",
+        "DOM-forced-capture-failure-canvas-move-cancel-and-up-with-one-router-edge",
+        "native-lostpointercapture-cleans-up-holds-edges-and-pointers",
+        "repeated-device-transitions-and-post-destroy-cleanup"
+      ],
+      "dragEvents": "DOM-PointerEvent",
+      "evidenceClass": "DOM-PointerEvent",
+      "padMapSamples": [
+        {
+          "image": "webkit-pad-map-selection.png",
+          "state": {
+            "index": 1,
+            "frames": 17,
+            "elapsedMs": 6894,
+            "visibility": "visible",
+            "focused": true,
+            "mapT": 1,
+            "mapV": 0,
+            "finiteRunning": 0,
+            "entrance": [
+              {
+                "name": "iw-hud-slide",
+                "playState": "finished",
+                "currentTime": 800,
+                "endTime": 800
+              }
+            ],
+            "mapOpacity": 1,
+            "rowOpacity": 1,
+            "labelOpacity": 1,
+            "labelTextOpacity": 1,
+            "labelText": "Target 1",
+            "iconOpacity": 1,
+            "discOpacity": 1,
+            "guideOpacity": 1,
+            "beaconIndices": [
+              1
+            ],
+            "rowIndices": [
+              1
+            ],
+            "controllerIndex": 1,
+            "targetMatches": true,
+            "cursor": false,
+            "guide": "\u5341\u5b57\u30ad\u30fc\u3067\u9078\u629e \u00b7 LB/RB\u3067\u30d0\u30ea\u30a2\u3092\u9078\u629e \u00b7 \u53f3\u306eA\u30dc\u30bf\u30f3\u3067\u78ba\u5b9a \u00b7 X\u3067\u9589\u3058\u308b",
+            "regions": {
+              "map": {
+                "x": 212.5,
+                "y": 96.80000305175781,
+                "width": 599,
+                "height": 599
+              },
+              "disc": {
+                "x": 429.34375,
+                "y": 253.74375915527344,
+                "width": 45.256256103515625,
+                "height": 45.25624084472656
+              },
+              "label": {
+                "x": 411.75,
+                "y": 301.4625244140625,
+                "width": 80.25,
+                "height": 33.28125
+              },
+              "labelText": {
+                "x": 426.421875,
+                "y": 316.5875244140625,
+                "width": 50.890625,
+                "height": 11.765625
+              },
+              "icon": {
+                "x": 438.5818756103516,
+                "y": 262.9818969726563,
+                "width": 26.780004882812502,
+                "height": 26.77998046875
+              },
+              "row": {
+                "x": 239.1116180419922,
+                "y": 235.0187530517578,
+                "width": 149.51564025878906,
+                "height": 35.82810974121094
+              },
+              "unselectedRow": {
+                "x": 235.015625,
+                "y": 194.5968780517578,
+                "width": 149.515625,
+                "height": 35.828125
+              },
+              "guide": {
+                "x": 235.015625,
+                "y": 360.89373779296875,
+                "width": 149.515625,
+                "height": 23.9375
+              }
+            },
+            "viewport": {
+              "width": 1024,
+              "height": 768
+            },
+            "status": "ready"
+          },
+          "pixels": {
+            "width": 2048,
+            "height": 1536,
+            "scaleX": 2,
+            "scaleY": 2,
+            "map": {
+              "pixels": 1435204,
+              "bright": 30159,
+              "orange": 15586,
+              "borderOrange": 0
+            },
+            "disc": {
+              "pixels": 8281,
+              "bright": 2163,
+              "orange": 4196,
+              "borderOrange": 681
+            },
+            "label": {
+              "pixels": 10787,
+              "bright": 1393,
+              "orange": 216,
+              "borderOrange": 0
+            },
+            "labelText": {
+              "pixels": 2448,
+              "bright": 1020,
+              "orange": 0,
+              "borderOrange": 0
+            },
+            "icon": {
+              "pixels": 2916,
+              "bright": 788,
+              "orange": 1074,
+              "borderOrange": 107
+            },
+            "row": {
+              "pixels": 21600,
+              "bright": 2936,
+              "orange": 4342,
+              "borderOrange": 2187
+            },
+            "unselectedRow": {
+              "pixels": 21600,
+              "bright": 3081,
+              "orange": 1792,
+              "borderOrange": 0
+            },
+            "guide": {
+              "pixels": 14400,
+              "bright": 1780,
+              "orange": 0,
+              "borderOrange": 0
+            }
+          }
+        },
+        {
+          "image": "webkit-pad-map-selection-next.png",
+          "state": {
+            "index": 2,
+            "frames": 3,
+            "elapsedMs": 444,
+            "visibility": "visible",
+            "focused": true,
+            "mapT": 1,
+            "mapV": 0,
+            "finiteRunning": 0,
+            "entrance": [
+              {
+                "name": "iw-hud-slide",
+                "playState": "finished",
+                "currentTime": 800,
+                "endTime": 800
+              }
+            ],
+            "mapOpacity": 1,
+            "rowOpacity": 1,
+            "labelOpacity": 1,
+            "labelTextOpacity": 1,
+            "labelText": "Target 2",
+            "iconOpacity": 1,
+            "discOpacity": 1,
+            "guideOpacity": 1,
+            "beaconIndices": [
+              2
+            ],
+            "rowIndices": [
+              2
+            ],
+            "controllerIndex": 2,
+            "targetMatches": true,
+            "cursor": false,
+            "guide": "\u5341\u5b57\u30ad\u30fc\u3067\u9078\u629e \u00b7 LB/RB\u3067\u30d0\u30ea\u30a2\u3092\u9078\u629e \u00b7 \u53f3\u306eA\u30dc\u30bf\u30f3\u3067\u78ba\u5b9a \u00b7 X\u3067\u9589\u3058\u308b",
+            "regions": {
+              "map": {
+                "x": 212.5,
+                "y": 96.80000305175781,
+                "width": 599,
+                "height": 599
+              },
+              "disc": {
+                "x": 549.2437744140625,
+                "y": 253.84375,
+                "width": 45.2562255859375,
+                "height": 45.256256103515625
+              },
+              "label": {
+                "x": 531.6500244140625,
+                "y": 301.5625,
+                "width": 80.25,
+                "height": 33.28125
+              },
+              "labelText": {
+                "x": 545.3843994140625,
+                "y": 316.6875,
+                "width": 52.78125,
+                "height": 11.765625
+              },
+              "icon": {
+                "x": 558.4818969726563,
+                "y": 263.0818756103516,
+                "width": 26.77998046875,
+                "height": 26.780004882812502
+              },
+              "row": {
+                "x": 239.1116180419922,
+                "y": 275.44061279296875,
+                "width": 149.51564025878906,
+                "height": 35.828125
+              },
+              "unselectedRow": {
+                "x": 235.015625,
+                "y": 194.5968780517578,
+                "width": 149.515625,
+                "height": 35.828125
+              },
+              "guide": {
+                "x": 235.015625,
+                "y": 360.89373779296875,
+                "width": 149.515625,
+                "height": 23.9375
+              }
+            },
+            "viewport": {
+              "width": 1024,
+              "height": 768
+            },
+            "status": "ready"
+          },
+          "pixels": {
+            "width": 2048,
+            "height": 1536,
+            "scaleX": 2,
+            "scaleY": 2,
+            "map": {
+              "pixels": 1435204,
+              "bright": 30263,
+              "orange": 15576,
+              "borderOrange": 0
+            },
+            "disc": {
+              "pixels": 8281,
+              "bright": 2173,
+              "orange": 4233,
+              "borderOrange": 691
+            },
+            "label": {
+              "pixels": 10787,
+              "bright": 1309,
+              "orange": 214,
+              "borderOrange": 0
+            },
+            "labelText": {
+              "pixels": 2544,
+              "bright": 1063,
+              "orange": 0,
+              "borderOrange": 0
+            },
+            "icon": {
+              "pixels": 2916,
+              "bright": 782,
+              "orange": 1122,
+              "borderOrange": 107
+            },
+            "row": {
+              "pixels": 21600,
+              "bright": 2951,
+              "orange": 4382,
+              "borderOrange": 2187
+            },
+            "unselectedRow": {
+              "pixels": 21600,
+              "bright": 3081,
+              "orange": 1792,
+              "borderOrange": 0
+            },
+            "guide": {
+              "pixels": 14400,
+              "bright": 1780,
+              "orange": 0,
+              "borderOrange": 0
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "earlierFailures": [
+    {
+      "run": "initial",
+      "engine": "webkit",
+      "framesIn10s": 11,
+      "failure": "native map presentation did not settle"
+    },
+    {
+      "run": "background-node-priority",
+      "engine": "chromium",
+      "framesIn10s": 9,
+      "failure": "native map presentation did not settle"
+    }
+  ]
+}

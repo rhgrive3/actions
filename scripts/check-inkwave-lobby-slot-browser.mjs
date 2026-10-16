@@ -15,7 +15,13 @@ function updateBlock(source) {
   assert(start>=0&&end>start,'production lobby update boundaries');
   return source.slice(start,end);
 }
-const before=updateBlock(raw),after=updateBlock(adaptBuildSource('src/ui/menus.js',raw));
+const after=updateBlock(adaptBuildSource('src/ui/menus.js',raw));
+// Keep every other production adaptation (including localization) identical.
+// The baseline differs only by the transform assignment being measured.
+const cached="if (a) { const transform = `translate3d(${Math.round(a.x)}px,${Math.round(a.y)}px,0) scale(${clamp(a.s || 1, 0.6, 1.25).toFixed(3)})`; if (transform !== O._slotTransform || O.el.style.transform !== O._slotAppliedTransform) { O.el.style.transform = transform; O._slotTransform = transform; O._slotAppliedTransform = O.el.style.transform; } }";
+const unconditional="if (a) O.el.style.transform = `translate3d(${Math.round(a.x)}px,${Math.round(a.y)}px,0) scale(${clamp(a.s || 1, 0.6, 1.25).toFixed(3)})`;";
+assert.equal(after.split(cached).length,2,'exactly one production transform cache');
+const before=after.replace(cached,unconditional);
 assert(before.includes('if (a) O.el.style.transform = '));
 assert(after.includes('if (a) { const transform = '));
 const dir=path.resolve(process.argv[2]||'.ci-scratch/lobby-slot-browser');fs.mkdirSync(dir,{recursive:true});
@@ -28,7 +34,7 @@ for(const [name,tool] of [['chromium',chromium],['webkit',webkit]]) {
   const result=await page.evaluate(({before,after})=>{
    const make=(code,label)=>{
     const container=document.createElement('section');container.dataset.variant=label;document.body.append(container);
-    const counts={writes:0,anchors:0};
+    const counts={writes:0,anchors:0};const translations=[];
     const slots=Array.from({length:8},(_,i)=>{
      const el=document.createElement('div'),plus=document.createElement('span');
      plus.className='iw-plate__plus';el.append(plus);container.append(el);
@@ -47,20 +53,25 @@ for(const [name,tool] of [['chromium',chromium],['webkit',webkit]]) {
     });
     let frame={anchor:()=>null};
     const sc={lobbySlotAnchor(row,i){counts.anchors++;return frame.anchor(row*4+i);}};
-    const fn=new Function('sc','open','lob','S','A','clamp','GLYPHS',code);
+    const fn=new Function('sc','open','lob','S','A','clamp','GLYPHS','tu',code);
     const tick=f=>{
      frame=f;fn(sc,slots,{bots:f.bots},{launching:f.launching},{},
-      (v,lo,hi)=>Math.max(lo,Math.min(hi,v)),{bot:'BOT',plus:'PLUS'});
+      (v,lo,hi)=>Math.max(lo,Math.min(hi,v)),{bot:'BOT',plus:'PLUS'},value=>{translations.push(value);return `localized:${value}`;});
     };
     const snapshot=()=>slots.map(o=>({transform:o.el.style.transform,
      cls:o.el.className,txt:o.txt.textContent,
      plus:o.el.querySelector('.iw-plate__plus').innerHTML,on:o.on,sig:o.sig}));
-    return{container,slots,counts,tick,snapshot};
+    return{container,slots,counts,translations,tick,snapshot};
    };
    const a=make(before,'source'),b=make(after,'candidate');let frames=0;
    const step=f=>{
     a.tick(f);b.tick(f);frames++;
     if(JSON.stringify(a.snapshot())!==JSON.stringify(b.snapshot()))throw Error('lobby native DOM divergence at frame '+frames);
+    if(JSON.stringify(a.translations)!==JSON.stringify(b.translations))throw Error('lobby translation call divergence at frame '+frames);
+    const bots=f.bots!==false;
+    for(const row of[a,b])for(const o of row.slots){
+     if(o.txt.textContent!==`localized:${bots?'BOT':'OPEN'}`||o.sig!==(bots?'bot':'open')||o.el.classList.contains('is-bot')!==bots)throw Error('lobby localized state mismatch at frame '+frames);
+    }
    };
    const fixed=()=>({x:10.1,y:20.2,s:1,vis:1});
    for(let i=0;i<180;i++)step({anchor:fixed});
@@ -73,7 +84,8 @@ for(const [name,tool] of [['chromium',chromium],['webkit',webkit]]) {
     s:[0,.1,.9,1.4][i%4],vis:i%5?1:0},launching:i%11===0,bots:i%3!==0});
    const summary={frames,stable,after:{baselineWrites:a.counts.writes,candidateWrites:b.counts.writes},
     anchors:{baseline:a.counts.anchors,candidate:b.counts.anchors},
-    sameDOM:JSON.stringify(a.snapshot())===JSON.stringify(b.snapshot()),externalRestored:true};
+    sameDOM:JSON.stringify(a.snapshot())===JSON.stringify(b.snapshot()),externalRestored:true,
+    localization:{nonempty:true,calls:a.translations.length,keys:[...new Set(a.translations)].sort()}};
    a.container.remove();b.container.remove();return summary;
   },{before,after});
   assert(result.sameDOM&&result.externalRestored);
