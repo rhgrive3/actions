@@ -3,11 +3,16 @@
 // distribution is not presented as a recovered Nintendo PRNG.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { catalogAngularLaunch, catalogAngularEnvelope, catalogSpinnerLaunchSpeed, advanceCatalogJumpClock } from '../runtime/main-weapon-catalog.mjs';
 import { biasQuantile } from '../runtime/weapon-accuracy.mjs';
 import { ShooterAccuracy } from '../runtime/shooter-accuracy.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { fixture } from './source-fixture.mjs';
+
+// Load the runtime through the existing VM fixture, which resolves vendored Three.
+// Delegate RNG dynamically so the original withDraws controls stay authoritative.
+const { catalogAngularLaunch, catalogAngularEnvelope, catalogSpinnerLaunchSpeed, advanceCatalogJumpClock } =
+  await fixture({ productionComposition:true, vmMathRandom:()=>Math.random(),
+    extraExports:"export { catalogAngularLaunch, catalogAngularEnvelope, catalogSpinnerLaunchSpeed, advanceCatalogJumpClock } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';" });
 
 const near = (a, b, label, tolerance = 1e-9) =>
   assert.ok(Math.abs(a - b) <= tolerance, label + ': ' + a + ' != ' + b);
