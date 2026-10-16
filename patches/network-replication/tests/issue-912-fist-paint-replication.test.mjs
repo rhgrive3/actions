@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './robustness-fixture.mjs';
 import {
-  installTripleSlamFists, tripleSlamFistStamps, FIST_STAMP_RADIUS, FIST_TRAVEL, FIST_LANDING_DELAY,
+  installTripleSlamFists, tripleSlamFistStamps, FIST_STAMP_RADIUS, FIST_TRAVEL, FIST_FLAT_IMPACT,
 } from '../../splatoon3/runtime/triple-slam-fists.mjs';
 
 // #912 two-peer replication: a Triple Splashdown landing on the sender must leave the receiver's CPU
@@ -87,11 +87,11 @@ function landFists(sender, team = 1) {
   Math.random = () => (draw++ * 0.618034) % 1;
   try {
     actor._startSpecial(); actor._slamImpact();
-    // The pinned MoveFrame (15F) is travel only. The independently measured
-    // flat-ground fist impact is 17F after the player's 70F contact.
+    // Pogo's MoveFrame=15F is the pre-ascent travel. The fingers keep their
+    // own activation clock and do not wait for _slamImpact from the player.
     assert.equal(FIST_TRAVEL * 60, 15);
-    assert.equal(FIST_LANDING_DELAY * 60, 17);
-    for (let i = 0; i < Math.round(FIST_LANDING_DELAY * 60); i++) actor.update(1 / 60);
+    assert.equal(FIST_FLAT_IMPACT * 60, 87);
+    for (let i = 0; i < Math.round(FIST_FLAT_IMPACT * 60); i++) actor.update(1 / 60);
   } finally { Math.random = realRandom; }
   return actor;
 }
