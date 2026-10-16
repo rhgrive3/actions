@@ -46,8 +46,10 @@ import { FOLLOWUP_MODELS as NEXT_C } from './variants-c-next-followup.mjs';
 import { FOLLOWUP_MODELS as FIFTH_CHARGERS } from './variants-charger-followups.mjs';
 import { FOLLOWUP_MODELS as ACCEPTED_SPINNER } from './variants-accepted-spinner-followup.mjs';
 import { FOLLOWUP_MODELS as ACCEPTED_SHOOTER } from './variants-accepted-shooter-followup.mjs';
-import { FOLLOWUP_MODELS as ACCEPTED_RANGED } from './variants-accepted-ranged-followup.mjs';
 import { FOLLOWUP_MODELS as MINI_VARIANTS } from './variants-mini-followup.mjs';
+import { FOLLOWUP_MODELS as ACCEPTED_HEAVY02 } from './variants-accepted-heavy02-followup.mjs';
+import { FOLLOWUP_MODELS as ACCEPTED_MANUAL_THREE } from './variants-accepted-manual-three-followup.mjs';
+import { FOLLOWUP_MODELS as ACCEPTED_RANGED } from './variants-accepted-ranged-followup.mjs';
 
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
 const FAMILIES = Object.freeze([['shooter', SHOOTERS], ['shooter', SHOOTERS_B], ['blaster', BLASTERS], ['dualies', DUALIES],
@@ -85,7 +87,7 @@ for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, RANGED_VARIANTS]) {
 }
 const VARIANT_SPECS = new Map(), VARIANT_KITS = new Map(), VARIANT_KEYS = new Map();
 const KITS_BY_ROW = new Map(ALTERNATE_WEAPON_KITS.map(kit => [kit.main, kit]));
-for (const mod of [BULBZ_VARIANTS, SQUIFFER_VARIANTS, NOCT_VARIANTS, MILK_VARIANTS, SORELLA_VARIANTS, EXPLOSHER_VARIANTS, SECOND_BRELLA, SECOND_REEF, SECOND_INKLINE, SECOND_WELLSTRING, SECOND_C, THIRD_SHOOTERS, THIRD_NEO, THIRD_CHARCOAL, THIRD_NOUVEAU, THIRD_RUST, THIRD_STICKERZ, THIRD_C, FOURTH_NOZZLE, FOURTH_DUALIE_FIXED, FOURTH_BLASTER_FIXED, FOURTH_DUALIE_LIGHT, FOURTH_BLASTER_DECO, FIFTH_CHARGERS, NEXT_C, ACCEPTED_SPINNER, ACCEPTED_SHOOTER, ACCEPTED_RANGED, MINI_VARIANTS]) {
+for (const mod of [BULBZ_VARIANTS, SQUIFFER_VARIANTS, NOCT_VARIANTS, MILK_VARIANTS, SORELLA_VARIANTS, EXPLOSHER_VARIANTS, SECOND_BRELLA, SECOND_REEF, SECOND_INKLINE, SECOND_WELLSTRING, SECOND_C, THIRD_SHOOTERS, THIRD_NEO, THIRD_CHARCOAL, THIRD_NOUVEAU, THIRD_RUST, THIRD_STICKERZ, THIRD_C, FOURTH_NOZZLE, FOURTH_DUALIE_FIXED, FOURTH_BLASTER_FIXED, FOURTH_DUALIE_LIGHT, FOURTH_BLASTER_DECO, FIFTH_CHARGERS, NEXT_C, ACCEPTED_SPINNER, ACCEPTED_SHOOTER, ACCEPTED_RANGED, ACCEPTED_HEAVY02, MINI_VARIANTS, ACCEPTED_MANUAL_THREE]) {
   for (const [key, spec] of Object.entries(mod)) {
     const kit = KITS_BY_ROW.get(key), record = kit && RECORDS.get(kit.baseId);
     if (!kit || !record || spec.sourceRow !== key || spec.baseId !== kit.baseId)
