@@ -2,8 +2,8 @@
   "status": "passed",
   "engine": "webkit",
   "browser": "27.2",
-  "contentHash": "8333dba32e4f46bb2e37ca6070dc75c80c81faaabe244502af337433774573a9",
-  "revision": "26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4",
+  "contentHash": "f62dc08341da0cc7667de891d0f1ed108b9ca7fef5507d31ce342b687aca8faf",
+  "revision": "c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996",
   "scope": "Actual emitted Renderer and ScreenFX; baseline restores only the old post-depth flag before first WebGL binding. Exact completed RGBA pixel comparison and live renderbuffer/attachment counts. No physical-iPad GPU memory, RSS or FPS claim.",
   "rows": [
     {
@@ -3334,6 +3334,36 @@
     },
     {
       "quality": "low",
+      "lift": -0.1,
+      "before": {
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 10,
+        "deleted": 8,
+        "sceneDraws": 28
+      },
+      "after": {
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 28
+      }
+    },
+    {
+      "quality": "low",
       "lift": 0,
       "before": {
         "post": true,
@@ -3346,7 +3376,7 @@
         ],
         "created": 13,
         "deleted": 11,
-        "sceneDraws": 28
+        "sceneDraws": 29
       },
       "after": {
         "post": false,
@@ -3359,7 +3389,37 @@
         ],
         "created": 9,
         "deleted": 8,
-        "sceneDraws": 28
+        "sceneDraws": 29
+      }
+    },
+    {
+      "quality": "low",
+      "lift": 0,
+      "before": {
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 13,
+        "deleted": 11,
+        "sceneDraws": 30
+      },
+      "after": {
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 9,
+        "deleted": 8,
+        "sceneDraws": 30
       }
     },
     {
@@ -3376,7 +3436,7 @@
         ],
         "created": 16,
         "deleted": 14,
-        "sceneDraws": 29
+        "sceneDraws": 31
       },
       "after": {
         "post": false,
@@ -3389,7 +3449,37 @@
         ],
         "created": 11,
         "deleted": 10,
-        "sceneDraws": 29
+        "sceneDraws": 31
+      }
+    },
+    {
+      "quality": "low",
+      "operation": "native composer reset",
+      "before": {
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          480,
+          270
+        ],
+        "created": 18,
+        "deleted": 16,
+        "sceneDraws": 32
+      },
+      "after": {
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          480,
+          270
+        ],
+        "created": 12,
+        "deleted": 11,
+        "sceneDraws": 32
       }
     },
     {
@@ -3424,6 +3514,36 @@
     },
     {
       "quality": "medium",
+      "lift": -0.1,
+      "before": {
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 10,
+        "deleted": 8,
+        "sceneDraws": 28
+      },
+      "after": {
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 28
+      }
+    },
+    {
+      "quality": "medium",
       "lift": 0,
       "before": {
         "post": true,
@@ -3436,7 +3556,7 @@
         ],
         "created": 13,
         "deleted": 11,
-        "sceneDraws": 28
+        "sceneDraws": 29
       },
       "after": {
         "post": false,
@@ -3449,7 +3569,37 @@
         ],
         "created": 9,
         "deleted": 8,
-        "sceneDraws": 28
+        "sceneDraws": 29
+      }
+    },
+    {
+      "quality": "medium",
+      "lift": 0,
+      "before": {
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 13,
+        "deleted": 11,
+        "sceneDraws": 30
+      },
+      "after": {
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 9,
+        "deleted": 8,
+        "sceneDraws": 30
       }
     },
     {
@@ -3466,7 +3616,7 @@
         ],
         "created": 16,
         "deleted": 14,
-        "sceneDraws": 29
+        "sceneDraws": 31
       },
       "after": {
         "post": false,
@@ -3479,7 +3629,37 @@
         ],
         "created": 11,
         "deleted": 10,
-        "sceneDraws": 29
+        "sceneDraws": 31
+      }
+    },
+    {
+      "quality": "medium",
+      "operation": "native composer reset",
+      "before": {
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          640,
+          360
+        ],
+        "created": 18,
+        "deleted": 16,
+        "sceneDraws": 32
+      },
+      "after": {
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          640,
+          360
+        ],
+        "created": 12,
+        "deleted": 11,
+        "sceneDraws": 32
       }
     },
     {
@@ -3514,6 +3694,36 @@
     },
     {
       "quality": "high",
+      "lift": -0.1,
+      "before": {
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 10,
+        "deleted": 8,
+        "sceneDraws": 28
+      },
+      "after": {
+        "post": true,
+        "scene": true,
+        "packed": false,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 7,
+        "deleted": 5,
+        "sceneDraws": 28
+      }
+    },
+    {
+      "quality": "high",
       "lift": 0,
       "before": {
         "post": true,
@@ -3526,7 +3736,7 @@
         ],
         "created": 13,
         "deleted": 11,
-        "sceneDraws": 28
+        "sceneDraws": 29
       },
       "after": {
         "post": false,
@@ -3539,7 +3749,37 @@
         ],
         "created": 9,
         "deleted": 8,
-        "sceneDraws": 28
+        "sceneDraws": 29
+      }
+    },
+    {
+      "quality": "high",
+      "lift": 0,
+      "before": {
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 13,
+        "deleted": 11,
+        "sceneDraws": 30
+      },
+      "after": {
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 9,
+        "deleted": 8,
+        "sceneDraws": 30
       }
     },
     {
@@ -3556,7 +3796,7 @@
         ],
         "created": 16,
         "deleted": 14,
-        "sceneDraws": 29
+        "sceneDraws": 31
       },
       "after": {
         "post": false,
@@ -3569,7 +3809,37 @@
         ],
         "created": 11,
         "deleted": 10,
-        "sceneDraws": 29
+        "sceneDraws": 31
+      }
+    },
+    {
+      "quality": "high",
+      "operation": "native composer reset",
+      "before": {
+        "post": true,
+        "scene": true,
+        "packed": true,
+        "live": 2,
+        "size": [
+          768,
+          432
+        ],
+        "created": 18,
+        "deleted": 16,
+        "sceneDraws": 32
+      },
+      "after": {
+        "post": false,
+        "scene": true,
+        "packed": true,
+        "live": 1,
+        "size": [
+          768,
+          432
+        ],
+        "created": 12,
+        "deleted": 11,
+        "sceneDraws": 32
       }
     },
     {
@@ -3590,32 +3860,32 @@
     }
   ],
   "negativeControl": true,
-  "frameCount": 177,
+  "frameCount": 195,
   "disposedLiveRenderbuffers": 0,
   "artifacts": [
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/patches/native-stages/runtime/build-config.mjs",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/patches/native-stages/runtime/registry.mjs",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/patches/splatoon3/runtime/battle-framing.mjs",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/src/config.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/src/core/ctx.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/src/core/device.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/src/core/renderer.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/src/fx/screenfx.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/src/game/inkFlight.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/build/three.module.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/math/SimplexNoise.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/postprocessing/EffectComposer.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/postprocessing/GTAOPass.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/postprocessing/MaskPass.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/postprocessing/OutputPass.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/postprocessing/Pass.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/postprocessing/RenderPass.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/postprocessing/ShaderPass.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/shaders/CopyShader.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/shaders/GTAOShader.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/shaders/OutputShader.js",
-    "_versions/26c4c643ea983de798c84fe9d360f29899469997a122cacb2a5a9ae598c631b4/vendor/three/jsm/shaders/PoissonDenoiseShader.js"
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/patches/native-stages/runtime/build-config.mjs",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/patches/native-stages/runtime/registry.mjs",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/patches/splatoon3/runtime/battle-framing.mjs",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/src/config.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/src/core/ctx.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/src/core/device.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/src/core/renderer.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/src/fx/screenfx.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/src/game/inkFlight.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/build/three.module.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/math/SimplexNoise.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/postprocessing/EffectComposer.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/postprocessing/GTAOPass.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/postprocessing/MaskPass.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/postprocessing/OutputPass.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/postprocessing/Pass.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/postprocessing/RenderPass.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/postprocessing/ShaderPass.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/shaders/CopyShader.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/shaders/GTAOShader.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/shaders/OutputShader.js",
+    "_versions/c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996/vendor/three/jsm/shaders/PoissonDenoiseShader.js"
   ]
 }

@@ -37,7 +37,7 @@ try{
    const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(45,width/height,.1,100);camera.position.set(0,0,5);
    const frontMat=new THREE.MeshBasicMaterial({color:0xf32b19}),backMat=new THREE.MeshBasicMaterial({color:0x1769ed}),frontGeo=new THREE.PlaneGeometry(1.4,1.4),backGeo=new THREE.PlaneGeometry(5,4),front=new THREE.Mesh(frontGeo,frontMat),back=new THREE.Mesh(backGeo,backMat);
    front.position.z=1;back.renderOrder=1;scene.add(front,back);R.setScene(scene,camera);const fx=new ScreenFX(R,G);
-   const render=r.render;r.render=function(s,...a){if(s===scene){sceneDraws++;if(r.getRenderTarget()!==R.composer.renderTarget2)throw Error('Scene drew into the color-only target');}return render.call(this,s,...a);};
+   const render=r.render;r.render=function(s,...a){if(s===scene){sceneDraws++;if(R._composerUsesPackedTarget&&r.getRenderTarget()!==R.composer.renderTarget2)throw Error('Scene drew into the color-only target');}return render.call(this,s,...a);};
    const flags=()=>({post:R.composer.renderTarget1.depthBuffer,scene:R.composer.renderTarget2.depthBuffer,packed:R._composerUsesPackedTarget,live:live.size,size:[R.composer.renderTarget1.width,R.composer.renderTarget1.height],created,deleted,sceneDraws});
    return {R,r,gl,fx,scene,camera,front,live,flags,dispose(){fx.dispose();R._disposeComposer();frontGeo.dispose();backGeo.dispose();frontMat.dispose();backMat.dispose();if(live.size)throw Error('Retained renderbuffers after disposal: '+live.size);r.dispose();r.domElement.remove();}};
   };
@@ -70,7 +70,7 @@ try{
     }
     pair.forEach(p=>p.R.fxaa.enabled=true);
     // Both HDR fallback and the return to packed mode recreate correct roles.
-    for(const lift of [-.1,0]){
+    for(const lift of [-.1,-.1,0,0]){
      G.env.grade={uLift:lift};pair.forEach(p=>prepare(p,null));const a=capture(pair[0]),b=capture(pair[1]);compare(a,b,'grade fallback '+lift);
      if(b.flags.live!==(lift<0?2:1)||b.flags.post!==(lift<0))throw Error('Incorrect fallback depth policy');lifecycle.push({quality,lift,before:a.flags,after:b.flags});
     }
@@ -79,6 +79,9 @@ try{
     delete document.visibilityState;document.dispatchEvent(new Event('visibilitychange'));pair.forEach(p=>prepare(p,null));
     const resumed=pair.map(capture);compare(resumed[0],resumed[1],'visible reconstruction');if(resumed[1].flags.live!==1||resumed[0].flags.live!==2)throw Error('Rebuilt composer lost depth roles');
     lifecycle.push({quality,visibility:'hidden release / visible rebuild',before:resumed[0].flags,after:resumed[1].flags});
+    pair.forEach(p=>p.R.composer.reset());
+    const resetFrames=pair.map(capture);compare(resetFrames[0],resetFrames[1],'native composer reset');compare(resumed[1],resetFrames[1],'reset output continuity');if(resetFrames[1].flags.live!==1||resetFrames[0].flags.live!==2)throw Error('Reset cloned away the scene/post depth roles');
+    lifecycle.push({quality,operation:'native composer reset',before:resetFrames[0].flags,after:resetFrames[1].flags});
     if(quality==='low'){
      const p=pair[1];G.env.grade={uLift:0};prepare(p,null);const normal=capture(p),target=p.R.composer.renderTarget2;target.dispose();target.depthBuffer=false;const broken=capture(p);let changed=0;for(let i=0;i<normal.pixels.length;i++)changed+=normal.pixels[i]!==broken.pixels[i];if(!changed)throw Error('Removing scene depth was not detected');negativeControl=true;
     }

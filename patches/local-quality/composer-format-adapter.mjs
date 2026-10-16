@@ -160,6 +160,17 @@ export function configureComposerColorTargets(THREE, composer, selection) {
   composer.renderTarget1.depthBuffer = false;
   sceneTarget.texture.format = THREE.RGBAFormat;
   sceneTarget.texture.type = THREE.HalfFloatType;
+  // Native reset() clones target1 for both replacements. Reapply the semantic
+  // roles before either new target can acquire GPU storage.
+  const reset = composer.reset;
+  composer.reset = function (...args) {
+    const value = reset.apply(this, args);
+    this.renderTarget1.depthBuffer = false;
+    this.renderTarget2.depthBuffer = true;
+    this.renderTarget2.texture.format = THREE.RGBAFormat;
+    this.renderTarget2.texture.type = THREE.HalfFloatType;
+    return value;
+  };
   // Pass enablement changes swap parity. Restore the semantic target roles
   // each frame so the scene never moves into the unsigned packed target.
   const render = composer.render;

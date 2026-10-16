@@ -143,6 +143,10 @@ test('#642 acceptance: mobile uses a renderable packed HDR pair and frees it on 
     composer.setSize(profile.css[0], profile.css[1]);
     assert.equal(composer.renderTarget1.depthBuffer, false, 'fullscreen packed target needs no depth attachment');
     assert.equal(composer.renderTarget2.depthBuffer, true, 'scene retains its depth attachment');
+    composer.reset();
+    assert.deepEqual([composer.renderTarget1.depthBuffer, composer.renderTarget2.depthBuffer], [false, true], 'native reset preserves distinct depth roles');
+    assert.equal(composer.renderTarget2.texture.type, ns.THREE.HalfFloatType, 'native reset preserves scene HDR color');
+    composer.setSize(profile.css[0], profile.css[1]);
     const renderPass = new ns.RenderPass(new ns.THREE.Scene(), new ns.THREE.Camera());
     const gradePass = new ns.ShaderPass({
       uniforms: { tDiffuse: { value: null } },
