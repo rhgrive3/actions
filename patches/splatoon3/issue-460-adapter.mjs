@@ -24,7 +24,7 @@ export function adaptIssue460Source(rel, code) {
 function adaptIssue460Actor(code) {
   code = replaceOnce(code,
     `import { WeaponRunner } from './weapons.js';`,
-    `import { WeaponRunner } from './weapons.js';\nimport { ownerJumpProgress, jumpMarkerSnapshot, liveJumpMarker, superJumpSignHiddenFrom } from '../../patches/splatoon3/issue-460-marker.mjs';\nimport { renderJumpGauge460, clearJumpGauge460 } from '../../patches/splatoon3/issue-460-gauge.mjs';`,
+    `import { WeaponRunner } from './weapons.js';\nimport { ownerJumpProgress, jumpMarkerSnapshot, liveJumpMarker, superJumpSignHiddenFrom, superJumpSignOpacityFor } from '../../patches/splatoon3/issue-460-marker.mjs';\nimport { renderJumpGauge460, clearJumpGauge460 } from '../../patches/splatoon3/issue-460-gauge.mjs';`,
     'issue-460 marker + gauge helpers');
   // #272: the owner's native landing ring is the same destination cue as the
   // gauge, so it is suppressed for opposing viewers when the jumper has Stealth Jump.
@@ -33,13 +33,17 @@ function adaptIssue460Actor(code) {
     `      if (s.marker > 0.12) { s.marker = 0; if (!superJumpSignHiddenFrom(this, G.local)) G.fx?.ring(`,
     'issue-272 owner landing ring concealment');
   code = replaceOnce(code,
+    `this.color, { radius: 1.6, life: 0.5 }`,
+    `this.color, { radius: 1.6, life: 0.5, alpha: 0.95 * superJumpSignOpacityFor(this, G.local) }`,
+    'issue-272 owner landing ring near-field fade');
+  code = replaceOnce(code,
     `emit('superjump', { actor: this, phase: 'flight', to: s.to.clone() });`,
     `emit('superjump', { actor: this, phase: 'flight', to: s.to.clone(), dur: s.dur });`,
     'issue-460 flight event duration');
   // every flight frame: snapshot + actual gauge geometry/label at s.to
   code = replaceOnce(code,
     `    if (s.phase === 'flight') {`,
-    `    if (s.phase === 'flight') {\n      { const m460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: ownerJumpProgress(s), dur: s.dur, jumper: this.name, concealed: superJumpSignHiddenFrom(this, G.local) })); this.s3 ||= {}; this.s3.jumpMarker460 = m460; renderJumpGauge460(G, this, m460, s.to, this.color, THREE); }`,
+    `    if (s.phase === 'flight') {\n      { const m460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: ownerJumpProgress(s), dur: s.dur, jumper: this.name, concealed: superJumpSignHiddenFrom(this, G.local), opacity: superJumpSignOpacityFor(this, G.local) })); this.s3 ||= {}; this.s3.jumpMarker460 = m460; renderJumpGauge460(G, this, m460, s.to, this.color, THREE); }`,
     'issue-460 owner gauge render');
   code = replaceOnce(code,
     `      if (k >= 1) {`,
@@ -67,7 +71,7 @@ function adaptIssue460Actor(code) {
 function adaptIssue460Net(code) {
   code = replaceOnce(code,
     `import { BotBrain } from '../game/bots.js';`,
-    `import { BotBrain } from '../game/bots.js';\nimport { remoteJumpProgress, jumpMarkerSnapshot, liveJumpMarker, superJumpSignHiddenFrom } from '../../patches/splatoon3/issue-460-marker.mjs';\nimport { renderJumpGauge460, clearJumpGauge460 } from '../../patches/splatoon3/issue-460-gauge.mjs';`,
+    `import { BotBrain } from '../game/bots.js';\nimport { remoteJumpProgress, jumpMarkerSnapshot, liveJumpMarker, superJumpSignHiddenFrom, superJumpSignOpacityFor } from '../../patches/splatoon3/issue-460-marker.mjs';\nimport { renderJumpGauge460, clearJumpGauge460 } from '../../patches/splatoon3/issue-460-gauge.mjs';`,
     'issue-460 remote marker + gauge helpers');
   code = replaceOnce(code,
     `    if (!a.net) a.net = { buf: [], err: new THREE.Vector3(), tp: -1, lastRaw: null, rendered: new THREE.Vector3(), has: false, prevGrounded: true, prevVy: 0, yawPrev: 0, loops: {}, sjTo: null, sjRing: 0 };`,
@@ -90,7 +94,7 @@ function adaptIssue460Net(code) {
   // every flight frame: snapshot from the event-seeded clock + gauge at n.sjTo
   code = replaceOnce(code,
     `    if (a.superJumpState?.phase === 'flight' && n.sjTo) {\n      n.sjRing += dt;`,
-    `    if (a.superJumpState?.phase !== 'flight' && n.sjMarker460) { n.sjMarker460 = null; n.sjTo = null; n.sjDur460 = 0; n.sjT460 = 0; clearJumpGauge460(a); }\n    if (a.superJumpState?.phase === 'flight' && n.sjTo) {\n      n.sjT460 = (Number(n.sjT460) || 0) + dt;\n      n.sjMarker460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: remoteJumpProgress(n.sjT460, n.sjDur460), dur: n.sjDur460, jumper: a.name, concealed: superJumpSignHiddenFrom(a, G.local, n.sjTo) }));\n      renderJumpGauge460(G, a, n.sjMarker460, n.sjTo, a.color, THREE);\n      n.sjRing += dt;`,
+    `    if (a.superJumpState?.phase !== 'flight' && n.sjMarker460) { n.sjMarker460 = null; n.sjTo = null; n.sjDur460 = 0; n.sjT460 = 0; clearJumpGauge460(a); }\n    if (a.superJumpState?.phase === 'flight' && n.sjTo) {\n      n.sjT460 = (Number(n.sjT460) || 0) + dt;\n      n.sjMarker460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: remoteJumpProgress(n.sjT460, n.sjDur460), dur: n.sjDur460, jumper: a.name, concealed: superJumpSignHiddenFrom(a, G.local, n.sjTo), opacity: superJumpSignOpacityFor(a, G.local, n.sjTo) }));\n      renderJumpGauge460(G, a, n.sjMarker460, n.sjTo, a.color, THREE);\n      n.sjRing += dt;`,
     'issue-460 remote gauge render');
   // #272: the remote landing ring is the same destination cue; far opponents
   // of a replicated Stealth Jump loadout do not see it either.
@@ -98,6 +102,10 @@ function adaptIssue460Net(code) {
     `      if (n.sjRing > 0.12) { n.sjRing = 0; G.fx?.ring(`,
     `      if (n.sjRing > 0.12) { n.sjRing = 0; if (!superJumpSignHiddenFrom(a, G.local, n.sjTo)) G.fx?.ring(`,
     'issue-272 remote landing ring concealment');
+  code = replaceOnce(code,
+    `a.color, { radius: 1.6, life: 0.5 }`,
+    `a.color, { radius: 1.6, life: 0.5, alpha: 0.95 * superJumpSignOpacityFor(a, G.local, n.sjTo) }`,
+    'issue-272 remote landing ring near-field fade');
   code = replaceOnce(code,
     `        if (e.phase === 'flight') { a.net.sjTo = e.to ? e.to.clone() : null; G.fx?.burst(`,
     `        if (e.phase === 'flight') { const sameFlight460 = a.net.sjTo && e.to && a.net.sjTo.equals(e.to); a.net.sjTo = e.to ? e.to.clone() : null; if (!sameFlight460) { a.net.sjDur460 = Number(e.dur) > 0 ? Number(e.dur) : 0; a.net.sjT460 = 0; a.net.sjMarker460 = null; clearJumpGauge460(a); } G.fx?.burst(`,
