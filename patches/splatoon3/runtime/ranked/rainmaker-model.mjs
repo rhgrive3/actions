@@ -47,8 +47,15 @@ export function createRainmakerModel(THREE) {
   oval([0, .39, -.49], [.12, .20, .14], gold, 6, 4);
   fin([[0, .40, -.46], [0, .82, -.72], [0, .90, -.97], [0, .63, -.85], [0, .52, -1.00], [0, .32, -.62]], .045);
   fin([[0, .49, -.34], [0, .68, -.28], [0, .62, .05], [0, .50, .16]], .04);
-  // Broad grip support is part of the same mesh, with no separate draw call.
-  const grip = new THREE.BoxGeometry(.105, .25, .12); grip.translate(0, .025, -.035); append(grip, gold);
+  // Keep the broad fish outline ahead of the native fist. This also keeps its
+  // raised tail clear of the carrier while preserving one immutable mesh.
+  for (let i = 0; i < position.length; i += 3) {
+    position[i] *= .6; position[i + 1] = position[i + 1] * .6 - .20;
+    position[i + 2] = position[i + 2] * .6 + .55;
+  }
+  // The same twelve-triangle support reaches from the existing fist to the fish.
+  // Its 18 mm square contact section fits inside the native 28 mm grip hole.
+  const grip = new THREE.BoxGeometry(.018, .018, .28); grip.translate(0, 0, .125); append(grip, gold);
   // Merge the primitives once and index identical vertices. No per-frame geometry.
   const unique = new Map(), indices = [], p = [], n = [], c = [];
   for (let i = 0; i < position.length; i += 3) {
@@ -71,7 +78,7 @@ export function createRainmakerModel(THREE) {
   const material = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: .65, roughness: .34 });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'rainmaker-core'; mesh.castShadow = true;
-  mesh.userData.rainmakerModel = { revision: 1, grip: [0, 0, 0], muzzle: [0, .24, .515] };
+  mesh.userData.rainmakerModel = { revision: 2, grip: [0, 0, 0], muzzle: [0, -.056, .859] };
   return mesh;
 }
 
@@ -99,7 +106,7 @@ export function createRainmakerPresentation(THREE, mesh) {
       for (const [pivot, visible] of hidden) if (!current.has(pivot)) { pivot.visible = visible; hidden.delete(pivot); }
       for (const pivot of current) { if (!hidden.has(pivot)) hidden.set(pivot, pivot.visible); pivot.visible = false; }
       hand.updateWorldMatrix(true, false);
-      hand.getWorldPosition(point); mesh.parent.worldToLocal(point); mesh.position.copy(point);
+      ch.weapon.pivot.getWorldPosition(point); mesh.parent.worldToLocal(point); mesh.position.copy(point);
       const dir = carrier.aimDir;
       if (dir && Number.isFinite(dir.x) && Number.isFinite(dir.y) && Number.isFinite(dir.z) && dir.lengthSq() > 1e-12) aim.copy(dir).normalize();
       else { const yaw = Number.isFinite(carrier.yaw) ? carrier.yaw : 0; aim.set(Math.sin(yaw), 0, Math.cos(yaw)); }
