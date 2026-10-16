@@ -1,0 +1,129 @@
+{
+  "scope": "Existing current-main three manual appearances, diagnostic-only; 20 normal-light source-bound rest frames plus source/emitted native firing ownership and LOD tests.",
+  "head": "fbdcacb690ec5c9abd10e14d6b623a6f4206aab0",
+  "files": [
+    {
+      "path": "README.txt",
+      "sha256": "289f7991cf5dc03476cbc2330ec4d32c248e2aabbcce7db0b7585155db7f4275",
+      "bytes": 1767
+    },
+    {
+      "path": "capture-manual-three.mjs",
+      "sha256": "bd6e9906b5b446baf8cae2e3d9abfb52d4c8484aa12cac0f13b94f10f049f35e",
+      "bytes": 15222
+    },
+    {
+      "path": "capture-manual-integration.mjs",
+      "sha256": "933ff5551d07276e1c4dfd884eeb2e66dcbef274fa435731e99fae9fd8f29fb6",
+      "bytes": 13139
+    },
+    {
+      "path": "manual-capture-contract.mjs",
+      "sha256": "feb7381fe35dae6e8ede217040bed36341b540cda21cf1faa9a27705ebd7d663",
+      "bytes": 2652
+    },
+    {
+      "path": "manual-capture-contract.test.mjs",
+      "sha256": "f4ae1546211c8784d767ef70b55317c4378806a2d9486f840d422602c7f23bf3",
+      "bytes": 1343
+    },
+    {
+      "path": "manual-actor.test.mjs",
+      "sha256": "94b41e77442307e51913698c918f8842482bf5c9c52467a85f86fc9f71966ff2",
+      "bytes": 7605
+    },
+    {
+      "path": "capture.test.mjs",
+      "sha256": "ebcef24538318579e174e10156d7afcebf3410508f5b2c62ba4337d52153afbf",
+      "bytes": 6929
+    },
+    {
+      "path": "build-binding.mjs",
+      "sha256": "d402e6f9d278bf589c4540d966ceaba6ad7e8ba011be0d975a3774581b237a2a",
+      "bytes": 2832
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "bytes": 2896
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "e33c0873d46a9befebfab54180c98bce74a31cba3837918ab1459d92d3138765",
+      "bytes": 1243
+    },
+    {
+      "path": "capture-checkpoint.test.mjs",
+      "sha256": "cf6b2cdcb15be8779487ba9944558d4963c7af525c3fdda7f2c76eb9187af95a",
+      "bytes": 2719
+    },
+    {
+      "path": "capture-resources.mjs",
+      "sha256": "1d81047ab52414c60495bacf744db5985846ecdd1651913f7f6185379442c270",
+      "bytes": 478
+    },
+    {
+      "path": "capture-resources.test.mjs",
+      "sha256": "05048eed03677f582f1b6984e3922cd36bfa0eb659d58e1eca401947bf3a0d80",
+      "bytes": 1036
+    },
+    {
+      "path": "preflight.mjs",
+      "sha256": "2d23cb1ceec9bac909e6bf06094b626070f1a46fc1927f1018233230e48da1cb",
+      "bytes": 1218
+    },
+    {
+      "path": "source-frames.json",
+      "sha256": "d4b376eda0cb6bf646b47136fcbbb56347eb430bde4c85462d14d90200a45cad",
+      "bytes": 98885
+    },
+    {
+      "path": "acceptance-plan.json",
+      "sha256": "4baf7b91d9d375d7abbe45c2b224c0ffc1114500d18ff5e0c75cc448bb9d9ad1",
+      "bytes": 5266
+    },
+    {
+      "path": "test-count.mjs",
+      "sha256": "a91bef1345ecd287c0beb1540301d613a259628e55bcb5795d6da170021579c0",
+      "bytes": 513
+    },
+    {
+      "path": "test-count.test.mjs",
+      "sha256": "bbe9ac77e8fa0a83c9be02b03d57a0c0f98d09a175b62a7b383b45f8ceb75152",
+      "bytes": 579
+    },
+    {
+      "path": "references.py",
+      "sha256": "f7d3409c7f9d5fa339c28af5c322d88af67c9e989fbd9e297398c3db775fcb04",
+      "bytes": 743
+    },
+    {
+      "path": ".github/workflows/manual-three-acceptance.yml",
+      "sha256": "925378e283c10577dcede06e9847486f66f9e3f2c59a62c4a6da26045af552eb",
+      "bytes": 2831
+    }
+  ],
+  "controls": 35,
+  "sourceReplay": {
+    "frames": 20,
+    "positiveExit": 0,
+    "raster": "synthetic; actual source Actor and appearance modules"
+  },
+  "sourceActor": {
+    "pass": 3,
+    "skip": 0,
+    "frames": 2880
+  },
+  "limitedRegistryCompatibility": {
+    "source": 3,
+    "emittedRegistryMixedGraph": 3,
+    "pairedSignatureCount": 12,
+    "registrySHA256": "d9b7ed3cb89a7ac28839631bf2fe85b5924bd3769438854abf57d6edc499b4fa"
+  },
+  "hostedPending": [
+    "full emitted site Actor3/0skip",
+    "actual 20 image GPU and native lighting",
+    "pinned reference broad visual comparison"
+  ],
+  "runtimeDelta": 0
+}
