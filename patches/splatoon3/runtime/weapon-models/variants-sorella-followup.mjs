@@ -56,10 +56,10 @@ export const FOLLOWUP_MODELS=Object.freeze({Shelter_Normal_01:Object.freeze({
   const hardware=subset(old,kept), fixed=new Pieces(), ink=new Pieces();
   for(let k=0;k<8;k++){
    const map=gore(k,.4,.2,.6,8);
-   fixed.add(fabric(map,.02,.67,0,1,8,3),'#242528',M.satin);
+   fixed.add(fabric(map,.02,.67,0,1,4,3),'#242528',M.satin);
    ink.add(fabric(map,.67,1,0,1,3,3),'#69cbb1',M.satin);
    const a=k*TAU/8,u=1.018;
-   fixed.add(sphere(.009,.009,.014,Math.cos(a)*.4*u,SH+Math.sin(a)*.4*u,.6-.2*u**1.6-.004,8,5),'#f2ca24',M.satin);
+   fixed.add(sphere(.009,.009,.014,Math.cos(a)*.4*u,SH+Math.sin(a)*.4*u,.6-.2*u**1.6-.004,6,4),'#f2ca24',M.satin);
   }
   for(const parts of [fixed,ink])parts.transform(g=>{g.translate(0,-SH,-.6).scale(.11,.11,2.15).translate(0,SH,.6);g.computeVertexNormals();});
   const cloth=fixed.build(), combined=mergeGeometries([hardware,cloth],false);

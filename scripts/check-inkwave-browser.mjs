@@ -62,7 +62,7 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const address='http://127.0.0.1:'+server.address().port+'/';
 let browser;
 try {
- browser=await chromium.launchPersistentContext(profile,{headless:true,viewport:{width:1280,height:800},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ browser=await chromium.launchPersistentContext(profile,{headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),viewport:{width:1280,height:800},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page = await browser.newPage(), errors = [], failures = [], consoleErrors = [], receipts = [];
 // Fulfill with the exact bytes returned by the local server after verification.
 // API responses retain preload bodies that Chrome's DevTools may discard.
