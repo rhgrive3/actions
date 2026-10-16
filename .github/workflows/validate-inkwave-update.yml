@@ -458,6 +458,9 @@ jobs:
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
+      - name: Verify queued native Showcase weapon selection across render rates
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-showcase-weapon-queue.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/showcase-weapon"
       - name: Verify emitted BVH query equivalence and work reduction in Chromium
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-bvh-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/bvh-queries"
@@ -581,7 +584,7 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
             'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json'],
             'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
