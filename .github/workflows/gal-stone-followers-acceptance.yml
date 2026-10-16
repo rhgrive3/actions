@@ -1,0 +1,55 @@
+name: Review repaired Gal stone followers
+on:
+  push:
+    branches: [review/gal-stone-followers-gpu-20261016]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: d43a625682e02c11332c4aff41c91737e55020b7
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Literal checkout and portable controls
+        run: |
+          node diagnostic/preflight.mjs
+          node --test diagnostic/build-binding.test.mjs diagnostic/capture-checkpoint.test.mjs diagnostic/capture-resources.test.mjs diagnostic/capture.test.mjs diagnostic/gal-capture-contract.test.mjs diagnostic/measure-capture.test.mjs diagnostic/test-count.test.mjs diagnostic/workflow.test.mjs diagnostic/preflight.test.mjs
+      - name: Exact source Actor firing and near-far ownership
+        run: |
+          mkdir -p evidence
+          node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap candidate/patches/splatoon3/tests/weapon-gal-stone-followers.test.mjs > evidence/source.tap 2>&1
+          node diagnostic/test-count.mjs evidence/source.tap 2
+      - name: One production build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: Exact emitted Actor firing and near-far ownership
+        run: |
+          INKWAVE_BUILT_SITE="$PWD/candidate-site" node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap candidate/patches/splatoon3/tests/weapon-gal-stone-followers.test.mjs > evidence/emitted.tap 2>&1
+          node diagnostic/test-count.mjs evidence/emitted.tap 2
+      - name: Normal-light sixteen native views and processing measurements
+        run: node diagnostic/capture-gal-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gal-stone-followers-acceptance
+          path: evidence
+          if-no-files-found: error
