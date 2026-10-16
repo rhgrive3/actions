@@ -493,16 +493,17 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-loadout__body .iw-wd [
 
 /* ---- results: one action row (REMATCH · CHANGE GEAR · MAIN MENU) instead of a wrapped stack, and a backdrop
    that stays put behind the scrolling touch layout */
-html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__foot { align-items: stretch; gap: calc(var(--u) * 1.6); }
-html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-xp { flex: 0 1 min(calc(var(--u) * 46), 44vw); width: auto; min-width: 0; box-sizing: border-box; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__foot { align-items: center; gap: calc(var(--u) * 1.6); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-xp { flex: 0 1 min(calc(var(--u) * 38), 36vw); width: auto; min-width: 0; box-sizing: border-box; }
 html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__btns {
   flex: 1 1 0; min-width: 0; max-width: calc(var(--u) * 56); margin-left: auto; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: stretch; gap: calc(var(--u) * .9); }
-html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__btns > .iw-btn--wide { width: auto; min-width: 0; height: auto; min-height: calc(var(--u) * 4.8); padding: calc(var(--u) * .6) calc(var(--u) * 1.1); font-size: calc(var(--u) * 1.55); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__btns > .iw-btn--wide { width: auto; min-width: 0; height: calc(var(--u) * 4.8); padding: 0 calc(var(--u) * 1.1); font-size: calc(var(--u) * 1.45); }
 html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__btns > .iw-btn--primary { font-size: calc(var(--u) * 1.8); }
 .iw-results .iw-res__btns .iw-btn__text { min-width: 0; }
-.iw-results .iw-res__btns .iw-btn__label { white-space: normal; line-height: 1.14; overflow-wrap: anywhere; }
+.iw-results .iw-res__btns .iw-btn__label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.14; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns .iw-btn__label { white-space: normal; overflow-wrap: anywhere; }
 .iw-results .iw-res__btns .iw-btn__icon { flex: none; }
-html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__btns > .iw-res__lobby { height: auto; min-height: calc(var(--u) * 4.8); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__btns > .iw-res__lobby { height: calc(var(--u) * 4.8); }
 /* the scoreboard band reads as one sheet: the live map and the podium drums no longer show through the team rows
    (a blurred, darker band from the coverage bar down; clear during the podium intro) */
 html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__scrim::before { content: ''; position: absolute; left: 0; right: 0; top: calc(46% - var(--u) * 1.2); bottom: 0; pointer-events: none;
@@ -513,6 +514,6 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__scrim::before { c
 html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::before { opacity: 0; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results > .iw-res__scrim { position: fixed; inset: 0; z-index: 0;
   background: linear-gradient(180deg, rgba(10, 8, 18, .3) 0%, rgba(10, 8, 18, .5) 30%, rgba(10, 8, 18, .8) 58%, rgba(10, 8, 18, .9) 100%); }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results > :not(.iw-res__scrim) { position: relative; z-index: 1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results > :is(.iw-res__head, .iw-res__body) { position: relative; z-index: 1; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns > .iw-btn--wide { height: auto; min-height: 56px; }
