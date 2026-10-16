@@ -75,28 +75,27 @@ export function adaptCollisionHotpath(rel, code, replaceOnce) {
     const yLo = base.y + radius, yHi = base.y + Math.max(radius, height - radius);
     const ax = a.x, ay = a.y, az = a.z, abx = b.x - ax, aby = b.y - ay, abz = b.z - az;
     const bx = base.x, bz = base.z;
-    const distance2 = (t) => {
-      const px = ax + abx * t, py = ay + aby * t, pz = az + abz * t;
-      const y = py < yLo ? yLo : py > yHi ? yHi : py;
-      const dx = px - bx, dy = py - y, dz = pz - bz;
-      return dx * dx + dy * dy + dz * dz;
-    };
     let best = Infinity, bt = 0;
     const steps = 6;
     for (let i = 0; i <= steps; i++) {
-      const t = i / steps, d2 = distance2(t);
-      // Math.sqrt can round distinct squared distances to a tie.
-      const better = d2 < best && (best - d2 > 8 * Number.EPSILON * Math.max(best, d2) ||
-        Math.sqrt(d2) < Math.sqrt(best));
-      if (better) { best = d2; bt = t; }
+      const t = i / steps;
+      const py = ay + aby * t, y = py < yLo ? yLo : py > yHi ? yHi : py;
+      const dx = ax + abx * t - bx, dy = py - y, dz = az + abz * t - bz;
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < best && (best - d2 > 8 * Number.EPSILON * Math.max(best, d2) ||
+          Math.sqrt(d2) < Math.sqrt(best))) { best = d2; bt = t; }
     }
     let lo = Math.max(0, bt - 1 / steps), hi = Math.min(1, bt + 1 / steps);
     for (let k = 0; k < 8; k++) {
       const m1 = lo + (hi - lo) / 3, m2 = hi - (hi - lo) / 3;
-      const d1 = distance2(m1), d2 = distance2(m2);
-      const closer = d1 < d2 && (d2 - d1 > 8 * Number.EPSILON * Math.max(d1, d2) ||
-        Math.sqrt(d1) < Math.sqrt(d2));
-      if (closer) hi = m2; else lo = m1;
+      const py1 = ay + aby * m1, y1 = py1 < yLo ? yLo : py1 > yHi ? yHi : py1;
+      const dx1 = ax + abx * m1 - bx, dy1 = py1 - y1, dz1 = az + abz * m1 - bz;
+      const d1 = dx1 * dx1 + dy1 * dy1 + dz1 * dz1;
+      const py2 = ay + aby * m2, y2 = py2 < yLo ? yLo : py2 > yHi ? yHi : py2;
+      const dx2 = ax + abx * m2 - bx, dy2 = py2 - y2, dz2 = az + abz * m2 - bz;
+      const d2 = dx2 * dx2 + dy2 * dy2 + dz2 * dz2;
+      if (d1 < d2 && (d2 - d1 > 8 * Number.EPSILON * Math.max(d1, d2) ||
+          Math.sqrt(d1) < Math.sqrt(d2))) hi = m2; else lo = m1;
     }
     res.t = (lo + hi) / 2;
     _p.copy(a).lerp(b, res.t);
