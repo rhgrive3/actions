@@ -16,6 +16,10 @@ The extracted parameter `WideSwingUnitGroupParam.Unit[0].SpawnPositionWidth` is 
 | Dynamo Roller | 0.8 | 0.16 lines | 0.8m |
 | Big Swig Roller | 1.9 | 0.38 lines | 1.9m |
 
+Additional researcher cross-check (April 2024): [Macaron's shot velocity/projectile article](https://macarongamemo.com/entry/splatoon3-weapon-bullets), table `ローラー・フデの弾数と拡散角度`, independently lists Splat/Carbon/Dynamo/Big Swig main unit widths as 0.16/0.12/0.16/0.38 lines, with the counts 12/10/10/8. This triangulates across two volunteer presentations, but they may share the same underlying extracted data rather than independent pixel measurements.
+
+The [community parameter glossary](https://wikiwiki.jp/splatoon3mix/検証/パラメータ情報) describes `SpawnPositionWidth` as the minimum occurrence width in range lines (`value*0.2`). This does **not** recover Nintendo's exact per-bullet placement algorithm or establish the jitter's distribution. The full-span interpretation is a testable source-guided calibration, not a Nintendo engine proof.
+
 Wiki pages:
 - https://wikiwiki.jp/splatoon3mix/ブキ/スプラローラー
 - https://wikiwiki.jp/splatoon3mix/ブキ/カーボンローラー
