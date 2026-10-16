@@ -2,6 +2,7 @@ import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
 import { adaptMaterialHandoff } from './material-handoff-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
+import { adaptMotionFkHotpath } from './motion-fk-hotpath-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
 import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
@@ -89,6 +90,7 @@ const IDENTITY_FILES = [
   'camera-fov-cache-adapter.mjs',
   'cloth-derivative-adapter.mjs',
   'retarget-branch-update-adapter.mjs',
+  'motion-fk-hotpath-adapter.mjs',
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
   'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
@@ -193,6 +195,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptIssue461Source(rel, code);
   code = adaptAudioListener(rel, code);
   code = adaptRetargetBranchUpdates(rel, code);
+  code = adaptMotionFkHotpath(rel, code, replaceOnce);
   code = adaptAimProfiles(rel, code);
   code = adaptMedalSource(rel, code);
   code = adaptResourceSource(rel, code, replaceOnce);
