@@ -85,8 +85,7 @@
       "spawnPlayerForwardRate": 2,
       "shotGuideFrame": 7,
       "rollPaintWidthHalf": 1.8,
-      "rollPaintWorldScale": 1,
-      "rollDist": 5
+      "rollPaintWorldScale": 1
     },
     "blaster": {
       "inkPerShot": 10,
@@ -706,7 +705,7 @@
       "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintRadius",
       "index": null,
       "factor": 1,
-      "rawValue": 5.0
+      "rawValue": 5
     },
     "deathBlast.paintOffsetY": {
       "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintOffsetY",
@@ -724,7 +723,7 @@
       "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/PaintRadius",
       "index": null,
       "factor": 1,
-      "rawValue": 1.0
+      "rawValue": 1
     },
     "weapons.charger.moveSpeedFiring": {
       "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeedFullCharge",
@@ -3645,7 +3644,7 @@
       "splatlingRandom": "symmetric uniform use of explicit SpawnSpeedRandomRate bounds; native bias law is not recovered",
       "rollerOmittedCount": "omitted BulletNum interpreted as one, matching the existing latest-main near-unit owner; omission semantics remain labelled inference",
       "rollerSpawnAnchor": "latest-main native body anchor retained; explicit source offsets applied by #64; absolute Switch-space anchor unverified",
-      "rollerVerticalSpawnHeight": "#278: each VerticalSwingUnitGroupParam unit's SpawnPositionHeight and SpawnPositionOffsetHeight are summed as raw INKWAVE world units (scale 1) onto the retained muzzle anchor, giving per-group starts 1+2+2; the additive combination, per-field engine meaning and the raw-unit scale are unverified (Leanny table has no field semantics); not an SI-metre claim",
+      "rollerVerticalSpawnHeight": "#278: each VerticalSwingUnitGroupParam unit has an extracted SpawnPositionOffsetHeight (group base) plus SpawnPositionHeight (per-projectile indexed Y separation). The INKWAVE model uses base + projectileIndex*height for the 1+2+2 vertical globs, so the five starts are +0.5, -0.25, 0, -1.25, -1.0 relative to the retained muzzle. The per-projectile indexed interpretation, source-to-world scale 1, spatial sign/coordinate transform and raw engine semantics are unverified; not an SI-metre claim.",
       "rollerHorizontalRandom": "explicit speed/width random bounds are used while native probability distribution/order remains unverified",
       "slosherAim": "native aim direction retained with explicit AddSpawnSpeedYRateByXZ and source unit rotations; no range-fitting solve",
       "slosherOffsets": "AfterOffset fields applied once per subsequent unit instance; engine semantics are source-guided",
