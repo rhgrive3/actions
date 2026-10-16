@@ -853,8 +853,8 @@ export class RankedWorld {
     return claimed;
   }
 
-  floorAt(x, z) {
-    const y = this.level?.groundHeight?.(x, z);
+  floorAt(x, z, yMax) {
+    const y = this.level?.groundHeight?.(x, z, yMax);
     return finite(y) ? y : null;
   }
 
