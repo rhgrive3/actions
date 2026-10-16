@@ -85,8 +85,7 @@
       "spawnPlayerForwardRate": 2,
       "shotGuideFrame": 7,
       "rollPaintWidthHalf": 1.8,
-      "rollPaintWorldScale": 1,
-      "rollDist": 5
+      "rollPaintWorldScale": 1
     },
     "blaster": {
       "inkPerShot": 10,
@@ -706,7 +705,7 @@
       "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintRadius",
       "index": null,
       "factor": 1,
-      "rawValue": 5.0
+      "rawValue": 5
     },
     "deathBlast.paintOffsetY": {
       "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintOffsetY",
@@ -724,7 +723,7 @@
       "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/PaintRadius",
       "index": null,
       "factor": 1,
-      "rawValue": 1.0
+      "rawValue": 1
     },
     "weapons.charger.moveSpeedFiring": {
       "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeedFullCharge",
@@ -1862,6 +1861,30 @@
       "index": null,
       "factor": 1,
       "rawValue": 7
+    },
+    "specials.slam.damageMax": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/0/Damage",
+      "index": null,
+      "factor": 0.1,
+      "rawValue": 2200
+    },
+    "specials.slam.damageMin": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/1/Damage",
+      "index": null,
+      "factor": 0.1,
+      "rawValue": 600
+    },
+    "specials.slam.damageNearRadius": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/0/Distance",
+      "index": null,
+      "factor": 1,
+      "rawValue": 6.4
+    },
+    "specials.slam.damageRadius": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/1/Distance",
+      "index": null,
+      "factor": 1,
+      "rawValue": 9.6
     }
   },
   "gearExtra": {
