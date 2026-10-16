@@ -42,3 +42,16 @@ The actual `Projectiles.fireFlick` pre-integration test checks 12 distinct start
 - Triple Splashdown flat-ground activation-to-explosion timings **70F main** and **87F fists** are reproduced in https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/ウルトラチャクチ and https://macarongamemo.com/entry/splatoon3-salmonrun-frame . The latter is primarily Salmon Run context, so it corroborates phase chronology but not every PvP damage condition. Current `triple-slam-fists.mjs` schedules 15F after the native landing, which would fire at 85F if that landing occurs at 70F. Yet `WeaponSpPogo.BulletParam.MoveFrame=15` in the raw source; the unexplained two-frame difference must not be "fixed" by silently changing that raw constant. See #912/#966 for separately gated verification.
 
 No claimed Nintendo executable access or retail hardware tests. No Issues are closed by this PR.
+
+
+## Additional patch: #278 vertical 1+2+2 group births
+Community mechanical overview [Splatoon3 system detail](https://wikiwiki.jp/splatoon3mix/システム詳細仕様) says the vertical rollers' initial positions and launch angles differ **per glob**, not only between groups; the globs travel along a far-to-near line. The exact Nintendo interpolation/placement and raw-to-world transform are not published.
+
+Existing main already used `AfterOffsetSpawnSpeed` and `AfterOffsetSpawnRotateXDegree` per projectile, but added `SpawnPositionHeight` indiscriminately to every glob in its group, resulting in only three distinct Y starts for the five bullets. The proposed formula is a **labelled model**: `SpawnPositionOffsetHeight + inGroupOffset*SpawnPositionHeight`. Source group fields at 11.3.0 are:
+- group 0: BulletNum default1, height offset +0.5, per-index height absent0, Y +0.5
+- group 1: BulletNum2, height offset -0.25, per-index height +0.25, Y -0.25 / 0
+- group 2: BulletNum2, height offset -1.25, per-index height +0.25, Y -1.25 / -1.0
+
+The native `p.start/p.prev/p.pos` before integration now distinguish all five starts (previously3) while `p.vel`, yaw, physics, paint, damage, repeat timing and random consumption remain unchanged. This should improve near-muzzle separation but **does not establish Nintendo's unrecovered indexed height semantics** or exact spacing; alternate centering/ordering hypotheses remain until direct captured projectile birth traces can choose among them. Frame-rate and replay acceptance must pass unchanged. Issue #278 stays OPEN for retail parity.
+
+Note: `unit.SpawnPositionHeight` does not appear for the main horizontal group, and that path keeps the source-guided full width correction from #285 without reinterpreting its independent `SpawnPositionRandomCube`.
