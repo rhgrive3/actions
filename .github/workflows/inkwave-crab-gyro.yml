@@ -1,0 +1,59 @@
+name: INKWAVE Crab Tank and simultaneous touch gyro
+on:
+  pull_request:
+    paths:
+      - 'patches/splatoon3/runtime/all-specials.mjs'
+      - 'patches/splatoon3/runtime/crab-tank-*.mjs'
+      - 'patches/splatoon3/runtime/special-*.mjs'
+      - 'patches/splatoon3/runtime/blaster-flight-paint.mjs'
+      - 'patches/splatoon3/runtime/weapons-fidelity.mjs'
+      - 'patches/reliability/*ownership*'
+      - 'patches/reliability/touch-gyro-owner-adapter.mjs'
+      - 'patches/local-quality/gyro*.mjs'
+      - 'patches/**/tests/*crab*.mjs'
+      - 'patches/**/tests/*gyro*.mjs'
+      - 'scripts/check-inkwave-crab-browser.mjs'
+      - 'scripts/check-inkwave-gyro-touch-browser.mjs'
+      - '.github/workflows/inkwave-crab-gyro.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  crab-gyro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - name: Source and production-composition regressions
+        run: |
+          node --experimental-vm-modules --test --test-concurrency=2 \
+            patches/splatoon3/tests/special-crab-*.test.mjs \
+            patches/splatoon3/tests/crab-tank-splash-visual.test.mjs \
+            patches/splatoon3/tests/special-projectile-paint-credit.test.mjs \
+            patches/reliability/tests/touch-gyro-owner.test.mjs \
+            patches/reliability/tests/input-ownership.test.mjs \
+            patches/reliability/tests/stick-inversion-scope.test.mjs \
+            patches/local-quality/tests/touch-gyro-composition.test.mjs
+      - name: Build the production composition
+        run: node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Verify emitted Crab logic and models
+        env:
+          INKWAVE_BUILT_SITE: _site
+        run: node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/special-crab-*.test.mjs patches/splatoon3/tests/crab-tank-splash-visual.test.mjs patches/splatoon3/tests/special-projectile-paint-credit.test.mjs
+      - name: Chromium Crab rendering and terrain
+        run: node scripts/check-inkwave-crab-browser.mjs --site _site --evidence-dir .ci-scratch/crab-browser
+      - name: Chromium real pointer and synthetic sensor composition
+        run: node scripts/check-inkwave-gyro-touch-browser.mjs --site _site --evidence-dir .ci-scratch/gyro-touch-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-crab-gyro-${{ github.sha }}
+          path: |
+            .ci-scratch/crab-browser/
+            .ci-scratch/gyro-touch-browser/
+          if-no-files-found: error

@@ -1,0 +1,5461 @@
+{
+  "schema": 1,
+  "auditDate": "2026-10-17",
+  "fetchedAtUtc": "2026-10-17T09:42:35.713662+00:00",
+  "game": "Splatoon 3",
+  "referenceVersion": "11.3.0",
+  "mode": "ordinary versus; Mission and Coop are ancestry/corroboration checks only",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "sourceCommitMessage": "1130",
+  "treeTruncated": false,
+  "sources": [
+    {
+      "id": "pvp-1130",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "rawUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "806e78fb51ae2db60479385b4316c689cce55345",
+      "sha256": "6cd8048512e030276bf7bc889490838a4346f1108505dbb70eb6e424dbcdf252",
+      "bytes": 5268,
+      "topLevelKeys": [
+        "GameParameters"
+      ],
+      "explicitFields": [
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/$type",
+          "value": "spl__SpawnBulletAdditionMovePlayerParam"
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/ZRate",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/$type",
+          "value": "spl__BulletSpChariotBodyParam"
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForField",
+          "value": 1.15
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForPlayer",
+          "value": 1.45
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/MyVelocityRate",
+          "value": 4800.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/MyVelocityRate",
+          "value": 5400.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/$type",
+          "value": "spl__BulletSpChariotCannonParam"
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DamageOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 300
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 4.8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Accel",
+          "value": 470.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Bias",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Distance",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintRadius",
+          "value": 4.5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForField",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForPlayer",
+          "value": 5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForField",
+          "value": 0.25
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/FriendThroughFrameForPlayer",
+          "value": 1000
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForField",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DirectDamage",
+          "value": 500
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DrawSize",
+          "value": 0.7
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeAirResist",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeGravity",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeStateFrame",
+          "value": 1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityXZ",
+          "value": 20.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityY",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeAirResist",
+          "value": 0.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeGravity",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/GoStraightToBrakeStateFrame",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/DrawRadius",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintDepthScale",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintWidthHalf",
+          "value": 1.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnBetweenLength",
+          "value": 3.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnNum",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/$type",
+          "value": "spl__BulletSimpleCollisionParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/ChangeFrameForField",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/FriendThroughFrameForPlayer",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/$type",
+          "value": "spl__BulletShooterDamageParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceEndFrame",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceStartFrame",
+          "value": 9
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMax",
+          "value": 320
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMin",
+          "value": 160
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/$type",
+          "value": "spl__BulletSimpleMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/FreeGravity",
+          "value": 0.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightStateEndMaxSpeed",
+          "value": 2.232
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightToBrakeStateFrame",
+          "value": 7
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/SpawnSpeed",
+          "value": 3.36
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/$type",
+          "value": "spl__BulletShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DistanceMiddle",
+          "value": 1.1
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfFar",
+          "value": 1.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfMiddle",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfNear",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/$type",
+          "value": "spl__BulletSplashShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMaxDropHeight",
+          "value": 3.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMinDropHeight",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalf",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalfNearest",
+          "value": 2.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/$type",
+          "value": "spl__BulletSplashShooterSpawnParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/ForceSpawnNearestAddNumArray",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnBetweenLength",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNearestLength",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNum",
+          "value": 2.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SplitNum",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/$type",
+          "value": "spl__BulletWallDropCollisionPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusFall",
+          "value": 0.65
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusGround",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusShock",
+          "value": 1.3
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/$type",
+          "value": "spl__BulletWallDropMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMax",
+          "value": 40
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMin",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMax",
+          "value": 35
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMin",
+          "value": 15
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondFrame",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FreeGravityType",
+          "value": "value_0_008"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/$type",
+          "value": "spl__WeaponSpChariotParam"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP",
+          "value": 5000
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP_BreakScissors",
+          "value": 2500
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/CannonNoShotFrame",
+          "value": 32
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedCoef_Squid",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX",
+          "value": 0.075
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX_SpongeEnemy",
+          "value": 0.024
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ_SpongeEnemy",
+          "value": 0.0048
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/NoShotBombReqFrm_FinishSpecial",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/PreDelayFrm_Squid_ShotBomb",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/RotDegLmt_ToHumanFrm",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Bias",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_First",
+          "value": 12.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Term",
+          "value": 90
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotGuideCannonFrame",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotPitVelLmt",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/High",
+          "value": 660.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Low",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Mid",
+          "value": 570.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Cannon",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Shooter",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/$type",
+          "value": "spl__BulletShooterTailLengthParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/DelayShotFrame",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/EndMaxLength",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/$type",
+          "value": "spl__PaintMonitorSetParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/RelabilityMinTime",
+          "value": 0
+        }
+      ],
+      "savedFile": "reports/inkwave-crab-source-audit-2026-10-17/WeaponSpChariot.game__GameParameterTable.json",
+      "checkedAbsentPointers": [
+        "/GameParameters/CannonParam/MoveParam/SpawnSpeed",
+        "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Last",
+        "/GameParameters/WeaponSpChariotParam/CannonRepeatFrame",
+        "/GameParameters/BodyParam/PaintRadius",
+        "/GameParameters/BodyParam/Damage",
+        "/GameParameters/BodyParam/DamageSpanSecond",
+        "/GameParameters/WeaponSpChariotParam/MoveAcc_Gnd",
+        "/GameParameters/WeaponSpChariotParam/MoveBrk",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_H",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_L"
+      ]
+    },
+    {
+      "id": "mission-1130",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSpChariot_Mission.game__GameParameterTable.json",
+      "rawUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpChariot_Mission.game__GameParameterTable.json",
+      "gitBlobSha1": "73418af1928dcc0b09e8d6fa7cea4b0de3afbb1c",
+      "sha256": "575d132236134067de25f1ce391740e773fd922f012f0b176ec32296b65759bb",
+      "bytes": 8065,
+      "topLevelKeys": [
+        "GameParameters"
+      ],
+      "explicitFields": [
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/$type",
+          "value": "spl__SpawnBulletAdditionMovePlayerParam"
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/GuideYMinusZero",
+          "value": false
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/XRate",
+          "value": 0.4
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/YMax",
+          "value": 100.0
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/YMinusRate",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/YPlusRate",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/ZRate",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/$type",
+          "value": "spl__BulletSpChariotBodyParam"
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionOffset",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForField",
+          "value": 1.15
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForPlayer",
+          "value": 1.45
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/Damage",
+          "value": 400
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/DamageSpanSecond",
+          "value": 0.4
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/MyVelocityRate",
+          "value": 4800.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/MyVelocityRate",
+          "value": 5400.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/PaintRadius",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/$type",
+          "value": "spl__BulletSpChariotCannonParam"
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CollisionRadiusForPaint",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintTexture",
+          "value": "Bomb00"
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintUseChageArea",
+          "value": false
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DamageAttackerPriority",
+          "value": false
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DamageLinear",
+          "value": false
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DamageOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 300
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 5.6
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Accel",
+          "value": 470.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Bias",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/DirectionZeroAccelRate",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Distance",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintHeight",
+          "value": 4.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintRadius",
+          "value": 4.5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintTexture",
+          "value": "Bomb00"
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PlaneDamage",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/ReactionVel",
+          "value": 100.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/SplashAroundParam/Num",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/SplashAroundParam/OffsetY",
+          "value": 0.5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/SplashAroundParam/PaintRadius",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/SplashAroundParam/PitchMax",
+          "value": 30.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/SplashAroundParam/PitchMin",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/SplashAroundParam/VelocityMax",
+          "value": 0.54
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/SplashAroundParam/VelocityMin",
+          "value": 0.48
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/SubSpecialSpecUpList",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForField",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForPlayer",
+          "value": 5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForField",
+          "value": 0.25
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/FriendThroughFrameForPlayer",
+          "value": 1000
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForField",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DirectDamage",
+          "value": 600
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DrawSize",
+          "value": 0.7
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeAirResist",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeGravity",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeStateFrame",
+          "value": 1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityXZ",
+          "value": 20.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityY",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeAirResist",
+          "value": 0.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeGravity",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/GoStraightStateEndMaxSpeed",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/GoStraightToBrakeStateFrame",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/SpawnSpeed",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/ChangeFrameForField",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/ChangeFrameForPlayer",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/FriendThroughFrameForPlayer",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/DrawRadius",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintDepthScale",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintWidthHalf",
+          "value": 1.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/FirstSplashRateForLengthMax",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/FirstSplashRateForLengthMin",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnBetweenLength",
+          "value": 3.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnNum",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/$type",
+          "value": "spl__BulletSimpleCollisionParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/ChangeFrameForField",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/ChangeFrameForPlayer",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/FriendThroughFrameForPlayer",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/$type",
+          "value": "spl__BulletShooterDamageParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceEndFrame",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceStartFrame",
+          "value": 9
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMax",
+          "value": 320
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMin",
+          "value": 160
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/$type",
+          "value": "spl__BulletSimpleMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/BrakeAirResist",
+          "value": 0.36
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/BrakeGravity",
+          "value": 0.07
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/BrakeToFreeStateFrame",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/BrakeToFreeVelocityXZ",
+          "value": 0.2355
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/BrakeToFreeVelocityY",
+          "value": -0.15
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/FreeAirResist",
+          "value": 0.02
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/FreeGravity",
+          "value": 0.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightStateEndMaxSpeed",
+          "value": 2.232
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightToBrakeStateFrame",
+          "value": 7
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/SpawnSpeed",
+          "value": 3.36
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/$type",
+          "value": "spl__BulletShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DegreeUseDepthScaleMax",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DegreeUseDepthScaleMin",
+          "value": 35.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DepthScaleMax",
+          "value": 2.4
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DepthScaleMaxBreakFree",
+          "value": 2.4
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DepthScaleMin",
+          "value": 1.4
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DepthScaleMinBreakFree",
+          "value": 1.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DistanceFar",
+          "value": 20.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DistanceMiddle",
+          "value": 1.1
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DistanceNear",
+          "value": 1.1
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/HeightUseDepthScaleMaxBreakFree",
+          "value": 1.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/HeightUseDepthScaleMinBreakFree",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfFar",
+          "value": 1.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfMiddle",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfNear",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/$type",
+          "value": "spl__BulletSplashShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMaxDropHeight",
+          "value": 3.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMinDropHeight",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthScaleMax",
+          "value": 1.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthScaleMin",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalf",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalfNearest",
+          "value": 2.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/$type",
+          "value": "spl__BulletSplashShooterSpawnParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/ForceSpawnNearestAddNumArray",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/RandomSpawnVelXMax",
+          "value": 0.055
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/RandomSpawnVelYMax",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/RandomSpawnVelZMax",
+          "value": 0.02
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/RandomSpawnVelZMin",
+          "value": 0.01
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnBetweenLength",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNearestLength",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNum",
+          "value": 2.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SplitNum",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/$type",
+          "value": "spl__BulletWallDropCollisionPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/FallPeriodFirstSecondTargetAlp",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusFall",
+          "value": 0.65
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusGround",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusShock",
+          "value": 1.3
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/$type",
+          "value": "spl__BulletWallDropMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMax",
+          "value": 40
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMin",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMax",
+          "value": 35
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMin",
+          "value": 15
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondFrame",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FreeGravityType",
+          "value": "value_0_008"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/$type",
+          "value": "spl__WeaponSpChariotParam"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP",
+          "value": 5000
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP_BreakScissors",
+          "value": 2500
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/CannonNoShotFrame",
+          "value": 32
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/CannonRepeatFrame",
+          "value": 75
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/CautionFrm",
+          "value": 180
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/DokanWarpLmtFrm_FinishSpecial",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/FrameOffsetMaxMoveLength",
+          "value": 3.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveAcc_Air",
+          "value": 0.006
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveAcc_Gnd",
+          "value": 0.008
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveBrk",
+          "value": 0.004
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedCoef_Squid",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedCoef_Squid_SpongeEnemy",
+          "value": 0.125
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX",
+          "value": 0.075
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX_SpongeEnemy",
+          "value": 0.024
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ_SpongeEnemy",
+          "value": 0.0048
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveTrn",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/NoShotBombFrm_FinishSpecial",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/NoShotBombReqFrm_FinishSpecial",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/PreDelayFrm_Squid_ShotBomb",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_H",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_L",
+          "value": 18.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/RotDegLmt_ToHumanFrm",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Bias",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_First",
+          "value": 12.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Last",
+          "value": 4.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Term",
+          "value": 90
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotGuideCannonFrame",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotGuideShooterFrame",
+          "value": 9
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotPitVelLmt",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/High",
+          "value": 660.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Low",
+          "value": 540.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Mid",
+          "value": 600.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/Stand_DegBiasDecrease",
+          "value": 0.01
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/Stand_DegBiasKf",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/Stand_DegBiasMax",
+          "value": 0.25
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/Stand_DegBiasMin",
+          "value": 0.02
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/Stand_DegSwerve",
+          "value": 3.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Cannon",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Chariot_NetRecv",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Chariot_NetSend",
+          "value": 40
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Shooter",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/$type",
+          "value": "spl__BulletShooterTailLengthParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/DelayShotFrame",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/EndMaxLength",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/MaxLengthFrame",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/StartMaxLength",
+          "value": 20.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/$type",
+          "value": "spl__PaintMonitorSetParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/InkTexType",
+          "value": "Disk"
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/PaintMonitorNum",
+          "value": 2
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/RelabilityMinTime",
+          "value": 0
+        }
+      ],
+      "savedFile": "reports/inkwave-crab-source-audit-2026-10-17/WeaponSpChariot_Mission.game__GameParameterTable.json"
+    },
+    {
+      "id": "coop-1130",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSpChariot_Coop.game__GameParameterTable.json",
+      "rawUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpChariot_Coop.game__GameParameterTable.json",
+      "gitBlobSha1": "5e3e6664569a69e3eb1ba9022822424a60bfe73e",
+      "sha256": "b11277d4b33de30b3e1f410c1843623d15156d83ac66a3ca84474669af38dcb7",
+      "bytes": 949,
+      "topLevelKeys": [
+        "$parent",
+        "GameParameters"
+      ],
+      "explicitFields": [
+        {
+          "pointer": "/$parent",
+          "value": "Work/Component/GameParameterTable/WeaponSpChariot.game__GameParameterTable.gyml"
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/$type",
+          "value": "spl__BulletSpChariotBodyParam"
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/Damage",
+          "value": 1000
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/$type",
+          "value": "spl__BulletSpChariotCannonParam"
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 1500
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 5.6
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DirectDamage",
+          "value": 3000
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/$type",
+          "value": "spl__BulletShooterDamageParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMax",
+          "value": 600
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMin",
+          "value": 600
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/$type",
+          "value": "spl__WeaponSpChariotParam"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/DokanWarpLmtFrm_FinishSpecial",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/NoShotBombFrm_FinishSpecial",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/NoShotBombReqFrm_FinishSpecial",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/PreDelayFrm_Squid_ShotBomb",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/High",
+          "value": 540.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Low",
+          "value": 540.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Mid",
+          "value": 540.0
+        }
+      ],
+      "savedFile": "reports/inkwave-crab-source-audit-2026-10-17/WeaponSpChariot_Coop.game__GameParameterTable.json"
+    },
+    {
+      "id": "player-1130",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "sourcePath": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "rawUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "gitBlobSha1": "83fdedf7bccc19c65609c3b1fd2a94cf7c9c59d0",
+      "sha256": "afece0e3e2016a895ba79483bfa63489b334c372293417b3b0ef072993bcb660",
+      "bytes": 13701,
+      "topLevelKeys": [
+        "GameParameters"
+      ],
+      "explicitFields": [
+        {
+          "pointer": "/GameParameters/DieBlastParam/$type",
+          "value": "spl__BulletBlastParam"
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/CollisionRadiusForPaint",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/CrossPaintRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/CrossPaintTexture",
+          "value": "Death00"
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/DamageOffsetY",
+          "value": 0.001
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/KnockBackParam/Accel",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/PaintOffsetY",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/PaintRadius",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/PaintTexture",
+          "value": "Death00"
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/Num",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/PaintRadius",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/PitchMax",
+          "value": 45.0
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/VelocityMax",
+          "value": 0.72
+        },
+        {
+          "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/VelocityMin",
+          "value": 0.54
+        },
+        {
+          "pointer": "/GameParameters/PlayerLeagueInGameModifierParam/$type",
+          "value": "spl__PlayerLeagueInGameModifierParam"
+        },
+        {
+          "pointer": "/GameParameters/PlayerLeagueInGameModifierParam/HighJump_ExCoef_Special",
+          "value": 0.925
+        },
+        {
+          "pointer": "/GameParameters/PlayerLeagueInGameModifierParam/HighJump_JumpVelCoef",
+          "value": 1.78
+        },
+        {
+          "pointer": "/GameParameters/PlayerLeagueInGameModifierParam/HighJump_JumpVelCoef_SqdAct",
+          "value": 1.72
+        },
+        {
+          "pointer": "/GameParameters/PlayerLeagueInGameModifierParam/HighJump_JumpVelLmtCoef",
+          "value": 1.78
+        },
+        {
+          "pointer": "/GameParameters/PlayerLeagueInGameModifierParam/SquidSpeedUp_MaxSpeed",
+          "value": 0.288
+        },
+        {
+          "pointer": "/GameParameters/spl__ConstraintBindableHelperParam/$type",
+          "value": "spl__ConstraintBindableHelperParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/$type",
+          "value": "spl__DamageParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/DamageHistMaxSize",
+          "value": 64
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/DamageRateInfoCol",
+          "value": "Default"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/Flag/0",
+          "value": "TargetedByBombRobot"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/Flag/1",
+          "value": "TargetedByMultiMissile"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/IsManualRefRigidBody",
+          "value": false
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/Name",
+          "value": "Main"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/RefHitPointHolder",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/RefRigidBody/0",
+          "value": "ColBullet"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/RefRigidBody/1",
+          "value": "Body"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/RefRigidBody/2",
+          "value": "ColBullet_CoopZombie"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/0/ShotTargetLocatorName",
+          "value": ""
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/1/DamageHistMaxSize",
+          "value": 64
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/1/DamageRateInfoCol",
+          "value": "Chariot"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/1/Flag",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/1/IsManualRefRigidBody",
+          "value": false
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/1/Name",
+          "value": "Chariot"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/1/RefHitPointHolder",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/1/RefRigidBody/0",
+          "value": "ColBullet_Chariot"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageReceiverArray/1/ShotTargetLocatorName",
+          "value": ""
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageSenderArray/0/Name",
+          "value": "Chariot"
+        },
+        {
+          "pointer": "/GameParameters/spl__DamageParam/DamageSenderArray/0/RefRigidBody/0",
+          "value": "ColBullet_Chariot"
+        },
+        {
+          "pointer": "/GameParameters/spl__DisplayItemGetHelperParam/$type",
+          "value": "spl__DisplayItemGetHelperParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__DisplayItemGetHelperParam/DisplayOffsetY",
+          "value": 1.8
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/$type",
+          "value": "spl__InkRailPlayerParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/FinishImmAfterFrame",
+          "value": 30
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/FinishPlayerVelRateY",
+          "value": 0.3
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/ModelDynamicsUnitParam/AirRes",
+          "value": 0.9
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/ModelDynamicsUnitParam/ConnectionForce",
+          "value": 0.08
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/ModelDynamicsUnitParam/EndBoneName",
+          "value": "under"
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/ModelDynamicsUnitParam/Gravity",
+          "value": 0.008
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/ModelDynamicsUnitParam/LimitAngle",
+          "value": 50.0
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/ModelDynamicsUnitParam/LimitLengthRateDiff",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/ModelDynamicsUnitParam/StartBoneName",
+          "value": "under00"
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/PlayerJumpRightSpeed",
+          "value": 0.01
+        },
+        {
+          "pointer": "/GameParameters/spl__InkRailPlayerParam/SwitchColBulletStartDist",
+          "value": 1.5
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerAttractTargetParam/$type",
+          "value": "spl__PlayerAttractTargetParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerBeaconSubSpecUpParam/$type",
+          "value": "spl__PlayerBeaconSubSpecUpParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerBeaconSubSpecUpParam/SubSpecUpParam/High",
+          "value": 57.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerBeaconSubSpecUpParam/SubSpecUpParam/Mid",
+          "value": 25.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/$type",
+          "value": "spl__PlayerCameraPeriscopeParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/PlayerFollowRate/Data/0",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/PlayerFollowRate/Data/1",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/PlayerFollowRate/Data/2",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/PlayerFollowRate/Data/3",
+          "value": 0.1081761
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/PlayerFollowRate/MaxX",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/PlayerFollowRate/Type",
+          "value": "Hermit"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateGyro/Data/0",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateGyro/Data/1",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateGyro/Data/2",
+          "value": 0.01
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateGyro/Data/3",
+          "value": -2.417407
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateGyro/MaxX",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateGyro/Type",
+          "value": "Hermit"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateStick/Data/0",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateStick/Data/1",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateStick/Data/2",
+          "value": 0.01
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateStick/Data/3",
+          "value": -2.428913
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateStick/MaxX",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCameraPeriscopeParam/YawAngleVelRateStick/Type",
+          "value": "Hermit"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCanolaShotParam/$type",
+          "value": "spl__PlayerCanolaShotParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCollisionParam/$type",
+          "value": "spl__PlayerCollisionParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCollisionParam/ColBullet_Height_Squid",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerCollisionParam/ColBullet_Radius_Squid",
+          "value": 0.675
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/$type",
+          "value": "spl__PlayerDispHPParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/BarBgColor/A",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/BarBgColor/B",
+          "value": 0.3
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/BarBgColor/G",
+          "value": 0.3
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/BarBgColor/R",
+          "value": 0.3
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/BarHeight",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/BarWidth",
+          "value": 70.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/IsApplyDmgColorToBgColor",
+          "value": false
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/IsFixBarBgColor",
+          "value": false
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/RecvDmgReactColorFrm",
+          "value": 12
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerDispHPParam/RecvDmgReactDispFrm",
+          "value": 180
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerEntryLiftParam/$type",
+          "value": "spl__PlayerEntryLiftParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerEntryLiftParam/FinishVel",
+          "value": 0.35
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/$type",
+          "value": "spl__PlayerGearSkillParam_ActionSpecUp_Squid"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_High",
+          "value": 5
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_Low",
+          "value": 45
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_Mid",
+          "value": 18
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_HumanMoveUp/$type",
+          "value": "spl__PlayerGearSkillParam_HumanMoveUp"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_InkRecoveryUp/$type",
+          "value": "spl__PlayerGearSkillParam_InkRecoveryUp"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_MainInkSave/$type",
+          "value": "spl__PlayerGearSkillParam_MainInkSave"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_OpInkEffectReduction/$type",
+          "value": "spl__PlayerGearSkillParam_OpInkEffectReduction"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_RespawnSpecialGaugeSave/$type",
+          "value": "spl__PlayerGearSkillParam_RespawnSpecialGaugeSave"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_RespawnTimeSave/$type",
+          "value": "spl__PlayerGearSkillParam_RespawnTimeSave"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SpecialIncreaseUp/$type",
+          "value": "spl__PlayerGearSkillParam_SpecialIncreaseUp"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SquidMoveUp/$type",
+          "value": "spl__PlayerGearSkillParam_SquidMoveUp"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SubEffectReduction/$type",
+          "value": "spl__PlayerGearSkillParam_SubEffectReduction"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SubEffectReduction/DamageRt_BombL_High",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SubEffectReduction/DamageRt_BombL_Mid",
+          "value": 0.75
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SubInkSave/$type",
+          "value": "spl__PlayerGearSkillParam_SubInkSave"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SuperJumpSignHide/$type",
+          "value": "spl__PlayerGearSkillParam_SuperJumpSignHide"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SuperJumpSignHide/ExtraMove_DistXZMax",
+          "value": 100.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SuperJumpSignHide/ExtraMove_DistXZMax_Tcl",
+          "value": 100.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SuperJumpSignHide/ExtraMove_FrmMax",
+          "value": 60
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGearSkillParam_SuperJumpTimeSave/$type",
+          "value": "spl__PlayerGearSkillParam_SuperJumpTimeSave"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGeyserParam/$type",
+          "value": "spl__PlayerGeyserParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGeyserParam/BindToRoofMinSec",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGeyserParam/JumpVelAtRoof",
+          "value": 0.12
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/$type",
+          "value": "spl__PlayerGrindRailParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/AerialVelYToBind",
+          "value": -0.05
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/AutoFinish_CheckDist",
+          "value": 0.001
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/AutoFinish_VelY",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/AutoJumpFinishNoBindFrame",
+          "value": 60
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/BindDistY",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/FinishNoBindFrame",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/FinishPlayerVelRateY",
+          "value": 0.5
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/GndCol_FallNoBindFrame",
+          "value": 60
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/GndCol_Radius",
+          "value": 0.3
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/PlayerJumpSpeed",
+          "value": 0.145
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerGrindRailParam/PlayerSideJumpEndFix",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerJumpGimmickParam/$type",
+          "value": "spl__PlayerJumpGimmickParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerJumpGimmickParam/JumpDisableFrm",
+          "value": 24
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/$type",
+          "value": "spl__PlayerMissionSearchAbilityParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/MarkingForgetTime",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/PeriscopeMarkingMaxNum/0",
+          "value": 5
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/PeriscopeMarkingMaxNum/1",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/PeriscopeMarkingMaxNum/2",
+          "value": 15
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/PeriscopeRadius/0",
+          "value": 25.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/PeriscopeRadius/1",
+          "value": 50.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/PeriscopeRadius/2",
+          "value": 80.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/RadiusParam/0/StrongRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/RadiusParam/0/WeakRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/RadiusParam/1/StrongRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/RadiusParam/1/WeakRadius",
+          "value": 15.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/RadiusParam/2/StrongRadius",
+          "value": 15.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/RadiusParam/2/WeakRadius",
+          "value": 25.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/SightParam/QueryLayerHitMaskEntity",
+          "value": "HitAll"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/SightParam/QuerySubLayerHitMaskEntity",
+          "value": "ActualGroundThrough"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/SightParam/ShapeHolderUnitParamArray/0/Name",
+          "value": "Main"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSearchAbilityParam/SightParam/UseDefilade",
+          "value": false
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/$type",
+          "value": "spl__PlayerMissionSkillParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/ArmorRecoverFrame/0",
+          "value": 720
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/ArmorRecoverFrame/1",
+          "value": 600
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/ArmorRecoverFrame/2",
+          "value": 480
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/InkTankCapacityRate/0",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/InkTankCapacityRate/1",
+          "value": 1.2
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/InkTankCapacityRate/2",
+          "value": 1.4
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/MarkerCheckRadius/0",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/MarkerCheckRadius/1",
+          "value": 6.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/MarkerCheckRadius/2",
+          "value": 18.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/OpInkEffect_MoveSpeed_Jump/0",
+          "value": 0.08
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/OpInkEffect_MoveSpeed_Jump/1",
+          "value": 0.09
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/OpInkEffect_MoveSpeed_Jump/2",
+          "value": 0.11
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/OpInkEffect_MoveSpeed_Normal/0",
+          "value": 0.024
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/OpInkEffect_MoveSpeed_Normal/1",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/OpInkEffect_MoveSpeed_Normal/2",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/OpInkEffect_MoveSpeed_Shot/0",
+          "value": 0.014
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/OpInkEffect_MoveSpeed_Shot/1",
+          "value": 0.0275
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/OpInkEffect_MoveSpeed_Shot/2",
+          "value": 0.042
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/ShooterShotIntervalFrame/0",
+          "value": 9
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/ShooterShotIntervalFrame/1",
+          "value": 6
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/ShooterShotIntervalFrame/2",
+          "value": 6
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/SpecialIncreaseUpRate/0",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/SpecialIncreaseUpRate/1",
+          "value": 1.2
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/SpecialIncreaseUpRate/2",
+          "value": 1.5
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/SubWeapon1_InkConsumeCoef",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/SubWeapon2_InkConsumeCoef",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerMissionSkillParam/SubWeapon3_InkConsumeCoef",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPeriscopeParam/$type",
+          "value": "spl__PlayerPeriscopeParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPeriscopeParam/ExtendSec",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPeriscopeParam/ShrinkMoveGraph/Data/0",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPeriscopeParam/ShrinkMoveGraph/Data/1",
+          "value": -0.1860269
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPeriscopeParam/ShrinkMoveGraph/Data/2",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPeriscopeParam/ShrinkMoveGraph/Data/3",
+          "value": -0.124018
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPeriscopeParam/ShrinkMoveGraph/MaxX",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPeriscopeParam/ShrinkMoveGraph/Type",
+          "value": "Hermit"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPeriscopeParam/ShrinkSec",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/$type",
+          "value": "spl__PlayerPipelineParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/DarkenDelaySec",
+          "value": 0.79
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/FinishSec",
+          "value": 0.5
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/FinishVel",
+          "value": 0.28
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/ModelOffsetY/Data/0",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/ModelOffsetY/Data/1",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/ModelOffsetY/MaxX",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/ModelOffsetY/Type",
+          "value": "Linear"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/ModelOffsetZ/Data/0",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/ModelOffsetZ/Data/1",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/ModelOffsetZ/MaxX",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/ModelOffsetZ/Type",
+          "value": "Linear"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/MoveAcc",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/OpenEndDistance",
+          "value": 8.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/StartAttCurve/Data/0",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/StartAttCurve/Data/1",
+          "value": 2.175926
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/StartAttCurve/Data/2",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/StartAttCurve/Data/3",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/StartAttCurve/Data/4",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/StartAttCurve/Data/5",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/StartAttCurve/MaxX",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/StartAttCurve/Type",
+          "value": "Hermit"
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/StartSec",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerPipelineParam/StartSplashStartOffsetZ",
+          "value": 0.5
+        },
+        {
+          "pointer": "/GameParameters/spl__PlayerVehicleSpectacleParam/$type",
+          "value": "spl__PlayerVehicleSpectacleParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/$type",
+          "value": "spl__ThrowClamParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/AdditionMoveParam/XRate",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/AdditionMoveParam/YMax",
+          "value": 0.16
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/AdditionMoveParam/YPlusRate",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/AdditionMoveParam/ZRate",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/BlastGachiParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/BlastGachiParam/CrossPaintRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/BlastGachiParam/DistanceDamage/0/Damage",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/BlastGachiParam/DistanceDamage/0/Distance",
+          "value": 2.5
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/BlastGachiParam/KnockBackParam/Accel",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/BlastGachiParam/PaintRadius",
+          "value": 2.5
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowGachiParam/GuideHitCollisionType",
+          "value": "Clam"
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowGachiParam/GuideRadius",
+          "value": 0.55
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowGachiParam/SpawnSpeedY",
+          "value": 0.24
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowGachiParam/SpawnSpeedYWorldMin",
+          "value": -0.4
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowGachiParam/SpawnSpeedZSpecUp/High",
+          "value": 0.82
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowGachiParam/SpawnSpeedZSpecUp/Low",
+          "value": 0.82
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowGachiParam/SpawnSpeedZSpecUp/Mid",
+          "value": 0.82
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowNormalParam/GuideHitCollisionType",
+          "value": "Clam"
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowNormalParam/GuideRadius",
+          "value": 0.55
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowNormalParam/SpawnSpeedY",
+          "value": 0.24
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowNormalParam/SpawnSpeedYWorldMin",
+          "value": -0.4
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowNormalParam/SpawnSpeedZSpecUp/High",
+          "value": 1.04
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowNormalParam/SpawnSpeedZSpecUp/Low",
+          "value": 1.04
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowClamParam/ThrowNormalParam/SpawnSpeedZSpecUp/Mid",
+          "value": 1.04
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/$type",
+          "value": "spl__ThrowGoldenIkuraParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AdditionMoveParam/XRate",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AdditionMoveParam/YMax",
+          "value": 0.32
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AdditionMoveParam/YPlusRate",
+          "value": 4.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/CrossPaintRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/DamageAttackerPriority",
+          "value": true
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/DamageOffsetY",
+          "value": -0.7
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 2000
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 2.5
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/KnockBackParam/Accel",
+          "value": 470.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/KnockBackParam/Bias",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/KnockBackParam/Distance",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/PaintOffsetY",
+          "value": -0.7
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/PaintRadius",
+          "value": 3.5
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/SplashAroundParam/PaintRadius",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/BlastParam/SplashAroundParam/VelocityMax",
+          "value": 0.54
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/CollisionRadius",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/DamageDirectHit",
+          "value": 8000
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/FlyGravity",
+          "value": 0.016
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/FlyPositionAirResist",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/GuideHitCollisionType",
+          "value": "EnemyOnFenceOff"
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/GuideRadius",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/SpawnSpeedY",
+          "value": 0.36
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/SpawnSpeedYWorldMin",
+          "value": -0.4
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/SpawnSpeedZSpecUp/High",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/SpawnSpeedZSpecUp/Low",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/AttackParam/SpawnSpeedZSpecUp/Mid",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/BlastParam/DamageAttackerPriority",
+          "value": true
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 1000
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/BlastParam/PaintRadius",
+          "value": 3.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/InkConsume",
+          "value": 0.7
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/ThrowParam/FlyHitWallReboundRate",
+          "value": 0.7
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/ThrowParam/GuideHitCollisionType",
+          "value": "EnemyOffFenceOnBlowerOffShieldOff"
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/ThrowParam/ReturnWaterMinFrame",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/ThrowParam/SpawnSpeedY",
+          "value": 0.24
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/ThrowParam/SpawnSpeedYWorldMin",
+          "value": -0.4
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/ThrowParam/SpawnSpeedZSpecUp/High",
+          "value": 1.12
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/ThrowParam/SpawnSpeedZSpecUp/Low",
+          "value": 1.12
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowGoldenIkuraParam/ThrowParam/SpawnSpeedZSpecUp/Mid",
+          "value": 1.12
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/$type",
+          "value": "spl__ThrowTenjinParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/AdditionMoveParam/XRate",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/AdditionMoveParam/YMax",
+          "value": 0.32
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/AdditionMoveParam/YPlusRate",
+          "value": 4.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/AdditionMoveParam/ZRate",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/BlastParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 300
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 5.2
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/BlastParam/KnockBackParam/Accel",
+          "value": 470.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/BlastParam/KnockBackParam/Bias",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/BlastParam/KnockBackParam/Distance",
+          "value": 9.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/BlastParam/PaintOffsetY",
+          "value": -2.8
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/BlastParam/PaintRadius",
+          "value": 3.45
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/BlastParam/PaintTexture",
+          "value": "Bomb00Tenjin"
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/GuideHitCollisionType",
+          "value": "EnemyOffFenceOn"
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/HitWallPitchToPlane",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/HitWallReboundResetFrame",
+          "value": 12
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/RiseFrame",
+          "value": 38
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/SpawnSpeedY",
+          "value": 0.24
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/SpawnSpeedYWorldMin",
+          "value": -0.4
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/SpawnSpeedZSpecUp/High",
+          "value": 1.4
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/SpawnSpeedZSpecUp/Low",
+          "value": 1.4
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/SpawnSpeedZSpecUp/Mid",
+          "value": 1.4
+        },
+        {
+          "pointer": "/GameParameters/spl__ThrowTenjinParam/ThrowParam/WaitRiseFrame",
+          "value": 22
+        }
+      ]
+    },
+    {
+      "id": "pvp-099",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "sourcePath": "data/parameter/099/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "rawUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/099/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "e2bf885450fe7741cd7415a548aa892dc600d59a",
+      "sha256": "cda1cb3abbea795843320d2e8af353179e8afdbe4e30ec978d7a393d9df6e73a",
+      "bytes": 5157,
+      "topLevelKeys": [
+        "GameParameters"
+      ],
+      "explicitFields": [
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/$type",
+          "value": "spl__SpawnBulletAdditionMovePlayerParam"
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/ZRate",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/$type",
+          "value": "spl__BulletSpChariotBodyParam"
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForField",
+          "value": 1.15
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForPlayer",
+          "value": 1.45
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/MyVelocityRate",
+          "value": 4800.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/MyVelocityRate",
+          "value": 5400.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/$type",
+          "value": "spl__BulletSpChariotCannonParam"
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DamageOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 300
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 5.6
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Accel",
+          "value": 470.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Bias",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Distance",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintRadius",
+          "value": 4.5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForField",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForPlayer",
+          "value": 5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForField",
+          "value": 0.25
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/FriendThroughFrameForPlayer",
+          "value": 1000
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForField",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DrawSize",
+          "value": 0.7
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeAirResist",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeGravity",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeStateFrame",
+          "value": 1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityXZ",
+          "value": 20.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityY",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeAirResist",
+          "value": 0.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeGravity",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/GoStraightToBrakeStateFrame",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/DrawRadius",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintDepthScale",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintWidthHalf",
+          "value": 1.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnBetweenLength",
+          "value": 3.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnNum",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/$type",
+          "value": "spl__BulletSimpleCollisionParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/ChangeFrameForField",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/FriendThroughFrameForPlayer",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/$type",
+          "value": "spl__BulletShooterDamageParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceEndFrame",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceStartFrame",
+          "value": 9
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMax",
+          "value": 320
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMin",
+          "value": 160
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/$type",
+          "value": "spl__BulletSimpleMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/FreeGravity",
+          "value": 0.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightStateEndMaxSpeed",
+          "value": 2.232
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightToBrakeStateFrame",
+          "value": 7
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/SpawnSpeed",
+          "value": 3.36
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/$type",
+          "value": "spl__BulletShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DistanceMiddle",
+          "value": 1.1
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfFar",
+          "value": 1.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfMiddle",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfNear",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/$type",
+          "value": "spl__BulletSplashShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMaxDropHeight",
+          "value": 3.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMinDropHeight",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalf",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalfNearest",
+          "value": 2.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/$type",
+          "value": "spl__BulletSplashShooterSpawnParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/ForceSpawnNearestAddNumArray",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnBetweenLength",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNearestLength",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNum",
+          "value": 2.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SplitNum",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/$type",
+          "value": "spl__BulletWallDropCollisionPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusFall",
+          "value": 0.65
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusGround",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusShock",
+          "value": 1.3
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/$type",
+          "value": "spl__BulletWallDropMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMax",
+          "value": 40
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMin",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMax",
+          "value": 35
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMin",
+          "value": 15
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondFrame",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FreeGravityType",
+          "value": "value_0_008"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/$type",
+          "value": "spl__WeaponSpChariotParam"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP",
+          "value": 5000
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP_BreakScissors",
+          "value": 2500
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/CannonNoShotFrame",
+          "value": 32
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedCoef_Squid",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX",
+          "value": 0.075
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX_SpongeEnemy",
+          "value": 0.024
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ_SpongeEnemy",
+          "value": 0.0048
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/RotDegLmt_ToHumanFrm",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Bias",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_First",
+          "value": 12.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Term",
+          "value": 90
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotGuideCannonFrame",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotPitVelLmt",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/High",
+          "value": 660.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Low",
+          "value": 540.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Mid",
+          "value": 600.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Cannon",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Shooter",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/$type",
+          "value": "spl__BulletShooterTailLengthParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/DelayShotFrame",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/EndMaxLength",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/$type",
+          "value": "spl__PaintMonitorSetParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/RelabilityMinTime",
+          "value": 0
+        }
+      ],
+      "checkedAbsentPointers": [
+        "/GameParameters/CannonParam/MoveParam/SpawnSpeed",
+        "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Last",
+        "/GameParameters/WeaponSpChariotParam/CannonRepeatFrame",
+        "/GameParameters/BodyParam/PaintRadius",
+        "/GameParameters/BodyParam/Damage",
+        "/GameParameters/BodyParam/DamageSpanSecond",
+        "/GameParameters/WeaponSpChariotParam/MoveAcc_Gnd",
+        "/GameParameters/WeaponSpChariotParam/MoveBrk",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_H",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_L"
+      ]
+    },
+    {
+      "id": "pvp-210",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "sourcePath": "data/parameter/210/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "rawUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/210/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "0c643cf42ab0f4257a47b29c318d5f2e20fb334d",
+      "sha256": "5d6f568746ce8a1dfa76eddb313a3abc2466b8a9fbc8473433f29883e778c764",
+      "bytes": 5157,
+      "topLevelKeys": [
+        "GameParameters"
+      ],
+      "explicitFields": [
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/$type",
+          "value": "spl__SpawnBulletAdditionMovePlayerParam"
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/ZRate",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/$type",
+          "value": "spl__BulletSpChariotBodyParam"
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForField",
+          "value": 1.15
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForPlayer",
+          "value": 1.45
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/MyVelocityRate",
+          "value": 4800.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/MyVelocityRate",
+          "value": 5400.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/$type",
+          "value": "spl__BulletSpChariotCannonParam"
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DamageOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 300
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 5.6
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Accel",
+          "value": 470.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Bias",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Distance",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintRadius",
+          "value": 4.5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForField",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForPlayer",
+          "value": 5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForField",
+          "value": 0.25
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/FriendThroughFrameForPlayer",
+          "value": 1000
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForField",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DrawSize",
+          "value": 0.7
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeAirResist",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeGravity",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeStateFrame",
+          "value": 1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityXZ",
+          "value": 20.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityY",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeAirResist",
+          "value": 0.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeGravity",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/GoStraightToBrakeStateFrame",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/DrawRadius",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintDepthScale",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintWidthHalf",
+          "value": 1.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnBetweenLength",
+          "value": 3.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnNum",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/$type",
+          "value": "spl__BulletSimpleCollisionParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/ChangeFrameForField",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/FriendThroughFrameForPlayer",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/$type",
+          "value": "spl__BulletShooterDamageParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceEndFrame",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceStartFrame",
+          "value": 9
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMax",
+          "value": 320
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMin",
+          "value": 160
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/$type",
+          "value": "spl__BulletSimpleMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/FreeGravity",
+          "value": 0.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightStateEndMaxSpeed",
+          "value": 2.232
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightToBrakeStateFrame",
+          "value": 7
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/SpawnSpeed",
+          "value": 3.36
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/$type",
+          "value": "spl__BulletShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DistanceMiddle",
+          "value": 1.1
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfFar",
+          "value": 1.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfMiddle",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfNear",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/$type",
+          "value": "spl__BulletSplashShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMaxDropHeight",
+          "value": 3.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMinDropHeight",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalf",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalfNearest",
+          "value": 2.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/$type",
+          "value": "spl__BulletSplashShooterSpawnParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/ForceSpawnNearestAddNumArray",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnBetweenLength",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNearestLength",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNum",
+          "value": 2.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SplitNum",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/$type",
+          "value": "spl__BulletWallDropCollisionPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusFall",
+          "value": 0.65
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusGround",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusShock",
+          "value": 1.3
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/$type",
+          "value": "spl__BulletWallDropMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMax",
+          "value": 40
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMin",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMax",
+          "value": 35
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMin",
+          "value": 15
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondFrame",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FreeGravityType",
+          "value": "value_0_008"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/$type",
+          "value": "spl__WeaponSpChariotParam"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP",
+          "value": 5000
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP_BreakScissors",
+          "value": 2500
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/CannonNoShotFrame",
+          "value": 32
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedCoef_Squid",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX",
+          "value": 0.075
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX_SpongeEnemy",
+          "value": 0.024
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ_SpongeEnemy",
+          "value": 0.0048
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/RotDegLmt_ToHumanFrm",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Bias",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_First",
+          "value": 12.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Term",
+          "value": 90
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotGuideCannonFrame",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotPitVelLmt",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/High",
+          "value": 660.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Low",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Mid",
+          "value": 570.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Cannon",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Shooter",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/$type",
+          "value": "spl__BulletShooterTailLengthParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/DelayShotFrame",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/EndMaxLength",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/$type",
+          "value": "spl__PaintMonitorSetParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/RelabilityMinTime",
+          "value": 0
+        }
+      ],
+      "checkedAbsentPointers": [
+        "/GameParameters/CannonParam/MoveParam/SpawnSpeed",
+        "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Last",
+        "/GameParameters/WeaponSpChariotParam/CannonRepeatFrame",
+        "/GameParameters/BodyParam/PaintRadius",
+        "/GameParameters/BodyParam/Damage",
+        "/GameParameters/BodyParam/DamageSpanSecond",
+        "/GameParameters/WeaponSpChariotParam/MoveAcc_Gnd",
+        "/GameParameters/WeaponSpChariotParam/MoveBrk",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_H",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_L"
+      ]
+    },
+    {
+      "id": "pvp-310",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "sourcePath": "data/parameter/310/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "rawUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/310/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1",
+      "sha256": "787d0153f0b642a6c594c5f8190efd74ed5cf97b7fd63f679d6d9a26bb086be6",
+      "bytes": 5241,
+      "topLevelKeys": [
+        "GameParameters"
+      ],
+      "explicitFields": [
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/$type",
+          "value": "spl__SpawnBulletAdditionMovePlayerParam"
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/ZRate",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/$type",
+          "value": "spl__BulletSpChariotBodyParam"
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForField",
+          "value": 1.15
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForPlayer",
+          "value": 1.45
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/MyVelocityRate",
+          "value": 4800.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/MyVelocityRate",
+          "value": 5400.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/$type",
+          "value": "spl__BulletSpChariotCannonParam"
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DamageOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 300
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 5.6
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Accel",
+          "value": 470.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Bias",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Distance",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintRadius",
+          "value": 4.5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForField",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForPlayer",
+          "value": 5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForField",
+          "value": 0.25
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/FriendThroughFrameForPlayer",
+          "value": 1000
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForField",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DrawSize",
+          "value": 0.7
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeAirResist",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeGravity",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeStateFrame",
+          "value": 1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityXZ",
+          "value": 20.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityY",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeAirResist",
+          "value": 0.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeGravity",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/GoStraightToBrakeStateFrame",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/DrawRadius",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintDepthScale",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintWidthHalf",
+          "value": 1.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnBetweenLength",
+          "value": 3.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnNum",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/$type",
+          "value": "spl__BulletSimpleCollisionParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/ChangeFrameForField",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/FriendThroughFrameForPlayer",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/$type",
+          "value": "spl__BulletShooterDamageParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceEndFrame",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceStartFrame",
+          "value": 9
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMax",
+          "value": 320
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMin",
+          "value": 160
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/$type",
+          "value": "spl__BulletSimpleMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/FreeGravity",
+          "value": 0.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightStateEndMaxSpeed",
+          "value": 2.232
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightToBrakeStateFrame",
+          "value": 7
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/SpawnSpeed",
+          "value": 3.36
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/$type",
+          "value": "spl__BulletShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DistanceMiddle",
+          "value": 1.1
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfFar",
+          "value": 1.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfMiddle",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfNear",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/$type",
+          "value": "spl__BulletSplashShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMaxDropHeight",
+          "value": 3.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMinDropHeight",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalf",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalfNearest",
+          "value": 2.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/$type",
+          "value": "spl__BulletSplashShooterSpawnParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/ForceSpawnNearestAddNumArray",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnBetweenLength",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNearestLength",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNum",
+          "value": 2.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SplitNum",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/$type",
+          "value": "spl__BulletWallDropCollisionPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusFall",
+          "value": 0.65
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusGround",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusShock",
+          "value": 1.3
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/$type",
+          "value": "spl__BulletWallDropMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMax",
+          "value": 40
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMin",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMax",
+          "value": 35
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMin",
+          "value": 15
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondFrame",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FreeGravityType",
+          "value": "value_0_008"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/$type",
+          "value": "spl__WeaponSpChariotParam"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP",
+          "value": 5000
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP_BreakScissors",
+          "value": 2500
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/CannonNoShotFrame",
+          "value": 32
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedCoef_Squid",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX",
+          "value": 0.075
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX_SpongeEnemy",
+          "value": 0.024
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ_SpongeEnemy",
+          "value": 0.0048
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/NoShotBombReqFrm_FinishSpecial",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/PreDelayFrm_Squid_ShotBomb",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/RotDegLmt_ToHumanFrm",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Bias",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_First",
+          "value": 12.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Term",
+          "value": 90
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotGuideCannonFrame",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotPitVelLmt",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/High",
+          "value": 660.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Low",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Mid",
+          "value": 570.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Cannon",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Shooter",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/$type",
+          "value": "spl__BulletShooterTailLengthParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/DelayShotFrame",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/EndMaxLength",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/$type",
+          "value": "spl__PaintMonitorSetParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/RelabilityMinTime",
+          "value": 0
+        }
+      ],
+      "checkedAbsentPointers": [
+        "/GameParameters/CannonParam/MoveParam/SpawnSpeed",
+        "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Last",
+        "/GameParameters/WeaponSpChariotParam/CannonRepeatFrame",
+        "/GameParameters/BodyParam/PaintRadius",
+        "/GameParameters/BodyParam/Damage",
+        "/GameParameters/BodyParam/DamageSpanSecond",
+        "/GameParameters/WeaponSpChariotParam/MoveAcc_Gnd",
+        "/GameParameters/WeaponSpChariotParam/MoveBrk",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_H",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_L"
+      ]
+    },
+    {
+      "id": "pvp-1000",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "sourcePath": "data/parameter/1000/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "rawUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1000/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "6a4ff09fba1933a0db3b5903ed94fc5e14f4fb67",
+      "sha256": "333da1adfaea265905428f146f8c95e5513ded2677c651e9f71f7d20b08a9f7a",
+      "bytes": 5268,
+      "topLevelKeys": [
+        "GameParameters"
+      ],
+      "explicitFields": [
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/$type",
+          "value": "spl__SpawnBulletAdditionMovePlayerParam"
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/ZRate",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/$type",
+          "value": "spl__BulletSpChariotBodyParam"
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForField",
+          "value": 1.15
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForPlayer",
+          "value": 1.45
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/MyVelocityRate",
+          "value": 4800.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/MyVelocityRate",
+          "value": 5400.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/$type",
+          "value": "spl__BulletSpChariotCannonParam"
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DamageOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 300
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 5.6
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Accel",
+          "value": 470.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Bias",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Distance",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintRadius",
+          "value": 4.5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForField",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForPlayer",
+          "value": 5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForField",
+          "value": 0.25
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/FriendThroughFrameForPlayer",
+          "value": 1000
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForField",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DirectDamage",
+          "value": 500
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DrawSize",
+          "value": 0.7
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeAirResist",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeGravity",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeStateFrame",
+          "value": 1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityXZ",
+          "value": 20.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityY",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeAirResist",
+          "value": 0.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeGravity",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/GoStraightToBrakeStateFrame",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/DrawRadius",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintDepthScale",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintWidthHalf",
+          "value": 1.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnBetweenLength",
+          "value": 3.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnNum",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/$type",
+          "value": "spl__BulletSimpleCollisionParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/ChangeFrameForField",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/FriendThroughFrameForPlayer",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/$type",
+          "value": "spl__BulletShooterDamageParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceEndFrame",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceStartFrame",
+          "value": 9
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMax",
+          "value": 320
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMin",
+          "value": 160
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/$type",
+          "value": "spl__BulletSimpleMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/FreeGravity",
+          "value": 0.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightStateEndMaxSpeed",
+          "value": 2.232
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightToBrakeStateFrame",
+          "value": 7
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/SpawnSpeed",
+          "value": 3.36
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/$type",
+          "value": "spl__BulletShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DistanceMiddle",
+          "value": 1.1
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfFar",
+          "value": 1.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfMiddle",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfNear",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/$type",
+          "value": "spl__BulletSplashShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMaxDropHeight",
+          "value": 3.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMinDropHeight",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalf",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalfNearest",
+          "value": 2.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/$type",
+          "value": "spl__BulletSplashShooterSpawnParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/ForceSpawnNearestAddNumArray",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnBetweenLength",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNearestLength",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNum",
+          "value": 2.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SplitNum",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/$type",
+          "value": "spl__BulletWallDropCollisionPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusFall",
+          "value": 0.65
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusGround",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusShock",
+          "value": 1.3
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/$type",
+          "value": "spl__BulletWallDropMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMax",
+          "value": 40
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMin",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMax",
+          "value": 35
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMin",
+          "value": 15
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondFrame",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FreeGravityType",
+          "value": "value_0_008"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/$type",
+          "value": "spl__WeaponSpChariotParam"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP",
+          "value": 5000
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP_BreakScissors",
+          "value": 2500
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/CannonNoShotFrame",
+          "value": 32
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedCoef_Squid",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX",
+          "value": 0.075
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX_SpongeEnemy",
+          "value": 0.024
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ_SpongeEnemy",
+          "value": 0.0048
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/NoShotBombReqFrm_FinishSpecial",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/PreDelayFrm_Squid_ShotBomb",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/RotDegLmt_ToHumanFrm",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Bias",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_First",
+          "value": 12.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Term",
+          "value": 90
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotGuideCannonFrame",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotPitVelLmt",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/High",
+          "value": 660.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Low",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Mid",
+          "value": 570.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Cannon",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Shooter",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/$type",
+          "value": "spl__BulletShooterTailLengthParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/DelayShotFrame",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/EndMaxLength",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/$type",
+          "value": "spl__PaintMonitorSetParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/RelabilityMinTime",
+          "value": 0
+        }
+      ],
+      "checkedAbsentPointers": [
+        "/GameParameters/CannonParam/MoveParam/SpawnSpeed",
+        "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Last",
+        "/GameParameters/WeaponSpChariotParam/CannonRepeatFrame",
+        "/GameParameters/BodyParam/PaintRadius",
+        "/GameParameters/BodyParam/Damage",
+        "/GameParameters/BodyParam/DamageSpanSecond",
+        "/GameParameters/WeaponSpChariotParam/MoveAcc_Gnd",
+        "/GameParameters/WeaponSpChariotParam/MoveBrk",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_H",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_L"
+      ]
+    },
+    {
+      "id": "pvp-1120",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "sourcePath": "data/parameter/1120/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "rawUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1120/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "806e78fb51ae2db60479385b4316c689cce55345",
+      "sha256": "6cd8048512e030276bf7bc889490838a4346f1108505dbb70eb6e424dbcdf252",
+      "bytes": 5268,
+      "topLevelKeys": [
+        "GameParameters"
+      ],
+      "explicitFields": [
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/$type",
+          "value": "spl__SpawnBulletAdditionMovePlayerParam"
+        },
+        {
+          "pointer": "/GameParameters/AdditionMovePlayerParam/ZRate",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/$type",
+          "value": "spl__BulletSpChariotBodyParam"
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForField",
+          "value": 1.15
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/CollisionRadiusForPlayer",
+          "value": 1.45
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/MyVelocityRate",
+          "value": 4800.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackChariotPlayer/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMax",
+          "value": 720.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/AccelMin",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/MyVelocityRate",
+          "value": 5400.0
+        },
+        {
+          "pointer": "/GameParameters/BodyParam/KnockBackOpponent/OpponentVelocityRate",
+          "value": 300.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/$type",
+          "value": "spl__BulletSpChariotCannonParam"
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintCheckLength",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/CrossPaintRadius",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DamageOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Damage",
+          "value": 300
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/DistanceDamage/0/Distance",
+          "value": 4.8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Accel",
+          "value": 470.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Bias",
+          "value": 0.8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/KnockBackParam/Distance",
+          "value": 5.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintOffsetY",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/BlastParam/PaintRadius",
+          "value": 4.5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForField",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/ChangeFrameForPlayer",
+          "value": 5
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForField",
+          "value": 0.25
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.4
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/FriendThroughFrameForPlayer",
+          "value": 1000
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForField",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DirectDamage",
+          "value": 500
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/DrawSize",
+          "value": 0.7
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeAirResist",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeGravity",
+          "value": 0.04
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeStateFrame",
+          "value": 1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityXZ",
+          "value": 20.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/BrakeToFreeVelocityY",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeAirResist",
+          "value": 0.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/FreeGravity",
+          "value": 0.05
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/MoveParam/GoStraightToBrakeStateFrame",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/EndRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForField",
+          "value": 0.15
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/CollisionParam/InitRadiusForPlayer",
+          "value": 0.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/DrawRadius",
+          "value": 0.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintDepthScale",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/DrawSizeCollisionPaintParam/PaintWidthHalf",
+          "value": 1.12
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnBetweenLength",
+          "value": 3.1
+        },
+        {
+          "pointer": "/GameParameters/CannonParam/SplashParam/SpawnParam/SpawnNum",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/$type",
+          "value": "spl__BulletSimpleCollisionParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/ChangeFrameForField",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/EndRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/FriendThroughFrameForPlayer",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForField",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterCollisionParam/InitRadiusForPlayer",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/$type",
+          "value": "spl__BulletShooterDamageParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceEndFrame",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ReduceStartFrame",
+          "value": 9
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMax",
+          "value": 320
+        },
+        {
+          "pointer": "/GameParameters/ShooterDamageParam/ValueMin",
+          "value": 160
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/$type",
+          "value": "spl__BulletSimpleMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/FreeGravity",
+          "value": 0.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightStateEndMaxSpeed",
+          "value": 2.232
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/GoStraightToBrakeStateFrame",
+          "value": 7
+        },
+        {
+          "pointer": "/GameParameters/ShooterMoveParam/SpawnSpeed",
+          "value": 3.36
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/$type",
+          "value": "spl__BulletShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/DistanceMiddle",
+          "value": 1.1
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfFar",
+          "value": 1.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfMiddle",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterPaintParam/WidthHalfNear",
+          "value": 1.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/$type",
+          "value": "spl__BulletSplashShooterPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMaxDropHeight",
+          "value": 3.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/DepthMinDropHeight",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalf",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashPaintParam/WidthHalfNearest",
+          "value": 2.016
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/$type",
+          "value": "spl__BulletSplashShooterSpawnParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/ForceSpawnNearestAddNumArray",
+          "value": []
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnBetweenLength",
+          "value": 10.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNearestLength",
+          "value": 1.0
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SpawnNum",
+          "value": 2.5
+        },
+        {
+          "pointer": "/GameParameters/ShooterSplashSpawnParam/SplitNum",
+          "value": 8
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/$type",
+          "value": "spl__BulletWallDropCollisionPaintParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusFall",
+          "value": 0.65
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusGround",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropCollisionPaintParam/PaintRadiusShock",
+          "value": 1.3
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/$type",
+          "value": "spl__BulletWallDropMoveParam"
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMax",
+          "value": 40
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstFrameMin",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodFirstTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMax",
+          "value": 35
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodLastFrameMin",
+          "value": 15
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondFrame",
+          "value": 10
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FallPeriodSecondTargetSpeed",
+          "value": 0.06
+        },
+        {
+          "pointer": "/GameParameters/ShooterWallDropMoveParam/FreeGravityType",
+          "value": "value_0_008"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/$type",
+          "value": "spl__WeaponSpChariotParam"
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP",
+          "value": 5000
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ArmorHP_BreakScissors",
+          "value": 2500
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/CannonNoShotFrame",
+          "value": 32
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedCoef_Squid",
+          "value": 0.6
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX",
+          "value": 0.075
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedX_SpongeEnemy",
+          "value": 0.024
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/MoveSpeedZ_SpongeEnemy",
+          "value": 0.0048
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/NoShotBombReqFrm_FinishSpecial",
+          "value": 25
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/PreDelayFrm_Squid_ShotBomb",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/RotDegLmt_ToHumanFrm",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Bias",
+          "value": 0.2
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_First",
+          "value": 12.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Term",
+          "value": 90
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotGuideCannonFrame",
+          "value": 0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/ShotPitVelLmt",
+          "value": 0.015
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/High",
+          "value": 660.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Low",
+          "value": 480.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/SpecialTotalFrame/Mid",
+          "value": 570.0
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Cannon",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/WeaponSpChariotParam/StartDelayFrame_Shooter",
+          "value": 20
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/$type",
+          "value": "spl__BulletShooterTailLengthParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/DelayShotFrame",
+          "value": 4
+        },
+        {
+          "pointer": "/GameParameters/spl__BulletShooterTailLengthParam/EndMaxLength",
+          "value": 2.0
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/$type",
+          "value": "spl__PaintMonitorSetParam"
+        },
+        {
+          "pointer": "/GameParameters/spl__PaintMonitorSetParam/RelabilityMinTime",
+          "value": 0
+        }
+      ],
+      "checkedAbsentPointers": [
+        "/GameParameters/CannonParam/MoveParam/SpawnSpeed",
+        "/GameParameters/WeaponSpChariotParam/ShooterRepeatFrame_Last",
+        "/GameParameters/WeaponSpChariotParam/CannonRepeatFrame",
+        "/GameParameters/BodyParam/PaintRadius",
+        "/GameParameters/BodyParam/Damage",
+        "/GameParameters/BodyParam/DamageSpanSecond",
+        "/GameParameters/WeaponSpChariotParam/MoveAcc_Gnd",
+        "/GameParameters/WeaponSpChariotParam/MoveBrk",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_H",
+        "/GameParameters/WeaponSpChariotParam/RotDegLmt_ShotDirXZ_L"
+      ]
+    }
+  ],
+  "baseline": {
+    "repositoryCommit": "e6a27000dfd36c2d8ddb24bd3a167ac984d9623b",
+    "path": "patches/splatoon3/runtime/all-specials.mjs",
+    "sha256": "94cd67bee71da2ec739c9137a0e849bd0d722efdc9d5d9fefacf193df2564520",
+    "gitBlobSha1": "0e4824d3bd6196304fbd61d7469d2b985dcc3159"
+  },
+  "allPinnedPvpVersions": [
+    {
+      "path": "data/parameter/099/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "e2bf885450fe7741cd7415a548aa892dc600d59a"
+    },
+    {
+      "path": "data/parameter/100/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "e2bf885450fe7741cd7415a548aa892dc600d59a"
+    },
+    {
+      "path": "data/parameter/1000/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "6a4ff09fba1933a0db3b5903ed94fc5e14f4fb67"
+    },
+    {
+      "path": "data/parameter/1010/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "6a4ff09fba1933a0db3b5903ed94fc5e14f4fb67"
+    },
+    {
+      "path": "data/parameter/110/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "e2bf885450fe7741cd7415a548aa892dc600d59a"
+    },
+    {
+      "path": "data/parameter/1100/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "6a4ff09fba1933a0db3b5903ed94fc5e14f4fb67"
+    },
+    {
+      "path": "data/parameter/1101/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "6a4ff09fba1933a0db3b5903ed94fc5e14f4fb67"
+    },
+    {
+      "path": "data/parameter/111/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "e2bf885450fe7741cd7415a548aa892dc600d59a"
+    },
+    {
+      "path": "data/parameter/1110/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "6a4ff09fba1933a0db3b5903ed94fc5e14f4fb67"
+    },
+    {
+      "path": "data/parameter/1120/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "806e78fb51ae2db60479385b4316c689cce55345"
+    },
+    {
+      "path": "data/parameter/1130/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "806e78fb51ae2db60479385b4316c689cce55345"
+    },
+    {
+      "path": "data/parameter/120/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "e2bf885450fe7741cd7415a548aa892dc600d59a"
+    },
+    {
+      "path": "data/parameter/200/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "e2bf885450fe7741cd7415a548aa892dc600d59a"
+    },
+    {
+      "path": "data/parameter/210/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "0c643cf42ab0f4257a47b29c318d5f2e20fb334d"
+    },
+    {
+      "path": "data/parameter/300/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "0c643cf42ab0f4257a47b29c318d5f2e20fb334d"
+    },
+    {
+      "path": "data/parameter/310/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/400/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/410/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/500/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/510/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/520/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/600/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/610/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/700/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/710/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/720/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/800/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/810/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/900/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/910/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/920/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    },
+    {
+      "path": "data/parameter/930/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "gitBlobSha1": "49f607647f2d1499219e79b1fc4a8e5c71ea0cf1"
+    }
+  ],
+  "searches": [
+    {
+      "query": "\"spl__BulletSpChariotBodyParam\" -repo:Leanny/splat3",
+      "totalCount": 4,
+      "items": [
+        {
+          "repository": "imink-app/SP3ExtractedData",
+          "path": "parameter/weapon/WeaponSpChariot_Coop.game__GameParameterTable.json",
+          "url": "https://github.com/imink-app/SP3ExtractedData/blob/8c53a1f1f785883271b754182c6c869bc2377413/parameter/weapon/WeaponSpChariot_Coop.game__GameParameterTable.json"
+        },
+        {
+          "repository": "cengelbart39/Splatalyzer",
+          "path": "Sources/Splatalyzer/Resources/weapon-json/WeaponSpChariot.game__GameParameterTable.json",
+          "url": "https://github.com/cengelbart39/Splatalyzer/blob/58568413df7c8bbd3b8d73d377e56ae29785ba18/Sources/Splatalyzer/Resources/weapon-json/WeaponSpChariot.game__GameParameterTable.json"
+        },
+        {
+          "repository": "imink-app/SP3ExtractedData",
+          "path": "parameter/weapon/WeaponSpChariot.game__GameParameterTable.json",
+          "url": "https://github.com/imink-app/SP3ExtractedData/blob/8c53a1f1f785883271b754182c6c869bc2377413/parameter/weapon/WeaponSpChariot.game__GameParameterTable.json"
+        },
+        {
+          "repository": "imink-app/SP3ExtractedData",
+          "path": "parameter/weapon/WeaponSpChariot_Mission.game__GameParameterTable.json",
+          "url": "https://github.com/imink-app/SP3ExtractedData/blob/8c53a1f1f785883271b754182c6c869bc2377413/parameter/weapon/WeaponSpChariot_Mission.game__GameParameterTable.json"
+        }
+      ]
+    },
+    {
+      "query": "\"ShooterRepeatFrame_Last\" -repo:Leanny/splat3",
+      "totalCount": 1,
+      "items": [
+        {
+          "repository": "imink-app/SP3ExtractedData",
+          "path": "parameter/weapon/WeaponSpChariot_Mission.game__GameParameterTable.json",
+          "url": "https://github.com/imink-app/SP3ExtractedData/blob/8c53a1f1f785883271b754182c6c869bc2377413/parameter/weapon/WeaponSpChariot_Mission.game__GameParameterTable.json"
+        }
+      ]
+    },
+    {
+      "query": "\"RotDegLmt_ShotDirXZ_H\" -repo:Leanny/splat3",
+      "totalCount": 1,
+      "items": [
+        {
+          "repository": "imink-app/SP3ExtractedData",
+          "path": "parameter/weapon/WeaponSpChariot_Mission.game__GameParameterTable.json",
+          "url": "https://github.com/imink-app/SP3ExtractedData/blob/8c53a1f1f785883271b754182c6c869bc2377413/parameter/weapon/WeaponSpChariot_Mission.game__GameParameterTable.json"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "No executable schema/constructor defaults recovered. Missing values are unknown, not zero.",
+    "Mission has no parent relation proving omitted versus values inherit Mission values.",
+    "Raw lengths use provisional INKWAVE scale 1. No hardware or retail frame/paint comparison.",
+    "Historical versions with identical Git blob SHA were deduplicated; all five distinct PvP blobs inspected."
+  ],
+  "parentDownloadedRawMatches": true
+}

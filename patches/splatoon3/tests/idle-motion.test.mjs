@@ -292,10 +292,25 @@ test('idle releases to native walk and action layers without changing gameplay, 
           rows.push({ pose: Array.from(r.ch.P), nativeIK: Array.from(r.ch.ikErr), gameplay: g,
             hand: r.ch.bones.handR.getWorldPosition(new api.THREE.Vector3()).toArray() });
         }
-        assert.notEqual(r.snapshot().phase, 'ready'); traces.push(rows);
+        assert.notEqual(r.snapshot().phase, 'ready'); traces.push({ rows, ready: r.snapshot().ready });
       } finally { r.close(); }
     }
-    assert.deepEqual(traces[0], traces[1], `${scenario}: active layer and gameplay remain identical`);
+    // Gameplay, clocks and input never depend on the idle layer.
+    assert.deepEqual(traces[0].rows.map(row => row.gameplay), traces[1].rows.map(row => row.gameplay),
+      `${scenario}: gameplay remains identical`);
+    // Every non-idle layer releases the ready stance smoothly (no snap) and ends on the native pose.
+    // The squid form hides the kid, whose pose is then not rebuilt (it is rebuilt on emergence).
+    assert.ok(traces[1].ready < .02, `${scenario}: ready stance released (${traces[1].ready})`);
+    if (scenario === 'form') continue;
+    // Feet planted in the staggered ready stance stay planted until the next step; the native
+    // pelvis twist follows them while spine and chest give it back, so the facing is unchanged.
+    const C = api.CHARACTER_CHANNELS, last = traces.map(t => t.rows.at(-1));
+    const twist = new Set([C.HIPS + 1, C.SPINE + 1, C.CHEST + 1]);
+    const facing = P => P[C.HIPS + 1] + P[C.SPINE + 1] + P[C.CHEST + 1];
+    assert.ok(Math.abs(facing(last[0].pose) - facing(last[1].pose)) < 1e-3, `${scenario}: chest facing unchanged`);
+    for (let i = 0; i < last[0].pose.length; i++) if (!twist.has(i))
+      assert.ok(Math.abs(last[0].pose[i] - last[1].pose[i]) < 3e-3, `${scenario}: channel ${i} returns to the native pose`);
+    assert.ok(distance(last[0].hand, last[1].hand) < 5e-3, `${scenario}: hand returns to the native pose`);
   }
 });
 

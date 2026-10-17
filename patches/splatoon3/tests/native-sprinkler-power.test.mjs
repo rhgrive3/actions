@@ -27,7 +27,7 @@ for(const ap of [0,10,57])test(`native Sprinkler phase progression is render-rat
  for(const fps of [30,60,120]){
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export {kitBombContact} from './patches/splatoon3/runtime/kit-subs.mjs';"});const id=Object.keys(f.WEAPONS).find(k=>f.WEAPONS[k].sub==='sprinkler'),o=f.make(id);equip(o,ap);o.weaponRunner.reset();
   f.G.level={...f.G.level,blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};f.G.physics=new f.installedRuntime.Physics(f.G.level);f.G.projectiles.throwBomb(o);const b=f.G.projectiles.bombs.at(-1);f.kitBombContact(f.SUB,b,{hit:true,point:new f.THREE.Vector3(),normal:new f.THREE.Vector3(0,1,0)});
-  let count=0;f.G.paint.splat=()=>{count++;return 0;};for(let i=0;i<18*fps;i++){f.G.time+=1/fps;f.G.projectiles.update(1/fps);}
+  let count=0;f.G.paint.splat=()=>{count++;return 0;};for(let i=0;i<32*fps;i++){f.G.time+=1/fps;f.G.projectiles.update(1/fps);}
   outcomes.push({phase:b.s3Sprinkler.phase,shots:b.s3Sprinkler.spraySequence,next:b.s3Sprinkler.nextFrame,paint:count});assert.equal(b.s3Sprinkler.phase,2);
  }
  assert.deepEqual(outcomes[0],outcomes[1]);assert.deepEqual(outcomes[1],outcomes[2]);

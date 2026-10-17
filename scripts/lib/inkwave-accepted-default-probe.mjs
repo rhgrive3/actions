@@ -15,15 +15,16 @@ export const ACCEPTED_DEFAULT_ROWS = Object.freeze([
  'Shooter_Gravity_01','Shooter_Heavy_01','Saber_Lite_01',
  'Shooter_First_01','Shooter_Normal_01','Shooter_Normal_02',
  'Blaster_Long_01','Blaster_Middle_02',
+ 'Roller_Normal_01','Roller_Wide_01','Roller_Wide_02','Brush_Normal_01','Brush_Normal_02','Roller_Heavy_02','Slosher_Double_02','Shelter_Compact_02',
 ]);
 // Called with the actual loaded game's public appearance/registry modules and
 // native Showcase. No replacement Character, renderer, geometry or selection.
 export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
  const check=(ok,label)=>{if(!ok)throw Error('Accepted default: '+label);};
  const sc=G.game.showcase,key=AP.WEAPON_APPEARANCE_STORAGE_KEY;
- const original={storage:storage.getItem(key),weapon:sc.weapon,color:sc.color,style:sc.style};
+ const original={storage:storage.getItem(key),weapon:sc.weapon,color:sc.color,style:sc.style,opponentColor:sc.weaponOpponentColor};
  const out={selectedCount:R.registeredWeaponVariantModels().length,manualCount:R.registeredWeaponVariants().length,rows:[]};
- check(out.selectedCount===87&&out.manualCount===94,'registry denominator');
+ check(out.selectedCount===95&&out.manualCount===95,'registry denominator');
  check(sc.mode==='loadout'&&sc.chars.length===1,'native loadout owner');
  let primary;
  try {
@@ -34,7 +35,7 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
    AP.setWeaponAppearance(kit.id,'',storage);
    check(AP.weaponAppearancePreference(kit.id,storage)===null,'override absent '+row);
    check(R.weaponDefaultAppearance(kit.id)===row&&AP.selectedWeaponAppearance(kit.id,storage)===row,'wrong default '+row);
-   sc.showLoadout(kit.id,original.color,original.style);
+   sc.showLoadout(kit.id,original.color,original.style,original.opponentColor??G.teamColors?.[1]);
    // Native loadout hop changes the held weapon partway through its update.
    // Advance its existing owner, never force Character.setWeapon or visibility.
    for(let i=0;i<180;i++)sc.update(1/60);
@@ -60,7 +61,7 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
    out.rows.push({row,kit:kit.id,base:kit.baseId,preference:AP.weaponAppearancePreference(kit.id,storage),selected:AP.selectedWeaponAppearance(kit.id,storage),weaponModel:ch.weaponModel,appearance:ch.weaponAppearanceModel,modelId:w.def.modelId,modelVariantId:w.def.modelVariantId,drawn,poseFinite:true});
    delete out.current;
   }
-  check(out.rows.length===42&&new Set(out.rows.map(x=>x.row)).size===42,'forty-two default receipts');
+  check(out.rows.length===50&&new Set(out.rows.map(x=>x.row)).size===50,'fifty default receipts');
   return out;
  }catch(error){primary=error;error.defaultPartial=out;throw error;}
  finally{
@@ -69,7 +70,7 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
   // Resynchronise the module's session fallback from the restored storage.
   attempt(()=>AP.setWeaponAppearance(original.weapon,AP.weaponAppearancePreference(original.weapon,storage)??'',storage));
   attempt(()=>{if(original.storage===null)storage.removeItem(key);else storage.setItem(key,original.storage);});
-  attempt(()=>{sc.showLoadout(original.weapon,original.color,original.style);for(let i=0;i<180;i++)sc.update(1/60);});
+  attempt(()=>{sc.showLoadout(original.weapon,original.color,original.style,original.opponentColor);for(let i=0;i<180;i++)sc.update(1/60);});
   if(errors.length){const e=new AggregateError([...(primary?[primary]:[]),...errors],'default probe restoration',{cause:primary});e.defaultPartial=out;throw e;}
  }
 }

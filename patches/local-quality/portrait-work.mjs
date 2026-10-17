@@ -206,6 +206,7 @@ export function installPortraitCharacterReuse(Character, api) {
   };
 
   Character.prototype.resetPortraitForRequest = function resetPortraitForRequest(request) {
+    Character.requireWeaponOpponentPalette(request.weapon || 'shooter', request.weaponOpponentColor, this.weaponAppearancePreview, this.isLocal);
     this.preparePortraitReuse();
     const weapons = this.weapons;
     for (const kind of Object.keys(weapons)) {
@@ -231,6 +232,9 @@ export function installPortraitCharacterReuse(Character, api) {
     this.u.uFreckle.value = skin.userData.iwLum != null && Math.abs(skin.userData.iwLum - 0.5) < 0.2 && new api.THREE.Color(api.SKIN_TONES[style.skin]).r > 0.8 ? 1 : 0;
     this._portraitSkins.set(style.skin, skin); this.mats.skin = skin;
     for (const set of this.lodSets) if (set) for (const mesh of set.list) mesh.material = this._matFor(mesh.userData.iwMat);
+    // Snapshot restoration may recover an old palette; bind this request afterward.
+    this.weaponOpponentColor = request.weaponOpponentColor?.isColor ? request.weaponOpponentColor : null;
+    if (this.weaponOpponentColor) this.setWeaponOpponentColor(this.weaponOpponentColor);
     this.setColor(request.color || this.color);
     this.setWeapon(request.weapon || 'shooter');
     snapshotWeapon(this, this.weapon);

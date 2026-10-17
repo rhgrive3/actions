@@ -4,11 +4,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fixture } from './source-fixture.mjs';
 import { adaptSource, checkCompatibility } from '../adapter.mjs';
+import { recordMovementLaunch, resetAirborneState } from '../runtime/roller-freefall.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 
 import { realCharacter } from './real-character-fixture.mjs';
 function start(f, a, vertical, dt = 1 / 60) {
   a.grounded = !vertical;
+  // These episodes model an admitted jump, not walking off a ledge. The
+  // production free-fall owner keeps a natural fall horizontal for25F.
+  if (vertical) recordMovementLaunch(a); else resetAirborneState(a);
   a.intent.move.set(0, 0, 1); // held-roll transitions require actual stick input (#847)
   a.weaponRunner.update(dt, { fire: true, firePressed: true });
 }
@@ -71,7 +75,7 @@ test('horizontal/vertical windups release on 21/31 elapsed ticks without an extr
 });
 test('jump after starting a horizontal attack keeps its selected mode; the next attack reselects', async () => {
   const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
-  start(f, a, false); a.grounded = false;
+  start(f, a, false); a.grounded = false; recordMovementLaunch(a);
   for (let i = 0; i < 42; i++) r.update(1 / 60, { fire: false });
   assert.equal(r.s3FlickVertical, false); assert.equal(f.shots.length, 1);
   r.update(1 / 60, { fire: true, firePressed: true });

@@ -12,7 +12,7 @@ async function setup(){
  const ps=G.projectiles=new f.Projectiles(G.scene);return{f,ps};
 }
 
-test('#607/#677 calibrated scalar deviation stays azimuth-independent through real emission',async()=>{
+test('#607/#677 calibrated yaw magnitude is independent of the signed-side sample through real emission',async()=>{
  const {f,ps}=await setup();
  // The old test encoded a Bernoulli inner/outer gate that has no source basis.
  // Gamma quantiles below test the explicitly labelled S2-derived calibration;
@@ -21,7 +21,8 @@ test('#607/#677 calibrated scalar deviation stays azimuth-independent through re
   const a=f.make(kind);a.grounded=grounded;a.aimPoint.set(0,1.05,100);a.aimDir.set(0,0,1);
   const biases=kind==='shooter'?(grounded?[.01,.25]:[.4]):[.5];
   for(const bias of biases)for(const u of [.25,.5,1])for(const azimuth of [0,.125,.25,.375,.5,.75]){
-   if(kind==='shooter')a.weaponRunner.s3Accuracy.stand=bias;
+   if(kind==='shooter'){a.weaponRunner.s3Accuracy.stand=bias;a.weaponRunner.s3JumpSpreadAge=grounded?null:0;}
+   if(kind==='blaster')a.weaponRunner.s3BlasterJumpT=0;
    const draws=[u,azimuth];let calls=0;
    f.setRandom(()=>{calls++;return draws.length?draws.shift():.5;});
    ps[kind==='shooter'?'fireShooter':'fireBlaster'](a,a.weapon,deg);const p=ps.list.at(-1),dir=p.vel.clone().normalize();

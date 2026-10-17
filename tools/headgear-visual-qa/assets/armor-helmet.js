@@ -46,21 +46,26 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
     else p=[(.178+.025+off)*Math.sin(az)*Math.cos(el),.164+(.176+.025+off)*Math.sin(el),.014+(.165+.025+off)*Math.cos(az)*Math.cos(el)];
     // Rear shell has a distinct tapered projection, not a spherical bicycle dome.
     const rear=Math.max(0,-Math.cos(az));p[2]-=.069*Math.pow(rear,5)*Math.pow(Math.cos(el),2);
-    const ridge=Math.exp(-Math.pow((Math.abs(p[0])-(.024+(.15-p[2])*.42))/.027,2));
-    p[1]+=.012*ridge*Math.pow(Math.max(0,Math.sin(el)),.65);
     return p;
   };
   // Closed rolled edge, outer crown and inner liner. Pole is inset to avoid degenerate triangles.
   const shell=grid(N,R,(u,v)=>{const az=u*Math.PI*2,el=rim(az)+(Math.PI/2-.004-rim(az))*v;return pt(az,el);});add('woven-shell',shell,mats.shell);
   const rimGeo=grid(N,6,(u,v)=>{const az=u*Math.PI*2,t=v*Math.PI*2;return pt(az,rim(az)+.021*Math.sin(t),-.005+.004*Math.cos(t));});add('rolled-rim',rimGeo,mats.trim);
   const pole=pt(0,Math.PI/2);add('crown-cap',new THREE.SphereGeometry(.006,8,6).scale(1,.15,1).translate(...pole),mats.shell);
-  // Two long raised crown rails and pale recessed vent channels; conform to shell.
+  // Broad raised V ribs with a bevelled trapezoid section. The old flat appliqué
+  // rails did not reproduce the reference crown silhouette in native renders.
+  const ribHeight=[0,.012,.034,.038,.034,.012,0];
   for(const side of [-1,1]){
-    const rail=grid([4,6,8][detail],[8,12,16][detail],(u,v)=>{
-      const z=.145-v*.265,x=side*(.008+v*.104+u*.036);const az=Math.atan2(x/.203,z/.190);
+    const rail=grid(6,[6,10,14][detail],(u,v)=>{
+      const z=.150-v*.273,x=side*(.004+v*.102+u*.060);
+      const az=Math.atan2(x/.203,z/.190);
       const h=Math.sqrt(Math.max(.001,1-(x/.203)**2-(z/.190)**2));
-      const el=Math.asin(clamp(h,.05,.999));const q=pt(az,el,.003);return q;
-    });add(`crown-channel-${side}`,rail,mats.trim);
+      const el=Math.asin(clamp(h,.05,.999));
+      const q=pt(az,el,.001);
+      const endFade=Math.min(1,v*12+.22,(1-v)*9+.15);
+      q[1]+=ribHeight[Math.round(u*6)]*endFade;
+      return q;
+    });add(`raised-crown-rib-${side}`,rail,mats.shell);
   }
   const prism=(verts,depth)=>{const p=[],ix=[];for(const z of [-depth/2,depth/2])for(const v of verts)p.push(v[0],v[1],v[2]+z);const n=verts.length;for(let i=1;i<n-1;i++){ix.push(0,i+1,i,n,n+i,n+i+1);}for(let i=0;i<n;i++){const k=(i+1)%n;ix.push(i,k,n+i,k,n+k,n+i);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(p.flatMap((_,i)=>i%3===0?[0,0]:[]),2));g.setIndex(ix);return g;};
   for(const s of [-1,1]){
@@ -77,13 +82,19 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
       const positions=[],indices=[];for(const g of dots){const offset=positions.length/3;positions.push(...g.attributes.position.array);indices.push(...Array.from(g.index.array,x=>x+offset));g.dispose();}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setIndex(indices);add(`ear-led-matrix-${s}`,g,mats.light);
     }
     // Y strap and chin buckle, leaves the face/mouth uncovered.
-    const points=[[s*.17,.14,.018],[s*.123,.044,.073],[s*.06,-.002,.074],[0,-.013,.074]];
+    const jawPoint=(az,el)=>{
+      if(headSurface){const q=new THREE.Vector3();headSurface(az,el,.009,q);return [q.x,q.y-1.05,q.z+.002];}
+      return [.178*Math.sin(az)*Math.cos(el),.164+.16*Math.sin(el),.014+.17*Math.cos(az)*Math.cos(el)];
+    };
+    // Follow the actual adopted lower-face surface, not a free-hanging neck loop.
+    const points=[[s*.17,.14,.018],jawPoint(s*1.2,-.43),jawPoint(s*.65,-.77),jawPoint(0,-.88)];
     const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));
     const corners=[[-1,-1],[1,-1],[1,1],[-1,1],[-1,-1]];
     const band=grid([8,14,20][detail],4,(u,v)=>{const q=curve.getPoint(u),t=curve.getTangent(u),c=corners[Math.round(v*4)],n=new THREE.Vector3(-t.y,t.x,0).normalize();q.addScaledVector(n,c[0]*.010);q.z+=c[1]*.0025;return q.toArray();});
     add(`chin-strap-${s}`,band,mats.trim);
   }
-  const buckle=new THREE.BoxGeometry(.034,.021,.014);buckle.translate(.015,-.011,.075);add('chin-buckle',buckle,mats.trim);
+  const chin=new THREE.Vector3();if(headSurface){headSurface(0,-.88,.014,chin);chin.y-=1.05;chin.z+=.002;}else chin.set(0,.164+.16*Math.sin(-.88),.014+.17*Math.cos(-.88));
+  const buckle=new THREE.BoxGeometry(.030,.019,.012);buckle.translate(chin.x,chin.y,chin.z+.003);add('chin-buckle',buckle,mats.trim);
   // Posterior crown matrix, observed on the actual back reference (no invented light bar).
   if(detail>0){const p=[],ix=[];for(let row=0;row<9;row++)for(let col=0;col<17;col++){
     const az=1.79+col*.17,el=.2+row*.105;const k=p.length/3;p.push(...pt(az,el,.0015));

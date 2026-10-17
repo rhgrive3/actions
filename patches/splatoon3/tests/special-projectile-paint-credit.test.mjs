@@ -84,11 +84,15 @@ test('all four canonical Crab kits preserve direct-shot flight and real JSON gho
   const nm=new f.NetMatch({myId:'owner'},{});f.G.netm=nm;
   readySpecialEvidence(a, {placeAtFixtureOrigin:true});a.intent.fire=true;for(let i=0;i<23;i++)a._updateSpecial(1/60);
   const p=f.G.projectiles.list.find(p=>p.s3AllSpecialMode==='shooter');assert.ok(p,id);
-  assert.equal(p.wid,'crabTank');assert.equal(p.grav,4);assert.equal(p.drag,.04);assert.equal(p.radius,.22);assert.equal(p.s3SpecialWeapon.splashRadius,0);
+  // WeaponSpChariot.ShooterPaintParam.WidthHalfNear=1.6; the old .22 was
+  // a generic ink-ball radius, not this special's sourced impact width.
+  assert.equal(p.wid,'crabTank');assert.equal(p.grav,4);assert.equal(p.drag,.04);assert.equal(p.radius,1.6);assert.equal(p.s3SpecialWeapon.splashRadius,0);
   const packet=JSON.parse(JSON.stringify(nm.out.find(e=>e[1]==='p'&&e[3]==='shot')));assert.ok(packet,id+' packet');
   const remote=f.make(id);remote.remote=true;remote.nid=7;
   const before=nm.out.length;f.G.projectiles.ghostProjectile(remote,packet);const ghost=f.G.projectiles.list.at(-1);
   assert.equal(ghost.ghost,true);assert.equal(ghost.s3Weapon.id,'crabTank');assert.equal(ghost.s3SpecialWeapon.type,'shot');assert.equal(ghost.s3SpecialWeapon.splashRadius,0);assert.equal(ghost.grav,4);assert.equal(ghost.damage,0);
+  assert.equal(ghost.s3AllSpecialFlight.source,p.s3AllSpecialFlight.source,'wire reconstruction restores the same source flight, not generic gravity');
+  assert.equal(ghost.fidelityFieldCollision.initRadius,.2);
   f.G.projectiles._impact(ghost,{point:p.pos.clone(),normal:new f.THREE.Vector3(0,1,0)});
   assert.equal(paint.counts[0],0,'remote presentation does not author paint');assert.equal(nm.out.length,before);
   f.G.netm=null;f.G.projectiles.clear();

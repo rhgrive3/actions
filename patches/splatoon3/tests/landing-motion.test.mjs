@@ -171,7 +171,9 @@ test('normal/hard landing produces actual knee/ankle absorb and recovery with na
       assert.ok(bent > .12, 'drawn leg bends on impact'); assert.ok(maxContact < .001, `drawn ankle retains native heel/toe contact (${maxContact})`);
       assert.ok(peakDelta > .004, 'the correction reaches indexed drawn body vertices');
       assert.equal(api.landingMotionSnapshot(patched.ch).phase, null, 'landing relinquishes the pose to ordinary grounded motion');
-      assert.ok(Math.max(...['L', 'R'].map((s, j) => Math.abs(knee(patched, s) - atRest[j]))) < .16, 'knees recover after landing');
+      // Recovery is measured against the same rig without the landing layer at the same instant:
+      // the S3 ready stance bobs the knees continuously and is itself released for the landing.
+      assert.ok(Math.max(...['L', 'R'].map(s => Math.abs(knee(patched, s) - knee(baseline, s)))) < .16, 'knees recover after landing');
       if (aimed) { assert.ok(grip(patched) < .025); assert.ok(grip(patched, 'L') < .025); }
     } finally { baseline.close(); patched.close(); }
   }

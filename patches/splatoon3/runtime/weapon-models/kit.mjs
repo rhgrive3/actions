@@ -229,6 +229,30 @@ export function rebuild(d, spec) {
   }
   return d;
 }
+/** Uniformly scale a pre-finishParts def about weapon-space origin (the right-hand
+ *  grip axis): geometry, part pivots, muzzle and the main grip; the support grip
+ *  keeps its distance along the weapon axis. Geometries are
+ *  cloned, never scaled in place, so a shared source stays intact. Returns d. */
+export function scaleWeaponDef(d, k) {
+  if (!(k > 0) || k === 1) return d;
+  const geo = g => g ? g.clone().scale(k, k, k) : g;
+  for (const key of ['body', 'ink', 'glass', 'glow', 'drum', 'drumCaps']) if (d[key]) d[key] = geo(d[key]);
+  for (const p of Object.values(d.parts || {})) {
+    if (p.src) p.src = geo(p.src);
+    if (p.pivot) p.pivot = p.pivot.clone().multiplyScalar(k);
+  }
+  if (d.muzzle) d.muzzle = d.muzzle.clone().multiplyScalar(k);
+  if (d.drumAt) d.drumAt = d.drumAt.clone().multiplyScalar(k);
+  if (d.drumR) d.drumR *= k;
+  // The support hand keeps its reach from the main grip along the weapon axis (Z)
+  // and moves out only with the thicker body: a 1.3x foregrip would leave the
+  // kid's arm span in two-hand and sub-throw poses.
+  const rz = d.gripR?.pos ? d.gripR.pos.z : 0;
+  if (d.gripR?.pos) d.gripR = { ...d.gripR, pos: d.gripR.pos.clone().multiplyScalar(k) };
+  if (d.gripL?.pos) d.gripL = { ...d.gripL, pos: d.gripL.pos.clone().set(d.gripL.pos.x * k, d.gripL.pos.y * k, rz * k + d.gripL.pos.z - rz) };
+  d.modelScale = (d.modelScale || 1) * k;
+  return d;
+}
 /** Coil-style glow geometry: rings (or any pieces) whose aSeg runs 0 → 1 along `axis` between a and b. */
 export function glowGeometry(pieces, a, b, axis = 'z') {
   const g = pieces.build(), pos = g.attributes.position, seg = new Float32Array(pos.count);

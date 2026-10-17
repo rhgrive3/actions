@@ -302,7 +302,7 @@ test('zero-spread ground Splatling range probe preserves its native projectile a
   assert.equal(f.impacts.length, 1);
   const landing = f.impacts[0];
   close(landing.time, 14/60); close(landing.pos[0], 0); close(landing.pos[1], 0);
-  close(landing.pos[2], 14.222816414228939); // unchanged fixed-seed native flight endpoint
+  close(landing.pos[2], 14.12029442757538); // audited source speed-rate correction; see inkwave-spinner-kinematics-source-audit-2026-10-17
   const source = INK_PROFILES.splatling.paint;
   assert.deepEqual([source.widthMiddle,source.widthFar,source.middle,source.far,source.depthMinFall],
     [2.226,2.102,1.1,20,1.17], 'pinned Heavy Splatling source fields');

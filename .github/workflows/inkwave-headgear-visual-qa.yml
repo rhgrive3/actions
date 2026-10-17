@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Assert pinned native source remains unchanged
-        run: git diff --exit-code 85acc45d0ab23a95161b599d4287fd8142e8145b HEAD -- inkwave-public patches scripts
+        run: git diff --exit-code d5265f73d9dad69f1afd9690e374caee45195f11 HEAD -- inkwave-public patches scripts
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

@@ -47,7 +47,7 @@ function surface(rows,around,point) {
 export function createCamoHeadphones({inkColor=0x20bc91,lod='hero',clearance=null}={}) {
   if(!['hero','game','far'].includes(lod)) throw new RangeError('Unknown headgear LOD');
   const root=new THREE.Group();root.name=CAMO_HEADPHONES_ID;
-  const detail=lod==='hero'?1:lod==='game'?.65:.35, seg=Math.max(12,Math.round(48*detail));
+  const detail=lod==='hero'?1:lod==='game'?.38:.35, seg=Math.max(12,Math.round(48*detail));
   const knitTex=texture('knit'),camoTex=texture('camo');
   const knit=new THREE.MeshStandardMaterial({color:inkColor,map:knitTex,roughness:.96,side:THREE.DoubleSide});
   const camo=new THREE.MeshStandardMaterial({color:0xffffff,map:camoTex,roughness:.36,metalness:.12});

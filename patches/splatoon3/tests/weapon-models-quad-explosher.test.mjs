@@ -7,6 +7,20 @@ const IDS=['s3-maneuver-stepper','s3-slosher-washtub'];
 const baseline=JSON.parse(fs.readFileSync(new URL('./fixtures/quad-explosher-main-contracts.json',import.meta.url)));
 let promise;const production=()=>promise??=fixture({fullRuntime:true,includeCharacter:true,productionComposition:true,realProjectiles:true,extraExports:"export { getWeaponDef } from './inkwave-public/src/game/character-weapons.js';\nexport { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"}).then(f=>{f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);return f;});
 const plain=x=>JSON.parse(JSON.stringify(x));
+// Dualies are drawn 1.3x about the grip (family-holds.mjs FAMILY_MODEL_SCALE, owner review
+// 2026-10-17). Authoring checks read the definition back in its authored units.
+const round=v=>Math.round(v*1e9)/1e9;
+function authored(f,id){
+ const d=f.getWeaponDef(id),k=d.modelScale||1;if(k===1)return d;
+ const geo=g=>g.clone().scale(1/k,1/k,1/k),v=x=>x.clone().multiplyScalar(1/k);
+ // Hand sockets = grip point + a fixed fist offset: undo only the grip point's move (kit.mjs scaleWeaponDef:
+ // the support grip keeps its axial reach from the main grip).
+ const gR=d.gripR.pos,gRa=v(gR),gL=d.gripL.pos,gLa=gL.clone().set(gL.x/k,gL.y/k,gL.z-gRa.z*(k-1));
+ const handR={...d.handR,pos:d.handR.pos.clone().sub(gR).add(gRa)},handL={...d.handL,pos:d.handL.pos.clone().sub(gL).add(gLa)};
+ const inHand={...d.inHand,pos:handR.pos.clone().negate().applyQuaternion(handR.quat.clone().invert())};
+ return {...d,body:geo(d.body),ink:geo(d.ink),muzzle:v(d.muzzle),handR,handL,inHand,parts:Object.fromEntries(Object.entries(d.parts).map(([n,p])=>[n,{...p,pivot:v(p.pivot)}]))};
+}
+const rounded=x=>JSON.parse(JSON.stringify(x),(_k,v)=>typeof v==='number'?round(v):v);
 function signature(d){const h=crypto.createHash('sha256');for(const g of[d.body,d.ink]){for(const a of Object.values(g.attributes))h.update(Buffer.from(a.array.buffer,a.array.byteOffset,a.array.byteLength));h.update(Buffer.from(g.index.array.buffer));}return h.digest('hex');}
 test('both families preserve main hand/muzzle/channel contracts',async()=>{
  // The two rebuilt weapons must retain the pinned gameplay contracts. Other
@@ -16,13 +30,13 @@ test('both families preserve main hand/muzzle/channel contracts',async()=>{
    ? JSON.parse(fs.readFileSync(process.env.QUAD_EXPLOSHER_BASELINE,'utf8')):null;
  const f=await production();let pinned=0;
  for(const [id,b]of Object.entries(baseline.models)){
-  const d=f.getWeaponDef(id),socket=k=>({pos:Array.from(d[k].pos.toArray()),quat:Array.from(d[k].quat.toArray())});
+  const d=authored(f,id),socket=k=>({pos:Array.from(d[k].pos.toArray()),quat:Array.from(d[k].quat.toArray())});
   const current={muzzle:Array.from(d.muzzle.toArray()),handR:socket('handR'),handL:socket('handL'),inHand:socket('inHand'),dual:d.dual??false,channels:Object.fromEntries(Object.entries(d.parts).map(([k,p])=>[k,{pivot:Array.from(p.pivot.toArray()),mat:p.mat}]))};
   if(IDS.includes(id))pinned++;
   const reference=IDS.includes(id)?b:liveBefore?.[id];
   if(!reference) continue; // Dedicated CI supplies immutable current-main before snapshot.
   const {geometryHash,triangles,bytes,bounds,...contract}=reference;
-  assert.deepEqual(plain(current),contract,id+' no gameplay frame or animation channel change');
+  assert.deepEqual(rounded(current),rounded(contract),id+' no gameplay frame or animation channel change');
 
  }
  assert.equal(pinned,2,'both rebuilt model contracts are always checked');
@@ -36,17 +50,17 @@ test('ten untouched models remain byte-identical to the same-runner before build
 });
 test('rebuilds are bounded merged volumetric assemblies with open loop and recessed burner',async()=>{
  const f=await production();const rows=[];
- for(const id of IDS){const d=f.getWeaponDef(id);let tris=0,bytes=0;for(const g of[d.body,d.ink]){assert.equal(g.groups.length,0);tris+=g.index.count/3;for(const a of Object.values(g.attributes))bytes+=a.array.byteLength;bytes+=g.index.array.byteLength;}
+ for(const id of IDS){const d=authored(f,id);let tris=0,bytes=0;for(const g of[d.body,d.ink]){assert.equal(g.groups.length,0);tris+=g.index.count/3;for(const a of Object.values(g.attributes))bytes+=a.array.byteLength;bytes+=g.index.array.byteLength;}
   assert.ok(tris<12000,id+' static triangle budget');assert.ok(bytes<320000,id+' static memory budget');d.body.computeBoundingBox();const size=d.body.boundingBox.getSize(new f.THREE.Vector3());assert.ok(size.x>.07,id+' genuine lateral volume');rows.push({id,tris,bytes,size:Array.from(size.toArray())});}
  // X-ray intersection count through each authored solid, avoiding renderer-specific raycaster exports.
- const hit=(id,y,z)=>{const g=f.getWeaponDef(id).body,p=g.attributes.position,idx=g.index.array;let count=0;for(let j=0;j<idx.length;j+=3){const a=idx[j],b=idx[j+1],c=idx[j+2],ay=p.getY(a),az=p.getZ(a),uy=p.getY(b)-ay,uz=p.getZ(b)-az,vy=p.getY(c)-ay,vz=p.getZ(c)-az,det=uy*vz-uz*vy;if(Math.abs(det)<1e-14)continue;const u=((y-ay)*vz-(z-az)*vy)/det,v=(uy*(z-az)-uz*(y-ay))/det;if(u>=0&&v>=0&&u+v<=1)count++;}return count;};
+ const hit=(id,y,z)=>{const g=authored(f,id).body,p=g.attributes.position,idx=g.index.array;let count=0;for(let j=0;j<idx.length;j+=3){const a=idx[j],b=idx[j+1],c=idx[j+2],ay=p.getY(a),az=p.getZ(a),uy=p.getY(b)-ay,uz=p.getZ(b)-az,vy=p.getY(c)-ay,vz=p.getZ(c)-az,det=uy*vz-uz*vy;if(Math.abs(det)<1e-14)continue;const u=((y-ay)*vz-(z-az)*vy)/det,v=(uy*(z-az)-uz*(y-ay))/det;if(u>=0&&v>=0&&u+v<=1)count++;}return count;};
  assert.equal(hit(IDS[0],.163,.156),0,'quad pull-loop aperture is not a filled silhouette');
  assert.ok(hit(IDS[0],.176,.157)>0,'quad loop crown exists');
  assert.ok(hit(IDS[0],.047,.004)>0,'quad receiver connects to grip');
  assert.ok(hit(IDS[0],-.067,-.048)>0,'quad heel connects to grip');
  assert.equal(hit(IDS[0],-.024,.060),0,'quad open space between grip and front stem');
  // The swept deck is a closed volume: its top faces must face outward, not disappear by back-face culling.
- const deck=f.getWeaponDef(IDS[0]).body,dp=deck.attributes.position,di=deck.index.array;let tops=0;
+ const deck=authored(f,IDS[0]).body,dp=deck.attributes.position,di=deck.index.array;let tops=0;
  for(let j=0;j<di.length;j+=3){const a=new f.THREE.Vector3().fromBufferAttribute(dp,di[j]),b=new f.THREE.Vector3().fromBufferAttribute(dp,di[j+1]),c=new f.THREE.Vector3().fromBufferAttribute(dp,di[j+2]);const center=a.clone().add(b).add(c).multiplyScalar(1/3);if(Math.abs(center.x)<.020&&center.z>-.010&&center.z<.025&&center.y>-.085&&center.y<-.079){const n=b.clone().sub(a).cross(c.clone().sub(a));assert.ok(n.y>0,'quad swept deck top has outward winding');tops++;}}
  assert.ok(tops>=2,'quad swept deck top witnesses exist');
  // The Dark receiver has a broad cover around one recessed mechanical band, with real depth.
@@ -67,7 +81,7 @@ test('rebuilds are bounded merged volumetric assemblies with open loop and reces
  }
 
  let heelWidth=0;for(let i=0;i<dp.count;i++)if(dp.getY(i)>-.060&&dp.getY(i)<-.020&&dp.getZ(i)>-.063&&dp.getZ(i)<-.012)heelWidth=Math.max(heelWidth,Math.abs(dp.getX(i)));assert.ok(heelWidth>.040,'quad rear heel has real transverse flare');
- const ex=f.getWeaponDef(IDS[1]).body,ep=ex.attributes.position,em=ex.attributes.aMat;let cageMetal=0;for(let i=0;i<ep.count;i++)if(Math.abs(ep.getX(i))>.084&&ep.getZ(i)>.06&&ep.getZ(i)<.245&&Math.round(em.getX(i))===3)cageMetal++;assert.ok(cageMetal>50,'explosher exposed cage uses existing brushed-metal class');
+ const ex=authored(f,IDS[1]).body,ep=ex.attributes.position,em=ex.attributes.aMat;let cageMetal=0;for(let i=0;i<ep.count;i++)if(Math.abs(ep.getX(i))>.084&&ep.getZ(i)>.06&&ep.getZ(i)<.245&&Math.round(em.getX(i))===3)cageMetal++;assert.ok(cageMetal>50,'explosher exposed cage uses existing brushed-metal class');
  console.log('QUAD_EXPLOSHER_METRICS '+JSON.stringify(rows));
 });
 test('angle-only Explosher trial keeps the fe242 mouth centre fixed',async()=>{
@@ -82,7 +96,7 @@ test('angle-only Explosher trial keeps the fe242 mouth centre fixed',async()=>{
  assert.ok(witnesses>=140,'lip-ring vertex witnesses');assert.ok(bounds.getCenter(new f.THREE.Vector3()).distanceTo(centre)<2e-6,'authored lip centre stays within 2 micrometres');
 });
 test('Dark Tetra target palette does not inherit Light Tetra colour volumes',async()=>{
- const f=await production(),d=f.getWeaponDef(IDS[0]),p=d.body.attributes.position,c=d.body.attributes.color,ip=d.ink.attributes.position;
+ const f=await production(),d=authored(f,IDS[0]),p=d.body.attributes.position,c=d.body.attributes.color,ip=d.ink.attributes.position;
  // The target render shows team colour only on the sole triangle and paired front circles.
  for(let i=0;i<ip.count;i++){const x=ip.getX(i),y=ip.getY(i),z=ip.getZ(i);if(x===0&&y===0&&z===0)continue;/* native hidden-channel degenerate sentinel */assert.ok(y<-.02,'no team-coloured receiver chamber');assert.ok((z>-.073&&z<-.018&&y>-.082&&y<-.074)||(z>.140&&y>-.067),'no team-coloured rebound cushion');}
  const expected=new f.THREE.Color('#e8e8e1');let whiteChamber=0,whiteCushion=0;const blackSides=[0,0],greyPads=[0,0];

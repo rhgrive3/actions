@@ -37,20 +37,22 @@ test('#475 held pad actions and pending edges do not leak after keyboard/touch o
   h.setPads(pad());h.input.pollPad();h.setPads(pad([0]));h.input.pollPad();h.controller.update(STEP);
   assert.equal(h.input.lastDevice,'pad');assert.equal(h.actor.intent.jump,true);
 });
-test('#474 gyro owns pitch; swipe yaw and actual sensor pitch remain independent',async()=>{
-  const h=await setup();h.gyro.enabled=true;h.mobile.lookDX=.2;h.mobile.lookDY=.3;h.gyro.pitch=.1;
-  h.controller.update(STEP);assert.equal(h.rig.yaw,-.2);assert.equal(h.rig.pitch,.1);assert.equal(h.mobile.lookDY,0);
-  h.mobile.lookDX=0;h.mobile.lookDY=.4;h.controller.update(STEP);assert.equal(h.rig.pitch,.1);
-  h.gyro.enabled=false;h.mobile.lookDY=.4;h.controller.update(STEP);assert.equal(h.rig.pitch,.1,'transition discards old pitch');
-  h.mobile.lookDY=.2;h.controller.update(STEP);assert.ok(Math.abs(h.rig.pitch+.1)<1e-12,'gyro off restores vertical swipe');
+test('gyro and swipe add both axes in the same update without a gyro transition latch',async()=>{
+  const h=await setup();h.gyro.enabled=true;h.mobile.lookDX=.2;h.mobile.lookDY=.3;h.gyro.yaw=.1;h.gyro.pitch=.1;
+  h.controller.update(STEP);assert.equal(h.rig.yaw,-.1);assert.ok(Math.abs(h.rig.pitch+.2)<1e-12);
+  h.input.endFrame();h.controller.update(STEP);assert.ok(Math.abs(h.rig.pitch+.2)<1e-12,'no delayed replay');
+  h.gyro.enabled=false;h.mobile.lookDY=.2;h.controller.update(STEP);assert.ok(Math.abs(h.rig.pitch+.4)<1e-12,'first OFF swipe survives');
+  h.input.endFrame();h.gyro.enabled=true;h.mobile._gyroBtn();h.mobile.lookDY=.2;h.gyro.pitch=.1;h.controller.update(STEP);
+  assert.ok(Math.abs(h.rig.pitch+.5)<1e-12,'first ON swipe survives');
 });
-for(const kind of ['look','fire','squid','sub'])for(const sens of [-5,0,5])test(`#474 ${kind} drag sensitivity ${sens} uses same pitch ownership`,async()=>{
+for(const kind of ['look','fire','squid','sub'])for(const sens of [-5,0,5])test(`${kind} drag sensitivity ${sens} keeps both axes live with gyro ON and OFF`,async()=>{
   const h=await setup();h.mobile._H=768;h.mobile.s.touchSens=sens;h.mobile.s.fireAim=true;
   const drag=()=>{h.mobile._ptr.set(77,{kind:kind==='look'?'look':'btn',id:kind,x:100,y:100,aiming:true});h.mobile._move({pointerId:77,clientX:120,clientY:120,preventDefault(){},stopPropagation(){}});};
-  h.gyro.enabled=true;drag();assert.ok(h.mobile.lookDX>0);assert.equal(h.mobile.lookDY,0);
-  h.gyro.enabled=false;drag();assert.ok(h.mobile.lookDY>0);
-  const fresh=h.mobile.lookDY;h.controller.update(STEP);assert.equal(h.rig.pitch,-fresh,'first OFF swipe is not swallowed');
-  h.gyro.enabled=true;h.mobile._gyroBtn();assert.equal(h.mobile.lookDY,0,'toggle notification clears queued pitch');
+  h.gyro.enabled=true;drag();const first={x:h.mobile.lookDX,y:h.mobile.lookDY};assert.ok(first.x>0);assert.ok(first.y>0);
+  h.controller.update(STEP);assert.equal(h.rig.yaw,-first.x);assert.equal(h.rig.pitch,-first.y);
+  h.input.endFrame();h.gyro.enabled=false;drag();assert.equal(h.mobile.lookDX,first.x);assert.equal(h.mobile.lookDY,first.y);
+  h.controller.update(STEP);assert.equal(h.rig.pitch,-2*first.y,'first OFF swipe is not swallowed');
+  h.mobile._gyroBtn();assert.equal(h.mobile.lookDY,first.y,'button presentation does not erase valid touch movement');
 });
 test('unrelated modules are unchanged and missing ownership anchors fail closed',()=>{
   assert.equal(adaptInputOwnership('src/unrelated.js','source'),'source');

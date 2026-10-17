@@ -6,6 +6,7 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../adapter.mjs';
+import { adaptWeaponOpponentPalette } from '../../splatoon3/weapon-opponent-palette-adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export async function resourceFixture({ baseline = false, globals = {} } = {}) {
   const context = vm.createContext({ console, performance, ...globals });
@@ -20,6 +21,10 @@ export async function resourceFixture({ baseline = false, globals = {} } = {}) {
     if (!rel.startsWith('..')) {
       code = adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)));
       if (!baseline) code = adaptQualitySource(rel, code);
+      // Portrait Character tests need the production opponent-palette guard,
+      // while this resource fixture intentionally avoids unrelated build adapters.
+      if (rel === 'src/game/character.js' || rel === 'src/game/character-weapons.js')
+        code = adaptWeaponOpponentPalette(rel, code);
     }
     const mod = new vm.SourceTextModule(code, { context, identifier: file }); modules.set(file, mod); return mod;
   }

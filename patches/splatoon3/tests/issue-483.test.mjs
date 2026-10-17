@@ -138,8 +138,12 @@ test('issue-483 character-geo transform: owned builder added, legacy getHairStyl
   assert.equal(adaptIssue483CharacterGeo('src/game/actor.js', 'x'), 'x');
   assert.equal(adaptIssue483CharacterGeo(ISSUE_483_GEO_REL, geo), geo, 'second application must be a no-op');
   assert.throws(() => adaptIssue483CharacterGeo(ISSUE_483_GEO_REL, 'no anchor'), /patch conflict/);
-  // adaptSource itself never touches this rel (no branch): the wire lives in the build composition
-  assert.equal(adaptSource(ISSUE_483_GEO_REL, NATIVE_GEO), NATIVE_GEO);
+  // adaptSource only wraps the kid-shared / rest getters for the S3 body proportions; the hair
+  // getter, its cache and the 483 anchor stay byte-identical, so the 483 wire still applies after it.
+  const s3Geo = adaptSource(ISSUE_483_GEO_REL, NATIVE_GEO);
+  assert.equal(s3Geo.split(ISSUE_483_GEO_ANCHOR).length - 1, 1, 'S3 keeps the 483 anchor');
+  assert.ok(s3Geo.includes("export function getHairStyle(st, lod = 'hero') {"), 'S3 keeps the legacy hair getter');
+  assert.ok(adaptIssue483(ISSUE_483_GEO_REL, s3Geo).includes('export function buildOwnedHairStyle('), '483 applies after S3');
 });
 
 test('issue-483 helper: refuses the caching native getHairStyle and missing catalog counts', () => {
@@ -268,7 +272,8 @@ async function runProductionOrder() {
         if (!s3.includes('sp[S_SQ + 1] -= 3.6 * a; ')) fail('landing anchor missing before quality');
         if (built.includes('sp[S_SQ + 1] -= 3.6 * a; ')) fail('the parent quality adapter must run after these');
       } else {
-        if (s3 !== raw) fail('adaptSource must be a no-op for character-geo.js (it has no branch)');
+        if (!s3.includes('runtime/body-proportion.mjs')) fail('S3 body proportion wrapper missing');
+        if (s3.split(a483.ISSUE_483_GEO_ANCHOR).length !== 2) fail('S3 must keep the 483 anchor');
         if (!built.includes('export function buildOwnedHairStyle(')) fail('owned builder lost');
         if (!built.includes("export function getHairStyle(st, lod = 'hero') {")) fail('legacy getHairStyle contract lost');
         if (!built.includes('_hair.has(ks)')) fail('legacy caching getter body lost');

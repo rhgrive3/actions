@@ -189,40 +189,36 @@ const issue1096Tuning = {
   charger: { kick: .36, back: .047, hz: 5.6, z: .84, jit: .006 },
   splatling: { kick: .022, back: .012, hz: 10, z: .92, jit: .006 },
 };
-// Recorded on the pre-repair PR1083 local integration snapshot (remote head 69add020).
+// Independently reproduced from the unmodified #1563 head d31dc8eb and the
+// six-PR integration: all16 digests agree over600 actual Character frames per
+// family. The shorter torso/holds change pose and recoil springs, and the
+// Splatling drawn-grip correction changes its layer digest. Breath and the
+// other three layer digests are retained. Bounded overlay identity, immutable
+// holds, independent shot counts/timing and exact output checks stay required.
 const issue1096BaselineOutputs = {
   "shooter": {
-    "pose": "30af48a6030396e5ae2567e02e8a3c8df9aae41c9a40ac0716db24d08e737b70",
-    "recoilTrigger": "c55ee6a095526ed1965e6f6cbef8c03a5b9686dc2c7529a2e4282c0ef6c568b5",
+    "pose": "1a92b1c5d6a754d169355069435672f7f679ef8bc0bd82b3092aed2b6aac7fb9",
+    "recoilTrigger": "23b82d089ebeefd558b76884a72bf326b1ed6feba999d3c176fbe556f50efaad",
     "breath": "ee90765bb7397f23b02406e461a0ee4e585f12b49e5aa781809705cb62f46631",
     "layerOutputs": "26ec4aedabdf3af1aa1b34efadc36a71f390ac40ab1e2b324f7e47869d551b05"
   },
   "blaster": {
-    "pose": "2151f73a8c00e9957f5ebdc1a176fe98d2f203e0735befd1e42d64f520d17cd3",
-    "recoilTrigger": "5748cbe9dbab8c3a56152617d50c5b9a9678407699418c49c45ddeeece7168b7",
+    "pose": "8520d74506b7a26ee37154a8d31d68cc3931f846aa902b62c0c5a03dca65e500",
+    "recoilTrigger": "7aba1e14681e699faee9345ca8c4a218b94a4a6a0e8e5c426b2f166f0651e05e",
     "breath": "8c93ebe1f00af866bbd0224bf845ef5bab4a9e1f70aca86e30c425e7c2ae26e3",
-    // Per-weapon Blaster model (weapon-models/blasters.mjs) moves the muzzle socket to its real nozzle, which the
-    // recorded fire events carry; pose, recoil and breath digests are unchanged.
     "layerOutputs": "078c7babd05a9399c2c36f7d84ebf587dbc38890c49d3f4b150d7d8d6547c59a"
   },
   "charger": {
-    "pose": "376b2d767cef5a28fd41b4e4b26f830eefc659a26e086850174c1b5d08ee9a91",
-    "recoilTrigger": "5dcb431b1181d3439057d9c25930ee1c265075acfbdbe8597cfcdb96a082c5c8",
+    "pose": "89e7c9d10de22b9158e3a9b21e8d0ad91d69038e8ae5c370c6be44413809f1b6",
+    "recoilTrigger": "0957285a918fca9fc4345c6d5ad01d875595af872a7b6f2e28dbdba9146d4b58",
     "breath": "032a83c35d476343a5ccfae4b2014ab4a6a5f0b27d83265df7c4176a485a588a",
     "layerOutputs": "4fe3c1c75672827883d3ae7ed0cb63cb847af318569f3199e85b7c89496fa325"
   },
-  // PR #1403 deliberately changes the actual Splatling stream from the
-  // former 40-round endpoint convention to 41 rounds at t=0..160F with a
-  // 161F stream lifetime. This alters recoil, pose and motor output digests.
-  // Measured from exact-head CI 38566064785 (source full install).
-  // The other three weapon classes retain their original strict baseline
-  // digests; independent 41-shot reservation/timing regression suites are
-  // still required and may not be replaced by these hash expectations.
   "splatling": {
-    "pose": "ae45af8186aaefbb558ffa231572d5b819ebe00ec97b80638ff68fb81bc4c050",
-    "recoilTrigger": "d6eb1bbb176ad50607166564fd80a4c10a6165aa0fd007e7af23d3fb927cfb5f",
+    "pose": "d7e9cc57f7bc4ecb5a6c38099accb61931c7dea285b61b588d51a3ffba6ee3d9",
+    "recoilTrigger": "e7af41459caf3f3e19067ebb05eeced6d865f9bbd64e06a0c0bc790a9452dc02",
     "breath": "0186ceeb0c0284dbd6e9d12efba6ec36c0ee37d8897902cc470abef2b73c9c14",
-    "layerOutputs": "9e52540355e4e51216b8b58535d10c0f0e9c10a4758d58a670d7f58b08e0757c"
+    "layerOutputs": "838b88d877c85a585feb989252b50c4639e013e9545af1a28e083ef93421779d"
   }
 };
 
@@ -269,7 +265,7 @@ test('#1096 current production pose wrapper identity and independent output base
     [[600, 2, 1], [600, 1, 1], [600, 1, 1], [600, 1, 1]],
     '600 full Character frames reuse bounded recoil overlays, plus the separate cached Shooter carry overlay');
   assert.deepEqual(Object.fromEntries(traces.map(row => [row.weapon, row.independentBaseline])), issue1096BaselineOutputs,
-    'pose, recoil trigger, charger breath and installed layer outputs match current-main baseline digests');
+    'pose, recoil trigger, charger breath and installed layer outputs match independently reviewed #1563 pose baseline digests');
 });
 
 test('#1096 refreshes mutable native records, switches tuning, and unwinds nested throws', async () => {

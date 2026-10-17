@@ -18,7 +18,7 @@ const code=(await transform(staged,{format:'esm',minify:true,target:'es2022'})).
 fs.writeFileSync(path.join(site,geo),code);
 const copied=[];for(const name of fs.readdirSync(path.join(dir,'assets'))){let c=fs.readFileSync(path.join(dir,'assets',name),'utf8');c=c.replaceAll("'../character-face.js'","'./character-face.js'");fs.writeFileSync(path.join(site,'src/game',name),c);copied.push({file:name,sha256:hash(c)});}
 fs.copyFileSync(path.join(dir,'registry.mjs'),path.join(site,'src/game/headgear-qa-registry.mjs'));
-const receipt={baseSha:'85acc45d0ab23a95161b599d4287fd8142e8145b',mode:'diagnostic staging only; no source or production adoption',characterGeo:{adaptedOriginalSha256:hash(before),productionOriginalSha256:hash(productionBefore),stagedSha256:hash(code)},rendererUnchanged:true,baselineRendererSha256:initialManifest.artifacts['vendor/three/build/three.module.js'],rendererSha256:hash(fs.readFileSync(path.join(site,'vendor/three/build/three.module.js'))),copied};
+const receipt={baseSha:'d5265f73d9dad69f1afd9690e374caee45195f11',mode:'diagnostic staging only; no source or production adoption',characterGeo:{adaptedOriginalSha256:hash(before),productionOriginalSha256:hash(productionBefore),stagedSha256:hash(code)},rendererUnchanged:true,baselineRendererSha256:initialManifest.artifacts['vendor/three/build/three.module.js'],rendererSha256:hash(fs.readFileSync(path.join(site,'vendor/three/build/three.module.js'))),copied};
 fs.writeFileSync(path.join(site,'headgear-qa-receipt.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt,null,2));
 // A separate manifest identifies diagnostic staged bytes; original build receipt is retained.
 const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));

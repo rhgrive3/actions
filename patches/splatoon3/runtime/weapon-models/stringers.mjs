@@ -90,7 +90,11 @@ function finishBow(d,cfg,body,ink,tr){
     nock:part(nock,[0,YC,tipZ]),arrow:part(arrow,[0,YC,arrowFront])};
   const rings=new Pieces();
   for(let k=0;k<6;k++)rings.add(ring(cfg.coilR,.0016,0,YC,cfg.coil0+(cfg.coil1-cfg.coil0)*k/5,'z',4,18),'#fff',M.led);
-  return rebuild(d,{body,ink,parts,gripL:cfg.gripL,muzzle:[0,YC,cfg.muzzleZ],glow:glowGeometry(rings,cfg.coil0-.002,cfg.coil1+.002,'z')});
+  // Official stringer movie 8zdjp76DrAy 0.8-3.2 s: the right hand holds the
+  // riser and the left hand draws the string. The support hand therefore sits
+  // on the nock (thumb up the string) and rides the draw (animateBow).
+  const gripL=gripSpec([0,YC,tipZ-.004],[0,1,0],[.75,-.3,-.6]);
+  return rebuild(d,{body,ink,parts,gripL,muzzle:[0,YC,cfg.muzzleZ],glow:glowGeometry(rings,cfg.coil0-.002,cfg.coil1+.002,'z')});
 }
 const TRI_LIMB_CONTROLS=[[.063,-.041],[.170,-.050],[.318,-.145],[.400,-.240]];
 const REEF_TIES=[-1,1].map(s=>({back:[-.018,YC+s*.069,-.17],front:[-.027,YC+s*.104,.02]}));
@@ -98,8 +102,7 @@ const REEF_LIMB_SECTIONS=[[.068,.021,.076,.055],[.138,.028,.061,.046],[.216,-.02
 function tri(d){
   const C={wood:'#68452d',steel:'#a5afb2',dark:'#30373b',black:'#1c2124'};
   const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.black,guardColor:C.dark});
-  const cfg={span:.4,tipZ:-.24,arrowFront:.02,coilR:.0545,coil0:-.070,coil1:.065,muzzleZ:.178,
-    gripL:gripSpec([0,0,.11],[0,0,1],[.75,-.62,-.1])};
+  const cfg={span:.4,tipZ:-.24,arrowFront:.02,coilR:.0545,coil0:-.070,coil1:.065,muzzleZ:.178};
   for(const s of[-1,1]){
     // 8.3% chord sag (old 3.2%): a continuously swept, tapering laminate.
     const limb=cubicLimb(s,TRI_LIMB_CONTROLS,18,t=>.050-.035*Math.pow(t,1.05),t=>.025-.0145*t);
@@ -138,8 +141,7 @@ function tri(d){
 function reef(d){
   const C={white:'#d5d5c8',edge:'#8b9492',steel:'#aab4b4',black:'#242a2c',dark:'#42494a'};
   const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.white,guardColor:C.black});
-  const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.0678,coil0:-.002,coil1:.041,muzzleZ:.15,castNock:true,
-    gripL:gripSpec([0,0,.095],[0,0,1],[.75,-.62,-.1])};
+  const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.0678,coil0:-.002,coil1:.041,muzzleZ:.15,castNock:true};
   for(const s of[-1,1]){
     // The root seats in the enlarged forward receiver collar. Rounded rims and
     // recessed web are one connected solid casting, rather than a grey stripe.
@@ -184,8 +186,7 @@ function reef(d){
 function wellstring(d){
   const C={green:'#28594d',hi:'#537b68',edge:'#183c35',steel:'#a8b4ac',brass:'#a49c64',black:'#252f2c',blue:'#527e91'};
   const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.blue,guardColor:C.edge});
-  const cfg={span:.325,tipZ:-.19,arrowFront:.02,coilR:.062,coil0:-.03,coil1:.14,muzzleZ:.205,
-    gripL:gripSpec([0,0,.105],[0,0,1],[.75,-.62,-.1])};
+  const cfg={span:.325,tipZ:-.19,arrowFront:.02,coilR:.062,coil0:-.03,coil1:.14,muzzleZ:.205};
   // Hydraulic clamp arms have an open C throat, thick rectangular cast cross-section, and joint bosses.
   for(const s of[-1,1]){
     const outline=[[-.058,.047],[-.082,.105],[-.105,.220],[-.071,.281],[.034,.307],[.075,.285],[.077,.247],[.039,.235],[-.019,.248],[-.055,.218],[-.054,.112],[-.024,.055]];
@@ -233,7 +234,8 @@ export function FAMILY_POSE(ch, dt, s, C) {
   if (!MODELS[ch.weapon?.def?.modelId ?? ch.weaponModel]) return;
   const m = bowState(ch); dt = Math.min(0.1, Math.max(0, dt || 0));
   m.roll = damp(m.roll, ch.grounded ? 1 : 0, 9, dt);
-  ch.P[C.ANCR + 2] += GROUND_ROLL * m.roll;
+  // The bow lies flat only in the grounded draw; at rest it hangs upright at the side.
+  ch.P[C.ANCR + 2] += GROUND_ROLL * m.roll * (ch.wAim || 0);
 }
 export function bowRollSnapshot(ch) { return st8.get(ch)?.roll ?? null; }
 
@@ -245,6 +247,7 @@ function animateBow(w, st) {
   const sr = st.sinceRelease ?? 99, vib = sr < 0.4 ? Math.exp(-sr * 14) * Math.sin(sr * 70) : 0;
   const draw = DRAW * charge - 0.012 * vib;
   ps.draw = draw;
+  w.supportZ = -draw;   // the drawing hand holds the nock (gripL)
   const k = Math.hypot(c.span, draw) / c.span, a = Math.atan2(draw, c.span);
   const up = w.parts.string, lo = w.parts.stringL, nock = w.parts.nock, arr = w.parts.arrow;
   if (up) { up.rotation.x = a; up.scale.y = k; }
@@ -253,8 +256,17 @@ function animateBow(w, st) {
   if (arr) arr.scale.z = 1 + draw / (c.arrowFront - c.tipZ);
 }
 
+// Over the native charger HOLD. Official stringer movie 8zdjp76DrAy (0.8-3.2 s, 9-11 s):
+// at rest the bow hangs upright at the right side in the right hand alone; the
+// draw pushes the riser forward at shoulder height on a near-straight right arm
+// while the left hand pulls the string back to the chest. INKWAVE calibration.
+const BOW_HOLD = {
+  carry: { p: [-0.2, 0.7, 0.11], r: [0.62, 0.12, -0.08] }, twoCarry: 0,
+  aim: { p: [-0.07, 0.02, 0.33], r: [0, 0.1, 0] }, twoAim: 1,
+  poleL: [0.85, -0.7, -0.15],
+};
 export const MODELS = {
-  's3-stringer-normal': { sourceModel: 'Wmn_Stringer_Normal', build: tri, animate: animateBow },
-  's3-stringer-short': { sourceModel: 'Wmn_Stringer_Short', build: reef, animate: animateBow },
-  's3-stringer-explosion': { sourceModel: 'Wmn_Stringer_Explosion', build: wellstring, animate: animateBow },
+  's3-stringer-normal': { sourceModel: 'Wmn_Stringer_Normal', build: tri, animate: animateBow, hold: BOW_HOLD },
+  's3-stringer-short': { sourceModel: 'Wmn_Stringer_Short', build: reef, animate: animateBow, hold: BOW_HOLD },
+  's3-stringer-explosion': { sourceModel: 'Wmn_Stringer_Explosion', build: wellstring, animate: animateBow, hold: BOW_HOLD },
 };
