@@ -124,8 +124,16 @@ test('accepted remote volleys produce one shell without network or damage author
     mapped(owner,'trizooka');peer.a.remote=true;mapped(peer,'trizooka');owner.a.nid=7;
     const nm=new f.NetMatch({myId:'owner'},{});f.G.netm=nm;
     f.throwVolley(system,owner.a,f.trizookaSpecialWeapon());
-    const packets=JSON.parse(JSON.stringify(nm.out.filter(e=>e[1]==='p'))),count=nm.out.length;
-    assert.equal(packets.length,3);const hp=peer.a.hp,ink=peer.a.ink;
+    // In 11.3.0 the three Trizooka globs are born at 0/4/8 source frames.
+    // Do not require the unborn two to send packets at volley admission.
+    const sent=()=>nm.out.filter(e=>e[1]==='p');
+    assert.equal(sent().length,1,'first glob is transmitted at 0F');
+    system.update(4/60);
+    assert.equal(sent().length,2,'second glob is transmitted at 4F');
+    system.update(4/60);
+    assert.equal(sent().length,3,'third glob is transmitted at 8F');
+    const packets=JSON.parse(JSON.stringify(sent())),count=nm.out.length;
+    const hp=peer.a.hp,ink=peer.a.ink;
     for(const packet of packets)system.ghostProjectile(peer.a,packet);
     assert.equal(nm.out.length,count);for(const p of system.list.slice(-3)){assert.equal(p.ghost,true);assert.equal(p.damage,0);assert.equal(p.damageOwner,false);}
     peer.step(30/60);assert.equal(f.specialPresentationSnapshot(peer.ch).ejects,1);
