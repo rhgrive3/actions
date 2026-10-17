@@ -65,7 +65,7 @@ try{
   await guest.evaluate(code=>G.net.join(code,'Victim'),code);await observer.evaluate(code=>G.net.join(code,'Observer'),code);
   await host.waitForFunction(()=>G.net._members.size===3);
   const owners=await Promise.all(pages.map(p=>p.evaluate(()=>G.net.myId)));
-  const cfg={id:engine+'-volley-vortex',map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid===1?1:0,weapon:'slosher',bot:false}))};
+  const cfg={id:engine+'-volley-vortex',map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid===1?1:0,slot:nid===2?1:0,weapon:'slosher',bot:false}))};
   await Promise.all(pages.map(p=>p.evaluate(cfg=>G.net._begin(cfg),cfg)));
   assert.deepEqual(await Promise.all(pages.map(p=>p.evaluate(()=>G.net._setupReady))),[true,true,true]);
   await host.evaluate(()=>G.net._go());await Promise.all(pages.map(p=>p.waitForFunction(()=>G.match?.state==='playing')));
