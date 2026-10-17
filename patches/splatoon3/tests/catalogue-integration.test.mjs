@@ -51,17 +51,29 @@ test('Triple Splashdown impact consumes source SPU tiers for damage reach and pa
   // Place the victim away from the second fist so only the expanded first
   // radius can reach it at maximum gear.
   victim.pos.set(center.x-radial,center.y,center.z);
-  for(let i=0;i<86;i++)f.G.projectiles.update(1/60);
+  for(let i=0;i<87;i++)f.G.projectiles.update(1/60);
   const extent=Math.max(...stamps.map(s=>Math.min(...fists.map(fist=>Math.hypot(s.x-fist.target.x,s.z-fist.target.z)))));
   return {hits,stamps,extent};
  }
  const base=await impact(0),max=await impact(57);
  assert.equal(base.hits.length,0,'10.2 units is beyond the source 9.6 far radius at base AP');
  assert.equal(max.hits.length,1,'57 AP grows the far damage radius to 10.56');
- assert.ok(Math.abs(max.hits[0].damage-(220+(60-220)*((10.2-7.04)/(10.56-7.04))))<1e-8);
+ assert.equal(max.hits[0].damage,60,'SPU expands the 60-damage band without adding interpolated lethal damage');
  assert.ok(max.stamps.length>base.stamps.length,'the source 12 paint-radius tier stamps a larger impact footprint than the 10 tier');
  assert.ok(base.extent<=8.5+1e-8&&max.extent<=10.5+1e-8,'the sampled stamp centers stay inside each sourced radius less the 1.5-unit stamp inset');
  assert.ok(max.extent>base.extent+1.5,'maximum gear expands the observed source paint footprint');
+});
+test('Triple Splashdown outer bands deal 60 per fist, while overlapping outer bands stack to 120',async()=>{
+ const f=await setup(),owner=f.make(),single=f.make(),overlap=f.make(),hits=[];
+ equip(f,owner,'bomb','tripleSplashdown');owner.pos.set(0,0,0);owner.aimYaw=0;owner.team=0;single.team=overlap.team=1;
+ owner._startSpecial();const [left]=f.G.projectiles._catalogueFists;
+ single.pos.set(left.target.x-8,left.target.y,left.target.z);
+ overlap.pos.set(0,left.target.y,left.target.z+Math.sqrt(8**2-left.target.x**2));
+ f.G.actors=[owner,single,overlap];f.G.projectiles.applyHit=(_source,target,damage)=>hits.push({target,damage});
+ for(let i=0;i<87;i++)f.G.projectiles.update(1/60);
+ assert.deepEqual(hits.filter(h=>h.target===single).map(h=>h.damage),[60]);
+ const stacked=hits.filter(h=>h.target===overlap).map(h=>h.damage);assert.deepEqual(stacked,[60,60]);
+ assert.equal(stacked.reduce((a,b)=>a+b,0),120,'the lethal overlap comes from separate blasts');
 });
 test('Super Jump Splashdown creates player descent without extra fists',async()=>{
  const f=await setup(),a=f.make();equip(f,a,'bomb','tripleSplashdown');a.superJumpState={phase:'flight'};a.intent.special=true;a.pos.y=20;

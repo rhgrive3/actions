@@ -167,6 +167,30 @@ test('#835 standalone cooler gives distinct one-per-player drinks and expires cl
   assert.equal(ally.s3.modifiers.runSpeed,normal,'gear stats revert after expiry');
   assert.equal(f.G.projectiles._s3SupportCoolers.length,0,'stand expires at 15 seconds');
 });
+test('Tacticooler thrown device uses its sourced gravity and air resistance at 30/60/120 Hz',async()=>{
+  // 11.3.0 EnergyStand.MoveParam: FlyGravity .009/frame² and retention .999
+  // per frame. The previous generic 24-unit gravity and zero drag fail both
+  // the vertical-velocity and horizontal-speed references after one second.
+  const retention=Math.pow(.999,60), expectedVy=4.2*retention-.54*.999*(1-retention)/.001;
+  const expectedZ=.4*.999*(1-retention)/.001;
+  for(const hz of [30,60,120]){
+    const {f,actor}=await setup();
+    actor.pos.set(0,100,0);actor.aimDir.set(0,0,1);
+    f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+    f.G.level.groundHeight=()=>-1000;
+    actor.special=actor.specialCost();actor._startSpecial();
+    actor.intent.sub=true;actor._updateSpecial(1/60);
+    actor.intent.sub=false;actor._updateSpecial(1/60);
+    for(let i=0;i<14&&actor.specialActive;i++)actor._updateSpecial(1/60);
+    const device=f.G.projectiles._s3SupportCoolerThrows[0];
+    assert.ok(device,'real throw owns the flight state');
+    for(let i=0;i<hz;i++){f.G.time+=1/hz;f.G.projectiles.update(1/hz);}
+    assert.ok(Math.abs(device.vel.z-24*retention)<1e-8,`${hz} Hz horizontal retention`);
+    assert.ok(Math.abs(device.vel.y-expectedVy)<.02,`${hz} Hz gravity: ${device.vel.y}`);
+    assert.ok(Math.abs(device.pos.z-expectedZ)<.02,`${hz} Hz throw distance`);
+    if(hz===60)assert.ok(Math.abs(device.vel.y-expectedVy)<1e-8,'source-frame recurrence at 60 Hz');
+  }
+});
 test('#835 a swimmer cannot take a drink and a respawn cannot re-take the same stand',async()=>{
   const {f,actor,ally}=await setup();
   ally.pos.set(0,0,1);ally.form='squid';

@@ -156,7 +156,7 @@ test('Line Marker direct player hit terminates instead of rebounding into a seco
  victim.pos.set(0,0,1.5);behind.pos.set(0,0,-1);f.G.actors=[a,victim,behind];
  const hits=[],events=[];f.G.projectiles.applyHit=(owner,target,damage)=>{hits.push([target,damage]);};f.on('all:sub',e=>events.push(e));
  const marker=f.G.projectiles.throwBomb(a);marker.pos.set(0,.7,0);marker.prev.copy(marker.pos);marker.vel.set(0,0,60);
- for(let i=0;i<10;i++){f.G.time+=DT;f.G.projectiles.update(DT);}
+ for(let i=0;i<110;i++){f.G.time+=DT;f.G.projectiles.update(DT);}
  assert.equal(hits.length,1);assert.equal(hits[0][0],victim);assert.equal(hits[0][1],40);
  assert.equal(marker.dead,true);assert.equal(events.some(e=>e.phase==='bounce'),false);
  assert.ok(events.some(e=>e.phase==='mark')&&events.some(e=>e.phase==='expire'));

@@ -27,11 +27,11 @@ export function absorbSpawnDamage(actor, amount, source, tuning, attacker = null
   const s = actor.s3?.spawnArmor;
   if (!s || source === 'ink' || spawnProtectionRemaining(actor) <= EPS) return amount;
   let penetration = Math.max(0, amount - tuning.maxAbsorb);
-  // #999: Roller flicks use cumulative damage groups, but are delivered as
-  // incremental contributions. The 100 HP penetration threshold applies ONCE
-  // to the whole logical swing, not once per incoming 90 + 60 delta.
+  // #999: Roller flicks and Trizooka actions use cumulative damage groups,
+  // delivered as incremental contributions. The 100 HP penetration threshold
+  // applies ONCE to the logical attack, not once per incoming damage delta.
   const id = actor.s3PendingHitGroup;
-  if (source === 'roller' && attacker && typeof attacker === 'object' && Number.isSafeInteger(id) && id > 0 && amount > 0) {
+  if ((source === 'roller' || source === 'trizooka') && attacker && typeof attacker === 'object' && Number.isSafeInteger(id) && id > 0 && amount > 0) {
     const all = s.groupPenetration || (s.groupPenetration = new WeakMap());
     // #999: one Actor object can be handed between network owners while its
     // group counters restart. An owner transition retires the previous era,
