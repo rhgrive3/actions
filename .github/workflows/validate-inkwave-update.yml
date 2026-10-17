@@ -310,6 +310,10 @@ jobs:
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/local-quality/tests/bot-navigation-respawn.test.mjs
+      - name: Verify emitted sourced weapon holds and gameplay muzzle ownership
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-hold-motion.test.mjs
       - name: Verify real emitted material handoff ownership and cancellation
         env:
           INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site

@@ -11,7 +11,8 @@ import { adaptSource } from '../adapter.mjs';
 // controller actually loaded (as source-posture.test.mjs): the handoff only
 // exists where the Wii U source carry owns the idle upper body.
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
+const BUILT = process.env.INKWAVE_BUILT_SITE;
+const SRC = path.resolve(BUILT || process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
 let cached;
 
 function fileFetch(url) {
@@ -49,12 +50,13 @@ async function production() {
       ? path.join(SRC, 'vendor/three/jsm', specifier.slice('three/addons/'.length))
       : path.resolve(path.dirname(from), specifier);
   const load = requested => {
-    let file = requested.startsWith(path.join(SRC, 'patches') + path.sep)
+    let file = !BUILT && requested.startsWith(path.join(SRC, 'patches') + path.sep)
       ? path.join(ROOT, path.relative(SRC, requested)) : requested;
+    if (BUILT && file.startsWith(path.join(ROOT, 'patches') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const source = fs.readFileSync(file, 'utf8');
-    const m = new vm.SourceTextModule(file.startsWith(SRC + path.sep) ? adaptSource(path.relative(SRC, file), source) : source, {
+    const m = new vm.SourceTextModule(!BUILT && file.startsWith(SRC + path.sep) ? adaptSource(path.relative(SRC, file), source) : source, {
       context, identifier: file,
       initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; },
       importModuleDynamically: async specifier => {
@@ -74,7 +76,7 @@ async function production() {
   `, { context, identifier: path.join(ROOT, 'weapon-hold-motion-entry.mjs') });
   await entry.link((specifier, from) => load(resolve(specifier, from.identifier)));
   await entry.evaluate();
-  const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
+  const profile = JSON.parse(fs.readFileSync(path.join(BUILT ? SRC : ROOT, 'patches/splatoon3/profile.json')));
   const api = { ...entry.namespace.install(profile), handoff: entry.namespace.handoff, registry: entry.namespace.registry, body: entry.namespace.body };
   const { G, THREE } = api;
   G.scene = new THREE.Scene(); G.settings = { quality: 'high' };
