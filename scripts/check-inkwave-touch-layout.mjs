@@ -116,6 +116,28 @@ try {
         const expectedControls = ['fire', 'jump', 'stick', 'squid', 'sub', 'special', 'map', ...(built ? ['cameraReset'] : []), 'gyro', 'pause'];
         assert.deepEqual(await page.locator('.iwm-layout-control option').evaluateAll(options => options.map(option => option.value)), expectedControls);
         entry.checks.push('settings-entry-and-exact-control-registry');
+        // Check the real production select, not a replacement widget. Native
+        // WebKit appearance can paint white even when computed background is dark.
+        const selectStyle = await page.locator('.iwm-layout-control').evaluate(el => {
+          const css = getComputedStyle(el);
+          const luminance = value => {
+            const rgb = value.match(/[\d.]+/g).map(Number);
+            if (rgb.length > 3 && rgb[3] !== 1) throw new Error('Select colors must be opaque');
+            return rgb.slice(0, 3).map(v => v / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4)
+              .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+          };
+          const fg = luminance(css.color), bg = luminance(css.backgroundColor);
+          return { tag: el.tagName, appearance: css.appearance, color: css.color, background: css.backgroundColor,
+            image: css.backgroundImage, contrast: (Math.max(fg, bg) + .05) / (Math.min(fg, bg) + .05),
+            label: el.selectedOptions[0]?.textContent.trim() };
+        });
+        assert.equal(selectStyle.tag, 'SELECT');
+        assert.equal(selectStyle.appearance, 'none', 'Disable native light field painting');
+        assert(selectStyle.contrast >= 4.5, 'Control selector text has at least 4.5:1 contrast');
+        assert(selectStyle.image.includes('linear-gradient'), 'Styled select retains a dropdown indicator');
+        assert(selectStyle.label, 'Selected control has visible label text');
+        entry.selectStyle = selectStyle;
+        entry.checks.push('control-selector-text-contrast');
         const bars = await page.locator('.iwm-edit__bar, .iwm-edit__sel').evaluateAll(els => els.map(el => {
           const r = el.getBoundingClientRect(); return { x: r.x, right: r.right, y: r.y, bottom: r.bottom, w: innerWidth, h: innerHeight };
         }));
@@ -124,6 +146,7 @@ try {
         entry.checks.push('responsive-editor');
         // Native selector/range taps work without sending gameplay actions.
         await page.locator('.iwm-layout-control').selectOption('jump');
+        assert.equal(await page.evaluate(() => mobile._sel), 'jump', 'Native select still changes the edited control');
         const sizeTrack = await page.locator('.iwm-edit__size').boundingBox();
         await page.touchscreen.tap(sizeTrack.x + sizeTrack.width * .8, sizeTrack.y + sizeTrack.height / 2);
         assert(await page.evaluate(() => mobile._cfg('jump').s > 1), 'Size slider responds to real touch');
