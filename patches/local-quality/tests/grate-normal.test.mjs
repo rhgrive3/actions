@@ -10,10 +10,10 @@ const orientation = /normal = normalize\(mat3\(viewMatrix\) \* \(nBase - slope\.
 
 test('the production world-normal replacement preserves Three double-sided orientation', () => {
   assert.match(composed, orientation);
-  assert.doesNotMatch(composed, /vec3 wn = normalize\(nBase - slope\.x \* T - slope\.y \* Bt\);/);
+  assert.match(composed, /#ifdef DOUBLE_SIDED\n  normal = normalize\(mat3\(viewMatrix\) \* \(nBase - slope\.x \* T - slope\.y \* Bt\)\) \* faceDirection;\n#else\n  vec3 wn = normalize\(nBase - slope\.x \* T - slope\.y \* Bt\);\n  normal = normalize\(\(viewMatrix \* vec4\(wn, 0\.0\)\)\.xyz\);\n#endif/);
   assert.match(composed, /clearcoatNormal = normal;/);
   assert.match(composed, /mat\.side = THREE\.DoubleSide;/);
-  assert.match(composed, /inkwave-level-v6-quality2/);
+  assert.match(composed, /inkwave-level-v6-quality3/);
 });
 
 test('normal orientation adds no texture access or draw and retains native shadow/coverage behavior', () => {

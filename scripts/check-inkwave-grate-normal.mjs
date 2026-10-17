@@ -242,7 +242,7 @@ try {
   }
   for (const row of result.frontRows) {
     assert.equal(row.independentExpression, true, row.name + ' independent original normal missing');
-    assert.ok(row.difference.maxChannelError <= 1, row.name + ' front-face arithmetic changed by more than 1/255');
+    assert.equal(row.difference.changedPixels, 0, row.name + ' original FrontSide arithmetic changed pixels');
   }
   fs.writeFileSync(path.join(output, 'shader-template.glsl'), result.shader.fragmentShader); delete result.shader.fragmentShader;
   assert.equal(result.webglError, 0); assert.equal(errors.length, 0, errors.join('\n'));
