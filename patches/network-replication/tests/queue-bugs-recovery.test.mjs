@@ -134,7 +134,12 @@ test('production composition exposes all queued fixes and retains both Turf and 
   assert.ok(main.includes('weapon: safeWeaponId(this.profile.weapon, WEAPONS)'),'offline weapon admission missing');
   assert.ok(main.includes('const resetMatch = this.match, resetFlow = this._matchFlow;'),'existing operation-owned attract reset must remain');
   assert.ok(main.includes('if (this.match !== resetMatch || this._matchFlow !== resetFlow) return;'));
-  assert.ok(main.includes('async startMatch(o = {}, flow = this._beginMatchFlow())'),'existing reliability flow must remain');
+  // Native-stage admission may move the flow allocation from the default
+  // parameter into the method body. Verify the operation guard rather than
+  // freezing the pre-native-stage function signature.
+  const startMatch=method(main,'Game','startMatch');
+  assert.ok(startMatch.includes('_beginMatchFlow()') && startMatch.includes('flow.current()'),
+    'existing reliability flow must remain');
   assert.ok(main.includes('if (!a?.weapon || !a.weaponRunner) return;'),'HUD defense missing');
   assert.ok(main.includes("if (!validStartRoster(cfg?.roster, G.net?.myId"));
   assert.equal(main.split('settleProgression(p, PROGRESSION);').length-1,2,'both results XP loops must be bounded');
@@ -180,7 +185,13 @@ test('composed NetSession rejects a missing-local START before allocating match 
   const js=composed('src/net/session.js'),src=method(js,'NetSession','_begin');
   const sends=[],G={game:{menus:{launchLobby:async()=>{}},startNetMatch:async()=>{sends.push('start')}}};
   const NetMatch=class{};
-  const C=(new Function('G','NetMatch','validStartRoster','WEAPONS','return class NetSession {'+src+'}',))(G,NetMatch,validStartRoster,weapons);
+  // The method is extracted without ES imports. Supply production-equivalent
+  // non-native stage admission for this ordinary Turf roster fixture so that
+  // missing-local rejection and READY sequencing remain the assertions.
+  const C=(new Function('G','NetMatch','validStartRoster','WEAPONS',
+    'nativeStageEnabled','nativeStageRuleStatus','UNAVAILABLE_NATIVE_STAGES','nativeStageCompatible',
+    'return class NetSession {'+src+'}'))(
+    G,NetMatch,validStartRoster,weapons,false,()=>null,[],cfg=>!cfg?.nativeStage);
   const make=()=>{
     const s=Object.create(C.prototype);
     s.myId='guest';s.hostId='host';s.state='lobby';s.lobby={players:[{ready:true}]};
