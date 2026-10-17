@@ -1,6 +1,9 @@
 {
   "status": "passed",
   "measurement": "webkit WebGL2; emitted level material / authored Level geometry / fallback surface branch; deterministic static render; software timings only; concurrent workloads may confound timing",
+  "sourceSha": "a6fcd76166b1aa887b7cbc3456833366b7d9cfe3",
+  "sourceRoot": "/workspace/render-1565",
+  "verifierSha256": "f5d937957f7497aecade84f8ea5dff45f701300073d506f5b0731425f6ecfdfd",
   "inputHash": "740727429c62619014ac7ebdcf4e37454f0a7c5c4df6783fc6ad178b996b5535",
   "contentHash": "c70ff01bfc49cc9ff974336d902abaa85bf66c6e6b9752cac6dc189a21b5aba2",
   "result": {
@@ -23,13 +26,15 @@
           "calls": 1,
           "triangles": 2,
           "geometries": 1,
-          "textures": 2
+          "textures": 2,
+          "programs": 2
         },
         "referenceCost": {
           "calls": 1,
           "triangles": 2,
           "geometries": 1,
-          "textures": 2
+          "textures": 2,
+          "programs": 2
         },
         "imageSHA256": "d74fcedace6da953450a41f5d99d6cc436fd046d6635c79f3d3135628bbc3bb1",
         "referenceImageSHA256": "d74fcedace6da953450a41f5d99d6cc436fd046d6635c79f3d3135628bbc3bb1",
@@ -53,13 +58,15 @@
           "calls": 1,
           "triangles": 2,
           "geometries": 2,
-          "textures": 2
+          "textures": 2,
+          "programs": 2
         },
         "referenceCost": {
           "calls": 1,
           "triangles": 2,
           "geometries": 2,
-          "textures": 2
+          "textures": 2,
+          "programs": 2
         },
         "imageSHA256": "d03b0e8017746c908b57a21a277e24b8e949b3a682a3c5219e774c18153926f9",
         "referenceImageSHA256": "d03b0e8017746c908b57a21a277e24b8e949b3a682a3c5219e774c18153926f9",
@@ -83,17 +90,157 @@
           "calls": 1,
           "triangles": 2,
           "geometries": 2,
-          "textures": 2
+          "textures": 2,
+          "programs": 2
         },
         "referenceCost": {
           "calls": 1,
           "triangles": 2,
           "geometries": 2,
-          "textures": 2
+          "textures": 2,
+          "programs": 2
         },
         "imageSHA256": "cdaf7ad63525f52b0f087b53869f3693d96770ebb7413572fcd14fb3d937b13d",
         "referenceImageSHA256": "cdaf7ad63525f52b0f087b53869f3693d96770ebb7413572fcd14fb3d937b13d",
         "pixelSHA256": "9abb60c6c17bd29c797cfead7e117d6032b44c1fcad3083fb679b8d52ef394b2"
+      }
+    ],
+    "frontRows": [
+      {
+        "name": "ink-flat",
+        "independentExpression": true,
+        "useLibrary": false,
+        "inked": true,
+        "tilted": false,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 54940,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "679757f03d090ebc7e0478effa39da056b0c01926ff93ff68851a2f234fd4d23",
+        "referenceImageSHA256": "679757f03d090ebc7e0478effa39da056b0c01926ff93ff68851a2f234fd4d23"
+      },
+      {
+        "name": "ink-tilted",
+        "independentExpression": true,
+        "useLibrary": false,
+        "inked": true,
+        "tilted": true,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 69275,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "56ce72d011f5833ce1fa76167ff4c41f31c93d62b8ab7d3889e51bb1a89cff01",
+        "referenceImageSHA256": "56ce72d011f5833ce1fa76167ff4c41f31c93d62b8ab7d3889e51bb1a89cff01"
+      },
+      {
+        "name": "texlib-dry-tilted",
+        "independentExpression": true,
+        "useLibrary": true,
+        "inked": false,
+        "tilted": true,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 1,
+          "maxChannelError": 1
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 69275,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "6fb079e9c25a5216959a63790c713f435bab2450a3b82e7227c905054f0f654d",
+        "referenceImageSHA256": "5a6c9cd16897bc0f217f1508af272d5dd58e890b7327f5191aca4c8e4206279d"
+      },
+      {
+        "name": "texlib-ink-tilted",
+        "independentExpression": true,
+        "useLibrary": true,
+        "inked": true,
+        "tilted": true,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 69275,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "e07aef3be8f64e7069a51d237df9517328098c7a2a579b2afe4e901f42d46646",
+        "referenceImageSHA256": "e07aef3be8f64e7069a51d237df9517328098c7a2a579b2afe4e901f42d46646"
       }
     ],
     "gpu": {
@@ -112,6 +259,10 @@
     "authoredFaceIndices": 6,
     "width": 480,
     "height": 360,
+    "texlib": {
+      "layers": 25,
+      "resolution": 64
+    },
     "timingExcludedReason": "Concurrent software draw/drain timings are nonqualifying diagnostics retained in scratch only."
   },
   "errors": []
