@@ -2,7 +2,7 @@
   "inputs": {
     "upstream/src/ui/menus.js": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e",
     "patch/runtime/menu-layout.mjs": "d55eec5cb3019d12d05bc689ec72f81d285394163cebafa358d3f6ec00280871",
-    "patch/runtime/install.mjs": "6cea5c9ee153b67a9acf66e945e8e953a1ac6fdfbcbe0119a1053de123484fd5"
+    "patch/runtime/install.mjs": "2ca60ad109e23409e5c349a64f7ed2ff8db1c7264bbe42cf8239ebc5901cf1ed"
   },
   "baseCommit": "9c3c183703c9f194112d1620f20e45c89dcbfc71"
 }
