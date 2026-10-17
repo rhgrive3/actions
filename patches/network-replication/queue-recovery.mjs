@@ -64,8 +64,9 @@ export function canApplyAttractReset(game, original, epoch, mode) {
 // allocate an Actor with a missing weapon. The native host builds at most 8
 // roster records, one unique team/slot and one unique nid per player/bot.
 export function validStartRoster(roster, myId, weapons, mode = 'turf', hostId = null) {
+  const knownModes = ['turf', 'boss', 'zones', 'tower', 'rainmaker', 'clams'];
   if (typeof myId !== 'string' || !myId || !Array.isArray(roster)
-    || roster.length < 1 || roster.length > 8 || (mode !== 'turf' && mode !== 'boss')) return false;
+    || roster.length < 1 || roster.length > 8 || !knownModes.includes(mode)) return false;
   const nids = new Set(), slots = new Set(), humanOwners = new Set();
   let local = 0;
   for (const r of roster) {
