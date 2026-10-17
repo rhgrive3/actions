@@ -23,8 +23,23 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
     shell:new THREE.MeshStandardMaterial({color:0x363b3e,roughness:.58,metalness:.13}),
     trim:new THREE.MeshStandardMaterial({color:0x171b1e,roughness:.82,metalness:.04}),
     inset:new THREE.MeshStandardMaterial({color:0xa0a6a5,roughness:.48,metalness:.4}),
+    earPrint:new THREE.MeshStandardMaterial({color:0x171b1e,roughness:.82,metalness:.04}),
     light:new THREE.MeshStandardMaterial({color:inkColor,emissive:inkColor,emissiveIntensity:.7,roughness:.35}),
   };
+  // Flat printed ink on the actual ear face, with no per-dot geometry or emission.
+  const earInk={value:new THREE.Color(inkColor)};
+  mats.earPrint.onBeforeCompile=shader=>{
+    shader.uniforms.earInk=earInk;
+    shader.vertexShader='#define USE_UV\n'+shader.vertexShader;
+    shader.fragmentShader='#define USE_UV\nuniform vec3 earInk;\nfloat earEdge(vec2 a,vec2 b,vec2 p){vec2 e=b-a,q=p-a;return -(e.x*q.y-e.y*q.x)/length(e); }\n'+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      vec2 center=(floor(vUv/.012)+.5)*.012;
+      float edge=min(earEdge(vec2(.181,.249),vec2(.300,.154),center),min(earEdge(vec2(.300,.154),vec2(.185,.090),center),earEdge(vec2(.185,.090),vec2(.181,.249),center)));
+      float radius=.0024, aa=max(fwidth(length(vUv-center)),.00005);
+      float dotInk=(1.0-smoothstep(radius-aa,radius+aa,length(vUv-center)))*step(.006,edge);
+      diffuseColor.rgb=mix(diffuseColor.rgb,earInk,dotInk);`);
+  };
+  mats.earPrint.customProgramCacheKey=()=> 'inkwave-armor-flat-earprint-v1';
   // Woven carbon/plastic pattern is original analytic shading, no external textures.
   // UV derivatives limit the weave below one pixel instead of shimmering at distance.
   mats.shell.onBeforeCompile = shader => {
@@ -93,16 +108,14 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
   for(const s of [-1,1]){
     // Broad triangular earpiece, thin in profile; face plane looks slightly forward.
     const verts=[[s*.181,.249,.002],[s*.300,.154,.015],[s*.185,.090,.035]];
-    add(`triangular-earpiece-${s}`,prism(s<0?verts.slice().reverse():verts,.035),mats.trim);
+    const earBody=prism(s<0?verts.slice().reverse():verts,.035);
+    // Replace the front cap with a printed face in exactly the same plane.
+    const bodyIndices=Array.from(earBody.index.array);earBody.setIndex(bodyIndices.filter((_,i)=>Math.floor(i/3)!==1));
+    add(`triangular-earpiece-${s}`,earBody,mats.trim);
+    const face=new THREE.BufferGeometry();face.setAttribute('position',new THREE.Float32BufferAttribute(verts.flatMap(v=>[v[0],v[1],v[2]+.0175]),3));
+    face.setAttribute('uv',new THREE.Float32BufferAttribute(verts.flatMap(v=>[Math.abs(v[0]),v[1]]),2));face.setIndex(s<0?[0,1,2]:[0,2,1]);
+    add(`flat-ear-print-${s}`,face,mats.earPrint);
     const pad=new THREE.SphereGeometry(.042,[8,12,16][detail],[5,7,10][detail]);pad.scale(.4,1,1);pad.translate(s*.187,.173,.009);add(`ear-pad-${s}`,pad,mats.trim);
-    if(detail===0){const g=new THREE.BufferGeometry();const vp=[[s*.194,.231,.04],[s*.284,.155,.04],[s*.195,.106,.04]];g.setAttribute('position',new THREE.Float32BufferAttribute(vp.flat(),3));g.setIndex(s<0?[0,1,2]:[0,2,1]);add(`ear-accent-${s}`,g,mats.light);}
-    if(detail>0){const dots=[];for(let row=0;row<8;row++)for(let col=0;col<9-row;col++){
-      const t=row/9, x=s*(.192+t*.095), y=.106+col*.014+t*.048;
-      const g=new THREE.CircleGeometry(.0025,6);g.translate(x,y,.038);dots.push(g);
-    }
-      // A single geometry for all LEDs avoids a draw call per dot.
-      const positions=[],indices=[];for(const g of dots){const offset=positions.length/3;positions.push(...g.attributes.position.array);indices.push(...Array.from(g.index.array,x=>x+offset));g.dispose();}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setIndex(indices);add(`ear-led-matrix-${s}`,g,mats.light);
-    }
     // Y strap and chin buckle, leaves the face/mouth uncovered.
     const jawPoint=(az,el)=>{
       if(headSurface){const q=new THREE.Vector3();headSurface(az,el,.009,q);return [q.x,q.y-1.05,q.z+.002];}
@@ -134,7 +147,7 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
     add(key,merged,mat);
   }
   group.userData.parts=parts;group.userData.fit=ARMOR_HELMET_FIT;group.userData.lod=lod;
-  group.userData.setInkColor=(color)=>{mats.light.color.set(color);mats.light.emissive.set(color);};
+  group.userData.setInkColor=(color)=>{mats.light.color.set(color);mats.light.emissive.set(color);earInk.value.set(color);};
   let disposed=false;group.userData.dispose=()=>{if(disposed)return;disposed=true;group.traverse(o=>o.geometry?.dispose());Object.values(mats).forEach(m=>m.dispose());group.removeFromParent();};
   return group;
 }

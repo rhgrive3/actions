@@ -7,8 +7,8 @@ const PIVOT = new V(0, 1.05, -0.002);
 const C = HEAD_C.clone().sub(PIVOT);
 const clamp = (x,a,b) => Math.min(b,Math.max(a,x));
 const smooth = (a,b,x) => { const t=clamp((x-a)/(b-a),0,1); return t*t*(3-2*t); };
-const rimKeys=[[0,.57],[.6,.54],[1.2,-.70],[1.6,-.74],[2.3,-.48],[Math.PI,-.36]];
-const rim=(az)=>{ const a=Math.abs(Math.atan2(Math.sin(az),Math.cos(az))); for(let i=1;i<rimKeys.length;i++){if(a<=rimKeys[i][0]) {const [x,y]=rimKeys[i-1],[x1,y1]=rimKeys[i]; return y+(y1-y)*(a-x)/(x1-x);}} return -.36;};
+const rimKeys=[[0,.57],[.6,.54],[1.2,-.70],[1.6,-.74],[2.3,-.66],[Math.PI,-.64]];
+const rim=(az)=>{ const a=Math.abs(Math.atan2(Math.sin(az),Math.cos(az))); for(let i=1;i<rimKeys.length;i++){if(a<=rimKeys[i][0]) {const [x,y]=rimKeys[i-1],[x1,y1]=rimKeys[i]; return y+(y1-y)*(a-x)/(x1-x);}} return -.64;};
 export const INK_BLACK_FLAP_CAP_FIT=Object.freeze({
   name:'inkBlackFlapCap', cls:4, col:[-3,1], thick:.0058, exitMax:.05, flare:.008,
   rows:[0,.025,.07,.14,.22,.32], crown:8, rim,
@@ -67,8 +67,9 @@ export function createInkBlackFlapCap({lod='hero',clearance}={}){
     const frontAz=.78+.20*smooth(.18,.64,v);
     const az=frontAz+(Math.PI-frontAz)*roundedU;
     const top=crown(s*az,.018,.001);
-    const bottom=-.070+.170*smooth(.12,.88,u)+.040*(1-smooth(0,.12,u));
-    const earBulge=.032*smooth(0,.10,v)*Math.exp(-(((v-.15)/.20)**2))*Math.exp(-(((az-1.95)/.45)**2));
+    // Continuous rear cloth, with a shallow raised center hem and longer side tongues.
+    const bottom=-.070+.095*smooth(.12,.76,u)+.040*(1-smooth(0,.12,u));
+    const earBulge=.035*smooth(0,.10,v)*Math.exp(-(((v-.15)/.20)**2))*Math.exp(-(((az-1.95)/.45)**2));
     const r=.012*smooth(0,.40,v)+earBulge+offset;
     const q=new V(top.x+s*Math.sin(az)*r,top.y+(bottom-top.y)*v,top.z+Math.cos(az)*r);
     const d=q.clone().sub(C),rad=d.length();d.divideScalar(rad);

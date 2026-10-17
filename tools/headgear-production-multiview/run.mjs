@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
-import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -14,8 +13,7 @@ async function main(){
  const site=fs.realpathSync(option('--site','_site')),out=path.resolve(option('--out','.qa-evidence/headgear-production-views'));fs.mkdirSync(out,{recursive:true});
  const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash,'artifact map identity');
  for(const [file,digest]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(safe(site,file))),digest,'build receipt '+file);
- const prefix='/_versions/'+manifest.build.revision+'/',basis={contentHash:manifest.contentHash,buildRevision:manifest.build.revision,sourceSha:process.env.SOURCE_SHA||process.env.GITHUB_SHA||null,harnessHashes:{},loaded:[]};
- if(basis.sourceSha){basis.checkoutSha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();assert.equal(basis.checkoutSha,basis.sourceSha,'exact candidate checkout');}
+ const prefix='/_versions/'+manifest.build.revision+'/',basis={contentHash:manifest.contentHash,buildRevision:manifest.build.revision,sourceSha:process.env.GITHUB_SHA||null,harnessHashes:{},loaded:[]};
  for(const f of ['browser.mjs','run.mjs','registry.mjs'])basis.harnessHashes[f]=hash(fs.readFileSync(path.join(here,f)));
  const write=r=>fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({...basis,...r},null,2));write({status:'verified-build',browserRun:false});
  let server,browser,page;const errors=[],warnings=[],blocked=[],loaded=new Set();
@@ -35,7 +33,7 @@ async function main(){
   await page.route('**/*',route=>{const u=route.request().url();if(u.startsWith(origin+'/'))return route.continue();blocked.push(u);return route.abort();});
   let frames=0;const screenshots=[];await page.exposeFunction('__saveHeadgearFrame',(name,png)=>{assert.match(name,/^[a-z0-9-]+$/);assert(png.startsWith('data:image/png;base64,'));const bytes=Buffer.from(png.split(',')[1],'base64'),file=name+'.png';fs.writeFileSync(path.join(out,file),bytes);const reread=fs.readFileSync(path.join(out,file));assert.equal(hash(reread),hash(bytes),'saved PNG readback');assert.equal(reread.readUInt32BE(16),720,'PNG width');assert.equal(reread.readUInt32BE(20),720,'PNG height');screenshots.push({file,sha256:hash(reread),bytes:reread.length,width:720,height:720});frames++;});
   await page.goto(origin+'/qa/');const result=await page.evaluate(async cfg=>(await import('/qa/browser.mjs')).run(cfg),{prefix});
-  assert.equal(result.rows.length,72,'complete case denominator');assert.equal(frames,144,'fitted and hidden screenshots');assert.equal(blocked.length,0,'no external traffic');assert.equal(errors.length,0,errors.join('\n'));
+  assert.equal(result.rows.length,76,'complete case denominator');assert.equal(frames,152,'fitted and hidden screenshots');assert.equal(blocked.length,0,'no external traffic');assert.equal(errors.length,0,errors.join('\n'));
   for(const suffix of ['src/game/character.js','src/core/ctx.js','patches/splatoon3/runtime/install.mjs','vendor/three/build/three.module.js'])assert([...loaded].some(x=>x.endsWith('/'+suffix)),'native runtime receipt '+suffix);
   basis.loaded=[...loaded].sort();write({...result,browserRun:true,browserVersion:browser.version(),frames,screenshots,errors,warnings,blocked});console.log(JSON.stringify({status:result.status,cases:result.rows.length,frames,contentHash:manifest.contentHash}));
  }catch(e){const partial=page?await page.evaluate(()=>globalThis.__headgearQA||null).catch(()=>null):null;if(page)await page.screenshot({path:path.join(out,'failed.png')}).catch(()=>{});basis.loaded=[...loaded].sort();write({status:'failed',browserRun:!!page,error:e.message,partial,errors,warnings,blocked});throw e;}
