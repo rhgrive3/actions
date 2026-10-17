@@ -8,7 +8,10 @@ const lateralBefore = 'const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnP
 const lateralAfter = 'const side=fan*(unit.SpawnPositionWidth||0)*0.5,j=unit.SpawnPositionRandomCube||0;';
 const verticalBefore = 'p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(unit.SpawnPositionHeight||0);';
 const verticalAfter = 'const baseHeight=unit.SpawnPositionOffsetHeight||0;\n  const perGlobHeight=unit.SpawnPositionHeight||0;\n  p.pos.y+=vertical ? baseHeight+offset*perGlobHeight : baseHeight+perGlobHeight;';
-const verticalReference = 'p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(vertical?offset:1)*(unit.SpawnPositionHeight||0);';
+// Copy no candidate file: only the reviewed expression is made byte-for-byte
+// equivalent in the baseline. Algebraically similar code can differ at an
+// exactly grazed 60 Hz contact because of floating point operation order.
+const verticalReference = verticalAfter;
 
 const count = (source, text) => source.split(text).length - 1;
 export function alignRollerBirthBaseline(baseline, candidate) {

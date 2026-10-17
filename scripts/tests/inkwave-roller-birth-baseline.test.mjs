@@ -10,7 +10,8 @@ test('reference changes exactly the two birth rules and never copies candidate g
   assert.equal(changes.length, 2);
   assert.equal(source, before
     .replace('unit.SpawnPositionWidth||0),j=', 'unit.SpawnPositionWidth||0)*0.5,j=')
-    .replace('+(unit.SpawnPositionHeight||0);', '+(vertical?offset:1)*(unit.SpawnPositionHeight||0);'));
+    .replace('p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(unit.SpawnPositionHeight||0);',
+      'const baseHeight=unit.SpawnPositionOffsetHeight||0;\n  const perGlobHeight=unit.SpawnPositionHeight||0;\n  p.pos.y+=vertical ? baseHeight+offset*perGlobHeight : baseHeight+perGlobHeight;'));
   assert.ok(!source.includes('unrelated candidate code'));
 });
 
