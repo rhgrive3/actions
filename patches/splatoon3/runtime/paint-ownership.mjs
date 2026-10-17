@@ -54,22 +54,10 @@ export const PAINT_SHAPE_HASH_GLSL = `float paintShapeHash(float word, float str
   x = mod(x * 251.0 + 13849.0, 65536.0);
   return x / 65536.0;
 }`;
-const wobble = (a, s) => {
-  let w = 1 + 0.12 * Math.sin(3 * a + s * 6.2831) + 0.08 * Math.sin(5 * a + s * 17.0) +
-    0.05 * Math.sin(7 * a + s * 41.0) + 0.03 * Math.sin(11 * a + s * 73.0) +
-    0.018 * Math.sin(17 * a + s * 29.0);
-  const c1 = Math.cos(a - s * 37.7);
-  if (c1 > 0) {
-    const c2 = c1 * c1, c4 = c2 * c2, c8 = c4 * c4, c16 = c8 * c8;
-    w += 0.17 * (c16 * c8 * c4);
-  }
-  const c2v = Math.cos(a - s * 53.3 - 2.1);
-  if (c2v > 0) {
-    const d2 = c2v * c2v, d4 = d2 * d2, d8 = d4 * d4, d16 = d8 * d8, d32 = d16 * d16;
-    w += 0.12 * (d32 * d4);
-  }
-  return w;
-};
+const wobble = (a, s) => 1 + 0.12 * Math.sin(3 * a + s * 6.2831) + 0.08 * Math.sin(5 * a + s * 17.0) +
+  0.05 * Math.sin(7 * a + s * 41.0) + 0.03 * Math.sin(11 * a + s * 73.0) +
+  0.018 * Math.sin(17 * a + s * 29.0) + 0.17 * Math.pow(Math.max(Math.cos(a - s * 37.7), 0), 28) +
+  0.12 * Math.pow(Math.max(Math.cos(a - s * 53.3 - 2.1), 0), 36);
 
 function sdRay(px, py, ax, ay, bx, by, ra, rb) {
   const pax = px - ax, pay = py - ay, bax = bx - ax, bay = by - ay;
@@ -89,12 +77,10 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const dirAng = sa > 0 ? Math.atan2(sdv, sdu) : 0;
   const spread = 6.2831 + (2.5 - 6.2831) * clamp(sa * 1.2, 0, 1);
   const big = kind > 1.5 && kind < 3.5;
-  const uGrow = 1 - clamp(tn, 0, 1), uGrow2 = uGrow * uGrow;
-  const bodyGrow = 0.4 + 0.6 * (1 - uGrow2 * uGrow2);
+  const bodyGrow = 0.4 + 0.6 * (1 - Math.pow(1 - clamp(tn, 0, 1), 4));
   const bodyEdge = a => r * bodyGrow * wobble(a, seed);
 
-  const uSp = 1 - clamp(tn * 1.4, 0, 1);
-  const tsp = 1 - uSp * uSp * uSp;
+  const tsp = 1 - Math.pow(1 - clamp(tn * 1.4, 0, 1), 3);
   for (let k = 0; k < rayCount; k++) {
     const h1 = paintShapeHash(word, 0, k), h2 = paintShapeHash(word, 1, k), h3 = paintShapeHash(word, 2, k);
     const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : (k + 0.35 + 0.6 * h1) / rayCount * 6.2831 + seed * 6.2831;
