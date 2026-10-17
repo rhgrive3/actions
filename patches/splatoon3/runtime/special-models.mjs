@@ -1459,19 +1459,46 @@ export function buildScreenSheet(THREE, color, width, height) {
   const geo = new THREE.ShapeGeometry(shp, 16);
   const uv = geo.attributes.uv, p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + W) / (2 * W), (p.getY(i) + H) / (2 * H));
-  const N = 128, data = new Uint8Array(N * N * 4), c = new THREE.Color(color), light = c.clone().lerp(new THREE.Color(0xffffff), 0.45);
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    const u = x / N, v = y / N;
-    const w = Math.sin(u * 9 + Math.sin(v * 7 + u * 3) * 2.2) + Math.sin(v * 11 - u * 5 + Math.sin(u * 13) * 1.5) * 0.7;
-    const k = (x + y * N) * 4, white = w > 1.15, mid = Math.abs(w) < 0.25;
-    const col = white ? new THREE.Color(1, 1, 1) : mid ? light : c;
-    data[k] = col.r * 255; data[k + 1] = col.g * 255; data[k + 2] = col.b * 255; data[k + 3] = white ? 200 : 170;
-  }
-  const tex = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.magFilter = THREE.LinearFilter; tex.needsUpdate = true;
-  if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
-  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false });
+  // Marbled team ink, animated (S3 footage: the sheet is a flowing marble of
+  // the team colour, darker and lighter bands and thin white veins). Linear colour
+  // in, the renderer's colour-space chunks out.
+  const base = new THREE.Color(color);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: base }, uTime: { value: 0 }, uOpacity: { value: 0.86 }, uFlow: { value: new THREE.Vector2() } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `
+      uniform vec3 uColor; uniform float uTime; uniform float uOpacity; uniform vec2 uFlow; varying vec2 vUv;
+      float h(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+      float n(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f*f*(3.0-2.0*f);
+        return mix(mix(h(i), h(i+vec2(1.0,0.0)), u.x), mix(h(i+vec2(0.0,1.0)), h(i+vec2(1.0,1.0)), u.x), u.y); }
+      float fbm(vec2 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * n(p); p = p * 2.02 + 7.3; a *= 0.5; } return s; }
+      void main(){
+        vec2 p = vUv * vec2(2.1, 1.25) + uFlow;   // broad swirls
+        float t = uTime;
+        vec2 q = vec2(fbm(p + vec2(0.0, t * 0.13)), fbm(p + vec2(5.2, 1.3) - t * 0.09));
+        vec2 r = vec2(fbm(p + 3.0 * q + vec2(1.7, 9.2) + t * 0.11), fbm(p + 3.0 * q + vec2(8.3, 2.8) - t * 0.07));
+        float m = fbm(p + 3.4 * r);
+        float bands = sin(m * 19.0 + r.x * 6.0);
+        // S3 footage (118.6-122.5s): deep, saturated swirls of the team colour with warmer and pinker bands
+        // (red with orange and pink for a red team), only a thin light vein; never pastel or white-washed
+        vec3 dark = uColor * 0.38, warm = clamp(uColor + vec3(0.12, 0.32, -0.08), 0.0, 1.4), pink = clamp(uColor + vec3(0.05, -0.02, 0.35), 0.0, 1.4);
+        vec3 col = mix(dark, uColor, smoothstep(-0.7, 0.0, bands));
+        col = mix(col, warm, smoothstep(0.2, 0.55, bands) * (0.5 + 0.5 * sin(m * 7.0 + r.y * 4.0)));
+        col = mix(col, pink, smoothstep(0.55, 0.85, bands) * 0.8);
+        col = mix(col, uColor * 1.3 + 0.12, smoothstep(0.95, 0.995, bands) * 0.6);
+        float edge = smoothstep(0.0, 0.035, vUv.x) * smoothstep(0.0, 0.035, 1.0 - vUv.x);
+        float a = min(1.0, uOpacity * 1.1) * mix(0.75, 1.0, edge);
+        gl_FragColor = vec4(col, a);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+    transparent: true, side: THREE.DoubleSide, depthWrite: false,
+  });
+  // Compatibility with callers that animate `opacity` / `tex.offset`: both drive uniforms.
+  Object.defineProperty(mat, 'opacity', { get() { return this.uniforms?.uOpacity?.value ?? 1; }, set(v) { if (this.uniforms?.uOpacity) this.uniforms.uOpacity.value = v; }, configurable: true });
+  const tex = { offset: mat.uniforms.uFlow.value, dispose() {} };
   const mesh = new THREE.Mesh(geo, mat);
+  mesh.name = 'splattercolor-sheet';
   const edge = new THREE.Mesh(new THREE.ShapeGeometry(shp, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }));
   edge.scale.set(1.01, 1.01, 1); edge.position.z = -0.01;
   const group = new THREE.Group(); group.add(edge, mesh); group.userData.s3ScreenSheet = { mat, tex };

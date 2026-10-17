@@ -4,7 +4,9 @@ on:
     paths:
       - 'patches/splatoon3/runtime/**'
       - 'patches/splatoon3/tests/main-weapon-catalog*.test.mjs'
+      - 'patches/splatoon3/tests/catalog-*.test.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'scripts/check-inkwave-saber-origins-browser.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   workflow_dispatch:
 permissions:
@@ -31,3 +33,29 @@ jobs:
         run: node --experimental-vm-modules --test patches/splatoon3/tests/reverse-shot-release.test.mjs patches/splatoon3/tests/source-posture.test.mjs
       - name: Verify Roller swing and Curling bomb production paths
         run: node --experimental-vm-modules --test patches/splatoon3/tests/roller-flick-movement.test.mjs patches/splatoon3/tests/roller.test.mjs patches/splatoon3/tests/bomb-kit-fidelity.test.mjs patches/splatoon3/tests/air-attack-acceleration.test.mjs patches/splatoon3/tests/catalog-rolling-form-reset.test.mjs
+      - name: Verify sourced Splatana origins and Slosher flight contact/cover
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs patches/splatoon3/tests/catalog-splash-contact-distance.test.mjs
+  browser-origins:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - name: Build production gameplay composition
+        run: node scripts/build-inkwave.mjs inkwave-public work/site
+      - name: Verify emitted source offsets, detached release clipping and lateral cover
+        run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs
+      - name: Verify actual Character origins, optical aim and fire event positions
+        run: node scripts/check-inkwave-saber-origins-browser.mjs work/site work/weapon-stage-gaps/browser-origins.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-main-weapon-origins
+          path: work/weapon-stage-gaps/
+          if-no-files-found: ignore

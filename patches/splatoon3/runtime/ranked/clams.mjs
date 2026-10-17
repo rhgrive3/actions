@@ -210,7 +210,7 @@ export class ClamsRule {
     let spawned = 0;
     for (let i = 0; i < count; i++) {
       const [dx, dz] = offsets[i];
-      const floor = typeof frame?.floorAt === 'function' ? this._floorAt(frame, base[0] + dx, base[2] + dz) : base[1];
+      const floor = typeof frame?.floorAt === 'function' ? this._floorAt(frame, base[0] + dx, base[2] + dz, base[1] + 0.25) : base[1];
       if (floor === null) continue;
       this._newClam('small', null, [base[0] + dx, floor ?? base[1], base[2] + dz], {
         grounded: true,
@@ -245,9 +245,9 @@ export class ClamsRule {
     }
   }
 
-  _floorAt(frame, x, z) {
+  _floorAt(frame, x, z, yMax) {
     if (typeof frame?.floorAt !== 'function') return 0;
-    const y = frame.floorAt(x, z);
+    const y = frame.floorAt(x, z, yMax);
     return Number.isFinite(y) ? y : null;
   }
 
@@ -288,7 +288,7 @@ export class ClamsRule {
     if (!inv || (!inv.small && !inv.power)) return;
     const pos = vec(position ?? this.state.actorPositions[id]);
     if (typeof frame?.floorAt === 'function') {
-      const floor = this._floorAt(frame, pos[0], pos[2]);
+      const floor = this._floorAt(frame, pos[0], pos[2], pos[1] + 0.25);
       if (floor !== null) pos[1] = floor;
     }
     const smallDrop = this._smallDeathDropCount(inv.small);
@@ -355,7 +355,7 @@ export class ClamsRule {
     if (!inv || !inv.small) return;
     const pos = vec(position);
     if (typeof frame?.floorAt === 'function') {
-      const floor = this._floorAt(frame, pos[0], pos[2]);
+      const floor = this._floorAt(frame, pos[0], pos[2], pos[1] + 0.25);
       if (floor !== null) pos[1] = floor;
     }
     const count = inv.small;
@@ -431,7 +431,7 @@ export class ClamsRule {
     if (clam.bounces > 2) {
       clam.velocity = [0, 0, 0];
       clam.grounded = true;
-      const floor = this._floorAt(frame, position[0], position[2]);
+      const floor = this._floorAt(frame, position[0], position[2], position[1] + 0.25);
       if (floor !== null) clam.pos[1] = floor;
     }
   }
@@ -522,7 +522,7 @@ export class ClamsRule {
     if (duplicate) return null;
     const pos = vec(position);
     if (typeof frame?.floorAt === 'function') {
-      const floor = this._floorAt(frame, pos[0], pos[2]);
+      const floor = this._floorAt(frame, pos[0], pos[2], pos[1] + 0.25);
       if (floor !== null) pos[1] = floor;
     }
     const clam = this._newClam('power', team, pos, {
@@ -574,7 +574,7 @@ export class ClamsRule {
     for (const basket of ready) {
       const drill = basket.pendingBreak; basket.pendingBreak = null;
       if (basket.tucked || basket.cooldown > 0) {
-        const floor = this._floorAt(frame, drill.pos[0], drill.pos[2]);
+        const floor = this._floorAt(frame, drill.pos[0], drill.pos[2], drill.pos[1] + 0.25);
         this._newClam('power', basket.team, [drill.pos[0], floor ?? drill.pos[1], drill.pos[2]]);
       } else {
         this._openBasket(basket.team, drill.pos);
@@ -660,13 +660,18 @@ export class ClamsRule {
           }
         }
         if (actorHit) continue;
-        const floor = this._floorAt(frame, next[0], next[2]);
-        if (floor === null || next[1] < floor - 12) {
+        // A roof above this flight segment is not a landing surface. Missing
+        // floor below an airborne clam is a gap; lose it at the live world's
+        // water/fall boundary, rather than deleting a valid throw mid-arc.
+        const floor = this._floorAt(frame, next[0], next[2], Math.max(previous[1], next[1]));
+        const overVoid = floor === null;
+        const lostInVoid = overVoid && (!Number.isFinite(frame?.fallDeathY) || next[1] <= frame.fallDeathY);
+        if (lostInVoid || !overVoid && next[1] < floor - 12) {
           this.state.clams = this.state.clams.filter(item => item.id !== clam.id);
           this._event('clam-lost', { id: clam.id, kind: clam.kind, pos: [...next] });
           continue;
         }
-        if (next[1] <= floor) {
+        if (!overVoid && next[1] <= floor) {
           clam.pos = [next[0], floor, next[2]];
           this._paintPower(clam, clam.pos);
           if (clam.velocity[1] < -1 && clam.bounces < 1) {

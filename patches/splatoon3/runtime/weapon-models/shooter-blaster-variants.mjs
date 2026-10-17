@@ -5,7 +5,7 @@ import { FOLLOWUP_MODELS as NOZZLE_FINISHES } from './variants-nozzlenose-d-fini
 import { MODELS as A } from './shooters.mjs';
 import { MODELS as B } from './shooters-b.mjs';
 import { MODELS as C } from './blasters.mjs';
-import { recolor, fixedSurfaces, fixedCanSurface, canAccessoryAnimation, stones, lamp, glowSticks, greenFoil, paintPattern, colorRing, starSticker, plainSticker, fixedInkSurface, partitionInk, coralTag, squidCharm } from './variant-shooter-surfaces.mjs';
+import { recolor, fixedSurfaces, fixedCanSurface, canAccessoryAnimation, stones, gravityStones, heavyStones, lamp, glowSticks, greenFoil, paintPattern, colorRing, starSticker, plainSticker, fixedInkSurface, partitionInk, coralTag, squidCharm } from './variant-shooter-surfaces.mjs';
 const BASE = { ...A, ...B, ...C };
 const SOURCE = 'https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/mush/1130/WeaponInfoMain.json';
 function variant(baseId, sourceRow, name, article, palette, decorate, followsCan = false) {
@@ -27,7 +27,7 @@ function variant(baseId, sourceRow, name, article, palette, decorate, followsCan
 }
 export const VARIANT_MODELS = Object.freeze({
   Shooter_First_01: variant('s3-shooter-first', 'Shooter_First_01', 'もみじシューター', 'Custom_Splattershot_Jr.', {}, starSticker, true),
-  Shooter_Gravity_01: variant('s3-shooter-gravity', 'Shooter_Gravity_01', '.52ガロンデコ', '.52_Gal_Deco', {}, stones),
+  Shooter_Gravity_01: variant('s3-shooter-gravity', 'Shooter_Gravity_01', '.52ガロンデコ', '.52_Gal_Deco', {}, gravityStones, true),
   Shooter_Blaze_02: variant('s3-shooter-blaze', 'Shooter_Blaze_02', 'プロモデラー彩', 'Colorz_Aerospray', { '#a8acb2':'#647cbb', '#6e737a':'#794c9f' }, d => colorRing(d)),
   Shooter_Heavy_02: variant('s3-shooter-heavy', 'Shooter_Heavy_02', '.96ガロン爪', 'Clawz_.96_Gal', {}, d => paintPattern(d, ['#babba7'], ['#b89054','#3e3025'], 'spots')),
   Shooter_TripleMiddle_02: variant('s3-shooter-triplemiddle', 'Shooter_TripleMiddle_02', 'H3リールガンSNAK', 'H-3_Nozzlenose_VIP-R', { '#293b99':'#5c7850', '#364cb2':'#809778', '#2b43b8':'#5c7850' }, d => paintPattern(d,['#5c7850','#26282d'],['#607c4c','#354632'])),
@@ -65,7 +65,7 @@ export const VARIANT_MODELS = Object.freeze({
     // Only the rear hose's former red geometry is chrome; trigger/tip stay orange.
     recolor(d.body, {'#ea7f32':'#bfc8ce'}, (x, y, z) => z < -.15 || (x < -.025 && y > .05 && z < .03));coralTag(d);
   }, true),
-  Shooter_Heavy_01: variant('s3-shooter-heavy', 'Shooter_Heavy_01', '.96ガロンデコ', '.96_Gal_Deco', {}, stones),
+  Shooter_Heavy_01: variant('s3-shooter-heavy', 'Shooter_Heavy_01', '.96ガロンデコ', '.96_Gal_Deco', {}, heavyStones),
   Shooter_Long_01: variant('s3-shooter-long', 'Shooter_Long_01', 'ジェットスイーパーカスタム', 'Custom_Jet_Squelcher', {}, d => partitionInk(d, 'ink', '#ecd047')),
   Shooter_Long_02: variant('s3-shooter-long', 'Shooter_Long_02', 'ジェットスイーパーCOBR', 'Jet_Squelcher_COB-R', {}, d => paintPattern(d,['#0d6366','#0a4f52'],['#a0865b','#6c593c'])),
   Shooter_QuickLong_01: variant('s3-shooter-quicklong', 'Shooter_QuickLong_01', 'スペースシューターコラボ', 'Annaki_Splattershot_Nova', { '#d5dc28':'#ac2858' }),

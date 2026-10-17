@@ -52,6 +52,10 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }
   if(rel==='src/main.js'){
+    code=once(code,'prepareMatch: () => self._prepareGyro(),',
+      'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); self._prepareGyro(); },',
+      'iPad start tap initializes audio before deferred screen wipe');
+
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
