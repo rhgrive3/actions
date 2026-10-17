@@ -1,0 +1,9 @@
+import {inflateSync}from'node:zlib';
+export function inspectPNG(b){
+ if(b.length<33||!b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))throw Error('Invalid PNG');
+ let width,height,type,depth,interlace;const chunks=[];for(let p=8;p+12<=b.length;){const n=b.readUInt32BE(p),kind=b.toString('ascii',p+4,p+8);if(p+12+n>b.length)throw Error('Truncated PNG');const d=b.subarray(p+8,p+8+n);if(kind==='IHDR'){width=d.readUInt32BE(0);height=d.readUInt32BE(4);depth=d[8];type=d[9];interlace=d[12];}if(kind==='IDAT')chunks.push(d);p+=n+12;}
+ if(!width||!height||width*height>16777216||depth!==8||![2,6].includes(type)||interlace!==0)throw Error('Unsupported PNG pixel format');
+ const channels=type===6?4:3,stride=width*channels,raw=inflateSync(Buffer.concat(chunks),{maxOutputLength:(stride+1)*height});if(raw.length!==(stride+1)*height)throw Error('Invalid PNG scanlines');let previous=Buffer.alloc(stride),opaque=0,nonblack=0;const colors=new Set();const paeth=(a,b,c)=>{const p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);return pa<=pb&&pa<=pc?a:pb<=pc?b:c;};
+ for(let y=0;y<height;y++){const at=y*(stride+1),filter=raw[at],row=Buffer.alloc(stride);if(filter>4)throw Error('Invalid PNG filter');for(let x=0;x<stride;x++){const a=x>=channels?row[x-channels]:0,u=previous[x],c=x>=channels?previous[x-channels]:0;row[x]=(raw[at+1+x]+[0,a,u,Math.floor((a+u)/2),paeth(a,u,c)][filter])&255;}for(let x=0;x<stride;x+=channels){const alpha=channels===4?row[x+3]:255;if(alpha>16){opaque++;if(Math.max(row[x],row[x+1],row[x+2])>8)nonblack++;colors.add((row[x]>>3)*1024+(row[x+1]>>3)*32+(row[x+2]>>3));}}previous=row;}
+ if(opaque<width*height*.01||nonblack<width*height*.005||colors.size<8)throw Error('Blank, transparent or uniform native frame');return{width,height,opaquePixels:opaque,nonblackPixels:nonblack,quantizedColors:colors.size};
+}
