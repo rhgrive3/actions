@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {fixture} from './source-fixture.mjs';
 import {makePaintWorld} from './paint-authority-fixture.mjs';
 import {crabShooterSplashPlan, crabShooterDamage} from '../runtime/crab-tank-projectile.mjs';
-const extraExports=`export {crabTankShotGeometry} from './patches/splatoon3/runtime/crab-tank-aim.mjs';`;
+const extraExports=`export {crabTankShotGeometry} from './patches/splatoon3/runtime/crab-tank-aim.mjs'; export {fidelityInkTail} from './patches/splatoon3/runtime/weapons-fidelity.mjs';`;
 async function setup({terrain=false}={}){
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports});
   const world=terrain?makePaintWorld(f):null;
@@ -31,6 +31,8 @@ test('Crab source identity and applied paint/collision values agree with the arc
     if(mode==='shooter'){
       assert.equal(p.radius,source.ShooterPaintParam.WidthHalfNear);
       assert.equal(p.s3CrabFlightPaint.spec.width,source.ShooterSplashPaintParam.WidthHalf);
+      const probe={...p,pos:p.start.clone().add(new f.THREE.Vector3(0,0,20))};
+      assert.equal(f.fidelityInkTail(probe,1,.1,[1,1,1,1,1]),source.spl__BulletShooterTailLengthParam.EndMaxLength/.1);
     }else{
       assert.equal(p.s3CrabFlightPaint.spec.count,source.CannonParam.SplashParam.SpawnParam.SpawnNum);
       assert.equal(p.s3CrabFlightPaint.spec.spacing,source.CannonParam.SplashParam.SpawnParam.SpawnBetweenLength);
@@ -133,6 +135,41 @@ test('Crab direct damage decays at the actual swept contact time at 30/60/120Hz'
     values.push(hits[0].amount);
   }
   for(const value of values.slice(1))assert.ok(Math.abs(value-values[0])<1e-9);
+});
+
+test('Crab socket beyond a thin wall cannot launch damage or flight paint through cover',async()=>{
+  for(const mode of ['shooter','cannon']){
+    const {f,a}=await setup();const {level}=makePaintWorld(f,{wall:true});
+    const wall=level.blocks[1];wall.center.z=.46;wall.half.z=.04;wall.aabbMin.z=.42;wall.aabbMax.z=.5;level.faces[1].origin.z=.42;
+    const victim=f.make();victim.team=1;victim.pos.set(0,0,3);f.G.actors=[a,victim];
+    a.aimPoint.set(0,.5,100);a.intent.fire=mode==='shooter';a.intent.sub=mode==='cannon';advance(a,20/60);
+    const p=f.G.projectiles.list.at(-1);assert.equal(p.s3AllSpecialMode,mode);assert.ok(p.start.z<.42,'accepted origin remains on the near side');
+    const hits=[];f.G.projectiles.applyHit=(_owner,target,damage)=>hits.push({target,damage});
+    for(let i=0;i<120;i++)f.G.projectiles.update(1/60);
+    assert.equal(hits.some(h=>h.target===victim),false);
+    assert.equal(p.s3CrabFlightPaint.index,0,'no detached flight ink is released beyond the wall');
+  }
+});
+
+test('Crab terminated by a boss clips the pending flight splash before that contact',async()=>{
+  const {f,a}=await setup();a.intent.fire=true;advance(a,20/60);a.intent.fire=false;
+  const p=f.G.projectiles.list.at(-1);p.pos.set(0,5,0);p.prev.copy(p.pos);p.start.copy(p.pos);p.vel.set(0,0,201.6);
+  // Rebase the paint observer to this controlled launch, retaining its sourced
+  // first9.75 distance and the actual production projectile/boss collision.
+  p.s3CrabFlightPaint.last.copy(p.pos);
+  f.G.boss={segHit(from,to){if(from.z<=9.4&&to.z>=9.4){const t=(9.4-from.z)/(to.z-from.z),point=from.clone().lerp(to,t);return{point,dist:from.distanceTo(point),target:{hp:100,id:1}};}return null;},hit(){}};
+  for(let i=0;i<4;i++)if(f.G.projectiles._step(p,1/60))break;
+  assert.equal(p.s3CrabFlightPaint.index,0);
+  assert.equal(f.G.projectiles._s3SplashDrops?.length||0,0);
+});
+
+test('Crab entering ball again at the same position repaints enemy ink',async()=>{
+  const {f,a}=await setup({terrain:true});const calls=[],native=f.G.paint.splat;
+  f.G.paint.splat=function(pos,r,team,opts){if(team===0)calls.push(pos.clone());return native.call(this,pos,r,team,opts);};
+  a.intent.squid=true;a._updateSpecial(1/60);const before=calls.length;assert.ok(before>0);
+  a.intent.squid=false;a._updateSpecial(1/60);
+  f.G.paint.splat(new f.THREE.Vector3(0,.005,0),.9,1,{seed:.2,face:0,kind:'source-splash'});
+  a.intent.squid=true;a._updateSpecial(1/60);assert.ok(calls.length>before,'re-entry at an unchanged position starts a fresh contact');
 });
 
 test('Crab rolling paints its entire grounded path without waiting for contact damage',async()=>{

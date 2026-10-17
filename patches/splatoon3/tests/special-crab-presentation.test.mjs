@@ -6,7 +6,7 @@ let cached;
 async function boot() {
   if (cached) return cached;
   const f = await fixture({ fullRuntime: true, realProjectiles: true, includeCharacter: true, productionComposition: true,
-    extraExports: "export * from './patches/splatoon3/runtime/crab-tank-aim.mjs';" });
+    extraExports: "export * from './patches/splatoon3/runtime/crab-tank-aim.mjs'; export {replaySpecial} from './patches/splatoon3/runtime/all-specials.mjs';" });
   f.G.scene = new f.THREE.Scene(); f.G.settings = { quality: 'high' }; f.G.mode = 'match'; f.G.match.state = 'playing';
   f.G.physics.segment = (_a, _b, h) => { h.hit = false; return h; };
   return cached = f;
@@ -86,6 +86,15 @@ test('cannon socket remains on the authored pod surface rather than a guessed ac
   } finally { r.close(); }
 });
 
+test('pilot step smoothing cannot separate the live model muzzle from its physical launch socket', async () => {
+  const f = await boot(), r = rig(f);
+  try {
+    r.a.smoothY = .2; r.a.smoothYV = 0; r.step(0);
+    assert.equal(r.ch.root.position.y, r.a.pos.y + .2, 'native pilot root still uses its step smoothing');
+    for (const mode of ['shooter', 'cannon']) closeVector(socket(f, r.d, mode), f.crabTankMuzzle(r.a, mode, new f.THREE.Vector3()), mode + ' stays on the physical shared socket');
+  } finally { r.a.smoothY = 0; r.close(); }
+});
+
 test('accepted shooter and cannon marks recoil their own barrel along its bore at 30/60/120 Hz', async () => {
   const f = await boot();
   for (const hz of [30, 60, 120]) {
@@ -133,4 +142,20 @@ test('actual accepted emissions animate recoil with the optional FX system absen
     assert.ok(gun.position.distanceTo(gun.userData.rest) > 0, 'accepted emission immediately retracts shooter');
     assert.ok(f.G.projectiles.list.some(p => p.owner === r.a && p.s3AllSpecialMode === 'shooter'), 'native projectile was emitted');
   } finally { f.G.projectiles.clear(); r.close(); }
+});
+
+test('accepted remote replay drives recoil without FX while duplicates and invalid events do not',async()=>{
+  const f=await boot(),r=rig(f);
+  try{
+    r.a.remote=true;f.G.fx=null;
+    const event={actor:r.a,id:'crabTank',activation:1,action:'shot',pos:r.a.pos.toArray(),seed:1};
+    f.G.time+=1;assert.equal(f.replaySpecial(f.installedRuntime,event),true);r.step(0);
+    const mark=r.a._s3SpecialMarks.shot;
+    assert.ok(r.d.model.groups.clawL.position.distanceTo(r.d.model.groups.clawL.userData.rest)>0);
+    f.G.time+=1;assert.equal(f.replaySpecial(f.installedRuntime,event),false);
+    assert.equal(f.replaySpecial(f.installedRuntime,{...event,seed:NaN}),false);
+    assert.equal(r.a._s3SpecialMarks.shot,mark,'rejected replay cannot restart recoil');
+    assert.equal(f.replaySpecial(f.installedRuntime,{...event,action:'cannon',seed:2}),true);r.step(0);
+    assert.ok(r.d.model.groups.clawR.position.distanceTo(r.d.model.groups.clawR.userData.rest)>0);
+  }finally{r.close();}
 });

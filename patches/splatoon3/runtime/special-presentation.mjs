@@ -142,6 +142,9 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     // marks retract them along the aimed bore, without kicking the chassis or
     // changing the other gun. Curves are INKWAVE presentation calibration.
     d.holder.position.copy(base);
+    // Actor.root carries the pilot's visual step smoothing. The ground rig
+    // and shared launch sockets use the actor's physical feet instead.
+    d.holder.position.y -= a.smoothY || 0;
     d.holder.rotation.set(...spec.rot);
     const rig = d.crabRig;
     d.model.root.getWorldQuaternion(rig.parentQ).invert();

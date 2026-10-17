@@ -1208,6 +1208,10 @@ export function fidelityInkTail(p,tail,drawnRadius,look) {
   if(style==='crown')return Math.max(1,1+(tail*look[3]-1)/look[4]);
   if(p?.type!=='shot'||!(drawnRadius>0)||!p.start||!p.pos)return Math.max(1,1+(tail*look[3]-1)/look[4]);
   const travel=p.start.distanceTo(p.pos),speed=p.vel?p.vel.length():0;
+  // Chariot's own tail table caps the end length at 2. The main-weapon
+  // two-frame fallback stretches a 3.36/F Crab round into a 6.72-unit rod.
+  // DelayShotFrame=4 is archived; its exact attachment law is unverified.
+  if(p.s3AllSpecial==='crabTank')return Math.max(1,Math.min(travel,2)/drawnRadius);
   return Math.max(1,Math.min(travel,speed*shotTailFrames(p)/60)/drawnRadius);
 }
 export function fidelityInkLook(p) {

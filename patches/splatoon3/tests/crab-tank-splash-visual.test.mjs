@@ -1,7 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
-import { updateCrabSplashVisuals, clearCrabSplashVisuals } from '../runtime/crab-tank-splash-visual.mjs';
+import { resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const root = fileURLToPath(new URL('../../../', import.meta.url));
+const builtSite = process.env.INKWAVE_BUILT_SITE && resolve(process.env.INKWAVE_BUILT_SITE);
+// Fail on missing emitted files instead of silently exercising source modules.
+const vendorUrl = pathToFileURL(resolve(builtSite || resolve(root, 'inkwave-public'), 'vendor/three/build/three.module.js'));
+const helperUrl = pathToFileURL(resolve(builtSite || root, 'patches/splatoon3/runtime/crab-tank-splash-visual.mjs'));
+const [THREE, { updateCrabSplashVisuals, clearCrabSplashVisuals }] = await Promise.all([
+  import(vendorUrl.href), import(helperUrl.href),
+]);
 
 function drop(mode, team = 0, x = 1) {
   return { spec: { crabMode: mode, noSpecial: true }, team,
@@ -72,6 +81,7 @@ test('steady updates reuse GPU/CPU resources without random calls or gameplay mu
   Object.freeze(d); Object.freeze(system._s3SplashDrops);
   game.physics = { segment() { throw new Error('visual must not query physics'); } };
   game.paint = { splat() { throw new Error('visual must not paint'); } };
+  Object.defineProperty(game, 'fx', { get() { throw new Error('visual must not depend on optional FX'); } });
   updateCrabSplashVisuals(system, game, THREE);
   const mesh = meshOf(game), geometry = mesh.geometry, material = mesh.material;
   const matrix = mesh.instanceMatrix, colors = mesh.instanceColor;
@@ -172,4 +182,40 @@ test('systems have separate lifetimes and owner colors support missing team pale
     clearCrabSplashVisuals(system, game);
     assert.equal(game.scene.children.length, 1); assert.equal(second.parent, game.scene);
   } finally { clearCrabSplashVisuals(system, game); clearCrabSplashVisuals(other, game); }
+});
+
+test('production update and clear own splash mesh lifetime with optional FX absent', async () => {
+  // The source fixture routes runtime/vendor imports through INKWAVE_BUILT_SITE
+  // too, so this verifies the emitted integration as well as the direct helper.
+  const { fixture } = await import('./source-fixture.mjs');
+  const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true,
+    extraExports: "export {spawnSplashDrop} from './patches/splatoon3/runtime/blaster-flight-paint.mjs';" });
+  const { G } = f;
+  G.scene = new f.THREE.Scene(); G.fx = undefined;
+  G.physics.segment = (_from, _to, hit) => { hit.hit = false; return hit; };
+  const system = G.projectiles;
+  try {
+    for (let cycle = 0; cycle < 2; cycle++) {
+      const d = f.spawnSplashDrop(G, { owner: { remote: false, color: G.teamColors[0] }, team: 0, seed: 1,
+        from: new f.THREE.Vector3(1, 6, 2), radius: 1,
+        spec: { crabMode: 'shooter', noSpecial: true, gravity: .016 * 3600, drag: .02 } });
+      assert.ok(d); const birthY = d.pos.y;
+      system.update(1 / 60);
+      const mesh = meshOf(G);
+      assert.ok(mesh?.isInstancedMesh, 'installed update invokes the helper without FX');
+      assert.equal(mesh.count, 1); assert.ok(d.pos.y < birthY, 'shared queue advanced before presentation');
+      const matrix = new f.THREE.Matrix4(); mesh.getMatrixAt(0, matrix);
+      close(matrix.elements[13], d.pos.y);
+      const disposed = { mesh: 0, geometry: 0, material: 0 };
+      mesh.addEventListener('dispose', () => disposed.mesh++);
+      mesh.geometry.addEventListener('dispose', () => disposed.geometry++);
+      mesh.material.addEventListener('dispose', () => disposed.material++);
+      system.clear(); system.clear();
+      assert.equal(mesh.parent, null); assert.equal(meshOf(G), undefined);
+      assert.equal(system._s3SplashDrops.length, 0, 'installed clear also retires the shared queue');
+      assert.deepEqual(disposed, { mesh: 1, geometry: 1, material: 1 });
+      system.update(1 / 60);
+      assert.equal(meshOf(G), undefined, 'empty update after clear does not resurrect resources');
+    }
+  } finally { system.clear(); }
 });

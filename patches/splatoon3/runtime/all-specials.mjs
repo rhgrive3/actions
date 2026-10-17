@@ -24,7 +24,7 @@ import { objectDamageScale, objectDamageRow, withObjectDamageCause } from './sub
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 import { specialGaugeLocked, startSpecialGauge, endSpecialGauge, SPECIAL_GAUGE_FRAMES } from './tacticooler-gauge.mjs';
 import { configureCrabProjectile, paintCrabFlight, crabShooterDamage, withCrabImpactPaint, startCrabWallDrop } from './crab-tank-projectile.mjs';
-import { crabTankShotGeometry } from './crab-tank-aim.mjs';
+import { CRAB_TANK_RIG, crabTankShotGeometry } from './crab-tank-aim.mjs';
 import { updateCrabSplashVisuals, clearCrabSplashVisuals } from './crab-tank-splash-visual.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-specials.install.v1');
@@ -50,7 +50,7 @@ const SPECIALS = Object.freeze({
   ultraStamp: { name: 'Ultra Stamp', source: 'WeaponSpUltraStamp', duration: [7.5, 9.5, 11], radius: 8, paintRadius: 5, near: 40, far: 40, status: '11.3.0 table: swing splash 40 at 4; throw 220/60 at 3.6/8, paint 5, 450/570/660F; 100 contact is community-reported and action hitboxes are calibrated' },
   zipcaster: { name: 'Zipcaster', source: 'WeaponSpSuperHook', duration: 9, radius: 6, paintRadius: 1.4, near: 45, far: 35, status: '11.3.0 table: 540F, 1.5× ink capacity, hook/per-second ink costs vary with Special Power Up; hook blast 45/35 at 5.25/6; direct hit and hook flight mapping still need game comparison' },
   killerWail: { name: 'Killer Wail 5.1', source: 'WeaponSpMicroLaser', duration: [308/60, 348/60, 368/60], radius: 27, paintRadius: 0, near: 3.5, far: 3.5, status: '11.3.0 table: 36F charge, 35 raw every 5F, 180/220/240F laser lifetime, 20F after-wait and dual launch; world conversion/lock geometry calibrated' },
-  crabTank: { name: 'Crab Tank', source: 'WeaponSpChariot', duration: [8, 9.5, 11], radius: 4.8, paintRadius: 4.5, near: 30, far: 30, direct: 50, status: '11.3.0 table: 20F shooter/cannon start, shooter repeat 12F→4F over90F (bias.2; interpolation calibrated), cannon lock32F, 500 armor, 480/570/660F; 25F finish lock and steering need retail comparison' },
+  crabTank: { name: 'Crab Tank', source: 'WeaponSpChariot', duration: [8, 9.5, 11], radius: 4.8, paintRadius: 4.5, near: 30, far: 30, direct: 50, status: '11.3.0 PvP: 20F shooter/cannon start and ball exit, shooter first12F/term90F/bias.2, cannon no-shot32F, 500 armor, 480/570/660F, no shots in final25F; retained unverified defaults/model: terminal4F, cannon repeat75F/speed18, ball paint.9/speed8.5, steering and interpolation; see crab source audit' },
   reefslider: { name: 'Reefslider', source: 'WeaponSpSkewer', duration: 158/FPS, radius: 14.9, paintRadius: 7.51, near: 220, far: 70, status: '11.3.0 table: 38F grounded startup, invulnerability from25F, movement54F/cancel after15F, recovery28F and player collision radius.8; blast/contact220/70, SPU damage×1/1.1/1.2 and paint7.51/8.26/9.012; trajectory calibrated' },
   tripleInkstrike: { name: 'Triple Inkstrike', source: 'WeaponSpTripleTornado', duration: 6, radius: 7.7, paintRadius: 7, near: 37.5, far: 37.5, status: '11.3.0 table: 360F, 7.7 damage radius, 7 paint and 50F spread; 37.5 per 5F from public mechanics, marker flight calibrated' },
   superChump: { name: 'Super Chump', source: 'WeaponSpFirework', duration: 10.583, radius: 6, paintRadius: 3.5, near: 70, far: 35, status: '11.3.0 table: 70/35 at 3.6/6, paint radius 3.5/3.8/4.1 and damage radii ×1/1.1/1.2 by Special Power Up; decoy HP 60, 108F flight, 210F burst and 635F special; count/spread calibrated' },
@@ -262,9 +262,10 @@ function stepSourceFlight(system,p,dt,step,game) {
     if(p.s3AllSpecial==='crabTank'&&p.s3CrabFlightPaint){
       const end=p.s3CrabFlightPaint.end.copy(p.pos);
       if(p.fidelityImpactActor)end.copy(p.prev).lerp(p.pos,p.fidelityImpactT);
-      else if(done&&system._fidelityCollision?.world?.hit){
-        const hit=system._fidelityCollision.world,len=p.prev.distanceTo(p.pos);
-        if(len>1e-9)end.copy(p.prev).lerp(p.pos,clamp(hit.dist/len,0,1));
+      else if(done&&system._fidelityCollision){
+        const c=system._fidelityCollision,hit=c.boss||(c.world?.hit?c.world:null),len=p.prev.distanceTo(p.pos);
+        if(hit&&len>1e-9){const distance=finite(hit.dist)?hit.dist:hit.point?p.prev.distanceTo(hit.point):len;
+          end.copy(p.prev).lerp(p.pos,clamp(distance/len,0,1));}
       }
       paintCrabFlight(game,p,end,(frames-i-1)/FPS);
     }
@@ -1314,6 +1315,16 @@ function paintCrabRoll(rt,actor,state,from) {
   }
   (state.rollPaintLast||=to.clone()).copy(to);
 }
+function crabLaunchGeometry(rt,actor,mode,origin,direction){
+  crabTankShotGeometry(actor,mode,origin,direction);
+  // An offset socket can extend completely through thin cover. Sweep from
+  // the actor's safe centre at the authored pivot height before accepting it.
+  // Keep the visible socket and the ordinary unoccluded launch identical.
+  const anchor=rt.v15.copy(actor.pos);anchor.y+=CRAB_TANK_RIG.scale*CRAB_TANK_RIG[mode].pivot[1];
+  const hit=rt.api.G.physics?.segment?.(anchor,origin,rt.hit,true);
+  if(hit?.hit&&finite3(hit.point)&&finite3(hit.normal))
+    origin.copy(hit.point).addScaledVector(hit.normal,(mode==='shooter'?.2:.1)+.005);
+}
 function updateWorld(rt,dt) {
   const list=rt.system._s3AllSpecialObjects;if(!Array.isArray(list)||!(dt>0))return;
   for(let i=list.length-1;i>=0;i--){
@@ -1669,14 +1680,15 @@ function activeStep(rt,actor,dt) {
       crabBall(rt,actor,state,false);moveActor(rt,actor,dt,state,{speed:0,squid:false,jump:false});
       if(elapsed>=state.finishUntil)endSpecial(rt,actor,'duration');return;
     }
-    if(state.wasRolling&&!rolling){state.nextShot=Math.max(state.nextShot,elapsed+20/60);state.nextCannon=Math.max(state.nextCannon,elapsed+20/60);state.fireStart=null;}
+    if(state.wasRolling&&!rolling){state.nextShot=Math.max(state.nextShot,elapsed+20/60);state.nextCannon=Math.max(state.nextCannon,elapsed+20/60);state.fireStart=null;state.rollPaintLast=null;}
     if(rolling){state.fireStart=null;}
     state.wasRolling=rolling;
     const rollFrom=rolling&&actor.grounded?actor.pos.clone():null;
     moveActor(rt,actor,dt,state,{speed:rolling?8.5:'crab',squid:false,jump:true});
     if(rolling&&actor.grounded)paintCrabRoll(rt,actor,state,rollFrom||actor.pos);
+    else state.rollPaintLast=null;
     if(actor.intent.sub&&!rolling&&elapsed+1e-8<state.duration-25/60&&elapsed+1e-8>=state.nextCannon){
-      const origin=rt.v0,dir=rt.v1;crabTankShotGeometry(actor,'cannon',origin,dir);
+      const origin=rt.v0,dir=rt.v1;crabLaunchGeometry(rt,actor,'cannon',origin,dir);
       launch(rt,actor,'crabTank',origin,dir,{speed:18,grav:18,drag:.12,life:1.7,damage:50,radius:4.5,size:.28,paintRadius:4.5,sourceMode:'cannon',seed:nextSeed(state)});
       emitAction(rt,actor,state.id,state.serial,'cannon',origin,rt.v2.copy(origin).addScaledVector(dir,16),nextSeed(state));
       state.nextCannon=elapsed+75/FPS;state.nextShot=Math.max(state.nextShot,elapsed+32/FPS);state.fireStart=null;state.cannonT=elapsed+32/60;
@@ -1686,7 +1698,7 @@ function activeStep(rt,actor,dt) {
       if(state.fireStart===null)state.fireStart=elapsed;
     }else state.fireStart=null;
     if(!rolling&&actor.intent.fire&&elapsed+1e-8<state.duration-25/60&&elapsed+1e-8>=state.nextShot){
-      const origin=rt.v0,dir=rt.v1;crabTankShotGeometry(actor,'shooter',origin,dir);
+      const origin=rt.v0,dir=rt.v1;crabLaunchGeometry(rt,actor,'shooter',origin,dir);
       launch(rt,actor,'crabTank',origin,dir,{type:'shot',directOnly:true,damage:32,radius:1.6,size:.2,speed:3.36*FPS,grav:4,drag:.04,life:1.25,sourceMode:'shooter',sequence:state.shotSequence++,seed:nextSeed(state),damageReduce:{max:32,min:16,start:9/60,end:25/60}});
       emitAction(rt,actor,state.id,state.serial,'shot',origin,rt.v2.copy(origin).addScaledVector(dir,20),nextSeed(state),{damage:32});
       const progress=clamp((elapsed-state.fireStart)/(90/60),0,1),interval=12-8*Math.pow(progress,.2);
@@ -2221,7 +2233,9 @@ export function replaySpecial(api,event) {
   }
   const objectAccepted=replayObjectEvent(rt,actor,event);
   if(event.action==='objectHit')return objectAccepted;
-  return replayFx(rt,actor,event);
+  const accepted=replayFx(rt,actor,event);
+  if(accepted&&event.id==='crabTank')api.crabTankPresentationEvent?.(event);
+  return accepted;
 }
 
 export const ALL_SPECIALS = SPECIALS;

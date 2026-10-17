@@ -72,9 +72,10 @@ try {
     const camera = new THREE.PerspectiveCamera(45, 4 / 3, .01, 200);
     Object.assign(G, { scene, renderer, camera, settings: { quality: 'high' }, mode: 'match', actors: [], time: 0,
       teamColors: [new THREE.Color('#ff7711'), new THREE.Color('#2255dd')], match: { state: 'playing', playing: () => true, canRespawn: () => false }, fx: null });
-    const cases = [], images = [], failures = [], records = [];
+    const cases = [], images = [], captures = [], failures = [], records = [];
     const expect = (ok, name, detail = null) => { if (!ok) failures.push({ name, detail }); };
     const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+    const wallCases = [null, [1.5, 1.8], [.7, .9], [.5, .55], [.42, .50]];
     const oldPush = api.Projectiles.prototype._push;
     api.Projectiles.prototype._push = function(p) {
       if (p.s3AllSpecial === 'crabTank') {
@@ -156,6 +157,7 @@ try {
       let changed = 0;
       for (let i = 0; i < before.length; i += 4) if (Math.abs(before[i] - after[i]) + Math.abs(before[i + 1] - after[i + 1]) + Math.abs(before[i + 2] - after[i + 2]) >= 9) changed++;
       expect(changed > 30, name + ' live actor/chassis contributes visible pixels', { changed });
+      captures.push({ name, changedPixels: changed });
     }
     function retire(a) { G.actors = G.actors.filter(x => x !== a); a.character.dispose(); }
 
@@ -186,22 +188,28 @@ try {
       retire(a);
     }
     // Real damage and CPU/GPU paint. A target behind a wall must remain safe,
-    // including the case where the neutral muzzle is inside that wall.
-    for (const hz of [30, 60, 120]) for (const mode of ['shooter', 'cannon']) for (const wall of [null, [1.5, 1.8], [.7, .9]]) {
+    // including walls overlapping the neutral muzzle and thin walls entirely
+    // between the actor and muzzle. These exercise different admission paths.
+    for (const hz of [30, 60, 120]) for (const mode of ['shooter', 'cannon']) for (const wall of wallCases) {
       console.log(`crab-check: collision ${mode}/${wall?.[0] ?? 'target'}/${hz}Hz`);
       stage(wall); const a = await actor(), target = await actor(1);
-      target.pos.set(0, 0, 4); target.character.root.position.copy(target.pos); target.invuln = 0; target.hp = 100;
+      const targetDistance = mode === 'shooter' && !wall ? 18 : 4;
+      target.pos.set(0, 0, targetDistance); target.character.root.position.copy(target.pos); target.invuln = 0; target.hp = 100;
       activate(a); aim(a, 0, 0); tick(a, hz);
       const start = records.length; a.intent[mode === 'shooter' ? 'fire' : 'sub'] = true;
       for (let i = 0; i < hz * 2 && records.length === start; i++) tick(a, hz);
       a.intent.fire = a.intent.sub = false;
       for (let i = 0; i < hz * 1.5; i++) tick(a, hz);
-      const damage = 100 - target.hp, painted = G.paint.counts[0], label = `${mode}/${wall ? wall[0] < 1 ? 'muzzle-wall' : 'wall' : 'target'}/${hz}Hz`;
+      const wallName = wall ? wall[0] < .45 ? 'behind-muzzle-wall' : wall[0] < .6 ? 'barrel-wall' : wall[0] < 1 ? 'muzzle-wall' : 'wall' : 'target';
+      const damage = 100 - target.hp, painted = G.paint.counts[0], label = `${mode}/${wallName}/${hz}Hz`;
       expect(wall ? damage === 0 : damage > 0, label + ' target damage/occlusion', { damage, target: target.pos.toArray() });
-      expect(painted > 0, label + ' real ownership grid receives ink', { painted });
-      expect(a.stats.turf > 0 && a.special === 0, label + ' owned turf without special refill', { turf: a.stats.turf, special: a.special });
-      cases.push({ kind: 'collision-paint-damage', hz, mode, wall, damage, painted, turf: a.stats.turf, special: a.special });
-      if (hz === 60) capture(`impact-${mode}-${wall ? wall[0] < 1 ? 'muzzle-wall' : 'wall' : 'target'}`, a, Math.PI, true);
+      // The farther shooter target allows its first scheduled flight drop to
+      // land before direct collision retires the head. Actor hits need no
+      // invented impact splat beneath the victim.
+      expect(painted > 0, label + ' real ownership grid follows contact/drop lifetime', { painted });
+      expect(a.stats.turf === painted * G.paint.cell ** 2 && a.special === 0, label + ' exact owned turf without special refill', { turf: a.stats.turf, special: a.special, painted });
+      cases.push({ kind: 'collision-paint-damage', hz, mode, wall, targetDistance, damage, painted, turf: a.stats.turf, special: a.special });
+      if (hz === 60) capture(`impact-${mode}-${wallName}`, a, 0, true);
       retire(a); retire(target);
     }
 
@@ -220,7 +228,7 @@ try {
       expect(gunSnapshot(a, 'shooter')?.d.holder.visible, `rolling/${hz}Hz tank returns`);
       retire(a);
     }
-    for (const mode of ['shooter', 'cannon']) for (const wall of [null, [1.5, 1.8], [.7, .9]]) {
+    for (const mode of ['shooter', 'cannon']) for (const wall of wallCases) {
       const rows = cases.filter(c => c.kind === 'collision-paint-damage' && c.mode === mode && JSON.stringify(c.wall) === JSON.stringify(wall));
       expect(rows.length === 3 && rows.every(c => c.damage === rows[0].damage && c.painted === rows[0].painted), `${mode}/${wall?.[0] ?? 'target'} identical damage and ownership at 30/60/120Hz`, rows);
     }
@@ -228,7 +236,8 @@ try {
     expect(rolls.length === 3 && rolls.every(c => c.painted === rolls[0].painted), 'rolling identical ownership at 30/60/120Hz', rolls);
     G.projectiles.clear(); G.paint.dispose(); levelMesh.geometry.dispose(); levelMesh.material.dispose(); renderer.dispose();
     api.Projectiles.prototype._push = oldPush;
-    return { scope: 'emitted production composition, catalogue admission, source Character, real Physics/Projectiles and GPU/CPU PaintSystem; controlled floor and walls; no Switch comparison', cases, failures, images };
+    return { scope: 'emitted production composition, catalogue admission, source Character, real Physics/Projectiles and GPU/CPU PaintSystem; controlled floor and walls; GPU atlas uploads at captures; no Switch comparison',
+      rig: CRAB_TANK_RIG, geometryStatus: 'INKWAVE authored mesh coordinates and presentation curves; not measured retail dimensions or joint limits', cases, captures, failures, images };
   }, prefix);
   for (const { name, data } of result.images) fs.writeFileSync(path.join(out, name), Buffer.from(data.split(',')[1], 'base64'));
   delete result.images;
