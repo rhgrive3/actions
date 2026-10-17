@@ -55,7 +55,10 @@ export async function fixture(options = {}) {
     const raw = fs.readFileSync(file, 'utf8');
     const upstream = file.startsWith(UPSTREAM + path.sep);
     const rel = upstream ? relative : path.relative(ROOT, file);
-    const native = !BUILT && upstream ? adaptNative(relative, raw) : raw;
+    // Production composition consumes raw source. Skip only the default
+    // constrained pass; preserve explicitly customized adapter callbacks.
+    const native = !BUILT && upstream && (!productionComposition || adaptNative !== adaptConstrainedSource)
+      ? adaptNative(relative, raw) : raw;
     const source = !BUILT && productionComposition && upstream ? adaptProduction(rel, raw)
       : upstream ? native : adaptRuntime(rel, native);
     const mod = new vm.SourceTextModule(source, { context, identifier: file,
