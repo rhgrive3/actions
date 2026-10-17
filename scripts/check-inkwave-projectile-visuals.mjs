@@ -273,6 +273,24 @@ async function openGameContext({ mobile = false } = {}) {
     a.character.setVisible(true);
     a.character.root.position.copy(a.pos); a.character.root.rotation.y = 0;
     a.character.root.updateMatrixWorld(true);
+    // Match.setup originally places every actor at a deterministic native
+    // spawn-deck offset. Re-establish those actual stage placements after
+    // variable-duration boot: frozen bots otherwise remain at different
+    // post-intro positions and intercept different Roller projectiles.
+    // Keep bots alive and collidable. This is only a capture fixture reset,
+    // not a gameplay collision exemption.
+    for (const actor of g.match.actors) {
+      if (actor === a) continue;
+      const otherPad = G.level.spawnPads[actor.team];
+      if (!otherPad || !Number.isInteger(actor.slot)) throw new Error('Missing canonical bot spawn');
+      const angle = actor.slot / 4 * Math.PI * 2 + 0.6;
+      const stand = new V(otherPad.x + Math.cos(angle) * 1.2, otherPad.y,
+        otherPad.z + Math.sin(angle) * 1.2);
+      actor.spawnAt(stand, actor.team === 0 ? 0 : Math.PI);
+      actor.invuln = 0;
+      if (actor.bot) { actor.bot.aimYaw = actor.yaw; actor.bot.aimPitch = 0; }
+      actor.character.root.updateMatrixWorld(true);
+    }
     G.scene.updateMatrixWorld(true);
     g._skipRender = false;
     const floorBlock = G.physics.level.blocks[ground.block];
