@@ -1,0 +1,69 @@
+{
+  "source": null,
+  "build": "f252ee8828b755725013488dfad90948634b4ee702a9b0afbc0dedc246f67ab6",
+  "results": [
+    {
+      "engine": "chromium",
+      "cadences": [
+        30,
+        60,
+        120
+      ],
+      "airChargeFrames": 164,
+      "minimumInk": 2.25,
+      "pitchDegrees": 1.6,
+      "straightSlosherDamage": 70,
+      "swimGraze": true,
+      "stages": [
+        [
+          "halyard",
+          2048,
+          1
+        ],
+        [
+          "tidewater",
+          1024,
+          1
+        ],
+        [
+          "cargo",
+          2048,
+          1
+        ],
+        [
+          "kelpline",
+          1024,
+          1
+        ],
+        [
+          "range",
+          2048,
+          1
+        ],
+        [
+          "tidewater",
+          1024,
+          1
+        ],
+        [
+          "halyard",
+          2048,
+          1
+        ],
+        [
+          "cargo",
+          2048,
+          1
+        ],
+        [
+          "tidewater",
+          1024,
+          1
+        ]
+      ],
+      "sharedPixelDifference": 0,
+      "canvasBytesBefore": 16777216,
+      "canvasBytesAfter": 8388608
+    }
+  ]
+}

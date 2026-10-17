@@ -1,4 +1,4 @@
-import { installWeaponAccuracy, withShotBias } from './weapon-accuracy.mjs';
+import { installWeaponAccuracy, withShotBias, accuracyEnvelope, recoveringJumpBias } from './weapon-accuracy.mjs';
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { DualiesAccuracy } from './dualies-accuracy.mjs';
@@ -437,6 +437,7 @@ export function installWeapons(context, profile) {
     this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false; this.s3BlasterMoveRemaining = 0;
     this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
     this.s3DualiesJumpT = null; this.s3DualiesJumpSeen = this.a?.s3JumpSerial || 0;
+    this.s3ShooterJumpSeen = this.a?.s3JumpSerial || 0;
     this.s3SloshRecovery = false; this.s3SloshPrevYaw = null; this.s3SloshTurnDelta = 0;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0;
     this.s3SplatlingHeld = false;
@@ -535,40 +536,35 @@ export function installWeapons(context, profile) {
   const BLASTER_END = Number.isFinite(blasterParam?.Jump_DegBiasEndFrame) ? blasterParam.Jump_DegBiasEndFrame / BLASTER_REF_HZ : null;
   const BLASTER_BIAS_MAX = Number.isFinite(blasterParam?.Jump_DegBiasMax) ? blasterParam.Jump_DegBiasMax : null;
   const blasterJumpSupported = () => Number.isFinite(BLASTER_START) && Number.isFinite(BLASTER_END) && BLASTER_END > BLASTER_START && BLASTER_BIAS_MAX > 0;
-  const blasterJumpBias = age => age <= BLASTER_START ? BLASTER_BIAS_MAX
-    : age >= BLASTER_END ? 0 : BLASTER_BIAS_MAX * (BLASTER_END - age) / (BLASTER_END - BLASTER_START);
+  const blasterJumpBias = age => recoveringJumpBias(blasterParam.Stand_DegBiasMax,
+    BLASTER_BIAS_MAX, age * BLASTER_REF_HZ, blasterParam);
   WeaponRunner.prototype.s3BlasterJumpState = function (w) {
     if (!w || w.kind !== 'blaster' || !blasterJumpSupported())
       return { supported: false, active: false, age: null, frames: null, bias: 0, envelope: 0, ground: 0, phase: 'idle', recovering: false };
     const active = this.s3BlasterJumpT != null, bias = active ? blasterJumpBias(this.s3BlasterJumpT) : 0;
-    const envelope = w.spreadAir, ground = w.spreadGround;
+    const envelope = accuracyEnvelope(w, this.a.grounded, this.s3BlasterJumpT, blasterParam, BLASTER_REF_HZ), ground = w.spreadGround;
     const frames = active ? this.s3BlasterJumpT * BLASTER_REF_HZ : null;
     const phase = !active ? 'idle' : frames <= BLASTER_START * BLASTER_REF_HZ ? 'held'
       : frames < BLASTER_END * BLASTER_REF_HZ ? 'recovering' : 'recovered';
     return { supported: true, active, age: active ? this.s3BlasterJumpT : null,
       frames, bias, envelope, ground, phase, recovering: phase === 'recovering' };
   };
-  // #887: pinned WeaponManeuverNormal names Jump_DegBiasDecreaseStartFrame=25 /
-  // Jump_DegBiasEndFrame=70 / Jump_DegBiasMax=0.4. Per Inkipedia's data
-  // explanation these DegBias fields describe the hidden OUTER-RETICLE
-  // PROBABILITY ("bias"), while Stand/Jump_DegSwerve=2/7.5 are the deviation
-  // angles. The same 25F/70F window therefore drives a per-shot selection, not
-  // an angle lerp. Mirror the already-sourced Blaster jump-bias owner: publish
-  // the outer envelope, sample the probability bias at fire time, and keep the
-  // LapOver post-roll cone independent. The exact 25F->70F curve shape is not
-  // published; this uses the same monotone linear recovery as the Blaster owner.
+  // Pinned WeaponManeuverNormal: hold 25F, recover by 70F, jump bias .4.
+  // DegBias is a median angular fraction, never a Bernoulli cone selector.
+  // Both the maximum angle and the bias recover; use the shared calibrated
+  // interior so the HUD and launch cannot disagree or rebound after 70F.
+  // LapOver post-roll accuracy remains an independent firing mode.
   const dualiesParam = profile.weaponsFidelityCompletion?.weapons?.dualies?.WeaponParam;
   const DUALIES_START = Number.isFinite(dualiesParam?.Jump_DegBiasDecreaseStartFrame) ? dualiesParam.Jump_DegBiasDecreaseStartFrame / BLASTER_REF_HZ : null;
   const DUALIES_END = Number.isFinite(dualiesParam?.Jump_DegBiasEndFrame) ? dualiesParam.Jump_DegBiasEndFrame / BLASTER_REF_HZ : null;
   const DUALIES_BIAS_MAX = Number.isFinite(dualiesParam?.Jump_DegBiasMax) ? dualiesParam.Jump_DegBiasMax : null;
   const dualiesJumpSupported = () => Number.isFinite(DUALIES_START) && Number.isFinite(DUALIES_END) && DUALIES_END > DUALIES_START && DUALIES_BIAS_MAX > 0;
-  const dualiesJumpBias = age => age <= DUALIES_START ? DUALIES_BIAS_MAX
-    : age >= DUALIES_END ? 0 : DUALIES_BIAS_MAX * (DUALIES_END - age) / (DUALIES_END - DUALIES_START);
   WeaponRunner.prototype.s3DualiesJumpState = function (w) {
     if (!w || w.kind !== 'dualies' || !dualiesJumpSupported())
       return { supported: false, active: false, age: null, frames: null, bias: 0, envelope: 0, ground: 0, phase: 'idle', recovering: false };
-    const active = this.s3DualiesJumpT != null, bias = active ? dualiesJumpBias(this.s3DualiesJumpT) : 0;
-    const envelope = w.spreadAir, ground = w.spreadGround;
+    const active = this.s3DualiesJumpT != null;
+    const bias = active ? this.s3DualiesAccuracy.chance(this.a.grounded, this.s3DualiesJumpT) : 0;
+    const envelope = accuracyEnvelope(w, this.a.grounded, this.s3DualiesJumpT, dualiesParam, BLASTER_REF_HZ), ground = w.spreadGround;
     const frames = active ? this.s3DualiesJumpT * BLASTER_REF_HZ : null;
     const phase = !active ? 'idle' : frames <= DUALIES_START * BLASTER_REF_HZ ? 'held'
       : frames < DUALIES_END * BLASTER_REF_HZ ? 'recovering' : 'recovered';
@@ -588,7 +584,7 @@ export function installWeapons(context, profile) {
       else if (this.s3BlasterJumpT != null) this.s3BlasterJumpT += dt;
       this.s3BlasterJumpSeen = jumpSerial;
       this.s3BlasterWasGrounded = grounded;
-      if (this.s3BlasterJumpT != null && grounded && this.s3BlasterJumpT >= BLASTER_END) this.s3BlasterJumpT = null;
+      if (this.s3BlasterJumpT != null && this.s3BlasterJumpT + 1e-10 >= BLASTER_END) this.s3BlasterJumpT = null;
     } else {
       this.s3BlasterJumpT = null;
       this.s3BlasterWasGrounded = false;
@@ -599,17 +595,20 @@ export function installWeapons(context, profile) {
       if (jumpSerial !== this.s3DualiesJumpSeen) this.s3DualiesJumpT = 0;
       else if (this.s3DualiesJumpT != null) this.s3DualiesJumpT += dt;
       this.s3DualiesJumpSeen = jumpSerial;
-      // The sourced clock ends at 70F whether or not the actor has landed. An
-      // airborne actor past 70F returns to the normal airborne 7.5 endpoint;
-      // keeping the clock would select the 0-bias 2 endpoint in the air.
-      if (this.s3DualiesJumpT != null && this.s3DualiesJumpT >= DUALIES_END) this.s3DualiesJumpT = null;
+      // End recovery regardless of landing. Inactive means ordinary accuracy,
+      // so clearing this timer cannot bring back the original jump penalty.
+      if (this.s3DualiesJumpT != null && this.s3DualiesJumpT + 1e-10 >= DUALIES_END) this.s3DualiesJumpT = null;
     } else {
       this.s3DualiesJumpT = null;
       this.s3DualiesJumpSeen = this.a?.s3JumpSerial || 0;
     }
     if (weapon.kind === 'shooter') {
-      if (this.s3WasGrounded && !this.a.grounded) this.s3JumpSpreadAge = 0;
+      const jumpSerial = this.a.s3JumpSerial || 0;
+      if (jumpSerial !== this.s3ShooterJumpSeen) this.s3JumpSpreadAge = 0;
       else if (this.s3JumpSpreadAge != null) this.s3JumpSpreadAge += dt;
+      this.s3ShooterJumpSeen = jumpSerial;
+      if (this.s3JumpSpreadAge != null && this.s3JumpSpreadAge * BLASTER_REF_HZ + 1e-10 >= this.s3Accuracy.jumpEnd)
+        this.s3JumpSpreadAge = null;
       this.s3WasGrounded = !!this.a.grounded;
       let next = input;
       const isSquid = this.a.form === 'squid';
@@ -989,7 +988,7 @@ export function installWeapons(context, profile) {
     const locked = !!(runner?.s3Turret || runner?.lockT > 0);
     const state = runner?.s3DualiesJumpState?.(w);
     const accuracy = runner?.s3DualiesAccuracy;
-    let effective = spreadDeg;
+    let effective = Number.isFinite(spreadDeg) ? spreadDeg : locked ? w.spreadLock : w.spreadGround;
     let angularBias = null;
     if (state?.active && !locked) {
       // S3 DegSwerve is the maximum horizontal angle and DegBias is the
@@ -997,7 +996,7 @@ export function installWeapons(context, profile) {
       // Retain the full maximum at the HUD and launch, independent of bloom.
       effective = state.envelope;
       angularBias = state.bias;
-      if (runner?.s3DualiesAdmitting) accuracy?.shot(!!a.grounded);
+      if (runner?.s3DualiesAdmitting) accuracy?.shot(!!a.grounded, state.age);
     } else if (accuracy && !locked) {
       // Direct helpers sample the current distribution without consuming an
       // admitted shot; the real runner alone owns per-shot progression.
@@ -1005,7 +1004,7 @@ export function installWeapons(context, profile) {
         ? accuracy.shot(!!a.grounded)
         : accuracy.chance(!!a.grounded);
       if (runner?.s3DualiesAdmitting)
-        effective = a.grounded ? w.spreadGround : w.spreadAir;
+        effective = w.spreadGround;
     }
     const emit = () => fireDualies.call(this, a, w, effective, hand);
     const result = Number.isFinite(angularBias)
@@ -1059,32 +1058,24 @@ export function installWeapons(context, profile) {
       // already distinguishes a jump from a ledge fall; do not reintroduce
       // the airborne penalty through the inactive-state scalar fallback.
       if (state.supported) return state.active ? state.envelope : state.ground;
-      return this.a.grounded ? w.spreadGround : w.spreadAir;
+      return w.spreadGround;
     }
-    if (w.kind === 'shooter' && this.s3JumpSpreadAge != null) {
-      const age = this.s3JumpSpreadAge, hold = w.jumpSpreadHold ?? 0, end = Math.max(hold + 1e-10, w.jumpSpreadRecoverEnd ?? hold);
-      let base;
-      if (age <= hold + 1e-10) base = w.spreadAir;
-      else if (age < end - 1e-10) base = w.spreadAir + (w.spreadGround - w.spreadAir) * ((age - hold) / (end - hold));
-      else { base = w.spreadGround; if (this.a.grounded) this.s3JumpSpreadAge = null; }
-      return base; // S3 maximum outer envelope; bias is applied on each admitted shot
-    }
+    if (w.kind === 'shooter') return accuracyEnvelope(w, this.a.grounded, this.s3JumpSpreadAge,
+      profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam, BLASTER_REF_HZ);
     if (w.kind === 'dualies') {
-      // #887: publish the jump-derived outer envelope while the biased recovery
-      // clock is active; the per-shot probability is sampled at fire time. The
-      // LapOver post-roll turret cone stays a separate owner.
+      // Publish the recovering angular maximum; the median angular fraction
+      // is applied at fire time. The post-roll cone stays a separate owner.
       if (this.s3Turret || this.lockT > 0) return w.spreadLock;
       const state = this.s3DualiesJumpState(w);
-      const base = state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
+      const base = state.active ? state.envelope : w.spreadGround;
       return base; // Sourced maximum yaw deviation; bloom affects median bias, not this endpoint.
     }
-    if (w.kind === 'shooter') return this.a.grounded ? w.spreadGround : w.spreadAir;
     return spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
   Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {
     const state = a?.weaponRunner?.s3BlasterJumpState?.(w);
-    const bias = state?.active ? state.bias : (a.grounded ? 0 : BLASTER_BIAS_MAX);
+    const bias = state?.active ? state.bias : blasterParam.Stand_DegBiasMax;
     const full = state?.active ? state.envelope : spreadDeg;
     return withShotBias(a, bias, bias, () => fireBlaster.call(this, a, w, full));
   };
@@ -1097,7 +1088,8 @@ export function installWeapons(context, profile) {
   Projectiles.prototype.fireShooter = function (a, weapon, spreadDeg) {
     const accuracy = a.weaponRunner?.s3Accuracy;
     const bias = accuracy?.shot(!!a.grounded, a.weaponRunner?.s3JumpSpreadAge);
-    const maxDeviation = Number.isFinite(spreadDeg) ? spreadDeg : (a.grounded ? weapon.spreadGround : weapon.spreadAir);
+    const maxDeviation = Number.isFinite(spreadDeg) ? spreadDeg
+      : accuracyEnvelope(weapon, a.grounded, a.weaponRunner?.s3JumpSpreadAge, shooterSource?.WeaponParam, BLASTER_REF_HZ);
     const result = withShotBias(a, bias, bias,
       () => fireShooter.call(this, a, weapon, maxDeviation));
     if (a.weaponRunner && weapon.kind === 'shooter') {

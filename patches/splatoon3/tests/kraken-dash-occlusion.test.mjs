@@ -11,6 +11,7 @@ function world(walls=[]) {
 }
 const wall=(z=1.5,xmin=-5,xmax=5)=>({kind:'box',min:[xmin,0,z],max:[xmax,5,z+.5]});
 function dash(a=f.make()){
+ a._integrate=f.Actor.prototype._integrate; // Retain native squid ground/grate/gravity collision.
  a.pos.set(0,0,1);a.team=0;a.aimYaw=a.yaw=0;a.aimPitch=0;a.weapon={...a.weapon,special:'krakenRoyale',specialCost:100};a.special=100;a.remote=false;a.intent.move.set(0,0,0);
  a._prevIntent||={};Object.assign(a._prevIntent,{fire:false,sub:false,jump:false,squid:false,booyah:false});
  a._startSpecial();assert.ok(a.specialActive);for(let i=0;i<61;i++){f.G.time+=1/60;a._updateSpecial(1/60);}a.intent.fire=true;a._updateSpecial(1/60);for(let i=0;i<36;i++)a._updateSpecial(1/60);a.intent.fire=false;a._updateSpecial(1/60);assert.equal(a._s3AllSpecialState.phase,'dash');return a;

@@ -100,6 +100,23 @@ export function attackAirRateScale(a, P) {
   return attacking && ratio > 0 ? ratio : 1;
 }
 
+/** The ordinary air steering floor is a handling convenience, not a license
+ * to walk at 4.6 WU/s while a real main-weapon action limits the humanoid to
+ * 2.88 WU/s (Splat Roller) or less (full-charge Charger). Attack targets use
+ * the same source-derived runner velocity as grounded movement. Air momentum
+ * still approaches the target using the existing acceleration, never snaps.
+ */
+export function airborneHumanTargetSpeed(actor, P, mist = 1) {
+  const runner = actor.weaponRunner;
+  const speed = runner.moveSpeed();
+  const s = runner.catalogState;
+  const attack = !actor.specialActive && !actor.superJumpState &&
+    (runner.firingPose?.() ||
+      (!!runner.s3RollerAttack && !runner.rolling) ||
+      !!s?.pending || !!s?.melee || s?.stream > 0 || s?.chargeF > 0);
+  return attack ? speed : Math.max(speed, P.airMinSpeed * mist);
+}
+
 /** Actor-vs-actor soft push (Match.update) written world-aware. Upstream added the whole correction to pos after the
  * body was collision-resolved, so a local actor taking 100% of a remote overlap (up to 1.7 radii) could land past the
  * midplane of a thin wall and be resolved out its far side on the next tick. The push now advances in sub-steps well

@@ -11,18 +11,20 @@ function launch(f,a,charge,u,{oldDouble=false}={}){
  try{f.projectiles.fireSplatling(a,{...a.weapon,spreadPitchGround:0},0);}finally{f.projectiles._fireRound=original;}
  return f.projectiles.list.at(-1);
 }
-test('actual Splatling launch samples the absolute speed envelope once at each charge base',async()=>{
+test('actual Splatling launch applies the source rate once to every charge-dependent base',async()=>{
  const {f,a}=await rig();
- for(const [charge,base] of [[0,63],[.25,86.625],[2/3,126],[1,126]])for(const [u,offset] of [[0,-7.2],[.25,-1.44],[.5,0],[.75,1.44],[1,7.2]]){
-  const p=launch(f,a,charge,u);close(p.vel.length(),base+offset);
+ // The endpoints are +/-12%; the first/third quartiles are +/-12% * .2.
+ // These independent quantiles reject the earlier absolute +/-7.2 WU/s law.
+ for(const [charge,base] of [[0,63],[.25,86.625],[2/3,126],[1,126]])for(const [u,ratio] of [[0,.88],[.25,.976],[.5,1],[.75,1.024],[1,1.12]]){
+  const p=launch(f,a,charge,u);close(p.vel.length(),base*ratio);
   close(p.fidelityPlayerCollision.initRadius,.225);close(p.fidelityFieldCollision.initRadius,.2);
  }
 });
 test('negative old uniform layer compounds the dedicated sampler and violates both full-charge bounds',async()=>{
  const {f,a}=await rig();
- close(launch(f,a,1,0,{oldDouble:true}).vel.length(),103.68);
- close(launch(f,a,1,1,{oldDouble:true}).vel.length(),148.32);
- assert.ok(103.68<118.8&&148.32>133.2);
+ close(launch(f,a,1,0,{oldDouble:true}).vel.length(),97.5744);
+ close(launch(f,a,1,1,{oldDouble:true}).vel.length(),158.0544);
+ assert.ok(97.5744<110.88&&158.0544>141.12);
 });
 test('native recorder captures the sampled birth velocity and ghosts preserve it without a second sample',async t=>{
  const {f,a}=await rig(true);

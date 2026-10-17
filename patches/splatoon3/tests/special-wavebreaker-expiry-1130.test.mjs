@@ -25,6 +25,7 @@ for(const [ap,maxFrames] of [[0,160],[57,216]]) {
   const objects=()=>f.G.projectiles._s3AllSpecialObjects||[];
   const generator=objects().find(o=>o.kind==='wave');
   assert.ok(generator,'real special deployment is required');
+  assert.equal(generator.phase,'active','consumer starts after actual terrain contact');
   assert.equal(generator.maxWaveFrame,maxFrames/60);
   tickWorld(f,90);
   const first=objects().find(o=>o.kind==='waveFront'&&o.index===0);

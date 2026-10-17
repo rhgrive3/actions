@@ -30,12 +30,15 @@
  *    forward smear with equal total length and equal area (see splashStretch).
  */
 import { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
+import { mainInkFootprint } from './main-ink-footprints.mjs';
 const EPS = 1e-9;
 const STEP_FRAMES_PER_SECOND = 60;
 // A splash that has not reached terrain after 4 s of free fall (> 450 world
 // units at Blaster FreeGravity) has left every authored stage. Bound the queue.
 const MAX_DROP_FRAMES = 240;
-const MAX_QUEUED_DROPS = 512;
+// Authoritative paint is bounded by accepted weapon cadence and the 240-frame
+// lifetime, not a visual capacity. Evicting the oldest drop at 512 silently
+// erased future floor ownership in crowded fights. Drawing has its own cap.
 export const SPLASH_SHOOTER_PAINT_DEFAULTS = Object.freeze({
   DepthMaxDropHeight: 3, DepthMinDropHeight: 10, DepthScaleMax: 1.2, DepthScaleMin: 1.0,
 });
@@ -135,7 +138,7 @@ function dropQueue(game) {
 // Owner-only falling splash. `spec` supplies gravity, depth law and random
 // spawn velocity; `radius` is the sourced paint half-width for this splash.
 export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direction = null, radius, spec,
-  depth = true, kind = 'drop', initialDownSpeed = 0 }) {
+  depth = true, kind = 'drop', initialDownSpeed = 0, catchUpSeconds = 0, footprint = null }) {
   const queue = dropQueue(game);
   if (!queue || !owner || owner.remote || !(radius > 0) || !spec || !from) return null;
   const V = from.constructor;
@@ -147,13 +150,13 @@ export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direc
   const vx = random ? (unit(1) * 2 - 1) * random.x : 0, vy = random ? (unit(2) * 2 - 1) * random.y : 0;
   const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;
   const drop = {
-    owner, team, seed: unit(0), radius, spec, depth, kind,
-    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0, carry: 0,
+    owner, team, seed: unit(0), radius, spec, depth, kind, footprint,
+    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0,
+    carry: Number.isFinite(catchUpSeconds) && catchUpSeconds > 0 ? catchUpSeconds * STEP_FRAMES_PER_SECOND : 0,
     pos: new V(from.x, from.y, from.z),
     vel: new V(fx * vz - fz * vx, vy - Math.max(0, initialDownSpeed), fz * vz + fx * vx),
     next: new V(), hit: null,
   };
-  if (queue.length >= MAX_QUEUED_DROPS) queue.shift();
   queue.push(drop);
   return drop;
 }
@@ -171,7 +174,7 @@ function landSplashDrop(game, drop, hit) {
   // independent ShotColHit burst-sphere is not a SplashPaintParam drop.
   const kind = drop.spec?.surfaceOnly && drop.depth
     ? SOURCE_SPLASH_PAINT_KIND : drop.kind;
-  const opts = { seed: drop.seed, kind, claimOwner: drop.owner };
+  const opts = { seed: drop.seed, kind, claimOwner: drop.owner, footprint: drop.footprint };
   if (surfaceOnly) opts.face = hit.face;
   const floor = hit.normal.y > .45;
   if (drop.depth && floor && (drop.dirX || drop.dirZ)) {
@@ -203,12 +206,16 @@ function hitRecord(v) {
 // changes how many whole reference frames are consumed per call.
 export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
   const queue = system?._s3SplashDrops;
-  if (!queue?.length || !(dt > 0)) return 0;
+  // A zero-time flush consumes only explicitly accrued birth-step debt. The
+  // catalogue uses it after its fixed steps; existing drops accrue no time.
+  if (!queue?.length || !Number.isFinite(dt) || dt < 0) return 0;
   const physics = game?.physics;
-  let landed = 0;
+  let landed = 0, write = 0;
+  const landings = [];
   for (let i = 0; i < queue.length; i++) {
     const d = queue[i];
     let done = !physics?.segment || !d.owner || d.owner.remote;
+    let stepTime = (1 - d.carry) / STEP_FRAMES_PER_SECOND;
     d.carry += dt * STEP_FRAMES_PER_SECOND;
     while (!done && d.carry >= 1 - 1e-7) {
       d.carry -= 1;
@@ -218,12 +225,21 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
       d.next.copy(d.pos).addScaledVector(d.vel, step);
       const hit = d.hit = physics.segment(d.pos, d.next, d.hit || hitRecord(d.pos), true);
       d.frames++;
-      if (hit?.hit) { landSplashDrop(game, d, hit); landed++; done = true; break; }
+      if (hit?.hit) { landings.push({drop:d,hit,time:stepTime});landed++;done=true;break; }
       d.pos.copy(d.next);
+      stepTime += step;
       if (d.frames >= MAX_DROP_FRAMES || d.pos.y < waterY - 2) done = true;
     }
-    if (done) { queue.splice(i, 1); i--; }
+    if (!done) queue[write++] = d;
   }
+  // Stable linear compaction: landing a large volley no longer repeatedly
+  // shifts all later drops. Survivors retain their deterministic order.
+  queue.length = write;
+  // Two opposite-team drops may land on different reference ticks inside one
+  // 30Hz update. Apply them by collision time, not by queue iteration order;
+  // otherwise the earlier landing can incorrectly overwrite the later one.
+  landings.sort((a,b)=>a.time-b.time);
+  for(const landing of landings)landSplashDrop(game,landing.drop,landing.hit);
   return landed;
 }
 
@@ -249,7 +265,8 @@ export function paintDistanceFlight(game, projectile, state, end = projectile?.p
     // sourced reach sticks to that wall instead of falling to the floor.
     if (typeof state.wallSplash === 'function' && state.wallSplash(state.sample, index)) continue;
     const drop = spawnSplashDrop(game, { owner: projectile.owner, team: projectile.team, seed: projectile.seed,
-      salt: index, from: state.sample, direction: state.direction, radius, spec, depth: true, kind });
+      salt: index, from: state.sample, direction: state.direction, radius, spec, depth: true, kind,
+      footprint: mainInkFootprint(projectile.s3Weapon || projectile.catalog?.r) });
     if (!drop) paintImmediate(game, projectile, state, index, radius);
   }
   state.distance = limit; state.last.copy(end);
@@ -259,6 +276,7 @@ export function paintDistanceFlight(game, projectile, state, end = projectile?.p
 // resolve the same falling drop synchronously; landing paint is identical.
 function paintImmediate(game, projectile, state, index, radius) {
   const drop = { owner: projectile.owner, team: projectile.team, seed: seededSplashUnit(projectile.seed, index * 8),
+    footprint: mainInkFootprint(projectile.s3Weapon || projectile.catalog?.r),
     radius, spec: state.spec, depth: true, kind: 'drop', dirX: 0, dirZ: 0, spawnY: state.sample.y, frames: 0,
     pos: state.sample.clone(), next: state.sample.clone(), hit: null };
   const len = Math.hypot(state.direction.x, state.direction.z);

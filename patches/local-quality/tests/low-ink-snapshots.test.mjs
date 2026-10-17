@@ -5,7 +5,7 @@ import { adaptHudSnapshots } from '../hud-snapshots-adapter.mjs';
 import { hudFrameSnapshot } from '../hud-snapshots.mjs';
 import { adaptGearSub } from '../../splatoon3/gear-sub-adapter.mjs';
 import { subInkSpec } from '../../splatoon3/runtime/sub-ready.mjs';
-import { stormGaugeFraction } from '../../splatoon3/runtime/storm-effects.mjs';
+import { specialGaugeFraction } from '../../splatoon3/runtime/storm-effects.mjs';
 
 // Actual native admission, Main update and HUD/Mobile methods; DOM drawing and
 // projectile creation are bounded sinks. This does not exercise full S3 timing.
@@ -91,10 +91,10 @@ test('#117 original threshold and touch-only fallback reproduce false shortage',
   // Link the actual Storm gauge source dependency in this historical fixture (#469).
   // Keep only the legacy threshold mutation as the negative control.
   const legacyBody = once(old,
-    "import { stormGaugeFraction } from '../splatoon3/runtime/storm-effects.mjs';\n",
+    "import { specialGaugeFraction } from '../splatoon3/runtime/storm-effects.mjs';\n",
     '', 'legacy HUD fixture Storm dependency');
-  const legacy = new Function('stormGaugeFraction',
-    legacyBody.replaceAll('export ', '') + '; return hudFrameSnapshot;')(stormGaugeFraction);
+  const legacy = new Function('specialGaugeFraction',
+    legacyBody.replaceAll('export ', '') + '; return hudFrameSnapshot;')(specialGaugeFraction);
   const h = fixture({ snapshot: legacy }); h.a.ink = 17.99;
   assert.equal(h.read().frame.inkLow, true);
   const mobileOnly = fixture({ oldMobile: true }); mobileOnly.a.ink = 17.99;

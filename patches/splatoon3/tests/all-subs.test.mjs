@@ -28,6 +28,7 @@ function rawSource(name) {
 function equip(actor, sub) { actor.weapon = { ...actor.weapon, sub }; }
 function deployed(f, actor, sub, pos = [0, 1, 0]) {
   equip(actor, sub);
+  if(sub==='inkMine')actor.pos.set(...pos);
   const object = f.G.projectiles.throwBomb(actor);
   assert.ok(object, `${sub} throw creates a runtime object`);
   object.phase = 'deployed';
@@ -92,7 +93,8 @@ test('catalogue exposes fourteen entries and extracted rows follow the pinned 11
   assert.equal(ALL_SUB_SPECS.autobomb.chaseSeconds,frames(robot.MoveParam.ChaseFrame));
   assert.equal(ALL_SUB_SPECS.autobomb.noTargetSeconds,frames(robot.MoveParam.NoReceiveTargetBurstWaitFrame));
   assert.equal(ALL_SUB_SPECS.autobomb.findRotateFrames,robotRaw.MoveParam.FindRotateFrame);
-  assert.equal(ALL_SUB_SPECS.autobomb.noTargetBurstWaitFrames,robotRaw.MoveParam.NoReceiveTargetBurstWaitFrame);
+  assert.equal(ALL_SUB_SPECS.autobomb.noTargetBurstWaitFrames,robotRaw.MoveParam.UnfindBurstWaitFrame);
+  assert.equal(ALL_SUB_SPECS.autobomb.unreceivedTargetWaitFrames,robotRaw.MoveParam.NoReceiveTargetBurstWaitFrame);
   assert.equal(ALL_SUB_SPECS.autobomb.chaseBurstWaitFrames,robotRaw.MoveParam.ChaseBurstWaitFrame);
   assert.equal(ALL_SUB_SPECS.autobomb.approachBurstWaitFrames,robotRaw.MoveParam.FindApproachBurstWaitFrame);
   assert.equal(ALL_SUB_SPECS.autobomb.unfindBurstWaitFrames,robotRaw.MoveParam.UnfindBurstWaitFrame);
@@ -285,7 +287,7 @@ test('real WeaponRunner sub hold and release pay the selected cost and create a 
   assert.equal(actor.ink, 40, 'Fizzy uses its 60-point source cost');
   assert.equal(object.sourceLife, 2);
   assert.ok(Number.isSafeInteger(object.seed));
-  assert.equal(object.fuse, frames(15), 'the first pop waits the extracted 15 frames');
+  assert.equal(object.fuse, frames(30), 'the initial ground-only fuse includes the community-observed warning, not just raw wait15');
   assert.equal(object.popLimit, 1, 'a short hold gets one pop');
   assert.ok(events.some(event => event.phase === 'spawn' && event.subId === 'fizzy' && event.actor === actor && event.sourceLife === 2));
 });
@@ -505,14 +507,11 @@ test('placing a third Ink Mine detonates and damages from the oldest deployed mi
   const oldest=deployed(f,owner,'inkMine',[0,1,0]);oldest.age=30;oldest.activeAt=0;
   const newer=deployed(f,owner,'inkMine',[20,1,0]);newer.age=10;newer.activeAt=0;
   equip(owner,'inkMine');
-  const third=f.G.projectiles.throwBomb(owner);
-  third.pos.set(8,1,0);third.prev.set(8,1.1,0);third.vel.set(0,-1,0);
-  f.G.physics.segment=(start,end,hit)=>{
-    hit.hit=true;hit.dist=start.distanceTo(end);hit.point.copy(end);hit.normal.set(0,1,0);return hit;
-  };
+  owner.pos.set(8,1,0);
   const hits=[];const applyHit=f.G.projectiles.applyHit.bind(f.G.projectiles);
   f.G.projectiles.applyHit=(...args)=>{hits.push(args);return applyHit(...args);};
   const events=[];const off=f.on('all:sub',event=>events.push(event));
+  const third=f.G.projectiles.throwBomb(owner);
   f.G.projectiles.update(1/60);off?.();
 
   const objects=f.G.projectiles._s3SubObjects;
@@ -654,16 +653,20 @@ test('a live Torpedo blocks a second release before native ink payment',async()=
  first.dead=true;assert.ok(f.G.projectiles.throwBomb(a),'a consumed Torpedo releases the one-live-object gate');
 });
 
-test('Torpedo does not enter its chase phase before the extracted 20-frame delay', async () => {
+test('Torpedo separates calibrated rotation from the extracted post-rotation 20-frame wait', async () => {
   const f=await fixture({fullRuntime:true,realProjectiles:true});
   const owner=f.make('shooter'),enemy=f.make('shooter');owner.team=0;enemy.team=1;
-  const torpedo=deployed(f,owner,'torpedo',[0,6,0]);torpedo.phase='flight';torpedo.activeAt=0;torpedo.vel.set(0,0,0);
+  const torpedo=deployed(f,owner,'torpedo',[0,2,0]);torpedo.phase='flight';torpedo.activeAt=0;torpedo.vel.set(0,0,0);
   enemy.pos.set(5,0,0);
   f.G.physics.segment=()=>null;
+  for(let i=0;i<6;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
+  assert.equal(torpedo.phase,'torpedoRotate');
+  for(let i=0;i<ALL_SUB_SPECS.torpedo.rotationFrames;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
+  assert.equal(torpedo.phase,'torpedoWait');
   for(let i=0;i<19;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
-  assert.equal(torpedo.phase,'flight','the extracted transition delay has not elapsed');
+  assert.equal(torpedo.phase,'torpedoWait','the explicit post-rotation delay has not elapsed');
   f.G.time+=1/60;f.G.projectiles.update(1/60);
-  assert.equal(torpedo.phase,'chase','the extracted 20F delay starts guidance');
+  assert.equal(torpedo.phase,'chase','the extracted 20F wait starts straight travel after rotation');
 });
 
 test('Fizzy blast and native Splat Bomb explosion damage nearby sub devices through source object rates', async () => {
@@ -672,7 +675,8 @@ test('Fizzy blast and native Splat Bomb explosion damage nearby sub devices thro
   fizzyOwner.team=1;wallOwner.team=0;equip(fizzyOwner,'fizzy');equip(wallOwner,'splashWall');
   const wall=deployed(fizzyFixture,wallOwner,'splashWall',[0,1,0]);
   const fizzy=fizzyFixture.G.projectiles.throwBomb(fizzyOwner);
-  fizzy.pos.set(0,1,0);fizzy.prev.copy(fizzy.pos);fizzy.vel.set(0,0,0);fizzy.fuse=1/60;fizzy.popLimit=1;fizzy.pops=1;
+  fizzy.pos.set(0,1,0);fizzy.prev.copy(fizzy.pos);fizzy.vel.set(0,0,0);fizzy.fuse=1/60;fizzy.popLimit=1;fizzy.pops=1;fizzy.grounded=true;
+  fizzyFixture.G.physics.segment=(_start,end,hit)=>{hit.hit=true;hit.point.copy(end);hit.normal.set(0,1,0);return hit;};
   const fizzyRate=objectDamageScale(fizzy,'splashWall','Bomb_Fizzy'),fizzyHp=wall.hp;
   fizzyFixture.G.projectiles.update(1/60);
   near(wall.hp,fizzyHp-ALL_SUB_SPECS.fizzy.bursts[0].damageMax*fizzyRate-fizzyHp/400,

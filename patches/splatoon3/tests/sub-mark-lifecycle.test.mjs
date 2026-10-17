@@ -22,7 +22,7 @@ for(const sub of ['angleShooter','inkMine'])test(`${sub} known mark birth outliv
   if(kind==='clear')b.f.G.projectiles.clear();if(kind==='match')b.f.G.match={...b.f.G.match};
   b.nm._play('a',JSON.parse(JSON.stringify(mark)));
   if(kind==='clear'||kind==='match'||kind==='retired')assert.equal(b.v.s3.revealedUntil,undefined,kind);
-  else near(b.v.s3.revealedUntil[0]-b.f.G.time,5*gearCurve(10,1,sub==='inkMine'?.55:.43,.1));
+  else near(b.v.s3.revealedUntil[0]-b.f.G.time,(5-(mark[5].markAgeFrames||0)/60)*gearCurve(10,1,sub==='inkMine'?.55:.43,.1));
  }
 });
 test('source-cap eviction cannot resurrect old births and owner identity changes reject receipts',async()=>{
@@ -64,7 +64,7 @@ test('ordered JSON tick replays source mark before wire expiry even after receiv
  const flush=()=>{a.f.G.time+=1/60;a.nm._sendTick();b.nm.onMessage('a',packet);const p=b.nm._peer('a');p.tr=packet.ts;p.sim=packet.u;b.nm._playEvents();};
  const shot=a.f.G.projectiles.throwBomb(a.o);flush();b.f.G.projectiles.kitDefenseCandidate=o=>({distance:0,point:o.prev.clone(),onHit(){}});for(let i=0;i<6;i++)b.f.G.projectiles.update(1/60);assert.equal(b.f.G.projectiles._s3SubObjects.length,0);
  shot.pos.set(0,.7,0);shot.prev.copy(shot.pos);shot.vel.set(0,0,60);for(let i=0;i<240;i++)a.f.G.projectiles.update(1/60);
- const events=a.nm.out.filter(e=>e[1]==='ac');assert.ok(events.findIndex(e=>e[5].phase==='mark')<events.findIndex(e=>e[5].phase==='expire'));flush();near(b.v.s3.revealedUntil[0]-b.f.G.time,5*gearCurve(10,1,.43,.1));
+ const events=a.nm.out.filter(e=>e[1]==='ac');assert.ok(events.findIndex(e=>e[5].phase==='mark')<events.findIndex(e=>e[5].phase==='expire'));flush();near(b.v.s3.revealedUntil[0]-b.f.G.time,(5-(events.find(e=>e[5].phase==='mark')[5].markAgeFrames||0)/60)*gearCurve(10,1,.43,.1));
 });
 
 test('observed authority and match replacement permanently retire old marking receipts',async()=>{

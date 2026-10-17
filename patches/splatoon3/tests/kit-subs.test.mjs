@@ -292,15 +292,16 @@ test('a real curling bomb rolls, reflects on a wall after landing, and bursts', 
   assert.ok(cur.fuse > 0, 'the burst window is armed');
   // now a wall must still reflect it (the earlier draft disabled this)
   const vx0 = cur.vel.x;
-  api.G.physics.segment = (a, b, out) => { out.hit = true; out.point = { x: 1, y: b.y, z: b.z }; out.normal = { x: 1, y: 0, z: 0 }; return out; };
+  api.G.physics.segment = (a, b, out) => { out.hit = true; out.point = { x: 1, y: b.y, z: b.z }; out.normal = { x: b.x > a.x ? -1 : 1, y: 0, z: 0 }; return out; };
   cur = tick(api, projectiles, 1 / 60);
   assert.equal(cur.s3Bounces, 1, 'a rolling bomb still reflects on a wall');
   assert.ok(cur.s3Mode === 'rolling', 'it stays rolling, not disabled');
   assert.ok(cur.vel.x !== vx0, 'velocity actually changed on reflection');
-  // bounce budget is a real bound: after MaxBoundNum the bomb stops adding energy
+  // ContactJumpPanel.MaxBoundNum belongs to jump panels, not normal walls.
+  // A narrow corridor may reflect more than three times without stopping.
   for (let i = 0; i < 5; i++) tick(api, projectiles, 1 / 60);
-  assert.equal(cur.s3BounceExhausted, true, 'bounce budget is exhausted and enforced');
-  assert.ok(Math.abs(cur.vel.x) < 1e-12, 'an exhausted bounce budget stops the bomb rather than flipping a dead flag');
+  assert.equal(cur.s3Bounces, 6, 'ordinary walls do not consume the jump-panel bound count');
+  assert.ok(Math.abs(cur.vel.x) > 0, 'the bomb keeps rolling after more than three wall reflections');
 });
 
 test('the real native PaintSystem accepts the rolling trail centre', async () => {
@@ -899,7 +900,7 @@ test('parent: a native ghost bomb remains visual after transport disposal and pe
 });
 
 
-test('S3 Sprinkler extracted parameters and 30F/480F/900F emission phases', async () => {
+test('S3 Sprinkler extracted parameters and 30F/480F/(480+900)F emission phases', async () => {
   const { SPRINKLER, sprinklerPhase, sprinklerShotFrames } = await import('../runtime/kit-sprinkler.mjs');
   assert.equal(SPRINKLER.inkCost, 60);
   assert.equal(SPRINKLER.inkRecoverStop, 1);
@@ -909,11 +910,13 @@ test('S3 Sprinkler extracted parameters and 30F/480F/900F emission phases', asyn
   assert.equal(sprinklerPhase(30), 0);
   assert.equal(sprinklerPhase(479), 0);
   assert.equal(sprinklerPhase(480), 1);
-  assert.equal(sprinklerPhase(900), 2);
-  const shots = sprinklerShotFrames(925);
+  assert.equal(sprinklerPhase(900), 1);
+  assert.equal(sprinklerPhase(1379), 1);
+  assert.equal(sprinklerPhase(1380), 2);
+  const shots = sprinklerShotFrames(1405);
   assert.deepEqual(shots.slice(0,5), [30,34,38,42,46]);
   assert.ok(shots.includes(480), 'source phase boundary 480F');
-  assert.ok(shots.includes(900), 'source phase boundary 900F');
+  assert.ok(shots.includes(1380), 'source second duration ends at 480+900F');
 });
 
 test('native Sprinkler sticks to wall, creates falling owner ink, retires on death without generic explosion', async () => {
@@ -982,6 +985,10 @@ test('Autobomb 11.3 source pins ink, chase frames, damage bands and select-neare
 
 test('real native Autobomb targets, walks and explodes only after a 60F warning',async()=>{
   const api=await production();ground(api,'record');
+  // The chase still has a floor after the single landing sweep. Supply that
+  // support to the separate contact-clearance probe as well.
+  api.G.physics.raycast=(o,d,len,h)=>{h.hit=d.y<0&&o.y>=0&&o.y+d.y*len<=0;
+    if(h.hit){h.point.set(o.x,0,o.z);h.normal.set(0,1,0);}return h;};
   const {projectiles,actor,bomb}=await throwReal(api,'autobomb',0);
   assert.equal(bomb.s3Sub.id,'autobomb');
   assert.equal(bomb.s3Resolved.spec.inkCost,55);
@@ -1013,7 +1020,7 @@ test('real native Autobomb targets, walks and explodes only after a 60F warning'
   assert.equal(projectiles.bombs.length,0);
 });
 
-test('Autobomb no target arms 180F wait, and network ghosts have no kit combat authority',async()=>{
+test('Autobomb no target arms the community-observed 60F warning, and network ghosts have no kit combat authority',async()=>{
   const api=await production();ground(api,'record');
   const {projectiles,actor,bomb}=await throwReal(api,'autobomb',0);
   api.G.actors=[actor];let first=true;
@@ -1024,7 +1031,7 @@ test('Autobomb no target arms 180F wait, and network ghosts have no kit combat a
   };
   projectiles._updateBombs(1/60);assert.equal(bomb.fuse,-1);
   for(let i=0;i<12;i++)projectiles._updateBombs(1/60);
-  assert.ok(bomb.fuse>2.8&&bomb.fuse<=3,'extracted no-target wait');
+  assert.ok(bomb.fuse>.8&&bomb.fuse<=1,'ordinary no-target warning, distinct from the 180F no-received-target fallback');
   assert.deepEqual(kitBombPacket(bomb),['autobomb',0]);
   const ghost={kind:'bomb',ghost:true,pos:new api.THREE.Vector3(),age:0,fuse:-1,team:1,
     vel:new api.THREE.Vector3(),owner:{alive:true}};

@@ -30,6 +30,8 @@ import { kitSubFor } from './kit-subs.mjs';
 import { createVacVortex } from './special-motion.mjs';
 import { withSpecialPresentation } from './special-presentation-owner.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes, damageBigBubblerFromInkVac } from './kit-big-bubbler.mjs';
+import {splashPaintFootprint} from './blaster-flight-paint.mjs';
+import {startSpecialGauge,endSpecialGauge} from './tacticooler-gauge.mjs';
 
 let api = null;
 const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
@@ -37,19 +39,27 @@ export const VAC_ID = 'inkVac';
 
 const RAW_TO_HP = 10;             // repository conversion rawDamageToHP: "/10"
 // #1090: S3 Ink Vac gauge is damage-equivalent (~1100 HP), not round count.
-// 1100 is a verified approximate capacity; upper bound prevents infinite/NaN
+// 1100 is the Wiki's estimated approximate capacity; upper bound prevents infinite/NaN
 // transport values, but is not proof of the remote projectile's damage.
 const ABSORB_CAPACITY_HP = 1100;
 const MAX_ACCEPTED_DAMAGE_HP = 220;
+const SCREEN_ABSORB_DAMAGE_HP = 400; // pinned Chimney MoveParam.DamageValueForDamageTag 4000 /10
 const INHALE_LENGTH = 15;         // pinned LengthMax
 const OWNER_MOVE_SPEED_MIN_CHARGE = 0.09;   // pinned WeaponParam.MoveSpeedMinCharge (per 60 Hz frame)
 const OWNER_MOVE_SPEED_FULL_CHARGE = 0.07;  // pinned WeaponParam.MoveSpeedFullCharge (per 60 Hz frame)
+// S3mix 11.3.0 measures the distinct firing-mode speed as .72 DU/frame;
+// INKWAVE uses 1/10 of that distance scale. It is not an inherited JSON default.
+const OWNER_MOVE_SPEED_EXHALE = 0.072;
 const INHALE_LENGTH_ADD_PER_FRAME = 0.3334; // pinned LengthAddPerFrame
 const OBJECT_DAMAGE_PER_FRAME = 20 / RAW_TO_HP; // pinned DamagePerFrameByObject, raw -> HP
 const INHALE_OBJECT_CAUSE = 'BlowerInhale'; // object-rate table row; exhale uses BlowerExhale_BombCore
 const NEAR_LOW = 0.8, NEAR_MID = 1.1, NEAR_HIGH = 1.4; // pinned RadiusMin Low/Mid/High
 const FAR_LOW = 3.3, FAR_MID = 3.8, FAR_HIGH = 4.3;    // pinned RadiusMax Low/Mid/High
 const SPEED_LOW = 0.55, SPEED_HIGH = 0.7;// pinned SpawnSpeedZ (per frame)
+const SPAWN_SPEED_Y = 0.08;      // pinned SpawnSpeedY and SpawnSpeedYMaxCharge
+const MIN_PLAYER_RADIUS = 0.4;   // pinned ExhaleCollisionParam.RadiusForPlayerMinCharge
+const MUZZLE_OFFSET = 1, MUZZLE_RADIUS = 1.2; // pinned InhaleParam.MuzzleCollision*
+const FOOT_PAINT_FRAMES=20, FOOT_PAINT_WIDTH=1.5, FOOT_PAINT_DEPTH=2;
 const FLY_GRAVITY = 0.003;        // pinned per frame^2
 const FLY_AIR_RESIST = 0.01;      // pinned per frame
 const SPAWN_BLAST_WAIT = 50;      // pinned frames: native projectile LIFETIME before detonation
@@ -83,16 +93,23 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   rawToHp: RAW_TO_HP,
   framesPerSecond: 60,
   breathOriginHeight: 1.0,   // intake origin above feet (kid chest) — calibration
-  frontalEpsilon: -0.05,    // projectile must travel against player aim — calibration
   absorbCapacityDamage: ABSORB_CAPACITY_HP,
   absorbDamageLimit: MAX_ACCEPTED_DAMAGE_HP,
-  absorbStatus: 'damage-proportional, 1100 approximate S3 capacity; remote source damage requires separate authoritative hit attestation',
+  screenAbsorbDamageLimit: SCREEN_ABSORB_DAMAGE_HP,
+  absorbStatus: 'damage-proportional, 1100 community-estimated approximate S3 capacity, not an extracted exact value; remote source damage requires separate authoritative hit attestation',
+  exhaleMoveSpeedStatus: 'S3mix 11.3.0 measured .72 DU/source frame, normalized .072 *60; distinct from pinned charge-dependent inhale speed',
   activationFrames: 17, inhaleStartHumanFrames: 12, inhaleStartSquidFrames: 18,
   inputTimingStatus: 'S3mix 11.3.0 measured startup 17F; human intake starts on13th held frame, squid on19th; retail input sampling unmeasured',
   inhaleLengthAddPerFrame: INHALE_LENGTH_ADD_PER_FRAME,
   inhaleLengthStatus: 'pinned LengthAddPerFrame .3334 and LengthMax 15; reach grows to maximum in about 45 gameplay frames',
   intakeRadiusTiers: Object.freeze({ near: Object.freeze([NEAR_LOW, NEAR_MID, NEAR_HIGH]), far: Object.freeze([FAR_LOW, FAR_MID, FAR_HIGH]) }),
-  geometry: 'frustum grows from zero to LengthMax at LengthAddPerFrame; RadiusMin/RadiusMax are interpreted as near/far, with Low/Mid/High as Special Power Up tiers',
+  muzzleCollisionOffset: MUZZLE_OFFSET, muzzleCollisionRadius: MUZZLE_RADIUS,
+  playerCollisionMinCharge: MIN_PLAYER_RADIUS,
+  playerCollisionStatus: 'explicit min-charge radius .4; charged player-radius defaults are omitted, so other charges retain the prior calibrated .2 rather than inventing an endpoint',
+  spawnSpeedY: SPAWN_SPEED_Y,
+  footPaintFrames:FOOT_PAINT_FRAMES,
+  footPaintStatus:'pinned PaintSplashSpanFrame20, offset(-.3,-.7,-.7), WidthHalf1.5 and DepthScale2; instantaneous native ground projection and actor-yaw/chest basis remain INKWAVE calibration',
+  geometry: 'frustum grows from zero to LengthMax at LengthAddPerFrame; RadiusMin/RadiusMax are interpreted as near/far, with Low/Mid/High as Special Power Up tiers; projectile intake also includes the independent source muzzle sphere',
   geometryStatus: 'reach and Special Power Up control points pinned; near/far interpretation of RadiusMin/RadiusMax remains calibrated',
   speedStatus: 'pinned per-frame values multiplied by 60 to per-second',
   damageStatus: 'pinned raw 2200 with repository /10 conversion; exceeds the 100 HP pool (instakill) — physical scale limitation',
@@ -114,12 +131,22 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   authorityStatus: 'the absorb branch validates the claimed sender against the transport-resolved actor, the installed peer-binding validator, team, liveness, the locally-owned live target and the exact live serial. WITHOUT a parent-installed validator the peer binding cannot be checked from a replayed payload and that gap is not papered over.',
   replicaStuckGuardSeconds: 11,
   replicaStuckGuardStatus: 'presentation-only failsafe: 6 s suction + 2x the pinned 2.5 s return-shot hold; owner release/dispose remains authoritative.',
-  status: 'pinned geometry/ballistics/timings; origin height, frontal epsilon and the frustum field reading are calibration',
+  status: 'pinned geometry/ballistics/timings; origin height, the frustum field reading and foot-splash ground projection remain calibration',
 });
 
 const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
 const clamp01 = v => Math.max(0, Math.min(1, v));
 const states = new WeakMap();
+const liveStates = new Set();
+const vacLife=a=>Math.max(Number.isSafeInteger(a?.netLife)?a.netLife:0,Number.isSafeInteger(a?.net?.lastLife)?a.net.lastLife:0);
+const ownsVacGauge=state=>!state.remote&&!state.actor.remote&&state.actor.owner===state.authorityOwner
+  &&vacLife(state.actor)===state.authorityLife&&state.game.match===state.match;
+function syncInkVacGauge(state){
+  const a=state.actor,fraction=state.phase==='inhale'?clamp01(1-state.t/INK_VAC_CALIBRATION.inhaleDurationSeconds):0;
+  if(a.specialActive?.id===VAC_ID)a.specialActive.gaugeFraction=fraction;
+  if(ownsVacGauge(state))a.special=state.gaugeCost*fraction;
+  return fraction;
+}
 
 // ---------------------------------------------------------------------------
 // Remote replay contract.
@@ -205,7 +232,8 @@ export function intakeNearRadius(specialPower) { return lerp(NEAR_LOW, NEAR_HIGH
 export function intakeFarRadius(specialPower) { return lerp(FAR_LOW, FAR_HIGH, specialPower); }
 // Owner walking target while the Vac is held (inhale and the pre-release hold).
 // Source endpoints are pinned; interpolation between them is INKWAVE's.
-export function inkVacOwnerMoveSpeed(charge) {
+export function inkVacOwnerMoveSpeed(charge, phase = 'inhale') {
+  if (phase === 'exhale') return OWNER_MOVE_SPEED_EXHALE * 60;
   return lerp(OWNER_MOVE_SPEED_MIN_CHARGE, OWNER_MOVE_SPEED_FULL_CHARGE, Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0))) * 60;
 }
 export function blastRadius(charge) { return lerp(BLAST_MIN, BLAST_MAX, charge); }
@@ -304,6 +332,23 @@ function firstEntry(state, start, end) {
   return Infinity;
 }
 
+// Independent source muzzle sphere, centred one source metre along the aim.
+// Reuse the state's scratch vectors; return the same distance contract as wind.
+function muzzleEntry(state, start, end) {
+  if (state.sucking === false || !(state.length > 0)) return Infinity;
+  const { _org: o, _fwd: f, _m: m, _e: e } = state;
+  originOf(state.actor, o).addScaledVector(forwardOf(state.actor, f), MUZZLE_OFFSET);
+  m.copy(start).sub(o); e.copy(end).sub(start);
+  const c = m.lengthSq() - MUZZLE_RADIUS * MUZZLE_RADIUS;
+  if (c <= 1e-10) return 0;
+  const aa = e.lengthSq();
+  if (!(aa > 1e-20)) return Infinity;
+  const b = m.dot(e), discriminant = b * b - aa * c;
+  if (discriminant < 0) return Infinity;
+  const t = (-b - Math.sqrt(discriminant)) / aa;
+  return t >= -1e-10 && t <= 1 + 1e-10 ? Math.max(0, t) * Math.sqrt(aa) : Infinity;
+}
+
 // ---------------------------------------------------------------------------
 // Narrow candidate hook. Returns { distance, onHit } when the projectile enters
 // the held intake, else null. Does not integrate or scan native projectiles.
@@ -313,16 +358,10 @@ export function inkVacAbsorbCandidate(actor, start, end, projectile) {
   if (projectile.team === actor.team) return null;
   if (projectile.s3InkVacAbsorbed) return null;
   const { G } = api;
-  // Direction: only projectiles travelling toward the player enter the intake.
-  if (projectile.vel) {
-    forwardOf(actor, state._fwd);
-    const vl = projectile.vel.length();
-    if (vl > 1e-6) {
-      const dot = projectile.vel.dot(state._fwd) / vl;
-      if (dot > INK_VAC_CALIBRATION.frontalEpsilon) return null;
-    }
-  }
-  const distance = firstEntry(state, start, end);
+  // The wind can shield a covered teammate from every direction (S3mix).
+  // Direction alone must not reject a lateral/outgoing shot crossing the volume.
+  // The source supplies a separate, larger muzzle collider as well as the wind.
+  const distance = Math.min(firstEntry(state, start, end), muzzleEntry(state, start, end));
   if (!Number.isFinite(distance)) return null;
   // Line of sight at the first-contact point (an intervening wall blocks intake).
   const q = state._q.copy(start).lerp(end, start.distanceTo(end) > 0 ? distance / start.distanceTo(end) : 0);
@@ -359,8 +398,9 @@ function proposalWeaponDamage(weapon) {
 function proposalDamageLimit(actor, payload) {
   if (Object.hasOwn(payload, 'special')) {
     const id = payload.special;
-    const admitted = ['trizooka', VAC_ID, 'tentaMissiles', 'inkjet', 'booyahBomb', 'ultraStamp', 'crabTank'];
+    const admitted = ['trizooka', VAC_ID, 'tentaMissiles', 'inkjet', 'booyahBomb', 'ultraStamp', 'crabTank', 'splattercolorScreen'];
     if (Object.hasOwn(payload, 'sub') || !admitted.includes(id) || actor.weapon?.special !== id) return null;
+    if(id==='splattercolorScreen')return api.SPECIALS?.[id] ? SCREEN_ABSORB_DAMAGE_HP : null;
     // The installed local registry owns these descriptors. No projectile data
     // or charge/radius supplied by the peer is used to construct the ceiling.
     const descriptor = api.SPECIALS?.[id]?.projectileDescriptor?.({});
@@ -383,7 +423,8 @@ function absorbDamageEquivalent(projectile) {
     projectile?.splashDamageMax, bomb?.splashDamageMax,
     projectile?.splashDamage, bomb?.splashDamage];
   const damage = values.find(v => Number.isFinite(v) && v > 0) ?? 0;
-  return Math.min(MAX_ACCEPTED_DAMAGE_HP, damage);
+  const screen=projectile?.s3SpecialWeapon?.id==='splattercolorScreen'||projectile?.wid==='splattercolorScreen';
+  return Math.min(screen?SCREEN_ABSORB_DAMAGE_HP:MAX_ACCEPTED_DAMAGE_HP, damage);
 }
 function creditCharge(state, damageEquivalent, projectile = true) {
   const delta = Number.isFinite(damageEquivalent) ? Math.max(0, damageEquivalent) : 0;
@@ -444,14 +485,17 @@ function makeState(actor, opts = {}) {
   // #1010: suction geometry is selected by Special Power Up, not absorbed charge.
   const specialPower = clamp01(Number.isFinite(opts.specialPower)
     ? opts.specialPower : actor?.s3?.modifiers?.specialPower || 0);
-  return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0, specialPower, length: 0,
+  const state={ actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0, specialPower, length: 0,
+    authorityOwner:actor.owner,authorityLife:vacLife(actor),game:api.G,match:api.G.match,gaugeCost:actor.specialCost?.()||190,
     fireHeld: false, exhaleArmed: false, sucking:false, inhaleAge:0, activationAge:0, intakeHeld:false, intakeWarmup:0, intakeStep:0,
+    footPaintAccum:0,_footHit:new api.Hit(),_footDown:new api.THREE.Vector3(0,-1,0),_foot:new api.THREE.Vector3(),_footForward:new api.THREE.Vector3(),
     _move:new api.THREE.Vector3(),
     nearR: intakeNearRadius(specialPower), farR: intakeFarRadius(specialPower), baseFar: FAR_HIGH,
     mesh: null, geo: null, mat: null,
     _fwd: new api.THREE.Vector3(), _org: new api.THREE.Vector3(), _q: new api.THREE.Vector3(),
     _m: new api.THREE.Vector3(), _e: new api.THREE.Vector3(), _axis: new api.THREE.Vector3(),
     _radial: new api.THREE.Vector3(), _contact: new api.THREE.Vector3(), _up: new api.THREE.Vector3(0, 1, 0) };
+  liveStates.add(state);return state;
 }
 
 function createVisual(state) {
@@ -488,13 +532,15 @@ function updateVisual(state) {
   state.mat.uniforms.age.value=state.t;
 }
 
-export function disposeInkVac(actor) {
+export function disposeInkVac(actor,{preserveGauge=false}={}) {
   const state = states.get(actor);
   if (!state) return;
   actor._s3InkVacSucking=false;
   disposeVisual(state);
   if (actor.specialActive && actor.specialActive.id === VAC_ID) actor.specialActive = null;
-  states.delete(actor);
+  state.s3Retired=true;endSpecialGauge(actor,VAC_ID,state);
+  if(!preserveGauge&&ownsVacGauge(state))actor.special=0;
+  states.delete(actor);liveStates.delete(state);
   // A locally owned activation must tell its replicas to drop the cone. A replayed
   // dispose never re-emits, so replay cannot loop.
   if (!state.remote && Number.isInteger(state.serial)) {
@@ -516,7 +562,8 @@ function beginExhale(state) {
   state.exhaleArmed = !!state.fireHeld;
   disposeVisual(state);
   const active = state.actor?.specialActive;
-  if (active?.id === VAC_ID) active.phase = 'exhale';
+  if (active?.id === VAC_ID) {active.phase = 'exhale';active.gaugeFraction=0;}
+  syncInkVacGauge(state);
   return true;
 }
 function release(state) {
@@ -532,7 +579,8 @@ function release(state) {
   // Flat payload: the countershot itself is a native recProj packet, so replicas
   // get it through ghostProjectile and this event allocates nothing for them.
   emit?.(INK_VAC_EVENTS.release, { actor: a, kit: VAC_ID, serial: state.serial, charge: c, authored });
-  states.delete(a);
+  state.s3Retired=true;endSpecialGauge(a,VAC_ID,state);syncInkVacGauge(state);
+  states.delete(a);liveStates.delete(state);
 }
 
 // Actor contact has no HP hit path. The Vac owner authors gauge; each victim
@@ -624,12 +672,30 @@ function damageInhaleObjects(state, eligible, seen) {
 }
 
 // Per-frame advance of a LOCALLY owned inhale. dt <= 0 is a strict no-op.
+function paintInhaleFeet(state,eligible){
+  if(!state.sucking){state.footPaintAccum=0;return;}
+  state.footPaintAccum+=eligible;
+  const interval=FOOT_PAINT_FRAMES/60,a=state.actor,{G}=api;
+  while(state.footPaintAccum+1e-10>=interval){
+    state.footPaintAccum-=interval;
+    const yaw=Number.isFinite(a.yaw)?a.yaw:0,s=Math.sin(yaw),c=Math.cos(yaw);
+    const from=state._foot.set(a.pos.x-.3*c-.7*s,a.pos.y+INK_VAC_CALIBRATION.breathOriginHeight-.7,a.pos.z+.3*s-.7*c);
+    const hit=G.physics?.raycast?.(from,state._footDown,3.5,state._footHit,true);
+    if(!hit?.hit)continue;
+    const direction=state._footForward.set(s,0,c),shape=splashPaintFootprint({radius:FOOT_PAINT_WIDTH,stretch:FOOT_PAINT_DEPTH-1});
+    from.copy(hit.point).addScaledVector(hit.normal,.05).addScaledVector(direction,-shape.centreBack);
+    const area=G.paint?.splat?.(from,shape.radius,a.team,{seed:Math.random(),stretch:direction,stretchAmt:shape.stretch,
+      kind:'drop',claimOwner:a,claimMode:'no-special'});
+    if(area!=null)a.addTurfNoSpecial?.(area);
+  }
+}
 function inkVacUpdate(a, dt) {
   const state = states.get(a);
   if (!state || state.phase !== 'inhale' || !(dt > 0)) return;
   const eligible = Math.min(state.intakeStep??dt, Math.max(0, INK_VAC_CALIBRATION.inhaleDurationSeconds - state.t));
   if (state.sucking)state.inhaleAge+=eligible;else state.inhaleAge=0;
   if (!a.remote && !state.remote && state.sucking) {
+    paintInhaleFeet(state,eligible);
     const seen = new Set(); let count = 0;
     for (const victim of api.G.actors || []) {
       const identity = victim.nid === undefined ? victim : `${victim.owner}:${victim.nid}`;
@@ -639,7 +705,7 @@ function inkVacUpdate(a, dt) {
     const amount = count * eligible * INK_VAC_CALIBRATION.actorContactDamagePerSecond;
     if (amount > 0) creditCharge(state, amount, false);
     damageInhaleObjects(state, eligible, new Set());
-  }
+  }else state.footPaintAccum=0;
   state.t += dt;
   updateVisual(state);
   if (state.t + 1e-10 >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
@@ -733,7 +799,8 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     // Mandatory numerical proposal: old flat-count packets cannot regain the
     // removed 34% fallback. Peer binding/serial/dedup remain required above.
     const damage = payload.damage;
-    if (!Number.isFinite(damage) || damage < 0 || damage > MAX_ACCEPTED_DAMAGE_HP) {
+    const ceiling=payload.special==='splattercolorScreen'?SCREEN_ABSORB_DAMAGE_HP:MAX_ACCEPTED_DAMAGE_HP;
+    if (!Number.isFinite(damage) || damage < 0 || damage > ceiling) {
       return drop('invalid-absorb-damage');
     }
     const limit = proposalDamageLimit(actor, payload);
@@ -775,7 +842,7 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     if (Number.isSafeInteger(last) && serial <= last) return drop('duplicate-or-out-of-order-activation');
     const current = states.get(subject);
     if (current && current.serial === serial) return drop('duplicate-activation');
-    if (current) disposeVisual(current);        // a newer activation supersedes an older cone
+    if (current) disposeInkVac(subject);        // a newer activation supersedes an older cone
     const charge = Number.isFinite(payload.charge) ? clamp01(payload.charge) : 0;
     const power = Number.isFinite(payload.power) ? clamp01(payload.power) : 0;
     const state = makeState(subject, { remote: true, serial, specialPower: power });
@@ -818,7 +885,7 @@ export function installKitInkVac(context, _profile) {
   const proto = Actor.prototype;
   if (api.WeaponRunner?.prototype) {
     const move=api.WeaponRunner.prototype.moveSpeed;
-    api.WeaponRunner.prototype.moveSpeed=function(...args){const s=states.get(this.a);return s&&!s.remote&&this.a.form==='kid'?inkVacOwnerMoveSpeed(s.charge):move.apply(this,args);};
+    api.WeaponRunner.prototype.moveSpeed=function(...args){const s=states.get(this.a);return s&&!s.remote&&this.a.form==='kid'?inkVacOwnerMoveSpeed(s.charge,s.phase):move.apply(this,args);};
     // Sample current contact once at dodge admission. The composed native
     // method uses this same cost for its availability check and payment.
     // No weapon registry mutation, post-debit correction or persistent debuff.
@@ -835,6 +902,9 @@ export function installKitInkVac(context, _profile) {
       const s = this.specialActive;
       const state = s && s.id === VAC_ID ? states.get(this) : null;
       if (!state) return update.call(this, dt);
+      if(!state.remote&&(this.remote||this.owner!==state.authorityOwner||vacLife(this)!==state.authorityLife||api.G.match!==state.match)){
+        disposeInkVac(this);return update.call(this,dt);
+      }
       if (!this.alive) { disposeInkVac(this); return update.call(this, dt); }
       if (!(dt > 0)) return undefined;
 
@@ -888,6 +958,7 @@ export function installKitInkVac(context, _profile) {
         const ready=state.t+1e-10>=INK_VAC_CALIBRATION.inhaleToExhaleSeconds;
         if(ready&&(state.exhaleFireRequested||state.t+1e-10>=INK_VAC_CALIBRATION.inhaleToExhaleSeconds+INK_VAC_CALIBRATION.exhaleHoldSeconds))release(state);
       }
+      if(states.get(this)===state)syncInkVacGauge(state);
       return result;
     };
     const vacUpdate = proto.update;
@@ -916,7 +987,7 @@ export function installKitInkVac(context, _profile) {
       runner.moveSpeed = function () {
         const state = states.get(this.a);
         if (state && !state.remote && (state.phase === 'inhale' || state.phase === 'exhale'))
-          return inkVacOwnerMoveSpeed(state.charge);
+          return inkVacOwnerMoveSpeed(state.charge,state.phase);
         return ownerMoveSpeed.call(this);
       };
     }
@@ -924,7 +995,7 @@ export function installKitInkVac(context, _profile) {
       if (this.weapon.special !== VAC_ID) return startSpecial.call(this);
       // A genuine native activation, exactly once: alive, not already holding a
       // special, no live state (reentrancy), and the special actually ready.
-      if (!this.alive) return undefined;
+      if (!this.alive || this.remote) return undefined;
       if (this.specialActive || states.has(this)) return undefined;
       if (typeof this.specialReady === 'function' && !this.specialReady()) return undefined;
       this.special = 0;
@@ -936,7 +1007,9 @@ export function installKitInkVac(context, _profile) {
       const state = makeState(this, { remote: false, serial: ++activationSeq,
         specialPower: this.s3?.modifiers?.specialPower || 0 });
       states.set(this, state);this._s3InkVacSucking=false;
-      this.specialActive = { id: VAC_ID, t: 0, phase: 'inhale', armor: false };
+      this.specialActive = { id: VAC_ID, t: 0, phase: 'inhale', armor: false, gaugeFraction:1 };
+      startSpecialGauge(this,api.G,VAC_ID,Infinity,state);
+      syncInkVacGauge(state);
       this.ink = api.PLAYER.inkMax;                 // tank refill, once per activation
       createVisual(state);
       api.emit?.(INK_VAC_EVENTS.activation, { actor: this, kit: VAC_ID, serial: state.serial,
@@ -944,11 +1017,21 @@ export function installKitInkVac(context, _profile) {
       return undefined;
     };
 
-    proto.splat = function (...args) { disposeInkVac(this); return splat.apply(this, args); };
+    proto.splat = function (...args) {
+      const state=states.get(this);if(state&&!state.remote)syncInkVacGauge(state);
+      // The existing death/Saver owner must receive the remaining native points,
+      // regardless of installer order. Disposal itself does not spend them here.
+      disposeInkVac(this,{preserveGauge:true});return splat.apply(this,args);
+    };
     proto.reset = function (...args) { disposeInkVac(this); return reset.apply(this, args); };
   }
 
   const { Projectiles } = api;
+  if(Projectiles?.prototype&&!Object.hasOwn(Projectiles.prototype,INSTALL)){
+    Object.defineProperty(Projectiles.prototype,INSTALL,{value:true});
+    const clear=Projectiles.prototype.clear;
+    Projectiles.prototype.clear=function(...args){for(const state of [...liveStates])if(state.game===api.G)disposeInkVac(state.actor);return clear.apply(this,args);};
+  }
   if (Projectiles?.prototype && !Projectiles.prototype.fireInkVacExhale) {
     Projectiles.prototype.fireInkVacExhale = function (a, payload) {
       const p = this._new();
@@ -962,7 +1045,9 @@ export function installKitInkVac(context, _profile) {
         wid: d.id,                                  // native splash cause id
         s3SpecialWeapon: d,                         // set BEFORE _push (parent preserves it)
         damage: exhaleDamage(),                     // direct damage travels on p.damage
-        size: 0.2, radius: d.impactRadius,
+        // Radius is the separately transported burst/paint radius. The native
+        // actor sweep reads size. Only the zero-charge endpoint is explicit.
+        size: charge <= 1e-10 ? MIN_PLAYER_RADIUS : 0.2, vis: 0.2, radius: d.impactRadius,
         splashRadius: d.splashRadius, splashDamageMax: d.splashDamageMax,
         splashDamageMin: d.splashDamageMin, burstRadius: d.burstRadius,
         damageBands: d.damageBands,
@@ -970,7 +1055,7 @@ export function installKitInkVac(context, _profile) {
         // per-frame air resistance x60. SpawnBlastWaitFrame is the native LIFETIME
         // before detonation; delay stays 0 so the native integrator runs at once and
         // the native step bursts the projectile on the age > life deadline.
-        vel: f.multiplyScalar(exhaleSpeed(charge)),
+        vel: f.multiplyScalar(exhaleSpeed(charge)).add(new THREE.Vector3(0, SPAWN_SPEED_Y * 60, 0)),
         life: SPAWN_BLAST_WAIT / INK_VAC_CALIBRATION.framesPerSecond,
         delay: 0,
         straight: 0, grav: FLY_GRAVITY * 3600, drag: FLY_AIR_RESIST * 60,

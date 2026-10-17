@@ -1,6 +1,7 @@
 import { cataloguePayload } from './catalogue-payload.mjs';
 export { cataloguePayload } from './catalogue-payload.mjs';
 import { recordCatalogueSubBirth } from '../../network-replication/kit-paint-admission.mjs';
+import { beakonActorKey } from './all-subs.mjs';
 // catalogue-loadout
 // Prototype loadout selection. Choices belong to the actor; shared tuning and
 // other players' equipment remain immutable. Native main IDs stay on the wire.
@@ -202,7 +203,8 @@ export function completeBaseKits({WEAPONS,SUB,SPECIALS}){
 
 // catalogue-splashdown
 import {gearCurve} from './gear.mjs';
-import {tripleSlamFistCenters,tripleSlamFistDamage,tripleSlamFistStamps} from './triple-slam-fists.mjs';
+import {tripleSlamFistCenters,tripleSlamFistDamage,tripleSlamFistStamps,FIST_FLAT_IMPACT} from './triple-slam-fists.mjs';
+import {createInkFist,disposeSpecialModel} from './special-motion.mjs';
 // SpPogo, separate from the original INKWAVE Tidal Slam. Sources are the
 // 11.3.0 WeaponSpPogo table and Nintendo 7.2/9.3/11.3 changes. Vertical
 // rise height and intermediate path are a collision-aware calibration.
@@ -216,11 +218,20 @@ const life=a=>Math.max(a?.netLife||0,a?.net?.lastLife||0);
 const array=v=>[v.x,v.y,v.z].map(n=>Math.round(n*100)/100);
 const INSTALL=Symbol.for('inkwave.catalogue.splashdown');
 function serial(a){a._splashdownSerial=(a._splashdownSerial||0)%999999999+1;return a._splashdownSerial;}
-function remove(f,G){if(!f.mesh)return;G.scene?.remove(f.mesh);f.mesh.geometry?.dispose();f.mesh.material?.dispose();f.mesh=null;}
+function remove(f,G){if(!f.mesh)return;disposeSpecialModel(f.mesh);f.mesh=null;}
 function net(api,a,action,activation,pos,extra={}){
   if(!a.remote)api.emit('all:special',{actor:a,id:SPLASHDOWN.id,activation,action,pos:array(pos),seed:activation,...extra});
 }
-function visual(api,pos,owner){if(!api.G.scene)return null;const m=new api.THREE.Mesh(new api.THREE.BoxGeometry(1.5,1.4,1.5),new api.THREE.MeshStandardMaterial({color:owner.color||api.G.teamColors?.[owner.team]}));m.position.copy(pos);api.G.scene.add(m);return m;}
+// The attack owns its visible fist for its entire life. A visible collision
+// box formerly waited for the optional VFX update to replace it, exposing the
+// box at activation, with VFX disabled, and after FX.clear().
+function visual(api,pos,owner){if(!api.G.scene)return null;const m=createInkFist(owner.color||api.G.teamColors?.[owner.team],api.THREE);m.name='splashdown-fist-model';m.position.copy(pos);api.G.scene.add(m);return m;}
+function poseFist(f,time){if(!f.mesh)return;
+  const elapsed=Math.max(0,f.age-SPLASHDOWN.travelFrames/60),fall=Math.max(0,Math.min(1,(elapsed-1)/(FIST_FLAT_IMPACT-1-SPLASHDOWN.travelFrames/60)));
+  const side=f.index?1:-1,pop=Math.max(0,Math.min(1,f.age/.18));
+  f.mesh.position.copy(f.pos);f.mesh.rotation.set(-.25-(Math.PI/2-.25)*fall,f.yaw,side*.1,'YXZ');
+  f.mesh.scale.set((side<0?1.1:-1.1)*pop,1.1*pop,1.1*pop);f.mesh.userData.energy.material.uniforms.age.value=time||0;
+}
 function spawnFists(api,owner,origin,yaw,activation,ghost=false){
   const p=api.G.projectiles;if(!p)return;
   const targets=tripleSlamFistCenters(origin,yaw);
@@ -232,8 +243,8 @@ function spawnFists(api,owner,origin,yaw,activation,ghost=false){
     if(api.G.physics?.segment){const h=api.G.physics.segment(topStart,topEnd,new api.Hit());if(h.hit)target.copy(h.point).addScaledVector(h.normal,.2);}
     const probe=target.clone();probe.y+=8;
     const floor=api.G.physics?.raycast?.(probe,new api.THREE.Vector3(0,-1,0),20,new api.Hit());if(floor?.hit)target.y=floor.point.y;
-    const f={owner,activation,index,sourceLife:life(owner),origin:origin.clone(),start,target,pos:start.clone(),age:0,hp:100,ghost,dead:false};
-    f.mesh=visual(api,f.pos,owner);(p._catalogueFists||=[]).push(f);
+    const f={owner,activation,index,yaw,sourceLife:life(owner),origin:origin.clone(),start,target,pos:start.clone(),age:0,hp:100,ghost,dead:false};
+    f.mesh=visual(api,f.pos,owner);poseFist(f,api.G.time);(p._catalogueFists||=[]).push(f);
   }
 }
 function burst(api,owner,pos,activation,index=-1){
@@ -263,8 +274,10 @@ function fistsStep(api,dt){const list=api.G.projectiles?._catalogueFists||[];
     const travel=.25,elapsed=f.age-travel;
     if(elapsed<0)f.pos.copy(f.start).lerp(f.target,Math.min(1,f.age/travel));
     else{const y=elapsed<1?6.5*Math.sin(Math.min(1,elapsed)*Math.PI/2):Math.max(0,6.5-39*(elapsed-1));f.pos.copy(f.target);f.pos.y+=y+1;}
-    f.mesh?.position.copy(f.pos);
-    if(elapsed>=1+10/60){if(!f.ghost)burst(api,f.owner,f.target,f.activation,f.index);remove(f,api.G);list.splice(i,1);}
+    poseFist(f,api.G.time);
+    // 87F is the published flat-ground observation, not an extracted falling
+    // law. Keep the attack and its visible model on the same bounded clock.
+    if(f.age+1e-10>=FIST_FLAT_IMPACT){if(!f.ghost)burst(api,f.owner,f.target,f.activation,f.index);remove(f,api.G);list.splice(i,1);}
   }
 }
 function hitFist(api,f,shooter,damage){if(f.dead||f.age-.25>=55/60||shooter.team===f.owner.team||!valid(damage)||damage<=0)return false;
@@ -294,7 +307,7 @@ export function installCatalogueSplashdown(api){
     nativeStart.call(actor);actor.specialActive={id:'tripleSplashdown',age:0,phase:superJump?'drop':'rise',activation,origin,superJump,armor:false};
     actor.special=actor.specialCost();
     actor.weaponRunner?.reset?.();actor._setClimb?.(false);actor.form='kid';actor.grounded=false;actor.superJumpState=null;
-    actor.character?.trigger?.('special_leap');actor.vel.set(0,superJump?-39:0,0);
+    actor.character?.trigger?.(superJump?'special_slam':'special_leap');actor.vel.set(0,superJump?-39:0,0);
     if(!superJump)spawnFists(api,actor,origin,yaw,activation);
     net(api,actor,'activate',activation,origin,{yaw,superJump});return true;
   }
@@ -305,7 +318,7 @@ export function installCatalogueSplashdown(api){
     // operate on a cancelled activation. No turf from these blasts refills it.
     this.special=this.specialCost()*Math.max(0,1-s.age/(70/60));
     if(!s.superJump&&s.age<1){this.pos.y=s.origin.y+6.5*Math.sin(s.age*Math.PI/2);this.vel.y=0;}
-    else{this.vel.y=-39;this.pos.addScaledVector(this.vel,dt);s.phase='drop';}
+    else{this.vel.y=-39;this.pos.addScaledVector(this.vel,dt);if(s.phase!=='drop'){s.phase='drop';this.character?.trigger?.('special_slam');}}
     this._resolve?.(false,oldY,false);
     if(s.phase==='drop'&&(this.grounded||s.age>2.25)){burst(api,this,this.pos,s.activation);this.specialActive=null;this.special=0;this.invuln=Math.max(this.invuln||0,.1);}
   };
@@ -346,7 +359,7 @@ export function installCatalogueVision({G,Actor,CameraRig}) {
 // lane. The prefixed identity distinguishes a Beakon from a Great Barrier.
 export function installCatalogueBeakonJumps(api) {
  const {G,Actor}=api,bubblerTargets=G.bigBubblerJumpTargets,bubblerJump=Actor.prototype.superJumpToBubbler;
- const identity=o=>'beakon:'+String(o.owner?.nid??o.owner?.id??'local')+':'+String(o.sourceLife);
+ const identity=o=>'beakon:'+beakonActorKey(o.owner)+':'+String(o.sourceLife);
  const resolve=(target,team)=>(api.getSubBeakons?.(team)||[]).find(o=>identity(o)===target?.id&&o.seq===target.serial);
  Object.defineProperty(G,'bigBubblerJumpTargets',{configurable:true,value:team=>[
   ...(bubblerTargets?.(team)||[]),...(api.getSubBeakons?.(team)||[]).map(o=>({kind:'bubbler',id:identity(o),serial:o.seq,team:o.team,pos:o.pos,beakon:true}))

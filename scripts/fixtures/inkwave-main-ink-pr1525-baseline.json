@@ -1,0 +1,321 @@
+{
+  "schema": 1,
+  "purpose": "Replay only the reviewed main-ink paint integration in the separate projectile visual reference. Shared gameplay files use exact-count hunks and are never copied from the candidate.",
+  "repository": "rhgrive3/actions",
+  "sourceBase": "378dcf78d09714cb3f89c39a46e36a52ad997869",
+  "sourceHead": "8c8c26d4486ddc95c03fcd5e0201c6c1c95c6654",
+  "precision": {
+    "finalBlob": "1844653c07ffc22b65ab74054111a827fb87df55",
+    "previousHighpBlob": "c8c8969cea508bafeb17134ef19545c00db7a4f9",
+    "description": "One nearest RGBA lookup packs the next RG edge in BA, retaining highp sampler, CPU coordinate order and explicit interpolation. Browser parity is an independent CI gate. 2026-10-17 rebase: four context windows retain later source-side splash catch-up timing and family scheduling without expanding the approved paint changes."
+  },
+  "qualification": "Calibrated retail-image outlines, not recovered Nintendo stencil textures. This INKWAVE regression reference keeps the physical/area/coverage comparator strict; old masks have a separate frozen oracle.",
+  "files": [
+    {
+      "path": "patches/network-replication/adapter.mjs",
+      "mode": "hunks",
+      "beforeBlob": "f47ad27ba429d93e2f2f3cc0888daf349b727ec3",
+      "afterBlob": "9385d75701050ca814f525a771f9bcfcaf4af5af",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 1631,
+          "before": "const PAINT_VICTIM_BLAST_RADIUS = 5;\nconst PAINT_VICTIM_SPLASH_RADIUS = 1;\nconst PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck', 'source-shot', 'source-splash']);\nconst paintClockSessions = new WeakMap();\nfunction paintClockStateFor(session, cfg) {\n",
+          "after": "const PAINT_VICTIM_BLAST_RADIUS = 5;\nconst PAINT_VICTIM_SPLASH_RADIUS = 1;\nconst PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck', 'source-shot', 'source-splash', 'ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact']);\nconst paintClockSessions = new WeakMap();\nfunction paintClockStateFor(session, cfg) {\n"
+        }
+      ]
+    },
+    {
+      "path": "patches/network-replication/slosher-paint-admission.mjs",
+      "mode": "hunks",
+      "beforeBlob": "98e267bc72eaa3d9859bbdc4ceebc2844d209118",
+      "afterBlob": "835ec49ce61f4d623a97f0cdb38fdcb8c592b916",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 27,
+          "before": " if(origin.some((v,i)=>r2(v)!==[b.start.x,b.start.y,b.start.z][i])\n   ||Math.abs(Math.hypot(...normal)-1)>1e-6||e[7]!==b.seed\n   ||(e[8]!==0&&e[8]!==undefined&&e[8]!==SOURCE_SHOT_PAINT_KIND)||(e[13]!==-1&&e[13]!==undefined))return false;\n if(point.some((v,i)=>v+normal[i]*.14!==e[2+i]))return false;\n // Match the native normalize -> flatten -> near-vertical fallback exactly.\n",
+          "after": " if(origin.some((v,i)=>r2(v)!==[b.start.x,b.start.y,b.start.z][i])\n   ||Math.abs(Math.hypot(...normal)-1)>1e-6||e[7]!==b.seed\n   ||(e[8]!==0&&e[8]!==undefined&&e[8]!==SOURCE_SHOT_PAINT_KIND&&e[8]!=='ink-slosh')||(e[13]!==-1&&e[13]!==undefined))return false;\n if(point.some((v,i)=>v+normal[i]*.14!==e[2+i]))return false;\n // Match the native normalize -> flatten -> near-vertical fallback exactly.\n"
+        }
+      ]
+    },
+    {
+      "path": "patches/splatoon3/main-ink-footprint-adapter.mjs",
+      "mode": "file",
+      "beforeBlob": null,
+      "originalBlob": "8ddbf0c56af50c68a645701c94a11fa81e6a2666",
+      "originalContent": "import { INK_FOOTPRINT_GLSL } from './runtime/main-ink-footprints.mjs';\n\n// Apply after the established quality broad phases; only the selected main\n// bodies take the table path. Protected upstream modules remain immutable.\nexport function adaptMainInkFootprints(rel, code) {\n  const once = (a, b) => {\n    if (code.split(a).length !== 2) throw Error('INKWAVE main ink footprint anchor: ' + a.slice(0, 100));\n    code = code.replace(a, b);\n  };\n  if (rel === 'src/world/paint.js') {\n    code = \"import { INK_FOOTPRINT_KINDS, inkFootprintContains, createInkProfileTexture } from '../../patches/splatoon3/runtime/main-ink-footprints.mjs';\\n\" + code;\n    once(\"'source-shot': 8, 'source-splash': 9\", \"'source-shot': 8, 'source-splash': 9, 'ink-shot': 10, 'ink-slosh': 11, 'ink-brush': 12, 'ink-flick': 13, 'ink-contact': 14\");\n    once('1.25, 1.35, 1, 1];', '1.25, 1.35, 1, 1, 1.42, 1.42, 1.42, 1.42, 1.42];');\n    once('float hsh(float n)', INK_FOOTPRINT_GLSL + '\\nfloat hsh(float n)');\n    once('    } else if (kind > 7.5) {', '    } else if (kind > 9.5 && kind < 14.5) {\\n      sd = mainInkDistance(p, dir, r * grow, kind, paintSeed);\\n    } else if (kind > 7.5) {');\n    once('  splat(center, radius, team, opts = {}) {', `  splat(center, radius, team, opts = {}) {\n    // Materialize the silhouette before recording the event. Receivers need\n    // only the existing kind and seed fields, never the owner's current gun.\n    if ((opts.kind === 'source-shot' || opts.kind === 'source-splash') && INK_FOOTPRINT_KINDS.includes(opts.footprint))\n      opts = { ...opts, kind: opts.footprint };`);\n    once('const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH;', `const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH || (kind >= 10 && kind <= 14);\n    const stencil = kind >= 10 && kind <= 14;\n    const inkWord = stencil ? paintShapeSeed(seed) : 0;\n    const inkDu = sdu || sdv ? sdu : 1, inkDv = sdu || sdv ? sdv : 0;\n    const inkInvR = stencil ? 1 / r : 0;\n    const inkInvFront = stencil ? inkInvR / (1 + sa) : 0, inkInvRear = stencil ? inkInvR / (1 + .25 * sa) : 0;`);\n    // Rounded-square lobes fit their source width/depth rectangle, whose\n    // rotated corners need a sqrt(2) bound rather than the old circle bound.\n    once('r * (1 + sa) * (sourced ? 1 : WOB_MAX);', 'r * (1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);');\n    // Keep generic broad-phase optimizations untouched. The profile path has\n    // no inner-disc shortcut: its tapered tails and band corners are not disks.\n    const start = code.indexOf('  _cpuSplat('), end = code.indexOf('\\n  _pushQuad(', start);\n    let body = code.slice(start, end);\n    body = body.replace('    const i0 =', `    const inkExtU = stencil ? r * (Math.abs(inkDu) * (1 + sa) + Math.abs(inkDv)) : ext;\n    const inkExtV = stencil ? r * (Math.abs(inkDv) * (1 + sa) + Math.abs(inkDu)) : ext;\n    const i0 =`).replaceAll('(lu - ext)', '(lu - inkExtU)').replaceAll('(lu + ext)', '(lu + inkExtU)')\n      .replaceAll('(lv - ext)', '(lv - inkExtV)').replaceAll('(lv + ext)', '(lv + inkExtV)');\n    if (body.split('        if (roll) {').length !== 2) throw Error('INKWAVE profile CPU body anchor');\n    code = code.slice(0, start) + body.replace('        if (roll) {', `        if (stencil) {\n          const along = px * inkDu + py * inkDv, across = -px * inkDv + py * inkDu;\n          if (!inkFootprintContains(along * (along > 0 ? inkInvFront : inkInvRear), across * inkInvR, kind, inkWord)) continue;\n        } else if (roll) {`) + code.slice(end);\n    once('kind !== K_SOURCE_SHOT && kind !== K_SOURCE_SPLASH ? 1 : 0;', 'kind !== K_SOURCE_SHOT && kind !== K_SOURCE_SPLASH && kind < 10 ? 1 : 0;');\n    once('    this.mat = new THREE.ShaderMaterial({\\n      vertexShader: PAINT_VS, fragmentShader: PAINT_FS,', `    this._mainInkProfiles = createInkProfileTexture(THREE);\n    this.mat = new THREE.ShaderMaterial({\n      uniforms: { uMainInkProfiles: { value: this._mainInkProfiles } },\n      vertexShader: PAINT_VS, fragmentShader: PAINT_FS,`);\n    once('this.rt.dispose();', 'this._mainInkProfiles?.dispose(); this.rt.dispose();');\n  }\n  if (rel === 'src/game/inkFlightRuntime.js') {\n    code = \"import { mainInkFootprint } from '../../patches/splatoon3/runtime/main-ink-footprints.mjs';\\n\" + code;\n    once('p.owner = head.owner; p.team = head.team;', 'p.inkKey = head.inkKey; p.s3Weapon = head.s3Weapon;\\n    p.owner = head.owner; p.team = head.team;');\n    once('kind: sourceFlightInkKind(kind), face: hit.face, claimOwner: p.owner,', 'kind: sourceFlightInkKind(kind), footprint: mainInkFootprint(p.s3Weapon || p.inkKey), face: hit.face, claimOwner: p.owner,');\n  }\n  if (rel === 'src/game/weapons.js') {\n    code = \"import { mainInkFootprint } from '../../patches/splatoon3/runtime/main-ink-footprints.mjs';\\n\" + code;\n    once('stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner', 'stretchAmt: paint?.stretchAmt ?? 1.25, footprint: mainInkFootprint(p.s3Weapon), claimOwner: p.owner');\n    once(\"stretchAmt: 0.7, claimOwner: p.owner,\", \"stretchAmt: 0.7, footprint: p.s3SpecialWeapon ? null : mainInkFootprint(p.s3Weapon), claimOwner: p.owner,\");\n  }\n  return code;\n}\n",
+      "afterBlob": "8ddbf0c56af50c68a645701c94a11fa81e6a2666",
+      "content": "import { INK_FOOTPRINT_GLSL } from './runtime/main-ink-footprints.mjs';\n\n// Apply after the established quality broad phases; only the selected main\n// bodies take the table path. Protected upstream modules remain immutable.\nexport function adaptMainInkFootprints(rel, code) {\n  const once = (a, b) => {\n    if (code.split(a).length !== 2) throw Error('INKWAVE main ink footprint anchor: ' + a.slice(0, 100));\n    code = code.replace(a, b);\n  };\n  if (rel === 'src/world/paint.js') {\n    code = \"import { INK_FOOTPRINT_KINDS, inkFootprintContains, createInkProfileTexture } from '../../patches/splatoon3/runtime/main-ink-footprints.mjs';\\n\" + code;\n    once(\"'source-shot': 8, 'source-splash': 9\", \"'source-shot': 8, 'source-splash': 9, 'ink-shot': 10, 'ink-slosh': 11, 'ink-brush': 12, 'ink-flick': 13, 'ink-contact': 14\");\n    once('1.25, 1.35, 1, 1];', '1.25, 1.35, 1, 1, 1.42, 1.42, 1.42, 1.42, 1.42];');\n    once('float hsh(float n)', INK_FOOTPRINT_GLSL + '\\nfloat hsh(float n)');\n    once('    } else if (kind > 7.5) {', '    } else if (kind > 9.5 && kind < 14.5) {\\n      sd = mainInkDistance(p, dir, r * grow, kind, paintSeed);\\n    } else if (kind > 7.5) {');\n    once('  splat(center, radius, team, opts = {}) {', `  splat(center, radius, team, opts = {}) {\n    // Materialize the silhouette before recording the event. Receivers need\n    // only the existing kind and seed fields, never the owner's current gun.\n    if ((opts.kind === 'source-shot' || opts.kind === 'source-splash') && INK_FOOTPRINT_KINDS.includes(opts.footprint))\n      opts = { ...opts, kind: opts.footprint };`);\n    once('const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH;', `const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH || (kind >= 10 && kind <= 14);\n    const stencil = kind >= 10 && kind <= 14;\n    const inkWord = stencil ? paintShapeSeed(seed) : 0;\n    const inkDu = sdu || sdv ? sdu : 1, inkDv = sdu || sdv ? sdv : 0;\n    const inkInvR = stencil ? 1 / r : 0;\n    const inkInvFront = stencil ? inkInvR / (1 + sa) : 0, inkInvRear = stencil ? inkInvR / (1 + .25 * sa) : 0;`);\n    // Rounded-square lobes fit their source width/depth rectangle, whose\n    // rotated corners need a sqrt(2) bound rather than the old circle bound.\n    once('r * (1 + sa) * (sourced ? 1 : WOB_MAX);', 'r * (1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);');\n    // Keep generic broad-phase optimizations untouched. The profile path has\n    // no inner-disc shortcut: its tapered tails and band corners are not disks.\n    const start = code.indexOf('  _cpuSplat('), end = code.indexOf('\\n  _pushQuad(', start);\n    let body = code.slice(start, end);\n    body = body.replace('    const i0 =', `    const inkExtU = stencil ? r * (Math.abs(inkDu) * (1 + sa) + Math.abs(inkDv)) : ext;\n    const inkExtV = stencil ? r * (Math.abs(inkDv) * (1 + sa) + Math.abs(inkDu)) : ext;\n    const i0 =`).replaceAll('(lu - ext)', '(lu - inkExtU)').replaceAll('(lu + ext)', '(lu + inkExtU)')\n      .replaceAll('(lv - ext)', '(lv - inkExtV)').replaceAll('(lv + ext)', '(lv + inkExtV)');\n    if (body.split('        if (roll) {').length !== 2) throw Error('INKWAVE profile CPU body anchor');\n    code = code.slice(0, start) + body.replace('        if (roll) {', `        if (stencil) {\n          const along = px * inkDu + py * inkDv, across = -px * inkDv + py * inkDu;\n          if (!inkFootprintContains(along * (along > 0 ? inkInvFront : inkInvRear), across * inkInvR, kind, inkWord)) continue;\n        } else if (roll) {`) + code.slice(end);\n    once('kind !== K_SOURCE_SHOT && kind !== K_SOURCE_SPLASH ? 1 : 0;', 'kind !== K_SOURCE_SHOT && kind !== K_SOURCE_SPLASH && kind < 10 ? 1 : 0;');\n    once('    this.mat = new THREE.ShaderMaterial({\\n      vertexShader: PAINT_VS, fragmentShader: PAINT_FS,', `    this._mainInkProfiles = createInkProfileTexture(THREE);\n    this.mat = new THREE.ShaderMaterial({\n      uniforms: { uMainInkProfiles: { value: this._mainInkProfiles } },\n      vertexShader: PAINT_VS, fragmentShader: PAINT_FS,`);\n    once('this.rt.dispose();', 'this._mainInkProfiles?.dispose(); this.rt.dispose();');\n  }\n  if (rel === 'src/game/inkFlightRuntime.js') {\n    code = \"import { mainInkFootprint } from '../../patches/splatoon3/runtime/main-ink-footprints.mjs';\\n\" + code;\n    once('p.owner = head.owner; p.team = head.team;', 'p.inkKey = head.inkKey; p.s3Weapon = head.s3Weapon;\\n    p.owner = head.owner; p.team = head.team;');\n    once('kind: sourceFlightInkKind(kind), face: hit.face, claimOwner: p.owner,', 'kind: sourceFlightInkKind(kind), footprint: mainInkFootprint(p.s3Weapon || p.inkKey), face: hit.face, claimOwner: p.owner,');\n  }\n  if (rel === 'src/game/weapons.js') {\n    code = \"import { mainInkFootprint } from '../../patches/splatoon3/runtime/main-ink-footprints.mjs';\\n\" + code;\n    once('stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner', 'stretchAmt: paint?.stretchAmt ?? 1.25, footprint: mainInkFootprint(p.s3Weapon), claimOwner: p.owner');\n    once(\"stretchAmt: 0.7, claimOwner: p.owner,\", \"stretchAmt: 0.7, footprint: p.s3SpecialWeapon ? null : mainInkFootprint(p.s3Weapon), claimOwner: p.owner,\");\n  }\n  return code;\n}\n",
+      "acceptedBaselineBlobs": [
+        "8ddbf0c56af50c68a645701c94a11fa81e6a2666"
+      ]
+    },
+    {
+      "path": "patches/splatoon3/runtime/blaster-flight-paint.mjs",
+      "mode": "hunks",
+      "beforeBlob": "54edf15dfd775dcedeeaf7fdb94e85dc4af5a3f5",
+      "afterBlob": "a850c077214213a0fd71081d7b0bf22cc9bf0f7d",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 31,
+          "before": " */\nimport { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\nconst EPS = 1e-9;\nconst STEP_FRAMES_PER_SECOND = 60;\n",
+          "after": " */\nimport { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { mainInkFootprint } from './main-ink-footprints.mjs';\nconst EPS = 1e-9;\nconst STEP_FRAMES_PER_SECOND = 60;\n"
+        },
+        {
+          "id": "paint-2",
+          "line": 136,
+          "before": "// spawn velocity; `radius` is the sourced paint half-width for this splash.\nexport function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direction = null, radius, spec,\n  depth = true, kind = 'drop', initialDownSpeed = 0, catchUpSeconds = 0 }) {\n  const queue = dropQueue(game);\n  if (!queue || !owner || owner.remote || !(radius > 0) || !spec || !from) return null;\n",
+          "after": "// spawn velocity; `radius` is the sourced paint half-width for this splash.\nexport function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direction = null, radius, spec,\n  depth = true, kind = 'drop', initialDownSpeed = 0, catchUpSeconds = 0, footprint = null }) {\n  const queue = dropQueue(game);\n  if (!queue || !owner || owner.remote || !(radius > 0) || !spec || !from) return null;\n"
+        },
+        {
+          "id": "paint-3",
+          "line": 148,
+          "before": "  const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;\n  const drop = {\n    owner, team, seed: unit(0), radius, spec, depth, kind,\n    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0,\n    carry: Number.isFinite(catchUpSeconds) && catchUpSeconds > 0 ? catchUpSeconds * STEP_FRAMES_PER_SECOND : 0,\n    pos: new V(from.x, from.y, from.z),\n",
+          "after": "  const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;\n  const drop = {\n    owner, team, seed: unit(0), radius, spec, depth, kind, footprint,\n    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0,\n    carry: Number.isFinite(catchUpSeconds) && catchUpSeconds > 0 ? catchUpSeconds * STEP_FRAMES_PER_SECOND : 0,\n    pos: new V(from.x, from.y, from.z),\n"
+        },
+        {
+          "id": "paint-4",
+          "line": 172,
+          "before": "  const kind = drop.spec?.surfaceOnly && drop.depth\n    ? SOURCE_SPLASH_PAINT_KIND : drop.kind;\n  const opts = { seed: drop.seed, kind, claimOwner: drop.owner };\n  if (surfaceOnly) opts.face = hit.face;\n  const floor = hit.normal.y > .45;\n",
+          "after": "  const kind = drop.spec?.surfaceOnly && drop.depth\n    ? SOURCE_SPLASH_PAINT_KIND : drop.kind;\n  const opts = { seed: drop.seed, kind, claimOwner: drop.owner, footprint: drop.footprint };\n  if (surfaceOnly) opts.face = hit.face;\n  const floor = hit.normal.y > .45;\n"
+        },
+        {
+          "id": "paint-5",
+          "line": 250,
+          "before": "    if (typeof state.wallSplash === 'function' && state.wallSplash(state.sample, index)) continue;\n    const drop = spawnSplashDrop(game, { owner: projectile.owner, team: projectile.team, seed: projectile.seed,\n      salt: index, from: state.sample, direction: state.direction, radius, spec, depth: true, kind });\n    if (!drop) paintImmediate(game, projectile, state, index, radius);\n  }\n",
+          "after": "    if (typeof state.wallSplash === 'function' && state.wallSplash(state.sample, index)) continue;\n    const drop = spawnSplashDrop(game, { owner: projectile.owner, team: projectile.team, seed: projectile.seed,\n      salt: index, from: state.sample, direction: state.direction, radius, spec, depth: true, kind,\n      footprint: mainInkFootprint(projectile.s3Weapon || projectile.catalog?.r) });\n    if (!drop) paintImmediate(game, projectile, state, index, radius);\n  }\n"
+        },
+        {
+          "id": "paint-6",
+          "line": 260,
+          "before": "function paintImmediate(game, projectile, state, index, radius) {\n  const drop = { owner: projectile.owner, team: projectile.team, seed: seededSplashUnit(projectile.seed, index * 8),\n    radius, spec: state.spec, depth: true, kind: 'drop', dirX: 0, dirZ: 0, spawnY: state.sample.y, frames: 0,\n    pos: state.sample.clone(), next: state.sample.clone(), hit: null };\n",
+          "after": "function paintImmediate(game, projectile, state, index, radius) {\n  const drop = { owner: projectile.owner, team: projectile.team, seed: seededSplashUnit(projectile.seed, index * 8),\n    footprint: mainInkFootprint(projectile.s3Weapon || projectile.catalog?.r),\n    radius, spec: state.spec, depth: true, kind: 'drop', dirX: 0, dirZ: 0, spawnY: state.sample.y, frames: 0,\n    pos: state.sample.clone(), next: state.sample.clone(), hit: null };\n"
+        }
+      ]
+    },
+    {
+      "path": "patches/splatoon3/runtime/main-ink-footprints.mjs",
+      "mode": "file",
+      "beforeBlob": null,
+      "originalBlob": "895085f4018f7586d68bf46d8c6ae1c49c390fb7",
+      "originalContent": "// Retail-image-guided silhouettes, NOT recovered Nintendo stencil textures.\n// See reference/main-ink-footprints-2026-10-16.md for images/conditions and\n// limitations. WidthHalf/DepthScale, pellet layout and flight stay with their\n// existing source owners. These profiles only replace the circular body.\n// A 128 x 8 RGBA8 strip (4 KiB) stores left/right edges. One GPU lookup,\n// two CPU edge reads; no per-cell trigonometry, extra stamps or simulation.\nexport const INK_FOOTPRINT_KINDS = Object.freeze(['ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact']);\nexport const INK_PROFILE_SIZE = 128;\nexport const INK_PROFILE_HEIGHT = 8;\n\n// Longitudinal coordinate, left half-width, right half-width. These control\n// sections describe the visible body, excluding detached drops (already real\n// paint events). Small lateral asymmetries mirror with the recorded seed.\n// They are calibrated outlines; perspective screenshots cannot supply exact\n// source-unit dimensions or the engine's stencil sampling law.\nexport const INK_PROFILE_SECTIONS = Object.freeze([\n  // Shooter / Dualies: blunt pool and broken shoulders, narrow trailing neck.\n  [[-1,0,0],[-.94,.13,.08],[-.84,.21,.29],[-.72,.19,.22],[-.59,.46,.38],[-.47,.43,.54],[-.33,.72,.62],[-.20,.68,.76],[-.08,.92,.88],[.06,.86,.94],[.19,1,.88],[.33,.93,1],[.48,.89,.84],[.61,.70,.81],[.74,.71,.59],[.85,.43,.48],[.94,.26,.20],[1,0,0]],\n  // Slosher: lobed, broad rounded-square puddles; the existing nine-unit\n  // Bucket volley, rather than one giant tear stamp, makes its tapered stripe.\n  [[-1,0,0],[-.92,.26,.20],[-.83,.66,.59],[-.72,.60,.76],[-.60,.85,.73],[-.47,.79,.93],[-.33,.98,.84],[-.19,.85,1],[-.05,.94,.90],[.10,1,.94],[.25,.89,.82],[.40,.95,.96],[.55,.83,.84],[.69,.88,.73],[.80,.59,.64],[.91,.30,.36],[1,0,0]],\n  // Brush flick: rounded ribbon with small scallops, not a pointed leaf.\n  // The isolated orange strokes in the brush reference have two broad caps.\n  // The sourced\n  // Mini/Normal/Heavy pellet spread and widths determine the whole fan.\n  [[-1,0,0],[-.94,.45,.40],[-.84,.74,.70],[-.71,.79,.84],[-.58,.90,.82],[-.44,.83,.93],[-.30,.95,.86],[-.16,.89,.92],[0,.92,.86],[.15,.88,.96],[.29,.96,.88],[.43,.87,1],[.57,1,.91],[.70,.89,.95],[.82,.75,.77],[.93,.43,.49],[1,0,0]],\n  // Roller flick: uneven broad head and tapered connecting fingers. The\n  // horizontal/vertical unit distributions remain separate source volleys.\n  [[-1,0,0],[-.93,.12,.09],[-.82,.21,.25],[-.69,.18,.16],[-.56,.38,.30],[-.42,.51,.60],[-.29,.47,.50],[-.16,.78,.73],[-.02,.86,.91],[.12,.81,.85],[.26,1,.93],[.40,.90,1],[.54,.91,.82],[.68,.72,.84],[.80,.61,.55],[.92,.31,.36],[1,0,0]],\n  // Contact: parallel edges, short rounded ends. Half-length .58 is bounded\n  // by the existing .52R contact-sampling interval, so neighboring stamps\n  // overlap without drawing a disk at every sample. Literal lateral width R.\n  [[-1,0,0],[-.60,0,0],[-.58,.84,.84],[-.53,.97,.97],[-.45,1,1],[.45,1,1],[.53,.97,.97],[.58,.84,.84],[.60,0,0],[1,0,0]],\n].map(sections => Object.freeze(sections.map(section => Object.freeze(section)))));\n\nexport function mainInkFootprint(weapon, contact = false) {\n  const kind = typeof weapon === 'string' ? weapon : weapon?.catalogRecord?.family ?? weapon?.family ?? weapon?.kind;\n  if (contact) return kind === 'brush' || kind === 'roller' ? 'ink-contact' : null;\n  if (kind === 'shooter' || kind === 'dualies') return 'ink-shot';\n  if (kind === 'brush') return 'ink-brush';\n  if (kind === 'roller') return 'ink-flick';\n  if (kind === 'slosher') {\n    // Screw and bouncing Bloblobber projectiles do not form Bucket's sheet.\n    const actor = weapon?.sourceActor ?? weapon?.catalogRecord?.sourceActor;\n    return actor === 'WeaponSlosherLauncher' || actor === 'WeaponSlosherBathtub' ? 'ink-shot' : 'ink-slosh';\n  }\n  return null;\n}\n\n// Pure data, created once, shared by every paint world. RG hold positive\n// left/right widths. Explicit linear sampling also works with WebGL1 RGBA8.\nexport const INK_PROFILE_BYTES = new Uint8Array(INK_PROFILE_SIZE * INK_PROFILE_HEIGHT * 4);\nfor (let row = 0; row < INK_PROFILE_SECTIONS.length; row++) {\n  const sections = INK_PROFILE_SECTIONS[row]; let segment = 0;\n  for (let i = 0; i < INK_PROFILE_SIZE; i++) {\n    const along = 2 * i / (INK_PROFILE_SIZE - 1) - 1;\n    while (segment < sections.length - 2 && sections[segment + 1][0] < along) segment++;\n    const a = sections[segment], b = sections[segment + 1], t = (along - a[0]) / (b[0] - a[0]);\n    const offset = (row * INK_PROFILE_SIZE + i) * 4;\n    const ease = t * t * (3 - 2 * t);\n    for (let channel = 0; channel < 2; channel++) {\n      const av = a[channel + 1], bv = b[channel + 1];\n      // Round a closing cap instead of making each puddle a pointed polygon.\n      const width = av === 0 ? bv * Math.sqrt(t) : bv === 0 ? av * Math.sqrt(1 - t) : av + (bv - av) * ease;\n      INK_PROFILE_BYTES[offset + channel] = Math.round(width * 255);\n    }\n    INK_PROFILE_BYTES[offset + 3] = 255;\n  }\n}\n\nexport function inkFootprintContains(along, across, kind, word) {\n  if (along <= -1 || along >= 1) return false;\n  if (word % 2) across = -across;\n  const x = (along + 1) * .5 * (INK_PROFILE_SIZE - 1), i = Math.floor(x), t = x - i;\n  const offset = ((kind - 10) * INK_PROFILE_SIZE + i) * 4;\n  const channel = across < 0 ? 0 : 1;\n  const width = (INK_PROFILE_BYTES[offset + channel] * (1 - t) + INK_PROFILE_BYTES[offset + 4 + channel] * t) / 255;\n  return Math.abs(across) < width;\n}\n\nexport function createInkProfileTexture(THREE) {\n  const texture = new THREE.DataTexture(INK_PROFILE_BYTES, INK_PROFILE_SIZE, INK_PROFILE_HEIGHT, THREE.RGBAFormat, THREE.UnsignedByteType);\n  texture.minFilter = texture.magFilter = THREE.LinearFilter;\n  texture.generateMipmaps = false; texture.needsUpdate = true;\n  return texture;\n}\n\nexport const INK_FOOTPRINT_GLSL = `\nuniform sampler2D uMainInkProfiles;\nfloat mainInkDistance(vec2 p, vec2 direction, float radius, float kind, float word) {\n  vec2 d = dot(direction, direction) > 0.5 ? direction : vec2(1.0, 0.0);\n  float along = dot(p, d) / radius;\n  float across = dot(p, vec2(-d.y, d.x)) / radius;\n  if (mod(word, 2.0) > 0.5) across = -across;\n  float x = (clamp(along, -1.0, 1.0) * 0.5 + 0.5) * (127.0 / 128.0) + 0.5 / 128.0;\n  vec2 edges = texture2D(uMainInkProfiles, vec2(x, (kind - 10.0 + 0.5) / 8.0)).rg;\n  // A zero-width section is empty. Its centerline is not an ink boundary:\n  // returning zero there would leave a half-alpha hair beyond a contact band.\n  if (edges.r + edges.g <= 0.0) return radius;\n  return max(abs(along) - 1.0, max(-across - edges.r, across - edges.g)) * radius;\n}`;\n",
+      "afterBlob": "1844653c07ffc22b65ab74054111a827fb87df55",
+      "content": "// Retail-image-guided silhouettes, NOT recovered Nintendo stencil textures.\n// See reference/main-ink-footprints-2026-10-16.md for images/conditions and\n// limitations. WidthHalf/DepthScale, pellet layout and flight stay with their\n// existing source owners. These profiles only replace the circular body.\n// A 128 x 8 RGBA8 strip (4 KiB) stores left/right edges. One GPU lookup,\n// two CPU edge reads; no per-cell trigonometry, extra stamps or simulation.\nexport const INK_FOOTPRINT_KINDS = Object.freeze(['ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact']);\nexport const INK_PROFILE_SIZE = 128;\nexport const INK_PROFILE_HEIGHT = 8;\n\n// Longitudinal coordinate, left half-width, right half-width. These control\n// sections describe the visible body, excluding detached drops (already real\n// paint events). Small lateral asymmetries mirror with the recorded seed.\n// They are calibrated outlines; perspective screenshots cannot supply exact\n// source-unit dimensions or the engine's stencil sampling law.\nexport const INK_PROFILE_SECTIONS = Object.freeze([\n  // Shooter / Dualies: blunt pool and broken shoulders, narrow trailing neck.\n  [[-1,0,0],[-.94,.13,.08],[-.84,.21,.29],[-.72,.19,.22],[-.59,.46,.38],[-.47,.43,.54],[-.33,.72,.62],[-.20,.68,.76],[-.08,.92,.88],[.06,.86,.94],[.19,1,.88],[.33,.93,1],[.48,.89,.84],[.61,.70,.81],[.74,.71,.59],[.85,.43,.48],[.94,.26,.20],[1,0,0]],\n  // Slosher: lobed, broad rounded-square puddles; the existing nine-unit\n  // Bucket volley, rather than one giant tear stamp, makes its tapered stripe.\n  [[-1,0,0],[-.92,.26,.20],[-.83,.66,.59],[-.72,.60,.76],[-.60,.85,.73],[-.47,.79,.93],[-.33,.98,.84],[-.19,.85,1],[-.05,.94,.90],[.10,1,.94],[.25,.89,.82],[.40,.95,.96],[.55,.83,.84],[.69,.88,.73],[.80,.59,.64],[.91,.30,.36],[1,0,0]],\n  // Brush flick: rounded ribbon with small scallops, not a pointed leaf.\n  // The isolated orange strokes in the brush reference have two broad caps.\n  // The sourced\n  // Mini/Normal/Heavy pellet spread and widths determine the whole fan.\n  [[-1,0,0],[-.94,.45,.40],[-.84,.74,.70],[-.71,.79,.84],[-.58,.90,.82],[-.44,.83,.93],[-.30,.95,.86],[-.16,.89,.92],[0,.92,.86],[.15,.88,.96],[.29,.96,.88],[.43,.87,1],[.57,1,.91],[.70,.89,.95],[.82,.75,.77],[.93,.43,.49],[1,0,0]],\n  // Roller flick: uneven broad head and tapered connecting fingers. The\n  // horizontal/vertical unit distributions remain separate source volleys.\n  [[-1,0,0],[-.93,.12,.09],[-.82,.21,.25],[-.69,.18,.16],[-.56,.38,.30],[-.42,.51,.60],[-.29,.47,.50],[-.16,.78,.73],[-.02,.86,.91],[.12,.81,.85],[.26,1,.93],[.40,.90,1],[.54,.91,.82],[.68,.72,.84],[.80,.61,.55],[.92,.31,.36],[1,0,0]],\n  // Contact: parallel edges, short rounded ends. Half-length .58 is bounded\n  // by the existing .52R contact-sampling interval, so neighboring stamps\n  // overlap without drawing a disk at every sample. Literal lateral width R.\n  [[-1,0,0],[-.60,0,0],[-.58,.84,.84],[-.53,.97,.97],[-.45,1,1],[.45,1,1],[.53,.97,.97],[.58,.84,.84],[.60,0,0],[1,0,0]],\n].map(sections => Object.freeze(sections.map(section => Object.freeze(section)))));\n\nexport function mainInkFootprint(weapon, contact = false) {\n  const kind = typeof weapon === 'string' ? weapon : weapon?.catalogRecord?.family ?? weapon?.family ?? weapon?.kind;\n  if (contact) return kind === 'brush' || kind === 'roller' ? 'ink-contact' : null;\n  if (kind === 'shooter' || kind === 'dualies') return 'ink-shot';\n  if (kind === 'brush') return 'ink-brush';\n  if (kind === 'roller') return 'ink-flick';\n  if (kind === 'slosher') {\n    // Screw and bouncing Bloblobber projectiles do not form Bucket's sheet.\n    const actor = weapon?.sourceActor ?? weapon?.catalogRecord?.sourceActor;\n    return actor === 'WeaponSlosherLauncher' || actor === 'WeaponSlosherBathtub' ? 'ink-shot' : 'ink-slosh';\n  }\n  return null;\n}\n\n// Pure data, created once, shared by every paint world. RG hold positive\n// left/right widths. Explicit linear sampling also works with WebGL1 RGBA8.\nexport const INK_PROFILE_BYTES = new Uint8Array(INK_PROFILE_SIZE * INK_PROFILE_HEIGHT * 4);\nfor (let row = 0; row < INK_PROFILE_SECTIONS.length; row++) {\n  const sections = INK_PROFILE_SECTIONS[row]; let segment = 0;\n  for (let i = 0; i < INK_PROFILE_SIZE; i++) {\n    const along = 2 * i / (INK_PROFILE_SIZE - 1) - 1;\n    while (segment < sections.length - 2 && sections[segment + 1][0] < along) segment++;\n    const a = sections[segment], b = sections[segment + 1], t = (along - a[0]) / (b[0] - a[0]);\n    const offset = (row * INK_PROFILE_SIZE + i) * 4;\n    const ease = t * t * (3 - 2 * t);\n    for (let channel = 0; channel < 2; channel++) {\n      const av = a[channel + 1], bv = b[channel + 1];\n      // Round a closing cap instead of making each puddle a pointed polygon.\n      const width = av === 0 ? bv * Math.sqrt(t) : bv === 0 ? av * Math.sqrt(1 - t) : av + (bv - av) * ease;\n      INK_PROFILE_BYTES[offset + channel] = Math.round(width * 255);\n    }\n  }\n}\n// Each RGBA texel contains this section's left/right widths (RG) and the\n// *next* section's widths (BA). A single nearest fetch plus explicit mix\n// uses the same 8-bit profile endpoints as the CPU and avoids driver-specific\n// fixed-point interpolation on the 45-degree outline boundary.\nfor (let row = 0; row < INK_PROFILE_SECTIONS.length; row++) {\n  for (let i = 0; i < INK_PROFILE_SIZE; i++) {\n    const offset = (row * INK_PROFILE_SIZE + i) * 4;\n    const next = (row * INK_PROFILE_SIZE + Math.min(i + 1, INK_PROFILE_SIZE - 1)) * 4;\n    INK_PROFILE_BYTES[offset + 2] = INK_PROFILE_BYTES[next];\n    INK_PROFILE_BYTES[offset + 3] = INK_PROFILE_BYTES[next + 1];\n  }\n}\n\nexport function inkFootprintContains(along, across, kind, word) {\n  if (along <= -1 || along >= 1) return false;\n  if (word % 2) across = -across;\n  const x = (along + 1) * .5 * (INK_PROFILE_SIZE - 1), i = Math.floor(x), t = x - i;\n  const offset = ((kind - 10) * INK_PROFILE_SIZE + i) * 4;\n  const channel = across < 0 ? 0 : 1;\n  const width = (INK_PROFILE_BYTES[offset + channel] * (1 - t) + INK_PROFILE_BYTES[offset + 2 + channel] * t) / 255;\n  return Math.abs(across) < width;\n}\n\nexport function createInkProfileTexture(THREE) {\n  const texture = new THREE.DataTexture(INK_PROFILE_BYTES, INK_PROFILE_SIZE, INK_PROFILE_HEIGHT, THREE.RGBAFormat, THREE.UnsignedByteType);\n  texture.minFilter = texture.magFilter = THREE.NearestFilter;\n  texture.generateMipmaps = false; texture.needsUpdate = true;\n  return texture;\n}\n\nexport const INK_FOOTPRINT_GLSL = `\nuniform highp sampler2D uMainInkProfiles;\nfloat mainInkDistance(vec2 p, vec2 direction, float radius, float kind, float word) {\n  vec2 d = dot(direction, direction) > 0.5 ? direction : vec2(1.0, 0.0);\n  float along = dot(p, d) / radius;\n  float across = dot(p, vec2(-d.y, d.x)) / radius;\n  if (mod(word, 2.0) > 0.5) across = -across;\n  // Match the CPU coordinate and explicit blend in highp arithmetic. RG/BA\n  // carry both exact RGBA8 endpoints, so one nearest fetch is sufficient.\n  float x = (clamp(along, -1.0, 1.0) + 1.0) * 0.5 * 127.0;\n  float i = floor(x), t = x - i;\n  vec4 packedEdges = texture2D(uMainInkProfiles,\n    vec2((i + 0.5) / 128.0, (kind - 10.0 + 0.5) / 8.0));\n  vec2 edges = packedEdges.rg * (1.0 - t) + packedEdges.ba * t;\n  // A zero-width section is empty. Its centerline is not an ink boundary:\n  // returning zero there would leave a half-alpha hair beyond a contact band.\n  if (edges.r + edges.g <= 0.0) return radius;\n  return max(abs(along) - 1.0, max(-across - edges.r, across - edges.g)) * radius;\n}`;\n",
+      "acceptedBaselineBlobs": [
+        "895085f4018f7586d68bf46d8c6ae1c49c390fb7",
+        "c8c8969cea508bafeb17134ef19545c00db7a4f9",
+        "1844653c07ffc22b65ab74054111a827fb87df55"
+      ]
+    },
+    {
+      "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+      "mode": "hunks",
+      "beforeBlob": "a525e13d3c4b4ff4a872cac299b64cd3c7a9f6d9",
+      "afterBlob": "1462c8a4b0c6bb883654b61125255a28dc8d454f",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 4,
+          "before": "import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';\nimport { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';\nimport { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';\n",
+          "after": "import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';\nimport { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { mainInkFootprint } from './main-ink-footprints.mjs';\nimport { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';\nimport { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';\n"
+        },
+        {
+          "id": "paint-2",
+          "line": 381,
+          "before": "    return new THREE.Vector3(Math.sin(y)*Math.cos(p),Math.sin(p),Math.cos(y)*Math.cos(p));\n  }\n  function paint(owner, at, radius, depth=1, direction=null, face=-1) {\n    if (!(radius>0) || !owner || owner.remote) return;\n    // The recorded paint packet carries this seed; receivers never reroll it.\n    const options = {seed:Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face};\n    let centre=at,paintRadius=radius;\n    if (direction) {\n",
+          "after": "    return new THREE.Vector3(Math.sin(y)*Math.cos(p),Math.sin(p),Math.cos(y)*Math.cos(p));\n  }\n  function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null) {\n    if (!(radius>0) || !owner || owner.remote) return;\n    // The recorded paint packet carries this seed; receivers never reroll it.\n    const options = {seed:Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face,footprint};\n    let centre=at,paintRadius=radius;\n    if (direction) {\n"
+        },
+        {
+          "id": "paint-3",
+          "line": 401,
+          "before": "    owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));\n  }\n  function floorPaint(owner, at, radius, depth=1, direction=null) {\n    base.copy(at); base.y += .15;\n    const h = G.physics.raycast(base,down,Math.max(4,at.y-owner.pos.y+2),floorHit,true);\n    if (h.hit) paint(owner,h.point,radius,depth,direction,h.face);\n  }\n\n",
+          "after": "    owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));\n  }\n  function floorPaint(owner, at, radius, depth=1, direction=null, footprint=null) {\n    base.copy(at); base.y += .15;\n    const h = G.physics.raycast(base,down,Math.max(4,at.y-owner.pos.y+2),floorHit,true);\n    if (h.hit) paint(owner,h.point,radius,depth,direction,h.face,footprint);\n  }\n\n"
+        },
+        {
+          "id": "paint-4",
+          "line": 502,
+          "before": "    const h=G.physics.raycast(contact.origin,contact.down,.3,contact.hit,true);\n    if(h.hit&&current.endFaces.includes(h.face)&&h.point.distanceToSquared(contact.point)<1e-12)\n      paint(owner,h.point,radius,depth,direction,h.face);\n  }\n\n",
+          "after": "    const h=G.physics.raycast(contact.origin,contact.down,.3,contact.hit,true);\n    if(h.hit&&current.endFaces.includes(h.face)&&h.point.distanceToSquared(contact.point)<1e-12)\n      paint(owner,h.point,radius,depth,direction,h.face,'ink-contact');\n  }\n\n"
+        },
+        {
+          "id": "paint-5",
+          "line": 644,
+          "before": "       advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){\n      const at=a.pos.clone().addScaledVector(a.aimDir.clone().setY(0).normalize(),finite(splash.SpawnNearestLength,0));\n      floorPaint(a,at,nearest.WidthHalfNearest);\n    }\n  }\n",
+          "after": "       advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){\n      const at=a.pos.clone().addScaledVector(a.aimDir.clone().setY(0).normalize(),finite(splash.SpawnNearestLength,0));\n      floorPaint(a,at,nearest.WidthHalfNearest,1,null,mainInkFootprint(r));\n    }\n  }\n"
+        },
+        {
+          "id": "paint-6",
+          "line": 696,
+          "before": "    base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+Math.max(0,n.MaxHeight),a.pos.z+rz*o.X+fz*o.Z);\n    const h=G.physics.raycast(base,down,Math.max(0,n.MaxHeight)+Math.abs(o.Y),floorHit,true);\n    if(h.hit&&h.normal.y>=.5)paint(a,h.point,n.PaintWidthHalf,1,null,h.face);\n  }\n  function emitArrow(runner,r,charge) {\n",
+          "after": "    base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+Math.max(0,n.MaxHeight),a.pos.z+rz*o.X+fz*o.Z);\n    const h=G.physics.raycast(base,down,Math.max(0,n.MaxHeight)+Math.abs(o.Y),floorHit,true);\n    if(h.hit&&h.normal.y>=.5)paint(a,h.point,n.PaintWidthHalf,1,null,h.face,mainInkFootprint(a.weapon));\n  }\n  function emitArrow(runner,r,charge) {\n"
+        },
+        {
+          "id": "paint-7",
+          "line": 861,
+          "before": "      // Retain the existing single paint owner and do not duplicate paint events.\n      const bounceRadius=(finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index)*Math.pow(.85,s.bounces);\n      if(!p.ghost)paint(p.owner,at,bounceRadius);\n      const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index,s.bounces+1));\n      p.pos.copy(at).addScaledVector(h.normal,clearance);\n",
+          "after": "      // Retain the existing single paint owner and do not duplicate paint events.\n      const bounceRadius=(finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index)*Math.pow(.85,s.bounces);\n      if(!p.ghost)paint(p.owner,at,bounceRadius,1,null,-1,mainInkFootprint(r));\n      const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index,s.bounces+1));\n      p.pos.copy(at).addScaledVector(h.normal,clearance);\n"
+        },
+        {
+          "id": "paint-8",
+          "line": 875,
+          "before": "    if(p.ghost)return true;\n    const footprint=impactPaint(p);\n    paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face);\n    if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&\n       (p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))\n",
+          "after": "    if(p.ghost)return true;\n    const footprint=impactPaint(p);\n    paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face,mainInkFootprint(r));\n    if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&\n       (p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))\n"
+        },
+        {
+          "id": "paint-9",
+          "line": 953,
+          "before": "          const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));\n          const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,\n            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,catchUpSeconds:s.carry});\n          if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}\n          s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;\n",
+          "after": "          const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));\n          const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,\n            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,catchUpSeconds:s.carry,footprint:mainInkFootprint(s.r)});\n          if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}\n          s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;\n"
+        },
+        {
+          "id": "paint-10",
+          "line": 979,
+          "before": "      if(!p.ghost&&!d.splashDropSpec&&!d.sloshFall&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){\n        const direction=p.vel.clone().setY(0).normalize();\n        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction);\n        s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;\n      }\n",
+          "after": "      if(!p.ghost&&!d.splashDropSpec&&!d.sloshFall&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){\n        const direction=p.vel.clone().setY(0).normalize();\n        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction,mainInkFootprint(s.r));\n        s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;\n      }\n"
+        }
+      ]
+    },
+    {
+      "path": "patches/splatoon3/runtime/paint-packet-codec.mjs",
+      "mode": "hunks",
+      "beforeBlob": "6d35c085439f4685f88e843ccc64c5ad8944d68a",
+      "afterBlob": "8854d6f935c350cfaa35819be5bda595d16bfef5",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 3,
+          "before": "// mixed/unknown peers keep the original rows. Existing sender/HLC admission\n// must run on decoded rows, using the transport sender, never payload identity.\nexport const PAINT_PACKET_CODEC_VERSION = 'inkwave-paint-dictionary-v1';\nexport const PAINT_PACKET_LIMITS = Object.freeze({ rows:512, dictionary:64, nodes:65536, depth:8, string:1024 });\nconst COMMON=[5,6,8,9,10,11,12,13];\n",
+          "after": "// mixed/unknown peers keep the original rows. Existing sender/HLC admission\n// must run on decoded rows, using the transport sender, never payload identity.\nexport const PAINT_PACKET_CODEC_VERSION = 'inkwave-paint-dictionary-v2';\nexport const PAINT_PACKET_LIMITS = Object.freeze({ rows:512, dictionary:64, nodes:65536, depth:8, string:1024 });\nconst COMMON=[5,6,8,9,10,11,12,13];\n"
+        },
+        {
+          "id": "paint-2",
+          "line": 20,
+          "before": " return visit(value,0);\n}\nconst PAINT_KINDS=new Set([0,'shot','line','blast','bomb','trail','drop','roll','rollFloor','speck']);\nfunction common(c){return Array.isArray(c)&&c.length===11&&c.slice(0,8).every((x,i)=>i===2?PAINT_KINDS.has(x):typeof x==='number'&&Number.isFinite(x))&&c[8]==='inkwave-paint-order-v1'&&typeof c[9]==='string'&&(c[10]===0||c[10]===1);}\nfunction paint(row){return Array.isArray(row)&&row.length===17&&row[1]==='s'&&Array.isArray(row[14])&&row[14].length===4&&row[14][0]==='inkwave-paint-order-v1'&&typeof row[14][1]==='string';}\n",
+          "after": " return visit(value,0);\n}\nconst PAINT_KINDS=new Set([0,'shot','line','blast','bomb','trail','drop','roll','rollFloor','speck','source-shot','source-splash','ink-shot','ink-slosh','ink-brush','ink-flick','ink-contact']);\nfunction common(c){return Array.isArray(c)&&c.length===11&&c.slice(0,8).every((x,i)=>i===2?PAINT_KINDS.has(x):typeof x==='number'&&Number.isFinite(x))&&c[8]==='inkwave-paint-order-v1'&&typeof c[9]==='string'&&(c[10]===0||c[10]===1);}\nfunction paint(row){return Array.isArray(row)&&row.length===17&&row[1]==='s'&&Array.isArray(row[14])&&row[14].length===4&&row[14][0]==='inkwave-paint-order-v1'&&typeof row[14][1]==='string';}\n"
+        }
+      ]
+    },
+    {
+      "path": "patches/splatoon3/runtime/slosher-intermediate-paint.mjs",
+      "mode": "hunks",
+      "beforeBlob": "7e50947314edb5954482dfa62e7a5f49ad9dc1c5",
+      "afterBlob": "9914ddcef5472e6314dd9a02ba6f0996ccfd3f05",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 1,
+          "before": "import { spawnSplashDrop, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';\nconst EPS = 1e-10;\n// PR1188: the source splash falls like every other BulletSplash: the shared\n",
+          "after": "import { spawnSplashDrop, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';\nimport { mainInkFootprint } from './main-ink-footprints.mjs';\nconst EPS = 1e-10;\n// PR1188: the source splash falls like every other BulletSplash: the shared\n"
+        },
+        {
+          "id": "paint-2",
+          "line": 110,
+          "before": "    spawnSplashDrop(G, { owner: p.owner, team: p.team, seed: p.seed,\n      salt: p.s3SloshIntermediateCount, from: point, direction: stretch,\n      radius: spec.widthHalf, spec: spec.drop, depth: true, kind: 'drop' });\n  };\n  const before = new THREE.Vector3();\n",
+          "after": "    spawnSplashDrop(G, { owner: p.owner, team: p.team, seed: p.seed,\n      salt: p.s3SloshIntermediateCount, from: point, direction: stretch,\n      radius: spec.widthHalf, spec: spec.drop, depth: true, kind: 'drop', footprint: mainInkFootprint(p.s3Weapon) });\n  };\n  const before = new THREE.Vector3();\n"
+        }
+      ]
+    },
+    {
+      "path": "patches/splatoon3/runtime/slosher-nearest-paint.mjs",
+      "mode": "hunks",
+      "beforeBlob": "0da1e7c284b30ffbb26401363f885c2dad0368e1",
+      "afterBlob": "948517797c8a2de11278e2f96bf324ab80a22aa6",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 8,
+          "before": " */\nimport { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\nconst EPS = 1e-10;\n\n",
+          "after": " */\nimport { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { mainInkFootprint } from './main-ink-footprints.mjs';\nconst EPS = 1e-10;\n\n"
+        },
+        {
+          "id": "paint-2",
+          "line": 59,
+          "before": "\n  const area = game.paint.splat(point, spec.width, actor.team, {\n    kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: actor,\n    seed: seedFor(actor, sequence),\n    stretch: dir,\n",
+          "after": "\n  const area = game.paint.splat(point, spec.width, actor.team, {\n    kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(actor.weapon), claimOwner: actor,\n    seed: seedFor(actor, sequence),\n    stretch: dir,\n"
+        }
+      ]
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-edgecases.mjs",
+      "mode": "hunks",
+      "beforeBlob": "b35b0a72c04cb2830731df7c9d33e14abaef3d1a",
+      "afterBlob": "33c791108bbcfb1d09891443dd04c18ccebba8b0",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 1,
+          "before": "import { biasQuantile } from './weapon-accuracy.mjs';\nimport { chargerPostShotBlocksSub } from './weapon-gates.mjs';\n// #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.\n",
+          "after": "import { biasQuantile } from './weapon-accuracy.mjs';\nimport { mainInkFootprint } from './main-ink-footprints.mjs';\nimport { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { chargerPostShotBlocksSub } from './weapon-gates.mjs';\n// #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.\n"
+        },
+        {
+          "id": "paint-2",
+          "line": 168,
+          "before": "  if (!p || p.owner !== a || !Number.isFinite(p.seed)) return 0;\n  const center = a.pos.clone().set(x, ground.y, z).addScaledVector(ground.normal, 0.1);\n  const area = G.paint.splat(center, shape.paintWidthHalf, a.team, { seed: p.seed, claimOwner: a });\n  if (area > 0) a.addTurf?.(area);\n  return area;\n",
+          "after": "  if (!p || p.owner !== a || !Number.isFinite(p.seed)) return 0;\n  const center = a.pos.clone().set(x, ground.y, z).addScaledVector(ground.normal, 0.1);\n  const heading=system._rollerFootPaintHeading||(system._rollerFootPaintHeading=a.pos.clone());\n  heading.set(forwardX,0,forwardZ);\n  const area = G.paint.splat(center, shape.paintWidthHalf, a.team, { seed: p.seed, kind: SOURCE_SPLASH_PAINT_KIND,\n    footprint: mainInkFootprint(w), stretch: heading, stretchAmt: 0, claimOwner: a });\n  if (area > 0) a.addTurf?.(area);\n  return area;\n"
+        }
+      ]
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "mode": "hunks",
+      "beforeBlob": "3ece8a4b02ac5082ca799cf2e2ff1ad4d6fcc94f",
+      "afterBlob": "d22f34e85237c6538246fadb5751fe06bd55224a",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 11,
+          "before": "import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint, SHOOTER_PARAMTABLE_DEFAULTS } from './shooter-impact-paint.mjs';\nimport { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';\nimport { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';\n",
+          "after": "import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint, SHOOTER_PARAMTABLE_DEFAULTS } from './shooter-impact-paint.mjs';\nimport { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { mainInkFootprint } from './main-ink-footprints.mjs';\nimport { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';\nimport { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';\n"
+        },
+        {
+          "id": "paint-2",
+          "line": 492,
+          "before": "function wallDropPaint(p, point, radius, state, salt) {\n  if (p.ghost || !(radius > 0) || !api.G.paint) return 0;\n  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: p.owner });\n  if (Number.isFinite(area)) p.owner?.addTurf?.(area);\n  return area || 0;\n",
+          "after": "function wallDropPaint(p, point, radius, state, salt) {\n  if (p.ghost || !(radius > 0) || !api.G.paint) return 0;\n  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(p.s3Weapon), claimOwner: p.owner });\n  if (Number.isFinite(area)) p.owner?.addTurf?.(area);\n  return area || 0;\n"
+        },
+        {
+          "id": "paint-3",
+          "line": 958,
+          "before": "  p.s3GrazePaint = { at: center, face };\n  const seed = ((Math.imul(((p.seed || 0) * 4294967296) >>> 0, 2654435761) ^ (p.s3GrazeCount = (p.s3GrazeCount || 0) + 1)) >>> 0) / 4294967296;\n  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: owner });\n  if (Number.isFinite(area) && area > 0) owner.addTurf?.(area);\n  return area;\n",
+          "after": "  p.s3GrazePaint = { at: center, face };\n  const seed = ((Math.imul(((p.seed || 0) * 4294967296) >>> 0, 2654435761) ^ (p.s3GrazeCount = (p.s3GrazeCount || 0) + 1)) >>> 0) / 4294967296;\n  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(p.s3Weapon), claimOwner: owner });\n  if (Number.isFinite(area) && area > 0) owner.addTurf?.(area);\n  return area;\n"
+        }
+      ]
+    },
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "hunks",
+      "beforeBlob": "402f37956e9983ef8bbf3213cdee669226847b41",
+      "afterBlob": "ce0369524e70d07014f5c4c4b01669d96a903efa",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 11,
+          "before": "import { adaptCameraAimControls } from '../patches/splatoon3/camera-aim-controls-adapter.mjs';\nimport { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-adapter.mjs';\n\n// Keep the tested source path identical to the production build's adapters.\n",
+          "after": "import { adaptCameraAimControls } from '../patches/splatoon3/camera-aim-controls-adapter.mjs';\nimport { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-adapter.mjs';\nimport { adaptMainInkFootprints } from '../patches/splatoon3/main-ink-footprint-adapter.mjs';\n\n// Keep the tested source path identical to the production build's adapters.\n"
+        },
+        {
+          "id": "paint-2",
+          "line": 27,
+          "before": "  code = adaptProjectileVisuals(rel, code);\n  code = adaptUiLocalization(rel, code);\n  return adaptCameraAimControls(rel, code);\n}\n",
+          "after": "  code = adaptProjectileVisuals(rel, code);\n  code = adaptUiLocalization(rel, code);\n  code = adaptMainInkFootprints(rel, code);\n  return adaptCameraAimControls(rel, code);\n}\n"
+        }
+      ]
+    },
+    {
+      "path": "scripts/lib/inkwave-build-only-modules.mjs",
+      "mode": "hunks",
+      "beforeBlob": "71e26957dbd9789dbed120dc7b7a36d5bcde0581",
+      "afterBlob": "1fe1edb7b68b9a2afbe533489cb40d6e96f22912",
+      "hunks": [
+        {
+          "id": "paint-1",
+          "line": 4,
+          "before": "export const BUILD_ONLY_PATCH_MODULES = new Set([\n  'patches/local-quality/bot-navigation-adapter.mjs',\n  'patches/local-quality/cloth-derivative-adapter.mjs',\n  'patches/local-quality/retarget-branch-update-adapter.mjs',\n",
+          "after": "export const BUILD_ONLY_PATCH_MODULES = new Set([\n  'patches/local-quality/bot-navigation-adapter.mjs',\n  'patches/splatoon3/main-ink-footprint-adapter.mjs',\n  'patches/local-quality/cloth-derivative-adapter.mjs',\n  'patches/local-quality/retarget-branch-update-adapter.mjs',\n"
+        }
+      ]
+    }
+  ]
+}

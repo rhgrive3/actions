@@ -127,13 +127,37 @@ test('deployed visuals: Splash Wall unfolds over its window, Toxic Mist becomes 
   const deploy = (id) => {
     actor.weapon = { ...actor.weapon, sub: id };
     const o = G.projectiles.throwBomb(actor);
+    if(id==='splashWall'){
+      near(o.s3Model.root.scale.x,SPLASH_WALL_FOLDED_SCALE,1e-12,'released device starts folded');
+      assert.equal(o.s3Model.groups.curtain.visible,false,'flight has no active curtain');
+    }
     G.physics.segment = (a, b, out) => { out.hit = true; out.point = new T.Vector3(b.x, 0, b.z); out.normal = new T.Vector3(0, 1, 0); return out; };
-    for (let i = 0; i < 30 && o.phase !== 'deployed' && !o.dead; i++) { G.time += 1 / 60; G.projectiles.update(1 / 60); }
+    let foldedPending=false,unfoldingPending=false;
+    for (let i = 0; i < 120 && o.phase !== 'deployed' && !o.dead; i++) {
+      G.time += 1 / 60; G.projectiles.update(1 / 60);
+      if(id==='splashWall'&&o.phase==='wallPending'){
+        assert.equal(o.s3Model.groups.curtain.visible,false,'landed preparation has no active curtain');
+        if(o.age<=o.wallReadyAge-SPLASH_WALL_UNFOLD_SECONDS+1e-10){
+          foldedPending=true;
+          near(o.s3Model.root.scale.x,SPLASH_WALL_FOLDED_SCALE,1e-12,'early contact keeps the device folded');
+        }else{
+          const scale=o.s3Model.root.scale.x;
+          if(scale>SPLASH_WALL_FOLDED_SCALE&&scale<1)unfoldingPending=true;
+          assert.ok(scale>SPLASH_WALL_FOLDED_SCALE&&scale<=1,'device grows before operation');
+          assert.ok(o.s3Model.groups.armR.rotation.z>0,'the arms are still opening while the curtain is absent');
+        }
+      }
+    }
+    if(id==='splashWall'){
+      assert.equal(foldedPending,true);assert.equal(unfoldingPending,true);
+      assert.ok(o.age+1e-10>=o.wallReadyAge,'operation follows the record release clock');
+    }
     return o;
   };
   const wall = deploy('splashWall');
   assert.equal(wall.phase, 'deployed');
-  assert.ok(wall.s3Model.root.scale.x < 0.6, 'starts folded');
+  near(wall.s3Model.root.scale.x,1,1e-9,'operation starts with the arms fully unfolded');
+  assert.equal(wall.s3Model.groups.curtain.visible,true,'the curtain begins with actual deployment');
   for (let t = 0; t < SPLASH_WALL_UNFOLD_SECONDS + 0.05; t += 1 / 60) { G.time += 1 / 60; G.projectiles.update(1 / 60); }
   near(wall.s3Model.root.scale.x, 1, 1e-9, 'stands at full height after the unfold window');
   assert.equal(wall.s3Model.groups.curtain.visible, true);
@@ -158,7 +182,11 @@ async function nativeWorld() {
     if (a.y >= 0 && b.y < 0) { const t = a.y / (a.y - b.y); out.hit = true; out.point = new V(a.x + (b.x - a.x) * t, 0, a.z + (b.z - a.z) * t); out.normal = new V(0, 1, 0); }
     return out;
   };
-  f.G.physics.raycast = (o, d, len, out) => { out.hit = false; return out; };
+  f.G.physics.raycast = (o, d, len, out) => {
+    out.hit=d.y<0&&o.y>=0&&o.y+d.y*len<=0;
+    if(out.hit){out.point.set(o.x,0,o.z);out.normal.set(0,1,0);out.dist=o.y/-d.y;}
+    return out;
+  };
   f.G.paint = { sample: () => 1, splat: () => 1 };
   return f;
 }

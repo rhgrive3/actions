@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -34,7 +35,7 @@ RECEIPT_FIELDS = (
 SCENARIO_FIELDS = ("seed", "setup", "births", "impacts")
 SETUP_PHYSICAL_FIELDS = (
     "weapon", "actor", "wall", "impact", "seed", "bootSeed", "lifecycleReset",
-    "aim", "inkHex", "canonicalPlacement",
+    "aim", "inkHex", "canonicalPlacement", "roster",
 )
 CAMERA_PHYSICAL_FIELDS = (
     "perspective", "mode", "pose", "pos", "target", "actor", "aim", "fov",
@@ -47,7 +48,7 @@ CAPTURE_CONDITION_FIELDS = (
 )
 RUNTIME_PHYSICAL_FIELDS = (
     "projectiles", "projectileScreen", "visibleCenters", "projectileCrop",
-    "liveHeadCount", "liveProjectileCount", "drawingBuffer",
+    "liveHeadCount", "liveProjectileCount", "drawingBuffer", "roster",
 )
 SCENARIO_EXTRA_PHYSICAL_FIELDS = (
     "lifecycleReset", "endState", "controllerProbe", "impactFrame", "captureFrame",
@@ -366,6 +367,8 @@ def canonical_physical_projection(document: dict[str, Any]) -> dict[str, Any]:
     lifecycle = provenance.get("canonicalLifecycleReset")
     if isinstance(lifecycle, dict):
         result["canonicalLifecycleReset"] = without_prior_squid_spawn(lifecycle)
+    if "canonicalRoster" in provenance:
+        result["canonicalRoster"] = provenance["canonicalRoster"]
     return result
 
 
@@ -378,7 +381,7 @@ def canonical_physical_verification(before: dict[str, Any], after: dict[str, Any
     return {"status": "matched" if not mismatches else "mismatch", "before": left, "after": right,
             "mismatches": mismatches,
             "comparisonFields": ["canonicalPlacement.pos/team/inkHex/yaw/aim/floorHit/bootSeed",
-                                  "canonicalLifecycleReset except priorSquidSpawn"]}
+                                  "canonicalLifecycleReset except priorSquidSpawn", "canonicalRoster (all actors and native capsules)"]}
 
 
 def index_receipts(document: dict[str, Any]) -> tuple[dict[tuple[Any, ...], list[tuple[int, dict[str, Any]]]], list[dict[str, Any]]]:
@@ -730,13 +733,115 @@ def verify_media(document: dict[str, Any], directory: Path) -> dict[str, Any]:
     return {"status": "pass" if checked and not errors else "fail", "verifiedFiles": checked, "errors": errors}
 
 
+def roster_evidence_errors(value: Any, path: str) -> list[str]:
+    """A complete capture proves every native collider, including teammates."""
+    if not isinstance(value, dict) or value.get("schema") != 1:
+        return [f"{path}: missing native roster receipt"]
+    actors = value.get("actors")
+    if not isinstance(actors, list) or len(actors) != 8:
+        return [f"{path}: expected all eight native actors"]
+    errors, identities, local_count = [], set(), 0
+
+    def number(v: Any) -> bool:
+        return type(v) in (int, float) and math.isfinite(v)
+
+    def vector(v: Any) -> bool:
+        return isinstance(v, list) and len(v) == 3 and all(number(n) for n in v)
+
+    for index, actor in enumerate(actors):
+        prefix = f"{path}.actors[{index}]"
+        if not isinstance(actor, dict):
+            errors.append(f"{prefix}: missing actor record")
+            continue
+        identity = (actor.get("team"), actor.get("slot"))
+        identity_valid = (type(identity[0]) is int and identity[0] in (0, 1)
+                          and type(identity[1]) is int and identity[1] in range(4))
+        if (not identity_valid or identity in identities or actor.get("order") != index or actor.get("remote") is not False):
+            errors.append(f"{prefix}: invalid or duplicate native identity/order")
+        if identity_valid:
+            identities.add(identity)
+        if actor.get("isLocal") is True:
+            local_count += 1
+            if identity != (0, 0):
+                errors.append(f"{prefix}: wrong local native slot")
+        if not all(vector(actor.get(key)) for key in ("pos", "vel", "rootPosition", "groundNormal")):
+            errors.append(f"{prefix}: missing finite actor vectors")
+        aim = actor.get("aim")
+        if (not isinstance(aim, dict) or not all(number(aim.get(key)) for key in ("yaw", "aimYaw", "aimPitch"))
+                or not vector(aim.get("direction")) or not vector(aim.get("point"))):
+            errors.append(f"{prefix}: missing native aim state")
+        capsule = actor.get("capsule")
+        if (not isinstance(capsule, dict) or not number(capsule.get("radius")) or capsule["radius"] <= 0
+                or not number(capsule.get("height")) or capsule["height"] <= 0
+                or not vector(capsule.get("start")) or not vector(capsule.get("end"))
+                or type(capsule.get("active")) is not bool):
+            errors.append(f"{prefix}: missing finite native capsule")
+        gear = actor.get("gear")
+        if (not isinstance(gear, dict) or not isinstance(gear.get("loadout"), list) or len(gear["loadout"]) != 3
+                or not isinstance(gear.get("abilityPoints"), dict)
+                or not isinstance(gear.get("modifiers"), dict) or not gear["modifiers"]):
+            errors.append(f"{prefix}: missing native gear/loadout/AP/modifiers")
+        if not isinstance(actor.get("state"), dict) or not all(key in actor["state"] for key in ("alive", "hp", "ink", "form", "grounded")):
+            errors.append(f"{prefix}: missing native life state")
+        for key in ("intent", "previousIntent", "weaponClock", "lifecycle"):
+            if not isinstance(actor.get(key), dict):
+                errors.append(f"{prefix}: missing {key}")
+        floor = actor.get("floorHit")
+        if (not isinstance(floor, dict) or type(floor.get("hit")) is not bool
+                or not vector(floor.get("point")) or not vector(floor.get("normal"))):
+            errors.append(f"{prefix}: missing native floor receipt")
+        if "motionStart" not in actor:
+            errors.append(f"{prefix}: missing coherent motion receipt")
+    if local_count != 1:
+        errors.append(f"{path}: expected exactly one native local actor")
+    return errors
+
+
+def bounded_physical_mismatches(result: dict[str, Any], limit: int = 8) -> list[dict[str, Any]]:
+    """Bound CI log diagnostics without changing any comparison or receipt."""
+    def brief(value: Any, depth: int = 0) -> Any:
+        if isinstance(value, str):
+            return value if len(value) <= 96 else value[:96] + "…"
+        if isinstance(value, list):
+            return {"length": len(value), "first": [brief(item, depth + 1) for item in value[:3]]} if depth < 2 else {"length": len(value)}
+        if isinstance(value, dict):
+            keys = sorted(value)
+            return {"fieldCount": len(keys), "first": {key: brief(value[key], depth + 1) for key in keys[:4]}} if depth < 2 else {"fieldCount": len(keys)}
+        return value
+
+    sources = [("canonical", result.get("canonicalPhysicalSetupVerification", {}).get("mismatches", []))]
+    sources.extend(("rng:" + str(row.get("scenario")), row.get("mismatches", []))
+                   for row in result.get("postNativeFireRngVerification", {}).get("entries", []))
+    sources.extend(("scenario:" + str(row.get("scenario")), row.get("mismatches", []))
+                   for row in result.get("nativeScenarioStateVerification", {}).get("scenarios", []))
+    sources.extend(("capture:" + str(row.get("key")), row.get("mismatches", []))
+                   for row in result.get("pairedCaptureVerification", {}).get("pairs", []))
+    out = []
+    for section, rows in sources:
+        for row in rows:
+            out.append({"section": section, "path": row.get("path"), "reason": row.get("reason"),
+                        "before": brief(row.get("before")), "after": brief(row.get("after"))})
+            if len(out) >= limit:
+                return out
+    for side, verification in result.get("completeVerification", {}).items():
+        for error in verification.get("errors", []):
+            out.append({"section": "complete:" + side, "error": brief(error)})
+            if len(out) >= limit:
+                return out
+    return out
+
+
 def verify_complete(document: dict[str, Any]) -> dict[str, Any]:
     errors = []
     if document.get("status") != "passed" or document.get("errors"):
         errors.append("capture invocation did not pass")
     if len(document.get("screenshots", [])) != 48 or len(document.get("visualScenarios", [])) != 6:
         errors.append("expected 48 captures and six native scenarios")
+    errors.extend(roster_evidence_errors(document.get("provenance", {}).get("canonicalRoster"), "provenance.canonicalRoster"))
+    for index, receipt in enumerate(document.get("screenshots", [])):
+        errors.extend(roster_evidence_errors(receipt.get("runtime", {}).get("roster"), f"screenshots[{index}].runtime.roster"))
     for scenario in document.get("visualScenarios", []):
+        errors.extend(roster_evidence_errors(scenario.get("setup", {}).get("roster"), f"scenario.{scenario.get('name')}.setup.roster"))
         rng = scenario.get("rng", {}).get("afterNativeFire", {})
         if not all(type(rng.get(field)) is int for field in REQUIRED_POST_NATIVE_FIRE_RNG_FIELDS):
             errors.append(f"missing native firing RNG proof: {scenario.get('name')}")
@@ -830,7 +935,7 @@ def compare(before_path: Path, after_path: Path, output_path: Path) -> dict[str,
         "physicalVerification": {
             "status": physical_status,
             "checks": physical_checks,
-            "note": "Physical equality gates screenshot receipts, native scenario state, explicit canonical setup/camera fields, and numeric RNG seed/draw-count/state after atomic native fire. Only impactState.fx cosmetic counters, prior Squid Spawn history, and RNG caller stack URLs remain raw diagnostics only.",
+            "note": "Physical equality gates screenshot receipts, all native actors and their capsules, native scenario state, explicit canonical setup/camera fields, and numeric RNG seed/draw-count/state after atomic native fire. Only impactState.fx cosmetic counters, prior Squid Spawn history, and RNG caller stack URLs remain raw diagnostics only.",
         },
         "canonicalPhysicalSetupVerification": canonical_physical,
         "nativeScenarioStateVerification": scenarios,
@@ -915,6 +1020,7 @@ def main() -> int:
         "glErrorsAfter": result["glErrors"]["after"]["screenshotsWithGlErrors"],
         "performanceBefore": result["performance"]["before"]["status"],
         "performanceAfter": result["performance"]["after"]["status"],
+        "firstPhysicalMismatches": bounded_physical_mismatches(result),
     }, indent=2))
     complete = all(row["status"] == "pass" for row in result.get("completeVerification", {}).values())
     return 0 if result["physicalVerification"]["status"] == "pass" and complete else 1

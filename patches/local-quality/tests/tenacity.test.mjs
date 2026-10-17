@@ -73,8 +73,16 @@ test('Practice Range dummy population never earns Tenacity and reentry does not 
  assert.equal(events.length,0);
  const remote=match(3);remote.actors[0].remote=true;advanceTenacity(remote,1,()=>{});assert.equal(remote.actors[0].special,0);
 });
-test('negative control without the range gate awards passive points for training targets',()=>{
+test('negative control without the range gate awards passive points for training targets',async()=>{
  const source=fs.readFileSync('patches/local-quality/tenacity.mjs','utf8');assert(source.includes(' || match.opts?.range'));
- const old=vm.runInNewContext(source.replace(' || match.opts?.range','').replaceAll('export ','')+';advanceTenacity');
+ // Keep the real import graph: the gauge guards are modules too. Evaluating
+ // this source as a classic script broke as soon as Tenacity gained an import.
+ const rootURL=new URL('../tenacity.mjs',import.meta.url),modules=new Map();
+ const load=(url,body)=>{if(modules.has(url.href))return modules.get(url.href);const module=new vm.SourceTextModule(body??fs.readFileSync(url,'utf8'),{identifier:url.href});modules.set(url.href,module);return module;};
+ const root=load(rootURL,source.replace(' || match.opts?.range',''));
+ await root.link((spec,from)=>load(new URL(spec,from.identifier)));await root.evaluate();
+ const old=root.namespace.advanceTenacity;
  const m=Object.assign(match(3),{opts:{range:true}});old(m,1,()=>{});assert.equal(m.actors[0].special,7.59);
+ const game={time:0,match:{}},a=m.actors[0];a.special=0;a.s3TacticoolerGauge={game,match:game.match,stand:{expires:10},until:10};
+ old(m,1,()=>{});assert.equal(a.special,0,'negative range control still evaluates the real gauge guard');
 });

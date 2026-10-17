@@ -12,6 +12,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { projectileDrawRadius, projectileVisualWidth } from '../patches/splatoon3/runtime/projectile-visuals.mjs';
 import { completeNativeTurfIntro } from './lib/inkwave-projectile-ci-intro.mjs';
+import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const option = (name, fallback) => {
@@ -161,20 +162,52 @@ async function openGameContext({ mobile = false } = {}) {
     // In SwiftShader an intro frame can take over a second to render. Finish
     // only the noninteractive 4.2s native Turf intro through Game._frame while
     // suppressing those cinematic renders. Never fast-forward live gameplay.
-    await page.waitForFunction(() => {
+    // Playwright's browser-side waitForFunction timer can be starved by a
+    // long native SwiftShader render even after the game has reached "playing".
+    // Probe the exact same predicate from Node, with the same strict wall-clock
+    // budget, without relying on a browser timer/rAF callback.
+    const requireNativePhase = async (predicate, label) => {
+      const deadline = Date.now() + NATIVE_BOOT_TIMEOUT_MS;
+      let lastFailure = null;
+      while (Date.now() < deadline) {
+        let timeoutId;
+        try {
+          const observed = await Promise.race([
+            page.evaluate(predicate),
+            new Promise((_, reject) => {
+              timeoutId = setTimeout(() => reject(new Error('native phase evaluation budget exceeded')),
+                Math.max(1, deadline - Date.now()));
+            }),
+          ]);
+          if (observed && Date.now() <= deadline) return;
+        } catch (error) {
+          lastFailure = String(error);
+          if (page.isClosed()) break;
+        } finally { clearTimeout(timeoutId); }
+        const remaining = deadline - Date.now();
+        if (remaining > 0) await new Promise(resolve => setTimeout(resolve, Math.min(250, remaining)));
+      }
+      throw new Error(label + ' did not meet the full native match predicate within ' +
+        NATIVE_BOOT_TIMEOUT_MS + 'ms' + (lastFailure ? ': ' + lastFailure : ''));
+    };
+    const admissionReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return G?.mode === 'match' && m === G.match &&
         (m?.state === 'intro' || m?.state === 'playing') &&
         !m.attract && m.local?.isLocal && m.controller && g.debug &&
         G.projectiles && G.renderer;
-    }, null, { timeout: NATIVE_BOOT_TIMEOUT_MS, polling: 250 });
+    };
+    // SwiftShader may finish the transition between timer ticks. Probe once
+    // synchronously first, then retain the identical strict timed gate.
+    await requireNativePhase(admissionReady, 'native Turf actor/controller admission');
     const introTransition = await page.evaluate(completeNativeTurfIntro);
     (report.provenance.introTransitions ||= []).push({ mobile, ...introTransition });
-    await page.waitForFunction(() => {
+    const playingReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
         !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer;
-    }, null, { timeout: NATIVE_BOOT_TIMEOUT_MS, polling: 250 });
+    };
+    await requireNativePhase(playingReady, 'native Turf playing transition');
   } catch (error) {
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
@@ -262,6 +295,7 @@ async function openGameContext({ mobile = false } = {}) {
   });
   report.provenance.canonicalPlacement = placement;
   report.provenance.canonicalLifecycleReset = await page.evaluate(() => window.__iwCanonicalLifecycleReset ?? null);
+  report.provenance.canonicalRoster = await page.evaluate(installProjectileCaptureRoster);
   const version = await page.evaluate(() => {
     const gl = __G.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info');
     return { chromium: navigator.userAgent, webgl: gl.getParameter(gl.VERSION), webglRenderer: gl.getParameter(gl.RENDERER),
@@ -411,6 +445,7 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
     }
     return {
       projectiles: read,
+      roster: window.__iwProjectileRosterSnapshot(),
       projectileScreen,
       visibleCenters: projectileScreen.length,
       projectileCrop,
@@ -744,6 +779,7 @@ const visualSetup = ({ name, seed, impact = null }) => {
   G.time = 0; g.time = 0; g.rig.time = 0;
   G.projectiles.clear(); G.fx.clear(); G.paint.clear();
   if (g.screenfx?.clear) g.screenfx.clear();
+  window.__iwResetProjectileRoster();
   const weapon = impact === 'wall' ? 'shooter' :
     name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
   a.setWeapon(weapon);
@@ -768,6 +804,7 @@ const visualSetup = ({ name, seed, impact = null }) => {
     // the selected real floor point before injecting test controls.
     a.spawnAt(new V(...position), yaw);
     normalizeIntent();
+    window.__iwResetProjectileGear(a);
     a.form = 'kid'; a.submerged = false; a.alive = true; a.hp = 100; a.ink = 100; a.vel.set(0, 0, 0);
     a.grounded = true; a.groundN.set(...groundNormal); a.climbing = false; a.specialActive = null; a.superJumpState = null;
     a.invuln = 0; a.fireBuffer = a.jumpBuffer = 0; a.kidT = 99;
@@ -868,7 +905,8 @@ const visualSetup = ({ name, seed, impact = null }) => {
   const setup = { weapon, actor: a.pos.toArray(), wall, impact, seed, bootSeed: canonical.bootSeed,
     aim: { yaw: a.yaw, aimYaw: a.aimYaw, aimPitch: a.aimPitch,
       direction: a.aimDir.toArray(), point: a.aimPoint.toArray() },
-    inkHex: '#' + a.color.getHexString(), canonicalPlacement: canonical };
+    inkHex: '#' + a.color.getHexString(), canonicalPlacement: canonical,
+    roster: window.__iwProjectileRosterSnapshot() };
   // Keep RNG diagnostics separate from physical setup and camera receipts.
   window.__iwCurrentVisualSetupRng = setupRng.snapshot();
   window.__iwCurrentVisualSetupLifecycle = lifecycleReset;
@@ -1096,7 +1134,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
       fireCalls: 0, renderSamples: 0, renderCalls: [], triangles: [], raf: [], maxProjectiles: 0,
       firstFrame: null, frameStates: [], blurEvents: 0, focusEvents: 0, visibilityChanges: [] };
     window.__inkwavePerf = { active: false, warming: false, raf: [], frames: [], loopTimestamps: [], projectileMs: [], renderMs: [], calls: [], triangles: [],
-      visualGeometryMs: [], visualBodies: [], visualVertices: [], nonemptyVisualRenders: 0,
+      visualGeometryMs: [], visualBodies: [], visualVertices: [], visualOwnerCounts: [], nonemptyVisualRenders: 0,
       projectileUpdates: 0, nonemptyProjectileUpdates: 0, fireCalls: 0, maxProjectiles: 0, gpuQueries: [], timer: null };
     const perf = window.__inkwavePerf;
     perf.warmup = warmup;
@@ -1230,7 +1268,17 @@ async function runFiringPerformance({ mobile = false } = {}) {
         if (perf.active) {
           perf.renderMs.push(performance.now() - t); perf.calls.push(G.renderer.info.render.calls); perf.triangles.push(G.renderer.info.render.triangles);
           const visuals = P.projectileVisuals;
-          const bodies = visuals ? visuals.mesh.visible ? visuals.bodies : 0 : P.blobs?.count ?? 0;
+          const history = visuals?.mesh?.visible ? visuals.bodies : 0;
+          // Current S3 projectile silhouettes and installed VTF volumes are
+          // legitimate GPU presentation owners. A present history renderer
+          // often intentionally owns zero heads while those meshes draw them.
+          const shape = P.s3ShapeCounts || {};
+          const s3 = ['body','slashH','slashV','shell','core','sparkles','sheets','drills']
+            .reduce((sum, key) => sum + (Number.isFinite(shape[key]) && shape[key] > 0 ? shape[key] : 0), 0);
+          const volume = G.fx?.inkVolumes?.isInkVolumes ? Math.max(0, G.fx.inkVolumes.metrics?.active ?? 0) : 0;
+          const legacy = Math.max(0, P.blobs?.count ?? 0);
+          const bodies = history + s3 + volume + legacy;
+          perf.visualOwnerCounts.push({ history, s3, volume, legacy });
           perf.visualBodies.push(bodies);
           perf.visualVertices.push(visuals?.stats.vertexCount ?? null);
           if (bodies > 0) perf.nonemptyVisualRenders++;
@@ -1354,6 +1402,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
       visualGeometryCpuMs: perf.visualGeometryMs,
       visualBodies: perf.visualBodies,
       visualVertices: perf.visualVertices,
+      visualOwnerCounts: perf.visualOwnerCounts,
       nonemptyVisualRenders: perf.nonemptyVisualRenders,
       visualBackend: G.projectiles.projectileVisuals ? 'source-aware-history' : 'legacy-native',
       renderCalls: perf.calls,

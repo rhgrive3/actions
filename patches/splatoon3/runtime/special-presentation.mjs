@@ -12,6 +12,8 @@
 
 import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs';
 import { buildScreenSheet, INKSTRIKE_LID_OPEN, CRAB_TANK_GRIPS } from './special-models.mjs';
+import { specialPresentationToken } from './special-presentation-owner.mjs';
+import { WAIL_SPEAKER_POSITIONS } from './wail-speakers.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.special-models.install.v1');
 const OBJECTS = Symbol('inkwave.s3.special-models.objects'), ROUNDS = Symbol('inkwave.s3.special-models.rounds');
@@ -71,15 +73,19 @@ export const SPECIAL_PROJECTILE_MODELS = Object.freeze({
   ultraStamp: { model: 'spUltraStamp', scale: 0.85, along: true, tumble: true, hideBlob: true },
 });
 // Six speakers in a hexagon round the kid (S3 promo screenshot 02).
-const SPEAKER_RING = [[-0.55, 1.95], [0.55, 1.95], [-1.0, 1.35], [1.0, 1.35], [-0.55, 0.75], [0.55, 0.75]];
+const SPEAKER_RING = WAIL_SPEAKER_POSITIONS;
 
 function disposeModel(group) {
   group?.removeFromParent?.();
+  const geometries = new Set(), materials = new Set(), textures = new Set();
   group?.traverse?.(o => {
-    if (o.geometry && !isSharedGeometry(o.geometry)) o.geometry.dispose?.();
+    if (o.geometry && !o.userData?.s3BorrowedGeometry && !isSharedGeometry(o.geometry)) geometries.add(o.geometry);
     const mats = Array.isArray(o.material) ? o.material : [o.material];
-    for (const m of mats) { if (!m || m.userData?.s3SharedInk) continue; m.map?.dispose?.(); m.dispose?.(); }
+    for (const m of mats) { if (!m || m.userData?.s3SharedInk) continue; if (m.map) textures.add(m.map); materials.add(m); }
   });
+  for (const g of geometries) g.dispose?.();
+  for (const t of textures) t.dispose?.();
+  for (const m of materials) m.dispose?.();
 }
 
 // Ultra Stamp: hold → wind up overhead → slam to the source swing frame → recover for the next
@@ -217,6 +223,55 @@ export function installSpecialModels(api) {
   const inkMat = (color) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.08, roughness: 0.42, metalness: 0.1 });
   const v = new THREE.Vector3(), q = new THREE.Quaternion(), fwd = new THREE.Vector3(0, 0, 1), grip = new THREE.Vector3(), pole = new THREE.Vector3();
   const leanQ = new THREE.Quaternion(), leanAxis = new THREE.Vector3(1, 0, 0), pivotA = new THREE.Vector3(), pivotB = new THREE.Vector3(), keep = new THREE.Matrix4(), inv = new THREE.Matrix4();
+  const up = new THREE.Vector3(0, 1, 0), tailSpeakers = new Map();
+  let speakerMarks = new WeakMap();
+  function observeSpeaker(e) {
+    if (e?.id === 'killerWail' && e.actor && e.action === 'activate') { speakerMarks.delete(e.actor); return; }
+    if (e?.id !== 'killerWail' || !e.actor || e.action !== 'laser' || !Number.isInteger(e.index) || e.index < 0 || e.index > 5
+      || !Array.isArray(e.pos) || e.pos.length !== 3 || !e.pos.every(Number.isFinite)
+      || !Array.isArray(e.target) || e.target.length !== 3 || !e.target.every(Number.isFinite)) return;
+    let marks = speakerMarks.get(e.actor);
+    if (!marks || marks.activation !== e.activation) { marks = { activation: e.activation, entries: [] }; speakerMarks.set(e.actor, marks); }
+    marks.entries[e.index] = { origin: new THREE.Vector3(...e.pos), target: new THREE.Vector3(...e.target), at: G.time || 0 };
+  }
+  api.on?.('all:special', e => { if (!e?.actor?.remote) observeSpeaker(e); });
+  // Called only after the network replay owner accepts the event, including
+  // when optional FX are absent or disabled.
+  api.specialModelsReplay = observeSpeaker;
+  function syncTailSpeakers(system) {
+    const seen = new Set();
+    const draw = (actor, activation, index, origin, target) => {
+      let slots = tailSpeakers.get(actor);
+      if (!slots) { slots = new Map(); tailSpeakers.set(actor, slots); }
+      let record = slots.get(index);
+      if (record && record.activation !== activation) { disposeModel(record.holder); slots.delete(index); record = null; }
+      if (!record) {
+        const model = buildSubModel(THREE, 'spKillerSpeaker', inkMat(colorOf(actor))), holder = new THREE.Group();
+        holder.name = 'killer-wail-surviving-speaker'; holder.add(model.root); G.scene?.add?.(holder);
+        record = { activation, holder }; slots.set(index, record);
+      }
+      record.holder.position.copy(origin); v.copy(target).sub(origin);
+      if (v.lengthSq() > 1e-8) record.holder.quaternion.setFromUnitVectors(fwd, v.normalize());
+      seen.add(record);
+    };
+    for (const tail of system._s3WailTails || []) for (const pair of tail.state.beamPairs || []) {
+      if (tail.state.t >= pair.until) continue;
+      for (let i = 0; i < pair.origins.length; i++) {
+        const mark = speakerMarks.get(tail.actor)?.entries[pair.index * 2 + i];
+        draw(tail.actor, tail.state.serial, pair.index * 2 + i, pair.origins[i], mark?.target || v.copy(pair.origins[i]).add(pair.direction));
+      }
+    }
+    for (const actor of G.actors || []) {
+      if (!actor.remote || actor.alive && actor.specialActive?.id === 'killerWail') continue;
+      const marks = speakerMarks.get(actor);
+      for (const [i, mark] of (marks?.entries || []).entries()) if (mark && (G.time || 0) >= mark.at && (G.time || 0) - mark.at <= 5 / 60 + .1)
+        draw(actor, marks.activation, i, mark.origin, mark.target);
+    }
+    for (const [actor, slots] of tailSpeakers) {
+      for (const [i, record] of slots) if (!seen.has(record)) { disposeModel(record.holder); slots.delete(i); }
+      if (!slots.size) tailSpeakers.delete(actor);
+    }
+  }
 
   // ---- deployed objects and projectiles --------------------------------------
   function objectModel(o) {
@@ -239,18 +294,19 @@ export function installSpecialModels(api) {
   }
   function poseObject(o, pres, dt) {
     const g = pres.group, m = pres.models;
+    const flight = o.phase === 'flight', age = Math.max(0, o.age - (o.landedAt || 0));
     if (o.mesh) o.mesh.visible = false;
     if (o.kind === 'screen') {
       // Unfurl over the 60F startup and fold back down over the 60F close (presentation of the
       // source StartFrame/EndFrame; the moving plane and its hits are unchanged).
       const H = o.height || 9, dur = o.dur || 680 / 60;
-      const rise = clamp01(o.age / 1), fold = clamp01((o.age - (dur - 1)) / 1);
+      const rise = flight ? 0 : clamp01(age / 1), fold = clamp01((age - (dur - 1)) / 1);
       const k = (1 - Math.pow(1 - rise, 3)) * (1 - fold * fold), wob = 1 + 0.04 * Math.sin(o.age * 9) * (1 - rise);
       g.position.copy(o.pos);
       g.rotation.set(0, Math.atan2(o.normal.x, o.normal.z), 0);
       pres.sheet.scale.set(0.35 + 0.65 * k * wob, Math.max(0.001, k), 1);
       pres.sheet.position.y = H / 2 * Math.max(0.001, k);
-      pres.sheet.visible = k > 0.002;
+      pres.sheet.visible = !flight && k > 0.002;
       const mat = pres.sheet.userData.s3ScreenSheet;
       mat.mat.opacity = 0.8 + 0.06 * Math.sin(o.age * 7);
       if (mat.mat.uniforms?.uTime) mat.mat.uniforms.uTime.value = o.age;
@@ -277,13 +333,14 @@ export function installSpecialModels(api) {
       const color = colorOf(o.owner, o.team);
       for (const [i, w] of (o.waves || []).entries()) {
         if (!pres.rings[i]) { const r = buildSubModel(THREE, 'spWaveRing', inkMat(color)); pres.rings[i] = r; g.add(r.root); }
-        const age = Math.max(0, o.age - w.started), r = w.radius * clamp01(age / (o.maxWaveFrame || 3)), ring = pres.rings[i];
-        ring.root.visible = r > 0.05 && age <= (o.maxWaveFrame || 3) + 0.25;
+        const waveAge = Math.max(0, age - w.started), r = w.radius * clamp01(waveAge / (o.maxWaveFrame || 3)), ring = pres.rings[i];
+        ring.root.visible = !flight && r > 0.05 && waveAge <= (o.maxWaveFrame || 3) + 0.25;
         ring.root.scale.set(Math.max(0.05, r), 1, Math.max(0.05, r));
       }
     }
   }
   function syncWorld(system, dt) {
+    syncTailSpeakers(system);
     const live = system._s3AllSpecialObjects || [];
     const shown = system[OBJECTS] ||= new Map();
     for (const o of live) {
@@ -327,6 +384,9 @@ export function installSpecialModels(api) {
   };
   const clear = Projectiles.prototype.clear;
   if (clear) Projectiles.prototype.clear = function (...args) {
+    for (const slots of tailSpeakers.values()) for (const r of slots.values()) disposeModel(r.holder);
+    tailSpeakers.clear();
+    speakerMarks = new WeakMap();
     for (const map of [this[OBJECTS], this[ROUNDS]]) if (map) { for (const r of map.values()) disposeModel(r.group); map.clear(); }
     return clear.apply(this, args);
   };
@@ -334,12 +394,18 @@ export function installSpecialModels(api) {
   // ---- devices on the kid ----------------------------------------------------
   if (!Character?.prototype?.update) return api;
   const states = new WeakMap();
+  function releaseWeapon(s) {
+    if (!s.weapon) return;
+    s.weapon.pivot.visible = s.weaponVisible;
+    if (s.weapon.left) s.weapon.left.pivot.visible = s.leftVisible;
+    s.weapon = null;
+  }
   function retire(ch) {
     const s = states.get(ch);
     if (!s) return;
     for (const d of s.devices) disposeModel(d.holder);
     disposeModel(s.coatGroup); disposeModel(s.line); disposeModel(s.ball?.root?.parent);
-    if (s.weapon) { s.weapon.pivot.visible = s.weaponVisible; if (s.weapon.left) s.weapon.left.pivot.visible = s.leftVisible; }
+    releaseWeapon(s);
     states.delete(ch);
   }
   function hostOf(ch, host) {
@@ -354,10 +420,10 @@ export function installSpecialModels(api) {
     for (const spec of SPECIAL_DEVICES[id] || []) {
       if (spec.inkCoat) { s.coat = true; continue; }
       if (spec.speakers) {
-        for (const [x, y] of SPEAKER_RING) {
+        for (const [x, y, z] of SPEAKER_RING) {
           const m = buildSubModel(THREE, spec.model, inkMat(color)), holder = new THREE.Group();
-          holder.add(m.root); holder.position.set(x, y, -0.35); hostOf(ch, 'kid')?.add(holder);
-          s.devices.push({ spec, holder, model: m, base: [x, y] });
+          holder.add(m.root); holder.position.set(x, y, z); G.scene?.add?.(holder);
+          s.devices.push({ spec, holder, model: m, base: [x, y, z] });
         }
         continue;
       }
@@ -385,12 +451,21 @@ export function installSpecialModels(api) {
       ch.kid.traverse(o => {
         if (!o.isSkinnedMesh || !/^kid:/.test(o.name || '') || /eye|iris|pupil|tooth|mouth|brow/i.test(o.name)) return;
         const twin = new THREE.SkinnedMesh(o.geometry, s.coatMat);
+        twin.userData.s3BorrowedGeometry = true;
         twin.bind(o.skeleton, o.bindMatrix); twin.frustumCulled = false; twin.renderOrder = (o.renderOrder || 0) + 1;
         s.coatGroup.add(twin); s.coatPairs.push([o, twin]);
       });
       ch.kid.add(s.coatGroup);
     }
-    if (s.coatGroup) { s.coatGroup.visible = on; for (const [o, t] of s.coatPairs) t.visible = on && o.visible; }
+    if (s.coatGroup) {
+      s.coatGroup.visible = on;
+      ch.kid.updateWorldMatrix(true, true);
+      inv.copy(s.coatGroup.matrixWorld).invert();
+      for (const [o, twin] of s.coatPairs) {
+        twin.visible = on && o.visible;
+        keep.multiplyMatrices(inv, o.matrixWorld); keep.decompose(twin.position, twin.quaternion, twin.scale);
+      }
+    }
   }
   function zipLine(ch, s, state, on) {
     if (!s.line && on) {
@@ -402,7 +477,9 @@ export function installSpecialModels(api) {
     s.line.visible = on;
     if (!on) return;
     const hand = ch.bones?.handR, from = v; (hand ? hand.getWorldPosition(from) : from.copy(ch.actor.pos).setY(ch.actor.pos.y + 1));
-    const to = state.zipTarget, d = to.clone().sub(from), len = d.length();
+    const to = state.zipTarget.clone();
+    if (state.phase === 'hookFlight') to.lerpVectors(from, to, clamp01((state.hookFlightT || 0) / Math.max(1e-6, state.hookFlightDuration || 0)));
+    const d = to.sub(from), len = d.length();
     s.line.position.copy(from); s.line.scale.set(1, Math.max(0.01, len), 1);
     if (len > 1e-6) s.line.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.divideScalar(len));
   }
@@ -411,7 +488,7 @@ export function installSpecialModels(api) {
     let hideWeapon = false, hideKid = false;
     for (const d of s.devices) {
       const spec = d.spec;
-      if (spec.hideWeapon) hideWeapon = true;
+      if (spec.hideWeapon && (s.id !== 'killerWail' || (state?.t ?? t - s.startedAt) < 40 / 60 - 1e-8)) hideWeapon = true;
       if (spec.hideKid) hideKid = true;
       poseSubModel(d.model, { dt, speed: Math.hypot(a.vel?.x || 0, a.vel?.z || 0) });
       if (spec.aim) d.holder.rotation.x = -(a.aimPitch || 0);
@@ -427,9 +504,24 @@ export function installSpecialModels(api) {
         const M = SPECIAL_DEVICE_MOTION.speakers, age = t - s.startedAt, k = easeOutBack(age / M.deploy), i = s.devices.indexOf(d);
         const laserAge = t - (a._s3SpecialMarks?.laser ?? -99), firing = a.specialActive?.phase === 'laser' || laserAge < 0.2;
         const recoil = kick(laserAge - (i % 3) * 0.012, 22) * M.recoil;
-        d.holder.position.set(d.base[0] * k, 1.1 + (d.base[1] - 1.1) * k + Math.sin(t * 3 + d.base[0] * 2) * 0.05 * k, -0.35 - 0.25 * (1 - k) - recoil);
+        const pair = state?.beamPairs?.find(p => p.index === Math.floor(i / 2));
+        const beam = speakerMarks.get(a), mark = !state || beam?.activation === state.serial ? beam?.entries[i] : null;
+        const origin = pair?.origins?.[i % 2] || mark?.origin;
+        if (origin) {
+          d.holder.position.copy(origin);
+          const end = mark?.target;
+          v.copy(end || origin).sub(origin);
+          if (v.lengthSq() < 1e-8) v.copy(pair?.direction || a.aimDir);
+          d.holder.quaternion.setFromUnitVectors(fwd, v.normalize());
+          d.holder.visible = pair ? (state.t <= pair.until + 1e-8) : t - mark.at <= 5 / 60 + .1;
+        } else {
+          v.set(d.base[0] * k, 1.1 + (d.base[1] - 1.1) * k + Math.sin(t * 3 + d.base[0] * 2) * .05 * k, d.base[2] - .25 * (1 - k) - recoil);
+          v.applyAxisAngle(up, a.aimYaw ?? a.yaw ?? 0);
+          d.holder.position.copy(a.pos).add(v);
+          d.holder.rotation.set(-(a.aimPitch || 0) + recoil * 2, (a.yaw || 0) + (1 - clamp01(k)) * (d.base[0] > 0 ? 1.2 : -1.2), 0);
+          d.holder.visible = true;
+        }
         d.holder.scale.setScalar(spec.scale * (0.15 + 0.85 * clamp01(k)) * (1 + recoil * 1.2));
-        d.holder.rotation.set(-(a.aimPitch || 0) + recoil * 2, (1 - clamp01(k)) * (d.base[0] > 0 ? 1.2 : -1.2), 0);
         const m = d.model.materials?.get('ink'); if (m?.emissiveIntensity != null) m.emissiveIntensity = firing ? 0.5 + 0.4 * Math.sin(t * 30) : 0.08 + 0.5 * kick(age, 4);
       }
       animateDevice(a, s, d, spec, state, t, dt);
@@ -477,17 +569,25 @@ export function installSpecialModels(api) {
         ch._solveLimb(side === 'L' ? ch.limbs.armL : ch.limbs.armR, grip, pole, null, 1, side === 'L' ? 0 : 1);
       }
     }
-    if (s.coat) { inkCoat(ch, s, true); zipLine(ch, s, state || {}, state?.phase === 'zip' && !!state.zipTarget); }
+    if (s.coat) { inkCoat(ch, s, true); zipLine(ch, s, state || {}, (state?.phase === 'zip' || state?.phase === 'hookFlight') && !!state.zipTarget); }
+    if (s.weapon && (!hideWeapon || s.weapon !== ch.weapon)) releaseWeapon(s);
     if (hideWeapon && ch.weapon?.pivot) {
       if (!s.weapon) { s.weapon = ch.weapon; s.weaponVisible = ch.weapon.pivot.visible; s.leftVisible = ch.weapon.left?.pivot.visible; }
       ch.weapon.pivot.visible = false; if (ch.weapon.left) ch.weapon.left.pivot.visible = false;
     }
     if (hideKid) { if (ch.kid) ch.kid.visible = false; if (ch.squidRoot) ch.squidRoot.visible = false; }
   }
-  const cp = Character.prototype, chUpdate = cp.update, dispose = cp.dispose;
+  const cp = Character.prototype, chUpdate = cp.update, dispose = cp.dispose, setVisible = cp.setVisible;
+  // Native dead actors stop calling Character.update. In particular, speakers
+  // now live in world space: hiding the body must release its held/unfired
+  // models immediately, leaving only the attack-owned fired tails.
+  if (setVisible) cp.setVisible = function (visible, ...args) {
+    if (!visible) retire(this);
+    return setVisible.call(this, visible, ...args);
+  };
   cp.update = function (dt, ...args) {
     const out = chUpdate.call(this, dt, ...args), a = this.actor;
-    const id = a?.alive && !a.superJumpState ? a.specialActive?.id : null;
+    const id = a?.alive && this.root?.visible !== false && !a.superJumpState ? specialPresentationToken(a)?.id : null;
     let s = states.get(this);
     if (!id || !SPECIAL_DEVICES[id]) { if (s) retire(this); return out; }
     if (!s || s.id !== id) s = begin(this, id);

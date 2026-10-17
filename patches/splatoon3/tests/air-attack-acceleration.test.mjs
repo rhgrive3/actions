@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
+import { airborneHumanTargetSpeed } from '../runtime/movement-physics.mjs';
 
 // #930: S3 gives main fire / held sub / special 2x acceleration AND braking, with no air exemption.
 // Ratio-only (no WU<->m conversion); the ordinary air baseline (P.airAccel/airDecel) is owned elsewhere.
@@ -43,7 +44,7 @@ test('#930 braking still clamps at zero and the target speed still bounds attack
   near(brakeStep(f, 'fire', 0.01), 0.01);
   f.a.vel.set(0, 0, 0); f.a.intent.move.set(1, 0, 0);
   for (let i = 0; i < 120; i++) f.a._horizontal(dt, false, false);
-  assert.ok(f.a.vel.x <= Math.max(f.a.weaponRunner.moveSpeed(), f.PLAYER.airMinSpeed) + 1e-9);
+  assert.ok(f.a.vel.x <= f.a.weaponRunner.moveSpeed() + 1e-9);
 });
 test('#930 a running dodge keeps its own controller (no generic air steering over it)', async () => {
   const f = await airborne(); f.a.weaponRunner.dodge = { t: 0, dur: 1 };
@@ -61,4 +62,27 @@ test('#930 the same fixed simulation gives the same braking trace at 30/60/120 r
   assert.equal(traces[1].length, 20);
   assert.deepEqual(traces[0], traces[1]); assert.deepEqual(traces[2], traces[1]);
   near(traces[1][0], expectedFirst); near(traces[1][19], 0);
+});
+
+test('main attack in air honors actual per-weapon shot speed below the ordinary minimum',async()=>{
+ const f=await fixture();
+ for(const kind of ['roller','blaster','charger','slosher']){
+  const a=f.make(kind),r=a.weaponRunner;a.form='kid';a.grounded=false;a.ground.hit=false;
+  a.intent.move.set(1,0,0);a.vel.set(0,0,0);
+  if(kind==='roller') r.s3RollerAttack={vertical:true,windup:31/60,interval:56/60,elapsed:35/60,released:true,rolling:false};
+  else if(kind==='charger'){r.charging=true;r.chargeT=1;r.charge=1;}
+  else if(kind==='slosher')r.slosh=0;
+  else r.firingT=.2;
+  const selected=r.moveSpeed();
+  assert.ok(selected<f.PLAYER.airMinSpeed,kind+' '+selected);
+  near(airborneHumanTargetSpeed(a,f.PLAYER),selected);
+  for(let i=0;i<120;i++)a._horizontal(dt,false,false);
+  near(a.vel.x,selected);
+ }
+ // The air floor remains intact for ordinary motion, even for a custom slower
+ // baseline; attack admission, not raw weapon category, selects the exception.
+ const w={weaponRunner:{moveSpeed:()=>2.2,firingPose:()=>false},specialActive:null,superJumpState:null};
+ near(airborneHumanTargetSpeed(w,f.PLAYER),f.PLAYER.airMinSpeed);
+ w.weaponRunner.firingPose=()=>true;
+ near(airborneHumanTargetSpeed(w,f.PLAYER),2.2);
 });

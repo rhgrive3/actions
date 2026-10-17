@@ -1,0 +1,184 @@
+{
+  "inspectedUTC": "2026-10-16",
+  "runtimeRedistribution": false,
+  "images": [
+    {
+      "id": "bucket-wiki.webp",
+      "family": "slosher",
+      "page": "https://wikiwiki.jp/splatoon3mix/ブキ/バケットスロッシャー",
+      "image": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/ブキ/バケットスロッシャー/%3A%3Aref/バケツ塗り3.1.0.webp",
+      "sha256": "9107deab0f9551b5d09537e2ed3ce3861c64e06bb4bdf577e32a143ebc64f460",
+      "width": 614,
+      "height": 574,
+      "frames": 1,
+      "viewedFrames": [
+        0
+      ],
+      "gear": "unknown",
+      "gameVersion": "3.1.0 label, capture conditions otherwise unknown",
+      "use": "qualitative shape and placement; not numeric size measurement"
+    },
+    {
+      "id": "bucket-game8.jpg",
+      "family": "slosher",
+      "page": "https://game8.jp/splatoon3/478571",
+      "image": "https://img.game8.jp/7235557/7ba8ba5197d1afaa792eaa9b77525648.jpg/poster",
+      "sha256": "ab8456da7b5958dcf28984a2a3a66ebc085293c49b91d4ca4a4ea7fd32f47ef2",
+      "width": 768,
+      "height": 432,
+      "frames": 1,
+      "viewedFrames": [
+        0
+      ],
+      "gear": "unknown",
+      "gameVersion": "unknown",
+      "use": "qualitative shape and placement; not numeric size measurement"
+    },
+    {
+      "id": "roller-wiki.webp",
+      "family": "roller",
+      "page": "https://wikiwiki.jp/splatoon3mix/ブキ/スプラローラー",
+      "image": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/ブキ/ローラー、スロッシャー/使用イメージ/%3A%3Aref/スプラローラー.webp",
+      "sha256": "f21c4c0e748d9f02a72ba4958e0113737acd0ad8724cf7fd06a8900361e0465f",
+      "width": 600,
+      "height": 680,
+      "frames": 1,
+      "viewedFrames": [
+        0
+      ],
+      "gear": "unknown",
+      "gameVersion": "unknown",
+      "use": "qualitative shape and placement; not numeric size measurement"
+    },
+    {
+      "id": "roller-altema.jpg",
+      "family": "roller",
+      "page": "https://altema.jp/splatoon3/dynamoroller",
+      "image": "https://img.altema.jp/splatoon3/kakudai/splatoon3_tatahuri.jpg",
+      "sha256": "5eaefe699a202de64b32f410ef135e42431d7393338c9459688229a84678597e",
+      "width": 1280,
+      "height": 720,
+      "frames": 1,
+      "viewedFrames": [
+        0
+      ],
+      "gear": "unknown",
+      "gameVersion": "unknown",
+      "use": "qualitative shape and placement; not numeric size measurement"
+    },
+    {
+      "id": "brush-wiki.jpg",
+      "family": "brush",
+      "page": "https://wikiwiki.jp/splatoon3mix/ブキ/パブロ",
+      "image": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/ブキ/パブロ/%3A%3Aattach/2025010611495100-4CE9651EE88A979D41F24CE8D6EA1C23.jpg",
+      "sha256": "991fc65db4d693af34f929b99151b03712a786c7b3627f97c145b986f9c77722",
+      "width": 1280,
+      "height": 720,
+      "frames": 1,
+      "viewedFrames": [
+        0
+      ],
+      "gear": "unknown",
+      "gameVersion": "unknown",
+      "use": "qualitative shape and placement; not numeric size measurement"
+    },
+    {
+      "id": "brush-note.jpg",
+      "family": "brush",
+      "page": "https://note.com/rbaconv/n/n5f6f4bfb753b",
+      "image": "https://assets.st-note.com/img/1669588225072-IVBOWcqajG.jpg?fit=bounds&height=2000&quality=85&width=2000",
+      "sha256": "b5c0a351195251118fcf564ade9c77cd5bfd4596872101d2f940be46c2ed7c5b",
+      "width": 1280,
+      "height": 720,
+      "frames": 1,
+      "viewedFrames": [
+        0
+      ],
+      "gear": "unknown",
+      "gameVersion": "unknown",
+      "use": "qualitative shape and placement; not numeric size measurement"
+    },
+    {
+      "id": "shooter-wiki.jpg",
+      "family": "shooter",
+      "page": "https://wikiwiki.jp/splatoon3mix/システム詳細仕様#paint_spread",
+      "image": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/システム詳細仕様/%3A%3Aref/塗り伸び_プロモデラー比較.jpg",
+      "sha256": "cbf412f8567488f34e7e4b4df1c87f8cf76225bfbbe03cc12cadcaecc1cea035",
+      "width": 1280,
+      "height": 720,
+      "frames": 1,
+      "viewedFrames": [
+        0
+      ],
+      "gear": "unknown",
+      "gameVersion": "unknown",
+      "use": "qualitative shape and placement; not numeric size measurement"
+    },
+    {
+      "id": "shooter-bold-wiki.jpg",
+      "family": "shooter",
+      "page": "https://wikiwiki.jp/splatoon3mix/システム詳細仕様#paint_spread",
+      "image": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/システム詳細仕様/%3A%3Aattach/塗り伸び_ボールドマーカー.jpg",
+      "sha256": "fa56b2b3b6ddc2f387f0f63ed0fbbaa64b8b53a8c3acc8ab9e2aaed06e8f09f7",
+      "width": 1280,
+      "height": 720,
+      "frames": 1,
+      "viewedFrames": [
+        0
+      ],
+      "gear": "unknown",
+      "gameVersion": "unknown",
+      "use": "qualitative shape and placement; not numeric size measurement"
+    },
+    {
+      "id": "shooter-altema.gif",
+      "family": "shooter",
+      "page": "https://altema.jp/splatoon3/promodelermg",
+      "image": "https://img.altema.jp/splatoon3/promode_1.gif",
+      "sha256": "291a9fca8142afc86f58b72c576f4471affe2ed95c7735c99d599006d393290f",
+      "width": 1280,
+      "height": 720,
+      "frames": 31,
+      "viewedFrames": [
+        10,
+        30
+      ],
+      "gear": "unknown",
+      "gameVersion": "unknown",
+      "use": "qualitative shape and placement; not numeric size measurement"
+    },
+    {
+      "id": "dualies-altema.gif",
+      "family": "dualies",
+      "page": "https://altema.jp/splatoon3/splatmaneuver",
+      "image": "https://img.altema.jp/splatoon3/splamaneu_3.gif",
+      "sha256": "87b41db7c71d04e2bc57238dc73658c21f7536dfa9036d79337b4a369e2d60cb",
+      "width": 1280,
+      "height": 720,
+      "frames": 42,
+      "viewedFrames": [
+        15,
+        41
+      ],
+      "gear": "unknown",
+      "gameVersion": "unknown",
+      "use": "qualitative shape and placement; not numeric size measurement"
+    },
+    {
+      "id": "dualies-nintendo.png",
+      "family": "dualies",
+      "page": "https://www.nintendo.com/jp/switch/av5ja/customize/index.html",
+      "image": "https://www.nintendo.com/jp/switch/av5ja/assets/images/customize/sp/buki/card/main_weapon_10.png",
+      "sha256": "4f5727fcafb403688c5c9714a1b07286828430dd05368486dad4954783814352",
+      "width": 580,
+      "height": 687,
+      "frames": 1,
+      "viewedFrames": [
+        0
+      ],
+      "gear": "unknown",
+      "gameVersion": "unknown",
+      "use": "launch-pose corroboration only; not an isolated floor mask"
+    }
+  ]
+}

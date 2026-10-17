@@ -27,6 +27,8 @@ assert.equal(hash(JSON.stringify(build.artifacts)), build.contentHash);
 for (const [file, expected] of Object.entries(build.artifacts)) assert.equal(hash(fs.readFileSync(path.join(site, file))), expected, file);
 const fixtureRel = 'patches/splatoon3/tests/paint-mask-browser-fixture.mjs';
 const fixtureCode = fs.readFileSync(path.join(ROOT, fixtureRel), 'utf8');
+const captureFile=arg('--main-ink-captures');
+const mainInkCaptures=captureFile?JSON.parse(fs.readFileSync(captureFile,'utf8')):[];
 let sourceSha = null;
 if (process.argv.includes('--exact-source')) {
   sourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
@@ -54,7 +56,7 @@ const server = http.createServer((req, res) => {
     const asset = mode === 'source' ? '/source/' : '/built/_versions/' + build.build.revision + '/';
     if (/^\/(source|built)\/fixture.html$/.test(pathname)) {
       res.setHeader('content-type', 'text/html');
-      res.end('<!doctype html><script type="importmap">' + JSON.stringify({ imports: { three: asset + 'vendor/three/build/three.module.js', 'three/addons/': asset + 'vendor/three/jsm/' } }) +
+      res.end('<!doctype html><script>globalThis.mainInkCapturedEvents='+JSON.stringify(mainInkCaptures).replaceAll('<','\\u003c')+'</script><script type="importmap">' + JSON.stringify({ imports: { three: asset + 'vendor/three/build/three.module.js', 'three/addons/': asset + 'vendor/three/jsm/' } }) +
         '</script><script type="module">import {runPaintMaskProbe} from "' + '/' + mode + '/fixture.mjs"; runPaintMaskProbe().then(result=>globalThis.paintMaskResult=result).catch(error=>globalThis.paintMaskError=String(error)+"\\n"+(error.stack||""));</script>'); return;
     }
     if (/^\/(source|built)\/fixture.mjs$/.test(pathname)) {
@@ -98,7 +100,10 @@ try {
     const outcome = await page.evaluate(() => ({ result: globalThis.paintMaskResult, error: globalThis.paintMaskError, diagnostic: globalThis.paintMaskDiagnostic }));
     if (outcome.error) fs.writeFileSync(path.join(evidence, 'paint-mask-failure.json'), JSON.stringify({ engine, mode, sourceSha, contentHash: build.contentHash, ...outcome }, null, 2) + '\n');
     assert.equal(outcome.error, undefined, outcome.error); assert.equal(errors.length, 0, JSON.stringify(errors));
-    results[mode] = outcome.result; await page.close();
+    results[mode] = outcome.result;
+    await page.locator('[data-main-ink-gallery]').screenshot({path:path.join(evidence,'main-ink-gallery-'+mode+'.png')});
+    if(mainInkCaptures.length)await page.locator('[data-main-ink-volleys]').screenshot({path:path.join(evidence,'main-ink-volleys-'+mode+'.png')});
+    await page.close();
   }
   assert.deepEqual(results.source, results.built, 'source-composed and emitted mask/hash receipts must agree exactly');
   for (const mode of ['source', 'built']) {
@@ -106,6 +111,7 @@ try {
     assert([...received].some(file => file.startsWith(mode + '/') && file.endsWith('/patches/splatoon3/runtime/paint-ownership.mjs')), mode + ' CPU ownership module served');
   }
   const receipt = { status: 'passed', engine, sourceSha, contentHash: build.contentHash, inputHash: build.inputHash,
+    mainInkCapturesHash:captureFile?hash(fs.readFileSync(captureFile)):null,
     verifierHash: hash(fs.readFileSync(fileURLToPath(import.meta.url))), fixtureHash: hash(fixtureCode), received: [...received].sort(), results };
   fs.writeFileSync(path.join(evidence, 'paint-mask-result.json'), JSON.stringify(receipt, null, 2) + '\n');
   console.log(JSON.stringify({ status: receipt.status, engine, sourceSha, cases: results.built.rows.length,

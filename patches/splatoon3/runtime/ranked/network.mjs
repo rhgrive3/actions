@@ -1,5 +1,7 @@
 import { validRankedSnapshot } from './engine.mjs';
 import { withObjectDamageCause } from '../sub-resistance.mjs';
+import { specialGaugeLocked } from '../tacticooler-gauge.mjs';
+import { recordTowerHostSnapshot, clearTowerPaintSupport } from '../../../network-replication/tower-paint-support.mjs';
 
 const damageCauses = new Set(['Gachihoko_Bullet', 'Gachihoko_BombCore', 'GachihokoTimeUpBurst']);
 
@@ -17,6 +19,8 @@ export function installRankedNetwork(api) {
       d = { ...d, rk: envelope(this, { state: this.match.ranked.snapshot(), gains: this.match.rankedGains || [0, 0] }) };
       if (d.k === 'res') Object.assign(d, { rankedResult: this.match.ranked.result() });
     }
+    if (current(this) && this.isHost && d.rk?.match === this.cfg.id && d.rk.host === this.s.hostId)
+      recordTowerHostSnapshot(this, d.rk.state);
     return send.call(this, d);
   };
   // Extend the existing 20Hz actor packet, with 5Hz objective snapshots. The
@@ -30,7 +34,10 @@ export function installRankedNetwork(api) {
     tr.broadcast = d => {
       if (d.k === 't') {
         this.rankedTick = (this.rankedTick || 0) + 1;
-        if (this.isHost && this.rankedTick % 4 === 0) d.rk = envelope(this, { state: this.match.ranked.snapshot(), gains: this.match.rankedGains || [0, 0] });
+        if (this.isHost && this.rankedTick % 4 === 0) {
+          d.rk = envelope(this, { state: this.match.ranked.snapshot(), gains: this.match.rankedGains || [0, 0] });
+          recordTowerHostSnapshot(this, d.rk.state);
+        }
         const a = this.match.local;
         if (a && !this.isHost) {
           const cmd = a._rankedInput || {};
@@ -109,6 +116,7 @@ export function installRankedNetwork(api) {
     if (m?.ranked) for (const a of m.actors.filter(a => a.owner === id)) m.ranked.rule.removeActor(actorId(a));
     const r = leave.call(this, id, changed);
     if (m?.ranked && changed) {
+      clearTowerPaintSupport(this);
       this.rankedInputs?.clear(); this.rankedHitSeq?.clear();
       this.rankedEventSeq = this.rankedDamageSeq = 0;
       if (this.isHost) {
@@ -120,6 +128,7 @@ export function installRankedNetwork(api) {
   };
   const dispose = P.dispose;
   P.dispose = function () {
+    clearTowerPaintSupport(this);
     this.rankedInputs?.clear(); this.rankedHitSeq?.clear();
     return dispose.call(this);
   };
@@ -144,12 +153,13 @@ export function acceptState(nm, packet) {
   m.time = engine.time;
   if (Array.isArray(packet.gains) && packet.gains.length === 2 && packet.gains.every(n => Number.isFinite(n) && n >= 0 && n < 10000)) {
     const previous = m.rankedGains || [0, 0];
-    for (const a of m.actors) if (!a.remote && a.alive && !a.specialActive) {
+    for (const a of m.actors) if (!a.remote && a.alive && !a.specialActive && !specialGaugeLocked(a)) {
       const gain = Math.max(0, packet.gains[a.team] - previous[a.team]);
       a.special = Math.min(a.specialCost(), a.special + gain);
     }
     m.rankedGains = [...packet.gains];
   }
   m.rankedWorld?.update(engine, 0);
+  recordTowerHostSnapshot(nm, packet.state);
   return true;
 }

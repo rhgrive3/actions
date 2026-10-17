@@ -173,9 +173,11 @@ test('special activation refills ink before native Storm startup', () => {
   let throws=0; G.projectiles={throwStorm(){throws++;}};
   const a=f.make('charger');
   a.weapon={...a.weapon,special:'storm'};a.ink=7; a.special=a.specialCost(); a.form='squid';
+  const activationCost=a.specialCost();
   a._startSpecial();
   assert.equal(a.ink,PLAYER.inkMax);
-  assert.equal(a.special,0);
+  assert.equal(a.special,activationCost,'holding retains the native reserve until actual operation');
+  assert.equal(a.specialReady(),false,'the held reserve cannot activate a second special');
   assert.equal(a.specialActive.id,'storm');
   assert.equal(throws,0,'activation enters the owned hold without a projectile');
   a.intent.sub=true;updateStormHold(a,1/60,G);a.intent.sub=false;updateStormHold(a,1/60,G);

@@ -9,10 +9,10 @@
 // Sources: Splatoon Wiki "Triple Splashdown" (v11.3.0: fist distance 6.54,
 // 220-damage radius 6.4, 60-damage radius 9.6, 0.25 s fist delay; ink-splatter
 // radius 10 from v9.3.0) and Nintendo's 11.3.0 notes (fist travel +9%, reduced
-// 100+ overlap area). The pinned Leanny extraction carries no fist parameters.
+// 100+ overlap area). Leanny's 11.3.0 WeaponSpPogo extraction confirms the
+// 15F travel, 6.54 distance, 100 HP and 60F rise; 87F is the community total.
 //
-// Unverified and therefore not claimed: the falloff shape between 220 and 60
-// (linear here), fist mesh/texture, the fists rising over slopes and short walls
+// Unverified and therefore not claimed: fist mesh/texture, the fists rising over slopes and short walls
 // (LOS-blocking is an approximation), fist SFX/VFX, and remote presentation.
 // Super Jump Slam never reaches _startSpecial, so it stays a single explosion.
 
@@ -79,7 +79,10 @@ export function tripleSlamFistDamage(distance, scale = 1) {
   const near = FIST_NEAR_RADIUS * scale, far = FIST_FAR_RADIUS * scale;
   if (distance > far) return 0;
   if (distance <= near) return 220;
-  return 220 + (60 - 220) * ((distance - near) / (far - near));
+  // Nintendo 7.2.0 explicitly describes a 60-damage explosion region; the
+  // verification wiki and 11.3.0 Pogo distance entries agree on two bands.
+  // Interpolating here invented a lethal 100+ band outside the near radius.
+  return 60;
 }
 
 function blast(actor, record, G, THREE) {

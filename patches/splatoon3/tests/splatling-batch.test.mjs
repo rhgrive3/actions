@@ -186,12 +186,12 @@ test('30/60/120Hz render partitions yield identical native fixed-tick spin/ink/s
   assert.deepEqual(traces[0], traces[1]); assert.deepEqual(traces[1], traces[2]);
 });
 
-test('#252: speed quantiles have a sourced absolute half-width and center bias, not +/-12 percent', () => {
-  near(sampleSplatlingSpeed(126, 7.2, .2, 0), 118.8);
-  near(sampleSplatlingSpeed(126, 7.2, .2, 1), 133.2);
-  near(sampleSplatlingSpeed(126, 7.2, .2, .5), 126);
-  near(sampleSplatlingSpeed(126, 7.2, .2, .75), 127.44);
-  near(sampleSplatlingSpeed(126, 7.2, .2, .25), 124.56);
+test('#252: speed quantiles use the source relative rate and research median bias', () => {
+  near(sampleSplatlingSpeed(126, .12, .2, 0), 110.88);
+  near(sampleSplatlingSpeed(126, .12, .2, 1), 141.12);
+  near(sampleSplatlingSpeed(126, .12, .2, .5), 126);
+  near(sampleSplatlingSpeed(126, .12, .2, .75), 129.024);
+  near(sampleSplatlingSpeed(126, .12, .2, .25), 122.976);
 });
 
 test('#252: actual emitted projectiles vary in norm before recording; ghosts use transmitted velocity', async () => {
@@ -202,7 +202,7 @@ test('#252: actual emitted projectiles vary in norm before recording; ghosts use
   for (let i = 0; i < 512; i++) system.fireSplatling(a, a.weapon, 0);
   const speeds = system.list.map(p => p.vel.length());
   assert.ok(Math.max(...speeds) - Math.min(...speeds) > 10);
-  assert.ok(speeds.every(s => s >= 55.8 - 1e-8 && s <= 70.2 + 1e-8));
+  assert.ok(speeds.every(s => s >= 55.44 - 1e-8 && s <= 70.56 + 1e-8));
   assert.equal(net.out.length, 512);
   for (let i = 0; i < speeds.length; i++) {
     const p = system.list[i], packet = net.out[i];

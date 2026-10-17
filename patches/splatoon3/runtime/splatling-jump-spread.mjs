@@ -1,4 +1,5 @@
-const HOLD_FRAMES = 25;
+import { jumpRecoveryAt } from './weapon-accuracy.mjs';
+
 const RECOVERY_END_FRAMES = 70;
 const SIMULATION_HZ = 60;
 const INSTALLED = Symbol.for('inkwave.s3.splatling-jump-spread.v1');
@@ -6,9 +7,8 @@ const INSTALLED = Symbol.for('inkwave.s3.splatling-jump-spread.v1');
 // The pinned 11.3.0 table publishes the hold and end frames, not the curve
 // between them. This is an internal monotone linear interpolation, not a claim
 // about Nintendo's unpublished intermediate curve.
-export function splatlingJumpRecoveryAt(ageFrames) {
-  if (!Number.isFinite(ageFrames)) return null;
-  return Math.max(0, Math.min(1, (ageFrames - HOLD_FRAMES) / (RECOVERY_END_FRAMES - HOLD_FRAMES)));
+export function splatlingJumpRecoveryAt(ageFrames, param = {}) {
+  return jumpRecoveryAt(ageFrames, param);
 }
 
 function clearJumpSpread(actor) {
@@ -28,7 +28,7 @@ function advanceJumpSpread(actor, dt) {
     RECOVERY_END_FRAMES,
     actor.s3SplatlingJumpAgeFrames + dt * SIMULATION_HZ,
   );
-  if (actor.s3SplatlingJumpAgeFrames >= RECOVERY_END_FRAMES && actor.grounded) clearJumpSpread(actor);
+  if (actor.s3SplatlingJumpAgeFrames >= RECOVERY_END_FRAMES) clearJumpSpread(actor);
 }
 
 function beginJumpSpread(actor) {
@@ -73,7 +73,7 @@ export function installSplatlingJumpSpread({ Actor, WeaponRunner, on }) {
     // sourced angular envelope. The native Splatling bloom factor is an
     // independent legacy approximation and must not shrink either endpoint.
     if (recovery === null)
-      return this.a.grounded ? weapon.spreadGround : weapon.spreadAir;
+      return weapon.spreadGround;
     return weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery;
   };
 }

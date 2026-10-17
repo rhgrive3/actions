@@ -17,13 +17,35 @@
 // may change local-owned device HP after the catalogue owner/life gate.
 
 import { gearCurve } from './gear.mjs';
-import { disposeInkVac } from './kit-ink-vac.mjs';
+import { validDamageGroup } from './final-damage.mjs';
+import { disposeInkVac, inkVacAbsorbCandidate } from './kit-ink-vac.mjs';
 import { endTrizooka } from './kit-trizooka.mjs';
+import { beginZipcasterArmor, arriveZipcasterArmor, updateZipcasterArmor, clearZipcasterArmor } from './zipcaster-armor.mjs';
 import { objectDamageScale, objectDamageRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
+import { specialGaugeLocked, startSpecialGauge, endSpecialGauge, startHeldSpecialGauge, SPECIAL_GAUGE_FRAMES } from './tacticooler-gauge.mjs';
+import { specialDeviceFlight, stepSpecialDeviceFlight, deviceBelowWorld } from './special-device-flight.mjs';
+import { wailSpeakerOrigin } from './wail-speakers.mjs';
+import { activeSpecialGaugeState, syncActiveSpecialGauge, startActiveSpecialGauge, endActiveSpecialGauge, clearActiveSpecialGauges } from './active-special-gauge.mjs';
+import { kitTrizookaSteppedBands } from './trizooka-collision.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-specials.install.v1');
 const FPS = 60, MAX_STAMP_RADIUS = 3.74;
+// Community verification: Wail aims at the target's position 0.5 seconds ago.
+// https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/メガホンレーザー5.1ch
+const WAIL_TRACK_DELAY = .5;
+// Nintendo 2.0.0: Zipcaster main-weapon ink consumption is 67% of normal.
+// Keep affordability and debit in the native runner on the same reduced costs,
+// after its equipped Ink Saver (Main) modifiers have already been applied.
+// https://support.nintendo.com/jp/switch/software_support/av5ja/200.html
+const ZIPCASTER_MAIN_INK_RATE = .67;
+// S3 verification Wiki, Splattercolor Screen (11.2.0 table): 40 contact HP,
+// one hit per 60F. WallDepth=.25 is from the pinned 11.3.0 Chimney table.
+// https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/スミナガシート#spec
+const SCREEN_CONTACT_INTERVAL = 60 / FPS, SCREEN_HALF_DEPTH = .25 / 2;
+// 11.3.0 Chimney WallParam.SplashSpawnPosition, in sheet-local coordinates.
+const SCREEN_SPLASH_POSITIONS=Object.freeze([[-5,4.5,.85],[7,5,.25],[-3,4,1.25],[1,4,1.5],
+  [11,6.5,-2],[3,4,1.25],[9,6.5,-.6],[-9,6.5,-.6],[-1,4,1.5],[-7,5,.25],[5,4.5,.85],[-11,6.5,-2]]);
 const q2 = n => Math.round(n * 100) / 100;
 const q3 = n => Math.round(n * 1000) / 1000;
 const finite = n => typeof n === 'number' && Number.isFinite(n);
@@ -34,7 +56,7 @@ const SPECIALS = Object.freeze({
   inkjet: { name: 'Inkjet', source: 'WeaponSpJetpack', duration: [7.5, 8, 8.5], radius: 5, paintRadius: 3.2, near: 50, far: 30, direct: 120, status: '11.3.0 table: 50/30 at 2.55/5, paint radius 3.2/3.6/4 and damage radii ×1/1.15/1.3 by Special Power Up; 450/480/510F; 120 direct is community-reported, flight tuning calibrated' },
   booyahBomb: { name: 'Booyah Bomb', source: 'WeaponSpNiceBall', duration: 10, radius: 12.6, paintRadius: 13.5, near: 0, far: 0, status: '11.3.0 table: 4700 armor; auto charge .002/.006/.01 per frame, self cheer .077, ally charge .088/.044/.022/.011 per cheerer, gauge credit 6/3/2/1/.5 and max15, blast radius 12.6, paint radius 13.5, paint span 6F. 3.3 damage/frame is community-reported; blast growth and charge inputs calibrated' },
   ultraStamp: { name: 'Ultra Stamp', source: 'WeaponSpUltraStamp', duration: [7.5, 9.5, 11], radius: 8, paintRadius: 5, near: 40, far: 40, status: '11.3.0 table: swing splash 40 at 4; throw 220/60 at 3.6/8, paint 5, 450/570/660F; 100 contact is community-reported and action hitboxes are calibrated' },
-  zipcaster: { name: 'Zipcaster', source: 'WeaponSpSuperHook', duration: 9, radius: 6, paintRadius: 1.4, near: 45, far: 35, status: '11.3.0 table: 540F, 1.5× ink capacity, hook/per-second ink costs vary with Special Power Up; hook blast 45/35 at 5.25/6; direct hit and hook flight mapping still need game comparison' },
+  zipcaster: { name: 'Zipcaster', source: 'WeaponSpSuperHook', duration: 10, radius: 6, paintRadius: 1.4, near: 45, far: 35, status: '11.3.0 table: 1.5× ink capacity and .15/.1305/.12 per-second costs; ink reserve owns duration (10s at AP0, 12.5s at AP57). SpecialTotalFrame540 role unresolved, not an active cutoff. Hook blast45/35 at5.25/6; pull/flight mapping still calibrated' },
   killerWail: { name: 'Killer Wail 5.1', source: 'WeaponSpMicroLaser', duration: [308/60, 348/60, 368/60], radius: 27, paintRadius: 0, near: 3.5, far: 3.5, status: '11.3.0 table: 36F charge, 35 raw every 5F, 180/220/240F laser lifetime, 20F after-wait and dual launch; world conversion/lock geometry calibrated' },
   crabTank: { name: 'Crab Tank', source: 'WeaponSpChariot', duration: [8, 9.5, 11], radius: 4.8, paintRadius: 4.5, near: 30, far: 30, direct: 50, status: '11.3.0 table: 20F shooter/cannon start, shooter repeat 12F→4F over90F (bias.2; interpolation calibrated), cannon lock32F, 500 armor, 480/570/660F; 25F finish lock and steering need retail comparison' },
   reefslider: { name: 'Reefslider', source: 'WeaponSpSkewer', duration: 158/FPS, radius: 14.9, paintRadius: 7.51, near: 220, far: 70, status: '11.3.0 table: 38F grounded startup, invulnerability from25F, movement54F/cancel after15F, recovery28F and player collision radius.8; blast/contact220/70, SPU damage×1/1.1/1.2 and paint7.51/8.26/9.012; trajectory calibrated' },
@@ -69,7 +91,7 @@ const runtimes = new WeakMap();
 const replaySeen = new WeakMap();
 const SEEN_LIMIT = 384;
 const SPECIAL_ROUND_FIELDS = Object.freeze(['s3AllSpecial','s3AllSpecialPaintRadius','s3AllSpecialActivation','s3AllSpecialSeed','s3DamageReduce',
-  's3TentaTarget','s3TentaAge','s3TentaDescending','s3TentaDirection','s3TentaLaunchedAt','s3AllSpecialMode','s3PaintNoSpecial',
+  's3TentaTarget','s3TentaTargetActor','s3TentaTargetLife','s3TentaAge','s3TentaDescending','s3TentaDirection','s3TentaLaunchedAt','s3AllSpecialMode','s3PaintNoSpecial',
   's3SpecialPowerAP','s3AllSpecialCrossPaintRadius','s3AllSpecialCrossPaintLength','s3AllSpecialSplashAroundRadius','s3AllSpecialSplashAroundCount',
   's3AllSpecialSplashAroundOffsetY','s3AllSpecialSplashAroundVelocityMin','s3AllSpecialSplashAroundVelocityMax','s3AllSpecialSplashAroundPitchMin',
   's3AllSpecialSplashAroundPitchMax','s3AllSpecialTrailPaintWidth','s3AllSpecialTrailPaintDepthScale','s3AllSpecialTrailPaintSpanFrames',
@@ -80,6 +102,23 @@ function vecArray(v) {
 }
 function normalizedSeed(seed) { return Number.isSafeInteger(seed) && seed >= 0 ? seed >>> 0 : 0; }
 function actorLife(actor) { return Math.max(Number(actor?.netLife)||0,Number(actor?.net?.lastLife)||0); }
+// General armor law: a single attack penetrates only its amount above 100;
+// Booyah's individual mechanics page reports an 80 HP cap. Its uncertain
+// break grace and Sub Resistance interaction are deliberately not invented.
+// https://wikiwiki.jp/splatoon3mix/システム詳細仕様#he35f781
+// https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/ナイスダマ
+function booyahArmorPenetration(state,victim,amount,attacker){
+  const through=total=>Math.min(80,Math.max(0,total-100)),group=victim.s3PendingHitGroup;
+  if(!attacker||typeof attacker!=='object'||!validDamageGroup(group))return through(amount);
+  const attackers=state.booyahArmorGroups||=new WeakMap();
+  let era=attackers.get(attacker);
+  if(!era||era.owner!==attacker.owner||era.life!==actorLife(attacker)){
+    era={owner:attacker.owner,life:actorLife(attacker),groups:new Map()};attackers.set(attacker,era);
+  }
+  const before=era.groups.get(group)||0,after=before+amount;
+  if(era.groups.size>=128&&!era.groups.has(group))era.groups.delete(era.groups.keys().next().value);
+  era.groups.set(group,after);return through(after)-through(before);
+}
 function seedUnit(seed, salt = 0) {
   let x = (normalizedSeed(seed) ^ Math.imul(salt + 1, 0x9e3779b1)) >>> 0;
   x ^= x >>> 16; x = Math.imul(x, 0x7feb352d); x ^= x >>> 15; x = Math.imul(x, 0x846ca68b); x ^= x >>> 16;
@@ -475,22 +514,11 @@ function damageBandRadius(rt, actor, center, bands, radius, source, once = null,
     const d = point.distanceTo(center);
     if (d > radius || Math.abs(point.y - center.y) > height) continue;
     if (G.physics?.los && !G.physics.los(center, point)) continue;
-    let amount = bands.at(-1)?.[1] ?? 0;
-    if (d <= bands[0][0]) amount = bands[0][1];
-    else for (let i = 1; i < bands.length; i++) if (d <= bands[i][0]) {
-      const [r0, d0] = bands[i - 1], [r1, d1] = bands[i];
-      amount = r1 === r0 ? d1 : d0 + (d1 - d0) * ((d - r0) / (r1 - r0));
-      break;
-    }
+    const amount = bands.find(([r]) => d <= r)?.[1] ?? 0;
     if (amount > 0) { G.projectiles.applyHit(actor, victim, amount, source); once?.add(victim); applied.push(victim); }
   }
   specialObjectRadius(rt,actor,center,radius,d=>{
-    if(!bands.length||d>radius)return 0;
-    if(d<=bands[0][0])return bands[0][1];
-    for(let i=1;i<bands.length;i++)if(d<=bands[i][0]){
-      const [r0,d0]=bands[i-1],[r1,d1]=bands[i];return r1===r0?d1:d0+(d1-d0)*((d-r0)/(r1-r0));
-    }
-    return bands.at(-1)?.[1]||0;
+    return d > radius ? 0 : bands.find(([r]) => d <= r)?.[1] ?? 0;
   },objectCause);
   return applied;
 }
@@ -525,6 +553,8 @@ export function crabTankAttackTargetVelocity(move,yaw=0){
 function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = true, flight = false } = {}) {
   const P = rt.api.PLAYER, move = actor.intent?.move;
   const useSquid = squid && !!actor.intent?.squid;
+  if(useSquid&&!flight)return moveCombatSquid(rt,actor,dt,state,{speed,jump});
+  if(!useSquid&&actor.climbing)actor._setClimb?.(false);
   actor.form = useSquid ? 'squid' : 'kid';
   const enemyInk = actor.grounded && actor.groundTeam === 2;
   if (speed == null) actor._horizontal?.(dt, useSquid, enemyInk);
@@ -560,6 +590,28 @@ function dampForSpecial(actor, dt, gravity = 25) {
   else actor.vel.y = 0;
   actor.pos.addScaledVector(actor.vel,dt);
   actor._resolve?.(false,py,actor.grounded);
+}
+// Inkjet can dive/swim/climb; Kraken is always a squid, including on grates.
+// Use the same surface, wall and collision owner as ordinary movement. The
+// special movement caps remain explicit calibrations; no new retail speeds
+// or wall attachment windows are inferred here.
+function moveCombatSquid(rt,actor,dt,state,{speed=null,jump=true,ignoreEnemy=false}={}) {
+  actor.form='squid';actor._surface?.();
+  actor.submerged=actor.grounded&&actor.groundTeam===1;
+  actor.onEnemy=!ignoreEnemy&&actor.grounded&&actor.groundTeam===2;
+  actor._updateClimb?.(dt,true);
+  if(!actor.climbing){
+    if(speed===null)actor._horizontal?.(dt,true,actor.onEnemy);
+    else{
+      const move=actor.intent.move,length=Math.hypot(move.x,move.z),scale=length>1?1/length:1,alpha=1-Math.exp(-8*dt);
+      actor.vel.x+=(move.x*scale*speed-actor.vel.x)*alpha;
+      actor.vel.z+=(move.z*scale*speed-actor.vel.z)*alpha;
+    }
+  }
+  const jumped=jump&&!!actor.intent.jump&&actor.grounded&&!actor.climbing&&!state._jumpHeld;
+  if(jumped){actor.vel.y=rt.api.PLAYER.swimJumpVel;actor.grounded=false;actor.character?.trigger?.('jump');rt.api.emit?.('actor:jump',{actor,surface:actor.groundTeam,swim:actor.submerged});}
+  actor._integrate?.(dt,true,jumped);state._jumpHeld=!!actor.intent.jump;
+  return jumped;
 }
 function colorOf(rt, owner) { return owner?.color || rt.api.G.teamColors?.[owner?.team] || 0xffffff; }
 function fxBurst(rt, owner, point, radius, action = 'hit') {
@@ -626,12 +678,16 @@ function emitObject(rt, object, action) {
       hp: object.hp || 0, radius: q2(object.maxRadius || 0), duration: q3(object.dur || 0), kind: object.kind,
       specialPowerAP: object.specialPowerAP || 0, width: object.width || 0, height: object.height || 0, waveFrame: object.maxWaveFrame || 0,
       startDelay: object.startDelay || 0, expand: object.expand || 0,
+      phase:object.phase,age:object.age||0,landedAt:object.landedAt??-1,
+      vx:object.vel?.x||0,vy:object.vel?.y||0,vz:object.vel?.z||0,
+      gravity:object.gravity||0,airResist:object.airResist||0,
       pulse: object.pulse || 0, tick: object.eventSerial });
 }
 function removeWorld(rt, object, reason = 'expire') {
   const objects = rt.system._s3AllSpecialObjects || [], at = objects.indexOf(object);
   if (at < 0) return false;
   objects.splice(at,1); disposeMesh(rt,object); object.dead = true;
+  if(object.kind==='wave'||object.kind==='screen')endSpecialGauge(object.owner,object.id,object);
   if (!object.owner?.remote) emitObject(rt,object,reason);
   return true;
 }
@@ -717,6 +773,10 @@ function candidate(rt, p, start, end) {
 }
 function stampGuardCandidate(rt,p,start,end,owner,state) {
   if(!start||!end||p?.ghost)return null;
+  // The hammer guards while attacking; simply holding the special, aiming
+  // a throw or waiting for the first swing must not create a permanent wall.
+  // Exact intracycle raising/lowering remains a hitbox calibration.
+  if(!state.stampHolding||!(state.stampCount>0||state.stampHasJumpSwing)||state.phase==='aimThrow')return null;
   const direction=aimDirection(rt,owner,rt.v0);direction.y=0;
   if(direction.lengthSq()<1e-8)return null;
   direction.normalize();
@@ -792,10 +852,10 @@ function screenObjectContact(rt,screen,from,to,object) {
 }
 function screenDamageObjects(rt,screen,from,to) {
   if(screen.owner.remote)return;
-  const now=rt.api.G.time,last=screen.lastObjectCross||=new WeakMap();
+  const now=screen.age,last=screen.lastObjectCross||=new WeakMap();
   const canHit=object=>{
     const point=screenObjectContact(rt,screen,from,to,object);if(!point)return null;
-    if(now-(last.get(object)??-Infinity)<.45)return null;
+    if(now-(last.get(object)??-Infinity)+1e-8<SCREEN_CONTACT_INTERVAL)return null;
     last.set(object,now);return point;
   };
   for(const object of rt.system?._s3AllSpecialObjects||[]){
@@ -805,22 +865,70 @@ function screenDamageObjects(rt,screen,from,to) {
   const center=rt.v12.copy(from).lerp(to,.5),radius=screen.width/2+3;
   rt.system?.s3DamageSubObjects?.(screen.owner,center,radius,(_distance,object)=>canHit(object)?40:0,'Chimney',{pierceLOS:true});
 }
+function screenPlayerContact(rt,screen,previous,victim) {
+  // Swept native collider contact against this runtime's rectangular sheet.
+  // The retail sheet's curved silhouette/vertical profile remains calibrated.
+  const before=previous?.pos||victim.pos,oldSheet=previous?.screen||screen.pos;
+  const fromSide=rt.v1.subVectors(before,oldSheet).dot(screen.normal);
+  const toSide=rt.v2.copy(victim.pos).sub(screen.pos).dot(screen.normal);
+  const delta=fromSide-toSide;
+  const t=Math.abs(delta)>1e-8?clamp(fromSide/delta,0,1):0;
+  const radius=Math.max(0,Number(rt.api.PLAYER?.radius)||0);
+  if(Math.abs(fromSide+(toSide-fromSide)*t)>radius+SCREEN_HALF_DEPTH)return null;
+  const player=rt.v3.copy(before).lerp(victim.pos,t),sheet=rt.v4.copy(oldSheet).lerp(screen.pos,t);
+  const across=Math.abs(rt.v5.copy(player).sub(sheet).dot(screen.tangent));
+  const height=Math.max(radius*2,Number(rt.api.PLAYER?.height)||0);
+  if(across>screen.width/2+radius||player.y+height<sheet.y||player.y>sheet.y+screen.height)return null;
+  return {sheet,player};
+}
 function lockWailPair(rt,actor,state,index) {
   const target=selectTargets(rt,actor,1,Infinity)[0]||null,direction=aimDirection(rt,actor,rt.v0).clone();
-  const origins=[-.65,.65].map(side=>new rt.api.THREE.Vector3(actor.pos.x+side,actor.pos.y+1.7,actor.pos.z-.6));
-  state.beamPairs.push({index,target,direction,origins,start:state.nextLock,until:state.nextLock+gearCurve(state.specialPowerAP,180,220,240)/FPS,nextTick:state.nextLock,tick:0,trace:[]});
+  const origins=[index*2,index*2+1].map(i=>wailSpeakerOrigin(rt.api.THREE,actor,i));
+  state.beamPairs.push({index,target,targetLife:actorLife(target),direction,origins,start:state.nextLock,until:state.nextLock+gearCurve(state.specialPowerAP,180,220,240)/FPS,nextTick:state.nextLock,tick:0,trace:[]});
   emitAction(rt,actor,'killerWail',state.serial,'target',actor.pos,target?.pos||actor.pos.clone().add(direction),nextSeed(state),{index});
 }
 function fireWailTick(rt, actor, state, pair) {
   for(let i=0;i<2;i++){
     const origin=pair.origins[i],target=pair.target;
-    // A delayed trace keeps the laser dodgeable; .2 s is calibration, not a recovered follow constant.
-    const sample=pair.trace.findLast(p=>p.t<=pair.nextTick-.2)||pair.trace[0];
-    const dir=target?.alive&&sample?rt.v2.copy(sample.pos).add(rt.v3.set(0,.75,0)).sub(origin).normalize():rt.v2.copy(pair.direction);
+    const at=pair.nextTick-WAIL_TRACK_DELAY,trace=pair.trace;
+    const before=trace.findLast(p=>p.t<=at)||trace[0],after=trace.find(p=>p.t>at);
+    const sample=before?rt.v3.copy(before.pos):null;
+    if(sample&&after&&at>before.t)sample.lerp(after.pos,clamp((at-before.t)/(after.t-before.t),0,1));
+    const dir=sample?rt.v2.copy(sample).add(rt.v3.set(0,.75,0)).sub(origin).normalize():rt.v2.copy(pair.direction);
     const end=hitBeam(rt,actor,state,origin,dir,1000,3.5);
     emitAction(rt,actor,'killerWail',state.serial,'laser',origin,end,nextSeed(state),{index:pair.index*2+i,tick:pair.tick});
   }
   pair.tick++;
+}
+function stepWailPairs(rt,actor,state){
+  for(const pair of state.beamPairs){
+    // A committed lock is one target life. Respawning reuses the Actor but
+    // must not redirect the old laser onto the new spawn. The exact retail
+    // terminal tracking/fade after death remains unmeasured.
+    if(pair.target&&(!pair.target.alive||actorLife(pair.target)!==pair.targetLife))pair.targetRetired=true;
+    if(pair.target?.alive&&!pair.targetRetired){
+      pair.trace.push({t:state.t,pos:pair.target.pos.clone()});
+      // Keep the two samples bracketing the delayed damage tick. A fixed
+      // 20-element ring covered only 1/6 second at 120 Hz.
+      const earliest=state.t-WAIL_TRACK_DELAY-5/FPS;
+      while(pair.trace.length>2&&pair.trace[1].t<earliest)pair.trace.shift();
+    }
+    while(pair.nextTick<pair.until-1e-8&&state.t+1e-8>=pair.nextTick){fireWailTick(rt,actor,state,pair);pair.nextTick+=5/FPS;}
+  }
+}
+function stepWailTails(rt,dt){
+  const tails=rt.system?._s3WailTails;if(!tails?.length||!(dt>0))return;
+  rt.system._s3WailTailClock=(rt.system._s3WailTailClock||0)+dt;
+  while(rt.system._s3WailTailClock+1e-10>=1/FPS){
+    rt.system._s3WailTailClock=Math.max(0,rt.system._s3WailTailClock-1/FPS);
+    for(let i=tails.length-1;i>=0;i--){
+      const tail=tails[i];
+      if(tail.actor.remote||tail.actor.owner!==tail.owner||tail.match!==rt.api.G.match){tails.splice(i,1);continue;}
+      tail.state.t+=1/FPS;stepWailPairs(rt,tail.actor,tail.state);
+      if(tail.state.beamPairs.every(pair=>pair.nextTick>=pair.until-1e-8))tails.splice(i,1);
+    }
+    if(!tails.length){rt.system._s3WailTailClock=0;break;}
+  }
 }
 function inkjetExhaustFrame(rt,actor) {
   if(!actor?.alive||actor.remote||actor.intent?.squid||actor.form==='squid'||actor.specialActive?.id!=='inkjet')return;
@@ -865,6 +973,7 @@ function deployObject(rt, actor, id, kind, pos, state, extra={}) {
     direction:extra.direction?.clone?.()||new rt.api.THREE.Vector3(),moveSpeed:extra.moveSpeed||0,
     waves:[],lastMoveEvent:0,previous:new WeakMap(),lastCross:new WeakMap(),remote:!!actor.remote,
     startDelay:extra.startDelay||0,expand:extra.expand||0,
+    vel:extra.vel?.clone?.()||null,gravity:extra.gravity||0,airResist:extra.airResist||0,
   };
   if(kind==='decoy'){
     const rate=gearCurve(object.specialPowerAP,1,1.1,1.2);
@@ -924,7 +1033,8 @@ function launchMissileStep(rt, actor, state) {
   const origin=state.missileOrigin,spread=(row.index-(row.count-1)/2)*.055;
   const dir=rt.v4.copy(row.dest).sub(origin);dir.x+=Math.sin(spread);dir.normalize();
   const p=launch(rt,actor,'tentaMissiles',origin,dir,{speed:6,grav:11,drag:.08,life:2.8,arc:3.5,seed:nextSeed(state),size:.24});
-  if(p){p.s3TentaTarget=row.dest.clone();p.s3TentaAge=0;p.s3TentaDescending=false;p.s3TentaDirection=dir.clone();p.s3TentaLaunchedAt=state.t;}
+  if(p){p.s3TentaTarget=row.dest.clone();p.s3TentaTargetActor=row.target;p.s3TentaTargetLife=actorLife(row.target);
+    p.s3TentaAge=0;p.s3TentaDescending=false;p.s3TentaDirection=dir.clone();p.s3TentaLaunchedAt=state.t;}
   state.missileIndex++;
   if(state.missileIndex>=state.pendingMissiles.length){
     emitAction(rt,actor,'tentaMissiles',state.serial,'launch',origin,null,nextSeed(state),{count:state.missileIndex});
@@ -943,7 +1053,7 @@ function throwBooyah(rt,actor,state,charge) {
   launch(rt,actor,'booyahBomb',origin,dir,{speed:13+charge*4,grav:19,drag:.16,life:2.1,arc:4.2,
     radius:3.7,damage:0,paintRadius:13.5,seed:nextSeed(state),size:.48});
   emitAction(rt,actor,'booyahBomb',state.serial,'throw',origin,rt.v2.copy(origin).addScaledVector(dir,12),nextSeed(state),{charge:q3(charge)});
-  const armor={id:'booyahBomb',t:state.t,armorHP:state.armorHP,until:(rt.api.G.time||0)+65/FPS};
+  const armor={id:'booyahBomb',t:state.t,armorHP:state.armorHP,booyahArmorGroups:state.booyahArmorGroups,until:(rt.api.G.time||0)+65/FPS};
   endSpecial(rt,actor,'thrown');booyahAfterArmor.set(actor,armor);
 }
 function throwStamp(rt,actor,state) {
@@ -952,13 +1062,24 @@ function throwStamp(rt,actor,state) {
   emitAction(rt,actor,'ultraStamp',state.serial,'throw',origin,rt.v2.copy(origin).addScaledVector(dir,18),nextSeed(state));
   endSpecial(rt,actor,'thrown');
 }
-function zipTo(rt,actor,state,target) {
+function zipTo(rt,actor,state,target,normal) {
   state.zipStart=actor.pos.clone();state.zipTarget=target.clone();state.phase='hookFlight';state.zipT=0;state.hookFlightT=0;
+  // Reuse this runtime's floor/wall classification. The retail slope cutoff
+  // is not exposed by the sparse hook extraction; ceilings cannot be held.
+  state.zipArrivalWall=!!normal&&Math.abs(normal.y)<=.5;
   // BulletBombMoveParam.SpawnSpeedZSpecUp is the hook's source velocity; the
   // player pull retains its separately calibrated 19 world-unit/s movement.
   state.hookFlightDuration=state.zipStart.distanceTo(state.zipTarget)/(3.36*FPS);
   actor.character?.trigger?.('special_zip');
   emitAction(rt,actor,'zipcaster',state.serial,'zip',actor.pos,target,nextSeed(state));
+}
+function zipImpact(rt,actor,state){
+  state.zips++;
+  const victimHits=damageBandRadius(rt,actor,state.zipTarget,descriptions.zipcaster.splashBands,6,'zipcaster');
+  const impactSeed=nextSeed(state),point=groundAt(rt,state.zipTarget,rt.v1);
+  paintStamp(rt,actor,point,1.4,impactSeed);paintSpecialChannels(rt,actor,point,specialPaintParams('zipcaster',state.abilityPoints||0),impactSeed);
+  fxBurst(rt,actor,state.zipTarget,5.25,'hit');
+  emitAction(rt,actor,'zipcaster',state.serial,'hookImpact',state.zipTarget,null,nextSeed(state),{targets:victimHits.length,index:state.zips});
 }
 function crabBomb(rt,actor,state) {
   const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.0,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
@@ -992,23 +1113,51 @@ function paintReefRut(rt,actor,state,from,to,dt) {
   state.rutPaintCarry=(elapsed+dt)%span;
 }
 function deployInkstrike(rt,actor,state,index) {
-  const target=aimPoint(rt,actor,28,rt.v0).clone();groundAt(rt,target,rt.v1);target.copy(rt.v1);
   const launchAt=rt.v2.set(actor.pos.x,actor.pos.y+1.1,actor.pos.z).clone();
-  const marker=deployObject(rt,actor,'tripleInkstrike','marker',launchAt,state,{dur:82/FPS+51/FPS,maxRadius:7.7,damage:37.5,seed:nextSeed(state),index,target,scale:[.36,.36,.36]});
-  marker.phase='flight';marker.origin=launchAt.clone();marker.flight=82/FPS;marker.age=0;
-  emitAction(rt,actor,'tripleInkstrike',state.serial,'marker',launchAt,target,marker.seed,{index});
+  const flight=specialDeviceFlight(rt.api,actor,'tripleInkstrike',state.specialPowerAP);
+  const marker=deployObject(rt,actor,'tripleInkstrike','marker',launchAt,state,{...flight,phase:'flight',dur:82/FPS+51/FPS,maxRadius:7.7,damage:37.5,seed:nextSeed(state),index,scale:[.36,.36,.36]});
+  marker.origin=launchAt.clone();
+  emitAction(rt,actor,'tripleInkstrike',state.serial,'marker',launchAt,null,marker.seed,{index});
+}
+function inkstrikeDamage(rt,o){
+  if(o.owner.remote)return;
+  // Raw BlastParam.DamageHeightUp=20; community verification measures lower
+  // reach at about two trial lines (10 WU). Unlike ordinary blast LOS, this
+  // column passes through solid terrain. Keep the uncertain lower bound cited.
+  // https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/トリプルトルネード#a2e0a022
+  const inside=pos=>pos&&Math.hypot(pos.x-o.pos.x,pos.z-o.pos.z)<=o.currentRadius
+    &&pos.y-o.pos.y>=-10&&pos.y-o.pos.y<=20;
+  for(const victim of rt.api.G.actors||[]){
+    if(!victim?.alive||victim.team===o.team||victim===o.owner)continue;
+    const center=rt.v0.copy(victim.pos);center.y+=.75;
+    if(inside(center))rt.api.G.projectiles.applyHit(o.owner,victim,37.5,'tripleInkstrike');
+  }
+  for(const object of rt.system?._s3AllSpecialObjects||[])
+    if(inside(object.pos))specialObjectDamage(rt,o.owner,object,37.5,'tripleInkstrike',o.pos);
+  rt.system?.s3DamageSubObjects?.(o.owner,o.pos,Math.hypot(o.currentRadius,20),(_d,object)=>inside(object?.pos)?37.5:0,'tripleInkstrike',{pierceLOS:true});
+}
+function inkstrikePaint(rt,o,elapsed){
+  if(o.owner.remote)return;
+  // Raw BlastParam: PaintSpanFrame2, radius.5->7 over50F. The Wiki measures
+  // floor reach +1.5/-1.2 trial lines. Preserve the existing20-point footprint
+  // calibration, but never substitute damage radius7.7 or an unbounded floor.
+  const radius=.5+6.5*clamp(elapsed/(50/FPS),0,1),stamp=Math.min(.78,radius),ring=radius-stamp,n=ring>0?20:1;
+  for(let i=0;i<n;i++){
+    const angle=i/n*Math.PI*2,from=new rt.api.THREE.Vector3(o.pos.x+Math.cos(angle)*ring,o.pos.y+7.5,o.pos.z+Math.sin(angle)*ring);
+    const hit=rt.api.G.physics?.raycast?.(from,rt.down,13.5,rt.hit,true);let point=null;
+    if(hit?.hit&&hit.normal?.y>.4&&hit.point.y>=o.pos.y-6-1e-8&&hit.point.y<=o.pos.y+7.5+1e-8)point=hit.point.clone().addScaledVector(hit.normal,.08);
+    else {const floor=rt.api.G.level?.groundHeight?.(from.x,from.z,from.y);
+      if(finite(floor)&&floor>=o.pos.y-6&&floor<=o.pos.y+7.5)point=from.clone().setY(floor+.08);}
+    if(point)paintStamp(rt,o.owner,point,stamp,seedUnit(o.seed,(o.paintPulse||0)*32+i));
+  }
+  o.paintPulse=(o.paintPulse||0)+1;
 }
 function throwChumps(rt,actor,state) {
-  const target=groundAt(rt,aimPoint(rt,actor,26,rt.v0),rt.v1).clone(), origin=rt.v2.set(actor.pos.x,actor.pos.y+1.2,actor.pos.z).clone();
-  const offset=rt.v3.copy(target).sub(actor.pos),distance=offset.length();
-  if(distance<18)target.copy(actor.pos).addScaledVector(offset.normalize(),18);
-  else if(distance>35)target.copy(actor.pos).addScaledVector(offset.normalize(),35);
-  groundAt(rt,target,target);
+  if(!actor.grounded)return;
+  const {target,positions}=chumpLandingPlan(rt,actor,state),origin=rt.v2.set(actor.pos.x,actor.pos.y+1.2,actor.pos.z).clone();
   const count=12,desc=specialDescription('superChump',state.specialPowerAP||0);
   for(let i=0;i<count;i++) {
-    const angle=(i/count)*Math.PI*2+seedUnit(state.seed,17)*Math.PI*2, radius=6.5;
-    const pos=target.clone();const direction=rt.v4.copy(target).sub(actor.pos).setY(0).normalize(),side=rt.v5.set(direction.z,0,-direction.x);
-    pos.addScaledVector(side,Math.cos(angle)*17.5).addScaledVector(direction,Math.sin(angle)*10);
+    const pos=positions[i];
     const obj=deployObject(rt,actor,'superChump','decoy',origin,state,{dur:(108+210)/FPS,maxRadius:desc.radius,damage:70,hp:60,seed:nextSeed(state),index:i,target:pos,scale:[.72,.72,.72]});
     obj.paintRadius=desc.paintRadius;obj.splashBands=desc.splashBands;
     obj.phase='flight';obj.armAt=1.8;obj.flight=1.8;obj.origin=origin.clone();
@@ -1028,35 +1177,66 @@ export function tentaMissilesLockPreview(api,actor) {
 export function superChumpLandingPreview(api,actor) {
   const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
   if(!rt||!state||state.id!=='superChump'||!actor?.alive||actor.remote)return null;
+  return chumpLandingPlan(rt,actor,state);
+}
+function chumpLandingPlan(rt,actor,state){
   const target=groundAt(rt,aimPoint(rt,actor,26,rt.v0),rt.v1).clone();
-  const offset=rt.v3.copy(target).sub(actor.pos),distance=offset.length();
+  const offset=rt.v3.copy(target).sub(actor.pos).setY(0),distance=offset.length();
+  if(distance<1e-8)offset.set(Math.sin(actor.aimYaw||0),0,Math.cos(actor.aimYaw||0));
   if(distance<18)target.copy(actor.pos).addScaledVector(offset.normalize(),18);
   else if(distance>35)target.copy(actor.pos).addScaledVector(offset.normalize(),35);
   groundAt(rt,target,target);
-  const count=12,positions=[],shadow={seed:state.seed};
+  const count=12,positions=[],rotation=seedUnit(state.seed,17)*Math.PI*2;
+  const direction=target.clone().sub(actor.pos).setY(0).normalize(),side=new rt.api.THREE.Vector3(direction.z,0,-direction.x);
   for(let i=0;i<count;i++){
-    const angle=(i/count)*Math.PI*2+seedUnit(shadow.seed,17)*Math.PI*2;
-    const pos=target.clone(),direction=rt.v4.copy(target).sub(actor.pos).setY(0).normalize(),side=rt.v5.set(direction.z,0,-direction.x);
+    const angle=(i/count)*Math.PI*2+rotation,pos=target.clone();
     pos.addScaledVector(side,Math.cos(angle)*17.5).addScaledVector(direction,Math.sin(angle)*10);
-    positions.push(pos);nextSeed(shadow);
+    groundAt(rt,pos,pos);
+    // Public gameplay: decoys do not select a landing point outside the map.
+    // Keep this deterministic preview/launch fallback inside the valid target;
+    // retail edge redistribution and exact random distribution remain unmeasured.
+    if(rt.api.G.level?.groundHeight?.(pos.x,pos.z,pos.y+12)===-Infinity)pos.copy(target);
+    positions.push(pos);
   }
   return {target,positions};
 }
 function deployScreen(rt,actor,state) {
-  const aim=aimPoint(rt,actor,28,rt.v0).clone(),pos=actor.pos.clone().addScaledVector(rt.v1.copy(aim).sub(actor.pos).setY(0).normalize(),2.5);
-  pos.y=Math.max(.08,actor.pos.y);
-  const direction=rt.v2.copy(aim).sub(pos).setY(0).normalize();
-  const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:gearCurve(state.specialPowerAP,.04,.053,.06)*FPS,seed:nextSeed(state),scale:[15/8,2,1]});
+  const pos=actor.pos.clone();pos.y+=1.1;
+  const direction=aimDirection(rt,actor,rt.v2).setY(0).normalize();
+  const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{...specialDeviceFlight(rt.api,actor,'splattercolorScreen',state.specialPowerAP),phase:'flight',dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:gearCurve(state.specialPowerAP,.04,.053,.06)*FPS,seed:nextSeed(state),scale:[15/8,2,1]});
   object.target=pos.clone().add(object.normal);
+  startSpecialGauge(actor,rt.api.G,'splattercolorScreen',SPECIAL_GAUGE_FRAMES.splattercolorScreen,object);
   emitAction(rt,actor,'splattercolorScreen',state.serial,'screen',pos,object.target,object.seed,{object:object.serial});
   endSpecial(rt,actor,'deployed');
 }
+function paintScreenDrops(rt,o,deviceAge){
+  if(o.owner.remote)return;
+  // WallParam:45F period,12 positions over10F, radius2.5. The raw table does
+  // not expose per-drop ordering within those10F. The Wiki observes ink on
+  // deployment, then drops while advancing. Emit an opening cycle, then
+  // Running cycles; their phase and evenly spaced order remain calibration.
+  const frame=Math.floor(deviceAge*FPS+1e-8);if(frame<0||frame>=620)return;
+  o.screenPaintDrop ||= 0;
+  while(true){
+    const index=o.screenPaintDrop%12,cycle=Math.floor(o.screenPaintDrop/12);
+    const start=cycle===0?0:60+(cycle-1)*45;
+    if(start+Math.floor(index*10/12)>frame)break;
+    o.screenPaintDrop++;
+    const [x,y,z]=SCREEN_SPLASH_POSITIONS[index],from=o.pos.clone()
+      .addScaledVector(o.tangent,x).addScaledVector(rt.up,y).addScaledVector(o.direction,z);
+    const hit=rt.api.G.physics?.raycast?.(from,rt.down,60,rt.hit,true);let point=null;
+    if(hit?.hit&&hit.normal?.y>.4)point=hit.point.clone().addScaledVector(hit.normal,.08);
+    else {const floor=rt.api.G.level?.groundHeight?.(from.x,from.z,from.y);
+      if(finite(floor))point=from.clone().setY(floor+.08);}
+    if(point)paintStamp(rt,o.owner,point,2.5,seedUnit(o.seed,o.screenPaintDrop));
+  }
+}
 function deployWave(rt,actor,state) {
-  const pos=groundAt(rt,aimPoint(rt,actor,16,rt.v0),rt.v1).clone(),ap=state.specialPowerAP;
+  const pos=actor.pos.clone();pos.y+=1.1;const ap=state.specialPowerAP;
   const maxRadius=gearCurve(ap,20,24,27),maxFrame=gearCurve(ap,160,192,216)/FPS;
-  const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{dur:390/FPS,maxRadius,maxWaveFrame:maxFrame,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
+  const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{...specialDeviceFlight(rt.api,actor,'waveBreaker',ap),phase:'flight',dur:390/FPS,maxRadius,maxWaveFrame:maxFrame,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
   object.hp=480;object.maxHp=480;object.pulse=0;object.maxWaveFrame=maxFrame;object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
-  object.markingUntil=rt.api.G.time+45/FPS;
+  startSpecialGauge(actor,rt.api.G,'waveBreaker',SPECIAL_GAUGE_FRAMES.waveBreaker,object);
   object.direction=rt.v2.copy(pos).sub(actor.pos).setY(0).normalize();
   emitAction(rt,actor,'waveBreaker',state.serial,'device',pos,null,object.seed,{object:object.serial});
   endSpecial(rt,actor,'deployed');
@@ -1083,8 +1263,16 @@ function updateWaveFront(rt,o) {
   if(radius>0){
     for(const victim of rt.api.G.actors||[]){
       if(!victim?.alive||victim.team===o.team||o.seen.has(victim))continue;
-      const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,d=Math.hypot(dx,dz),dy=victim.pos.y+.75-o.pos.y;
-      if(d<previous-.75||d>radius+.75||dy< -5.2||dy>2.8)continue;
+      const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,d=Math.hypot(dx,dz);
+      if(d<previous-.75||d>radius+.75)continue;
+      // WaveParam's vertical range selects TERRAIN surfaces. The attack is
+      // their intersection with the expanding cylinder, not an airborne
+      // cylinder: a normal jump must clear the ground wave. Retain the
+      // existing .08 contact skin; exact retail attack thickness is unmeasured.
+      const floor=rt.api.G.level?.groundHeight?.(victim.pos.x,victim.pos.z,victim.pos.y+.6);
+      const surface=victim.climbing?victim.pos.y:floor;
+      if(!finite(surface)||surface-o.pos.y< -5.2||surface-o.pos.y>2.8)continue;
+      if(!victim.climbing&&victim.pos.y>surface+.08)continue;
       o.seen.add(victim);
       if(!o.owner.remote)rt.api.G.projectiles.applyHit(o.owner,victim,45,'waveBreaker');
       victim.s3 ||= {};victim.s3.revealedUntil ||= {};
@@ -1111,6 +1299,14 @@ function updateWaveFront(rt,o) {
 function endSpecial(rt,actor,reason='duration') {
   const state=actorStates.get(actor);
   if(!state)return;
+  endActiveSpecialGauge(actor,{preserve:reason==='splat',jumping:state.id==='killerWail'&&reason==='superjump'});
+  if(state.id==='zipcaster')clearZipcasterArmor(actor);
+  // Fired Wail pairs are independent attacks. Death stops only pairs which
+  // have not launched; a reset/teardown must not preserve gameplay objects.
+  if(state.id==='killerWail'&&reason!=='reset'&&!actor.remote&&state.beamPairs.some(pair=>pair.nextTick<pair.until-1e-8)){
+    const tail={...state,beamPairs:state.beamPairs};
+    (rt.api.G.projectiles._s3WailTails||=[]).push({actor,owner:actor.owner,match:rt.api.G.match,state:tail});
+  }
   const pos=actor.pos.clone();
   emitAction(rt,actor,state.id,state.serial,'end',pos,null,nextSeed(state),{reason});
   if(state.ballMesh){disposeMesh(rt,{mesh:state.ballMesh});state.ballMesh=null;}
@@ -1189,7 +1385,7 @@ function addBooyahCall(rt,owner,state,cheerer,{network=false,callId=null}={}) {
   return true;
 }
 function creditBooyahGauge(rt,cheerer,ownerRef,ownerLife,activation,callId,ordinal=null) {
-  if(!cheerer?.isLocal||cheerer.remote||cheerer.specialActive||!Number.isSafeInteger(callId))return false;
+  if(!cheerer?.isLocal||cheerer.remote||!Number.isSafeInteger(callId))return false;
   const ownerNid=Number.isSafeInteger(ownerRef)?ownerRef:ownerRef?.nid;
   const target=ownerRef&&typeof ownerRef==='object'?ownerRef:
     rt.api.G.netm?.byNid?.get(ownerNid)||(rt.api.G.actors||[]).find(a=>a.nid===ownerNid);
@@ -1205,6 +1401,10 @@ function creditBooyahGauge(rt,cheerer,ownerRef,ownerLife,activation,callId,ordin
   calls.count=Math.max(calls.count,i+1);
   if(i>=5)return false;
   calls.seen.add(callId);
+  // A cheer still helps the Booyah owner, but cannot recharge the sender
+  // during a placed Tacticooler's lock. Consume its identity before rejecting
+  // the credit so a delayed duplicate cannot become charge after unlock.
+  if(cheerer.specialActive||specialGaugeLocked(cheerer))return false;
   const points=[6,3,2,1,.5][i]||0;
   if(points<=0)return false;
   const cost=Number(cheerer.specialCost?.()??cheerer.weapon?.specialCost);
@@ -1250,20 +1450,47 @@ function updateWorld(rt,dt) {
   for(let i=list.length-1;i>=0;i--){
     const o=list[i];if(!o||o.dead){list.splice(i,1);continue;}
     o.age+=dt;
-    if(o.kind==='marker'){
-      const k=clamp(o.age/Math.max(.05,o.flight||82/FPS),0,1);
-      o.pos.copy(o.origin).lerp(o.target,k);o.pos.y+=Math.sin(k*Math.PI)*4;
+    if(o.phase==='flight'&&o.vel&&['marker','wave','screen'].includes(o.kind)){
+      const from=o.pos.clone();
+      const hit=stepSpecialDeviceFlight(rt.api,o,dt,rt.hit);
       o.mesh?.position.copy(o.pos);
-      if(k>=1){
-        // 82F from marker throw to the first damage frame, then 51F of tornado
+      if(o.kind==='screen'||o.kind==='wave'){
+        // Chimney MoveParam.DamageValueForDamageTag=4000 (400 HP) is the
+        // generator's absorption tag, distinct from its40HP sheet contact.
+        // A thrown Wave generator is absorbable too; its charge equivalence
+        // is not exposed, so neutralize it without inventing an intake credit.
+        const proxy=o.inkVacProxy ||= {owner:o.owner,team:o.team,ghost:!!o.owner.remote,
+          damage:o.kind==='screen'?400:0,s3SpecialWeapon:{id:o.id}};
+        for(const actor of rt.api.G.actors||[]){
+          const candidate=inkVacAbsorbCandidate(actor,from,o.pos,proxy);
+          if(candidate){candidate.onHit();if(proxy.s3InkVacAbsorbed)break;}
+        }
+        if(proxy.s3InkVacAbsorbed){removeWorld(rt,o,'expire');continue;}
+      }
+      if(deviceBelowWorld(rt.api,o)){removeWorld(rt,o,'expire');continue;}
+      if(!hit)continue;
+      if(o.kind==='wave'&&hit.normal.y<=.5){
+        // A generator needs a floor. Keep gravity and slide along a contacted
+        // wall/ceiling rather than creating an operational airborne device.
+        const vn=o.vel.dot(hit.normal);if(vn<0)o.vel.addScaledVector(hit.normal,-vn);
+        o.pos.addScaledVector(hit.normal,.08);continue;
+      }
+      o.landedAt=o.age;o.vel=null;o.pos.addScaledVector(hit.normal,.08);
+      o.phase=o.kind==='marker'?'warning':'active';
+      if(o.kind==='marker')o.target=o.pos.clone();
+      if(o.kind==='screen')paintScreenDrops(rt,o,0);
+      emitObject(rt,o,'land');continue;
+    }
+    const deviceAge=o.age-(o.landedAt||0);
+    if(o.kind==='marker'){
+      if(deviceAge+1e-8>=82/FPS){
+        // 82F from terrain attachment to the first damage frame, then 51F
         // with damage every five source frames (0,5,...50: eleven ticks).
         o.kind='strike';o.phase='active';o.dur=51/FPS;o.activeAt=o.age;
         o.maxRadius=7.7;o.currentRadius=.5;o.nextDamage=o.age+5/FPS;
-        o.paintT=0;o.once=new Set();o.mesh?.scale.set(.2,.25,.2);
-        if(!o.owner.remote){
-          const hitCenter=rt.v0.copy(o.pos);hitCenter.y+=.8;
-          damageBandRadius(rt,o.owner,hitCenter,descriptions.tripleInkstrike.splashBands,o.currentRadius,'tripleInkstrike');
-        }
+        o.nextPaint=o.age+2/FPS;o.once=new Set();o.mesh?.scale.set(.2,.25,.2);
+        inkstrikeDamage(rt,o);
+        inkstrikePaint(rt,o,0);
         fxBurst(rt,o.owner,o.target,1.6,'deploy');emitObject(rt,o,'active');
       }
     }else if(o.kind==='strike'){
@@ -1275,14 +1502,12 @@ function updateWorld(rt,dt) {
         o.nextDamage=Number.isFinite(o.nextDamage)?o.nextDamage:o.age;
         if(o.age+1e-8>=o.nextDamage){
           o.nextDamage+=5/FPS;
-          if(!o.owner.remote)damageBandRadius(rt,o.owner,center,descriptions.tripleInkstrike.splashBands,o.currentRadius,'tripleInkstrike');
+          inkstrikeDamage(rt,o);
           rt.api.G.fx?.rain?.(center,o.currentRadius,colorOf(rt,o.owner),dt,{cloud:false});
-          o.paintT-=dt;
-          if(!o.owner.remote&&o.paintT<=0){o.paintT=.1;const n=20;
-            for(let j=0;j<n;j++){const a=j/n*Math.PI*2,p=rt.v1.set(o.pos.x+Math.cos(a)*o.currentRadius,o.pos.y+.08,o.pos.z+Math.sin(a)*o.currentRadius);
-              paintStamp(rt,o.owner,p,.78,seedUnit(o.seed,(o.pulse||0)*32+j));}o.pulse=(o.pulse||0)+1;}
+          o.pulse=(o.pulse||0)+1;
           if(!o.owner.remote&&(o.pulse||0)%4===0)emitObject(rt,o,'pulse');
         }
+        if(o.age+1e-8>=(o.nextPaint??o.age)){o.nextPaint=o.age+2/FPS;inkstrikePaint(rt,o,elapsed);}
       }
       if(elapsed+1e-8>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='booyahBlast'){
@@ -1309,26 +1534,29 @@ function updateWorld(rt,dt) {
       if(o.frameCount>=80)removeWorld(rt,o,'expire');
     }else if(o.kind==='wave'){
       if(o.mesh)o.mesh.material.emissiveIntensity=.18+.4*Math.sin(o.age*9);
-      const frame=o.age*FPS,markRatio=frame<4?0:frame<10?.19+.21*(frame-4)/6:frame<18?.4+.215*(frame-10)/8:.615;
+      const frame=deviceAge*FPS+1e-8,markRatio=frame<4?0:frame<10?.19+.21*(frame-4)/6:frame<18?.4+.215*(frame-10)/8:.615;
       o.contactTimes ||= new Map();
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===o.team)continue;
         const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.hypot(dx,dz);
-        if(frame<=57&&rt.api.G.time<=o.markingUntil&&d<=o.maxRadius*markRatio&&dy>=-5.2&&dy<=2.8){
+        if(frame<=57+1e-8&&d<=o.maxRadius*markRatio&&dy>=-5.2&&dy<=2.8){
           victim.s3 ||= {};victim.s3.revealedUntil ||= {};
-          victim.s3.revealedUntil[o.team]=Math.max(victim.s3.revealedUntil[o.team]||0,o.markingUntil);
+          // Detection has source radius records through57F; MarkingFrame45
+          // is the applied status duration, not an early detector cutoff.
+          // The Wiki's unspecified uniform expiry remains to be measured.
+          victim.s3.revealedUntil[o.team]=Math.max(victim.s3.revealedUntil[o.team]||0,rt.api.G.time+45/FPS);
         }
         if(d<=1.2&&dy>=-.75&&dy<=2.75){
           const next=o.contactTimes.get(victim)||0;
           if(o.age+1e-8>=next){if(!o.owner.remote)rt.api.G.projectiles.applyHit(o.owner,victim,30,'waveBreaker');o.contactTimes.set(victim,o.age+.5);}
         }else if(o.contactTimes.get(victim)<=o.age)o.contactTimes.delete(victim);
       }
-      while(o.pulse<3&&o.age+1e-8>=o.pulseFrames[o.pulse]){
+      while(o.pulse<3&&deviceAge+1e-8>=o.pulseFrames[o.pulse]){
         const pulse=o.pulse,start=o.pulseFrames[pulse];o.pulse++;
         if(!o.owner.remote)emitObject(rt,o,'pulse');
-        const front=spawnWaveFront(rt,o,pulse);front.age=Math.max(0,o.age-start);updateWaveFront(rt,front);
+        const front=spawnWaveFront(rt,o,pulse);front.age=Math.max(0,deviceAge-start);updateWaveFront(rt,front);
       }
-      if(o.age>=o.dur)removeWorld(rt,o,'expire');
+      if(deviceAge+1e-8>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='waveFront'){
       updateWaveFront(rt,o);
       // Each emitted wave has its own source MaxFrame and must retire after
@@ -1351,35 +1579,36 @@ function updateWorld(rt,dt) {
     }else if(o.kind==='screen'){
       const runStart=1,runEnd=1+560/FPS;
       const oldScreenPos=o.lastObjectScreenPos?.clone()||o.pos.clone();
-      const movingSeconds=Math.max(0,Math.min(o.age,runEnd)-Math.max(o.age-dt,runStart));
+      const movingSeconds=Math.max(0,Math.min(deviceAge,runEnd)-Math.max(deviceAge-dt,runStart));
       if(movingSeconds>0)o.pos.addScaledVector(o.direction,o.moveSpeed*movingSeconds);
       o.mesh?.position.copy(o.pos).setY(o.pos.y+o.height/2);
       if(o.mesh){o.mesh.material.opacity=.27+.06*Math.sin(o.age*7);o.mesh.rotation.y=Math.atan2(o.normal.x,o.normal.z);}
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===o.team)continue;
         const previous=o.previous.get(victim);
-        if(previous){
-          const fromSide=rt.v1.subVectors(previous.pos,previous.screen).dot(o.normal),toSide=rt.v2.copy(victim.pos).sub(o.pos).dot(o.normal);
-          if(o.age>=runStart&&o.age<=runEnd&&fromSide*toSide<=0&&Math.abs(fromSide-toSide)>1e-6){
-            const t=clamp(fromSide/(fromSide-toSide),0,1),player=rt.v3.copy(previous.pos).lerp(victim.pos,t),sheet=rt.v4.copy(previous.screen).lerp(o.pos,t);
-            const x=player.clone().sub(sheet),across=Math.abs(x.dot(o.tangent));
-            if(across<=o.width/2&&player.y+1>=sheet.y&&player.y+1<=sheet.y+o.height){
-              const last=o.lastCross.get(victim)||-Infinity;
-              if(rt.api.G.time-last>=.45){
-                o.lastCross.set(victim,rt.api.G.time);
-                if(victim.isLocal){victim.s3 ||= {};victim.s3.splattercolorUntil=Math.max(victim.s3.splattercolorUntil||0,rt.api.G.time+360/FPS);
-                  victim.s3.splattercolorMarkUntil=Math.max(victim.s3.splattercolorMarkUntil||0,rt.api.G.time+120/FPS);}
-                if(!o.owner.remote)rt.api.G.projectiles.applyHit(o.owner,victim,40,'splattercolorScreen');
-                if(!o.owner.remote){o.crossCount=(o.crossCount||0)+1;emitAction(rt,o.owner,o.id,o.activation,'cross',sheet,player,o.seed,{object:o.serial,index:o.index,tick:o.crossCount});}
-              }
+        if(deviceAge>=0&&deviceAge<=runEnd){
+          const contact=screenPlayerContact(rt,o,previous,victim);
+          if(contact){
+            // Contact debuffs refresh continuously, independently of the 60F
+            // damage cooldown. The sheet already has a hitbox during startup.
+            if(victim.isLocal){victim.s3 ||= {};victim.s3.splattercolorUntil=Math.max(victim.s3.splattercolorUntil||0,rt.api.G.time+360/FPS);
+              victim.s3.splattercolorMarkUntil=Math.max(victim.s3.splattercolorMarkUntil||0,rt.api.G.time+120/FPS);}
+            const last=o.lastCross.get(victim)??-Infinity;
+            // Use the source-frame object clock; G.time is shared by all
+            // fixed substeps of a coarse render update.
+            if(o.age-last+1e-8>=SCREEN_CONTACT_INTERVAL){
+              const {sheet,player}=contact;o.lastCross.set(victim,o.age);
+              if(!o.owner.remote)rt.api.G.projectiles.applyHit(o.owner,victim,40,'splattercolorScreen');
+              if(!o.owner.remote){o.crossCount=(o.crossCount||0)+1;emitAction(rt,o.owner,o.id,o.activation,'cross',sheet,player,o.seed,{object:o.serial,index:o.index,tick:o.crossCount});}
             }
           }
         }
         o.previous.set(victim,{pos:victim.pos.clone(),screen:o.pos.clone()});
       }
       screenDamageObjects(rt,o,oldScreenPos,o.pos);o.lastObjectScreenPos=o.pos.clone();
+      paintScreenDrops(rt,o,deviceAge);
       if(!o.owner.remote&&o.age-o.lastMoveEvent>=.25){o.lastMoveEvent=o.age;o.moveCount=(o.moveCount||0)+1;emitObject(rt,o,'move');}
-      if(o.age>=o.dur)removeWorld(rt,o,'expire');
+      if(deviceAge>=o.dur)removeWorld(rt,o,'expire');
     }
   }
 }
@@ -1414,8 +1643,18 @@ function activeStep(rt,actor,dt) {
   if(!state||!s||state.id!==s.id)return;
   if(!(dt>0))return;
   if(!actor.alive||actor.remote){endSpecial(rt,actor,'interrupted');return;}
+  if(state.gaugeTracked&&!activeSpecialGaugeState(actor)){
+    // Ownership/life/match replacement is not an authoritative action end.
+    // Retire only our exact old token; never emit an end or overwrite a
+    // replacement network token, form, points, or world attacks.
+    if(state.id==='zipcaster')clearZipcasterArmor(actor);
+    if(actor.specialActive===state.controlToken)actor.specialActive=null;
+    if(actor._s3AllSpecialState===state)actor._s3AllSpecialState=null;
+    actorStates.delete(actor);return;
+  }
   const edges=inputEdges(actor,state);
   state.t+=dt;s.t=state.t;
+  syncActiveSpecialGauge(actor);
   const spec=SPECIALS[state.id],elapsed=state.t;
   if(state.throwAt!==undefined){
     if(elapsed+1e-8>=state.throwAt){const thrower=state.thrower,arg=state.throwArg;delete state.throwAt;delete state.thrower;thrower(rt,actor,state,arg);}
@@ -1432,8 +1671,9 @@ function activeStep(rt,actor,dt) {
   }
   if(state.id==='inkjet'){
     const it=actor.intent;
-    if(it.squid)moveActor(rt,actor,dt,state,{squid:true});
+    if(it.squid)moveCombatSquid(rt,actor,dt,state);
     else {
+      actor._setClimb?.(false);
       // Wiki hover height ~one lobby line; exact retail servo remains calibrated.
       const probe=rt.v3.copy(actor.pos);probe.y+=20;
       const hit=rt.api.G.physics?.raycast?.(probe,rt.down,80,rt.hit,true);
@@ -1481,29 +1721,33 @@ function activeStep(rt,actor,dt) {
     // a 40F delay before further grounded stomps. No 5F damage spam.
     const throwing=!!actor.intent.sub;
     const jumpStarted=edges.jump&&actor.intent.fire&&actor.grounded&&!throwing;
+    const airAttackStarted=edges.fire&&!actor.grounded&&!throwing;
     moveActor(rt,actor,dt,state,{speed:actor.intent.fire&&!throwing?2.6:null,squid:!actor.intent.fire&&!throwing,jump:true});
     if(throwing){
+      if(state.stampHolding)emitAction(rt,actor,state.id,state.serial,'swingEnd',actor.pos,null,nextSeed(state));
       state.stampHolding=false;state.stampCount=0;
-      state.jumpStampAt=null;
+      state.jumpStampAt=null;state.stampHasJumpSwing=false;
     } else if(actor.intent.fire){
       if(!state.stampHolding){
         state.stampHolding=true;state.stampCount=0;
         state.nextSwing=Math.max(47/FPS,elapsed+30/FPS);
       }
-      if(jumpStarted){
+      if(jumpStarted||airAttackStarted){
         state.jumpStampAt=elapsed+8/FPS;
         state.nextSwing=Math.max(state.nextSwing,elapsed+48/FPS);
       }
       if(state.jumpStampAt!==null&&elapsed+1e-8>=state.jumpStampAt){
         stampSwing(rt,actor,state,true);
+        state.stampHasJumpSwing=true;
         state.jumpStampAt=null;state.nextSwing=elapsed+40/FPS;
-      }else if(state.jumpStampAt===null&&elapsed+1e-8>=state.nextSwing&&actor.form!=='squid'){
+      }else if(state.jumpStampAt===null&&elapsed+1e-8>=state.nextSwing&&actor.form!=='squid'&&actor.grounded){
         stampSwing(rt,actor,state,false);
         state.stampCount++;
         state.nextSwing=elapsed+(state.stampCount===1?20:13)/FPS;
       }
     }else{
-      state.stampHolding=false;state.stampCount=0;state.jumpStampAt=null;
+      if(state.stampHolding)emitAction(rt,actor,state.id,state.serial,'swingEnd',actor.pos,null,nextSeed(state));
+      state.stampHolding=false;state.stampCount=0;state.jumpStampAt=null;state.stampHasJumpSwing=false;
     }
     state.phase=throwing?'aimThrow':'active';s.phase=state.phase;
     if(edges.subUp)queueSubThrow(state,42,throwStamp);
@@ -1511,35 +1755,38 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='zipcaster'){
-    let zipDt=dt;
+    let zipDt=dt;const priorForm=actor.form;
     if(state.phase==='hookFlight'){
       const remain=Math.max(0,(state.hookFlightDuration||0)-(state.hookFlightT||0));
       if(zipDt+1e-8<remain){state.hookFlightT+=zipDt;actor.vel.set(0,0,0);zipDt=0;}
-      else {state.hookFlightT=state.hookFlightDuration||0;zipDt=Math.max(0,zipDt-remain);state.phase='zip';state.zipStart=actor.pos.clone();state.zipT=0;}
+      else {state.hookFlightT=state.hookFlightDuration||0;zipDt=Math.max(0,zipDt-remain);state.phase='zip';state.zipStart=actor.pos.clone();state.zipT=0;
+        beginZipcasterArmor(actor,state);}
     }
     if(state.phase==='zip'&&zipDt>0){
       state.zipT+=zipDt;const from=actor.pos.clone(),delta=rt.v0.copy(state.zipTarget).sub(actor.pos),distance=delta.length();
-      if(distance<.7||state.zipT>1.35){actor.pos.copy(state.zipTarget);actor.vel.set(0,0,0);state.phase='hookWait';state.hookWait=0;}
+      if(distance<.7||state.zipT>1.35){actor.pos.copy(state.zipTarget);actor.vel.set(0,0,0);state.phase='hookWait';state.hookWait=0;
+        arriveZipcasterArmor(actor,state.zipArrivalWall);}
       else {delta.multiplyScalar(Math.min(1,19*zipDt/distance));actor.pos.add(delta);actor.vel.copy(delta).multiplyScalar(1/zipDt);actor.grounded=false;}
       zipContactHits(rt,actor,state,from,actor.pos);
+      if(state.phase==='hookWait')zipImpact(rt,actor,state);
       state.zipPaintT=(state.zipPaintT||0)+zipDt;
       const trailPaint=specialPaintParams('zipcaster',state.abilityPoints||0),trailSpan=trailPaint.trailSpanFrames/FPS;
       if(state.zipPaintT+1e-8>=trailSpan){state.zipPaintT-=trailSpan;stampLine(rt,actor,from,actor.pos,trailPaint.trailWidth,nextSeed(state),trailPaint.trailDepthScale);}
     }else if(state.phase==='hookWait'){
       state.hookWait+=dt;actor.vel.set(0,0,0);
-      if(state.hookWait+1e-8>=12/FPS){state.phase='ready';state.zips++;
-        const victimHits=damageBandRadius(rt,actor,state.zipTarget,descriptions.zipcaster.splashBands,6,'zipcaster');
-        const impactSeed=nextSeed(state),point=groundAt(rt,state.zipTarget,rt.v1);
-        paintStamp(rt,actor,point,1.4,impactSeed);paintSpecialChannels(rt,actor,point,specialPaintParams('zipcaster',state.abilityPoints||0),impactSeed);
-        fxBurst(rt,actor,state.zipTarget,5.25,'hit');
-        emitAction(rt,actor,'zipcaster',state.serial,'hookImpact',state.zipTarget,null,nextSeed(state),{targets:victimHits.length,index:state.zips});}
+      if(state.hookWait+1e-8>=12/FPS)state.phase='ready';
     }else if(state.phase==='ready')moveActor(rt,actor,dt,state,{speed:actor.intent.squid?6:4.2,squid:true,jump:true});
+    updateZipcasterArmor(actor,{squid:priorForm!=='squid'&&actor.form==='squid'});
     state.inkFuel=Math.max(0,state.inkFuel-(state.inkDrainPerSecond??((state.inkPerSecond??.1305)*100))*dt);
     // Zipcaster has its own 1.5x special ink tank. Let the equipped native
     // WeaponRunner spend from that tank while preserving the player's normal
-    // ink reserve for after the special ends.
+    // ink reserve for after the special ends. Express that reserve in native
+    // main-cost units for the duration of this call: both low-ink admission
+    // and debit then receive the same 67% benefit, including gear-adjusted
+    // costs and progressive charge spending. Do not mutate shared/equipped
+    // weapon definitions or bypass a runner's affordability check with a refund.
     const normalInk=actor.ink;
-    actor.ink=state.inkFuel;
+    actor.ink=state.inkFuel/ZIPCASTER_MAIN_INK_RATE;
     try{
       // WeaponSpSuperHook: ordinary shooting is allowed between hook uses,
       // never during hook flight, player pull, or 12F post-hook wait. Preserve
@@ -1548,23 +1795,30 @@ function activeStep(rt,actor,dt) {
       runSpecialMain(actor,dt,{fire:canFire&&!!actor.intent.fire,
         firePressed:canFire&&edges.fire,sub:false,subReleased:false});
     }finally{
-      state.inkFuel=clamp(Number(actor.ink)||0,0,150);
+      state.inkFuel=clamp((Number(actor.ink)||0)*ZIPCASTER_MAIN_INK_RATE,0,150);
       actor.ink=normalInk;
     }
     const hookInk=state.hookInkCost??(state.hookInk??.025)*100;
-    if(state.phase==='ready'&&edges.sub&&elapsed+1e-8>=(state.nextHookAt||0)&&state.inkFuel>=hookInk){
+    if(state.phase==='ready'&&edges.sub&&elapsed+1e-8>=(state.nextHookAt||0)&&state.inkFuel>0){
       const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z),direction=aimDirection(rt,actor,rt.v1);
       const contact=rt.api.G.physics?.raycast?.(origin,direction,35,rt.hit,true);
+      // WeaponSpSuperHook MinLengthHook_Floor=3 / MinLengthHook_Wall=0.
+      // Close floor hits fail like an empty hook; close walls remain usable.
+      const closeFloor=contact?.hit&&finite3(contact.point)&&contact.normal?.y>.5&&origin.distanceTo(contact.point)<3;
       // A reticle coordinate is not a surface. Missed hooks neither spend
       // hook ink nor pull the player into empty space (Wiki: 45F miss wait).
-      if(!contact?.hit||!finite3(contact.point)||origin.distanceTo(contact.point)>35+1e-6){
+      if(!contact?.hit||!finite3(contact.point)||origin.distanceTo(contact.point)>35+1e-6||closeFloor){
         state.nextHookAt=elapsed+45/FPS;state.failedHooks=(state.failedHooks||0)+1;
       }else {
-        const target=contact.point.clone();state.inkFuel-=hookInk;
-        state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target);
+        const target=contact.point.clone();state.inkFuel=Math.max(0,state.inkFuel-hookInk);
+        state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target,contact.normal);
       }
     }
-    if(state.inkFuel<=0||elapsed+1e-8>=state.duration)returnToOrigin(rt,actor,state,state.inkFuel<=0?'ink':'duration');
+    syncActiveSpecialGauge(actor);
+    // The special tank owns duration. A last low-ink hook may complete its
+    // flight/pull at zero ink; the arrival impact precedes immediate recall.
+    // S3mix Zipcaster #q14bf52c, also corroborated by Inkipedia's ink-tank rule.
+    if(state.inkFuel<=1e-8&&state.phase!=='hookFlight'&&state.phase!=='zip')returnToOrigin(rt,actor,state,'ink');
     return;
   }
   if(state.id==='killerWail'){
@@ -1580,8 +1834,7 @@ function activeStep(rt,actor,dt) {
       sub:controlsUnlocked&&!!actor.intent.sub&&actor.form!=='squid',
       subReleased:controlsUnlocked&&edges.subUp&&actor.form!=='squid'});
     while(state.beams<3&&elapsed+1e-8>=state.nextLock){lockWailPair(rt,actor,state,state.beams++);state.nextLock+=36/FPS;state.phase='laser';}
-    for(const pair of state.beamPairs){if(pair.target?.alive){pair.trace.push({t:elapsed,pos:pair.target.pos.clone()});while(pair.trace.length>20)pair.trace.shift();}}
-    for(const pair of state.beamPairs)while(pair.nextTick< pair.until-1e-8&&elapsed+1e-8>=pair.nextTick){fireWailTick(rt,actor,state,pair);pair.nextTick+=5/FPS;}
+    stepWailPairs(rt,actor,state);
     if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');
     return;
   }
@@ -1700,27 +1953,33 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='superChump'){
-    moveActor(rt,actor,dt,state,{squid:false});
-    if(edges.fire){throwChumps(rt,actor,state);return;}
+    moveActor(rt,actor,dt,state,{squid:true});
+    if(edges.fire&&actor.grounded){actor.form='kid';queueSubThrow(state,13,throwChumps);return;}
     if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');return;
   }
   if(state.id==='krakenRoyale'){
     const dir=aimDirection(rt,actor,rt.v0);
     if(elapsed+1e-8<1){dampForSpecial(actor,dt);state.phase='startup';s.phase=state.phase;return;}
-    if(elapsed+1e-8>=state.duration){state.phase='finish';state.armor=false;s.armor=false;s.phase=state.phase;dampForSpecial(actor,dt);if(elapsed+1e-8>=state.duration+1)endSpecial(rt,actor,'duration');return;}
+    if(elapsed+1e-8>=state.duration){state.phase='finish';state.armor=false;s.armor=false;s.phase=state.phase;moveCombatSquid(rt,actor,dt,state,{jump:false});if(elapsed+1e-8>=state.duration+1)endSpecial(rt,actor,'duration');return;}
     if(state.phase==='startup')state.phase='active';
     state.armor=true;s.armor=true;
+    actor.form='squid';actor._surface?.();actor.onEnemy=false;
     if(state.phase==='dash'){
-      state.dashT+=dt;const before=actor.pos.clone(),py=actor.pos.y;
-      actor.vel.x=state.direction.x*21;actor.vel.z=state.direction.z*21;actor.vel.y=0;
-      actor.pos.addScaledVector(actor.vel,dt);actor._resolve?.(false,py,false);
+      state.dashT+=dt;const before=actor.pos.clone();
+      // The native squid collision path follows slopes and falls through
+      // grates. Removing vertical velocity every tick let a Kraken dash over
+      // gaps indefinitely and collide as a humanoid with elevated platforms.
+      actor._updateClimb?.(dt,true);
+      if(!actor.climbing){actor.vel.x=state.direction.x*21;actor.vel.z=state.direction.z*21;}
+      actor._integrate?.(dt,true,false);
+      const onSurface=actor.grounded||actor.climbing;
       state.dashHits||=new Set();
       // 11.3.0 WeaponSpCastle BodyParam: CollisionDashFrontOffset=2.75,
       // CollisionDashRadiusForPlayer=1.5. Offset BOTH ends of the true
       // 3D travelled segment; never enlarge radius at the actor's feet.
       const hitFrom=rt.v13.copy(before).addScaledVector(state.direction,2.75);
       const hitTo=rt.v14.copy(actor.pos).addScaledVector(state.direction,2.75);
-      for(const victim of rt.api.G.actors||[]){
+      for(const victim of onSurface?rt.api.G.actors||[]:[]){
         if(!victim?.alive||victim.team===actor.team||state.dashHits.has(victim))continue;
         if(!krakenDashSweptContact(hitFrom,hitTo,victim.pos,1.5))continue;
         // The attack capsule projects 2.75 ahead of the resolved body. A
@@ -1735,13 +1994,20 @@ function activeStep(rt,actor,dt) {
         state.dashHits.add(victim);
       }
       stampLine(rt,actor,before,actor.pos,1.2,nextSeed(state));
-      if(state.dashT>=35/60){state.phase='active';state.dashT=0;}
-    }else {const jumped=edges.jump&&actor.grounded;moveActor(rt,actor,dt,state,{speed:state.phase==='charge'?1.9:5.5,squid:false,jump:true});state.jumpAttack=jumped;}
-    if(state.jumpAttack){state.jumpAttack=false;
+      // Public gameplay reference: an airborne/grate dash becomes the
+      // 60-damage spinning attack, rather than retaining its grounded 120.
+      if(!onSurface){state.phase='active';state.jumpAttack=true;state.jumpHits=new Set();}
+      else if(state.dashT+1e-8>=35/60){state.phase='active';state.dashT=0;}
+    }else {
+      const jumped=moveCombatSquid(rt,actor,dt,state,{speed:state.phase==='charge'?1.9:5.5,ignoreEnemy:true});
+      if(jumped){state.jumpAttack=true;state.jumpHits=new Set();
+        emitAction(rt,actor,state.id,state.serial,'jump',actor.pos,null,nextSeed(state),{damage:60,index:state.strikes++});}
+    }
+    if(state.jumpAttack){
       const center=rt.v0.copy(actor.pos);center.y+=.65;
-      damageBandRadius(rt,actor,center,[[2.65,60]],2.65,'krakenRoyale',null,3);
-      paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v1),1.2,nextSeed(state));fxBurst(rt,actor,center,2.65,'hit');
-      emitAction(rt,actor,state.id,state.serial,'jump',center,null,nextSeed(state),{damage:60,index:state.strikes++});
+      damageBandRadius(rt,actor,center,[[2.65,60]],2.65,'krakenRoyale',state.jumpHits||(state.jumpHits=new Set()),3);
+      paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v1),1.2,nextSeed(state));
+      if(actor.grounded||actor.climbing)state.jumpAttack=false;
     }
     if(edges.fire&&state.phase!=='dash'){
       state.phase='charge';state.chargeT=0;state.direction.copy(dir).setY(0).normalize();state.dashHits=new Set();
@@ -1782,15 +2048,28 @@ function makeState(rt,actor,id) {
   if(id==='waveBreaker')state.phase='ready';
   if(id==='zipcaster')state.phase='ready';
   if(id==='krakenRoyale'){state.armorHP=Infinity;state.phase='startup';state.direction=new rt.api.THREE.Vector3();}
-  if(id==='killerWail'){state.phase='charge';state.beamPairs=[];state.nextLock=36/FPS;}
-  if(id==='inkjet'){actor.vel.y=Math.max(actor.vel.y,7.4);state.nextShot=1;}
+  if(id==='killerWail'){
+    state.phase='charge';state.beamPairs=[];state.nextLock=36/FPS;
+  }
+  if(id==='inkjet'){
+    // Airborne/wall activation recalls to the last supported position, rather
+    // than leaving its return marker suspended at the activation's height.
+    // S3mix Inkjet mechanics, "特徴" (includes grate support).
+    if(!actor.grounded&&finite3(actor.superJumpGround))state.origin.copy(actor.superJumpGround);
+    actor.vel.y=Math.max(actor.vel.y,7.4);state.nextShot=1;
+  }
   if(id==='zipcaster'){state.inkFuel=150;state.abilityPoints=ap;
     state.hookInkCost=gearCurve(ap,4,2.5,1.5);state.inkDrainPerSecond=gearCurve(ap,15,13.05,12);
-    state.hookInk=gearCurve(ap,.04,.025,.015);state.inkPerSecond=gearCurve(ap,.15,.1305,.12);}
+    state.hookInk=gearCurve(ap,.04,.025,.015);state.inkPerSecond=gearCurve(ap,.15,.1305,.12);
+    state.duration=150/state.inkDrainPerSecond;}
 
   actorStates.set(actor,state);actor._s3AllSpecialState=state;
   actor.specialActive={id,t:0,phase:state.phase,armor:false,armorHP:state.armorHP,activation:serial};
-  emitAction(rt,actor,id,serial,'activate',actor.pos,null,state.seed,{duration:q3(duration)});
+  state.controlToken=actor.specialActive;
+  startActiveSpecialGauge(actor,state,rt.api.G);
+  if(id==='waveBreaker'||id==='splattercolorScreen')startHeldSpecialGauge(actor,rt.api.G,id);
+  if(id==='tentaMissiles'||id==='superChump')startSpecialGauge(actor,rt.api.G,id,SPECIAL_GAUGE_FRAMES[id]);
+  emitAction(rt,actor,id,serial,'activate',actor.pos,null,state.seed,{duration:q3(state.duration)});
   return state;
 }
 
@@ -1805,13 +2084,42 @@ function installRuntime(api) {
     zero:new THREE.Vector3(),up:new THREE.Vector3(0,1,0),down:new THREE.Vector3(0,-1,0),hit:api.Hit ? new api.Hit() : null};
   if(!rt.hit)rt.hit={hit:false,point:new THREE.Vector3(),normal:new THREE.Vector3(),dist:0};
   runtimes.set(Projectiles,rt);
+  // Only native completed attacks/jumps retire wall protection. Input held
+  // through hook flight / hookWait may still be denied by the action runner.
+  api.on?.('weapon:fire',event=>updateZipcasterArmor(event?.actor,{fire:true}));
+  api.on?.('actor:jump',event=>updateZipcasterArmor(event?.actor,{jump:true}));
   api.on?.('all:special',event=>{
     if(event?.action==='cheer'&&event.id==='booyahBomb'&&Number.isSafeInteger(event.ownerNid)&&Number.isSafeInteger(event.ownerLife)
       &&Number.isSafeInteger(event.activation)&&Number.isSafeInteger(event.seed))
       creditBooyahGauge(rt,event.actor,event.ownerNid,event.ownerLife,event.activation,event.seed,event.call);
   });
   const proto=Actor.prototype,start=proto._startSpecial,step=proto._updateSpecial,reset=proto.reset,splat=proto.splat,damage=proto.damage;
+  const canJump=proto.canSuperJump,jump=proto.superJump,jumpStep=proto._updateSuperJump;
   Object.defineProperty(proto,INSTALL,{value:true});
+  proto.canSuperJump=function(...args){
+    const token=this.specialActive;
+    if(token?.id!=='killerWail'||!actorStates.has(this)||this.remote)return canJump.apply(this,args);
+    // Only the synchronous native admission predicate is unmasked. The
+    // ordinary destination, water, life and match checks still own the jump.
+    this.specialActive=null;
+    try{return canJump.apply(this,args);}finally{this.specialActive=token;}
+  };
+  proto.superJump=function(...args){
+    const wail=this.specialActive?.id==='killerWail'&&actorStates.has(this);
+    const result=jump.apply(this,args);
+    if(wail&&result&&this.superJumpState){endSpecial(rt,this,'superjump');this.form='squid';}
+    return result;
+  };
+  proto._updateSuperJump=function(dt,...args){
+    const gauge=activeSpecialGaugeState(this),before=this.superJumpState;
+    if(gauge?.jumping&&before&&Number.isFinite(dt)&&dt>0){gauge.state.t+=dt;syncActiveSpecialGauge(this);}
+    if(gauge?.jumping&&before)gauge.steppingJump=true;
+    try{return jumpStep.call(this,dt,...args);}
+    finally{
+      if(gauge)gauge.steppingJump=false;
+      if(gauge?.jumping&&before&&!this.superJumpState)endActiveSpecialGauge(this);
+    }
+  };
   proto._startSpecial=function(...args){
     const id=this.weapon?.special;
     if(!IDS.has(id))return start.apply(this,args);
@@ -1828,16 +2136,22 @@ function installRuntime(api) {
     const id=this.specialActive?.id;
     if(!IDS.has(id))return step.call(this,dt,...args);
     rt.system=api.G.projectiles||rt.system;
-    if(this.remote){this.specialActive=null;return undefined;}
+    if(this.remote){
+      const state=actorStates.get(this);
+      if(state?.gaugeTracked){endActiveSpecialGauge(this);actorStates.delete(this);if(this._s3AllSpecialState===state)this._s3AllSpecialState=null;}
+      this.specialActive=null;return undefined;
+    }
     activeStep(rt,this,dt);
     return undefined;
   };
   proto.reset=function(...args){
     const state=actorStates.get(this);if(state)endSpecial(rt,this,'reset');
+    endActiveSpecialGauge(this);
     booyahAfterArmor.delete(this);this._s3AllSpecialState=null;return reset.apply(this,args);
   };
   proto.splat=function(...args){
     const state=actorStates.get(this);if(state)endSpecial(rt,this,'splat');
+    endActiveSpecialGauge(this,{preserve:true});
     booyahAfterArmor.delete(this);return splat.apply(this,args);
   };
   proto.damage=function(amount,attacker,source){
@@ -1854,7 +2168,7 @@ function installRuntime(api) {
     }
     if((state.id==='booyahBomb'&&state.t+1e-8>=.5||state.id==='crabTank')&&state.armorHP>0){
       const shield=state.armorHP,cause=attacker?._s3AllSpecialDamageCause||source,scale=objectDamageScale(attacker,state.id,cause),scaled=amount*scale;
-      const absorbed=Math.min(shield,scaled),left=scale>0?Math.max(0,amount-absorbed/scale):0;
+      const absorbed=Math.min(shield,scaled),left=scale>0?(state.id==='booyahBomb'?booyahArmorPenetration(state,this,amount,attacker):Math.max(0,amount-absorbed/scale)):0;
       state.armorHP=Math.max(0,shield-absorbed);
       if(this.specialActive)this.specialActive.armorHP=state.armorHP;
       api.emit?.('actor:armorhit',{actor:this,absorbed,broken:state.armorHP<=0,kind:state.id});
@@ -1893,6 +2207,14 @@ function installRuntime(api) {
     }else if(!(this._s3AllSpecialObjects?.length||0))this._s3AllSpecialWorldClock=0;
     for(const p of this.list||[]){
       if(p?.s3TentaTarget&&p.s3AllSpecial==='tentaMissiles'){
+        // The S3 mechanics reference describes tracking before the overhead
+        // descent/landing marker. A launch-time coordinate alone makes every
+        // missile miss a moving target even during that tracking phase.
+        // Keep the existing calibrated .7s transition; its retail timing and
+        // the missing long-range horizontal phase remain unverified.
+        const target=p.s3TentaTargetActor;
+        if(!p.s3TentaDescending&&target?.alive&&finite3(target.pos)&&actorLife(target)===p.s3TentaTargetLife)
+          p.s3TentaTarget.copy(groundAt(rt,target.pos,rt.v2));
         p.s3TentaAge=(p.s3TentaAge||0)+dt;
         if(p.s3TentaAge<.7){const d=p.s3TentaDirection||rt.up;p.vel.x=d.x*4;p.vel.z=d.z*4;p.vel.y=14;p.grav=12;p.drag=.03;}
         else {p.s3TentaDescending=true;p.grav=0;p.drag=0;const diff=rt.v11.subVectors(p.s3TentaTarget,p.pos),distance=diff.length(),flight=clamp(distance/25,.12,.55);p.vel.copy(diff).multiplyScalar(1/flight);}
@@ -1901,6 +2223,7 @@ function installRuntime(api) {
       const t=Number(p.age)||0,k=clamp((t-profile.start)/Math.max(1e-6,profile.end-profile.start),0,1);
       p.damage=profile.max+(profile.min-profile.max)*k;
     }
+    if(Number.isFinite(dt)&&dt>0)stepWailTails(rt,dt);
     return update.call(this,dt);
   };
   if(typeof baseCandidate==='function')P.kitDefenseCandidate=function(p,...args){
@@ -1923,6 +2246,7 @@ function installRuntime(api) {
     if(!p?.ghost&&!p?.owner?.remote&&bands?.length&&p.s3AllSpecial!=='booyahBomb'){
       const radius=weapon.splashRadius||weapon.burstRadius||bands.at(-1)?.[0]||0;
       specialObjectRadius(rt,p,at,radius,d=>{
+        if(p.s3AllSpecial||kitTrizookaSteppedBands(p))return bands.find(([r])=>d<=r)?.[1]??0;
         if(d<=bands[0][0])return bands[0][1];
         for(let i=1;i<bands.length;i++)if(d<=bands[i][0]){const [r0,d0]=bands[i-1],[r1,d1]=bands[i];return r1===r0?d1:d0+(d1-d0)*((d-r0)/(r1-r0));}
         return bands.at(-1)?.[1]||0;
@@ -1944,6 +2268,13 @@ function installRuntime(api) {
     return result;
   };
   P.clear=function(...args){
+    // Practice-range resetPaint clears Projectiles without resetting Actors.
+    // Retire body actions now, before a later actor tick can detach old Wail
+    // pairs into the otherwise freshly cleared world.
+    clearActiveSpecialGauges(api.G,(actor,state)=>{
+      if(actorStates.get(actor)===state)endSpecial(rt,actor,'reset');
+    });
+    this._s3WailTails=[];this._s3WailTailClock=0;
     rt.system=this;
     for(const object of [...(this._s3AllSpecialObjects||[])])removeWorld(rt,object,'expire');
     this._s3AllSpecialObjects=[];this._s3AllSpecialWorldClock=0;return clear?.apply(this,args);
@@ -1976,6 +2307,7 @@ export function interruptSpecialForObjective(api, actor) {
   endTrizooka(actor, 'objective-pickup');
   const rt = runtimes.get(api?.Projectiles);
   if (rt && actorStates.has(actor)) endSpecial(rt, actor, 'objective-pickup');
+  endActiveSpecialGauge(actor);
   if (actor) { actor.specialActive = null; actor.special = 0; }
 }
 
@@ -2025,14 +2357,11 @@ function replayObjectEvent(rt,actor,event) {
     }
     if(kind==='booyahBlast'){extra.startDelay=finite(event.startDelay)?event.startDelay:40/FPS;extra.expand=finite(event.expand)?event.expand:40/FPS;extra.damage=3.3;}
     object=deployObject(rt,actor,event.id,kind,point,state,extra);
-    if(kind==='marker'){object.phase='flight';object.origin=point.clone();object.flight=82/FPS;}
+    if(kind==='marker'){object.phase='warning';object.origin=point.clone();if(target)object.pos.copy(target);}
     if(kind==='decoy'){object.phase='flight';object.origin=point.clone();object.flight=108/FPS;}
     if(kind==='wave'){
       object.hp=finite(event.hp)?event.hp:480;object.maxHp=object.hp;object.pulse=0;object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
       object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
-      // Source GeneratorParam.MarkingFrame=45. Without this, remotely
-      // replayed devices never mark a recipient within the initial ring.
-      object.markingUntil=rt.api.G.time+45/FPS;
     }else if(kind==='waveFront'){
       object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
       object.last=0;object.seen=new Set();object.pulse=event.index||0;
@@ -2040,7 +2369,27 @@ function replayObjectEvent(rt,actor,event) {
     if(kind==='screen')object.target=target;
   }
   if(!object)return false;
-  if(event.action==='move'){
+  if(['deploy','land','active'].includes(event.action)){
+    if(finite(event.age)&&event.age>=0&&event.age<=3600)object.age=event.age;
+    if(finite(event.landedAt)&&event.landedAt>=0&&event.landedAt<=object.age)object.landedAt=event.landedAt;
+    if(['flight','warning','active'].includes(event.phase))object.phase=event.phase;
+    if(event.phase==='flight'&&['marker','wave','screen'].includes(object.kind)
+      &&[event.vx,event.vy,event.vz].every(v=>finite(v)&&Math.abs(v)<=500)
+      &&finite(event.gravity)&&event.gravity>=0&&event.gravity<=1000
+      &&finite(event.airResist)&&event.airResist>=0&&event.airResist<1){
+      object.vel=new rt.api.THREE.Vector3(event.vx,event.vy,event.vz);object.gravity=event.gravity;object.airResist=event.airResist;
+    }
+  }
+  if(event.action==='land'){
+    object.pos.copy(point);object.vel=null;
+    if(object.id==='tripleInkstrike'){
+      // Local terrain prediction may have begun a ghost strike before its
+      // owner's delayed attachment packet. The owner can correct that phase.
+      object.kind='marker';object.phase='warning';object.target=point.clone();
+      delete object.activeAt;object.currentRadius=0;
+    }
+    object.mesh?.position.copy(point);
+  }else if(event.action==='move'){
     object.pos.copy(point);if(object.mesh){object.mesh.position.copy(point);if(object.kind==='screen')object.mesh.position.y+=object.height/2;}
     if(object.kind==='screen'&&target){const normal=target.clone().sub(point).setY(0).normalize();object.normal.copy(normal);object.direction.copy(normal);object.tangent.set(normal.z,0,-normal.x);object.target=target;}
   }else if(event.action==='active'){
@@ -2079,9 +2428,11 @@ export function replaySpecial(api,event) {
   }
   if(actor.remote&&event.id==='ultraStamp'){
     const state=actorStates.get(actor);
-    if(event.action==='activate')actorStates.set(actor,{id:'ultraStamp',serial:event.activation,seed:event.seed,phase:'active',expiresAt:api.G.time+(finite(event.duration)?event.duration:7.5)});
+    if(event.action==='activate')actorStates.set(actor,{id:'ultraStamp',serial:event.activation,seed:event.seed,phase:'active',stampHolding:false,stampCount:0,expiresAt:api.G.time+(finite(event.duration)?event.duration:7.5)});
     else if(state?.id==='ultraStamp'&&state.serial===event.activation){
       if(event.action==='throw'||event.action==='end')actorStates.delete(actor);
+      else if(event.action==='swing'||event.action==='jumpSwing'){state.stampHolding=true;state.stampCount=1;}
+      else if(event.action==='swingEnd'){state.stampHolding=false;state.stampCount=0;}
     }
   }
   const objectAccepted=replayObjectEvent(rt,actor,event);

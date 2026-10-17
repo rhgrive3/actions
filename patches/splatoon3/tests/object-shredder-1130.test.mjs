@@ -121,11 +121,17 @@ for(const [id,rate] of [['splashWall',1.5],['beakon',10],['torpedo',1.3]])test(`
  rx._play('foreign',[0,...event]);assert.equal(target.hp,1000);rx._play('attacker',[0,...event]);assert.equal(target.hp,1000-10*rate);rx._play('attacker',[0,...event]);assert.equal(target.hp,1000-10*rate);
 });
 
-for(const id of ['booyahBomb','crabTank'])for(const wear of [false,true])test(`${id} armor break boundary retains raw overflow with Object Shredder ${wear}`,async()=>{
+for(const id of ['booyahBomb','crabTank'])for(const wear of [false,true])test(`${id} armor break follows its raw penetration rule with Object Shredder ${wear}`,async()=>{
  const f=await setup(),v=f.make(),a=f.make();equip(v,id);a.team=1;a.pos.set(0,0,5);a.s3.loadout[2].main=wear?'objectShredder':'runSpeed';readySpecialEvidence(v, {placeAtFixtureOrigin:true});v._updateSpecial(1/60);v.invuln=0;v.hp=100;
  const state=v._s3AllSpecialState;state.armorHP=50;v.specialActive.armorHP=50;
  const rate=(wear?(id==='crabTank'?1.3:1.1):1)*(id==='booyahBomb'?.7:1),rawOverflow=100-50/rate;
  const legacyBodyFactor=v.specialActive.armor===true?.25:1;
- const expectedDamage=Math.floor(rawOverflow*legacyBodyFactor*10+1e-9)/10; // existing final 0.1-HP quantizer
+ const expectedDamage=id==='booyahBomb'?0:Math.floor(rawOverflow*legacyBodyFactor*10+1e-9)/10; // existing Crab formula / final0.1HP quantizer
  v.damage(100,a,'shooter');assert.equal(state.armorHP,0);assert.equal(v.hp,100-expectedDamage);
+ if(id==='booyahBomb')for(const [raw,body]of [[120,20],[220,80]]){
+  state.armorHP=300;v.specialActive.armorHP=300;v.hp=100;
+  v.damage(raw,a,'shooter');
+  assert.ok(Math.abs(state.armorHP-(300-raw*rate))<1e-8,'source row and Object Shredder scale only armor damage');
+  assert.ok(state.armorHP>0);assert.equal(v.hp,100-body,'raw100 threshold and80 cap permit penetration even while armor remains');
+ }
 });

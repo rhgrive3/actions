@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import vm from 'node:vm';
+import { memoizeFixtureSourceAdapter, memoizeFixtureVmCompiler } from './fixture-cache.mjs';
 import { pathToFileURL } from 'node:url';
 
 // Exercise the real loader without booting gameplay or replacing its branches.
@@ -31,6 +32,7 @@ function exercise({ built, upstream, production, custom }) {
     adaptConstrainedSource: custom ? () => { throw Error('unused default adapter'); } : native,
     adaptProduction(rel, raw) { calls.push(['production', rel]); return `production(${raw})`; },
     adaptRuntime(rel, raw) { calls.push(['runtime', rel]); return `runtime(${raw})`; },
+    cachedVmModule(source, options) { return { source, options }; },
     vm: { SourceTextModule: class {
       constructor(source, options) { this.source = source; this.options = options; }
     } },
@@ -68,3 +70,63 @@ for (const built of [false, true]) {
     }
   }
 }
+
+test('source transform cache compares complete input bytes, not only paths', () => {
+  let calls = 0;
+  const adapt = memoizeFixtureSourceAdapter((rel, code) => {
+    calls++;
+    if (code === 'corrupt') throw Error('adapter still rejects source drift');
+    return rel + ':' + code;
+  }, 70);
+  assert.equal(adapt('src/game.js', 'const a=1'), 'src/game.js:const a=1');
+  assert.equal(adapt('src/game.js', 'const a=1'), 'src/game.js:const a=1');
+  assert.equal(calls, 1, 'identical bytes reuse adapter output');
+  assert.equal(adapt('src/game.js', 'const a=2'), 'src/game.js:const a=2');
+  assert.equal(calls, 2, 'any source edit reruns the real adapter');
+  assert.throws(() => adapt('src/game.js', 'corrupt'), /source drift/);
+  assert.throws(() => adapt('src/game.js', 'corrupt'), /source drift/);
+  assert.equal(calls, 4, 'exceptions are never cached as passing results');
+});
+
+test('no-VM-flag CLI imports can validate arguments before creating a fixture', () => {
+  const compile = memoizeFixtureVmCompiler(undefined);
+  assert.equal(typeof compile, 'function');
+  assert.throws(() => compile('export const x=1;', {identifier:'x.mjs'}), /SourceTextModule constructor required/);
+});
+
+test('fresh VM contexts execute correct bytecode after source edits', {skip: !vm.SourceTextModule}, async () => {
+  const compile = memoizeFixtureVmCompiler(vm.SourceTextModule);
+  const id = 'test-compiled-realm-isolation.mjs';
+  for (const [source, state, expected] of [
+    ['export const value = globalThis.seed + 1;', 20, 21],
+    ['export const value = globalThis.seed + 1;', 30, 31],
+    ['export const value = globalThis.seed + 2;', 40, 42],
+    ['export const value = globalThis.seed + 2;', 50, 52],
+    ['export const value = globalThis.seed + 1;', 60, 61],
+  ]) {
+    const mod = compile(source, {identifier: id, context: vm.createContext({seed: state})});
+    await mod.link(() => { throw Error('unexpected import'); });
+    await mod.evaluate();
+    assert.equal(mod.namespace.value, expected, 'no VM state or old source is retained');
+  }
+  assert.throws(() => compile('export const = 1', {identifier: id, context: vm.createContext({seed: 1})}), /Unexpected token/);
+  const mod = compile('export const value = 123;', {identifier: id, context: vm.createContext({seed: 1})});
+  await mod.link(() => { throw Error('unexpected import'); });
+  await mod.evaluate();
+  assert.equal(mod.namespace.value, 123, 'syntax failure cannot poison the cache');
+});
+
+test('cached import linking uses the current realm, never a previous dependency', {skip: !vm.SourceTextModule}, async () => {
+  const compile = memoizeFixtureVmCompiler(vm.SourceTextModule);
+  for (const offset of [3, 9]) {
+    const context = vm.createContext({});
+    const parent = compile("import { n } from './dependency.mjs'; export const result = n * 2;", {context, identifier:'parent.mjs'});
+    const dependency = new vm.SourceTextModule('export const n = ' + offset, {context, identifier:'dependency.mjs'});
+    await parent.link(spec => {
+      assert.equal(spec, './dependency.mjs');
+      return dependency;
+    });
+    await parent.evaluate();
+    assert.equal(parent.namespace.result, offset * 2);
+  }
+});

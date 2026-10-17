@@ -139,6 +139,14 @@ function step(match, frames, metrics, until = null) {
     // drying simulation. Only the renderer's GPU submission is stubbed.
     f.G.paint.flush(DT);
     metrics.maxProgress = Math.max(metrics.maxProgress, ranked.rule.state.progress ?? 0);
+    if (metrics.towerMotion) {
+      const motion = metrics.towerMotion, state = ranked.rule.state;
+      const body = match.rankedWorld.towerBlock.center;
+      motion.minimum = Math.min(motion.minimum, state.pathDistance);
+      motion.maximum = Math.max(motion.maximum, state.pathDistance);
+      motion.maxBodyDisplacement = Math.max(motion.maxBodyDisplacement,
+        Math.hypot(body.x - motion.origin[0], body.y - motion.origin[1], body.z - motion.origin[2]));
+    }
     metrics.boarded ||= match.actors.some(actor => actor.grounded && actor.ground?.block === match.rankedWorld.towerBlockId);
     metrics.maxCountDelta = Math.max(metrics.maxCountDelta, 100 - Math.min(...ranked.counts));
     if (until?.(metrics, match)) break;
@@ -176,7 +184,7 @@ test('native projectiles cover and capture an expanded 13 by 11 zone', () => {
   } finally { finish(match); stage.zones = original; }
 });
 
-test('native ranked bots jump onto the moving Tower deck and carry its live objective', () => {
+test('native ranked bots jump onto the moving Tower deck and carry its live objective', t => {
   const match = start('tower'), seen = metrics();
   let hits = 0;
   const stop = f.on('hit', event => {
@@ -184,12 +192,25 @@ test('native ranked bots jump onto the moving Tower deck and carry its live obje
       && event.attacker.team !== event.victim.team) hits++;
   });
   const initial = match.ranked.rule.state.pathDistance;
+  seen.towerMotion = { minimum: initial, maximum: initial,
+    origin: match.rankedWorld.towerBlock.center.toArray(), maxBodyDisplacement: 0 };
   try { step(match, 60 * 60, seen); }
   finally { stop(); }
-  const moved = Math.abs(match.ranked.rule.state.pathDistance - initial) > 0.5 || seen.maxProgress > initial / match.ranked.rule.metrics.total + 0.01;
+  // Either team can attack, and an unattended tower can return to centre.
+  // A positive-only progress maximum or the final position loses legitimate
+  // negative-direction excursions. Observe the entire native route and the
+  // actual collision body independently; events/counts alone cannot pass it.
+  const maxPathDisplacement = Math.max(Math.abs(seen.towerMotion.minimum - initial),
+    Math.abs(seen.towerMotion.maximum - initial));
+  const evidence = { initial, final: match.ranked.rule.state.pathDistance,
+    maxProgress: seen.maxProgress, centerProgress: initial / match.ranked.rule.metrics.total,
+    ...seen.towerMotion, maxPathDisplacement, hits, maxCountDelta: seen.maxCountDelta, events: [...seen.events] };
+  t.diagnostic('Tower motion receipt: ' + JSON.stringify(evidence));
   finish(match);
   assert.ok(seen.boarded, `at least one native Actor must land on the live tower collider: ${JSON.stringify([...seen.events])}`);
-  assert.ok(moved, `native riders must move the Tower and update counts: ${JSON.stringify([...seen.events])}`);
+  assert.ok(maxPathDisplacement > 0.5, `native riders must move the Tower along its route: ${JSON.stringify(evidence)}`);
+  assert.ok(seen.towerMotion.maxBodyDisplacement > 0.5,
+    `the actual Tower collision body must travel with its live objective: ${JSON.stringify(evidence)}`);
   assert.ok(seen.maxCountDelta > 0, `native riders must change an actual ranked count: ${JSON.stringify([...seen.events])}`);
   assert.ok(hits > 0, 'native Tower projectiles must inflict accepted opponent damage while bots play the objective');
 });

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runLoggedTestProcess } from './run-logged-test-process.mjs';
+import { selectTestShard } from './lib/inkwave-test-shards.mjs';
 import vm from 'node:vm';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
 import { checkCompatibility, adaptSource, PATCH_ROOT } from '../patches/splatoon3/adapter.mjs';
@@ -33,7 +34,12 @@ try {
     process.exit(0);
   }
   const walk = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(d => d.isDirectory() ? walk(path.join(directory, d.name)) : [path.join(directory, d.name)]);
-  if (vm.SourceTextModule) {
+  const shardCount = Number(process.env.INKWAVE_TEST_SHARD_COUNT ?? '1');
+  const shardIndex = Number(process.env.INKWAVE_TEST_SHARD_INDEX ?? '0');
+  selectTestShard([], shardIndex, shardCount);
+  // Only shard zero repeats the complete composed-source syntax scan.
+  // All shards checkout the same SHA, and the required fan-in needs all four.
+  if (vm.SourceTextModule && shardIndex === 0) {
     for (const file of [...walk(path.join(SRC, 'src')), ...walk(PATCH_ROOT)]) {
       if (!/\.m?js$/.test(file)) continue;
       const rel = path.relative(SRC, file);
@@ -49,14 +55,20 @@ try {
   }
   const files = [...walk(path.join(PATCH_ROOT, 'tests')), ...walk(path.join(RELIABILITY_ROOT, 'tests'))].filter(f => f.endsWith('.test.mjs')).sort();
   if (!files.length) throw new Error('No patch tests discovered');
+  const shardFiles = selectTestShard(files, shardIndex, shardCount);
+  if (!shardFiles.length) throw new Error(`Patch suite shard ${shardIndex + 1}/${shardCount} has no test files`);
   const logDir = path.resolve(process.env.INKWAVE_TEST_LOG_DIR || path.join(ROOT, '.ci-scratch/inkwave-patches'));
   const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
   if (['/tmp', '/var/tmp', '/dev/shm'].some(p => physical(logDir) === p || physical(logDir).startsWith(p + '/'))) throw Error('Persistent test log storage required');
   fs.mkdirSync(logDir, { recursive: true });
   const log = path.join(logDir, 'patch-tests.log');
+  fs.writeFileSync(path.join(logDir, 'shard-manifest.json'), JSON.stringify({
+    sourceSha: process.env.SOURCE_SHA ?? null, shardIndex, shardCount, totalFiles: files.length,
+    files: shardFiles.map(file => path.relative(ROOT, file).split(path.sep).join('/')),
+  }, null, 2) + '\n');
   const concurrency = Number(process.env.INKWAVE_TEST_CONCURRENCY || 4);
   if (!Number.isInteger(concurrency) || concurrency < 1) throw Error('INKWAVE_TEST_CONCURRENCY must be a positive integer');
-  const result = await runLoggedTestProcess(process.execPath, ['--experimental-vm-modules', '--test', `--test-concurrency=${concurrency}`, ...files], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, logFile: log });
+  const result = await runLoggedTestProcess(process.execPath, ['--experimental-vm-modules', '--test', `--test-concurrency=${concurrency}`, ...shardFiles], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, logFile: log });
   result.stdout = fs.readFileSync(log, 'utf8');
   result.stderr = '';
   if (result.status !== 0) {
@@ -71,6 +83,6 @@ try {
     throw new Error(`Patch tests failed (exit ${result.status}); full diagnostic log: ${log}`);
   }
   const summary = result.stdout.split('\n').filter(line => /tests |pass |fail |skipped |duration_ms /.test(line));
-  console.log(`INKWAVE patches OK: ${files.length} test files; upstream compatible; reference ${profile.referenceVersion}`);
+  console.log(`INKWAVE patches OK: ${shardFiles.length}/${files.length} test files (shard ${shardIndex + 1}/${shardCount}); upstream compatible; reference ${profile.referenceVersion}`);
   console.log(summary.join('\n'));
 } catch (error) { console.error(error.message); process.exitCode = 1; }

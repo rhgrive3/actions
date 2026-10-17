@@ -8,15 +8,42 @@ export function isStormHolding(a) { return a.specialActive?.id === 'storm' && a.
 // Remote actors have no replicated post-use clock, so they keep the old value.
 export function stormGaugeFraction(a) {
   if (a.remote) return null;
-  if (isStormHolding(a)) return 1;
+  if (isStormHolding(a) && preOperationGaugeState(a)) return 1;
   const remaining = a.stormGaugeLock;
   if (!Number.isFinite(remaining) || remaining <= 0) return null;
   const total = a.stormGaugeDuration;
   return Math.min(1, remaining / (Number.isFinite(total) && total > 0 ? total : STORM_GAUGE_LOCK));
 }
+// Wiki special-gauge rules: deployed locks keep their spent gauge depleting
+// after the actor animation and after death. This projection grants no points
+// and does not alter specialFrac, specialReady or remote snapshots.
+export function specialGaugeFraction(a) {
+  return stormGaugeFraction(a) ?? deployedGaugeFraction(a) ?? activeGaugeFraction(a);
+}
+// Wiki's general rule is constant automatic depletion, ending immediately on a
+// normal early finish. Read the real action clock rather than starting another
+// timer in HUD code. Zipcaster is the documented exception: its special ink
+// reserve IS the displayed gauge. Crab and native Trizooka/Wail stay untouched.
+function activeGaugeFraction(a) {
+  if(a.remote||a.alive===false)return null;
+  const active=a.specialActive;
+  if(active?.id==='inkVac'&&Number.isFinite(active.gaugeFraction))return Math.min(1,Math.max(0,active.gaugeFraction));
+  const state=activeSpecialGaugeState(a)?.state;
+  if(!active||state?.id!==active.id)return null;
+  if(!['inkjet','booyahBomb','ultraStamp','tripleInkstrike','krakenRoyale','zipcaster'].includes(state.id))return null;
+  return activeSpecialDepletionFraction(state);
+}
 export function advanceStormLock(a, dt) {
   const remaining = (a.stormGaugeLock || 0) - dt;
   a.stormGaugeLock = remaining <= 1e-10 ? 0 : remaining;
+}
+// The canister's release is not cloud operation. Start only when the native
+// _spawnCloud has created the authoritative cloud, including after owner death.
+export function startStormCloudGauge(a, cloud, game) {
+  if(a?.s3PreOperationGauge?.id==='storm')clearPreOperationGauge(a);
+  if (!a || a.remote || !Number.isFinite(cloud?.dur) || !(cloud.dur>0) || rainmakerGaugeException(a,game)) return;
+  a.special=0;
+  a.stormGaugeLock=cloud.dur;a.stormGaugeDuration=cloud.dur;
 }
 export function startStormHold(a) {
   a.specialActive = { id: 'storm', t: 0, phase: 'hold', armor: false, subWasDown: !!a.intent.sub, subArmed: false };
@@ -39,12 +66,8 @@ export function updateStormHold(a, dt, G) {
     // startup origin remains unverified; do not invent a new timing constant.
     s.phase = 'throw'; s.t = 0;
     a.form = 'kid'; a._setClimb(false);
-    a.stormGaugeLock = STORM_GAUGE_LOCK;
     a.character.trigger('throw');
     G.projectiles.throwStorm(a);
-    // Captured after the throw: the Special Power wrapper may extend this lock.
-    // Actor.reset removes the temporary power snapshot but keeps this denominator.
-    a.stormGaugeDuration = a.stormGaugeLock;
   }
   s.subWasDown = down;
 }
@@ -113,3 +136,5 @@ export function applyStormHits(hits, emit) {
     if (killed) emit('hit', { attacker: hit.owner, victim, damage: 0, killed: true, weaponId: 'storm' });
   }
 }
+import { rainmakerGaugeException, deployedGaugeFraction, clearPreOperationGauge, preOperationGaugeState } from './tacticooler-gauge.mjs';
+import { activeSpecialGaugeState, activeSpecialDepletionFraction } from './active-special-gauge.mjs';

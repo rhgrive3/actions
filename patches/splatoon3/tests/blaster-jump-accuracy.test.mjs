@@ -85,7 +85,8 @@ test('#684 recovery begins after 25F, is monotone, and ends at the sourced 70F e
   for (let frame = START_F + 1; frame <= END_F; frame++) {
     airborne(f, a, 1);
     const s = state(a);
-    close(s.frames, frame, `age at ${frame}F`, 1e-6);
+    if (frame < END_F) close(s.frames, frame, `age at ${frame}F`, 1e-6);
+    else assert.equal(s.active, false, 'recovery finishes at 70F without requiring landing');
     samples.push(s.bias);
   }
   assert.ok(samples[0] < BIAS_MAX, 'recovery has begun just after 25F');
@@ -107,15 +108,15 @@ test('#684 landing before 70F keeps the remaining jump-accuracy state', async ()
   assert.equal(after.active, true, 'landing does not erase the remaining state');
   assert.ok(after.bias > 0, 'remaining bias is preserved after landing');
   assert.ok(after.bias <= before.bias + 1e-12, 'bias keeps decreasing, never jumps up');
-  close(after.envelope, 10, 'the HUD keeps the sourced outer envelope while bias recovers');
-  close(a.weaponRunner.spread, 10, 'landing does not shrink the rendered outer envelope early');
+  assert.ok(after.envelope > 0 && after.envelope < before.envelope, 'angular maximum keeps recovering through landing');
+  close(a.weaponRunner.spread, after.envelope, 'HUD publishes the recovering maximum');
 
   a.grounded = true; airborne(f, a, END_F - 31);   // finish the sourced timeline on the ground
   assert.equal(state(a).active, false, 'state completes at the sourced endpoint');
   assert.equal(a.weaponRunner._spreadDeg(a.weapon), a.weapon.spreadGround, 'back to the grounded endpoint');
 });
 
-test('#684 extended airtime preserves the outer envelope while the independent bias recovers', async () => {
+test('extended airtime recovers the angular maximum and bias without a 70F rebound', async () => {
   const f = await fixture();
   const a = jump(f, f.make('blaster'));
   airborne(f, a, START_F);
@@ -125,10 +126,11 @@ test('#684 extended airtime preserves the outer envelope while the independent b
   airborne(f, a, 10); const at70 = state(a);
   assert.ok(at25.bias > at30.bias && at30.bias > at60.bias && at60.bias > at70.bias,
     `angular bias must recover: ${[at25.bias, at30.bias, at60.bias, at70.bias]}`);
-  for (const sample of [at25, at30, at60, at70]) close(sample.envelope, 10, 'outer envelope stays at the sourced endpoint');
+  assert.ok(at25.envelope > at30.envelope && at30.envelope > at60.envelope && at60.envelope > at70.envelope,
+    'angular maximum actually recovers before the end frame');
   close(at70.bias, 0, 'bias reaches the sourced recovered endpoint');
-  assert.equal(at70.phase, 'recovered', 'the separate HUD presentation reaches its recovery endpoint');
-  close(a.weaponRunner.spread, 10, 'HUD continues to display the actual outer envelope');
+  assert.equal(at70.phase, 'idle', 'completed jump penalty has no active cue');
+  close(a.weaponRunner.spread, 0, 'HUD reaches the ordinary maximum while still airborne');
   assert.equal(a.grounded, false, 'still airborne past the endpoint');
 });
 
@@ -232,6 +234,7 @@ test('#684 Blaster fields stay namespaced beside the existing Shooter update/res
   const r = a.weaponRunner;
   r.s3WasGrounded = true;        // Shooter #98 state owner
   r.s3JumpSpreadAge = 0.4;       // Shooter #98 recovery clock
+  r.s3ShooterJumpSeen = a.s3JumpSerial || 0;
   r.s3BlasterJumpT = 12 / HZ;
   a.grounded = true;
   a.weapon = f.WEAPONS.shooter;  // exercise the non-Blaster branch without setWeapon/reset
@@ -311,7 +314,7 @@ test('#1102 a real jump and a ledge fall from the same platform diverge: only th
   assert.equal(state(walker).active, false, 'walking off starts no jump-accuracy timer');
   assert.equal(walker.weaponRunner.spread, 0, 'walking off keeps the 0-degree grounded cone');
   assert.equal(state(jumper).active, true, 'the actual jump still starts its timer');
-  close(state(jumper).envelope, 10, 'the actual jump keeps the sourced 10-degree envelope');
+  assert.ok(state(jumper).envelope > 0 && state(jumper).envelope < 10, 'the actual jump is inside its sourced recovery interval');
   close(state(jumper).bias, BIAS_MAX * (END_F - 30) / (END_F - START_F), 'the actual jump keeps the sourced 25F-70F recovery at 30F', 1e-9);
 });
 
