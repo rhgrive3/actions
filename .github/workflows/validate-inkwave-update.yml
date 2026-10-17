@@ -441,11 +441,11 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 8
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     env:
-      INKWAVE_TEST_SHARD_COUNT: '4'
+      INKWAVE_TEST_SHARD_COUNT: '8'
       INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v4
@@ -477,7 +477,7 @@ jobs:
           path: .ci-scratch/inkwave-patches/
           retention-days: 14
 
-  # Required /validate passes only when core and all four regression shards pass.
+  # Required /validate passes only when core and all eight regression shards pass.
   validate:
     if: ${{ always() && inputs.diagnostic_only != true }}
     needs: [validate_core, patch_tests]

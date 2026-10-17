@@ -38,7 +38,7 @@ try {
   const shardIndex = Number(process.env.INKWAVE_TEST_SHARD_INDEX ?? '0');
   selectTestShard([], shardIndex, shardCount);
   // Only shard zero repeats the complete composed-source syntax scan.
-  // All shards checkout the same SHA, and the required fan-in needs all four.
+  // All shards checkout the same SHA, and the required fan-in needs every configured shard.
   if (vm.SourceTextModule && shardIndex === 0) {
     for (const file of [...walk(path.join(SRC, 'src')), ...walk(PATCH_ROOT)]) {
       if (!/\.m?js$/.test(file)) continue;

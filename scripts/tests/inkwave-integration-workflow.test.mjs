@@ -177,14 +177,14 @@ test('emitted menu focus is mandatory in the UI shard and source-bound in its re
   assert.ok(workflow.includes("if suite=='ui': assert reports['menu-focus/menu-focus-result.json']['sourceSha']==os.environ['SOURCE_SHA']"));
 });
 
-test('all four patch shards report into the existing required validate gate', () => {
+test('all eight patch shards report into the existing required validate gate', () => {
   const core = workflow.slice(workflow.indexOf('  validate_core:'),workflow.indexOf('  patch_tests:'));
   const shards = workflow.slice(workflow.indexOf('  patch_tests:'),workflow.indexOf('  validate:'));
   const gate = workflow.slice(workflow.indexOf('  validate:'),workflow.indexOf('  browser:'));
   assert.ok(core.includes('scripts/check-inkwave-patches.mjs --quick'));
-  assert.ok(shards.includes('shard: [0, 1, 2, 3]'));
-  assert.ok(shards.includes('max-parallel: 4'));
-  assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '4'"));
+  assert.ok(shards.includes('shard: [0, 1, 2, 3, 4, 5, 6, 7]'));
+  assert.ok(shards.includes('max-parallel: 8'));
+  assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '8'"));
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
   assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
   assert.ok(shards.includes('if: failure() && hashFiles('));
