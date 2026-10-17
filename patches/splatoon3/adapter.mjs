@@ -70,13 +70,17 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
     // S3 shooter carry: lower the non-firing barrel to the right-hip hold before the aim pitch.
     code = replaceOnce(code, 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis).premultiply(this.retarget.aim);', 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis);sourceCarryWeapon(this,this.weaponQ);this.weaponQ.premultiply(this.retarget.aim);', 'source shooter carry posture');
+    // A weapon may borrow another family's body clips (Brush: the shooter rest stance).
+    code = replaceOnce(code, "const family=SOURCE_WEAPONS[c.weaponKind]||'Nrml';", "const family=c.weaponSourceBody||SOURCE_WEAPONS[c.weaponKind]||'Nrml';", 'weapon source body family');
+    code = replaceOnce(code, '  this.fitR.copy(this.handP);', '  this.fitR.copy(this.handP);sourceStandGrip(this,this.fitR);', 'source shooter standing grip');
+    code = replaceOnce(code, 'c._kidXform(c.limbs.armR.lo,this.armPole,this.parentQ);this.armPole.sub(this.shoulderR);', 'c._kidXform(c.limbs.armR.lo,this.armPole,this.parentQ);this.armPole.sub(this.shoulderR);sourceStandPole(this,this.armPole);', 'source shooter standing elbow');
     // ToHuman/ToSquid own the whole body only for a grounded, stationary change (moving: locomotion steps; air: jump pose).
     code = replaceOnce(code, 'this.formTime=0;this.formEvent=true;', 'this.formTime=0;this.formEvent=true;this.s3FormClipDeclined=false;', 'source form clip admission reset');
     code = replaceOnce(code, "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)){", "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)&&sourceFormClipAdmitted(this)){", 'source form clip admission');
     code = replaceOnce(code, "if(this.finalState!=='air'){this.airBlendTime=0;", "if(this.finalState!=='air'){this.airBlendTime=sourceAirBlendStart(this,HOST_MOTION.transitionSeconds);", 'airborne form change skips stale dive crossfade');
     return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
       "import { sourceAirBlendStart, sourceFormClipAdmitted } from '../../../patches/splatoon3/runtime/source-form-transition.mjs';\n" +
-      "import { sourceCarryWeapon } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
+      "import { sourceCarryWeapon, sourceStandGrip, sourceStandPole } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
   if (rel === 'src/game/motion/retarget.js') {
     // S3 posture: reduce the Wii U clips' torso/neck lean before the aim pitch; arms keep their solved directions.

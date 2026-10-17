@@ -171,7 +171,7 @@ test('the Wii U hold clips lean forward; the corrected stance, walk and run stay
   ch.dispose();
 });
 
-test('a non-firing shooter: level two-hand carry when moving, the source two-hand hold kept when standing', async () => {
+test('a non-firing shooter: level two-hand carry when moving, forward-left and down in both hands when standing', async () => {
   const api = await production(), st = state(), runs = [];
   // Identical input on two fresh rigs (opt-out, corrected) so the standing clip phase matches.
   for (const on of [false, true]) {
@@ -192,9 +192,18 @@ test('a non-firing shooter: level two-hand carry when moving, the source two-han
   }
   // Standing: the barrel direction and both hands on the gun stay as authored (S3 footage shows the
   // support hand on the gun; the arms keep their world direction while the torso is uprighted).
-  assert.ok(Math.abs(stand.pitch - rawStand.pitch) < 1 && Math.abs(stand.yaw - rawStand.yaw) < 1,
+  // Standing (official movie oEdD5N0jxN2 0-2.5 s, front view): S3 holds the gun across the front of the
+  // body in both hands, sloping down from the right chest to past the left hip, the right elbow tucked
+  // against the side. The Wii U clip held it level at the right hip with the elbow out.
+  assert.ok(stand.yaw > 40 && stand.yaw < 75 && stand.pitch < -10 && stand.pitch > -35,
     `standing barrel ${rawStand.pitch.toFixed(1)}°/${rawStand.yaw.toFixed(1)}° -> ${stand.pitch.toFixed(1)}°/${stand.yaw.toFixed(1)}°`);
-  assert.ok(walk.hands < 0.2 && stand.hands < 0.2 && Math.abs(stand.hands - rawStand.hands) < 0.01,
+  {
+    const { THREE } = api, kidPos = o => { const v = o.getWorldPosition(new THREE.Vector3()); ch.kid.worldToLocal(v); return v; };
+    const hand = kidPos(ch.bones.handR), elbow = kidPos(ch.limbs.armR.lo), shoulder = kidPos(ch.limbs.armR.up);
+    assert.ok(hand.z > shoulder.z + 0.1 && hand.y > 0.6, `grip in front of the lower chest (${hand.toArray().map(v => v.toFixed(3))})`);
+    assert.ok(Math.abs(elbow.x - shoulder.x) < 0.06, `elbow tucked against the side (${(elbow.x - shoulder.x).toFixed(3)} m)`);
+  }
+  assert.ok(walk.hands < 0.25 && stand.hands < 0.25,
     `two-hand hold (walk ${walk.hands.toFixed(3)}, stand ${rawStand.hands.toFixed(3)} -> ${stand.hands.toFixed(3)})`);
   // Stopping and starting turn the gun over several frames, never in one jump.
   let last = null, jump = 0;

@@ -24,3 +24,9 @@ export function shiftHold(hold, shift) {
   }
   return out;
 }
+
+// Model size per behaviour family, about the right-hand grip (kit.mjs scaleWeaponDef).
+// 2026-10-17 owner review: shooters, dualies and brushes read about 30% too small
+// against the official movies. The muzzle scales with the model, so shot spawn
+// points move outward with it (reports/inkwave-weapon-hold-motion-2026-10-17.md).
+export const FAMILY_MODEL_SCALE = Object.freeze({ shooter: 1.3, dualies: 1.3, brush: 1.3 });

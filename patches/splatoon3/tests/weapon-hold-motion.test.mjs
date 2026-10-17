@@ -175,7 +175,7 @@ test('a stringer draws with the left hand on the string; at rest it hangs in the
   ch.dispose();
 });
 
-test('a brush rests on the right shoulder and sweeps in the right hand alone', async () => {
+test('a brush rests upright over the right shoulder and is held in both hands', async () => {
   const api = await production(), C = api.CHARACTER_CHANNELS;
   for (const weapon of ['s3-brush-mini', 's3-brush-normal', 's3-brush-heavy']) {
     const ch = await rig(api, weapon), st = state();
@@ -183,11 +183,24 @@ test('a brush rests on the right shoulder and sweeps in the right hand alone', a
     ch.root.updateMatrixWorld(true);
     const tip = kidPoint(api, ch, ch.weapon.muzzle), head = kidPoint(api, ch, ch.bones.head);
     assert.ok(tip.y > head.y, `${weapon}: head carried up over the shoulder (${tip.y.toFixed(3)} vs head ${head.y.toFixed(3)})`);
-    assert.ok(ch.P[C.IKL] < 0.01 && ch.P[C.LTW] > 0.99, `${weapon}: free left hand at rest`);
+    assert.ok(ch.P[C.IKL] > 0.99, `${weapon}: both hands at rest`);
     ch.trigger('shoot');
-    let free = 1;
-    for (let f = 0; f < 20; f++) { ch.update(1 / 60, st); free = Math.min(free, 1 - ch.P[C.IKL]); }
-    assert.ok(free > 0.99, `${weapon}: one-handed sweep`);
+    let held = 1;
+    for (let f = 0; f < 20; f++) { ch.update(1 / 60, st); held = Math.min(held, ch.P[C.IKL]); }
+    assert.ok(held > 0.99, `${weapon}: two-handed sweep`);
     ch.dispose();
   }
+});
+
+test('shooters, dualies and brushes are 30% larger about the grip; other families are not', async () => {
+  const api = await production(), { registry } = api, unscaled = [];
+  for (const [id, k] of [['shooter', 1.3], ['s3-shooter-long', 1.3], ['dualies', 1.3], ['s3-maneuver-short', 1.3], ['s3-brush-normal', 1.3],
+    ['blaster', 1], ['charger', 1], ['roller', 1], ['s3-stringer-normal', 1], ['s3-shelter-normal', 1]]) {
+    const ch = await rig(api, id), d = ch.weapon.def;
+    assert.equal(d.modelScale ?? 1, k, `${id} model scale`);
+    if (k === 1) unscaled.push(id);
+    ch.dispose();
+  }
+  assert.equal(registry.weaponBehaviorFamily('s3-shelter-normal'), 'brella', 'brellas share the shooter model kind only');
+  assert.ok(unscaled.length === 5);
 });

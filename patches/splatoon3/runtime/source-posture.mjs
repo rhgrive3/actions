@@ -30,9 +30,20 @@ export const SOURCE_POSTURE = Object.freeze({
   standResponse: 6,
   // Moving shooter carry: muzzle pitch (rad, negative = down), inward yaw toward
   // the midline (rad, + = kid left) and how much of the source barrel direction
-  // is replaced by that target. Faded out when standing: the standing two-hand
-  // hold stays the source clip's own.
+  // is replaced by that target.
   carry: Object.freeze({ pitch: -0.15, yaw: 0, follow: 0.85 }),
+  // Standing shooter carry, blended with `carry` by the stand/move weight. The
+  // official shooter movie oEdD5N0jxN2 (0-2.5 s, seen from the front) holds the
+  // gun in both hands nearly level across the front of the body, the muzzle
+  // left-forward and a little down, reaching past the left hip. Directions read
+  // from the movie by eye.
+  stand: Object.freeze({ pitch: -0.55, yaw: 1.0, follow: 0.9 }),
+  // Standing shooter right arm (same movie, owner review 2026-10-17): the elbow
+  // hangs tucked against the side and the forearm comes forward, so the grip
+  // sits in front of the lower right chest instead of out at the hip. Kid-space
+  // wrist target (m) and elbow bend direction; INKWAVE calibration.
+  standHand: Object.freeze([-0.12, 0.67, 0.16]),
+  standElbow: Object.freeze([-0.25, -1, -0.45]),
   // Fraction of the source swing-ankle height above its rest (stance) level kept
   // while walking / running. The Wii U walk lifts the ankle 0.60 leg lengths
   // with 109° knee flexion (run: 0.70, 136°); the S3 shooter walk keeps the
@@ -206,19 +217,20 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
 }
 
 /** Called by SourceMotionController.alignWeapon with the weapon orientation (kid space, before aim pitch).
- *  Turns a moving, non-firing shooter's barrel from across the belly to level-forward at the right hip.
- *  Standing (smoothed stand/move weight) leaves the source two-hand hold unchanged. */
+ *  Turns a non-firing shooter's barrel from across the belly to level-forward at the right hip when
+ *  moving, and forward-left and down in both hands when standing (smoothed stand/move weight). */
 export function sourceCarryWeapon(controller, weaponQ) {
   const c = controller.character;
   if (!c || c.weaponKind !== 'shooter' || !controller.retarget ||
       formClipOwnsCarry(controller) || !sourceCarryWeight(controller.retarget)) return;
   let w = sourceCarryWeight(controller.retarget) * sourcePostureWeight(controller.retarget) *
-    clamp(1 - (controller.shootBlend || 0), 0, 1) * smoothMove(controller.retarget);
+    clamp(1 - (controller.shootBlend || 0), 0, 1);
   if (w <= 1e-4) return;
-  const k = SOURCE_POSTURE.carry;
-  _t.set(Math.sin(k.yaw) * Math.cos(k.pitch), Math.sin(k.pitch), Math.cos(k.yaw) * Math.cos(k.pitch));
+  const m = smoothMove(controller.retarget), a = SOURCE_POSTURE.stand, b = SOURCE_POSTURE.carry;
+  const pitch = a.pitch + (b.pitch - a.pitch) * m, yaw = a.yaw + (b.yaw - a.yaw) * m, follow = a.follow + (b.follow - a.follow) * m;
+  _t.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
   _d.set(0, 0, 1).applyQuaternion(weaponQ);
-  _t.lerp(_d, 1 - k.follow).normalize();
+  _t.lerp(_d, 1 - follow).normalize();
   // Source clips can point the barrel far across the body at the instant
   // ToHuman hands control back to grounded movement. Bound the *actual*
   // source-to-target quaternion contribution, not a guessed retail joint angle.
@@ -232,6 +244,29 @@ export function sourceCarryWeapon(controller, weaponQ) {
   }
   _q.setFromUnitVectors(_d, _t);
   weaponQ.premultiply(_id.identity().slerp(_q, w)).normalize();
+}
+
+function standGripWeight(controller) {
+  const c = controller.character;
+  if (!c || c.weaponKind !== 'shooter' || !controller.retarget || formClipOwnsCarry(controller)) return 0;
+  return sourceCarryWeight(controller.retarget) * sourcePostureWeight(controller.retarget) *
+    clamp(1 - (controller.shootBlend || 0), 0, 1) * (1 - smoothMove(controller.retarget));
+}
+/** Called by SourceMotionController.alignWeapon with the kid-space right wrist target before the
+ *  two-hand fit: a standing, non-firing shooter brings the grip in front of the lower right chest. */
+export function sourceStandGrip(controller, wrist) {
+  const w = standGripWeight(controller);
+  if (w <= 1e-4) return;
+  const k = SOURCE_POSTURE.standHand;
+  _t.set(k[0], k[1], k[2]); wrist.lerp(_t, w);
+}
+/** Called with the right elbow pole (elbow minus shoulder, kid space) before the right-arm solve:
+ *  the standing elbow hangs tucked against the side. */
+export function sourceStandPole(controller, pole) {
+  const w = standGripWeight(controller);
+  if (w <= 1e-4) return;
+  const k = SOURCE_POSTURE.standElbow, len = pole.length() || 1;
+  _t.set(k[0], k[1], k[2]).setLength(len); pole.lerp(_t, w);
 }
 
 /** Called by HumanRetarget.adaptLegFootpaths with a leg's kid-space ankle target before leg IK.

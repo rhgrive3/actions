@@ -21,8 +21,10 @@ const TAU = Math.PI * 2;
 // Head width from the paint half width on the 11.3.0 tables, scaled 1.2/2.8 m per unit so the
 // hand-held grips stay ~0.11 m per hand (kit scale rule); see brushes.md.
 const drumWidth = halfMax => +(halfMax * 1.2 / 2.8).toFixed(3);
-const GRIP_R = () => gripSpec([0, 0, -0.022], [0, 0, 1], [-0.3, 1, 0]);
-const GRIP_L = z => gripSpec([0, 0, z], [0, 0, 1], [0.5, 1, 0]);
+// Both hands at the very end of the handle: the left fist on the butt, the right fist
+// right above it (official brush movie EyKDWN7kgYb at rest; owner review 2026-10-17).
+const GRIP_R = butt => gripSpec([0, 0, butt + 0.11], [0, 0, 1], [-0.3, 1, 0]);
+const GRIP_L = butt => gripSpec([0, 0, butt + 0.035], [0, 0, 1], [0.5, 1, 0]);
 
 /** Brush head: natural bristle body (lathe, elliptic section) + ink cap over the tip. */
 function roundHead(body, ink, z0, z1, rx, ry, bristle, inkFrom, wave = 0.025) {
@@ -67,7 +69,7 @@ function inkbrush(d) {
   const head = new Pieces(), headInk = new Pieces();
   roundHead(head, headInk, 0.44, 0.86, W * 0.5, W * 0.44, C.bristle, 0.67, 0.035);
   head.transform(g => g.translate(0.012, 0, 0)); headInk.transform(g => g.translate(0.012, 0, 0));
-  return finishBrush(d, { body, ink, head, headInk, pivot: [0.012, 0, 0.45], gripL: 0.2, muzzle: [0.012, 0, 0.74] });
+  return finishBrush(d, { body, ink, head, headInk, pivot: [0.012, 0, 0.45], muzzle: [0.012, 0, 0.74], butt: -0.07 });
 }
 
 // ------------------------------------------------------------------------------------------ Octobrush
@@ -99,7 +101,7 @@ function octobrush(d) {
   for (let i = 0; i <= n; i++) { const x = -W / 2 + W * i / n; tip.push([x, 0.84 + 0.022 * Math.sin(i * 1.7) + 0.012 * Math.cos(i * 3.1)]); }
   const top = smoothOutline([[W / 2 + 0.005, 0.88], [W / 2 - 0.02, 1.0], [0, 1.03], [-W / 2 + 0.02, 1.0], [-W / 2 - 0.005, 0.88]], 24).filter(([, z]) => z > 0.87);
   headInk.add(topSlab([...tip, ...top.sort((a, b) => b[0] - a[0])], 0.105, 0, 0.022));
-  return finishBrush(d, { body, ink, head, headInk, pivot: [0, 0, 0.69], gripL: 0.17, muzzle: [0, 0, 0.92] });
+  return finishBrush(d, { body, ink, head, headInk, pivot: [0, 0, 0.69], muzzle: [0, 0, 0.92], butt: -0.1 });
 }
 
 // ------------------------------------------------------------------------------------------ Painbrush
@@ -135,12 +137,12 @@ function painbrush(d) {
   head.add(topSlab(fan(0.05, R * 0.8, -1.45, 1.45, false), 0.035, 0, 0.006), C.bristle, M.satin);
   for (let k = 0; k <= 22; k++) { const a = -1.4 + 2.8 * k / 22; head.add(pipe([[cx + Math.sin(a) * 0.08, 0, cz + Math.cos(a) * 0.075], [cx + Math.sin(a) * R * 0.78, 0, cz + Math.cos(a) * R * 0.72]], 0.006, 4, 4), '#d8d3c8', M.satin); }
   headInk.add(topSlab(fan(R * 0.66, R, -1.5, 1.5, true), 0.075, 0, 0.018));
-  return finishBrush(d, { body, ink, head, headInk, pivot: [cx, 0, 0.72], gripL: 0.17, muzzle: [cx, 0, 0.92] });
+  return finishBrush(d, { body, ink, head, headInk, pivot: [cx, 0, 0.72], muzzle: [cx, 0, 0.92], butt: -0.1 });
 }
 
-function finishBrush(d, { body, ink, head, headInk, pivot, gripL, muzzle }) {
+function finishBrush(d, { body, ink, head, headInk, pivot, muzzle, butt }) {
   rebuild(d, {
-    body, ink, gripR: GRIP_R(), gripL: GRIP_L(gripL), muzzle, drop: ['drum'],
+    body, ink, gripR: GRIP_R(butt), gripL: GRIP_L(butt), muzzle, drop: ['drum'],
     // the head flexes about the ferrule as it sweeps or drags (own channels)
     parts: { head: part(head, pivot), headInk: part(headInk, pivot, 'ink') },
   });
@@ -159,8 +161,9 @@ const BRUSH = {
   's3-brush-heavy': { sweep: 12 / 60, tip: 0.95, thick: 0.035 },
 };
 const HOLD_END = 0.16, RETURN = 0.22, SIDE = 1.15;
-const CARRY = { p: [-0.18, 0.78, 0.08], r: [-1.0, -1.4, 0] };
-const LEFT_REST = [0.2, 0.5, 0.04], LEFT_SWING = [0.3, 0.74, 0.17];
+const CARRY = { p: [-0.28, 0.84, 0.1], r: [-0.75, -1.85, 0.55] };
+// Carry elbows: both bent and hanging down, the left forearm crossing the chest.
+const CARRY_POLE_R = [-0.3, -1, -0.35], CARRY_POLE_L = [0.35, -1, -0.1];
 const state = new WeakMap();
 const mix = (a, b, t) => a + (b - a) * t;
 function brushState(ch) {
@@ -204,15 +207,17 @@ export function FAMILY_POSE(ch, dt, s, C) {
   // drag pitch (ground = the actor's feet).
   const w0 = ch.weapon, own = ch._owner?.();
   if ((ch.wRoll || 0) > 0.3 && ch.grounded && w0?.off && own?.pos) {
-    _tip.set(w0.def.muzzle.x, -cfg.thick, cfg.tip).applyMatrix4(w0.off.matrixWorld);
+    const sc = w0.def.modelScale || 1;
+    _tip.set(w0.def.muzzle.x, -cfg.thick * sc, cfg.tip * sc).applyMatrix4(w0.off.matrixWorld);
     const err = _tip.y - (own.pos.y + 0.015);
     if (Math.abs(err) < 1) m.corr = clamp(m.corr + err / cfg.tip * Math.min(1, dt * 12), -0.7, 0.5);
   } else m.corr = damp(m.corr, 0, 1.5, dt);
   if (!(ch.kidForm && !ch.dance && (ch.wSub || 0) <= 0.01)) { m.w = 0; return; }
   const P = ch.P, roll = clamp(ch.wRoll || 0);
-  // carry: shouldered in the right hand, the head up over the right shoulder (official
-  // brush movies vgGl1gaD7rb / EyKDWN7kgYb / XJql6EAj5yE at rest; INKWAVE calibration)
-  const L = cfg.tip;
+  // carry: both hands together at the bottom of the handle in front of the right
+  // shoulder, elbows bent down, the head up, out to the right and a little back
+  // (official brush movie EyKDWN7kgYb at rest, overlaid; owner review 2026-10-17)
+  const L = cfg.tip * (ch.weapon?.def?.modelScale || 1);
   // drag: both hands low in front, the ink tip on the floor
   const hr = 0.66, pitchR = Math.asin(clamp((hr - 0.26) / L, 0, 0.98));
   _anc[0] = mix(CARRY.p[0], -0.06, roll); _anc[1] = mix(CARRY.p[1], hr, roll); _anc[2] = mix(CARRY.p[2], 0.3, roll);
@@ -242,17 +247,12 @@ export function FAMILY_POSE(ch, dt, s, C) {
     P[C.SPINE] += 0.06 * w; P[C.HIPS_P + 1] -= 0.02 * w;
   }
   for (let i = 0; i < 3; i++) { P[C.ANC + i] = _anc[i]; P[C.ANCR + i] = _rot[i]; }
-  // The right hand alone carries and sweeps; the free left arm hangs, then swings out
-  // for balance (XJql6EAj5yE 0.6-3.8 s). Both hands drag (promotional art; the movies
-  // do not show the drag grip clearly). The roller kind's two-hand shoulder protraction
-  // is undone where the left hand is free.
-  P[C.IKR] = Math.max(P[C.IKR], 1); P[C.IKL] = roll;
-  const free = 1 - roll;
-  if (free > 0.001) {
-    P[C.CLAVL + 1] += 0.28 * free; P[C.CLAVL + 2] -= 0.04 * free;
-    P[C.LTW] = Math.max(P[C.LTW], free);
-    const bw = w * free;
-    P[C.LTGT] = mix(LEFT_REST[0], LEFT_SWING[0], bw); P[C.LTGT + 1] = mix(LEFT_REST[1], LEFT_SWING[1], bw); P[C.LTGT + 2] = mix(LEFT_REST[2], LEFT_SWING[2], bw);
+  // Both hands on the handle when carrying, sweeping and dragging (owner review
+  // 2026-10-17; the official movies are too small to separate the hands).
+  P[C.IKR] = Math.max(P[C.IKR], 1); P[C.IKL] = 1;
+  const rest = (1 - roll) * (1 - Math.min(1, w));
+  if (rest > 0.001) for (let i = 0; i < 3; i++) {
+    P[C.POLER + i] = mix(P[C.POLER + i], CARRY_POLE_R[i], rest); P[C.POLEL + i] = mix(P[C.POLEL + i], CARRY_POLE_L[i], rest);
   }
   if (roll > 0.001) { P[C.SPINE] += 0.12 * roll; P[C.CHEST] += 0.06 * roll; P[C.HIPS_P + 1] -= 0.03 * roll; }
 }

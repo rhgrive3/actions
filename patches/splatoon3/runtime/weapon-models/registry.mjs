@@ -12,7 +12,8 @@ import { FOLLOWUP_MODELS as ACCEPTED_CARBON } from './variants-accepted-carbon-f
 // (modelKind) still selects gameplay, native HOLD data and the animated part
 // channels the family runtime drives. Geometry is procedural and built lazily.
 import { MAIN_WEAPON_CATALOG } from '../main-weapon-catalog-data.mjs';
-import { FAMILY_HOLD_SHIFT, shiftHold } from './family-holds.mjs';
+import { FAMILY_HOLD_SHIFT, FAMILY_MODEL_SCALE, shiftHold } from './family-holds.mjs';
+import { scaleWeaponDef } from './kit.mjs';
 import { ALTERNATE_WEAPON_KITS, VARIANT_BASE_WEAPON } from '../alternate-weapon-kits-data.mjs';
 import * as SHOOTERS from './shooters.mjs';
 import * as SHOOTERS_B from './shooters-b.mjs';
@@ -152,8 +153,8 @@ export function registeredWeaponModels() { return [...SPECS.keys()]; }
 
 /** Apply the weapon's own model to a freshly built family def (before finishParts). */
 export function buildWeaponModel(key, base) {
-  const spec = ownSpec(key);
-  if (!spec) return base;
+  const spec = ownSpec(key), scale = FAMILY_MODEL_SCALE[weaponBehaviorFamily(key)] ?? 1;
+  if (!spec) return scaleWeaponDef(base, scale);
   const family = base.kind;
   const d = spec.build(base) || base;
   const baseId = weaponBaseModelId(key);
@@ -162,7 +163,7 @@ export function buildWeaponModel(key, base) {
   if (selected) { d.modelVariantId = selected; d.appearanceName = spec.name; }
   d.referenceModelName = spec.sourceModel ?? null;
   if (spec.animate) d.animate = spec.animate;
-  return d;
+  return scaleWeaponDef(d, scale);
 }
 
 // Hold = native family HOLD entry deep-merged with the weapon's overrides, then
@@ -193,6 +194,11 @@ export function weaponHold(key, base) {
 // The Wii U source bank has no Brella / Splatana / Stringer / Brush upper-body
 // clips; those families (and any model asking for it) keep the native hold.
 const NATIVE_CARRY = new Set(['brella', 'splatana', 'stringer', 'brush']);
+// Source-bank body family (legs and torso) per behaviour family. The Wii U roller
+// clips stand upright; a Brush rests in the same bent-knee ready stance as the
+// existing INKWAVE shooter rest (owner review 2026-10-17).
+const SOURCE_BODY = Object.freeze({ brush: 'Nrml' });
+export function weaponSourceBodyFamily(id) { return id ? SOURCE_BODY[weaponBehaviorFamily(id)] ?? null : null; }
 export function weaponNeedsNativeCarry(id) {
   return !!id && (NATIVE_CARRY.has(weaponBehaviorFamily(id)) || !!SPECS.get(weaponBaseModelId(id))?.nativeCarry);
 }
