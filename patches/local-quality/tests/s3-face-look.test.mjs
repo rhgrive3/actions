@@ -212,6 +212,74 @@ test('S3 face look: a projecting nose, and the face stays upright through the mo
   }
 });
 
+test('S3 face look: the nose follows the outline traced on the S3 front photo (bridge, bulb, tip, round bottom)', async () => {
+  const { face } = await realm();
+  const V = face.HEAD_C.constructor, h0 = face.NOSE.h;
+  // how far the nose stands off the nose-free face at (az, el)
+  const rise = (az, el) => {
+    const a = face.headSurfFace(az, el, 0, new V());
+    face.NOSE.h = 0; const b = face.headSurfFace(az, el, 0, new V()); face.NOSE.h = h0;
+    return a.distanceTo(b);
+  };
+  // photo outline mapped onto the face: round bottom on the midline just above the lip, bulb about ±0.15 wide at its
+  // widest line, a narrow bridge where it leaves the mask
+  assert.ok(rise(0, -0.29) > 0.0005 && rise(0, -0.316) === 0, `bottom ${rise(0, -0.29)} / ${rise(0, -0.316)}`);
+  assert.ok(rise(0.13, -0.23) > 0.001 && rise(0.21, -0.23) === 0, `bulb ${rise(0.13, -0.23)} / ${rise(0.21, -0.23)}`);
+  assert.ok(rise(0.06, -0.08) < 0.25 * rise(0, -0.08), 'narrow bridge under the mask');
+  // the crease (where the surface turns from facing up to facing down): the tip on the midline, arching down toward
+  // the wing corners, so the underside below it is a lens between the crease and the bottom arc
+  const n = new V();
+  const crease = (az) => { for (let el = -0.1; el > -0.28; el -= 0.002) { face.headSurfFace(az, el, 0, new V(), n); if (n.y < 0) return el; } return null; };
+  const tipEl = crease(0), sideEl = crease(0.1);
+  assert.ok(tipEl !== null && tipEl < -0.125 && tipEl > -0.16, `tip at el ${tipEl}`);
+  assert.ok(sideEl !== null && sideEl < tipEl - 0.02, `crease at az 0.1: el ${sideEl}`);
+  // the shader paints the same lens (crease arc and bottom arc between the wing corners)
+  const L = face.FACE_SHADER.nose;
+  assert.ok(L.tip > L.wingEl && L.bot < L.wingEl && L.wing > 0.12 && L.wing < 0.17, JSON.stringify(L));
+});
+
+test('S3 face look: the eye patches lie on the nose flank, and the carrier is triangulated mirror-symmetric', async () => {
+  const { face } = await realm();
+  const V = face.HEAD_C.constructor, h0 = face.NOSE.h, q = new V(), base = new V(), full = new V();
+  const solve = (p) => {
+    const v = p.clone().sub(face.HEAD_C), r = v.length(), taz = Math.atan2(v.x, v.z), tel = Math.asin(v.y / r);
+    let az = taz, el = tel;
+    for (let i = 0; i < 8; i++) { face.headSurfFace(az, el, 0, q); q.sub(face.HEAD_C); az += taz - Math.atan2(q.x, q.z); el += tel - Math.asin(q.y / q.length()); }
+    return [az, el];
+  };
+  for (const lv of [2, 4]) {
+    const { acc } = face.buildFaceSkin(lv);
+    // rays from the eye centre graze the nose's flank: the patch skin there is the face itself, not a chord across it
+    let checked = 0;
+    for (let i = 0; i < acc.P.length; i++) {
+      if (acc.part[i] !== 3) continue;
+      const [az, el] = solve(acc.P[i]);
+      face.NOSE.h = 0; face.headSurfFace(az, el, 0, base); face.NOSE.h = h0; face.headSurfFace(az, el, 0, full);
+      if (base.distanceTo(full) < 0.0005 || face.visorSD(az, el) > -0.01) continue;
+      const d = full.distanceTo(acc.P[i]);
+      assert.ok(d < 5e-5, `eye patch ${(d * 1000).toFixed(2)} mm off the nose at ${az.toFixed(3)},${el.toFixed(3)} (level ${lv})`);
+      checked++;
+    }
+    if (lv === 4) assert.ok(checked > 8, `level ${lv}: ${checked} eye-patch vertices on the nose`);
+    // a quad's diagonal across a flank shades it as a zigzag: the two flanks are split as mirror images
+    const cells = new Map(), k = (x, y, z) => `${Math.round(x * 2e4)},${Math.round(y * 2e4)},${Math.round(z * 2e4)}`;
+    const tris = [];
+    for (let t = 0; t < acc.idx.length; t += 3) {
+      const ids = [acc.idx[t], acc.idx[t + 1], acc.idx[t + 2]];
+      if (!ids.every((i) => acc.part[i] === 1)) continue;
+      const c = ids.reduce((s, i) => s.add(acc.P[i]), new V()).multiplyScalar(1 / 3);
+      cells.set(k(c.x, c.y, c.z), true); tris.push(c);
+    }
+    let miss = 0;
+    for (const c of tris) {
+      let hit = false;
+      for (const dx of [-1, 0, 1]) for (const dy of [-1, 0, 1]) for (const dz of [-1, 0, 1]) hit ||= cells.has(k(-c.x + dx / 2e4, c.y + dy / 2e4, c.z + dz / 2e4));
+      if (!hit) miss++;
+    }
+    assert.ok(miss === 0, `level ${lv}: ${miss} of ${tris.length} carrier triangles have no mirror image`);
+  }
+});
+
 test('S3 face look: a round outline from the front (no point at the ear line), ears out to the side', async () => {
   const { face, matsSource } = await realm();
   const V = face.HEAD_C.constructor, p = new V();
