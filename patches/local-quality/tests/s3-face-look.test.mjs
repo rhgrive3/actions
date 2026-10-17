@@ -238,7 +238,7 @@ test('S3 face look: the nose follows the outline traced on the S3 front photo (b
   assert.ok(L.tip > L.wingEl && L.bot < L.wingEl && L.wing > 0.12 && L.wing < 0.17, JSON.stringify(L));
 });
 
-test('S3 face look: the eye patches lie on the nose flank, and the carrier is triangulated mirror-symmetric', async () => {
+test('S3 face look: the nose is one smooth surface on the carrier (eye patches clear of it), mirror-triangulated', async () => {
   const { face } = await realm();
   const V = face.HEAD_C.constructor, h0 = face.NOSE.h, q = new V(), base = new V(), full = new V();
   const solve = (p) => {
@@ -249,19 +249,21 @@ test('S3 face look: the eye patches lie on the nose flank, and the carrier is tr
   };
   for (const lv of [2, 4]) {
     const { acc } = face.buildFaceSkin(lv);
-    // rays from the eye centre graze the nose's flank: the patch skin there is the face itself, not a chord across it
-    let checked = 0;
+    let onCarrier = 0;
     for (let i = 0; i < acc.P.length; i++) {
-      if (acc.part[i] !== 3) continue;
+      if (acc.part[i] !== 1 && acc.part[i] !== 3) continue;
       const [az, el] = solve(acc.P[i]);
       face.NOSE.h = 0; face.headSurfFace(az, el, 0, base); face.NOSE.h = h0; face.headSurfFace(az, el, 0, full);
-      if (base.distanceTo(full) < 0.0005 || face.visorSD(az, el) > -0.01) continue;
+      if (base.distanceTo(full) < 0.0005) continue;
+      if (acc.part[i] === 1) { onCarrier++; continue; }
+      // the eye patch's rings (rays from the eye centre) would shade the bulb and wings in streaks: they stay on the
+      // carrier, and where a patch still reaches the bridge its skin is the nose itself, not a chord across it
+      assert.ok(el > face.NOSE.top - 0.1, `level ${lv}: eye patch on the bulb at ${az.toFixed(3)},${el.toFixed(3)}`);
       const d = full.distanceTo(acc.P[i]);
-      assert.ok(d < 5e-5, `eye patch ${(d * 1000).toFixed(2)} mm off the nose at ${az.toFixed(3)},${el.toFixed(3)} (level ${lv})`);
-      checked++;
+      assert.ok(d < 5e-5, `level ${lv}: eye patch ${(d * 1000).toFixed(2)} mm off the nose at ${az.toFixed(3)},${el.toFixed(3)}`);
     }
-    if (lv === 4) assert.ok(checked > 8, `level ${lv}: ${checked} eye-patch vertices on the nose`);
-    // a quad's diagonal across a flank shades it as a zigzag: the two flanks are split as mirror images
+    assert.ok(onCarrier > 150, `level ${lv}: ${onCarrier} carrier vertices on the nose`);
+    // a quad's diagonal across an edge of the nose shades it as a zigzag: the two sides are split as mirror images
     const cells = new Map(), k = (x, y, z) => `${Math.round(x * 2e4)},${Math.round(y * 2e4)},${Math.round(z * 2e4)}`;
     const tris = [];
     for (let t = 0; t < acc.idx.length; t += 3) {
