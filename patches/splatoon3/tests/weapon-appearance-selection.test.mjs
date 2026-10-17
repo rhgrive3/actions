@@ -113,7 +113,7 @@ test('all alternate appearances retain finite native carry/attack poses and unch
   assert.ok(attacked>0,id+' admitted attack');a.weaponRunner.reset();ch.dispose();G.scene.remove(ch.root);f.AP.setWeaponAppearance(base,base,null);
  }
 });
-test('kit IDs retain gameplay APIs with87 reviewed defaults and8 base fallbacks',async()=>{
+test('kit IDs retain gameplay APIs with94 candidate defaults and1 base fallback',async()=>{
  const {REG:R,AP,WEAPONS,WEAPON_ORDER}=await production();
  assert.equal(WEAPON_ORDER.length,160);let implemented=0,fallback=0;
  for(const kit of ALTERNATE_WEAPON_KITS){
@@ -126,7 +126,7 @@ test('kit IDs retain gameplay APIs with87 reviewed defaults and8 base fallbacks'
   assert.equal(WEAPONS[kit.id].special,kit.special);assert.equal(WEAPONS[kit.id].specialCost,kit.specialCost);
   assert.ok(AP.weaponAppearanceOptions(kit.id).some(o=>o.id===kit.baseId));
  }
- assert.equal(implemented,87);assert.equal(fallback,8);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
+ assert.equal(implemented,94);assert.equal(fallback,1);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
  assert.equal(AP.selectedWeaponAppearance('unknown-kit',memoryStorage()),'unknown-kit');
 });
 test('explicit Base persists separately from absent kit default and does not leak to peers',async()=>{
