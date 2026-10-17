@@ -118,57 +118,106 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-mode--range .iw-mode__tape .iw-dis
 }
 
 /* ---------------------------------------------------------------- the range pause screen */
+/* Left: RESUME / SETTINGS / LEAVE. Right: one panel — the equipped weapon and three tabs (TOOLS · TRAVEL · WEAPON);
+   only the active tab's content scrolls, so resets and travel are never buried under the 160-weapon list. */
 .iwr-pausescr .iwr-pause__menu { position: absolute; left: calc(var(--u) * 4); top: calc(var(--u) * 15); display: flex; flex-direction: column; gap: calc(var(--u) * 1.4); width: calc(var(--u) * 30); pointer-events: auto; }
-.iwr-pause { position: absolute; left: calc(var(--u) * 37.5); right: calc(var(--u) * 3); top: calc(var(--u) * 12.5); bottom: calc(var(--u) * 7.5); max-width: calc(var(--u) * 80); margin-left: auto; display: flex; flex-direction: column; gap: calc(var(--u) * 1.5);
-  padding: calc(var(--u) * 2) calc(var(--u) * 2.2); overflow: auto; pointer-events: auto; }
-.iwr-pause__sec { display: flex; flex-direction: column; gap: calc(var(--u) * .8); }
-.iwr-pause__hint { font: 600 var(--fs-xs, 12px) / 1.3 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .65); }
-.iwr-pause__foot { margin-top: auto; font: 700 var(--fs-xs, 12px) / 1.3 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .55); letter-spacing: .02em; }
-.iwr-wchips { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: calc(var(--u) * .7); }
+.iwr-pause { position: absolute; left: calc(var(--u) * 37.5); right: calc(var(--u) * 3); top: calc(var(--u) * 11.5); bottom: calc(var(--u) * 7.2); max-width: calc(var(--u) * 82); margin-left: auto;
+  display: flex; flex-direction: column; gap: calc(var(--u) * 1.1); padding: calc(var(--u) * 1.5) calc(var(--u) * 1.7) calc(var(--u) * 1.2); overflow: hidden; pointer-events: auto; box-sizing: border-box; }
+.iwr-pause__top { flex: none; display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 1.4); flex-wrap: wrap; }
+.iwr-pause__body { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .3) transparent;
+  margin: 0 calc(var(--u) * -.8); padding: calc(var(--u) * .4) calc(var(--u) * .8) calc(var(--u) * .8);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--u) * .5), #000 calc(100% - var(--u) * 1), transparent);
+  mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--u) * .5), #000 calc(100% - var(--u) * 1), transparent); }
+.iwr-pause__sec { display: flex; flex-direction: column; gap: calc(var(--u) * .9); }
+.iwr-pause__sec[hidden] { display: none; }
+.iwr-pause__hint { font: 600 var(--fs-xs, 12px) / 1.35 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .65); }
+.iwr-pause__foot { flex: none; font: 700 var(--fs-xs, 12px) / 1.3 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .5); letter-spacing: .02em; }
+/* equipped weapon */
+.iwr-cur { display: flex; align-items: center; gap: calc(var(--u) * 1); min-width: 0; flex: 1 1 calc(var(--u) * 26); }
+.iwr-cur__icon { flex: none; display: grid; place-items: center; width: calc(var(--u) * 4.6); height: calc(var(--u) * 4.6); border-radius: calc(var(--u) * 1.1); background: var(--a, #ff8a14); color: var(--a-ink, #15121c);
+  box-shadow: 0 0 0 2px var(--k, #15121c), 0 calc(var(--u) * .3) 0 2px var(--k, #15121c); }
+.iwr-cur__icon svg { width: 82%; height: 82%; }
+.iwr-cur__txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.iwr-cur__txt small { font: 900 calc(var(--u) * .8) / 1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .16em; color: var(--a, #ff8a14); }
+.iwr-cur__txt b { font: 400 calc(var(--u) * 1.75) / 1.1 'Titan One', 'IW JP Display', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.iwr-cur__kit { display: flex; flex-wrap: wrap; gap: 4px calc(var(--u) * .9); font: 700 calc(var(--u) * .9) / 1.2 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .78); }
+.iwr-cur__kit span { display: inline-flex; align-items: center; gap: .4em; }
+.iwr-cur__kit i { display: block; width: 1.5em; height: 1.5em; color: var(--a, #ff8a14); }
+.iwr-cur__kit .is-sp i { color: #ffd54a; }
+.iwr-cur__kit svg { width: 100%; height: 100%; }
+/* tabs */
+.iwr-tabs { flex: none; display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(0, 0, 0, .32); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .07); }
+.iwr-tab, .iwr-filter { position: relative; display: inline-flex; align-items: center; gap: .5em; border: 0; cursor: pointer; pointer-events: auto; outline: none; color: #fff; font: 900 calc(var(--u) * 1.05) / 1 'Rubik', 'IW JP Body', sans-serif;
+  letter-spacing: .06em; background: transparent; border-radius: 999px; transition: background .15s, color .15s, box-shadow .15s; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.iwr-tab { padding: calc(var(--u) * .75) calc(var(--u) * 1.25); }
+.iwr-tab i { display: block; width: 1.25em; height: 1.25em; opacity: .85; }
+.iwr-tab i svg { width: 100%; height: 100%; }
+.iwr-tab small, .iwr-filter small { padding: .22em .45em; border-radius: 999px; background: rgba(255, 255, 255, .14); font: 800 .85em / 1 'Rubik', sans-serif; letter-spacing: 0; }
+.iwr-tab.is-hover, .iwr-tab.is-focus { background: rgba(255, 255, 255, .14); }
+.iwr-tab.is-on { background: var(--a, #ff8a14); color: var(--a-ink, #15121c); box-shadow: 0 calc(var(--u) * .2) 0 rgba(0, 0, 0, .35); }
+.iwr-tab.is-on small { background: rgba(0, 0, 0, .16); }
+.iwr-filters { display: flex; flex-wrap: wrap; gap: calc(var(--u) * .45); }
+.iwr-filter { padding: calc(var(--u) * .5) calc(var(--u) * .85); background: rgba(255, 255, 255, .07); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .08); font-size: calc(var(--u) * .95); }
+.iwr-filter.is-hover, .iwr-filter.is-focus { box-shadow: inset 0 0 0 2px #fff; }
+.iwr-filter.is-on { background: #fff; color: #15121c; }
+.iwr-filter.is-on small { background: rgba(0, 0, 0, .1); }
+/* weapon / tool / zone buttons */
+.iwr-wchips { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 9.2), 1fr)); gap: calc(var(--u) * .7); }
 .iwr-wchip, .iwr-rbtn, .iwr-zbtn { position: relative; border: 0; font: inherit; color: #fff; cursor: pointer; pointer-events: auto; outline: none; background: rgba(255, 255, 255, .08);
   border-radius: calc(var(--u) * 1.1); box-shadow: 0 0 0 2px rgba(255, 255, 255, .1); transition: background .15s, box-shadow .15s, scale .3s var(--spring, ease); -webkit-tap-highlight-color: transparent; }
-.iwr-wchip { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: calc(var(--u) * .8) 4px calc(var(--u) * .7); }
-.iwr-wchip__icon { width: calc(var(--u) * 4.2); height: calc(var(--u) * 4.2); }
+.iwr-wchip[hidden] { display: none; }
+.iwr-wchip { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: calc(var(--u) * .8) 4px calc(var(--u) * .7); min-width: 0; }
+.iwr-wchip__icon { width: calc(var(--u) * 3.8); height: calc(var(--u) * 3.8); }
 .iwr-wchip__icon svg { width: 100%; height: 100%; }
-.iwr-wchip b { font: 900 calc(var(--u) * 1.05) / 1.1 'Rubik', 'IW JP Body', sans-serif; text-align: center; }
-.iwr-wchip small { font: 700 calc(var(--u) * .85) / 1 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .6); }
+.iwr-wchip b { width: 100%; font: 900 calc(var(--u) * 1) / 1.15 'Rubik', 'IW JP Body', sans-serif; text-align: center; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; min-height: 2.3em; }
+.iwr-wchip small { font: 700 calc(var(--u) * .8) / 1 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .6); }
 .iwr-wchip.is-on { background: var(--a, #ff8a14); color: var(--a-ink, #15121c); }
 .iwr-wchip.is-on small { color: inherit; opacity: .7; }
-.iwr-rbtns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(var(--u) * .7); }
-.iwr-rbtn { display: flex; align-items: center; justify-content: space-between; gap: .6em; padding: calc(var(--u) * 1) calc(var(--u) * 1.2); text-align: left; }
-.iwr-rbtn b { font: 900 calc(var(--u) * 1.2) / 1.1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .04em; }
-.iwr-rbtn kbd { display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em; border-radius: .3em; background: rgba(255, 255, 255, .9); color: #15121c; font: 900 calc(var(--u) * 1) / 1 'Rubik', sans-serif; }
+.iwr-rbtns { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 17), 1fr)); gap: calc(var(--u) * .8); }
+.iwr-rbtn { display: flex; align-items: center; justify-content: space-between; gap: .6em; min-height: calc(var(--u) * 4.6); padding: calc(var(--u) * 1) calc(var(--u) * 1.3); text-align: left; }
+.iwr-rbtn b { font: 900 calc(var(--u) * 1.2) / 1.15 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .04em; }
+.iwr-rbtn kbd { flex: none; display: inline-grid; place-items: center; min-width: 1.7em; height: 1.7em; border-radius: .3em; background: rgba(255, 255, 255, .9); color: #15121c; font: 900 calc(var(--u) * 1) / 1 'Rubik', sans-serif;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
 html.iw-touch-ui .iwr-rbtn kbd { display: none; }
 .iwr-toggle__v { font: 900 calc(var(--u) * 1) / 1 'Rubik', sans-serif; padding: .3em .6em; border-radius: 999px; background: rgba(255, 255, 255, .15); }
 .iwr-toggle.is-on .iwr-toggle__v { background: #3fd17d; color: #0f2a1a; }
-.iwr-zbtns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--u) * .7); }
-.iwr-zbtn { --zc: #35405a; display: flex; align-items: center; gap: calc(var(--u) * 1); padding: calc(var(--u) * .6) calc(var(--u) * 1) calc(var(--u) * .6) calc(var(--u) * .6); text-align: left; }
+.iwr-zbtns { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 21), 1fr)); gap: calc(var(--u) * .7); }
+.iwr-zbtn { --zc: #35405a; display: flex; align-items: center; gap: calc(var(--u) * 1); padding: calc(var(--u) * .7) calc(var(--u) * 1) calc(var(--u) * .7) calc(var(--u) * .7); text-align: left; min-width: 0; }
+.iwr-zbtn::before { content: ''; position: absolute; left: 0; top: 18%; bottom: 18%; width: 3px; border-radius: 3px; background: var(--zc); opacity: .9; }
 .iwr-zbtn__l { flex: none; display: grid; place-items: center; width: calc(var(--u) * 3.3); height: calc(var(--u) * 3.3); border-radius: 50%; background: var(--zc); font: 400 calc(var(--u) * 1.8) / 1 'Titan One', sans-serif; }
 .iwr-zbtn__t { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .iwr-zbtn__t b { font: 900 calc(var(--u) * 1.2) / 1.1 'Rubik', 'IW JP Body', sans-serif; }
-.iwr-zbtn__t small { font: 600 calc(var(--u) * .9) / 1.2 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.iwr-zbtn__t small { font: 600 calc(var(--u) * .9) / 1.25 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .62); }
 .iwr-wchip.is-focus, .iwr-rbtn.is-focus, .iwr-zbtn.is-focus, .iwr-wchip.is-hover, .iwr-rbtn.is-hover, .iwr-zbtn.is-hover { background: rgba(255, 255, 255, .2); box-shadow: 0 0 0 2.5px #fff; scale: 1.03; }
 .iwr-wchip.is-on.is-focus, .iwr-wchip.is-on.is-hover { background: var(--a, #ff8a14); }
-/* touch (the game's touch layout makes .iw-pause a scrolling 2-column grid: buttons | panel) and narrow windows */
+/* touch (the game's touch layout makes .iw-pause a scrolling 2-column grid: buttons | panel) and narrow windows:
+   the panel flows with the screen, so only the screen scrolls */
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-pausescr .iwr-pause__menu { position: relative; left: auto; top: auto; width: auto; margin: 0; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-pause { position: relative; inset: auto; width: auto; min-width: 0; max-width: none; margin: 0; overflow: visible; padding: 16px; box-sizing: border-box; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-wchips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-rbtns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-pause__body { overflow: visible; margin: 0; padding: 0; -webkit-mask-image: none; mask-image: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-tabs { width: 100%; box-sizing: border-box; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-tab { flex: 1 1 0; justify-content: center; min-height: 44px; padding: 0 10px; font-size: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-filter { min-height: 44px; padding: 0 12px; font-size: 13px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-wchips { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-rbtns { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-zbtns { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iwr-wchip, .iwr-rbtn, .iwr-zbtn) { min-height: 48px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-wchip b { font-size: 12px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-wchip small, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-zbtn__t small { font-size: 10px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-rbtn b, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-zbtn__t b { font-size: 14px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-wchip__icon { width: 34px; height: 34px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-zbtn__l { width: 34px; height: 34px; font-size: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-cur__icon { width: 48px; height: 48px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-cur__txt b { font-size: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-cur__txt small, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-cur__kit { font-size: 11px; }
 @media (max-width: 700px) { :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-pausescr { grid-template-columns: minmax(0, 1fr); } }
 html:not(.iw-touch-ui) .iwr-pausescr { overflow: hidden auto; }
 @media (max-width: 1000px), (max-aspect-ratio: 4/3) {
   html:not(.iw-touch-ui) .iwr-pausescr .iwr-pause__menu { position: relative; left: auto; top: auto; width: auto; margin: 84px 16px 12px; flex-direction: row; flex-wrap: wrap; }
   html:not(.iw-touch-ui) .iwr-pausescr .iwr-pause__menu .iw-btn { flex: 1 1 140px; }
   html:not(.iw-touch-ui) .iwr-pause { position: relative; inset: auto; width: auto; max-width: none; margin: 0 16px 80px; overflow: visible; }
-  html:not(.iw-touch-ui) .iwr-wchips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  html:not(.iw-touch-ui) .iwr-pause__body { overflow: visible; -webkit-mask-image: none; mask-image: none; }
 }
-/* wide desktop: three travel columns so the whole pause panel fits a 720p screen; Japanese weapon names sit tighter */
-@media (min-width: 1100px) { html:not(.iw-touch-ui) .iw-ui:not(.is-touch) .iwr-zbtns { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-html:lang(ja) .iwr-wchip b { letter-spacing: -.04em; font-size: calc(var(--u) * 1); }
+html:lang(ja) .iwr-wchip b { letter-spacing: -.03em; }
 @media (max-width: 520px) { .iwr-zbtns { grid-template-columns: minmax(0, 1fr); } }
