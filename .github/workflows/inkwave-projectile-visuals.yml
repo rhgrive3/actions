@@ -11,6 +11,7 @@ on:
       - 'scripts/lib/inkwave-projectile-ci-intro.mjs'
       - 'scripts/tests/inkwave-projectile-ci-intro.test.mjs'
       - 'scripts/tests/inkwave-projectile-character-reset.test.mjs'
+      - 'scripts/tests/inkwave-projectile-pool-reset.test.mjs'
       - 'scripts/compare-inkwave-projectile-captures.py'
       - 'scripts/tests/inkwave-projectile-captures-synthetic.py'
       - 'scripts/tests/inkwave-projectile-captures.test.py'
@@ -55,7 +56,7 @@ jobs:
       - name: Native visual, source-value and gameplay regressions
         if: ${{ matrix.side == 'after' }}
         run: |
-          node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs scripts/tests/inkwave-projectile-pool-reset.test.mjs
           python3 scripts/tests/inkwave-projectile-captures.test.py
           node --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs
       - name: Build unchanged main reference

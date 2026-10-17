@@ -28,9 +28,9 @@ function fixture() {
   return { api: { G: { actors: [owner, enemy1, teammate, dead, enemy2] } }, owner, enemy1, enemy2, teammate };
 }
 
-test('all eight sub-weapon enemy lookups release their borrowed array even when hooks throw', () => {
-  assert.equal((source.match(/hostileActors\(api,(mine|object)\.owner\)/g) || []).length, 8);
-  assert.equal((source.match(/releaseHostileActors\(api\)/g) || []).length, 9);
+test('all nine sub-weapon enemy lookups release their borrowed array even when hooks throw', () => {
+  assert.equal((source.match(/hostileActors\(api,(mine|object)\.owner\)/g) || []).length, 9);
+  assert.equal((source.match(/releaseHostileActors\(api\)/g) || []).length, 10);
   assert.equal((source.match(/for \(const target of __iwHostiles\)/g) || []).length, 7);
   assert.match(source, /finally \{ releaseHostileActors\(api\); \}/);
 });
@@ -78,4 +78,29 @@ test('try/finally returns the nested pool to a clean state after an exception', 
   }, /synchronous nested hit/);
   assert.equal(api._allSubHostileDepth, 0);
   assert.deepEqual(api._allSubHostilePool.map(a => a.length), [0, 0]);
+});
+
+
+test('residual Line Marker releases its borrowed targets when collision hooks throw', () => {
+  const updateAngleLine = new Function('hostileActors', 'releaseHostileActors', 'ownerLife',
+    extract('updateAngleLine') + '\nreturn updateAngleLine;'
+  )(hostileActors, releaseHostileActors, () => 0);
+  const { api, owner } = fixture();
+  api.THREE = { Vector3: class { copy(p) { Object.assign(this, p); return this; } } };
+  api.PLAYER = { height: 2, squidHeight: 1, radius: .5 };
+  const failure = new Error('residual line collision hook');
+  let calls = 0;
+  api.Physics = { segmentCapsuleDist() { calls++; throw failure; } };
+  const object = { owner, age: 0, ghost: false, seenMarks: new Map(),
+    lineSegments: [[{}, {}]], spec: { collisionRadius: .25 }, lineEndsAtAge: 10 };
+  assert.throws(() => updateAngleLine(api, {}, object, 1 / 60), error => error === failure);
+  assert.equal(calls, 1, 'the new residual-line lookup reaches its collision hook');
+  assert.equal(api._allSubHostileDepth, 0);
+  assert.deepEqual(api._allSubHostilePool.map(a => a.length), [0]);
+  const reused = hostileActors(api, owner);
+  try {
+    assert.strictEqual(reused, api._allSubHostilePool[0]);
+    assert.equal(reused.length, 2, 'the released buffer remains reusable');
+  } finally { releaseHostileActors(api); }
+  assert.equal(api._allSubHostileDepth, 0);
 });

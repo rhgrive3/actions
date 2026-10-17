@@ -792,7 +792,11 @@ const visualSetup = async ({ name, seed, impact = null }) => {
   }
   const setupRng = window.__iwResetScenarioRandom(seed);
   G.time = 0; g.time = 0; g.rig.time = 0;
-  G.projectiles.clear(); G.fx.clear(); G.paint.clear();
+  G.projectiles.clear();
+  // Independent captures must not inherit optional fields from earlier pooled rounds.
+  // Keep normal native pooling throughout each scenario; discard only cleared records here.
+  G.projectiles.pool.length = 0;
+  G.fx.clear(); G.paint.clear();
   if (g.screenfx?.clear) g.screenfx.clear();
   const weapon = impact === 'wall' ? 'shooter' :
     name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';

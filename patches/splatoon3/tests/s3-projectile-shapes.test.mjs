@@ -176,3 +176,62 @@ test('the Sloshing Machine round is one spinning membrane that never reaches beh
   const step = ((phase[1] - phase[0]) % 6.283185307179586 + 6.283185307179586) % 6.283185307179586;
   assert(Math.abs(step - MACHINE_DRILL.spin / 60) < 1e-5, 'spins with time, not with draw count');
 });
+
+
+test('offset Brella volleys keep independent native firing identities even at equal owner and birth time', async () => {
+  const f = await api(), system = f.G.projectiles;
+  const owner = fire(f, 's3-shelter-normal');
+  const first = [...system.list], firstVolley = first[0].catalog.volley;
+  assert.equal(typeof firstVolley, 'object');
+  assert.ok(firstVolley);
+  assert.ok(first.every(p => p.catalog.volley === firstVolley));
+  assert.ok(first.some(p => p.start.distanceTo(first[0].start) > .08), 'real sourced pellet offsets exceed old proximity dedupe');
+  system.list.length = 0;
+  owner.intent.fire = false; f.tick(owner); owner.weaponRunner.reset();
+  owner.intent.fire = true;
+  for (let frame = 0; frame < 90 && !system.list.length; frame++) f.tick(owner);
+  owner.intent.fire = false;
+  const second = [...system.list];
+  assert.equal(second.length, first.length);
+  assert.notEqual(second[0].catalog.volley, firstVolley, 'new action has a distinct existing native volley');
+  // Presentation must not coalesce two legitimate actions even when their
+  // observed age/time coincide (e.g. a batched presentation admission).
+  for (const p of [...first, ...second]) { p.age = 0; p.s3FireSeed = undefined; }
+  system.list.splice(0, system.list.length, ...first, ...second);
+  system._s3Shapes?.sheets.clear();
+  if (system._s3Shapes) system._s3Shapes.fireVolleys = new WeakSet();
+  system._draw();
+  assert.equal(system.s3ShapeCounts.body, first.length + second.length);
+  assert.equal(system._s3Shapes.sheets.bursts.length, 2, 'one burst per native action, not per pellet or timestamp');
+  system._draw();
+  assert.equal(system._s3Shapes.sheets.bursts.length, 2, 'redraw cannot replay either action');
+});
+
+
+test('Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time', async () => {
+  const f = await api(), system = f.G.projectiles;
+  const owner = fire(f, 's3-stringer-normal', 80);
+  const first = [...system.list], firstDescriptor = first[0].catalog.descriptor;
+  assert.equal(typeof firstDescriptor, 'object');
+  assert.ok(firstDescriptor);
+  assert.ok(first.every(p => p.catalog.descriptor === firstDescriptor), 'one descriptor shared by the native arrow action');
+  system.list.length = 0;
+  owner.intent.fire = false; f.tick(owner); owner.weaponRunner.reset();
+  owner.intent.fire = true; f.tick(owner, 80); owner.intent.fire = false;
+  for (let frame = 0; frame < 90 && !system.list.length; frame++) f.tick(owner);
+  const second = [...system.list], secondDescriptor = second[0]?.catalog.descriptor;
+  assert.equal(second.length, first.length);
+  assert.equal(typeof secondDescriptor, 'object');
+  assert.ok(secondDescriptor);
+  assert.notEqual(secondDescriptor, firstDescriptor, 'descriptor is allocated per action, never reused weapon configuration');
+  assert.ok(second.every(p => p.catalog.descriptor === secondDescriptor));
+  for (const p of [...first, ...second]) { p.age = 0; p.s3FireSeed = undefined; }
+  system.list.splice(0, system.list.length, ...first, ...second);
+  system._s3Shapes?.sheets.clear();
+  if (system._s3Shapes) system._s3Shapes.fireVolleys = new WeakSet();
+  system._draw();
+  assert.equal(system.s3ShapeCounts.body, first.length + second.length);
+  assert.equal(system._s3Shapes.sheets.bursts.length, 2, 'two native arrow actions each retain a firing burst');
+  system._draw();
+  assert.equal(system._s3Shapes.sheets.bursts.length, 2, 'redraw never replays either action');
+});

@@ -124,6 +124,11 @@ test('accepted remote volleys produce one shell without network or damage author
     mapped(owner,'trizooka');peer.a.remote=true;mapped(peer,'trizooka');owner.a.nid=7;
     const nm=new f.NetMatch({myId:'owner'},{});f.G.netm=nm;
     f.throwVolley(system,owner.a,f.trizookaSpecialWeapon());
+    assert.equal(nm.out.filter(e=>e[1]==='p').length,1,'only the first native lobe is born at 0F');
+    for(let frame=1;frame<=8;frame++){
+      f.G.time+=1/60;system.update(1/60);
+      assert.equal(nm.out.filter(e=>e[1]==='p').length,1+Math.floor(frame/4),'native wire births occur at 0/4/8F');
+    }
     const packets=JSON.parse(JSON.stringify(nm.out.filter(e=>e[1]==='p'))),count=nm.out.length;
     assert.equal(packets.length,3);const hp=peer.a.hp,ink=peer.a.ink;
     for(const packet of packets)system.ghostProjectile(peer.a,packet);
