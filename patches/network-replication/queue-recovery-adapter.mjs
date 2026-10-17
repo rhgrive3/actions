@@ -15,8 +15,10 @@ export function adaptQueuedBugRecovery(rel, input, once) {
       "        if (!validWeaponId(weapon, WEAPONS)) return;",
       'loadout cannot accept inherited keys');
 
-    patch("  async startMatch(o = {}) {",
-      "  async startMatch(o = {}) {\n    const queueStartEpoch = reserveLiveStart(this);\n    try {",
+    // The reliability start adapter already owns the flow parameter.
+    // Preserve it so menu recovery and async ownership checks remain intact.
+    patch("  async startMatch(o = {}, flow = this._beginMatchFlow()) {",
+      "  async startMatch(o = {}, flow = this._beginMatchFlow()) {\n    const queueStartEpoch = reserveLiveStart(this);\n    try {",
       'invalidate pending attract before offline awaits');
     patch("mode: opts.mode, weapon: this.profile.weapon || 'shooter',",
       "mode: opts.mode, weapon: safeWeaponId(this.profile.weapon, WEAPONS),",
