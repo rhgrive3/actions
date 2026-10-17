@@ -28,13 +28,28 @@ function fixture() {
   return { api: { G: { actors: [owner, enemy1, teammate, dead, enemy2] } }, owner, enemy1, enemy2, teammate };
 }
 
-test('all nine sub-weapon enemy lookups release their borrowed array even when hooks throw', () => {
-  const acquired = (source.match(/hostileActors\(api,(mine|object)\.owner\)/g) || []).length;
+test('all ten sub-weapon enemy lookups release their borrowed array even when hooks throw', () => {
+  const acquired = (source.match(/\bhostileActors\(api,\s*[^)]+\)/g) || []).length - 1; // exclude declaration
   const released = (source.match(/releaseHostileActors\(api\)/g) || []).length - 1; // exclude declaration
-  assert.equal(acquired, 9, 'every current sub-weapon acquisition is counted');
+  assert.equal(acquired, 10, 'every current sub-weapon acquisition, including drop.owner, is counted');
   assert.equal(released, acquired, 'every acquisition has its own try/finally release');
-  assert.equal((source.match(/for \(const target of __iwHostiles\)/g) || []).length, 7);
+  assert.equal((source.match(/for \(const target of __iwHostiles\)/g) || []).length, 6);
   assert.match(source, /finally \{ releaseHostileActors\(api\); \}/);
+});
+
+test('Torpedo splash returns its drop-owned enemy buffer when a hit callback throws', () => {
+  const burst = new Function('hostileActors', 'releaseHostileActors', 'localOwner', 'surfacePaint', 'damageSubObjectsInRadius',
+    extract('burstTorpedoSplash') + '\nreturn burstTorpedoSplash;'
+  )(hostileActors, releaseHostileActors, () => true, () => {}, () => assert.fail('hit must throw first'));
+  const { api, owner } = fixture(), failure = new Error('Torpedo splash hit callback');
+  api.THREE = { Vector3: class { copy(p) { Object.assign(this, p); return this; } distanceTo() { return 0; } } };
+  let calls = 0;
+  api.G.projectiles = { applyHit() { calls++; throw failure; } };
+  const drop = { owner, team: 0, kind: 'burst', ghost: false, source: { spec: { splashRadius: 10, splashDamage: 12 } } };
+  assert.throws(() => burst(api, drop, {}), error => error === failure);
+  assert.equal(calls, 1);
+  assert.equal(api._allSubHostileDepth, 0);
+  assert.deepEqual(api._allSubHostilePool.map(a => a.length), [0]);
 });
 
 test('nested hit callbacks cannot corrupt the outer enemy snapshot', () => {
