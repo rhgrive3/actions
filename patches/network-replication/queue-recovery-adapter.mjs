@@ -48,8 +48,10 @@ export function adaptQueuedBugRecovery(rel, input, once) {
   }
   if (rel === 'src/net/session.js') {
     code = "import { validStartRoster } from '../../patches/network-replication/queue-recovery.mjs';\n" + code;
-    patch("  async _begin(cfg) {\n    this._startCfg = cfg;",
-      "  async _begin(cfg) {\n    if (!validStartRoster(cfg?.roster, this.myId, WEAPONS, cfg?.mode, this.hostId)) {\n      this._emit('error', { message: 'Invalid match roster: own player missing or roster malformed' });\n      return false;\n    }\n    this._startCfg = cfg;",
+    // The reliability net layer has already inserted its room-attempt / transport
+    // guard before this adapter runs. Validate before *any* state or timer mutation.
+    patch("  async _begin(cfg) {\n",
+      "  async _begin(cfg) {\n    if (!validStartRoster(cfg?.roster, this.myId, WEAPONS, cfg?.mode, this.hostId)) {\n      this._emit('error', { message: 'Invalid match roster: own player missing or roster malformed' });\n      return false;\n    }\n",
       'reject missing local roster before starting state/READY');
   }
   if (rel === 'src/game/match.js') {
