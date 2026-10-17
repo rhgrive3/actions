@@ -1,0 +1,16 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import crypto from 'node:crypto';
+const source=fs.readFileSync(new URL('./driver.template.mjs',import.meta.url),'utf8');
+const block=source.slice(source.indexOf('const savedFiveExactResponses=[];'),source.indexOf("await page.route(address+'**'"));
+const hash=x=>crypto.createHash('sha256').update(x).digest('hex');
+const key='_versions/'+ 'a'.repeat(64)+'/src/core/ctx.js',body=Buffer.from('exact source');
+const create=()=>{const handlers={},errors=[],manifest={artifacts:{[key]:hash(body)}};return new Function('page','errors','manifest','hash','address',block+';return {verifyServiceWorkerResponse,settleSavedFiveResponses,savedFiveExactResponses};')({on:(event,fn)=>handlers[event]=fn},errors,manifest,hash,'http://localhost/');};
+const response=(bytes=body,sw=true,k=key)=>({fromServiceWorker:()=>sw,url:()=>`http://localhost/${k}`,body:async()=>bytes});
+const results=[];
+let v=create();await v.verifyServiceWorkerResponse(response());assert.equal(v.savedFiveExactResponses.length,1);assert.equal(v.savedFiveExactResponses[0].sha256,hash(body));results.push('exact SW bytes accepted');
+v=create();await assert.rejects(v.verifyServiceWorkerResponse(response(Buffer.from('drift'))),/mismatch/);assert.equal(v.savedFiveExactResponses.length,0);results.push('SW byte drift rejected');
+v=create();await v.verifyServiceWorkerResponse(response(body,false));assert.equal(v.savedFiveExactResponses.length,0);results.push('network response not double-counted');
+v=create();await v.verifyServiceWorkerResponse(response(body,true,'_versions/wrong/src/core/ctx.js'));assert.equal(v.savedFiveExactResponses.length,0);results.push('wrong revision cannot qualify required key');
+v=create();await assert.rejects(v.verifyServiceWorkerResponse({...response(),body:async()=>{throw Error('body unavailable')}}),/body unavailable/);assert.equal(v.savedFiveExactResponses.length,0);results.push('unreadable actual bytes rejected');
+v=create();await assert.rejects(v.verifyServiceWorkerResponse({...response(),url:()=>`http://wrong-host/${key}`}),/origin mismatch/);assert.equal(v.savedFiveExactResponses.length,0);results.push('wrong origin rejected');
+const helper=fs.readFileSync(new URL('./saved-five-reopen.mjs',import.meta.url),'utf8');assert(helper.includes('await settleResponses();const start=verifiedResponses.length;'));assert(helper.includes('await settleResponses();const consumed=verifiedResponses.slice(responseStart);'));results.push('initial drain before boundary and reload drain before assertion');
+fs.writeFileSync(new URL('./proof.json',import.meta.url),JSON.stringify({status:'passed',controls:results,files:Object.fromEntries(['driver.template.mjs','saved-five-reopen.mjs','sw-response-controls.mjs'].map(f=>[f,hash(fs.readFileSync(new URL(f,import.meta.url)))]))},null,2));console.log(results);
