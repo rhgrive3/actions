@@ -29,6 +29,7 @@ import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
 import { registerMainWeaponCatalog, installMainWeaponCatalogRuntime } from './main-weapon-catalog.mjs';
 import { registerAlternateWeaponKits } from './alternate-weapon-kits.mjs';
+import { installMenuLayout } from './menu-layout.mjs';
 import { installRollerBodyKnockback } from './roller-body-knockback.mjs';
 import { installMuzzleFeedback } from './muzzle-feedback.mjs';
 import { installShotGuide } from './weapons-fidelity.mjs';
@@ -202,6 +203,8 @@ export function install(profile) {
   for (const [id, name] of Object.entries(SUB_NAMES)) if (SUB[id]) { Object.assign(SUB[id], {id, name}); SUB_ICONS[id] ||= SUB_ICONS.bomb; }
   for (const [id, name] of Object.entries(SPECIAL_NAMES)) if (SPECIALS[id]) { SPECIALS[id].name = name; SPECIAL_ICONS[id] ||= SPECIAL_ICONS.slam; }
   installCatalogueLoadout(api);
+  // after the gear and catalogue panels: menu layout for 26 stages / 160 weapons
+  installMenuLayout(api);
   installCatalogueVision(api);
   installCatalogueBeakonJumps(api);
   installCatalogueControls(api);
