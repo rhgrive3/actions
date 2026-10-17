@@ -1,3 +1,4 @@
+import { adaptWeaponOpponentPalette } from '../patches/splatoon3/weapon-opponent-palette-adapter.mjs';
 import { adaptUiLocalization } from '../patches/splatoon3/ui-localization-adapter.mjs';
 import { adaptNativeStages } from '../patches/native-stages/adapter.mjs';
 import { adaptWeaponAudio } from '../patches/splatoon3/audio-adapter.mjs';
@@ -26,5 +27,6 @@ export function adaptBuildSource(rel, code) {
   code = adaptWeaponAudio(rel, code);
   code = adaptProjectileVisuals(rel, code);
   code = adaptUiLocalization(rel, code);
+  code = adaptWeaponOpponentPalette(rel, code);
   return adaptCameraAimControls(rel, code);
 }
