@@ -48,3 +48,12 @@ test('Blaster pair append after prior37 and three Shooters; old84 and85 rejected
 test('seven saved models append after all forty-two retained rows; old87 rejects',()=>{assert.deepEqual(rows.slice(42,49),['Roller_Normal_01','Roller_Wide_01','Roller_Wide_02','Brush_Normal_01','Brush_Normal_02','Roller_Heavy_02','Slosher_Double_02']);const f=fixture();f.args.R.registeredWeaponVariantModels=()=>Array(87);assert.throws(()=>observeAcceptedDefaults(f.args),/registry denominator/);});
 
 test('Patternz appends after all49 retained defaults; stale94 registry rejected',()=>{assert.equal(rows[49],'Shelter_Compact_02');const f=fixture();f.args.R.registeredWeaponVariantModels=()=>Array(94);assert.throws(()=>observeAcceptedDefaults(f.args),/registry denominator/);});
+
+for (const savedPalette of [true,false]) test('default probe supplies and restores explicit opponent palette: '+savedPalette,()=>{
+ const f=fixture(), original=savedPalette?Object.freeze({isColor:true,id:'saved'}):undefined;
+ const other=Object.freeze({isColor:true,id:'team1'});f.sc.weaponOpponentColor=original;f.args.G.teamColors=[{},other];
+ const old=f.sc.showLoadout,calls=[];f.sc.showLoadout=function(...args){calls.push(args);this.weaponOpponentColor=args[3];return old.apply(this,args);};
+ observeAcceptedDefaults(f.args);assert.equal(calls.length,51);
+ for(const args of calls.slice(0,50))assert.equal(args[3],original??other,'native four-argument palette contract');
+ assert.equal(calls[50][3],original,'restore exact previous palette');assert.equal(f.sc.weaponOpponentColor,original);
+});

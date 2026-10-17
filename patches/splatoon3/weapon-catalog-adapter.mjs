@@ -163,7 +163,7 @@ export function adaptWeaponCatalog(rel, code) {
       const options = weaponAppearanceOptions(shown, LANG), selected = weaponAppearancePreference(shown) ?? '';
       const index = Math.max(0, options.findIndex(o => o.id === selected));
       setWeaponAppearance(shown, options[(index + 1) % options.length].id);
-      for (const c of this._sc()?.chars || []) if (c.weaponAppearancePreview && c.weaponModel === weaponBaseModelId(shown)) c.setWeapon(shown);
+      for (const c of this._sc()?.chars || []) if (c.weaponAppearancePreview && c.weaponModel === weaponModelKey(shown)) c.setWeapon(shown);
       refreshAppearance(); this._sfx('ui_toggle');
     } });
     // ---- detail panel

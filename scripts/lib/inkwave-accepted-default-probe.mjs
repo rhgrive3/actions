@@ -22,7 +22,7 @@ export const ACCEPTED_DEFAULT_ROWS = Object.freeze([
 export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
  const check=(ok,label)=>{if(!ok)throw Error('Accepted default: '+label);};
  const sc=G.game.showcase,key=AP.WEAPON_APPEARANCE_STORAGE_KEY;
- const original={storage:storage.getItem(key),weapon:sc.weapon,color:sc.color,style:sc.style};
+ const original={storage:storage.getItem(key),weapon:sc.weapon,color:sc.color,style:sc.style,opponentColor:sc.weaponOpponentColor};
  const out={selectedCount:R.registeredWeaponVariantModels().length,manualCount:R.registeredWeaponVariants().length,rows:[]};
  check(out.selectedCount===95&&out.manualCount===95,'registry denominator');
  check(sc.mode==='loadout'&&sc.chars.length===1,'native loadout owner');
@@ -35,7 +35,7 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
    AP.setWeaponAppearance(kit.id,'',storage);
    check(AP.weaponAppearancePreference(kit.id,storage)===null,'override absent '+row);
    check(R.weaponDefaultAppearance(kit.id)===row&&AP.selectedWeaponAppearance(kit.id,storage)===row,'wrong default '+row);
-   sc.showLoadout(kit.id,original.color,original.style);
+   sc.showLoadout(kit.id,original.color,original.style,original.opponentColor??G.teamColors?.[1]);
    // Native loadout hop changes the held weapon partway through its update.
    // Advance its existing owner, never force Character.setWeapon or visibility.
    for(let i=0;i<180;i++)sc.update(1/60);
@@ -70,7 +70,7 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
   // Resynchronise the module's session fallback from the restored storage.
   attempt(()=>AP.setWeaponAppearance(original.weapon,AP.weaponAppearancePreference(original.weapon,storage)??'',storage));
   attempt(()=>{if(original.storage===null)storage.removeItem(key);else storage.setItem(key,original.storage);});
-  attempt(()=>{sc.showLoadout(original.weapon,original.color,original.style);for(let i=0;i<180;i++)sc.update(1/60);});
+  attempt(()=>{sc.showLoadout(original.weapon,original.color,original.style,original.opponentColor);for(let i=0;i<180;i++)sc.update(1/60);});
   if(errors.length){const e=new AggregateError([...(primary?[primary]:[]),...errors],'default probe restoration',{cause:primary});e.defaultPartial=out;throw e;}
  }
 }
