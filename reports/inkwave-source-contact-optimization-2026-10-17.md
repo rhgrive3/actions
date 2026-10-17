@@ -29,13 +29,28 @@ source fixture は `sourceOnly:true` であり、`INKWAVE_BUILT_SITE` が指定�
 
 ブラウザ用 harness は emitted module と source bank の実読込を待ち、前後の全 pose、muzzle、indexed shoe と接写ピクセルを比較する。平面は native Physics、斜面は明示した解析平面 fixture。これらは実機・Nintendo の入力計測や whole-game FPS の代用ではない。
 
+結果と原資料:
+
+| 確認 | 結果 |
+| --- | --- |
+| 厳密な component 比較 | 350 ケース一致。既存 adapter の統合 guard も通過 |
+| source-only Actor 比較 | 1,118 frame 一致。idle/move/air/land、settled contact 1,380 samples。地面問い合わせ/IK と各足 3,833 indexed/skinned vertices も一致 |
+| Chromium / WebKit の emitted 比較 | 各 9 条件、789 idle + 324 実 Actor 移動/射撃/ジャンプ frame。全 pose・muzzle・contact・geometry・問い合わせ/IK 回数が一致 |
+| 接写 PNG | 各 engine の 3 組すべて前後 byte-identical。6 unique images を保存 |
+| committed-source binding | 各側 1,274 input files を Git blob と照合。base `d5265f73`、code `b061bbd7`。builder、verifier と helper の SHA も照合。未登録ファイルの配信は拒否 |
+| パッケージ | artifact 1,860 件 + manifest 1 件のまま。manifest は双方 513,914 bytes、全出力は 125,946,377 → 125,946,350 bytes |
+
+[照合情報と image aliases](inkwave-source-contact-2026-10-17/evidence-binding.json)、[source log](inkwave-source-contact-2026-10-17/node-test.log)、[統合 guard log](inkwave-source-contact-2026-10-17/integration-test.log)、[Chromium receipt](inkwave-source-contact-2026-10-17/chromium/receipt.json.gz)、[WebKit receipt](inkwave-source-contact-2026-10-17/webkit/receipt.json.gz) に原資料を保存する。PNG の前後は同一 SHA のため after だけ保存し、before の alias を照合情報へ記録する。
+
+source-only 1,118 frame は adapter を既存ファイルへ統合する前に実行した。統合後の emitted filter は検証済み layout と同じ SHA-256 `16343f10cfee0ed47d6ab12853440e0f8e637b4f88914daad5389985c49447a9` であり、統合 guard と厳密な 350 ケースを再確認した。最後の両 browser は統合後の committed code に束縛されている。WebKit の GPU 名は browser の自己申告値であり、Apple 実機や物理 GPU の証拠には使わない。
+
 ## コストの測定範囲
 
 350 ケースの単体比較では clamp は `350 → 350` 回、Hermite 累乗・係数ブロックへの進入は `350 → 273` 回だった。進行中の式は演算順を変えず、飽和した場合だけ 17 乗算・11 加減算・1 除算を省く。local binding のほかに保持状態は増やさない。
 
 実 Three.js と本体 filter の component benchmark（Node v24.19.0、AMD EPYC 9V74、50 万 advance/window、ABBA × 2、各版 4 window）では wall 中央値 `111.199 → 106.968 ms`、process CPU 中央値 `115.0005 → 110.6485 ms`。約 3.8% の差はこの小さな component だけの診断値であり、少数 window のばらつきと JIT の影響を含む。whole-game CPU/GPU、frame pacing、FPS、実機性能の改善や非劣化の証明には使わない。
 
-module の production minified bytes は `1009 → 996`、gzip は `424 → 456`。保持する executable code は 13 bytes 減る一方、この module の圧縮転送は 32 bytes 増える。モデル、texture、animation pack と実行時 cache は増やさない。
+module の production minified JavaScript source bytes は `1009 → 996`、gzip は `424 → 456`。source は 13 bytes 減る一方、この module の圧縮転送は 32 bytes 増える。V8 bytecode、JIT code heap、peak/global heap の減少や非劣化を測定した値ではない。構造上、新しい object/state/cache と manifest entry は追加しないが、実 global heap は未検証である。モデル、texture、animation pack は変更しない。
 
 ## 採用しなかった見た目の変更
 
