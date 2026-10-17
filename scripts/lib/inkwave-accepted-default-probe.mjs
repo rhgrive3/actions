@@ -13,6 +13,8 @@ export const ACCEPTED_DEFAULT_ROWS = Object.freeze([
  'Shooter_Blaze_02','Shooter_Expert_02','Shooter_Flash_01',
  'Brush_Mini_01',
  'Shooter_Gravity_01','Shooter_Heavy_01','Saber_Lite_01',
+ 'Shooter_First_01','Shooter_Normal_01','Shooter_Normal_02',
+ 'Blaster_Long_01','Blaster_Middle_02',
 ]);
 // Called with the actual loaded game's public appearance/registry modules and
 // native Showcase. No replacement Character, renderer, geometry or selection.
@@ -21,7 +23,7 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
  const sc=G.game.showcase,key=AP.WEAPON_APPEARANCE_STORAGE_KEY;
  const original={storage:storage.getItem(key),weapon:sc.weapon,color:sc.color,style:sc.style};
  const out={selectedCount:R.registeredWeaponVariantModels().length,manualCount:R.registeredWeaponVariants().length,rows:[]};
- check(out.selectedCount===82&&out.manualCount===94,'registry denominator');
+ check(out.selectedCount===87&&out.manualCount===94,'registry denominator');
  check(sc.mode==='loadout'&&sc.chars.length===1,'native loadout owner');
  let primary;
  try {
@@ -58,7 +60,7 @@ export function observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage,rows}) {
    out.rows.push({row,kit:kit.id,base:kit.baseId,preference:AP.weaponAppearancePreference(kit.id,storage),selected:AP.selectedWeaponAppearance(kit.id,storage),weaponModel:ch.weaponModel,appearance:ch.weaponAppearanceModel,modelId:w.def.modelId,modelVariantId:w.def.modelVariantId,drawn,poseFinite:true});
    delete out.current;
   }
-  check(out.rows.length===37&&new Set(out.rows.map(x=>x.row)).size===37,'thirty-seven default receipts');
+  check(out.rows.length===42&&new Set(out.rows.map(x=>x.row)).size===42,'forty-two default receipts');
   return out;
  }catch(error){primary=error;error.defaultPartial=out;throw error;}
  finally{

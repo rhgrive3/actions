@@ -218,7 +218,7 @@ export class RainmakerRule {
     const actors = Array.isArray(frame.actors) ? frame.actors : [];
     const carrier = this._findActor(actors, this.state.carrier);
     if (this.state.carrier !== null && (!carrier || carrier.alive === false)) {
-      this._drop(carrier, carrier ? 'death' : 'death');
+      this._drop(carrier, carrier && this._isFallen(carrier, frame) ? 'fall' : 'death');
     } else if (carrier && this._isFallen(carrier, frame)) {
       this._drop(carrier, 'fall');
     }
@@ -630,10 +630,13 @@ export class RainmakerRule {
   }
 
   _isFallen(actor, frame) {
+    // Actual capsule support on the lower storey wins over an unrelated roof
+    // above it. Ordinary airborne travel over a gap is not a water death.
+    if (actor.grounded === true) return false;
     if (typeof frame.floorAt !== 'function') return false;
     const pos = positionOf(actor);
-    const floor = frame.floorAt(pos[0], pos[2]);
-    if (floor === null) return true;
+    const floor = frame.floorAt(pos[0], pos[2], pos[1] + 0.05);
+    if (floor === null) return !finite(frame.fallDeathY) || pos[1] <= frame.fallDeathY;
     return finite(floor) && pos[1] < floor - FALL_BELOW_FLOOR;
   }
 
