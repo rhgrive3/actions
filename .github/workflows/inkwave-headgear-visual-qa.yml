@@ -1,0 +1,49 @@
+name: INKWAVE four headgear diagnostic QA
+on:
+  push:
+    branches: ['review/inkwave-headgear-visual-20261017']
+    paths: ['tools/headgear-visual-qa/**', '.github/workflows/inkwave-headgear-visual-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: headgear-visual-qa-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  render-headgear:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Assert pinned native source remains unchanged
+        run: git diff --exit-code 85acc45d0ab23a95161b599d4287fd8142e8145b HEAD -- inkwave-public patches scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact official build and browser tools
+        run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+      - name: Syntax checks
+        run: find tools/headgear-visual-qa -type f \( -name '*.js' -o -name '*.mjs' \) -exec node --check '{}' \;
+      - name: Install CI browser
+        run: npx playwright install --with-deps chromium
+      - name: Build native production and adapted readable diagnostics
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+          INKWAVE_BUILD_UNMINIFIED=1 node scripts/build-inkwave.mjs inkwave-public _readable
+      - name: Prepare isolated attachment overlay with hash receipts
+        run: node tools/headgear-visual-qa/prepare.mjs _site _readable
+      - name: Render saved headgear modules on native Character
+        run: node tools/headgear-visual-qa/run.mjs --site _site --out .qa-evidence/headgear
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: headgear-diagnostic-${{ github.sha }}
+          path: |
+            .qa-evidence/headgear/**
+            _site/headgear-qa-*.json
+            _site/inkwave-build.json
+          if-no-files-found: warn
+          retention-days: 14
