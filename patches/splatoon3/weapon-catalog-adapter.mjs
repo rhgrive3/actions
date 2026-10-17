@@ -149,7 +149,7 @@ export function adaptWeaponCatalog(rel, code) {
   }
 
   if (rel === 'src/ui/menus.js') {
-    code = "import { weaponAppearanceOptions, weaponAppearancePreference, setWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\nimport { weaponBaseModelId } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\n" + code;
+    code = "import { weaponAppearanceOptions, weaponAppearancePreference, setWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\nimport { weaponBaseModelId, weaponModelKey } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\n" + code;
     code = replaceOnce(code, "    // ---- detail panel\n", `    // Appearance is device-local and preserves this weapon's sub/special/stats.
     const appearanceLabel = h('span');
     const appearance = h('button', { class: 'iw-btn iw-btn--menu', type: 'button', 'aria-label': 'Weapon appearance / ブキの見た目' }, appearanceLabel);
