@@ -24,7 +24,7 @@ const sourceSha = shaAt < 0 ? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: 
 const output = option('--evidence-dir', '.ci-scratch/grate-normal');
 const browserName = process.argv[process.argv.indexOf('--browser') + 1] === 'webkit' ? 'webkit' : 'chromium';
 const executableAt = process.argv.indexOf('--executable-path');
-const executablePath = executableAt < 0 ? (browserName === 'webkit' ? undefined : process.env.CHROMIUM_PATH || '/usr/bin/chromium') : process.argv[executableAt + 1];
+const executablePath = executableAt < 0 ? (browserName === 'webkit' ? undefined : process.env.CHROMIUM_PATH) : process.argv[executableAt + 1];
 if (output === site || output.startsWith(site + '/')) throw Error('Evidence must be outside the immutable build');
 fs.mkdirSync(output, { recursive: true });
 const hash = data => crypto.createHash('sha256').update(data).digest('hex');

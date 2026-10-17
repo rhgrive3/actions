@@ -1,0 +1,28 @@
+✔ progress is persisted and forwarded while a child is still running; failure status remains failure (49.108193ms)
+✔ signal termination keeps already emitted progress and never reports success (34.28997ms)
+✔ spawn failure rejects and leaves a readable diagnostic destination (1.993292ms)
+✔ integration retains immutable source and independently rebuilt artifact identity checks (0.253823ms)
+✔ parallel browser families retain every final integration acceptance surface (0.712909ms)
+✔ all nested final integration source families trigger validation on PR and pushed main (0.312239ms)
+✔ successful browser artifacts require validated reports and source-bound suite receipts (0.192372ms)
+✔ active browser CI requires source-bound grate and painted-normal evidence from both installed engines (0.284418ms)
+✔ ancillary paint WebGL source and emitted masks are mandatory exact-head network evidence (0.471564ms)
+✔ compatibility failure preserves its primary error without a missing diagnostic upload (0.198832ms)
+✔ runtime verifier storage is prepared before runtime evidence tests and baseline checkout creation (0.296356ms)
+✔ high-quality runtime comparison is final-integration gated and preserves baseline before candidate (0.27903ms)
+✔ range and startup evidence are distinct final acceptance receipts (0.159144ms)
+✔ isolated render diagnosis cannot replace full acceptance jobs or emit passing browser receipt (0.102901ms)
+✔ optional focused regressions preserve the canonical gate and publish only completed source evidence (0.08825ms)
+✔ worker source regressions have their pinned dependency and writable persistent storage before focused and canonical tests (1.852705ms)
+✔ emitted material handoff is mandatory and runs only after a complete site build (0.151052ms)
+✔ emitted menu focus is mandatory in the UI shard and source-bound in its receipt (0.163661ms)
+✔ all eight patch shards report into the existing required validate gate (0.404124ms)
+✔ emitted Bot respawn and retry regressions reuse the complete production site without replacing source coverage (0.276666ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 160.758065
