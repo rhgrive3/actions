@@ -454,9 +454,17 @@ function adaptQualityLayer(rel, code) {
       'smoothstep(1.0, 0.8, a)',
       '(1.0 - smoothstep(0.8, 1.0, a))',
       'defined coverage smoothstep');
+    code = replaceOnce(code,
+      '  vec3 wn = normalize(nBase - slope.x * T - slope.y * Bt);\n' +
+      '  normal = normalize((viewMatrix * vec4(wn, 0.0)).xyz);',
+      // Preserve Three's front/back orientation after replacing its normal.
+      // Normalize once after the linear transform; an earlier normalization
+      // changes magnitude only and is redundant with this final normalization.
+      '  normal = normalize(mat3(viewMatrix) * (nBase - slope.x * T - slope.y * Bt)) * faceDirection;',
+      'double-sided level normal orientation');
     return replaceOnce(code,
       'inkwave-level-v6',
-      'inkwave-level-v6-quality1',
+      'inkwave-level-v6-quality2',
       'material program identity');
   }
 
