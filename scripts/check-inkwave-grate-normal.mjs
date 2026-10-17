@@ -108,6 +108,13 @@ try {
       }
       return { pixels: width * height, changedPixels, maxChannelError };
     };
+    const covered = pixels => {
+      let count = 0;
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (pixels[i] !== pixels[0] || pixels[i + 1] !== pixels[1] || pixels[i + 2] !== pixels[2]) count++;
+      }
+      return count;
+    };
     const draw = referenceOn => {
       mesh.geometry = referenceOn ? referenceGeometry : face;
       mesh.material = referenceOn ? reference : material;
@@ -126,6 +133,7 @@ try {
       draw(false); draw(true); draw(false); draw(true);
       const actual = draw(false), expected = draw(true), again = draw(false);
       rows.push({ name, orientation: diff(actual.pixels, expected.pixels), stable: diff(actual.pixels, again.pixels),
+        coveredPixels: covered(actual.pixels), referenceCoveredPixels: covered(expected.pixels),
         cost: actual.cost, referenceCost: expected.cost, image: actual.image, referenceImage: expected.image,
         pixelBytes: Array.from(actual.pixels) });
     }
@@ -137,6 +145,7 @@ try {
     const gpu = { webgl: gl.getParameter(gl.VERSION), renderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
       timerQuery: !!gl.getExtension('EXT_disjoint_timer_query_webgl2') };
     const shader = { textureAccesses: [...fragmentShader.matchAll(/\btexture(?:2D|Grad|Lod)?\s*\(/g)].length,
+      normalizationExpressions: [...fragmentShader.matchAll(/\bnormalize\s*\(/g)].length,
       doubleSided: material.side === THREE.DoubleSide, cacheKey: material.customProgramCacheKey(),
       customOrientation: /normal\s*=\s*normalize\([^;]+\)\s*\*\s*faceDirection/.test(fragmentShader), fragmentShader };
     const webglError = gl.getError();
@@ -153,6 +162,8 @@ try {
     assert.equal(row.stable.changedPixels, 0, row.name + ' changed during a frozen redraw');
     assert.deepEqual(row.cost, row.referenceCost, row.name + ' draw/resource cost changed');
     assert.equal(row.cost.calls, 1); assert.equal(row.cost.triangles, 2);
+    assert.ok(row.coveredPixels > 10000, row.name + ' actual grate is absent');
+    assert.equal(row.coveredPixels, row.referenceCoveredPixels, row.name + ' grate coverage changed');
   }
   fs.writeFileSync(path.join(output, 'compiled-fragment.glsl'), result.shader.fragmentShader); delete result.shader.fragmentShader;
   assert.equal(result.webglError, 0); assert.equal(errors.length, 0, errors.join('\n'));
