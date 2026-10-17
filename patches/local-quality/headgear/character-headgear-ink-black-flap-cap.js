@@ -25,7 +25,19 @@ export function createInkBlackFlapCap({lod='hero',clearance}={}){
   const fabric=mat(0x30312d),edge=mat(0x1a1c1a),inner=edge,ink=mat(0xc5c7b6),snap=mat(0x161916,.55);
   fabric.userData.gearClass=-4;edge.userData.gearClass=-5;ink.userData.gearClass=-4;snap.userData.gearClass=-2;
   function add(name,g,m=fabric){const mesh=new THREE.Mesh(g,m);mesh.name=name;mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);return mesh;}
-  const crown=(az,t,extra=0)=>{const el=rim(az)+(Math.PI/2-rim(az))*t;const q=surface(az,el,(clearance?clearance(az,el):.022+INK_BLACK_FLAP_CAP_FIT.lift(az,el))+.0058+extra);const sideEase=.040*Math.sin(az)**4*(1-t)**2;q.x+=Math.sin(az)*sideEase;q.z+=Math.cos(az)*sideEase;const shoulder=1+.12*Math.sin(Math.PI*t);q.x*=shoulder;q.z=C.z+(q.z-C.z)*shoulder;return q;};
+  // Structured cloth panels: an upright side/front wall, a rounded shoulder, then a sloping roof.
+  // Heights are INKWAVE fit calibrations, not extracted Nintendo dimensions.
+  const crown=(az,t,extra=0)=>{
+    const wallT=Math.min(1,t/.58),roofT=clamp((t-.58)/.42,0,1);
+    const r=t<=.58?1-.14*wallT:.86*Math.cos(roofT*Math.PI/2);
+    const baseY=.190+.065*Math.max(0,Math.cos(az))-.015*Math.max(0,-Math.cos(az));
+    const wallY=.373+.010*Math.cos(az);
+    const y=t<=.58?baseY+(wallY-baseY)*wallT:wallY+(.410-wallY)*Math.sin(roofT*Math.PI/2);
+    const sidePad=(lod==='far'?.043:.039)*Math.sin(az)**4*(1-t)**2;
+    const q=new V(Math.sin(az)*(.218*r+sidePad),y,.018-.020*wallT+.185*r*Math.cos(az));
+    q.addScaledVector(new V(Math.sin(az)*Math.cos(t*Math.PI/2),Math.sin(t*Math.PI/2),Math.cos(az)*Math.cos(t*Math.PI/2)),extra);
+    return q;
+  };
   add('structured-crown',grid(n,lod==='far'?6:Math.max(8,n/3|0),(u,v)=>crown((u-.5)*Math.PI*2,v)));
   add('turned-under-rim',grid(n,2,(u,v)=>{const az=(u-.5)*Math.PI*2;return crown(az,.023*v,-.004*(1-v));},true),inner);
   const tubeSeg=lod==='far'?6:lod==='game'?12:24;
@@ -39,10 +51,11 @@ export function createInkBlackFlapCap({lod='hero',clearance}={}){
   function flap(s,u,v,offset=0){
     const corner=clamp((v-.78)/.22,0,1);
     const roundedU=u+.10*(1-Math.sqrt(Math.max(0,1-corner*corner)))*Math.exp(-((u/.13)**2));
-    const az=.98+(Math.PI-.98)*roundedU;
+    const frontAz=.78+.20*smooth(.18,.64,v);
+    const az=frontAz+(Math.PI-frontAz)*roundedU;
     const top=crown(s*az,.018,.001);
-    const bottom=-.085+.135*smooth(.12,.88,u)+.045*(1-smooth(0,.12,u));
-    const earBulge=.016*smooth(0,.10,v)*Math.exp(-(((v-.15)/.20)**2))*Math.exp(-(((az-1.95)/.45)**2));
+    const bottom=-.070+.170*smooth(.12,.88,u)+.040*(1-smooth(0,.12,u));
+    const earBulge=.032*smooth(0,.10,v)*Math.exp(-(((v-.15)/.20)**2))*Math.exp(-(((az-1.95)/.45)**2));
     const r=.012*smooth(0,.40,v)+earBulge+offset;
     return new V(top.x+s*Math.sin(az)*r,top.y+(bottom-top.y)*v,top.z+Math.cos(az)*r);
   }

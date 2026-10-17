@@ -15,7 +15,18 @@ function joined(gs){const p=[],n=[],uv=[],idx=[];let off=0;for(const g of gs){p.
 export function twoLineMeshParts({lod='game',ctx=null,helpers={}}={}){
  const far=lod==='far',N=far?12:lod==='hero'?36:24,parts=[];
  const add=(name,geo,color,team=false,plastic=false)=>parts.push({name,geo,color,team,plastic});
- const surface=(az,el,extra=0)=>{const off=(ctx?ctx.offIn(az,el):capOffset(az,el)+.0045+TWO_LINE_MESH_HAT.lift(az,el))+.0058+extra;const p=helpers.headSurf?helpers.headSurf(az,el,off,new V()):nativeSurface(az,el,off);const shoulder=smooth(.55,1.3,el);p.x*=1+.14*shoulder;p.z=HEAD_C.z+(p.z-HEAD_C.z)*(1+.12*shoulder);p.y+=.005*Math.sin(2*el)**2;return p;};
+ const surface=(az,el,extra=0)=>{
+  const er=rim(az),v=Math.max(0,Math.min(1,(el-er)/(PI/2-er)));
+  const off=(ctx?ctx.offIn(az,er):capOffset(az,er)+.0045+TWO_LINE_MESH_HAT.lift(az,er))+.0058;
+  const base=helpers.headSurf?helpers.headSurf(az,er,off,new V()):nativeSurface(az,er,off);
+  // Structured trucker crown: a tall vertical front and rounded upper shoulders.
+  // Fit is inherited at the rim; the crown is not constrained to a scalp hemisphere.
+  const radial=Math.pow(Math.max(0,Math.cos(v*PI/2)),.48);
+  const topY=HEAD_C.y+.27;
+  const p=new V(base.x*radial,base.y+(topY-base.y)*Math.sin(v*PI/2),HEAD_C.z+(base.z-HEAD_C.z)*radial);
+  if(extra){const n=new V(Math.cos(el)*Math.sin(az),Math.sin(el),Math.cos(el)*Math.cos(az));p.addScaledVector(n,extra);}
+  return p;
+ };
  const rearCut=az=>{const d=Math.abs(az-PI);return .44*Math.sqrt(Math.max(0,1-(d/.43)**2));};
  const frontEdge=1.2;
  add('solid-front-crown',grid(N,far?6:10,(u,v)=>{const az=(u*2-1)*frontEdge;return surface(az,rim(az)+(PI/2-rim(az))*v);}),0x3256ff,true);
@@ -33,7 +44,7 @@ export function twoLineMeshParts({lod='game',ctx=null,helpers={}}={}){
  seams.push(grid(N,1,(u,v)=>{const a=frontEdge+range*u;return surface(a,rim(a)+rearCut(a)+(v-.5)*.024,.0015);}));
  add('mesh-seams-and-opening-binding',joined(seams),0xe3e6dc);
  // Curved bill with true underside and thickness, visibly wider than the forehead.
- const bill=(u,t,y=0)=>{const a=(u*2-1)*1.10,p=surface(a,rim(a),-.002);const length=.12*Math.sqrt(Math.max(0,1-(u*2-1)**2))+.003;return p.add(new V(Math.sin(a)*length*t,-.008*t-.004*(u*2-1)**2*t+y,Math.cos(a)*length*t));};
+ const bill=(u,t,y=0)=>{const a=(u*2-1)*1.10,p=surface(a,rim(a),-.002);const length=.15*Math.sqrt(Math.max(0,1-(u*2-1)**2))+.003;return p.add(new V(Math.sin(a)*length*t,-.008*t-.004*(u*2-1)**2*t+y,Math.cos(a)*length*t));};
  add('bill-top',grid(N,6,(u,v)=>bill(u,v)),0x3256ff,true);
  add('bill-underside',grid(N,4,(u,v)=>bill(1-u,v,-.0045)),0x263ed1,true);
  add('bill-rounded-edge',grid(N,2,(u,v)=>bill(u,1,-.0045*v)),0x3256ff,true);
@@ -83,7 +94,7 @@ export function twoLineMeshParts({lod='game',ctx=null,helpers={}}={}){
  return parts;
 }
 /** Standalone review Group. Attach to head bone, never root. Ink is configurable. */
-export function createTwoLineMesh(options={}){const group=new THREE.Group();group.name='headgear:two-line-mesh';const ink=new THREE.Color(options.inkColor??options.teamColor??0x3256ff);const buckets=new Map();for(const p of twoLineMeshParts(options)){const key=(p.team?'ink:'+p.team:p.color)+':'+p.plastic;if(!buckets.has(key))buckets.set(key,{...p,geos:[],names:[]});buckets.get(key).geos.push(p.geo);buckets.get(key).names.push(p.name);}for(const p of buckets.values()){p.geo=joined(p.geos);p.geo.translate(-PIVOT.x,-PIVOT.y,-PIVOT.z);const material=new THREE.MeshStandardMaterial({color:p.team?(p.team==='mesh-cell'?new THREE.Color(0x8b8d91).lerp(ink,.25):ink):p.color,roughness:p.plastic?.52:.9,side:THREE.DoubleSide});const mesh=new THREE.Mesh(p.geo,material);mesh.name=p.names.join('|');mesh.userData.inkRole=p.team;if(p.team==='mesh-cell')installFineWeave(material);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);}group.setInkColor=(color)=>{ink.set(color);for(const mesh of group.children)if(mesh.userData.inkRole){mesh.material.color.copy(ink);if(mesh.userData.inkRole==='mesh-cell')mesh.material.color.copy(new THREE.Color(0x8b8d91).lerp(ink,.25));}return group;};let disposed=false;group.dispose=()=>{if(disposed)return;disposed=true;for(const mesh of group.children){mesh.geometry.dispose();mesh.material.dispose();}group.clear();};group.userData={revision:'shape-fabric-wordmark-v5',gearId:'two-line-mesh',headBoneLocal:true,sourceMain:'85acc45d0ab23a95161b599d4287fd8142e8145b'};return group;}
+export function createTwoLineMesh(options={}){const group=new THREE.Group();group.name='headgear:two-line-mesh';const ink=new THREE.Color(options.inkColor??options.teamColor??0x3256ff);const buckets=new Map();for(const p of twoLineMeshParts(options)){const key=(p.team?'ink:'+p.team:p.color)+':'+p.plastic;if(!buckets.has(key))buckets.set(key,{...p,geos:[],names:[]});buckets.get(key).geos.push(p.geo);buckets.get(key).names.push(p.name);}for(const p of buckets.values()){p.geo=joined(p.geos);p.geo.translate(-PIVOT.x,-PIVOT.y,-PIVOT.z);const material=new THREE.MeshStandardMaterial({color:p.team?(p.team==='mesh-cell'?new THREE.Color(0x8b8d91).lerp(ink,.25):ink):p.color,roughness:p.plastic?.52:.9,side:THREE.DoubleSide});const mesh=new THREE.Mesh(p.geo,material);mesh.name=p.names.join('|');mesh.userData.inkRole=p.team;if(p.team==='mesh-cell')installFineWeave(material);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);}group.setInkColor=(color)=>{ink.set(color);for(const mesh of group.children)if(mesh.userData.inkRole){mesh.material.color.copy(ink);if(mesh.userData.inkRole==='mesh-cell')mesh.material.color.copy(new THREE.Color(0x8b8d91).lerp(ink,.25));}return group;};let disposed=false;group.dispose=()=>{if(disposed)return;disposed=true;for(const mesh of group.children){mesh.geometry.dispose();mesh.material.dispose();}group.clear();};group.userData={revision:'tall-crown-long-visor-v6-proposal',gearId:'two-line-mesh',headBoneLocal:true,sourceMain:'85acc45d0ab23a95161b599d4287fd8142e8145b'};return group;}
 /** Native build adapter: existing B adds head weights and shared fabric shader. */
 export function buildTwoLineMesh(B,hat,ctx,helpers={},D=null){for(const p of twoLineMeshParts({lod:D?.lod||'game',ctx,helpers})){B.add(p.geo,{ex:p.plastic?-2:-4,uv:true,color:p.team?new THREE.Color(-1,1,0):new THREE.Color(p.color),bone:'head'});}}
 
