@@ -146,3 +146,32 @@ test('explicit Base persists separately from absent kit default and does not lea
  local.setWeapon('unknown-kit');assert.equal(local.weaponModel,'shooter');assert.equal(local.modelVariantId,null);
  local.dispose();peer.dispose();bot.dispose();
 });
+
+test('native selector immediately refreshes accepted preview model ownership through every appearance',async()=>{
+ const f=await production(),{REG:R,AP}=f;
+ const source=adaptWeaponCatalog('src/ui/menus.js',fs.readFileSync(new URL('../../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8'));
+ const start=source.indexOf("this._bind(appearance, { id: 'weapon-appearance', accept: () => {");assert.ok(start>=0);
+ const handler=source.slice(start,source.indexOf('\n    } });',start));const body=handler.slice(handler.indexOf('accept: () => {')+'accept: () => {'.length);
+ const rows=['Shooter_First_01','Shooter_Normal_01','Shooter_Normal_02','Blaster_Long_01','Blaster_Middle_02'];
+ for(const row of rows){
+  const kit=ALTERNATE_WEAPON_KITS.find(k=>k.main===row);const previous=AP.weaponAppearancePreference(kit.id);
+  AP.setWeaponAppearance(kit.id,'');
+  const preview=new f.Character({weapon:kit.id,weaponAppearancePreview:true});
+  const remote=new f.Character({weapon:kit.id,isLocal:false});const remoteWeapon=remote.weapon;
+  const otherKit=ALTERNATE_WEAPON_KITS.find(k=>k.main!==row&&k.baseId===kit.baseId)||ALTERNATE_WEAPON_KITS.find(k=>k.baseId!==kit.baseId);
+  const other=new f.Character({weapon:otherKit.id,weaponAppearancePreview:true});const otherWeapon=other.weapon;
+  const click=Function('shown','LANG','weaponAppearanceOptions','weaponAppearancePreference','setWeaponAppearance','weaponModelKey','weaponBaseModelId','refreshAppearance',body).bind({_sc:()=>({chars:[preview,remote,other]}),_sfx(){}});
+  try{
+   assert.equal(preview.weaponModel,row);assert.notEqual(row,R.weaponBaseModelId(kit.id));
+   const count=AP.weaponAppearanceOptions(kit.id).length;
+   for(let i=0;i<count;i++){
+    click(kit.id,'en',AP.weaponAppearanceOptions,AP.weaponAppearancePreference,AP.setWeaponAppearance,R.weaponModelKey,R.weaponBaseModelId,()=>{});
+    assert.equal(preview.weaponAppearanceModel,AP.selectedWeaponAppearance(kit.id),row+' immediate preview');
+    assert.equal(preview.weaponModel,row,row+' stable gameplay model');
+    assert.equal(preview.weapon.def.modelVariantId??null,preview.weaponAppearanceModel===kit.baseId?null:preview.weaponAppearanceModel,row+' actual geometry definition');
+    assert.equal(remote.weapon,remoteWeapon,'remote unchanged');assert.equal(other.weapon,otherWeapon,'other preview owner unchanged');
+   }
+   assert.equal(AP.weaponAppearancePreference(kit.id),null,'full cycle returns to default');
+  }finally{preview.dispose();remote.dispose();other.dispose();AP.setWeaponAppearance(kit.id,previous??'');}
+ }
+});
