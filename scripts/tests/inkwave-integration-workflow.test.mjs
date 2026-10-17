@@ -163,6 +163,19 @@ test('emitted material handoff is mandatory and runs only after a complete site 
   assert.ok(workflow.includes('patches/local-quality/tests/*.test.mjs'),
     'do not remove the original source regression gate');
 });
+
+test('emitted menu focus is mandatory in the UI shard and source-bound in its receipt', () => {
+  const marker = '      - name: Verify emitted menu focus lifecycle';
+  assert.equal(workflow.split(marker).length - 1, 1);
+  const at = workflow.indexOf(marker), end = workflow.indexOf('\n      - name:', at + marker.length);
+  const block = workflow.slice(at, end);
+  assert.ok(at > workflow.indexOf('npx playwright install --with-deps ${{ matrix.browsers }}'));
+  assert.ok(block.includes("if: matrix.suite == 'ui'"));
+  assert.ok(block.includes('node scripts/check-inkwave-menu-focus.mjs --source .built-site/_site --evidence-dir "$CI_STORAGE/evidence/menu-focus"'));
+  assert.ok(!block.includes('continue-on-error') && !block.includes('||'));
+  assert.ok(workflow.includes("'ui':['menu-focus/menu-focus-result.json',"));
+  assert.ok(workflow.includes("if suite=='ui': assert reports['menu-focus/menu-focus-result.json']['sourceSha']==os.environ['SOURCE_SHA']"));
+});
 test('emitted Bot respawn and retry regressions reuse the complete production site without replacing source coverage', () => {
   const validate = workflow.slice(workflow.indexOf('  validate:'), workflow.indexOf('  browser:'));
   const marker = '      - name: Verify emitted Bot navigation respawn and retry state';
