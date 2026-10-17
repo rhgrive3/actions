@@ -35,6 +35,7 @@ const JA = {
   'Paint height · climbing · ledges': '塗りの高さ・壁のぼり・段差', 'Throws · bounces · blast radius': '投てき・跳ね返り・爆発範囲',
   'Special radius · endurance targets': 'スペシャルの範囲・耐久ターゲット', 'Where you started': 'スタート地点',
   'WELCOME TO THE RANGE': '試し撃ちラボへようこそ',
+  'EQUIPPED': 'そうび中', 'ALL': 'すべて', 'Tabs': 'タブ', 'R · T · G also work during play.': 'R・T・G キーはプレイ中も使えます。',
 };
 
 export const L = (s, vars) => {

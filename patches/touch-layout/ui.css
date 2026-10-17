@@ -32,7 +32,12 @@
 .iwm-layout-selection { display: flex; align-items: center; gap: 9px; width: 100%; }
 .iwm-layout-select-label { font-size: 11px; color: #c3bdd6; }
 .iwm-layout-control { flex: 1; min-width: 0; min-height: 40px; padding: 6px 9px; border: 2px solid #ffffff30; border-radius: 11px;
-  font: inherit; color: #fff; background: #15121c; touch-action: manipulation; }
+  /* Native WebKit menulists can paint a light field behind our white text. */
+  -webkit-appearance: none; appearance: none; padding-right: 2em;
+  font: inherit; color: #fff; background-color: #15121c; touch-action: manipulation;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 13px) 50%, calc(100% - 9px) 50%;
+  background-size: 4px 4px; background-repeat: no-repeat; }
 #iw-mobile-controls .iwm-layout-size { width: 100%; display: flex; gap: 10px; }
 #iw-mobile-controls .iwm-edit__size { flex: 1; width: 80px; min-width: 0; height: 28px; margin: 0; touch-action: pan-x; }
 .iwm-layout-note { font-size: 10px; line-height: 1.4; color: #c3bdd6; }

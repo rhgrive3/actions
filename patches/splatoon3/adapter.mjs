@@ -1670,6 +1670,19 @@ export function adaptSource(rel, code) {
   }
 
   if (rel === 'src/game/showcase.js') {
+    // Results / loadout framing reads the live DOM boxes. On the touch layout
+    // the results screen scrolls: offsets ignored that scroll, and measuring
+    // stopped for good 9 s in, so the podium kept framing an old layout while
+    // the scoreboard moved over it. Subtract each offset parent's scroll and
+    // keep re-reading at a low rate (the camera eases toward new values).
+    code = replaceOnce(code,
+      '        for (let e = el; e; e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop; }',
+      '        for (let e = el; e; e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop; const p = e.offsetParent; if (p) { x -= p.scrollLeft || 0; y -= p.scrollTop || 0; } }',
+      'results framing follows a scrolled layout');
+    code = replaceOnce(code,
+      "      U.next = this.t < 0.4 ? this.t + 0.1 : this.t < 1.5 ? this.t + 0.35 : this.t < 9 ? this.t + 0.2 : 1e9;",
+      "      U.next = this.t < 0.4 ? this.t + 0.1 : this.t < 1.5 ? this.t + 0.35 : this.t < 9 ? this.t + 0.2 : this.t + 0.5;",
+      'results framing keeps measuring');
     // #1119: portrait readback staging targets are lazy resources, not
     // lifetime Showcase allocations. Leaving Locker releases them once async
     // readbacks settle; final dispose also tears down the resolve material/scene.

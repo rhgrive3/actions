@@ -3779,6 +3779,8 @@ The combined new focused tests pass 51/51 with no skips. Prior complete-suite re
 - **確認状態**: すべてロジック単独の確認。Switch 実機・ブラウザでの比較は未実施。
 ## 2026-10-10: ボム3種（スプラッシュ・キューバン・カーリング）の性能・投げ方・予測線・見た目
 
+> 履歴注記（2026-10-17、PR #1520）: この節の `previewCurlingPath` と爆発地点マーカーの説明・一致測定は、10月10日時点の旧実装の記録。PR #1520 ではカーリングを構えた際の線と円をともに非表示にし、この予測専用処理を削除した。以下の旧予測表示を現在の仕様または本家一致の根拠として扱わない。投擲後の運動・塗り・爆発は今回の表示変更の対象外。最新の比較条件と未確認事項は末尾の「PR #1520: ローラー振り、カーリング表示、射撃解除後の後退」を参照。
+
 - **本家の根拠**: 参照版 Ver. 11.3.0。Leanny/splat3 固定コミット `7280ff9c` の `data/parameter/1130/weapon/WeaponBombSplash`・`WeaponBombSuction`・`WeaponBombCurling.game__GameParameterTable.json`（差分表なので記載値は明示値）。主な項目：スプラッシュ `SpawnSpeedZ 1.12`・`SpawnSpeedY 0.24`・`FlyGravity 0.016`・`GroundPosition{Horizon,Deg50}AirResist 0.19/0.28`・`BlastParam.KnockBackParam 700/0.8/12`。キューバン `SpawnSpeedY 0.24`・`SpawnSpeedYWorldMin -0.4`・`spl__SpawnBulletAdditionMovePlayerParam {XRate 1.6, ZRate 2.0, YPlusRate 4.0, YMax 0.32}`・`BlastParam {PaintRadius 5.0, PaintOffsetY 0.45, SplashAroundParam {Num 15, PaintRadius 1.116, OffsetY 0.5}, KnockBackParam 700/0.8/12}`。カーリング `SpawnSpeedY 0.12`（`MaxCharge` も 0.12）・`SpawnSpeedYWorldMin -0.5`・`{XRate 0.8, ZRate 1.2, YPlusRate 2.0, YMax 0.16}`・`FlyPositionAirResist 0.05866`・`GroundPositionAirResist 0.0`・`GroundGravity 0.0016`・`BaseSpeedMinCharge 0.22`・`BaseSpeedComeOverRate 0.92`／`ComeUnderRate 0.96`・`BurstTimingSpeedStartRestFrame 90`／`StopBias 0.41`・`WarningAnimRestFrame 90`・`BlastParamMin/MaxCharge.KnockBackParam 700/0.8/9`。挙動の記述は [Inkipedia Curling Bomb](https://splatoonwiki.org/wiki/Curling_Bomb)（床をまっすぐ進み、最大距離に近づくと減速、溜めると距離が短く・大きくなる、上部ランプが爆発前に緑→赤）、[Suction Bomb](https://splatoonwiki.org/wiki/Suction_Bomb)（吸盤付きスプレー缶の形、床・壁に付く）、[Splat Bomb](https://splatoonwiki.org/wiki/Splat_Bomb)。攻略 wiki（[スプラトゥーン3 wiki カーリングボム](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B5%E3%83%96%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E3%82%AB%E3%83%BC%E3%83%AA%E3%83%B3%E3%82%B0%E3%83%9C%E3%83%A0)、検索結果の抜粋のみ確認）は、下向きに投げるとすぐ滑り出して遠くまで進み、上向きでは進行距離が縮むとする。そのためカーリングにも照準の上下角を残した。
 - **比較条件**: ギアなし（0 AP）、平地、立ち投げ、静止または一定速度。ブキとサブの組は `kit-composition.mjs` の検証済みキット（スプラシューター＝キューバン、スプラローラー＝カーリング、スプラチャージャー＝スプラッシュ）。測定は本番と同じ6段アダプター合成のヘッドレス Node（実 `_updateBombs`）。60/30/120 Hz。
 - **修正前の差分（本番合成で実行して確認）**:
@@ -3805,7 +3807,7 @@ The combined new focused tests pass 51/51 with no skips. Prior complete-suite re
   1. カーリングの地上速度則の形。各フィールドの値は原典だが、近づき方（ステップごとの比率）と残り 90F からの減速曲線（`StopBias` を指数として使用）は INKWAVE の読み。最大溜めの基準速度（`BaseSpeedMaxCharge` は表に無い）は最小溜めの 13.2 を共用。
   2. カーリングの溜めの始まり。押した瞬間から数えるため、サブの準備 5F＋使用開始 1F の間も溜まり、タップでも溜め約 0.1 になる（初速 22.8、爆発 3.3 s）。本家で溜めが何フレーム目から始まるかは未確認。
   3. カーリングの溜め投げ後のインク回復停止（`InkRecoverStopMaxCharge 30F`）が、`resources.mjs` の「本体の停止時間との大きい方」の規則で 43F（スプラローラー本体）になる。共通の回復停止の設計に関わるため変更していない。
-  4. 予測マーカーの位置。本家のカーリングのガイド表示の形と、爆風範囲をガイドで示すかどうかは公開資料で確認できなかった。INKWAVE は爆風半径を表示せず、爆発地点の予測だけを出す（スプラッシュ・キューバンは従来どおり最初の着地点、マーカー 0.55〜0.75 ≒ `GuideRadius 0.575`）。
+  4. 予測マーカーの位置。本家のカーリングのガイド表示の形と、爆風範囲をガイドで示すかどうかは当時の公開資料で確認できなかった。旧実装では爆発地点の予測を出していたが、PR #1520 はカーリングの線・円をともに隠す。これは本家のガイド仕様を新たに実測して確定したという意味ではない。スプラッシュ・キューバンのガイドは今回変更していない。
   5. `SplashAroundParam` の飛び方（Pitch/Velocity）の再現、キューバンの `DamageOffsetY 0.6`、スプラッシュボムの床での跳ね返り係数（`vn·0.35·0.45`、原典の項目なし）。
   6. スプラッシュボムの滑り距離そのもの（本家の値は未計測）、モデルの寸法・色。
 ## 2026-10-10: メインの塗り範囲・弾の大きさ、メニューの重さ、発射時のカクつき
@@ -4900,3 +4902,35 @@ Slosherの独立落下飛沫を、固定60Hzの衝突で切った区間内の各
 ## 2026-10-17: 10月15日スペシャルVFXの現行mainへの再統合
 
 元作業ブランチ `ccr-ae0adf18-yfythe` (最終 `542c4dfc`) の映像比較・VFX・テイオウイカ伏せ姿勢・床接地補正を `fix/inkwave-special-vfx-from-ccr-20261017` に再移植。上記の5,661件などは元ブランチの歴史的な結果であり、この再統合HEADのCI結果を意味しない。取り込みでは現行mainのゲーム本体・ネットワーク・武器/ステージ修正を維持し、視覚提示のファイルのみ差分統合する。
+
+
+## 2026-10-17: PR #1520: ローラー振り、カーリング表示、射撃解除後の後退
+
+対象は公開版 `inkwave-public/` に対する本番アダプター合成。PR の保存済み変更 `a221fe33cf9864d1c79c2dda282da0e0f96719f5` を main `4754c4ef402375f26e2d46702ed46330b401108b` に統合する。共有する `patches/splatoon3/adapter.mjs` と Validate workflow では UI / Bot 修正と射撃解除修正の両方を保持し、main の VFX 寿命修正5ファイルも保持する。下記は本家の抽出値、INKWAVE 内の解釈、実行して確認した範囲を分けた記録である。
+
+### 参照条件と根拠
+
+参照版は Splatoon 3 Ver.11.3.0、60 Hz。`patches/splatoon3/profile.json` は Leanny/splat3 の固定コミット `7280ff9cde8bb1c5dcef46c700c326471584d2e6` を指定している。スプラローラーは同ファイルの `weaponsFidelityCompletion.weapons.roller` にある `WeaponWideSwingParam.SwingMoveSpeed` と `WeaponVerticalSwingParam.SwingMoveSpeed` がともに **0.048 / frame**。既存の INKWAVE 換算では **2.88 world units / s** となる。追加ローラーは `main-weapon-catalog-data.mjs` の各ブキに保存した同名の横振り・縦振りレコードを個別に読む。world unit を実測のメートルとして扱わない。
+
+比較操作は、ギアなしとヒト移動速度アップ装備、地上の横振り、ジャンプ縦振り、発射後の回復中の前後左右移動、構え直し・転がし・サブ・変身による中断。シューター等では照準に対して後退しながら ZR を押す→離す→押し直す。通常歩行、横移動、微入力、サブ、チャージ、連射継続、回避中も対照にする。確認に用いる速度・姿勢のフレーム列は INKWAVE の実クラスによるもので、Switch 実機の計測ではない。
+
+### 差分・実装・プレイへの影響
+
+| 項目 | 修正前の差分 | 今回の実装と確認条件 | 本家との対応の限界 |
+|---|---|---|---|
+| ローラーの振り中の移動 | 短い `firingT` / `flickRecover` が終わると、振りの回復途中で通常歩行速度へ戻った。 | `runtime/roller.mjs` の `rollerSwingMoveSpeed` は受理済み `s3RollerAttack` の区間を使う。追加ローラーは `main-weapon-catalog.mjs` の `s3SwingMode` と pending / cooldown を使い、発射後も該当の横・縦 `SwingMoveSpeed` を維持する。`gear.mjs` はその区間を射撃用ギア曲線へ接続する。スプラローラー縦振りの既存 31F 発射 / 56F 区間を回帰で検査し、転がし・サブ・変身等の別動作は各動作の速度を使う。 | `SwingMoveSpeed` の値は固定抽出値。回復全体への適用区間は INKWAVE の受理済み攻撃時計に接続したもので、Nintendo エンジンの状態分岐を復元したという意味ではない。 |
+| 空中の攻撃移動 | 全動作共通の 4.6 world units / s 下限が、2.88 等の攻撃用目標まで押し上げた。 | `movement-physics-adapter.mjs` / `runtime/movement-physics.mjs` で受理済みメイン攻撃時だけ runner の目標を使う。ローラー・ブラスター・チャージャー・スロッシャーと通常空中移動・回避を対照にし、通常時の加減速と空中最低値はそのまま検査する。 | 4.6 は旧 INKWAVE の下限。飛距離・空中慣性が本家と全条件で一致することは未確認。 |
+| ローラー縦振りの持ち手 | 補間列が実際の release key を飛ばし、インク放出時に横向きの follow-through へ移った。 | `runtime/roller.mjs` の縦振りだけ release key と縦向き follow-through を使う。床への残りのめり込みは実 drum geometry の最下点から手首目標を補正し、有限の腕の到達距離と変身中のゼロ scale 防御を保つ。発射時計・弾数は変更しない。 | 姿勢補間と床補正は INKWAVE の表示処理。元ゲームの骨・カーブの完全一致はこのテストでは示さない。 |
+| カーリングを構えた際のガイド | 放物線に加えて、壁反射を含む予測爆発地点の円が表示された。 | `runtime/kit-subs.mjs` の `Projectiles.updateArc` はカーリングだけ既存の hide 経路へ渡し、前のボムで出した線と円も消す。旧 `previewCurlingPath` を削除。タップ / 溜め投げ、壁反射、転がり、爆発を回帰し、キューバンのガイドは表示されることを対照にする。 | 本家のガイド表示の全形状・全条件を新たに実測したものではない。既存のカーリング速度則等の未確認事項は上記10月10日節のまま残る。 |
+| 射撃解除後の後退姿勢 | 後退中に ZR を離しても、`fireFacing` 最大0.5秒・`firingT` 0.35秒・source pose の0.18秒猶予が Shoot 姿勢を残した。 | `runtime/shooter-movement.mjs` の `reverseShotRelease` は実際の move と aim yaw を照合する。Actor の向き、Character の `wAim`、Player00 / Player01 の Shoot→Hold、表情・視線、上半身姿勢の選択へ接続する。実弾の発射待ち・連射・サブ・スペシャル・回避等が動作中なら、その動作の姿勢を維持する。ネイティブシューターの既存4F移動制限や反動時計は解除しない。 | 0.5 / 0.35 / 0.18秒は旧 INKWAVE 表示の時計。解除ブレンドは INKWAVE の調整であり、本家の正確な解除フレーム・カーブは未確認。 |
+| 追加シューターの後退時の移動回復 | `firingT=.35` が射撃後も歩行速度を長く制限した。 | `main-weapon-catalog.mjs` は後退・ZR解除・実際の攻撃待ちなしの場合、最後に出た弾から `WeaponParam.PostDelayFrame` の2〜4F（明示値がない行は既存シューターの4F校正）の間は射撃歩行速度、その後は通常歩行へ戻す。射撃用 / 通常用ギア倍率、バースト、空中で通常走行ギアを適用しない条件を保持する。 | **PostDelayFrame を移動速度制限の区間と読むことは INKWAVE の解釈であり、元エンジンの規則として未確定。** 欠落フィールドの4Fも抽出値と区別する。 |
+
+### 検証と残条件
+
+この統合では、保存済み PR の全22変更ファイルを各 blob SHA と照合して復元し、最新 main 側で変わった30ファイルを重ねた。共有2ファイル以外の28ファイルは main と同じ blob SHA、PR 側の共有2ファイル以外の20ファイルは保存済み PR と同じ blob SHAである。共有部分は片方の変更を落とさない合成に限定する。
+
+検証対象は `roller-flick-movement.test.mjs`、`air-attack-acceleration.test.mjs`、`bomb-kit-fidelity.test.mjs`、`reverse-shot-release.test.mjs`、`source-posture.test.mjs` と関連ローラー / サブ回帰。`reverse-shot-release` は固定60Hzロジックを30/60/120Hzの表示間隔で進め、同じ向きの履歴になることと実 Actor / Character の状態を検査する。source fixture の一部は床・衝突・描画を簡略化するため、全試験を実ブラウザ操作と同一視しない。
+
+この統合候補のローカル直接実行では、上記9ファイルの source 回帰 **134/134**、同じ本番ビルドを `INKWAVE_BUILT_SITE` に指定した主要4ファイル（ローラー振り・空中攻撃・ボム・後退解除）の **29/29** が成功し、skip は0。本番ビルドの content hash は `cf9258e51527`（先頭12桁）。Node の子 pipe が出力を失うローカル制約を避け、各テストファイルを直接起動して個別の TAP 件数と終了値を回収した。意図的な失敗ケースが終了値1になることも確認した。既存 live-log handshake を含む workflow テストはローカル pipe 制約のため完了せず、成功数には含めない。ソースファイルと minified モジュールの実行確認であり、この再実行には WebGL 描画は含まない。
+
+統合後の最終 CI とブラウザ合格は、新しい head の run を確認して判定する。旧 `a221fe33` の CI はその head の証拠として保持する。Nintendo 実機との微入力・停止距離・旋回・坂 / 段差・姿勢の同期比較と、iPad mini の実フレーム時間は今回未計測であり、完全一致や端末 FPS 向上を主張しない。
