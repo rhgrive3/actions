@@ -200,7 +200,8 @@ test('safe optimization preserves the ray envelope and keeps ancillary paint out
     const satellite = out.indexOf('    // ---- satellite droplets',guarded);
     const guardText = out.slice(guarded,satellite);
     assert.equal((guardText.match(/for \(int k = 0; k < 10; k\+\+\)/g)||[]).length,1);
-    assert.match(guardText,/\n      }\n    }\n    \/\/ ---- satellite droplets$/);
+    assert.match(guardText,/\n      }\n    }\n$/);
+    assert.ok(satellite > guarded && out.slice(satellite).startsWith('    // ---- satellite droplets'), 'satellite pass remains outside ray-only guard');
     assert.doesNotThrow(()=>new vm.SourceTextModule(out));
   }
   const maxRay=1.588+0.57+0.57*0.09+0.115+0.072+0.06;
