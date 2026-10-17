@@ -12,6 +12,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { projectileDrawRadius, projectileVisualWidth } from '../patches/splatoon3/runtime/projectile-visuals.mjs';
 import { completeNativeTurfIntro } from './lib/inkwave-projectile-ci-intro.mjs';
+import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const option = (name, fallback) => {
@@ -294,6 +295,7 @@ async function openGameContext({ mobile = false } = {}) {
   });
   report.provenance.canonicalPlacement = placement;
   report.provenance.canonicalLifecycleReset = await page.evaluate(() => window.__iwCanonicalLifecycleReset ?? null);
+  report.provenance.canonicalRoster = await page.evaluate(installProjectileCaptureRoster);
   const version = await page.evaluate(() => {
     const gl = __G.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info');
     return { chromium: navigator.userAgent, webgl: gl.getParameter(gl.VERSION), webglRenderer: gl.getParameter(gl.RENDERER),
@@ -443,6 +445,7 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
     }
     return {
       projectiles: read,
+      roster: window.__iwProjectileRosterSnapshot(),
       projectileScreen,
       visibleCenters: projectileScreen.length,
       projectileCrop,
@@ -776,6 +779,7 @@ const visualSetup = ({ name, seed, impact = null }) => {
   G.time = 0; g.time = 0; g.rig.time = 0;
   G.projectiles.clear(); G.fx.clear(); G.paint.clear();
   if (g.screenfx?.clear) g.screenfx.clear();
+  window.__iwResetProjectileRoster();
   const weapon = impact === 'wall' ? 'shooter' :
     name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
   a.setWeapon(weapon);
@@ -800,6 +804,7 @@ const visualSetup = ({ name, seed, impact = null }) => {
     // the selected real floor point before injecting test controls.
     a.spawnAt(new V(...position), yaw);
     normalizeIntent();
+    window.__iwResetProjectileGear(a);
     a.form = 'kid'; a.submerged = false; a.alive = true; a.hp = 100; a.ink = 100; a.vel.set(0, 0, 0);
     a.grounded = true; a.groundN.set(...groundNormal); a.climbing = false; a.specialActive = null; a.superJumpState = null;
     a.invuln = 0; a.fireBuffer = a.jumpBuffer = 0; a.kidT = 99;
@@ -900,7 +905,8 @@ const visualSetup = ({ name, seed, impact = null }) => {
   const setup = { weapon, actor: a.pos.toArray(), wall, impact, seed, bootSeed: canonical.bootSeed,
     aim: { yaw: a.yaw, aimYaw: a.aimYaw, aimPitch: a.aimPitch,
       direction: a.aimDir.toArray(), point: a.aimPoint.toArray() },
-    inkHex: '#' + a.color.getHexString(), canonicalPlacement: canonical };
+    inkHex: '#' + a.color.getHexString(), canonicalPlacement: canonical,
+    roster: window.__iwProjectileRosterSnapshot() };
   // Keep RNG diagnostics separate from physical setup and camera receipts.
   window.__iwCurrentVisualSetupRng = setupRng.snapshot();
   window.__iwCurrentVisualSetupLifecycle = lifecycleReset;

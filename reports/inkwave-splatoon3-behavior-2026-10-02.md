@@ -4979,3 +4979,15 @@ Slosherを回収したprojectile objectがRollerへ再利用される際、`fide
 並行して更新されたPR #1525は、同じ128×8 RGBA8のBA成分へ次のsectionのRG幅を詰め、輪郭2点を一度のNearest fetchで取得する。これにWebKit検査で必要だったhighp sampler、CPUと同じ座標の計算順、明示した線形補間を組み合わせる。幅データRGは既存校正値と全て同じ、BAは次のRGと全て一致し、旧2-fetch版との266,370 CPU照会で判定差0。塗りの独立oracleは固定RG輪郭のまま保持する。これはJavaScriptでのデータ・計算確認であり、新しい結合shaderのWebGL合格は最終PRの同一headで別途確認する。
 
 統合途中で実行環境の接続が停止したため、GitHubに保存したblobと既存PRの固定差分からチェックポイントを再構成した。Git tree `44ff0be5134294be496be4f5f8c496ea0e62c781` は切断前のローカル `c9dc58298d76703227e5738746c79129b18d9ddc` と完全に一致する。後続の復元・追加コードは、このチェックポイント以降の最終commitのCIで再検証する。切断前の成功件数を、後から作成したcommitの実行結果として数えない。
+
+### 復旧後の製品ビルドでの再検証
+
+遅延Slosher初速、pool index初期化、packed 1-fetch shaderを含む製品ビルド（esbuild 0.28.2、content hash `a1141213de1df26eaffa74d49e0e38982758514fa86d49c1afee79dbce051189`、input hash `3bef4e1a31cb77df685366a5b32783c8d999e0c9c3603e04e1d9d226f421bc3e`）で再実行した。`check-inkwave-paint-mask.mjs --exact-source` により、作業commitのソースと実際に配信する圧縮済みshaderを照合したうえで両方を検査した。
+
+| 検証 | このビルドでの結果 | 判定範囲 |
+|---|---|---|
+| Chromium 151・WebKit 26.5の実WebGL | 各124マスク条件・1,512 hash照会・782身体輪郭条件が成功。内点差は両方0/0。WebKitはCPU/GPUとも119,521セル、境界差0。ChromiumはCPU119,521/GPU119,512セル、旧汎用輪郭のfloat32境界差9セル。 | source/製品buildの結果が厳密一致。新しい5輪郭を含み、production Nearest設定、実uniform画像、実fragment shaderで検査。9境界セルを完全一致として数えない。 |
+| 製品ビルドの慣性・出生時初速・チャージ・ジャンプ回復・被弾形状 | 6ファイル、30テスト成功・失敗0・skip0。各関連操作の30/60/120 Hz比較を含む。 | `INKWAVE_BUILT_SITE` を使って実製品モジュールを読む。同じ6ファイルをValidateの明示的な製品ビルドgateへ追加。 |
+| 起動予算 | core preload 131、practice range 14、初期JS要求146、初期JS 2,698,925 bytesで成功。 | ファイルと依存関係の決定的な予算検査。実機のFPSや待ち時間の測定ではない。 |
+
+復元した遅延Slosherのソース6テストと、慣性・native Slosherを含む関連27テストも成功した。上表は統合途中の同一生成物のローカル証拠であり、PR [#1552](https://github.com/rhgrive3/actions/pull/1552) の最終headのCIは別の必須gateとして扱う。Nintendoの未公開カーブやSwitch実機での完全一致の未確認範囲は変わらない。

@@ -683,9 +683,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           : (count===1?0:lerp(-finite(u.SpawnWideDegree,0)/2,finite(u.SpawnWideDegree,0)/2,i/(count-1)));
         const yaw=finite(u.BaseRotateYDegree,0)+fan;
         const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
-        const d={...desc,index:i};
+        const d={...desc,index:i},liftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
         const p=spawn(a,r,d,aim,at,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
-          index:i,volley,lift:speed*finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0))});
+          index:i,volley,lift:speed*liftRate});
+        // Like the existing native Slosher owner, select ground/air speed at
+        // each glob's actual birth. Retain the admitted direction, per-index
+        // offset and speed draw; landing/falling does not reroll the volley.
+        if(key==='slosh'&&p?.catalog?.birthPending)
+          p.catalog.birthPending.sloshLaunch={direction:aim,sourceBaseSpeed:velocity,speed,liftRate};
         // Vertical swing intermediate splashes ride the central Unit 0 glob, as on the native Splat Roller.
         if(r.family==='roller'&&key==='vertical'&&j===0&&i===0&&p&&!p.ghost)configureCatalogRollerFlight(p,group);
       }
@@ -1499,6 +1504,16 @@ export function releaseCatalogBirth(system, projectile, game) {
   projectile.pos.z += birth.offsetZ * cz - birth.offsetX * sx;
   projectile.prev.copy(projectile.pos); projectile.start.copy(projectile.pos);
   projectile.delay = 0;
+  const launch = birth.sloshLaunch;
+  if (launch) {
+    const unit = state.descriptor.packet;
+    const baseSpeed = finite(actor.grounded ? unit.SpawnSpeedGround : unit.SpawnSpeedAir, 1);
+    if (baseSpeed !== launch.sourceBaseSpeed) {
+      const speed = launch.speed + (baseSpeed - launch.sourceBaseSpeed) * HZ;
+      projectile.vel.copy(launch.direction).multiplyScalar(speed);
+      projectile.vel.y += speed * launch.liftRate;
+    }
+  }
   applyCatalogPlayerVelocity(projectile);
   game?.netm?.recProj?.(projectile);
   return true;

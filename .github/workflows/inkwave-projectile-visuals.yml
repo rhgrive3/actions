@@ -9,9 +9,14 @@ on:
       - 'patches/splatoon3/tests/projectile-visuals.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
       - 'scripts/lib/inkwave-projectile-ci-intro.mjs'
+      - 'scripts/lib/inkwave-projectile-ci-roster.mjs'
+      - 'scripts/tests/inkwave-projectile-ci-roster.test.mjs'
       - 'scripts/lib/inkwave-roller-birth-baseline.mjs'
+      - 'scripts/lib/inkwave-main-ink-baseline.mjs'
+      - 'scripts/fixtures/inkwave-main-ink-pr1525-baseline.json'
       - 'scripts/prepare-inkwave-projectile-baseline.mjs'
       - 'scripts/tests/inkwave-roller-birth-baseline.test.mjs'
+      - 'scripts/tests/inkwave-main-ink-baseline.test.mjs'
       - 'scripts/tests/inkwave-projectile-ci-intro.test.mjs'
       - 'scripts/compare-inkwave-projectile-captures.py'
       - 'scripts/tests/inkwave-projectile-captures-synthetic.py'
@@ -55,13 +60,14 @@ jobs:
         run: |
           node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs
           python3 scripts/tests/inkwave-projectile-captures.test.py
-          node --test scripts/tests/inkwave-projectile-ci-intro.test.mjs
+          node --experimental-vm-modules --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-ci-roster.test.mjs
           node --test scripts/tests/inkwave-roller-birth-baseline.test.mjs
-      - name: Replay the two reviewed Roller birth corrections in the main reference
+          node --test scripts/tests/inkwave-main-ink-baseline.test.mjs
+      - name: Replay reviewed Roller births, pool reset and pinned paint in the main reference
         run: node scripts/prepare-inkwave-projectile-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/baseline-birth-adjustment.json
       - name: Build complete production composition
         run: node scripts/build-inkwave.mjs inkwave-public .built-site/projectiles
-      - name: Build main reference with identical reviewed Roller births
+      - name: Build main reference with reviewed births, pool reset and paint
         run: node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/baseline
       - name: Verify emitted packaging
         id: package-check
@@ -74,7 +80,7 @@ jobs:
       - name: Verify paired physical state, firing workloads and original image hashes
         if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}
         run: python3 scripts/compare-inkwave-projectile-captures.py --before .ci-scratch/projectile-visuals/before --after .ci-scratch/projectile-visuals/after --output .ci-scratch/projectile-visuals/paired-verification.json --require-complete
-      - name: Exercise camera, RNG, contact, retirement and paint comparison gates
+      - name: Exercise roster, camera, RNG, contact, retirement and paint comparison gates
         if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}
         run: python3 scripts/tests/inkwave-projectile-captures-synthetic.py --before .ci-scratch/projectile-visuals/before/projectile-visuals-result.json --after .ci-scratch/projectile-visuals/after/projectile-visuals-result.json --out .ci-scratch/projectile-visuals/comparator-synthetic-gates.json
       - uses: actions/upload-artifact@v4

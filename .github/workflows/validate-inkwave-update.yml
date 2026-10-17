@@ -377,6 +377,18 @@ jobs:
         run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/paint-piece-local-ownership.test.mjs
       - name: Verify local paint order deduplication lifetime against built site
         run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/local-paint-order-map.test.mjs
+      - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: >-
+          node --experimental-vm-modules --test
+          patches/splatoon3/tests/catalog-player-inertia-native.test.mjs
+          patches/splatoon3/tests/catalog-slosher-birth-speed.test.mjs
+          patches/splatoon3/tests/projectile-pool-slosher-index.test.mjs
+          patches/splatoon3/tests/spinner-kinematics-source.test.mjs
+          patches/splatoon3/tests/spinner-charge-family.test.mjs
+          patches/splatoon3/tests/jump-recovery-airborne-native.test.mjs
+          patches/splatoon3/tests/player-collision-source-1130.test.mjs
       - name: Verify built weapons fidelity measurements and packet parity
         run: |
           INKWAVE_BUILT_SITE=_site INKWAVE_OBJECT_DAMAGE_REFERENCE=.reference-data/object-damage.json node --experimental-vm-modules --test patches/splatoon3/tests/object-shredder-1130.test.mjs patches/splatoon3/tests/native-sprinkler-damage.test.mjs
