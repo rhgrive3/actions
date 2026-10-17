@@ -190,7 +190,12 @@ try {
       }
       const mistChecks=[];const mistQueryChecks=[];
       {
-        const saved={actors:G.actors,projectiles:G.projectiles,time:G.time};
+        const saved={actors:G.actors,projectiles:G.projectiles,time:G.time,level:G.level,physics:G.physics};
+        // Mist now deploys on actual terrain contact. An empty collision world
+        // exercised the removed airborne timeout rather than a valid throw.
+        const {Level}=await import('/src/world/level.js');
+        G.level=new Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});
+        G.physics=new api.Physics(G.level);
         G.projectiles=new Projectiles(G.scene);G.actors=[];
         const source=makeActor('s3-slosher-diffusion'),victim=makeActor('shooter');victim.team=1;G.actors=[source,victim];
         source.aimDir.set(0,-1,.1).normalize();source.aimPoint.set(0,0,1);source.intent.sub=true;
