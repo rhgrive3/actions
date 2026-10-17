@@ -235,7 +235,31 @@ test('S3 face look: a round outline from the front (no point at the ear line), e
   assert.ok(Math.abs(y0 + iMax * h - face.HEAD_C.y) < 0.03, 'widest at the ear line');
   const F = face.earFrame(1);
   assert.ok(F.A.x > 0.75 && F.A.y < 0.3 && F.A.z < 0, `ear points out ${F.A.x.toFixed(2)}, up ${F.A.y.toFixed(2)}, back ${F.A.z.toFixed(2)}`);
-  assert.match(matsSource, /lineK = 0\.0;/);
+  assert.match(matsSource, /float lineK = iwStroke\(el - mEl \+ 0\.0165, lineW\)/);
+});
+
+test('S3 face look: the mouth area shades like the face (normals match across the patch edges, flat lips)', async () => {
+  const { face } = await realm();
+  const { geo, acc } = face.buildFaceSkin(4);
+  const N = geo.attributes.normal, V = face.HEAD_C.constructor, n = new V(), m = new V(), q = new V();
+  // reference: the analytic face normal at each vertex's own surface parameters (solved, the head is no sphere)
+  const ref = (p, out) => {
+    const v = p.clone().sub(face.HEAD_C), r = v.length(), taz = Math.atan2(v.x, v.z), tel = Math.asin(v.y / r);
+    let az = taz, el = tel;
+    for (let i = 0; i < 8; i++) { face.headSurfFace(az, el, 0, q); q.sub(face.HEAD_C); az += taz - Math.atan2(q.x, q.z); el += tel - Math.asin(q.y / q.length()); }
+    return face.headSurfFace(az, el, 0, q, out);
+  };
+  let checked = 0;
+  for (let i = 0; i < acc.P.length; i++) {
+    if (acc.part[i] !== 4 && acc.part[i] !== 1) continue;
+    if (acc.uv[i][1] > 0) continue;                                        // inner lip / cavity
+    const v = acc.P[i].clone().sub(face.HEAD_C), az = Math.atan2(v.x, v.z), el = Math.asin(v.y / v.length());
+    if (Math.abs(az) > 0.6 || el < -0.62 || el > -0.3) continue;            // around the mouth patch
+    ref(acc.P[i], m); n.fromBufferAttribute(N, i);
+    assert.ok(n.angleTo(m) < 0.05, `normal off the face by ${n.angleTo(m).toFixed(3)} rad at ${az.toFixed(2)},${el.toFixed(2)} (part ${acc.part[i]})`);
+    checked++;
+  }
+  assert.ok(checked > 200);
 });
 
 test('S3 face look: missing or duplicated anchors fail closed; other files pass through', () => {
