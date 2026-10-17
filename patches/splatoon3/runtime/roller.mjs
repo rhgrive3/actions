@@ -796,10 +796,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       q.premultiply(turn.setFromAxisAngle(axis.normalize(),now-allowable + .003));
     };
     const contacting = !!this._s3RollerContactPose;
-    // Aerial vertical release still swings a visible drum around the wrist.
-    // Enforce the same geometry-derived nonpenetration relative to the actor's
-    // floor plane before ground contact, without changing airborne physics.
-    const swinging = !contacting && !!this.s3RollerFlick;
+    const swinging = !contacting && !!this.s3RollerFlick && this.grounded;
     const neededGround = contacting || swinging;
     let bound;
     const bottom = q => {
