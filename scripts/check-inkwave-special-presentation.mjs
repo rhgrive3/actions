@@ -131,7 +131,69 @@ try{
     if(glBuffers.size!==baseline.buffers)throw Error('Native cloud instance buffer survived '+end);
   }
   const after=memory();if(after.geometries>baseline.geometries||after.textures>baseline.textures||after.programs>baseline.programs||after.buffers>baseline.buffers)throw Error('GPU resource count grew after repeated use');
-  return {rows,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig; Vac uses actual Actor.update/Physics and native lifecycle, other specials use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim'};
+  // Targeted emitted WebGL checks: actual FX/director and production fist factory.
+  // Projectile records below are injected component inputs, not match activation.
+  const vfxResources={pool:[],fists:[],scope:'emitted native FX/director + production factory; injected fist records; no retail or gameplay qualification'};
+  const ensure=(ok,label)=>{if(!ok)throw Error('VFX resource gate: '+label);};
+  const noGrowth=(before,after,label)=>{for(const k of ['geometries','textures','programs','buffers'])ensure(after[k]<=before[k],label+' '+k);};
+  const drawVfx=()=>{render();ensure(!gl.isContextLost(),'WebGL context');ensure(gl.getError()===gl.NO_ERROR,'WebGL error after real draw');};
+  const previousFx=G.fx,previousFists=G.projectiles._catalogueFists,previousActors=G.actors;
+  const liveFx=new Set();
+  const openFx=q=>{const fx=new api.FX(scene,{quality:q});liveFx.add(fx);G.fx=fx;fx.setCollider(()=>null);const d=fx.s3SpecialVfx;ensure(d?.kit&&d.fists,'production installed director');return{fx,d};};
+  const directorHealthy=(d,label)=>ensure(d.errors===0,'director callback errors '+label);
+  const closeFx=fx=>{const d=fx.s3SpecialVfx;directorHealthy(d,'before dispose');fx.dispose();directorHealthy(d,'after dispose');liveFx.delete(fx);};
+  try {
+    G.actors=[];G.projectiles._catalogueFists=[];
+    // Existing factory loop above has warmed shared model resources/programs.
+    drawVfx();const totalBefore=memory();
+    for(const quality of [.35,1]){
+      const {fx,d}=openFx(quality);d.kit.update(1/60,camera);drawVfx();const baseline=memory();
+      for(const key of ['sparks','puffs']){
+        const p=d.kit[key],mesh=p.mesh,oldDraw=mesh.onBeforeRender;let draws=0;
+        mesh.onBeforeRender=function(...args){draws++;return oldDraw?.apply(this,args);};
+        const spawn=i=>p.spawn((i%11)*.025,1.5+(i%7)*.025,0,0,0,0,10,.2,.3,1,.5,.1,1,0,{rot:0,seed:.5});
+        const verify=label=>{for(const a of [p.aPos,p.aDir,p.aCol,p.aPar]){ensure(mesh.geometry.instanceCount<=a.count,label+' attribute capacity');for(const r of a.updateRanges)ensure(r.start+r.count<=a.array.length,label+' upload bounds');}ensure(mesh.geometry.instanceCount===p.n+1,label+' reserved warm slot');ensure(p.aCol.array[3]===0,label+' warm slot transparent');const n=draws;drawVfx();ensure(draws>n,label+' actual pool draw');};
+        try {
+          p.clear();p.update(1/60);drawVfx();const blank=render();
+          for(let i=0;i<p.cap;i++)spawn(i);p.update(1/60);ensure(p.n===p.cap,'full '+key);verify('saturation '+key);
+          const pixels=changed(blank,render());ensure(pixels>0,'visible saturated '+key);
+          spawn(999);p.update(1/60);ensure(p.n===p.cap,'bounded eviction '+key);verify('eviction '+key);
+          p.clear();p.update(1/60);ensure(p.n===0,'clear '+key);verify('empty '+key);
+          spawn(7);p.update(1/60);ensure(p.n===1,'reuse '+key);verify('reuse '+key);
+          p.clear();p.update(1/60);drawVfx();const after=memory();noGrowth(baseline,after,'pool cycle');
+          vfxResources.pool.push({quality,key,cap:p.cap,attributeCapacity:p.aPos.count,draws,pixels,baseline,after});
+        } finally {mesh.onBeforeRender=oldDraw;}
+      }
+      closeFx(fx);drawVfx();noGrowth(totalBefore,memory(),'FX pool disposal');
+    }
+    for(const quality of [.35,1])for(const mode of ['clear','dispose','normal'])for(let cycle=0;cycle<2;cycle++){
+      const before=memory(),{fx,d}=openFx(quality);d.kit.update(1/60,camera);drawVfx();const allocated=memory();
+      const f={owner:{team:0},index:0,pos:new THREE.Vector3(0,1.5,0),origin:new THREE.Vector3(0,2,0),target:new THREE.Vector3(0,0,0),age:.5,hp:10};
+      G.projectiles._catalogueFists=[f];fx.update(1/60,camera);const record=d.fists.get(f),model=record?.model;
+      directorHealthy(d,'fist birth');ensure(model?.parent===scene,'actual external production fist birth');
+      const counts=new Map(),shared=new Set(),listeners=[];model.traverse(o=>{if(o.geometry){counts.set(o.geometry,0);if(o.geometry.userData.specialShared)shared.add(o.geometry);}for(const mat of Array.isArray(o.material)?o.material:o.material?[o.material]:[])counts.set(mat,0);});
+      ensure(counts.size>shared.size,'owned fist resources');
+      for(const obj of counts.keys()){const cb=()=>counts.set(obj,counts.get(obj)+1);obj.addEventListener('dispose',cb);listeners.push([obj,cb]);}
+      let draws=0;const oldDraw=[];model.traverse(o=>{if(o.isMesh){const old=o.onBeforeRender;oldDraw.push([o,old]);o.onBeforeRender=function(...a){draws++;return old?.apply(this,a);};}});
+      try {
+        drawVfx();ensure(draws>0,'production fist actually rendered');const rendered=memory();
+        G.projectiles._catalogueFists=[];
+        if(mode==='clear')fx.clear();else if(mode==='dispose')closeFx(fx);else {f.dead=true;f.hp=0;fx.update(1/60,camera);fx.clear();}
+        directorHealthy(d,'fist retirement');drawVfx();ensure(model.parent===null&&d.fists.size===0,'external fist retired '+mode);
+        for(const [obj,n]of counts)ensure(n===(shared.has(obj)?0:1),'fist owned/shared exact disposal '+mode);
+        // Repeated clear is safe without assuming the native base FX.dispose is idempotent.
+        if(mode!=='dispose'){fx.clear();directorHealthy(d,'repeated clear');drawVfx();noGrowth(allocated,memory(),'fist clear allocation');closeFx(fx);}
+        drawVfx();for(const [obj,n]of counts)ensure(n===(shared.has(obj)?0:1),'no double fist disposal '+mode);
+        const after=memory();noGrowth(before,after,'fist complete lifetime '+mode);
+        vfxResources.fists.push({quality,mode,cycle,directorErrors:d.errors,draws,owned:counts.size-shared.size,shared:shared.size,before,allocated,rendered,after});
+      } finally {for(const[o,cb]of listeners)o.removeEventListener('dispose',cb);for(const[o,cb]of oldDraw)o.onBeforeRender=cb;}
+    }
+    drawVfx();vfxResources.baseline=totalBefore;vfxResources.after=memory();noGrowth(totalBefore,vfxResources.after,'all VFX lifetimes');
+  } finally {
+    G.projectiles._catalogueFists=[];for(const fx of liveFx){try{fx.dispose();}catch{}}
+    G.fx=previousFx;G.projectiles._catalogueFists=previousFists;G.actors=previousActors;
+  }
+  return {rows,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,vfxResources,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig; Vac uses actual Actor.update/Physics and native lifecycle, other specials use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim'};
  },prefix);
  for(const item of result.images)fs.writeFileSync(path.join(out,item.name+'.png'),Buffer.from(item.data.split(',')[1],'base64'));delete result.images;
  assert.deepEqual(errors,[]);result={status:'passed',contentHash:manifest.contentHash,revision:manifest.build.revision,...result,errors};

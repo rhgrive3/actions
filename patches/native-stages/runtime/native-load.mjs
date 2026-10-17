@@ -18,6 +18,7 @@ export async function loadNativeData(id,signal){
  if(digest!==nativeStageBuild.stages.find(s=>s.id===id)?.integritySha256)throw Error('Native integrity manifest changed: '+id);
  const integrity=JSON.parse(new TextDecoder().decode(raw));
  const manifest=JSON.parse(new TextDecoder().decode(await verified(id,'manifest.json',integrity,signal)));
+ if(manifest.diagnosticOnly||manifest.placementReceipt)throw Error('Diagnostic placement data cannot be loaded as a playable stage: '+id);
  const names={vertices:Float32Array,indices:Uint32Array,triangles:Float32Array,normals:Float32Array,flags:Uint32Array,objectIds:Uint32Array,nodes:Float32Array,order:Uint32Array,triangleFace:Int32Array,mask:Uint8Array};
  const file={triangles:'collision',objectIds:'objects',nodes:'bvh'};const data={manifest,integrity};
  await Promise.all(Object.entries(names).map(async([key,Type])=>{data[key]=new Type(await verified(id,(file[key]||key)+'.bin',integrity,signal));}));
