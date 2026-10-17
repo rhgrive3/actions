@@ -35,7 +35,9 @@ const STEP_FRAMES_PER_SECOND = 60;
 // A splash that has not reached terrain after 4 s of free fall (> 450 world
 // units at Blaster FreeGravity) has left every authored stage. Bound the queue.
 const MAX_DROP_FRAMES = 240;
-const MAX_QUEUED_DROPS = 512;
+// Authoritative paint is bounded by accepted weapon cadence and the 240-frame
+// lifetime, not a visual capacity. Evicting the oldest drop at 512 silently
+// erased future floor ownership in crowded fights. Drawing has its own cap.
 export const SPLASH_SHOOTER_PAINT_DEFAULTS = Object.freeze({
   DepthMaxDropHeight: 3, DepthMinDropHeight: 10, DepthScaleMax: 1.2, DepthScaleMin: 1.0,
 });
@@ -135,7 +137,7 @@ function dropQueue(game) {
 // Owner-only falling splash. `spec` supplies gravity, depth law and random
 // spawn velocity; `radius` is the sourced paint half-width for this splash.
 export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direction = null, radius, spec,
-  depth = true, kind = 'drop', initialDownSpeed = 0 }) {
+  depth = true, kind = 'drop', initialDownSpeed = 0, catchUpSeconds = 0 }) {
   const queue = dropQueue(game);
   if (!queue || !owner || owner.remote || !(radius > 0) || !spec || !from) return null;
   const V = from.constructor;
@@ -148,12 +150,12 @@ export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direc
   const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;
   const drop = {
     owner, team, seed: unit(0), radius, spec, depth, kind,
-    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0, carry: 0,
+    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0,
+    carry: Number.isFinite(catchUpSeconds) && catchUpSeconds > 0 ? catchUpSeconds * STEP_FRAMES_PER_SECOND : 0,
     pos: new V(from.x, from.y, from.z),
     vel: new V(fx * vz - fz * vx, vy - Math.max(0, initialDownSpeed), fz * vz + fx * vx),
     next: new V(), hit: null,
   };
-  if (queue.length >= MAX_QUEUED_DROPS) queue.shift();
   queue.push(drop);
   return drop;
 }
@@ -203,12 +205,16 @@ function hitRecord(v) {
 // changes how many whole reference frames are consumed per call.
 export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
   const queue = system?._s3SplashDrops;
-  if (!queue?.length || !(dt > 0)) return 0;
+  // A zero-time flush consumes only explicitly accrued birth-step debt. The
+  // catalogue uses it after its fixed steps; existing drops accrue no time.
+  if (!queue?.length || !Number.isFinite(dt) || dt < 0) return 0;
   const physics = game?.physics;
-  let landed = 0;
+  let landed = 0, write = 0;
+  const landings = [];
   for (let i = 0; i < queue.length; i++) {
     const d = queue[i];
     let done = !physics?.segment || !d.owner || d.owner.remote;
+    let stepTime = (1 - d.carry) / STEP_FRAMES_PER_SECOND;
     d.carry += dt * STEP_FRAMES_PER_SECOND;
     while (!done && d.carry >= 1 - 1e-7) {
       d.carry -= 1;
@@ -218,12 +224,21 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
       d.next.copy(d.pos).addScaledVector(d.vel, step);
       const hit = d.hit = physics.segment(d.pos, d.next, d.hit || hitRecord(d.pos), true);
       d.frames++;
-      if (hit?.hit) { landSplashDrop(game, d, hit); landed++; done = true; break; }
+      if (hit?.hit) { landings.push({drop:d,hit,time:stepTime});landed++;done=true;break; }
       d.pos.copy(d.next);
+      stepTime += step;
       if (d.frames >= MAX_DROP_FRAMES || d.pos.y < waterY - 2) done = true;
     }
-    if (done) { queue.splice(i, 1); i--; }
+    if (!done) queue[write++] = d;
   }
+  // Stable linear compaction: landing a large volley no longer repeatedly
+  // shifts all later drops. Survivors retain their deterministic order.
+  queue.length = write;
+  // Two opposite-team drops may land on different reference ticks inside one
+  // 30Hz update. Apply them by collision time, not by queue iteration order;
+  // otherwise the earlier landing can incorrectly overwrite the later one.
+  landings.sort((a,b)=>a.time-b.time);
+  for(const landing of landings)landSplashDrop(game,landing.drop,landing.hit);
   return landed;
 }
 

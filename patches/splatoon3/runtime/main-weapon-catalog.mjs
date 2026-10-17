@@ -3,7 +3,7 @@ import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
-import { spawnSplashDrop, paintDistanceFlight, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
+import { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 import { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
@@ -284,6 +284,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (!runner.catalogState || runner.catalogState.id !== r.id) runner.catalogState = initialState(r,runner.a);
     return runner.catalogState;
   }
+  function slidePaint(r,s,ending=false){
+    const width=r.parameters.SideStepParam?.SplashSlideParam?.PaintWidthHalf;
+    if(s.slideRunner&&width>0)paintDualiesSlide(G,s.slideRunner,
+      {kind:'dualies',rollPaintWidthHalf:width,rollPaintWorldScale:1},ending);
+  }
   function cancel(runner, keep = false) {
     const s = runner.catalogState;
     if (!s) return;
@@ -298,6 +303,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
+    slidePaint(r,s,true);
     s.roll = null; s.slideRunner = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;
     s.rollingFrames=0;s.rollingDash=false;
     if (s.canopy && !s.canopy.launched) { s.canopy.open = false; if (s.canopy.preparing) s.canopy.preparing = false; }
@@ -657,7 +663,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(hand!==null){runner.hand=hand;runner.sinceHand[hand]=0;}
     notify(a,r,muzzle,aim,charge,hand);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
-    if(Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
+    if(['shooter','splatling','dualies'].includes(r.family)&&Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
       const at=a.pos.clone().addScaledVector(a.aimDir.clone().setY(0).normalize(),finite(splash.SpawnNearestLength,0));
       floorPaint(a,at,nearest.WidthHalfNearest);
@@ -771,7 +777,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (p.ghost) return;
     const bands=descriptor?.DistanceDamage||[],radius=Math.max(...bands.map(b=>b.Distance),0);
     const paintRadius=finite(descriptor?.PaintRadius,0)||finite(p.catalog.descriptor.b.BlasterBurstParam?.SplashDropPaintRadius,0);
-    floorPaint(p.owner,p.pos,paintRadius);
+    if(p.catalog.r.family==='stringer'){
+      // A lodged arrow may be on a wall. A downward-only floor probe discarded
+      // its detonation paint there; use the explicit blast centre offset and
+      // the existing multi-surface sphere footprint, including nearby floor.
+      const centre=p.pos.clone();centre.y+=finite(descriptor?.PaintOffsetY,0);
+      paint(p.owner,centre,paintRadius);
+    }else floorPaint(p.owner,p.pos,paintRadius);
     for(const a of G.actors||[])if(a.alive&&a.team!==p.team){
       if(a===skip)continue;
       base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(p.pos);
@@ -984,8 +996,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const fraction=Math.min(1,clamp(stop),clamp((p.life-(p.age-DT))/DT));
         const end=p.prev.clone().lerp(p.pos,fraction);
         collectBrellaSplashes(s.brellaFlight,p,end,stop<=1||p.age+EPS>=p.life||s.travel+EPS>=s.range||p.pos.y<PLAYER.waterY-1.8,
-          (from,radius,spec,salt)=>spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:s.brellaFlight.volley.seed,salt,from,
-            direction:s.brellaFlight.volley.direction,radius,spec,depth:true}));
+          (from,radius,spec,salt,birthFrame)=>spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:s.brellaFlight.volley.seed,salt,from,
+            direction:s.brellaFlight.volley.direction,radius,spec,depth:true,
+            catchUpSeconds:Math.max(0,p.age+s.carry-birthFrame/HZ)}));
       }
       // Admit every crossed release distance on the unobstructed part of this
       // fixed simulation step, including the final segment before a collision.
@@ -999,7 +1012,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
           const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
           const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
-            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true});
+            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,catchUpSeconds:s.carry});
           if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
           s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
         }
@@ -1033,7 +1046,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(s.r.family==='splatana'&&!p.ghost){
           const spec=addedFamilySplash(d.b,'splatana',0)?.spec;
           const terminal=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:255,from:p.pos,
-            direction:p.vel,radius:d.b.BurstParam?.SplashPaintRadius,spec,depth:false,kind:SOURCE_SHOT_PAINT_KIND});
+            direction:p.vel,radius:d.b.BurstParam?.SplashPaintRadius,spec,depth:false,kind:SOURCE_SHOT_PAINT_KIND,catchUpSeconds:s.carry});
           if(terminal)terminal.drawRadius=d.b.BurstParam.SplashDrawRadius;
         }
         return true;
@@ -1275,8 +1288,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function dualies(runner,r,input,s,dt) {
     const a=runner.a,t=r.parameters.SideStepParam||{};
     if(s.slideRunner){
-      const width=t.SplashSlideParam?.PaintWidthHalf;
-      if(width>0)paintDualiesSlide(G,s.slideRunner,{kind:'dualies',rollPaintWidthHalf:width,rollPaintWorldScale:1},!s.roll);
+      slidePaint(r,s,!s.roll);
       if(!s.roll)s.slideRunner=null;
     }
     if(s.roll){
@@ -1296,6 +1308,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(r.family!=='dualies'||!a.intent.fire||!move||move.lengthSq()<=EPS)return false;
     const s=state(this),t=r.parameters.SideStepParam||{};
     if(s.roll||s.rolls>=finite(t.RepeatCnt,2)||!pay(this,finite(t.InkConsume,.07)*100*inkMod(a)))return false;
+    // Flush the previous endpoint before a same-tick chained roll replaces
+    // its distance accumulator; otherwise the last fraction of the stroke
+    // disappears at turns. Denied rolls never create a new stroke.
+    slidePaint(r,s,true);
     const duration=finite(t.MoveFrame,12)/HZ,direction=move.clone().setY(0).normalize();
     s.roll={remaining:duration,t:0,dur:duration,speed:finite(t.MoveDist,5)/duration,direction,paintStart:a.pos.clone()};s.rolls++;
     s.slideRunner={a,dodge:s.roll,_dodgeDir:direction};
@@ -1333,6 +1349,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     c.paintLast.copy(c.pos);
   }
   const worldUpdate = P.update;
+  P.s3FlushCatalogSplashBirths=function(){advanceSplashDrops(this,0,G,PLAYER.waterY);};
   P.update = function(dt,...args){
     if(Number.isFinite(dt)&&dt>0)for(const c of launchedCanopies){
       const next=c.pos.clone().addScaledVector(c.dir,c.speed*dt);
@@ -1351,21 +1368,42 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     return worldUpdate.call(this,dt,...args);
   };
+  function heldCanopyFoot(a,canopy,c,measure,wasOpen,dt){
+    const radius=c.FootSplashPaintRadius,wait=c.FootSplashWaitFrame,span=c.FootSplashSpanFrame;
+    // Connect only complete, explicit source rows. Normal/Wide omit the
+    // timing fields; do not invent their type defaults. A zero span is a
+    // single attempt per opening in this interpreter, not a 60Hz ink source.
+    if(![radius,wait,span].every(Number.isFinite)||radius<=0||wait<0||span<0)return;
+    if(!canopy.open){canopy.footFrames=0;canopy.footNext=wait;return;}
+    canopy.footFrames=wasOpen?(canopy.footFrames||0)+dt*HZ:
+      clamp(canopy.age*HZ-measure.open,0,dt*HZ);
+    if(!wasOpen)canopy.footNext=wait;
+    while(canopy.footFrames+EPS>=(canopy.footNext??wait)){
+      canopy.footNext=span>0?(canopy.footNext??wait)+span:Infinity;
+      if(a.grounded&&!a.remote&&a.alive!==false){
+        base.copy(a.pos);base.y+=.15;
+        const h=G.physics.raycast(base,down,.4,floorHit,true);
+        if(h.hit&&h.normal.y>=.5)paint(a,h.point,radius,1,null,h.face);
+      }
+    }
+  }
   function brella(runner,r,input,s,dt) {
     const a=runner.a,p=r.parameters,measure=BRELLA_MEASURED[r.sourceActor],t=weaponParam(r),c=p.spl__BulletShelterCanopyParam||{};
     s.naked=Math.max(0,s.naked-dt);
     const canopy=s.canopy;
     if(canopy){
+      const wasOpen=canopy.open;
       canopy.age+=dt;
       {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
         // Prep belongs to the admitted pre-opening canopy only; do not prolong after input cancellation.
-        if(canopy.preparing)canopy.preparing=!!input.fire&&canopy.age*HZ<measure.open;
-        canopy.open=!!input.fire&&canopy.age*HZ>=measure.open;
+        if(canopy.preparing)canopy.preparing=!!input.fire&&canopy.age*HZ+EPS<measure.open;
+        canopy.open=!!input.fire&&canopy.age*HZ+EPS>=measure.open;
         if(canopy.open){
           const total=p.spl__WeaponShelterCanopyParam.InkConsumeUmbrella||0;
           if(!pay(runner,Number.isFinite(measure.launch)?total*100/measure.launch*HZ*dt*inkMod(a):0,finite(t.InkRecoverStopCharge,20)/HZ))canopy.open=false;
         }else if(a.submerged||a.climbing) canopy.hp=Math.min(finite(c.CanopyHP,measure.hp*10)/10,canopy.hp+finite(c.CanopyCureHPPerFrame,25)/10*HZ*dt);
-        if(canopy.open&&canopy.age*HZ>=measure.open+measure.launch&&p.spl__WeaponShelterCanopyParam.IsCanopyShot!==false){
+        heldCanopyFoot(a,canopy,c,measure,wasOpen,dt);
+        if(canopy.open&&canopy.age*HZ+EPS>=measure.open+measure.launch&&p.spl__WeaponShelterCanopyParam.IsCanopyShot!==false){
           canopy.launched=true;canopy.remaining=finite(c.CanopyFrame,300)/HZ;
           s.naked=finite(c.CanopyNakedFrame,330)/HZ;
           canopy.owner=a;canopy.weaponId=r.id;canopy.speed=finite(c.CanopyInitSpeed,7.92);canopy.paintRadius=finite(c.CanopyPaintRadius,1);

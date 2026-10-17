@@ -1,0 +1,81 @@
+{
+  "referenceVersion": "Splatoon 3 11.3.0",
+  "baseMain": "e6a27000dfd36c2d8ddb24bd3a167ac984d9623b",
+  "build": "96f1516a11b312abe9cbd95d5a3535d318e4fcb3624a36d92022e577a60e88a3",
+  "retailHardwareMeasured": false,
+  "node": {
+    "sourceBoundaries": {
+      "tests": 16,
+      "pass": 16,
+      "fail": 0,
+      "skipped": 0
+    },
+    "emittedAddedAndBoundaries": {
+      "tests": 44,
+      "pass": 44,
+      "fail": 0,
+      "skipped": 0
+    },
+    "localQuality": {
+      "tests": 1062,
+      "pass": 1053,
+      "fail": 0,
+      "skipped": 9
+    },
+    "practiceAndLoading": {
+      "tests": 90,
+      "pass": 85,
+      "fail": 0,
+      "skipped": 5
+    },
+    "pagesIdentity": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skipped": 0
+    },
+    "baselineBoundaries13": {
+      "tests": 13,
+      "pass": 2,
+      "fail": 11,
+      "skipped": 0
+    },
+    "baselineAdditionalBrella3": {
+      "tests": 3,
+      "pass": 0,
+      "fail": 3,
+      "skipped": 0
+    },
+    "relatedRegressions": {
+      "tests": 493,
+      "pass": 492,
+      "fail": 0,
+      "skipped": 1
+    }
+  },
+  "browser": {
+    "addedFamilyCases": 45,
+    "cadences": [
+      30,
+      60,
+      120
+    ],
+    "temporalSamplesPerCase": 30,
+    "saberOrigins": {
+      "cases": 12,
+      "maxError": 0
+    },
+    "catalog": "passed",
+    "sevenClaims": "passed",
+    "paintMask": "paint-mask.json"
+  },
+  "pages": {
+    "quick": "passed",
+    "pythonLoadingHarness": {
+      "tests": 4,
+      "passed": 3,
+      "skipped": 1
+    },
+    "startupBudget": "passed"
+  }
+}
