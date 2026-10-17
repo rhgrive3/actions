@@ -47,7 +47,8 @@ EYEBALLS = ['HEAD_eyes', 'HEAD_eyes_02', 'HEAD_eyes_18', 'HEAD_eyes_19']
 IRIS_BALLS = {'HEAD_eyes_18': -1, 'HEAD_eyes': 1}
 EAR_PARTS = ['HEAD_face_02', 'HEAD_face_03', 'HEADGEAR_headgear', 'HEADGEAR_headgear_02']
 NECK = 'BODY_torso'
-CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS + [NECK]))   # backed up / restored
+SCALP = 'HAIR_scalp'   # moved with the upper forehead (profile_fit 'also')
+CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS + [NECK, SCALP]))   # backed up / restored
 
 
 def restore(drop=False):
@@ -761,6 +762,71 @@ def _ear_relief(uv, D, s):
     return h
 
 
+def _ear_tubes(ear, D, s, tip, a1, a2, nv, mat):
+    """The height-field rim read as a flat plate with a thin bright line on it ("too artificial"): the reference
+    rims are rolled, thick and round.  Each rim in s['tubes'] is a Blender curve with a round bevel along a path on
+    the ear plane (outline indices moved inward by 'inset' mm, or 'pts'), radius and lift off the mid-plane
+    (toward the front, mm) interpolated along the path; the tubes are joined to the slab and merged with it by a
+    second voxel remesh, then Smooth."""
+    O = np.array(D['outline'], float)
+    tg = np.roll(O, -1, 0) - np.roll(O, 1, 0)
+    tg /= np.linalg.norm(tg, axis=1)[:, None]
+    area = np.sum(O[:, 0] * np.roll(O[:, 1], -1) - np.roll(O[:, 0], -1) * O[:, 1])
+    inward = np.c_[-tg[:, 1], tg[:, 0]] * (1 if area > 0 else -1)
+    deps = bpy.context.evaluated_depsgraph_get()
+    inv = np.array(ear.matrix_world.inverted())
+    Lm = M.to_local(er.world(ear)) * 1000
+    tree = BVHTree.FromPolygons([Vector(v) for v in Lm], [list(p.vertices) for p in ear.data.polygons])
+    V = [np.array([v.co for v in ear.data.vertices])]
+    F = [list(p.vertices) for p in ear.data.polygons]
+    for tb in s['tubes']:
+        # path entries: an outline index (moved inward by 'inset' mm) or an ear-plane point [u, v]
+        P = np.array([O[i % len(O)] + inward[i % len(O)] * tb.get('inset', 0.0) if isinstance(i, int) else i
+                      for i in tb['path']], float)
+        P = _chaikin(P, 3)
+        u = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
+        u /= u[-1]
+
+        def interp(v):     # a number, or [[fraction along the path, value], ...]
+            v = np.atleast_2d(np.asarray(v, float))
+            return np.full(len(u), v[0, 0]) if v.shape[1] == 1 else np.interp(u, v[:, 0], v[:, 1])
+        r, lift = interp(tb['r']), interp(tb.get('lift', 0.0))
+        # the centre sits 'lift' mm off the slab's front surface there (ray from the front along -n)
+        base = tip + P[:, :1] * a1 + P[:, 1:] * a2
+        front = np.zeros(len(P))
+        for i, b in enumerate(base):
+            hit = tree.ray_cast(Vector(b + nv * 40), Vector(-nv))
+            front[i] = (np.array(hit[0]) - b) @ nv if hit[0] is not None else 0.0
+        Wp = M.to_world((base + (front + lift)[:, None] * nv) / 1000)
+        cu = bpy.data.curves.new('ear_tube', 'CURVE')
+        cu.dimensions, cu.bevel_depth, cu.bevel_resolution, cu.use_fill_caps = '3D', 0.001, 6, True
+        sp = cu.splines.new('POLY')
+        sp.points.add(len(Wp) - 1)
+        for pt, w, rr in zip(sp.points, Wp, r):
+            pt.co, pt.radius = (*w, 1.0), float(rr)
+        ob = bpy.data.objects.new('ear_tube', cu)
+        bpy.context.scene.collection.objects.link(ob)
+        deps.update()
+        me = bpy.data.meshes.new_from_object(ob.evaluated_get(deps))
+        co = np.array([v.co for v in me.vertices])
+        co = (np.c_[co, np.ones(len(co))] @ inv.T)[:, :3]
+        off = sum(len(v) for v in V)
+        V.append(co)
+        F += [[off + i for i in p.vertices] for p in me.polygons]
+        bpy.data.objects.remove(ob)
+        bpy.data.curves.remove(cu)
+        bpy.data.meshes.remove(me)
+    name = ear.data.name
+    new = bpy.data.meshes.new(name + '_tubes')
+    new.from_pydata(np.concatenate(V).tolist(), [], F)
+    new.materials.append(mat)
+    old, ear.data = ear.data, new
+    bpy.data.meshes.remove(old)
+    new.name = name
+    _apply_modifier(ear, 'REMESH', mode='VOXEL', voxel_size=s.get('tube_voxel_mm', s['voxel_mm']) / 1000)
+    _apply_modifier(ear, 'SMOOTH', factor=0.5, iterations=int(s.get('tube_smooth', 8)))
+
+
 def _apply_modifier(obj, kind, **kw):
     md = obj.modifiers.new('ear_' + kind.lower(), kind)
     for k, v in kw.items():
@@ -862,6 +928,8 @@ def rebuild_ears(cfg):
     L = L + ((w - (w.max() + w.min()) / 2) * (f - 1) + disp * np.maximum(f, 0.25))[:, None] * nv
     set_local_mm(ear, L)
     _apply_modifier(ear, 'SMOOTH', factor=0.5, iterations=int(s['smooth_iterations']))
+    if s.get('tubes'):
+        _ear_tubes(ear, D, s, tip, a1, a2, nv, em)
     _apply_modifier(ear, 'DECIMATE', ratio=s['vertices'] / len(ear.data.vertices))
     for poly in ear.data.polygons:
         poly.use_smooth = True
@@ -888,6 +956,9 @@ def rebuild_ears(cfg):
     bm.free()
     place_piercings(ear, nv, D['piercings'])
     print('FACE_VOLUME ears rebuilt', len(ear.data.vertices), 'vertices each')
+
+
+BAR_MATERIAL = 'headgear_2cc6c8'
 
 
 def place_piercings(ear, nv, PI):
@@ -924,10 +995,17 @@ def place_piercings(ear, nv, PI):
         dist = lambda order: sum(np.linalg.norm(Lb[lb == j].mean(0) - tops[i]) for i, j in zip(hoops, order))
         beads = min((beads, beads[::-1]), key=dist)
         for hi, bi, hole in zip(hoops, beads, holes * [-side, 1, 1]):
+            # the reference hoops are larger (sideR about 24 px tall, the model's 17): scaled about their top
+            Lh[lh == hi] = tops[hi] + (Lh[lh == hi] - tops[hi]) * PI.get('hoop_scale', 1.0)
             Lh[lh == hi] += hole + [0, PI['hoop_up'], 0] - tops[hi]
             Lb[lb == bi] += hole + nv * [-side, 1, 1] * PI['bead_out'] - Lb[lb == bi].mean(0)
     set_local_mm(hg, Lh)
     set_local_mm(bar, Lb)
+    if PI.get('bar_colour'):
+        # the reference bar is a pale blue-grey metal, not teal
+        mat = bpy.data.materials[BAR_MATERIAL]
+        keep_material(mat)
+        next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value = list(PI['bar_colour']) + [1.0]
     # the reference has the bar on the left ear too: a mirrored copy
     inv = np.array(bar.matrix_world.inverted())
     Wm = M.to_world(Lb[on_bar] * [-1, 1, 1] / 1000)
@@ -1149,7 +1227,7 @@ def keep_material(mat):
 def restore_materials():
     if bpy.data.materials.get(EAR_MATERIAL) is not None and not bpy.data.materials[EAR_MATERIAL].users:
         bpy.data.materials.remove(bpy.data.materials[EAR_MATERIAL])
-    for name in DECAL_MATERIALS.values():
+    for name in list(DECAL_MATERIALS.values()) + [BAR_MATERIAL]:
         mat = bpy.data.materials.get(name)
         if mat is None or SUFFIX not in mat:
             continue
@@ -1648,6 +1726,19 @@ def soften_lights(cfg):
         if SUFFIX + '_energy' not in light:
             light[SUFFIX + '_energy'] = light.energy
         light.energy = energy
+    # the key was warm (1, 0.9, 0.82) and the fill and the sky cool: lit parts came out orange and the parts
+    # under them grey-brown (the reference is lit evenly in colour); colours nearer white, the sky a little stronger
+    for name, colour in cfg.get('colour', {}).items():
+        light = bpy.data.objects[name].data
+        if SUFFIX + '_colour' not in light:
+            light[SUFFIX + '_colour'] = list(light.color)
+        light.color = colour
+    if 'world' in cfg:
+        world = bpy.context.scene.world
+        bg = next(n for n in world.node_tree.nodes if n.type == 'BACKGROUND')
+        if SUFFIX + '_strength' not in world:
+            world[SUFFIX + '_strength'] = bg.inputs['Strength'].default_value
+        bg.inputs['Strength'].default_value = cfg['world']
     if cfg.get('side_suns'):
         # the reference lights the sides of the face about as brightly as the front; here the sides (the cheek
         # below the triangle, the side of the jaw) were 5-8 L darker in the 3/4 and side views while the front
@@ -1740,13 +1831,34 @@ def eye_look(cfg):
             t.links.new(rng.outputs['Result'], mx.inputs[0])
             t.links.new(rw.outputs['Result'], mx.inputs[1])
             t.links.new(mx.outputs[0], mul.inputs[7])
-        t.links.new(mul.outputs[2], bsdf.inputs['Base Color'])
+        out = mul.outputs[2]
+        if cfg.get('gain'):
+            # the eye colours are brighter than the reference's (front view white about 245 vs 217, iris teal
+            # 63/207/187 vs 35/152/143): the colour is multiplied by cfg['gain']; the near-white catch lights
+            # (keep_white mask) stay as they are
+            gmix = t.nodes.new('ShaderNodeMix')
+            gmix.data_type, gmix.blend_type = 'RGBA', 'MIX'
+            gmix.inputs[6].default_value = (*cfg['gain'], 1.0)
+            gmix.inputs[7].default_value = (1.0, 1.0, 1.0, 1.0)
+            gmul = t.nodes.new('ShaderNodeMix')
+            gmul.data_type, gmul.blend_type = 'RGBA', 'MULTIPLY'
+            gmul.inputs['Factor'].default_value = 1.0
+            for n in (gmix, gmul):
+                n.name = n.label = EYE_LOOK + '_gain_' + n.blend_type
+            if cfg.get('keep_white'):
+                t.links.new(rw.outputs['Result'], gmix.inputs['Factor'])
+            else:
+                gmix.inputs['Factor'].default_value = 0.0
+            t.links.new(out, gmul.inputs[6])
+            t.links.new(gmix.outputs[2], gmul.inputs[7])
+            out = gmul.outputs[2]
+        t.links.new(out, bsdf.inputs['Base Color'])
         if cfg.get('emission'):
             # the white behind the iris lies in the socket's shadow and went black in the side view, where the
             # reference shows it white: a little of the eye's own colour as emission (old value kept)
             if SUFFIX + '_emit' not in bpy.data.materials[mat_name]:
                 bpy.data.materials[mat_name][SUFFIX + '_emit'] = bsdf.inputs['Emission Strength'].default_value
-            t.links.new(mul.outputs[2], bsdf.inputs['Emission Color'])
+            t.links.new(out, bsdf.inputs['Emission Color'])
             bsdf.inputs['Emission Strength'].default_value = cfg['emission']
 
 
@@ -1759,7 +1871,7 @@ def restore_eye_look():
         mine = [n for n in t.nodes if n.name.startswith(EYE_LOOK)]
         if not mine:
             continue
-        mul = next(n for n in mine if n.bl_idname == 'ShaderNodeMix')
+        mul = next(n for n in mine if n.name == EYE_LOOK + '_ShaderNodeMix')
         src = mul.inputs[6].links[0].from_socket
         bsdf = next(n for n in t.nodes if n.type == 'BSDF_PRINCIPLED')
         if SUFFIX + '_emit' in mat:
@@ -1798,6 +1910,13 @@ def restore_lights():
         if SUFFIX + '_energy' in light:
             light.energy = light[SUFFIX + '_energy']
             del light[SUFFIX + '_energy']
+        if SUFFIX + '_colour' in light:
+            light.color = list(light[SUFFIX + '_colour'])
+            del light[SUFFIX + '_colour']
+    world = bpy.context.scene.world
+    if world is not None and SUFFIX + '_strength' in world:
+        next(n for n in world.node_tree.nodes if n.type == 'BACKGROUND').inputs['Strength'].default_value = world[SUFFIX + '_strength']
+        del world[SUFFIX + '_strength']
 
 
 CORNEA_MATERIAL = 'eyes_000000'
@@ -1858,6 +1977,14 @@ def raise_iris(cfg):
         uvl.foreach_set('uv', uv.ravel())
         me.update()
         print('FACE_VOLUME iris', name, 'up px', cfg['px'], 'uv shift', np.round(duv, 4).tolist())
+        if cfg.get('scale', 1.0) != 1.0:
+            # the painted iris is smaller than the reference's (front view radius 13.6 / 12.9 px, reference 14.3 /
+            # 14.2): the UV map shrinks about the UV under the front-view iris centre, so the iris grows on the ball
+            c = uv_at(*cfg['scale_centre_px'][0 if side < 0 else 1])
+            uv = c + (uv - c) / cfg['scale']
+            uvl.foreach_set('uv', uv.ravel())
+            me.update()
+            print('FACE_VOLUME iris', name, 'scale', cfg['scale'], 'about uv', np.round(c, 4).tolist())
 
 
 IRIS_IMAGES = {'Image_0': (184.5, 134.0), 'Image_1': (198.5, 134.0)}
@@ -2209,6 +2336,31 @@ def main():
                 me.update()
                 print('FACE_VOLUME', step['name'], 'neck vertices', int((wn > 0.001).sum()), 'mm', step.get('mm_side', step.get('mm')), 'lean', step.get('lean'))
                 continue
+            elif step['kind'] == 'profile_fit':
+                # the side-view profile of the forehead had a groove (head y 44-48 mm) over a part that stood forward
+                # (y 31-43 mm) of the reference's smooth arc: forward (+) / back (-) move (head z, mm) by height
+                # (step['profile'] = [[y_mm, dz_mm], ...], measured row by row against the reference outline), full
+                # near the midline and fading to the sides (step['x'] = [full, none], |x| mm), front only (z > 60 mm).
+                # Blender's Warp, one for the forward part and one for the back part
+                # step['also']: meshes lying on that part (the scalp shell over the upper forehead) take the same
+                # field, else the moved face cuts through them in a line
+                pr = np.array(step['profile'], float)
+                o = np.argsort(pr[:, 0])
+                x0, x1 = step['x']
+                before = er.world(face)
+                for obj in [face] + [bpy.data.objects[n] for n in step.get('also', [])]:
+                    ol = loc if obj is face else M.to_local(er.world(obj)) * 1000
+                    d = np.interp(ol[:, 1], pr[o, 0], pr[o, 1], left=0.0, right=0.0)
+                    t = np.clip((x1 - np.abs(ol[:, 0])) / (x1 - x0), 0, 1)
+                    d *= t * t * (3 - 2 * t) * np.clip((ol[:, 2] - 60) / 20, 0, 1)
+                    for sign in (1, -1):
+                        part = np.maximum(sign * d, 0)
+                        if part.max() > 0:
+                            warp(obj, part / part.max(), [0, 0, sign * float(part.max())], ol)
+                print('FACE_VOLUME', step['name'], 'max move mm',
+                      round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 2),
+                      'seam gap closed mm', round(float(join_seam(face, pairs)), 3))
+                continue
             elif step['kind'] == 'neck_normals':
                 # the face laid on the neck (jaw_tuck) ends on it: its own shading differs from the neck's, so the
                 # border reads as a line from under the ear to the neck front (the reference has none).  Blender's
@@ -2278,6 +2430,15 @@ def main():
             elif step['kind'] == 'displace':
                 er.apply_weighted_modifier(face, w, 'DISPLACE', direction='NORMAL', strength=step['mm'] / 1000,
                                            mid_level=0.0)
+            elif step['kind'] == 'eye_wrap':
+                # the lid margin rests on the eyeball (the usual eyelid build): weighted Shrinkwrap of the lid skin
+                # onto this side's eyeball, Above Surface at offset_mm, so skin moved over the eye stays in front
+                for side, ball in ((-1, 'HEAD_eyes_18'), (1, 'HEAD_eyes')):
+                    ws = w * (np.sign(loc[:, 0]) == side)
+                    if ws.any():
+                        er.apply_weighted_modifier(face, ws, 'SHRINKWRAP', target=bpy.data.objects[ball],
+                                                   wrap_method='NEAREST_SURFACEPOINT', wrap_mode='ABOVE_SURFACE',
+                                                   offset=step['offset_mm'] / 1000)
             else:
                 # seam_chunks > 1: smooth across the open midline too.  Each half is smoothed on its own for a few
                 # iterations, then the midline pairs are joined again, so the joint never drifts far and no fold

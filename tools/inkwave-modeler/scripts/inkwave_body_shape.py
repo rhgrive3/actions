@@ -105,9 +105,26 @@ def nape_field(obj, cfg):
     prof = np.array(cfg['profile'], float)
     order = np.argsort(prof[:, 0])
     d = np.interp(L[:, 1], prof[order, 0], prof[order, 1], left=0.0, right=0.0)
+    if cfg.get('profile_left'):
+        # the left (+x) back of the neck stood 10-14 px behind the reference in the left side view while the right
+        # one matched: the left half takes its own profile (negative = forward), blended across the midline
+        pl = np.array(cfg['profile_left'], float)
+        ol = np.argsort(pl[:, 0])
+        dl = np.interp(L[:, 1], pl[ol, 0], pl[ol, 1], left=0.0, right=0.0)
+        m0, m1 = cfg.get('x_mix', [-8.0, 8.0])
+        t = smoothstep((L[:, 0] - m0) / (m1 - m0))
+        d = d * (1 - t) + dl * t
+    else:
+        t = np.zeros(len(L))
     x_full, x_out = cfg['x']
     z0, z1 = cfg['z_back']
-    return d * smoothstep((x_out - np.abs(L[:, 0])) / (x_out - x_full)) * smoothstep((z0 - L[:, 2]) / (z0 - z1))
+    fade = smoothstep((x_out - np.abs(L[:, 0])) / (x_out - x_full))
+    if cfg.get('profile_left') and cfg.get('x_left'):
+        # the left side view's back edge is on the side of the neck (|x| 17-35 mm), where the right profile has
+        # faded: the left half fades over its own, wider range
+        xl_full, xl_out = cfg['x_left']
+        fade = fade * (1 - t) + smoothstep((xl_out - np.abs(L[:, 0])) / (xl_out - xl_full)) * t
+    return d * fade * smoothstep((z0 - L[:, 2]) / (z0 - z1))
 
 
 def nape(cfg):
@@ -118,11 +135,781 @@ def nape(cfg):
     peak = max(m for _, m in cfg['profile'])
     for name in cfg['meshes']:
         obj = bpy.data.objects[name]
-        w = nape_field(obj, cfg) / peak
+        f = nape_field(obj, cfg)
         before = er.world(obj)
-        warp(obj, w, tuple(back * peak / 1000))
+        for sign in (1, -1):        # back (profile > 0) and forward (profile_left < 0) as two Warps
+            w = np.maximum(sign * f, 0) / peak
+            if w.max() > 0:
+                warp(obj, w, tuple(sign * back * peak / 1000))
         print('BODY_SHAPE nape', name, 'vertices', int((w > 1e-3).sum()), 'max move mm',
               round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def collar_lower(cfg):
+    """The collar (turtleneck) top stood higher than the reference in the side and back views (left side view
+    14-16 px, back right 10-12, right 4-8; the front matched): its top part goes down (head-frame -y, Blender's
+    Warp) by an amount that depends on the direction round the neck (cfg['angles'] = [deg, mm]: 0 = front,
+    90 = left (+x), 180 = back), full from cfg['y'][1] up, nothing from cfg['y'][0] down (the collar is squeezed,
+    not moved), only within cfg['r_max'] mm of the neck axis (cfg['centre_xz'])."""
+    down = er.M.to_world_delta(np.array([[0.0, -1.0, 0.0]]))[0]
+    down /= np.linalg.norm(down)
+    ang = np.array(cfg['angles'], float)
+    ang = np.r_[ang[-1:] - [360, 0], ang, ang[:1] + [360, 0]]
+    peak = float(ang[:, 1].max())
+    cx, cz = cfg['centre_xz']
+    y0, y1 = cfg['y']
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        L = er.M.to_local(er.world(obj)) * 1000
+        phi = np.degrees(np.arctan2(L[:, 0] - cx, L[:, 2] - cz)) % 360
+        amount = np.interp(phi, ang[:, 0], ang[:, 1])
+        r = np.hypot(L[:, 0] - cx, L[:, 2] - cz)
+        w = amount / peak * smoothstep((L[:, 1] - y0) / (y1 - y0)) * smoothstep((cfg['r_max'] - r) / 10.0)
+        before = er.world(obj)
+        warp(obj, w, tuple(down * peak / 1000))
+        print('BODY_SHAPE collar_lower', name, 'vertices', int((w > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def head_side_field(obj, cfg):
+    """Inward move (mm, head-frame |x|) of the sides of the head round the ear root: in the front view the head
+    behind the cheek (|x| 92-95 mm at z -10..20) stood 3-9 px outside the reference's cheek outline, so the cheek
+    and the jaw angle read wide and square.  Amount by height per side (cfg['profile_right'] for x < 0,
+    cfg['profile_left'] for x > 0, [y_mm, mm] pairs), full over cfg['z'][1]..cfg['z'][2] and none beyond
+    cfg['z'][0] / cfg['z'][3] (the cheek front and the back of the head stay), none inside |x| cfg['x'][0]."""
+    L = er.M.to_local(er.world(obj)) * 1000
+    out = np.zeros(len(L))
+    for key, side in (('profile_right', -1), ('profile_left', 1)):
+        pr = np.array(cfg[key], float)
+        o = np.argsort(pr[:, 0])
+        d = np.interp(L[:, 1], pr[o, 0], pr[o, 1], left=0.0, right=0.0)
+        out = np.where(np.sign(L[:, 0]) == side, d, out)
+    z0, z1, z2, z3 = cfg['z']
+    out *= smoothstep((L[:, 2] - z0) / (z1 - z0)) * smoothstep((z3 - L[:, 2]) / (z3 - z2))
+    x0, x1 = cfg['x']
+    return out * smoothstep((np.abs(L[:, 0]) - x0) / (x1 - x0)), L
+
+
+def head_side_in(cfg):
+    """The same field on the head and the shaved-temple shell over it (Blender's Warp, one vector per side)."""
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        f, L = head_side_field(obj, cfg)
+        peak = float(f.max())
+        if peak <= 0:
+            continue
+        before = er.world(obj)
+        for side in (-1, 1):
+            vec = er.M.to_world_delta(np.array([[-side * 1.0, 0.0, 0.0]]))[0]
+            vec = vec / np.linalg.norm(vec) * peak / 1000
+            warp(obj, f * (np.sign(L[:, 0]) == side) / peak, tuple(vec))
+        print('BODY_SHAPE head_side_in', name, 'vertices', int((f > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def skull_back(cfg):
+    """The back of the skull bulged out behind the reference's line in the left side view (10-12 px over rows
+    300-345): forward move (head z, Blender's Warp) by height (cfg['profile'] = [y_mm, mm]), on the back only
+    (cfg['z'] = [none, full], head z mm), on the left half (cfg['x_side'] = [none, full], head x mm) and fading to the
+    sides (cfg['x_out'] = [full, none], |x| mm); the same field on the head and on the shells that lie on it."""
+    fwd = er.M.to_world_delta(np.array([[0.0, 0.0, 1.0]]))[0]
+    fwd /= np.linalg.norm(fwd)
+    pr = np.array(cfg['profile'], float)
+    o = np.argsort(pr[:, 0])
+    peak = float(pr[:, 1].max())
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        L = er.M.to_local(er.world(obj)) * 1000
+        d = np.interp(L[:, 1], pr[o, 0], pr[o, 1], left=0.0, right=0.0)
+        (z0, z1), (s0, s1), (x0, x1) = cfg['z'], cfg['x_side'], cfg['x_out']
+        w = d / peak * smoothstep((z0 - L[:, 2]) / (z0 - z1)) * smoothstep((L[:, 0] - s0) / (s1 - s0))
+        w *= smoothstep((x1 - np.abs(L[:, 0])) / (x1 - x0))
+        before = er.world(obj)
+        warp(obj, w, tuple(fwd * peak / 1000))
+        print('BODY_SHAPE skull_back', name, 'vertices', int((w > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def smooth_regions(steps):
+    """Bumps left on the bald head and the neck after the shape steps (2026-10-08, user: 後頭部の凸凹を滑らかに):
+    the back of the skull had a flat band with horizontal ridges (skull_back moved y -25..28 forward 12 mm, the
+    source bulge above stayed) and the head-to-neck join at the back had a ledge and a groove.  Each step is
+    Blender's Smooth on cfg['mesh'] limited to an ellipsoid (head-frame mm, cfg['centre'], cfg['r']; weight
+    cos^2 of the scaled distance).  HEAD_face is two halves not joined at the midline: the step runs in chunks
+    and puts each midline pair back on its mean after each (as face_volume does).  Meshes lying on it
+    (cfg['follow']) follow by Surface Deform bound before."""
+    import inkwave_face_volume as fv
+    for cfg in steps:
+        obj = bpy.data.objects[cfg['mesh']]
+        pairs = fv.seam_pairs(obj)
+        mods = []
+        for r in cfg.get('follow', []):
+            f = bpy.data.objects[r]
+            mod = f.modifiers.new('INKWAVE_smooth_follow', 'SURFACE_DEFORM')
+            mod.target = obj
+            er.with_object(f, lambda: bpy.ops.object.surfacedeform_bind(modifier=mod.name))
+            if not mod.is_bound:
+                raise RuntimeError(f'Surface Deform could not bind {r}')
+            mods.append((f, mod))
+        L = er.M.to_local(er.world(obj)) * 1000
+        d = np.linalg.norm((L - np.array(cfg['centre'], float)) / np.array(cfg['r'], float), axis=1)
+        w = np.where(d < 1, np.cos(np.clip(d, 0, 1) * np.pi / 2) ** 2, 0.0)
+        if cfg.get('y_min') is not None:
+            w *= smoothstep((L[:, 1] - cfg['y_min'][0]) / (cfg['y_min'][1] - cfg['y_min'][0]))
+        if cfg.get('keep_near'):
+            # the head's lower edge lies on the neck: smoothing it lifts the edge off the neck and its teeth show,
+            # so nothing moves within keep_near['mm'][0] of keep_near['mesh'], full beyond mm[1]
+            from mathutils.bvhtree import BVHTree
+            kn = cfg['keep_near']
+            other = bpy.data.objects[kn['mesh']]
+            tree = BVHTree.FromObject(other, bpy.context.evaluated_depsgraph_get())
+            inv = other.matrix_world.inverted()
+            idx = np.flatnonzero(w > 1e-4)
+            dist = np.full(len(w), 1e9)
+            Wd = er.world(obj)
+            dist[idx] = [tree.find_nearest(inv @ Vector(Wd[i]))[3] * 1000 for i in idx]
+            d0, d1 = kn['mm']
+            w *= smoothstep((dist - d0) / (d1 - d0))
+        before = er.world(obj)
+        chunks = int(cfg.get('chunks', 1))
+        for _ in range(chunks):
+            er.apply_weighted_modifier(obj, w, 'SMOOTH', factor=cfg['factor'], iterations=max(1, cfg['iters'] // chunks))
+            if len(pairs):
+                fv.join_seam(obj, pairs)
+        for f, mod in mods:
+            er.apply_modifier(f, mod)
+        print('BODY_SHAPE smooth', cfg['name'], 'vertices', int((w > 1e-3).sum()), 'midline pairs', len(pairs),
+              'max move mm', round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def set_local_mm(obj, loc):
+    """Vertex positions from head-frame mm."""
+    W = er.M.to_world(np.asarray(loc, float) / 1000)
+    inv = np.array(obj.matrix_world.inverted())
+    co = (np.c_[W, np.ones(len(W))] @ inv.T)[:, :3]
+    obj.data.vertices.foreach_set('co', co.astype(np.float32).ravel())
+    obj.data.update()
+
+
+def neck_flare(cfg):
+    """The neck went straight up into the skull: from the back and the back 3/4 the head sat on it like a ball on a
+    stick with a ledge under it (2026-10-08, user: もっと滑らかに繋げろ).  The top of the neck widens toward the
+    skull: Blender's Displace along the normals on the neck (cfg['mesh']), cfg['mm'] at the top, by height
+    (smoothstep from head y cfg['y'][0] to cfg['y'][1], back to 0 by cfg['y'][2] inside the head), back and sides
+    only (head z < cfg['z'][0], full behind cfg['z'][1])."""
+    obj = bpy.data.objects[cfg['mesh']]
+    L = er.M.to_local(er.world(obj)) * 1000
+    y0, y1, y2 = cfg['y']
+    w = smoothstep((L[:, 1] - y0) / (y1 - y0)) * smoothstep((y2 - L[:, 1]) / (y2 - y1))
+    w *= smoothstep((cfg['z'][0] - L[:, 2]) / (cfg['z'][0] - cfg['z'][1]))
+    before = er.world(obj)
+    fl = cfg.get('follow')
+    if fl:
+        # the head's lower band lies on the neck: it takes the move of the nearest neck vertex (full within
+        # fl['mm'][0] of the neck, none beyond fl['mm'][1]) so its edge moves out with the neck instead of showing
+        # (Surface Deform does not bind the head to this neck)
+        from mathutils.kdtree import KDTree
+        head = bpy.data.objects[fl['mesh']]
+        Wn0 = er.world(obj)
+        kd = KDTree(len(Wn0))
+        for i, c in enumerate(Wn0):
+            kd.insert(Vector(c), i)
+        kd.balance()
+        Wh = er.world(head)
+        Lh = er.M.to_local(Wh) * 1000
+        near = np.flatnonzero(Lh[:, 1] < y2 + 10)
+        nid = np.zeros(len(Wh), int)
+        dist = np.full(len(Wh), 1e9)
+        for i in near:
+            _, j, dd = kd.find(Vector(Wh[i]))
+            nid[i], dist[i] = j, dd * 1000
+        d0, d1 = fl['mm']
+        wh = 1 - smoothstep((dist - d0) / (d1 - d0))
+    er.apply_weighted_modifier(obj, w, 'DISPLACE', direction='NORMAL', strength=cfg['mm'] / 1000, mid_level=0.0)
+    if cfg.get('smooth_iters'):
+        er.apply_weighted_modifier(obj, np.clip(w * 3, 0, 1), 'SMOOTH', factor=0.5, iterations=cfg['smooth_iters'])
+    if fl:
+        mv = er.world(obj) - Wn0
+        Lnew = er.M.to_local(Wh + wh[:, None] * mv[nid]) * 1000
+        set_local_mm(head, Lnew)
+        print('BODY_SHAPE neck_flare head follows, max move mm',
+              round(float(np.linalg.norm(er.world(head) - Wh, axis=1).max() * 1000), 2))
+    print('BODY_SHAPE neck_flare vertices', int((w > 1e-3).sum()), 'max move mm',
+          round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def corner_fill(cfg):
+    """Behind and under the ears the skull's underside stood out over the neck like a shelf (head x 45 mm: z -23 ->
+    -55 mm between y -70 and -60), so the head read as a ball on a stick (2026-10-08, user: もっと滑らかに繋げろ).
+    The corner is filled like a fillet: each head vertex there is pulled toward the nearest neck point so that its
+    distance to the neck d becomes smin(d, o(y)), o rising smoothly from 0 at head y cfg['y'][0] to cfg['mm'] at
+    cfg['y'][1] (nothing above cfg['y'][2]); back and sides only (head z < cfg['z'][0], full behind cfg['z'][1]).
+    Blender's Shrinkwrap (nearest surface point, outside) with the per-vertex weight 1 - d'/d."""
+    from mathutils.bvhtree import BVHTree
+    face, neck = bpy.data.objects[cfg['mesh']], bpy.data.objects[cfg['target']]
+    tree = BVHTree.FromObject(neck, bpy.context.evaluated_depsgraph_get())
+    inv = neck.matrix_world.inverted()
+    W = er.world(face)
+    L = er.M.to_local(W) * 1000
+    y0, y1, y2 = cfg['y']
+    o = cfg['mm'] * smoothstep((L[:, 1] - y0) / (y1 - y0))
+    region = smoothstep((cfg['z'][0] - L[:, 2]) / (cfg['z'][0] - cfg['z'][1])) * smoothstep((y2 - L[:, 1]) / (y2 - y1))
+    idx = np.flatnonzero((region > 1e-4) & (L[:, 1] > y0 - 5))
+    d = np.full(len(W), 1e9)
+    d[idx] = [tree.find_nearest(inv @ Vector(W[i]))[3] * 1000 for i in idx]
+    k = cfg.get('k_mm', 4.0)
+    dn = -k * np.logaddexp(-d / k, -o / k)                  # smooth min(d, o)
+    w = np.where(d < 1e8, np.clip(1 - np.maximum(dn, 0) / np.maximum(d, 1e-6), 0, 1), 0.0) * region
+    before = er.world(face)
+    er.apply_weighted_modifier(face, w, 'SHRINKWRAP', target=neck, wrap_method='NEAREST_SURFACEPOINT',
+                               wrap_mode='OUTSIDE_SURFACE', offset=cfg.get('offset_mm', 0.3) / 1000)
+    print('BODY_SHAPE corner_fill vertices', int((w > 1e-3).sum()), 'max move mm',
+          round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 2))
+
+
+def nape_fillet(cfg):
+    """The head's lower edge rode over the back of the neck as a thin lip (seen from behind and the back 3/4).
+    Near the neck the head is laid onto it: Blender's Shrinkwrap (nearest surface point, outside, cfg['offset_mm'])
+    on the head, full where it is within cfg['mm'][0] of the neck, none beyond cfg['mm'][1]; back only
+    (head z < cfg['z'][0], full behind cfg['z'][1]) and below head y cfg['y_max']."""
+    from mathutils.bvhtree import BVHTree
+    face, neck = bpy.data.objects[cfg['mesh']], bpy.data.objects[cfg['target']]
+    tree = BVHTree.FromObject(neck, bpy.context.evaluated_depsgraph_get())
+    inv = neck.matrix_world.inverted()
+    W = er.world(face)
+    L = er.M.to_local(W) * 1000
+    w = smoothstep((cfg['z'][0] - L[:, 2]) / (cfg['z'][0] - cfg['z'][1])) * (L[:, 1] < cfg['y_max'])
+    idx = np.flatnonzero(w > 1e-4)
+    dist = np.full(len(w), 1e9)
+    dist[idx] = [tree.find_nearest(inv @ Vector(W[i]))[3] * 1000 for i in idx]
+    d0, d1 = cfg['mm']
+    w *= 1 - smoothstep((dist - d0) / (d1 - d0))
+    before = er.world(face)
+    er.apply_weighted_modifier(face, w, 'SHRINKWRAP', target=neck, wrap_method='NEAREST_SURFACEPOINT',
+                               wrap_mode='OUTSIDE_SURFACE', offset=cfg['offset_mm'] / 1000)
+    print('BODY_SHAPE nape_fillet vertices', int((w > 1e-3).sum()), 'max move mm',
+          round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 2))
+
+
+def back_profile(cfg):
+    """Moves added one after the other (nape, skull_back, ...) left the back of the head with a flat stretch at ear
+    height and a dent where it meets the neck (2026-10-08, user circled both on a side view).  One smooth target
+    line instead: the back midline (head x 0, the furthest-back point of the head and the neck at each height) is
+    moved onto cfg['target'] ([y_mm, z_mm], one smooth curve from the neck to the crown).  Move = target - now at
+    each height (smoothed, sigma cfg['sigma_mm']), the same for the whole slice at that height, back part only
+    (head z < cfg['z'][0], full behind cfg['z'][1]), fading to the sides (cfg['x_out'] = [full, none] |x| mm).
+    Blender's Warp, forward and backward as two passes, on cfg['meshes']."""
+    fwd = er.M.to_world_delta(np.array([[0.0, 0.0, 1.0]]))[0]
+    fwd /= np.linalg.norm(fwd)
+    Ls = [er.M.to_local(er.world(bpy.data.objects[n])) * 1000 for n in cfg['measure']]
+    A = np.concatenate(Ls)
+    A = A[(np.abs(A[:, 0]) < 4) & (A[:, 2] < 0)]
+    tg = np.array(cfg['target'], float)
+    tg = tg[np.argsort(tg[:, 0])]
+    ys = np.arange(tg[0, 0], tg[-1, 0] + 0.1, 1.0)
+    now = np.array([A[np.abs(A[:, 1] - y) < 2.0, 2].min() if np.any(np.abs(A[:, 1] - y) < 2.0) else np.nan for y in ys])
+    ok = ~np.isnan(now)
+    now = np.interp(ys, ys[ok], now[ok])
+    move = np.interp(ys, tg[:, 0], tg[:, 1]) - now
+    sig = cfg.get('sigma_mm', 5.0)
+    k = np.exp(-0.5 * (np.arange(-3 * sig, 3 * sig + 1) / sig) ** 2)
+    move = np.convolve(np.pad(move, len(k) // 2, mode='edge'), k / k.sum(), mode='valid')
+    ramp = cfg.get('end_ramp_mm', 10.0)        # nothing at the two ends of the target line
+    move *= np.clip((ys - ys[0]) / ramp, 0, 1) * np.clip((ys[-1] - ys) / ramp, 0, 1)
+    print('BODY_SHAPE back_profile move mm by y', [(int(y), round(float(m), 1)) for y, m in zip(ys[::10], move[::10])])
+    (z0, z1), (x0, x1) = cfg['z'], cfg['x_out']
+    peak = float(np.abs(move).max())
+    if peak < 1e-3:
+        return
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        L = er.M.to_local(er.world(obj)) * 1000
+        d = np.interp(L[:, 1], ys, move, left=0.0, right=0.0)
+        w = d / peak * smoothstep((z0 - L[:, 2]) / (z0 - z1)) * smoothstep((x1 - np.abs(L[:, 0])) / (x1 - x0))
+        before = er.world(obj)
+        for sign in (1, -1):
+            ws = np.maximum(sign * w, 0)
+            if ws.max() > 0:
+                warp(obj, ws, tuple(sign * fwd * peak / 1000))
+        print('BODY_SHAPE back_profile', name, 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def clean_manifold(bm):
+    """Loose edges and vertices go; at an edge with more than two faces the smallest extra faces go (Surface Deform
+    cannot bind to such a surface).  Returns the number of faces removed."""
+    import bmesh
+    bmesh.ops.delete(bm, geom=[e for e in bm.edges if not e.link_faces], context='EDGES')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    extra = set()
+    for e in bm.edges:
+        if len(e.link_faces) > 2:
+            fs = sorted(e.link_faces, key=lambda f: f.calc_area())
+            extra.update(fs[:len(fs) - 2])
+    if extra:
+        bmesh.ops.delete(bm, geom=list(extra), context='FACES_ONLY')
+        bmesh.ops.delete(bm, geom=[e for e in bm.edges if not e.link_faces], context='EDGES')
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    return len(extra)
+
+
+def consistent_normals(me):
+    """Blender's Recalculate Normals (outside) on the whole mesh; if that turned most faces round (an open mesh can
+    fool it), all faces are turned back, so only the few faces against their neighbours change."""
+    import bmesh
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    before = np.array([f.normal.copy() for f in bm.faces])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    after = np.array([f.normal.copy() for f in bm.faces])
+    flipped = (before * after).sum(1) < 0
+    if flipped.mean() > 0.5:
+        bmesh.ops.reverse_faces(bm, faces=list(bm.faces))
+        flipped = ~flipped
+    bm.to_mesh(me)
+    bm.free()
+    return int(flipped.sum())
+
+
+def neck_side_sculpt(R, steps):
+    """The side of the neck under the ear was one smooth slope from the cheek to the collar; the reference (3/4
+    views) shows three forms there: a clear jaw corner and jaw line with a narrow shadow under it, a small hollow
+    behind and under the jaw corner, and the neck muscle as a round lit column from behind the ear down to the
+    front of the collar (2026-10-08, user: ここの立体感).  Each is Blender's Displace along the normals on the merged
+    head and neck, weighted by distance to a line or a point (head-frame mm, both sides by |x|):
+    'under_line' = just under a side-view line [[z, y], ...] (cfg['below'] = [start, full, end] mm under it),
+    'blob' = an ellipsoid, 'line' = a tube round a 3D polyline (tapering to its ends), 'outline' = the front-view
+    outline moved sideways to the reference line by height (2026-10-08, after the jaw band smoothing made the jaw
+    3-5 px narrower in front).  A step with 'iters' only smooths (Smooth) inside its weight."""
+    for st in steps:
+        L = er.M.to_local(er.world(R)) * 1000
+        A = np.c_[np.abs(L[:, 0]), L[:, 1], L[:, 2]]
+        if st['kind'] == 'under_line':
+            ln = np.array(st['line'], float)
+            o = np.argsort(ln[:, 0])
+            ly = np.interp(A[:, 2], ln[o, 0], ln[o, 1], left=np.nan, right=np.nan)
+            d = ly - A[:, 1]                              # mm under the line
+            b0, b1, b2 = st['below']
+            w = np.where(np.isnan(d), 0.0, smoothstep((d - b0) / (b1 - b0)) * smoothstep((b2 - d) / (b2 - b1)))
+            w *= smoothstep((A[:, 0] - st['x_min']) / 6.0)
+            z0, z1 = st.get('z', [-1e9, 1e9])
+            w *= smoothstep((A[:, 2] - z0) / 8.0) * smoothstep((z1 - A[:, 2]) / 8.0)
+        elif st['kind'] == 'outline':
+            # the front-view outline (the widest point of each height, per side) is moved sideways by
+            # st['rows'] = [[y, mm], ...] (head-frame height, outward mm): vertices within st['band'] = [full, none]
+            # mm inside that widest point move, and only them, so the front outline goes to the reference line
+            # and the side / 3/4 views keep their shape
+            # st['rows'] for the character's right (x < 0), st['rows_pos'] (default the same) for the left: the
+            # neck leans a little to one side in the head frame
+            rows = np.array(st['rows'], float)
+            rows_p = np.array(st.get('rows_pos', st['rows']), float)
+            amt = np.where(L[:, 0] < 0, np.interp(L[:, 1], rows[:, 0], rows[:, 1], left=0.0, right=0.0),
+                           np.interp(L[:, 1], rows_p[:, 0], rows_p[:, 1], left=0.0, right=0.0))
+            edge = np.zeros(len(L))
+            for sgn in (-1, 1):
+                sd = np.sign(L[:, 0]) == sgn
+                bins = np.floor(L[:, 1] / 2.0).astype(int)
+                for b in np.unique(bins[sd]):
+                    m = sd & (np.abs(bins - b) <= 1)
+                    edge[sd & (bins == b)] = np.abs(L[m, 0]).max()
+            f0, f1 = st.get('band', [8.0, 18.0])
+            w = 1 - smoothstep((edge - A[:, 0] - f0) / (f1 - f0))
+            z0, z1 = st.get('z', [-1e9, 1e9])
+            w *= smoothstep((A[:, 2] - z0) / 8.0) * smoothstep((z1 - A[:, 2]) / 8.0)
+            before = er.world(R)
+            L2 = L.copy()
+            L2[:, 0] += np.sign(L[:, 0]) * amt * w
+            set_local_mm(R, L2)
+            if st.get('smooth'):
+                er.apply_weighted_modifier(R, np.clip(w * (amt > 0.05) * 2, 0, 1), 'SMOOTH', factor=0.5,
+                                           iterations=int(st['smooth']))
+            print('BODY_SHAPE neck sculpt', st['name'], 'vertices', int(((amt * w) > 0.05).sum()), 'max move mm',
+                  round(float(np.linalg.norm(er.world(R) - before, axis=1).max() * 1000), 2))
+            continue
+        elif st['kind'] == 'outside_line':
+            # the jaw as a side-view shape: st['line'] = [[z, y], ...] from under the ear lobe straight down the
+            # back edge of the ramus, round the jaw angle and along the lower border to the chin (2026-10-08, the
+            # user drew it on the side reference).  Outside that line (behind the ramus, under the lower border)
+            # the skin goes in towards the neck, so it turns away and lies in shadow; inside it stays.  d = signed
+            # side-view distance, outside > 0 (the outside is to the right walking down the line)
+            ln = np.array(st['line'], float)
+            P2 = A[:, [2, 1]]
+            best = np.full(len(A), 1e9)
+            sgn = np.zeros(len(A))
+            for q0, q1 in zip(ln[:-1], ln[1:]):
+                t = q1 - q0
+                u = np.clip(((P2 - q0) @ t) / (t @ t), 0, 1)
+                foot = q0 + u[:, None] * t
+                dist = np.linalg.norm(P2 - foot, axis=1)
+                nout = np.array([t[1], -t[0]]) / np.linalg.norm(t)
+                upd = dist < best
+                best[upd] = dist[upd]
+                sgn[upd] = np.sign((P2[upd] - foot[upd]) @ nout)
+            d = best * sgn
+            b0, b1, b2 = st['outside']
+            w = smoothstep((d - b0) / (b1 - b0)) * smoothstep((b2 - d) / (b2 - b1))
+            w *= smoothstep((ln[0, 1] + 2.0 - A[:, 1]) / 6.0)          # nothing above the top of the line
+            w *= smoothstep((ln[-1, 0] - A[:, 2]) / 8.0)               # nor in front of the chin end
+            if st.get('z_fade'):                                       # weaker towards the chin (no fold there)
+                fz0, fz1 = st['z_fade']
+                w *= 1 - smoothstep((A[:, 2] - fz0) / (fz1 - fz0))
+            w *= smoothstep((A[:, 0] - st.get('x_min', 8.0)) / 6.0)
+            w *= smoothstep((A[:, 2] - st.get('z_min', -1e9)) / 8.0)
+        elif st['kind'] == 'blob':
+            dd = np.linalg.norm((A - np.array(st['centre'], float)) / np.array(st['r'], float), axis=1)
+            w = np.where(dd < 1, np.cos(np.clip(dd, 0, 1) * np.pi / 2) ** 2, 0.0)
+        else:
+            P = np.array(st['pts'], float)
+            seg_t = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
+            seg_t /= seg_t[-1]
+            best, tpar = np.full(len(A), 1e9), np.zeros(len(A))
+            for i, (q0, q1) in enumerate(zip(P[:-1], P[1:])):
+                dv = q1 - q0
+                t = np.clip(((A - q0) @ dv) / (dv @ dv), 0, 1)
+                dist = np.linalg.norm(A - (q0 + t[:, None] * dv), axis=1)
+                upd = dist < best
+                best[upd], tpar[upd] = dist[upd], (seg_t[i] + t * (seg_t[i + 1] - seg_t[i]))[upd]
+            w = np.where(best < st['r'], np.cos(np.clip(best / st['r'], 0, 1) * np.pi / 2) ** 2, 0.0)
+            a, b = st.get('taper', [0.15, 0.85])
+            w *= smoothstep(tpar / a) * smoothstep((1 - tpar) / (1 - b))
+        before = er.world(R)
+        if st.get('iters'):                          # a smoothing step (no displacement)
+            er.apply_weighted_modifier(R, w, 'SMOOTH', factor=0.5, iterations=int(st['iters']))
+            print('BODY_SHAPE neck sculpt', st['name'], 'smoothed', int((w > 1e-3).sum()), 'max move mm',
+                  round(float(np.linalg.norm(er.world(R) - before, axis=1).max() * 1000), 2))
+            continue
+        sign = 1.0 if st['mm'] > 0 else -1.0
+        er.apply_weighted_modifier(R, w, 'DISPLACE', direction='NORMAL', strength=sign * abs(st['mm']) / 1000,
+                                   mid_level=0.0)
+        if st['kind'] == 'outside_line' and st.get('inside_mm'):
+            # just inside the line the skin goes out a little: the jaw edge is a rounded corner, not a groove
+            i0, i1, i2 = st['inside']
+            wi = smoothstep((d - i0) / (i1 - i0)) * smoothstep((i2 - d) / (i2 - i1))
+            wi *= smoothstep((ln[0, 1] + 2.0 - A[:, 1]) / 6.0) * smoothstep((ln[-1, 0] - A[:, 2]) / 8.0)
+            wi *= smoothstep((A[:, 0] - st.get('x_min', 8.0)) / 6.0)
+            if st.get('z_fade'):
+                wi *= 1 - smoothstep((A[:, 2] - st['z_fade'][0]) / (st['z_fade'][1] - st['z_fade'][0]))
+            er.apply_weighted_modifier(R, wi, 'DISPLACE', direction='NORMAL', strength=st['inside_mm'] / 1000,
+                                       mid_level=0.0)
+            w = np.maximum(w, wi)
+        if st.get('smooth'):
+            er.apply_weighted_modifier(R, np.clip(w * 2, 0, 1), 'SMOOTH', factor=0.5, iterations=int(st['smooth']))
+        print('BODY_SHAPE neck sculpt', st['name'], 'vertices', int((w > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(R) - before, axis=1).max() * 1000), 2))
+
+
+def neck_join(cfg):
+    """The head (a closed shell, its two halves split at the midline) only dived into the neck: where the two
+    surfaces cross there was a line and the head's underside stood over the neck (2026-10-08, user: 繋げろ, the
+    usual way).  The usual way: one surface.  The head (halves welded) and the neck are merged with Blender's
+    Boolean (Union, Exact), the joint is smoothed (Smooth, weight by distance to the joint, back and sides only:
+    head z < cfg['z'][0], full behind cfg['z'][1]), then split again by material into HEAD_face and BODY_torso,
+    so the parts, their names and materials stay; both take the merged surface's normals (Data Transfer), so
+    the joint shades as one surface.  Meshes lying on the head or the neck there follow (cfg['follow'])."""
+    import bmesh
+    from mathutils.kdtree import KDTree
+    head, neck = bpy.data.objects[cfg['head']], bpy.data.objects[cfg['neck']]
+    sc = bpy.context.scene
+    me = head.data.copy()
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)       # the midline pairs
+    bm.to_mesh(me)
+    bm.free()
+    R = bpy.data.objects.new('INKWAVE_neck_join', me)
+    sc.collection.objects.link(R)
+    R.matrix_world = head.matrix_world.copy()
+    # the operand is only the neck (above head y cfg['cut_y']), closed: an open neck top inside the head made the
+    # Boolean take parts of the back of the head for 'inside' (holes there)
+    tme = neck.data.copy()
+    Ln = er.M.to_local(er.world(neck)) * 1000
+    low = Ln[:, 1] < cfg['cut_y']
+    cap = bpy.data.materials.get('INKWAVE_join_cap') or bpy.data.materials.new('INKWAVE_join_cap')
+    tme.materials.append(cap)
+    cap_i = len(tme.materials) - 1
+    lower = neck.data.copy()                           # the body below the cut, unchanged
+    bm = bmesh.new()
+    bm.from_mesh(lower)
+    bm.faces.ensure_lookup_table()
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if not all(low[v.index] for v in f.verts)], context='FACES_ONLY')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    bm.to_mesh(lower)
+    bm.free()
+    bm = bmesh.new()
+    bm.from_mesh(tme)
+    bm.faces.ensure_lookup_table()
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if all(low[v.index] for v in f.verts)], context='FACES_ONLY')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)      # the neck's halves meet at the midline too
+    filled = bmesh.ops.holes_fill(bm, edges=[e for e in bm.edges if e.is_boundary], sides=0)
+    for f in filled['faces']:
+        f.material_index = cap_i
+    bm.to_mesh(tme)
+    bm.free()
+    T = bpy.data.objects.new('INKWAVE_neck_join_operand', tme)
+    sc.collection.objects.link(T)
+    T.matrix_world = neck.matrix_world.copy()
+    mod = R.modifiers.new('INKWAVE_neck_join', 'BOOLEAN')
+    mod.operation, mod.solver, mod.object = 'UNION', 'EXACT', T
+    mod.use_hole_tolerant = True
+    mod.material_mode = 'TRANSFER'
+    er.apply_modifier(R, mod)
+    tdata = T.data
+    bpy.data.objects.remove(T)
+    bpy.data.meshes.remove(tdata)
+    # thin slivers along the crossing line showed as dark specks: points closer than cfg['weld_mm'] are merged
+    # there and the collapsed faces dissolved (Blender's Merge by Distance, Dissolve Degenerate)
+    bm = bmesh.new()
+    bm.from_mesh(R.data)
+    # only next to the crossing line (where faces of the two parts meet): elsewhere the head has its own tiny
+    # rings (the poles under the chin and at the crown) that must not be merged
+    hm = {m.name for m in head.data.materials if m}
+    rmw = [m.name if m else None for m in R.data.materials]
+    bm.verts.ensure_lookup_table()
+    side = np.zeros((len(bm.verts), 2), bool)
+    for f in bm.faces:
+        k = 0 if rmw[f.material_index] in hm else 1
+        for v in f.verts:
+            side[v.index, k] = True
+    jv = np.flatnonzero(side.all(1))
+    Pj = np.array([v.co[:] for v in bm.verts])
+    from mathutils.kdtree import KDTree as _KD
+    kdj = _KD(len(jv))
+    for i in jv:
+        kdj.insert(Vector(Pj[i]), int(i))
+    kdj.balance()
+    zone = [v for v in bm.verts if kdj.find(v.co)[2] * 1000 < cfg.get('weld_zone_mm', 3.0)] if len(jv) else []
+    nv0 = len(bm.verts)
+    bmesh.ops.remove_doubles(bm, verts=zone, dist=cfg.get('weld_mm', 0.2) / 1000)
+    zs = {v for v in zone if v.is_valid}
+    bmesh.ops.dissolve_degenerate(bm, edges=[e for e in bm.edges if e.verts[0] in zs or e.verts[1] in zs],
+                                  dist=cfg.get('weld_mm', 0.2) / 1000)
+    # merging leaves loose edges and a few edges with three faces (the skin layers cannot be bound to such a
+    # surface by Surface Deform later): loose parts go, the smallest face at such an edge goes, the small hole
+    # left is filled
+    bmesh.ops.delete(bm, geom=[e for e in bm.edges if not e.link_faces], context='EDGES')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    extra = set()
+    for e in bm.edges:
+        if len(e.link_faces) > 2:
+            fs = sorted(e.link_faces, key=lambda f: f.calc_area())
+            extra.update(fs[:len(fs) - 2])
+    if extra:
+        bmesh.ops.delete(bm, geom=list(extra), context='FACES_ONLY')
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+        Lh = er.M.to_local(np.array([R.matrix_world @ v.co for v in bm.verts])) * 1000
+        hole = [e for e in bm.edges if e.is_boundary and -130 < Lh[e.verts[0].index, 1] < -40]
+        bmesh.ops.holes_fill(bm, edges=hole, sides=8)
+    bm.to_mesh(R.data)
+    bm.free()
+    print('BODY_SHAPE neck_join faces removed at edges with three faces', len(extra))
+    print('BODY_SHAPE neck_join slivers: vertices merged', nv0 - len(R.data.vertices),
+          'faces turned to face out', consistent_normals(R.data))
+    head_mats = {m.name for m in head.data.materials if m}
+    rm0 = [m.name if m else None for m in R.data.materials]
+    mi0 = np.zeros(len(R.data.polygons), int)
+    R.data.polygons.foreach_get('material_index', mi0)
+    bm = bmesh.new()                                    # the caps go
+    bm.from_mesh(R.data)
+    bm.faces.ensure_lookup_table()
+    bmesh.ops.delete(bm, geom=[bm.faces[i] for i in np.flatnonzero(np.array([rm0[k] == cap.name for k in mi0]))], context='FACES_ONLY')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    bm.to_mesh(R.data)
+    bm.free()
+    neck_mats = [m for m in neck.data.materials]
+    rm = [m.name if m else None for m in R.data.materials]
+    mi = np.zeros(len(R.data.polygons), int)
+    R.data.polygons.foreach_get('material_index', mi)
+    is_head = np.array([rm[i] in head_mats for i in mi])
+    # joint vertices: used by faces of both parts
+    nv = len(R.data.vertices)
+    vh, vn = np.zeros(nv, bool), np.zeros(nv, bool)
+    for f, h in zip(R.data.polygons, is_head):
+        (vh if h else vn)[list(f.vertices)] = True
+    joint = np.flatnonzero(vh & vn)
+    W = er.world(R)
+    kd = KDTree(len(joint))
+    for i, j in enumerate(joint):
+        kd.insert(Vector(W[j]), i)
+    kd.balance()
+    dist = np.array([kd.find(Vector(c))[2] for c in W]) * 1000
+    L = er.M.to_local(W) * 1000
+    w = (1 - smoothstep(dist / cfg['r_mm'])) * smoothstep((cfg['z'][0] - L[:, 2]) / (cfg['z'][0] - cfg['z'][1]))
+    print('BODY_SHAPE neck_join joint vertices', len(joint), 'smoothed', int((w > 1e-3).sum()))
+    # meshes on the head / neck there follow the smoothing (move of the nearest merged vertex)
+    W0 = W.copy()
+    er.apply_weighted_modifier(R, w, 'SMOOTH', factor=0.5, iterations=int(cfg['iters']))
+    ns = cfg.get('neck_smooth')
+    if ns:
+        # wrinkles and the front crossing line on the neck: the whole neck (all round) is smoothed; on the head
+        # side only within ns['head_mm'] of the joint (the jaw and the face stay)
+        L = er.M.to_local(er.world(R)) * 1000
+        ax, az = cfg.get('axis_xz', [0.0, 10.0])
+        y0, y1, y2, y3 = ns['y']
+        wn = smoothstep((L[:, 1] - y0) / (y1 - y0)) * smoothstep((y3 - L[:, 1]) / (y3 - y2))
+        wn *= smoothstep((ns['r_mm'] - np.hypot(L[:, 0] - ax, L[:, 2] - az)) / 10.0)
+        only_head = vh & ~vn
+        h0, h1 = ns['head_mm']
+        wn = np.where(only_head, wn * (1 - smoothstep((dist - h0) / (h1 - h0))), wn)
+        er.apply_weighted_modifier(R, wn, 'SMOOTH', factor=0.5, iterations=int(ns['iters']))
+        print('BODY_SHAPE neck_join neck smoothed', int((wn > 1e-3).sum()))
+    if cfg.get('sculpt'):
+        neck_side_sculpt(R, cfg['sculpt'])
+    if cfg.get('follow'):
+        kd2 = KDTree(nv)
+        for i, c in enumerate(W0):
+            kd2.insert(Vector(c), i)
+        kd2.balance()
+        mv = er.world(R) - W0
+        for n in cfg['follow']:
+            o = bpy.data.objects[n]
+            Wo = er.world(o)
+            near = [kd2.find(Vector(c)) for c in Wo]
+            idx = np.array([q[1] for q in near])
+            dd = np.array([q[2] for q in near]) * 1000
+            f = 1 - smoothstep((dd - 2.0) / 8.0)
+            set_local_mm(o, er.M.to_local(Wo + f[:, None] * mv[idx]) * 1000)
+    if cfg.get('border_mm') is not None:
+        # the two materials met along the jagged crossing line: the head faces just under the highest point of
+        # that line (one smooth line round the neck) take the neck's plain skin, so the border is a smooth line
+        # (only head faces change: the neck material has no texture, the head's has)
+        Lr = er.M.to_local(er.world(R)) * 1000
+        ax, az = cfg.get('axis_xz', [0.0, 10.0])
+        th = lambda P: np.arctan2(P[:, 0] - ax, P[:, 2] - az)
+        nb = 72
+        tj, yj = th(Lr[joint]), Lr[joint, 1]
+        bins = ((tj + np.pi) / (2 * np.pi) * nb).astype(int) % nb
+        top = np.full(nb, -1e9)
+        np.maximum.at(top, bins, yj)
+        ok = top > -1e8
+        idx = np.arange(nb)
+        top = np.interp(idx, idx[ok], top[ok], period=nb)
+        k = np.exp(-0.5 * (np.arange(-6, 7) / 2.0) ** 2)
+        top = np.convolve(np.r_[top[-6:], top, top[:6]], k / k.sum(), mode='valid')
+        cen = np.array([Lr[list(f.vertices)].mean(0) for f in R.data.polygons])
+        tb = ((th(cen) + np.pi) / (2 * np.pi) * nb) % nb
+        border = np.interp(tb, idx, top, period=nb) + cfg['border_mm']
+        neck_mat = next(i for i, m in enumerate(R.data.materials) if m and m.name not in head_mats)
+        near = np.linalg.norm(cen[:, None, :] - Lr[joint][None, ::8, :], axis=2).min(1) < cfg.get('border_zone_mm', 30.0)
+        switch = is_head & near & (cen[:, 1] < border) & (cen[:, 2] < cfg['z'][0])   # back and sides only
+        mi2 = np.zeros(len(R.data.polygons), int)
+        R.data.polygons.foreach_get('material_index', mi2)
+        mi2[switch] = neck_mat
+        R.data.polygons.foreach_set('material_index', mi2)
+        is_head = is_head & ~switch
+        print('BODY_SHAPE neck_join border faces to the neck skin', int(switch.sum()))
+
+    if cfg.get('neck_skin_y') is not None:
+        # the head skin (its texture is one plain colour away from the lashes) and the neck skin differ in colour
+        # and subsurface: the neck above the collar takes the head skin, so the colour border lies under the collar.
+        # Those faces read the head texture at a plain-skin point (cfg['neck_skin_uv']); they go to HEAD_face.
+        Lr = er.M.to_local(er.world(R)) * 1000
+        ax, az = cfg.get('axis_xz', [0.0, 10.0])
+        cen = np.array([Lr[list(f.vertices)].mean(0) for f in R.data.polygons])
+        band = (~is_head) & (cen[:, 1] > cfg['neck_skin_y']) & (np.hypot(cen[:, 0] - ax, cen[:, 2] - az) < cfg.get('neck_skin_r', 60.0))
+        head_slot = next(i for i, m in enumerate(R.data.materials) if m and m.name in head_mats)
+        mi2 = np.zeros(len(R.data.polygons), int)
+        R.data.polygons.foreach_get('material_index', mi2)
+        mi2[band] = head_slot
+        R.data.polygons.foreach_set('material_index', mi2)
+        uvl = R.data.uv_layers.active
+        uvs = np.zeros(len(R.data.loops) * 2)
+        uvl.data.foreach_get('uv', uvs)
+        uvs = uvs.reshape(-1, 2)
+        for f in np.flatnonzero(band):
+            poly = R.data.polygons[f]
+            uvs[poly.loop_start:poly.loop_start + poly.loop_total] = cfg['neck_skin_uv']
+        uvl.data.foreach_set('uv', uvs.ravel())
+        is_head = is_head | band
+        print('BODY_SHAPE neck_join neck faces with the head skin', int(band.sum()))
+    if R.data.attributes.get('custom_normal') is not None:      # the merged surface's own normals
+        R.data.attributes.remove(R.data.attributes['custom_normal'])
+    for obj, keep in ((head, is_head), (neck, ~is_head)):
+        bm = bmesh.new()
+        bm.from_mesh(R.data)
+        bm.faces.ensure_lookup_table()
+        bmesh.ops.delete(bm, geom=[bm.faces[i] for i in np.flatnonzero(~keep)], context='FACES_ONLY')
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+        # small holes the Boolean left near the joint (dark specks on the back of the neck) are filled
+        Lb = er.M.to_local(np.array([R.matrix_world @ v.co for v in bm.verts])) * 1000
+        small = [e for e in bm.edges if e.is_boundary and Lb[e.verts[0].index, 1] > cfg['cut_y'] + 5
+                 and Lb[e.verts[0].index, 1] < -40]
+        filled = bmesh.ops.holes_fill(bm, edges=small, sides=cfg.get('hole_sides', 12))['faces']
+        print('BODY_SHAPE neck_join', obj.name, 'small holes filled', len(filled))
+        # the Boolean and the fills leave n-gons (some concave): Surface Deform (later steps bind the skin layers
+        # to the head) cannot bind to those, so they are made into triangles
+        ngons = [f for f in bm.faces if len(f.verts) > 4]
+        bmesh.ops.triangulate(bm, faces=ngons)
+        print('BODY_SHAPE neck_join', obj.name, 'n-gons triangulated', len(ngons), 'extra faces removed',
+              clean_manifold(bm))
+        new = bpy.data.meshes.new(obj.data.name + '_joined')
+        bm.to_mesh(new)
+        bm.free()
+        new.transform(obj.matrix_world.inverted() @ R.matrix_world)
+        print('BODY_SHAPE neck_join', obj.name, 'faces turned to face out', consistent_normals(new))
+        if obj is neck:
+            # the body below the cut comes back, welded along the cut
+            bm = bmesh.new()
+            bm.from_mesh(new)
+            nfirst = len(bm.verts)
+            bm.from_mesh(lower)
+            bm.verts.ensure_lookup_table()
+            bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=1e-6)
+            bm.to_mesh(new)
+            bm.free()
+        own = list(obj.data.materials)
+        for m in own:
+            new.materials.append(m)
+        names = [m.name if m else None for m in own]
+        fm = np.zeros(len(new.polygons), int)
+        new.polygons.foreach_get('material_index', fm)
+        fm = np.array([names.index(rm[i]) if rm[i] in names else 0 for i in fm])
+        new.polygons.foreach_set('material_index', fm)
+        old, oldname = obj.data, obj.data.name
+        obj.data = new
+        if old.users == 0:
+            bpy.data.meshes.remove(old)
+        new.name = oldname
+        md = obj.modifiers.new('INKWAVE_join_normals', 'DATA_TRANSFER')
+        md.object, md.use_loop_data = R, True
+        md.data_types_loops = {'CUSTOM_NORMAL'}
+        md.loop_mapping = 'POLYINTERP_NEAREST'
+        er.apply_modifier(obj, md)
+        # where the merged surface faced the other way, the copied normal points into the part (black in renders):
+        # those corner normals are turned to the face's side
+        me = obj.data
+        cn = np.array([l.vector[:] for l in me.corner_normals]).reshape(-1, 3)
+        fnm = np.array([p.normal[:] for p in me.polygons])
+        fl = np.repeat(np.arange(len(me.polygons)), [p.loop_total for p in me.polygons])
+        bad = (cn * fnm[fl]).sum(1) < 0
+        cn[bad] *= -1
+        me.normals_split_custom_set([tuple(v) for v in cn])
+        print('BODY_SHAPE neck_join', obj.name, 'copied normals turned to the face side', int(bad.sum()))
+        print('BODY_SHAPE neck_join', obj.name, 'vertices', len(new.vertices))
+    rdata = R.data
+    bpy.data.objects.remove(R)
+    bpy.data.meshes.remove(rdata)
+    bpy.data.meshes.remove(lower)
+    bpy.data.materials.remove(cap)
+
+
+def seam_normals(cfg):
+    """A line ran from under the ear to under the jaw in the side and 3/4 views where the face (laid on the neck by
+    face_volume jaw_tuck) meets the neck: the shading jumped there (clay +5 brighter on the neck side).  The face
+    near the neck takes the neck's normals (Blender's Data Transfer, custom normals): full within cfg['mm'][0] of
+    the neck surface, none beyond cfg['mm'][1], below head y cfg['y_max'].  Last of all, after every step that moves
+    the neck or the face (nape, collar, ...), so the copied normals match the final neck."""
+    from mathutils.bvhtree import BVHTree
+    face, neck = bpy.data.objects[cfg['face']], bpy.data.objects[cfg['neck']]
+    tree = BVHTree.FromObject(neck, bpy.context.evaluated_depsgraph_get())
+    inv = neck.matrix_world.inverted()
+    W = er.world(face)
+    dist = np.array([tree.find_nearest(inv @ Vector(q))[3] for q in W]) * 1000
+    d0, d1 = cfg['mm']
+    w = smoothstep((d1 - dist) / (d1 - d0)) * (er.M.to_local(W)[:, 1] * 1000 < cfg['y_max'])
+    er.apply_weighted_modifier(face, w, 'DATA_TRANSFER', object=neck, use_loop_data=True,
+                               data_types_loops={'CUSTOM_NORMAL'}, loop_mapping='POLYINTERP_NEAREST')
+    print('BODY_SHAPE seam_normals vertices', int((w > 1e-3).sum()), 'full', int((w > 0.999).sum()))
 
 
 def jacket_field(W, cfg):
@@ -603,6 +1390,20 @@ def main():
     for sl, _, riders in p.get('sleeves', {}).get('pairs', []):
         names += [n for n in [sl] + riders if n not in names]
     names += [n for n in p.get('nape', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('collar_lower', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('hood_lower', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('head_side_in', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('skull_back', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('occiput_in', {}).get('meshes', []) if n not in names]
+    names += [n for n in [p.get('nape_fillet', {}).get('mesh')] if n and n not in names]
+    names += [n for n in [p.get('neck_flare', {}).get('mesh')] if n and n not in names]
+    names += [n for n in [p.get('corner_fill', {}).get('mesh')] if n and n not in names]
+    names += [n for n in p.get('back_profile', {}).get('meshes', []) if n not in names]
+    for sm in p.get('smooth_regions', []):
+        names += [n for n in [sm['mesh']] + sm.get('follow', []) if n not in names]
+    nj = p.get('neck_join', {})
+    names += [n for n in [nj.get('head'), nj.get('neck')] + nj.get('follow', []) if n and n not in names]
+    names += [n for n in [p.get('seam_normals', {}).get('face')] if n and n not in names]
     remove_made()
     restore_legwear()
     print('BODY_SHAPE restored', restore(names, drop=args.restore), 'meshes')
@@ -666,10 +1467,42 @@ def main():
             slim_sleeves(p['sleeves'])
         if p.get('nape'):
             nape(p['nape'])
+        if p.get('collar_lower'):
+            collar_lower(p['collar_lower'])
+        if p.get('hood_lower'):
+            # the hood lying on the shoulders stood 15-30 px higher than the reference behind the neck in both
+            # side views (2026-10-08, user: 横から見た首の生え方が全然違う): it hid the back of the neck and
+            # the collar, so the neck read as growing out of the hood.  Same per-direction lowering as the collar.
+            collar_lower(p['hood_lower'])
+        if p.get('head_side_in'):
+            head_side_in(p['head_side_in'])
+        if p.get('skull_back'):
+            skull_back(p['skull_back'])
+        if p.get('occiput_in'):
+            # the lower back of the skull stood out behind the neck like a shelf (head y -70..-50: z -56 -> -90 mm
+            # in 20 mm of height) and the whole back of the head sat far behind the neck (2026-10-08, user:
+            # 首に対して後頭部が滑らかに繋がってなくて、後ろに出すぎ): the same forward move as skull_back,
+            # with its own height profile (most at y -50, nothing at the neck and the crown)
+            skull_back(p['occiput_in'])
+        if p.get('neck_flare'):
+            neck_flare(p['neck_flare'])
+        if p.get('nape_fillet'):
+            nape_fillet(p['nape_fillet'])
+        if p.get('corner_fill'):
+            corner_fill(p['corner_fill'])
+        if p.get('smooth_regions'):
+            smooth_regions(p['smooth_regions'])
+        if p.get('back_profile'):
+            # last of the head shapes: the smoothing above shrinks the round back a little
+            back_profile(p['back_profile'])
         if p.get('nails'):
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:
                 nails(bpy.data.objects[hand], p['nails'], mat)
+        if p.get('neck_join'):
+            neck_join(p['neck_join'])
+        elif p.get('seam_normals'):
+            seam_normals(p['seam_normals'])
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)
 
