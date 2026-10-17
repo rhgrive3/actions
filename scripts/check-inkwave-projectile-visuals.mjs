@@ -831,6 +831,34 @@ const visualSetup = ({ name, seed, impact = null }) => {
   a.aimDir.set(0, 0, 1); a.aimPoint.copy(a.pos).add(new V(0, 1.05, 24));
   a.character.root.rotation.y = 0; a.character.root.updateMatrixWorld(true);
   G.scene.updateMatrixWorld(true);
+  // Pin the *native source motion* at an actual, authored aim/idle frame.
+  // Boot/render time is nondeterministic under SwiftShader (the paired runs
+  // spent 133 versus 208 native intro ticks before this capture). A changing
+  // source clip phase moves the weapon-bone muzzle by sub-millimetres and
+  // changes real projectile positions despite identical gameplay physics/RNG.
+  // Preserve the real loaded source bank and IK/retarget solver: the snapshot
+  // uses a fixed keyframe, not a synthetic muzzle override or tolerance.
+  const character = a.character, source = character.sourceMotion;
+  if (character.weaponKind !== 'roller') {
+    if (source?.status !== 'ready' || typeof source.playClip !== 'function') {
+      throw new Error('Paired native projectile capture requires loaded source motion for ' + character.weaponKind);
+    }
+    source.playClip('WaitShoot_Nrml', { frame: 0, rate: 0 });
+    character.t = 0; character.brPh = 0; character.phase = 0;
+    character.sp.fill(0); character.tr.fill(99);
+    character.gaitW = 0; character.runW = 0; character.wAim = 0; character.wRoll = 0;
+    character.idleT = 0; character.fidget = -1; character.rootInit = false;
+    character.feetValid = false; character.replant = true;
+    character.update(0, {
+      form: 'kid', grounded: true, speed: 0, turnRate: 0,
+      localMove: { x: 0, z: 0 }, vy: 0, aimPitch: 0,
+      firing: false, charge: 0, rolling: 0, subAim: false,
+      ink: 1, hp: 1, special: 0, invuln: false, inEnemyInk: false,
+    });
+    if (source.state !== 'manual' || !source.active) throw new Error('Source aim frame was not admitted');
+    character.root.updateMatrixWorld(true);
+    G.scene.updateMatrixWorld(true);
+  }
   let wall = null;
   if (impact === 'wall') {
     const level = G.physics.level;
