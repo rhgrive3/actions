@@ -1,4 +1,5 @@
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { memoizeFixtureSourceAdapter, memoizeFixtureVmCompiler } from './fixture-cache.mjs';
 // Actual public modules plus the build adapter. Defaults stub physics, paint,
 // display and audio; make() also freezes integration/frame finishing and uses
 // a simplified fixed world-axis muzzle. Geometry-sensitive tests must retain
@@ -15,7 +16,12 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 if (process.env.INKWAVE_BUILT_ROOT) throw new Error('Use INKWAVE_BUILT_SITE; INKWAVE_BUILT_ROOT is not a supported fixture switch');
 const BUILT = process.env.INKWAVE_BUILT_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-const adaptProduction = adaptBuildSource;
+// Cache only derived immutable text/compiled bytecode, never a VM context or evaluated module.
+const adaptProduction = process.env.INKWAVE_DISABLE_FIXTURE_CACHES === '1'
+  ? adaptBuildSource : memoizeFixtureSourceAdapter(adaptBuildSource);
+const cachedVmModule = process.env.INKWAVE_DISABLE_FIXTURE_CACHES === '1'
+  ? (source, options) => new vm.SourceTextModule(source, options)
+  : memoizeFixtureVmCompiler(vm.SourceTextModule);
 // Super Jump admission calls the same native water predicate as ordinary and
 // special movement. Include its real production adapter in constrained boots.
 export const adaptConstrainedSource = (rel, code) => adaptSpecialWater(rel, adaptSource(rel, code));
@@ -61,7 +67,7 @@ export async function fixture(options = {}) {
       ? adaptNative(relative, raw) : raw;
     const source = !BUILT && productionComposition && upstream ? adaptProduction(rel, raw)
       : upstream ? native : adaptRuntime(rel, native);
-    const mod = new vm.SourceTextModule(source, { context, identifier: file,
+    const mod = cachedVmModule(source, { context, identifier: file,
       initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } }); modules.set(file, mod); return mod;
   }
   const characterExports = includeCharacter ? `

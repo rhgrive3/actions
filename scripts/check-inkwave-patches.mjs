@@ -34,7 +34,12 @@ try {
     process.exit(0);
   }
   const walk = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(d => d.isDirectory() ? walk(path.join(directory, d.name)) : [path.join(directory, d.name)]);
-  if (vm.SourceTextModule) {
+  const shardCount = Number(process.env.INKWAVE_TEST_SHARD_COUNT ?? '1');
+  const shardIndex = Number(process.env.INKWAVE_TEST_SHARD_INDEX ?? '0');
+  selectTestShard([], shardIndex, shardCount);
+  // Only shard zero repeats the complete composed-source syntax scan.
+  // All shards checkout the same SHA, and the required fan-in needs all four.
+  if (vm.SourceTextModule && shardIndex === 0) {
     for (const file of [...walk(path.join(SRC, 'src')), ...walk(PATCH_ROOT)]) {
       if (!/\.m?js$/.test(file)) continue;
       const rel = path.relative(SRC, file);
@@ -50,8 +55,6 @@ try {
   }
   const files = [...walk(path.join(PATCH_ROOT, 'tests')), ...walk(path.join(RELIABILITY_ROOT, 'tests'))].filter(f => f.endsWith('.test.mjs')).sort();
   if (!files.length) throw new Error('No patch tests discovered');
-  const shardCount = Number(process.env.INKWAVE_TEST_SHARD_COUNT ?? '1');
-  const shardIndex = Number(process.env.INKWAVE_TEST_SHARD_INDEX ?? '0');
   const shardFiles = selectTestShard(files, shardIndex, shardCount);
   if (!shardFiles.length) throw new Error(`Patch suite shard ${shardIndex + 1}/${shardCount} has no test files`);
   const logDir = path.resolve(process.env.INKWAVE_TEST_LOG_DIR || path.join(ROOT, '.ci-scratch/inkwave-patches'));
