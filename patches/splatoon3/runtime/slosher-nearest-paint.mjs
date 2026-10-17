@@ -7,6 +7,7 @@
  * than guessing an orientation.
  */
 import { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
+import { mainInkFootprint } from './main-ink-footprints.mjs';
 const EPS = 1e-10;
 
 export function slosherNearestPaintSpec(source, scale = 1) {
@@ -58,7 +59,7 @@ export function paintSlosherNearest(game, actor, source, scale = 1, sequence = 1
   if (len > EPS) dir.multiplyScalar(1 / len); else dir.set(0, 0, 1);
 
   const area = game.paint.splat(point, spec.width, actor.team, {
-    kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: actor,
+    kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(actor.weapon), claimOwner: actor,
     seed: seedFor(actor, sequence),
     stretch: dir,
     stretchAmt: Math.max(0, spec.depthScale - 1),

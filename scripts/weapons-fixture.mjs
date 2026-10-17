@@ -108,7 +108,7 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
   }
   G.paint = new CpuPaint(null,G.level,{atlasSize:4096,maxDensity:8,cell});
   const paints=[]; const splat=G.paint.splat;
-  G.paint.splat=function(center,radius,team,opts={}) {const area=splat.call(this,center,radius,team,opts);paints.push({time:G.time,center:center.toArray(),radius,team,seed:opts.seed,kind:opts.kind??null,stretch:opts.stretch?.toArray()??null,stretchAmt:opts.stretchAmt??null,cosmetic:!!opts.cosmetic,area});return area;};
+  G.paint.splat=function(center,radius,team,opts={}) {const area=splat.call(this,center,radius,team,opts);paints.push({time:G.time,center:center.toArray(),radius,team,seed:opts.seed,kind:opts.kind??null,stretch:opts.stretch?.toArray()??null,stretchAmt:opts.stretchAmt??null,cosmetic:!!opts.cosmetic,area,...(typeof opts.footprint==='string'?{footprint:opts.footprint}:{})});return area;};
   const projectiles = G.projectiles = new api.Projectiles(G.scene), hits=[], fires=[], impacts=[];
   api.on('hit',e=>hits.push({time:G.time,victim:e.victim.name,damage:e.damage,weapon:e.weaponId}));
   api.on('weapon:fire',e=>fires.push({time:G.time,weapon:e.weapon,muzzle:e.muzzle?.toArray(),dir:e.dir?.toArray(),charge:e.charge??null,len:e.len??null,hand:e.hand??null}));

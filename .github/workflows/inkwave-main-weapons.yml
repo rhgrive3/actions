@@ -29,6 +29,10 @@ jobs:
         run: |
           git rev-parse HEAD
           node --experimental-vm-modules --test patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/issue-771-roller-speed-swerve.test.mjs patches/splatoon3/tests/catalog-projectile-vfx-range.test.mjs
+      - name: Verify backward shot-release facing and source Hold gait
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/reverse-shot-release.test.mjs patches/splatoon3/tests/source-posture.test.mjs
+      - name: Verify Roller swing and Curling bomb production paths
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/roller-flick-movement.test.mjs patches/splatoon3/tests/roller.test.mjs patches/splatoon3/tests/bomb-kit-fidelity.test.mjs patches/splatoon3/tests/air-attack-acceleration.test.mjs patches/splatoon3/tests/catalog-rolling-form-reset.test.mjs
       - name: Verify sourced Splatana origins and Slosher flight contact/cover
         run: node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs patches/splatoon3/tests/catalog-splash-contact-distance.test.mjs
   browser-origins:

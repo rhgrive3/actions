@@ -6,10 +6,11 @@
 // The 25% cap is an Inkipedia value, not in the pinned primary table.
 // The chance()/shot() API supplies a median ANGLE FRACTION to biasQuantile,
 // not Bernoulli outer-ring odds. The exact Nintendo PDF and RNG are 未確認.
-// The 25F->70F jump-envelope recovery is separate; the modeled post-landing
-// return to stand bias is also 未確認 against hardware.
+// The 25F->70F maximum-angle recovery has its own owner but shares this jump
+// clock. Its precise interior and composition with stand bias are 未確認.
 // Angular envelope (2 deg grounded / 7.5 deg air) and post-roll spreadLock are not owned here.
 
+import { recoveringJumpBias } from './weapon-accuracy.mjs';
 const finiteOr = (x, otherwise) => (Number.isFinite(x) ? x : otherwise);
 
 export class DualiesAccuracy {
@@ -21,6 +22,10 @@ export class DualiesAccuracy {
     this.recovery = finiteOr(param.Stand_DegBiasDecrease, .005);
     this.holdFrames = Math.max(0, finiteOr(param.RepeatFrame, 5));
     this.jumpBias = finiteOr(param.Jump_DegBiasMax, .4);
+    this.jumpParam = {
+      Jump_DegBiasDecreaseStartFrame: finiteOr(param.Jump_DegBiasDecreaseStartFrame, 25),
+      Jump_DegBiasEndFrame: finiteOr(param.Jump_DegBiasEndFrame, 70),
+    };
     this.maximum = finiteOr(param.Stand_DegBiasMax, .25);
     this.stand = this.minimum;
     this.sinceShotFrames = 0;
@@ -36,12 +41,13 @@ export class DualiesAccuracy {
     const before = Math.max(0, previous - this.holdFrames);
     if (after > before) this.stand = Math.max(this.minimum, this.stand - (after - before) * this.recovery);
   }
-  chance(grounded) {
-    return grounded ? this.stand : this.jumpBias;
+  chance(_grounded, jumpAgeSeconds) {
+    return recoveringJumpBias(this.stand, this.jumpBias,
+      Number.isFinite(jumpAgeSeconds) ? jumpAgeSeconds * this.hz : null, this.jumpParam);
   }
   // Call once per admitted normal shot. Returns the angular median fraction for that shot.
-  shot(grounded) {
-    const p = this.chance(grounded);
+  shot(grounded, jumpAgeSeconds) {
+    const p = this.chance(grounded, jumpAgeSeconds);
     this.stand = Math.min(this.maximum, this.stand + this.step);
     this.sinceShotFrames = 0;
     return p;

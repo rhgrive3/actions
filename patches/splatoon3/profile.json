@@ -17,6 +17,7 @@
     "respawnTime": 8.5,
     "s3HumanoidHurtRadius": 0.35,
     "s3SwimHurtRadius": 0.675,
+    "s3SwimHurtSegmentHeight": 0,
     "s3HumanoidHurtHeight": 1.65,
     "s3TerrainDistanceScale": 1,
     "s3HumanoidTerrainRadiusRaw": 0.35,
@@ -163,7 +164,7 @@
       "fieldCollisionRadius": 0.2,
       "airChargeRate": 0.25,
       "emptyChargeRate": 0.25,
-      "speedRandomHalfWidth": 7.2,
+      "speedRandomRate": 0.12,
       "speedRandomBias": 0.2,
       "postStreamDelay": 0.06666666666666667,
       "shotGuideFrame": 11,
@@ -701,6 +702,18 @@
     }
   },
   "bindings": {
+    "player.s3SwimHurtRadius": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerCollisionParam/ColBullet_Radius_Squid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.675
+    },
+    "player.s3SwimHurtSegmentHeight": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerCollisionParam/ColBullet_Height_Squid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0
+    },
     "deathBlast.paintRadius": {
       "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintRadius",
       "index": null,
@@ -1677,10 +1690,10 @@
       "rawValue": 4,
       "factor": 0.016666666666666666
     },
-    "weapons.splatling.speedRandomHalfWidth": {
+    "weapons.splatling.speedRandomRate": {
       "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomRate",
       "index": null,
-      "factor": 60,
+      "factor": 1,
       "rawValue": 0.12
     },
     "weapons.splatling.speedRandomBias": {
@@ -3665,10 +3678,10 @@
       "radiusGrowth": "linear interpolation between explicit collision-radius endpoints over ChangeFrame; native interpolation semantics not recovered",
       "chargerSpeed": "linear interpolation between explicit minimum/full speed endpoints; native nonlinear release interpolation unverified",
       "splatlingSpeed": "linear interpolation within first charge stage and plateau afterward; endpoint fields are pinned, native curve unverified",
-      "splatlingRandom": "symmetric uniform use of explicit SpawnSpeedRandomRate bounds; native bias law is not recovered",
+      "splatlingRandom": "dimensionless SpawnSpeedRandomRate scales the charge-dependent base; signed-power quantiles follow Kanamoji study #10 (bias is the median magnitude), not recovered native code",
       "rollerOmittedCount": "omitted BulletNum interpreted as one, matching the existing latest-main near-unit owner; omission semantics remain labelled inference",
       "rollerSpawnAnchor": "latest-main native body anchor retained; explicit source offsets applied by #64; absolute Switch-space anchor unverified",
-      "rollerVerticalSpawnHeight": "#278: each VerticalSwingUnitGroupParam unit's SpawnPositionHeight and SpawnPositionOffsetHeight are summed as raw INKWAVE world units (scale 1) onto the retained muzzle anchor, giving per-group starts 1+2+2; the additive combination, per-field engine meaning and the raw-unit scale are unverified (Leanny table has no field semantics); not an SI-metre claim",
+      "rollerVerticalSpawnHeight": "#278: each VerticalSwingUnitGroupParam unit has an extracted SpawnPositionOffsetHeight (group base) plus SpawnPositionHeight (per-projectile indexed Y separation). The INKWAVE model uses base + projectileIndex*height for the 1+2+2 vertical globs, so the five starts are +0.5, -0.25, 0, -1.25, -1.0 relative to the retained muzzle. The per-projectile indexed interpretation, source-to-world scale 1, spatial sign/coordinate transform and raw engine semantics are unverified; not an SI-metre claim.",
       "rollerHorizontalRandom": "explicit speed/width random bounds are used while native probability distribution/order remains unverified",
       "slosherAim": "native aim direction retained with explicit AddSpawnSpeedYRateByXZ and source unit rotations; no range-fitting solve",
       "slosherOffsets": "AfterOffset fields applied once per subsequent unit instance; engine semantics are source-guided",

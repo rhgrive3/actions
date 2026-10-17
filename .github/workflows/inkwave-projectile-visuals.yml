@@ -9,6 +9,9 @@ on:
       - 'patches/splatoon3/tests/projectile-visuals.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
       - 'scripts/lib/inkwave-projectile-ci-intro.mjs'
+      - 'scripts/lib/inkwave-roller-birth-baseline.mjs'
+      - 'scripts/prepare-inkwave-projectile-baseline.mjs'
+      - 'scripts/tests/inkwave-roller-birth-baseline.test.mjs'
       - 'scripts/tests/inkwave-projectile-ci-intro.test.mjs'
       - 'scripts/compare-inkwave-projectile-captures.py'
       - 'scripts/tests/inkwave-projectile-captures-synthetic.py'
@@ -32,10 +35,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      # The baseline must match this PR event's actual main SHA. The old
+      # 01aa5cc fixture predates independent paint/contact fixes, so comparing
+      # it with a later Roller PR incorrectly reports Slosher/Shooter drift.
       - name: Check out immutable current-main baseline
         uses: actions/checkout@v4
         with:
-          ref: 01aa5cc61c842a8616ab38ff5fb541b6becf1395
+          ref: ${{ github.event.pull_request.base.sha || 'main' }}
           path: .ci-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -50,14 +56,17 @@ jobs:
           node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs
           python3 scripts/tests/inkwave-projectile-captures.test.py
           node --test scripts/tests/inkwave-projectile-ci-intro.test.mjs
+          node --test scripts/tests/inkwave-roller-birth-baseline.test.mjs
+      - name: Replay the two reviewed Roller birth corrections in the main reference
+        run: node scripts/prepare-inkwave-projectile-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/baseline-birth-adjustment.json
       - name: Build complete production composition
         run: node scripts/build-inkwave.mjs inkwave-public .built-site/projectiles
-      - name: Build unchanged baseline for the same browser harness
+      - name: Build main reference with identical reviewed Roller births
         run: node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/baseline
       - name: Verify emitted packaging
         id: package-check
         run: INKWAVE_BUILT_SITE=.built-site/projectiles node --test scripts/tests/inkwave-build-packaging.test.mjs
-      - name: Render unchanged native game and measure baseline
+      - name: Render native main reference and measure baseline
         run: node scripts/check-inkwave-projectile-visuals.mjs --site .built-site/baseline --evidence-dir .ci-scratch/projectile-visuals/before --mode baseline
       - name: Render candidate native game and measure desktop/mobile emulation
         if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}

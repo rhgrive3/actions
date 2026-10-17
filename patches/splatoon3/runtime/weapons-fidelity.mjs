@@ -10,6 +10,7 @@ import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
 import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint, SHOOTER_PARAMTABLE_DEFAULTS } from './shooter-impact-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
+import { mainInkFootprint } from './main-ink-footprints.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
@@ -491,7 +492,7 @@ function eligibleWallDropHit(hit) {
 }
 function wallDropPaint(p, point, radius, state, salt) {
   if (p.ghost || !(radius > 0) || !api.G.paint) return 0;
-  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: p.owner });
+  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(p.s3Weapon), claimOwner: p.owner });
   if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   return area || 0;
 }
@@ -957,7 +958,7 @@ export function globGrazePaint(game, p, point, normal, radius, face = -1) {
   if (last && last.face === face && last.at.distanceTo(center) < paintRadius * 0.8) return 0;
   p.s3GrazePaint = { at: center, face };
   const seed = ((Math.imul(((p.seed || 0) * 4294967296) >>> 0, 2654435761) ^ (p.s3GrazeCount = (p.s3GrazeCount || 0) + 1)) >>> 0) / 4294967296;
-  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: owner });
+  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(p.s3Weapon), claimOwner: owner });
   if (Number.isFinite(area) && area > 0) owner.addTurf?.(area);
   return area;
 }
@@ -1296,17 +1297,27 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
     speed=60*sampledSourceSpeed*speedRate;
     angle=actor.yaw+radians(rollerSpeedSwerveDegrees(unit,offset,count,sampledSourceSpeed));
     pitch+=radians(b.horizontalPitchDegrees); // retained calibrated launch angle, NOT extracted
-    const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnPositionRandomCube||0;
+    // #285: the extracted SpawnPositionWidth is the entire lateral unit-group
+    // span, not the distance from centre to each edge. The 11.3.0 main value
+    // 0.8 m is listed as 0.16 range lines (5 m/line) in splatoon3mix; Carbon
+    // 0.6/0.12, Dynamo 0.8/0.16 and Big Swig 1.9/0.38 agree. The source
+    // does not publish the exact per-glob placement or random-cube PDF, so
+    // keep the existing deterministic fan and seeded independent jitter.
+    const side=fan*(unit.SpawnPositionWidth||0)*0.5,j=unit.SpawnPositionRandomCube||0;
     p.pos.x+=Math.cos(actor.yaw)*side+(Math.random()*2-1)*j;
     p.pos.z-=Math.sin(actor.yaw)*side-(Math.random()*2-1)*j;
     p.pos.y+=(Math.random()*2-1)*j;
   }
-  // Only offsets are extracted. Native body +1.3 anchor is not claimed as Switch height.
-  // #278: the two pinned height fields are summed as raw INKWAVE world units (scale 1).
-  // The additive combination and per-field engine meaning are unverified: the pinned
-  // Leanny table carries no field semantics. This is an INKWAVE assumption, not a
-  // sourced engine law, and makes no SI-metre claim (profile.json models.rollerVerticalSpawnHeight).
-  p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(unit.SpawnPositionHeight||0);
+  // #278: separate group height offset and indexed per-glob position height.
+  // Each two-round vertical group has SpawnPositionHeight=.25; summing it as a
+  // shared offset collapsed that pair into the same birth position even though
+  // its speed/pitch already uses AfterOffset* at offset=0/1. The community
+  // projectile reference describes vertically distinct starts per glob.
+  // Mapping offsetHeight + offset*positionHeight uses the existing local
+  // world scale 1; Nintendo's native coordinate transform is not recovered.
+  const baseHeight=unit.SpawnPositionOffsetHeight||0;
+  const perGlobHeight=unit.SpawnPositionHeight||0;
+  p.pos.y+=vertical ? baseHeight+offset*perGlobHeight : baseHeight+perGlobHeight;
   p.prev.copy(p.pos);p.start.copy(p.pos);p.fidelityMaxY=p.pos.y;p.fidelityImpactHeight=null;
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);

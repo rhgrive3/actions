@@ -88,19 +88,29 @@ function withSampledProjectileSpeed(source, value, run) {
   finally { entry.values.pop(); }
 }
 
-// The wiki's full-charge 19.8..22.2 DU/F brackets 21 DU/F by 1.2 DU/F,
-// matching raw 2.1 +/- .12. This is an absolute speed half-width, NOT +/-12%.
-// The center-biased quantile uses the wiki's gamma model: magnitude(.5)=bias.
-export function sampleSplatlingSpeed(base, halfWidth, bias, uniform) {
+// SpawnSpeedRandomRate is dimensionless (S2 label: 速度ブレ率最大).
+// Kanamoji's primary S3 study #10 uses v0 * (1 + rate * signedBiasedDraw).
+// The earlier Heavy wiki table's absolute half-width contradicts that formula
+// and its own parameter glossary; see the 2026-10-17 Spinner source audit.
+// The study's signed-power distribution is a model, not recovered native code.
+export function sampleSplatlingSpeed(base, rate, bias, uniform) {
+  if (!Number.isFinite(rate) || rate <= 0) return base;
   const signed = clamp01(uniform) * 2 - 1;
-  const magnitude = Math.pow(Math.abs(signed), Math.log(bias) / Math.log(.5));
-  return Math.max(0, base + Math.sign(signed) * halfWidth * magnitude);
+  const median = Number.isFinite(bias) && bias > 0 && bias < 1 ? bias : .5;
+  const magnitude = Math.pow(Math.abs(signed), Math.log(median) / Math.log(.5));
+  return Math.max(0, base * (1 + Math.sign(signed) * rate * magnitude));
 }
 
-// Pinned Leanny/splat3 7280ff9c WeaponSpinnerStandard WeaponParam.VelGnd_DownRt_Charge (0.05).
-// The field name carries no meaning; the Splatoon 2 table labels it 減速遅延 (deceleration delay).
-export function splatlingChargeDownRate(profile) {
-  const rate = profile?.weaponsFidelityCompletion?.weapons?.splatling?.WeaponParam?.VelGnd_DownRt_Charge;
+// Pinned Leanny/splat3 7280ff9c, all six Spinner WeaponParam records.
+// S2's extracted label is 減速遅延 (deceleration delay), not a proved decay law.
+// Added mains must read their own record; unrelated/missing rows never inherit
+// the Heavy value just because their display model resembles a Splatling.
+export function splatlingChargeDownRate(profile, weapon = { kind: 'splatling' }) {
+  const record = weapon?.catalogRecord;
+  const param = record
+    ? record.family === 'splatling' ? record.parameters?.WeaponParam : null
+    : weapon?.kind === 'splatling' ? profile?.weaponsFidelityCompletion?.weapons?.splatling?.WeaponParam : null;
+  const rate = param?.VelGnd_DownRt_Charge;
   return Number.isFinite(rate) && rate > 0 && rate < 1 ? rate : 0;
 }
 
@@ -125,28 +135,29 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   // special:use listener, including kits that bypass native _startSpecial.
 
   // Charge-start ground slowdown (#952, takeover of PR #1188 A05).
-  // Pinned 11.3.0 WeaponSpinnerStandard: MoveSpeed_Charge 0.062, VelGnd_DownRt_Charge 0.05.
+  // Pinned 11.3.0 Spinner records supply each main's MoveSpeed_Charge and DownRt.
   // MODEL, NOT SOURCED FORM (未確認): while charging on the ground above the charge target,
   // speed falls by DownRt of itself per 60 Hz reference frame, never below the target, in
   // place of the generic PLAYER.runDecel brake. The S2 label 減速遅延 (deceleration delay)
   // does not establish this per-frame proportional form; the S3 speed-vs-frame trace is not captured.
   // VelGnd_Bias_Charge (0.9, 減速カーブ) has no published definition and stays unmapped.
-  const chargeDownRate = splatlingChargeDownRate(profile);
-  if (Actor?.prototype._horizontal && chargeDownRate > 0) {
+  if (Actor?.prototype._horizontal) {
     const horizontal = Actor.prototype._horizontal;
     Actor.prototype._horizontal = function (dt, squid, onEnemy, ...rest) {
       const runner = this.weaponRunner, before = Math.hypot(this.vel.x, this.vel.z);
       const value = horizontal.call(this, dt, squid, onEnemy, ...rest);
-      if (!(dt > 0) || squid || onEnemy || !this.grounded || this.weapon?.kind !== 'splatling' ||
+      if (runner?.s3SplatlingChargeDecel) runner.s3SplatlingChargeDecel = undefined;
+      const chargeDownRate = splatlingChargeDownRate(profile, this.weapon);
+      if (!(dt > 0) || !(chargeDownRate > 0) || squid || onEnemy || !this.grounded ||
           !runner?.charging || runner.streaming || runner.dodge || (runner.lockT || 0) > 0) return value;
       const move = this.intent?.move, input = move ? Math.min(1, Math.hypot(move.x, move.z)) : 0;
       if (input < .01) return value;
       const target = runner.moveSpeed() * input, after = Math.hypot(this.vel.x, this.vel.z);
       if (!(before > target + 1e-9) || !(after > 1e-9)) return value;
-      const sourced = Math.max(target, before * Math.pow(1 - chargeDownRate, dt * 60));
-      const k = sourced / after;
+      const modeled = Math.max(target, before * Math.pow(1 - chargeDownRate, dt * 60));
+      const k = modeled / after;
       this.vel.x *= k; this.vel.z *= k;
-      runner.s3SplatlingChargeDecel = { before, target, speed: sourced };
+      runner.s3SplatlingChargeDecel = { before, target, speed: modeled };
       return value;
     };
   }
@@ -255,7 +266,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   const fireRound = Projectiles.prototype._fireRound;
   Projectiles.prototype._fireRound = function (a, w, ...args) {
     if (w.kind !== 'splatling') return fireRound.call(this, a, w, ...args);
-    const sampled = sampleSplatlingSpeed(w.projSpeed, w.speedRandomHalfWidth, w.speedRandomBias, Math.random());
+    const sampled = sampleSplatlingSpeed(w.projSpeed, w.speedRandomRate, w.speedRandomBias, Math.random());
     return withSampledProjectileSpeed(w, sampled, config => fireRound.call(this, a, config, ...args));
   };
 

@@ -101,8 +101,23 @@
   },
   "player.s3SwimHurtRadius": {
     "value": 0.675,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerCollisionParam/ColBullet_Radius_Squid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.675
+    }
+  },
+  "player.s3SwimHurtSegmentHeight": {
+    "value": 0,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerCollisionParam/ColBullet_Height_Squid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0
+    }
   },
   "player.s3HumanoidHurtHeight": {
     "value": 1.65,
@@ -973,13 +988,13 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "weapons.splatling.speedRandomHalfWidth": {
-    "value": 7.2,
+  "weapons.splatling.speedRandomRate": {
+    "value": 0.12,
     "status": "derived from pinned extracted data; physical scale unverified",
     "binding": {
       "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomRate",
       "index": null,
-      "factor": 60,
+      "factor": 1,
       "rawValue": 0.12
     }
   },

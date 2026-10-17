@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './robustness-fixture.mjs';
 import { slosherImpactMatches } from '../slosher-paint-admission.mjs';
-async function client(id){const f=await fixture();const nm=f.makeNetMatch(f.makeSession(id,'a',[['a','A'],['b','B']]),{id:'slosh-cap'});const actors=['a','b'].map((owner,nid)=>f.makeActor({nid,owner,remote:owner!==id,team:nid,roller:false}));f.G.match=f.bind(nm,actors);f.G.time=10;const V=(...x)=>new f.THREE.Vector3(...x);const face={id:0,paintable:true,turf:true,wall:false,block:0,origin:V(-20,0,-20),u:V(1,0,0),v:V(0,0,1),n:V(0,1,0),su:40,sv:40};const level={faces:[face],blocks:[{aabbMin:V(-20,-.1,-20),aabbMax:V(20,0,20),faces:[0,-1,-1,-1,-1,-1]}],pointInside:()=>false,queryBlocks:()=>[0]};class CPU extends f.PaintSystem{_initGPU(){} _pushQuad(){}}f.G.paint=new CPU(null,level,{atlasSize:1024,maxDensity:8,cell:.25});return{f,nm,actors};}
+async function client(id,productionComposition=false){const f=await fixture({productionComposition});const nm=f.makeNetMatch(f.makeSession(id,'a',[['a','A'],['b','B']]),{id:'slosh-cap'});const actors=['a','b'].map((owner,nid)=>f.makeActor({nid,owner,remote:owner!==id,team:nid,roller:false}));f.G.match=f.bind(nm,actors);f.G.time=10;const V=(...x)=>new f.THREE.Vector3(...x);const face={id:0,paintable:true,turf:true,wall:false,block:0,origin:V(-20,0,-20),u:V(1,0,0),v:V(0,0,1),n:V(0,1,0),su:40,sv:40};const level={faces:[face],blocks:[{aabbMin:V(-20,-.1,-20),aabbMax:V(20,0,20),faces:[0,-1,-1,-1,-1,-1]}],pointInside:()=>false,queryBlocks:()=>[0]};class CPU extends f.PaintSystem{_initGPU(){} _pushQuad(){}}f.G.paint=new CPU(null,level,{atlasSize:1024,maxDensity:8,cell:.25});return{f,nm,actors};}
 
 function receive(c,e){const row=JSON.parse(JSON.stringify(e));row._netSeq=e._netSeq;row._netTick=e._netTick;c.nm._peer('a');c.nm._play('a',row);}
 function tick(c,rows,ts=1000){c.nm._tick('a',{k:'t',r:2,ts,u:600,a:[],e:rows.map(e=>JSON.parse(JSON.stringify(e)))});}
 function drain(c){for(const e of c.nm._peer('a').events.splice(0))c.nm._play('a',e);}
 function same(a,b){assert.deepEqual(Array.from(a.f.G.paint.grid),Array.from(b.f.G.paint.grid));assert.deepEqual(Array.from(a.f.G.paint.counts),Array.from(b.f.G.paint.counts));}
-async function pair({ordinal=0,distance=5,drop=0}={}){
- const sender=await client('a'),receiver=await client('b'),f=sender.f,owner=sender.actors[0];
+async function pair({ordinal=0,distance=5,drop=0,productionComposition=false}={}){
+ const sender=await client('a',productionComposition),receiver=await client('b',productionComposition),f=sender.f,owner=sender.actors[0];
  for(const c of [sender,receiver]){c.actors[0].weapon=c.f.WEAPONS.slosher;c.actors[0].netLife=0;c.actors[0].net.lastLife=0;}
  let index=ordinal,unit;for(const u of f.profile.weaponsFidelityCompletion.weapons.slosher.UnitGroupParam.Unit){if(index<(u.BulletNum??1)){unit=u;break;}index-=u.BulletNum??1;}
  const p=f.projectiles._new();Object.assign(p,{owner,team:0,type:'slosh',wid:'slosher',s3Weapon:owner.weapon,fidelitySloshUnit:unit,fidelitySloshIndex:index,fidelitySloshPacketIndex:ordinal,age:0,life:2.4,straight:0,delay:0,radius:.3,size:.2,grav:24,drag:0,trailEvery:0,head:false,seed:.5});
@@ -19,9 +19,11 @@ async function pair({ordinal=0,distance=5,drop=0}={}){
  impact();return{sender,receiver,p,birth,impact,rows:sender.nm.out};
 }
 for(const options of [{},{distance:10},{distance:18},{drop:5},{ordinal:1},{ordinal:4},{ordinal:8}])test('source-derived footprint '+JSON.stringify(options),async()=>{const h=await pair(options);for(const e of h.rows)receive(h.receiver,e);same(h.sender,h.receiver);});
-test('sourced Slosher terrain ink keeps its accepted source-shot kind and rejects forged source-splash cores',async()=>{
+test('sourced Slosher terrain ink keeps its physical kind and rejects forged source-splash cores',async()=>{
  const h=await pair(),head=h.rows[1];
- assert.equal(head[8],'source-shot','the live Slosher source stamp carries its physical kind over the wire');
+ // The source fixture deliberately retains its older partial composition;
+ // emitted fixtures already include the production silhouette adapter.
+ assert.equal(head[8],process.env.INKWAVE_BUILT_SITE?'ink-slosh':'source-shot','the live Slosher source stamp carries its physical kind over the wire');
  const b={projectileId:h.p._netId,start:h.p.start,seed:h.p.seed,
    heading:h.p.vel.clone(),unit:h.p.fidelitySloshUnit,index:h.p.fidelitySloshIndex};
  assert.equal(slosherImpactMatches(b,head),true,'the original source core matches its numeric birth record');
@@ -107,4 +109,14 @@ test('native complete volley flight preserves full terrain paint on the receivin
  for(let i=0;i<180;i++){f.G.time+=1/60;f.clock.advance(1/60);f.projectiles.update(1/60);}
  assert.ok(sender.nm.out.some(e=>e[1]==='s'&&e[5]>3.744&&e[15]?.[0]==='inkwave-slosher-impact-v1'));
  for(const e of sender.nm.out)receive(receiver,e);same(sender,receiver);
+});
+
+// The new surface body must retain the original exact birth/radius/depth proof.
+test('production profile travels through authenticated Slosher terrain admission',async()=>{
+ const h=await pair({productionComposition:true});
+ assert.equal(h.rows[1][8],'ink-slosh');
+ for(const e of h.rows)receive(h.receiver,e);same(h.sender,h.receiver);
+ const forged=JSON.parse(JSON.stringify(h.rows[1]));forged[8]='ink-brush';
+ const b={projectileId:h.p._netId,start:h.p.start,seed:h.p.seed,heading:h.p.vel,unit:h.p.fidelitySloshUnit,index:h.p.fidelitySloshIndex};
+ assert.equal(slosherImpactMatches(b,forged),false,'only the Bucket profile is authorized by this birth');
 });

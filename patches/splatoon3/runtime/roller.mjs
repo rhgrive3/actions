@@ -61,6 +61,15 @@ export function rollerFireBuffer(actor, fallback, dt) {
   return Math.max(fallback, remaining + dt);
 }
 
+export function rollerSwingMoveSpeed(runner) {
+  const a = runner?.a, attack = runner?.s3RollerAttack;
+  if (!a || a.weapon?.kind !== 'roller' || !attack || runner.rolling || runner.lockT > 0 ||
+      runner.aimingSub || a.form === 'squid' || a.specialActive || a.superJumpState ||
+      !(attack.interval > 0) || attack.elapsed >= attack.interval - EPS) return null;
+  const speed = a.weapon.moveSpeedFiring; // 11.3.0 SwingMoveSpeed: 0.048 source units/frame * 60.
+  return Number.isFinite(speed) && speed >= 0 ? speed : null;
+}
+
 export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
@@ -271,6 +280,15 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       if (!this.alive || this.specialActive || this.superJumpState) r.s3RollerSquidPressT = null;
     }
     return actorUpdate.call(this, dt);
+  };
+
+  const nativeMoveSpeed = WeaponRunner.prototype.moveSpeed;
+  WeaponRunner.prototype.moveSpeed = function (...args) {
+    // Own the entire admitted windup + recovery, not only native flickRecover's
+    // short visual timer. Roll contact/dash, sub, transform and interruption
+    // retain their existing movement owners.
+    const speed = rollerSwingMoveSpeed(this);
+    return speed === null ? nativeMoveSpeed.apply(this, args) : speed;
   };
 
   const armsInterruption = runner => {
@@ -656,7 +674,7 @@ const VERTICAL_GRIPS = [
   { a: READY_ANCHOR, r: READY_ROTATION },
   { a: [.015, 1.11, .025], r: [VERTICAL_SWING.coil, .015, Math.PI / 2] },
   { a: [-.025, 1.05, .23], r: [VERTICAL_SWING.release, 0, Math.PI / 2] },
-  { a: [-.025, 1.12, .28], r: [VERTICAL_SWING.follow, 0, 0] },
+  { a: [-.025, 1.12, .28], r: [VERTICAL_SWING.follow, 0, Math.PI / 2] },
   { a: READY_ANCHOR, r: READY_ROTATION },
 ];
 function slope(keys, times, i, joint, component) {
@@ -695,7 +713,11 @@ function s3SwingPose(elapsed, windup, interval, keys, heavy) {
   let restEnd, end;
   if (heavy) { restEnd = Math.max(release + H.rest, interval); end = restEnd + H.ret; }
   else { end = Math.max(release + 1 / 60, interval); restEnd = end - Math.min(S.ret, (end - release) * .5); }
-  const k = [keys[0], keys[1], keys[1], keys[3], keys[3], keys[4]];
+  // Release must sample the release grip (key 2), especially for the vertical
+  // flick. Jumping to follow-through (key 3) rotates the roller sideways
+  // exactly when ink leaves the drum. Preserve the established horizontal track.
+  const releaseGrip = keys === VERTICAL_GRIPS ? keys[2] : keys[3];
+  const k = [keys[0], keys[1], keys[1], releaseGrip, keys[3], keys[4]];
   const times = [0, coilAt, hold, release, restEnd, end];
   const t = Math.max(0, Math.min(end, elapsed));
   const { anchor, rotation } = hermiteKeys(k, times, t);
@@ -828,6 +850,26 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
           if(cost<bestCost){bestCost=cost;bestGroundError=floorError;bestQ.copy(candidateQ);}
           if(floorError<=.003)break;
         }
+      }
+    }
+    // An upright vertical release can place the actual drum below the floor
+    // even after orientation search. Recover the remaining penetration from
+    // the live drum geometry, not a weapon-wide guessed height offset. Lift
+    // only the presentation wrist target, in character-local coordinates,
+    // and retain the native finite arm reach and left-hand alignment.
+    if (neededGround) {
+      const penetration = -.002 - bottom(bestQ);
+      const scale = this.kid.scale;
+      // During a form transition the source skeleton can scale kid to zero.
+      // A visible roller grip never divides by a collapsed or invalid axis.
+      if (penetration > .00001 && [scale.x, scale.y, scale.z].every(v => Number.isFinite(v) && Math.abs(v) > 1e-4)) {
+        delta.set(0, 1, 0).applyQuaternion(inverseHandQ.copy(this.kid.quaternion).invert());
+        target.x += penetration * delta.x / scale.x;
+        target.y += penetration * delta.y / scale.y;
+        target.z += penetration * delta.z / scale.z;
+        delta.subVectors(target, rightOrigin);
+        if (delta.length() > reachR) target.copy(rightOrigin).add(delta.setLength(reachR));
+        alignLeft(bestQ);
       }
     }
     orientation.copy(bestQ);

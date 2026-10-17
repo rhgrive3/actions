@@ -1,0 +1,4022 @@
+{
+  "baselineCommit": "bf9a8a9270b349a3b20c9550ff6ed78a61c9e729",
+  "scope": "Clean pre-change INKWAVE physical events, independent of changed masks and Spinner speed; not Nintendo measurements",
+  "cases": {
+    "shooter": {
+      "initialProjectiles": [
+        {
+          "type": "shot",
+          "wid": "shooter",
+          "life": 3,
+          "straight": 0.06666666666666667,
+          "radius": 1.93,
+          "damage": 36,
+          "dmgFar": null,
+          "size": 0.285,
+          "trail": -1.45,
+          "trailEvery": 0,
+          "trailRadius": 0.44,
+          "grav": 57.6,
+          "drag": 1.2,
+          "delay": 0,
+          "vis": 0.1071751099927351,
+          "tail0": 0.8,
+          "tailK": 1.3,
+          "wob": 0.035,
+          "wobF": 26,
+          "nose": 0.3,
+          "sats": 0,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            0,
+            135.96
+          ]
+        }
+      ],
+      "birthDraws": 2,
+      "flightDraws": 2,
+      "paintPoints": [
+        {
+          "time": 0.16666666666666666,
+          "center": [
+            0,
+            0.005000000000000111,
+            11.720869779450997
+          ],
+          "radius": 1.8054093318183002,
+          "team": 0,
+          "seed": 0.2519546449184418,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.4960000000000001,
+          "cosmetic": false,
+          "area": 13.25
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.16666666666666666,
+          "pos": [
+            0,
+            1.1102230246251565e-16,
+            12.056675915169201
+          ],
+          "kind": "shot",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "59b92159c56ba658bdd46e72feda6cd34129caa7ad62d58894fa47589d437158"
+    },
+    "dualies-normal": {
+      "initialProjectiles": [
+        {
+          "type": "shot",
+          "wid": "dualies",
+          "life": 3,
+          "straight": 0.05,
+          "radius": 1.71,
+          "damage": 30,
+          "dmgFar": null,
+          "size": 0.31,
+          "trail": -1.35,
+          "trailEvery": 0,
+          "trailRadius": 0.38,
+          "grav": 57.6,
+          "drag": 1.2,
+          "delay": 0,
+          "vis": 0.088,
+          "tail0": 0.8,
+          "tailK": 1.3,
+          "wob": 0.03,
+          "wobF": 28,
+          "nose": 0.3,
+          "sats": 0,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            0,
+            142.2
+          ]
+        }
+      ],
+      "birthDraws": 1,
+      "flightDraws": 1,
+      "paintPoints": [
+        {
+          "time": 0.15,
+          "center": [
+            0,
+            0.005000000000000111,
+            10.997524098112759
+          ],
+          "radius": 1.6827954828869645,
+          "team": 0,
+          "seed": 0.2519546449184418,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            0,
+            0.9999999999999999
+          ],
+          "stretchAmt": 1.0098335524733089,
+          "cosmetic": false,
+          "area": 14.625
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.15,
+          "pos": [
+            0,
+            1.1102230246251565e-16,
+            11.634777850826426
+          ],
+          "kind": "shot",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "9be2b5f7d138453bd9cb09e40b26bd1b70242753a934672aecd303c144b2b592"
+    },
+    "dualies-post": {
+      "initialProjectiles": [
+        {
+          "type": "shot",
+          "wid": "dualies",
+          "life": 3,
+          "straight": 0.05,
+          "radius": 1.71,
+          "damage": 30,
+          "dmgFar": null,
+          "size": 0.335,
+          "trail": -1.35,
+          "trailEvery": 0,
+          "trailRadius": 0.38,
+          "grav": 57.6,
+          "drag": 1.2,
+          "delay": 0,
+          "vis": 0.088,
+          "tail0": 0.8,
+          "tailK": 1.3,
+          "wob": 0.03,
+          "wobF": 28,
+          "nose": 0.3,
+          "sats": 0,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            0,
+            142.2
+          ]
+        }
+      ],
+      "birthDraws": 1,
+      "flightDraws": 1,
+      "paintPoints": [
+        {
+          "time": 0.15,
+          "center": [
+            0,
+            0.005000000000000111,
+            10.997524098112759
+          ],
+          "radius": 1.6827954828869645,
+          "team": 0,
+          "seed": 0.2519546449184418,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            0,
+            0.9999999999999999
+          ],
+          "stretchAmt": 1.0098335524733089,
+          "cosmetic": false,
+          "area": 14.625
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.15,
+          "pos": [
+            0,
+            1.1102230246251565e-16,
+            11.634777850826426
+          ],
+          "kind": "shot",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "9be2b5f7d138453bd9cb09e40b26bd1b70242753a934672aecd303c144b2b592"
+    },
+    "blaster": {
+      "initialProjectiles": [
+        {
+          "type": "blast",
+          "wid": "blaster",
+          "life": 0.21666666666666667,
+          "straight": 0.15,
+          "radius": 1.5,
+          "damage": 125,
+          "dmgFar": null,
+          "size": 0.285,
+          "trail": -1.5,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 57.599999999999994,
+          "drag": 1.2,
+          "delay": 0,
+          "vis": 0.2,
+          "tail0": 0.5,
+          "tailK": 0.9,
+          "wob": 0.085,
+          "wobF": 17,
+          "nose": 0.15,
+          "sats": 4,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            0,
+            56.7
+          ]
+        }
+      ],
+      "birthDraws": 1,
+      "flightDraws": 1,
+      "paintPoints": [
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            -0.3938188628849932,
+            0.005000000000000056,
+            0.6178835412821316
+          ],
+          "radius": 2.43,
+          "team": 0,
+          "seed": 0.239603424211964,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.31999999999999995,
+          "cosmetic": false,
+          "area": 22.25
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            0,
+            0.55990592,
+            10.155946205696
+          ],
+          "radius": 2,
+          "team": 0,
+          "seed": 0.9866384712513536,
+          "kind": "source-shot",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 11.625
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            -0.3299254085800369,
+            0.005000000000000056,
+            2.208721838138595
+          ],
+          "radius": 1.62,
+          "team": 0,
+          "seed": 0.18387267994694412,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.31999999999999995,
+          "cosmetic": false,
+          "area": 1.1875
+        },
+        {
+          "time": 0.26666666666666666,
+          "center": [
+            -0.2670132692688215,
+            0.004999999999999972,
+            3.801061077618553
+          ],
+          "radius": 1.62,
+          "team": 0,
+          "seed": 0.1281446551438421,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.31999999999999995,
+          "cosmetic": false,
+          "area": 4.9375
+        },
+        {
+          "time": 0.3,
+          "center": [
+            -0.20504867273125774,
+            0.004999999999999972,
+            5.29415631382256
+          ],
+          "radius": 1.62,
+          "team": 0,
+          "seed": 0.0724192417692393,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.31999999999999995,
+          "cosmetic": false,
+          "area": 4.6875
+        },
+        {
+          "time": 0.3,
+          "center": [
+            -0.1439157178529485,
+            0.005000000000000056,
+            6.7872631788163735
+          ],
+          "radius": 1.62,
+          "team": 0,
+          "seed": 0.01669055689126253,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.31999999999999995,
+          "cosmetic": false,
+          "area": 3.8125
+        },
+        {
+          "time": 0.3333333333333333,
+          "center": [
+            -0.08370946125114616,
+            0.005,
+            8.280436646844233
+          ],
+          "radius": 1.62,
+          "team": 0,
+          "seed": 0.9609590079635382,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.31999999999999995,
+          "cosmetic": false,
+          "area": 0.875
+        },
+        {
+          "time": 0.35,
+          "center": [
+            0,
+            0.10000000000000003,
+            10.155946205696
+          ],
+          "radius": 3.2,
+          "team": 0,
+          "seed": 0.9093101418111473,
+          "kind": "drop",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 17.125
+        },
+        {
+          "time": 0.36666666666666664,
+          "center": [
+            -0.022013386631263347,
+            0.005000000000000111,
+            9.733400630502524
+          ],
+          "radius": 1.62,
+          "team": 0,
+          "seed": 0.9052359974011779,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.31999999999999995,
+          "cosmetic": false,
+          "area": 0
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.21666666666666665,
+          "pos": [
+            0,
+            0.55990592,
+            10.155946205696
+          ],
+          "kind": "blast",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "166e55d93862facb1cc176b8c66cca12e0a853b63e16835af56028d56d493983"
+    },
+    "splatling-partial": {
+      "initialProjectiles": [
+        {
+          "type": "shot",
+          "wid": "splatling",
+          "life": 3,
+          "straight": 0.13333333333333333,
+          "radius": 2.226,
+          "damage": 30,
+          "dmgFar": null,
+          "size": 0.225,
+          "trail": -1.3,
+          "trailEvery": 0,
+          "trailRadius": 0.42,
+          "grav": 57.6,
+          "drag": 1.2,
+          "delay": 0,
+          "vis": 0.086,
+          "tail0": 0.9,
+          "tailK": 1.6,
+          "wob": 0.025,
+          "wobF": 30,
+          "nose": 0.35,
+          "sats": 0,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            0,
+            85.21100704
+          ]
+        }
+      ],
+      "birthDraws": 4,
+      "flightDraws": 4,
+      "paintPoints": [
+        {
+          "time": 0.2333333333333333,
+          "center": [
+            0,
+            0.005000000000000111,
+            14.004371982896306
+          ],
+          "radius": 2.1416120718885585,
+          "team": 0,
+          "seed": 0.715884089237079,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.2719999999999999,
+          "cosmetic": false,
+          "area": 16.625
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.2333333333333333,
+          "pos": [
+            0,
+            1.1102230246251565e-16,
+            14.222816414228939
+          ],
+          "kind": "shot",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "f7f275d6a3dd0ae926bfdfcb00681d7793b2ef41ef8a5cdbde0dd51cc1cdc508"
+    },
+    "splatling-first": {
+      "initialProjectiles": [
+        {
+          "type": "shot",
+          "wid": "splatling",
+          "life": 3,
+          "straight": 0.13333333333333333,
+          "radius": 2.226,
+          "damage": 30,
+          "dmgFar": null,
+          "size": 0.225,
+          "trail": -1.3,
+          "trailEvery": 0,
+          "trailRadius": 0.42,
+          "grav": 57.6,
+          "drag": 1.2,
+          "delay": 0,
+          "vis": 0.086,
+          "tail0": 0.9,
+          "tailK": 1.6,
+          "wob": 0.025,
+          "wobF": 30,
+          "nose": 0.35,
+          "sats": 0,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            0,
+            124.58600704
+          ]
+        }
+      ],
+      "birthDraws": 4,
+      "flightDraws": 4,
+      "paintPoints": [
+        {
+          "time": 0.2333333333333333,
+          "center": [
+            0,
+            0.005000000000000111,
+            19.420875875321723
+          ],
+          "radius": 2.106171426873516,
+          "team": 0,
+          "seed": 0.715884089237079,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.2719999999999999,
+          "cosmetic": false,
+          "area": 16.125
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.2333333333333333,
+          "pos": [
+            0,
+            1.1102230246251565e-16,
+            19.635705360862822
+          ],
+          "kind": "shot",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "f2cc7e5c98a3a8cefa25498bd23834e2e5f764147fbbad94e58645d52b9b7102"
+    },
+    "splatling-full": {
+      "initialProjectiles": [
+        {
+          "type": "shot",
+          "wid": "splatling",
+          "life": 3,
+          "straight": 0.13333333333333333,
+          "radius": 2.226,
+          "damage": 30,
+          "dmgFar": null,
+          "size": 0.225,
+          "trail": -1.3,
+          "trailEvery": 0,
+          "trailRadius": 0.42,
+          "grav": 57.6,
+          "drag": 1.2,
+          "delay": 0,
+          "vis": 0.086,
+          "tail0": 0.9,
+          "tailK": 1.6,
+          "wob": 0.025,
+          "wobF": 30,
+          "nose": 0.35,
+          "sats": 0,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            0,
+            124.58600704
+          ]
+        }
+      ],
+      "birthDraws": 4,
+      "flightDraws": 4,
+      "paintPoints": [
+        {
+          "time": 0.2333333333333333,
+          "center": [
+            0,
+            0.005000000000000111,
+            19.420875875321723
+          ],
+          "radius": 2.106171426873516,
+          "team": 0,
+          "seed": 0.715884089237079,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.2719999999999999,
+          "cosmetic": false,
+          "area": 16.125
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.2333333333333333,
+          "pos": [
+            0,
+            1.1102230246251565e-16,
+            19.635705360862822
+          ],
+          "kind": "shot",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "f2cc7e5c98a3a8cefa25498bd23834e2e5f764147fbbad94e58645d52b9b7102"
+    },
+    "charger-0": {
+      "initialProjectiles": [],
+      "birthDraws": 10,
+      "flightDraws": 13,
+      "paintPoints": [
+        {
+          "time": 0,
+          "center": [
+            0,
+            0.10000000000000006,
+            0
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 4.75
+        },
+        {
+          "time": 0.016666666666666666,
+          "center": [
+            0,
+            0.10000000000000023,
+            1.5
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0.4249683904927224,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 2.5,
+          "cosmetic": false,
+          "area": 9.25
+        },
+        {
+          "time": 0.05,
+          "center": [
+            0,
+            0.10000000000000023,
+            6.2775
+          ],
+          "radius": 0.78,
+          "team": 0,
+          "seed": 0.900967170484364,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 2.5,
+          "cosmetic": false,
+          "area": 4.375
+        },
+        {
+          "time": 0.06666666666666667,
+          "center": [
+            0,
+            0.10000000000000023,
+            9.333
+          ],
+          "radius": 1.17,
+          "team": 0,
+          "seed": 0.7996532982215285,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 2.5,
+          "cosmetic": false,
+          "area": 9.875
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.06666666666666667,
+          "pos": [
+            0,
+            1.05,
+            9.333
+          ],
+          "kind": "charger",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "5c5b5b18a785fbc562e12a5d0ffe957b6a24473def4f0f30c6f36e1dbe26ea69"
+    },
+    "charger-0.25": {
+      "initialProjectiles": [],
+      "birthDraws": 2,
+      "flightDraws": 6,
+      "paintPoints": [
+        {
+          "time": 0,
+          "center": [
+            0,
+            0.10000000000000006,
+            0
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 4.75
+        },
+        {
+          "time": 0.016666666666666666,
+          "center": [
+            0,
+            0.10000000000000023,
+            1.5
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0.13079005177132785,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 1.906779661016949,
+          "cosmetic": false,
+          "area": 7.75
+        },
+        {
+          "time": 0.05,
+          "center": [
+            0,
+            0.10000000000000023,
+            5.91530048076923
+          ],
+          "radius": 0.885,
+          "team": 0,
+          "seed": 0.715884089237079,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 1.906779661016949,
+          "cosmetic": false,
+          "area": 5.125
+        },
+        {
+          "time": 0.06666666666666667,
+          "center": [
+            0,
+            0.10000000000000023,
+            10.330600961538462
+          ],
+          "radius": 0.885,
+          "team": 0,
+          "seed": 0.934819060144946,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 1.906779661016949,
+          "cosmetic": false,
+          "area": 5.125
+        },
+        {
+          "time": 0.08333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            11.35276923076923
+          ],
+          "radius": 1.3275000000000001,
+          "team": 0,
+          "seed": 0.06394727295264602,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 1.906779661016949,
+          "cosmetic": false,
+          "area": 7.25
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.08333333333333333,
+          "pos": [
+            0,
+            1.05,
+            11.35276923076923
+          ],
+          "kind": "charger",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "95519cfe94a897545c4b29b990c5a3402ddf402998db4e4741f6be066b0eac66"
+    },
+    "charger-0.5": {
+      "initialProjectiles": [],
+      "birthDraws": 2,
+      "flightDraws": 7,
+      "paintPoints": [
+        {
+          "time": 0,
+          "center": [
+            0,
+            0.10000000000000006,
+            0
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 4.75
+        },
+        {
+          "time": 0.016666666666666666,
+          "center": [
+            0,
+            0.10000000000000023,
+            1.5
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0.13079005177132785,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 1.0135135135135132,
+          "cosmetic": false,
+          "area": 5.75
+        },
+        {
+          "time": 0.03333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            5.174855769230769
+          ],
+          "radius": 1.11,
+          "team": 0,
+          "seed": 0.715884089237079,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 1.0135135135135132,
+          "cosmetic": false,
+          "area": 6.125
+        },
+        {
+          "time": 0.05,
+          "center": [
+            0,
+            0.10000000000000023,
+            8.849711538461538
+          ],
+          "radius": 1.11,
+          "team": 0,
+          "seed": 0.934819060144946,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 1.0135135135135132,
+          "cosmetic": false,
+          "area": 6.125
+        },
+        {
+          "time": 0.06666666666666667,
+          "center": [
+            0,
+            0.10000000000000023,
+            12.524567307692307
+          ],
+          "radius": 1.11,
+          "team": 0,
+          "seed": 0.06394727295264602,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 1.0135135135135132,
+          "cosmetic": false,
+          "area": 5.875
+        },
+        {
+          "time": 0.08333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            15.680846153846154
+          ],
+          "radius": 1.665,
+          "team": 0,
+          "seed": 0.18731569196097553,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 1.0135135135135132,
+          "cosmetic": false,
+          "area": 13
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.08333333333333333,
+          "pos": [
+            0,
+            1.05,
+            15.680846153846154
+          ],
+          "kind": "charger",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "0a6446902ef512efce35765a746358ad49629bd3281f8e6c2fd295b330829915"
+    },
+    "charger-0.75": {
+      "initialProjectiles": [],
+      "birthDraws": 2,
+      "flightDraws": 10,
+      "paintPoints": [
+        {
+          "time": 0,
+          "center": [
+            0,
+            0.10000000000000006,
+            0
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 4.75
+        },
+        {
+          "time": 0.016666666666666666,
+          "center": [
+            0,
+            0.10000000000000023,
+            1.5
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0.13079005177132785,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.4213483146067416,
+          "cosmetic": false,
+          "area": 4.375
+        },
+        {
+          "time": 0.03333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            4.483088942307692
+          ],
+          "radius": 1.335,
+          "team": 0,
+          "seed": 0.715884089237079,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.4213483146067416,
+          "cosmetic": false,
+          "area": 6.875
+        },
+        {
+          "time": 0.03333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            7.466177884615385
+          ],
+          "radius": 1.335,
+          "team": 0,
+          "seed": 0.934819060144946,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.4213483146067416,
+          "cosmetic": false,
+          "area": 6.75
+        },
+        {
+          "time": 0.05,
+          "center": [
+            0,
+            0.10000000000000023,
+            10.449266826923077
+          ],
+          "radius": 1.335,
+          "team": 0,
+          "seed": 0.06394727295264602,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.4213483146067416,
+          "cosmetic": false,
+          "area": 6.625
+        },
+        {
+          "time": 0.06666666666666667,
+          "center": [
+            0,
+            0.10000000000000023,
+            13.43235576923077
+          ],
+          "radius": 1.335,
+          "team": 0,
+          "seed": 0.18731569196097553,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.4213483146067416,
+          "cosmetic": false,
+          "area": 6.5
+        },
+        {
+          "time": 0.06666666666666667,
+          "center": [
+            0,
+            0.10000000000000023,
+            16.415444711538463
+          ],
+          "radius": 1.335,
+          "team": 0,
+          "seed": 0.5341551220044494,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.4213483146067416,
+          "cosmetic": false,
+          "area": 6.625
+        },
+        {
+          "time": 0.08333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            19.398533653846155
+          ],
+          "radius": 1.335,
+          "team": 0,
+          "seed": 0.7523999395780265,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.4213483146067416,
+          "cosmetic": false,
+          "area": 6.75
+        },
+        {
+          "time": 0.08333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            20.00892307692308
+          ],
+          "radius": 2.0025,
+          "team": 0,
+          "seed": 0.38541593542322516,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.4213483146067416,
+          "cosmetic": false,
+          "area": 8.5
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.08333333333333333,
+          "pos": [
+            0,
+            1.05,
+            20.00892307692308
+          ],
+          "kind": "charger",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "0809e6769fc4e1975591655435ccd8c068adddb1c50cc3d4ea3ef9636cb559ee"
+    },
+    "charger-1": {
+      "initialProjectiles": [],
+      "birthDraws": 2,
+      "flightDraws": 14,
+      "paintPoints": [
+        {
+          "time": 0,
+          "center": [
+            0,
+            0.10000000000000006,
+            0
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 4.75
+        },
+        {
+          "time": 0.016666666666666666,
+          "center": [
+            0,
+            0.10000000000000023,
+            1.5
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0.13079005177132785,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 3.5
+        },
+        {
+          "time": 0.016666666666666666,
+          "center": [
+            0,
+            0.10000000000000023,
+            3.5591999999999997
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.715884089237079,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 6.625
+        },
+        {
+          "time": 0.03333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            5.618399999999999
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.934819060144946,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 6
+        },
+        {
+          "time": 0.03333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            7.677599999999999
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.06394727295264602,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 5.75
+        },
+        {
+          "time": 0.05,
+          "center": [
+            0,
+            0.10000000000000023,
+            9.736799999999999
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.18731569196097553,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 5.875
+        },
+        {
+          "time": 0.05,
+          "center": [
+            0,
+            0.10000000000000023,
+            11.796
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.5341551220044494,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 5.75
+        },
+        {
+          "time": 0.05,
+          "center": [
+            0,
+            0.10000000000000023,
+            13.8552
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.7523999395780265,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 6
+        },
+        {
+          "time": 0.06666666666666667,
+          "center": [
+            0,
+            0.10000000000000023,
+            15.9144
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.38541593542322516,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 5.875
+        },
+        {
+          "time": 0.06666666666666667,
+          "center": [
+            0,
+            0.10000000000000023,
+            17.9736
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.4249683904927224,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 5.875
+        },
+        {
+          "time": 0.08333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            20.0328
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.900967170484364,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 5.75
+        },
+        {
+          "time": 0.08333333333333333,
+          "center": [
+            0,
+            0.10000000000000023,
+            22.092000000000002
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.7996532982215285,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 6.125
+        },
+        {
+          "time": 0.09999999999999999,
+          "center": [
+            0,
+            0.10000000000000023,
+            24.337
+          ],
+          "radius": 2.34,
+          "team": 0,
+          "seed": 0.4372010095976293,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 13.5
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.09999999999999999,
+          "pos": [
+            0,
+            1.05,
+            24.337
+          ],
+          "kind": "charger",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "bd240c1a25b9052703f918c926b2b73eb0d2ad33781e960d12207821bf605daf"
+    },
+    "roller-horizontal": {
+      "initialProjectiles": [
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 0.8892370155313983,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            -0.79316898,
+            1.27708319,
+            0.65047999
+          ],
+          "velocity": [
+            -15.75551395,
+            0,
+            46.91722066
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 1.0898959894664586,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            -0.60445848,
+            1.29251211,
+            0.68265277
+          ],
+          "velocity": [
+            -16.01534674,
+            0,
+            60.92834792
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 0.9154483896680176,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            -0.5928871,
+            1.28205625,
+            0.68183448
+          ],
+          "velocity": [
+            -11.28617478,
+            0,
+            54.14104934
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 0.9283345992211253,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 2,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            -0.36603008,
+            1.37336963,
+            0.53155114
+          ],
+          "velocity": [
+            -10.46825535,
+            0,
+            80.19584756
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 0.9087419880088419,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 2,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            -0.31335771,
+            1.20507652,
+            0.64966455
+          ],
+          "velocity": [
+            -5.5061236,
+            0,
+            65.81645197
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 1.0327255719108508,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 2,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            -0.14602065,
+            1.32255516,
+            0.51794308
+          ],
+          "velocity": [
+            -1.84979334,
+            0,
+            59.5260662
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 0.9515149894403293,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 2,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            0.16785221,
+            1.39192526,
+            0.59341002
+          ],
+          "velocity": [
+            1.88312502,
+            0,
+            64.09113071
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 1.044341654283926,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 2,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            0.25775857,
+            1.20647767,
+            0.65710642
+          ],
+          "velocity": [
+            6.15070471,
+            0,
+            68.3378619
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 0.8740527515299618,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 2,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            0.40672162,
+            1.30807069,
+            0.65436943
+          ],
+          "velocity": [
+            11.09828077,
+            0,
+            73.07048509
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 0.9435590144246816,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            0.5492204,
+            1.21422978,
+            0.62857849
+          ],
+          "velocity": [
+            7.61207659,
+            0,
+            40.83170343
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 1.1322742768097669,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            0.72859439,
+            1.36520327,
+            0.63792875
+          ],
+          "velocity": [
+            14.61800515,
+            0,
+            56.40180597
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 1.0103866939665749,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            0.73955155,
+            1.37146314,
+            0.59601192
+          ],
+          "velocity": [
+            12.26556032,
+            0,
+            39.84037024
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.11666666666666667,
+          "radius": 1,
+          "damage": 150,
+          "dmgFar": 35,
+          "size": 0.12,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.3,
+          "tail0": 0.4,
+          "tailK": 1,
+          "wob": 0.1,
+          "wobF": 19,
+          "nose": 0,
+          "sats": 2,
+          "s3Vertical": false,
+          "fidelityMode": "horizontal",
+          "origin": [
+            0.03310617,
+            1.3,
+            0.6
+          ],
+          "velocity": [
+            0.71046697,
+            0,
+            23.24793467
+          ]
+        }
+      ],
+      "birthDraws": 124,
+      "flightDraws": 150,
+      "paintPoints": [
+        {
+          "time": 0,
+          "center": [
+            0,
+            0.10000000000000006,
+            0.5
+          ],
+          "radius": 1.5,
+          "team": 0,
+          "seed": 0.8704422225710005,
+          "kind": null,
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 7.3125
+        },
+        {
+          "time": 0.19999999999999998,
+          "center": [
+            1.644155592374033,
+            0.05,
+            6.5018863209818205
+          ],
+          "radius": 0.264617164713151,
+          "team": 0,
+          "seed": 0.46440958767198026,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.125
+        },
+        {
+          "time": 0.19999999999999998,
+          "center": [
+            1.1424873248351781,
+            0.05,
+            10.486951016458042
+          ],
+          "radius": 0.27984121295835174,
+          "team": 0,
+          "seed": 0.29149384517222643,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.25
+        },
+        {
+          "time": 0.19999999999999998,
+          "center": [
+            -1.1053687206879466,
+            0.05,
+            10.11682487684572
+          ],
+          "radius": 0.28248265212955415,
+          "team": 0,
+          "seed": 0.8716773074120283,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.3125
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            0.1369102067521766,
+            0.05,
+            3.9966807802098074
+          ],
+          "radius": 0.43122194717935847,
+          "team": 0,
+          "seed": 0.3925969684496522,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.5
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            2.5316330199764527,
+            0.05,
+            6.416959963411948
+          ],
+          "radius": 0.34816368086456084,
+          "team": 0,
+          "seed": 0.47678497387096286,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.375
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            2.864383989263912,
+            0.05,
+            8.87861477026394
+          ],
+          "radius": 0.356786450999139,
+          "team": 0,
+          "seed": 0.4849016803782433,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.4375
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            2.028255644085843,
+            0.05,
+            11.330462420609184
+          ],
+          "radius": 0.4232649346626456,
+          "team": 0,
+          "seed": 0.8156666371505708,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.5625
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            0.4429895336740901,
+            0.05,
+            9.957558494045404
+          ],
+          "radius": 0.31749250374136634,
+          "team": 0,
+          "seed": 0.3871417425107211,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.25
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            -0.4162879894104948,
+            0.05,
+            9.21510469680572
+          ],
+          "radius": 0.4081960905990187,
+          "team": 0,
+          "seed": 0.060930256731808186,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.5
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            -1.8955131204694606,
+            0.05,
+            12.24870787004473
+          ],
+          "radius": 0.34547227019166277,
+          "team": 0,
+          "seed": 0.04204331245273352,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.375
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            -2.2418737132490154,
+            0.05,
+            8.59220864328305
+          ],
+          "radius": 0.44788648354084815,
+          "team": 0,
+          "seed": 0.4508427008986473,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.625
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            -2.9444091616713934,
+            0.05,
+            9.5846972418499
+          ],
+          "radius": 0.43834238817177346,
+          "team": 0,
+          "seed": 0.6212514580693096,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.625
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            -3.095156321467307,
+            0.05,
+            7.505403833150505
+          ],
+          "radius": 0.4522704116513943,
+          "team": 0,
+          "seed": 0.20181776909157634,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.625
+        },
+        {
+          "time": 0.2333333333333333,
+          "center": [
+            1.1688064266268645,
+            0.14,
+            10.779371353134557
+          ],
+          "radius": 1.67001677076426,
+          "team": 0,
+          "seed": 0.11407964047975838,
+          "kind": "source-shot",
+          "stretch": [
+            0.047118287081034015,
+            -0.8507149101050623,
+            0.523511230774933
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 8.125
+        },
+        {
+          "time": 0.2333333333333333,
+          "center": [
+            -1.1288601627009174,
+            0.14,
+            10.397625577528736
+          ],
+          "radius": 1.6791339293511476,
+          "team": 0,
+          "seed": 0.1651150754187256,
+          "kind": "source-shot",
+          "stretch": [
+            -0.04261496952924327,
+            -0.8594797613834279,
+            0.5093903259233606
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 6.75
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            2.911349402498891,
+            0.14,
+            9.059825140445966
+          ],
+          "radius": 1.704404817518578,
+          "team": 0,
+          "seed": 0.5808179588057101,
+          "kind": "source-shot",
+          "stretch": [
+            0.1007661632017551,
+            -0.9157976624380989,
+            0.3887940609455228
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 7.4375
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            1.6772025102066592,
+            0.14,
+            6.679152265627273
+          ],
+          "radius": 1.7654101002126636,
+          "team": 0,
+          "seed": 0.8408729336224496,
+          "kind": "source-shot",
+          "stretch": [
+            0.05468646563256121,
+            -0.9544421820789315,
+            0.29334197030944387
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 8.0625
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            2.0591399940844246,
+            0.14,
+            11.533803323767792
+          ],
+          "radius": 1.6496155202108078,
+          "team": 0,
+          "seed": 0.583516685757786,
+          "kind": "source-shot",
+          "stretch": [
+            0.07300155638665344,
+            -0.8738750302319058,
+            0.48063833003861867
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 3.5
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            0.13884413768206952,
+            0.14,
+            4.059962961806491
+          ],
+          "radius": 1.8274422124773242,
+          "team": 0,
+          "seed": 0.20712010306306183,
+          "kind": "source-shot",
+          "stretch": [
+            0.005267631700201151,
+            -0.9850185927907769,
+            0.17236769973736005
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 9.1875
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            0.44941849554907143,
+            0.14,
+            10.176364697685713
+          ],
+          "radius": 1.683188330690788,
+          "team": 0,
+          "seed": 0.5571466241963208,
+          "kind": "source-shot",
+          "stretch": [
+            0.012765478069705391,
+            -0.9005977333905292,
+            0.4344660690796153
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 0.9375
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            -0.4216372787491239,
+            0.14,
+            9.387244008171365
+          ],
+          "radius": 1.7004316392522367,
+          "team": 0,
+          "seed": 0.616180517943576,
+          "kind": "source-shot",
+          "stretch": [
+            -0.012705385706934285,
+            -0.9125098508290175,
+            0.4088573654883106
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 1.9375
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            2.5716183237524333,
+            0.14,
+            6.546838196865991
+          ],
+          "radius": 1.7629472843719272,
+          "team": 0,
+          "seed": 0.8704422225710005,
+          "kind": "source-shot",
+          "stretch": [
+            0.08808941874780256,
+            -0.9541337767165166,
+            0.28612757719826837
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 2.6875
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            -1.929789494752163,
+            0.14,
+            12.511294403907264
+          ],
+          "radius": 1.6275,
+          "team": 0,
+          "seed": 0.3316664576996118,
+          "kind": "source-shot",
+          "stretch": [
+            -0.06730500479335794,
+            -0.8541732578321491,
+            0.5156142763095093
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 6.1875
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            -2.2710709554131494,
+            0.14,
+            8.73227109658901
+          ],
+          "radius": 1.7160556998924794,
+          "team": 0,
+          "seed": 0.7516543085221201,
+          "kind": "source-shot",
+          "stretch": [
+            -0.07842790186318913,
+            -0.9232020149359724,
+            0.37622746288315895
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 4.25
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            -2.987101175883168,
+            0.14,
+            9.747113575208715
+          ],
+          "radius": 1.688643729927803,
+          "team": 0,
+          "seed": 0.4372010095976293,
+          "kind": "source-shot",
+          "stretch": [
+            -0.10892323883006191,
+            -0.9035602550517638,
+            0.414384596158642
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 3.0625
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            -3.135325936448859,
+            0.14,
+            7.625022063061799
+          ],
+          "radius": 1.7366585620634307,
+          "team": 0,
+          "seed": 0.715884089237079,
+          "kind": "source-shot",
+          "stretch": [
+            -0.11113218804262447,
+            -0.9370876388659309,
+            0.3309326122725495
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 4.4375
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.2333333333333333,
+          "pos": [
+            1.1688064266268645,
+            0,
+            10.779371353134557
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.2333333333333333,
+          "pos": [
+            -1.1288601627009174,
+            0,
+            10.397625577528736
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            2.911349402498891,
+            0,
+            9.059825140445966
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            1.6772025102066592,
+            0,
+            6.679152265627273
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            2.0591399940844246,
+            0,
+            11.533803323767792
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            0.13884413768206952,
+            0,
+            4.059962961806491
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            0.44941849554907143,
+            0,
+            10.176364697685713
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            -0.4216372787491239,
+            0,
+            9.387244008171365
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            2.5716183237524333,
+            0,
+            6.546838196865991
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            -1.929789494752163,
+            0,
+            12.511294403907264
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            -2.2710709554131494,
+            0,
+            8.73227109658901
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            -2.987101175883168,
+            0,
+            9.747113575208715
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            -3.135325936448859,
+            0,
+            7.625022063061799
+          ],
+          "kind": "drop",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "5341577e693707d9bb8add7d2292e3c2b19debd50f17b2603201c2520e134910"
+    },
+    "roller-vertical": {
+      "initialProjectiles": [
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.1,
+          "radius": 0.8892370155313983,
+          "damage": 150,
+          "dmgFar": 40,
+          "size": 0.116,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.36,
+          "tail0": 0.65,
+          "tailK": 1.7,
+          "wob": 0.055,
+          "wobF": 19,
+          "nose": 0.55,
+          "sats": 1,
+          "s3Vertical": true,
+          "fidelityMode": "vertical",
+          "origin": [
+            0,
+            1.8,
+            0.6
+          ],
+          "velocity": [
+            0,
+            14.36153588,
+            109.08669521
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.1,
+          "radius": 1.075719981873408,
+          "damage": 150,
+          "dmgFar": 40,
+          "size": 0.116,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.36,
+          "tail0": 0.65,
+          "tailK": 1.7,
+          "wob": 0.055,
+          "wobF": 19,
+          "nose": 0.55,
+          "sats": 2,
+          "s3Vertical": true,
+          "fidelityMode": "vertical",
+          "origin": [
+            0,
+            1.3,
+            0.6
+          ],
+          "velocity": [
+            0,
+            8.54370315,
+            97.65497386
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.1,
+          "radius": 1.0190804171375931,
+          "damage": 150,
+          "dmgFar": 40,
+          "size": 0.116,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.36,
+          "tail0": 0.65,
+          "tailK": 1.7,
+          "wob": 0.055,
+          "wobF": 19,
+          "nose": 0.55,
+          "sats": 2,
+          "s3Vertical": true,
+          "fidelityMode": "vertical",
+          "origin": [
+            0,
+            1.3,
+            0.6
+          ],
+          "velocity": [
+            0,
+            3.75248866,
+            85.94612041
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.1,
+          "radius": 1.1463675172999501,
+          "damage": 150,
+          "dmgFar": 40,
+          "size": 0.116,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.36,
+          "tail0": 0.65,
+          "tailK": 1.7,
+          "wob": 0.055,
+          "wobF": 19,
+          "nose": 0.55,
+          "sats": 2,
+          "s3Vertical": true,
+          "fidelityMode": "vertical",
+          "origin": [
+            0,
+            0.3,
+            0.6
+          ],
+          "velocity": [
+            0,
+            0,
+            74.028
+          ]
+        },
+        {
+          "type": "drop",
+          "wid": "roller",
+          "life": 1.4,
+          "straight": 0.1,
+          "radius": 0.9465617428068072,
+          "damage": 150,
+          "dmgFar": 40,
+          "size": 0.116,
+          "trail": 0,
+          "trailEvery": 0,
+          "trailRadius": 0.45,
+          "grav": 144,
+          "drag": 6,
+          "delay": 0,
+          "vis": 0.36,
+          "tail0": 0.65,
+          "tailK": 1.7,
+          "wob": 0.055,
+          "wobF": 19,
+          "nose": 0.55,
+          "sats": 1,
+          "s3Vertical": true,
+          "fidelityMode": "vertical",
+          "origin": [
+            0,
+            0.3,
+            0.6
+          ],
+          "velocity": [
+            0,
+            -2.70562336,
+            61.96896309
+          ]
+        }
+      ],
+      "birthDraws": 30,
+      "flightDraws": 40,
+      "paintPoints": [
+        {
+          "time": 0,
+          "center": [
+            0,
+            0.10000000000000006,
+            0.5
+          ],
+          "radius": 1.462,
+          "team": 0,
+          "seed": 0.08101902762427926,
+          "kind": null,
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 7
+        },
+        {
+          "time": 0.016666666666666666,
+          "center": [
+            0,
+            0.05,
+            1.6328160514713246
+          ],
+          "radius": 0.20161297024692726,
+          "team": 0,
+          "seed": 0.24733374151401222,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0
+        },
+        {
+          "time": 0.016666666666666666,
+          "center": [
+            0,
+            0.05,
+            1.8338
+          ],
+          "radius": 0.12500000000000006,
+          "team": 0,
+          "seed": 0.19083706219680607,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0
+        },
+        {
+          "time": 0.03333333333333333,
+          "center": [
+            0,
+            0.05,
+            2.6656321029426495
+          ],
+          "radius": 0.5084079974756615,
+          "team": 0,
+          "seed": 0.2473337408155203,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.875
+        },
+        {
+          "time": 0.03333333333333333,
+          "center": [
+            0,
+            0.05,
+            3.0676
+          ],
+          "radius": 0.4609772228646444,
+          "team": 0,
+          "seed": 0.19083706242963672,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.25
+        },
+        {
+          "time": 0.05,
+          "center": [
+            0,
+            0.05,
+            3.698448154413974
+          ],
+          "radius": 0.5247549012408284,
+          "team": 0,
+          "seed": 0.24733374104835093,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.75
+        },
+        {
+          "time": 0.05,
+          "center": [
+            0,
+            0.05,
+            4.3014
+          ],
+          "radius": 0.4609772228646444,
+          "team": 0,
+          "seed": 0.19083706266246736,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.5
+        },
+        {
+          "time": 0.06666666666666667,
+          "center": [
+            0,
+            0.05,
+            4.7312642058852985
+          ],
+          "radius": 0.5368331521142917,
+          "team": 0,
+          "seed": 0.24733374221250415,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.5
+        },
+        {
+          "time": 0.06666666666666667,
+          "center": [
+            0,
+            0.05,
+            5.5352
+          ],
+          "radius": 0.4609772228646444,
+          "team": 0,
+          "seed": 0.19083706103265285,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.625
+        },
+        {
+          "time": 0.08333333333333333,
+          "center": [
+            0,
+            0.14,
+            5.180753109686236
+          ],
+          "radius": 1.8887903038496532,
+          "team": 0,
+          "seed": 0.08101902762427926,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            -0.043619387365336,
+            0.9990482215818578
+          ],
+          "stretchAmt": 0.76,
+          "cosmetic": false,
+          "area": 13.375
+        },
+        {
+          "time": 0.08333333333333333,
+          "center": [
+            0,
+            0.05,
+            6.769
+          ],
+          "radius": 0.4609772228646444,
+          "team": 0,
+          "seed": 0.1908370612654835,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0
+        },
+        {
+          "time": 0.09999999999999999,
+          "center": [
+            0,
+            0.05,
+            8.0028
+          ],
+          "radius": 0.4609772228646444,
+          "team": 0,
+          "seed": 0.19083706149831414,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0
+        },
+        {
+          "time": 0.11666666666666665,
+          "center": [
+            0,
+            0.05,
+            8.792432
+          ],
+          "radius": 0.4995998398718719,
+          "team": 0,
+          "seed": 0.19083706173114479,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.625
+        },
+        {
+          "time": 0.13333333333333333,
+          "center": [
+            0,
+            0.05,
+            9.29779648
+          ],
+          "radius": 0.5378001115656262,
+          "team": 0,
+          "seed": 0.19083706010133028,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.625
+        },
+        {
+          "time": 0.15,
+          "center": [
+            0,
+            0.14,
+            9.33206229954277
+          ],
+          "radius": 1.9455632011482127,
+          "team": 0,
+          "seed": 0.11989065166562796,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            -0.4054867063917046,
+            0.9141009413295708
+          ],
+          "stretchAmt": 0.6068620671272644,
+          "cosmetic": false,
+          "area": 12.5
+        },
+        {
+          "time": 0.18333333333333332,
+          "center": [
+            0,
+            0.004999999999999889,
+            0.24533383364857242
+          ],
+          "radius": 1.287,
+          "team": 0,
+          "seed": 0.5837755156680942,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 3.2,
+          "cosmetic": false,
+          "area": 4.75
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            0,
+            0.05,
+            11.90007051310221
+          ],
+          "radius": 0.30721184409385716,
+          "team": 0,
+          "seed": 0.04555369634181261,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            0,
+            0.004999999999999889,
+            4.8059801959681
+          ],
+          "radius": 1.287,
+          "team": 0,
+          "seed": 0.639521517092362,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 3.2,
+          "cosmetic": false,
+          "area": 0
+        },
+        {
+          "time": 0.26666666666666666,
+          "center": [
+            0,
+            0.14,
+            12.24456429108293
+          ],
+          "radius": 1.9863589764030483,
+          "team": 0,
+          "seed": 0.2715256076771766,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            -0.9026359852458737,
+            0.4304047840570672
+          ],
+          "stretchAmt": 0.32000000000000006,
+          "cosmetic": false,
+          "area": 8.75
+        },
+        {
+          "time": 0.26666666666666666,
+          "center": [
+            0,
+            0.05,
+            13.59238808807156
+          ],
+          "radius": 0.43972727794125055,
+          "team": 0,
+          "seed": 0.8466755466070026,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0
+        },
+        {
+          "time": 0.3,
+          "center": [
+            0,
+            0.14,
+            13.754637926820337
+          ],
+          "radius": 2.006920699412325,
+          "team": 0,
+          "seed": 0.38541593542322516,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            -0.9594158357403816,
+            0.2819951313951806
+          ],
+          "stretchAmt": 0.32000000000000006,
+          "cosmetic": false,
+          "area": 5.875
+        },
+        {
+          "time": 0.31666666666666665,
+          "center": [
+            0,
+            0.005000000000000111,
+            9.366626558287628
+          ],
+          "radius": 1.287,
+          "team": 0,
+          "seed": 0.6952446971554309,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 3.2,
+          "cosmetic": false,
+          "area": 0
+        },
+        {
+          "time": 0.35,
+          "center": [
+            0,
+            0.05,
+            15.207572291666972
+          ],
+          "radius": 0.5718070875194134,
+          "team": 0,
+          "seed": 0.20181776909157634,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0
+        },
+        {
+          "time": 0.3833333333333333,
+          "center": [
+            0,
+            0.14,
+            15.259237261528405
+          ],
+          "radius": 3.017286663745821,
+          "team": 0,
+          "seed": 0.715884089237079,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            -0.9928513741227761,
+            0.11935723230083473
+          ],
+          "stretchAmt": 0.32000000000000006,
+          "cosmetic": false,
+          "area": 16.75
+        },
+        {
+          "time": 0.4333333333333333,
+          "center": [
+            0,
+            0.004999999999999889,
+            13.318577438750186
+          ],
+          "radius": 1.287,
+          "team": 0,
+          "seed": 0.7509719266090542,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 3.2,
+          "cosmetic": false,
+          "area": 0.375
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.08333333333333333,
+          "pos": [
+            0,
+            0,
+            5.180753109686236
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.15,
+          "pos": [
+            0,
+            0,
+            9.33206229954277
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.26666666666666666,
+          "pos": [
+            0,
+            0,
+            12.24456429108293
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.3,
+          "pos": [
+            0,
+            0,
+            13.754637926820337
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.3833333333333333,
+          "pos": [
+            0,
+            0,
+            15.259237261528405
+          ],
+          "kind": "drop",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "a5f81dc1f9a63fdb4fcc6ad46b5368df406465cc21300f68ce346ba14e6fc01a"
+    },
+    "slosher": {
+      "initialProjectiles": [
+        {
+          "type": "slosh",
+          "wid": "slosher",
+          "life": 2.4,
+          "straight": 0.03333333333333333,
+          "radius": 1.05,
+          "damage": 70,
+          "dmgFar": null,
+          "size": 0.097,
+          "trail": -0.8,
+          "trailEvery": 0,
+          "trailRadius": 0.5,
+          "grav": 180,
+          "drag": 7.199999999999999,
+          "delay": 0,
+          "vis": 1,
+          "tail0": 1.5,
+          "tailK": 0,
+          "wob": 0.12,
+          "wobF": 15,
+          "nose": 0.1,
+          "sats": 2,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            10.5654,
+            105.654
+          ]
+        },
+        {
+          "type": "slosh",
+          "wid": "slosher",
+          "life": 2.4,
+          "straight": 0.03333333333333333,
+          "radius": 0.7901250000000001,
+          "damage": 70,
+          "dmgFar": null,
+          "size": 0.085,
+          "trail": -0.8,
+          "trailEvery": 0,
+          "trailRadius": 0.5,
+          "grav": 180,
+          "drag": 7.199999999999999,
+          "delay": 0.016666666666666666,
+          "vis": 0.97,
+          "tail0": 1.5154639175257731,
+          "tailK": 0,
+          "wob": 0.12,
+          "wobF": 15,
+          "nose": 0.1,
+          "sats": 2,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            -4.57237433,
+            9.6054,
+            95.94511092
+          ]
+        },
+        {
+          "type": "slosh",
+          "wid": "slosher",
+          "life": 2.4,
+          "straight": 0.03333333333333333,
+          "radius": 0.76125,
+          "damage": 70,
+          "dmgFar": null,
+          "size": 0.07300000000000001,
+          "trail": -0.8,
+          "trailEvery": 0,
+          "trailRadius": 0.5,
+          "grav": 180,
+          "drag": 7.199999999999999,
+          "delay": 0.03333333333333333,
+          "vis": 0.94,
+          "tail0": 1.5319148936170213,
+          "tailK": 0,
+          "wob": 0.12,
+          "wobF": 15,
+          "nose": 0.1,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            5.38892298,
+            8.6454,
+            86.28588312
+          ]
+        },
+        {
+          "type": "slosh",
+          "wid": "slosher",
+          "life": 2.4,
+          "straight": 0.03333333333333333,
+          "radius": 0.732375,
+          "damage": 70,
+          "dmgFar": null,
+          "size": 0.061,
+          "trail": -0.8,
+          "trailEvery": 0,
+          "trailRadius": 0.5,
+          "grav": 180,
+          "drag": 7.199999999999999,
+          "delay": 0.05,
+          "vis": 0.91,
+          "tail0": 1.5494505494505493,
+          "tailK": 0,
+          "wob": 0.12,
+          "wobF": 15,
+          "nose": 0.1,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            -2.78154464,
+            7.6854,
+            76.80364787
+          ]
+        },
+        {
+          "type": "slosh",
+          "wid": "slosher",
+          "life": 2.4,
+          "straight": 0.03333333333333333,
+          "radius": 0.7035000000000001,
+          "damage": 50,
+          "dmgFar": null,
+          "size": 0.057,
+          "trail": -0.8,
+          "trailEvery": 0,
+          "trailRadius": 0.5,
+          "grav": 180,
+          "drag": 7.199999999999999,
+          "delay": 0.06666666666666667,
+          "vis": 0.6,
+          "tail0": 1.8333333333333335,
+          "tailK": 0,
+          "wob": 0.12,
+          "wobF": 15,
+          "nose": 0.1,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            1.67777524,
+            6.6,
+            65.97867133
+          ]
+        },
+        {
+          "type": "slosh",
+          "wid": "slosher",
+          "life": 2.4,
+          "straight": 0.03333333333333333,
+          "radius": 0.6746250000000001,
+          "damage": 50,
+          "dmgFar": null,
+          "size": 0.052000000000000005,
+          "trail": -0.8,
+          "trailEvery": 0,
+          "trailRadius": 0.5,
+          "grav": 180,
+          "drag": 7.199999999999999,
+          "delay": 0.1,
+          "vis": 0.5,
+          "tail0": 2,
+          "tailK": 0,
+          "wob": 0.12,
+          "wobF": 15,
+          "nose": 0.1,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            -0.18549633,
+            5.4,
+            53.9996814
+          ]
+        },
+        {
+          "type": "slosh",
+          "wid": "slosher",
+          "life": 2.4,
+          "straight": 0.03333333333333333,
+          "radius": 0.64575,
+          "damage": 50,
+          "dmgFar": null,
+          "size": 0.047,
+          "trail": -0.8,
+          "trailEvery": 0,
+          "trailRadius": 0.5,
+          "grav": 180,
+          "drag": 7.199999999999999,
+          "delay": 0.13333333333333333,
+          "vis": 0.39999999999999997,
+          "tail0": 2.25,
+          "tailK": 0,
+          "wob": 0.12,
+          "wobF": 15,
+          "nose": 0.1,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            1.41702558,
+            4.2,
+            41.97608889
+          ]
+        },
+        {
+          "type": "slosh",
+          "wid": "slosher",
+          "life": 2.4,
+          "straight": 0.03333333333333333,
+          "radius": 0.6168750000000001,
+          "damage": 50,
+          "dmgFar": null,
+          "size": 0.042,
+          "trail": -0.8,
+          "trailEvery": 0,
+          "trailRadius": 0.5,
+          "grav": 180,
+          "drag": 7.199999999999999,
+          "delay": 0.16666666666666666,
+          "vis": 0.29999999999999993,
+          "tail0": 2.666666666666667,
+          "tailK": 0,
+          "wob": 0.12,
+          "wobF": 15,
+          "nose": 0.1,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0.0784567,
+            3,
+            29.99989741
+          ]
+        },
+        {
+          "type": "slosh",
+          "wid": "slosher",
+          "life": 2.4,
+          "straight": 0.03333333333333333,
+          "radius": 0.5880000000000001,
+          "damage": 50,
+          "dmgFar": null,
+          "size": 0.037000000000000005,
+          "trail": -0.8,
+          "trailEvery": 0,
+          "trailRadius": 0.5,
+          "grav": 180,
+          "drag": 7.199999999999999,
+          "delay": 0.2,
+          "vis": 0.19999999999999996,
+          "tail0": 3.5000000000000004,
+          "tailK": 0,
+          "wob": 0.12,
+          "wobF": 15,
+          "nose": 0.1,
+          "sats": 1,
+          "s3Vertical": false,
+          "fidelityMode": null,
+          "origin": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            -3e-7,
+            1.8,
+            18
+          ]
+        }
+      ],
+      "birthDraws": 17,
+      "flightDraws": 35,
+      "paintPoints": [
+        {
+          "time": 0,
+          "center": [
+            0,
+            0.10000000000000006,
+            0
+          ],
+          "radius": 1.56,
+          "team": 0,
+          "seed": 0.42703575268387794,
+          "kind": "source-splash",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0.19999999999999996,
+          "cosmetic": false,
+          "area": 8.5
+        },
+        {
+          "time": 0.18333333333333332,
+          "center": [
+            0,
+            0.05,
+            12.648296927875366
+          ],
+          "radius": 0.5014103841305868,
+          "team": 0,
+          "seed": 0.6215687694493681,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.875
+        },
+        {
+          "time": 0.19999999999999998,
+          "center": [
+            -0.5343956298379062,
+            0.05,
+            11.51357183248166
+          ],
+          "radius": 0.44844974396272186,
+          "team": 0,
+          "seed": 0.8187056202441454,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.75
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            0.6298296426643398,
+            0.05,
+            10.384650892551507
+          ],
+          "radius": 0.39296863845712693,
+          "team": 0,
+          "seed": 0.20181776909157634,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.5625
+        },
+        {
+          "time": 0.21666666666666665,
+          "center": [
+            0,
+            0.05,
+            13.570272180946684
+          ],
+          "radius": 0.7936760011737882,
+          "team": 0,
+          "seed": 0.6215687696821988,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 1.625
+        },
+        {
+          "time": 0.2333333333333333,
+          "center": [
+            -0.32509265266249376,
+            0.05,
+            9.276415932997388
+          ],
+          "radius": 0.33371231197819773,
+          "team": 0,
+          "seed": 0.14393164752982557,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.3125
+        },
+        {
+          "time": 0.2333333333333333,
+          "center": [
+            -0.5683135093240539,
+            0.14,
+            12.225292806208074
+          ],
+          "radius": 1.911610552089671,
+          "team": 0,
+          "seed": 0.597925832727924,
+          "kind": "source-shot",
+          "stretch": [
+            -0.047602123061982554,
+            0,
+            0.99886637638875
+          ],
+          "stretchAmt": 0.20174780164798523,
+          "cosmetic": false,
+          "area": 9.625
+        },
+        {
+          "time": 0.2333333333333333,
+          "center": [
+            0,
+            0.14,
+            13.59708449616015
+          ],
+          "radius": 3.942174930230391,
+          "team": 0,
+          "seed": 0.2519546449184418,
+          "kind": "source-shot",
+          "stretch": [
+            0,
+            0,
+            1
+          ],
+          "stretchAmt": 0,
+          "cosmetic": false,
+          "area": 35.1875
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            0.1960897536203499,
+            0.05,
+            8.011248267633166
+          ],
+          "radius": 0.3666442822967825,
+          "team": 0,
+          "seed": 0.7699284025002271,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.375
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            -0.3369227241019198,
+            0.14,
+            9.603066322932861
+          ],
+          "radius": 1.5509712510735656,
+          "team": 0,
+          "seed": 0.06394727295264602,
+          "kind": "source-shot",
+          "stretch": [
+            -0.036192581249058255,
+            0,
+            0.9993448339099624
+          ],
+          "stretchAmt": 0.27688098935967376,
+          "cosmetic": false,
+          "area": 4.125
+        },
+        {
+          "time": 0.24999999999999997,
+          "center": [
+            0.6613446079375539,
+            0.14,
+            10.889259442455248
+          ],
+          "radius": 1.7293565135957865,
+          "team": 0,
+          "seed": 0.715884089237079,
+          "kind": "source-shot",
+          "stretch": [
+            0.062332835716024236,
+            0,
+            0.9980554180964099
+          ],
+          "stretchAmt": 0.2397173930008778,
+          "cosmetic": false,
+          "area": 0.5625
+        },
+        {
+          "time": 0.26666666666666666,
+          "center": [
+            0.19954856145272323,
+            0.14,
+            8.14726621560358
+          ],
+          "radius": 1.2,
+          "team": 0,
+          "seed": 0.5341551220044494,
+          "kind": "source-shot",
+          "stretch": [
+            0.02542083695404902,
+            0,
+            0.9996768383075382
+          ],
+          "stretchAmt": 0.3999999999999999,
+          "cosmetic": false,
+          "area": 2.5
+        },
+        {
+          "time": 0.26666666666666666,
+          "center": [
+            -0.02070143171827719,
+            0.05,
+            6.326376580256988
+          ],
+          "radius": 0.21525554159898908,
+          "team": 0,
+          "seed": 0.8466755466070026,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.125
+        },
+        {
+          "time": 0.2833333333333333,
+          "center": [
+            -0.021621311236515523,
+            0.14,
+            6.594161942197694
+          ],
+          "radius": 1.088825972345275,
+          "team": 0,
+          "seed": 0.38541593542322516,
+          "kind": "source-shot",
+          "stretch": [
+            -0.003435117155967328,
+            0,
+            0.9999940999676572
+          ],
+          "stretchAmt": 0.3999999999999999,
+          "cosmetic": false,
+          "area": 2.6875
+        },
+        {
+          "time": 0.3,
+          "center": [
+            0.15814037313949939,
+            0.05,
+            4.984540954089598
+          ],
+          "radius": 0.2642328253118068,
+          "team": 0,
+          "seed": 0.8206795800942928,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0.25
+        },
+        {
+          "time": 0.31666666666666665,
+          "center": [
+            0.1613293248955183,
+            0.14,
+            5.079006237085409
+          ],
+          "radius": 1.0434518559958539,
+          "team": 0,
+          "seed": 0.900967170484364,
+          "kind": "source-shot",
+          "stretch": [
+            0.03373870427305887,
+            0,
+            0.9994306878588306
+          ],
+          "stretchAmt": 0.3999999999999999,
+          "cosmetic": false,
+          "area": 2.6875
+        },
+        {
+          "time": 0.3333333333333333,
+          "center": [
+            0.008723922036106372,
+            0.14,
+            3.63581152154169
+          ],
+          "radius": 1.0000746878719058,
+          "team": 0,
+          "seed": 0.4372010095976293,
+          "kind": "source-shot",
+          "stretch": [
+            0.0026152233561616096,
+            0,
+            0.9999965802975515
+          ],
+          "stretchAmt": 0.3999999999999999,
+          "cosmetic": false,
+          "area": 2.6875
+        },
+        {
+          "time": 0.35,
+          "center": [
+            -3.1548892858554156e-8,
+            0.05,
+            2.200913687986175
+          ],
+          "radius": 0.15177327822257455,
+          "team": 0,
+          "seed": 0.04555369634181261,
+          "kind": "source-splash",
+          "stretch": null,
+          "stretchAmt": null,
+          "cosmetic": false,
+          "area": 0
+        },
+        {
+          "time": 0.36666666666666664,
+          "center": [
+            -3.231995497764838e-8,
+            0.14,
+            2.2473724509939643
+          ],
+          "radius": 0.96,
+          "team": 0,
+          "seed": 0.2715256076771766,
+          "kind": "source-shot",
+          "stretch": [
+            -1.6596699291474406e-8,
+            0,
+            1
+          ],
+          "stretchAmt": 0.3999999999999999,
+          "cosmetic": false,
+          "area": 1.8125
+        }
+      ],
+      "impacts": [
+        {
+          "time": 0.2333333333333333,
+          "pos": [
+            -0.5683135093240539,
+            0,
+            12.225292806208074
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.2333333333333333,
+          "pos": [
+            0,
+            0,
+            13.59708449616015
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            -0.3369227241019198,
+            0,
+            9.603066322932861
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.24999999999999997,
+          "pos": [
+            0.6613446079375539,
+            0,
+            10.889259442455248
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.26666666666666666,
+          "pos": [
+            0.19954856145272323,
+            0,
+            8.14726621560358
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.2833333333333333,
+          "pos": [
+            -0.021621311236515523,
+            0,
+            6.594161942197694
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.31666666666666665,
+          "pos": [
+            0.1613293248955183,
+            0,
+            5.079006237085409
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.3333333333333333,
+          "pos": [
+            0.008723922036106372,
+            0,
+            3.63581152154169
+          ],
+          "kind": "drop",
+          "victim": null
+        },
+        {
+          "time": 0.36666666666666664,
+          "pos": [
+            -3.231995497764838e-8,
+            0,
+            2.2473724509939643
+          ],
+          "kind": "drop",
+          "victim": null
+        }
+      ],
+      "oldCellsHash": "c273fcbdd1210210e6cd6f225a1f52392e5de46b268d3bcd52a8d219acbf2ee6"
+    }
+  }
+}

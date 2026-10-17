@@ -3,19 +3,37 @@ const finite = (x, otherwise) => Number.isFinite(x) ? x : otherwise;
 const clamp01 = x => Math.max(0, Math.min(1, x));
 
 /**
- * Sourced jump hold/recovery endpoints. The interpolation between the endpoints
- * is explicitly the retained linear calibration, not a recovered Nintendo PDF.
+ * Sourced jump hold/recovery endpoints, shared by every angular family.
+ * Only an admitted jump owns a penalty; an absent clock means normal accuracy
+ * even during a ledge fall. Landing does not change the recovery trajectory.
+ * The interior remains INKWAVE's linear calibration: the pinned 11.3.0 tables
+ * and Kanamoji #6 publish endpoints, not Nintendo's interpolation routine.
  */
-export function accuracyEnvelope(weapon, grounded, jumpAge, param = {}, hz = 60) {
+export function jumpRecoveryAt(ageFrames, param = {}) {
+  if (!Number.isFinite(ageFrames)) return null;
+  const start = Math.max(0, finite(param.Jump_DegBiasDecreaseStartFrame, 25));
+  const end = Math.max(start, finite(param.Jump_DegBiasEndFrame, 70));
+  const frames = Math.max(0, ageFrames);
+  if (frames >= end) return 1;
+  if (frames <= start) return 0;
+  return (frames - start) / (end - start);
+}
+
+export function accuracyEnvelope(weapon, _grounded, jumpAge, param = {}, hz = 60) {
   const ground = Math.max(0, finite(weapon.spreadGround, 0));
   const air = Math.max(0, finite(weapon.spreadAir, ground));
-  if (!Number.isFinite(jumpAge)) return grounded ? ground : air;
-  const start = finite(param.Jump_DegBiasDecreaseStartFrame, 25);
-  const end = Math.max(start, finite(param.Jump_DegBiasEndFrame, 70));
-  const frames = Math.max(0, jumpAge * hz);
-  if (frames <= start) return air;
-  if (frames >= end) return ground;
-  return air + (ground - air) * (frames - start) / (end - start);
+  const recovery = jumpRecoveryAt(Number.isFinite(jumpAge) ? jumpAge * hz : null, param);
+  return recovery === null || recovery === 1 ? ground : recovery === 0 ? air : air + (ground - air) * recovery;
+}
+
+// Keep the standing process independent while a jump recovers. This retains
+// the existing Shooter interpolation model; its precise composition with the
+// standing bias remains unverified against the Nintendo executable.
+export function recoveringJumpBias(standing, jumping, ageFrames, param = {}) {
+  const stand = clamp01(finite(standing, .5));
+  const jump = clamp01(finite(jumping, stand));
+  const recovery = jumpRecoveryAt(ageFrames, param);
+  return recovery === null || recovery === 1 ? stand : recovery === 0 ? jump : jump + (stand - jump) * recovery;
 }
 
 /**
@@ -65,8 +83,11 @@ export function installWeaponAccuracy({ Projectiles }, profile) {
   const param = profile.weaponsFidelityCompletion?.weapons?.splatling?.WeaponParam ?? {};
   const fireSplatling = Projectiles.prototype.fireSplatling;
   Projectiles.prototype.fireSplatling = function (actor, weapon, spreadDeg) {
-    const bias = actor.grounded ? param.Stand_DegBiasMax : param.Jump_DegBiasMax;
+    const bias = recoveringJumpBias(param.Stand_DegBiasMax, param.Jump_DegBiasMax,
+      actor.s3SplatlingJumpAgeFrames, param);
+    const maximum = Number.isFinite(spreadDeg) ? spreadDeg : accuracyEnvelope(weapon,
+      actor.grounded, Number.isFinite(actor.s3SplatlingJumpAgeFrames) ? actor.s3SplatlingJumpAgeFrames / 60 : null, param);
     return withShotBias(actor, bias, param.PitchDegBias,
-      () => fireSplatling.call(this, actor, weapon, spreadDeg));
+      () => fireSplatling.call(this, actor, weapon, maximum));
   };
 }
