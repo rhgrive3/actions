@@ -2,8 +2,10 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 // Review pin: 378dcf78 -> 8c8c26d, plus the reviewed highp/packed-edge GPU
-// module. These are INKWAVE changes, not recovered Nintendo stencil code.
-export const MAIN_INK_BASELINE_MANIFEST_BLOB = '5985726bc374b100f615dcd436f8cc9b653edbb9';
+// module. Later independent splash catch-up/added-family source changes are
+// retained in four rebased context windows without expanding 32 paint hunks.
+// These are INKWAVE changes, not recovered Nintendo stencil code.
+export const MAIN_INK_BASELINE_MANIFEST_BLOB = 'dbfc392aabbf5844a8a454abbdf5f990cb1f9e17';
 const fixtureUrl = new URL('../fixtures/inkwave-main-ink-pr1525-baseline.json', import.meta.url);
 export const MAIN_INK_BASELINE_PATHS = Object.freeze([
   "patches/network-replication/adapter.mjs",

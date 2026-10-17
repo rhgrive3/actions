@@ -7,7 +7,7 @@
   "precision": {
     "finalBlob": "1844653c07ffc22b65ab74054111a827fb87df55",
     "previousHighpBlob": "c8c8969cea508bafeb17134ef19545c00db7a4f9",
-    "description": "One nearest RGBA lookup packs the next RG edge in BA, retaining highp sampler, CPU coordinate order and explicit interpolation. Browser parity is an independent CI gate."
+    "description": "One nearest RGBA lookup packs the next RG edge in BA, retaining highp sampler, CPU coordinate order and explicit interpolation. Browser parity is an independent CI gate. 2026-10-17 rebase: four context windows retain later source-side splash catch-up timing and family scheduling without expanding the approved paint changes."
   },
   "qualification": "Calibrated retail-image outlines, not recovered Nintendo stencil textures. This INKWAVE regression reference keeps the physical/area/coverage comparator strict; old masks have a separate frozen oracle.",
   "files": [
@@ -66,14 +66,14 @@
         {
           "id": "paint-2",
           "line": 136,
-          "before": "// spawn velocity; `radius` is the sourced paint half-width for this splash.\nexport function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direction = null, radius, spec,\n  depth = true, kind = 'drop', initialDownSpeed = 0 }) {\n  const queue = dropQueue(game);\n  if (!queue || !owner || owner.remote || !(radius > 0) || !spec || !from) return null;\n",
-          "after": "// spawn velocity; `radius` is the sourced paint half-width for this splash.\nexport function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direction = null, radius, spec,\n  depth = true, kind = 'drop', initialDownSpeed = 0, footprint = null }) {\n  const queue = dropQueue(game);\n  if (!queue || !owner || owner.remote || !(radius > 0) || !spec || !from) return null;\n"
+          "before": "// spawn velocity; `radius` is the sourced paint half-width for this splash.\nexport function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direction = null, radius, spec,\n  depth = true, kind = 'drop', initialDownSpeed = 0, catchUpSeconds = 0 }) {\n  const queue = dropQueue(game);\n  if (!queue || !owner || owner.remote || !(radius > 0) || !spec || !from) return null;\n",
+          "after": "// spawn velocity; `radius` is the sourced paint half-width for this splash.\nexport function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direction = null, radius, spec,\n  depth = true, kind = 'drop', initialDownSpeed = 0, catchUpSeconds = 0, footprint = null }) {\n  const queue = dropQueue(game);\n  if (!queue || !owner || owner.remote || !(radius > 0) || !spec || !from) return null;\n"
         },
         {
           "id": "paint-3",
           "line": 148,
-          "before": "  const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;\n  const drop = {\n    owner, team, seed: unit(0), radius, spec, depth, kind,\n    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0, carry: 0,\n    pos: new V(from.x, from.y, from.z),\n",
-          "after": "  const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;\n  const drop = {\n    owner, team, seed: unit(0), radius, spec, depth, kind, footprint,\n    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0, carry: 0,\n    pos: new V(from.x, from.y, from.z),\n"
+          "before": "  const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;\n  const drop = {\n    owner, team, seed: unit(0), radius, spec, depth, kind,\n    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0,\n    carry: Number.isFinite(catchUpSeconds) && catchUpSeconds > 0 ? catchUpSeconds * STEP_FRAMES_PER_SECOND : 0,\n    pos: new V(from.x, from.y, from.z),\n",
+          "after": "  const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;\n  const drop = {\n    owner, team, seed: unit(0), radius, spec, depth, kind, footprint,\n    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0,\n    carry: Number.isFinite(catchUpSeconds) && catchUpSeconds > 0 ? catchUpSeconds * STEP_FRAMES_PER_SECOND : 0,\n    pos: new V(from.x, from.y, from.z),\n"
         },
         {
           "id": "paint-4",
@@ -118,8 +118,8 @@
         {
           "id": "paint-1",
           "line": 4,
-          "before": "import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';\nimport { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { spawnSplashDrop, paintDistanceFlight, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';\nimport { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';\n",
-          "after": "import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';\nimport { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { mainInkFootprint } from './main-ink-footprints.mjs';\nimport { spawnSplashDrop, paintDistanceFlight, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';\nimport { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';\n"
+          "before": "import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';\nimport { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';\nimport { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';\n",
+          "after": "import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';\nimport { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { mainInkFootprint } from './main-ink-footprints.mjs';\nimport { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';\nimport { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';\n"
         },
         {
           "id": "paint-2",
@@ -166,8 +166,8 @@
         {
           "id": "paint-9",
           "line": 953,
-          "before": "          const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));\n          const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,\n            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true});\n          if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}\n          s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;\n",
-          "after": "          const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));\n          const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,\n            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,footprint:mainInkFootprint(s.r)});\n          if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}\n          s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;\n"
+          "before": "          const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));\n          const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,\n            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,catchUpSeconds:s.carry});\n          if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}\n          s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;\n",
+          "after": "          const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));\n          const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,\n            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,catchUpSeconds:s.carry,footprint:mainInkFootprint(s.r)});\n          if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}\n          s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;\n"
         },
         {
           "id": "paint-10",
