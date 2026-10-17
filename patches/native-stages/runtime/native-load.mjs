@@ -57,12 +57,23 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
     let alpha=false;const pngType=new Uint8Array(buffer)[25];if(pngType===6||pngType===4){const p=readPixels();for(let i=3;i<p.length;i+=4)if(p[i]<250){alpha=true;break;}}
     for(const m of matched)if(m.albedo===file)m.hasAlpha=alpha;
    }
-   if(['normal','roughness','opacity'].includes(role)){
-    const p=readPixels(),mean=[0,0,0],lo=[255,255,255],hi=[0,0,0];let unorm=0,signed=0;
-    for(let i=0;i<p.length;i+=4){for(let k=0;k<3;k++){mean[k]+=p[i+k];lo[k]=Math.min(lo[k],p[i+k]);hi[k]=Math.max(hi[k],p[i+k]);}if(role==='normal'){const x=p[i]/127.5-1,y=p[i+1]/127.5-1,sx=(p[i]>127?p[i]-256:p[i])/127,sy=(p[i+1]>127?p[i+1]-256:p[i+1])/127;unorm+=x*x+y*y>1.02;signed+=sx*sx+sy*sy>1.02;}}
-    const count=p.length/4;for(let k=0;k<3;k++)mean[k]/=count;
-    if(role==='normal'){encoding=mean[2]<1?(signed/count+.1<unorm/count?'signed-byte-rg':'unorm-rg'):'rgb';for(const m of matched)m.normalEncoding=encoding;}
-    else for(const m of matched)m.channels[role]=mean[1]<1&&(mean[0]>2||hi[0]-lo[0]>4)?'r':'g';
+   // Each role only consults a subset of channels. Preserve the original
+   // accumulation order and exact channel threshold tests.
+   if(role==='normal'){
+    const p=readPixels(),count=p.length/4;let mean2=0,unorm=0,signed=0;
+    for(let i=0;i<p.length;i+=4){
+     mean2+=p[i+2];
+     const x=p[i]/127.5-1,y=p[i+1]/127.5-1;
+     const sx=(p[i]>127?p[i]-256:p[i])/127,sy=(p[i+1]>127?p[i+1]-256:p[i+1])/127;
+     unorm+=x*x+y*y>1.02;signed+=sx*sx+sy*sy>1.02;
+    }
+    encoding=mean2/count<1?(signed/count+.1<unorm/count?'signed-byte-rg':'unorm-rg'):'rgb';
+    for(const m of matched)m.normalEncoding=encoding;
+   }else if(role==='roughness'||role==='opacity'){
+    const p=readPixels(),count=p.length/4;let mean0=0,mean1=0,lo0=255,hi0=0;
+    for(let i=0;i<p.length;i+=4){const r=p[i];mean0+=r;mean1+=p[i+1];if(r<lo0)lo0=r;if(r>hi0)hi0=r;}
+    const ch=mean1/count<1&&(mean0/count>2||hi0-lo0>4)?'r':'g';
+    for(const m of matched)m.channels[role]=ch;
    }
   }
   if(role==='normal'&&['rg-reconstruct-z','unorm-rg','signed-byte-rg'].includes(encoding)){

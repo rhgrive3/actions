@@ -100,12 +100,20 @@ export function installRanked(context) {
     if (m?.mode === 'clams' && a) {
       const input = this.input, touch = input.mobile;
       const inv = m.ranked?.rule.state.inventories?.[actorId(a)];
-      const throwHeld = input.down('KeyC') || input.padButton(1) || (!!(inv?.small || inv?.power) && !!touch?.down('sub'));
+      const touchDown = !!touch?.down('sub'), touchPressed = !!touch?.wasPressed?.('sub');
+      // The same finger hold stays a clam gesture after its last clam leaves.
+      // Reinterpreting it as SUB on the next tick would arm/throw a bomb.
+      const touchThrow = !!(inv?.small || inv?.power || a._rankedTouchThrowHeld) && (touchDown || touchPressed);
+      a._rankedTouchThrowHeld = touchThrow && touchDown;
+      const throwHeld = input.down('KeyC') || input.padButton(1) || (touchThrow && touchDown);
+      // A press/release can occur between fixed ticks. Preserve the same raw
+      // press edges as jump/sub instead of sampling only the current hold.
+      const throwPressed = input.wasPressed('KeyC') || input.padPressed.has(1) || (touchThrow && touchPressed);
       const allowed = this.enabled && a.alive && !this.mapHeld && !this.menuBlocked;
-      a.intent.throw = !!allowed && !!throwHeld && !a._rankedThrowHeld;
+      a.intent.throw = !!allowed && (!!throwPressed || !!throwHeld && !a._rankedThrowHeld);
       a._rankedThrowHeld = !!throwHeld;
       if (!allowed) a._rankedThrowPending = false;
-      if (allowed && throwHeld && touch?.down('sub')) {
+      if (allowed && touchThrow) {
         a.intent.sub = false;
         if (a._prevIntent) a._prevIntent.sub = false;
       }
@@ -116,7 +124,12 @@ export function installRanked(context) {
   Actor.prototype.update = function (dt) {
     const m = G.match;
     if (!m?.ranked) { this._rankedCarrierPrepared = false; return actorUpdate.call(this, dt); }
-    const aim = this.aimDir?.toArray?.() || [Math.sin(this.yaw) * Math.cos(this.aimPitch), Math.sin(this.aimPitch), Math.cos(this.yaw) * Math.cos(this.aimPitch)];
+    // Controller/BotBrain have already supplied this tick's aim angles. The
+    // cached aimDir is refreshed inside actorUpdate and still points along
+    // the previous tick here, so a turn-and-throw/shot must use the new angles.
+    const yaw = Number.isFinite(this.aimYaw) ? this.aimYaw : this.yaw;
+    const pitch = Number.isFinite(this.aimPitch) ? this.aimPitch : 0;
+    const aim = [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
     this._rankedInput = { fire: !!this.intent.fire, throw: !!this.intent.throw, aim };
     if (this.intent.throw) this._rankedThrowPending = true;
     if (isCarrier(m, this)) {
@@ -161,5 +174,6 @@ export function buildFrame(match, api) {
       remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming: a.form === 'squid', slot: a.slot };
   });
   return { actors, inputs, zoneCoverage: match.rankedWorld.zoneCoverage(), barrierHits: match.rankedBarrierHits.splice(0),
-    floorAt: (x, z) => match.rankedWorld.floorAt(x, z), blocked: (a, b) => match.rankedWorld.blocked(a, b) };
+    floorAt: (x, z, yMax) => match.rankedWorld.floorAt(x, z, yMax), fallDeathY: api.PLAYER?.fallDeathY,
+    blocked: (a, b) => match.rankedWorld.blocked(a, b) };
 }
