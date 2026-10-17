@@ -91,3 +91,50 @@ for(const id of sourceIds)test('source ink partition preserves every vertex, tri
  assert.equal(g.drawRange.count,p.count);for(let i=0;i<p.count;i++)assert.equal(g.index.getX(i),i,'full view must retain exact original triangle order');
  mesh.dispose();mesh.material.dispose();
 });
+
+test('native ink bulk runs retain interleaved transparent source triangle order', async () => {
+ const f=await nativeFixture(), {THREE}=f, g=new THREE.BufferGeometry();
+ // Source order is near, far, near. Tile-grouped packing would change it.
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  0,0,0, 1,0,0, 0,1,0,
+  100,0,100, 101,0,100, 100,1,100,
+  2,0,0, 3,0,0, 2,1,0,
+ ],3));
+ const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial());
+ const camera=new THREE.PerspectiveCamera(60,1,.1,50);
+ camera.position.set(1,4,12);camera.lookAt(1,0,0);camera.updateMatrixWorld();
+ mesh.updateMatrixWorld();
+ assert.equal(mesh.selectVisible(camera),2);
+ assert.deepEqual(Array.from(mesh.geometry.index.array.slice(0,g.drawRange.count)),[0,1,2,6,7,8]);
+ const version=mesh.geometry.index.version;
+ camera.position.set(1.2,4,12);camera.lookAt(1,0,0);camera.updateMatrixWorld();
+ assert.equal(mesh.selectVisible(camera),2);
+ assert.equal(mesh.geometry.index.version,version,'moved camera with unchanged visible set avoids GPU writes');
+ camera.position.set(50,2,50);camera.lookAt(51,0,50);camera.updateMatrixWorld();
+ assert.equal(mesh.selectVisible(camera),0);
+ camera.position.set(1,4,12);camera.lookAt(1,0,0);camera.updateMatrixWorld();
+ assert.equal(mesh.selectVisible(camera),2);
+ assert.deepEqual(Array.from(mesh.geometry.index.array.slice(0,g.drawRange.count)),[0,1,2,6,7,8]);
+ mesh.dispose();mesh.material.dispose();
+});
+
+test('native ink culling respects stage world transforms and camera clip changes', async () => {
+ const f=await nativeFixture(),{THREE}=f,g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  0,0,0, 1,0,0, 0,1,0,
+  100,0,100, 101,0,100, 100,1,100,
+ ],3));
+ const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial()),camera=new THREE.PerspectiveCamera(60,1,.1,50);
+ mesh.position.set(200,0,0);mesh.updateMatrixWorld();
+ camera.position.set(200,3,10);camera.lookAt(200,0,0);camera.updateMatrixWorld();
+ assert.equal(mesh.selectVisible(camera),1);
+ assert.deepEqual(Array.from(g.index.array.slice(0,g.drawRange.count)),[0,1,2]);
+ const version=g.index.version;
+ assert.equal(mesh.selectVisible(camera),1);
+ assert.equal(g.index.version,version);
+ camera.far=3;camera.updateProjectionMatrix();
+ assert.equal(mesh.selectVisible(camera),0,'projection change invalidates cached frustum');
+ camera.far=50;camera.updateProjectionMatrix();
+ assert.equal(mesh.selectVisible(camera),1);
+ mesh.dispose();mesh.material.dispose();
+});
