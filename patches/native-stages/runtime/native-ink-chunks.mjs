@@ -70,6 +70,9 @@ export class NativeInkMesh extends THREE.Mesh {
     this._runTiles = Uint32Array.from(tiles);
     this._runStarts = Uint32Array.from(starts);
     this._runEnds = Uint32Array.from(ends);
+    // Many tiny interleaved runs make subarray construction more costly than
+    // the original scalar loop. Use that loop only on highly fragmented maps.
+    this._fragmentedRuns = tiles.length > triCount / 4;
     // Native TypedArray.set copies the visible original-index runs in bulk.
     // Its memory cost is explicit and stable, with no frame-time JS arrays.
     this._fullIndex = new Uint32Array(triCount * 3);
@@ -95,7 +98,7 @@ export class NativeInkMesh extends THREE.Mesh {
       this._lastReversedDepth === camera.reversedDepth;
     if (same) {
       for (let i = 0; i < 16; i++) {
-        if (elements[i] !== previous[i]) { same = false; break; }
+        if (!Object.is(elements[i], previous[i])) { same = false; break; }
       }
     }
     if (same) return this._lastVisibleCount;
@@ -139,26 +142,37 @@ export class NativeInkMesh extends THREE.Mesh {
     // Coalesce adjacent *visible source-order runs*, even if their tiles
     // differ. This can reduce thousands of scalar writes to a few
     // TypedArray.set operations without changing triangle order.
-    let count = 0, first = -1, last = 0;
-    const tiles = this._runTiles, starts = this._runStarts, ends = this._runEnds;
-    for (let k = 0; k < tiles.length; k++) {
-      if (this._visible[tiles[k]]) {
-        if (first === -1) { first = starts[k]; last = ends[k]; }
-        else if (starts[k] === last) last = ends[k];
-        else {
+    let count = 0;
+    if (this._fragmentedRuns) {
+      // Scalar fallback preserves original performance when source triangles
+      // alternate tiles too frequently for contiguous bulk writes.
+      for (let tri = 0; tri < this._triangleTile.length; tri++) {
+        if (!this._visible[this._triangleTile[tri]]) continue;
+        const i = tri * 3;
+        index[count++] = i; index[count++] = i + 1; index[count++] = i + 2;
+      }
+    } else {
+      let first = -1, last = 0;
+      const tiles = this._runTiles, starts = this._runStarts, ends = this._runEnds;
+      for (let k = 0; k < tiles.length; k++) {
+        if (this._visible[tiles[k]]) {
+          if (first === -1) { first = starts[k]; last = ends[k]; }
+          else if (starts[k] === last) last = ends[k];
+          else {
+            index.set(full.subarray(first, last), count);
+            count += last - first;
+            first = starts[k]; last = ends[k];
+          }
+        } else if (first !== -1) {
           index.set(full.subarray(first, last), count);
           count += last - first;
-          first = starts[k]; last = ends[k];
+          first = -1;
         }
-      } else if (first !== -1) {
+      }
+      if (first !== -1) {
         index.set(full.subarray(first, last), count);
         count += last - first;
-        first = -1;
       }
-    }
-    if (first !== -1) {
-      index.set(full.subarray(first, last), count);
-      count += last - first;
     }
     this.geometry.setDrawRange(0, count);
     this._drawIndex.clearUpdateRanges();
