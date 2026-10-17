@@ -1644,7 +1644,7 @@ const PAINT_RADIUS_MAX = 5.2 * 0.72;
 // row above PAINT_RADIUS_MAX, and only with this exact victim-blast signature.
 const PAINT_VICTIM_BLAST_RADIUS = 5;
 const PAINT_VICTIM_SPLASH_RADIUS = 1;
-const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck', 'source-shot', 'source-splash']);
+const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck', 'source-shot', 'source-splash', 'ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact']);
 const paintClockSessions = new WeakMap();
 function paintClockStateFor(session, cfg) {
   const matchId = typeof cfg?.id === 'string' ? cfg.id : '';
@@ -2222,8 +2222,8 @@ function firstSplatStateFor(session,cfg) {
     patch("emit('weapon:impact', { pos: c.clone(), normal: new THREE.Vector3(0, 1, 0), team: p.team, kind: 'blast', radius: w.burstRadius });",
       "emit('weapon:impact', { pos: c, normal: UP, team: p.team, kind: 'blast', radius: w.burstRadius });",
       'blast impact payload');
-    patch('    if (nm && !p.ghost) nm.recProj(p);',
-      '    if (nm && !p.ghost && !p._s3SloshBirthPending) nm.recProj(p);',
+    patch('    if (nm && !p.ghost && !p.catalog?.birthPending) nm.recProj(p);',
+      '    if (nm && !p.ghost && !p.catalog?.birthPending && !p._s3SloshBirthPending) nm.recProj(p);',
       'defer pending Slosher projectile packet until birth');
     patch('  applyHit(attacker, victim, dmg, weaponId) {',
       '  applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {', 'Slosher volley identity projectile entry');

@@ -4,11 +4,15 @@ import {fixture} from './source-fixture.mjs';
 
 async function setup(id) {
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
-    extraExports:"export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
+    extraExports:"export {installMainWeaponCatalogRuntime, releaseCatalogBirth} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
   f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
   f.G.physics.level=null;f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
   f.G.physics.raycast=(_a,_b,_d,h)=>{h.hit=false;return h;};
   const a=f.make(id);a.form='kid';a.intent.fire=true;f.tick(a,50);a.intent.fire=false;
+  // Admit the real delayed glob births before the isolated contact sweep
+  // rewinds positions and velocities. No physics/paint owner is bypassed.
+  for (const p of f.G.projectiles.list.filter(p=>p.catalog?.birthPending))
+    assert.equal(f.releaseCatalogBirth(f.G.projectiles,p,f.G),true,'fixture must admit queued native birth');
   return {f,a,rounds:f.G.projectiles.list.filter(p=>p.catalog)};
 }
 function reset(p,speed=600) {

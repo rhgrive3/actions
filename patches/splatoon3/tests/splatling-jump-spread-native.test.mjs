@@ -21,7 +21,7 @@ const bloomScale = () => 1;
 const expectedHorizontal = runner => {
   const w = runner.a.weapon;
   const recovery = splatlingJumpRecoveryAt(runner.a.s3SplatlingJumpAgeFrames);
-  if (recovery === null) return (runner.a.grounded ? w.spreadGround : w.spreadAir);
+  if (recovery === null) return w.spreadGround;
   return (w.spreadAir + (w.spreadGround - w.spreadAir) * recovery);
 };
 

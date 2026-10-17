@@ -64,6 +64,22 @@
     }
   ],
   "parameters": {
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerCollisionParam/ColBullet_Radius_Squid": {
+      "value": 0.675,
+      "pointer": "/GameParameters/spl__PlayerCollisionParam/ColBullet_Radius_Squid",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "source distance units",
+      "notes": "Explicit 11.3.0 ColBullet value. World factor 1 retains INKWAVE calibration; terrain radius and Nintendo physical metre scale are independent."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerCollisionParam/ColBullet_Height_Squid": {
+      "value": 0,
+      "pointer": "/GameParameters/spl__PlayerCollisionParam/ColBullet_Height_Squid",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "source distance units",
+      "notes": "Explicit zero collision segment height. INKWAVE uses a sphere with total extent 2*radius; exact retail centre placement remains unverified."
+    },
     "data/parameter/1130/misc/params.json#/MoveVel_Human": {
       "value": [
         0.144,

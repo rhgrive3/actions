@@ -106,12 +106,12 @@ test('#883 grounded Dualies use signed horizontal deviation up to 2°, not a 2D 
   assert.equal(right.randomCalls, 3, 'two spread draws plus existing seed');
 });
 
-test('#883 airborne Dualies 7.5° jump spread affects yaw but never randomizes pitch', async () => {
+test('#883 airborne direct Dualies helpers without an admitted jump keep ordinary 2° accuracy', async () => {
   const { f, ps, a } = await setup();
   a.grounded = false;
   for (const [side, sign] of [[.25,-1],[.75,1]]) {
     const shot = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, side);
-    close(shot.yaw, sign*7.5, 1e-6);
+    close(shot.yaw, sign*2, 1e-6);
     close(shot.v, 0, 1e-6);
     close(shot.shotY, shot.baseY);
     assert.equal(shot.randomCalls, 3);
@@ -130,7 +130,7 @@ test('#883 native cone is kept separate; corrected Dualies preserve two random d
   close(corrected.shotY, corrected.baseY);
   assert.equal(corrected.randomCalls, native.randomCalls + 1);
   a.grounded = false;
-  const jump = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, .75);
+  const jump = fireAndDecompose(f, ps, a, 0, 7.5, 1 - 1e-12, .75);
   close(jump.yaw, 7.5, 1e-6);
   close(jump.shotY, jump.baseY);
   assert.equal(jump.randomCalls, 3);

@@ -1,0 +1,252 @@
+{
+  "status": "passed",
+  "engine": "chromium",
+  "sourceSha": null,
+  "contentHash": "b9d166911697dcc3d91966629006aacf4b04ede326373f43a691c2b411a0027f",
+  "inputHash": "b85fe2aa0be307df9d3704c9615a52b605e96317da259fd3ac39de3e961c4512",
+  "verifierHash": "1f96001f64f056690695b0bc23ca044b4a59f3642a6e7da78f7d287afd808094",
+  "fixtureHash": "728f0323bc5df9c339482f4bc81d7f07e3a90796c56cef0f6d445dc29954deed",
+  "mainInkCapturesHash": "38f5ac74383c1d7497d0d40c4cfe24b3111181a73331b83e260293bc9c2f5674",
+  "sourceEqualsBuilt": true,
+  "legacyAncillaryCases": 124,
+  "hashQueries": 1512,
+  "bodyCases": 782,
+  "newMainCases": 540,
+  "cpuOnly": 0,
+  "gpuOnly": 0,
+  "float32BoundaryTies": 9,
+  "tiesLimitWU": 0.001,
+  "mainAtlas": [
+    {
+      "kind": 8,
+      "area": 15.625,
+      "solid": 942,
+      "mismatches": 0,
+      "counts": [
+        1000,
+        0
+      ]
+    },
+    {
+      "kind": 10,
+      "area": 13,
+      "solid": 768,
+      "mismatches": 0,
+      "counts": [
+        832,
+        0
+      ]
+    },
+    {
+      "kind": 11,
+      "area": 15.109375,
+      "solid": 901,
+      "mismatches": 0,
+      "counts": [
+        967,
+        0
+      ]
+    },
+    {
+      "kind": 12,
+      "area": 16.375,
+      "solid": 987,
+      "mismatches": 0,
+      "counts": [
+        1048,
+        0
+      ]
+    },
+    {
+      "kind": 13,
+      "area": 12.8125,
+      "solid": 760,
+      "mismatches": 0,
+      "counts": [
+        820,
+        0
+      ]
+    },
+    {
+      "kind": 14,
+      "area": 6.125,
+      "solid": 360,
+      "mismatches": 0,
+      "counts": [
+        392,
+        0
+      ]
+    }
+  ],
+  "volleyAtlas": [
+    {
+      "id": "shooter",
+      "after": false,
+      "stamps": 2,
+      "cells": 372
+    },
+    {
+      "id": "shooter",
+      "after": true,
+      "stamps": 2,
+      "cells": 316
+    },
+    {
+      "id": "dualies",
+      "after": false,
+      "stamps": 1,
+      "cells": 322
+    },
+    {
+      "id": "dualies",
+      "after": true,
+      "stamps": 1,
+      "cells": 269
+    },
+    {
+      "id": "slosher",
+      "after": false,
+      "stamps": 19,
+      "cells": 1187
+    },
+    {
+      "id": "slosher",
+      "after": true,
+      "stamps": 19,
+      "cells": 1151
+    },
+    {
+      "id": "roller",
+      "after": false,
+      "stamps": 27,
+      "cells": 832
+    },
+    {
+      "id": "roller",
+      "after": true,
+      "stamps": 27,
+      "cells": 719
+    },
+    {
+      "id": "s3-brush-mini",
+      "after": false,
+      "stamps": 3,
+      "cells": 384
+    },
+    {
+      "id": "s3-brush-mini",
+      "after": true,
+      "stamps": 3,
+      "cells": 398
+    },
+    {
+      "id": "s3-roller-heavy",
+      "after": false,
+      "stamps": 133,
+      "cells": 1242
+    },
+    {
+      "id": "s3-roller-heavy",
+      "after": true,
+      "stamps": 133,
+      "cells": 1108
+    },
+    {
+      "id": "s3-brush-heavy",
+      "after": false,
+      "stamps": 8,
+      "cells": 344
+    },
+    {
+      "id": "s3-brush-heavy",
+      "after": true,
+      "stamps": 8,
+      "cells": 358
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "after": false,
+      "stamps": 26,
+      "cells": 1208
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "after": true,
+      "stamps": 26,
+      "cells": 1182
+    }
+  ],
+  "hidden": [
+    {
+      "wall": false,
+      "rate": 30,
+      "compared": 201,
+      "mismatches": 0,
+      "counts": [
+        150,
+        76
+      ]
+    },
+    {
+      "wall": false,
+      "rate": 60,
+      "compared": 201,
+      "mismatches": 0,
+      "counts": [
+        150,
+        76
+      ]
+    },
+    {
+      "wall": false,
+      "rate": 120,
+      "compared": 201,
+      "mismatches": 0,
+      "counts": [
+        150,
+        76
+      ]
+    },
+    {
+      "wall": true,
+      "rate": 30,
+      "compared": 268,
+      "mismatches": 0,
+      "counts": [
+        0,
+        0
+      ]
+    },
+    {
+      "wall": true,
+      "rate": 60,
+      "compared": 268,
+      "mismatches": 0,
+      "counts": [
+        0,
+        0
+      ]
+    },
+    {
+      "wall": true,
+      "rate": 120,
+      "compared": 268,
+      "mismatches": 0,
+      "counts": [
+        0,
+        0
+      ]
+    }
+  ],
+  "resultSHA256": "8571d7581d0b9fa81823d0fb82a2ace4fbafb74f845d9afa05d1a69f9d876473",
+  "galleryPNGHashes": {
+    "main-ink-gallery": {
+      "source": "f8fb52a715511c13f7eb8997bb4a451e44f4465bce3d5ee044ad1f089df155d4",
+      "built": "f8fb52a715511c13f7eb8997bb4a451e44f4465bce3d5ee044ad1f089df155d4"
+    },
+    "main-ink-volleys": {
+      "source": "e7a723f89a0dea936708dc4eea218122d1d1f4f3143f75f12de16e605e454853",
+      "built": "e7a723f89a0dea936708dc4eea218122d1d1f4f3143f75f12de16e605e454853"
+    }
+  }
+}

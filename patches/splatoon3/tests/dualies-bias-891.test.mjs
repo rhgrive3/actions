@@ -38,14 +38,16 @@ test('#891 Dualies recovery boundary is independent of the rendered frame rate',
   near(at30, at60);
 });
 
-test('#891 Dualies jump bias is 40% while airborne and does not persist after landing', () => {
+test('#891 Dualies jump bias follows an admitted jump clock through landing and recovers to the live standing state', () => {
   const a = new DualiesAccuracy();
   for (let i = 0; i < 10; i++) a.shot(true);
   const stand = a.stand;
-  assert.equal(a.chance(false), .4);
-  assert.equal(a.shot(false), .4);
-  assert.equal(a.chance(true), a.stand);
-  assert.notEqual(a.chance(true), .4);
+  assert.equal(a.chance(false), stand, 'falling without a jump retains the standing process');
+  assert.equal(a.chance(false, 0), .4);
+  assert.equal(a.shot(false, 0), .4);
+  assert.equal(a.chance(true, 0), .4, 'landing alone does not erase the jump recovery');
+  assert.equal(a.chance(false, 70 / 60), a.stand, 'recovery completes while still airborne');
+  assert.equal(a.chance(true, 70 / 60), a.stand);
   near(stand + .01, a.stand);
 });
 

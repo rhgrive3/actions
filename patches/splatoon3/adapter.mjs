@@ -68,6 +68,10 @@ export function adaptSource(rel, code) {
   code = adaptWeaponLodMaterialPacking(rel, code);
   if (rel === 'src/game/motion/source-controller.js') {
     code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
+    code = replaceOnce(code, "const triggerActive=!!s.firing||Number(s.charge)>0||c.lastShot<0.1;", "const releasedBackpedal=reverseShotRelease(c._owner?.());\n   const triggerActive=!releasedBackpedal&&(!!s.firing||Number(s.charge)>0||c.lastShot<0.1);\n   if(releasedBackpedal)this.shootUntil=this.time;", 'release backpedal source shoot latch');
+    code = replaceOnce(code, 'this.shootBlend+=((shooting?1:0)-this.shootBlend)*(1-Math.exp(-12*dt));',
+      'this.shootBlend+=((shooting?1:0)-this.shootBlend)*(1-Math.exp(-(releasedBackpedal?24:12)*dt));',
+      'release source backpedal blend');
     // S3 shooter carry: lower the non-firing barrel to the right-hip hold before the aim pitch.
     code = replaceOnce(code, 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis).premultiply(this.retarget.aim);', 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis);sourceCarryWeapon(this,this.weaponQ);this.weaponQ.premultiply(this.retarget.aim);', 'source shooter carry posture');
     // ToHuman/ToSquid own the whole body only for a grounded, stationary change (moving: locomotion steps; air: jump pose).
@@ -76,6 +80,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "if(this.finalState!=='air'){this.airBlendTime=0;", "if(this.finalState!=='air'){this.airBlendTime=sourceAirBlendStart(this,HOST_MOTION.transitionSeconds);", 'airborne form change skips stale dive crossfade');
     return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
       "import { sourceAirBlendStart, sourceFormClipAdmitted } from '../../../patches/splatoon3/runtime/source-form-transition.mjs';\n" +
+      "import { reverseShotRelease } from '../../../patches/splatoon3/runtime/shooter-movement.mjs';\n" +
       "import { sourceCarryWeapon } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
   if (rel === 'src/game/motion/retarget.js') {
@@ -427,6 +432,10 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'this.tr[T_LEAP] > 1.9 && this.tr[T_SLAM] > 1.4', 'specialMotionAllowsFootPlant(this, this.tr[T_LEAP] > 1.9 && this.tr[T_SLAM] > 1.4)', 'special foot-plant ownership');
     code = replaceOnce(code, 'st.sinceFlick = this.tr[T_FLICK];', 'st.sinceFlick = this.s3RollerFlick?.elapsed ?? this.tr[T_FLICK];', 'roller weapon elapsed clock');
     code = replaceOnce(code, "    if (tr[T_FLICK] < 0.7 && this.weaponKind === 'roller') this._poseFlick(P, tr[T_FLICK]);", "    if (this.weaponKind === 'roller' && (this.s3RollerFlick ? this.s3RollerFlick.elapsed < this.s3RollerFlick.interval : tr[T_FLICK] < 0.7)) this._poseFlick(P, tr[T_FLICK]);", 'roller recovery pose duration');
+    code = replaceOnce(code, "    const aiming = kid && !dance && this.weaponKind !== 'roller' && (!!s.firing || ch > 0.01 || this.lastShot < 0.5 || this.lastRelease < 0.35 || this.lockW > 0.5);", "    const releasedBackpedal = reverseShotRelease(this._owner?.());\n    const aiming = kid && !dance && this.weaponKind !== 'roller' && !releasedBackpedal && (!!s.firing || ch > 0.01 || this.lastShot < 0.5 || this.lastRelease < 0.35 || this.lockW > 0.5);", 'released backpedal native aim');
+    code = replaceOnce(code, 'this.wAim = damp(this.wAim, aiming ? 1 : 0, aiming ? 22 : 4.5, dt);',
+      'this.wAim = damp(this.wAim, aiming ? 1 : 0, aiming ? 22 : releasedBackpedal ? 18 : 4.5, dt);',
+      'released backpedal aim carry fade');
     // Capture actual native pose methods before installers decorate them.
     // Both named source connections are mandatory; no private pose copy.
     for (const [anchor, label] of [['  _poseThrow(P, tt) {', 'native bomb throw pose'], ['  _applyPose(dt, s) {', 'native bomb pose application']])
@@ -440,7 +449,8 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, near: true, pump: 0, trig: 0, left: null, hidden: 0 };',
       'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
     code = replaceOnce(code, '    pivot.add(off);', '    pivot.add(off);\n    attachWeaponGlass(d, off);', 'independent transparent weapon shell at every LOD');
-    return "import { attachWeaponGlass } from '../../patches/splatoon3/runtime/weapon-models/kit.mjs';\nimport { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
+    return "import { reverseShotRelease } from '../../patches/splatoon3/runtime/shooter-movement.mjs';\n" +
+      "import { attachWeaponGlass } from '../../patches/splatoon3/runtime/weapon-models/kit.mjs';\nimport { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'styles/hud.css') {
     // Shooter-only placement; preserve the native spread signal and all other reticles.
@@ -954,6 +964,10 @@ export function adaptSource(rel, code) {
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
+    // Catalog delayed globs publish their finalized launch velocity at birth.
+    code = replaceOnce(code, '    if (nm && !p.ghost) nm.recProj(p);',
+      '    if (nm && !p.ghost && !p.catalog?.birthPending) nm.recProj(p);',
+      'defer pending catalog projectile packet until birth');
     // #226/#735: count INKWAVE rain candidates, ground contact and owned
     // paint separately. The existing 12-unit ray is an internal consistency
     // bound, not a verified S3-specific HP cutoff or RainNum semantics.

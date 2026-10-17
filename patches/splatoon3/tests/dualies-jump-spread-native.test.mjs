@@ -99,13 +99,13 @@ test('#887 angular median holds 0.4 to 25F and reaches the modeled endpoint at 7
   runner.s3DualiesJumpT = END_F / 60;
   s = stateOf(a);
   assert.equal(round(s.frames), END_F, '70F boundary');
-  assert.equal(s.bias, 0, 'normal endpoint at the 70F boundary');
+  assert.equal(s.bias, 0.01, 'ordinary standing process is restored at the 70F boundary');
   assert.equal(s.phase, 'recovered');
-  assert.equal(s.envelope, 7.5, 'outer envelope is still the sourced Jump_DegSwerve');
+  assert.equal(s.envelope, 2, 'angular maximum reaches the sourced Stand_DegSwerve');
   assert.equal(s.ground, 2, 'normal endpoint is the sourced Stand_DegSwerve');
 });
 
-test('#887 stable grounded keeps the 2 endpoint, and a non-jump ledge fall keeps the 7.5 envelope', async () => {
+test('stable ground and a non-jump ledge fall both keep the sourced 2-degree envelope', async () => {
   const f = await floorFixture(), { a } = f;
   a.weaponRunner.update(1 / 60, { fire: false });
   assert.equal(stateOf(a).active, false, 'no jump state while stable on the ground');
@@ -115,7 +115,7 @@ test('#887 stable grounded keeps the 2 endpoint, and a non-jump ledge fall keeps
   a.grounded = false;
   a.weaponRunner.update(1 / 60, { fire: false });
   assert.equal(stateOf(a).active, false, 'a ledge fall does not start the clock');
-  close(a.weaponRunner.spread, a.weapon.spreadAir * bloomScale(a), 'airborne envelope keeps 7.5');
+  close(a.weaponRunner.spread, a.weapon.spreadGround * bloomScale(a), 'ledge fall retains ordinary accuracy');
 });
 
 test('#887 an admitted jump holds the outer envelope, then landing does not collapse it to the grounded endpoint', async () => {
@@ -133,9 +133,9 @@ test('#887 an admitted jump holds the outer envelope, then landing does not coll
   assert.ok(landing.state.active, 'landing before 70F keeps the jump-accuracy clock alive');
   assert.ok(landing.state.frames > START_F && landing.state.frames < END_F,
     `landing stays inside recovery: ${landing.state.frames}`);
-  assert.equal(landing.state.envelope, 7.5, 'outer envelope is preserved after landing');
+  assert.ok(landing.state.envelope > 2 && landing.state.envelope < 7.5, 'landing remains inside the recovering envelope');
   assert.ok(landing.state.bias > 0, 'a positive bias remains after landing');
-  close(landing.spread, a.weapon.spreadAir * bloomScale(a), 'first grounded frame does not collapse to the 2 endpoint');
+  close(landing.spread, landing.state.envelope, 'first grounded frame publishes the still-recovering maximum');
   for (let frame = 0; frame < 120 && stateOf(a).active; frame++) f.tick(a);
   assert.equal(stateOf(a).active, false, 'grounded recovery completes and clears at the endpoint');
   close(a.weaponRunner.spread, a.weapon.spreadGround * bloomScale(a), 'normal endpoint after recovery');
@@ -246,21 +246,20 @@ test('#887 30/60/120Hz render cadence shares one fixed-60Hz jump-accuracy trace'
   assert.deepEqual(t120, t60, '120Hz and 60Hz render cadence share the fixed 60Hz trace');
 });
 
-test('#887 an airborne actor past 70F returns to the normal airborne 7.5 endpoint, not the 0-bias 2 endpoint', async () => {
+test('an airborne actor past 70F retains the ordinary 2-degree envelope and nonzero standing bias', async () => {
   const f = await floorFixture(), { a } = f;
   jump(f, a);
-  // Hold the actor in the air well past the sourced 70F boundary. Landing is
-  // the only event that could otherwise end the recovery clock.
+  // Hold the actor in the air well past the sourced 70F boundary: accuracy
+  // recovery is controlled by elapsed time, not by landing.
   for (let frame = 0; frame < 90; frame++) {
     a.pos.y = 50; a.vel.y = 0;
     f.tick(a);
     assert.equal(a.grounded, false, `held airborne at frame ${frame + 1}`);
   }
   assert.equal(stateOf(a).active, false, 'an airborne clock past 70F is cleared');
-  close(a.weaponRunner.spread, a.weapon.spreadAir * bloomScale(a), 'airborne spread is the 7.5 endpoint');
+  close(a.weaponRunner.spread, a.weapon.spreadGround * bloomScale(a), 'jump penalty cannot rebound at 70F');
   a.aimYaw = 0; a.aimPitch = 0; a.aimDir.set(0, 0, 1); a.aimPoint.set(0, 1.05, 100);
-  // After the jump clock, the airborne median remains independent of the
-  // full 7.5 degree maximum angle.
+  // The standing process remains independent of the recovering jump penalty.
   const bias = a.weaponRunner.s3DualiesAccuracy.chance(false);
   const aim = fireDir(f, a, [0, .5]);
   const round = fireDir(f, a, [.5, .75]);
@@ -270,7 +269,7 @@ test('#887 an airborne actor past 70F returns to the normal airborne 7.5 endpoin
   const pitch = v => Math.atan2(v.y, Math.hypot(v.x, v.z));
   const delta = yaw(round) - yaw(aim);
   const signedYaw = Math.atan2(Math.sin(delta), Math.cos(delta)) * 180 / Math.PI;
-  close(signedYaw, a.weapon.spreadAir * biasQuantile(.5, bias),
-    'airborne yaw median is inside the 7.5 degree maximum', 1e-6);
+  close(signedYaw, a.weapon.spreadGround * biasQuantile(.5, bias),
+    'recovered yaw median is inside the 2-degree maximum', 1e-6);
   close(pitch(round), pitch(aim), 'world-up scatter preserves steep aim pitch', 1e-9);
 });

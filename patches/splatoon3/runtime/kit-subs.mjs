@@ -965,70 +965,10 @@ export function withGhostBombSpawn(fn) {
 }
 export function ghostBombSpawning() { return ghostSpawnDepth > 0; }
 
-// ---- 6. Curling guide: flight + roll to the predicted burst point -------------
-// The native guide stops at the first surface, which is where a Splat or
-// Suction Bomb settles. A Curling Bomb keeps travelling, so its guide replays
-// the same per-step pipeline as _updateBombs (kitBombStep, flight gravity,
-// segment contact through kitBombContact, fuse from release) on a scratch
-// presentation record, and the marker sits where the bomb will burst. The
-// record is `ghost` with `s3GhostResolved`, so no authority is reachable.
-const PREVIEW_DT = 1 / 60;
-function previewCurlingPath(projectiles, resolved) {
-  const geo = projectiles.arcGeo, cache = projectiles._arcCache, physics = G_REF?.physics;
-  const pos = geo?.attributes?.position, ring = projectiles.arcRing;
-  if (!pos || !cache || !physics?.segment || !Number.isFinite(cache.vx) || !Number.isFinite(resolved.fuse)) return;
-  const key = projectiles.s3CurlingPreviewKey || (projectiles.s3CurlingPreviewKey = {});
-  const same = key.physics === physics && key.px === cache.px && key.py === cache.py && key.pz === cache.pz
-    && key.vx === cache.vx && key.vy === cache.vy && key.vz === cache.vz && key.charge === resolved.charge && key.fuse === resolved.fuse;
-  if (!same) {
-    const V = ring.position.constructor;
-    const b = key.record || (key.record = { pos: new V(), vel: new V(), ghost: true, kind: 'bomb', team: -1 });
-    const prev = key.prev || (key.prev = new V()), hit = key.hit || (key.hit = { hit: false, point: new V(), normal: new V() });
-    b.pos.set(cache.px, cache.py, cache.pz); b.vel.set(cache.vx, cache.vy, cache.vz);
-    b.s3GhostResolved = resolved; b.s3Mode = 'flight'; b.s3Bounces = 0; b.fuse = resolved.fuse; b.age = 0;
-    b.s3SurfaceNormal = null;
-    const steps = Math.ceil(resolved.fuse / PREVIEW_DT - 1e-9), every = Math.max(1, Math.ceil(steps / (projectiles.arcN - 2)));
-    let n = 1;
-    pos.setXYZ(0, b.pos.x, b.pos.y, b.pos.z);
-    for (let i = 1; i <= steps; i++) {
-      kitBombStep(SUB_REF, b, PREVIEW_DT);
-      b.vel.y -= kitBombGravity(SUB_REF, b) * PREVIEW_DT;
-      prev.copy(b.pos);
-      b.pos.addScaledVector(b.vel, PREVIEW_DT);
-      const h = physics.segment(prev, b.pos, hit);
-      if (h?.hit) kitBombContact(SUB_REF, b, h, PREVIEW_DT);
-      b.fuse -= PREVIEW_DT;
-      if (b.pos.y < (PLAYER_REF?.waterY ?? -Infinity) - 1.8) break;
-      if ((i % every === 0 || i === steps) && n < projectiles.arcN) { pos.setXYZ(n, b.pos.x, b.pos.y, b.pos.z); n++; }
-    }
-    key.n = n;
-    key.end = key.end || new V(); key.end.copy(b.pos);
-    key.normal = key.normal || new V(); key.normal.copy(b.s3SurfaceNormal || { x: 0, y: 1, z: 0 });
-    key.rolling = b.s3Mode === 'rolling';
-    Object.assign(key, { physics, px: cache.px, py: cache.py, pz: cache.pz, vx: cache.vx, vy: cache.vy, vz: cache.vz,
-      charge: resolved.charge, fuse: resolved.fuse });
-    pos.updateRanges && (pos.updateRanges.length = 0);
-    pos.needsUpdate = true;
-    const dist = geo.attributes.lineDistance;
-    if (dist) {
-      let total = 0;
-      dist.setX(0, 0);
-      for (let i = 1; i < key.n; i++) {
-        total += Math.hypot(pos.getX(i) - pos.getX(i - 1), pos.getY(i) - pos.getY(i - 1), pos.getZ(i) - pos.getZ(i - 1));
-        dist.setX(i, total);
-      }
-      dist.updateRanges && (dist.updateRanges.length = 0);
-      dist.needsUpdate = true;
-    }
-  }
-  geo.setDrawRange(0, key.n);
-  if (ring && UP_REF) {
-    ring.position.copy(key.end).addScaledVector(key.normal, 0.03 - CONTACT_BIAS);
-    ring.quaternion.setFromUnitVectors(UP_REF.copy({ x: 0, y: 1, z: 0 }), key.normal);
-    ring.visible = key.rolling;
-  }
-}
-let UP_REF = null, SUB_REF = null;
+// ---- 6. Curling has no airborne arc or distant blast-radius marker while held.
+// The old flight/ground preview model drew a ballistic throw and a predicted
+// explosion ring even though this sub is deployed as a ground-running puck.
+// Keep the real throw/physics/paint intact; only suppress its aiming guides.
 
 // Consume the sub's own launch record (MoveParam SpawnSpeedY/YWorldMin and
 // SpawnBulletAdditionMovePlayerParam X/Z/YPlus/YMax) without changing the
@@ -1064,7 +1004,6 @@ export function installKitSubs(api, profile) {
   if (!SUB || !Projectiles || !WeaponRunner) throw new Error('INKWAVE sub patch needs SUB, Projectiles and WeaponRunner');
   if (SUB[KIT_KEY]) return api;   // idempotent: no double wrapping
   G_REF = G; PLAYER_REF = api.PLAYER; PHYSICS_REF = api.Physics;
-  UP_REF = api.THREE ? new api.THREE.Vector3(0, 1, 0) : null; SUB_REF = SUB;
   registerKitSubs(SUB, profile);
 
   const nativeThrowVelocity = Projectiles.prototype.throwVelocity;
@@ -1093,6 +1032,10 @@ export function installKitSubs(api, profile) {
   const updateArc = Projectiles.prototype.updateArc;
   Projectiles.prototype.updateArc = function (actor, show) {
     const resolved = resolveSubForThrow(actor, actor?.weaponRunner?.s3SubHold, SUB);
+    if (resolved?.spec?.id === 'curling') {
+      // Hide the previous bomb's line and ring as well as the Curling marker.
+      return updateArc.call(this, actor, false);
+    }
     if (!resolved || resolved.throwSpeed == null) return updateArc.call(this, actor, show);
     const saved = this.s3PreviewSubSpeed, previous = this.s3KitPreviewResolved;
     this.s3KitPreviewResolved = resolved;
@@ -1100,7 +1043,6 @@ export function installKitSubs(api, profile) {
     let out;
     try { out = updateArc.call(this, actor, show); }
     finally { this.s3PreviewSubSpeed = saved; this.s3KitPreviewResolved = previous; }
-    if (show && actor?.alive && resolved.spec?.mode === 'roll') previewCurlingPath(this, resolved);
     return out;
   };
 

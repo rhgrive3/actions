@@ -6,11 +6,15 @@ import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs'
 
 async function shot({wall=false,grate=false,height=4,enemyX=.9,ghost=false,native=false,hz=60}={}){
   const f=await fixture({fullRuntime:true,realProjectiles:true,productionComposition:true,adaptRuntime:adaptBuildSource,
-    extraExports:`export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';
+    extraExports:`export {installMainWeaponCatalogRuntime, releaseCatalogBirth} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';
       export {NativeLevel,NativePhysics} from './patches/native-stages/runtime/engine.mjs';`});
   f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
   const a=f.make('s3-slosher-launcher');a.form='kid';a.intent.fire=true;f.tick(a,50);a.intent.fire=false;
   const p=f.G.projectiles.list.find(p=>p.catalog?.descriptor.unit===1&&p.catalog.index===0);assert.ok(p);
+  // The source now queues delayed globs. Admit the native birth before moving
+  // the projectile into the isolated cover fixture; otherwise _step correctly
+  // restores its original muzzle and the synthetic ray never meets the actor.
+  assert.equal(f.releaseCatalogBirth(f.G.projectiles,p,f.G),true,'fixture must admit queued native birth');
   p.pos.set(0,8,0);p.prev.copy(p.pos);p.start.copy(p.pos);p.vel.set(0,0,60);p.age=5/60;p.life=2;p.ghost=ghost;
   Object.assign(p.catalog,{travel:0,carry:0,range:100,phase:0});p.catalog.descriptor.m={};
   const enemy=f.make('shooter');enemy.team=1;enemy.pos.set(enemyX,7.5,.5);f.G.actors=[a,enemy];

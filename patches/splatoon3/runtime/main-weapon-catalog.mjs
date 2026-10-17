@@ -3,6 +3,7 @@ import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
+import { mainInkFootprint } from './main-ink-footprints.mjs';
 import { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 import { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
@@ -12,16 +13,18 @@ import { CANONICAL_KITS } from './canonical-kits-data.mjs';
 import { catalogueAttackRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { withBlasterSplashHit } from './audio/blaster-hit.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
+import { sampleSplatlingSpeed } from './splatling.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
-import { withShotBias } from './weapon-accuracy.mjs';
-import { spreadWeaponRound, signedBiasSample } from './weapon-edgecases.mjs';
+import { withShotBias, accuracyEnvelope, recoveringJumpBias } from './weapon-accuracy.mjs';
+import { spreadWeaponRound } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 import { rollerSpeedSwerveDegrees, GLOB_GRAZE, globGrazePaint, startCatalogWallDrop } from './weapons-fidelity.mjs';
 import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
+import { reverseShotRelease } from './shooter-movement.mjs';
 import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
@@ -194,7 +197,7 @@ const ANGULAR_FAMILIES = new Set(['shooter', 'dualies', 'blaster', 'splatling'])
 export function catalogAngularLaunch(projectiles, direction, actor, family, param, accuracy, maximumDegrees, jumpAgeSeconds = actor.weaponRunner?.s3JumpSpreadAge) {
   if (!ANGULAR_FAMILIES.has(family)) {
     // Other source families have no verified common angular law here.
-    const chance = accuracy.shot(!!actor.grounded, jumpAgeSeconds);
+    const chance = accuracy.shot(!!actor.grounded, jumpAgeSeconds ?? (actor.grounded ? null : 0));
     return projectiles._spread(direction, Math.random() < chance ? maximumDegrees : maximumDegrees * .45);
   }
   const spinner = family === 'splatling';
@@ -202,7 +205,8 @@ export function catalogAngularLaunch(projectiles, direction, actor, family, para
   // the fixed standing/jumping median and independent vertical median.
   // Sparse unextracted defaults remain neutral (0.5), not invented values.
   const median = spinner
-    ? actor.grounded ? finite(param.Stand_DegBiasMax, .5) : finite(param.Jump_DegBiasMax, .5)
+    ? recoveringJumpBias(finite(param.Stand_DegBiasMax, .5), finite(param.Jump_DegBiasMax, .5),
+      Number.isFinite(jumpAgeSeconds) ? jumpAgeSeconds * HZ : null, param)
     : accuracy.shot(!!actor.grounded, jumpAgeSeconds);
   return withShotBias(actor, median, spinner ? finite(param.PitchDegBias, .5) : null,
     () => spreadWeaponRound(projectiles, direction, actor,
@@ -219,8 +223,7 @@ export function advanceCatalogJumpClock(state, actor, family, dt) {
     state.jumpSerial = serial;
     state.jumpAge = 0;
   } else if (state.jumpAge != null && Number.isFinite(dt) && dt > 0) state.jumpAge += dt;
-  if (state.jumpAge != null && state.jumpAge * HZ + EPS >= state.accuracy.jumpEnd &&
-    (actor.grounded || family === 'dualies')) state.jumpAge = null;
+  if (state.jumpAge != null && state.jumpAge * HZ + EPS >= state.accuracy.jumpEnd) state.jumpAge = null;
   return state.jumpAge;
 }
 
@@ -231,29 +234,16 @@ export function catalogSpinnerLaunchSpeed(baseSpeed, move, random = Math.random)
   const rate = move?.SpawnSpeedRandomRate;
   if (!Number.isFinite(rate) || rate <= 0) return baseSpeed;
   const bias = finite(move.SpawnSpeedRandomBias, .5);
-  return baseSpeed * (1 + rate * signedBiasSample(random(), bias));
+  return sampleSplatlingSpeed(baseSpeed, rate, bias, random());
 }
 
-// Source-grounded launch envelope through an admitted jump. Shooter and
-// Spinner maximum angles recover after 25F and reach ground by 70F. The
+// Source-grounded launch envelope through an admitted jump. Every angular
+// family recovers over its own source start/end frame window. The
 // established Splatling jump clock is owned by splatling-jump-spread.mjs;
 // this catalog only reads it, not advancing a duplicate clock.
 export function catalogAngularEnvelope(family, grounded, ground, jump, jumpAge, actionReduction = 0, param = {}) {
   const airborne = lerp(ground, jump, 1 - clamp(actionReduction));
-  if (Number.isFinite(jumpAge)) {
-    if (family === 'shooter' || family === 'splatling') {
-      const frames = jumpAge * HZ;
-      const hold = finite(param.Jump_DegBiasDecreaseStartFrame, 25);
-      const end = Math.max(hold + EPS, finite(param.Jump_DegBiasEndFrame, 70));
-      return frames <= hold ? airborne
-        : frames >= end ? ground : lerp(airborne, ground, (frames - hold) / (end - hold));
-    }
-    if (family === 'dualies' || family === 'blaster') return airborne;
-  }
-  // The native Blaster's jump-serial owner rejects edge falls, whereas
-  // Shooter and Dualies retain their ordinary airborne envelope.
-  if (family === 'blaster') return ground;
-  return grounded ? ground : airborne;
+  return accuracyEnvelope({spreadGround:ground, spreadAir:airborne}, grounded, jumpAge, param, HZ);
 }
 
 function initialState(r,actor) {
@@ -292,6 +282,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function cancel(runner, keep = false) {
     const s = runner.catalogState;
     if (!s) return;
+    s.birthEpoch = (s.birthEpoch || 0) + 1;
     const r = RECORDS.get(s.id), kp = r.parameters.WeaponKeepChargeParam || r.parameters.spl__WeaponStringerParam?.ChargeKeepParam;
     if(keep&&s.stream>0&&kp?.EnableKeepChargeAnytime){s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(runner.a);}
     if (keep && s.chargeF > 0 && kp && (kp.EnableKeepChargeAnytime || s.chargeF+EPS >= chargeFrames(r)) &&
@@ -302,6 +293,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))))
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
+    s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
     slidePaint(r,s,true);
     s.roll = null; s.slideRunner = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;
@@ -332,6 +324,29 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       return finite(s?.rollingDash?(dashTurnBreakActive(this.a)?roll.SpeedDashTurnBreak:roll.SpeedDash):normal,normal)*HZ;
     }
     if (s?.canopy?.open && !s.canopy.launched) return finite(t.MoveSpeedCharge,.055)*HZ*mod;
+    // The swing's own source row owns movement through recovery as well as
+    // startup. firingT is only a short animation hint (0.35 s) and ends before
+    // the longer Roller repeat gate, especially the vertical Flingza/Dynamo.
+    if (r.family === 'roller' && s?.s3SwingMode && (s.pending || this.cooldown > EPS)) {
+      const swing = s.s3SwingMode === 'vertical' ? p.WeaponVerticalSwingParam : p.WeaponWideSwingParam;
+      const sourceSpeed = swing?.SwingMoveSpeed;
+      return Number.isFinite(sourceSpeed) && sourceSpeed >= 0 ? sourceSpeed * HZ : w.moveSpeedFiring;
+    }
+    // A 0.35s firingT is an animation/recoil signal, not an exported Shooter
+    // walking gate. During reverse-input release, the last admitted round owns
+    // a bounded post-shot action tail. PostDelayFrame is the source action
+    // delay (2-4F where exported); treating it as the movement tail is an
+    // explicit INKWAVE interpretation, NOT a recovered engine rule. In sparse
+    // rows retain the established four-frame Splat Shooter calibration.
+    // This does not shorten burst streams (reverseShotRelease refuses those).
+    if (r.family === 'shooter' && reverseShotRelease(this.a)) {
+      const post = Number.isFinite(t.PostDelayFrame) && t.PostDelayFrame >= 0
+        ? t.PostDelayFrame : 4;
+      const shotGate = Number.isFinite(this.a.lastFire) &&
+        this.a.lastFire + EPS < post / HZ;
+      return shotGate ? w.moveSpeedFiring * mod
+        : PLAYER.runSpeed * (this.a.grounded ? (this.a.s3?.modifiers?.runSpeed ?? 1) : 1);
+    }
     if (this.charging) return w.moveSpeedCharging*mod;
     if (r.sourceActor==='WeaponSpinnerDownpour'&&s?.streamElapsed+EPS>=.5)
       return lerp(finite(t.MoveSpeed,.086),finite(p.VariableShotParam?.MoveSpeed,.05),
@@ -388,10 +403,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
     return new THREE.Vector3(Math.sin(y)*Math.cos(p),Math.sin(p),Math.cos(y)*Math.cos(p));
   }
-  function paint(owner, at, radius, depth=1, direction=null, face=-1) {
+  function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null) {
     if (!(radius>0) || !owner || owner.remote) return;
     // The recorded paint packet carries this seed; receivers never reroll it.
-    const options = {seed:Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face};
+    const options = {seed:Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face,footprint};
     let centre=at,paintRadius=radius;
     if (direction) {
       const normal=G.level?.faces?.[face]?.n||down.clone().negate();
@@ -408,10 +423,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));
   }
-  function floorPaint(owner, at, radius, depth=1, direction=null) {
+  function floorPaint(owner, at, radius, depth=1, direction=null, footprint=null) {
     base.copy(at); base.y += .15;
     const h = G.physics.raycast(base,down,Math.max(4,at.y-owner.pos.y+2),floorHit,true);
-    if (h.hit) paint(owner,h.point,radius,depth,direction,h.face);
+    if (h.hit) paint(owner,h.point,radius,depth,direction,h.face,footprint);
   }
 
   // Trace the centre path on actual collision polygons, never paint-chart
@@ -509,7 +524,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     contact.down.copy(current.normal).negate();
     const h=G.physics.raycast(contact.origin,contact.down,.3,contact.hit,true);
     if(h.hit&&current.endFaces.includes(h.face)&&h.point.distanceToSquared(contact.point)<1e-12)
-      paint(owner,h.point,radius,depth,direction,h.face);
+      paint(owner,h.point,radius,depth,direction,h.face,'ink-contact');
   }
 
   function mode(r, key='normal', unit=0, charge=0) {
@@ -595,7 +610,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0}});
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
-    p.vel.y += finite(options.lift,0);updateCatalogVisual(p);
+    p.vel.y += finite(options.lift,0);
+    if(!queueCatalogBirth(p,G,muzzle))applyCatalogPlayerVelocity(p);
+    updateCatalogVisual(p);
     system._push(p);
     return p;
   }
@@ -641,7 +658,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       G.projectiles._spread(aim,spread);
     } else {
       // Variable-charge modes may omit fields present in the base WeaponParam.
-      catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,s.jumpAge);
+      catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,jumpAge);
     }
     runner.spread=spread;
     spawn(a,r,desc,aim,muzzle,{volley,
@@ -666,7 +683,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(['shooter','splatling','dualies'].includes(r.family)&&Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
       const at=a.pos.clone().addScaledVector(a.aimDir.clone().setY(0).normalize(),finite(splash.SpawnNearestLength,0));
-      floorPaint(a,at,nearest.WidthHalfNearest);
+      floorPaint(a,at,nearest.WidthHalfNearest,1,null,mainInkFootprint(r));
     }
   }
   function emitUnits(runner,r,key,charge=0) {
@@ -689,9 +706,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           : (count===1?0:lerp(-finite(u.SpawnWideDegree,0)/2,finite(u.SpawnWideDegree,0)/2,i/(count-1)));
         const yaw=finite(u.BaseRotateYDegree,0)+fan;
         const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
-        const d={...desc,index:i};
+        const d={...desc,index:i},liftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
         const p=spawn(a,r,d,aim,at,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
-          index:i,volley,lift:speed*finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0))});
+          index:i,volley,lift:speed*liftRate});
+        // Like the existing native Slosher owner, select ground/air speed at
+        // each glob's actual birth. Retain the admitted direction, per-index
+        // offset and speed draw; landing/falling does not reroll the volley.
+        if(key==='slosh'&&p?.catalog?.birthPending)
+          p.catalog.birthPending.sloshLaunch={direction:aim,sourceBaseSpeed:velocity,speed,liftRate};
         // Vertical swing intermediate splashes ride the central Unit 0 glob, as on the native Splat Roller.
         if(r.family==='roller'&&key==='vertical'&&j===0&&i===0&&p&&!p.ghost)configureCatalogRollerFlight(p,group);
       }
@@ -718,7 +740,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // high airborne swing paints nothing under the player (native foot-paint rule).
     base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+Math.max(0,n.MaxHeight),a.pos.z+rz*o.X+fz*o.Z);
     const h=G.physics.raycast(base,down,Math.max(0,n.MaxHeight)+Math.abs(o.Y),floorHit,true);
-    if(h.hit&&h.normal.y>=.5)paint(a,h.point,n.PaintWidthHalf,1,null,h.face);
+    if(h.hit&&h.normal.y>=.5)paint(a,h.point,n.PaintWidthHalf,1,null,h.face,mainInkFootprint(a.weapon));
   }
   function emitArrow(runner,r,charge) {
     const a=runner.a,p=r.parameters.spl__WeaponStringerParam,t=p.ShotParam||{}, frames=charge*chargeFrames(r), count=finite(t.ArrowNum,3);
@@ -912,7 +934,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // The source's first-bounce footprint decays by 15% on each later contact.
       // Retain the existing single paint owner and do not duplicate paint events.
       const bounceRadius=(finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index)*Math.pow(.85,s.bounces);
-      if(!p.ghost)paint(p.owner,at,bounceRadius);
+      if(!p.ghost)paint(p.owner,at,bounceRadius,1,null,-1,mainInkFootprint(r));
       const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index,s.bounces+1));
       p.pos.copy(at).addScaledVector(h.normal,clearance);
       p.vel.reflect(h.normal);
@@ -926,7 +948,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     if(p.ghost)return true;
     const footprint=impactPaint(p);
-    paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face);
+    paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face,mainInkFootprint(r));
     if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&
        (p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
       G.fx?.burst(at,h.normal||down,p.owner.color,{count:r.family==='roller'?12:9,speed:2.5,
@@ -936,6 +958,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   P._new=function(...args){const p=fresh.apply(this,args);p.catalog=null;p.catalogVisual=null;return p;};
   P._step=function(p,dt){
     if(!p.catalog)return step.call(this,p,dt);
+    if(!releaseCatalogBirth(this,p,G))return true;
     const s=p.catalog,d=s.descriptor;
     s.carry+=dt;
     while(s.carry+EPS>=DT){
@@ -1012,7 +1035,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
           const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
           const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
-            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,catchUpSeconds:s.carry});
+            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,catchUpSeconds:s.carry,footprint:mainInkFootprint(s.r)});
           if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
           s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
         }
@@ -1038,7 +1061,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       if(!p.ghost&&!d.splashDropSpec&&!d.sloshFall&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){
         const direction=p.vel.clone().setY(0).normalize();
-        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction);
+        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction,mainInkFootprint(s.r));
         s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
       }
       if(p.age+EPS>=p.life||s.travel+EPS>=s.range){
@@ -1261,6 +1284,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const vertical=!brush&&selectRollerFlickVertical(a,runner),key=brush?'brush':vertical?'vertical':'horizontal';
       const t=brush?p.WeaponSwingParam:vertical?p.WeaponVerticalSwingParam:p.WeaponWideSwingParam;
       if(pay(runner,finite(t.InkConsume,.085)*100*inkMod(a),finite(t.InkRecoverStop,43)/HZ)){
+        if (!brush) s.s3SwingMode = key; // immutable mode through post-release recovery
         // Individual Wiki tables v11.0/v11.1: sustained cadence is 7/11/14F,
         // with the first interval one frame shorter. These defaults are sparse.
         const communityRepeat=brush?({WeaponBrushMini:7,WeaponBrushNormal:11,WeaponBrushHeavy:14}[r.sourceActor]):null;
@@ -1534,4 +1558,84 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.frame=input.fire?s.frame+dt*HZ:0;s.pressed=!!input.fire;
   };
   return {records:RECORDS.size,limits:CATALOG_MODEL_LIMITS};
+}
+
+// Pinned S3 11.3.0: spl__SpawnBulletAdditionMovePlayerParam.
+// Apply explicit source axes only. Body-yaw local X/right and Z/forward follow
+// the existing native Shooter/Dualies/Roller/Slosher owners; the sparse table
+// does not recover Nintendo's omitted defaults or additional clamps.
+export function applyCatalogPlayerVelocity(projectile, { guide = false } = {}) {
+  const state = projectile?.catalog, actor = projectile?.owner;
+  if (!state || state.r?.legacy !== false || !actor || actor.remote || projectile.ghost ||
+      state.playerVelocityApplied || !projectile.vel) return false;
+  const spec = state.r.parameters?.spl__SpawnBulletAdditionMovePlayerParam;
+  state.playerVelocityApplied = true;
+  if (!spec) return false;
+  const velocity = actor.vel, out = projectile.vel;
+  if (![out.x, out.y, out.z].every(Number.isFinite)) return false;
+  if (Number.isFinite(actor.yaw) && Number.isFinite(velocity?.x) && Number.isFinite(velocity?.z)) {
+    const sx = Math.sin(actor.yaw), cz = Math.cos(actor.yaw);
+    const x = Number.isFinite(spec.XRate) ? (velocity.x * cz - velocity.z * sx) * spec.XRate : 0;
+    const z = Number.isFinite(spec.ZRate) ? (velocity.x * sx + velocity.z * cz) * spec.ZRate : 0;
+    out.x += x * cz + z * sx;
+    out.z += z * cz - x * sx;
+  }
+  const y = velocity?.y;
+  const rate = y < 0 ? spec.YMinusRate : spec.YPlusRate;
+  if (Number.isFinite(y) && Number.isFinite(rate) && !(guide && y < 0 && spec.GuideYMinusZero === true))
+    out.y += y * rate;
+  return true;
+}
+
+// The native queue stores delayed globs before they become live. Record their
+// owner/life now, then inherit motion and publish their packet at actual birth.
+export function queueCatalogBirth(projectile, game, muzzle) {
+  const state = projectile?.catalog, actor = projectile?.owner;
+  if (!state || state.r?.legacy !== false || !actor || actor.remote || projectile.ghost ||
+      !(projectile.delay > 0)) return false;
+  const runnerState = actor.weaponRunner?.catalogState;
+  const yaw = Number.isFinite(actor.yaw) ? actor.yaw : 0;
+  const sx = Math.sin(yaw), cz = Math.cos(yaw);
+  const dx = projectile.pos.x - muzzle.x, dz = projectile.pos.z - muzzle.z;
+  state.birthPending = {
+    actor, weapon: actor.weapon, runnerState, epoch: runnerState?.birthEpoch || 0,
+    nid: actor.nid, peer: actor.owner, inMatch: Array.isArray(game?.actors) && game.actors.includes(actor),
+    offsetX: dx * cz - dz * sx, offsetY: projectile.pos.y - muzzle.y, offsetZ: dx * sx + dz * cz,
+  };
+  return true;
+}
+
+// false means an admitted delayed volley was cancelled before this glob existed.
+// The caller retires it without damage, paint or a network projectile packet.
+export function releaseCatalogBirth(system, projectile, game) {
+  const state = projectile?.catalog, birth = state?.birthPending;
+  if (!birth) return true;
+  const actor = projectile.owner, runnerState = actor?.weaponRunner?.catalogState;
+  state.birthPending = null;
+  if (!actor || actor !== birth.actor || actor.remote || projectile.ghost || actor.alive === false ||
+      (Number.isFinite(actor.hp) && actor.hp <= 0) || actor.specialActive || actor.weapon !== birth.weapon ||
+      runnerState !== birth.runnerState || (runnerState?.birthEpoch || 0) !== birth.epoch ||
+      actor.nid !== birth.nid || actor.owner !== birth.peer ||
+      (birth.inMatch && !game?.actors?.includes(actor))) return false;
+  system._muzzle(actor, projectile.pos);
+  const yaw = Number.isFinite(actor.yaw) ? actor.yaw : 0;
+  const sx = Math.sin(yaw), cz = Math.cos(yaw);
+  projectile.pos.x += birth.offsetX * cz + birth.offsetZ * sx;
+  projectile.pos.y += birth.offsetY;
+  projectile.pos.z += birth.offsetZ * cz - birth.offsetX * sx;
+  projectile.prev.copy(projectile.pos); projectile.start.copy(projectile.pos);
+  projectile.delay = 0;
+  const launch = birth.sloshLaunch;
+  if (launch) {
+    const unit = state.descriptor.packet;
+    const baseSpeed = finite(actor.grounded ? unit.SpawnSpeedGround : unit.SpawnSpeedAir, 1);
+    if (baseSpeed !== launch.sourceBaseSpeed) {
+      const speed = launch.speed + (baseSpeed - launch.sourceBaseSpeed) * HZ;
+      projectile.vel.copy(launch.direction).multiplyScalar(speed);
+      projectile.vel.y += speed * launch.liftRate;
+    }
+  }
+  applyCatalogPlayerVelocity(projectile);
+  game?.netm?.recProj?.(projectile);
+  return true;
 }

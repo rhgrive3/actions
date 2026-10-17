@@ -25,6 +25,18 @@ export async function runPaintMaskProbe() {
   check(nativeShader.includes('float paintShapeHash('), 'emitted shader must contain the shared integer hash');
   const canvas = document.createElement('canvas'), gl = canvas.getContext('webgl2', { antialias: false });
   check(gl, 'real WebGL2 is required');
+  // Bind the exact production profile data to the scalar shader probe too.
+  // The actual atlas framebuffer below still uses THREE's normal uploader.
+  const profileImage = paint.mat.uniforms.uMainInkProfiles.value.image;
+  const profileTexture = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, profileTexture);
+  check(paint.mat.uniforms.uMainInkProfiles.value.minFilter === THREE.NearestFilter &&
+    paint.mat.uniforms.uMainInkProfiles.value.magFilter === THREE.NearestFilter,
+    'CPU/GPU profiles interpolate exact texels in highp arithmetic');
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, profileImage.width, profileImage.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, profileImage.data);
   const maxWidth = 1024;
   function compile(type, source) {
     const shader = gl.createShader(type); gl.shaderSource(shader, source); gl.compileShader(shader);
@@ -42,7 +54,7 @@ void main() {
   gl_Position = vec4((mod(id, width) + 0.5) / width * 2.0 - 1.0, (floor(id / width) + 0.5) / height * 2.0 - 1.0, 0.0, 1.0);
   gl_PointSize = 1.0; vLocal = query; vSplat = splat; vGrow = grow; vStretch = stretch;
 }`));
-    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, '#version 300 es\n' + fragment.replaceAll('varying ', 'in ').replaceAll('gl_FragColor', 'result')
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, '#version 300 es\n' + fragment.replaceAll('varying ', 'in ').replaceAll('gl_FragColor', 'result').replaceAll('texture2D(', 'texture(')
       .replace('precision highp float;', 'precision highp float;\nout vec4 result;')));
     gl.linkProgram(p); check(gl.getProgramParameter(p, gl.LINK_STATUS), gl.getProgramInfoLog(p)); return p;
   }
@@ -53,6 +65,7 @@ void main() {
     const attr = gl.getAttribLocation(p, 'query'); gl.enableVertexAttribArray(attr); gl.vertexAttribPointer(attr, 3, gl.FLOAT, false, 0, 0);
     gl.uniform1f(gl.getUniformLocation(p, 'width'), width); gl.uniform1f(gl.getUniformLocation(p, 'height'), height);
     gl.uniform4fv(gl.getUniformLocation(p, 'splat'), splat); gl.uniform4fv(gl.getUniformLocation(p, 'grow'), grow); gl.uniform3fv(gl.getUniformLocation(p, 'stretch'), stretch);
+    gl.uniform1i(gl.getUniformLocation(p, 'uMainInkProfiles'), 0);
     gl.disable(gl.BLEND); gl.disable(gl.DITHER); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.POINTS, 0, count);
     const result = new Uint8Array(width * height * 4); gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, result);
@@ -197,7 +210,92 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail);
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, activeFamilies, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
-    body, hidden: hiddenPresentationRows(), ownedRunScan: ownedRunScanRows(), localOrderMap: localOrderMapRows() };
+    body, mainAtlas: mainInkAtlasRows(), volleys:mainInkVolleyGallery(), hidden: hiddenPresentationRows(), ownedRunScan: ownedRunScanRows(), localOrderMap: localOrderMapRows() };
+}
+
+function mainInkVolleyGallery() {
+  const captures=globalThis.mainInkCapturedEvents||[];if(!captures.length)return [];
+  const renderer=new THREE.WebGLRenderer({antialias:false}),rows=[];
+  const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=70+Math.ceil(captures.length/2)*265;
+  canvas.dataset.mainInkVolleys='';document.body.appendChild(canvas);
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#101b25';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#e4f6fa';ctx.font='bold 23px sans-serif';ctx.fillText('Actual single-trigger Actor paint events / same numeric source inputs',25,33);
+  ctx.font='14px sans-serif';ctx.fillText('Before: ellipse bodies. After: shared silhouette profiles. Top-down GPU framebuffer; independent panel crop per weapon.',25,56);
+  try {for(let w=0;w<captures.length;w++)for(let after=0;after<2;after++) {
+    const capture=captures[w],V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
+    const face={origin:V(-40,0,-5),u:V(1,0,0),v:V(0,0,1),n:V(0,1,0),su:80,sv:105,wall:false,turf:true,paintable:true};
+    const level={faces:[face],blocks:[{faces:[0,-1,-1,-1,-1,-1],aabbMin:V(-40,-.01,-5),aabbMax:V(40,.01,100)}],
+      pointInside:()=>false,queryBlocks:(_a,_b,_c,_d,out=[])=>{out.length=0;out.push(0);return out;}};
+    const paint=new PaintSystem(renderer,level,{atlasSize:1024,maxDensity:8,cell:.25});
+    let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+    for(const e of capture.events){
+      const reach=e.R*(1+(e.stretchAmt||0));minX=Math.min(minX,e.at[0]-reach);maxX=Math.max(maxX,e.at[0]+reach);
+      minZ=Math.min(minZ,e.at[2]-reach);maxZ=Math.max(maxZ,e.at[2]+reach);
+      paint.splat(V(...e.at),e.R,e.team,{seed:e.seed,kind:e.kind,footprint:after?e.footprint:null,
+        stretch:e.stretch?V(...e.stretch):undefined,stretchAmt:e.stretchAmt,face:e.face,instant:true});
+    }
+    paint.flush(0);const pixels=new Uint8Array(1024*1024*4);renderer.readRenderTargetPixels(paint.rt,0,0,1024,1024,pixels);
+    const image=new ImageData(1024,1024);
+    for(let y=0;y<1024;y++)for(let x=0;x<1024;x++){const i=(y*1024+x)*4,j=((1023-y)*1024+x)*4;
+      image.data[j]=52;image.data[j+1]=224;image.data[j+2]=194;image.data[j+3]=pixels[i+3];}
+    const scratch=document.createElement('canvas');scratch.width=scratch.height=1024;scratch.getContext('2d').putImageData(image,0,0);
+    const x=((w%2)*2+after)*300+12,y=75+Math.floor(w/2)*265;
+    ctx.fillStyle='#192a36';ctx.fillRect(x,y,282,248);ctx.fillStyle='#e4f6fa';ctx.font='bold 15px sans-serif';ctx.fillText(capture.id+' / '+(after?'after':'before'),x+10,y+24);
+    const a=face.atlas,span=Math.max(maxX-minX,maxZ-minZ,4)*1.06;
+    const ox=(minX+maxX-span)/2,oz=(minZ+maxZ-span)/2,side=span*a.ppm;
+    ctx.drawImage(scratch,a.x+a.pad+(ox+40)*a.ppm,1024-(a.y+a.pad+(oz+5)*a.ppm+side),side,side,x+35,y+31,210,210);
+    check(paint.counts[0]>0,'actual single-trigger capture paints the real atlas');
+    rows.push({id:capture.id,after:!!after,stamps:capture.events.length,cells:paint.counts[0]});paint.dispose();
+  }}finally{renderer.dispose();}
+  return rows;
+}
+
+// Real production paint quads, material/uniform uploader and framebuffer.
+// Include a plain ellipse control beside the four flying bodies/contact band.
+function mainInkAtlasRows() {
+  const renderer=new THREE.WebGLRenderer({antialias:false}),rows=[];
+  const gallery=document.createElement('canvas');gallery.width=1200;gallery.height=650;
+  gallery.dataset.mainInkGallery='';document.body.appendChild(gallery);
+  const ctx=gallery.getContext('2d');ctx.fillStyle='#101b25';ctx.fillRect(0,0,1200,650);
+  ctx.fillStyle='#e4f6fa';ctx.font='bold 24px sans-serif';ctx.fillText('INKWAVE / actual GPU paint footprints',30,36);
+  ctx.font='14px sans-serif';ctx.fillText('Existing width / depth / seed. Individual bodies; volley and drop placement stay with each weapon.',30,61);
+  const names=['Ellipse control','Shooter / Dualies','Bucket body','Brush flick','Roller flick','Brush / Roller contact'];
+  try {
+    for(let k=0;k<6;k++) {
+      const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
+      const face={origin:V(-8,0,-8),u:V(1,0,0),v:V(0,0,1),n:V(0,1,0),su:16,sv:16,wall:false,turf:true,paintable:true};
+      const level={faces:[face],blocks:[{faces:[0,-1,-1,-1,-1,-1],aabbMin:V(-8,-.01,-8),aabbMax:V(8,.01,8)}],
+        pointInside:()=>false,queryBlocks:(_a,_b,_c,_d,out=[])=>{out.length=0;out.push(0);return out;}};
+      const paint=new PaintSystem(renderer,level,{atlasSize:512,maxDensity:28,cell:.125});
+      const footprint=['ink-shot','ink-slosh','ink-brush','ink-flick','ink-contact'][k-1];
+      const area=paint.splat(V(),1.6,0,{kind:'source-shot',footprint,seed:.37,face:0,stretch:V(0,0,1),stretchAmt:k===5?0:1.5,instant:true});
+      paint.flush(0);
+      const pixels=new Uint8Array(512*512*4);renderer.readRenderTargetPixels(paint.rt,0,0,512,512,pixels);
+      const image=new ImageData(512,512);
+      for(let y=0;y<512;y++)for(let x=0;x<512;x++){
+        const from=(y*512+x)*4,to=((511-y)*512+x)*4;
+        image.data[to]=52;image.data[to+1]=224;image.data[to+2]=194;image.data[to+3]=pixels[from+3];
+      }
+      const scratch=document.createElement('canvas');scratch.width=scratch.height=512;scratch.getContext('2d').putImageData(image,0,0);
+      const x=20+(k%3)*400,y=90+Math.floor(k/3)*280;
+      ctx.fillStyle='#192a36';ctx.fillRect(x,y,380,256);ctx.fillStyle='#e4f6fa';ctx.font='bold 17px sans-serif';ctx.fillText(names[k],x+16,y+25);
+      const a=face.atlas,side=9*a.ppm,inset=3.5*a.ppm;
+      ctx.drawImage(scratch,a.x+a.pad+inset,512-(a.y+a.pad+inset+side),side,side,x+80,y+35,210,210);
+      let solid=0,mismatches=0;
+      for(let j=0;j<face.nv;j++)for(let i=0;i<face.nu;i++) {
+        const gx=Math.floor(a.x+a.pad+(i+.5)*face.cu*a.ppm),gy=Math.floor(a.y+a.pad+(j+.5)*face.cv*a.ppm),at=(gy*512+gx)*4;
+        if(pixels[at+3]>250){solid++;if(!paint.grid[face.grid+j*face.nu+i])mismatches++;}
+      }
+      check(area>0&&solid>20&&mismatches===0,'real main atlas must show only owned solid ink');
+      if(k===5){
+        const gx=Math.floor(a.x+a.pad+8*a.ppm),gy=Math.floor(a.y+a.pad+9.35*a.ppm);
+        for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)check(pixels[((gy+dy)*512+gx+dx)*4+3]===0,
+          'zero-width contact section must not render an unowned centerline');
+      }
+      rows.push({kind:k?9+k:8,area,solid,mismatches,counts:Array.from(paint.counts)});paint.dispose();
+    }
+  } finally {renderer.dispose();}
+  return rows;
 }
 
 // PR1188: bidirectional CPU-grid / GPU-body agreement. The GPU program is the
@@ -212,6 +310,7 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
   check(bodyShader.split(sourceBoundary).length === 2, 'one dedicated sourced paint boundary');
   const genericSource = program(bodyShader.replace(sourceBoundary,
     'sd = length(p) - r * grow * wob(atan(p.y, p.x), seed);'));
+  const circleMain = program(bodyShader.replace('sd = mainInkDistance(p, dir, r * grow, kind, paintSeed);', 'sd = length(p) - r * grow;'));
   const size = 32, cell = 0.25, n = size / cell;
   const face = { atlas: { x: 0, y: 0, pad: 2, ppm: 64 }, su: size, sv: size, nu: n, nv: n, cu: cell, cv: cell,
     grid: 0, wall: false, turf: true };
@@ -234,12 +333,21 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
   const wallRadii = [...new Set(Object.values(CATALOG_WALL_DROP).flatMap(r => [r.paint.PaintRadiusShock, r.paint.PaintRadiusFall]))]
     .filter(R => Number.isFinite(R) && R > 0);
   for (const R of wallRadii) for (const seed of [.11, .5, .93]) cases.push({ kind:0, sa:0, R, seed, wall:true });
-  for (const { kind, sa, R, seed, rotate=false, depth=null, wall=false } of cases) {
+  const mainStart = cases.length;
+  for (const wall of [false,true]) for (const kind of [10,11,12,13,14])
+    for (const radius of [.2,.65,1.93]) for (const depth of [.25,1,2.24]) for (const seed of [.11,.93])
+      for (const angle of [0, Math.PI/4, 2.4]) {
+        const shape=catalogPaintEllipse(radius,depth);
+        cases.push({wall,kind,R:shape.radius,sa:shape.stretchAmt,seed,depth,angle});
+      }
+  const mainCount = cases.length - mainStart;
+  for (const { kind, sa, R, seed, rotate=false, depth=null, wall=false, angle=null } of cases) {
     face.wall = wall;
     face.turf = !wall;
     paint.grid = new Uint8Array(n * n); paint.dead = new Uint8Array(n * n); paint.counts = [0, 0];
     paint._paintOwnershipOrder = new Uint32Array(n * n);
-    const sdu = sa ? (rotate ? -.8 : .6) : 0, sdv = sa ? (rotate ? .6 : .8) : 0, lu = 16, lv = 16;
+    const sdu = angle !== null ? Math.cos(angle) : sa ? (rotate ? -.8 : .6) : 0,
+      sdv = angle !== null ? Math.sin(angle) : sa ? (rotate ? .6 : .8) : 0, lu = 16, lv = 16;
     paint._cpuSplat(face, lu, lv, R, 0, seed, sdu, sdv, sa, kind);
     const points = [], index = [];
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
@@ -248,8 +356,9 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
       points.push(x, y, 0); index.push(j * n + i);
     }
     const splat = [R, 0, Math.fround(seed), 2 * kind + (wall ? 1 : 0)];
-    const pixels = query(gpu, points, splat, [3, 1, 2, 0], [sdu, sdv, sa]);
-    const reverted = kind >= 8 ? query(genericSource, points, splat, [3, 1, 2, 0], [sdu, sdv, sa]) : null;
+    const grow = [3,1,2,paintShapeSeed(seed)];
+    const pixels = query(gpu, points, splat, grow, [sdu, sdv, sa]);
+    const reverted = kind >= 8 ? query(kind >= 10 ? circleMain : genericSource, points, splat, grow, [sdu, sdv, sa]) : null;
     let negativeDifferences = 0;
     let cpu = 0, gpuCells = 0, cpuOnly = 0, gpuOnly = 0, ties = 0;
     for (let k = 0; k < index.length; k++) {
@@ -258,19 +367,24 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
       if (owned !== visible) { if (tie) ties++; else if (owned) cpuOnly++; else gpuOnly++; }
       if (reverted && visible !== (reverted[k * 4] === 255)) negativeDifferences++;
     }
-    rows.push({ wall, kind, sa, R, seed, depth, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties, negativeDifferences });
+    rows.push({ wall, kind, sa, R, seed, depth, angle, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties, negativeDifferences });
   }
   const result = { rows, cpuOnly: rows.reduce((t, r) => t + r.cpuOnly, 0), gpuOnly: rows.reduce((t, r) => t + r.gpuOnly, 0),
     ties: rows.reduce((t, r) => t + r.ties, 0), cpuCells: rows.reduce((t, r) => t + r.cpu, 0), gpuCells: rows.reduce((t, r) => t + r.gpu, 0) };
   // Only float32 ties on the SDF zero crossing (|sd| < 1e-3 WU, 1/16 texel) may disagree.
   check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
-  check(rows.length === 227 + wallRadii.length * 3
+  check(rows.length === 227 + wallRadii.length * 3 + mainCount
     && rows.filter(r => r.kind < 8).length === 99 + wallRadii.length * 3 && result.cpuCells > 0,
     'all original body cases, 128 sourced floor/wall cases and catalog wall-drop radii exercised');
   for (const wall of [false, true]) for (const kind of [8, 9]) {
     const sourced = rows.filter(row => row.wall === wall && row.kind === kind);
     check(sourced.length === 32 && sourced.some(row => row.cpu > 0), 'sourced mask claims actual cells');
     check(sourced.some(row => row.negativeDifferences > 0), 'reverting only sourced boundary must change GPU cells');
+  }
+  for(const kind of [10,11,12,13,14]) {
+    const main=rows.filter(row=>row.kind===kind);
+    check(main.length===108 && main.some(row=>row.cpu>0), 'main footprint CPU path exercised');
+    check(main.some(row=>row.negativeDifferences>0), 'circle-only counterfactual must change main footprint');
   }
   return result;
 }

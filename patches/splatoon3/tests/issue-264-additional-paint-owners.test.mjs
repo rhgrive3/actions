@@ -4,7 +4,7 @@ import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 
 for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} release, flight and landing paint retain temporal credit owners`, async () => {
-  let totalLateCredit = 0;
+  let totalLateCredit = 0, totalBodyCredit = 0;
   for (const seed of [0.17, 0.37, 0.71]) {
     const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
     const { G } = f, { paint, face } = makePaintWorld(f), owner = f.make(weapon);
@@ -40,11 +40,15 @@ for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} re
       assert.equal(lateCredit, 0, 'completed source masks add no procedural ancillary turf');
     }
     totalLateCredit += lateCredit;
+    totalBodyCredit += before;
   }
-  // Source masks claim their full bounded body immediately. Generic Roller and
-  // Blaster growth still exercises positive late credit; no path may invent it.
+  // The new Roller silhouette may fill its scored cells before the 32-frame
+  // growth check. Ownership and exact credited-cell equality are asserted for
+  // every seed above; do not require additional cells after an already-full
+  // Roller profile. Generic Blaster growth still produces late scored cells.
   if (weapon === 'slosher') assert.equal(totalLateCredit, 0);
-  else assert.ok(totalLateCredit > 0, `native ${weapon} later cells reach the emitting actor`);
+  else if (weapon === 'blaster') assert.ok(totalLateCredit > 0, 'native blaster delayed cells earn turf');
+  else assert.ok(totalBodyCredit > 0, 'native roller body cells credit its actual owner');
 });
 
 for (const sub of ['suction', 'curling']) test(`native ${sub} detonation retains its owner for every core and satellite splat`, async () => {

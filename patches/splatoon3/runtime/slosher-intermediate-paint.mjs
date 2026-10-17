@@ -1,4 +1,5 @@
 import { spawnSplashDrop, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
+import { mainInkFootprint } from './main-ink-footprints.mjs';
 const EPS = 1e-10;
 // PR1188: the source splash falls like every other BulletSplash: the shared
 // splash-drop defaults (FreeGravity 0.016 DU/F^2, FreeAirResist 0.02) are a
@@ -109,7 +110,7 @@ export function installSlosherIntermediatePaint(api, profile) {
     else stretch.normalize();
     spawnSplashDrop(G, { owner: p.owner, team: p.team, seed: p.seed,
       salt: p.s3SloshIntermediateCount, from: point, direction: stretch,
-      radius: spec.widthHalf, spec: spec.drop, depth: true, kind: 'drop' });
+      radius: spec.widthHalf, spec: spec.drop, depth: true, kind: 'drop', footprint: mainInkFootprint(p.s3Weapon) });
   };
   const before = new THREE.Vector3();
   Projectiles.prototype._step = function (p, dt) {

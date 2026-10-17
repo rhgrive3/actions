@@ -4,10 +4,10 @@
 // Stand_DegBiasMin=.01, Stand_DegBiasKf=.01, Stand_DegBiasDecrease=.015 (per frame;
 // the unit is not stated in the file, per-frame agrees with Inkipedia 1.5%/F),
 // Jump_DegBiasMax=.4, Jump_DegBiasDecreaseStartFrame=25, Jump_DegBiasEndFrame=70.
-// NOT in the pinned file, from Inkipedia (community) only, unverified against
-// official data: the 25% outer-chance cap and the 6F stop/recovery gate.
-// Unverified: the linear 25F->70F jump interpolation shape, and the inner-shot
-// angular kernel (provisional spreadFirst fraction in weapons.mjs).
+// NOT in the pinned file, from Inkipedia (community) only: the .25 standing
+// median cap. RepeatFrame is explicitly sourced; the post-shot recovery gate
+// and the linear intermediate jump curve remain engine-model assumptions.
+import { recoveringJumpBias } from './weapon-accuracy.mjs';
 export const OUTER_CHANCE_CAP = .25; // 未確認 (Inkipedia only)
 export const RECOVERY_GATE_FRAMES = 6; // 未確認 (Inkipedia only)
 export class ShooterAccuracy {
@@ -22,6 +22,7 @@ export class ShooterAccuracy {
     this.jumpBias = Number.isFinite(param.Jump_DegBiasMax) ? param.Jump_DegBiasMax : .4;
     this.jumpStart = Number.isFinite(param.Jump_DegBiasDecreaseStartFrame) ? param.Jump_DegBiasDecreaseStartFrame : 25;
     this.jumpEnd = Number.isFinite(param.Jump_DegBiasEndFrame) ? param.Jump_DegBiasEndFrame : 70;
+    this.jumpParam = { Jump_DegBiasDecreaseStartFrame: this.jumpStart, Jump_DegBiasEndFrame: this.jumpEnd };
     this.stand = this.minimum;
     this.sinceShotFrames = 0;
   }
@@ -36,13 +37,10 @@ export class ShooterAccuracy {
     const before = Math.max(0, previous - this.recoveryFrames);
     if (after > before) this.stand = Math.max(this.minimum, this.stand - (after - before) * this.recovery);
   }
-  chance(grounded, jumpAgeSeconds) {
-    if (Number.isFinite(jumpAgeSeconds)) {
-      const f = jumpAgeSeconds * this.hz;
-      if (f <= this.jumpStart) return this.jumpBias;
-      if (f < this.jumpEnd) return this.jumpBias + (this.stand - this.jumpBias) * (f - this.jumpStart) / (this.jumpEnd - this.jumpStart);
-    }
-    return Number.isFinite(jumpAgeSeconds) || grounded ? this.stand : this.jumpBias;
+  chance(_grounded, jumpAgeSeconds) {
+    return recoveringJumpBias(this.stand, this.jumpBias,
+      Number.isFinite(jumpAgeSeconds) ? jumpAgeSeconds * this.hz : null,
+      this.jumpParam);
   }
   shot(grounded, jumpAgeSeconds) {
     const p = this.chance(grounded, jumpAgeSeconds);

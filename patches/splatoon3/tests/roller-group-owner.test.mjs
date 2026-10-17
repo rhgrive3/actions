@@ -13,22 +13,31 @@ test('Roller incremental volley top-ups preserve the actual 6.1 full-damage boun
   }
 });
 
-test('negative cumulative-max interpretation drops the second Roller increment', async () => {
+test('negative cumulative-max interpretation drops a real Roller 100+50HP grouped top-up', async () => {
+  // The narrower source-guided #285 fan can put a full 150HP first pellet on
+  // our original 5.6-DU centerline dummy: the negative control must not depend
+  // on which independent projectile happens to be the first collider.
+  // Keep the *production applyHit* and sourced 150/100 damage bands, and
+  // compare its required incremental semantics against the buggy cumulative
+  // max transform under a controlled two-hit order.
   const f = await fixture({site: `${ROOT}.group-source`, fidelity:true});
-  const c = CASES.find(c => c.key === 'roller-horizontal'), a = reset(f,c,5.6);
+  const owner = f.make('roller'), victim = f.make('shooter', {team:1,z:5.6});
+  const w = f.WEAPONS.roller;
+  const full = w.flickDamageBands[0][1], partial = w.flickDamageBands[1][1];
+  assert.equal(full, 150, 'S3 Roller full damage band');
+  assert.equal(partial, 100, 'S3 Roller middle damage band');
+  const amounts = [partial, full-partial];
   const apply = f.projectiles.applyHit; let maximum = 0; const submitted = [];
-  f.projectiles.applyHit = function(owner,victim,damage,weapon,group) {
+  f.projectiles.applyHit = function(attacker,target,damage,weapon,group) {
     if (group != null) { submitted.push(damage); const next=Math.max(maximum,damage); damage=next-maximum; maximum=next; }
-    if (damage>0) return apply.call(this,owner,victim,damage,weapon,group);
+    if (damage>0) return apply.call(this,attacker,target,damage,weapon,group);
   };
-  launch(f,a,c); finish(f,a);
-  const total = f.hits.reduce((n,h) => n+h.damage,0);
-  // #430 changes capsule contact time, and thus the exact first pellet's damage.
-  // Keep a differential negative control instead of pinning a terrain-radius accident.
-  assert.ok(submitted.length > 1, 'real volley must submit multiple increments');
-  assert.ok(Math.abs(submitted.reduce((n,d)=>n+d,0)-150)<1e-9, 'correct additive volley remains 150');
-  assert.ok(Math.abs(total-Math.max(...submitted))<1e-9, 'buggy cumulative-max path drops the real top-up');
-  assert.ok(total < 150-1e-7, 'the negative implementation must lose lethal damage');
+  for (const damage of amounts) f.projectiles.applyHit(owner,victim,damage,'roller','roller-negative-control');
+  const total = f.hits.reduce((n,h)=>n+h.damage,0);
+  assert.deepEqual(submitted,[100,50], 'two independently admitted Roller increments use source damage bands');
+  assert.equal(submitted.reduce((n,d)=>n+d,0),150);
+  assert.equal(total,100,'buggy cumulative-max path loses the second 50HP increment');
+  assert.ok(total<full, 'the negative grouped route is distinguishable from the correct full 150HP');
 });
 
 test('receiver uses immutable hit weapon identity after attacker switches weapon', async () => {

@@ -30,6 +30,7 @@
  *    forward smear with equal total length and equal area (see splashStretch).
  */
 import { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
+import { mainInkFootprint } from './main-ink-footprints.mjs';
 const EPS = 1e-9;
 const STEP_FRAMES_PER_SECOND = 60;
 // A splash that has not reached terrain after 4 s of free fall (> 450 world
@@ -137,7 +138,7 @@ function dropQueue(game) {
 // Owner-only falling splash. `spec` supplies gravity, depth law and random
 // spawn velocity; `radius` is the sourced paint half-width for this splash.
 export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direction = null, radius, spec,
-  depth = true, kind = 'drop', initialDownSpeed = 0, catchUpSeconds = 0 }) {
+  depth = true, kind = 'drop', initialDownSpeed = 0, catchUpSeconds = 0, footprint = null }) {
   const queue = dropQueue(game);
   if (!queue || !owner || owner.remote || !(radius > 0) || !spec || !from) return null;
   const V = from.constructor;
@@ -149,7 +150,7 @@ export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direc
   const vx = random ? (unit(1) * 2 - 1) * random.x : 0, vy = random ? (unit(2) * 2 - 1) * random.y : 0;
   const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;
   const drop = {
-    owner, team, seed: unit(0), radius, spec, depth, kind,
+    owner, team, seed: unit(0), radius, spec, depth, kind, footprint,
     dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0,
     carry: Number.isFinite(catchUpSeconds) && catchUpSeconds > 0 ? catchUpSeconds * STEP_FRAMES_PER_SECOND : 0,
     pos: new V(from.x, from.y, from.z),
@@ -173,7 +174,7 @@ function landSplashDrop(game, drop, hit) {
   // independent ShotColHit burst-sphere is not a SplashPaintParam drop.
   const kind = drop.spec?.surfaceOnly && drop.depth
     ? SOURCE_SPLASH_PAINT_KIND : drop.kind;
-  const opts = { seed: drop.seed, kind, claimOwner: drop.owner };
+  const opts = { seed: drop.seed, kind, claimOwner: drop.owner, footprint: drop.footprint };
   if (surfaceOnly) opts.face = hit.face;
   const floor = hit.normal.y > .45;
   if (drop.depth && floor && (drop.dirX || drop.dirZ)) {
@@ -264,7 +265,8 @@ export function paintDistanceFlight(game, projectile, state, end = projectile?.p
     // sourced reach sticks to that wall instead of falling to the floor.
     if (typeof state.wallSplash === 'function' && state.wallSplash(state.sample, index)) continue;
     const drop = spawnSplashDrop(game, { owner: projectile.owner, team: projectile.team, seed: projectile.seed,
-      salt: index, from: state.sample, direction: state.direction, radius, spec, depth: true, kind });
+      salt: index, from: state.sample, direction: state.direction, radius, spec, depth: true, kind,
+      footprint: mainInkFootprint(projectile.s3Weapon || projectile.catalog?.r) });
     if (!drop) paintImmediate(game, projectile, state, index, radius);
   }
   state.distance = limit; state.last.copy(end);
@@ -274,6 +276,7 @@ export function paintDistanceFlight(game, projectile, state, end = projectile?.p
 // resolve the same falling drop synchronously; landing paint is identical.
 function paintImmediate(game, projectile, state, index, radius) {
   const drop = { owner: projectile.owner, team: projectile.team, seed: seededSplashUnit(projectile.seed, index * 8),
+    footprint: mainInkFootprint(projectile.s3Weapon || projectile.catalog?.r),
     radius, spec: state.spec, depth: true, kind: 'drop', dirX: 0, dirZ: 0, spawnY: state.sample.y, frames: 0,
     pos: state.sample.clone(), next: state.sample.clone(), hit: null };
   const len = Math.hypot(state.direction.x, state.direction.z);

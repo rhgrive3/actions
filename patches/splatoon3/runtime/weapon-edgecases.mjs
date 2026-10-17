@@ -1,4 +1,6 @@
 import { biasQuantile } from './weapon-accuracy.mjs';
+import { mainInkFootprint } from './main-ink-footprints.mjs';
+import { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
@@ -167,7 +169,10 @@ export function paintRollerReleaseFootprint(system, a, w, { G, PLAYER, Hit, WALK
   const p = system.list[system.list.length - 1];
   if (!p || p.owner !== a || !Number.isFinite(p.seed)) return 0;
   const center = a.pos.clone().set(x, ground.y, z).addScaledVector(ground.normal, 0.1);
-  const area = G.paint.splat(center, shape.paintWidthHalf, a.team, { seed: p.seed, claimOwner: a });
+  const heading=system._rollerFootPaintHeading||(system._rollerFootPaintHeading=a.pos.clone());
+  heading.set(forwardX,0,forwardZ);
+  const area = G.paint.splat(center, shape.paintWidthHalf, a.team, { seed: p.seed, kind: SOURCE_SPLASH_PAINT_KIND,
+    footprint: mainInkFootprint(w), stretch: heading, stretchAmt: 0, claimOwner: a });
   if (area > 0) a.addTurf?.(area);
   return area;
 }
