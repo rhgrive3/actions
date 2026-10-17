@@ -149,7 +149,7 @@ export function adaptWeaponCatalog(rel, code) {
   }
 
   if (rel === 'src/ui/menus.js') {
-    code = "import { weaponAppearanceOptions, weaponAppearancePreference, setWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\nimport { weaponBaseModelId } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\n" + code;
+    code = "import { weaponAppearanceOptions, weaponAppearancePreference, setWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\nimport { weaponModelKey } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\n" + code;
     code = replaceOnce(code, "    // ---- detail panel\n", `    // Appearance is device-local and preserves this weapon's sub/special/stats.
     const appearanceLabel = h('span');
     const appearance = h('button', { class: 'iw-btn iw-btn--menu', type: 'button', 'aria-label': 'Weapon appearance / ブキの見た目' }, appearanceLabel);
@@ -163,7 +163,7 @@ export function adaptWeaponCatalog(rel, code) {
       const options = weaponAppearanceOptions(shown, LANG), selected = weaponAppearancePreference(shown) ?? '';
       const index = Math.max(0, options.findIndex(o => o.id === selected));
       setWeaponAppearance(shown, options[(index + 1) % options.length].id);
-      for (const c of this._sc()?.chars || []) if (c.weaponAppearancePreview && c.weaponModel === weaponBaseModelId(shown)) c.setWeapon(shown);
+      for (const c of this._sc()?.chars || []) if (c.weaponAppearancePreview && c.weaponModel === weaponModelKey(shown)) c.setWeapon(shown);
       refreshAppearance(); this._sfx('ui_toggle');
     } });
     // ---- detail panel
