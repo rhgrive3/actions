@@ -1,0 +1,109 @@
+name: Diagnose native Character reset at fixed 228 product
+on:
+  push:
+    branches: [review/pose-reset-228-diagnostic-20261017]
+permissions:
+  contents: read
+jobs:
+  capture:
+    name: Original 48 and native pose histories (${{ matrix.side }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - side: before
+            mode: baseline
+            ref: fc0970eb80fc836ba1dbede38807bc29ddce988e
+          - side: after
+            mode: candidate
+            ref: 22835eaca78c9e5dd9bf5c1286a226673da751af
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 22835eaca78c9e5dd9bf5c1286a226673da751af
+          path: candidate
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          path: product
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned build and browser tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Build unchanged pinned product and bind every input/output
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/diagnostic/node_modules/esbuild/lib/main.js
+        run: |
+          mkdir -p evidence/${{ matrix.side }}
+          (cd product && node scripts/build-inkwave.mjs inkwave-public ../built-site) > evidence/${{ matrix.side }}/build.log 2>&1
+          python3 diagnostic/diagnostics/pose/prepare.py product built-site '${{ matrix.ref }}' evidence/${{ matrix.side }}/build-binding.json
+          python3 diagnostic/diagnostics/pose/generate.py candidate
+          sha256sum diagnostic/diagnostics/pose/original-driver.mjs candidate/scripts/check-inkwave-projectile-visuals.mjs diagnostic/diagnostics/pose/driver.mjs > evidence/${{ matrix.side }}/driver-hashes.txt
+      - name: Native source-motion histories then all48 originals and full workloads
+        env:
+          NODE_PATH: ${{ github.workspace }}/diagnostic/node_modules
+        run: |
+          node diagnostic/diagnostics/pose/driver.mjs --site built-site --evidence-dir evidence/${{ matrix.side }} --profile-dir profile-${{ matrix.side }} --mode '${{ matrix.mode }}' > evidence/${{ matrix.side }}/capture.log 2>&1
+          test -z "$(git -C candidate status --porcelain)"
+          test -z "$(git -C product status --porcelain)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pose-reset-${{ matrix.side }}-${{ github.run_id }}
+          path: evidence/${{ matrix.side }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+  compare:
+    needs: capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 22835eaca78c9e5dd9bf5c1286a226673da751af
+          path: candidate
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: pose-reset-before-${{ github.run_id }}
+          path: evidence/before
+      - uses: actions/download-artifact@v4
+        with:
+          name: pose-reset-after-${{ github.run_id }}
+          path: evidence/after
+      - name: Exact original48 physical/media/workload gates unchanged
+        run: python3 candidate/scripts/compare-inkwave-projectile-captures.py --before evidence/before --after evidence/after --output evidence/paired-verification.json --require-complete
+      - name: All14 synthetic gates and source-motion proof
+        if: ${{ !cancelled() }}
+        run: |
+          python3 candidate/scripts/tests/inkwave-projectile-captures-synthetic.py --before evidence/before/projectile-visuals-result.json --after evidence/after/projectile-visuals-result.json --out evidence/comparator-synthetic-gates.json
+          python3 diagnostic/diagnostics/pose/verify.py evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pose-reset-comparison-${{ github.run_id }}
+          path: |
+            evidence/paired-verification.json
+            evidence/comparator-synthetic-gates.json
+            evidence/pose-reset-proof.json
+          if-no-files-found: error
+          retention-days: 14
