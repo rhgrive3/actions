@@ -174,7 +174,17 @@ export function adaptQualitySource(rel, code) {
   code = adaptIssue484(rel, code);
   const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
   const paced = adaptRangeFramePacing(rel, framed);
-  const broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
+  let broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
+  if (rel === 'src/game/physics.js') {
+    broadphased = replaceOnce(broadphased,
+      '    const yLo = Math.min(origin.y, ey) - 1e-6;\n    const yHi = Math.max(origin.y, ey) + 1e-6;',
+      '    const yLo = Math.min(origin.y, ey) - 1e-6;\n    const yHi = Math.max(origin.y, ey) + 1e-6;\n    const xLo = Math.min(origin.x, ex) - 1e-6, xHi = Math.max(origin.x, ex) + 1e-6;\n    const zLo = Math.min(origin.z, ez) - 1e-6, zHi = Math.max(origin.z, ez) + 1e-6;',
+      'compute horizontal ray reach once per ray');
+    broadphased = replaceOnce(broadphased,
+      '      if (b.aabbMin?.y > yHi || b.aabbMax?.y < yLo) continue;',
+      '      if (b.aabbMin?.y > yHi || b.aabbMax?.y < yLo) continue;\n      if (b.aabbMin && (b.aabbMin.x > xHi || b.aabbMax.x < xLo || b.aabbMin.z > zHi || b.aabbMax.z < zLo)) continue;',
+      'discard horizontally disjoint raycast blocks');
+  }
   const painted = adaptFxEmptyPools(rel, adaptPerfReadout(rel, adaptPaintHotpath(rel, broadphased, replaceOnce), replaceOnce), replaceOnce);
   const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
@@ -210,6 +220,176 @@ function adaptQualityLayer(rel, code) {
   code = adaptAudioListener(rel, code);
   code = adaptRetargetBranchUpdates(rel, code);
   code = adaptMotionFkHotpath(rel, code, replaceOnce);
+  if (rel === 'src/game/inkCollision.js') {
+    code = replaceOnce(code,
+      '  let best = Infinity;\n  for (const id of candidates) {\n    const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;',
+      `  const xLo = Math.min(from.x, to.x) - radius - 1e-6, xHi = Math.max(from.x, to.x) + radius + 1e-6;
+  const yLo = Math.min(from.y, to.y) - radius - 1e-6, yHi = Math.max(from.y, to.y) + radius + 1e-6;
+  const zLo = Math.min(from.z, to.z) - radius - 1e-6, zHi = Math.max(from.z, to.z) + radius + 1e-6;
+  let best = Infinity;
+  for (const id of candidates) {
+    const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;
+    if (box.aabbMin && (box.aabbMin.y > yHi || box.aabbMax.y < yLo || box.aabbMin.x > xHi || box.aabbMax.x < xLo || box.aabbMin.z > zHi || box.aabbMax.z < zLo)) continue;`,
+      'skip 3D AABB-disjoint blocks in sweepLevelSphere');
+    code = replaceOnce(code,
+      'export function capsuleEntry(from, to, base, actorRadius, height, bulletRadius) {\n  const lo = base.y + Math.min(actorRadius, height * 0.5), hi = base.y + Math.max(height - actorRadius, height * 0.5);\n  const r = actorRadius + bulletRadius, ox = from.x - base.x, oz = from.z - base.z;',
+      `export function capsuleEntry(from, to, base, actorRadius, height, bulletRadius) {
+  const r = actorRadius + bulletRadius;
+  if (Math.min(from.x, to.x) - base.x > r + 1e-7 || Math.max(from.x, to.x) - base.x < -r - 1e-7 ||
+      Math.min(from.z, to.z) - base.z > r + 1e-7 || Math.max(from.z, to.z) - base.z < -r - 1e-7) return Infinity;
+  const lo = base.y + Math.min(actorRadius, height * 0.5), hi = base.y + Math.max(height - actorRadius, height * 0.5);
+  if (Math.min(from.y, to.y) > hi + r + 1e-7 || Math.max(from.y, to.y) < lo - r - 1e-7) return Infinity;
+  const ox = from.x - base.x, oz = from.z - base.z;`,
+      'skip 3D bounding-box disjoint segments in inkCollision capsuleEntry');
+  }
+  if (rel === 'src/game/motion/source-bank.js') {
+    code = replaceOnce(code,
+      `  fromRaw(mode) {
+    for (let i = 0; i < this.bank.bones.length; i++) {
+      const j = i * STRIDE, r = this.raw;
+      this.s[i].set(r[j], r[j + 1], r[j + 2]); this.p[i].set(r[j + 3], r[j + 4], r[j + 5]);
+      // BFRES applies X, then Y, then Z to COLUMN vectors => Rz*Ry*Rx, Three's ZYX.
+      if (mode === 'eulerXYZ') {
+        const e=this.euler.set(r[j+6],r[j+7],r[j+8],'ZYX'),x=e._x/2,y=e._y/2,z=e._z/2;
+        const c1=x===0?1:Math.cos(x),c2=y===0?1:Math.cos(y),c3=z===0?1:Math.cos(z);
+        const s1=x===0?x:Math.sin(x),s2=y===0?y:Math.sin(y),s3=z===0?z:Math.sin(z);
+        this.q[i].set(s1*c2*c3-c1*s2*s3,c1*s2*c3+s1*c2*s3,c1*c2*s3-s1*s2*c3,c1*c2*c3+s1*s2*s3);
+      }
+      else if (mode === 'quaternion') this.q[i].set(r[j + 6], r[j + 7], r[j + 8], r[j + 9]).normalize();
+      else throw new Error(\`Unsupported rotation mode \${mode}\`);
+    }
+    return this.fk();
+  }`,
+      `  fromRaw(mode, doFk = true) {
+    const bones = this.bank.bones, n = bones.length, r = this.raw;
+    for (let i = 0; i < n; i++) {
+      const j = i * STRIDE;
+      this.s[i].set(r[j], r[j + 1], r[j + 2]); this.p[i].set(r[j + 3], r[j + 4], r[j + 5]);
+      // BFRES applies X, then Y, then Z to COLUMN vectors => Rz*Ry*Rx, Three's ZYX.
+      if (mode === 'eulerXYZ') {
+        const rx = r[j + 6], ry = r[j + 7], rz = r[j + 8], x = rx / 2, y = ry / 2, z = rz / 2;
+        if (i === n - 1) { this.euler._x = rx; this.euler._y = ry; this.euler._z = rz; this.euler._order = 'ZYX'; }
+        const c1=x===0?1:Math.cos(x),c2=y===0?1:Math.cos(y),c3=z===0?1:Math.cos(z);
+        const s1=x===0?x:Math.sin(x),s2=y===0?y:Math.sin(y),s3=z===0?z:Math.sin(z);
+        this.q[i].set(s1*c2*c3-c1*s2*s3,c1*s2*c3+s1*c2*s3,c1*c2*s3-s1*s2*c3,c1*c2*c3+s1*s2*s3);
+      }
+      else if (mode === 'quaternion') this.q[i].set(r[j + 6], r[j + 7], r[j + 8], r[j + 9]).normalize();
+      else throw new Error(\`Unsupported rotation mode \${mode}\`);
+    }
+    return doFk ? this.fk() : this;
+  }`,
+      'skip intermediate Euler callback notifications and optional FK in fromRaw');
+    code = replaceOnce(code,
+      `      if (parent >= 0 && (this.flags[i] & (1 << 23))) {
+        const ps = this.s[parent], e = m.elements;`,
+      `      if (parent >= 0 && (this.flags[i] & (1 << 23)) && (this.s[parent].x !== 1 || this.s[parent].y !== 1 || this.s[parent].z !== 1)) {
+        const ps = this.s[parent], e = m.elements;`,
+      'skip unit parent-scale division in fk');
+    code = replaceOnce(code,
+      '  sample(name, frame, out, loop = undefined) {\n',
+      '  sample(name, frame, out, loop = undefined, doFk = true) {\n',
+      'optional doFk parameter in SourceBank.sample');
+    code = replaceOnce(code,
+      '    return out.fromRaw(c.rotationMode);\n',
+      '    return out.fromRaw(c.rotationMode, doFk);\n',
+      'pass doFk to out.fromRaw in SourceBank.sample');
+  }
+  if (rel === 'src/game/motion/retarget.js') {
+    code = replaceOnce(code,
+      '  this.accessories.push({bone,i,hairReady:false,hairQ:new THREE.Quaternion(),restSourceQ:this.bank.rest.wq[i].clone().invert(),...options});',
+      '  this.accessories.push({bone,i,hairReady:false,hairQ:new THREE.Quaternion(),restSourceQ:this.bank.rest.wq[i].clone().invert(),restHeadRelQ:options.head!==undefined?this.bank.rest.wq[options.head].clone().invert().multiply(this.bank.rest.wq[i]).invert():null,...options});',
+      'precompute static restHeadRelQ for hair accessories');
+    code = replaceOnce(code,
+      ` applyAccessories(pose,{hairTargets=null,shootBlend=0,dt=0}={}) {
+  const c=this.character;
+  for(const e of this.accessories){
+   if(e.hair){
+    // Express hair deformation in source HEAD space. This preserves arbitrary target hair rest directions.
+    this.q.copy(pose.wq[e.head]).invert().multiply(pose.wq[e.i]);
+    this.q3.copy(this.bank.rest.wq[e.head]).invert().multiply(this.bank.rest.wq[e.i]).invert();
+    this.q.multiply(this.q3);
+    if(hairTargets?.total>0){
+     const gain=e.hairGain*(HOST_HAIR.amplitude+(HOST_HAIR.aimAmplitude-HOST_HAIR.amplitude)*clamp(shootBlend,0,1));
+     this.q.identity().slerp(hairTargets.q[e.i],gain);
+     // Continuous-time response in HEAD space: suppress residual curve/clip
+     // cusps on long host strands without making hair lag behind head turns.
+     if(!e.hairReady){e.hairQ.copy(this.q);e.hairReady=true;}
+     else e.hairQ.slerp(this.q,-Math.expm1(-HOST_HAIR.response*Math.max(0,dt)));
+     this.q.copy(e.hairQ);
+    }
+    c._kidXform(c.bones.head,this.p,this.q3);this.q.premultiply(this.q3);
+   }else this.q.copy(pose.wq[e.i]).multiply(e.restSourceQ);
+   c._kidXform(e.bone.parent,this.p,this.q2);this.q2.invert().multiply(this.q);e.bone.quaternion.copy(this.q2).normalize();
+  }
+ }`,
+      ` applyAccessories(pose,{hairTargets=null,shootBlend=0,dt=0}={}) {
+  const c=this.character;
+  const headWorldQ=this._headWorldQ||(this._headWorldQ=new THREE.Quaternion());
+  const poseHeadInvQ=this._poseHeadInvQ||(this._poseHeadInvQ=new THREE.Quaternion());
+  let headWorldReady=false,lastHead=-1;
+  const hasHairTargets=hairTargets?.total>0;
+  const ampScale=hasHairTargets?(HOST_HAIR.amplitude+(HOST_HAIR.aimAmplitude-HOST_HAIR.amplitude)*clamp(shootBlend,0,1)):0;
+  const hairAlpha=hasHairTargets?-Math.expm1(-HOST_HAIR.response*Math.max(0,dt)):0;
+  for(const e of this.accessories){
+   if(e.hair){
+    // Express hair deformation in source HEAD space. This preserves arbitrary target hair rest directions.
+    if(e.head!==lastHead){poseHeadInvQ.copy(pose.wq[e.head]).invert();lastHead=e.head;}
+    this.q.copy(poseHeadInvQ).multiply(pose.wq[e.i]);
+    if(e.restHeadRelQ)this.q.multiply(e.restHeadRelQ);
+    else{this.q3.copy(this.bank.rest.wq[e.head]).invert().multiply(this.bank.rest.wq[e.i]).invert();this.q.multiply(this.q3);}
+    if(hasHairTargets){
+     const gain=e.hairGain*ampScale;
+     this.q.identity().slerp(hairTargets.q[e.i],gain);
+     // Continuous-time response in HEAD space: suppress residual curve/clip
+     // cusps on long host strands without making hair lag behind head turns.
+     if(!e.hairReady){e.hairQ.copy(this.q);e.hairReady=true;}
+     else e.hairQ.slerp(this.q,hairAlpha);
+     this.q.copy(e.hairQ);
+    }
+    if(!headWorldReady){c._kidXform(c.bones.head,this.p,headWorldQ);headWorldReady=true;}
+    this.q.premultiply(headWorldQ);
+   }else this.q.copy(pose.wq[e.i]).multiply(e.restSourceQ);
+   if(e.bone.parent===c.bones.head&&headWorldReady)this.q2.copy(headWorldQ);
+   else c._kidXform(e.bone.parent,this.p,this.q2);
+   this.q2.invert().multiply(this.q);e.bone.quaternion.copy(this.q2).normalize();
+  }
+ }`,
+      'hoist invariant head world transform and restHeadRelQ in applyAccessories');
+  }
+  if (rel === 'src/game/motion/source-controller.js') {
+    code = replaceOnce(code,
+      '     this.bank.sample(cl,mod(this.phase+p.feet[0].strike,1)*cl.frames,this.overlay);\n     this.mixUpper(this.overlay,weight/(upperTotal+weight));upperTotal+=weight;',
+      '     this.bank.sample(cl,mod(this.phase+p.feet[0].strike,1)*cl.frames,this.overlay,undefined,false);\n     this.mixUpper(this.overlay,weight/(upperTotal+weight),false);upperTotal+=weight;',
+      'skip intermediate FK on upper-body overlay sample and mix');
+    code = replaceOnce(code,
+      '   this.mixUpper(locomotionProfile(this.bank,name).centerPose,this.pivotWeight);',
+      '   this.mixUpper(locomotionProfile(this.bank,name).centerPose,this.pivotWeight,false);',
+      'skip intermediate FK on pivot upper-body mix');
+    code = replaceOnce(code,
+      '    if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);if(moving)this.mixUpper(this.overlay,weight);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly:moving});}',
+      '    if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);if(moving)this.mixUpper(this.overlay,weight,false);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly:moving});}',
+      'skip intermediate FK on action overlay sample and mix');
+    code = replaceOnce(code,
+      ' mixUpper(pose,weight){for(let i=0;i<this.upperMask.length;i++)if(this.upperMask[i]){this.pose.p[i].lerp(pose.p[i],weight);this.pose.q[i].slerp(pose.q[i],weight);this.pose.s[i].lerp(pose.s[i],weight);}this.pose.fk();}',
+      ' mixUpper(pose,weight,doFk=true){for(let i=0;i<this.upperMask.length;i++)if(this.upperMask[i]){this.pose.p[i].lerp(pose.p[i],weight);this.pose.q[i].slerp(pose.q[i],weight);this.pose.s[i].lerp(pose.s[i],weight);}if(doFk)this.pose.fk();}',
+      'optional doFk parameter in mixUpper');
+    code = replaceOnce(code,
+      `   const rr=(c.limbs.armR.a+c.limbs.armR.b)*0.995,rl=(c.limbs.armL.a+c.limbs.armL.b)*0.995;
+   for(let k=0;k<16;k++){
+    this.gripV2.subVectors(this.fitR,this.shoulderR);if(this.gripV2.length()>rr)this.fitR.copy(this.shoulderR).add(this.gripV2.setLength(rr));
+    this.fitL.copy(this.fitR).add(this.gripV);this.gripV2.subVectors(this.fitL,this.shoulderL);
+    if(this.gripV2.length()>rl)this.fitR.add(this.shoulderL).add(this.gripV2.setLength(rl)).sub(this.fitL);
+   }`,
+      `   const rr=(c.limbs.armR.a+c.limbs.armR.b)*0.995,rl=(c.limbs.armL.a+c.limbs.armL.b)*0.995,rr2=rr*rr,rl2=rl*rl;
+   for(let k=0;k<16;k++){
+    let changed=false;
+    this.gripV2.subVectors(this.fitR,this.shoulderR);const dR2=this.gripV2.lengthSq();if(dR2>rr2){this.fitR.copy(this.shoulderR).addScaledVector(this.gripV2,rr/Math.sqrt(dR2));changed=true;}
+    this.fitL.copy(this.fitR).add(this.gripV);this.gripV2.subVectors(this.fitL,this.shoulderL);const dL2=this.gripV2.lengthSq();
+    if(dL2>rl2){this.fitR.add(this.shoulderL).addScaledVector(this.gripV2,rl/Math.sqrt(dL2)).sub(this.fitL);changed=true;}
+    if(!changed)break;
+   }`,
+      'early-exit bimanual reach projection in alignWeapon when within arm reach spheres');
+  }
   code = adaptAimProfiles(rel, code);
   code = adaptMedalSource(rel, code);
   code = adaptResourceSource(rel, code, replaceOnce);
@@ -305,6 +485,16 @@ function adaptQualityLayer(rel, code) {
       'finite live camera and mouse settings');
   }
 
+  // #363/#367: Splatoon 3 holds the lens off the player's right even when the boom is
+  // clear. The shipped term only reached that while the boom was forced short, because
+  // closeK hits 0 at curDist >= 2.8, so normal follow stayed vertically centred behind the
+  // crosshair. SH0 adds a persistent baseline and keeps the obstruction-driven shift at its
+  // full current range at closeK = 1.
+  // SH0 is deliberately modest and explicitly unquantified: Splatoon 3 publishes no shoulder
+  // offset and none is pinned in this repository, so this is NOT a claimed Nintendo constant.
+  // The shift stays a parallel lens+target offset, so the aim direction is unchanged; the
+  // right-side wall probe, muzzle-to-target parallax, obstacle avoidance, input axes and the
+  // Charger zoom profile are all untouched.
   if (rel === 'src/game/cameraRig.js') {
     code = replaceOnce(code,
       "    if (this.mode !== this._prevMode || (this.mode === 'follow' && this.target !== this._prevTarget)) {\n",
@@ -501,6 +691,10 @@ function adaptQualityLayer(rel, code) {
       '    }',
       'drop compaction links');
     code = replaceOnce(code,
+      '    const col = this.collider;\n    for (let i = 0; i < this.dN; i++) {\n      const i3 = i * 3, i8 = i * 8;\n      A[i8 + 1] += dt;\n      if (A[i8 + 1] >= A[i8 + 2]) { this._killDrop(i); i--; continue; }\n      const drag = 1 - 0.35 * dt;',
+      '    const col = this.collider, drag = 1 - 0.35 * dt;\n    for (let i = 0; i < this.dN; i++) {\n      const i3 = i * 3, i8 = i * 8;\n      A[i8 + 1] += dt;\n      if (A[i8 + 1] >= A[i8 + 2]) { this._killDrop(i); i--; continue; }',
+      'hoist droplet drag outside per-droplet loop');
+    code = replaceOnce(code,
       '      const vx = Vv[i3], vy = Vv[i3 + 1], vz = Vv[i3 + 2];',
       '      const source = this._qualityDropSource?.[i];\n' +
       '      const linked = source && !source._qualityDead && source._qualityGeneration === this._qualityDropGeneration[i];\n' +
@@ -582,16 +776,6 @@ function adaptQualityLayer(rel, code) {
       '\ninstallGyroQuality(Gyro, screenAngle);\n';
   }
 
-  // #363/#367: Splatoon 3 holds the lens off the player's right even when the boom is
-  // clear. The shipped term only reached that while the boom was forced short, because
-  // closeK hits 0 at curDist >= 2.8, so normal follow stayed vertically centred behind the
-  // crosshair. SH0 adds a persistent baseline and keeps the obstruction-driven shift at its
-  // full current range at closeK = 1.
-  // SH0 is deliberately modest and explicitly unquantified: Splatoon 3 publishes no shoulder
-  // offset and none is pinned in this repository, so this is NOT a claimed Nintendo constant.
-  // The shift stays a parallel lens+target offset, so the aim direction is unchanged; the
-  // right-side wall probe, muzzle-to-target parallax, obstacle avoidance, input axes and the
-  // Charger zoom profile are all untouched.
   if (rel === 'src/game/cameraRig.js') {
     code = replaceOnce(code, `    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);
     let shT = 0.55 * closeK * closeK * (3 - 2 * closeK);
@@ -603,12 +787,6 @@ function adaptQualityLayer(rel, code) {
     if (this.shoulder > 1e-3) cam.position.addScaledVector(_right, this.shoulder);`, `    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);
     const SH0 = 0.28;   // persistent right-shoulder framing; not a pinned S3 value
     let shT = SH0 + (0.55 - SH0) * closeK * closeK * (3 - 2 * closeK);
-    // C19-CAMERA-COLLISION-TRANSITION: the wall probe used to be target-only. With SH0 the damped
-    // shoulder is normally 0.28, so when a right-side wall then becomes reachable the probe only
-    // ever looked as far as the new target and the *applied* (still-damped) value kept rendering the
-    // lens inside the 0.25 m clearance for several frames. Probe as far as the lens actually is, and
-    // clamp the applied value as well as the target, so the first frame after the transition is safe.
-    // The open case is untouched: no hit means no cap, so the damped return to SH0 is unchanged.
     let shMax = Infinity;
     if (shT > 0.01 && G.physics) {
       const hr = G.physics.raycast(cam.position, _right, Math.max(shT, this.shoulder || 0) + 0.25, _hit, true);
