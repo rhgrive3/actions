@@ -133,7 +133,7 @@ function decorateLoadout(menus, scr, api) {
     return b;
   });
   bar.append(...tabs);
-  const setCat = (key, sound) => {
+  const setCat = (key, sound, { repairFocus = true } = {}) => {
     if (!order.some(([k]) => k === key)) key = 'all';
     cur = key;
     for (const t of tabs) { const on = t.dataset.cat === key; t.classList.toggle('is-sel', on); t.setAttribute('aria-selected', on ? 'true' : 'false'); }
@@ -142,7 +142,7 @@ function decorateLoadout(menus, scr, api) {
     if (sound) menus._sfx?.('ui_toggle');
     const f = menus._focus;
     // keep the selection on a visible card: the equipped one when it is in this class
-    if (!f || (f._wid && f.hidden)) {
+    if (repairFocus && (!f || (f._wid && f.hidden))) {
       const next = cards.find((c) => !c.hidden && c.classList.contains('is-equipped')) || cards.find((c) => !c.hidden);
       if (next) { menus._setFocus(next, { snap: true }); keepInView(next, grid, { smooth: false }); }
     }
@@ -151,7 +151,10 @@ function decorateLoadout(menus, scr, api) {
   };
   const label = scr.el.querySelector('.iw-loadout__body .iw-seclabel');
   if (label) label.after(bar); else grid.before(bar);
-  setCat('all', false);
+  // Native _swap assigns this screen only after its factory returns. Taking
+  // focus here would call the outgoing screen's onFocus after destroy and
+  // suppress the incoming screen's initial onFocus. Let _swap own that focus.
+  setCat('all', false, { repairFocus: false });
   const onNav = scr.onNav;
   scr.onNav = (dir) => {
     if (dir === 'tab_prev' || dir === 'tab_next') {
