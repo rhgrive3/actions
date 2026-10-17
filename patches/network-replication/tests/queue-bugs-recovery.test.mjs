@@ -25,7 +25,8 @@ function member(owner,nid,team,slot,weapon='shooter',bot=false) {
 }
 function method(js,className,name) {
   const ast=parse(js,{ecmaVersion:'latest',sourceType:'module'});
-  const cls=ast.body.find(n=>n.type==='ClassDeclaration' && n.id.name===className);
+  const cls=ast.body.map(n=>n.type==='ExportNamedDeclaration'?n.declaration:n)
+    .find(n=>n?.type==='ClassDeclaration' && n.id?.name===className);
   assert.ok(cls,className+' class must exist in built source');
   const m=cls.body.body.find(n=>n.key?.name===name);
   assert.ok(m,className+'.'+name+' must exist in built source');
