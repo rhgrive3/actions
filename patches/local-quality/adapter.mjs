@@ -1,5 +1,6 @@
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
 import { adaptNavHeuristic } from './nav-heuristic-adapter.mjs';
+import { adaptBotNavigation } from './bot-navigation-adapter.mjs';
 import { adaptRootHairSpring } from './root-hair-spring-adapter.mjs';
 import { adaptPoseRotation } from './pose-rotation-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
@@ -141,6 +142,7 @@ const IDENTITY_FILES = [
   'paint-hotpath-adapter.mjs',
   'distance-hotpath-adapter.mjs',
   'nav-heuristic-adapter.mjs',
+  'bot-navigation-adapter.mjs', 'bot-navigation.mjs',
   'root-hair-spring-adapter.mjs',
   'pose-rotation-adapter.mjs',
   'collision-hotpath-adapter.mjs',
@@ -175,7 +177,7 @@ export function adaptQualitySource(rel, code) {
   const painted = adaptFxEmptyPools(rel, adaptPerfReadout(rel, adaptPaintHotpath(rel, broadphased, replaceOnce), replaceOnce), replaceOnce);
   const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
-  return adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce);
+  return adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
