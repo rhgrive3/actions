@@ -28,9 +28,11 @@ function fixture() {
   return { api: { G: { actors: [owner, enemy1, teammate, dead, enemy2] } }, owner, enemy1, enemy2, teammate };
 }
 
-test('all eight sub-weapon enemy lookups release their borrowed array even when hooks throw', () => {
-  assert.equal((source.match(/hostileActors\(api,(mine|object)\.owner\)/g) || []).length, 8);
-  assert.equal((source.match(/releaseHostileActors\(api\)/g) || []).length, 9);
+test('all nine sub-weapon enemy lookups release their borrowed array even when hooks throw', () => {
+  const acquired = (source.match(/hostileActors\(api,(mine|object)\.owner\)/g) || []).length;
+  const released = (source.match(/releaseHostileActors\(api\)/g) || []).length - 1; // exclude declaration
+  assert.equal(acquired, 9, 'every current sub-weapon acquisition is counted');
+  assert.equal(released, acquired, 'every acquisition has its own try/finally release');
   assert.equal((source.match(/for \(const target of __iwHostiles\)/g) || []).length, 7);
   assert.match(source, /finally \{ releaseHostileActors\(api\); \}/);
 });
