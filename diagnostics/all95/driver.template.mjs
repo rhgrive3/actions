@@ -22,7 +22,7 @@ const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'
 if(hash(JSON.stringify(manifest.artifacts))!==manifest.contentHash) throw new Error('Build identity mismatch');
 for(const [file,expected] of Object.entries(manifest.artifacts)) if(hash(fs.readFileSync(path.join(site,file)))!==expected) throw new Error('Artifact mismatch: '+file);
 const sourceSha=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
-if(sourceSha!=='211090dd2fce15a55a244f62602639ac7f10d5f4'||execFileSync('git',['rev-parse','HEAD^{tree}'],{cwd:ROOT,encoding:'utf8'}).trim()!=='c675d39297d7225ec3295188cf6998cc5d3f4d92')throw Error('Candidate identity mismatch');
+if(sourceSha!=='1d7355253f80dce82f17292690ddaab85e342492'||execFileSync('git',['rev-parse','HEAD^{tree}'],{cwd:ROOT,encoding:'utf8'}).trim()!=='4fc90ebe2836d990debb3fc23ae198712ec9df08')throw Error('Candidate identity mismatch');
 // Bind every build input to the actual checkout commit when --exact-source is used.
 if(process.argv.includes('--exact-source')) {
   const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:ROOT,encoding:'utf8'}).split('\0').filter(Boolean).map(row=>{ const [meta,file]=row.split('\t'); return [file,meta.split(' ')[2]]; }));
@@ -122,7 +122,7 @@ try {
     const m=globalThis.s3ProbeG.game.menus,el=m._scr?.el;
     return m.current==='loadout'&&el?.isConnected&&!el.classList.contains('is-leaving')&&!m._modal;
   });
-  result.savedPatternz=await checkSavedFiveReopening({page,evidence,manifest,binding:{candidateTree:'c675d39297d7225ec3295188cf6998cc5d3f4d92',contentHash:manifest.contentHash,head:sourceSha},verifiedResponses:savedFiveExactResponses,settleResponses:settleSavedFiveResponses});
+  result.savedPatternz=await checkSavedFiveReopening({page,evidence,manifest,binding:{candidateTree:'4fc90ebe2836d990debb3fc23ae198712ec9df08',contentHash:manifest.contentHash,head:sourceSha},verifiedResponses:savedFiveExactResponses,settleResponses:settleSavedFiveResponses});
   if(result.savedPatternz.status!=='passed'||result.savedPatternz.phases.length!==3)throw Error('Incomplete Patternz reopening');
   result.status='passed';
 } catch(error){result={...(result||{}),status:'failed',error:String(error)};process.exitCode=1;}

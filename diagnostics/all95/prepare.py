@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys,json,hashlib,subprocess
 D=Path(__file__).parent;root=Path(sys.argv[1]).resolve();site=Path(sys.argv[2]).resolve();e=Path(sys.argv[3]).resolve();e.mkdir(exist_ok=True);git=lambda *a:subprocess.check_output(['git','-C',str(root),*a]).decode().strip();H=lambda b:hashlib.sha256(b).hexdigest()
-assert git('rev-parse','HEAD')=='211090dd2fce15a55a244f62602639ac7f10d5f4';assert not git('status','--porcelain')
+assert git('rev-parse','HEAD')=='1d7355253f80dce82f17292690ddaab85e342492';assert not git('status','--porcelain')
 m=json.loads((site/'inkwave-build.json').read_bytes()); tree={}
 for row in subprocess.check_output(['git','-C',str(root),'ls-tree','-r','-z','HEAD']).decode().split('\0'):
  if row:
