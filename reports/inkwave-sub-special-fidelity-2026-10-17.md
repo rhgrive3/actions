@@ -79,6 +79,16 @@
 
 修正前の本番ビルド `c3bdb268f442372bbd7b119843529f3bed993962a883e5b0f9b4c997565c3802` では、実カタログ発動・Actor/Physics/Projectiles/原典モーション読込済みCharacterを使い、30/60/120Hz×VFXなし／特殊VFX無効／有効の全9条件で仮箱と通常武器の保持を再現。page errorは0。旧 `slam` の手動phase診断が合格しても、現行 `tripleSplashdown` の不具合を検出しないことも確認した。
 
-`scripts/check-inkwave-splashdown-browser.mjs` は現行IDを入力で発動し、phaseや位置を強制せず着地・拳退場まで進める。全9条件で**FX更新前**に各拳の画素差を個別測定し、非表示・scale=0・未生成も拒否する。VFX無効時も普通のFX.updateは実行する。修正後の初回9条件は失敗0・page error0。最終コードのビルド、source/emitted回帰、画面・GPU破棄・起動予算の結果は統合後に追記する。
+`scripts/check-inkwave-splashdown-browser.mjs` は現行IDを入力で発動し、phaseや位置を強制せず着地・拳退場まで進める。全9条件で**FX更新前**に各拳の画素差を個別測定し、非表示・scale=0・未生成も拒否する。VFX無効時も普通のFX.updateは実行する。最終9条件は失敗0・page error0、各拳の最小画素差1798。normal overrideでは半透明energyの画素寄与0、拳本体1699を確認し、共有drawRangeも復元された。
+
+最終配布ビルドのcontent hashは `6c4f636f3963268d3638dc67043fe9c7e369ee595f1d5ca2c0bdded5aa6dbfae`、revisionは `17b79d5a3b8be9633200f9435ad8db5a7fa75b6644360c242f968405ecc83e3a`。ソース統合9ファイル145/145、同じ配布物を使う22ファイル350/350が成功（両方skipなし）。別途サブ152/152と最終35/35、kit164/164とlife境界34/34、エナスタ57/57を確認した。これらは一部重複するため件数を合算しない。ビルド・manifest・workflowの3ファイルは27成功・任意fixture5スキップ・失敗0。固定一次データ8ファイルのGit blobと36明示値の照合も成功。隣接する水死・敵インク・実installer・ホコ所持境界・shader keeperの6ファイル25/25も成功。
+
+既存の実WebGL診断では、モデル・grip・吸引→発射→通常保持への復帰、36回の雲退役、2画質・pool飽和／再利用・拳clear／dispose／通常退役を確認。GPU値は前後ともgeometry46・texture2・program16・buffer241で増加0、page error0。この診断の旧slamは手動phaseであり、現行チャクチの証拠は上記の別9条件に限定する。
+
+起動予算はcore preload131＋range14、初期JS2,727,924 bytesで既存上限を維持。元データ・通常キャラクター・他ブキを減らして帳尻を合わせていない。詳細と画像hashを[検証記録JSON](inkwave-sub-special-fidelity-2026-10-17/verification.json)に保存した。
+
+| 修正前：現行チャクチ30F | 修正後：同じ条件30F |
+|---|---|
+| ![修正前の箱](inkwave-sub-special-fidelity-2026-10-17/splashdown-before-f030.png) | ![修正後の拳](inkwave-sub-special-fidelity-2026-10-17/splashdown-after-f030.png) |
 
 画像と詳細ログは `/workspace/scratch/splashdown-before/`、`splashdown-after-initial/`、`special-presentation-before/`。これらは本家の録画ではなく、制御された平地でのINKWAVE実描画。実機一致の根拠へ転用しない。
