@@ -20,6 +20,18 @@ test('profile resource is bounded and only the requested main families opt in',(
   assert.equal(mainInkFootprint({family:'slosher',sourceActor:'WeaponSlosherBathtub'}),'ink-shot','bubbles retain discrete puddles');
 });
 
+test('single nearest GPU fetch packs both linear profile endpoints exactly', () => {
+  assert.equal(INK_PROFILE_BYTES.length, 128 * 8 * 4);
+  for (let row = 0; row < INK_FOOTPRINT_KINDS.length; row++) {
+    for (let i = 0; i < 128; i++) {
+      const offset = (row * 128 + i) * 4;
+      const neighbor = (row * 128 + Math.min(i + 1, 127)) * 4;
+      assert.equal(INK_PROFILE_BYTES[offset + 2], INK_PROFILE_BYTES[neighbor], 'next left');
+      assert.equal(INK_PROFILE_BYTES[offset + 3], INK_PROFILE_BYTES[neighbor + 1], 'next right');
+    }
+  }
+});
+
 test('all 34 main Actors use the new CPU silhouette through real release/contact paths and credit it once',async()=>{
   const f=await fixture(options);f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
   const rows=[];
