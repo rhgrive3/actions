@@ -84,7 +84,8 @@ function legacySpecial(f, weapon, special) {
 test('#469 removed projection still reproduces the HUD defect under complete bootstrap', async () => {
   const f = await bootstrap({ negative: 'storm' }), a = legacySpecial(f,'splatling','storm'); a.isLocal = true;
   a.special = a.specialCost(); a._startSpecial();
-  a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a); f.tick(a, 240);
+  a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a);
+  f.G.projectiles._spawnCloud(f.G.projectiles.bombs.at(-1));f.tick(a,240);
   close(a.stormGaugeLock, 4); assert.equal(view(f, a).special, 0);
   assert.equal(view(f, a).specialActive, false);
 });
@@ -107,6 +108,7 @@ test('#469 personal Storm used gauge remains connected with every production boo
   assert.equal(view(f, a).special, 1); assert.equal(a.special, 0);
   a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a);
   assert.equal(f.G.projectiles.bombs.length, 1);
+  f.G.projectiles._spawnCloud(f.G.projectiles.bombs.at(-1));
   f.tick(a, 240);
   close(a.stormGaugeLock, 4); close(view(f, a).special, .5);
   assert.equal(a.specialActive, null); assert.equal(view(f, a).specialActive, true);

@@ -45,6 +45,8 @@ test('#469 Tenacity cannot recharge after the real Storm throw animation ends; u
     close(a.special, 0, 'holding cannot recharge');
     a.intent.sub = true; tick(); a.intent.sub = false; tick();
     assert.equal(a.specialActive.phase, 'throw');
+    const clouds = new f.Projectiles(new f.THREE.Scene());
+    clouds._spawnCloud({owner:a,team:a.team,pos:a.pos.clone(),dir:new f.THREE.Vector3(0,0,1)});
     const duration = a.stormGaugeLock;
     const clock = new FixedClock(); let cleared = false, unlocked = false, count = 0;
     for (let frame = 0; frame < (duration + .1) * hz; frame++) clock.advance(1 / hz, () => {

@@ -14,7 +14,7 @@ import {adaptKitSource as adaptSource} from './kit-composed-fixture.mjs';
 import { installKitTrizooka, VOLLEY_CONFIG, throwVolley, trizookaSpecialWeapon } from '../runtime/kit-trizooka.mjs';
 import {
   kitTrizookaWorldSweep, kitTrizookaFlight, kitTrizookaActorRadius, isDamageCarrier,
-  kitPaintCredit, kitPaintAuthority, kitVolleyHitAuthority,
+  kitPaintCredit, kitPaintAuthority, kitVolleyHitAuthority, kitTrizookaBirth,
 } from '../runtime/trizooka-collision.mjs';
 import { TRIZOOKA_ORBIT } from '../runtime/kit-trizooka.mjs';
 
@@ -132,11 +132,19 @@ function shooter(api) {
 }
 
 function shell(api, projectiles, owner, ageFrames) {
-  const fired = throwVolley(projectiles, owner, trizookaSpecialWeapon());
+  const fired = bornVolley(projectiles, owner, trizookaSpecialWeapon());
   const p = fired[VOLLEY_CONFIG.damageLobeIndex];
   p.age = ageFrames / 60;
   kitTrizookaFlight(projectiles, p, F);
   return { fired, p };
+}
+
+// These geometry tests admit all three globs before arranging their contacts;
+// actual 0/4/8F scheduling is covered by trizooka-birth-swim.test.mjs.
+function bornVolley(projectiles, owner, descriptor) {
+  const fired=throwVolley(projectiles,owner,descriptor);
+  for (const p of fired) { p.delay=0; kitTrizookaBirth(projectiles,p); }
+  return fired;
 }
 
 // ---- swept sphere vs OBB ---------------------------------------------------
@@ -300,7 +308,7 @@ test('recProj -> JSON -> _play -> ghostProjectile preserves the volley presentat
   nm.byNid = new Map(); nm.replayKitEvent = () => false;
   api.G.netm = nm;
 
-  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const fired = bornVolley(projectiles, a, trizookaSpecialWeapon());
   // throwVolley already went through the native _push -> native recProj path
   assert.equal(nm.out.length, VOLLEY_CONFIG.lobes, 'every lobe took the real packet path');
   const wire = JSON.parse(JSON.stringify(nm.out));     // the real serialisation hop
@@ -356,7 +364,7 @@ test('a ghost world impact lays no ink and credits no turf after the transport i
   const { projectiles, paintCalls } = world(api, [obb(api, [0, 1, 8], [2, 2, 2])]);
   const a = shooter(api);
   a.nid = 3;
-  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const fired = bornVolley(projectiles, a, trizookaSpecialWeapon());
   const carrier = fired[VOLLEY_CONFIG.damageLobeIndex];
   const other = shooter(api);
   other.team = 1; other.pos.set(0, 0, 6);
@@ -383,7 +391,7 @@ test('each local Trizooka glob independently lays impact ink and credits turf', 
   const api = await production();
   const { projectiles, paintCalls } = world(api, []);
   const a = shooter(api);
-  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const fired = bornVolley(projectiles, a, trizookaSpecialWeapon());
   const hit = { point: new api.THREE.Vector3(0, 1, 3), normal: new api.THREE.Vector3(0, 0, -1) };
   for (const p of fired) {
     paintCalls.length = 0;
@@ -591,7 +599,7 @@ test('each native paint site credits turf exactly once, for a carrier and an ord
   const calls = spyTurf(a);
   const hit = { point: new api.THREE.Vector3(0, 1, 3), normal: new api.THREE.Vector3(0, 0, -1) };
 
-  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const fired = bornVolley(projectiles, a, trizookaSpecialWeapon());
   const carrier = fired[VOLLEY_CONFIG.damageLobeIndex];
 
   a.special = 0;
@@ -633,7 +641,7 @@ test('kitPaintCredit is pure: it returns the amount and never credits by itself'
   const { projectiles } = world(api, []);
   const a = shooter(api);
   const calls = spyTurf(a);
-  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const fired = bornVolley(projectiles, a, trizookaSpecialWeapon());
   const carrier = fired[VOLLEY_CONFIG.damageLobeIndex];
   const outer = fired[1];
 
@@ -690,7 +698,7 @@ test('all Trizooka globs keep independent collision but cap a victim at one dire
   enemy.pos.set(0, 0, 3);
   api.G.actors = [a, enemy];
 
-  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const fired = bornVolley(projectiles, a, trizookaSpecialWeapon());
   const first = fired[0], second = fired[1];
   assert.notEqual(first.vol, second.vol, 'each glob owns a distinct native hit ledger');
   first.pos.set(0, 0.7, 3); first.prev.copy(first.pos);
@@ -716,7 +724,7 @@ test('Trizooka shared damage upgrades splash to direct, keeps victims/actions se
     return e;
   };
   const first=victim(), second=victim(); api.G.actors=[a,first,second];
-  const globs=throwVolley(projectiles,a,trizookaSpecialWeapon());
+  const globs=bornVolley(projectiles,a,trizookaSpecialWeapon());
   const at=first.pos.clone().add(new api.THREE.Vector3(0,.7,0));
   // Splash contacts from separate globs in the same action: 53 + 53 stays 53.
   projectiles._blastBurst(globs[0],at,null);
@@ -726,7 +734,7 @@ test('Trizooka shared damage upgrades splash to direct, keeps victims/actions se
   globs[2].pos.copy(at);globs[2].prev.copy(at);projectiles._step(globs[2],F);
   assert.equal(1000-first.hp,220);
   assert.equal(1000-second.hp,53,'another victim keeps its own strongest-contact record');
-  const next=throwVolley(projectiles,a,trizookaSpecialWeapon());
+  const next=bornVolley(projectiles,a,trizookaSpecialWeapon());
   projectiles._blastBurst(next[0],at,null);
   assert.equal(1000-first.hp,273,'another fire action can deal fresh damage');
   // Remove only the shared-action ledger: the old independent-glob behavior
@@ -744,7 +752,7 @@ test('Trizooka splash then direct shares spawn-armor penetration and rejects inv
     e.s3.spawnArmor={hp:30,remaining:3,breakRemaining:null};return e;
   };
   const target=victim(),control=victim(); control.pos.x=100;api.G.actors=[a,target,control];
-  const globs=throwVolley(projectiles,a,trizookaSpecialWeapon()),at=target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
+  const globs=bornVolley(projectiles,a,trizookaSpecialWeapon()),at=target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
   projectiles._blastBurst(globs[0],at,null);
   assert.equal(target.hp,100,'53 splash is absorbed but belongs to this action');
   globs[1].pos.copy(at);globs[1].prev.copy(at);projectiles._step(globs[1],F);
@@ -753,7 +761,7 @@ test('Trizooka splash then direct shares spawn-armor penetration and rejects inv
   assert.equal(target.hp,-20);
   const invulnerable=victim();invulnerable.s3.spawnArmor=null;invulnerable.invuln=1;
   api.G.actors=[a,invulnerable];
-  const next=throwVolley(projectiles,a,trizookaSpecialWeapon());
+  const next=bornVolley(projectiles,a,trizookaSpecialWeapon());
   projectiles._blastBurst(next[0],at,null);
   assert.equal(invulnerable.hp,100);
   assert.equal(next[0].s3TrizookaVolleyDamage.has(invulnerable),false,'rejected contact does not reserve damage');
@@ -766,7 +774,7 @@ test('Trizooka native direct and splash forwarding preserve one damage group for
   const target=new api.Actor({team:1,name:'remote-volley',weapon:'shooter',isLocal:false,CharacterClass:api.Character});
   target.invuln=0;target.hp=100;target.remote=true;target.pos.set(0,0,3);api.G.actors=[a,target];
   const sent=[];api.G.netm={recProj(){},shouldApplyHit:()=> 'send',sendHit:(...args)=>{sent.push(args);return true;}};
-  const globs=throwVolley(projectiles,a,trizookaSpecialWeapon()),at=target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
+  const globs=bornVolley(projectiles,a,trizookaSpecialWeapon()),at=target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
   projectiles._blastBurst(globs[0],at,null);
   globs[1].pos.copy(at);globs[1].prev.copy(at);projectiles._step(globs[1],F);
   assert.deepEqual(sent.map(x=>x[2]),[53,167]);
@@ -784,7 +792,7 @@ test('a surviving Trizooka lobe starts a fresh budget after the same Actor genui
   const api=await production(),{projectiles}=world(api,[]),a=shooter(api);
   const target=new api.Actor({team:1,name:'new-life-volley',weapon:'shooter',isLocal:false,CharacterClass:api.Character});
   target.invuln=0;target.hp=100;target.pos.set(0,0,3);api.G.actors=[a,target];
-  const globs=throwVolley(projectiles,a,trizookaSpecialWeapon()),at=target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
+  const globs=bornVolley(projectiles,a,trizookaSpecialWeapon()),at=target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
   const priorLife=target.netLife??0;
   projectiles._blastBurst(globs[0],at,null);assert.equal(target.hp,47);
   target.spawnAt(target.pos.clone(),0);
@@ -805,7 +813,7 @@ test('each Trizooka glob independently reaches the boss damage path', async () =
     segHit: () => null,
   };
   api.G.boss = boss;
-  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const fired = bornVolley(projectiles, a, trizookaSpecialWeapon());
   const first = fired[0], second = fired[1];
   const bh = { point: new api.THREE.Vector3(0, 1, 3), target: boss, dist: 3 };
   projectiles._bossImpact(first, bh);
@@ -827,7 +835,7 @@ test('the volley identity rides the main projectile packet, and old packets stil
   nm.byNid = new Map(); nm.replayKitEvent = () => false;
   api.G.netm = nm;
 
-  throwVolley(projectiles, a, trizookaSpecialWeapon(57));
+  bornVolley(projectiles, a, trizookaSpecialWeapon(57));
   const wire = JSON.parse(JSON.stringify(nm.out));      // the real serialisation hop
   const packets = wire.filter((e) => e[1] === 'p');
   assert.equal(packets.length, VOLLEY_CONFIG.lobes);

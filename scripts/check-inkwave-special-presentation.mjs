@@ -47,25 +47,27 @@ try{
   const changed=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=4)if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>=9)n++;return n;};
   const clear=()=>{G.projectiles.clear();bubble.clearBigBubblers?.();};
   for(const id of ['trizooka','inkVac','storm','slam','bubbler','tacticooler']){
+    const nativeControls=id==='inkVac'||id==='trizooka';
     G.level=diagnosticLevel;G.physics=diagnosticPhysics;
-    if(id==='inkVac'){
+    if(nativeControls){
       G.level=new Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});
       G.physics=new api.Physics(G.level);
     }
-    clear();const a=new api.Actor({team:0,name:'special render',isLocal:id==='inkVac',weapon:'shooter',CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
+    clear();const a=new api.Actor({team:0,name:'special render',isLocal:nativeControls,weapon:'shooter',CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
     G.actors=[a];scene.add(ch.root);a.grounded=a.ground.hit=true;
-    if(id==='inkVac'){a.pos.set(0,0,0);a.ground.block=0;a.groundN.set(0,1,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,1,20);}
+    if(nativeControls){a.pos.set(0,0,0);a.ground.block=0;a.groundN.set(0,1,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,1,20);}
     else {ch.onEvent=null;a._integrate=()=>{};a._resolve=()=>{};a._spawnBarrier=()=>{};}
     if(id==='storm')stormOwner=a;
     if(ch._sourceMotionLoader)await ch._sourceMotionLoader;if(ch.sourceMotion?.ready)await ch.sourceMotion.ready;
     if(ch.sourceMotion?.status!=='ready')throw Error('Source motion unavailable: '+id);
     a.weapon={...a.weapon,special:id,specialCost:200};a.special=200;
-    const step=dt=>{G.time+=dt;if(id==='inkVac')a.update(dt);else a._finishFrame(dt);};for(let i=0;i<40;i++)step(1/60);
+    const step=dt=>{G.time+=dt;if(nativeControls)a.update(dt);else a._finishFrame(dt);};for(let i=0;i<40;i++)step(1/60);
     a._startSpecial();if(!a.specialActive&&!(id==='bubbler'&&bubble.bigBubblerDomes().length))throw Error('Activation refused: '+id);
     let maxHandError=0;
     for(let frame=0;frame<100;frame++){
-      a.intent.fire=id==='inkVac'||id==='trizooka'&&frame>38;if(id==='tacticooler'){a.aimDir.set(0,-1,0);a.intent.sub=frame===0;}if(id==='storm'&&a.specialActive?.phase==='hold')storms.updateStormHold(a,1/60,G);else if(id!=='inkVac'&&a.specialActive)a._updateSpecial(1/60);if(id==='bubbler')bubble.tickBigBubblers(1/60);G.projectiles.update(1/60);step(1/60);
+      a.intent.fire=id==='inkVac'||id==='trizooka'&&frame>38;if(id==='tacticooler'){a.aimDir.set(0,-1,0);a.intent.sub=frame===0;}if(id==='storm'&&a.specialActive?.phase==='hold')storms.updateStormHold(a,1/60,G);else if(!nativeControls&&a.specialActive)a._updateSpecial(1/60);if(id==='bubbler')bubble.tickBigBubblers(1/60);G.projectiles.update(1/60);step(1/60);
       if(id==='inkVac'&&(ch.sourceMotion.sourceUpper||art.specialPresentationSnapshot(ch)?.kind!=='inkVac'))throw Error('Real Actor.update lost native Vac presentation at frame '+frame);
+      if(id==='trizooka'&&(ch.sourceMotion.sourceUpper||art.specialPresentationSnapshot(ch)?.kind!=='trizooka'))throw Error('Real Actor.update lost Trizooka presentation at frame '+frame);
       maxHandError=Math.max(maxHandError,art.specialPresentationSnapshot(ch)?.handError||0);
       if(id==='slam'&&frame===12){a.specialActive.phase='hang';a.specialActive.t=0;a.pos.y=2;}
       if(id==='slam'&&frame===17)break;
@@ -89,7 +91,24 @@ try{
     const visibility=objects.map(o=>o.visible);objects.forEach(o=>o.visible=false);const pixels=changed(before,render());objects.forEach((o,i)=>o.visible=visibility[i]);render();
     if(JSON.stringify(clocks)!==JSON.stringify([G.time,ch.t,a.specialActive?.t]))throw Error('Render advanced a clock: '+id);
     if(pixels<50||maxHandError>1e-5)throw Error(`Invalid visible/grip result: ${id} pixels=${pixels} hand=${maxHandError} state=${JSON.stringify(a.specialActive)} art=${JSON.stringify(art.specialPresentationSnapshot(ch))} model=${JSON.stringify(objects.map(o=>({name:o.name,visible:o.visible,pos:o.getWorldPosition(new THREE.Vector3()).toArray()})))}`);
-    rows.push({id,driver:id==='inkVac'?'real Actor.update with native Physics':'manual phase/finish diagnostic',sourceMotion:ch.sourceMotion.status,phase:a.specialActive?.phase||null,position:a.pos.toArray(),changedPixels:pixels,actorPixels,maxHandError,calls,triangles});
+    rows.push({id,driver:nativeControls?'real Actor.update with native Physics':'manual phase/finish diagnostic',sourceMotion:ch.sourceMotion.status,phase:a.specialActive?.phase||null,position:a.pos.toArray(),changedPixels:pixels,actorPixels,maxHandError,calls,triangles});
+    if(id==='trizooka'){
+      const advance=()=>{G.projectiles.update(1/60);step(1/60);};
+      for(let frame=0;a.s3Trizooka.pendingShotAt!==null&&frame<20;frame++)advance();
+      const shots=a.s3Trizooka.shots,from=a.pos.clone();a.intent.fire=false;a.intent.squid=true;a.intent.move.set(.5,0);
+      for(let frame=0;frame<30;frame++)advance();
+      if(a.form!=='squid'||!a.submerged||ch.kid.visible||a.s3Trizooka.shots!==shots)throw Error('Trizooka native swim/form/fire admission '+JSON.stringify({form:a.form,submerged:a.submerged,kidVisible:ch.kid.visible,shots:a.s3Trizooka.shots,beforeShots:shots,grounded:a.grounded,groundTeam:a.groundTeam,ground:a.ground,position:a.pos.toArray()}));
+      const swimDistance=a.pos.distanceTo(from);if(swimDistance<.05)throw Error('Trizooka swim did not move');
+      render();images.push({name:'trizooka-swim',data:renderer.domElement.toDataURL('image/png')});
+      a.intent.squid=false;a.intent.fire=true;a.intent.move.set(0,0);advance();
+      if(a.form!=='kid')throw Error('Trizooka fire did not surface');
+      for(let frame=0;a.specialActive&&frame<500;frame++)advance();
+      if(a.specialActive||a.s3Trizooka)throw Error('Trizooka native firing did not finish');
+      a.intent.fire=false;for(let frame=0;frame<60;frame++)advance();
+      if(art.specialPresentationSnapshot(ch)?.kind||!ch.sourceMotion.sourceUpper||!ch.weapon.pivot.visible)throw Error('Trizooka failed to return to ordinary carry');
+      render();images.push({name:'trizooka-return',data:renderer.domElement.toDataURL('image/png')});
+      rows.at(-1).nativeLifecycle={swimDistance,swimFrames:30,shotsWhileSwimming:0,surfacedOnFire:true,returnedToCarry:true};
+    }
     if(id==='inkVac'){
       for(let frame=0;vac.inkVacState(a)?.phase==='inhale'&&frame<600;frame++){
         step(1/60);
@@ -193,7 +212,7 @@ try{
     G.projectiles._catalogueFists=[];for(const fx of liveFx){try{fx.dispose();}catch{}}
     G.fx=previousFx;G.projectiles._catalogueFists=previousFists;G.actors=previousActors;
   }
-  return {rows,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,vfxResources,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig; Vac uses actual Actor.update/Physics and native lifecycle, other specials use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim'};
+  return {rows,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,vfxResources,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig; Trizooka and Vac use actual Actor.update/Physics and native lifecycle, other specials use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim'};
  },prefix);
  for(const item of result.images)fs.writeFileSync(path.join(out,item.name+'.png'),Buffer.from(item.data.split(',')[1],'base64'));delete result.images;
  assert.deepEqual(errors,[]);result={status:'passed',contentHash:manifest.contentHash,revision:manifest.build.revision,...result,errors};

@@ -18,6 +18,13 @@ export function advanceStormLock(a, dt) {
   const remaining = (a.stormGaugeLock || 0) - dt;
   a.stormGaugeLock = remaining <= 1e-10 ? 0 : remaining;
 }
+// The canister's release is not cloud operation. Start only when the native
+// _spawnCloud has created the authoritative cloud, including after owner death.
+export function startStormCloudGauge(a, cloud, game) {
+  if (!a || a.remote || !Number.isFinite(cloud?.dur) || !(cloud.dur>0) || rainmakerGaugeException(a,game)) return;
+  a.special=0;
+  a.stormGaugeLock=cloud.dur;a.stormGaugeDuration=cloud.dur;
+}
 export function startStormHold(a) {
   a.specialActive = { id: 'storm', t: 0, phase: 'hold', armor: false, subWasDown: !!a.intent.sub, subArmed: false };
   a.fireBuffer = 0; a.weaponRunner.reset();
@@ -39,12 +46,8 @@ export function updateStormHold(a, dt, G) {
     // startup origin remains unverified; do not invent a new timing constant.
     s.phase = 'throw'; s.t = 0;
     a.form = 'kid'; a._setClimb(false);
-    a.stormGaugeLock = STORM_GAUGE_LOCK;
     a.character.trigger('throw');
     G.projectiles.throwStorm(a);
-    // Captured after the throw: the Special Power wrapper may extend this lock.
-    // Actor.reset removes the temporary power snapshot but keeps this denominator.
-    a.stormGaugeDuration = a.stormGaugeLock;
   }
   s.subWasDown = down;
 }
@@ -113,3 +116,4 @@ export function applyStormHits(hits, emit) {
     if (killed) emit('hit', { attacker: hit.owner, victim, damage: 0, killed: true, weaponId: 'storm' });
   }
 }
+import { rainmakerGaugeException } from './tacticooler-gauge.mjs';

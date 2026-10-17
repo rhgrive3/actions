@@ -1,5 +1,6 @@
 import { gearCurve } from './gear.mjs';
 import { createBubblerHardware, disposeSpecialModel } from './special-motion.mjs';
+import { startSpecialGauge, endSpecialGauge } from './tacticooler-gauge.mjs';
 
 // Big Bubbler (Splat Roller special; internal id SpGreatBarrier) for the
 // composed public INKWAVE runtime.
@@ -481,6 +482,7 @@ function removeDome(dome, reason) {
   if (i < 0) return false;
   list.splice(i, 1);
   dome.dead = true;
+  endSpecialGauge(dome.owner,'bubbler',dome);
   releaseVisual(dome);
   // A remote dome's disappearance is presentation, not gameplay, so it is a
   // separate stream and never claims the authoritative collapse event.
@@ -985,6 +987,7 @@ export function tickBigBubblers(dt) {
     dome.emitterY = raw.ascendHeight * hermite2d(raw.ascendCurve, ascend);
     if (!dome.ignited && dome.t + 1e-10 >= raw.ignitionFrames / 60) {
       dome.ignited = true;
+      startSpecialGauge(dome.owner,api.G,'bubbler',Infinity,dome);
       if (tuning.paintAtIgnition) {
         const area = api.G.paint?.splat?.(dome.pos.clone().setY(dome.pos.y + raw.paintRadius * 0.35),
           raw.paintRadius, dome.team, { seed: dome.paintSeed/0x100000000, claimOwner: dome.owner, claimMode: 'no-special', kitPaint:dome.s3PaintBirth }) || 0;

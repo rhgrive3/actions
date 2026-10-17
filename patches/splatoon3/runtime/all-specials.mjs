@@ -19,9 +19,10 @@
 import { gearCurve } from './gear.mjs';
 import { disposeInkVac } from './kit-ink-vac.mjs';
 import { endTrizooka } from './kit-trizooka.mjs';
+import { beginZipcasterArmor, arriveZipcasterArmor, updateZipcasterArmor, clearZipcasterArmor } from './zipcaster-armor.mjs';
 import { objectDamageScale, objectDamageRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
-import { tacticoolerGaugeLocked } from './tacticooler-gauge.mjs';
+import { specialGaugeLocked, startSpecialGauge, endSpecialGauge, SPECIAL_GAUGE_FRAMES } from './tacticooler-gauge.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-specials.install.v1');
 const FPS = 60, MAX_STAMP_RADIUS = 3.74;
@@ -642,6 +643,7 @@ function removeWorld(rt, object, reason = 'expire') {
   const objects = rt.system._s3AllSpecialObjects || [], at = objects.indexOf(object);
   if (at < 0) return false;
   objects.splice(at,1); disposeMesh(rt,object); object.dead = true;
+  if(object.kind==='wave'||object.kind==='screen')endSpecialGauge(object.owner,object.id,object);
   if (!object.owner?.remote) emitObject(rt,object,reason);
   return true;
 }
@@ -979,8 +981,11 @@ function throwStamp(rt,actor,state) {
   emitAction(rt,actor,'ultraStamp',state.serial,'throw',origin,rt.v2.copy(origin).addScaledVector(dir,18),nextSeed(state));
   endSpecial(rt,actor,'thrown');
 }
-function zipTo(rt,actor,state,target) {
+function zipTo(rt,actor,state,target,normal) {
   state.zipStart=actor.pos.clone();state.zipTarget=target.clone();state.phase='hookFlight';state.zipT=0;state.hookFlightT=0;
+  // Reuse this runtime's floor/wall classification. The retail slope cutoff
+  // is not exposed by the sparse hook extraction; ceilings cannot be held.
+  state.zipArrivalWall=!!normal&&Math.abs(normal.y)<=.5;
   // BulletBombMoveParam.SpawnSpeedZSpecUp is the hook's source velocity; the
   // player pull retains its separately calibrated 19 world-unit/s movement.
   state.hookFlightDuration=state.zipStart.distanceTo(state.zipTarget)/(3.36*FPS);
@@ -1075,6 +1080,7 @@ function deployScreen(rt,actor,state) {
   const direction=rt.v2.copy(aim).sub(pos).setY(0).normalize();
   const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:gearCurve(state.specialPowerAP,.04,.053,.06)*FPS,seed:nextSeed(state),scale:[15/8,2,1]});
   object.target=pos.clone().add(object.normal);
+  startSpecialGauge(actor,rt.api.G,'splattercolorScreen',SPECIAL_GAUGE_FRAMES.splattercolorScreen,object);
   emitAction(rt,actor,'splattercolorScreen',state.serial,'screen',pos,object.target,object.seed,{object:object.serial});
   endSpecial(rt,actor,'deployed');
 }
@@ -1084,6 +1090,7 @@ function deployWave(rt,actor,state) {
   const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{dur:390/FPS,maxRadius,maxWaveFrame:maxFrame,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
   object.hp=480;object.maxHp=480;object.pulse=0;object.maxWaveFrame=maxFrame;object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
   object.markingUntil=rt.api.G.time+45/FPS;
+  startSpecialGauge(actor,rt.api.G,'waveBreaker',SPECIAL_GAUGE_FRAMES.waveBreaker,object);
   object.direction=rt.v2.copy(pos).sub(actor.pos).setY(0).normalize();
   emitAction(rt,actor,'waveBreaker',state.serial,'device',pos,null,object.seed,{object:object.serial});
   endSpecial(rt,actor,'deployed');
@@ -1138,6 +1145,7 @@ function updateWaveFront(rt,o) {
 function endSpecial(rt,actor,reason='duration') {
   const state=actorStates.get(actor);
   if(!state)return;
+  if(state.id==='zipcaster')clearZipcasterArmor(actor);
   const pos=actor.pos.clone();
   emitAction(rt,actor,state.id,state.serial,'end',pos,null,nextSeed(state),{reason});
   if(state.ballMesh){disposeMesh(rt,{mesh:state.ballMesh});state.ballMesh=null;}
@@ -1235,7 +1243,7 @@ function creditBooyahGauge(rt,cheerer,ownerRef,ownerLife,activation,callId,ordin
   // A cheer still helps the Booyah owner, but cannot recharge the sender
   // during a placed Tacticooler's lock. Consume its identity before rejecting
   // the credit so a delayed duplicate cannot become charge after unlock.
-  if(tacticoolerGaugeLocked(cheerer))return false;
+  if(specialGaugeLocked(cheerer))return false;
   const points=[6,3,2,1,.5][i]||0;
   if(points<=0)return false;
   const cost=Number(cheerer.specialCost?.()??cheerer.weapon?.specialCost);
@@ -1540,15 +1548,17 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='zipcaster'){
-    let zipDt=dt;
+    let zipDt=dt;const priorForm=actor.form;
     if(state.phase==='hookFlight'){
       const remain=Math.max(0,(state.hookFlightDuration||0)-(state.hookFlightT||0));
       if(zipDt+1e-8<remain){state.hookFlightT+=zipDt;actor.vel.set(0,0,0);zipDt=0;}
-      else {state.hookFlightT=state.hookFlightDuration||0;zipDt=Math.max(0,zipDt-remain);state.phase='zip';state.zipStart=actor.pos.clone();state.zipT=0;}
+      else {state.hookFlightT=state.hookFlightDuration||0;zipDt=Math.max(0,zipDt-remain);state.phase='zip';state.zipStart=actor.pos.clone();state.zipT=0;
+        beginZipcasterArmor(actor,state);}
     }
     if(state.phase==='zip'&&zipDt>0){
       state.zipT+=zipDt;const from=actor.pos.clone(),delta=rt.v0.copy(state.zipTarget).sub(actor.pos),distance=delta.length();
-      if(distance<.7||state.zipT>1.35){actor.pos.copy(state.zipTarget);actor.vel.set(0,0,0);state.phase='hookWait';state.hookWait=0;}
+      if(distance<.7||state.zipT>1.35){actor.pos.copy(state.zipTarget);actor.vel.set(0,0,0);state.phase='hookWait';state.hookWait=0;
+        arriveZipcasterArmor(actor,state.zipArrivalWall);}
       else {delta.multiplyScalar(Math.min(1,19*zipDt/distance));actor.pos.add(delta);actor.vel.copy(delta).multiplyScalar(1/zipDt);actor.grounded=false;}
       zipContactHits(rt,actor,state,from,actor.pos);
       state.zipPaintT=(state.zipPaintT||0)+zipDt;
@@ -1563,6 +1573,7 @@ function activeStep(rt,actor,dt) {
         fxBurst(rt,actor,state.zipTarget,5.25,'hit');
         emitAction(rt,actor,'zipcaster',state.serial,'hookImpact',state.zipTarget,null,nextSeed(state),{targets:victimHits.length,index:state.zips});}
     }else if(state.phase==='ready')moveActor(rt,actor,dt,state,{speed:actor.intent.squid?6:4.2,squid:true,jump:true});
+    updateZipcasterArmor(actor,{squid:priorForm!=='squid'&&actor.form==='squid'});
     state.inkFuel=Math.max(0,state.inkFuel-(state.inkDrainPerSecond??((state.inkPerSecond??.1305)*100))*dt);
     // Zipcaster has its own 1.5x special ink tank. Let the equipped native
     // WeaponRunner spend from that tank while preserving the player's normal
@@ -1597,7 +1608,7 @@ function activeStep(rt,actor,dt) {
         state.nextHookAt=elapsed+45/FPS;state.failedHooks=(state.failedHooks||0)+1;
       }else {
         const target=contact.point.clone();state.inkFuel-=hookInk;
-        state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target);
+        state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target,contact.normal);
       }
     }
     if(state.inkFuel<=0||elapsed+1e-8>=state.duration)returnToOrigin(rt,actor,state,state.inkFuel<=0?'ink':'duration');
@@ -1826,6 +1837,7 @@ function makeState(rt,actor,id) {
 
   actorStates.set(actor,state);actor._s3AllSpecialState=state;
   actor.specialActive={id,t:0,phase:state.phase,armor:false,armorHP:state.armorHP,activation:serial};
+  if(id==='tentaMissiles'||id==='superChump')startSpecialGauge(actor,rt.api.G,id,SPECIAL_GAUGE_FRAMES[id]);
   emitAction(rt,actor,id,serial,'activate',actor.pos,null,state.seed,{duration:q3(duration)});
   return state;
 }
@@ -1841,6 +1853,10 @@ function installRuntime(api) {
     zero:new THREE.Vector3(),up:new THREE.Vector3(0,1,0),down:new THREE.Vector3(0,-1,0),hit:api.Hit ? new api.Hit() : null};
   if(!rt.hit)rt.hit={hit:false,point:new THREE.Vector3(),normal:new THREE.Vector3(),dist:0};
   runtimes.set(Projectiles,rt);
+  // Only native completed attacks/jumps retire wall protection. Input held
+  // through hook flight / hookWait may still be denied by the action runner.
+  api.on?.('weapon:fire',event=>updateZipcasterArmor(event?.actor,{fire:true}));
+  api.on?.('actor:jump',event=>updateZipcasterArmor(event?.actor,{jump:true}));
   api.on?.('all:special',event=>{
     if(event?.action==='cheer'&&event.id==='booyahBomb'&&Number.isSafeInteger(event.ownerNid)&&Number.isSafeInteger(event.ownerLife)
       &&Number.isSafeInteger(event.activation)&&Number.isSafeInteger(event.seed))

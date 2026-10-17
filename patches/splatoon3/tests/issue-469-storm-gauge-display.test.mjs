@@ -16,7 +16,11 @@ function system(f) {
 function chargeActor(f) {
   const a = f.make('charger'); a._resolve = () => { a.grounded = true; }; a.special = a.specialCost(); return a;
 }
-function release(f, a) { a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a); }
+function release(f, a) {
+  a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a);
+  assert.equal(a.stormGaugeLock||0,0,'canister release alone starts no cloud lock');
+  f.G.projectiles._spawnCloud(f.G.projectiles.bombs.at(-1));
+}
 function hud(f, game, a) {
   const m = { time: 0, teamSummary: () => null, controller: null };
   return hudFrameSnapshot(game, m, a, a.weapon, 0, [], [], null, false, f.PLAYER, f.SUB);
