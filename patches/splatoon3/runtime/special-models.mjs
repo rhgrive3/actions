@@ -17,6 +17,7 @@
 // finishes and team-ink materials ('ink*' finishes take the owner's colour).
 
 import { MODEL_KIT, registerSubModelBuilder, registerFinish, registerInkFinish } from './sub-models.mjs';
+import { CRAB_TANK_RIG } from './crab-tank-aim.mjs';
 
 const { kit, rod, tube, latheY, latheZ, box, smooth, orient, TAU } = MODEL_KIT;
 
@@ -562,6 +563,7 @@ export const CRAB_TANK_GRIPS = Object.freeze({ R: [-0.2, 1.13, 0.34], L: [0.2, 1
 
 function crabTank(THREE) {
   const K = kit();
+  K.pivot('clawR', CRAB_TANK_RIG.cannon.pivot);
   // Dome shell, cut for the cockpit (top, round the kid) and the front core
   // notch; the ink covers the top with a blocky edge, the yellow shows below.
   let dome = new THREE.SphereGeometry(1, 36, 18, 0, TAU, 0, Math.PI * 0.62).scale(...DOME_R).translate(...DOME_C);
@@ -653,7 +655,7 @@ function crabTank(THREE) {
   // round a three-barrel bronze gun with red muzzle rings, on a grey arm.
   {
     const G = [0.48, 0.5, 0.6];
-    K.pivot('clawL', [0.3, 0.55, 0.3]);
+    K.pivot('clawL', CRAB_TANK_RIG.shooter.pivot);
     const barrels = [], rims = [], holes = [];
     for (const a of [Math.PI / 2, Math.PI * 7 / 6, Math.PI * 11 / 6]) {
       const x = G[0] + Math.cos(a) * 0.085, y = G[1] + Math.sin(a) * 0.085;

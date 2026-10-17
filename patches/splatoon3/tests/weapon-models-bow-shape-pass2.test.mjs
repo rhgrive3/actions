@@ -43,15 +43,17 @@ test('REEF rear casting uses the existing nock channel and moves with the unchan
 });
 test('Tri and green Wellstring builders and all existing motion remain byte-identical to the reviewed baseline',()=>{
  const s=fs.readFileSync(new URL('../runtime/weapon-models/stringers.mjs',import.meta.url),'utf8'),m=s.indexOf('// ------------------------------------------------------------------------------------------ motion'),hash=x=>crypto.createHash('sha256').update(x).digest('hex');
- assert.equal(hash(s.slice(s.indexOf('function tri(d){'),s.indexOf('function reef(d){'))),'0b52bfc582e5bc02b2025875d2383603f723908cd4111a3b772bf20b9755c642');
- assert.equal(hash(s.slice(s.indexOf('function wellstring(d){'),m)),'61191d87e49d8b9e188c54fd374eb1498d1543e763514c3fcb0e70fea6e68cb5');
+ // 2026-10-17: the support grip moved from each builder's cfg to the shared nock grip in
+ // finishBow, and the family pose/hold gained the draw hold (reports/inkwave-weapon-hold-motion-2026-10-17.md).
+ assert.equal(hash(s.slice(s.indexOf('function tri(d){'),s.indexOf('function reef(d){'))),'8fb6efbe41ea9993fa9facf9a141bd4ebb8a2286176f115bc63136174fe777e3');
+ assert.equal(hash(s.slice(s.indexOf('function wellstring(d){'),m)),'f055ea02367486a56e570df4a0e545b45ecbf3eb5b80fb38fd5a786a2a411273');
  // Variant-owned models dispatch through the canonical modelId while old
  // base Stringer motion remains byte-identical beyond that one selector.
  const altered='if (!MODELS[ch.weapon?.def?.modelId ?? ch.weaponModel]) return;';
  const original='if (!MODELS[ch.weaponModel]) return;';
  const motion=s.slice(m);
  assert.equal(motion.split(altered).length,2,'exactly one adopted variant model selector');
- assert.equal(hash(motion.replace(altered,original)),'f1c54e1216a8603da0d910f751087f52e80113173ea28b74cbc59b1cebf600ad',
+ assert.equal(hash(motion.replace(altered,original)),'f7418bfe56c09a48b0ba7275bc35024ca91dc48a6c642e26d4124eb0ffecaae3',
    'all other Stringer family pose and weapon animation bytes remain unchanged');
 });
 

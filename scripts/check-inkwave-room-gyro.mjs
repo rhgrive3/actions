@@ -70,7 +70,7 @@ try{
     await host.waitForFunction(()=>G.net._members.size===2);
     const owners=await Promise.all(pages.map(p=>p.evaluate(()=>G.net.myId)));
     for(const stage of ['lobby','world','warmup']){
-      const cfg={id:engine+'-'+stage,map:'',mode:'turf',roster:owners.map(owner=>({owner,bot:false}))};
+      const cfg={id:engine+'-'+stage,map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid,slot:0,weapon:'shooter',bot:false}))};
       await guest.evaluate(({cfg,stage})=>{hold(stage);globalThis.pending=G.net._begin(cfg);},{cfg,stage});
       await host.evaluate(cfg=>{globalThis.pending=G.net._begin(cfg);},cfg);
       await host.waitForFunction(()=>G.net._setupReady);
@@ -90,7 +90,7 @@ try{
       results.push({engine,stage,readyPackets:packetCount});
       await Promise.all(pages.map(p=>p.evaluate(()=>{G.net.endMatch();stage=null;})));
     }
-    const abandonedCfg={id:engine+'-abandoned',map:'',mode:'turf',roster:owners.map(owner=>({owner,bot:false}))};
+    const abandonedCfg={id:engine+'-abandoned',map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid,slot:0,weapon:'shooter',bot:false}))};
     await guest.evaluate(cfg=>{hold('warmup');globalThis.pending=G.net._begin(cfg);},abandonedCfg);
     await guest.waitForFunction(()=>G.net.match!==null);
     await host.evaluate(cfg=>{globalThis.pending=G.net._begin(cfg);},abandonedCfg);

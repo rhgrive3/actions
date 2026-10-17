@@ -22,7 +22,9 @@
 | `runtime/flow-motion.mjs` | フロー開始・延長・失効の粒子と外周表示、描画パスとリソースの分離 |
 | `runtime/walk.mjs` | 足の接地・踏み出し・停止・方向転換、腰・上体の歩行校正。左右の足は一つの歩行時計で交互に動く |
 | `runtime/carry-motion.mjs` | シューターの歩行・待機・射撃・復帰で連続する両手の支持 |
-| `runtime/source-posture.mjs` | Wii U 版ソースモーションの上体・首の前傾、シューターの非射撃時の持ち方、遊脚の高さを S3 映像に合わせて補正（`reference/stance-carry-comparison-2026-10-12.md`） |
+| `runtime/weapon-handoff-motion.mjs` | 上半身の担当（ネイティブの構え ⇄ ソースの待機）が替わる時の構え上げ・待機への戻しのフェード。ゲームの銃口はフェード前の姿勢で計算（`reports/inkwave-weapon-hold-motion-2026-10-17.md`） |
+| `runtime/weapon-models/family-holds.mjs` | ブキ種ごとの構え位置の補正（シューター・ブラスターの頬の横の構え）とモデルの大きさ（シューター・マニューバー・フデ 1.3 倍） |
+| `runtime/source-posture.mjs` | Wii U 版ソースモーションの上体・首の前傾、シューターの非射撃時の持ち方（移動中と停止中。停止中の右手首・右肘を含む）、遊脚の高さを S3 映像に合わせて補正（`reference/stance-carry-comparison-2026-10-12.md`、`reports/inkwave-weapon-hold-motion-2026-10-17.md`） |
 | `runtime/jump-motion.mjs`, `runtime/landing-motion.mjs` | 通常ジャンプの武器種別 presentation selector と INKWAVE ローカル脚校正（#1116）、着地の圧縮・復帰 |
 | `runtime/swim-motion.mjs`, `runtime/wall-motion.mjs` | 通常の泳ぎ・方向転換、壁登り・イカノボリの表示 |
 | `runtime/form-motion.mjs` | ヒト・イカへの変形と中断時の復帰 |

@@ -81,7 +81,8 @@ test('#250: reholding ZR cannot change a stream spread sequence or charge it aga
     advance(a, 72); release(a); advance(a, 161, { fire });
     assert.equal(a.weaponRunner.streaming, false); assert.equal(a.weaponRunner.charging, false);
     near(a.ink, 77.5); assert.equal(spreads.length, 41); traces.push(spreads);
-    a.grounded = false; assert.ok(a.weaponRunner._spreadDeg(a.weapon) > spreads[0]);
+    a.grounded = false; near(a.weaponRunner._spreadDeg(a.weapon), spreads[0], 'ledge fall has no admitted jump penalty');
+    a.s3SplatlingJumpAgeFrames = 0; assert.ok(a.weaponRunner._spreadDeg(a.weapon) > spreads[0]);
   }
   assert.deepEqual(traces[0], traces[1]);
   assert.ok(traces[0].every(value => value === traces[0][0]));

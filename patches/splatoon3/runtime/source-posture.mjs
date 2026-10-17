@@ -30,9 +30,20 @@ export const SOURCE_POSTURE = Object.freeze({
   standResponse: 6,
   // Moving shooter carry: muzzle pitch (rad, negative = down), inward yaw toward
   // the midline (rad, + = kid left) and how much of the source barrel direction
-  // is replaced by that target. Faded out when standing: the standing two-hand
-  // hold stays the source clip's own.
+  // is replaced by that target.
   carry: Object.freeze({ pitch: -0.15, yaw: 0, follow: 0.85 }),
+  // Standing shooter carry, blended with `carry` by the stand/move weight. The
+  // official shooter movie oEdD5N0jxN2 (0-2.5 s, seen from the front) holds the
+  // gun in both hands nearly level across the front of the body, the muzzle
+  // left-forward and a little down, reaching past the left hip. Directions read
+  // from the movie by eye.
+  standCarry: Object.freeze({ pitch: -0.55, yaw: 1.0, follow: 0.9 }),
+  // Standing shooter right arm (same movie, owner review 2026-10-17): the elbow
+  // hangs tucked against the side and the forearm comes forward, so the grip
+  // sits in front of the lower right chest instead of out at the hip. Kid-space
+  // wrist target (m) and elbow bend direction; INKWAVE calibration.
+  standHand: Object.freeze([-0.12, 0.67, 0.16]),
+  standElbow: Object.freeze([-0.25, -1, -0.45]),
   // Fraction of the source swing-ankle height above its rest (stance) level kept
   // while walking / running. The Wii U walk lifts the ankle 0.60 leg lengths
   // with 109° knee flexion (run: 0.70, 136°); the S3 shooter walk keeps the
@@ -46,6 +57,18 @@ export const SOURCE_POSTURE = Object.freeze({
   // silhouette with S3 as the body tipping over on every left-right ("rerere") reversal. Scaled by the
   // controller's own smoothed |sideways travel| so forward/back gaits keep their natural per-step sway.
   lateralKeep: 0.2,
+  // Standing ready stance. Splatoon 3 footage (media y7Zl26Zl12n, n=366-402
+  // and n=596-668, a shooter standing between and after shots): the front leg
+  // stands almost straight with its shin perpendicular to the ground, its foot
+  // under the pelvis; the rear leg runs diagonally back to a foot on its toes;
+  // the torso bobs about every 30 frames by about 4 % of the height (torso
+  // template track; the head adds a nod) while the soles stay still. The Wii U
+  // WaitHold clips instead bend the front knee far forward over a zig-zag leg.
+  // "Nearly straight" is 26 degrees at the top of the bob: the retarget keeps
+  // every leg within 0.97 of its length (HOST_RETARGET.reachFraction, 28 deg).
+  // The Player00 WaitHold clips put the LEFT foot forward. INKWAVE calibrations
+  // in metres / degrees / seconds, not extracted joint values.
+  idle: Object.freeze({ front: 'L', frontKneeDeg: 24, rearKneeDeg: 30, rearHeel: 0.06, bob: 0.045, period: 0.5 }),
 });
 const CORRECTED_STATES = new Set(['idle', 'move']);
 let enabled = true;
@@ -206,19 +229,20 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
 }
 
 /** Called by SourceMotionController.alignWeapon with the weapon orientation (kid space, before aim pitch).
- *  Turns a moving, non-firing shooter's barrel from across the belly to level-forward at the right hip.
- *  Standing (smoothed stand/move weight) leaves the source two-hand hold unchanged. */
+ *  Turns a non-firing shooter's barrel from across the belly to level-forward at the right hip when
+ *  moving, and forward-left and down in both hands when standing (smoothed stand/move weight). */
 export function sourceCarryWeapon(controller, weaponQ) {
   const c = controller.character;
   if (!c || c.weaponKind !== 'shooter' || !controller.retarget ||
       formClipOwnsCarry(controller) || !sourceCarryWeight(controller.retarget)) return;
   let w = sourceCarryWeight(controller.retarget) * sourcePostureWeight(controller.retarget) *
-    clamp(1 - (controller.shootBlend || 0), 0, 1) * smoothMove(controller.retarget);
+    clamp(1 - (controller.shootBlend || 0), 0, 1);
   if (w <= 1e-4) return;
-  const k = SOURCE_POSTURE.carry;
-  _t.set(Math.sin(k.yaw) * Math.cos(k.pitch), Math.sin(k.pitch), Math.cos(k.yaw) * Math.cos(k.pitch));
+  const m = smoothMove(controller.retarget), a = SOURCE_POSTURE.standCarry, b = SOURCE_POSTURE.carry;
+  const pitch = a.pitch + (b.pitch - a.pitch) * m, yaw = a.yaw + (b.yaw - a.yaw) * m, follow = a.follow + (b.follow - a.follow) * m;
+  _t.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
   _d.set(0, 0, 1).applyQuaternion(weaponQ);
-  _t.lerp(_d, 1 - k.follow).normalize();
+  _t.lerp(_d, 1 - follow).normalize();
   // Source clips can point the barrel far across the body at the instant
   // ToHuman hands control back to grounded movement. Bound the *actual*
   // source-to-target quaternion contribution, not a guessed retail joint angle.
@@ -232,6 +256,29 @@ export function sourceCarryWeapon(controller, weaponQ) {
   }
   _q.setFromUnitVectors(_d, _t);
   weaponQ.premultiply(_id.identity().slerp(_q, w)).normalize();
+}
+
+function standGripWeight(controller) {
+  const c = controller.character;
+  if (!c || c.weaponKind !== 'shooter' || !controller.retarget || formClipOwnsCarry(controller)) return 0;
+  return sourceCarryWeight(controller.retarget) * sourcePostureWeight(controller.retarget) *
+    clamp(1 - (controller.shootBlend || 0), 0, 1) * (1 - smoothMove(controller.retarget));
+}
+/** Called by SourceMotionController.alignWeapon with the kid-space right wrist target before the
+ *  two-hand fit: a standing, non-firing shooter brings the grip in front of the lower right chest. */
+export function sourceStandGrip(controller, wrist) {
+  const w = standGripWeight(controller);
+  if (w <= 1e-4) return;
+  const k = SOURCE_POSTURE.standHand;
+  _t.set(k[0], k[1], k[2]); wrist.lerp(_t, w);
+}
+/** Called with the right elbow pole (elbow minus shoulder, kid space) before the right-arm solve:
+ *  the standing elbow hangs tucked against the side. */
+export function sourceStandPole(controller, pole) {
+  const w = standGripWeight(controller);
+  if (w <= 1e-4) return;
+  const k = SOURCE_POSTURE.standElbow, len = pole.length() || 1;
+  _t.set(k[0], k[1], k[2]).setLength(len); pole.lerp(_t, w);
 }
 
 /** Called by HumanRetarget.adaptLegFootpaths with a leg's kid-space ankle target before leg IK.
@@ -248,4 +295,76 @@ export function sourceFootLift(retarget, ankle, side) {
   const k = SOURCE_POSTURE.footLift, run = clamp(c.runBlend || 0, 0, 1);
   const keep = k.walkKeep + (k.runKeep - k.walkKeep) * run;
   ankle.y = rest.y + dy * (1 - (1 - keep) * w);
+}
+
+/** 0..1 weight of the standing ready-stance corrections (ground idle only). */
+function idleWeight(retarget) {
+  const c = controllerOf(retarget);
+  if (!enabled || !c || c.manual || c.formKid === false) return 0;
+  const st = postureState(retarget);
+  // Firing stands still on the sourced shoot clip and the native upper body:
+  // its shot origin and stance stay the existing ones.
+  return st.weight * clamp(1 - st.move, 0, 1) * clamp(1 - (c.shootBlend || 0), 0, 1);
+}
+const _j = new THREE.Vector3(), _jq = new THREE.Quaternion();
+const legReach = (leg, deg) => { const k = deg * Math.PI / 180; return Math.sqrt(leg.a * leg.a + leg.b * leg.b + 2 * leg.a * leg.b * Math.cos(k)); };
+/** Called by HumanRetarget.adaptLegFootpaths with a leg's kid-space ankle target before leg IK.
+ *  Front ankle: under its knee, the shin perpendicular to the ground. Rear ankle: heel raised,
+ *  a nearly straight leg reaching diagonally back. Both are solved once per frame from the
+ *  pelvis at the TOP of the bob (sourceIdleBob), so the soles do not slide as the pelvis dips. */
+export function sourceIdleStance(retarget, ankle, side) {
+  if (!retarget.locomotion) return;
+  const w = idleWeight(retarget), feet = postureState(retarget).idleFeet;
+  if (w <= 1e-4 || !feet) return;
+  const f = side === SOURCE_POSTURE.idle.front ? feet.front : feet.rear;
+  ankle.y += (f.y - ankle.y) * w; ankle.z += (f.z - ankle.z) * w;
+}
+/** Called by HumanRetarget.adaptLegFootpaths after the ankle's lateral lane is set: a per-family
+ *  stance (the brush) moves the rear ankle out to the side. */
+export function sourceIdleStanceSide(retarget, ankle, side) {
+  if (!retarget.locomotion) return;
+  const w = idleWeight(retarget), feet = postureState(retarget).idleFeet;
+  if (w <= 1e-4 || !feet || side === SOURCE_POSTURE.idle.front || feet.rear.x === undefined) return;
+  ankle.x += (feet.rear.x - ankle.x) * w;
+}
+const _flat = new THREE.Quaternion();
+/** Called by HumanRetarget.adaptLegFootpaths with a leg's kid-space foot orientation before leg IK.
+ *  The standing front sole is flat on the ground and points straight ahead (the rear foot keeps
+ *  the sourced raised heel). */
+export function sourceIdleFoot(retarget, q, side) {
+  if (!retarget.locomotion || side !== SOURCE_POSTURE.idle.front) return;
+  const w = idleWeight(retarget);
+  if (w <= 1e-4) return;
+  // Flat and pointing straight ahead: the Wii U clip turns this foot's toes out by
+  // about 30 degrees; the owner review (2026-10-17) asks for it facing forward.
+  _flat.identity();
+  q.slerp(_flat, w);
+}
+/** Called at the end of HumanRetarget.adaptPelvis with the kid-space pelvis position.
+ *  Raises/lowers the standing pelvis so the front leg is nearly straight (frontKneeDeg) with a
+ *  vertical shin at the top of the bob, records the matching ankle targets, then dips the
+ *  pelvis by the footage's bob at the clip's 30-frame period. */
+export function sourceIdleBob(retarget, hips) {
+  const c = controllerOf(retarget), w = idleWeight(retarget), st = postureState(retarget);
+  if (!c || w <= 1e-4) { st.idleFeet = null; return; }
+  const ch = retarget.character, I = SOURCE_POSTURE.idle, rearSide = I.front === 'L' ? 'R' : 'L';
+  const front = ch.limbs['leg' + I.front], rear = ch.limbs['leg' + rearSide];
+  const k = I.frontKneeDeg * Math.PI / 180, ankleY = ch.rest['foot' + I.front].y;
+  // Hip joint height for a vertical shin under a thigh bent by the knee angle.
+  ch._kidXform(front.up, _j, _jq);
+  hips.y += (ankleY + front.b + front.a * Math.cos(k) - _j.y) * w;
+  // The soles are latched in kid space when the stance is entered: the sourced
+  // pelvis sway and the bob move the body over still feet.
+  if (!st.idleFeet) {
+    ch._kidXform(front.up, _j, _jq);
+    const feet = st.idleFeet = { front: { y: ankleY, z: _j.z + front.a * Math.sin(k) }, rear: { y: 0, z: 0 } };
+    ch._kidXform(rear.up, _j, _jq);
+    // Per-family stance (registry IDLE_STANCE): the brush sets the rear foot out to the side.
+    const fam = ch.weaponIdleStance, out = (fam?.rearOutDeg || 0) * Math.PI / 180;
+    const rearY = ch.rest['foot' + rearSide].y + (fam?.rearHeel ?? I.rearHeel), reach = legReach(rear, I.rearKneeDeg);
+    const flat = Math.sqrt(Math.max(0, reach * reach - (_j.y - rearY) ** 2));
+    feet.rear.y = rearY; feet.rear.z = _j.z - flat * Math.cos(out);
+    if (out) feet.rear.x = _j.x + (rearSide === 'R' ? -1 : 1) * flat * Math.sin(out);
+  }
+  hips.y -= w * I.bob * (0.5 - 0.5 * Math.cos(2 * Math.PI * c.time / I.period));
 }

@@ -21,7 +21,9 @@ test('five-shooter pass preserves the shipped gameplay sockets and all unrequest
 });
 test('measured .96 silhouette proportions and packed purifier stay finite and within budget',async()=>{
  const f=await production(),d=f.getWeaponDef('s3-shooter-heavy');let triangles=0;for(const g of[d.body,d.ink]){triangles+=g.index.count/3;assert.equal(g.groups.length,0);for(const a of Object.values(g.attributes))for(const v of a.array)assert.ok(Number.isFinite(v));}
- assert.ok(triangles<=16000,'triangle budget '+triangles);assert.deepEqual(Array.from(d.muzzle.toArray()),[0,.065,.38625]);
+ assert.ok(triangles<=16000,'triangle budget '+triangles);
+ // Authored weapon space; the shooter family is drawn 1.3x about the grip (family-holds.mjs FAMILY_MODEL_SCALE).
+ const k=d.modelScale||1;assert.equal(k,1.3);assert.deepEqual(Array.from(d.muzzle.toArray()).map(v=>+(v/k).toFixed(9)),[0,.065,.38625]);
  const tank=d.parts.can.geo; tank.computeBoundingBox();const sz=tank.boundingBox.getSize(new f.THREE.Vector3());
  assert.ok(Math.abs(sz.z/sz.y-268/214)<.12,'measured water tank length/diameter within stated runtime fit');
  console.log('GAL_GEOMETRY '+JSON.stringify({triangles,tankSize:sz.toArray(),frame:frame(d)}));
@@ -59,7 +61,7 @@ test('two .96 label instances follow peak/rest can transforms and far-near owner
 });
 
 test('Nova visible upper aperture is recessed and never sealed by the yellow collar',async()=>{
- const f=await production(),d=f.getWeaponDef('s3-shooter-quicklong'),{THREE}=f,u=.11/130,axis=(475-310)*u;
+ const f=await production(),d=f.getWeaponDef('s3-shooter-quicklong'),{THREE}=f,k=d.modelScale||1,u=.11/130*k,axis=(475-310)*u;
  // The optimized production bundle legitimately tree-shakes Raycaster. Intersect
  // the actual emitted triangles numerically instead of expanding runtime exports.
  const p=d.body.attributes.position,ii=d.body.index.array,c=d.body.attributes.color;let z=-Infinity,front=-1;
@@ -71,5 +73,5 @@ test('Nova visible upper aperture is recessed and never sealed by the yellow col
  assert.ok(front>=0);assert.ok(Math.abs(z-(955-439)*u)<1e-6,'ray first hits recessed dark backplate, not yellow front cap');
  assert.ok(Math.max(c.getX(front),c.getY(front),c.getZ(front))<.02,'backplate stays dark');
  // Visible aperture evidence is intentionally independent of the unresolved legacy shot socket.
- assert.deepEqual(Array.from(d.muzzle.toArray()),[0,.11/66*(265-237),.11/66*(384-118)]);
+ assert.deepEqual(Array.from(d.muzzle.toArray()).map(v=>+(v/k).toFixed(9)),[0,.11/66*(265-237),.11/66*(384-118)].map(v=>+v.toFixed(9)));
 });

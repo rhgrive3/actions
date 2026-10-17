@@ -1,0 +1,57 @@
+// INKWAVE model coordinates (+Y up, +Z forward), not retail dimensions.
+// The cannon socket is the front-face ray sample used by the closed pod's
+// existing mark; the shooter socket is the centre of its three muzzle holes.
+export const CRAB_TANK_RIG = Object.freeze({
+  scale: 0.9,
+  offset: Object.freeze([0, 0, -0.05]),
+  shooter: Object.freeze({ group: 'clawL', pivot: Object.freeze([0.3, 0.55, 0.3]), muzzle: Object.freeze([0.48, 0.5, 0.907]) }),
+  cannon: Object.freeze({ group: 'clawR', pivot: Object.freeze([-0.3, 0.55, 0.3]), muzzle: Object.freeze([-0.4, 0.56, 0.9505855697567009]) }),
+});
+
+// Aim is authoritative even while body yaw catches up. A caller can explicitly
+// request crosshair convergence by supplying its muzzle; never aim from feet.
+export function crabTankAimDirection(actor, out, muzzle = null) {
+  const aim = actor?.aimDir;
+  if (aim && [aim.x, aim.y, aim.z].every(Number.isFinite) && aim.lengthSq() > 1e-12) out.copy(aim).normalize();
+  else {
+    const yaw = actor?.aimYaw ?? actor?.yaw ?? 0, pitch = actor?.aimPitch ?? 0, cp = Math.cos(pitch);
+    out.set(Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp);
+  }
+  const target = actor?.aimPoint;
+  if (muzzle && target && [target.x, target.y, target.z].every(Number.isFinite)) {
+    const x = target.x - muzzle.x, y = target.y - muzzle.y, z = target.z - muzzle.z;
+    const fromFeet = (target.x - actor.pos.x) ** 2 + (target.y - actor.pos.y) ** 2 + (target.z - actor.pos.z) ** 2;
+    if (fromFeet > 1e-12 && x * out.x + y * out.y + z * out.z > 0 && x * x + y * y + z * z > 1e-12) out.set(x, y, z).normalize();
+  }
+  return out;
+}
+
+// Neutral socket at emission. Recoil is a visual response AFTER a round leaves.
+// Optional direction lets a converged barrel and projectile share one axis.
+export function crabTankMuzzle(actor, mode, out, direction = null) {
+  const gun = CRAB_TANK_RIG[mode];
+  if (!gun?.muzzle) throw new RangeError('Unknown Crab Tank firing mode: ' + mode);
+  const aim = direction || crabTankAimDirection(actor, out), yaw = Math.atan2(aim.x, aim.z), pitch = Math.atan2(aim.y, Math.hypot(aim.x, aim.z));
+  const sy = Math.sin(yaw), cy = Math.cos(yaw), sp = Math.sin(pitch), cp = Math.cos(pitch);
+  const bodyYaw = actor.yaw || 0, sb = Math.sin(bodyYaw), cb = Math.cos(bodyYaw), scale = CRAB_TANK_RIG.scale;
+  const [ox, oy, oz] = CRAB_TANK_RIG.offset, [px, py, pz] = gun.pivot;
+  const x = gun.muzzle[0] - px, y = gun.muzzle[1] - py, z = gun.muzzle[2] - pz;
+  const bx = ox + scale * px, bz = oz + scale * pz;
+  return out.set(actor.pos.x + bx * cb + bz * sb + scale * (x * cy - y * sy * sp + z * sy * cp),
+    actor.pos.y + oy + scale * (py + y * cp + z * sp),
+    actor.pos.z - bx * sb + bz * cb + scale * (-x * sy - y * cy * sp + z * cy * cp));
+}
+
+// Solve the muzzle/axis pair together because pitching an offset barrel also
+// moves its socket. Both gameplay and presentation consume this same pair.
+export function crabTankShotGeometry(actor, mode, origin, direction) {
+  crabTankAimDirection(actor, direction);
+  for (let i = 0; i < 16; i++) {
+    crabTankMuzzle(actor, mode, origin, direction);
+    const x = direction.x, y = direction.y, z = direction.z;
+    crabTankAimDirection(actor, direction, origin);
+    if ((x - direction.x) ** 2 + (y - direction.y) ** 2 + (z - direction.z) ** 2 < 1e-20) break;
+  }
+  crabTankMuzzle(actor, mode, origin, direction);
+  return origin;
+}

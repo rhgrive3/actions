@@ -14,6 +14,7 @@ import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs'
 import { buildScreenSheet, INKSTRIKE_LID_OPEN, CRAB_TANK_GRIPS } from './special-models.mjs';
 import { specialPresentationToken } from './special-presentation-owner.mjs';
 import { WAIL_SPEAKER_POSITIONS } from './wail-speakers.mjs';
+import { CRAB_TANK_RIG, crabTankShotGeometry } from './crab-tank-aim.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.special-models.install.v1');
 const OBJECTS = Symbol('inkwave.s3.special-models.objects'), ROUNDS = Symbol('inkwave.s3.special-models.rounds');
@@ -51,7 +52,7 @@ export const SPECIAL_DEVICES = Object.freeze({
   // The tank stands on the ground round the standing kid (no riding pose):
   // the cockpit rim is between the kid's waist and chest, the hands take
   // the handlebars (CRAB_TANK_GRIPS).
-  crabTank: [{ model: 'spCrabTank', host: 'kid', pos: [0, 0, -0.05], rot: [0, 0, 0], scale: 0.9, hideWeapon: true, crab: true, hands: CRAB_TANK_GRIPS }],
+  crabTank: [{ model: 'spCrabTank', host: 'root', pos: CRAB_TANK_RIG.offset, rot: [0, 0, 0], scale: CRAB_TANK_RIG.scale, hideWeapon: true, crab: true, hands: CRAB_TANK_GRIPS }],
   reefslider: [{ model: 'spReefShark', host: 'kid', pos: [0, -0.1, 0.12], rot: [0, 0, 0], scale: 1, hideWeapon: true, hands: { R: [-0.215, 0.54, 0.18], L: [0.215, 0.54, 0.18] } }],
   // Worn on the back with the lid shut, tray down and lid outward (S3 promo
   // image); the free hand throws the markers.
@@ -143,12 +144,28 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     d.holder.position.set(base.x, base.y + 0.25 * c + 0.03 * Math.sin(t * 5), base.z);
     d.holder.rotation.y += dt * (0.6 + 2.5 * c);
   } else if (id === 'crabTank') {
-    const shot = kick(t - (marks.shot ?? -99), 26), cannon = kick(t - (marks.cannon ?? -99), 9);
-    const left = Math.floor((marks.shot ?? 0) * 60) % 2;                    // the claws fire alternately
-    if (g.clawL) g.clawL.position.z = (g.clawL.userData.rest?.z ?? 0) - 0.06 * shot * left;
-    if (g.clawR) g.clawR.position.z = (g.clawR.userData.rest?.z ?? 0) - 0.06 * shot * (1 - left);
-    d.holder.position.set(base.x, base.y + 0.03 * Math.abs(Math.sin(t * 9)) * Math.min(1, Math.hypot(a.vel?.x || 0, a.vel?.z || 0) / 3), base.z - 0.16 * cannon);
-    d.holder.rotation.x = spec.rot[0] - 0.12 * cannon;
+    // The shooter and cannon are distinct guns. Their own accepted emission
+    // marks retract them along the aimed bore, without kicking the chassis or
+    // changing the other gun. Curves are INKWAVE presentation calibration.
+    d.holder.position.copy(base);
+    // Actor.root carries the pilot's visual step smoothing. The ground rig
+    // and shared launch sockets use the actor's physical feet instead.
+    d.holder.position.y -= a.smoothY || 0;
+    d.holder.rotation.set(...spec.rot);
+    const rig = d.crabRig;
+    d.model.root.getWorldQuaternion(rig.parentQ).invert();
+    for (const mode of ['shooter', 'cannon']) {
+      const gun = CRAB_TANK_RIG[mode], part = g[gun.group];
+      if (!part) continue;
+      crabTankShotGeometry(a, mode, rig.origin, rig.direction);
+      const yaw = Math.atan2(rig.direction.x, rig.direction.z), pitch = Math.atan2(rig.direction.y, Math.hypot(rig.direction.x, rig.direction.z));
+      rig.euler.set(-pitch, yaw, 0, 'YXZ');
+      rig.aimQ.setFromEuler(rig.euler);
+      part.quaternion.copy(rig.parentQ).multiply(rig.aimQ);
+      rig.axis.copy(rig.direction).applyQuaternion(rig.parentQ);
+      const recoil = mode === 'shooter' ? 0.06 * kick(t - (marks.shot ?? -99), 26) : 0.16 * kick(t - (marks.cannon ?? -99), 9);
+      part.position.copy(part.userData.rest).addScaledVector(rig.axis, -recoil);
+    }
   } else if (id === 'reefslider') {
     // the shark surfaces out of the ink, then bucks and rolls with the ride; brakes shudder before the burst
     const phase = state?.phase ?? a.specialActive?.phase, up = easeOutBack(age / 0.35);
@@ -219,6 +236,15 @@ export function installSpecialModels(api) {
   if (!THREE || !Projectiles?.prototype?.update) return api;
   if (Projectiles.prototype[INSTALL]) return api;
   Object.defineProperty(Projectiles.prototype, INSTALL, { value: true });
+  // Device recoil must survive an absent/disabled FX director. Local rows
+  // reach this observer only after gameplay emits; remote callers must route
+  // through their accepted replay envelope before invoking this callback.
+  const crabEmission = e => {
+    if (e?.id !== 'crabTank' || !e.actor || (e.action !== 'shot' && e.action !== 'cannon')) return;
+    (e.actor._s3SpecialMarks ||= {})[e.action] = G.time || 0;
+  };
+  api.on?.('all:special', e => { if (!e?.actor?.remote) crabEmission(e); });
+  api.crabTankPresentationEvent = crabEmission;
   const colorOf = (owner, team) => owner?.color || G.teamColors?.[owner?.team ?? team] || 0xffcc33;
   const inkMat = (color) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.08, roughness: 0.42, metalness: 0.1 });
   const v = new THREE.Vector3(), q = new THREE.Quaternion(), fwd = new THREE.Vector3(0, 0, 1), grip = new THREE.Vector3(), pole = new THREE.Vector3();
@@ -409,6 +435,7 @@ export function installSpecialModels(api) {
     states.delete(ch);
   }
   function hostOf(ch, host) {
+    if (host === 'root') return ch.root;
     if (host === 'chest') return ch.bones?.chest || ch.kid;
     if (host === 'model') return ch.model || ch.kid?.parent;
     return ch.kid;
@@ -435,7 +462,9 @@ export function installSpecialModels(api) {
       if (spec.lidClosed && m.groups.lid) m.groups.lid.rotation.x = INKSTRIKE_LID_OPEN;
       if (spec.tilt && m.groups.globe) m.groups.globe.rotation.x = spec.tilt;
       hostOf(ch, spec.host)?.add(holder);
-      s.devices.push({ spec, holder, model: m });
+      const d = { spec, holder, model: m };
+      if (spec.crab) d.crabRig = { origin: new THREE.Vector3(), direction: new THREE.Vector3(), axis: new THREE.Vector3(), parentQ: new THREE.Quaternion(), aimQ: new THREE.Quaternion(), euler: new THREE.Euler() };
+      s.devices.push(d);
     }
     states.set(ch, s);
     return s;

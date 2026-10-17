@@ -48,14 +48,15 @@ export function createRainmakerModel(THREE) {
   fin([[0, .40, -.46], [0, .82, -.72], [0, .90, -.97], [0, .63, -.85], [0, .52, -1.00], [0, .32, -.62]], .045);
   fin([[0, .49, -.34], [0, .68, -.28], [0, .62, .05], [0, .50, .16]], .04);
   // Keep the broad fish outline ahead of the native fist. This also keeps its
-  // raised tail clear of the carrier while preserving one immutable mesh.
+  // raised tail clear of the proportioned carrier while preserving one immutable mesh.
+  // The larger/lower head needs4cm more clearance; the native grip stays fixed.
   for (let i = 0; i < position.length; i += 3) {
     position[i] *= .6; position[i + 1] = position[i + 1] * .6 - .20;
-    position[i + 2] = position[i + 2] * .6 + .55;
+    position[i + 2] = position[i + 2] * .6 + .59;
   }
   // The same twelve-triangle support reaches from the existing fist to the fish.
   // Its 18 mm square contact section fits inside the native 28 mm grip hole.
-  const grip = new THREE.BoxGeometry(.018, .018, .28); grip.translate(0, 0, .125); append(grip, gold);
+  const grip = new THREE.BoxGeometry(.018, .018, .32); grip.translate(0, 0, .145); append(grip, gold);
   // Merge the primitives once and index identical vertices. No per-frame geometry.
   const unique = new Map(), indices = [], p = [], n = [], c = [];
   for (let i = 0; i < position.length; i += 3) {
@@ -78,7 +79,7 @@ export function createRainmakerModel(THREE) {
   const material = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: .65, roughness: .34 });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'rainmaker-core'; mesh.castShadow = true;
-  mesh.userData.rainmakerModel = { revision: 2, grip: [0, 0, 0], muzzle: [0, -.056, .859] };
+  mesh.userData.rainmakerModel = { revision: 3, grip: [0, 0, 0], muzzle: [0, -.056, .899] };
   return mesh;
 }
 

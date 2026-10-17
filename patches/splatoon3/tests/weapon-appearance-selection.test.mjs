@@ -14,8 +14,8 @@ const list = x => Array.from(x);
 const memoryStorage = () => { let value=null; return {getItem:()=>value,setItem:(_k,v)=>{value=v;},inject:v=>{value=v;}}; };
 test('visual registry resolves only built variants and keeps all base IDs/callbacks/holds', async()=>{
   const {REG:R,AP,WEAPONS}=await production();
-  const ids=R.registeredWeaponVariants(); assert.equal(ids.length,94);
-  for (const absent of ['Shelter_Compact_02']) assert.equal(R.weaponVariantSpec(absent),null,absent+' withheld'); assert.equal(new Set(ids).size,ids.length);
+  const ids=R.registeredWeaponVariants(); assert.equal(ids.length,95);
+  assert.equal(typeof R.weaponVariantSpec('Shelter_Compact_02')?.build,'function','Patternz implemented'); assert.equal(new Set(ids).size,ids.length);
   const hold={carry:{p:[1,2,3]},rc:{kick:1}};
   for(const id of ids){const spec=R.weaponVariantSpec(id),base=spec.baseId;
     assert.equal(WEAPONS[id],undefined,id+' no gameplay kit'); assert.ok(WEAPONS[base]);
@@ -113,7 +113,7 @@ test('all alternate appearances retain finite native carry/attack poses and unch
   assert.ok(attacked>0,id+' admitted attack');a.weaponRunner.reset();ch.dispose();G.scene.remove(ch.root);f.AP.setWeaponAppearance(base,base,null);
  }
 });
-test('kit IDs retain gameplay APIs with87 reviewed defaults and8 base fallbacks',async()=>{
+test('kit IDs retain gameplay APIs with95 candidate defaults and0 base fallbacks',async()=>{
  const {REG:R,AP,WEAPONS,WEAPON_ORDER}=await production();
  assert.equal(WEAPON_ORDER.length,160);let implemented=0,fallback=0;
  for(const kit of ALTERNATE_WEAPON_KITS){
@@ -126,7 +126,7 @@ test('kit IDs retain gameplay APIs with87 reviewed defaults and8 base fallbacks'
   assert.equal(WEAPONS[kit.id].special,kit.special);assert.equal(WEAPONS[kit.id].specialCost,kit.specialCost);
   assert.ok(AP.weaponAppearanceOptions(kit.id).some(o=>o.id===kit.baseId));
  }
- assert.equal(implemented,87);assert.equal(fallback,8);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
+ assert.equal(implemented,95);assert.equal(fallback,0);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
  assert.equal(AP.selectedWeaponAppearance('unknown-kit',memoryStorage()),'unknown-kit');
 });
 test('explicit Base persists separately from absent kit default and does not leak to peers',async()=>{
@@ -145,4 +145,33 @@ test('explicit Base persists separately from absent kit default and does not lea
  f.AP.setWeaponAppearance(kit.id,'',null);local.setWeapon(kit.id);assert.equal(local.modelVariantId,kit.main);
  local.setWeapon('unknown-kit');assert.equal(local.weaponModel,'shooter');assert.equal(local.modelVariantId,null);
  local.dispose();peer.dispose();bot.dispose();
+});
+
+test('native selector immediately refreshes accepted preview model ownership through every appearance',async()=>{
+ const f=await production(),{REG:R,AP}=f;
+ const source=adaptWeaponCatalog('src/ui/menus.js',fs.readFileSync(new URL('../../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8'));
+ const start=source.indexOf("this._bind(appearance, { id: 'weapon-appearance', accept: () => {");assert.ok(start>=0);
+ const handler=source.slice(start,source.indexOf('\n    } });',start));const body=handler.slice(handler.indexOf('accept: () => {')+'accept: () => {'.length);
+ const rows=['Shooter_First_01','Shooter_Normal_01','Shooter_Normal_02','Blaster_Long_01','Blaster_Middle_02'];
+ for(const row of rows){
+  const kit=ALTERNATE_WEAPON_KITS.find(k=>k.main===row);const previous=AP.weaponAppearancePreference(kit.id);
+  AP.setWeaponAppearance(kit.id,'');
+  const preview=new f.Character({weapon:kit.id,weaponAppearancePreview:true});
+  const remote=new f.Character({weapon:kit.id,isLocal:false});const remoteWeapon=remote.weapon;
+  const otherKit=ALTERNATE_WEAPON_KITS.find(k=>k.main!==row&&k.baseId===kit.baseId)||ALTERNATE_WEAPON_KITS.find(k=>k.baseId!==kit.baseId);
+  const other=new f.Character({weapon:otherKit.id,weaponAppearancePreview:true});const otherWeapon=other.weapon;
+  const click=Function('shown','LANG','weaponAppearanceOptions','weaponAppearancePreference','setWeaponAppearance','weaponModelKey','weaponBaseModelId','refreshAppearance',body).bind({_sc:()=>({chars:[preview,remote,other]}),_sfx(){}});
+  try{
+   assert.equal(preview.weaponModel,row);assert.notEqual(row,R.weaponBaseModelId(kit.id));
+   const count=AP.weaponAppearanceOptions(kit.id).length;
+   for(let i=0;i<count;i++){
+    click(kit.id,'en',AP.weaponAppearanceOptions,AP.weaponAppearancePreference,AP.setWeaponAppearance,R.weaponModelKey,R.weaponBaseModelId,()=>{});
+    assert.equal(preview.weaponAppearanceModel,AP.selectedWeaponAppearance(kit.id),row+' immediate preview');
+    assert.equal(preview.weaponModel,row,row+' stable gameplay model');
+    assert.equal(preview.weapon.def.modelVariantId??null,preview.weaponAppearanceModel===kit.baseId?null:preview.weaponAppearanceModel,row+' actual geometry definition');
+    assert.equal(remote.weapon,remoteWeapon,'remote unchanged');assert.equal(other.weapon,otherWeapon,'other preview owner unchanged');
+   }
+   assert.equal(AP.weaponAppearancePreference(kit.id),null,'full cycle returns to default');
+  }finally{preview.dispose();remote.dispose();other.dispose();AP.setWeaponAppearance(kit.id,previous??'');}
+ }
 });

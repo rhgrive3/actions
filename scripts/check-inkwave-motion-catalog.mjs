@@ -41,7 +41,9 @@ const SUPERJUMP_TAKEOFF = Math.round((CATALOG_PROFILE.superJump.chargeTime + CAT
 // Release on the current AP0 readiness boundary, before slow charge-climb crests the fixture wall.
 const SURGE_RELEASE_FRAME = Math.round(CATALOG_PROFILE.movement.surge.chargeTime * 60);
 export const CATALOG_SCENARIOS = Object.freeze([
-  { name: 'carry-walk-fire-return', kind: 'shooter', frames: 240 },
+  // Include a second real walk/stop so source support is sampled after two
+  // independent transitions, including the new ready-stance blend.
+  { name: 'carry-walk-fire-return', kind: 'shooter', frames: 300 },
   { name: 'ordinary-aimed-jump', kind: 'shooter', frames: 180, probes: [23, 38] },
   { name: 'hard-landing-recovery', kind: 'shooter', frames: 120 },
   { name: 'swim-turn-brake', kind: 'shooter', frames: 180 },
@@ -886,7 +888,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
         if (scenario.name === 'roller-vertical-land') { globalThis.catalogRollerVerticalLaunch(a); driver = drivers.physics; }
         const runFrame = () => {
           const n = scenario.name, input = {};
-          if (n === 'carry-walk-fire-return') { const speed = frame < 25 ? .15 : frame < 65 ? 1.2 : frame < 105 ? 5.76 : frame < 165 ? 2.4 : 0; horizontal(speed, frame >= 70 && frame < 90 ? 1 : 0, frame >= 70 && frame < 90 ? 0 : frame >= 90 && frame < 105 ? -1 : 1); input.fire = frame >= 105 && frame < 145; driver = 'Native Actor._horizontal input slew and _integrate/native floor, real Runner fire/release and _finishFrame; isolated arena, no whole-game update'; }
+          if (n === 'carry-walk-fire-return') { const speed = frame < 25 ? .15 : frame < 65 ? 1.2 : frame < 105 ? 5.76 : frame < 165 ? 2.4 : frame >= 200 && frame < 230 ? 1.2 : 0; horizontal(speed, frame >= 70 && frame < 90 ? 1 : 0, frame >= 70 && frame < 90 ? 0 : frame >= 90 && frame < 105 ? -1 : 1); input.fire = frame >= 105 && frame < 145; driver = 'Native Actor._horizontal input slew and _integrate/native floor, real Runner fire/release and _finishFrame; isolated arena, no whole-game update'; }
           if (n === 'ordinary-aimed-jump' || n === 'hard-landing-recovery') { if (!a.grounded) a._integrate(1 / 60, false, false); input.fire = n.includes('aimed') && frame < 100; }
           if (n === 'swim-turn-brake') { horizontal(frame < 115 ? 11 : 0, frame >= 45 && frame < 80 ? 1 : 0, frame >= 45 && frame < 80 ? 0 : frame >= 80 ? -1 : 1, true); driver = 'Native Actor._horizontal swim acceleration/turn/brake and _integrate/native own-ink floor; squid form/submerged diagnostic assignment; no full match'; }
           if (n === 'wall-surge-ready-crest') { a.intent.jump = frame < scenario.surgeReleaseFrame; a._updateClimb(1 / 60, true); beforeActions(a, 1 / 60, false); a._integrate(1 / 60, true, false); }

@@ -5,6 +5,8 @@ import vm from 'node:vm';
 import { fixture, compose } from './match-hud-fixture.mjs';
 import {sampleRespawnCountdown} from '../runtime/respawn-lifecycle.mjs';
 import { adaptWeaponCatalog } from '../weapon-catalog-adapter.mjs';
+import { normalizeQueueProfile, settleProgression } from '../../network-replication/queue-recovery.mjs';
+import { WEAPONS } from '../../../inkwave-public/src/config.js';
 const ROOT=new URL('../../../',import.meta.url);
 const composed=rel=>compose(rel,fs.readFileSync(new URL('inkwave-public/'+rel,ROOT),'utf8'));
 function section(s,start,end){const a=s.indexOf(start),b=s.indexOf(end,a);assert.ok(a>=0&&b>a,start);return s.slice(a,b);}
@@ -68,7 +70,7 @@ test('#300 actual judge result payload carries all players specials without chan
  [a,b,enemy].forEach((x,i)=>{x.stats={turf:100+i,splats:2+i,assists:i,deaths:i,specials:i*2};});
  const code=section(composed('src/main.js'),'  async _judge() {','\n  _fade(to, ms)');let output;
  const G={teamHex:['a','b'],teamColors:['a','b'],netm:null,net:null};
- const Game=vm.runInNewContext(`class Game{${code}};Game`,{G,turfExperience:f.turfExperience,TEAM_NAMES:['A','B'],PROGRESSION:f.PROGRESSION,saveJSON(){},setTimeout:()=>0});
+ const Game=vm.runInNewContext(`class Game{${code}};Game`,{G,turfExperience:f.turfExperience,TEAM_NAMES:['A','B'],PROGRESSION:f.PROGRESSION,WEAPONS,normalizeQueueProfile,settleProgression,saveJSON(){},setTimeout:()=>0});
  const game=new Game(),m={local:a,actors:[a,b,enemy],state:'judge',result:{coverage:[.6,.4],winner:0},setState(s){this.state=s;}};
  Object.assign(game,{match:m,profile:{level:1,xp:0,matches:0,wins:0,totalTurf:0},palette:{},mapDef:{name:'test'},rig:{overview(){}},hud:{judge:()=>Promise.resolve(),setVisible(){}},showcase:{showResults(){}},menus:{showResults:d=>{output=d;},show(){}}});
  await game._judge();assert.deepEqual(plain(output.players.map(p=>p.specials)),[0,2,4]);assert.deepEqual(plain(output.players.map(p=>p.turf)),[100,101,102]);assert.deepEqual(plain(output.players.map(p=>p.splats)),[2,4,6]);assert.equal(output.xp.gained,f.turfExperience(100,true).total);

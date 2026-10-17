@@ -37,7 +37,9 @@ function bow(d, cfg, extra) {
   };
   const rings = new Pieces();
   for (let k = 0; k < 6; k++) rings.add(ring(cfg.coilR, 0.0016, 0, YC, cfg.coil0 + (cfg.coil1 - cfg.coil0) * k / 5, 'z', 4, 18), '#ffffff', M.led);
-  return rebuild(d, { body, ink, parts, gripL: cfg.gripL, muzzle: [0, YC, cfg.muzzleZ],
+  // Drawing hand on the nock, as the base stringers (stringers.mjs finishBow).
+  const gripL = gripSpec([0, YC, tipZ - 0.004], [0, 1, 0], [0.75, -0.3, -0.6]);
+  return rebuild(d, { body, ink, parts, gripL, muzzle: [0, YC, cfg.muzzleZ],
     glow: glowGeometry(rings, cfg.coil0 - 0.002, cfg.coil1 + 0.002, 'z') });
 }
 
@@ -45,7 +47,7 @@ function bow(d, cfg, extra) {
 function reefMilK(d) {
   const C = { limb: '#e4e0d4', steel: '#a9adb4', dark: '#2a2b30', black: '#17181b', string: '#cfd6c4', grip: '#2a2b30' };
   const cfg = { C, span: 0.3, back: 0.14, riserZ: -0.03, limbR: 0, stringR: 0.0025, arrowNockFit: true, coilR: 0.056, coil0: -0.01, coil1: 0.09,
-    arrowFront: 0.02, muzzleZ: 0.15, gripL: gripSpec([0, 0.0, 0.095], [0, 0, 1], [0.75, -0.62, -0.1]) };
+    arrowFront: 0.02, muzzleZ: 0.15 };
   return bow(d, cfg, (body, ink) => {
     // HD02/06 projected ratios: rear body/shoulder about 0.8, rear carriage/bow 0.20-0.25.
     // Shorter, flatter shoulder and flared rear closure replace v4's bulbous connector.
@@ -147,6 +149,7 @@ function animateBow(w, st) {
   const sr = st.sinceRelease ?? 99, vib = sr < 0.4 ? Math.exp(-sr * 14) * Math.sin(sr * 70) : 0;
   const draw = DRAW * charge - 0.012 * vib;
   ps.draw = draw;
+  w.supportZ = -draw;   // the drawing hand holds the nock (gripL)
   const k = Math.hypot(c.span, draw) / c.span, a = Math.atan2(draw, c.span);
   const up = w.parts.string, lo = w.parts.stringL, nock = w.parts.nock, arr = w.parts.arrow;
   if (up) { up.rotation.x = a; up.scale.y = k; }

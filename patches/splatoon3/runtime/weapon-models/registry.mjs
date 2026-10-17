@@ -1,3 +1,7 @@
+import { FOLLOWUP_MODELS as PATTERNZ_VARIANTS } from './variants-patternz-followup.mjs';
+import { FOLLOWUP_MODELS as ACCEPTED_ROLLER_THREE } from './variants-accepted-roller-three-followup.mjs';
+import { FOLLOWUP_MODELS as ACCEPTED_BRUSH_TWO } from './variants-accepted-brush-two-followup.mjs';
+import { FOLLOWUP_MODELS as ACCEPTED_STARZ_HORNZ } from './variants-accepted-starz-hornz-followup.mjs';
 import { FOLLOWUP_MODELS as ACCEPTED_BLASTER_NEXT } from './variants-accepted-blaster-next-followup.mjs';
 import { FOLLOWUP_MODELS as ACCEPTED_BASIC_SHOOTERS } from './variants-accepted-basic-shooters-followup.mjs';
 import { FOLLOWUP_MODELS as ACCEPTED_GAL } from './variants-accepted-gal-followup.mjs';
@@ -12,6 +16,8 @@ import { FOLLOWUP_MODELS as ACCEPTED_CARBON } from './variants-accepted-carbon-f
 // (modelKind) still selects gameplay, native HOLD data and the animated part
 // channels the family runtime drives. Geometry is procedural and built lazily.
 import { MAIN_WEAPON_CATALOG } from '../main-weapon-catalog-data.mjs';
+import { FAMILY_HOLD_SHIFT, FAMILY_MODEL_SCALE, shiftHold } from './family-holds.mjs';
+import { scaleWeaponDef } from './kit.mjs';
 import { ALTERNATE_WEAPON_KITS, VARIANT_BASE_WEAPON } from '../alternate-weapon-kits-data.mjs';
 import * as SHOOTERS from './shooters.mjs';
 import * as SHOOTERS_B from './shooters-b.mjs';
@@ -89,7 +95,7 @@ for (const [family, mod] of FAMILIES) {
 // Alternate appearance IDs never enter the gameplay catalogue. Only implemented
 // rows are selectable; retain base IDs for direct family animation table lookups.
 const VARIANTS = new Map();
-for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, RANGED_VARIANTS]) {
+for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, RANGED_VARIANTS, PATTERNZ_VARIANTS]) {
   for (const [id, spec] of Object.entries(group)) {
     if (SPECS.has(id) || VARIANTS.has(id)) throw new Error(`Duplicate weapon appearance ${id}`);
     const base = SPECS.get(spec.baseId);
@@ -99,7 +105,7 @@ for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, RANGED_VARIANTS]) {
 }
 const VARIANT_SPECS = new Map(), VARIANT_KITS = new Map(), VARIANT_KEYS = new Map();
 const KITS_BY_ROW = new Map(ALTERNATE_WEAPON_KITS.map(kit => [kit.main, kit]));
-for (const mod of [ACCEPTED_BLASTER_NEXT, ACCEPTED_BASIC_SHOOTERS, ACCEPTED_GAL, ACCEPTED_SABER_LITE, ACCEPTED_BRUSH_MINI, COLORZ_THREE, BULBZ_VARIANTS, SQUIFFER_VARIANTS, NOCT_VARIANTS, MILK_VARIANTS, SORELLA_VARIANTS, EXPLOSHER_VARIANTS, SECOND_BRELLA, SECOND_REEF, SECOND_INKLINE, SECOND_WELLSTRING, SECOND_C, THIRD_SHOOTERS, THIRD_NEO, THIRD_CHARCOAL, THIRD_NOUVEAU, THIRD_RUST, THIRD_STICKERZ, THIRD_C, FOURTH_NOZZLE, FOURTH_DUALIE_FIXED, FOURTH_BLASTER_FIXED, FOURTH_DUALIE_LIGHT, FOURTH_BLASTER_DECO, FIFTH_CHARGERS, NEXT_C, ACCEPTED_SPINNER, ACCEPTED_SHOOTER, ACCEPTED_RANGED, ACCEPTED_HEAVY02, MINI_VARIANTS, ACCEPTED_MANUAL_THREE, ACCEPTED_BRUSH_SLOSHER, ACCEPTED_A4, LUNA_VARIANTS, ACCEPTED_CARBON, ACCEPTED_LIGHTLONG]) {
+for (const mod of [PATTERNZ_VARIANTS, ACCEPTED_ROLLER_THREE, ACCEPTED_BRUSH_TWO, ACCEPTED_STARZ_HORNZ, ACCEPTED_BLASTER_NEXT, ACCEPTED_BASIC_SHOOTERS, ACCEPTED_GAL, ACCEPTED_SABER_LITE, ACCEPTED_BRUSH_MINI, COLORZ_THREE, BULBZ_VARIANTS, SQUIFFER_VARIANTS, NOCT_VARIANTS, MILK_VARIANTS, SORELLA_VARIANTS, EXPLOSHER_VARIANTS, SECOND_BRELLA, SECOND_REEF, SECOND_INKLINE, SECOND_WELLSTRING, SECOND_C, THIRD_SHOOTERS, THIRD_NEO, THIRD_CHARCOAL, THIRD_NOUVEAU, THIRD_RUST, THIRD_STICKERZ, THIRD_C, FOURTH_NOZZLE, FOURTH_DUALIE_FIXED, FOURTH_BLASTER_FIXED, FOURTH_DUALIE_LIGHT, FOURTH_BLASTER_DECO, FIFTH_CHARGERS, NEXT_C, ACCEPTED_SPINNER, ACCEPTED_SHOOTER, ACCEPTED_RANGED, ACCEPTED_HEAVY02, MINI_VARIANTS, ACCEPTED_MANUAL_THREE, ACCEPTED_BRUSH_SLOSHER, ACCEPTED_A4, LUNA_VARIANTS, ACCEPTED_CARBON, ACCEPTED_LIGHTLONG]) {
   for (const [key, spec] of Object.entries(mod)) {
     const kit = KITS_BY_ROW.get(key), record = kit && RECORDS.get(kit.baseId);
     if (!kit || !record || spec.sourceRow !== key || spec.baseId !== kit.baseId)
@@ -151,8 +157,8 @@ export function registeredWeaponModels() { return [...SPECS.keys()]; }
 
 /** Apply the weapon's own model to a freshly built family def (before finishParts). */
 export function buildWeaponModel(key, base) {
-  const spec = ownSpec(key);
-  if (!spec) return base;
+  const spec = ownSpec(key), scale = FAMILY_MODEL_SCALE[weaponBehaviorFamily(key)] ?? 1;
+  if (!spec) return scaleWeaponDef(base, scale);
   const family = base.kind;
   const d = spec.build(base) || base;
   const baseId = weaponBaseModelId(key);
@@ -161,10 +167,11 @@ export function buildWeaponModel(key, base) {
   if (selected) { d.modelVariantId = selected; d.appearanceName = spec.name; }
   d.referenceModelName = spec.sourceModel ?? null;
   if (spec.animate) d.animate = spec.animate;
-  return d;
+  return scaleWeaponDef(d, scale);
 }
 
-// Hold = native family HOLD entry deep-merged with the weapon's overrides. Stable
+// Hold = native family HOLD entry deep-merged with the weapon's overrides, then
+// the behaviour-family calibration (family-holds.mjs). Stable
 // identity per (weapon, base) so per-hold caches (carry/detail overlays) stay valid.
 const holds = new WeakMap();
 const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -175,18 +182,35 @@ function merge(base, over) {
 }
 export function weaponHold(key, base) {
   key = weaponBaseModelId(key);
-  const spec = SPECS.get(key);
-  if (!spec?.hold || !base) return base;
+  const spec = SPECS.get(key), shift = FAMILY_HOLD_SHIFT[weaponBehaviorFamily(key)];
+  if ((!spec?.hold && !shift) || !base) return base;
   let byKey = holds.get(base);
   if (!byKey) { byKey = new Map(); holds.set(base, byKey); }
   let h = byKey.get(key);
-  if (!h) { h = merge(base, spec.hold); byKey.set(key, h); }
+  if (!h) {
+    h = spec?.hold ? merge(base, spec.hold) : base;
+    if (shift) h = shiftHold(h, shift);
+    byKey.set(key, h);
+  }
   return h;
 }
 
 // The Wii U source bank has no Brella / Splatana / Stringer / Brush upper-body
 // clips; those families (and any model asking for it) keep the native hold.
 const NATIVE_CARRY = new Set(['brella', 'splatana', 'stringer', 'brush']);
+// Source-bank body family (legs and torso) per behaviour family. The Wii U roller
+// clips stand upright; a Brush rests in the same bent-knee ready stance as the
+// existing INKWAVE shooter rest (owner review 2026-10-17).
+const SOURCE_BODY = Object.freeze({ brush: 'Nrml' });
+export function weaponSourceBodyFamily(id) { return id ? SOURCE_BODY[weaponBehaviorFamily(id)] ?? null : null; }
+// Standing ready-stance changes per behaviour family (source-posture.mjs sourceIdleBob).
+// Brush (owner review 2026-10-17, official brush movie EyKDWN7kgYb at rest): the
+// right foot is set out to the side instead of straight back, the body twisted a
+// little under a forward-facing head. Angles are INKWAVE calibration.
+const IDLE_STANCE = Object.freeze({
+  brush: Object.freeze({ rearOutDeg: 70, rearHeel: 0.02, twist: -0.32 }),
+});
+export function weaponIdleStanceFamily(id) { return id ? IDLE_STANCE[weaponBehaviorFamily(id)] ?? null : null; }
 export function weaponNeedsNativeCarry(id) {
   return !!id && (NATIVE_CARRY.has(weaponBehaviorFamily(id)) || !!SPECS.get(weaponBaseModelId(id))?.nativeCarry);
 }

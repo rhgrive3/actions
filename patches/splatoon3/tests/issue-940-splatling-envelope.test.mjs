@@ -21,7 +21,7 @@ test('#940 maximum Splatling envelope and jump recovery do not use generic bloom
   assert.equal(a.weapon.spreadAir, source.Jump_DegSwerve);
   for (const bloom of [0, .4, 1]) for (const first of [undefined, .1, .6, .9]) {
     r.bloom = bloom; a.weapon.spreadFirst = first;
-    for (const [grounded, age, expected] of [[true, null, 3.3], [false, null, 7], [false, 25, 7], [true, 47.5, 5.15], [true, 70, 3.3]]) {
+    for (const [grounded, age, expected] of [[true, null, 3.3], [false, null, 3.3], [false, 0, 7], [false, 25, 7], [true, 47.5, 5.15], [true, 70, 3.3]]) {
       a.grounded = grounded; a.s3SplatlingJumpAgeFrames = age;
       close(r._spreadDeg(a.weapon), expected);
     }
@@ -30,7 +30,7 @@ test('#940 maximum Splatling envelope and jump recovery do not use generic bloom
 test('#940 native launch reaches the full horizontal envelope while preserving pitch and four RNG draws', async () => {
   const f = await setup(), { a, ps } = f;
   for (const [grounded, horizontal] of [[true, 3.3], [false, 7]]) for (const axis of ['yaw', 'pitch']) {
-    a.grounded = grounded;
+    a.grounded = grounded; a.s3SplatlingJumpAgeFrames = grounded ? null : 0;
     const draws = [.5, axis === 'yaw' ? 1 - 1e-12 : .5, axis === 'pitch' ? 1 - 1e-12 : .5, .5]; let count = 0;
     f.setRandom(() => { count++; return draws.shift() ?? .5; });
     ps.fireSplatling(a, a.weapon, a.weaponRunner._spreadDeg(a.weapon));

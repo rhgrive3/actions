@@ -310,6 +310,10 @@ jobs:
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/local-quality/tests/bot-navigation-respawn.test.mjs
+      - name: Verify emitted sourced weapon holds and gameplay muzzle ownership
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-hold-motion.test.mjs
       - name: Verify real emitted material handoff ownership and cancellation
         env:
           INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site
@@ -437,12 +441,15 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 8
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     env:
-      INKWAVE_TEST_SHARD_COUNT: '4'
+      INKWAVE_TEST_SHARD_COUNT: '8'
       INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}
+      # Full-Character VM/geometry tests can retain large heaps. Keep the
+      # complete eight-way partition, with at most two test processes per VM.
+      INKWAVE_TEST_CONCURRENCY: '2'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -473,7 +480,7 @@ jobs:
           path: .ci-scratch/inkwave-patches/
           retention-days: 14
 
-  # Required /validate passes only when core and all four regression shards pass.
+  # Required /validate passes only when core and all eight regression shards pass.
   validate:
     if: ${{ always() && inputs.diagnostic_only != true }}
     needs: [validate_core, patch_tests]

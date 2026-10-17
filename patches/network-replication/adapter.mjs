@@ -1,4 +1,5 @@
 import { adaptTransientGear } from './transient-gear-adapter.mjs';
+import { adaptQueuedBugRecovery } from './queue-recovery-adapter.mjs';
 import { adaptGearLoadout } from './gear-loadout-adapter.mjs';
 import { adaptConditionalGear } from './conditional-gear-adapter.mjs';
 // Network owns the wire contract. Compose LAST; upstream modules and gameplay
@@ -26,7 +27,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -2654,5 +2655,6 @@ function canAllocateNetworkGhost(projectiles, actor) {
     patch('    const wr = a.weaponRunner;', "    const wr = a.weaponRunner;\n    if ((a.weapon?.behaviorKind || a.weapon?.kind) === 'dualies' && Number.isFinite(dt) && dt > 0) { wr.sinceHand[0] += dt; wr.sinceHand[1] += dt; }", 'remote dualies presentation clocks');
   }
   if (rel === 'src/net/netmatch.js') {code = adaptGearLoadout(code, once);code = adaptConditionalGear(code, once);code = adaptTransientGear(code, once);}
+  code = adaptQueuedBugRecovery(rel, code, once);
   return code;
 }

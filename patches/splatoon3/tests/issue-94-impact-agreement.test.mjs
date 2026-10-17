@@ -79,8 +79,14 @@ async function scene(look = [0.1, 1.3, 50]) {
   G.rig = { gameCam: camera };
   const actor = new Actor({ team: 0, name: 'issue 94 impact regression', weapon: 'shooter',
     CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
-  actor.character.wAim = 1;
   G.scene.add(actor.character.root);
+  // Pose the real standing stance before reading the muzzle, as every game frame does:
+  // the never-posed rest rig hangs the (1.3x) shooter so low that its muzzle sits inside
+  // the 0.2 m shot collision radius of the floor (reports/inkwave-weapon-hold-motion-2026-10-17.md).
+  vm.runInContext('globalThis.innerWidth ??= 1600; globalThis.innerHeight ??= 900;', api.vmContext);
+  for (let f = 0; f < 30; f++) actor.character.update(1 / 60, { form: 'kid', grounded: true, firing: false, charge: 0, aimPitch: 0,
+    speed: 0, localMove: { x: 0, z: 0 }, ink: 1, hp: 1, vy: 0 });
+  actor.character.wAim = 1;
   actor.character.root.updateMatrixWorld(true);
   G.actors = [actor];
   const controller = new PlayerController(actor, null, null);

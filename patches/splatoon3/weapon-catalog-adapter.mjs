@@ -28,7 +28,7 @@ export function adaptWeaponCatalog(rel, code) {
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code,
       "import { PLAYER } from '../config.js';",
-      "import { PLAYER, WEAPONS } from '../config.js';\nimport { weaponModelKey, weaponModelFamily, weaponHold, weaponNeedsNativeCarry, weaponAppearanceKey, weaponDefaultAppearance, weaponBaseModelId } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\nimport { selectedWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\n",
+      "import { PLAYER, WEAPONS } from '../config.js';\nimport { weaponModelKey, weaponModelFamily, weaponHold, weaponNeedsNativeCarry, weaponSourceBodyFamily, weaponIdleStanceFamily, weaponAppearanceKey, weaponDefaultAppearance, weaponBaseModelId } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\nimport { selectedWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\n",
       'character weapon catalog import');
     code = replaceOnce(code, "    this.setWeapon(opts.weapon || 'shooter');",
       "    this.weaponAppearancePreview = opts.weaponAppearancePreview === true;\n    this.setWeapon(opts.weapon || 'shooter');", 'personal preview appearance');
@@ -58,7 +58,9 @@ export function adaptWeaponCatalog(rel, code) {
     if (w.left) this.bones.handL.add(w.left.pivot);
     this.weaponKind = kind; this.weaponModel = model; this.weapon = w; this.hold = weaponHold(model, HOLD[kind]);
     this.weaponAppearanceModel = visual; this.modelVariantId = visual === weaponBaseModelId(visual) ? null : visual;
-    this.weaponNativeCarry = weaponNeedsNativeCarry(id);`,
+    this.weaponNativeCarry = weaponNeedsNativeCarry(id);
+    this.weaponSourceBody = weaponSourceBodyFamily(id);
+    this.weaponIdleStance = weaponIdleStanceFamily(id);`,
       'character weapon ID to its own model and family hold');
   }
 
@@ -157,7 +159,7 @@ export function adaptWeaponCatalog(rel, code) {
   }
 
   if (rel === 'src/ui/menus.js') {
-    code = "import { weaponAppearanceOptions, weaponAppearancePreference, setWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\nimport { weaponBaseModelId } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\n" + code;
+    code = "import { weaponAppearanceOptions, weaponAppearancePreference, setWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\nimport { weaponBaseModelId, weaponModelKey } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\n" + code;
     code = replaceOnce(code, "    // ---- detail panel\n", `    // Appearance is device-local and preserves this weapon's sub/special/stats.
     const appearanceLabel = h('span');
     const appearance = h('button', { class: 'iw-btn iw-btn--menu', type: 'button', 'aria-label': 'Weapon appearance / ブキの見た目' }, appearanceLabel);
@@ -171,7 +173,7 @@ export function adaptWeaponCatalog(rel, code) {
       const options = weaponAppearanceOptions(shown, LANG), selected = weaponAppearancePreference(shown) ?? '';
       const index = Math.max(0, options.findIndex(o => o.id === selected));
       setWeaponAppearance(shown, options[(index + 1) % options.length].id);
-      for (const c of this._sc()?.chars || []) if (c.weaponAppearancePreview && c.weaponModel === weaponBaseModelId(shown)) c.setWeapon(shown);
+      for (const c of this._sc()?.chars || []) if (c.weaponAppearancePreview && c.weaponModel === weaponModelKey(shown)) c.setWeapon(shown);
       refreshAppearance(); this._sfx('ui_toggle');
     } });
     // ---- detail panel
