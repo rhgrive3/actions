@@ -30,7 +30,7 @@ async function settingsRig(saved) {
     applyRuntimeWorldQuality(){}, refreshEnvironmentBudget(){}, effectiveQuality(){}, dressingFor(){}, THREE:{},
   };
   const persistence = span(main, 'function loadJSON(', 'const DEFAULT_PROFILE');
-  const load = span(main, "    this.settings = G.settings = migrateAimProfiles(", "    this.profile = loadJSON(");
+  const load = span(main, "    this.settings = G.settings = migrateAimProfiles(", "    this.profile = normalizeQueueProfile(");
   const set = span(main, '  _setSettings(partial) {', '\n  _applyAudioVolumes()');
   const Game = vm.runInNewContext(`${persistence}\nclass Game { bootSettings(){${load}} ${set} }; Game`, context);
   const make = () => { const game = new Game(); game.mobile={touch:false}; game._applyAudioVolumes=()=>{}; game.bootSettings(); return game; };
