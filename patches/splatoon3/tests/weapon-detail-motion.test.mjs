@@ -190,24 +190,29 @@ const issue1096Tuning = {
   splatling: { kick: .022, back: .012, hz: 10, z: .92, jit: .006 },
 };
 // Recorded on the pre-repair PR1083 local integration snapshot (remote head 69add020).
+// 2026-10-16: the S3 body proportions (runtime/body-proportion.mjs) and the
+// standing ready crouch/bob (runtime/idle-motion.mjs) deliberately change the
+// pose and recoil-spring digests of all four classes; breath digests are
+// unchanged. Splatling layer outputs differ only by a 1e-16 floating-point
+// change in the drawn grip correction; its fire events are unchanged.
 const issue1096BaselineOutputs = {
   "shooter": {
-    "pose": "30af48a6030396e5ae2567e02e8a3c8df9aae41c9a40ac0716db24d08e737b70",
-    "recoilTrigger": "c55ee6a095526ed1965e6f6cbef8c03a5b9686dc2c7529a2e4282c0ef6c568b5",
+    "pose": "c9c2276f3ee5ded38a971a488b00cf2ca5226957d8741e039d8a16489e53d2c9",
+    "recoilTrigger": "c7b74d403f06ea1ea7d6db344f94184b4d0411d40faa7a0fb79f891e2abb10f5",
     "breath": "ee90765bb7397f23b02406e461a0ee4e585f12b49e5aa781809705cb62f46631",
     "layerOutputs": "26ec4aedabdf3af1aa1b34efadc36a71f390ac40ab1e2b324f7e47869d551b05"
   },
   "blaster": {
-    "pose": "2151f73a8c00e9957f5ebdc1a176fe98d2f203e0735befd1e42d64f520d17cd3",
-    "recoilTrigger": "5748cbe9dbab8c3a56152617d50c5b9a9678407699418c49c45ddeeece7168b7",
+    "pose": "0cadaab3b66c35d354f6918c7e65cdcbb18bea423e76a19d9dacde8b22360ffe",
+    "recoilTrigger": "f11b5948efc68f59d85e4ce2e70be4f351d47efd5d6777577fe9a18e18ef06a0",
     "breath": "8c93ebe1f00af866bbd0224bf845ef5bab4a9e1f70aca86e30c425e7c2ae26e3",
     // Per-weapon Blaster model (weapon-models/blasters.mjs) moves the muzzle socket to its real nozzle, which the
     // recorded fire events carry; pose, recoil and breath digests are unchanged.
     "layerOutputs": "078c7babd05a9399c2c36f7d84ebf587dbc38890c49d3f4b150d7d8d6547c59a"
   },
   "charger": {
-    "pose": "376b2d767cef5a28fd41b4e4b26f830eefc659a26e086850174c1b5d08ee9a91",
-    "recoilTrigger": "5dcb431b1181d3439057d9c25930ee1c265075acfbdbe8597cfcdb96a082c5c8",
+    "pose": "dcd30b88c7584351f63527a289fca448e1dd6e591f0ee1e5e4eb7d6f766e7e68",
+    "recoilTrigger": "b45f215fc28a30f21b4cc6a6fc5ef30ea678ea5c27750ca44b6699aee59fd80a",
     "breath": "032a83c35d476343a5ccfae4b2014ab4a6a5f0b27d83265df7c4176a485a588a",
     "layerOutputs": "4fe3c1c75672827883d3ae7ed0cb63cb847af318569f3199e85b7c89496fa325"
   },
@@ -219,10 +224,10 @@ const issue1096BaselineOutputs = {
   // digests; independent 41-shot reservation/timing regression suites are
   // still required and may not be replaced by these hash expectations.
   "splatling": {
-    "pose": "ae45af8186aaefbb558ffa231572d5b819ebe00ec97b80638ff68fb81bc4c050",
-    "recoilTrigger": "d6eb1bbb176ad50607166564fd80a4c10a6165aa0fd007e7af23d3fb927cfb5f",
+    "pose": "95efec3ea8df02e958f8adc924e6c3d0d1d2c22a9dff92790ad6bf4144217a00",
+    "recoilTrigger": "f4c7e2e99ac2ab613d24b5c772e4a6a2548206ab0ea88c555f88499d2e50ce5c",
     "breath": "0186ceeb0c0284dbd6e9d12efba6ec36c0ee37d8897902cc470abef2b73c9c14",
-    "layerOutputs": "9e52540355e4e51216b8b58535d10c0f0e9c10a4758d58a670d7f58b08e0757c"
+    "layerOutputs": "16b9abd4d781ed48bc0bb6c623482f229025afa8468440b5ea7ebf73cb51c59d"
   }
 };
 

@@ -77,6 +77,7 @@ import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
 import { installWeaponHitReaction } from './weapon-hit-reaction.mjs';
 import { installSpawnPoseMotion } from './spawn-pose-motion.mjs';
 import { installIdleMotion } from './idle-motion.mjs';
+import { installBodyProportion } from './body-proportion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion, installSpecialPresentation } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
@@ -154,6 +155,7 @@ export function install(profile) {
   installSpawnPoseMotion(api);
   installDeathCamera(api);
   installIdleMotion(api, profile);
+  installBodyProportion(api);
   installEmotesMotion(api, profile);
   installSpecialMotion(api, profile);
   installFlowMotion(api);
