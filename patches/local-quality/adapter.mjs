@@ -1,3 +1,4 @@
+import { adaptHeadgear } from './headgear-adapter.mjs';
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
 import { adaptNavHeuristic } from './nav-heuristic-adapter.mjs';
 import { adaptBotNavigation } from './bot-navigation-adapter.mjs';
@@ -90,6 +91,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'headgear-adapter.mjs', 'headgear/catalog.mjs', 'headgear/lifecycle.mjs', 'headgear/armor-helmet.js', 'headgear/two-line-mesh.js', 'headgear/camo-headphones.js', 'headgear/character-headgear-ink-black-flap-cap.js',
   'view-settings.mjs',
   'material-handoff-adapter.mjs', 'material-handoff.mjs',
   'lobby-slot-transform-adapter.mjs',
@@ -468,6 +470,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptS3HudLook(rel, code);
   code = adaptS3SquidLook(rel, code);
   code = adaptS3FaceLook(rel, code);
+  code = adaptHeadgear(rel, code);
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
     code = adaptTouchRelayout(rel, code);
