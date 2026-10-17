@@ -220,10 +220,10 @@ class SpritePool {
     const g = new THREE.InstancedBufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0]), 3));
     g.setIndex([0, 1, 2, 0, 2, 3]);
-    this.aPos = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
-    this.aDir = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
-    this.aCol = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
-    this.aPar = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.aPos = new THREE.InstancedBufferAttribute(new Float32Array((cap + 1) * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.aDir = new THREE.InstancedBufferAttribute(new Float32Array((cap + 1) * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.aCol = new THREE.InstancedBufferAttribute(new Float32Array((cap + 1) * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.aPar = new THREE.InstancedBufferAttribute(new Float32Array((cap + 1) * 4), 4).setUsage(THREE.DynamicDrawUsage);
     g.setAttribute('iPos', this.aPos); g.setAttribute('iDir', this.aDir); g.setAttribute('iCol', this.aCol); g.setAttribute('iPar', this.aPar);
     g.instanceCount = 1;
     const m = new THREE.ShaderMaterial({ uniforms: { uTime, ...(additive ? {} : light) }, vertexShader: SPRITE_VERT, fragmentShader: additive ? SPARK_FRAG : PUFF_FRAG,
