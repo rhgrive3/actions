@@ -158,6 +158,7 @@ test('native composed Character keeps style snapshots in weak keys across repeat
   ];
   const character = new Character({ name: 'portrait weak-key retention', weapon: 'shooter', style: styles[0] });
   try {
+    assert.equal(typeof Character.requireWeaponOpponentPalette, 'function', 'native portrait fixture must retain the production palette admission guard');
     character.preparePortraitReuse();
     assert.equal(Object.prototype.toString.call(character._portraitObjects), '[object WeakMap]', 'detached mesh keys cannot be strongly enumerated or retained by the snapshot cache');
     for (let i = 0; i < 40; i++) {
