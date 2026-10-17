@@ -1,0 +1,13 @@
+lightmap cargo.png: 220594 -> 168115 bytes (same pixels)
+lightmap halyard.png: 63401 -> 54085 bytes (same pixels)
+lightmap kelpline.png: 153108 -> 121155 bytes (same pixels)
+lightmap range.png: 161986 -> 112128 bytes (same pixels)
+lightmap tidewater.png: 149335 -> 119063 bytes (same pixels)
+three.js: 149 of 444 exports kept · 741 KB → 599 KB (gzip 152 KB)
+startup runtime: 9963 -> 5502 bytes
+patch: splatoon3+quality+range · build c70ff01bfc49
+JS : 6627 KB → 3465 KB  (gzip 1804 KB → 1165 KB)
+CSS: 465 KB → 392 KB
+repeated module strings: saved 28944 bytes total, 28857 in the offline precache
+modulepreload: 145 modules (273 deferred, all precached)
+lossless lightmaps: 173878 bytes saved with identical decoded pixels

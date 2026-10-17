@@ -97,7 +97,7 @@ export function adaptRange(rel, code) {
       '      base = mix(base, vec3(0.13, 0.16, 0.23), hM * 0.85);\n' +
       '    }\n' +
       '    // ramps: anti-slip grooves across the slope\n', 'range measuring lines');
-    return replaceOnce(code, "'inkwave-level-v6-quality1'", "'inkwave-level-v6-quality1-range1'", 'material program identity');
+    return replaceOnce(code, "'inkwave-level-v6-quality3'", "'inkwave-level-v6-quality3-range1'", 'material program identity');
   }
   if (rel === 'src/ui/hud.js') {
     // Upstream bug (found while testing the range): HUD._killCard reads `isJa`, which hud.js never imports, so every

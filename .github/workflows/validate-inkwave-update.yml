@@ -590,6 +590,11 @@ jobs:
         run: |
           node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser chromium --out "$CI_STORAGE/evidence/post-depth-chromium.json"
           node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser webkit --out "$CI_STORAGE/evidence/post-depth-webkit.json"
+      - name: Verify grate orientation and painted level normals in Chromium and WebKit
+        if: matrix.suite == 'active'
+        run: |
+          node scripts/check-inkwave-grate-normal.mjs --site .built-site/_site --source-root "$GITHUB_WORKSPACE" --source-sha "$SOURCE_SHA" --browser chromium --evidence-dir "$CI_STORAGE/evidence/grate-normal"
+          node scripts/check-inkwave-grate-normal.mjs --site .built-site/_site --source-root "$GITHUB_WORKSPACE" --source-sha "$SOURCE_SHA" --browser webkit --evidence-dir "$CI_STORAGE/evidence/grate-normal-webkit"
       - name: Verify browser movement speed across directions and native firing/rolling transitions
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-movement-speed.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/movement-speed" --profile-dir "$CI_STORAGE/cache/movement-speed"
@@ -717,6 +722,7 @@ jobs:
           }[suite]
           if suite=='active': checks.extend(['motion-cache-chromium.json','motion-cache-webkit.json','native-normal-webkit/native-normal-browser.json'])
           if suite=='active': checks.extend(['post-depth-chromium.json','post-depth-webkit.json'])
+          if suite=='active': checks.extend(['grate-normal/grate-normal-result.json','grate-normal-webkit/grate-normal-result.json'])
           runtime_performance=os.environ['RUNTIME_PERFORMANCE']=='true'
           if suite=='active' and runtime_performance:
             checks.extend(['runtime-before/runtime-result.json','runtime-after/runtime-result.json','runtime-comparison.json'])
@@ -733,6 +739,8 @@ jobs:
           if suite=='active':
             assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
             assert reports['weapon-models/weapon-models-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+            for name in ['grate-normal/grate-normal-result.json','grate-normal-webkit/grate-normal-result.json']:
+              assert reports[name]['sourceSha']==os.environ['SOURCE_SHA'], name
             if runtime_performance:
               assert reports['runtime-after/runtime-result.json']['sourceSha']==os.environ['SOURCE_SHA']
               assert reports['runtime-before/runtime-result.json']['sourceSha']=='5e28dbd16f7829aebd88052ff5f7fdf71f39fdad'
