@@ -24,7 +24,7 @@ test('Triple Inkstrike keeps sub-release command and source 20F +14F first throw
  assert.equal(events.length,1);
  const marker=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='marker');
  assert.ok(marker);
- assert.equal(Math.round(marker.flight*60),82);
+ assert.equal(marker.phase,'flight');assert.equal(marker.vel.z,120,'raw guide speed Low=2 per source frame');
  assert.equal(actor.form,'kid');
 });
 test('Triple Inkstrike three sub-release throws are separated by 33F (34/67/100)',async()=>{
@@ -44,13 +44,15 @@ test('Triple Inkstrike three sub-release throws are separated by 33F (34/67/100)
  assert.equal(events.length,3);
  assert.equal(actor.specialActive,null,'third throw ends the weapon usage');
 });
-test('Triple Inkstrike begins at 82F after marker and applies 11 damage pulses over 51F',async()=>{
+test('Triple Inkstrike begins at 82F after terrain contact and applies 11 damage pulses over 51F',async()=>{
  const {f,actor,events,tick,release}=await harness();
  release();
  for(let i=3;i<=34;i++)tick();
  assert.equal(events.length,1);
  const marker=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='marker');
  assert.ok(marker);
+ for(let i=0;i<600&&marker.phase==='flight';i++)f.G.projectiles.update(1/60);
+ assert.equal(marker.phase,'warning','real guide must contact terrain before warning countdown');
  const victim=f.make();victim.team=1;victim.pos.copy(marker.target);victim.alive=true;
  f.G.actors=[actor,victim];
  const hits=[],old=f.G.projectiles.applyHit;

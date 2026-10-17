@@ -16,5 +16,10 @@ export function useSpecialEvidence(f,actor) {
  }else{
   if(id==='tentaMissiles'&&!f.G.actors.some(a=>a.alive&&a.team!==actor.team)){const enemy=f.make();enemy.team=1-actor.team;enemy.pos.copy(actor.pos).addScaledVector(actor.aimDir,8);f.G.actors.push(enemy);}
   actor.intent.fire=true;actor._updateSpecial(1/60);
+  if(id==='superChump')for(let i=0;i<13&&actor.specialActive;i++)actor._updateSpecial(1/60);
+ }
+ if(['waveBreaker','splattercolorScreen'].includes(id)){
+  const object=f.G.projectiles._s3AllSpecialObjects?.find(o=>o.owner===actor&&['wave','screen'].includes(o.kind));
+  for(let i=0;i<600&&object?.phase==='flight'&&!object.dead;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
  }
 }

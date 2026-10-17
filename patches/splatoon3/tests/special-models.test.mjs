@@ -62,7 +62,7 @@ test('deployed objects and rounds are drawn with models in the real runtime; pri
   const kinds = ['decoy', 'marker', 'wave', 'screen'];
   const objects = kinds.map((kind, i) => ({
     kind, owner, team: 0, pos: new T.Vector3(i * 3, 0, 0), age: 0.5, dead: false, target: new T.Vector3(i * 3, 0, 4),
-    origin: new T.Vector3(i * 3, 1, 0), normal: new T.Vector3(0, 0, 1), width: 15, height: 9, index: i,
+    origin: new T.Vector3(i * 3, 1, 0), normal: new T.Vector3(0, 0, 1), direction: new T.Vector3(0,0,1), tangent: new T.Vector3(1,0,0), width: 15, height: 9, index: i,
     waves: kind === 'wave' ? [{ started: 0, radius: 20 }] : [], maxWaveFrame: 3,
     mesh: new T.Mesh(new T.SphereGeometry(0.5), new T.MeshBasicMaterial()),
   }));
@@ -98,12 +98,14 @@ test('devices attach to the real Character while a special is active and retire 
   const f = await fixture({ fullRuntime: true, productionComposition: true, includeCharacter: true });
   const actor = new f.Actor({ team: 0, name: 'sp', weapon: 'shooter', CharacterClass: f.Character });
   actor.character.actor = actor; f.G.actors.push(actor);
+  f.G.scene = new f.THREE.Scene(); f.G.scene.add(actor.character.root);
   const ch = actor.character, view = { form: 'kid', hp: 100, grounded: true };
-  const count = () => { let n = 0; ch.root.traverse(o => { if (o.userData?.s3SubModel?.startsWith?.('sp')) n++; }); return n; };
+  const count = () => { let n = 0; f.G.scene.traverse(o => { if (o.userData?.s3SubModel?.startsWith?.('sp')) n++; }); return n; };
   for (const [id, expect] of [['reefslider', 1], ['killerWail', 6], ['inkjet', 2]]) {
     actor.specialActive = { id, phase: 'active' };
     ch.update(1 / 60, view);
-    assert.equal(count(), expect, `${id}: device models on the kid`);
+    assert.equal(count(), expect, `${id}: device models in the world or on the kid`);
+    if(id==='killerWail')assert.ok(ch.s3SpecialDevices().every(d=>d.holder.parent===f.G.scene),'floating speakers survive native form visibility');
     if (SPECIAL_DEVICES[id].some(d => d.hideWeapon)) assert.equal(ch.weapon.pivot.visible, false, `${id}: main weapon hidden while held`);
     actor.specialActive = null;
     ch.update(1 / 60, view);

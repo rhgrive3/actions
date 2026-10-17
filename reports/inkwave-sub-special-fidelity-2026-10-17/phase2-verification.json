@@ -1,0 +1,1245 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-10-17T09:15:39.631804+00:00",
+  "reference": "Splatoon 3 Ver.11.3.0 regular PvP; Crab parameters excluded",
+  "baselineMain": "f75aefae5c7e08cf23a8369cc606a1080a826b5c",
+  "runtimeCodeCommit": "b353646515f8a3fdb7e5daf8a666c5767017275a",
+  "followupPR": "https://github.com/rhgrive3/actions/pull/1554",
+  "sources": {
+    "official": "https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html",
+    "pinnedExtraction": "https://github.com/Leanny/splat3/tree/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon",
+    "trizooka": "https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/ウルトラショット",
+    "zipcaster": "https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/ショクワンダー",
+    "armor": "https://wikiwiki.jp/splatoon3mix/システム詳細仕様",
+    "gauge": "https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン#a6ebc309",
+    "burst": "https://wikiwiki.jp/splatoon3mix/ブキ/サブウェポン/クイックボム"
+  },
+  "emitted": {
+    "contentHash": "73385cce67858f7e98b436e52accb594615b1af1e3f34b32548c060a2a665e4b",
+    "revision": "361ef78a6d50eb012072caad969e4f60973bd7771b38380cb90d848df095c00b",
+    "site": "/workspace/scratch/subspecial-phase2-verified-site",
+    "artifactManifestSha256": "6067219f7c3e3ddfad7047b24d8ea7e8f1c9eb74aa204174983a0be00bfff117"
+  },
+  "verification": {
+    "targetedEmitted": {
+      "files": 17,
+      "pass": 269,
+      "fail": 0,
+      "skip": 0,
+      "log": "/workspace/scratch/subspecial-phase2-verified-emitted.log",
+      "maxOldSpaceMiB": 2048,
+      "concurrency": 2
+    },
+    "sourceAdjacent": {
+      "files": 3,
+      "pass": 30,
+      "fail": 0,
+      "skip": 0,
+      "filesIncluded": [
+        "issue-469-647-bootstrap-scope.test.mjs",
+        "storm-lifetime.test.mjs",
+        "respawn-lifecycle.test.mjs"
+      ],
+      "log": "/workspace/scratch/subspecial-phase2-source-adjacent.log"
+    },
+    "packagingManifestWorkflow": {
+      "files": 4,
+      "pass": 29,
+      "fail": 0,
+      "skip": 5,
+      "skipReason": "existing optional external fixtures; not gameplay cases",
+      "log": "/workspace/scratch/subspecial-phase2-build-tests.log"
+    },
+    "sourceNewBoundaries": {
+      "burst": 9,
+      "trizooka": 9,
+      "zipcaster": 12,
+      "deployedGauge": 7,
+      "note": "individual successful suites; overlap other runs, do not sum"
+    },
+    "startup": {
+      "status": "passed",
+      "revision": "361ef78a6d50eb012072caad969e4f60973bd7771b38380cb90d848df095c00b",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 77425,
+      "initialJSBytes": 2718488,
+      "criticalHTMLBytes": 15802,
+      "precacheCount": 421,
+      "precacheBytes": 6710810,
+      "workerBytes": 65737,
+      "declaredBytes": 11768196,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "splashdownBrowser": {
+      "scope": "production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison",
+      "cases": [
+        {
+          "fxMode": "none",
+          "hz": 30,
+          "sourceMotion": "ready",
+          "phases": [
+            "rise",
+            "drop"
+          ],
+          "maxY": 6.5,
+          "endedAt": 1.2,
+          "primitiveFrames": 0,
+          "armedFrames": 0,
+          "fistFrames": 43,
+          "fistPixels": [
+            1910,
+            3399
+          ],
+          "normalPass": null,
+          "captures": []
+        },
+        {
+          "fxMode": "none",
+          "hz": 60,
+          "sourceMotion": "ready",
+          "phases": [
+            "rise",
+            "drop"
+          ],
+          "maxY": 6.497772612341123,
+          "endedAt": 1.1666666666666667,
+          "primitiveFrames": 0,
+          "armedFrames": 0,
+          "fistFrames": 86,
+          "fistPixels": [
+            1911,
+            3375
+          ],
+          "normalPass": {
+            "energyPixels": 0,
+            "solidPixels": 1699
+          },
+          "captures": [
+            {
+              "frame": 1,
+              "phase": "rise",
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 2,
+              "armed": false,
+              "presentation": "tripleSplashdown"
+            },
+            {
+              "frame": 30,
+              "phase": "rise",
+              "pos": [
+                0,
+                4.474304742009401,
+                0
+              ],
+              "fists": 2,
+              "armed": false,
+              "presentation": "tripleSplashdown"
+            },
+            {
+              "frame": 60,
+              "phase": "rise",
+              "pos": [
+                0,
+                6.497772612341123,
+                0
+              ],
+              "fists": 2,
+              "armed": false,
+              "presentation": "tripleSplashdown"
+            },
+            {
+              "frame": 70,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 2,
+              "armed": true,
+              "presentation": null
+            },
+            {
+              "frame": 80,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 2,
+              "armed": true,
+              "presentation": null
+            },
+            {
+              "frame": 87,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 0,
+              "armed": true,
+              "presentation": null
+            },
+            {
+              "frame": 120,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 0,
+              "armed": true,
+              "presentation": null
+            }
+          ]
+        },
+        {
+          "fxMode": "none",
+          "hz": 120,
+          "sourceMotion": "ready",
+          "phases": [
+            "rise",
+            "drop"
+          ],
+          "maxY": 6.5,
+          "endedAt": 1.175,
+          "primitiveFrames": 0,
+          "armedFrames": 0,
+          "fistFrames": 173,
+          "fistPixels": [
+            1934,
+            3371
+          ],
+          "normalPass": null,
+          "captures": []
+        },
+        {
+          "fxMode": "disabled",
+          "hz": 30,
+          "sourceMotion": "ready",
+          "phases": [
+            "rise",
+            "drop"
+          ],
+          "maxY": 6.5,
+          "endedAt": 1.2,
+          "primitiveFrames": 0,
+          "armedFrames": 0,
+          "fistFrames": 43,
+          "fistPixels": [
+            1929,
+            3407
+          ],
+          "normalPass": null,
+          "captures": []
+        },
+        {
+          "fxMode": "disabled",
+          "hz": 60,
+          "sourceMotion": "ready",
+          "phases": [
+            "rise",
+            "drop"
+          ],
+          "maxY": 6.497772612341123,
+          "endedAt": 1.1666666666666667,
+          "primitiveFrames": 0,
+          "armedFrames": 0,
+          "fistFrames": 86,
+          "fistPixels": [
+            1905,
+            3399
+          ],
+          "normalPass": null,
+          "captures": [
+            {
+              "frame": 1,
+              "phase": "rise",
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 2,
+              "armed": false,
+              "presentation": "tripleSplashdown"
+            },
+            {
+              "frame": 30,
+              "phase": "rise",
+              "pos": [
+                0,
+                4.474304742009401,
+                0
+              ],
+              "fists": 2,
+              "armed": false,
+              "presentation": "tripleSplashdown"
+            },
+            {
+              "frame": 60,
+              "phase": "rise",
+              "pos": [
+                0,
+                6.497772612341123,
+                0
+              ],
+              "fists": 2,
+              "armed": false,
+              "presentation": "tripleSplashdown"
+            },
+            {
+              "frame": 70,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 2,
+              "armed": true,
+              "presentation": null
+            },
+            {
+              "frame": 80,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 2,
+              "armed": true,
+              "presentation": null
+            },
+            {
+              "frame": 87,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 0,
+              "armed": true,
+              "presentation": null
+            },
+            {
+              "frame": 120,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 0,
+              "armed": true,
+              "presentation": null
+            }
+          ]
+        },
+        {
+          "fxMode": "disabled",
+          "hz": 120,
+          "sourceMotion": "ready",
+          "phases": [
+            "rise",
+            "drop"
+          ],
+          "maxY": 6.5,
+          "endedAt": 1.175,
+          "primitiveFrames": 0,
+          "armedFrames": 0,
+          "fistFrames": 173,
+          "fistPixels": [
+            1911,
+            3373
+          ],
+          "normalPass": null,
+          "captures": []
+        },
+        {
+          "fxMode": "enabled",
+          "hz": 30,
+          "sourceMotion": "ready",
+          "phases": [
+            "rise",
+            "drop"
+          ],
+          "maxY": 6.5,
+          "endedAt": 1.2,
+          "primitiveFrames": 0,
+          "armedFrames": 0,
+          "fistFrames": 43,
+          "fistPixels": [
+            1816,
+            3125
+          ],
+          "normalPass": null,
+          "captures": []
+        },
+        {
+          "fxMode": "enabled",
+          "hz": 60,
+          "sourceMotion": "ready",
+          "phases": [
+            "rise",
+            "drop"
+          ],
+          "maxY": 6.497772612341123,
+          "endedAt": 1.1666666666666667,
+          "primitiveFrames": 0,
+          "armedFrames": 0,
+          "fistFrames": 86,
+          "fistPixels": [
+            1806,
+            3117
+          ],
+          "normalPass": null,
+          "captures": [
+            {
+              "frame": 1,
+              "phase": "rise",
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 2,
+              "armed": false,
+              "presentation": "tripleSplashdown"
+            },
+            {
+              "frame": 30,
+              "phase": "rise",
+              "pos": [
+                0,
+                4.474304742009401,
+                0
+              ],
+              "fists": 2,
+              "armed": false,
+              "presentation": "tripleSplashdown"
+            },
+            {
+              "frame": 60,
+              "phase": "rise",
+              "pos": [
+                0,
+                6.497772612341123,
+                0
+              ],
+              "fists": 2,
+              "armed": false,
+              "presentation": "tripleSplashdown"
+            },
+            {
+              "frame": 70,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 2,
+              "armed": true,
+              "presentation": null
+            },
+            {
+              "frame": 80,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 2,
+              "armed": true,
+              "presentation": null
+            },
+            {
+              "frame": 87,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 0,
+              "armed": true,
+              "presentation": null
+            },
+            {
+              "frame": 120,
+              "phase": null,
+              "pos": [
+                0,
+                0,
+                0
+              ],
+              "fists": 0,
+              "armed": true,
+              "presentation": null
+            }
+          ]
+        },
+        {
+          "fxMode": "enabled",
+          "hz": 120,
+          "sourceMotion": "ready",
+          "phases": [
+            "rise",
+            "drop"
+          ],
+          "maxY": 6.5,
+          "endedAt": 1.175,
+          "primitiveFrames": 0,
+          "armedFrames": 0,
+          "fistFrames": 173,
+          "fistPixels": [
+            1798,
+            3074
+          ],
+          "normalPass": null,
+          "captures": []
+        }
+      ],
+      "failures": [],
+      "errors": [],
+      "buildRevision": "361ef78a6d50eb012072caad969e4f60973bd7771b38380cb90d848df095c00b",
+      "contentHash": "73385cce67858f7e98b436e52accb594615b1af1e3f34b32548c060a2a665e4b"
+    },
+    "specialPresentationBrowser": {
+      "status": "passed",
+      "contentHash": "73385cce67858f7e98b436e52accb594615b1af1e3f34b32548c060a2a665e4b",
+      "revision": "361ef78a6d50eb012072caad969e4f60973bd7771b38380cb90d848df095c00b",
+      "rows": [
+        {
+          "id": "trizooka",
+          "driver": "real Actor.update with native Physics",
+          "sourceMotion": "ready",
+          "phase": "charge",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "changedPixels": 20559,
+          "actorPixels": 40173,
+          "maxHandError": 9.586791989626881e-16,
+          "calls": 11,
+          "triangles": 115817,
+          "nativeLifecycle": {
+            "swimDistance": 2.361,
+            "swimFrames": 30,
+            "shotsWhileSwimming": 0,
+            "surfacedOnFire": true,
+            "returnedToCarry": true
+          }
+        },
+        {
+          "id": "inkVac",
+          "driver": "real Actor.update with native Physics",
+          "sourceMotion": "ready",
+          "phase": "inhale",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "changedPixels": 5827,
+          "actorPixels": 29258,
+          "maxHandError": 6.687668363004597e-16,
+          "calls": 12,
+          "triangles": 113789,
+          "nativeLifecycle": {
+            "exhalePixels": 5446,
+            "transitionFrames": 20,
+            "countershots": 1,
+            "returnedToCarry": true
+          }
+        },
+        {
+          "id": "storm",
+          "driver": "manual phase/finish diagnostic",
+          "sourceMotion": "ready",
+          "phase": "hold",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "changedPixels": 2745,
+          "actorPixels": 23638,
+          "maxHandError": 0,
+          "calls": 9,
+          "triangles": 34160
+        },
+        {
+          "id": "slam",
+          "driver": "manual phase/finish diagnostic",
+          "sourceMotion": "ready",
+          "phase": "hang",
+          "position": [
+            0,
+            2.033333333333334,
+            0
+          ],
+          "changedPixels": 60657,
+          "actorPixels": 10074,
+          "maxHandError": 0,
+          "calls": 11,
+          "triangles": 39104
+        },
+        {
+          "id": "bubbler",
+          "driver": "manual phase/finish diagnostic",
+          "sourceMotion": "ready",
+          "phase": null,
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "changedPixels": 120788,
+          "actorPixels": 554,
+          "maxHandError": 0,
+          "calls": 16,
+          "triangles": 41461
+        },
+        {
+          "id": "tacticooler",
+          "driver": "manual phase/finish diagnostic",
+          "sourceMotion": "ready",
+          "phase": null,
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "changedPixels": 22265,
+          "actorPixels": 10501,
+          "maxHandError": 0,
+          "calls": 18,
+          "triangles": 13959
+        }
+      ],
+      "cloudDrawCalls": 1,
+      "nativeCloudRetirements": 36,
+      "baseline": {
+        "geometries": 48,
+        "textures": 2,
+        "programs": 17,
+        "buffers": 258
+      },
+      "after": {
+        "geometries": 48,
+        "textures": 2,
+        "programs": 17,
+        "buffers": 258
+      },
+      "vfxResources": {
+        "pool": [
+          {
+            "quality": 0.35,
+            "key": "sparks",
+            "cap": 315,
+            "attributeCapacity": 316,
+            "draws": 8,
+            "pixels": 2592,
+            "baseline": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            }
+          },
+          {
+            "quality": 0.35,
+            "key": "puffs",
+            "cap": 182,
+            "attributeCapacity": 183,
+            "draws": 8,
+            "pixels": 2310,
+            "baseline": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            }
+          },
+          {
+            "quality": 1,
+            "key": "sparks",
+            "cap": 900,
+            "attributeCapacity": 901,
+            "draws": 8,
+            "pixels": 2592,
+            "baseline": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            }
+          },
+          {
+            "quality": 1,
+            "key": "puffs",
+            "cap": 520,
+            "attributeCapacity": 521,
+            "draws": 8,
+            "pixels": 2326,
+            "baseline": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            }
+          }
+        ],
+        "fists": [
+          {
+            "quality": 0.35,
+            "mode": "clear",
+            "cycle": 0,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 0.35,
+            "mode": "clear",
+            "cycle": 1,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 0.35,
+            "mode": "dispose",
+            "cycle": 0,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 0.35,
+            "mode": "dispose",
+            "cycle": 1,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 0.35,
+            "mode": "normal",
+            "cycle": 0,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 0.35,
+            "mode": "normal",
+            "cycle": 1,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 1,
+            "mode": "clear",
+            "cycle": 0,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 1,
+            "mode": "clear",
+            "cycle": 1,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 1,
+            "mode": "dispose",
+            "cycle": 0,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 1,
+            "mode": "dispose",
+            "cycle": 1,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 1,
+            "mode": "normal",
+            "cycle": 0,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          },
+          {
+            "quality": 1,
+            "mode": "normal",
+            "cycle": 1,
+            "directorErrors": 0,
+            "draws": 2,
+            "owned": 2,
+            "shared": 2,
+            "before": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            },
+            "allocated": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 32,
+              "buffers": 378
+            },
+            "rendered": {
+              "geometries": 67,
+              "textures": 2,
+              "programs": 33,
+              "buffers": 378
+            },
+            "after": {
+              "geometries": 48,
+              "textures": 2,
+              "programs": 17,
+              "buffers": 258
+            }
+          }
+        ],
+        "scope": "emitted native FX/director + production factory; injected fist records; no retail or gameplay qualification",
+        "baseline": {
+          "geometries": 48,
+          "textures": 2,
+          "programs": 17,
+          "buffers": 258
+        },
+        "after": {
+          "geometries": 48,
+          "textures": 2,
+          "programs": 17,
+          "buffers": 258
+        }
+      },
+      "renderer": "WebKit WebGL",
+      "fixture": "source-loaded native rig; Trizooka and Vac use actual Actor.update/Physics and native lifecycle, other specials use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim",
+      "errors": []
+    },
+    "catalogBrowser": {
+      "engines": [
+        "chromium"
+      ],
+      "reference": "controlled native game modules, collision and DisplayCharacter; not a retail visual comparison",
+      "recordCount": 65,
+      "log": "/workspace/scratch/subspecial-phase2-catalog-browser.log",
+      "terrainProbeFixCommit": "cc5350d"
+    },
+    "independentReview": "same GPT-6.1 Sol xhigh peer; verified fixes for dodge admission, actual Zipcaster action cancellation, approximate swim calibration, and late-operation Rainmaker exception; no unresolved P1 reported",
+    "allSpecials": {
+      "sourcePass": 78,
+      "sourceFail": 0,
+      "sourceSkip": 0,
+      "sourceBatches": [
+        "a-d",
+        "e-h",
+        "i-l",
+        "m-p",
+        "q-r",
+        "s-except-launch",
+        "source-launch",
+        "t",
+        "u-z"
+      ],
+      "sourceLogPattern": "/workspace/scratch/all-specials-source-part-*.log",
+      "emittedPass": 78,
+      "emittedFail": 0,
+      "emittedSkip": 0,
+      "emittedLog": "/workspace/scratch/subspecial-phase2-verified-all-specials.log",
+      "sameContentHash": "73385cce67858f7e98b436e52accb594615b1af1e3f34b32548c060a2a665e4b"
+    }
+  },
+  "discardedRuns": [
+    {
+      "log": "/workspace/scratch/subspecial-phase2-emitted-tests.log",
+      "status": "not a passing suite",
+      "reason": "one all-specials process stopped during huge identity assertion formatting; three source-only mutation controls could not mutate emitted input and a constrained source packet-length assertion expected23 versus production26; these three suites were rerun source-only and passed30/30",
+      "tests": 357,
+      "pass": 351,
+      "fail": 5,
+      "skip": 1,
+      "superseded": true
+    },
+    {
+      "reason": "Super Chump wrong-owner negative control serialized a cyclic Actor/world on assert.equal failure; preserve === oracle via boolean assertion to avoid huge error formatting; all negative controls retained"
+    },
+    {
+      "reason": "catalogue Mist probe used empty collision world, depending on removed airborne timeout; changed probe to actual Level/Physics floor and passed Chromium"
+    },
+    {
+      "reason": "local WebKit runtime downloaded but could not launch: missing OS libraries; installing dependencies requires unavailable root credentials; Chromium results are separate from pending hosted WebKit CI"
+    }
+  ],
+  "limits": [
+    "No simultaneous Switch retail A/B video acquired.",
+    "Approximate Trizooka swim speed is community distance-derived; exact reduction and weight interaction unverified.",
+    "Per-glob aim/muzzle resampling, trajectories on all terrain, original meshes and skeletal curves remain unverified.",
+    "Local browser passes do not imply hosted CI or Pages deployment has passed."
+  ],
+  "verifiedSourceFileHashes": {
+    ".github/workflows/inkwave-specials-1130.yml": "498c872d98f00baa515e92f1103f87109c7a4e999ecdfe9604f6953b6cca517f",
+    "patches/local-quality/tenacity.mjs": "7bb8b3b08e2a3cd8ca24e57e7a9850252e0f5a2fc31b81777fbec84d33e1cd60",
+    "patches/local-quality/tests/tenacity.test.mjs": "a9478ca7a46a59c0bb01c72968775860e033b6959350d5159c56bc493d912155",
+    "patches/splatoon3/adapter.mjs": "fc15906b7a84c66feb78798813a924047bcc51f35b20398d669e15075f18adde",
+    "patches/splatoon3/kit-rescue-adapter.mjs": "a34088b7c91447836bea47f15da9be88c952d7019c6de62c75a54bde057d90f8",
+    "patches/splatoon3/runtime/all-specials.mjs": "94cd67bee71da2ec739c9137a0e849bd0d722efdc9d5d9fefacf193df2564520",
+    "patches/splatoon3/runtime/kit-big-bubbler.mjs": "9916efffe0202a7c5e451e501324012421489fce2763315a375d330ae9ee9404",
+    "patches/splatoon3/runtime/kit-support.mjs": "724663ec60f55fe60589c0892ed74a86318b5cfb15c6908f5ddf5895a3c189c4",
+    "patches/splatoon3/runtime/kit-trizooka.mjs": "1075c4dd974079704b1eaec353b0f9f2b25c31482e06b0f603ce5433d867db9b",
+    "patches/splatoon3/runtime/movement.mjs": "bb9ac37742652731595f053d3bd83f1480ab08199c7a2f7b793bf978ebdc097d",
+    "patches/splatoon3/runtime/ranked/install.mjs": "24748ccb3669a9c0bbf572f3939bbe747fc939ad98902a372b0c66176a9497ad",
+    "patches/splatoon3/runtime/ranked/network.mjs": "10a833c7c31608facbde4e27be3831ccd7cbdedf4122259a28b304b599cd4ef4",
+    "patches/splatoon3/runtime/storm-effects.mjs": "db9dbd1f9d5018471931818b848ea37ac034799a965b60bb84be65a075b5d5bb",
+    "patches/splatoon3/runtime/storm-power.mjs": "ad9c26fc6e3fbfc2da8a43c506d357cee58bcc589dafbee394d277137de5e841",
+    "patches/splatoon3/runtime/tacticooler-gauge.mjs": "7776f4cd557c3b9035d8dbd3682f529e496658e091153baffdb301d13e794fc5",
+    "patches/splatoon3/runtime/tenacity.mjs": "60f0d57332d07f545973eb6dbdc44935cbf52f0ae0537e896fa83c76cb7cf185",
+    "patches/splatoon3/runtime/trizooka-collision.mjs": "0854677be8789d50cae84281a6d755b4c1007f2b1dbe1c273279e6df21b26d57",
+    "patches/splatoon3/runtime/zipcaster-armor.mjs": "7a822971c2903e599d57d5043c3fab36921289a02ecc2d06ab93746427fdb4c4",
+    "patches/splatoon3/tests/all-specials.test.mjs": "6d73aa8f7a52c8778f2a0ac2507523dacbf70a4bcf212996d5d4cf243a13d555",
+    "patches/splatoon3/tests/burst-contact-phases.test.mjs": "827181895e768ef63f469a84abfea5e0b64050c7826b2e3c80e0a77a7264fb53",
+    "patches/splatoon3/tests/deployed-special-gauge-lock.test.mjs": "9abca8a7ebac0e7e3e5641050f59b1f6263007f5db514fbeff360d77ec36c18e",
+    "patches/splatoon3/tests/issue-469-647-bootstrap-scope.test.mjs": "372bec79e2c076be56ef8ed04ada8a2464c79f60e721eb262205a8bc894f68b3",
+    "patches/splatoon3/tests/issue-469-storm-gauge-display.test.mjs": "e1ca5ec066572d791c3e93660384b9c087f6a8d8c849d60c1a6971ba1dd4f975",
+    "patches/splatoon3/tests/kit-trizooka-geometry.test.mjs": "6ef67a7a57318720c4da63ce606e80b2892f18cb89c971ed02b2f5ca8954bc2b",
+    "patches/splatoon3/tests/kit-trizooka-native.test.mjs": "0a4bd777d81eb523107a43a08117610d2f1361637f61653ef6b99b74ac59e528",
+    "patches/splatoon3/tests/kit-trizooka.test.mjs": "58f8e036c23e295259955e60230f3b13c3e27eb08962047745935ff577942923",
+    "patches/splatoon3/tests/special-zipcaster-armor.test.mjs": "11feefbd5ebbcc55154300cc2acc229a6808d7123bf1ec9f558124d96c3359c0",
+    "patches/splatoon3/tests/storm-effects.test.mjs": "02978ff5a1c46487e3b9f27d9491105576e438381104a86f850df2183b08112f",
+    "patches/splatoon3/tests/tenacity-special-lock.test.mjs": "0f6a1c2f1ba1fe439f56bc15b7fd1e5886aeeb8a8a2bce4769e14b672cebb513",
+    "patches/splatoon3/tests/trizooka-birth-swim.test.mjs": "17e191b3c6c3ce76a991594fa905ee83c01d5db8e122fde75d91f4a2f0252eb0",
+    "scripts/check-inkwave-catalog-browser.mjs": "3c09fb969bbba99f6b8d2aa5c167ccec8f81f75cd2f4a0a04aa783778014d5d7",
+    "scripts/check-inkwave-special-presentation.mjs": "f7e469db4fabb48ba75c70eb8b96cd1ec69734289689d125e9f4760268dd0f30"
+  }
+}

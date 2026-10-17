@@ -8,6 +8,8 @@ import { gearCurve } from './gear.mjs';
 import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs';
 import { createTacticooler, disposeSpecialModel } from './special-motion.mjs';
 import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerStandFrames, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
+import { installTacticoolerGauge, startTacticoolerGauge, endTacticoolerGauge, clearSpecialGaugeLocks, startHeldSpecialGauge, startPendingSpecialGauge } from './tacticooler-gauge.mjs';
+import { installCoolerCollision } from './support-cooler-collision.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
@@ -138,9 +140,13 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
   const pos = position ? new THREE.Vector3(...position) :
     owner.pos.clone().add(new THREE.Vector3(Math.sin(owner.yaw || 0)*1.6,0,Math.cos(owner.yaw || 0)*1.6));
   if (!vec3(pos)) return null;
-  // One stand per player; other teammates can each maintain their own.
+  // A new stand replaces the caster's old one. The explicit FridgeParam
+  // VanishDistance also retires any stand it overlaps, including enemy stands.
+  // This shared deploy path applies the same geometry to validated wire replay.
   const stands = projectile._s3SupportCoolers ||= [];
-  for(let i=stands.length-1;i>=0;i--) if(stands[i].owner===owner) {
+  for(let i=stands.length-1;i>=0;i--) if(stands[i].owner===owner ||
+      stands[i].pos.distanceToSquared(pos)<=TACTICOOLER_SOURCE.vanishDistance**2+TINY) {
+    endTacticoolerGauge(stands[i]);
     releaseVisual(stands[i],G);stands.splice(i,1);
   }
   const drinkFrames = remote && Number.isSafeInteger(incomingFrames)
@@ -153,6 +159,7 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
     drinkSeconds:drinkFrames/60, sourceLife:life(owner), seq:remote?incomingSeq:serial(owner),
     taken:new Set(), mesh:coolerVisual(owner,pos,THREE,G) };
   stands.push(stand);
+  if (!remote) startTacticoolerGauge(stand,G);
   if (!remote) emitNet(G,owner,['c',owner.nid,stand.seq,pos.x,pos.y,pos.z,stand.sourceLife,drinkFrames]);
   return stand;
 }
@@ -162,6 +169,7 @@ function throwCooler(owner,projectile,G,THREE,Hit) {
   const device={owner,pos,prev:pos.clone(),vel,age:0,hit:new Hit(),mesh:coolerVisual(owner,pos,THREE,G)};
   if(device.mesh)device.mesh.scale.setScalar(.35);
   (projectile._s3SupportCoolerThrows ||= []).push(device);
+  startPendingSpecialGauge(owner,G,'tacticooler',device,projectile._s3SupportCoolerThrows);
 }
 function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   if (!(dt>0) || !Number.isFinite(G.time)) return;
@@ -212,7 +220,12 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
     releaseVisual(sensors[i],G);sensors.splice(i,1);
   }
   const throws=projectile._s3SupportCoolerThrows||[];
-  for(let i=throws.length-1;i>=0;i--){const d=throws[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=24*dt;d.pos.addScaledVector(d.vel,dt);
+  for(let i=throws.length-1;i>=0;i--){const d=throws[i];d.age+=dt;d.prev.copy(d.pos);
+    // EnergyStand.MoveParam, 11.3.0: source frames -> seconds. Preserve
+    // native gravity-then-drag order; exponentiate retention for subframes.
+    d.vel.y-=TACTICOOLER_SOURCE.flyGravity*3600*dt;
+    d.vel.multiplyScalar(Math.pow(1-TACTICOOLER_SOURCE.flyPositionAirResist,60*dt));
+    d.pos.addScaledVector(d.vel,dt);
     const hit=G.physics?.segment?.(d.prev,d.pos,d.hit);let landed=hit?.hit&&hit.normal.y>.4;
     if(hit?.hit){d.pos.copy(hit.point);if(!landed){d.pos.addScaledVector(hit.normal,.03);d.vel.addScaledVector(hit.normal,-d.vel.dot(hit.normal));}}
     const floor=G.level?.groundHeight?.(d.pos.x,d.pos.z);
@@ -225,7 +238,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   for(let i=coolers.length-1;i>=0;i--) {
     const stand=coolers[i];
     advanceTowerStand(stand,G);
-    if(G.time>=stand.expires||!playing) {releaseVisual(stand,G);coolers.splice(i,1);continue;}
+    if(G.time+TINY>=stand.expires||!playing) {endTacticoolerGauge(stand);releaseVisual(stand,G);coolers.splice(i,1);continue;}
     // Each actor's owner decides whether it obtained a drink; remote replicas
     // never mutate another peer's authoritative gear, HP or weapon state.
     for(const a of G.actors || [])if(drinkEligible(a,stand,G.time,PLAYER)) {
@@ -240,6 +253,8 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
 export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE, Hit, Physics, PLAYER }) {
   if (Actor.prototype[INSTALL]) return;
   Object.defineProperty(Actor.prototype,INSTALL,{value:true});
+  installTacticoolerGauge({Actor,G});
+  installCoolerCollision({Actor,Projectiles,G,THREE,Hit,Physics,PLAYER});
   const throwBomb=Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb=function(actor,...rest) {
     if(actor?.weapon?.sub==='pointSensor' && !actor.remote && aliveInMatch(G))
@@ -253,6 +268,8 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
     return result;
   };
   Projectiles.prototype.clear=function(...args) {
+    for(const owner of new Set([...(G.actors||[]),...(this.clouds||[]).map(c=>c.owner),...(this.bombs||[]).map(b=>b.owner),...(this._s3SupportCoolerThrows||[]).map(d=>d.owner)]))clearSpecialGaugeLocks(owner,false);
+    for(const stand of this._s3SupportCoolers||[])endTacticoolerGauge(stand);
     for(const record of [...this._s3SupportSensors||[],...this._s3SupportCoolers||[],...this._s3SupportCoolerThrows||[]])releaseVisual(record,G);
     this._s3SupportSensors=[];this._s3SupportCoolers=[];this._s3SupportCoolerThrows=[];
     return clear.call(this,...args);
@@ -266,6 +283,7 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
     const result=start.apply(this,args);
     if(this.special!==0 || this.stats?.specials!==before+1)return result;
     this.specialActive={id:'tacticooler',t:0,phase:'hold',armor:false,subHeld:!!this.intent.sub};
+    startHeldSpecialGauge(this,G,'tacticooler');
     return result;
   };
   Actor.prototype._updateSpecial=function(dt,...args) {

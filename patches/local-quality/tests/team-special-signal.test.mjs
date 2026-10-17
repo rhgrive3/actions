@@ -47,8 +47,9 @@ async function localRig(options){
 test('#919 missing consumer drops the native teammate activation; current HUD shows its actual icon and excludes self',async()=>{
  for(const baseline of [true,false]){
   const f=await localRig({baseline});f.ally.weapon={...f.ally.weapon,special:'storm'};f.ally.special=f.ally.specialCost();let events=0;const off=f.on('special:use',e=>{if(e.actor===f.ally)events++;});
-  f.ally._startSpecial();assert.equal(events,1,'real Actor producer');assert.equal(f.rows().length,baseline?0:1);
-  if(!baseline){assert.equal(f.rows()[0].dataset.teamSpecial,'storm');assert.equal(f.rows()[0].querySelector('.iw-feed__icon').innerHTML,f.icon('storm'));assert.equal(f.ally.special,0);}
+  const activationCost=f.ally.specialCost();f.ally._startSpecial();assert.equal(events,1,'real Actor producer');assert.equal(f.rows().length,baseline?0:1);
+  assert.equal(f.ally.special,activationCost,'held Storm retains its native full reserve');assert.equal(f.ally.specialReady(),false,'the held reserve is not reusable');
+  if(!baseline){assert.equal(f.rows()[0].dataset.teamSpecial,'storm');assert.equal(f.rows()[0].querySelector('.iw-feed__icon').innerHTML,f.icon('storm'));}
   f.emit('special:use',{actor:f.me,id:'slam'});assert.equal(f.rows().length,baseline?0:1);off();f.hud.dispose();
  }
 });

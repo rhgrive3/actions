@@ -1,5 +1,6 @@
 import { gearCurve } from './gear.mjs';
 import { createBubblerHardware, disposeSpecialModel } from './special-motion.mjs';
+import { startSpecialGauge, endSpecialGauge } from './tacticooler-gauge.mjs';
 
 // Big Bubbler (Splat Roller special; internal id SpGreatBarrier) for the
 // composed public INKWAVE runtime.
@@ -68,7 +69,7 @@ const INSTALL = Symbol.for('inkwave.s3.kit-big-bubbler.install.v1');
 
 // Pinned raw 11.3.0 values (verbatim from the receipts above).
 export const BIG_BUBBLER_RAW = Object.freeze({
-  maxHp: 15360,                  // BarrierParam.MaxHP.Low        (0 AP Ink Resistance)
+  maxHp: 15360,                  // BarrierParam.MaxHP.Low        (0 AP Special Power Up)
   maxFieldHp: 30720,             // BarrierParam.MaxFieldHP.Low
   maxFieldHpMid: 33792,          // BarrierParam.MaxFieldHP.Mid
   maxFieldHpHigh: 36864,         // BarrierParam.MaxFieldHP.High
@@ -109,7 +110,7 @@ export const BIG_BUBBLER_CALIBRATION = Object.freeze({
   rawPerDamageUnit: 10,
   // TimeDamage is the wiki-confirmed 92.1 HP/s rate; the ratio below retains the
   // same duration when this adapter assigns the MaxFieldHP budget to the shell.
-  timeDamageIntervalSeconds: 1,
+  timeDamageIntervalSeconds: 1 / 60,
   // Radius growth window. DECLARED mapping onto the pinned drone frames.
   radiusGrowthSeconds: 45 / 60,
   // Landing point ahead of the owner. DECLARED: the tables carry no throw
@@ -481,6 +482,7 @@ function removeDome(dome, reason) {
   if (i < 0) return false;
   list.splice(i, 1);
   dome.dead = true;
+  endSpecialGauge(dome.owner,'bubbler',dome);
   releaseVisual(dome);
   // A remote dome's disappearance is presentation, not gameplay, so it is a
   // separate stream and never claims the authoritative collapse event.
@@ -560,6 +562,11 @@ function deploy(owner) {
   });
   const tower=bubblerTowerBinding(api.G,dome.pos);
   dome.onTower=tower.onTower;dome.towerLocal=tower.local;
+  // The gauge starts in the device's startup motion, before the shell ignites.
+  // Its display uses the unattacked natural duration; shots only end the lock
+  // when the structure is destroyed, never turn HP loss into gauge loss.
+  startSpecialGauge(owner,api.G,'bubbler',Infinity,dome,
+    raw.ignitionFrames+Math.ceil(dome.hpMax/bigBubblerTimeDamage(dome.onTower)*60-1e-10));
   buildVisual(dome);
   domes.push(dome);
   syncVisual(dome);
@@ -585,7 +592,7 @@ function syncVisual(dome) {
   dome.shell.scale.setScalar(Math.max(0.001, dome.radius));
   dome.emitterMesh.position.set(0, dome.emitterY, 0);
   dome.shell.material.uniforms.age.value=dome.t;
-  dome.shell.material.uniforms.health.value=Math.max(0,dome.hp/dome.hpMax);
+  dome.shell.material.uniforms.health.value=Math.max(0,1-dome.damageProgress-(dome.presentationBurnProgress||0));
 }
 
 // ------------------------------------------------------------------- damage
@@ -979,6 +986,7 @@ export function tickBigBubblers(dt) {
   for (const dome of [...domes]) {
     if (dome.dead) continue;
     advanceBubblerTower(dome);
+    const previousAge = dome.t;
     dome.t += dt;
     dome.radius = radiusAt(dome.t);
     const ascend = clamp(dome.t / (raw.ascendFrames / 60), 0, 1);
@@ -996,12 +1004,12 @@ export function tickBigBubblers(dt) {
     }
     if (dome.ignited) {
       const interval = tuning.timeDamageIntervalSeconds;
-      dome.burnAccum += dt;
+      dome.burnAccum += Math.max(0,dome.t-Math.max(previousAge,raw.ignitionFrames/60));
       while (dome.burnAccum + 1e-10 >= interval && !dome.dead) {
         dome.burnAccum -= interval;
         // MaxFieldHP is 2x the old swapped canopy budget. Scale the internal
         // TimeDamage delta by the same ratio so passive lifetime is unchanged.
-        damageDome(dome, 'canopy', bigBubblerTimeDamage(dome.onTower), 'burn');
+        damageDome(dome, 'canopy', bigBubblerTimeDamage(dome.onTower)*interval, 'burn');
       }
       if (tuning.overlapFieldDamage && !dome.dead) {
         const tickSeconds = raw.overlapFieldDamageInterval / 60;
@@ -1020,7 +1028,8 @@ export function tickBigBubblers(dt) {
 
 // The presentation clock for replayed remote domes. It advances ONLY what the
 // client may draw: age, radius and emitter height, plus the arming flag. It
-// applies NO paint, NO TimeDamage burn and NO authoritative HP, and it emits a
+// applies NO paint or authoritative TimeDamage/HP. A separate display-only burn
+// progress drives shell health, and it emits a
 // distinctly named presentation stream so nothing downstream mistakes it for the
 // authoritative one. dt <= 0 is a strict no-op here too.
 export function tickRemoteBigBubblers(dt) {
@@ -1028,6 +1037,7 @@ export function tickRemoteBigBubblers(dt) {
   for (const dome of [...remoteDomes]) {
     if (dome.dead) continue;
     advanceBubblerTower(dome);
+    const previousAge = dome.t;
     dome.t += dt;
     dome.radius = radiusAt(dome.t);
     const ascend = clamp(dome.t / (raw.ascendFrames / 60), 0, 1);
@@ -1038,6 +1048,17 @@ export function tickRemoteBigBubblers(dt) {
         actor: dome.owner, owner: dome.owner, domeId: dome.id, serial: dome.serial, team: dome.team,
         pos: dome.pos.clone(), presentationOnly: true,
       });
+    }
+    if (dome.ignited) {
+      // Remote age changes the displayed shell only. HP, destruction and wire
+      // expiry remain exclusively the owner's decisions, never replica ticks.
+      const interval=tuning.timeDamageIntervalSeconds;
+      dome.burnAccum+=Math.max(0,dome.t-Math.max(previousAge,raw.ignitionFrames/60));
+      while(dome.burnAccum+1e-10>=interval){
+        dome.burnAccum-=interval;
+        dome.presentationBurnProgress=clamp((dome.presentationBurnProgress||0)+
+          bigBubblerTimeDamage(dome.onTower)*interval/dome.hpMax,0,1);
+      }
     }
     syncVisual(dome);
   }

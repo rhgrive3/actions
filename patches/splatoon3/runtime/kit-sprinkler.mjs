@@ -4,6 +4,7 @@
 // Source: Leanny/splat3@7280ff9c/WeaponSprinkler.game__GameParameterTable.json
 // S3 verification: https://wikiwiki.jp/splatoon3mix/ブキ/サブウェポン/スプリンクラー
 import {gearCurve} from './gear.mjs';
+import {captureSubAttachment,syncSubAttachment} from './sub-surface-attachment.mjs';
 const FRAME=1/60, EPS=1e-9;
 export const SPRINKLER=Object.freeze({
   id:'sprinkler', name:'Sprinkler', mode:'sprinkler', chargeable:false,
@@ -23,7 +24,9 @@ export function resolveSprinklerPower(spec,ap){
 }
 export function sprinklerPhase(f,spec=SPRINKLER){
   if(!Number.isFinite(f)||f<spec.deployFrames)return -1;
-  return f<spec.periodFirstFrames?0:f<spec.periodSecondFrames?1:2;
+  // PeriodSecond is the duration of the middle stage, not a deployment-age
+  // timestamp. GP0 therefore weakens at 8 s, then at 8 + 15 = 23 s.
+  return f<spec.periodFirstFrames?0:f<spec.periodFirstFrames+spec.periodSecondFrames?1:2;
 }
 export function sprinklerShotFrames(until,spec=SPRINKLER){
   const out=[];if(!Number.isFinite(until)||until<spec.deployFrames)return out;
@@ -31,12 +34,13 @@ export function sprinklerShotFrames(until,spec=SPRINKLER){
   while(f<=until+EPS&&out.length<1024){
     out.push(f);const p=sprinklerPhase(f,spec);let next=f+spec.cadenceFrames[p];
     if(f<spec.periodFirstFrames&&next>=spec.periodFirstFrames)next=spec.periodFirstFrames;
-    if(f<spec.periodSecondFrames&&next>=spec.periodSecondFrames)next=spec.periodSecondFrames;
+    const secondEnd=spec.periodFirstFrames+spec.periodSecondFrames;
+    if(f<secondEnd&&next>=secondEnd)next=secondEnd;
     f=next;
   }
   return out;
 }
-export function beginSprinkler(b,n,spec=SPRINKLER){
+export function beginSprinkler(b,n,spec=SPRINKLER,hit=null){
   if(!b||b.s3Sprinkler)return;
   const tangent=n.clone(), bitangent=n.clone();
   if(Math.abs(n.y)<.9)tangent.set(0,1,0).cross(n).normalize();
@@ -44,13 +48,18 @@ export function beginSprinkler(b,n,spec=SPRINKLER){
   bitangent.copy(n).cross(tangent).normalize();
   b.s3Sprinkler={sourceAge:b.age,nextFrame:spec.deployFrames,drops:[],spraySequence:0,
     phase:-1,normal:n.clone(),tangent,bitangent,p0:b.pos.clone(),p1:b.pos.clone(),
-    hit:{point:b.pos.clone(),normal:n.clone()},previousAge:b.age,baseSeed:Math.floor(b.age*1e7)>>>0};
+    hit:{point:b.pos.clone(),normal:n.clone()},supportBlockId:hit?.block,
+    previousAge:b.age,baseSeed:Math.floor(b.age*1e7)>>>0};
 }
 function unit(seed){let n=Math.imul(seed^0x9e3779b9,0x85ebca6b)>>>0;
   n^=n>>>13;n=Math.imul(n,0xc2b2ae35)>>>0;n^=n>>>16;return(n>>>0)/4294967296;}
 export function stepSprinkler(b,paint,projectiles,G,physics,player){
-  const st=b?.s3Sprinkler,spec=b?.s3Resolved?.spec;
-  if(!st||b.ghost||!spec||spec.mode!=='sprinkler'||!paint?.splat||!G?.physics)return 0;
+  const st=b?.s3Sprinkler,spec=(b?.s3Resolved||b?.s3GhostResolved)?.spec;
+  if(!st||!spec||spec.mode!=='sprinkler'||!G?.physics)return 0;
+  if(!st.supportCaptured){st.supportCaptured=true;st.support=captureSubAttachment(G,b,st.supportBlockId,st);}
+  syncSubAttachment(G,b,st.support,st);b.s3SurfaceNormal?.copy(st.normal);
+  // A replica follows the same stage surface, but never acquires paint/damage.
+  if(b.ghost||!paint?.splat)return 0;
   const elapsed=Math.max(0,b.age-st.sourceAge),f=elapsed/FRAME;
   const n=st.normal, t=st.tangent, bit=st.bitangent;let area=0;
   if(!st.deploymentPainted){
@@ -74,7 +83,8 @@ export function stepSprinkler(b,paint,projectiles,G,physics,player){
     st.spraySequence++;
     let next=at+spec.cadenceFrames[phase];
     if(at<spec.periodFirstFrames&&next>=spec.periodFirstFrames)next=spec.periodFirstFrames;
-    if(at<spec.periodSecondFrames&&next>=spec.periodSecondFrames)next=spec.periodSecondFrames;
+    const secondEnd=spec.periodFirstFrames+spec.periodSecondFrames;
+    if(at<secondEnd&&next>=secondEnd)next=secondEnd;
     st.nextFrame=next;
   }
   const dt=Math.min(.25,Math.max(0,b.age-st.previousAge));st.previousAge=b.age;

@@ -100,6 +100,20 @@ export function adaptSource(rel, code) {
   // with the SAME sourced teammate-through window installed on each main
   // projectile, rather than silently letting bullets cross an ally.
   if (rel === 'src/game/inkFlightRuntime.js') {
+    code = replaceOnce(code,
+      '      let first = world.hit ? world.dist / Math.max(EPS, length) : Infinity, target = null, boss = null;',
+      '      let first = world.hit ? world.dist / Math.max(EPS, length) : Infinity, target = null, boss = null;\n' +
+      '      world.kitDefense = null; p.damage = damageAt(p.inkProfile, p.age);\n' +
+      '      const defense = this.system.kitDefenseCandidate?.(p);\n' +
+      '      if (defense && defense.distance / Math.max(EPS, length) < first - EPS) {\n' +
+      '        first = defense.distance / Math.max(EPS, length);\n' +
+      '        if (typeof barrierHit !== "undefined") barrierHit = false;\n' +
+      '        world.hit = true; world.dist = defense.distance; world.kitDefense = defense;\n' +
+      '      }', 'ink flight shares native kit first-contact defenses');
+    code = replaceOnce(code,
+      '          this.stats.headImpacts++;',
+      '          if (!target && !boss && world.kitDefense) { world.kitDefense.onHit(); return true; }\n          this.stats.headImpacts++;',
+      'ink flight settles one selected defense contact');
     // Native shooter-family heads and detached drops bypass the generic
     // projectile impact path, but retain its local late-paint credit owner.
     code = replaceOnce(code,
@@ -1090,6 +1104,10 @@ export function adaptSource(rel, code) {
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
+    // Fidelity recomputes a main projectile's full damage. Route the special
+    // only after that transform so its strongest-contact delta is not reset.
+    code = replaceOnce(code, '          if (dmg > 0) applyFidelityProjectileHit(this, p, e, dmg, _v);',
+      "          if (dmg > 0) { if (p.wid === 'trizooka') kitTrizookaApplyHit(this, p, e, dmg); else applyFidelityProjectileHit(this, p, e, dmg, _v); }", 'Trizooka shared action direct damage');
     // #1135: S3 standard Slosher has no opponent-damage landing splash record.
     // Keep landing FX/paint, but do not let a zero-damage legacy radius poison
     // the shared volley hit cache or emit false hit feedback.
@@ -1115,17 +1133,23 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code,
       '      const hit = G.physics.segment(_v, b.pos, _hit);',
       `      const hit = G.physics.segment(_v, b.pos, _hit);
+      hit.s3Tacticooler = false;
       const s3BombDefense = this.kitBombDefenseCandidate?.(b, _v, b.pos);
       const s3BombStep = _v.distanceTo(b.pos);
       const s3WorldDistance = hit.hit ? _v.distanceTo(hit.point) : Infinity;
       if (s3BombDefense && s3BombDefense.distance < s3WorldDistance - 1e-10) {
         if (s3BombStep > 1e-10) b.pos.copy(_v).lerp(b.pos, Math.max(0, Math.min(1, s3BombDefense.distance / s3BombStep)));
+        if (s3BombDefense.kind === 'tacticooler') {
+          hit.hit = true; hit.point.copy(s3BombDefense.point || b.pos);
+          hit.normal.copy(s3BombDefense.normal); hit.s3Tacticooler = true;
+        } else {
         s3BombDefense.onHit();
         if (s3BombDefense.kind === 'bubbler') {
           const nm = G.netm; if (b.ghost && nm) nm.mute++;
           try { this._explodeBomb(b); } finally { if (b.ghost && nm) nm.mute--; }
         }
         this._releaseBomb(b); this.bombs.splice(i, 1); continue;
+        }
       }`,
       'native bomb first-contact Vac/Bubbler arbitration');
     // #1060: remove only the generic burst-floor stamp after the kit authority
@@ -1178,7 +1202,7 @@ export function adaptSource(rel, code) {
       'Blaster independent air-burst knockback radius');
     code = replaceOnce(code,
       "      this.applyHit(p.owner, e, p.s3SpecialWeapon ? distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)) : blasterBurstDamage(p, w, d, distanceDamage), p.wid || 'blaster');",
-      "      if (p.s3SpecialWeapon) this.applyHit(p.owner, e, distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)), p.wid || 'blaster');\n      else applyBlasterBlastContact(this, p, e, c, _v, d <= damageRadius ? blasterBurstDamage(p, w, d, distanceDamage) : 0, G.netm);",
+      "      if (p.s3SpecialWeapon) kitTrizookaApplyHit(this, p, e, distanceDamage(w.splashBands || w.damageBands, d, !p.s3AllSpecial && !kitTrizookaSteppedBands(p)));\n      else applyBlasterBlastContact(this, p, e, c, _v, d <= damageRadius ? blasterBurstDamage(p, w, d, distanceDamage) : 0, G.netm);",
       'Blaster air-burst authoritative contact');
     code = adaptPaintOwnership(rel, code, replaceOnce);
     return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint, kitBombKnockback } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, applyBlasterBlastContact, BLASTER_KNOCKBACK } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
@@ -1305,8 +1329,8 @@ export function adaptSource(rel, code) {
       ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }"
       : "    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }";
     const specialActiveTarget = specialActiveHead.includes('stormHolding')
-      ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { clearFullCancelCandidate(this); const activeSpecial = this.specialActive.id, stormResources = activeSpecial === 'storm', slamRecovery = activeSpecial === 'slam', trizookaHealth = activeSpecial === 'trizooka' && !this.remote; this._updateSpecial(dt); if (this.alive) { if (stormResources) updateResources(this, dt); else if (slamRecovery) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (trizookaHealth) updateResources(this, dt); } if (this.alive) this._finishFrame(dt); return; }"
-      : "    if (this.specialActive) { clearFullCancelCandidate(this); const activeSpecial = this.specialActive.id, stormResources = activeSpecial === 'storm', slamRecovery = activeSpecial === 'slam', trizookaHealth = activeSpecial === 'trizooka' && !this.remote; this._updateSpecial(dt); if (this.alive) { if (stormResources) updateResources(this, dt); else if (slamRecovery) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (trizookaHealth) updateResources(this, dt); } if (this.alive) this._finishFrame(dt); return; }";
+      ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { clearFullCancelCandidate(this); const activeSpecial = this.specialActive.id, stormResources = activeSpecial === 'storm' || activeSpecial === 'killerWail', slamRecovery = activeSpecial === 'slam', trizookaHealth = activeSpecial === 'trizooka' && !this.remote; this._updateSpecial(dt); if (this.alive) { if (stormResources) updateResources(this, dt); else if (slamRecovery) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (trizookaHealth) updateResources(this, dt); else if (!this.remote && activeSpecial !== 'crabTank' && activeSpecial !== 'inkVac') updateSpecialHealthRecovery(this, dt); } if (this.alive) this._finishFrame(dt); return; }"
+      : "    if (this.specialActive) { clearFullCancelCandidate(this); const activeSpecial = this.specialActive.id, stormResources = activeSpecial === 'storm' || activeSpecial === 'killerWail', slamRecovery = activeSpecial === 'slam', trizookaHealth = activeSpecial === 'trizooka' && !this.remote; this._updateSpecial(dt); if (this.alive) { if (stormResources) updateResources(this, dt); else if (slamRecovery) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (trizookaHealth) updateResources(this, dt); else if (!this.remote && activeSpecial !== 'crabTank' && activeSpecial !== 'inkVac') updateSpecialHealthRecovery(this, dt); } if (this.alive) this._finishFrame(dt); return; }";
     code = replaceOnce(code, specialActiveHead, specialActiveTarget, 'special active resources');
     // Issue #624 residual: activation also returns before ordinary resources.
     // Admit only a live Storm user; other specials retain their resource gates.
@@ -1325,6 +1349,9 @@ export function adaptSource(rel, code) {
     const fallBody = code.slice(fallStart, fallEnd).replace('      return;', '      return true;');
     code = code.slice(0, fallStart) + '    if (this._checkFallDeath()) return;\n\n' + code.slice(fallEnd);
     code = replaceOnce(code, '  _nearCamera() {', '  _checkFallDeath() {\n    const P = PLAYER;\n' + fallBody + '    return false;\n  }\n\n  _nearCamera() {', 'shared environmental death');
+    code = replaceOnce(code, "    if (this.specialActive) a.form = 'kid';",
+      "    if (this.specialActive && !specialKeepsNativeForm(this.specialActive.id)) a.form = 'kid';", 'special native swim and climb presentation');
+    code = "import { specialKeepsNativeForm } from '../../patches/splatoon3/runtime/special-presentation-owner.mjs';\n" + code;
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',
       '    this._updateClimb(dt, isSquid, jumpPressed);\n    const actionHandled = beforeActions(this, dt, jumpPressed, { wasSquid, wasSubmerged, wasClimbing, firePressed, fireWins });', 'movement actions');
     code = replaceOnce(code, '  _updateClimb(dt, isSquid) {',

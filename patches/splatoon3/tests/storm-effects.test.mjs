@@ -62,6 +62,7 @@ test('#239 stale sub release, death, reset and match end do not release an unthr
 
 test('#223 gauge lock is separate from recovery, preserves turf points, and expires at 480 ticks', async () => {
   const f = await fixture(), p = system(f), a = chargeActor(f); a._startSpecial(); release(f, a);
+  assert.equal(a.stormGaugeLock||0,0);p._spawnCloud(p.bombs.at(-1));
   close(a.stormGaugeLock, 8); a.addTurf(10); close(a.special, 0); close(a.stats.turf, 10);
   f.tick(a, 479); assert.equal(a.specialActive, null); assert.ok(a.stormGaugeLock > 0);
   a.addTurf(10); close(a.special, 0); close(a.stats.turf, 20);
@@ -70,6 +71,7 @@ test('#223 gauge lock is separate from recovery, preserves turf points, and expi
 
 test('#223 death/respawn preserve remaining lock while a new match actor starts unlocked', async () => {
   const f = await fixture(), p = system(f), a = chargeActor(f); a._startSpecial(); release(f, a);
+  p._spawnCloud(p.bombs.at(-1));
   f.tick(a, 60); close(a.stormGaugeLock, 7); a.splat(null, 'water'); f.tick(a, 60); close(a.stormGaugeLock, 6);
   a.reset(); close(a.stormGaugeLock, 6); a.addTurf(10); close(a.special, 0);
   f.tick(a, 360); a.addTurf(10); close(a.special, 10); close(chargeActor(f).stormGaugeLock || 0, 0); p.clear();

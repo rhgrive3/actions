@@ -1,4 +1,5 @@
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
+import { captureSubAttachment, syncSubAttachment } from './sub-surface-attachment.mjs';
 // Splatoon 3 sub weapons for the published INKWAVE runtime.
 //
 // Authority stays exactly where issue 177 and the parent advisory place it:
@@ -34,7 +35,7 @@ import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidel
 // like the native code when installKitSubs has not been applied.
 
 import { SPRINKLER, beginSprinkler, stepSprinkler, resolveSprinklerPower } from './kit-sprinkler.mjs';
-import { AUTOBOMB, startAutobomb, stepAutobomb } from './kit-autobomb.mjs';
+import { AUTOBOMB, startAutobomb, stepAutobomb, followAutobombGround } from './kit-autobomb.mjs';
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
 const frames = (v) => (v == null ? null : v * FRAME);
@@ -70,7 +71,7 @@ export const SUCTION = {
 
   throwSpeed: perSecond(1.12),   // MoveParam.SpawnSpeedZSpecUp.Low
   throwSpeedStatus: 'extracted',
-  // SpawnSpeedZSpecUp Low/Mid/High is the gear (Special Power Up) ladder. It is
+  // SpawnSpeedZSpecUp Low/Mid/High is the gear (Sub Power Up) ladder. It is
   // deliberately NOT used as the charge curve; Curling owns its charge mapping.
   throwSpeedTiers: { low: perSecond(1.12), mid: perSecond(1.4), high: perSecond(1.68) },
 
@@ -179,6 +180,15 @@ export const CURLING = {
   burstStatus: 'extracted',
   warningAnimRestFrame: frames(90),
   baseSpeedMinCharge: 0.22,
+  // BaseSpeedMaxCharge is omitted from the 11.3.0 export. The community Wiki
+  // https://wikiwiki.jp/splatoon3mix/ブキ/サブウェポン/カーリングボム
+  // measures 1.0 DU/F at full charge (10 DU = 1 runtime world unit). Keep the
+  // omission and the measured fallback distinct instead of using the tap base
+  // at every charge. The curve between these endpoints remains calibrated.
+  baseSpeedMaxCharge: null,
+  baseSpeedMaxChargeStatus: 'unknown-omitted',
+  baseSpeedMaxChargeFallback: 0.1,
+  baseSpeedMaxChargeFallbackStatus: 'community-verified',
   baseSpeedComeOverRate: 0.92,
   baseSpeedComeUnderRate: 0.96,
   contactJump: { maxBoundNum: 3, addSpeedOneBoundRate: 0.5, addSpeedPerImpact: 0.05167 },
@@ -333,7 +343,8 @@ function actorSubSpec(actor, sub) {
   }
   return { ...sub, inkCost: Number.isFinite(cost) ? cost * (m.inkSaverSub ?? 1) : cost,
     throwSpeed: Number.isFinite(sub.throwSpeed) ? sub.throwSpeed * power : sub.throwSpeed,
-    throwSpeedMaxCharge: Number.isFinite(sub.throwSpeedMaxCharge) ? sub.throwSpeedMaxCharge * power : sub.throwSpeedMaxCharge };
+    throwSpeedMaxCharge: Number.isFinite(sub.throwSpeedMaxCharge) ? sub.throwSpeedMaxCharge * power : sub.throwSpeedMaxCharge,
+    rollSpeedScale: sub.mode === 'roll' ? power : sub.rollSpeedScale };
 }
 export function resolveSubForThrow(actor, subHoldSeconds, SUB) {
   const id = actor?.weapon?.sub;
@@ -480,15 +491,18 @@ export function kitBombAttach(SUB, projectiles, actor, release) {
 // is applied per elapsed time rather than per surface contact.
 //
 // Flight : horizontal velocity keeps (1 - FlyPositionAirResist) per 60 Hz step.
-// Rolling: horizontal speed approaches the base speed. Above it the excess keeps
+// Rolling: horizontal speed approaches the charge-dependent base speed. Above it the excess keeps
 //          BaseSpeedComeOverRate per step, below it the deficit keeps
-//          BaseSpeedComeUnderRate per step. BaseSpeedMinCharge is the only base
-//          the 11.3.0 table states (no max-charge base), so it serves every
-//          charge. Within BurstTimingSpeedStartRestFrame of the burst the base
+//          BaseSpeedComeUnderRate per step. The tap base comes from the table;
+//          the omitted full-charge base uses the measured fallback above. Sub
+//          Power Up also scales rolling speed. Near the burst the base
 //          scales by (rest / start) ^ BurstTimingSpeedStopBias, reaching 0 at
 //          the burst. Field values are pinned; this composition is calibrated.
-export function curlingRollTargetSpeed(spec, rest) {
-  const base = perSecond(spec.baseSpeedMinCharge);
+export function curlingRollTargetSpeed(spec, rest, charge = 0) {
+  const maxCharge = spec.baseSpeedMaxCharge ?? spec.baseSpeedMaxChargeFallback ?? spec.baseSpeedMinCharge;
+  const c = clamp01(Number.isFinite(charge) ? charge : 0);
+  const base = perSecond(spec.baseSpeedMinCharge + (maxCharge - spec.baseSpeedMinCharge) * c)
+    * (spec.rollSpeedScale ?? 1);
   const start = spec.burstTimingSpeedStartRest;
   if (!Number.isFinite(rest) || !(start > 0) || rest >= start) return base;
   return base * Math.pow(Math.max(0, rest) / start, spec.burstTimingSpeedStopBias);
@@ -526,12 +540,27 @@ function followRollingGround(b) {
 
 export function kitBombStep(SUB, b, dt) {
   const spec = presentedOf(b)?.spec;
-  if (!spec || spec.mode !== 'roll' || !(dt > 0) || !b?.vel) return;
+  if (!spec || !(dt > 0) || !b?.vel) return;
+  if(spec.mode==='stick'&&b.s3Mode==='stuck') {
+    syncSubAttachment(G_REF,b,b.s3SuctionAttachment,{normal:b.s3SurfaceNormal});
+    return;
+  }
+  if(spec.mode==='chase') {
+    if(b.s3Mode==='chasing')followAutobombGround(b,G_REF);
+    // Robot's initial flight has its own extracted position resistance. Once
+    // grounded, the chase owns XZ velocity; do not repeatedly damp its walking.
+    if(b.s3Mode==='flight'&&Number.isFinite(spec.flyPositionAirResist)) {
+      const keep=Math.pow(1-spec.flyPositionAirResist,dt*60);
+      b.vel.x*=keep;b.vel.z*=keep;
+    }
+    return;
+  }
+  if(spec.mode!=='roll')return;
   if (b.s3Mode === 'rolling') followRollingGround(b);
   const h = Math.hypot(b.vel.x, b.vel.z);
-  if (!(h > 1e-9)) return;            // stopped (bounce budget spent): no direction to restore
+  if (!(h > 1e-9)) return;            // no direction to restore
   let next;
-  if (b.s3Mode === 'rolling') next = curlingRollSpeed(h, curlingRollTargetSpeed(spec, b.fuse), spec, dt);
+  if (b.s3Mode === 'rolling') next = curlingRollSpeed(h, curlingRollTargetSpeed(spec, b.fuse, presentedOf(b).charge), spec, dt);
   else if (Number.isFinite(spec.flyPositionAirResist)) next = h * Math.pow(1 - spec.flyPositionAirResist, dt * 60);
   else return;
   b.vel.x *= next / h;
@@ -545,7 +574,7 @@ export function kitBombStep(SUB, b, dt) {
 export const NATIVE_STORM_GRAVITY = 24;
 export function kitBombGravity(SUB, b) {
   if (b?.kind === 'storm') return NATIVE_STORM_GRAVITY;
-  if (b?.s3Mode === 'stuck' || b?.s3Mode === 'sprinkling' || b?.s3Mode === 'chasing') return 0;
+  if (b?.s3Mode === 'stuck' || b?.s3Mode === 'sprinkling' || b?.s3Mode === 'chasing'&&b.s3Auto?.grounded!==false) return 0;
   const spec = presentedOf(b)?.spec;
   if (!spec) return SUB.bomb.gravity;
   if (b?.s3Mode === 'rolling') return Number.isFinite(spec.groundGravity) ? spec.groundGravity : SUB.bomb.gravity;
@@ -558,14 +587,21 @@ export function kitBombGravity(SUB, b) {
 // Returns false to let the native bounce/settle run unchanged.
 //
 // Unlike the earlier draft this never disables wall handling after landing: a
-// rolling Curling Bomb still reflects on a wall, and the bounce budget is a real
-// bound that stops adding energy once exhausted.
+// rolling Curling Bomb still reflects on a wall. ContactJumpPanel.MaxBoundNum
+// belongs to a jump-panel interaction, not to ordinary wall reflections.
 //
 // The contact itself only moves the record and arms its fuse, which is why a ghost
 // may take it: a remote Suction Bomb that bounced off the wall would be a lie about
 // the throw the owner made. Painting and damage live in `kitBombTrail`, which stays
 // authority-only.
 export function kitBombContact(SUB, b, hit, dt) {
+  // Tacticooler is solid cover, not an attachable/arming stage surface. Keep
+  // the existing native rebound; all selected sub modes retain flight/fuse.
+  if(hit?.s3Tacticooler){
+    b.pos.copy(hit.point).addScaledVector(hit.normal,.21);
+    const vn=b.vel.dot(hit.normal);if(vn<0)b.vel.addScaledVector(hit.normal,-vn*1.35);
+    b.vel.multiplyScalar(.6);return true;
+  }
   const r = presentedOf(b);
   if (!r || !hit?.hit) return false;
   const n = hit.normal;
@@ -574,10 +610,20 @@ export function kitBombContact(SUB, b, hit, dt) {
   if (spec.mode === 'chase') {
     if (b.s3Mode === 'chasing') {
       b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
-      if (Math.abs(n.y)<.6) b.vel.set(0,0,0);
+      if(n.y>.6){if(b.s3Auto)b.s3Auto.grounded=true;if(b.vel.y<0)b.vel.y=0;}
+      else if (Math.abs(n.y)<.6) {b.vel.x=0;b.vel.z=0;}
       return true;
     }
-    if (n.y<.6) return false;
+    if (n.y<.6) {
+      // A Robot bounced off a wall/ceiling has not landed or searched yet.
+      // Retain the native calibrated rebound without letting its generic
+      // contact arming start a bomb fuse in midair.
+      b.pos.copy(hit.point).addScaledVector(n,CONTACT_BIAS);
+      const vn=b.vel.dot(n);
+      if(vn<0)b.vel.addScaledVector(n,-vn*1.35);
+      b.vel.multiplyScalar(.6);
+      return true;
+    }
     b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
     b.vel.set(0,0,0);b.fuse=-1;b.s3Mode='chasing';
     startAutobomb(b,spec);return true;
@@ -587,10 +633,13 @@ export function kitBombContact(SUB, b, hit, dt) {
     b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
     b.vel.set(0,0,0);b.fuse=-1;b.s3Mode='sprinkling';
     b.s3SurfaceNormal ||= new b.pos.constructor();b.s3SurfaceNormal.copy(n);
-    beginSprinkler(b,n,spec);
+    beginSprinkler(b,n,spec,hit);
     return true;
   }
   if (spec.mode === 'stick') {
+    // An already attached bomb is not displaced/re-attached by a Tower
+    // crossing its fixed-floor position (S3mix Suction Bomb footnote).
+    if(b.s3Mode==='stuck')return true;
     const onFloor = n.y > 0.6;
     const onWall = Math.abs(n.x) > 0.5 || Math.abs(n.z) > 0.5;
     const onCeiling = n.y < -0.5;
@@ -605,11 +654,13 @@ export function kitBombContact(SUB, b, hit, dt) {
     b.s3SurfaceNormal ||= new b.pos.constructor();
     b.s3SurfaceNormal.copy(n);
     b.s3StuckOn = onCeiling ? 'ceiling' : onWall ? 'wall' : 'floor';
+    const tower=G_REF?.match?.mode==='tower'&&G_REF.match.rankedWorld,block=G_REF?.level?.blocks?.[hit.block];
+    b.s3SuctionAttachment=block&&(block===tower?.towerBlock||block===tower?.towerPoleBlock)
+      ?captureSubAttachment(G_REF,b,hit.block,{normal:b.s3SurfaceNormal}):null;
     return true;                       // native bounce is skipped for a stuck bomb
   }
 
   if (spec.mode === 'roll') {
-    const c = spec.contactJump;
     if (n.y > 0.6) {
       // floor: clamp to the contact surface so the bomb cannot sink through it and
       // the trail paints the surface it actually rests on.
@@ -624,18 +675,15 @@ export function kitBombContact(SUB, b, hit, dt) {
       if (b.fuse < 0) { b.fuse = r.fuse; b.s3FuseTotal = r.fuse; }
       return true;
     }
-    // vertical surface: reflect with the pinned rate, bounded by MaxBoundNum.
-    // Once the budget is spent the bomb stops gaining energy instead of setting
-    // a flag that nothing reads.
-    if (b.s3Mode === 'rolling') b.s3Mode = 'rolling';
-    b.s3Bounces = (b.s3Bounces || 0) + 1;
-    if (b.s3Bounces > c.maxBoundNum) {
-      b.vel.multiplyScalar(0);
-      b.s3BounceExhausted = true;
-      return true;
-    }
+    // Wiki's ordinary wall reflection has equal incidence/reflection angles.
+    // ContactJumpPanel.AddSpeedOneBoundRate/MaxBoundNum are NOT wall settings.
+    // Specular reflection preserves speed and has no fabricated three-hit cap.
+    b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
     const vn = b.vel.dot(n);
-    b.vel.addScaledVector(n, -vn * (1 + c.addSpeedOneBoundRate));
+    if (vn < 0) {
+      b.s3Bounces = (b.s3Bounces || 0) + 1;
+      b.vel.addScaledVector(n, -2 * vn);
+    }
     return true;
   }
   return false;
@@ -894,7 +942,7 @@ export function kitGhostBombAttach(SUB, projectiles, b, rawId, rawCharge) {
   // Presentation only: `s3Resolved` is what grants paint/damage/turf authority, so
   // a ghost's numbers live on their own field and `ownsAuthority` stays false for
   // the whole life of the record.
-  const resolved = resolveSubAtCharge(spec, charge);
+  const resolved = resolveSubAtCharge(spec.mode === 'roll' ? actorSubSpec(b.owner, spec) : spec, charge);
   if (!resolved) return null;
   if (spec.mode === 'sprinkler') retireReplacedGhostSprinklers(projectiles, b.owner, b);
   b.s3GhostResolved = resolved;
@@ -985,8 +1033,7 @@ export function installKitSubs(api, profile) {
   Projectiles.prototype.updateArc = function (actor, show) {
     const resolved = resolveSubForThrow(actor, actor?.weaponRunner?.s3SubHold, SUB);
     if (resolved?.spec?.id === 'curling') {
-      // The parent renderer may have displayed another bomb's arc in the last
-      // frame. Delegate the hide path so both its line and ring are cleared.
+      // Hide the previous bomb's line and ring as well as the Curling marker.
       return updateArc.call(this, actor, false);
     }
     if (!resolved || resolved.throwSpeed == null) return updateArc.call(this, actor, show);

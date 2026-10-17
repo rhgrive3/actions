@@ -36,6 +36,7 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     }
     code="import { selectedSubCost } from '../patches/splatoon3/runtime/kit-composition.mjs';\n"+code;
   } else if(rel==='src/net/netmatch.js'){
+    patch('  recProj(p) {', '  recProj(p) {\n    if (p.s3TrizookaBirthPending) return;', 'Trizooka true projectile birth');
     patch("'splatted', 'respawn'];","'splatted', 'respawn', ...KIT_FORWARD];",'kit event forward');
     patch("case 'ev': this._playEvent(e[2], e[3]); break;","case 'ev': this._playEvent(e[2], e[3], from); break;",'event sender');
     patch('  _playEvent(name, d) {','  _playEvent(name, d, from) {','event signature');
@@ -62,6 +63,8 @@ export function adaptKitRescue(rel, code, replaceOnce) {
       'trizooka packet identity');
     code="import { KIT_FORWARD } from '../../patches/splatoon3/runtime/kit-network.mjs';\nimport { kitVolleyPacketIndex } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { kitBombPacket } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\n"+code;
   } else if(rel==='src/game/weapons.js'){
+    patch('    this.inkFlight.updateDrops();', '    this.inkFlight.updateDrops();\n    flushTrizookaBirths(this);', 'Trizooka tick-endpoint births before draw');
+    patch('  _blastBurst(p, at, direct) {', '  _blastBurst(p, at, direct) {\n    if (p.s3TrizookaBirthPending) return;', 'Trizooka pending glob has no burst');
     patch('this.throwVelocity(a, subThrowSpec(a, SUB.bomb).throwSpeed, vel);',
       'this.throwVelocity(a, this.s3PreviewSubSpeed ?? subThrowSpec(a, SUB.bomb).throwSpeed, vel);','actor-local preview speed');
     const plainSubRelease = '    // ---- sub weapon (splat bomb)\n    const bomb = SUB.bomb;';
@@ -123,7 +126,7 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     patch("    this.list.push(p);\n  }",
       "    kitTrizookaGhost(p, a, SPECIALS, { volleyIndex: s3Volley, actionIndex: s3Action, specialPowerAP: e[34]?.s3SpecialPowerAP ?? e[33]?.s3SpecialPowerAP ?? e[30]?.s3SpecialPowerAP ?? e[29]?.s3SpecialPowerAP });\n    this.list.push(p);\n  }",
       'trizooka ghost reconstruction');
-    code="import { kitPaintAuthority, kitTrizookaGhost, kitTrizookaSteppedBands } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { applySplatBombRestingResistance } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { kitSubRelease, kitBombAttach, kitBombGravity, kitBombRetire, kitBombStep, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombKeepsFuse, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n"+code;
+    code="import { kitPaintAuthority, kitTrizookaGhost, kitTrizookaSteppedBands, kitTrizookaApplyHit, flushTrizookaBirths } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { applySplatBombRestingResistance } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { kitSubRelease, kitBombAttach, kitBombGravity, kitBombRetire, kitBombStep, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombKeepsFuse, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n"+code;
   }
   return code;
 }

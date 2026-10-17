@@ -3,10 +3,12 @@ on:
   pull_request:
     paths:
       - 'patches/splatoon3/runtime/**'
+      - 'patches/splatoon3/weapon-catalog-adapter.mjs'
       - 'patches/splatoon3/tests/main-weapon-catalog*.test.mjs'
       - 'patches/splatoon3/tests/catalog-*.test.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
       - 'scripts/check-inkwave-saber-origins-browser.mjs'
+      - 'scripts/check-inkwave-added-family-paint-browser.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   workflow_dispatch:
 permissions:
@@ -35,6 +37,8 @@ jobs:
         run: node --experimental-vm-modules --test patches/splatoon3/tests/roller-flick-movement.test.mjs patches/splatoon3/tests/roller.test.mjs patches/splatoon3/tests/bomb-kit-fidelity.test.mjs patches/splatoon3/tests/air-attack-acceleration.test.mjs patches/splatoon3/tests/catalog-rolling-form-reset.test.mjs
       - name: Verify sourced Splatana origins and Slosher flight contact/cover
         run: node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs patches/splatoon3/tests/catalog-splash-contact-distance.test.mjs
+      - name: Verify Stringer, Splatana, Brella and added Dualies floor paint
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/catalog-added-family-paint.test.mjs patches/splatoon3/tests/catalog-paint-timing-boundaries.test.mjs
   browser-origins:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -51,8 +55,12 @@ jobs:
         run: node scripts/build-inkwave.mjs inkwave-public work/site
       - name: Verify emitted source offsets, detached release clipping and lateral cover
         run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs
+      - name: Verify emitted added-family floor paint and falling splashes
+        run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/catalog-added-family-paint.test.mjs patches/splatoon3/tests/catalog-paint-timing-boundaries.test.mjs
       - name: Verify actual Character origins, optical aim and fire event positions
         run: node scripts/check-inkwave-saber-origins-browser.mjs work/site work/weapon-stage-gaps/browser-origins.json
+      - name: Verify actual Character and floor physics at 30, 60 and 120 Hz
+        run: node scripts/check-inkwave-added-family-paint-browser.mjs work/site work/weapon-stage-gaps/added-family-paint.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
