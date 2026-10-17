@@ -255,6 +255,8 @@ for (const run of RUNS) {
         picker.variants !== 95 || picker.second !== 65 || picker.third !== 30 ||
         picker.catalog !== 142 || !picker.last?.startsWith('w-s3-'))
       throw new Error('range weapon picker ' + JSON.stringify(picker));
+    // The picker is the pause panel's WEAPON tab (TOOLS / TRAVEL / WEAPON).
+    await page.locator('.iwr-pausescr:not(.is-leaving) [data-id="r-tab-weapon"]').click();
     await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').last().click();
     await page.waitForFunction(id => window.__G.local.weaponId === id && !window.__G.match.paused, picker.last.slice(2), { timeout: 30000 });
     out.checks.weaponPicker.selected = await page.evaluate(() => window.__G.local.weaponId);
@@ -266,6 +268,18 @@ for (const run of RUNS) {
     // Menus._swap intentionally leaves the prior pause DOM mounted for 340ms
     // while its transition finishes. Scope to the current active screen, not
     // a leaving, still-clickable weapon-picker panel from the previous pause.
+    // The panel remembers its last tab (WEAPON after the switch above); open TRAVEL like a player, once the
+    // tab is painted (the menu rejects presses on items still in their entrance).
+    const travelTab = page.locator('.iwr-pausescr:not(.is-leaving) [data-id="r-tab-travel"]');
+    await travelTab.waitFor({ state: 'visible', timeout: 30000 });
+    await page.waitForFunction(() => {
+      const m=window.__G.menus,root=m._scr?.el,b=root?.querySelector('[data-id="r-tab-travel"]');
+      if(!b||m.current!==m._scr.name||root.inert)return false;
+      let opacity=1;
+      for(let e=b;e&&e!==root.parentNode;e=e.parentElement){const o=+getComputedStyle(e).opacity;if(Number.isFinite(o))opacity*=o;if(e===root)break;}
+      return opacity>0.6;
+    },null,{timeout:30000});
+    await travelTab.click();
     const travelButton = page.locator('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]');
     await travelButton.waitFor({ state: 'visible', timeout: 30000 });
     if (await travelButton.count() !== 1) throw new Error('range has duplicate active travel buttons');
