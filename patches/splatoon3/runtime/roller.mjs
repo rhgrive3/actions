@@ -796,8 +796,9 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       q.premultiply(turn.setFromAxisAngle(axis.normalize(),now-allowable + .003));
     };
     const contacting = !!this._s3RollerContactPose;
-    const swinging = !contacting && !!this.s3RollerFlick && this.grounded;
-    const neededGround = contacting || swinging;
+    // Landing recovery can outlive the runner's flick token. Keep the drum
+    // above the floor through that grounded recovery as well as the swing.
+    const neededGround = !!this.grounded;
     let bound;
     const bottom = q => {
       if (!bound) {
@@ -818,6 +819,12 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       const kid = this.kid;
       weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());
       center.copy(d.drumAt);center.x += bound.centerX;
+      // The live hinge moves the drum centre during folding. Its rotation
+      // is about the cylinder axle, so the radial support bound is unchanged.
+      // Testing the unfolded centre can miss penetration in a folded landing.
+      const fold = this.weapon.fold;
+      if (fold && this.weapon.drum?.parent === fold)
+        center.sub(fold.position).applyQuaternion(fold.quaternion).add(fold.position);
       center.sub(d.handR.pos).applyQuaternion(weaponQ).add(target).multiply(kid.scale).applyQuaternion(kid.quaternion).add(kid.position);
       axisX.set(1,0,0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
       axisY.set(0,1,0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);

@@ -32,3 +32,13 @@ The pre-integration #1547 run `39036249840` failed on stale or incomplete test c
 Production minification and the unchanged startup dependency/size gate passed locally (131 core preloads, 14 range preloads, 146 initial JS requests). Final committed-head CI, focused source/emitted tests and browser results are recorded on the integration PR.
 
 The comparison reference remains Splatoon 3 Ver.11.3.0 under the weapon, gear and input conditions recorded by each source PR. These integration checks establish INKWAVE regression behavior, not Nintendo executable equivalence or Switch/iOS/Android hardware measurements. Existing unverified source defaults, paint masks, model pattern accuracy and real-device measurements remain explicitly unverified in the original reports.
+
+## Integration CI follow-up
+
+The first integration run found three additional cases:
+
+- The pool regression still expected a Slosher index leak already fixed in main. It now requires exact clean/dirty Roller equality in production and removes exactly the one allocator reset in an isolated negative control to reproduce the original leak. All six pool controls pass.
+- The paint baseline's wide context windows included adjacent imports and post-paint hooks that Crab/opponent palettes legitimately extend. Three context windows are narrowed while retaining exactly the same32 paint edits, pinned full modules, unique occurrence requirements, and byte-identical preservation of all non-paint baseline code. Preparing the separate current-main reference passes with zero writes: main already contains every reviewed birth/pool/paint change.
+- The S3 proportioned rig exposed a folded Roller clipping the floor by13.8mm during a120Hz vertical landing. The grip solver now evaluates the actual folded drum centre and guards the full grounded recovery after the runner clears its flick token. Existing actual indexed-vertex floor checks and both grip tolerances remain strict; all16 Roller/fold tests pass. Only the visual wrist/orientation correction changes; weapon timings, movement, damage, ink and hit volumes remain unchanged.
+
+Local verification of the initial committed build `cc561406` also passed109 existing-failure regressions,47 emitted Crab/palette/model checks,10 exact packaging checks,105 Chromium Crab cases, and22 simultaneous pointer/synthetic-gyro cases. A persistent Chromium profile saved Patternz, closed the browser context, reopened it fresh, and rendered both palette teams with the saved kit and appearance retained and no page errors. These are scoped results of that build, not substitute results for later commits. The final integration head still requires its own CI.

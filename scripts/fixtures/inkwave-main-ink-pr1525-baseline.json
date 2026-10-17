@@ -60,8 +60,8 @@
         {
           "id": "paint-1",
           "line": 31,
-          "before": " */\nimport { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\nconst EPS = 1e-9;\nconst STEP_FRAMES_PER_SECOND = 60;\n",
-          "after": " */\nimport { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { mainInkFootprint } from './main-ink-footprints.mjs';\nconst EPS = 1e-9;\nconst STEP_FRAMES_PER_SECOND = 60;\n"
+          "before": " */\nimport { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\n",
+          "after": " */\nimport { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';\nimport { mainInkFootprint } from './main-ink-footprints.mjs';\n"
         },
         {
           "id": "paint-2",
@@ -78,8 +78,8 @@
         {
           "id": "paint-4",
           "line": 172,
-          "before": "  const kind = drop.spec?.surfaceOnly && drop.depth\n    ? SOURCE_SPLASH_PAINT_KIND : drop.kind;\n  const opts = { seed: drop.seed, kind, claimOwner: drop.owner };\n  if (surfaceOnly) opts.face = hit.face;\n  const floor = hit.normal.y > .45;\n",
-          "after": "  const kind = drop.spec?.surfaceOnly && drop.depth\n    ? SOURCE_SPLASH_PAINT_KIND : drop.kind;\n  const opts = { seed: drop.seed, kind, claimOwner: drop.owner, footprint: drop.footprint };\n  if (surfaceOnly) opts.face = hit.face;\n  const floor = hit.normal.y > .45;\n"
+          "before": "  const kind = drop.spec?.surfaceOnly && drop.depth\n    ? SOURCE_SPLASH_PAINT_KIND : drop.kind;\n  const opts = { seed: drop.seed, kind, claimOwner: drop.owner };\n",
+          "after": "  const kind = drop.spec?.surfaceOnly && drop.depth\n    ? SOURCE_SPLASH_PAINT_KIND : drop.kind;\n  const opts = { seed: drop.seed, kind, claimOwner: drop.owner, footprint: drop.footprint };\n"
         },
         {
           "id": "paint-5",
@@ -298,8 +298,8 @@
         {
           "id": "paint-2",
           "line": 27,
-          "before": "  code = adaptProjectileVisuals(rel, code);\n  code = adaptUiLocalization(rel, code);\n  return adaptCameraAimControls(rel, code);\n}\n",
-          "after": "  code = adaptProjectileVisuals(rel, code);\n  code = adaptUiLocalization(rel, code);\n  code = adaptMainInkFootprints(rel, code);\n  return adaptCameraAimControls(rel, code);\n}\n"
+          "before": "  code = adaptProjectileVisuals(rel, code);\n  code = adaptUiLocalization(rel, code);\n",
+          "after": "  code = adaptProjectileVisuals(rel, code);\n  code = adaptUiLocalization(rel, code);\n  code = adaptMainInkFootprints(rel, code);\n"
         }
       ]
     },

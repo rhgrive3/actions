@@ -9,8 +9,12 @@ const snapshot = P => JSON.parse(JSON.stringify(P.list.map(p => ({
   sloshUnit:p.fidelitySloshIndex??p.fidelitySloshPacketIndex??null,
   rollerUnit:p.fidelityRollerUnitIndex??null,
 }))));
-async function run(history, target, resetPool) {
-  const f=await fixture({productionComposition:true,fullRuntime:true,realProjectiles:true,vmMathRandom:()=>.5});
+async function run(history, target, resetPool, legacySloshIndex = false) {
+  const f=await fixture({productionComposition:true,fullRuntime:true,realProjectiles:true,vmMathRandom:()=>.5,adaptRuntime:(rel,source)=>{
+    if(!legacySloshIndex||rel!=='patches/splatoon3/runtime/weapons-fidelity.mjs')return source;
+    const anchor='p.fidelitySloshIndex=null;';assert.equal(source.split(anchor).length,2,'one production Slosher index reset');
+    return source.replace(anchor,''); // isolated pre-fix negative control, never shipped
+  }});
   const {G}=f,P=G.projectiles;
   G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
   const fire=kind=>{
@@ -34,13 +38,16 @@ async function run(history, target, resetPool) {
   return result;
 }
 const histories=[[],['shooter'],['slosher'],['shooter','slosher','roller-horizontal','shooter']];
-test('native pool history reproduces both exact CI metadata mismatches',async()=>{
+test('native pool retains incidental ink metadata but clears prior Slosher ownership; legacy control reproduces the old leak',async()=>{
   const cleanSlosh=await run([],'slosher',false),dirtySlosh=await run(['shooter'],'slosher',false);
   assert.equal(cleanSlosh[0][0].headFrame,null);assert.equal(dirtySlosh[0][0].headFrame,2);
   assert.equal(cleanSlosh[0][0].phase,null);assert.equal(dirtySlosh[0][0].phase,0);
   const cleanRoller=await run([],'roller-horizontal',false),dirtyRoller=await run(['slosher'],'roller-horizontal',false);
-  assert.notDeepEqual(dirtyRoller,cleanRoller);
-  assert.ok(dirtyRoller[0].some(p=>p.sloshUnit!==null));
+  assert.deepEqual(dirtyRoller,cleanRoller,'current native allocator clears Slosher state before Roller reuse');
+  assert.ok(dirtyRoller[0].every(p=>p.sloshUnit===null));
+  const legacyRoller=await run(['slosher'],'roller-horizontal',false,true);
+  assert.notDeepEqual(legacyRoller,cleanRoller,'removing exactly the reviewed reset reproduces the metadata drift');
+  assert.ok(legacyRoller[0].some(p=>p.sloshUnit!==null));
 });
 for(const target of ['shooter','slosher','roller-horizontal','roller-vertical'])test(`independent ${target} capture is exact across native pool histories`,async()=>{
   const baseline=await run([],target,true);
