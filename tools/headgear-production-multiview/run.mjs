@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -13,7 +14,8 @@ async function main(){
  const site=fs.realpathSync(option('--site','_site')),out=path.resolve(option('--out','.qa-evidence/headgear-production-views'));fs.mkdirSync(out,{recursive:true});
  const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash,'artifact map identity');
  for(const [file,digest]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(safe(site,file))),digest,'build receipt '+file);
- const prefix='/_versions/'+manifest.build.revision+'/',basis={contentHash:manifest.contentHash,buildRevision:manifest.build.revision,sourceSha:process.env.GITHUB_SHA||null,harnessHashes:{},loaded:[]};
+ const prefix='/_versions/'+manifest.build.revision+'/',basis={contentHash:manifest.contentHash,buildRevision:manifest.build.revision,sourceSha:process.env.SOURCE_SHA||process.env.GITHUB_SHA||null,harnessHashes:{},loaded:[]};
+ if(basis.sourceSha){basis.checkoutSha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();assert.equal(basis.checkoutSha,basis.sourceSha,'exact candidate checkout');}
  for(const f of ['browser.mjs','run.mjs','registry.mjs'])basis.harnessHashes[f]=hash(fs.readFileSync(path.join(here,f)));
  const write=r=>fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({...basis,...r},null,2));write({status:'verified-build',browserRun:false});
  let server,browser,page;const errors=[],warnings=[],blocked=[],loaded=new Set();
