@@ -94,7 +94,12 @@ def cases() -> list[tuple[str, str, Callable[[dict[str, Any]], None] | None, dic
 
 def run(before_path: Path, after_path: Path, receipt_path: Path) -> dict[str, Any]:
     before = json.loads(before_path.read_text())
-    baseline_after = json.loads(after_path.read_text())
+    observed_after = json.loads(after_path.read_text())
+    if not isinstance(before, dict) or not isinstance(observed_after, dict):
+        raise ValueError("baseline and candidate capture reports must be JSON objects")
+    # Mutation controls use an identical physical pair. Intentional candidate
+    # changes are checked independently by the complete paired comparison.
+    baseline_after = copy.deepcopy(before)
     records = []
     for name, expected, mutate, evidence in cases():
         after = copy.deepcopy(baseline_after)
@@ -150,6 +155,8 @@ def run(before_path: Path, after_path: Path, receipt_path: Path) -> dict[str, An
         "method": "Fourteen isolated mutations against copied before/after receipt JSON; comparator inputs are temporary copies and original capture receipts remain unchanged. The original nine gates are retained and rerun, with five impactState FX/contact/retirement/face/paint-coverage gates added.",
         "inputs": {"before": str(before_path), "after": str(after_path)},
         "caseCount": len(records),
+        "syntheticControlSource": "identical baseline self-pair; real candidate is checked by separate complete comparison",
+        "observedCandidateBuild": observed_after.get("build"),
         "passedCases": passed,
         "failedCases": len(records) - passed,
         "status": "pass" if passed == len(records) else "fail",
