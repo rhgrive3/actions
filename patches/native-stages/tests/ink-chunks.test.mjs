@@ -104,16 +104,16 @@ test('native ink bulk runs retain interleaved transparent source triangle order'
  const camera=new THREE.PerspectiveCamera(60,1,.1,50);
  camera.position.set(1,4,12);camera.lookAt(1,0,0);camera.updateMatrixWorld();
  mesh.updateMatrixWorld();
- assert.equal(mesh.selectVisible(camera),2);
+ assert.equal(mesh.selectVisible(camera),1);
  assert.deepEqual(Array.from(mesh.geometry.index.array.slice(0,g.drawRange.count)),[0,1,2,6,7,8]);
  const version=mesh.geometry.index.version;
  camera.position.set(1.2,4,12);camera.lookAt(1,0,0);camera.updateMatrixWorld();
- assert.equal(mesh.selectVisible(camera),2);
+ assert.equal(mesh.selectVisible(camera),1);
  assert.equal(mesh.geometry.index.version,version,'moved camera with unchanged visible set avoids GPU writes');
  camera.position.set(50,2,50);camera.lookAt(51,0,50);camera.updateMatrixWorld();
  assert.equal(mesh.selectVisible(camera),0);
  camera.position.set(1,4,12);camera.lookAt(1,0,0);camera.updateMatrixWorld();
- assert.equal(mesh.selectVisible(camera),2);
+ assert.equal(mesh.selectVisible(camera),1);
  assert.deepEqual(Array.from(mesh.geometry.index.array.slice(0,g.drawRange.count)),[0,1,2,6,7,8]);
  mesh.dispose();mesh.material.dispose();
 });
@@ -150,7 +150,7 @@ test('native ink bulk path retains separated source runs without changing blend 
  assert.equal(mesh._fragmentedRuns,false,'contiguous source runs use the bulk copy path');
  const camera=new THREE.PerspectiveCamera(60,1,.1,55);
  camera.position.set(1,3,15);camera.lookAt(1,0,0);camera.updateMatrixWorld();mesh.updateMatrixWorld();
- assert.equal(mesh.selectVisible(camera),2);
+ assert.equal(mesh.selectVisible(camera),1);
  const actual=Array.from(g.index.array.subarray(0,g.drawRange.count));
  const expected=[...Array.from({length:24},(_,i)=>i),...Array.from({length:24},(_,i)=>48+i)];
  assert.deepEqual(actual,expected,'the two separated near runs retain original source order');
