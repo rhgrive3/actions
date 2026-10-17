@@ -11,6 +11,9 @@ if(rows.slice(-8).includes(row)){
     if(!mesh.isMesh)return;const old=mesh.onBeforeRender;hooks.push([mesh,old]);
     mesh.onBeforeRender=function(...args){drawn.push({body:mesh===w.body||mesh===w.bodyFar,vertices:mesh.geometry?.attributes?.position?.count??0});return old?.apply(this,args);};
    });
+   // Match the native main.js frame order: redraw the world before its transparent showcase overlay.
+   check(typeof G.game.R?.render==='function','native world renderer');
+   G.game.R.render();
    sc.render();
    check(drawn.some(x=>x.body&&x.vertices>0),'captured native body '+row);
    check(composites.some(x=>x.opacity>0.01&&x.texture),'captured native composite '+row);
