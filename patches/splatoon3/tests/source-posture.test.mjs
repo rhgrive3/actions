@@ -174,7 +174,7 @@ test('the Wii U hold clips lean forward; the corrected stance, walk and run stay
   ch.dispose();
 });
 
-test('a non-firing shooter: level two-hand carry when moving, the source two-hand hold kept when standing', async () => {
+test('a non-firing shooter: level two-hand carry when moving, a forward two-hand hold when standing', async () => {
   const api = await production(), st = state(), runs = [];
   // Identical input on two fresh rigs (opt-out, corrected) so the standing clip phase matches.
   for (const on of [false, true]) {
@@ -193,9 +193,10 @@ test('a non-firing shooter: level two-hand carry when moving, the source two-han
   for (const [name, m] of [['walk', walk], ['run', run]]) {
     assert.ok(Math.abs(m.yaw) < 25 && m.pitch > -25 && m.pitch < 10, `${name}: pitch ${m.pitch.toFixed(1)}°, yaw ${m.yaw.toFixed(1)}°`);
   }
-  // Standing: the barrel direction and both hands on the gun stay as authored (S3 footage shows the
-  // support hand on the gun; the arms keep their world direction while the torso is uprighted).
-  assert.ok(Math.abs(stand.pitch - rawStand.pitch) < 1 && Math.abs(stand.yaw - rawStand.yaw) < 1,
+  // Standing: S3 front-quarter footage holds the gun two-handed with the barrel forward, turned a
+  // little toward the midline and tipped down, not laid across the belly as the Wii U clip does.
+  assert.ok(rawStand.yaw > 50, `the Wii U standing hold crosses the belly (${rawStand.yaw.toFixed(1)}°)`);
+  assert.ok(stand.yaw > 15 && stand.yaw < 45 && stand.pitch < 0 && stand.pitch > -30,
     `standing barrel ${rawStand.pitch.toFixed(1)}°/${rawStand.yaw.toFixed(1)}° -> ${stand.pitch.toFixed(1)}°/${stand.yaw.toFixed(1)}°`);
   assert.ok(walk.hands < 0.2 && stand.hands < 0.2 && Math.abs(stand.hands - rawStand.hands) < 0.01,
     `two-hand hold (walk ${walk.hands.toFixed(3)}, stand ${rawStand.hands.toFixed(3)} -> ${stand.hands.toFixed(3)})`);
