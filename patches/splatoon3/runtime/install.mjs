@@ -10,6 +10,7 @@ import { Actor } from '../../../src/game/actor.js';
 import { CameraRig } from '../../../src/game/cameraRig.js';
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
+import { FX } from '../../../src/fx/fx.js';
 import { NetMatch } from '../../../src/net/netmatch.js';
 import { LANG, TXT } from '../../../src/i18n.js';
 import { PaintSystem } from '../../../src/world/paint.js';
@@ -86,13 +87,14 @@ import { installDeathBlast } from './death-blast.mjs';
 import { installAllSubs, replaySub } from './all-subs.mjs';
 import { installAllSpecials, replaySpecial } from './all-specials.mjs';
 import { installSpecialModels } from './special-presentation.mjs';
+import { installSpecialVfx, observeSpecialReplay } from './special-vfx.mjs';
 import {installCatalogueSplashdown,replaySplashdown,installCatalogueLoadout,SUB_NAMES,SPECIAL_NAMES,installCatalogueNetwork,completeBaseKits,installCatalogueVision,installCatalogueBeakonJumps,installCatalogueControls} from './catalogue.mjs';
 
 let installed = false;
 export function install(profile) {
   if (installed) throw new Error('INKWAVE patches already installed');
   if (profile.schema !== 1 || profile.referenceVersion !== '11.3.0') throw new Error('Unsupported gameplay profile');
-  const api = { THREE, G, on, emit, LANG, TXT, PLAYER, WEAPONS, WEAPON_ORDER, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, CameraRig, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, Minimap, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
+  const api = { THREE, G, on, emit, LANG, TXT, PLAYER, WEAPONS, WEAPON_ORDER, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, CameraRig, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, FX, PaintSystem, Minimap, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
   Object.assign(PLAYER, profile.player);
   for (const [kind, data] of Object.entries(profile.weapons)) {
     if (!WEAPONS[kind]) throw new Error(`Missing upstream weapon ${kind}`);
@@ -205,11 +207,12 @@ export function install(profile) {
   installCatalogueVision(api);
   installCatalogueBeakonJumps(api);
   installCatalogueControls(api);
-  installCatalogueNetwork(api, { replaySub, replaySpecial, replaySplashdown });
+  installCatalogueNetwork(api, { replaySub, replaySpecial: observeSpecialReplay(api, replaySpecial), replaySplashdown: observeSpecialReplay(api, replaySplashdown) });
   installNativeSprinklerDamage(api);
   installBotPaintDeviceProfile({ G, Actor });
   installSpecialPresentation(api, profile);
   installSpecialModels(api);
+  installSpecialVfx(api);
   // Outermost weapon pose layer: per-weapon / per-family offsets over every native and patched hold.
   installWeaponFamilyMotion(api);
   // Validate and bind catalogue gameplay only after all supported sub/special

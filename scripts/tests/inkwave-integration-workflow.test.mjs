@@ -163,3 +163,20 @@ test('emitted material handoff is mandatory and runs only after a complete site 
   assert.ok(workflow.includes('patches/local-quality/tests/*.test.mjs'),
     'do not remove the original source regression gate');
 });
+test('emitted Bot respawn and retry regressions reuse the complete production site without replacing source coverage', () => {
+  const validate = workflow.slice(workflow.indexOf('  validate:'), workflow.indexOf('  browser:'));
+  const marker = '      - name: Verify emitted Bot navigation respawn and retry state';
+  assert.equal(validate.split(marker).length - 1, 1);
+  const at = validate.indexOf(marker);
+  const build = validate.indexOf('node scripts/build-inkwave.mjs inkwave-public _site');
+  const receipt = validate.indexOf('git rev-parse HEAD > _site-source-sha.txt');
+  assert.ok(build >= 0 && receipt > build && at > receipt, 'use the completed production build');
+  const end = validate.indexOf('\n      - name:', at + marker.length);
+  assert.ok(end > at);
+  const block = validate.slice(at, end);
+  assert.ok(block.includes('INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site'));
+  assert.ok(block.includes('run: node --experimental-vm-modules --test patches/local-quality/tests/bot-navigation-respawn.test.mjs'));
+  assert.ok(!/^\s+(?:if|continue-on-error):/m.test(block), 'mandatory step without failure suppression');
+  assert.ok(!block.includes('||') && !block.includes('--test-name-pattern'));
+  assert.ok(validate.includes('node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs'), 'retain all original source tests');
+});
