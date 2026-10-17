@@ -6,6 +6,7 @@ export const UI_JA = Object.freeze({
   'Private rooms for up to 8 friends — create one or join with a room code':'最大8人のプライベートルーム。部屋を作るか、コードで参加しよう',
   'BOOYAH!':'ナイス！','HEY!':'カモン！','DANCE':'ダンス','FLEX':'ポーズ',
   '{n} weapons · every one comes with a sub and a special':'全{n}種・サブ＆スペシャル付き',
+  'CHANGE GEAR, THEN GO!':'ギアを変えて再戦','KEEP GOING':'このまま続ける',
   'Fresh':'フレッシュな','Inky':'インクまみれの','Turf':'ナワバリの','Splashy':'はじける','Rad':'イカした','Sneaky':'こっそり','Deep-Sea':'深海の','Glossy':'つやつやの','Tidal':'潮風の','Zesty':'元気な','Mighty':'力強い','Soggy':'びしょぬれの','Speedy':'すばやい','Salty':'しょっぱい','Bubbly':'あわあわの','Snazzy':'おしゃれな','Drippy':'したたる','Sunny':'陽気な','Inkling':'インクリング','Splatter':'塗り手','Tentacle':'ゲソ','Sprayer':'塗り名人','Rookie':'新人','Legend':'伝説',
   'Turf Boss':'ナワバリのボス','Wave Rider':'波乗り名人','Drip Lord':'おしゃれ番長','Deck Hand':'船乗り','Sea Pickle':'海の人気者','Kelp Fan':'コンブ好き','Plaza Star':'広場のスター','Harbor Kid':'港のイカ',
   'Room not found':'部屋が見つかりません','ROOM NOT FOUND':'部屋が見つかりません',

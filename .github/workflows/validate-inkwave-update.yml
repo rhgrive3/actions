@@ -453,6 +453,9 @@ jobs:
       - name: Verify PR1171 rendered reticle and GPU paint parity
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-pr1171.mjs .built-site/_site
+      - name: Verify emitted menu focus lifecycle
+        if: matrix.suite == 'ui'
+        run: node scripts/check-inkwave-menu-focus.mjs --source .built-site/_site --evidence-dir "$CI_STORAGE/evidence/menu-focus"
       - name: Verify native touch gesture continuity in Chromium
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-tap-gestures-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/tap-gestures"
@@ -603,7 +606,7 @@ jobs:
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
             'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json'],
-            'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
+            'ui':['menu-focus/menu-focus-result.json','identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
             'responsive':['responsive/responsive-result.json'],
             'range':['range/range-result.json'],
             'startup':['startup/startup-browser-result.json'],
@@ -620,6 +623,7 @@ jobs:
             if name=='motion/motion-result.json': assert not report['errors'] and report['fixture']['scenarios']==10
             else: assert report['status']=='passed', name
             if 'contentHash' in report and name!='runtime-before/runtime-result.json': assert report['contentHash']==build['contentHash'], name
+          if suite=='ui': assert reports['menu-focus/menu-focus-result.json']['sourceSha']==os.environ['SOURCE_SHA']
           if suite=='network':
             for name in checks: assert reports[name]['sourceSha']==os.environ['SOURCE_SHA']
           if suite=='active':
