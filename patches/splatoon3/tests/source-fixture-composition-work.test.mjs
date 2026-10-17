@@ -88,6 +88,12 @@ test('source transform cache compares complete input bytes, not only paths', () 
   assert.equal(calls, 4, 'exceptions are never cached as passing results');
 });
 
+test('no-VM-flag CLI imports can validate arguments before creating a fixture', () => {
+  const compile = memoizeFixtureVmCompiler(undefined);
+  assert.equal(typeof compile, 'function');
+  assert.throws(() => compile('export const x=1;', {identifier:'x.mjs'}), /SourceTextModule constructor required/);
+});
+
 test('fresh VM contexts execute correct bytecode after source edits', {skip: !vm.SourceTextModule}, async () => {
   const compile = memoizeFixtureVmCompiler(vm.SourceTextModule);
   const id = 'test-compiled-realm-isolation.mjs';

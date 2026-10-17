@@ -44,7 +44,10 @@ export function memoizeFixtureSourceAdapter(adapter, maxBytes = 12 * 1024 * 1024
 // V8 can execute stale code if cachedData belongs to different source bytes.
 // Therefore a matching identifier alone is NEVER enough: compare full text.
 export function memoizeFixtureVmCompiler(Module, maxBytes = 12 * 1024 * 1024) {
-  if (typeof Module !== 'function') throw new TypeError('SourceTextModule constructor required');
+  // Some validation CLIs import source-fixture before rejecting an unsupported
+  // fixture root, without --experimental-vm-modules. Defer this error until a
+  // VM compilation is actually requested so early guards remain effective.
+  if (typeof Module !== 'function') return () => { throw new TypeError('SourceTextModule constructor required'); };
   const cache = boundedCache(maxBytes);
   return (source, options) => {
     const id = options?.identifier;
