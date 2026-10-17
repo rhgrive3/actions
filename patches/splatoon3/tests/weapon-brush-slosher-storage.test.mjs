@@ -4,7 +4,7 @@ const {AP,R,ALTERNATE_WEAPON_KITS}=await fixture({extraExports:"export * as AP f
 const rows=['Brush_Heavy_01','Brush_Heavy_02','Slosher_Double_01','Slosher_Diffusion_02'];
 function store(initial=null){let raw=initial;const make=()=>({getItem:k=>{assert.equal(k,AP.WEAPON_APPEARANCE_STORAGE_KEY);return raw;},setItem:(k,v)=>{assert.equal(k,AP.WEAPON_APPEARANCE_STORAGE_KEY);raw=v;}});return {open:make,raw:()=>raw};}
 test('four new defaults persist explicit Base and manual preference through new storage handles',()=>{
- assert.equal(R.registeredWeaponVariantModels().length,94);assert.equal(AP.WEAPON_APPEARANCE_STORAGE_KEY,'inkwave.weapon-appearances.v1');
+ assert.equal(R.registeredWeaponVariantModels().length,95);assert.equal(AP.WEAPON_APPEARANCE_STORAGE_KEY,'inkwave.weapon-appearances.v1');
  for(const row of rows){const kit=ALTERNATE_WEAPON_KITS.find(k=>k.main===row);assert.ok(kit);const s=store();
   assert.equal(AP.weaponAppearancePreference(kit.id,s.open()),null);assert.equal(AP.selectedWeaponAppearance(kit.id,s.open()),row);
   AP.setWeaponAppearance(kit.id,kit.baseId,s.open());assert.deepEqual(JSON.parse(s.raw()),{[kit.baseId]:kit.baseId});assert.equal(AP.selectedWeaponAppearance(kit.id,s.open()),kit.baseId);
@@ -13,7 +13,7 @@ test('four new defaults persist explicit Base and manual preference through new 
  }
 });
 test('all94 historical saved manual rows survive read/reopen and unrelated preference writes',()=>{
- const all=R.registeredWeaponVariants();assert.equal(all.length,94);
+ const all=R.registeredWeaponVariants();assert.equal(all.length,95);
  for(const row of all){const base=R.weaponVariantSpec(row).baseId,kit=ALTERNATE_WEAPON_KITS.find(k=>k.baseId===base);assert.ok(kit);const raw=JSON.stringify({[base]:row}),s=store(raw);
   assert.equal(AP.weaponAppearancePreference(kit.id,s.open()),row);assert.equal(AP.selectedWeaponAppearance(kit.id,s.open()),row);assert.equal(s.raw(),raw,'read does not rewrite saved bytes');
   assert.ok(AP.weaponAppearanceOptions(kit.id).some(x=>x.id===row));

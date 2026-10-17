@@ -14,8 +14,8 @@ const list = x => Array.from(x);
 const memoryStorage = () => { let value=null; return {getItem:()=>value,setItem:(_k,v)=>{value=v;},inject:v=>{value=v;}}; };
 test('visual registry resolves only built variants and keeps all base IDs/callbacks/holds', async()=>{
   const {REG:R,AP,WEAPONS}=await production();
-  const ids=R.registeredWeaponVariants(); assert.equal(ids.length,94);
-  for (const absent of ['Shelter_Compact_02']) assert.equal(R.weaponVariantSpec(absent),null,absent+' withheld'); assert.equal(new Set(ids).size,ids.length);
+  const ids=R.registeredWeaponVariants(); assert.equal(ids.length,95);
+  assert.equal(typeof R.weaponVariantSpec('Shelter_Compact_02')?.build,'function','Patternz implemented'); assert.equal(new Set(ids).size,ids.length);
   const hold={carry:{p:[1,2,3]},rc:{kick:1}};
   for(const id of ids){const spec=R.weaponVariantSpec(id),base=spec.baseId;
     assert.equal(WEAPONS[id],undefined,id+' no gameplay kit'); assert.ok(WEAPONS[base]);
@@ -126,7 +126,7 @@ test('kit IDs retain gameplay APIs with94 candidate defaults and1 base fallback'
   assert.equal(WEAPONS[kit.id].special,kit.special);assert.equal(WEAPONS[kit.id].specialCost,kit.specialCost);
   assert.ok(AP.weaponAppearanceOptions(kit.id).some(o=>o.id===kit.baseId));
  }
- assert.equal(implemented,94);assert.equal(fallback,1);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
+ assert.equal(implemented,95);assert.equal(fallback,0);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
  assert.equal(AP.selectedWeaponAppearance('unknown-kit',memoryStorage()),'unknown-kit');
 });
 test('explicit Base persists separately from absent kit default and does not leak to peers',async()=>{

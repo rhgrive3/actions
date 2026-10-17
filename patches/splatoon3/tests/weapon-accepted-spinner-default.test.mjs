@@ -24,7 +24,7 @@ function digestWeapon(w){const h=crypto.createHash('sha256');let count=0;for(con
 process.on('exit',()=>{if(process.env.SPINNER_ADOPTION_RECEIPT)fs.writeFileSync(process.env.SPINNER_ADOPTION_RECEIPT,JSON.stringify(receipts,null,2)+'\n');});
 
 test('accepted spinner defaults preserve manual94 and explicit Base override on actual local Character',()=>{
- assert.equal(R.registeredWeaponVariants().length,94);
+ assert.equal(R.registeredWeaponVariants().length,95);
  for(const row of ['Spinner_Serein_01','Spinner_Hyper_01','Spinner_Hyper_02']){const kit=f.ALTERNATE_WEAPON_KITS.find(k=>k.main===row);assert.ok(kit);
   for(const team of [0,1]){f.setWeaponAppearance(kit.id,kit.baseId,null);assert.equal(f.selectedWeaponAppearance(kit.id,null),kit.baseId);G.actors=[];G.projectiles.clear();
    const a=new f.Actor({team,weapon:kit.id,isLocal:true,CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
