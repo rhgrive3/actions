@@ -188,3 +188,48 @@ test('animated marina boats and gulls preserve all transforms while reducing rep
   assert.equal(before.counters.sin - after.counters.sin,600*entities);
   assert.equal(before.counters.cos - after.counters.cos,600*entities);
 });
+
+test('safe optimization preserves the ray envelope and keeps ancillary paint outside ray guard', () => {
+  const source = read('src/world/paint.js');
+  const patched = adaptRuntimeFrameScratch('src/world/paint.js', source, unique);
+  const composed = adaptBuildSource('src/world/paint.js',source);
+  for (const out of [patched,composed]) {
+    assert.match(out,/length\(p\) <= r \* 2\.55 \+ tx \* 2\.0/);
+    assert.match(out,/if \(ks\.x > 0\.0 && length\(p\)/);
+    const guarded = out.indexOf('if (ks.x > 0.0 && length(p)');
+    const satellite = out.indexOf('    // ---- satellite droplets',guarded);
+    const guardText = out.slice(guarded,satellite);
+    assert.equal((guardText.match(/for \(int k = 0; k < 10; k\+\+\)/g)||[]).length,1);
+    assert.match(guardText,/\n      }\n    }\n$/);
+    assert.ok(satellite > guarded && out.slice(satellite).startsWith('    // ---- satellite droplets'), 'satellite pass remains outside ray-only guard');
+    assert.doesNotThrow(()=>new vm.SourceTextModule(out));
+  }
+  const maxRay=1.588+0.57+0.57*0.09+0.115+0.072+0.06;
+  assert.ok(maxRay < 2.55, 'far ray cutoff exceeds conservative outer envelope');
+});
+
+test('BFRES integer step kinds and Float64 direction target are allocation free', () => {
+  const bank=read('src/game/motion/source-bank.js');
+  const changed=adaptRuntimeFrameScratch('src/game/motion/source-bank.js',bank,unique);
+  assert.match(changed,/kind >= 4 && kind <= 7/);
+  assert.doesNotMatch(changed,/\[4, 5, 6, 7\]\.includes/);
+  for(let kind=0;kind<=7;kind++)assert.equal(kind>=4&&kind<=7,[4,5,6,7].includes(kind));
+  const control=read('src/game/motion/source-controller.js');
+  const mod=adaptRuntimeFrameScratch('src/game/motion/source-controller.js',control,unique);
+  assert.doesNotMatch(mod,/this\.directionTarget\.set\(this\.pivoting/);
+  assert.match(mod,/this\.directionTarget\[0\]=Math\.max\(0,this\.localZ\)/);
+  assert.doesNotThrow(()=>new vm.SourceTextModule(mod));
+  assert.match(adaptBuildSource('src/game/motion/source-controller.js',control),/this\.directionTarget\[0\]=Math\.max/);
+});
+
+test('stage mesh attributes release temporary JS arrays while keeping native index selection', () => {
+  const original=read('src/world/level.js');
+  const changed=adaptRuntimeFrameScratch('src/world/level.js',original,unique);
+  assert.match(changed,/B\.pos = null/);
+  assert.match(changed,/B\.ftan = null/);
+  assert.match(changed,/B\.idx = null/);
+  assert.match(changed,/g\.setIndex\(B\.idx\)/);
+  assert.match(changed,/this\.renderTris = B\.idx\.length \/ 3/);
+  assert.doesNotThrow(()=>new vm.SourceTextModule(changed));
+  assert.match(adaptBuildSource('src/world/level.js',original),/B\.idx = null/);
+});

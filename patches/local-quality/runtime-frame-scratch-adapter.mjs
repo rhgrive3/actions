@@ -201,5 +201,71 @@ export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
   let sum=this.directionTarget[0]+this.directionTarget[1]+this.directionTarget[2]+this.directionTarget[3];if(sum<1e-10){this.directionTarget[0]=1;this.directionTarget[1]=0;this.directionTarget[2]=0;this.directionTarget[3]=0;sum=1;}`,
       'populate directional target without arrays');
   }
+
+  if (rel === 'src/game/motion/source-bank.js') {
+    // BFRES kind is masked with &7; use a branch instead of allocating a new
+    // four-element array on every curve sample.
+    patch('else if ([4, 5, 6, 7].includes(kind)) v = data[ko + i];',
+      'else if (kind >= 4 && kind <= 7) v = data[ko + i];',
+      'BFRES integer step curve without hot-path array');
+  }
+  if (rel === 'src/world/level.js') {
+    // Three's setIndex(array) already selects uint16 when all indices fit.
+    // Release each temporary JS vertex array as soon as its typed attribute
+    // exists, avoiding retaining every JS array through the final copies.
+    patch(`    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(B.pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(B.nor, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(B.col, 3));
+    g.setAttribute('paintUv', new THREE.Float32BufferAttribute(B.puv, 2));
+    g.setAttribute('lightUv', new THREE.Float32BufferAttribute(B.luv, 2));
+    g.setAttribute('faceUv', new THREE.Float32BufferAttribute(B.fuv, 2));
+    g.setAttribute('faceData', new THREE.Float32BufferAttribute(B.fdat, 4));
+    g.setAttribute('faceFlags', new THREE.Float32BufferAttribute(B.fflag, 3));
+    g.setAttribute('faceTan', new THREE.Float32BufferAttribute(B.ftan, 3));
+    g.setIndex(B.idx);
+    g.computeBoundingSphere();
+    this.renderTris = B.idx.length / 3;
+    return g;`,
+      `    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(B.pos, 3)); B.pos = null;
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(B.nor, 3)); B.nor = null;
+    g.setAttribute('color', new THREE.Float32BufferAttribute(B.col, 3)); B.col = null;
+    g.setAttribute('paintUv', new THREE.Float32BufferAttribute(B.puv, 2)); B.puv = null;
+    g.setAttribute('lightUv', new THREE.Float32BufferAttribute(B.luv, 2)); B.luv = null;
+    g.setAttribute('faceUv', new THREE.Float32BufferAttribute(B.fuv, 2)); B.fuv = null;
+    g.setAttribute('faceData', new THREE.Float32BufferAttribute(B.fdat, 4)); B.fdat = null;
+    g.setAttribute('faceFlags', new THREE.Float32BufferAttribute(B.fflag, 3)); B.fflag = null;
+    g.setAttribute('faceTan', new THREE.Float32BufferAttribute(B.ftan, 3)); B.ftan = null;
+    g.setIndex(B.idx);
+    g.computeBoundingSphere();
+    this.renderTris = B.idx.length / 3;
+    B.idx = null;
+    return g;`,
+      'release stage-build number arrays as typed GPU attributes are created');
+  }
+  if (rel === 'src/world/paint.js') {
+    // Only skip the 10-ray evaluation when its entire footprint is strictly
+    // outside the pixel. Max body wobble <=1.588r, ray reach <=.57r,
+    // lateral offset <=.0513r, bead <=max(.072r,1.35tx);
+    // smooth union adds at most .06r. 2.55r+2tx is conservative.
+    // Never skip satellite, spatter or wall-drip computations here.
+    patch(
+      `    float tsp = 1.0 - pow(1.0 - clamp(tn * 1.4, 0.0, 1.0), 3.0);
+    for (int k = 0; k < 10; k++) {`,
+      `    if (ks.x > 0.0 && length(p) <= r * 2.55 + tx * 2.0) {
+      float tsp = 1.0 - pow(1.0 - clamp(tn * 1.4, 0.0, 1.0), 3.0);
+      for (int k = 0; k < 10; k++) {`,
+      'conservative ray-only GPU culling retaining far ink');
+    patch(
+      `      sd = smin(sd, ray, r * 0.06);
+    }
+    // ---- satellite droplets`,
+      `      sd = smin(sd, ray, r * 0.06);
+      }
+    }
+    // ---- satellite droplets`,
+      'close ray-only culling without masking satellite or wall ink');
+  }
   return code;
 }
