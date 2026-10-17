@@ -15,3 +15,52 @@ test('Refs878 legitimate separate clock advance cannot be rolled back or subtrac
 
 test('Refs878 hidden deadline is invalidated by replacement, pause, mode and host identity',async()=>{for(const kind of ['match','net','paused','range','owner','menu']){const p=await pair();try{p.host.hide(true);if(kind==='match')p.host.game.match=new p.host.f.Match({duration:90});if(kind==='net')p.host.f.G.netm={};if(kind==='paused')p.host.m.paused=true;if(kind==='range')p.host.m.mode='range';if(kind==='owner')p.host.s.hostId=p.guest.s.myId;if(kind==='menu')p.host.f.G.mode='menu';p.frames(11,[]);assert.equal(p.host.m.state,'playing',kind);assert.equal(p.host.m.time,10,kind);assert.equal(p.guest.m.state,'playing',kind);}finally{p.close();}}});
 test('Refs878 early timer delivery re-arms only the remaining deadline and disposal clears it',async()=>{const p=await pair();try{p.host.hide(true);const saved=p.host.game.platform.hiddenHostClock;p.host.env.performance.now=()=>saved.at+5000;p.frames(10,[]);assert.equal(p.host.m.state,'playing');assert.equal(p.host.timerCount(),1);p.host.env.performance.now=()=>saved.at+15000;p.frames(5.1,[]);assert.equal(p.host.m.state,'judge');assert.equal(p.guest.m.state,'judge');assert.equal(p.host.timerCount(),0);}finally{p.close();}const q=await pair();q.host.hide(true);assert.equal(q.host.timerCount(),1);q.close();assert.equal(q.host.timerCount(),0);});
+
+test('#878 hidden guest promoted to Turf host arms deadline at election without a visibility edge', async () => {
+  const p = await pair();
+  try {
+    // The room has already played 170 of 180 seconds: a host disconnect now
+    // is ordinary handoff, NOT first-minute no-contest.
+    p.host.m.duration = p.guest.m.duration = 180;
+    p.host.m.time = p.guest.m.time = 10;
+    p.guest.hide(true);
+    assert.equal(p.guest.timerCount(), 0, 'a hidden follower has no authoritative deadline');
+    const before = p.guest.snapshot(), worldTime = p.guest.f.G.time;
+    p.host.socket.close();
+    assert.equal(p.guest.s.isHost, true, 'real room/NetSession elected this hidden guest');
+    assert.equal(p.guest.m.follower, false, 'NetMatch promoted match ownership');
+    assert.ok(p.guest.game.platform.hiddenHostClock, 'election arms the old clock without a visibility edge');
+    assert.equal(p.guest.timerCount(), 1, 'one host deadline is pending');
+    assert.equal(p.guest.game.platform.onHostAcquired(), false, 'duplicate migration does not replace the timer');
+    assert.equal(p.guest.timerCount(), 1);
+    p.frames(5, []);
+    assert.equal(p.guest.m.time, 10, 'no hidden Actor/Match sim catch-up runs between timers');
+    p.frames(5.2, []);
+    assert.equal(p.guest.m.time, 0, 'actual host ends at elapsed deadline');
+    assert.equal(p.guest.m.state, 'finish');
+    p.frames(2.7, []);
+    assert.equal(p.guest.m.state, 'judge', 'hidden newly elected host sends the ordinary result');
+    assert.ok(p.guest.m.result, 'new host cannot strand its online match without a result');
+    assert.equal(p.guest.snapshot().physics, before.physics, 'migration does not start background physics');
+    assert.equal(p.guest.f.G.time, worldTime, 'no scene clock catch-up');
+    assert.equal(p.guest.timerCount(), 0, 'deadline and result timers retire');
+  } finally { p.close(); }
+});
+
+test('#878 hidden host promotion does not revive an old result or mutate a replacement match', async () => {
+  const p = await pair();
+  try {
+    p.host.m.duration = p.guest.m.duration = 180;
+    p.guest.hide(true);
+    p.host.socket.close();
+    assert.equal(p.guest.s.isHost, true);
+    const old = p.guest.m;
+    p.guest.game.match = new p.guest.f.Match({ duration: 90, mode: 'turf' });
+    p.frames(120, []);
+    assert.equal(p.guest.game.match.time, 90, 'stale elected-host deadline cannot time a new Match');
+    assert.equal(p.guest.game.match.result, null);
+    assert.equal(old.result, null, 'cancelled old match may not judge a replacement');
+    p.guest.hide(false);
+    assert.equal(p.guest.timerCount(), 0);
+  } finally { p.close(); }
+});

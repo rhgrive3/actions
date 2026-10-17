@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { WEAPON_AUDIO,fireArticulation } from '../runtime/audio/weapon-recipes.mjs';
 import { KIT_AUDIO,SUB_AUDIO_IDS,SPECIAL_AUDIO_IDS } from '../runtime/audio/kit-recipes.mjs';
+import { specialActivationAudioEvent } from '../runtime/audio/kit-runtime.mjs';
 import { renderSound,pcmMetrics } from '../runtime/audio/render.mjs';
 import { WeaponSoundBank,audioEmitterKey,selectVictim } from '../runtime/audio/bank.mjs';
 import { fixture } from './source-fixture.mjs';
@@ -79,7 +80,10 @@ test('all 19 actual special activations produce one distinct activation sound',a
   f.G.projectiles.clear();f.G.actors.length=0;f.calls.length=0;const a=f.make('shooter');a.isLocal=true;a.form='kid';a.weapon={...a.weapon,special:id,specialCost:100};a.special=100;a.intent.fire=false;a.intent.sub=false;a.intent.jump=false;
   a._prevIntent||={};Object.assign(a._prevIntent,{fire:false,sub:false,jump:false,squid:false,booyah:false});a._startSpecial();
   assert.ok(a.stats.specials>0,id+' activation accepted');
-  assert.equal(f.calls.filter(c=>c.id==='special:'+id&&c.event==='open').length,1,id+' exactly one activation');
+  const event=specialActivationAudioEvent(id);
+  assert.ok(KIT_AUDIO['special:'+id]?.events.includes(event),id+' source activation event is catalogued');
+  assert.equal(f.calls.filter(c=>c.id==='special:'+id&&c.event===event).length,1,id+' exactly one correct activation');
+  assert.equal(f.calls.filter(c=>c.id==='special:'+id).length,1,id+' no unrelated extra activation');
  }
 });
 test('loop seam is no greater than ordinary high-frequency sample changes',()=>{

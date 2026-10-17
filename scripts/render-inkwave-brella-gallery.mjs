@@ -15,8 +15,16 @@ const arg = (name, fallback) => { const n = process.argv.indexOf(name); return n
 const site = path.resolve(arg('--site', '_site')), out = path.resolve(arg('--out', '.ci-scratch/weapon-gallery'));
 const ids = (arg('--ids', '') || '').split(',').filter(Boolean), held = !process.argv.includes('--no-held');
 const size = Number(arg('--size', 400)), crowd=process.argv.includes('--crowd');
+function focusPaperPolicy(identity, role) {
+  if (role === 'candidate') return 'required';
+  if (role !== 'baseline-adbd') throw new Error('Unknown Focus paper role');
+  if (identity.files?.['patch/runtime/weapon-models/brellas.mjs'] !== '9f586f64c3c140bc150b7cd53493a7b4dca56ad1ae96f248d925cadbd668b536'
+    || identity.files?.['patch/runtime/brella-canopy-visual.mjs'] !== '5803e0e4b05d1f18478ec81fb08686e4593eaaef92ee4692808dc54052fc2317') throw new Error('Legacy Focus paper source binding mismatch');
+  return 'legacy-absent';
+}
 fs.mkdirSync(out, { recursive: true });
 const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
+const focusPaper = focusPaperPolicy(identity, arg('--focus-paper-role', 'candidate'));
 const prefix = '/_versions/' + identity.build.revision + '/';
 const server = http.createServer((req, res) => {
   if (req.url === '/review') {
@@ -64,7 +72,7 @@ try {
   const list = ids.length ? ids : all;
   const rows = [];
   for (const id of list) {
-    const row = await page.evaluate(async ({ id, held, crowd }) => {
+    const row = await page.evaluate(async ({ id, held, crowd, focusPaper }) => {
       const { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G } = window.__gallery;
       const { Actor, Character } = api;
       // Each selected model owns a separate preview lifetime. Runner.reset does
@@ -147,6 +155,24 @@ try {
         renderer.render(scene, camera); return snap();
       };
       // Observe the native ownership handoff: update removes the launched canopy from catalogState.
+      function observeFocusPaper(canopy, actor, policy) {
+        const d = canopy.visualSource, mesh = canopy.mesh;
+        const ink = mesh?.children.filter(part => part.name === 'canopyInk') || [];
+        if (!d?.ink?.attributes?.position?.count || !mesh) return false;
+        mesh.updateMatrixWorld(true);
+        if (![mesh.position,mesh.quaternion,mesh.scale].every(v => v.toArray().every(Number.isFinite)) || !mesh.matrixWorld.elements.every(Number.isFinite)) return false;
+        if (policy === 'legacy-absent') return d.detachedCanopyInk === undefined && d.parts.canopyInk === undefined && ink.length === 0;
+        if (policy !== 'required' || ink.length !== 1) return false;
+        const paper = ink[0], metadata = d.detachedCanopyInk, canopyPart = mesh.children.find(part => part.name === 'canopy');
+        if (metadata?.geo !== d.ink || paper.geometry !== d.ink || !paper.isMesh || paper.visible !== true
+          || !paper.material?.color?.equals(actor.color) || !metadata.pivot?.equals(d.parts.canopy.pivot)
+          || !canopyPart || !paper.scale.equals(canopyPart.scale)) return false;
+        const expected = metadata.pivot.clone().multiply(paper.scale).negate();
+        if (!paper.position.equals(expected)) return false;
+        mesh.updateMatrixWorld(true);
+        return [mesh.position,mesh.quaternion,mesh.scale,paper.position,paper.quaternion,paper.scale].every(v => v.toArray().every(Number.isFinite))
+          && mesh.matrixWorld.elements.every(Number.isFinite) && paper.matrixWorld.elements.every(Number.isFinite);
+      }
       function observeCanopyHandoff(before, wasLaunched, after, actor, weaponId, scene) {
         const mesh = before?.mesh;
         return !!before && wasLaunched === false && before.launched === true && after === null
@@ -154,9 +180,7 @@ try {
           && Number.isFinite(before.remaining) && before.remaining > 0
           && mesh?.parent === scene && mesh.visible === true && mesh.name === 'brella-canopy:' + weaponId
           && !!before.visualSource?.parts?.canopy?.geo
-          && (weaponId !== 's3-shelter-focus' || (before.visualSource.detachedCanopyInk?.geo === before.visualSource.ink
-            && mesh.children.some(part => part.name === 'canopyInk' && part.isMesh
-              && part.geometry === before.visualSource.ink && part.visible === true)))
+          && (weaponId !== 's3-shelter-focus' || observeFocusPaper(before, actor, focusPaper))
           && ['canopy', 'canopyInk'].every(name => !before.visualSource.parts[name] || mesh.children.some(part =>
             part.name === name && part.isMesh && part.geometry === before.visualSource.parts[name].geo && part.visible === true));
       }
@@ -201,7 +225,7 @@ try {
         if(frame===25)res.closedRender=bench();
         if(c?.open&&!c.launched&&ch.weapon.ps.bo>.9&&!sawOpen){sawOpen=true;shots.heldOpen=look(frame,'front');shots.heldOpenRear=look(frame,'back');shots.heldOpenSide=look(frame,'right');res.openFrame=frame;res.openRender=bench();}
         const handedOff = observeCanopyHandoff(canopyBefore, wasLaunched, c, a, id, scene);
-        if(handedOff&&!sawLaunched){pendingHandoff={canopy:canopyBefore,mesh:canopyBefore.mesh,source:canopyBefore.visualSource,weapon:ch.weapon,frame};sawLaunched=true;res.launchFrame=frame;res.launchOwnership={owner:true,weaponId:id,heldStateCleared:c===null,detachedName:canopyBefore.mesh.name,detachedInScene:true};}
+        if(handedOff&&!sawLaunched){pendingHandoff={canopy:canopyBefore,mesh:canopyBefore.mesh,source:canopyBefore.visualSource,weapon:ch.weapon,frame};sawLaunched=true;res.launchFrame=frame;res.focusPaperObservation=id==='s3-shelter-focus'?{policy:focusPaper,heldPaperVertices:canopyBefore.visualSource.ink.attributes.position.count,detachedPaperMeshes:canopyBefore.mesh.children.filter(part=>part.name==='canopyInk').length,knownBaselinePaperMissing:focusPaper==='legacy-absent'}:null;res.launchOwnership={owner:true,weaponId:id,heldStateCleared:c===null,detachedName:canopyBefore.mesh.name,detachedInScene:true};}
         if(pendingHandoff&&!sawHidden){
           if(ch.weapon!==pendingHandoff.weapon||cs?.canopy!==null||!(cs.naked>0)||pendingHandoff.canopy.mesh!==pendingHandoff.mesh||pendingHandoff.canopy.visualSource!==pendingHandoff.source||!observeCanopyHandoff(pendingHandoff.canopy,false,cs.canopy,a,id,scene))throw new Error(id+' detached canopy ownership lost before held hide');
           if(frame-pendingHandoff.frame>=canopyHideApplications(1/60))throw new Error(id+' held canopy hide exceeded native damping bound');
@@ -297,11 +321,11 @@ try {
         G.actors = [];
         if (cleanupErrors.length) throw new AggregateError(previewFailed ? [previewFailure, ...cleanupErrors] : cleanupErrors, 'Preview cleanup failed: ' + id);
       }
-    }, { id, held, crowd });
+    }, { id, held, crowd, focusPaper });
     for (const [k, b64] of Object.entries(row.images)) fs.writeFileSync(path.join(out, `${id}.${k}.png`), Buffer.from(b64, 'base64'));
     delete row.images; rows.push(row);
     console.log(JSON.stringify(row));
   }
-  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, contentHash:identity.contentHash, environment:await page.evaluate(()=>window.__gallery.nativeDay.receipt), rows, errors }, null, 2));
+  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ focusPaperPolicy:focusPaper, revision: identity.build.revision, contentHash:identity.contentHash, environment:await page.evaluate(()=>window.__gallery.nativeDay.receipt), rows, errors }, null, 2));
   if (errors.length) { console.error('page errors:', errors.slice(0, 10)); process.exitCode = 1; }
 } finally { if(browser)for(const context of browser.contexts())for(const page of context.pages())await page.evaluate(()=>window.__gallery?.nativeDay?.owner.dispose()).catch(()=>{}); await browser?.close(); await new Promise(r => server.close(r)); }

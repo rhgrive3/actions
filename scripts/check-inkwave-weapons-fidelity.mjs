@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { fixture } from './weapons-fixture.mjs';
-import { CASES, reset, launch, finish, paintMetrics, measure } from './measure-weapons-fidelity.mjs';
+import { CASES, reset, launch, finish, paintMetrics, measure, projectileParams } from './measure-weapons-fidelity.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const at = process.argv.indexOf('--site');
@@ -22,9 +22,19 @@ assert.equal(createHash('sha256').update(baselineBytes).digest('hex'), 'b79883e3
 const baseline = JSON.parse(baselineBytes);
 assert.equal(baseline.baselineCommit, '9c0703298aed297667837533c32454cc60980603');
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
-const golden = Object.fromEntries(Object.entries(baseline.cases).map(([key, row]) => [key, row.golden]));
+// #1512 intentionally changes only Roller birth positions, which also moves
+// landing/scoring cells and hit-sweep samples. Keep the old archive intact and
+// pin the two corrected rows separately. The source inverse-birth proof below
+// still requires every non-position birth field to match the old archive.
+const rollerBytes = fs.readFileSync(new URL('./fixtures/weapons-fidelity-roller-birth-8e55bfcb.json', import.meta.url));
+assert.equal(createHash('sha256').update(rollerBytes).digest('hex'), '48ea0079e7fffca667ffa3626abbb34c2b42eb1d7997c4ff64df4db5c54fd9f4');
+const rollerBaseline = JSON.parse(rollerBytes);
+assert.equal(rollerBaseline.baselineCommit, '8e55bfcbcdf9cd82df76dbf1a6948f9a075b6719');
+assert.deepEqual(Object.keys(rollerBaseline.cases), ['roller-horizontal', 'roller-vertical']);
+const expectedCases = { ...baseline.cases, ...rollerBaseline.cases };
+const golden = Object.fromEntries(Object.entries(expectedCases).map(([key, row]) => [key, row.golden]));
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
-  const c = data.cases[key], expected = baseline.cases[key];
+  const c = data.cases[key], expected = expectedCases[key];
   assert.equal(digest(c.paint.cellsXZ), expected.cellsHash, key + ' main scoring cells');
   assert.equal(digest(c.hitSamples), expected.hitSamplesHash, key + ' main full hit sweep');
   assert.equal(digest(c.initialProjectiles), expected.initialProjectilesHash, key + ' main projectile births');
@@ -35,6 +45,33 @@ for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
 // measured hit boundary and on the real paint grid. The built receipt cannot
 // become a replacement for source/build equivalence.
 const sourceFixture = await fixture({ site:path.join(root,'.ci-scratch/unbuilt-weapons-source'), fidelity:true });
+// Independently remove only the two sourced birth-coordinate deltas from raw
+// pre-integration rounds, then compare the complete legacy birth record. This
+// catches changes to speed, radii, damage, lifetime, RNG-derived appearance,
+// count and every other serialized birth property instead of blessing them
+// through the new golden. Round once, after the inverse, as in the archive.
+for (const c of CASES.filter(row => row.id === 'roller')) {
+  const actor = reset(sourceFixture, c);
+  launch(sourceFixture, actor, c);
+  const raw = sourceFixture.profile.weaponsFidelityCompletion.weapons.roller;
+  const groups = raw[c.vertical ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam'].Unit;
+  assert.equal(raw.WideSwingUnitGroupParam.Unit[0].SpawnPositionWidth, .8);
+  assert.deepEqual(raw.VerticalSwingUnitGroupParam.Unit.map(unit => unit.SpawnPositionHeight || 0), [0, .25, .25]);
+  const offsets = new Map();
+  const legacyBirths = sourceFixture.projectiles.list.map(p => {
+    const group = p.fidelityRollerUnitIndex, unit = groups[group];
+    const offset = offsets.get(group) || 0;
+    offsets.set(group, offset + 1);
+    const start = p.start.clone();
+    if (c.vertical) start.y += (1 - offset) * (unit.SpawnPositionHeight || 0);
+    else {
+      const count = unit.BulletNum ?? 1, fan = count > 1 ? 2 * offset / (count - 1) - 1 : 0;
+      start.x += fan * (unit.SpawnPositionWidth || 0) * .5;
+    }
+    return projectileParams({ ...p, start });
+  });
+  assert.equal(digest(legacyBirths), baseline.cases[c.key].initialProjectilesHash, c.key + ' only the reviewed birth coordinates differ from the archived gameplay');
+}
 // Independent scalar raster of sourced stamps on this fixture's flat grid.
 // It scans every cell rather than reusing production raster/culling helpers.
 // Generic stamps keep their existing mask; their observed deltas are included

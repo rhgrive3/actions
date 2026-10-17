@@ -77,7 +77,7 @@ export function paintMetrics(f) {
     densityRegions:'centre |x|<=0.5; sides 0.5<|x|<=3; z from max(0,minPaintZ) to maxPaintZ',
     emptyCentreRows:gaps,splatRadius:{n:radii.length,min:radii[0]??null,median:radii[Math.floor(radii.length/2)]??null,max:radii.at(-1)??null},cellsXZ:points};
 }
-function projectileParams(p) {
+export function projectileParams(p) {
   const out={};for(const k of ['type','wid','life','straight','radius','damage','dmgFar','size','trail','trailEvery','trailRadius','grav','drag','delay','vis','tail0','tailK','wob','wobF','nose','sats','s3Vertical','fidelityMode'])out[k]=p[k]??null;
   out.origin=vec(p.start);out.velocity=vec(p.vel);return out;
 }

@@ -6,6 +6,10 @@ import {RoomDurableObject} from '../../../server/src/index.js';
 const {installPlatformGame} = await import(process.env.INKWAVE_CONTROLS_SITE
   ? pathToFileURL(path.resolve(process.env.INKWAVE_CONTROLS_SITE, 'patches/local-quality/platform-game.mjs')).href
   : '../../local-quality/platform-game.mjs');
+// Use the same host-migration fidelity installer in source and emitted fixtures.
+const {installDisconnectFidelity} = await import(process.env.INKWAVE_CONTROLS_SITE
+  ? pathToFileURL(path.resolve(process.env.INKWAVE_CONTROLS_SITE, 'patches/splatoon3/runtime/disconnect-fidelity.mjs')).href
+  : '../../splatoon3/runtime/disconnect-fidelity.mjs');
 let ms=1000000;
 class Socket {
  constructor(){this.handlers=new Map();this.sent=[];this.live=true;}
@@ -17,7 +21,7 @@ class Socket {
 export async function pair(){
  const relay=new RoomDurableObject({},{}),participants=[];
  async function client(name){const socket=new Socket();relay.handleSession(socket,name);const welcome=JSON.parse(socket.sent.find(x=>x.startsWith('{')&&JSON.parse(x).t==='welcome'));
-  const f=await fixture({match:true,network:true,session:true,clock:{now:()=>ms}}),s=new f.NetSession();s.myId=welcome.id;s.hostId=welcome.host;s.state='match';s.code='room';s._members=new Map(welcome.members.map(x=>[x.id,x.name]));s.lobby.players=welcome.members.map(x=>({...x,host:x.id===s.hostId,team:0,ready:true}));
+  const f=await fixture({match:true,network:true,session:true,clock:{now:()=>ms}}),s=new f.NetSession();installDisconnectFidelity({NetMatch:f.NetMatch,G:f.G});s.myId=welcome.id;s.hostId=welcome.host;s.state='match';s.code='room';s._members=new Map(welcome.members.map(x=>[x.id,x.name]));s.lobby.players=welcome.members.map(x=>({...x,host:x.id===s.hostId,team:0,ready:true}));
   const m=new f.Match({duration:10,mode:'turf',roster:[],host:s.isHost});m.follower=!s.isHost;m.setState('playing');
   const nm=new f.NetMatch(s,{map:'reef'});s.match=nm;nm.bind(m);let sends=0,physics=0,aborted=0;
   s.tr={broadcast(data){sends++;socket.receive('b|'+JSON.stringify(data));},sendTo(id,data){socket.receive('s|'+id+'|'+JSON.stringify(data));},close(){socket.close();},rtt:0};

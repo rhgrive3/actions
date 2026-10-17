@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from '../../network-replication/tests/robustness-fixture.mjs';
-import {tickTripleSlamFists,tripleSlamFistCenters} from '../runtime/triple-slam-fists.mjs';
+import {tickTripleSlamFists,tripleSlamFistCenters,FIST_FLAT_IMPACT} from '../runtime/triple-slam-fists.mjs';
 
 async function client(id, wallHeight=5) {
  const f=await fixture(),V=(...a)=>new f.THREE.Vector3(...a),axes=[V(1,0,0),V(0,1,0),V(0,0,1)];
@@ -22,12 +22,19 @@ async function client(id, wallHeight=5) {
 }
 function fire(c,steps) {
  const origin={x:0,y:0,z:0};
- c.owner._s3TripleSlamFists={origin,centers:tripleSlamFistCenters(origin,0),remaining:.25,scale:1};
- for(const dt of steps)tickTripleSlamFists(c.owner,dt,c.f.G,c.f.THREE);
+ assert.equal(steps.reduce((sum,dt)=>sum+dt,0).toFixed(9),FIST_FLAT_IMPACT.toFixed(9),
+   'the entire 87F independent fist timeline must be simulated');
+ c.owner._s3TripleSlamFists={origin,centers:tripleSlamFistCenters(origin,0),age:0,scale:1};
+ let fired=0;
+ for(let i=0;i<steps.length;i++){
+  const done=tickTripleSlamFists(c.owner,steps[i],c.f.G,c.f.THREE);
+  if(done){fired++;assert.equal(i,steps.length-1,'no fist splat before 87F');}
+ }
+ assert.equal(fired,1,'the activation-relative fist stamp is emitted exactly once');
  return c.nm.out.filter(e=>e[1]==='s');
 }
 function replay(a,b,rows){b.nm._peer('a');for(const e of rows){const row=JSON.parse(JSON.stringify(e));row._netSeq=e._netSeq;row._netTick=e._netTick;b.nm._play('a',row);}assert.deepEqual(Array.from(a.paint.grid),Array.from(b.paint.grid));}
-for(const [label,steps] of [['60 Hz',Array(15).fill(1/60)],['low FPS',Array(5).fill(1/20)]]) {
+for(const [label,steps] of [['60 Hz',Array(87).fill(1/60)],['low FPS',Array(29).fill(1/20)]]) {
  test(`fist split centres cannot paint across thin cover at ${label}; replay agrees`,async()=>{
   const a=await client('a'),b=await client('b'),rows=fire(a,steps);
   assert.ok(rows.length>0&&rows.length<38,'blocked offsets are not emitted, but the visible footprint remains');
@@ -38,6 +45,6 @@ for(const [label,steps] of [['60 Hz',Array(15).fill(1/60)],['low FPS',Array(5).f
  });
 }
 test('a low lip below the fist impact plane does not reject visible stamp centres',async()=>{
- const a=await client('a',.05),b=await client('b',.05),rows=fire(a,Array(15).fill(1/60));
+ const a=await client('a',.05),b=await client('b',.05),rows=fire(a,Array(87).fill(1/60));
  assert.equal(rows.length,38);replay(a,b,rows);
 });

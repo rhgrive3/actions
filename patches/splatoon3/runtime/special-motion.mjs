@@ -420,9 +420,12 @@ function createBubblerHardware(color){
   const material=new THREE.ShaderMaterial({uniforms:{color:{value:new THREE.Color(color)},age:{value:0},health:{value:1}},
     vertexShader:`varying vec3 n;varying vec3 v;varying vec2 uv0;void main(){uv0=uv;vec4 p=modelViewMatrix*vec4(position,1.);v=-p.xyz;n=normalize(normalMatrix*normal);gl_Position=projectionMatrix*p;}`,
     fragmentShader:`uniform vec3 color;uniform float age;uniform float health;varying vec3 n;varying vec3 v;varying vec2 uv0;
-      void main(){float fres=pow(1.-abs(dot(normalize(n),normalize(v))),2.);float lines=pow(.5+.5*cos(uv0.y*50.+.3*sin(uv0.x*50.)-age*.4),32.);
-      vec2 grid=fract(uv0*vec2(100.,45.))-.5;float mesh=1.-smoothstep(.09,.16,length(grid));float a=(.045+.24*fres+.11*lines+.055*mesh)*(.7+.3*health);
-      gl_FragColor=vec4(color*(.85+.35*fres+.25*lines),a);#include <tonemapping_fragment>
+      // S3 footage (2.0-5.9s): the field is nearly clear; what reads is a stack of thin bright rings round the dome
+      // (latitude lines, drifting up) and a faint rim. No fog-like fill.
+      void main(){float fres=pow(1.-abs(dot(normalize(n),normalize(v))),3.);float k=fract(uv0.y*14.-age*.25);
+      float w=fwidth(uv0.y*14.)*1.2+.012;float lines=1.-smoothstep(w*.5,w*1.5,abs(k-.5));
+      float a=(.012+.1*fres+.55*lines*(.55+.45*(1.-uv0.y*.6)))*(.6+.4*health);
+      gl_FragColor=vec4(color*(1.15+.6*lines)+vec3(.25*lines),a);#include <tonemapping_fragment>
       #include <colorspace_fragment>}`.replace(';#include',';\n#include'),transparent:true,depthWrite:false,side:THREE.DoubleSide});
   const shell=mesh(g,geo,material,'bubbler-field');shell.castShadow=false;shell.renderOrder=4;
   g.userData.shell=shell;g.userData.emitter=emitter;return g;
@@ -432,22 +435,27 @@ function createVacVortex(color,length,near,far){
   const mat=new THREE.ShaderMaterial({uniforms:{color:{value:new THREE.Color(color)},age:{value:0},near:{value:near},far:{value:far},extent:{value:length}},
     vertexShader:`uniform float near;uniform float far;uniform float extent;varying vec2 uv0;
       void main(){uv0=uv;vec3 p=position;p.xz*=mix(near,far,p.y);p.y*=extent;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
-    fragmentShader:`uniform vec3 color;uniform float age;varying vec2 uv0;void main(){float path=uv0.x*6.+uv0.y*2.+age*2.;
-      float spiral=pow(.5+.5*cos(path*6.283185),10.);float dust=pow(.5+.5*sin(uv0.x*170.+uv0.y*110.+age*13.),20.);
-      float edge=smoothstep(0.,.04,uv0.y)*(1.-smoothstep(.85,1.,uv0.y));gl_FragColor=vec4(color*(.8+spiral*.7),(.025+.24*spiral+.09*dust)*edge);
+    // S3 footage: a translucent team-colour funnel, a broad swirl winding into the nozzle and rings drawn down it.
+    fragmentShader:`uniform vec3 color;uniform float age;varying vec2 uv0;void main(){
+      float swirl=pow(.5+.5*cos((uv0.x*3.+uv0.y*1.6+age*1.6)*6.283185),3.);
+      float rings=pow(.5+.5*cos((uv0.y*5.+age*2.2)*6.283185),6.);
+      float dust=pow(.5+.5*sin(uv0.x*170.+uv0.y*110.+age*13.),20.);
+      float edge=smoothstep(0.,.08,uv0.y)*(1.-smoothstep(.55,1.,uv0.y));
+      gl_FragColor=vec4(color*(.8+.6*rings+.4*swirl),(.04+.18*swirl+.22*rings+.06*dust)*edge);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>}`,transparent:true,depthWrite:false,side:THREE.DoubleSide});
   const m=new THREE.Mesh(geo,mat);m.name='special:vac-vortex';m.frustumCulled=false;return m;
 }
 function createStormCloud(color){
   const g=root('storm-cloud'),geo=geometry('storm-puff',()=>{const d=new THREE.SphereGeometry(1,20,12);d.userData.specialShared=true;return d;});
-  const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(color).multiplyScalar(.56),roughness:.81,
-    emissive:color,emissiveIntensity:.10});
+  // S3 footage (37.6-45.5s): a flat, lumpy slab of glossy ink, bright team colour from below
+  const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(color).multiplyScalar(.9),roughness:.32,metalness:.05,
+    emissive:color,emissiveIntensity:.16});
   const puffs=new THREE.InstancedMesh(geo,mat,15);puffs.name='storm-cloud-puffs';puffs.userData.bob=0;puffs.castShadow=true;
   const transform=new THREE.Object3D();
   for(let i=0;i<15;i++){const angle=i*Math.PI*2/9,outer=i>0&&i<10,r=outer?2.1:i>9?.8:0;
     transform.position.set(Math.cos(angle)*r,i>9?.75:0,Math.sin(angle)*r);
-    transform.scale.set(outer?1.45:1.6,i>9?1.0:.80,outer?1.45:1.6);transform.updateMatrix();puffs.setMatrixAt(i,transform.matrix);}
+    transform.scale.set(outer?1.45:1.6,i>9?.5:.42,outer?1.45:1.6);transform.updateMatrix();puffs.setMatrixAt(i,transform.matrix);}
   puffs.instanceMatrix.needsUpdate=true;puffs.computeBoundingSphere();g.add(puffs);return g;
 }
 function createTacticooler(color){
@@ -517,6 +525,8 @@ export function specialProgramKeepers(THREE){
     f.createTacticooler(0xffffff)])g.add(m);
   // deployables (Splattercolor Screen, Wave Breaker, Super Chump, Inkstrike, Booyah Bomb, Crab Tank ball)
   for(const kind of WORLD_MESH_KINDS){const {geometry,material}=worldMeshParts(THREE,kind,0xffffff);const m=new THREE.Mesh(geometry,material);m.name='keeper:'+kind;g.add(m);}
+  // the animated Splattercolor marble sheet (special-models.mjs) is built per deployment
+  {const sheet=buildScreenSheet(THREE,0xffffff,2,2);sheet.name='keeper:screen-sheet';g.add(sheet);}
   g.traverse(o=>{o.visible=true;});
   return programKeepers=g;
 }
@@ -549,6 +559,7 @@ export function warmSpecialPrograms(THREE,G,renderer,camera,target){
 import { inkVacState } from './kit-ink-vac.mjs';
 import { specialPresentationToken } from './special-presentation-owner.mjs';
 import { worldMeshParts, WORLD_MESH_KINDS } from './all-specials.mjs';
+import { buildScreenSheet } from './special-models.mjs';
 import { TRIZOOKA_CARTRIDGE } from './kit-trizooka.mjs';
 import { FIST_TRAVEL, tripleSlamFistCenters } from './triple-slam-fists.mjs';
 const PRESENTATION_INSTALL=Symbol.for('inkwave.s3.special-presentation.v1');

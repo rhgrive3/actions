@@ -86,20 +86,21 @@ export function runSimulation(game, dt) {
   const menuRenderElapsed = menuAttractBudget ? (game._menuAttractRenderElapsed || 0) + dt : 0;
   game._menuAttractFrame = false;
   game._menuAttractFrameDelta = 0;
-  if (!menuAttractBudget) game._menuAttractSimulationElapsed = 0;
+  if (!menuAttractBudget) game._menuAttractPresentationElapsed = 0;
   G.paint?.useFixedPaintClock?.();
   game._s3Ticked = clock.advance(dt, step => {
     // Offline pause must freeze the same gameplay clock as actors/projectiles (#707).
     const gameplayPaused = !!(m && m.paused && !m.attract);
     if (!gameplayPaused) G.time += step;
     if (m && !(covered && m.attract)) {
-      let simDt = step;
+      // The menu budget limits drawing, never the physical integration step.
+      // Aggregating three ticks into 50 ms also coarsened collision, facing,
+      // spawn trajectories and the Character's spring-driven pose.
+      const simDt = step;
       if (menuAttractBudget) {
-        game._menuAttractSimulationElapsed = (game._menuAttractSimulationElapsed || 0) + step;
-        if (game._menuAttractSimulationElapsed + 1e-10 < MENU_ATTRACT_STEP) simDt = 0;
-        else {
-          simDt = game._menuAttractSimulationElapsed;
-          game._menuAttractSimulationElapsed = 0;
+        game._menuAttractPresentationElapsed = (game._menuAttractPresentationElapsed || 0) + step;
+        if (game._menuAttractPresentationElapsed + 1e-10 >= MENU_ATTRACT_STEP) {
+          game._menuAttractPresentationElapsed = 0;
           game._menuAttractFrame = true;
         }
       }

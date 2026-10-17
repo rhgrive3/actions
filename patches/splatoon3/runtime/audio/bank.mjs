@@ -3,14 +3,17 @@ import { KIT_AUDIO } from './kit-recipes.mjs';
 export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO});
 import { renderSound } from './render.mjs';
 export const MAIN_AUDIO_PREFIX='main:';
+// Source-recorded MP3s always win. Only MAIN-weapon attack one-shots may use
+// an explicitly authored INKWAVE fallback when the real sample is not resident.
+export const mainAttackFallbackEligible=(id,event)=>typeof id==='string'&&!id.includes(':')&&/^fire(?:_[a-z0-9]+)?$/.test(event)&&!!WEAPON_AUDIO[id]?.events.includes(event);
 import { AuthorizedSamplePack } from './authorized-samples.mjs';
 const MAX_BYTES=12*1024*1024;
 export class WeaponSoundBank {
-  constructor(ctx,{maxBytes=MAX_BYTES,workerFactory,realOnly=false}={}){this.realOnly=realOnly;this.ctx=ctx;this.maxBytes=Math.max(1024*1024,maxBytes);this.cache=new Map();this.defs=new Map();this.roundRobin=new Map();this.bytes=0;this.hits=0;this.misses=0;this.evicted=0;this.jobs=[];this.pending=new Set();this.timer=null;this.disposed=false;this.workerFactory=workerFactory;this.worker=null;this.workerFailed=false;this.workerError=null;this.inFlight=null;this.generatedOffThread=0;this.authorized=new AuthorizedSamplePack(ctx);}
+  constructor(ctx,{maxBytes=MAX_BYTES,workerFactory,realOnly=false,audibleShotFallback=false}={}){this.realOnly=realOnly;this.audibleShotFallback=!!audibleShotFallback;this.ctx=ctx;this.maxBytes=Math.max(1024*1024,maxBytes);this.cache=new Map();this.defs=new Map();this.roundRobin=new Map();this.bytes=0;this.hits=0;this.misses=0;this.evicted=0;this.jobs=[];this.pending=new Set();this.timer=null;this.disposed=false;this.workerFactory=workerFactory;this.worker=null;this.workerFailed=false;this.workerError=null;this.inFlight=null;this.generatedOffThread=0;this.authorized=new AuthorizedSamplePack(ctx);}
   has(id,event='fire'){return !!AUDIO_RECIPES[id]?.events.includes(event);}
   name(id,event='fire'){return this.has(id,event)?`${MAIN_AUDIO_PREFIX}${id}:${event}`:null;}
   get(id,event,variant=0){
-    if(this.realOnly)throw new Error('Procedural weapon audio disabled in real-only mode');
+    if(this.realOnly&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Procedural weapon audio disabled for non-main-shot events');
     const key=`${id}:${event}:${variant}`;let item=this.cache.get(key);
     if(item){this.cache.delete(key);this.cache.set(key,item);this.hits++;return item.buffer;}
     const recipe=AUDIO_RECIPES[id];if(!recipe||!this.has(id,event))throw new RangeError('Unknown main audio '+key);
@@ -57,12 +60,12 @@ export class WeaponSoundBank {
     if(!this.has(id,event))return null;
     // Strict deployment must never substitute a synthesized waveform, even if
     // an authorized file is still decoding, missing, or evicted from the LRU.
-    if(this.realOnly&&!this.authorized.byEvent.has(`${id}:${event}`))return null;
+    if(this.realOnly&&!this.authorized.byEvent.has(`${id}:${event}`)&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))return null;
     const bank=this,loop=LOOP_EVENTS.has(event);
     const build=(v,p,o={})=>{
       const serial=o.variant??bank.roundRobin.get(name)??0;bank.roundRobin.set(name,(serial+1)%3);
       const authorized=bank.authorized.pick(id,event,serial);
-      if(!authorized&&bank.realOnly)throw new Error('Verified sample not resident: '+id+'/'+event);
+      if(!authorized&&bank.realOnly&&!(bank.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Verified sample not resident: '+id+'/'+event);
       const buffer=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3),s=v.ctx.createBufferSource();s.buffer=buffer;s.loop=loop;
       if(loop&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
       if(authorized&&authorized.gain!==1){const g=v.ctx.createGain();g.gain.value=authorized.gain;s.connect(g);g.connect(v.out);v.nodes.push(g);}else s.connect(v.out);
@@ -79,15 +82,15 @@ export class WeaponSoundBank {
   }
   // Newest local weapon is likely to fire first: prioritize its attack/charge buffers.
   // Keep worker jobs bounded even after rapid weapon switches or many remote actors.
-  warm(id,{focus=true}={}){
-    if(this.disposed||this.realOnly||!AUDIO_RECIPES[id])return;
+  warm(id,{focus=true,events=null}={}){
+    if(this.disposed||(this.realOnly&&!this.audibleShotFallback)||!AUDIO_RECIPES[id])return;
     const priority=['fire','fire_full','fire_left','fire_alt','fire_vertical','ready'];
-    const events=AUDIO_RECIPES[id].events.slice().sort((a,b)=>{
+    const eventNames=AUDIO_RECIPES[id].events.filter(e=>!events||events.includes(e)).filter(e=>!this.realOnly||mainAttackFallbackEligible(id,e)).sort((a,b)=>{
       const pa=priority.indexOf(a),pb=priority.indexOf(b);
       return (pa<0?99:pa)-(pb<0?99:pb);
     });
     const urgent=[],ordinary=[];
-    for(const e of events)for(let v=0;v<3;v++){
+    for(const e of eventNames)for(let v=0;v<3;v++){
       if(this.authorized.pick(id,e,v))continue;
       const key=`${id}:${e}:${v}`;if(this.cache.has(key)||this.pending.has(key))continue;
       if(this.pending.size>=256){
@@ -104,7 +107,7 @@ export class WeaponSoundBank {
     this._pump();
   }
 
-  stats(){return{realOnly:this.realOnly,bytes:this.bytes,budget:this.maxBytes,entries:this.cache.size,hits:this.hits,misses:this.misses,evicted:this.evicted,pending:this.pending.size,generatedOffThread:this.generatedOffThread,worker:!!this.worker,workerFallback:this.workerFailed,workerError:this.workerError,authorized:this.authorized.stats()};}
+  stats(){return{realOnly:this.realOnly,audibleShotFallback:this.audibleShotFallback,bytes:this.bytes,budget:this.maxBytes,entries:this.cache.size,hits:this.hits,misses:this.misses,evicted:this.evicted,pending:this.pending.size,generatedOffThread:this.generatedOffThread,worker:!!this.worker,workerFallback:this.workerFailed,workerError:this.workerError,authorized:this.authorized.stats()};}
   dispose(){this.disposed=true;this.worker?.terminate();this.worker=null;this.inFlight=null;if(this.timer)clearTimeout(this.timer);this.timer=null;this.jobs.length=0;this.pending.clear();this.cache.clear();this.defs.clear();this.roundRobin.clear();this.bytes=0;this.authorized.clear();}
 }
 // A weak actor key prevents one player's firing/landing from suppressing another's.

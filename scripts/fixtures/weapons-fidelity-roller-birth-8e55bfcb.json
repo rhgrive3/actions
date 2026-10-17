@@ -1,0 +1,29 @@
+{
+  "baselineCommit": "8e55bfcbcdf9cd82df76dbf1a6948f9a075b6719",
+  "scope": "Deterministic INKWAVE Roller birth correction regression, not Nintendo measurements; replaces only the two Roller rows of weapons-fidelity-9c070329.json.",
+  "contentHash": "3c483dcc42b520024e66cd78270d2c921fb1bea6f6795b636b45795ee8e1ca7a",
+  "cases": {
+    "roller-horizontal": {
+      "golden": [
+        11.6,
+        6.1,
+        14.125,
+        13
+      ],
+      "cellsHash": "2147fb9bc7a80b7a1274e88a6e6863ac72d0c611d6b3c1b33252e9c23e3b4716",
+      "hitSamplesHash": "6168d2357ef76f042a2b08509630e6decf132c4013d5e52cff4bb0c92b9ae2e2",
+      "initialProjectilesHash": "37d9bc8e81d2a8d2dbe23abe7638ad2148705d90985c00fc69c96b230f2da4c0"
+    },
+    "roller-vertical": {
+      "golden": [
+        16.4,
+        6.9,
+        18.625,
+        5
+      ],
+      "cellsHash": "17992b768791551e1fdec9b3df6f39584cb767420fd32571a0bede2bd7ba3c79",
+      "hitSamplesHash": "5bc931c3a1187e06b63ba67510a8ff936d10558c3deb583d14a1bdbc5374ce22",
+      "initialProjectilesHash": "2e3b2e8ded0584b59cbd923444928ed9ff3fb469c1b9b027ea4b0ca550f41262"
+    }
+  }
+}

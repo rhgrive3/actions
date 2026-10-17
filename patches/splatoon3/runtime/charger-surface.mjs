@@ -3,7 +3,9 @@ const EPS = 1e-10;
 // Unknown/incomplete keep records stay hidden; regular live/remote charges keep
 // their previous visibility rule. Rendering must not advance either clock.
 export function chargerSightVisible(a) {
-  if (!a?.alive || a.weapon?.kind !== 'charger') return false;
+  // Added source-backed Chargers have kind='catalog'; use their explicit
+  // gameplay family while preserving the original kept-charge warning clock.
+  if (!a?.alive || (a.weapon?.behaviorKind || a.weapon?.kind) !== 'charger') return false;
   const runner = a.weaponRunner, kept = runner?.s3Stored;
   if (kept) return a.form !== 'squid' && kept.resurfaced === true &&
     Number.isFinite(kept.laserDelay) && kept.laserDelay <= EPS;

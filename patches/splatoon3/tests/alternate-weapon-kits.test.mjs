@@ -132,8 +132,8 @@ test('pinned alternate rows match raw Leanny 11.3.0 source when provided', t => 
 
 test('production: 95 variants select the original model, and both legacy/catalog variants fire', async () => {
   const f = await fixture({ fullRuntime:true, productionComposition:true, realProjectiles:true,
-    extraExports:"export { getWeaponDef } from './inkwave-public/src/game/character-weapons.js'; export * as REG from './patches/splatoon3/runtime/weapon-models/registry.mjs'; export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';" });
-  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
+    extraExports:"export { getWeaponDef } from './inkwave-public/src/game/character-weapons.js'; export * as REG from './patches/splatoon3/runtime/weapon-models/registry.mjs';" });
+  // Additional kit owner must be activated by installS3 in production.
   f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
   assert.equal(f.WEAPON_ORDER.length,160);
   assert.equal(f.REG.registeredWeaponModels().length,65);
@@ -175,6 +175,9 @@ test('production: 95 variants select the original model, and both legacy/catalog
     actor.form='kid';actor.ink=100;actor.intent.fire=true;
     f.tick(actor,140);
     assert.ok(Number.isFinite(actor.ink) && actor.ink>=0 && actor.ink<=100,kit.main+' finite ink');
-    assert.ok(f.G.projectiles.list.some(p=>p.owner===actor),kit.main+' projectile emission');
+    const baseWeapon=f.WEAPONS[kit.baseId];
+    assert.ok(f.G.projectiles.list.some(p=>p.owner===actor&&
+      (baseWeapon.catalogRecord ? p.catalog?.r?.id===baseWeapon.catalogRecord.id : !p.catalog)),
+      kit.main+' must inherit the base weapon projectile owner');
   }
 });
