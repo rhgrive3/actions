@@ -51,7 +51,7 @@ try{
       's3-maneuver-short','s3-maneuver-gallon','s3-maneuver-dual','s3-maneuver-stepper','s3-maneuver-long'];
     const checks=[];
     const random=Math.random;Math.random=()=>.37;
-    try{for(const id of ids){let previous;
+    try{for(const id of ids){let previous,previousTrace;
       for(const hz of [30,60,120]){
         G.projectiles?.clear();floor();
         const a=new Actor({team:0,weapon:id,isLocal:false,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
@@ -67,11 +67,26 @@ try{
           a.weaponRunner.update(1/60,{fire:true,firePressed:true});
           for(let i=0;i<50;i++)a.weaponRunner.update(1/60,{fire:false});
         }
-        for(let i=0;i<hz*3;i++){G.time+=1/hz;G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);}
+        const trace=[];let streamChecks=0;const matrix=new THREE.Matrix4(),centre=new THREE.Vector3();
+        for(let i=0;i<hz*3;i++){
+          G.time+=1/hz;G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);
+          if(i<hz&&(i+1)%(hz/30)===0){
+            const queue=G.projectiles._s3SplashDrops||[];
+            const positions=[];for(let n=0;n<G.projectiles.blobs.count;n++){
+              G.projectiles.blobs.getMatrixAt(n,matrix);positions.push(centre.setFromMatrixPosition(matrix).clone());
+            }
+            for(const d of queue.slice(-48)){
+              if(!positions.some(p=>p.distanceToSquared(d.pos)<1e-8))throw Error(id+' visible splash has stale position at '+hz+'Hz');streamChecks++;
+            }
+            const airborne=queue.map(d=>[d.seed,d.frames,...d.pos.toArray().map(v=>+v.toFixed(8))]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
+            trace.push({airborne,cells:G.paint.counts[0],turf:a.stats.turf,splashes});
+          }
+        }
+        if(previousTrace&&JSON.stringify(previousTrace)!==JSON.stringify(trace)){const frame=trace.findIndex((t,i)=>JSON.stringify(t)!==JSON.stringify(previousTrace[i]));throw Error(JSON.stringify({id,hz,frame,before:previousTrace[frame],after:trace[frame]}));}previousTrace=trace;
         const grid=Array.from(G.paint.grid),cells=G.paint.counts[0];
         if(!cells||(!slide&&!splashes)||(slide&&!rolls)||ownerless||a.stats.turf!==cells*.0625)throw Error(JSON.stringify({id,hz,cells,splashes,rolls,ownerless,turf:a.stats.turf}));
         if(previous&&JSON.stringify(previous)!==JSON.stringify(grid))throw Error(id+' different final ownership at '+hz+'Hz');previous=grid;
-        checks.push({id,hz,cells,turf:a.stats.turf,splashes,rolls,ownerless,landings:G.projectiles._s3SplashLandings?.length||0});
+        checks.push({id,hz,cells,turf:a.stats.turf,splashes,rolls,ownerless,temporalSamples:trace.length,streamChecks,landings:G.projectiles._s3SplashLandings?.length||0});
         G.scene.remove(a.character.root);a.character.dispose();
       }
     }}finally{Math.random=random;}

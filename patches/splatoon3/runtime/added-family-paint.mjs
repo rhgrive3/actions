@@ -41,13 +41,18 @@ export function collectBrellaSplashes(node, projectile, end, ended, release) {
     const at=plan.first+i*plan.spacing;
     if(at>limit+1e-9)break;
     if(at+1e-9<before || node.samples.has(i))continue;
-    node.samples.set(i,projectile.prev.clone().lerp(end,distance>0?Math.max(0,Math.min(1,(at-before)/distance)):0));
+    node.samples.set(i,{point:projectile.prev.clone().lerp(end,distance>0?Math.max(0,Math.min(1,(at-before)/distance)):0),
+      frame:finite(projectile.age,0)*60});
   }
-  node.distance=limit;node.ended=ended;
+  node.distance=limit;node.ended=ended;if(ended)node.endFrame=finite(projectile.age,0)*60;
   while(volley.next<plan.count){
     const i=volley.next,at=plan.first+i*plan.spacing;
     if(!volley.nodes.every(n=>n.ended||n.distance+1e-9>=at))break;
-    const points=volley.nodes.map(n=>n.samples.get(i)).filter(Boolean);
+    const samples=volley.nodes.map(n=>n.samples.get(i));
+    const points=samples.filter(Boolean).map(s=>s.point);
+    // Projectiles consume all their substeps before the next pellet. A ready
+    // volley may therefore depend on a later substep of an earlier member.
+    const birthFrame=Math.max(...volley.nodes.map((n,index)=>samples[index]?.frame??n.endFrame??0));
     if(points.length){
       const centre=points[0].clone().set(0,0,0);
       for(const point of points)centre.add(point);
@@ -58,7 +63,7 @@ export function collectBrellaSplashes(node, projectile, end, ended, release) {
       release(centre,radius,{ gravity:ADDED_PAINT_MODEL.gravity*3600,drag:SPLASH_DROP_AIR_RESIST,
         surfaceOnly:true,depthScaleMax:depth,depthScaleMin:depth,dropHeightMax:0,dropHeightMin:0,
         randomVelocity:{x:finite(p.RandomSpawnVelXMax,0)*60,y:finite(p.RandomSpawnVelYMax,0)*60,
-          zMin:finite(p.RandomSpawnVelZMin,0)*60,zMax:finite(p.RandomSpawnVelZMax,0)*60} },i);
+          zMin:finite(p.RandomSpawnVelZMin,0)*60,zMax:finite(p.RandomSpawnVelZMax,0)*60} },i,birthFrame);
     }
     for(const n of volley.nodes)n.samples.delete(i);
     volley.next++;
