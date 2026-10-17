@@ -209,27 +209,6 @@ export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
       'else if (kind >= 4 && kind <= 7) v = data[ko + i];',
       'BFRES integer step curve without hot-path array');
   }
-  if (rel === 'src/game/motion/source-controller.js') {
-    // Values and addition order match the original Float64Array .set/reduce.
-    // Avoid allocating per-frame directional blend arrays in 8-actor scenes.
-    patch(`  this.directionTarget.set(this.pivoting?
-   (this.turnRate>=0?[0,0,1,0]:[0,0,0,1]):
-   [Math.max(0,this.localZ),Math.max(0,-this.localZ),Math.max(0,this.localX),Math.max(0,-this.localX)]);
-  let sum=this.directionTarget.reduce((a,b)=>a+b,0);if(sum<1e-10){this.directionTarget.set([1,0,0,0]);sum=1;}`,
-      `  if(this.pivoting){
-   this.directionTarget[0]=0;this.directionTarget[1]=0;
-   this.directionTarget[2]=this.turnRate>=0?1:0;
-   this.directionTarget[3]=this.turnRate>=0?0:1;
-  }else{
-   this.directionTarget[0]=Math.max(0,this.localZ);
-   this.directionTarget[1]=Math.max(0,-this.localZ);
-   this.directionTarget[2]=Math.max(0,this.localX);
-   this.directionTarget[3]=Math.max(0,-this.localX);
-  }
-  let sum=this.directionTarget[0]+this.directionTarget[1]+this.directionTarget[2]+this.directionTarget[3];
-  if(sum<1e-10){this.directionTarget[0]=1;this.directionTarget[1]=0;this.directionTarget[2]=0;this.directionTarget[3]=0;sum=1;}`,
-      'reuse typed directional target without hot-path arrays');
-  }
   if (rel === 'src/world/level.js') {
     // Three's setIndex(array) already selects uint16 when all indices fit.
     // Release each temporary JS vertex array as soon as its typed attribute
