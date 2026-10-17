@@ -124,6 +124,7 @@ test('accepted remote volleys produce one shell without network or damage author
     mapped(owner,'trizooka');peer.a.remote=true;mapped(peer,'trizooka');owner.a.nid=7;
     const nm=new f.NetMatch({myId:'owner'},{});f.G.netm=nm;
     f.throwVolley(system,owner.a,f.trizookaSpecialWeapon());
+    system.update(8/60); // native lobe births are staggered at 0/4/8F
     const packets=JSON.parse(JSON.stringify(nm.out.filter(e=>e[1]==='p'))),count=nm.out.length;
     assert.equal(packets.length,3);const hp=peer.a.hp,ink=peer.a.ink;
     for(const packet of packets)system.ghostProjectile(peer.a,packet);

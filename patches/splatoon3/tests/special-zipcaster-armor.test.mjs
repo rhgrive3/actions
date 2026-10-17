@@ -171,7 +171,7 @@ test('Zipcaster armor retires on reset/death/life/owner change and never grants 
     if(change==='life')a.netLife=(a.netLife||0)+1;
     if(change==='owner')a.owner='new-owner';
     if(change==='remote')a.remote=true;
-    if(change==='end'){a._s3AllSpecialState.duration=a._s3AllSpecialState.t+1/60;w.tick(a);}
+    if(change==='end'){a._s3AllSpecialState.inkFuel=0;for(let i=0;i<120&&a.specialActive;i++)w.tick(a);}
     assert.equal(w.snapshot(a),null,change);
   }
 });

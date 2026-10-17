@@ -31,7 +31,7 @@ const netRoot = path.join(ROOT, 'patches/network-replication');
 // `productionComposition` uses the shared complete build adapter and S3 installer.
 // Both built selectors read emitted modules without applying adapters twice.
 export async function fixture({ network = true, flow = false, fullRuntime = false,
-  productionComposition = false, built = null, includeSession = false } = {}) {
+  productionComposition = false, built = null, includeSession = false, rankedNetwork = false } = {}) {
   const builtRoot = built || BUILT ? path.resolve(built || BUILT) : null;
   const UPSTREAM = builtRoot || process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
   const PATCH_ROOT = builtRoot ? path.join(builtRoot, 'patches/splatoon3') : path.join(ROOT, 'patches/splatoon3');
@@ -91,6 +91,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/net/netmatch.js';
     ${includeSession ? "export { NetSession } from './inkwave-public/src/net/session.js';" : ''}
+    ${rankedNetwork ? "export { installRankedNetwork } from './patches/splatoon3/runtime/ranked/network.mjs';" : ''}
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
@@ -127,6 +128,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
       api.installResources(api, profile);
     } else if (flow) api.installFlow(api, profile);
   }
+  if (rankedNetwork) api.installRankedNetwork(api);
 
   // ---- world stubs: physics only reports a flat floor at y = 0, no actors, no boss
   const floorHit = (a, b, hit) => {

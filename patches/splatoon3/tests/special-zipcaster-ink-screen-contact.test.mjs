@@ -21,7 +21,8 @@ function deployScreen(f){
   owner.intent.sub=false;
   for(let i=0;i<15&&owner.specialActive;i++)owner._updateSpecial(1/60);
   const screen=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='screen');
-  assert.ok(screen);return {owner,screen};
+  assert.ok(screen);for(let i=0;i<600&&screen.phase==='flight';i++)advance(f,1/60);
+  assert.equal(screen.phase,'active');return {owner,screen};
 }
 
 test('Zipcaster native main spends 67% of equipped ink cost with and without Ink Saver (Main)',async()=>{
@@ -75,7 +76,7 @@ test('Screen stationary capsule contact repeats once per 60 source frames at 30/
     try{
       for(let i=0;i<3*hz;i++)advance(f,1/hz);
       assert.equal(hits.length,3,`${hz}Hz stationary contact`);
-      assert.deepEqual(hits.map(h=>Math.round(h.age*60)),[60,120,180]);
+      assert.deepEqual(hits.map(h=>Math.round((h.age-screen.landedAt)*60)),[1,61,121]);
       assert.ok(hits.every(h=>h.damage===40));
       assert.ok(victim.s3.splattercolorUntil>f.G.time);assert.ok(victim.s3.splattercolorMarkUntil>f.G.time);
       assert.equal(owner.alive,true);
@@ -96,9 +97,9 @@ test('Screen catches swept crossings and collider contact, excludes allies and o
   const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=(_a,b,_d,id)=>{if(id==='splattercolorScreen')hits.push(b);return false;};
   try{
     for(let i=0;i<59;i++)advance(f,1/60);
-    assert.equal(hits.length,0,'no contacts before running phase');
+    assert.deepEqual(hits,[overlap],'startup sheet already has a contact hitbox');
     swept.pos.copy(screen.pos).addScaledVector(screen.normal,20);advance(f,1/60);
-    assert.deepEqual(hits,[swept,overlap]);
+    assert.deepEqual(hits,[overlap,swept]);
   }finally{f.G.projectiles.applyHit=apply;}
 });
 

@@ -266,9 +266,23 @@ try {
         defender.damage(100,attacker,'shooter');check(Math.abs(state.armorHP-(before-100*rate))<1e-8,id+' compiled target gear');
         state.armorHP=50;defender.specialActive.armorHP=50;defender.hp=100;
         const bodyFactor=defender.specialActive.armor?.valueOf()===true?.25:1;
-        defender.damage(100,attacker,'shooter');const expected=100-Math.floor((100-50/rate)*bodyFactor*10+1e-9)/10;
+        defender.damage(100,attacker,'shooter');const expected=id==='booyahBomb'?100:100-Math.floor((100-50/rate)*bodyFactor*10+1e-9)/10;
         check(state.armorHP===0&&Math.abs(defender.hp-expected)<1e-8,id+' compiled armor break');
-        objectGearChecks.push({id,equipped,rate,bodyHp: defender.hp});defender.reset();
+        const bodyHp=defender.hp,penetrationChecks=[];
+        if(id==='booyahBomb'){
+          // General armor law: a breaking hit at or below 100 is absorbed;
+          // above 100 only the excess penetrates, capped at 80. Object Shredder
+          // changes armor HP debit, not that raw-hit threshold or body cap.
+          // https://wikiwiki.jp/splatoon3mix/システム詳細仕様#he35f781
+          for(const [raw,bodyDamage]of [[25,0],[100,0],[120,20],[180,80],[220,80]]){
+            state.armorHP=50;defender.specialActive.armorHP=50;defender.hp=100;
+            defender.damage(raw,attacker,'shooter');
+            check(Math.abs(state.armorHP-Math.max(0,50-raw*rate))<1e-8,id+' compiled raw armor debit '+raw+' shredder='+equipped);
+            check(Math.abs(defender.hp-(100-bodyDamage))<1e-8,id+' compiled 100 threshold / 80 cap '+raw+' shredder='+equipped);
+            penetrationChecks.push({raw,bodyDamage:100-defender.hp,armorHp:state.armorHP});
+          }
+        }
+        objectGearChecks.push({id,equipped,rate,bodyHp,...(penetrationChecks.length?{penetrationChecks}:{})});defender.reset();
       }
       const {kitBombContact}=await import('/patches/splatoon3/runtime/kit-subs.mjs');
       for(const equipped of [false,true]){

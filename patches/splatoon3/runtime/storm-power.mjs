@@ -14,12 +14,19 @@ export function stormCloudSpec(b,base){
 export function installStormPower({Actor,Projectiles,G}){
  const tag=Symbol.for('inkwave.s3.storm-power.v1');if(Actor.prototype[tag])return;
  Object.defineProperty(Actor.prototype,tag,{value:true});
- const start=Actor.prototype._startSpecial,reset=Actor.prototype.reset,spawnCloud=Projectiles.prototype._spawnCloud,clear=Projectiles.prototype.clear;
+ const start=Actor.prototype._startSpecial,reset=Actor.prototype.reset,spawnCloud=Projectiles.prototype._spawnCloud,throwStorm=Projectiles.prototype.throwStorm,clear=Projectiles.prototype.clear;
  Actor.prototype._startSpecial=function(...args){
   if(this.weapon.special==='storm'){this.s3||={};this.s3.stormPowerSnapshot=stormPowerSnapshot(this);}
-  return start.apply(this,args);
+  const result=start.apply(this,args);
+  if(this.specialActive?.id==='storm'&&this.specialActive.phase==='hold')startHeldSpecialGauge(this,G,'storm');
+  return result;
  };
- Actor.prototype.reset=function(...args){if(this.s3)delete this.s3.stormPowerSnapshot;return reset.apply(this,args);};
+ Actor.prototype.reset=function(...args){if(this.s3)delete this.s3.stormPowerSnapshot;clearPreOperationGauge(this);return reset.apply(this,args);};
+ Projectiles.prototype.throwStorm=function(actor,...args){
+  const before=this.bombs.length,result=throwStorm.call(this,actor,...args);
+  if(this.bombs.length>before)startPendingSpecialGauge(actor,G,'storm',this.bombs[this.bombs.length-1],this.bombs);
+  return result;
+ };
  Projectiles.prototype._spawnCloud=function(b,...args){
   const before=this.clouds.length,result=spawnCloud.call(this,b,...args);
   if(!b.ghost&&!b.owner?.remote&&this.clouds.length>before)startStormCloudGauge(b.owner,this.clouds[this.clouds.length-1],G);
@@ -31,3 +38,4 @@ export function installStormPower({Actor,Projectiles,G}){
  };
 }
 import { startStormCloudGauge } from './storm-effects.mjs';
+import { startHeldSpecialGauge, startPendingSpecialGauge, clearPreOperationGauge } from './tacticooler-gauge.mjs';
