@@ -5,6 +5,16 @@ import { specialMotionAllowsAction, bombMotionAllowsAction, dualiesMotionLock } 
 // Native breathing, planted feet, turns, walk and weapon/action poses stay native.
 export const IDLE_MOTION_CALIBRATION = Object.freeze({
   lookWeight: .20,
+  // Native (non-source) ready stance, matched to the Splatoon 3 footage of a
+  // standing shooter (media y7Zl26Zl12n, n=366-402 and n=596-668): the legs
+  // stand nearly straight (the front shin perpendicular to the ground) and the
+  // torso bobs about every 30 frames by about 4 % of the height. `crouch` is
+  // the extra pelvis drop over the native ready stance (negative = raise the
+  // native 3.6 cm drop back toward nearly straight legs at the top of the
+  // bob); `bob` is the half peak-to-peak dip. The native stance keeps its own
+  // small stagger: a wider one makes the native feet re-plant (settle
+  // threshold 6.8 cm). Values are INKWAVE calibrations in metres / seconds.
+  ready: Object.freeze({ crouch: -.02, bob: .0225, period: .5, response: 8 }),
   status: 'visual calibration; original idle frequencies and joint curves unknown',
 });
 const INSTALL = Symbol.for('inkwave.s3.idle-motion.install.v1');
@@ -48,7 +58,7 @@ export function idleMotionSnapshot(ch) {
   const hooks = ch?.[INSTALL], m = hooks?.states.get(ch);
   return { phase: m?.phase || 'off', reason: m?.reason || 'unowned',
     quiet: !!m?.quiet, filteredFidgets: m?.filtered || 0, looks: m?.looks || 0,
-    ownedResources: 0, disposed: !!hooks?.disposed.has(ch) };
+    ready: m?.ready || 0, ownedResources: 0, disposed: !!hooks?.disposed.has(ch) };
 }
 export function installIdleMotion(api, _profile) {
   const C = api.Character?.prototype, A = api.Actor?.prototype;
@@ -87,6 +97,33 @@ export function installIdleMotion(api, _profile) {
     P[channels.SPINE + 1] = before[channels.SPINE + 1];
     P[channels.CHEST + 1] = before[channels.CHEST + 1];
     if (this._dt > 0) m.looks++;
+  };
+  // Native ready crouch and bob (the source rig owns its own stance when active).
+  const channels = api.CHARACTER_CHANNELS, buildPose = C._buildPose;
+  const readyTarget = (ch, s) => {
+    const m = states.get(ch);
+    if (!m || ch.sourceMotion?.active || !ch.weapon || !ch.kidForm || !ch.grounded || ch.dance || ch.wDance > .001) return 0;
+    // Standing quiet only: attacks, subs and actions own their own native stance and release it smoothly.
+    if (m.reason !== 'quiet') return 0;
+    return (1 - (ch.gaitW || 0)) * (1 - (ch.wAir || 0));
+  };
+  C._updateStates = (function (inner) {
+    return function (dt, s) {
+      const result = inner.call(this, dt, s), k = state(this), want = readyTarget(this, s || {});
+      if (k.ready === undefined) k.ready = want;
+      else k.ready += (want - k.ready) * (1 - Math.exp(-IDLE_MOTION_CALIBRATION.ready.response * Math.max(0, dt || 0)));
+      return result;
+    };
+  })(C._updateStates);
+  C._buildPose = function (dt, s) {
+    const result = buildPose.call(this, dt, s);
+    const m = states.get(this), w = m?.ready || 0;
+    if (w > 1e-4 && !this.sourceMotion?.active) {
+      const R = IDLE_MOTION_CALIBRATION.ready, aim = Math.min(1, this.wAim || 0);
+      const bob = .5 - .5 * Math.cos(2 * Math.PI * this.t / R.period);
+      this.P[channels.HIPS_P + 1] -= w * (R.crouch + R.bob * 2 * bob * (1 - aim));
+    }
+    return result;
   };
   const update = C.update, dispose = C.dispose, setWeapon = C.setWeapon, visible = C.setVisible;
   C.update = function (...args) { if (!disposed.has(this)) return update.apply(this, args); };

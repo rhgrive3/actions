@@ -41,6 +41,7 @@ import { adaptScorchGorge } from './scorch-gorge-adapter.mjs';
 import { adaptIssue719Dodge } from './issue-719-dodge-adapter.mjs';
 import { adaptWeaponCatalog } from './weapon-catalog-adapter.mjs';
 import { adaptWeaponLodMaterialPacking } from './weapon-lod-material-packing-adapter.mjs';
+import { adaptBodyProportion } from './body-proportion-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -66,6 +67,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 export function adaptSource(rel, code) {
   code = adaptWeaponCatalog(rel, code);
   code = adaptWeaponLodMaterialPacking(rel, code);
+  code = adaptBodyProportion(rel, code, replaceOnce);
   if (rel === 'src/game/motion/source-controller.js') {
     code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
     // S3 shooter carry: lower the non-firing barrel to the right-hip hold before the aim pitch.
@@ -87,7 +89,11 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '   if(isUpper&&upper)this.q.premultiply(this.aim);', '   sourcePostureBone(this,target,this.q,dir,isUpper&&upper);\n   if(isUpper&&upper)this.q.premultiply(this.aim);', 'source torso/neck posture');
     // S3 gait: lower the Wii U swing-ankle height before leg IK; contacts are solved later in ground().
     code = replaceOnce(code, "   this.v3.add(c.rest['foot'+label]);\n", "   this.v3.add(c.rest['foot'+label]);\n   sourceFootLift(this,this.v3,label);\n", 'source swing foot lift');
-    return "import { sourcePostureBone, sourceFootLift } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
+    // S3 ready stance: front shin vertical under the pelvis, rear foot back on its toes, and the footage's knee bob.
+    code = replaceOnce(code, "   sourceFootLift(this,this.v3,label);\n", "   sourceFootLift(this,this.v3,label);\n   sourceIdleStance(this,this.v3,label);\n", 'source idle stance');
+    code = replaceOnce(code, '   c.bones.hips.position.y-=drop;\n  }\n', '   c.bones.hips.position.y-=drop;\n  }\n  sourceIdleBob(this,c.bones.hips.position);\n', 'source idle bob');
+    code = replaceOnce(code, "   this.q.copy(pose.wq[footIdx]).multiply(this.byTarget.get('foot'+label).restSourceQ);\n", "   this.q.copy(pose.wq[footIdx]).multiply(this.byTarget.get('foot'+label).restSourceQ);\n   sourceIdleFoot(this,this.q,label);\n", 'source idle flat front sole');
+    return "import { sourcePostureBone, sourceFootLift, sourceIdleStance, sourceIdleBob, sourceIdleFoot } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
   code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);
