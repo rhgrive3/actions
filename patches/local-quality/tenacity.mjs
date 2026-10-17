@@ -1,6 +1,6 @@
 // #392: bounded, owner-only passive special source. Rates are the documented
 // S3 baseline points/second, not effective (SCU-discounted) actor points.
-import { tacticoolerGaugeLocked } from '../splatoon3/runtime/tacticooler-gauge.mjs';
+import { specialGaugeLocked } from '../splatoon3/runtime/tacticooler-gauge.mjs';
 export const TENACITY_RATES = Object.freeze([0, 3.26, 5.44, 7.59]);
 export function advanceTenacity(match, dt, emit) {
   if (!Number.isFinite(dt) || dt <= 0 || match.mode !== 'turf' || match.attract || match.opts?.range ||
@@ -11,7 +11,7 @@ export function advanceTenacity(match, dt, emit) {
   const counts = [0, 0];
   for (const a of actors) if (a.alive && (a.team === 0 || a.team === 1)) counts[a.team]++;
   for (const a of actors) {
-    if (!a.alive || a.remote || a.specialActive || a.stormGaugeLock > 0 || tacticoolerGaugeLocked(a) || a.s3TidalSlamGaugeFinish || a.s3?.loadout?.[0]?.main !== 'tenacity' ||
+    if (!a.alive || a.remote || a.specialActive || a.stormGaugeLock > 0 || specialGaugeLocked(a) || a.s3TidalSlamGaugeFinish || a.s3?.loadout?.[0]?.main !== 'tenacity' ||
         (a.team !== 0 && a.team !== 1)) continue;
     const deficit = Math.max(0, Math.min(3, counts[1 - a.team] - counts[a.team]));
     const cost = a.specialCost(), baseCost = a.s3?.tenacityBaseCost;

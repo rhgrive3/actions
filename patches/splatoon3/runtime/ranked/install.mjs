@@ -9,7 +9,7 @@ import { installRankedNetwork, actorId } from './network.mjs';
 import { installRankedCombat, createRankedEffects, isCarrier } from './combat.mjs';
 
 import { interruptSpecialForObjective } from '../all-specials.mjs';
-import { tacticoolerGaugeLocked } from '../tacticooler-gauge.mjs';
+import { specialGaugeLocked, clearSpecialGaugeLocks } from '../tacticooler-gauge.mjs';
 
 const INSTALLED = Symbol.for('inkwave.ranked.v1');
 export function installRanked(context) {
@@ -72,7 +72,7 @@ export function installRanked(context) {
       }
       if (e.kind === 'special-gain' && !visualOnly) {
         this.rankedGains[e.team] += e.points;
-        for (const a of this.actors) if (a.team === e.team && a.alive && !a.remote && !a.specialActive && !tacticoolerGaugeLocked(a)) a.special = Math.min(a.specialCost(), a.special + e.points);
+        for (const a of this.actors) if (a.team === e.team && a.alive && !a.remote && !a.specialActive && !specialGaugeLocked(a)) a.special = Math.min(a.specialCost(), a.special + e.points);
       }
       this.rankedEffects.event(e, visualOnly);
       if (['lead', 'checkpoint', 'tower-capture', 'zone-capture', 'clam-score', 'overtime'].includes(e.kind)) {
@@ -152,6 +152,7 @@ export function installRanked(context) {
 
 function prepareCarrier(api, actor) {
   if (actor._rankedCarrierPrepared) return;
+  clearSpecialGaugeLocks(actor);actor.special=0;
   // A suspended main-weapon charge/stream would retain its busy gate, block
   // swimming, and resume firing when the holder reaches a checkpoint.
   actor.weaponRunner?.reset?.();

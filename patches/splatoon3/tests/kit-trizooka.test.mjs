@@ -772,6 +772,7 @@ test('the orbit is an offset selector, not a second position or integrator', asy
   const a = makeActor(api);
   const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
   const o1 = trizookaOrbitOffset(fired[1], F);
+  fired[1].delay = 0;                         // admit this lobe before testing its flight/orbit
   projectiles._step(fired[1], F * 30);          // the NATIVE step advances p.age
   const o2 = trizookaOrbitOffset(fired[1], F);
   assert.equal(typeof o1.x, 'number');

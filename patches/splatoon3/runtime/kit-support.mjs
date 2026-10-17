@@ -8,7 +8,7 @@ import { gearCurve } from './gear.mjs';
 import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs';
 import { createTacticooler, disposeSpecialModel } from './special-motion.mjs';
 import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerStandFrames, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
-import { installTacticoolerGauge, startTacticoolerGauge, endTacticoolerGauge } from './tacticooler-gauge.mjs';
+import { installTacticoolerGauge, startTacticoolerGauge, endTacticoolerGauge, clearSpecialGaugeLocks } from './tacticooler-gauge.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
@@ -262,6 +262,7 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
     return result;
   };
   Projectiles.prototype.clear=function(...args) {
+    for(const owner of new Set([...(G.actors||[]),...(this.clouds||[]).map(c=>c.owner),...(this.bombs||[]).map(b=>b.owner)]))clearSpecialGaugeLocks(owner,false);
     for(const stand of this._s3SupportCoolers||[])endTacticoolerGauge(stand);
     for(const record of [...this._s3SupportSensors||[],...this._s3SupportCoolers||[],...this._s3SupportCoolerThrows||[]])releaseVisual(record,G);
     this._s3SupportSensors=[];this._s3SupportCoolers=[];this._s3SupportCoolerThrows=[];

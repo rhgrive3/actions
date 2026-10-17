@@ -30,11 +30,13 @@ const VOLLEY_VICTIM_LIVES = new WeakMap();
 
 let PLAYER_CONFIG = null;
 let SPECIALS_CONFIG = null;
+let WORLD_CONFIG = null;
 // The kit is configured by its installer; before that the helpers fall back to
 // the same constants native config.js carries, so nothing is ever undefined.
-export function configureTrizookaNative({ PLAYER, SPECIALS } = {}) {
+export function configureTrizookaNative({ PLAYER, SPECIALS, G } = {}) {
   if (PLAYER) PLAYER_CONFIG = PLAYER;
   if (SPECIALS) SPECIALS_CONFIG = SPECIALS;
+  if (G) WORLD_CONFIG = G;
 }
 const playerRadius = () => PLAYER_CONFIG?.radius ?? 0.38;
 
@@ -47,7 +49,39 @@ export function isKitProjectile(p) {
 // #1057: all three locally-fired Trizooka globs are authoritative. A ghost
 // keeps kit identity for presentation but is never allowed to damage or paint.
 export function hasAuthority(p) {
-  return isKitProjectile(p) && !p.ghost && p.damageOwner === true;
+  return isKitProjectile(p) && !p.ghost && !p.s3TrizookaBirthPending && p.damageOwner === true;
+}
+
+// Native delay owns the clock and active integration fraction. Publish only
+// when that delay has elapsed; zero-time births at a tick endpoint are flushed
+// after the native list pass and before draw, never advanced a second time.
+export function trizookaBirthLife(actor) {
+  return Math.max(Number.isSafeInteger(actor?.netLife) ? actor.netLife : 0,
+    Number.isSafeInteger(actor?.net?.lastLife) ? actor.net.lastLife : 0);
+}
+export function kitTrizookaBirth(system, p) {
+  if (!isKitProjectile(p) || !p.s3TrizookaBirthPending || p.delay > 1e-10) return false;
+  // Unborn globs do not become new attacks after death, a new life or handoff.
+  // Already-born globs remain owned by the native flight/terminal pipeline.
+  if (!p.owner?.alive || trizookaBirthLife(p.owner) !== p.s3TrizookaBirthLife ||
+      p.owner.owner !== p.s3TrizookaBirthOwner || !!p.owner.remote !== p.s3TrizookaBirthRemote) {
+    p.s3TrizookaBirthPending = false; p.s3TrizookaBirthCancelled = true; p.damageOwner = false;
+    return false;
+  }
+  p.delay = 0; p.s3TrizookaBirthPending = false;
+  if (!p.ghost && !p.owner?.remote) WORLD_CONFIG?.netm?.recProj?.(p);
+  return true;
+}
+export function flushTrizookaBirths(system) {
+  for (let i = system.list.length - 1; i >= 0; i--) {
+    const p = system.list[i];
+    if (!p.s3TrizookaBirthPending || p.delay > 1e-10) continue;
+    kitTrizookaBirth(system, p);
+    if (p.s3TrizookaBirthCancelled) {
+      system.list[i] = system.list[system.list.length - 1]; system.list.pop();
+      if (system._recycle) system._recycle(p); else system.pool.push(p);
+    }
+  }
 }
 
 // Every local glob is a damage carrier; replay ghosts are not.

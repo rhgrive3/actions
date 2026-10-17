@@ -29,8 +29,9 @@
 // framesToSeconds /60, perFrameVelocityToPerSecond *60,
 // perFrameGravityToPerSecondSquared *3600, rawDamageToHP /10.
 
-import { configureTrizookaNative } from './trizooka-collision.mjs';
+import { configureTrizookaNative, kitTrizookaBirth, trizookaBirthLife } from './trizooka-collision.mjs';
 import { gearCurve } from './gear.mjs';
+import { withSpecialPresentation } from './special-presentation-owner.mjs';
 
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
@@ -178,7 +179,15 @@ export const VOLLEY_CONFIG = {
   damageStatus: 'independent-authoritative-projectiles-with-shared-strongest-contact',
   // retained as the deterministic centre-lobe index for spread/aim calibration
   damageLobeIndex: 0,
+  lobeInterval: 4 / 60,
+  lobeIntervalStatus: 'S3mix community verification: one glob is emitted every 4 source frames',
+  launchSnapshotStatus: 'existing INKWAVE muzzle/aim snapshot retained for the committed action; per-glob retail resampling unverified',
 };
+
+export const TRIZOOKA_SWIM_CALIBRATION = Object.freeze({
+  multiplier: 1.82 / 1.92,
+  status: 'S3mix approximate 1.82 DU/F inferred from 12 lines in 330F, relative to ordinary 1.92; exact reduction and weight interaction remain unverified, not an extracted parameter',
+});
 
 export function volleysPerAction() {
   return TRIZOOKA.maxFireActions;
@@ -260,6 +269,11 @@ export function throwVolley(System, actor, descriptor) {
       owner: actor,
       team: actor.team,
       age: 0,
+      delay: i * VOLLEY_CONFIG.lobeInterval,
+      s3TrizookaBirthPending: i > 0,
+      s3TrizookaBirthLife: trizookaBirthLife(actor),
+      s3TrizookaBirthOwner: actor.owner,
+      s3TrizookaBirthRemote: !!actor.remote,
       life: TRIZOOKA.duration,
       straight: TRIZOOKA.goStraightFrames,
       damage: descriptor.directDamage,
@@ -398,7 +412,7 @@ export function setTrizookaPlayerConfig(PLAYER) { currentPlayerConfig = () => PL
 // Advances the special by one frame. Consumes the NATIVE fire intent edge, so
 // nothing fires unless the player actually presses fire.
 // Returns the events produced this frame.
-export function stepTrizooka(actor, dt, System) {
+export function stepTrizooka(actor, dt, System, movementOwned = false) {
   const s = actor?.s3Trizooka;
   if (!s?.active) return [];
   // dt 0 is a strict no-op: no time, no gate change, no shot, no event.
@@ -410,7 +424,7 @@ export function stepTrizooka(actor, dt, System) {
   syncTrizookaGauge(actor);
   const events = [];
   const intent = actor.intent;
-  const held = !!intent?.fire;
+  const held = !!intent?.fire && actor.form !== 'squid';
   const pressed = held && !s.fireHeld;
   s.fireHeld = held;
 
@@ -441,7 +455,7 @@ export function stepTrizooka(actor, dt, System) {
     events.push({ type: 'volley', shot: s.shots, projectiles: fired });
   }
 
-  stepMovement(actor, dt, s.shots === 0);
+  if (!movementOwned) stepMovement(actor, dt, s.shots === 0);
 
   // bounded return: once the three actions are spent, control comes back after the
   // calibrated end delay; otherwise the AP duration is the hard ceiling
@@ -632,7 +646,7 @@ export function trizookaOrbitOffset(p, dt) {
 export const TRIZOOKA_PROJECTILE_FIELDS = [
   's3SpecialWeapon', 's3Weapon', 's3VolleyIndex', 's3ActionIndex', 'damageOwner', 's3OrbitPhase', 's3Yaw',
   's3Stage', 's3StageFrames', 's3StageTransition', 's3AppliedStage', 's3ActorRadius', 's3WorldRadius', 's3SizeBase',
-  's3OrbitApplied', 's3TrizookaAP', 's3TrizookaVolleyDamage',
+  's3OrbitApplied', 's3TrizookaAP', 's3TrizookaVolleyDamage', 's3TrizookaBirthPending', 's3TrizookaBirthLife', 's3TrizookaBirthOwner', 's3TrizookaBirthRemote', 's3TrizookaBirthCancelled',
 ];
 
 export function trizookaClearProjectile(p) {
@@ -762,8 +776,41 @@ export function installTrizookaLifecycle(api) {
   // it with dt <= 0 would still advance the intent edges. The whole frame is
   // skipped instead, which is the only way to make dt 0 a true no-op.
   proto.update = function update(dt, ...rest) {
-    if (!(dt > 0) && this.s3Trizooka?.active) return undefined;
-    return originalUpdate.call(this, dt, ...rest);
+    const token = this.specialActive, state = this.s3Trizooka;
+    if (token?.id !== TRIZOOKA_ID || !state?.active) return originalUpdate.call(this, dt, ...rest);
+    if (!(dt > 0)) return undefined;
+    // Reuse the ordinary Actor form/surface/swim/climb/jump/collision owner.
+    // Only weapon admission is masked; ZR still participates in native
+    // squid/fire press ordering, so a fresh ZR pops out and a later ZL dives.
+    const runner = this.weaponRunner, it = this.intent;
+    const runUpdate = runner.update, runSpeed = runner.moveSpeed, busy = runner.busy, tryDodge = runner.tryDodge;
+    const finish = this._finishFrame;
+    const sub = it.sub, special = it.special;
+    const swim = PLAYER.swimSpeed;
+    runner.update = () => {}; // no main or sub action while the special owns ZR
+    runner.moveSpeed = () => state.pendingShotAt !== null || state.shots === 0 ? TRIZOOKA.moveSpeedInCharge : TRIZOOKA.moveSpeed;
+    runner.busy = () => state.pendingShotAt !== null;
+    runner.tryDodge = () => false;
+    this._finishFrame = () => {};
+    PLAYER.swimSpeed = swim * TRIZOOKA_SWIM_CALIBRATION.multiplier;
+    it.sub = false; it.special = false; this.specialActive = null;
+    let result;
+    try {
+      result = withSpecialPresentation(this, token, () => this.alive && this.s3Trizooka === state,
+        () => originalUpdate.call(this, dt, ...rest));
+    } finally {
+      runner.update = runUpdate; runner.moveSpeed = runSpeed; runner.busy = busy; runner.tryDodge = tryDodge;
+      this._finishFrame = finish;
+      PLAYER.swimSpeed = swim; it.sub = sub; it.special = special;
+      if (this.alive && this.s3Trizooka === state && !this.specialActive) this.specialActive = token;
+    }
+    this.fireBuffer = 0;
+    if (this.alive && this.s3Trizooka === state) {
+      token.t += dt;
+      stepTrizooka(this, dt, G.projectiles, true);
+    }
+    if (this.alive) this._finishFrame(dt);
+    return result;
   };
 
   proto._updateSpecial = function _updateSpecial(dt, ...rest) {
@@ -808,7 +855,21 @@ export function installKitTrizooka(api, profile) {
   const { SPECIALS, Projectiles, PLAYER } = api || {};
   if (!SPECIALS || !Projectiles) throw new Error('INKWAVE trizooka patch needs SPECIALS and Projectiles');
   // the native-pipeline helpers need the real PLAYER radius and the registry
-  configureTrizookaNative({ PLAYER, SPECIALS });
+  configureTrizookaNative({ PLAYER, SPECIALS, G: api.G });
+  const nativeTag = Symbol.for('inkwave.s3.trizooka-native-birth.v1');
+  if (!Projectiles.prototype[nativeTag]) {
+    Object.defineProperty(Projectiles.prototype, nativeTag, { value: true });
+    const step = Projectiles.prototype._step;
+    Projectiles.prototype._step = function (p, dt) {
+      if (p.s3TrizookaBirthCancelled) return true;
+      if (p.s3TrizookaBirthPending) {
+        if (p.delay > 1e-10) return false;
+        kitTrizookaBirth(this, p);
+        if (p.s3TrizookaBirthCancelled) return true;
+      }
+      return step.call(this, p, dt);
+    };
+  }
 
   const existing = SPECIALS[TRIZOOKA_ID] || { id: TRIZOOKA_ID, name: 'Trizooka' };
   Object.assign(existing, {

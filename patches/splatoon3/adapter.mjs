@@ -1315,6 +1315,8 @@ export function adaptSource(rel, code) {
     const fallBody = code.slice(fallStart, fallEnd).replace('      return;', '      return true;');
     code = code.slice(0, fallStart) + '    if (this._checkFallDeath()) return;\n\n' + code.slice(fallEnd);
     code = replaceOnce(code, '  _nearCamera() {', '  _checkFallDeath() {\n    const P = PLAYER;\n' + fallBody + '    return false;\n  }\n\n  _nearCamera() {', 'shared environmental death');
+    code = replaceOnce(code, "    if (this.specialActive) a.form = 'kid';",
+      "    if (this.specialActive && this.specialActive.id !== 'trizooka') a.form = 'kid';", 'Trizooka native swim presentation');
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',
       '    this._updateClimb(dt, isSquid, jumpPressed);\n    const actionHandled = beforeActions(this, dt, jumpPressed, { wasSquid, wasSubmerged, wasClimbing, firePressed, fireWins });', 'movement actions');
     code = replaceOnce(code, '  _updateClimb(dt, isSquid) {',

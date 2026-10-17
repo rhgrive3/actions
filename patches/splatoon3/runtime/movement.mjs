@@ -1,5 +1,6 @@
 import { slamProtected } from './tidal-slam-gauge.mjs';
 import { absorbSpawnDamage, spawnProtectionRemaining } from './respawn-lifecycle.mjs';
+import { absorbZipcasterDamage } from './zipcaster-armor.mjs';
 let api, config;
 // Read the installed local controller calibration; native route screening must
 // not duplicate a different Surge impulse or charging duration.
@@ -305,9 +306,17 @@ export function installMovement(context, tuning) {
   Actor.prototype.damage = function (amount, attacker, source) {
     if (this.invuln > 0 || slamProtected(this) || !this.alive) return false;
     if (source !== 'ink') {
-      // Spawn armor is the sole shield owner for this hit; do not charge a
-      // simultaneous Roll/Surge armor pool as a second layer.
-      if (this.s3?.spawnArmor && spawnProtectionRemaining(this) > 0) {
+      // Select a single live shield owner. Ordinary spawn protection must not
+      // also charge a simultaneous Roll/Surge pool, and active Zipcaster has
+      // its separately bounded player-armor law.
+      const zip = absorbZipcasterDamage(this, amount, attacker, source);
+      if (zip) {
+        // Sub Resistance already classified/reduced the original sub hit.
+        // Zipcaster is the only shield for this contact; capped penetration
+        // continues to native HP without another spawn/roll armor reduction.
+        api.emit('actor:armorhit', { actor:this, absorbed:zip.absorbed, broken:zip.broken, kind:zip.kind });
+        amount=zip.amount;
+      } else if (this.s3?.spawnArmor && spawnProtectionRemaining(this) > 0) {
         const shield = this.s3.spawnArmor;
         const left = absorbSpawnDamage(this, amount, source, tuning.spawnArmor, attacker);
         if (left !== amount) api.emit('actor:armorhit', { actor: this, absorbed: amount - left, broken: !this.s3.spawnArmor || shield.hp <= 0, kind: 'spawn' });
