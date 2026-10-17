@@ -52,6 +52,10 @@ test('#198 grounded Splattershot 1%-to-25% angular medians advance once per shot
 test('#198 airborne Splattershot uses 11.66-degree max and 40% angular median', async () => {
   const { actor, dirOf, angle } = await setup();
   const a = actor(false), maxSwerve = 11.66;
+  // A walk-off is deliberately *not* an admitted jump after #1552.
+  // Exercise the still-active admitted jump clock for this direct fire helper;
+  // native input admission and the eventual 70F reset have separate tests.
+  a.weaponRunner.s3JumpSpreadAge = 0;
   for (const u of [0, .25, .5, .75, 1 - 1e-12]) {
     const direction = dirOf(a, maxSwerve, [u, .75]);
     close(angle(direction), maxSwerve * biasQuantile(u, .4),

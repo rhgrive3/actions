@@ -59,7 +59,7 @@ test('catalog Splatlings sample independent sourced yaw and pitch without first-
 
 test('catalog Splatlings use the airborne sourced median and maximum, not standing first-shot bias',()=>{
   const a=actor(false),d=vec(),p={Stand_DegBiasMax:.1,Jump_DegBiasMax:.4,PitchDegBias:.4,PitchDegSwerve:1.6};
-  withDraws([.75,.5],()=>catalogAngularLaunch({_spread(){throw Error('legacy cone');}},d,a,'splatling',p,null,7));
+  withDraws([.75,.5],()=>catalogAngularLaunch({_spread(){throw Error('legacy cone');}},d,a,'splatling',p,null,7,0));
   near(deg(Math.atan2(d.x,d.z)),7*.4,'7 degree maximum times sourced 0.4 median');
   near(d.y,0,'centered pitch sample');
 });
@@ -114,13 +114,13 @@ test('catalog actual jumps use pinned 25F hold and 70F landing recovery, ledge f
   near(s.accuracy.chance(true,s.jumpAge),.01,'grounded endpoint');
 });
 
-test('catalog Dualies end the airborne jump window without entering a false zero-bias mode',()=>{
+test('catalog Dualies end the airborne jump window without restoring the jump penalty or a false zero-bias mode',()=>{
   const a=actor(false),s={accuracy:new ShooterAccuracy(),jumpSerial:0,jumpAge:null};
   a.s3JumpSerial=1;
   advanceCatalogJumpClock(s,a,'dualies',1/60);
   for(let i=0;i<70;i++)advanceCatalogJumpClock(s,a,'dualies',1/60);
   assert.equal(s.jumpAge,null,'70F is the end even before landing');
-  near(s.accuracy.chance(false,s.jumpAge),.4,'normal airborne median restored');
+  near(s.accuracy.chance(false,s.jumpAge),.01,'ordinary first-shot median after recovery');
 });
 
 test('catalog Shooter maximum angle continuously recovers across landing, never snaps at touch-down',()=>{
@@ -133,22 +133,25 @@ test('catalog Shooter maximum angle continuously recovers across landing, never 
     near(f(70),4.86,'70F source ground maximum');
   }
   near(catalogAngularEnvelope('shooter',true,4.86,11.66,null),4.86,'ordinary ground');
-  near(catalogAngularEnvelope('shooter',false,4.86,11.66,null),11.66,'ledge fall airborne');
+  near(catalogAngularEnvelope('shooter',false,4.86,11.66,null),4.86,'ledge fall cannot create a jump penalty');
 });
 
-test('catalog Dualies/Blasters retain air maximum through landing, not Shooter lerp',()=>{
+test('catalog Dualies/Blasters recover their angular maximum through landing and finish in the air',()=>{
   const d={Jump_DegBiasDecreaseStartFrame:25,Jump_DegBiasEndFrame:70};
   for(const [family,ground,jump] of [['dualies',2,7.5],['blaster',0,8]]){
-    for(const frames of [0,25,47.5,69.99]){
-      near(catalogAngularEnvelope(family,true,ground,jump,frames/60,0,d),jump,
-        family+' active recovery after landing '+frames+'F');
+    for(const grounded of [false,true]) {
+      near(catalogAngularEnvelope(family,grounded,ground,jump,0,0,d),jump,family+' initial endpoint');
+      near(catalogAngularEnvelope(family,grounded,ground,jump,25/60,0,d),jump,family+' hold endpoint');
+      const mid=catalogAngularEnvelope(family,grounded,ground,jump,47.5/60,0,d);
+      assert.ok(mid>ground&&mid<jump,family+' maximum actually recovers before 70F');
+      near(catalogAngularEnvelope(family,grounded,ground,jump,70/60,0,d),ground,family+' recovered endpoint');
     }
     near(catalogAngularEnvelope(family,true,ground,jump,null),ground,family+' recovered ground');
   }
   near(catalogAngularEnvelope('blaster',false,0,8,null),0,'non-jump ledge fall cannot start blaster penalty');
-  near(catalogAngularEnvelope('dualies',false,2,7.5,null),7.5,'non-jump dualies stay airborne');
-  near(catalogAngularEnvelope('splatling',false,3.3,7,null),7,'Spinner not changed by these owners');
-  near(catalogAngularEnvelope('shooter',false,4.86,11.66,null,.5),8.26,
+  near(catalogAngularEnvelope('dualies',false,2,7.5,null),2,'non-jump dualies retain ordinary accuracy');
+  near(catalogAngularEnvelope('splatling',false,3.3,7,null),3.3,'non-jump Spinner retains ordinary accuracy');
+  near(catalogAngularEnvelope('shooter',false,4.86,11.66,0,.5),8.26,
     'Action Strength reduces airborne maximum but not ordinary ground');
 });
 
@@ -207,7 +210,7 @@ test('five added Spinners share authoritative Heavy Splatling 25F/70F jump recov
     }
   }
   near(catalogAngularEnvelope('splatling',true,3.3,7,null),3.3,'regular ground');
-  near(catalogAngularEnvelope('splatling',false,3.3,7,null),7,'regular air');
+  near(catalogAngularEnvelope('splatling',false,3.3,7,null),3.3,'fall without an admitted jump');
 });
 
 test('Ballpoint long mode uses source .2 vertical bias and .75-degree pitch envelope',()=>{

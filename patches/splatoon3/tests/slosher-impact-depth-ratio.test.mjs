@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
+import { mainInkFootprint } from '../runtime/main-ink-footprints.mjs';
 
 // DepthScale is dimensionless. The existing renderer applies 1 + stretchAmt
 // forward and 1 + .25 * stretchAmt backward, so this verifies the adapter's
@@ -23,9 +24,11 @@ for (const [unitIndex, bulletIndex, endpoint] of [[1, 0, 'Near'], [1, 1, 'Near']
     f.G.projectiles._impact(p, { hit: true, point: center, normal: V(0, 1, 0), face: 0 });
     const actual = Array.from(paint.grid);
     assert.ok(paint.counts[0] > 0, 'native impact paints scoring cells');
+    const footprint = mainInkFootprint(owner.weapon);
+    assert.equal(footprint, 'ink-slosh', 'Bucket source stencil is the current production owner');
     const expected = makePaintWorld(f).paint;
     expected.splat(center.clone().add(V(0, .14, 0)), source[`WidthHalf${endpoint}`] * scale, 0, {
-      kind: 'source-splash', seed: .5, stretch: V(0, 0, 1), stretchAmt: source[`DepthScale${endpoint}`] - 1,
+      kind: 'source-splash', footprint, seed: .5, stretch: V(0, 0, 1), stretchAmt: source[`DepthScale${endpoint}`] - 1,
     });
     assert.deepEqual(actual, Array.from(expected.grid), 'source ratio reaches actual scoring footprint without adding a second base width');
   });

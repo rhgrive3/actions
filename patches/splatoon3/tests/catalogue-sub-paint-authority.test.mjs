@@ -73,10 +73,15 @@ test('charged Fizzy real receive preserves every core with reverse order and del
 test('accepted mine can finish after owner death but an unreceived old-life birth cannot authorize paint',async()=>{
   const a=await client('a','inkMine'),rows=fire(a,'inkMine'),birth=rows.find(e=>e[1]==='ac'&&e[5].phase==='spawn');
   for(const receivedBeforeDeath of [true,false]){
-    const b=await client('b','inkMine');if(receivedBeforeDeath)play(b,[birth]);
+    const b=await client('b','inkMine');
+    if(receivedBeforeDeath)play(b,[birth]);
+    // The sourced radius1 placement footprint is ordinary prior-life paint,
+    // independent of the capability for the later radius5 Mine explosion.
+    const placement=rows.filter(e=>e[1]==='s'&&e[15]?.[0]!=='inkwave-sub-core-v1');play(b,placement);
+    const placedCount=b.paint.counts[0];assert.ok(placedCount>0&&placedCount<a.paint.counts[0]);
     b.owner.alive=false;b.owner.netLife=1;b.owner.net.lastLife=1;
-    play(b,receivedBeforeDeath?rows.filter(e=>e!==birth):rows);
-    assert.equal(b.paint.counts[0],receivedBeforeDeath?a.paint.counts[0]:0);
+    play(b,rows.filter(e=>!placement.includes(e)&&(!receivedBeforeDeath||e!==birth)));
+    assert.equal(b.paint.counts[0],receivedBeforeDeath?a.paint.counts[0]:placedCount);
   }
 });
 test('match and owner changes cannot reuse an accepted sub birth',async()=>{
@@ -100,5 +105,22 @@ test('malformed catalogue birth cannot grant a core rejected by normal catalogue
   const a=await client('a','burst'),rows=fire(a,'burst'),birth=rows.find(e=>e[1]==='ac'&&e[5].phase==='spawn'),core=rows.find(e=>e[1]==='s'&&e[15]);
   for(const mutate of [v=>v.extra='x'.repeat(97),v=>v.vx=1e50,v=>v.eventSeq=-1,v=>v.hold=-1,v=>v.charge=2,v=>v.v=2]){
     const b=await client('b','burst'),bad=wire(birth);mutate(bad[5]);play(b,[bad,core]);assert.equal(b.paint.counts[0],0);
+  }
+});
+
+test('Fizzy ground-fuse envelope remains bounded and cannot authorize a third core from a short-charge birth',async()=>{
+  const a=await client('a','fizzy'),rows=fire(a,'fizzy',130);
+  const birth=rows.find(e=>e[1]==='ac'&&e[5].phase==='spawn');
+  const third=rows.find(e=>e[1]==='s'&&e[15]?.[0]==='inkwave-sub-core-v1'&&e[15][5]===2);
+  assert.ok(birth&&third,'a full charge produces its third grounded core');
+  for(const [label,change] of [
+    ['teleport',(b,c)=>{c[2]+=10000;}],
+    ['radius',(b,c)=>{c[5]+=.1;}],
+    ['extra core',(b,c)=>{c[15][5]=3;}],
+    ['short charge',(b,c)=>{b[5].hold=.1;b[5].charge=.05;}],
+    ['legacy permit',(b,c)=>{c[15]=null;}],
+  ]){
+    const receiver=await client('b','fizzy'),b=wire(birth),c=wire(third);change(b,c);play(receiver,[b,c]);
+    assert.equal(receiver.paint.counts[0],0,label+' cannot gain the third-core grant');
   }
 });

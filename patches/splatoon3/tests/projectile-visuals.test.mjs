@@ -728,7 +728,23 @@ test('native horizontal Roller links stay inside each of two real 13-glob volley
   ps.syncVisuals(1);
   const links = ps.projectileVisuals.stats.linkedRollerPairs;
   assert.ok(links > 0, 'real adjacent horizontal Roller globs form liquid links');
-  assert.equal(links, 24, 'each volley contributes twelve adjacent links, with no bridge between overlapping volleys');
+  // #285's corrected full-width fan draws the main heads closer to one another.
+  // A membrane is unnecessary where two source-radius heads already overlap;
+  // insisting on 24 ribbons would double their thickness and GPU triangles.
+  // However any adjacent separated pair still needs a continuous rendered link.
+  let overlapped = 0;
+  const globs = ps.list.slice();
+  for (const volley of [globs.slice(0, 13), globs.slice(13, 26)]) {
+    for (let k = 0; k < 12; k++) {
+      const u = volley[k], v = volley[k + 1];
+      const gap = u.pos.distanceTo(v.pos);
+      const r = Math.min(projectileDrawRadius(u, u.age), projectileDrawRadius(v, v.age));
+      if (gap < 0.6 * r) overlapped++;
+    }
+  }
+  assert.ok(links <= 24, 'a volley cannot produce cross-owner or cross-volley links');
+  assert.ok(links + overlapped >= 24,
+    `all 24 adjacent pairs must either overlap by native radius or be bridged (links=${links}, overlapped=${overlapped})`);
   assert.equal(ps.list.filter(p => p._iwVisualOrdinal === 0).length, 2, 'each volley keeps its own first-glob ordinal');
   const groups = new Set(ps.list.map(p => p._iwVisualGroup));
   assert.equal(groups.size, 2, 'the two gameplay volleys retain separate presentation group identities');

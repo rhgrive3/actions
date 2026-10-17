@@ -27,7 +27,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -226,7 +226,8 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     code = "import { syncRemoteInitialSquidSpawn } from '../../patches/splatoon3/runtime/respawn-lifecycle.mjs';\n" + code;
     patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst BOMB_BUDGET_WAIT = Symbol("bomb-budget-wait");\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
-    patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
+    patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a) || splashdownProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
+    code = "import { packSplashdownSnapshot, readSplashdownSnapshot, interpolateSplashdownSnapshot, applySplashdownSnapshot, splashdownProtected } from '../../patches/splatoon3/runtime/splashdown-network.mjs';\n" + code;
     code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
     code = "import { recordWipeoutLife, packWipeoutTimeline, acceptWipeoutTimeline, acceptWipeoutConfirmation, replayWipeoutConfirmations } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
     patch("    this._rec(['ev', name, packEvent(e)]);", "    recordWipeoutLife(this, name, e);\n    this._rec(['ev', name, packEvent(e)]);", 'owner wipeout transitions');
@@ -524,6 +525,12 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     patch('    const a = [], sq = Object.create(null), wp = Object.create(null), bw = Object.create(null), rf = Object.create(null);',
       '    const a = [], sq = Object.create(null), dr = Object.create(null), wp = Object.create(null), bw = Object.create(null), rf = Object.create(null);',
       'Drop Roller presentation sidecar map');
+    patch('    const a = [], sq = Object.create(null), dr = Object.create(null), wp = Object.create(null), bw = Object.create(null), rf = Object.create(null);',
+      '    const a = [], sq = Object.create(null), dr = Object.create(null), wp = Object.create(null), bw = Object.create(null), rf = Object.create(null), pg = Object.create(null);',
+      'current Triple Splashdown presentation sidecar');
+    patch('      a.push(packActor(x));',
+      '      a.push(packActor(x));\n      const splashdown = packSplashdownSnapshot(x); if (splashdown) pg[x.nid] = splashdown;',
+      'pack current Triple Splashdown life and activation clock');
     patch('      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;',
       '      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const dropRoll = packDropRollSnapshot(x);\n      if (dropRoll) dr[x.nid] = dropRoll;',
       'pack owner Drop Roller presentation without gameplay AP');
@@ -535,7 +542,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     }
     // actors
     if (d.a)`, 'bounded snapshot physics tick pair');
-    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(dr).length) msg.dr = dr;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (Object.keys(rf).length) msg.rf = rf;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(dr).length) msg.dr = dr;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(pg).length) msg.pg = pg;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (Object.keys(rf).length) msg.rf = rf;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
       'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
       'strict optional Squid Roll and motion metadata validation');
@@ -629,6 +636,9 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     patch('  o.lock = a.lock + (b.lock - a.lock) * u;\n  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  o.spCost = a.spCost;\n  return o;',
       '  o.lock = a.lock + (b.lock - a.lock) * u;\n  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);\n  o.hp = u < 0.5 ? a.hp : b.hp; o.hitLife = u < 0.5 ? a.hitLife : b.hitLife; o.hitSeq = u < 0.5 ? a.hitSeq : b.hitSeq; o.hitParent = u < 0.5 ? a.hitParent : b.hitParent; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.sloshElapsed >= 0 && b.sloshElapsed >= 0) o.sloshElapsed = a.sloshElapsed + (b.sloshElapsed - a.sloshElapsed) * u;\n  if (a.slamPhase && a.slamPhase === b.slamPhase) o.slamT = a.slamT + (b.slamT - a.slamT) * u;\n  o.blasterWindup = (a.blasterWindup || 0) + ((b.blasterWindup || 0) - (a.blasterWindup || 0)) * u;\n  o.spCost = a.spCost;\n  return o;',
       'interpolate matching presentation action clocks');
+    patch('  o.spCost = a.spCost;\n  return o;',
+      '  o.splashdown = interpolateSplashdownSnapshot(a.splashdown, b.splashdown, u);\n  o.spCost = a.spCost;\n  return o;',
+      'interpolate only matching current Triple Splashdown activations');
     patch('  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;',
       '  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.dropRollId && a.dropRollId === b.dropRollId) o.dropRollRemaining = a.dropRollRemaining + (b.dropRollRemaining - a.dropRollRemaining) * u;',
       'interpolate matching owner Drop Roller pose');
@@ -720,6 +730,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         a.net._adoptionTick = adoption.tick; a.net._adoptionTickOwner = from;
       }
       else delete snap.adoption;
+      snap.splashdown = readSplashdownSnapshot(d.pg && typeof d.pg === 'object' && !Array.isArray(d.pg) && Object.hasOwn(d.pg, a.nid) ? d.pg[a.nid] : null, snap.life, a.weapon?.special === 'tripleSplashdown' && !!(snap.f & F.alive) && !!(snap.f & F.special));
       a.net.lastLife = snap.life;
       this._acceptHitAuthoritySnapshot(a, snap, from);`, 'strict life/sequence-bound adoption packet');
     patch('    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
@@ -734,6 +745,9 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     patch('    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;',
       "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;\n    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }",
       'remote Tidal Slam phase clock');
+    patch("    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }",
+      "    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }\n    applySplashdownSnapshot(a, S.splashdown);",
+      'restore current Triple Splashdown without moving actors or spawning fists');
     patch('    wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
       '    wr.slosh = f & F.slosh ? (Number.isFinite(S.sloshElapsed) && S.sloshElapsed >= 0 ? S.sloshElapsed : Math.max(0, wr.slosh)) : -1;',
       'remote Slosher elapsed windup clock');
@@ -1631,7 +1645,7 @@ const PAINT_RADIUS_MAX = 5.2 * 0.72;
 // row above PAINT_RADIUS_MAX, and only with this exact victim-blast signature.
 const PAINT_VICTIM_BLAST_RADIUS = 5;
 const PAINT_VICTIM_SPLASH_RADIUS = 1;
-const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck', 'source-shot', 'source-splash']);
+const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck', 'source-shot', 'source-splash', 'ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact']);
 const paintClockSessions = new WeakMap();
 function paintClockStateFor(session, cfg) {
   const matchId = typeof cfg?.id === 'string' ? cfg.id : '';
@@ -2209,8 +2223,8 @@ function firstSplatStateFor(session,cfg) {
     patch("emit('weapon:impact', { pos: c.clone(), normal: new THREE.Vector3(0, 1, 0), team: p.team, kind: 'blast', radius: w.burstRadius });",
       "emit('weapon:impact', { pos: c, normal: UP, team: p.team, kind: 'blast', radius: w.burstRadius });",
       'blast impact payload');
-    patch('    if (nm && !p.ghost) nm.recProj(p);',
-      '    if (nm && !p.ghost && !p._s3SloshBirthPending) nm.recProj(p);',
+    patch('    if (nm && !p.ghost && !p.catalog?.birthPending) nm.recProj(p);',
+      '    if (nm && !p.ghost && !p.catalog?.birthPending && !p._s3SloshBirthPending) nm.recProj(p);',
       'defer pending Slosher projectile packet until birth');
     patch('  applyHit(attacker, victim, dmg, weaponId) {',
       '  applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {', 'Slosher volley identity projectile entry');

@@ -4,7 +4,7 @@ import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 
 for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} release, flight and landing paint retain temporal credit owners`, async () => {
-  let totalLateCredit = 0;
+  let totalLateCredit = 0, sourcedRollerFootprints = 0;
   for (const seed of [0.17, 0.37, 0.71]) {
     const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
     const { G } = f, { paint, face } = makePaintWorld(f), owner = f.make(weapon);
@@ -12,7 +12,7 @@ for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} re
     owner.aimDir.set(0, 0, 1); owner.aimPoint.set(0, 1.05, 10);
     const emissions = [], nativeSplat = paint.splat;
     paint.splat = function (center, radius, team, opts = {}) {
-      emissions.push({ owner: opts.claimOwner, kind: opts.kind });
+      emissions.push({ owner: opts.claimOwner, kind: opts.kind, footprint: opts.footprint ?? null });
       return nativeSplat.call(this, center, radius, team, opts);
     };
     const method = { roller: 'fireFlick', slosher: 'fireSlosh', blaster: 'fireBlaster' }[weapon];
@@ -22,6 +22,7 @@ for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} re
     assert.ok(emissions.length > releaseEmissions, 'native projectiles reach their real floor/timed paint paths');
     if (weapon !== 'blaster') assert.ok(releaseEmissions > 0, 'the independent native release-footprint is exercised');
     assert.ok(emissions.every(e => e.owner === owner), `${weapon} has no unowned scoring emission`);
+    if (weapon === 'roller') sourcedRollerFootprints += emissions.filter(e => e.footprint === 'ink-flick').length;
     assert.ok(paint.growing.length > 0);
     assert.ok(paint.growing.every(g => g.paintOwner === owner));
     const before = owner.stats.turf, cellsBefore = paint.counts[owner.team];
@@ -41,9 +42,13 @@ for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} re
     }
     totalLateCredit += lateCredit;
   }
-  // Source masks claim their full bounded body immediately. Generic Roller and
-  // Blaster growth still exercises positive late credit; no path may invent it.
-  if (weapon === 'slosher') assert.equal(totalLateCredit, 0);
+  // Source-stencil Roller now claims its bounded body immediately, just like
+  // Slosher. The per-emission actor, raster cell and exact m² ledger assertions
+  // above remain enabled; generic Blaster must still yield real late credit.
+  if (weapon === 'roller') {
+    assert.ok(sourcedRollerFootprints > 0, 'the native Roller selected ink-flick at emission');
+    assert.equal(totalLateCredit, 0, 'source-stencil Roller never invents late turf');
+  } else if (weapon === 'slosher') assert.equal(totalLateCredit, 0);
   else assert.ok(totalLateCredit > 0, `native ${weapon} later cells reach the emitting actor`);
 });
 

@@ -318,7 +318,7 @@ test('all three Trizooka globs are independent authoritative blast projectiles',
   assert.equal(vols.size, 3, 'each glob has its own per-projectile victim dedupe');
 });
 
-test('the second volley is spaced by ShotDelay, and Repeat governs held-fire repeats', async () => {
+test('activation and shot windup precede the first volley; Repeat governs held-fire repeats', async () => {
   const api = await production();
   const projectiles = world(api);
   const a = makeActor(api);
@@ -335,7 +335,7 @@ test('the second volley is spaced by ShotDelay, and Repeat governs held-fire rep
   releaseFire(a);
   assert.ok(stamps.length >= 2, 'holding fire repeats the volley');
   const first = stamps[0].t, second = stamps[1].t;
-  assert.ok(Math.abs(first - TRIZOOKA.startDelay) < 1e-6, `first volley waits StartDelayFrame, got ${first}`);
+  assert.ok(Math.abs(first - 38 / 60) < 1e-6, `first volley waits 23F activation + 15F windup, got ${first}`);
   assert.ok(Math.abs((second - first) - TRIZOOKA.repeatFrame) < 1e-6,
     `a held repeat waits RepeatFrame 55F, got ${(second - first) * 60} frames`);
   assert.ok(Math.abs((second - first) - TRIZOOKA.shotDelay) > 1e-6,
@@ -369,9 +369,49 @@ test('a press during StartDelayFrame is remembered, not lost', async () => {
   const a = makeActor(api);
   a.intent.special = true; a.update(F); a.intent.special = false;
   pressFire(a);                                   // pressed before the start delay elapses
-  for (let i = 0; i < 30; i++) api_time(a, F);
+  for (let i = 0; i < 40; i++) api_time(a, F);
   releaseFire(a);
   assert.ok(projectiles.list.length > 0, 'IsReqShotInStartDelay honoured');
+});
+
+test('S3mix 38F startup and 55F fire cycle hold at 20/30/60/120 Hz, including rapid trigger taps', async () => {
+  const api = await production();
+  for (const hz of [20, 30, 60, 120]) for (const tapping of [false, true]) {
+    const projectiles = world(api), a = makeActor(api);
+    a._startSpecial();
+    const stamps = [];
+    for (let i = 0; i < hz * 4 && stamps.length < 3; i++) {
+      // The old 15F re-press gate accepts these taps before a 55F cycle ends.
+      a.intent.fire = !tapping || Math.floor(i / Math.max(1, Math.round(hz / 20))) % 2 === 0;
+      api_time(a, 1 / hz);
+      const count = projectiles.list.length / 3;
+      if (count > stamps.length) stamps.push(a.s3Trizooka.t);
+    }
+    assert.equal(stamps.length, 3, `${hz} Hz / tapping=${tapping}`);
+    assert.ok(stamps[0] + 1e-9 >= 38 / 60, 'no first shot before activation and windup finish');
+    for (let i = 1; i < stamps.length; i++)
+      assert.ok(stamps[i] - stamps[i - 1] + 1 / hz + 1e-9 >= 55 / 60,
+        `rapid taps cannot bypass RepeatFrame: ${hz} Hz / ${stamps}`);
+    if (!tapping) for (let i = 0; i < stamps.length; i++)
+      assert.ok(Math.abs(stamps[i] - (38 + i * 55) / 60) < 1 / hz + 1e-8,
+        `held fire stays on the source schedule: ${hz} Hz / ${stamps}`);
+  }
+});
+
+test('an idle Trizooka press has a 15F windup and a late request cannot fire after expiry', async () => {
+  const api = await production(), projectiles = world(api), a = makeActor(api);
+  a._startSpecial();
+  for (let i = 0; i < 90; i++) api_time(a, F);
+  a.intent.fire = true; api_time(a, F); a.intent.fire = false;
+  for (let i = 0; i < 14; i++) api_time(a, F);
+  assert.equal(projectiles.list.length, 0, 'press is a request, not an immediate projectile');
+  api_time(a, F);
+  assert.equal(projectiles.list.length, 3);
+  const late = makeActor(api); late._startSpecial();
+  for (let i = 0; i < 325; i++) api_time(late, F);
+  late.intent.fire = true;
+  for (let i = 0; i < 10; i++) api_time(late, F);
+  assert.equal(projectiles.list.filter(p=>p.wid==='trizooka').length, 3, 'expiry cancels the unfinished 15F request');
 });
 
 test('main and sub are suppressed for the whole special, including the release frame', async () => {
@@ -464,7 +504,7 @@ test('disposal is permanent and the native clear releases the volley', async () 
   const a = makeActor(api);
   a.intent.special = true; a.update(F); a.intent.special = false;
   pressFire(a);
-  for (let i = 0; i < 20; i++) api_time(a, F);
+  for (let i = 0; i < 40; i++) api_time(a, F);
   releaseFire(a);
   assert.ok(projectiles.list.length > 0);
   disposeTrizooka(a);
@@ -732,6 +772,7 @@ test('the orbit is an offset selector, not a second position or integrator', asy
   const a = makeActor(api);
   const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
   const o1 = trizookaOrbitOffset(fired[1], F);
+  fired[1].delay = 0;                         // admit this lobe before testing its flight/orbit
   projectiles._step(fired[1], F * 30);          // the NATIVE step advances p.age
   const o2 = trizookaOrbitOffset(fired[1], F);
   assert.equal(typeof o1.x, 'number');

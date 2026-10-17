@@ -5,7 +5,20 @@ import {reset,launch,finish,paintMetrics} from '../../../scripts/measure-weapons
 test('recycled Slosher graze state cannot suppress a new volley',async()=>{
 const f=await fixture({site:ROOT+'.pool-probe',fidelity:true});
 const slosh={id:'slosher'},rh={id:'roller'},rv={id:'roller',vertical:true};
-function run(c,{fresh=false,team=0}={}){const a=reset(f,c,null,2.2);a.team=team;if(fresh)f.projectiles.pool.length=0;launch(f,a,c);assert.ok(f.projectiles.list.every(p=>p.owner===a&&p.team===team),'new owner/team on every glob');const births=f.projectiles.list.map(p=>({team:p.team,seed:p.seed,pos:p.pos.toArray(),vel:p.vel.toArray(),index:p.fidelitySloshIndex,unit:p.fidelitySloshPacketIndex}));const trace=[];finish(f,a,90,trace);return {births,trace,paintCalls:structuredClone(f.paints),paint:paintMetrics(f),impacts:structuredClone(f.impacts),draws:f.draws()};}
+// The NearestParam stencil deliberately changes its left/right outline with
+// an advancing volley sequence. Normalize only that single source-controlled
+// seed while testing pool reuse. Every projectile birth, physics step, later
+// paint receipt, scoring cell, RNG draw count and owner remains compared exactly.
+const rawSplat=f.G.paint.splat;
+let pinNearest=false;
+f.G.paint.splat=function(center,radius,team,opts={}){
+ if(pinNearest && opts.kind==='source-splash' && opts.footprint==='ink-slosh'){
+   pinNearest=false;
+   return rawSplat.call(this,center,radius,team,{...opts,seed:.375});
+ }
+ return rawSplat.call(this,center,radius,team,opts);
+};
+function run(c,{fresh=false,team=0}={}){const a=reset(f,c,null,2.2);a.team=team;pinNearest=c.id==='slosher';if(fresh)f.projectiles.pool.length=0;launch(f,a,c);assert.ok(f.projectiles.list.every(p=>p.owner===a&&p.team===team),'new owner/team on every glob');const births=f.projectiles.list.map(p=>({team:p.team,seed:p.seed,pos:p.pos.toArray(),vel:p.vel.toArray(),index:p.fidelitySloshIndex,unit:p.fidelitySloshPacketIndex}));const trace=[];finish(f,a,90,trace);if(c.id==='slosher')assert.equal(pinNearest,false,'real nearest stencil must fire');return {births,trace,paintCalls:structuredClone(f.paints),paint:paintMetrics(f),impacts:structuredClone(f.impacts),draws:f.draws()};}
 const alone=run(slosh,{fresh:true});run(rh);run(rv);const reused=run(slosh);const fresh=run(slosh,{fresh:true});const recycledOnce=run(slosh);
 const recycledTwice=run(slosh);const recycledThrice=run(slosh);const freshAgain=run(slosh,{fresh:true});
 const result={alone,reused,fresh,recycledOnce,recycledTwice,recycledThrice,freshAgain};

@@ -16,17 +16,21 @@ function system(f) {
 function chargeActor(f) {
   const a = f.make('charger'); a._resolve = () => { a.grounded = true; }; a.special = a.specialCost(); return a;
 }
-function release(f, a) { a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a); }
+function release(f, a) {
+  a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a);
+  assert.equal(a.stormGaugeLock||0,0,'canister release alone starts no cloud lock');
+  f.G.projectiles._spawnCloud(f.G.projectiles.bombs.at(-1));
+}
 function hud(f, game, a) {
   const m = { time: 0, teamSummary: () => null, controller: null };
   return hudFrameSnapshot(game, m, a, a.weapon, 0, [], [], null, false, f.PLAYER, f.SUB);
 }
 const newGame = () => ({ settings: { showFps: false }, _lowInkFlash: 0, minimap: { canvas: null } });
 
-test('#469 activation keeps the display full while authoritative charge is spent, then drains on the existing lock', async () => {
+test('#469 activation keeps the held remainder full and unusable, then drains on the existing lock', async () => {
   const f = await fixture(), p = system(f), a = chargeActor(f);
   a._startSpecial(); assert.equal(a.specialActive.phase, 'hold');
-  close(a.special, 0, 'activation tick spends the authoritative charge');
+  close(a.special,a.specialCost(),'held device retains full points until operation or ordinary death');assert.equal(a.specialReady(),false);
   close(f.stormGaugeFraction(a), 1, 'held device shows the full spent gauge');
   release(f, a);
   close(a.stormGaugeLock, LOCK_TICKS / 60); assert.equal(a.specialActive.phase, 'throw');

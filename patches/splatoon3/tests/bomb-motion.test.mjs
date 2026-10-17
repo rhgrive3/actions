@@ -437,9 +437,15 @@ test('release and per-frame preview sample native rig without changing any live 
       r.projectiles.updateArc(r.a, true);
       assert.deepEqual(preservedRig(r, api), before, 'actual native arc path does not mutate Character/runner/Flow');
       assert.deepEqual(calls, beforeCalls);
-      const attribute = r.projectiles.arcGeo.getAttribute('position');
-      assert.ok(new api.THREE.Vector3().fromBufferAttribute(attribute, 0).distanceTo(preview) < 1e-7,
-        'actual drawn native arc starts at the same native release sample');
+      if (r.a.weapon.sub === 'curling') {
+        assert.equal(r.projectiles.arcLine.visible, false, 'Curling has no drawn trajectory guide');
+        assert.equal(r.projectiles.arcRing.visible, false, 'Curling has no predicted blast circle');
+      } else {
+        assert.equal(r.projectiles.arcLine.visible, true, 'other held bombs retain their native trajectory guide');
+        const attribute = r.projectiles.arcGeo.getAttribute('position');
+        assert.ok(new api.THREE.Vector3().fromBufferAttribute(attribute, 0).distanceTo(preview) < 1e-7,
+          'actual drawn native arc starts at the same native release sample');
+      }
       // Trigger and launch in the real runner, with no intervening pose update.
       api.G.projectiles = r.projectiles;
       r.a.weaponRunner.update(1 / 60, { subReleased: true });

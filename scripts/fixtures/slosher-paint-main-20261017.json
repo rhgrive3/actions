@@ -1,0 +1,87 @@
+{
+  "runtimeCommit": "d0d64b7405611cc9afe93ee370a6e647bfd2e703",
+  "scope": "Reviewed INKWAVE ink-slosh silhouette; source-scaled radii, depth, seed and actual nine-unit landing retained. Independent scalar edge-byte oracle and immutable circle/generic archives are separate gates.",
+  "cases": {
+    "current": {
+      "paint": {
+        "method": "production CPU scoring grid, cell centres; bounds uncertainty ±half-cell; not cosmetic GPU satellites",
+        "cell": 0.25,
+        "area": 73.0625,
+        "cells": 1169,
+        "bounds": {
+          "minX": -3.875,
+          "maxX": 3.875,
+          "minZ": -1.375,
+          "maxZ": 17.375
+        },
+        "centerDensity": 1,
+        "sideDensity": 0.53,
+        "densityRegions": "centre |x|<=0.5; sides 0.5<|x|<=3; z from max(0,minPaintZ) to maxPaintZ",
+        "emptyCentreRows": 0,
+        "splatRadius": {
+          "n": 19,
+          "min": 0.15177327822257455,
+          "median": 0.96,
+          "max": 3.942174930230391
+        }
+      },
+      "cellsHash": "bab1b6774453b56dd80bd280a1a113f75d9d4b08ffddcfff9d4b98b80e57cf9c",
+      "stampsHash": "29d0fcb114e79f8fe1567b68f199fc2ba233e87a485d78c88ebbf4bbf3b02890",
+      "impactsHash": "395489c5f6ac6b65c5a80e1e18ad3823d409bd9bfd7681db3c085fd6c5b8bbb4"
+    },
+    "legacyScale": {
+      "paint": {
+        "method": "production CPU scoring grid, cell centres; bounds uncertainty ±half-cell; not cosmetic GPU satellites",
+        "cell": 0.25,
+        "area": 16.375,
+        "cells": 262,
+        "bounds": {
+          "minX": -1.375,
+          "maxX": 1.375,
+          "minZ": -1.375,
+          "maxZ": 14.875
+        },
+        "centerDensity": 0.49166667,
+        "sideDensity": 0.06916667,
+        "densityRegions": "centre |x|<=0.5; sides 0.5<|x|<=3; z from max(0,minPaintZ) to maxPaintZ",
+        "emptyCentreRows": 16,
+        "splatRadius": {
+          "n": 19,
+          "min": 0.15177327822257455,
+          "median": 0.3666442822967825,
+          "max": 1.56
+        }
+      },
+      "cellsHash": "2ee2741ba2b0708c3feab3e820cd3d947b73c112febad322c9cf819867041e66",
+      "stampsHash": "71b96eb1a10a1395d84e97ed8eca3669dbeabb4d6f652daeb6a0e1a4abf6d34b",
+      "impactsHash": "395489c5f6ac6b65c5a80e1e18ad3823d409bd9bfd7681db3c085fd6c5b8bbb4"
+    },
+    "legacyDepth": {
+      "paint": {
+        "method": "production CPU scoring grid, cell centres; bounds uncertainty ±half-cell; not cosmetic GPU satellites",
+        "cell": 0.25,
+        "area": 100.125,
+        "cells": 1602,
+        "bounds": {
+          "minX": -3.875,
+          "maxX": 3.875,
+          "minZ": -1.375,
+          "maxZ": 21.375
+        },
+        "centerDensity": 1,
+        "sideDensity": 0.61162791,
+        "densityRegions": "centre |x|<=0.5; sides 0.5<|x|<=3; z from max(0,minPaintZ) to maxPaintZ",
+        "emptyCentreRows": 0,
+        "splatRadius": {
+          "n": 19,
+          "min": 0.15177327822257455,
+          "median": 0.96,
+          "max": 3.942174930230391
+        }
+      },
+      "cellsHash": "f403b3ed457586796dcee494eb9e1771f06a4c395b3dcacc1b8126c4023120c0",
+      "stampsHash": "cf1e76b61451c17e2b576c48bbe45e89d92cf877fc860b2d5be05d37fa9eec47",
+      "impactsHash": "395489c5f6ac6b65c5a80e1e18ad3823d409bd9bfd7681db3c085fd6c5b8bbb4"
+    }
+  }
+}

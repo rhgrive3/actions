@@ -14,7 +14,7 @@ import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {adaptKitSource as adaptSource} from './kit-composed-fixture.mjs';
 import { installKitTrizooka, VOLLEY_CONFIG, throwVolley, trizookaSpecialWeapon, TRIZOOKA_PROJECTILE_FIELDS, TRIZOOKA } from '../runtime/kit-trizooka.mjs';
-import { kitTrizookaClearPooled, kitTrizookaGhost, isDamageCarrier, kitTrizookaFlight } from '../runtime/trizooka-collision.mjs';
+import { kitTrizookaClearPooled, kitTrizookaGhost, isDamageCarrier, kitTrizookaFlight, kitTrizookaBirth } from '../runtime/trizooka-collision.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
@@ -322,7 +322,9 @@ test('all three live globs may damage and paint, while ghosts remain presentatio
   const projectiles = world(api, { blockAt: [999, 0, 0] });
   const a = shooter(api);
   const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
-  assert.equal(fired.filter((p) => isDamageCarrier(p)).length, 3, 'every local glob is authoritative');
+  assert.equal(fired.filter((p) => isDamageCarrier(p)).length, 1, 'only the first glob has been born');
+  for (const p of fired) { p.delay=0; kitTrizookaBirth(projectiles,p); }
+  assert.equal(fired.filter((p) => isDamageCarrier(p)).length, 3, 'all born local globs are authoritative');
   for (const p of fired) {
     assert.equal(p.damage, 220);
     assert.equal(p.type, 'blast');

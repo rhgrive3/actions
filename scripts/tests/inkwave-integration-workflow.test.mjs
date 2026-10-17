@@ -125,7 +125,7 @@ test('isolated render diagnosis cannot replace full acceptance jobs or emit pass
 
 test('optional focused regressions preserve the canonical gate and publish only completed source evidence', () => {
   const focus = workflow.indexOf('name: Run requested focused source regressions');
-  const canonical = workflow.indexOf('name: Verify gameplay patch contracts and regressions');
+  const canonical = workflow.indexOf('name: Verify gameplay patch compatibility and numeric contract');
   assert.ok(focus > 0 && canonical > focus);
   assert.ok(workflow.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
   assert.ok(workflow.includes("steps.focused_native.outcome == 'success'"));
@@ -136,7 +136,7 @@ test('optional focused regressions preserve the canonical gate and publish only 
 
 
 test('worker source regressions have their pinned dependency and writable persistent storage before focused and canonical tests', () => {
-  const validate=workflow.slice(workflow.indexOf('  validate:'),workflow.indexOf('  browser:'));
+  const validate=workflow.slice(workflow.indexOf('  validate_core:'),workflow.indexOf('  patch_tests:'));
   const install=validate.indexOf('name: Install pinned source regression and build tool');
   const prepare=validate.indexOf('name: Prepare persistent worker regression fixtures');
   const focus=validate.indexOf('name: Run requested focused source regressions');
@@ -175,4 +175,40 @@ test('emitted menu focus is mandatory in the UI shard and source-bound in its re
   assert.ok(!block.includes('continue-on-error') && !block.includes('||'));
   assert.ok(workflow.includes("'ui':['menu-focus/menu-focus-result.json',"));
   assert.ok(workflow.includes("if suite=='ui': assert reports['menu-focus/menu-focus-result.json']['sourceSha']==os.environ['SOURCE_SHA']"));
+});
+
+test('all four patch shards report into the existing required validate gate', () => {
+  const core = workflow.slice(workflow.indexOf('  validate_core:'),workflow.indexOf('  patch_tests:'));
+  const shards = workflow.slice(workflow.indexOf('  patch_tests:'),workflow.indexOf('  validate:'));
+  const gate = workflow.slice(workflow.indexOf('  validate:'),workflow.indexOf('  browser:'));
+  assert.ok(core.includes('scripts/check-inkwave-patches.mjs --quick'));
+  assert.ok(shards.includes('shard: [0, 1, 2, 3]'));
+  assert.ok(shards.includes('max-parallel: 4'));
+  assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '4'"));
+  assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
+  assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
+  assert.ok(shards.includes('if: failure() && hashFiles('));
+  assert.ok(gate.includes('needs: [validate_core, patch_tests]'));
+  assert.ok(gate.includes('always()'));
+  assert.ok(gate.includes('test "$CORE_RESULT" = success'));
+  assert.ok(gate.includes('test "$PATCH_RESULT" = success'));
+  assert.ok(!workflow.includes('needs: validate'));
+});
+
+test('emitted Bot respawn and retry regressions reuse the complete production site without replacing source coverage', () => {
+  const validate = workflow.slice(workflow.indexOf('  validate_core:'), workflow.indexOf('  patch_tests:'));
+  const marker = '      - name: Verify emitted Bot navigation respawn and retry state';
+  assert.equal(validate.split(marker).length - 1, 1);
+  const at = validate.indexOf(marker);
+  const build = validate.indexOf('node scripts/build-inkwave.mjs inkwave-public _site');
+  const receipt = validate.indexOf('git rev-parse HEAD > _site-source-sha.txt');
+  assert.ok(build >= 0 && receipt > build && at > receipt, 'use the completed production build');
+  const end = validate.indexOf('\n      - name:', at + marker.length);
+  assert.ok(end > at);
+  const block = validate.slice(at, end);
+  assert.ok(block.includes('INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site'));
+  assert.ok(block.includes('run: node --experimental-vm-modules --test patches/local-quality/tests/bot-navigation-respawn.test.mjs'));
+  assert.ok(!/^\s+(?:if|continue-on-error):/m.test(block), 'mandatory step without failure suppression');
+  assert.ok(!block.includes('||') && !block.includes('--test-name-pattern'));
+  assert.ok(validate.includes('node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs'), 'retain all original source tests');
 });

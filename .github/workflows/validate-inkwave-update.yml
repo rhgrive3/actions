@@ -71,10 +71,10 @@ env:
   RUNTIME_PERFORMANCE: ${{ inputs.runtime_performance == true || (github.event_name == 'pull_request' && (github.head_ref == 'inkwave/runtime-performance-ui' || github.head_ref == 'inkwave/final-nine-way-integration')) }}
   REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}
 jobs:
-  validate:
+  validate_core:
     if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
-    # Full source and network suites exceed45minutes; retain every validation step.
+    # Keep all source, network, build and emitted checks; shard the complete patch suite separately.
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
@@ -146,13 +146,13 @@ jobs:
       - name: Verify source-sampled direction-aware humanoid gait
         run: node --experimental-vm-modules --test patches/splatoon3/tests/legacy-walk-reference.test.mjs
       - name: Verify source-bank torso, weapon carry and squid-to-human transitions
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/source-posture.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/source-posture.test.mjs patches/splatoon3/tests/reverse-shot-release.test.mjs
       - name: Verify PR1077 additional seven regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/kit-ink-vac.test.mjs patches/splatoon3/tests/kit-subs.test.mjs patches/splatoon3/tests/issue-1008-1020-1037-1053.test.mjs
       - name: Diagnose nine-way walk contact regression
         run: node --experimental-vm-modules --test patches/splatoon3/tests/walk-special-contact.test.mjs
-      - name: Verify gameplay patch contracts and regressions
-        run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
+      - name: Verify gameplay patch compatibility and numeric contract
+        run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs --quick
       - name: Verify source-guided ink flight model
         run: node --test tests/ink-flight/model.test.mjs
       - name: Verify cancelled native texture ownership
@@ -184,13 +184,6 @@ jobs:
         run: |
           node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs
           python3 patches/loading-cache/tests/harness.test.py
-      - uses: actions/upload-artifact@v4
-        if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''
-        with:
-          name: inkwave-patch-failure-diagnostics-${{ env.SOURCE_SHA }}
-          if-no-files-found: error
-          path: .ci-scratch/inkwave-patches/
-          retention-days: 14
       - name: Prepare persistent runtime verifier fixtures
         run: |
           runtime_fixtures=/mnt/workspace/.dev-state/agent-work/scratch/inkwave-runtime-performance-ui-evidence-tests
@@ -203,7 +196,7 @@ jobs:
           sudo mkdir -p "$browser_tmp"
           sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs
+        run: node --test scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -313,6 +306,10 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify emitted Bot navigation respawn and retry state
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/local-quality/tests/bot-navigation-respawn.test.mjs
       - name: Verify real emitted material handoff ownership and cancellation
         env:
           INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site
@@ -377,12 +374,53 @@ jobs:
         run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/paint-piece-local-ownership.test.mjs
       - name: Verify local paint order deduplication lifetime against built site
         run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/local-paint-order-map.test.mjs
+      - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: >-
+          node --experimental-vm-modules --test
+          patches/splatoon3/tests/catalog-player-inertia-native.test.mjs
+          patches/splatoon3/tests/catalog-slosher-birth-speed.test.mjs
+          patches/splatoon3/tests/projectile-pool-slosher-index.test.mjs
+          patches/splatoon3/tests/spinner-kinematics-source.test.mjs
+          patches/splatoon3/tests/spinner-charge-family.test.mjs
+          patches/splatoon3/tests/jump-recovery-airborne-native.test.mjs
+          patches/splatoon3/tests/player-collision-source-1130.test.mjs
       - name: Verify built weapons fidelity measurements and packet parity
         run: |
           INKWAVE_BUILT_SITE=_site INKWAVE_OBJECT_DAMAGE_REFERENCE=.reference-data/object-damage.json node --experimental-vm-modules --test patches/splatoon3/tests/object-shredder-1130.test.mjs patches/splatoon3/tests/native-sprinkler-damage.test.mjs
           INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-name-pattern='^full installer (keeps Curling|Curling trail)' patches/splatoon3/tests/kit-defense.test.mjs patches/splatoon3/tests/kit-subs.test.mjs
           INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test scripts/tests/inkwave-slosher-paint-golden.test.mjs
           node --experimental-vm-modules scripts/check-inkwave-weapons-fidelity.mjs --site _site
+      - name: Verify emitted sub and special fidelity boundaries
+        run: |
+          INKWAVE_BUILT_SITE=_site node --max-old-space-size=2048 --experimental-vm-modules --test --test-concurrency=1 \
+            patches/splatoon3/tests/active-special-gauge.test.mjs \
+            patches/splatoon3/tests/preoperation-special-gauge.test.mjs \
+            patches/splatoon3/tests/deployed-special-gauge-display.test.mjs \
+            patches/splatoon3/tests/retained-special-deep-fidelity.test.mjs \
+            patches/splatoon3/tests/special-device-flight.test.mjs \
+            patches/splatoon3/tests/combat-special-terrain.test.mjs \
+            patches/splatoon3/tests/combat-special-native-bands.test.mjs \
+            patches/splatoon3/tests/killer-wail-trace-lifecycle.test.mjs \
+            patches/splatoon3/tests/triple-splashdown-network.test.mjs \
+            patches/splatoon3/tests/special-health-recovery.test.mjs \
+            patches/splatoon3/tests/special-presentation-native-controls.test.mjs \
+            patches/splatoon3/tests/retained-autobomb-fidelity.test.mjs \
+            patches/splatoon3/tests/retained-suction-attachment.test.mjs \
+            patches/splatoon3/tests/beakon-concurrent-jumps.test.mjs \
+            patches/splatoon3/tests/beakon-ground-admission.test.mjs \
+            patches/splatoon3/tests/fizzy-ghost-hops.test.mjs \
+            patches/splatoon3/tests/fizzy-detached-splashes.test.mjs \
+            patches/splatoon3/tests/fizzy-input-queue.test.mjs \
+            patches/splatoon3/tests/ink-mine-source-offsets.test.mjs \
+            patches/splatoon3/tests/splash-wall-deployment.test.mjs \
+            patches/splatoon3/tests/sprinkler-stage-duration.test.mjs \
+            patches/splatoon3/tests/sub-ground-reflection.test.mjs \
+            patches/splatoon3/tests/sub-moving-surface.test.mjs \
+            patches/splatoon3/tests/torpedo-detached-splashes.test.mjs \
+            patches/splatoon3/tests/torpedo-flight-stages.test.mjs \
+            patches/network-replication/tests/tower-mine-paint-admission.test.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: inkwave-patched-site-${{ env.SOURCE_SHA }}
@@ -392,6 +430,65 @@ jobs:
             _site/
             _site-source-sha.txt
           retention-days: 14
+  # The test-file set is partitioned across isolated, independent machines.
+  patch_tests:
+    if: inputs.diagnostic_only != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      INKWAVE_TEST_SHARD_COUNT: '4'
+      INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+      - name: Verify immutable checkout identity
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned patch test dependencies
+        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2
+      - name: Prepare persistent worker regression fixtures
+        run: |
+          test "$(realpath -m "$INKWAVE_TEST_SCRATCH")" = "$INKWAVE_TEST_SCRATCH"
+          sudo mkdir -p "$INKWAVE_TEST_SCRATCH"
+          sudo chown "$(id -u):$(id -g)" "$INKWAVE_TEST_SCRATCH"
+          test "$(realpath "$INKWAVE_TEST_SCRATCH")" = "$INKWAVE_TEST_SCRATCH"
+          test -w "$INKWAVE_TEST_SCRATCH"
+      - name: Verify gameplay patch contracts and regressions (shard ${{ matrix.shard }})
+        run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
+      - uses: actions/upload-artifact@v4
+        if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''
+        with:
+          name: inkwave-patch-failure-shard-${{ matrix.shard }}-${{ env.SOURCE_SHA }}
+          if-no-files-found: error
+          path: .ci-scratch/inkwave-patches/
+          retention-days: 14
+
+  # Required /validate passes only when core and all four regression shards pass.
+  validate:
+    if: ${{ always() && inputs.diagnostic_only != true }}
+    needs: [validate_core, patch_tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every source and patch regression to pass
+        env:
+          CORE_RESULT: ${{ needs.validate_core.result }}
+          PATCH_RESULT: ${{ needs.patch_tests.result }}
+        run: |
+          printf 'validate_core=%s patch_tests=%s\n' "$CORE_RESULT" "$PATCH_RESULT"
+          test "$CORE_RESULT" = success
+          test "$PATCH_RESULT" = success
+
   browser:
     if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest

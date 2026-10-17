@@ -3,8 +3,13 @@
 // Nintendo establishes the action families; all joint/reach values below are
 // calibration for this rig. No Actor/Runner clocks or world transforms change.
 const INSTALL = Symbol.for('inkwave.s3.special-motion.install.v1');
+import {excludeFromOverridePasses} from './special-vfx-kit.mjs';
 const states = new WeakMap();
 const stateMap = ch => ch?.[INSTALL]?.states ?? states;
+const isSlam = id => id === 'slam' || id === 'tripleSplashdown';
+const slamPhase = token => token?.id === 'tripleSplashdown'
+  ? token.phase === 'drop' ? 'fall' : token.phase : token?.phase;
+const specialClock = token => token?.id === 'tripleSplashdown' ? token.age : token?.t;
 function shown(ch) {
   for (let p = ch.root; p; p = p.parent) if (p.visible === false) return false;
   return true;
@@ -35,7 +40,8 @@ function clear(ch, block = true) {
 export function specialMotionSnapshot(ch) {
   const m = stateMap(ch).get(ch);
   return m ? { phase: m.phase, kind: m.kind, recoveryAge: m.recovery, impactPending: m.impactPending,
-    controlled: m.controlled, originalMapping: m.kind === 'slam' ? 'native Tidal Slam; closest comparison Triple Splashdown'
+    controlled: m.controlled, originalMapping: m.kind === 'tripleSplashdown' ? 'Triple Splashdown; procedural reference pose'
+      : m.kind === 'slam' ? 'native Tidal Slam; closest comparison Triple Splashdown'
       : m.kind === 'storm' ? 'Ink Tempest; closest comparison Ink Storm' : null } : null;
 }
 export function specialMotionOwnsPose(ch) { return ch?.s3SpecialMotionEnabled !== false && !!stateMap(ch).get(ch)?.phase; }
@@ -50,10 +56,10 @@ export function specialMotionAllowsFootPlant(ch, nativeEligible) {
   // An interruption can clear nativeOnly while an incomplete network token
   // remains live. Read its mapping without running native owner lookup clocks.
   const live = ch.actor?.character === ch ? ch.actor.specialActive : null;
-  if (live && (!Number.isFinite(live.t) || !(live.id === 'storm'
-    || live.id === 'slam' && ['rise', 'hang', 'fall'].includes(live.phase))
+  if (live && (!Number.isFinite(specialClock(live)) || !(live.id === 'storm'
+    || isSlam(live.id) && ['rise', 'hang', 'fall'].includes(slamPhase(live)))
     || m.token !== live && m.blocked !== live)) return nativeEligible;
-  return !(m.kind === 'slam' && m.phase);
+  return !(isSlam(m.kind) && m.phase);
 }
 
 export function installSpecialMotion({ Character, Actor, THREE, CHARACTER_CHANNELS: C,
@@ -79,16 +85,16 @@ export function installSpecialMotion({ Character, Actor, THREE, CHARACTER_CHANNE
         || (!live && owner.weaponRunner?.firingPose())
         || this.weaponKind !== m.weapon;
       if (interrupted) clear(this);
-      else if (live && live !== m.blocked && (live.id === 'slam' || live.id === 'storm')) {
+      else if (live && live !== m.blocked && (isSlam(live.id) || live.id === 'storm')) {
         m.token = live; m.kind = live.id; m.recovery = 0;
         // Network proxies may supply only {id, net:true}; the local physics
         // phase cannot be inferred from it. Retain native replay presentation.
-        m.nativeOnly = !Number.isFinite(live.t) || (live.id === 'slam' && !['rise', 'hang', 'fall'].includes(live.phase));
-        m.phase = m.nativeOnly ? 'native-unmapped' : live.id === 'storm' ? (stormHold ? 'storm-hold' : 'storm-deploy') : live.phase;
+        m.nativeOnly = !Number.isFinite(specialClock(live)) || (isSlam(live.id) && !['rise', 'hang', 'fall'].includes(slamPhase(live)));
+        m.phase = m.nativeOnly ? 'native-unmapped' : live.id === 'storm' ? (stormHold ? 'storm-hold' : 'storm-deploy') : slamPhase(live);
       } else if (!live && m.token) {
         // Only a completed grounded fall earns impact recovery. Cancellation
         // in rise/hang must not resurrect a slam after returning to kid form.
-        const completed = m.kind === 'slam' && m.phase === 'fall' && s.grounded;
+        const completed = isSlam(m.kind) && m.phase === 'fall' && s.grounded;
         const stormEnd = m.kind === 'storm' && m.phase === 'storm-deploy';
         m.token = null; m.recovery = step; m.nativeOnly = false;
         m.phase = completed ? 'slam-recovery' : stormEnd ? 'storm-recovery' : null;
@@ -108,7 +114,7 @@ export function installSpecialMotion({ Character, Actor, THREE, CHARACTER_CHANNE
   proto._poseLeap = function (P, elapsed) {
     const m = state(this);
     if (this.s3SpecialMotionEnabled === false || !m.controlled || m.nativeOnly) return leap.call(this, P, elapsed);
-    if (m.kind !== 'slam' || !['rise', 'hang'].includes(m.phase)) return;
+    if (!isSlam(m.kind) || !['rise', 'hang'].includes(m.phase)) return;
     const result = leap.call(this, P, elapsed);
     // Nintendo's airborne Triple Splashdown render has a clearly lifted lead
     // knee and a trailing foot below it. Borrow only that readable silhouette
@@ -123,7 +129,7 @@ export function installSpecialMotion({ Character, Actor, THREE, CHARACTER_CHANNE
   proto._poseSlam = function (P, elapsed) {
     const m = state(this);
     if (this.s3SpecialMotionEnabled === false || !m.controlled || m.nativeOnly) return slam.call(this, P, elapsed);
-    if (m.kind !== 'slam' || !['fall', 'slam-recovery'].includes(m.phase)) {
+    if (!isSlam(m.kind) || !['fall', 'slam-recovery'].includes(m.phase)) {
       // A low ceiling can make actual Physics impact occur at st <= .02.
       // Native _poseSlam defers its impact clock/spring/hair impulse until a
       // later grounded pose. A new shot may already own that pose. Delegate
@@ -221,7 +227,7 @@ export function installSpecialMotion({ Character, Actor, THREE, CHARACTER_CHANNE
       // A short fall can begin and land in one physics tick. The native event
       // is enough to retain that transition when the next visual frame sees
       // specialActive already cleared; no invented gameplay phase clock.
-      if (live?.id === 'slam' && live !== m.blocked) { m.token = live; m.kind = 'slam'; m.phase = 'fall'; }
+      if (isSlam(live?.id) && live !== m.blocked) { m.token = live; m.kind = live.id; m.phase = 'fall'; }
     }
     if (this.s3SpecialMotionEnabled !== false &&
       ['spawn', 'jump', 'superjump', 'squidroll', 'squidsurge', 'squidsurge_top', 'dodge', 'slosh', 'shoot', 'charge_release', 'movement_cancel'].includes(name)) clear(this);
@@ -403,6 +409,8 @@ function createInkFist(color){
       #include <tonemapping_fragment>
       #include <colorspace_fragment>}`,transparent:true,depthWrite:false,side:THREE.DoubleSide}),'splashdown-energy');
   energy.position.set(0,-.20,0);energy.scale.set(.48,.55,.43);energy.castShadow=false;g.userData.energy=energy;
+  // The translucent spiral is not a solid sphere in the GTAO normal pass.
+  excludeFromOverridePasses(energy);
   return g;
 }
 
@@ -569,7 +577,7 @@ function presentationShown(ch){for(let p=ch.root;p;p=p.parent)if(!p.visible)retu
 const presentationMap=ch=>ch?.[PRESENTATION_INSTALL]?.states||presentationStates;
 const blockedMap=ch=>ch?.[PRESENTATION_INSTALL]?.blocked||presentationBlocked;
 function mapped(ch){const a=ch.actor,token=specialPresentationToken(a);if(!a||blockedMap(ch).get(ch)===token||!a.alive||a.superJumpState||ch.dance||ch.s3SpecialPresentationEnabled===false||!ch.kidForm||!presentationShown(ch))return null;
-  const id=token?.id;return id==='trizooka'||id==='inkVac'||id==='slam'||id==='storm'&&token.phase==='hold'?id:null;}
+  const id=token?.id;return id==='trizooka'||id==='inkVac'||isSlam(id)||id==='storm'&&token.phase==='hold'?id:null;}
 export function specialPresentationSnapshot(ch){const m=presentationMap(ch).get(ch);return m?{kind:m.kind,handError:m.error,
   heldVisible:!!m.model?.visible,fistsVisible:!!m.fists?.visible,ejects:m.ejects?.children.filter(x=>x.visible).length||0,status:SPECIAL_ART_STATUS}:null;}
 function restore(ch,m){if(m.weapon){m.weapon.pivot.visible=m.weaponVisible;if(m.weapon.left)m.weapon.left.pivot.visible=m.leftVisible;m.weapon=null;}
@@ -642,9 +650,9 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
       P[C.IKR]=P[C.IKL]=P[C.LTW]=0;P[C.CHEST]+=.09-.13*kick;P[C.SPINE]+=.025;
       P[C.HANDPL]=P[C.HANDPR]=0;P[C.MODELR]=P[C.MODELR+1]=P[C.MODELR+2]=0;
       if(this.sourceMotion){this.sourceMotion.sourceUpper=false;this.sourceMotion.keepSourceArms=false;}
-    }else if(id==='slam'){
-      const m=presentationState(this);if(m.kind!=='slam'){restore(this,m);m.kind='slam';m.model=null;}hideMain(this,m);
-      const P=this.P,fall=this.actor.specialActive.phase==='fall';
+    }else if(isSlam(id)){
+      const m=presentationState(this);if(m.kind!==id){restore(this,m);m.kind=id;m.model=null;}hideMain(this,m);
+      const P=this.P,fall=slamPhase(specialPresentationToken(this.actor))==='fall';
       P[C.IKR]=P[C.IKL]=P[C.LTW]=0;P[C.MODELR]=P[C.MODELR+1]=P[C.MODELR+2]=0;
       P[C.UARML]=fall?-1.6:-1.85;P[C.UARMR]=fall?-1.6:-1.85;
       P[C.UARML+2]=.65;P[C.UARMR+2]=-.65;P[C.FARML]=P[C.FARMR]=-.70;
@@ -664,7 +672,7 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
       const s=presentationState(this);hold(this,s,id);this.bones.handL.getWorldPosition(s.p);this.kid.worldToLocal(s.p);
       this.bones.handL.getWorldQuaternion(s.q);s.q.multiply(s.handQ.copy(s.model.userData.handQL).invert());this.kid.getWorldQuaternion(s.worldQ);
       s.model.quaternion.copy(s.worldQ.invert()).multiply(s.q);s.model.position.copy(s.p).sub(s.a.copy(s.model.userData.handL).applyQuaternion(s.model.quaternion));
-    }else if(id==='slam'){const s=presentationState(this);hideMain(this,s);}
+    }else if(isSlam(id)){const s=presentationState(this);hideMain(this,s);}
     else if(m)restore(this,m);
     return result;};
   function cartridge(ch,m){if(!m.ejects)return;

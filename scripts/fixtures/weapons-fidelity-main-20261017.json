@@ -1,0 +1,202 @@
+{
+  "runtimeCommit": "d0d64b7405611cc9afe93ee370a6e647bfd2e703",
+  "scope": "Reviewed INKWAVE main silhouette, prior Roller birth correction and source-relative Spinner speed receipts. Old 9c070329/8e55bfcb archives are immutable and checked independently; not Nintendo measurements.",
+  "contentHash": "7582e8bcaa8c3742a8179a5978d6d61ad8a9103402ebc3842a08302c382891c2",
+  "cases": {
+    "shooter": {
+      "golden": [
+        12.6,
+        12.2,
+        14.375,
+        1
+      ],
+      "cellsHash": "02206652ad95d7e6a596c8c96795664bb5b169c829bab2f2ae3d53e36eeff4a2",
+      "hitSamplesHash": "15a9aa0cb9e675604da7b76a8f985306ca07ac503c51632a4cbfde7082a34229",
+      "initialProjectilesHash": "c399737247602a334d9df42aeafef5ff1b13c71b042ee23f2cde304edd1ba466",
+      "paintPointsHash": "18577629e61e2a2c975d0239e3e4f022c5f729d0c967ba408c1357ecc168d338",
+      "impactsHash": "d58ee2643a18a3554c46857377f965047ee55eef2049b3a61a404063136eebf4"
+    },
+    "dualies-normal": {
+      "golden": [
+        12.2,
+        11.5,
+        14.125,
+        1
+      ],
+      "cellsHash": "09504cdc9199f9261e7dbf0e25083324a683fc2c9a2932eafd290084519fde0b",
+      "hitSamplesHash": "12e0ecc6a7b84077937c65299b352538a3a350f1c86a0304d69c28565c4b2620",
+      "initialProjectilesHash": "b38e02807a258e389233e419f4928f6d0b2943cd0ca6899bea345627fda5e661",
+      "paintPointsHash": "93febceb96e86fa019b00345996753e155753df41112be8e05f7a6759a81d628",
+      "impactsHash": "f127209739e1f98d37a007adcc8b0ca93b6baf7e4903a5dd834719293a4835c8"
+    },
+    "dualies-post": {
+      "golden": [
+        12.3,
+        11.5,
+        14.125,
+        1
+      ],
+      "cellsHash": "09504cdc9199f9261e7dbf0e25083324a683fc2c9a2932eafd290084519fde0b",
+      "hitSamplesHash": "c1da605ea1e1735f6a3e4055f406e03b0c06ff5b28dd720062c9305803bf3f1e",
+      "initialProjectilesHash": "fea16beb843113c0178d09acfd3b97a7b040abb2f0777c00fd17d710eb56b54f",
+      "paintPointsHash": "93febceb96e86fa019b00345996753e155753df41112be8e05f7a6759a81d628",
+      "impactsHash": "f127209739e1f98d37a007adcc8b0ca93b6baf7e4903a5dd834719293a4835c8"
+    },
+    "blaster": {
+      "golden": [
+        13.5,
+        10.7,
+        13.375,
+        1
+      ],
+      "cellsHash": "166e55d93862facb1cc176b8c66cca12e0a853b63e16835af56028d56d493983",
+      "hitSamplesHash": "3445ff8bea83924d8560d29962e11b1c5b0b4f26271b028c7b816ebaa3d7339e",
+      "initialProjectilesHash": "c5d8fde637ffc2f56fc38b71c619b9a848db81e611d56e47c8bc9f5f7e309faa",
+      "paintPointsHash": "549d488a2a004e266c81b151e8c0a69328a567dd129abdf7463ee64c42f3e8bb",
+      "impactsHash": "300a9756c23da739fc35ef96546fd6c32fcb9189ec61859f97448bcd7487fab9"
+    },
+    "splatling-partial": {
+      "golden": [
+        14.6,
+        14,
+        16.375,
+        1
+      ],
+      "cellsHash": "8a81a29d9e28cfc00f8998ae56ad1ff91ee54d7582e249498d52d404b92678c1",
+      "hitSamplesHash": "b9abd008f4a9b1b0f1c1002a42a566fa72b1bf7b6dbe835d6f77911f40b582b0",
+      "initialProjectilesHash": "2963c6f9d31b03207faf11ef561ec1f61a561dc84f5c02f87e26491b86d3bbf3",
+      "paintPointsHash": "009b2b23818fa44bbd986fbbce2d4118fd6b79e93a939c869d9c549a1798493b",
+      "impactsHash": "6191c2ab42f23eaf927353ca43aca3099e50e8c3fd3d2ca0f1a8fa615b661aec"
+    },
+    "splatling-first": {
+      "golden": [
+        19.9,
+        19.2,
+        21.875,
+        1
+      ],
+      "cellsHash": "bb3684337b91d85dbb9629f491068ac2d47acd311367815de8365f4074d3d7be",
+      "hitSamplesHash": "cf52e73530f61716f5f343135dbe995dc9d97350c785f3aa33ee5302ed5458c6",
+      "initialProjectilesHash": "0c91c48718443f1dec140b2f85fab7a8ffc964f3e83b348813098ac491b3652f",
+      "paintPointsHash": "eb64057542cb23fc05fe2fdebc33f6f9ee523dddea46245fa8807b51777b7e99",
+      "impactsHash": "4da24482fac2c7275e855b68e0590f11c5fb4660862c7cc4ffc3f7df0b3cad50"
+    },
+    "splatling-full": {
+      "golden": [
+        19.9,
+        19.2,
+        21.875,
+        1
+      ],
+      "cellsHash": "bb3684337b91d85dbb9629f491068ac2d47acd311367815de8365f4074d3d7be",
+      "hitSamplesHash": "cf52e73530f61716f5f343135dbe995dc9d97350c785f3aa33ee5302ed5458c6",
+      "initialProjectilesHash": "0c91c48718443f1dec140b2f85fab7a8ffc964f3e83b348813098ac491b3652f",
+      "paintPointsHash": "eb64057542cb23fc05fe2fdebc33f6f9ee523dddea46245fa8807b51777b7e99",
+      "impactsHash": "4da24482fac2c7275e855b68e0590f11c5fb4660862c7cc4ffc3f7df0b3cad50"
+    },
+    "charger-0": {
+      "golden": [
+        9.8,
+        9.8,
+        13.375,
+        0
+      ],
+      "cellsHash": "5c5b5b18a785fbc562e12a5d0ffe957b6a24473def4f0f30c6f36e1dbe26ea69",
+      "hitSamplesHash": "6bccad939dcae72971f3c6387fe463410fc6e67b10841565629d3c4f8c7ed0b3",
+      "initialProjectilesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "paintPointsHash": "536f9e4dc7d8522a0eb0c085f6b6fc2b9d25a8bfc9965655de33200d98e3fe07",
+      "impactsHash": "6a89ee1436fef9bc2d7abbe5e5a2552f358c82d77c33ce043a6da08798c41573"
+    },
+    "charger-0.25": {
+      "golden": [
+        11.8,
+        11.8,
+        15.125,
+        0
+      ],
+      "cellsHash": "95519cfe94a897545c4b29b990c5a3402ddf402998db4e4741f6be066b0eac66",
+      "hitSamplesHash": "6238111b5281c15e34743d9dc3091d24386b43d019fd15485de711815d273471",
+      "initialProjectilesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "paintPointsHash": "54976091b8bd8c92485e4ec92df2f25682361c1ee5a1926ad5dfbe68a21c0efa",
+      "impactsHash": "1462fb29f947e829d74f6b851c85518aac1e1fa68f55bce521145e19d3ac5f2f"
+    },
+    "charger-0.5": {
+      "golden": [
+        16.1,
+        16.1,
+        18.875,
+        0
+      ],
+      "cellsHash": "0a6446902ef512efce35765a746358ad49629bd3281f8e6c2fd295b330829915",
+      "hitSamplesHash": "8696bfa365c4f6c4c93532024b3aeaa9245aa7e87aaebaf5d27d3fe797302418",
+      "initialProjectilesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "paintPointsHash": "4a7d4a5ab734c4111b20631d46749aed035ec4bfe12bcf7440f172eb9afe93b6",
+      "impactsHash": "332108361d78b3d614e8d8cb10761661c5883d9ef33230f451790de097c12498"
+    },
+    "charger-0.75": {
+      "golden": [
+        20.4,
+        20.4,
+        22.625,
+        0
+      ],
+      "cellsHash": "0809e6769fc4e1975591655435ccd8c068adddb1c50cc3d4ea3ef9636cb559ee",
+      "hitSamplesHash": "62baa237dddf8db29a7448e406bc3a97e44eddc27cfd4cdbd76cc6da97788680",
+      "initialProjectilesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "paintPointsHash": "938fce042de392b5569f14c071b143ecc853fa3da23445168db7c8e216ea0198",
+      "impactsHash": "d87db7f3f9cb2637891dc02ec181ea7d1062fd705703c983d7a0b30d39097245"
+    },
+    "charger-1": {
+      "golden": [
+        24.8,
+        24.8,
+        26.625,
+        0
+      ],
+      "cellsHash": "bd240c1a25b9052703f918c926b2b73eb0d2ad33781e960d12207821bf605daf",
+      "hitSamplesHash": "496f822457a478129be8b0a8ad223b96b11f637a6c47d9e1e7888bc522d0c8c6",
+      "initialProjectilesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "paintPointsHash": "171639b616c86342fc8cc660b2e191df4f2e8f482751dd40663ba1baa986e2fb",
+      "impactsHash": "8dc3e2661f7b304dc0cbf1b08cd81ff3f314e927ea4c960193b0342cddd31d6b"
+    },
+    "roller-horizontal": {
+      "golden": [
+        11.6,
+        6.1,
+        14.125,
+        13
+      ],
+      "cellsHash": "cb3b448f1d7f4a66f6130f678e7cc63d6f9f95da6c66fb9200251fbf908a827f",
+      "hitSamplesHash": "6168d2357ef76f042a2b08509630e6decf132c4013d5e52cff4bb0c92b9ae2e2",
+      "initialProjectilesHash": "37d9bc8e81d2a8d2dbe23abe7638ad2148705d90985c00fc69c96b230f2da4c0",
+      "paintPointsHash": "1852653c811b936d59075bc673831c7334c864542f34e8b9b20b3217c3d6bf1f",
+      "impactsHash": "d89bbf5f3b06e5f4ded37a684e9ca5b756f1c31f88153284193d7fb66b81f4b0"
+    },
+    "roller-vertical": {
+      "golden": [
+        16.4,
+        6.9,
+        18.625,
+        5
+      ],
+      "cellsHash": "aa06ab75112370c207e1e76c43bd48dcc9bed8267d812b6d9feb2e9b1058d15e",
+      "hitSamplesHash": "5bc931c3a1187e06b63ba67510a8ff936d10558c3deb583d14a1bdbc5374ce22",
+      "initialProjectilesHash": "2e3b2e8ded0584b59cbd923444928ed9ff3fb469c1b9b027ea4b0ca550f41262",
+      "paintPointsHash": "fc18ab58926c2a55b86fada593076b6d9fb375915803945a64f1e6a5046330ca",
+      "impactsHash": "5c5b142b485e1976bd2b1d4f533bf9e859be32ff42e5b6a12c985ffef58b87a7"
+    },
+    "slosher": {
+      "golden": [
+        14.8,
+        14.8,
+        17.375,
+        9
+      ],
+      "cellsHash": "bab1b6774453b56dd80bd280a1a113f75d9d4b08ffddcfff9d4b98b80e57cf9c",
+      "hitSamplesHash": "651ad8d0c2540922df716985eeb30b40201b0d07d8967979f49f42461efd0e62",
+      "initialProjectilesHash": "1ecf4a79f66b53711c331f900310abf2c2ffdad025018514c7e1b7d3a6625ed9",
+      "paintPointsHash": "29d0fcb114e79f8fe1567b68f199fc2ba233e87a485d78c88ebbf4bbf3b02890",
+      "impactsHash": "168d26a9bf4d86c515f592a3c627a57c8a9409f355a998258f4c07c29cee1f75"
+    }
+  }
+}

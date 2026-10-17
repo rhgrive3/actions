@@ -1,0 +1,1186 @@
+{
+  "referenceVersion": "11.3.0",
+  "baselineCommit": "750d81f3c1fa4c4a57fcff396361c5f0eca8b86d",
+  "runtimeSourceCommit": "e9ecf2e11c4813d00aaaf2e846a6a4d3885a018b",
+  "scope": "production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison",
+  "before": {
+    "buildRevision": "0d7d386c3a7175f3b8fa62d555c482203662ceee86ed3b18270a7be6ffa47f75",
+    "contentHash": "c3bdb268f442372bbd7b119843529f3bed993962a883e5b0f9b4c997565c3802",
+    "cases": [
+      {
+        "fxMode": "none",
+        "hz": 30,
+        "primitiveFrames": 42,
+        "armedFrames": 35
+      },
+      {
+        "fxMode": "none",
+        "hz": 60,
+        "primitiveFrames": 85,
+        "armedFrames": 69
+      },
+      {
+        "fxMode": "none",
+        "hz": 120,
+        "primitiveFrames": 170,
+        "armedFrames": 140
+      },
+      {
+        "fxMode": "disabled",
+        "hz": 30,
+        "primitiveFrames": 42,
+        "armedFrames": 35
+      },
+      {
+        "fxMode": "disabled",
+        "hz": 60,
+        "primitiveFrames": 85,
+        "armedFrames": 69
+      },
+      {
+        "fxMode": "disabled",
+        "hz": 120,
+        "primitiveFrames": 170,
+        "armedFrames": 140
+      },
+      {
+        "fxMode": "enabled",
+        "hz": 30,
+        "primitiveFrames": 42,
+        "armedFrames": 35
+      },
+      {
+        "fxMode": "enabled",
+        "hz": 60,
+        "primitiveFrames": 85,
+        "armedFrames": 69
+      },
+      {
+        "fxMode": "enabled",
+        "hz": 120,
+        "primitiveFrames": 170,
+        "armedFrames": 140
+      }
+    ],
+    "errors": []
+  },
+  "after": {
+    "scope": "production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison",
+    "cases": [
+      {
+        "fxMode": "none",
+        "hz": 30,
+        "sourceMotion": "ready",
+        "phases": [
+          "rise",
+          "drop"
+        ],
+        "maxY": 6.5,
+        "endedAt": 1.2,
+        "primitiveFrames": 0,
+        "armedFrames": 0,
+        "fistFrames": 43,
+        "fistPixels": [
+          1910,
+          3399
+        ],
+        "normalPass": null,
+        "captures": []
+      },
+      {
+        "fxMode": "none",
+        "hz": 60,
+        "sourceMotion": "ready",
+        "phases": [
+          "rise",
+          "drop"
+        ],
+        "maxY": 6.497772612341123,
+        "endedAt": 1.1666666666666667,
+        "primitiveFrames": 0,
+        "armedFrames": 0,
+        "fistFrames": 86,
+        "fistPixels": [
+          1911,
+          3375
+        ],
+        "normalPass": {
+          "energyPixels": 0,
+          "solidPixels": 1699
+        },
+        "captures": [
+          {
+            "frame": 1,
+            "phase": "rise",
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 2,
+            "armed": false,
+            "presentation": "tripleSplashdown"
+          },
+          {
+            "frame": 30,
+            "phase": "rise",
+            "pos": [
+              0,
+              4.474304742009401,
+              0
+            ],
+            "fists": 2,
+            "armed": false,
+            "presentation": "tripleSplashdown"
+          },
+          {
+            "frame": 60,
+            "phase": "rise",
+            "pos": [
+              0,
+              6.497772612341123,
+              0
+            ],
+            "fists": 2,
+            "armed": false,
+            "presentation": "tripleSplashdown"
+          },
+          {
+            "frame": 70,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 2,
+            "armed": true,
+            "presentation": null
+          },
+          {
+            "frame": 80,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 2,
+            "armed": true,
+            "presentation": null
+          },
+          {
+            "frame": 87,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 0,
+            "armed": true,
+            "presentation": null
+          },
+          {
+            "frame": 120,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 0,
+            "armed": true,
+            "presentation": null
+          }
+        ]
+      },
+      {
+        "fxMode": "none",
+        "hz": 120,
+        "sourceMotion": "ready",
+        "phases": [
+          "rise",
+          "drop"
+        ],
+        "maxY": 6.5,
+        "endedAt": 1.175,
+        "primitiveFrames": 0,
+        "armedFrames": 0,
+        "fistFrames": 173,
+        "fistPixels": [
+          1934,
+          3371
+        ],
+        "normalPass": null,
+        "captures": []
+      },
+      {
+        "fxMode": "disabled",
+        "hz": 30,
+        "sourceMotion": "ready",
+        "phases": [
+          "rise",
+          "drop"
+        ],
+        "maxY": 6.5,
+        "endedAt": 1.2,
+        "primitiveFrames": 0,
+        "armedFrames": 0,
+        "fistFrames": 43,
+        "fistPixels": [
+          1929,
+          3407
+        ],
+        "normalPass": null,
+        "captures": []
+      },
+      {
+        "fxMode": "disabled",
+        "hz": 60,
+        "sourceMotion": "ready",
+        "phases": [
+          "rise",
+          "drop"
+        ],
+        "maxY": 6.497772612341123,
+        "endedAt": 1.1666666666666667,
+        "primitiveFrames": 0,
+        "armedFrames": 0,
+        "fistFrames": 86,
+        "fistPixels": [
+          1905,
+          3399
+        ],
+        "normalPass": null,
+        "captures": [
+          {
+            "frame": 1,
+            "phase": "rise",
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 2,
+            "armed": false,
+            "presentation": "tripleSplashdown"
+          },
+          {
+            "frame": 30,
+            "phase": "rise",
+            "pos": [
+              0,
+              4.474304742009401,
+              0
+            ],
+            "fists": 2,
+            "armed": false,
+            "presentation": "tripleSplashdown"
+          },
+          {
+            "frame": 60,
+            "phase": "rise",
+            "pos": [
+              0,
+              6.497772612341123,
+              0
+            ],
+            "fists": 2,
+            "armed": false,
+            "presentation": "tripleSplashdown"
+          },
+          {
+            "frame": 70,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 2,
+            "armed": true,
+            "presentation": null
+          },
+          {
+            "frame": 80,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 2,
+            "armed": true,
+            "presentation": null
+          },
+          {
+            "frame": 87,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 0,
+            "armed": true,
+            "presentation": null
+          },
+          {
+            "frame": 120,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 0,
+            "armed": true,
+            "presentation": null
+          }
+        ]
+      },
+      {
+        "fxMode": "disabled",
+        "hz": 120,
+        "sourceMotion": "ready",
+        "phases": [
+          "rise",
+          "drop"
+        ],
+        "maxY": 6.5,
+        "endedAt": 1.175,
+        "primitiveFrames": 0,
+        "armedFrames": 0,
+        "fistFrames": 173,
+        "fistPixels": [
+          1911,
+          3373
+        ],
+        "normalPass": null,
+        "captures": []
+      },
+      {
+        "fxMode": "enabled",
+        "hz": 30,
+        "sourceMotion": "ready",
+        "phases": [
+          "rise",
+          "drop"
+        ],
+        "maxY": 6.5,
+        "endedAt": 1.2,
+        "primitiveFrames": 0,
+        "armedFrames": 0,
+        "fistFrames": 43,
+        "fistPixels": [
+          1816,
+          3125
+        ],
+        "normalPass": null,
+        "captures": []
+      },
+      {
+        "fxMode": "enabled",
+        "hz": 60,
+        "sourceMotion": "ready",
+        "phases": [
+          "rise",
+          "drop"
+        ],
+        "maxY": 6.497772612341123,
+        "endedAt": 1.1666666666666667,
+        "primitiveFrames": 0,
+        "armedFrames": 0,
+        "fistFrames": 86,
+        "fistPixels": [
+          1806,
+          3117
+        ],
+        "normalPass": null,
+        "captures": [
+          {
+            "frame": 1,
+            "phase": "rise",
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 2,
+            "armed": false,
+            "presentation": "tripleSplashdown"
+          },
+          {
+            "frame": 30,
+            "phase": "rise",
+            "pos": [
+              0,
+              4.474304742009401,
+              0
+            ],
+            "fists": 2,
+            "armed": false,
+            "presentation": "tripleSplashdown"
+          },
+          {
+            "frame": 60,
+            "phase": "rise",
+            "pos": [
+              0,
+              6.497772612341123,
+              0
+            ],
+            "fists": 2,
+            "armed": false,
+            "presentation": "tripleSplashdown"
+          },
+          {
+            "frame": 70,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 2,
+            "armed": true,
+            "presentation": null
+          },
+          {
+            "frame": 80,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 2,
+            "armed": true,
+            "presentation": null
+          },
+          {
+            "frame": 87,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 0,
+            "armed": true,
+            "presentation": null
+          },
+          {
+            "frame": 120,
+            "phase": null,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "fists": 0,
+            "armed": true,
+            "presentation": null
+          }
+        ]
+      },
+      {
+        "fxMode": "enabled",
+        "hz": 120,
+        "sourceMotion": "ready",
+        "phases": [
+          "rise",
+          "drop"
+        ],
+        "maxY": 6.5,
+        "endedAt": 1.175,
+        "primitiveFrames": 0,
+        "armedFrames": 0,
+        "fistFrames": 173,
+        "fistPixels": [
+          1798,
+          3074
+        ],
+        "normalPass": null,
+        "captures": []
+      }
+    ],
+    "failures": [],
+    "errors": [],
+    "buildRevision": "17b79d5a3b8be9633200f9435ad8db5a7fa75b6644360c242f968405ecc83e3a",
+    "contentHash": "6c4f636f3963268d3638dc67043fe9c7e369ee595f1d5ca2c0bdded5aa6dbfae"
+  },
+  "presentation": {
+    "contentHash": "6c4f636f3963268d3638dc67043fe9c7e369ee595f1d5ca2c0bdded5aa6dbfae",
+    "rows": [
+      {
+        "id": "trizooka",
+        "driver": "manual phase/finish diagnostic",
+        "sourceMotion": "ready",
+        "phase": "charge",
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "changedPixels": 20584,
+        "actorPixels": 40065,
+        "maxHandError": 8.510829877773609e-16,
+        "calls": 11,
+        "triangles": 39400
+      },
+      {
+        "id": "inkVac",
+        "driver": "real Actor.update with native Physics",
+        "sourceMotion": "ready",
+        "phase": "inhale",
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "changedPixels": 5827,
+        "actorPixels": 29258,
+        "maxHandError": 6.687668363004597e-16,
+        "calls": 12,
+        "triangles": 113789,
+        "nativeLifecycle": {
+          "exhalePixels": 5446,
+          "transitionFrames": 20,
+          "countershots": 1,
+          "returnedToCarry": true
+        }
+      },
+      {
+        "id": "storm",
+        "driver": "manual phase/finish diagnostic",
+        "sourceMotion": "ready",
+        "phase": "hold",
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "changedPixels": 2745,
+        "actorPixels": 23638,
+        "maxHandError": 0,
+        "calls": 9,
+        "triangles": 34160
+      },
+      {
+        "id": "slam",
+        "driver": "manual phase/finish diagnostic",
+        "sourceMotion": "ready",
+        "phase": "hang",
+        "position": [
+          0,
+          2.033333333333334,
+          0
+        ],
+        "changedPixels": 60945,
+        "actorPixels": 10073,
+        "maxHandError": 0,
+        "calls": 11,
+        "triangles": 39104
+      },
+      {
+        "id": "bubbler",
+        "driver": "manual phase/finish diagnostic",
+        "sourceMotion": "ready",
+        "phase": null,
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "changedPixels": 120788,
+        "actorPixels": 554,
+        "maxHandError": 0,
+        "calls": 16,
+        "triangles": 41461
+      },
+      {
+        "id": "tacticooler",
+        "driver": "manual phase/finish diagnostic",
+        "sourceMotion": "ready",
+        "phase": null,
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "changedPixels": 22265,
+        "actorPixels": 10501,
+        "maxHandError": 0,
+        "calls": 18,
+        "triangles": 13959
+      }
+    ],
+    "baseline": {
+      "geometries": 46,
+      "textures": 2,
+      "programs": 16,
+      "buffers": 241
+    },
+    "after": {
+      "geometries": 46,
+      "textures": 2,
+      "programs": 16,
+      "buffers": 241
+    },
+    "nativeCloudRetirements": 36,
+    "vfxResources": {
+      "pool": [
+        {
+          "quality": 0.35,
+          "key": "sparks",
+          "cap": 315,
+          "attributeCapacity": 316,
+          "draws": 8,
+          "pixels": 2592,
+          "baseline": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          }
+        },
+        {
+          "quality": 0.35,
+          "key": "puffs",
+          "cap": 182,
+          "attributeCapacity": 183,
+          "draws": 8,
+          "pixels": 2310,
+          "baseline": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          }
+        },
+        {
+          "quality": 1,
+          "key": "sparks",
+          "cap": 900,
+          "attributeCapacity": 901,
+          "draws": 8,
+          "pixels": 2592,
+          "baseline": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          }
+        },
+        {
+          "quality": 1,
+          "key": "puffs",
+          "cap": 520,
+          "attributeCapacity": 521,
+          "draws": 8,
+          "pixels": 2326,
+          "baseline": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          }
+        }
+      ],
+      "fists": [
+        {
+          "quality": 0.35,
+          "mode": "clear",
+          "cycle": 0,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 0.35,
+          "mode": "clear",
+          "cycle": 1,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 0.35,
+          "mode": "dispose",
+          "cycle": 0,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 0.35,
+          "mode": "dispose",
+          "cycle": 1,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 0.35,
+          "mode": "normal",
+          "cycle": 0,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 0.35,
+          "mode": "normal",
+          "cycle": 1,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 1,
+          "mode": "clear",
+          "cycle": 0,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 1,
+          "mode": "clear",
+          "cycle": 1,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 1,
+          "mode": "dispose",
+          "cycle": 0,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 1,
+          "mode": "dispose",
+          "cycle": 1,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 1,
+          "mode": "normal",
+          "cycle": 0,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        },
+        {
+          "quality": 1,
+          "mode": "normal",
+          "cycle": 1,
+          "directorErrors": 0,
+          "draws": 2,
+          "owned": 2,
+          "shared": 2,
+          "before": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          },
+          "allocated": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 31,
+            "buffers": 361
+          },
+          "rendered": {
+            "geometries": 65,
+            "textures": 2,
+            "programs": 32,
+            "buffers": 361
+          },
+          "after": {
+            "geometries": 46,
+            "textures": 2,
+            "programs": 16,
+            "buffers": 241
+          }
+        }
+      ],
+      "scope": "emitted native FX/director + production factory; injected fist records; no retail or gameplay qualification",
+      "baseline": {
+        "geometries": 46,
+        "textures": 2,
+        "programs": 16,
+        "buffers": 241
+      },
+      "after": {
+        "geometries": 46,
+        "textures": 2,
+        "programs": 16,
+        "buffers": 241
+      }
+    },
+    "fixture": "source-loaded native rig; Vac uses actual Actor.update/Physics and native lifecycle, other specials use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim",
+    "errors": []
+  },
+  "budget": {
+    "status": "passed",
+    "revision": "17b79d5a3b8be9633200f9435ad8db5a7fa75b6644360c242f968405ecc83e3a",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 77425,
+    "initialJSBytes": 2727924,
+    "criticalHTMLBytes": 15774,
+    "precacheCount": 420,
+    "precacheBytes": 6702818,
+    "workerBytes": 65611,
+    "declaredBytes": 11760176,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "regressions": {
+    "sourceIntegration": {
+      "files": 9,
+      "tests": 145,
+      "pass": 145,
+      "fail": 0,
+      "skipped": 0
+    },
+    "emitted": {
+      "files": 22,
+      "tests": 350,
+      "pass": 350,
+      "fail": 0,
+      "skipped": 0
+    },
+    "buildAndWorkflow": {
+      "files": 3,
+      "tests": 32,
+      "pass": 27,
+      "fail": 0,
+      "skipped": 5
+    },
+    "pinnedSource": {
+      "files": 8,
+      "explicitFields": 36,
+      "status": "passed"
+    },
+    "adjacentIntegration": {
+      "files": 6,
+      "tests": 25,
+      "pass": 25,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "images": {
+    "splashdown-after-f030.png": "e0b1e69475b2f832ee510e8369381533efe8643b7af203954e012911e9f78e21",
+    "splashdown-before-f030.png": "b140ce3f34a2fa9b906eea5ce1976c4628e14a31ac1b888cf47e63298dcea7a8"
+  }
+}

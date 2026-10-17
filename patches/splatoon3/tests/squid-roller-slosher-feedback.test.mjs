@@ -89,7 +89,16 @@ test('heavy roller swing: level overhead hold, ink with the drum down, floor res
     const top = at(H.coilAt), held = at(windup - H.whip - 1 / 60);
     for (let i = 0; i < 3; i++) near(held.rotation[i], top.rotation[i], 1e-9, label + ' holds overhead until the whip');
     const heavy = at(windup), follow = at(windup + H.rest * .5);
-    for (let i = 0; i < 3; i++) near(heavy.rotation[i], follow.rotation[i], 1e-9, label + ' drum already down at release');
+    if (label === 'vertical') {
+      // The corrected release pose is explicitly upright, and the following
+      // X-axis key now eases forward without replaying the horizontal flick.
+      near(heavy.rotation[2], Math.PI / 2, 1e-9, 'vertical release remains upright');
+      near(follow.rotation[2], Math.PI / 2, 1e-9, 'vertical follow-through remains upright');
+      near(heavy.rotation[1], follow.rotation[1], 1e-9, 'no yaw twist during release');
+      assert.ok(follow.rotation[0] > heavy.rotation[0], 'vertical forward follow-through begins after release');
+    } else {
+      for (let i = 0; i < 3; i++) near(heavy.rotation[i], follow.rotation[i], 1e-9, label + ' horizontal release hold');
+    }
     const done = at(end);
     for (let i = 0; i < 3; i++) {
       near(done.anchor[i], ROLLER_POSE.READY_ANCHOR[i], 1e-7, label + ' anchor back to carry');
@@ -115,7 +124,14 @@ test('standard roller swing (Splat Roller 21F/26F): same S3 order inside the gam
     const top = at(coilAt), held = at(hold - 1 / 120);
     for (let i = 0; i < 3; i++) near(held.rotation[i], top.rotation[i], 1e-9, label + ' level overhead is held');
     const release = at(windup), rest = at(windup + 2 / 60);
-    for (let i = 0; i < 3; i++) near(release.rotation[i], rest.rotation[i], 1e-9, label + ' drum down at the release frame');
+    if (label === 'vertical') {
+      near(release.rotation[2], Math.PI / 2, 1e-9, 'upright standard vertical release');
+      near(rest.rotation[2], Math.PI / 2, 1e-9, 'upright standard vertical follow-through');
+      near(release.rotation[1], rest.rotation[1], 1e-9, 'no yaw at standard vertical release');
+      assert.ok(rest.rotation[0] > release.rotation[0], 'standard vertical follow-through moves forward after ink release');
+    } else {
+      for (let i = 0; i < 3; i++) near(release.rotation[i], rest.rotation[i], 1e-9, 'horizontal release hold');
+    }
     const done = at(interval);
     for (let i = 0; i < 3; i++) near(done.rotation[i], ROLLER_POSE.READY_ROTATION[i], 1e-7, label + ' back to carry at the interval');
     assert.equal(done.weight, 0, label + ' hands the pose back at the interval');

@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { fixture } from './weapons-fixture.mjs';
-import { CASES, reset, launch, finish, paintMetrics, measure } from './measure-weapons-fidelity.mjs';
+import { CASES, reset, launch, finish, paintMetrics, measure, projectileParams } from './measure-weapons-fidelity.mjs';
+import { isSourcedStamp, rasterFlatSourcedStamp } from './lib/source-paint-oracle.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const at = process.argv.indexOf('--site');
@@ -13,21 +14,50 @@ const site = path.resolve(at >= 0 ? process.argv[at + 1] : path.join(root, '_sit
 const near = (a,b,t=1e-7) => assert.ok(Math.abs(a-b) <= t, `${a} != ${b} ±${t}`);
 
 const data = await measure({ site, fidelity: true, detail: false });
-// Deterministic main-baseline fixtures, not Nintendo meter measurements.
-// The old roller/Slosher rows predated native terminal-contact corrections and
-// falling splash paint. Record the actual clean main build separately; require
-// every hit sample, initial projectile and scoring cell to remain exact.
+// Preserve the old archives. Only the reviewed silhouettes, the previously
+// approved Roller birth correction and the Spinner relative-speed correction
+// replace their affected receipts; unchanged physics stays bound to history.
 const baselineBytes = fs.readFileSync(new URL('./fixtures/weapons-fidelity-9c070329.json', import.meta.url));
 assert.equal(createHash('sha256').update(baselineBytes).digest('hex'), 'b79883e3c0e14e0a4ba9577d01d162dbcfe530a7d03c75b22187df18c0ea1259');
 const baseline = JSON.parse(baselineBytes);
 assert.equal(baseline.baselineCommit, '9c0703298aed297667837533c32454cc60980603');
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
-const golden = Object.fromEntries(Object.entries(baseline.cases).map(([key, row]) => [key, row.golden]));
+// #1512 intentionally changes only Roller birth positions, which also moves
+// landing/scoring cells and hit-sweep samples. Keep the old archive intact and
+// pin the two corrected rows separately. The source inverse-birth proof below
+// still requires every non-position birth field to match the old archive.
+const rollerBytes = fs.readFileSync(new URL('./fixtures/weapons-fidelity-roller-birth-8e55bfcb.json', import.meta.url));
+assert.equal(createHash('sha256').update(rollerBytes).digest('hex'), '48ea0079e7fffca667ffa3626abbb34c2b42eb1d7997c4ff64df4db5c54fd9f4');
+const rollerBaseline = JSON.parse(rollerBytes);
+assert.equal(rollerBaseline.baselineCommit, '8e55bfcbcdf9cd82df76dbf1a6948f9a075b6719');
+assert.deepEqual(Object.keys(rollerBaseline.cases), ['roller-horizontal', 'roller-vertical']);
+const expectedCases = { ...baseline.cases, ...rollerBaseline.cases };
+function pinnedFixture(name,hash) {
+  const bytes=fs.readFileSync(new URL('./fixtures/'+name,import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),hash,name+' immutable receipt');
+  return JSON.parse(bytes);
+}
+const physicalBaseline=pinnedFixture('weapons-physical-bf9a8a92.json','07bcfd60ef35aacd055144413f27ef20e13b8e4e95435dc703bc0aa183719dc3');
+const current=pinnedFixture('weapons-fidelity-main-20261017.json','7dc914f9bbf1a85639ba9562ff8ad2318d7a41ff8ebe58d733471192c02cb548');
+assert.equal(physicalBaseline.baselineCommit,'bf9a8a9270b349a3b20c9550ff6ed78a61c9e729');
+assert.deepEqual(Object.keys(current.cases),CASES.map(c=>c.key));
+for(const c of CASES) {
+  const prior=physicalBaseline.cases[c.key];
+  assert.equal(digest(prior.initialProjectiles),baseline.cases[c.key].initialProjectilesHash,c.key+' independent old checkout reproduces every archived birth');
+  assert.equal(prior.oldCellsHash,baseline.cases[c.key].cellsHash,c.key+' independent old checkout reproduces archived scoring');
+}
+const golden = Object.fromEntries(Object.entries(current.cases).map(([key, row]) => [key, row.golden]));
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
-  const c = data.cases[key], expected = baseline.cases[key];
+  const c = data.cases[key], expected = current.cases[key];
   assert.equal(digest(c.paint.cellsXZ), expected.cellsHash, key + ' main scoring cells');
   assert.equal(digest(c.hitSamples), expected.hitSamplesHash, key + ' main full hit sweep');
   assert.equal(digest(c.initialProjectiles), expected.initialProjectilesHash, key + ' main projectile births');
+  assert.equal(digest(c.paintPoints),expected.paintPointsHash,key+' all source stamp dimensions and recorded shape');
+  assert.equal(digest(c.groundImpacts),expected.impactsHash,key+' all terrain impacts');
+  if(!key.startsWith('splatling-')) {
+    assert.equal(digest(c.hitSamples),expectedCases[key].hitSamplesHash,key+' unaffected hit sweep remains pinned');
+    assert.equal(digest(c.initialProjectiles),expectedCases[key].initialProjectilesHash,key+' unaffected birth remains pinned');
+  }
   near(c.practicalHitRange,hit); near(c.fullDamageRange,full);
   near(c.paint.bounds.maxZ,paint,.001); assert.equal(c.projectileCount,count,key);
 }
@@ -35,51 +65,115 @@ for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
 // measured hit boundary and on the real paint grid. The built receipt cannot
 // become a replacement for source/build equivalence.
 const sourceFixture = await fixture({ site:path.join(root,'.ci-scratch/unbuilt-weapons-source'), fidelity:true });
+// Independently remove only the two sourced birth-coordinate deltas from raw
+// pre-integration rounds, then compare the complete legacy birth record. This
+// catches changes to speed, radii, damage, lifetime, RNG-derived appearance,
+// count and every other serialized birth property instead of blessing them
+// through the new golden. Round once, after the inverse, as in the archive.
+for (const c of CASES.filter(row => row.id === 'roller')) {
+  const actor = reset(sourceFixture, c);
+  launch(sourceFixture, actor, c);
+  const raw = sourceFixture.profile.weaponsFidelityCompletion.weapons.roller;
+  const groups = raw[c.vertical ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam'].Unit;
+  assert.equal(raw.WideSwingUnitGroupParam.Unit[0].SpawnPositionWidth, .8);
+  assert.deepEqual(raw.VerticalSwingUnitGroupParam.Unit.map(unit => unit.SpawnPositionHeight || 0), [0, .25, .25]);
+  const offsets = new Map();
+  const legacyBirths = sourceFixture.projectiles.list.map(p => {
+    const group = p.fidelityRollerUnitIndex, unit = groups[group];
+    const offset = offsets.get(group) || 0;
+    offsets.set(group, offset + 1);
+    const start = p.start.clone();
+    if (c.vertical) start.y += (1 - offset) * (unit.SpawnPositionHeight || 0);
+    else {
+      const count = unit.BulletNum ?? 1, fan = count > 1 ? 2 * offset / (count - 1) - 1 : 0;
+      start.x += fan * (unit.SpawnPositionWidth || 0) * .5;
+    }
+    return projectileParams({ ...p, start });
+  });
+  assert.equal(digest(legacyBirths), baseline.cases[c.key].initialProjectilesHash, c.key + ' only the reviewed birth coordinates differ from the archived gameplay');
+}
 // Independent scalar raster of sourced stamps on this fixture's flat grid.
-// It scans every cell rather than reusing production raster/culling helpers.
+// It scans every cell and reads frozen profile bytes, without importing the
+// production profile generator, mask or culling helpers.
 // Generic stamps keep their existing mask; their observed deltas are included
 // separately and are not claimed as an independent generic-mask oracle.
 const paintSystem=sourceFixture.G.paint,realSplat=paintSystem.splat;
 let sourceCells,sourceStampCount;
 paintSystem.splat=function(center,radius,team,opts={}){
   assert.equal(team,0,'golden fixture paint owner');
-  const sourced=opts.kind==='source-shot'||opts.kind==='source-splash';
+  const stamp={center,radius,team,...opts},sourced=isSourcedStamp(stamp);
   const before=sourced?null:Uint8Array.from(this.grid);
   if(sourced&&!opts.cosmetic){
     sourceStampCount++;
-    if(center.y<=radius&&center.y>=-.12){
-      const r2=radius*radius-center.y*center.y;
-      if(r2>.02*.02){
-        const heading=opts.stretch,length=heading?Math.hypot(heading.x,heading.z):0;
-        const dx=length>.2?heading.x/length:0,dz=length>.2?heading.z/length:0;
-        const stretch=length>.2?(opts.stretchAmt??1)*length:0;
-        for(const face of this.paintFaces){
-          assert.equal(face.origin.y,0);assert.deepEqual(Array.from(face.u.toArray()),[1,0,0]);assert.deepEqual(Array.from(face.v.toArray()),[0,0,1]);
-          for(let j=0;j<face.nv;j++)for(let i=0;i<face.nu;i++){
-            const x=face.origin.x+(i+.5)*face.cu-center.x,z=face.origin.z+(j+.5)*face.cv-center.z;
-            const along=x*dx+z*dz,across=x*dz-z*dx;
-            const depth=stretch>0?1+stretch*(along>0?1:.25):1;
-            const squared=length>.2?(along/depth)**2+across**2:x*x+z*z;
-            if(squared<=r2)sourceCells[face.grid+j*face.nu+i]=1;
-          }
-        }
-      }
-    }
+    rasterFlatSourcedStamp(this,sourceCells,stamp);
   }
   const value=realSplat.call(this,center,radius,team,opts);
   if(!sourced)for(let i=0;i<this.grid.length;i++)if(this.grid[i]!==before[i])sourceCells[i]=this.grid[i];
   return value;
 };
 
+// Restore the prior masks without changing physical stamp dimensions. #1525
+// also opted the one release-time Roller foot stamp into SOURCE_SPLASH; that
+// stamp used the generic mask before this change, unlike the flight stamps.
+const circleFixture=await fixture({site:path.join(root,'.ci-scratch/unbuilt-weapons-circle-control'),fidelity:true});
+const circleSplat=circleFixture.G.paint.splat;
+let circleCase;
+circleFixture.G.paint.splat=function(center,radius,team,opts={}){
+  if(circleCase.id==='roller'&&this===circleFixture.G.paint&&circleFixture.G.time===0&&circleFixture.paints.length===0){
+    assert.equal(opts.kind,'source-splash','release foot stamp entered the sourced mask');
+    assert.equal(opts.footprint,'ink-flick','release foot stamp uses the reviewed Roller profile');
+    assert.equal(opts.stretchAmt,0,'release foot heading adds no physical stretch');
+    assert.deepEqual(Array.from(opts.stretch.toArray()),[0,0,1]);
+    return circleSplat.call(this,center,radius,team,{...opts,footprint:null,kind:undefined,stretch:undefined,stretchAmt:undefined});
+  }
+  return circleSplat.call(this,center,radius,team,{...opts,footprint:null});
+};
+const plain=value=>JSON.parse(JSON.stringify(value));
+const physicalStamps=stamps=>plain(stamps.map(({area,footprint,...stamp})=>stamp));
 for (const c of CASES) {
   const expected=data.cases[c.key];
   let actor=reset(sourceFixture,c);sourceCells=new Uint8Array(paintSystem.grid.length);sourceStampCount=0;
-  launch(sourceFixture,actor,c);finish(sourceFixture,actor);
+  launch(sourceFixture,actor,c);
+  const births=plain(sourceFixture.projectiles.list.map(projectileParams)),prior=physicalBaseline.cases[c.key];
+  assert.equal(sourceFixture.draws(),prior.birthDraws,c.key+' unchanged birth RNG consumption');
+  assert.deepEqual(births,plain(expected.initialProjectiles),c.key+' source/build every birth field');
+  if(c.id==='splatling') {
+    const base=c.charge>=2/3?126:63+(126-63)*(c.charge/(2/3));
+    for(let i=0;i<births.length;i++) {
+      const {velocity:oldVelocity,...oldRest}=prior.initialProjectiles[i],{velocity,...rest}=births[i];
+      assert.deepEqual(rest,oldRest,c.key+' only birth velocity changes');
+      const oldNorm=Math.hypot(...oldVelocity),norm=Math.hypot(...velocity);
+      const biasedDraw=(oldNorm-base)/7.2;
+      near(norm,base*(1+.12*biasedDraw),1e-7);
+      for(let axis=0;axis<3;axis++)near(velocity[axis]/norm,oldVelocity[axis]/oldNorm,1e-8);
+    }
+  }
+  finish(sourceFixture,actor);
+  assert.equal(sourceFixture.draws(),prior.flightDraws,c.key+' unchanged complete-flight RNG consumption');
+  if(c.id!=='splatling'&&c.id!=='roller') {
+    assert.deepEqual(physicalStamps(sourceFixture.paints),physicalStamps(prior.paintPoints),c.key+' same historical stamp position, width, depth, seed and time');
+    assert.deepEqual(plain(sourceFixture.impacts),prior.impacts,c.key+' unchanged physical terrain impacts');
+  }
   assert.ok(sourceStampCount>0,c.key+' sourced stamp oracle exercised');
   assert.deepEqual(Uint8Array.from(paintSystem.grid),sourceCells,c.key+' independent sourced scoring cells');
   const sourcePaint=paintMetrics(sourceFixture);
   assert.deepEqual(sourcePaint.bounds,expected.paint.bounds,c.key+' source/build paint bounds');
   assert.deepEqual(sourcePaint.cellsXZ,expected.paint.cellsXZ,c.key+' source/build every scoring cell');
+  assert.deepEqual(plain(sourceFixture.paints),expected.paintPoints,c.key+' source/build every stamp and seed');
+  if(c.id!=='splatling') {
+    circleCase=c;
+    const controlActor=reset(circleFixture,c);launch(circleFixture,controlActor,c);finish(circleFixture,controlActor);
+    const circlePaint=paintMetrics(circleFixture);
+    assert.equal(digest(circlePaint.cellsXZ),expectedCases[c.key].cellsHash,c.key+' restoring just the prior masks restores every archived scoring cell');
+    const subjectStamps=physicalStamps(sourceFixture.paints);
+    if(c.id==='roller') {
+      assert.equal(subjectStamps[0].time,0,'one release-time Roller foot stamp');
+      const priorFoot=physicalStamps(prior.paintPoints)[0];
+      subjectStamps[0]={...subjectStamps[0],kind:null,stretch:null,stretchAmt:null};
+      assert.deepEqual(subjectStamps[0],priorFoot,c.key+' unchanged foot position, radius, seed and time');
+    }
+    assert.deepEqual(physicalStamps(circleFixture.paints),subjectStamps,c.key+' mask-only control retains every physical stamp');
+  }
   for(const z of [expected.practicalHitRange,Math.round((expected.practicalHitRange+.1)*10)/10]){
     actor=reset(sourceFixture,c,z);sourceCells=new Uint8Array(paintSystem.grid.length);launch(sourceFixture,actor,c);finish(sourceFixture,actor);
     const damage=sourceFixture.hits.reduce((sum,hit)=>sum+hit.damage,0);

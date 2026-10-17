@@ -10,6 +10,7 @@ import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
 import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint, SHOOTER_PARAMTABLE_DEFAULTS } from './shooter-impact-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
+import { mainInkFootprint } from './main-ink-footprints.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
@@ -491,7 +492,7 @@ function eligibleWallDropHit(hit) {
 }
 function wallDropPaint(p, point, radius, state, salt) {
   if (p.ghost || !(radius > 0) || !api.G.paint) return 0;
-  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: p.owner });
+  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(p.s3Weapon), claimOwner: p.owner });
   if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   return area || 0;
 }
@@ -930,6 +931,9 @@ function slosherCollisionRadius(p, age, field, y) {
 }
 export function fidelityPlayerCollisionRadius(p) { return slosherCollisionRadius(p,p.age,false,p.pos?.y); }
 function fieldRadiusAt(p,age,y=p.pos?.y) { return slosherCollisionRadius(p,age,true,y); }
+// Deployed cover uses the same physical field sphere as the native sweep.
+// InkFlight's current INK_LENGTH_SCALE is 1; its profile already owns that radius.
+export function fidelityWorldCollisionRadius(p) { return p.inkProfile?.collision?.field ?? fieldRadiusAt(p,p.age); }
 // Slosher globs and Roller flicks grow their terrain (Field) radius to 0.4-1.05
 // within 2-4 F. Ending the whole glob on the first contact of that grown sphere
 // made a level Splat Bucket throw (born ~0.7-0.9 m high, Field 0.5-0.8) die
@@ -957,7 +961,7 @@ export function globGrazePaint(game, p, point, normal, radius, face = -1) {
   if (last && last.face === face && last.at.distanceTo(center) < paintRadius * 0.8) return 0;
   p.s3GrazePaint = { at: center, face };
   const seed = ((Math.imul(((p.seed || 0) * 4294967296) >>> 0, 2654435761) ^ (p.s3GrazeCount = (p.s3GrazeCount || 0) + 1)) >>> 0) / 4294967296;
-  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: owner });
+  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(p.s3Weapon), claimOwner: owner });
   if (Number.isFinite(area) && area > 0) owner.addTurf?.(area);
   return area;
 }
@@ -1296,17 +1300,27 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
     speed=60*sampledSourceSpeed*speedRate;
     angle=actor.yaw+radians(rollerSpeedSwerveDegrees(unit,offset,count,sampledSourceSpeed));
     pitch+=radians(b.horizontalPitchDegrees); // retained calibrated launch angle, NOT extracted
-    const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnPositionRandomCube||0;
+    // #285: the extracted SpawnPositionWidth is the entire lateral unit-group
+    // span, not the distance from centre to each edge. The 11.3.0 main value
+    // 0.8 m is listed as 0.16 range lines (5 m/line) in splatoon3mix; Carbon
+    // 0.6/0.12, Dynamo 0.8/0.16 and Big Swig 1.9/0.38 agree. The source
+    // does not publish the exact per-glob placement or random-cube PDF, so
+    // keep the existing deterministic fan and seeded independent jitter.
+    const side=fan*(unit.SpawnPositionWidth||0)*0.5,j=unit.SpawnPositionRandomCube||0;
     p.pos.x+=Math.cos(actor.yaw)*side+(Math.random()*2-1)*j;
     p.pos.z-=Math.sin(actor.yaw)*side-(Math.random()*2-1)*j;
     p.pos.y+=(Math.random()*2-1)*j;
   }
-  // Only offsets are extracted. Native body +1.3 anchor is not claimed as Switch height.
-  // #278: the two pinned height fields are summed as raw INKWAVE world units (scale 1).
-  // The additive combination and per-field engine meaning are unverified: the pinned
-  // Leanny table carries no field semantics. This is an INKWAVE assumption, not a
-  // sourced engine law, and makes no SI-metre claim (profile.json models.rollerVerticalSpawnHeight).
-  p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(unit.SpawnPositionHeight||0);
+  // #278: separate group height offset and indexed per-glob position height.
+  // Each two-round vertical group has SpawnPositionHeight=.25; summing it as a
+  // shared offset collapsed that pair into the same birth position even though
+  // its speed/pitch already uses AfterOffset* at offset=0/1. The community
+  // projectile reference describes vertically distinct starts per glob.
+  // Mapping offsetHeight + offset*positionHeight uses the existing local
+  // world scale 1; Nintendo's native coordinate transform is not recovered.
+  const baseHeight=unit.SpawnPositionOffsetHeight||0;
+  const perGlobHeight=unit.SpawnPositionHeight||0;
+  p.pos.y+=vertical ? baseHeight+offset*perGlobHeight : baseHeight+perGlobHeight;
   p.prev.copy(p.pos);p.start.copy(p.pos);p.fidelityMaxY=p.pos.y;p.fidelityImpactHeight=null;
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
@@ -1764,7 +1778,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
     p.fidelityMaxY=null;p.fidelityImpactHeight=null;p.s3GrazePaint=null;p.s3GrazeCount=0;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.s3DepletionPaintScale=1;p.s3DepletionRound=false;p.fidelitySloshUnit=null;p.fidelitySloshDownward=null;p.fidelitySloshFallAnchorY=null;p.fidelitySloshPacketIndex=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.s3DepletionPaintScale=1;p.s3DepletionRound=false;p.fidelitySloshUnit=null;p.fidelitySloshIndex=null;p.fidelitySloshDownward=null;p.fidelitySloshFallAnchorY=null;p.fidelitySloshPacketIndex=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,

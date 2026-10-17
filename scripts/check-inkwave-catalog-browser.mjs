@@ -190,7 +190,12 @@ try {
       }
       const mistChecks=[];const mistQueryChecks=[];
       {
-        const saved={actors:G.actors,projectiles:G.projectiles,time:G.time};
+        const saved={actors:G.actors,projectiles:G.projectiles,time:G.time,level:G.level,physics:G.physics};
+        // Mist now deploys on actual terrain contact. An empty collision world
+        // exercised the removed airborne timeout rather than a valid throw.
+        const {Level}=await import('/src/world/level.js');
+        G.level=new Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});
+        G.physics=new api.Physics(G.level);
         G.projectiles=new Projectiles(G.scene);G.actors=[];
         const source=makeActor('s3-slosher-diffusion'),victim=makeActor('shooter');victim.team=1;G.actors=[source,victim];
         source.aimDir.set(0,-1,.1).normalize();source.aimPoint.set(0,0,1);source.intent.sub=true;
@@ -261,9 +266,23 @@ try {
         defender.damage(100,attacker,'shooter');check(Math.abs(state.armorHP-(before-100*rate))<1e-8,id+' compiled target gear');
         state.armorHP=50;defender.specialActive.armorHP=50;defender.hp=100;
         const bodyFactor=defender.specialActive.armor?.valueOf()===true?.25:1;
-        defender.damage(100,attacker,'shooter');const expected=100-Math.floor((100-50/rate)*bodyFactor*10+1e-9)/10;
+        defender.damage(100,attacker,'shooter');const expected=id==='booyahBomb'?100:100-Math.floor((100-50/rate)*bodyFactor*10+1e-9)/10;
         check(state.armorHP===0&&Math.abs(defender.hp-expected)<1e-8,id+' compiled armor break');
-        objectGearChecks.push({id,equipped,rate,bodyHp: defender.hp});defender.reset();
+        const bodyHp=defender.hp,penetrationChecks=[];
+        if(id==='booyahBomb'){
+          // General armor law: a breaking hit at or below 100 is absorbed;
+          // above 100 only the excess penetrates, capped at 80. Object Shredder
+          // changes armor HP debit, not that raw-hit threshold or body cap.
+          // https://wikiwiki.jp/splatoon3mix/システム詳細仕様#he35f781
+          for(const [raw,bodyDamage]of [[25,0],[100,0],[120,20],[180,80],[220,80]]){
+            state.armorHP=50;defender.specialActive.armorHP=50;defender.hp=100;
+            defender.damage(raw,attacker,'shooter');
+            check(Math.abs(state.armorHP-Math.max(0,50-raw*rate))<1e-8,id+' compiled raw armor debit '+raw+' shredder='+equipped);
+            check(Math.abs(defender.hp-(100-bodyDamage))<1e-8,id+' compiled 100 threshold / 80 cap '+raw+' shredder='+equipped);
+            penetrationChecks.push({raw,bodyDamage:100-defender.hp,armorHp:state.armorHP});
+          }
+        }
+        objectGearChecks.push({id,equipped,rate,bodyHp,...(penetrationChecks.length?{penetrationChecks}:{})});defender.reset();
       }
       const {kitBombContact}=await import('/patches/splatoon3/runtime/kit-subs.mjs');
       for(const equipped of [false,true]){
@@ -373,7 +392,7 @@ try {
           if(sub==='pointSensor'){const sensor=G.projectiles._s3SupportSensors[0];sensor.pos.set(0,.7,2);sensor.activeAt=10;sensor.expires=13;}
           else{obj.pos.set(0,.7,0);obj.prev.copy(obj.pos);obj.vel.set(0,0,60);if(sub==='inkMine'){obj.phase='deployed';obj.vel.set(0,0,0);obj.activeAt=0;obj.deployedAt=0;obj.expireAt=Infinity;}}
           for(let i=0;i<20&&!victim.s3.revealedUntil?.[0];i++)G.projectiles.update(1/60);
-          const remaining=(victim.s3.revealedUntil?.[0]||0)-G.time,expected=(sub==='pointSensor'?8:5)*gearCurve(ap,1,sub==='inkMine'?.55:.43,.1);
+          const remaining=(victim.s3.revealedUntil?.[0]||0)-G.time,expected=(sub==='pointSensor'?8:sub==='angleShooter'?5-obj.age:5)*gearCurve(ap,1,sub==='inkMine'?.55:.43,.1);
           check(Math.abs(remaining-expected)<1e-8,'victim mark resistance '+sub+' '+ap);subMarkChecks.push({sub,ap,remaining});
         }
         G.projectiles.clear();Object.assign(G,saved);

@@ -74,6 +74,18 @@ def cases() -> list[tuple[str, str, Callable[[dict[str, Any]], None] | None, dic
     def paint_coverage(doc: dict[str, Any]) -> None:
         scenario(doc, "floor-slosher9")["impactState"]["paintCoverage"][0] += 0.01
 
+    def canonical_actor(doc: dict[str, Any]) -> None:
+        doc["provenance"]["canonicalRoster"]["actors"][1]["pos"][0] += 0.01
+
+    def setup_gear(doc: dict[str, Any]) -> None:
+        scenario(doc, "wall-shooter")["setup"]["roster"]["actors"][1]["gear"]["abilityPoints"]["runSpeed"] = 3
+
+    def runtime_capsule(doc: dict[str, Any]) -> None:
+        first_receipt(doc)["runtime"]["roster"]["actors"][1]["capsule"]["radius"] += 0.01
+
+    def paint_result(doc: dict[str, Any]) -> None:
+        scenario(doc, "floor-slosher9")["impactEvidence"]["impactPaintContact"]["result"] += 0.0625
+
     return [
         ("caller stack URL only", "pass", caller_stack, {"mutation": "RNG caller stack URL changed only"}),
         ("identical control", "pass", None, {}),
@@ -89,12 +101,23 @@ def cases() -> list[tuple[str, str, Callable[[dict[str, Any]], None] | None, dic
         ("impact retirement difference", "fail", retirement, {"mutation": "floor impactState.retired projectile removed"}),
         ("impact face difference", "fail", impact_face, {"mutation": "wall impactState.attempts.face changed"}),
         ("paint coverage difference", "fail", paint_coverage, {"mutation": "floor impactState.paintCoverage changed"}),
+        ("canonical teammate pose difference", "fail", canonical_actor, {"mutation": "canonical teammate position +0.01"}),
+        ("scenario teammate gear difference", "fail", setup_gear, {"mutation": "scenario teammate Run Speed AP changed"}),
+        ("native teammate capsule difference", "fail", runtime_capsule, {"mutation": "capture teammate capsule radius +0.01"}),
+        ("scored paint area difference", "fail", paint_result, {"mutation": "retained native paint.splat return value +0.0625"}),
     ]
 
 
 def run(before_path: Path, after_path: Path, receipt_path: Path) -> dict[str, Any]:
     before = json.loads(before_path.read_text())
-    baseline_after = json.loads(after_path.read_text())
+    observed_after = json.loads(after_path.read_text())
+    if not isinstance(before, dict) or not isinstance(observed_after, dict):
+        raise ValueError("baseline and candidate capture reports must be JSON objects")
+    # Verify comparator mutation gates against an *identical* physical pair.
+    # The real candidate can deliberately change Roller projectile births, and
+    # its separate full comparator step must still reject unexplained drift.
+    # Using a failing real pair here invalidates all four positive controls.
+    baseline_after = copy.deepcopy(before)
     records = []
     for name, expected, mutate, evidence in cases():
         after = copy.deepcopy(baseline_after)
@@ -147,9 +170,11 @@ def run(before_path: Path, after_path: Path, receipt_path: Path) -> dict[str, An
         "artifact": "synthetic capture comparator gate receipt",
         "helper": str(HELPER),
         "helperSha256": helper_hash,
-        "method": "Fourteen isolated mutations against copied before/after receipt JSON; comparator inputs are temporary copies and original capture receipts remain unchanged. The original nine gates are retained and rerun, with five impactState FX/contact/retirement/face/paint-coverage gates added.",
+        "method": "Eighteen isolated controls against copied capture JSON. All fourteen previous camera/RNG/lifecycle/contact/retirement/paint gates remain, with three full-roster pose/gear/capsule gates and an additional scored-paint-area gate. Inputs are temporary copies and original captures remain unchanged.",
         "inputs": {"before": str(before_path), "after": str(after_path)},
         "caseCount": len(records),
+        "syntheticControlSource": "identical baseline self-pair; the real candidate is evaluated by the separate complete physical comparison",
+        "observedCandidateBuild": observed_after.get("build"),
         "passedCases": passed,
         "failedCases": len(records) - passed,
         "status": "pass" if passed == len(records) else "fail",

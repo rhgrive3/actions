@@ -1,0 +1,1386 @@
+{
+  "status": "passed",
+  "scope": "full-active",
+  "fullAcceptance": true,
+  "sourceSha": "d197cc51f334b980ad6f0100a01c0757cf53153d",
+  "contentHash": "11e83aa370160918a6cfbf88e047afb344fa735236315c4c6a8ad7fc494ca0d2",
+  "verifiedResponses": 501,
+  "errors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "gameplay": {
+    "state": "playing",
+    "elapsedAt20Hz": 3.0000000000023874,
+    "movement": 2.7603360000000166,
+    "movementProbe": {
+      "state": "playing",
+      "paused": false,
+      "alive": true,
+      "form": "kid",
+      "grounded": true,
+      "controller": true,
+      "enabled": true,
+      "menuBlocked": false,
+      "samples": [
+        {
+          "key": "KeyW",
+          "keyPresent": true,
+          "enabled": true,
+          "menuBlocked": false,
+          "intent": [
+            0,
+            0,
+            1
+          ],
+          "vel": [
+            0,
+            0,
+            0.6
+          ],
+          "deltaAfterFirstTick": 0.010000000000001563
+        }
+      ]
+    },
+    "hp": 100,
+    "gear": [
+      {
+        "main": "runSpeed",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      }
+    ],
+    "velocityFinite": true,
+    "clockTicks": 610,
+    "paintedFloorArea": 0.625,
+    "coverage": [
+      0.00014398802830541628,
+      0
+    ]
+  },
+  "canonicalLoadout": [
+    {
+      "id": "s3-shooter-short",
+      "sub": "curling",
+      "special": "ultraStamp",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 336.88279724121094,
+          "y": 458.25,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-first",
+      "sub": "bomb",
+      "special": "bubbler",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 100.3984375,
+          "y": 458.1562805175781,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-precision",
+      "sub": "burst",
+      "special": "crabTank",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 336.88282775878906,
+          "y": 458.15625,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-blaze",
+      "sub": "fizzy",
+      "special": "reefslider",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 218.640625,
+          "y": 458.0624694824219,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "shooter",
+      "sub": "suction",
+      "special": "trizooka",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 100.3984375,
+          "y": 258.62499237060547,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-gravity",
+      "sub": "splashWall",
+      "special": "killerWail",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 100.39843368530273,
+          "y": 457.96875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-quickmiddle",
+      "sub": "suction",
+      "special": "tacticooler",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 457.9687805175781,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-expert",
+      "sub": "angleShooter",
+      "special": "crabTank",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 100.39844131469727,
+          "y": 457.875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-heavy",
+      "sub": "sprinkler",
+      "special": "inkVac",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 457.8749694824219,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-long",
+      "sub": "angleShooter",
+      "special": "inkVac",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 336.88279724121094,
+          "y": 458.78125,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-quicklong",
+      "sub": "pointSensor",
+      "special": "killerWail",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 218.640625,
+          "y": 458.68748474121094,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-short",
+      "sub": "bomb",
+      "special": "zipcaster",
+      "points": 170,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.6875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "blaster",
+      "sub": "autobomb",
+      "special": "bubbler",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.3437194824219,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-long",
+      "sub": "suction",
+      "special": "waveBreaker",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 218.640625,
+          "y": 458.5937194824219,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-lightshort",
+      "sub": "bomb",
+      "special": "trizooka",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.59375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-light",
+      "sub": "inkMine",
+      "special": "tripleInkstrike",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 218.640625,
+          "y": 458.5,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-lightlong",
+      "sub": "toxicMist",
+      "special": "inkVac",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.49998474121094,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-precision",
+      "sub": "sprinkler",
+      "special": "reefslider",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 458.40625,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-triplequick",
+      "sub": "curling",
+      "special": "crabTank",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 100.39843368530273,
+          "y": 458.3125,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-triplemiddle",
+      "sub": "pointSensor",
+      "special": "tacticooler",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.3125,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-flash",
+      "sub": "splashWall",
+      "special": "trizooka",
+      "points": 220,
+      "nativeInput": {
+        "point": {
+          "x": 336.88282775878906,
+          "y": 458.21875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-roller-compact",
+      "sub": "autobomb",
+      "special": "zipcaster",
+      "points": 160,
+      "nativeInput": {
+        "point": {
+          "x": 100.3984375,
+          "y": 458.125,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "roller",
+      "sub": "curling",
+      "special": "bubbler",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 100.39843368530273,
+          "y": 458.4375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-roller-heavy",
+      "sub": "sprinkler",
+      "special": "tacticooler",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.125,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-roller-hunter",
+      "sub": "inkMine",
+      "special": "tentaMissiles",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 458.0312805175781,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-roller-wide",
+      "sub": "splashWall",
+      "special": "inkVac",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 100.39844131469727,
+          "y": 457.9375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-brush-mini",
+      "sub": "bomb",
+      "special": "killerWail",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 457.9374694824219,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-brush-normal",
+      "sub": "suction",
+      "special": "zipcaster",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 218.64060974121094,
+          "y": 457.84375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-brush-heavy",
+      "sub": "curling",
+      "special": "waveBreaker",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 100.3984375,
+          "y": 458.7500305175781,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-quick",
+      "sub": "pointSensor",
+      "special": "bubbler",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.75,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "charger",
+      "sub": "bomb",
+      "special": "inkVac",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 100.39844131469727,
+          "y": 458.34375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "sub": "bomb",
+      "special": "inkVac",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 218.640625,
+          "y": 458.6562194824219,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-long",
+      "sub": "inkMine",
+      "special": "waveBreaker",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 100.39843368530273,
+          "y": 458.5625,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-longscope",
+      "sub": "inkMine",
+      "special": "waveBreaker",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 458.5625305175781,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-light",
+      "sub": "autobomb",
+      "special": "killerWail",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 100.39844131469727,
+          "y": 458.46875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-keeper",
+      "sub": "torpedo",
+      "special": "tentaMissiles",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 458.46875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-pencil",
+      "sub": "sprinkler",
+      "special": "tacticooler",
+      "points": 220,
+      "nativeInput": {
+        "point": {
+          "x": 100.39843368530273,
+          "y": 458.375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "slosher",
+      "sub": "bomb",
+      "special": "tripleInkstrike",
+      "points": 220,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 458.4375305175781,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "sub": "toxicMist",
+      "special": "inkjet",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 336.88279724121094,
+          "y": 458.375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-launcher",
+      "sub": "fizzy",
+      "special": "booyahBomb",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 218.640625,
+          "y": 458.28123474121094,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-bathtub",
+      "sub": "sprinkler",
+      "special": "storm",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.28125,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "sub": "pointSensor",
+      "special": "storm",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 218.640625,
+          "y": 458.1874694824219,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-double",
+      "sub": "suction",
+      "special": "reefslider",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.1875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-quick",
+      "sub": "burst",
+      "special": "ultraStamp",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 458.0937805175781,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "splatling",
+      "sub": "sprinkler",
+      "special": "waveBreaker",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 388.53126525878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-hyper",
+      "sub": "autobomb",
+      "special": "booyahBomb",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 218.64064025878906,
+          "y": 458,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-downpour",
+      "sub": "fizzy",
+      "special": "inkjet",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 100.39843368530273,
+          "y": 457.90625,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-serein",
+      "sub": "pointSensor",
+      "special": "storm",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 336.88279724121094,
+          "y": 457.90625,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "sub": "curling",
+      "special": "tacticooler",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 100.3984375,
+          "y": 457.8125305175781,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-short",
+      "sub": "beakon",
+      "special": "tacticooler",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 336.88282775878906,
+          "y": 463.8125,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "dualies",
+      "sub": "suction",
+      "special": "crabTank",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 258.62499237060547,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-gallon",
+      "sub": "splashWall",
+      "special": "booyahBomb",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 218.640625,
+          "y": 458.7187194824219,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-dual",
+      "sub": "bomb",
+      "special": "waveBreaker",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.71875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "sub": "autobomb",
+      "special": "reefslider",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 458.6250305175781,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-long",
+      "sub": "inkMine",
+      "special": "killerWail",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 100.39844131469727,
+          "y": 458.53125,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shelter-normal",
+      "sub": "sprinkler",
+      "special": "tripleInkstrike",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 458.53125,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shelter-wide",
+      "sub": "beakon",
+      "special": "inkVac",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 100.39843368530273,
+          "y": 458.4375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shelter-compact",
+      "sub": "inkMine",
+      "special": "reefslider",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.4375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shelter-focus",
+      "sub": "angleShooter",
+      "special": "bubbler",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 336.88282775878906,
+          "y": 458.34375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-stringer-normal",
+      "sub": "toxicMist",
+      "special": "killerWail",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 100.3984375,
+          "y": 458.25,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-stringer-short",
+      "sub": "curling",
+      "special": "tentaMissiles",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 458.25,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "sub": "autobomb",
+      "special": "ultraStamp",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 336.8828125,
+          "y": 458.1562805175781,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-saber-normal",
+      "sub": "burst",
+      "special": "zipcaster",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 100.39844131469727,
+          "y": 519.0625,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-saber-lite",
+      "sub": "torpedo",
+      "special": "ultraStamp",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 455.125,
+          "y": 519.0624847412109,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-saber-heavy",
+      "sub": "suction",
+      "special": "bubbler",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 336.88279724121094,
+          "y": 648.96875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    }
+  ],
+  "actionReliability": {
+    "before": 1,
+    "renderOnly": 1,
+    "after": 2,
+    "held": 2,
+    "jumps": 0,
+    "physicalKeyboardEvents": true,
+    "groundCollisionPinned": true
+  },
+  "verifiedRuntimeFilesCount": 452,
+  "hudAuthority": {
+    "frames": [
+      {
+        "fraction": 0,
+        "count": 23,
+        "lit": 0,
+        "isReady": false,
+        "color": "rgba(255, 255, 255, 0.086)"
+      },
+      {
+        "fraction": 0.47,
+        "count": 23,
+        "lit": 10,
+        "isReady": false,
+        "color": "rgb(250, 195, 55)"
+      },
+      {
+        "fraction": 0.9999,
+        "count": 23,
+        "lit": 22,
+        "isReady": false,
+        "color": "rgb(250, 195, 55)"
+      },
+      {
+        "fraction": 1,
+        "count": 23,
+        "lit": 23,
+        "isReady": true,
+        "color": "rgb(255, 226, 122)"
+      },
+      {
+        "fraction": 1,
+        "count": 23,
+        "lit": 23,
+        "isReady": true,
+        "color": "rgb(255, 226, 122)"
+      },
+      {
+        "fraction": 0,
+        "count": 23,
+        "lit": 0,
+        "isReady": false,
+        "color": "rgba(255, 255, 255, 0.086)"
+      },
+      {
+        "fraction": 0.5,
+        "count": 23,
+        "lit": 11,
+        "isReady": false,
+        "color": "rgb(250, 195, 55)"
+      }
+    ],
+    "negativeControls": [
+      {
+        "id": "waveBreaker",
+        "held": true,
+        "filled": 23,
+        "ready": false
+      },
+      {
+        "id": "tentaMissiles",
+        "held": false,
+        "filled": 23,
+        "ready": false
+      }
+    ],
+    "neutralNativeActor": true,
+    "touch": [
+      {
+        "fraction": 0,
+        "count": 23,
+        "lit": 0,
+        "ready": false
+      },
+      {
+        "fraction": 0.47,
+        "count": 23,
+        "lit": 10,
+        "ready": false
+      },
+      {
+        "fraction": 0.99999,
+        "count": 23,
+        "lit": 22,
+        "ready": false
+      },
+      {
+        "fraction": 1,
+        "count": 23,
+        "lit": 23,
+        "ready": true
+      },
+      {
+        "fraction": 1,
+        "count": 23,
+        "lit": 23,
+        "ready": true
+      },
+      {
+        "fraction": 0,
+        "count": 23,
+        "lit": 0,
+        "ready": false
+      },
+      {
+        "fraction": 0.47,
+        "count": 23,
+        "lit": 10,
+        "ready": false
+      }
+    ],
+    "touchBeforeCapture": {
+      "owner": "touch",
+      "buttonVisible": true,
+      "desktopHidden": true,
+      "segments": 23
+    },
+    "touchAfterCapture": {
+      "owner": "touch",
+      "buttonVisible": true,
+      "desktopHidden": true,
+      "segments": 23
+    }
+  },
+  "rawResultSha256": "37088b9f361c0b8c2c4388e49ca2a83e9ad13dfc623e449c507648c2a45b250b"
+}

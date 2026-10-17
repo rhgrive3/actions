@@ -1,0 +1,66 @@
+{
+  "referenceVersion": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "rows": [
+    {
+      "id": "s3-shelter-normal",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterNormal.game__GameParameterTable.json",
+      "sha256": "a5cfa45bd450b773fd39eccf51ac39cde2cd45367fa6b46eccc8d8c2a2b9b268",
+      "match": true
+    },
+    {
+      "id": "s3-shelter-wide",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterWide.game__GameParameterTable.json",
+      "sha256": "ec1fa93b80e3736de425d2d8eeaa74991c8d6020a3da3eabf79ba3a1c3c5fc5d",
+      "match": true
+    },
+    {
+      "id": "s3-shelter-compact",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterCompact.game__GameParameterTable.json",
+      "sha256": "e53c9b297839e131150d6436bc2844e055728fa1735bf4f15688487d39c713a2",
+      "match": true
+    },
+    {
+      "id": "s3-shelter-focus",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterFocus.game__GameParameterTable.json",
+      "sha256": "dec8f891b8fae33a9d10837ef592c616471a5de88d2e17cb87c8c4b1a70d5f78",
+      "match": true
+    },
+    {
+      "id": "s3-stringer-normal",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponStringerNormal.game__GameParameterTable.json",
+      "sha256": "cb61af8d568193c5c3af677ca8a324aae2afe92a9a681c0483a15f6266e5317f",
+      "match": true
+    },
+    {
+      "id": "s3-stringer-short",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponStringerShort.game__GameParameterTable.json",
+      "sha256": "43be11b5a207160d2c06571bfea70041f1bcc8cc95abe028cae6b8134cf1c5d9",
+      "match": true
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponStringerExplosion.game__GameParameterTable.json",
+      "sha256": "e24399f434d1124229a796e80e57ff5adde94b473d0df40139193237adfdbe89",
+      "match": true
+    },
+    {
+      "id": "s3-saber-normal",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSaberNormal.game__GameParameterTable.json",
+      "sha256": "11d42c2c7616fc2d4318a42d4bcf9ea651fdddc93cb5f9ac75112ea99295c100",
+      "match": true
+    },
+    {
+      "id": "s3-saber-lite",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSaberLite.game__GameParameterTable.json",
+      "sha256": "f6f8238ce0175f50e20bfa8ef70e669179f9da8bda301ecec35f786e0b59d35c",
+      "match": true
+    },
+    {
+      "id": "s3-saber-heavy",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSaberHeavy.game__GameParameterTable.json",
+      "sha256": "e16c518cdf5fa3180b8b959aa24a80728229de0241f836be854e5cef9431cf6e",
+      "match": true
+    }
+  ]
+}

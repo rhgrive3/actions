@@ -4,6 +4,8 @@ import { ALL_SUB_SPECS } from '../splatoon3/runtime/all-subs.mjs';
 import { SLOSHER_IMPACT_TAG, slosherPaintMetaValid, slosherPaintBirth, slosherImpactMatches } from './slosher-paint-admission.mjs';
 import { KIT_SUBS, resolveSubAtCharge } from '../splatoon3/runtime/kit-subs.mjs';
 import { catalogPaintRadiusLimit } from './catalog-paint-admission.mjs';
+import { mineTowerPaintBirth, mineTowerPaintCoreMatches, mineTowerPaintBirthWaitScope,
+ towerPaintProofPending, towerPaintScopeCurrent, watchTowerPaintProof } from './tower-paint-support.mjs';
 export const KIT_BIRTH_TAG = 'inkwave-kit-birth-v1';
 export const KIT_PAINT_TAG = 'inkwave-kit-core-v1';
 export const BUBBLER_PAINT_TAG='inkwave-bubbler-core-v1';
@@ -21,7 +23,16 @@ const isKit = id => id === 'suction' || id === 'curling';
 const clock = () => performance.now()/1000;
 function state(nm) {
  let s=states.get(nm);
- if(!s || s.epoch!==epoch(nm)){s={epoch:epoch(nm),births:new Map(),pending:new Map(),expired:new Map(),retiredBirths:new Map(),retiredProjectiles:new Map(),flushing:false};states.set(nm,s);}
+ if(!s || s.epoch!==epoch(nm)){
+  s={epoch:epoch(nm),births:new Map(),pending:new Map(),expired:new Map(),retiredBirths:new Map(),retiredProjectiles:new Map(),
+   envelopeEligible:new WeakSet(),towerScopes:new WeakMap(),flushing:false,proofFlushing:false};states.set(nm,s);
+  watchTowerPaintProof(nm,()=>{
+   if(states.get(nm)!==s||s.proofFlushing||nm._disposed||nm.match?._disposed)return;
+   s.proofFlushing=true;
+   try{for(const from of [...s.pending.keys()])nm._queueKitRecoveredEvents(from,prepareKitPaintEvents(nm,from,{r:2,e:[]}));}
+   finally{s.proofFlushing=false;}
+  });
+ }
  for(const [k,b] of s.births){const a=nm.byNid.get(b.nid);if(!a || a.owner!==b.owner || !nm.s._members?.has(b.owner))s.births.delete(k);}
  for(const from of s.pending.keys())if(!nm.s._members?.has(from))s.pending.delete(from);
  return s;
@@ -32,7 +43,7 @@ function identify(e) {
  return safe(e._netSeq)&&e._netSeq>0&&safe(e._netTick);
 }
 function paintMeta(e){return Array.isArray(e?.[15]) ? e[15] : null;}
-function validMeta(meta){return Array.isArray(meta)&&meta.length===6&&meta[0]===SUB_PAINT_TAG&&typeof meta[1]==='string'&&meta.slice(2).every(safe)&&meta[4]>0&&meta[5]<3||slosherPaintMetaValid(meta)||Array.isArray(meta)&&meta.length===5&&[KIT_PAINT_TAG,BUBBLER_PAINT_TAG].includes(meta[0])&&typeof meta[1]==='string'&&safe(meta[2])&&safe(meta[3])&&safe(meta[4])&&meta[4]>0;}
+function validMeta(meta){return Array.isArray(meta)&&[6,7].includes(meta.length)&&meta[0]===SUB_PAINT_TAG&&typeof meta[1]==='string'&&meta.slice(2).every(safe)&&meta[4]>0&&meta[5]<3||slosherPaintMetaValid(meta)||Array.isArray(meta)&&meta.length===5&&[KIT_PAINT_TAG,BUBBLER_PAINT_TAG].includes(meta[0])&&typeof meta[1]==='string'&&safe(meta[2])&&safe(meta[3])&&safe(meta[4])&&meta[4]>0;}
 export function kitBombBirthMetadata(nm,b){
  const a=b?.owner,id=b?.s3Resolved?.spec?.id;
  return a && !a.remote && safe(a.nid)&&safe(life(a))&&isKit(id) ? [KIT_BIRTH_TAG,epoch(nm),life(a)] : null;
@@ -55,6 +66,7 @@ function register(nm,from,e,s){
  if(!identify(e)||!(['b','p'].includes(e[1])||catalogueBirth(e)||bubblerBirth(e)))return;
  const a=nm.byNid.get(bubblerBirth(e)?e[3]?.actor?.n:catalogueBirth(e)?e[3]:e[2]);
  if(!a?.remote||a.owner!==from||!nm.s._members?.has(from)||!Number.isFinite(e[0])||e[0]<0)return;
+ if(s.births.has(key(from,e._netSeq)))return;
  let record;
  if(bubblerBirth(e)){
   const v=e[3];
@@ -72,8 +84,29 @@ function register(nm,from,e,s){
     ||![v.x,v.y,v.z,v.vx,v.vy,v.vz].every(n=>Number.isFinite(Math.fround(n)))
     ||v.charge<0||v.charge>1||v.hold<0)return;
   const count=id==='fizzy'?(v.hold>=(spec.chargeFrames[0]+spec.chargeFrames[1])/60?3:v.hold>=spec.chargeFrames[0]/60?2:1):1;
+  let towerSupport=null;
+  if(['support','supportRevision','supportX','supportY','supportZ'].some(k=>v[k]!==undefined)){
+   if(id!=='inkMine'||v.vx!==0||v.vy!==0||v.vz!==0)return;
+   const previous=s.towerScopes.get(e);
+   if(previous&&!towerPaintScopeCurrent(nm,previous))return;
+   towerSupport=mineTowerPaintBirth(nm,v);
+   if(!towerSupport){
+    const waiting=mineTowerPaintBirthWaitScope(nm,v);
+    if(waiting&&e._netSeq>Math.max(nm.peers.get(from)?._lastEventSeq||0,s.expired.get(from)||0,s.retiredBirths.get(key(from,'sub'))||0)){
+     s.towerScopes.set(e,waiting);return waiting;
+    }
+    return;
+   }
+   s.towerScopes.set(e,towerSupport.scope);
+  }
   record={kind:'sub',life:e[4],subId:id,seed:v.seed,origin:[v.x,v.y,v.z],velocity:[v.vx,v.vy,v.vz],
-    flightSeconds:id==='fizzy'?spec.burstWaitFrames[0]/60+1/60:2.2+1/60,gravity:spec.gravity,
+    towerSupport,paintOffsetY:spec.paintOffsetY||0,
+    // Fizzy's timer pauses during flight and each hop has its own flight cap.
+    // A raw 15F wait is not the old release-to-first-impact deadline.
+    flightSeconds:id==='fizzy'?spec.maxFlightSeconds+spec.firstGroundFuseFrames/60+1/60:2.2+1/60,gravity:spec.gravity,
+    hopFlightSeconds:id==='fizzy'?spec.maxFlightSeconds+Math.max(...spec.burstWaitFrames.slice(1))/60+1/60:0,
+    hopHorizontalSpeed:id==='fizzy'?Math.max(spec.hop.lowVelocity*Math.cos(spec.hop.lowPitchDeg*Math.PI/180),spec.hop.highVelocity*Math.cos(spec.hop.highPitchDeg*Math.PI/180)):0,
+    hopVerticalSpeed:id==='fizzy'?Math.max(spec.hop.lowVelocity*Math.sin(spec.hop.lowPitchDeg*Math.PI/180),spec.hop.highVelocity*Math.sin(spec.hop.highPitchDeg*Math.PI/180)):0,
     coreRadii:id==='fizzy'?spec.bursts.slice(0,count).map(b=>b.paintRadius):[spec.paintRadius],
     usedCores:Array(count).fill(null)};
  }else if(e[1]==='p'){
@@ -115,17 +148,30 @@ function register(nm,from,e,s){
 // contacted actor height. It rejects remote teleport cores without pretending
 // to reproduce dynamic actor contacts or authoritative collision simulation.
 function subCoreReachable(b,e,index){
- const t=b.flightSeconds, hop=b.subId==='fizzy'?index*(.62+5.5*2/60):0;
+ const t=b.flightSeconds;
  const [x,y,z]=b.origin,[vx,vy,vz]=b.velocity;
+ const hop=b.subId==='fizzy'?index*(.62+b.hopHorizontalSpeed*b.hopFlightSeconds):0;
  const pad=.1+hop;
+ if(b.subId==='fizzy'){
+  // Wall contacts can reverse horizontal direction. Bound that swept path by
+  // launch speed and the finite first-flight/ground timer, plus at most the
+  // birth-authorized number of sourced hop velocities. No receiver simulation
+  // or new unbounded radius grant is involved.
+  const horizontal=Math.hypot(vx,vz)*t+pad;
+  if(Math.hypot(e[2]-x,e[4]-z)>horizontal)return false;
+  const vertical=2+index*b.hopVerticalSpeed*b.hopFlightSeconds;
+  return e[3]>=y+Math.min(0,vy*t)-.5*b.gravity*t*(t+1/60)-vertical
+    &&e[3]<=y+Math.max(0,vy*t)+vertical;
+ }
  if(e[2]<x+Math.min(0,vx*t)-pad||e[2]>x+Math.max(0,vx*t)+pad
   ||e[4]<z+Math.min(0,vz*t)-pad||e[4]>z+Math.max(0,vz*t)+pad)return false;
  const vertical=2+index*(3.4*2/60);
  return e[3]>=y+Math.min(0,vy*t)-.5*b.gravity*t*(t+1/60)-vertical
   &&e[3]<=y+Math.max(0,vy*t)+vertical;
 }
-function receipt(nm,from,e,s){
+function receipt(nm,from,e,s,waitForTowerProof=false){
  const meta=paintMeta(e);if(!validMeta(meta)||!identify(e)||meta[1]!==epoch(nm))return null;
+ if(waitForTowerProof&&(!e.slice(2,8).every(Number.isFinite)||!Number.isFinite(e[0])||e[0]<0))return null;
  const a=nm.byNid.get(meta[2]);
  if(!a?.remote||a.owner!==from||!nm.s._members?.has(from)
   ||e._netSeq<=meta[4])return null;
@@ -140,7 +186,12 @@ function receipt(nm,from,e,s){
  }
  if(b.kind==='sub'){
   const index=meta[5];
-  if(meta[0]!==SUB_PAINT_TAG||index>=b.coreRadii.length||e[5]!==b.coreRadii[index]||!subCoreReachable(b,e,index)
+  const reachable=b.towerSupport
+   ? meta.length===7&&(waitForTowerProof
+      ? meta[6]>=b.towerSupport.revision&&towerPaintProofPending(nm,meta[6],b.towerSupport.scope)
+      : mineTowerPaintCoreMatches(nm,b.towerSupport,meta[6],e.slice(2,5),b.paintOffsetY))
+   : meta.length===6&&subCoreReachable(b,e,index);
+  if(meta[0]!==SUB_PAINT_TAG||index>=b.coreRadii.length||e[5]!==b.coreRadii[index]||!reachable
     ||b.usedCores[index]!==null&&b.usedCores[index]!==e._netSeq
     ||e[7]!==((b.seed^((index+1)*0x9e3779b9))>>>0)/0x100000000
     ||(e[8]!==0&&e[8]!==undefined)||e[9]||e[10]||e[11]||e[12]||(e[13]!==-1&&e[13]!==undefined))return null;
@@ -176,31 +227,47 @@ function couldWait(nm,from,e,s){
 // later satellites must not reserve a higher sequence and discard the core.
 // Existing reliable-WebSocket old-timestamp rejection remains authoritative.
 export function prepareKitPaintEvents(nm,from,d){
- const rows=Array.isArray(d.e)?d.e:[];if(d.r!==2)return rows;
+ const incoming=Array.isArray(d.e)?d.e:[];if(d.r!==2)return incoming;
  const s=state(nm),now=clock();let old=s.pending.get(from);
- if(old&&now-old.since>=WAIT_SECONDS){
+ // Recovered old envelopes reach this function before ordinary _tick row
+ // admission. Invalid rows must never enter ready/pending, where a later
+ // context-free playback retry could otherwise erase their original bounds.
+ const rows=incoming.filter(e=>Array.isArray(e)
+  &&!(Number.isFinite(d.ts)&&e[0]>d.ts)
+  &&!(Number.isSafeInteger(d.u)&&identify(e)&&e._netTick>d.u));
+ if(old&&(now-old.since>=WAIT_SECONDS||old.tower&&!towerPaintScopeCurrent(nm,old.tower.scope))){
   const held=[];
   for(const e of old.rows){
-   if(e[1]==='s'&&couldWait(nm,from,e,s))s.expired.set(from,Math.max(s.expired.get(from)||0,e[15][4]));
+   if(old.tower?.seq===e._netSeq){
+    if(old.tower.birth)s.expired.set(from,Math.max(s.expired.get(from)||0,e._netSeq));
+    else{
+     const b=s.births.get(key(from,e[15][4]));
+     if(b?.kind==='sub'){b.usedCores[e[15][5]]=-1;if(b.usedCores.every(n=>n!==null))b.used=-1;}
+    }
+   }else if(e[1]==='s'&&couldWait(nm,from,e,s))s.expired.set(from,Math.max(s.expired.get(from)||0,e[15][4]));
    else held.push(e);
   }
   old={since:now,rows:held};s.pending.delete(from);
  }
- for(const e of rows){
-  if(Number.isFinite(d.ts)&&e?.[0]>d.ts)continue;
-  if(Number.isSafeInteger(d.u)&&identify(e)&&e._netTick>d.u)continue;
-  register(nm,from,e,s);
- }
+ for(const e of rows)s.envelopeEligible.add(e);
  const all=[...(old?.rows||[]),...rows],seen=new Set();
- const ordered=all.filter(e=>{if(!Array.isArray(e))return false;if(!identify(e))return true;if(seen.has(e._netSeq))return false;seen.add(e._netSeq);return true;})
+ const ordered=all.filter(e=>{if(!Array.isArray(e)||!s.envelopeEligible.has(e))return false;if(!identify(e))return true;if(seen.has(e._netSeq))return false;seen.add(e._netSeq);return true;})
   .sort((a,b)=>(a._netSeq??Infinity)-(b._netSeq??Infinity));
+ const towerBirths=new Map();
+ for(const e of ordered)if(s.envelopeEligible.has(e)){
+  const scope=register(nm,from,e,s);if(scope)towerBirths.set(e._netSeq,scope);
+ }
  const ready=[];s.pending.delete(from);
  for(let i=0;i<ordered.length;i++){
   const e=ordered[i];
-  if(e?.[1]==='s'&&couldWait(nm,from,e,s)){
+  const birthScope=towerBirths.get(e._netSeq);
+  const core= e?.[1]==='s'&&s.envelopeEligible.has(e)?receipt(nm,from,e,s,true):null;
+  const towerScope=birthScope||core?.towerSupport?.scope;
+  if(towerScope||e?.[1]==='s'&&couldWait(nm,from,e,s)){
    if(old&&now-old.since>=WAIT_SECONDS)continue; // missing proof expires closed, not a wider cap
    const waiting=ordered.slice(i);
-   if(waiting.length<=MAX_PENDING&&!d._eventOverBudget){s.pending.set(from,{since:old?.since??now,rows:waiting});return ready;}
+   if(waiting.length<=MAX_PENDING&&!d._eventOverBudget){s.pending.set(from,{since:old?.since??now,rows:waiting,
+     ...(towerScope?{tower:{scope:towerScope,seq:e._netSeq,birth:!!birthScope}}:{})});return ready;}
    // Capacity or over-budget envelope closes only the unresolved claim; unrelated later rows
    // continue through their normal admission instead of being silently dropped.
    continue;

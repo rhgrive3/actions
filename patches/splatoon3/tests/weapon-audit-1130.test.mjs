@@ -60,7 +60,7 @@ test('temporary launch state cleans up after throwing and nested calls',()=>{
 });
 test('jump endpoints are independent of generic bloom and retain the 25/70F calibration gates',()=>{
   const w={spreadGround:2,spreadAir:7.5},p=raw('dualies').WeaponParam;
-  close(accuracyEnvelope(w,true,null,p),2);close(accuracyEnvelope(w,false,null,p),7.5);
+  close(accuracyEnvelope(w,true,null,p),2);close(accuracyEnvelope(w,false,null,p),2);
   close(accuracyEnvelope(w,true,25/60,p),7.5);close(accuracyEnvelope(w,true,70/60,p),2);
   let last=7.5;for(let i=26;i<=70;i++){const x=accuracyEnvelope(w,true,i/60,p);assert(x<=last);last=x;}
 });

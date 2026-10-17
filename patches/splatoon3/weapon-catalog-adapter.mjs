@@ -17,6 +17,14 @@ function replaceAllExpected(code, before, after, expected, label) {
 }
 
 export function adaptWeaponCatalog(rel, code) {
+  if (rel === 'src/game/weapons.js') {
+    // Consume the remaining fixed-step time of newly born catalog splashes
+    // before native draw copies their positions into the visible instance
+    // buffer. Drawing itself must never advance authoritative paint.
+    return replaceOnce(code, '    this.inkFlight.updateDrops();',
+      '    this.s3FlushCatalogSplashBirths?.();\n    this.inkFlight.updateDrops();',
+      'catalog splash birth catch-up before draw');
+  }
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code,
       "import { PLAYER } from '../config.js';",

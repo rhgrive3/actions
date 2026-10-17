@@ -1,0 +1,156 @@
+{
+  "referenceVersion": "11.3.0",
+  "sourceRepository": "https://github.com/Leanny/splat3",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "extractedAt": "2026-10-17",
+  "interpretation": "Raw field values are source-backed. Relative-speed signed-power sampling follows Kanamoji study #10; the exact native distribution and charge deceleration curve are not recovered.",
+  "records": [
+    {
+      "sourceActor": "WeaponSpinnerStandard",
+      "sourceFile": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "sourceBlobSha": "76e62caaa2c3bee8f502b1794c8cf91cf5cbc972",
+      "parameters": {
+        "WeaponParam": {
+          "MoveSpeed": 0.07,
+          "MoveSpeed_Charge": 0.062,
+          "VelGnd_Bias_Charge": 0.9,
+          "VelGnd_DownRt_Charge": 0.05
+        },
+        "MoveParam": {
+          "$type": "spl__BulletSpinnerMoveParam",
+          "GoStraightStateEndMaxSpeed": 1.5105,
+          "GoStraightToBrakeStateFrame": 8,
+          "SpawnSpeed": 1.05,
+          "SpawnSpeedFirstLastAndSecond": 2.1,
+          "SpawnSpeedRandomBias": 0.2,
+          "SpawnSpeedRandomRate": 0.12
+        }
+      },
+      "sourceSha256": "92647d586beee1764ca8984820fa37e0fd7887e2a756f7ca18e10e1aef97fd08"
+    },
+    {
+      "sourceActor": "WeaponSpinnerQuick",
+      "sourceFile": "data/parameter/1130/weapon/WeaponSpinnerQuick.game__GameParameterTable.json",
+      "sourceBlobSha": "82e301b2357210d158ca3fc6522ad53be7e64f64",
+      "parameters": {
+        "WeaponParam": {
+          "MoveSpeed": 0.086,
+          "MoveSpeed_Charge": 0.072,
+          "VelGnd_Bias_Charge": 0.9,
+          "VelGnd_DownRt_Charge": 0.05
+        },
+        "MoveParam": {
+          "$type": "spl__BulletSpinnerMoveParam",
+          "GoStraightStateEndMaxSpeed": 1.105,
+          "GoStraightToBrakeStateFrame": 8,
+          "SpawnSpeed": 1.05,
+          "SpawnSpeedFirstLastAndSecond": 1.5,
+          "SpawnSpeedRandomBias": 0.2,
+          "SpawnSpeedRandomRate": 0.1
+        }
+      },
+      "sourceSha256": "36d1af6547a876ed4ce0d1ecd6daa3a1f08290636c2ae95f099e79b06872a56f"
+    },
+    {
+      "sourceActor": "WeaponSpinnerHyper",
+      "sourceFile": "data/parameter/1130/weapon/WeaponSpinnerHyper.game__GameParameterTable.json",
+      "sourceBlobSha": "aab2ea620ea118b9fe6bc7953e9a0a73eb547054",
+      "parameters": {
+        "WeaponParam": {
+          "MoveSpeed": 0.06,
+          "MoveSpeed_Charge": 0.044,
+          "VelGnd_Bias_Charge": 0.9,
+          "VelGnd_DownRt_Charge": 0.05
+        },
+        "MoveParam": {
+          "$type": "spl__BulletSpinnerMoveParam",
+          "GoStraightStateEndMaxSpeed": 1.94,
+          "GoStraightToBrakeStateFrame": 8,
+          "SpawnSpeed": 1.05,
+          "SpawnSpeedFirstLastAndSecond": 2.4,
+          "SpawnSpeedRandomBias": 0.2,
+          "SpawnSpeedRandomRate": 0.14
+        }
+      },
+      "sourceSha256": "1f92f4f4266070e59c7ab3775fb90c75624018899bb3b9bced915a6a3e2630ed"
+    },
+    {
+      "sourceActor": "WeaponSpinnerDownpour",
+      "sourceFile": "data/parameter/1130/weapon/WeaponSpinnerDownpour.game__GameParameterTable.json",
+      "sourceBlobSha": "ad219b25319f5e7ad8a8b4978145637335e78540",
+      "parameters": {
+        "WeaponParam": {
+          "MoveSpeed": 0.086,
+          "MoveSpeed_Charge": 0.086,
+          "VelGnd_Bias_Charge": 0.9,
+          "VelGnd_DownRt_Charge": 0.05
+        },
+        "MoveParam": {
+          "$type": "spl__BulletSpinnerMoveParam",
+          "GoStraightStateEndMaxSpeed": 1.027,
+          "GoStraightToBrakeStateFrame": 8,
+          "SpawnSpeed": 1.1,
+          "SpawnSpeedFirstLastAndSecond": 1.1,
+          "SpawnSpeedRandomBias": 0.2,
+          "SpawnSpeedRandomRate": 0.12
+        },
+        "VariableMoveParam": {
+          "$type": "spl__BulletSpinnerMoveParam",
+          "GoStraightStateEndMaxSpeed": 10,
+          "GoStraightToBrakeStateFrame": 8,
+          "SpawnSpeed": 2.21915,
+          "SpawnSpeedFirstLastAndSecond": 2.21915,
+          "SpawnSpeedRandomBias": 0.2,
+          "SpawnSpeedRandomRate": 0.03
+        }
+      },
+      "sourceSha256": "9193fcb40f14a2bc850777a13ee0077e88083700c1d6a366f258ea73d6220e60"
+    },
+    {
+      "sourceActor": "WeaponSpinnerSerein",
+      "sourceFile": "data/parameter/1130/weapon/WeaponSpinnerSerein.game__GameParameterTable.json",
+      "sourceBlobSha": "c7988bc39f0ed76afb820cdf25640b4e8ec7551c",
+      "parameters": {
+        "WeaponParam": {
+          "MoveSpeed": 0.07,
+          "MoveSpeed_Charge": 0.04,
+          "VelGnd_Bias_Charge": 0.9,
+          "VelGnd_DownRt_Charge": 0.05
+        },
+        "MoveParam": {
+          "$type": "spl__BulletSpinnerMoveParam",
+          "GoStraightStateEndMaxSpeed": 1.8215,
+          "GoStraightToBrakeStateFrame": 3,
+          "SpawnSpeed": 4.4333,
+          "SpawnSpeedFirstLastAndSecond": 4.4333,
+          "SpawnSpeedRandomBias": 0.2,
+          "SpawnSpeedRandomRate": 0.11
+        }
+      },
+      "sourceSha256": "42d9ba656a039606c3d56da7cb1d8b97f556866d260328cb0792c0718ff22eeb"
+    },
+    {
+      "sourceActor": "WeaponSpinnerHyperShort",
+      "sourceFile": "data/parameter/1130/weapon/WeaponSpinnerHyperShort.game__GameParameterTable.json",
+      "sourceBlobSha": "3d55ecb88c0044731ac95a5920605c5bb0973a61",
+      "parameters": {
+        "WeaponParam": {
+          "MoveSpeed": 0.086,
+          "MoveSpeed_Charge": 0.072,
+          "VelGnd_Bias_Charge": 0.9,
+          "VelGnd_DownRt_Charge": 0.05
+        },
+        "MoveParam": {
+          "$type": "spl__BulletSpinnerMoveParam",
+          "GoStraightStateEndMaxSpeed": 1.105,
+          "GoStraightToBrakeStateFrame": 8,
+          "SpawnSpeed": 1.05,
+          "SpawnSpeedFirstLastAndSecond": 1.8,
+          "SpawnSpeedRandomBias": 0.2,
+          "SpawnSpeedRandomRate": 0.05
+        }
+      },
+      "sourceSha256": "0eb316039a439354af2923dc75b6725f2a93abd31515b59f399d5fa34100e125"
+    }
+  ]
+}

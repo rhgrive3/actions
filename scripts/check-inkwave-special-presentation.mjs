@@ -47,25 +47,27 @@ try{
   const changed=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=4)if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>=9)n++;return n;};
   const clear=()=>{G.projectiles.clear();bubble.clearBigBubblers?.();};
   for(const id of ['trizooka','inkVac','storm','slam','bubbler','tacticooler']){
+    const nativeControls=id==='inkVac'||id==='trizooka';
     G.level=diagnosticLevel;G.physics=diagnosticPhysics;
-    if(id==='inkVac'){
+    if(nativeControls){
       G.level=new Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});
       G.physics=new api.Physics(G.level);
     }
-    clear();const a=new api.Actor({team:0,name:'special render',isLocal:id==='inkVac',weapon:'shooter',CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
+    clear();const a=new api.Actor({team:0,name:'special render',isLocal:nativeControls,weapon:'shooter',CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
     G.actors=[a];scene.add(ch.root);a.grounded=a.ground.hit=true;
-    if(id==='inkVac'){a.pos.set(0,0,0);a.ground.block=0;a.groundN.set(0,1,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,1,20);}
+    if(nativeControls){a.pos.set(0,0,0);a.ground.block=0;a.groundN.set(0,1,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,1,20);}
     else {ch.onEvent=null;a._integrate=()=>{};a._resolve=()=>{};a._spawnBarrier=()=>{};}
     if(id==='storm')stormOwner=a;
     if(ch._sourceMotionLoader)await ch._sourceMotionLoader;if(ch.sourceMotion?.ready)await ch.sourceMotion.ready;
     if(ch.sourceMotion?.status!=='ready')throw Error('Source motion unavailable: '+id);
     a.weapon={...a.weapon,special:id,specialCost:200};a.special=200;
-    const step=dt=>{G.time+=dt;if(id==='inkVac')a.update(dt);else a._finishFrame(dt);};for(let i=0;i<40;i++)step(1/60);
+    const step=dt=>{G.time+=dt;if(nativeControls)a.update(dt);else a._finishFrame(dt);};for(let i=0;i<40;i++)step(1/60);
     a._startSpecial();if(!a.specialActive&&!(id==='bubbler'&&bubble.bigBubblerDomes().length))throw Error('Activation refused: '+id);
     let maxHandError=0;
     for(let frame=0;frame<100;frame++){
-      a.intent.fire=id==='inkVac'||id==='trizooka'&&frame>38;if(id==='tacticooler'){a.aimDir.set(0,-1,0);a.intent.sub=frame===0;}if(id==='storm'&&a.specialActive?.phase==='hold')storms.updateStormHold(a,1/60,G);else if(id!=='inkVac'&&a.specialActive)a._updateSpecial(1/60);if(id==='bubbler')bubble.tickBigBubblers(1/60);G.projectiles.update(1/60);step(1/60);
+      a.intent.fire=id==='inkVac'||id==='trizooka'&&frame>38;if(id==='tacticooler'){a.aimDir.set(0,-1,0);a.intent.sub=frame===0;}if(id==='storm'&&a.specialActive?.phase==='hold')storms.updateStormHold(a,1/60,G);else if(!nativeControls&&a.specialActive)a._updateSpecial(1/60);if(id==='bubbler')bubble.tickBigBubblers(1/60);G.projectiles.update(1/60);step(1/60);
       if(id==='inkVac'&&(ch.sourceMotion.sourceUpper||art.specialPresentationSnapshot(ch)?.kind!=='inkVac'))throw Error('Real Actor.update lost native Vac presentation at frame '+frame);
+      if(id==='trizooka'&&(ch.sourceMotion.sourceUpper||art.specialPresentationSnapshot(ch)?.kind!=='trizooka'))throw Error('Real Actor.update lost Trizooka presentation at frame '+frame);
       maxHandError=Math.max(maxHandError,art.specialPresentationSnapshot(ch)?.handError||0);
       if(id==='slam'&&frame===12){a.specialActive.phase='hang';a.specialActive.t=0;a.pos.y=2;}
       if(id==='slam'&&frame===17)break;
@@ -89,7 +91,24 @@ try{
     const visibility=objects.map(o=>o.visible);objects.forEach(o=>o.visible=false);const pixels=changed(before,render());objects.forEach((o,i)=>o.visible=visibility[i]);render();
     if(JSON.stringify(clocks)!==JSON.stringify([G.time,ch.t,a.specialActive?.t]))throw Error('Render advanced a clock: '+id);
     if(pixels<50||maxHandError>1e-5)throw Error(`Invalid visible/grip result: ${id} pixels=${pixels} hand=${maxHandError} state=${JSON.stringify(a.specialActive)} art=${JSON.stringify(art.specialPresentationSnapshot(ch))} model=${JSON.stringify(objects.map(o=>({name:o.name,visible:o.visible,pos:o.getWorldPosition(new THREE.Vector3()).toArray()})))}`);
-    rows.push({id,driver:id==='inkVac'?'real Actor.update with native Physics':'manual phase/finish diagnostic',sourceMotion:ch.sourceMotion.status,phase:a.specialActive?.phase||null,position:a.pos.toArray(),changedPixels:pixels,actorPixels,maxHandError,calls,triangles});
+    rows.push({id,driver:nativeControls?'real Actor.update with native Physics':'manual phase/finish diagnostic',sourceMotion:ch.sourceMotion.status,phase:a.specialActive?.phase||null,position:a.pos.toArray(),changedPixels:pixels,actorPixels,maxHandError,calls,triangles});
+    if(id==='trizooka'){
+      const advance=()=>{G.projectiles.update(1/60);step(1/60);};
+      for(let frame=0;a.s3Trizooka.pendingShotAt!==null&&frame<20;frame++)advance();
+      const shots=a.s3Trizooka.shots,from=a.pos.clone();a.intent.fire=false;a.intent.squid=true;a.intent.move.set(.5,0);
+      for(let frame=0;frame<30;frame++)advance();
+      if(a.form!=='squid'||!a.submerged||ch.kid.visible||a.s3Trizooka.shots!==shots)throw Error('Trizooka native swim/form/fire admission '+JSON.stringify({form:a.form,submerged:a.submerged,kidVisible:ch.kid.visible,shots:a.s3Trizooka.shots,beforeShots:shots,grounded:a.grounded,groundTeam:a.groundTeam,ground:a.ground,position:a.pos.toArray()}));
+      const swimDistance=a.pos.distanceTo(from);if(swimDistance<.05)throw Error('Trizooka swim did not move');
+      render();images.push({name:'trizooka-swim',data:renderer.domElement.toDataURL('image/png')});
+      a.intent.squid=false;a.intent.fire=true;a.intent.move.set(0,0);advance();
+      if(a.form!=='kid')throw Error('Trizooka fire did not surface');
+      for(let frame=0;a.specialActive&&frame<500;frame++)advance();
+      if(a.specialActive||a.s3Trizooka)throw Error('Trizooka native firing did not finish');
+      a.intent.fire=false;for(let frame=0;frame<60;frame++)advance();
+      if(art.specialPresentationSnapshot(ch)?.kind||!ch.sourceMotion.sourceUpper||!ch.weapon.pivot.visible)throw Error('Trizooka failed to return to ordinary carry');
+      render();images.push({name:'trizooka-return',data:renderer.domElement.toDataURL('image/png')});
+      rows.at(-1).nativeLifecycle={swimDistance,swimFrames:30,shotsWhileSwimming:0,surfacedOnFire:true,returnedToCarry:true};
+    }
     if(id==='inkVac'){
       for(let frame=0;vac.inkVacState(a)?.phase==='inhale'&&frame<600;frame++){
         step(1/60);
@@ -114,6 +133,63 @@ try{
     }
     a.specialActive=null;a._s3TripleSlamFists=null;vac.disposeInkVac(a);step(1/60);ch.dispose();G.actors=[];clear();
   }
+  // Current catalogue controls, real native Actor/Physics, optional FX absent.
+  // These cases catch visible failures that pure model construction misses.
+  const nativeExtra=[];
+  for(const id of ['killerWail','zipcaster','splattercolorScreen']){
+    clear();G.actors=[];
+    G.level=new Level({bounds:{minX:-150,maxX:150,minZ:-150,maxZ:150},spawnPads:[[-140,0,0],[140,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-150,-.5,-150],max:[150,0,150]}]});G.physics=new api.Physics(G.level);
+    const a=new api.Actor({team:0,name:'current native special',isLocal:true,weapon:'shooter',CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
+    G.actors=[a];scene.add(ch.root);a.pos.set(0,0,0);a._probeGround();a.invuln=0;
+    if(ch._sourceMotionLoader)await ch._sourceMotionLoader;if(ch.sourceMotion?.ready)await ch.sourceMotion.ready;
+    if(ch.sourceMotion?.status!=='ready')throw Error('Source motion unavailable: '+id);
+    const step=(n=1)=>{for(let i=0;i<n;i++){G.time+=1/60;a.update(1/60);G.projectiles.update(1/60);}};
+    step(40);a.weapon={...a.weapon,special:id,specialCost:200};a.special=200;a.intent.special=true;step();a.intent.special=false;
+    if(a.specialActive?.id!==id)throw Error('Native special input rejected: '+id);
+    camera.position.set(2.2,1.9,3.2);camera.lookAt(0,.8,0);
+    if(id==='killerWail'){
+      camera.position.set(3.6,2.8,6);camera.lookAt(0,1.4,0);
+      step(42);a.intent.fire=true;step(12);
+      if(!ch.weapon.pivot.visible||!G.projectiles.list.some(p=>p.owner===a))throw Error('Wail main emission/visibility');
+      let before=render();ch.weapon.pivot.visible=false;const weaponPixels=changed(before,render());ch.weapon.pivot.visible=true;
+      if(weaponPixels<20)throw Error('Wail permitted main is not visible');
+      render();images.push({name:'wail-native-main',data:renderer.domElement.toDataURL('image/png')});
+      const origin=a._s3AllSpecialState.beamPairs[0].origins[0].clone();a.intent.fire=false;a.intent.squid=true;a.intent.move.set(.5,0,0);step(30);
+      const devices=ch.s3SpecialDevices();
+      if(a.anim.form!=='swim'||ch.kid.visible||devices[0].holder.position.distanceTo(origin)>1e-8)throw Error('Wail native swim/anchored emitter');
+      before=render();devices.forEach(d=>d.holder.visible=false);const speakerPixels=changed(before,render());devices.forEach(d=>d.holder.visible=true);
+      if(speakerPixels<50)throw Error('Wail speakers disappeared with the human rig');
+      render();images.push({name:'wail-native-swim',data:renderer.domElement.toDataURL('image/png')});
+      a.splat(null,'test');step();const tails=scene.children.filter(g=>g.name==='killer-wail-surviving-speaker');
+      if(ch.s3SpecialDevices())throw Error('Wail held models survived native death');
+      if(tails.length!==4)throw Error('Wail fired-pair tail display '+tails.length);
+      step(300);if(scene.children.some(g=>g.name==='killer-wail-surviving-speaker'))throw Error('Wail tail display leaked');
+      nativeExtra.push({id,weaponPixels,speakerPixels,nativeSwim:true,tailSpeakers:tails.length,tailRetired:true});
+    }else if(id==='zipcaster'){
+      step();const coat=ch.kid.getObjectByName('zipcaster-ink-coat');if(!coat)throw Error('Zipcaster ink coat absent');
+      const resources=new Set();coat.traverse(o=>{if(o.geometry)resources.add(o.geometry);});let borrowedDisposals=0;
+      const dispose=()=>borrowedDisposals++;for(const g of resources)g.addEventListener('dispose',dispose);
+      render();images.push({name:'zipcaster-native-coat',data:renderer.domElement.toDataURL('image/png')});
+      a.specialActive=null;step();if(borrowedDisposals||ch.kid.getObjectByName('zipcaster-ink-coat'))throw Error('Zipcaster disposed the normal body or retained the coat');
+      for(const g of resources)g.removeEventListener('dispose',dispose);
+      step(30);render();images.push({name:'zipcaster-native-return',data:renderer.domElement.toDataURL('image/png')});
+      nativeExtra.push({id,borrowedGeometries:resources.size,borrowedDisposals,coatRetired:true});
+    }else{
+      a.pos.y=6;a.grounded=false;a.aimPitch=-.25;a.intent.sub=true;step();a.intent.sub=false;
+      for(let i=0;!G.projectiles._s3AllSpecialObjects.some(o=>o.kind==='screen')&&i<20;i++)step();
+      const o=G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='screen');if(!o||o.phase!=='flight')throw Error('Screen native throw did not fly');
+      const group=scene.children.find(g=>g.userData.s3SpecialObject==='screen'),sheet=group?.children.find(g=>g.userData.s3ScreenSheet);
+      if(!sheet||sheet.visible||o.mesh.visible)throw Error('Screen plane exposed during flight');
+      camera.position.copy(o.pos).add(new THREE.Vector3(2,1,3));camera.lookAt(o.pos);const before=render();group.visible=false;const jarPixels=changed(before,render());group.visible=true;
+      if(jarPixels<50)throw Error('Thrown screen jar is invisible');render();images.push({name:'screen-native-flight',data:renderer.domElement.toDataURL('image/png')});
+      for(let i=0;o.phase==='flight'&&i<240;i++)step();if(o.phase!=='active')throw Error('Screen did not land');
+      const landedAt=o.landedAt;step(30);if(!sheet.visible||sheet.scale.y<=.5||sheet.scale.y>=1)throw Error('Screen deployment ignores actual contact time');
+      camera.position.copy(o.pos).add(new THREE.Vector3(8,5,12));camera.lookAt(o.pos.clone().add(new THREE.Vector3(0,3,0)));render();images.push({name:'screen-native-land',data:renderer.domElement.toDataURL('image/png')});
+      nativeExtra.push({id,jarPixels,landedAt,operationAge:o.age-landedAt,unfold:sheet.scale.y});
+    }
+    a.specialActive=null;step();ch.dispose();G.actors=[];clear();
+  }
+  G.level=diagnosticLevel;G.physics=diagnosticPhysics;
   // Compile the deployed suction shader and the instanced rain cloud as well.
   const vortex=art.createVacVortex('#ff7711',3,.10,.7,THREE);vortex.position.set(0,.8,0);vortex.rotation.x=Math.PI/2;scene.add(vortex);
   const cloud=art.createStormCloud('#2255dd',THREE);cloud.position.set(0,3,0);scene.add(cloud);camera.position.set(5,4,8);camera.lookAt(0,1.8,0);render();
@@ -193,7 +269,7 @@ try{
     G.projectiles._catalogueFists=[];for(const fx of liveFx){try{fx.dispose();}catch{}}
     G.fx=previousFx;G.projectiles._catalogueFists=previousFists;G.actors=previousActors;
   }
-  return {rows,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,vfxResources,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig; Vac uses actual Actor.update/Physics and native lifecycle, other specials use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim'};
+  return {rows,nativeExtra,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,vfxResources,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig; Trizooka, Vac and nativeExtra use actual Actor.update/Physics; legacy diagnostic rows use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim'};
  },prefix);
  for(const item of result.images)fs.writeFileSync(path.join(out,item.name+'.png'),Buffer.from(item.data.split(',')[1],'base64'));delete result.images;
  assert.deepEqual(errors,[]);result={status:'passed',contentHash:manifest.contentHash,revision:manifest.build.revision,...result,errors};

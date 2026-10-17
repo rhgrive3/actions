@@ -6,6 +6,8 @@ async function setup(){
   const f=await fixture();installKitInkVac(f,f.profile);
   f.G.paint.sample=()=>0;f.G.projectiles=new f.Projectiles(new f.THREE.Scene());
   const a=f.make('charger'),b=f.make('shooter');b.team=1;b.pos.set(0,0,-5);
+  // Canonical Vac authority is captured at activation, as in the real roster.
+  a.owner='A';a.nid=1;b.owner='B';b.nid=2;
   a.weapon={...a.weapon,special:'inkVac',specialCost:190};a.special=190;a._startSpecial();a.intent.fire=true;
   a.aimDir.set(0,0,1);a.aimYaw=0;a.aimPitch=0;
   // Grow the source-defined 15-unit intake before measuring actor contact.
@@ -40,7 +42,7 @@ test('#1149 contact filters allies, dead actors, occlusion, elevation, and ends 
   a.special=190;a._startSpecial();a.intent.fire=true;a.reset();assert.equal(inkVacActorContact(a,b),false);
 });
 test('#1149 remote cone affects only a local victim; replica and duplicate actor rows never author duplicate charge',async()=>{
-  const {f,a,b}=await setup();a.owner='A';a.nid=1;b.owner='B';b.nid=2;
+  const {f,a,b}=await setup();
   b.remote=true;f.G.actors.push(b);f.tick(a,30);close(inkVacState(a).absorbedDamage,45);
   f.tick(b,30);assert.equal(b.ink,100,'remote victim tank remains owner-authored');
   disposeInkVac(a);a.remote=true;b.remote=false;
