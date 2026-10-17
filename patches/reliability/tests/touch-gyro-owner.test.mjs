@@ -34,6 +34,16 @@ test('#633 duplicate same-owner notifications do not reset valid gyro data',asyn
 test('#633 disabled controller still discards gyro and does not replay on resume',async()=>{
  const h=await rig();h.controller.enabled=false;h.motion();h.controller.update(STEP);assert.equal(h.g.dYaw,0);assert.equal(h.rig.yaw,0);h.controller.enabled=true;h.controller.update(STEP);assert.equal(h.rig.yaw,0);
 });
+for(const online of [false,true])test(`simultaneous touch and gyro cannot replay after ${online?'online':'offline'} pause`,async()=>{
+ const h=await rig();h.G.netm=online?{}:null;
+ h.m.lookDX=.3;h.m.lookDY=.2;h.motion(.1,.1);h.game.pause();
+ // Reports may still arrive while the pause menu owns gameplay input.
+ h.m.lookDX=.4;h.m.lookDY=.3;h.motion(.2,.2);h.frame(STEP);
+ assert.equal(h.rig.yaw,0);assert.equal(h.rig.pitch,0);
+ h.game.resume();h.frame(STEP);assert.equal(h.rig.yaw,0);assert.equal(h.rig.pitch,0);
+ h.m.lookDX=.1;h.m.lookDY=.08;h.motion(.2,.12);h.frame(STEP);
+ assert.ok(Math.abs(h.rig.yaw-.1)<1e-12);assert.ok(Math.abs(h.rig.pitch-.04)<1e-12);
+});
 test('#633 native owner anchors and the optional #276 exclusivity connection fail closed',()=>{
  for(const rel of ['src/core/mobile.js','src/game/player.js']){const raw=fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8');assert.throws(()=>adaptTouchGyroOwner(rel,''),/conflict/);assert.throws(()=>adaptTouchGyroOwner(rel,adaptTouchGyroOwner(rel,raw)),/conflict/);}
  const rel='src/game/player.js',raw=fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8');const with276=raw.replace("    const usingPad =",'    const gyroActive = !!touch?.gyro?.enabled;\n    const usingPad =');assert.match(adaptTouchGyroOwner(rel,with276),/const gyroActive = inp.lastDevice === 'touch' &&/);
