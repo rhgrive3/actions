@@ -1,0 +1,66 @@
+name: Verify87 saved model default draws and fifteen reopen frames
+on:
+  push:
+    branches: [review/default87-main378-reopening-20261017]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: c386cbe581dfda252b611751301f277761fa1269
+          path: candidate
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned established browser tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Small capture pixel and binding controls
+        run: |
+          mkdir -p evidence
+          node --max-old-space-size=64 diagnostic/diagnostics/default87/pixel-controls.mjs > evidence/pixel-controls.log
+          node --max-old-space-size=64 diagnostic/diagnostics/default87/capture-controls.mjs > evidence/capture-controls.log
+          node --max-old-space-size=64 diagnostic/diagnostics/default87/sw-response-controls.mjs > evidence/sw-response-controls.log
+          cp diagnostic/diagnostics/default87/proof.json evidence/sw-response-proof.json
+          cp diagnostic/diagnostics/default87/pixel-control-proof.json evidence/
+          cp diagnostic/diagnostics/default87/capture-controls/proof.json evidence/capture-control-proof.json
+      - name: One exact unchanged production build
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/diagnostic/node_modules/esbuild/lib/main.js
+        run: |
+          test "$(git -C candidate rev-parse HEAD)" = c386cbe581dfda252b611751301f277761fa1269
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = a619a4476f23c6c768bf4b6fda3983a16dc1e043
+          (cd candidate && timeout -k 5s 180s node --jitless --max-old-space-size=96 --max-semi-space-size=1 scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+          git -C candidate diff --exit-code
+      - name: Bind exact source, complete build, and frozen browser helpers
+        run: python3 diagnostic/diagnostics/default87/prepare.py candidate candidate-site evidence execution browser-profile
+      - name: Forty-two native defaults and fifteen saved fresh-reload PNG frames
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/diagnostic/node_modules/playwright/index.mjs
+          INKWAVE_ROOT_LEASE: github-default87-exclusive-${{ github.run_id }}
+        run: |
+          python3 execution/run-browser.py execution/config.json > evidence/browser-run.log 2>&1
+          git -C candidate diff --exit-code
+      - name: Verify fifteen image hashes and fresh final PR head
+        run: python3 diagnostic/diagnostics/default87/finish.py evidence
+      - name: Preserve complete and partial evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: default87-reopening-main378-${{ github.run_id }}
+          path: evidence
+          if-no-files-found: error
