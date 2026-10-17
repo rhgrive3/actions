@@ -168,10 +168,7 @@ const UPPER_REST = Symbol.for('inkwave.s3.body-proportion.upper');
 const UPPER = ['neck', 'clavL', 'clavR'];
 /** Head scale and neck length on the posed rig. Every pose owner resets the
  * head bone's local scale/position from the rest (source retarget) or leaves
- * the previous value (native pose), so this is applied after each update.
- * The neck and clavicles (with the arms, hands, weapon, head and hair below
- * them) are lowered by the torso shortening the same way: their bind pose is
- * the native one, the chest under them carries the shortened torso. */
+ * the previous value (native pose), so this is applied after each update. */
 export function s3ProportionHead(ch) {
   const head = ch?.bones?.head, rest = ch?.rest;
   if (!head || !rest?.head || !rest.neck) return;
@@ -180,20 +177,35 @@ export function s3ProportionHead(ch) {
   const k = enabled ? P.head.scale : 1, drop = enabled ? P.head.drop : 0;
   head.position.set(local.x, local.y - drop, local.z);
   head.scale.setScalar(k);
-  s3ProportionUpper(ch, enabled ? P.torsoShorten : 0);
 }
-/** Places the neck and clavicles `lower` metres below their rest offset from the chest.
- *  The update wrapper restores 0 before every update, so every pose system (the native
- *  pose leaves these positions as they are) solves against the native shoulders. */
-function s3ProportionUpper(ch, lower) {
-  const rest = ch?.rest;
+/** The torso shortening on the posed rig (character.js _applyPose, body-proportion-adapter.mjs).
+ *  The neck and clavicles keep their native bind pose; `on` places them torsoShorten below
+ *  their rest offset from the chest, so the arms, hands, weapon, head and hair move down with
+ *  them. The pose is solved with the native shoulders (off at the start of _applyPose) and
+ *  lowered after the arm and weapon IK, before the face, so every reader of the posed rig
+ *  (gameplay muzzle, face gaze, hit presentation) sees one consistent pose. */
+export function s3ProportionShoulders(ch, on) {
+  const lower = on && enabled ? P.torsoShorten : 0, rest = ch?.rest;
   if (!rest?.chest || !ch.bones) return;
+  // The drop this pose receives after its IK; ground tests solved during the IK read it
+  // (roller.mjs drum floor search).
+  ch.s3ShoulderDrop = s3ShoulderDrop(ch);
   let upper = ch[UPPER_REST];
   if (!upper) {
     upper = UPPER.filter((n) => ch.bones[n] && rest[n]).map((n) => [ch.bones[n], new THREE.Vector3().subVectors(rest[n], rest.chest)]);
     Object.defineProperty(ch, UPPER_REST, { value: upper });
   }
   for (const [bone, l] of upper) bone.position.set(l.x, l.y - lower, l.z);
+}
+/** How far the shoulders (and the hands, weapon and head on them) drop after the arm IK. */
+export function s3ShoulderDrop(ch) { return enabled && ch?.rest?.chest ? P.torsoShorten : 0; }
+/** Height added to the weapon anchor before the arm IK so the part of it held in kid space
+ *  rather than riding the chest (1 - AFOLT: the Brella guard on its world shield, the roller
+ *  push) stays where it was after the rigid shoulder drop. A carry or aim that rides the chest
+ *  drops with the body. Ground contacts that are solved during the IK (roller.mjs) subtract
+ *  the drop from their own floor test. */
+export function s3ProportionAnchorLift(ch, follow) {
+  return s3ShoulderDrop(ch) * (1 - Math.min(1, Math.max(0, follow)));
 }
 /** Installs the per-update head proportion on the production Character. */
 export function installBodyProportion(api) {
@@ -204,7 +216,6 @@ export function installBodyProportion(api) {
   Object.defineProperty(C, key, { value: true });
   const update = C.update;
   C.update = function (...args) {
-    s3ProportionUpper(this, 0);
     const result = update.apply(this, args);
     s3ProportionHead(this);
     return result;
