@@ -1,0 +1,58 @@
+name: Diagnose fixed Roller actor collision capture parity
+on:
+  push:
+    branches: [review/roller-collider-fc20-diagnostic-20261017]
+permissions:
+  contents: read
+jobs:
+  focused-collider:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fc20ecbdfc7a2bb7ba29f23d75ab52d16d7e6410
+          path: candidate
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fc0970eb80fc836ba1dbede38807bc29ddce988e
+          path: baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned browser and build tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Two exact production builds
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/diagnostic/node_modules/esbuild/lib/main.js
+        run: |
+          mkdir -p evidence
+          (cd baseline && node --jitless --max-old-space-size=96 --max-semi-space-size=1 scripts/build-inkwave.mjs inkwave-public ../baseline-site) > evidence/baseline-build.log 2>&1
+          (cd candidate && node --jitless --max-old-space-size=96 --max-semi-space-size=1 scripts/build-inkwave.mjs inkwave-public ../candidate-site) > evidence/candidate-build.log 2>&1
+          python3 diagnostic/diagnostics/roller/prepare.py baseline baseline-site fc0970eb80fc836ba1dbede38807bc29ddce988e evidence/baseline-binding.json
+          python3 diagnostic/diagnostics/roller/prepare.py candidate candidate-site fc20ecbdfc7a2bb7ba29f23d75ab52d16d7e6410 evidence/candidate-binding.json
+          python3 diagnostic/diagnostics/roller/generate.py candidate
+      - name: Same native actor fixture and horizontal11 capture parity
+        run: |
+          node diagnostic/diagnostics/roller/driver.mjs --site baseline-site --evidence-dir evidence/before --profile-dir before-profile --mode baseline --capture visuals > evidence/before.log 2>&1
+          node diagnostic/diagnostics/roller/driver.mjs --site candidate-site --evidence-dir evidence/after --profile-dir after-profile --mode candidate --capture visuals > evidence/after.log 2>&1
+          python3 candidate/scripts/compare-inkwave-projectile-captures.py --before evidence/before --after evidence/after --output evidence/paired.json || true
+          python3 diagnostic/diagnostics/roller/verify.py evidence
+          test -z "$(git -C candidate status --porcelain)"
+          test -z "$(git -C baseline status --porcelain)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roller-collider-fc20-${{ github.run_id }}
+          path: evidence
+          if-no-files-found: error
