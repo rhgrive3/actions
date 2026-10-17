@@ -138,3 +138,30 @@ test('native ink culling respects stage world transforms and camera clip changes
  assert.equal(mesh.selectVisible(camera),1);
  mesh.dispose();mesh.material.dispose();
 });
+
+test('native ink bulk path retains separated source runs without changing blend order', async () => {
+ const f=await nativeFixture(),{THREE}=f,g=new THREE.BufferGeometry(),positions=[];
+ const tri=(x,z)=>positions.push(x,0,z,x+0.7,0,z,x,0.7,z);
+ for(let i=0;i<8;i++)tri(0+(i%4)*.2,i*.2);
+ for(let i=0;i<8;i++)tri(120+(i%4)*.2,120+i*.2);
+ for(let i=0;i<8;i++)tri(1+(i%4)*.2,i*.2);
+ g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial());
+ assert.equal(mesh._fragmentedRuns,false,'contiguous source runs use the bulk copy path');
+ const camera=new THREE.PerspectiveCamera(60,1,.1,55);
+ camera.position.set(1,3,15);camera.lookAt(1,0,0);camera.updateMatrixWorld();mesh.updateMatrixWorld();
+ assert.equal(mesh.selectVisible(camera),2);
+ const actual=Array.from(g.index.array.subarray(0,g.drawRange.count));
+ const expected=[...Array.from({length:24},(_,i)=>i),...Array.from({length:24},(_,i)=>48+i)];
+ assert.deepEqual(actual,expected,'the two separated near runs retain original source order');
+ const version=g.index.version;mesh.selectVisible(camera);assert.equal(g.index.version,version);
+ mesh.dispose();mesh.material.dispose();
+});
+test('signed projection zero is recognized by the cached view comparison', async () => {
+ const f=await nativeFixture(), {THREE}=f, g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,1,0,0,0,1,0],3));
+ const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial());
+ assert.equal(Object.is(0,-0),false);
+ assert.match(f.NativeInkMesh.prototype.selectVisible.toString(),/Object\.is\(elements\[i\], previous\[i\]\)/);
+ mesh.dispose();mesh.material.dispose();
+});
