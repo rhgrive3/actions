@@ -1,6 +1,6 @@
 // Owned rigid head-bone attachments; no shared body/hair geometry is modified or disposed.
 import {G} from '../../../src/core/ctx.js';
-import {getHairStyle,headSurf} from '../../../src/game/character-geo.js';
+import {headSurf} from '../../../src/game/character-geo.js';
 import {HEADGEAR} from './catalog.mjs';
 import {withHeadgearSignals} from '../../../src/game/character-mats.js';
 const states=new WeakMap();
@@ -12,9 +12,16 @@ function state(c){
  const signature=[c.style.hair,c.style.hat,c.style.brows,G.settings?.quality||'high'].join(':');
  let s=states.get(c);if(s?.signature!==signature){disposeHeadgear(c);s={signature,item,groups:new Map(),active:null};states.set(c,s);}return s;
 }
+// Native fit analysis precedes tessellation and is identical across LODs. Borrow it
+// from Character's live owned hair entry, including during headgear-only warmup.
+// Never call legacy getHairStyle: it permanently retains geometry in native _hair.
+function ownedFit(c,lod){
+ const held=c.hairKeys483||[];
+ return (held.find(r=>r.lod===lod)?.entry||held[0]?.entry||c.hairAnatomy483?.entry)?.hatContext;
+}
 function obtain(c,s,lod){
  if(!tiers.includes(lod))throw Error('Invalid headgear LOD: '+lod);
- let group=s.groups.get(lod);if(!group){const fit=getHairStyle(c.style,lod).hatContext;if(!fit)throw Error('Native headgear clearance missing');group=s.item.create({lod,inkColor:c.color,headSurface:headSurf,offIn:fit.offIn,clearance:fit.offIn,ctx:fit,helpers:{headSurf}});group.traverse(o=>{for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])withHeadgearSignals(m,c.u);});group.name='headgear:'+s.item.key+':'+lod;group.visible=false;c.bones.head.add(group);s.groups.set(lod,group);}return group;
+ let group=s.groups.get(lod);if(!group){const fit=ownedFit(c,lod);if(!fit)throw Error('Native headgear clearance missing');group=s.item.create({lod,inkColor:c.color,headSurface:headSurf,offIn:fit.offIn,clearance:fit.offIn,ctx:fit,helpers:{headSurf}});group.traverse(o=>{for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])withHeadgearSignals(m,c.u);});group.name='headgear:'+s.item.key+':'+lod;group.visible=false;c.bones.head.add(group);s.groups.set(lod,group);}return group;
 }
 export function syncHeadgear(c,lod){if(!c.bones?.head)return;const s=state(c);if(!s)return;const next=obtain(c,s,lod);for(const group of s.groups.values())group.visible=group===next;s.active=lod;}
 export function warmHeadgear(c){if(!c.bones?.head)return;const s=state(c);if(!s)return;for(const lod of tiers)obtain(c,s,lod);if(s.active)syncHeadgear(c,s.active);}

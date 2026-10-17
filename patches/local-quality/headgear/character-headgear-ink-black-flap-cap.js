@@ -7,8 +7,8 @@ const PIVOT = new V(0, 1.05, -0.002);
 const C = HEAD_C.clone().sub(PIVOT);
 const clamp = (x,a,b) => Math.min(b,Math.max(a,x));
 const smooth = (a,b,x) => { const t=clamp((x-a)/(b-a),0,1); return t*t*(3-2*t); };
-const rimKeys=[[0,.57],[.6,.54],[1.2,.32],[1.6,.17],[2.3,.02],[Math.PI,-.03]];
-const rim=(az)=>{ const a=Math.abs(Math.atan2(Math.sin(az),Math.cos(az))); for(let i=1;i<rimKeys.length;i++){if(a<=rimKeys[i][0]) {const [x,y]=rimKeys[i-1],[x1,y1]=rimKeys[i]; return y+(y1-y)*(a-x)/(x1-x);}} return -.03;};
+const rimKeys=[[0,.57],[.6,.54],[1.2,-.70],[1.6,-.74],[2.3,-.66],[Math.PI,-.64]];
+const rim=(az)=>{ const a=Math.abs(Math.atan2(Math.sin(az),Math.cos(az))); for(let i=1;i<rimKeys.length;i++){if(a<=rimKeys[i][0]) {const [x,y]=rimKeys[i-1],[x1,y1]=rimKeys[i]; return y+(y1-y)*(a-x)/(x1-x);}} return -.64;};
 export const INK_BLACK_FLAP_CAP_FIT=Object.freeze({
   name:'inkBlackFlapCap', cls:4, col:[-3,1], thick:.0058, exitMax:.05, flare:.008,
   rows:[0,.025,.07,.14,.22,.32], crown:8, rim,
@@ -25,8 +25,33 @@ export function createInkBlackFlapCap({lod='hero',clearance}={}){
   const fabric=mat(0x30312d),edge=mat(0x1a1c1a),inner=edge,ink=mat(0xc5c7b6),snap=mat(0x161916,.55);
   fabric.userData.gearClass=-4;edge.userData.gearClass=-5;ink.userData.gearClass=-4;snap.userData.gearClass=-2;
   function add(name,g,m=fabric){const mesh=new THREE.Mesh(g,m);mesh.name=name;mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);return mesh;}
-  const crown=(az,t,extra=0)=>{const el=rim(az)+(Math.PI/2-rim(az))*t;const q=surface(az,el,(clearance?clearance(az,el):.022+INK_BLACK_FLAP_CAP_FIT.lift(az,el))+.0058+extra);const sideEase=.040*Math.sin(az)**4*(1-t)**2;q.x+=Math.sin(az)*sideEase;q.z+=Math.cos(az)*sideEase;const shoulder=1+.12*Math.sin(Math.PI*t);q.x*=shoulder;q.z=C.z+(q.z-C.z)*shoulder;return q;};
-  add('structured-crown',grid(n,lod==='far'?6:Math.max(8,n/3|0),(u,v)=>crown((u-.5)*Math.PI*2,v)));
+  // Structured cloth panels: an upright side/front wall, a rounded shoulder, then a sloping roof.
+  // Heights are INKWAVE fit calibrations, not extracted Nintendo dimensions.
+  const crown=(az,t,extra=0)=>{
+    const wallT=Math.min(1,t/.58),roofT=clamp((t-.58)/.42,0,1);
+    const r=t<=.58?1-.14*wallT:.86*Math.cos(roofT*Math.PI/2);
+    const baseY=.190+.065*Math.max(0,Math.cos(az))-.015*Math.max(0,-Math.cos(az));
+    const wallY=.355+.012*Math.cos(az);
+    const y=t<=.58?baseY+(wallY-baseY)*wallT:wallY+(.410-wallY)*Math.sin(roofT*Math.PI/2);
+    const sidePad=(lod==='far'?.045:.041)*Math.sin(az)**4*(1-t)**2;
+    const q=new V(Math.sin(az)*(.218*r+sidePad),y,.018-.020*wallT+.185*r*Math.cos(az));
+    q.addScaledVector(new V(Math.sin(az)*Math.cos(t*Math.PI/2),Math.sin(t*Math.PI/2),Math.cos(az)*Math.cos(t*Math.PI/2)),extra);
+    // The panel silhouette is authored, but its inner envelope must honor the native hair fit.
+    const d=q.clone().sub(C),rad=d.length();d.divideScalar(rad);
+    const el=Math.asin(clamp(d.y,-1,1)),a=Math.atan2(d.x,d.z);
+    const required=surface(a,el,(clearance?clearance(a,el):INK_BLACK_FLAP_CAP_FIT.lift(a,el)+.013)+.006+extra);
+    if(required.distanceTo(C)>rad)q.copy(required);
+    return q;
+  };
+  const crownGeo=grid(n,lod==='far'?6:Math.max(8,n/3|0),(u,v)=>crown((u-.5)*Math.PI*2,v));
+  // Remove collapsed pole triangles and smooth coincident seam/pole normals.
+  const cp=crownGeo.attributes.position,ci=crownGeo.index.array,clean=[];
+  for(let k=0;k<ci.length;k+=3){const a=new V().fromBufferAttribute(cp,ci[k]),b=new V().fromBufferAttribute(cp,ci[k+1]),c=new V().fromBufferAttribute(cp,ci[k+2]);if(b.sub(a).cross(c.sub(a)).lengthSq()>1e-18)clean.push(ci[k],ci[k+1],ci[k+2]);}
+  crownGeo.setIndex(clean);crownGeo.computeVertexNormals();
+  const cn=crownGeo.attributes.normal,groups=new Map();
+  for(let k=0;k<cp.count;k++){const key=[cp.getX(k),cp.getY(k),cp.getZ(k)].map(v=>Math.round(v*1e7)).join(',');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(k);}
+  for(const ids of groups.values()){const normal=new V();for(const k of ids)normal.add(new V().fromBufferAttribute(cn,k));normal.normalize();for(const k of ids)cn.setXYZ(k,normal.x,normal.y,normal.z);}
+  add('structured-crown',crownGeo);
   add('turned-under-rim',grid(n,2,(u,v)=>{const az=(u-.5)*Math.PI*2;return crown(az,.023*v,-.004*(1-v));},true),inner);
   const tubeSeg=lod==='far'?6:lod==='game'?12:24;
   const tube=(points,r,segments=32)=>path(points,r,Math.min(segments,tubeSeg),lod==='hero'?5:3);
@@ -39,12 +64,21 @@ export function createInkBlackFlapCap({lod='hero',clearance}={}){
   function flap(s,u,v,offset=0){
     const corner=clamp((v-.78)/.22,0,1);
     const roundedU=u+.10*(1-Math.sqrt(Math.max(0,1-corner*corner)))*Math.exp(-((u/.13)**2));
-    const az=.98+(Math.PI-.98)*roundedU;
+    const frontAz=.78+.20*smooth(.18,.64,v);
+    const az=frontAz+(Math.PI-frontAz)*roundedU;
     const top=crown(s*az,.018,.001);
-    const bottom=-.085+.135*smooth(.12,.88,u)+.045*(1-smooth(0,.12,u));
-    const earBulge=.016*smooth(0,.10,v)*Math.exp(-(((v-.15)/.20)**2))*Math.exp(-(((az-1.95)/.45)**2));
+    // Continuous rear cloth, with a shallow raised center hem and longer side tongues.
+    const bottom=-.070+.095*smooth(.12,.76,u)+.040*(1-smooth(0,.12,u));
+    const earBulge=.035*smooth(0,.10,v)*Math.exp(-(((v-.15)/.20)**2))*Math.exp(-(((az-1.95)/.45)**2));
     const r=.012*smooth(0,.40,v)+earBulge+offset;
-    return new V(top.x+s*Math.sin(az)*r,top.y+(bottom-top.y)*v,top.z+Math.cos(az)*r);
+    const q=new V(top.x+s*Math.sin(az)*r,top.y+(bottom-top.y)*v,top.z+Math.cos(az)*r);
+    const d=q.clone().sub(C),rad=d.length();d.divideScalar(rad);
+    const el=Math.asin(clamp(d.y,-1,1)),a=Math.atan2(d.x,d.z);
+    if(el>=rim(a)-.02){
+      const required=surface(a,el,(clearance?clearance(a,el):INK_BLACK_FLAP_CAP_FIT.lift(a,el)+.013)+.006+offset);
+      if(required.distanceTo(C)>rad)q.copy(required);
+    }
+    return q;
   }
   const flapNu=lod==='far'?12:lod==='game'?12:16,flapNv=lod==='far'?4:lod==='game'?8:12;
   const vKeys=lod==='far'?[0,.12,.45,.86,1]:[0,.10,.22,.42,.64,.80,.90,.97,1];

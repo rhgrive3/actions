@@ -6,7 +6,7 @@ const base='d5265f73d9dad69f1afd9690e374caee45195f11';
 const allowed=new Set([
  'patches/local-quality/adapter.mjs','patches/local-quality/headgear-adapter.mjs','scripts/lib/inkwave-build-only-modules.mjs',
  'patches/local-quality/headgear/armor-helmet.js','patches/local-quality/headgear/two-line-mesh.js','patches/local-quality/headgear/camo-headphones.js','patches/local-quality/headgear/character-headgear-ink-black-flap-cap.js','patches/local-quality/headgear/catalog.mjs','patches/local-quality/headgear/lifecycle.mjs',
- 'patches/local-quality/tests/material-handoff.test.mjs',
+ 'patches/local-quality/tests/material-handoff.test.mjs','patches/splatoon3/tests/issue-483.test.mjs',
  'patches/local-quality/tests/headgear-production-loader.mjs','patches/local-quality/tests/headgear-lifecycle.fixture.mjs',
 ]);
 const git=(...args)=>execFileSync('git',args);

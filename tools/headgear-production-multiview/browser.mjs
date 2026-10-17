@@ -38,6 +38,7 @@ export async function run(config){
   for(const gearId of [4,5,6,7]){
    for(const lod of ['hero','game'])for(const view of ['front','back','left','right','top','oblique'])await capture(gearId,lod,0,view);
    for(const hair of [5,6])await capture(gearId,'game',hair,'oblique');
+   if(gearId===7)for(const hair of [5,6])for(const view of ['back','top'])await capture(gearId,'game',hair,view);
    for(const pose of ['look-left','look-right'])await capture(gearId,'game',0,'oblique',pose);
    await capture(gearId,'game',0,'front','neutral',0xe637ab);
    await capture(gearId,'far',0,'oblique');
