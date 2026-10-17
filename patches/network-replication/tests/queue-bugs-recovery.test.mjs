@@ -5,6 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {normalizeViewSettings} from '../../local-quality/view-settings.mjs';
 import {
   validWeaponId, safeWeaponId, normalizeQueueProfile, settleProgression,
   reserveLiveStart, releaseLiveStart, canApplyAttractReset, validStartRoster,
@@ -32,6 +33,22 @@ function method(js,className,name) {
   assert.ok(m,className+'.'+name+' must exist in built source');
   return js.slice(m.start,m.end);
 }
+
+test('current main already normalizes corrupted persisted mouse sensitivity without changing valid look tuning',()=>{
+  const defaults={sensitivity:1,fov:82};
+  for(const corrupt of ['not-a-number',null,[],{},true,1e308]){
+    const settings={sensitivity:corrupt,fov:82};
+    normalizeViewSettings(settings,defaults);
+    assert.equal(settings.sensitivity,corrupt===1e308?3:1);
+    const yaw=0-6*(0.0021*settings.sensitivity);
+    assert.ok(Number.isFinite(yaw),'mouse movement must not poison camera yaw');
+  }
+  for(const sensitivity of [.2,1,1.75,3]){
+    const settings={sensitivity};
+    normalizeViewSettings(settings,defaults);
+    assert.equal(settings.sensitivity,sensitivity,'legitimate controls must retain current calibration');
+  }
+});
 
 test('saved profile restores a registered weapon, including inherited names and numeric legacy IDs',()=>{
   assert.equal(validWeaponId('alt_kit',weapons),true);
