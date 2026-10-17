@@ -1,0 +1,11 @@
+{
+  "repository": "kirakira-dev/KiTrix",
+  "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "stage": "Vss_Hiagari04",
+  "bytes": 29497521,
+  "objSha256": "fc8f7233063cdbe7b2bd821b30cbe60e94e7a20e6a5d60ce00ce9b272232d561",
+  "objects": 98,
+  "explicitRuleLayers": {},
+  "floatPrototypeObjects": 7,
+  "bancPlacementsRecovered": false
+}

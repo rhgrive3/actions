@@ -6,6 +6,7 @@ on:
       - 'scripts/inkwave-source-composition.mjs'
       - 'scripts/build-inkwave.mjs'
       - 'scripts/lib/inkwave-native-stages.mjs'
+      - 'scripts/check-inkwave-source-placement-browser.mjs'
       - '.github/workflows/validate-inkwave-native-stage5.yml'
   workflow_dispatch:
 concurrency:
@@ -38,3 +39,23 @@ jobs:
         run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/vertical-slab-parity.test.mjs
       - name: Assert reference model payload remains excluded
         run: test ! -e _site/_native-reference-assets && node --test scripts/tests/inkwave-stage-assets.test.mjs
+  placement-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - name: Build without original stage payloads
+        run: node scripts/build-inkwave.mjs inkwave-public work/site
+      - name: Verify diagnostic placement conversion in a real Worker
+        run: node scripts/check-inkwave-source-placement-browser.mjs work/site work/placement-evidence/worker.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-diagnostic-placement-worker
+          path: work/placement-evidence/
+          if-no-files-found: ignore
