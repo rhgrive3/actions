@@ -7,8 +7,8 @@ const PIVOT = new V(0, 1.05, -0.002);
 const C = HEAD_C.clone().sub(PIVOT);
 const clamp = (x,a,b) => Math.min(b,Math.max(a,x));
 const smooth = (a,b,x) => { const t=clamp((x-a)/(b-a),0,1); return t*t*(3-2*t); };
-const rimKeys=[[0,.57],[.6,.54],[1.2,.32],[1.6,.17],[2.3,.02],[Math.PI,-.03]];
-const rim=(az)=>{ const a=Math.abs(Math.atan2(Math.sin(az),Math.cos(az))); for(let i=1;i<rimKeys.length;i++){if(a<=rimKeys[i][0]) {const [x,y]=rimKeys[i-1],[x1,y1]=rimKeys[i]; return y+(y1-y)*(a-x)/(x1-x);}} return -.03;};
+const rimKeys=[[0,.57],[.6,.54],[1.2,-.70],[1.6,-.74],[2.3,-.48],[Math.PI,-.36]];
+const rim=(az)=>{ const a=Math.abs(Math.atan2(Math.sin(az),Math.cos(az))); for(let i=1;i<rimKeys.length;i++){if(a<=rimKeys[i][0]) {const [x,y]=rimKeys[i-1],[x1,y1]=rimKeys[i]; return y+(y1-y)*(a-x)/(x1-x);}} return -.36;};
 export const INK_BLACK_FLAP_CAP_FIT=Object.freeze({
   name:'inkBlackFlapCap', cls:4, col:[-3,1], thick:.0058, exitMax:.05, flare:.008,
   rows:[0,.025,.07,.14,.22,.32], crown:8, rim,
@@ -31,14 +31,27 @@ export function createInkBlackFlapCap({lod='hero',clearance}={}){
     const wallT=Math.min(1,t/.58),roofT=clamp((t-.58)/.42,0,1);
     const r=t<=.58?1-.14*wallT:.86*Math.cos(roofT*Math.PI/2);
     const baseY=.190+.065*Math.max(0,Math.cos(az))-.015*Math.max(0,-Math.cos(az));
-    const wallY=.373+.010*Math.cos(az);
+    const wallY=.355+.012*Math.cos(az);
     const y=t<=.58?baseY+(wallY-baseY)*wallT:wallY+(.410-wallY)*Math.sin(roofT*Math.PI/2);
-    const sidePad=(lod==='far'?.043:.039)*Math.sin(az)**4*(1-t)**2;
+    const sidePad=(lod==='far'?.045:.041)*Math.sin(az)**4*(1-t)**2;
     const q=new V(Math.sin(az)*(.218*r+sidePad),y,.018-.020*wallT+.185*r*Math.cos(az));
     q.addScaledVector(new V(Math.sin(az)*Math.cos(t*Math.PI/2),Math.sin(t*Math.PI/2),Math.cos(az)*Math.cos(t*Math.PI/2)),extra);
+    // The panel silhouette is authored, but its inner envelope must honor the native hair fit.
+    const d=q.clone().sub(C),rad=d.length();d.divideScalar(rad);
+    const el=Math.asin(clamp(d.y,-1,1)),a=Math.atan2(d.x,d.z);
+    const required=surface(a,el,(clearance?clearance(a,el):INK_BLACK_FLAP_CAP_FIT.lift(a,el)+.013)+.006+extra);
+    if(required.distanceTo(C)>rad)q.copy(required);
     return q;
   };
-  add('structured-crown',grid(n,lod==='far'?6:Math.max(8,n/3|0),(u,v)=>crown((u-.5)*Math.PI*2,v)));
+  const crownGeo=grid(n,lod==='far'?6:Math.max(8,n/3|0),(u,v)=>crown((u-.5)*Math.PI*2,v));
+  // Remove collapsed pole triangles and smooth coincident seam/pole normals.
+  const cp=crownGeo.attributes.position,ci=crownGeo.index.array,clean=[];
+  for(let k=0;k<ci.length;k+=3){const a=new V().fromBufferAttribute(cp,ci[k]),b=new V().fromBufferAttribute(cp,ci[k+1]),c=new V().fromBufferAttribute(cp,ci[k+2]);if(b.sub(a).cross(c.sub(a)).lengthSq()>1e-18)clean.push(ci[k],ci[k+1],ci[k+2]);}
+  crownGeo.setIndex(clean);crownGeo.computeVertexNormals();
+  const cn=crownGeo.attributes.normal,groups=new Map();
+  for(let k=0;k<cp.count;k++){const key=[cp.getX(k),cp.getY(k),cp.getZ(k)].map(v=>Math.round(v*1e7)).join(',');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(k);}
+  for(const ids of groups.values()){const normal=new V();for(const k of ids)normal.add(new V().fromBufferAttribute(cn,k));normal.normalize();for(const k of ids)cn.setXYZ(k,normal.x,normal.y,normal.z);}
+  add('structured-crown',crownGeo);
   add('turned-under-rim',grid(n,2,(u,v)=>{const az=(u-.5)*Math.PI*2;return crown(az,.023*v,-.004*(1-v));},true),inner);
   const tubeSeg=lod==='far'?6:lod==='game'?12:24;
   const tube=(points,r,segments=32)=>path(points,r,Math.min(segments,tubeSeg),lod==='hero'?5:3);
@@ -57,7 +70,14 @@ export function createInkBlackFlapCap({lod='hero',clearance}={}){
     const bottom=-.070+.170*smooth(.12,.88,u)+.040*(1-smooth(0,.12,u));
     const earBulge=.032*smooth(0,.10,v)*Math.exp(-(((v-.15)/.20)**2))*Math.exp(-(((az-1.95)/.45)**2));
     const r=.012*smooth(0,.40,v)+earBulge+offset;
-    return new V(top.x+s*Math.sin(az)*r,top.y+(bottom-top.y)*v,top.z+Math.cos(az)*r);
+    const q=new V(top.x+s*Math.sin(az)*r,top.y+(bottom-top.y)*v,top.z+Math.cos(az)*r);
+    const d=q.clone().sub(C),rad=d.length();d.divideScalar(rad);
+    const el=Math.asin(clamp(d.y,-1,1)),a=Math.atan2(d.x,d.z);
+    if(el>=rim(a)-.02){
+      const required=surface(a,el,(clearance?clearance(a,el):INK_BLACK_FLAP_CAP_FIT.lift(a,el)+.013)+.006+offset);
+      if(required.distanceTo(C)>rad)q.copy(required);
+    }
+    return q;
   }
   const flapNu=lod==='far'?12:lod==='game'?12:16,flapNv=lod==='far'?4:lod==='game'?8:12;
   const vKeys=lod==='far'?[0,.12,.45,.86,1]:[0,.10,.22,.42,.64,.80,.90,.97,1];

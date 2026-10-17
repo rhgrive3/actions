@@ -357,6 +357,7 @@ async function runNative(mode) {
       "export * as HC from './patches/splatoon3/runtime/hair-cache.mjs';",
       "export * as GEO from './inkwave-public/src/game/character-geo.js';",
       "export * as HAIR from './inkwave-public/src/game/character-hair.js';",
+      ...(MODE === 'patched' ? ["export * as HG from './patches/local-quality/headgear/lifecycle.mjs';"] : []),
       "export { getHairStyle, getRestPositions, BONE_NAMES } from './inkwave-public/src/game/character-geo.js';",
     ].join(NL), { context, identifier: path.join(ROOT_DIR, 'entry-483.mjs') });
     await entry.link((spec, from) => load(
@@ -364,7 +365,7 @@ async function runNative(mode) {
         : spec.startsWith('three/addons/') ? path.join(SRC, 'vendor/three/jsm', spec.slice('three/addons/'.length))
           : path.resolve(path.dirname(from.identifier), spec)));
     await entry.evaluate();
-    const { Character, G, HC, GEO, HAIR, getHairStyle, getRestPositions, BONE_NAMES } = entry.namespace;
+    const { Character, G, HC, GEO, HAIR, HG, getHairStyle, getRestPositions, BONE_NAMES } = entry.namespace;
     const hairSize = () => context.__i483.hairSize();
     const invSize = () => context.__i483.invSize();
     G.settings = { quality: 'high' };
@@ -524,6 +525,28 @@ async function runNative(mode) {
       if (peakOwned > 12) fail('owned set must be bounded by live holds, peak ' + peakOwned);
       if (HC.hairStats().builds - buildsBefore !== 24) fail('24 fresh builds expected (12 per round), saw ' + (HC.hairStats().builds - buildsBefore));
       for (const g of freshGeo) if (disposedOf(g) !== 1) fail('every released geometry must be disposed exactly once, saw ' + disposedOf(g));
+
+      // Rigid gear must borrow native clearance from the owned path, including warmup
+      // before hero/far hair tiers exist and after quality rebuild releases anatomy.
+      for (const hat of [4, 5, 6, 7]) {
+        G.settings.quality = 'high';
+        const ch = new Character({ name: 'owned-headgear-' + hat, weapon: 'shooter', style: { hair: 0, hat, brows: 0 } });
+        const beforeWarm = HC.hairStats();
+        HG.warmHeadgear(ch);
+        if (HC.hairStats().builds !== beforeWarm.builds || HC.hairStats().liveUsers !== beforeWarm.liveUsers) fail('headgear warmup must not acquire hair');
+        if (HG.headgearState(ch).groups.length !== 3) fail('headgear warmup must prepare all tiers');
+        for (const q of ['high', 'low', 'high']) {
+          G.settings.quality = q;
+          ch._updateLod(0);
+          for (const lod of ['hero', 'far', 'game']) ch.setLod(lod);
+          HG.warmHeadgear(ch);
+          if (hairSize() !== 0 || invSize() !== 0) fail('headgear must leave native caches empty: hat=' + hat + ' quality=' + q);
+        }
+        ch.dispose();
+        ch.dispose();
+        if (HG.headgearState(ch) !== null) fail('headgear teardown must drop all groups');
+        if (HC.hairStats().entries !== 0 || HC.hairStats().liveUsers !== 0) fail('headgear teardown must release owned hair');
+      }
 
       // CPU strong-reference drop (the reported root): after the last release the disposed
       // geometry must be unreachable - no native cache, no helper slot, no Character hold.

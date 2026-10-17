@@ -29,3 +29,30 @@ test('ten gear replacements release all owned attachments without touching share
 test('build adapter fails closed on absent or duplicated catalog anchors',()=>{const raw=fs.readFileSync(new URL('../../../inkwave-public/src/game/character-style.js',import.meta.url),'utf8');assert.throws(()=>adaptHeadgear('src/game/character-style.js',raw.replace("export const HATS =","const HATS =")),/headgear conflict/);assert.throws(()=>adaptHeadgear('src/game/character-style.js',raw+raw),/headgear conflict/);});
 
 for(const hat of [4,5])test('new material hooks preserve authored weave and share native damage/flash uniforms '+hat,()=>{const c=make(hat),s=headgearState(c),materials=new Set();for(const {group} of s.groups)group.traverse(o=>{if(o.material)materials.add(o.material);});let weave=false;for(const m of materials){const shader={uniforms:{},vertexShader:'#include <common>\n#include <begin_vertex>',fragmentShader:'#include <common>\n#include <color_fragment>\n#include <roughnessmap_fragment>\n#include <emissivemap_fragment>'};m.onBeforeCompile(shader,{});assert.equal(shader.uniforms.uHurt,c.u.uHurt);assert.equal(shader.uniforms.uFlash,c.u.uFlash);assert(shader.fragmentShader.includes('float iwHurtM'));assert(shader.fragmentShader.includes('totalEmissiveRadiance += uFlash'));if(shader.fragmentShader.includes('weaveUV')){weave=true;assert(shader.fragmentShader.indexOf('float iwHurtM')>shader.fragmentShader.indexOf('weaveUV'),'damage follows authored weave');}}assert(weave);c.dispose();});
+
+const {createInkBlackFlapCap,INK_BLACK_FLAP_CAP_FIT}=await load('patches/local-quality/headgear/character-headgear-ink-black-flap-cap.js');
+for(const lod of ['far','game','hero'])test('cap '+lod+' authored panels consume native clearance instead of ignoring the callback',()=>{
+ let calls=0;const compact=createInkBlackFlapCap({lod,clearance:()=>0}),expanded=createInkBlackFlapCap({lod,clearance:()=>{calls++;return .18;}});
+ try{let moved=0;assert.equal(compact.children.length,expanded.children.length);for(let i=0;i<compact.children.length;i++){const a=compact.children[i].geometry.attributes.position.array,b=expanded.children[i].geometry.attributes.position.array;assert.equal(a.length,b.length);for(let j=0;j<a.length;j+=3)if(Math.hypot(a[j]-b[j],a[j+1]-b[j+1],a[j+2]-b[j+2])>.005)moved++;}assert(calls>100,'actual native callback used');assert(moved>100,'clearance must change the authored geometry');}finally{compact.dispose();expanded.dispose();}
+});
+test('cap rear hair exit stays below its raised rear skirt hem',()=>{const rearHemElevation=Math.atan2(.100-.164,.185);assert(INK_BLACK_FLAP_CAP_FIT.rim(Math.PI)<rearHemElevation,'hair must exit beneath the rear cover instead of the crown seam');});
+
+for(const hat of [4,5,6,7])test('headgear '+hat+' warmup borrows owned fit without acquiring hair',async()=>{
+ const {hairStats}=await load('patches/splatoon3/runtime/hair-cache.mjs');
+ const {HEADGEAR}=await load('patches/local-quality/headgear/catalog.mjs');
+ const item=HEADGEAR.find(x=>x.id===hat),create=item.create,calls=[];let c;
+ item.create=options=>{calls.push(options.ctx);return create(options);};
+ try {
+  c=make(hat);const before=hairStats(),fit=c.hairKeys483[0].entry.hatContext;
+  assert.deepEqual(c.hairKeys483.map(r=>r.lod),['game']);
+  warmHeadgear(c);assert.deepEqual(hairStats(),before);assert.equal(headgearState(c).groups.length,3);
+  assert.equal(calls.length,3);assert(calls.every(ctx=>ctx===fit),'warmup must borrow the exact owned native fit');
+  c._updateLod(0);G.settings.quality='low';c._updateLod(0);
+  assert.equal(c.hairAnatomy483,null);assert(c.hairKeys483.length>0);
+  const rebuilt=hairStats(),freshFit=c.hairKeys483[0].entry.hatContext;
+  assert.notEqual(freshFit,fit);warmHeadgear(c);assert.deepEqual(hairStats(),rebuilt);
+  const liveFits=new Set(c.hairKeys483.map(r=>r.entry.hatContext));
+  assert.equal(calls.length,6);assert(calls.slice(3).every(ctx=>ctx!==fit&&liveFits.has(ctx)),'quality rebuild must use fresh owned fits');
+ } finally {item.create=create;c?.dispose();}
+ assert.equal(hairStats().entries,0);assert.equal(hairStats().liveUsers,0);
+});

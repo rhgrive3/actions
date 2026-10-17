@@ -32,16 +32,16 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
     shader.fragmentShader = '#define USE_UV\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
       // Coarse two-over/two-under twill remains legible in the head-sized render.
-      vec2 weaveUV = vUv * vec2(80.0,44.0);
+      vec2 weaveUV = vUv * vec2(136.0,75.0);
       float footprint=max(fwidth(weaveUV.x),fwidth(weaveUV.y));
       vec2 cell=floor(weaveUV), f=fract(weaveUV);
       float warp=step(2.0,mod(cell.x+cell.y,4.0));
       float fibre=mix(sin(f.y*3.14159265),sin(f.x*3.14159265),warp);
       float grain=mix(sin(f.x*31.4159265),sin(f.y*31.4159265),warp);
-      float twill=.60+.51*pow(max(0.0,fibre),.5)+.035*grain;
+      float twill=.74+.30*pow(max(0.0,fibre),.5)+.035*grain;
       diffuseColor.rgb *= mix(1.0,twill,1.0-smoothstep(.65,1.8,footprint));`);
   };
-  mats.shell.customProgramCacheKey=()=> 'inkwave-armor-twill-v2';
+  mats.shell.customProgramCacheKey=()=> 'inkwave-armor-twill-v3';
   const add=(name,geo,mat)=>{geo.computeVertexNormals();const m=new THREE.Mesh(geo,mat);m.name=name;m.castShadow=true;m.receiveShadow=true;group.add(m);return m;};
   const grid=(nu,nv,fn)=>{const p=[],uv=[],ix=[];for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){p.push(...fn(i/nu,j/nv));uv.push(i/nu,j/nv);}for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const a=j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;ix.push(a,b,c,b,d,c);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);return g;};
   const rim=ARMOR_HAT_CLEARANCE.rim;
@@ -49,20 +49,11 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
     let p;
     if(headSurface){const q=new THREE.Vector3();headSurface(az,el,(offIn?offIn(az,el)+ARMOR_HAT_CLEARANCE.thick:.025)+off,q);p=[q.x,q.y-1.05,q.z+.002];}
     else p=[(.178+.025+off)*Math.sin(az)*Math.cos(el),.164+(.176+.025+off)*Math.sin(el),.014+(.165+.025+off)*Math.cos(az)*Math.cos(el)];
-    // The broad roof-profile V ribs are integral shell displacement, never open
-    // raised patches. This keeps the rib feet connected and mirrored winding valid.
+    // Base shell only. Structural rails below use closed planar solids, so
+    // latitude sampling cannot collapse their broad roof into isolated peaks.
     const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
-    const center=.023+(.150-p[2])*.60;
-    const distance=Math.abs(Math.abs(p[0])-center);
-    const roof=1-clamp((distance-.025)/.018,0,1);
-    const along=smooth(-.13,-.07,p[2])*(1-smooth(.140,.185,p[2]));
-    const aboveRim=smooth(.025,.18,el-rim(az));
     p[1]+=.031*smooth(.40,1.15,el);
-    const rise=clamp(.418-.65*Math.max(0,p[2]-.04)-p[1],0,.055)*roof*along*aboveRim*smooth(.40,.75,el);
     p[0]*=1+.045*smooth(.30,.9,el);
-    // A planar roof target makes broad faceted rail tops; all feet remain in the shell.
-    const n=new THREE.Vector3(p[0]/.203**2,(p[1]-.164)/.201**2,(p[2]-.014)/.190**2).normalize();
-    p[0]+=n.x*rise*.22;p[1]+=rise;p[2]+=n.z*rise*.12;
     // Rear shell has a distinct tapered projection, not a spherical bicycle dome.
     const rear=Math.max(0,-Math.cos(az));p[2]-=.069*Math.pow(rear,5)*Math.pow(Math.cos(el),2);
     return p;
@@ -71,6 +62,33 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
   const shell=grid(N,R,(u,v)=>{const az=u*Math.PI*2,el=rim(az)+(Math.PI/2-.004-rim(az))*v;return pt(az,el);});add('woven-shell',shell,mats.shell);
   const rimGeo=grid(N,6,(u,v)=>{const az=u*Math.PI*2,t=v*Math.PI*2;return pt(az,rim(az)+.064*Math.sin(t),.001+.009*Math.cos(t));});for(let k=0;k<rimGeo.attributes.uv.count;k++)rimGeo.attributes.uv.setY(k,rimGeo.attributes.uv.getY(k)*.12);add('rolled-rim',rimGeo,mats.shell);
   const pole=pt(0,Math.PI/2);add('crown-cap',new THREE.SphereGeometry(.006,8,6).scale(1,.15,1).translate(...pole),mats.shell);
+  // Two closed, wide, bevel-sided rails converge at the front V. Their roof
+  // consists of explicit quads with duplicated face vertices (hard normals).
+  // Feet follow the base-shell triangle intersection and sink .012 into it.
+  const shellMesh=group.children.find(m=>m.name==='woven-shell');
+  shellMesh.updateMatrixWorld(true);
+  const ray=new THREE.Raycaster();
+  const shellHeight=(x,z)=>{ray.set(new THREE.Vector3(x,1,z),new THREE.Vector3(0,-1,0));return ray.intersectObject(shellMesh,false)[0]?.point.y??.29;};
+  for(const side of [-1,1]){
+    const stations=[{x:.023,z:.158,y:.321,w:.046},{x:.045,z:.105,y:.372,w:.060},{x:.075,z:.045,y:.389,w:.072},{x:.095,z:-.075,y:.389,w:.070},{x:.070,z:-.130,y:.350,w:.060}];
+    const rings=stations.map((t,station)=>{
+      const x=side*t.x,z=t.z;
+      const left=x-t.w/2,right=x+t.w/2, flank=station===0?0:station===stations.length-1?.006:.014;
+      const y=Math.max(t.y,shellHeight(x,z)+.012);
+      // Each roof corner is bounded above its local base, avoiding deep outer
+      // slabs. Rear station reduces relief to 3mm so its end sinks into shell.
+      const relief=station===stations.length-1?.003:.023;
+      const roofY=qx=>Math.min(y,shellHeight(qx,z)+relief);
+      return [[left-flank,shellHeight(left-flank,z)-.008,z],[left,roofY(left)-.005,z],[left+.009,roofY(left+.009),z],[right-.009,roofY(right-.009),z],[right,roofY(right)-.005,z],[right+flank,shellHeight(right+flank,z)-.008,z]];
+    });
+    const p=[],uv=[];
+    const tri=(a,b,c)=>{for(const q of [a,b,c]){p.push(...q);uv.push(.5+q[0]*1.25,.5+q[2]*1.8);}};
+    const quad=(a,b,c,d)=>{tri(a,c,b);tri(a,d,c);};
+    for(let j=0;j<rings.length-1;j++)for(let k=0;k<6;k++){const l=(k+1)%6;quad(rings[j][k],rings[j+1][k],rings[j+1][l],rings[j][l]);}
+    for(let k=1;k<5;k++){tri(rings[0][0],rings[0][k+1],rings[0][k]);const r=rings.at(-1);tri(r[0],r[k],r[k+1]);}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(Array.from({length:p.length/3},(_,i)=>i));
+    add(`closed-planar-v-rail-${side}`,g,mats.shell);
+  }
   const prism=(verts,depth)=>{const p=[],ix=[];for(const z of [-depth/2,depth/2])for(const v of verts)p.push(v[0],v[1],v[2]+z);const n=verts.length;for(let i=1;i<n-1;i++){ix.push(0,i+1,i,n,n+i,n+i+1);}for(let i=0;i<n;i++){const k=(i+1)%n;ix.push(i,k,n+i,k,n+k,n+i);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(p.flatMap((_,i)=>i%3===0?[0,0]:[]),2));g.setIndex(ix);return g;};
   for(const s of [-1,1]){
     // Broad triangular earpiece, thin in profile; face plane looks slightly forward.
