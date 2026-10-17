@@ -82,3 +82,6 @@ Split the same860 test files into eight immutable, disjoint shards (107/108 file
 
 
 The completed fourth shard found one additional stale pool-audit assertion: its acquisition regex omitted the existing Torpedo `drop.owner` call. Count all ten acquisitions and all ten releases, retaining the six named-loop sites. Add an actual Torpedo splash hit-callback exception case that proves its nested buffer returns to depth0 and is reusable. All five pool controls pass; no runtime change is needed.
+
+
+The same eight-way suite was retried at identical head `2c8c6cb9` after the core, all seven browser families, all48 paired projectile captures,18 mutation controls and desktop/mobile performance checks succeeded. Some full-Character patch workers again received runner shutdown/exit143 without any failed test assertion. A shutdown message alone does not establish its infrastructure cause. Limit each patch VM to two Node test processes while retaining all eight workers, all860 source files and the unchanged required fan-in. This halves the maximum simultaneous full-Character test processes from32 to16 and reduces per-VM peak memory pressure; no test, timeout or numeric tolerance is removed.

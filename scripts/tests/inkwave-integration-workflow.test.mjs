@@ -185,6 +185,7 @@ test('all eight patch shards report into the existing required validate gate', (
   assert.ok(shards.includes('shard: [0, 1, 2, 3, 4, 5, 6, 7]'));
   assert.ok(shards.includes('max-parallel: 8'));
   assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '8'"));
+  assert.ok(shards.includes("INKWAVE_TEST_CONCURRENCY: '2'"));
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
   assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
   assert.ok(shards.includes('if: failure() && hashFiles('));

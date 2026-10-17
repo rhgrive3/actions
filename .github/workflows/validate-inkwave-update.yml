@@ -447,6 +447,9 @@ jobs:
     env:
       INKWAVE_TEST_SHARD_COUNT: '8'
       INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}
+      # Full-Character VM/geometry tests can retain large heaps. Keep the
+      # complete eight-way partition, with at most two test processes per VM.
+      INKWAVE_TEST_CONCURRENCY: '2'
     steps:
       - uses: actions/checkout@v4
         with:
