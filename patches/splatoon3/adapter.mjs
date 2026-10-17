@@ -76,6 +76,11 @@ export function adaptSource(rel, code) {
       'release source backpedal blend');
     // S3 shooter carry: lower the non-firing barrel to the right-hip hold before the aim pitch.
     code = replaceOnce(code, 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis).premultiply(this.retarget.aim);', 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis);sourceCarryWeapon(this,this.weaponQ);this.weaponQ.premultiply(this.retarget.aim);', 'source shooter carry posture');
+    // A weapon may borrow another family's body clips (Brush: the shooter rest stance).
+    code = replaceOnce(code, "const family=SOURCE_WEAPONS[c.weaponKind]||'Nrml';", "const family=c.weaponSourceBody||SOURCE_WEAPONS[c.weaponKind]||'Nrml';", 'weapon source body family');
+    code = replaceOnce(code, "this.active=this.enabled&&this.status==='ready'&&!this.disposed&&this.character.weaponKind!=='roller';", "this.active=this.enabled&&this.status==='ready'&&!this.disposed&&(this.character.weaponKind!=='roller'||!!this.character.weaponSourceBody);", 'roller-kind weapon with a source body');
+    code = replaceOnce(code, '  this.fitR.copy(this.handP);', '  this.fitR.copy(this.handP);sourceStandGrip(this,this.fitR);', 'source shooter standing grip');
+    code = replaceOnce(code, 'c._kidXform(c.limbs.armR.lo,this.armPole,this.parentQ);this.armPole.sub(this.shoulderR);', 'c._kidXform(c.limbs.armR.lo,this.armPole,this.parentQ);this.armPole.sub(this.shoulderR);sourceStandPole(this,this.armPole);', 'source shooter standing elbow');
     // ToHuman/ToSquid own the whole body only for a grounded, stationary change (moving: locomotion steps; air: jump pose).
     code = replaceOnce(code, 'this.formTime=0;this.formEvent=true;', 'this.formTime=0;this.formEvent=true;this.s3FormClipDeclined=false;', 'source form clip admission reset');
     code = replaceOnce(code, "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)){", "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)&&sourceFormClipAdmitted(this)){", 'source form clip admission');
@@ -83,7 +88,7 @@ export function adaptSource(rel, code) {
     return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
       "import { sourceAirBlendStart, sourceFormClipAdmitted } from '../../../patches/splatoon3/runtime/source-form-transition.mjs';\n" +
       "import { reverseShotRelease } from '../../../patches/splatoon3/runtime/shooter-movement.mjs';\n" +
-      "import { sourceCarryWeapon } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
+      "import { sourceCarryWeapon, sourceStandGrip, sourceStandPole } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
   if (rel === 'src/game/motion/retarget.js') {
     // S3 posture: reduce the Wii U clips' torso/neck lean before the aim pitch; arms keep their solved directions.
@@ -92,9 +97,10 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "   this.v3.add(c.rest['foot'+label]);\n", "   this.v3.add(c.rest['foot'+label]);\n   sourceFootLift(this,this.v3,label);\n", 'source swing foot lift');
     // S3 ready stance: front shin vertical under the pelvis, rear foot back on its toes, and the footage's knee bob.
     code = replaceOnce(code, "   sourceFootLift(this,this.v3,label);\n", "   sourceFootLift(this,this.v3,label);\n   sourceIdleStance(this,this.v3,label);\n", 'source idle stance');
+    code = replaceOnce(code, '   this.keepAnkleInLane(this.v3,label);\n', '   this.keepAnkleInLane(this.v3,label);\n   sourceIdleStanceSide(this,this.v3,label);\n', 'source idle stance side');
     code = replaceOnce(code, '   c.bones.hips.position.y-=drop;\n  }\n', '   c.bones.hips.position.y-=drop;\n  }\n  sourceIdleBob(this,c.bones.hips.position);\n', 'source idle bob');
     code = replaceOnce(code, "   this.q.copy(pose.wq[footIdx]).multiply(this.byTarget.get('foot'+label).restSourceQ);\n", "   this.q.copy(pose.wq[footIdx]).multiply(this.byTarget.get('foot'+label).restSourceQ);\n   sourceIdleFoot(this,this.q,label);\n", 'source idle flat front sole');
-    return "import { sourcePostureBone, sourceFootLift, sourceIdleStance, sourceIdleBob, sourceIdleFoot } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
+    return "import { sourcePostureBone, sourceFootLift, sourceIdleStance, sourceIdleStanceSide, sourceIdleBob, sourceIdleFoot } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
   code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);
@@ -455,6 +461,12 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, near: true, pump: 0, trig: 0, left: null, hidden: 0 };',
       'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
     code = replaceOnce(code, '    pivot.add(off);', '    pivot.add(off);\n    attachWeaponGlass(d, off);', 'independent transparent weapon shell at every LOD');
+    // A bow's drawing hand rides its string (weapon-models/stringers.mjs animateBow).
+    code = replaceOnce(code, '      _pT.copy(d.handL.pos); if (w.pump) _pT.z -= 0.036 * w.pump;   // blaster: the support hand racks the pump',
+      '      _pT.copy(d.handL.pos); if (w.pump) _pT.z -= 0.036 * w.pump;   // blaster: the support hand racks the pump\n      if (w.supportZ) _pT.z += w.supportZ;', 'support hand follows a moving grip');
+    // Native ready stance (roller, and any weapon before its source motion loads): the front
+    // (left) foot points straight ahead instead of 11 degrees out (owner review 2026-10-17).
+    code = replaceOnce(code, 'const STANCE_IDLE = [HIPW + 0.012, 0.014, 0.19, -HIPW - 0.008, -0.01, -0.2];', 'const STANCE_IDLE = [HIPW + 0.012, 0.014, 0, -HIPW - 0.008, -0.01, -0.2];', 'native ready stance front foot forward');
     return "import { reverseShotRelease } from '../../patches/splatoon3/runtime/shooter-movement.mjs';\n" +
       "import { attachWeaponGlass } from '../../patches/splatoon3/runtime/weapon-models/kit.mjs';\nimport { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }

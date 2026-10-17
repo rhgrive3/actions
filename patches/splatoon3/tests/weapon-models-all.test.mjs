@@ -84,9 +84,10 @@ test('the real Actor/Runner/Character holds every main weapon through carry and 
       assert.ok([...ch.P].every(Number.isFinite), id + ' finite pose');
       if (a.weaponRunner.busy?.() || a.weaponRunner.firingT > 0 || a.weaponRunner.charging || a.weaponRunner.rolling || a.weaponRunner.flick >= 0) attacked++;
       assert.ok(ch.getMuzzle(new THREE.Vector3()).toArray().every(Number.isFinite), id + ' finite muzzle');
-      // first frames after spawn: the shoulder-reach integrator is still settling
+      // first frames after spawn: the shoulder-reach integrator is still settling; a bow's
+      // drawing hand rides its string (supportZ)
       if (n >= 10 && !ch.dual && ch.P[C.IKL] > .99 && ch.P[C.LTW] < .001)
-        maxGrip = Math.max(maxGrip, ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(hand)));
+        maxGrip = Math.max(maxGrip, ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone().setZ(ch.weapon.def.handL.pos.z + (ch.weapon.supportZ || 0))).distanceTo(ch.bones.handL.getWorldPosition(hand)));
     }
     assert.ok(maxGrip < 0.008, `${id} support hand stays on its grip (${maxGrip.toFixed(4)} m)`);
     assert.ok(attacked > 0, `${id} really attacks during the held-fire window`);

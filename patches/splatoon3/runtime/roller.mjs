@@ -829,7 +829,8 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       axisX.set(1,0,0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
       axisY.set(0,1,0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
       axisZ.set(0,0,1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-      return center.y - bound.halfWidth*Math.abs(axisX.y) - bound.radius*Math.hypot(axisY.y,axisZ.y);
+      // The shoulders, hands and drum drop after this IK (body-proportion.mjs torso shortening).
+      return center.y - bound.halfWidth*Math.abs(axisX.y) - bound.radius*Math.hypot(axisY.y,axisZ.y) - (this.s3ShoulderDrop || 0)*kid.scale.y;
     };
     const evaluate = q => {
       alignLeft(q);
