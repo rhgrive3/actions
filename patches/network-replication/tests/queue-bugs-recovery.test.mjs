@@ -8,7 +8,7 @@ import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs'
 import {normalizeViewSettings} from '../../local-quality/view-settings.mjs';
 import {
   validWeaponId, safeWeaponId, normalizeQueueProfile, settleProgression,
-  reserveLiveStart, releaseLiveStart, canApplyAttractReset, validStartRoster,
+  validStartRoster,
   PROFILE_XP_LIMIT, PROFILE_LEVEL_LIMIT,
 } from '../queue-recovery.mjs';
 
@@ -123,23 +123,6 @@ test('incoming START roster must have one legitimate own human, valid IDs, slots
   for(const row of cases)assert.equal(validStartRoster(row,'guest',weapons,'turf','host'),false,JSON.stringify(row));
 });
 
-test('a scheduled menu reset belongs only to its original attract match and is invalidated before an asynchronous real startup',()=>{
-  const attract={attract:true},live={attract:false},game={match:attract};
-  const epoch=game._queueAttractEpoch||0;
-  assert.equal(canApplyAttractReset(game,attract,epoch,'menu'),true);
-  const start=reserveLiveStart(game);
-  assert.equal(canApplyAttractReset(game,attract,epoch,'menu'),false,'starting during fade cancels reset');
-  releaseLiveStart(game,start);
-  game.match=live;
-  assert.equal(canApplyAttractReset(game,attract,epoch,'menu'),false,'old menu must not dispose live game');
-  assert.equal(canApplyAttractReset(game,live,start,'match'),false);
-  const newer=reserveLiveStart(game);
-  releaseLiveStart(game,start);
-  assert.equal(game._queueStartPending,true,'old startup finally must not clear newer startup');
-  releaseLiveStart(game,newer);
-  assert.equal(game._queueStartPending,false);
-});
-
 test('production composition exposes all queued fixes and retains both Turf and Boss result gates',()=>{
   const main=composed('src/main.js');
   const match=composed('src/game/match.js');
@@ -149,8 +132,9 @@ test('production composition exposes all queued fixes and retains both Turf and 
   }
   assert.ok(main.includes('normalizeQueueProfile(loadJSON('),'boot profile repair not composed');
   assert.ok(main.includes('weapon: safeWeaponId(this.profile.weapon, WEAPONS)'),'offline weapon admission missing');
-  assert.ok(main.includes('canApplyAttractReset(this, previousAttract, resetEpoch, G.mode)'));
-  assert.ok(main.includes('reserveLiveStart(this)'));
+  assert.ok(main.includes('const resetMatch = this.match, resetFlow = this._matchFlow;'),'existing operation-owned attract reset must remain');
+  assert.ok(main.includes('if (this.match !== resetMatch || this._matchFlow !== resetFlow) return;'));
+  assert.ok(main.includes('async startMatch(o = {}, flow = this._beginMatchFlow())'),'existing reliability flow must remain');
   assert.ok(main.includes('if (!a?.weapon || !a.weaponRunner) return;'),'HUD defense missing');
   assert.ok(main.includes("if (!validStartRoster(cfg?.roster, G.net?.myId"));
   assert.equal(main.split('settleProgression(p, PROGRESSION);').length-1,2,'both results XP loops must be bounded');
@@ -163,7 +147,7 @@ test('production composition exposes all queued fixes and retains both Turf and 
 test('composed Game attract callback skips stale live-start and keeps normal menu-only recycling',async()=>{
   const js=composed('src/main.js'),src=method(js,'Game','_updateAttract');
   const G={mode:'menu',time:10,paint:{coverage:()=>[0,0]}};
-  const C=(new Function('G','canApplyAttractReset','return class Game {'+src+'}',))(G,canApplyAttractReset);
+  const C=(new Function('G','return class Game {'+src+'}',))(G);
   function rig(){
     const game=Object.create(C.prototype),old={attract:true},calls=[];
     game.match=old;game.attractT=111;game.shotT=10;game.menus={current:'main'};
@@ -175,11 +159,17 @@ test('composed Game attract callback skips stale live-start and keeps normal men
     return {game,old,calls,settle:()=>settle()};
   }
   const a=rig();a.game._updateAttract(1/60);
-  const start=reserveLiveStart(a.game),live={attract:false,dispose(){throw Error('destroyed live match');}};
-  a.game.match=live;releaseLiveStart(a.game,start);
+  const live={attract:false,dispose(){throw Error('destroyed live match');}};
+  a.game.match=live;
   a.settle();await Promise.resolve();
   assert.equal(a.game.match,live);
   assert.deepEqual(a.calls,['fade'],'stale reset must not alter palette or create a new attract match');
+
+  const pending=rig();pending.game._matchFlow={id:1};pending.game._updateAttract(1/60);
+  pending.game._matchFlow={id:2}; // newer start reserved an operation, but the attract still exists
+  pending.settle();await Promise.resolve();
+  assert.equal(pending.game.match,pending.old);
+  assert.deepEqual(pending.calls,['fade'],'fresh startup invalidates prior fade without replacing original match');
 
   const b=rig();b.game._updateAttract(1/60);
   b.settle();await Promise.resolve();
