@@ -1,8 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import * as R from '../runtime/weapon-models/registry.mjs';
-import * as AP from '../runtime/weapon-appearance.mjs';
-import {VARIANT_MODELS} from '../runtime/weapon-models/shooter-blaster-variants.mjs';
-import {ALTERNATE_WEAPON_KITS} from '../runtime/alternate-weapon-kits-data.mjs';
+import {fixture} from './source-fixture.mjs';
+// Standalone Node CI intentionally has no node_modules/three; the production source
+// fixture resolves the pinned vendored Three and follows normal runtime composition.
+const f=await fixture({fullRuntime:true,productionComposition:true,includeCharacter:true,realProjectiles:true,vmMathRandom:()=>.5,
+ extraExports:"export * as R from './patches/splatoon3/runtime/weapon-models/registry.mjs';export * as AP from './patches/splatoon3/runtime/weapon-appearance.mjs';export {VARIANT_MODELS} from './patches/splatoon3/runtime/weapon-models/shooter-blaster-variants.mjs';export {ALTERNATE_WEAPON_KITS} from './patches/splatoon3/runtime/alternate-weapon-kits-data.mjs';"});
+const {R,AP,VARIANT_MODELS,ALTERNATE_WEAPON_KITS}=f;
 const rows=['Shooter_First_01','Shooter_Normal_01','Shooter_Normal_02'];
 for(const row of rows)test(row+' reuses saved builder and preserves explicit Base/manual/default migration',()=>{
  const kit=ALTERNATE_WEAPON_KITS.find(k=>k.main===row),base=kit.baseId;
