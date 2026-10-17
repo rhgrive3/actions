@@ -2,7 +2,7 @@
 // See reference/main-ink-footprints-2026-10-16.md for images/conditions and
 // limitations. WidthHalf/DepthScale, pellet layout and flight stay with their
 // existing source owners. These profiles only replace the circular body.
-// A 128 x 8 RGBA8 strip (4 KiB) stores left/right edges. Two GPU texel reads,
+// A 128 x 8 RGBA8 strip (4 KiB) stores left/right edges. One GPU lookup,
 // two CPU edge reads; no per-cell trigonometry, extra stamps or simulation.
 export const INK_FOOTPRINT_KINDS = Object.freeze(['ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact']);
 export const INK_PROFILE_SIZE = 128;
@@ -64,7 +64,18 @@ for (let row = 0; row < INK_PROFILE_SECTIONS.length; row++) {
       const width = av === 0 ? bv * Math.sqrt(t) : bv === 0 ? av * Math.sqrt(1 - t) : av + (bv - av) * ease;
       INK_PROFILE_BYTES[offset + channel] = Math.round(width * 255);
     }
-    INK_PROFILE_BYTES[offset + 3] = 255;
+  }
+}
+// Each RGBA texel contains this section's left/right widths (RG) and the
+// *next* section's widths (BA). A single nearest fetch plus explicit mix
+// uses the same 8-bit profile endpoints as the CPU and avoids driver-specific
+// fixed-point interpolation on the 45-degree outline boundary.
+for (let row = 0; row < INK_PROFILE_SECTIONS.length; row++) {
+  for (let i = 0; i < INK_PROFILE_SIZE; i++) {
+    const offset = (row * INK_PROFILE_SIZE + i) * 4;
+    const next = (row * INK_PROFILE_SIZE + Math.min(i + 1, INK_PROFILE_SIZE - 1)) * 4;
+    INK_PROFILE_BYTES[offset + 2] = INK_PROFILE_BYTES[next];
+    INK_PROFILE_BYTES[offset + 3] = INK_PROFILE_BYTES[next + 1];
   }
 }
 
@@ -74,15 +85,12 @@ export function inkFootprintContains(along, across, kind, word) {
   const x = (along + 1) * .5 * (INK_PROFILE_SIZE - 1), i = Math.floor(x), t = x - i;
   const offset = ((kind - 10) * INK_PROFILE_SIZE + i) * 4;
   const channel = across < 0 ? 0 : 1;
-  const width = (INK_PROFILE_BYTES[offset + channel] * (1 - t) + INK_PROFILE_BYTES[offset + 4 + channel] * t) / 255;
+  const width = (INK_PROFILE_BYTES[offset + channel] * (1 - t) + INK_PROFILE_BYTES[offset + 2 + channel] * t) / 255;
   return Math.abs(across) < width;
 }
 
 export function createInkProfileTexture(THREE) {
   const texture = new THREE.DataTexture(INK_PROFILE_BYTES, INK_PROFILE_SIZE, INK_PROFILE_HEIGHT, THREE.RGBAFormat, THREE.UnsignedByteType);
-  // Hardware linear filtering can quantize interpolation differently across
-  // WebGL backends (observed on WebKit). Read the two exact RGBA8 sections
-  // and interpolate in highp shader arithmetic, matching the CPU mask.
   texture.minFilter = texture.magFilter = THREE.NearestFilter;
   texture.generateMipmaps = false; texture.needsUpdate = true;
   return texture;
@@ -95,11 +103,13 @@ float mainInkDistance(vec2 p, vec2 direction, float radius, float kind, float wo
   float along = dot(p, d) / radius;
   float across = dot(p, vec2(-d.y, d.x)) / radius;
   if (mod(word, 2.0) > 0.5) across = -across;
+  // Match the CPU coordinate and explicit blend in highp arithmetic. RG/BA
+  // carry both exact RGBA8 endpoints, so one nearest fetch is sufficient.
   float x = (clamp(along, -1.0, 1.0) + 1.0) * 0.5 * 127.0;
-  float i = floor(x), t = x - i, row = (kind - 10.0 + 0.5) / 8.0;
-  vec2 left = texture2D(uMainInkProfiles, vec2((i + 0.5) / 128.0, row)).rg;
-  vec2 right = texture2D(uMainInkProfiles, vec2((min(i + 1.0, 127.0) + 0.5) / 128.0, row)).rg;
-  vec2 edges = left * (1.0 - t) + right * t;
+  float i = floor(x), t = x - i;
+  vec4 packedEdges = texture2D(uMainInkProfiles,
+    vec2((i + 0.5) / 128.0, (kind - 10.0 + 0.5) / 8.0));
+  vec2 edges = packedEdges.rg * (1.0 - t) + packedEdges.ba * t;
   // A zero-width section is empty. Its centerline is not an ink boundary:
   // returning zero there would leave a half-alpha hair beyond a contact band.
   if (edges.r + edges.g <= 0.0) return radius;

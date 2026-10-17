@@ -218,9 +218,13 @@ test('vertical release, recovery, held ground pushing and lift on a fresh attack
         rows.push(poseRow(api, r, i, [0, 18, 31, 38, 56, 65, 79, 85, 100, 110].includes(i)));
       }
       const floorClearance = row => row.bottom + row.gameplay.root[1];
-      assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002 && floorClearance(x) >= -.006),
-        JSON.stringify(rows.filter(x => x.gripL >= .02 || x.gripR >= .002 || floorClearance(x) < -.006)
-          .map(({index,gripL,gripR,bottom,ik,center,gameplay}) => ({index,gripL,gripR,bottom,ik,center,grounded:gameplay.grounded,rolling:gameplay.rolling}))));
+      const outside = rows.filter(x => !(x.gripL < .02 && x.gripR < .002 && floorClearance(x) >= -.006));
+      assert.equal(outside.length, 0, 'vertical grip and actual floor violations (' + outside.length + '): ' +
+        JSON.stringify(outside.slice(0, 10).map(x => ({
+          frame:x.index, gripL:x.gripL, gripR:x.gripR, bottom:x.bottom,
+          floorClearance:floorClearance(x), ik:x.ik, center:x.center,
+          attack:x.gameplay.attack, rolling:x.gameplay.rolling, grounded:x.gameplay.grounded
+        }))));
       assert.equal(rows[30].gameplay.shots, 0); assert.equal(rows[31].gameplay.shots, 1);
       assert.equal(rows[30].drumW, 0); assert.ok(rows[31].drumW > 30);
       assert.equal(rows[52].gameplay.rolling,false); assert.equal(rows[53].gameplay.rolling,true,'31F release plus22F roll admission');
