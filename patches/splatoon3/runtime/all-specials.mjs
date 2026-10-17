@@ -19,11 +19,22 @@
 import { gearCurve } from './gear.mjs';
 import { disposeInkVac } from './kit-ink-vac.mjs';
 import { endTrizooka } from './kit-trizooka.mjs';
+import { beginZipcasterArmor, arriveZipcasterArmor, updateZipcasterArmor, clearZipcasterArmor } from './zipcaster-armor.mjs';
 import { objectDamageScale, objectDamageRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
+import { specialGaugeLocked, startSpecialGauge, endSpecialGauge, SPECIAL_GAUGE_FRAMES } from './tacticooler-gauge.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-specials.install.v1');
 const FPS = 60, MAX_STAMP_RADIUS = 3.74;
+// Nintendo 2.0.0: Zipcaster main-weapon ink consumption is 67% of normal.
+// Keep affordability and debit in the native runner on the same reduced costs,
+// after its equipped Ink Saver (Main) modifiers have already been applied.
+// https://support.nintendo.com/jp/switch/software_support/av5ja/200.html
+const ZIPCASTER_MAIN_INK_RATE = .67;
+// S3 verification Wiki, Splattercolor Screen (11.2.0 table): 40 contact HP,
+// one hit per 60F. WallDepth=.25 is from the pinned 11.3.0 Chimney table.
+// https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/スミナガシート#spec
+const SCREEN_CONTACT_INTERVAL = 60 / FPS, SCREEN_HALF_DEPTH = .25 / 2;
 const q2 = n => Math.round(n * 100) / 100;
 const q3 = n => Math.round(n * 1000) / 1000;
 const finite = n => typeof n === 'number' && Number.isFinite(n);
@@ -69,7 +80,7 @@ const runtimes = new WeakMap();
 const replaySeen = new WeakMap();
 const SEEN_LIMIT = 384;
 const SPECIAL_ROUND_FIELDS = Object.freeze(['s3AllSpecial','s3AllSpecialPaintRadius','s3AllSpecialActivation','s3AllSpecialSeed','s3DamageReduce',
-  's3TentaTarget','s3TentaAge','s3TentaDescending','s3TentaDirection','s3TentaLaunchedAt','s3AllSpecialMode','s3PaintNoSpecial',
+  's3TentaTarget','s3TentaTargetActor','s3TentaTargetLife','s3TentaAge','s3TentaDescending','s3TentaDirection','s3TentaLaunchedAt','s3AllSpecialMode','s3PaintNoSpecial',
   's3SpecialPowerAP','s3AllSpecialCrossPaintRadius','s3AllSpecialCrossPaintLength','s3AllSpecialSplashAroundRadius','s3AllSpecialSplashAroundCount',
   's3AllSpecialSplashAroundOffsetY','s3AllSpecialSplashAroundVelocityMin','s3AllSpecialSplashAroundVelocityMax','s3AllSpecialSplashAroundPitchMin',
   's3AllSpecialSplashAroundPitchMax','s3AllSpecialTrailPaintWidth','s3AllSpecialTrailPaintDepthScale','s3AllSpecialTrailPaintSpanFrames',
@@ -632,6 +643,7 @@ function removeWorld(rt, object, reason = 'expire') {
   const objects = rt.system._s3AllSpecialObjects || [], at = objects.indexOf(object);
   if (at < 0) return false;
   objects.splice(at,1); disposeMesh(rt,object); object.dead = true;
+  if(object.kind==='wave'||object.kind==='screen')endSpecialGauge(object.owner,object.id,object);
   if (!object.owner?.remote) emitObject(rt,object,reason);
   return true;
 }
@@ -792,10 +804,10 @@ function screenObjectContact(rt,screen,from,to,object) {
 }
 function screenDamageObjects(rt,screen,from,to) {
   if(screen.owner.remote)return;
-  const now=rt.api.G.time,last=screen.lastObjectCross||=new WeakMap();
+  const now=screen.age,last=screen.lastObjectCross||=new WeakMap();
   const canHit=object=>{
     const point=screenObjectContact(rt,screen,from,to,object);if(!point)return null;
-    if(now-(last.get(object)??-Infinity)<.45)return null;
+    if(now-(last.get(object)??-Infinity)+1e-8<SCREEN_CONTACT_INTERVAL)return null;
     last.set(object,now);return point;
   };
   for(const object of rt.system?._s3AllSpecialObjects||[]){
@@ -804,6 +816,22 @@ function screenDamageObjects(rt,screen,from,to) {
   }
   const center=rt.v12.copy(from).lerp(to,.5),radius=screen.width/2+3;
   rt.system?.s3DamageSubObjects?.(screen.owner,center,radius,(_distance,object)=>canHit(object)?40:0,'Chimney',{pierceLOS:true});
+}
+function screenPlayerContact(rt,screen,previous,victim) {
+  // Swept native collider contact against this runtime's rectangular sheet.
+  // The retail sheet's curved silhouette/vertical profile remains calibrated.
+  const before=previous?.pos||victim.pos,oldSheet=previous?.screen||screen.pos;
+  const fromSide=rt.v1.subVectors(before,oldSheet).dot(screen.normal);
+  const toSide=rt.v2.copy(victim.pos).sub(screen.pos).dot(screen.normal);
+  const delta=fromSide-toSide;
+  const t=Math.abs(delta)>1e-8?clamp(fromSide/delta,0,1):0;
+  const radius=Math.max(0,Number(rt.api.PLAYER?.radius)||0);
+  if(Math.abs(fromSide+(toSide-fromSide)*t)>radius+SCREEN_HALF_DEPTH)return null;
+  const player=rt.v3.copy(before).lerp(victim.pos,t),sheet=rt.v4.copy(oldSheet).lerp(screen.pos,t);
+  const across=Math.abs(rt.v5.copy(player).sub(sheet).dot(screen.tangent));
+  const height=Math.max(radius*2,Number(rt.api.PLAYER?.height)||0);
+  if(across>screen.width/2+radius||player.y+height<sheet.y||player.y>sheet.y+screen.height)return null;
+  return {sheet,player};
 }
 function lockWailPair(rt,actor,state,index) {
   const target=selectTargets(rt,actor,1,Infinity)[0]||null,direction=aimDirection(rt,actor,rt.v0).clone();
@@ -924,7 +952,8 @@ function launchMissileStep(rt, actor, state) {
   const origin=state.missileOrigin,spread=(row.index-(row.count-1)/2)*.055;
   const dir=rt.v4.copy(row.dest).sub(origin);dir.x+=Math.sin(spread);dir.normalize();
   const p=launch(rt,actor,'tentaMissiles',origin,dir,{speed:6,grav:11,drag:.08,life:2.8,arc:3.5,seed:nextSeed(state),size:.24});
-  if(p){p.s3TentaTarget=row.dest.clone();p.s3TentaAge=0;p.s3TentaDescending=false;p.s3TentaDirection=dir.clone();p.s3TentaLaunchedAt=state.t;}
+  if(p){p.s3TentaTarget=row.dest.clone();p.s3TentaTargetActor=row.target;p.s3TentaTargetLife=actorLife(row.target);
+    p.s3TentaAge=0;p.s3TentaDescending=false;p.s3TentaDirection=dir.clone();p.s3TentaLaunchedAt=state.t;}
   state.missileIndex++;
   if(state.missileIndex>=state.pendingMissiles.length){
     emitAction(rt,actor,'tentaMissiles',state.serial,'launch',origin,null,nextSeed(state),{count:state.missileIndex});
@@ -952,8 +981,11 @@ function throwStamp(rt,actor,state) {
   emitAction(rt,actor,'ultraStamp',state.serial,'throw',origin,rt.v2.copy(origin).addScaledVector(dir,18),nextSeed(state));
   endSpecial(rt,actor,'thrown');
 }
-function zipTo(rt,actor,state,target) {
+function zipTo(rt,actor,state,target,normal) {
   state.zipStart=actor.pos.clone();state.zipTarget=target.clone();state.phase='hookFlight';state.zipT=0;state.hookFlightT=0;
+  // Reuse this runtime's floor/wall classification. The retail slope cutoff
+  // is not exposed by the sparse hook extraction; ceilings cannot be held.
+  state.zipArrivalWall=!!normal&&Math.abs(normal.y)<=.5;
   // BulletBombMoveParam.SpawnSpeedZSpecUp is the hook's source velocity; the
   // player pull retains its separately calibrated 19 world-unit/s movement.
   state.hookFlightDuration=state.zipStart.distanceTo(state.zipTarget)/(3.36*FPS);
@@ -1048,6 +1080,7 @@ function deployScreen(rt,actor,state) {
   const direction=rt.v2.copy(aim).sub(pos).setY(0).normalize();
   const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:gearCurve(state.specialPowerAP,.04,.053,.06)*FPS,seed:nextSeed(state),scale:[15/8,2,1]});
   object.target=pos.clone().add(object.normal);
+  startSpecialGauge(actor,rt.api.G,'splattercolorScreen',SPECIAL_GAUGE_FRAMES.splattercolorScreen,object);
   emitAction(rt,actor,'splattercolorScreen',state.serial,'screen',pos,object.target,object.seed,{object:object.serial});
   endSpecial(rt,actor,'deployed');
 }
@@ -1057,6 +1090,7 @@ function deployWave(rt,actor,state) {
   const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{dur:390/FPS,maxRadius,maxWaveFrame:maxFrame,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
   object.hp=480;object.maxHp=480;object.pulse=0;object.maxWaveFrame=maxFrame;object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
   object.markingUntil=rt.api.G.time+45/FPS;
+  startSpecialGauge(actor,rt.api.G,'waveBreaker',SPECIAL_GAUGE_FRAMES.waveBreaker,object);
   object.direction=rt.v2.copy(pos).sub(actor.pos).setY(0).normalize();
   emitAction(rt,actor,'waveBreaker',state.serial,'device',pos,null,object.seed,{object:object.serial});
   endSpecial(rt,actor,'deployed');
@@ -1111,6 +1145,7 @@ function updateWaveFront(rt,o) {
 function endSpecial(rt,actor,reason='duration') {
   const state=actorStates.get(actor);
   if(!state)return;
+  if(state.id==='zipcaster')clearZipcasterArmor(actor);
   const pos=actor.pos.clone();
   emitAction(rt,actor,state.id,state.serial,'end',pos,null,nextSeed(state),{reason});
   if(state.ballMesh){disposeMesh(rt,{mesh:state.ballMesh});state.ballMesh=null;}
@@ -1205,6 +1240,10 @@ function creditBooyahGauge(rt,cheerer,ownerRef,ownerLife,activation,callId,ordin
   calls.count=Math.max(calls.count,i+1);
   if(i>=5)return false;
   calls.seen.add(callId);
+  // A cheer still helps the Booyah owner, but cannot recharge the sender
+  // during a placed Tacticooler's lock. Consume its identity before rejecting
+  // the credit so a delayed duplicate cannot become charge after unlock.
+  if(specialGaugeLocked(cheerer))return false;
   const points=[6,3,2,1,.5][i]||0;
   if(points<=0)return false;
   const cost=Number(cheerer.specialCost?.()??cheerer.weapon?.specialCost);
@@ -1358,20 +1397,18 @@ function updateWorld(rt,dt) {
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===o.team)continue;
         const previous=o.previous.get(victim);
-        if(previous){
-          const fromSide=rt.v1.subVectors(previous.pos,previous.screen).dot(o.normal),toSide=rt.v2.copy(victim.pos).sub(o.pos).dot(o.normal);
-          if(o.age>=runStart&&o.age<=runEnd&&fromSide*toSide<=0&&Math.abs(fromSide-toSide)>1e-6){
-            const t=clamp(fromSide/(fromSide-toSide),0,1),player=rt.v3.copy(previous.pos).lerp(victim.pos,t),sheet=rt.v4.copy(previous.screen).lerp(o.pos,t);
-            const x=player.clone().sub(sheet),across=Math.abs(x.dot(o.tangent));
-            if(across<=o.width/2&&player.y+1>=sheet.y&&player.y+1<=sheet.y+o.height){
-              const last=o.lastCross.get(victim)||-Infinity;
-              if(rt.api.G.time-last>=.45){
-                o.lastCross.set(victim,rt.api.G.time);
-                if(victim.isLocal){victim.s3 ||= {};victim.s3.splattercolorUntil=Math.max(victim.s3.splattercolorUntil||0,rt.api.G.time+360/FPS);
-                  victim.s3.splattercolorMarkUntil=Math.max(victim.s3.splattercolorMarkUntil||0,rt.api.G.time+120/FPS);}
-                if(!o.owner.remote)rt.api.G.projectiles.applyHit(o.owner,victim,40,'splattercolorScreen');
-                if(!o.owner.remote){o.crossCount=(o.crossCount||0)+1;emitAction(rt,o.owner,o.id,o.activation,'cross',sheet,player,o.seed,{object:o.serial,index:o.index,tick:o.crossCount});}
-              }
+        if(o.age+1e-8>=runStart&&o.age<=runEnd){
+          const contact=screenPlayerContact(rt,o,previous,victim);
+          if(contact){
+            const last=o.lastCross.get(victim)??-Infinity;
+            // Use the source-frame object clock; G.time is shared by all
+            // fixed substeps of a coarse render update.
+            if(o.age-last+1e-8>=SCREEN_CONTACT_INTERVAL){
+              const {sheet,player}=contact;o.lastCross.set(victim,o.age);
+              if(victim.isLocal){victim.s3 ||= {};victim.s3.splattercolorUntil=Math.max(victim.s3.splattercolorUntil||0,rt.api.G.time+360/FPS);
+                victim.s3.splattercolorMarkUntil=Math.max(victim.s3.splattercolorMarkUntil||0,rt.api.G.time+120/FPS);}
+              if(!o.owner.remote)rt.api.G.projectiles.applyHit(o.owner,victim,40,'splattercolorScreen');
+              if(!o.owner.remote){o.crossCount=(o.crossCount||0)+1;emitAction(rt,o.owner,o.id,o.activation,'cross',sheet,player,o.seed,{object:o.serial,index:o.index,tick:o.crossCount});}
             }
           }
         }
@@ -1511,15 +1548,17 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='zipcaster'){
-    let zipDt=dt;
+    let zipDt=dt;const priorForm=actor.form;
     if(state.phase==='hookFlight'){
       const remain=Math.max(0,(state.hookFlightDuration||0)-(state.hookFlightT||0));
       if(zipDt+1e-8<remain){state.hookFlightT+=zipDt;actor.vel.set(0,0,0);zipDt=0;}
-      else {state.hookFlightT=state.hookFlightDuration||0;zipDt=Math.max(0,zipDt-remain);state.phase='zip';state.zipStart=actor.pos.clone();state.zipT=0;}
+      else {state.hookFlightT=state.hookFlightDuration||0;zipDt=Math.max(0,zipDt-remain);state.phase='zip';state.zipStart=actor.pos.clone();state.zipT=0;
+        beginZipcasterArmor(actor,state);}
     }
     if(state.phase==='zip'&&zipDt>0){
       state.zipT+=zipDt;const from=actor.pos.clone(),delta=rt.v0.copy(state.zipTarget).sub(actor.pos),distance=delta.length();
-      if(distance<.7||state.zipT>1.35){actor.pos.copy(state.zipTarget);actor.vel.set(0,0,0);state.phase='hookWait';state.hookWait=0;}
+      if(distance<.7||state.zipT>1.35){actor.pos.copy(state.zipTarget);actor.vel.set(0,0,0);state.phase='hookWait';state.hookWait=0;
+        arriveZipcasterArmor(actor,state.zipArrivalWall);}
       else {delta.multiplyScalar(Math.min(1,19*zipDt/distance));actor.pos.add(delta);actor.vel.copy(delta).multiplyScalar(1/zipDt);actor.grounded=false;}
       zipContactHits(rt,actor,state,from,actor.pos);
       state.zipPaintT=(state.zipPaintT||0)+zipDt;
@@ -1534,12 +1573,17 @@ function activeStep(rt,actor,dt) {
         fxBurst(rt,actor,state.zipTarget,5.25,'hit');
         emitAction(rt,actor,'zipcaster',state.serial,'hookImpact',state.zipTarget,null,nextSeed(state),{targets:victimHits.length,index:state.zips});}
     }else if(state.phase==='ready')moveActor(rt,actor,dt,state,{speed:actor.intent.squid?6:4.2,squid:true,jump:true});
+    updateZipcasterArmor(actor,{squid:priorForm!=='squid'&&actor.form==='squid'});
     state.inkFuel=Math.max(0,state.inkFuel-(state.inkDrainPerSecond??((state.inkPerSecond??.1305)*100))*dt);
     // Zipcaster has its own 1.5x special ink tank. Let the equipped native
     // WeaponRunner spend from that tank while preserving the player's normal
-    // ink reserve for after the special ends.
+    // ink reserve for after the special ends. Express that reserve in native
+    // main-cost units for the duration of this call: both low-ink admission
+    // and debit then receive the same 67% benefit, including gear-adjusted
+    // costs and progressive charge spending. Do not mutate shared/equipped
+    // weapon definitions or bypass a runner's affordability check with a refund.
     const normalInk=actor.ink;
-    actor.ink=state.inkFuel;
+    actor.ink=state.inkFuel/ZIPCASTER_MAIN_INK_RATE;
     try{
       // WeaponSpSuperHook: ordinary shooting is allowed between hook uses,
       // never during hook flight, player pull, or 12F post-hook wait. Preserve
@@ -1548,20 +1592,23 @@ function activeStep(rt,actor,dt) {
       runSpecialMain(actor,dt,{fire:canFire&&!!actor.intent.fire,
         firePressed:canFire&&edges.fire,sub:false,subReleased:false});
     }finally{
-      state.inkFuel=clamp(Number(actor.ink)||0,0,150);
+      state.inkFuel=clamp((Number(actor.ink)||0)*ZIPCASTER_MAIN_INK_RATE,0,150);
       actor.ink=normalInk;
     }
     const hookInk=state.hookInkCost??(state.hookInk??.025)*100;
     if(state.phase==='ready'&&edges.sub&&elapsed+1e-8>=(state.nextHookAt||0)&&state.inkFuel>=hookInk){
       const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z),direction=aimDirection(rt,actor,rt.v1);
       const contact=rt.api.G.physics?.raycast?.(origin,direction,35,rt.hit,true);
+      // WeaponSpSuperHook MinLengthHook_Floor=3 / MinLengthHook_Wall=0.
+      // Close floor hits fail like an empty hook; close walls remain usable.
+      const closeFloor=contact?.hit&&finite3(contact.point)&&contact.normal?.y>.5&&origin.distanceTo(contact.point)<3;
       // A reticle coordinate is not a surface. Missed hooks neither spend
       // hook ink nor pull the player into empty space (Wiki: 45F miss wait).
-      if(!contact?.hit||!finite3(contact.point)||origin.distanceTo(contact.point)>35+1e-6){
+      if(!contact?.hit||!finite3(contact.point)||origin.distanceTo(contact.point)>35+1e-6||closeFloor){
         state.nextHookAt=elapsed+45/FPS;state.failedHooks=(state.failedHooks||0)+1;
       }else {
         const target=contact.point.clone();state.inkFuel-=hookInk;
-        state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target);
+        state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target,contact.normal);
       }
     }
     if(state.inkFuel<=0||elapsed+1e-8>=state.duration)returnToOrigin(rt,actor,state,state.inkFuel<=0?'ink':'duration');
@@ -1790,6 +1837,7 @@ function makeState(rt,actor,id) {
 
   actorStates.set(actor,state);actor._s3AllSpecialState=state;
   actor.specialActive={id,t:0,phase:state.phase,armor:false,armorHP:state.armorHP,activation:serial};
+  if(id==='tentaMissiles'||id==='superChump')startSpecialGauge(actor,rt.api.G,id,SPECIAL_GAUGE_FRAMES[id]);
   emitAction(rt,actor,id,serial,'activate',actor.pos,null,state.seed,{duration:q3(duration)});
   return state;
 }
@@ -1805,6 +1853,10 @@ function installRuntime(api) {
     zero:new THREE.Vector3(),up:new THREE.Vector3(0,1,0),down:new THREE.Vector3(0,-1,0),hit:api.Hit ? new api.Hit() : null};
   if(!rt.hit)rt.hit={hit:false,point:new THREE.Vector3(),normal:new THREE.Vector3(),dist:0};
   runtimes.set(Projectiles,rt);
+  // Only native completed attacks/jumps retire wall protection. Input held
+  // through hook flight / hookWait may still be denied by the action runner.
+  api.on?.('weapon:fire',event=>updateZipcasterArmor(event?.actor,{fire:true}));
+  api.on?.('actor:jump',event=>updateZipcasterArmor(event?.actor,{jump:true}));
   api.on?.('all:special',event=>{
     if(event?.action==='cheer'&&event.id==='booyahBomb'&&Number.isSafeInteger(event.ownerNid)&&Number.isSafeInteger(event.ownerLife)
       &&Number.isSafeInteger(event.activation)&&Number.isSafeInteger(event.seed))
@@ -1893,6 +1945,14 @@ function installRuntime(api) {
     }else if(!(this._s3AllSpecialObjects?.length||0))this._s3AllSpecialWorldClock=0;
     for(const p of this.list||[]){
       if(p?.s3TentaTarget&&p.s3AllSpecial==='tentaMissiles'){
+        // The S3 mechanics reference describes tracking before the overhead
+        // descent/landing marker. A launch-time coordinate alone makes every
+        // missile miss a moving target even during that tracking phase.
+        // Keep the existing calibrated .7s transition; its retail timing and
+        // the missing long-range horizontal phase remain unverified.
+        const target=p.s3TentaTargetActor;
+        if(!p.s3TentaDescending&&target?.alive&&finite3(target.pos)&&actorLife(target)===p.s3TentaTargetLife)
+          p.s3TentaTarget.copy(groundAt(rt,target.pos,rt.v2));
         p.s3TentaAge=(p.s3TentaAge||0)+dt;
         if(p.s3TentaAge<.7){const d=p.s3TentaDirection||rt.up;p.vel.x=d.x*4;p.vel.z=d.z*4;p.vel.y=14;p.grav=12;p.drag=.03;}
         else {p.s3TentaDescending=true;p.grav=0;p.drag=0;const diff=rt.v11.subVectors(p.s3TentaTarget,p.pos),distance=diff.length(),flight=clamp(distance/25,.12,.55);p.vel.copy(diff).multiplyScalar(1/flight);}

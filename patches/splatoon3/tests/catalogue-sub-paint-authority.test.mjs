@@ -102,3 +102,20 @@ test('malformed catalogue birth cannot grant a core rejected by normal catalogue
     const b=await client('b','burst'),bad=wire(birth);mutate(bad[5]);play(b,[bad,core]);assert.equal(b.paint.counts[0],0);
   }
 });
+
+test('Fizzy ground-fuse envelope remains bounded and cannot authorize a third core from a short-charge birth',async()=>{
+  const a=await client('a','fizzy'),rows=fire(a,'fizzy',130);
+  const birth=rows.find(e=>e[1]==='ac'&&e[5].phase==='spawn');
+  const third=rows.find(e=>e[1]==='s'&&e[15]?.[0]==='inkwave-sub-core-v1'&&e[15][5]===2);
+  assert.ok(birth&&third,'a full charge produces its third grounded core');
+  for(const [label,change] of [
+    ['teleport',(b,c)=>{c[2]+=10000;}],
+    ['radius',(b,c)=>{c[5]+=.1;}],
+    ['extra core',(b,c)=>{c[15][5]=3;}],
+    ['short charge',(b,c)=>{b[5].hold=.1;b[5].charge=.05;}],
+    ['legacy permit',(b,c)=>{c[15]=null;}],
+  ]){
+    const receiver=await client('b','fizzy'),b=wire(birth),c=wire(third);change(b,c);play(receiver,[b,c]);
+    assert.equal(receiver.paint.counts[0],0,label+' cannot gain the third-core grant');
+  }
+});

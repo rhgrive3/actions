@@ -18,7 +18,7 @@ for(const sub of ['inkMine','angleShooter'])for(const ap of [0,10,57])test(`${su
  const obj=f.G.projectiles.throwBomb(o);assert.ok(obj);obj.pos.set(0,.7,0);obj.prev.copy(obj.pos);obj.vel.set(0,0,60);
  if(sub==='inkMine'){obj.phase='deployed';obj.vel.set(0,0,0);obj.activeAt=0;obj.deployedAt=0;obj.expireAt=Infinity;}
  for(let i=0;i<20&&!v.s3.revealedUntil?.[0];i++)f.G.projectiles.update(1/60);
- assert.ok(v.s3.revealedUntil?.[0]>10);near(v.s3.revealedUntil[0]-10,5*gearCurve(ap,1,sub==='inkMine'?.55:.43,.1));
+ assert.ok(v.s3.revealedUntil?.[0]>10);near(v.s3.revealedUntil[0]-10,(5-(sub==='angleShooter'?obj.age:0))*gearCurve(ap,1,sub==='inkMine'?.55:.43,.1));
 });
 test('overlapping marks retain max admitted deadline across gear changes and sources',async()=>{
  const f=await world(),v=f.make();v.team=1;equip(v,57);f.pointSensorMark(v,0,10,8);near(v.s3.revealedUntil[0],10.8);f.pointSensorMark(v,0,10.1,5);near(v.s3.revealedUntil[0],10.8);

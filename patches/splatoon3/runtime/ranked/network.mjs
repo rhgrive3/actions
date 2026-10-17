@@ -1,5 +1,6 @@
 import { validRankedSnapshot } from './engine.mjs';
 import { withObjectDamageCause } from '../sub-resistance.mjs';
+import { specialGaugeLocked } from '../tacticooler-gauge.mjs';
 
 const damageCauses = new Set(['Gachihoko_Bullet', 'Gachihoko_BombCore', 'GachihokoTimeUpBurst']);
 
@@ -144,7 +145,7 @@ export function acceptState(nm, packet) {
   m.time = engine.time;
   if (Array.isArray(packet.gains) && packet.gains.length === 2 && packet.gains.every(n => Number.isFinite(n) && n >= 0 && n < 10000)) {
     const previous = m.rankedGains || [0, 0];
-    for (const a of m.actors) if (!a.remote && a.alive && !a.specialActive) {
+    for (const a of m.actors) if (!a.remote && a.alive && !a.specialActive && !specialGaugeLocked(a)) {
       const gain = Math.max(0, packet.gains[a.team] - previous[a.team]);
       a.special = Math.min(a.specialCost(), a.special + gain);
     }

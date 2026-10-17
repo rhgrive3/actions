@@ -3,7 +3,32 @@ on:
   pull_request:
     paths:
       - 'patches/splatoon3/runtime/all-specials.mjs'
+      - 'patches/splatoon3/runtime/all-subs.mjs'
+      - 'patches/splatoon3/runtime/kit-*.mjs'
+      - 'patches/splatoon3/runtime/catalogue.mjs'
+      - 'patches/splatoon3/runtime/special-*.mjs'
+      - 'patches/splatoon3/runtime/support-cooler.mjs'
+      - 'patches/splatoon3/runtime/sub-special-fidelity.mjs'
+      - 'patches/splatoon3/runtime/triple-slam-fists.mjs'
+      - 'patches/splatoon3/runtime/trizooka-collision.mjs'
+      - 'patches/splatoon3/runtime/respawn-lifecycle.mjs'
+      - 'patches/splatoon3/runtime/tacticooler-gauge.mjs'
+      - 'patches/splatoon3/runtime/zipcaster-armor.mjs'
+      - 'patches/splatoon3/runtime/movement.mjs'
+      - 'patches/splatoon3/runtime/storm-*.mjs'
+      - 'patches/local-quality/tenacity.mjs'
+      - 'patches/local-quality/tests/tenacity.test.mjs'
       - 'patches/splatoon3/tests/special-*.test.mjs'
+      - 'patches/splatoon3/tests/triple-splashdown-presentation.test.mjs'
+      - 'patches/splatoon3/tests/sub-community-behavior.test.mjs'
+      - 'patches/splatoon3/tests/curling-community-fidelity.test.mjs'
+      - 'patches/splatoon3/tests/catalogue-integration.test.mjs'
+      - 'patches/splatoon3/tests/tacticooler-gauge-lock.test.mjs'
+      - 'patches/splatoon3/tests/kit-trizooka*.test.mjs'
+      - 'patches/splatoon3/tests/trizooka-birth-swim.test.mjs'
+      - 'patches/splatoon3/tests/deployed-special-gauge-lock.test.mjs'
+      - 'patches/splatoon3/tests/burst-contact-phases.test.mjs'
+      - 'scripts/check-inkwave-splashdown-browser.mjs'
       - '.github/workflows/inkwave-specials-1130.yml'
   workflow_dispatch:
 permissions:
@@ -14,6 +39,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            inkwave-public
+            patches
+            scripts
+            reports/ink-volume/source
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -41,3 +73,67 @@ jobs:
             patches/splatoon3/tests/special-projectile-paint-credit.test.mjs \
             patches/splatoon3/tests/special-presentation.test.mjs \
             patches/splatoon3/tests/special-projectile.test.mjs
+      - name: Public sub and current catalogue lifecycle regressions
+        run: |
+          node --experimental-vm-modules --test --test-concurrency=2 \
+            patches/splatoon3/tests/special-zipcaster-ink-screen-contact.test.mjs \
+            patches/splatoon3/tests/special-missile-tracking-hook-range.test.mjs \
+            patches/splatoon3/tests/sub-community-behavior.test.mjs \
+            patches/splatoon3/tests/curling-community-fidelity.test.mjs \
+            patches/splatoon3/tests/catalogue-integration.test.mjs \
+            patches/splatoon3/tests/tacticooler-gauge-lock.test.mjs \
+            patches/splatoon3/tests/kit-trizooka-geometry.test.mjs \
+            patches/splatoon3/tests/kit-trizooka-native.test.mjs \
+            patches/splatoon3/tests/trizooka-birth-swim.test.mjs \
+            patches/splatoon3/tests/special-zipcaster-armor.test.mjs \
+            patches/splatoon3/tests/deployed-special-gauge-lock.test.mjs \
+            patches/splatoon3/tests/burst-contact-phases.test.mjs \
+            patches/local-quality/tests/tenacity.test.mjs \
+            patches/splatoon3/tests/triple-splashdown-presentation.test.mjs
+  catalogue-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            inkwave-public
+            patches
+            scripts
+            reports/ink-volume/source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - name: Build actual production composition
+        run: node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Check actual catalogue activation with and without optional VFX
+        run: node scripts/check-inkwave-splashdown-browser.mjs --site _site --evidence-dir .ci-scratch/splashdown-browser
+      - name: Verify new boundaries in emitted modules
+        run: |
+          INKWAVE_TENACITY_BUILT_SITE=_site INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-concurrency=2 \
+            patches/splatoon3/tests/special-zipcaster-ink-screen-contact.test.mjs \
+            patches/splatoon3/tests/special-missile-tracking-hook-range.test.mjs \
+            patches/splatoon3/tests/sub-community-behavior.test.mjs \
+            patches/splatoon3/tests/curling-community-fidelity.test.mjs \
+            patches/splatoon3/tests/catalogue-integration.test.mjs \
+            patches/splatoon3/tests/tacticooler-gauge-lock.test.mjs \
+            patches/splatoon3/tests/kit-trizooka.test.mjs \
+            patches/splatoon3/tests/kit-trizooka-geometry.test.mjs \
+            patches/splatoon3/tests/kit-trizooka-native.test.mjs \
+            patches/splatoon3/tests/trizooka-birth-swim.test.mjs \
+            patches/splatoon3/tests/special-zipcaster-armor.test.mjs \
+            patches/splatoon3/tests/deployed-special-gauge-lock.test.mjs \
+            patches/splatoon3/tests/burst-contact-phases.test.mjs \
+            patches/local-quality/tests/tenacity.test.mjs \
+            patches/splatoon3/tests/kit-ink-vac.test.mjs \
+            patches/splatoon3/tests/support-kit-recon-cooler.test.mjs \
+            patches/splatoon3/tests/triple-splashdown-presentation.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-catalogue-splashdown-lifecycle
+          path: .ci-scratch/splashdown-browser/
+          if-no-files-found: error

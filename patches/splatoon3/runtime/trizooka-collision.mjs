@@ -9,12 +9,13 @@
 //   - presentation (stage, orbit, growing radii, volley identity) runs for a
 //     GHOST as well, so a remote volley looks right even after its transport is
 //     gone;
-//   - authority (damage, paint, turf, gauge) is refused for a ghost AND for a
-//     side lobe, whatever the transport is doing.
+//   - authority (damage, paint, turf, gauge) is refused for a ghost; all three
+//     local lobes collide and paint, sharing the action's strongest-hit cap.
 //
 // Every helper returns without touching anything unless the projectile belongs
 // to this kit, so an un-composed build stays byte-identical to native.
 import { selectTrizookaFlight, selectTrizookaCollision, trizookaOrbitOffset, TRIZOOKA_PROJECTILE_FIELDS, TRIZOOKA_ORBIT } from './kit-trizooka.mjs';
+import { damageGroupId } from './final-damage.mjs';
 
 export const TRIZOOKA_WID = 'trizooka';
 
@@ -25,14 +26,17 @@ export const TRIZOOKA_WID = 'trizooka';
 // once `G.netm` is null, or a ghost is stepped outside the mute window, a mute
 // based guard would quietly start letting ghost ink through.
 const KIT_GHOST_WIDS = new Set([TRIZOOKA_WID, 'inkVac']);
+const VOLLEY_VICTIM_LIVES = new WeakMap();
 
 let PLAYER_CONFIG = null;
 let SPECIALS_CONFIG = null;
+let WORLD_CONFIG = null;
 // The kit is configured by its installer; before that the helpers fall back to
 // the same constants native config.js carries, so nothing is ever undefined.
-export function configureTrizookaNative({ PLAYER, SPECIALS } = {}) {
+export function configureTrizookaNative({ PLAYER, SPECIALS, G } = {}) {
   if (PLAYER) PLAYER_CONFIG = PLAYER;
   if (SPECIALS) SPECIALS_CONFIG = SPECIALS;
+  if (G) WORLD_CONFIG = G;
 }
 const playerRadius = () => PLAYER_CONFIG?.radius ?? 0.38;
 
@@ -45,7 +49,39 @@ export function isKitProjectile(p) {
 // #1057: all three locally-fired Trizooka globs are authoritative. A ghost
 // keeps kit identity for presentation but is never allowed to damage or paint.
 export function hasAuthority(p) {
-  return isKitProjectile(p) && !p.ghost && p.damageOwner === true;
+  return isKitProjectile(p) && !p.ghost && !p.s3TrizookaBirthPending && p.damageOwner === true;
+}
+
+// Native delay owns the clock and active integration fraction. Publish only
+// when that delay has elapsed; zero-time births at a tick endpoint are flushed
+// after the native list pass and before draw, never advanced a second time.
+export function trizookaBirthLife(actor) {
+  return Math.max(Number.isSafeInteger(actor?.netLife) ? actor.netLife : 0,
+    Number.isSafeInteger(actor?.net?.lastLife) ? actor.net.lastLife : 0);
+}
+export function kitTrizookaBirth(system, p) {
+  if (!isKitProjectile(p) || !p.s3TrizookaBirthPending || p.delay > 1e-10) return false;
+  // Unborn globs do not become new attacks after death, a new life or handoff.
+  // Already-born globs remain owned by the native flight/terminal pipeline.
+  if (!p.owner?.alive || trizookaBirthLife(p.owner) !== p.s3TrizookaBirthLife ||
+      p.owner.owner !== p.s3TrizookaBirthOwner || !!p.owner.remote !== p.s3TrizookaBirthRemote) {
+    p.s3TrizookaBirthPending = false; p.s3TrizookaBirthCancelled = true; p.damageOwner = false;
+    return false;
+  }
+  p.delay = 0; p.s3TrizookaBirthPending = false;
+  if (!p.ghost && !p.owner?.remote) WORLD_CONFIG?.netm?.recProj?.(p);
+  return true;
+}
+export function flushTrizookaBirths(system) {
+  for (let i = system.list.length - 1; i >= 0; i--) {
+    const p = system.list[i];
+    if (!p.s3TrizookaBirthPending || p.delay > 1e-10) continue;
+    kitTrizookaBirth(system, p);
+    if (p.s3TrizookaBirthCancelled) {
+      system.list[i] = system.list[system.list.length - 1]; system.list.pop();
+      if (system._recycle) system._recycle(p); else system.pool.push(p);
+    }
+  }
 }
 
 // Every local glob is a damage carrier; replay ghosts are not.
@@ -412,13 +448,54 @@ export function kitPaintCredit(p, area) {
   return area;
 }
 
-// #1057 gives each Trizooka glob its own native `p.vol.hits` record. This
-// authority gate therefore prevents replay ghosts from writing hit state while
-// allowing every local glob to independently hit the same victim. Ordinary
-// drop/slosh rounds keep their native shared-vol semantics untouched.
+// Each Trizooka glob keeps its native p.vol.hits collision record. Damage from
+// different globs is combined by kitTrizookaDamageDelta below; this authority
+// gate keeps replay ghosts from writing either kind of hit state.
 export function kitVolleyHitAuthority(p) {
   if (!isKitProjectile(p)) return true;
   return hasAuthority(p);
+}
+
+// S3mix (11.3.0), Ultra Shot / 弾の仕様: a firing action deals the
+// strongest of its three globs' contacts, never their sum. An earlier splash
+// can be upgraded to a direct hit. Per-glob native vol.hits still prevents
+// repeated contact from the same projectile; this ledger spans all three.
+function trizookaVictimLedger(p, victim) {
+  const ledger = p.s3TrizookaVolleyDamage;
+  if (!ledger) return null;
+  let lives = VOLLEY_VICTIM_LIVES.get(ledger);
+  if (!lives) { lives = new WeakMap(); VOLLEY_VICTIM_LIVES.set(ledger, lives); }
+  // Production combat-life increments netLife at every genuine spawnAt.
+  // A surviving lobe must not inherit an earlier life of the same Actor.
+  const life = Number.isSafeInteger(victim.netLife) ? victim.netLife : 0;
+  if (lives.has(victim) && lives.get(victim) !== life) ledger.delete(victim);
+  lives.set(victim, life);
+  return ledger;
+}
+export function kitTrizookaDamageDelta(p, victim, amount) {
+  if (!isKitProjectile(p)) return amount;
+  if (!hasAuthority(p) || !(amount > 0)) return 0;
+  const ledger = trizookaVictimLedger(p, victim);
+  if (!ledger) return amount; // legacy standalone projectile, no firing action
+  const previous = ledger.get(victim) || 0;
+  if (amount <= previous) return 0;
+  ledger.set(victim, amount);
+  return amount - previous;
+}
+
+// Keep the action identity through native defense and network routing. Armor
+// penetration and final HP rounding need the same group for splash and direct
+// increments. Invulnerable contacts do not reserve any of the action's budget.
+export function kitTrizookaApplyHit(system, p, victim, amount) {
+  if (!isKitProjectile(p)) return system.applyHit(p.owner, victim, amount, p.wid || 'blaster');
+  const ledger = trizookaVictimLedger(p, victim), previous = ledger?.get(victim);
+  const delta = kitTrizookaDamageDelta(p, victim, amount);
+  if (!(delta > 0)) return;
+  const result = system.applyHit(p.owner, victim, delta, p.wid, damageGroupId(ledger));
+  if (ledger && result === 'rejected-invulnerable') {
+    if (previous === undefined) ledger.delete(victim); else ledger.set(victim, previous);
+  }
+  return result;
 }
 
 // ---- pooled reuse ------------------------------------------------------------

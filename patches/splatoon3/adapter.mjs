@@ -1076,6 +1076,10 @@ export function adaptSource(rel, code) {
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
+    // Fidelity recomputes a main projectile's full damage. Route the special
+    // only after that transform so its strongest-contact delta is not reset.
+    code = replaceOnce(code, '          if (dmg > 0) applyFidelityProjectileHit(this, p, e, dmg, _v);',
+      "          if (dmg > 0) { if (p.wid === 'trizooka') kitTrizookaApplyHit(this, p, e, dmg); else applyFidelityProjectileHit(this, p, e, dmg, _v); }", 'Trizooka shared action direct damage');
     // #1135: S3 standard Slosher has no opponent-damage landing splash record.
     // Keep landing FX/paint, but do not let a zero-damage legacy radius poison
     // the shared volley hit cache or emit false hit feedback.
@@ -1164,7 +1168,7 @@ export function adaptSource(rel, code) {
       'Blaster independent air-burst knockback radius');
     code = replaceOnce(code,
       "      this.applyHit(p.owner, e, p.s3SpecialWeapon ? distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)) : blasterBurstDamage(p, w, d, distanceDamage), p.wid || 'blaster');",
-      "      if (p.s3SpecialWeapon) this.applyHit(p.owner, e, distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)), p.wid || 'blaster');\n      else applyBlasterBlastContact(this, p, e, c, _v, d <= damageRadius ? blasterBurstDamage(p, w, d, distanceDamage) : 0, G.netm);",
+      "      if (p.s3SpecialWeapon) kitTrizookaApplyHit(this, p, e, distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)));\n      else applyBlasterBlastContact(this, p, e, c, _v, d <= damageRadius ? blasterBurstDamage(p, w, d, distanceDamage) : 0, G.netm);",
       'Blaster air-burst authoritative contact');
     code = adaptPaintOwnership(rel, code, replaceOnce);
     return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint, kitBombKnockback } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, applyBlasterBlastContact, BLASTER_KNOCKBACK } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
@@ -1311,6 +1315,8 @@ export function adaptSource(rel, code) {
     const fallBody = code.slice(fallStart, fallEnd).replace('      return;', '      return true;');
     code = code.slice(0, fallStart) + '    if (this._checkFallDeath()) return;\n\n' + code.slice(fallEnd);
     code = replaceOnce(code, '  _nearCamera() {', '  _checkFallDeath() {\n    const P = PLAYER;\n' + fallBody + '    return false;\n  }\n\n  _nearCamera() {', 'shared environmental death');
+    code = replaceOnce(code, "    if (this.specialActive) a.form = 'kid';",
+      "    if (this.specialActive && this.specialActive.id !== 'trizooka') a.form = 'kid';", 'Trizooka native swim presentation');
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',
       '    this._updateClimb(dt, isSquid, jumpPressed);\n    const actionHandled = beforeActions(this, dt, jumpPressed, { wasSquid, wasSubmerged, wasClimbing, firePressed, fireWins });', 'movement actions');
     code = replaceOnce(code, '  _updateClimb(dt, isSquid) {',

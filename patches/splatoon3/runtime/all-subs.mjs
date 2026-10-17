@@ -77,8 +77,8 @@ export const ALL_SUB_SPECS = Object.freeze({
     inheritX: 1.6, inheritZ: 2, inheritYPlus: 4, inheritYMax: speedPerSecond(.32),
     radius: 6.5, damageInner: 2.85, damageOuter: 6.5, damageMax: rawDamage(1800), damageMin: rawDamage(300), damageFalloff: 'discrete',
     paintRadius: 4, gravity: accelPerSecondSquared(.016), flyPositionAirResist: .05866, flyRotateAirResist: .01985,
-    chaseRadius: 10, chaseSpeed: 5.4,
-    findRotateFrames: 10, noTargetBurstWaitFrames: 180, chaseBurstWaitFrames: 60,
+    chaseRadius: 2.5 * 5, chaseSpeed: 5.4,
+    findRotateFrames: 10, noTargetBurstWaitFrames: 60, unreceivedTargetWaitFrames: 180, chaseBurstWaitFrames: 60,
     approachBurstWaitFrames: 60, unfindBurstWaitFrames: 60,
     chaseMovement: Object.freeze({
       beforeRotateFrames:30, yawDegreesPerFrame:2,
@@ -87,7 +87,7 @@ export const ALL_SUB_SPECS = Object.freeze({
       approachDistance:.65,
     }),
     chaseSeconds: frameSeconds(150), noTargetSeconds: frameSeconds(180),
-    inkCostFallback: 55, calibration: 'damage/radius/chase timing, ground-air acceleration/speed limits, yaw, approach distance and burst wait fields extracted; target choice, panel impacts, steering and world mapping calibrated',
+    inkCostFallback: 55, calibration: 'damage/chase movement and wait fields extracted; Wiki measures search radius 2.5 trial lines and ordinary no-target warning 60F (UnfindBurstWaitFrame); NoReceiveTargetBurstWaitFrame=180 remains distinct; target shape, panel impacts, steering and world mapping calibrated',
   }),
   fizzy: Object.freeze({
     id: 'fizzy', name: 'Fizzy Bomb', source: 'WeaponBombFizzy.game__GameParameterTable.json',
@@ -95,7 +95,8 @@ export const ALL_SUB_SPECS = Object.freeze({
     throwSpeed: speedPerSecond(1.36), throwSpeedTiers: Object.freeze({ low: speedPerSecond(1.36), mid: speedPerSecond(1.6), high: speedPerSecond(1.84) }),
     spawnSpeedY: speedPerSecond(.24), spawnSpeedYWorldMin: speedPerSecond(-.4),
     inheritX: 1.6, inheritZ: 2, inheritYPlus: 4, inheritYMax: speedPerSecond(.32),
-    chargeFrames: Object.freeze([40, 80]), burstWaitFrames: Object.freeze([15, 1, 1]), objectDamage: rawDamage(100),
+    chargeFrames: Object.freeze([40, 80]), burstWaitFrames: Object.freeze([15, 1, 1]),
+    burstWarnFrames: Object.freeze([15, 7, 7]), firstGroundFuseFrames: 30, objectDamage: rawDamage(100),
     hop: Object.freeze({ lowPitchDeg: 48, highPitchDeg: 58, lowVelocity: speedPerSecond(.24), highVelocity: speedPerSecond(.32) }),
     flySplashDistance: Object.freeze([2.2,2.2,2.2]),
     flySplashPaintRadius: Object.freeze([.9,1.0,1.1]),
@@ -114,8 +115,8 @@ export const ALL_SUB_SPECS = Object.freeze({
       Object.freeze({ radius: 4.5, damageInner: 1.95, damageOuter: 4.5, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.4, crossPaintRadius: 2.0 }),
       Object.freeze({ radius: 5.45, damageInner: 2.6, damageOuter: 5.45, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.8, crossPaintRadius: 2.0 }),
     ]),
-    gravity: 24, groundGravity: accelPerSecondSquared(.016), flyRotateAirResist: .018, inkCostFallback: 60,
-    calibration: 'per-stage charge frames, blast, hop and flight-splash arrays extracted; acceleration mapped from community testing; bounce flight, paint stamp shape and hop interval calibrated',
+    gravity: 24, maxFlightSeconds: 2.2, groundGravity: accelPerSecondSquared(.016), flyRotateAirResist: .018, inkCostFallback: 60,
+    calibration: 'per-stage charge/wait/warn frames, blast, hop and flight-splash arrays extracted; Wiki measures initial grounded fuse about 30F and later bursts on re-landing; acceleration mapped from community testing; ground rolling/side-wall rebound, bounce flight, stamp shape and exact warning-state mapping calibrated',
   }),
   torpedo: Object.freeze({
     id: 'torpedo', name: 'Torpedo', source: 'WeaponBombTorpedo.game__GameParameterTable.json',
@@ -131,7 +132,7 @@ export const ALL_SUB_SPECS = Object.freeze({
     throwBlast: Object.freeze({ nearDamage: rawDamage(600), farDamage: rawDamage(350), nearRadius: 2.6, farRadius: 6, paintRadius: 3.5 }),
     chaseBlast: Object.freeze({ nearDamage: rawDamage(600), farDamage: rawDamage(350), nearRadius: 2.6, farRadius: 6, paintRadius: 3.5 }),
     splashRadius: 2.6, splashPaintRadius: 2, splashDamage: rawDamage(120),
-    inkCostFallback: 65, calibration: 'throw/chase damage bands, recovery, fuse, 20F chase-start delay and throw tuple extracted; delay origin/target acquisition, separate splash actor/object routing and world mapping calibrated',
+    inkCostFallback: 65, calibration: 'throw/chase damage bands, recovery, fuse, 20F chase-start delay and throw tuple extracted; delay origin/target acquisition, lost-target last-position steering, separate splash actor/object routing and world mapping calibrated',
   }),
   inkMine: Object.freeze({
     id: 'inkMine', name: 'Ink Mine', source: 'WeaponTrap.game__GameParameterTable.json',
@@ -163,9 +164,9 @@ export const ALL_SUB_SPECS = Object.freeze({
     inkCost: 40, inkCostStatus: 'extracted', inkRecoverStop: frameSeconds(50),
     throwSpeed: speedPerSecond(6.3), throwSpeedTiers: Object.freeze({ low: speedPerSecond(6.3), mid: speedPerSecond(6.55), high: speedPerSecond(6.8) }),
     spawnSpeedY: 0, spawnSpeedYWorldMin: speedPerSecond(-100), inheritX: 0, inheritYPlus: 0, inheritYMax: 0,
-    directDamage: rawDamage(400), markFrames: Object.freeze([300, 450, 600]),
-    flightFrames: 7, tailFrames: 90, paintRadius: 2.6, collisionRadius: .25, gravity: 0, flyPositionAirResist: 0, maxBounces: 2,
-    inkCostFallback: 40, calibration: 'direct damage, marking/tail frames, paint radius and throw speed extracted; rebound mapping calibrated',
+    directDamage: rawDamage(400), directPaintRadius: 2, markFrames: Object.freeze([300, 450, 600]),
+    flightFrames: 7, tailFrames: 90, paintRadius: 2.6, collisionRadius: .25, gravity: 0, flyPositionAirResist: 0,
+    inkCostFallback: 40, calibration: 'direct damage, marking/tail frames, paint radius and throw speed extracted; residual line marks without damage; Wiki starts mark clock at release; line width, rebound mapping and raw90F versus Wiki105F tail interpretation calibrated/unverified',
   }),
   splashWall: Object.freeze({
     id: 'splashWall', name: 'Splash Wall', source: 'WeaponShield.game__GameParameterTable.json',
@@ -228,6 +229,14 @@ function ownerLife(owner) { return Number.isSafeInteger(owner?.netLife) && owner
 function localOwner(owner) { return !!owner && owner.remote !== true; }
 function hasActiveTorpedo(projectiles, owner) {
   return !!projectiles&&!!owner&&entityList(projectiles).some(o=>!o.dead&&o.owner===owner&&o.subId==='torpedo'&&o.phase!=='ghostWait');
+}
+function canPlaceInkMine(projectiles,owner){
+  // S3 mix Wiki: mines are placed at the feet on ground, and another mine
+  // cannot be placed inside an existing one's sensor circle. Gate before the
+  // native runner pays ink, as well as at the direct projectile entry point.
+  if(!owner?.grounded||!finite3(owner.pos))return false;
+  return !entityList(projectiles).some(o=>!o.dead&&o.owner===owner&&o.subId==='inkMine'&&o.phase==='deployed'&&
+    o.pos.distanceToSquared(owner.pos)<=o.spec.sensorRadius**2);
 }
 
 function emitEvent(api, object, phase, extra = {}) {
@@ -363,12 +372,16 @@ function createObject(api, projectiles, owner, id, record = {}) {
     expireAt: Infinity, activeAt: Infinity,
   };
   if(id==='splashWall')object.wallHpInitial=object.hp;
+  if(id==='angleShooter')object.lineSegments=[];
   const heldSeconds = Number.isFinite(record.hold) ? record.hold : owner.weaponRunner?.s3SubHold || 0;
   if (id === 'fizzy') {
     const hold = heldSeconds;
     object.popLimit = hold >= frameSeconds(spec.chargeFrames[0] + spec.chargeFrames[1]) ? 3 : hold >= frameSeconds(spec.chargeFrames[0]) ? 2 : 1;
     object.pops = object.popLimit;
-    object.fuse = frameSeconds(spec.burstWaitFrames[0]);
+    // BurstWaitFrame is a subphase, not a release-time fuse. The Wiki observes
+    // about .5 s of ground contact before the first pop; later hops pop only
+    // after returning to the ground, never one frame into their airborne arc.
+    object.fuse = frameSeconds(spec.firstGroundFuseFrames);
   }
   const list = entityList(projectiles);
   while (list.length >= MAX_OBJECTS) removeObject(api, projectiles, list[0], true);
@@ -439,6 +452,10 @@ function removeObject(api, projectiles, object, silent = false) {
     api.emit?.('sub:beakon-expire',{ actor:object.owner, beacon:object, team:object.team, seq:object.seq });
   }
   disposeVisual(api,object,projectiles);
+  if(object.lineMesh){
+    sceneFor(api,projectiles)?.remove?.(object.lineMesh);
+    object.lineMesh.geometry?.dispose?.();object.lineMesh.material?.dispose?.();object.lineMesh=null;
+  }
   return true;
 }
 
@@ -539,6 +556,59 @@ function markSeconds(spec, owner, apOverride = null) {
   return gearCurve(ap,raw[0],raw[1],raw[2]) / 60;
 }
 
+function markAngleTarget(api,object,target){
+  const life=ownerLife(target);
+  if(object.ghost||object.seenMarks.get(target)===life)return;
+  const frames=Math.round(markSeconds(object.spec,object.owner,object.subPowerAP)*60);
+  const markAgeFrames=Math.max(0,Math.floor(object.age*60+1e-8));
+  const remaining=Math.max(0,frames-markAgeFrames)/60;
+  if(!(remaining>0))return;
+  object.seenMarks.set(target,life);
+  applyMark(api,target,object.team,remaining,object.subId);
+  if(Number.isInteger(target.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:object.subId,seq:object.seq,
+    life:ownerLife(object.owner),sourceLife:object.sourceLife,eventSeq:nextSeq(object.owner),
+    targetId:target.nid,targetLife:life,frames,markAgeFrames,sourceTeam:object.team,actor:object.owner});
+}
+function appendAngleLine(api,projectiles,object,start,end){
+  if(!object.lineSegments||object.lineSegments.length>=object.spec.flightFrames||start.distanceToSquared(end)<1e-10)return;
+  object.lineSegments.push([start.clone(),end.clone()]);
+  const scene=sceneFor(api,projectiles),THREE=api.THREE;
+  if(!scene?.add||!THREE.LineSegments)return;
+  if(!object.lineMesh){
+    object.lineMesh=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({
+      color:object.owner?.color||api.G.teamColors?.[object.team]||0xffcc33,transparent:true,opacity:.85}));
+    object.lineMesh.geometry.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(object.spec.flightFrames*6),3));
+    object.lineMesh.frustumCulled=false;
+    scene.add(object.lineMesh);
+  }
+  const positions=object.lineMesh.geometry.getAttribute('position'),i=(object.lineSegments.length-1)*2;
+  positions.setXYZ(i,start.x,start.y,start.z);positions.setXYZ(i+1,end.x,end.y,end.z);positions.needsUpdate=true;
+  object.lineMesh.geometry.setDrawRange(0,object.lineSegments.length*2);
+}
+function finishAngleFlight(api,object){
+  object.phase='line';object.vel.set(0,0,0);
+  object.lineEndsAtAge=object.age+frameSeconds(object.spec.tailFrames);
+  if(object.mesh)object.mesh.visible=false;
+}
+function updateAngleLine(api,projectiles,object,dt){
+  object.age+=dt;
+  if(!object.ghost){
+    const hostiles=hostileActors(api,object.owner),base=new api.THREE.Vector3(),result={t:0,dist:Infinity};
+    try{
+      for(const target of hostiles){
+        if(object.seenMarks.get(target)===ownerLife(target))continue;
+        base.copy(target.pos);base.y+=target.smoothY||0;
+        const height=target.form==='squid'?api.PLAYER.squidHeight:api.PLAYER.height;
+        for(const [start,end] of object.lineSegments||[]){
+          api.Physics.segmentCapsuleDist(start,end,base,api.PLAYER.radius,height,result);
+          if(result.dist<=api.PLAYER.radius+object.spec.collisionRadius){markAngleTarget(api,object,target);break;}
+        }
+      }
+    }finally{releaseHostileActors(api);}
+  }
+  if(object.age+1e-10>=object.lineEndsAtAge)removeObject(api,projectiles,object);
+}
+
 function detonateInkMine(api,projectiles,mine){
   if(!mine||mine.dead||mine.subId!=='inkMine'||mine.ghost)return false;
   const baseDuration=markSeconds({markFrames:mine.spec.markFrames},mine.owner,mine.subPowerAP);
@@ -546,7 +616,9 @@ function detonateInkMine(api,projectiles,mine){
     try {
       for (const target of __iwHostiles) {
     const dx=target.pos.x-mine.pos.x,dy=target.pos.y+.7-mine.pos.y,dz=target.pos.z-mine.pos.z;
-    if(dx*dx+dy*dy+dz*dz>mine.spec.markRadius**2||api.G.physics?.los&&!api.G.physics.los(mine.pos,target.pos))continue;
+    // The marking volume passes through walls; the separate damage blast below
+    // still performs its normal obstruction test (S3 mix Wiki, Ink Mine).
+    if(dx*dx+dy*dy+dz*dz>mine.spec.markRadius**2)continue;
     applyMark(api,target,mine.team,baseDuration,mine.subId);
     if(Number.isInteger(target.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:mine.subId,seq:mine.seq,life:ownerLife(mine.owner),sourceLife:mine.sourceLife,eventSeq:nextSeq(mine.owner),
       targetId:target.nid,targetLife:ownerLife(target),frames:Math.round(baseDuration*60),sourceTeam:mine.team,actor:mine.owner});
@@ -1036,6 +1108,30 @@ function updateStatuses(api, dt) {
 function updateFlight(api, projectiles, object, dt) {
   const spec=object.spec;
   if(object.ghost&&object.phase==='ghostWait')return;
+  if(object.subId==='fizzy'&&object.grounded){
+    object.age+=dt;object.prev.copy(object.pos);
+    // Recheck support so rolling off an edge pauses the ground-only fuse.
+    const from=object.pos.clone().add(new api.THREE.Vector3(0,.08,0));
+    const to=object.pos.clone().add(new api.THREE.Vector3(0,-.12,0));
+    const floor=api.G.physics?.segment?.(from,to,projectiles._s3FizzyGroundHit ||= new api.Hit());
+    if(floor?.hit&&floor.normal.y>.5){
+      object.pos.y=floor.point.y+.03;
+      object.fuse-=dt;
+      if(object.fuse<=1e-10){if(object.ghost)object.phase='ghostWait';else burstFizzy(api,projectiles,object);return;}
+      object.vel.y=0;
+      object.vel.x*=Math.pow(.81,dt*60);object.vel.z*=Math.pow(.81,dt*60);
+      const next=object.pos.clone().addScaledVector(object.vel,dt);
+      const contact=api.G.physics?.segment?.(object.pos,next,projectiles._s3SubHit ||= new api.Hit());
+      if(contact?.hit){
+        object.pos.copy(contact.point).addScaledVector(contact.normal,.03);
+        const vn=object.vel.dot(contact.normal);if(vn<0)object.vel.addScaledVector(contact.normal,-1.7*vn);
+      }else object.pos.copy(next);
+      return;
+    }
+    object.grounded=false;
+    // The unsupported interval is airborne; do not count it a second time.
+    object.age-=dt;
+  }
   if(object.phase==='burstWait'){
     object.age+=dt;object.prev.copy(object.pos);object.fuse-=dt;
     if(object.fuse<=0){if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
@@ -1071,9 +1167,22 @@ function updateFlight(api, projectiles, object, dt) {
     // Autobomb search and target tracking begin only after landing. The source
     // Robot Bomb walks, searches, then holds its burst; it is not a homing
     // airborne projectile.
-    const target=object.subId==='autobomb'?null:closestActor(api,object,spec.chaseRadius,true)?.actor;
+    let target=null;
+    if(object.subId==='torpedo'){
+      if(object.torpedoTarget){
+        // Retain the captured life, not the Actor object across a respawn.
+        // Lost-target travel toward the last captured position is calibrated;
+        // retail's exact lost-target steering has not been measured.
+        if(object.torpedoTarget.alive&&ownerLife(object.torpedoTarget)===object.torpedoTargetLife)
+          object.torpedoAim.copy(object.torpedoTarget.pos);
+        target={pos:object.torpedoAim};
+      }else target=closestActor(api,object,spec.chaseRadius,true)?.actor;
+    }
       const canChase=object.age>=frameSeconds(spec.chaseStartFrames||spec.chaseMovement?.beforeRotateFrames||0);
     if(target&&canChase){
+      if(object.subId==='torpedo'&&!object.torpedoTarget){
+        object.torpedoTarget=target;object.torpedoTargetLife=ownerLife(target);object.torpedoAim=target.pos.clone();
+      }
       object.phase='chase'; object.chasedTarget=true;
       if(object.subId==='autobomb'){
         object.chaseAge=(object.chaseAge||0)+dt;
@@ -1088,18 +1197,20 @@ function updateFlight(api, projectiles, object, dt) {
       const approach=object.subId==='autobomb'?spec.chaseMovement.approachDistance:.75;
       const chaseOver=object.subId==='autobomb'?object.chaseAge>=spec.chaseSeconds:object.age>=(spec.chaseSeconds||2.5);
       if(target.pos.distanceTo(object.pos)<approach||chaseOver){
-        object.pos.copy(target.pos);object.pos.y+=.35;
+        // A homing timeout bursts at the projectile, not at a target that may
+        // still be many metres away. Actor contact below owns direct collision.
         if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}
         return;
       }
     }
   }
-  if(object.subId==='angleShooter') object.vel.y=0;
-  else object.vel.y-=spec.gravity*dt;
+  // Zero gravity preserves the pitched launch velocity. Clearing y here made
+  // Angle Shooter incapable of hitting above or below its release height.
+  object.vel.y-=spec.gravity*dt;
   applyFlightPositionAirResist(object,dt);
   object.pos.addScaledVector(object.vel,dt);
   const world=api.G.physics?.segment?.(object.prev,object.pos,projectiles._s3SubHit ||= new api.Hit());
-  const actor=object.subId==='toxicMist'?null:contactActor(api,object,object.prev,object.pos,object.subId==='angleShooter'?spec.collisionRadius:.22);
+  const actor=['toxicMist','fizzy'].includes(object.subId)?null:contactActor(api,object,object.prev,object.pos,object.subId==='angleShooter'?spec.collisionRadius:.22);
   // The native defense lane uses the projectile record it receives for both
   // hit arbitration and Ink Vac's one-shot consume marker. Keep this record
   // persistent across the candidate call so an accepted inhale disables the
@@ -1113,6 +1224,11 @@ function updateFlight(api, projectiles, object, dt) {
   const defense=projectiles.kitDefenseCandidate?.(object);
   const defenseDistance=defense?.distance??Infinity, actorDistance=actor?.distance??Infinity;
   const worldDistance=world?.hit?world.dist:Infinity;
+  if(object.subId==='angleShooter'){
+    const length=object.prev.distanceTo(object.pos),distance=Math.min(length,defenseDistance,actorDistance,worldDistance);
+    const end=length>0?object.prev.clone().lerp(object.pos,clamp(distance/length,0,1)):object.pos;
+    appendAngleLine(api,projectiles,object,object.prev,end);
+  }
   if(defense&&defenseDistance<=Math.min(worldDistance,actorDistance)){
     object.pos.copy(defense.point||object.pos);defense.onHit?.();
     // A defense contact consumes the thrown object. Angle Shooter still bounces
@@ -1133,10 +1249,8 @@ function updateFlight(api, projectiles, object, dt) {
         return;
       }
       if(object.subId==='angleShooter'){
-        const duration=markSeconds(spec,object.owner,object.subPowerAP);
-        applyMark(api,actor.actor,object.team,duration,object.subId);
-        if(Number.isInteger(actor.actor.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:object.subId,seq:object.seq,life:ownerLife(object.owner),sourceLife:object.sourceLife,eventSeq:nextSeq(object.owner),
-          targetId:actor.actor.nid,targetLife:ownerLife(actor.actor),frames:Math.round(duration*60),sourceTeam:object.team,actor:object.owner});
+        markAngleTarget(api,object,actor.actor);
+        surfacePaint(api,object.owner,object.team,object.pos,spec.directPaintRadius,object.seed);
       }
     }
     if(['inkMine','toxicMist','splashWall','sprinkler','beakon'].includes(object.subId)){
@@ -1144,23 +1258,28 @@ function updateFlight(api, projectiles, object, dt) {
       deploy(api,projectiles,object,object.pos);
       return;
     }
-    if(object.subId==='fizzy'){burstFizzy(api,projectiles,object);return;}
     // Wiki Line Marker: a direct player hit terminates the projectile/line.
     // Only terrain can reflect it; reflecting off a player allowed a second
     // unsupported 40-damage hit on the return path.
-    if(object.subId!=='angleShooter')blast(api,object,object.pos);
+    if(object.subId==='angleShooter'){finishAngleFlight(api,object);return;}
+    blast(api,object,object.pos);
     removeObject(api,projectiles,object);return;
   }
   if(world?.hit){
     object.pos.copy(world.point).addScaledVector(world.normal,.03);
     if(object.ghost){object.phase='ghostWait';return;}
     if(object.subId==='angleShooter'){
-      const vn=object.vel.dot(world.normal);object.vel.addScaledVector(world.normal,-2*vn).multiplyScalar(.82);object.bounceCount++;
+      const vn=object.vel.dot(world.normal);object.vel.addScaledVector(world.normal,-2*vn);object.bounceCount++;
       surfacePaint(api,object.owner,object.team,object.pos,spec.paintRadius,object.seed^object.bounceCount);
-      if(object.bounceCount<=spec.maxBounces){object.pos.addScaledVector(object.vel,dt);emitEvent(api,object,'bounce',{bounceCount:object.bounceCount});return;}
-      removeObject(api,projectiles,object);return;
+      emitEvent(api,object,'bounce',{bounceCount:object.bounceCount});
+      if(object.age+1e-10>=frameSeconds(spec.flightFrames))finishAngleFlight(api,object);
+      return;
     }
-    if(object.subId==='fizzy'){burstFizzy(api,projectiles,object);return;}
+    if(object.subId==='fizzy'){
+      if(world.normal.y>.5){object.grounded=true;object.vel.y=0;}
+      else {const vn=object.vel.dot(world.normal);if(vn<0)object.vel.addScaledVector(world.normal,-1.7*vn);}
+      return;
+    }
     if(object.subId==='inkMine'||object.subId==='toxicMist'||object.subId==='splashWall'||object.subId==='sprinkler'||object.subId==='beakon'){
       deploy(api,projectiles,object,object.pos,world.normal);
       if(object.subId==='inkMine')object.activeAt=api.G.time+spec.armSeconds;
@@ -1173,13 +1292,14 @@ function updateFlight(api, projectiles, object, dt) {
     }
     blast(api,object,object.pos);removeObject(api,projectiles,object);return;
   }
-  if(object.subId==='fizzy'&&object.age+1e-10>=object.fuse){if(object.ghost)object.phase='ghostWait';else burstFizzy(api,projectiles,object);return;}
-  if(object.subId==='toxicMist'&&object.age>=1.2){if(object.ghost)object.phase='ghostWait';else deploy(api,projectiles,object,object.pos);return;}
   const flightLimit=object.subId==='angleShooter'?frameSeconds(spec.flightFrames):
-    object.subId==='autobomb'?spec.noTargetSeconds:object.subId==='torpedo'?Math.max(2.2,spec.chaseSeconds||0):2.2;
-  if(object.age>flightLimit){
+    object.subId==='autobomb'?spec.noTargetSeconds:object.subId==='torpedo'?Math.max(2.2,spec.chaseSeconds||0):spec.maxFlightSeconds||2.2;
+  if(object.age+1e-10>=flightLimit){
+    if(object.subId==='angleShooter'){finishAngleFlight(api,object);return;}
     if(object.ghost){object.phase='ghostWait';return;}
-    if(object.subId==='autobomb'||object.subId==='torpedo'||object.subId==='burst'){blast(api,object,object.pos);}
+    // Safety retirement is not a collision. Burst Bomb is contact-triggered;
+    // an unlanded Autobomb cannot manufacture an airborne explosion either.
+    if(object.subId==='torpedo'){blast(api,object,object.pos);}
     removeObject(api,projectiles,object);return;
   }
   if(object.mesh)object.mesh.position.copy(object.pos);
@@ -1191,6 +1311,7 @@ function burstFizzy(api,projectiles,object){
   blast(api,object,object.pos,index);
   if(object.pops<=0){removeObject(api,projectiles,object);return;}
   object.phase='flight';object.age=0;
+  object.grounded=false;
   object.fuse=frameSeconds(object.spec.burstWaitFrames[Math.min(2,index+1)]||1);
   const direction=new api.THREE.Vector3(object.vel.x,0,object.vel.z);
   if(direction.lengthSq()<1e-6)direction.set(Math.sin(object.yaw),0,Math.cos(object.yaw));
@@ -1284,7 +1405,9 @@ function tickObjects(api,projectiles,dt){
   for(let i=list.length-1;i>=0;i--){
     const o=list[i];if(o.dead||o.phase==='ghostWait')continue;
     if(o.subId==='sprinkler'&&!o.owner?.alive){removeObject(api,projectiles,o);continue;}
-    if(o.phase==='deployed')updateDeployed(api,projectiles,o,dt);else updateFlight(api,projectiles,o,dt);
+    if(o.phase==='deployed')updateDeployed(api,projectiles,o,dt);
+    else if(o.phase==='line')updateAngleLine(api,projectiles,o,dt);
+    else updateFlight(api,projectiles,o,dt);
     if(!o.dead&&o.phase!=='ghostWait')poseVisual(api,o,dt);
   }
   updateStatuses(api,dt);
@@ -1318,7 +1441,11 @@ function replayMark(api,event,owner){
   if(!owner?.remote||!target||target.team===owner.team||ownerLife(target)!==event.targetLife||
     !['inkMine','angleShooter'].includes(event.subId)||!birth||
     !Number.isSafeInteger(event.frames)||event.frames!==birth.frames)return false;
-  return applyMark(api,target,owner.team,event.frames/60,event.subId);
+  const elapsed=event.markAgeFrames??0;
+  if(!Number.isSafeInteger(elapsed)||elapsed<0||
+    event.subId!=='angleShooter'&&elapsed!==0||
+    event.subId==='angleShooter'&&elapsed>ALL_SUB_SPECS.angleShooter.flightFrames+ALL_SUB_SPECS.angleShooter.tailFrames)return false;
+  return applyMark(api,target,owner.team,Math.max(0,event.frames-elapsed)/60,event.subId);
 }
 function replayExpire(api,event,owner){
   // Owner retirement is ordered after its marks. Local visual retirement is not.
@@ -1361,7 +1488,9 @@ export function replaySub(api,event){
   if(event.phase==='fizzyHop'||event.phase==='bounce'){
     const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
     if(!object||![event.x,event.y,event.z,event.vx,event.vy,event.vz].every(Number.isFinite))return false;
-    object.pos.set(event.x,event.y,event.z);object.vel.set(event.vx,event.vy,event.vz);object.age=0;object.phase='flight';
+    object.pos.set(event.x,event.y,event.z);object.vel.set(event.vx,event.vy,event.vz);
+    if(event.phase==='fizzyHop')object.age=0;
+    object.phase='flight';
     if(event.phase==='fizzyHop'){
       if(!Number.isSafeInteger(event.pops)||event.pops<0||event.pops>3||!Number.isFinite(event.fuse)||event.fuse<0||event.fuse>1)return false;
       object.pops=event.pops;object.fuse=event.fuse;
@@ -1414,10 +1543,13 @@ export function installAllSubs(api,profile={}){
       return nativeThrow.call(this,actor,...args);
     if(actor?.remote||!actor?.alive)return undefined;
     if(id==='torpedo'&&hasActiveTorpedo(this,actor))return undefined;
+    if(id==='inkMine'&&!canPlaceInkMine(this,actor))return undefined;
     const runner=actor.weaponRunner;
     const hold=runner?.s3SubHold||0;
     const release=runner?.s3Release;
-    const object=createObject(api,this,actor,id,{hold,charge:Math.min(1,hold/(ALL_SUB_SPECS[id].maxChargeTime||1))});
+    const placement=id==='inkMine'?{x:actor.pos.x,y:actor.pos.y,z:actor.pos.z,vx:0,vy:0,vz:0}:{};
+    const object=createObject(api,this,actor,id,{hold,charge:Math.min(1,hold/(ALL_SUB_SPECS[id].maxChargeTime||1)),...placement});
+    if(object&&id==='inkMine')deploy(api,this,object,object.pos,actor.ground?.normal);
     if(runner){runner.s3SubHold=0;if(id==='fizzy')runner.s3FizzyCharge=null;}
     return object;
   };
@@ -1430,7 +1562,9 @@ export function installAllSubs(api,profile={}){
   if(nativeRunnerReset)WeaponRunner.prototype.reset=function(...args){this.s3FizzyCharge=null;return nativeRunnerReset.apply(this,args);};
   WeaponRunner.prototype.update=function(dt,input,...args){
     const actor=this.a;
-    if(actor?.weapon?.sub==='torpedo'&&!actor.remote&&hasActiveTorpedo(G.projectiles,actor)){
+    if(!actor?.remote&&(
+      actor?.weapon?.sub==='torpedo'&&hasActiveTorpedo(G.projectiles,actor)||
+      actor?.weapon?.sub==='inkMine'&&!canPlaceInkMine(G.projectiles,actor))){
       this.s3FizzyCharge=null;
       this.s3SubHold=0;this.s3SubReady=null;this.aimingSub=false;
       const suppressed=input?{...input,sub:false,subReleased:false}:input;

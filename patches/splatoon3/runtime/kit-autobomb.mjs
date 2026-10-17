@@ -9,8 +9,13 @@ export const AUTOBOMB=Object.freeze({
  throwSpeed:1.12*60, throwSpeedStatus:'extracted',
  flyGravity:.016*3600, guideRadius:.5,
  rotateFrames:30, findRotateFrames:10, chaseFrames:150, approachDistance:.65,
- acquireRadius:2.5, groundMaxSpeed:.09*60, groundAcceleration:.003*60,
- chaseBurstDelayFrames:60, noTargetBurstDelayFrames:180, lostTargetBurstDelayFrames:60,
+ // Wiki measures 2.5 trial lines, with 5 world units per line. This is a
+ // community measurement; the table omits the search-volume definition.
+ acquireRadius:2.5*5, groundMaxSpeed:.09*60, groundAcceleration:.003*60,
+ // Ordinary unfind uses the 60F warning observed in retail. The distinct
+ // NoReceiveTargetBurstWaitFrame=180 row is not the normal empty-area timer.
+ chaseBurstDelayFrames:60, noTargetBurstDelayFrames:60, lostTargetBurstDelayFrames:60,
+ unreceivedTargetBurstDelayFrames:180,
  damageMax:180, damageMin:30, damageInnerDistance:2.85, damageOuterDistance:6.5,
  radius:6.5, paintRadius:1.75, crossPaintRadius:1.75, splashSatellites:10,
  splashSatelliteRadius:.7, knockback:{accel:470,bias:.8,distance:9},

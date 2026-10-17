@@ -37,13 +37,16 @@ export const VAC_ID = 'inkVac';
 
 const RAW_TO_HP = 10;             // repository conversion rawDamageToHP: "/10"
 // #1090: S3 Ink Vac gauge is damage-equivalent (~1100 HP), not round count.
-// 1100 is a verified approximate capacity; upper bound prevents infinite/NaN
+// 1100 is the Wiki's estimated approximate capacity; upper bound prevents infinite/NaN
 // transport values, but is not proof of the remote projectile's damage.
 const ABSORB_CAPACITY_HP = 1100;
 const MAX_ACCEPTED_DAMAGE_HP = 220;
 const INHALE_LENGTH = 15;         // pinned LengthMax
 const OWNER_MOVE_SPEED_MIN_CHARGE = 0.09;   // pinned WeaponParam.MoveSpeedMinCharge (per 60 Hz frame)
 const OWNER_MOVE_SPEED_FULL_CHARGE = 0.07;  // pinned WeaponParam.MoveSpeedFullCharge (per 60 Hz frame)
+// S3mix 11.3.0 measures the distinct firing-mode speed as .72 DU/frame;
+// INKWAVE uses 1/10 of that distance scale. It is not an inherited JSON default.
+const OWNER_MOVE_SPEED_EXHALE = 0.072;
 const INHALE_LENGTH_ADD_PER_FRAME = 0.3334; // pinned LengthAddPerFrame
 const OBJECT_DAMAGE_PER_FRAME = 20 / RAW_TO_HP; // pinned DamagePerFrameByObject, raw -> HP
 const INHALE_OBJECT_CAUSE = 'BlowerInhale'; // object-rate table row; exhale uses BlowerExhale_BombCore
@@ -86,7 +89,8 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   frontalEpsilon: -0.05,    // projectile must travel against player aim — calibration
   absorbCapacityDamage: ABSORB_CAPACITY_HP,
   absorbDamageLimit: MAX_ACCEPTED_DAMAGE_HP,
-  absorbStatus: 'damage-proportional, 1100 approximate S3 capacity; remote source damage requires separate authoritative hit attestation',
+  absorbStatus: 'damage-proportional, 1100 community-estimated approximate S3 capacity, not an extracted exact value; remote source damage requires separate authoritative hit attestation',
+  exhaleMoveSpeedStatus: 'S3mix 11.3.0 measured .72 DU/source frame, normalized .072 *60; distinct from pinned charge-dependent inhale speed',
   activationFrames: 17, inhaleStartHumanFrames: 12, inhaleStartSquidFrames: 18,
   inputTimingStatus: 'S3mix 11.3.0 measured startup 17F; human intake starts on13th held frame, squid on19th; retail input sampling unmeasured',
   inhaleLengthAddPerFrame: INHALE_LENGTH_ADD_PER_FRAME,
@@ -205,7 +209,8 @@ export function intakeNearRadius(specialPower) { return lerp(NEAR_LOW, NEAR_HIGH
 export function intakeFarRadius(specialPower) { return lerp(FAR_LOW, FAR_HIGH, specialPower); }
 // Owner walking target while the Vac is held (inhale and the pre-release hold).
 // Source endpoints are pinned; interpolation between them is INKWAVE's.
-export function inkVacOwnerMoveSpeed(charge) {
+export function inkVacOwnerMoveSpeed(charge, phase = 'inhale') {
+  if (phase === 'exhale') return OWNER_MOVE_SPEED_EXHALE * 60;
   return lerp(OWNER_MOVE_SPEED_MIN_CHARGE, OWNER_MOVE_SPEED_FULL_CHARGE, Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0))) * 60;
 }
 export function blastRadius(charge) { return lerp(BLAST_MIN, BLAST_MAX, charge); }
@@ -818,7 +823,7 @@ export function installKitInkVac(context, _profile) {
   const proto = Actor.prototype;
   if (api.WeaponRunner?.prototype) {
     const move=api.WeaponRunner.prototype.moveSpeed;
-    api.WeaponRunner.prototype.moveSpeed=function(...args){const s=states.get(this.a);return s&&!s.remote&&this.a.form==='kid'?inkVacOwnerMoveSpeed(s.charge):move.apply(this,args);};
+    api.WeaponRunner.prototype.moveSpeed=function(...args){const s=states.get(this.a);return s&&!s.remote&&this.a.form==='kid'?inkVacOwnerMoveSpeed(s.charge,s.phase):move.apply(this,args);};
     // Sample current contact once at dodge admission. The composed native
     // method uses this same cost for its availability check and payment.
     // No weapon registry mutation, post-debit correction or persistent debuff.
@@ -916,7 +921,7 @@ export function installKitInkVac(context, _profile) {
       runner.moveSpeed = function () {
         const state = states.get(this.a);
         if (state && !state.remote && (state.phase === 'inhale' || state.phase === 'exhale'))
-          return inkVacOwnerMoveSpeed(state.charge);
+          return inkVacOwnerMoveSpeed(state.charge,state.phase);
         return ownerMoveSpeed.call(this);
       };
     }
