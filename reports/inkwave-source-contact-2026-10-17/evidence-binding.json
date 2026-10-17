@@ -1,0 +1,72 @@
+{
+  "baseCommit": "d5265f73d9dad69f1afd9690e374caee45195f11",
+  "codeCommit": "b061bbd7f5c00c641a5d54104a742f55ad5b415c",
+  "sourceFiles": {
+    "patches/local-quality/motion-fk-hotpath-adapter.mjs": "bc4f1f609026f2821ee6488c1abfb6658fd0ba9cbf6e8f1b4c76a391665c5de2",
+    "scripts/check-inkwave-source-contact.mjs": "39bbdeb6278f6ad9a3ba14a0c088b9a05742d6b89c87e53178b99b493b97825e",
+    "patches/local-quality/tests/source-contact-fixture.mjs": "ada727d6d4e6137f83a02aa95d177ac8319e8a309e8cdce65e6b9a32f85cf705"
+  },
+  "baseline": {
+    "contentHash": "8f56a1470c72ecf04250ba7be2cf74a3c89f7267674c840d7d63c14fa3b29775",
+    "inputHash": "d23766d00da1f917546548ba941760d80de89fd1b279430f8ae580a95694cf83",
+    "revision": "65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6"
+  },
+  "candidate": {
+    "contentHash": "0dd8e075049178cf32a2e833b99e17ec6d5322c9143afad6a429cd409a369a10",
+    "inputHash": "7c99359b216144d9586c7f4b892d39452b5bc0461056da3dd7c51b37c86a058b",
+    "revision": "7a5e6b7a1f473c038e0e2bf791ffedd83798139547c21549db3c0a7233979bb5"
+  },
+  "filterSHA256": "16343f10cfee0ed47d6ab12853440e0f8e637b4f88914daad5389985c49447a9",
+  "receipts": {
+    "chromium": {
+      "sha256": "2e810b6cc24c75ba77d1800b8893cf026c5c6758b4b355f4906e5b7b02da8c16",
+      "verifierSHA256": "39bbdeb6278f6ad9a3ba14a0c088b9a05742d6b89c87e53178b99b493b97825e",
+      "sourceHeads": [
+        "d5265f73d9dad69f1afd9690e374caee45195f11",
+        "b061bbd7f5c00c641a5d54104a742f55ad5b415c"
+      ],
+      "inputHashes": [
+        "d23766d00da1f917546548ba941760d80de89fd1b279430f8ae580a95694cf83",
+        "7c99359b216144d9586c7f4b892d39452b5bc0461056da3dd7c51b37c86a058b"
+      ],
+      "sourceInputCount": [
+        1274,
+        1274
+      ],
+      "idleFrames": 789,
+      "movingFrames": 324
+    },
+    "webkit": {
+      "sha256": "cc00799e3c92e7d7aeb245499146a852df711132b62285374b99d2670aaa695d",
+      "verifierSHA256": "39bbdeb6278f6ad9a3ba14a0c088b9a05742d6b89c87e53178b99b493b97825e",
+      "sourceHeads": [
+        "d5265f73d9dad69f1afd9690e374caee45195f11",
+        "b061bbd7f5c00c641a5d54104a742f55ad5b415c"
+      ],
+      "inputHashes": [
+        "d23766d00da1f917546548ba941760d80de89fd1b279430f8ae580a95694cf83",
+        "7c99359b216144d9586c7f4b892d39452b5bc0461056da3dd7c51b37c86a058b"
+      ],
+      "sourceInputCount": [
+        1274,
+        1274
+      ],
+      "idleFrames": 789,
+      "movingFrames": 324
+    }
+  },
+  "imageAliases": {
+    "chromium": {
+      "before-slope-0.png": "after-slope-0.png",
+      "before-slope-0.08.png": "after-slope-0.08.png",
+      "before-slope--0.08.png": "after-slope--0.08.png"
+    },
+    "webkit": {
+      "before-slope-0.png": "after-slope-0.png",
+      "before-slope-0.08.png": "after-slope-0.08.png",
+      "before-slope--0.08.png": "after-slope--0.08.png"
+    }
+  },
+  "nodeSourceScope": "1118 source-only Actor frames on current-main anatomy before integration into existing build adapter; final emitted filter identical SHA, integration guard and350 strict component cases rerun after integration",
+  "scope": "before PNG aliases byte-identical to stored after PNGs; browser GPU renderer strings are self-reported, not hardware identification"
+}

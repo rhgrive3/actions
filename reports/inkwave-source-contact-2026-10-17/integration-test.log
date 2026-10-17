@@ -1,0 +1,16 @@
+(node:10010) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ motion optimization is guarded, composed and excluded from browser payloads (20.341729ms)
+{"scope":"actual Three.Vector3 and ContactTransition source, no renderer","checked":350,"counts":[{"clamp":350,"polynomial":350},{"clamp":350,"polynomial":273}]}
+✔ source-contact edits fail closed and stay out of the browser payload (1.803743ms)
+✔ settled contact bypass preserves transitions, signed zero, nonfinite offsets and paused ticks exactly (9.587466ms)
+(node:10011) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 568.146479
