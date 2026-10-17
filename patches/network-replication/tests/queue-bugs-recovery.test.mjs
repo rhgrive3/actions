@@ -103,6 +103,8 @@ test('incoming START roster must have one legitimate own human, valid IDs, slots
   assert.equal(validStartRoster(turf,'host',weapons,'turf','host'),true);
   const boss=[member('host',0,0,0),member('guest',1,0,1),member('host',2,0,2,'roller',true)];
   assert.equal(validStartRoster(boss,'guest',weapons,'boss','host'),true);
+  for(const ranked of ['zones','tower','rainmaker','clams'])
+    assert.equal(validStartRoster(turf,'guest',weapons,ranked,'host'),true,ranked+' must preserve normal ranked rooms');
   const full=Array.from({length:8},(_,i)=>member(i%4===0?'guest':i%4===1?'host':'peer'+i,i,i<4?0:1,i%4));
   assert.equal(validStartRoster(full,'guest',weapons,'turf','host'),false,'duplicate local humans forbidden');
   const cases=[
