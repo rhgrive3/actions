@@ -12,12 +12,20 @@ export async function parkVisualColliders() {
  if(others.length!==7)throw Error('Expected all seven nonlocal native actors');
  const original=others.map((o,i)=>({index:i,name:o.name,team:o.team,pos:o.pos.toArray(),alive:o.alive,form:o.form}));
  const corridor={axis:'x',min:-8,max:8,projectileRadiusBound:2,actorRadiusBound:2};
- const slots=others.map((o,i)=>{
-  const x=16,z=-42+i*2,hit={hit:false,y:0,normal:new V(),block:-1,face:-1,center:false,grate:false};
-  G.physics.groundProbe(x,5,z,10,10,.38,hit,false);
-  if(!hit.hit||!hit.center||hit.grate||hit.normal.y<.68||hit.block<0||hit.face<0)throw Error('No verified native floor for parked collider '+i);
-  return {index:i,pos:[x,hit.y,z],floorHit:{block:hit.block,face:hit.face,normal:hit.normal.toArray()},horizontalClearance:x-corridor.max-corridor.projectileRadiusBound-corridor.actorRadiusBound};
- });
+ const slots=[],floorSearch=[];
+ // Deterministic native-floor search, independent of boot actor positions.
+ // Some lateral Tidewater coordinates are gaps: reject them, never invent a floor.
+ for(let x=16;x<=32&&slots.length<others.length;x+=2){
+  for(let z=-42;z<=-20&&slots.length<others.length;z+=2){
+   const hit={hit:false,y:0,normal:new V(),block:-1,face:-1,center:false,grate:false};
+   G.physics.groundProbe(x,5,z,10,10,.38,hit,false);
+   const valid=!!(hit.hit&&hit.center&&!hit.grate&&hit.normal.y>=.68&&hit.block>=0&&hit.face>=0);
+   floorSearch.push({x,z,valid,block:hit.block,face:hit.face});
+   if(!valid)continue;
+   slots.push({index:slots.length,pos:[x,hit.y,z],floorHit:{block:hit.block,face:hit.face,normal:hit.normal.toArray()},horizontalClearance:x-corridor.max-corridor.projectileRadiusBound-corridor.actorRadiusBound});
+  }
+ }
+ if(slots.length!==others.length)throw Error('No seven verified native-floor slots outside projectile corridor');
  for(let i=0;i<others.length;i++){
   const o=others[i],s=slots[i];o.spawnAt(new V(...s.pos),0);
   o.form='kid';o.submerged=false;o.alive=true;o.hp=100;o.ink=100;o.invuln=0;o.vel.set(0,0,0);
@@ -32,7 +40,7 @@ export async function parkVisualColliders() {
   if(Math.abs(o.pos.x-s.pos[0])>1e-8||s.horizontalClearance<=0)throw Error('Collider parking clearance invalid');
  }
  G.scene.updateMatrixWorld(true);
- const receipt={method:'native Actor.spawnAt/reset on verified floor',original,slots,corridor,actorCount:actors.length,actorArrayPreserved:G.actors===actors,segments:[],actorHits:[]};
+ const receipt={method:'native Actor.spawnAt/reset on verified floor',original,slots,floorSearch,corridor,actorCount:actors.length,actorArrayPreserved:G.actors===actors,segments:[],actorHits:[]};
  const P=G.projectiles,oldStep=P._step;
  P._step=function(p,dt){
   const seed=p.seed,from=p.pos.toArray(),radiusBefore=fidelityPlayerCollisionRadius(p),dead=oldStep.call(this,p,dt),to=p.pos.toArray();
