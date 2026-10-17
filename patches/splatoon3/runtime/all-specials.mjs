@@ -23,6 +23,9 @@ import { beginZipcasterArmor, arriveZipcasterArmor, updateZipcasterArmor, clearZ
 import { objectDamageScale, objectDamageRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 import { specialGaugeLocked, startSpecialGauge, endSpecialGauge, SPECIAL_GAUGE_FRAMES } from './tacticooler-gauge.mjs';
+import { configureCrabProjectile, paintCrabFlight, crabShooterDamage, withCrabImpactPaint, startCrabWallDrop } from './crab-tank-projectile.mjs';
+import { crabTankShotGeometry } from './crab-tank-aim.mjs';
+import { updateCrabSplashVisuals, clearCrabSplashVisuals } from './crab-tank-splash-visual.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-specials.install.v1');
 const FPS = 60, MAX_STAMP_RADIUS = 3.74;
@@ -84,7 +87,7 @@ const SPECIAL_ROUND_FIELDS = Object.freeze(['s3AllSpecial','s3AllSpecialPaintRad
   's3SpecialPowerAP','s3AllSpecialCrossPaintRadius','s3AllSpecialCrossPaintLength','s3AllSpecialSplashAroundRadius','s3AllSpecialSplashAroundCount',
   's3AllSpecialSplashAroundOffsetY','s3AllSpecialSplashAroundVelocityMin','s3AllSpecialSplashAroundVelocityMax','s3AllSpecialSplashAroundPitchMin',
   's3AllSpecialSplashAroundPitchMax','s3AllSpecialTrailPaintWidth','s3AllSpecialTrailPaintDepthScale','s3AllSpecialTrailPaintSpanFrames',
-  's3AllSpecialFlight','s3AllSpecialFlightCarry']);
+  's3AllSpecialFlight','s3AllSpecialFlightCarry','s3CrabFlightPaint']);
 
 function vecArray(v) {
   return v && [v.x, v.y, v.z].every(finite) ? [q2(v.x), q2(v.y), q2(v.z)] : null;
@@ -228,7 +231,7 @@ function sourceFlight(id,mode,type,ap=0) {
     brakeGravity:.04*3600,brakeAirResist:.1,gravity:.05*3600,airResist:.12,source:'WeaponSpChariot.CannonParam.MoveParam'};
   return null;
 }
-function stepSourceFlight(system,p,dt,step) {
+function stepSourceFlight(system,p,dt,step,game) {
   const source=p?.s3AllSpecialFlight;
   if(!source||!(dt>0)||!finite(dt))return step.call(system,p,dt);
   let carry=(p.s3AllSpecialFlightCarry||0)+dt,frames=Math.floor(carry*FPS+1e-8);
@@ -250,8 +253,21 @@ function stepSourceFlight(system,p,dt,step) {
     // the trajectory or apply the same force a second time.
     const grav=p.grav,drag=p.drag,straightTime=p.straight;
     p.grav=0;p.drag=0;p.straight=0;
+    // The collision/damage owner consumes a source frame, even when a host
+    // update contains several of them. Updating damage once per render left
+    // fast and slow clients applying different decay at the same contact.
+    if(p.s3AllSpecial==='crabTank'&&p.type==='shot'&&!p.ghost)p.damage=crabShooterDamage((p.age||0)+1/FPS);
     let done;
     try{done=step.call(system,p,1/FPS);}finally{p.grav=grav;p.drag=drag;p.straight=straightTime;}
+    if(p.s3AllSpecial==='crabTank'&&p.s3CrabFlightPaint){
+      const end=p.s3CrabFlightPaint.end.copy(p.pos);
+      if(p.fidelityImpactActor)end.copy(p.prev).lerp(p.pos,p.fidelityImpactT);
+      else if(done&&system._fidelityCollision?.world?.hit){
+        const hit=system._fidelityCollision.world,len=p.prev.distanceTo(p.pos);
+        if(len>1e-9)end.copy(p.prev).lerp(p.pos,clamp(hit.dist/len,0,1));
+      }
+      paintCrabFlight(game,p,end,(frames-i-1)/FPS);
+    }
     if(done)return done;
   }
   return false;
@@ -327,6 +343,7 @@ function launch(rt, actor, id, origin, direction, opts = {}) {
   p.s3AllSpecialActivation = actorStates.get(actor)?.serial || 0;
   p.s3AllSpecialSeed = normalizedSeed(opts.seed || 0);
   if (opts.damageReduce) p.s3DamageReduce = { ...opts.damageReduce };
+  if(id==='crabTank')configureCrabProjectile(p,opts.sequence||0);
   system._push(p);
   return p;
 }
@@ -992,11 +1009,6 @@ function zipTo(rt,actor,state,target,normal) {
   actor.character?.trigger?.('special_zip');
   emitAction(rt,actor,'zipcaster',state.serial,'zip',actor.pos,target,nextSeed(state));
 }
-function crabBomb(rt,actor,state) {
-  const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.0,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
-  launch(rt,actor,'crabTank',origin,dir,{speed:14,grav:23,drag:.18,life:1.4,arc:2.5,seed:nextSeed(state),size:.2,damage:50,paintRadius:4.5});
-  emitAction(rt,actor,'crabTank',state.serial,'cannon',origin,rt.v2.copy(origin).addScaledVector(dir,10),nextSeed(state));
-}
 // WeaponSpSkewer 11.3.0 per-frame MoveAcc=MoveBrk=.031; top speed=.405.
 // A change of frame rate must not change the distance travelled in source ticks.
 export function reefsliderRawSpeed(speed, braking = false, sourceFrames = 1) {
@@ -1283,6 +1295,24 @@ function stampLine(rt,actor,from,to,width,seed,depthScale=1) {
     const p=rt.v8.copy(from).lerp(to,i/steps);
     paintStamp(rt,actor,p,Math.min(MAX_STAMP_RADIUS,width*depthScale),seedUnit(seed,index++));
   }
+}
+// Separate ground ink from the contact-damage cooldown. The .9 radius is the
+// retained local ball footprint, NOT a recovered Nintendo paint parameter.
+// Short contact probes prevent painting through bridges or while airborne.
+function paintCrabRoll(rt,actor,state,from) {
+  const radius=.9,to=actor.pos,length=from.distanceTo(to),steps=Math.max(1,Math.ceil(length/(radius*.5)));
+  if(state.rollPaintLast&&length<1e-8&&state.rollPaintLast.distanceToSquared(to)<1e-8)return;
+  for(let i=0;i<=steps;i++){
+    const probe=rt.v7.copy(from).lerp(to,i/steps);probe.y+=.25;
+    const hit=rt.api.G.physics?.raycast?.(probe,rt.down,.6,rt.hit,true);
+    if(!hit?.hit||!(hit.normal?.y>.4))continue;
+    const point=rt.v8.copy(hit.point).addScaledVector(hit.normal,.005);
+    const opts={seed:seedUnit(state.rollPaintSeed),kind:'source-splash',claimOwner:actor,claimMode:'no-special'};
+    if(Number.isInteger(hit.face)&&hit.face>=0)opts.face=hit.face;
+    const area=rt.api.G.paint?.splat?.(point,radius,actor.team,opts);
+    if(finite(area)&&area>0)actor.addTurfNoSpecial?.(area);
+  }
+  (state.rollPaintLast||=to.clone()).copy(to);
 }
 function updateWorld(rt,dt) {
   const list=rt.system._s3AllSpecialObjects;if(!Array.isArray(list)||!(dt>0))return;
@@ -1639,13 +1669,15 @@ function activeStep(rt,actor,dt) {
       crabBall(rt,actor,state,false);moveActor(rt,actor,dt,state,{speed:0,squid:false,jump:false});
       if(elapsed>=state.finishUntil)endSpecial(rt,actor,'duration');return;
     }
-    if(state.wasRolling&&!rolling){state.nextShot=Math.max(state.nextShot,elapsed+20/60);state.fireStart=null;}
+    if(state.wasRolling&&!rolling){state.nextShot=Math.max(state.nextShot,elapsed+20/60);state.nextCannon=Math.max(state.nextCannon,elapsed+20/60);state.fireStart=null;}
     if(rolling){state.fireStart=null;}
     state.wasRolling=rolling;
+    const rollFrom=rolling&&actor.grounded?actor.pos.clone():null;
     moveActor(rt,actor,dt,state,{speed:rolling?8.5:'crab',squid:false,jump:true});
+    if(rolling&&actor.grounded)paintCrabRoll(rt,actor,state,rollFrom||actor.pos);
     if(actor.intent.sub&&!rolling&&elapsed+1e-8<state.duration-25/60&&elapsed+1e-8>=state.nextCannon){
-      const origin=rt.v0.set(actor.pos.x,actor.pos.y+.95,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
-      launch(rt,actor,'crabTank',origin,dir,{speed:18,grav:18,drag:.12,life:1.7,arc:2.4,damage:50,radius:4.5,size:.28,paintRadius:4.5,sourceMode:'cannon',seed:nextSeed(state)});
+      const origin=rt.v0,dir=rt.v1;crabTankShotGeometry(actor,'cannon',origin,dir);
+      launch(rt,actor,'crabTank',origin,dir,{speed:18,grav:18,drag:.12,life:1.7,damage:50,radius:4.5,size:.28,paintRadius:4.5,sourceMode:'cannon',seed:nextSeed(state)});
       emitAction(rt,actor,state.id,state.serial,'cannon',origin,rt.v2.copy(origin).addScaledVector(dir,16),nextSeed(state));
       state.nextCannon=elapsed+75/FPS;state.nextShot=Math.max(state.nextShot,elapsed+32/FPS);state.fireStart=null;state.cannonT=elapsed+32/60;
     }
@@ -1653,14 +1685,14 @@ function activeStep(rt,actor,dt) {
     if(!rolling&&actor.intent.fire){
       if(state.fireStart===null)state.fireStart=elapsed;
     }else state.fireStart=null;
-    if(!rolling&&actor.intent.fire&&elapsed>=state.nextShot){
-      const origin=rt.v0.set(actor.pos.x,actor.pos.y+.95,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
-      const p=launch(rt,actor,'crabTank',origin,dir,{type:'shot',directOnly:true,damage:32,radius:.22,size:.13,speed:24,grav:4,drag:.04,life:1.25,sourceMode:'shooter',seed:nextSeed(state),damageReduce:{max:32,min:16,start:9/60,end:25/60}});
+    if(!rolling&&actor.intent.fire&&elapsed+1e-8<state.duration-25/60&&elapsed+1e-8>=state.nextShot){
+      const origin=rt.v0,dir=rt.v1;crabTankShotGeometry(actor,'shooter',origin,dir);
+      launch(rt,actor,'crabTank',origin,dir,{type:'shot',directOnly:true,damage:32,radius:1.6,size:.2,speed:3.36*FPS,grav:4,drag:.04,life:1.25,sourceMode:'shooter',sequence:state.shotSequence++,seed:nextSeed(state),damageReduce:{max:32,min:16,start:9/60,end:25/60}});
       emitAction(rt,actor,state.id,state.serial,'shot',origin,rt.v2.copy(origin).addScaledVector(dir,20),nextSeed(state),{damage:32});
       const progress=clamp((elapsed-state.fireStart)/(90/60),0,1),interval=12-8*Math.pow(progress,.2);
       state.nextShot=elapsed+interval/60;
     }
-    if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();c.y+=.75;withObjectDamageCause(actor,()=>damageBandRadius(rt,actor,c,[[1.45,40]],1.45,'crabTank',null,2.8,'Chariot_Body'),'Chariot_Body');paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v0),.9,nextSeed(state));}
+    if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();c.y+=.75;withObjectDamageCause(actor,()=>damageBandRadius(rt,actor,c,[[1.45,40]],1.45,'crabTank',null,2.8,'Chariot_Body'),'Chariot_Body');}
     if(elapsed+1e-8>=state.duration){state.phase='finish';state.finishUntil=state.duration+25/60;crabBall(rt,actor,state,false);moveActor(rt,actor,dt,state,{speed:0,squid:false,jump:false});}return;
   }
   if(state.id==='reefslider'){
@@ -1823,7 +1855,7 @@ function makeState(rt,actor,id) {
   };
   if(id==='booyahBomb'){state.charge=0;state.armorHP=470;state.cheerCalls=new WeakMap();state.cheerHeld=new WeakMap();actor.s3CatalogueBooyah=serial;}
   if(id==='ultraStamp'){state.stampHolding=false;state.stampCount=0;state.jumpStampAt=null;state.nextSwing=47/FPS;}
-  if(id==='crabTank'){state.armorHP=500;state.cannon=false;state.nextShot=20/60;state.nextCannon=20/60;state.cannonT=0;state.fireStart=null;state.wasRolling=false;}
+  if(id==='crabTank'){state.armorHP=500;state.cannon=false;state.nextShot=20/60;state.nextCannon=20/60;state.cannonT=0;state.fireStart=null;state.wasRolling=false;state.shotSequence=0;state.rollPaintSeed=nextSeed(state);}
   if(id==='reefslider'){state.paintRadius=gearCurve(ap,7.51,8.26,9.012);state.damageDistanceRate=gearCurve(ap,1,1.1,1.2);state.phase='startup';state.direction=aimDirection(rt,actor,new rt.api.THREE.Vector3());state.direction.y=0;state.direction.normalize();state.startupT=0;state.footHits=new Set();}
   if(id==='tripleInkstrike'){state.nextMarkerStart=20/FPS;state.markerQueued=false;}
   if(id==='waveBreaker')state.phase='ready';
@@ -1881,6 +1913,15 @@ function installRuntime(api) {
     if(!IDS.has(id))return step.call(this,dt,...args);
     rt.system=api.G.projectiles||rt.system;
     if(this.remote){this.specialActive=null;return undefined;}
+    if(id==='crabTank'){
+      if(!finite(dt)||dt<=0)return undefined;
+      const state=actorStates.get(this);if(!state)return undefined;
+      state.sourceCarry=(state.sourceCarry||0)+dt;
+      while(state.sourceCarry+1e-10>=1/FPS&&this.specialActive?.id===id){
+        state.sourceCarry=Math.max(0,state.sourceCarry-1/FPS);activeStep(rt,this,1/FPS);
+      }
+      return undefined;
+    }
     activeStep(rt,this,dt);
     return undefined;
   };
@@ -1916,19 +1957,43 @@ function installRuntime(api) {
     }
     return damage.call(this,amount,attacker,source);
   };
-  const P=Projectiles.prototype,update=P.update,clear=P.clear,baseCandidate=P.kitDefenseCandidate,blast=P._blastBurst,newProjectile=P._new,projectileStep=P._step;
+  const P=Projectiles.prototype,update=P.update,clear=P.clear,baseCandidate=P.kitDefenseCandidate,blast=P._blastBurst,newProjectile=P._new,projectileStep=P._step,impact=P._impact,ghostProjectile=P.ghostProjectile;
   // Projectiles are pooled, so every field owned by this module expires on reuse.
   P._new=function(...args){
     const p=newProjectile.apply(this,args);
     for(const key of SPECIAL_ROUND_FIELDS)delete p[key];
     return p;
   };
+  P.ghostProjectile=function(...args){
+    const before=this.list.length,result=ghostProjectile.apply(this,args);
+    if(this.list.length>before){const p=this.list.at(-1);
+      if(p.ghost&&p.wid==='crabTank'){
+        const mode=p.type==='shot'?'shooter':'cannon';
+        p.s3AllSpecial='crabTank';p.s3AllSpecialMode=mode;p.s3PaintNoSpecial=true;
+        p.s3AllSpecialFlight=sourceFlight('crabTank',mode,p.type);p.s3AllSpecialFlightCarry=0;
+        configureCrabProjectile(p);
+      }
+    }
+    return result;
+  };
   if(typeof projectileStep==='function')P._step=function(p,...args){
     const cause=p?.s3AllSpecial?projectileObjectCause(p):null;
     const advance=()=>p?.s3AllSpecialFlight
-      ?stepSourceFlight(this,p,args[0],projectileStep)
+      ?stepSourceFlight(this,p,args[0],projectileStep,api.G)
       :projectileStep.call(this,p,...args);
     return cause&&!p?.ghost&&!p?.owner?.remote?withObjectDamageCause(p,advance,cause):advance();
+  };
+  if(typeof impact==='function')P._impact=function(p,hit,...args){
+    if(p?.s3AllSpecial==='crabTank'&&startCrabWallDrop(this,p,hit)){
+      // Separate wall shock/fall/ground radii own paint at a wall contact.
+      // Native impact still owns feedback; suppress its additional random disk.
+      const native=api.G.paint?.splat;
+      if(native){let first=true;api.G.paint.splat=function(...values){if(first){first=false;return 0;}return native.apply(this,values);};
+        try{return impact.call(this,p,hit,...args);}finally{api.G.paint.splat=native;}}
+    }
+    return p?.s3AllSpecial==='crabTank'
+      ?withCrabImpactPaint(api.G,p,hit,()=>impact.call(this,p,hit,...args))
+      :impact.call(this,p,hit,...args);
   };
   P.update=function(dt){
     rt.system=this;
@@ -1961,7 +2026,9 @@ function installRuntime(api) {
       const t=Number(p.age)||0,k=clamp((t-profile.start)/Math.max(1e-6,profile.end-profile.start),0,1);
       p.damage=profile.max+(profile.min-profile.max)*k;
     }
-    return update.call(this,dt);
+    const result=update.call(this,dt);
+    updateCrabSplashVisuals(this,api.G,THREE);
+    return result;
   };
   if(typeof baseCandidate==='function')P.kitDefenseCandidate=function(p,...args){
     rt.system=this;
@@ -1988,8 +2055,15 @@ function installRuntime(api) {
         return bands.at(-1)?.[1]||0;
       },cause);
     }
-    if(!p?.ghost&&!p?.owner?.remote&&p?.s3AllSpecial&&p.s3AllSpecial!=='booyahBomb'&&finite(p.s3AllSpecialPaintRadius)&&p.s3AllSpecialPaintRadius>MAX_STAMP_RADIUS)
-      paintDisk(rt,p.owner,at,p.s3AllSpecialPaintRadius,p.s3AllSpecialSeed||0,p.seed);
+    if(!p?.ghost&&!p?.owner?.remote&&p?.s3AllSpecial&&p.s3AllSpecial!=='booyahBomb'&&finite(p.s3AllSpecialPaintRadius)&&p.s3AllSpecialPaintRadius>MAX_STAMP_RADIUS){
+      if(p.s3AllSpecial==='crabTank'){
+        // Cannon BlastParam.PaintOffsetY=.2 and PaintRadius=4.5. A remote
+        // floor outside the blast cannot receive a projected full-size disk.
+        const probe=rt.v7.copy(at);probe.y+=.2;
+        const hit=api.G.physics?.raycast?.(probe,rt.down,p.s3AllSpecialPaintRadius+.2,rt.hit,true);
+        if(hit?.hit)paintDisk(rt,p.owner,hit.point.clone().addScaledVector(hit.normal||rt.up,.08),p.s3AllSpecialPaintRadius,p.s3AllSpecialSeed||0,p.seed);
+      }else paintDisk(rt,p.owner,at,p.s3AllSpecialPaintRadius,p.s3AllSpecialSeed||0,p.seed);
+    }
     if(!p?.ghost&&!p?.owner?.remote&&p?.s3AllSpecial&&p.s3AllSpecial!=='booyahBomb')
       paintSpecialChannels(rt,p.owner,at,{crossRadius:p.s3AllSpecialCrossPaintRadius,crossLength:p.s3AllSpecialCrossPaintLength,
         splashAroundRadius:p.s3AllSpecialSplashAroundRadius,splashAroundCount:p.s3AllSpecialSplashAroundCount,
@@ -2005,6 +2079,7 @@ function installRuntime(api) {
   };
   P.clear=function(...args){
     rt.system=this;
+    clearCrabSplashVisuals(this,api.G);
     for(const object of [...(this._s3AllSpecialObjects||[])])removeWorld(rt,object,'expire');
     this._s3AllSpecialObjects=[];this._s3AllSpecialWorldClock=0;return clear?.apply(this,args);
   };

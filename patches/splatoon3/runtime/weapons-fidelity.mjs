@@ -627,8 +627,12 @@ function detachedPaint(system, state, point, radius, salt, face = state.paintFac
   const area = api.G.paint.splat(point, radius, state.team, {
     ...(Number.isInteger(face) && face >= 0 ? { face } : {}),
     seed: seededUnit(state.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: state.owner,
+    ...(state.noSpecial?{claimMode:'no-special'}:{}),
   });
-  if (Number.isFinite(area)) state.owner?.addTurf?.(area);
+  if (Number.isFinite(area)) {
+    if(state.noSpecial)state.owner?.addTurfNoSpecial?.(area);
+    else state.owner?.addTurf?.(area);
+  }
   return area || 0;
 }
 
@@ -640,7 +644,7 @@ function startDetachedWallDrop(system, p, hit, move, paint, tag, salt, paintFace
   const firstSpeed = Number(move.FallPeriodFirstTargetSpeed ?? 0), secondSpeed = Number(move.FallPeriodSecondTargetSpeed ?? 0);
   if (![firstSpeed, secondSpeed].every(v => Number.isFinite(v) && v >= 0)) throw new RangeError('Invalid detached wall-drop speed');
   const state = {
-    tag, paintFace, owner: p.owner, team: p.team, seed: Number.isFinite(p.seed) ? p.seed : 0, ghost: !!p.ghost,
+    tag, paintFace, owner: p.owner, team: p.team, seed: Number.isFinite(p.seed) ? p.seed : 0, ghost: !!p.ghost, noSpecial:!!p.s3PaintNoSpecial,
     frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames,
     firstSpeed, secondSpeed,
     shockRadius: Number(paint.PaintRadiusShock) || 0,
@@ -1531,6 +1535,10 @@ export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
     return w.damage + (w.damageMin - w.damage) * t;
   }
   const age=(p.fidelityPrevAge??p.age)+(p.age-(p.fidelityPrevAge??p.age))*impactT;
+  if(p.s3AllSpecial==='crabTank'&&p.type==='shot'&&p.s3DamageReduce){
+    const d=p.s3DamageReduce,t=clamp01((age-d.start)/(d.end-d.start));
+    return d.max+(d.min-d.max)*t;
+  }
   return p.damage;
 }
 export function applyFidelityProjectileHit(system,p,victim,amount,point) {

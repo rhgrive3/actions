@@ -30,6 +30,7 @@
  *    forward smear with equal total length and equal area (see splashStretch).
  */
 import { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
+import { sweptWorldHit } from './weapons-collision.mjs';
 const EPS = 1e-9;
 const STEP_FRAMES_PER_SECOND = 60;
 // A splash that has not reached terrain after 4 s of free fall (> 450 world
@@ -172,6 +173,7 @@ function landSplashDrop(game, drop, hit) {
   const kind = drop.spec?.surfaceOnly && drop.depth
     ? SOURCE_SPLASH_PAINT_KIND : drop.kind;
   const opts = { seed: drop.seed, kind, claimOwner: drop.owner };
+  if(drop.spec.noSpecial)opts.claimMode='no-special';
   if (surfaceOnly) opts.face = hit.face;
   const floor = hit.normal.y > .45;
   if (drop.depth && floor && (drop.dirX || drop.dirZ)) {
@@ -188,7 +190,10 @@ function landSplashDrop(game, drop, hit) {
     height: drop.spawnY - hit.point.y, frames: drop.frames, radius: drop.radius, depth: drop.landingDepth ?? 1,
     releaseX: drop.releaseX, releaseY: drop.spawnY, releaseZ: drop.releaseZ, face: hit.face ?? -1 };
   const area = paint.splat(point, drop.radius, drop.team, opts);
-  if (Number.isFinite(area) && area) drop.owner.addTurf?.(area);
+  if (Number.isFinite(area) && area) {
+    if(drop.spec.noSpecial)drop.owner.addTurfNoSpecial?.(area);
+    else drop.owner.addTurf?.(area);
+  }
   const log = game?.projectiles && (game.projectiles._s3SplashLandings || (game.projectiles._s3SplashLandings = []));
   if (log) { log.push(drop.landing); if (log.length > MAX_LANDING_RECORDS) log.shift(); }
   return Number.isFinite(area) ? area : 0;
@@ -216,7 +221,10 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
       if (d.spec.drag > 0) d.vel.multiplyScalar(1 - d.spec.drag);
       d.vel.y -= d.spec.gravity * step;
       d.next.copy(d.pos).addScaledVector(d.vel, step);
-      const hit = d.hit = physics.segment(d.pos, d.next, d.hit || hitRecord(d.pos), true);
+      const record=d.hit||hitRecord(d.pos),radius=d.spec.fieldRadius||0;
+      const hit = d.hit = radius>0
+        ?sweptWorldHit(physics,d.pos,d.next,radius,radius,record,true)
+        :physics.segment(d.pos, d.next, record, true);
       d.frames++;
       if (hit?.hit) { landSplashDrop(game, d, hit); landed++; done = true; break; }
       d.pos.copy(d.next);
@@ -231,7 +239,7 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
 // owner supplies a clipped endpoint; splash state cannot alter motion/damage.
 // Returns the number of splashes released this call.
 export function paintDistanceFlight(game, projectile, state, end = projectile?.pos) {
-  if (!state || projectile.s3SpecialWeapon || projectile.ghost ||
+  if (!state || (projectile.s3SpecialWeapon && !(projectile.s3AllSpecial === 'crabTank' && state === projectile.s3CrabFlightPaint)) || projectile.ghost ||
       projectile.owner?.remote || !game?.paint || !game?.physics ||
       !end || ![end.x, end.y, end.z].every(Number.isFinite)) return 0;
   const distance = state.last.distanceTo(end), limit = state.distance + distance, spec = state.spec;
