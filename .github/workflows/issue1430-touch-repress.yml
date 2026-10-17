@@ -1,0 +1,67 @@
+name: Diagnose1430 exact emitted touch release and repress
+on:
+  push:
+    branches: [review/issue1430-main4754-touch-repress-20261017]
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        engine: [chromium, webkit]
+    env:
+      CI_STORAGE: /mnt/workspace/issue1430-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 4754c4ef402375f26e2d46702ed46330b401108b
+          path: candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Established pinned toolchain
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Prepare persistent evidence and exact production build
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/diagnostic/node_modules/esbuild/lib/main.js
+        run: |
+          sudo mkdir -p "$CI_STORAGE"
+          sudo chown "$(id -u):$(id -g)" "$CI_STORAGE"
+          test "$(realpath "$CI_STORAGE")" = "$CI_STORAGE"
+          mkdir -p "$CI_STORAGE/evidence" "$CI_STORAGE/cache"
+          test "$(git -C candidate rev-parse HEAD)" = 4754c4ef402375f26e2d46702ed46330b401108b
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 1e5a9b77ab5ff7fcee7556341ddb60a0b338079f
+          (cd candidate && timeout -k 5s 180s node --jitless --max-old-space-size=96 --max-semi-space-size=1 scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json "$CI_STORAGE/evidence/"
+          git -C candidate diff --exit-code
+      - name: Bind unchanged strict case and observational trace
+        run: |
+          node --max-old-space-size=64 diagnostic/diagnostics/issue1430/controls.mjs
+          python3 diagnostic/diagnostics/issue1430/prepare.py candidate diagnostic/execution ${{ matrix.engine }}
+          cp diagnostic/execution/preparation.json "$CI_STORAGE/evidence/"
+          node --check diagnostic/execution/run.mjs
+      - name: Execute original reliability flow and strict expected two actions
+        run: |
+          timeout -k 5s 600s node --max-old-space-size=512 diagnostic/execution/run.mjs --site candidate-site --evidence-dir "$CI_STORAGE/evidence" --profile-dir "$CI_STORAGE/cache" > "$CI_STORAGE/evidence/browser.log" 2>&1
+          python3 diagnostic/diagnostics/issue1430/finish.py "$CI_STORAGE/evidence" ${{ matrix.engine }} diagnostic/execution candidate-site
+          git -C candidate diff --exit-code
+      - name: Preserve pass and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue1430-main4754-${{ matrix.engine }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.CI_STORAGE }}/evidence
+          if-no-files-found: error

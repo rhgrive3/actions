@@ -1,0 +1,9 @@
+# Issue1430 exact-main reproduction
+
+New recovery provenance after executor replacement. Original unpersisted main378 proposal was lost; this independently reconstructed payload targets immutable main4754c4ef402375f26e2d46702ed46330b401108b, tree1e5a9b77ab5ff7fcee7556341ddb60a0b338079f, fetched from official GitHub. This is not a recovered runtime receipt.
+
+No production changes. Reuse the complete original reliability browser flow to preserve preceding state, native tap setup,31-tick held interval, release/repress scheduling and strict expected2 assertion. Separate serial Chromium/WebKit matrix jobs preserve the other engine after a failure. Existing bounded collision/paint/projectile fixture substitutions remain explicit: this is not full-game renderer, live relay or physical iPad acceptance.
+
+Observer logs pointer capture/bubble events (including trusted flag), input ownership/edges, Actor intent/admission, runner cooldown/dodge/lock/ink and emitted dodge count. Advance receiver, arguments, return and exceptions are preserved. Hooks are restored after the strict case.2048-row overflow fails, never silently truncates. Partial traces are written before context close; trace extraction errors have separate evidence. The held sequence retains its original synthetic DOM PointerEvents.
+
+Prepared controls only: observer semantics/cleanup; reversible generation for both engines with original strict assertion unchanged; generated JS syntax; Python AST/YAML. Private generator tests mock Git revision reads only to exercise exact official sparse fixtures; actual workflow Git checks are unmocked. No build/browser has run. After successful execution every artifact and generated helper is rehashed and receipt ownership checked. Failure, absent trace and later timeout cannot become acceptance. A pass alone does not establish that an intermittent problem is resolved.
