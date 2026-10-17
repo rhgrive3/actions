@@ -61,6 +61,7 @@ import { installFlowMotion } from './flow-motion.mjs';
 import { installBombMotion } from './bomb-motion.mjs';
 import { installWeaponDetailMotion } from './weapon-detail-motion.mjs';
 import { installWeaponFamilyMotion } from './weapon-family-motion.mjs';
+import { installWeaponHandoffMotion } from './weapon-handoff-motion.mjs';
 import { installJumpMotion } from './jump-motion.mjs';
 import { installLandingMotion } from './landing-motion.mjs';
 import { installSwimMotion } from './swim-motion.mjs';
@@ -218,6 +219,7 @@ export function install(profile) {
   installSpecialVfx(api);
   // Outermost weapon pose layer: per-weapon / per-family offsets over every native and patched hold.
   installWeaponFamilyMotion(api);
+  installWeaponHandoffMotion(api);
   // Validate and bind catalogue gameplay only after all supported sub/special
   // slots and alternative weapon identities are registered. Early validation
   // fails even valid source kits because their registry entries do not exist.

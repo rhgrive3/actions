@@ -12,6 +12,7 @@ import { FOLLOWUP_MODELS as ACCEPTED_CARBON } from './variants-accepted-carbon-f
 // (modelKind) still selects gameplay, native HOLD data and the animated part
 // channels the family runtime drives. Geometry is procedural and built lazily.
 import { MAIN_WEAPON_CATALOG } from '../main-weapon-catalog-data.mjs';
+import { FAMILY_HOLD_SHIFT, shiftHold } from './family-holds.mjs';
 import { ALTERNATE_WEAPON_KITS, VARIANT_BASE_WEAPON } from '../alternate-weapon-kits-data.mjs';
 import * as SHOOTERS from './shooters.mjs';
 import * as SHOOTERS_B from './shooters-b.mjs';
@@ -164,7 +165,8 @@ export function buildWeaponModel(key, base) {
   return d;
 }
 
-// Hold = native family HOLD entry deep-merged with the weapon's overrides. Stable
+// Hold = native family HOLD entry deep-merged with the weapon's overrides, then
+// the behaviour-family calibration (family-holds.mjs). Stable
 // identity per (weapon, base) so per-hold caches (carry/detail overlays) stay valid.
 const holds = new WeakMap();
 const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -175,12 +177,16 @@ function merge(base, over) {
 }
 export function weaponHold(key, base) {
   key = weaponBaseModelId(key);
-  const spec = SPECS.get(key);
-  if (!spec?.hold || !base) return base;
+  const spec = SPECS.get(key), shift = FAMILY_HOLD_SHIFT[weaponBehaviorFamily(key)];
+  if ((!spec?.hold && !shift) || !base) return base;
   let byKey = holds.get(base);
   if (!byKey) { byKey = new Map(); holds.set(base, byKey); }
   let h = byKey.get(key);
-  if (!h) { h = merge(base, spec.hold); byKey.set(key, h); }
+  if (!h) {
+    h = spec?.hold ? merge(base, spec.hold) : base;
+    if (shift) h = shiftHold(h, shift);
+    byKey.set(key, h);
+  }
   return h;
 }
 

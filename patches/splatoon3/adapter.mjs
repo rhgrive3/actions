@@ -426,6 +426,9 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, near: true, pump: 0, trig: 0, left: null, hidden: 0 };',
       'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
     code = replaceOnce(code, '    pivot.add(off);', '    pivot.add(off);\n    attachWeaponGlass(d, off);', 'independent transparent weapon shell at every LOD');
+    // A bow's drawing hand rides its string (weapon-models/stringers.mjs animateBow).
+    code = replaceOnce(code, '      _pT.copy(d.handL.pos); if (w.pump) _pT.z -= 0.036 * w.pump;   // blaster: the support hand racks the pump',
+      '      _pT.copy(d.handL.pos); if (w.pump) _pT.z -= 0.036 * w.pump;   // blaster: the support hand racks the pump\n      if (w.supportZ) _pT.z += w.supportZ;', 'support hand follows a moving grip');
     return "import { attachWeaponGlass } from '../../patches/splatoon3/runtime/weapon-models/kit.mjs';\nimport { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'styles/hud.css') {

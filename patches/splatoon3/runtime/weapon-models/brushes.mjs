@@ -159,6 +159,8 @@ const BRUSH = {
   's3-brush-heavy': { sweep: 12 / 60, tip: 0.95, thick: 0.035 },
 };
 const HOLD_END = 0.16, RETURN = 0.22, SIDE = 1.15;
+const CARRY = { p: [-0.18, 0.78, 0.08], r: [-1.0, -1.4, 0] };
+const LEFT_REST = [0.2, 0.5, 0.04], LEFT_SWING = [0.3, 0.74, 0.17];
 const state = new WeakMap();
 const mix = (a, b, t) => a + (b - a) * t;
 function brushState(ch) {
@@ -208,12 +210,13 @@ export function FAMILY_POSE(ch, dt, s, C) {
   } else m.corr = damp(m.corr, 0, 1.5, dt);
   if (!(ch.kidForm && !ch.dance && (ch.wSub || 0) <= 0.01)) { m.w = 0; return; }
   const P = ch.P, roll = clamp(ch.wRoll || 0);
-  // carry: brush low at the right side, head just off the floor ahead-right
-  const L = cfg.tip, hc = 0.72, pitchC = Math.asin(clamp((hc - 0.26) / L, 0, 0.98));
+  // carry: shouldered in the right hand, the head up over the right shoulder (official
+  // brush movies vgGl1gaD7rb / EyKDWN7kgYb / XJql6EAj5yE at rest; INKWAVE calibration)
+  const L = cfg.tip;
   // drag: both hands low in front, the ink tip on the floor
   const hr = 0.66, pitchR = Math.asin(clamp((hr - 0.26) / L, 0, 0.98));
-  _anc[0] = mix(-0.2, -0.06, roll); _anc[1] = mix(hc, hr, roll); _anc[2] = mix(0.12, 0.3, roll);
-  _rot[0] = mix(pitchC, pitchR + m.corr, roll); _rot[1] = mix(-0.62, 0.02, roll); _rot[2] = 0;
+  _anc[0] = mix(CARRY.p[0], -0.06, roll); _anc[1] = mix(CARRY.p[1], hr, roll); _anc[2] = mix(CARRY.p[2], 0.3, roll);
+  _rot[0] = mix(CARRY.r[0], pitchR + m.corr, roll); _rot[1] = mix(CARRY.r[1], 0.02, roll); _rot[2] = mix(CARRY.r[2], 0, roll);
   // swing: windup (first heavy swing) → sweep across → hold at the far side → return
   const t = m.age - m.windup, sw = cfg.sweep;
   let k = 0, phi = 0, up = 0;
@@ -239,8 +242,18 @@ export function FAMILY_POSE(ch, dt, s, C) {
     P[C.SPINE] += 0.06 * w; P[C.HIPS_P + 1] -= 0.02 * w;
   }
   for (let i = 0; i < 3; i++) { P[C.ANC + i] = _anc[i]; P[C.ANCR + i] = _rot[i]; }
-  // one hand carries; both hands sweep and drag (Octobrush / Painbrush promotional art)
-  P[C.IKR] = Math.max(P[C.IKR], 1); P[C.IKL] = Math.max(roll, w > 0.001 ? w : 0);
+  // The right hand alone carries and sweeps; the free left arm hangs, then swings out
+  // for balance (XJql6EAj5yE 0.6-3.8 s). Both hands drag (promotional art; the movies
+  // do not show the drag grip clearly). The roller kind's two-hand shoulder protraction
+  // is undone where the left hand is free.
+  P[C.IKR] = Math.max(P[C.IKR], 1); P[C.IKL] = roll;
+  const free = 1 - roll;
+  if (free > 0.001) {
+    P[C.CLAVL + 1] += 0.28 * free; P[C.CLAVL + 2] -= 0.04 * free;
+    P[C.LTW] = Math.max(P[C.LTW], free);
+    const bw = w * free;
+    P[C.LTGT] = mix(LEFT_REST[0], LEFT_SWING[0], bw); P[C.LTGT + 1] = mix(LEFT_REST[1], LEFT_SWING[1], bw); P[C.LTGT + 2] = mix(LEFT_REST[2], LEFT_SWING[2], bw);
+  }
   if (roll > 0.001) { P[C.SPINE] += 0.12 * roll; P[C.CHEST] += 0.06 * roll; P[C.HIPS_P + 1] -= 0.03 * roll; }
 }
 
