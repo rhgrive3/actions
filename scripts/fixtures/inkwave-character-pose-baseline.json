@@ -1,30 +1,30 @@
 {
   "schema": 1,
-  "purpose": "Use the reviewed #1562 character proportions/ready stance and folded Roller clearance on both sides of the projectile comparison. No projectile, damage, paint, collision, movement or RNG module is copied. This baseline is not unchanged main.",
+  "purpose": "Reference main plus the explicitly reviewed #1562/#1563 body proportions, holds, model scale, handoff and live folded-Roller clearance. Shared registry/catalog reverse edits retain #1550 variant/menu changes exclusively on the candidate side. No projectile, damage, paint, collision, movement or RNG module is copied. This reference is not unchanged main.",
   "sourceBase": "85acc45d0ab23a95161b599d4287fd8142e8145b",
-  "sourceHead": "e8b89e5588bb95aab5be54b9f8346ceca50cf177",
-  "reviewedDiffSha256": "9d9a1b7471effca5a220943eb94af3217010a39e4a21d2fbcff683e65a0bd570",
+  "sourceHead": "3e386b37f7d94d3dc5ee396131a04f9cbb16c34b",
+  "reviewedDiffSha256": "55090dd9c998bf0c6065387230b2f35e9e84bfbf0a2857bb693ac9ecbbd2e2ce",
   "files": [
     {
       "path": "patches/splatoon3/adapter.mjs",
       "beforeBlob": "e72f27c6b732269276faf777e26c3f1419064c3b",
-      "afterBlob": "46d6a2adefdfbb28fe56484fcb866ca4173c4b86",
+      "afterBlob": "7eb1113e0692bcd08fc46e908ed4a16f85c4f83c",
       "beforeSha256": "430cd619f893511080e1a336d88ee2dd7746faba6e310024294b39bf27124d95",
-      "afterSha256": "82f736f845cf734c71eb608c08134887ad5486810487606eb70626f8c155bbd0"
+      "afterSha256": "4dcb9d0274a109c9a24bfacc0967f042000d7211e8d3ac080c160ac3a73c7a9e"
     },
     {
       "path": "patches/splatoon3/body-proportion-adapter.mjs",
       "beforeBlob": null,
-      "afterBlob": "6e1d479cb8828e6c7a4669b695cac4c1bdc00cbe",
+      "afterBlob": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
       "beforeSha256": null,
-      "afterSha256": "f94ea757cd2d201a7d643a7f05ac2080c4a9d4c897ffb9969f0dd4b157f47c55"
+      "afterSha256": "e02da6606eee59fc9d554f116ae66aca51c3a5aca7df9fed4f3f8d2fd4bd5ecc"
     },
     {
       "path": "patches/splatoon3/runtime/body-proportion.mjs",
       "beforeBlob": null,
-      "afterBlob": "953e84671e99af3a30638c842084368a0ca4be2d",
+      "afterBlob": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
       "beforeSha256": null,
-      "afterSha256": "513587d9b571bbea0315bdc48d6d3b2b9576d480bc8893f643a8e852843be3c2"
+      "afterSha256": "e5058d0603b374b926adcc50bd641591a7ab416829fc4031a94d79f7611b0de5"
     },
     {
       "path": "patches/splatoon3/runtime/idle-motion.mjs",
@@ -36,23 +36,23 @@
     {
       "path": "patches/splatoon3/runtime/install.mjs",
       "beforeBlob": "7de79e25b11e9018d9fe75b113b85b894e5677fb",
-      "afterBlob": "3f8dcdd3ad086e30d360beede7e2f42400b31734",
+      "afterBlob": "c33e62280d1a47b39ed80437e5c12a73766ce7ba",
       "beforeSha256": "6cea5c9ee153b67a9acf66e945e8e953a1ac6fdfbcbe0119a1053de123484fd5",
-      "afterSha256": "bd3dff052a5bafdfd6185d23d112a5b8cb01b162a68d836d2f62c30d2fa07d27"
+      "afterSha256": "2ca60ad109e23409e5c349a64f7ed2ff8db1c7264bbe42cf8239ebc5901cf1ed"
     },
     {
       "path": "patches/splatoon3/runtime/roller.mjs",
       "beforeBlob": "bfd100b2e46aa89b40669a620f59f5058afc151d",
-      "afterBlob": "2f1a9018c6e7b4b522866f21fbaf7cafce34f7ca",
+      "afterBlob": "331dc4ce709158e9d1a1fb22694b7ff484bb3c32",
       "beforeSha256": "914f4e4fc57acb210a6394fa51aaea8f9ae63520e4ea790a7894cb6634d22d09",
-      "afterSha256": "1818dd6d53ab5ff565eff8118a2c0ae72d49d28bb1f3c923c67ce55e880f7d4e"
+      "afterSha256": "2fe22484d3cc54c2ade2b2218f03eed8eaf85761b8b53e6957a42fc71e85079a"
     },
     {
       "path": "patches/splatoon3/runtime/source-posture.mjs",
       "beforeBlob": "a6529a14d56cb0e22700453c9b7509bb56dd5cca",
-      "afterBlob": "fb22f09b2f2071d148cdc031f8556c34caf62dc7",
+      "afterBlob": "d28246d52530407edd853d303e1170e273f23c9e",
       "beforeSha256": "728c5615c471b71e6da4ad662de17bd846cc6fd3cbd999e5cde1103d6cb3c268",
-      "afterSha256": "bd5fa90fa2ea1a215be271ad56691a4a755799e893fae03becc74d42e07211ad"
+      "afterSha256": "34054624c0811e811d0b8b14c318df02a0a50d835018a04d4b072e9e286577af"
     },
     {
       "path": "patches/splatoon3/upstream-lock.json",
@@ -60,6 +60,90 @@
       "afterBlob": "94e1025c2e054e39e5ef44232220b2b9b7037e46",
       "beforeSha256": "f364306e13b5927b7c4de158c361a279772be64ec698a4c0ddae5a165ae7c5d8",
       "afterSha256": "8c5b73710512b8183f41c7c2eb4bcbbce74a8791360307062b89f45ef2c2622a"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+      "beforeBlob": null,
+      "afterBlob": "88dcc18c462ec32ea636f04e5e736c0ad01fa608",
+      "beforeSha256": null,
+      "afterSha256": "b7c194a0ce6f2363456d9c3d10d02f242f947ddf886435c33749860c84823718"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/brushes.mjs",
+      "beforeBlob": "17ecceec7f15452c181b1216c95ee0c08e61e441",
+      "afterBlob": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+      "beforeSha256": "3bc172c003ff3dea4171bd0b5da3b430c22caae04b4d5a2ec66452fccc24a43c",
+      "afterSha256": "f648d7ec28e39760069660119246d5826376df70065816d0ca6cb008263f93da"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/family-holds.mjs",
+      "beforeBlob": null,
+      "afterBlob": "c9b31171caaefe538b2fdebb09b425fced0f3b91",
+      "beforeSha256": null,
+      "afterSha256": "bd813a70830a7366734ab55eacf0497561cbbfea47b95332d7662c2cb772b66d"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/kit.mjs",
+      "beforeBlob": "c29be833c719915d9db1c2f5da9c3f6f74621e33",
+      "afterBlob": "9dd0434f8fe96da306896e4c9e55bf9394d178ab",
+      "beforeSha256": "b91c581e911399a515955cdcbc95565c0a7040cb29f530142bb7b68a8f103fc1",
+      "afterSha256": "5a5897b9925411510d281340355c6642695cdb35cd63241a73784597ffc3fd6c"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "beforeBlob": "540e41a45156a8a2838e5d328e485e7fb8fb70f2",
+      "afterBlob": "75c7a2cc99ed511c5b239b4dd1813750edcea374",
+      "beforeSha256": "7dfa8333004290680fc4e750cad914dfc9fe226a203152b28324d2bfa126bc37",
+      "afterSha256": "5cce88a3693f92961dcdb8e8261acf4ff2b8481e5ca3a14cb7bb84d1cbf70d38",
+      "candidateBlob": "315461172b10afd0bf0f760a5870a0cd9aa9faae",
+      "candidateSha256": "ff75a0798fa519401dccfdf8ccc11189fd014159e71997c83f58a2510eb3ace8",
+      "candidateToReference": [
+        {
+          "from": "import { FOLLOWUP_MODELS as PATTERNZ_VARIANTS } from './variants-patternz-followup.mjs';\nimport { FOLLOWUP_MODELS as ACCEPTED_ROLLER_THREE } from './variants-accepted-roller-three-followup.mjs';\nimport { FOLLOWUP_MODELS as ACCEPTED_BRUSH_TWO } from './variants-accepted-brush-two-followup.mjs';\nimport { FOLLOWUP_MODELS as ACCEPTED_STARZ_HORNZ } from './variants-accepted-starz-hornz-followup.mjs';\n",
+          "to": ""
+        },
+        {
+          "from": "for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, RANGED_VARIANTS, PATTERNZ_VARIANTS]) {\n",
+          "to": "for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, RANGED_VARIANTS]) {\n"
+        },
+        {
+          "from": "for (const mod of [PATTERNZ_VARIANTS, ACCEPTED_ROLLER_THREE, ACCEPTED_BRUSH_TWO, ACCEPTED_STARZ_HORNZ, ACCEPTED_BLASTER_NEXT, ACCEPTED_BASIC_SHOOTERS, ACCEPTED_GAL, ACCEPTED_SABER_LITE, ACCEPTED_BRUSH_MINI, COLORZ_THREE, BULBZ_VARIANTS, SQUIFFER_VARIANTS, NOCT_VARIANTS, MILK_VARIANTS, SORELLA_VARIANTS, EXPLOSHER_VARIANTS, SECOND_BRELLA, SECOND_REEF, SECOND_INKLINE, SECOND_WELLSTRING, SECOND_C, THIRD_SHOOTERS, THIRD_NEO, THIRD_CHARCOAL, THIRD_NOUVEAU, THIRD_RUST, THIRD_STICKERZ, THIRD_C, FOURTH_NOZZLE, FOURTH_DUALIE_FIXED, FOURTH_BLASTER_FIXED, FOURTH_DUALIE_LIGHT, FOURTH_BLASTER_DECO, FIFTH_CHARGERS, NEXT_C, ACCEPTED_SPINNER, ACCEPTED_SHOOTER, ACCEPTED_RANGED, ACCEPTED_HEAVY02, MINI_VARIANTS, ACCEPTED_MANUAL_THREE, ACCEPTED_BRUSH_SLOSHER, ACCEPTED_A4, LUNA_VARIANTS, ACCEPTED_CARBON, ACCEPTED_LIGHTLONG]) {\n",
+          "to": "for (const mod of [ACCEPTED_BLASTER_NEXT, ACCEPTED_BASIC_SHOOTERS, ACCEPTED_GAL, ACCEPTED_SABER_LITE, ACCEPTED_BRUSH_MINI, COLORZ_THREE, BULBZ_VARIANTS, SQUIFFER_VARIANTS, NOCT_VARIANTS, MILK_VARIANTS, SORELLA_VARIANTS, EXPLOSHER_VARIANTS, SECOND_BRELLA, SECOND_REEF, SECOND_INKLINE, SECOND_WELLSTRING, SECOND_C, THIRD_SHOOTERS, THIRD_NEO, THIRD_CHARCOAL, THIRD_NOUVEAU, THIRD_RUST, THIRD_STICKERZ, THIRD_C, FOURTH_NOZZLE, FOURTH_DUALIE_FIXED, FOURTH_BLASTER_FIXED, FOURTH_DUALIE_LIGHT, FOURTH_BLASTER_DECO, FIFTH_CHARGERS, NEXT_C, ACCEPTED_SPINNER, ACCEPTED_SHOOTER, ACCEPTED_RANGED, ACCEPTED_HEAVY02, MINI_VARIANTS, ACCEPTED_MANUAL_THREE, ACCEPTED_BRUSH_SLOSHER, ACCEPTED_A4, LUNA_VARIANTS, ACCEPTED_CARBON, ACCEPTED_LIGHTLONG]) {\n"
+        }
+      ]
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/stringers.mjs",
+      "beforeBlob": "aea1288db065e38c572bedd53d574cc57db0a0b0",
+      "afterBlob": "569fe3924c14183b31d68dad92cd6eb5c3570040",
+      "beforeSha256": "b601dd08d7c7780246ad6dbc082e5a923dd6f7ba63940c8f9165400721b0a5cb",
+      "afterSha256": "d711f2decefff5d02aafb093d925f014c9729ec402b8c12773dacbbf5b6c5c4f"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs",
+      "beforeBlob": "57b28daef4408ac5e7ead46793791517d8e9c83f",
+      "afterBlob": "9f68724343748037145c552937025d74ac5df8b9",
+      "beforeSha256": "ad137a216607e197dc2a0b102897f6930375dc1855341867cd4cd649622f7322",
+      "afterSha256": "37ac0f9ddc36949b9ad8e243c917e7fdffc27ffa85365e02a307b5953967c3bb"
+    },
+    {
+      "path": "patches/splatoon3/weapon-catalog-adapter.mjs",
+      "beforeBlob": "a92581986afa3948ec4fbcf56b346af6c63fb679",
+      "afterBlob": "5c062665609a3bbd7d7123680a3f3c59917a5733",
+      "beforeSha256": "ed2573085149175dd22118b19ff26ef8e9db1ad62cfb4d2047c432d7cdd0ba59",
+      "afterSha256": "3a009c3a2748aa0986ee1ae7a863bf071b6e0700fdf540d7cb346eba117d8a37",
+      "candidateBlob": "55582fd6109ff814ed107577db74b990d755a926",
+      "candidateSha256": "2957ddee99cdc8dbe189b1162cee8d5deb35728e970e73fd76c4660cae5f799c",
+      "candidateToReference": [
+        {
+          "from": "    code = \"import { weaponAppearanceOptions, weaponAppearancePreference, setWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\\nimport { weaponBaseModelId, weaponModelKey } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\\n\" + code;\n",
+          "to": "    code = \"import { weaponAppearanceOptions, weaponAppearancePreference, setWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\\nimport { weaponBaseModelId } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\\n\" + code;\n"
+        },
+        {
+          "from": "      for (const c of this._sc()?.chars || []) if (c.weaponAppearancePreview && c.weaponModel === weaponModelKey(shown)) c.setWeapon(shown);\n",
+          "to": "      for (const c of this._sc()?.chars || []) if (c.weaponAppearancePreview && c.weaponModel === weaponBaseModelId(shown)) c.setWeapon(shown);\n"
+        }
+      ]
     }
   ]
 }
