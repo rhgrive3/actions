@@ -18,7 +18,7 @@
 - 同エディターの `Lft_FldObj_Hiagari04PntFloat` 等は rail/sequential rotation/AI lift パラメータへのアクセスを持つ。しかしクラス定義だけでは実配置、経路、移動開始条件を復元できない。全6,856 tree entry の調査で原典 Banc 配置ファイルは得られなかった。
 - [KiTrix](https://github.com/kirakira-dev/KiTrix/tree/0611f51b35c9736ee986fb2218461e2585b7875e) 固定コミットの `Vss_Hiagari04` OBJ は29,497,521 bytes、SHA-256 `fc8f7233063cdbe7b2bd821b30cbe60e94e7a20e6a5d60ce00ce9b272232d561`。98オブジェクト中 Float 名の部品が7個あるが、明示的な Pnt/Var/Vlf/Vgl/Vcl/Tcl レイヤー名はなく、Banc 配置も回収できなかった。数値のみ [audit](source-placement-mahi-audit-20261017.json) に記録した。
 - Drive の追加検索でも Banc/BYML/RomFS 等の実データは得られなかった。既存の提供資料は RomFS を含まない旨の説明があり、ローカル調整済み配置を原典の値へ昇格させなかった。
-- [ToolboxPaintFix](https://github.com/nvnprogram/ToolboxPaintFix/tree/a135901547ee854d826eb018a66b049a3ed76657) の BFRES `blitz_paint_type` と `_pu0/_pu1/_pu2` に対して、現有 KiTrix MTL は同じ情報を持たない。本家の塗り画像や専用衝突データは未入手で、楕円の弾着塗りマスク・表示三角形からのステージ判定は未解消。
+- [ToolboxPaintFix](https://github.com/nvnprogram/ToolboxPaintFix/tree/a135901547ee854d826eb018a66b049a3ed76657) の BFRES `blitz_paint_type` と `_pu0/_pu1/_pu2` に対して、現有 KiTrix MTL は同じ情報を持たない。初回実装時には本家の塗り画像や専用衝突データは未入手だった。追加探索で塗りPNG候補108枚と専用衝突の変換ツール・フラグ表を発見したが、ゲームへの適用・版照合とステージ別衝突は未完。[追加調査](source-data-search-20261017.md) を参照。楕円の弾着塗りマスク・表示三角形からのステージ判定は未解消。
 
 ## 検証の範囲
 
