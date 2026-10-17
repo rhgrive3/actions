@@ -1,0 +1,50 @@
+name: Verify fixed Patternz native saved selection reopening
+on:
+  push:
+    branches: [review/patternz-reopen-211090-20261017]
+permissions:
+  contents: read
+jobs:
+  model-screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 211090dd2fce15a55a244f62602639ac7f10d5f4
+          path: candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Established pinned build and browser tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build unchanged fixed candidate
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/diagnostic/node_modules/esbuild/lib/main.js
+        run: |
+          mkdir -p evidence
+          (cd candidate && timeout -k 5s 180s node --jitless --max-old-space-size=96 --max-semi-space-size=1 scripts/build-inkwave.mjs inkwave-public ../candidate-site) > evidence/build.log 2>&1
+          cp candidate-site/inkwave-build.json evidence/
+          python3 diagnostic/diagnostics/all95/prepare.py candidate candidate-site evidence
+      - name: Three trusted Patternz selections and fresh document reloads
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/diagnostic/node_modules/playwright/index.mjs
+        run: |
+          timeout -k 5s 900s node --max-old-space-size=512 diagnostic/diagnostics/all95/driver.mjs --site candidate-site --source-root candidate --evidence-dir evidence/browser --profile-dir browser-profile --exact-source > evidence/browser.log 2>&1
+          test -z "$(git -C candidate status --porcelain)"
+      - name: Preserve complete and partial results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: patternz-fixed211-reopen-${{ github.run_id }}
+          path: evidence
+          if-no-files-found: error
