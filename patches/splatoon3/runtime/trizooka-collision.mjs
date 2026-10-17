@@ -396,6 +396,14 @@ function sweepFill(out, a, b, hit) {
   return true;
 }
 
+// Reuse the same exact rounded-OBB query for calibrated deployed cover. This
+// is a contact query only; the caller's native loop remains the motion owner.
+export function kitSweepSphereBlocks(level, a, b, radius, out) {
+  out.__level=level;
+  sweepFill(out,a,b,{radius});
+  return out;
+}
+
 // Replaces the native block query for a growing kit shell only.
 export function kitTrizookaWorldSweep(system, p, out, physics) {
   if (!isKitProjectile(p)) return physics.segment(p.prev, p.pos, out, true);

@@ -160,6 +160,21 @@ test('remote replay rows reach the effects only when accepted, and only for remo
   assert.ok(remote._s3SpecialMarks.laser !== undefined, 'remote device motion receives the mark');
 });
 
+test('fired Wail effects keep their accepted world origins after death and expire without an actor track',async()=>{
+  const {fx,THREE,G}=await boot(),d=specialVfxDirector(fx);
+  const a={alive:false,remote:true,pos:new THREE.Vector3(20,0,20),team:1,nid:undefined};
+  const origin=[1,2,3],event={actor:a,id:'killerWail',activation:1,index:0,action:'laser',pos:origin,target:[1,2,30]};
+  G.actors=[a];d.event(event);assert.equal(d.lasers.size,1);
+  fx.update(1/60,G.camera);assert.equal(d.tracks.has(a),false);
+  const laser=[...d.lasers.values()][0];assert.deepEqual([...laser.from.toArray()],origin);
+  a.pos.set(40,0,40);d.event({...event,tick:1});fx.update(1/60,G.camera);
+  assert.deepEqual([...laser.from.toArray()],origin,'no living rig or fallback ring can move an accepted origin');
+  const b={...a,pos:a.pos.clone()};d.event({...event,actor:b});assert.equal(d.lasers.size,2,'offline actors with no nid retain separate effects');
+  for(let i=0;i<20;i++)fx.update(1/60,G.camera);
+  assert.equal(d.lasers.size,0,'world effects retire even after their character track has ended');
+  assert.equal(d.errors,0);fx.dispose();
+});
+
 test('the effect kit retires its GPU resources with the FX instance', async () => {
   const { fx } = await boot();
   const d = specialVfxDirector(fx);
@@ -231,6 +246,9 @@ test('Super Chump aim preview shows exactly the twelve landing points the throw 
   assert.ok(preview, 'preview available while aiming');
   assert.equal(preview.positions.length, 12);
   a.intent.fire = true; a._updateSpecial(1 / 60);
+  assert.equal((G.projectiles._s3AllSpecialObjects||[]).filter(o=>o.kind==='decoy').length,0,'the 13F launch preparation has not elapsed');
+  a.intent.fire=false;
+  for(let i=0;i<13;i++){G.time+=1/60;a._updateSpecial(1/60);}
   const decoys = (G.projectiles._s3AllSpecialObjects || []).filter(o => o.kind === 'decoy');
   assert.equal(decoys.length, 12, 'the throw deployed twelve decoys');
   for (let i = 0; i < 12; i++) assert.ok(decoys[i].target.distanceTo(preview.positions[i]) < 1e-9, `decoy ${i} lands where the preview showed`);

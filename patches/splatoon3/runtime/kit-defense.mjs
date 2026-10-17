@@ -1,5 +1,6 @@
 import { distanceDamage } from './weapons.mjs';
 import { kitBombDamageBands, kitBombDamageMax } from './kit-subs.mjs';
+import { kitTrizookaSteppedBands } from './trizooka-collision.mjs';
 // Special contacts are candidates in the native swept segment, never a second step.
 // Pinned spl__DamageRateInfoConfig row of an explosion's blast core against the
 // Big Bubbler (see BIG_BUBBLER_SOURCE_RATES in kit-big-bubbler.mjs).
@@ -32,7 +33,7 @@ export function installKitDefense(api) {
   Projectiles.prototype.kitBombDefenseCandidate = function (b, start, end) {
     if (!b || b.kind !== 'bomb' || !start || !end) return null;
     const subId = b.s3Sub?.id || b.s3Resolved?.spec?.id || 'bomb';
-    if (!['bomb', 'suction', 'curling'].includes(subId)) return null;
+    if (!['bomb', 'suction', 'curling'].includes(subId)) return this.coolerBombCandidate?.(b,start,end) || null;
     const length = start.distanceTo(end);
     if (!(length > 0)) return null;
     const probe = this._s3BombDefenseProbe || (this._s3BombDefenseProbe = {
@@ -56,7 +57,7 @@ export function installKitDefense(api) {
         || candidate.distance < 0 || candidate.distance > length) return;
       if (!best || candidate.distance < best.distance) {
         best = { distance: candidate.distance, point: candidate.point?.clone?.() || null,
-          normal: candidate.normal?.clone?.() || null, onHit: candidate.onHit, kind,
+          normal: candidate.normal?.clone?.() || null, onHit: candidate.onHit, kind: candidate.kind === 'tacticooler' ? 'tacticooler' : kind,
           visualOnly: !!candidate.visualOnly };
       }
     };
@@ -78,7 +79,7 @@ export function installKitDefense(api) {
   // only at the existing actor-hit boundary, using the same explosion context.
   for (const [method, descriptor] of [
     ['_blastBurst', p => ({ origin: null, bands: (p.s3SpecialWeapon || api.WEAPONS.blaster).splashBands ||
-      (p.s3SpecialWeapon || api.WEAPONS.blaster).damageBands, linear: true })],
+      (p.s3SpecialWeapon || api.WEAPONS.blaster).damageBands, linear: !p.s3AllSpecial&&!kitTrizookaSteppedBands(p) })],
     ['_explodeBomb', b => ({ origin: b.pos, bands: kitBombDamageBands(api.SUB, b, api.SUB.bomb.damageBands), linear: false })],
   ]) {
     const native = Projectiles.prototype[method];

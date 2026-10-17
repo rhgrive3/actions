@@ -158,7 +158,11 @@ async function nativeWorld() {
     if (a.y >= 0 && b.y < 0) { const t = a.y / (a.y - b.y); out.hit = true; out.point = new V(a.x + (b.x - a.x) * t, 0, a.z + (b.z - a.z) * t); out.normal = new V(0, 1, 0); }
     return out;
   };
-  f.G.physics.raycast = (o, d, len, out) => { out.hit = false; return out; };
+  f.G.physics.raycast = (o, d, len, out) => {
+    out.hit=d.y<0&&o.y>=0&&o.y+d.y*len<=0;
+    if(out.hit){out.point.set(o.x,0,o.z);out.normal.set(0,1,0);out.dist=o.y/-d.y;}
+    return out;
+  };
   f.G.paint = { sample: () => 1, splat: () => 1 };
   return f;
 }

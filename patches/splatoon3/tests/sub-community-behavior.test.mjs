@@ -111,13 +111,15 @@ test('Torpedo retains its captured life and last point without jumping to a dead
   const owner=f.make('shooter'),target=f.make('shooter'),other=f.make('shooter');owner.team=0;target.team=other.team=1;
   owner.weapon={...owner.weapon,sub:'torpedo'};owner.pos.set(50,0,50);target.pos.set(0,0,8);target.netLife=4;other.pos.set(30,0,30);
   f.G.physics.segment=(_a,_b,hit)=>{hit.hit=false;return hit;};
-  const torpedo=f.G.projectiles.throwBomb(owner);torpedo.pos.set(0,6,0);torpedo.prev.copy(torpedo.pos);torpedo.vel.set(0,0,0);torpedo.age=19/60;
+  const torpedo=f.G.projectiles.throwBomb(owner);torpedo.pos.set(0,2,0);torpedo.prev.copy(torpedo.pos);torpedo.vel.set(0,0,0);torpedo.age=19/60;
   f.G.projectiles.update(1/60);assert.equal(torpedo.torpedoTarget,target);assert.equal(torpedo.torpedoTargetLife,4);
   const captured=torpedo.torpedoAim.clone();target.alive=false;target.pos.set(80,0,80);other.pos.set(0,0,1);
   f.G.projectiles.update(1/60);assert.ok(torpedo.torpedoAim.equals(captured));assert.equal(torpedo.torpedoTarget,target,'another closer target is not substituted');
   target.alive=true;target.netLife=5;target.pos.set(100,0,100);f.G.projectiles.update(1/60);
   assert.ok(torpedo.torpedoAim.equals(captured),'the reused Actor life cannot move the captured destination');
-  torpedo.pos.set(0,50,0);torpedo.age=2.5;let burst;f.on('all:sub',e=>{if(e.phase==='burst'&&e.seq===torpedo.seq)burst=e;});
+  for(let i=0;i<45;i++)f.G.projectiles.update(1/60);
+  assert.equal(torpedo.phase,'chase');
+  torpedo.pos.set(0,50,0);torpedo.chaseAge=2.5;let burst;f.on('all:sub',e=>{if(e.phase==='burst'&&e.seq===torpedo.seq)burst=e;});
   f.G.projectiles.update(1/60);assert.ok(burst);assert.equal(burst.y,50,'the fallback bursts at the projectile, not at the remote target');
 });
 
@@ -138,7 +140,7 @@ test('Ink Mine actual input places at the feet and rejects airborne/overlapping 
   assert.equal(f.G.projectiles.throwBomb(owner),undefined,'direct callers cannot bypass the airborne gate');
   owner.grounded=true;release();
   const mine=f.G.projectiles._s3SubObjects.find(o=>o.subId==='inkMine');assert.ok(mine);assert.equal(owner.ink,40);
-  assert.equal(mine.phase,'deployed');assert.equal(mine.pos.x,2);assert.equal(mine.pos.z,3);assert.ok(Math.abs(mine.pos.y-1.02)<1e-8);
+  assert.equal(mine.phase,'deployed');assert.equal(mine.pos.x,2);assert.equal(mine.pos.z,3);assert.equal(mine.pos.y,owner.pos.y);
   assert.equal(mine.vel.length(),0,'aim and movement cannot turn the feet placement into a throw');
   owner.ink=100;release();assert.equal(owner.ink,100,'overlap rejection precedes the 60% cost');
   assert.equal(f.G.projectiles._s3SubObjects.length,1);assert.equal(f.G.projectiles.throwBomb(owner),undefined);
