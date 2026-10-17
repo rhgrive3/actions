@@ -1,0 +1,1 @@
+{"status":"failed","error":"AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1282 !== 0\n\n    at file:///workspace/scratch/probe-inkwave-normal-codegen.mjs:191:10","evidence":"/workspace/render-1565/.ci-scratch/1565/normal-codegen-current-persistent"}

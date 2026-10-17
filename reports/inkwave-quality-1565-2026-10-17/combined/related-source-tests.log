@@ -1,0 +1,343 @@
+(node:19491) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ motion optimization is guarded, composed and excluded from browser payloads (14.408438ms)
+{"fixture":"real source-loaded Character; exact before/after, not device FPS","compared":1164,"states":["idle","move","air","land","ToHuman"],"clips":31,"fkBefore":23006,"fkAfter":21612,"reduction":0.0605928888116144}
+✔ real source motion preserves every frame at 30/60/120 Hz and irregular/paused ticks (80522.590126ms)
+{"scope":"all original packed motion data, exact Float64 poses","variants":3,"clips":548,"poses":2740,"cacheBytes":0}
+{"scope":"Player00 WalkHold_Nrml, 360 sampled frames","before":71280,"after":36360,"reduction":0.48989898989898994}
+(node:19492) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ frozen source bank and guarded build-only rotation calculation (1.541146ms)
+✔ every shipped clip keeps exact raw, local and world poses through seeks, loops and alternating output poses (2845.305638ms)
+✔ rotation keys preserve negative zero, quaternion normalization, mode changes and overwritten outputs (204.566512ms)
+✔ zero channels avoid exact sin/cos work across live animation frames (354.327103ms)
+{"fixture":"native Character/source bank, matrix call counts (not device FPS)","beforeCalls":587457,"afterCalls":319449,"reduction":0.45621722100511186,"forcedCCD":72,"forcedCCDSides":[36,36]}
+(node:19498) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ four guarded edits only; malformed anchors fail closed; build-only transformer (6.713547ms)
+✔ real source banks and native rig: exact transforms/contacts/muzzle at 30/60/120Hz, including forced CCD (43915.356984ms)
+{"scope":"actual Three.js bones; exact Float64 state","compared":720,"cacheRecords":24}
+{"scope":"6 strands x4 segments x3 axes, 120 warmed fixed ticks","before":{"sqrt":8640,"exp":8640,"cos":8640,"sin":8640},"after":{"sqrt":0,"exp":0,"cos":0,"sin":0}}
+(node:19504) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ frozen pre-optimization spring and strict build-only connections (1.508388ms)
+✔ exact spring state and bone transforms through rates, saturation, reset and coefficient changes (373.330715ms)
+✔ fixed tick exp/cos/sin work falls to zero after first tick; changing dt reuses axes (179.904484ms)
+{"scope":"loaded production source motion","frames":450,"nonzeroInertiaFrames":447}
+✔ loaded production Character preserves turns, gait, feet, skeleton and muzzle at 30/60/120Hz (48692.318831ms)
+(node:19522) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ production form patch removes the legacy free-arm emerge flourish and retains native IK (13461.568456ms)
+✔ supported production carry keeps both actual grips through compact form return and pause (584.273411ms)
+✔ zero-time rapid reversal preserves actual displayed scales, gun visibility and conversion clocks (320.784556ms)
+✔ 30/60/120Hz render schedules yield the same production pose, skinned vertices and weapon transitions (252.26822ms)
+✔ dry, own-ink, wall and airborne conversions keep native visibility endpoints and gun hierarchy (178.470672ms)
+✔ actual native Physics/Actor/Runner gameplay is unchanged by posed form corrections (233.229423ms)
+✔ main fire, sub aim, throw, roller, dualies and special actions own their channels on emergence (1507.804657ms)
+✔ spawn/reset, death, weapon replacement, hidden updates and nullable previews retain native cleanup (3323.055873ms)
+✔ cross-realm snapshots/reset observe the installed state and disposed forms cannot reacquire it (147.027907ms)
+✔ a retired real Bomb presentation does not keep new emergence blocked by its preserved event age (78.219093ms)
+(node:19538) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ normal/hard landing produces actual knee/ankle absorb and recovery with native contact and drawn geometry (13462.188714ms)
+✔ aimed landing keeps weapon/action channels and genuine native arm IK (729.649833ms)
+✔ reset/death/form/sub/weapon/action interruption cancels only landing and requires a fresh land event (1464.642525ms)
+✔ 30/60/120Hz rendering yields identical native poses/geometry at fixed gameplay ticks; dt0 preserves landing age (989.600283ms)
+✔ nullable standalone preview, pause and duplicate realm snapshot are safe (55.540371ms)
+✔ actual native floor collision lands and recovers with identical actor physics when the landing patch is enabled (216.757927ms)
+✔ brief hiding or movement cancellation cannot replay a landing on return (211.928345ms)
+✔ fresh landing after cancelled Slam regains its owned absorb despite orphaned special clocks (87.695582ms)
+(node:19553) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native Actor cancellation does not allocate an untouched Character and disposal stays terminal (12478.7228ms)
+✔ real Actor reversal produces a visible full squid rotation then releases it at 30/60/120Hz (1417.884672ms)
+✔ surge charge, partial burst, wall loss and top release reach the actual squid mesh (1258.040807ms)
+✔ dry squid jump remains an ordinary airborne squid instead of a roll (404.644556ms)
+✔ standalone burst previews expire and Super Jump preparation follows the live gear duration (375.799394ms)
+✔ super jump charge is distinct from idle and flight is actually airborne before kid landing (1284.950151ms)
+✔ remote Super Jump charge transforms stay finite at 30/60/120Hz (1157.744959ms)
+✔ wall charge takes over a live roll, full charge releases, and wall roll takes over surge (1293.086268ms)
+✔ form change, death, reset, special and super jump clear offsets including hidden bodies (522.790386ms)
+✔ ordinary transform, jump and walk/roller rig paths still run and return to planted feet (3306.224677ms)
+✔ native collision and full in-world rig finish roll and landing identically under 30/60/120Hz rendering (1138.336926ms)
+(node:19560) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ adapter connects the source posture hooks exactly once (4.543531ms)
+shot origin delta at 0 m/s: first 0.000 mm, after 1 s 0.209 mm
+shot origin delta at 1.6 m/s: first 0.000 mm, after 1 s 0.013 mm
+✔ the Wii U hold clips lean forward; the corrected stance, walk and run stay upright with a level head (14608.489382ms)
+✔ a non-firing shooter: level two-hand carry when moving, forward-left and down in both hands when standing (1780.414222ms)
+✔ firing keeps the native weapon pose; shot origins move by less than a millimetre (1198.877225ms)
+✔ swing feet are lower while planted feet stay planted (629.398172ms)
+✔ the posture blend is frame-rate independent, holds on paused frames and leaves manual clips untouched (740.071628ms)
+✔ source ToHuman bow is corrected after kid silhouette returns, without changing action clocks (599.59017ms)
+✔ airborne carry survives an ordinary moving jump and landing (342.04218ms)
+✔ sourced ToHuman cannot generate a phantom carry while airborne or landing (519.91321ms)
+✔ reacquires shooter carry without a grounded ToHuman weapon snap (633.542793ms)
+✔ actual Player00 source gait exits Shoot clips when a shooter releases while walking backwards (334.187274ms)
+(node:19568) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 11.3.0 pinned Shooter inputs remain the source of separate terminal, mid-flight and foot paint (1110.222587ms)
+✔ Shooter main body selects source width and straight/break-free depth from the actual shot phase (946.52329ms)
+✔ source DepthScale maps to a centered WidthHalf x depth ellipse with no extra size (1.307783ms)
+✔ all 65 source main weapon records retain numeric paint widths rather than a global rescale (1.901316ms)
+✔ production source mask uses original WidthHalf without artificial shrink or satellite Turf (13.071699ms)
+✔ source-defined WidthHalf and DepthScale bound real CPU turf on a flat floor (899.953264ms)
+✔ actual native source ink flight retains separate head and detached splash numeric widths (816.426523ms)
+✔ same full-precision sourced event gives identical CPU ownership on local and replay clients (1857.86925ms)
+✔ simultaneous stance clearance at yaw 0.000 (1.674322ms)
+✔ simultaneous stance clearance at yaw 0.400 (0.23838ms)
+✔ simultaneous stance clearance at yaw -1.100 (1.769482ms)
+✔ simultaneous stance clearance at yaw 1.571 (0.17723ms)
+✔ simultaneous stance clearance at yaw 3.142 (0.215897ms)
+✔ a planted contact is never shifted; swing foot takes the full gap deficit (0.998608ms)
+✔ lift-off and touchdown carry exactly zero correction (0.432276ms)
+✔ separation operates only where the shoes overlap longitudinally (0.391997ms)
+✔ left/right processing order does not change either physical foot (0.583608ms)
+✔ correction has bounded continuity as swing progresses (0.965219ms)
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:49:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:48:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:73:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:72:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:73:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:72:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:73:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:72:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:73:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:72:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:73:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:72:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:562:39)
+    at character (file:///workspace/actions/patches/splatoon3/tests/real-character-fixture.mjs:15:76)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:73:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/walk-gait-phase.test.mjs:72:37)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:19586) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ legs alternate in steady walking, running, strafing and diagonals on the actual rig
+  ✔ forward (12491.675382ms)
+  ✔ backward (115.99292ms)
+  ✔ left strafe (115.344186ms)
+  ✔ right strafe (111.79769ms)
+  ✔ forward left (92.225359ms)
+  ✔ forward right (84.484306ms)
+  ✔ back left (84.878595ms)
+  ✔ back right (81.717037ms)
+  ✔ slow left strafe (84.310019ms)
+  ✔ walking right strafe (83.42718ms)
+  ✔ running left strafe (83.954136ms)
+  ✔ slow forward (81.085988ms)
+✔ legs alternate in steady walking, running, strafing and diagonals on the actual rig (13513.807674ms)
+▶ direction changes keep contacts planted, the pelvis continuous and the legs re-alternating
+  ✔ stop and start (115.866915ms)
+  ✔ 90 degree turn (118.517712ms)
+  ✔ 180 degree reversal (101.151395ms)
+  ✔ strafe flip left to right (98.422973ms)
+  ✔ forward to backward (93.32132ms)
+  ✔ walking strafe flip (97.138373ms)
+✔ direction changes keep contacts planted, the pelvis continuous and the legs re-alternating (625.541389ms)
+▶ fully installed rig catches abrupt browser-probe turns before pelvis overextension
+  ✔ 30 Hz (11017.550707ms)
+  ✔ 60 Hz (2909.370833ms)
+  ✔ 120 Hz (2981.379321ms)
+✔ fully installed rig catches abrupt browser-probe turns before pelvis overextension (17410.33359ms)
+(node:19624) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the attack/carry handoff no longer jumps the weapon; the gameplay muzzle is unchanged (13260.051318ms)
+✔ the handoff fade lasts the same time at 30, 60 and 120 Hz (773.899657ms)
+✔ shooters and blasters fire from beside the right cheek, not the chest (513.768611ms)
+✔ a stringer draws with the left hand on the string; at rest it hangs in the right hand (340.878487ms)
+✔ a brush rests in the ready stance, both fists at the butt, head up past the right shoulder (571.555138ms)
+✔ shooters, dualies and brushes are 30% larger about the grip; other families are not (421.309702ms)
+✔ standing still, the front (left) foot points straight ahead: shooter, brush and roller (179.500156ms)
+✔ a brush stands with the right foot out to the side and the body twisted under a forward head (161.521774ms)
+✔ the torso is shorter: the shoulders and everything above drop, the crotch does not (19.858372ms)
+ℹ tests 103
+ℹ suites 0
+ℹ pass 103
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87895.730212

@@ -1,0 +1,2348 @@
+{
+  "schema": 1,
+  "sourceEvidence": {
+    "path": "/workspace/actions/.ci-scratch/1565/evidence/grate-calibration/whole-game-calibrate.json",
+    "bytes": 9454269,
+    "sha256": "c3f5d8b082fffb9cefd7a50d24e261dff0c4a606d29600e101951c41bb6d19b0"
+  },
+  "diagnosticStatus": "passed",
+  "adoptionStatus": "UNQUALIFIED",
+  "performanceNondegradationEstablished": false,
+  "conclusion": "Calibration passes its gameplay, same-version endpoint image, cross-version endpoint image, PWA and audio checks. It does not establish performance or total-resource nondegradation. Candidate timings are slower in this small sample; renderer resource history differs within the exact baseline revision. Source effect, process/order effects and shared-host throttling remain unresolved.",
+  "harnessSha256": "77f0d946f638924751146d0aefa4a9678ec75f748a00693f492bcb60d6968360",
+  "runtimeEvidenceLibSha256": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db",
+  "diagnosticSourceSha": "2c57cb3c6dee7791ed26d08a845ba51388131993",
+  "calibrationScope": {
+    "harnessSha256": "77f0d946f638924751146d0aefa4a9678ec75f748a00693f492bcb60d6968360",
+    "runtimeEvidenceLibSha256": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db",
+    "sourceA": "d5265f73d9dad69f1afd9690e374caee45195f11",
+    "sourceB": "a6fcd76166b1aa887b7cbc3456833366b7d9cfe3",
+    "contentA": "8f56a1470c72ecf04250ba7be2cf74a3c89f7267674c840d7d63c14fa3b29775",
+    "contentB": "c70ff01bfc49cc9ff974336d902abaa85bf66c6e6b9752cac6dc189a21b5aba2",
+    "baseline": "A",
+    "candidate": "B",
+    "stage": "scorch",
+    "scenario": "normal",
+    "input": "outward-fire",
+    "gpuTiming": true,
+    "settings": {
+      "quality": "medium",
+      "shadows": true,
+      "bloom": true,
+      "frameRate": "display",
+      "music": 0.6,
+      "sfx": 0.85,
+      "master": 0.8
+    },
+    "viewport": [
+      480,
+      300
+    ],
+    "warmup": 12
+  },
+  "provenance": {
+    "A": {
+      "sourceSha": "d5265f73d9dad69f1afd9690e374caee45195f11",
+      "contentHash": "8f56a1470c72ecf04250ba7be2cf74a3c89f7267674c840d7d63c14fa3b29775",
+      "revision": "65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6",
+      "logicalFiles": 931,
+      "logicalBytes": 62751824
+    },
+    "B": {
+      "sourceSha": "a6fcd76166b1aa887b7cbc3456833366b7d9cfe3",
+      "contentHash": "c70ff01bfc49cc9ff974336d902abaa85bf66c6e6b9752cac6dc189a21b5aba2",
+      "revision": "c25eaa3fc995ab1f393a11bb3778cef23e91c6d5b451392a1715ff87f9c98357",
+      "logicalFiles": 931,
+      "logicalBytes": 62751804
+    }
+  },
+  "environment": {
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCpus": 5,
+    "memBytes": 18882674688,
+    "node": "v24.19.0",
+    "os": "6.18.55",
+    "platform": "linux",
+    "launch": {
+      "executablePath": "/home/agent/.cache/ms-playwright/chromium-1194/chrome-linux/chrome",
+      "headless": true,
+      "args": [
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader",
+        "--enable-precise-memory-info"
+      ]
+    },
+    "browser": "141.0.7390.37",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "settings": {
+    "quality": "medium",
+    "shadows": true,
+    "bloom": true,
+    "frameRate": "display",
+    "music": 0.6,
+    "sfx": 0.85,
+    "master": 0.8
+  },
+  "timeouts": {
+    "navigationMs": 120000,
+    "bootMs": 180000,
+    "pwaMs": 120000,
+    "setupMs": 180000,
+    "measurementMs": 180000
+  },
+  "stage": "scorch",
+  "scenario": "normal",
+  "input": "outward-fire",
+  "order": [
+    "A",
+    "B",
+    "B",
+    "A"
+  ],
+  "samplesPerTrial": 6,
+  "renderedWarmupPerTrial": 12,
+  "viewport": [
+    480,
+    300
+  ],
+  "deviceScaleFactor": 1,
+  "hardwareClaim": false,
+  "guards": {
+    "gameplayComparable": true,
+    "backgroundComparable": true,
+    "visualValidation": {
+      "ARepeatExact": true,
+      "BRepeatExact": true,
+      "ABExact": true,
+      "accepted": true,
+      "allowedChange": "none; exact endpoint pixels required across both exact production SHAs"
+    },
+    "comparisonValidUnderHarnessGuards": true,
+    "comparability": [
+      {
+        "ordinal": 0,
+        "variant": "A",
+        "startStateEqual": true,
+        "endStateEqual": true,
+        "pixelEqual": true,
+        "inputNodesEqual": true,
+        "frameWorkEqual": true
+      },
+      {
+        "ordinal": 1,
+        "variant": "B",
+        "startStateEqual": true,
+        "endStateEqual": true,
+        "pixelEqual": true,
+        "inputNodesEqual": true,
+        "frameWorkEqual": true
+      },
+      {
+        "ordinal": 2,
+        "variant": "B",
+        "startStateEqual": true,
+        "endStateEqual": true,
+        "pixelEqual": true,
+        "inputNodesEqual": true,
+        "frameWorkEqual": true
+      },
+      {
+        "ordinal": 3,
+        "variant": "A",
+        "startStateEqual": true,
+        "endStateEqual": true,
+        "pixelEqual": true,
+        "inputNodesEqual": true,
+        "frameWorkEqual": true
+      }
+    ],
+    "stateDifferences": [
+      {
+        "ordinal": 0,
+        "variant": "A",
+        "start": [],
+        "end": []
+      },
+      {
+        "ordinal": 1,
+        "variant": "B",
+        "start": [],
+        "end": []
+      },
+      {
+        "ordinal": 2,
+        "variant": "B",
+        "start": [],
+        "end": []
+      },
+      {
+        "ordinal": 3,
+        "variant": "A",
+        "start": [],
+        "end": []
+      }
+    ],
+    "harnessAcceptanceBlockers": [],
+    "resourceCountsCheckedForEqualityByHarness": false,
+    "timingNondegradationThresholdCheckedByHarness": false
+  },
+  "resourceEvidence": {
+    "baselineA0": {
+      "geometries": 406,
+      "textures": 132,
+      "programs": 147
+    },
+    "candidateB1": {
+      "geometries": 410,
+      "textures": 131,
+      "programs": 147
+    },
+    "candidateB2": {
+      "geometries": 410,
+      "textures": 131,
+      "programs": 147
+    },
+    "baselineA3": {
+      "geometries": 410,
+      "textures": 131,
+      "programs": 147
+    },
+    "withinBaselineA3MinusA0": {
+      "geometries": 4,
+      "textures": -1,
+      "programs": 0
+    },
+    "allMeasuredWindowsResourceStable": true,
+    "mainSceneCountsEqualAcrossTrials": true,
+    "fieldProvenance": {
+      "renderer.geometries": "G.renderer.info.memory.geometries: Three WebGLGeometries registrations minus disposal; renderer-wide, including registered geometry outside G.scene. Not bytes or a count of current G.scene objects.",
+      "renderer.textures": "G.renderer.info.memory.textures: renderer-managed WebGL texture allocations/cache-key variants and render-target textures minus deletion. Not scene texture references or driver VRAM bytes.",
+      "renderer.programs": "G.renderer.info.programs.length: renderer program-cache entries, including prior owners until release.",
+      "uniqueGeometries": "Unique object identities found by G.scene.traverse; includes invisible descendants, excludes private Showcase/portrait/post/environment scenes not rooted under G.scene.",
+      "uniqueAttributeBackingBytes": "Deduplicated ArrayBuffer.byteLength for geometry.attributes and index arrays reachable under G.scene, including complete shared backing buffers rather than just view byte lengths; excludes morph attributes, object instanceMatrix/instanceColor, textures, skeleton textures and private-scene/post resources. Not GPU bytes.",
+      "heap": "performance.memory snapshot; separate CDP JSHeap fields are also recorded. No forced GC; ending snapshots include endpoint capture/serialization. APIs have different scopes and must not be summed or presented as a leak/peak measurement."
+    },
+    "cause": "Unknown. The same A revision differs between first and last trial, so the difference is not uniquely attributable to candidate source. Boot/showcase/private-scene/resource-history paths are plausible investigation targets but no creation/disposal ledger or readiness snapshot identifies the four geometries/one texture."
+  },
+  "aggregateTimings": {
+    "A": {
+      "submit": {
+        "n": 12,
+        "mean": 25.566666666641442,
+        "p50": 24.699999999953434,
+        "p95": 30.599999999976717,
+        "p99": 30.599999999976717,
+        "min": 18.5,
+        "max": 30.599999999976717
+      },
+      "readback": {
+        "n": 12,
+        "mean": 1140.6416666666628,
+        "p50": 1133.5,
+        "p95": 1261.6999999999534,
+        "p99": 1261.6999999999534,
+        "min": 1000.5,
+        "max": 1261.6999999999534
+      },
+      "completed": {
+        "n": 12,
+        "mean": 1166.2083333333042,
+        "p50": 1158.3999999999069,
+        "p95": 1289.6999999999534,
+        "p99": 1289.6999999999534,
+        "min": 1019,
+        "max": 1289.6999999999534
+      },
+      "pacing": {
+        "n": 10,
+        "mean": 1146.4100000000094,
+        "p50": 1161.3999999999069,
+        "p95": 1290.1000000000931,
+        "p99": 1290.1000000000931,
+        "min": 1021.6000000000931,
+        "max": 1290.1000000000931
+      },
+      "gpu": {
+        "n": 12,
+        "mean": 1148.5913349999998,
+        "p50": 1141.537016,
+        "p95": 1273.576488,
+        "p99": 1273.576488,
+        "min": 1004.904823,
+        "max": 1273.576488
+      },
+      "drawCalls": {
+        "n": 12,
+        "mean": 244.16666666666666,
+        "p50": 244,
+        "p95": 245,
+        "p99": 245,
+        "min": 243,
+        "max": 245
+      },
+      "triangles": {
+        "n": 12,
+        "mean": 642385.3333333334,
+        "p50": 643596,
+        "p95": 647194,
+        "p99": 647194,
+        "min": 637334,
+        "max": 647194
+      }
+    },
+    "B": {
+      "submit": {
+        "n": 12,
+        "mean": 29.54166666668607,
+        "p50": 28,
+        "p95": 41.800000000046566,
+        "p99": 41.800000000046566,
+        "min": 20,
+        "max": 41.800000000046566
+      },
+      "readback": {
+        "n": 12,
+        "mean": 1266.658333333345,
+        "p50": 1273.5,
+        "p95": 1379.3000000000466,
+        "p99": 1379.3000000000466,
+        "min": 1101.6999999999534,
+        "max": 1379.3000000000466
+      },
+      "completed": {
+        "n": 12,
+        "mean": 1296.200000000031,
+        "p50": 1299.1000000000931,
+        "p95": 1421.1000000000931,
+        "p99": 1421.1000000000931,
+        "min": 1131.6000000000931,
+        "max": 1421.1000000000931
+      },
+      "pacing": {
+        "n": 10,
+        "mean": 1304.9700000000187,
+        "p50": 1320.8999999999069,
+        "p95": 1423.3999999999069,
+        "p99": 1423.3999999999069,
+        "min": 1135,
+        "max": 1423.3999999999069
+      },
+      "gpu": {
+        "n": 12,
+        "mean": 1275.6913945,
+        "p50": 1278.567627,
+        "p95": 1395.311685,
+        "p99": 1395.311685,
+        "min": 1110.245136,
+        "max": 1395.311685
+      },
+      "drawCalls": {
+        "n": 12,
+        "mean": 244.16666666666666,
+        "p50": 244,
+        "p95": 245,
+        "p99": 245,
+        "min": 243,
+        "max": 245
+      },
+      "triangles": {
+        "n": 12,
+        "mean": 642385.3333333334,
+        "p50": 643596,
+        "p95": 647194,
+        "p99": 647194,
+        "min": 637334,
+        "max": 647194
+      }
+    }
+  },
+  "rawObservedChanges": {
+    "submit": {
+      "beforeMean": 25.566666666641442,
+      "afterMean": 29.54166666668607,
+      "improvementPercent": -15.54758800540501,
+      "costChangePercent": 15.54758800540501
+    },
+    "readback": {
+      "beforeMean": 1140.6416666666628,
+      "afterMean": 1266.658333333345,
+      "improvementPercent": -11.047875099543326,
+      "costChangePercent": 11.047875099543326
+    },
+    "completed": {
+      "beforeMean": 1166.2083333333042,
+      "afterMean": 1296.200000000031,
+      "improvementPercent": -11.146521847874236,
+      "costChangePercent": 11.146521847874236
+    },
+    "pacing": {
+      "beforeMean": 1146.4100000000094,
+      "afterMean": 1304.9700000000187,
+      "improvementPercent": -13.831002869829124,
+      "costChangePercent": 13.831002869829124
+    },
+    "gpu": {
+      "beforeMean": 1148.5913349999998,
+      "afterMean": 1275.6913945,
+      "improvementPercent": -11.065733792950837,
+      "costChangePercent": 11.065733792950837
+    }
+  },
+  "gpuCoverage": {
+    "requested": 24,
+    "valid": 24,
+    "missing": 0,
+    "disjoint": 0
+  },
+  "trials": [
+    {
+      "ordinal": 0,
+      "variant": "A",
+      "status": "complete",
+      "setupElapsedMs": 67422,
+      "setup": {
+        "native": true,
+        "atlas": 2048,
+        "actors": 8,
+        "bots": 7,
+        "playerController": true,
+        "mobile": {
+          "ios": false,
+          "ipad": false,
+          "android": false,
+          "touch": false,
+          "touchCapable": false,
+          "phone": false,
+          "tablet": false
+        },
+        "audio": {
+          "on": true,
+          "state": "running",
+          "music": "battle",
+          "worker": true
+        },
+        "width": 480,
+        "height": 300,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "gpuTimerQuery": true,
+        "near": [
+          {
+            "id": 3457,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3458,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3397,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": -1
+          },
+          {
+            "id": 3398,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": -1
+          },
+          {
+            "id": 3517,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": 1
+          },
+          {
+            "id": 3518,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": 1
+          },
+          {
+            "id": 3456,
+            "x": -1.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3459,
+            "x": 1.5,
+            "y": 3.009999990463257,
+            "z": 0
+          }
+        ]
+      },
+      "settings": {
+        "sensitivity": 1,
+        "padSensitivity": 0,
+        "padInvertX": false,
+        "invertY": false,
+        "invertX": false,
+        "aimProfile": "tv",
+        "aimProfiles": {
+          "tv": {
+            "gyro": false,
+            "gyroSens": 0,
+            "padSensitivity": 0,
+            "invertY": false,
+            "invertX": false
+          },
+          "handheld": {
+            "gyro": false,
+            "gyroSens": 0,
+            "padSensitivity": 0,
+            "invertY": false,
+            "invertX": false
+          }
+        },
+        "fov": 82,
+        "quality": "medium",
+        "frameRate": "display",
+        "shadows": true,
+        "bloom": true,
+        "cameraShake": 1,
+        "showFps": false,
+        "master": 0.8,
+        "music": 0.6,
+        "sfx": 0.85,
+        "colorblind": false,
+        "minimap": false,
+        "matchLength": 180,
+        "difficulty": "normal",
+        "rumble": 1,
+        "aimAssist": 0,
+        "aimAssistMouse": false,
+        "lang": "ja",
+        "gyro": false,
+        "gyroSens": 0,
+        "gyroInvertX": false,
+        "gyroInvertY": false,
+        "touchSens": 0,
+        "fireAim": true,
+        "stickMode": "float",
+        "touchScale": 1,
+        "touchOpacity": 0.85,
+        "fovMode": "h",
+        "padSensitivityScale": "s3"
+      },
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      },
+      "errors": [],
+      "pwaBefore": {
+        "controller": "http://127.0.0.1:46305/A/sw.js",
+        "controllerState": "activated",
+        "registrations": [
+          {
+            "scope": "http://127.0.0.1:46305/A/",
+            "active": "activated",
+            "waiting": null,
+            "installing": null
+          }
+        ],
+        "status": {
+          "type": "INKWAVE_CACHE_STATUS",
+          "revision": "65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6",
+          "offlineReady": true
+        }
+      },
+      "backgroundAfter": {
+        "pwa": {
+          "controller": "http://127.0.0.1:46305/A/sw.js",
+          "controllerState": "activated",
+          "registrations": [
+            {
+              "scope": "http://127.0.0.1:46305/A/",
+              "active": "activated",
+              "waiting": null,
+              "installing": null
+            }
+          ],
+          "status": {
+            "type": "INKWAVE_CACHE_STATUS",
+            "revision": "65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6",
+            "offlineReady": true
+          }
+        },
+        "audioState": "running",
+        "musicWorker": true
+      },
+      "pixelSha256": "f61a528893484b12571c560daa8ef4c01376ae6c25d66f0b706f3c7950e7b3a0",
+      "pixelBytes": 576000,
+      "imageValidation": {
+        "opaque": 144000,
+        "pixels": 144000,
+        "colors": 28580
+      },
+      "timings": {
+        "submit": {
+          "n": 6,
+          "mean": 22.84999999999612,
+          "p50": 21.100000000093132,
+          "p95": 30.599999999976717,
+          "p99": 30.599999999976717,
+          "min": 18.5,
+          "max": 30.599999999976717
+        },
+        "readback": {
+          "n": 6,
+          "mean": 1084.68333333331,
+          "p50": 1048.7999999999302,
+          "p95": 1249.4000000000233,
+          "p99": 1249.4000000000233,
+          "min": 1000.5,
+          "max": 1249.4000000000233
+        },
+        "completed": {
+          "n": 6,
+          "mean": 1107.5333333333062,
+          "p50": 1069.9000000000233,
+          "p95": 1271.1999999999534,
+          "p99": 1271.1999999999534,
+          "min": 1019,
+          "max": 1271.1999999999534
+        },
+        "pacing": {
+          "n": 5,
+          "mean": 1077.5200000000186,
+          "p50": 1072.9000000000233,
+          "p95": 1161.3999999999069,
+          "p99": 1161.3999999999069,
+          "min": 1021.6000000000931,
+          "max": 1161.3999999999069
+        }
+      },
+      "gpu": {
+        "supported": true,
+        "requested": 6,
+        "valid": 6,
+        "missing": 0,
+        "disjoint": 0,
+        "complete": true,
+        "wholeRun": {
+          "n": 6,
+          "mean": 1090.1623133333333,
+          "p50": 1049.279863,
+          "p95": 1255.922412,
+          "p99": 1255.922412,
+          "min": 1004.904823,
+          "max": 1255.922412
+        }
+      },
+      "resourcesBefore": {
+        "renderer": {
+          "geometries": 406,
+          "textures": 132,
+          "programs": 147
+        },
+        "sceneNodes": 1517,
+        "meshes": 507,
+        "uniqueGeometries": 337,
+        "uniqueMaterials": 219,
+        "materialRefs": 509,
+        "uniqueAttributeBackingBytes": 104188607,
+        "heap": {
+          "usedJSHeapSize": 304305446,
+          "totalJSHeapSize": 307553086,
+          "jsHeapSizeLimit": 4294705152
+        }
+      },
+      "resourcesAfter": {
+        "renderer": {
+          "geometries": 406,
+          "textures": 132,
+          "programs": 147
+        },
+        "sceneNodes": 1517,
+        "meshes": 507,
+        "uniqueGeometries": 337,
+        "uniqueMaterials": 219,
+        "materialRefs": 509,
+        "uniqueAttributeBackingBytes": 104188607,
+        "heap": {
+          "usedJSHeapSize": 302678182,
+          "totalJSHeapSize": 317230398,
+          "jsHeapSizeLimit": 4294705152
+        }
+      },
+      "cdpHeapBefore": {
+        "JSHeapUsedSize": 125493112,
+        "JSHeapTotalSize": 130555904,
+        "Nodes": 1440,
+        "Documents": 2,
+        "JSEventListeners": 138,
+        "Resources": 492,
+        "ArrayBufferContents": 4663
+      },
+      "cdpHeapAfter": {
+        "JSHeapUsedSize": 124448528,
+        "JSHeapTotalSize": 139468800,
+        "Nodes": 1640,
+        "Documents": 2,
+        "JSEventListeners": 156,
+        "Resources": 438,
+        "ArrayBufferContents": 4505
+      },
+      "system": {
+        "beforeUtc": "2026-10-17T16:56:45.933Z",
+        "afterUtc": "2026-10-17T16:56:54.600Z",
+        "loadAverageBefore": [
+          4.29,
+          3.94,
+          3.03
+        ],
+        "loadAverageAfter": [
+          4.42,
+          3.97,
+          3.05
+        ],
+        "cgroupCpuStatBefore": {
+          "usage_usec": 2586289043,
+          "user_usec": 2425198277,
+          "system_usec": 161090765,
+          "nice_usec": 15613,
+          "nr_periods": 8336,
+          "nr_throttled": 4963,
+          "throttled_usec": 440964756,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuStatAfter": {
+          "usage_usec": 2615561706,
+          "user_usec": 2452572657,
+          "system_usec": 162989049,
+          "nice_usec": 15613,
+          "nr_periods": 8423,
+          "nr_throttled": 5023,
+          "throttled_usec": 445193075,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuStatDelta": {
+          "usage_usec": 29272663,
+          "user_usec": 27374380,
+          "system_usec": 1898284,
+          "nice_usec": 0,
+          "nr_periods": 87,
+          "nr_throttled": 60,
+          "throttled_usec": 4228319,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cpuPressureBefore": null,
+        "cpuPressureAfter": null
+      },
+      "frames": [
+        {
+          "frame": 1012,
+          "submitMs": 30.599999999976717,
+          "readbackMs": 1008.7999999999302,
+          "completedMs": 1039.3999999999069,
+          "startIntervalMs": null,
+          "gpuMs": 1020.8063,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 638048,
+          "scale": 1,
+          "gameTime": 5.716666666666652,
+          "fxDrops": 256,
+          "projectiles": 15,
+          "rng": {
+            "state": 2291787028,
+            "calls": 1
+          }
+        },
+        {
+          "frame": 1013,
+          "submitMs": 18.5,
+          "readbackMs": 1000.5,
+          "completedMs": 1019,
+          "startIntervalMs": 1041.5,
+          "gpuMs": 1004.904823,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 243,
+          "triangles": 637334,
+          "scale": 1,
+          "gameTime": 5.733333333333318,
+          "fxDrops": 254,
+          "projectiles": 15,
+          "rng": {
+            "state": 314159610,
+            "calls": 0
+          }
+        },
+        {
+          "frame": 1014,
+          "submitMs": 24.699999999953434,
+          "readbackMs": 1133.5,
+          "completedMs": 1158.1999999999534,
+          "startIntervalMs": 1021.6000000000931,
+          "gpuMs": 1141.537016,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 245,
+          "triangles": 647194,
+          "scale": 1,
+          "gameTime": 5.749999999999985,
+          "fxDrops": 326,
+          "projectiles": 21,
+          "rng": {
+            "state": 4157596063,
+            "calls": 404
+          }
+        },
+        {
+          "frame": 1015,
+          "submitMs": 21.100000000093132,
+          "readbackMs": 1048.7999999999302,
+          "completedMs": 1069.9000000000233,
+          "startIntervalMs": 1161.3999999999069,
+          "gpuMs": 1049.279863,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 644538,
+          "scale": 1,
+          "gameTime": 5.7666666666666515,
+          "fxDrops": 361,
+          "projectiles": 21,
+          "rng": {
+            "state": 538325087,
+            "calls": 245
+          }
+        },
+        {
+          "frame": 1016,
+          "submitMs": 20.400000000023283,
+          "readbackMs": 1067.0999999999767,
+          "completedMs": 1087.5,
+          "startIntervalMs": 1072.9000000000233,
+          "gpuMs": 1068.523466,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 643596,
+          "scale": 1,
+          "gameTime": 5.783333333333318,
+          "fxDrops": 360,
+          "projectiles": 21,
+          "rng": {
+            "state": 1733086040,
+            "calls": 17
+          }
+        },
+        {
+          "frame": 1017,
+          "submitMs": 21.79999999993015,
+          "readbackMs": 1249.4000000000233,
+          "completedMs": 1271.1999999999534,
+          "startIntervalMs": 1090.2000000000698,
+          "gpuMs": 1255.922412,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 245,
+          "triangles": 643602,
+          "scale": 1,
+          "gameTime": 5.799999999999985,
+          "fxDrops": 355,
+          "projectiles": 21,
+          "rng": {
+            "state": 4073960404,
+            "calls": 6
+          }
+        }
+      ]
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "status": "complete",
+      "setupElapsedMs": 63088,
+      "setup": {
+        "native": true,
+        "atlas": 2048,
+        "actors": 8,
+        "bots": 7,
+        "playerController": true,
+        "mobile": {
+          "ios": false,
+          "ipad": false,
+          "android": false,
+          "touch": false,
+          "touchCapable": false,
+          "phone": false,
+          "tablet": false
+        },
+        "audio": {
+          "on": true,
+          "state": "running",
+          "music": "battle",
+          "worker": true
+        },
+        "width": 480,
+        "height": 300,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "gpuTimerQuery": true,
+        "near": [
+          {
+            "id": 3457,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3458,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3397,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": -1
+          },
+          {
+            "id": 3398,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": -1
+          },
+          {
+            "id": 3517,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": 1
+          },
+          {
+            "id": 3518,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": 1
+          },
+          {
+            "id": 3456,
+            "x": -1.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3459,
+            "x": 1.5,
+            "y": 3.009999990463257,
+            "z": 0
+          }
+        ]
+      },
+      "settings": {
+        "sensitivity": 1,
+        "padSensitivity": 0,
+        "padInvertX": false,
+        "invertY": false,
+        "invertX": false,
+        "aimProfile": "tv",
+        "aimProfiles": {
+          "tv": {
+            "gyro": false,
+            "gyroSens": 0,
+            "padSensitivity": 0,
+            "invertY": false,
+            "invertX": false
+          },
+          "handheld": {
+            "gyro": false,
+            "gyroSens": 0,
+            "padSensitivity": 0,
+            "invertY": false,
+            "invertX": false
+          }
+        },
+        "fov": 82,
+        "quality": "medium",
+        "frameRate": "display",
+        "shadows": true,
+        "bloom": true,
+        "cameraShake": 1,
+        "showFps": false,
+        "master": 0.8,
+        "music": 0.6,
+        "sfx": 0.85,
+        "colorblind": false,
+        "minimap": false,
+        "matchLength": 180,
+        "difficulty": "normal",
+        "rumble": 1,
+        "aimAssist": 0,
+        "aimAssistMouse": false,
+        "lang": "ja",
+        "gyro": false,
+        "gyroSens": 0,
+        "gyroInvertX": false,
+        "gyroInvertY": false,
+        "touchSens": 0,
+        "fireAim": true,
+        "stickMode": "float",
+        "touchScale": 1,
+        "touchOpacity": 0.85,
+        "fovMode": "h",
+        "padSensitivityScale": "s3"
+      },
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      },
+      "errors": [],
+      "pwaBefore": {
+        "controller": "http://127.0.0.1:46305/B/sw.js",
+        "controllerState": "activated",
+        "registrations": [
+          {
+            "scope": "http://127.0.0.1:46305/B/",
+            "active": "activated",
+            "waiting": null,
+            "installing": null
+          }
+        ],
+        "status": {
+          "type": "INKWAVE_CACHE_STATUS",
+          "revision": "c25eaa3fc995ab1f393a11bb3778cef23e91c6d5b451392a1715ff87f9c98357",
+          "offlineReady": true
+        }
+      },
+      "backgroundAfter": {
+        "pwa": {
+          "controller": "http://127.0.0.1:46305/B/sw.js",
+          "controllerState": "activated",
+          "registrations": [
+            {
+              "scope": "http://127.0.0.1:46305/B/",
+              "active": "activated",
+              "waiting": null,
+              "installing": null
+            }
+          ],
+          "status": {
+            "type": "INKWAVE_CACHE_STATUS",
+            "revision": "c25eaa3fc995ab1f393a11bb3778cef23e91c6d5b451392a1715ff87f9c98357",
+            "offlineReady": true
+          }
+        },
+        "audioState": "running",
+        "musicWorker": true
+      },
+      "pixelSha256": "f61a528893484b12571c560daa8ef4c01376ae6c25d66f0b706f3c7950e7b3a0",
+      "pixelBytes": 576000,
+      "imageValidation": {
+        "opaque": 144000,
+        "pixels": 144000,
+        "colors": 28580
+      },
+      "timings": {
+        "submit": {
+          "n": 6,
+          "mean": 29.683333333348855,
+          "p50": 29.9000000001397,
+          "p95": 40.200000000186265,
+          "p99": 40.200000000186265,
+          "min": 20,
+          "max": 40.200000000186265
+        },
+        "readback": {
+          "n": 6,
+          "mean": 1228.3000000000466,
+          "p50": 1223.7000000001863,
+          "p95": 1299.6999999999534,
+          "p99": 1299.6999999999534,
+          "min": 1101.6999999999534,
+          "max": 1299.6999999999534
+        },
+        "completed": {
+          "n": 6,
+          "mean": 1257.9833333333954,
+          "p50": 1243.7000000001863,
+          "p95": 1329.6999999999534,
+          "p99": 1329.6999999999534,
+          "min": 1131.6000000000931,
+          "max": 1329.6999999999534
+        },
+        "pacing": {
+          "n": 5,
+          "mean": 1255.7200000000187,
+          "p50": 1246.4000000001397,
+          "p95": 1332.3999999999069,
+          "p99": 1332.3999999999069,
+          "min": 1135,
+          "max": 1332.3999999999069
+        }
+      },
+      "gpu": {
+        "supported": true,
+        "requested": 6,
+        "valid": 6,
+        "missing": 0,
+        "disjoint": 0,
+        "complete": true,
+        "wholeRun": {
+          "n": 6,
+          "mean": 1237.530786,
+          "p50": 1222.389385,
+          "p95": 1311.07826,
+          "p99": 1311.07826,
+          "min": 1110.245136,
+          "max": 1311.07826
+        }
+      },
+      "resourcesBefore": {
+        "renderer": {
+          "geometries": 410,
+          "textures": 131,
+          "programs": 147
+        },
+        "sceneNodes": 1517,
+        "meshes": 507,
+        "uniqueGeometries": 337,
+        "uniqueMaterials": 219,
+        "materialRefs": 509,
+        "uniqueAttributeBackingBytes": 104188607,
+        "heap": {
+          "usedJSHeapSize": 303657601,
+          "totalJSHeapSize": 306430517,
+          "jsHeapSizeLimit": 4294705152
+        }
+      },
+      "resourcesAfter": {
+        "renderer": {
+          "geometries": 410,
+          "textures": 131,
+          "programs": 147
+        },
+        "sceneNodes": 1517,
+        "meshes": 507,
+        "uniqueGeometries": 337,
+        "uniqueMaterials": 219,
+        "materialRefs": 509,
+        "uniqueAttributeBackingBytes": 104188607,
+        "heap": {
+          "usedJSHeapSize": 302783157,
+          "totalJSHeapSize": 315657269,
+          "jsHeapSizeLimit": 4294705152
+        }
+      },
+      "cdpHeapBefore": {
+        "JSHeapUsedSize": 126496228,
+        "JSHeapTotalSize": 129245184,
+        "Nodes": 1444,
+        "Documents": 2,
+        "JSEventListeners": 135,
+        "Resources": 493,
+        "ArrayBufferContents": 4666
+      },
+      "cdpHeapAfter": {
+        "JSHeapUsedSize": 124558468,
+        "JSHeapTotalSize": 137895936,
+        "Nodes": 1634,
+        "Documents": 2,
+        "JSEventListeners": 153,
+        "Resources": 438,
+        "ArrayBufferContents": 4507
+      },
+      "system": {
+        "beforeUtc": "2026-10-17T16:58:16.277Z",
+        "afterUtc": "2026-10-17T16:58:25.821Z",
+        "loadAverageBefore": [
+          4.18,
+          3.98,
+          3.13
+        ],
+        "loadAverageAfter": [
+          4.06,
+          3.96,
+          3.14
+        ],
+        "cgroupCpuStatBefore": {
+          "usage_usec": 2882847150,
+          "user_usec": 2704040821,
+          "system_usec": 178806329,
+          "nice_usec": 15613,
+          "nr_periods": 9240,
+          "nr_throttled": 5459,
+          "throttled_usec": 480252570,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuStatAfter": {
+          "usage_usec": 2916048628,
+          "user_usec": 2735077838,
+          "system_usec": 180970790,
+          "nice_usec": 15613,
+          "nr_periods": 9335,
+          "nr_throttled": 5526,
+          "throttled_usec": 485408270,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuStatDelta": {
+          "usage_usec": 33201478,
+          "user_usec": 31037017,
+          "system_usec": 2164461,
+          "nice_usec": 0,
+          "nr_periods": 95,
+          "nr_throttled": 67,
+          "throttled_usec": 5155700,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cpuPressureBefore": null,
+        "cpuPressureAfter": null
+      },
+      "frames": [
+        {
+          "frame": 1012,
+          "submitMs": 32.0999999998603,
+          "readbackMs": 1206.8000000000466,
+          "completedMs": 1238.8999999999069,
+          "startIntervalMs": null,
+          "gpuMs": 1222.389385,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 638048,
+          "scale": 1,
+          "gameTime": 5.716666666666652,
+          "fxDrops": 256,
+          "projectiles": 15,
+          "rng": {
+            "state": 2291787028,
+            "calls": 1
+          }
+        },
+        {
+          "frame": 1013,
+          "submitMs": 25.899999999906868,
+          "readbackMs": 1293.7000000001863,
+          "completedMs": 1319.6000000000931,
+          "startIntervalMs": 1241.1999999999534,
+          "gpuMs": 1296.03328,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 243,
+          "triangles": 637334,
+          "scale": 1,
+          "gameTime": 5.733333333333318,
+          "fxDrops": 254,
+          "projectiles": 15,
+          "rng": {
+            "state": 314159610,
+            "calls": 0
+          }
+        },
+        {
+          "frame": 1014,
+          "submitMs": 30,
+          "readbackMs": 1299.6999999999534,
+          "completedMs": 1329.6999999999534,
+          "startIntervalMs": 1323.6000000000931,
+          "gpuMs": 1311.07826,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 245,
+          "triangles": 647194,
+          "scale": 1,
+          "gameTime": 5.749999999999985,
+          "fxDrops": 326,
+          "projectiles": 21,
+          "rng": {
+            "state": 4157596063,
+            "calls": 404
+          }
+        },
+        {
+          "frame": 1015,
+          "submitMs": 29.9000000001397,
+          "readbackMs": 1101.6999999999534,
+          "completedMs": 1131.6000000000931,
+          "startIntervalMs": 1332.3999999999069,
+          "gpuMs": 1110.245136,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 644538,
+          "scale": 1,
+          "gameTime": 5.7666666666666515,
+          "fxDrops": 361,
+          "projectiles": 21,
+          "rng": {
+            "state": 538325087,
+            "calls": 245
+          }
+        },
+        {
+          "frame": 1016,
+          "submitMs": 20,
+          "readbackMs": 1223.7000000001863,
+          "completedMs": 1243.7000000001863,
+          "startIntervalMs": 1135,
+          "gpuMs": 1221.317534,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 643596,
+          "scale": 1,
+          "gameTime": 5.783333333333318,
+          "fxDrops": 360,
+          "projectiles": 21,
+          "rng": {
+            "state": 1733086040,
+            "calls": 17
+          }
+        },
+        {
+          "frame": 1017,
+          "submitMs": 40.200000000186265,
+          "readbackMs": 1244.1999999999534,
+          "completedMs": 1284.4000000001397,
+          "startIntervalMs": 1246.4000000001397,
+          "gpuMs": 1264.121121,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 245,
+          "triangles": 643602,
+          "scale": 1,
+          "gameTime": 5.799999999999985,
+          "fxDrops": 355,
+          "projectiles": 21,
+          "rng": {
+            "state": 4073960404,
+            "calls": 6
+          }
+        }
+      ]
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "status": "complete",
+      "setupElapsedMs": 62889,
+      "setup": {
+        "native": true,
+        "atlas": 2048,
+        "actors": 8,
+        "bots": 7,
+        "playerController": true,
+        "mobile": {
+          "ios": false,
+          "ipad": false,
+          "android": false,
+          "touch": false,
+          "touchCapable": false,
+          "phone": false,
+          "tablet": false
+        },
+        "audio": {
+          "on": true,
+          "state": "running",
+          "music": "battle",
+          "worker": true
+        },
+        "width": 480,
+        "height": 300,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "gpuTimerQuery": true,
+        "near": [
+          {
+            "id": 3457,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3458,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3397,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": -1
+          },
+          {
+            "id": 3398,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": -1
+          },
+          {
+            "id": 3517,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": 1
+          },
+          {
+            "id": 3518,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": 1
+          },
+          {
+            "id": 3456,
+            "x": -1.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3459,
+            "x": 1.5,
+            "y": 3.009999990463257,
+            "z": 0
+          }
+        ]
+      },
+      "settings": {
+        "sensitivity": 1,
+        "padSensitivity": 0,
+        "padInvertX": false,
+        "invertY": false,
+        "invertX": false,
+        "aimProfile": "tv",
+        "aimProfiles": {
+          "tv": {
+            "gyro": false,
+            "gyroSens": 0,
+            "padSensitivity": 0,
+            "invertY": false,
+            "invertX": false
+          },
+          "handheld": {
+            "gyro": false,
+            "gyroSens": 0,
+            "padSensitivity": 0,
+            "invertY": false,
+            "invertX": false
+          }
+        },
+        "fov": 82,
+        "quality": "medium",
+        "frameRate": "display",
+        "shadows": true,
+        "bloom": true,
+        "cameraShake": 1,
+        "showFps": false,
+        "master": 0.8,
+        "music": 0.6,
+        "sfx": 0.85,
+        "colorblind": false,
+        "minimap": false,
+        "matchLength": 180,
+        "difficulty": "normal",
+        "rumble": 1,
+        "aimAssist": 0,
+        "aimAssistMouse": false,
+        "lang": "ja",
+        "gyro": false,
+        "gyroSens": 0,
+        "gyroInvertX": false,
+        "gyroInvertY": false,
+        "touchSens": 0,
+        "fireAim": true,
+        "stickMode": "float",
+        "touchScale": 1,
+        "touchOpacity": 0.85,
+        "fovMode": "h",
+        "padSensitivityScale": "s3"
+      },
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      },
+      "errors": [],
+      "pwaBefore": {
+        "controller": "http://127.0.0.1:46305/B/sw.js",
+        "controllerState": "activated",
+        "registrations": [
+          {
+            "scope": "http://127.0.0.1:46305/B/",
+            "active": "activated",
+            "waiting": null,
+            "installing": null
+          }
+        ],
+        "status": {
+          "type": "INKWAVE_CACHE_STATUS",
+          "revision": "c25eaa3fc995ab1f393a11bb3778cef23e91c6d5b451392a1715ff87f9c98357",
+          "offlineReady": true
+        }
+      },
+      "backgroundAfter": {
+        "pwa": {
+          "controller": "http://127.0.0.1:46305/B/sw.js",
+          "controllerState": "activated",
+          "registrations": [
+            {
+              "scope": "http://127.0.0.1:46305/B/",
+              "active": "activated",
+              "waiting": null,
+              "installing": null
+            }
+          ],
+          "status": {
+            "type": "INKWAVE_CACHE_STATUS",
+            "revision": "c25eaa3fc995ab1f393a11bb3778cef23e91c6d5b451392a1715ff87f9c98357",
+            "offlineReady": true
+          }
+        },
+        "audioState": "running",
+        "musicWorker": true
+      },
+      "pixelSha256": "f61a528893484b12571c560daa8ef4c01376ae6c25d66f0b706f3c7950e7b3a0",
+      "pixelBytes": 576000,
+      "imageValidation": {
+        "opaque": 144000,
+        "pixels": 144000,
+        "colors": 28580
+      },
+      "timings": {
+        "submit": {
+          "n": 6,
+          "mean": 29.400000000023283,
+          "p50": 26.5,
+          "p95": 41.800000000046566,
+          "p99": 41.800000000046566,
+          "min": 25.5,
+          "max": 41.800000000046566
+        },
+        "readback": {
+          "n": 6,
+          "mean": 1305.0166666666435,
+          "p50": 1285.0999999998603,
+          "p95": 1379.3000000000466,
+          "p99": 1379.3000000000466,
+          "min": 1225.7999999998137,
+          "max": 1379.3000000000466
+        },
+        "completed": {
+          "n": 6,
+          "mean": 1334.4166666666667,
+          "p50": 1314.0999999998603,
+          "p95": 1421.1000000000931,
+          "p99": 1421.1000000000931,
+          "min": 1253.7999999998137,
+          "max": 1421.1000000000931
+        },
+        "pacing": {
+          "n": 5,
+          "mean": 1354.2200000000187,
+          "p50": 1340.6000000000931,
+          "p95": 1423.3999999999069,
+          "p99": 1423.3999999999069,
+          "min": 1301.6000000000931,
+          "max": 1423.3999999999069
+        }
+      },
+      "gpu": {
+        "supported": true,
+        "requested": 6,
+        "valid": 6,
+        "missing": 0,
+        "disjoint": 0,
+        "complete": true,
+        "wholeRun": {
+          "n": 6,
+          "mean": 1313.8520029999997,
+          "p50": 1290.674985,
+          "p95": 1395.311685,
+          "p99": 1395.311685,
+          "min": 1236.498362,
+          "max": 1395.311685
+        }
+      },
+      "resourcesBefore": {
+        "renderer": {
+          "geometries": 410,
+          "textures": 131,
+          "programs": 147
+        },
+        "sceneNodes": 1517,
+        "meshes": 507,
+        "uniqueGeometries": 337,
+        "uniqueMaterials": 219,
+        "materialRefs": 509,
+        "uniqueAttributeBackingBytes": 104188607,
+        "heap": {
+          "usedJSHeapSize": 304728548,
+          "totalJSHeapSize": 311707688,
+          "jsHeapSizeLimit": 4294705152
+        }
+      },
+      "resourcesAfter": {
+        "renderer": {
+          "geometries": 410,
+          "textures": 131,
+          "programs": 147
+        },
+        "sceneNodes": 1517,
+        "meshes": 507,
+        "uniqueGeometries": 337,
+        "uniqueMaterials": 219,
+        "materialRefs": 509,
+        "uniqueAttributeBackingBytes": 104188607,
+        "heap": {
+          "usedJSHeapSize": 302988156,
+          "totalJSHeapSize": 318681584,
+          "jsHeapSizeLimit": 4294705152
+        }
+      },
+      "cdpHeapBefore": {
+        "JSHeapUsedSize": 127468528,
+        "JSHeapTotalSize": 135274496,
+        "Nodes": 1458,
+        "Documents": 2,
+        "JSEventListeners": 157,
+        "Resources": 879,
+        "ArrayBufferContents": 5054
+      },
+      "cdpHeapAfter": {
+        "JSHeapUsedSize": 124675560,
+        "JSHeapTotalSize": 141565952,
+        "Nodes": 1624,
+        "Documents": 2,
+        "JSEventListeners": 153,
+        "Resources": 438,
+        "ArrayBufferContents": 4507
+      },
+      "system": {
+        "beforeUtc": "2026-10-17T16:59:47.105Z",
+        "afterUtc": "2026-10-17T16:59:57.032Z",
+        "loadAverageBefore": [
+          3.26,
+          3.82,
+          3.16
+        ],
+        "loadAverageAfter": [
+          3.36,
+          3.82,
+          3.17
+        ],
+        "cgroupCpuStatBefore": {
+          "usage_usec": 3185052764,
+          "user_usec": 2988795386,
+          "system_usec": 196257377,
+          "nice_usec": 15613,
+          "nr_periods": 10148,
+          "nr_throttled": 5985,
+          "throttled_usec": 521982897,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuStatAfter": {
+          "usage_usec": 3219599866,
+          "user_usec": 3021208806,
+          "system_usec": 198391060,
+          "nice_usec": 15613,
+          "nr_periods": 10247,
+          "nr_throttled": 6057,
+          "throttled_usec": 527389615,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuStatDelta": {
+          "usage_usec": 34547102,
+          "user_usec": 32413420,
+          "system_usec": 2133683,
+          "nice_usec": 0,
+          "nr_periods": 99,
+          "nr_throttled": 72,
+          "throttled_usec": 5406718,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cpuPressureBefore": null,
+        "cpuPressureAfter": null
+      },
+      "frames": [
+        {
+          "frame": 1012,
+          "submitMs": 41.800000000046566,
+          "readbackMs": 1379.3000000000466,
+          "completedMs": 1421.1000000000931,
+          "startIntervalMs": null,
+          "gpuMs": 1395.311685,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 638048,
+          "scale": 1,
+          "gameTime": 5.716666666666652,
+          "fxDrops": 256,
+          "projectiles": 15,
+          "rng": {
+            "state": 2291787028,
+            "calls": 1
+          }
+        },
+        {
+          "frame": 1013,
+          "submitMs": 25.5,
+          "readbackMs": 1355.3000000000466,
+          "completedMs": 1380.8000000000466,
+          "startIntervalMs": 1423.3999999999069,
+          "gpuMs": 1365.239905,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 243,
+          "triangles": 637334,
+          "scale": 1,
+          "gameTime": 5.733333333333318,
+          "fxDrops": 254,
+          "projectiles": 15,
+          "rng": {
+            "state": 314159610,
+            "calls": 0
+          }
+        },
+        {
+          "frame": 1014,
+          "submitMs": 25.600000000093132,
+          "readbackMs": 1273.5,
+          "completedMs": 1299.1000000000931,
+          "startIntervalMs": 1384.6000000000931,
+          "gpuMs": 1278.567627,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 245,
+          "triangles": 647194,
+          "scale": 1,
+          "gameTime": 5.749999999999985,
+          "fxDrops": 326,
+          "projectiles": 21,
+          "rng": {
+            "state": 4157596063,
+            "calls": 404
+          }
+        },
+        {
+          "frame": 1015,
+          "submitMs": 29,
+          "readbackMs": 1285.0999999998603,
+          "completedMs": 1314.0999999998603,
+          "startIntervalMs": 1301.6000000000931,
+          "gpuMs": 1290.674985,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 644538,
+          "scale": 1,
+          "gameTime": 5.7666666666666515,
+          "fxDrops": 361,
+          "projectiles": 21,
+          "rng": {
+            "state": 538325087,
+            "calls": 245
+          }
+        },
+        {
+          "frame": 1016,
+          "submitMs": 26.5,
+          "readbackMs": 1311.1000000000931,
+          "completedMs": 1337.6000000000931,
+          "startIntervalMs": 1320.8999999999069,
+          "gpuMs": 1316.819454,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 643596,
+          "scale": 1,
+          "gameTime": 5.783333333333318,
+          "fxDrops": 360,
+          "projectiles": 21,
+          "rng": {
+            "state": 1733086040,
+            "calls": 17
+          }
+        },
+        {
+          "frame": 1017,
+          "submitMs": 28,
+          "readbackMs": 1225.7999999998137,
+          "completedMs": 1253.7999999998137,
+          "startIntervalMs": 1340.6000000000931,
+          "gpuMs": 1236.498362,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 245,
+          "triangles": 643602,
+          "scale": 1,
+          "gameTime": 5.799999999999985,
+          "fxDrops": 355,
+          "projectiles": 21,
+          "rng": {
+            "state": 4073960404,
+            "calls": 6
+          }
+        }
+      ]
+    },
+    {
+      "ordinal": 3,
+      "variant": "A",
+      "status": "complete",
+      "setupElapsedMs": 63065,
+      "setup": {
+        "native": true,
+        "atlas": 2048,
+        "actors": 8,
+        "bots": 7,
+        "playerController": true,
+        "mobile": {
+          "ios": false,
+          "ipad": false,
+          "android": false,
+          "touch": false,
+          "touchCapable": false,
+          "phone": false,
+          "tablet": false
+        },
+        "audio": {
+          "on": true,
+          "state": "running",
+          "music": "battle",
+          "worker": true
+        },
+        "width": 480,
+        "height": 300,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "gpuTimerQuery": true,
+        "near": [
+          {
+            "id": 3457,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3458,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3397,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": -1
+          },
+          {
+            "id": 3398,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": -1
+          },
+          {
+            "id": 3517,
+            "x": -0.5,
+            "y": 3.009999990463257,
+            "z": 1
+          },
+          {
+            "id": 3518,
+            "x": 0.5,
+            "y": 3.009999990463257,
+            "z": 1
+          },
+          {
+            "id": 3456,
+            "x": -1.5,
+            "y": 3.009999990463257,
+            "z": 0
+          },
+          {
+            "id": 3459,
+            "x": 1.5,
+            "y": 3.009999990463257,
+            "z": 0
+          }
+        ]
+      },
+      "settings": {
+        "sensitivity": 1,
+        "padSensitivity": 0,
+        "padInvertX": false,
+        "invertY": false,
+        "invertX": false,
+        "aimProfile": "tv",
+        "aimProfiles": {
+          "tv": {
+            "gyro": false,
+            "gyroSens": 0,
+            "padSensitivity": 0,
+            "invertY": false,
+            "invertX": false
+          },
+          "handheld": {
+            "gyro": false,
+            "gyroSens": 0,
+            "padSensitivity": 0,
+            "invertY": false,
+            "invertX": false
+          }
+        },
+        "fov": 82,
+        "quality": "medium",
+        "frameRate": "display",
+        "shadows": true,
+        "bloom": true,
+        "cameraShake": 1,
+        "showFps": false,
+        "master": 0.8,
+        "music": 0.6,
+        "sfx": 0.85,
+        "colorblind": false,
+        "minimap": false,
+        "matchLength": 180,
+        "difficulty": "normal",
+        "rumble": 1,
+        "aimAssist": 0,
+        "aimAssistMouse": false,
+        "lang": "ja",
+        "gyro": false,
+        "gyroSens": 0,
+        "gyroInvertX": false,
+        "gyroInvertY": false,
+        "touchSens": 0,
+        "fireAim": true,
+        "stickMode": "float",
+        "touchScale": 1,
+        "touchOpacity": 0.85,
+        "fovMode": "h",
+        "padSensitivityScale": "s3"
+      },
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      },
+      "errors": [],
+      "pwaBefore": {
+        "controller": "http://127.0.0.1:46305/A/sw.js",
+        "controllerState": "activated",
+        "registrations": [
+          {
+            "scope": "http://127.0.0.1:46305/A/",
+            "active": "activated",
+            "waiting": null,
+            "installing": null
+          }
+        ],
+        "status": {
+          "type": "INKWAVE_CACHE_STATUS",
+          "revision": "65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6",
+          "offlineReady": true
+        }
+      },
+      "backgroundAfter": {
+        "pwa": {
+          "controller": "http://127.0.0.1:46305/A/sw.js",
+          "controllerState": "activated",
+          "registrations": [
+            {
+              "scope": "http://127.0.0.1:46305/A/",
+              "active": "activated",
+              "waiting": null,
+              "installing": null
+            }
+          ],
+          "status": {
+            "type": "INKWAVE_CACHE_STATUS",
+            "revision": "65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6",
+            "offlineReady": true
+          }
+        },
+        "audioState": "running",
+        "musicWorker": true
+      },
+      "pixelSha256": "f61a528893484b12571c560daa8ef4c01376ae6c25d66f0b706f3c7950e7b3a0",
+      "pixelBytes": 576000,
+      "imageValidation": {
+        "opaque": 144000,
+        "pixels": 144000,
+        "colors": 28580
+      },
+      "timings": {
+        "submit": {
+          "n": 6,
+          "mean": 28.283333333286766,
+          "p50": 29.199999999953434,
+          "p95": 30.5999999998603,
+          "p99": 30.5999999998603,
+          "min": 22.5,
+          "max": 30.5999999998603
+        },
+        "readback": {
+          "n": 6,
+          "mean": 1196.6000000000156,
+          "p50": 1188.1999999999534,
+          "p95": 1261.6999999999534,
+          "p99": 1261.6999999999534,
+          "min": 1129,
+          "max": 1261.6999999999534
+        },
+        "completed": {
+          "n": 6,
+          "mean": 1224.8833333333023,
+          "p50": 1218.1999999999534,
+          "p95": 1289.6999999999534,
+          "p99": 1289.6999999999534,
+          "min": 1158.3999999999069,
+          "max": 1289.6999999999534
+        },
+        "pacing": {
+          "n": 5,
+          "mean": 1215.3,
+          "p50": 1221.3999999999069,
+          "p95": 1290.1000000000931,
+          "p99": 1290.1000000000931,
+          "min": 1161.5,
+          "max": 1290.1000000000931
+        }
+      },
+      "gpu": {
+        "supported": true,
+        "requested": 6,
+        "valid": 6,
+        "missing": 0,
+        "disjoint": 0,
+        "complete": true,
+        "wholeRun": {
+          "n": 6,
+          "mean": 1207.0203566666667,
+          "p50": 1200.97174,
+          "p95": 1273.576488,
+          "p99": 1273.576488,
+          "min": 1136.57395,
+          "max": 1273.576488
+        }
+      },
+      "resourcesBefore": {
+        "renderer": {
+          "geometries": 410,
+          "textures": 131,
+          "programs": 147
+        },
+        "sceneNodes": 1517,
+        "meshes": 507,
+        "uniqueGeometries": 337,
+        "uniqueMaterials": 219,
+        "materialRefs": 509,
+        "uniqueAttributeBackingBytes": 104188607,
+        "heap": {
+          "usedJSHeapSize": 303259752,
+          "totalJSHeapSize": 309415380,
+          "jsHeapSizeLimit": 4294705152
+        }
+      },
+      "resourcesAfter": {
+        "renderer": {
+          "geometries": 410,
+          "textures": 131,
+          "programs": 147
+        },
+        "sceneNodes": 1517,
+        "meshes": 507,
+        "uniqueGeometries": 337,
+        "uniqueMaterials": 219,
+        "materialRefs": 509,
+        "uniqueAttributeBackingBytes": 104188607,
+        "heap": {
+          "usedJSHeapSize": 302893980,
+          "totalJSHeapSize": 317929372,
+          "jsHeapSizeLimit": 4294705152
+        }
+      },
+      "cdpHeapBefore": {
+        "JSHeapUsedSize": 126043620,
+        "JSHeapTotalSize": 132653056,
+        "Nodes": 1452,
+        "Documents": 2,
+        "JSEventListeners": 154,
+        "Resources": 492,
+        "ArrayBufferContents": 4664
+      },
+      "cdpHeapAfter": {
+        "JSHeapUsedSize": 124625664,
+        "JSHeapTotalSize": 140255232,
+        "Nodes": 1628,
+        "Documents": 2,
+        "JSEventListeners": 153,
+        "Resources": 438,
+        "ArrayBufferContents": 4507
+      },
+      "system": {
+        "beforeUtc": "2026-10-17T17:01:18.065Z",
+        "afterUtc": "2026-10-17T17:01:27.399Z",
+        "loadAverageBefore": [
+          4.89,
+          4.11,
+          3.32
+        ],
+        "loadAverageAfter": [
+          4.66,
+          4.09,
+          3.32
+        ],
+        "cgroupCpuStatBefore": {
+          "usage_usec": 3487560271,
+          "user_usec": 3274604146,
+          "system_usec": 212956125,
+          "nice_usec": 15613,
+          "nr_periods": 11057,
+          "nr_throttled": 6526,
+          "throttled_usec": 563893381,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuStatAfter": {
+          "usage_usec": 3519611053,
+          "user_usec": 3304776844,
+          "system_usec": 214834209,
+          "nice_usec": 15613,
+          "nr_periods": 11151,
+          "nr_throttled": 6593,
+          "throttled_usec": 568957605,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuStatDelta": {
+          "usage_usec": 32050782,
+          "user_usec": 30172698,
+          "system_usec": 1878084,
+          "nice_usec": 0,
+          "nr_periods": 94,
+          "nr_throttled": 67,
+          "throttled_usec": 5064224,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cpuPressureBefore": null,
+        "cpuPressureAfter": null
+      },
+      "frames": [
+        {
+          "frame": 1012,
+          "submitMs": 22.5,
+          "readbackMs": 1205.3000000000466,
+          "completedMs": 1227.8000000000466,
+          "startIntervalMs": null,
+          "gpuMs": 1212.809224,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 638048,
+          "scale": 1,
+          "gameTime": 5.716666666666652,
+          "fxDrops": 256,
+          "projectiles": 15,
+          "rng": {
+            "state": 2291787028,
+            "calls": 1
+          }
+        },
+        {
+          "frame": 1013,
+          "submitMs": 30.5999999998603,
+          "readbackMs": 1137.6000000000931,
+          "completedMs": 1168.1999999999534,
+          "startIntervalMs": 1230.8000000000466,
+          "gpuMs": 1150.671193,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 243,
+          "triangles": 637334,
+          "scale": 1,
+          "gameTime": 5.733333333333318,
+          "fxDrops": 254,
+          "projectiles": 15,
+          "rng": {
+            "state": 314159610,
+            "calls": 0
+          }
+        },
+        {
+          "frame": 1014,
+          "submitMs": 30,
+          "readbackMs": 1188.1999999999534,
+          "completedMs": 1218.1999999999534,
+          "startIntervalMs": 1172.6999999999534,
+          "gpuMs": 1200.97174,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 245,
+          "triangles": 647194,
+          "scale": 1,
+          "gameTime": 5.749999999999985,
+          "fxDrops": 326,
+          "projectiles": 21,
+          "rng": {
+            "state": 4157596063,
+            "calls": 404
+          }
+        },
+        {
+          "frame": 1015,
+          "submitMs": 29.399999999906868,
+          "readbackMs": 1129,
+          "completedMs": 1158.3999999999069,
+          "startIntervalMs": 1221.3999999999069,
+          "gpuMs": 1136.57395,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 644538,
+          "scale": 1,
+          "gameTime": 5.7666666666666515,
+          "fxDrops": 361,
+          "projectiles": 21,
+          "rng": {
+            "state": 538325087,
+            "calls": 245
+          }
+        },
+        {
+          "frame": 1016,
+          "submitMs": 29.199999999953434,
+          "readbackMs": 1257.8000000000466,
+          "completedMs": 1287,
+          "startIntervalMs": 1161.5,
+          "gpuMs": 1267.519545,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 244,
+          "triangles": 643596,
+          "scale": 1,
+          "gameTime": 5.783333333333318,
+          "fxDrops": 360,
+          "projectiles": 21,
+          "rng": {
+            "state": 1733086040,
+            "calls": 17
+          }
+        },
+        {
+          "frame": 1017,
+          "submitMs": 28,
+          "readbackMs": 1261.6999999999534,
+          "completedMs": 1289.6999999999534,
+          "startIntervalMs": 1290.1000000000931,
+          "gpuMs": 1273.576488,
+          "gpuDisjoint": false,
+          "alive": 8,
+          "botCalls": 7,
+          "playerCalls": 1,
+          "calls": 245,
+          "triangles": 643602,
+          "scale": 1,
+          "gameTime": 5.799999999999985,
+          "fxDrops": 355,
+          "projectiles": 21,
+          "rng": {
+            "state": 4073960404,
+            "calls": 6
+          }
+        }
+      ]
+    }
+  ],
+  "adoptionBlockers": [
+    "Only calibration: four trials, six frame samples per trial, five pacing intervals; per-trial p95/p99 equal the maximum. No eight-trial performance measurement or confidence interval.",
+    "Candidate aggregate completed-frame time is slower by the recorded raw cost change; pacing is also slower. Neither value may be omitted or explained away as proven noise.",
+    "Renderer-wide resource counts differ within the exact baseline revision; current readiness/identity snapshots do not identify their owner/history. Stable main-scene arrays and endpoint pixels do not prove identical total resources.",
+    "Chronological process/order variation and observed cgroup CPU throttling confound source attribution. Boundary load snapshots do not exclude other activity.",
+    "SwiftShader serialized full-frame readback and GPU queries are software diagnostics, not physical-device FPS/GPU/input latency/thermal/power evidence.",
+    "Native source-display uses separate MeshStandardMaterial; this run exercises custom level material through native ink overlay, not an authored-Level custom grate-backface scene."
+  ],
+  "nextMatchedStaticProbe": {
+    "scope": "Separate renderer/material diagnostic, not a replacement for whole-game acceptance or hardware validation.",
+    "design": [
+      "Serve exact before/after production modules with source/artifact receipts. Use fresh balanced ABBA/BAAB realms with identical fixture geometry, textures, uniforms, camera and render targets; no whole-game boot, actors or Showcase.",
+      "Cover authored grate top/back and FrontSide preservation, real texlib relief and real Paint splat/flush ink gradients, multiple camera/light directions. Prove nonblank coverage and nonzero-gradient sensitivity. Leave intentional grate backface differences constrained to that fixture; compare unaffected pixels independently.",
+      "Await natural fixture texture/compile completion and identical rendered warmup, then record stable resource counts and allocation/disposal ownership before/after. Log renderer-wide and private-scene resources separately.",
+      "Measure draw-only CPU submit, explicit completion wait and fully recovered nondisjoint GPU queries separately. Keep toDataURL/full-image readback and diagnostics outside timing windows. Retain every raw timing including unfavorable samples.",
+      "For later whole-game investigation, add creation/disposal ledgers and natural readiness observations for Showcase._warmState/_warmChar, portrait queue/task/inflight, environment/post targets and old match cleanup. Do not disable those owners or force-dispose resources to make counts match."
+    ]
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "scope": "All eight endpoint images are byte-identical. One lossless copy plus aliases, not every measured frame. 480x300 DPR1 medium native Scorch, current-main proportions, no retail console comparison.",
+  "images": [
+    {
+      "ordinal": 0,
+      "variant": "A",
+      "png": "trial-0-A.png",
+      "pngSha256": "5b1e6eccf7d8b3f0ab7525632efd4fd3507fdcd0ca82c911b6f675ddf9ae9ec3",
+      "pngBytes": 276013,
+      "rgbaSha256": "db9cd08752c65119eb228b1b6d8db73b7295bd33a7456ede8f8b667e16cb0b6d",
+      "rgbaBytes": 576000,
+      "storedPngAlias": "endpoint.png",
+      "storedRgbaAlias": "endpoint.rgba.gz"
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "png": "trial-1-B.png",
+      "pngSha256": "5b1e6eccf7d8b3f0ab7525632efd4fd3507fdcd0ca82c911b6f675ddf9ae9ec3",
+      "pngBytes": 276013,
+      "rgbaSha256": "db9cd08752c65119eb228b1b6d8db73b7295bd33a7456ede8f8b667e16cb0b6d",
+      "rgbaBytes": 576000,
+      "storedPngAlias": "endpoint.png",
+      "storedRgbaAlias": "endpoint.rgba.gz"
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "png": "trial-2-B.png",
+      "pngSha256": "5b1e6eccf7d8b3f0ab7525632efd4fd3507fdcd0ca82c911b6f675ddf9ae9ec3",
+      "pngBytes": 276013,
+      "rgbaSha256": "db9cd08752c65119eb228b1b6d8db73b7295bd33a7456ede8f8b667e16cb0b6d",
+      "rgbaBytes": 576000,
+      "storedPngAlias": "endpoint.png",
+      "storedRgbaAlias": "endpoint.rgba.gz"
+    },
+    {
+      "ordinal": 3,
+      "variant": "A",
+      "png": "trial-3-A.png",
+      "pngSha256": "5b1e6eccf7d8b3f0ab7525632efd4fd3507fdcd0ca82c911b6f675ddf9ae9ec3",
+      "pngBytes": 276013,
+      "rgbaSha256": "db9cd08752c65119eb228b1b6d8db73b7295bd33a7456ede8f8b667e16cb0b6d",
+      "rgbaBytes": 576000,
+      "storedPngAlias": "endpoint.png",
+      "storedRgbaAlias": "endpoint.rgba.gz"
+    },
+    {
+      "ordinal": 4,
+      "variant": "B",
+      "png": "trial-4-B.png",
+      "pngSha256": "5b1e6eccf7d8b3f0ab7525632efd4fd3507fdcd0ca82c911b6f675ddf9ae9ec3",
+      "pngBytes": 276013,
+      "rgbaSha256": "db9cd08752c65119eb228b1b6d8db73b7295bd33a7456ede8f8b667e16cb0b6d",
+      "rgbaBytes": 576000,
+      "storedPngAlias": "endpoint.png",
+      "storedRgbaAlias": "endpoint.rgba.gz"
+    },
+    {
+      "ordinal": 5,
+      "variant": "A",
+      "png": "trial-5-A.png",
+      "pngSha256": "5b1e6eccf7d8b3f0ab7525632efd4fd3507fdcd0ca82c911b6f675ddf9ae9ec3",
+      "pngBytes": 276013,
+      "rgbaSha256": "db9cd08752c65119eb228b1b6d8db73b7295bd33a7456ede8f8b667e16cb0b6d",
+      "rgbaBytes": 576000,
+      "storedPngAlias": "endpoint.png",
+      "storedRgbaAlias": "endpoint.rgba.gz"
+    },
+    {
+      "ordinal": 6,
+      "variant": "A",
+      "png": "trial-6-A.png",
+      "pngSha256": "5b1e6eccf7d8b3f0ab7525632efd4fd3507fdcd0ca82c911b6f675ddf9ae9ec3",
+      "pngBytes": 276013,
+      "rgbaSha256": "db9cd08752c65119eb228b1b6d8db73b7295bd33a7456ede8f8b667e16cb0b6d",
+      "rgbaBytes": 576000,
+      "storedPngAlias": "endpoint.png",
+      "storedRgbaAlias": "endpoint.rgba.gz"
+    },
+    {
+      "ordinal": 7,
+      "variant": "B",
+      "png": "trial-7-B.png",
+      "pngSha256": "5b1e6eccf7d8b3f0ab7525632efd4fd3507fdcd0ca82c911b6f675ddf9ae9ec3",
+      "pngBytes": 276013,
+      "rgbaSha256": "db9cd08752c65119eb228b1b6d8db73b7295bd33a7456ede8f8b667e16cb0b6d",
+      "rgbaBytes": 576000,
+      "storedPngAlias": "endpoint.png",
+      "storedRgbaAlias": "endpoint.rgba.gz"
+    }
+  ]
+}

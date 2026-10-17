@@ -1,0 +1,4994 @@
+{
+  "total_count": 20,
+  "jobs": [
+    {
+      "id": 117456808314,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPipeg",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808314",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808314",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:33:31Z",
+      "completed_at": "2026-10-17T17:36:36Z",
+      "name": "seven_claims",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:33:31Z",
+          "completed_at": "2026-10-17T17:33:32Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:33:32Z",
+          "completed_at": "2026-10-17T17:33:49Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:33:49Z",
+          "completed_at": "2026-10-17T17:33:49Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:33:49Z",
+          "completed_at": "2026-10-17T17:33:50Z"
+        },
+        {
+          "name": "Install build and browser dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:33:50Z",
+          "completed_at": "2026-10-17T17:34:45Z"
+        },
+        {
+          "name": "Verify seven claimed gameplay and handoff regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:34:45Z",
+          "completed_at": "2026-10-17T17:36:08Z"
+        },
+        {
+          "name": "Verify emitted gameplay and mural resource lifetime in both browsers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:36:08Z",
+          "completed_at": "2026-10-17T17:36:28Z"
+        },
+        {
+          "name": "Verify compiled main weapon catalog in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-17T17:36:28Z",
+          "completed_at": "2026-10-17T17:36:32Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-17T17:36:32Z",
+          "completed_at": "2026-10-17T17:36:33Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T17:36:33Z",
+          "completed_at": "2026-10-17T17:36:33Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-10-17T17:36:33Z",
+          "completed_at": "2026-10-17T17:36:33Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-10-17T17:36:33Z",
+          "completed_at": "2026-10-17T17:36:33Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808314",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336005,
+      "runner_name": "GitHub Actions 1000336005",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808361,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPipqQ",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808361",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808361",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:29:36Z",
+      "completed_at": "2026-10-17T17:33:28Z",
+      "name": "resource_paint_continuation",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:29:36Z",
+          "completed_at": "2026-10-17T17:29:37Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:29:37Z",
+          "completed_at": "2026-10-17T17:29:52Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:29:52Z",
+          "completed_at": "2026-10-17T17:29:52Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:29:52Z",
+          "completed_at": "2026-10-17T17:29:56Z"
+        },
+        {
+          "name": "Verify the seven claimed resource, paint and continuation fixes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:29:56Z",
+          "completed_at": "2026-10-17T17:30:36Z"
+        },
+        {
+          "name": "Verify existing Surge tests at the native wall-launch boundary",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:30:36Z",
+          "completed_at": "2026-10-17T17:30:52Z"
+        },
+        {
+          "name": "Verify native wall geometry and private armor scheduling",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:30:52Z",
+          "completed_at": "2026-10-17T17:31:07Z"
+        },
+        {
+          "name": "Install build and browser dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-17T17:31:07Z",
+          "completed_at": "2026-10-17T17:31:55Z"
+        },
+        {
+          "name": "Build and verify emitted runtime and two-peer continuation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-17T17:31:55Z",
+          "completed_at": "2026-10-17T17:33:24Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-17T17:33:24Z",
+          "completed_at": "2026-10-17T17:33:25Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-10-17T17:33:25Z",
+          "completed_at": "2026-10-17T17:33:25Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-10-17T17:33:25Z",
+          "completed_at": "2026-10-17T17:33:25Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-10-17T17:33:25Z",
+          "completed_at": "2026-10-17T17:33:25Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808361",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336002,
+      "runner_name": "GitHub Actions 1000336002",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808414,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPip3g",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808414",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808414",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:29:29Z",
+      "completed_at": "2026-10-17T17:38:52Z",
+      "name": "patch_tests (6)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:29:29Z",
+          "completed_at": "2026-10-17T17:29:30Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:29:30Z",
+          "completed_at": "2026-10-17T17:29:47Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:29:47Z",
+          "completed_at": "2026-10-17T17:29:47Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:29:47Z",
+          "completed_at": "2026-10-17T17:29:47Z"
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:29:47Z",
+          "completed_at": "2026-10-17T17:29:49Z"
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:29:49Z",
+          "completed_at": "2026-10-17T17:29:49Z"
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 6)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:29:49Z",
+          "completed_at": "2026-10-17T17:38:50Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:38:50Z",
+          "completed_at": "2026-10-17T17:38:50Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-17T17:38:50Z",
+          "completed_at": "2026-10-17T17:38:50Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-17T17:38:50Z",
+          "completed_at": "2026-10-17T17:38:50Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T17:38:50Z",
+          "completed_at": "2026-10-17T17:38:50Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808414",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336000,
+      "runner_name": "GitHub Actions 1000336000",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808494,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqLg",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808494",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808494",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:36:11Z",
+      "completed_at": "2026-10-17T18:04:18Z",
+      "name": "browser (responsive, chromium webkit)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:36:12Z",
+          "completed_at": "2026-10-17T17:36:13Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:36:13Z",
+          "completed_at": "2026-10-17T17:36:30Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:36:30Z",
+          "completed_at": "2026-10-17T17:36:30Z"
+        },
+        {
+          "name": "Build patched site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:36:30Z",
+          "completed_at": "2026-10-17T17:36:43Z"
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:36:43Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify repeated battle \u2192 results \u2192 menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T17:37:31Z"
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 43,
+          "started_at": "2026-10-17T17:37:31Z",
+          "completed_at": "2026-10-17T18:04:06Z"
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44,
+          "started_at": "2026-10-17T18:04:06Z",
+          "completed_at": "2026-10-17T18:04:06Z"
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45,
+          "started_at": "2026-10-17T18:04:06Z",
+          "completed_at": "2026-10-17T18:04:06Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46,
+          "started_at": "2026-10-17T18:04:06Z",
+          "completed_at": "2026-10-17T18:04:06Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47,
+          "started_at": "2026-10-17T18:04:06Z",
+          "completed_at": "2026-10-17T18:04:06Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48,
+          "started_at": "2026-10-17T18:04:06Z",
+          "completed_at": "2026-10-17T18:04:06Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49,
+          "started_at": "2026-10-17T18:04:06Z",
+          "completed_at": "2026-10-17T18:04:15Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 97,
+          "started_at": "2026-10-17T18:04:15Z",
+          "completed_at": "2026-10-17T18:04:15Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 98,
+          "started_at": "2026-10-17T18:04:15Z",
+          "completed_at": "2026-10-17T18:04:15Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 99,
+          "started_at": "2026-10-17T18:04:15Z",
+          "completed_at": "2026-10-17T18:04:15Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808494",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336017,
+      "runner_name": "GitHub Actions 1000336017",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808506,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqOg",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808506",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808506",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:24:10Z",
+      "completed_at": "2026-10-17T17:34:57Z",
+      "name": "patch_tests (0)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:24:11Z",
+          "completed_at": "2026-10-17T17:24:11Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:24:11Z",
+          "completed_at": "2026-10-17T17:24:29Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:24:29Z",
+          "completed_at": "2026-10-17T17:24:29Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:24:29Z",
+          "completed_at": "2026-10-17T17:24:29Z"
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:24:29Z",
+          "completed_at": "2026-10-17T17:24:31Z"
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:24:31Z",
+          "completed_at": "2026-10-17T17:24:31Z"
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 0)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:24:31Z",
+          "completed_at": "2026-10-17T17:34:55Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:34:55Z",
+          "completed_at": "2026-10-17T17:34:55Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-17T17:34:55Z",
+          "completed_at": "2026-10-17T17:34:55Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-17T17:34:55Z",
+          "completed_at": "2026-10-17T17:34:55Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T17:34:55Z",
+          "completed_at": "2026-10-17T17:34:55Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808506",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000335990,
+      "runner_name": "GitHub Actions 1000335990",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808530,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqUg",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808530",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808530",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:36:42Z",
+      "completed_at": "2026-10-17T17:42:39Z",
+      "name": "patch_tests (3)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:36:42Z",
+          "completed_at": "2026-10-17T17:36:44Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:36:44Z",
+          "completed_at": "2026-10-17T17:37:02Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:37:02Z",
+          "completed_at": "2026-10-17T17:37:02Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:37:02Z",
+          "completed_at": "2026-10-17T17:37:04Z"
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:37:04Z",
+          "completed_at": "2026-10-17T17:37:06Z"
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:37:06Z",
+          "completed_at": "2026-10-17T17:37:06Z"
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 3)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:37:06Z",
+          "completed_at": "2026-10-17T17:42:36Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:42:36Z",
+          "completed_at": "2026-10-17T17:42:36Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-17T17:42:36Z",
+          "completed_at": "2026-10-17T17:42:36Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-17T17:42:36Z",
+          "completed_at": "2026-10-17T17:42:36Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T17:42:36Z",
+          "completed_at": "2026-10-17T17:42:36Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808530",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336024,
+      "runner_name": "GitHub Actions 1000336024",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808541,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqXQ",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808541",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808541",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:36:38Z",
+      "completed_at": "2026-10-17T17:50:59Z",
+      "name": "patch_tests (2)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:36:39Z",
+          "completed_at": "2026-10-17T17:36:40Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:36:40Z",
+          "completed_at": "2026-10-17T17:36:56Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:36:56Z",
+          "completed_at": "2026-10-17T17:36:56Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:36:56Z",
+          "completed_at": "2026-10-17T17:36:59Z"
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:36:59Z",
+          "completed_at": "2026-10-17T17:37:02Z"
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:37:02Z",
+          "completed_at": "2026-10-17T17:37:02Z"
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 2)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:37:02Z",
+          "completed_at": "2026-10-17T17:50:57Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:50:57Z",
+          "completed_at": "2026-10-17T17:50:57Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-17T17:50:57Z",
+          "completed_at": "2026-10-17T17:50:57Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-17T17:50:57Z",
+          "completed_at": "2026-10-17T17:50:57Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T17:50:57Z",
+          "completed_at": "2026-10-17T17:50:57Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808541",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336023,
+      "runner_name": "GitHub Actions 1000336023",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808542,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqXg",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808542",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808542",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:36:20Z",
+      "completed_at": "2026-10-17T17:38:40Z",
+      "name": "browser (network, chromium webkit)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:36:21Z",
+          "completed_at": "2026-10-17T17:36:21Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:36:21Z",
+          "completed_at": "2026-10-17T17:36:37Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:36:37Z",
+          "completed_at": "2026-10-17T17:36:38Z"
+        },
+        {
+          "name": "Build patched site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:36:38Z",
+          "completed_at": "2026-10-17T17:36:51Z"
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:36:51Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:37:29Z"
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T17:37:29Z",
+          "completed_at": "2026-10-17T17:38:01Z"
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-10-17T17:38:01Z",
+          "completed_at": "2026-10-17T17:38:16Z"
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-10-17T17:38:16Z",
+          "completed_at": "2026-10-17T17:38:26Z"
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-10-17T17:38:26Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify repeated battle \u2192 results \u2192 menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:36Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49,
+          "started_at": "2026-10-17T17:38:36Z",
+          "completed_at": "2026-10-17T17:38:37Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 97,
+          "started_at": "2026-10-17T17:38:37Z",
+          "completed_at": "2026-10-17T17:38:37Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 98,
+          "started_at": "2026-10-17T17:38:37Z",
+          "completed_at": "2026-10-17T17:38:38Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 99,
+          "started_at": "2026-10-17T17:38:38Z",
+          "completed_at": "2026-10-17T17:38:38Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808542",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336018,
+      "runner_name": "GitHub Actions 1000336018",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808557,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqbQ",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808557",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808557",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:36:57Z",
+      "completed_at": "2026-10-17T17:46:25Z",
+      "name": "patch_tests (5)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:36:58Z",
+          "completed_at": "2026-10-17T17:36:59Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:36:59Z",
+          "completed_at": "2026-10-17T17:37:14Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:37:14Z",
+          "completed_at": "2026-10-17T17:37:14Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:37:14Z",
+          "completed_at": "2026-10-17T17:37:15Z"
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:37:15Z",
+          "completed_at": "2026-10-17T17:37:16Z"
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:37:16Z",
+          "completed_at": "2026-10-17T17:37:16Z"
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 5)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:37:16Z",
+          "completed_at": "2026-10-17T17:46:21Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:46:21Z",
+          "completed_at": "2026-10-17T17:46:21Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-17T17:46:21Z",
+          "completed_at": "2026-10-17T17:46:21Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-17T17:46:21Z",
+          "completed_at": "2026-10-17T17:46:21Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T17:46:21Z",
+          "completed_at": "2026-10-17T17:46:22Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808557",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336026,
+      "runner_name": "GitHub Actions 1000336026",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808573,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqfQ",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808573",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808573",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:36:52Z",
+      "completed_at": "2026-10-17T17:50:20Z",
+      "name": "browser (startup, chromium)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:36:53Z",
+          "completed_at": "2026-10-17T17:36:54Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:36:54Z",
+          "completed_at": "2026-10-17T17:37:12Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:37:12Z",
+          "completed_at": "2026-10-17T17:37:13Z"
+        },
+        {
+          "name": "Build patched site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:37:13Z",
+          "completed_at": "2026-10-17T17:37:26Z"
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:37:26Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify repeated battle \u2192 results \u2192 menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:37:46Z"
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 44,
+          "started_at": "2026-10-17T17:37:46Z",
+          "completed_at": "2026-10-17T17:50:16Z"
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45,
+          "started_at": "2026-10-17T17:50:16Z",
+          "completed_at": "2026-10-17T17:50:16Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46,
+          "started_at": "2026-10-17T17:50:16Z",
+          "completed_at": "2026-10-17T17:50:16Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47,
+          "started_at": "2026-10-17T17:50:16Z",
+          "completed_at": "2026-10-17T17:50:16Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48,
+          "started_at": "2026-10-17T17:50:16Z",
+          "completed_at": "2026-10-17T17:50:16Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49,
+          "started_at": "2026-10-17T17:50:16Z",
+          "completed_at": "2026-10-17T17:50:17Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 97,
+          "started_at": "2026-10-17T17:50:17Z",
+          "completed_at": "2026-10-17T17:50:17Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 98,
+          "started_at": "2026-10-17T17:50:17Z",
+          "completed_at": "2026-10-17T17:50:17Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 99,
+          "started_at": "2026-10-17T17:50:17Z",
+          "completed_at": "2026-10-17T17:50:17Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808573",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336025,
+      "runner_name": "GitHub Actions 1000336025",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808589,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqjQ",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808589",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808589",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:49:29Z",
+      "completed_at": "2026-10-17T18:11:52Z",
+      "name": "validate_core",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:49:30Z",
+          "completed_at": "2026-10-17T17:49:31Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:49:31Z",
+          "completed_at": "2026-10-17T17:49:48Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:49:48Z",
+          "completed_at": "2026-10-17T17:49:48Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:49:48Z",
+          "completed_at": "2026-10-17T17:49:49Z"
+        },
+        {
+          "name": "Install pinned source regression and build tool",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:49:49Z",
+          "completed_at": "2026-10-17T17:49:50Z"
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:49:50Z",
+          "completed_at": "2026-10-17T17:49:50Z"
+        },
+        {
+          "name": "Prepare persistent focused test evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-17T17:49:50Z",
+          "completed_at": "2026-10-17T17:49:50Z"
+        },
+        {
+          "name": "Run requested focused source regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:49:50Z",
+          "completed_at": "2026-10-17T17:49:50Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2026-10-17T17:49:50Z",
+          "completed_at": "2026-10-17T17:49:50Z"
+        },
+        {
+          "name": "Verify queued InkFlight and catalogue bot liveness fixes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-17T17:49:50Z",
+          "completed_at": "2026-10-17T17:49:56Z"
+        },
+        {
+          "name": "Verify source session admission and finite view settings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-17T17:49:56Z",
+          "completed_at": "2026-10-17T17:50:04Z"
+        },
+        {
+          "name": "Verify claimed room startup and gyro health regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-17T17:50:04Z",
+          "completed_at": "2026-10-17T17:50:06Z"
+        },
+        {
+          "name": "Verify modal controller and pending Pointer Lock lifetimes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-17T17:50:06Z",
+          "completed_at": "2026-10-17T17:50:24Z"
+        },
+        {
+          "name": "Verify PR1172 Slosher and Ink Vac regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-17T17:50:24Z",
+          "completed_at": "2026-10-17T17:50:56Z"
+        },
+        {
+          "name": "Verify source-loaded actual Actor Ink Vac presentation ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-17T17:50:56Z",
+          "completed_at": "2026-10-17T17:51:28Z"
+        },
+        {
+          "name": "Verify PR1172 updated wire contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-17T17:51:28Z",
+          "completed_at": "2026-10-17T17:51:29Z"
+        },
+        {
+          "name": "Verify PR1171 seven-issue and composition regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T17:51:29Z",
+          "completed_at": "2026-10-17T17:51:34Z"
+        },
+        {
+          "name": "Verify six follow-up INKWAVE regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-10-17T17:51:34Z",
+          "completed_at": "2026-10-17T17:51:34Z"
+        },
+        {
+          "name": "Verify eight additional INKWAVE regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-10-17T17:51:34Z",
+          "completed_at": "2026-10-17T17:51:34Z"
+        },
+        {
+          "name": "Verify finish authority, adoption and portrait regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-10-17T17:51:34Z",
+          "completed_at": "2026-10-17T17:51:36Z"
+        },
+        {
+          "name": "Verify source-sampled direction-aware humanoid gait",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-10-17T17:51:36Z",
+          "completed_at": "2026-10-17T17:51:50Z"
+        },
+        {
+          "name": "Verify source-bank torso, weapon carry and squid-to-human transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-10-17T17:51:50Z",
+          "completed_at": "2026-10-17T17:52:12Z"
+        },
+        {
+          "name": "Verify PR1077 additional seven regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-10-17T17:52:12Z",
+          "completed_at": "2026-10-17T17:52:38Z"
+        },
+        {
+          "name": "Diagnose nine-way walk contact regression",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24,
+          "started_at": "2026-10-17T17:52:38Z",
+          "completed_at": "2026-10-17T17:52:54Z"
+        },
+        {
+          "name": "Verify gameplay patch compatibility and numeric contract",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25,
+          "started_at": "2026-10-17T17:52:54Z",
+          "completed_at": "2026-10-17T17:52:54Z"
+        },
+        {
+          "name": "Verify source-guided ink flight model",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26,
+          "started_at": "2026-10-17T17:52:54Z",
+          "completed_at": "2026-10-17T17:52:54Z"
+        },
+        {
+          "name": "Verify cancelled native texture ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27,
+          "started_at": "2026-10-17T17:52:54Z",
+          "completed_at": "2026-10-17T17:52:57Z"
+        },
+        {
+          "name": "Verify cancelled native world preparation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28,
+          "started_at": "2026-10-17T17:52:57Z",
+          "completed_at": "2026-10-17T17:52:58Z"
+        },
+        {
+          "name": "Verify native BVH query lifetime and collision parity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29,
+          "started_at": "2026-10-17T17:52:58Z",
+          "completed_at": "2026-10-17T17:53:04Z"
+        },
+        {
+          "name": "Verify deterministic network replication",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30,
+          "started_at": "2026-10-17T17:53:04Z",
+          "completed_at": "2026-10-17T17:58:46Z"
+        },
+        {
+          "name": "Compare authoritative and reconstructed attacks",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31,
+          "started_at": "2026-10-17T17:58:46Z",
+          "completed_at": "2026-10-17T17:59:07Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32,
+          "started_at": "2026-10-17T17:59:07Z",
+          "completed_at": "2026-10-17T17:59:08Z"
+        },
+        {
+          "name": "Verify local quality regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33,
+          "started_at": "2026-10-17T17:59:08Z",
+          "completed_at": "2026-10-17T18:04:54Z"
+        },
+        {
+          "name": "Verify platform lifecycle smoke regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34,
+          "started_at": "2026-10-17T18:04:54Z",
+          "completed_at": "2026-10-17T18:04:55Z"
+        },
+        {
+          "name": "Verify movement physics smoke regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35,
+          "started_at": "2026-10-17T18:04:55Z",
+          "completed_at": "2026-10-17T18:04:55Z"
+        },
+        {
+          "name": "Verify practice range measurement, rules and battle isolation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36,
+          "started_at": "2026-10-17T18:04:55Z",
+          "completed_at": "2026-10-17T18:05:55Z"
+        },
+        {
+          "name": "Verify loading/cache regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37,
+          "started_at": "2026-10-17T18:05:55Z",
+          "completed_at": "2026-10-17T18:05:56Z"
+        },
+        {
+          "name": "Prepare persistent runtime verifier fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 38,
+          "started_at": "2026-10-17T18:05:56Z",
+          "completed_at": "2026-10-17T18:05:56Z"
+        },
+        {
+          "name": "Verify motion verifier regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 39,
+          "started_at": "2026-10-17T18:05:56Z",
+          "completed_at": "2026-10-17T18:06:00Z"
+        },
+        {
+          "name": "Verify pinned primary numerical sources",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 40,
+          "started_at": "2026-10-17T18:06:00Z",
+          "completed_at": "2026-10-17T18:06:37Z"
+        },
+        {
+          "name": "Verify completed weapon source mirror",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 41,
+          "started_at": "2026-10-17T18:06:37Z",
+          "completed_at": "2026-10-17T18:06:37Z"
+        },
+        {
+          "name": "Compare every catalog record with its pinned numerical source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 42,
+          "started_at": "2026-10-17T18:06:37Z",
+          "completed_at": "2026-10-17T18:06:40Z"
+        },
+        {
+          "name": "Verify pinned Sub/Special numerical sources",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 43,
+          "started_at": "2026-10-17T18:06:40Z",
+          "completed_at": "2026-10-17T18:06:41Z"
+        },
+        {
+          "name": "Check JavaScript syntax",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 44,
+          "started_at": "2026-10-17T18:06:41Z",
+          "completed_at": "2026-10-17T18:06:51Z"
+        },
+        {
+          "name": "Check local module and stylesheet references",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45,
+          "started_at": "2026-10-17T18:06:51Z",
+          "completed_at": "2026-10-17T18:06:51Z"
+        },
+        {
+          "name": "Build patched site at the checkout commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 46,
+          "started_at": "2026-10-17T18:06:51Z",
+          "completed_at": "2026-10-17T18:07:06Z"
+        },
+        {
+          "name": "Verify emitted Bot navigation respawn and retry state",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 47,
+          "started_at": "2026-10-17T18:07:06Z",
+          "completed_at": "2026-10-17T18:07:07Z"
+        },
+        {
+          "name": "Verify emitted sourced weapon holds and gameplay muzzle ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 48,
+          "started_at": "2026-10-17T18:07:07Z",
+          "completed_at": "2026-10-17T18:07:28Z"
+        },
+        {
+          "name": "Verify real emitted material handoff ownership and cancellation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49,
+          "started_at": "2026-10-17T18:07:28Z",
+          "completed_at": "2026-10-17T18:07:29Z"
+        },
+        {
+          "name": "Verify emitted motion caches against frozen baselines",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 50,
+          "started_at": "2026-10-17T18:07:29Z",
+          "completed_at": "2026-10-17T18:07:59Z"
+        },
+        {
+          "name": "Verify actual built codec and authenticated JSON transport",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 51,
+          "started_at": "2026-10-17T18:07:59Z",
+          "completed_at": "2026-10-17T18:08:07Z"
+        },
+        {
+          "name": "Verify emitted Tenacity lock and passive ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 52,
+          "started_at": "2026-10-17T18:08:07Z",
+          "completed_at": "2026-10-17T18:08:14Z"
+        },
+        {
+          "name": "Verify emitted health HUD stability and visibility composition",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 53,
+          "started_at": "2026-10-17T18:08:14Z",
+          "completed_at": "2026-10-17T18:08:15Z"
+        },
+        {
+          "name": "Verify emitted native BVH query lifetime and collision parity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 54,
+          "started_at": "2026-10-17T18:08:15Z",
+          "completed_at": "2026-10-17T18:08:20Z"
+        },
+        {
+          "name": "Verify emitted tap gesture continuity and practice range feedback",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 55,
+          "started_at": "2026-10-17T18:08:20Z",
+          "completed_at": "2026-10-17T18:08:23Z"
+        },
+        {
+          "name": "Verify emitted ranked input and network lifetime",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 56,
+          "started_at": "2026-10-17T18:08:23Z",
+          "completed_at": "2026-10-17T18:08:29Z"
+        },
+        {
+          "name": "Verify emitted session admission and finite view settings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 57,
+          "started_at": "2026-10-17T18:08:29Z",
+          "completed_at": "2026-10-17T18:08:33Z"
+        },
+        {
+          "name": "Verify emitted active aim-profile sensor transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 58,
+          "started_at": "2026-10-17T18:08:33Z",
+          "completed_at": "2026-10-17T18:08:35Z"
+        },
+        {
+          "name": "Verify emitted special audio match disposal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 59,
+          "started_at": "2026-10-17T18:08:35Z",
+          "completed_at": "2026-10-17T18:08:37Z"
+        },
+        {
+          "name": "Verify emitted queue hardening and native catalogue wire compatibility",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 60,
+          "started_at": "2026-10-17T18:08:37Z",
+          "completed_at": "2026-10-17T18:08:41Z"
+        },
+        {
+          "name": "Verify emitted modal controller and Pointer Lock lifetimes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 61,
+          "started_at": "2026-10-17T18:08:41Z",
+          "completed_at": "2026-10-17T18:08:58Z"
+        },
+        {
+          "name": "Verify emitted explicit Turf Map and gyro transport",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 62,
+          "started_at": "2026-10-17T18:08:58Z",
+          "completed_at": "2026-10-17T18:09:06Z"
+        },
+        {
+          "name": "Verify emitted empty Bubbler beam lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 63,
+          "started_at": "2026-10-17T18:09:06Z",
+          "completed_at": "2026-10-17T18:09:07Z"
+        },
+        {
+          "name": "Verify exact owned rectangle scans against production build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 64,
+          "started_at": "2026-10-17T18:09:07Z",
+          "completed_at": "2026-10-17T18:09:08Z"
+        },
+        {
+          "name": "Verify built piece-local paint ownership against the immutable baseline",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 65,
+          "started_at": "2026-10-17T18:09:08Z",
+          "completed_at": "2026-10-17T18:09:10Z"
+        },
+        {
+          "name": "Verify local paint order deduplication lifetime against built site",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 66,
+          "started_at": "2026-10-17T18:09:10Z",
+          "completed_at": "2026-10-17T18:09:11Z"
+        },
+        {
+          "name": "Verify emitted source-backed inertia, launch, charge and hurtbox behavior",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 67,
+          "started_at": "2026-10-17T18:09:11Z",
+          "completed_at": "2026-10-17T18:09:34Z"
+        },
+        {
+          "name": "Verify built weapons fidelity measurements and packet parity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 68,
+          "started_at": "2026-10-17T18:09:34Z",
+          "completed_at": "2026-10-17T18:10:15Z"
+        },
+        {
+          "name": "Verify emitted sub and special fidelity boundaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 69,
+          "started_at": "2026-10-17T18:10:15Z",
+          "completed_at": "2026-10-17T18:11:43Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 70,
+          "started_at": "2026-10-17T18:11:43Z",
+          "completed_at": "2026-10-17T18:11:49Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 139,
+          "started_at": "2026-10-17T18:11:49Z",
+          "completed_at": "2026-10-17T18:11:49Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 140,
+          "started_at": "2026-10-17T18:11:49Z",
+          "completed_at": "2026-10-17T18:11:50Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 141,
+          "started_at": "2026-10-17T18:11:50Z",
+          "completed_at": "2026-10-17T18:11:50Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808589",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336047,
+      "runner_name": "GitHub Actions 1000336047",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808591,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqjw",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808591",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808591",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:36:24Z",
+      "completed_at": "2026-10-17T17:49:27Z",
+      "name": "browser (range, chromium webkit)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:36:25Z",
+          "completed_at": "2026-10-17T17:36:26Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:36:26Z",
+          "completed_at": "2026-10-17T17:36:42Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:36:42Z",
+          "completed_at": "2026-10-17T17:36:43Z"
+        },
+        {
+          "name": "Build patched site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:36:43Z",
+          "completed_at": "2026-10-17T17:36:57Z"
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:36:57Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify repeated battle \u2192 results \u2192 menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:37:37Z"
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 42,
+          "started_at": "2026-10-17T17:37:37Z",
+          "completed_at": "2026-10-17T17:49:23Z"
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43,
+          "started_at": "2026-10-17T17:49:23Z",
+          "completed_at": "2026-10-17T17:49:23Z"
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44,
+          "started_at": "2026-10-17T17:49:23Z",
+          "completed_at": "2026-10-17T17:49:23Z"
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45,
+          "started_at": "2026-10-17T17:49:23Z",
+          "completed_at": "2026-10-17T17:49:23Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46,
+          "started_at": "2026-10-17T17:49:23Z",
+          "completed_at": "2026-10-17T17:49:23Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47,
+          "started_at": "2026-10-17T17:49:23Z",
+          "completed_at": "2026-10-17T17:49:23Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48,
+          "started_at": "2026-10-17T17:49:23Z",
+          "completed_at": "2026-10-17T17:49:23Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49,
+          "started_at": "2026-10-17T17:49:23Z",
+          "completed_at": "2026-10-17T17:49:24Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 97,
+          "started_at": "2026-10-17T17:49:24Z",
+          "completed_at": "2026-10-17T17:49:24Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 98,
+          "started_at": "2026-10-17T17:49:24Z",
+          "completed_at": "2026-10-17T17:49:25Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 99,
+          "started_at": "2026-10-17T17:49:25Z",
+          "completed_at": "2026-10-17T17:49:25Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808591",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336020,
+      "runner_name": "GitHub Actions 1000336020",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808597,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqlQ",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808597",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808597",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:50:22Z",
+      "completed_at": "2026-10-17T17:59:09Z",
+      "name": "browser (catalog, chromium)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:50:22Z",
+          "completed_at": "2026-10-17T17:50:23Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:50:23Z",
+          "completed_at": "2026-10-17T17:50:40Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:50:40Z",
+          "completed_at": "2026-10-17T17:50:41Z"
+        },
+        {
+          "name": "Build patched site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:50:41Z",
+          "completed_at": "2026-10-17T17:50:53Z"
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:50:53Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:14Z"
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33,
+          "started_at": "2026-10-17T17:51:14Z",
+          "completed_at": "2026-10-17T17:51:54Z"
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34,
+          "started_at": "2026-10-17T17:51:54Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Verify repeated battle \u2192 results \u2192 menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:02Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49,
+          "started_at": "2026-10-17T17:59:02Z",
+          "completed_at": "2026-10-17T17:59:07Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 97,
+          "started_at": "2026-10-17T17:59:07Z",
+          "completed_at": "2026-10-17T17:59:07Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 98,
+          "started_at": "2026-10-17T17:59:07Z",
+          "completed_at": "2026-10-17T17:59:07Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 99,
+          "started_at": "2026-10-17T17:59:07Z",
+          "completed_at": "2026-10-17T17:59:07Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808597",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336049,
+      "runner_name": "GitHub Actions 1000336049",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808603,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqmw",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808603",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808603",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:55:56Z",
+      "completed_at": "2026-10-17T18:05:48Z",
+      "name": "patch_tests (4)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:55:56Z",
+          "completed_at": "2026-10-17T17:55:57Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:55:57Z",
+          "completed_at": "2026-10-17T17:56:13Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:56:13Z",
+          "completed_at": "2026-10-17T17:56:13Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:56:13Z",
+          "completed_at": "2026-10-17T17:56:14Z"
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:56:14Z",
+          "completed_at": "2026-10-17T17:56:15Z"
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:56:15Z",
+          "completed_at": "2026-10-17T17:56:15Z"
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 4)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:56:15Z",
+          "completed_at": "2026-10-17T18:05:46Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T18:05:46Z",
+          "completed_at": "2026-10-17T18:05:46Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-17T18:05:46Z",
+          "completed_at": "2026-10-17T18:05:46Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-17T18:05:46Z",
+          "completed_at": "2026-10-17T18:05:46Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T18:05:46Z",
+          "completed_at": "2026-10-17T18:05:47Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808603",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336061,
+      "runner_name": "GitHub Actions 1000336061",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808607,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqnw",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808607",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808607",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:48:43Z",
+      "completed_at": "2026-10-17T17:59:03Z",
+      "name": "patch_tests (7)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:48:45Z",
+          "completed_at": "2026-10-17T17:48:45Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:48:45Z",
+          "completed_at": "2026-10-17T17:49:00Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:49:00Z",
+          "completed_at": "2026-10-17T17:49:00Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:49:00Z",
+          "completed_at": "2026-10-17T17:49:01Z"
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:49:01Z",
+          "completed_at": "2026-10-17T17:49:03Z"
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:49:03Z",
+          "completed_at": "2026-10-17T17:49:03Z"
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 7)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:49:03Z",
+          "completed_at": "2026-10-17T17:58:59Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:58:59Z",
+          "completed_at": "2026-10-17T17:58:59Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-17T17:58:59Z",
+          "completed_at": "2026-10-17T17:58:59Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-17T17:58:59Z",
+          "completed_at": "2026-10-17T17:58:59Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T17:58:59Z",
+          "completed_at": "2026-10-17T17:58:59Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808607",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336045,
+      "runner_name": "GitHub Actions 1000336045",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808630,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqtg",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808630",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808630",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:54:56Z",
+      "completed_at": "2026-10-17T18:02:16Z",
+      "name": "patch_tests (1)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:54:56Z",
+          "completed_at": "2026-10-17T17:54:57Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:54:57Z",
+          "completed_at": "2026-10-17T17:55:13Z"
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:55:13Z",
+          "completed_at": "2026-10-17T17:55:13Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:55:13Z",
+          "completed_at": "2026-10-17T17:55:13Z"
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:55:13Z",
+          "completed_at": "2026-10-17T17:55:15Z"
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:55:15Z",
+          "completed_at": "2026-10-17T17:55:15Z"
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 1)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:55:15Z",
+          "completed_at": "2026-10-17T18:02:14Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T18:02:14Z",
+          "completed_at": "2026-10-17T18:02:14Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-17T18:02:14Z",
+          "completed_at": "2026-10-17T18:02:14Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-17T18:02:14Z",
+          "completed_at": "2026-10-17T18:02:14Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-17T18:02:14Z",
+          "completed_at": "2026-10-17T18:02:14Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808630",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336060,
+      "runner_name": "GitHub Actions 1000336060",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808641,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqwQ",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808641",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808641",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:52:24Z",
+      "completed_at": "2026-10-17T18:17:15Z",
+      "name": "browser (active, chromium webkit)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:52:25Z",
+          "completed_at": "2026-10-17T17:52:25Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:52:25Z",
+          "completed_at": "2026-10-17T17:52:42Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:52:42Z",
+          "completed_at": "2026-10-17T17:52:42Z"
+        },
+        {
+          "name": "Build patched site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:52:42Z",
+          "completed_at": "2026-10-17T17:52:54Z"
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:52:54Z",
+          "completed_at": "2026-10-17T17:53:39Z"
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-17T17:53:39Z",
+          "completed_at": "2026-10-17T17:53:51Z"
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-17T17:53:51Z",
+          "completed_at": "2026-10-17T17:53:51Z"
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-17T17:53:51Z",
+          "completed_at": "2026-10-17T17:53:51Z"
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-17T17:53:51Z",
+          "completed_at": "2026-10-17T17:53:52Z"
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-17T17:53:52Z",
+          "completed_at": "2026-10-17T17:57:56Z"
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-17T17:57:56Z",
+          "completed_at": "2026-10-17T17:58:37Z"
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-17T17:58:37Z",
+          "completed_at": "2026-10-17T17:58:38Z"
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-17T17:58:38Z",
+          "completed_at": "2026-10-17T17:58:46Z"
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-17T17:58:46Z",
+          "completed_at": "2026-10-17T17:59:09Z"
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-17T17:59:09Z",
+          "completed_at": "2026-10-17T17:59:29Z"
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-17T17:59:29Z",
+          "completed_at": "2026-10-17T18:00:35Z"
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17,
+          "started_at": "2026-10-17T18:00:35Z",
+          "completed_at": "2026-10-17T18:00:35Z"
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18,
+          "started_at": "2026-10-17T18:00:35Z",
+          "completed_at": "2026-10-17T18:00:35Z"
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19,
+          "started_at": "2026-10-17T18:00:35Z",
+          "completed_at": "2026-10-17T18:00:35Z"
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20,
+          "started_at": "2026-10-17T18:00:35Z",
+          "completed_at": "2026-10-17T18:00:35Z"
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-10-17T18:00:35Z",
+          "completed_at": "2026-10-17T18:01:38Z"
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-10-17T18:01:38Z",
+          "completed_at": "2026-10-17T18:03:45Z"
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-10-17T18:03:45Z",
+          "completed_at": "2026-10-17T18:07:00Z"
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24,
+          "started_at": "2026-10-17T18:07:00Z",
+          "completed_at": "2026-10-17T18:07:35Z"
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25,
+          "started_at": "2026-10-17T18:07:35Z",
+          "completed_at": "2026-10-17T18:07:36Z"
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26,
+          "started_at": "2026-10-17T18:07:36Z",
+          "completed_at": "2026-10-17T18:08:07Z"
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27,
+          "started_at": "2026-10-17T18:08:07Z",
+          "completed_at": "2026-10-17T18:08:36Z"
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28,
+          "started_at": "2026-10-17T18:08:36Z",
+          "completed_at": "2026-10-17T18:08:39Z"
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29,
+          "started_at": "2026-10-17T18:08:39Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Verify repeated battle \u2192 results \u2192 menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:09Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49,
+          "started_at": "2026-10-17T18:17:09Z",
+          "completed_at": "2026-10-17T18:17:13Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 97,
+          "started_at": "2026-10-17T18:17:13Z",
+          "completed_at": "2026-10-17T18:17:13Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 98,
+          "started_at": "2026-10-17T18:17:13Z",
+          "completed_at": "2026-10-17T18:17:13Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 99,
+          "started_at": "2026-10-17T18:17:13Z",
+          "completed_at": "2026-10-17T18:17:13Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808641",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336056,
+      "runner_name": "GitHub Actions 1000336056",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456808655,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPiqzw",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456808655",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808655",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:50:24Z",
+      "completed_at": "2026-10-17T18:10:22Z",
+      "name": "browser (ui, chromium webkit)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T17:50:26Z",
+          "completed_at": "2026-10-17T17:50:27Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T17:50:27Z",
+          "completed_at": "2026-10-17T17:50:43Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T17:50:43Z",
+          "completed_at": "2026-10-17T17:50:43Z"
+        },
+        {
+          "name": "Build patched site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-17T17:50:43Z",
+          "completed_at": "2026-10-17T17:50:57Z"
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-17T17:50:57Z",
+          "completed_at": "2026-10-17T17:51:50Z"
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-17T17:51:50Z",
+          "completed_at": "2026-10-17T17:51:50Z"
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-17T17:51:50Z",
+          "completed_at": "2026-10-17T17:51:55Z"
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-17T17:51:55Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:51:58Z"
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35,
+          "started_at": "2026-10-17T17:51:58Z",
+          "completed_at": "2026-10-17T17:52:13Z"
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36,
+          "started_at": "2026-10-17T17:52:13Z",
+          "completed_at": "2026-10-17T17:52:18Z"
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37,
+          "started_at": "2026-10-17T17:52:18Z",
+          "completed_at": "2026-10-17T17:53:11Z"
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 38,
+          "started_at": "2026-10-17T17:53:11Z",
+          "completed_at": "2026-10-17T17:53:37Z"
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 39,
+          "started_at": "2026-10-17T17:53:37Z",
+          "completed_at": "2026-10-17T17:53:39Z"
+        },
+        {
+          "name": "Verify repeated battle \u2192 results \u2192 menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 40,
+          "started_at": "2026-10-17T17:53:39Z",
+          "completed_at": "2026-10-17T18:10:07Z"
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 41,
+          "started_at": "2026-10-17T18:10:07Z",
+          "completed_at": "2026-10-17T18:10:17Z"
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42,
+          "started_at": "2026-10-17T18:10:17Z",
+          "completed_at": "2026-10-17T18:10:17Z"
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43,
+          "started_at": "2026-10-17T18:10:17Z",
+          "completed_at": "2026-10-17T18:10:17Z"
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44,
+          "started_at": "2026-10-17T18:10:17Z",
+          "completed_at": "2026-10-17T18:10:17Z"
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45,
+          "started_at": "2026-10-17T18:10:17Z",
+          "completed_at": "2026-10-17T18:10:17Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46,
+          "started_at": "2026-10-17T18:10:17Z",
+          "completed_at": "2026-10-17T18:10:17Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47,
+          "started_at": "2026-10-17T18:10:17Z",
+          "completed_at": "2026-10-17T18:10:17Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48,
+          "started_at": "2026-10-17T18:10:17Z",
+          "completed_at": "2026-10-17T18:10:17Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49,
+          "started_at": "2026-10-17T18:10:17Z",
+          "completed_at": "2026-10-17T18:10:19Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 97,
+          "started_at": "2026-10-17T18:10:19Z",
+          "completed_at": "2026-10-17T18:10:19Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 98,
+          "started_at": "2026-10-17T18:10:19Z",
+          "completed_at": "2026-10-17T18:10:20Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 99,
+          "started_at": "2026-10-17T18:10:20Z",
+          "completed_at": "2026-10-17T18:10:20Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456808655",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336051,
+      "runner_name": "GitHub Actions 1000336051",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 117456809445,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWPit5Q",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117456809445",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456809445",
+      "status": "completed",
+      "conclusion": "skipped",
+      "created_at": "2026-10-17T17:23:30Z",
+      "started_at": "2026-10-17T17:23:30Z",
+      "completed_at": "2026-10-17T17:23:30Z",
+      "name": "render-diagnostic",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117456809445",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    },
+    {
+      "id": 117467003647,
+      "run_id": 39053444492,
+      "workflow_name": "Validate INKWAVE update",
+      "head_branch": "work/inkwave-contact-1565",
+      "run_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39053444492",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbp58s8AAAAbWZQ6_w",
+      "head_sha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "url": "https://api.github.com/repos/rhgrive3/actions/actions/jobs/117467003647",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117467003647",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-17T18:11:52Z",
+      "started_at": "2026-10-17T18:11:55Z",
+      "completed_at": "2026-10-17T18:11:57Z",
+      "name": "validate",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-17T18:11:56Z",
+          "completed_at": "2026-10-17T18:11:56Z"
+        },
+        {
+          "name": "Require every source and patch regression to pass",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-17T18:11:56Z",
+          "completed_at": "2026-10-17T18:11:56Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-17T18:11:56Z",
+          "completed_at": "2026-10-17T18:11:56Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/rhgrive3/actions/check-runs/117467003647",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000336074,
+      "runner_name": "GitHub Actions 1000336074",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ],
+  "_archive": {
+    "capturedAt": "2026-10-17T18:22:01.092990+00:00",
+    "pullRequest": 1568,
+    "endpoint": "repos/rhgrive3/actions/actions/runs/39053444492/jobs?per_page=100",
+    "pageCount": 1
+  }
+}

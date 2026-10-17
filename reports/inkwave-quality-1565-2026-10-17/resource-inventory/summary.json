@@ -1,0 +1,1295 @@
+{
+  "schema": 1,
+  "purpose": "Resource ownership classification only",
+  "status": "resource-diagnostic-complete",
+  "workloadGuardStatus": "passed",
+  "historical406Geometry132TextureReproduced": false,
+  "historical406132Cause": "UNKNOWN",
+  "unreconciledGeometryResidual": 65,
+  "completeRendererLedger": false,
+  "resourceNondegradationEstablished": false,
+  "performanceNondegradationEstablished": false,
+  "timingEvidenceEligible": false,
+  "hardwareClaim": false,
+  "resourceDiagnosticOnly": true,
+  "sourceEvidencePath": "/workspace/actions/.ci-scratch/1565/evidence/combined-resource-inventory",
+  "rawResultSha256": "a78c833ed00d7df5d14662b447661e845c8c8a098c3a26ecb09d7318f8ebc1a4",
+  "provenance": {
+    "A": {
+      "sourceSha": "d5265f73d9dad69f1afd9690e374caee45195f11",
+      "contentHash": "8f56a1470c72ecf04250ba7be2cf74a3c89f7267674c840d7d63c14fa3b29775",
+      "revision": "65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6"
+    },
+    "B": {
+      "sourceSha": "57e5cf61121514c8d04ac8efe059b5386fa99f27",
+      "contentHash": "657671efb238bc3625cdfea9f704087307b91a8fc0687cef01f48fd0a982e974",
+      "revision": "8bd29ae2ea0de5f99683754f8a602b14d1daf457c3b4da8d80bf8acb2bca8e9d"
+    }
+  },
+  "hashes": {
+    "harnessSha256": "ac5b29c75ec35efef9753665ffe7115e2ce110240ac5bf4911a27b389b5f2127",
+    "resourceInventoryLibSha256": "ee52a2fbb182a8fc15fbcb7a8faa623775cbcd76cac7f9f81e50bcf8393a4271",
+    "runtimeEvidenceLibSha256": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db",
+    "resourceInventoryClassifiersSha256": "6b4b1fed3e37a622048dbcff3b99faa138cec4329355b370405a5cac09bccb0a",
+    "frozenParentHarnessSha256": "359ed88ab17f84f16986f1668c30a4e86d0aca9d23cbab18bdc07f6d4f11c011"
+  },
+  "invocation": {
+    "argv": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "/workspace/scratch/measure-inkwave-resource-inventory.mjs",
+      "--harness-root",
+      "/workspace/actions",
+      "--mode",
+      "calibrate",
+      "--stage",
+      "scorch",
+      "--scenario",
+      "normal",
+      "--input",
+      "outward-fire",
+      "--samples",
+      "60",
+      "--warmup",
+      "12",
+      "--gpu-timing",
+      "--before-site",
+      "/workspace/inkwave-baseline-current",
+      "--before-sha",
+      "d5265f73d9dad69f1afd9690e374caee45195f11",
+      "--after-site",
+      "/workspace/inkwave-candidate",
+      "--after-sha",
+      "57e5cf61121514c8d04ac8efe059b5386fa99f27",
+      "--playwright",
+      "/workspace/actions/node_modules/playwright/index.mjs",
+      "--chromium",
+      "/home/agent/.cache/ms-playwright/chromium-1194/chrome-linux/chrome",
+      "--out",
+      "/workspace/actions/.ci-scratch/1565/evidence/combined-resource-inventory"
+    ],
+    "cwd": "/workspace/actions",
+    "harnessRoot": "/workspace/actions",
+    "node": "v24.19.0",
+    "harnessSha256": "ac5b29c75ec35efef9753665ffe7115e2ce110240ac5bf4911a27b389b5f2127",
+    "runtimeEvidenceLibSha256": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db",
+    "resourceInventoryLibSha256": "ee52a2fbb182a8fc15fbcb7a8faa623775cbcd76cac7f9f81e50bcf8393a4271",
+    "frozenParentHarnessSha256": "359ed88ab17f84f16986f1668c30a4e86d0aca9d23cbab18bdc07f6d4f11c011"
+  },
+  "settings": {
+    "quality": "medium",
+    "shadows": true,
+    "bloom": true,
+    "frameRate": "display",
+    "music": 0.6,
+    "sfx": 0.85,
+    "master": 0.8
+  },
+  "scope": {
+    "stage": "scorch",
+    "scenario": "normal",
+    "input": "outward-fire",
+    "samples": 6,
+    "warmup": 12,
+    "viewport": [
+      480,
+      300
+    ],
+    "deviceScaleFactor": 1,
+    "order": [
+      "A",
+      "B",
+      "B",
+      "A"
+    ],
+    "gpuTiming": true,
+    "timeouts": {
+      "navigationMs": 120000,
+      "bootMs": 180000,
+      "pwaMs": 120000,
+      "setupMs": 180000,
+      "measurementMs": 180000
+    }
+  },
+  "environment": {
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCpus": 5,
+    "memBytes": 18882674688,
+    "node": "v24.19.0",
+    "os": "6.18.55",
+    "platform": "linux",
+    "launch": {
+      "executablePath": "/home/agent/.cache/ms-playwright/chromium-1194/chrome-linux/chrome",
+      "headless": true,
+      "args": [
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader",
+        "--enable-precise-memory-info"
+      ]
+    },
+    "browser": "141.0.7390.37",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "observedStage": {
+    "requested": "?map=scorch",
+    "mapId": "scorch",
+    "layoutId": "scorch",
+    "native": true,
+    "manifestId": "scorch",
+    "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+    "sourceMode": "browser-direct"
+  },
+  "observedPrivateOwners": {
+    "stage": {
+      "requested": "?map=scorch",
+      "mapId": "scorch",
+      "layoutId": "scorch",
+      "native": true,
+      "manifestId": "scorch",
+      "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+      "sourceMode": "browser-direct"
+    },
+    "showcase": {
+      "mode": null,
+      "fullFrame": false,
+      "warmState": "done",
+      "warmCharacter": null,
+      "portraitCharacter": {
+        "visible": true,
+        "sourceStatus": "ready",
+        "warmPromisePresent": false,
+        "rootParent": "detached",
+        "objects": {
+          "nodes": 145,
+          "meshes": 20,
+          "geometries": 19,
+          "materials": 12
+        }
+      },
+      "portraitTask": false,
+      "portraitJob": false,
+      "portraitPrepared": false,
+      "portraitActive": false,
+      "portraitQueue": 0,
+      "portraitInFlight": 0,
+      "portraitCache": 0,
+      "characters": 0,
+      "scene": {
+        "nodes": 21,
+        "meshes": 9,
+        "geometries": 8,
+        "materials": 6
+      },
+      "compositeScene": {
+        "nodes": 2,
+        "meshes": 1,
+        "geometries": 1,
+        "materials": 1
+      },
+      "portraitResolveScene": {
+        "nodes": 2,
+        "meshes": 1,
+        "geometries": 1,
+        "materials": 1
+      },
+      "targets": {
+        "overlay": null,
+        "portrait": {
+          "width": 128,
+          "height": 128,
+          "samples": 4,
+          "type": 1016,
+          "depthBuffer": true,
+          "depthTexture": false
+        },
+        "portraitResolve": {
+          "width": 128,
+          "height": 128,
+          "samples": 0,
+          "type": 1009,
+          "depthBuffer": false,
+          "depthTexture": false
+        }
+      },
+      "lobby": {
+        "exists": false,
+        "ready": false,
+        "members": null
+      }
+    },
+    "environment": {
+      "cloud": {
+        "width": 2048,
+        "height": 640,
+        "samples": 0,
+        "type": 1016,
+        "depthBuffer": false,
+        "depthTexture": false
+      },
+      "environment": {
+        "width": 768,
+        "height": 1024,
+        "samples": 0,
+        "type": 1016,
+        "depthBuffer": true,
+        "depthTexture": false
+      },
+      "reflection": null,
+      "farReflection": null
+    },
+    "post": {
+      "read": {
+        "width": 480,
+        "height": 300,
+        "samples": 2,
+        "type": 1016,
+        "depthBuffer": true,
+        "depthTexture": false
+      },
+      "write": {
+        "width": 480,
+        "height": 300,
+        "samples": 2,
+        "type": 1016,
+        "depthBuffer": true,
+        "depthTexture": false
+      },
+      "passes": [
+        {
+          "type": "h",
+          "enabled": true,
+          "needsSwap": false
+        },
+        {
+          "type": "h",
+          "enabled": true,
+          "needsSwap": false
+        },
+        {
+          "type": "f",
+          "enabled": true,
+          "needsSwap": true
+        },
+        {
+          "type": "f",
+          "enabled": true,
+          "needsSwap": true
+        },
+        {
+          "type": "T",
+          "enabled": true,
+          "needsSwap": true
+        }
+      ]
+    },
+    "mainWarmMeshes": 0
+  },
+  "preservedGuards": {
+    "gameplayComparable": true,
+    "drawCallsComparable": true,
+    "visualValidation": {
+      "ARepeatExact": true,
+      "BRepeatExact": true,
+      "ABExact": true,
+      "accepted": true,
+      "allowedChange": "none; exact endpoint pixels required across both exact production SHAs"
+    },
+    "backgroundComparable": true,
+    "resourceValidation": {
+      "scope": "Read-only observations outside timed frames; these equalities are recorded, not included in the original workload acceptance guard",
+      "rendererAllTrialsEqual": true,
+      "rendererStableWithinWindows": true,
+      "mainSceneAllTrialsEqual": true,
+      "privateOwnersAllTrialsEqual": true,
+      "sameVariant": {
+        "A": {
+          "rendererRepeatEqual": true,
+          "privateOwnerRepeatEqual": true
+        },
+        "B": {
+          "rendererRepeatEqual": true,
+          "privateOwnerRepeatEqual": true
+        }
+      }
+    }
+  },
+  "framesPreservedInFullResult": 24,
+  "gpuRowsPreservedInFullResult": 24,
+  "gpuValidRows": 24,
+  "phaseComparisonMethod": "Only top-level local identity fields id/uuid/key/sourceId/sourceUuid are omitted from node/geometry/material/texture/target/listener descriptors. Roots and private-owner state are compared verbatim. Node references, owner paths, attribute/index descriptors, material state and listener source are retained. Geometry attribute contents are not hashed.",
+  "phaseComparisons": [
+    {
+      "phase": "after-boot",
+      "allRendererCountersEqual": true,
+      "allCoverageEqual": true,
+      "canonicalEquality": {
+        "roots": true,
+        "privateOwners": true,
+        "nodes": true,
+        "geometries": true,
+        "materials": true,
+        "textures": true,
+        "targets": true,
+        "listeners": true
+      },
+      "canonicalSha256ByTrial": {
+        "roots": [
+          "0e541c2a117146857a4b0548f0550365b8c5886fd3a924685421744c57f1df31",
+          "0e541c2a117146857a4b0548f0550365b8c5886fd3a924685421744c57f1df31",
+          "0e541c2a117146857a4b0548f0550365b8c5886fd3a924685421744c57f1df31",
+          "0e541c2a117146857a4b0548f0550365b8c5886fd3a924685421744c57f1df31"
+        ],
+        "privateOwners": [
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca"
+        ],
+        "nodes": [
+          "23845a4729e0d77e45d1a972b36366f00d1ffcc8e8f5fb12d52bb170c47c485f",
+          "23845a4729e0d77e45d1a972b36366f00d1ffcc8e8f5fb12d52bb170c47c485f",
+          "23845a4729e0d77e45d1a972b36366f00d1ffcc8e8f5fb12d52bb170c47c485f",
+          "23845a4729e0d77e45d1a972b36366f00d1ffcc8e8f5fb12d52bb170c47c485f"
+        ],
+        "geometries": [
+          "7b5b1bc96918cdeda9a9bfa4155c3e89350c3a6659274966ffb0d36aac5e2b3a",
+          "7b5b1bc96918cdeda9a9bfa4155c3e89350c3a6659274966ffb0d36aac5e2b3a",
+          "7b5b1bc96918cdeda9a9bfa4155c3e89350c3a6659274966ffb0d36aac5e2b3a",
+          "7b5b1bc96918cdeda9a9bfa4155c3e89350c3a6659274966ffb0d36aac5e2b3a"
+        ],
+        "materials": [
+          "b5da02bfdee54e62e3a0f70bac4b87bca9c1cbf610ba7b2fce0ee4dc1eae80e3",
+          "b5da02bfdee54e62e3a0f70bac4b87bca9c1cbf610ba7b2fce0ee4dc1eae80e3",
+          "b5da02bfdee54e62e3a0f70bac4b87bca9c1cbf610ba7b2fce0ee4dc1eae80e3",
+          "b5da02bfdee54e62e3a0f70bac4b87bca9c1cbf610ba7b2fce0ee4dc1eae80e3"
+        ],
+        "textures": [
+          "377d037b589779de2b53d6509332c749aef29bfff3682a63ac5318c82bcc1c82",
+          "377d037b589779de2b53d6509332c749aef29bfff3682a63ac5318c82bcc1c82",
+          "377d037b589779de2b53d6509332c749aef29bfff3682a63ac5318c82bcc1c82",
+          "377d037b589779de2b53d6509332c749aef29bfff3682a63ac5318c82bcc1c82"
+        ],
+        "targets": [
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39"
+        ],
+        "listeners": [
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413"
+        ]
+      },
+      "trials": [
+        {
+          "ordinal": 0,
+          "variant": "A",
+          "renderer": {
+            "geometries": 352,
+            "textures": 129,
+            "programs": 153
+          },
+          "coverage": {
+            "reachableNodes": 1731,
+            "reachableGeometries": 424,
+            "reachableMaterials": 328,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 350,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 350,
+                "mainSceneGeometryCount": 337
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 2,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-0-A-inventory-after-boot.json",
+          "inventorySha256": "431418dfc0f180c1d6ef1e78b9a79f8f6092394ca7394db05c1b1067dc25c0b3"
+        },
+        {
+          "ordinal": 1,
+          "variant": "B",
+          "renderer": {
+            "geometries": 352,
+            "textures": 129,
+            "programs": 153
+          },
+          "coverage": {
+            "reachableNodes": 1731,
+            "reachableGeometries": 424,
+            "reachableMaterials": 328,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 350,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 350,
+                "mainSceneGeometryCount": 337
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 2,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-1-B-inventory-after-boot.json",
+          "inventorySha256": "eef45f2898cf46d073eed34e414e9877407f2fb49e657938a9a6e3c3f4d60ae8"
+        },
+        {
+          "ordinal": 2,
+          "variant": "B",
+          "renderer": {
+            "geometries": 352,
+            "textures": 129,
+            "programs": 153
+          },
+          "coverage": {
+            "reachableNodes": 1731,
+            "reachableGeometries": 424,
+            "reachableMaterials": 328,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 350,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 350,
+                "mainSceneGeometryCount": 337
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 2,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-2-B-inventory-after-boot.json",
+          "inventorySha256": "4a462e6be6a74700bd116e8896b4967a9f84d7fbd40ac78d160b03d48c14a35c"
+        },
+        {
+          "ordinal": 3,
+          "variant": "A",
+          "renderer": {
+            "geometries": 352,
+            "textures": 129,
+            "programs": 153
+          },
+          "coverage": {
+            "reachableNodes": 1731,
+            "reachableGeometries": 424,
+            "reachableMaterials": 328,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 350,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 350,
+                "mainSceneGeometryCount": 337
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 2,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-3-A-inventory-after-boot.json",
+          "inventorySha256": "a258cc7fb20ed3eca13d4a3ee0d4af6f3fc6833d55fc3721be7bfaaf24ce32ee"
+        }
+      ]
+    },
+    {
+      "phase": "after-pwa",
+      "allRendererCountersEqual": true,
+      "allCoverageEqual": true,
+      "canonicalEquality": {
+        "roots": true,
+        "privateOwners": true,
+        "nodes": true,
+        "geometries": true,
+        "materials": true,
+        "textures": true,
+        "targets": true,
+        "listeners": true
+      },
+      "canonicalSha256ByTrial": {
+        "roots": [
+          "0e541c2a117146857a4b0548f0550365b8c5886fd3a924685421744c57f1df31",
+          "0e541c2a117146857a4b0548f0550365b8c5886fd3a924685421744c57f1df31",
+          "0e541c2a117146857a4b0548f0550365b8c5886fd3a924685421744c57f1df31",
+          "0e541c2a117146857a4b0548f0550365b8c5886fd3a924685421744c57f1df31"
+        ],
+        "privateOwners": [
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca"
+        ],
+        "nodes": [
+          "23845a4729e0d77e45d1a972b36366f00d1ffcc8e8f5fb12d52bb170c47c485f",
+          "23845a4729e0d77e45d1a972b36366f00d1ffcc8e8f5fb12d52bb170c47c485f",
+          "23845a4729e0d77e45d1a972b36366f00d1ffcc8e8f5fb12d52bb170c47c485f",
+          "23845a4729e0d77e45d1a972b36366f00d1ffcc8e8f5fb12d52bb170c47c485f"
+        ],
+        "geometries": [
+          "7b5b1bc96918cdeda9a9bfa4155c3e89350c3a6659274966ffb0d36aac5e2b3a",
+          "7b5b1bc96918cdeda9a9bfa4155c3e89350c3a6659274966ffb0d36aac5e2b3a",
+          "7b5b1bc96918cdeda9a9bfa4155c3e89350c3a6659274966ffb0d36aac5e2b3a",
+          "7b5b1bc96918cdeda9a9bfa4155c3e89350c3a6659274966ffb0d36aac5e2b3a"
+        ],
+        "materials": [
+          "b5da02bfdee54e62e3a0f70bac4b87bca9c1cbf610ba7b2fce0ee4dc1eae80e3",
+          "b5da02bfdee54e62e3a0f70bac4b87bca9c1cbf610ba7b2fce0ee4dc1eae80e3",
+          "b5da02bfdee54e62e3a0f70bac4b87bca9c1cbf610ba7b2fce0ee4dc1eae80e3",
+          "b5da02bfdee54e62e3a0f70bac4b87bca9c1cbf610ba7b2fce0ee4dc1eae80e3"
+        ],
+        "textures": [
+          "377d037b589779de2b53d6509332c749aef29bfff3682a63ac5318c82bcc1c82",
+          "377d037b589779de2b53d6509332c749aef29bfff3682a63ac5318c82bcc1c82",
+          "377d037b589779de2b53d6509332c749aef29bfff3682a63ac5318c82bcc1c82",
+          "377d037b589779de2b53d6509332c749aef29bfff3682a63ac5318c82bcc1c82"
+        ],
+        "targets": [
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39"
+        ],
+        "listeners": [
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413"
+        ]
+      },
+      "trials": [
+        {
+          "ordinal": 0,
+          "variant": "A",
+          "renderer": {
+            "geometries": 352,
+            "textures": 129,
+            "programs": 153
+          },
+          "coverage": {
+            "reachableNodes": 1731,
+            "reachableGeometries": 424,
+            "reachableMaterials": 328,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 350,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 350,
+                "mainSceneGeometryCount": 337
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 2,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-0-A-inventory-after-pwa.json",
+          "inventorySha256": "431418dfc0f180c1d6ef1e78b9a79f8f6092394ca7394db05c1b1067dc25c0b3"
+        },
+        {
+          "ordinal": 1,
+          "variant": "B",
+          "renderer": {
+            "geometries": 352,
+            "textures": 129,
+            "programs": 153
+          },
+          "coverage": {
+            "reachableNodes": 1731,
+            "reachableGeometries": 424,
+            "reachableMaterials": 328,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 350,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 350,
+                "mainSceneGeometryCount": 337
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 2,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-1-B-inventory-after-pwa.json",
+          "inventorySha256": "eef45f2898cf46d073eed34e414e9877407f2fb49e657938a9a6e3c3f4d60ae8"
+        },
+        {
+          "ordinal": 2,
+          "variant": "B",
+          "renderer": {
+            "geometries": 352,
+            "textures": 129,
+            "programs": 153
+          },
+          "coverage": {
+            "reachableNodes": 1731,
+            "reachableGeometries": 424,
+            "reachableMaterials": 328,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 350,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 350,
+                "mainSceneGeometryCount": 337
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 2,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-2-B-inventory-after-pwa.json",
+          "inventorySha256": "4a462e6be6a74700bd116e8896b4967a9f84d7fbd40ac78d160b03d48c14a35c"
+        },
+        {
+          "ordinal": 3,
+          "variant": "A",
+          "renderer": {
+            "geometries": 352,
+            "textures": 129,
+            "programs": 153
+          },
+          "coverage": {
+            "reachableNodes": 1731,
+            "reachableGeometries": 424,
+            "reachableMaterials": 328,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 350,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 350,
+                "mainSceneGeometryCount": 337
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 2,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-3-A-inventory-after-pwa.json",
+          "inventorySha256": "a258cc7fb20ed3eca13d4a3ee0d4af6f3fc6833d55fc3721be7bfaaf24ce32ee"
+        }
+      ]
+    },
+    {
+      "phase": "after-setup",
+      "allRendererCountersEqual": true,
+      "allCoverageEqual": true,
+      "canonicalEquality": {
+        "roots": true,
+        "privateOwners": true,
+        "nodes": true,
+        "geometries": true,
+        "materials": true,
+        "textures": true,
+        "targets": true,
+        "listeners": true
+      },
+      "canonicalSha256ByTrial": {
+        "roots": [
+          "e97988399382218a5e9baef76d8411cbcb522a1d521355da4225becc152c7724",
+          "e97988399382218a5e9baef76d8411cbcb522a1d521355da4225becc152c7724",
+          "e97988399382218a5e9baef76d8411cbcb522a1d521355da4225becc152c7724",
+          "e97988399382218a5e9baef76d8411cbcb522a1d521355da4225becc152c7724"
+        ],
+        "privateOwners": [
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca"
+        ],
+        "nodes": [
+          "3c7cabdf7b46d1ac316212c78f9a9a8f937a7807eb67282c844c11288aaef534",
+          "3c7cabdf7b46d1ac316212c78f9a9a8f937a7807eb67282c844c11288aaef534",
+          "3c7cabdf7b46d1ac316212c78f9a9a8f937a7807eb67282c844c11288aaef534",
+          "3c7cabdf7b46d1ac316212c78f9a9a8f937a7807eb67282c844c11288aaef534"
+        ],
+        "geometries": [
+          "588c2af63a6ea4a28e708b8d5f8f3adc6850b922629e028376a61a9802ce8f42",
+          "588c2af63a6ea4a28e708b8d5f8f3adc6850b922629e028376a61a9802ce8f42",
+          "588c2af63a6ea4a28e708b8d5f8f3adc6850b922629e028376a61a9802ce8f42",
+          "588c2af63a6ea4a28e708b8d5f8f3adc6850b922629e028376a61a9802ce8f42"
+        ],
+        "materials": [
+          "0238c02cdaf5845e6baa6db0e750e6e7812fea5742654c884ada27d88de71281",
+          "0238c02cdaf5845e6baa6db0e750e6e7812fea5742654c884ada27d88de71281",
+          "0238c02cdaf5845e6baa6db0e750e6e7812fea5742654c884ada27d88de71281",
+          "0238c02cdaf5845e6baa6db0e750e6e7812fea5742654c884ada27d88de71281"
+        ],
+        "textures": [
+          "9bc6b73ead994e70220dfc02549ecec3b2da304db577c3305d7326f04f36f92b",
+          "9bc6b73ead994e70220dfc02549ecec3b2da304db577c3305d7326f04f36f92b",
+          "9bc6b73ead994e70220dfc02549ecec3b2da304db577c3305d7326f04f36f92b",
+          "9bc6b73ead994e70220dfc02549ecec3b2da304db577c3305d7326f04f36f92b"
+        ],
+        "targets": [
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39"
+        ],
+        "listeners": [
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413"
+        ]
+      },
+      "trials": [
+        {
+          "ordinal": 0,
+          "variant": "A",
+          "renderer": {
+            "geometries": 396,
+            "textures": 129,
+            "programs": 144
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 433,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 331,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 331,
+                "mainSceneGeometryCount": 303
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-0-A-inventory-after-setup.json",
+          "inventorySha256": "80be38f9f8bab23d8217d3cbaa9b932ff79598266148f2429fed8ab8c9e6632e"
+        },
+        {
+          "ordinal": 1,
+          "variant": "B",
+          "renderer": {
+            "geometries": 396,
+            "textures": 129,
+            "programs": 144
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 433,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 331,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 331,
+                "mainSceneGeometryCount": 303
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-1-B-inventory-after-setup.json",
+          "inventorySha256": "2c555706af6d2080fdb9fdf64234129e4411da9354131854ae8ecde23ecf0e9e"
+        },
+        {
+          "ordinal": 2,
+          "variant": "B",
+          "renderer": {
+            "geometries": 396,
+            "textures": 129,
+            "programs": 144
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 433,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 331,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 331,
+                "mainSceneGeometryCount": 303
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-2-B-inventory-after-setup.json",
+          "inventorySha256": "f782db51d209d0d8c424f79792006a5e5d437fdb3e59b0e43caea26f71a9e45e"
+        },
+        {
+          "ordinal": 3,
+          "variant": "A",
+          "renderer": {
+            "geometries": 396,
+            "textures": 129,
+            "programs": 144
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 433,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 331,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 331,
+                "mainSceneGeometryCount": 303
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-3-A-inventory-after-setup.json",
+          "inventorySha256": "8d5d123ea36ef2d24fd098189dfa7afa372b03dab0d6f94b62e20efcf2ef6105"
+        }
+      ]
+    },
+    {
+      "phase": "before-window",
+      "allRendererCountersEqual": true,
+      "allCoverageEqual": true,
+      "canonicalEquality": {
+        "roots": true,
+        "privateOwners": true,
+        "nodes": true,
+        "geometries": true,
+        "materials": true,
+        "textures": true,
+        "targets": true,
+        "listeners": true
+      },
+      "canonicalSha256ByTrial": {
+        "roots": [
+          "595ee949d51d666e9b776a327f6c0833fdcc4e2bcc3352155298f7d2e7167b7d",
+          "595ee949d51d666e9b776a327f6c0833fdcc4e2bcc3352155298f7d2e7167b7d",
+          "595ee949d51d666e9b776a327f6c0833fdcc4e2bcc3352155298f7d2e7167b7d",
+          "595ee949d51d666e9b776a327f6c0833fdcc4e2bcc3352155298f7d2e7167b7d"
+        ],
+        "privateOwners": [
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca"
+        ],
+        "nodes": [
+          "a16ca0796f35d002fd853d2cc86528ca72605f3c7147fc76eee595cc26ae9efd",
+          "a16ca0796f35d002fd853d2cc86528ca72605f3c7147fc76eee595cc26ae9efd",
+          "a16ca0796f35d002fd853d2cc86528ca72605f3c7147fc76eee595cc26ae9efd",
+          "a16ca0796f35d002fd853d2cc86528ca72605f3c7147fc76eee595cc26ae9efd"
+        ],
+        "geometries": [
+          "a9f5397ba86cf60f49a7161f46233a6821d6fca857b55fa1be6bae899333112c",
+          "a9f5397ba86cf60f49a7161f46233a6821d6fca857b55fa1be6bae899333112c",
+          "a9f5397ba86cf60f49a7161f46233a6821d6fca857b55fa1be6bae899333112c",
+          "a9f5397ba86cf60f49a7161f46233a6821d6fca857b55fa1be6bae899333112c"
+        ],
+        "materials": [
+          "356f454911f07c229c26c6f342dbd69108ec38d4ec96f9bb1c331d78dde54e32",
+          "356f454911f07c229c26c6f342dbd69108ec38d4ec96f9bb1c331d78dde54e32",
+          "356f454911f07c229c26c6f342dbd69108ec38d4ec96f9bb1c331d78dde54e32",
+          "356f454911f07c229c26c6f342dbd69108ec38d4ec96f9bb1c331d78dde54e32"
+        ],
+        "textures": [
+          "f48666730a94b531503ef3cde38f8b783c7b5a9ba3fa436cc254ff67ca8dc529",
+          "f48666730a94b531503ef3cde38f8b783c7b5a9ba3fa436cc254ff67ca8dc529",
+          "f48666730a94b531503ef3cde38f8b783c7b5a9ba3fa436cc254ff67ca8dc529",
+          "f48666730a94b531503ef3cde38f8b783c7b5a9ba3fa436cc254ff67ca8dc529"
+        ],
+        "targets": [
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39"
+        ],
+        "listeners": [
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413"
+        ]
+      },
+      "trials": [
+        {
+          "ordinal": 0,
+          "variant": "A",
+          "renderer": {
+            "geometries": 410,
+            "textures": 131,
+            "programs": 147
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 435,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 345,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 345,
+                "mainSceneGeometryCount": 312
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-0-A-inventory-before-window.json",
+          "inventorySha256": "d9a4db5d2e3384c8057cee1388391729e3b94e4d1ec0acb605be0fa6cb7d19f8"
+        },
+        {
+          "ordinal": 1,
+          "variant": "B",
+          "renderer": {
+            "geometries": 410,
+            "textures": 131,
+            "programs": 147
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 435,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 345,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 345,
+                "mainSceneGeometryCount": 312
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-1-B-inventory-before-window.json",
+          "inventorySha256": "1738d8b45a6e304d8aa6857aa38d5328ac8abd09c5609c0e7b140b205e15e52e"
+        },
+        {
+          "ordinal": 2,
+          "variant": "B",
+          "renderer": {
+            "geometries": 410,
+            "textures": 131,
+            "programs": 147
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 435,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 345,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 345,
+                "mainSceneGeometryCount": 312
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-2-B-inventory-before-window.json",
+          "inventorySha256": "f44239e34beaa9904561ef7ae3b567945230e8856400a5f99f85907392f91f28"
+        },
+        {
+          "ordinal": 3,
+          "variant": "A",
+          "renderer": {
+            "geometries": 410,
+            "textures": 131,
+            "programs": 147
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 435,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 345,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 345,
+                "mainSceneGeometryCount": 312
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-3-A-inventory-before-window.json",
+          "inventorySha256": "b00cc269bc5f307164a824749a7d398a82051fcb7bded9dc734bf12fdd0aab95"
+        }
+      ]
+    },
+    {
+      "phase": "after-window",
+      "allRendererCountersEqual": true,
+      "allCoverageEqual": true,
+      "canonicalEquality": {
+        "roots": true,
+        "privateOwners": true,
+        "nodes": true,
+        "geometries": true,
+        "materials": true,
+        "textures": true,
+        "targets": true,
+        "listeners": true
+      },
+      "canonicalSha256ByTrial": {
+        "roots": [
+          "595ee949d51d666e9b776a327f6c0833fdcc4e2bcc3352155298f7d2e7167b7d",
+          "595ee949d51d666e9b776a327f6c0833fdcc4e2bcc3352155298f7d2e7167b7d",
+          "595ee949d51d666e9b776a327f6c0833fdcc4e2bcc3352155298f7d2e7167b7d",
+          "595ee949d51d666e9b776a327f6c0833fdcc4e2bcc3352155298f7d2e7167b7d"
+        ],
+        "privateOwners": [
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca",
+          "f47566fa8484bb4ebc588a80f4be5596d67d929de4c71a872d74e734031ef6ca"
+        ],
+        "nodes": [
+          "c39b74acc5bfe59f4b98812d1412eb7d4fdf1111244e4c2b30c937cba0278fd1",
+          "c39b74acc5bfe59f4b98812d1412eb7d4fdf1111244e4c2b30c937cba0278fd1",
+          "c39b74acc5bfe59f4b98812d1412eb7d4fdf1111244e4c2b30c937cba0278fd1",
+          "c39b74acc5bfe59f4b98812d1412eb7d4fdf1111244e4c2b30c937cba0278fd1"
+        ],
+        "geometries": [
+          "2033ae98500b5e8b59913e8c8efff56705615b713800a2d09e1152bb8347e052",
+          "2033ae98500b5e8b59913e8c8efff56705615b713800a2d09e1152bb8347e052",
+          "2033ae98500b5e8b59913e8c8efff56705615b713800a2d09e1152bb8347e052",
+          "2033ae98500b5e8b59913e8c8efff56705615b713800a2d09e1152bb8347e052"
+        ],
+        "materials": [
+          "356f454911f07c229c26c6f342dbd69108ec38d4ec96f9bb1c331d78dde54e32",
+          "356f454911f07c229c26c6f342dbd69108ec38d4ec96f9bb1c331d78dde54e32",
+          "356f454911f07c229c26c6f342dbd69108ec38d4ec96f9bb1c331d78dde54e32",
+          "356f454911f07c229c26c6f342dbd69108ec38d4ec96f9bb1c331d78dde54e32"
+        ],
+        "textures": [
+          "f5fc3025013ae059249b1fbe2ab7e490ba27d40a7c0e9572249a5309b962cfd3",
+          "f5fc3025013ae059249b1fbe2ab7e490ba27d40a7c0e9572249a5309b962cfd3",
+          "f5fc3025013ae059249b1fbe2ab7e490ba27d40a7c0e9572249a5309b962cfd3",
+          "f5fc3025013ae059249b1fbe2ab7e490ba27d40a7c0e9572249a5309b962cfd3"
+        ],
+        "targets": [
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39",
+          "8a547b25bcc1fba1be88ba826f960d61fc279f5c983994e848f765e136ff1e39"
+        ],
+        "listeners": [
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413",
+          "389dc3eab5e53442888822cc59ab7fabb81f6aab32adb97129e3441c6706d413"
+        ]
+      },
+      "trials": [
+        {
+          "ordinal": 0,
+          "variant": "A",
+          "renderer": {
+            "geometries": 410,
+            "textures": 131,
+            "programs": 147
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 435,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 345,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 345,
+                "mainSceneGeometryCount": 312
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-0-A-inventory-after-window.json",
+          "inventorySha256": "0f11143b5456bc0151e63c6a8b59fd0b9207ac637761bd412bf709b32a1c51e0"
+        },
+        {
+          "ordinal": 1,
+          "variant": "B",
+          "renderer": {
+            "geometries": 410,
+            "textures": 131,
+            "programs": 147
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 435,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 345,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 345,
+                "mainSceneGeometryCount": 312
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-1-B-inventory-after-window.json",
+          "inventorySha256": "8c898e32a4ff3e4da78d841d74c5fa37e0c34964477640ed0bfb3d91f205efb9"
+        },
+        {
+          "ordinal": 2,
+          "variant": "B",
+          "renderer": {
+            "geometries": 410,
+            "textures": 131,
+            "programs": 147
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 435,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 345,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 345,
+                "mainSceneGeometryCount": 312
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-2-B-inventory-after-window.json",
+          "inventorySha256": "08ef9092eb583922c4370110ed563690a8637709399fccc9a319ef1ecde42cd3"
+        },
+        {
+          "ordinal": 3,
+          "variant": "A",
+          "renderer": {
+            "geometries": 410,
+            "textures": 131,
+            "programs": 147
+          },
+          "coverage": {
+            "reachableNodes": 1862,
+            "reachableGeometries": 435,
+            "reachableMaterials": 345,
+            "reachableTextures": 125,
+            "reachableRenderTargets": 18,
+            "reachableGeometriesWithExactDisposeListener": 345,
+            "exactGeometryListenerClosures": [
+              {
+                "listener": "listener-0",
+                "reachableGeometryCount": 345,
+                "mainSceneGeometryCount": 312
+              }
+            ],
+            "rendererGeometryCountMinusReachableExactMatches": 65,
+            "skipped": [],
+            "completeRendererLedger": false
+          },
+          "inventoryFile": "trial-3-A-inventory-after-window.json",
+          "inventorySha256": "1cf6f33097a160aec8f95f949b3cfb0ae52228ff47372e92c639d4b71b77c8b2"
+        }
+      ]
+    }
+  ],
+  "withinTrialChronology": [
+    {
+      "ordinal": 0,
+      "variant": "A",
+      "bootToSetupPreviouslyMatchingGeometryIdentitiesNoLongerReachable": 48,
+      "bootToSetupLostMatchingIdentitiesStillInventoried": 0,
+      "bootToSetupNewReachableMatchingIdentities": 29,
+      "warmupNewReachableMatchingIdentities": 14,
+      "warmupLostReachableMatchingIdentities": 0,
+      "attribution": "Lost boot-root references include former actor weapon definitions/parts and rebuilt hair geometries. This is reachability chronology, not identification of all65 unaccounted registrations or a leak/driver-allocation proof."
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "bootToSetupPreviouslyMatchingGeometryIdentitiesNoLongerReachable": 48,
+      "bootToSetupLostMatchingIdentitiesStillInventoried": 0,
+      "bootToSetupNewReachableMatchingIdentities": 29,
+      "warmupNewReachableMatchingIdentities": 14,
+      "warmupLostReachableMatchingIdentities": 0,
+      "attribution": "Lost boot-root references include former actor weapon definitions/parts and rebuilt hair geometries. This is reachability chronology, not identification of all65 unaccounted registrations or a leak/driver-allocation proof."
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "bootToSetupPreviouslyMatchingGeometryIdentitiesNoLongerReachable": 48,
+      "bootToSetupLostMatchingIdentitiesStillInventoried": 0,
+      "bootToSetupNewReachableMatchingIdentities": 29,
+      "warmupNewReachableMatchingIdentities": 14,
+      "warmupLostReachableMatchingIdentities": 0,
+      "attribution": "Lost boot-root references include former actor weapon definitions/parts and rebuilt hair geometries. This is reachability chronology, not identification of all65 unaccounted registrations or a leak/driver-allocation proof."
+    },
+    {
+      "ordinal": 3,
+      "variant": "A",
+      "bootToSetupPreviouslyMatchingGeometryIdentitiesNoLongerReachable": 48,
+      "bootToSetupLostMatchingIdentitiesStillInventoried": 0,
+      "bootToSetupNewReachableMatchingIdentities": 29,
+      "warmupNewReachableMatchingIdentities": 14,
+      "warmupLostReachableMatchingIdentities": 0,
+      "attribution": "Lost boot-root references include former actor weapon definitions/parts and rebuilt hair geometries. This is reachability chronology, not identification of all65 unaccounted registrations or a leak/driver-allocation proof."
+    }
+  ],
+  "limitations": [
+    "Exact matching onGeometryDispose source proves registration by a renderer using this served Three implementation, not uniquely G.renderer. Listener closure IDs distinguish registrations within one snapshot only.",
+    "Inventory follows explicit owner roots and bounded plain resource containers. Unreachable resources, module-local caches and renderer WeakMaps are not enumerated; a remaining counter delta is UNKNOWN.",
+    "Geometry descriptors describe existing attribute/index layout, backing sizes and owner paths; attribute contents are not hashed. CPU objects are deduplicated by identity inside each snapshot; UUID/id are only local references, not cross-context semantic equality.",
+    "Texture CPU identities and dispose listeners are not GPU texture allocation counts. Source/cache-key sharing, render-target allocations, cube faces and renderbuffers prevent equating this texture list to info.memory.textures or VRAM.",
+    "No renderer.properties.get(), GL probing, production method calls, warming, compilation, rendering, disposal, listeners or resource mutation are performed by this callback.",
+    "Inventories allocate diagnostic JavaScript outside measured loops and can alter GC/scheduling chronology. All timings from this derivative are inadmissible as the original isolated timing evidence."
+  ],
+  "interpretation": [
+    "All four new windows show410 geometries/131 textures/147 programs. The historical406/132 state was not captured; no causal explanation is established.",
+    "Before and after each window,435 reachable CPU geometries include345 with the exact renderer-registration disposer, in one listener closure;312 are on main-scene paths.410-345=65 is unreconciled.",
+    "The exact disposer source establishes registration by some renderer using the served implementation, not unique ownership by G.renderer. Unreachable objects/module caches/renderer WeakMaps remain outside the ledger.",
+    "All125 inventoried texture identities and18 target identities remain present during warmup while renderer texture count129→131; no new captured texture/target identity or listener explains those2 allocations.",
+    "Diagnostic allocation and serialization occur outside frame loops but may alter GC/scheduling history. Every recorded timing remains ineligible for isolated performance/calibration acceptance."
+  ]
+}

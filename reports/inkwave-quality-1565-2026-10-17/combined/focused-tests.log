@@ -1,0 +1,65 @@
+✔ the production world-normal replacement preserves Three double-sided orientation (1.003896ms)
+✔ normal orientation adds no texture access or draw and retains native shadow/coverage behavior (1.743553ms)
+{"scope":"actual Three.Vector3 and ContactTransition source, no renderer","checked":350,"counts":[{"clamp":350,"polynomial":350},{"clamp":350,"polynomial":273}]}
+(node:16679) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ source-contact edits fail closed and stay out of the browser payload (1.936638ms)
+✔ settled contact bypass preserves transitions, signed zero, nonfinite offsets and paused ticks exactly (10.119928ms)
+{"scope":"production source-loaded Actor/Runner/Physics, full native/source poses and indexed/skinned shoes; slope ground probes analytic planes; CPU, not GPU/device","compared":1118,"states":["idle","move","air","land"],"settledContacts":1380,"rows":[{"variant":"Player00","slope":0.08,"hz":30,"probes":[{"ground":665,"ik":656},{"ground":665,"ik":656}],"clearance":[[0.021791959623198354,0.020186556330585387],[0.021791959623198354,0.020186556330585387]],"geometry":[[{"side":"L","vertices":3833,"minimum":0.018168622646622015},{"side":"R","vertices":3833,"minimum":0.007594384764366996}],[{"side":"L","vertices":3833,"minimum":0.018168622646622015},{"side":"R","vertices":3833,"minimum":0.007594384764366996}]]},{"variant":"Player00","slope":0,"hz":60,"probes":[{"ground":1367,"ik":1262},{"ground":1367,"ik":1262}],"clearance":[[0.006437374289343392,0.006982919973403556],[0.006437374289343392,0.006982919973403556]],"geometry":[[{"side":"L","vertices":3833,"minimum":0.006420426818073242},{"side":"R","vertices":3833,"minimum":0.0008388908973851021}],[{"side":"L","vertices":3833,"minimum":0.006420426818073242},{"side":"R","vertices":3833,"minimum":0.0008388908973851021}]]},{"variant":"Player00","slope":-0.08,"hz":120,"probes":[{"ground":2812,"ik":2534},{"ground":2812,"ik":2534}],"clearance":[[0.11287618175508492,0.1278783161832688],[0.11287618175508492,0.1278783161832688]],"geometry":[[{"side":"L","vertices":3833,"minimum":0.1101560945985013},{"side":"R","vertices":3833,"minimum":0.11457901790893953}],[{"side":"L","vertices":3833,"minimum":0.1101560945985013},{"side":"R","vertices":3833,"minimum":0.11457901790893953}]]},{"variant":"Player01","slope":0.08,"hz":30,"probes":[{"ground":663,"ik":654},{"ground":663,"ik":654}],"clearance":[[0.02200370728350573,0.0203810036346887],[0.02200370728350573,0.0203810036346887]],"geometry":[[{"side":"L","vertices":3833,"minimum":0.018895677960965696},{"side":"R","vertices":3833,"minimum":0.007942062173221992}],[{"side":"L","vertices":3833,"minimum":0.018895677960965696},{"side":"R","vertices":3833,"minimum":0.007942062173221992}]]},{"variant":"Player01","slope":0,"hz":60,"probes":[{"ground":1368,"ik":1257},{"ground":1368,"ik":1257}],"clearance":[[0.006437801345597918,0.006982793337663079],[0.006437801345597918,0.006982793337663079]],"geometry":[[{"side":"L","vertices":3833,"minimum":0.006421354954740619},{"side":"R","vertices":3833,"minimum":0.0008329794165620533}],[{"side":"L","vertices":3833,"minimum":0.006421354954740619},{"side":"R","vertices":3833,"minimum":0.0008329794165620533}]]},{"variant":"Player01","slope":-0.08,"hz":120,"probes":[{"ground":2823,"ik":2532},{"ground":2823,"ik":2532}],"clearance":[[0.11189266722311329,0.125979077855852],[0.11189266722311329,0.125979077855852]],"geometry":[[{"side":"L","vertices":3833,"minimum":0.10839032466629746},{"side":"R","vertices":3833,"minimum":0.11305624495889804}],[{"side":"L","vertices":3833,"minimum":0.10839032466629746},{"side":"R","vertices":3833,"minimum":0.11305624495889804}]]}]}
+✔ actual loaded actors preserve full poses, source contacts and indexed soles across movement and frame intervals (62628.227461ms)
+[inkwave] texture library failed — procedural fallback Error: GPU context lost during texture generation
+    at failingCreateFn (file:///workspace/actions/patches/local-quality/tests/texlib-stage-pack.test.mjs:653:11)
+    at syncWorldTexlib (file:///workspace/actions/patches/local-quality/texlib.mjs:38:24)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/local-quality/tests/texlib-stage-pack.test.mjs:657:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+[inkwave] texture library failed — procedural fallback Error: GPU context lost during texture generation
+    at failingCreateFn (file:///workspace/actions/patches/local-quality/tests/texlib-stage-pack.test.mjs:653:11)
+    at syncWorldTexlib (file:///workspace/actions/patches/local-quality/texlib.mjs:38:24)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/local-quality/tests/texlib-stage-pack.test.mjs:669:32)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+(node:16680) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real native catalog generation: coldboot Tidewater produces 25 shared layers (stage=null), Cargo pack produces 28 layers (stage=cargo) (109.210035ms)
+✔ slot metadata before-after: Cargo -> Tidewater -> Cargo preserves 32 slots and stable semantics without shader mismatch (86.750891ms)
+✔ generic stage pack support: dynamic STAGE_SURFACES and injected extra stage without leaking into baseline (39.261832ms)
+✔ coldboot-to-first-world single generation and Tidewater/Kelpline zero-generation reuse (42.554248ms)
+✔ async Game._buildWorld integration: bounded replacement/disposal, residency lifecycle (1 steady, 2 transient), and lobby safety (57.186095ms)
+✔ native compiled LobbySet materials: precompile and postcompile update holders and uniforms with correct sampler and meta (122.41231ms)
+✔ native _buildWorld epoch cancellation: uncommitted candidate library disposed on cancellation without corrupting current texlib (114.305471ms)
+✔ generation failure resilience: preserves valid current library without disposal or use-after-free, cleans up disposed library (53.987212ms)
+✔ resolution fidelity and renderer state: no arbitrary resolution downgrade, state restored after generation (61.726821ms)
+✔ negative control: unpatched upstream baseline generates all 28 layers unconditionally on cold boot (37.729349ms)
+✔ native world commit uses the published default factory route and preserves single cold generation (71.306394ms)
+✔ negative control catches the former misplaced runtime-relative factory import (46.170861ms)
+✔ actual native factory failures retire candidate resources and restore renderer while preserving the live library (72.377388ms)
+✔ native lobby materials invalidate cached programs only when texlib presence changes (77.199979ms)
+✔ progress is persisted and forwarded while a child is still running; failure status remains failure (62.404051ms)
+✔ signal termination keeps already emitted progress and never reports success (62.979402ms)
+✔ spawn failure rejects and leaves a readable diagnostic destination (3.574895ms)
+✔ integration retains immutable source and independently rebuilt artifact identity checks (0.405276ms)
+✔ parallel browser families retain every final integration acceptance surface (1.001833ms)
+✔ all nested final integration source families trigger validation on PR and pushed main (0.295404ms)
+✔ successful browser artifacts require validated reports and source-bound suite receipts (0.254054ms)
+✔ active browser CI requires source-bound grate and painted-normal evidence from both installed engines (0.41439ms)
+✔ ancillary paint WebGL source and emitted masks are mandatory exact-head network evidence (0.737444ms)
+✔ compatibility failure preserves its primary error without a missing diagnostic upload (0.313852ms)
+✔ runtime verifier storage is prepared before runtime evidence tests and baseline checkout creation (0.261074ms)
+✔ high-quality runtime comparison is final-integration gated and preserves baseline before candidate (0.385917ms)
+✔ range and startup evidence are distinct final acceptance receipts (0.157481ms)
+✔ isolated render diagnosis cannot replace full acceptance jobs or emit passing browser receipt (0.153605ms)
+✔ optional focused regressions preserve the canonical gate and publish only completed source evidence (0.158363ms)
+✔ worker source regressions have their pinned dependency and writable persistent storage before focused and canonical tests (0.198943ms)
+✔ emitted material handoff is mandatory and runs only after a complete site build (0.349063ms)
+✔ emitted menu focus is mandatory in the UI shard and source-bound in its receipt (0.215297ms)
+✔ all eight patch shards report into the existing required validate gate (0.736333ms)
+✔ emitted Bot respawn and retry regressions reuse the complete production site without replacing source coverage (0.300111ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 63329.671303

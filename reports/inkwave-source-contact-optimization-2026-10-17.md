@@ -2,6 +2,8 @@
 
 対象: 公開 INKWAVE、base `d5265f73d9dad69f1afd9690e374caee45195f11`。`inkwave-public/` は変更しない。
 
+最終判定: exact-head CI は通過したが、全体・active-path の測定では性能非劣化を立証できず、**PR #1568 は Draft・未採用**。小さな component の改善値だけで採用しない。[共通の最終記録](inkwave-quality-1565-2026-10-17/README.md)に全 raw 測定、不利な結果、資源不一致と未達条件を保存する。本稿の当初の correctness 証跡と実行時点は下記に区別して残す。
+
 `ContactTransition.advance` の正規化時間が 1 のとき、既存の quintic Hermite 係数 4 個はすべて正のゼロになる。この場合だけ累乗と係数式を省く。元の時間更新、clamp、未完了区間の演算順、最後のベクトル加算はそのまま保つ。ゼロを掛ける加算も残すため、符号付きゼロや非有限 offset の扱いを変えない。duration/offset の参照は、この filter が所有する既存フィールドをローカル変数へ束縛する。
 
 新しいキャッシュ、位相時計、アニメーション検索、補間データ、間引き、地面問い合わせ、IK、骨格・モデル変更はない。これは処理量の削減であり、モーションの見た目や Nintendo との一致を改善したという主張ではない。PR #1498 の FK 削減とは別の、既存 contact filter 内の処理を対象とする。

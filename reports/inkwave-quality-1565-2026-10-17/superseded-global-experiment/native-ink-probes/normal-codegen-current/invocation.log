@@ -1,0 +1,1 @@
+{"status":"failed","error":"page.evaluate: Target page, context or browser has been closed\n    at /workspace/scratch/probe-inkwave-normal-codegen.mjs:76:29","evidence":"/workspace/render-1565/.ci-scratch/1565/normal-codegen-current"}

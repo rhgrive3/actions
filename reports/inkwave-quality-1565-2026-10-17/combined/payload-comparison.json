@@ -1,0 +1,67 @@
+{
+  "baselineSourceSha": "d5265f73d9dad69f1afd9690e374caee45195f11",
+  "candidateSourceSha": "57e5cf61121514c8d04ac8efe059b5386fa99f27",
+  "contentHashes": [
+    "8f56a1470c72ecf04250ba7be2cf74a3c89f7267674c840d7d63c14fa3b29775",
+    "657671efb238bc3625cdfea9f704087307b91a8fc0687cef01f48fd0a982e974"
+  ],
+  "node": "v24.19.0",
+  "zlib": "1.3.2.1-motley-3246f1b",
+  "gzipLevel": 9,
+  "bytes": [
+    62667454,
+    62667277
+  ],
+  "delta": -177,
+  "gzip": [
+    56162283,
+    56162240
+  ],
+  "gzipDelta": -43,
+  "changed": [
+    {
+      "file": "src/game/motion/contact-transition.js",
+      "bytes": [
+        1009,
+        996
+      ],
+      "delta": -13,
+      "gzip": [
+        424,
+        456
+      ],
+      "gzipDelta": 32
+    },
+    {
+      "file": "src/world/levelMaterial.js",
+      "bytes": [
+        37007,
+        36843
+      ],
+      "delta": -164,
+      "gzip": [
+        12363,
+        12288
+      ],
+      "gzipDelta": -75
+    }
+  ],
+  "logicalFiles": [
+    929,
+    929
+  ],
+  "logicalScope": "Manifest root artifact paths excluding index.html and sw.js; includes empty .nojekyll.",
+  "versionedScope": "_versions/<revision>/* instead includes the immutable 13185-byte sw.js (gzip4799) and excludes .nojekyll (gzip20). All shared paths/hashes match.",
+  "versionedFiles": [
+    929,
+    929
+  ],
+  "versionedBytes": [
+    62680639,
+    62680462
+  ],
+  "versionedGzip": [
+    56167062,
+    56167019
+  ]
+}

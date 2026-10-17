@@ -1,0 +1,557 @@
+{
+  "data": {
+    "repository": {
+      "a": {
+        "number": 1566,
+        "headRefOid": "602774b9caf8a5cbb12290096a09d4d17cc756b0",
+        "url": "https://github.com/rhgrive3/actions/pull/1566",
+        "isDraft": true,
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "602774b9caf8a5cbb12290096a09d4d17cc756b0",
+                "statusCheckRollup": {
+                  "state": "SUCCESS",
+                  "contexts": {
+                    "nodes": [
+                      {
+                        "__typename": "CheckRun",
+                        "name": "single-change-comparison",
+                        "status": "COMPLETED",
+                        "conclusion": "SKIPPED",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646809/job/117457104231",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "paired-game",
+                        "status": "COMPLETED",
+                        "conclusion": "SKIPPED",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646814/job/117457104669",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "compare",
+                        "status": "COMPLETED",
+                        "conclusion": "SKIPPED",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646811/job/117457104474",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "frame-parity",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646808/job/117457103089",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "volume",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646810/job/117457103190",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "native-cssom",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646832/job/117457103179",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (chromium, 1)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646831/job/117457103393",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "paint-parity",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646853/job/117457103156",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "reopened-six",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646835/job/117457103479",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "frame-pacing",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646829/job/117457102856",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "validate_core",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468922",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (chromium, 2)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646831/job/117457103460",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (webkit, 1)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646831/job/117457103408",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (webkit, 2)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646831/job/117457103230",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "live-ray-equivalence",
+                        "status": "COMPLETED",
+                        "conclusion": "SKIPPED",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646809/job/117457103710",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (0)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468921",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (1)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468964",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (2)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468992",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (3)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457469037",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (4)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468909",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (5)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457469123",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (6)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468861",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (7)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457469124",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (active, chromium webkit)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468920",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (catalog, chromium)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468879",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (ui, chromium webkit)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468932",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (responsive, chromium webkit)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468643",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (network, chromium webkit)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468860",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (range, chromium webkit)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468918",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (startup, chromium)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468917",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "render-diagnostic",
+                        "status": "COMPLETED",
+                        "conclusion": "SKIPPED",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457469904",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "seven_claims",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457468868",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "resource_paint_continuation",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457469742",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "validate",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117467254897",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "StatusContext",
+                        "context": "CodeRabbit",
+                        "state": "SUCCESS",
+                        "targetUrl": null,
+                        "isRequired": false
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "b": {
+        "number": 1568,
+        "headRefOid": "fb33e4530b1419b5762ac180ef829360035aff4d",
+        "url": "https://github.com/rhgrive3/actions/pull/1568",
+        "isDraft": true,
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "fb33e4530b1419b5762ac180ef829360035aff4d",
+                "statusCheckRollup": {
+                  "state": "SUCCESS",
+                  "contexts": {
+                    "nodes": [
+                      {
+                        "__typename": "CheckRun",
+                        "name": "single-change-comparison",
+                        "status": "COMPLETED",
+                        "conclusion": "SKIPPED",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444468/job/117456549084",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "paired-game",
+                        "status": "COMPLETED",
+                        "conclusion": "SKIPPED",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444534/job/117456518376",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "frame-parity",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444502/job/117456517264",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "paint-parity",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444477/job/117456516807",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "reopened-six",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444490/job/117456517193",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "frame-pacing",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444531/job/117456517233",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "validate_core",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808589",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "live-ray-equivalence",
+                        "status": "COMPLETED",
+                        "conclusion": "SKIPPED",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444468/job/117456541030",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (0)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808506",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (1)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808630",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (2)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808541",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (3)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808530",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (4)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808603",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (5)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808557",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (6)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808414",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "patch_tests (7)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808607",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (active, chromium webkit)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808641",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (catalog, chromium)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808597",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (ui, chromium webkit)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808655",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (responsive, chromium webkit)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808494",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (network, chromium webkit)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808542",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (range, chromium webkit)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808591",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "browser (startup, chromium)",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808573",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "render-diagnostic",
+                        "status": "COMPLETED",
+                        "conclusion": "SKIPPED",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456809445",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "seven_claims",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808314",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "resource_paint_continuation",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456808361",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "CheckRun",
+                        "name": "validate",
+                        "status": "COMPLETED",
+                        "conclusion": "SUCCESS",
+                        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117467003647",
+                        "isRequired": false
+                      },
+                      {
+                        "__typename": "StatusContext",
+                        "context": "CodeRabbit",
+                        "state": "SUCCESS",
+                        "targetUrl": null,
+                        "isRequired": false
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "_archive": {
+    "capturedAt": "2026-10-17T18:22:22.544861+00:00",
+    "query": "query { repository(owner:\"rhgrive3\",name:\"actions\") { a:pullRequest(number:1566){number headRefOid url isDraft commits(last:1){nodes{commit{oid statusCheckRollup{state contexts(first:100){nodes{__typename ... on CheckRun{name status conclusion detailsUrl isRequired(pullRequestNumber:1566)} ... on StatusContext{context state targetUrl isRequired(pullRequestNumber:1566)}}}}}}}} b:pullRequest(number:1568){number headRefOid url isDraft commits(last:1){nodes{commit{oid statusCheckRollup{state contexts(first:100){nodes{__typename ... on CheckRun{name status conclusion detailsUrl isRequired(pullRequestNumber:1568)} ... on StatusContext{context state targetUrl isRequired(pullRequestNumber:1568)}}}}}}}} } }",
+    "scope": "Read-only current PR head and per-context isRequired flags. Administrative branch-protection REST endpoint returned 403; no protection settings were changed."
+  }
+}

@@ -1,0 +1,12 @@
+--- original-expandedGLSL
++++ current-expandedGLSL
+@@ -2735,8 +2735,7 @@
+   float keep = max((vFaceData.x > 4.5 && vFaceData.x < 5.5) ? 0.55 : 0.0, gTexKeep);   // containers + stairs
+   nBase = texlibPerturbNormal(gTexN, T, Bt, vWNorm, gTexStr * (1.0 - gInk * (1.0 - max(keep, gInkKeep))));
+ #endif
+-  vec3 wn = normalize(nBase - slope.x * T - slope.y * Bt);
+-normal = normalize((viewMatrix * vec4(wn, 0.0)).xyz);
++  normal = normalize(mat3(viewMatrix) * (nBase - slope.x * T - slope.y * Bt)) * faceDirection;
+ }
+ #ifdef USE_CLEARCOAT
+ 	vec3 clearcoatNormal = nonPerturbedNormal;

@@ -1,0 +1,42 @@
+[
+  {
+    "cycle": 0,
+    "pattern": "ABBA",
+    "ACompletedMs": 142.45624999998836,
+    "BCompletedMs": 132.08749999999418,
+    "completedChangePercent": -7.278550432146735,
+    "AGpuMs": 141.3742514375,
+    "BGpuMs": 130.7886845625,
+    "gpuChangePercent": -7.487620105758608
+  },
+  {
+    "cycle": 0,
+    "pattern": "BAAB",
+    "ACompletedMs": 131.55624999997963,
+    "BCompletedMs": 134.99999999998545,
+    "completedChangePercent": 2.617701553522811,
+    "AGpuMs": 130.548158125,
+    "BGpuMs": 134.035507375,
+    "gpuChangePercent": 2.6713124873511296
+  },
+  {
+    "cycle": 1,
+    "pattern": "ABBA",
+    "ACompletedMs": 129.375,
+    "BCompletedMs": 137.6875,
+    "completedChangePercent": 6.425120772946857,
+    "AGpuMs": 128.78275324999998,
+    "BGpuMs": 137.273598375,
+    "gpuChangePercent": 6.593153905101823
+  },
+  {
+    "cycle": 1,
+    "pattern": "BAAB",
+    "ACompletedMs": 112.13749999999709,
+    "BCompletedMs": 124.34375,
+    "completedChangePercent": 10.88507412774784,
+    "AGpuMs": 111.49457662500001,
+    "BGpuMs": 123.54156018750001,
+    "gpuChangePercent": 10.804995119196459
+  }
+]

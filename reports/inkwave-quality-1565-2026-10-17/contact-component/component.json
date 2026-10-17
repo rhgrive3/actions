@@ -1,0 +1,447 @@
+{
+  "scope": "scratch-only actual ContactTransition/Three component replay; scheduler and fixed-vector input copies included; no browser/Character/whole-game/FPS claim",
+  "scriptSHA256": "d9f7978e282054d719a96b6ac7dfa8e0e083686bdf0631474cea56f706e3ce41",
+  "sourceRoot": "/workspace/motion-1565",
+  "sourceHead": "fb33e4530b1419b5762ac180ef829360035aff4d",
+  "sourceBinding": {
+    "inkwave-public/src/game/motion/contact-transition.js": {
+      "sha256": "5677e65bb5ca108f1c83102fcaaa893df21f46f9bbdeb243b5fdfc06c01975bd",
+      "bytes": 1503
+    },
+    "inkwave-public/src/game/motion/source-bank.js": {
+      "sha256": "558a3ac20e26e4fb16abf1a4280b59ef71e585614eee9888ddfebfeb9072c90c",
+      "bytes": 13172
+    },
+    "inkwave-public/vendor/three/build/three.module.js": {
+      "sha256": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+      "bytes": 662772
+    },
+    "patches/local-quality/motion-fk-hotpath-adapter.mjs": {
+      "sha256": "bc4f1f609026f2821ee6488c1abfb6658fd0ba9cbf6e8f1b4c76a391665c5de2",
+      "bytes": 2897
+    },
+    "patches/local-quality/adapter.mjs": {
+      "sha256": "33e3c569262bde9314b9c97983b1407179ab20b29da531ff6fa97bd9a971a53c",
+      "bytes": 41126
+    },
+    "patches/local-quality/tests/source-contact-fixture.mjs": {
+      "sha256": "ada727d6d4e6137f83a02aa95d177ac8319e8a309e8cdce65e6b9a32f85cf705",
+      "bytes": 3138
+    },
+    "scripts/inkwave-source-composition.mjs": {
+      "sha256": "02ef3ab6377baa49518841434990e99dfe202af6dc067c73f7673501781757df",
+      "bytes": 2094
+    },
+    "scripts/benchmark-inkwave-contact-transition.mjs": {
+      "sha256": "9b0157df49638493849b807df918c507f8d46d0e470dccf7aef01af1ef5c33ec",
+      "bytes": 2820
+    }
+  },
+  "timingClassSHA256": [
+    "5677e65bb5ca108f1c83102fcaaa893df21f46f9bbdeb243b5fdfc06c01975bd",
+    "8efc71c0b2615a370d9489fcb690d47eec708d80110d188e594e1f4886eb8f1c"
+  ],
+  "node": "v24.19.0",
+  "threeRevision": "186",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "endianness": "LE",
+  "forcedGcBetweenWindows": true,
+  "frames": 960,
+  "order": [
+    0,
+    1,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1
+  ],
+  "requestedIterations": 500000,
+  "iterations": 500160,
+  "requestedWarmup": 20000,
+  "warmup": 20160,
+  "checks": [
+    {
+      "mode": "mostly_settled",
+      "steps": 1920,
+      "inputSHA256": "b1d903932f30fa31b6242274b3bdc0e3b301683195356b1a6ffbe5a7ea9b6fb4",
+      "counts": [
+        {
+          "advance": 1920,
+          "clamp": 1920,
+          "saturated": 1808,
+          "polynomial": 1920,
+          "transitions": 16,
+          "nonzeroTransitions": 0,
+          "resets": 0
+        },
+        {
+          "advance": 1920,
+          "clamp": 1920,
+          "saturated": 1808,
+          "polynomial": 112,
+          "transitions": 16,
+          "nonzeroTransitions": 0,
+          "resets": 0
+        }
+      ],
+      "exact": true,
+      "finalFloat64SHA256": [
+        "7a94cf5ccac0a7761cf66161f287a5dc62a7612606fb2ef263307ebbf534f032",
+        "7a94cf5ccac0a7761cf66161f287a5dc62a7612606fb2ef263307ebbf534f032"
+      ]
+    },
+    {
+      "mode": "always_active",
+      "steps": 1920,
+      "inputSHA256": "a99ab993dc2a6a565667a560d5c16f8dfb1072ecfbdbaa6e2aa8d64a605f2b0e",
+      "counts": [
+        {
+          "advance": 1920,
+          "clamp": 1920,
+          "saturated": 0,
+          "polynomial": 1920,
+          "transitions": 480,
+          "nonzeroTransitions": 479,
+          "resets": 0
+        },
+        {
+          "advance": 1920,
+          "clamp": 1920,
+          "saturated": 0,
+          "polynomial": 1920,
+          "transitions": 480,
+          "nonzeroTransitions": 479,
+          "resets": 0
+        }
+      ],
+      "exact": true,
+      "finalFloat64SHA256": [
+        "602505012697e9af3806bd2de850f32badcf6c60112f54de8aeda8339de5a473",
+        "602505012697e9af3806bd2de850f32badcf6c60112f54de8aeda8339de5a473"
+      ]
+    },
+    {
+      "mode": "irregular_contact",
+      "steps": 1920,
+      "inputSHA256": "547075a49a677c415ee4d9abdfc519be4e28410ecb39ee86fa62a866bab4d96f",
+      "counts": [
+        {
+          "advance": 1920,
+          "clamp": 1900,
+          "saturated": 1564,
+          "polynomial": 1900,
+          "transitions": 40,
+          "nonzeroTransitions": 40,
+          "resets": 20
+        },
+        {
+          "advance": 1920,
+          "clamp": 1900,
+          "saturated": 1564,
+          "polynomial": 336,
+          "transitions": 40,
+          "nonzeroTransitions": 40,
+          "resets": 20
+        }
+      ],
+      "exact": true,
+      "finalFloat64SHA256": [
+        "cbf0d4442ef864cb580cf38d73b30a239c945ff774196bd453b419575390067b",
+        "cbf0d4442ef864cb580cf38d73b30a239c945ff774196bd453b419575390067b"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "mode": "mostly_settled",
+      "warmup": 20160,
+      "iterations": 500160,
+      "windows": [
+        {
+          "window": 0,
+          "block": "ABBA",
+          "version": 0,
+          "wallMs": 109.13201700000002,
+          "cpuMs": 119.369,
+          "userMs": 119.369,
+          "systemMs": 0
+        },
+        {
+          "window": 1,
+          "block": "ABBA",
+          "version": 1,
+          "wallMs": 107.52126700000008,
+          "cpuMs": 121.064,
+          "userMs": 119.014,
+          "systemMs": 2.05
+        },
+        {
+          "window": 2,
+          "block": "ABBA",
+          "version": 1,
+          "wallMs": 107.75714500000004,
+          "cpuMs": 122.79,
+          "userMs": 122.79,
+          "systemMs": 0
+        },
+        {
+          "window": 3,
+          "block": "ABBA",
+          "version": 0,
+          "wallMs": 107.64685300000008,
+          "cpuMs": 107.875,
+          "userMs": 107.875,
+          "systemMs": 0
+        },
+        {
+          "window": 4,
+          "block": "BAAB",
+          "version": 1,
+          "wallMs": 105.64193399999999,
+          "cpuMs": 110.126,
+          "userMs": 110.126,
+          "systemMs": 0
+        },
+        {
+          "window": 5,
+          "block": "BAAB",
+          "version": 0,
+          "wallMs": 107.91577800000005,
+          "cpuMs": 117.662,
+          "userMs": 117.662,
+          "systemMs": 0
+        },
+        {
+          "window": 6,
+          "block": "BAAB",
+          "version": 0,
+          "wallMs": 108.50948999999991,
+          "cpuMs": 122.001,
+          "userMs": 117.67,
+          "systemMs": 4.331
+        },
+        {
+          "window": 7,
+          "block": "BAAB",
+          "version": 1,
+          "wallMs": 108.83167900000012,
+          "cpuMs": 111.519,
+          "userMs": 111.316,
+          "systemMs": 0.203
+        }
+      ],
+      "medianWallMs": [
+        108.21263399999998,
+        107.63920600000006
+      ],
+      "medianCpuMs": [
+        118.5155,
+        116.2915
+      ],
+      "wallChangePercent": -0.5299085502344592,
+      "cpuChangePercent": -1.8765477933266106,
+      "candidateSlowerWallMedian": false,
+      "candidateSlowerCpuMedian": false,
+      "exactTimedFinal": true,
+      "finalFloat64SHA256": [
+        "7a94cf5ccac0a7761cf66161f287a5dc62a7612606fb2ef263307ebbf534f032",
+        "7a94cf5ccac0a7761cf66161f287a5dc62a7612606fb2ef263307ebbf534f032"
+      ]
+    },
+    {
+      "mode": "always_active",
+      "warmup": 20160,
+      "iterations": 500160,
+      "windows": [
+        {
+          "window": 0,
+          "block": "ABBA",
+          "version": 0,
+          "wallMs": 131.20547899999997,
+          "cpuMs": 149.805,
+          "userMs": 149.805,
+          "systemMs": 0
+        },
+        {
+          "window": 1,
+          "block": "ABBA",
+          "version": 1,
+          "wallMs": 133.29415100000006,
+          "cpuMs": 149.207,
+          "userMs": 149.207,
+          "systemMs": 0
+        },
+        {
+          "window": 2,
+          "block": "ABBA",
+          "version": 1,
+          "wallMs": 128.64088700000002,
+          "cpuMs": 131.636,
+          "userMs": 131.636,
+          "systemMs": 0
+        },
+        {
+          "window": 3,
+          "block": "ABBA",
+          "version": 0,
+          "wallMs": 126.51657399999999,
+          "cpuMs": 129.558,
+          "userMs": 129.558,
+          "systemMs": 0
+        },
+        {
+          "window": 4,
+          "block": "BAAB",
+          "version": 1,
+          "wallMs": 125.27739099999985,
+          "cpuMs": 128.191,
+          "userMs": 128.191,
+          "systemMs": 0
+        },
+        {
+          "window": 5,
+          "block": "BAAB",
+          "version": 0,
+          "wallMs": 148.13199699999996,
+          "cpuMs": 150.911,
+          "userMs": 150.911,
+          "systemMs": 0
+        },
+        {
+          "window": 6,
+          "block": "BAAB",
+          "version": 0,
+          "wallMs": 124.29468599999973,
+          "cpuMs": 126.932,
+          "userMs": 126.932,
+          "systemMs": 0
+        },
+        {
+          "window": 7,
+          "block": "BAAB",
+          "version": 1,
+          "wallMs": 177.84763500000008,
+          "cpuMs": 128.063,
+          "userMs": 128.063,
+          "systemMs": 0
+        }
+      ],
+      "medianWallMs": [
+        128.86102649999998,
+        130.96751900000004
+      ],
+      "medianCpuMs": [
+        139.6815,
+        129.9135
+      ],
+      "wallChangePercent": 1.6347010086871006,
+      "cpuChangePercent": -6.99305205055788,
+      "candidateSlowerWallMedian": true,
+      "candidateSlowerCpuMedian": false,
+      "exactTimedFinal": true,
+      "finalFloat64SHA256": [
+        "602505012697e9af3806bd2de850f32badcf6c60112f54de8aeda8339de5a473",
+        "602505012697e9af3806bd2de850f32badcf6c60112f54de8aeda8339de5a473"
+      ]
+    },
+    {
+      "mode": "irregular_contact",
+      "warmup": 20160,
+      "iterations": 500160,
+      "windows": [
+        {
+          "window": 0,
+          "block": "ABBA",
+          "version": 0,
+          "wallMs": 107.03769699999975,
+          "cpuMs": 133.636,
+          "userMs": 131.27,
+          "systemMs": 2.366
+        },
+        {
+          "window": 1,
+          "block": "ABBA",
+          "version": 1,
+          "wallMs": 108.1217999999999,
+          "cpuMs": 138.981,
+          "userMs": 138.981,
+          "systemMs": 0
+        },
+        {
+          "window": 2,
+          "block": "ABBA",
+          "version": 1,
+          "wallMs": 105.21826099999998,
+          "cpuMs": 108.05,
+          "userMs": 108.05,
+          "systemMs": 0
+        },
+        {
+          "window": 3,
+          "block": "ABBA",
+          "version": 0,
+          "wallMs": 105.2807929999999,
+          "cpuMs": 107.638,
+          "userMs": 107.638,
+          "systemMs": 0
+        },
+        {
+          "window": 4,
+          "block": "BAAB",
+          "version": 1,
+          "wallMs": 105.61384300000009,
+          "cpuMs": 108.587,
+          "userMs": 108.587,
+          "systemMs": 0
+        },
+        {
+          "window": 5,
+          "block": "BAAB",
+          "version": 0,
+          "wallMs": 107.10757899999999,
+          "cpuMs": 110.462,
+          "userMs": 110.462,
+          "systemMs": 0
+        },
+        {
+          "window": 6,
+          "block": "BAAB",
+          "version": 0,
+          "wallMs": 103.7018909999997,
+          "cpuMs": 106.295,
+          "userMs": 106.295,
+          "systemMs": 0
+        },
+        {
+          "window": 7,
+          "block": "BAAB",
+          "version": 1,
+          "wallMs": 105.30153300000029,
+          "cpuMs": 107.713,
+          "userMs": 107.713,
+          "systemMs": 0
+        }
+      ],
+      "medianWallMs": [
+        106.15924499999983,
+        105.45768800000019
+      ],
+      "medianCpuMs": [
+        109.05000000000001,
+        108.3185
+      ],
+      "wallChangePercent": -0.6608534188422666,
+      "cpuChangePercent": -0.6707932141219675,
+      "candidateSlowerWallMedian": false,
+      "candidateSlowerCpuMedian": false,
+      "exactTimedFinal": true,
+      "finalFloat64SHA256": [
+        "cbf0d4442ef864cb580cf38d73b30a239c945ff774196bd453b419575390067b",
+        "cbf0d4442ef864cb580cf38d73b30a239c945ff774196bd453b419575390067b"
+      ]
+    }
+  ],
+  "interpretation": "Positive change percent is slower. Four windows per version are diagnostic, not statistical proof. Always-active has no skipped coefficients and can regress despite a mostly-settled gain; do not combine modes into a whole-game claim."
+}

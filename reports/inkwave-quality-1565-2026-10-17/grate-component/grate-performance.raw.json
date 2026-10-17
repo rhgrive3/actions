@@ -1,0 +1,3267 @@
+{
+  "status": "passed-component-diagnostic-only",
+  "harnessSha256": "fdd1f2aeb8c4fcc61b42fbb8821a8d6ccfe554f3564fd0c9db4f1cee80ab7568",
+  "argv": [
+    "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "/workspace/scratch/probe-inkwave-grate-performance.mjs",
+    "--execute",
+    "--warmup",
+    "12",
+    "--batch",
+    "32",
+    "--cycles",
+    "1",
+    "--out",
+    "/workspace/render-1565/.ci-scratch/1565/grate-double-sided-component-01"
+  ],
+  "candidate": {
+    "sourceSha": "602774b9caf8a5cbb12290096a09d4d17cc756b0",
+    "contentHash": "50b919d25d49699574f9846c99400b8486c70c60d1634d94bc7bc75121211bb3",
+    "inputHash": "db87521e2a1443bb87dec9babfd4822d9b3dd755559832f211c481798c12978b",
+    "materialArtifactSha256": "a5ecdbaca75c519e79789d24ef67436b6dabc78e9501eae5464baaa06b50e626"
+  },
+  "baseline": {
+    "sourceSha": "d5265f73d9dad69f1afd9690e374caee45195f11",
+    "contentHash": "8f56a1470c72ecf04250ba7be2cf74a3c89f7267674c840d7d63c14fa3b29775",
+    "inputHash": "d23766d00da1f917546548ba941760d80de89fd1b279430f8ae580a95694cf83",
+    "materialArtifactSha256": "78f592c653101f94755185448f762aa0b8fdbe98b68bfe5f2cc9715b430005e7"
+  },
+  "environment": {
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCpus": 5,
+    "node": "v24.19.0",
+    "browser": "141.0.7390.37"
+  },
+  "config": {
+    "width": 480,
+    "height": 300,
+    "warmup": 12,
+    "batch": 32,
+    "cycles": 1,
+    "windowsPerView": 8,
+    "order": "ABBA then BAAB, per view",
+    "texlibSize": 64
+  },
+  "scope": "Single Chromium realm/context, exact emitted A original and B narrow DoubleSide grate material factories, shared real generated 25-layer texlib at 64px and shared authored Level top-face geometry. Nonpaintable production grate attributes; same zero-paint atlas, uniforms, camera/light, coverage and draw workload. Four front/back × top/bottom-light views. Independent reversed-normal/winding FrontSide oracle outside timing.",
+  "limitations": [
+    "Component only; no full-game, startup/load, hardware GPU, heap, or general nondegradation claim.",
+    "64px real procedural texlib is a diagnostic resolution, not the production 256/512px library.",
+    "No world lightmap, mural, environment map, shadow map, postprocessing or simulation; these are identical between component A/B.",
+    "GPU elapsed-query durations are SwiftShader/driver observations; unsupported, missing, or disjoint results fail the run.",
+    "Intentional backside lighting changes are compared to an independent reversed-geometry oracle, not blanket A/B parity.",
+    "The oracle is restricted to this horizontal, nonpaintable pattern-12 grate: unchanged UV/tangent/position attributes, identity mesh transform, no stair remap, ink/wake/ripple slopes, mural, or see-through fade.",
+    "Its existing max-1/255 and at-most-1%-changed-pixels arithmetic tolerance is a separate component-oracle criterion; the committed PR FrontSide controls require exact zero changed pixels.",
+    "Timing starts after query begin/error checks and ends after gl.finish plus mandatory one-pixel readPixels. Full-frame reads, PNGs, validation and query polling remain outside timing."
+  ],
+  "errors": [],
+  "probe": {
+    "gpu": {
+      "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "vendor": "Google Inc. (Google)"
+    },
+    "warm": [
+      {
+        "label": "A",
+        "draws": 12,
+        "elapsedMs": 717.9000000003725,
+        "resources": {
+          "geometries": 1,
+          "textures": 5,
+          "programs": 1
+        }
+      },
+      {
+        "label": "B",
+        "draws": 12,
+        "elapsedMs": 779.1000000005588,
+        "resources": {
+          "geometries": 1,
+          "textures": 5,
+          "programs": 2
+        }
+      },
+      {
+        "label": "oracle",
+        "draws": 12,
+        "elapsedMs": 809.7999999998137,
+        "resources": {
+          "geometries": 1,
+          "textures": 5,
+          "programs": 3
+        }
+      },
+      {
+        "label": "A",
+        "back": true,
+        "draws": 12,
+        "elapsedMs": 252.20000000018626,
+        "resources": {
+          "geometries": 1,
+          "textures": 5,
+          "programs": 3
+        }
+      },
+      {
+        "label": "B",
+        "back": true,
+        "draws": 12,
+        "elapsedMs": 238,
+        "resources": {
+          "geometries": 1,
+          "textures": 5,
+          "programs": 3
+        }
+      },
+      {
+        "label": "oracle",
+        "back": true,
+        "draws": 12,
+        "elapsedMs": 232.19999999925494,
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        }
+      }
+    ],
+    "oracleScope": {
+      "horizontalPattern12": true,
+      "unpaintable": true,
+      "unchangedAttributesExceptNormal": true,
+      "texlibRemapIdentity": true,
+      "noStairs": true,
+      "noInkSlopes": true,
+      "noMural": true,
+      "noSeeThrough": true,
+      "tolerance": {
+        "maxChannelError": 1,
+        "maxChangedPixelFraction": 0.01,
+        "separateFromExactZeroFrontSidePRGate": true
+      }
+    },
+    "shaderChecks": {
+      "baselineOriginalConnection": true,
+      "candidateGuardedConnection": true,
+      "templateEqualOutsideNormalAndComments": true,
+      "expandedEqualOutsideNormalAndComments": true,
+      "actualDefines": {
+        "USE_TEXLIB": true,
+        "DOUBLE_SIDED": true,
+        "GRATE": true
+      }
+    },
+    "templates": {
+      "A": {
+        "vertex": {
+          "file": "A-templates-vertex.glsl",
+          "sha256": "1ed914130177861f073ba35b3ed1246ec0262a27a4b52ba0b01c7b5ef5a70db3"
+        },
+        "fragment": {
+          "file": "A-templates-fragment.glsl",
+          "sha256": "2a3dff9037af3c307da282ab59c2be710bd4239edf2f778aaaf513941c7664eb"
+        }
+      },
+      "B": {
+        "vertex": {
+          "file": "B-templates-vertex.glsl",
+          "sha256": "1ed914130177861f073ba35b3ed1246ec0262a27a4b52ba0b01c7b5ef5a70db3"
+        },
+        "fragment": {
+          "file": "B-templates-fragment.glsl",
+          "sha256": "914eb6c1f46d84dc6b28d6942695bcfa2b770b82b53ed164e05088fa371e59b1"
+        }
+      },
+      "oracle": {
+        "vertex": {
+          "file": "oracle-templates-vertex.glsl",
+          "sha256": "1ed914130177861f073ba35b3ed1246ec0262a27a4b52ba0b01c7b5ef5a70db3"
+        },
+        "fragment": {
+          "file": "oracle-templates-fragment.glsl",
+          "sha256": "ace8c85e519635ede41aa9daa6b1bd1092013a10cbee15fe86e228a14af25154"
+        }
+      }
+    },
+    "expanded": {
+      "A": {
+        "vertex": {
+          "file": "A-expanded-vertex.glsl",
+          "sha256": "82f7d5cd4bca787f584774789e1ec8c4b1572f038b4c40b9228388b03048e29e"
+        },
+        "fragment": {
+          "file": "A-expanded-fragment.glsl",
+          "sha256": "c302c989553643cff2b67900a72b68fa25b297d117a2712134e73392a3201644"
+        }
+      },
+      "B": {
+        "vertex": {
+          "file": "B-expanded-vertex.glsl",
+          "sha256": "82f7d5cd4bca787f584774789e1ec8c4b1572f038b4c40b9228388b03048e29e"
+        },
+        "fragment": {
+          "file": "B-expanded-fragment.glsl",
+          "sha256": "9a92accbb5ee29965bfa496453c242b6432c780ba3f7ca6af21c4ac2634a6994"
+        }
+      },
+      "oracle": {
+        "vertex": {
+          "file": "oracle-expanded-vertex.glsl",
+          "sha256": "73d80e2db57a21ba8ab38eda8189c55c33ca4fbdc87d980d745042d845bdf7c3"
+        },
+        "fragment": {
+          "file": "oracle-expanded-fragment.glsl",
+          "sha256": "c63969db774165d00df74c4873d2bbaaf8bffdcf50b9a64e8c840567edceae15"
+        }
+      }
+    },
+    "correctness": [
+      {
+        "view": "front-toplight",
+        "back": false,
+        "coverage": {
+          "A": 14584,
+          "B": 14584,
+          "oracle": 14584
+        },
+        "candidateVsOracle": {
+          "pixels": 144000,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "originalVsCandidate": {
+          "pixels": 144000,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "camera": [
+          0,
+          3,
+          3
+        ],
+        "light": [
+          2,
+          5,
+          3
+        ],
+        "repeat": {
+          "A": {
+            "pixels": 144000,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          },
+          "B": {
+            "pixels": 144000,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          }
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        }
+      },
+      {
+        "view": "front-underlight",
+        "back": false,
+        "coverage": {
+          "A": 14584,
+          "B": 14584,
+          "oracle": 14584
+        },
+        "candidateVsOracle": {
+          "pixels": 144000,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "originalVsCandidate": {
+          "pixels": 144000,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "camera": [
+          0,
+          3,
+          3
+        ],
+        "light": [
+          2,
+          -5,
+          3
+        ],
+        "repeat": {
+          "A": {
+            "pixels": 144000,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          },
+          "B": {
+            "pixels": 144000,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          }
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        }
+      },
+      {
+        "view": "back-toplight",
+        "back": true,
+        "coverage": {
+          "A": 14518,
+          "B": 14518,
+          "oracle": 14518
+        },
+        "candidateVsOracle": {
+          "pixels": 144000,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "originalVsCandidate": {
+          "pixels": 144000,
+          "changedPixels": 14518,
+          "maxChannelError": 119
+        },
+        "camera": [
+          0,
+          -3,
+          3
+        ],
+        "light": [
+          2,
+          5,
+          3
+        ],
+        "repeat": {
+          "A": {
+            "pixels": 144000,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          },
+          "B": {
+            "pixels": 144000,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          }
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        }
+      },
+      {
+        "view": "back-underlight",
+        "back": true,
+        "coverage": {
+          "A": 14518,
+          "B": 14518,
+          "oracle": 14518
+        },
+        "candidateVsOracle": {
+          "pixels": 144000,
+          "changedPixels": 9,
+          "maxChannelError": 1
+        },
+        "originalVsCandidate": {
+          "pixels": 144000,
+          "changedPixels": 14518,
+          "maxChannelError": 246
+        },
+        "camera": [
+          0,
+          -3,
+          3
+        ],
+        "light": [
+          2,
+          -5,
+          3
+        ],
+        "repeat": {
+          "A": {
+            "pixels": 144000,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          },
+          "B": {
+            "pixels": 144000,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          }
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        }
+      }
+    ],
+    "rows": [
+      {
+        "view": "front-toplight",
+        "cycle": 0,
+        "ordinal": 0,
+        "block": "ABBA",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 3.5,
+        "completedMs": 731.5999999996275,
+        "completedPerDrawMs": 22.86249999998836,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 727671468,
+          "milliseconds": 727.671468
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-toplight",
+        "cycle": 0,
+        "ordinal": 1,
+        "block": "ABBA",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 3.7000000001862645,
+        "completedMs": 894.4000000003725,
+        "completedPerDrawMs": 27.95000000001164,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 890108231,
+          "milliseconds": 890.108231
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-toplight",
+        "cycle": 0,
+        "ordinal": 2,
+        "block": "ABBA",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 2.8999999994412065,
+        "completedMs": 729.3999999994412,
+        "completedPerDrawMs": 22.793749999982538,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 725900046,
+          "milliseconds": 725.900046
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-toplight",
+        "cycle": 0,
+        "ordinal": 3,
+        "block": "ABBA",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 3.2999999998137355,
+        "completedMs": 874.2999999998137,
+        "completedPerDrawMs": 27.32187499999418,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 868959864,
+          "milliseconds": 868.959864
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-toplight",
+        "cycle": 0,
+        "ordinal": 4,
+        "block": "BAAB",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 3.2999999998137355,
+        "completedMs": 775.3999999994412,
+        "completedPerDrawMs": 24.231249999982538,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 771722523,
+          "milliseconds": 771.722523
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-toplight",
+        "cycle": 0,
+        "ordinal": 5,
+        "block": "BAAB",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 2.5,
+        "completedMs": 835,
+        "completedPerDrawMs": 26.09375,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 832082068,
+          "milliseconds": 832.082068
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-toplight",
+        "cycle": 0,
+        "ordinal": 6,
+        "block": "BAAB",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 2.7999999998137355,
+        "completedMs": 815,
+        "completedPerDrawMs": 25.46875,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 811850515,
+          "milliseconds": 811.850515
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-toplight",
+        "cycle": 0,
+        "ordinal": 7,
+        "block": "BAAB",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 2.699999999254942,
+        "completedMs": 737.2999999998137,
+        "completedPerDrawMs": 23.04062499999418,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 733644563,
+          "milliseconds": 733.644563
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-underlight",
+        "cycle": 0,
+        "ordinal": 0,
+        "block": "ABBA",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 2.5,
+        "completedMs": 691.5,
+        "completedPerDrawMs": 21.609375,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 688458555,
+          "milliseconds": 688.458555
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-underlight",
+        "cycle": 0,
+        "ordinal": 1,
+        "block": "ABBA",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 2.2000000001862645,
+        "completedMs": 750.4000000003725,
+        "completedPerDrawMs": 23.45000000001164,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 747584081,
+          "milliseconds": 747.584081
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-underlight",
+        "cycle": 0,
+        "ordinal": 2,
+        "block": "ABBA",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 6.5,
+        "completedMs": 864.0999999996275,
+        "completedPerDrawMs": 27.00312499998836,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 857093167,
+          "milliseconds": 857.093167
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-underlight",
+        "cycle": 0,
+        "ordinal": 3,
+        "block": "ABBA",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 1.900000000372529,
+        "completedMs": 816.2000000001863,
+        "completedPerDrawMs": 25.50625000000582,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 810038917,
+          "milliseconds": 810.038917
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-underlight",
+        "cycle": 0,
+        "ordinal": 4,
+        "block": "BAAB",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 2.400000000372529,
+        "completedMs": 733.9000000003725,
+        "completedPerDrawMs": 22.93437500001164,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 731054087,
+          "milliseconds": 731.054087
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-underlight",
+        "cycle": 0,
+        "ordinal": 5,
+        "block": "BAAB",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 1.5,
+        "completedMs": 716.4000000003725,
+        "completedPerDrawMs": 22.38750000001164,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 714412980,
+          "milliseconds": 714.41298
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-underlight",
+        "cycle": 0,
+        "ordinal": 6,
+        "block": "BAAB",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 2,
+        "completedMs": 725.7999999998137,
+        "completedPerDrawMs": 22.68124999999418,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 723232560,
+          "milliseconds": 723.23256
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "front-underlight",
+        "cycle": 0,
+        "ordinal": 7,
+        "block": "BAAB",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 1.6000000005587935,
+        "completedMs": 740,
+        "completedPerDrawMs": 23.125,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 737776461,
+          "milliseconds": 737.776461
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-toplight",
+        "cycle": 0,
+        "ordinal": 0,
+        "block": "ABBA",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 1.7000000001862645,
+        "completedMs": 752.7000000001863,
+        "completedPerDrawMs": 23.52187500000582,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 750572707,
+          "milliseconds": 750.572707
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-toplight",
+        "cycle": 0,
+        "ordinal": 1,
+        "block": "ABBA",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 1.7000000001862645,
+        "completedMs": 797.2000000001863,
+        "completedPerDrawMs": 24.91250000000582,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 795039222,
+          "milliseconds": 795.039222
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-toplight",
+        "cycle": 0,
+        "ordinal": 2,
+        "block": "ABBA",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 1.699999999254942,
+        "completedMs": 725,
+        "completedPerDrawMs": 22.65625,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 722813953,
+          "milliseconds": 722.813953
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-toplight",
+        "cycle": 0,
+        "ordinal": 3,
+        "block": "ABBA",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 2.2000000001862645,
+        "completedMs": 691.7000000001863,
+        "completedPerDrawMs": 21.61562500000582,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 688822293,
+          "milliseconds": 688.822293
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-toplight",
+        "cycle": 0,
+        "ordinal": 4,
+        "block": "BAAB",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 2,
+        "completedMs": 728.1999999992549,
+        "completedPerDrawMs": 22.756249999976717,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 725528440,
+          "milliseconds": 725.52844
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-toplight",
+        "cycle": 0,
+        "ordinal": 5,
+        "block": "BAAB",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 1.599999999627471,
+        "completedMs": 833.0999999996275,
+        "completedPerDrawMs": 26.03437499998836,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 830775408,
+          "milliseconds": 830.775408
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-toplight",
+        "cycle": 0,
+        "ordinal": 6,
+        "block": "BAAB",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 1.7999999998137355,
+        "completedMs": 842.2999999998137,
+        "completedPerDrawMs": 26.32187499999418,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 839882262,
+          "milliseconds": 839.882262
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-toplight",
+        "cycle": 0,
+        "ordinal": 7,
+        "block": "BAAB",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 1.7000000001862645,
+        "completedMs": 770.6000000005588,
+        "completedPerDrawMs": 24.081250000017462,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 768390388,
+          "milliseconds": 768.390388
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-underlight",
+        "cycle": 0,
+        "ordinal": 0,
+        "block": "ABBA",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 1.7999999998137355,
+        "completedMs": 705.7000000001863,
+        "completedPerDrawMs": 22.05312500000582,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 703380807,
+          "milliseconds": 703.380807
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-underlight",
+        "cycle": 0,
+        "ordinal": 1,
+        "block": "ABBA",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 1.7999999998137355,
+        "completedMs": 696.5999999996275,
+        "completedPerDrawMs": 21.76874999998836,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 694378689,
+          "milliseconds": 694.378689
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-underlight",
+        "cycle": 0,
+        "ordinal": 2,
+        "block": "ABBA",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 1.7999999998137355,
+        "completedMs": 735.0999999996275,
+        "completedPerDrawMs": 22.97187499998836,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 732872985,
+          "milliseconds": 732.872985
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-underlight",
+        "cycle": 0,
+        "ordinal": 3,
+        "block": "ABBA",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 1.7000000001862645,
+        "completedMs": 700.0999999996275,
+        "completedPerDrawMs": 21.87812499998836,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 697478437,
+          "milliseconds": 697.478437
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-underlight",
+        "cycle": 0,
+        "ordinal": 4,
+        "block": "BAAB",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 1.7000000001862645,
+        "completedMs": 737.7999999998137,
+        "completedPerDrawMs": 23.05624999999418,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 735426317,
+          "milliseconds": 735.426317
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-underlight",
+        "cycle": 0,
+        "ordinal": 5,
+        "block": "BAAB",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 1.7999999998137355,
+        "completedMs": 723.7999999998137,
+        "completedPerDrawMs": 22.61874999999418,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 721347685,
+          "milliseconds": 721.347685
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-underlight",
+        "cycle": 0,
+        "ordinal": 6,
+        "block": "BAAB",
+        "label": "A",
+        "batch": 32,
+        "submitMs": 1.7000000001862645,
+        "completedMs": 705.2999999998137,
+        "completedPerDrawMs": 22.04062499999418,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 701997520,
+          "milliseconds": 701.99752
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      },
+      {
+        "view": "back-underlight",
+        "cycle": 0,
+        "ordinal": 7,
+        "block": "BAAB",
+        "label": "B",
+        "batch": 32,
+        "submitMs": 1.8999999994412065,
+        "completedMs": 773.7999999998137,
+        "completedPerDrawMs": 24.18124999999418,
+        "gpu": {
+          "available": true,
+          "disjoint": false,
+          "valid": true,
+          "nanoseconds": 771357351,
+          "milliseconds": 771.357351
+        },
+        "counts": {
+          "calls": 32,
+          "triangles": 64,
+          "gpuCalls": 32,
+          "gpuIndices": 192,
+          "allTriangleMode": true
+        },
+        "resources": {
+          "geometries": 2,
+          "textures": 5,
+          "programs": 3
+        },
+        "sameGeometry": true,
+        "sameUniforms": true
+      }
+    ],
+    "fixedResourcesBeforeViews": {
+      "geometries": 2,
+      "textures": 5,
+      "programs": 3
+    },
+    "finalResources": {
+      "geometries": 2,
+      "textures": 5,
+      "programs": 3
+    },
+    "geometryState": {
+      "indexVersion": 0,
+      "indices": [
+        8,
+        10,
+        9,
+        8,
+        11,
+        10
+      ],
+      "drawRange": {
+        "start": 0,
+        "count": null
+      },
+      "attributes": {
+        "position": {
+          "version": 0,
+          "count": 20,
+          "itemSize": 3
+        },
+        "normal": {
+          "version": 0,
+          "count": 20,
+          "itemSize": 3
+        },
+        "color": {
+          "version": 0,
+          "count": 20,
+          "itemSize": 3
+        },
+        "paintUv": {
+          "version": 0,
+          "count": 20,
+          "itemSize": 2
+        },
+        "lightUv": {
+          "version": 0,
+          "count": 20,
+          "itemSize": 2
+        },
+        "faceUv": {
+          "version": 0,
+          "count": 20,
+          "itemSize": 2
+        },
+        "faceData": {
+          "version": 0,
+          "count": 20,
+          "itemSize": 4
+        },
+        "faceFlags": {
+          "version": 0,
+          "count": 20,
+          "itemSize": 3
+        },
+        "faceTan": {
+          "version": 0,
+          "count": 20,
+          "itemSize": 3
+        }
+      }
+    },
+    "errorChecks": [
+      {
+        "stage": "after-context",
+        "codes": []
+      },
+      {
+        "stage": "after-real-texlib-generation",
+        "codes": []
+      },
+      {
+        "stage": "after-initial-warm-A",
+        "codes": []
+      },
+      {
+        "stage": "after-initial-warm-B",
+        "codes": []
+      },
+      {
+        "stage": "after-initial-warm-oracle",
+        "codes": []
+      },
+      {
+        "stage": "after-back-resource-warm-A",
+        "codes": []
+      },
+      {
+        "stage": "after-back-resource-warm-B",
+        "codes": []
+      },
+      {
+        "stage": "after-back-resource-warm-oracle",
+        "codes": []
+      },
+      {
+        "stage": "after-correctness-front-toplight",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-toplight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-toplight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-toplight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-toplight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-toplight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-toplight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-toplight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-toplight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-toplight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-toplight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-toplight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-toplight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-toplight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-toplight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-toplight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-toplight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-toplight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-toplight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-toplight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-toplight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-toplight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-toplight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-toplight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-toplight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-toplight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-toplight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-toplight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-toplight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-toplight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-toplight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-toplight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-toplight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-view-front-toplight",
+        "codes": []
+      },
+      {
+        "stage": "after-correctness-front-underlight",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-underlight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-underlight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-underlight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-underlight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-underlight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-underlight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-underlight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-underlight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-underlight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-underlight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-underlight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-underlight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-underlight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-underlight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-underlight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-underlight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-underlight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-underlight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-underlight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-underlight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-underlight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-underlight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-underlight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-underlight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-underlight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-underlight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-underlight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-underlight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "before-query-front-underlight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-front-underlight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-front-underlight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-front-underlight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-view-front-underlight",
+        "codes": []
+      },
+      {
+        "stage": "after-correctness-back-toplight",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-toplight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-toplight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-toplight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-toplight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-toplight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-toplight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-toplight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-toplight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-toplight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-toplight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-toplight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-toplight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-toplight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-toplight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-toplight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-toplight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-toplight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-toplight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-toplight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-toplight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-toplight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-toplight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-toplight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-toplight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-toplight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-toplight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-toplight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-toplight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-toplight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-toplight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-toplight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-toplight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-view-back-toplight",
+        "codes": []
+      },
+      {
+        "stage": "after-correctness-back-underlight",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-underlight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-underlight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-underlight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-underlight-0-0",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-underlight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-underlight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-underlight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-underlight-0-1",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-underlight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-underlight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-underlight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-underlight-0-2",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-underlight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-underlight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-underlight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-underlight-0-3",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-underlight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-underlight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-underlight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-underlight-0-4",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-underlight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-underlight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-underlight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-underlight-0-5",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-underlight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-underlight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-underlight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-underlight-0-6",
+        "codes": []
+      },
+      {
+        "stage": "before-query-back-underlight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-query-begin-back-underlight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-completion-readback-back-underlight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-query-result-back-underlight-0-7",
+        "codes": []
+      },
+      {
+        "stage": "after-view-back-underlight",
+        "codes": []
+      },
+      {
+        "stage": "after-hooks-restored",
+        "codes": []
+      }
+    ],
+    "images": {
+      "front-toplight-A": {
+        "file": "front-toplight-A.png",
+        "sha256": "c8c826d76d15b28bb4fa97c35afd4c83153d551eb1fd0b07c74e6854a2b725c5"
+      },
+      "front-toplight-B": {
+        "file": "front-toplight-B.png",
+        "sha256": "c8c826d76d15b28bb4fa97c35afd4c83153d551eb1fd0b07c74e6854a2b725c5"
+      },
+      "front-toplight-oracle": {
+        "file": "front-toplight-oracle.png",
+        "sha256": "c8c826d76d15b28bb4fa97c35afd4c83153d551eb1fd0b07c74e6854a2b725c5"
+      },
+      "front-underlight-A": {
+        "file": "front-underlight-A.png",
+        "sha256": "001db089e186fca8f77117c298d6a5cae1ddcf0f9fe4044590c5bb199c0abdcf"
+      },
+      "front-underlight-B": {
+        "file": "front-underlight-B.png",
+        "sha256": "001db089e186fca8f77117c298d6a5cae1ddcf0f9fe4044590c5bb199c0abdcf"
+      },
+      "front-underlight-oracle": {
+        "file": "front-underlight-oracle.png",
+        "sha256": "001db089e186fca8f77117c298d6a5cae1ddcf0f9fe4044590c5bb199c0abdcf"
+      },
+      "back-toplight-A": {
+        "file": "back-toplight-A.png",
+        "sha256": "bcf9206a543b6cbd6db4392fe4e1c1aba0ebbbb032c3a041d8bbabe4a5b1ab03"
+      },
+      "back-toplight-B": {
+        "file": "back-toplight-B.png",
+        "sha256": "e0119be49057f58e703b57a8ebc16bcf7b4c17c1c252c1f39640f8b2f6106199"
+      },
+      "back-toplight-oracle": {
+        "file": "back-toplight-oracle.png",
+        "sha256": "e0119be49057f58e703b57a8ebc16bcf7b4c17c1c252c1f39640f8b2f6106199"
+      },
+      "back-underlight-A": {
+        "file": "back-underlight-A.png",
+        "sha256": "f7edeb3196a638e442a07cba14dfe4d5a8be25f107f041e3ca94762ef68cd9cb"
+      },
+      "back-underlight-B": {
+        "file": "back-underlight-B.png",
+        "sha256": "198a0ffd6fabd90c7320b57a2b2022baf7a8185c3348c85e2392f2202ab618b4"
+      },
+      "back-underlight-oracle": {
+        "file": "back-underlight-oracle.png",
+        "sha256": "9a9b94430ad9758e8281335faf15f54f6b30f614e63b49b2ef6e88ecaaa2a57f"
+      }
+    },
+    "authoredFaceIndices": 6,
+    "atlas": {
+      "width": 1,
+      "height": 1,
+      "nonzeroBytes": 0
+    },
+    "texlib": {
+      "size": 64,
+      "layers": 25,
+      "grateLayer": 8
+    },
+    "materialKeys": {
+      "A": "inkwave-level-v6-quality1-range1-grate",
+      "B": "inkwave-level-v6-quality3-range1-grate"
+    },
+    "translatedShader": "Not queried: live gl.shaderSource capture only; no deleted shader getters or assembly claim."
+  },
+  "summary": {
+    "front-toplight": {
+      "A": {
+        "submitPerDrawMs": {
+          "n": 4,
+          "mean": 0.09453124999708962,
+          "p50": 0.09531249999417923,
+          "min": 0.078125,
+          "max": 0.109375,
+          "samples": [
+            0.109375,
+            0.10312499999417923,
+            0.078125,
+            0.08749999999417923
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 4,
+          "mean": 25.436718749995634,
+          "p50": 25.78125,
+          "min": 22.86249999998836,
+          "max": 27.32187499999418,
+          "samples": [
+            22.86249999998836,
+            27.32187499999418,
+            26.09375,
+            25.46875
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 4,
+          "mean": 25.3169055859375,
+          "p50": 25.686446609375,
+          "min": 22.739733375,
+          "max": 27.15499575,
+          "samples": [
+            22.739733375,
+            27.15499575,
+            26.002564625,
+            25.37032859375
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 4,
+          "mean": 0.09843749998981366,
+          "p50": 0.09687499998835847,
+          "min": 0.08437499997671694,
+          "max": 0.11562500000582077,
+          "samples": [
+            0.11562500000582077,
+            0.0906249999825377,
+            0.10312499999417923,
+            0.08437499997671694
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 4,
+          "mean": 24.503906249992724,
+          "p50": 23.63593749998836,
+          "min": 22.793749999982538,
+          "max": 27.95000000001164,
+          "samples": [
+            27.95000000001164,
+            22.793749999982538,
+            24.231249999982538,
+            23.04062499999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 4,
+          "mean": 24.3857450234375,
+          "p50": 23.52136071875,
+          "min": 22.6843764375,
+          "max": 27.81588221875,
+          "samples": [
+            27.81588221875,
+            22.6843764375,
+            24.11632884375,
+            22.92639259375
+          ]
+        }
+      },
+      "completedRatioBoverA": 0.9633281120426325,
+      "gpuRatioBoverA": 0.9632198113889076
+    },
+    "front-underlight": {
+      "A": {
+        "submitPerDrawMs": {
+          "n": 4,
+          "mean": 0.06171875000291038,
+          "p50": 0.060937500005820766,
+          "min": 0.046875,
+          "max": 0.078125,
+          "samples": [
+            0.078125,
+            0.05937500001164153,
+            0.046875,
+            0.0625
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 4,
+          "mean": 23.04609375000291,
+          "p50": 22.53437500000291,
+          "min": 21.609375,
+          "max": 25.50625000000582,
+          "samples": [
+            21.609375,
+            25.50625000000582,
+            22.38750000001164,
+            22.68124999999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 4,
+          "mean": 22.93861728125,
+          "p50": 22.4632115625,
+          "min": 21.51432984375,
+          "max": 25.31371615625,
+          "samples": [
+            21.51432984375,
+            25.31371615625,
+            22.325405625,
+            22.6010175
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 4,
+          "mean": 0.09921875000873115,
+          "p50": 0.07187500000873115,
+          "min": 0.0500000000174623,
+          "max": 0.203125,
+          "samples": [
+            0.06875000000582077,
+            0.203125,
+            0.07500000001164153,
+            0.0500000000174623
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 4,
+          "mean": 24.12812500000291,
+          "p50": 23.28750000000582,
+          "min": 22.93437500001164,
+          "max": 27.00312499998836,
+          "samples": [
+            23.45000000001164,
+            27.00312499998836,
+            22.93437500001164,
+            23.125
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 4,
+          "mean": 24.01177965625,
+          "p50": 23.20875846875,
+          "min": 22.84544021875,
+          "max": 26.78416146875,
+          "samples": [
+            23.36200253125,
+            26.78416146875,
+            22.84544021875,
+            23.05551440625
+          ]
+        }
+      },
+      "completedRatioBoverA": 1.0469507440930141,
+      "gpuRatioBoverA": 1.0467840917280224
+    },
+    "back-toplight": {
+      "A": {
+        "submitPerDrawMs": {
+          "n": 4,
+          "mean": 0.05703124999854481,
+          "p50": 0.0546875,
+          "min": 0.04999999998835847,
+          "max": 0.06875000000582077,
+          "samples": [
+            0.053125000005820766,
+            0.06875000000582077,
+            0.04999999998835847,
+            0.056249999994179234
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 4,
+          "mean": 24.373437499998545,
+          "p50": 24.77812499999709,
+          "min": 21.61562500000582,
+          "max": 26.32187499999418,
+          "samples": [
+            23.52187500000582,
+            21.61562500000582,
+            26.03437499998836,
+            26.32187499999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 4,
+          "mean": 24.297286484375,
+          "p50": 24.708564296875,
+          "min": 21.52569665625,
+          "max": 26.2463206875,
+          "samples": [
+            23.45539709375,
+            21.52569665625,
+            25.9617315,
+            26.2463206875
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 4,
+          "mean": 0.05546874999708962,
+          "p50": 0.053125000005820766,
+          "min": 0.053124999976716936,
+          "max": 0.0625,
+          "samples": [
+            0.053125000005820766,
+            0.053124999976716936,
+            0.0625,
+            0.053125000005820766
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 4,
+          "mean": 23.6015625,
+          "p50": 23.41874999999709,
+          "min": 22.65625,
+          "max": 24.91250000000582,
+          "samples": [
+            24.91250000000582,
+            22.65625,
+            22.756249999976717,
+            24.081250000017462
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 4,
+          "mean": 23.529468773437497,
+          "p50": 23.3424816875,
+          "min": 22.58793603125,
+          "max": 24.8449756875,
+          "samples": [
+            24.8449756875,
+            22.58793603125,
+            22.67276375,
+            24.012199625
+          ]
+        }
+      },
+      "completedRatioBoverA": 0.9683313032887302,
+      "gpuRatioBoverA": 0.9683990345411094
+    },
+    "back-underlight": {
+      "A": {
+        "submitPerDrawMs": {
+          "n": 4,
+          "mean": 0.0546875,
+          "p50": 0.0546875,
+          "min": 0.053125000005820766,
+          "max": 0.056249999994179234,
+          "samples": [
+            0.056249999994179234,
+            0.053125000005820766,
+            0.056249999994179234,
+            0.053125000005820766
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 4,
+          "mean": 22.147656249995634,
+          "p50": 22.046875,
+          "min": 21.87812499998836,
+          "max": 22.61874999999418,
+          "samples": [
+            22.05312500000582,
+            21.87812499998836,
+            22.61874999999418,
+            22.04062499999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 4,
+          "mean": 22.0640972578125,
+          "p50": 21.959036359375,
+          "min": 21.79620115625,
+          "max": 22.54211515625,
+          "samples": [
+            21.98065021875,
+            21.79620115625,
+            22.54211515625,
+            21.9374225
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 4,
+          "mean": 0.056249999994179234,
+          "p50": 0.056249999994179234,
+          "min": 0.053125000005820766,
+          "max": 0.0593749999825377,
+          "samples": [
+            0.056249999994179234,
+            0.056249999994179234,
+            0.053125000005820766,
+            0.0593749999825377
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 4,
+          "mean": 22.99453124999127,
+          "p50": 23.01406249999127,
+          "min": 21.76874999998836,
+          "max": 24.18124999999418,
+          "samples": [
+            21.76874999998836,
+            22.97187499998836,
+            23.05624999999418,
+            24.18124999999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 4,
+          "mean": 22.922151109375,
+          "p50": 22.94217659375,
+          "min": 21.69933403125,
+          "max": 24.10491721875,
+          "samples": [
+            21.69933403125,
+            22.90228078125,
+            22.98207240625,
+            24.10491721875
+          ]
+        }
+      },
+      "completedRatioBoverA": 1.0382376803412687,
+      "gpuRatioBoverA": 1.038889143822038
+    }
+  },
+  "pairedBlocks": [
+    {
+      "view": "front-toplight",
+      "cycle": 0,
+      "order": "ABBA",
+      "completedRatioBoverA": 1.0111463976588697,
+      "gpuRatioBoverA": 1.0121361422713204,
+      "A": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.10624999999708962,
+          "p50": 0.10624999999708962,
+          "min": 0.10312499999417923,
+          "max": 0.109375,
+          "samples": [
+            0.109375,
+            0.10312499999417923
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 25.09218749999127,
+          "p50": 25.09218749999127,
+          "min": 22.86249999998836,
+          "max": 27.32187499999418,
+          "samples": [
+            22.86249999998836,
+            27.32187499999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 24.9473645625,
+          "p50": 24.9473645625,
+          "min": 22.739733375,
+          "max": 27.15499575,
+          "samples": [
+            22.739733375,
+            27.15499575
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.10312499999417923,
+          "p50": 0.10312499999417923,
+          "min": 0.0906249999825377,
+          "max": 0.11562500000582077,
+          "samples": [
+            0.11562500000582077,
+            0.0906249999825377
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 25.37187499999709,
+          "p50": 25.37187499999709,
+          "min": 22.793749999982538,
+          "max": 27.95000000001164,
+          "samples": [
+            27.95000000001164,
+            22.793749999982538
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 25.250129328125,
+          "p50": 25.250129328125,
+          "min": 22.6843764375,
+          "max": 27.81588221875,
+          "samples": [
+            27.81588221875,
+            22.6843764375
+          ]
+        }
+      }
+    },
+    {
+      "view": "front-toplight",
+      "cycle": 0,
+      "order": "BAAB",
+      "completedRatioBoverA": 0.9167878787874273,
+      "gpuRatioBoverA": 0.9157109613661085,
+      "A": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.08281249999708962,
+          "p50": 0.08281249999708962,
+          "min": 0.078125,
+          "max": 0.08749999999417923,
+          "samples": [
+            0.078125,
+            0.08749999999417923
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 25.78125,
+          "p50": 25.78125,
+          "min": 25.46875,
+          "max": 26.09375,
+          "samples": [
+            26.09375,
+            25.46875
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 25.686446609375,
+          "p50": 25.686446609375,
+          "min": 25.37032859375,
+          "max": 26.002564625,
+          "samples": [
+            26.002564625,
+            25.37032859375
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.09374999998544808,
+          "p50": 0.09374999998544808,
+          "min": 0.08437499997671694,
+          "max": 0.10312499999417923,
+          "samples": [
+            0.10312499999417923,
+            0.08437499997671694
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 23.63593749998836,
+          "p50": 23.63593749998836,
+          "min": 23.04062499999418,
+          "max": 24.231249999982538,
+          "samples": [
+            24.231249999982538,
+            23.04062499999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 23.52136071875,
+          "p50": 23.52136071875,
+          "min": 22.92639259375,
+          "max": 24.11632884375,
+          "samples": [
+            24.11632884375,
+            22.92639259375
+          ]
+        }
+      }
+    },
+    {
+      "view": "front-underlight",
+      "cycle": 0,
+      "order": "ABBA",
+      "completedRatioBoverA": 1.0708363732836774,
+      "gpuRatioBoverA": 1.0708574942460762,
+      "A": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.06875000000582077,
+          "p50": 0.06875000000582077,
+          "min": 0.05937500001164153,
+          "max": 0.078125,
+          "samples": [
+            0.078125,
+            0.05937500001164153
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 23.55781250000291,
+          "p50": 23.55781250000291,
+          "min": 21.609375,
+          "max": 25.50625000000582,
+          "samples": [
+            21.609375,
+            25.50625000000582
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 23.414023,
+          "p50": 23.414023,
+          "min": 21.51432984375,
+          "max": 25.31371615625,
+          "samples": [
+            21.51432984375,
+            25.31371615625
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.13593750000291038,
+          "p50": 0.13593750000291038,
+          "min": 0.06875000000582077,
+          "max": 0.203125,
+          "samples": [
+            0.06875000000582077,
+            0.203125
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 25.2265625,
+          "p50": 25.2265625,
+          "min": 23.45000000001164,
+          "max": 27.00312499998836,
+          "samples": [
+            23.45000000001164,
+            27.00312499998836
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 25.073082,
+          "p50": 25.073082,
+          "min": 23.36200253125,
+          "max": 26.78416146875,
+          "samples": [
+            23.36200253125,
+            26.78416146875
+          ]
+        }
+      }
+    },
+    {
+      "view": "front-underlight",
+      "cycle": 0,
+      "order": "BAAB",
+      "completedRatioBoverA": 1.0219803078631133,
+      "gpuRatioBoverA": 1.021691722425543,
+      "A": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.0546875,
+          "p50": 0.0546875,
+          "min": 0.046875,
+          "max": 0.0625,
+          "samples": [
+            0.046875,
+            0.0625
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 22.53437500000291,
+          "p50": 22.53437500000291,
+          "min": 22.38750000001164,
+          "max": 22.68124999999418,
+          "samples": [
+            22.38750000001164,
+            22.68124999999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 22.4632115625,
+          "p50": 22.4632115625,
+          "min": 22.325405625,
+          "max": 22.6010175,
+          "samples": [
+            22.325405625,
+            22.6010175
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.06250000001455192,
+          "p50": 0.06250000001455192,
+          "min": 0.0500000000174623,
+          "max": 0.07500000001164153,
+          "samples": [
+            0.07500000001164153,
+            0.0500000000174623
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 23.02968750000582,
+          "p50": 23.02968750000582,
+          "min": 22.93437500001164,
+          "max": 23.125,
+          "samples": [
+            22.93437500001164,
+            23.125
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 22.9504773125,
+          "p50": 22.9504773125,
+          "min": 22.84544021875,
+          "max": 23.05551440625,
+          "samples": [
+            22.84544021875,
+            23.05551440625
+          ]
+        }
+      }
+    },
+    {
+      "view": "back-toplight",
+      "cycle": 0,
+      "order": "ABBA",
+      "completedRatioBoverA": 1.053863195790497,
+      "gpuRatioBoverA": 1.054507744573241,
+      "A": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.060937500005820766,
+          "p50": 0.060937500005820766,
+          "min": 0.053125000005820766,
+          "max": 0.06875000000582077,
+          "samples": [
+            0.053125000005820766,
+            0.06875000000582077
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 22.56875000000582,
+          "p50": 22.56875000000582,
+          "min": 21.61562500000582,
+          "max": 23.52187500000582,
+          "samples": [
+            23.52187500000582,
+            21.61562500000582
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 22.490546875,
+          "p50": 22.490546875,
+          "min": 21.52569665625,
+          "max": 23.45539709375,
+          "samples": [
+            23.45539709375,
+            21.52569665625
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.05312499999126885,
+          "p50": 0.05312499999126885,
+          "min": 0.053124999976716936,
+          "max": 0.053125000005820766,
+          "samples": [
+            0.053125000005820766,
+            0.053124999976716936
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 23.78437500000291,
+          "p50": 23.78437500000291,
+          "min": 22.65625,
+          "max": 24.91250000000582,
+          "samples": [
+            24.91250000000582,
+            22.65625
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 23.716455859375,
+          "p50": 23.716455859375,
+          "min": 22.58793603125,
+          "max": 24.8449756875,
+          "samples": [
+            24.8449756875,
+            22.58793603125
+          ]
+        }
+      }
+    },
+    {
+      "view": "back-toplight",
+      "cycle": 0,
+      "order": "BAAB",
+      "completedRatioBoverA": 0.8945923361587165,
+      "gpuRatioBoverA": 0.8942100196984102,
+      "A": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.05312499999126885,
+          "p50": 0.05312499999126885,
+          "min": 0.04999999998835847,
+          "max": 0.056249999994179234,
+          "samples": [
+            0.04999999998835847,
+            0.056249999994179234
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 26.17812499999127,
+          "p50": 26.17812499999127,
+          "min": 26.03437499998836,
+          "max": 26.32187499999418,
+          "samples": [
+            26.03437499998836,
+            26.32187499999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 26.10402609375,
+          "p50": 26.10402609375,
+          "min": 25.9617315,
+          "max": 26.2463206875,
+          "samples": [
+            25.9617315,
+            26.2463206875
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.05781250000291038,
+          "p50": 0.05781250000291038,
+          "min": 0.053125000005820766,
+          "max": 0.0625,
+          "samples": [
+            0.0625,
+            0.053125000005820766
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 23.41874999999709,
+          "p50": 23.41874999999709,
+          "min": 22.756249999976717,
+          "max": 24.081250000017462,
+          "samples": [
+            22.756249999976717,
+            24.081250000017462
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 23.3424816875,
+          "p50": 23.3424816875,
+          "min": 22.67276375,
+          "max": 24.012199625,
+          "samples": [
+            22.67276375,
+            24.012199625
+          ]
+        }
+      }
+    },
+    {
+      "view": "back-underlight",
+      "cycle": 0,
+      "order": "ABBA",
+      "completedRatioBoverA": 1.0184236733528558,
+      "gpuRatioBoverA": 1.0188401726390721,
+      "A": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.0546875,
+          "p50": 0.0546875,
+          "min": 0.053125000005820766,
+          "max": 0.056249999994179234,
+          "samples": [
+            0.056249999994179234,
+            0.053125000005820766
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 21.96562499999709,
+          "p50": 21.96562499999709,
+          "min": 21.87812499998836,
+          "max": 22.05312500000582,
+          "samples": [
+            22.05312500000582,
+            21.87812499998836
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 21.8884256875,
+          "p50": 21.8884256875,
+          "min": 21.79620115625,
+          "max": 21.98065021875,
+          "samples": [
+            21.98065021875,
+            21.79620115625
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.056249999994179234,
+          "p50": 0.056249999994179234,
+          "min": 0.056249999994179234,
+          "max": 0.056249999994179234,
+          "samples": [
+            0.056249999994179234,
+            0.056249999994179234
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 22.37031249998836,
+          "p50": 22.37031249998836,
+          "min": 21.76874999998836,
+          "max": 22.97187499998836,
+          "samples": [
+            21.76874999998836,
+            22.97187499998836
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 22.30080740625,
+          "p50": 22.30080740625,
+          "min": 21.69933403125,
+          "max": 22.90228078125,
+          "samples": [
+            21.69933403125,
+            22.90228078125
+          ]
+        }
+      }
+    },
+    {
+      "view": "back-underlight",
+      "cycle": 0,
+      "order": "BAAB",
+      "completedRatioBoverA": 1.057728640403066,
+      "gpuRatioBoverA": 1.0586213820139296,
+      "A": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.0546875,
+          "p50": 0.0546875,
+          "min": 0.053125000005820766,
+          "max": 0.056249999994179234,
+          "samples": [
+            0.056249999994179234,
+            0.053125000005820766
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 22.32968749999418,
+          "p50": 22.32968749999418,
+          "min": 22.04062499999418,
+          "max": 22.61874999999418,
+          "samples": [
+            22.61874999999418,
+            22.04062499999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 22.239768828125,
+          "p50": 22.239768828125,
+          "min": 21.9374225,
+          "max": 22.54211515625,
+          "samples": [
+            22.54211515625,
+            21.9374225
+          ]
+        }
+      },
+      "B": {
+        "submitPerDrawMs": {
+          "n": 2,
+          "mean": 0.056249999994179234,
+          "p50": 0.056249999994179234,
+          "min": 0.053125000005820766,
+          "max": 0.0593749999825377,
+          "samples": [
+            0.053125000005820766,
+            0.0593749999825377
+          ]
+        },
+        "completedPerDrawMs": {
+          "n": 2,
+          "mean": 23.61874999999418,
+          "p50": 23.61874999999418,
+          "min": 23.05624999999418,
+          "max": 24.18124999999418,
+          "samples": [
+            23.05624999999418,
+            24.18124999999418
+          ]
+        },
+        "gpuPerDrawMs": {
+          "n": 2,
+          "mean": 23.5434948125,
+          "p50": 23.5434948125,
+          "min": 22.98207240625,
+          "max": 24.10491721875,
+          "samples": [
+            22.98207240625,
+            24.10491721875
+          ]
+        }
+      }
+    }
+  ],
+  "loadedArtifacts": [
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/vendor/three/build/three.module.js",
+      "sha256": "941d498aa2f84e571501b2a9de90bed8736307511a877d3f260132d82b38e677",
+      "bytes": 612504
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/src/world/level.js",
+      "sha256": "3f03dae1c7c752cb6c7d1a5e9acd4ee58520f8f6eaa1113be10197ffa8e08536",
+      "bytes": 12227
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/src/world/maps.js",
+      "sha256": "42763c2fde4acbbb9bad3b44fa52365b15cc6c7888467836572aaccd3da50394",
+      "bytes": 10162
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/patches/native-stages/runtime/registry.mjs",
+      "sha256": "858fb78ea93cd0dfe7c8aa5088a0e24277cd7f260e22883de6cd091035d2b6c9",
+      "bytes": 3628
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/src/world/mapkit.js",
+      "sha256": "5e4a4233aa01ecd42de7cdb1fe88f63b3982e53635bb30a31a48f20ea5a3aab5",
+      "bytes": 1702
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/src/world/stages/cargo/layout.js",
+      "sha256": "9b0656d4125bf053003d7cbf79aad2c8a3e017f88fa2fae6615a51dab5c93cff",
+      "bytes": 8205
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/patches/practice-range/stage/layout.mjs",
+      "sha256": "90e256a3f42588df81fd156bc23b28ae429000b71e25bc9c7a0e8cb10b2f7320",
+      "bytes": 6330
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/patches/splatoon3/stage/scorch-layout.mjs",
+      "sha256": "eba846284eaaadbece090b9e02fc8b1a8422b8004e0dacfaac5fecc94c4f59f3",
+      "bytes": 3099
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/patches/native-stages/runtime/build-config.mjs",
+      "sha256": "3e11918969c69a00c2b02c27c2645e6b985380d3275954b8196b40e585ff7994",
+      "bytes": 20293
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/src/world/stages/cargo/surfaces.js",
+      "sha256": "2dd4cf9e953384538fba591d2124d26acd00937d03a47384e9d8953b18daf475",
+      "bytes": 7716
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/patches/practice-range/stage/surfaces.mjs",
+      "sha256": "941aace332e11a33e80eea62d70c0a4c64c518e606e87f0d1b2e7f38e76588ee",
+      "bytes": 2392
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/patches/practice-range/stage/zones.mjs",
+      "sha256": "cd0fdc4a97901a993578985463ec2068831d6cc69e4fd1963c6b34b193ca97df",
+      "bytes": 7220
+    },
+    {
+      "variant": "A",
+      "path": "_versions/65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6/src/world/levelMaterial.js",
+      "sha256": "78f592c653101f94755185448f762aa0b8fdbe98b68bfe5f2cc9715b430005e7",
+      "bytes": 37007
+    },
+    {
+      "variant": "A",
+      "path": "_versions/65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6/src/world/texlib.js",
+      "sha256": "488a322754c070959abc02a8948dc1d486d5b447e4ca8e0b9d17590c3b304ad2",
+      "bytes": 76420
+    },
+    {
+      "variant": "A",
+      "path": "_versions/65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6/src/world/stages/surfaces.js",
+      "sha256": "7e3678a6e21922d45f577bad4e2af7e09f60ec7e37d6727dfc049c2e5f940e20",
+      "bytes": 558
+    },
+    {
+      "variant": "A",
+      "path": "_versions/65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6/src/core/ctx.js",
+      "sha256": "1c56245ee5659b8a7149b2a5e8983509d9c4fab9029aca9b690fa7558779c855",
+      "bytes": 3632
+    },
+    {
+      "variant": "A",
+      "path": "_versions/65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6/src/world/inkShading.js",
+      "sha256": "e3da14ce5c41bcb30fc016a233960699dcb7e2ccc0ea7fc0cd620379e84c57ad",
+      "bytes": 14018
+    },
+    {
+      "variant": "A",
+      "path": "_versions/65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6/src/world/stages/cargo/surfaces.js",
+      "sha256": "2dd4cf9e953384538fba591d2124d26acd00937d03a47384e9d8953b18daf475",
+      "bytes": 7716
+    },
+    {
+      "variant": "A",
+      "path": "_versions/65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6/patches/practice-range/stage/surfaces.mjs",
+      "sha256": "941aace332e11a33e80eea62d70c0a4c64c518e606e87f0d1b2e7f38e76588ee",
+      "bytes": 2392
+    },
+    {
+      "variant": "A",
+      "path": "_versions/65d362c7403c0717b59ee2a807bdb4fab568bf306e044bfc5ac0c2727e1680d6/src/world/mapkit.js",
+      "sha256": "5e4a4233aa01ecd42de7cdb1fe88f63b3982e53635bb30a31a48f20ea5a3aab5",
+      "bytes": 1702
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/src/world/levelMaterial.js",
+      "sha256": "a5ecdbaca75c519e79789d24ef67436b6dabc78e9501eae5464baaa06b50e626",
+      "bytes": 36843
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/src/world/texlib.js",
+      "sha256": "488a322754c070959abc02a8948dc1d486d5b447e4ca8e0b9d17590c3b304ad2",
+      "bytes": 76420
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/src/world/stages/surfaces.js",
+      "sha256": "7e3678a6e21922d45f577bad4e2af7e09f60ec7e37d6727dfc049c2e5f940e20",
+      "bytes": 558
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/src/core/ctx.js",
+      "sha256": "1c56245ee5659b8a7149b2a5e8983509d9c4fab9029aca9b690fa7558779c855",
+      "bytes": 3632
+    },
+    {
+      "variant": "B",
+      "path": "_versions/b5da44e1ba3257eb9ee38a85a1ce125d6dddeb72d12a86745e579ee489d277e8/src/world/inkShading.js",
+      "sha256": "e3da14ce5c41bcb30fc016a233960699dcb7e2ccc0ea7fc0cd620379e84c57ad",
+      "bytes": 14018
+    }
+  ]
+}

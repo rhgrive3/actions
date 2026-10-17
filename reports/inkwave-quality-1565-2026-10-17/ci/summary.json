@@ -1,0 +1,94 @@
+{
+  "capturedAt": "2026-10-17T18:22:01.092990+00:00",
+  "repository": "rhgrive3/actions",
+  "pullRequests": [
+    {
+      "pullRequest": 1566,
+      "headSha": "602774b9caf8a5cbb12290096a09d4d17cc756b0",
+      "validationRun": 39053646849,
+      "validationUrl": "https://github.com/rhgrive3/actions/actions/runs/39053646849",
+      "validationConclusion": "success",
+      "checkCounts": {
+        "skipped": 5,
+        "success": 29
+      },
+      "allEightPatchShards": "success",
+      "core": "success",
+      "aggregateValidate": "success",
+      "browserFamilies": {
+        "active": "success",
+        "catalog": "success",
+        "ui": "success",
+        "responsive": "success",
+        "network": "success",
+        "range": "success",
+        "startup": "success"
+      },
+      "skippedChecks": [
+        {
+          "name": "render-diagnostic",
+          "url": "https://github.com/rhgrive3/actions/actions/runs/39053646849/job/117457469904"
+        },
+        {
+          "name": "paired-game",
+          "url": "https://github.com/rhgrive3/actions/actions/runs/39053646814/job/117457104669"
+        },
+        {
+          "name": "compare",
+          "url": "https://github.com/rhgrive3/actions/actions/runs/39053646811/job/117457104474"
+        },
+        {
+          "name": "single-change-comparison",
+          "url": "https://github.com/rhgrive3/actions/actions/runs/39053646809/job/117457104231"
+        },
+        {
+          "name": "live-ray-equivalence",
+          "url": "https://github.com/rhgrive3/actions/actions/runs/39053646809/job/117457103710"
+        }
+      ],
+      "scope": "Regression checks only; skipped performance jobs are not performance evidence."
+    },
+    {
+      "pullRequest": 1568,
+      "headSha": "fb33e4530b1419b5762ac180ef829360035aff4d",
+      "validationRun": 39053444492,
+      "validationUrl": "https://github.com/rhgrive3/actions/actions/runs/39053444492",
+      "validationConclusion": "success",
+      "checkCounts": {
+        "skipped": 4,
+        "success": 23
+      },
+      "allEightPatchShards": "success",
+      "core": "success",
+      "aggregateValidate": "success",
+      "browserFamilies": {
+        "active": "success",
+        "catalog": "success",
+        "ui": "success",
+        "responsive": "success",
+        "network": "success",
+        "range": "success",
+        "startup": "success"
+      },
+      "skippedChecks": [
+        {
+          "name": "render-diagnostic",
+          "url": "https://github.com/rhgrive3/actions/actions/runs/39053444492/job/117456809445"
+        },
+        {
+          "name": "single-change-comparison",
+          "url": "https://github.com/rhgrive3/actions/actions/runs/39053444468/job/117456549084"
+        },
+        {
+          "name": "live-ray-equivalence",
+          "url": "https://github.com/rhgrive3/actions/actions/runs/39053444468/job/117456541030"
+        },
+        {
+          "name": "paired-game",
+          "url": "https://github.com/rhgrive3/actions/actions/runs/39053444534/job/117456518376"
+        }
+      ],
+      "scope": "Regression checks only; skipped performance jobs are not performance evidence."
+    }
+  ]
+}

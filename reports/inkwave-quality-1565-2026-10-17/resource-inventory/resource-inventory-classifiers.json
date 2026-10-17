@@ -1,0 +1,28 @@
+{
+  "A": {
+    "path": "vendor/three/build/three.module.js",
+    "threeSha256": "941d498aa2f84e571501b2a9de90bed8736307511a877d3f260132d82b38e677",
+    "geometryDispose": {
+      "source": "function a(f){let h=f.target;h.index!==null&&t.remove(h.index);for(let g in h.attributes)t.remove(h.attributes[g]);h.removeEventListener(ab(),a),delete s[h.id];let d=r.get(h);d&&(t.remove(d),r.delete(h)),n.releaseStatesOfGeometry(h),h.isInstancedBufferGeometry===!0&&delete h._maxInstanceCount,e.memory.geometries--}",
+      "sha256": "eb95d2777fb2c17ffd0f734f631bf7692daac692696bbde50a1778dd2f72611b"
+    },
+    "textureDispose": {
+      "source": "function R(w){let _=w.target;_.removeEventListener(ab(),R),E(_),_.isVideoTexture&&u.delete(_),_.isHTMLTexture&&f.delete(_)}",
+      "sha256": "e839240fde631cf97d78e96828a7010201f90bda8b92711d964253c63d96c7ea"
+    },
+    "method": "AST identifies smallest disposal function with memory.geometries-- and releaseStatesOfGeometry; enclosing implementation must attach that exact identifier and increment memory.geometries. Texture callback is the smallest function containing both HTML/video cleanup and listener removal."
+  },
+  "B": {
+    "path": "vendor/three/build/three.module.js",
+    "threeSha256": "941d498aa2f84e571501b2a9de90bed8736307511a877d3f260132d82b38e677",
+    "geometryDispose": {
+      "source": "function a(f){let h=f.target;h.index!==null&&t.remove(h.index);for(let g in h.attributes)t.remove(h.attributes[g]);h.removeEventListener(ab(),a),delete s[h.id];let d=r.get(h);d&&(t.remove(d),r.delete(h)),n.releaseStatesOfGeometry(h),h.isInstancedBufferGeometry===!0&&delete h._maxInstanceCount,e.memory.geometries--}",
+      "sha256": "eb95d2777fb2c17ffd0f734f631bf7692daac692696bbde50a1778dd2f72611b"
+    },
+    "textureDispose": {
+      "source": "function R(w){let _=w.target;_.removeEventListener(ab(),R),E(_),_.isVideoTexture&&u.delete(_),_.isHTMLTexture&&f.delete(_)}",
+      "sha256": "e839240fde631cf97d78e96828a7010201f90bda8b92711d964253c63d96c7ea"
+    },
+    "method": "AST identifies smallest disposal function with memory.geometries-- and releaseStatesOfGeometry; enclosing implementation must attach that exact identifier and increment memory.geometries. Texture callback is the smallest function containing both HTML/video cleanup and listener removal."
+  }
+}

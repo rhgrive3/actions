@@ -32,5 +32,36 @@
       ],
       "gzipDelta": -75
     }
-  ]
+  ],
+  "scope": "All manifest artifacts under _versions/<build.revision>/; includes versioned sw.js and excludes root .nojekyll.",
+  "scopeReconciliation": {
+    "versionedOnly": {
+      "path": "sw.js",
+      "bytes": 13185,
+      "gzip": 4799
+    },
+    "logicalOnly": {
+      "path": ".nojekyll",
+      "bytes": 0,
+      "gzip": 20
+    },
+    "sharedLogicalPathHashesEqual": true
+  },
+  "rootLogicalAssets": {
+    "scope": "Manifest root artifacts excluding _versions/*, index.html and sw.js; includes empty .nojekyll.",
+    "files": [
+      929,
+      929
+    ],
+    "bytes": [
+      62667454,
+      62667290
+    ],
+    "delta": -164,
+    "gzip": [
+      56162283,
+      56162208
+    ],
+    "gzipDelta": -75
+  }
 }

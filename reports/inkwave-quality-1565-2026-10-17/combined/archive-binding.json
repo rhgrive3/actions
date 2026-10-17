@@ -1,0 +1,48 @@
+{
+  "calibration": {
+    "file": "calibration.json.gz",
+    "bytes": 9534588,
+    "sha256": "30c24b1e77f59fa0c716bb7c2a51274c7d6eb94bdc97e03ac0a5f9c940510bd5",
+    "gzipBytes": 1450949,
+    "gzipSha256": "19c291bf641bc9ca9586ee1a8b75bc1819d3b1457276adee991207d4c4d19e8f",
+    "losslessReadback": true,
+    "invocation.json": {
+      "file": "calibration-invocation.json",
+      "bytes": 1186,
+      "sha256": "1fa441e01afd773c890fba72aadafed88ad668b67364e797e0508f9c90c2facb"
+    },
+    "measure-inkwave-quality.mjs": {
+      "file": "calibration-measure-inkwave-quality.mjs",
+      "bytes": 41036,
+      "sha256": "359ed88ab17f84f16986f1668c30a4e86d0aca9d23cbab18bdc07f6d4f11c011"
+    },
+    "inkwave-runtime-evidence.mjs": {
+      "file": "calibration-inkwave-runtime-evidence.mjs",
+      "bytes": 6255,
+      "sha256": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db"
+    }
+  },
+  "measurement": {
+    "file": "measurement.json.gz",
+    "bytes": 19266905,
+    "sha256": "7c150d439c08f962296a80eea2a24e3e83ba5fcd6d9ee4f1fa3bcc77c052ad6a",
+    "gzipBytes": 2899174,
+    "gzipSha256": "38934c6bb264a71a1f8f0882855423c16a196b3fc5d09b971f8eef5048119555",
+    "losslessReadback": true,
+    "invocation.json": {
+      "file": "measurement-invocation.json",
+      "bytes": 1304,
+      "sha256": "1723c07044dc32270df0d52d866e423a3eaeda98147e3f6ccd1195939a998862"
+    },
+    "measure-inkwave-quality.mjs": {
+      "file": "measurement-measure-inkwave-quality.mjs",
+      "bytes": 41036,
+      "sha256": "359ed88ab17f84f16986f1668c30a4e86d0aca9d23cbab18bdc07f6d4f11c011"
+    },
+    "inkwave-runtime-evidence.mjs": {
+      "file": "measurement-inkwave-runtime-evidence.mjs",
+      "bytes": 6255,
+      "sha256": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db"
+    }
+  }
+}

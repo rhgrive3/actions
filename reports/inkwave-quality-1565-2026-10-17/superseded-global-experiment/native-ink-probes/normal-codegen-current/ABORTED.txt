@@ -1,0 +1,1 @@
+Aborted during boot, before measured batches, because Playwright selected an OS-temporary profile directory. No timing result. Subsequent attempts use persistent .ci-scratch/np storage.

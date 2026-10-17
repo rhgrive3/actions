@@ -1,0 +1,37 @@
+[
+  {
+    "name": "motion-matching",
+    "url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/motion-matching-in-unreal-engine",
+    "status": 200,
+    "bytes": 206197,
+    "sha256": "37e91a567126dd9c4b7e3268e01e1c4f48ab1c1c31c240ba9a4e8f3966499633",
+    "snippets": [
+      "rajectory \n\n The Trajectory Channel is used for sampling a character\u2019s movement trajectory and is designed to be used in conjunction with the  Character Trajectory  blueprint component. Using the  Weight  property you can set the amount of influence the Trajectory Channel has over the final output pose. With the Samples property you can add samples from points in time on the Ch",
+      "haracter's legs when in motion by selecting poses that keeps the limbs at a set distance apart. This is calculated using the angle between the direction from the  LeftThigh  position to the  RightThigh  position, and the direction from the  LeftFoot  position to the  RightFoot  position, which is then divided it by PI to have values within the set range of  -1.0  to  1.0 . This",
+      " Engine is a query-based animation pose selection system. Contained within the  Pose Search  plugin, you can use the Motion Matching   Animation Blueprint  node as a dynamic alternative to  State Machines , or  Blendspaces . Unlike traditional animation systems, Motion Matching can make informed animation pose selections from a set of animation data, to create a responsive and "
+    ]
+  },
+  {
+    "name": "pose-warping",
+    "url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/pose-warping-in-unreal-engine",
+    "status": 200,
+    "bytes": 120481,
+    "sha256": "b857886f4c985eebf996b0ee4b735135ae190e6f79f8bde949b0cbd229674b13",
+    "snippets": [
+      "tation to adjust animations to match Root Motion in unique ways. \n\n \n \n   \n     Orientation Warping \n   \n   \n     Stride Warping \n   \n   \n     Slope Warping \n   \n \n\n Within the properties of each node, many parameters can be defined through a  Manual Evaluation  mode of control over the generation of these warps. A  Graph Evaluation  mode is also present and can define these pa",
+      "ch Root Motion in unique ways. \n\n \n \n   \n     Orientation Warping \n   \n   \n     Stride Warping \n   \n   \n     Slope Warping \n   \n \n\n Within the properties of each node, many parameters can be defined through a  Manual Evaluation  mode of control over the generation of these warps. A  Graph Evaluation  mode is also present and can define these parameters automatically. \n\n General",
+      "n.\n Pelvis Adjustment Error Tolerance : Specifies that if the pelvis adjustment distance is incrementing at a value lower or equal to this value for each iteration, the solve will halt. Lower values will marginally increase visual quality at the cost of performance, but may require a higher PelvisAdjustmentMaxIter to be specified.\n Pelvis Adjustment Max Iter : Specifies the max"
+    ]
+  },
+  {
+    "name": "distance-matching",
+    "url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/distance-matching-in-unreal-engine",
+    "status": 200,
+    "bytes": 92214,
+    "sha256": "b72d7bee753281931148ba4e68e930b50b117933ea6ef9125ac7112c214c8b66",
+    "snippets": [
+      "ve, triangles representing keyframes are consistently displaced along the curve trajectory (the green line). However, a pose can be selected at any point on a trajectory, not only at the keyframe intersections. Using Distance Matching, the  Animation Blueprint  searches the Animation Curve to find the indexed value, denoted by the distance variable, and outputs the correspondin",
+      "e With  Distance Matching ,  Animation Sequences  can be driven by a calculated distance variable rather than time-based linear playback. This document provides an overview of Distance Matching, and a workflow example demonstrating the implementation process. \n\n Prerequisites \n\n \n   Enable the  Animation Locomotion Library   Plugin . Navigate in the  Menu Bar  to  Edit > Plugin"
+    ]
+  }
+]
