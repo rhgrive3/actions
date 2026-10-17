@@ -108,7 +108,8 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
   for(const s of [-1,1]){
     // Broad triangular earpiece, thin in profile; face plane looks slightly forward.
     const verts=[[s*.181,.249,.002],[s*.300,.154,.015],[s*.185,.090,.035]];
-    const earBody=prism(s<0?verts.slice().reverse():verts,.035);
+    // Prism expects CCW XY vertices: back must face -Z on both mirrored ears.
+    const earBody=prism(s>0?verts.slice().reverse():verts,.035);
     // Replace the front cap with a printed face in exactly the same plane.
     const bodyIndices=Array.from(earBody.index.array);earBody.setIndex(bodyIndices.filter((_,i)=>Math.floor(i/3)!==1));
     add(`triangular-earpiece-${s}`,earBody,mats.trim);
