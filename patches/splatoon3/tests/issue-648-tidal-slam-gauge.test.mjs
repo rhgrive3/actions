@@ -209,12 +209,14 @@ test('the composed Character visual observer and a remote proxy do not duplicate
   assert.equal(f.specialMotionSnapshot(remote.character).phase, 'native-unmapped');
 });
 
-test('Storm retains its existing immediate-consume behavior', async () => {
+test('Storm retains its full held reserve without permitting a second activation', async () => {
   const { f, a } = await slam({ weapon: 'charger' });
   assert.equal(a.weapon.special, 'storm');
-  assert.equal(a.special, 0, 'the non-Slam helper created only a fixture actor');
+  const cost=a.specialCost();
+  assert.equal(a.special, cost, 'native Storm startup retains the reserve until operation');
+  assert.equal(a.specialReady(), false);
   a._updateSpecial(STEP);
-  assert.equal(a.special, 0);
+  assert.equal(a.special, cost);
   assert.equal(a.specialActive.id, 'storm');
 });
 

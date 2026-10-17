@@ -170,15 +170,45 @@ export async function checkWinnerPodium({page,evidence,sourceSha,contentHash}) {
 }
 
 export async function checkHudAuthority({ page, evidence, sourceSha = null, contentHash = null }) {
-  const result = await page.evaluate(async () => {
+  const viewport=page.viewportSize();let result;
+  // A previous acceptance probe may leave a legitimate spent-gauge owner even
+  // after its body animation. Use a real fresh Actor for neutral fractions;
+  // never clear private gameplay claims from the live player to make HUD ready.
+  await page.evaluate(async()=>{
+    const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
+    const {Actor}=await import(new URL('src/game/actor.js',document.baseURI).href);
+    const g=G.game,m=g.match,local=m.local;
+    if(G.netm||!g.frozen||G.match!==m)throw Error('HUD authority probe requires the frozen offline native match');
+    const actor=new Actor({team:local.team,name:'HUD authority fixture',weapon:local.weaponId,isLocal:true,
+      slot:local.slot,CharacterClass:g.CharacterClass,style:{...local.character.style}});
+    actor.pos.copy(local.pos);actor.aimDir.copy(local.aimDir);actor.aimPoint.copy(local.aimPoint);
+    globalThis.__hudGaugeActorFixture={actor,match:m,local,globalLocal:G.local,special:local.special,active:local.specialActive,specials:local.stats.specials};
+    m.local=G.local=actor;
+  });
+  try {
+  result = await page.evaluate(async () => {
     const { G } = await import(new URL('src/core/ctx.js', document.baseURI).href);
+    const {WEAPONS}=await import(new URL('src/config.js',document.baseURI).href);
+    const {clearSpecialGaugeLocks,specialGaugeLocked,preOperationGaugeState}=await import(new URL('patches/splatoon3/runtime/tacticooler-gauge.mjs',document.baseURI).href);
     const g=G.game,a=g.match.local,h=g.hud;
     if(!h.sp.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}))throw Error('Desktop special gauge is hidden');
-    const saved={special:a.special,active:a.specialActive};
-    const frames=[];
+    const saved={special:a.special,weapon:a.weaponId},frames=[],negativeControls=[];
     try {
+      for(const [id,held]of [['waveBreaker',true],['tentaMissiles',false]]){
+        const weapon=Object.keys(WEAPONS).find(key=>WEAPONS[key].special===id);
+        if(!weapon)throw Error('HUD negative control lacks native '+id+' kit');
+        a.setWeapon(weapon);a.special=a.specialCost();a._startSpecial();
+        if(held?!preOperationGaugeState(a):!specialGaugeLocked(a))throw Error('HUD negative control did not establish '+id+' ownership');
+        if(!held){a.reset();if(a.specialActive||!specialGaugeLocked(a))throw Error('Real reset must retain the fixed deployed lock');}
+        g._updateHud(1/60);
+        const filled=h.sp.querySelectorAll('.iw-sp__segment.is-filled').length,ready=h.sp.classList.contains('is-ready');
+        if(filled!==23||ready||a.specialReady())throw Error('Native active/lock HUD negative control failed: '+id);
+        negativeControls.push({id,held,filled,ready});a.reset();clearSpecialGaugeLocks(a);
+      }
+      a.setWeapon(saved.weapon);a.reset();
+      if(preOperationGaugeState(a)||specialGaugeLocked(a)||a.specialActive)throw Error('Native HUD fixture did not return to a neutral state');
       for(const [fraction,ready,filled] of [[0,false,0],[.47,false,10],[.9999,false,22],[1,true,23],[1,true,23],[0,false,0],[.5,false,11]]){
-        a.specialActive=null;a.special=a.specialCost()*fraction;g._updateHud(1/60);
+        a.special=a.specialCost()*fraction;g._updateHud(1/60);
         const count=h.sp.querySelectorAll('.iw-sp__segment').length;
         const lit=h.sp.querySelectorAll('.iw-sp__segment.is-filled').length;
         const isReady=h.sp.classList.contains('is-ready');
@@ -189,10 +219,9 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
         if(!color||color==='none')throw Error('Segment has no paint');
         frames.push({fraction,count,lit,isReady,color});
       }
-    } finally {a.special=saved.special;a.specialActive=saved.active;g._updateHud(1/60);}
-    return {frames};
+    } finally {a.reset();clearSpecialGaugeLocks(a);a.setWeapon(saved.weapon);a.special=saved.special;g._updateHud(1/60);}
+    return {frames,negativeControls,neutralNativeActor:true};
   });
-  const viewport=page.viewportSize();
   try {
     for(const width of [1280]){
       await page.setViewportSize({width,height:width===375?812:800});
@@ -219,14 +248,14 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
       const {MobileInput}=await import(new URL('src/core/mobile.js',document.baseURI).href);
       const g=G.game,a=g.match.local,original=g.input.mobile;
       const m=original.root?original:new MobileInput(original.canvas,g.input);
-      const saved={original,m,created:m!==original,inputActive:m.active,device:g.input.lastDevice,special:a.special,active:a.specialActive,visible:m.visible,touch:document.documentElement.classList.contains('iw-touch-ui')};
+      const saved={original,m,created:m!==original,inputActive:m.active,device:g.input.lastDevice,special:a.special,visible:m.visible,touch:document.documentElement.classList.contains('iw-touch-ui')};
       globalThis.__hudTouchFixture=saved;
       m.active=true;if(!m.root)m._install();
       g.input.mobile=m;g.input.lastDevice='touch';document.documentElement.classList.add('iw-touch-ui');m.setVisible(true);
       if(resumeForTouch)g.resume();
       const rows=[];
       for(const [fraction,ready,filled]of [[0,false,0],[.47,false,10],[.99999,false,22],[1,true,23],[1,true,23],[0,false,0],[.47,false,10]]){
-        a.specialActive=null;a.special=a.specialCost()*fraction;g._updateHud(1/60);
+        a.special=a.specialCost()*fraction;g._updateHud(1/60);
         const count=m.els.special.querySelectorAll('.iwm-sp-segment').length;
         const lit=m.els.special.querySelectorAll('.iwm-sp-segment.is-filled').length;
         if(count!==23||lit!==filled||m.els.special.classList.contains('is-ready')!==ready)throw Error('Touch special segment state drift');
@@ -250,9 +279,20 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
     await page.evaluate(async()=>{
       const s=globalThis.__hudTouchFixture;if(!s)return;
       const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
-      G.game.input.mobile=s.original;G.game.input.lastDevice=s.device;G.game.match.local.special=s.special;G.game.match.local.specialActive=s.active;
+      G.game.input.mobile=s.original;G.game.input.lastDevice=s.device;G.game.match.local.special=s.special;
       if(s.created)s.m.destroy();else {s.m.active=s.inputActive;s.m.setVisible(s.visible);}
       document.documentElement.classList.toggle('iw-touch-ui',s.touch);G.game._updateHud(1/60);delete globalThis.__hudTouchFixture;
+    });
+    if(viewport)await page.setViewportSize(viewport);
+  }
+  } finally {
+    await page.evaluate(async()=>{
+      const s=globalThis.__hudGaugeActorFixture;if(!s)return;
+      const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
+      const {clearSpecialGaugeLocks}=await import(new URL('patches/splatoon3/runtime/tacticooler-gauge.mjs',document.baseURI).href);
+      try {s.actor.reset();clearSpecialGaugeLocks(s.actor);s.actor.character.dispose();}
+      finally {s.match.local=s.local;G.local=s.globalLocal;delete globalThis.__hudGaugeActorFixture;G.game._updateHud(1/60);}
+      if(G.game.match!==s.match||s.local.special!==s.special||s.local.specialActive!==s.active||s.local.stats.specials!==s.specials)throw Error('HUD fixture changed the original live actor');
     });
     if(viewport)await page.setViewportSize(viewport);
   }
