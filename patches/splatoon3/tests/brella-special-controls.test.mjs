@@ -65,7 +65,7 @@ test('marker and device specials use a sub release, with Triple Inkstrike forbid
 
 test('Super Chump holds aim until fire, deploys twelve, and cancels unlaunched at deadline',async()=>{
  const f=await boot(),a=actor(f,'shooter','superChump');a._startSpecial();step(f,a,180);assert.ok(a.specialActive);assert.equal((f.G.projectiles._s3AllSpecialObjects||[]).length,0);
- a.intent.fire=true;step(f,a);assert.equal(f.G.projectiles._s3AllSpecialObjects.filter(o=>o.kind==='decoy').length,12);a.character.dispose();
+ a.intent.fire=true;step(f,a);assert.equal((f.G.projectiles._s3AllSpecialObjects||[]).length,0,'13F sourced throw wind-up precedes births');step(f,a,12);assert.equal((f.G.projectiles._s3AllSpecialObjects||[]).length,0);step(f,a);assert.equal(f.G.projectiles._s3AllSpecialObjects.filter(o=>o.kind==='decoy').length,12);a.character.dispose();
  const b=actor(f,'shooter','superChump');b._startSpecial();step(f,b,636);assert.equal(b.specialActive,null);assert.equal((f.G.projectiles._s3AllSpecialObjects||[]).length,0);b.character.dispose();
 });
 

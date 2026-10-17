@@ -406,16 +406,6 @@ export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capac
 function fireInk(R, p, kind, f, G, system) {
   p.s3FireSeed = p.seed;
   if (!(p.age < 4 / 60) || !p.start) return;
-  // Every Brella pellet shares the physical volley object, but its individual
-  // spread offset can exceed the legacy 0.08-unit muzzle proximity heuristic.
-  // Gate the decorative firing sheet by volley identity without suppressing
-  // any individual projectile or altering its physics, seed, paint or damage.
-  const volley = kind === 'pellet' ? p.catalog?.volley : null;
-  if (volley && typeof volley === 'object') {
-    const fired = R.firedPelletVolleys || (R.firedPelletVolleys = new WeakSet());
-    if (fired.has(volley)) return;
-    fired.add(volley);
-  }
   const time = Number.isFinite(G?.time) ? G.time : 0, last = R.lastFire;
   // Sourced Brella offsets and Stringer nock margins give one action several
   // start positions. Use its existing native identity, never a time bucket:

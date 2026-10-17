@@ -1,3 +1,4 @@
+import { splashdownProtected } from '../../splatoon3/runtime/splashdown-network.mjs';
 import { acceptPaintTick, forgetPaintPeer } from '../../splatoon3/runtime/paint-packet-codec.mjs';
 import { objectShredderEquipped, withObjectHitGear, OBJECT_SHREDDER_FLAG } from '../../splatoon3/runtime/object-gear.mjs';
 import assert from 'node:assert/strict';
@@ -34,10 +35,10 @@ function sourceFunction(name) {
 const productionPackActor = new Function(
   'PLAYER', 'F', 'SPAWN_ARMOR_FLAG', 'RESPAWN_PUNISHER_FLAG', 'chargerSightVisible', 'slamProtected',
   'spawnProtectionRemaining', 'respawnPunisherEquipped', 'swimTrailVisible', 'swimSplashVisible', 'r2', 'r3',
-  'packAdoptionState', 'packC1088SurgePresentation', 'objectShredderEquipped', 'OBJECT_SHREDDER_FLAG',
+  'packAdoptionState', 'packC1088SurgePresentation', 'objectShredderEquipped', 'OBJECT_SHREDDER_FLAG', 'splashdownProtected',
   `${hitAuthoritySource}\n${sourceFunction('packActor')}\nreturn packActor;`,
 )({ hp: 100 }, {}, 0, 0, () => false, () => false, () => 0, () => false, () => true, () => true,
-  (x) => Math.round(x * 100) / 100, (x) => Math.round(x * 1000) / 1000, () => null, () => null, objectShredderEquipped, OBJECT_SHREDDER_FLAG);
+  (x) => Math.round(x * 100) / 100, (x) => Math.round(x * 1000) / 1000, () => null, () => null, objectShredderEquipped, OBJECT_SHREDDER_FLAG, splashdownProtected);
 const productionUnpackActor = new Function('PLAYER',
   `${hitAuthoritySource}\n${sourceFunction('unpackActor')}\nreturn unpackActor;`,
 )({ hp: 100 });
