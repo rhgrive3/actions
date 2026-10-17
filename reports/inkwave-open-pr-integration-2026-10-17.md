@@ -2,9 +2,9 @@
 
 ## Scope
 
-Integrate #1547 (profile/start/roster recovery), #1550 (remaining weapon variants and opponent palettes), #1556 (Crab Tank and simultaneous touch/gyro), #1561 (shared CI fixtures and volley rendering), and #1562 (body proportions and ready stance) in one branch based on main `85acc45d`.
+Integrate #1547 (profile/start/roster recovery), #1550 (remaining weapon variants and opponent palettes), #1556 (Crab Tank and simultaneous touch/gyro), #1561 (shared CI fixtures and volley rendering), #1562 (body proportions and ready stance), and #1563 (weapon holds, visual handoff and shorter torso) in one branch based on main `85acc45d`.
 
-PR #1563 is owned by the concurrent task and is not merged here; its shared ancestor #1562 is included. PR #401 is excluded. Source PR histories are retained with merge commits. No changes are made to `inkwave-public/`.
+The owner subsequently requested #1563 too; its latest head `d31dc8eb` is included through merge `2a821bed`. Only PR #401 is excluded. Source PR histories are retained with merge commits. No changes are made to `inkwave-public/`.
 
 ## Conflict resolution
 
@@ -56,3 +56,14 @@ The source-motion walking coverage was35 supported frames against a36-frame mini
 The enlarged/lowered head also exposed actual Rainmaker tail/skin triangle intersections for native Shooter/Dualies carriers. Translate only the fish outline forward4cm, lengthen its existing12-triangle support by the same amount, and keep the native fist origin unchanged. Geometry stays444 triangles /15948 bytes /one draw; model metadata advances to revision3. Rule state, Actor/hand matrices, aim, shot origins and visibility/disposal ownership remain under their existing owners. The independent mesh/skin intersection and exact hand-attachment assertions remain strict.
 
 The overlapping fixture repair arrived independently on the shared integration branch as `aebef1d2`. Retain that commit and its explicit native-guard assertion, using its narrower Character/weapon-definition adapter scope rather than overwriting it. Its seven portrait checks pass locally. Rainmaker's final4cm candidate passes all10 geometry/carrier tests, covering all three weapons and both teams for90 ticks each with zero head/chest solid penetration, zero selected skin/fish triangle intersections, exact hand attachment and single resource disposal.
+
+
+## #1563 addition
+
+The latest weapon-hold branch is included in this same integration PR, retaining its pre-face shoulder-drop ordering and all prior integration fixes. Bind the real splashdown protection function once in the shared network fixture; keep both behavioral records and refresh only the reviewed installer UI pin.
+
+The shorter torso moves each clavicle in the chest local frame. The Roller floor search had subtracted5cm on world Y regardless of chest lean, which over-corrected a held rolling drum into a hover. Evaluate the actual chest quaternion and kid transform for that displacement instead. Existing real indexed-vertex floor/contact limits and both hand-grip limits remain unchanged, including30/60/120Hz landing/restart episodes.
+
+The fixed-color Dualies variant check compares raw, unscaled variant geometry for palette-only changes as before, and separately compares its registered model against the explicitly scaled1.3x definition. Geometry layout, indices, all non-color attributes, resource sizes and corruption controls remain exact.
+
+Extend the strict character reference to the reviewed16 pose/model-hold paths needed by #1563. Both full candidate and reference blobs remain pinned. For the two shared registry/catalog files, exact pinned reverse edits keep #1550's independent new variants and menu repair exclusively on the candidate side; they are not copied into the reference. All physical/RNG/performance comparator requirements are retained.

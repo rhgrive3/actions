@@ -750,7 +750,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   // their authored sockets without changing the gameplay Runner or hit volume.
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
   let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, searchAxis, turn;
-  let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ;
+  let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ, shoulderShift, chestQ;
   const SEARCH_AXES = [[1,0,0],[0,1,0],[0,0,1]];
   const rotCos = v => Math.max(-1, Math.min(1, v));
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
@@ -767,6 +767,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       turn = orientation.clone(); weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
       candidateQ = orientation.clone(); bestQ = orientation.clone(); baseQ = orientation.clone(); trialQ = orientation.clone();
       center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone();
+      shoulderShift = target.clone(); chestQ = orientation.clone();
     }
     // The native solver clamps exactly at 99.95% of the rest-chain length.
     // Keep the visual grip target just inside that physical limit.
@@ -796,6 +797,15 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       q.premultiply(turn.setFromAxisAngle(axis.normalize(),now-allowable + .003));
     };
     const contacting = !!this._s3RollerContactPose;
+    // The later shortening moves each clavicle along the chest's local Y,
+    // which is tilted while pushing/landing. Use that exact world displacement;
+    // subtracting a vertical 5cm over-corrects the leaned drum into a hover.
+    shoulderShift.set(0, 0, 0);
+    if (this.s3ShoulderDrop) {
+      this._kidXform(this.bones.chest, delta, chestQ);
+      shoulderShift.set(0, -this.s3ShoulderDrop, 0).applyQuaternion(chestQ)
+        .multiply(this.kid.scale).applyQuaternion(this.kid.quaternion);
+    }
     // Landing recovery can outlive the runner's flick token. Keep the drum
     // above the floor through that grounded recovery as well as the swing.
     const neededGround = !!this.grounded;
@@ -829,8 +839,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       axisX.set(1,0,0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
       axisY.set(0,1,0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
       axisZ.set(0,0,1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-      // The shoulders, hands and drum drop after this IK (body-proportion.mjs torso shortening).
-      return center.y - bound.halfWidth*Math.abs(axisX.y) - bound.radius*Math.hypot(axisY.y,axisZ.y) - (this.s3ShoulderDrop || 0)*kid.scale.y;
+      return center.y + shoulderShift.y - bound.halfWidth*Math.abs(axisX.y) - bound.radius*Math.hypot(axisY.y,axisZ.y);
     };
     const evaluate = q => {
       alignLeft(q);
