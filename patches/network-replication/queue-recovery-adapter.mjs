@@ -22,7 +22,7 @@ export function adaptQueuedBugRecovery(rel, input, once) {
       "mode: opts.mode, weapon: safeWeaponId(this.profile.weapon, WEAPONS),",
       'offline match uses validated weapon even after mutable profile edit');
     patch("  async startNetMatch(cfg, nm) {",
-      "  async startNetMatch(cfg, nm) {\\n    if (!validStartRoster(cfg?.roster, G.net?.myId, WEAPONS, cfg?.mode, G.net?.hostId)) throw new Error('Invalid online match roster');",
+      "  async startNetMatch(cfg, nm) {\n    if (!validStartRoster(cfg?.roster, G.net?.myId, WEAPONS, cfg?.mode, G.net?.hostId)) throw new Error('Invalid online match roster');",
       'validate direct online START before allocating a match');
 
     patch("    const m = this.match, a = m.local, cam = G.camera;",
