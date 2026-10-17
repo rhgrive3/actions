@@ -1,6 +1,7 @@
 // Browser-worker conversion of the public, pinned display export. This code
 // contains no third-party vertices, images or native gameplay placement data.
 import {SOURCE_COMMIT,SOURCE_RECIPE} from './source-catalog.mjs';
+import {applySourcePlacements} from './source-placement.mjs';
 const F=Math.fround;
 /** Positive-area overlap between a source triangle and a grid cell. A centre
  * sample alone drops paintable strips at the original polygon boundary. */
@@ -178,8 +179,12 @@ export function parseSourceMaterials(text,objects,files){
  }
  return materials;
 }
-export function convertSource(stage,obj,mtl,files,progress=()=>{}){
- progress('OBJ');const geometry=parseSourceOBJ(obj,stage.sourceSemantics);
+export function convertSource(stage,obj,mtl,files,progress=()=>{},placement=null){
+ progress('OBJ');let geometry=parseSourceOBJ(obj,stage.sourceSemantics);
+ if(placement){
+  if(placement.plan?.stageId!==stage.id)throw Error('Placement stage differs from requested source');
+  geometry=applySourcePlacements(geometry,placement.document,placement.plan,stage.sourceSha256);
+ }
  progress('collision');const data=collision(geometry);
  progress('BVH');Object.assign(data,buildSourceBVH(data.triangles));
  progress('paint');const charts=paintCharts(data);
@@ -191,6 +196,7 @@ export function convertSource(stage,obj,mtl,files,progress=()=>{}){
   collisionStatus:'inferred display triangles, not native collision',paintStatus:'inferred planar masks, not native masks',ruleStatus:'Pnt display only; ranked objectives are local calibration',
   objects:geometry.objects,materials,faces:charts.faces,textureIntegrity:integrity,
   gridCells:charts.mask.length,geometry:{vertices:geometry.vertices.length/8,triangles:geometry.indices.length/3,collisionTriangles:data.flags.length,bvhNodes:data.nodes.length/8,paintFaces:charts.faces.length},chartMaxPlaneError:charts.chartMaxPlaneError,cell:.25};
+ if(geometry.placementReceipt){manifest.diagnosticOnly=true;manifest.placementReceipt=geometry.placementReceipt;manifest.coordinates='Explicit actor-local Banc binding; scales/Euler convention declared in placementReceipt';manifest.spawnStatus='Existing inferred trial pads, not Banc respawns';}
  delete data.areas;
  return {...data,vertices:geometry.vertices,indices:geometry.indices,mask:charts.mask,triangleFace:charts.triangleFace,manifest,integrity};
 }
