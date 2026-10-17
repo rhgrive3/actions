@@ -1,0 +1,461 @@
+{
+  "baseCommit": "7ea9410d9aaca46ddb864b96ca4af4ea475f82d6",
+  "baselineComposedBotSha256": "e3685e67320e1dbf31b2022a95782d37364d91899def0757ff649aaa79d3c626",
+  "productionContentHash": "f194d770ef7c881490772a9fe498f175acdbceac13c282c8dc0624a89c80f372",
+  "noRouteWorkload": [
+    {
+      "variant": "before",
+      "brains": 7,
+      "ticks": 120,
+      "goalDecisions": 840,
+      "pathSearches": 840,
+      "paintRegionQueries": 8463
+    },
+    {
+      "variant": "after",
+      "brains": 7,
+      "ticks": 120,
+      "goalDecisions": 21,
+      "pathSearches": 63,
+      "paintRegionQueries": 277
+    }
+  ],
+  "checks": {
+    "sourcePassed": 100,
+    "sourceSkippedExternalOrBuiltOnly": 17,
+    "emittedPassed": 22,
+    "newBotRegressionCasesPerVariant": 12,
+    "actorTimeStepsHz": [
+      30,
+      60,
+      120
+    ],
+    "sevenBotTrenchRunSeconds": 30,
+    "sevenBotEscaped": 7,
+    "compatibility": "INKWAVE quick checks OK: upstream compatible; reference 11.3.0",
+    "optimizedBuild": true,
+    "startupBudget": true
+  },
+  "limits": [
+    "CPU and software-rendered browser evidence do not establish physical-device FPS or retail Nintendo AI parity.",
+    "External native-stage source assets are absent; optional source-geometry tests are skipped."
+  ],
+  "browser": {
+    "scope": "Actual production game in Chromium / SwiftShader, controlled seven bots placed below Kelpline bridge; fixed 60Hz simulation with render every simulated second; not device FPS or retail AI parity",
+    "build": "f194d770ef7c881490772a9fe498f175acdbceac13c282c8dc0624a89c80f372",
+    "results": [
+      {
+        "variant": "before",
+        "map": "kelpline",
+        "bots": 7,
+        "initial": [
+          [
+            -1.2000000000000002,
+            -2,
+            0
+          ],
+          [
+            -0.8,
+            -2,
+            0
+          ],
+          [
+            -0.4,
+            -2,
+            0
+          ],
+          [
+            0,
+            -2,
+            0
+          ],
+          [
+            0.4,
+            -2,
+            0
+          ],
+          [
+            0.8,
+            -2,
+            0
+          ],
+          [
+            1.2000000000000002,
+            -2,
+            0
+          ]
+        ],
+        "escaped": 0,
+        "raised": 0,
+        "trace": [
+          {
+            "seconds": 5,
+            "positions": [
+              [
+                -1.938,
+                -2,
+                0
+              ],
+              [
+                -1.292,
+                -2,
+                0
+              ],
+              [
+                -0.6460000000000001,
+                -2,
+                0
+              ],
+              [
+                -2.498001805406602e-16,
+                -2,
+                0
+              ],
+              [
+                0.6459999999999997,
+                -2,
+                0
+              ],
+              [
+                1.2919999999999996,
+                -2,
+                0
+              ],
+              [
+                1.9379999999999997,
+                -2,
+                0
+              ]
+            ],
+            "alive": [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          {
+            "seconds": 10,
+            "positions": [
+              [
+                -1.938,
+                -2,
+                0
+              ],
+              [
+                -1.292,
+                -2,
+                0
+              ],
+              [
+                -0.6460000000000001,
+                -2,
+                0
+              ],
+              [
+                -2.498001805406602e-16,
+                -2,
+                0
+              ],
+              [
+                0.6459999999999997,
+                -2,
+                0
+              ],
+              [
+                1.2919999999999996,
+                -2,
+                0
+              ],
+              [
+                1.9379999999999997,
+                -2,
+                0
+              ]
+            ],
+            "alive": [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          {
+            "seconds": 15,
+            "positions": [
+              [
+                -1.938,
+                -2,
+                0
+              ],
+              [
+                -1.292,
+                -2,
+                0
+              ],
+              [
+                -0.6460000000000001,
+                -2,
+                0
+              ],
+              [
+                -2.498001805406602e-16,
+                -2,
+                0
+              ],
+              [
+                0.6459999999999997,
+                -2,
+                0
+              ],
+              [
+                1.2919999999999996,
+                -2,
+                0
+              ],
+              [
+                1.9379999999999997,
+                -2,
+                0
+              ]
+            ],
+            "alive": [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        ],
+        "renderCalls": 102,
+        "renderTriangles": 374375,
+        "errors": []
+      },
+      {
+        "variant": "after",
+        "map": "kelpline",
+        "bots": 7,
+        "initial": [
+          [
+            -1.2000000000000002,
+            -2,
+            0
+          ],
+          [
+            -0.8,
+            -2,
+            0
+          ],
+          [
+            -0.4,
+            -2,
+            0
+          ],
+          [
+            0,
+            -2,
+            0
+          ],
+          [
+            0.4,
+            -2,
+            0
+          ],
+          [
+            0.8,
+            -2,
+            0
+          ],
+          [
+            1.2000000000000002,
+            -2,
+            0
+          ]
+        ],
+        "escaped": 7,
+        "raised": 6,
+        "trace": [
+          {
+            "seconds": 5,
+            "positions": [
+              [
+                -10.334859729564805,
+                -0.9303838265068451,
+                -0.5810020510822028
+              ],
+              [
+                5.695122148386338,
+                -2,
+                -1.0991212311795215
+              ],
+              [
+                6.620090716466059,
+                -2,
+                0.5582765163098795
+              ],
+              [
+                5.84594520325864,
+                -1.4123333333333334,
+                0.9112623750086128
+              ],
+              [
+                2.778833184452504,
+                2.058482730549761,
+                9.383448366090052
+              ],
+              [
+                -6.607326741472488,
+                0,
+                -2.9209939697165126
+              ],
+              [
+                1.447327253144952,
+                5.551115123125783e-17,
+                5.725595284168825
+              ]
+            ],
+            "alive": [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          {
+            "seconds": 10,
+            "positions": [
+              [
+                -14.589544451963903,
+                0,
+                0.8704750265161115
+              ],
+              [
+                6.8549,
+                -2,
+                0.49999999547202806
+              ],
+              [
+                -6.181579113270219,
+                -0.12806830243918288,
+                1.0341005829723007
+              ],
+              [
+                11.719865127386846,
+                5.551115123125783e-17,
+                11.540919811550738
+              ],
+              [
+                -3.3576372864445254,
+                2.8,
+                5.548882640405139
+              ],
+              [
+                -13.534724938134486,
+                5.551115123125783e-17,
+                -8.500036232991233
+              ],
+              [
+                1.003982614252041,
+                2.8,
+                5.14778329544961
+              ]
+            ],
+            "alive": [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          {
+            "seconds": 15,
+            "positions": [
+              [
+                -19.3631878407846,
+                5.551115123125783e-17,
+                7.7225894387587495
+              ],
+              [
+                6.8549,
+                -2,
+                0.4999999999999998
+              ],
+              [
+                -11.1751,
+                -2,
+                -1.3339640328102045
+              ],
+              [
+                11.615283340206336,
+                0,
+                25.223675395567803
+              ],
+              [
+                -5.322500901591626,
+                1.4641666666666668,
+                20.13303480464965
+              ],
+              [
+                -8.575062210357968,
+                0,
+                -11.386169654611463
+              ],
+              [
+                -12.59770922337573,
+                2,
+                -10.50941482745712
+              ]
+            ],
+            "alive": [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        ],
+        "renderCalls": 61,
+        "renderTriangles": 317585,
+        "errors": []
+      }
+    ],
+    "setup": {
+      "simulatedSeconds": 15,
+      "fixedPhysicsHz": 60,
+      "renderEverySimulatedSecond": true,
+      "quality": "low",
+      "viewport": [
+        960,
+        540
+      ],
+      "seed": 142,
+      "botCount": 7,
+      "weapon": "shooter",
+      "team": 0,
+      "localActorStart": [
+        18,
+        0,
+        -25
+      ],
+      "serviceWorkers": "blocked for controlled before/after module replacement"
+    }
+  }
+}
