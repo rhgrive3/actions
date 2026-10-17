@@ -212,7 +212,12 @@ test('vertical release, recovery, held ground pushing and lift on a fresh attack
           grounded: i < 40 ? false : i < 100, speed: i > 45 && i < 80 ? 6.48 : 0 });
         rows.push(poseRow(api, r, i, [0, 18, 31, 38, 56, 65, 79, 85, 100, 110].includes(i)));
       }
-      assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002 && x.bottom >= -.006));
+      const outside = rows.filter(x => x.gripL >= .02 || x.gripR >= .002 || x.bottom < -.006);
+      assert.ok(outside.length === 0, 'vertical grip and drum floor violations: ' +
+        JSON.stringify(outside.slice(0, 10).map(x => ({
+          frame:x.index, gripL:x.gripL, gripR:x.gripR, bottom:x.bottom,
+          attack:x.gameplay.attack, rolling:x.gameplay.rolling, grounded:x.gameplay.grounded
+        }))));
       assert.equal(rows[30].gameplay.shots, 0); assert.equal(rows[31].gameplay.shots, 1);
       assert.equal(rows[30].drumW, 0); assert.ok(rows[31].drumW > 30);
       assert.equal(rows[52].gameplay.rolling,false); assert.equal(rows[53].gameplay.rolling,true,'31F release plus22F roll admission');

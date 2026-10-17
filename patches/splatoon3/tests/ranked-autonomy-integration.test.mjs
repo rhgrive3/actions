@@ -139,6 +139,12 @@ function step(match, frames, metrics, until = null) {
     // drying simulation. Only the renderer's GPU submission is stubbed.
     f.G.paint.flush(DT);
     metrics.maxProgress = Math.max(metrics.maxProgress, ranked.rule.state.progress ?? 0);
+    // Tower control can return to its centre after a legitimate push. Record
+    // its greatest actual path displacement, not just the final snapshot.
+    if (match.mode === 'tower' && Number.isFinite(ranked.rule.state.pathDistance) &&
+        Number.isFinite(metrics.initialTowerDistance))
+      metrics.maxTowerTravel = Math.max(metrics.maxTowerTravel,
+        Math.abs(ranked.rule.state.pathDistance - metrics.initialTowerDistance));
     metrics.boarded ||= match.actors.some(actor => actor.grounded && actor.ground?.block === match.rankedWorld.towerBlockId);
     metrics.maxCountDelta = Math.max(metrics.maxCountDelta, 100 - Math.min(...ranked.counts));
     if (until?.(metrics, match)) break;
@@ -154,6 +160,7 @@ function finish(match) {
 }
 
 const metrics = () => ({ events: new Map(), maxProgress: 0, boarded: false, maxCountDelta: 0,
+  initialTowerDistance: null, maxTowerTravel: 0,
   clamPickups: 0, clamThrows: 0, clamScoringEvents: 0, escortCombatFrames: 0, rainmakerEvents: [],
   barrierHitCount: 0, barrierDamage: 0 });
 
@@ -184,9 +191,10 @@ test('native ranked bots jump onto the moving Tower deck and carry its live obje
       && event.attacker.team !== event.victim.team) hits++;
   });
   const initial = match.ranked.rule.state.pathDistance;
+  seen.initialTowerDistance = initial;
   try { step(match, 60 * 60, seen); }
   finally { stop(); }
-  const moved = Math.abs(match.ranked.rule.state.pathDistance - initial) > 0.5 || seen.maxProgress > initial / match.ranked.rule.metrics.total + 0.01;
+  const moved = seen.maxTowerTravel > 0.5 || Math.abs(match.ranked.rule.state.pathDistance - initial) > 0.5 || seen.maxProgress > initial / match.ranked.rule.metrics.total + 0.01;
   finish(match);
   assert.ok(seen.boarded, `at least one native Actor must land on the live tower collider: ${JSON.stringify([...seen.events])}`);
   assert.ok(moved, `native riders must move the Tower and update counts: ${JSON.stringify([...seen.events])}`);

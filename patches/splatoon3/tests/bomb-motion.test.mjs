@@ -414,6 +414,13 @@ test('release and per-frame preview sample native rig without changing any live 
   const api = await production();
   for (const kind of ['shooter', 'dualies', 'slosher', 'charger', 'splatling', 'roller']) {
     const r = rig(api, kind); let flowEvents = 0;
+    // This comparison intentionally tests an actual airborne bomb preview.
+    // Curling has a ground-running puck and deliberately hides its arc; keep
+    // that separate contract out of the ballistic release/preview oracle.
+    if (r.a.weapon.sub !== 'suction') {
+      r.a.weapon = { ...r.a.weapon, sub: 'suction' };
+      r.a.weaponRunner.reset();
+    }
     const stop = api.on('actor:flow', event => { if (event.actor === r.a) flowEvents++; });
     try {
       api.emit('turf', { actor: r.a, area: api.profile.flow.threshold / api.profile.flow.weights.turf + 1 });
