@@ -52,6 +52,11 @@ export function markSpecial(actor, name, time) {
   (actor._s3SpecialMarks ||= {})[name] = time;
 }
 
+function releaseFistModel(record) {
+  const model = record.model; record.model = null;
+  if (model) disposeSpecialModel(model);
+}
+
 class Director {
   constructor(api, fx) {
     this.api = api; this.THREE = api.THREE; this.G = api.G; this.fx = fx;
@@ -275,6 +280,7 @@ class Director {
     this.kit.update(dt, camera);
   }
   clear() {
+    for (const record of this.fists.values()) releaseFistModel(record);
     for (const [a, t] of this.tracks) this.endTrack(a, t);
     for (const m of [this.tracks, this.rounds, this.objects, this.lasers, this.domes, this.coolers, this.fists, this.storms]) m.clear();
     this.kit.clear();
@@ -762,7 +768,7 @@ const KIT_FX = {
     },
     end(r, f) {
       this.kit.ribbons.end(r.d.trail);
-      if (r.model) { disposeSpecialModel(r.model); r.model = null; }
+      releaseFistModel(r);
       if (f.dead && f.hp <= 0) { this.streaks(f.pos, 18, 10, r.color); this.chunks(f.pos, 14, 7, r.color, { size: 0.22 }); return; }
       this.inkBlast(f.target || f.pos, r.color, 6.4, { streaks: 24, chunks: 14, native: false });
     },
@@ -1426,7 +1432,7 @@ export function installSpecialVfx(api) {
   const clear = FX.prototype.clear;
   FX.prototype.clear = function (...args) { directors.get(this)?.clear(); return clear.apply(this, args); };
   const dispose = FX.prototype.dispose;
-  if (dispose) FX.prototype.dispose = function (...args) { const d = directors.get(this); if (d) { d.kit.dispose(); directors.delete(this); delete this.s3SpecialVfx; } return dispose.apply(this, args); };
+  if (dispose) FX.prototype.dispose = function (...args) { const d = directors.get(this); if (d) { d.clear(); d.kit.dispose(); directors.delete(this); delete this.s3SpecialVfx; } return dispose.apply(this, args); };
   const route = (e) => { const d = G.fx && G.fx.s3SpecialVfxEnabled !== false && directors.get(G.fx); if (d) d.event(e); };
   on?.('all:special', (e) => { if (!e?.actor?.remote) route(e); });
   api.specialVfxReplay = route;

@@ -62,20 +62,19 @@ export function installCatalogueLoadout(api) {
   Menus.prototype._scr_loadout=function(...args){
     const screen=render.apply(this,args), body=screen.el.querySelector('.iw-loadout__body')||screen.el;
     const panel=document.createElement('fieldset');panel.className='s3-catalogue';
-    panel.style.cssText='min-width:0;max-width:100%;box-sizing:border-box;margin:12px 0;padding:14px;border:1px solid currentColor;border-radius:12px;display:grid;gap:10px';
+    // Layout and look: .s3-gear .s3-catalogue in ui.css (game panel, 44px controls).
     const legend=document.createElement('legend');legend.textContent='本家セット / カスタム';panel.append(legend);
     const note=document.createElement('p');note.textContent='標準はスプラトゥーン3 Ver.11.3.0のブキセット。変更するとカスタムになります。各技の挙動には未検証部分があります。';panel.append(note);
     const selectors={};
     for(const [field,names,registry,title] of [['sub',SUB_NAMES,SUB,'サブウェポン'],['special',SPECIAL_NAMES,SPECIALS,'スペシャル']]){
-      const label=document.createElement('label');label.textContent=title+' ';label.style.cssText='display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0';
+      const label=document.createElement('label');label.textContent=title+' ';
       const select=document.createElement('select');select.setAttribute('aria-label',title);
-      select.style.cssText='box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:44px;color:#15121c;background:#fff;font:inherit;border-radius:8px;padding:6px';
       for(const [id,name] of Object.entries(names)){if(!registry[id])throw new Error('Missing playable catalogue entry: '+id);const o=document.createElement('option');o.value=id;o.textContent=name;select.append(o);}
       select.addEventListener('keydown',e=>e.stopPropagation());
       select.addEventListener('change',()=>save());selectors[field]=select;label.append(select);panel.append(label);
     }
     const help=document.createElement('p');help.setAttribute('aria-live','polite');panel.append(help);
-    const reset=document.createElement('button');reset.type='button';reset.textContent='標準セットに戻す';reset.style.minHeight='44px';
+    const reset=document.createElement('button');reset.type='button';reset.textContent='標準セットに戻す';
     reset.addEventListener('click',()=>save(true));panel.append(reset);
     const gear=screen.el.querySelector('details.s3-gear');
     if(gear){const summary=gear.querySelector('summary');if(summary)summary.textContent='サブ・スペシャル・ギア';gear.insertBefore(panel,summary?.nextSibling||null);}else body.append(panel);
@@ -84,7 +83,9 @@ export function installCatalogueLoadout(api) {
       const choice=validateCatalogueChoice(saved,SUB,SPECIALS)&&(saved.sub!==base.sub||saved.special!==base.special)?saved:null;
       selectors.sub.value=choice?.sub||base.sub;selectors.special.value=choice?.special||base.special;
       const sub=SUB[selectors.sub.value],sp=SPECIALS[selectors.special.value];
-      const chips=body.querySelectorAll('.iw-kit');
+      // The detail chips belong to the shown weapon; while another weapon is previewed (compare)
+      // they must keep that weapon's own kit instead of the equipped weapon's choice.
+      const chips=body.querySelector('.iw-wd.is-compare')?[]:body.querySelectorAll('.iw-kit');
       if(chips[0]?.querySelector('b'))chips[0].querySelector('b').textContent=sub?.name||'';
       if(chips[1]?.querySelector('b'))chips[1].querySelector('b').textContent=sp?.name||'';
       note.textContent=(choice?'カスタムセット':'本家標準セット（Ver.11.3.0）')+' / 必要スペシャルポイント: '+base.specialCost+'p。技の挙動には未検証部分があります。';
