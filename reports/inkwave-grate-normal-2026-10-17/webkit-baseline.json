@@ -1,0 +1,270 @@
+{
+  "status": "failed",
+  "measurement": "webkit WebGL2; emitted level material / authored Level geometry / fallback surface branch; deterministic static render; software timings only; concurrent workloads may confound timing",
+  "sourceSha": "d5265f73d9dad69f1afd9690e374caee45195f11",
+  "sourceRoot": "/workspace/render-1565",
+  "verifierSha256": "9dbea84c1affaeec716513c72257358339a51261a796c0832cbd845c5e1cfc77",
+  "inputHash": "d23766d00da1f917546548ba941760d80de89fd1b279430f8ae580a95694cf83",
+  "contentHash": "8f56a1470c72ecf04250ba7be2cf74a3c89f7267674c840d7d63c14fa3b29775",
+  "result": {
+    "rows": [
+      {
+        "name": "top",
+        "orientation": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 40275,
+        "referenceCoveredPixels": 40275,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 1,
+          "textures": 2,
+          "programs": 2
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 1,
+          "textures": 2,
+          "programs": 2
+        },
+        "imageSHA256": "d74fcedace6da953450a41f5d99d6cc436fd046d6635c79f3d3135628bbc3bb1",
+        "referenceImageSHA256": "d74fcedace6da953450a41f5d99d6cc436fd046d6635c79f3d3135628bbc3bb1",
+        "pixelSHA256": "d0a60cc1043fc5f68c7304c88b0f15dd6d9b1e646c1aedb07e79dab4734c02f8"
+      },
+      {
+        "name": "back-toplight",
+        "orientation": {
+          "pixels": 172800,
+          "changedPixels": 40275,
+          "maxChannelError": 102
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 40275,
+        "referenceCoveredPixels": 40275,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 2,
+          "textures": 2,
+          "programs": 2
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 2,
+          "textures": 2,
+          "programs": 2
+        },
+        "imageSHA256": "402310ba00dcff9cd63259fc968f983c52f55135291e3e3c08e94ff7536bb3e9",
+        "referenceImageSHA256": "d03b0e8017746c908b57a21a277e24b8e949b3a682a3c5219e774c18153926f9",
+        "pixelSHA256": "09cbd7b1a78228a2797af6d690f62ca4bd905a1a6fe01856591d6a06bf31be6f"
+      },
+      {
+        "name": "back-underlight",
+        "orientation": {
+          "pixels": 172800,
+          "changedPixels": 40275,
+          "maxChannelError": 107
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 40275,
+        "referenceCoveredPixels": 40275,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 2,
+          "textures": 2,
+          "programs": 2
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 2,
+          "textures": 2,
+          "programs": 2
+        },
+        "imageSHA256": "46958f643999a03a0d39a22eb7f15b87828db1fdb50cd848345c2e694ff44f3d",
+        "referenceImageSHA256": "cdaf7ad63525f52b0f087b53869f3693d96770ebb7413572fcd14fb3d937b13d",
+        "pixelSHA256": "261d521f3c80014ef0b06515e0b98c633a772f4daebd05184eed67270c89980a"
+      }
+    ],
+    "frontRows": [
+      {
+        "name": "ink-flat",
+        "independentExpression": true,
+        "useLibrary": false,
+        "inked": true,
+        "tilted": false,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 54940,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "679757f03d090ebc7e0478effa39da056b0c01926ff93ff68851a2f234fd4d23",
+        "referenceImageSHA256": "679757f03d090ebc7e0478effa39da056b0c01926ff93ff68851a2f234fd4d23"
+      },
+      {
+        "name": "ink-tilted",
+        "independentExpression": true,
+        "useLibrary": false,
+        "inked": true,
+        "tilted": true,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 69275,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "56ce72d011f5833ce1fa76167ff4c41f31c93d62b8ab7d3889e51bb1a89cff01",
+        "referenceImageSHA256": "56ce72d011f5833ce1fa76167ff4c41f31c93d62b8ab7d3889e51bb1a89cff01"
+      },
+      {
+        "name": "texlib-dry-tilted",
+        "independentExpression": true,
+        "useLibrary": true,
+        "inked": false,
+        "tilted": true,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 69275,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "5a6c9cd16897bc0f217f1508af272d5dd58e890b7327f5191aca4c8e4206279d",
+        "referenceImageSHA256": "5a6c9cd16897bc0f217f1508af272d5dd58e890b7327f5191aca4c8e4206279d"
+      },
+      {
+        "name": "texlib-ink-tilted",
+        "independentExpression": true,
+        "useLibrary": true,
+        "inked": true,
+        "tilted": true,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 69275,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "e07aef3be8f64e7069a51d237df9517328098c7a2a579b2afe4e901f42d46646",
+        "referenceImageSHA256": "e07aef3be8f64e7069a51d237df9517328098c7a2a579b2afe4e901f42d46646"
+      }
+    ],
+    "gpu": {
+      "webgl": "WebGL 2.0",
+      "renderer": "Apple GPU",
+      "timerQuery": false
+    },
+    "shader": {
+      "textureAccesses": 15,
+      "normalizationExpressions": 13,
+      "doubleSided": true,
+      "cacheKey": "inkwave-level-v6-quality1-range1-grate",
+      "customOrientation": false
+    },
+    "webglError": 0,
+    "authoredFaceIndices": 6,
+    "width": 480,
+    "height": 360,
+    "texlib": {
+      "layers": 25,
+      "resolution": 64
+    },
+    "timingExcludedReason": "Concurrent correctness work; software draw/drain samples do not qualify performance acceptance."
+  },
+  "errors": [],
+  "error": "AssertionError [ERR_ASSERTION]: back-toplight differs from correctly oriented authored geometry\n\n40275 !== 0\n\n    at file:///workspace/render-1565/scripts/check-inkwave-grate-normal.mjs:249:41"
+}

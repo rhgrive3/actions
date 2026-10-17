@@ -454,9 +454,34 @@ function adaptQualityLayer(rel, code) {
       'smoothstep(1.0, 0.8, a)',
       '(1.0 - smoothstep(0.8, 1.0, a))',
       'defined coverage smoothstep');
+    code = replaceOnce(code,
+      '  vec3 wn = normalize(nBase - slope.x * T - slope.y * Bt);\n' +
+      '  normal = normalize((viewMatrix * vec4(wn, 0.0)).xyz);',
+      // Preserve Three's front/back orientation after replacing its normal.
+      // Keep the exact original FrontSide expression. The correction and
+      // redundant-normalization removal compile only for double-sided draws.
+      '#ifdef DOUBLE_SIDED\n' +
+      '  normal = normalize(mat3(viewMatrix) * (nBase - slope.x * T - slope.y * Bt)) * faceDirection;\n' +
+      '#else\n' +
+      '  vec3 wn = normalize(nBase - slope.x * T - slope.y * Bt);\n' +
+      '  normal = normalize((viewMatrix * vec4(wn, 0.0)).xyz);\n' +
+      '#endif',
+      'double-sided level normal orientation');
+    // Offset the inactive shader branch's download text with comments only.
+    // The documented upstream source stays intact; emitted arithmetic is kept.
+    code = replaceOnce(code,
+      "  // slopes along the face's u / v axes (height per unit length), applied in the face's world tangent frame\n",
+      '', 'generated normal introduction comment');
+    code = replaceOnce(code,
+      '  // surface relief from the texture library; ink fills the grooves so the relief fades out under it\n' +
+      '  // (on corrugated metal the ink still follows the ribs)\n',
+      '', 'generated normal relief comments');
+    code = replaceOnce(code,
+      '   // containers + stairs',
+      '', 'generated normal keep comment');
     return replaceOnce(code,
       'inkwave-level-v6',
-      'inkwave-level-v6-quality1',
+      'inkwave-level-v6-quality3',
       'material program identity');
   }
 

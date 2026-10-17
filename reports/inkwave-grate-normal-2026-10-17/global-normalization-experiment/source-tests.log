@@ -1,0 +1,38 @@
+✔ the production world-normal replacement preserves Three double-sided orientation (0.790373ms)
+✔ normal orientation adds no texture access or draw and retains native shadow/coverage behavior (1.52275ms)
+[inkwave] texture library failed — procedural fallback Error: GPU context lost during texture generation
+    at failingCreateFn (file:///workspace/render-1565/patches/local-quality/tests/texlib-stage-pack.test.mjs:653:11)
+    at syncWorldTexlib (file:///workspace/render-1565/patches/local-quality/texlib.mjs:38:24)
+    at TestContext.<anonymous> (file:///workspace/render-1565/patches/local-quality/tests/texlib-stage-pack.test.mjs:657:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+[inkwave] texture library failed — procedural fallback Error: GPU context lost during texture generation
+    at failingCreateFn (file:///workspace/render-1565/patches/local-quality/tests/texlib-stage-pack.test.mjs:653:11)
+    at syncWorldTexlib (file:///workspace/render-1565/patches/local-quality/texlib.mjs:38:24)
+    at TestContext.<anonymous> (file:///workspace/render-1565/patches/local-quality/tests/texlib-stage-pack.test.mjs:669:32)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+(node:5667) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real native catalog generation: coldboot Tidewater produces 25 shared layers (stage=null), Cargo pack produces 28 layers (stage=cargo) (126.817119ms)
+✔ slot metadata before-after: Cargo -> Tidewater -> Cargo preserves 32 slots and stable semantics without shader mismatch (84.764408ms)
+✔ generic stage pack support: dynamic STAGE_SURFACES and injected extra stage without leaking into baseline (53.608639ms)
+✔ coldboot-to-first-world single generation and Tidewater/Kelpline zero-generation reuse (47.878384ms)
+✔ async Game._buildWorld integration: bounded replacement/disposal, residency lifecycle (1 steady, 2 transient), and lobby safety (50.135926ms)
+✔ native compiled LobbySet materials: precompile and postcompile update holders and uniforms with correct sampler and meta (70.859312ms)
+✔ native _buildWorld epoch cancellation: uncommitted candidate library disposed on cancellation without corrupting current texlib (103.519712ms)
+✔ generation failure resilience: preserves valid current library without disposal or use-after-free, cleans up disposed library (52.302636ms)
+✔ resolution fidelity and renderer state: no arbitrary resolution downgrade, state restored after generation (38.103117ms)
+✔ negative control: unpatched upstream baseline generates all 28 layers unconditionally on cold boot (50.459155ms)
+✔ native world commit uses the published default factory route and preserves single cold generation (57.737582ms)
+✔ negative control catches the former misplaced runtime-relative factory import (40.132021ms)
+✔ actual native factory failures retire candidate resources and restore renderer while preserving the live library (84.871034ms)
+✔ native lobby materials invalidate cached programs only when texlib presence changes (82.927728ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1614.295493
