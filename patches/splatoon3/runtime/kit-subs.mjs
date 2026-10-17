@@ -1,4 +1,5 @@
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
+import { captureSubAttachment, syncSubAttachment } from './sub-surface-attachment.mjs';
 // Splatoon 3 sub weapons for the published INKWAVE runtime.
 //
 // Authority stays exactly where issue 177 and the parent advisory place it:
@@ -34,7 +35,7 @@ import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidel
 // like the native code when installKitSubs has not been applied.
 
 import { SPRINKLER, beginSprinkler, stepSprinkler, resolveSprinklerPower } from './kit-sprinkler.mjs';
-import { AUTOBOMB, startAutobomb, stepAutobomb } from './kit-autobomb.mjs';
+import { AUTOBOMB, startAutobomb, stepAutobomb, followAutobombGround } from './kit-autobomb.mjs';
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
 const frames = (v) => (v == null ? null : v * FRAME);
@@ -539,7 +540,22 @@ function followRollingGround(b) {
 
 export function kitBombStep(SUB, b, dt) {
   const spec = presentedOf(b)?.spec;
-  if (!spec || spec.mode !== 'roll' || !(dt > 0) || !b?.vel) return;
+  if (!spec || !(dt > 0) || !b?.vel) return;
+  if(spec.mode==='stick'&&b.s3Mode==='stuck') {
+    syncSubAttachment(G_REF,b,b.s3SuctionAttachment,{normal:b.s3SurfaceNormal});
+    return;
+  }
+  if(spec.mode==='chase') {
+    if(b.s3Mode==='chasing')followAutobombGround(b,G_REF);
+    // Robot's initial flight has its own extracted position resistance. Once
+    // grounded, the chase owns XZ velocity; do not repeatedly damp its walking.
+    if(b.s3Mode==='flight'&&Number.isFinite(spec.flyPositionAirResist)) {
+      const keep=Math.pow(1-spec.flyPositionAirResist,dt*60);
+      b.vel.x*=keep;b.vel.z*=keep;
+    }
+    return;
+  }
+  if(spec.mode!=='roll')return;
   if (b.s3Mode === 'rolling') followRollingGround(b);
   const h = Math.hypot(b.vel.x, b.vel.z);
   if (!(h > 1e-9)) return;            // no direction to restore
@@ -558,7 +574,7 @@ export function kitBombStep(SUB, b, dt) {
 export const NATIVE_STORM_GRAVITY = 24;
 export function kitBombGravity(SUB, b) {
   if (b?.kind === 'storm') return NATIVE_STORM_GRAVITY;
-  if (b?.s3Mode === 'stuck' || b?.s3Mode === 'sprinkling' || b?.s3Mode === 'chasing') return 0;
+  if (b?.s3Mode === 'stuck' || b?.s3Mode === 'sprinkling' || b?.s3Mode === 'chasing'&&b.s3Auto?.grounded!==false) return 0;
   const spec = presentedOf(b)?.spec;
   if (!spec) return SUB.bomb.gravity;
   if (b?.s3Mode === 'rolling') return Number.isFinite(spec.groundGravity) ? spec.groundGravity : SUB.bomb.gravity;
@@ -579,6 +595,13 @@ export function kitBombGravity(SUB, b) {
 // the throw the owner made. Painting and damage live in `kitBombTrail`, which stays
 // authority-only.
 export function kitBombContact(SUB, b, hit, dt) {
+  // Tacticooler is solid cover, not an attachable/arming stage surface. Keep
+  // the existing native rebound; all selected sub modes retain flight/fuse.
+  if(hit?.s3Tacticooler){
+    b.pos.copy(hit.point).addScaledVector(hit.normal,.21);
+    const vn=b.vel.dot(hit.normal);if(vn<0)b.vel.addScaledVector(hit.normal,-vn*1.35);
+    b.vel.multiplyScalar(.6);return true;
+  }
   const r = presentedOf(b);
   if (!r || !hit?.hit) return false;
   const n = hit.normal;
@@ -587,10 +610,20 @@ export function kitBombContact(SUB, b, hit, dt) {
   if (spec.mode === 'chase') {
     if (b.s3Mode === 'chasing') {
       b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
-      if (Math.abs(n.y)<.6) b.vel.set(0,0,0);
+      if(n.y>.6){if(b.s3Auto)b.s3Auto.grounded=true;if(b.vel.y<0)b.vel.y=0;}
+      else if (Math.abs(n.y)<.6) {b.vel.x=0;b.vel.z=0;}
       return true;
     }
-    if (n.y<.6) return false;
+    if (n.y<.6) {
+      // A Robot bounced off a wall/ceiling has not landed or searched yet.
+      // Retain the native calibrated rebound without letting its generic
+      // contact arming start a bomb fuse in midair.
+      b.pos.copy(hit.point).addScaledVector(n,CONTACT_BIAS);
+      const vn=b.vel.dot(n);
+      if(vn<0)b.vel.addScaledVector(n,-vn*1.35);
+      b.vel.multiplyScalar(.6);
+      return true;
+    }
     b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
     b.vel.set(0,0,0);b.fuse=-1;b.s3Mode='chasing';
     startAutobomb(b,spec);return true;
@@ -600,10 +633,13 @@ export function kitBombContact(SUB, b, hit, dt) {
     b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
     b.vel.set(0,0,0);b.fuse=-1;b.s3Mode='sprinkling';
     b.s3SurfaceNormal ||= new b.pos.constructor();b.s3SurfaceNormal.copy(n);
-    beginSprinkler(b,n,spec);
+    beginSprinkler(b,n,spec,hit);
     return true;
   }
   if (spec.mode === 'stick') {
+    // An already attached bomb is not displaced/re-attached by a Tower
+    // crossing its fixed-floor position (S3mix Suction Bomb footnote).
+    if(b.s3Mode==='stuck')return true;
     const onFloor = n.y > 0.6;
     const onWall = Math.abs(n.x) > 0.5 || Math.abs(n.z) > 0.5;
     const onCeiling = n.y < -0.5;
@@ -618,6 +654,9 @@ export function kitBombContact(SUB, b, hit, dt) {
     b.s3SurfaceNormal ||= new b.pos.constructor();
     b.s3SurfaceNormal.copy(n);
     b.s3StuckOn = onCeiling ? 'ceiling' : onWall ? 'wall' : 'floor';
+    const tower=G_REF?.match?.mode==='tower'&&G_REF.match.rankedWorld,block=G_REF?.level?.blocks?.[hit.block];
+    b.s3SuctionAttachment=block&&(block===tower?.towerBlock||block===tower?.towerPoleBlock)
+      ?captureSubAttachment(G_REF,b,hit.block,{normal:b.s3SurfaceNormal}):null;
     return true;                       // native bounce is skipped for a stuck bomb
   }
 

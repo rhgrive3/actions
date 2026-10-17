@@ -18,11 +18,25 @@ import { gearCurve } from './gear.mjs';
 import { objectDamageScale, objectDamageRow, subEffectScale } from './sub-resistance.mjs';
 import { subMarkSeconds } from './sub-mark-resistance.mjs';
 import { buildSubModel, poseSubModel, isSharedGeometry, SPLASH_WALL_FOLDED_SCALE, SPLASH_WALL_UNFOLD_SECONDS } from './sub-models.mjs';
+import { spawnTorpedoSplashes, spawnFizzySplashes, stepTorpedoSplashes, clearTorpedoSplashes } from './torpedo-splashes.mjs';
+import { coolerSegmentContact } from './support-cooler-collision.mjs';
+import {captureSubAttachment,syncSubAttachment,towerAttachmentFields,replayTowerAttachment} from './sub-surface-attachment.mjs';
+import {mineTowerPaintReference} from '../../network-replication/tower-paint-support.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-subs.v1');
 const STEP = 1 / 60;
 const MAX_OBJECTS = 96;
 const MAX_REPLAY_EVENTS = 256;
+const localBeakonActorKeys=new WeakMap();
+let nextLocalBeakonActorKey=0;
+// Network identities stay wire-compatible. Offline Actors have no native nid;
+// their object identity must not collapse every owner's first device to local:0.
+export function beakonActorKey(actor){
+  if(Number.isSafeInteger(actor?.nid)&&actor.nid>=0)return String(actor.nid);
+  if(!actor||typeof actor!=='object')return 'missing';
+  if(!localBeakonActorKeys.has(actor))localBeakonActorKeys.set(actor,`local${++nextLocalBeakonActorKey}`);
+  return localBeakonActorKeys.get(actor);
+}
 // A rendered ghost may retire before its owner's delayed marking event.
 // Retain only bounded, accepted birth facts, independently of visual lifetime.
 const markBirths = new WeakMap();
@@ -111,9 +125,12 @@ export const ALL_SUB_SPECS = Object.freeze({
     maxChargeTime: frameSeconds(120),
     blurb: 'サブを保持。左右の切り返し・ジャンプ連打・照準を振ると速く充電、離すと投げる。',
     bursts: Object.freeze([
-      Object.freeze({ radius: 3.8, damageInner: 1.6, damageOuter: 3.8, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.0, crossPaintRadius: 2.0 }),
-      Object.freeze({ radius: 4.5, damageInner: 1.95, damageOuter: 4.5, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.4, crossPaintRadius: 2.0 }),
-      Object.freeze({ radius: 5.45, damageInner: 2.6, damageOuter: 5.45, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.8, crossPaintRadius: 2.0 }),
+      Object.freeze({ radius: 3.8, damageInner: 1.6, damageOuter: 3.8, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.0, crossPaintRadius: 2.0,
+        splashAround:Object.freeze({count:6,offsetY:.3,paintRadius:.7,pitchMinDegrees:10,pitchMaxDegrees:25,velocityMin:speedPerSecond(.35),velocityMax:speedPerSecond(.4)}) }),
+      Object.freeze({ radius: 4.5, damageInner: 1.95, damageOuter: 4.5, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.4, crossPaintRadius: 2.0,
+        splashAround:Object.freeze({count:6,offsetY:.3,paintRadius:.7,pitchMinDegrees:10,pitchMaxDegrees:20,velocityMin:speedPerSecond(.36),velocityMax:speedPerSecond(.42)}) }),
+      Object.freeze({ radius: 5.45, damageInner: 2.6, damageOuter: 5.45, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.8, crossPaintRadius: 2.0,
+        splashAround:Object.freeze({count:6,offsetY:.3,paintRadius:.7,pitchMinDegrees:10,pitchMaxDegrees:20,velocityMin:speedPerSecond(.39),velocityMax:speedPerSecond(.43)}) }),
     ]),
     gravity: 24, maxFlightSeconds: 2.2, groundGravity: accelPerSecondSquared(.016), flyRotateAirResist: .018, inkCostFallback: 60,
     calibration: 'per-stage charge/wait/warn frames, blast, hop and flight-splash arrays extracted; Wiki measures initial grounded fuse about 30F and later bursts on re-landing; acceleration mapped from community testing; ground rolling/side-wall rebound, bounce flight, stamp shape and exact warning-state mapping calibrated',
@@ -128,11 +145,18 @@ export const ALL_SUB_SPECS = Object.freeze({
     // shot-down threshold. This is not extracted from the pinned JSON.
     hp: 20, hpStatus: 'public-gameplay',
     radius: 6, damageInner: 2.6, damageOuter: 6, damageMax: rawDamage(600), damageMin: rawDamage(350), damageFalloff: 'discrete',
-    paintRadius: 3.5, burstSeconds: frameSeconds(30), gravity: 24, flyRotateAirResist: .018, chaseRadius: 12, chaseStartFrames: 20,
+    paintRadius: 3.5, burstSeconds: frameSeconds(30), gravity: 24, flyRotateAirResist: .018,
+    chaseRadius: 1.8*5, findHeightAbove: 1*5, findHeightBelow: .5*5,
+    findStartFrames: 6, findStartStatus: 'calibrated-from-legacy-community-5-to-6F-estimate', findCollisionStartRadiusRate: .55555,
+    rotationFrames: 25, rotationStatus: 'calibrated-from-provisional-community-45F-total-minus-extracted-20F-wait',
+    chaseStartFrames: 20, chaseSpeed: 6.2, chaseSeconds: 2.5,
+    groundPositionAirResist: .3, verticalWallReboundMaxRate: .7,
     throwBlast: Object.freeze({ nearDamage: rawDamage(600), farDamage: rawDamage(350), nearRadius: 2.6, farRadius: 6, paintRadius: 3.5 }),
     chaseBlast: Object.freeze({ nearDamage: rawDamage(600), farDamage: rawDamage(350), nearRadius: 2.6, farRadius: 6, paintRadius: 3.5 }),
     splashRadius: 2.6, splashPaintRadius: 2, splashDamage: rawDamage(120),
-    inkCostFallback: 65, calibration: 'throw/chase damage bands, recovery, fuse, 20F chase-start delay and throw tuple extracted; delay origin/target acquisition, lost-target last-position steering, separate splash actor/object routing and world mapping calibrated',
+    splashAround: Object.freeze({count:8,pitchDegrees:65,velocityMin:speedPerSecond(.42),velocityMax:speedPerSecond(.48)}),
+    findSplashAround: Object.freeze({count:6,pitchMinDegrees:30,pitchMaxDegrees:45,velocityMin:speedPerSecond(.15),velocityMax:speedPerSecond(.23),paintRadius:.7}),
+    inkCostFallback: 65, calibration: 'throw/chase damage bands, recovery, ground fuse, 20F post-rotation wait, ground drag and throw tuple extracted; Wiki reports stop/transform then straight flight, approximate asymmetric search and provisional 45F total transform. Rotation25F is a calibration from that tentative total minus20F, not extracted; startup6F uses a legacy community estimate; chase speed/timeout, lost-target last-position aim and world mapping remain calibrated',
   }),
   inkMine: Object.freeze({
     id: 'inkMine', name: 'Ink Mine', source: 'WeaponTrap.game__GameParameterTable.json',
@@ -143,6 +167,7 @@ export const ALL_SUB_SPECS = Object.freeze({
     radius: 8, damageInner: 3.6, damageOuter: 8, damageMax: rawDamage(450), damageMin: rawDamage(350), damageFalloff: 'discrete',
     damageDistanceRate: Object.freeze([1, 1.1875, 1.375]),
     markRadiusTiers: Object.freeze([8, 9.5, 11]), sensorRadius: 3, sensorRadiusTiers: Object.freeze([3, 3.5, 4]), inkTriggerRadius: .45, markFrames: Object.freeze([300, 450, 600]), paintRadius: 5,
+    placePaintRadius: 1, markOffsetY: .45, damageOffsetY: .45, paintOffsetY: .45,
     maxOwnerObjects: 2, lifetime: Infinity, armSeconds: .6, gravity: 24,
     inkCostFallback: 60, calibration: 'cost, sensor/damage/paint radii and marks extracted; public gameplay reports indefinite lifetime and oldest-mine detonation on third placement; arm/ink-contact/world scale calibrated',
   }),
@@ -166,7 +191,8 @@ export const ALL_SUB_SPECS = Object.freeze({
     spawnSpeedY: 0, spawnSpeedYWorldMin: speedPerSecond(-100), inheritX: 0, inheritYPlus: 0, inheritYMax: 0,
     directDamage: rawDamage(400), directPaintRadius: 2, markFrames: Object.freeze([300, 450, 600]),
     flightFrames: 7, tailFrames: 90, paintRadius: 2.6, collisionRadius: .25, gravity: 0, flyPositionAirResist: 0,
-    inkCostFallback: 40, calibration: 'direct damage, marking/tail frames, paint radius and throw speed extracted; residual line marks without damage; Wiki starts mark clock at release; line width, rebound mapping and raw90F versus Wiki105F tail interpretation calibrated/unverified',
+    reboundGroundAngleRate: .1, reboundWallAngleRate: 1, reboundGroundSpeedRate: 1, reboundWallSpeedRate: 1,
+    inkCostFallback: 40, calibration: 'direct damage, marking/tail frames, paint radius, throw speed and ground/wall rebound ratios extracted; Wiki confirms near-tangent ground rebound and starts mark clock at release; line width and raw90F versus Wiki105F tail interpretation calibrated/unverified',
   }),
   splashWall: Object.freeze({
     id: 'splashWall', name: 'Splash Wall', source: 'WeaponShield.game__GameParameterTable.json',
@@ -175,8 +201,9 @@ export const ALL_SUB_SPECS = Object.freeze({
     spawnSpeedY: speedPerSecond(.07), spawnSpeedYWorldMin: speedPerSecond(-.5), inheritX: 0, inheritYPlus: 0, inheritYMax: 0,
     gravity: accelPerSecondSquared(.009), flyPositionAirResist: .001,
     wallHpTiers: Object.freeze([800, 1150, 1500]), wallWidth: 4.2, wallHeight: 2.8,
+    minimumDeploySeconds: 1, deployTimingStatus: 'wiki-approximate-release-to-active', fixedThrowPitch: 0,
     lifetime: frameSeconds(400), hpDecayFrames: 400, damageSpanFrames: 30, contactDamage: 30,
-    inkCostFallback: 60, calibration: 'cost/recovery/gravity/throw/HP tiers/DamageSpanFrame extracted; 400F life, HP decay and 30 damage/30F contact sourced from community Wiki; dimensions calibrated',
+    inkCostFallback: 60, calibration: 'cost/recovery/gravity/throw/HP tiers/DamageSpanFrame extracted; Wiki reports fixed local throw trajectory, floor placement, approximately1s release-to-active and replacement/400F decay from activation; dimensions, hand-origin pitch shift, rebound coefficient and exact activation frame remain calibrated/unverified',
   }),
   sprinkler: Object.freeze({
     id: 'sprinkler', name: 'Sprinkler', source: 'WeaponSprinkler.game__GameParameterTable.json',
@@ -225,16 +252,20 @@ function rng(seed) {
   return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
 function entityList(projectiles) { return projectiles._s3SubObjects ||= []; }
+function syncObjectAttachment(api,object){
+  if(syncSubAttachment(api.G,object,object.s3SurfaceAttachment))object.mesh?.position.copy(object.pos);
+}
 function ownerLife(owner) { return Number.isSafeInteger(owner?.netLife) && owner.netLife >= 0 ? owner.netLife : 0; }
 function localOwner(owner) { return !!owner && owner.remote !== true; }
 function hasActiveTorpedo(projectiles, owner) {
   return !!projectiles&&!!owner&&entityList(projectiles).some(o=>!o.dead&&o.owner===owner&&o.subId==='torpedo'&&o.phase!=='ghostWait');
 }
-function canPlaceInkMine(projectiles,owner){
+function canPlaceInkMine(projectiles,owner,level=null){
   // S3 mix Wiki: mines are placed at the feet on ground, and another mine
   // cannot be placed inside an existing one's sensor circle. Gate before the
   // native runner pays ink, as well as at the direct projectile entry point.
   if(!owner?.grounded||!finite3(owner.pos))return false;
+  if(level?.blocks?.[owner.ground?.block]?.grate)return false;
   return !entityList(projectiles).some(o=>!o.dead&&o.owner===owner&&o.subId==='inkMine'&&o.phase==='deployed'&&
     o.pos.distanceToSquared(owner.pos)<=o.spec.sensorRadius**2);
 }
@@ -246,7 +277,9 @@ function emitEvent(api, object, phase, extra = {}) {
     v: 1, phase, subId: object.subId, seq: object.seq, eventSeq: nextSeq(object.owner),
     life: ownerLife(object.owner), sourceLife: object.sourceLife, subPowerAP: object.subPowerAP, x: p?.x || 0, y: p?.y || 0, z: p?.z || 0,
     vx: object.vel?.x || 0, vy: object.vel?.y || 0, vz: object.vel?.z || 0,
-    seed: object.seed >>> 0, charge: clamp(object.charge || 0, 0, 1), ...extra,
+    seed: object.seed >>> 0, charge: clamp(object.charge || 0, 0, 1),
+    ...towerAttachmentFields(api.G,object.s3SurfaceAttachment),
+    ...(phase==='spawn'?object.s3TowerPaintBirthRef:null),...extra,
     actor: object.owner, paintSource: object,
   };
   api.emit?.('all:sub', payload);
@@ -272,7 +305,7 @@ function buildVisual(api, object, projectiles) {
   if (!scene?.add) return null;
   const { THREE } = api, group = new THREE.Group(), id = object.subId;
   const color = object.owner?.color || api.G.teamColors?.[object.team] || 0xffcc33;
-  const deployed = object.phase === 'deployed';
+  const deployed = object.phase === 'deployed'||object.phase==='wallPending';
   const ink = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .08, roughness: .42, metalness: .1 });
   const modelId = id === 'toxicMist' && deployed ? 'toxicMistCloud' : id;
   const spec = ALL_SUB_SPECS[id];
@@ -304,7 +337,7 @@ function poseVisual(api, object, dt) {
   if (!mesh) return;
   mesh.position.copy(object.pos);
   if (!model) return;
-  const id = object.subId, deployed = object.phase === 'deployed', now = api.G.time || 0, v = object.vel;
+  const id = object.subId, deployed = object.phase === 'deployed'||object.phase==='wallPending', now = api.G.time || 0, v = object.vel;
   if (!deployed && (id === 'torpedo' || id === 'angleShooter')) {
     // Nose along the travel (Angle Shooter flies wide end first).
     const h = Math.hypot(v.x, v.z);
@@ -314,7 +347,7 @@ function poseVisual(api, object, dt) {
   } else if (id === 'autobomb' && Math.hypot(v.x, v.z) > .05) {
     mesh.rotation.set(0, Math.atan2(v.x, v.z), 0);
   } else mesh.rotation.set(0, object.yaw || 0, 0);
-  const unfold = id === 'splashWall' && deployed ? (now - (object.deployedAt ?? now)) / SPLASH_WALL_UNFOLD_SECONDS : 0;
+  const unfold = id === 'splashWall' && deployed ? (object.age-(object.wallReadyAge??object.age)+SPLASH_WALL_UNFOLD_SECONDS) / SPLASH_WALL_UNFOLD_SECONDS : 0;
   let bulge = 0;
   if (id === 'fizzy') bulge = Math.min(1, .25 * (object.popLimit - 1) + (object.fuse > 0 ? .5 * Math.min(1, object.age / object.fuse) : 0));
   if (id === 'splashWall' && !Number.isFinite(object.s3HpMax)) object.s3HpMax = object.hp;
@@ -372,6 +405,10 @@ function createObject(api, projectiles, owner, id, record = {}) {
     expireAt: Infinity, activeAt: Infinity,
   };
   if(id==='splashWall')object.wallHpInitial=object.hp;
+  if(['inkMine','beakon'].includes(id))object.s3SurfaceAttachment=object.ghost?replayTowerAttachment(api.G,object,record):
+    captureSubAttachment(api.G,object,owner.ground?.block,{towerOnly:true});
+  if(id==='inkMine'&&!object.ghost&&object.s3SurfaceAttachment)
+    object.s3TowerPaintBirthRef=mineTowerPaintReference(api.G.netm,object.pos);
   if(id==='angleShooter')object.lineSegments=[];
   const heldSeconds = Number.isFinite(record.hold) ? record.hold : owner.weaponRunner?.s3SubHold || 0;
   if (id === 'fizzy') {
@@ -423,16 +460,8 @@ function launchVelocity(api, projectiles, actor, spec, charge = 0) {
     inheritYPlus: spec.inheritYPlus ?? SUB_SPECIAL_FIDELITY.bomb.inheritYPlus,
     inheritYMax: spec.inheritYMax ?? SUB_SPECIAL_FIDELITY.bomb.inheritYMax,
   };
-  if (template.inheritZ === template.inheritX)
-    return fidelityThrowVelocity(actor,'bomb',new api.THREE.Vector3(),speed,template);
-  const pitch=clamp(actor.aimPitch||0,-1.05,1.15),yaw=actor.aimYaw||0,cp=Math.cos(pitch),sp=Math.sin(pitch);
-  const av=actor.vel||{x:0,y:0,z:0};
-  const horizontal=speed*cp-template.spawnSpeedY*sp;
-  let vy=speed*sp+template.spawnSpeedY*cp;
-  vy+=Math.min(Math.max(0,av.y||0)*template.inheritYPlus,template.inheritYMax);
-  vy=Math.max(template.spawnSpeedYWorldMin,vy);
-  return new api.THREE.Vector3(Math.sin(yaw)*horizontal+(av.x||0)*template.inheritX,vy,
-    Math.cos(yaw)*horizontal+(av.z||0)*template.inheritZ);
+  const input=Number.isFinite(spec.fixedThrowPitch)?{aimYaw:actor.aimYaw,aimPitch:spec.fixedThrowPitch,vel:actor.vel}:actor;
+  return fidelityThrowVelocity(input,'bomb',new api.THREE.Vector3(),speed,template);
 }
 
 function replaceVisual(api, object) {
@@ -447,6 +476,15 @@ function removeObject(api, projectiles, object, silent = false) {
   if (at >= 0) list.splice(at,1);
   if (!silent && !object.ghost) emitEvent(api,object,'expire');
   if (object.subId === 'beakon') {
+    // A shared destination can disappear after an earlier jumper lands. Its
+    // other in-flight jumps retain their native fixed destination; only their
+    // now-useless consumption bookkeeping ends with this device.
+    for(const actor of api.G.actors||[]){
+      const use=actor?.s3SubBeaconUse;
+      if(use&&use.beaconOwner===object.owner&&use.beaconLife===object.sourceLife&&use.beaconSeq===object.seq)
+        delete actor.s3SubBeaconUse;
+    }
+    object.reservations?.clear();
     const beakons = api.G.s3Beakons;
     if (Array.isArray(beakons)) { const i = beakons.indexOf(object); if (i >= 0) beakons.splice(i,1); }
     api.emit?.('sub:beakon-expire',{ actor:object.owner, beacon:object, team:object.team, seq:object.seq });
@@ -462,14 +500,14 @@ function removeObject(api, projectiles, object, silent = false) {
 function ownerObjects(projectiles, object) {
   return entityList(projectiles).filter(x => !x.dead && x !== object && x.owner === object.owner && x.subId === object.subId && x.phase === 'deployed');
 }
-function deploy(api, projectiles, object, pos, normal = null) {
-  if (object.dead || object.phase === 'deployed') return;
+function deploy(api, projectiles, object, pos, normal = null, blockId = null) {
+  if (object.dead || object.phase === 'deployed'||object.phase==='wallPending') return;
   if (finite3(pos)) object.pos.copy(pos);
   object.vel.set(0,0,0); object.phase = 'deployed';
   const spec = object.spec;
   const cap = spec.maxOwnerObjects || (object.subId === 'splashWall' ? 1 : 1);
   const siblings = ownerObjects(projectiles,object).sort((a,b) => b.age-a.age);
-  while (siblings.length >= cap) {
+  while (object.subId!=='splashWall'&&siblings.length >= cap) {
     const oldest=siblings.shift();
     if(object.subId==='inkMine'){
       // The owner detonates the oldest armed mine when placing a third. Replay
@@ -488,9 +526,18 @@ function deploy(api, projectiles, object, pos, normal = null) {
   if(object.subId==='splashWall'){
     object.wallHpInitial=object.hp;
     object.wallContactUntil=new WeakMap();
+    // A folded device has landed, but its ink curtain is not a barrier yet.
+    // Approximate Wiki release clock stays separate from the extracted400F
+    // active lifetime and the raw HP pool.
+    object.phase='wallPending';
+    object.wallReadyAge=Math.max(object.age,spec.minimumDeploySeconds);
+    object.activeAt=(api.G.time||0)+Math.max(0,object.wallReadyAge-object.age);
+    object.expireAt=Infinity;
   }
-  if(object.subId==='sprinkler'&&!object.ghost)surfacePaint(api,object.owner,object.team,object.pos,spec.placePaintRadius,object.seed^0x27d4eb2d);
-  object.pos.y += object.subId === 'splashWall' ? 0 : 0.02;
+  if(['sprinkler','inkMine'].includes(object.subId)&&!object.ghost)surfacePaint(api,object.owner,object.team,object.pos,spec.placePaintRadius,object.seed^0x27d4eb2d);
+  if(!['splashWall','inkMine','beakon'].includes(object.subId))object.pos.y+=.02;
+  if(!object.ghost&&['splashWall','inkMine','beakon'].includes(object.subId))
+    object.s3SurfaceAttachment=captureSubAttachment(api.G,object,blockId??object.owner?.ground?.block,{towerOnly:true,normal});
   if (object.subId === 'beakon') {
     object.grounded = true; object.alive = true; object.superJumpState = null;
     api.G.s3Beakons ||= [];
@@ -504,6 +551,12 @@ function deploy(api, projectiles, object, pos, normal = null) {
     if(object.subId==='beakon')extra.usesLeft=object.usesLeft;
     emitEvent(api,object,'deploy',extra);
   }
+}
+function activateSplashWall(api,projectiles,object){
+  for(const old of ownerObjects(projectiles,object))removeObject(api,projectiles,old);
+  object.phase='deployed';object.deployedAt=api.G.time||0;
+  object.activeAt=api.G.time||0;object.expireAt=(api.G.time||0)+object.spec.lifetime;
+  replaceVisual(api,object);
 }
 
 function surfacePaint(api, owner, team, point, radius, seed, proof = null) {
@@ -611,11 +664,12 @@ function updateAngleLine(api,projectiles,object,dt){
 
 function detonateInkMine(api,projectiles,mine){
   if(!mine||mine.dead||mine.subId!=='inkMine'||mine.ghost)return false;
+  syncObjectAttachment(api,mine);
   const baseDuration=markSeconds({markFrames:mine.spec.markFrames},mine.owner,mine.subPowerAP);
   { const __iwHostiles = hostileActors(api,mine.owner);
     try {
       for (const target of __iwHostiles) {
-    const dx=target.pos.x-mine.pos.x,dy=target.pos.y+.7-mine.pos.y,dz=target.pos.z-mine.pos.z;
+    const dx=target.pos.x-mine.pos.x,dy=target.pos.y+.7-mine.pos.y-(mine.spec.markOffsetY||0),dz=target.pos.z-mine.pos.z;
     // The marking volume passes through walls; the separate damage blast below
     // still performs its normal obstruction test (S3 mix Wiki, Ink Mine).
     if(dx*dx+dy*dy+dz*dz>mine.spec.markRadius**2)continue;
@@ -652,7 +706,7 @@ export function applySubObjectHit(api, projectiles, object, projectile, point, d
 
 function isSubObjectBlastTarget(target){
   return target.phase==='deployed'&&['splashWall','sprinkler','beakon'].includes(target.subId) ||
-    target.subId==='torpedo'&&target.chasedTarget&&['flight','chase'].includes(target.phase);
+    targetableTorpedo(target);
 }
 function subObjectBlastPoint(api,target,origin){
   if(target.subId!=='splashWall')return target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
@@ -664,6 +718,7 @@ function subObjectBlastPoint(api,target,origin){
 
 function damageSubObjectsInRadius(api,projectiles,source,center,radius,damageAt,cause=null,includeSpecials=true,options={}){
   for(const target of entityList(projectiles)){
+    syncObjectAttachment(api,target);
     const sourceTeam=source?.team??source?.owner?.team;
     if(target===source||target.dead||!isSubObjectBlastTarget(target)||target.team===sourceTeam)continue;
     const point=subObjectBlastPoint(api,target,center),distance=point.distanceTo(center);
@@ -719,13 +774,20 @@ function blast(api, object, pos, burstIndex = 0) {
   // Burst Bomb's Wiki-measured 25 direct hit is followed one frame later by
   // the ordinary 35/25 blast bands. Preserve both separately-timed events.
   const spec = object.subId === 'burst' ? { ...sourceSpec, directDamage: undefined } : sourceSpec;
+  const damagePos=spec.damageOffsetY?pos.clone().add(new api.THREE.Vector3(0,spec.damageOffsetY,0)):pos;
   if (!object.ghost) {
     if (Number.isFinite(spec.paintRadius)) {
       const center = pos.clone();
+      center.y+=spec.paintOffsetY||0;
       if (object.subId === 'splashWall') center.y += .3;
-      const area = surfacePaint(api,object.owner,object.team,center,spec.paintRadius,object.seed ^ ((burstIndex+1)*0x9e3779b9),
-        object.s3PaintBirth ? [...object.s3PaintBirth,burstIndex] : null);
-      if (spec.splashPaintRadius > 0) surfacePaint(api,object.owner,object.team,center,spec.splashPaintRadius,object.seed ^ 0x27d4eb2d);
+      let proof=object.s3PaintBirth?[...object.s3PaintBirth,burstIndex]:null;
+      if(object.subId==='inkMine'&&object.s3SurfaceAttachment){
+        const support=mineTowerPaintReference(api.G.netm,object.pos);
+        // Moving paint needs a bounded host-accepted pose. Never downgrade a
+        // Tower core to the static birth envelope when that proof is absent.
+        proof=proof&&support&&object.s3TowerPaintBirthRef?[...proof,support.supportRevision]:null;
+      }
+      const area = surfacePaint(api,object.owner,object.team,center,spec.paintRadius,object.seed ^ ((burstIndex+1)*0x9e3779b9),proof);
       if (spec.crossPaintRadius > 0) {
         for (const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]) {
           const p=center.clone();p.x+=dx*spec.crossPaintRadius;p.z+=dz*spec.crossPaintRadius;
@@ -741,36 +803,53 @@ function blast(api, object, pos, burstIndex = 0) {
         try {
           for (const target of __iwHostiles) {
         targetPoint.copy(target.pos); targetPoint.y += target.form === 'squid' ? .45 : .7;
-        const d = targetPoint.distanceTo(pos);
-        if (d > outer || api.G.physics?.los && !api.G.physics.los(pos,targetPoint)) continue;
-        const shelter=api.G.projectiles?.kitBarrierCandidate?.(object,pos,targetPoint);
-        if(shelter?.object?.subId==='splashWall'&&shelter.distance<pos.distanceTo(targetPoint)-1e-6)continue;
+        const d = targetPoint.distanceTo(damagePos);
+        if (d > outer || api.G.physics?.los && !api.G.physics.los(damagePos,targetPoint)) continue;
+        const shelter=api.G.projectiles?.kitBarrierCandidate?.(object,damagePos,targetPoint);
+        if(shelter?.object?.subId==='splashWall'&&shelter.distance<damagePos.distanceTo(targetPoint)-1e-6)continue;
         const amount = damageAt(d,spec);
         if (amount > 0) api.G.projectiles?.applyHit?.(object.owner,target,amount,object.subId);
       }
         } finally { releaseHostileActors(api); }
       }
       const mainCause=object.subId==='torpedo'?'Bomb_TorpedoBullet':object.subId==='inkMine'?'Bomb_Trap':null;
-      damageSubObjectsInRadius(api,api.G.projectiles,object,pos,outer,d=>damageAt(d,spec),mainCause);
-      if (spec.splashRadius > 0 && (object.subId !== 'torpedo' || object.chasedTarget)) {
-        { const __iwHostiles = hostileActors(api,object.owner);
-          try {
-            for (const target of __iwHostiles) {
-          targetPoint.copy(target.pos); targetPoint.y += .7;
-          const d=targetPoint.distanceTo(pos);
-          if (d <= spec.splashRadius && api.G.physics?.los?.(pos,targetPoint)) api.G.projectiles?.applyHit?.(object.owner,target,spec.splashDamage,object.subId+'-splash');
-        }
-          } finally { releaseHostileActors(api); }
-        }
-        damageSubObjectsInRadius(api,api.G.projectiles,object,pos,spec.splashRadius,()=>spec.splashDamage,'Bomb_TorpedoSplashBurst');
-      }
+      damageSubObjectsInRadius(api,api.G.projectiles,object,damagePos,outer,d=>damageAt(d,spec),mainCause);
     }
   }
-  if (!object.ghost) api.G.fx?.explosion?.(pos,api.G.teamColors?.[object.team],spec.radius || spec.damageOuter || 2);
+  if (!object.ghost) api.G.fx?.explosion?.(damagePos,api.G.teamColors?.[object.team],spec.radius || spec.damageOuter || 2);
   if (!object.ghost) {
-    emitEvent(api,object,'burst',{ burstIndex, x:pos.x,y:pos.y,z:pos.z });
-    api.emit?.('weapon:impact',{ pos:pos.clone(),normal:new api.THREE.Vector3(0,1,0),team:object.team,kind:'sub',radius:spec.radius||spec.damageOuter||1,subId:object.subId });
+    emitEvent(api,object,'burst',{ burstIndex, x:damagePos.x,y:damagePos.y,z:damagePos.z });
+    api.emit?.('weapon:impact',{ pos:damagePos.clone(),normal:new api.THREE.Vector3(0,1,0),team:object.team,kind:'sub',radius:spec.radius||spec.damageOuter||1,subId:object.subId });
   }
+  if(object.subId==='torpedo'&&object.chasedTarget)spawnTorpedoSplashes(api,api.G.projectiles,object,pos);
+  if(object.subId==='fizzy')spawnFizzySplashes(api,api.G.projectiles,object,pos,burstIndex);
+}
+
+function burstTorpedoSplash(api,drop,pos){
+  const spec=drop.source.spec;
+  if(drop.kind==='fizzy'){
+    if(!drop.ghost&&localOwner(drop.owner))surfacePaint(api,drop.owner,drop.team,pos,drop.paintRadius,drop.seed);
+    return;
+  }
+  if(drop.kind==='find'){
+    if(!drop.ghost&&localOwner(drop.owner))surfacePaint(api,drop.owner,drop.team,pos,spec.findSplashAround.paintRadius,drop.seed);
+    return;
+  }
+  if(!drop.ghost&&localOwner(drop.owner)){
+    surfacePaint(api,drop.owner,drop.team,pos,spec.splashPaintRadius,drop.seed);
+    const hostiles=hostileActors(api,drop.owner),point=new api.THREE.Vector3();
+    try{
+      for(const target of hostiles){
+        point.copy(target.pos);point.y+=target.form==='squid'?.45:.7;
+        if(point.distanceTo(pos)>spec.splashRadius||api.G.physics?.los&&!api.G.physics.los(pos,point))continue;
+        const shelter=api.G.projectiles?.kitBarrierCandidate?.(drop,pos,point);
+        if(shelter?.object?.subId==='splashWall'&&shelter.distance<pos.distanceTo(point)-1e-6)continue;
+        api.G.projectiles?.applyHit?.(drop.owner,target,spec.splashDamage,'torpedo-splash');
+      }
+    }finally{releaseHostileActors(api);}
+    damageSubObjectsInRadius(api,api.G.projectiles,drop,pos,spec.splashRadius,()=>spec.splashDamage,'Bomb_TorpedoSplashBurst');
+  }
+  api.G.fx?.explosion?.(pos,api.G.teamColors?.[drop.team],spec.splashRadius);
 }
 
 function closestActor(api, object, maxDistance, lineOfSight = true) {
@@ -784,6 +863,61 @@ function closestActor(api, object, maxDistance, lineOfSight = true) {
     } finally { releaseHostileActors(api); }
   }
   return best ? { actor:best, distance:bestD } : null;
+}
+function findTorpedoTarget(api,object){
+  let best=null,distance=Infinity;
+  const spec=object.spec,hostiles=hostileActors(api,object.owner);
+  try{
+    for(const target of hostiles){
+      const dx=target.pos.x-object.pos.x,dz=target.pos.z-object.pos.z;
+      const dy=target.pos.y+.7-object.pos.y,horizontal=dx*dx+dz*dz;
+      if(horizontal>spec.chaseRadius**2||dy>spec.findHeightAbove||dy< -spec.findHeightBelow)continue;
+      const d=horizontal+dy*dy;
+      if(d>=distance||api.G.physics?.los&&!api.G.physics.los(object.pos,target.pos))continue;
+      best=target;distance=d;
+    }
+  }finally{releaseHostileActors(api);}
+  return best;
+}
+function captureTorpedo(api,object,target){
+  object.torpedoTarget=target;object.torpedoTargetLife=ownerLife(target);
+  object.torpedoAim=target.pos.clone();object.torpedoAim.y+=.7;
+  object.phase='torpedoRotate';object.chasedTarget=true;object.torpedoStageAge=0;
+  object.vel.set(0,0,0);
+  emitEvent(api,object,'torpedoLock');
+  spawnTorpedoSplashes(api,api.G.projectiles,object,object.pos,'find');
+}
+function updateTorpedoTransform(api,object,dt){
+  object.age+=dt;object.prev.copy(object.pos);
+  if(object.ghost)return;
+  const target=object.torpedoTarget;
+  if(target?.alive&&ownerLife(target)===object.torpedoTargetLife){
+    object.torpedoAim.copy(target.pos);object.torpedoAim.y+=.7;
+  }
+  object.torpedoStageAge+=dt;
+  if(object.phase==='torpedoRotate'){
+    if(object.torpedoStageAge+1e-10>=frameSeconds(object.spec.rotationFrames)){
+      object.phase='torpedoWait';object.torpedoStageAge=0;
+    }
+    return;
+  }
+  if(object.torpedoStageAge+1e-10<frameSeconds(object.spec.chaseStartFrames))return;
+  // The lock is sampled until launch. Afterwards retail flies straight; it
+  // does not continuously turn after a moving or respawned target.
+  object.vel.copy(object.torpedoAim).sub(object.pos);
+  if(object.vel.lengthSq()<1e-10)object.vel.set(Math.sin(object.yaw),0,Math.cos(object.yaw));
+  object.vel.normalize().multiplyScalar(object.spec.chaseSpeed);
+  object.phase='chase';object.chaseAge=0;
+  emitEvent(api,object,'torpedoLaunch');
+}
+function targetableTorpedo(object){
+  return object.subId==='torpedo'&&object.chasedTarget&&['flight','chase','torpedoRotate','torpedoWait'].includes(object.phase);
+}
+function reboundTorpedo(object,normal){
+  const vn=object.vel.dot(normal);
+  if(vn>=0)return;
+  const outward=Math.min(-vn,object.vel.length()*object.spec.verticalWallReboundMaxRate);
+  object.vel.addScaledVector(normal,outward-vn);
 }
 function steerAutobomb(object,target,dt,air=false){
   const m=object.spec.chaseMovement,dx=target.pos.x-object.pos.x,dz=target.pos.z-object.pos.z;
@@ -856,13 +990,14 @@ function customObjectCandidate(api, projectiles, p, start, end) {
   if (!(length > 1e-8) || !finite3(start)||!finite3(end)) return null;
   let best=null;
   for (const object of entityList(projectiles)) {
+    syncObjectAttachment(api,object);
     // A homing Torpedo can be shot down after it has locked onto an opponent.
     // It is in the custom list rather than Projectiles.list; exclude the moving
     // object itself when its own sweep asks the shared defense hook for a result.
     if (object===p || object.dead || object.team===p.team) continue;
-    const targetableTorpedo=object.subId==='torpedo'&&object.chasedTarget&&['flight','chase'].includes(object.phase);
+    const torpedoTarget=targetableTorpedo(object);
     const targetableDeployable=object.phase==='deployed'&&['splashWall','sprinkler','beakon'].includes(object.subId);
-    if(!targetableTorpedo&&!targetableDeployable)continue;
+    if(!torpedoTarget&&!targetableDeployable)continue;
     let hit=null;
     if (object.subId==='splashWall') {
       const nX=Math.sin(object.yaw||0), nZ=Math.cos(object.yaw||0), den=(end.x-start.x)*nX+(end.z-start.z)*nZ;
@@ -929,7 +1064,7 @@ function objectHitKey(event) { return `${event.actor?.nid??event.actorId}:${even
 const objectHitSeen = new Set();
 const beaconResultSeen = new Set();
 const statusEventSeen = new Set();
-function beaconReservationKey(actor, life, reservationId) { return `${actor?.nid}:${life}:${reservationId}`; }
+function beaconReservationKey(actor, life, reservationId) { return `${beakonActorKey(actor)}:${life}:${reservationId}`; }
 function emitActorEvent(api, actor, phase, beacon, extra = {}) {
   if(!localOwner(actor)||!Number.isInteger(actor?.nid)||!beacon)return null;
   const event={v:1,phase,subId:'beakon',seq:beacon.seq,eventSeq:nextSeq(actor),life:ownerLife(actor),sourceLife:beacon.sourceLife,
@@ -945,10 +1080,16 @@ function reserveBeacon(object, actor, reservationId) {
   object.reservations ||= new Map();
   const key=beaconReservationKey(actor,ownerLife(actor),reservationId);
   if(object.reservations.has(key))return true;
-  const reserved=[...object.reservations.values()].reduce((n,r)=>n+(r.cost||1),0);
+  // S3 mix Wiki: uses are consumed on LANDING, so all teammates can select
+  // the same live Beakon before the earlier arrivals exhaust it. A reservation
+  // is an identity/cancellation record, not a prepaid capacity slot.
+  for(const [oldKey,reservation] of object.reservations){
+    if(reservation.actorKey!==beakonActorKey(actor))continue;
+    if(reservation.actorLife===ownerLife(actor))return false;
+    object.reservations.delete(oldKey);
+  }
   const cost=actor.weapon?.sub==='beakon'?object.usesLeft:1;
-  if(reserved+cost>object.usesLeft)return false;
-  object.reservations.set(key,{actorId:actor.nid,actorLife:ownerLife(actor),cost});
+  object.reservations.set(key,{actorKey:beakonActorKey(actor),actorId:actor.nid,actorLife:ownerLife(actor),cost});
   return true;
 }
 function releaseBeaconReservation(object, actor, reservationId) {
@@ -992,7 +1133,7 @@ function useSubBeakon(api,actor,beacon,stage='land') {
   // even when the catalogue can no longer resolve the ghost object.
   if(!beacon&&stage==='cancel'&&pending){
     if(pending.reserved){
-      const owner=api.G.netm?.byNid?.get(pending.beaconOwnerId);
+      const owner=pending.beaconOwner||api.G.netm?.byNid?.get(pending.beaconOwnerId);
       const descriptor={owner,seq:pending.beaconSeq,sourceLife:pending.beaconLife,subId:'beakon'};
       if(owner?.remote)emitActorEvent(api,actor,'beakonUseProposal',descriptor,{reservationId:pending.reservationId,stage});
       else {
@@ -1004,9 +1145,9 @@ function useSubBeakon(api,actor,beacon,stage='land') {
   }
   if(!beacon||beacon.dead||beacon.subId!=='beakon'||beacon.phase!=='deployed'||beacon.team!==actor.team)return false;
   let use=pending;
-  if(!use||use.beaconSeq!==beacon.seq||use.beaconLife!==beacon.sourceLife||use.beaconOwnerId!==beacon.owner?.nid){
+  if(!use||use.beaconSeq!==beacon.seq||use.beaconLife!==beacon.sourceLife||use.beaconOwner!==beacon.owner){
     actor.s3BeakonUseSeq=((actor.s3BeakonUseSeq||0)+1)%1_000_000_000;if(!actor.s3BeakonUseSeq)actor.s3BeakonUseSeq=1;
-    use={beaconOwnerId:beacon.owner?.nid,beaconLife:beacon.sourceLife,beaconSeq:beacon.seq,reservationId:actor.s3BeakonUseSeq};
+    use={beaconOwner:beacon.owner,beaconOwnerId:beacon.owner?.nid,beaconLife:beacon.sourceLife,beaconSeq:beacon.seq,reservationId:actor.s3BeakonUseSeq};
     actor.s3SubBeaconUse=use;
   }
   const remoteOwner=beacon.owner?.remote===true;
@@ -1040,7 +1181,7 @@ function applyRemoteObjectHit(api,event) {
   const key=objectHitKey(event);if(objectHitSeen.has(key))return false;objectHitSeen.add(key);
   while(objectHitSeen.size>MAX_REPLAY_EVENTS)objectHitSeen.delete(objectHitSeen.values().next().value);
   const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.owner===owner&&o.seq===event.targetSeq&&o.sourceLife===event.targetLife&&o.subId===event.targetSubId&&o.phase==='deployed');
-  const target=object||entityList(api.G.projectiles).find(o=>!o.dead&&o.owner===owner&&o.seq===event.targetSeq&&o.sourceLife===event.targetLife&&o.subId==='torpedo'&&o.chasedTarget&&['flight','chase'].includes(o.phase));
+  const target=object||entityList(api.G.projectiles).find(o=>!o.dead&&o.owner===owner&&o.seq===event.targetSeq&&o.sourceLife===event.targetLife&&targetableTorpedo(o));
   if(!target||target.ghost)return false;
   const reach=target.subId==='splashWall'?ALL_SUB_SPECS.splashWall.wallWidth/2+1:target.subId==='torpedo'?1:1.5;
   if(target.pos.distanceTo(new api.THREE.Vector3(event.x,event.y,event.z))>reach)return false;
@@ -1108,6 +1249,9 @@ function updateStatuses(api, dt) {
 function updateFlight(api, projectiles, object, dt) {
   const spec=object.spec;
   if(object.ghost&&object.phase==='ghostWait')return;
+  if(object.subId==='torpedo'&&['torpedoRotate','torpedoWait'].includes(object.phase)){
+    updateTorpedoTransform(api,object,dt);return;
+  }
   if(object.subId==='fizzy'&&object.grounded){
     object.age+=dt;object.prev.copy(object.pos);
     // Recheck support so rolling off an edge pauses the ground-only fuse.
@@ -1157,60 +1301,46 @@ function updateFlight(api, projectiles, object, dt) {
     return;
   }
   if(object.grounded&&object.subId==='torpedo'){
-    object.age+=dt;object.prev.copy(object.pos);object.fuse-=dt;
-    if(object.fuse<=0){if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
-    if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw||0;}
-    return;
+    const floor=api.G.physics?.segment?.(object.pos.clone().add(new api.THREE.Vector3(0,.08,0)),
+      object.pos.clone().add(new api.THREE.Vector3(0,-.12,0)),projectiles._s3TorpedoGroundHit ||= new api.Hit());
+    if(floor?.hit&&floor.normal.y>.5){
+      object.age+=dt;object.prev.copy(object.pos);object.pos.y=floor.point.y+.03;object.fuse-=dt;
+      if(object.fuse<=1e-10){if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
+      const drag=Math.pow(1-spec.groundPositionAirResist,dt*60);
+      object.vel.y=0;object.vel.x*=drag;object.vel.z*=drag;
+      const next=object.pos.clone().addScaledVector(object.vel,dt);
+      const wall=api.G.physics?.segment?.(object.pos,next,projectiles._s3SubHit ||= new api.Hit());
+      if(wall?.hit){object.pos.copy(wall.point).addScaledVector(wall.normal,.03);reboundTorpedo(object,wall.normal);}
+      else object.pos.copy(next);
+      return;
+    }
+    object.grounded=false;
   }
   object.age+=dt;object.prev.copy(object.pos);
-  if(object.subId==='autobomb'||object.subId==='torpedo'){
-    // Autobomb search and target tracking begin only after landing. The source
-    // Robot Bomb walks, searches, then holds its burst; it is not a homing
-    // airborne projectile.
-    let target=null;
-    if(object.subId==='torpedo'){
-      if(object.torpedoTarget){
-        // Retain the captured life, not the Actor object across a respawn.
-        // Lost-target travel toward the last captured position is calibrated;
-        // retail's exact lost-target steering has not been measured.
-        if(object.torpedoTarget.alive&&ownerLife(object.torpedoTarget)===object.torpedoTargetLife)
-          object.torpedoAim.copy(object.torpedoTarget.pos);
-        target={pos:object.torpedoAim};
-      }else target=closestActor(api,object,spec.chaseRadius,true)?.actor;
-    }
-      const canChase=object.age>=frameSeconds(spec.chaseStartFrames||spec.chaseMovement?.beforeRotateFrames||0);
-    if(target&&canChase){
-      if(object.subId==='torpedo'&&!object.torpedoTarget){
-        object.torpedoTarget=target;object.torpedoTargetLife=ownerLife(target);object.torpedoAim=target.pos.clone();
-      }
-      object.phase='chase'; object.chasedTarget=true;
-      if(object.subId==='autobomb'){
-        object.chaseAge=(object.chaseAge||0)+dt;
-        steerAutobomb(object,target,dt,true);
-      }else{
-        const dx=target.pos.x-object.pos.x,dz=target.pos.z-object.pos.z,desired=Math.atan2(dx,dz),current=Math.atan2(object.vel.x,object.vel.z);
-        let d=desired-current;while(d>Math.PI)d-=Math.PI*2;while(d< -Math.PI)d+=Math.PI*2;
-        const turn=clamp(d,-2.2*dt,2.2*dt),angle=current+turn;
-        const speed=Math.max(spec.chaseSpeed||6.2,Math.hypot(object.vel.x,object.vel.z));
-        object.vel.x=Math.sin(angle)*speed;object.vel.z=Math.cos(angle)*speed;object.vel.y=Math.max(-3,Math.min(2,object.vel.y));
-      }
-      const approach=object.subId==='autobomb'?spec.chaseMovement.approachDistance:.75;
-      const chaseOver=object.subId==='autobomb'?object.chaseAge>=spec.chaseSeconds:object.age>=(spec.chaseSeconds||2.5);
-      if(target.pos.distanceTo(object.pos)<approach||chaseOver){
-        // A homing timeout bursts at the projectile, not at a target that may
-        // still be many metres away. Actor contact below owns direct collision.
+  if(object.subId==='torpedo'){
+    if(object.phase==='chase'){
+      object.chaseAge=(object.chaseAge||0)+dt;
+      if(object.chaseAge+1e-10>=spec.chaseSeconds){
         if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}
         return;
       }
+    }else if(!object.ghost&&!object.torpedoSearchDisabled&&object.age+1e-10>=frameSeconds(spec.findStartFrames)){
+      const target=findTorpedoTarget(api,object);
+      if(target){captureTorpedo(api,object,target);return;}
     }
   }
   // Zero gravity preserves the pitched launch velocity. Clearing y here made
   // Angle Shooter incapable of hitting above or below its release height.
-  object.vel.y-=spec.gravity*dt;
-  applyFlightPositionAirResist(object,dt);
+  if(!(object.subId==='torpedo'&&object.phase==='chase')){
+    object.vel.y-=spec.gravity*dt;
+    applyFlightPositionAirResist(object,dt);
+  }
   object.pos.addScaledVector(object.vel,dt);
-  const world=api.G.physics?.segment?.(object.prev,object.pos,projectiles._s3SubHit ||= new api.Hit());
-  const actor=['toxicMist','fizzy'].includes(object.subId)?null:contactActor(api,object,object.prev,object.pos,object.subId==='angleShooter'?spec.collisionRadius:.22);
+  let world=api.G.physics?.segment?.(object.prev,object.pos,projectiles._s3SubHit ||= new api.Hit());
+  const standRadius=object.subId==='angleShooter'?spec.collisionRadius:.2;
+  const stand=coolerSegmentContact(projectiles,object.prev,object.pos,standRadius);
+  if(stand&&(!world?.hit||stand.distance<world.dist))world={hit:true,point:stand.point,normal:stand.normal,dist:stand.distance,s3Tacticooler:true};
+  const actor=['toxicMist','fizzy','splashWall','beakon'].includes(object.subId)?null:contactActor(api,object,object.prev,object.pos,object.subId==='angleShooter'?spec.collisionRadius:.22);
   // The native defense lane uses the projectile record it receives for both
   // hit arbitration and Ink Vac's one-shot consume marker. Keep this record
   // persistent across the candidate call so an accepted inhale disables the
@@ -1266,12 +1396,29 @@ function updateFlight(api, projectiles, object, dt) {
     removeObject(api,projectiles,object);return;
   }
   if(world?.hit){
-    object.pos.copy(world.point).addScaledVector(world.normal,.03);
-    if(object.ghost){object.phase='ghostWait';return;}
+    object.pos.copy(world.point).addScaledVector(world.normal,world.s3Tacticooler?standRadius+.03:.03);
+    // Replicas may mirror pure terrain flight (including Cooler reflection),
+    // but deployments and detonations still wait for the owner's event.
+    const visualBounce=object.subId==='angleShooter'||object.subId==='fizzy'||
+      object.subId==='torpedo'&&!object.chasedTarget||object.subId==='splashWall'&&world.normal.y<=.5;
+    if(object.ghost&&!visualBounce){object.phase='ghostWait';return;}
     if(object.subId==='angleShooter'){
-      const vn=object.vel.dot(world.normal);object.vel.addScaledVector(world.normal,-2*vn);object.bounceCount++;
-      surfacePaint(api,object.owner,object.team,object.pos,spec.paintRadius,object.seed^object.bounceCount);
-      emitEvent(api,object,'bounce',{bounceCount:object.bounceCount});
+      const normal=world.normal,vn=object.vel.dot(normal),speed=object.vel.length(),ground=normal.y>.5;
+      const angleRate=ground?spec.reboundGroundAngleRate:spec.reboundWallAngleRate;
+      const speedRate=ground?spec.reboundGroundSpeedRate:spec.reboundWallSpeedRate;
+      const tangent=object.vel.clone().addScaledVector(normal,-vn),tangentSpeed=tangent.length();
+      // Ground reflection flattens the elevation relative to the struck plane;
+      // applying ordinary specular reflection to a slope launched the dart up.
+      if(tangentSpeed>1e-10){
+        const angle=Math.atan2(Math.abs(vn),tangentSpeed)*angleRate;
+        object.vel.copy(tangent).multiplyScalar(Math.cos(angle)*speed*speedRate/tangentSpeed)
+          .addScaledVector(normal,Math.sin(angle)*speed*speedRate);
+      }else object.vel.addScaledVector(normal,-2*vn).multiplyScalar(speedRate);
+      object.bounceCount++;
+      if(!object.ghost){
+        surfacePaint(api,object.owner,object.team,object.pos,spec.paintRadius,object.seed^object.bounceCount);
+        emitEvent(api,object,'bounce',{bounceCount:object.bounceCount});
+      }
       if(object.age+1e-10>=frameSeconds(spec.flightFrames))finishAngleFlight(api,object);
       return;
     }
@@ -1280,26 +1427,34 @@ function updateFlight(api, projectiles, object, dt) {
       else {const vn=object.vel.dot(world.normal);if(vn<0)object.vel.addScaledVector(world.normal,-1.7*vn);}
       return;
     }
+    if(object.subId==='splashWall'&&world.normal.y<=.5){
+      const vn=object.vel.dot(world.normal);if(vn<0)object.vel.addScaledVector(world.normal,-2*vn);
+      return;
+    }
     if(object.subId==='inkMine'||object.subId==='toxicMist'||object.subId==='splashWall'||object.subId==='sprinkler'||object.subId==='beakon'){
-      deploy(api,projectiles,object,object.pos,world.normal);
+      deploy(api,projectiles,object,object.pos,world.normal,world.block);
       if(object.subId==='inkMine')object.activeAt=api.G.time+spec.armSeconds;
       return;
     }
     if(object.subId==='autobomb'||object.subId==='torpedo'){
-      object.vel.y=0;object.phase='flight';object.grounded=true;object.pos.y=world.point.y+.08;
-      if(object.subId==='torpedo')object.fuse=spec.burstSeconds;
+      if(object.subId==='torpedo'){
+        if(object.chasedTarget){blast(api,object,object.pos);removeObject(api,projectiles,object);return;}
+        object.torpedoSearchDisabled=true;
+        if(world.normal.y<=.5){reboundTorpedo(object,world.normal);return;}
+        if(!object.torpedoGroundFuseStarted){object.fuse=spec.burstSeconds;object.torpedoGroundFuseStarted=true;}
+      }
+      object.vel.y=0;object.phase='flight';object.grounded=true;object.pos.y=world.point.y+.03;
       return;
     }
     blast(api,object,object.pos);removeObject(api,projectiles,object);return;
   }
   const flightLimit=object.subId==='angleShooter'?frameSeconds(spec.flightFrames):
     object.subId==='autobomb'?spec.noTargetSeconds:object.subId==='torpedo'?Math.max(2.2,spec.chaseSeconds||0):spec.maxFlightSeconds||2.2;
-  if(object.age+1e-10>=flightLimit){
+  if(!(object.subId==='torpedo'&&object.chasedTarget)&&object.age+1e-10>=flightLimit){
     if(object.subId==='angleShooter'){finishAngleFlight(api,object);return;}
     if(object.ghost){object.phase='ghostWait';return;}
     // Safety retirement is not a collision. Burst Bomb is contact-triggered;
     // an unlanded Autobomb cannot manufacture an airborne explosion either.
-    if(object.subId==='torpedo'){blast(api,object,object.pos);}
     removeObject(api,projectiles,object);return;
   }
   if(object.mesh)object.mesh.position.copy(object.pos);
@@ -1401,11 +1556,21 @@ function updateDeployed(api,projectiles,object,dt){
 }
 
 function tickObjects(api,projectiles,dt){
-  const list=entityList(projectiles);
+  // Advance detached children before parent contacts can emit a new set. A
+  // just-born drop cannot move/explode a frame before its own birth.
+  stepTorpedoSplashes(api,projectiles,dt,(drop,pos)=>burstTorpedoSplash(api,drop,pos));
+  // Activation/hits can synchronously retire another entry. Snapshot births
+  // once so removing an earlier sibling cannot advance this object twice.
+  const list=entityList(projectiles).slice();
   for(let i=list.length-1;i>=0;i--){
     const o=list[i];if(o.dead||o.phase==='ghostWait')continue;
+    syncObjectAttachment(api,o);
     if(o.subId==='sprinkler'&&!o.owner?.alive){removeObject(api,projectiles,o);continue;}
-    if(o.phase==='deployed')updateDeployed(api,projectiles,o,dt);
+    if(o.phase==='wallPending'){
+      o.age+=dt;
+      if(o.age+1e-10>=o.wallReadyAge)activateSplashWall(api,projectiles,o);
+    }
+    else if(o.phase==='deployed')updateDeployed(api,projectiles,o,dt);
     else if(o.phase==='line')updateAngleLine(api,projectiles,o,dt);
     else updateFlight(api,projectiles,o,dt);
     if(!o.dead&&o.phase!=='ghostWait')poseVisual(api,o,dt);
@@ -1430,7 +1595,12 @@ function replayDeploy(api,event,owner){
   if(!object||!finite3({x:event.x,y:event.y,z:event.z}))return false;
   deploy(api,api.G.projectiles,object,new api.THREE.Vector3(event.x,event.y,event.z));
   if(Number.isFinite(event.yaw))object.yaw=event.yaw;
-  if(Number.isFinite(event.activeIn))object.activeAt=(api.G.time||0)+clamp(event.activeIn,0,5);
+  if(['splashWall','inkMine','beakon'].includes(object.subId))object.s3SurfaceAttachment=replayTowerAttachment(api.G,object,event);
+  syncObjectAttachment(api,object);
+  if(Number.isFinite(event.activeIn)){
+    const delay=clamp(event.activeIn,0,5);object.activeAt=(api.G.time||0)+delay;
+    if(object.phase==='wallPending')object.wallReadyAge=object.age+delay;
+  }
   if(Number.isFinite(event.lifeSeconds))object.expireAt=(api.G.time||0)+clamp(event.lifeSeconds,0,60);
   if(object.subId==='beakon'&&Number.isInteger(event.usesLeft))object.usesLeft=clamp(event.usesLeft,0,2);
   replaceVisual(api,object);return true;
@@ -1476,11 +1646,46 @@ export function replaySub(api,event){
   if(event.phase==='sprinklerDrop')return false;
   if(event.phase==='beakonUses')return replayBeaconUses(api,event,owner);
   if(event.phase==='expire'||event.phase==='destroy')return replayExpire(api,event,owner);
+  if(event.phase==='fizzyHop'){
+    const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.owner===owner&&o.subId==='fizzy'&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
+    if(!object||![event.x,event.y,event.z,event.vx,event.vy,event.vz,event.fuse].every(Number.isFinite)||
+      !Number.isInteger(event.pops)||event.pops<1||event.pops!==object.pops-1||
+      event.fuse!==frameSeconds(object.spec.burstWaitFrames[object.popLimit-event.pops]||1))return false;
+    object.pos.set(event.x,event.y,event.z);object.prev.copy(object.pos);object.vel.set(event.vx,event.vy,event.vz);
+    object.phase='flight';object.grounded=false;object.age=0;object.pops=event.pops;object.fuse=event.fuse;
+    return true;
+  }
+  if(event.phase==='torpedoLock'||event.phase==='torpedoLaunch'){
+    const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.owner===owner&&o.subId==='torpedo'&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
+    if(!object||![event.x,event.y,event.z,event.vx,event.vy,event.vz].every(Number.isFinite))return false;
+    if(event.phase==='torpedoLock'){
+      if(object.chasedTarget)return false;
+      object.pos.set(event.x,event.y,event.z);object.prev.copy(object.pos);object.vel.set(0,0,0);
+      object.phase='torpedoRotate';object.grounded=false;object.chasedTarget=true;object.torpedoStageAge=0;
+      spawnTorpedoSplashes(api,api.G.projectiles,object,object.pos,'find');
+    }else{
+      if(!object.chasedTarget||!['torpedoRotate','torpedoWait'].includes(object.phase))return false;
+      object.pos.set(event.x,event.y,event.z);object.prev.copy(object.pos);object.vel.set(event.vx,event.vy,event.vz);
+      object.phase='chase';object.grounded=false;object.chaseAge=0;
+    }
+    return true;
+  }
   if(event.phase==='burst'){
     const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
     if(!object)return false;
+    if(object.subId==='fizzy'){
+      const index=object.fizzyBurstReplayed||0;
+      if(!Number.isSafeInteger(event.burstIndex)||event.burstIndex!==index||index>=object.popLimit)return false;
+      object.fizzyBurstReplayed=index+1;
+    }
+    if(object.subId==='torpedo'){
+      if(object.torpedoBurstReplayed)return false;
+      object.torpedoBurstReplayed=true;
+    }
     if([event.x,event.y,event.z].every(Number.isFinite))object.pos.set(event.x,event.y,event.z);
     const spec=object.subId==='fizzy'?object.spec.bursts[Math.min(2,event.burstIndex||0)]:object.spec;
+    if(object.subId==='torpedo'&&object.chasedTarget)spawnTorpedoSplashes(api,api.G.projectiles,object,object.pos);
+    if(object.subId==='fizzy')spawnFizzySplashes(api,api.G.projectiles,object,object.pos,event.burstIndex);
     api.G.fx?.explosion?.(object.pos,api.G.teamColors?.[object.team],spec.radius||spec.damageOuter||2);
     object.phase='ghostWait';
     return true;
@@ -1542,14 +1747,17 @@ export function installAllSubs(api,profile={}){
     if(!ALL_SUB_SPECS[id]||id==='sprinkler'||id==='autobomb')
       return nativeThrow.call(this,actor,...args);
     if(actor?.remote||!actor?.alive)return undefined;
+    if(id==='inkMine')for(const placed of entityList(this))syncObjectAttachment(api,placed);
     if(id==='torpedo'&&hasActiveTorpedo(this,actor))return undefined;
-    if(id==='inkMine'&&!canPlaceInkMine(this,actor))return undefined;
+    if(id==='inkMine'&&!canPlaceInkMine(this,actor,G.level))return undefined;
+    if(id==='beakon'&&(!actor.grounded||!finite3(actor.pos)))return undefined;
     const runner=actor.weaponRunner;
     const hold=runner?.s3SubHold||0;
     const release=runner?.s3Release;
-    const placement=id==='inkMine'?{x:actor.pos.x,y:actor.pos.y,z:actor.pos.z,vx:0,vy:0,vz:0}:{};
+    const placedAtFeet=id==='inkMine'||id==='beakon';
+    const placement=placedAtFeet?{x:actor.pos.x,y:actor.pos.y,z:actor.pos.z,vx:0,vy:0,vz:0}:{};
     const object=createObject(api,this,actor,id,{hold,charge:Math.min(1,hold/(ALL_SUB_SPECS[id].maxChargeTime||1)),...placement});
-    if(object&&id==='inkMine')deploy(api,this,object,object.pos,actor.ground?.normal);
+    if(object&&placedAtFeet)deploy(api,this,object,object.pos,actor.ground?.normal);
     if(runner){runner.s3SubHold=0;if(id==='fizzy')runner.s3FizzyCharge=null;}
     return object;
   };
@@ -1562,9 +1770,11 @@ export function installAllSubs(api,profile={}){
   if(nativeRunnerReset)WeaponRunner.prototype.reset=function(...args){this.s3FizzyCharge=null;return nativeRunnerReset.apply(this,args);};
   WeaponRunner.prototype.update=function(dt,input,...args){
     const actor=this.a;
+    if(actor?.weapon?.sub==='inkMine'&&G.projectiles)for(const placed of entityList(G.projectiles))syncObjectAttachment(api,placed);
     if(!actor?.remote&&(
       actor?.weapon?.sub==='torpedo'&&hasActiveTorpedo(G.projectiles,actor)||
-      actor?.weapon?.sub==='inkMine'&&!canPlaceInkMine(G.projectiles,actor))){
+      actor?.weapon?.sub==='inkMine'&&!canPlaceInkMine(G.projectiles,actor,G.level)||
+      actor?.weapon?.sub==='beakon'&&(!actor.grounded||!finite3(actor.pos)))){
       this.s3FizzyCharge=null;
       this.s3SubHold=0;this.s3SubReady=null;this.aimingSub=false;
       const suppressed=input?{...input,sub:false,subReleased:false}:input;
@@ -1601,6 +1811,10 @@ export function installAllSubs(api,profile={}){
           state.queue=Math.min(FIZZY_ACCEL.queue,state.queue+FIZZY_ACCEL.aim);state.aimCooldown=FIZZY_ACCEL.aimCooldown;
         }
       }
+      // Wiki's queued bonuses begin on the input frame itself. Existing queue
+      // credit consumed above still shares this frame's 2.5F/source-frame cap.
+      const immediate=Math.min(state.queue,Math.max(0,FIZZY_ACCEL.drainPerSecond*dt-drained));
+      state.queue-=immediate;this.s3SubHold+=immediate/60;
     }
     state.jump=jump;state.moveX=mx;state.moveZ=mz;state.moveMag=mag;state.yaw=yaw;state.pitch=pitch;
     if(!held&&!input?.subReleased&&!this.s3SubReady?.pending&&!this.aimingSub){
@@ -1624,6 +1838,7 @@ export function installAllSubs(api,profile={}){
 
   const nativeClear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){
+    clearTorpedoSplashes(this);
     for(const object of [...this._s3SubObjects||[]])removeObject(api,this,object,true);
     this._s3SubObjects=[];this._s3SubAccumulator=0;
     markBirths.delete(this);
@@ -1660,7 +1875,7 @@ export function installAllSubs(api,profile={}){
   };
 
   api.replaySub=event=>replaySub(api,event);
-  api.getSubBeakons=(team=null)=>entityList(G.projectiles).filter(o=>!o.dead&&o.subId==='beakon'&&o.phase==='deployed'&&o.usesLeft>0&&(team===null||o.team===team));
+  api.getSubBeakons=(team=null)=>entityList(G.projectiles).filter(o=>{syncObjectAttachment(api,o);return !o.dead&&o.subId==='beakon'&&o.phase==='deployed'&&o.usesLeft>0&&(team===null||o.team===team);});
   api.useSubBeakon=(actor,beacon,stage='land')=>useSubBeakon(api,actor,beacon,stage);
   Object.defineProperty(Projectiles.prototype,INSTALL,{value:true,configurable:false});
   return api;

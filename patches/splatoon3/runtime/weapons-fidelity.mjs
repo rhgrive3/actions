@@ -930,6 +930,9 @@ function slosherCollisionRadius(p, age, field, y) {
 }
 export function fidelityPlayerCollisionRadius(p) { return slosherCollisionRadius(p,p.age,false,p.pos?.y); }
 function fieldRadiusAt(p,age,y=p.pos?.y) { return slosherCollisionRadius(p,age,true,y); }
+// Deployed cover uses the same physical field sphere as the native sweep.
+// InkFlight's current INK_LENGTH_SCALE is 1; its profile already owns that radius.
+export function fidelityWorldCollisionRadius(p) { return p.inkProfile?.collision?.field ?? fieldRadiusAt(p,p.age); }
 // Slosher globs and Roller flicks grow their terrain (Field) radius to 0.4-1.05
 // within 2-4 F. Ending the whole glob on the first contact of that grown sphere
 // made a level Splat Bucket throw (born ~0.7-0.9 m high, Field 0.5-0.8) die

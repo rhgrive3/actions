@@ -261,7 +261,7 @@ test('native Rainmaker pickup cancels allowed actor-owned specials while keeping
   f.Match.prototype.playRankedEvents.call(m,e.events);assert.equal(a.specialActive,null);assert.equal(a._s3AllSpecialState,null);assert.equal(a.special,0);
 });
 
-test('Rainmaker sweep reaches the real native Ultra Stamp guard and never detonates behind it', async () => {
+for (const attacking of [false, true]) test('Rainmaker sweep reaches the real native Ultra Stamp guard only during an actual swing (' + attacking + ')', async () => {
   const f = await bootRanked({ realProjectiles: true }), shooter = f.make('shooter'), guard = f.make('shooter');
   shooter.nid = 'carrier'; shooter.team = 0; shooter.pos.set(0, 0, 0);
   guard.nid = 'stamp'; guard.team = 1; guard.pos.set(0, 0, 3); guard.yaw = guard.aimYaw = Math.PI; guard.aimDir.set(0, 0, -1);
@@ -269,12 +269,35 @@ test('Rainmaker sweep reaches the real native Ultra Stamp guard and never detona
   const m = f.G.match = { mode: 'rainmaker', state: 'playing', playing: () => true, actors: [shooter, guard], ranked: { revision: 0, rule: { state: { carrier: shooter.nid, charge: { value: 1 } } } } };
   f.G.actors = m.actors; guard._startSpecial(); assert.equal(guard.specialActive?.id, 'ultraStamp');
   f.G.physics.segment = (_start, _end, hit) => { hit.hit = false; return hit; };
+  if (attacking) {
+    // Holding an idle Stamp is no shield. Reach the real attack using ZR,
+    // keeping the shooter away until the swing so it cannot be pre-damaged.
+    shooter.pos.set(0, 0, -20); const swings = [], off = f.on('all:special', e => {
+      if (e.actor === guard && e.action === 'swing') swings.push(e);
+    });
+    try {
+      guard.intent.fire = true;
+      for (let frame = 0; frame < 60 && !swings.length; frame++) { f.G.time += 1/60; guard._updateSpecial(1/60); }
+      assert.equal(swings.length, 1, 'real ZR input completed a sourced grounded swing');
+      assert.ok(guard._s3AllSpecialState.stampCount > 0); assert.equal(shooter.hp, 100);
+    } finally { off?.(); }
+    shooter.pos.set(0, 0, 0);
+  }
+  const defenses = [], candidate = f.G.projectiles.kitDefenseCandidate;
+  f.G.projectiles.kitDefenseCandidate = function (...args) { const result = candidate.apply(this, args); if (result) defenses.push(result.kind); return result; };
   const rings = [], removals = []; f.G.fx = { ...f.G.fx, ring: (...a) => rings.push(a) }; f.G.scene = { add() {}, remove: o => removals.push(o) };
   const effects = f.createRankedEffects(f.installedRuntime, m);
   effects.event({ kind: 'rainmaker-shot', actorId: shooter.nid, team: 0, pos: [0, 0, 0], aim: [0, 0, 1], charge: 1,
     damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92, paintRadius: 1, speed: 18, directRange: 4.4 });
   effects.update(.1); effects.update(.1); effects.update(.3);
-  assert.equal(removals.length, 1); assert.deepEqual(rings, []); assert.equal(guard.hp, 100);
+  assert.equal(removals.length, 1);
+  if (attacking) {
+    assert.ok(defenses.includes('ultra-stamp-guard'), 'the dedicated projectile reaches the installed active guard');
+    assert.deepEqual(rings, []); assert.equal(guard.hp, 100);
+  } else {
+    assert.ok(!defenses.includes('ultra-stamp-guard'), 'the idle special cannot manufacture a guard');
+    assert.ok(rings.length > 0, 'an unguarded Rainmaker shot still detonates'); assert.ok(guard.hp < 100);
+  }
   effects.dispose();
 });
 
@@ -378,10 +401,21 @@ async function rainmakerArmorHarness() {
 
 for (const gear of [false, true]) test('dedicated Rainmaker actor hits retain their source phase against active Nice Ball armor (' + gear + ')', async () => {
   const f = await rainmakerArmorHarness(); f.shooter.s3.objectHitGear = gear;
-  const before = f.victim._s3AllSpecialState.armorHP;
+  const state = f.victim._s3AllSpecialState, before = state.armorHP;
+  assert.ok(state.t + 1e-8 >= 30/60 && state.armor, 'the actual activation has reached Nice Ball armor');
+  const phases = [], damage = f.victim.damage;
+  f.victim.damage = function (raw, attacker, source) {
+    const cause = attacker?._s3AllSpecialDamageCause, armor = state.armorHP, hp = this.hp;
+    const result = damage.call(this, raw, attacker, source);
+    phases.push({ raw, source, cause, armorDebit: armor-state.armorHP, bodyDamage: hp-this.hp }); return result;
+  };
   f.fire(false);
-  assert.equal(before - f.victim._s3AllSpecialState.armorHP, (60 + 180) * (gear ? 1.1 : 1));
-  assert.equal(f.victim.hp, 100);
+  assert.deepEqual(phases.map(p => [p.raw, p.source, p.cause]), [[60, 'rainmaker', 'Gachihoko_Bullet'], [180, 'rainmaker', 'Gachihoko_BombCore']]);
+  for (const phase of phases) assert.ok(Math.abs(phase.armorDebit-phase.raw*(gear?1.1:1))<1e-8, 'Rainmaker source row and Object Shredder apply once to armor');
+  assert.equal(before - state.armorHP, (60 + 180) * (gear ? 1.1 : 1)); assert.ok(state.armorHP > 0);
+  // General armor penetration is raw-100, capped at 80, independently of
+  // remaining armor HP: the separate 60 contact is absorbed, 180 penetrates80.
+  assert.deepEqual(phases.map(p => p.bodyDamage), [0, 80]); assert.equal(f.victim.hp, 20);
   assert.equal(f.shooter._s3AllSpecialDamageCause, undefined, 'the ordinary weapon cause is restored');
   f.effects.dispose();
 });

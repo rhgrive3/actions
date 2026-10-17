@@ -20,7 +20,8 @@ const EXTRA=`
 async function world(ap=0){
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,adaptRuntime:adaptBuildSource,extraExports:EXTRA});
  const {G,THREE}=f;G.scene=new THREE.Scene();G.camera=new THREE.PerspectiveCamera();G.match={mode:'turf',state:'playing',time:180,playing:()=>true,canRespawn:()=>false};
- G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+ G.physics.segment=(from,to,h)=>{h.hit=from.y>=0&&to.y<0;
+  if(h.hit){const t=from.y/(from.y-to.y);h.point.copy(from).lerp(to,t);h.normal.set(0,1,0);}return h;};
  const a=f.make(),enemy=f.make();enemy.team=1;enemy.pos.set(0,0,15);enemy.remote=true;
  a._resolve=()=>{};a.isLocal=true;a.nid=7;a.aimDir.set(0,0,1);a.aimYaw=0;a.aimPitch=0;a.aimPoint.set(0,1,15);
  a.s3.loadout=ap===57?Array.from({length:3},()=>({main:'specialPower',subs:Array(3).fill('specialPower')})):f.emptyLoadout();
@@ -50,8 +51,8 @@ test('Tenta and Chump fixed activation locks survive death/reset and cleared mis
  }
 });
 
-test('Wave lock begins at throw for 360F; Screen begins at operation for 300F, independent of AP/effect lifetime',async()=>{
- for(const ap of [0,57])for(const [id,frames,kind]of [['waveBreaker',360,'wave'],['splattercolorScreen',300,'screen']]){
+test('Wave/Screen begin at throw for community-measured ~390F/300F, independent of AP and landed effect lifetime',async()=>{
+ for(const ap of [0,57])for(const [id,frames,kind]of [['waveBreaker',390,'wave'],['splattercolorScreen',300,'screen']]){
   const w=await world(ap),{f,G,a,p}=w;w.start(id);
   assert.equal(f.specialGaugeLocked(a),false,'holding/activation alone starts no device lock');
   w.subThrow();const object=p._s3AllSpecialObjects.find(o=>o.kind===kind);
@@ -76,12 +77,12 @@ test('Wave destruction ends its lock immediately; stale retirement cannot clear 
  object.dead=true;assert.equal(f.specialGaugeLocked(a),true,'retired wave cannot unlock a fixed missile use');
 });
 
-test('Big Bubbler starts at native ignition, retains AP-controlled HP lifetime after death, and ends on collapse',async()=>{
+test('Big Bubbler starts during device ignition motion, retains AP-controlled HP lifetime after death, and ends on collapse',async()=>{
  const lifetimes=[];
  for(const ap of [0,57]){
   const w=await world(ap),{f,G,a}=w;w.start('bubbler');const dome=f.bigBubblerDomes()[0];assert.ok(dome);
-  assert.equal(f.specialGaugeLocked(a),false,'unignited structure starts no lock');
-  w.tick(14);assert.equal(f.specialGaugeLocked(a),false);w.tick();assert.equal(dome.ignited,true);assert.equal(f.specialGaugeLocked(a),true);
+  assert.equal(dome.ignited,false);assert.equal(f.specialGaugeLocked(a),true,'device operation precedes visible field ignition');
+  w.tick(14);assert.equal(dome.ignited,false);assert.equal(f.specialGaugeLocked(a),true);w.tick();assert.equal(dome.ignited,true);
   a.splat(null,'water');a.reset();assert.equal(f.bigBubblerDomes().includes(dome),true);assert.equal(f.specialGaugeLocked(a),true);
   let frames=15;while(!dome.dead&&frames<1400){w.tick();frames++;}
   assert.ok(dome.dead);assert.equal(f.specialGaugeLocked(a),false);lifetimes.push(frames);

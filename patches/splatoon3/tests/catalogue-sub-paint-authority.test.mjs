@@ -73,10 +73,15 @@ test('charged Fizzy real receive preserves every core with reverse order and del
 test('accepted mine can finish after owner death but an unreceived old-life birth cannot authorize paint',async()=>{
   const a=await client('a','inkMine'),rows=fire(a,'inkMine'),birth=rows.find(e=>e[1]==='ac'&&e[5].phase==='spawn');
   for(const receivedBeforeDeath of [true,false]){
-    const b=await client('b','inkMine');if(receivedBeforeDeath)play(b,[birth]);
+    const b=await client('b','inkMine');
+    if(receivedBeforeDeath)play(b,[birth]);
+    // The sourced radius1 placement footprint is ordinary prior-life paint,
+    // independent of the capability for the later radius5 Mine explosion.
+    const placement=rows.filter(e=>e[1]==='s'&&e[15]?.[0]!=='inkwave-sub-core-v1');play(b,placement);
+    const placedCount=b.paint.counts[0];assert.ok(placedCount>0&&placedCount<a.paint.counts[0]);
     b.owner.alive=false;b.owner.netLife=1;b.owner.net.lastLife=1;
-    play(b,receivedBeforeDeath?rows.filter(e=>e!==birth):rows);
-    assert.equal(b.paint.counts[0],receivedBeforeDeath?a.paint.counts[0]:0);
+    play(b,rows.filter(e=>!placement.includes(e)&&(!receivedBeforeDeath||e!==birth)));
+    assert.equal(b.paint.counts[0],receivedBeforeDeath?a.paint.counts[0]:placedCount);
   }
 });
 test('match and owner changes cannot reuse an accepted sub birth',async()=>{

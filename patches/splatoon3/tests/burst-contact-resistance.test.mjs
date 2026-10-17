@@ -13,7 +13,38 @@ async function world(){const f=await fixture({fullRuntime:true,productionComposi
 function throwBurst(f,o){const p=f.G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);return p;}
 function advance(f,fps=60){for(let i=0;i<10;i++){f.G.time+=1/fps;f.G.projectiles.update(1/fps);}}
 for(const ap of [0,57])for(const fps of [30,60,120])test(`Burst native direct ${ap}AP at ${fps}Hz preserves direct and one-frame splash`,async()=>{const {f,o,v}=await world();equip(v,ap);const bystander=f.make();bystander.team=1;bystander.invuln=0;bystander.pos.set(1.5,0,2);equip(bystander,ap);const hits=[],other=[],damage=v.damage,collateral=bystander.damage;v.damage=function(n,a,w){hits.push([n,w]);return damage.call(this,n,a,w);};bystander.damage=function(n,a,w){other.push([n,w]);return collateral.call(this,n,a,w);};const hp=v.hp,bhp=bystander.hp;throwBurst(f,o);advance(f,fps);assert.deepEqual(hits,[[25,'burst'],[35,'burst']]);close(hp-v.hp,expected(60,ap,true));assert.equal(other.length,1);assert.equal(other[0][1],'burst');assert.ok(other[0][0]>0&&other[0][0]<=35);close(bhp-bystander.hp,expected(other[0][0],ap,true));});
-for(const armor of ['booyahBomb','crabTank'])test(`Burst native collision consumes raw ${armor} armor then reduces only body spillover`,async()=>{const {f,o,v}=await world();equip(v,57);v.yaw=Math.PI;v.aimDir.set(0,0,-1);v.weapon={...v.weapon,special:armor,specialCost:100};v.special=100;readySpecialEvidence(v,{placeAtFixtureOrigin:true});const s=v._s3AllSpecialState;s.armorHP=10;v.specialActive.armorHP=10;const hp=v.hp,hits=[],damage=v.damage;v.damage=function(n,a,w){hits.push([n,w]);return damage.call(this,n,a,w);};throwBurst(f,o);advance(f);assert.deepEqual(hits,[[25,'burst'],[35,'burst']]);assert.equal(s.armorHP,0);close(hp-v.hp,armor==='crabTank'?30:32);});
+for(const armor of ['booyahBomb','crabTank'])test(`Burst native collision consumes raw ${armor} armor before the next-frame body splash`,async()=>{
+ const {f,o,v}=await world();equip(v,57);v.yaw=Math.PI;v.aimDir.set(0,0,-1);
+ v.weapon={...v.weapon,special:armor,specialCost:100};v.special=100;readySpecialEvidence(v,{placeAtFixtureOrigin:true});
+ const s=v._s3AllSpecialState;s.armorHP=10;v.specialActive.armorHP=10;
+ const hp=v.hp,hits=[],body=[],damage=v.damage;
+ v.damage=function(n,a,w){hits.push([n,w]);const result=damage.call(this,n,a,w);body.push(hp-this.hp);return result;};
+ throwBurst(f,o);advance(f);assert.deepEqual(hits,[[25,'burst'],[35,'burst']]);assert.equal(s.armorHP,0);
+ // Booyah follows the general 100-damage penetration threshold: its breaking
+ // 25 contact is fully absorbed despite only 10 armor HP remaining. The next
+ // native phase hits the unarmored body for 35*.6=21. Crab keeps its existing
+ // armor-HP spill: (25-10)*.6=9, then another 21, totaling 30.
+ assert.deepEqual(body,armor==='crabTank'?[9,30]:[0,21]);
+ close(hp-v.hp,armor==='crabTank'?30:21);
+});
+test('Burst native Booyah armor boundary uses raw contact object damage before Sub Resistance',async()=>{
+ for(const armorHP of [37.5,37.5001]){
+  const {f,o,v}=await world();equip(v,57);v.weapon={...v.weapon,special:'booyahBomb',specialCost:100};v.special=100;
+  readySpecialEvidence(v,{placeAtFixtureOrigin:true});const state=v._s3AllSpecialState;
+  state.armorHP=armorHP;v.specialActive.armorHP=armorHP;
+  const hp=v.hp,phases=[],damage=v.damage;
+  v.damage=function(amount,attacker,cause){const result=damage.call(this,amount,attacker,cause);
+   phases.push({amount,cause,armor:state.armorHP,body:hp-this.hp});return result;};
+  throwBurst(f,o);advance(f);
+  assert.deepEqual(phases.map(p=>[p.amount,p.cause]),[[25,'burst'],[35,'burst']]);
+  close(phases[0].armor,armorHP-25*1.5);close(phases[0].body,0);
+  assert.equal(phases[1].armor,0);
+  // At exactly 25*the pinned Bomb_DirectHit→NiceBall multiplier, the second
+  // phase sees bare skin. Any positive armor instead absorbs the entire 35
+  // breaking splash; neither attack reaches the general 100 threshold.
+  close(phases[1].body,armorHP===37.5?21:0);
+ }
+});
 test('ghost Burst flight never applies direct or splash body damage',async()=>{const {f,o,v}=await world();const p=throwBurst(f,o);p.ghost=true;const hp=v.hp;advance(f);assert.equal(v.hp,hp);});
 test('Burst native collision sends both raw phases through real NetMatch and duplicate JSON stays inert',async()=>{const {f,o,v}=await world();Object.assign(o,{nid:1,owner:'attacker',netLife:0,isLocal:true});Object.assign(v,{nid:2,owner:'victim',netLife:0,remote:true});equip(v,57);const packets=[];const tx=new f.NetMatch({myId:'attacker',hostId:'attacker',isHost:true,tr:{sendTo:(_id,p)=>packets.push(JSON.parse(JSON.stringify(p))) }},{id:'burst-native'});tx.bind({actors:[o,v],state:'playing',time:180});f.G.netm=tx;const hp=v.hp;throwBurst(f,o);advance(f);const hits=packets.filter(p=>p.k==='hit');assert.equal(hits.length,2);assert.deepEqual(hits.map(p=>p.d),[25,35]);assert.equal(v.hp,hp);v.remote=false;const rx=new f.NetMatch({myId:'victim',hostId:'attacker',isHost:false,tr:{sendTo(){}}},{id:'burst-native'});rx.bind({actors:[o,v],state:'playing',time:180});f.G.netm=rx;for(const packet of hits)rx.onMessage('attacker',packet);assert.equal(hp-v.hp,36);for(const packet of hits)rx.onMessage('attacker',packet);assert.equal(hp-v.hp,36);});
 for(const wear of [false,true])test(`Burst intercepted by Splash Wall preserves object HP path, Object Shredder ${wear}`,async()=>{const {f,o,v}=await world();equip(v,57);o.s3.loadout[2].main=wear?'objectShredder':'none';o.s3RefreshGear();v.weapon={...v.weapon,sub:'splashWall'};const wall=f.G.projectiles.throwBomb(v);wall.phase='deployed';wall.pos.set(0,.7,1);wall.prev.copy(wall.pos);wall.vel.set(0,0,0);wall.hp=1000;wall.wallHpInitial=0;const hp=v.hp;throwBurst(f,o);advance(f);assert.equal(v.hp,hp);close(wall.hp,1000-35*2*(wear?1.5:1));});

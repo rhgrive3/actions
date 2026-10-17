@@ -47,16 +47,18 @@ const fireReturn = (f, a) => {
   a.intent.fire = false; f.tick(a);
 };
 
-test('activation consumes the special once, refills the tank once, and opens a held intake', async () => {
+test('activation begins one constant special depletion, refills the tank once, and opens a held intake', async () => {
   const { f, a } = await setup();
   a.ink = 10;
   activate(f, a);
-  assert.equal(a.special, 0, 'the special gauge is consumed on activation');
+  assert.ok(Math.abs(a.special-190*(1-f.inkVacState(a).t/6))<1e-8, 'remaining spent points follow the inhale clock');
   assert.equal(a.ink, f.PLAYER.inkMax, 'the ink tank is refilled on activation');
   assert.equal(a.specialActive.id, VAC_ID, 'the held special uses the normalized id');
   assert.notEqual(a.weapon.special, 'storm', 'Ink Vac is not a Storm alias');
+  const before=a.special,uses=a.stats.specials;
   f.tick(a);
-  assert.equal(a.special, 0, 'the gauge is consumed exactly once');
+  assert.ok(a.special<before, 'remaining spent points decrease continuously');
+  assert.equal(a.stats.specials,uses, 'the activation is consumed exactly once');
 });
 
 test('the intake absorbs a frontal enemy projectile and disables its damage', async () => {
@@ -425,7 +427,7 @@ test('the countershot uses the pinned spawn speed, gravity and blast wait', asyn
   const { f, a, system } = await setup();
   activate(f, a); shoot(f, a); fireReturn(f, a);
   const ex = system.list[system.list.length - 1];
-  const speed = ex.vel.length();
+  const speed = ex.vel.clone().add(new f.THREE.Vector3(0,-.08*60,0)).length();
   assert.ok(Math.abs(speed - 42) < 1e-6, `full-charge speed is 0.7*60 = 42 u/s, got ${speed}`);
   assert.ok(Math.abs(ex.grav - 0.003 * 3600) < 1e-6, 'gravity is the pinned per-frame^2 value x3600');
   assert.ok(Math.abs(ex.drag - 0.01 * 60) < 1e-6, 'air resistance is the pinned per-frame value x60');
@@ -445,15 +447,15 @@ test('countershot damage uses the repository raw/10 conversion', async () => {
 
 test('a remote ghost authors no projectile (and thus no damage/paint) on release', async () => {
   const { f, a, system } = await setup();
-  a.remote = true;
-  activate(f, a);
-  shoot(f, a);
-  enterExhale(f, a, 30);
-  const before = system.list.length;f.tick(a,20);
-  a.intent.fire = true; f.tick(a);
-  a.intent.fire = false; f.tick(a);
+  a.remote = true;a.special=17;
+  a._startSpecial();assert.equal(f.inkVacState(a),null,'a replica cannot author a local activation');
+  const event={actor:a,kit:VAC_ID,serial:41,charge:1,power:0};
+  assert.equal(f.replayInkVac(f.INK_VAC_EVENTS.activation,a,event).applied,true);
+  expandReplica(f,a);const before=system.list.length;
+  assert.equal(f.replayInkVac(f.INK_VAC_EVENTS.release,a,event).applied,true);
   assert.equal(system.list.length, before, 'a remote ghost authors no projectile');
   assert.equal(a.specialActive, null, 'the remote special still ends cleanly');
+  assert.equal(a.special,17,'replica release never spends the adopted reserve');
 });
 
 test('death during an update does not restore the special token', async () => {

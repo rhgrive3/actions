@@ -1,6 +1,7 @@
 import { cataloguePayload } from './catalogue-payload.mjs';
 export { cataloguePayload } from './catalogue-payload.mjs';
 import { recordCatalogueSubBirth } from '../../network-replication/kit-paint-admission.mjs';
+import { beakonActorKey } from './all-subs.mjs';
 // catalogue-loadout
 // Prototype loadout selection. Choices belong to the actor; shared tuning and
 // other players' equipment remain immutable. Native main IDs stay on the wire.
@@ -358,7 +359,7 @@ export function installCatalogueVision({G,Actor,CameraRig}) {
 // lane. The prefixed identity distinguishes a Beakon from a Great Barrier.
 export function installCatalogueBeakonJumps(api) {
  const {G,Actor}=api,bubblerTargets=G.bigBubblerJumpTargets,bubblerJump=Actor.prototype.superJumpToBubbler;
- const identity=o=>'beakon:'+String(o.owner?.nid??o.owner?.id??'local')+':'+String(o.sourceLife);
+ const identity=o=>'beakon:'+beakonActorKey(o.owner)+':'+String(o.sourceLife);
  const resolve=(target,team)=>(api.getSubBeakons?.(team)||[]).find(o=>identity(o)===target?.id&&o.seq===target.serial);
  Object.defineProperty(G,'bigBubblerJumpTargets',{configurable:true,value:team=>[
   ...(bubblerTargets?.(team)||[]),...(api.getSubBeakons?.(team)||[]).map(o=>({kind:'bubbler',id:identity(o),serial:o.seq,team:o.team,pos:o.pos,beakon:true}))

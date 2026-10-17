@@ -653,16 +653,20 @@ test('a live Torpedo blocks a second release before native ink payment',async()=
  first.dead=true;assert.ok(f.G.projectiles.throwBomb(a),'a consumed Torpedo releases the one-live-object gate');
 });
 
-test('Torpedo does not enter its chase phase before the extracted 20-frame delay', async () => {
+test('Torpedo separates calibrated rotation from the extracted post-rotation 20-frame wait', async () => {
   const f=await fixture({fullRuntime:true,realProjectiles:true});
   const owner=f.make('shooter'),enemy=f.make('shooter');owner.team=0;enemy.team=1;
-  const torpedo=deployed(f,owner,'torpedo',[0,6,0]);torpedo.phase='flight';torpedo.activeAt=0;torpedo.vel.set(0,0,0);
+  const torpedo=deployed(f,owner,'torpedo',[0,2,0]);torpedo.phase='flight';torpedo.activeAt=0;torpedo.vel.set(0,0,0);
   enemy.pos.set(5,0,0);
   f.G.physics.segment=()=>null;
+  for(let i=0;i<6;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
+  assert.equal(torpedo.phase,'torpedoRotate');
+  for(let i=0;i<ALL_SUB_SPECS.torpedo.rotationFrames;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
+  assert.equal(torpedo.phase,'torpedoWait');
   for(let i=0;i<19;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
-  assert.equal(torpedo.phase,'flight','the extracted transition delay has not elapsed');
+  assert.equal(torpedo.phase,'torpedoWait','the explicit post-rotation delay has not elapsed');
   f.G.time+=1/60;f.G.projectiles.update(1/60);
-  assert.equal(torpedo.phase,'chase','the extracted 20F delay starts guidance');
+  assert.equal(torpedo.phase,'chase','the extracted 20F wait starts straight travel after rotation');
 });
 
 test('Fizzy blast and native Splat Bomb explosion damage nearby sub devices through source object rates', async () => {

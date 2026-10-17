@@ -24,6 +24,7 @@ import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
 import { createInkFist, disposeSpecialModel } from './special-motion.mjs';
 import { superChumpLandingPreview, tentaMissilesLockPreview } from './all-specials.mjs';
 import { remoteKrakenPhase } from './special-presentation.mjs';
+import { WAIL_SPEAKER_POSITIONS } from './wail-speakers.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.special-vfx.install.v1');
 const TAU = Math.PI * 2;
@@ -274,6 +275,7 @@ class Director {
       }
     }
     for (const [a, t] of this.tracks) if (!(G.actors || []).includes(a)) { this.endTrack(a, t); this.tracks.delete(a); }
+    this.call(this.updateWailLasers, dt);
     this.call(this.updateRounds, dt);
     this.call(this.updateObjects, dt);
     this.call(this.updateKits, dt);
@@ -284,6 +286,22 @@ class Director {
     for (const [a, t] of this.tracks) this.endTrack(a, t);
     for (const m of [this.tracks, this.rounds, this.objects, this.lasers, this.domes, this.coolers, this.fists, this.storms]) m.clear();
     this.kit.clear();
+  }
+  updateWailLasers(dt) {
+      for (const [key, L] of this.lasers) {
+        if (this.time - L.seen > SPECIAL_VFX_CALIBRATION.killerWail.beamHold) { L.outer.dead = L.core.dead = L.halo.dead = true; this.lasers.delete(key); continue; }
+        const c = this.rgb(L.actor), from = L.from, to = L.to;
+        L.drawTo.lerp(to, 1 - Math.exp(-dt * 30));
+        this.setBeam(L.outer, from, L.drawTo); this.setBeam(L.core, from, L.drawTo); this.setBeam(L.halo, from, L.drawTo);
+        if (vfxRandom() < 0.6) { // impact crackle
+          this.drop(L.drawTo, rnd(6, -6), rnd(7, 1), rnd(6, -6), 0.45, 0.1, c, { grav: 12 });   // the beam splashes ink where it lands
+          if (vfxRandom() < 0.3) this.spark(SPARK.GLOW, L.drawTo, 0, 0, 0, 0.1, 0.6, 1.0, this.hdr(c, 1.3, 1), 0.6);
+        }
+        if (vfxRandom() < 0.35) { // sparks running along the beam
+          const k = vfxRandom(); this.v[0].copy(from).lerp(L.drawTo, k);
+          this.spark(SPARK.STAR, this.v[0], rnd(1, -1), rnd(1, -1), rnd(1, -1), 0.25, 0.25, 0.03, this.hdr(c, 1.8, 1.6), 1);
+        }
+      }
   }
   // ------------------------------------------------------------------ events (local emits and replayed remote copies)
   event(e) {
@@ -532,17 +550,24 @@ const OBJECT_FX = {
       r.d.trail = this.ribbon(true, { width: 0.18, widthTail: 0.04, color: this.hdr(r.color, 1.5, 0.8), alpha: 0.8, style: RIBBON.GLOW, life: 0.3, spacing: 0.12 });
       const tgt = o.target || o.pos;
       r.d.mark = this.disc(true, 0, DISC.TARGET, this.v[0].copy(tgt).setY(tgt.y + 0.05), this.up, 0.5, 0.5, this.hdr(r.color, 1.5, 0.7), 0.9,
-        { fade: false, follow: (rec) => { const k = clamp01(r.age / ((o.flight || 82 / 60) * 0.6)); rec.v[3] = 1.2 + 6.5 * easeOut(k); rec.v[7] += 0.03; } });
+        { fade: false, follow: (rec) => {
+          const age = Math.max(0, o.age - (o.landedAt || 0)), k = clamp01(age / ((o.flight || 82 / 60) * 0.6));
+          rec.v[0] = o.pos.x; rec.v[1] = o.pos.y + .05; rec.v[2] = o.pos.z;
+          rec.v[11] = o.phase === 'flight' ? 0 : .9; rec.v[3] = 1.2 + 6.5 * easeOut(k); rec.v[7] += 0.03;
+        } });
     },
     frame(r, o) {
-      this.pushRibbon(r.d.trail, o.pos, true);
+      if (o.phase === 'flight') this.pushRibbon(r.d.trail, o.pos, true);
+      else if (!r.landed) { r.landed = true; this.kit.glowRibbons.end(r.d.trail); }
       if (vfxRandom() < 0.25) this.spark(SPARK.STAR, o.pos, 0, 0, 0, 0.3, 0.14, 0.02, this.hdr(r.color, 1.5, 1.2), 1);
-      const C = SPECIAL_VFX_CALIBRATION.inkstrike, flight = o.flight || 82 / 60, left = flight - r.age, tgt = o.target || o.pos;
+      if (o.phase === 'flight') return;
+      const age = Math.max(0, o.age - (o.landedAt || 0));
+      const C = SPECIAL_VFX_CALIBRATION.inkstrike, flight = o.flight || 82 / 60, left = flight - age, tgt = o.pos;
       // the twister descends out of the sky over the last frames of the beacon's flight
       if (left < C.dropFrames / 60 && !r.d.funnel) {
         const top = tgt.y + 26;
         r.d.funnel = this.band(false, 0, BAND.TWISTER, this.v[0].set(tgt.x, top, tgt.z), 0.6, 0.6, 0.1, 0.1, this.hdr(r.color, 1.0), 0.95,
-          { fade: false, taper: 3.2, twist: 3, speed: 1.4, follow: (rec) => { const k = clamp01(1 - ((o.flight || 82 / 60) - r.age) / (C.dropFrames / 60));
+          { fade: false, taper: 3.2, twist: 3, speed: 1.4, follow: (rec) => { const k = clamp01(1 - ((o.flight || 82 / 60) - Math.max(0, o.age - (o.landedAt || 0))) / (C.dropFrames / 60));
             rec.v[5] = Math.max(0.1, 26 * easeOut(k)); rec.v[1] = top - rec.v[5]; rec.v[4] = 0.9 + 1.2 * k; } });
       }
     },
@@ -603,7 +628,9 @@ const OBJECT_FX = {
   screen: { // Splattercolor Screen: unfurl, marbled flow, drips, fold back into the jar
     start(r, o) { this.nativeBurst(o.pos, this.up, this.c.setRGB(...r.color), { count: 14, speed: 6, size: 0.1, paint: false }); this.flash(this.v[0].copy(o.pos).setY(o.pos.y + 0.6), r.color, 1, 0.25); },
     frame(r, o, dt) {
-      const w = o.width || 15, h = o.height || 9, k = smooth(o.age / 1), close = smooth((o.age - (o.dur - 1)) / 1), grown = k * (1 - close);
+      if (o.phase === 'flight') return;
+      const age = Math.max(0, o.age - (o.landedAt || 0));
+      const w = o.width || 15, h = o.height || 9, k = smooth(age / 1), close = smooth((age - (o.dur - 1)) / 1), grown = k * (1 - close);
       if (grown <= 0.02 || !this.near(o.pos, 70)) return;
       r.acc = (r.acc || 0) + dt;
       while (r.acc > 0.045) {
@@ -622,11 +649,12 @@ const OBJECT_FX = {
       const c = r.color, p = o.pos;
       this.flash(this.v[0].copy(p).setY(p.y + 0.6), c, 1.2, 0.25);
       r.d.holo = this.shell(true, 0, SHELL.HOLO, this.v[0].copy(p), 1.1, 1.1, this.hdr(c, 1.3, 0.5), 0.75,
-        { hemi: true, sy: 1.5, fade: false, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[1] = o.pos.y; rec.v[2] = o.pos.z; const hp = o.maxHp ? clamp01(o.hp / o.maxHp) : 1; rec.v[11] = 0.45 + 0.35 * hp; } });
+        { hemi: true, sy: 1.5, fade: false, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[1] = o.pos.y; rec.v[2] = o.pos.z; const hp = o.maxHp ? clamp01(o.hp / o.maxHp) : 1; rec.v[11] = o.phase === 'flight' ? 0 : 0.45 + 0.35 * hp; } });
       r.d.dots = this.disc(true, 0, DISC.TARGET, this.v[0].copy(p).setY(p.y + 0.04), this.up, 2.2, 2.2, this.hdr(c, 1.2, 0.5), 0.55,
-        { fade: false, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[2] = o.pos.z; rec.v[7] += 0.01; } });
+        { fade: false, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[1] = o.pos.y + .04; rec.v[2] = o.pos.z; rec.v[11] = o.phase === 'flight' ? 0 : .55; rec.v[7] += 0.01; } });
     },
     frame(r, o) {
+      if (o.phase === 'flight') return;
       const pulse = o.pulse || 0;
       if (pulse !== r.pulse) { r.pulse = pulse; if (pulse > 0) { const p = o.pos; this.flash(this.v[0].copy(p).setY(p.y + 0.9), r.color, 1.4, 0.2); this.stars(p, 6, 0.8, this.hdr(r.color, 1.8, 1.2), { h: 1.6, h0: 0.5 }); } }
       // marking lines from the device to marked enemies (only for the viewer's team, as the HUD does)
@@ -826,22 +854,7 @@ const DIRECTORS = {
         }
         void k;
       }
-      // live beams from the authoritative lasers
-      for (const [key, L] of this.lasers) {
-        if (L.actor !== a) continue;
-        if (this.time - L.seen > SPECIAL_VFX_CALIBRATION.killerWail.beamHold) { L.outer.dead = L.core.dead = L.halo.dead = true; this.lasers.delete(key); continue; }
-        const from = L.from, to = L.to;
-        L.drawTo.lerp(to, 1 - Math.exp(-dt * 30));
-        this.setBeam(L.outer, from, L.drawTo); this.setBeam(L.core, from, L.drawTo); this.setBeam(L.halo, from, L.drawTo);
-        if (vfxRandom() < 0.6) { // impact crackle
-          this.drop(L.drawTo, rnd(6, -6), rnd(7, 1), rnd(6, -6), 0.45, 0.1, c, { grav: 12 });   // the beam splashes ink where it lands
-          if (vfxRandom() < 0.3) this.spark(SPARK.GLOW, L.drawTo, 0, 0, 0, 0.1, 0.6, 1.0, this.hdr(c, 1.3, 1), 0.6);
-        }
-        if (vfxRandom() < 0.35) { // sparks running along the beam
-          const k = vfxRandom(); this.v[0].copy(from).lerp(L.drawTo, k);
-          this.spark(SPARK.STAR, this.v[0], rnd(1, -1), rnd(1, -1), rnd(1, -1), 0.25, 0.25, 0.03, this.hdr(c, 1.8, 1.6), 1);
-        }
-      }
+      // Laser lifetimes belong to their world events, including after death.
       void st;
     },
     event(a, e, pos, target) {
@@ -849,13 +862,15 @@ const DIRECTORS = {
       if (e.action === 'target' && target) {
         this.disc(true, 0.6, DISC.RETICLE, this.v[0].copy(target).setY(target.y + 1), this.v[1].copy(this.camPos).sub(target).normalize(), 1.6, 0.9, this.hdr(c, 1.6, 1), 1, { spin: 4 });
       } else if (e.action === 'laser' && pos && target) {
-        const key = `${a.nid ?? 'l'}:${e.activation}:${e.index ?? 0}`;
+        const ids = this.wailActorIds ||= new WeakMap();
+        if (!ids.has(a)) ids.set(a, this.wailActorSerial = (this.wailActorSerial || 0) + 1);
+        const key = `${ids.get(a)}:${e.activation}:${e.index ?? 0}`;
         let L = this.lasers.get(key);
         const end = target.clone(), len = end.distanceTo(pos);
         if (len > C.maxLength) end.sub(pos).multiplyScalar(C.maxLength / len).add(pos);
-        // visual origin: the speaker mouth nearest the gameplay origin
-        const anchors = speakerAnchors(this, a); let from = pos.clone();
-        if (anchors.length) from = anchors[(e.index ?? 0) % anchors.length].clone();
+        // Keep accepted beam origins fixed. Character frames may run after
+        // this event, or its owner may already be dead/swimming.
+        const from = pos.clone();
         if (!L) {
           L = { actor: a, from, to: end, drawTo: from.clone().lerp(end, 0.2), seen: this.time };
           // S3: a thick team-colour tube wound with brighter spiral bands, a hot core and a soft halo
@@ -868,7 +883,7 @@ const DIRECTORS = {
         L.from.copy(from); L.to.copy(end); L.seen = this.time;
       }
     },
-    end(a, t) { for (const r of t.d.mouths || []) r.dead = true; for (const [k, L] of this.lasers) if (L.actor === a) { L.outer.dead = L.core.dead = L.halo.dead = true; this.lasers.delete(k); } },
+    end(a, t) { for (const r of t.d.mouths || []) r.dead = true; },
   },
   // ---------------------------------------------------------------- Tenta Missiles
   tentaMissiles: {
@@ -1381,17 +1396,17 @@ function stepFilaments(self, a, fil, R, cy, speed, f, dt) {
 }
 function endFilaments(self, fil) { for (const q of fil || []) (q.white ? self.kit.glowRibbons : self.kit.ribbons).end(q.r); }
 // Killer Wail speaker mouths, from the drawn devices when present, otherwise from the shared ring layout.
-const SPEAKER_RING = [[-0.55, 1.95], [0.55, 1.95], [-1.0, 1.35], [1.0, 1.35], [-0.55, 0.75], [0.55, 0.75]];
+const SPEAKER_RING = WAIL_SPEAKER_POSITIONS;
 function speakerAnchors(self, a) {
   const out = self._spk ||= SPEAKER_RING.map(() => new self.THREE.Vector3());
   const ch = a.character, list = ch?.s3SpecialDevices?.() || null;
   const holders = list ? list.filter(d => d.spec?.speakers).map(d => d.holder) : [];
   if (holders.length === SPEAKER_RING.length) {
-    for (let i = 0; i < holders.length; i++) { holders[i].updateWorldMatrix(true, false); out[i].set(0, 0, 0.25).applyMatrix4(holders[i].matrixWorld); }
+    for (let i = 0; i < holders.length; i++) { holders[i].updateWorldMatrix(true, false); out[i].set(0, 0, 0.035).applyMatrix4(holders[i].matrixWorld); }
     return out;
   }
-  const y = a.yaw ?? a.aimYaw ?? 0, cs = Math.cos(y), sn = Math.sin(y);
-  for (let i = 0; i < SPEAKER_RING.length; i++) { const [x, h] = SPEAKER_RING[i], z = -0.1; out[i].set(a.pos.x + x * cs + z * sn, a.pos.y + h, a.pos.z - x * sn + z * cs); }
+  const y = a.aimYaw ?? a.yaw ?? 0, cs = Math.cos(y), sn = Math.sin(y);
+  for (let i = 0; i < SPEAKER_RING.length; i++) { const [x, h, z] = SPEAKER_RING[i]; out[i].set(a.pos.x + x * cs + z * sn, a.pos.y + h, a.pos.z - x * sn + z * cs); }
   return out;
 }
 function groundBelow(self, a) { return groundBelowPoint(self, a.pos, a.pos.y); }
@@ -1444,7 +1459,10 @@ export function installSpecialVfx(api) {
 export function observeSpecialReplay(api, replay) {
   return (a, event, ...rest) => {
     const accepted = replay(a, event, ...rest);
-    if (accepted && event?.actor?.remote) { try { api.specialVfxReplay?.(event); } catch (e) { console.warn('[special-vfx]', e); } }
+    if (accepted && event?.actor?.remote) {
+      api.specialModelsReplay?.(event);
+      try { api.specialVfxReplay?.(event); } catch (e) { console.warn('[special-vfx]', e); }
+    }
     return accepted;
   };
 }
