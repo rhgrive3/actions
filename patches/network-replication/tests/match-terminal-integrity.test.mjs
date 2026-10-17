@@ -12,6 +12,7 @@ import { fixture } from './robustness-fixture.mjs';
 import { installDisconnectFidelity } from '../../splatoon3/runtime/disconnect-fidelity.mjs';
 import { fixture as actorFixture } from '../../splatoon3/tests/source-fixture.mjs';
 import { installRespawnLifecycle, beginInitialSquidSpawn } from '../../splatoon3/runtime/respawn-lifecycle.mjs';
+import { normalizeQueueProfile, settleProgression } from '../queue-recovery.mjs';
 
 async function setup(options = {}) {
   const f=await fixture(options), nm=f.makeNetMatch(f.makeSession('p2','host'));
@@ -134,7 +135,11 @@ function productionJudge(G) {
   const start=code.indexOf('  async _judge() {'),end=code.indexOf('  _fade(',start);
   assert.ok(start>=0&&end>start);
   return vm.runInNewContext(`(class Game {${code.slice(start,end)}})`,{
-    G,PROGRESSION:{xpForLevel:()=>1000},TEAM_NAMES:['A','B'],
+    G,PROGRESSION:{xpForLevel:level=>800+350*level},TEAM_NAMES:['A','B'],
+    // The extracted production judge has imports that are normally resolved
+    // by ES modules. Preserve their real profile/XP behavior inside this
+    // isolated guest-result continuation harness.
+    WEAPONS:{shooter:{kind:'shooter'}},normalizeQueueProfile,settleProgression,
     setTimeout:()=>0,saveJSON(){throw Error('Private Battle may not save XP');},
   });
 }

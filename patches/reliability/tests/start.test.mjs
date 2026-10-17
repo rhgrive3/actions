@@ -10,6 +10,8 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { turfExperience } from '../../splatoon3/runtime/results-scoring.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { safeWeaponId, validStartRoster, normalizeQueueProfile, settleProgression } from '../../network-replication/queue-recovery.mjs';
+import { WEAPONS } from '../../../inkwave-public/src/config.js';
 import { isRankedMode } from '../../splatoon3/runtime/ranked/engine.mjs';
 import { adaptCompiledMain } from '../../loading-cache/adapter.mjs';
 import { nativeStageRuleStatus } from '../../native-stages/runtime/rule-availability.mjs';
@@ -80,7 +82,7 @@ function boot(source, held = []) {
   const sandbox = {
     nativeStageEnabled,NATIVE_IDS,nativeStageRuleStatus,UNAVAILABLE_NATIVE_STAGES,
     releaseNativeWorld(game) { assert.equal(game.nativeWorld,undefined,'source worlds are exercised by the native stage fixture'); },
-    isRankedMode,
+    isRankedMode, safeWeaponId, validStartRoster, normalizeQueueProfile, settleProgression, WEAPONS,
     beginMaterialHandoff: (game, previous, renderer) => beginNativeMaterialHandoff(game, previous, renderer, { setTimeout: () => 1, clearTimeout() {} }),
     // These fixtures use legacy maps; composed main also imports native-world helpers.
     nativeStageEnabled: false, NATIVE_IDS: [],
