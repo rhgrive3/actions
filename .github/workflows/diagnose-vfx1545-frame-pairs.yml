@@ -1,0 +1,61 @@
+name: Capture pinned VFX1545 target and baseline frames
+on:
+  push:
+    branches: [review/vfx1545-frame-pairs-20261017]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 5b876cb239412e2cf8f67323f2523d93ff5fd642
+          path: candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Initialize immutable source identity and partial evidence
+        run: |
+          mkdir -p evidence
+          test "$(git -C candidate rev-parse HEAD)" = 5b876cb239412e2cf8f67323f2523d93ff5fd642
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = fb68251f33ced4e97fab14b5bd663c6c9e9ff334
+          printf '%s\n' "$GITHUB_SHA" > evidence/diagnostic-sha.txt
+          printf '%s\n' "$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" > evidence/run.txt
+          git -C candidate rev-parse HEAD > evidence/game-sha.txt
+      - name: Pinned established browser tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Capture stale-frame and binding controls
+        run: |
+          set -o pipefail
+          node --max-old-space-size=64 --test diagnostic/scripts/tests/inkwave-vfx-frame-evidence.test.mjs 2>&1 | tee evidence/light-controls.tap
+          node --check diagnostic/scripts/check-inkwave-special-presentation.mjs
+      - name: Build unchanged immutable game commit
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/diagnostic/node_modules/esbuild/lib/main.js
+        run: |
+          set -o pipefail
+          (cd candidate && timeout -k 5s 180s node --jitless --max-old-space-size=96 --max-semi-space-size=1 scripts/build-inkwave.mjs inkwave-public ../candidate-site) 2>&1 | tee evidence/build.log
+          python3 diagnostic/diagnostics/vfx1545/verify.py prepare candidate candidate-site evidence
+      - name: Unchanged VFX assertions and sixteen exact frame pairs
+        run: |
+          set -o pipefail
+          timeout -k 5s 180s node --max-old-space-size=256 diagnostic/scripts/check-inkwave-special-presentation.mjs --site candidate-site --source-sha 5b876cb239412e2cf8f67323f2523d93ff5fd642 --evidence-dir evidence/special-presentation 2>&1 | tee evidence/capture.log
+          python3 diagnostic/diagnostics/vfx1545/verify.py finish candidate candidate-site evidence
+      - name: Preserve complete and partial evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vfx1545-frame-pairs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence
+          if-no-files-found: error

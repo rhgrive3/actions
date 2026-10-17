@@ -2,6 +2,7 @@
 // Render the shipped, source-loaded Character and actual special owners. This
 // is a WebGL regression diagnostic, not evidence of Nintendo pixel parity.
 import fs from 'node:fs';
+import {createVfxFrameCapture} from './lib/inkwave-vfx-frame-evidence.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
@@ -12,6 +13,11 @@ fs.mkdirSync(out,{recursive:true});
 const hash=b=>createHash('sha256').update(b).digest('hex'),manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
 for(const [file,digest]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(path.join(site,file))),digest,file);
+const stamp=path.join(site,'..','_site-source-sha.txt');
+const sourceHead=opt('--source-sha',fs.existsSync(stamp)?fs.readFileSync(stamp,'utf8').trim():null);
+assert.match(sourceHead||'',/^[a-f0-9]{40}$/,'Explicit --source-sha or official source stamp required');
+if(fs.existsSync(stamp))assert.equal(sourceHead,fs.readFileSync(stamp,'utf8').trim(),'Official source stamp mismatch');
+const frameBinding={head:sourceHead,contentHash:manifest.contentHash,revision:manifest.build.revision};
 const prefix=`/_versions/${manifest.build.revision}/`,errors=[];
 const server=http.createServer((req,res)=>{
  if(req.url==='/specials'){res.setHeader('content-type','text/html');res.end(`<html><head><link rel="icon" href="data:,"><script type="importmap">{"imports":{"three":"${prefix}vendor/three/build/three.module.js","three/addons/":"${prefix}vendor/three/jsm/"}}</script></head><body style="margin:0"></body></html>`);return;}
@@ -25,7 +31,8 @@ try{
  const {chromium}=await import('playwright');browser=await chromium.launch({headless:true,executablePath:opt('--browser-executable',undefined),args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const page=await browser.newPage({viewport:{width:960,height:720}});page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.goto(`http://127.0.0.1:${server.address().port}/specials`);
- result=await page.evaluate(async prefix=>{
+ await page.addScriptTag({content:'globalThis.__createVfxFrameCapture = '+createVfxFrameCapture.toString()+';'});
+ result=await page.evaluate(async ({prefix,frameBinding})=>{
   const THREE=await import('three'),{G}=await import(prefix+'src/core/ctx.js'),{install}=await import(prefix+'patches/splatoon3/runtime/install.mjs');
   const profile=await fetch(prefix+'patches/splatoon3/profile.json').then(r=>r.json()),api=install(profile);
   const storms=await import(prefix+'patches/splatoon3/runtime/storm-effects.mjs');
@@ -43,7 +50,9 @@ try{
   G.physics={los:()=>true,segment:(_a,_b,h)=>{h.hit=false;return h;},raycast:(a,_b,_c,h)=>{h.hit=true;h.point.copy(a).setY(0);h.normal.set(0,1,0);h.distance=a.y;return h;}};
   const diagnosticLevel=G.level,diagnosticPhysics=G.physics;
   G.projectiles=new api.Projectiles(scene);const rows=[],images=[];let stormOwner;
-  const render=()=>{renderer.render(scene,camera);const gl=renderer.getContext(),p=new Uint8Array(960*720*4);gl.readPixels(0,0,960,720,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;};
+  const readFramePixels=()=>{const gl=renderer.getContext(),p=new Uint8Array(960*720*4);gl.readPixels(0,0,960,720,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;};
+  const frameCapture=globalThis.__createVfxFrameCapture({readPixels:readFramePixels,encodePng:()=>renderer.domElement.toDataURL('image/png'),binding:frameBinding,width:960,height:720});
+  const render=()=>{renderer.render(scene,camera);return frameCapture.rendered(readFramePixels());};
   const changed=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=4)if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>=9)n++;return n;};
   const clear=()=>{G.projectiles.clear();bubble.clearBigBubblers?.();};
   for(const id of ['trizooka','inkVac','storm','slam','bubbler','tacticooler']){
@@ -155,19 +164,22 @@ try{
         const verify=label=>{for(const a of [p.aPos,p.aDir,p.aCol,p.aPar]){ensure(mesh.geometry.instanceCount<=a.count,label+' attribute capacity');for(const r of a.updateRanges)ensure(r.start+r.count<=a.array.length,label+' upload bounds');}ensure(mesh.geometry.instanceCount===p.n+1,label+' reserved warm slot');ensure(p.aCol.array[3]===0,label+' warm slot transparent');const n=draws;drawVfx();ensure(draws>n,label+' actual pool draw');};
         try {
           p.clear();p.update(1/60);drawVfx();const blank=render();
+          const baselineFrame=frameCapture.capture({kind:'pool',quality,key,phase:'baseline',state:'cleared',live:p.n},blank);
           for(let i=0;i<p.cap;i++)spawn(i);p.update(1/60);ensure(p.n===p.cap,'full '+key);verify('saturation '+key);
-          const pixels=changed(blank,render());ensure(pixels>0,'visible saturated '+key);
+          const saturated=render(),pixels=changed(blank,saturated);ensure(pixels>0,'visible saturated '+key);
+          const targetFrame=frameCapture.capture({kind:'pool',quality,key,phase:'target',state:'saturated',live:p.n,cap:p.cap,changedPixels:pixels,baselineFrame},saturated);
           spawn(999);p.update(1/60);ensure(p.n===p.cap,'bounded eviction '+key);verify('eviction '+key);
           p.clear();p.update(1/60);ensure(p.n===0,'clear '+key);verify('empty '+key);
           spawn(7);p.update(1/60);ensure(p.n===1,'reuse '+key);verify('reuse '+key);
           p.clear();p.update(1/60);drawVfx();const after=memory();noGrowth(baseline,after,'pool cycle');
-          vfxResources.pool.push({quality,key,cap:p.cap,attributeCapacity:p.aPos.count,draws,pixels,baseline,after});
+          vfxResources.pool.push({quality,key,cap:p.cap,attributeCapacity:p.aPos.count,draws,pixels,baseline,after,baselineFrame,targetFrame});
         } finally {mesh.onBeforeRender=oldDraw;}
       }
       closeFx(fx);drawVfx();noGrowth(totalBefore,memory(),'FX pool disposal');
     }
     for(const quality of [.35,1])for(const mode of ['clear','dispose','normal'])for(let cycle=0;cycle<2;cycle++){
       const before=memory(),{fx,d}=openFx(quality);d.kit.update(1/60,camera);drawVfx();const allocated=memory();
+      const baselineFrame=frameCapture.capture({kind:'fist',quality,mode,cycle,phase:'baseline',state:'before injected birth'},frameCapture.latest());
       const f={owner:{team:0},index:0,pos:new THREE.Vector3(0,1.5,0),origin:new THREE.Vector3(0,2,0),target:new THREE.Vector3(0,0,0),age:.5,hp:10};
       G.projectiles._catalogueFists=[f];fx.update(1/60,camera);const record=d.fists.get(f),model=record?.model;
       directorHealthy(d,'fist birth');ensure(model?.parent===scene,'actual external production fist birth');
@@ -177,6 +189,7 @@ try{
       let draws=0;const oldDraw=[];model.traverse(o=>{if(o.isMesh){const old=o.onBeforeRender;oldDraw.push([o,old]);o.onBeforeRender=function(...a){draws++;return old?.apply(this,a);};}});
       try {
         drawVfx();ensure(draws>0,'production fist actually rendered');const rendered=memory();
+        const targetFrame=frameCapture.capture({kind:'fist',quality,mode,cycle,phase:'target',state:'rendered before retirement',draws,directorErrors:d.errors,baselineFrame},frameCapture.latest());
         G.projectiles._catalogueFists=[];
         if(mode==='clear')fx.clear();else if(mode==='dispose')closeFx(fx);else {f.dead=true;f.hp=0;fx.update(1/60,camera);fx.clear();}
         directorHealthy(d,'fist retirement');drawVfx();ensure(model.parent===null&&d.fists.size===0,'external fist retired '+mode);
@@ -185,7 +198,7 @@ try{
         if(mode!=='dispose'){fx.clear();directorHealthy(d,'repeated clear');drawVfx();noGrowth(allocated,memory(),'fist clear allocation');closeFx(fx);}
         drawVfx();for(const [obj,n]of counts)ensure(n===(shared.has(obj)?0:1),'no double fist disposal '+mode);
         const after=memory();noGrowth(before,after,'fist complete lifetime '+mode);
-        vfxResources.fists.push({quality,mode,cycle,directorErrors:d.errors,draws,owned:counts.size-shared.size,shared:shared.size,before,allocated,rendered,after});
+        vfxResources.fists.push({quality,mode,cycle,directorErrors:d.errors,draws,owned:counts.size-shared.size,shared:shared.size,before,allocated,rendered,after,baselineFrame,targetFrame});
       } finally {for(const[o,cb]of listeners)o.removeEventListener('dispose',cb);for(const[o,cb]of oldDraw)o.onBeforeRender=cb;}
     }
     drawVfx();vfxResources.baseline=totalBefore;vfxResources.after=memory();noGrowth(totalBefore,vfxResources.after,'all VFX lifetimes');
@@ -193,10 +206,13 @@ try{
     G.projectiles._catalogueFists=[];for(const fx of liveFx){try{fx.dispose();}catch{}}
     G.fx=previousFx;G.projectiles._catalogueFists=previousFists;G.actors=previousActors;
   }
-  return {rows,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,vfxResources,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig; Vac uses actual Actor.update/Physics and native lifecycle, other specials use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim'};
- },prefix);
+  ensure(frameCapture.frames.length===32,'all target frame pairs captured');
+  return {rows,images,vfxFrames:frameCapture.frames,cloudDrawCalls,nativeCloudRetirements,baseline,after,vfxResources,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig; Vac uses actual Actor.update/Physics and native lifecycle, other specials use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim'};
+ },{prefix,frameBinding});
  for(const item of result.images)fs.writeFileSync(path.join(out,item.name+'.png'),Buffer.from(item.data.split(',')[1],'base64'));delete result.images;
- assert.deepEqual(errors,[]);result={status:'passed',contentHash:manifest.contentHash,revision:manifest.build.revision,...result,errors};
+ assert.equal(result.vfxFrames.length,32);
+ for(const frame of result.vfxFrames){assert.equal(frame.head,sourceHead);assert.equal(frame.contentHash,manifest.contentHash);assert.equal(frame.revision,manifest.build.revision);const bytes=Buffer.from(frame.data.split(',')[1],'base64');assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');assert.equal(bytes.readUInt32BE(16),frame.width);assert.equal(bytes.readUInt32BE(20),frame.height);const file=frame.name+'.png';fs.writeFileSync(path.join(out,file),bytes,{flag:'wx'});delete frame.data;Object.assign(frame,{file,sha256:hash(bytes),bytes:bytes.length});}
+ assert.deepEqual(errors,[]);result={status:'passed',sourceHead,contentHash:manifest.contentHash,revision:manifest.build.revision,...result,errors};
  fs.writeFileSync(path.join(out,'special-presentation-result.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
 }catch(e){fs.writeFileSync(path.join(out,'special-presentation-result.json'),JSON.stringify({status:'failed',error:e.message,errors},null,2));throw e;}
 finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
