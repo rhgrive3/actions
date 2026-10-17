@@ -519,7 +519,7 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
   return receipt;
 }
 
-const visualSetup = ({ name, seed, impact = null }) => {
+const visualSetup = async ({ name, seed, impact = null }) => {
   const G = window.__G, g = window.__inkwave, a = g.match.local;
   const V = G.camera.position.constructor;
   const canonical = window.__iwCanonicalPlacement;
@@ -796,6 +796,37 @@ const visualSetup = ({ name, seed, impact = null }) => {
   if (g.screenfx?.clear) g.screenfx.clear();
   const weapon = impact === 'wall' ? 'shooter' :
     name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
+async function resetCaptureCharacter(actor) {
+  const old = actor.character, parent = old.root.parent;
+  const fresh = new old.constructor({ color: actor.color, weapon: actor.weaponId,
+    style: old.style, name: actor.name, isLocal: actor.isLocal });
+  fresh.actor = actor;
+  fresh.onEvent = old.onEvent;
+  try {
+    // Character's normal loader also owns late source-motion initialization.
+    // Do not let that initialization race the first physical capture.
+    await fresh._sourceMotionLoader;
+    if (fresh.sourceMotion?.status !== 'ready')
+      throw new Error('Fresh native Character source motion failed readiness');
+    fresh.root.position.copy(old.root.position);
+    fresh.root.quaternion.copy(old.root.quaternion);
+    fresh.setVisible(old.visible);
+  } catch (error) { fresh.dispose(); throw error; }
+  // Commit only after successful initialization; disposal failures must never
+  // dispose the replacement now owned by the gameplay Actor.
+  actor.character = fresh;
+  if (parent) parent.add(fresh.root);
+  old.dispose();
+  fresh.root.updateMatrixWorld(true);
+  return fresh;
+}
+
+  if (!g.frozen) throw new Error('Native loop must remain frozen during reset');
+  const oldCharacter = a.character;
+  await resetCaptureCharacter(a);
+  if (!g.frozen) throw new Error('Native loop unfroze during async reset');
+  window.__iwCharacterResetReceipt = { oldDisposed: oldCharacter._sourceMotionDisposed === true, oldDetached: oldCharacter.root.parent === null, actorOwned: a.character.actor === a, sceneOwned: a.character.root.parent === G.scene, constructorPreserved: a.character.constructor === oldCharacter.constructor, stylePreserved: JSON.stringify(a.character.style) === JSON.stringify(oldCharacter.style), sourceMotionStatus: a.character.sourceMotion.status };
+  if (Object.entries(window.__iwCharacterResetReceipt).some(([key, value]) => key !== 'sourceMotionStatus' && value !== true)) throw new Error('Native Character ownership/disposal failed');
   a.setWeapon(weapon);
   const lifecycleBeforeReset = a.s3?.squidSpawn ? {
     phase: a.s3.squidSpawn.phase ?? null, initial: a.s3.squidSpawn.initial ?? null,
@@ -823,6 +854,7 @@ const visualSetup = ({ name, seed, impact = null }) => {
     a.invuln = 0; a.fireBuffer = a.jumpBuffer = 0; a.kidT = 99;
     a.weaponRunner?.reset?.();
     a.character.setVisible(true); a.character.root.position.copy(a.pos); a.character.root.rotation.y = yaw;
+    a._finishFrame(0);
     a.character.root.updateMatrixWorld(true); G.scene.updateMatrixWorld(true);
     if (a.s3?.squidSpawn) throw new Error('Native Actor.spawnAt did not clear the startup squidSpawn lifecycle');
   };
@@ -831,34 +863,6 @@ const visualSetup = ({ name, seed, impact = null }) => {
   a.aimDir.set(0, 0, 1); a.aimPoint.copy(a.pos).add(new V(0, 1.05, 24));
   a.character.root.rotation.y = 0; a.character.root.updateMatrixWorld(true);
   G.scene.updateMatrixWorld(true);
-  // Pin the *native source motion* at an actual, authored aim/idle frame.
-  // Boot/render time is nondeterministic under SwiftShader (the paired runs
-  // spent 133 versus 208 native intro ticks before this capture). A changing
-  // source clip phase moves the weapon-bone muzzle by sub-millimetres and
-  // changes real projectile positions despite identical gameplay physics/RNG.
-  // Preserve the real loaded source bank and IK/retarget solver: the snapshot
-  // uses a fixed keyframe, not a synthetic muzzle override or tolerance.
-  const character = a.character, source = character.sourceMotion;
-  if (character.weaponKind !== 'roller') {
-    if (source?.status !== 'ready' || typeof source.playClip !== 'function') {
-      throw new Error('Paired native projectile capture requires loaded source motion for ' + character.weaponKind);
-    }
-    source.playClip('WaitShoot_Nrml', { frame: 0, rate: 0 });
-    character.t = 0; character.brPh = 0; character.phase = 0;
-    character.sp.fill(0); character.tr.fill(99);
-    character.gaitW = 0; character.runW = 0; character.wAim = 0; character.wRoll = 0;
-    character.idleT = 0; character.fidget = -1; character.rootInit = false;
-    character.feetValid = false; character.replant = true;
-    character.update(0, {
-      form: 'kid', grounded: true, speed: 0, turnRate: 0,
-      localMove: { x: 0, z: 0 }, vy: 0, aimPitch: 0,
-      firing: false, charge: 0, rolling: 0, subAim: false,
-      ink: 1, hp: 1, special: 0, invuln: false, inEnemyInk: false,
-    });
-    if (source.state !== 'manual' || !source.active) throw new Error('Source aim frame was not admitted');
-    character.root.updateMatrixWorld(true);
-    G.scene.updateMatrixWorld(true);
-  }
   let wall = null;
   if (impact === 'wall') {
     const level = G.physics.level;
