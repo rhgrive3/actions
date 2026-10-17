@@ -1,0 +1,651 @@
+{
+  "status": "passed",
+  "contentHash": "11e83aa370160918a6cfbf88e047afb344fa735236315c4c6a8ad7fc494ca0d2",
+  "revision": "c24a4e4ddb7c96fba658b244f6bea2d0135132fe77b323ba57238240abcb094a",
+  "rows": [
+    {
+      "id": "trizooka",
+      "driver": "real Actor.update with native Physics",
+      "sourceMotion": "ready",
+      "phase": "charge",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 20559,
+      "actorPixels": 40173,
+      "maxHandError": 9.586791989626881e-16,
+      "calls": 11,
+      "triangles": 115817,
+      "nativeLifecycle": {
+        "swimDistance": 2.361,
+        "swimFrames": 30,
+        "shotsWhileSwimming": 0,
+        "surfacedOnFire": true,
+        "returnedToCarry": true
+      }
+    },
+    {
+      "id": "inkVac",
+      "driver": "real Actor.update with native Physics",
+      "sourceMotion": "ready",
+      "phase": "inhale",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 5827,
+      "actorPixels": 29258,
+      "maxHandError": 6.687668363004597e-16,
+      "calls": 12,
+      "triangles": 113789,
+      "nativeLifecycle": {
+        "exhalePixels": 5446,
+        "transitionFrames": 20,
+        "countershots": 1,
+        "returnedToCarry": true
+      }
+    },
+    {
+      "id": "storm",
+      "driver": "manual phase/finish diagnostic",
+      "sourceMotion": "ready",
+      "phase": "hold",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 2744,
+      "actorPixels": 23642,
+      "maxHandError": 0,
+      "calls": 9,
+      "triangles": 34160
+    },
+    {
+      "id": "slam",
+      "driver": "manual phase/finish diagnostic",
+      "sourceMotion": "ready",
+      "phase": "hang",
+      "position": [
+        0,
+        2.033333333333334,
+        0
+      ],
+      "changedPixels": 60657,
+      "actorPixels": 10074,
+      "maxHandError": 0,
+      "calls": 11,
+      "triangles": 39104
+    },
+    {
+      "id": "bubbler",
+      "driver": "manual phase/finish diagnostic",
+      "sourceMotion": "ready",
+      "phase": null,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 120482,
+      "actorPixels": 554,
+      "maxHandError": 0,
+      "calls": 16,
+      "triangles": 41461
+    },
+    {
+      "id": "tacticooler",
+      "driver": "manual phase/finish diagnostic",
+      "sourceMotion": "ready",
+      "phase": null,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 22265,
+      "actorPixels": 10501,
+      "maxHandError": 0,
+      "calls": 18,
+      "triangles": 13959
+    }
+  ],
+  "nativeExtra": [
+    {
+      "id": "killerWail",
+      "weaponPixels": 579,
+      "speakerPixels": 16933,
+      "nativeSwim": true,
+      "tailSpeakers": 4,
+      "tailRetired": true
+    },
+    {
+      "id": "zipcaster",
+      "borrowedGeometries": 6,
+      "borrowedDisposals": 0,
+      "coatRetired": true
+    },
+    {
+      "id": "splattercolorScreen",
+      "jarPixels": 7741,
+      "landedAt": 0.41666666666666663,
+      "operationAge": 0.5000000000000012,
+      "unfold": 0.8750000000000009
+    }
+  ],
+  "cloudDrawCalls": 1,
+  "nativeCloudRetirements": 36,
+  "baseline": {
+    "geometries": 61,
+    "textures": 4,
+    "programs": 19,
+    "buffers": 304
+  },
+  "after": {
+    "geometries": 61,
+    "textures": 4,
+    "programs": 19,
+    "buffers": 304
+  },
+  "vfxResources": {
+    "pool": [
+      {
+        "quality": 0.35,
+        "key": "sparks",
+        "cap": 315,
+        "attributeCapacity": 316,
+        "draws": 8,
+        "pixels": 2592,
+        "baseline": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        }
+      },
+      {
+        "quality": 0.35,
+        "key": "puffs",
+        "cap": 182,
+        "attributeCapacity": 183,
+        "draws": 8,
+        "pixels": 2310,
+        "baseline": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        }
+      },
+      {
+        "quality": 1,
+        "key": "sparks",
+        "cap": 900,
+        "attributeCapacity": 901,
+        "draws": 8,
+        "pixels": 2592,
+        "baseline": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        }
+      },
+      {
+        "quality": 1,
+        "key": "puffs",
+        "cap": 520,
+        "attributeCapacity": 521,
+        "draws": 8,
+        "pixels": 2326,
+        "baseline": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        }
+      }
+    ],
+    "fists": [
+      {
+        "quality": 0.35,
+        "mode": "clear",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 0.35,
+        "mode": "clear",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 0.35,
+        "mode": "dispose",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 0.35,
+        "mode": "dispose",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 0.35,
+        "mode": "normal",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 0.35,
+        "mode": "normal",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "clear",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "clear",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "dispose",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "dispose",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "normal",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "normal",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        },
+        "allocated": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 34,
+          "buffers": 424
+        },
+        "rendered": {
+          "geometries": 80,
+          "textures": 4,
+          "programs": 35,
+          "buffers": 424
+        },
+        "after": {
+          "geometries": 61,
+          "textures": 4,
+          "programs": 19,
+          "buffers": 304
+        }
+      }
+    ],
+    "scope": "emitted native FX/director + production factory; injected fist records; no retail or gameplay qualification",
+    "baseline": {
+      "geometries": 61,
+      "textures": 4,
+      "programs": 19,
+      "buffers": 304
+    },
+    "after": {
+      "geometries": 61,
+      "textures": 4,
+      "programs": 19,
+      "buffers": 304
+    }
+  },
+  "renderer": "WebKit WebGL",
+  "fixture": "source-loaded native rig; Trizooka, Vac and nativeExtra use actual Actor.update/Physics; legacy diagnostic rows use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim",
+  "errors": []
+}

@@ -1,0 +1,2119 @@
+{
+  "build": "c24a4e4ddb7c96fba658b244f6bea2d0135132fe77b323ba57238240abcb094a",
+  "results": [
+    {
+      "engine": "chromium",
+      "wallFacingChecks": [
+        {
+          "yaw": 0,
+          "meshYaw": 0,
+          "frames": 60,
+          "hp": 680
+        },
+        {
+          "yaw": 1.0471975511965976,
+          "meshYaw": 1.0471975511965976,
+          "frames": 60,
+          "hp": 680
+        }
+      ],
+      "catalogueSubChecks": [
+        {
+          "source": "burst",
+          "ap": 0,
+          "native": true,
+          "damage": 60
+        },
+        {
+          "source": "burst",
+          "ap": 10,
+          "native": true,
+          "damage": 49.2
+        },
+        {
+          "source": "burst",
+          "ap": 57,
+          "native": true,
+          "damage": 36
+        },
+        {
+          "source": "burst",
+          "ap": 57,
+          "wire": true,
+          "damage": 21
+        },
+        {
+          "source": "fizzy",
+          "ap": 57,
+          "wire": true,
+          "damage": 30
+        },
+        {
+          "source": "torpedo",
+          "ap": 57,
+          "wire": true,
+          "damage": 30
+        },
+        {
+          "source": "torpedo-splash",
+          "ap": 57,
+          "wire": true,
+          "damage": 6
+        },
+        {
+          "source": "inkMine",
+          "ap": 57,
+          "wire": true,
+          "damage": 22.5
+        }
+      ],
+      "directSubChecks": [
+        {
+          "source": "angleShooter",
+          "ap": 0,
+          "damage": 40
+        },
+        {
+          "source": "angleShooter",
+          "ap": 10,
+          "damage": 33.900000000000006
+        },
+        {
+          "source": "angleShooter",
+          "ap": 57,
+          "damage": 20
+        },
+        {
+          "source": "sprinkler",
+          "ap": 0,
+          "damage": 20
+        },
+        {
+          "source": "sprinkler",
+          "ap": 10,
+          "damage": 16.900000000000006
+        },
+        {
+          "source": "sprinkler",
+          "ap": 57,
+          "damage": 10
+        },
+        {
+          "source": "angleShooter",
+          "ap": 0,
+          "wire": true,
+          "damage": 40
+        },
+        {
+          "source": "angleShooter",
+          "ap": 57,
+          "wire": true,
+          "damage": 20
+        },
+        {
+          "source": "sprinkler",
+          "ap": 0,
+          "wire": true,
+          "damage": 40
+        },
+        {
+          "source": "sprinkler",
+          "ap": 57,
+          "wire": true,
+          "damage": 20
+        }
+      ],
+      "accelerationChecks": [
+        {
+          "id": "s3-shooter-short",
+          "squid": false,
+          "ready": false,
+          "delta": 0.6
+        },
+        {
+          "id": "s3-shooter-short",
+          "squid": false,
+          "ready": true,
+          "delta": 1.2
+        },
+        {
+          "id": "s3-shooter-short",
+          "squid": true,
+          "ready": false,
+          "delta": 0.9
+        },
+        {
+          "id": "s3-shooter-short",
+          "squid": true,
+          "ready": true,
+          "delta": 1.2
+        },
+        {
+          "id": "s3-shooter-first",
+          "squid": false,
+          "ready": false,
+          "delta": 0.6
+        },
+        {
+          "id": "s3-shooter-first",
+          "squid": false,
+          "ready": true,
+          "delta": 1.2
+        },
+        {
+          "id": "s3-shooter-first",
+          "squid": true,
+          "ready": false,
+          "delta": 0.6
+        },
+        {
+          "id": "s3-shooter-first",
+          "squid": true,
+          "ready": true,
+          "delta": 1.2
+        }
+      ],
+      "mistChecks": [
+        {
+          "ap": 0,
+          "squid": false,
+          "speed": 2.88
+        },
+        {
+          "ap": 0,
+          "squid": true,
+          "speed": 5.76
+        },
+        {
+          "ap": 10,
+          "squid": false,
+          "speed": 3.3163199999999997
+        },
+        {
+          "ap": 10,
+          "squid": true,
+          "speed": 6.632639999999999
+        },
+        {
+          "ap": 57,
+          "squid": false,
+          "speed": 4.32
+        },
+        {
+          "ap": 57,
+          "squid": true,
+          "speed": 8.64
+        }
+      ],
+      "mistQueryChecks": [
+        {
+          "volumes": 1,
+          "form": "kid",
+          "losCalls": 1
+        },
+        {
+          "volumes": 96,
+          "form": "kid",
+          "losCalls": 1
+        },
+        {
+          "volumes": 96,
+          "form": "air-squid",
+          "losCalls": 0
+        }
+      ],
+      "kitChecks": [
+        {
+          "id": "s3-shooter-short",
+          "sub": "curling",
+          "special": "ultraStamp",
+          "points": 190,
+          "inkCost": 65
+        },
+        {
+          "id": "s3-shooter-first",
+          "sub": "bomb",
+          "special": "bubbler",
+          "points": 180,
+          "inkCost": 63.63636363636363
+        },
+        {
+          "id": "s3-shooter-precision",
+          "sub": "burst",
+          "special": "crabTank",
+          "points": 210,
+          "inkCost": 45
+        },
+        {
+          "id": "s3-shooter-blaze",
+          "sub": "fizzy",
+          "special": "reefslider",
+          "points": 180,
+          "inkCost": 60
+        },
+        {
+          "id": "shooter",
+          "sub": "suction",
+          "special": "trizooka",
+          "points": 200,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-shooter-gravity",
+          "sub": "splashWall",
+          "special": "killerWail",
+          "points": 210,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-shooter-quickmiddle",
+          "sub": "suction",
+          "special": "tacticooler",
+          "points": 200,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-shooter-expert",
+          "sub": "angleShooter",
+          "special": "crabTank",
+          "points": 190,
+          "inkCost": 40
+        },
+        {
+          "id": "s3-shooter-heavy",
+          "sub": "sprinkler",
+          "special": "inkVac",
+          "points": 190,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-shooter-long",
+          "sub": "angleShooter",
+          "special": "inkVac",
+          "points": 180,
+          "inkCost": 40
+        },
+        {
+          "id": "s3-shooter-quicklong",
+          "sub": "pointSensor",
+          "special": "killerWail",
+          "points": 190,
+          "inkCost": 45
+        },
+        {
+          "id": "s3-blaster-short",
+          "sub": "bomb",
+          "special": "zipcaster",
+          "points": 170,
+          "inkCost": 70
+        },
+        {
+          "id": "blaster",
+          "sub": "autobomb",
+          "special": "bubbler",
+          "points": 190,
+          "inkCost": 55
+        },
+        {
+          "id": "s3-blaster-long",
+          "sub": "suction",
+          "special": "waveBreaker",
+          "points": 210,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-blaster-lightshort",
+          "sub": "bomb",
+          "special": "trizooka",
+          "points": 180,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-blaster-light",
+          "sub": "inkMine",
+          "special": "tripleInkstrike",
+          "points": 190,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-blaster-lightlong",
+          "sub": "toxicMist",
+          "special": "inkVac",
+          "points": 180,
+          "inkCost": 55
+        },
+        {
+          "id": "s3-blaster-precision",
+          "sub": "sprinkler",
+          "special": "reefslider",
+          "points": 180,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-shooter-triplequick",
+          "sub": "curling",
+          "special": "crabTank",
+          "points": 190,
+          "inkCost": 65
+        },
+        {
+          "id": "s3-shooter-triplemiddle",
+          "sub": "pointSensor",
+          "special": "tacticooler",
+          "points": 190,
+          "inkCost": 45
+        },
+        {
+          "id": "s3-shooter-flash",
+          "sub": "splashWall",
+          "special": "trizooka",
+          "points": 220,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-roller-compact",
+          "sub": "autobomb",
+          "special": "zipcaster",
+          "points": 160,
+          "inkCost": 55
+        },
+        {
+          "id": "roller",
+          "sub": "curling",
+          "special": "bubbler",
+          "points": 180,
+          "inkCost": 65
+        },
+        {
+          "id": "s3-roller-heavy",
+          "sub": "sprinkler",
+          "special": "tacticooler",
+          "points": 210,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-roller-hunter",
+          "sub": "inkMine",
+          "special": "tentaMissiles",
+          "points": 210,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-roller-wide",
+          "sub": "splashWall",
+          "special": "inkVac",
+          "points": 180,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-brush-mini",
+          "sub": "bomb",
+          "special": "killerWail",
+          "points": 180,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-brush-normal",
+          "sub": "suction",
+          "special": "zipcaster",
+          "points": 190,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-brush-heavy",
+          "sub": "curling",
+          "special": "waveBreaker",
+          "points": 190,
+          "inkCost": 65
+        },
+        {
+          "id": "s3-charger-quick",
+          "sub": "pointSensor",
+          "special": "bubbler",
+          "points": 190,
+          "inkCost": 45
+        },
+        {
+          "id": "charger",
+          "sub": "bomb",
+          "special": "inkVac",
+          "points": 190,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-charger-normalscope",
+          "sub": "bomb",
+          "special": "inkVac",
+          "points": 190,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-charger-long",
+          "sub": "inkMine",
+          "special": "waveBreaker",
+          "points": 210,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-charger-longscope",
+          "sub": "inkMine",
+          "special": "waveBreaker",
+          "points": 210,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-charger-light",
+          "sub": "autobomb",
+          "special": "killerWail",
+          "points": 190,
+          "inkCost": 55
+        },
+        {
+          "id": "s3-charger-keeper",
+          "sub": "torpedo",
+          "special": "tentaMissiles",
+          "points": 200,
+          "inkCost": 65
+        },
+        {
+          "id": "s3-charger-pencil",
+          "sub": "sprinkler",
+          "special": "tacticooler",
+          "points": 220,
+          "inkCost": 60
+        },
+        {
+          "id": "slosher",
+          "sub": "bomb",
+          "special": "tripleInkstrike",
+          "points": 220,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-slosher-diffusion",
+          "sub": "toxicMist",
+          "special": "inkjet",
+          "points": 180,
+          "inkCost": 55
+        },
+        {
+          "id": "s3-slosher-launcher",
+          "sub": "fizzy",
+          "special": "booyahBomb",
+          "points": 210,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-slosher-bathtub",
+          "sub": "sprinkler",
+          "special": "storm",
+          "points": 190,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-slosher-washtub",
+          "sub": "pointSensor",
+          "special": "storm",
+          "points": 200,
+          "inkCost": 45
+        },
+        {
+          "id": "s3-slosher-double",
+          "sub": "suction",
+          "special": "reefslider",
+          "points": 200,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-spinner-quick",
+          "sub": "burst",
+          "special": "ultraStamp",
+          "points": 200,
+          "inkCost": 45
+        },
+        {
+          "id": "splatling",
+          "sub": "sprinkler",
+          "special": "waveBreaker",
+          "points": 210,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-spinner-hyper",
+          "sub": "autobomb",
+          "special": "booyahBomb",
+          "points": 190,
+          "inkCost": 55
+        },
+        {
+          "id": "s3-spinner-downpour",
+          "sub": "fizzy",
+          "special": "inkjet",
+          "points": 210,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-spinner-serein",
+          "sub": "pointSensor",
+          "special": "storm",
+          "points": 190,
+          "inkCost": 45
+        },
+        {
+          "id": "s3-spinner-hypershort",
+          "sub": "curling",
+          "special": "tacticooler",
+          "points": 200,
+          "inkCost": 65
+        },
+        {
+          "id": "s3-maneuver-short",
+          "sub": "beakon",
+          "special": "tacticooler",
+          "points": 180,
+          "inkCost": 75
+        },
+        {
+          "id": "dualies",
+          "sub": "suction",
+          "special": "crabTank",
+          "points": 200,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-maneuver-gallon",
+          "sub": "splashWall",
+          "special": "booyahBomb",
+          "points": 180,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-maneuver-dual",
+          "sub": "bomb",
+          "special": "waveBreaker",
+          "points": 200,
+          "inkCost": 70
+        },
+        {
+          "id": "s3-maneuver-stepper",
+          "sub": "autobomb",
+          "special": "reefslider",
+          "points": 200,
+          "inkCost": 55
+        },
+        {
+          "id": "s3-maneuver-long",
+          "sub": "inkMine",
+          "special": "killerWail",
+          "points": 190,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-shelter-normal",
+          "sub": "sprinkler",
+          "special": "tripleInkstrike",
+          "points": 210,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-shelter-wide",
+          "sub": "beakon",
+          "special": "inkVac",
+          "points": 190,
+          "inkCost": 75
+        },
+        {
+          "id": "s3-shelter-compact",
+          "sub": "inkMine",
+          "special": "reefslider",
+          "points": 180,
+          "inkCost": 60
+        },
+        {
+          "id": "s3-shelter-focus",
+          "sub": "angleShooter",
+          "special": "bubbler",
+          "points": 190,
+          "inkCost": 40
+        },
+        {
+          "id": "s3-stringer-normal",
+          "sub": "toxicMist",
+          "special": "killerWail",
+          "points": 190,
+          "inkCost": 55
+        },
+        {
+          "id": "s3-stringer-short",
+          "sub": "curling",
+          "special": "tentaMissiles",
+          "points": 210,
+          "inkCost": 65
+        },
+        {
+          "id": "s3-stringer-explosion",
+          "sub": "autobomb",
+          "special": "ultraStamp",
+          "points": 200,
+          "inkCost": 55
+        },
+        {
+          "id": "s3-saber-normal",
+          "sub": "burst",
+          "special": "zipcaster",
+          "points": 210,
+          "inkCost": 45
+        },
+        {
+          "id": "s3-saber-lite",
+          "sub": "torpedo",
+          "special": "ultraStamp",
+          "points": 190,
+          "inkCost": 65
+        },
+        {
+          "id": "s3-saber-heavy",
+          "sub": "suction",
+          "special": "bubbler",
+          "points": 210,
+          "inkCost": 70
+        }
+      ],
+      "weightChecks": [
+        {
+          "id": "s3-shooter-short",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-short",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-short",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-first",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-first",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-first",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-precision",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-precision",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-precision",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-blaze",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-blaze",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-blaze",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "shooter",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "shooter",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "shooter",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-gravity",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-gravity",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-gravity",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-quickmiddle",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-quickmiddle",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-quickmiddle",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shooter-expert",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-expert",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-expert",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-heavy",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-heavy",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-heavy",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-long",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-long",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-long",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-quicklong",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-quicklong",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-quicklong",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-short",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-blaster-short",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-blaster-short",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "blaster",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "blaster",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "blaster",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-long",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-long",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-long",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-lightshort",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-blaster-lightshort",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-blaster-lightshort",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-blaster-light",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-light",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-light",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-lightlong",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-lightlong",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-lightlong",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-precision",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-precision",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-blaster-precision",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-triplequick",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-triplequick",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-triplequick",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-triplemiddle",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-triplemiddle",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-triplemiddle",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-flash",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-flash",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shooter-flash",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-roller-compact",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-roller-compact",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-roller-compact",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "roller",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "roller",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "roller",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-roller-heavy",
+          "ap": 0,
+          "speed": 5.279999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-roller-heavy",
+          "ap": 10,
+          "speed": 6.29808,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-roller-heavy",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-roller-hunter",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-roller-hunter",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-roller-hunter",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-roller-wide",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-roller-wide",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-roller-wide",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-brush-mini",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-brush-mini",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-brush-mini",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-brush-normal",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-brush-normal",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-brush-normal",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-brush-heavy",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-brush-heavy",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-brush-heavy",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-quick",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-quick",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-quick",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "charger",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "charger",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "charger",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-normalscope",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-normalscope",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-normalscope",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-long",
+          "ap": 0,
+          "speed": 5.279999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-charger-long",
+          "ap": 10,
+          "speed": 6.29808,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-charger-long",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-charger-longscope",
+          "ap": 0,
+          "speed": 5.279999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-charger-longscope",
+          "ap": 10,
+          "speed": 6.29808,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-charger-longscope",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-charger-light",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-charger-light",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-charger-light",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-charger-keeper",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-keeper",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-keeper",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-pencil",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-pencil",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-charger-pencil",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "slosher",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "slosher",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "slosher",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-slosher-diffusion",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-slosher-diffusion",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-slosher-diffusion",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-slosher-launcher",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-slosher-launcher",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-slosher-launcher",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-slosher-bathtub",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-slosher-bathtub",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-slosher-bathtub",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-slosher-washtub",
+          "ap": 0,
+          "speed": 5.279999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-slosher-washtub",
+          "ap": 10,
+          "speed": 6.29808,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-slosher-washtub",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-slosher-double",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-slosher-double",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-slosher-double",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-quick",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-quick",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-quick",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "splatling",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "splatling",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "splatling",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-hyper",
+          "ap": 0,
+          "speed": 5.279999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-spinner-hyper",
+          "ap": 10,
+          "speed": 6.29808,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-spinner-hyper",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-spinner-downpour",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-downpour",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-downpour",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-serein",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-serein",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-serein",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-hypershort",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-hypershort",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-spinner-hypershort",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-short",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-maneuver-short",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-maneuver-short",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "dualies",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "dualies",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "dualies",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-gallon",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-gallon",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-gallon",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-dual",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-dual",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-dual",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-stepper",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-stepper",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-stepper",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-long",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-long",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-maneuver-long",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shelter-normal",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shelter-normal",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shelter-normal",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shelter-wide",
+          "ap": 0,
+          "speed": 5.279999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-shelter-wide",
+          "ap": 10,
+          "speed": 6.29808,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-shelter-wide",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-shelter-compact",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shelter-compact",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shelter-compact",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-shelter-focus",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shelter-focus",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-shelter-focus",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-stringer-normal",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-stringer-normal",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-stringer-normal",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-stringer-short",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-stringer-short",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-stringer-short",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-stringer-explosion",
+          "ap": 0,
+          "speed": 5.279999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-stringer-explosion",
+          "ap": 10,
+          "speed": 6.29808,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-stringer-explosion",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Slow"
+        },
+        {
+          "id": "s3-saber-normal",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-saber-normal",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-saber-normal",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-saber-lite",
+          "ap": 0,
+          "speed": 6.239999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-saber-lite",
+          "ap": 10,
+          "speed": 6.9672,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-saber-lite",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Fast"
+        },
+        {
+          "id": "s3-saber-heavy",
+          "ap": 0,
+          "speed": 5.76,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-saber-heavy",
+          "ap": 10,
+          "speed": 6.632640000000001,
+          "weight": "Mid"
+        },
+        {
+          "id": "s3-saber-heavy",
+          "ap": 57,
+          "speed": 8.639999999999999,
+          "weight": "Mid"
+        }
+      ],
+      "uniqueGearChecks": [
+        {
+          "ability": "specialPower",
+          "ap": 0,
+          "zipcasterFuel": 135
+        },
+        {
+          "ability": "specialPower",
+          "ap": 10,
+          "zipcasterFuel": 136.42838037833712
+        },
+        {
+          "ability": "specialPower",
+          "ap": 57,
+          "zipcasterFuel": 138.00000000000068
+        }
+      ],
+      "sprinklerPowerChecks": [
+        {
+          "ap": 0,
+          "first": 480,
+          "second": 900,
+          "velocity": 67.2
+        },
+        {
+          "ap": 10,
+          "first": 570.9,
+          "second": 936.36,
+          "velocity": 67.2
+        },
+        {
+          "ap": 57,
+          "first": 780,
+          "second": 1020,
+          "velocity": 67.2
+        }
+      ],
+      "conditionalChecks": [
+        {
+          "ability": "tenacity",
+          "gauge": 3.2399999999999975
+        },
+        {
+          "ability": "lastDitchEffort",
+          "uninstalledRanked": 0,
+          "turfFinalWindow": 18
+        }
+      ],
+      "objectGearChecks": [
+        {
+          "id": "booyahBomb",
+          "equipped": false,
+          "rate": 0.7,
+          "bodyHp": 100,
+          "penetrationChecks": [
+            {
+              "raw": 25,
+              "bodyDamage": 0,
+              "armorHp": 32.5
+            },
+            {
+              "raw": 100,
+              "bodyDamage": 0,
+              "armorHp": 0
+            },
+            {
+              "raw": 120,
+              "bodyDamage": 20,
+              "armorHp": 0
+            },
+            {
+              "raw": 180,
+              "bodyDamage": 80,
+              "armorHp": 0
+            },
+            {
+              "raw": 220,
+              "bodyDamage": 80,
+              "armorHp": 0
+            }
+          ]
+        },
+        {
+          "id": "booyahBomb",
+          "equipped": true,
+          "rate": 0.77,
+          "bodyHp": 100,
+          "penetrationChecks": [
+            {
+              "raw": 25,
+              "bodyDamage": 0,
+              "armorHp": 30.75
+            },
+            {
+              "raw": 100,
+              "bodyDamage": 0,
+              "armorHp": 0
+            },
+            {
+              "raw": 120,
+              "bodyDamage": 20,
+              "armorHp": 0
+            },
+            {
+              "raw": 180,
+              "bodyDamage": 80,
+              "armorHp": 0
+            },
+            {
+              "raw": 220,
+              "bodyDamage": 80,
+              "armorHp": 0
+            }
+          ]
+        },
+        {
+          "id": "crabTank",
+          "equipped": false,
+          "rate": 1,
+          "bodyHp": 50
+        },
+        {
+          "id": "crabTank",
+          "equipped": true,
+          "rate": 1.3,
+          "bodyHp": 38.5
+        },
+        {
+          "id": "sprinkler",
+          "equipped": false,
+          "hp": 108
+        },
+        {
+          "id": "sprinkler",
+          "equipped": true,
+          "hp": 0
+        }
+      ],
+      "gearAdoptionChecks": [
+        {
+          "points": 0,
+          "runSpeed": 5.76,
+          "owner": "gear-viewer"
+        },
+        {
+          "points": 3,
+          "runSpeed": 5.76,
+          "owner": "gear-viewer"
+        },
+        {
+          "points": 10,
+          "runSpeed": 6.632640000000001,
+          "owner": "gear-viewer"
+        },
+        {
+          "points": 57,
+          "runSpeed": 8.639999999999999,
+          "owner": "gear-viewer"
+        }
+      ],
+      "gearClockChecks": [
+        {
+          "head": "comeback",
+          "expired": true
+        },
+        {
+          "head": "openingGambit",
+          "expired": true
+        }
+      ],
+      "transientGearChecks": [
+        {
+          "kind": "drink",
+          "remaining": 16.983333333333334,
+          "adopted": 16.38333333333334,
+          "expired": true
+        },
+        {
+          "kind": "drop",
+          "remaining": 2.966666666666667,
+          "adopted": 2.3666666666666725,
+          "expired": true
+        }
+      ],
+      "subMarkChecks": [
+        {
+          "sub": "pointSensor",
+          "ap": 0,
+          "remaining": 8
+        },
+        {
+          "sub": "pointSensor",
+          "ap": 10,
+          "remaining": 4.721898982262804
+        },
+        {
+          "sub": "pointSensor",
+          "ap": 57,
+          "remaining": 0.8000000000000007
+        },
+        {
+          "sub": "inkMine",
+          "ap": 0,
+          "remaining": 5
+        },
+        {
+          "sub": "inkMine",
+          "ap": 10,
+          "remaining": 3.6365
+        },
+        {
+          "sub": "inkMine",
+          "ap": 57,
+          "remaining": 0.5
+        },
+        {
+          "sub": "angleShooter",
+          "ap": 0,
+          "remaining": 4.966666666666667
+        },
+        {
+          "sub": "angleShooter",
+          "ap": 10,
+          "remaining": 2.9315122848214905
+        },
+        {
+          "sub": "angleShooter",
+          "ap": 57,
+          "remaining": 0.49666666666666615
+        }
+      ],
+      "records": 65,
+      "legacy": 7,
+      "added": 58,
+      "sourceVersion": "11.3.0",
+      "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "sourceHashes": 65,
+      "bilingualMetadata": 65,
+      "familyCounts": {
+        "shooter": 13,
+        "blaster": 6,
+        "roller": 4,
+        "brush": 3,
+        "charger": 7,
+        "slosher": 5,
+        "splatling": 5,
+        "dualies": 5,
+        "brella": 4,
+        "stringer": 3,
+        "splatana": 3
+      },
+      "emittedWeapons": 58,
+      "totalProjectiles": 887,
+      "firingFrames": {
+        "hold": 160,
+        "release": 35
+      },
+      "ghost": {
+        "weapon": "s3-shooter-short",
+        "retainedCatalog": true,
+        "tick": 0,
+        "sequence": 1
+      }
+    }
+  ]
+}

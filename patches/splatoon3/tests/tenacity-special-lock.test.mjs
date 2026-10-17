@@ -40,13 +40,16 @@ test('#469 Tenacity cannot recharge after the real Storm throw animation ends; u
     f.G.projectiles.throwStorm = () => {};
     a._resolve = () => {};
     a.weapon = { ...a.weapon, special: 'storm' }; a.special = a.specialCost();
+    const activationCost = a.specialCost();
     a._startSpecial(); assert.equal(a.specialActive.phase, 'hold');
     for (let i = 0; i < 3; i++) tick();
-    close(a.special, 0, 'holding cannot recharge');
+    close(a.special, activationCost, 'holding keeps its full native reserve without recharge');
+    assert.equal(a.specialReady(), false, 'the held reserve cannot be reused');
     a.intent.sub = true; tick(); a.intent.sub = false; tick();
     assert.equal(a.specialActive.phase, 'throw');
     const clouds = new f.Projectiles(new f.THREE.Scene());
     clouds._spawnCloud({owner:a,team:a.team,pos:a.pos.clone(),dir:new f.THREE.Vector3(0,0,1)});
+    close(a.special, 0, 'real cloud operation consumes the held reserve');
     const duration = a.stormGaugeLock;
     const clock = new FixedClock(); let cleared = false, unlocked = false, count = 0;
     for (let frame = 0; frame < (duration + .1) * hz; frame++) clock.advance(1 / hz, () => {
