@@ -8,6 +8,10 @@ on:
       - 'patches/splatoon3/reference/projectile-*.json'
       - 'patches/splatoon3/tests/projectile-visuals.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
+      - 'scripts/lib/inkwave-main-ink-baseline.mjs'
+      - 'scripts/fixtures/inkwave-main-ink-pr1525-baseline.json'
+      - 'scripts/prepare-inkwave-main-ink-baseline.mjs'
+      - 'scripts/tests/inkwave-main-ink-baseline.test.mjs'
       - 'scripts/lib/inkwave-projectile-ci-intro.mjs'
       - 'scripts/tests/inkwave-projectile-ci-intro.test.mjs'
       - 'scripts/compare-inkwave-projectile-captures.py'
@@ -53,14 +57,17 @@ jobs:
           node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs
           python3 scripts/tests/inkwave-projectile-captures.test.py
           node --test scripts/tests/inkwave-projectile-ci-intro.test.mjs
+          node --test scripts/tests/inkwave-main-ink-baseline.test.mjs
+      - name: Replay strictly reviewed paint changes into isolated main reference
+        run: node scripts/prepare-inkwave-main-ink-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/baseline-paint-alignment.json
       - name: Build complete production composition
         run: node scripts/build-inkwave.mjs inkwave-public .built-site/projectiles
-      - name: Build unchanged baseline for the same browser harness
+      - name: Build paint-aligned main baseline for the same browser harness
         run: node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/baseline
       - name: Verify emitted packaging
         id: package-check
         run: INKWAVE_BUILT_SITE=.built-site/projectiles node --test scripts/tests/inkwave-build-packaging.test.mjs
-      - name: Render unchanged native game and measure baseline
+      - name: Render reviewed paint-aligned native main game and measure baseline
         run: node scripts/check-inkwave-projectile-visuals.mjs --site .built-site/baseline --evidence-dir .ci-scratch/projectile-visuals/before --mode baseline
       - name: Render candidate native game and measure desktop/mobile emulation
         if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}
