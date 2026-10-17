@@ -46,20 +46,6 @@ export function settleProgression(profile, progression) {
   return profile;
 }
 
-export function reserveLiveStart(game) {
-  const epoch = (game._queueAttractEpoch || 0) + 1;
-  game._queueAttractEpoch = epoch;
-  game._queueStartPending = true;
-  return epoch;
-}
-export function releaseLiveStart(game, epoch) {
-  if (game._queueAttractEpoch === epoch) game._queueStartPending = false;
-}
-export function canApplyAttractReset(game, original, epoch, mode) {
-  return !game._queueStartPending && game._queueAttractEpoch === epoch
-    && game.match === original && !!original?.attract && mode === 'menu';
-}
-
 // A START packet cannot create a local-less HUD, forge a second local actor or
 // allocate an Actor with a missing weapon. The native host builds at most 8
 // roster records, one unique team/slot and one unique nid per player/bot.
