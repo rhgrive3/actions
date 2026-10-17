@@ -1,0 +1,29 @@
+if(rows.slice(-8).includes(row)){
+ const capture=role=>{
+  const ch=sc.chars[0],w=ch.weapon;
+  check(ch.weaponAppearanceModel===(role==='default'?row:kit.baseId),'captured appearance '+row+' '+role);
+  check(w.def.modelId===kit.baseId&&(role==='default'?w.def.modelVariantId===row:w.def.modelVariantId==null),'captured spec '+row+' '+role);
+  const hooks=[],drawn=[],composites=[];
+  try{
+   const quad=sc.compQuad,old=quad.onBeforeRender;hooks.push([quad,old]);
+   quad.onBeforeRender=function(...args){composites.push({opacity:sc.compMat.uniforms.uOpacity.value,texture:!!sc.compMat.uniforms.tMap.value});return old?.apply(this,args);};
+   for(const root of[w.pivot,w.left?.pivot].filter(Boolean))root.traverse(mesh=>{
+    if(!mesh.isMesh)return;const old=mesh.onBeforeRender;hooks.push([mesh,old]);
+    mesh.onBeforeRender=function(...args){drawn.push({body:mesh===w.body||mesh===w.bodyFar,vertices:mesh.geometry?.attributes?.position?.count??0});return old?.apply(this,args);};
+   });
+   sc.render();
+   check(drawn.some(x=>x.body&&x.vertices>0),'captured native body '+row);
+   check(composites.some(x=>x.opacity>0.01&&x.texture),'captured native composite '+row);
+   check(!sc.r.getContext().isContextLost()&&sc.r.getRenderTarget()===null,'captured framebuffer '+row);
+   const canvas=sc.r.domElement;check(canvas.width>0&&canvas.height>0,'canvas dimensions');
+   (out.frames??=[]).push({row,role,kit:kit.id,appearance:ch.weaponAppearanceModel,modelId:w.def.modelId,modelVariantId:w.def.modelVariantId??null,drawn,composites,png:canvas.toDataURL('image/png')});
+  }finally{for(const[mesh,old]of hooks)mesh.onBeforeRender=old;}
+ };
+ capture('default');
+ AP.setWeaponAppearance(kit.id,kit.baseId,storage);
+ const other=kits.find(k=>k.id!==kit.id&&k.main!=='Shelter_Compact_02');check(other,'native alternate hop');
+ sc.showLoadout(other.id,original.color,original.style,original.opponentColor??G.teamColors?.[1]);for(let i=0;i<180;i++)sc.update(1/60);
+ sc.showLoadout(kit.id,original.color,original.style,original.opponentColor??G.teamColors?.[1]);for(let i=0;i<180;i++)sc.update(1/60);
+ capture('base');
+ AP.setWeaponAppearance(kit.id,'',storage);
+}
