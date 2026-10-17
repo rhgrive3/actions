@@ -49,6 +49,8 @@ export function prepareNativeStageBuild(assetPath){
    const bytes=fs.readFileSync(path.join(root,s.id,rel));
    if(bytes.length!==expected.bytes||hash(bytes)!==expected.sha256)throw Error('Native build integrity mismatch: '+s.id+'/'+rel);
   }
+  const manifest=JSON.parse(fs.readFileSync(path.join(root,s.id,'manifest.json')));
+  if(s.diagnosticOnly||manifest.diagnosticOnly||manifest.placementReceipt)throw Error('Diagnostic placement conversion cannot enable a playable native stage: '+s.id);
   if(JSON.stringify(s.sourceNavigation||null)!==JSON.stringify(definition.sourceNavigation||null))throw Error('Native navigation differs from reviewed definition: '+s.id);
   return {...definition,integritySha256:hash(fs.readFileSync(file)),version1130Verified:false};
  });
