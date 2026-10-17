@@ -24,6 +24,22 @@ async function receipt({ legacyScale = false, legacyDepth = false, legacyMask = 
   const c = { key: 'slosher', id: 'slosher' }, a = reset(f, c);
   const scale = f.profile.weaponsFidelityCompletion.worldUnitsPerSourceUnit;
   assert.equal(scale, 1, 'the configured source-to-world scale is one, not range-line units');
+  // This frozen oracle verifies the original source-scaled elliptical landings,
+  // not the later optional 5-family profile masks. Keep the original real
+  // radius, stretch, owner, random seed, contact path and scoring CPU code,
+  // while projecting only the new profile selector away in this historical
+  // baseline. Dedicated main-ink-footprints tests verify the live profile
+  // dispatch, exact grid scoring and browser pixel parity independently.
+  const nativeSourceSplat = f.G.paint.splat;
+  let maskedLandings = 0;
+  f.G.paint.splat = function (point, radius, team, opts = {}) {
+    if ((opts.kind === 'source-shot' || opts.kind === 'source-splash') && opts.footprint) {
+      assert.equal(opts.footprint, 'ink-slosh', 'only the Slosher stencil is projected out of the old source oracle');
+      maskedLandings++;
+      return nativeSourceSplat.call(this, point, radius, team, { ...opts, footprint: null });
+    }
+    return nativeSourceSplat.call(this, point, radius, team, opts);
+  };
   const nativeImpact = f.projectiles._impact, impacts = [];
   f.projectiles._impact = function (p, hit) {
     if (p.type !== 'slosh' || !p.fidelitySloshUnit) return nativeImpact.call(this, p, hit);
@@ -68,6 +84,7 @@ async function receipt({ legacyScale = false, legacyDepth = false, legacyMask = 
     };
   }
   launch(f, a, c); finish(f, a);
+  assert.ok(maskedLandings > 0, 'the live Slosher stencil must be present before the historical oracle projection');
   assert.equal(impacts.length, 9, 'all nine native units reach their source-owned landing');
   const paint = paintMetrics(f);
   if (!legacyMask) {
