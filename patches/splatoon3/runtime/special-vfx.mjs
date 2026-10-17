@@ -738,14 +738,16 @@ const KIT_FX = {
     },
     end() {},
   },
-  fist: { // Triple Splashdown fists: the existing ink-fist model replaces the box stand-in, with a glow trail and the slam
+  fist: { // Trails/impact for attack-owned fists; a model fallback also supports older replay records.
     start(r, f) {
       r.d.trail = this.ribbon(false, { width: 0.9, widthTail: 0.15, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.3, spacing: 0.15 });
-      try {
+      // Production catalogue fists already own the complete model. Optional
+      // effects must never hide it or create a second fist at the same place.
+      try { if(f.mesh?.userData?.specialKind!=='slam') {
         r.model = createInkFist(this.c.setRGB(...r.color).getHex(), this.THREE);
         r.model.name = 'splashdown-fist-model';
         (this.G.scene || this.fx.root)?.add?.(r.model);
-      } catch { r.model = null; }
+      } } catch { r.model = null; }
       r.side = (f.index ?? 0) ? 1 : -1;
       const o = f.origin || f.start || f.pos, tg = f.target || f.pos;
       r.yaw = Math.atan2(tg.x - o.x, tg.z - o.z);

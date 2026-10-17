@@ -1113,8 +1113,16 @@ test('the Vac owner walks at the pinned MoveSpeedMinCharge 0.09 -> MoveSpeedFull
   near(f.inkVacState(a).charge, 1, 'filled');
   near(a.weaponRunner.moveSpeed(), 0.07 * 60, 'full intake');
   a.intent.fire = true; enterExhale(f, a);
-  near(a.weaponRunner.moveSpeed(), 0.07 * 60, 'return-shot hold keeps the full-charge speed');f.tick(a,20);
+  near(a.weaponRunner.moveSpeed(), 0.072 * 60, 'return-shot hold uses the separate S3mix firing-mode speed');f.tick(a,20);
   a.intent.fire = false; f.tick(a);
   assert.ok(!f.inkVacState(a), 'released');
   near(a.weaponRunner.moveSpeed(), ordinary, 'ordinary walking target after release');
+});
+
+test('Ink Vac firing-mode movement is independent of absorbed charge', async () => {
+  for (const charge of [0, .5, 1]) {
+    const {f,a}=await setup();activate(f,a);enterExhale(f,a);
+    f.inkVacState(a).charge=charge;
+    assert.ok(Math.abs(a.weaponRunner.moveSpeed()-4.32)<1e-9);
+  }
 });

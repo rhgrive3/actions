@@ -1,4 +1,5 @@
 import { turfCombatAllowed } from './turf-combat.mjs';
+import { tacticoolerGaugeLocked } from './tacticooler-gauge.mjs';
 // Head-only MinorityUp in pinned 11.3.0 GearSkillTraitsParam.
 // 3.24 points/s per living-player deficit is the post-5.0.0 community
 // measurement (gear/gear-power/part3); Nintendo confirms the 5.0.0 rate buff.
@@ -6,7 +7,7 @@ import { turfCombatAllowed } from './turf-combat.mjs';
 export const TENACITY_POINTS_PER_SECOND = 3.24;
 export function advanceTenacity(actor, dt, api) {
   const match=api.G.match;
-  if(!(dt>0)||!Number.isFinite(dt)||!actor?.alive||actor.remote||actor.specialActive||actor.stormGaugeLock>0||actor.s3TidalSlamGaugeFinish||
+  if(!(dt>0)||!Number.isFinite(dt)||!actor?.alive||actor.remote||actor.specialActive||actor.stormGaugeLock>0||tacticoolerGaugeLocked(actor)||actor.s3TidalSlamGaugeFinish||
     (match?.mode==='turf'&&match[Symbol.for('inkwave.tenacity.match-owner.v1')]===true)||
     actor.s3?.loadout?.[0]?.main!=='tenacity'||!match||match.attract||match.paused||match.bossMode||match.range||match.opts?.range||
     !match.playing?.()||!turfCombatAllowed(api.G))return 0;

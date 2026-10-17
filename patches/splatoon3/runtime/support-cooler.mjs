@@ -10,6 +10,7 @@ export const TACTICOOLER_SOURCE = Object.freeze({
   serveAreaRadius:7, serveAreaHeightDown:0, serveAreaHeightUp:3,
   vanishDistance:1.8, specialReduceFrame:600,
   spawnSpeedY:.07, spawnSpeedZ:.4,
+  flyGravity:.009, flyPositionAirResist:.001,
 });
 export const TACTICOOLER = Object.freeze({
   id: 'tacticooler', standSeconds: TACTICOOLER_SOURCE.putFrame / 60,

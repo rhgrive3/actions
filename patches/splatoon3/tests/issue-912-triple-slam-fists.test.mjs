@@ -48,7 +48,7 @@ function world({ wall = false, victim = [0, 0, 5.6] } = {}) {
   return { Actor, G, THREE, target, blasts, hits, paint, emits };
 }
 
-test('#912 pinned 11.3.0 symmetric fist centers and near/far damage endpoints', () => {
+test('#912 pinned 11.3.0 symmetric fist centers and discrete near/far damage bands', () => {
   const c = tripleSlamFistCenters({ x: 0, y: 0, z: 0 }, 0, 1);
   assert.equal(c.length, 2);
   assert.ok(Math.abs(c[0].x + 3.27) < 1e-8);
@@ -57,8 +57,14 @@ test('#912 pinned 11.3.0 symmetric fist centers and near/far damage endpoints', 
   assert.ok(Math.abs(Math.hypot(c[0].x, c[0].z) - 6.54) < 1e-8);
   assert.equal(tripleSlamFistDamage(0), 220);
   assert.equal(tripleSlamFistDamage(6.4), 220);
+  assert.equal(tripleSlamFistDamage(6.400001), 60);
+  assert.equal(tripleSlamFistDamage(8), 60,'one outer explosion must leave a full-health target alive');
   assert.equal(tripleSlamFistDamage(9.6), 60);
   assert.equal(tripleSlamFistDamage(9.600001), 0);
+  assert.equal(tripleSlamFistDamage(7.04,1.1),220);
+  assert.equal(tripleSlamFistDamage(7.040001,1.1),60);
+  assert.equal(tripleSlamFistDamage(10.56,1.1),60);
+  assert.equal(tripleSlamFistDamage(10.560001,1.1),0);
   assert.equal(FIST_TRAVEL, 15 / 60, 'raw Pogo MoveFrame remains 15F');
   assert.equal(FIST_FLAT_RISE, 60 / 60, 'Pogo Rise_Frame');
   assert.equal(FIST_FLAT_IMPACT, 87 / 60, 'community activation-relative flat-ground fist contact');
@@ -183,7 +189,7 @@ test('#912 composed production Tidal Slam: fists complete their own 87F clock in
     f.tick(a, 1);
     const fistHits = hits.filter(h => h.victim === fistVictim).slice(landingHits);
     assert.equal(fistHits.length, 2, 'both fists damage the victim when their independent 87F clock ends');
-    assert.ok(fistHits.every(h => h.cause === 'slam' && h.amount > 60 && h.amount <= 220));
+    assert.ok(fistHits.every(h => h.cause === 'slam' && [60,220].includes(h.amount)));
     assert.ok(fistHits.reduce((s, h) => s + h.amount, 0) >= 100);
     assert.equal(hits.filter(h => h.victim === playerVictim).length, 1, 'player blast is not duplicated');
   } finally {

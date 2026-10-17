@@ -8,6 +8,7 @@ import { gearCurve } from './gear.mjs';
 import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs';
 import { createTacticooler, disposeSpecialModel } from './special-motion.mjs';
 import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerStandFrames, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
+import { installTacticoolerGauge, startTacticoolerGauge, endTacticoolerGauge } from './tacticooler-gauge.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
@@ -141,6 +142,7 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
   // One stand per player; other teammates can each maintain their own.
   const stands = projectile._s3SupportCoolers ||= [];
   for(let i=stands.length-1;i>=0;i--) if(stands[i].owner===owner) {
+    endTacticoolerGauge(stands[i]);
     releaseVisual(stands[i],G);stands.splice(i,1);
   }
   const drinkFrames = remote && Number.isSafeInteger(incomingFrames)
@@ -153,6 +155,7 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
     drinkSeconds:drinkFrames/60, sourceLife:life(owner), seq:remote?incomingSeq:serial(owner),
     taken:new Set(), mesh:coolerVisual(owner,pos,THREE,G) };
   stands.push(stand);
+  if (!remote) startTacticoolerGauge(stand,G);
   if (!remote) emitNet(G,owner,['c',owner.nid,stand.seq,pos.x,pos.y,pos.z,stand.sourceLife,drinkFrames]);
   return stand;
 }
@@ -212,7 +215,12 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
     releaseVisual(sensors[i],G);sensors.splice(i,1);
   }
   const throws=projectile._s3SupportCoolerThrows||[];
-  for(let i=throws.length-1;i>=0;i--){const d=throws[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=24*dt;d.pos.addScaledVector(d.vel,dt);
+  for(let i=throws.length-1;i>=0;i--){const d=throws[i];d.age+=dt;d.prev.copy(d.pos);
+    // EnergyStand.MoveParam, 11.3.0: source frames -> seconds. Preserve
+    // native gravity-then-drag order; exponentiate retention for subframes.
+    d.vel.y-=TACTICOOLER_SOURCE.flyGravity*3600*dt;
+    d.vel.multiplyScalar(Math.pow(1-TACTICOOLER_SOURCE.flyPositionAirResist,60*dt));
+    d.pos.addScaledVector(d.vel,dt);
     const hit=G.physics?.segment?.(d.prev,d.pos,d.hit);let landed=hit?.hit&&hit.normal.y>.4;
     if(hit?.hit){d.pos.copy(hit.point);if(!landed){d.pos.addScaledVector(hit.normal,.03);d.vel.addScaledVector(hit.normal,-d.vel.dot(hit.normal));}}
     const floor=G.level?.groundHeight?.(d.pos.x,d.pos.z);
@@ -225,7 +233,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   for(let i=coolers.length-1;i>=0;i--) {
     const stand=coolers[i];
     advanceTowerStand(stand,G);
-    if(G.time>=stand.expires||!playing) {releaseVisual(stand,G);coolers.splice(i,1);continue;}
+    if(G.time+TINY>=stand.expires||!playing) {endTacticoolerGauge(stand);releaseVisual(stand,G);coolers.splice(i,1);continue;}
     // Each actor's owner decides whether it obtained a drink; remote replicas
     // never mutate another peer's authoritative gear, HP or weapon state.
     for(const a of G.actors || [])if(drinkEligible(a,stand,G.time,PLAYER)) {
@@ -240,6 +248,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
 export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE, Hit, Physics, PLAYER }) {
   if (Actor.prototype[INSTALL]) return;
   Object.defineProperty(Actor.prototype,INSTALL,{value:true});
+  installTacticoolerGauge({Actor,G});
   const throwBomb=Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb=function(actor,...rest) {
     if(actor?.weapon?.sub==='pointSensor' && !actor.remote && aliveInMatch(G))
@@ -253,6 +262,7 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
     return result;
   };
   Projectiles.prototype.clear=function(...args) {
+    for(const stand of this._s3SupportCoolers||[])endTacticoolerGauge(stand);
     for(const record of [...this._s3SupportSensors||[],...this._s3SupportCoolers||[],...this._s3SupportCoolerThrows||[]])releaseVisual(record,G);
     this._s3SupportSensors=[];this._s3SupportCoolers=[];this._s3SupportCoolerThrows=[];
     return clear.call(this,...args);

@@ -58,6 +58,10 @@ export const TRIZOOKA = {
   startDelay: frames(5),         // StartDelayFrame 5
   repeatFrame: frames(55),       // RepeatFrame 55, and HoldAimFrame 55
   shotDelay: frames(15),         // ShotDelayFrame 15
+  // S3mix's measured full activation lock (includes the shared weapon switch),
+  // distinct from the extracted weapon-local StartDelayFrame 5.
+  activationDelay: frames(23),
+  activationDelayStatus: 'S3mix approximate community measurement (about 23F); includes shared weapon switch, not extracted StartDelayFrame',
   reqShotInStartDelay: true,     // IsReqShotInStartDelay
   duration: frames(330),         // SpecialDurationFrame.Low, AP 0. NOT the Stamp 570.
   durationMid: frames(405),      // SpecialDurationFrame.Mid
@@ -161,18 +165,17 @@ export const TRIZOOKA_CARTRIDGE = {
 // three-lobed burst and marked as such. They are deliberately non-null: a null
 // count produced zero projectiles, which is not the weapon.
 //
-// #1057: every one of the three fired globs is an authoritative Trizooka
-// projectile. Each owns its own direct hit, 53/35 splash and impact paint. The
-// native per-victim ledger remains useful only as a per-GLOB duplicate guard,
-// so every glob receives a distinct reused `vol` record instead of sharing one
-// volley-wide immunity token. Ghost/replay copies remain presentation-only.
+// Every glob owns collision and paint. The S3mix verified specification caps
+// damage to the strongest contact per firing action, including an upgrade from
+// an earlier splash to a later direct hit. Keep native per-glob collision
+// records and share a separate damage ledger across this action's three globs.
 export const VOLLEY_CONFIG = {
   lobes: 3,
   lobesStatus: 'simulation-calibration-not-extracted',
   spreadDeg: 2.6,
   spreadStatus: 'simulation-calibration-not-extracted',
   damageCarriers: 3,
-  damageStatus: 'independent-authoritative-projectiles',
+  damageStatus: 'independent-authoritative-projectiles-with-shared-strongest-contact',
   // retained as the deterministic centre-lobe index for spread/aim calibration
   damageLobeIndex: 0,
 };
@@ -242,6 +245,7 @@ export function throwVolley(System, actor, descriptor) {
   const muzzle = System._muzzle(actor, seed.pos);
   const aim = System._aimFrom(actor, muzzle, seed.vel).clone();
   const fired = [];
+  const volleyDamage = new Map();
   for (let i = 0; i < count; i++) {
     const p = i === 0 ? seed : System._new();
     const spread = VOLLEY_CONFIG.spreadDeg * Math.PI / 180;
@@ -265,6 +269,7 @@ export function throwVolley(System, actor, descriptor) {
       grav: descriptor.grav,
       drag: descriptor.drag,
       vol,
+      s3TrizookaVolleyDamage: volleyDamage,
       trail: -1.5,
       trailEvery: 1.1,
       trailRadius: 0.3,
@@ -320,10 +325,9 @@ export function newTrizookaState(ap = 0) {
     t: 0,
     ap,
     shots: 0,
-    // gateAt uses ShotDelayFrame, repeatAt uses RepeatFrame. Neither is the
-    // start delay: the first volley is the only one StartDelayFrame governs.
-    gateAt: TRIZOOKA.startDelay,
+    gateAt: TRIZOOKA.activationDelay,
     repeatAt: Infinity,
+    pendingShotAt: null,
     fireHeld: false,
     armed: false,
     bufferedShot: false,
@@ -410,24 +414,26 @@ export function stepTrizooka(actor, dt, System) {
   const pressed = held && !s.fireHeld;
   s.fireHeld = held;
 
-  // IsReqShotInStartDelay: a press during the start delay is remembered, not lost.
-  // IsReqShotInStartDelay: a press made before the start delay elapses is
-  // remembered, not lost. The buffer is consumed as soon as the gate opens.
+  // The shared activation lock precedes the weapon's 15F shot windup. A press
+  // during activation may request the first shot, but cannot bypass either.
   if (pressed && !s.armed) s.bufferedShot = true;
-  if (!s.armed && s.t >= TRIZOOKA.startDelay) s.armed = true;
-
-  // gateAt is StartDelayFrame for the first volley and ShotDelayFrame afterwards.
-  // repeatAt is RepeatFrame and governs a held trigger, which needs no new edge.
+  if (!s.armed && s.t + 1e-10 >= TRIZOOKA.activationDelay) s.armed = true;
   const fired3 = s.shots >= TRIZOOKA.maxFireActions;
-  const edgeReady = s.armed && s.t >= s.gateAt && (pressed || (s.bufferedShot && !fired3));
-  const heldReady = s.armed && held && s.t >= s.repeatAt;
-  const bufferedPending = s.armed && s.bufferedShot && s.t >= s.gateAt;
-
-  if (!fired3 && (edgeReady || heldReady || bufferedPending)) {
-    s.shots += 1;
+  if (!fired3 && s.pendingShotAt === null && s.armed &&
+      s.t + 1e-10 >= s.gateAt && (held || s.bufferedShot)) {
+    // Held repeats use the scheduled gate rather than accumulating tick error.
+    // A fresh idle press begins its own windup on this input sample.
+    const requestedAt = pressed && !s.bufferedShot ? s.t : s.gateAt;
+    s.pendingShotAt = requestedAt + TRIZOOKA.shotDelay;
+    s.gateAt = requestedAt + TRIZOOKA.repeatFrame;
+    s.repeatAt = s.gateAt;
     s.bufferedShot = false;
-    s.gateAt = s.t + TRIZOOKA.shotDelay;
-    s.repeatAt = s.t + TRIZOOKA.repeatFrame;
+  }
+
+  if (!fired3 && s.pendingShotAt !== null && s.pendingShotAt <= s.duration + 1e-10 &&
+      s.t + 1e-10 >= s.pendingShotAt) {
+    s.shots += 1;
+    s.pendingShotAt = null;
     // ammo is spent: schedule the bounded return instead of holding to timeout
     if (s.shots >= TRIZOOKA.maxFireActions) s.endAt = s.t + TRIZOOKA_END_DELAY;
     s.descriptor.actionIndex = s.shots;
@@ -626,7 +632,7 @@ export function trizookaOrbitOffset(p, dt) {
 export const TRIZOOKA_PROJECTILE_FIELDS = [
   's3SpecialWeapon', 's3Weapon', 's3VolleyIndex', 's3ActionIndex', 'damageOwner', 's3OrbitPhase', 's3Yaw',
   's3Stage', 's3StageFrames', 's3StageTransition', 's3AppliedStage', 's3ActorRadius', 's3WorldRadius', 's3SizeBase',
-  's3OrbitApplied', 's3TrizookaAP',
+  's3OrbitApplied', 's3TrizookaAP', 's3TrizookaVolleyDamage',
 ];
 
 export function trizookaClearProjectile(p) {

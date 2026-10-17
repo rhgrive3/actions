@@ -292,15 +292,16 @@ test('a real curling bomb rolls, reflects on a wall after landing, and bursts', 
   assert.ok(cur.fuse > 0, 'the burst window is armed');
   // now a wall must still reflect it (the earlier draft disabled this)
   const vx0 = cur.vel.x;
-  api.G.physics.segment = (a, b, out) => { out.hit = true; out.point = { x: 1, y: b.y, z: b.z }; out.normal = { x: 1, y: 0, z: 0 }; return out; };
+  api.G.physics.segment = (a, b, out) => { out.hit = true; out.point = { x: 1, y: b.y, z: b.z }; out.normal = { x: b.x > a.x ? -1 : 1, y: 0, z: 0 }; return out; };
   cur = tick(api, projectiles, 1 / 60);
   assert.equal(cur.s3Bounces, 1, 'a rolling bomb still reflects on a wall');
   assert.ok(cur.s3Mode === 'rolling', 'it stays rolling, not disabled');
   assert.ok(cur.vel.x !== vx0, 'velocity actually changed on reflection');
-  // bounce budget is a real bound: after MaxBoundNum the bomb stops adding energy
+  // ContactJumpPanel.MaxBoundNum belongs to jump panels, not normal walls.
+  // A narrow corridor may reflect more than three times without stopping.
   for (let i = 0; i < 5; i++) tick(api, projectiles, 1 / 60);
-  assert.equal(cur.s3BounceExhausted, true, 'bounce budget is exhausted and enforced');
-  assert.ok(Math.abs(cur.vel.x) < 1e-12, 'an exhausted bounce budget stops the bomb rather than flipping a dead flag');
+  assert.equal(cur.s3Bounces, 6, 'ordinary walls do not consume the jump-panel bound count');
+  assert.ok(Math.abs(cur.vel.x) > 0, 'the bomb keeps rolling after more than three wall reflections');
 });
 
 test('the real native PaintSystem accepts the rolling trail centre', async () => {
@@ -1013,7 +1014,7 @@ test('real native Autobomb targets, walks and explodes only after a 60F warning'
   assert.equal(projectiles.bombs.length,0);
 });
 
-test('Autobomb no target arms 180F wait, and network ghosts have no kit combat authority',async()=>{
+test('Autobomb no target arms the community-observed 60F warning, and network ghosts have no kit combat authority',async()=>{
   const api=await production();ground(api,'record');
   const {projectiles,actor,bomb}=await throwReal(api,'autobomb',0);
   api.G.actors=[actor];let first=true;
@@ -1024,7 +1025,7 @@ test('Autobomb no target arms 180F wait, and network ghosts have no kit combat a
   };
   projectiles._updateBombs(1/60);assert.equal(bomb.fuse,-1);
   for(let i=0;i<12;i++)projectiles._updateBombs(1/60);
-  assert.ok(bomb.fuse>2.8&&bomb.fuse<=3,'extracted no-target wait');
+  assert.ok(bomb.fuse>.8&&bomb.fuse<=1,'ordinary no-target warning, distinct from the 180F no-received-target fallback');
   assert.deepEqual(kitBombPacket(bomb),['autobomb',0]);
   const ghost={kind:'bomb',ghost:true,pos:new api.THREE.Vector3(),age:0,fuse:-1,team:1,
     vel:new api.THREE.Vector3(),owner:{alive:true}};

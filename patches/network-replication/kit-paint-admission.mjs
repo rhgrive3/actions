@@ -73,7 +73,12 @@ function register(nm,from,e,s){
     ||v.charge<0||v.charge>1||v.hold<0)return;
   const count=id==='fizzy'?(v.hold>=(spec.chargeFrames[0]+spec.chargeFrames[1])/60?3:v.hold>=spec.chargeFrames[0]/60?2:1):1;
   record={kind:'sub',life:e[4],subId:id,seed:v.seed,origin:[v.x,v.y,v.z],velocity:[v.vx,v.vy,v.vz],
-    flightSeconds:id==='fizzy'?spec.burstWaitFrames[0]/60+1/60:2.2+1/60,gravity:spec.gravity,
+    // Fizzy's timer pauses during flight and each hop has its own flight cap.
+    // A raw 15F wait is not the old release-to-first-impact deadline.
+    flightSeconds:id==='fizzy'?spec.maxFlightSeconds+spec.firstGroundFuseFrames/60+1/60:2.2+1/60,gravity:spec.gravity,
+    hopFlightSeconds:id==='fizzy'?spec.maxFlightSeconds+Math.max(...spec.burstWaitFrames.slice(1))/60+1/60:0,
+    hopHorizontalSpeed:id==='fizzy'?Math.max(spec.hop.lowVelocity*Math.cos(spec.hop.lowPitchDeg*Math.PI/180),spec.hop.highVelocity*Math.cos(spec.hop.highPitchDeg*Math.PI/180)):0,
+    hopVerticalSpeed:id==='fizzy'?Math.max(spec.hop.lowVelocity*Math.sin(spec.hop.lowPitchDeg*Math.PI/180),spec.hop.highVelocity*Math.sin(spec.hop.highPitchDeg*Math.PI/180)):0,
     coreRadii:id==='fizzy'?spec.bursts.slice(0,count).map(b=>b.paintRadius):[spec.paintRadius],
     usedCores:Array(count).fill(null)};
  }else if(e[1]==='p'){
@@ -115,9 +120,21 @@ function register(nm,from,e,s){
 // contacted actor height. It rejects remote teleport cores without pretending
 // to reproduce dynamic actor contacts or authoritative collision simulation.
 function subCoreReachable(b,e,index){
- const t=b.flightSeconds, hop=b.subId==='fizzy'?index*(.62+5.5*2/60):0;
+ const t=b.flightSeconds;
  const [x,y,z]=b.origin,[vx,vy,vz]=b.velocity;
+ const hop=b.subId==='fizzy'?index*(.62+b.hopHorizontalSpeed*b.hopFlightSeconds):0;
  const pad=.1+hop;
+ if(b.subId==='fizzy'){
+  // Wall contacts can reverse horizontal direction. Bound that swept path by
+  // launch speed and the finite first-flight/ground timer, plus at most the
+  // birth-authorized number of sourced hop velocities. No receiver simulation
+  // or new unbounded radius grant is involved.
+  const horizontal=Math.hypot(vx,vz)*t+pad;
+  if(Math.hypot(e[2]-x,e[4]-z)>horizontal)return false;
+  const vertical=2+index*b.hopVerticalSpeed*b.hopFlightSeconds;
+  return e[3]>=y+Math.min(0,vy*t)-.5*b.gravity*t*(t+1/60)-vertical
+    &&e[3]<=y+Math.max(0,vy*t)+vertical;
+ }
  if(e[2]<x+Math.min(0,vx*t)-pad||e[2]>x+Math.max(0,vx*t)+pad
   ||e[4]<z+Math.min(0,vz*t)-pad||e[4]>z+Math.max(0,vz*t)+pad)return false;
  const vertical=2+index*(3.4*2/60);

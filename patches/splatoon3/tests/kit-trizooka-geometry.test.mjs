@@ -680,7 +680,7 @@ test('the authority rule is intrinsic: a kit ghost is refused with no transport 
 
 // ---- the authoritative volley ledger ----------------------------------------
 
-test('two Trizooka globs can independently hit the same victim without sharing a dedupe token', async () => {
+test('all Trizooka globs keep independent collision but cap a victim at one direct hit per action', async () => {
   const api = await production();
   const { projectiles } = world(api, []);
   const a = shooter(api);
@@ -700,11 +700,98 @@ test('two Trizooka globs can independently hit the same victim without sharing a
 
   assert.equal(first.vol.hits[0], enemy);
   assert.equal(second.vol.hits[0], enemy);
-  assert.equal(1000 - enemy.hp, 440, 'both independent 220 direct hits land');
+  assert.equal(1000 - enemy.hp, 220, 'one action cannot add two 220 direct hits');
   assert.equal(kitVolleyHitAuthority(first), true);
   assert.equal(kitVolleyHitAuthority(second), true);
   assert.equal(kitVolleyHitAuthority({ wid: 'shooter', vol: {} }), true,
     'an ordinary drop/slosh round keeps the native shared-vol semantics');
+});
+
+test('Trizooka shared damage upgrades splash to direct, keeps victims/actions separate, and has a negative control', async () => {
+  const api = await production();
+  const { projectiles } = world(api, []), a = shooter(api);
+  const victim = () => {
+    const e = new api.Actor({team:1,name:'volley-victim',weapon:'shooter',isLocal:false,CharacterClass:api.Character});
+    e.hp=1000;e.pos.set(0,0,3);e._spawnBarrier=()=>{};e._finishFrame=()=>{};e._integrate=()=>{};
+    return e;
+  };
+  const first=victim(), second=victim(); api.G.actors=[a,first,second];
+  const globs=throwVolley(projectiles,a,trizookaSpecialWeapon());
+  const at=first.pos.clone().add(new api.THREE.Vector3(0,.7,0));
+  // Splash contacts from separate globs in the same action: 53 + 53 stays 53.
+  projectiles._blastBurst(globs[0],at,null);
+  projectiles._blastBurst(globs[1],at,null);
+  assert.equal(1000-first.hp,53); assert.equal(1000-second.hp,53);
+  // A subsequent direct hit upgrades the action to 220 (adds only 167).
+  globs[2].pos.copy(at);globs[2].prev.copy(at);projectiles._step(globs[2],F);
+  assert.equal(1000-first.hp,220);
+  assert.equal(1000-second.hp,53,'another victim keeps its own strongest-contact record');
+  const next=throwVolley(projectiles,a,trizookaSpecialWeapon());
+  projectiles._blastBurst(next[0],at,null);
+  assert.equal(1000-first.hp,273,'another fire action can deal fresh damage');
+  // Remove only the shared-action ledger: the old independent-glob behavior
+  // adds another 53, so this fixture detects the original bug.
+  delete next[1].s3TrizookaVolleyDamage;
+  projectiles._blastBurst(next[1],at,null);
+  assert.equal(1000-first.hp,326,'negative control reproduces the extra damage');
+});
+
+test('Trizooka splash then direct shares spawn-armor penetration and rejects invulnerable reservations', async () => {
+  const api=await production(),{projectiles}=world(api,[]),a=shooter(api);
+  const victim=()=>{
+    const e=new api.Actor({team:1,name:'armor-victim',weapon:'shooter',isLocal:false,CharacterClass:api.Character});
+    e.hp=100;e.invuln=0;e.pos.set(0,0,3);e.s3.spawnArmorManaged=true;
+    e.s3.spawnArmor={hp:30,remaining:3,breakRemaining:null};return e;
+  };
+  const target=victim(),control=victim(); control.pos.x=100;api.G.actors=[a,target,control];
+  const globs=throwVolley(projectiles,a,trizookaSpecialWeapon()),at=target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
+  projectiles._blastBurst(globs[0],at,null);
+  assert.equal(target.hp,100,'53 splash is absorbed but belongs to this action');
+  globs[1].pos.copy(at);globs[1].prev.copy(at);projectiles._step(globs[1],F);
+  projectiles.applyHit(a,control,220,'trizooka');
+  assert.equal(target.hp,control.hp,'100-HP penetration threshold applies once across 53 + 167');
+  assert.equal(target.hp,-20);
+  const invulnerable=victim();invulnerable.s3.spawnArmor=null;invulnerable.invuln=1;
+  api.G.actors=[a,invulnerable];
+  const next=throwVolley(projectiles,a,trizookaSpecialWeapon());
+  projectiles._blastBurst(next[0],at,null);
+  assert.equal(invulnerable.hp,100);
+  assert.equal(next[0].s3TrizookaVolleyDamage.has(invulnerable),false,'rejected contact does not reserve damage');
+  invulnerable.invuln=0;projectiles._blastBurst(next[1],at,null);
+  assert.equal(invulnerable.hp,47,'next legal splash keeps its full 53 damage');
+});
+
+test('Trizooka native direct and splash forwarding preserve one damage group for victim-owner armor', async () => {
+  const api=await production(),{projectiles}=world(api,[]),a=shooter(api);
+  const target=new api.Actor({team:1,name:'remote-volley',weapon:'shooter',isLocal:false,CharacterClass:api.Character});
+  target.invuln=0;target.hp=100;target.remote=true;target.pos.set(0,0,3);api.G.actors=[a,target];
+  const sent=[];api.G.netm={recProj(){},shouldApplyHit:()=> 'send',sendHit:(...args)=>{sent.push(args);return true;}};
+  const globs=throwVolley(projectiles,a,trizookaSpecialWeapon()),at=target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
+  projectiles._blastBurst(globs[0],at,null);
+  globs[1].pos.copy(at);globs[1].prev.copy(at);projectiles._step(globs[1],F);
+  assert.deepEqual(sent.map(x=>x[2]),[53,167]);
+  assert.ok(Number.isSafeInteger(sent[0][4])&&sent[0][4]>0);
+  assert.equal(sent[0][4],sent[1][4],'both hit messages carry the firing action identity');
+  // Native receive uses applyHit(..., d.g). Exercise that handoff on the
+  // authoritative victim with the actual sent increments and same group.
+  api.G.netm=null;target.remote=false;target.s3.spawnArmorManaged=true;
+  target.s3.spawnArmor={hp:30,remaining:3,breakRemaining:null};
+  for(const args of sent)projectiles.applyHit(...args);
+  assert.equal(target.hp,-20,'victim-owner defense sees one cumulative 220 attack');
+});
+
+test('a surviving Trizooka lobe starts a fresh budget after the same Actor genuinely respawns', async () => {
+  const api=await production(),{projectiles}=world(api,[]),a=shooter(api);
+  const target=new api.Actor({team:1,name:'new-life-volley',weapon:'shooter',isLocal:false,CharacterClass:api.Character});
+  target.invuln=0;target.hp=100;target.pos.set(0,0,3);api.G.actors=[a,target];
+  const globs=throwVolley(projectiles,a,trizookaSpecialWeapon()),at=target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
+  const priorLife=target.netLife??0;
+  projectiles._blastBurst(globs[0],at,null);assert.equal(target.hp,47);
+  target.spawnAt(target.pos.clone(),0);
+  assert.equal(target.netLife,priorLife+1,'actual production spawn advances the combat life');
+  target.invuln=0;target.s3.spawnArmorManaged=true;target.s3.spawnArmor=null;
+  projectiles._blastBurst(globs[1],at,null);
+  assert.equal(target.hp,47,'same object in a new life receives a fresh full 53 splash');
 });
 
 test('each Trizooka glob independently reaches the boss damage path', async () => {
