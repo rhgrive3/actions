@@ -1,0 +1,47 @@
+name: Qualify87 native source and exact fullsite Actors
+on:
+  push:
+    branches: [review/default87-native-main4754-20261017]
+permissions:
+  contents: read
+jobs:
+  qualification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 9de6db03899d751a1dcd4fc373afe3a1147614d0
+          path: candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned build tool and light read-guard controls
+        run: |
+          cd diagnostic
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2
+          python3 diagnostics/default87-native/guard-controls.py
+      - name: Exact unchanged production build
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/diagnostic/node_modules/esbuild/lib/main.js
+        run: |
+          test "$(git -C candidate rev-parse HEAD)" = 9de6db03899d751a1dcd4fc373afe3a1147614d0
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 335250f0a1f81f8235da6efef304f0eaf27751bd
+          (cd candidate && timeout -k 5s 180s node --jitless --max-old-space-size=96 --max-semi-space-size=1 scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+      - name: Sixteen sequential native source and fullsite cases
+        run: python3 diagnostic/diagnostics/default87-native/run.py candidate candidate-site evidence
+      - name: Native update omission must fail at real clock assertion
+        run: python3 diagnostic/diagnostics/default87-native/negative-native.py candidate candidate-site evidence
+      - name: Preserve all passing and partial receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: default87-native-main4754-${{ github.run_id }}
+          path: evidence
+          if-no-files-found: error
