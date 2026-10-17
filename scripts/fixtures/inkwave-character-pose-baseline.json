@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "purpose": "Use the reviewed #1562 character proportions/ready stance and folded Roller clearance on both sides of the projectile comparison. No projectile, damage, paint, collision, movement or RNG module is copied. This baseline is not unchanged main.",
+  "sourceBase": "85acc45d0ab23a95161b599d4287fd8142e8145b",
+  "sourceHead": "e8b89e5588bb95aab5be54b9f8346ceca50cf177",
+  "reviewedDiffSha256": "9d9a1b7471effca5a220943eb94af3217010a39e4a21d2fbcff683e65a0bd570",
+  "files": [
+    {
+      "path": "patches/splatoon3/adapter.mjs",
+      "beforeBlob": "e72f27c6b732269276faf777e26c3f1419064c3b",
+      "afterBlob": "46d6a2adefdfbb28fe56484fcb866ca4173c4b86",
+      "beforeSha256": "430cd619f893511080e1a336d88ee2dd7746faba6e310024294b39bf27124d95",
+      "afterSha256": "82f736f845cf734c71eb608c08134887ad5486810487606eb70626f8c155bbd0"
+    },
+    {
+      "path": "patches/splatoon3/body-proportion-adapter.mjs",
+      "beforeBlob": null,
+      "afterBlob": "6e1d479cb8828e6c7a4669b695cac4c1bdc00cbe",
+      "beforeSha256": null,
+      "afterSha256": "f94ea757cd2d201a7d643a7f05ac2080c4a9d4c897ffb9969f0dd4b157f47c55"
+    },
+    {
+      "path": "patches/splatoon3/runtime/body-proportion.mjs",
+      "beforeBlob": null,
+      "afterBlob": "953e84671e99af3a30638c842084368a0ca4be2d",
+      "beforeSha256": null,
+      "afterSha256": "513587d9b571bbea0315bdc48d6d3b2b9576d480bc8893f643a8e852843be3c2"
+    },
+    {
+      "path": "patches/splatoon3/runtime/idle-motion.mjs",
+      "beforeBlob": "02b6e62171ca86f723d420799442d1c8733f1f10",
+      "afterBlob": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+      "beforeSha256": "538d82cee09e5473d18ba0e743ebd4161160887cd59023bdafb8117d2fc7ecfd",
+      "afterSha256": "426e2ebd7a4d420651ca03b93fd3b8ac9c8db1ec1a80e3d13d401bca7a1a5c33"
+    },
+    {
+      "path": "patches/splatoon3/runtime/install.mjs",
+      "beforeBlob": "7de79e25b11e9018d9fe75b113b85b894e5677fb",
+      "afterBlob": "3f8dcdd3ad086e30d360beede7e2f42400b31734",
+      "beforeSha256": "6cea5c9ee153b67a9acf66e945e8e953a1ac6fdfbcbe0119a1053de123484fd5",
+      "afterSha256": "bd3dff052a5bafdfd6185d23d112a5b8cb01b162a68d836d2f62c30d2fa07d27"
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller.mjs",
+      "beforeBlob": "bfd100b2e46aa89b40669a620f59f5058afc151d",
+      "afterBlob": "2f1a9018c6e7b4b522866f21fbaf7cafce34f7ca",
+      "beforeSha256": "914f4e4fc57acb210a6394fa51aaea8f9ae63520e4ea790a7894cb6634d22d09",
+      "afterSha256": "1818dd6d53ab5ff565eff8118a2c0ae72d49d28bb1f3c923c67ce55e880f7d4e"
+    },
+    {
+      "path": "patches/splatoon3/runtime/source-posture.mjs",
+      "beforeBlob": "a6529a14d56cb0e22700453c9b7509bb56dd5cca",
+      "afterBlob": "fb22f09b2f2071d148cdc031f8556c34caf62dc7",
+      "beforeSha256": "728c5615c471b71e6da4ad662de17bd846cc6fd3cbd999e5cde1103d6cb3c268",
+      "afterSha256": "bd5fa90fa2ea1a215be271ad56691a4a755799e893fae03becc74d42e07211ad"
+    },
+    {
+      "path": "patches/splatoon3/upstream-lock.json",
+      "beforeBlob": "c7bda9c4629453e8e5a72a87e32aa23db6f2894d",
+      "afterBlob": "94e1025c2e054e39e5ef44232220b2b9b7037e46",
+      "beforeSha256": "f364306e13b5927b7c4de158c361a279772be64ec698a4c0ddae5a165ae7c5d8",
+      "afterSha256": "8c5b73710512b8183f41c7c2eb4bcbbce74a8791360307062b89f45ef2c2622a"
+    }
+  ]
+}
