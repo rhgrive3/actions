@@ -18,13 +18,21 @@ const DT = 1 / HISTORY_HZ, EPS = 1e-9;
 const sqrt=Math.sqrt,abs=Math.abs,min=Math.min,max=Math.max,sin=Math.sin,cos=Math.cos,pow=Math.pow,isFiniteNumber=Number.isFinite;
 const RINGS = 13, SIDES = 12, BODY_VERTICES = RINGS * SIDES;
 const SECTION_COS=new Float64Array(SIDES),SECTION_SIN=new Float64Array(SIDES),SECTION_ANGLE=new Float64Array(SIDES);
+const SECTION_COS3=new Float64Array(SIDES),SECTION_SIN3=new Float64Array(SIDES),SECTION_COS4=new Float64Array(SIDES);
+const SECTION_COS5=new Float64Array(SIDES),SECTION_SIN5=new Float64Array(SIDES);
 const HISTORY_FRACTION=new Float64Array(RINGS);
 // End-cap rings share their history endpoint. Only the middle rings sweep the
 // retained path, so a fast round cannot stretch its rounded cap into a spear.
 // This radius-sized surface construction is an INKWAVE approximation; it does
 // not change source radii, history duration or authoritative projectile state.
 for(let ring=0;ring<RINGS;ring++)HISTORY_FRACTION[ring]=max(0,min(1,(ring-2)/(RINGS-5)));
-for(let i=0;i<SIDES;i++){SECTION_ANGLE[i]=i/SIDES*Math.PI*2;SECTION_COS[i]=cos(SECTION_ANGLE[i]);SECTION_SIN[i]=sin(SECTION_ANGLE[i]);}
+for(let i=0;i<SIDES;i++){
+  const a=i/SIDES*Math.PI*2;
+  SECTION_ANGLE[i]=a;SECTION_COS[i]=cos(a);SECTION_SIN[i]=sin(a);
+  SECTION_COS3[i]=cos(a*3);SECTION_SIN3[i]=sin(a*3);
+  SECTION_COS4[i]=max(0,cos(a*4));
+  SECTION_COS5[i]=cos(a*5);SECTION_SIN5[i]=sin(a*5);
+}
 const SHAPE_PROFILES=Object.create(null);
 for(const kind of ['shooter','bubble','explosive','spiral','bucket-front','bucket-rear','roller-horizontal','roller-vertical','tri-sheet','paired-sheet']) {
   const profile=SHAPE_PROFILES[kind]={width:new Float64Array(RINGS),thickness:new Float64Array(RINGS),axial:new Float64Array(RINGS),
@@ -442,6 +450,8 @@ export class ProjectileVisualRuntime {
     }
     const lobeMode=kind==='roller-horizontal'?1:kind==='roller-vertical'&&petalCenter+petalRate>0?2:
       kind==='tri-sheet'?3:kind==='spiral'?4:kind==='explosive'?5:0;
+    const cSeed3=lobeMode===3?cos(seed*3):0,sSeed3=lobeMode===3?sin(seed*3):0;
+    const invPetal=lobeMode===2?1/(petalCenter+petalRate):0;
     for(let ring=0;ring<RINGS;ring++) {
       const before=ring>0?ring-1:0,after=ring<RINGS-1?ring+1:RINGS-1;
       const o=ring*6,prev=before*6,next=after*6;
@@ -458,14 +468,20 @@ export class ProjectileVisualRuntime {
       const inverseLength=1/max(EPS,length),dWidth=(w[after]-w[before])*inverseLength,dThin=(t[after]-t[before])*inverseLength;
       const circular=w[ring]===t[ring]&&dWidth===dThin,circularNormalScale=1/sqrt(1+dWidth*dWidth);
       const endpoint=ring===0||ring===RINGS-1,capSign=ring===0?-1:1;
+      const ph1=lobeMode===1?seed*7+ring*.6:lobeMode===4?ring*.75+seed*6:lobeMode===5?ring*1.2+seed*8:0;
+      const cPh=lobeMode===1||lobeMode===4||lobeMode===5?cos(ph1):0;
+      const sPh=lobeMode===1||lobeMode===4||lobeMode===5?sin(ph1):0;
       for(let side=0;side<SIDES;side++) {
-        const angle=SECTION_ANGLE[side],cs=SECTION_COS[side],sn=SECTION_SIN[side];
+        const cs=SECTION_COS[side],sn=SECTION_SIN[side];
         let lobe=1;
-        if(lobeMode===1)lobe=.86+.14*pow(max(0,cos(angle*5+seed*7+ring*.6)),4);
-        else if(lobeMode===2)lobe=(petalCenter+petalRate*max(0,cos(angle*4)))/(petalCenter+petalRate);
-        else if(lobeMode===3)lobe=.78+.22*max(0,cos(angle*3+seed*3));
-        else if(lobeMode===4)lobe=.86+.14*cos(angle*3+ring*.75+seed*6);
-        else if(lobeMode===5)lobe=.92+.08*sin(angle*5+ring*1.2+seed*8);
+        if(lobeMode===1){
+          const u=max(0,SECTION_COS5[side]*cPh-SECTION_SIN5[side]*sPh),u2=u*u;
+          lobe=.86+.14*(u2*u2);
+        }
+        else if(lobeMode===2)lobe=(petalCenter+petalRate*SECTION_COS4[side])*invPetal;
+        else if(lobeMode===3)lobe=.78+.22*max(0,SECTION_COS3[side]*cSeed3-SECTION_SIN3[side]*sSeed3);
+        else if(lobeMode===4)lobe=.86+.14*(SECTION_COS3[side]*cPh-SECTION_SIN3[side]*sPh);
+        else if(lobeMode===5)lobe=.92+.08*(SECTION_SIN5[side]*cPh+SECTION_COS5[side]*sPh);
         const x=cs*width*lobe,y=sn*thickness*lobe,vertex=(base+ring*SIDES+side)*3;
         pa[vertex]=cx+f0*x+f3*y;pa[vertex+1]=cy+f4*y;pa[vertex+2]=cz+f2*x+f5*y;
         let nx,ny,nz;

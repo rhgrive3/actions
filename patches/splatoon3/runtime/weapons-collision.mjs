@@ -40,6 +40,10 @@ function firstRoot(A, B, C, lo, hi) {
 }
 
 function roundedBoxEntryScalar(ox, oy, oz, dx, dy, dz, hx, hy, hz, radius0, radius1) {
+  const maxR = Math.max(radius0, radius1) + 1e-7;
+  if (Math.min(ox, ox + dx) > hx + maxR || Math.max(ox, ox + dx) < -hx - maxR ||
+      Math.min(oy, oy + dy) > hy + maxR || Math.max(oy, oy + dy) < -hy - maxR ||
+      Math.min(oz, oz + dz) > hz + maxR || Math.max(oz, oz + dz) < -hz - maxR) return null;
   let count = 2;
   CUTS[0] = 0;
   CUTS[1] = 1;
@@ -113,6 +117,9 @@ export function sweptWorldHit(physics, from, to, r0, r1, out, skipGrates = true)
   if (!level?.queryBlocks || !level.blocks) return physics.segment(from, to, out, skipGrates);
   out.hit = false; out.dist = len; out.block = -1; out.face = -1;
   const r = Math.max(r0, r1);
+  const xLo = Math.min(from.x, to.x) - r - 1e-6, xHi = Math.max(from.x, to.x) + r + 1e-6;
+  const yLo = Math.min(from.y, to.y) - r - 1e-6, yHi = Math.max(from.y, to.y) + r + 1e-6;
+  const zLo = Math.min(from.z, to.z) - r - 1e-6, zHi = Math.max(from.z, to.z) + r + 1e-6;
   const ids = level.queryBlocks(
     Math.min(from.x, to.x) - r, Math.min(from.z, to.z) - r,
     Math.max(from.x, to.x) + r, Math.max(from.z, to.z) + r,
@@ -126,6 +133,7 @@ export function sweptWorldHit(physics, from, to, r0, r1, out, skipGrates = true)
     const index = ids[i];
     const b = level.blocks[index];
     if (!b?.solid || (skipGrates && b.grate)) continue;
+    if (b.aabbMin && (b.aabbMin.y > yHi || b.aabbMax.y < yLo || b.aabbMin.x > xHi || b.aabbMax.x < xLo || b.aabbMin.z > zHi || b.aabbMax.z < zLo)) continue;
     const rx = from.x - b.center.x, ry = from.y - b.center.y, rz = from.z - b.center.z;
     const a0 = b.axes[0], a1 = b.axes[1], a2 = b.axes[2];
     const ox = rx * a0.x + ry * a0.y + rz * a0.z;
@@ -172,7 +180,7 @@ export function sweptWorldHit(physics, from, to, r0, r1, out, skipGrates = true)
   } else {
     nx /= nlen; ny /= nlen; nz /= nlen;
     if (Math.abs(ny) > Math.abs(nx)) axis = 1;
-    if (Math.abs(nz) > Math.abs(axis === 0 ? nx : ny)) axis = 2;
+    if (Math.abs(nz) > Math.abs(axis === 1 ? ny : nx)) axis = 2;
   }
 
   out.hit = true; out.dist = best * len; out.block = chosenIndex;
