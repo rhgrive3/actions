@@ -199,6 +199,14 @@ const NATIVE_CARRY = new Set(['brella', 'splatana', 'stringer', 'brush']);
 // existing INKWAVE shooter rest (owner review 2026-10-17).
 const SOURCE_BODY = Object.freeze({ brush: 'Nrml' });
 export function weaponSourceBodyFamily(id) { return id ? SOURCE_BODY[weaponBehaviorFamily(id)] ?? null : null; }
+// Standing ready-stance changes per behaviour family (source-posture.mjs sourceIdleBob).
+// Brush (owner review 2026-10-17, official brush movie EyKDWN7kgYb at rest): the
+// right foot is set out to the side instead of straight back, the body twisted a
+// little under a forward-facing head. Angles are INKWAVE calibration.
+const IDLE_STANCE = Object.freeze({
+  brush: Object.freeze({ rearOutDeg: 70, rearHeel: 0.02, twist: -0.32 }),
+});
+export function weaponIdleStanceFamily(id) { return id ? IDLE_STANCE[weaponBehaviorFamily(id)] ?? null : null; }
 export function weaponNeedsNativeCarry(id) {
   return !!id && (NATIVE_CARRY.has(weaponBehaviorFamily(id)) || !!SPECS.get(weaponBaseModelId(id))?.nativeCarry);
 }

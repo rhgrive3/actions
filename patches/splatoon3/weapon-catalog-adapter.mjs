@@ -20,7 +20,7 @@ export function adaptWeaponCatalog(rel, code) {
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code,
       "import { PLAYER } from '../config.js';",
-      "import { PLAYER, WEAPONS } from '../config.js';\nimport { weaponModelKey, weaponModelFamily, weaponHold, weaponNeedsNativeCarry, weaponSourceBodyFamily, weaponAppearanceKey, weaponDefaultAppearance, weaponBaseModelId } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\nimport { selectedWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\n",
+      "import { PLAYER, WEAPONS } from '../config.js';\nimport { weaponModelKey, weaponModelFamily, weaponHold, weaponNeedsNativeCarry, weaponSourceBodyFamily, weaponIdleStanceFamily, weaponAppearanceKey, weaponDefaultAppearance, weaponBaseModelId } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\nimport { selectedWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\n",
       'character weapon catalog import');
     code = replaceOnce(code, "    this.setWeapon(opts.weapon || 'shooter');",
       "    this.weaponAppearancePreview = opts.weaponAppearancePreview === true;\n    this.setWeapon(opts.weapon || 'shooter');", 'personal preview appearance');
@@ -51,7 +51,8 @@ export function adaptWeaponCatalog(rel, code) {
     this.weaponKind = kind; this.weaponModel = model; this.weapon = w; this.hold = weaponHold(model, HOLD[kind]);
     this.weaponAppearanceModel = visual; this.modelVariantId = visual === weaponBaseModelId(visual) ? null : visual;
     this.weaponNativeCarry = weaponNeedsNativeCarry(id);
-    this.weaponSourceBody = weaponSourceBodyFamily(id);`,
+    this.weaponSourceBody = weaponSourceBodyFamily(id);
+    this.weaponIdleStance = weaponIdleStanceFamily(id);`,
       'character weapon ID to its own model and family hold');
   }
 

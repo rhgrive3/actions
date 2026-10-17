@@ -70,11 +70,12 @@ async function production() {
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export * as handoff from './patches/splatoon3/runtime/weapon-handoff-motion.mjs';
     export * as registry from './patches/splatoon3/runtime/weapon-models/registry.mjs';
+    export * as body from './patches/splatoon3/runtime/body-proportion.mjs';
   `, { context, identifier: path.join(ROOT, 'weapon-hold-motion-entry.mjs') });
   await entry.link((specifier, from) => load(resolve(specifier, from.identifier)));
   await entry.evaluate();
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
-  const api = { ...entry.namespace.install(profile), handoff: entry.namespace.handoff, registry: entry.namespace.registry };
+  const api = { ...entry.namespace.install(profile), handoff: entry.namespace.handoff, registry: entry.namespace.registry, body: entry.namespace.body };
   const { G, THREE } = api;
   G.scene = new THREE.Scene(); G.settings = { quality: 'high' };
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
@@ -112,6 +113,11 @@ async function attackCycle(api, weapon, hz, enabled) {
   ch.dispose();
   return out;
 }
+/** Kid-space heading (radians, +left) of a bone's +Z axis. */
+const kidYaw = (api, ch, o) => {
+  const q = o.getWorldQuaternion(new api.THREE.Quaternion()).premultiply(ch.kid.getWorldQuaternion(new api.THREE.Quaternion()).invert());
+  const v = new api.THREE.Vector3(0, 0, 1).applyQuaternion(q); return Math.atan2(v.x, v.z);
+};
 const maxStep = rows => rows.slice(1).reduce((m, r, i) => Math.max(m, r.shown.distanceTo(rows[i].shown)), 0);
 
 test('the attack/carry handoff no longer jumps the weapon; the gameplay muzzle is unchanged', async () => {
@@ -141,8 +147,8 @@ test('the handoff fade lasts the same time at 30, 60 and 120 Hz', async () => {
 });
 
 test('shooters and blasters fire from beside the right cheek, not the chest', async () => {
-  const api = await production();
-  for (const [weapon, minY] of [['shooter', 0.8], ['s3-shooter-first', 0.8], ['s3-shooter-long', 0.8], ['blaster', 0.8]]) {
+  const api = await production(), drop = api.body.S3_BODY_PROPORTION.torsoShorten; // the shoulders sit this much lower
+  for (const [weapon, minY] of [['shooter', 0.8 - drop], ['s3-shooter-first', 0.8 - drop], ['s3-shooter-long', 0.8 - drop], ['blaster', 0.8 - drop]]) {
     const ch = await rig(api, weapon), st = state();
     st.firing = true;
     for (let f = 0; f < 40; f++) { if (f % 6 === 0) ch.trigger('shoot'); ch.update(1 / 60, st); }
@@ -175,7 +181,7 @@ test('a stringer draws with the left hand on the string; at rest it hangs in the
   ch.dispose();
 });
 
-test('a brush rests upright over the right shoulder and is held in both hands', async () => {
+test('a brush rests in the ready stance, both fists at the butt, head up past the right shoulder', async () => {
   const api = await production(), C = api.CHARACTER_CHANNELS;
   for (const weapon of ['s3-brush-mini', 's3-brush-normal', 's3-brush-heavy']) {
     const ch = await rig(api, weapon), st = state();
@@ -184,6 +190,11 @@ test('a brush rests upright over the right shoulder and is held in both hands', 
     const tip = kidPoint(api, ch, ch.weapon.muzzle), head = kidPoint(api, ch, ch.bones.head);
     assert.ok(tip.y > head.y, `${weapon}: head carried up over the shoulder (${tip.y.toFixed(3)} vs head ${head.y.toFixed(3)})`);
     assert.ok(ch.P[C.IKL] > 0.99, `${weapon}: both hands at rest`);
+    const left = kidPoint(api, ch, ch.bones.handL), right = kidPoint(api, ch, ch.bones.handR);
+    assert.ok(left.y < right.y && left.distanceTo(right) < 0.16, `${weapon}: left fist on the butt, right fist just above it`);
+    // The brush rests in the existing INKWAVE ready stance (shooter body clips), not the upright roller rest.
+    assert.ok(ch.sourceMotion.active && !ch.sourceMotion.sourceUpper, `${weapon}: source body, native weapon arms`);
+    assert.equal(ch.sourceMotion.debug.clips.map(c => c.name).join(), 'WaitHold_Nrml', `${weapon}: ready-stance rest clip`);
     ch.trigger('shoot');
     let held = 1;
     for (let f = 0; f < 20; f++) { ch.update(1 / 60, st); held = Math.min(held, ch.P[C.IKL]); }
@@ -203,4 +214,45 @@ test('shooters, dualies and brushes are 30% larger about the grip; other familie
   }
   assert.equal(registry.weaponBehaviorFamily('s3-shelter-normal'), 'brella', 'brellas share the shooter model kind only');
   assert.ok(unscaled.length === 5);
+});
+
+test('standing still, the front (left) foot points straight ahead: shooter, brush and roller', async () => {
+  const api = await production();
+  for (const weapon of ['shooter', 's3-brush-normal', 'roller']) {
+    const ch = await rig(api, weapon), st = state();
+    for (let f = 0; f < 60; f++) ch.update(1 / 60, st);
+    ch.root.updateMatrixWorld(true);
+    const yaw = kidYaw(api, ch, ch.bones.footL) * 180 / Math.PI;
+    assert.ok(Math.abs(yaw) < 2, `${weapon}: front foot heading ${yaw.toFixed(1)} deg`);
+    ch.dispose();
+  }
+});
+
+test('a brush stands with the right foot out to the side and the body twisted under a forward head', async () => {
+  const api = await production(), feet = {};
+  for (const weapon of ['shooter', 's3-brush-normal']) {
+    const ch = await rig(api, weapon), st = state();
+    for (let f = 0; f < 60; f++) ch.update(1 / 60, st);
+    ch.root.updateMatrixWorld(true);
+    feet[weapon] = { foot: kidPoint(api, ch, ch.bones.footR), chest: kidYaw(api, ch, ch.bones.chest), head: kidYaw(api, ch, ch.bones.head) };
+    ch.dispose();
+  }
+  const shooter = feet.shooter, brush = feet['s3-brush-normal'];
+  assert.ok(shooter.foot.z < -0.2, 'the shooter rear foot stays back');
+  assert.ok(brush.foot.z > -0.12 && brush.foot.x < -0.19, `brush right foot to the side (${brush.foot.x.toFixed(3)}, ${brush.foot.z.toFixed(3)})`);
+  assert.ok(brush.chest < shooter.chest - 0.12, `chest turned to the right (${brush.chest.toFixed(3)} vs ${shooter.chest.toFixed(3)})`);
+  assert.ok(Math.abs(brush.head - shooter.head) < 0.06, 'the head keeps facing forward');
+});
+
+
+test('the torso is shorter: the shoulders and everything above drop, the crotch does not', async () => {
+  const api = await production(), P = api.body.S3_BODY_PROPORTION, s = P.torsoShorten;
+  assert.equal(s, 0.05);
+  assert.ok(Math.abs(api.body.s3ProportionY(P.hipY) - api.body.S3_HIP_Y) < 1e-9, 'hip joint height unchanged');
+  assert.ok(Math.abs(api.body.s3ProportionY(1.2) - (1.2 - s)) < 1e-12, 'above the shoulders: lowered by the shortening');
+  const ch = await rig(api, 'shooter'), st = state(), rest = ch.rest;
+  for (let f = 0; f < 10; f++) ch.update(1 / 60, st);
+  for (const n of ['neck', 'clavL', 'clavR'])
+    assert.ok(Math.abs(ch.bones[n].position.y - (rest[n].y - rest.chest.y - s)) < 1e-9, n + ' lowered on the chest after the update');
+  ch.dispose();
 });

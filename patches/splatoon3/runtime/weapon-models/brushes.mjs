@@ -254,6 +254,13 @@ export function FAMILY_POSE(ch, dt, s, C) {
   if (rest > 0.001) for (let i = 0; i < 3; i++) {
     P[C.POLER + i] = mix(P[C.POLER + i], CARRY_POLE_R[i], rest); P[C.POLEL + i] = mix(P[C.POLEL + i], CARRY_POLE_L[i], rest);
   }
+  // Standing still: the body twists a little under a forward-facing head
+  // (registry IDLE_STANCE.brush; owner review 2026-10-17).
+  const twist = (ch.weaponIdleStance?.twist || 0) * rest * (1 - clamp(ch.gaitW || 0));
+  if (Math.abs(twist) > 1e-4) {
+    P[C.SPINE + 1] += 0.4 * twist; P[C.CHEST + 1] += 0.6 * twist;
+    P[C.NECK + 1] -= 0.5 * twist; P[C.HEAD + 1] -= 0.5 * twist;
+  }
   if (roll > 0.001) { P[C.SPINE] += 0.12 * roll; P[C.CHEST] += 0.06 * roll; P[C.HIPS_P + 1] -= 0.03 * roll; }
 }
 

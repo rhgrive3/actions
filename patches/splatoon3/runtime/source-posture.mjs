@@ -319,16 +319,25 @@ export function sourceIdleStance(retarget, ankle, side) {
   const f = side === SOURCE_POSTURE.idle.front ? feet.front : feet.rear;
   ankle.y += (f.y - ankle.y) * w; ankle.z += (f.z - ankle.z) * w;
 }
+/** Called by HumanRetarget.adaptLegFootpaths after the ankle's lateral lane is set: a per-family
+ *  stance (the brush) moves the rear ankle out to the side. */
+export function sourceIdleStanceSide(retarget, ankle, side) {
+  if (!retarget.locomotion) return;
+  const w = idleWeight(retarget), feet = postureState(retarget).idleFeet;
+  if (w <= 1e-4 || !feet || side === SOURCE_POSTURE.idle.front || feet.rear.x === undefined) return;
+  ankle.x += (feet.rear.x - ankle.x) * w;
+}
 const _flat = new THREE.Quaternion();
 /** Called by HumanRetarget.adaptLegFootpaths with a leg's kid-space foot orientation before leg IK.
- *  The standing front sole is flat on the ground (the rear foot keeps the sourced raised heel). */
+ *  The standing front sole is flat on the ground and points straight ahead (the rear foot keeps
+ *  the sourced raised heel). */
 export function sourceIdleFoot(retarget, q, side) {
   if (!retarget.locomotion || side !== SOURCE_POSTURE.idle.front) return;
   const w = idleWeight(retarget);
   if (w <= 1e-4) return;
-  // Keep the sourced toe-out yaw; remove pitch and roll.
-  const e = new THREE.Euler().setFromQuaternion(q, 'YXZ');
-  _flat.setFromAxisAngle(YAX, e.y);
+  // Flat and pointing straight ahead: the Wii U clip turns this foot's toes out by
+  // about 30 degrees; the owner review (2026-10-17) asks for it facing forward.
+  _flat.identity();
   q.slerp(_flat, w);
 }
 /** Called at the end of HumanRetarget.adaptPelvis with the kid-space pelvis position.
@@ -350,8 +359,12 @@ export function sourceIdleBob(retarget, hips) {
     ch._kidXform(front.up, _j, _jq);
     const feet = st.idleFeet = { front: { y: ankleY, z: _j.z + front.a * Math.sin(k) }, rear: { y: 0, z: 0 } };
     ch._kidXform(rear.up, _j, _jq);
-    const rearY = ch.rest['foot' + rearSide].y + I.rearHeel, reach = legReach(rear, I.rearKneeDeg);
-    feet.rear.y = rearY; feet.rear.z = _j.z - Math.sqrt(Math.max(0, reach * reach - (_j.y - rearY) ** 2));
+    // Per-family stance (registry IDLE_STANCE): the brush sets the rear foot out to the side.
+    const fam = ch.weaponIdleStance, out = (fam?.rearOutDeg || 0) * Math.PI / 180;
+    const rearY = ch.rest['foot' + rearSide].y + (fam?.rearHeel ?? I.rearHeel), reach = legReach(rear, I.rearKneeDeg);
+    const flat = Math.sqrt(Math.max(0, reach * reach - (_j.y - rearY) ** 2));
+    feet.rear.y = rearY; feet.rear.z = _j.z - flat * Math.cos(out);
+    if (out) feet.rear.x = _j.x + (rearSide === 'R' ? -1 : 1) * flat * Math.sin(out);
   }
   hips.y -= w * I.bob * (0.5 - 0.5 * Math.cos(2 * Math.PI * c.time / I.period));
 }
