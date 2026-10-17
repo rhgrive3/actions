@@ -16,9 +16,14 @@ for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57])for(cons
  else{f.G.projectiles.throwBomb(o);const b=f.G.projectiles.bombs.at(-1);f.kitBombContact(f.SUB,b,{hit:true,point:new f.THREE.Vector3(0,0,0),normal:new f.THREE.Vector3(0,1,0)});b.s3Sprinkler.nextFrame=Infinity;b.s3Sprinkler.drops.push({pos:new f.THREE.Vector3(0,.7,2),vel:new f.THREE.Vector3(),life:0,seed:.2});}
  for(let i=0;i<10&&v.hp===hp;i++){f.G.time+=1/fps;f.G.projectiles.update(1/fps);}assert.equal(hp-v.hp,(source==='angleShooter'?40:20)*(ap===57?.5:1));
 });
-for(const source of ['angleShooter','sprinkler'])for(const armor of ['booyahBomb','crabTank'])test(`${source} does not reduce ${armor} object armor but reduces body spillover`,async()=>{
+for(const source of ['angleShooter','sprinkler'])for(const armor of ['booyahBomb','crabTank'])test(`${source} retains raw ${armor} object damage and applies resistance only to admitted body damage`,async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),o=f.make(),v=f.make();o.team=1;o.pos.set(0,0,5);v.invuln=0;equip(v,57);v.weapon={...v.weapon,special:armor,specialCost:100};v.special=100;readySpecialEvidence(v);const state=v._s3AllSpecialState;
- state.armorHP=10;v.specialActive.armorHP=10;const hp=v.hp;v.damage(40,o,source);assert.equal(state.armorHP,0);assert.ok(Math.abs((hp-v.hp)-15)<1e-8,'source object rows consume raw armor; victim resistance reduces only the body spillover');
+ const hp=v.hp;state.armorHP=100;v.specialActive.armorHP=100;v.damage(40,o,source);
+ assert.equal(state.armorHP,60,'victim Sub Resistance cannot halve the raw object debit');assert.equal(v.hp,hp);
+ state.armorHP=10;v.specialActive.armorHP=10;v.damage(40,o,source);assert.equal(state.armorHP,0);
+ const breakingBody=armor==='crabTank'?15:0;
+ assert.equal(hp-v.hp,breakingBody,'Booyah absorbs a breaking hit below100; Crab retains its armor-HP spill');
+ const afterBreak=v.hp;v.damage(40,o,source);assert.equal(afterBreak-v.hp,20,'the next bare-body hit still applies57AP Sub Resistance once');
 });
 for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57])test(`${source} JSON hit retains raw damage and applies victim ${ap}AP once`,async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),o=f.make(),v=f.make();Object.assign(o,{team:0,nid:1,owner:'attacker',netLife:0});Object.assign(v,{team:1,nid:2,owner:'victim',netLife:0,invuln:0});equip(v,ap);equip(o,57);o.weapon={...o.weapon,sub:source};
