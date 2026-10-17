@@ -1,0 +1,53 @@
+{
+  "base": "f75aefae5c7e08cf23a8369cc606a1080a826b5c",
+  "build": "ecd4793f9930df6c2c5d39a8e916d7c008e0c7f282c2a9093caaf14ed803a9db",
+  "referenceVersion": "11.3.0",
+  "source": {
+    "tests": 437,
+    "passed": 436,
+    "failed": 0,
+    "skipped": 1,
+    "skipReason": "Original Bluefin asset unavailable"
+  },
+  "before": {
+    "selected": 21,
+    "passed": 2,
+    "failed": 19
+  },
+  "emitted": {
+    "tests": 28,
+    "passed": 28,
+    "failed": 0
+  },
+  "chromium": {
+    "version": "153.0.8010.0",
+    "familyCases": 45,
+    "originCases": 12,
+    "ownershipEqualAtHz": [
+      30,
+      60,
+      120
+    ],
+    "pageErrors": 0
+  },
+  "artifacts": {
+    "verified": 1820,
+    "mismatches": 0
+  },
+  "sourceFiles": {
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": "cfcde893de1cffba177adabb6463b386748f93a9a24cd24b491d3571c614082f",
+    "patches/splatoon3/runtime/added-family-paint.mjs": "1cd1226f045ea6b76d4e237984c684008c5e80a0a159f6f78915d30f63700b36"
+  },
+  "existingFailure": {
+    "probe": "scripts/check-inkwave-catalog-browser.mjs",
+    "error": "Mist native deployment",
+    "reproducedOnUnmodifiedBase": true
+  },
+  "hardwareParity": false,
+  "gpuImageComparison": false,
+  "limitations": [
+    "Sparse defaults and release phases remain INKWAVE models",
+    "Retail 11.3.0 paint masks unavailable",
+    "Canopy terrain tracking and intermediate scatter not retail certified"
+  ]
+}
