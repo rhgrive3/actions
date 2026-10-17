@@ -464,10 +464,10 @@ test('Super Chump expiry paints sourced cross and satellite channels',async()=>{
    assert.equal(rows.length,12,'each decoy expires once');const seen=new Set();
    for(const row of rows){
     const decoy=bySerial.get(row.object);assert.ok(decoy,'expiry names a deployed decoy');assert.equal(seen.has(row.object),false,'no duplicate expiry');seen.add(row.object);
-    assert.equal(row.index,decoy.index);assert.equal(row.activation,decoy.activation);assert.equal(row.actor,owner);
+    assert.equal(row.index,decoy.index);assert.equal(row.activation,decoy.activation);assert.ok(row.actor===owner,'expiry actor identity');
     const cross=row.stamps.filter(call=>call.radius===2.5),satellites=row.stamps.filter(call=>call.radius===1.116);
     assert.equal(cross.length,4,'each expiry emits four radius-2.5 cross stamps');assert.equal(satellites.length,1,'each expiry emits one sourced radius-1.116 satellite');
-    for(const call of row.stamps){assert.equal(call.team,owner.team);assert.equal(call.claimOwner,owner);assert.equal(call.claimMode,'no-special');}
+    for(const call of row.stamps){assert.equal(call.team,owner.team);assert.ok(call.claimOwner===owner,'claim owner identity');assert.equal(call.claimMode,'no-special');}
     for(const [dx,dz] of [[2.5,0],[-2.5,0],[0,2.5],[0,-2.5]]){
      assert.equal(cross.filter(call=>Math.abs(call.at.x-(decoy.pos.x+dx))<1e-9&&Math.abs(call.at.z-(decoy.pos.z+dz))<1e-9).length,1,'one stamp at each sourced cross offset');
     }
