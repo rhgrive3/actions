@@ -6,7 +6,7 @@ export async function run(config){
  const {G}=await import(config.prefix+'src/core/ctx.js');
  const profile=await fetch(config.prefix+'patches/splatoon3/profile.json').then(r=>r.json());
  const {install}=await import(config.prefix+'patches/splatoon3/runtime/install.mjs');install(profile);
- const {createFittedCharacter}=await import(config.prefix+'src/game/headgear-qa-registry.mjs');
+ const {createFittedCharacter}=await import('/qa/registry.mjs');
  const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(720,720);renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=.94;document.body.appendChild(renderer.domElement);
  const scene=new THREE.Scene();scene.background=new THREE.Color('#79828c');
  const camera=new THREE.OrthographicCamera(-.46,.46,.46,-.46,.01,30);
@@ -43,6 +43,6 @@ export async function run(config){
    await capture(gearId,'far',0,'oblique');
   }
   progress.stage='complete';const debug=gl.getExtension('WEBGL_debug_renderer_info');
-  return {status:'rendered-awaiting-visual-review',threeRevision:THREE.REVISION,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),rows,caseCount:rows.length,limits:'Native emitted adapted Character with diagnostic head-bone gear attachment. Same-frame gear-hidden comparison retains tucked hair. Reference top or opposite angles may be reconstructed. Software-renderer timings are not gameplay FPS. Render completion is not visual acceptance.'};
+  return {status:'rendered-awaiting-visual-review',threeRevision:THREE.REVISION,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),rows,caseCount:rows.length,limits:'Native emitted production Character with production lifecycle attachment. Same-frame gear-hidden comparison retains tucked hair. Reference top or opposite angles may be reconstructed. Software-renderer timings are not gameplay FPS. Render completion is not visual acceptance.'};
  }finally{if(active){scene.remove(active.character.root);active.dispose();}renderer.dispose();}
 }

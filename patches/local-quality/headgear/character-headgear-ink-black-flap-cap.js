@@ -1,7 +1,7 @@
 // INKWAVE original procedural reconstruction, calibrated to Splatoon 3 reference screenshots.
 // All coordinates are HEAD BONE LOCAL, +Z forward. No texture/model is copied from the game.
 import * as THREE from 'three';
-import { headShape, HEAD_C } from './character-face.js';
+import { headShape, HEAD_C } from '../../../src/game/character-face.js';
 const V = THREE.Vector3;
 const PIVOT = new V(0, 1.05, -0.002);
 const C = HEAD_C.clone().sub(PIVOT);
@@ -42,8 +42,8 @@ export function createInkBlackFlapCap({lod='hero',clearance}={}){
     const az=.98+(Math.PI-.98)*roundedU;
     const top=crown(s*az,.018,.001);
     const bottom=-.085+.135*smooth(.12,.88,u)+.045*(1-smooth(0,.12,u));
-    const earBulge=.043*smooth(0,.10,v)*Math.exp(-(((v-.15)/.20)**2))*Math.exp(-(((az-1.95)/.45)**2));
-    const r=.023*smooth(0,.35,v)+earBulge+offset;
+    const earBulge=.016*smooth(0,.10,v)*Math.exp(-(((v-.15)/.20)**2))*Math.exp(-(((az-1.95)/.45)**2));
+    const r=.012*smooth(0,.40,v)+earBulge+offset;
     return new V(top.x+s*Math.sin(az)*r,top.y+(bottom-top.y)*v,top.z+Math.cos(az)*r);
   }
   const flapNu=lod==='far'?12:lod==='game'?12:16,flapNv=lod==='far'?4:lod==='game'?8:12;

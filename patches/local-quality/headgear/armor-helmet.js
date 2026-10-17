@@ -18,7 +18,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSurface=null, offIn=null}={}) {
   const group = new THREE.Group(); group.name='armor-helmet-replica';
   const detail = lod==='far'?0:lod==='game'?1:2;
-  const N=[16,32,48][detail], R=[5,10,16][detail];
+  const N=[24,40,56][detail], R=[7,12,18][detail];
   const mats = {
     shell:new THREE.MeshStandardMaterial({color:0x363b3e,roughness:.82,metalness:.08}),
     trim:new THREE.MeshStandardMaterial({color:0x171b1e,roughness:.82,metalness:.04}),
@@ -44,6 +44,18 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
     let p;
     if(headSurface){const q=new THREE.Vector3();headSurface(az,el,(offIn?offIn(az,el)+ARMOR_HAT_CLEARANCE.thick:.025)+off,q);p=[q.x,q.y-1.05,q.z+.002];}
     else p=[(.178+.025+off)*Math.sin(az)*Math.cos(el),.164+(.176+.025+off)*Math.sin(el),.014+(.165+.025+off)*Math.cos(az)*Math.cos(el)];
+    // The broad roof-profile V ribs are integral shell displacement, never open
+    // raised patches. This keeps the rib feet connected and mirrored winding valid.
+    const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+    const center=.027+(.150-p[2])*.38;
+    const distance=Math.abs(Math.abs(p[0])-center);
+    const roof=1-smooth(.020,.055,distance);
+    const along=smooth(-.13,-.07,p[2])*(1-smooth(.140,.185,p[2]));
+    const aboveRim=smooth(.025,.18,el-rim(az));
+    const rise=.024*roof*along*aboveRim;
+    // Normal-direction offset produces broad shoulders rather than vertical fins.
+    const n=new THREE.Vector3(p[0]/.203**2,(p[1]-.164)/.201**2,(p[2]-.014)/.190**2).normalize();
+    p[0]+=n.x*rise;p[1]+=n.y*rise;p[2]+=n.z*rise;
     // Rear shell has a distinct tapered projection, not a spherical bicycle dome.
     const rear=Math.max(0,-Math.cos(az));p[2]-=.069*Math.pow(rear,5)*Math.pow(Math.cos(el),2);
     return p;
@@ -52,21 +64,6 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
   const shell=grid(N,R,(u,v)=>{const az=u*Math.PI*2,el=rim(az)+(Math.PI/2-.004-rim(az))*v;return pt(az,el);});add('woven-shell',shell,mats.shell);
   const rimGeo=grid(N,6,(u,v)=>{const az=u*Math.PI*2,t=v*Math.PI*2;return pt(az,rim(az)+.021*Math.sin(t),-.005+.004*Math.cos(t));});add('rolled-rim',rimGeo,mats.trim);
   const pole=pt(0,Math.PI/2);add('crown-cap',new THREE.SphereGeometry(.006,8,6).scale(1,.15,1).translate(...pole),mats.shell);
-  // Broad raised V ribs with a bevelled trapezoid section. The old flat appliqué
-  // rails did not reproduce the reference crown silhouette in native renders.
-  const ribHeight=[0,.012,.034,.038,.034,.012,0];
-  for(const side of [-1,1]){
-    const rail=grid(6,[6,10,14][detail],(u,v)=>{
-      const z=.150-v*.273,x=side*(.004+v*.102+u*.060);
-      const az=Math.atan2(x/.203,z/.190);
-      const h=Math.sqrt(Math.max(.001,1-(x/.203)**2-(z/.190)**2));
-      const el=Math.asin(clamp(h,.05,.999));
-      const q=pt(az,el,.001);
-      const endFade=Math.min(1,v*12+.22,(1-v)*9+.15);
-      q[1]+=ribHeight[Math.round(u*6)]*endFade;
-      return q;
-    });add(`raised-crown-rib-${side}`,rail,mats.shell);
-  }
   const prism=(verts,depth)=>{const p=[],ix=[];for(const z of [-depth/2,depth/2])for(const v of verts)p.push(v[0],v[1],v[2]+z);const n=verts.length;for(let i=1;i<n-1;i++){ix.push(0,i+1,i,n,n+i,n+i+1);}for(let i=0;i<n;i++){const k=(i+1)%n;ix.push(i,k,n+i,k,n+k,n+i);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(p.flatMap((_,i)=>i%3===0?[0,0]:[]),2));g.setIndex(ix);return g;};
   for(const s of [-1,1]){
     // Broad triangular earpiece, thin in profile; face plane looks slightly forward.
