@@ -10,6 +10,9 @@ const DT = 1 / 60;
 async function setup() {
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
   const a = f.make('shooter'); a.invuln = 0; a.hp = 100; a.ink = 80;
+  // The generic test fixture disables movement. Water crossing must execute
+  // the production integrator so lethal-water checks run on the first tick.
+  a._integrate = f.Actor.prototype._integrate;
   a.special = a.specialCost();
   f.G.physics.collideBody = () => false;
   f.G.physics.groundProbe = (_x, _y, _z, _up, _down, _r, h) => { h.hit = true; h.y = 0; h.face = 0; h.normal.set(0, 1, 0); return h; };
