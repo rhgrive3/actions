@@ -1,0 +1,36 @@
+{
+  "referenceVersion": "11.3.0",
+  "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "verified": [
+    {
+      "id": "s3-slosher-launcher",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSlosherLauncher.game__GameParameterTable.json",
+      "sourceSha256": "3b6d7326f487efd5f8999c7286d0688e97cc5bb9d1e3938fba5e4ea6c69c9a9a",
+      "verifiedSha256": "3b6d7326f487efd5f8999c7286d0688e97cc5bb9d1e3938fba5e4ea6c69c9a9a"
+    },
+    {
+      "id": "s3-slosher-bathtub",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSlosherBathtub.game__GameParameterTable.json",
+      "sourceSha256": "203ff1f8b529bcda8224d4cd5b247aeb3ebb1b54a62f1838c980957a4718d4af",
+      "verifiedSha256": "203ff1f8b529bcda8224d4cd5b247aeb3ebb1b54a62f1838c980957a4718d4af"
+    },
+    {
+      "id": "s3-saber-normal",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSaberNormal.game__GameParameterTable.json",
+      "sourceSha256": "11d42c2c7616fc2d4318a42d4bcf9ea651fdddc93cb5f9ac75112ea99295c100",
+      "verifiedSha256": "11d42c2c7616fc2d4318a42d4bcf9ea651fdddc93cb5f9ac75112ea99295c100"
+    },
+    {
+      "id": "s3-saber-lite",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSaberLite.game__GameParameterTable.json",
+      "sourceSha256": "f6f8238ce0175f50e20bfa8ef70e669179f9da8bda301ecec35f786e0b59d35c",
+      "verifiedSha256": "f6f8238ce0175f50e20bfa8ef70e669179f9da8bda301ecec35f786e0b59d35c"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSaberHeavy.game__GameParameterTable.json",
+      "sourceSha256": "e16c518cdf5fa3180b8b959aa24a80728229de0241f836be854e5cef9431cf6e",
+      "verifiedSha256": "e16c518cdf5fa3180b8b959aa24a80728229de0241f836be854e5cef9431cf6e"
+    }
+  ]
+}

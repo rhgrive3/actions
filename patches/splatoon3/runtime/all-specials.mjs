@@ -109,10 +109,13 @@ function upDirection(THREE) { return new THREE.Vector3(0, 1, 0); }
 function inputEdges(actor, state) {
   const it = actor.intent || {};
   const fire = !!it.fire, sub = !!it.sub, jump = !!it.jump, squid = !!it.squid, booyah=!!it.booyah;
-  const e = { fire: fire && !state.held.fire, fireUp: !fire && state.held.fire,
-    sub: sub && !state.held.sub, subUp: !sub && state.held.sub, jump: jump && !state.held.jump, squid: squid && !state.held.squid,
-    booyah:booyah&&!state.held.booyah };
-  state.held = { fire, sub, jump, squid, booyah };
+  const h = state.held || (state.held = { fire: false, sub: false, jump: false, squid: false, booyah: false });
+  const e = state.edges || (state.edges = { fire: false, fireUp: false, sub: false, subUp: false, jump: false, squid: false, booyah: false });
+  e.fire = fire && !h.fire; e.fireUp = !fire && h.fire;
+  e.sub = sub && !h.sub; e.subUp = !sub && h.sub;
+  e.jump = jump && !h.jump; e.squid = squid && !h.squid;
+  e.booyah = booyah && !h.booyah;
+  h.fire = fire; h.sub = sub; h.jump = jump; h.squid = squid; h.booyah = booyah;
   return e;
 }
 function aimDirection(rt, actor, out) {
@@ -745,7 +748,7 @@ function hitBeam(rt, actor, state, origin, direction, length, damage) {
     // closest point on the finite beam segment; a cylinder radius of 0.85 is
     // a world-scale calibration of the sourced continuous laser capsule.
     const d=rt.v14.subVectors(end,origin), dd=d.lengthSq();
-    const t=dd>1e-9?clamp(base.clone().sub(origin).dot(d)/dd,0,1):0;
+    const t=dd>1e-9?clamp(rt.v10.subVectors(base,origin).dot(d)/dd,0,1):0;
     const near=rt.v15.copy(origin).addScaledVector(d,t);
     if(base.distanceTo(near)>.85)continue;
     rt.api.G.projectiles.applyHit(actor,victim,damage,'killerWail');touched.add(victim);
@@ -1012,6 +1015,32 @@ function throwChumps(rt,actor,state) {
     emitAction(rt,actor,'superChump',state.serial,'balloon',origin,pos,obj.seed,{index:i});
   }
   endSpecial(rt,actor,'deployed');
+}
+// Presentation preview of throwChumps: the same aim, clamp and ellipse, with the seed advanced once per decoy exactly
+// as the throw does (nextSeed in each deploy). Read-only: works on a copy of the seed and returns new vectors.
+// Presentation read-out of the Tenta Missiles lock: the circle limit (fraction of the half screen height) and the
+// opponents prepareMissiles would lock right now, so the HUD draws exactly what launches.
+export function tentaMissilesLockPreview(api,actor) {
+  const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
+  if(!rt||!state||state.id!=='tentaMissiles'||!actor?.alive||actor.remote)return null;
+  return {limit:gearCurve(state.specialPowerAP||0,140,190,240)/360,targets:selectTargets(rt,actor,5,Infinity)};
+}
+export function superChumpLandingPreview(api,actor) {
+  const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
+  if(!rt||!state||state.id!=='superChump'||!actor?.alive||actor.remote)return null;
+  const target=groundAt(rt,aimPoint(rt,actor,26,rt.v0),rt.v1).clone();
+  const offset=rt.v3.copy(target).sub(actor.pos),distance=offset.length();
+  if(distance<18)target.copy(actor.pos).addScaledVector(offset.normalize(),18);
+  else if(distance>35)target.copy(actor.pos).addScaledVector(offset.normalize(),35);
+  groundAt(rt,target,target);
+  const count=12,positions=[],shadow={seed:state.seed};
+  for(let i=0;i<count;i++){
+    const angle=(i/count)*Math.PI*2+seedUnit(shadow.seed,17)*Math.PI*2;
+    const pos=target.clone(),direction=rt.v4.copy(target).sub(actor.pos).setY(0).normalize(),side=rt.v5.set(direction.z,0,-direction.x);
+    pos.addScaledVector(side,Math.cos(angle)*17.5).addScaledVector(direction,Math.sin(angle)*10);
+    positions.push(pos);nextSeed(shadow);
+  }
+  return {target,positions};
 }
 function deployScreen(rt,actor,state) {
   const aim=aimPoint(rt,actor,28,rt.v0).clone(),pos=actor.pos.clone().addScaledVector(rt.v1.copy(aim).sub(actor.pos).setY(0).normalize(),2.5);
@@ -1362,7 +1391,7 @@ function targetWaveOrigin(rt,actor) {
   for(const victim of rt.api.G.actors||[]) {
     if(!victim.alive||victim.team===actor.team)continue;
     const pos=rt.v3.set(victim.pos.x,victim.pos.y+.7,victim.pos.z),d=rt.v4.subVectors(end,origin),dd=d.lengthSq();
-    const t=dd>1e-9?clamp(pos.clone().sub(origin).dot(d)/dd,0,1):0;
+    const t=dd>1e-9?clamp(rt.v6.subVectors(pos,origin).dot(d)/dd,0,1):0;
     const near=rt.v5.copy(origin).addScaledVector(d,t);
     if(pos.distanceTo(near)<1.2)rt.api.G.projectiles.applyHit(actor,victim,3.5,'killerWail');
   }
@@ -1929,6 +1958,8 @@ function installRuntime(api) {
   }
   api.allSpecialObjectCandidate=(p,startPoint,endPoint)=>candidate(rt,p,startPoint||p?.prev,endPoint||p?.pos);
   api.allSpecialObjectHit=(p,object)=>objectHitProposal(rt,p,object);
+  api.superChumpLandingPreview=superChumpLandingPreview;
+  api.tentaMissilesLockPreview=tentaMissilesLockPreview;
   P.s3DamageSpecialObjects=function(attack,center,radius,damageAtDistance,cause=null){
     if(!attack||!center||!(radius>=0)||typeof damageAtDistance!=='function')return false;
     rt.system=this;specialObjectRadius(rt,attack,center,radius,damageAtDistance,cause,false);return true;

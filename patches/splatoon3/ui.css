@@ -329,3 +329,193 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* =====================================================================================
+   Menu layout for the patched catalogue (runtime/menu-layout.mjs): 26 stages, 160 weapons.
+   Desktop rules are scoped away from the touch layout, which has its own flow below.
+   ===================================================================================== */
+/* ---- stage select: the left column runs to the bottom edge; the ticket list scrolls inside it */
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__left { bottom: calc(var(--u) * 2.2 + var(--sab)); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__list.is-many {
+  flex: 1 1 0; min-height: calc(var(--u) * 11); max-height: none; gap: calc(var(--u) * .7);
+  overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .32) transparent;
+  /* room for the focus lift, the selected ticket's nudge arrow and its ink splat */
+  padding: calc(var(--u) * .9) calc(var(--u) * 2.3) calc(var(--u) * 1) calc(var(--u) * .6);
+  margin: calc(var(--u) * -.6) calc(var(--u) * -2.3) 0 calc(var(--u) * -.6);
+  scroll-padding-block: calc(var(--u) * 1.2);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--u) * 1), #000 calc(100% - var(--u) * 1.4), transparent);
+  mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--u) * 1), #000 calc(100% - var(--u) * 1.4), transparent);
+}
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__list.is-many .iw-ticket { height: calc(var(--u) * 5.1); border-radius: calc(var(--u) * 1.05); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__list.is-many .iw-ticket__num { left: calc(var(--u) * .7); width: calc(var(--u) * 2.3); height: calc(var(--u) * 2.3); font-size: calc(var(--u) * .95); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__list.is-many .iw-ticket__name { left: calc(var(--u) * 3.7); right: calc(var(--u) * 3.3); font-size: calc(var(--u) * 1.3); line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: .1em 0 .14em; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__list.is-many .iw-ticket__time { top: 50%; translate: 0 -50%; right: calc(var(--u) * .65); width: calc(var(--u) * 2.3); height: calc(var(--u) * 2.3); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__list.is-many .iw-ticket__ink { left: calc(var(--u) * -2.2); width: calc(var(--u) * 6.6); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__list.is-many .iw-ticket.is-sel { translate: calc(var(--u) * .5) 0; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__list.is-many .iw-ticket.is-focus { transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateX(calc(var(--u) * .5)) scale(1.03); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__list.is-many .iw-ticket.is-sel::after { right: calc(var(--u) * -1.15); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-ss__left .iw-ss__match { flex: none; }
+/* the selected stage's number + the list length, next to the STAGES label */
+.iw-ss__list.is-many::-webkit-scrollbar { width: 6px; }
+.iw-ss__list.is-many::-webkit-scrollbar-thumb { border-radius: 6px; background: rgba(255, 255, 255, .3); }
+/* touch: the list is a bounded scroller instead of a 26-ticket column pushing the options off-screen */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__list.is-many {
+  max-height: min(58dvh, 480px); overflow: hidden auto; overscroll-behavior: contain; touch-action: pan-y; gap: 10px; padding: 8px 10px 12px;
+  border-radius: 18px; background: rgba(10, 8, 18, .35); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .06);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 10px, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(180deg, transparent 0, #000 10px, #000 calc(100% - 14px), transparent);
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__list.is-many .iw-ticket { height: 64px; border-radius: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__list.is-many .iw-ticket__name { right: 56px; font-size: 15px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__list.is-many .iw-ticket__time { top: 50%; translate: 0 -50%; right: 8px; width: 44px; height: 44px; }
+
+/* ---- loadout: weapon grid | detail panel side by side, both inside the screen height */
+.iw-wcard[hidden] { display: none !important; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-loadout__body {
+  top: calc(var(--u) * 10.2); bottom: calc(var(--u) * 5.4 + var(--sab)); width: min(calc(var(--u) * 63), 64vw);
+  display: grid; grid-template-columns: minmax(0, 1fr) calc(var(--u) * 25.5); grid-template-rows: auto auto minmax(0, 1fr);
+  gap: calc(var(--u) * .8) calc(var(--u) * 1.3); align-items: stretch;
+}
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-loadout__body > .iw-seclabel { grid-column: 1; grid-row: 1; margin: 0; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-loadout__body > .s3-wfilter { grid-column: 1; grid-row: 2; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-loadout__body > .iw-wgrid { grid-column: 1; grid-row: 3; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout:not(.has-wfilter) .iw-loadout__body > .iw-wgrid { grid-row: 2 / 4; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-loadout__body .iw-wgrid.is-compact,
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-loadout__body .iw-wgrid.s3-wgrid {
+  max-height: none; min-height: 0; height: 100%; box-sizing: border-box; overflow: hidden auto; overscroll-behavior: contain;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 8.1), 1fr)); grid-auto-rows: max-content; align-content: start;
+  gap: calc(var(--u) * .75); padding: calc(var(--u) * .5) calc(var(--u) * .6) calc(var(--u) * 1.2); margin: calc(var(--u) * -.5) calc(var(--u) * -.6) 0;
+  scroll-padding-block: calc(var(--u) * .8);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--u) * .6), #000 calc(100% - var(--u) * 1.2), transparent);
+  mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--u) * .6), #000 calc(100% - var(--u) * 1.2), transparent);
+}
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-loadout__body > .iw-wd {
+  grid-column: 2; grid-row: 1 / -1; min-height: 0; box-sizing: border-box; overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: none;
+  grid-template-columns: minmax(0, 1fr); align-content: start; gap: calc(var(--u) * .75);
+  padding: calc(var(--u) * 1.3) calc(var(--u) * 1.4) calc(var(--u) * 1.4);
+}
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-wd > * { grid-column: 1; min-width: 0; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-wd__head { flex-wrap: wrap; align-items: flex-start; gap: calc(var(--u) * .5); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-wd__title { flex: 1 1 100%; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-wd__name { font-size: calc(var(--u) * 2.1); white-space: normal; overflow-wrap: anywhere; line-height: 1.12; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-wd__blurb { font-size: var(--fs-s); line-height: 1.4; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-wd__stats { gap: calc(var(--u) * .55); padding: calc(var(--u) * .8) calc(var(--u) * .9); border-radius: calc(var(--u) * 1); background: rgba(0, 0, 0, .22); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-stat { grid-template-columns: calc(var(--u) * 7.2) minmax(0, 1fr) calc(var(--u) * 2.4) calc(var(--u) * 1.9); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-wd__kits { gap: calc(var(--u) * .55); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-kit { padding: calc(var(--u) * .6) calc(var(--u) * .75); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-kit__icon { width: calc(var(--u) * 3); height: calc(var(--u) * 3); }
+/* appearance choice + its "visual only" note read as one row */
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-loadout .iw-loadout__body .iw-wd [data-id="weapon-appearance"] { min-height: calc(var(--u) * 3); }
+.iw-loadout .iw-wd > small { display: block; margin-top: calc(var(--u) * -.35); font: 600 var(--fs-xs) / 1.3 'Rubik', 'IW JP Body', sans-serif; color: var(--muted); opacity: .8; }
+.iw-loadout .iw-wd [data-id="weapon-appearance"][hidden] + small { display: none; }
+/* weapon cards: the whole name (two lines), sub + special marks instead of the class (the filter shows it) */
+.s3-wgrid .iw-wcard { height: auto; min-height: calc(var(--u) * 9.4); justify-content: flex-start; gap: calc(var(--u) * .3); padding: calc(var(--u) * .65) calc(var(--u) * .4) calc(var(--u) * .6); }
+.s3-wgrid .iw-wcard__icon { flex: none; height: calc(var(--u) * 3.9); }
+.s3-wgrid .iw-wcard__icon svg { height: calc(var(--u) * 3.9); }
+.s3-wgrid .iw-wcard__blob { top: calc(var(--u) * 2.6); width: calc(var(--u) * 8.4); }
+.s3-wgrid .iw-wcard__name { flex: none; width: 100%; box-sizing: border-box; min-height: 2.3em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  white-space: normal; overflow: hidden; text-overflow: clip; overflow-wrap: anywhere; font-size: calc(var(--u) * .98); line-height: 1.16; letter-spacing: 0; -webkit-text-stroke-width: .16em; }
+.s3-wgrid .iw-wcard__kind { display: none; }
+.iw-loadout:not(.has-wfilter) .s3-wgrid .iw-wcard__kind { display: block; font-size: max(10px, calc(var(--u) * .7)); }
+.s3-wkit { display: flex; justify-content: center; gap: calc(var(--u) * .35); margin-top: auto; pointer-events: none; }
+.s3-wkit i { display: grid; place-items: center; width: calc(var(--u) * 1.9); height: calc(var(--u) * 1.9); border-radius: calc(var(--u) * .5); background: rgba(0, 0, 0, .42); color: var(--a);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .1); }
+.s3-wkit i.s3-wkit__sp { color: #ffd54a; }
+.s3-wkit svg { width: 76%; height: 76%; }
+.iw-wcard.is-equipped .s3-wkit i { background: rgba(0, 0, 0, .55); }
+/* class filter: Q / E (LB / RB) or tap */
+.s3-wfilter { display: flex; gap: calc(var(--u) * .45); overflow: auto hidden; scrollbar-width: none; padding: 2px calc(var(--u) * 2) calc(var(--u) * .3) 2px; margin: -2px -2px 0; pointer-events: auto;
+  scroll-padding-inline: calc(var(--u) * 2.4); overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - var(--u) * 2.4), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - var(--u) * 2.4), transparent); }
+.s3-wfilter::-webkit-scrollbar { display: none; }
+.s3-wfilter__tab { flex: none; display: inline-flex; align-items: center; gap: .5em; padding: .55em .9em .5em; border: 0; border-radius: 999px; background: rgba(20, 16, 32, .88); color: #fff; cursor: pointer;
+  font: 900 var(--fs-xs) / 1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .06em; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .1); transition: background .18s, color .18s, box-shadow .18s; -webkit-tap-highlight-color: transparent; }
+.s3-wfilter__tab small { padding: .2em .45em; border-radius: 999px; background: rgba(255, 255, 255, .12); font: 800 .9em / 1 'Rubik', sans-serif; letter-spacing: 0; opacity: .85; }
+.s3-wfilter__tab:hover { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45); }
+.s3-wfilter__tab.is-sel { background: var(--a); color: var(--a-ink); box-shadow: 0 calc(var(--u) * .25) 0 var(--a-deep); }
+.s3-wfilter__tab.is-sel small { background: rgba(0, 0, 0, .18); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .s3-wfilter { gap: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .s3-wfilter__tab { min-height: 44px; padding: 0 14px; font-size: 13px; }
+/* touch: a taller weapon grid (the old 34vh cap left a single strip of cards on phones) */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .iw-loadout__body .iw-wgrid.s3-wgrid {
+  max-height: min(64dvh, 560px); grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 12px; padding: 6px 4px 12px; border-radius: 16px;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .s3-wgrid .iw-wcard { height: auto; min-height: 124px; padding: 10px 6px 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .s3-wgrid .iw-wcard__name { font-size: 13px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .s3-wkit i { width: 22px; height: 22px; }
+
+/* ---- loadout: the sub/special/gear owner as a game panel (was a bare <details> with browser form controls) */
+.iw-loadout > .s3-gear {
+  top: calc(var(--u) * 9.6 + var(--sat)); right: calc(var(--u) * 3.4 + var(--sar)); width: min(calc(var(--u) * 30), 31vw); max-height: calc(100% - var(--u) * 16.5 - var(--sat) - var(--sab));
+  box-sizing: border-box; padding: 0; border-radius: calc(var(--u) * 1.3); pointer-events: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .3) transparent;
+  background: linear-gradient(170deg, rgba(38, 31, 58, .96), rgba(18, 14, 30, .97));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .09), 0 calc(var(--u) * .45) 0 rgba(0, 0, 0, .4), 0 calc(var(--u) * 1.2) calc(var(--u) * 2.6) rgba(0, 0, 0, .3);
+  font: 600 var(--fs-s) / 1.4 'Rubik', 'IW JP Body', sans-serif;
+}
+.s3-gear > summary { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: .65em; min-height: 44px; box-sizing: border-box; padding: calc(var(--u) * .75) calc(var(--u) * 1.2);
+  list-style: none; border-radius: inherit; background: inherit; font: 400 calc(var(--u) * 1.3) / 1.15 'Titan One', 'IW JP Display', sans-serif; letter-spacing: .01em; user-select: none; -webkit-user-select: none; }
+.s3-gear > summary::-webkit-details-marker { display: none; }
+.s3-gear > summary::before { content: ''; flex: none; width: calc(var(--u) * 1.9); height: calc(var(--u) * 1.9); border-radius: 50%; background: var(--a);
+  box-shadow: 0 0 0 2px var(--k), inset 0 0 0 calc(var(--u) * .5) var(--a), inset 0 0 0 calc(var(--u) * .95) var(--k); }
+.s3-gear > summary::after { content: ''; margin-left: auto; width: .55em; height: .55em; border-right: 3px solid currentColor; border-bottom: 3px solid currentColor; rotate: 45deg; translate: 0 -.15em; opacity: .8; transition: rotate .25s var(--spring, ease), translate .25s; }
+.s3-gear[open] > summary { border-radius: calc(var(--u) * 1.3) calc(var(--u) * 1.3) 0 0; box-shadow: 0 2px 0 rgba(255, 255, 255, .06); }
+.s3-gear[open] > summary::after { rotate: -135deg; translate: 0 .15em; }
+.s3-gear > summary:hover { color: var(--a-light, #fff); }
+.s3-gear fieldset { display: grid; gap: calc(var(--u) * .45); margin: calc(var(--u) * .8) calc(var(--u) * .9) 0; padding: calc(var(--u) * .7) calc(var(--u) * .9) calc(var(--u) * .9);
+  border: 0; border-radius: calc(var(--u) * 1); background: rgba(255, 255, 255, .05); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .06); min-width: 0; }
+.s3-gear fieldset:last-of-type { margin-bottom: calc(var(--u) * .9); }
+.s3-gear legend { float: left; width: 100%; margin-bottom: calc(var(--u) * .35); padding: 0; font: 900 var(--fs-xs) / 1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .16em; color: var(--a); text-transform: uppercase; }
+.s3-gear legend + * { clear: both; }
+.s3-gear label { display: grid; grid-template-columns: minmax(0, 7.2em) minmax(0, 1fr); align-items: center; gap: .6em; font: 700 var(--fs-xs) / 1.25 'Rubik', 'IW JP Body', sans-serif; color: var(--muted); }
+.s3-gear select { -webkit-appearance: none; appearance: none; width: 100%; max-width: none; min-height: 34px; box-sizing: border-box; padding: .35em 2.1em .35em .75em; border: 0; border-radius: calc(var(--u) * .7);
+  color: #fff; font: 700 var(--fs-s) / 1.2 'Rubik', 'IW JP Body', sans-serif; cursor: pointer; text-overflow: ellipsis;
+  background: rgba(0, 0, 0, .38) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right .75em center / .75em auto;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .12); transition: box-shadow .15s, background-color .15s; }
+.s3-gear select:hover { background-color: rgba(255, 255, 255, .08); }
+.s3-gear select:focus-visible, .s3-gear select:focus { outline: none; box-shadow: inset 0 0 0 2px var(--a), 0 0 0 3px rgba(var(--a-rgb), .3); }
+.s3-gear select option { background: #1f1a2c; color: #fff; }
+/* the kit owner (sub / special choice) */
+.s3-gear .s3-catalogue { gap: calc(var(--u) * .6); }
+.s3-gear .s3-catalogue > p { margin: 0; font: 500 var(--fs-xs) / 1.45 'Rubik', 'IW JP Body', sans-serif; color: var(--muted); }
+.s3-gear .s3-catalogue > p[aria-live] { padding: calc(var(--u) * .55) calc(var(--u) * .7); border-radius: calc(var(--u) * .6); background: rgba(0, 0, 0, .22); color: #e6e1f2; }
+.s3-gear .s3-catalogue label { grid-template-columns: minmax(0, 1fr); gap: .35em; }
+.s3-gear .s3-catalogue select { min-height: 44px; }
+.s3-gear .s3-catalogue button { min-height: 44px; border: 0; border-radius: 999px; padding: 0 1.2em; cursor: pointer; justify-self: start; color: #fff; background: rgba(255, 255, 255, .1);
+  font: 900 var(--fs-xs) / 1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .08em; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .14); transition: background .15s, box-shadow .15s; }
+.s3-gear .s3-catalogue button:hover { background: rgba(255, 255, 255, .18); box-shadow: inset 0 0 0 2px #fff; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .s3-gear select { min-height: 44px; font-size: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .s3-gear > summary { min-height: 52px; font-size: 17px; }
+@media (max-width: 500px) { .iw-loadout > .s3-gear { left: 1rem; right: 1rem; width: auto; } }
+/* touch: the panel joins the screen's scroll flow below the weapon details instead of covering the cards */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout > .s3-gear { position: relative; inset: auto; width: auto; max-height: none; margin-top: 24px; overflow: visible; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout > .s3-gear > summary { position: relative; }
+
+/* ---- results: one action row (REMATCH · CHANGE GEAR · MAIN MENU) instead of a wrapped stack, and a backdrop
+   that stays put behind the scrolling touch layout */
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__foot { align-items: center; gap: calc(var(--u) * 1.6); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-xp { flex: 0 1 min(calc(var(--u) * 38), 36vw); width: auto; min-width: 0; box-sizing: border-box; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__btns {
+  flex: 1 1 0; min-width: 0; max-width: calc(var(--u) * 56); margin-left: auto; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: stretch; gap: calc(var(--u) * .9); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__btns > .iw-btn--wide { width: auto; min-width: 0; height: calc(var(--u) * 4.8); padding: 0 calc(var(--u) * 1.1); font-size: calc(var(--u) * 1.45); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__btns > .iw-btn--primary { font-size: calc(var(--u) * 1.8); }
+.iw-results .iw-res__btns .iw-btn__text { min-width: 0; }
+.iw-results .iw-res__btns .iw-btn__label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.14; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns .iw-btn__label { white-space: normal; overflow-wrap: anywhere; }
+.iw-results .iw-res__btns .iw-btn__icon { flex: none; }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__btns > .iw-res__lobby { height: calc(var(--u) * 4.8); }
+/* the scoreboard band reads as one sheet: the live map and the podium drums no longer show through the team rows
+   (a blurred, darker band from the coverage bar down; clear during the podium intro) */
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results .iw-res__scrim::before { content: ''; position: absolute; left: 0; right: 0; top: calc(46% - var(--u) * 1.2); bottom: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(10, 8, 18, 0), rgba(10, 8, 18, .5) calc(var(--u) * 5), rgba(10, 8, 18, .62));
+  -webkit-backdrop-filter: blur(10px) saturate(.85); backdrop-filter: blur(10px) saturate(.85);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--u) * 4)); mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--u) * 4));
+  transition: opacity .6s var(--out, ease); }
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::before { opacity: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results > .iw-res__scrim { position: fixed; inset: 0; z-index: 0;
+  background: linear-gradient(180deg, rgba(10, 8, 18, .3) 0%, rgba(10, 8, 18, .5) 30%, rgba(10, 8, 18, .8) 58%, rgba(10, 8, 18, .9) 100%); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results > :is(.iw-res__head, .iw-res__body) { position: relative; z-index: 1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns > .iw-btn--wide { height: auto; min-height: 56px; }
+/* the key hints sit top-right on results: at the bottom they covered the end of the action row */
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results > .iw-prompts { top: calc(var(--u) * 2.2 + var(--sat)); bottom: auto; }

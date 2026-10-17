@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 const f=await fixture({fullRuntime:true,productionComposition:true,includeCharacter:true,realProjectiles:true,vmMathRandom:()=>.5,extraExports:`export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';`});
-const {G,Actor,Character,THREE,Projectiles,Physics}=f.installedRuntime;f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
+const {G,Actor,Character,THREE,Projectiles,Physics}=f.installedRuntime; // production installer owns catalogue
 function finiteWeapon(w){assert.ok(w&&w.ps);assert.ok(Object.keys(w.ps).length);for(const v of Object.values(w.ps))assert.ok(Number.isFinite(v));for(const p of Object.values(w.parts)){p.updateMatrixWorld(true);assert.ok(p.matrixWorld.elements.every(Number.isFinite));}assert.ok(w.muzzle.getWorldPosition(new THREE.Vector3()).toArray().every(Number.isFinite));}
 for(const id of ['s3-maneuver-short','s3-maneuver-gallon','s3-maneuver-dual','s3-maneuver-stepper','s3-maneuver-long'])test(id+' native Actor advances both hand triggers through near/far and reset',()=>{
  for(const team of [0,1]){
@@ -28,4 +28,52 @@ for(const id of ['s3-maneuver-short','s3-maneuver-gallon','s3-maneuver-dual','s3
    assert.ok(shots>1);assert.deepEqual([...hands].sort(),[0,1]);assert.deepEqual([...near].sort(),[false,true]);assert.deepEqual(moved,[true,true]);r.reset();assert.equal(r.hand,0);assert.deepEqual(Array.from(r.sinceHand),[99,99]);a._finishFrame(0);finiteWeapon(ch.weapon);finiteWeapon(ch.weapon.left);console.log('BASE_DUALIES_ACTOR',JSON.stringify({id,team,shots,ticks:180,moved,near:[...near]}));
   }finally{ch.trigger=trigger;ps.clear();G.scene.remove(ch.root);ch.dispose();G.scene.remove(ps.blobs,ps.arcLine,ps.arcRing);G.actors=[];}
  }
+});
+
+test('catalog Dualies feed native roll and turret Character pose without mutating gameplay runner',()=>{
+  G.scene=new THREE.Scene();G.camera=new THREE.PerspectiveCamera(60,1,.1,100);
+  G.camera.position.set(0,2,2);G.camera.updateMatrixWorld();
+  G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};
+  G.physics=new Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.actors=[];G.time=0;
+  G.match={playing:()=>true};const ps=new Projectiles(G.scene);G.projectiles=ps;
+  const a=new Actor({team:0,weapon:'s3-maneuver-dual',isLocal:false,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
+  const ch=a.character,r=a.weaponRunner;ch.actor=a;ch.onEvent=null;ch.inWorld=true;
+  a.grounded=a.ground.hit=true;a.form='kid';a.intent.fire=true;
+  a.yaw=Math.PI/2;a.intent.move.set(1,0,0);G.actors=[a];G.scene.add(ch.root);
+  try{
+    // The real Character's Spawn/Leap admission gates must settle before a
+    // dodge is eligible to drive the native C1 pose. A new rig at frame 0 is
+    // intentionally not permitted to tumble during its spawn animation.
+    a.intent.fire=false;
+    for(let frame=0;frame<150;frame++){G.time+=1/60;a._finishFrame(1/60);}
+    a.intent.fire=true;
+    assert.ok(ch.kidForm && ch.inWorld,'render rig is active after spawn settling');
+    assert.equal(r.tryDodge(a.intent.move),true);
+    assert.equal(r.dodge,null,'native dodge physics was not overwritten');
+    assert.equal(r.s3Turret??false,false,'native turret clock was not overwritten');
+    const view=ch._runner();
+    assert.notStrictEqual(view,r,'Character receives read-only catalogue view');
+    assert.ok(view.dodge,'render view sees the actual source roll');
+    assert.equal(view.dodge.t,0,'sourced roll age is initially zero');
+    assert.equal(view.dodge.dur,a.weapon.catalogRecord.parameters.SideStepParam.MoveFrame/60);
+    assert.strictEqual(view._dodgeDir,r.catalogState.roll.direction,'native smooth motion reads actual world dodge direction');
+    assert.ok(view.lockT>0&&view.s3Turret,'render view sees the source post-roll turret');
+    assert.equal(ch.dodgeDur,a.weapon.catalogRecord.parameters.SideStepParam.MoveFrame/60);
+    assert.ok(Math.abs(ch.dodgeX)<1e-8&&Math.abs(ch.dodgeZ-1)<1e-8,'animation direction is root-relative');
+    // Drive the actual Character state/pose owner first, including the
+    // enhanced Dualies C1 motion adapter and its admission gates.
+    // The C1 turn intentionally starts at >12% of the sourced roll duration:
+    // at the first 1/60 step its twist is correctly zero, not suppressed.
+    const advanceFrames=Math.max(3,Math.ceil(ch.dodgeDur*60*.35));
+    for(let frame=0;frame<advanceFrames;frame++){
+      G.time+=1/60;r.update(1/60,{fire:false,firePressed:false});a._finishFrame(1/60);
+    }
+    assert.ok(ch._runner().dodge?.t>0,'sourced dodge age reaches the Character');
+    ch._poseDodge(ch.P,Math.min(.1,ch.dodgeDur*.5));
+    assert.ok(ch.tumble>0,'the smooth C1 turn advances after its sourced 12% delay');
+    assert.ok(Array.from(ch.P).every(Number.isFinite));
+    assert.ok(r.catalogState.roll,'real gameplay roll unchanged by presentation');
+    r.catalogState.roll=null;r.catalogState.turret=0;
+    assert.strictEqual(ch._runner(),r,'render view retires at the actual end');
+  }finally{ps.clear();G.scene.remove(ch.root,ps.blobs,ps.arcLine,ps.arcRing);ch.dispose();G.actors=[];}
 });
