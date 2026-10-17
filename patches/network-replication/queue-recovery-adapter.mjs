@@ -4,7 +4,7 @@ export function adaptQueuedBugRecovery(rel, input, once) {
   let code = input;
   const patch = (before, after, label) => { code = once(code, before, after, rel + ': queued ' + label); };
   if (rel === 'src/main.js') {
-    code = "import { normalizeQueueProfile, safeWeaponId, validWeaponId, settleProgression, reserveLiveStart, releaseLiveStart, canApplyAttractReset, validStartRoster } from '../patches/network-replication/queue-recovery.mjs';\n" + code;
+    code = "import { normalizeQueueProfile, safeWeaponId, validWeaponId, settleProgression, validStartRoster } from '../patches/network-replication/queue-recovery.mjs';\n" + code;
     patch("    this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);",
       "    this.profile = normalizeQueueProfile(loadJSON('inkwave.profile', DEFAULT_PROFILE), WEAPONS);\n    saveJSON('inkwave.profile', this.profile);",
       'normalize and persist saved profile at boot');
@@ -15,31 +15,15 @@ export function adaptQueuedBugRecovery(rel, input, once) {
       "        if (!validWeaponId(weapon, WEAPONS)) return;",
       'loadout cannot accept inherited keys');
 
-    // The reliability start adapter already owns the flow parameter.
-    // Preserve it so menu recovery and async ownership checks remain intact.
-    patch("  async startMatch(o = {}, flow = this._beginMatchFlow()) {",
-      "  async startMatch(o = {}, flow = this._beginMatchFlow()) {\n    const queueStartEpoch = reserveLiveStart(this);\n    try {",
-      'invalidate pending attract before offline awaits');
+    // The existing reliability start/attract adapters already reserve an
+    // operation identity before their first await and guard stale menu fades.
+    // Preserve those verified guards rather than creating a competing epoch.
     patch("mode: opts.mode, weapon: this.profile.weapon || 'shooter',",
       "mode: opts.mode, weapon: safeWeaponId(this.profile.weapon, WEAPONS),",
       'offline match uses validated weapon even after mutable profile edit');
-    patch("    this._fade(0, 500);\n  }\n\n  // ---- online",
-      "    this._fade(0, 500);\n    } finally { releaseLiveStart(this, queueStartEpoch); }\n  }\n\n  // ---- online",
-      'offline transition always retires pending flag');
-
     patch("  async startNetMatch(cfg, nm) {",
-      "  async startNetMatch(cfg, nm) {\n    const queueStartEpoch = reserveLiveStart(this);\n    try {\n      if (!validStartRoster(cfg?.roster, G.net?.myId, WEAPONS, cfg?.mode, G.net?.hostId)) throw new Error('Invalid online match roster');",
-      'validate START roster and invalidate attract before online awaits');
-    patch("    this._fade(0, 450);\n  }\n  // Compile every shader",
-      "    this._fade(0, 450);\n    } finally { releaseLiveStart(this, queueStartEpoch); }\n  }\n  // Compile every shader",
-      'online transition always retires pending flag');
-
-    patch("    const cov = G.paint.coverage();\n    if (this.attractT > 110 || cov[0] + cov[1] > 0.72) {",
-      "    if (this._queueStartPending) return;\n    const cov = G.paint.coverage();\n    if (this.attractT > 110 || cov[0] + cov[1] > 0.72) {",
-      'do not schedule attract reset during live-match startup');
-    patch("      this._fade(1, 400).then(() => { this._setPalette(this._pickPalette()); this._startAttract(); this._fade(0, 600); });",
-      "      const previousAttract = this.match, resetEpoch = this._queueAttractEpoch || 0;\n      this._fade(1, 400).then(() => {\n        if (!canApplyAttractReset(this, previousAttract, resetEpoch, G.mode)) return;\n        this._setPalette(this._pickPalette()); this._startAttract(); this._fade(0, 600);\n      });",
-      'stale attract Promise cannot destroy newer match');
+      "  async startNetMatch(cfg, nm) {\\n    if (!validStartRoster(cfg?.roster, G.net?.myId, WEAPONS, cfg?.mode, G.net?.hostId)) throw new Error('Invalid online match roster');",
+      'validate direct online START before allocating a match');
 
     patch("    const m = this.match, a = m.local, cam = G.camera;",
       "    const m = this.match, a = m?.local, cam = G.camera;\n    if (!a?.weapon || !a.weaponRunner) return;",
