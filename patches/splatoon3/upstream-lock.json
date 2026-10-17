@@ -2,6 +2,7 @@
   "schema": 1,
   "sourceCommit": "f5a82ada9f50db26e82feb72d9181ee90d304ee9",
   "files": {
+    "src/fx/fx.js": "4f73310a0d6d190601a29811eb39548f223b68226c2d8581ea9e3388e6e0cb90",
     "index.html": "13e4485f3974f806a1672e60200d6c86efd419a1cd41b18c9aa3e9cbf461a580",
     "src/main.js": "af8d0c1e0d5850ba10b5a1e5f1b5be15860927aab78fd85390775876bd41bcd1",
     "src/game/actor.js": "f8c85831733661d6e40aa58f8d588ca576ab2affece932d7f2a574bd49cb2d5d",

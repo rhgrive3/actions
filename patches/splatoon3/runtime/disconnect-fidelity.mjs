@@ -208,7 +208,13 @@ export function installDisconnectFidelity(api) {
 
     // Host migration keeps clock/boss authority, but never revives the departed
     // human as an AI-controlled combatant.
-    if (hostChanged && this.isHost) { this.match.follower = false; this.clockT = 0; }
+    if (hostChanged && this.isHost) {
+      this.match.follower = false; this.clockT = 0;
+      // #878: host election may occur while the new host is already suspended.
+      // Arming the existing elapsed-time deadline is independent of WebGL
+      // resume and does not run actor/projectile physics in the background.
+      this.__s3G?.game?.platform?.onHostAcquired?.();
+    }
     if (hostChanged && this.match.boss) {
       if (this.isHost) this.match.boss.adopt();
       else this.match.boss.handoff();

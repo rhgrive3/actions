@@ -2,6 +2,7 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  'patches/local-quality/bot-navigation-adapter.mjs',
   'patches/local-quality/cloth-derivative-adapter.mjs',
   'patches/local-quality/retarget-branch-update-adapter.mjs',
   'patches/local-quality/motion-fk-hotpath-adapter.mjs',

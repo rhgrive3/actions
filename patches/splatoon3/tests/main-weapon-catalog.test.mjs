@@ -15,12 +15,111 @@ test('registration applies Japanese and English even after the early i18n boot',
 });
 
 async function setup() {
+  // Never manually install the catalogue in tests: production must own this.
   const f = await fixture({ fullRuntime:true, productionComposition:true, realProjectiles:true,
-    extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export { MAIN_WEAPON_CATALOG } from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';" });
-  f.installMainWeaponCatalogRuntime(f.installedRuntime, f.profile);
+    extraExports:"export { MAIN_WEAPON_CATALOG } from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';" });
   f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
   return f;
 }
+
+test('production install enables added weapon owners without a test-only second install', async () => {
+  const f = await fixture({ fullRuntime:true, productionComposition:true, realProjectiles:true });
+  f.G.physics.segment = (_a,_b,h) => { h.hit=false; return h; };
+  const legacy=f.make('shooter'); legacy.form='kid'; legacy.intent.fire=true;
+  f.tick(legacy, 10);
+  assert.ok(f.G.projectiles.list.some(p => p.wid==='shooter' && !p.catalog),
+    'legacy seven must retain their native owner');
+  for(const family of [...new Set(MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy).map(r=>r.family))]){
+    const r=MAIN_WEAPON_CATALOG.records.find(r=>!r.legacy && r.family===family);
+    f.G.projectiles.clear();f.G.actors.length=0;
+    const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;
+    f.tick(a,130);a.intent.fire=false;f.tick(a,35);
+    assert.ok(f.G.projectiles.list.some(p=>p.wid===r.id&&p.catalog?.r?.id===r.id),
+      r.id+' ('+family+') must use the installed catalogue owner');
+  }
+});
+
+test('added Slosher muzzle retains the legacy full-segment wall guard but Shooter is unchanged', async () => {
+  const f=await fixture({ fullRuntime:true, productionComposition:true, realProjectiles:true });
+  const row=MAIN_WEAPON_CATALOG.records.find(r=>!r.legacy && r.family==='slosher');
+  assert.ok(row);
+  const a=f.make(row.id), shooter=f.make('shooter');
+  let rays=0;
+  f.G.physics.los=()=>true; // native shortcut omits its terminal sliver
+  f.G.physics.raycast=(_from,_dir,_len,h)=>{rays++;h.hit=true;return h;};
+  for(const actor of [a,shooter]){
+    actor.form='kid';actor.aimDir.set(0,0,1);
+    actor.character.getMuzzle=out=>out.copy(actor.pos).add(new f.THREE.Vector3(.25,1.1,.45));
+    actor.character.aimReady=()=>1;
+  }
+  const anchor=a.pos.clone();anchor.y+=1.05;
+  const blocked=f.G.projectiles._muzzle(a,new f.THREE.Vector3());
+  assert.ok(blocked.distanceTo(anchor)<1e-9,'catalog Slosher must not launch inside the overlooked wall sliver');
+  assert.ok(rays>=1,'full-segment ray must reject the obstructed catalogue Slosher muzzle');
+  const ordinary=f.G.projectiles._muzzle(shooter,new f.THREE.Vector3());
+  assert.ok([ordinary.x,ordinary.y,ordinary.z].every(Number.isFinite), 'native Shooter muzzle remains finite');
+  // Native Shooter may have its own independent obstruction ray from
+  // constrainMuzzle; the added Slosher guard must not constrain its output.
+});
+
+test('catalog Shooter live reticle retains its sourced cone on cooldown/idle frames',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const row=MAIN_WEAPON_CATALOG.records.find(r=>!r.legacy&&r.family==='shooter'&&
+    Number.isFinite(r.parameters.WeaponParam?.Stand_DegSwerve)&&r.parameters.WeaponParam.Stand_DegSwerve>0);
+  assert.ok(row,'at least one additional Shooter with a sourced standing cone');
+  const actor=f.make(row.id);actor.form='kid';actor.grounded=true;
+  const expected=row.parameters.WeaponParam.Stand_DegSwerve;
+  f.tick(actor,3);
+  assert.ok(Math.abs(actor.weaponRunner.spread-expected)<1e-9,'reticle cone must not be zero while idle');
+  actor.intent.fire=true;f.tick(actor);actor.intent.fire=false;f.tick(actor,2);
+  assert.ok(Math.abs(actor.weaponRunner.spread-expected)<1e-9,'cooldown must not erase the live cone');
+});
+
+test('all added Sloshers inherit funded heave and true-birth release without Shooter recoil',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+  for(const row of MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&r.family==='slosher')){
+    f.G.projectiles.clear();f.G.actors.length=0;
+    const actor=f.make(row.id);
+    actor.form='kid';actor.ink=100;actor.intent.fire=true;
+    const events=[],oldTrigger=actor.character.trigger.bind(actor.character);
+    actor.character.trigger=(name,...args)=>{events.push(name);return oldTrigger(name,...args);};
+    const windup=row.parameters.WeaponParam.SwingLiftFrame;
+    assert.equal(actor.weapon.windup,windup/60,row.id+' sourced windup');
+    f.tick(actor);
+    assert.equal(events.filter(name=>name==='slosh').length,1,row.id+' funded heave begins immediately');
+    assert.equal(events.filter(name=>name==='shoot').length,0,row.id+' no Shooter recoil before release');
+    assert.ok(actor.weaponRunner.slosh>=0,row.id+' heave clock active');
+    assert.ok(actor.weaponRunner.catalogState.pending,row.id+' actual birth remains pending');
+    f.tick(actor,Math.ceil(windup)+1);
+    assert.ok(f.G.projectiles.list.some(p=>p.catalog?.r?.id===row.id),row.id+' true-release source rounds');
+    assert.equal(actor.weaponRunner.slosh,-1,row.id+' visual heave clock completes');
+    assert.equal(events.filter(name=>name==='slosh').length,1,row.id+' no duplicate heave at birth');
+    assert.equal(events.filter(name=>name==='shoot').length,0,row.id+' no conflicting generic recoil');
+    actor.intent.sub=true;f.tick(actor);
+    assert.equal(actor.weaponRunner.slosh,-1,row.id+' sub cancels heave');
+  }
+});
+
+test('added Charger sight and scoped-only zoom use the sourced family, not kind=catalog',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const {chargerSightVisible}=await import('../runtime/charger-surface.mjs');
+  const records=MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&r.family==='charger');
+  const plain=records.find(r=>!r.parameters.WeaponScopeParam),scoped=records.find(r=>r.parameters.WeaponScopeParam);
+  assert.ok(plain&&scoped,'both source-backed scoped and ordinary Chargers exist');
+  f.G.physics.cameraProbe=(_p,_b,d,_radius,out)=>Object.assign(out,{soft:d,hard:d});
+  f.G.settings={fov:82,cameraShake:0};
+  for(const [r,shouldZoom] of [[plain,false],[scoped,true]]){
+    const a=f.make(r.id);
+    a.weaponRunner.charging=true;a.weaponRunner.charge=1;
+    assert.equal(chargerSightVisible(a),true,r.id+' must show actual charged sight');
+    const cam=new f.THREE.PerspectiveCamera(60,16/9),rig=new f.CameraRig(cam);
+    rig.follow(a,true);
+    for(let i=0;i<90;i++)rig.update(1/60);
+    if(shouldZoom)assert.ok(rig.zoom>10,r.id+' scoped view zooms');
+    else assert.ok(Math.abs(rig.zoom)<1e-8,r.id+' unscoped view stays at native FOV');
+  }
+});
 
 test('all 58 additions admit finite native main shots through Actor input', async () => {
   const f = await setup();
@@ -76,6 +175,30 @@ test('charged Stamper slash uses its independent 3F contact before its 6F bullet
   a.intent.fire=false;f.tick(a);f.tick(a,3);
   assert.ok(hits.includes(140));assert.equal(f.G.projectiles.list.length,0);
   f.tick(a,3);assert.equal(f.G.projectiles.list.length,1);assert.equal(f.G.projectiles.list[0].damage,70);
+});
+
+test('catalog Dualies pass sourced root-space roll direction and duration to native Character',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const r=f.MAIN_WEAPON_CATALOG?.records?.find(r=>!r.legacy&&r.family==='dualies') ||
+    MAIN_WEAPON_CATALOG.records.find(r=>!r.legacy&&r.family==='dualies');
+  assert.ok(r);
+  const a=f.make(r.id), v=a.intent.move;
+  a.form='kid';a.intent.fire=true;a.yaw=Math.PI/2;v.set(1,0,0);
+  const ink=a.ink;
+  assert.equal(a.weaponRunner.tryDodge(v),true);
+  const note=a.character.events.find(x=>x[0]==='dodge');
+  assert.ok(note,'native Character receives exactly the accepted dodge');
+  const opts=note[1];
+  assert.ok(Math.abs(opts.x)<1e-9 && Math.abs(opts.z-1)<1e-9,'world right becomes root forward');
+  assert.equal(opts.t,r.parameters.SideStepParam.MoveFrame/60,'animation uses source roll duration');
+  assert.equal(a.weaponRunner.dodge,null,'physical native dodge state is not modified');
+  const roll=a.weaponRunner.catalogState.roll;
+  assert.ok(roll,'existing sourced physical roll is preserved');
+  assert.equal(roll.dur,r.parameters.SideStepParam.MoveFrame/60);
+  assert.equal(roll.t,0,'source roll presentation starts with a zero-age clock');
+  f.tick(a);
+  assert.ok(Math.abs(roll.t-1/60)<1e-9,'actual fixed tick advances animation age');
+  assert.ok(a.ink<ink,'existing sourced ink charge is preserved');
 });
 
 test('additional dualies replace jump with sourced roll distance and ink cost',async()=>{

@@ -37,36 +37,43 @@ installWeaponAudioEngine(MixerStub);
 
 test('v11 connects real game AudioEngine._def to decoded weapon buffers', async()=>{
  const {ctx,sources}=mkctx();const a=new MixerStub(ctx);
- // An admitted shot before warmup is discarded rather than synthesized or delayed.
- assert.equal(a.playWeapon(id,'fire'),null);
- assert.equal(a.played.length,0);
+ // The first *local* admitted shot must remain audible even before its MP3
+ // finishes decoding on a slow iPad. It is an original, per-weapon cue only.
+ const local={isLocal:true};
+ assert.equal(a.playWeapon(id,'fire',{actor:local})?.weaponId,id);
+ assert.equal(a.played.length,1);
  assert.equal(a.weaponBank().stats().realOnly,true);
+ assert.equal(a.weaponBank().stats().audibleShotFallback,true);
+ assert.equal(a.stats().authoredFallbackShots,1);
  // Supply the same-origin manifest and bytes through the real loader.
  a._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest([clip(id,'fire')])});
  a._realS3Loader.manifestPromise=null;
  a._realS3Loader.bank.authorized.fetcher=async()=>res;
  const ready=await a._realS3Loader.ensure(id,'fire');
  assert.equal(ready.loaded,1,JSON.stringify(ready));
- const result=a.playWeapon(id,'fire');
+ const result=a.playWeapon(id,'fire',{actor:local});
  assert.equal(result.weaponId,id);
  assert.equal(a.played.at(-1).name,`main:${id}:fire`);
  assert.equal(a.played.at(-1).def.legacy,undefined);
- assert.equal(sources.length,1);
- assert.equal(sources[0].buffer,a.weaponBank().authorized.pick(id,'fire').buffer);
- assert.equal(a.weaponBank().cache.size,0,'no procedural PCM created');
+ assert.equal(sources.length,2,'authored first shot then real MP3');
+ assert.equal(sources[1].buffer,a.weaponBank().authorized.pick(id,'fire').buffer);
+ assert.notEqual(sources[0].buffer,sources[1].buffer,'real sample replaces only later shots');
+ assert.equal(a.weaponBank().cache.size,1,'a bounded single local fallback was cached');
  assert.equal(a._def('ui_click').legacy,true,'unrelated legacy UI audio remains intact');
- assert.equal(a.stats().realAudioSuppressed,1);
+ assert.equal(a.stats().realAudioSuppressed,0,'a local cold shot is no longer silent');
 });
 
-test('strict real-only mode suppresses unrecorded 2024+ weapons and missing events',async()=>{
+test('local unrecorded mains are audible, while unknown events and remote cold shots stay silent',async()=>{
  const {ctx}=mkctx(),a=new MixerStub(ctx);
- assert.equal(a.playWeapon('s3-charger-pencil','fire_full'),null);
+ assert.equal(a.playWeapon('s3-charger-pencil','fire_full',{actor:{isLocal:true}})?.weaponId,'s3-charger-pencil');
+ assert.equal(a.playWeapon('s3-charger-pencil','fire',{actor:{isLocal:false}}),null);
  assert.equal(a.playWeapon('s3-charger-long','scope'),null);
  const suspended=a.loopWeapon('s3-charger-long','charge');
  assert.equal(suspended.playing,true,'cold loops await real MP3 decoding without synthesis');
  suspended.stop();assert.equal(suspended.playing,false);
- assert.equal(a.played.length,0);
- assert.equal(a._def('main:s3-charger-pencil:fire_full'),null);
+ assert.equal(a.played.length,1,'only the local main shot can use original fallback');
+ assert.ok(a._def('main:s3-charger-pencil:fire_full'));
+ assert.equal(a._def('main:special:inkjet:open'),null,'no synth replacement for unrecorded kits');
  assert.equal(a.weaponBank().stats().generatedOffThread,0);
 });
 
