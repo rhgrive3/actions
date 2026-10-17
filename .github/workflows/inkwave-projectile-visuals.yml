@@ -8,7 +8,6 @@ on:
       - 'patches/splatoon3/reference/projectile-*.json'
       - 'patches/splatoon3/tests/projectile-visuals.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
-      - 'scripts/lib/inkwave-projectile-ci-intro.mjs'
       - 'scripts/lib/inkwave-projectile-ci-roster.mjs'
       - 'scripts/tests/inkwave-projectile-ci-roster.test.mjs'
       - 'scripts/lib/inkwave-roller-birth-baseline.mjs'
@@ -17,7 +16,10 @@ on:
       - 'scripts/prepare-inkwave-projectile-baseline.mjs'
       - 'scripts/tests/inkwave-roller-birth-baseline.test.mjs'
       - 'scripts/tests/inkwave-main-ink-baseline.test.mjs'
+      - 'scripts/lib/inkwave-projectile-ci-intro.mjs'
       - 'scripts/tests/inkwave-projectile-ci-intro.test.mjs'
+      - 'scripts/tests/inkwave-projectile-character-reset.test.mjs'
+      - 'scripts/tests/inkwave-projectile-pool-reset.test.mjs'
       - 'scripts/compare-inkwave-projectile-captures.py'
       - 'scripts/tests/inkwave-projectile-captures-synthetic.py'
       - 'scripts/tests/inkwave-projectile-captures.test.py'
@@ -29,21 +31,24 @@ permissions:
   contents: read
 
 concurrency:
-  group: projectile-visuals-${{ github.event.pull_request.number || github.ref }}
+  group: projectile-visuals-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
-  native-and-render:
+  capture:
+    name: Capture ${{ matrix.side }}
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        side: [before, after]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      # The baseline must match this PR event's actual main SHA. The old
-      # 01aa5cc fixture predates independent paint/contact fixes, so comparing
-      # it with a later Roller PR incorrectly reports Slosher/Shooter drift.
-      - name: Check out immutable current-main baseline
+      - name: Check out immutable PR-base main for reference
+        if: ${{ matrix.side == 'before' }}
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.sha || 'main' }}
@@ -57,36 +62,71 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Native visual, source-value and gameplay regressions
+        if: ${{ matrix.side == 'after' }}
         run: |
-          node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs scripts/tests/inkwave-projectile-pool-reset.test.mjs
           python3 scripts/tests/inkwave-projectile-captures.test.py
-          node --experimental-vm-modules --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-ci-roster.test.mjs
-          node --test scripts/tests/inkwave-roller-birth-baseline.test.mjs
-          node --test scripts/tests/inkwave-main-ink-baseline.test.mjs
+          node --experimental-vm-modules --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-ci-roster.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs
+          node --test scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs
       - name: Replay reviewed Roller births, pool reset and pinned paint in the main reference
-        run: node scripts/prepare-inkwave-projectile-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/baseline-birth-adjustment.json
-      - name: Build complete production composition
-        run: node scripts/build-inkwave.mjs inkwave-public .built-site/projectiles
+        if: ${{ matrix.side == 'before' }}
+        run: node scripts/prepare-inkwave-projectile-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
       - name: Build main reference with reviewed births, pool reset and paint
+        if: ${{ matrix.side == 'before' }}
         run: node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/baseline
-      - name: Verify emitted packaging
-        id: package-check
+      - name: Build complete candidate production composition
+        if: ${{ matrix.side == 'after' }}
+        run: node scripts/build-inkwave.mjs inkwave-public .built-site/projectiles
+      - name: Verify candidate packaging
+        if: ${{ matrix.side == 'after' }}
         run: INKWAVE_BUILT_SITE=.built-site/projectiles node --test scripts/tests/inkwave-build-packaging.test.mjs
-      - name: Render native main reference and measure baseline
+      - name: Capture native main reference
+        if: ${{ matrix.side == 'before' }}
         run: node scripts/check-inkwave-projectile-visuals.mjs --site .built-site/baseline --evidence-dir .ci-scratch/projectile-visuals/before --mode baseline
-      - name: Render candidate native game and measure desktop/mobile emulation
-        if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}
+      - name: Capture candidate native game including desktop and mobile workloads
+        if: ${{ matrix.side == 'after' }}
         run: node scripts/check-inkwave-projectile-visuals.mjs --site .built-site/projectiles --evidence-dir .ci-scratch/projectile-visuals/after --mode candidate
-      - name: Verify paired physical state, firing workloads and original image hashes
-        if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}
-        run: python3 scripts/compare-inkwave-projectile-captures.py --before .ci-scratch/projectile-visuals/before --after .ci-scratch/projectile-visuals/after --output .ci-scratch/projectile-visuals/paired-verification.json --require-complete
-      - name: Exercise roster, camera, RNG, contact, retirement and paint comparison gates
-        if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}
-        run: python3 scripts/tests/inkwave-projectile-captures-synthetic.py --before .ci-scratch/projectile-visuals/before/projectile-visuals-result.json --after .ci-scratch/projectile-visuals/after/projectile-visuals-result.json --out .ci-scratch/projectile-visuals/comparator-synthetic-gates.json
-      - uses: actions/upload-artifact@v4
+      - name: Preserve independent capture and original image evidence
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: projectile-visuals-${{ github.event.pull_request.head.sha || github.sha }}
-          path: .ci-scratch/projectile-visuals/
+          name: projectile-capture-${{ matrix.side }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .ci-scratch/projectile-visuals/${{ matrix.side }}/
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 0
+
+  compare:
+    name: Compare all 48 original native captures
+    needs: capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Retrieve immutable main reference capture
+        uses: actions/download-artifact@v4
+        with:
+          name: projectile-capture-before-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .ci-scratch/projectile-visuals/before
+      - name: Retrieve full candidate capture
+        uses: actions/download-artifact@v4
+        with:
+          name: projectile-capture-after-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .ci-scratch/projectile-visuals/after
+      - name: Verify exact paired native physical states, firing workloads and image hashes
+        run: python3 scripts/compare-inkwave-projectile-captures.py --before .ci-scratch/projectile-visuals/before --after .ci-scratch/projectile-visuals/after --output .ci-scratch/projectile-visuals/paired-verification.json --require-complete
+      - name: Exercise camera, RNG, contact, retirement and paint comparison gates
+        if: ${{ !cancelled() }}
+        run: python3 scripts/tests/inkwave-projectile-captures-synthetic.py --before .ci-scratch/projectile-visuals/before/projectile-visuals-result.json --after .ci-scratch/projectile-visuals/after/projectile-visuals-result.json --out .ci-scratch/projectile-visuals/comparator-synthetic-gates.json
+      - name: Preserve comparison receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: projectile-comparison-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            .ci-scratch/projectile-visuals/paired-verification.json
+            .ci-scratch/projectile-visuals/comparator-synthetic-gates.json
           if-no-files-found: warn
           retention-days: 14

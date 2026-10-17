@@ -53,7 +53,7 @@ for(const[row,baseId]of rows)test(row+' official default preserves accepted manu
 });
 
 test('accepted ranged defaults retain all manual choices and explicit base overrides',()=>{
- assert.equal(R.registeredWeaponVariants().length,94);
+ assert.equal(R.registeredWeaponVariants().length,95);
  for(const[row,baseId]of rows){const kit=f.ALTERNATE_WEAPON_KITS.find(k=>k.main===row);
   assert.ok(R.registeredWeaponVariants(baseId).includes(row));
   for(const team of[0,1]){

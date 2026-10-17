@@ -274,6 +274,24 @@ async function openGameContext({ mobile = false } = {}) {
     a.character.setVisible(true);
     a.character.root.position.copy(a.pos); a.character.root.rotation.y = 0;
     a.character.root.updateMatrixWorld(true);
+    // Match.setup originally places every actor at a deterministic native
+    // spawn-deck offset. Re-establish those actual stage placements after
+    // variable-duration boot: frozen bots otherwise remain at different
+    // post-intro positions and intercept different Roller projectiles.
+    // Keep bots alive and collidable. This is only a capture fixture reset,
+    // not a gameplay collision exemption.
+    for (const actor of g.match.actors) {
+      if (actor === a) continue;
+      const otherPad = G.level.spawnPads[actor.team];
+      if (!otherPad || !Number.isInteger(actor.slot)) throw new Error('Missing canonical bot spawn');
+      const angle = actor.slot / 4 * Math.PI * 2 + 0.6;
+      const stand = new V(otherPad.x + Math.cos(angle) * 1.2, otherPad.y,
+        otherPad.z + Math.sin(angle) * 1.2);
+      actor.spawnAt(stand, actor.team === 0 ? 0 : Math.PI);
+      actor.invuln = 0;
+      if (actor.bot) { actor.bot.aimYaw = actor.yaw; actor.bot.aimPitch = 0; }
+      actor.character.root.updateMatrixWorld(true);
+    }
     G.scene.updateMatrixWorld(true);
     g._skipRender = false;
     const floorBlock = G.physics.level.blocks[ground.block];
@@ -504,7 +522,7 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
   return receipt;
 }
 
-const visualSetup = ({ name, seed, impact = null }) => {
+const visualSetup = async ({ name, seed, impact = null }) => {
   const G = window.__G, g = window.__inkwave, a = g.match.local;
   const V = G.camera.position.constructor;
   const canonical = window.__iwCanonicalPlacement;
@@ -777,11 +795,46 @@ const visualSetup = ({ name, seed, impact = null }) => {
   }
   const setupRng = window.__iwResetScenarioRandom(seed);
   G.time = 0; g.time = 0; g.rig.time = 0;
-  G.projectiles.clear(); G.fx.clear(); G.paint.clear();
+  G.projectiles.clear();
+  // Independent captures must not inherit optional fields from earlier pooled rounds.
+  // Keep normal native pooling throughout each scenario; discard only cleared records here.
+  G.projectiles.pool.length = 0;
+  G.fx.clear(); G.paint.clear();
   if (g.screenfx?.clear) g.screenfx.clear();
   window.__iwResetProjectileRoster();
   const weapon = impact === 'wall' ? 'shooter' :
     name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
+async function resetCaptureCharacter(actor) {
+  const old = actor.character, parent = old.root.parent;
+  const fresh = new old.constructor({ color: actor.color, weapon: actor.weaponId,
+    style: old.style, name: actor.name, isLocal: actor.isLocal });
+  fresh.actor = actor;
+  fresh.onEvent = old.onEvent;
+  try {
+    // Character's normal loader also owns late source-motion initialization.
+    // Do not let that initialization race the first physical capture.
+    await fresh._sourceMotionLoader;
+    if (fresh.sourceMotion?.status !== 'ready')
+      throw new Error('Fresh native Character source motion failed readiness');
+    fresh.root.position.copy(old.root.position);
+    fresh.root.quaternion.copy(old.root.quaternion);
+    fresh.setVisible(old.visible);
+  } catch (error) { fresh.dispose(); throw error; }
+  // Commit only after successful initialization; disposal failures must never
+  // dispose the replacement now owned by the gameplay Actor.
+  actor.character = fresh;
+  if (parent) parent.add(fresh.root);
+  old.dispose();
+  fresh.root.updateMatrixWorld(true);
+  return fresh;
+}
+
+  if (!g.frozen) throw new Error('Native loop must remain frozen during reset');
+  const oldCharacter = a.character;
+  await resetCaptureCharacter(a);
+  if (!g.frozen) throw new Error('Native loop unfroze during async reset');
+  window.__iwCharacterResetReceipt = { oldDisposed: oldCharacter._sourceMotionDisposed === true, oldDetached: oldCharacter.root.parent === null, actorOwned: a.character.actor === a, sceneOwned: a.character.root.parent === G.scene, constructorPreserved: a.character.constructor === oldCharacter.constructor, stylePreserved: JSON.stringify(a.character.style) === JSON.stringify(oldCharacter.style), sourceMotionStatus: a.character.sourceMotion.status };
+  if (Object.entries(window.__iwCharacterResetReceipt).some(([key, value]) => key !== 'sourceMotionStatus' && value !== true)) throw new Error('Native Character ownership/disposal failed');
   a.setWeapon(weapon);
   const lifecycleBeforeReset = a.s3?.squidSpawn ? {
     phase: a.s3.squidSpawn.phase ?? null, initial: a.s3.squidSpawn.initial ?? null,
@@ -810,6 +863,7 @@ const visualSetup = ({ name, seed, impact = null }) => {
     a.invuln = 0; a.fireBuffer = a.jumpBuffer = 0; a.kidT = 99;
     a.weaponRunner?.reset?.();
     a.character.setVisible(true); a.character.root.position.copy(a.pos); a.character.root.rotation.y = yaw;
+    a._finishFrame(0);
     a.character.root.updateMatrixWorld(true); G.scene.updateMatrixWorld(true);
     if (a.s3?.squidSpawn) throw new Error('Native Actor.spawnAt did not clear the startup squidSpawn lifecycle');
   };
@@ -1488,6 +1542,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
     renderCalls: summary(measured.renderCalls), triangles: summary(measured.triangles),
     visualGeometryCpuMs: summary(measured.visualGeometryCpuMs),
     renderedVisualBodies: summary(measured.visualBodies),
+    visualOwnerCounts: measured.visualOwnerCounts,
     renderedVisualVertices: measured.visualBackend === 'source-aware-history' ? summary(measured.visualVertices) : null,
     visualBackend: measured.visualBackend, nonemptyVisualRenders: measured.nonemptyVisualRenders,
     nativeFrames: measured.nativeLoopTimestamps.length,

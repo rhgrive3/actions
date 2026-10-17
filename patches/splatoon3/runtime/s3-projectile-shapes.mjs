@@ -311,7 +311,7 @@ function createRenderer(THREE, scene) {
   sparks.onBeforeRender = (renderer, sc, camera, geometry) => { geometry.drawRange.count = sc.overrideMaterial ? 0 : sparks.userData.count || 0; };
   scene.add(body, slashH, slashV, shell, core, sparks);
   const sheets = createInkSheets(THREE, scene, { nearDither: NEAR_DITHER, rim: RIM });
-  return { body, bodyData, slashH, slashV, shell, core, sparks, sparkPos, sparkSize, sheets, lastFire: { kind: '', x: 0, y: 0, z: 0, t: -1 },
+  return { body, bodyData, slashH, slashV, shell, core, sparks, sparkPos, sparkSize, sheets, fireVolleys: new WeakSet(), lastFire: { owner: null, kind: '', x: 0, y: 0, z: 0, t: -1 },
     m: new THREE.Matrix4(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), s: new THREE.Vector3(),
     v: new THREE.Vector3(), v2: new THREE.Vector3(), f: new THREE.Vector3(), x: new THREE.Vector3(), y: new THREE.Vector3(),
     basis: new THREE.Matrix4(), Z: new THREE.Vector3(0, 0, 1), UP: new THREE.Vector3(0, 1, 0), c: new THREE.Color(),
@@ -407,9 +407,20 @@ function fireInk(R, p, kind, f, G, system) {
   p.s3FireSeed = p.seed;
   if (!(p.age < 4 / 60) || !p.start) return;
   const time = Number.isFinite(G?.time) ? G.time : 0, last = R.lastFire;
-  if (last.kind === kind && Math.abs(last.t - (time - p.age)) < 0.02 &&
-      Math.hypot(last.x - p.start.x, last.y - p.start.y, last.z - p.start.z) < 0.08) return;
-  last.kind = kind; last.t = time - p.age; last.x = p.start.x; last.y = p.start.y; last.z = p.start.z;
+  // Sourced Brella offsets and Stringer nock margins give one action several
+  // start positions. Use its existing native identity, never a time bucket:
+  // two independent actions may legitimately share owner and birth timestamp.
+  const volley = kind === 'pellet' ? p.catalog?.volley :
+    kind === 'arrow' && !p.ghost ? p.catalog?.descriptor : null;
+  if (volley) {
+    if (R.fireVolleys.has(volley)) return;
+    R.fireVolleys.add(volley);
+  } else {
+    if (last.owner === p.owner && last.kind === kind && Math.abs(last.t - (time - p.age)) < 0.02 &&
+        Math.hypot(last.x - p.start.x, last.y - p.start.y, last.z - p.start.z) < 0.08) return;
+    last.owner = p.owner; last.kind = kind; last.t = time - p.age;
+    last.x = p.start.x; last.y = p.start.y; last.z = p.start.z;
+  }
   const cam = G?.camera?.position;
   if (cam && cam.distanceToSquared(p.start) > 1600) return;
   let at = p.start, t0 = time - p.age, follow = null;

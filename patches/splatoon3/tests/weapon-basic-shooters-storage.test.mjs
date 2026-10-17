@@ -8,7 +8,7 @@ const {R,AP,VARIANT_MODELS,ALTERNATE_WEAPON_KITS}=f;
 const rows=['Shooter_First_01','Shooter_Normal_01','Shooter_Normal_02'];
 for(const row of rows)test(row+' reuses saved builder and preserves explicit Base/manual/default migration',()=>{
  const kit=ALTERNATE_WEAPON_KITS.find(k=>k.main===row),base=kit.baseId;
- assert.equal(R.registeredWeaponVariantModels().length,87);assert.equal(R.registeredWeaponVariants().length,94);assert.equal(R.registeredWeaponModels().length,65);
+ assert.equal(R.registeredWeaponVariantModels().length,95);assert.equal(R.registeredWeaponVariants().length,95);assert.equal(R.registeredWeaponModels().length,65);
  assert.equal(R.weaponVariantSpec(row).build,VARIANT_MODELS[row].build);assert.equal(R.weaponDefaultAppearance(kit.id),row);assert.equal(R.weaponModelKey(kit.id),row);assert.equal(R.weaponBaseModelId(kit.id),base);
  for(const preference of [base,row,null]){
   let raw=JSON.stringify(preference===null?{}:{[base]:preference});const initial=raw;const storage=()=>({getItem:()=>raw,setItem:(_key,v)=>{raw=v;}});
