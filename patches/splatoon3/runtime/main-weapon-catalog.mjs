@@ -273,6 +273,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   const defaults = profile.weaponsFidelity;
   const down = new THREE.Vector3(0,-1,0), floorHit = new Hit(), hit = new Hit();
   const muzzle = new THREE.Vector3(), dir = new THREE.Vector3(), base = new THREE.Vector3();
+  const rollerContactAt = new THREE.Vector3(), rollerContactEye = new THREE.Vector3(), rollerTargetCentre = new THREE.Vector3();
 
   function state(runner) {
     const r = runner.a.weapon.catalogRecord;
@@ -1268,7 +1269,6 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // rendered at ballistic scale, several times wider than the drum/bristles.
     // Preserve raw tables and damage radius; these are image-guided estimates.
     const radius=sourceRadius*(r.family==='brush'?.25:.3);
-    const at=a.pos.clone().addScaledVector(a.aimDir,.6);
     // Drum/brush floor contact follows body yaw, not reticle pitch. An aimed-down
     // camera formerly pushed the ray origin below the floor and lost every mark.
     // Keep the existing 'at' for damage contact; only paint is floor-anchored.
@@ -1292,8 +1292,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     from.copy(to);stroke.active=true;stroke.face=a.ground?.face;
     s.contactTimes ||= new Map();
+    // Owner report 2026-10-18: contact follows the body heading like the paint
+    // above, and occlusion is tested at body height. The former aimDir point
+    // left the floor with the camera pitch, and a floor-level LOS between two
+    // foot points could be blocked by the floor itself, so a touching drum
+    // dealt no damage. Contact radius and cadence are unchanged.
+    const at=rollerContactAt.set(a.pos.x+heading.x*.6,a.pos.y,a.pos.z+heading.z*.6);
+    const eye=rollerContactEye.set(at.x,a.pos.y+.35,at.z);
     for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<sourceRadius+PLAYER.radius&&
-      G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(at,enemy.pos)){
+      G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(eye,rollerTargetCentre.set(enemy.pos.x,enemy.pos.y+(enemy.form==='squid'?PLAYER.squidHeight:PLAYER.height)*.5,enemy.pos.z))){
       withObjectDamageCause({owner:a,type:r.family==='brush'?'brush-body':'roller',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id));s.contactTimes.set(enemy,G.time);
     }
   }

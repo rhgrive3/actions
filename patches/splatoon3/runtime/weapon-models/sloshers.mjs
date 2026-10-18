@@ -470,10 +470,31 @@ function carryGrip(ch, dt, P, C, s) {
 }
 /** Read-only view for regressions. */
 export function slosherCarryGripSnapshot(ch) { return ch.weapon?.s3Grip ? { k: ch.weapon.s3Grip.k } : null; }
+// Owner report 2026-10-18: the pail rests at the right side, but the native heave anchor (HOLD.aim,
+// about the chest-centre aim pivot x=-0.03 in character.js) pulled it to the body centre at the press,
+// so every slosh started from the middle. While a windup that began from the carry runs, keep the
+// anchor's lateral offset at the carry side and let it reach the native anchor at the release frame:
+// the release pose and the ink's birth point are unchanged. Presentation only.
+const NATIVE_AIM_PIVOT_X = -0.03;
+const HEAVE_FROM_CARRY = new WeakMap();
+function heaveFromCarry(ch, dt, s, P, C) {
+  const r = ch._runner?.(s), winding = r?.slosh >= 0 || !!r?.catalogState?.pending;
+  let m = HEAVE_FROM_CARRY.get(ch);
+  if (!m) HEAVE_FROM_CARRY.set(ch, m = { t: -1, carry: 0, aim: 0 });
+  // The aim weight already rises on the press frame: judge the start from the frame before.
+  if (!winding) { m.t = -1; m.aim = clamp01(ch.wAim || 0); return; }
+  if (m.t < 0) { m.t = 0; m.carry = 1 - m.aim; }
+  else m.t += Math.min(0.1, Math.max(0, dt || 0));
+  const H = ch.hold, windup = r?.a?.weapon?.windup;
+  if (!H?.carry?.p || !H.aim?.p || !(windup > 0) || !(m.carry > 1e-4)) return;
+  const u = clamp01(m.t / windup), lead = 1 - u * u * (3 - 2 * u);
+  P[C.ANC] += (H.carry.p[0] - (NATIVE_AIM_PIVOT_X + H.aim.p[0])) * clamp01(ch.wAim || 0) * m.carry * lead;
+}
 export function FAMILY_POSE(ch, dt, s, C) {
   carryGrip(ch, dt, ch.P, C, s);
   if (!C || !ch.kidForm || ch.dance || ch.showcase) return;
   const P = ch.P;
+  heaveFromCarry(ch, dt, s, P, C);
   // Only the gait swing the native layer added this frame: a support hand,
   // a thrown sub, the heave and its recovery own the left arm themselves.
   const free = (1 - clamp01(ch.wTwo || 0)) * (1 - clamp01(Math.max(P[C.IKL], P[C.LTW]))) *
