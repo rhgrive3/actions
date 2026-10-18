@@ -10,12 +10,17 @@ export function adaptCameraAimControls(rel, input) {
   if (rel === 'src/game/cameraRig.js') {
     code = `import { updateScopeZoom, enforceBoomClearance, constrainCameraLens, recordAimPose } from '../../patches/splatoon3/runtime/camera-aim-controls.mjs';\n` + code;
     if (code.includes('this.scopeK = damp(this.scopeK, chargerScopeFactor(')) {
-      // New camera preserves the true per-weapon vertical FOV and optical pose.
-      // Still enter the authoritative source charge gate once per follow tick.
-      replace('const charging = a.weaponRunner?.charging ? a.weaponRunner.charge : 0;',
-        'const charging = updateScopeZoom(this, a, dt);', 'true scope FOV source charge');
+      // Native and previous passes may have normalized charge source syntax.
+      // Accept one real follow-camera charging owner; never mask duplicates.
+      const candidates = [...code.matchAll(/^    const charging = [^\n;]+;$/gm)];
+      if (candidates.length === 1) {
+        replace(candidates[0][0], '    const charging = updateScopeZoom(this, a, dt);',
+          'true scope FOV source charge');
+      } else if (!code.includes('    const charging = updateScopeZoom(this, a, dt);')) {
+        throw new Error('camera-aim-controls: unexpected charging owner count ' + candidates.length);
+      }
     } else {
-      replace("const charging = a.weapon?.kind === 'charger' && a.weaponRunner?.charging ? a.weaponRunner.charge : 0;\n    this.zoom = damp(this.zoom, charging > 0.99 ? 14 : charging * 6, 8, dt);",
+      replace("const charging = a.weapon?.kind === 'charger' && a.weaponRunner?.charging ? a.weaponRunner.charge : 0;\\n    this.zoom = damp(this.zoom, charging > 0.99 ? 14 : charging * 6, 8, dt);",
         'const charging = updateScopeZoom(this, a, dt);', 'scope capability after reliability pass');
     }
     replace('    _back.copy(fwd).negate();',
