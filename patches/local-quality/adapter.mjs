@@ -12,7 +12,6 @@ import { adaptMotionFkHotpath } from './motion-fk-hotpath-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
 import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
-import { adaptStaticMenuArt } from './static-menu-adapter.mjs';
 import { adaptMuralAtlas } from './mural-atlas-adapter.mjs';
 import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
 import { adaptClothingGear } from '../splatoon3/clothing-gear-adapter.mjs';
@@ -193,7 +192,7 @@ export function adaptQualitySource(rel, code) {
   const painted = adaptFxEmptyPools(rel, adaptPerfReadout(rel, adaptPaintHotpath(rel, broadphased, replaceOnce), replaceOnce), replaceOnce);
   const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
-  return adaptStaticMenuArt(rel, adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce), replaceOnce), replaceOnce);
+  return adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
