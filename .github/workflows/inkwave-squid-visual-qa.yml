@@ -1,0 +1,58 @@
+name: INKWAVE squid regression native QA
+on:
+  push:
+    branches: ['codex/squid-*']
+  pull_request:
+    paths: ['tools/squid-production-qa/**', 'patches/local-quality/s3-squid-look-adapter.mjs', 'patches/splatoon3/runtime/swim-motion.mjs', 'patches/splatoon3/*squid*', 'patches/local-quality/squid-motion-binding-adapter.mjs', 'patches/local-quality/tests/squid-source-presentation.test.mjs', '.github/workflows/inkwave-squid-visual-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: squid-native-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  compare-squid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BASE_SHA: da97926a21e0e7c6170d76864f896123d979f915
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact existing native QA tools
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify source presentation regression
+        run: node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs
+      - name: Build and capture preserved baseline
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          git worktree add --detach _squid_baseline "$BASE_SHA"
+          cd _squid_baseline
+          node scripts/build-inkwave.mjs inkwave-public _site
+          SOURCE_SHA="$BASE_SHA" node ../tools/squid-production-qa/run.mjs --site _site --out ../.qa-evidence/squid-baseline
+      - name: Build and capture exact candidate
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs
+          node tools/squid-production-qa/run.mjs --site _site --out .qa-evidence/squid-candidate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: squid-native-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            .qa-evidence/squid-baseline/**
+            .qa-evidence/squid-candidate/**
+            _site/inkwave-build.json
+            _squid_baseline/_site/inkwave-build.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

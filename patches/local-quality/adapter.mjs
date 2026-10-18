@@ -8,6 +8,7 @@ import { adaptPoseRotation } from './pose-rotation-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
 import { adaptMaterialHandoff } from './material-handoff-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
+import { adaptSquidMotionBinding } from './squid-motion-binding-adapter.mjs';
 import { adaptMotionFkHotpath } from './motion-fk-hotpath-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
@@ -224,6 +225,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptAudioListener(rel, code);
   code = adaptRetargetBranchUpdates(rel, code);
   code = adaptMotionFkHotpath(rel, code, replaceOnce);
+  code = adaptSquidMotionBinding(rel, code, replaceOnce);
   if (rel === 'src/game/inkCollision.js') {
     code = replaceOnce(code,
       '  let best = Infinity;\n  for (const id of candidates) {\n    const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;',
