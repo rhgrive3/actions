@@ -78,7 +78,7 @@ try{
         const owner=ch.sourceMotion?.sourceUpper?'source':'native';if(input.fire&&owner==='native')attackNativeFrames++;
         let grip=0;
         const c=api.CHARACTER_CHANNELS;
-        if(!ch.dual&&ch.P[c.IKL]>.99&&ch.P[c.LTW]<.001){grip=ch.weapon.off.localToWorld(d.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3()));maxGrip=Math.max(maxGrip,grip);}
+        if(!ch.dual&&ch.P[c.IKL]>.99&&ch.P[c.LTW]<.001){grip=ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone().setZ(ch.weapon.def.handL.pos.z+(ch.weapon.supportZ||0))).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3()));maxGrip=Math.max(maxGrip,grip);}
         maxIK=Math.max(maxIK,...ch.ikErr);samples.push({frame,owner,grip,aim:ch.wAim});
         if([80,150].includes(frame)){
           camera.position.copy(a.pos).add(new THREE.Vector3(-1.8,1.25,3.25));camera.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.12)));renderer.render(scene,camera);

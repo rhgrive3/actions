@@ -168,17 +168,39 @@ test('mouse displacement is not multiplied by dt; stick traces agree across dire
   close(Math.max(...values)-Math.min(...values),0);
 });
 
-test('camera final pass fails closed on incompatible/duplicate upstream anchors', () => {
+test('camera composition fails closed and runs once after gameplay and presentation adapters', () => {
   assert.throws(()=>adaptCameraAimControls('src/game/player.js',''),/missing/);
   assert.equal(adaptCameraAimControls('src/game/actor.js','unchanged'),'unchanged');
-  const s=fs.readFileSync(new URL('../../../scripts/inkwave-source-composition.mjs',import.meta.url),'utf8');
-  const range=s.indexOf('code = adaptRange');
-  const visuals=s.indexOf('code = adaptProjectileVisuals');
-  const camera=s.indexOf('return adaptCameraAimControls');
-  assert.ok(range>=0&&visuals>range,'VFX observes the composed range and gameplay adapters');
-  assert.ok(camera>visuals,'the fail-closed camera and aim pass remains terminal after presentation VFX');
-  assert.equal((s.match(/return adaptCameraAimControls\(/g)||[]).length,1,
-    'one terminal camera composition owns its fail-closed anchor');
+  const source=fs.readFileSync(new URL('../../../scripts/inkwave-source-composition.mjs',import.meta.url),'utf8');
+  // Execute the authored production composition with tracing adapters rather
+  // than requiring obsolete syntax such as "return adaptCameraAimControls".
+  // Menu-art and queue admission guards legitimately wrap the camera pass.
+  const inspect=s=>{
+    const imports=[...s.matchAll(/^import\s*\{([^}]+)\}\s*from\s*['"][^'"]+['"];?\s*$/gm)];
+    assert.ok(imports.length>0,'production adapter imports are required');
+    const names=imports.flatMap(m=>m[1].split(',').map(x=>x.trim()));
+    const body=s.replace(/^import\s*\{[^}]+\}\s*from\s*['"][^'"]+['"];?\s*$/gm,'').replace('export function adaptBuildSource','function adaptBuildSource');
+    assert.ok(body.includes('function adaptBuildSource('),'production composition function is required');
+    const trace=[],sentinel=new Error('camera anchor conflict');let rejectCamera=false;
+    const adapters=names.map(name=>name==='replaceOnce'?()=>{throw Error('unexpected replaceOnce call');}:(rel,code)=>{
+      assert.equal(rel,'src/game/player.js');assert.equal(code,'input'+trace.map(n=>'|'+n).join(''),'composition preserves prior adapter output');
+      if(name==='adaptCameraAimControls'&&rejectCamera)throw sentinel;
+      trace.push(name);return code+'|'+name;
+    });
+    const compose=new Function(...names,body+'\nreturn adaptBuildSource;')(...adapters);
+    const output=compose('src/game/player.js','input'),camera=trace.indexOf('adaptCameraAimControls');
+    assert.equal(trace.filter(n=>n==='adaptCameraAimControls').length,1,'one fail-closed camera pass');
+    assert.ok(trace.indexOf('adaptRange')>=0&&trace.indexOf('adaptProjectileVisuals')>trace.indexOf('adaptRange'));
+    assert.ok(camera>trace.indexOf('adaptProjectileVisuals')&&camera>trace.indexOf('adaptWeaponAudio'),'camera follows VFX and audio');
+    assert.deepEqual(trace.slice(camera+1),['adaptStaticMenuArt','adaptQueueNine'],'only established menu and queue guards follow camera');
+    assert.equal(output,'input'+trace.map(n=>'|'+n).join(''),'final composed output is returned');
+    trace.length=0;rejectCamera=true;
+    assert.throws(()=>compose('src/game/player.js','input'),e=>e===sentinel,'camera anchor errors propagate unchanged');
+    assert.ok(!trace.includes('adaptStaticMenuArt')&&!trace.includes('adaptQueueNine'),'later guards do not run after camera conflict');
+  };
+  inspect(source);
+  assert.throws(()=>inspect(source.replace('adaptCameraAimControls(rel, code)','code')),'omitted camera is rejected');
+  assert.throws(()=>inspect(source.replace('adaptCameraAimControls(rel, code)','adaptCameraAimControls(rel, adaptCameraAimControls(rel, code))')),'duplicate camera is rejected');
 });
 
 test('same-tick optical origin cannot rotate through a nearby wall before the render step',async()=>{

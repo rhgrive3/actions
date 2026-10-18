@@ -1,5 +1,9 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-18：音声workerの生成元と配信済み処理の整合
+
+PR #1580 の生成済みworkerにだけ残っていた別キット95件の音声ID解決関数を生成元へ復元し、再生bankと共通化した。生成後のworkerはmain `b84d77cb` と全163,668バイト同一で、録音優先・loop・パン・clipの挙動は変更しない。生成器check、118件のaudio回帰、対象16ブキと25派生の771 PCM比較を確認した。詳細・証跡は [audio-worker-source-sync.md](new-families-1130-20261018/audio-worker-source-sync.md)。本家との新たな音響一致の証明ではない。
+
 ## 2026-10-18：ローラー・バケツの塊とワイパーの波の部分接触
 
 参照版は Ver.11.3.0、数値は固定済みの Leanny/splat3 `7280ff9` 抽出値。本家側の根拠は、各ユニットの `CollisionParam`（地形用半径 `InitRadiusForField`→`EndRadiusForField` の成長、ワイパー波の `ParamArray`/`OffsetArray`/`CoreIndex`）だけである。塊の縁が触れた時の本家の処理を示す公式資料はなく、所有者の指摘（インクは流体で、一部が触れただけで塊ごと止まらない）に沿った INKWAVE の判定規則として扱う。INKWAVE 側は無ギア・静止・照準ピッチ 0。

@@ -1,0 +1,205 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "baselineCommit": "b84d77cb7172807ac28fb6df13cd4a0ecfc9af3a",
+  "fixCommit": "cbd3c1275fc74513c252d1f612319dbc5aba22b9",
+  "root": "/workspace/actions-dsp-worker",
+  "generatedWorker": {
+    "baselineCommit": "b84d77cb7172807ac28fb6df13cd4a0ecfc9af3a",
+    "baselineHash": "1b529572b841c452ae80e015aadb70a8926f07a7c2b0f2c307c2a85ac59fb412",
+    "candidateHash": "1b529572b841c452ae80e015aadb70a8926f07a7c2b0f2c307c2a85ac59fb412",
+    "equal": true,
+    "bytes": 163668,
+    "generatorCommand": "node tools/audio/build-worker.mjs",
+    "checkCommand": "node tools/audio/build-worker.mjs --check",
+    "sourceRecipesSha256": "f00400a2079453cd5780aa3a9a4271aedcdb29b771e4b3e4b865217c54c0d504",
+    "generatedWorkerUnchangedFromBaseline": true
+  },
+  "regressions": {
+    "beforeGeneratorExit": 1,
+    "beforeSourceExportRegressionExit": 1,
+    "afterGeneratorExit": 0,
+    "catalogAudio": {
+      "tests": 16,
+      "pass": 16,
+      "fail": 0,
+      "isolatedWorkerRecipes": 98,
+      "isolatedWorkerEvents": 696,
+      "sampleRate": 8000,
+      "variant": 0,
+      "command": "node --experimental-vm-modules --test scripts/tests/inkwave-catalog-audio.test.mjs"
+    },
+    "relatedAudio": {
+      "tests": 102,
+      "pass": 102,
+      "fail": 0,
+      "finitePcmVariants": 2088,
+      "command": "node --experimental-vm-modules --test patches/splatoon3/tests/audio-v11-real-only.test.mjs patches/splatoon3/tests/weapon-audio.test.mjs patches/splatoon3/tests/audio-refinement.test.mjs patches/splatoon3/tests/audio-loader-lifetime.test.mjs patches/splatoon3/tests/audio-combat-events.test.mjs patches/splatoon3/tests/audio-match-disposal.test.mjs patches/splatoon3/tests/audio-provenance.test.mjs patches/splatoon3/tests/real-s3-loader-v7.test.mjs patches/local-quality/tests/audio-listener-composition.test.mjs patches/local-quality/tests/audio-loop-dedupe.test.mjs patches/local-quality/tests/ipad-audio-unlock.test.mjs"
+    },
+    "independentReview": {
+      "sourceRoot": "/workspace/actions-dsp-worker",
+      "workerSha256": "1b529572b841c452ae80e015aadb70a8926f07a7c2b0f2c307c2a85ac59fb412",
+      "workerBytes": 163668,
+      "workerExactlyB84": true,
+      "sameFunction": true,
+      "kitDispatches": 95,
+      "canonicalInputNegativeControls": 95,
+      "targetBaseCount": 16,
+      "targetIdCount": 41,
+      "targetPcmComparisons": 771,
+      "sampleRate": 8000,
+      "variants": [
+        0,
+        1,
+        2
+      ],
+      "unknownPrototypeAndNonMainIdentityPreserved": true,
+      "unknownEventAndInvalidRateRejected": true,
+      "scope": "source/worker regression, not retail acoustic parity"
+    }
+  },
+  "benchmark": {
+    "condition": "Node 24; alternating 7 rounds after warmup; 1.94M mixed alias/base/sub/special/prototype/null lookups per round; no hard performance threshold",
+    "beforeMs": 60.550130000000024,
+    "afterMs": 63.94991600000003,
+    "rounds": [
+      {
+        "before": {
+          "ms": 60.550130000000024,
+          "checksum": 30830000,
+          "calls": 1940000
+        },
+        "after": {
+          "ms": 63.94991600000003,
+          "checksum": 30830000,
+          "calls": 1940000
+        }
+      },
+      {
+        "after": {
+          "ms": 60.10779500000001,
+          "checksum": 30830000,
+          "calls": 1940000
+        },
+        "before": {
+          "ms": 57.979482000000075,
+          "checksum": 30830000,
+          "calls": 1940000
+        }
+      },
+      {
+        "before": {
+          "ms": 59.96996300000001,
+          "checksum": 30830000,
+          "calls": 1940000
+        },
+        "after": {
+          "ms": 62.71509900000001,
+          "checksum": 30830000,
+          "calls": 1940000
+        }
+      },
+      {
+        "after": {
+          "ms": 59.17320200000006,
+          "checksum": 30830000,
+          "calls": 1940000
+        },
+        "before": {
+          "ms": 61.471664999999916,
+          "checksum": 30830000,
+          "calls": 1940000
+        }
+      },
+      {
+        "before": {
+          "ms": 59.77260700000011,
+          "checksum": 30830000,
+          "calls": 1940000
+        },
+        "after": {
+          "ms": 81.86488300000008,
+          "checksum": 30830000,
+          "calls": 1940000
+        }
+      },
+      {
+        "after": {
+          "ms": 79.68819699999995,
+          "checksum": 30830000,
+          "calls": 1940000
+        },
+        "before": {
+          "ms": 61.827798999999914,
+          "checksum": 30830000,
+          "calls": 1940000
+        }
+      },
+      {
+        "before": {
+          "ms": 61.794337999999925,
+          "checksum": 30830000,
+          "calls": 1940000
+        },
+        "after": {
+          "ms": 64.185025,
+          "checksum": 30830000,
+          "calls": 1940000
+        }
+      }
+    ],
+    "scope": "Synthetic helper-only measurement with identical before/after implementation. Timings include JIT/scheduling noise; no speedup or complete-match performance claim. DSP worker executable is byte-identical."
+  },
+  "rawReceipts": [
+    {
+      "path": ".ci-scratch/dsp-worker-sync/before-check.log",
+      "sha256": "0ece334e6b2defced50bab977d3e61a605fd89c4663f3b7114aec9d9a331c42b",
+      "bytes": 683
+    },
+    {
+      "path": ".ci-scratch/dsp-worker-sync/before-source-regression.log",
+      "sha256": "171fe669694ebe7032134f3781dd6c6e1deb292936ec15cdf7680c14b7b36057",
+      "bytes": 981
+    },
+    {
+      "path": ".ci-scratch/dsp-worker-sync/after-source-regression.log",
+      "sha256": "2951054ce57e43d1816e1dd26a73e6e8b5b46cc781dfd0f1b07cbbba4d7d18f6",
+      "bytes": 216
+    },
+    {
+      "path": ".ci-scratch/dsp-worker-sync/after-check.log",
+      "sha256": "5427b7bd337c639a3ec8fbf87895b0dc90ab561f7a14c359fa36f844a54c194b",
+      "bytes": 25
+    },
+    {
+      "path": ".ci-scratch/dsp-worker-sync/catalog-audio-tests.log",
+      "sha256": "7e465a9deba078f87f63cdc9f5cc2e0b0d0b7257345409cfefe07bb749684be3",
+      "bytes": 1378
+    },
+    {
+      "path": ".ci-scratch/dsp-worker-sync/audio-regression-tests.log",
+      "sha256": "75a9fd19901369138178c5042f83ccb667e678379eb5cfd4fcbfed2746ce9a20",
+      "bytes": 10201
+    },
+    {
+      "path": ".ci-scratch/dsp-worker-sync/helper-benchmark.json",
+      "sha256": "1400fb2f5f0380f523b6fc250f6b9b2208f19ff7ea95c8bad6cd8360f912fc52",
+      "bytes": 1932
+    },
+    {
+      "path": ".ci-scratch/dsp-worker-sync/worker-byte-preservation.json",
+      "sha256": "32b32ed092e549ef94885d0f378ab3aea822e67556b473c3f3c526f843b5fb9f",
+      "bytes": 276
+    },
+    {
+      "path": "/workspace/dsp-worker-independent-review.json",
+      "sha256": "d8d0f21f44563a1ea29c536aa4fa35e6dfc09eb8b2136932d90254b26c7dd8de",
+      "bytes": 588
+    }
+  ],
+  "scope": [
+    "Only source/bundle consistency and existing audio behavior are asserted. This is not retail acoustic parity or a new Splatoon 11.3.0 measurement.",
+    "No DSP coefficients, recording priority, loop, pan, clipping, kit gameplay/network IDs or generated worker bytes changed.",
+    "Push, PR, CI and main integration are performed separately by the parent task."
+  ]
+}

@@ -19,10 +19,31 @@ test('guard admission is pure and immediately relinquishes every invalidated own
   }
   assert.equal(heldBrellaGuardFacing(null),false);
 });
-test('build hook is single-use and preserves special/superjump and roller precedence',()=>{
+test('build hook is single-use and preserves special/superjump and roller precedence',async()=>{
   const raw=fs.readFileSync(new URL('../../../inkwave-public/src/game/actor.js',import.meta.url),'utf8'),code=adaptSource('src/game/actor.js',raw);
-  assert.ok(code.indexOf('if (this.specialActive || this.superJumpState)')<code.indexOf('else if (rollingMovementActive(this)'));
-  assert.ok(code.indexOf('else if (rollingMovementActive(this)')<code.indexOf('|| heldBrellaGuardFacing(this)'));
+  // Exercise the actual fully composed Actor rather than spelling of a helper:
+  // held roller facing intentionally has a different gate from roll speed.
+  const f=await setup();
+  for(const hz of [30,60,120]){
+    const make=id=>{const a=f.make(id);a.yaw=a.yawVel=0;a.aimYaw=-.8;
+      a.intent.move.set(0,0,-1);a.vel.set(1.4,0,0);return a;};
+    const failLower=()=>assert.fail('higher-priority owner evaluated firing/guard branch');
+    for(const owner of ['specialActive','superJumpState']){
+      const a=make(IDS[0]);a[owner]={};a.weaponRunner.rolling=true;
+      a.weaponRunner.catalogState={id:IDS[0],canopy:{open:true,launched:false,hp:100}};
+      a.weaponRunner.firingPose=failLower;a._face(1/hz,false);
+      assert.equal(a._faceTarget,Math.PI/2,owner+' owns velocity facing before roller/guard');
+    }
+    const roller=make('roller');roller.weaponRunner.rolling=true;
+    roller.weaponRunner.firingPose=failLower;roller._face(1/hz,false);
+    assert.equal(roller._faceTarget,roller.aimYaw,'roller owns aim facing before firing/guard');
+    for(const id of IDS){const guard=make(id);guard.weaponRunner.firingPose=()=>false;
+      guard.weaponRunner.catalogState={id,canopy:{open:true,launched:false,hp:100}};
+      guard._face(1/hz,false);assert.equal(guard._faceTarget,guard.aimYaw,id+' held guard owns aim facing');
+      guard.weaponRunner.catalogState.canopy.open=false;guard._face(1/hz,false);
+      assert.equal(guard._faceTarget,Math.PI,id+' released guard returns to movement facing');
+    }
+  }
   assert.throws(()=>adaptBrellaGuardFacing('src/game/actor.js',code,replaceOnce),/expected exactly one/);
   assert.equal(adaptBrellaGuardFacing('src/game/character.js','untouched',replaceOnce),'untouched');
 });
