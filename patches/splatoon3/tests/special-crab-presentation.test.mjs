@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 import { fixture } from './source-fixture.mjs';
 
 let cached;
@@ -158,4 +160,66 @@ test('accepted remote replay drives recoil without FX while duplicates and inval
     assert.equal(f.replaySpecial(f.installedRuntime,{...event,action:'cannon',seed:2}),true);r.step(0);
     assert.ok(r.d.model.groups.clawR.position.distanceTo(r.d.model.groups.clawR.userData.rest)>0);
   }finally{r.close();}
+});
+
+// Compile actual exported source for counterfactuals: gameplay/mesh checks above
+// still execute the complete production composition and keep their 1e-8 bounds.
+const crabAimSource = readFileSync(new URL('../runtime/crab-tank-aim.mjs', import.meta.url), 'utf8');
+async function crabKernel(before, after) {
+  assert.equal(crabAimSource.split(before).length, 2, 'one actual mutation connection');
+  const mod = new vm.SourceTextModule(crabAimSource.replace(before, after));
+  await mod.link(() => { throw new Error('Crab aim kernel must not acquire hidden dependencies'); });
+  await mod.evaluate();
+  return mod.namespace.crabTankShotGeometry;
+}
+function inputDirection(f, yaw, pitch) {
+  return new f.THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+}
+function assertUninitializedTarget(f, geometry) {
+  for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) for (const pitch of [-1.2, 0, 1.2]) {
+    const expected = inputDirection(f, yaw, pitch);
+    const actor = { pos: new f.THREE.Vector3(3, 2, -4), yaw: -.8, aimYaw: 0, aimPitch: 0, aimDir: expected.clone() };
+    actor.aimPoint = actor.pos.clone(); // Native uninitialized-target sentinel.
+    for (const mode of ['shooter', 'cannon']) {
+      const origin = new f.THREE.Vector3(), direction = new f.THREE.Vector3();
+      geometry(actor, mode, origin, direction);
+      closeVector(direction, expected, 'uninitialized feet target preserves current input vector');
+    }
+  }
+}
+function assertTargetResidual(f, geometry, near = false) {
+  for (const mode of ['shooter', 'cannon']) {
+    if (near) {
+      const actor = { pos: new f.THREE.Vector3(), yaw: 0, aimYaw: 0, aimPitch: 0,
+        aimPoint: new f.THREE.Vector3(0, .5, 1.2), aimDir: new f.THREE.Vector3(0, -.8, 1.2).normalize() };
+      const origin = new f.THREE.Vector3(), direction = new f.THREE.Vector3();
+      geometry(actor, mode, origin, direction);
+      closeVector(direction, actor.aimPoint.clone().sub(origin).normalize(), 'attainable close target must converge without a two-cycle');
+    } else for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) for (const pitch of [-.65, 0, .65]) {
+      const input = inputDirection(f, yaw, pitch);
+      const actor = { pos: new f.THREE.Vector3(3, 2, -4), yaw: -.8, aimYaw: 0, aimPitch: 0, aimDir: input,
+        aimPoint: new f.THREE.Vector3(3, 3.3, -4).addScaledVector(input, 12) };
+      const origin = new f.THREE.Vector3(), direction = new f.THREE.Vector3();
+      geometry(actor, mode, origin, direction);
+      // Independent ray from the final physical socket to the supplied world
+      // target; neither a scalar yaw nor the solver output defines expected aim.
+      closeVector(direction, actor.aimPoint.clone().sub(origin).normalize(), 'final muzzle-to-target residual retains original precision');
+    }
+  }
+}
+
+test('Crab uninitialized target keeps input owner; missing sentinel guard is detected', async () => {
+  const f = await boot();
+  assertUninitializedTarget(f, f.crabTankShotGeometry);
+  const missingGuard = await crabKernel('&& fromFeet > 1e-12', '');
+  assert.throws(() => assertUninitializedTarget(f, missingGuard), /uninitialized feet target/);
+});
+
+test('Crab final socket residual and close-target stability reject loose precision and undamped cycles', async () => {
+  const f = await boot();
+  assertTargetResidual(f, f.crabTankShotGeometry); assertTargetResidual(f, f.crabTankShotGeometry, true);
+  const loosePrecision = await crabKernel('if (error < 1e-20)', 'if (error < 1e-12)');
+  assert.throws(() => assertTargetResidual(f, loosePrecision), /final muzzle-to-target residual/);
+  const noDamping = await crabKernel('direction.set(direction.x + x, direction.y + y, direction.z + z).normalize();', 'direction.set(x, y, z);');
+  assert.throws(() => assertTargetResidual(f, noDamping, true), /attainable close target/);
 });

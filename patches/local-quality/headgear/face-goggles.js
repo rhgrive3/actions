@@ -51,7 +51,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   // Molded panels, not separate horizontal bars. Holes are actual apertures
   // triangulated in angular space, with continuous front/back and wall surfaces.
   function panel(name,outline,holes=[],depth=.055,thickness=.009,key='shell'){
-    const S=name==='molded-wrap-shell'?1:(lod==='hero'?2:1);
+    const S=name.startsWith('temple-')?3:name==='molded-wrap-shell'?1:(lod==='hero'?2:1);
     const step=lod==='hero'?.25:lod==='game'?.31:.38;
     const densify=loop=>loop.flatMap((A,i)=>{const B=loop[(i+1)%loop.length],n=Math.max(1,Math.ceil(Math.hypot(B[0]-A[0],B[1]-A[1])/step));return Array.from({length:n},(_,j)=>[A[0]+(B[0]-A[0])*j/n,A[1]+(B[1]-A[1])*j/n]);});
     if(name==='molded-wrap-shell'){outline=densify(outline);holes=holes.map(densify);}
@@ -107,11 +107,14 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
     const w=.32-row*.020,base=-.11-row*.16,h=.100,slope=.100;
     vents.push([[-w,base-slope],[0,base],[w,base-slope],[w,base-slope-h],[0,base-h],[-w,base-slope-h]]);
   }
-  // Cheek apertures follow the rising chin-to-temple curve.
-  for(const side of [-1,1])for(let i=0;i<6;i++){
-    const a=side*(.43+i*.115),b=side*(.41+(i+1)*.115),m=(a+b)/2;
-    const edge=(x,t)=>eyeBottom(x)+(lower(x)-eyeBottom(x))*t;
-    vents.push([[a,edge(a,.42)],[b,edge(b,.42)],[m,edge(m,.70)]]);
+  // Each cheek is one continuous dark perforated band with slender
+  // diagonals, not isolated downward triangular holes in a broad white slab.
+  const cheekEdge=(a,t)=>eyeBottom(a)+(lower(a)-eyeBottom(a))*t;
+  for(const side of [-1,1]){
+    const h=[];
+    for(let i=0;i<=8;i++){const a=side*(.43+i*.085);h.push([a,cheekEdge(a,.39)]);}
+    for(let i=8;i>=0;i--){const a=side*(.43+i*.085);h.push([a,cheekEdge(a,.73)]);}
+    vents.push(h);
   }
   // Two broad forehead windows with internal diagonal webs, matching the
   // grouped source apertures rather than a row of separate perforations.
@@ -123,8 +126,12 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   // Three dominant connected breathing slots with restrained inset lattice.
   for(let row=0;row<3;row++)for(const side of [-1,1])for(let i=0;i<3;i++){
     const w=.32-row*.020,base=-.11-row*.16,h=.100;
-    rail('central-slot-web',u=>{const a=side*w*(i+.15+.70*u)/3,e=base-.100*Math.abs(a)/w-h*(i%2?u:1-u);return [a,e,depth(a,e)-.002];},.012,.004,'shell',2);
+    rail('central-slot-web',u=>{const a=side*w*(i+.15+.70*u)/3,e=base-.100*Math.abs(a)/w-h*(i%2?u:1-u);return [a,e,depth(a,e)-.002];},.009,.003,'shell',2);
   }
+  for(const side of [-1,1])for(let i=0;i<6;i++)rail('cheek-slot-web',u=>{
+    const a=side*(.445+(i+.90*u)*.108),t=.39+.34*(i%2?u:1-u);
+    const e=cheekEdge(a,t);return [a,e,depth(a,e)-.002];
+  },.010,.003,'shell',3);
   for(const side of [-1,1])for(let i=0;i<5;i++)rail('forehead-window-web',u=>{const a=side*(.25+(i+.90*u)*.16),e=crown(a)-.065-.14*(i%2?u:1-u);return [a,e,depth(a,e)-.001];},.024,.006,'shell',3);
   // Surface color blocks follow the molded cheek curvature; no separate bars.
   for(const side of [-1,1])for(const row of [.20,.86])for(let i=0;i<5;i++){
@@ -134,15 +141,15 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   // Compact shallow side insets belong to the rounded face shell. The
   // source does not establish a large anatomical ear hole.
   for(const h of sideInsets){
-    panel('temple-inset-border',h,[],(a,e)=>depth(a,e)+.0065,.001,'dark');
+    panel('temple-inset-border',h,[],(a,e)=>depth(a,e)+.0105,.001,'dark');
     const ca=h.reduce((n,p)=>n+p[0],0)/h.length,ce=h.reduce((n,p)=>n+p[1],0)/h.length;
-    panel('temple-ink-inlay',h.map(([a,e])=>[ca+(a-ca)*.70,ce+(e-ce)*.75]),[],(a,e)=>depth(a,e)+.0075,.001,'ink');
+    panel('temple-ink-inlay',h.map(([a,e])=>[ca+(a-ca)*.70,ce+(e-ce)*.75]),[],(a,e)=>depth(a,e)+.012,.001,'ink');
   }
   // A distinct cap-like canopy projects in front of the shield. The rooted
   // seam, free rounded leading edge and underside remain separate in profile.
   const canopy=(u,v,bottom=false)=>{const a=(u-.5)*2*1.18;
     const A=pt(a,.55-.050*Math.sin(a)**2,.075),B=pt(a,.34-.045*Math.sin(a)**2,.105+.030*Math.cos(a)**2);B[2]+=.020*Math.cos(a)**2;B[0]*=1-.17*Math.sin(a)**2;
-    const p=A.map((x,k)=>x+(B[k]-x)*v);p[1]+=.010*Math.sin(Math.PI*v)*Math.cos(a)**2;if(bottom)p[1]-=.010;return p;};
+    const p=A.map((x,k)=>x+(B[k]-x)*v);p[1]+=.003*Math.sin(Math.PI*v)*Math.cos(a)**2;if(bottom)p[1]-=.007;return p;};
   const canopyEdge=(u,v,at)=>{const A=canopy(u,at,true),B=canopy(u,at,false);return A.map((x,k)=>x+(B[k]-x)*v);};
   add(grid(Math.ceil(N*.75),4,(u,v)=>canopy(u,1-v)),'shell','cap-visor-top');
   add(grid(Math.ceil(N*.75),4,(u,v)=>canopy(u,v,true)),'shell','cap-visor-bottom');

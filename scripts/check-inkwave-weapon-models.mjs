@@ -68,7 +68,7 @@ try{
       ch.actor=a;ch.onEvent=null;a.grounded=a.ground.hit=true;G.actors=[a];scene.add(ch.root);
       if(ch._sourceMotionLoader)await ch._sourceMotionLoader;if(ch.sourceMotion?.ready)await ch.sourceMotion.ready;
       if(ch.sourceMotion?.status!=='ready')throw Error(kind+' source motion failed');
-      const samples=[];let fireImage,carryImage,attackNativeFrames=0,maxGrip=0,maxIK=0;
+      const samples=[];let fireImage,carryImage,contactControls,attackNativeFrames=0,maxGrip=0,maxIK=0;
       for(let frame=0;frame<270;frame++){
         const input={fire:frame>=90&&frame<190,sub:frame>=220&&frame<230};a.ink=100;a.intent.fire=input.fire;a.intent.sub=input.sub;
         a.grounded=!(frame>=130&&frame<145);a.aimPitch=frame>=130&&frame<145?.75:0;
@@ -78,15 +78,39 @@ try{
         const owner=ch.sourceMotion?.sourceUpper?'source':'native';if(input.fire&&owner==='native')attackNativeFrames++;
         let grip=0;
         const c=api.CHARACTER_CHANNELS;
-        if(!ch.dual&&ch.P[c.IKL]>.99&&ch.P[c.LTW]<.001){grip=ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone().setZ(ch.weapon.def.handL.pos.z+(ch.weapon.supportZ||0))).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3()));maxGrip=Math.max(maxGrip,grip);}
+        if(!ch.dual&&ch.P[c.IKL]>.99&&ch.P[c.LTW]<.001){
+          // Family pose layers may own per-instance, animated carry grips.
+          // Measure this frame's actual weapon socket, not the cached model rest def.
+          const held=ch.weapon.def;grip=ch.weapon.off.localToWorld(held.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3()));maxGrip=Math.max(maxGrip,grip);
+        }
         maxIK=Math.max(maxIK,...ch.ikErr);samples.push({frame,owner,grip,aim:ch.wAim});
+        if(frame===80&&!ch.dual){
+          const held=ch.weapon.def,w=ch.weapon;
+          // The fist aperture is authored on the unchanged hand rig. Check it
+          // against the model's live physical grip as a second geometric oracle.
+          const hole=d.gripL.pos.clone().sub(d.handL.pos).applyQuaternion(d.handL.quat.clone().invert());
+          const aperture=ch.bones.handL.localToWorld(hole);
+          const socket=w.off.localToWorld(held.gripL.pos.clone());
+          const hand=ch.bones.handL.getWorldPosition(new THREE.Vector3());
+          const current=w.off.localToWorld(held.handL.pos.clone()).distanceTo(hand);
+          const cached=w.off.localToWorld(d.handL.pos.clone()).distanceTo(hand);
+          // A displaced rendered weapon must fail the same contact threshold.
+          // Move the actual model transform, leaving the solved hand untouched.
+          const before=w.off.position.clone();let displaced;
+          try{
+            w.off.position.x+=.2;ch.root.updateMatrixWorld(true);
+            displaced=w.off.localToWorld(held.handL.pos.clone()).distanceTo(hand);
+          }finally{w.off.position.copy(before);ch.root.updateMatrixWorld(true);}
+          contactControls={frame,current,cached,aperture:aperture.distanceTo(socket),displaced,
+            activeDefinitionIsCached:held===d,heldWeight:ch.P[c.IKL],explicitLeft:ch.P[c.LTW]};
+        }
         if([80,150].includes(frame)){
           camera.position.copy(a.pos).add(new THREE.Vector3(-1.8,1.25,3.25));camera.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.12)));renderer.render(scene,camera);
           if(frame===80)carryImage=snap();else fireImage=snap();
         }
       }
       rows.push({kind,reference:d.referenceWeapon,size:size.toArray(),triangles:d.body.index.count/3+d.ink.index.count/3,
-        modelImage,carryImage,fireImage,maxGrip,maxIK,attackNativeFrames,samples});
+        modelImage,carryImage,fireImage,contactControls,maxGrip,maxIK,attackNativeFrames,samples});
       scene.remove(ch.root);ch.dispose();body.material.dispose();ink.material.dispose();
     }
     env.dispose();sky.dispose();pmrem.dispose();renderer.dispose();return {rows,shots,renderer:'Chromium SwiftShader; emitted production shaders; source banks fully loaded'};
@@ -94,6 +118,17 @@ try{
   assert.equal(data.rows.length,7);assert.deepEqual(errors,[]);
   for(const row of data.rows){
     assert.equal(row.attackNativeFrames,100,row.kind+' attack owner');assert.ok(row.maxGrip<.006,row.kind+' fully held support contact '+row.maxGrip);
+    if(row.contactControls){
+      const c=row.contactControls;
+      assert.ok(c.heldWeight>.99&&c.explicitLeft<.001,row.kind+' contact control is fully held');
+      assert.ok(c.current<.006&&c.aperture<.006,row.kind+' wrist and physical fist aperture contact');
+      assert.ok(c.displaced>.1,row.kind+' displaced actual model must break contact');
+      assert.ok(!(c.displaced<.006),row.kind+' contact threshold rejects model displacement');
+      if(row.kind==='slosher'){
+        assert.equal(c.activeDefinitionIsCached,false,'Slosher carry grip has an instance owner');
+        assert.ok(c.cached>.6,'cached Slosher heave grip is an invalid carry contact');
+      }
+    }
     for(const key of ['modelImage','carryImage','fireImage']){fs.writeFileSync(path.join(out,row.kind+'-'+key+'.png'),Buffer.from(row[key],'base64'));delete row[key];}
   }
   const result={status:'passed',contentHash:identity.contentHash,sourceSha,...data};
