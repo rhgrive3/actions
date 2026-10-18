@@ -613,9 +613,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0}});
-    // Optional visual-only extension; legacy five-entry catalogue metadata
-    // stays unchanged for every other family and remains accepted on receive.
-    if(descriptor.key==='arrow')p.inkMeta.s3Catalog.push(options.bowTilt);
+    // Keep the five-entry catalogue tuple readable by existing peers. Older
+    // receivers ignore this named visual-only extension on the same object.
+    if(descriptor.key==='arrow')p.inkMeta.s3StringerTilt=options.bowTilt;
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
     p.vel.y += finite(options.lift,0);
     if(!queueCatalogBirth(p,G,muzzle))applyCatalogPlayerVelocity(p);
@@ -1113,8 +1113,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const r=RECORDS.get(e[4]),meta=e[27]?.s3Catalog;
     const allowed=['normal','blaster-jump','variable','turret','horizontal','vertical','brush','slosh','pellet','arrow','saber-horizontal','saber-vertical'];
     const maxTilt=finite(r?.parameters.spl__WeaponStringerParam?.ShotParam?.BowTiltDegreeMax,90);
-    const layout=Array.isArray(meta)&&(meta.length===5||meta.length===6&&r?.family==='stringer'&&meta[1]==='arrow'&&
-      Number.isFinite(meta[5])&&meta[5]>=0&&meta[5]<=maxTilt);
+    const namedTilt=Object.hasOwn(e[27]||{},'s3StringerTilt');
+    const hasTilt=namedTilt||Array.isArray(meta)&&meta.length===6;
+    const tilt=namedTilt?e[27].s3StringerTilt:meta?.[5];
+    const layout=Array.isArray(meta)&&(meta.length===5||meta.length===6)&&(!hasTilt||
+      r?.family==='stringer'&&meta[1]==='arrow'&&Number.isFinite(tilt)&&tilt>=0&&tilt<=maxTilt);
     if(p&&r&&!r.legacy&&layout&&meta[0]===1&&allowed.includes(meta[1])&&
       Number.isSafeInteger(meta[2])&&meta[2]>=0&&meta[2]<30&&Number.isFinite(meta[3])&&meta[3]>=0&&meta[3]<=1){
       try {const d=mode(r,meta[1],meta[2],meta[3]);p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
@@ -1135,7 +1138,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           }
         }
         if(a.remote&&d.key==='arrow'&&a.weapon?.catalogRecord?.id===r.id&&a.weaponRunner)
-          state(a.weaponRunner).remoteBowTilt=meta.length===6?meta[5]:null;
+          state(a.weaponRunner).remoteBowTilt=hasTilt?tilt:null;
       }
       catch { /* malformed visual packet cannot create a gameplay object */ }
     }return result;
