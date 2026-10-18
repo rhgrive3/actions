@@ -33,6 +33,49 @@ const response={ok:true,headers:{get:()=>null},arrayBuffer:async()=>new ArrayBuf
   sameModuleFetch('./s3-real/Wp_ChargerLong_Shot_00.mp3',url=>{captured=String(url);return response});
   assert.ok(captured.endsWith('/patches/splatoon3/runtime/audio/s3-real/Wp_ChargerLong_Shot_00.mp3'));
  });
+ test('Safari receiver-bound global fetch loads ShooterNormal MP3 and manifest end to end',async()=>{
+  // WebKit throws if its native window.fetch is detached from Window.
+  // Stub exactly that brand check, instead of depending on Node's permissive fetch.
+  const savedFetch=globalThis.fetch,requests=[];
+  globalThis.fetch=function(url){
+    if(this!==globalThis)throw new TypeError('Can only call Window.fetch on instances of Window');
+    const address=String(url);requests.push(address);
+    if(address.endsWith('/real-s3-installed.json'))
+      return Promise.resolve({ok:true,json:async()=>({
+        schema:1,usageRights:manifest.usageRights,clips:[
+          {id:'shooter',event:'fire',file:'s3-real/Wp_ShooterNormal_Shot_00.mp3',variant:0}
+        ]
+      })});
+    return Promise.resolve(response);
+  };
+  try {
+    const unbound=globalThis.fetch;
+    assert.throws(()=>unbound('https://localhost/fixture'),/Can only call Window.fetch/,
+      'the fixture reproduces the precise Safari console error');
+    const bank={ctx,authorized:new AuthorizedSamplePack(ctx)};
+    const loader=new RealS3SampleLoader(bank);
+    // This first reaches the manifest URL, then the authorized local MP3 URL.
+    const loaded=await loader.ensure('shooter','fire');
+    assert.equal(loaded.loaded,1,JSON.stringify(loaded));
+    assert.equal(loader.stats().status,'ready');
+    assert.ok(bank.authorized.pick('shooter','fire')?.buffer,
+      'the first playable Splattershot shot has a decoded recording');
+    assert.ok(requests.some(url=>url.endsWith('/real-s3-installed.json')));
+    assert.ok(requests.some(url=>url.endsWith('/s3-real/Wp_ShooterNormal_Shot_00.mp3')));
+    assert.equal(loader.errors.length,0,'no Safari fetch-brand failure');
+    // Also cover the standalone local-asset helper and a direct operator pack,
+    // both of which previously captured unbound Window.fetch independently.
+    await sameModuleFetch('./s3-real/Wp_ShooterNormal_Shot_00.mp3');
+    const direct=new AuthorizedSamplePack(ctx);
+    const result=await direct.load({
+      schema:1,usageRights:manifest.usageRights,
+      clips:[{id:'shooter',event:'fire',file:'s3-real/Wp_ShooterNormal_Shot_00.mp3',variant:0}]
+    });
+    assert.equal(result.loaded,1);
+    assert.equal(result.rejected,0);
+    assert.equal(requests.length,4,'manifest, loader MP3, helper MP3, direct pack MP3');
+  }finally{globalThis.fetch=savedFetch;}
+ });
  test('concurrent outfit and special reads are serialized rather than losing selected samples',async()=>{
   let manifestDownloads=0,assetDownloads=0;
   const bank={authorized:new AuthorizedSamplePack(ctx,{fetcher:async()=>response})};
