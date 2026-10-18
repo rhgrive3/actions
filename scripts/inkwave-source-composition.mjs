@@ -51,10 +51,6 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
     ['The INKWAVE servers didn', 'The ZEVANT servers didn'],
     ['The squidkids and code behind INKWAVE', 'The squidkids and code behind ZEVANT'],
   ],
-  // Compatibility string for an unmigrated runtime module.
-  'patches/splatoon3/runtime/ui-strings.mjs': [
-    ['The INKWAVE servers didn’t answer. Check your connection, then try again.', 'The ZEVANT servers didn’t answer. Check your connection, then try again.'],
-  ],
   'src/i18n.js': [
     ["'The squidkids and code behind INKWAVE': 'INKWAVE をつくった仲間たち'", "'The squidkids and code behind ZEVANT': 'ZEVANT をつくった仲間たち'"],
   ],
