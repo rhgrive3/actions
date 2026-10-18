@@ -35,7 +35,7 @@ export async function run(config){
   rows.push({name,gearId,lod,hair,view,pose,inkColor:'#'+ink.toString(16).padStart(6,'0'),changedPixels,fitted,bare,deltaCalls:fitted.calls-bare.calls,deltaTriangles:fitted.triangles-bare.triangles,gearMeshes:meshes,gearVertices:vertices,gearTriangles:triangles,p50Ms:timings[3],p95Ms:timings[5],headWorld:c.bones.head.getWorldPosition(new THREE.Vector3()).toArray(),fit:gear.userData.fit||null});
  }
  try{
-  for(const gearId of [4,5,6,7,8,9,10,11]){
+  for(const gearId of config.gearIds){
    for(const lod of ['hero','game'])for(const view of ['front','back','left','right','top','under','oblique'])await capture(gearId,lod,0,view);
    for(const hair of [5,6])await capture(gearId,'game',hair,'oblique');
    if(gearId===7)for(const hair of [5,6])for(const view of ['back','top'])await capture(gearId,'game',hair,view);

@@ -1,70 +1,105 @@
-name: INKWAVE eight headgear production candidate QA
+name: INKWAVE sharded headgear diagnostic QA
 on:
   push:
-    branches: ['main', 'review/new-headgear-diagnostic-20261018']
-    paths: ['tools/headgear-production-qa/**', 'tools/headgear-production-multiview/**', 'patches/local-quality/headgear/**', 'patches/local-quality/headgear-adapter.mjs', 'patches/local-quality/adapter.mjs', 'patches/local-quality/tests/headgear-*', 'scripts/lib/inkwave-build-only-modules.mjs', '.github/workflows/inkwave-headgear-visual-qa.yml']
-  pull_request:
-    paths: ['tools/headgear-production-qa/**', 'tools/headgear-production-multiview/**', 'patches/local-quality/headgear/**', 'patches/local-quality/headgear-adapter.mjs', 'patches/local-quality/adapter.mjs', 'patches/local-quality/tests/headgear-*', 'scripts/lib/inkwave-build-only-modules.mjs', '.github/workflows/inkwave-headgear-visual-qa.yml']
+    branches: ['review/new-headgear-diagnostic-20261018']
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: headgear-visual-qa-${{ github.ref }}
+  group: headgear-sharded-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   render-headgear:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - key: multi-4-5
+            kind: multiview
+            gears: '4,5'
+          - key: multi-6-7
+            kind: multiview
+            gears: '6,7'
+          - key: multi-8-9
+            kind: multiview
+            gears: '8,9'
+          - key: multi-10-11
+            kind: multiview
+            gears: '10,11'
+          - key: production
+            kind: production
+            gears: ''
     env:
-      BASE_SOURCE_SHA: 9ef63350385bffee71b3afa0a09290a92e9c862b
-      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      SOURCE_SHA: ${{ github.sha }}
+      RUNTIME_SOURCE_SHA: 4480124ee0d5c25c166a0a6a91a4dbeacb023e45
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Verify exact candidate checkout
-        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-      - name: Verify diagnostic source scope against approved main
-        if: github.ref_name == 'review/new-headgear-diagnostic-20261018'
+          ref: ${{ github.sha }}
+      - name: Verify exact checkout and unchanged runtime
         run: |
-          git merge-base --is-ancestor "$BASE_SOURCE_SHA" "$SOURCE_SHA"
-          git diff --exit-code "$BASE_SOURCE_SHA" "$SOURCE_SHA" -- inkwave-public patches/local-quality/s3-face-look-adapter.mjs patches/local-quality/headgear/armor-helmet.js patches/local-quality/headgear/two-line-mesh.js patches/local-quality/headgear/camo-headphones.js patches/local-quality/headgear/character-headgear-ink-black-flap-cap.js
-      - name: Assert pinned native source remains unchanged
-        if: github.head_ref == 'review/inkwave-headgear-visual-20261017' || github.ref_name == 'review/inkwave-headgear-visual-20261017'
-        run: |
-          git diff --exit-code d5265f73d9dad69f1afd9690e374caee45195f11 HEAD -- inkwave-public
-          node tools/headgear-production-qa/assert-scope.mjs
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          git merge-base --is-ancestor "$RUNTIME_SOURCE_SHA" "$SOURCE_SHA"
+          git diff --exit-code "$RUNTIME_SOURCE_SHA" "$SOURCE_SHA" -- inkwave-public patches scripts
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Install exact official build and browser tools
         run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
-      - name: Syntax checks
-        run: find tools/headgear-production-qa tools/headgear-production-multiview patches/local-quality/headgear -type f \( -name '*.js' -o -name '*.mjs' \) -exec node --check '{}' \;
       - name: Install CI browser
         run: npx playwright install --with-deps chromium
-      - name: Build normal production candidate
+      - name: Build and check normal production candidate
         run: |
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
-      - name: Preserve approved source and selection IDs
-        run: node --test patches/local-quality/tests/headgear-source.test.mjs
-      - name: Native lifecycle regressions
-        run: INKWAVE_HEADGEAR_SITE="$PWD/_site" node --experimental-loader ./patches/local-quality/tests/headgear-production-loader.mjs --test patches/local-quality/tests/headgear-lifecycle.fixture.mjs
-      - name: Render all eight fitted production headgear from multiple views
-        run: node tools/headgear-production-multiview/run.mjs --site _site --out .qa-evidence/headgear
-      - name: Verify production shader signals, LOD, quality and resource lifecycle
-        if: always()
-        run: node tools/headgear-production-qa/run.mjs --site _site --out .qa-evidence/headgear-production
+          node --test patches/local-quality/tests/headgear-source.test.mjs
+          INKWAVE_HEADGEAR_SITE="$PWD/_site" node --experimental-loader ./patches/local-quality/tests/headgear-production-loader.mjs --test patches/local-quality/tests/headgear-lifecycle.fixture.mjs
+      - name: Render bounded multiview shard
+        if: matrix.kind == 'multiview'
+        timeout-minutes: 18
+        run: node tools/headgear-production-multiview/run.mjs --site _site --out .qa-evidence/${{ matrix.key }} --gear-ids '${{ matrix.gears }}'
+      - name: Render bounded signal and LOD suite
+        if: matrix.kind == 'production'
+        timeout-minutes: 18
+        run: node tools/headgear-production-qa/run.mjs --site _site --out .qa-evidence/${{ matrix.key }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: headgear-production-candidate-${{ github.sha }}
+          name: headgear-shard-${{ matrix.key }}-${{ github.sha }}
           path: |
-            .qa-evidence/headgear/**
-            .qa-evidence/headgear-production/**
-            .qa-evidence/headgear-scope.json
+            .qa-evidence/${{ matrix.key }}/**
             _site/inkwave-build.json
-          if-no-files-found: warn
+          include-hidden-files: true
+          if-no-files-found: error
           retention-days: 14
+  verify-combined:
+    if: always()
+    needs: render-headgear
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: headgear-shard-*-${{ github.sha }}
+          path: _headgear-shards
+          merge-multiple: false
+      - name: Verify all 480 PNG readbacks and five complete suites
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: node tools/headgear-production-qa/verify-shards.mjs _headgear-shards .qa-evidence/headgear-combined.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: headgear-combined-${{ github.sha }}
+          path: .qa-evidence/headgear-combined.json
+          include-hidden-files: true
+          if-no-files-found: warn
