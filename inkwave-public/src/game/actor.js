@@ -48,7 +48,7 @@ export class Actor {
     this.groundN = new THREE.Vector3(0, 1, 0);
     this.wallN = new THREE.Vector3(0, 0, 1);
     this._ledgeHit = new Hit();
-    this.character = new CharacterClass({ color: G.teamColors[team], weapon: WEAPONS[weapon]?.kind || weapon, style, name, isLocal });
+    this.character = new CharacterClass({ color: G.teamColors[team], weapon, style, name, isLocal });
     // Character → game bus: character.js calls this.onEvent(name, data) (e.g. 'footstep' at each foot plant) and it is
     // re-emitted as 'actor:<name>' with the actor and the surface under it (0 dry, 1 own ink, 2 enemy ink). See docs/EVENTS.md.
     this.character.onEvent = (name, data) => emit('actor:' + name, { actor: this, surface: this.groundTeam, ...(data || {}) });
@@ -104,7 +104,7 @@ export class Actor {
 
   setWeapon(id) {
     this.weaponId = id; this.weapon = WEAPONS[id];
-    this.character.setWeapon(this.weapon.kind);
+    this.character.setWeapon(id);
     this.weaponRunner.reset();
   }
 
