@@ -1,0 +1,1606 @@
+[
+  {
+    "id": "blaster",
+    "frames": 25,
+    "height": 0,
+    "angle": 0,
+    "events": [
+      {
+        "at": [
+          0,
+          0,
+          6.789983268957229
+        ],
+        "R": 1.4,
+        "team": 0,
+        "seed": 0.6185604792553931,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0
+      },
+      {
+        "at": [
+          0,
+          0.1,
+          6.789983268957229
+        ],
+        "R": 2.5,
+        "team": 0,
+        "seed": 0.269052077550441,
+        "kind": "source-splash",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0
+      },
+      {
+        "at": [
+          0.5143992703138668,
+          0.004999999999999945,
+          0.6692479069585618
+        ],
+        "R": 2.43,
+        "team": 0,
+        "seed": 0.6305941129103303,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          -0.32203585026476494,
+          0.004999999999999986,
+          3.6934234450434107
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.5191242245491594,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          0.1329894942368872,
+          0.005000000000000097,
+          6.63939086605588
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.8535135288257152,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          0.41189693858283966,
+          0.005000000000000028,
+          2.242746959014586
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.6863213144242764,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          -0.30042136169873007,
+          0.004999999999999903,
+          5.162803911365646
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.5748687665909529,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      }
+    ],
+    "cells": 590,
+    "beforeEvents": [
+      {
+        "at": [
+          0,
+          0,
+          6.789983268957229
+        ],
+        "R": 1.4,
+        "team": 0,
+        "seed": 0.6185604792553931,
+        "kind": "source-shot",
+        "footprint": "ink-blast"
+      },
+      {
+        "at": [
+          0,
+          0.1,
+          6.789983268957229
+        ],
+        "R": 2.5,
+        "team": 0,
+        "seed": 0.269052077550441,
+        "kind": "source-splash",
+        "footprint": "ink-blast"
+      },
+      {
+        "at": [
+          0.5143992703138668,
+          0.004999999999999945,
+          0.6692479069585618
+        ],
+        "R": 2.43,
+        "team": 0,
+        "seed": 0.6305941129103303,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          -0.32203585026476494,
+          0.004999999999999986,
+          3.6934234450434107
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.5191242245491594,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          0.1329894942368872,
+          0.005000000000000097,
+          6.63939086605588
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.8535135288257152,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          0.41189693858283966,
+          0.005000000000000028,
+          2.242746959014586
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.6863213144242764,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          -0.30042136169873007,
+          0.004999999999999903,
+          5.162803911365646
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.5748687665909529,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      }
+    ],
+    "beforeCells": 598
+  },
+  {
+    "id": "s3-blaster-long / oblique",
+    "frames": 35,
+    "height": 0,
+    "angle": 0.55,
+    "events": [
+      {
+        "at": [
+          3.4025121386443775,
+          8.326672684688674e-17,
+          5.82996918008903
+        ],
+        "R": 3.14,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0.5240364508785849,
+          0,
+          0.8516958366403916
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          0.9285833604112699,
+          0.005000000000000083,
+          0.8604001168033056
+        ],
+        "R": 1.56,
+        "team": 0,
+        "seed": 0.6305941129103303,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.5240364508785849,
+          0,
+          0.8516958366403916
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          1.807429837004488,
+          0.005000000000000042,
+          2.511412487664987
+        ],
+        "R": 1.56,
+        "team": 0,
+        "seed": 0.6863213144242764,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.5240364508785849,
+          0,
+          0.8516958366403916
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          2.218054792872146,
+          0.004999999999999889,
+          4.418962144717883
+        ],
+        "R": 1.56,
+        "team": 0,
+        "seed": 0.5191242245491594,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.5240364508785849,
+          0,
+          0.8516958366403916
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      }
+    ],
+    "cells": 539,
+    "beforeEvents": [
+      {
+        "at": [
+          3.4025121386443775,
+          8.326672684688674e-17,
+          5.82996918008903
+        ],
+        "R": 3.14,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "face": 0
+      },
+      {
+        "at": [
+          0.9285833604112699,
+          0.005000000000000083,
+          0.8604001168033056
+        ],
+        "R": 1.56,
+        "team": 0,
+        "seed": 0.6305941129103303,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.5240364508785849,
+          0,
+          0.8516958366403916
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          1.807429837004488,
+          0.005000000000000042,
+          2.511412487664987
+        ],
+        "R": 1.56,
+        "team": 0,
+        "seed": 0.6863213144242764,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.5240364508785849,
+          0,
+          0.8516958366403916
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      },
+      {
+        "at": [
+          2.218054792872146,
+          0.004999999999999889,
+          4.418962144717883
+        ],
+        "R": 1.56,
+        "team": 0,
+        "seed": 0.5191242245491594,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.5240364508785849,
+          0,
+          0.8516958366403916
+        ],
+        "stretchAmt": 0.31999999999999995,
+        "face": 0
+      }
+    ],
+    "beforeCells": 563
+  },
+  {
+    "id": "s3-stringer-normal",
+    "frames": 72,
+    "height": 0,
+    "angle": 0,
+    "events": [
+      {
+        "at": [
+          0.4,
+          0,
+          6.789983268957229
+        ],
+        "R": 3,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          0,
+          0,
+          6.789983268957229
+        ],
+        "R": 3,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          -0.4,
+          0,
+          6.789983268957229
+        ],
+        "R": 3,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          0.4,
+          0.6,
+          6.789983268957229
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0,
+        "face": -1
+      },
+      {
+        "at": [
+          0,
+          0.6,
+          6.789983268957229
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0,
+        "face": -1
+      },
+      {
+        "at": [
+          -0.4,
+          0.6,
+          6.789983268957229
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0,
+        "face": -1
+      }
+    ],
+    "cells": 432,
+    "beforeEvents": [
+      {
+        "at": [
+          0.4,
+          0,
+          6.789983268957229
+        ],
+        "R": 3,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          0,
+          0,
+          6.789983268957229
+        ],
+        "R": 3,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          -0.4,
+          0,
+          6.789983268957229
+        ],
+        "R": 3,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          0.4,
+          0.6,
+          6.789983268957229
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "face": -1
+      },
+      {
+        "at": [
+          0,
+          0.6,
+          6.789983268957229
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "face": -1
+      },
+      {
+        "at": [
+          -0.4,
+          0.6,
+          6.789983268957229
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "face": -1
+      }
+    ],
+    "beforeCells": 432
+  },
+  {
+    "id": "s3-stringer-explosion / oblique",
+    "frames": 80,
+    "height": 0,
+    "angle": 0.3,
+    "events": [
+      {
+        "at": [
+          0.7858087558003157,
+          0,
+          6.852357644355621
+        ],
+        "R": 2.76,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.08959997046526266,
+          0,
+          0.9959778337355828
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          1.9237338024061337,
+          0,
+          6.499239341244461
+        ],
+        "R": 2.76,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.2963755973661538,
+          0,
+          0.9550714660620196
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          3.061658849011952,
+          0,
+          6.146121038133302
+        ],
+        "R": 2.76,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.48998340739155777,
+          0,
+          0.8717317594770532
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          -0.47788216428618185,
+          0,
+          7.244503326260542
+        ],
+        "R": 2.76,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          -0.12085533672818026,
+          0,
+          0.9926701302972294
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          4.325349769098449,
+          0,
+          5.753975356228388
+        ],
+        "R": 2.76,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.6615940035559785,
+          0,
+          0.7498622369867495
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          0.7858087558003157,
+          0.6,
+          6.852357644355621
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0.08959997046526266,
+          0,
+          0.9959778337355828
+        ],
+        "stretchAmt": 0,
+        "face": -1
+      },
+      {
+        "at": [
+          1.9237338024061337,
+          0.6,
+          6.499239341244461
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0.2963755973661538,
+          0,
+          0.9550714660620196
+        ],
+        "stretchAmt": 0,
+        "face": -1
+      },
+      {
+        "at": [
+          3.061658849011952,
+          0.6,
+          6.146121038133302
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0.48998340739155777,
+          0,
+          0.8717317594770532
+        ],
+        "stretchAmt": 0,
+        "face": -1
+      },
+      {
+        "at": [
+          -0.47788216428618185,
+          0.6,
+          7.244503326260542
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          -0.12085533672818026,
+          0,
+          0.9926701302972294
+        ],
+        "stretchAmt": 0,
+        "face": -1
+      },
+      {
+        "at": [
+          4.325349769098449,
+          0.6,
+          5.753975356228388
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0.6615940035559785,
+          0,
+          0.7498622369867495
+        ],
+        "stretchAmt": 0,
+        "face": -1
+      }
+    ],
+    "cells": 725,
+    "beforeEvents": [
+      {
+        "at": [
+          0.7858087558003157,
+          0,
+          6.852357644355621
+        ],
+        "R": 2.76,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.08959997046526266,
+          0,
+          0.9959778337355828
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          1.9237338024061337,
+          0,
+          6.499239341244461
+        ],
+        "R": 2.76,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.2963755973661538,
+          0,
+          0.9550714660620196
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          3.061658849011952,
+          0,
+          6.146121038133302
+        ],
+        "R": 2.76,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.48998340739155777,
+          0,
+          0.8717317594770532
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          -0.47788216428618185,
+          0,
+          7.244503326260542
+        ],
+        "R": 2.76,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          -0.12085533672818026,
+          0,
+          0.9926701302972294
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          4.325349769098449,
+          0,
+          5.753975356228388
+        ],
+        "R": 2.76,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.6615940035559785,
+          0,
+          0.7498622369867495
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          0.7858087558003157,
+          0.6,
+          6.852357644355621
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "face": -1
+      },
+      {
+        "at": [
+          1.9237338024061337,
+          0.6,
+          6.499239341244461
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "face": -1
+      },
+      {
+        "at": [
+          3.061658849011952,
+          0.6,
+          6.146121038133302
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "face": -1
+      },
+      {
+        "at": [
+          -0.47788216428618185,
+          0.6,
+          7.244503326260542
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "face": -1
+      },
+      {
+        "at": [
+          4.325349769098449,
+          0.6,
+          5.753975356228388
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "face": -1
+      }
+    ],
+    "beforeCells": 726
+  },
+  {
+    "id": "s3-saber-lite",
+    "frames": 1,
+    "height": 0,
+    "angle": 0,
+    "events": [
+      {
+        "at": [
+          0,
+          8.326672684688674e-17,
+          0
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-brush",
+        "face": 0
+      },
+      {
+        "at": [
+          0,
+          0,
+          6.153761867606093
+        ],
+        "R": 2.3,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-brush",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.6399999999999999,
+        "face": 0
+      },
+      {
+        "at": [
+          0.2705182812358243,
+          0.004999999999999945,
+          4.9222405357272585
+        ],
+        "R": 1.28,
+        "team": 0,
+        "seed": 0.6863213144242764,
+        "kind": "source-splash",
+        "footprint": "ink-brush",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 3.2,
+        "face": 0
+      },
+      {
+        "at": [
+          0.4034834550997794,
+          0.0050000000000000695,
+          2.9677134578730686
+        ],
+        "R": 1.28,
+        "team": 0,
+        "seed": 0.6305941129103303,
+        "kind": "source-splash",
+        "footprint": "ink-brush",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 3.2,
+        "face": 0
+      }
+    ],
+    "cells": 667,
+    "beforeEvents": [
+      {
+        "at": [
+          0,
+          8.326672684688674e-17,
+          0
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-brush",
+        "face": 0
+      },
+      {
+        "at": [
+          0,
+          0,
+          6.153761867606093
+        ],
+        "R": 2.3,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-brush",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 0.6399999999999999,
+        "face": 0
+      },
+      {
+        "at": [
+          0.2705182812358243,
+          0.004999999999999945,
+          4.9222405357272585
+        ],
+        "R": 1.28,
+        "team": 0,
+        "seed": 0.6863213144242764,
+        "kind": "source-splash",
+        "footprint": "ink-brush",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 3.2,
+        "face": 0
+      },
+      {
+        "at": [
+          0.4034834550997794,
+          0.0050000000000000695,
+          2.9677134578730686
+        ],
+        "R": 1.28,
+        "team": 0,
+        "seed": 0.6305941129103303,
+        "kind": "source-splash",
+        "footprint": "ink-brush",
+        "stretch": [
+          0,
+          0,
+          1
+        ],
+        "stretchAmt": 3.2,
+        "face": 0
+      }
+    ],
+    "beforeCells": 667
+  },
+  {
+    "id": "s3-saber-heavy / oblique",
+    "frames": 1,
+    "height": 0,
+    "angle": 0.3,
+    "events": [
+      {
+        "at": [
+          0,
+          8.326672684688674e-17,
+          0
+        ],
+        "R": 2.4,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-brush",
+        "face": 0
+      },
+      {
+        "at": [
+          1.4034640580953217,
+          0,
+          5.8700529295887645
+        ],
+        "R": 2.6,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-brush",
+        "stretch": [
+          0.2995527450545316,
+          0,
+          0.9540797413897304
+        ],
+        "stretchAmt": 0.6399999999999999,
+        "face": 0
+      },
+      {
+        "at": [
+          1.5836969148176347,
+          0.005000000000000111,
+          5.540486973593584
+        ],
+        "R": 2.112,
+        "team": 0,
+        "seed": 0.6863213144242764,
+        "kind": "source-splash",
+        "footprint": "ink-brush",
+        "stretch": [
+          0.29955274505453167,
+          0,
+          0.9540797413897305
+        ],
+        "stretchAmt": 0.8,
+        "face": 0
+      },
+      {
+        "at": [
+          1.1249809334773642,
+          0.0050000000000000695,
+          3.635852592718489
+        ],
+        "R": 2.112,
+        "team": 0,
+        "seed": 0.6305941129103303,
+        "kind": "source-splash",
+        "footprint": "ink-brush",
+        "stretch": [
+          0.29955274505453167,
+          0,
+          0.9540797413897305
+        ],
+        "stretchAmt": 0.8,
+        "face": 0
+      }
+    ],
+    "cells": 860,
+    "beforeEvents": [
+      {
+        "at": [
+          0,
+          8.326672684688674e-17,
+          0
+        ],
+        "R": 2.4,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-brush",
+        "face": 0
+      },
+      {
+        "at": [
+          1.4034640580953217,
+          0,
+          5.8700529295887645
+        ],
+        "R": 2.6,
+        "team": 0,
+        "seed": 0.37,
+        "kind": "source-shot",
+        "footprint": "ink-brush",
+        "stretch": [
+          0.2995527450545316,
+          0,
+          0.9540797413897304
+        ],
+        "stretchAmt": 0.6399999999999999,
+        "face": 0
+      },
+      {
+        "at": [
+          1.5836969148176347,
+          0.005000000000000111,
+          5.540486973593584
+        ],
+        "R": 2.112,
+        "team": 0,
+        "seed": 0.6863213144242764,
+        "kind": "source-splash",
+        "footprint": "ink-brush",
+        "stretch": [
+          0.29955274505453167,
+          0,
+          0.9540797413897305
+        ],
+        "stretchAmt": 0.8,
+        "face": 0
+      },
+      {
+        "at": [
+          1.1249809334773642,
+          0.0050000000000000695,
+          3.635852592718489
+        ],
+        "R": 2.112,
+        "team": 0,
+        "seed": 0.6305941129103303,
+        "kind": "source-splash",
+        "footprint": "ink-brush",
+        "stretch": [
+          0.29955274505453167,
+          0,
+          0.9540797413897305
+        ],
+        "stretchAmt": 0.8,
+        "face": 0
+      }
+    ],
+    "beforeCells": 860
+  },
+  {
+    "id": "blaster / high / oblique",
+    "frames": 25,
+    "height": 12,
+    "angle": 0.7,
+    "events": [
+      {
+        "at": [
+          6.523563571472237,
+          11.272512657833579,
+          8.014450617102517
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.10747049027122557,
+        "kind": "source-shot",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0.6457086862236497,
+          0,
+          0.7635838477438666
+        ],
+        "stretchAmt": 0
+      },
+      {
+        "at": [
+          1.8558519801037952,
+          0.005,
+          0.04475830992866959
+        ],
+        "R": 2.43,
+        "team": 0,
+        "seed": 0.6305941129103303,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.6457086862236497,
+          0,
+          0.7635838477438666
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          2.6830940481898713,
+          0.005,
+          1.3118039945176978
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.6863213144242764,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.6457086862236497,
+          0,
+          0.7635838477438666
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          1.5628297600128944,
+          0.005000000000000111,
+          4.136656020455922
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.5191242245491594,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.6457086862236497,
+          0,
+          0.7635838477438663
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          2.400860288888374,
+          0.005000000000000056,
+          5.394367389187959
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.5748687665909529,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.6457086862236497,
+          0,
+          0.7635838477438663
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          6.523563571472237,
+          0.1,
+          8.014450617102517
+        ],
+        "R": 3.2,
+        "team": 0,
+        "seed": 0.21332735707983375,
+        "kind": "source-splash",
+        "footprint": "ink-blast-rectified",
+        "stretch": [
+          0.6457086862236497,
+          0,
+          0.7635838477438666
+        ],
+        "stretchAmt": 0
+      },
+      {
+        "at": [
+          5.170607246809615,
+          0.005000000000000056,
+          5.106770639227353
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.8535135288257152,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.6457086862236497,
+          0,
+          0.7635838477438663
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          6.001814281346549,
+          0.005000000000000056,
+          6.369622898341042
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.9092379736248404,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.6457086862236497,
+          0,
+          0.7635838477438663
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      },
+      {
+        "at": [
+          7.289249808973346,
+          0.005000000000000056,
+          7.097888104872438
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.7420365987345576,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "stretch": [
+          0.6457086862236506,
+          0,
+          0.7635838477438659
+        ],
+        "stretchAmt": 0,
+        "face": 0
+      }
+    ],
+    "cells": 898,
+    "beforeEvents": [
+      {
+        "at": [
+          6.523563571472237,
+          11.272512657833579,
+          8.014450617102517
+        ],
+        "R": 2,
+        "team": 0,
+        "seed": 0.10747049027122557,
+        "kind": "source-shot",
+        "footprint": "ink-blast"
+      },
+      {
+        "at": [
+          1.8558519801037952,
+          0.005,
+          0.04475830992866959
+        ],
+        "R": 2.43,
+        "team": 0,
+        "seed": 0.6305941129103303,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "face": 0
+      },
+      {
+        "at": [
+          2.6830940481898713,
+          0.005,
+          1.3118039945176978
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.6863213144242764,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "face": 0
+      },
+      {
+        "at": [
+          1.5628297600128944,
+          0.005000000000000111,
+          4.136656020455922
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.5191242245491594,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "face": 0
+      },
+      {
+        "at": [
+          2.400860288888374,
+          0.005000000000000056,
+          5.394367389187959
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.5748687665909529,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "face": 0
+      },
+      {
+        "at": [
+          6.523563571472237,
+          0.1,
+          8.014450617102517
+        ],
+        "R": 3.2,
+        "team": 0,
+        "seed": 0.21332735707983375,
+        "kind": "source-splash",
+        "footprint": "ink-blast"
+      },
+      {
+        "at": [
+          5.170607246809615,
+          0.005000000000000056,
+          5.106770639227353
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.8535135288257152,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "face": 0
+      },
+      {
+        "at": [
+          6.001814281346549,
+          0.005000000000000056,
+          6.369622898341042
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.9092379736248404,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "face": 0
+      },
+      {
+        "at": [
+          7.289249808973346,
+          0.005000000000000056,
+          7.097888104872438
+        ],
+        "R": 1.62,
+        "team": 0,
+        "seed": 0.7420365987345576,
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "face": 0
+      }
+    ],
+    "beforeCells": 899
+  }
+]

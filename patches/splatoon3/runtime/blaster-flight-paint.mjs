@@ -179,6 +179,12 @@ function landSplashDrop(game, drop, hit) {
   if(drop.spec.noSpecial)opts.claimMode='no-special';
   if (surfaceOnly) opts.face = hit.face;
   const floor = hit.normal.y > .45;
+  // An asymmetric profile still needs its captured direction at depth=1.
+  // Zero stretch rotates the body without changing the source envelope.
+  if (floor && drop.footprint && (drop.dirX || drop.dirZ)) {
+    drop.next.set(drop.dirX, 0, drop.dirZ);
+    opts.stretch = drop.next; opts.stretchAmt = 0;
+  }
   if (drop.depth && floor && (drop.dirX || drop.dirZ)) {
     const depth = splashDepthScale(drop.spec, drop.spawnY - hit.point.y);
     const { amount, centreBack } = splashStretch(depth, drop.radius);

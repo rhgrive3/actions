@@ -1645,7 +1645,7 @@ const PAINT_RADIUS_MAX = 5.2 * 0.72;
 // row above PAINT_RADIUS_MAX, and only with this exact victim-blast signature.
 const PAINT_VICTIM_BLAST_RADIUS = 5;
 const PAINT_VICTIM_SPLASH_RADIUS = 1;
-const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck', 'source-shot', 'source-splash', 'ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact', 'ink-charger-a', 'ink-charger-b', 'ink-charger-c']);
+const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck', 'source-shot', 'source-splash', 'ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact', 'ink-charger-a', 'ink-charger-b', 'ink-charger-c', 'ink-blast', 'ink-blast-rectified']);
 const paintClockSessions = new WeakMap();
 function paintClockStateFor(session, cfg) {
   const matchId = typeof cfg?.id === 'string' ? cfg.id : '';

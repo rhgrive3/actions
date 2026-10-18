@@ -24,6 +24,7 @@ for(const id of ['s3-stringer-normal','s3-stringer-short','s3-stringer-explosion
   x.f.G.projectiles.update(1/60);
   assert.equal(x.stamps.length,0,'no instant floor projection from high airborne shot');
   simulate(x);assert.ok(x.f.G.projectiles._s3SplashLandings?.length>0);
+  assert.ok(x.stamps.filter(s=>s.opts.kind==='source-splash').every(s=>s.opts.footprint), 'falling main ink retains its release-time silhouette');
   assert.ok(x.stamps.some(s=>s.opts.kind==='source-splash'));assert.equal(x.a.stats.turf,x.paint.counts[0]*.0625);
  });
 
@@ -38,6 +39,7 @@ for(const id of ['s3-shelter-normal','s3-shelter-wide','s3-shelter-compact','s3-
   assert.ok(x.f.G.projectiles._s3SplashDrops.length>0);
   assert.ok(x.f.G.projectiles._s3SplashDrops.length<=plan.count,'never count once per pellet');
   simulate(x);assert.equal(flight.next,plan.count,'retired members settle every remaining threshold');
+  assert.ok(x.stamps.filter(s=>s.opts.kind==='source-splash').every(s=>s.opts.footprint==='ink-shot'), 'shared Brella drops must not fall back to ellipses');
   assert.ok(x.stamps.some(s=>s.opts.kind==='source-splash'));assert.equal(x.a.stats.turf,x.paint.counts[0]*.0625);
  });
 
@@ -57,11 +59,18 @@ test('explosive arrows paint on lodging, then detonate once after the source fus
  x.f.G.actors=[];x.f.G.physics.level=null;
  x.f.G.physics.raycast=(from,dir,len,h)=>{h.hit=true;h.dist=from.y;h.point.copy(from).setY(0);h.normal.set(0,1,0);h.face=0;return h;};
  x.f.G.physics.segment=(from,to,h)=>{h.hit=true;h.dist=from.distanceTo(to)*.5;h.point.copy(from).lerp(to,.5);h.point.y=0;h.normal.set(0,1,0);h.face=0;return h;};
+ const releaseDirection=p.vel.clone().setY(0).normalize();
  const before=x.stamps.length;assert.equal(x.f.G.projectiles._step(p,1/60),false);
- assert.equal(p.catalog.stuck,true);assert.equal(x.stamps.length,before+1);assert.equal(x.stamps.at(-1).r,3);
+ assert.equal(p.catalog.stuck,true);
+ assert.equal(p.vel.lengthSq(),0);x.a.aimDir.set(1,0,0);
+ assert.ok(p.catalog.inkDirection.distanceTo(releaseDirection)<1e-12);assert.equal(x.stamps.length,before+1);assert.equal(x.stamps.at(-1).r,3);
+ assert.equal(x.stamps.at(-1).opts.footprint,'ink-shot','lodging owns a shot-shaped pool');
  for(let i=0;i<44;i++)assert.equal(x.f.G.projectiles._step(p,1/60),false);
  assert.equal(x.stamps.length,before+1,'fuse does not repeatedly stamp');
  assert.equal(x.f.G.projectiles._step(p,1/60),true);assert.equal(x.stamps.length,before+2);
+ assert.equal(x.stamps.at(-1).opts.footprint,'ink-blast-rectified','detonation owns a separate blast-shaped pool');
+ assert.ok(x.stamps.at(-1).opts.stretch.distanceTo(releaseDirection)<1e-12,'fuse preserves pre-lodging bearing');
+ assert.equal(x.stamps.at(-1).opts.stretchAmt,0);
 });
 
 test('Saber foot mask requires nearby grounded floor; expiry releases its explicit terminal radius',async()=>{
@@ -71,6 +80,7 @@ test('Saber foot mask requires nearby grounded floor; expiry releases its explic
   const p=high.f.G.projectiles.list.find(p=>p.catalog);high.f.G.actors=[];
   while(!high.f.G.projectiles._step(p,1/60)){}
   assert.ok(high.f.G.projectiles._s3SplashDrops.some(d=>d.radius===p.catalog.descriptor.b.BurstParam.SplashPaintRadius&&!d.depth));
+  assert.ok(high.f.G.projectiles._s3SplashDrops.filter(d=>!d.depth).every(d=>d.footprint==='ink-blast-rectified'), 'terminal paint retains its footprint until landing');
  }
 });
 

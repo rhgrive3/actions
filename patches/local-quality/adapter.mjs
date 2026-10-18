@@ -550,6 +550,39 @@ function adaptQualityLayer(rel, code) {
   }
   if (rel === 'src/core/mobile.js') return code;
   if (rel === 'src/ui/menus.js') {
+    // Title -> MAIN used to synchronously kick off a decode() for every
+    // day/dusk stage image (and desktop hero variant). On source-stage builds
+    // this pins dozens of independent 800x450 SVG raster surfaces exactly as
+    // the title wipe and the first player portrait enter. Only actual visible
+    // stage artwork should consume decoded-image memory.
+    code = replaceOnce(code,
+      `  /** Warm the image cache with every stage render (hero + thumbnail, day + dusk) so switches never flash. */
+  _preloadStages() {
+    if (this._stageImgs) return;
+    this._stageImgs = [];
+    for (const m of this._maps()) {
+      for (const t of ['day', 'dusk']) {
+        // phones/tablets only warm the small cards; the big hero art streams in on demand (≈2 MB less on mobile data)
+        for (const sm of (touchPrimary ? [true] : [true, false])) {
+          const im = new Image();
+          im.decoding = 'async';
+          im.src = stageArt(m.id, t, sm);
+          if (im.decode) im.decode().catch(() => {});
+          this._stageImgs.push(im);
+        }
+      }
+    }
+  }`,
+      `  /** Stage artwork is loaded by the selected hero and visible picker tickets.
+   *  Do not globally decode and retain every map while entering the main menu. */
+  _preloadStages() {}`,
+      'title/main removes bulk stage image decode and retained atlas owners');
+    code = replaceOnce(code,
+      `      const imgDay = h('img', { class: 'iw-ticket__img is-day', alt: '', draggable: 'false' });
+      const imgDusk = h('img', { class: 'iw-ticket__img is-dusk', alt: '', draggable: 'false' });`,
+      `      const imgDay = h('img', { class: 'iw-ticket__img is-day', alt: '', draggable: 'false', loading: 'lazy', decoding: 'async' });
+      const imgDusk = h('img', { class: 'iw-ticket__img is-dusk', alt: '', draggable: 'false', loading: 'lazy', decoding: 'async' });`,
+      'defer offscreen stage ticket images; selected stage hero stays eager');
     code = replaceOnce(code,
       "    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(this._refit).observe(this.el);",
       "    if (typeof ResizeObserver !== 'undefined') { this._qualityFitObserver = new ResizeObserver(this._refit); this._qualityFitObserver.observe(this.el); }",

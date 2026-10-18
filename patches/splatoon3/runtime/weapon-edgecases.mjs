@@ -405,6 +405,9 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       (this.s3BlastQueue ??= []).push({
         point: point.clone(), victim,
         p: { owner: p.owner, team: p.team, ghost: !!p.ghost, wid: p.wid, seed: p.seed,
+          // The live round is pooled before this burst runs. Keep its bearing,
+          // just as we keep its source weapon and collision normal.
+          vel: p.vel?.clone(),
           s3Weapon: p.s3Weapon ?? null, s3TerrainBurst: true,
           // PR1188: keep the struck surface orientation for the falling burst drop.
           s3BurstCollisionHit: p.s3BurstCollisionHit?.normal ? { normal: p.s3BurstCollisionHit.normal.clone() } : null },

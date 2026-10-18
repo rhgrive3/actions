@@ -8,13 +8,13 @@ import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { mainInkFootprint, CHARGER_FOOTPRINT, chargerInkProfileKind, INK_PROFILE_BYTES, INK_FOOTPRINT_KINDS } from '../runtime/main-ink-footprints.mjs';
 import { chargerPaintParameters } from '../runtime/weapons-charger-flight.mjs';
 
-const families=new Set(['shooter','dualies','roller','brush','slosher','charger']);
+const families=new Set(MAIN_WEAPON_CATALOG.records.map(r=>r.family));
 const options={fullRuntime:true,productionComposition:true,realProjectiles:true,
   extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"};
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 
-test('profile resource is bounded and only the requested main families opt in',()=>{
-  assert.equal(INK_PROFILE_BYTES.byteLength,4096);
+test('profile resource is bounded and every main family selects a silhouette',()=>{
+  assert.equal(INK_PROFILE_BYTES.byteLength,8192);
   for(const r of MAIN_WEAPON_CATALOG.records)assert.equal(!!mainInkFootprint(r),families.has(r.family),r.id);
   assert.equal(mainInkFootprint('shooter'),mainInkFootprint('dualies'),'both fire discrete ink shots');
   assert.equal(mainInkFootprint('charger'),CHARGER_FOOTPRINT);
@@ -25,7 +25,7 @@ test('profile resource is bounded and only the requested main families opt in',(
 });
 
 test('single nearest GPU fetch packs both linear profile endpoints exactly', () => {
-  assert.equal(INK_PROFILE_BYTES.length, 128 * 8 * 4);
+  assert.equal(INK_PROFILE_BYTES.length, 128 * 16 * 4);
   for (let row = 0; row < INK_FOOTPRINT_KINDS.length; row++) {
     for (let i = 0; i < 128; i++) {
       const offset = (row * 128 + i) * 4;
@@ -61,14 +61,13 @@ test('all selected main Actors use their CPU silhouettes through real release/co
       assert.ok(sourceEvents.every(s=>s.footprint===CHARGER_FOOTPRINT),
         r.id+' Charger feet, travel and terminal ink must all use the organic outline');
     }
-    // Explosher's explosion is a separate existing blast owner, not Bucket's sheet.
-    if(r.sourceActor!=='WeaponSlosherWashtub')assert.ok([...kinds].some(k=>k>=10&&k<=17),r.id+' selected live silhouette');
+    assert.ok([...kinds].some(k=>k>=10&&k<=19),r.id+' selected live silhouette');
     assert.equal(a.stats.turf,paint.counts[0]*.0625,r.id+' exact once-only turf credit');
     rows.push({id:r.id,family:r.family,kinds:[...kinds].sort((a,b)=>a-b),stamps:stamps.length,cells:paint.counts[0],
       grid:digest(paint.grid),events:digest(JSON.stringify(stamps))});
   }
   assert.equal(rows.length, MAIN_WEAPON_CATALOG.records.filter(r=>families.has(r.family)).length);
-  if(process.env.INK_FOOTPRINT_RECEIPT)fs.writeFileSync(process.env.INK_FOOTPRINT_RECEIPT,JSON.stringify({version:'11.3.0',profileBytes:4096,rows},null,2)+'\n');
+  if(process.env.INK_FOOTPRINT_RECEIPT)fs.writeFileSync(process.env.INK_FOOTPRINT_RECEIPT,JSON.stringify({version:'11.3.0',profileBytes:8192,rows},null,2)+'\n');
 });
 
 test('oriented contact band has parallel sides and continuous center coverage without circular scallops',async()=>{

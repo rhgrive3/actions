@@ -1,0 +1,521 @@
+[
+  {
+    "id": "s3-blaster-short",
+    "charged": false,
+    "stamps": 6,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 926,
+    "after": 751
+  },
+  {
+    "id": "s3-blaster-short",
+    "charged": true,
+    "stamps": 18,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 926,
+    "after": 751
+  },
+  {
+    "id": "blaster",
+    "charged": false,
+    "stamps": 8,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 880,
+    "after": 711
+  },
+  {
+    "id": "blaster",
+    "charged": true,
+    "stamps": 16,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 880,
+    "after": 711
+  },
+  {
+    "id": "s3-blaster-long",
+    "charged": false,
+    "stamps": 6,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 833,
+    "after": 686
+  },
+  {
+    "id": "s3-blaster-long",
+    "charged": true,
+    "stamps": 12,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 833,
+    "after": 686
+  },
+  {
+    "id": "s3-blaster-lightshort",
+    "charged": false,
+    "stamps": 4,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 673,
+    "after": 567
+  },
+  {
+    "id": "s3-blaster-lightshort",
+    "charged": true,
+    "stamps": 20,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 673,
+    "after": 567
+  },
+  {
+    "id": "s3-blaster-light",
+    "charged": false,
+    "stamps": 7,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 723,
+    "after": 608
+  },
+  {
+    "id": "s3-blaster-light",
+    "charged": true,
+    "stamps": 21,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 723,
+    "after": 608
+  },
+  {
+    "id": "s3-blaster-lightlong",
+    "charged": false,
+    "stamps": 7,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 690,
+    "after": 567
+  },
+  {
+    "id": "s3-blaster-lightlong",
+    "charged": true,
+    "stamps": 21,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 690,
+    "after": 567
+  },
+  {
+    "id": "s3-blaster-precision",
+    "charged": false,
+    "stamps": 6,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 611,
+    "after": 516
+  },
+  {
+    "id": "s3-blaster-precision",
+    "charged": true,
+    "stamps": 12,
+    "kinds": [
+      "ink-blast",
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 611,
+    "after": 516
+  },
+  {
+    "id": "s3-spinner-quick",
+    "charged": false,
+    "stamps": 2,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 459,
+    "after": 384
+  },
+  {
+    "id": "s3-spinner-quick",
+    "charged": true,
+    "stamps": 51,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 797,
+    "after": 702
+  },
+  {
+    "id": "splatling",
+    "charged": false,
+    "stamps": 0,
+    "kinds": [],
+    "unprofiled": 0,
+    "before": 0,
+    "after": 0
+  },
+  {
+    "id": "splatling",
+    "charged": true,
+    "stamps": 54,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 834,
+    "after": 723
+  },
+  {
+    "id": "s3-spinner-hyper",
+    "charged": false,
+    "stamps": 1,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 378,
+    "after": 312
+  },
+  {
+    "id": "s3-spinner-hyper",
+    "charged": true,
+    "stamps": 36,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 669,
+    "after": 591
+  },
+  {
+    "id": "s3-spinner-downpour",
+    "charged": false,
+    "stamps": 0,
+    "kinds": [],
+    "unprofiled": 0,
+    "before": 0,
+    "after": 0
+  },
+  {
+    "id": "s3-spinner-downpour",
+    "charged": true,
+    "stamps": 60,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 782,
+    "after": 706
+  },
+  {
+    "id": "s3-spinner-serein",
+    "charged": false,
+    "stamps": 1,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 317,
+    "after": 259
+  },
+  {
+    "id": "s3-spinner-serein",
+    "charged": true,
+    "stamps": 61,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 698,
+    "after": 572
+  },
+  {
+    "id": "s3-spinner-hypershort",
+    "charged": false,
+    "stamps": 1,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 357,
+    "after": 302
+  },
+  {
+    "id": "s3-spinner-hypershort",
+    "charged": true,
+    "stamps": 56,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 718,
+    "after": 651
+  },
+  {
+    "id": "s3-shelter-normal",
+    "charged": false,
+    "stamps": 14,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 844,
+    "after": 745
+  },
+  {
+    "id": "s3-shelter-normal",
+    "charged": true,
+    "stamps": 14,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 844,
+    "after": 745
+  },
+  {
+    "id": "s3-shelter-wide",
+    "charged": false,
+    "stamps": 17,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 884,
+    "after": 774
+  },
+  {
+    "id": "s3-shelter-wide",
+    "charged": true,
+    "stamps": 17,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 884,
+    "after": 774
+  },
+  {
+    "id": "s3-shelter-compact",
+    "charged": false,
+    "stamps": 10,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 708,
+    "after": 617
+  },
+  {
+    "id": "s3-shelter-compact",
+    "charged": true,
+    "stamps": 41,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 738,
+    "after": 651
+  },
+  {
+    "id": "s3-shelter-focus",
+    "charged": false,
+    "stamps": 14,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 844,
+    "after": 748
+  },
+  {
+    "id": "s3-shelter-focus",
+    "charged": true,
+    "stamps": 42,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 1818,
+    "after": 1666
+  },
+  {
+    "id": "s3-stringer-normal",
+    "charged": false,
+    "stamps": 6,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 750,
+    "after": 641
+  },
+  {
+    "id": "s3-stringer-normal",
+    "charged": true,
+    "stamps": 9,
+    "kinds": [
+      "ink-shot",
+      "ink-blast"
+    ],
+    "unprofiled": 0,
+    "before": 591,
+    "after": 483
+  },
+  {
+    "id": "s3-stringer-short",
+    "charged": false,
+    "stamps": 3,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 680,
+    "after": 584
+  },
+  {
+    "id": "s3-stringer-short",
+    "charged": true,
+    "stamps": 6,
+    "kinds": [
+      "ink-shot",
+      "ink-blast"
+    ],
+    "unprofiled": 0,
+    "before": 440,
+    "after": 355
+  },
+  {
+    "id": "s3-stringer-explosion",
+    "charged": false,
+    "stamps": 5,
+    "kinds": [
+      "ink-shot"
+    ],
+    "unprofiled": 0,
+    "before": 794,
+    "after": 703
+  },
+  {
+    "id": "s3-stringer-explosion",
+    "charged": true,
+    "stamps": 10,
+    "kinds": [
+      "ink-shot",
+      "ink-blast"
+    ],
+    "unprofiled": 0,
+    "before": 1044,
+    "after": 932
+  },
+  {
+    "id": "s3-saber-normal",
+    "charged": false,
+    "stamps": 5,
+    "kinds": [
+      "ink-brush"
+    ],
+    "unprofiled": 0,
+    "before": 804,
+    "after": 818
+  },
+  {
+    "id": "s3-saber-normal",
+    "charged": true,
+    "stamps": 3,
+    "kinds": [
+      "ink-brush"
+    ],
+    "unprofiled": 0,
+    "before": 357,
+    "after": 363
+  },
+  {
+    "id": "s3-saber-lite",
+    "charged": false,
+    "stamps": 5,
+    "kinds": [
+      "ink-brush"
+    ],
+    "unprofiled": 0,
+    "before": 743,
+    "after": 757
+  },
+  {
+    "id": "s3-saber-lite",
+    "charged": true,
+    "stamps": 4,
+    "kinds": [
+      "ink-brush"
+    ],
+    "unprofiled": 0,
+    "before": 345,
+    "after": 361
+  },
+  {
+    "id": "s3-saber-heavy",
+    "charged": false,
+    "stamps": 5,
+    "kinds": [
+      "ink-brush"
+    ],
+    "unprofiled": 0,
+    "before": 980,
+    "after": 997
+  },
+  {
+    "id": "s3-saber-heavy",
+    "charged": true,
+    "stamps": 5,
+    "kinds": [
+      "ink-brush"
+    ],
+    "unprofiled": 0,
+    "before": 1135,
+    "after": 1142
+  }
+]
