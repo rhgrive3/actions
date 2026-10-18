@@ -30,7 +30,7 @@ test('falling catalog projectiles release from the explicit source distance for 
  const {catalogSplashDropSpec,catalogSplashFirst}=await import('../runtime/catalog-splash-paint.mjs');
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);makePaintWorld(f);f.G.settings={};
- const records=MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&catalogSplashDropSpec(r.parameters));assert.ok(records.length>=23,'typed Shooter default adds at least TripleQuick to the falling queue');
+ const records=MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&catalogSplashDropSpec(r.parameters,r.sourceActor));assert.ok(records.length>=23,'typed Shooter default adds at least TripleQuick to the falling queue');
  assert.ok(records.some(r=>r.id==='s3-shooter-triplequick'));
  for(const r of records){
   f.G.projectiles.clear();const a=f.make(r.id);a.aimDir.set(0,0,1);
