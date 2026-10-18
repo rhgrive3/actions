@@ -5127,3 +5127,8 @@ Slosherを回収したprojectile objectがRollerへ再利用される際、`fide
 `b6f4fd97` で導入された累乗の乗算列化と距離の二乗比較は、数学上の等価性に対して binary64 の丸め順序が異なり、付随塗りマスク座標と境界の内外判定を変えていた。`paint-ownership.mjs` の元の `Math.pow` と符号付き距離式を復元し、ドリップで不要な伸長変換を省く分岐と既存の直接piece走査は維持する。境界の数ULP内外を検査する厳密な回帰試験を追加し、既存oracleと完全一致比較は変更しない。原因・固定SHA・検証範囲は [修復記録](inkwave-paint-sampling-2026-10-17.md) を参照。
 
 比較対象は既存 profile の Splatoon 3 Ver.11.3.0。今回は INKWAVE 内部の床・壁、伸長量0/0.4/1.7、種0/0.37/0.99999、成長時刻0.01/0.5/1.2/3のロジック検証であり、本家のブキ・ギア別実機計測や新しい公称値を追加したものではない。境界サンプルで所有権の内外が反転する退行を修正したが、見た目の差や本家との完全一致を実証したとはしない。
+
+
+## 2026-10-18: Armor Helmet Replica coating finish
+
+User clarified the remaining material request as a coating finish. Shell material alone adds a clearcoat layer; accepted geometry, base color, flat ear print and other gear stay unchanged. Reference, scope, source/geometry checks and explicitly pending native exact-head browser/GPU evidence are recorded in [the coating report](inkwave-armor-coating-2026-10-18.md). No gameplay or gear-ability parity is claimed from this appearance correction.
