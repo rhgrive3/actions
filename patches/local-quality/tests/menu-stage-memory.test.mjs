@@ -66,6 +66,8 @@ test('transform is scoped to menus and rejects upstream drift instead of silentl
   assert.notEqual(drift, source);
   assert.throws(() => adaptQualitySource('src/ui/menus.js', drift),
     /expected exactly one connection/);
+  // A fully composed menu is rejected by the earlier lobby-slot guard before
+  // the stage-memory layer runs. Keep the single-stage drift assertion above.
   assert.throws(() => adaptQualitySource('src/ui/menus.js', built),
-    /expected exactly one connection/);
+    /lobby slot transform: expected exactly one anchor/);
 });
