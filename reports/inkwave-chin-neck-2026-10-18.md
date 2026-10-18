@@ -9,7 +9,7 @@
 
 ## 実装
 
-`patches/local-quality/s3-face-look-adapter.mjs` に、一意アンカー置換 `localized under-jaw to neck transition` を追加。変更は `character-face.js` の `unionField` とその丸め幅のみ。
+`patches/local-quality/s3-face-look-adapter.mjs` に、一意アンカー置換 `localized under-jaw to neck transition` を追加。形状変更は `character-face.js` の `unionField` とその丸め幅のみ。後述の背面検証を受け、既存skull normal overrideの適用条件もtrim後のhead fieldに合わせた。
 
 1. 下部carrierのhead fieldを、左右と後方へ少し上がる滑らかな下限で局所的に切り上げる。下限は `1.078 + 0.11 * (sqrt(x² + 0.02²) - 0.02) + 0.012 * sstep(0.04, -0.07, z)`、smooth-max幅は `0.014`。
 2. 首とのsmooth-union幅を `0.017` から `0.028` に変更し、接続の折れを和らげる。
@@ -40,11 +40,12 @@ Production composed `unionField` の同一 `x,z` に対し、下側のゼロ交�
 node --experimental-vm-modules --test patches/local-quality/tests/s3-chin-neck.test.mjs patches/local-quality/tests/s3-face-look.test.mjs
 ```
 
-a505のproduction/test/scriptsを用いて **18/18 pass**（既存15＋追加3）。追加試験は以下を確認する。
+a505のproduction/test/scriptsを用いて **19/19 pass**（既存15＋追加4）。追加試験は以下を確認する。
 
 - 左右後寄りの局所切り上げ、鏡対称、前中央顎の固定座標保持。
 - 解析的head surfaceと顔feature surfaceのサンプル完全一致、下首fieldとtube半径の保持。
 - 全120 profile列の有限座標、下降性、隣接間隔、upper joinとcollar joinの連続性。
+- normal補正の前後で全5detailのposition/index/skinweight配列完全一致。後首の問題2点と周辺の外向きnormal、AO暗斑消失を数値検証。
 
 既存試験は全detail level、目鼻口、normal、鏡像triangulation等を含む。数値テストだけで外観合格や本家一致とは判定しない。
 
@@ -56,13 +57,19 @@ a505のproduction/test/scriptsを用いて **18/18 pass**（既存15＋追加3�
 - 斜め/横では後ろ下顎の張り出しが減る。横下面は以前より水平で直線的に見えるため、「本家の丸みと厳密一致」とはしない。前顎を尖らせた変更ではない。
 - 確認した下・横・首上向き画像に穴や大きな首分離は見られない。首を太らせて隠す処理ではない。
 - 対応ケースの頂点数・triangle数・draw数は増加なし。skinの有限性・正規化等の技術検証は正常。これらは描画時間/FPSの完全不変を保証するものではない。
-- 髪の形を保持したまま後下顎を切り上げるため、背面の髪下に新しい隙間がないかを追加確認する。背面を含めた44ケース版 exact head `33e8bec5a2fbb17d4b7eb89854e8dc56fc5bffc3` は **本記録作成時点で未完了**。43ケース成功をもって背面確認済みとはしない。
+- 髪の形を保持したまま後下顎を切り上げるため、背面の髪下に新しい隙間がないかを追加確認する。背面を含めた44ケース版 exact head `33e8bec5a2fbb17d4b7eb89854e8dc56fc5bffc3` は44+44ケースと全88 PNG照合に成功したが、首後上端に小さい青黒い斑点2つを発見した。この版は最終採用しない。
+
+## 背面で発見したnormal回帰と補正
+
+44ケース版では、大きな髪間隙はない一方、後首上端の小暗斑を自然な影と即断せず調べた。後首帯494頂点を確認し、対象三角形の反転は0件だった。問題2点 `x=±0.02180720236, y=1.06945512049, z=-0.03551700085` では、既存の旧headFieldだけを参照するskull normal overrideが1.0で作用し、実際は露出した首の表面なのに下向き・一部内向きのnormalを与えていた（normal.y約-0.951、AO約0.506）。拡大画像の左右暗斑と対応する。
+
+`jawNeckHeadField` にtrim後のhead fieldを抽出し、既存normal overrideを「元head fieldとtrim後head fieldの両方でskull表面に近い点」に限定した。形状式は変更せず、首の点にはgeometry normalを使う。全5detailでposition/index/skinweightの完全一致を確認し、問題2点のAOは0.9超、対象後首帯の最低AOは約0.908となった。数値回帰は19/19成功。**normal修正版 exact head `e89f829591271e4bf1e4613cdd3bde4cd844cad7` の44+44 native再撮影は本記録作成時点では未確認**であり、旧44ケースの成功を新normal版の描画証拠に流用しない。
 
 ## 変更ファイルと固定ハッシュ
 
 SHA-256:
 
-- `patches/local-quality/s3-face-look-adapter.mjs`: `dd8383f91d961b46e76e298b28bfbf156f4bc1e318d7c33fd27250ccd19b771f`
-- `patches/local-quality/tests/s3-chin-neck.test.mjs`: `5324d43969b59b8f1cdfeb7c563fb0735f686544d2c40e52567e73451b7d582b`
+- `patches/local-quality/s3-face-look-adapter.mjs`: `173dea3ad8f7d9a88accf891654218526bd91502199db7274646f48ed373322e`
+- `patches/local-quality/tests/s3-chin-neck.test.mjs`: `93dfe7f89dc2e67a383c8ebc0ddf47d971214f8bbc0321212fb80ab26dc2d891`
 
 診断workflow/harnessは診断専用branchであり、本番runtime変更に含めない。本番PRの最終head CI、背面追加確認、公開反映は別gate。公開サイト更新・マージ完了をこの記録では主張しない。

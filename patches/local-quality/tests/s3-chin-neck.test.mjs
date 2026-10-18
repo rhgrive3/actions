@@ -16,8 +16,9 @@ async function realm(previous = false) {
     let source = fs.readFileSync(file, 'utf8');
     if (rel.startsWith('src/')) source = adaptBuildSource(rel, source);
     if (rel === 'src/game/character-face.js') {
-      if (previous) source = source.replace(/const NECK_K = 0\.028;[\s\S]*?(?=const NECK_O)/,
-        'const NECK_K = 0.017;\nconst unionField = (p) => sminK(headField(p), neckField(p), NECK_K);\n');
+      if (previous === true) source = source.replace(/const NECK_K = 0\.028;[\s\S]*?(?=const NECK_O)/,
+        'const NECK_K = 0.017;\nconst jawNeckHeadField = headField;\nconst unionField = (p) => sminK(headField(p), neckField(p), NECK_K);\n').replace(' * sstep(0.003, 0.0005, Math.abs(jawNeckHeadField(p)))', '');
+      if (previous === 'oldNormals') source = source.replace(' * sstep(0.003, 0.0005, Math.abs(jawNeckHeadField(p)))', '');
       source += '\nexport { unionField, neckField, neckProfiles };';
     }
     const module = new vm.SourceTextModule(source, { context, identifier: file });
@@ -72,4 +73,36 @@ test('chin/neck: profile columns remain finite, descending and continuous into t
       assert.ok(col[i].distanceTo(col[i - 1]) < 0.005, 'no gap or step');
     }
   }
+});
+
+
+test('chin/neck: trimmed neck never inherits obsolete skull normals; all detail-level geometry and weights stay identical', async () => {
+  const old = await realm('oldNormals'), [, fixed] = await both();
+  let changed = 0, exactPair = 0;
+  for (let level = 0; level <= 4; level++) {
+    const a = old.buildFaceSkin(level), b = fixed.buildFaceSkin(level);
+    assert.deepEqual(Array.from(a.geo.attributes.position.array), Array.from(b.geo.attributes.position.array), `level ${level}: positions unchanged`);
+    assert.deepEqual(Array.from(a.geo.index.array), Array.from(b.geo.index.array), `level ${level}: topology unchanged`);
+    assert.equal(JSON.stringify(a.acc.w), JSON.stringify(b.acc.w), `level ${level}: skin weights unchanged`);
+    const N = b.geo.attributes.normal;
+    for (let i = 0; i < b.acc.P.length; i++) {
+      const p = b.acc.P[i];
+      if (b.acc.part[i] !== 1 || p.z >= -0.01 || p.y < 1.04 || p.y > 1.115) continue;
+      if ((a.acc.nb[i]?.[1] || 0) > 0.1 && !(b.acc.nb[i]?.[1] > 0)) {
+        const neckCenterZ = -0.0135 + 0.01 * Math.max(0, Math.min(1, (p.y - 0.93) / 0.2));
+        const radial = N.getX(i) * p.x + N.getZ(i) * (p.z - neckCenterZ);
+        assert.ok(radial > 0, `level ${level}: exposed rear neck normal faces outward at ${i}`);
+        assert.ok(b.ao[i] > 0.8, `level ${level}: no spurious dark AO at ${i}: ${b.ao[i]}`);
+        changed++;
+      }
+      if (level === 4 && Math.abs(Math.abs(p.x) - 0.02180720236) < 1e-9 && Math.abs(p.y - 1.06945512049) < 1e-9) {
+        assert.equal(b.acc.nb[i], undefined, 'both former blue-spot vertices keep geometry normals');
+        assert.ok(a.ao[i] < 0.6 && b.ao[i] > 0.9, 'both old blue AO spots removed');
+        exactPair++;
+      }
+    }
+    a.geo.dispose(); b.geo.dispose();
+  }
+  assert.ok(changed > 2, 'includes surrounding neck vertices across detail levels');
+  assert.equal(exactPair, 2, 'both observed rear-neck vertices covered');
 });
