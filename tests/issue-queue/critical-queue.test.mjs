@@ -135,35 +135,60 @@ test('composed fixed-step player aim uses current input yaw, not stale gameCam',
   fn.call(controller,false);
   assert.ok(Math.abs(Math.atan2(actor.aimPoint.x,actor.aimPoint.z))<1e-9);
 });
-test('malformed remote splat cannot trap replay flag or suppress later paint',()=>{
+test('composed malformed remote splat never traps replay or suppresses later paint',()=>{
+  const composed=adaptBuildSource('src/net/netmatch.js',
+    readFileSync(new URL('../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8'));
   const splats=[];
   const G={paint:{splat(c,r,t,o){splats.push([r,t,o.kind]);if(o.seed===999)throw Error('test paint failure');}}};
-  const fn=method('../../inkwave-public/src/net/netmatch.js','  _play(from, e) {','\n  // ---- the boss',{G,
-    _v:new Vec(),_v2:new Vec()});
-  const nm={applying:false,_paintReplayWarned:false};
+  const fn=method('../../inkwave-public/src/net/netmatch.js',
+    '  _applyRemoteSplatEvent(e, commitReplay = true) {','\n  commitDeadlinePaint()',{
+      G,_v:new Vec(),_v2:new Vec(),readPaintOrder:()=>null,receivePaintOrder:()=>{},
+    },composed);
+  const nm={applying:false,_paintReplayWarned:false,_paintClockState:{applied:new Map()}};
   const event=(kind,seed=1)=>[0,'s',0,0,1,1,0,seed,kind,0,0,0,0,-1];
-  fn.call(nm,'peer',event({toString:null}));
+  assert.equal(fn.call(nm,event({toString:null})),false);
   assert.equal(nm.applying,false);
-  fn.call(nm,'peer',event('shot'));
+  assert.equal(fn.call(nm,event('shot')),true);
   assert.equal(nm.applying,false);
   assert.equal(splats.length,1);
   const warn=console.warn;console.warn=()=>{};
-  try{fn.call(nm,'peer',event('shot',999));}finally{console.warn=warn;}
+  try{assert.equal(fn.call(nm,event('shot',999)),false);}finally{console.warn=warn;}
   assert.equal(nm.applying,false);
-  fn.call(nm,'peer',event('line'));
+  assert.equal(fn.call(nm,event('line')),true);
   assert.equal(splats.length,3);
 });
-test('late menu attract callback cannot dispose a newly launched match',async()=>{
+test('composed late menu attract callback cannot dispose a newly started match',async()=>{
+  const composed=adaptBuildSource('src/main.js',
+    readFileSync(new URL('../../inkwave-public/src/main.js',import.meta.url),'utf8'));
   let resolve;
   const old={attract:true},live={attract:false};
   const G={mode:'menu',paint:{coverage:()=>[0,0]}};
-  const fn=method('../../inkwave-public/src/main.js','  _updateAttract(dt) {','\n  // ---------------------------------------------------------------------------------------- match flow',{G,THREE:{}});
+  const fn=method('../../inkwave-public/src/main.js','  _updateAttract(dt) {',
+    '\n  // ---------------------------------------------------------------------------------------- match flow',{G,THREE:{}},composed);
   let resets=0;
-  const game={match:old,attractT:110,shotT:100,menus:{current:'main'},rig:{mode:'orbit'},
+  const game={match:old,_matchFlow:{},attractT:110,shotT:100,menus:{current:'main'},rig:{mode:'orbit'},
     _fade:()=>new Promise(r=>{resolve=r}),_setPalette(){},_pickPalette(){return 0},
     _startAttract(){resets++}};
   fn.call(game,.02);
-  game.match=live;game._attractGeneration=1;resolve();
+  game.match=live;game._matchFlow={};resolve();
   await Promise.resolve();await Promise.resolve();
   assert.equal(resets,0);assert.equal(game.match,live);
+});
+
+
+test('real production composition retains source-admission and bounded progression',()=>{
+  const base=(path)=>readFileSync(new URL('../../inkwave-public/'+path,import.meta.url),'utf8');
+  const main=adaptBuildSource('src/main.js',base('src/main.js'));
+  const cfg=adaptBuildSource('src/config.js',base('src/config.js'));
+  const session=adaptBuildSource('src/net/session.js',base('src/net/session.js'));
+  const paint=adaptBuildSource('src/world/paint.js',base('src/world/paint.js'));
+  assert.match(main,/sanitizeProfile\(storedProfile/);
+  assert.match(main,/sanitizeSettings\(this.settings, DEFAULT_SETTINGS, QUALITY\)/);
+  assert.match(main,/awardProfileXP\(p, gained, PROGRESSION.xpForLevel\)/);
+  assert.ok(!main.includes('p.xp += gained;'));
+  assert.ok(!main.includes('while (p.xp >= PROGRESSION.xpForLevel(p.level))'));
+  assert.match(main,/validStartRoster\(cfg\?\.roster, G.net\?\.myId/);
+  assert.match(session,/validStartRoster\(cfg\?\.roster, this.myId/);
+  assert.match(cfg,/Object.hasOwn\(QUALITY, settings.quality\)/);
+  assert.match(paint,/Object.hasOwn\(K, opts.kind\)/);
 });
