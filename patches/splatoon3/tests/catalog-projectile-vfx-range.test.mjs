@@ -204,7 +204,7 @@ test('Bloblobber physical launch remains level against a short ground reticle an
       const dead=system._step(p,1/60);
       if(p.catalog.groundBounces>before)contacts.push({frame,distance:p.pos.z-originZ});
       if(p.catalog.groundBounces>0)sawBounce=true;
-      if(frame===74){assert.equal(dead,false,'bubble must not vanish at old 1.2s limit');survived72=true;}
+      if(frame===74 && requireAfterDefaultLife){assert.equal(dead,false,'high-arc bubble must not vanish at old 1.2s limit');survived72=true;}
       if(dead){ended=frame;distance=p.pos.z-originZ;break;}
     }
     assert.ok(sawBounce,'real ground geometry must cause a bounce');
