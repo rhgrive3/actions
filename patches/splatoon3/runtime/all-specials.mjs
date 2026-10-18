@@ -501,7 +501,7 @@ function specialObjectRadius(rt,attack,center,radius,damageAt,cause=null,include
     const point=options.shapeContact?(rt.shapeObjectPoint||(rt.shapeObjectPoint=new rt.api.THREE.Vector3())).copy(object.pos):object.pos;
     if(options.shapeContact?!options.shapeContact(object,point):point.distanceTo(center)>radius)continue;
     if(rt.api.G.physics?.los&&!rt.api.G.physics.los(center,point))continue;
-    const amount=damageAt(point.distanceTo(center),object,point);if(amount>0)specialObjectDamage(rt,attack,object,amount,cause,point);
+    const amount=damageAt(point.distanceTo(center),object,point);if(amount>0)specialObjectDamage(rt,attack,object,amount,cause,options.shapeContact?point:center);
   }
   if(includeSubs)rt.system?.s3DamageSubObjects?.(attack,center,radius,damageAt,cause);
 }
