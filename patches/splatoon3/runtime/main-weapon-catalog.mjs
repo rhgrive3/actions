@@ -571,6 +571,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     if (key==='arrow') { speed=stageValue(r,m,'SpawnSpeed',frames,2.1)*HZ; damage=stageValue(r,d,'DirectHitDamage',frames,300)/10; }
     if (key==='slosh') { speed=finite(packet.SpawnSpeedGround,1)*HZ; }
+    // The Bloblobber is terrain-rebound terminated, not an ordinary 1.2s
+    // catalogue glob. From its pinned 11.3.0 initial speed, gravity and drag,
+    // a near-vertical level-ground throw takes ~200 fixed frames to reach its
+    // third ground contact. Keep a separate 240F safety deadline for voids and
+    // exceptional geometry. This is an INKWAVE cleanup bound, NOT a Nintendo
+    // extracted lifetime; ordinary ground shots end on their third contact.
+    if (r.sourceActor==='WeaponSlosherBathtub') life=240/HZ;
     if (packet?.SpawnSpeedBase != null) speed=packet.SpawnSpeedBase*HZ;
     if (r.family==='blaster') life=finite(b.BlasterBurstParam?.BurstFrame,13)/HZ;
     if (key.startsWith('saber-')) life=finite(b.BurstParam?.BurstFrame,6)/HZ;
@@ -690,6 +697,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const a=runner.a,p=r.parameters,s=state(runner),group=key==='slosh'?p.UnitGroupParam:
       key==='vertical'?p.VerticalSwingUnitGroupParam:key==='brush'?p.SwingUnitGroupParam:p.WideSwingUnitGroupParam;
     origin(a);const at=muzzle.clone(), direction=dir.clone(), volleys=new Map();
+    // This particular main weapon lobs a ballistic row. The generic muzzle
+    // -> reticle-point convergence can angle it sharply toward a nearby floor
+    // crosshair hit, even when the player is looking horizontally. Fire along
+    // the admitted camera yaw/pitch instead; preserve the safe muzzle origin.
+    if(r.sourceActor==='WeaponSlosherBathtub'&&a.aimDir?.lengthSq()>EPS)
+      direction.copy(a.aimDir).normalize();
     group.Unit.forEach((u,j)=> {
       const desc=mode(r,key,j,charge), count=finite(u.BulletNum,1);
       for(let i=0;i<count;i++) {
@@ -706,7 +719,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           : (count===1?0:lerp(-finite(u.SpawnWideDegree,0)/2,finite(u.SpawnWideDegree,0)/2,i/(count-1)));
         const yaw=finite(u.BaseRotateYDegree,0)+fan;
         const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
-        const d={...desc,index:i},liftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
+        const d={...desc,index:i};
+        const sourceLiftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
+        // S3 names this as a boost by XZ speed, rather than total 3D speed.
+        // Inclined Bloblobber throws must not gain excessive Y launch speed.
+        // Store the resolved factor for delayed ground/air births as well.
+        const liftRate=r.sourceActor==='WeaponSlosherBathtub'
+          ?sourceLiftRate*Math.hypot(aim.x,aim.z):sourceLiftRate;
         const p=spawn(a,r,d,aim,at,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
           index:i,volley,lift:speed*liftRate});
         // Like the existing native Slosher owner, select ground/air speed at
