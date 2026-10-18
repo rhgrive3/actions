@@ -1,4 +1,4 @@
-import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
+import { WEAPON_AUDIO, fireArticulation, mainAudioSourceId } from './weapon-recipes.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
 import { withBlasterSplashHit } from './blaster-hit.mjs';
 const INSTALL=Symbol.for('inkwave.weapon-audio.runtime.v1');
@@ -40,17 +40,17 @@ export function installWeaponAudioRuntime(api){
     }
     return {actor:a,pos:local?undefined:finite3(pos)?pos:undefined,volume,priority:local?88:64,occlusion:occ};
   }
-  function play(a,event,pos,volume=1,id=a?.weapon?.id){if(WEAPON_AUDIO[id]?.events.includes(event))return G.audio?.playWeapon?.(id,event,options(a,pos,volume));return null;}
+  function play(a,event,pos,volume=1,id=a?.weapon?.id){id=mainAudioSourceId(id);if(WEAPON_AUDIO[id]?.events.includes(event))return G.audio?.playWeapon?.(id,event,options(a,pos,volume));return null;}
   function stop(r){const s=r?._mainAudioState;if(!s)return;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
-  function keepLoop(r,event,enabled,pitch=1){const s=stateFor(r),a=r.a;
-    if(enabled&&WEAPON_AUDIO[a.weapon.id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
-      if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(a.weapon.id,event,{...options(a,a.pos,.68),pitch});
+  function keepLoop(r,event,enabled,pitch=1){const s=stateFor(r),a=r.a,id=mainAudioSourceId(a?.weapon?.id);
+    if(enabled&&WEAPON_AUDIO[id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
+      if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch});
       s.loops[event]?.set({pos:a.isLocal?undefined:a.pos,pitch,volume:.68});active.add(r);
     }else{ s.loops[event]?.stop(.06);delete s.loops[event];}
   }
   const listen=(event,fn)=>{const u=on?.(event,fn);if(typeof u==='function')unsubs.push(u);};
   listen('weapon:fire',e=>{
-    const a=e?.actor,id=e?.weapon||a?.weapon?.id,r=WEAPON_AUDIO[id];
+    const a=e?.actor,id=mainAudioSourceId(e?.weapon||a?.weapon?.id),r=WEAPON_AUDIO[id];
     if(!a||!r||a.alive===false)return;
     const articulation=fireArticulation(r,e);
     // Mark accepted shots during WeaponRunner.update. A charge interrupted by firing
@@ -62,7 +62,7 @@ export function installWeaponAudioRuntime(api){
   });
   listen('weapon:dodge',e=>play(e?.actor,'dodge',e?.actor?.pos,.8));
   listen('weapon:impact',e=>{
-    const id=e?.weapon||e?.weaponId,a=e?.actor||e?.owner;
+    const id=mainAudioSourceId(e?.weapon||e?.weaponId),a=e?.actor||e?.owner;
     if(!WEAPON_AUDIO[id]||e.kind==='roll')return;
     const event=['burst','blast','explosion'].includes(e.kind)?'explosion':'impact';
     if(!WEAPON_AUDIO[id].events.includes(event))return;
@@ -77,7 +77,7 @@ export function installWeaponAudioRuntime(api){
   const oldReset=R.reset;R.reset=function(...args){stop(this);this._mainAudioState=null;return oldReset.apply(this,args);};
   const oldUpdate=R.update;
   R.update=function(dt,input,...rest){
-    const a=this.a,s=stateFor(this),id=a?.weapon?.id;
+    const a=this.a,s=stateFor(this),id=mainAudioSourceId(a?.weapon?.id);
     if(s.id!==id||s.engine!==G.audio){stop(this);s.id=id;s.engine=G.audio;s.preloadedKit=null;G.audio?.prepareWeapon?.(id,{urgent:!!a?.isLocal});}
     // A selected kit may become available only after the user's first gesture
     // starts AudioContext. Preload the actual selected sub/special *events*
