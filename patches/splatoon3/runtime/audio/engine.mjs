@@ -1,7 +1,7 @@
-import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX } from './bank.mjs';
+import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
-import { mainAudioSourceId } from './weapon-recipes.mjs';
+
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 
 // Extends the existing mixer; its unlock, mute, compressor and spatial paths remain authoritative.
