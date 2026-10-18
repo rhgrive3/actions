@@ -6,6 +6,9 @@ import path from 'node:path';
 // layout and UI state; it does not simulate gameplay or attest a real device.
 export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, testContinuation = !audit, touchCameraReset = false }) {
   const capture = async (name, selector) => {
+    // A finished exit animation can retain its translated panel until the
+    // menu's 340ms removal timer. Measure only after that owner is gone.
+    await page.waitForFunction(() => !document.querySelector('.iw-screen.is-leaving'));
     entry.screens[name] = selector ? await geometry(page, selector, name) : 'display';
     if (!audit) assert(await page.locator('.iw-ss__frame, .iw-prev__stage, .iw-wd, .iw-howto__ctl, .iw-lpanel, .iw-lfoot, .iw-pmatch').evaluateAll((els) => els.every((el) => {
       const r = el.getBoundingClientRect(); return r.left >= -1 && r.right <= innerWidth + 1;
