@@ -20,6 +20,7 @@ All are original generated illustrations, then downsampled from 1672×941 to 128
 - The frozen attract match is not updated, no projectile/paint/FX/world/shadow/post frame is submitted, and no recurring `Showcase.render()` is called. A short offscreen character portrait job may execute **only when requested**, so the existing Gear/Locker thumbnails can still appear.
 - Entry into Loadout, Locker and Online hub no longer builds the invisible 3D showroom or LobbySet. The actual Online lobby still uses its original 3D lineup and launch animation; changing wardrobe choices still updates profile data and portrait requests.
 - Live matches, title/loading, online lobby room line-ups, paused live games and results use the original simulation and renderer. The real online lobby intentionally retains its multiplayer launch animations and is not frozen. Leaving a static menu restores the normal 3D path automatically.
+- The static background rewrite runs as the final build-only composition pass, **after** source palette/weapon preview adapters, so those fail-closed integration anchors remain intact.
 - No gameplay tuning, weapon damage, network-authoritative physics or stages changed.
 
 ## Verification

@@ -1,17 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { adaptQualitySource, qualityIdentity, replaceOnce } from '../adapter.mjs';
+import { qualityIdentity, replaceOnce } from '../adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { adaptWeaponOpponentPreview } from '../../splatoon3/weapon-opponent-preview-adapter.mjs';
 import { adaptStaticMenuArt } from '../static-menu-adapter.mjs';
 const STATIC_MENU_SCREENS = ['main', 'mode', 'setup', 'loadout', 'locker', 'settings', 'howto', 'credits', 'online'];
 
 const fromRepo = path => fs.readFileSync(new URL('../../../' + path, import.meta.url), 'utf8');
 const rawGame = fromRepo('inkwave-public/src/main.js');
 const rawStyle = fromRepo('inkwave-public/styles/ui.css');
-const game = adaptQualitySource('src/main.js', rawGame);
+const game = adaptBuildSource('src/main.js', rawGame);
 const rawMenus = fromRepo('inkwave-public/src/ui/menus.js');
-const menus = adaptQualitySource('src/ui/menus.js', rawMenus);
-const css = adaptQualitySource('styles/ui.css', rawStyle);
+const menus = adaptBuildSource('src/ui/menus.js', rawMenus);
+const css = adaptBuildSource('styles/ui.css', rawStyle);
 
 function framePrefix(code) {
   const from = code.indexOf('  _frame(dt) {');
@@ -106,7 +108,8 @@ test('CSS maps exactly three generated locally hosted WebP backgrounds to the co
 });
 
 test('source transform is strict, idempotence fails closed, and unrelated source is unchanged', () => {
-  const changed = adaptStaticMenuArt('src/main.js', rawGame, replaceOnce);
+  const preview = adaptWeaponOpponentPreview('src/main.js', rawGame);
+  const changed = adaptStaticMenuArt('src/main.js', preview, replaceOnce);
   assert.match(changed, /INKWAVE_ART_MENU_SCREENS/);
   assert.throws(() => adaptStaticMenuArt('src/main.js', changed, replaceOnce), /expected exactly one connection/);
   const changedStyle = adaptStaticMenuArt('styles/ui.css', rawStyle, replaceOnce);
