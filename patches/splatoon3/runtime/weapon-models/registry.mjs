@@ -197,19 +197,20 @@ export function weaponHold(key, base) {
 
 // The Wii U source bank has no Brella / Splatana / Stringer / Brush upper-body
 // clips; those families (and any model asking for it) keep the native hold.
-const NATIVE_CARRY = new Set(['brella', 'splatana', 'stringer', 'brush']);
+const NATIVE_CARRY = new Set(['brella', 'splatana', 'stringer', 'brush', 'slosher']);
 // Source-bank body family (legs and torso) per behaviour family. The Wii U roller
 // clips stand upright; a Brush rests in the same bent-knee ready stance as the
-// existing INKWAVE shooter rest (owner review 2026-10-17).
-const SOURCE_BODY = Object.freeze({ brush: 'Nrml' });
+// existing INKWAVE shooter rest (owner review 2026-10-17). The roller takes the
+// brush's legs and stance as they are (owner review 2026-10-18); its upper body
+// and two-hand grip stay on the native rig like the brush's.
+const SOURCE_BODY = Object.freeze({ brush: 'Nrml', roller: 'Nrml', slosher: 'Nrml' });
 export function weaponSourceBodyFamily(id) { return id ? SOURCE_BODY[weaponBehaviorFamily(id)] ?? null : null; }
 // Standing ready-stance changes per behaviour family (source-posture.mjs sourceIdleBob).
 // Brush (owner review 2026-10-17, official brush movie EyKDWN7kgYb at rest): the
 // right foot is set out to the side instead of straight back, the body twisted a
 // little under a forward-facing head. Angles are INKWAVE calibration.
-const IDLE_STANCE = Object.freeze({
-  brush: Object.freeze({ rearOutDeg: 70, rearHeel: 0.02, twist: -0.32 }),
-});
+const BRUSH_STANCE = Object.freeze({ rearOutDeg: 70, rearHeel: 0.02, twist: -0.32 });
+const IDLE_STANCE = Object.freeze({ brush: BRUSH_STANCE, roller: BRUSH_STANCE });
 export function weaponIdleStanceFamily(id) { return id ? IDLE_STANCE[weaponBehaviorFamily(id)] ?? null : null; }
 export function weaponNeedsNativeCarry(id) {
   return !!id && (NATIVE_CARRY.has(weaponBehaviorFamily(id)) || !!SPECS.get(weaponBaseModelId(id))?.nativeCarry);
