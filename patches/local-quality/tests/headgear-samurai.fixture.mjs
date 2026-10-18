@@ -1,4 +1,4 @@
-// Builder regression executed against emitted production module.
+// Builder regression against emitted production module.
 import path from 'node:path';import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
@@ -8,6 +8,10 @@ for(const lod of ['far','game','hero']){
  let calls=0;const headSurface=(a,e,o,q)=>{calls++;q.set((.178+o)*Math.sin(a)*Math.cos(e),1.214+(.176+o)*Math.sin(e),.012+(.165+o)*Math.cos(a)*Math.cos(e));};
  const g=createSamuraiHelmet({lod,headSurface,offIn:()=>.024,inkColor:0xff0066});
  assert(calls>0);assert.equal(g.children.length,4);
+ const bowlBox=g.children.find(c=>c.name==='dark').geometry.boundingBox;assert(bowlBox.max.y>.42,'raised crown survives native-fit callback');
+ assert(g.userData.parts.some(p=>p.name==='crest-diamond-backing'));
+ assert.equal(g.userData.parts.filter(p=>p.name.startsWith('crest-squid-tentacle-')).length,4);
+ assert.equal(g.userData.parts.filter(p=>p.name.startsWith('crest-upper-curl-')).length,2);
  let triangles=0,geodispose=0,matdispose=0;const box=new THREE.Box3().setFromObject(g);
  g.traverse(m=>{if(!m.isMesh)return;const geo=m.geometry;assert(geo.index);triangles+=geo.index.count/3;for(const a of Object.values(geo.attributes))assert(Array.from(a.array).every(Number.isFinite));assert(Math.max(...geo.index.array)<geo.attributes.position.count);geo.addEventListener('dispose',()=>geodispose++);m.material.addEventListener('dispose',()=>matdispose++);});
  assert(box.max.x>.32&&box.min.x<-.32);assert(box.max.y>.57&&box.max.y<.61);assert(box.min.z<-.31);

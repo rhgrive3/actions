@@ -23,3 +23,7 @@ Revision 3 source cf24745f9879cdb5412b82fea9b1c3589c6588d8 includes bounded gold
 The draft PR additionally includes goldfish shell triangulation correction 955d013470f781552b9e1d4f5edf0210c2a0beae1741c0ca9d850fe824d100a5: interior-only constrained edge flips remove skinny folded nose triangles while preserving projected boundaries, eye apertures, palette, texture/PBR bytes and material settings. Focused regressions pass; actual native nose-seam review must happen on the final PR head. Do not infer its visual pass from earlier captures.
 
 Final-head 496-frame QA, required CI, independent four-item visual acceptance, isolated-head underside inspection, and native goldfish nose-seam confirmation are merge gates. This document records a draft candidate, not completed visual acceptance. No merge is authorized by technical test success alone.
+
+
+## Subsequent user feedback and illumination gate
+The user identified insufficient samurai crown/crest prominence and dull gold appearance. PR remains draft. The [illumination audit](inkwave-headgear-production-lighting-2026-10-18.md) establishes that the earlier harness omitted the actual production PMREM. A separate actual-emitted-Environment suite adds32 images while retaining496 historical controlled frames. Gold palette compensation is explicitly excluded; new crown/crest geometry and production-illumination native visual review remain merge gates.

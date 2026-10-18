@@ -36,13 +36,13 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
  const offset=offIn||ctx?.offIn||(typeof clearance==='function'?clearance:null);
  const scalp=(a,e,extra=0)=>{if(headSurface){const q=new THREE.Vector3();headSurface(a,e,(offset?offset(a,e):.022)+fit.thick+extra,q);return [q.x,q.y-1.05,q.z+.002];}return [(.206+extra)*Math.sin(a)*Math.cos(e),.164+(.196+extra)*Math.sin(e),.014+(.194+extra)*Math.cos(a)*Math.cos(e)];};
  // Low domed iron bowl follows the existing native hat fit at the rim.
- const dome=(a,t,extra=0)=>{const e=fit.rim(a)+(PI/2-.002-fit.rim(a))*t,p=scalp(a,e,extra);p[1]+=.012*Math.sin(t*PI/2);return p;};
+ const dome=(a,t,extra=0)=>{const e=fit.rim(a)+(PI/2-.002-fit.rim(a))*t,p=scalp(a,e,extra);p[1]+=.062*Math.sin(t*PI/2);return p;};
  add('low-black-kabuto-bowl',grid(N,R,(u,v)=>dome(u*PI*2,v)),'dark');
  add('gold-lower-circumference',grid(N,d===2?2:1,(u,v)=>scalp(u*PI*2,fit.rim(u*PI*2)+(v-.5)*.045,.004)),'gold');
  // Gold broad ribs on the bowl, and deliberately coarse major studs.
  for(let i=0;i<8;i++){const a=i*PI/4;add('bowl-gold-rib-'+i,grid(1,R,(u,v)=>dome(a+(u-.5)*.035,v,.002)),'gold');}
  for(let row=0;row<2;row++)for(let i=0;i<8;i++){const a=(i+.5)*PI/4,p=dome(a,.22+row*.36,.001);const g=new THREE.SphereGeometry(.022,[4,6,10][d],[3,4,6][d]);g.scale(1,.68,1);g.translate(...p);add('large-gold-stud-'+row+'-'+i,g,'gold');}
- const top=scalp(0,PI/2);const topG=new THREE.CylinderGeometry(.035,.042,.011,[8,12,24][d]);topG.translate(0,top[1]+.012,.014);add('crown-top-ring',topG,'gold');
+ const top=dome(0,1);const topG=new THREE.CylinderGeometry(.035,.042,.011,[8,12,24][d]);topG.translate(0,top[1]+.004,.014);add('crown-top-ring',topG,'gold');
  // Wide, shallow, flared shikoro. S3 rear reference has a horizontal sweep,
  // not a long vertical neck skirt. Its opening leaves cheeks/eyes unobstructed.
  const skirt=(u,v,extra=0)=>{const a=.95+u*(PI*2-1.9),r=.205+v*.103;return [Math.sin(a)*r,.220-v*.075+.085*v*v*v*Math.pow(Math.abs(Math.sin(a)),4)+extra,.003+Math.cos(a)*(r+.012)];};
@@ -81,6 +81,9 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
   const disc=new THREE.SphereGeometry(.028,[6,10,16][d],[4,5,8][d]);disc.scale(1,1,.28);disc.translate(side*.263,.278,.116);add('wing-gold-roundel-'+side,disc,'gold');
  }
  // Original stylized squid crest silhouette, broad surface rather than filigree.
+ // Enlarged S3 comparison reveals a diamond backing under the squid relief.
+ const backing=new THREE.Shape();backing.moveTo(0,.451);backing.lineTo(-.119,.330);backing.lineTo(0,.238);backing.lineTo(.119,.330);backing.closePath();
+ const backingGeo=new THREE.ExtrudeGeometry(backing,{depth:.007,bevelEnabled:true,bevelSize:.003,bevelThickness:.003,bevelSegments:1});backingGeo.translate(0,0,.211);add('crest-diamond-backing',backingGeo,'gold');
  const crestShape=new THREE.Shape();crestShape.moveTo(0,.430);
  crestShape.bezierCurveTo(-.027,.407,-.046,.377,-.052,.345);
  crestShape.bezierCurveTo(-.085,.351,-.121,.337,-.137,.310);
@@ -89,18 +92,23 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
  crestShape.bezierCurveTo(.104,.257,.141,.282,.137,.310);
  crestShape.bezierCurveTo(.121,.337,.085,.351,.052,.345);
  crestShape.bezierCurveTo(.046,.377,.027,.407,0,.430);crestShape.closePath();
- const crestBase=new THREE.ExtrudeGeometry(crestShape,{depth:.010,bevelEnabled:true,bevelSize:.004,bevelThickness:.004,bevelSegments:1,curveSegments:[3,4,6][d]});crestBase.translate(0,0,.219);add('broad-embossed-crest-base',crestBase,'gold');
+ const crestBase=new THREE.ExtrudeGeometry(crestShape,{depth:.010,bevelEnabled:true,bevelSize:.004,bevelThickness:.004,bevelSegments:1,curveSegments:[3,4,6][d]});crestBase.scale(1.08,1,1);crestBase.translate(0,0,.219);add('broad-embossed-crest-base',crestBase,'gold');
  const tube=(name,points,r,k,closed=false)=>{const c=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),closed,'centripetal');add(name,new THREE.TubeGeometry(c,d===2?28:name.startsWith('bow-tail')?[3,4][d]:name.startsWith('crest-')?[6,8][d]:[8,12][d],r,[4,5,9][d],closed),k);};
  // Raised central squid mantle: broad convex volume catches the same native
  // light as the bowl studs. Its two eyes sit within a brow, not a smiling face.
- const mantle=grid([10,14,20][d],[6,8,12][d],(u,v)=>{const y=.280+v*.137,w=.055*Math.pow(Math.sin(PI*v),.8),a=u*PI;return [Math.cos(a)*w,y,.235+Math.sin(a)*.026*Math.sin(PI*v)];});
+ const mantle=grid([10,14,20][d],[6,8,12][d],(u,v)=>{const y=.288+v*.139,w=.068*Math.pow(1-v,.78),a=u*PI;return [Math.cos(a)*w,y,.239+(.023*Math.sin(a)+.006*Math.pow(Math.sin(a),12))*Math.sin(PI*(.14+.86*v))];});
  // u runs from right to left, v up: front-facing winding is reversed.
  const mi=mantle.index.array;for(let i=0;i<mi.length;i+=3){const q=mi[i+1];mi[i+1]=mi[i+2];mi[i+2]=q;}add('raised-squid-mantle',mantle,'gold');
  for(const side of [-1,1]){
-  tube('crest-broad-scroll-'+side,[[side*.012,.260,.239],[side*.065,.262,.243],[side*.113,.286,.242],[side*.113,.312,.242],[side*.087,.322,.244],[side*.075,.303,.247],[side*.088,.293,.248]],.009,'gold');
-  tube('crest-squid-tentacle-'+side,[[side*.013,.321,.263],[side*.027,.299,.258],[side*.023,.278,.251],[side*.041,.268,.244]],.006,'gold');
-  const eye=new THREE.SphereGeometry(.008,[4,6,8][d],[3,4,6][d]);eye.scale(1,.65,.35);eye.translate(side*.022,.338,.259);add('crest-eye-inset-'+side,eye,'dark');
+  tube('crest-broad-scroll-'+side,[[side*.023,.262,.243],[side*.074,.263,.246],[side*.122,.287,.246],[side*.135,.330,.238],[side*.112,.311,.247],[side*.088,.300,.251],[side*.072,.313,.252],[side*.084,.324,.250]],.009,'gold');
+  // Two curled tendrils beside the upper mantle, not random decorative dots.
+  tube('crest-upper-curl-'+side,[[side*.057,.343,.242],[side*.077,.366,.240],[side*.066,.382,.239],[side*.050,.374,.243]],.0055,'gold');
+  for(let strand=0;strand<2;strand++)tube('crest-squid-tentacle-'+side+'-'+strand,[[side*(.010+strand*.016),.320,.265],[side*(.016+strand*.016),.294,.260],[side*(.016+strand*.014),.267,.251],[side*(.030+strand*.028),.251,.242]],.0055,'gold');
+  // Eye sockets are recessed gold-rimmed bowls, not painted black pupils.
+  const eye=new THREE.SphereGeometry(.010,[6,8,12][d],[4,5,6][d]);eye.scale(1,.78,.34);eye.translate(side*.026,.333,.262);add('crest-eye-recess-'+side,eye,'dark');
+  const brow=new THREE.TorusGeometry(.010,.003,[4,5,6][d],[8,12,16][d]);brow.scale(1,.78,1);brow.translate(side*.026,.333,.265);add('crest-eye-gold-rim-'+side,brow,'gold');
  }
+ tube('crest-central-tentacle',[[0,.313,.268],[0,.284,.258],[0,.249,.242]],.005,'gold');
  // Thick ink-colored chin tie follows adopted lower-face surface without editing it.
  const jaw=(a,e)=>{if(headSurface){const q=new THREE.Vector3();headSurface(a,e,.018,q);return [q.x,q.y-1.05,q.z+.002];}return [.178*Math.sin(a)*Math.cos(e),.164+.16*Math.sin(e),.014+.17*Math.cos(a)*Math.cos(e)];};
  const chin=jaw(0,-1.02);chin[1]-=.016;chin[2]+=.014;

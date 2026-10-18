@@ -59,6 +59,6 @@ export async function run(config){
    if(gearId>=8)for(const lod of ['hero','game'])await capture(gearId,lod,0,'under','neutral',0x19ae96,true);
   }
   progress.stage='complete';const debug=gl.getExtension('WEBGL_debug_renderer_info');
-  return {status:'rendered-awaiting-visual-review',threeRevision:THREE.REVISION,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),rows,caseCount:rows.length,limits:'Native emitted production Character with production lifecycle attachment. Same-frame gear-hidden comparison retains tucked hair. Reference top or opposite angles may be reconstructed. Software-renderer timings are not gameplay FPS. Render completion is not visual acceptance.'};
+  return {lightingProfile:'historical-controlled-no-IBL',status:'rendered-awaiting-visual-review',threeRevision:THREE.REVISION,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),rows,caseCount:rows.length,limits:'Native emitted production Character with production lifecycle attachment. Same-frame gear-hidden comparison retains tucked hair. Reference top or opposite angles may be reconstructed. Software-renderer timings are not gameplay FPS. Render completion is not visual acceptance.'};
  }finally{if(active){scene.remove(active.character.root);active.dispose();}renderer.dispose();}
 }
