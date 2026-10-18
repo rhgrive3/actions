@@ -1,0 +1,259 @@
+#!/usr/bin/env node
+// Actual emitted level shader and authored-Level runtime geometry (not an
+// imported source-stage mesh). Compare a double-sided grate face with
+// the same indexed face reversed into a front-facing reference. The
+// reference changes winding/normals only; no lighting or coverage is mocked.
+import fs from 'node:fs';
+import path from 'node:path';
+import http from 'node:http';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { chromium, webkit } from 'playwright';
+import { verifyRuntimeBuild } from './lib/inkwave-runtime-evidence.mjs';
+
+const option = (name, fallback) => {
+  const i = process.argv.indexOf(name);
+  return path.resolve(i < 0 ? fallback : process.argv[i + 1]);
+};
+const site = fs.realpathSync(option('--site', '_site'));
+const sourceRoot = fs.realpathSync(option('--source-root', fileURLToPath(new URL('../', import.meta.url))));
+const shaAt = process.argv.indexOf('--source-sha');
+const sourceSha = shaAt < 0 ? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim() : process.argv[shaAt + 1];
+const output = option('--evidence-dir', '.ci-scratch/grate-normal');
+const browserName = process.argv[process.argv.indexOf('--browser') + 1] === 'webkit' ? 'webkit' : 'chromium';
+const executableAt = process.argv.indexOf('--executable-path');
+const executablePath = executableAt < 0 ? (browserName === 'webkit' ? undefined : process.env.CHROMIUM_PATH) : process.argv[executableAt + 1];
+if (output === site || output.startsWith(site + '/')) throw Error('Evidence must be outside the immutable build');
+fs.mkdirSync(output, { recursive: true });
+const hash = data => crypto.createHash('sha256').update(data).digest('hex');
+const manifest = verifyRuntimeBuild(site, sourceRoot, sourceSha);
+assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash);
+assert.equal(hash(JSON.stringify(manifest.files)), manifest.inputHash);
+const verifierSha256 = hash(fs.readFileSync(fileURLToPath(import.meta.url)));
+const prefix = '/_versions/' + manifest.build.revision + '/';
+const loaded = new Map(), errors = [];
+const server = http.createServer((request, response) => {
+  if (request.url === '/grate-normal') {
+    response.writeHead(200, { 'content-type': 'text/html' });
+    response.end(`<html><head><link rel="icon" href="data:,"><script type="importmap">{"imports":{"three":"${prefix}vendor/three/build/three.module.js","three/addons/":"${prefix}vendor/three/jsm/"}}</script></head><body style="margin:0;background:#20242b"></body></html>`);
+    return;
+  }
+  try {
+    const key = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).slice(1);
+    const file = fs.realpathSync(path.resolve(site, key));
+    if (!file.startsWith(site + '/') || !manifest.artifacts[key]) throw Error('Missing artifact');
+    const bytes = fs.readFileSync(file);
+    assert.equal(hash(bytes), manifest.artifacts[key], key + ' differs from its manifest');
+    loaded.set(key, { path: key, bytes: bytes.length, sha256: hash(bytes) });
+    response.writeHead(200, { 'content-type': /\.m?js$/.test(key) ? 'text/javascript' : 'application/json', 'cache-control': 'no-store' });
+    response.end(bytes);
+  } catch { response.writeHead(404); response.end(); }
+});
+await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+let browser, result, failure;
+try {
+  browser = await (browserName === 'webkit' ? webkit : chromium).launch({ executablePath, headless: true,
+    ...(browserName === 'webkit' ? {} : { args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }) });
+  const page = await browser.newPage({ viewport: { width: 480, height: 360 } });
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.goto('http://127.0.0.1:' + server.address().port + '/grate-normal');
+  result = await page.evaluate(async ({ prefix }) => {
+    const THREE = await import('three');
+    const { Level } = await import(prefix + 'src/world/level.js');
+    const { createLevelMaterial } = await import(prefix + 'src/world/levelMaterial.js');
+    const { createTextureLibrary } = await import(prefix + 'src/world/texlib.js');
+    const { G } = await import(prefix + 'src/core/ctx.js');
+    const width = 480, height = 360;
+    const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(1); renderer.setSize(width, height);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.NeutralToneMapping;
+    renderer.debug.checkShaderErrors = true;
+    document.body.appendChild(renderer.domElement);
+    G.renderer = renderer;
+    const scene = new THREE.Scene(); scene.background = new THREE.Color('#20242b');
+    const camera = new THREE.PerspectiveCamera(40, width / height, .05, 30);
+    const ambient = new THREE.HemisphereLight(0xffffff, 0xffffff, .25); scene.add(ambient);
+    const sun = new THREE.DirectionalLight(0xffffff, 3); scene.add(sun);
+    const level = new Level({ id: 'grate-normal-fixture', bounds: { minX: -5, maxX: 5, minZ: -5, maxZ: 5 },
+      spawnPads: [[0, 0, -4], [0, 0, 4]], spawnBarrier: 1, half: [], single: [
+        { kind: 'box', min: [-1.5, -.15, -1], max: [1.5, 0, 1], grate: true, pattern: 12, color: '#87969d', bevel: 0 },
+      ] });
+    const native = level.buildGeometry(1, block => block.grate);
+    const indices = [];
+    for (let i = 0; i < native.index.count; i += 3) {
+      const a = native.index.getX(i), b = native.index.getX(i + 1), c = native.index.getX(i + 2);
+      if ([a, b, c].every(vertex => native.attributes.normal.getY(vertex) > .999)) indices.push(a, b, c);
+    }
+    if (indices.length !== 6) throw Error('Authored Level grate-face denominator');
+    const face = native.clone(); face.setIndex(indices); face.computeBoundingSphere();
+    const reversed = face.clone();
+    for (let i = 0; i < reversed.attributes.normal.count; i++) {
+      const n = reversed.attributes.normal;
+      n.setXYZ(i, -n.getX(i), -n.getY(i), -n.getZ(i));
+    }
+    const reversedIndices = indices.slice();
+    for (let i = 0; i < reversedIndices.length; i += 3) [reversedIndices[i + 1], reversedIndices[i + 2]] = [reversedIndices[i + 2], reversedIndices[i + 1]];
+    reversed.setIndex(reversedIndices);
+    const paint = new THREE.DataTexture(new Uint8Array(4), 1, 1); paint.needsUpdate = true;
+    const material = createLevelMaterial(paint, 1, null, { grate: true });
+    const reference = createLevelMaterial(paint, 1, null, { grate: true }); reference.side = THREE.FrontSide;
+    let fragmentShader = '';
+    const compile = material.onBeforeCompile;
+    material.onBeforeCompile = function (shader, ...rest) { compile.call(this, shader, ...rest); fragmentShader = shader.fragmentShader; };
+    const mesh = new THREE.Mesh(face, material); scene.add(mesh);
+    let referenceGeometry = reversed;
+    const gl = renderer.getContext();
+    const pixels = () => { const value = new Uint8Array(width * height * 4); gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, value); return value; };
+    const diff = (a, b) => {
+      let changedPixels = 0, maxChannelError = 0;
+      for (let i = 0; i < a.length; i += 4) {
+        let changed = false;
+        for (let c = 0; c < 4; c++) { const error = Math.abs(a[i + c] - b[i + c]); changed ||= error > 0; maxChannelError = Math.max(maxChannelError, error); }
+        changedPixels += changed;
+      }
+      return { pixels: width * height, changedPixels, maxChannelError };
+    };
+    const covered = pixels => {
+      let count = 0;
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (pixels[i] !== pixels[0] || pixels[i + 1] !== pixels[1] || pixels[i + 2] !== pixels[2]) count++;
+      }
+      return count;
+    };
+    const draw = referenceOn => {
+      mesh.geometry = referenceOn ? referenceGeometry : face;
+      mesh.material = referenceOn ? reference : material;
+      renderer.info.reset(); renderer.render(scene, camera); gl.finish();
+      return { image: renderer.domElement.toDataURL(), pixels: pixels(),
+        cost: { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
+          geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, programs: renderer.info.programs.length } };
+    };
+    const rows = [];
+    for (const [name, cameraY, lightY] of [['top', 3, 5], ['back-toplight', -3, 5], ['back-underlight', -3, -5]]) {
+      camera.position.set(0, cameraY, 3); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
+      sun.position.set(2, lightY, 3); sun.updateMatrixWorld();
+      // The top reference uses the original normal/winding and FrontSide;
+    // the back reference reverses the same authored triangle attributes.
+      referenceGeometry = cameraY > 0 ? face : reversed;
+      draw(false); draw(true); draw(false); draw(true);
+      const actual = draw(false), expected = draw(true), again = draw(false);
+      rows.push({ name, orientation: diff(actual.pixels, expected.pixels), stable: diff(actual.pixels, again.pixels),
+        coveredPixels: covered(actual.pixels), referenceCoveredPixels: covered(expected.pixels),
+        cost: actual.cost, referenceCost: expected.cost, image: actual.image, referenceImage: expected.image,
+        pixelBytes: Array.from(actual.pixels) });
+    }
+    // Front-facing independent control: compile the original two-normalize
+    // expression into a test-only material while serving production bytes
+    // unchanged. Cover nonzero ink derivatives and actual texlib relief.
+    const atlasSize = 64, atlas = new Uint8Array(atlasSize * atlasSize * 4);
+    for (let y = 0; y < atlasSize; y++) for (let x = 0; x < atlasSize; x++) {
+      const u = (x + .5) / atlasSize, v = (y + .5) / atlasSize;
+      const radius = Math.hypot((u - .5) * 1.15, (v - .5) * 1.5);
+      const edge = Math.max(0, Math.min(1, (.46 - radius) / .13));
+      const coverage = edge * edge * (3 - 2 * edge), team = x < atlasSize / 2 ? 0 : 1;
+      const i = (y * atlasSize + x) * 4;
+      atlas[i] = Math.round(255 * coverage * team);
+      atlas[i + 1] = Math.round(255 * coverage * (team ? .94 : .24));
+      atlas[i + 2] = Math.round(255 * coverage * (.6 + .2 * Math.sin(v * 19)));
+      atlas[i + 3] = Math.round(255 * coverage);
+    }
+    const inkTexture = new THREE.DataTexture(atlas, atlasSize, atlasSize);
+    inkTexture.magFilter = THREE.LinearFilter; inkTexture.minFilter = THREE.LinearMipmapLinearFilter;
+    inkTexture.generateMipmaps = true; inkTexture.needsUpdate = true;
+    const paintedFace = face.clone();
+    for (let i = 0; i < paintedFace.attributes.faceData.count; i++) {
+      paintedFace.attributes.faceData.setX(i, 1); paintedFace.attributes.faceData.setY(i, 1);
+      paintedFace.attributes.paintUv.setXY(i, .1 + paintedFace.attributes.faceUv.getX(i) * .25, .1 + paintedFace.attributes.faceUv.getY(i) * .35);
+    }
+    const library = await createTextureLibrary(renderer, { size: 64 });
+    const oldNormal = 'vec3 wn = normalize(nBase - slope.x * T - slope.y * Bt);\nnormal = normalize((viewMatrix * vec4(wn, 0.0)).xyz);';
+    const newNormal = /normal\s*=\s*normalize\(mat3\(viewMatrix\)\s*\*\s*\(nBase\s*-\s*slope\.x\s*\*\s*T\s*-\s*slope\.y\s*\*\s*Bt\)\)\s*\*\s*faceDirection\s*;/;
+    const frontRows = [];
+    for (const [name, useLibrary, inked, tilted] of [['ink-flat', false, true, false], ['ink-tilted', false, true, true],
+      ['texlib-dry-tilted', true, false, true], ['texlib-ink-tilted', true, true, true]]) {
+      const options = { ...(useLibrary ? { texlib: library } : {}) };
+      const current = createLevelMaterial(inkTexture, atlasSize, null, options);
+      const legacy = createLevelMaterial(inkTexture, atlasSize, null, options);
+      const nativeCompile = legacy.onBeforeCompile, nativeKey = legacy.customProgramCacheKey;
+      let independentExpression = false;
+      legacy.customProgramCacheKey = () => nativeKey() + '-test-legacy-normal';
+      legacy.onBeforeCompile = function (shader, ...args) {
+        nativeCompile.call(this, shader, ...args);
+        if (newNormal.test(shader.fragmentShader)) {
+          shader.fragmentShader = shader.fragmentShader.replace(newNormal, oldNormal);
+          independentExpression = true;
+        } else if (/vec3 wn\s*=\s*normalize\(nBase\s*-\s*slope\.x\s*\*\s*T\s*-\s*slope\.y\s*\*\s*Bt\)/.test(shader.fragmentShader)) independentExpression = true;
+        else throw Error('Original normal reference connection missing');
+      };
+      for (let i = 0; i < paintedFace.attributes.faceData.count; i++) paintedFace.attributes.faceData.setY(i, inked ? 1 : 0);
+      paintedFace.attributes.faceData.needsUpdate = true;
+      mesh.geometry = paintedFace; mesh.rotation.set(tilted ? .41 : 0, tilted ? .17 : 0, tilted ? .29 : 0);
+      camera.position.set(tilted ? 1.1 : 0, tilted ? 2.4 : 3, 3.2); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
+      sun.position.set(2, 5, 3); sun.updateMatrixWorld();
+      const frontDraw = referenceOn => {
+        mesh.material = referenceOn ? legacy : current;
+        renderer.info.reset(); renderer.render(scene, camera); gl.finish();
+        return { pixels: pixels(), image: renderer.domElement.toDataURL(), cost: {
+          calls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
+          geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, programs: renderer.info.programs.length } };
+      };
+      frontDraw(false); frontDraw(true); frontDraw(false); frontDraw(true);
+      const actual = frontDraw(false), expected = frontDraw(true), again = frontDraw(false);
+      frontRows.push({ name, independentExpression, useLibrary, inked, tilted,
+        difference: diff(actual.pixels, expected.pixels), stable: diff(actual.pixels, again.pixels),
+        coveredPixels: covered(actual.pixels), cost: actual.cost, referenceCost: expected.cost,
+        image: actual.image, referenceImage: expected.image });
+      current.dispose(); legacy.dispose();
+    }
+    mesh.rotation.set(0, 0, 0); mesh.geometry = face; mesh.material = material;
+    // Alternate the same real draw and drain its queue. Software-renderer
+    // timings are diagnostics; they do not certify a physical mobile GPU.
+    const timing = [];
+    for (let i = 0; i < 20; i++) { const start = performance.now(); draw(false); timing.push(performance.now() - start); }
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const gpu = { webgl: gl.getParameter(gl.VERSION), renderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+      timerQuery: !!gl.getExtension('EXT_disjoint_timer_query_webgl2') };
+    const shader = { textureAccesses: [...fragmentShader.matchAll(/\btexture(?:2D|Grad|Lod)?\s*\(/g)].length,
+      normalizationExpressions: [...fragmentShader.matchAll(/\bnormalize\s*\(/g)].length,
+      doubleSided: material.side === THREE.DoubleSide, cacheKey: material.customProgramCacheKey(),
+      customOrientation: /normal\s*=\s*normalize\([^;]+\)\s*\*\s*faceDirection/.test(fragmentShader), fragmentShader };
+    const webglError = gl.getError();
+    material.dispose(); reference.dispose(); native.dispose(); face.dispose(); reversed.dispose(); paintedFace.dispose();
+    paint.dispose(); inkTexture.dispose(); library.dispose(); renderer.dispose();
+    return { rows, frontRows, timing, gpu, shader, webglError, authoredFaceIndices: indices.length, width, height,
+      texlib: { layers: library.names.length, resolution: library.size } };
+  }, { prefix });
+  for (const row of [...result.rows, ...result.frontRows]) {
+    for (const [key, suffix] of [['image', 'actual'], ['referenceImage', 'reference']]) {
+      const bytes = Buffer.from(row[key].split(',')[1], 'base64');
+      fs.writeFileSync(path.join(output, row.name + '-' + suffix + '.png'), bytes);
+      row[key + 'SHA256'] = hash(bytes); delete row[key];
+    }
+    if (row.pixelBytes) { row.pixelSHA256 = hash(Buffer.from(row.pixelBytes)); delete row.pixelBytes; }
+    assert.equal(row.stable.changedPixels, 0, row.name + ' changed during a frozen redraw');
+    assert.deepEqual(row.cost, row.referenceCost, row.name + ' draw/resource cost changed');
+    assert.equal(row.cost.calls, 1); assert.equal(row.cost.triangles, 2);
+    assert.ok(row.coveredPixels > 10000, row.name + ' actual grate is absent');
+    if (row.referenceCoveredPixels != null) assert.equal(row.coveredPixels, row.referenceCoveredPixels, row.name + ' grate coverage changed');
+  }
+  for (const row of result.frontRows) {
+    assert.equal(row.independentExpression, true, row.name + ' independent original normal missing');
+    assert.equal(row.difference.changedPixels, 0, row.name + ' original FrontSide arithmetic changed pixels');
+  }
+  fs.writeFileSync(path.join(output, 'shader-template.glsl'), result.shader.fragmentShader); delete result.shader.fragmentShader;
+  assert.equal(result.webglError, 0); assert.equal(errors.length, 0, errors.join('\n'));
+  for (const row of result.rows) assert.equal(row.orientation.changedPixels, 0, row.name + ' differs from correctly oriented authored geometry');
+} catch (error) { failure = error; }
+finally {
+  await browser?.close(); await new Promise(resolve => server.close(resolve));
+  const receipt = { status: failure ? 'failed' : 'passed', measurement: browserName + ' WebGL2; emitted level material / authored Level geometry / fallback surface branch; deterministic static render; software timings only; concurrent workloads may confound timing',
+    sourceSha, sourceRoot, verifierSha256, inputHash: manifest.inputHash, contentHash: manifest.contentHash, result, errors, loaded: [...loaded.values()],
+    ...(failure ? { error: failure.stack } : {}) };
+  fs.writeFileSync(path.join(output, 'grate-normal-result.json'), JSON.stringify(receipt, null, 2) + '\n');
+  console.log(JSON.stringify({ status: receipt.status, rows: result?.rows.map(row => ({ name: row.name, orientation: row.orientation, cost: row.cost })), error: failure?.message }));
+  if (failure) process.exitCode = 1;
+}

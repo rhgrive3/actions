@@ -1,10 +1,8 @@
 # Remaining INKWAVE work
 
-This folder records work that is **not completed by the Movement Physics Draft PR**.
+> Scope record from the Movement Physics Draft PR, not a live completion dashboard. Check subsequent PRs and reports before treating an item as still open. See the [documentation index](../docs/README.md) for entry points.
 
-It exists to prevent a partial PR from being mistaken for the overall INKWAVE fidelity/performance effort being finished.
-
-Current workstreams still outside this PR:
+These workstreams were outside that draft and remain documented here so its acceptance is not mistaken for completion of the overall INKWAVE fidelity/performance effort:
 
 1. Motion / Animation / Visual Fidelity
 2. Network / Replication
