@@ -76,6 +76,33 @@ export function adaptWeaponAudio(rel,code){
       "self.profile.weapon = weapon; saveJSON('inkwave.profile', self.profile); G.audio?.prepareWeapon?.(weapon,{urgent:true});",
       'main-weapon loadout MP3 prefetch');
 
+    // A recorded first shot must not race MP3 download/decoding. Reserve the
+    // preload synchronously while the start gesture still owns AudioContext;
+    // await the exact recording before the existing START flow proceeds past
+    // its guarded fade. On load failure the existing menu startup recovery
+    // handles the rejection instead of admitting an inaudible battle.
+    const patchStartShot=(start,end,selected,label)=>{
+      const lo=code.indexOf(start),hi=code.indexOf(end,lo+start.length);
+      if(lo<0||hi<0)throw new Error('audio adapter start boundary: '+label);
+      let method=code.slice(lo,hi);
+      method=once(method,
+        '    G.audio?.init?.();\\n    if (!flow.current()) return;',
+        '    G.audio?.init?.();\\n    if (!flow.current()) return;\\n' +
+        "    if(typeof G.audio?.requireRecordedMainShot!=='function') throw new Error('Recorded weapon audio is not installed');\\n" +
+        '    const selectedShotReady=G.audio.requireRecordedMainShot('+selected+');',
+        label+' start selected recorded MP3');
+      method=once(method,
+        '    await this._fade(1, 350);\\n    if (!flow.current()) return;',
+        '    await this._fade(1, 350);\\n    if (!flow.current()) return;\\n' +
+        '    await selectedShotReady;\\n    if (!flow.current()) return;',
+        label+' wait for MP3 before gameplay');
+      code=code.slice(0,lo)+method+code.slice(hi);
+    };
+    patchStartShot('  async startMatch(o = {}, flow = this._beginMatchFlow()) {',
+      '\\n  // ---- online (src/net/session.js', "this.profile.weapon||'shooter'",'offline');
+    patchStartShot('  async startNetMatch(cfg, nm) {',
+      '\\n  // Compile every shader variant',
+      "cfg?.roster?.find(r=>r.owner===G.net?.myId&&!r.bot)?.weapon",'online');
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
