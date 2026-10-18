@@ -1399,7 +1399,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       slidePaint(r,s,!s.roll&&!s.slip);
       if(!s.roll&&!s.slip)s.slideRunner=null;
     }
-    if(s.slip){s.slip.t=Math.min(s.slip.dur,s.slip.t+dt);if(s.slip.t+EPS>=s.slip.dur)s.slip=null;}
+    if(s.slip){s.slip.t=Math.min(s.slip.dur,s.slip.t+dt);if(s.slip.t+EPS>=s.slip.dur){s.slip=null;a.vel.x=a.vel.z=0;}}
     if(s.roll){
       const roll=s.roll;roll.remaining-=dt;roll.t=Math.min(roll.dur,roll.t+dt);
       if(roll.remaining<=EPS){
@@ -1408,6 +1408,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // explicit ground/air distance + frame pair admits a new slip phase.
         const slipDistance=a.grounded?t.SlipMoveDistGnd:t.SlipMoveDistAir;
         if(slipDistance>0&&t.SlipMoveFrame>0)s.slip={t:0,dur:t.SlipMoveFrame/HZ,distance:slipDistance,direction:roll.direction};
+        else a.vel.x=a.vel.z=0;
       }else{
         // Tetra may fire while travelling, but those rounds still use the
         // ordinary cone, collision row and cadence. Recovery starts only once

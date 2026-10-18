@@ -27,7 +27,7 @@ test('added roll substeps stay within half a body radius and discard blocked mot
 
 test('production Actor integrates source Dapple 3+.6 and Douser 5.5+1.2, including a thin wall',async()=>{
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
-  for(const wall of [false,true])for(const [id,frames,distance] of [['s3-maneuver-short',38,3.6],['s3-maneuver-long',66,6.7]]){
+  for(const wall of [false,true])for(const [id,frames,distance] of [['s3-maneuver-short',38,3.6],['s3-maneuver-long',66,6.7],['s3-maneuver-gallon',12,5],['s3-maneuver-dual',12,3.5],['s3-maneuver-stepper',12,3.5]]){
     f.G.projectiles.clear();f.G.actors.length=0;
     const single=[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}];
     if(wall)single.push({kind:'box',min:[1,0,-5],max:[1.03,10,5]});
@@ -38,10 +38,11 @@ test('production Actor integrates source Dapple 3+.6 and Douser 5.5+1.2, includi
     const core=a.weaponRunner.catalogState.roll.dur*60;
     f.tick(a,core);
     if(wall)assert.ok(a.pos.x<.7&&a.pos.x>.4,'the real body solver stops before the wall');
-    else near(a.pos.x,a.weapon.catalogRecord.parameters.SideStepParam.MoveDist);
-    assert.ok(a.weaponRunner.catalogState.slip,'explicit slip phase follows the core');
+    else near(a.pos.x,a.weapon.catalogRecord.parameters.SideStepParam.MoveDist??5);
+    assert.equal(!!a.weaponRunner.catalogState.slip,frames>core,'only an explicit distance/time pair admits slip');
     f.tick(a,frames-core);
     if(wall)assert.ok(a.pos.x<1,'the 0.03-unit wall is not tunneled through');else near(a.pos.x,distance);
-    assert.equal(a.weaponRunner.catalogState.slip,null);
+    assert.equal(a.weaponRunner.catalogState.slip??null,null);
+    if(!wall){f.tick(a,5);near(a.pos.x,distance);}
   }
 });
