@@ -41,4 +41,14 @@ node scripts/check-inkwave-rolling-paint-browser.mjs _site reports/rolling-conta
 node scripts/check-inkwave-paint-mask.mjs --site _site --executable /usr/bin/chromium --evidence-dir work/roller-gpu --profile-dir work/roller-gpu-profile
 ```
 
-検証結果は完了後に追記する。ロジック／ブラウザ確認を本家実機の検証に読み替えない。
+## 確認結果
+
+コードコミット `8926934bbfa61535fe204c8368e7bfc9032d1938`。公開用生成物のcontent hashは `5c3105a90b6f90e3d37e71784c5b4218309aba99d6b23d590a13f4a656f5630c`。
+
+- 互換性quick check、本番ビルド、起動予算のゲート成功。
+- ローラー・接地地形・通信再生・描画・共有スライドの306テスト：304成功、失敗0、既存スキップ2。
+- Chromiumの実Character／実Physicsで全8ブキ×30/60/120Hzの24ケース成功。[結果](browser.json)。斜め保持、保持開始遷移、カメラ旋回、実際の接地スタンプ幅、描画間隔による軌跡差を確認。
+- `--exact-source` でコミットと入力ファイルを照合し、ソース合成と本番minifyの両方で実WebGLを検査。既存124ケース・1512ハッシュ問合せを保持。986境界条件で明確なCPUのみ／GPUのみの塗り0、float32境界同値17点を別計上。
+- [検証要約](verification.json)、[全GPU結果](gpu-result.json.gz)、[実際のアトラス描画](gpu-profiles.png)。
+
+ロジック／ブラウザ確認を本家実機の検証に読み替えない。今回の校正で確認できるのはINKWAVE内の一貫性と画像に見える特徴の改善であり、本家の全条件での一致ではない。
