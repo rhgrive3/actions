@@ -1,3 +1,4 @@
+import { sweepNativeCatalogueSphere } from '../../native-stages/runtime/engine.mjs';
 // Continuous time-of-impact primitives, independent of weapon tuning and render Hz.
 // Radii may grow linearly within one fixed tick. Expanded-box corner false positives
 // are avoided by solving the true distance to the OBB (rounded Minkowski boundary).
@@ -111,6 +112,7 @@ export function capsuleEntry(from, to, base, bodyRadius, height, bulletRadius0, 
 }
 
 export function sweptWorldHit(physics, from, to, r0, r1, out, skipGrates = true) {
+  if (physics?.level?.native) return sweepNativeCatalogueSphere(physics, from, to, r0, r1, out, skipGrates, sweptWorldHit);
   const level = physics?.level;
   const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
   const len = Math.hypot(dx, dy, dz);
