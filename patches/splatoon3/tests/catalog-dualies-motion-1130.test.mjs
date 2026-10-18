@@ -46,3 +46,24 @@ test('production Actor integrates source Dapple 3+.6 and Douser 5.5+1.2, includi
     if(!wall){f.tick(a,5);near(a.pos.x,distance);}
   }
 });
+
+test('all six base Dualies retain exact 60Hz Actor/round traces under 30/60/120Hz presentation scheduling',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  f.G.level=new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}],half:[],spawnPads:[[-80,0,0],[80,0,0]],spawnBarrier:0});
+  f.G.physics=new f.Physics(f.G.level);
+  for(const id of ['dualies','s3-maneuver-short','s3-maneuver-gallon','s3-maneuver-dual','s3-maneuver-stepper','s3-maneuver-long']){
+    const runs=[];
+    for(const hz of [30,60,120]){
+      f.G.projectiles.clear();f.G.actors.length=0;f.G.time=0;f.setRandom(()=>.37);
+      const a=f.make(id),clock=new f.FixedClock(),trace=[];a._integrate=f.Actor.prototype._integrate;a.form='kid';a.pos.set(0,0,0);a.intent.fire=true;
+      assert.ok(a.weaponRunner.tryDodge(new f.THREE.Vector3(1,0,0)));
+      for(let render=0;render<hz*2;render++)clock.advance(1/hz,dt=>{
+        f.G.time+=dt;a.intent.fire=clock.ticks<80;a.update(dt);f.G.projectiles.update(dt);
+        trace.push([a.pos.x,a.pos.y,a.pos.z,a.ink,a.weaponRunner.cooldown,a.weaponRunner.spread,
+          ...f.G.projectiles.list.flatMap(p=>[p.age,p.pos.x,p.pos.y,p.pos.z,p.damage,p.radius])]);
+      });
+      assert.equal(trace.length,120);runs.push(trace);
+    }
+    assert.deepEqual(runs[0],runs[1],id+' 30/60');assert.deepEqual(runs[1],runs[2],id+' 60/120');
+  }
+});

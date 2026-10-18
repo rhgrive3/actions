@@ -44,15 +44,16 @@ export function catalogDualiesIntervalDistance(motion,dt,offset=0) {
 
 export function catalogDualiesPeakSpeed(motion) {
   if(!(motion?.dur>0))return 0;
-  const kd=motion.kd;
-  if(kd>0&&kd<1){const log=Math.log(kd)*motion.dur*HZ;return motion.distance/motion.dur*log/Math.expm1(log);}
-  return 1.5*motion.distance/motion.dur;
+  const kd=motion.kd,age=clamp(motion.t/motion.dur);
+  if(kd>0&&kd<1){const log=Math.log(kd)*motion.dur*HZ;return motion.distance/motion.dur*log/Math.expm1(log)*Math.exp(log*age);}
+  return 1.5*motion.distance/motion.dur*(1-age*age);
 }
 
 export function catalogDualiesMotion(actor) {
-  if(actor?.weapon?.catalogRecord?.family!=='dualies'||actor.remote||actor.alive===false||actor.form!=='kid'||actor.climbing||actor.specialActive||actor.superJumpState)return null;
-  const s=actor.weaponRunner?.catalogState;
-  return s?.roll||s?.slip||null;
+  const s=actor?.weaponRunner?.catalogState;
+  const motion=s?.roll||s?.slip;
+  if(!motion||actor?.weapon?.catalogRecord?.family!=='dualies'||actor.remote||actor.alive===false||actor.form!=='kid'||actor.climbing||actor.specialActive||actor.superJumpState)return null;
+  return motion;
 }
 
 export function writeCatalogDualiesVelocity(actor,dt,offset=0) {
@@ -73,7 +74,8 @@ export function integrateCatalogDualies(actor,dt,isSquid,jumped,radius) {
   const count=Math.max(1,Math.ceil(catalogDualiesPeakSpeed(motion)*active/Math.max(.02,radius*.5)));
   const slice=dt/count;
   for(let i=0;i<count;i++){
-    writeCatalogDualiesVelocity(actor,slice,i*slice);
+    const speed=catalogDualiesIntervalDistance(motion,slice,i*slice)/slice;
+    actor.vel.x=motion.direction.x*speed;actor.vel.z=motion.direction.z*speed;
     actor._integrateMovementStep(slice,isSquid,jumped&&i===0);
   }
   return true;
