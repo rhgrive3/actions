@@ -85,6 +85,18 @@ export function adaptS3SquidLook(rel, code) {
             vec3 club=vec3(0.075,0.04,0.16);
             if(vSqPart > 1.5 && vSqPart < 2.5) club=mix(vec3(0.13,0.08,0.24),vec3(0.38,0.29,0.56),smoothstep(0.1,0.65,vSq.y-1.0));
             else if(vSqPart < 1.5) club=mix(club,vec3(0.38,0.29,0.56),iwSuck);
+            // Broad flat marks on the outward/eye-facing club surface. Existing
+            // cup relief is inward-facing and cannot represent these visible marks.
+            if(vSqPart < 1.5 || vSqPart > 2.5) {
+              float t=vSqUv.x,cs=vSqUv.y;
+              float side=sqrt(max(0.0,1.0-cs*cs));
+              float d0=length(vec2((t-0.70)/0.052,side/0.29));
+              float d1=length(vec2((t-0.80)/0.052,(side-0.53)/0.25));
+              float d2=length(vec2((t-0.90)/0.047,side/0.33));
+              float d=min(d0,min(d1,d2)),aa=max(fwidth(d),0.03);
+              float spots=(1.0-smoothstep(1.0-aa,1.0+aa,d))*smoothstep(0.05,0.25,cs);
+              club=mix(club,vec3(0.38,0.29,0.56),spots);
+            }
             diffuseColor.rgb=mix(diffuseColor.rgb,club,tip);
           }
           diffuseColor.rgb *= mix(0.7, 1.0, iwAO);`, 'two long club coating');
@@ -102,13 +114,18 @@ export function adaptS3SquidLook(rel, code) {
     code = once(code, '    const feeler = k === 4 || k === 6;', '    const feeler = k === 0 || k === N - 1;', 'feelers under the face');
     code = once(code,
       '    const len = lerp(0.15, 0.108, Math.max(0, Math.cos(a))) * (k % 2 ? 0.92 : 1.0) * (feeler ? 1.3 : 1);',
-      '    const len = lerp(0.15, 0.108, Math.max(0, Math.cos(a))) * (k % 2 ? 0.92 : 1.0) * (feeler ? 2.0 : 0.52);', 'bundled arms and long feelers');
+      '    const len = lerp(0.15, 0.108, Math.max(0, Math.cos(a))) * (k % 2 ? 0.92 : 1.0) * (feeler ? 2.0 : 0.36);', 'bundled arms and long feelers');
     code = once(code,
       '    const raw = [[dx * 0.055, 0.012, dz * 0.055], [dx * 0.09, -0.04, dz * 0.09], [dx * 0.118, -0.035 - len * 0.55, dz * 0.118], [dx * 0.15, -0.035 - len * 0.86, dz * 0.15], [dx * (0.178 + curl * 0.6), -0.032 - len * 0.98, dz * (0.178 + curl * 0.6)]].map((q) => new V3(...q));',
-      '    const raw = [[dx * 0.055, 0.012, dz * 0.055], [dx * (feeler ? 0.08 : 0.06), -0.04, dz * (feeler ? 0.08 : 0.06)], [dx * (feeler ? 0.088 : 0.066), -0.035 - len * 0.55, dz * (feeler ? 0.088 : 0.066)], [dx * (feeler ? 0.094 : 0.069), -0.035 - len * 0.86, dz * (feeler ? 0.094 : 0.069)], [dx * (feeler ? 0.1 + curl * 0.3 : 0.07), -0.032 - len * 0.98, dz * (feeler ? 0.1 + curl * 0.3 : 0.07)]].map((q) => new V3(...q));', 'arms hang bundled');
+      '    const raw = [[dx * 0.055, 0.012, dz * 0.055], [dx * (feeler ? 0.08 : 0.052), -0.04, dz * (feeler ? 0.08 : 0.052)], [dx * (feeler ? 0.088 : 0.055), -0.035 - len * 0.55, dz * (feeler ? 0.088 : 0.055)], [dx * (feeler ? 0.094 : 0.058), -0.035 - len * 0.86, dz * (feeler ? 0.094 : 0.058)], [dx * (feeler ? 0.1 + curl * 0.3 : 0.06), -0.032 - len * 0.98, dz * (feeler ? 0.1 + curl * 0.3 : 0.06)]].map((q) => new V3(...q));', 'arms hang bundled');
     // Short arms are compact rounded fingers, not thin curled wires.
     code = once(code, 'const pts = curlTip(raw, (feeler ? 0.9 : 0.75) + 0.1 * (k % 3), () => out, 0.5);', 'const pts = feeler ? curlTip(raw, 0.9 + 0.1 * (k % 3), () => out, 0.5) : raw;', 'uncurled short arm group');
-    code = once(code, 'lerp(0.0255, 0.0062, Math.pow(t, 0.78))', 'lerp(feeler ? 0.0255 : 0.032, feeler ? 0.0062 : 0.016, Math.pow(t, 0.78))', 'rounded short arms');
+    code = once(code, 'lerp(0.0255, 0.0062, Math.pow(t, 0.78))', 'lerp(feeler ? 0.0255 : 0.036, feeler ? 0.0062 : 0.024, Math.pow(t, 0.78))', 'rounded short arms');
+    code = once(code, 'tipSteps: D.tipSteps, tipLen: 1.1 });', 'tipSteps: D.tipSteps, tipLen: feeler ? 1.1 : 0.35 });', 'rounded short arm terminal caps');
+    // Tiny repeated relief cups made the short lobes read as spindly legs.
+    // Preserve the hidden long-arm cups; short arm surfaces stay smooth.
+    code = once(code, '    if (SD.cups) {', '    if (SD.cups && feeler) {', 'simplified short arm surface');
+    code = once(code, 'ex: SD.cups ? 3 : 1, uv:', 'ex: !feeler || SD.cups ? 3 : 1, uv:', 'short arms without printed microcups');
     // S3 squid colours follow the tentacle scheme: the two longest tentacles shade darker toward their club
     // tips (negative tint = the material's dark ink shade); the cups keep their pale tint, so the club reads
     // as a dark tip with light spots.
