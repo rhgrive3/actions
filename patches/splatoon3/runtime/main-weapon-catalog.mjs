@@ -1421,6 +1421,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     if(s.slip){s.slip.t=Math.min(s.slip.dur,s.slip.t+dt);if(s.slip.t+EPS>=s.slip.dur){s.slip=null;a.vel.x=a.vel.z=0;}}
     if(s.roll){
+      // Explicit SideStep.ChargeFrame is pre-roll anticipation, separate from
+      // MoveFrame. Match the existing native startup clock contract; omitted
+      // defaults on the other additions remain unchanged.
+      if(s.roll.startup>EPS){s.roll.startup=Math.max(0,s.roll.startup-dt);return;}
       const roll=s.roll;roll.remaining-=dt;roll.t=Math.min(roll.dur,roll.t+dt);
       if(roll.remaining<=EPS){
         s.roll=null;s.turret=roll.recovery;s.turretHeld=true;
@@ -1459,15 +1463,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // its distance accumulator; otherwise the last fraction of the stroke
     // disappears at turns. Denied rolls never create a new stroke.
     slidePaint(r,s,true);
-    const duration=finite(t.MoveFrame,12)/HZ,direction=move.clone().setY(0).normalize();
+    const duration=finite(t.MoveFrame,12)/HZ,direction=move.clone().setY(0).normalize(),startup=Math.max(0,finite(t.ChargeFrame,0))/HZ;
     s.slip=null;s.turretHeld=false;
     s.roll={remaining:duration,t:0,dur:duration,distance:finite(t.MoveDist,5),speed:finite(t.MoveDist,5)/duration,
-      kd:a.grounded?t.MoveStepKd:t.MoveStepKd_Air,direction,paintStart:a.pos.clone(),startup:0,startupDur:0,
+      kd:a.grounded?t.MoveStepKd:t.MoveStepKd_Air,direction,paintStart:a.pos.clone(),startup,startupDur:startup,
       token:this.s3CatalogDodgeSequence=(this.s3CatalogDodgeSequence||0)+1};s.rolls++;
     s.slideRunner={a,dodge:s.roll,_dodgeDir:direction};
     s.roll.recovery=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameMove_Last:t.UnrelaxFrameMove,32)/HZ;
     s.turret=0;
-    s.stop=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameNoSquid_Last:t.UnrelaxFrameNoSquid,32)/HZ+duration;
+    s.stop=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameNoSquid_Last:t.UnrelaxFrameNoSquid,32)/HZ+duration+startup;
     writeCatalogDualiesVelocity(a,DT);
     this.cooldown=finite(t.UnrelaxFrameNoWeapon,0)/HZ;
     // The native Character expects the world move transformed to root space

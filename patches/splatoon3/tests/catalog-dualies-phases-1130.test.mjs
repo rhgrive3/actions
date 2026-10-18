@@ -13,6 +13,19 @@ async function setup(id='s3-maneuver-stepper') {
 }
 function tick(f,fire=true) {f.G.time+=STEP;f.r.update(STEP,{fire});}
 
+test('Tetra explicit ChargeFrame is five accepted stationary startup ticks before the independent movement clock',async()=>{
+  const f=await setup();f.a.vel.set(4,0,0);
+  assert.ok(f.r.tryDodge(f.a.intent.move));near(f.a.ink,97);
+  const roll=f.r.catalogState.roll;
+  near(roll.startupDur,5/60);near(roll.startup,5/60);
+  for(let frame=1;frame<=5;frame++){
+    f.a._horizontal(STEP,false,false);near(f.a.vel.x,0);near(f.a.vel.z,0);
+    tick(f);near(roll.t,0);near(roll.remaining,roll.dur);assert.equal(f.r.catalogState.turret,0);
+    assert.equal(f.G.projectiles.list.length,0,'startup cannot consume the separate eight-frame shot gate');
+  }
+  f.a._horizontal(STEP,false,false);assert.ok(f.a.vel.x>0,'movement begins on tick6');tick(f);near(roll.t,1/60);
+});
+
 test('Tetra moving rounds retain 7.4 degree / 6F / .26 radius until the physical roll ends',async()=>{
   const f=await setup();assert.equal(f.r.tryDodge(f.a.intent.move),true);
   assert.equal(f.r.catalogState.turret,0,'post-roll mode is not active at moving admission');
@@ -24,12 +37,12 @@ test('Tetra moving rounds retain 7.4 degree / 6F / .26 radius until the physical
       fired.push({frame,key:p.catalog.descriptor.key,spread:f.r.spread,radius:p.catalog.descriptor.c.InitRadiusForPlayer,cooldown:f.r.cooldown});
     }
   }
-  const moving=fired.filter(p=>p.frame<12),planted=fired.filter(p=>p.frame>=12);
+  const moving=fired.filter(p=>p.frame<17),planted=fired.filter(p=>p.frame>=17);
   assert.ok(moving.length>0,'Tetra retains fire during movement');
   for(const p of moving){assert.equal(p.key,'normal');near(p.spread,7.4);near(p.radius,.26);near(p.cooldown,6/60);}
   assert.ok(planted.length>=2);
   for(const p of planted){assert.equal(p.key,'turret');near(p.spread,2.7);near(p.radius,.31);near(p.cooldown,5/60);}
-  near(f.r.catalogState.turret,(45-(30-12))/60,'full recovery starts at the physical roll end');
+  near(f.r.catalogState.turret,(45-(30-17))/60,'full recovery starts at the physical roll end');
 });
 
 test('every added Dualies base and alternate kit starts in moving mode, never planted mode',async()=>{
@@ -41,7 +54,7 @@ test('every added Dualies base and alternate kit starts in moving mode, never pl
     const f={...shared,a,r:a.weaponRunner};assert.equal(f.a.weapon.catalogRecord.id,base.id,id);
     assert.equal(f.r.tryDodge(f.a.intent.move),true,id);
     assert.equal(f.r.catalogState.turret,0,id+' no post-roll cone during motion');
-    const duration=f.r.catalogState.roll.dur;
+    const duration=f.r.catalogState.roll.dur+f.r.catalogState.roll.startupDur;
     for(let i=0;i<Math.round(duration*60)-1;i++)tick(f,false);
     assert.ok(f.r.catalogState.roll,id+' motion remains active until its last frame');
     assert.equal(f.r.catalogState.turret,0,id+' recovery clock does not run early');
@@ -80,7 +93,8 @@ test('Tetra four-roll chain resets after complete recovery; a rejected fifth nev
   const f=await setup();
   for(let roll=1;roll<=4;roll++){
     assert.ok(f.r.tryDodge(f.a.intent.move));
-    for(let i=0;i<12;i++)tick(f,false);
+    const totalFrames=Math.round((f.r.catalogState.roll.dur+f.r.catalogState.roll.startupDur)*60);
+    for(let i=0;i<totalFrames;i++)tick(f,false);
     assert.equal(f.r.catalogState.rolls,roll);
   }
   const ink=f.a.ink,stroke=f.r.catalogState.slideRunner;

@@ -1,0 +1,26 @@
+(node:9508) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ all added Dualies and kits send accepted roll epochs and planted state over the native snapshot/event transport (3407.257145ms)
+(node:9515) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ calibrated braking and explicit .98 air retention consume exact distances at 30/60/120Hz (13.377963ms)
+✔ added roll substeps stay within half a body radius and discard blocked motion without accumulating debt (9.035025ms)
+✔ production Actor integrates source Dapple 3+.6 and Douser 5.5+1.2, including a thin wall (5222.024092ms)
+✔ all six base Dualies retain exact 60Hz Actor/round traces under 30/60/120Hz presentation scheduling (4390.254248ms)
+✔ Splat Dualies alternate kits retain the dedicated native owner and the same real Actor trace (5773.981779ms)
+(node:9573) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tetra explicit ChargeFrame is five accepted stationary startup ticks before the independent movement clock (9518.726941ms)
+✔ Tetra moving rounds retain 7.4 degree / 6F / .26 radius until the physical roll ends (4498.598182ms)
+✔ every added Dualies base and alternate kit starts in moving mode, never planted mode (4087.681925ms)
+✔ sourced slide recovery blocks squid, preserves stationary planted fire and releases on movement (4006.754026ms)
+✔ Dapple and Squelcher slide ink recovery uses the SideStep 50F / 60F source (2914.197714ms)
+✔ Tetra four-roll chain resets after complete recovery; a rejected fifth never spends ink or changes the stroke (2487.731565ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51592.300368

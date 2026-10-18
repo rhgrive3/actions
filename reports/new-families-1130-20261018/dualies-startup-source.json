@@ -1,0 +1,47 @@
+{
+  "retrievedOn": "2026-10-18",
+  "versionSource": "Leanny 1130 explicit ChargeFrame=5, unchanged pinned hash in dualies-source.json",
+  "template": {
+    "url": "https://splatoonwiki.org/wiki/Template:Dualies_data_S3?action=raw",
+    "sha256": "b9e52961122e3032b9be298d6676ceeedf69ffe2bd6786d220a94823a16e4228",
+    "revision": {
+      "batchcomplete": "",
+      "query": {
+        "normalized": [
+          {
+            "from": "Template:Dualies_data_S3",
+            "to": "Template:Dualies data S3"
+          }
+        ],
+        "pages": {
+          "55629": {
+            "pageid": 55629,
+            "ns": 10,
+            "title": "Template:Dualies data S3",
+            "revisions": [
+              {
+                "revid": 697265,
+                "parentid": 697263,
+                "timestamp": "2026-04-21T22:39:48Z"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "excerpt": "After a {{{ChargeFrame|4}}} frame startup, the roll animation lasts for {{{MoveFrame|16}}} frames",
+    "use": "ChargeFrame semantic only; old example/default data not substituted for 11.3.0"
+  },
+  "tetraPage": {
+    "url": "https://splatoonwiki.org/wiki/Dark_Tetra_Dualies?action=raw",
+    "sha256": "a07f727b01c3ee0c4300ee30c72a479cbb5dcf09d19110175693303cac40fcbc",
+    "excerpt": "ChargeFrame = 5 in Splatoon3 Rolling subsection"
+  },
+  "official": {
+    "url": "https://www.nintendo.com/jp/character/splatoon/en/fashion/index.html",
+    "sha256": "8d4db5822e83c943cbe7dcdd92a9795714091375cd2df4f4655ddf5b4c6c02aa",
+    "excerpt": "Up to Four Rolls in a Row; you can shoot while rolling too",
+    "use": "Four-roll and firing-during-roll capability, not numerical startup proof"
+  },
+  "existingRuntime": "patches/splatoon3/issue-477-adapter.mjs native 4F pre-roll startup contract reused only for explicit Tetra5F"
+}

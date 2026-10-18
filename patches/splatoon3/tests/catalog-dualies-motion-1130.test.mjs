@@ -27,7 +27,7 @@ test('added roll substeps stay within half a body radius and discard blocked mot
 
 test('production Actor integrates source Dapple 3+.6 and Douser 5.5+1.2, including a thin wall',async()=>{
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
-  for(const wall of [false,true])for(const [id,frames,distance] of [['s3-maneuver-short',38,3.6],['s3-maneuver-long',66,6.7],['s3-maneuver-gallon',12,5],['s3-maneuver-dual',12,3.5],['s3-maneuver-stepper',12,3.5]]){
+  for(const wall of [false,true])for(const [id,frames,distance] of [['s3-maneuver-short',38,3.6],['s3-maneuver-long',66,6.7],['s3-maneuver-gallon',12,5],['s3-maneuver-dual',12,3.5],['s3-maneuver-stepper',17,3.5]]){
     f.G.projectiles.clear();f.G.actors.length=0;
     const single=[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}];
     if(wall)single.push({kind:'box',min:[1,0,-5],max:[1.03,10,5]});
@@ -35,7 +35,7 @@ test('production Actor integrates source Dapple 3+.6 and Douser 5.5+1.2, includi
     f.G.physics=new f.Physics(f.G.level);
     const a=f.make(id);a._integrate=f.Actor.prototype._integrate;a.form='kid';a.intent.fire=true;a.pos.set(0,0,0);
     assert.ok(a.weaponRunner.tryDodge(new f.THREE.Vector3(1,0,0)));a.intent.fire=false;
-    const core=a.weaponRunner.catalogState.roll.dur*60;
+    const core=(a.weaponRunner.catalogState.roll.dur+a.weaponRunner.catalogState.roll.startupDur)*60;
     f.tick(a,core);
     if(wall)assert.ok(a.pos.x<.7&&a.pos.x>.4,'the real body solver stops before the wall');
     else near(a.pos.x,a.weapon.catalogRecord.parameters.SideStepParam.MoveDist??5);

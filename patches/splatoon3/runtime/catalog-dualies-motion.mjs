@@ -31,7 +31,7 @@ export function dualiesNetworkLock(actor) {
 }
 
 export function catalogDualiesIntervalDistance(motion,dt,offset=0) {
-  if(!motion||!(dt>0)||!(motion.dur>0)||!(motion.distance>=0))return 0;
+  if(!motion||motion.startup>EPS||!(dt>0)||!(motion.dur>0)||!(motion.distance>=0))return 0;
   const start=clamp((motion.t+offset)/motion.dur),end=clamp((motion.t+offset+dt)/motion.dur);
   const kd=motion.kd;
   if(kd>0&&kd<1){
@@ -43,7 +43,7 @@ export function catalogDualiesIntervalDistance(motion,dt,offset=0) {
 }
 
 export function catalogDualiesPeakSpeed(motion) {
-  if(!(motion?.dur>0))return 0;
+  if(!(motion?.dur>0)||motion.startup>EPS)return 0;
   const kd=motion.kd,age=clamp(motion.t/motion.dur);
   if(kd>0&&kd<1){const log=Math.log(kd)*motion.dur*HZ;return motion.distance/motion.dur*log/Math.expm1(log)*Math.exp(log*age);}
   return 1.5*motion.distance/motion.dur*(1-age*age);

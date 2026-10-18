@@ -31,7 +31,13 @@ test('all added Dualies and kits send accepted roll epochs and planted state ove
       receiver.onMessage('owner',structuredClone(packet));const peer=receiver._peer('owner');peer.tr=packet.ts;
       receiver._sample(remote,peer.tr,1/60);receiver._playEvents();receiver.applyRemote(remote,1/60);
       assert.ok(remote.remoteDodgeClock,id+' remote accepted epoch');
-      assert.equal(remoteDodgePresentation(remote)?.phase,'roll',id+' remote motion uses the accepted phase');
+      const startupFrames=base.parameters.SideStepParam.ChargeFrame||0;
+      assert.equal(remoteDodgePresentation(remote)?.phase,startupFrames?'startup':'roll',id+' remote motion uses the accepted phase');
+      assert.equal(event[4].startupDur,startupFrames/60,id+' startup is separate from the movement duration');
+      if(startupFrames){
+        peer.tr=packet.ts+startupFrames/60+.0001;receiver._sample(remote,peer.tr,1/60);receiver.applyRemote(remote,1/60);
+        assert.equal(remoteDodgePresentation(remote)?.phase,'roll',id+' remote startup transitions on the sender clock');
+      }
       const epoch=remote.remoteDodgeClock.epoch;
       assert.equal(acceptRemoteDodgeClock(remote,'owner',event[0],event[4],packet.ts),false,id+' duplicate cannot restart');
       assert.equal(acceptRemoteDodgeClock(remote,'owner',event[0]-.01,{...event[4],start:event[0]-.01},packet.ts),false,id+' reordered older epoch cannot rewind');
@@ -40,7 +46,7 @@ test('all added Dualies and kits send accepted roll epochs and planted state ove
       assert.equal(acceptRemoteDodgeClock(remote,'owner',event[0]+.01,{...event[4],token:event[4].token+1,start:event[0]+.01},packet.ts+.01),false,id+' prior-life action cannot restart');
       remote.net.remoteDodgeLife=event[4].life;
       owner.intent.move.set(0,0,0);
-      const frames=Math.round(owner.weaponRunner.catalogState.roll.dur*60);
+      const frames=Math.round((owner.weaponRunner.catalogState.roll.dur+owner.weaponRunner.catalogState.roll.startupDur)*60);
       for(let i=0;i<frames;i++)owner.weaponRunner.update(1/60,{fire:true});
       time+=500;sender._sendTick();const planted=packets.at(-1);
       assert.ok(planted.a[0][10]&DUALIES_TURRET_FLAG,id+' planted state is sent');

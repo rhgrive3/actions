@@ -70,6 +70,7 @@ export function adaptIssue1163RemoteDodgeClock(code) {
         Number.isSafeInteger(rl.tp) && rl.tp === S.tp && Number.isFinite(rl.startupDur) && rl.startupDur >= 0 &&
         Number.isFinite(rl.lockDur) && rl.lockDur >= 0 &&
         (rl.phase === 'startup' || rl.phase === 'roll');`, 'sidecar requires accepted epoch and lifecycle');
+  code=replaceOnce(code,'const startupDur = 4 / 60;','const startupDur = rl.startupDur;','validated per-action startup duration');
 
   code = replaceOnce(code,
     `      } else {
