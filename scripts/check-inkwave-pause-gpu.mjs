@@ -53,12 +53,16 @@ try {
       }
       const snapshot=()=>JSON.stringify({time:G.match.time,actors:G.match.actors.map(a=>({hp:a.hp,ink:a.ink,pos:a.pos.toArray()}))});
       const state=snapshot(),animations=hudAnimations();
+      const preservedEntryPhases=before.every(({a,time})=>!animations.includes(a)||Math.abs(a.currentTime-time)<1);
+      // CSS pause commits on the next animation frame. Compare steady times
+      // after its ready promise, rather than mistaking a pending pause for drift.
+      await Promise.all(animations.map(a=>a.ready));
       const phase=animations.map(a=>({a,time:a.currentTime}));
       for(let i=0;i<120;i++)g._frame(1/60);
       await new Promise(resolve=>setTimeout(resolve,350));
       const pause={counts:{...counts},stateUnchanged:state===snapshot(),paused:G.match.paused,menu:g.menus.current,
         animations:animations.map(a=>({name:a.animationName,playState:a.playState})),
-        preservedEntryPhases:before.every(({a,time})=>!animations.includes(a)||Math.abs(a.currentTime-time)<1),
+        preservedEntryPhases,
         unchangedAnimationTimes:phase.every(({a,time})=>a.currentTime===time),glError:G.renderer.getContext().getError()};
       for(const undo of restore)undo();
       return pause;

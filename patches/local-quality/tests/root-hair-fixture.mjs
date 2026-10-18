@@ -3,13 +3,18 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {fileURLToPath} from 'node:url';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {adaptRootHairSpring} from '../root-hair-spring-adapter.mjs';
+import {replaceOnce} from '../adapter.mjs';
 export const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 export const REL='src/game/motion/root-hair.js';
 export const baseline=fs.readFileSync(new URL('./fixtures/root-hair-07f44b97.mjs.txt',import.meta.url),'utf8');
-export async function rootHairFixture(old=false){
+export async function rootHairFixture(old=false,{springOnly=false}={}){
  const site=process.env.INKWAVE_BUILT_SITE||path.join(ROOT,'inkwave-public');
  const context=vm.createContext({console}),modules=new Map();
- const code=old?baseline:process.env.INKWAVE_BUILT_SITE?fs.readFileSync(path.join(site,REL),'utf8'):adaptBuildSource(REL,baseline);
+ // Exact spring arithmetic must compare only the propagator optimization.
+ // Full composition also removes eager matrix updates and walks quaternions;
+ // the loaded-production Character test covers those separate transforms.
+ const code=old?baseline:springOnly?adaptRootHairSpring(REL,baseline,replaceOnce):process.env.INKWAVE_BUILT_SITE?fs.readFileSync(path.join(site,REL),'utf8'):adaptBuildSource(REL,baseline);
  const THREEFILE=path.join(site,'vendor/three/build/three.module.js');
  function load(file){if(modules.has(file))return modules.get(file);const m=new vm.SourceTextModule(fs.readFileSync(file,'utf8'),{context,identifier:file});modules.set(file,m);return m;}
  const clamp=new vm.SyntheticModule(['clamp'],function(){this.setExport('clamp',(x,a,b)=>Math.max(a,Math.min(b,x)));},{context});

@@ -17,7 +17,7 @@
 
 - pause GPU回帰3件、既存idle回帰22件成功。自己駆動effectsを60秒停止後に再開しても停止時間を積算しないことを含む。
 - 本番minifyビルドと `check-inkwave-patches.mjs --quick` 成功。
-- local-quality全体：1,115件、1,105成功、9スキップ、1失敗（既存root-hair springの30Hz/0の骨行列比較）。変更前のmainのidle adapterへ戻しても同じ失敗を再現。今回のHUD変更と切り分けて扱う。
+- local-quality全体：1,115件、1,105成功、9スキップ、1失敗（既存root-hair springの30Hz/0の骨行列比較）。変更前のmainのidle adapterへ戻しても同じ失敗を再現。原因はspring単独の厳密比較に、別の行列/Quaternion最適化まで混ぜていたテスト条件。spring単独の比較に修正し、全合成を読み込む実キャラクターの回帰を残した。修正後のspring回帰4件は成功（720条件の完全一致と実キャラクター450フレームを含む）。
 - `scripts/check-inkwave-pause-gpu.mjs` と専用Actionsは、変更前/変更後の実ビルドをChromiumで起動し、デスクトップ/スマートフォンそれぞれ120停止フレームの世界/HUD/ミニマップ/タンク描画数、停止時のCSS位相保持、再開、WebGLエラー、ゲーム状態不変を確認する。結果とスクリーンショットをActions artifactへ保存する。
 
-ローカルChromiumはこのホストのソケット制限で終了し、実ブラウザ確認はActions側で実行する。ソフトウェアWebGLの処理回数は、実機GPU使用率の測定値ではない。実機での削減率は未計測。
+ローカルのゲーム全体のChromiumはこのホストのソケット制限で終了。HUD/Menus/CSSだけを実ビルドから読み込むChromium確認は成功し、変更前に動き続けた9個のHUDアニメーションが変更後は位相を保持してすべて停止した。ゲーム全体の実ブラウザ確認はActions側で実行する。ソフトウェアWebGLの処理回数は、実機GPU使用率の測定値ではない。実機での削減率は未計測。
