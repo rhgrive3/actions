@@ -8,7 +8,7 @@
 // exactly the aim (yaw/pitch) plus spring-driven visual recoil and smooth trauma shake — the aim ray is taken from
 // the rendered camera, so the crosshair is always the truth. Mode changes blend the pose (no cuts, no pops).
 import * as THREE from 'three';
-import { chargerScopeFactor } from './chargerTuning.js';
+import { chargerScopeFactor, chargerScopeFov } from './chargerTuning.js';
 import { G, clamp, damp, lerp, dampAngle } from '../core/ctx.js';
 import { Hit } from './physics.js';
 
@@ -64,6 +64,7 @@ export class CameraRig {
     this.baseFov = 70;
     this.zoom = 0;
     this.scopeK = 0; // 0 = normal shoulder camera, 1 = scoped eye-line
+    this.scopeUsesTrueFov = true; // composited runtime owns collision, local renderer owns true FOV
     this.time = 0;
     this.kick = 0;                // visual recoil pitch (radians)
     // follow springs
@@ -190,7 +191,7 @@ export class CameraRig {
     // fisheye); kicks/zoom are in vertical degrees
     const vBase = 2 * Math.atan(Math.tan((this.baseFov * Math.PI) / 360) / (16 / 9)) * (180 / Math.PI);
     const normalFov = vBase + (this.fovKick - this.zoom) * 0.8;
-    let fov = lerp(normalFov, this.target?.weapon?.scopeFovY ?? 28, this.mode === 'follow' ? this.scopeK : 0);
+    let fov = lerp(normalFov, chargerScopeFov(this.target?.weapon), this.mode === 'follow' ? this.scopeK : 0);
     // pose blend (mode transitions)
     const b = this.blend;
     if (b && b.active) {
