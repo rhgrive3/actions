@@ -38,6 +38,37 @@ class MixerStub {
 }
 installWeaponAudioEngine(MixerStub);
 
+test('2022-unrecorded alternate kits keep their own source-family authored cue after negative proof',async()=>{
+ const {ctx,sources}=mkctx(),audio=new MixerStub(ctx);
+ audio.weaponBank();
+ audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest([clip('shooter','fire','recorded.mp3')])});
+ audio._realS3Loader.bank.authorized.fetcher=async()=>res;
+ for(const [alt,base] of [
+   ['s3-shooter-quicklong-01','s3-shooter-quicklong'],
+   ['s3-spinner-hypershort-01','s3-spinner-hypershort'],
+   ['s3-brush-heavy-01','s3-brush-heavy']
+ ]){
+   assert.equal(mainAudioSourceId(alt),base);
+   assert.equal(audio.playWeapon(alt,'fire',{actor:{isLocal:true}}),null,
+     'unavailable manifest must not allow premature synthesis: '+alt);
+ }
+ await audio._realS3Loader.getManifest();
+ for(const [alt,base] of [
+   ['s3-shooter-quicklong-01','s3-shooter-quicklong'],
+   ['s3-spinner-hypershort-01','s3-spinner-hypershort'],
+   ['s3-brush-heavy-01','s3-brush-heavy']
+ ]){
+   assert.equal(audio._realS3Loader.declares(base,'fire'),false);
+   const voice=audio.playWeapon(alt,'fire',{actor:{isLocal:true}});
+   assert.equal(voice?.weaponId,base,'only the correct family recipe is eligible');
+   assert.equal(audio.played.at(-1).name,`main:${base}:fire`);
+ }
+ assert.equal(audio.stats().authoredFallbackShots,3);
+ assert.equal(sources.length,3);
+ assert.ok(sources.every(x=>x.buffer),'each confirmed unrecorded alternate has an authored sample');
+ audio.disposeWeaponAudio();
+});
+
 test('95 alternate main kits resolve to their original sound identity, no synthetic collab bank',()=>{
  const recorded=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
  const recordedBase=new Set(recorded.clips.filter(c=>c.event==='fire'&&!c.id.includes(':')).map(c=>c.id));
