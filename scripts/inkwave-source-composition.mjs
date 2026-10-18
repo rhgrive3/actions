@@ -34,5 +34,34 @@ export function adaptBuildSource(rel, code) {
   code = adaptMainInkFootprints(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
-  return adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce));
+  return applyZevantDisplayName(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)));
+}
+
+// Display-only rename applied after all gameplay/UI adapters. Keep the upstream
+// input snapshot, storage keys, JS identifiers and source hash lock unchanged.
+const ZEVANT_DISPLAY_REPLACEMENTS = {
+  'index.html': [
+    ['<title>INKWAVE — ナワバリバトル</title>', '<title>ZEVANT — ナワバリバトル</title>'],
+    ['content="INKWAVE：4対4', 'content="ZEVANT：4対4'],
+  ],
+  'src/config.js': [
+    ["export const GAME_TITLE = 'INKWAVE';", "export const GAME_TITLE = 'ZEVANT';"],
+  ],
+  'src/ui/ui-icons.js': [
+    ["logoMarkup(title = 'INKWAVE'", "logoMarkup(title = 'ZEVANT'"],
+  ],
+  'src/ui/menus.js': [
+    ['The INKWAVE servers didn', 'The ZEVANT servers didn'],
+    ['The squidkids and code behind INKWAVE', 'The squidkids and code behind ZEVANT'],
+  ],
+  'src/i18n.js': [
+    ["'The squidkids and code behind INKWAVE': 'INKWAVE をつくった仲間たち'", "'The squidkids and code behind ZEVANT': 'ZEVANT をつくった仲間たち'"],
+  ],
+};
+
+export function applyZevantDisplayName(rel, code) {
+  for (const [before, after] of ZEVANT_DISPLAY_REPLACEMENTS[rel] || []) {
+    code = replaceOnce(code, before, after, 'ZEVANT public display name (' + rel + ')');
+  }
+  return code;
 }
