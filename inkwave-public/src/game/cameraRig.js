@@ -8,6 +8,7 @@
 // exactly the aim (yaw/pitch) plus spring-driven visual recoil and smooth trauma shake — the aim ray is taken from
 // the rendered camera, so the crosshair is always the truth. Mode changes blend the pose (no cuts, no pops).
 import * as THREE from 'three';
+import { chargerScopeFactor } from './chargerTuning.js';
 import { G, clamp, damp, lerp, dampAngle } from '../core/ctx.js';
 import { Hit } from './physics.js';
 
@@ -62,6 +63,7 @@ export class CameraRig {
     this.lookAt = new THREE.Vector3();
     this.baseFov = 70;
     this.zoom = 0;
+    this.scopeK = 0; // 0 = normal shoulder camera, 1 = scoped eye-line
     this.time = 0;
     this.kick = 0;                // visual recoil pitch (radians)
     // follow springs
@@ -122,6 +124,7 @@ export class CameraRig {
       this.boom.reset(this.dist); this.curDist = this.dist; this.wantDist = this.dist;
       this.dipS.x = 0; this.dipS.v = 0; this.side.reset(0); this.lensLift.reset(0);
       this.kickS.reset(0);
+      this.scopeK = 0; this.zoom = 0;
       this._lastTY = null; this._takeoffY = p.y;
       this._landSeen = actor.landT ?? 99;
     }
@@ -186,7 +189,8 @@ export class CameraRig {
     // settings.fov is the HORIZONTAL field of view at a 16:9 reference (Hor+: wider screens see more, never a stretched
     // fisheye); kicks/zoom are in vertical degrees
     const vBase = 2 * Math.atan(Math.tan((this.baseFov * Math.PI) / 360) / (16 / 9)) * (180 / Math.PI);
-    let fov = vBase + (this.fovKick - this.zoom) * 0.8;
+    const normalFov = vBase + (this.fovKick - this.zoom) * 0.8;
+    let fov = lerp(normalFov, this.target?.weapon?.scopeFovY ?? 28, this.mode === 'follow' ? this.scopeK : 0);
     // pose blend (mode transitions)
     const b = this.blend;
     if (b && b.active) {
@@ -365,9 +369,13 @@ export class CameraRig {
     else if (!a.grounded && a.vel.y > 2) fk = 1.2;
     this.fovKick = damp(this.fovKick, fk, 5, dt);
     const charging = a.weaponRunner?.charging ? a.weaponRunner.charge : 0;
-    this.zoom = damp(this.zoom, charging > 0.99 ? 14 : charging * 6, 8, dt);
+    this.scopeK = damp(this.scopeK, chargerScopeFactor(a.weapon, charging, a.weaponRunner?.charging), 16, dt);
+    // Unscoped chargers stay in the normal third-person view; a scoped charger
+    // moves the actual camera in to its eyepiece, not just the FOV slider.
+    this.zoom = damp(this.zoom, a.weapon?.kind === 'charger' && !a.weapon?.scoped ? charging * 1.4 : 0, 9, dt);
     // ---- boom length: soft probe, fast in / slow out
-    let want = (squid ? 4.1 : this.dist) - charging * 0.6;
+    let want = (squid ? 4.1 : this.dist) - charging * 0.18;
+    want = lerp(want, 0.5, this.scopeK);
     if (swim) want += clamp((hs - 6) / 6, 0, 1) * 0.35;
     if (flying) want += 1.2;
     this.wantDist = damp(this.wantDist, want, 6, dt);
@@ -382,7 +390,7 @@ export class CameraRig {
     if (_probe.floor && this.boom.x > _probe.hard) { this.boom.x = _probe.hard; this.boom.v = Math.min(this.boom.v, 0); }
     if (this.boom.x < 0.45) { this.boom.x = 0.45; this.boom.v = Math.max(0, this.boom.v); }
     this.curDist = this.boom.x;
-    cam.position.copy(this.pivot).addScaledVector(fwd, -this.curDist);
+    cam.position.copy(this.pivot).addScaledVector(fwd, -this.curDist + this.scopeK * 0.55);
     cam.position.y += 0.15;
     // keep the lens off the floor under it (only real floors well below the pivot — not wall tops at head height)
     const gy = G.level?.groundHeight(cam.position.x, cam.position.z, cam.position.y + 0.2) ?? -Infinity;
