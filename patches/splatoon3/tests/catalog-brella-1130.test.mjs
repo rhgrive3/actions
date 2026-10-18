@@ -133,3 +133,20 @@ test('F07 local and incoming projectile boundaries agree at every 0.1 across the
   f.G.projectiles.applyHit(enemy,a,1,'shooter');assert.equal(c.hp===199,local,`${radius} / ${x}`);
  }
 });
+
+test('additional audit: a launched shield retains defense after its owner is splatted',async()=>{
+ const {f,a}=await world();let mesh;f.G.scene={add(m){mesh=m;}};
+ a.character.weapon={def:{parts:{canopy:{geo:new f.THREE.BufferGeometry()}}}};hold(a,65);a.alive=false;
+ const probe={team:1,size:0,damage:1,prev:mesh.position.clone().add(new f.THREE.Vector3(0,0,1)),pos:mesh.position.clone().add(new f.THREE.Vector3(0,0,-1))};
+ assert.ok(f.G.projectiles.kitDefenseCandidate(probe)?.brella);
+});
+
+for(const hz of [30,60,120])test('F05 canopy contact owns a 30F cooldown independent of render clock at '+hz+'Hz',async()=>{
+ const {f,a}=await world('s3-shelter-focus',0);makePaintWorld(f,{wall:true});hold(a,65);f.G.projectiles.list.length=0;
+ const enemy=f.make('shooter');enemy.team=1;enemy.pos.set(0,0,7.8);f.G.actors=[a,enemy];
+ let contacts=0;f.G.projectiles.applyHit=(_owner,target)=>{if(target===enemy)contacts++;return'accepted';};
+ // Deliberately hold the display clock fixed: only simulation dt owns this
+ // object's recontact budget, including the two fixed substeps at30Hz.
+ for(let i=0;i<hz*2;i++)f.G.projectiles.update(1/hz);
+ assert.equal(contacts,3);
+});
