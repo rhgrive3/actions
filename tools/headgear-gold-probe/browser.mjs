@@ -39,10 +39,10 @@ export async function run(config){
     const framing=frame(c,gear,view);await renderer.compileAsync(scene,camera);const fitted=render();
     const pixels=new Uint8Array(720*720*4);gl.readPixels(0,0,720,720,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
     if(variant==='current')baselinePixels.set(view,pixels);
-    if(variant==='neutral-hook-disabled'){
+    if(variant!=='current'){
      const ref=baselinePixels.get(view);let differingChannels=0,maxDelta=0,totalDelta=0;
      for(let i=0;i<pixels.length;i++){const d=Math.abs(pixels[i]-ref[i]);if(d)differingChannels++;maxDelta=Math.max(maxDelta,d);totalDelta+=d;}
-     parity.push({view,exactEqual:differingChannels===0,differingChannels,maxDelta,totalDelta});
+     parity.push({variant,view,exactEqual:differingChannels===0,differingChannels,maxDelta,totalDelta});
     }
     await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL('image/png'));
     const materials=[];gear.traverse(o=>{if(o.isMesh)materials.push({name:o.name,type:o.material.type,color:o.material.color?.toArray(),metalness:o.material.metalness,roughness:o.material.roughness,clearcoat:o.material.clearcoat||0,hasLocalEnvMap:!!o.material.envMap,hasMetalnessMap:!!o.material.metalnessMap,hasRoughnessMap:!!o.material.roughnessMap});});
@@ -50,6 +50,6 @@ export async function run(config){
    }
    disposeActive();render();const after=resources();cycles.push({gearId,variant,baseline,after});check(after.geometries===baseline.geometries&&after.textures===baseline.textures,'one-character resources returned '+variant);
   }
-  progress.stage='complete';return{status:'diagnostic-awaiting-pixel-review',qaOnly:true,rows,caseCount:rows.length,lightingReceipt,cycles,parity,limits:'QA-only physical conductor candidate, not proof of original game material. Identical geometry, production Environment, tone mapping and exposure. No runtime asset edits.'};
+  progress.stage='complete';return{status:'diagnostic-awaiting-pixel-review',qaOnly:true,rows,caseCount:rows.length,lightingReceipt,cycles,parity,limits:'QA-only roughness sensitivity, original color and metalness preserved. Identical geometry, production Environment, tone mapping and exposure. No runtime asset edits.'};
  }finally{disposeActive();scene.environment=null;env.dispose();G.env=null;renderer.dispose();}
 }
