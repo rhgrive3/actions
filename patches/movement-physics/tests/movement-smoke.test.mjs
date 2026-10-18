@@ -4,12 +4,16 @@ import fs from 'node:fs';
 import {
   MOVEMENT_EPSILON,
   dodgeIntervalDistance,
+  groundAcceleration,
   rollingMovementActive,
   rollingMovementSpeed,
+  shedFormExitOverspeed,
   stepGroundVelocity,
 } from '../../splatoon3/runtime/movement-physics.mjs';
 import { adaptMovementPhysics } from '../../splatoon3/movement-physics-adapter.mjs';
 import { FixedClock } from '../../splatoon3/runtime/clock.mjs';
+import { reverseShotRelease } from '../../splatoon3/runtime/shooter-movement.mjs';
+import { toxicMistScale } from '../../splatoon3/runtime/toxic-mist.mjs';
 
 const close = (a, b, tol = 1e-9) => assert.ok(Math.abs(a - b) <= tol, `${a} != ${b}`);
 const replaceOnce = (code, before, after, label) => {
@@ -19,6 +23,43 @@ const replaceOnce = (code, before, after, label) => {
   return code.slice(0, i) + after + code.slice(i + before.length);
 };
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
+
+// Execute the adapter's real methods without a browser/VM-module loader. Only
+// their scalar context is supplied here; movement and admission use real helpers.
+const adaptedMethod = (code, name, scope) => {
+  const start = code.indexOf(`\n  ${name}(`), lineEnd = code.indexOf('\n', start + 1);
+  const end = code[lineEnd - 1] === '}' ? lineEnd : code.indexOf('\n  }\n', start) + 4;
+  assert.ok(start >= 0 && end > start, `missing adapted ${name} method`);
+  return new Function(...Object.keys(scope), `return (class {${code.slice(start, end)}}).prototype.${name};`)(...Object.values(scope));
+};
+const nativePlayer = read('src/config.js').match(/export const PLAYER = (\{[\s\S]*?\n\});/);
+assert.ok(nativePlayer, 'native player constants');
+const PLAYER = { ...new Function(`return (${nativePlayer[1]});`)(),
+  ...JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json', import.meta.url), 'utf8')).player };
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smoothstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const angleDiff = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
+const adaptedRoller = (active = rollingMovementActive, speed = rollingMovementSpeed) => {
+  const scope = { PLAYER, clamp, lerp, smoothstep, angleDiff, TAU: Math.PI * 2,
+    rollingMovementActive: active, rollingMovementSpeed: speed, groundAcceleration,
+    shedFormExitOverspeed, stepGroundVelocity, toxicMistScale, reverseShotRelease,
+    _ZERO_MOVE: { x: 0, z: 0 } };
+  const actorCode = adaptMovementPhysics('src/game/actor.js', read('src/game/actor.js'), replaceOnce);
+  const runnerCode = adaptMovementPhysics('src/game/weapons.js', read('src/game/weapons.js'), replaceOnce);
+  const a = { weapon: { kind: 'roller', rollBaseSpeed: 6.48, rollSpeed: 7.92, rollDashTime: 1.5,
+    rollDashTurnBreakSpeed: 6.48, moveSpeedFiring: 3, flickWindup: .2 },
+    form: 'kid', grounded: true, hardLand: 0, kidT: 1, fireFacing: 0,
+    specialActive: null, superJumpState: null, intent: { move: { x: 1, z: 0 }, fire: false, sub: false },
+    vel: { x: 0, z: 0 }, anim: {}, aimYaw: 0, yaw: 0, yawVel: 0, _faceTarget: null };
+  a.weaponRunner = { a, rolling: true, flick: -1, flickRecover: 0, aimingSub: false, rollT: 0,
+    lockT: 0, slosh: -1, firingT: 0, charging: false, streaming: false,
+    moveSpeed: adaptedMethod(runnerCode, 'moveSpeed', scope),
+    firingPose: adaptedMethod(runnerCode, 'firingPose', scope) };
+  a._horizontal = adaptedMethod(actorCode, '_horizontal', scope);
+  a._face = adaptedMethod(actorCode, '_face', scope);
+  return a;
+};
 
 test('dodge curve integrates exactly to configured distance under irregular partitions', () => {
   for (const D of [.1, 2.8, 4, 10]) for (const duration of [.12, .2, .31]) {
@@ -62,7 +103,10 @@ test('build-only adapter changes only its explicit actor/weapons anchors', () =>
   const weaponsAfter = adaptMovementPhysics('src/game/weapons.js', weapons, replaceOnce);
   assert.match(actorAfter, /integrateMovement\(this, dt, isSquid, jumped, PLAYER\.radius\)/);
   assert.match(actorAfter, /if \(mh > 1\) side\.multiplyScalar\(1 \/ mh\)/);
-  assert.match(actorAfter, /rollingMovementActive\(this\)/);
+  // Actor delegates speed; #1584 deliberately gives held roller/brush facing
+  // its own aim-yaw gate instead of reusing the grounded roll-speed gate.
+  assert.match(actorAfter, /else vt = this\.weaponRunner\.moveSpeed\(\)/);
+  assert.match(weaponsAfter, /if \(rollingMovementActive\(this\.a\)\) return rollingMovementSpeed\(this\)/);
   assert.match(actorAfter, /stepGroundVelocity\(this\.vel, mv\.x, mv\.z, vt, accel, dt\)/);
   assert.match(weaponsAfter, /rollingMovementSpeed\(this\)/);
   assert.match(weaponsAfter, /MOVEMENT_EPSILON/);
@@ -70,6 +114,60 @@ test('build-only adapter changes only its explicit actor/weapons anchors', () =>
   for (const rel of ['src/game/player.js','src/core/input.js','src/core/gyro.js','src/net/netmatch.js','src/game/character.js']) {
     assert.equal(adaptMovementPhysics(rel, 'UNCHANGED', replaceOnce), 'UNCHANGED');
   }
+});
+
+test('adapted Actor consumes Runner roll speed and preserves every admission gate', () => {
+  const verify = (active, speed) => {
+    const a = adaptedRoller(active, speed), r = a.weaponRunner;
+    close(r.moveSpeed(), 6.48);
+    for (let i = 0; i < 60; i++) a._horizontal(1 / 60, false, false);
+    close(a.vel.x, 6.48); close(a.vel.z, 0);
+    r.rollT = 1.5; close(r.moveSpeed(), 7.92);
+    for (let i = 0; i < 60; i++) a._horizontal(1 / 60, false, false);
+    close(a.vel.x, 7.92);
+    a.intent.move.x = -1; close(r.moveSpeed(), 6.48);
+    a.intent.move.x = 1; r.rollT = 0;
+    for (const [obj, key, value, expected] of [
+      [r, 'rolling', false, PLAYER.runSpeed], [r, 'aimingSub', true, PLAYER.runSpeed],
+      [r, 'flick', .1, 2.175], [r, 'lockT', .1, 0],
+      [a, 'grounded', false, PLAYER.runSpeed], [a, 'form', 'squid', PLAYER.runSpeed],
+      [a, 'specialActive', {}, PLAYER.runSpeed], [a, 'superJumpState', {}, PLAYER.runSpeed],
+      [a.weapon, 'kind', 'shooter', PLAYER.runSpeed],
+    ]) {
+      const old = obj[key]; obj[key] = value;
+      close(r.moveSpeed(), expected);
+      obj[key] = old;
+    }
+    r.flickRecover = .1; close(r.moveSpeed(), 6.48);
+  };
+  verify(rollingMovementActive, rollingMovementSpeed);
+  assert.throws(() => verify(() => false, rollingMovementSpeed), assert.AssertionError,
+    'removing the Runner admission call must lose the sourced rolling speed');
+  assert.throws(() => verify(() => true, rollingMovementSpeed), assert.AssertionError,
+    'unconditional rolling speed must fail the cancellation/form gates');
+  assert.throws(() => verify(rollingMovementActive, r => r.a.weapon.rollSpeed), assert.AssertionError,
+    'bypassing the normal/dash speed profile must fail');
+});
+
+test('adapted held-roll facing is independent of speed admission and preserves ordinary/special facing', () => {
+  const heading = (configure, target) => {
+    const a = adaptedRoller();
+    a.vel.x = 6.48; a.intent.fire = true;
+    configure(a, a.weaponRunner);
+    for (let i = 0; i < 60; i++) a._face(1 / 60, a.form === 'squid');
+    close(Math.sin(a.yaw), Math.sin(target), 2e-4);
+    close(Math.cos(a.yaw), Math.cos(target), 2e-4);
+  };
+  heading(() => {}, 0); // native roll strafes without turning away from aim
+  for (const kind of ['roller', 'brush']) {
+    heading((a, r) => { r.rolling = false; a.weapon.kind = 'catalog'; a.weapon.behaviorKind = kind; }, 0);
+    heading((a, r) => { r.rolling = false; a.weapon.kind = 'catalog'; a.weapon.behaviorKind = kind; a.form = 'squid'; }, Math.PI / 2);
+  }
+  heading((a) => { a.specialActive = {}; }, Math.PI / 2);
+  heading((a) => { a.superJumpState = {}; }, Math.PI / 2);
+  heading((a, r) => { a.weapon.kind = 'shooter'; r.rolling = false; }, Math.PI / 2);
+  heading((a, r) => { a.weapon.kind = 'shooter'; r.rolling = false; r.firingT = 1; }, 0);
+  heading((a, r) => { r.rolling = false; a.intent.sub = true; }, 0);
 });
 
 
