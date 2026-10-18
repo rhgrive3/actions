@@ -1318,10 +1318,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(s.roll){
       const roll=s.roll;roll.remaining-=dt;roll.t=Math.min(roll.dur,roll.t+dt);
       a.vel.x=roll.direction.x*roll.speed;a.vel.z=roll.direction.z*roll.speed;
-      if(roll.remaining<=EPS)s.roll=null;
-      if(!t.IsShootableInMove)return;
+      if(roll.remaining<=EPS){
+        s.roll=null;s.turret=roll.recovery;
+      }else{
+        // Tetra may fire while travelling, but those rounds still use the
+        // ordinary cone, collision row and cadence. Recovery starts only once
+        // the physical movement phase ends, including on chained dodges.
+        if(t.IsShootableInMove)auto(runner,r,input,s,dt);
+        return;
+      }
+    }else if(s.turret>0){
+      s.turret=Math.max(0,s.turret-dt);if(s.turret<=EPS)s.rolls=0;
     }
-    if(s.turret>0){s.turret=Math.max(0,s.turret-dt);if(s.turret<=EPS)s.rolls=0;}
     const old=runner.cooldown;auto(runner,r,input,s,dt);
     if(runner.cooldown>old+EPS&&s.turret>0)runner.cooldown=finite(weaponParam(r).LapOver_RepeatFrame,4)/HZ;
   }
@@ -1339,7 +1347,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const duration=finite(t.MoveFrame,12)/HZ,direction=move.clone().setY(0).normalize();
     s.roll={remaining:duration,t:0,dur:duration,speed:finite(t.MoveDist,5)/duration,direction,paintStart:a.pos.clone()};s.rolls++;
     s.slideRunner={a,dodge:s.roll,_dodgeDir:direction};
-    s.turret=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameMove_Last:t.UnrelaxFrameMove,32)/HZ;
+    s.roll.recovery=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameMove_Last:t.UnrelaxFrameMove,32)/HZ;
+    s.turret=0;
     s.stop=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameNoSquid_Last:t.UnrelaxFrameNoSquid,32)/HZ+duration;
     a.vel.x=direction.x*s.roll.speed;a.vel.z=direction.z*s.roll.speed;
     this.cooldown=finite(t.UnrelaxFrameNoWeapon,0)/HZ;
