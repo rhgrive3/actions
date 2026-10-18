@@ -1,5 +1,44 @@
 export function adaptIdleSource(rel, code, replace) {
   const patch = (before, after, label) => { code = replace(code, before, after, 'idle: ' + label); };
+  if (rel === 'styles/ui.css') {
+    code += `
+/* The offline pause backdrop includes the HUD. Keep its exact animation phase
+   instead of repainting SVG gauges/glows beneath the full-screen blur. */
+:is(.iw-hud, .iw-hud-over).is-world-paused,
+:is(.iw-hud, .iw-hud-over).is-world-paused *,
+:is(.iw-hud, .iw-hud-over).is-world-paused *::before,
+:is(.iw-hud, .iw-hud-over).is-world-paused *::after {
+  animation-play-state: paused !important;
+}
+`;
+  }
+  if (rel === 'src/ui/hud.js') {
+    patch('  setVisible(v) {', `  // Offline world pause has a separate owner from the HUD lab/debug pause.
+  setWorldPaused(on) {
+    on = !!on;
+    if (on === !!this._worldPaused) return;
+    this._worldPaused = on;
+    this.el.classList.toggle('is-world-paused', on);
+    this.overLayer.classList.toggle('is-world-paused', on);
+    if (on) {
+      cancelAnimationFrame(this._rafId); this._rafId = 0;
+    } else if (this._fxMap?.size && !this._rafId) {
+      this._lastFx = performance.now();
+      this._rafId = requestAnimationFrame(this._fxLoop);
+    }
+  }
+
+  setVisible(v) {
+    this.setWorldPaused(false);`, 'HUD pause lifetime and visibility reset');
+    patch('    if (!this._rafId) { this._lastFx = performance.now(); this._rafId = requestAnimationFrame(this._fxLoop); }',
+      '    if (!this._rafId && !this._worldPaused) { this._lastFx = performance.now(); this._rafId = requestAnimationFrame(this._fxLoop); }', 'effects added during pause stay parked');
+    patch('  _fxLoop(t) {', '  _fxLoop(t) {\n    if (this._worldPaused) { this._rafId = 0; return; }', 'retired effects callback stays parked');
+  }
+  if (rel === 'src/ui/menus.js') {
+    patch('        if (snap.live) refresh(this._matchSnapshot());',
+      '        if (snap.live && (!G.match?.paused || G.netm)) refresh(this._matchSnapshot());',
+      'offline pause stats do not rebuild unchanged DOM');
+  }
   if (rel === 'src/world/environment.js') {
     code = "import { environmentBudget, releaseFarReflection, releaseReflection } from '../../patches/local-quality/idle-resources.mjs';\n" + code;
     patch('  _initCloudBake() {', '  _initCloudBake() {\n    const { cloudWidth: CLOUD_W, cloudHeight: CLOUD_H } = environmentBudget(G.settings, G.game?.mobile ?? G.mobile);', 'cloud allocation budget');
@@ -86,6 +125,9 @@ export function adaptIdleSource(rel, code, replace) {
         pausedFrame.commit?.();
       }`, 'frozen pause or budgeted menu backdrop');
     patch('    this.menus?.update?.(dt);', '    this.menus?.update?.(dt);\n    if (pausedFrame.paused) G.renderer.shadowMap.needsUpdate = false;', 'paused shadow flag retirement');
+    patch("    if (m && !m.attract && this.hud && (m.state === 'playing' || m.state === 'intro' || m.state === 'finish')) this._updateHud(dt);",
+      "    this.hud?.setWorldPaused?.(pausedFrame.paused);\n    if (m && !m.attract && this.hud && (!pausedFrame.paused || pausedFrame.draw) && (m.state === 'playing' || m.state === 'intro' || m.state === 'finish')) this._updateHud(pausedFrame.paused ? 0 : dt);",
+      'freeze HUD canvas/minimap and refresh once after backdrop invalidation');
   }
   return code;
 }
