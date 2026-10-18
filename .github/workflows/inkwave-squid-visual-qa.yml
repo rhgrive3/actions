@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 40
     env:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      BASE_SHA: e082695ed7a33fcdacdc4c830e7c6ba4eefabfbf
+      BASE_SHA: 14171420e3081add0145533922e71a3e72e72b62
     steps:
       - uses: actions/checkout@v4
         with:

@@ -21,3 +21,13 @@ Large club marks are supported by both official ikahito2.9–3.4s and https://ww
 Baseline for next native comparison is exact e082695ed7a33fcdacdc4c830e7c6ba4eefabfbf. Same100cases/camera/light. CPU sweep margin22.66%. Visual acceptance remains pending.
 
 After increasing lobe thickness, the existing .17m group-width test caught excessive width. Short-arm rest centers were moved inward8–10mm while preserving that guard. Final short-tip group width .14981m, source5/5 tests passed, 564-frame CPU sweep /100cases margin22.66%. Candidate source SHA256 b0ce5223c167a03a6733ede163b7ec1015595f99bba80ed0225f1ef40a4ffa31. Body triangles14291/6288/2100 (hero/game/far).
+
+## Outer attachment and four small support lobes
+
+Latest feedback requested the long pair outside, with fewer smaller thicker short arms. This consolidated candidate generates six presentation arms using semantic IDs[0,2,4,6,8,9]: outer long IDs0/9 and inner short IDs2/4/6/8. N=10 and color.z=id/10 stay unchanged; the existing source mapping therefore uses its two arm chains and four leg chains correctly. The omitted four short-arm meshes are not retained as hidden duplicates. This is a stylized visible-form reconstruction informed by the official frames, not a claim about real squid anatomy.
+
+Long roots move to x±.095m (not just their tips), paths continue outward to±.117m. Four short root centers are±.050/±.017m and length multiplier .28; their broad rounded radii/caps are retained. The widened clubs' broad surface is oriented toward face+Z, so outward flat marks cannot accidentally follow the wrong radial side after moving attachments. Existing source motion keys and bindings are unchanged.
+
+Regression tests assert exact six semantic IDs, long root centroids outside .085m, all short roots inside .07m, grouped short tip width below .17m, finite geometry, all three LODs and source rates. Main shape adjustments and the already-tested front-club markings are consolidated before the next native publication. Native baseline is preserved14171420e3081add0145533922e71a3e72e72b62; same100cases/camera/light. Final visual acceptance pending.
+
+Final source32c600eb464a28586ad2ec254f4fe35ff708eafaea2ef5702f75faf8e2f9ed5a: source5/5 tests passed; source-loaded100case CPU envelope margin22.66%. Body triangles12177/5248/1572. Independent posed-root audit confirms outer-root ordering throughout11rest/Wait/Walk/Jump samples. Four short centroid span10cm rest and13.3–14.1cm jump, terminal widths4.1–4.8cm. Long tip span23.5cm rest and20.3–21.2cm jump. Inherited Sqd_Wait splays long tips33.7–45.3cm; explicitly inspect dry idle native evidence before acceptance. This is not a new chain mismatch, and has not been hidden by camera changes.

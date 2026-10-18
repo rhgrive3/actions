@@ -16,13 +16,15 @@ test('actual source-loaded actor isolates squid eyes at all LODs and disposes on
  assert(c.mats.eye!==c.mats.squidEye);assert.equal(c.squid.eyes.material,c.mats.squidEye);
  for(const lod of ['hero','game','far']){c.setLod(lod);assert.equal(c.squid.eyes.material,c.mats.squidEye);
   const g=c.squid.body.geometry,p=g.attributes.position,e=g.attributes.aEx,col=g.attributes.color,uv=g.attributes.uv;
-  let maxDepth=0,shortMin=Infinity,shortMax=-Infinity,shortN=0;
+  let maxDepth=0,shortMin=Infinity,shortMax=-Infinity,shortN=0;const ids=new Set(),roots=new Map();
   for(let i=0;i<p.count;i++){
    assert(Number.isFinite(p.getX(i))&&Number.isFinite(p.getY(i))&&Number.isFinite(p.getZ(i)));
    if(e.getX(i)===0)maxDepth=Math.max(maxDepth,Math.abs(p.getZ(i)));
-   const k=Math.round(col.getZ(i)*10)%10;
+   const k=Math.round(col.getZ(i)*10)%10;if(e.getX(i)>.5&&e.getX(i)!==2){ids.add(k);if(uv.getX(i)<.001){const v=roots.get(k)||[0,0];v[0]+=p.getX(i);v[1]++;roots.set(k,v);}}
    if(e.getX(i)!==0&&e.getX(i)!==2&&k!==0&&k!==9&&uv.getX(i)>.65){shortMin=Math.min(shortMin,p.getX(i));shortMax=Math.max(shortMax,p.getX(i));shortN++;}
   }
+  assert.deepEqual([...ids].sort((a,b)=>a-b),[0,2,4,6,8,9],'six semantic arm IDs');
+  const rootX=k=>{const r=roots.get(k);assert(r&&r[1]>0);return r[0]/r[1];};assert(rootX(0)>.085&&rootX(9)<-.085,'long roots attach outside');for(const k of [2,4,6,8])assert(Math.abs(rootX(k))<.07,'four short supports sit inside long roots');
   assert(maxDepth<.074&&maxDepth>.065,'flattened mantle preserves nonzero thickness');
   assert(shortN>0&&shortMax-shortMin<.17,'short tips form a compact group');
   assert(g.index.count/3<18000,'bounded triangle cost');
