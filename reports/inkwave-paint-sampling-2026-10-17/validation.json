@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "baseCommit": "9f5d3add194b5b8cde1bb1667a890a18b5bd8d4d",
+  "baseTrackedBlobsVerified": 4679,
+  "baseMissingFiles": 0,
+  "baseDriftedFiles": 0,
+  "mergeParents": [
+    "cb26e409b30e4be5d1185047cef018bbf9c23217",
+    "c913973ead7600805ef2bd343a48c4777e40cc76"
+  ],
+  "introducingCommit": "b6f4fd97233a162a9721e0c148d53cbd63fe1191",
+  "introducingPR": 1570,
+  "basePaintBlob": "9f4b670480fb1d653330592927f6ee63ae27b699",
+  "fixedPaintSha256": "1378b7b883fefcfea0a336413a8660a9e72a632ad5bbc3de504c5f5dc86e4a0f",
+  "testSha256": "fb320df9e4ee52d50559feea3202fd667b61d06473660a70440a167b65934109",
+  "unchangedOracleSha256": "9f38008a6b2e693eafe03c123a820dc46c93b8e3dbb6d0ece947674b098dcff4",
+  "runtimeVersions": [
+    "22.23.3",
+    "24.19.0"
+  ],
+  "minifier": "esbuild 0.28.2",
+  "newStrictBoundarySamples": 413952,
+  "checks": {
+    "focusedPaintNode22": {
+      "tests": 88,
+      "pass": 88,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 26797.441616,
+      "logSha256": "5c098862a121ec3b72779d2fdacf590c37b98a08c026ce8e0461984b190939c8"
+    },
+    "relatedPaintNode22": {
+      "tests": 25,
+      "pass": 25,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 8780.373881,
+      "logSha256": "55018176ada4faef6bf9711dc2932d115d0de9f66f9a81030b9eaa559a6d34c7"
+    },
+    "strictNode22": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 330.420035,
+      "logSha256": "6889601c08d867ae53740e1f3cf7d0965c8bb05cd13f1ece1bea5c57136bb464"
+    },
+    "strictNode24": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "logSha256": "d575098c007b4788ded811cc82406b681f04f23a17d6cde015a85b33c2b6212d"
+    },
+    "minifiedNode22": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 381.93616,
+      "logSha256": "978fdc993b72c5b19c67b5c8d2546c0dc9944335a33dfb9559df49669e8fec33"
+    },
+    "formerlyFailingShard3Node22": {
+      "tests": 835,
+      "pass": 832,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 3,
+      "duration_ms": 567865.261424,
+      "logSha256": "bfb6d2dd3c80dd105e141381ff29bece975daee6d76a5423a60c03dde1e3045f"
+    }
+  },
+  "negativeControls": {
+    "unmodifiedMainNode22": {
+      "tests": 2,
+      "pass": 0,
+      "fail": 2,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 99.161519,
+      "logSha256": "81df1def005668601cf711e811da29697814e1086d5d11712e5d7bcd05992812"
+    },
+    "unmodifiedMainNode24": {
+      "tests": 2,
+      "pass": 0,
+      "fail": 2,
+      "logSha256": "5c1b5a8c364fcbed917b905016e09ab72d081c6782d3eee4d7e7c6323bb3d4da"
+    },
+    "powersOnlyNode22": {
+      "tests": 2,
+      "pass": 1,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 135.407248,
+      "logSha256": "f70729077004aae2fae60e11ef0dfa52247595ed5ca63d614dca59c98978d1e8"
+    },
+    "d526Node22": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 445.847814,
+      "logSha256": "ebdbf6dc37f789b7b20eeb4811136e84e761fb3dc8034a8233c08a9bd27a5980"
+    },
+    "c913Node22": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 390.20932,
+      "logSha256": "576d471c438f1311ef3b77653ae515fba433b4bab36477f31637702f8b7eabec"
+    }
+  },
+  "build": {
+    "status": "passed",
+    "contentHash": "5b27aa9a8a866d50f082248c6113724f170a7266f759e502c6f4eb0715ba4bb3",
+    "inputHash": "fdd7e2e000e45f3220fdd6fe179192cf643d73a6738b200442c50195e861b627",
+    "revision": "5172ad5b74b7a2882356e89453d80bbfd1856ae98c397f8470b40e06d032fd78",
+    "paintArtifactSha256": "7074992c024ba69ab9ae422c7ed7a2bd6195c901c899dccd185a9bfb221aa404",
+    "logSha256": "9c1f8c56554e4c81210a7bba44e2348da302828d8a505fd73853f2a9777c5348"
+  },
+  "startupBudget": {
+    "status": "passed",
+    "logSha256": "0746ec406d352aa8e228689c0f0af45974e89b4275356bde7bb1a4a6ff10b6ef"
+  },
+  "syntax": "passed",
+  "quickCompatibility": "passed",
+  "scopeLimits": [
+    "Full repository CI is not replaced by one shard.",
+    "Published exact-head CI remains required.",
+    "No browser, physical-device, native-game parity or performance improvement claim."
+  ],
+  "independentReview": {
+    "status": "no blocking findings",
+    "reviewed": [
+      "restored operation order",
+      "strict additive coverage",
+      "ellipse/stretch sample mapping",
+      "retained type-3 drip fast path"
+    ]
+  }
+}
