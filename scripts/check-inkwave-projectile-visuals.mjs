@@ -5,6 +5,7 @@
 // The captures are intentionally browser evidence, not the isolated geometry
 // fixtures used by the numeric weapon tests.
 import fs from 'node:fs';
+import {installAudioTimingObserver} from './lib/inkwave-audio-timing-observer.mjs';
 import {audioDiagnosticURL,audioBuildManifestReceipt,sha256 as audioReceiptSha256} from './lib/inkwave-audio-readiness-diagnostics.mjs';
 import path from 'node:path';
 import http from 'node:http';
@@ -12,6 +13,7 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { projectileDrawRadius, projectileVisualWidth } from '../patches/splatoon3/runtime/projectile-visuals.mjs';
+import { startProjectileThroughMenu } from './lib/inkwave-projectile-menu-start.mjs';
 import { completeNativeTurfIntro } from './lib/inkwave-projectile-ci-intro.mjs';
 import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';
 
@@ -88,7 +90,7 @@ const report = {
   build: { revision: manifest.build?.revision, contentHash: manifest.contentHash, inputHash: manifest.inputHash },
   provenance: {
     harnessSha256: hash(fs.readFileSync(fileURLToPath(import.meta.url))),
-    capture: 'Normal INKWAVE bootstrap/autostart into Tidewater full match; production Projectiles fire methods; live stage Physics, Paint and FX update; native Three/WebGL renderer screenshots.',
+    capture: 'Normal INKWAVE bootstrap then real PLAY/TURF/Tidewater/START menu gestures into full match; production Projectiles fire methods; live stage Physics, Paint and FX update; native Three/WebGL renderer screenshots.',
     stage: 'Tidewater, normal difficulty, turf, fixed 180 s match; local player; deterministic Math.random stream reset for each projectile scenario.',
     phaseFrames: { F0: 0, F5: 5, F10: 10, F15: 15, fall: 36 },
     perspectives: ['shoulder', 'front', 'side'],
@@ -137,7 +139,7 @@ async function openGameContext({ mobile = false } = {}) {
   const snapshotAudio = async reason => {
     const state = await page.evaluate(() => {
       const a = window.__G?.audio, l = a?._realS3Loader, b = a?._weaponBank?.authorized;
-      return { audioContext: a?.ctx?.state ?? null, currentTime: a?.ctx?.currentTime ?? null,
+      return { timings: window.__iwAudioTimings ?? null, audioContext: a?.ctx?.state ?? null, currentTime: a?.ctx?.currentTime ?? null,
         userActivation: { active: navigator.userActivation?.isActive ?? null, everActive: navigator.userActivation?.hasBeenActive ?? null },
         loader: l?.stats?.() ?? null, queuedKeys: l?.inFlight ? [...l.inFlight.keys()] : [],
         shooterDeclared: l?.declares?.('shooter','fire') ?? null,
@@ -177,8 +179,9 @@ async function openGameContext({ mobile = false } = {}) {
   page.on('pageerror', e => mimeErrors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') mimeErrors.push(m.text().slice(0, 1000)); });
   page.on('requestfailed', r => mimeErrors.push(`request failed ${r.url()}: ${r.failure()?.errorText || 'unknown'}`));
+  await page.addInitScript(installAudioTimingObserver);
   await page.addInitScript(({ setting, bootSeed }) => {
-    localStorage.setItem('inkwave.settings', JSON.stringify({ quality: setting, shadows: setting !== 'low', bloom: setting !== 'low', minimap: false, cameraShake: 0, colorblind: true }));
+    localStorage.setItem('inkwave.settings', JSON.stringify({ quality: setting, shadows: setting !== 'low', bloom: setting !== 'low', minimap: false, cameraShake: 0, colorblind: true, difficulty: 'normal', matchLength: 180, lastStage: 'tidewater', lastMode: 'turf', stageTimes: { tidewater: 'day' } }));
     window.__iwBootSeed = bootSeed >>> 0;
     let state = bootSeed >>> 0;
     Math.random = () => { state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return (state >>> 0) / 4294967296; };
@@ -203,7 +206,7 @@ async function openGameContext({ mobile = false } = {}) {
       return recorder;
     };
   }, { setting: quality, bootSeed: BOOT_SEED });
-  await page.goto(address + '?map=tidewater&difficulty=normal&autostart=180&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto(address + '?map=tidewater&difficulty=normal&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
   try {
     // In SwiftShader an intro frame can take over a second to render. Finish
     // only the noninteractive 4.2s native Turf intro through Game._frame while
@@ -212,8 +215,9 @@ async function openGameContext({ mobile = false } = {}) {
     // long native SwiftShader render even after the game has reached "playing".
     // Probe the exact same predicate from Node, with the same strict wall-clock
     // budget, without relying on a browser timer/rAF callback.
+    // One original admission budget includes boot, menu navigation and START.
+    const deadline = Date.now() + NATIVE_BOOT_TIMEOUT_MS;
     const requireNativePhase = async (predicate, label) => {
-      const deadline = Date.now() + NATIVE_BOOT_TIMEOUT_MS;
       let lastFailure = null;
       while (Date.now() < deadline) {
         let timeoutId;
@@ -236,6 +240,10 @@ async function openGameContext({ mobile = false } = {}) {
       throw new Error(label + ' did not meet the full native match predicate within ' +
         NATIVE_BOOT_TIMEOUT_MS + 'ms' + (lastFailure ? ': ' + lastFailure : ''));
     };
+    const menuReceipt={mobile,route:'native-menu-start',coldAutostart:'not exercised; prior failure retained separately',events:[]};
+    (report.provenance.menuStarts ||= []).push(menuReceipt);
+    await startProjectileThroughMenu(page,{waitForPhase:requireNativePhase,remainingMs:()=>deadline-Date.now(),receipt:menuReceipt.events});
+    await snapshotAudio('native-menu-start-clicked');
     const admissionReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return G?.mode === 'match' && m === G.match &&
