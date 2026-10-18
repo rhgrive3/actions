@@ -1,0 +1,68 @@
+// Static decorative menu backdrops, built from original generated artwork.
+// The actual game arena, result podium, pause screen and network room must keep
+// their existing simulation/render lifecycle. Do not change combat or loadout data.
+export const STATIC_MENU_SCREENS = Object.freeze([
+  'main', 'mode', 'setup', 'loadout', 'locker', 'settings', 'howto', 'credits', 'online',
+]);
+
+// This is build-only: it runs after all local-quality source transformations.
+export function adaptStaticMenuArt(rel, code, replaceOnce) {
+  if (rel === 'src/main.js') {
+    // Avoid restarting a full 8-bot attract simulation, repainting the world,
+    // or submitting composer/shadow passes behind a *fully opaque* menu image.
+    // The input/menu/net clocks remain live; real matches and online rooms do
+    // not take this path. Portraits are on-demand offscreen renders, not demos.
+    const anchor = '  _frame(dt) {\n    const tA = performance.now();';
+    const replacement = `  _frame(dt) {
+    const artScreen = this.menus?._scr?.name;
+    if (G.mode === 'menu' && this.match?.attract &&
+        artScreen === this.menus?.current && INKWAVE_ART_MENU_SCREENS.has(artScreen)) {
+      G.time += dt;
+      this.input.pollPad();
+      this._padMenus();
+      G.net?.update?.(dt);
+      // Character thumbnails are still generated only when requested. No
+      // showcase/world render loop runs behind these decorative backgrounds.
+      if (this.showcase?._pq?.length) this.showcase._portraitStep?.();
+      this.menus.update(dt);
+      this.input.endFrame();
+      return;
+    }
+    const tA = performance.now();`;
+    code = replaceOnce(code, anchor, replacement, 'static menu world-frame gate');
+    code = `const INKWAVE_ART_MENU_SCREENS = new Set(${JSON.stringify(STATIC_MENU_SCREENS)});\n` + code;
+    return code;
+  }
+  if (rel !== 'styles/ui.css') return code;
+  if (code.includes('INKWAVE generated static menu backdrops')) {
+    throw new Error('INKWAVE static menu stylesheet applied twice');
+  }
+  // Only three WebP files, requested by the browser when the corresponding
+  // screen is visible. No extra JS image preloading or full-screen GPU blur.
+  return code + `
+/* INKWAVE generated static menu backdrops: no live attract/composer rendering. */
+.iw-ui.is-active:is([data-screen="main"], [data-screen="mode"],
+  [data-screen="setup"], [data-screen="settings"], [data-screen="howto"],
+  [data-screen="credits"], [data-screen="online"]) {
+  background-color: #192134;
+  background-image: linear-gradient(90deg, rgba(12,11,27,.73), rgba(12,11,27,.36) 53%, rgba(12,11,27,.22)),
+    url('../patches/local-quality/assets/menu/lobby.webp');
+  background-size: cover;
+  background-position: center;
+}
+.iw-ui.is-active[data-screen="loadout"] {
+  background-color: #101420;
+  background-image: linear-gradient(90deg, rgba(14,12,27,.64), rgba(14,12,27,.32) 65%, rgba(14,12,27,.18)),
+    url('../patches/local-quality/assets/menu/weapon.webp');
+  background-size: cover;
+  background-position: center;
+}
+.iw-ui.is-active[data-screen="locker"] {
+  background-color: #192134;
+  background-image: linear-gradient(90deg, rgba(13,12,28,.80), rgba(13,12,28,.46) 54%, rgba(13,12,28,.10)),
+    url('../patches/local-quality/assets/menu/locker.webp');
+  background-size: cover;
+  background-position: center;
+}
+`;
+}
