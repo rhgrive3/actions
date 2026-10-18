@@ -303,11 +303,27 @@ test('the bucket rests at the right side, right fist on its rear grip, left hand
   ch.dispose();
 });
 
-test('the carried bucket clears the legs and torso standing, walking and running (30/60/120 Hz)', async () => {
+const SLOSHERS = ['slosher', 's3-slosher-diffusion', 's3-slosher-launcher', 's3-slosher-bathtub', 's3-slosher-washtub', 's3-slosher-double'];
+test('every slosher rests two-handed at the right side: right fist on the rear grip, left hand on the top handle', async () => {
+  const api = await production(), C = api.CHARACTER_CHANNELS;
+  for (const weapon of SLOSHERS) for (const speed of [0, 1.5, 3, 5.76]) {
+    const ch = await rig(api, weapon), st = state();
+    for (let f = 0; f < 90; f++) { ch.root.position.z += speed / 60; st.speed = speed; st.localMove.z = speed ? 1 : 0; ch.update(1 / 60, st); }
+    ch.root.updateMatrixWorld(true);
+    const w = ch.weapon, grip = w.s3BaseDef.s3CarryGrip.L.pos.clone().applyMatrix4(w.off.matrixWorld); ch.kid.worldToLocal(grip);
+    const left = kidPoint(api, ch, ch.bones.handL), head = kidPoint(api, ch, ch.bones.head), origin = kidPoint(api, ch, w.off);
+    assert.ok(ch.P[C.IKL] > 0.99, `${weapon} ${speed} m/s: both hands on`);
+    assert.ok(left.distanceTo(grip) < 0.09, `${weapon} ${speed} m/s: left hand on the top handle (${left.distanceTo(grip).toFixed(3)} m)`);
+    assert.ok(origin.x < head.x - 0.12, `${weapon} ${speed} m/s: carried at the right side (x ${origin.x.toFixed(3)})`);
+    ch.dispose();
+  }
+});
+
+test('the carried slosher clears the legs and torso standing, walking and at full tilt (30/60/120 Hz)', async () => {
   const api = await production(), { THREE } = api, worst = {};
   const seg = (p, a, b) => { const ab = b.clone().sub(a), t = Math.max(0, Math.min(1, p.clone().sub(a).dot(ab) / ab.lengthSq())); return p.distanceTo(a.addScaledVector(ab, t)); };
-  for (const hz of [30, 60, 120]) for (const speed of [0, 1.5, 3, 5.76]) {
-    const ch = await rig(api, 'slosher'), st = state(), dt = 1 / hz;
+  for (const weapon of SLOSHERS) for (const hz of [30, 60, 120]) for (const speed of [0, 1.5, 3, 5.76]) {
+    const ch = await rig(api, weapon), st = state(), dt = 1 / hz;
     let deepest = 0;
     for (let f = 0; f < Math.round(2.5 * hz); f++) {
       ch.root.position.z += speed * dt; st.speed = speed; st.localMove.z = speed ? 1 : 0; api.G.time += dt;
@@ -326,8 +342,8 @@ test('the carried bucket clears the legs and torso standing, walking and running
         for (const [a, b, r] of caps) deepest = Math.max(deepest, r - seg(v, a.clone(), b));
       }
     }
-    worst[`${hz}Hz ${speed}m/s`] = deepest;
+    worst[`${weapon} ${hz}Hz ${speed}m/s`] = deepest;
     ch.dispose();
   }
-  for (const [k, d] of Object.entries(worst)) assert.ok(d < 0.01, `${k}: bucket ${(d * 100).toFixed(1)} cm into the body`);
+  for (const [k, d] of Object.entries(worst)) assert.ok(d < 0.01, `${k}: ${(d * 100).toFixed(1)} cm into the body`);
 });

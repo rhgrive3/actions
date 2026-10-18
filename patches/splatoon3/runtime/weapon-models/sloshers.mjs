@@ -482,7 +482,13 @@ const CARRY_GRIP = {
 };
 // Two-handed carry placement per slosher (weapon-origin anchor at rest / walking / full-tilt walk).
 // INKWAVE calibration: placed on the right side and searched for no leg or torso penetration.
-const CARRY_HOLD = {};
+const CARRY_HOLD = {
+  's3-slosher-diffusion': { carry: { p: [-0.3, 0.46, 0.08], r: [0, 0.2, 0] }, walk: { p: [-0.26, 0.54, 0.1], r: [0, -0.1, 0] }, run: { p: [-0.32, 0.46, -0.06], r: [0, -0.1, 0] } },
+  's3-slosher-launcher': { carry: { p: [-0.34, 0.5, 0.08], r: [0, 0.2, 0] }, walk: { p: [-0.26, 0.62, -0.06], r: [0, -0.1, 0] }, run: { p: [-0.32, 0.62, -0.06], r: [0, -0.1, 0] } },
+  's3-slosher-bathtub': { carry: { p: [-0.3, 0.5, 0.08], r: [0, 0.2, 0] }, walk: { p: [-0.26, 0.62, -0.06], r: [0, -0.1, 0] }, run: { p: [-0.32, 0.62, -0.1], r: [0, 0.05, 0] } },
+  's3-slosher-washtub': { carry: { p: [-0.3, 0.46, 0.08], r: [0, 0.2, 0] }, walk: { p: [-0.26, 0.54, 0.02], r: [0, -0.1, 0] }, run: { p: [-0.32, 0.62, -0.06], r: [0, -0.1, 0] } },
+  's3-slosher-double': { carry: { p: [-0.26, 0.46, 0.14], r: [0, 0.4, 0] }, walk: { p: [-0.32, 0.62, -0.06], r: [0, 0.2, 0] }, run: { p: [-0.38, 0.62, -0.06], r: [0, -0.1, 0] } },
+};
 export const MODELS = Object.fromEntries(Object.entries(CFG).map(([id, c]) => [id, {
   sourceModel: id === 'slosher' ? 'Wmn_Slosher_StrongT'
     : id === 's3-slosher-diffusion' ? 'Wmn_Slosher_Diffusion'
