@@ -262,7 +262,7 @@ export function normalJumpVelocity(a, velocity) {
   // JumpHeightFullCharge is source world-units/frame, as for native Chargers.
   const stringer=a.weapon.catalogRecord?.family==='stringer'
     ?a.weapon.catalogRecord.parameters.spl__WeaponStringerParam.ChargeParam:null;
-  if(stringer&&a.intent.fire&&r.charging&&r.charge>=1&&Number.isFinite(stringer.JumpHeightFullCharge))
+  if(stringer&&a.intent.fire&&r.charging&&r.charge+1e-9>=1&&Number.isFinite(stringer.JumpHeightFullCharge))
     return Math.min(velocity,stringer.JumpHeightFullCharge*60);
   // #251: only a held full-charge Charger lowers the takeoff impulse.
   if (a.weapon.kind === 'charger') {

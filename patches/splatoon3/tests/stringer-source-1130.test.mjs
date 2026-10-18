@@ -131,6 +131,12 @@ test('all Stringers and derived kits cap actual full-charge jump admission at th
       const ordinary=f.make(id);ordinary.form='kid';ordinary.intent.jump=true;f.tick(ordinary);
       assert.ok(ordinary.vel.y>a.vel.y,id+' uncharged takeoff retains normal impulse');
     }
+    const air=f.make(r.id);air.form='kid';air.grounded=false;air.intent.fire=true;
+    const charge=r.parameters.spl__WeaponStringerParam.ChargeParam;
+    f.tick(air,charge.ChargeFrameFullCharge*(charge.AirChargeRateByInkEmpty===3?1:3));
+    close(air.weaponRunner.charge,1,r.id+' air-charge fixed-step boundary');
+    air.grounded=true;air.ground.hit=true;air.intent.jump=true;f.tick(air);
+    close(air.vel.y,charge.JumpHeightFullCharge*60,r.id+' airborne rounding cannot bypass full-charge cap');
   }
 });
 
