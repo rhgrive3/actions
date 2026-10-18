@@ -19,11 +19,24 @@ export async function rootHairFixture(old=false){
 }
 export function makeHair(api,strands=6){
  const {THREE}=api,root=new THREE.Bone(),head=new THREE.Bone();root.add(head);
- const character={bones:{head},hairMeta:[],_kidXform(b,p,q){b.updateWorldMatrix(true,false);b.getWorldPosition(p);b.getWorldQuaternion(q);}};
+ // Mirror Character._kidXform's kid-local bone walk. The old fixture read
+ // Three.js world matrices here, changing unrelated lazy-update side effects.
+ const character={kid:root,bones:{head},hairMeta:[],_kidXform(b,p,q){
+  p.set(0,0,0);q.identity();
+  for(let o=b;o&&o!==this.kid;o=o.parent){
+   p.applyQuaternion(o.quaternion).add(o.position);q.premultiply(o.quaternion);
+  }
+  return p;
+ }};
  for(let si=0;si<strands;si++){
   character.hairMeta.push({K:.4+si*.17,len:.09+si*.052});let parent=head;
   for(let k=0;k<4;k++){const b=new THREE.Bone();b.position.set(.03*(si-2),-.06,.02*k);parent.add(b);parent=b;character.bones[k<3?`hair${si}_${k}`:`hairTip${si}`]=b;}
  }
  return {hair:new api.RootHairInertia(character),character,root};
 }
-export function hairSnapshot(f){return {state:Array.from(f.hair.state),result:Array.from(f.hair.result),bones:Object.values(f.character.bones).map(b=>[...b.quaternion.toArray(),...b.matrixWorld.elements])};}
+export function hairSnapshot(f){
+ // World matrices are rendered state, not implicit _kidXform cache effects.
+ // Resolve them identically for both implementations before asserting parity.
+ f.root.updateWorldMatrix(true,true);
+ return {state:Array.from(f.hair.state),result:Array.from(f.hair.result),bones:Object.values(f.character.bones).map(b=>[...b.quaternion.toArray(),...b.matrixWorld.elements])};
+}
