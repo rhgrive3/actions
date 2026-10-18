@@ -301,6 +301,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
     slidePaint(r,s,true);
     s.roll = null; s.slip=null; s.slideRunner = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;s.turretHeld=false;s.rolls=0;
+    // A hard-cancelled main never resumes its old recovery after a special,
+    // jump or respawn. Ink recovery remains owned by the separate resource timer.
+    s.stop=0;
     s.rollingFrames=0;s.rollingDash=false;
     if (s.canopy && !s.canopy.launched) { s.canopy.open = false; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
