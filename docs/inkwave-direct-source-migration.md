@@ -45,6 +45,12 @@ The five `src/world/murals.js` transformations previously applied by `patches/lo
 
 `inkwave-direct-source-ownership.test.mjs` requires the composed mural output to equal the directly tracked source. No visual layout, painted geometry, text or memory policy is intentionally changed.
 
+## Completed slice: 3D world lettering, lobby text and logo default
+
+The final build-time ZEVANT string-replacement map has been retired for `src/world/props.js`, `src/world/props-marina-vessels.js`, `src/game/lobbySet-tex.js` and `src/ui/ui-icons.js`. Their displayed names now live in the actual source modules; `src/ui/ui-icons.js` still receives unrelated weapon/icon adapters, so it is not claimed to be fully source-owned yet. The other three source files are required to pass the identity composition test.
+
+The remaining five display-only final substitutions are associated with locked/unmigrated inputs (index.html, config.js, menus.js, i18n.js, and a runtime UI string module). Do not silently invalidate SHA-256 upstream locks during their migration.
+
 ## Next migration batches
 
 1. Audit and migrate simple performance and UI adapters with isolated upstream anchors. Keep each change small enough to compare composed output against the previous behavior.
