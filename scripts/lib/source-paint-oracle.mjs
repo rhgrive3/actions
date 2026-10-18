@@ -18,9 +18,37 @@ profileKinds.forEach((kind,row)=>reference.profiles[kind].forEach(([left,right],
 assert.equal(createHash('sha256').update(bytes).digest('hex'),reference.rgbaSha256,'frozen oracle edge bytes');
 export const profileBytesHash = reference.rgbaSha256;
 
+// Pin the separately reviewed Charger-only extension without rewriting the
+// prior 5-profile archive. This oracle never imports runtime profiles.
+const chargerReferenceBytes=fs.readFileSync(new URL('../fixtures/charger-organic-20261018.json', import.meta.url));
+assert.equal(createHash('sha256').update(chargerReferenceBytes).digest('hex'),'ebd6827b0d5a40759f78368be25aaadd9dcfd30e188760f302c8636e1df079d0','immutable Charger silhouette fixture');
+const chargerReference=JSON.parse(chargerReferenceBytes);
+assert.equal(chargerReference.columns,128);
+const chargerProfileKinds=Object.keys(chargerReference.profiles);
+assert.deepEqual(chargerProfileKinds,['ink-charger-a','ink-charger-b','ink-charger-c']);
+const chargerBytes=new Uint8Array(128*3*4);
+chargerProfileKinds.forEach((kind,row)=>{
+  const points=chargerReference.profiles[kind];
+  assert.equal(points.length,128,kind+' profile width');
+  points.forEach(([left,right],column)=>{
+    assert.ok(Number.isInteger(left)&&left>=0&&left<=255&&Number.isInteger(right)&&right>=0&&right<=255,kind+' RGBA8 endpoints');
+    const i=(row*128+column)*4;
+    chargerBytes[i]=left;chargerBytes[i+1]=right;chargerBytes[i+3]=255;
+  });
+});
+assert.equal(createHash('sha256').update(chargerBytes).digest('hex'),chargerReference.rgbaSha256,'Charger immutable RGBA8 edges');
+const allProfiles=Object.freeze({...reference.profiles,...chargerReference.profiles});
+const allProfileKinds=Object.keys(allProfiles);
+
 function selectedProfile(stamp) {
-  if(profileKinds.includes(stamp.kind))return stamp.kind;
-  return ['source-shot','source-splash'].includes(stamp.kind)&&profileKinds.includes(stamp.footprint)
+  if(allProfileKinds.includes(stamp.kind))return stamp.kind;
+  if(['source-shot','source-splash'].includes(stamp.kind)&&stamp.footprint==='ink-charger'){
+    // Same seed-row selection as the network event, with independently pinned
+    // reference widths. Leave the Float32 mirror bit computation below intact.
+    const seed=Number.isFinite(stamp.seed)?Math.max(0,Math.min(1-Number.EPSILON,stamp.seed)):0;
+    return chargerProfileKinds[Math.min(2,Math.floor(seed*3))];
+  }
+  return ['source-shot','source-splash'].includes(stamp.kind)&&allProfileKinds.includes(stamp.footprint)
     ?stamp.footprint:null;
 }
 export function isSourcedStamp(stamp) {
@@ -43,7 +71,7 @@ export function compileFlatSourcedStamp(stamp) {
     assert.ok(Number.isFinite(stamp.seed),'profile mirror comes from the recorded seed');
     // A Float32 seed supplies one exact low bit; no new random draw is made.
     const seed=Math.fround(stamp.seed),mirror=Math.floor((seed-Math.floor(seed))*65536)%2===1;
-    const edges=reference.profiles[profile];
+    const edges=allProfiles[profile];
     return(x,z)=>{
       const rx=x-center[0],rz=z-center[2],longitudinal=rx*dx+rz*dz;
       const along=longitudinal/(radius*(1+stretch*(longitudinal>0?1:.25)));

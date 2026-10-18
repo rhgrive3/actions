@@ -67,3 +67,22 @@ for(const lod of ['far','game','hero'])for(const side of [-1,1])test('armor ear 
  const {HEADGEAR}=await load('patches/local-quality/headgear/catalog.mjs');const g=HEADGEAR.find(x=>x.id===4).create({lod});g.updateMatrixWorld(true);
  try{const vertices=[[side*.181,.249,.002],[side*.300,.154,.015],[side*.185,.090,.035]],ray=new THREE.Raycaster();for(const weights of [[.2,.6,.2],[.2,.3,.5],[.5,.3,.2]]){const p=new THREE.Vector3();for(let i=0;i<3;i++)p.addScaledVector(new THREE.Vector3(...vertices[i]),weights[i]);for(const sign of [-1,1]){ray.set(new THREE.Vector3(p.x,p.y,sign*.5),new THREE.Vector3(0,0,-sign));const hit=ray.intersectObject(g,true)[0];assert(hit,`ear ${side} ${lod} ${sign<0?'rear':'front'} must be visible`);assert.equal(hit.object.material.side,THREE.FrontSide,'correct winding required, not DoubleSide workaround');assert(Math.abs(hit.point.z-(p.z+sign*.0175))<.00002,'first visible surface must be the actual ear face, not interior pad or opposite panel');const index=hit.face,position=hit.object.geometry.attributes.position,a=new THREE.Vector3().fromBufferAttribute(position,index.a),b=new THREE.Vector3().fromBufferAttribute(position,index.b),c=new THREE.Vector3().fromBufferAttribute(position,index.c),normal=b.sub(a).cross(c.sub(a)).normalize();assert(normal.z*sign>.8,'face winding points out of prism');}}}finally{g.userData.dispose();}
 });
+
+// ShaderLib is intentionally not exported by the production Three bundle. Read
+// its locked vendored shader literals for hook-order checks; exact-head browser
+// QA still performs actual WebGL compilation and hurt/flash pixel assertions.
+const nativeThreeSource=fs.readFileSync(new URL('../../../inkwave-public/vendor/three/build/three.module.js',import.meta.url),'utf8');
+function physicalShaderLiteral(stage){const symbol=nativeThreeSource.match(new RegExp('meshphysical_'+stage+':\\s*([\\w$]+)'))?.[1];assert(symbol,'native physical shader mapping');const line=nativeThreeSource.split('\n').find(x=>x.startsWith('const '+symbol+' = '));assert(line?.endsWith(';'),'native physical shader literal');return JSON.parse(line.slice(('const '+symbol+' = ').length,-1));}
+for(const lod of ['far','game','hero'])test('armor coating '+lod+' preserves physical lighting, native signals and owned material disposal',()=>{
+ const c=make(4);c.setLod(lod);const g=group(c),m=g.children.find(x=>x.name==='shell')?.material;
+ try{
+  assert(m?.isMeshPhysicalMaterial);assert.equal(m.clearcoat,.55);assert.equal(m.clearcoatRoughness,.18);assert.equal(m.roughness,.58);assert.equal(m.metalness,.13);assert.equal(m.color.getHex(),0x363b3e);
+  const shader={uniforms:{},vertexShader:physicalShaderLiteral('vert'),fragmentShader:physicalShaderLiteral('frag')};m.onBeforeCompile(shader,{});const f=shader.fragmentShader;
+  assert(f.includes('uniform float clearcoat;'));assert(f.includes('#include <clearcoat_normal_fragment_begin>'));assert(f.includes('#include <lights_physical_fragment>'));
+  assert(f.includes('weaveUV'));assert(f.includes('float iwHurtM'));assert(f.indexOf('weaveUV')<f.indexOf('float iwHurtM'));assert(f.indexOf('float iwHurtM')<f.indexOf('#include <roughnessmap_fragment>'));assert(f.includes('totalEmissiveRadiance += uFlash;'));
+  for(const key of ['uHurt','uHurtSeed','uFlash'])assert.equal(shader.uniforms[key],c.u[key]);
+  assert(m.customProgramCacheKey().includes('inkwave-armor-twill-v3|iw-headgear-signals-v1'));
+  c.setColor('#e637ab');assert.equal(m.color.getHex(),0x363b3e);assert.equal(m.clearcoat,.55);assert.equal(m.clearcoatRoughness,.18);
+  let disposed=0;m.addEventListener('dispose',()=>disposed++);c.dispose();c.dispose();assert.equal(disposed,1);
+ }finally{c.dispose();}
+});

@@ -1,0 +1,36 @@
+{
+  "baselineSourceSha": "d5265f73d9dad69f1afd9690e374caee45195f11",
+  "candidateSourceSha": "5d82908b96c199de14b3d79d048e7474f98365d8",
+  "baselineContentHash": "8f56a1470c72ecf04250ba7be2cf74a3c89f7267674c840d7d63c14fa3b29775",
+  "candidateContentHash": "50b919d25d49699574f9846c99400b8486c70c60d1634d94bc7bc75121211bb3",
+  "candidateInputHash": "db87521e2a1443bb87dec9babfd4822d9b3dd755559832f211c481798c12978b",
+  "versionedFiles": [
+    929,
+    929
+  ],
+  "bytes": [
+    62680639,
+    62680475
+  ],
+  "delta": -164,
+  "gzip": [
+    56167062,
+    56166987
+  ],
+  "gzipDelta": -75,
+  "changed": [
+    {
+      "file": "src/world/levelMaterial.js",
+      "bytes": [
+        37007,
+        36843
+      ],
+      "delta": -164,
+      "gzip": [
+        12363,
+        12288
+      ],
+      "gzipDelta": -75
+    }
+  ]
+}

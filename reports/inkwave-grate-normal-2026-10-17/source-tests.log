@@ -1,0 +1,58 @@
+✔ the production world-normal replacement preserves Three double-sided orientation (1.097685ms)
+✔ normal orientation adds no texture access or draw and retains native shadow/coverage behavior (1.724407ms)
+[inkwave] texture library failed — procedural fallback Error: GPU context lost during texture generation
+    at failingCreateFn (file:///workspace/render-1565/patches/local-quality/tests/texlib-stage-pack.test.mjs:653:11)
+    at syncWorldTexlib (file:///workspace/render-1565/patches/local-quality/texlib.mjs:38:24)
+    at TestContext.<anonymous> (file:///workspace/render-1565/patches/local-quality/tests/texlib-stage-pack.test.mjs:657:24)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+[inkwave] texture library failed — procedural fallback Error: GPU context lost during texture generation
+    at failingCreateFn (file:///workspace/render-1565/patches/local-quality/tests/texlib-stage-pack.test.mjs:653:11)
+    at syncWorldTexlib (file:///workspace/render-1565/patches/local-quality/texlib.mjs:38:24)
+    at TestContext.<anonymous> (file:///workspace/render-1565/patches/local-quality/tests/texlib-stage-pack.test.mjs:669:32)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+(node:15471) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real native catalog generation: coldboot Tidewater produces 25 shared layers (stage=null), Cargo pack produces 28 layers (stage=cargo) (94.717329ms)
+✔ slot metadata before-after: Cargo -> Tidewater -> Cargo preserves 32 slots and stable semantics without shader mismatch (70.730479ms)
+✔ generic stage pack support: dynamic STAGE_SURFACES and injected extra stage without leaking into baseline (39.59092ms)
+✔ coldboot-to-first-world single generation and Tidewater/Kelpline zero-generation reuse (35.648942ms)
+✔ async Game._buildWorld integration: bounded replacement/disposal, residency lifecycle (1 steady, 2 transient), and lobby safety (43.481713ms)
+✔ native compiled LobbySet materials: precompile and postcompile update holders and uniforms with correct sampler and meta (72.181764ms)
+✔ native _buildWorld epoch cancellation: uncommitted candidate library disposed on cancellation without corrupting current texlib (76.932015ms)
+✔ generation failure resilience: preserves valid current library without disposal or use-after-free, cleans up disposed library (38.431884ms)
+✔ resolution fidelity and renderer state: no arbitrary resolution downgrade, state restored after generation (38.385337ms)
+✔ negative control: unpatched upstream baseline generates all 28 layers unconditionally on cold boot (37.57146ms)
+✔ native world commit uses the published default factory route and preserves single cold generation (53.539304ms)
+✔ negative control catches the former misplaced runtime-relative factory import (31.456215ms)
+✔ actual native factory failures retire candidate resources and restore renderer while preserving the live library (73.943816ms)
+✔ native lobby materials invalidate cached programs only when texlib presence changes (77.532594ms)
+✔ progress is persisted and forwarded while a child is still running; failure status remains failure (44.123666ms)
+✔ signal termination keeps already emitted progress and never reports success (33.994558ms)
+✔ spawn failure rejects and leaves a readable diagnostic destination (2.298401ms)
+✔ integration retains immutable source and independently rebuilt artifact identity checks (0.226573ms)
+✔ parallel browser families retain every final integration acceptance surface (0.928416ms)
+✔ all nested final integration source families trigger validation on PR and pushed main (0.237239ms)
+✔ successful browser artifacts require validated reports and source-bound suite receipts (0.202678ms)
+✔ active browser CI requires source-bound grate and painted-normal evidence from both installed engines (0.840927ms)
+✔ ancillary paint WebGL source and emitted masks are mandatory exact-head network evidence (0.511882ms)
+✔ compatibility failure preserves its primary error without a missing diagnostic upload (0.169529ms)
+✔ runtime verifier storage is prepared before runtime evidence tests and baseline checkout creation (0.148698ms)
+✔ high-quality runtime comparison is final-integration gated and preserves baseline before candidate (0.168839ms)
+✔ range and startup evidence are distinct final acceptance receipts (0.126666ms)
+✔ isolated render diagnosis cannot replace full acceptance jobs or emit passing browser receipt (0.107488ms)
+✔ optional focused regressions preserve the canonical gate and publish only completed source evidence (0.130492ms)
+✔ worker source regressions have their pinned dependency and writable persistent storage before focused and canonical tests (0.371487ms)
+✔ emitted material handoff is mandatory and runs only after a complete site build (0.163731ms)
+✔ emitted menu focus is mandatory in the UI shard and source-bound in its receipt (0.167206ms)
+✔ all eight patch shards report into the existing required validate gate (0.351677ms)
+✔ emitted Bot respawn and retry regressions reuse the complete production site without replacing source coverage (0.233944ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1172.290254

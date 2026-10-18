@@ -2,6 +2,7 @@ import { adaptHeadgear } from './headgear-adapter.mjs';
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
 import { adaptNavHeuristic } from './nav-heuristic-adapter.mjs';
 import { adaptBotNavigation } from './bot-navigation-adapter.mjs';
+import { adaptFirefightTierBudget } from './firefight-tier-budget.mjs';
 import { adaptRootHairSpring } from './root-hair-spring-adapter.mjs';
 import { adaptPoseRotation } from './pose-rotation-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
@@ -145,7 +146,7 @@ const IDENTITY_FILES = [
   'paint-hotpath-adapter.mjs',
   'distance-hotpath-adapter.mjs',
   'nav-heuristic-adapter.mjs',
-  'bot-navigation-adapter.mjs', 'bot-navigation.mjs',
+  'bot-navigation-adapter.mjs', 'bot-navigation.mjs', 'firefight-tier-budget.mjs',
   'root-hair-spring-adapter.mjs',
   'pose-rotation-adapter.mjs',
   'collision-hotpath-adapter.mjs',
@@ -174,7 +175,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptIssue482(rel, code);
   code = adaptIssue405(rel, code);
   code = adaptIssue484(rel, code);
-  const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
+  const framed = adaptFrameOrder(rel, adaptFirefightTierBudget(rel, adaptQualityLayer(rel, code), replaceOnce));
   const paced = adaptRangeFramePacing(rel, framed);
   let broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
   if (rel === 'src/game/physics.js') {
@@ -647,9 +648,34 @@ function adaptQualityLayer(rel, code) {
       'smoothstep(1.0, 0.8, a)',
       '(1.0 - smoothstep(0.8, 1.0, a))',
       'defined coverage smoothstep');
+    code = replaceOnce(code,
+      '  vec3 wn = normalize(nBase - slope.x * T - slope.y * Bt);\n' +
+      '  normal = normalize((viewMatrix * vec4(wn, 0.0)).xyz);',
+      // Preserve Three's front/back orientation after replacing its normal.
+      // Keep the exact original FrontSide expression. The correction and
+      // redundant-normalization removal compile only for double-sided draws.
+      '#ifdef DOUBLE_SIDED\n' +
+      '  normal = normalize(mat3(viewMatrix) * (nBase - slope.x * T - slope.y * Bt)) * faceDirection;\n' +
+      '#else\n' +
+      '  vec3 wn = normalize(nBase - slope.x * T - slope.y * Bt);\n' +
+      '  normal = normalize((viewMatrix * vec4(wn, 0.0)).xyz);\n' +
+      '#endif',
+      'double-sided level normal orientation');
+    // Offset the inactive shader branch's download text with comments only.
+    // The documented upstream source stays intact; emitted arithmetic is kept.
+    code = replaceOnce(code,
+      "  // slopes along the face's u / v axes (height per unit length), applied in the face's world tangent frame\n",
+      '', 'generated normal introduction comment');
+    code = replaceOnce(code,
+      '  // surface relief from the texture library; ink fills the grooves so the relief fades out under it\n' +
+      '  // (on corrugated metal the ink still follows the ribs)\n',
+      '', 'generated normal relief comments');
+    code = replaceOnce(code,
+      '   // containers + stairs',
+      '', 'generated normal keep comment');
     return replaceOnce(code,
       'inkwave-level-v6',
-      'inkwave-level-v6-quality1',
+      'inkwave-level-v6-quality3',
       'material program identity');
   }
 

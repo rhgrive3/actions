@@ -5139,3 +5139,19 @@ Slosherを回収したprojectile objectがRollerへ再利用される際、`fide
 `b6f4fd97` で導入された累乗の乗算列化と距離の二乗比較は、数学上の等価性に対して binary64 の丸め順序が異なり、付随塗りマスク座標と境界の内外判定を変えていた。`paint-ownership.mjs` の元の `Math.pow` と符号付き距離式を復元し、ドリップで不要な伸長変換を省く分岐と既存の直接piece走査は維持する。境界の数ULP内外を検査する厳密な回帰試験を追加し、既存oracleと完全一致比較は変更しない。原因・固定SHA・検証範囲は [修復記録](inkwave-paint-sampling-2026-10-17.md) を参照。
 
 比較対象は既存 profile の Splatoon 3 Ver.11.3.0。今回は INKWAVE 内部の床・壁、伸長量0/0.4/1.7、種0/0.37/0.99999、成長時刻0.01/0.5/1.2/3のロジック検証であり、本家のブキ・ギア別実機計測や新しい公称値を追加したものではない。境界サンプルで所有権の内外が反転する退行を修正したが、見た目の差や本家との完全一致を実証したとはしない。
+
+
+## 2026-10-18: Armor Helmet Replica coating finish
+
+User clarified the remaining material request as a coating finish. Shell material alone adds a clearcoat layer; accepted geometry, base color, flat ear print and other gear stay unchanged. Reference, scope, source/geometry checks and explicitly pending native exact-head browser/GPU evidence are recorded in [the coating report](inkwave-armor-coating-2026-10-18.md). No gameplay or gear-ability parity is claimed from this appearance correction.
+
+## 2026-10-18: 顎下左右から首への局所接続
+
+ユーザーが赤丸で示した、顎下左右が首の脇へ張り出す輪郭を補正した。a505基準のproduction adapterで下部face carrierのhead/neck unionのみを変更し、中央前顎・目鼻口・髪/ギアfit・首tube半径・body・ゲームロジックを保持する。既存15＋追加3試験は18/18成功。同一条件のnative baseline/candidate 43+43ケース（exact head `156ec04300679323eaec9d30ce5ec609a9f113ba`、run `39095121381`）で正面/斜め/横/下、表情・首姿勢・帽子を確認し、正面弱陰影でも張り出し減少を確認した。対応描画の頂点・triangle・draw数は増加なし。背面追加44ケース版は本記録時点で未完了。
+
+本家参照は2022年の任天堂公式Splatoon 3 × Pokémon告知画像で、顔幅約80pxかつ姿勢・照明差があり、正確な曲率・寸法・横顔一致は主張しない。実測内部座標、限定変更、ハッシュ、検証済み/未確認範囲は [顎と首の比較記録](inkwave-chin-neck-2026-10-18.md) を参照。横下面は以前より直線的に見えるため、局所改善と本家完全再現を区別する。
+
+
+### 顎・首の背面追加確認とnormal補正
+
+背面を加えた44+44ケース版 `33e8bec5a2fbb17d4b7eb89854e8dc56fc5bffc3` は描画とPNG照合に成功したが、後首上端の小暗斑2つを検出した。三角反転ではなく、trimで露出した首へ旧skull normalを強制していたことを数値で特定したため、この版は最終採用しない。trim後head fieldも用いてnormal適用を局所制限し、全5detailのposition/index/skinweightを完全保持した。既存15＋追加4の19/19試験は成功。normal修正版 exact head `e89f829591271e4bf1e4613cdd3bde4cd844cad7` の44+44 native再撮影は本追記時点では未確認。詳細・現行ファイルhashは[顎と首の比較記録](inkwave-chin-neck-2026-10-18.md)に更新した。
