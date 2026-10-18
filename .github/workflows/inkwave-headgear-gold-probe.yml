@@ -1,0 +1,44 @@
+name: INKWAVE gold material diagnostic
+on:
+  push:
+    branches: ['diag/headgear-gold-response-20261018']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Verify exact diagnostic checkout
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned official build and browser tools
+        run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+      - name: Install native CI browser
+        run: npx playwright install --with-deps chromium
+      - name: Build unchanged production and run material helper guards
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+          INKWAVE_HEADGEAR_SITE="$PWD/_site" node --experimental-loader ./patches/local-quality/tests/headgear-production-loader.mjs --test tools/headgear-gold-probe/variants.test.mjs
+      - name: Capture fixed-light material probe
+        timeout-minutes: 18
+        run: node tools/headgear-gold-probe/run.mjs --site _site --out .qa-evidence/gold-probe
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: headgear-gold-probe-${{ github.sha }}
+          path: |
+            .qa-evidence/gold-probe/**
+            _site/inkwave-build.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
