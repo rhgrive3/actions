@@ -57,6 +57,12 @@ All 5 Maneuver MoveParam rows explicitly specify FreeGravity=0.016; all 5 Spinne
 
 A preexisting main-weapon numerical test previously demanded two immediate muzzle-floor stamps from Jr. at shot births 3/7; this contradicted the single-source falling queue contract and caused numerical-main to fail (42/43). The regression now checks accepted shot slots, no premature turf, and independent falling drops with sourced feet width. The screenshot/engine phase ordering remains unresolved.
 
+Two Maneuver post-slide variants in 11.3.0 also replace MoveParam with a distinct MoveLapOverParam that omits FreeGravity while preserving the explicit original SimpleMove type:
+- WeaponManeuverGallon: SplashSpawnLapOverParam SpawnNum=3, SplitNum=5, SpawnBetweenLength=7, SpawnNearestLength=1.
+- WeaponManeuverLong: SplashSpawnLapOverParam SpawnNum=1.5, SplitNum=8, SpawnBetweenLength=9, SpawnNearestLength=1.1.
+
+Their source-proven type defaults now enable the physical drop queue in **turret mode only**; they are not generalized to SpinnerMoveParam or unverified types. Source: Leanny/splat3 pinned 11.3.0 WeaponManeuverGallon / WeaponManeuverLong GameParameterTable JSON.
+
 See patches/splatoon3/tests/catalog-spinner-dualies-splash-1130.test.mjs for all 10 pinned rows and real projectile ownership checks.
 
 ## Observed INKWAVE mismatches and fixes
