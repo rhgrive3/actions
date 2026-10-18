@@ -164,22 +164,59 @@ export function installChargerFlight(api,completion) {
     const origin=new THREE.Vector3().copy(event.muzzle||actor.pos),dir=new THREE.Vector3().copy(event.dir||actor.aimDir);
     begin(this,actor,w,event.charge??0,origin,dir,true,event.len??null);
   };
+  // Reuse one downward query/Hit for each native paint point. This does not
+  // increase the ray count compared with the previous 3.5-unit probe.
+  const paintPoint=new THREE.Vector3(),paintDown=new THREE.Vector3(0,-1,0),paintHit=new Hit(),paintTangent=new THREE.Vector3();
+  function groundUnder(point) {
+    // Stage platforms and jump arcs can be much higher than the old 3.5-unit
+    // paint probe; search down to the level water plane, not an arbitrary gap.
+    const limit=Math.max(3.5,Math.min(512,point.y-PLAYER.waterY+6));
+    return G.physics.raycast(point,paintDown,limit,paintHit,true);
+  }
+  function postponePaint(system,job,from,hit,radius,seed) {
+    // Pooling shares the live Projectiles renderer, keeping zero new draw calls.
+    if(!system.chargerDrops||system.chargerDrops.length>=192)return;
+    const drop=system.chargerDropPool.pop()||{
+      pos:new THREE.Vector3(),start:new THREE.Vector3(),target:new THREE.Vector3(),
+      normal:new THREE.Vector3(),direction:new THREE.Vector3()
+    };
+    drop.start.copy(from);drop.pos.copy(from);
+    drop.landed=!!hit?.hit;
+    if(drop.landed){drop.target.copy(hit.point);drop.normal.copy(hit.normal);drop.face=hit.face;}
+    else{drop.target.copy(from).setY(PLAYER.waterY-1.8);drop.normal.set(0,1,0);drop.face=-1;}
+    drop.direction.copy(job.dir).addScaledVector(drop.normal,-job.dir.dot(drop.normal));
+    if(drop.direction.lengthSq()<1e-8)drop.direction.set(1,0,0);
+    else drop.direction.normalize();
+    const stretch=Math.max(0,job.paint.depth/radius-1)*1.6;
+    drop.shift=radius*stretch*0.375;drop.stretchAmt=stretch;
+    drop.age=0;drop.life=Math.max(0.05,Math.sqrt(Math.max(0,2*(from.y-drop.target.y)/20)));
+    drop.radius=radius;drop.owner=job.owner;drop.team=job.team;drop.seed=seed;
+    system.chargerDrops.push(drop);
+  }
+  function splatTravelPoint(system,job,at,radius,terminal=false){
+    const h=groundUnder(at),seed=Math.random();
+    if(h.hit&&h.dist<=3.5){
+      if(!terminal&&beginChargerWallDrop(system,job,h,completion.weapons.charger,api,true))return 0;
+      return G.paint.splat(h.point.clone().addScaledVector(h.normal,.015),radius,job.team,
+        {seed,footprint:CHARGER_FOOTPRINT,kind:SOURCE_SPLASH_PAINT_KIND,
+         stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/radius-1),claimOwner:job.owner});
+    }
+    // Airborne ink is not destroyed: it remains a pooled bead until actual
+    // ground contact. A miss only expires after falling through the water plane.
+    postponePaint(system,job,at,h,radius,seed);
+    return 0;
+  }
   function paintTravel(system,job,end){
     if(job.ghost)return;
     const paint=job.paint,interval=paint.interval;
     if(!(interval>EPS))return;
     let area=0;
     for(;job.nextPaint<end-.3;job.nextPaint+=interval){
-      // The first checkpoint owns the sourced RadiusSpawnNearest (1.2),
-      // not the ordinary charge-dependent SplashPaintParam.WidthHalf.
-      // Consume this first slot even if the surface probe misses.
-      const radius=job.nearestPending?paint.nearest:paint.width;
+      // RadiusSpawnNearest belongs to the separate feet mark, not the first
+      // forward line sample. Using 1.2 here overpainted every tap and full shot.
       job.nearestPending=false;
-      const p=job.origin.clone().addScaledVector(job.dir,job.nextPaint);
-      const h=G.physics.raycast(p,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
-      if(h.hit && beginChargerWallDrop(system,job,h,completion.weapons.charger,api,true)) continue;
-      if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),radius,job.team,
-        {seed:Math.random(),footprint:CHARGER_FOOTPRINT,kind:SOURCE_SPLASH_PAINT_KIND,stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1),claimOwner:job.owner});
+      paintPoint.copy(job.origin).addScaledVector(job.dir,job.nextPaint);
+      area+=splatTravelPoint(system,job,paintPoint,paint.width);
     }
     job.owner.addTurf(area);
   }
@@ -228,9 +265,7 @@ export function installChargerFlight(api,completion) {
     if(ended){
       // Final trail stamp at the stopping point, never beyond an obstruction.
       if(!job.ghost && target!=='defense' && !(world.hit && !target)){
-        const h=G.physics.raycast(job.pos,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
-        if(h.hit)job.owner.addTurf(G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),job.paint.width*job.paint.terminalRate,job.team,
-          {seed:Math.random(),footprint:CHARGER_FOOTPRINT,kind:SOURCE_SPLASH_PAINT_KIND,stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/job.paint.width-1),claimOwner:job.owner}));
+        job.owner.addTurf(splatTravelPoint(system,job,job.pos,job.paint.width*job.paint.terminalRate,true));
       }
       if(world.hit&&!target&&!job.ghost){
         if (!beginChargerWallDrop(system,job,world,completion.weapons.charger,api)) {
