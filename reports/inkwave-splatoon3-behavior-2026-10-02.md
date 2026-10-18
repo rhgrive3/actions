@@ -5143,3 +5143,8 @@ User clarified the remaining material request as a coating finish. Shell materia
 ### 顎・首の背面追加確認とnormal補正
 
 背面を加えた44+44ケース版 `33e8bec5a2fbb17d4b7eb89854e8dc56fc5bffc3` は描画とPNG照合に成功したが、後首上端の小暗斑2つを検出した。三角反転ではなく、trimで露出した首へ旧skull normalを強制していたことを数値で特定したため、この版は最終採用しない。trim後head fieldも用いてnormal適用を局所制限し、全5detailのposition/index/skinweightを完全保持した。既存15＋追加4の19/19試験は成功。normal修正版 exact head `e89f829591271e4bf1e4613cdd3bde4cd844cad7` の44+44 native再撮影は本追記時点では未確認。詳細・現行ファイルhashは[顎と首の比較記録](inkwave-chin-neck-2026-10-18.md)に更新した。
+
+
+### 2026-10-18: 新世代16メインの11.3.0再監査
+
+作業開始時main `9ef63350385bffee71b3afa0a09290a92e9c862b` と固定原典16ファイル・41キットを再照合。[総合報告](new-families-1130-20261018/README.md)に、提示F01–F10、追加差異、系統別7領域、実行経路、検証結果を集約する。スライド射撃位相、4F近接、爆風高さ、パージ・散弾・幾何防御、弓の発射/表示同期、踏み込み/通信を修正。既存スプラマニューバー専用処理と塗り所有権を維持する。省略既定値、弓45F/2の適用規則、盾の厳密な輪郭、専用S3モーション・SEと遅延補償は未確定。ロジック/production/ブラウザの成功をSwitch実機一致とは扱わない。PR[#1577](https://github.com/rhgrive3/actions/pull/1577)の最終SHA・main反映・CIは総合報告に記録する。#992/#532の古い記述を現mainのバグとして再計上せず、原典不足の残項目を区別する。

@@ -20,7 +20,11 @@ try{
   args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader','--js-flags=--expose-gc']});
  const page=await browser.newPage(),errors=[];page.on('console',m=>{if(m.text().startsWith('new-family checked '))console.log(m.text());});page.on('pageerror',e=>errors.push(e.message));
  await page.goto(`http://127.0.0.1:${server.address().port}/probe`);
- const result=await page.evaluate(async({benchmarkOnly})=>{
+ const stressOnly=process.argv.includes('--stress-only');let cdp,heapBefore=null,gcPauses=[];
+ if(stressOnly){cdp=await page.context().newCDPSession(page);await cdp.send('Performance.enable');await cdp.send('HeapProfiler.collectGarbage');heapBefore=(await cdp.send('Performance.getMetrics')).metrics.find(m=>m.name==='JSHeapUsedSize')?.value;
+  cdp.on('Tracing.dataCollected',e=>{for(const v of e.value)if((v.name==='MinorGC'||v.name==='MajorGC')&&v.ph==='X'&&Number.isFinite(v.dur))gcPauses.push({name:v.name,ms:v.dur/1000});});
+  await cdp.send('Tracing.start',{categories:'v8',transferMode:'ReportEvents'});}
+ const result=await page.evaluate(async({benchmarkOnly,stressOnly})=>{
   const profile=await fetch('/patches/splatoon3/profile.json').then(r=>r.json());
   const {install}=await import('/patches/splatoon3/runtime/install.mjs'),api=install(profile);
   const {MAIN_WEAPON_CATALOG:C}=await import('/patches/splatoon3/runtime/main-weapon-catalog-data.mjs');
@@ -49,14 +53,14 @@ try{
    G.paint=new CpuPaint(null,level,{atlasSize:1024,maxDensity:10,cell:.5});G.time=0;events=[];};
   const summaries=[];
   try{for(const r of target){
-   const ids=benchmarkOnly?[r.id]:[r.id,...K.filter(k=>k.baseId===r.id).map(k=>k.id)];
+   const ids=benchmarkOnly||stressOnly?[r.id]:[r.id,...K.filter(k=>k.baseId===r.id).map(k=>k.id)];
    for(const id of ids){
     if(api.WEAPONS[id].catalogRecord!==api.WEAPONS[r.id].catalogRecord)throw Error(id+' does not inherit main source');
-    const modes=benchmarkOnly?['hold']:id===r.id?['tap','hold','air','squid-cancel',...(['stringer','splatana'].includes(r.family)?['partial',...(r.family==='stringer'?['mid']:[]),'full','charge-jump']:[]),...(r.family==='dualies'?['slide']:[])]:['tap','hold'];
+    const modes=stressOnly?['stress']:benchmarkOnly?['hold']:id===r.id?['tap','hold','air','squid-cancel',...(['stringer','splatana'].includes(r.family)?['partial',...(r.family==='stringer'?['mid']:[]),'full','charge-jump']:[]),...(r.family==='dualies'?['slide']:[])]:['tap','hold'];
     const chargeParam=r.parameters.spl__WeaponStringerParam?.ChargeParam||r.parameters.spl__WeaponSaberParam?.ChargeParam||{};
     const fullFrames=chargeParam.ChargeFrameFullCharge??72,midFrames=chargeParam.ChargeFrameMidCharge??Math.floor(fullFrames/2);
     for(const mode of modes){let canonical;
-     for(const hz of [30,60,120]){
+     for(const hz of (stressOnly?[60]:[30,60,120])){
       clear();frame=0;
       const a=new Actor({team:0,weapon:id,isLocal:false,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
       a.character.actor=a;actors.push(a);G.actors=[a];G.scene.add(a.character.root);a.spawnAt(new THREE.Vector3(0,0,0),0);
@@ -65,11 +69,12 @@ try{
       a.aimDir.set(0,0,1);a.aimPoint.set(0,a.pos.y+1.05,100);
       G.scene.updateMatrixWorld(true);renderer.render(G.scene,camera);
       const trace=[],timings=[],draw=[];let carry=0,peak=0;
-      for(let display=0;display<hz*3;display++){
+      for(let display=0;display<hz*(stressOnly?22:3);display++){
        carry+=60;while(carry>=hz){carry-=hz;
         // Frame zero supplies the first held sample. Charge is released well
         // after the longest published max stage; hold also exercises canopies.
-        a.intent.fire=mode==='tap'?frame<3:mode==='mid'?frame<midFrames:mode==='partial'?frame<Math.max(1,Math.floor(midFrames/2)):mode==='full'?frame<fullFrames:mode==='charge-jump'?frame<fullFrames+8:mode==='squid-cancel'?frame<15:frame<120;
+        a.intent.fire=mode==='stress'?(frame<900&&(!['stringer','splatana'].includes(r.family)||frame%(fullFrames+20)<fullFrames)):mode==='tap'?frame<3:mode==='mid'?frame<midFrames:mode==='partial'?frame<Math.max(1,Math.floor(midFrames/2)):mode==='full'?frame<fullFrames:mode==='charge-jump'?frame<fullFrames+8:mode==='squid-cancel'?frame<15:frame<120;
+        if(stressOnly&&frame<900&&frame%60===0)a.ink=100; // bounded full-tank throughput fixture
         a.intent.jump=mode==='charge-jump'&&frame===fullFrames+2;
         a.intent.squid=mode==='squid-cancel'&&frame>=15&&frame<35;
         a.intent.move.set(0,0,mode==='full'&&r.family==='splatana'?1:0);
@@ -83,12 +88,13 @@ try{
        }
        if((id===r.id&&mode==='hold'&&display<hz/4)||display===0||display===hz||display===hz*2){const t=performance.now();G.scene.updateMatrixWorld(true);renderer.render(G.scene,camera);draw.push(performance.now()-t);}
       }
+      if(stressOnly&&(G.projectiles.list.length||(G.projectiles._s3SplashDrops?.length||0)))throw Error(id+' retains attacks after the seven-second drain');
       const state={trace,events,paint:digest(G.paint.grid),cells:Array.from(G.paint.counts)};
       if(canonical&&JSON.stringify(canonical)!==JSON.stringify(state))throw Error(JSON.stringify({id,mode,hz,firstDifferentTrace:state.trace.findIndex((t,i)=>JSON.stringify(t)!==JSON.stringify(canonical.trace[i])),oldEvents:canonical.events,newEvents:state.events}));canonical=state;
       if(!events.length&&mode!=='squid-cancel')throw Error(id+' '+mode+' never emitted a shot');
       timings.sort((a,b)=>a-b);draw.sort((a,b)=>a-b);measurements.push({id,mode,hz,steps:frame,shots:events.length,peakProjectiles:peak,
        cpuMeanMs:timings.reduce((a,b)=>a+b,0)/timings.length,cpuP95Ms:timings[Math.floor(timings.length*.95)],draws:draw.length,drawSubmitMeanMs:draw.reduce((a,b)=>a+b,0)/draw.length,drawSubmitP95Ms:draw[Math.floor(draw.length*.95)],
-       cells:state.cells,paint:state.paint,heap:performance.memory?.usedJSHeapSize});
+       cells:state.cells,paint:state.paint,renderInfo:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures},heapHintBytes:performance.memory?.usedJSHeapSize});
      }
      cases.push({id,base:r.id,mode,shots:canonical.events.length,firstShot:canonical.events[0]?.frame,chargeFrames:mode==='mid'?midFrames:mode==='full'?fullFrames:null,paint:canonical.paint,cells:canonical.cells});
     }
@@ -97,9 +103,14 @@ try{
   }}finally{off();Math.random=random;clear();renderer.dispose();}
   return {bases:summaries,cases,measurements,renderer:'SwiftShader',fixedHz:60,renderHz:[30,60,120],
    randomMode:'constant .37; angular distributions require separate statistical tests',
+   stress:stressOnly?{firingSeconds:15,drainSeconds:7,refill:'100 ink each second',remainingProjectiles:G.projectiles.list.length,remainingDrops:G.projectiles._s3SplashDrops?.length||0}:null,
    evidence:'production modules, actual Character/Actor/Physics, CPU paint, first quarter-second rendered at each display rate for sixteen base hold scenarios; three sampled renders in other scenarios; no hardware GPU or Nintendo parity claim'};
- },{benchmarkOnly:process.argv.includes('--benchmark-only')});
+ },{benchmarkOnly:process.argv.includes('--benchmark-only'),stressOnly});
  if(errors.length)throw Error(errors.join('\n'));
- fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify({contentHash:build.contentHash,buildRevision:build.build?.revision,browser:browser.version(),...result,errors},null,2)+'\n');
+ let memory=null;if(cdp){const done=new Promise(resolve=>cdp.once('Tracing.tracingComplete',resolve));await cdp.send('Tracing.end');await done;
+  const heapBeforeGC=(await cdp.send('Performance.getMetrics')).metrics.find(m=>m.name==='JSHeapUsedSize')?.value;await cdp.send('HeapProfiler.collectGarbage');
+  const heapAfterGC=(await cdp.send('Performance.getMetrics')).metrics.find(m=>m.name==='JSHeapUsedSize')?.value;
+  memory={heapBefore,heapBeforeGC,heapAfterGC,gcEvents:gcPauses.length,gcPauseTotalMs:gcPauses.reduce((a,p)=>a+p.ms,0),gcPauseMaxMs:Math.max(0,...gcPauses.map(p=>p.ms)),scope:'whole sixteen-case fixture including module/model setup; memory hints inside synchronous page task are coarsely cached'};}
+ fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify({contentHash:build.contentHash,buildRevision:build.build?.revision,browser:browser.version(),...result,memory,errors},null,2)+'\n');
  console.log(JSON.stringify({bases:result.bases.length,cases:result.cases.length,frequencyRuns:result.measurements.length,errors}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
