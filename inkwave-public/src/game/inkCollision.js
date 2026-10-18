@@ -1,4 +1,4 @@
-import { sweepNativeLevelSphere } from '../../patches/native-stages/runtime/engine.mjs';
+import { sweepNativeLevelSphere } from '../../patches/native-stages/runtime/native-projectile-sweep.mjs';
 // Continuous collision, shared by ink heads, paint-only droplets and aim probes.
 // Analytic swept sphere vs OBB using the piecewise-quadratic distance to a box.
 // This includes rounded edges/corners; it is not an expanded-box approximation.
