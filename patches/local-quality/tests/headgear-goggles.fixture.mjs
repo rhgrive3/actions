@@ -27,15 +27,17 @@ for(const key of ['position','normal','uv'])assert.ok([...m.geometry.attributes[
  let volume=0;for(const tri of trianglesFor('rear-closed')){const [a,b,c]=tri;volume+=a[0]*(b[1]*c[2]-b[2]*c[1])+a[1]*(b[2]*c[0]-b[0]*c[2])+a[2]*(b[0]*c[1]-b[1]*c[0]);}assert.ok(volume>0,'closed convex bands have outward winding');
  const shell=g.userData.parts.find(p=>p.name==='molded-wrap-shell');assert.ok(shell.bounds.max.y-shell.bounds.min.y>.28);
  assert.equal(g.userData.parts.filter(p=>p.name.startsWith('vent-recess-')).length,7);assert.equal(g.userData.parts.filter(p=>p.name==='central-slot-web-0').length,18);assert.equal(g.userData.parts.filter(p=>p.name==='cheek-ink-inlay').length,20);
+ assert.equal(g.userData.parts.filter(p=>p.name==='central-chevron-inlay').length,3);const arch=g.userData.construction.foreheadProfile;assert.ok(Math.abs(arch[1][1]-arch[3][1])<1e-7);assert.ok(arch[2][1]-arch[1][1]<.0001,'rounded crown has no center cusp');assert.ok(arch[2][1]>arch[0][1]+.003,'raised arch shoulders remain below center');assert.deepEqual(g.userData.construction.centralSlotHalfWidths,[.28,.26,.24]);
  assert.equal(g.userData.construction.sideInsets,'closed compact inset; no ear opening');assert.equal(g.userData.parts.filter(p=>p.name==='temple-inset-border').length,2);assert.ok(g.userData.construction.rearSection.thickness>=.015);
  assert.equal(g.userData.parts.filter(p=>p.name==='cheek-slot-web-0').length,12);
+ const plan=g.userData.construction.billPlan,reach=plan.map(p=>Math.hypot(...p.tip.map((v,i)=>v-p.root[i])));assert.ok(reach[2]>reach[1]*1.5&&reach[1]>reach[0]*2,'bill projects centrally and recedes toward lateral roots');
  const vs=g.userData.construction.visorSection;assert.ok(vs.tip[2]-vs.lensUpper[2]>.04,'cap visor overhangs shield');assert.ok(vs.tip[1]<vs.root[1]-.015,'cap visor slopes down beyond root');
  assert.ok(!g.userData.parts.some(p=>/central-block-perimeter|^visor-|eye-side-frame/.test(p.name)),'no detached ring, shelf or side posts');
  const section=g.userData.construction.browSection;for(let i=1;i<section.length;i++){assert.ok(section[i].point[1]<section[i-1].point[1],'brow slopes down toward lens');assert.ok(section[i].point[2]>section[i-1].point[2],'brow projects forward toward lens');}
  assert.ok(g.userData.construction.centralExtraDepth>.015&&g.userData.construction.centralExtraDepth<.025,'central breathing unit integrated within shallow cheek relief');
  for(const a of g.userData.construction.templeAnchors)assert.ok(Math.abs(a.strapDepth-a.shellDepth)<.009,'strap ends overlap thick temple shell');g.updateMatrixWorld(true);for(const a of g.userData.construction.templeAnchors){const p=new Vector3(...a.point),d=p.clone().sub(new Vector3(0,.164,.014)).normalize(),ray=new Raycaster(p.clone().addScaledVector(d,.1),d.clone().negate()),hit=ray.intersectObject(g.children.find(m=>m.name==='shell-batch'))[0];assert.ok(hit&&hit.point.distanceTo(p)<.02,'each rear strap attaches to solid side shell, not ear opening');}
 
- for(const part of g.userData.parts.filter(p=>p.name==='temple-ink-inlay')){
+ for(const part of g.userData.parts.filter(p=>p.name==='temple-ink-inlay'||p.name==='central-chevron-inlay')){
  const mesh=g.children.find(m=>m.name==='ink-batch'),p=mesh.geometry.attributes.position,ix=mesh.geometry.index;
  for(let i=part.indexStart;i<part.indexStart+part.indexCount;i+=3){
  const c=new Vector3();for(let k=0;k<3;k++)c.add(new Vector3().fromBufferAttribute(p,ix.getX(i+k)));c.multiplyScalar(1/3);
