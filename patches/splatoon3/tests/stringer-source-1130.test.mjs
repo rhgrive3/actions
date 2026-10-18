@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {fixture} from './source-fixture.mjs';
 import {MAIN_WEAPON_CATALOG} from '../runtime/main-weapon-catalog-data.mjs';
+import {ALTERNATE_WEAPON_KITS} from '../runtime/alternate-weapon-kits-data.mjs';
 
 const DT=1/60;
 const rows=MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='stringer');
@@ -41,12 +42,13 @@ test('Stringer min/mid/full releases use each explicit recovery stage and charge
   for(const r of rows){
     const charge=r.parameters.spl__WeaponStringerParam.ChargeParam;
     const bullet=r.parameters.spl__BulletStringerParam;
+    for(const id of [r.id,...ALTERNATE_WEAPON_KITS.filter(kit=>kit.baseId===r.id).map(kit=>kit.id)])
     for(const [name,stem] of [['Min','Min'],['Mid','Mid'],['Full','Max']]){
       f.G.projectiles.clear();f.G.actors.length=0;
-      const a=release(f,r,charge[`ChargeFrame${name}Charge`]);
+      const a=release(f,{...r,id},charge[`ChargeFrame${name}Charge`]);
       const rounds=f.G.projectiles.list.filter(p=>p.owner===a);
       assert.equal(rounds.length,r.parameters.spl__WeaponStringerParam.ShotParam.ArrowNum??3,r.id+' '+name);
-      close(a.weaponRunner.cooldown*60,charge[`FreezeFrame${name}Charge`],r.id+' '+name+' recovery');
+      close(a.weaponRunner.cooldown*60,charge[`FreezeFrame${name}Charge`],id+' '+name+' recovery');
       close(rounds[0].damage,bullet.DamageParam[`DirectHitDamage${stem}`]/10,r.id+' '+name+' damage');
       close(rounds[0].vel.length(),bullet.MoveParam[`SpawnSpeed${stem}`]*60,r.id+' '+name+' speed');
       close(100-a.ink,charge[`InkConsume${name}Charge`]*100,r.id+' '+name+' ink');
@@ -112,4 +114,22 @@ test('Stringer offset blast keeps wall/step occlusion and independent arrow over
   }
   assert.equal(hits.length,4,'a wall blocks its arrow without suppressing other blast instances');
   assert.equal(hits.reduce((n,h)=>n+h[1],0),120);
+});
+
+test('all Stringers and derived kits cap actual full-charge jump admission at the explicit source impulse',async()=>{
+  const f=await world();
+  for(const r of rows){
+    const kits=[r.id,...ALTERNATE_WEAPON_KITS.filter(kit=>kit.baseId===r.id).map(kit=>kit.id)];
+    for(const id of kits){
+      const a=f.make(id);a.form='kid';a.intent.fire=true;
+      f.tick(a,r.parameters.spl__WeaponStringerParam.ChargeParam.ChargeFrameFullCharge);
+      close(a.weaponRunner.charge,1,id+' fully funded before takeoff');
+      a.intent.jump=true;f.tick(a);
+      assert.equal(a.grounded,false,id+' actual jump admitted');
+      close(a.vel.y,r.parameters.spl__WeaponStringerParam.ChargeParam.JumpHeightFullCharge*60,id+' source jump cap');
+      assert.ok(a.character.events.some(event=>event[0]==='jump'),id+' character receives jump');
+      const ordinary=f.make(id);ordinary.form='kid';ordinary.intent.jump=true;f.tick(ordinary);
+      assert.ok(ordinary.vel.y>a.vel.y,id+' uncharged takeoff retains normal impulse');
+    }
+  }
 });
