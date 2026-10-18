@@ -122,3 +122,36 @@ New native rendering is pending. Software preview proves construction only; no v
 
 ## Native8fa lip diagnosis
 The material/winding were not the cause of the black wedge: the authored white lip faced downward. The new underside path preserves closed topology but returns through the inner frame before ending directly below the outer peak, making a short vertical front lip. Gold appearance remains independently unresolved; no lighting or material compensation is used.
+
+
+## Coherent wrap revision after user oblique/side review
+
+# Coherent S3 Paintball Mask wrap reconstruction
+
+Reference pixels: S3 isolated item three-quarter https://img.gamewith.jp/article_tools/splatoon3/gacha/ge429.png and S3 worn near-front https://img.gamewith.jp/img/9a245d07c6dfa3b4460b237694dd6bba.png, item page https://gamewith.jp/splatoon3/390028. Original procedural geometry, no copied mesh/texture. True S3 side/back remains unverified; historical S2 back is contextual only.
+
+## Why reconstructed
+Actual f336 front/oblique/right showed a nearly horizontal shelf above thin side posts, parallel cheek bands, and a separately projecting oval mouth ring. Source oblique instead has a sloping molded brow with broad temple wings and continuous rounded cheek-to-chin cup. Earlier bounded lip correction did not establish full shape fidelity. f336 module preserved as face-goggles-f336.js.
+
+## Implemented coarse form
+One closed molded-wrap-shell contains the panoramic eye opening, three connected central breathing slots, side vents and two grouped forehead windows. Thick sloping brow flows into solid temples; lower outline curves inward/up toward temples and rounds into chin. No separate visor shelf, eye-side posts or oval mouth perimeter. Central relief is0.020 over cheek depth. Upper window lowered approximately0.08rad while retaining nose saddle. Lens material unchanged.
+
+Center brow crosssection elevation/depth: e0.90/d~0.046; e0.65/d~0.056; e0.45/d~0.085; e0.32/d0.096. Lower toward lens is also forward; broad slope replaces horizontal shelf. Outer azimuth about±1.28 versus window±1.04 leaves broad temple wings. Lower outer contour narrows to±1.12 and rises at sides; center chin elevation−0.70. Source35/28/37% broad height proportions are observational, not exact measurements.
+
+Curved shell uses conforming shared-edge angular subdivision. Zero-area parameter triangles are filtered before emission; final global nondegenerate and closed welded-edge incidence/opposite winding tests pass. Surface normals use finite differences of the actual molded-depth function, not an unrelated radial normal. All three LODs have genuine curved geometry, not merely normal smoothing.
+
+## Side/back repair and uncertainty
+Rear X bands originally entered raw native scalp/skull at low LOD. Their base radial offset is now0.042/0.049 and minimum rear longitudinal steps24/20/16 across hero/game/far. Native analytic scalp estimate now has positive clearance at vertices and triangle centroids. Band endpoints blend to the molded shell depth at az±1.20,e±0.23, overlapping the solid temple wall; no floating end assumption. Hair strands can still lie over bands. This is not an all-animation/hair clearance guarantee; actual native left/right/back and multiple hair styles remain acceptance gates. No hair/head/face edits.
+
+## Tests and budget
+node --loader ./loader.mjs headgear-face-goggles.fixture.mjs
+node --loader ./loader.mjs audit-fit.mjs > audit-fit-results.jsonl
+Both exit0. Fixture checks four batches, one transparent lens, finite data, valid indices, global nondegeneracy, outward lens winding, closed full-shell topology, triangle-centroid envelope clearance, monotonic down/forward brow crosssection, shallow central relief, overlapping temple anchors, LOD reduction and exactly-once disposal. Audit uses fetched raw9851character-face.js headSurfFace/headShape (only Node context import stubbed), not a synthetic ellipsoid alone. Native emitted QA remains required.
+
+Triangles hero6964/game4844/far3400. Four materials/batches; zero textures; one transparent lens. No additional framebuffer/transmission pass.
+
+Module SHA2564c5958e21735a39f0240b27ef3068cfc9f4d3e923dd82959b87d0476b2f5c863.
+Fixture SHAcc65e442ca0881482830189ecae077b81c9c9eadd99ea05164cb0a8c4b34acdf.
+
+## Pending rendered gate
+Inspect actual front, oblique, both sides, rear, top, isolated underside, allLOD and alternate hair: coherent sloping brow/temple profile; integrated cheek/chin transition; readable three slot bands; no open seams; rear bands meet anchors and do not cut exposed skull; lens remains readable. CPU construction preview is not native visual acceptance. No exact-match claim.

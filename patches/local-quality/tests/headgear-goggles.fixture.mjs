@@ -17,21 +17,22 @@ for(const key of ['position','normal','uv'])assert.ok([...m.geometry.attributes[
  const trianglesFor=name=>{const out=[];for(const part of g.userData.parts.filter(p=>p.name===name||(name==='molded-brim'&&p.name.startsWith('visor-')))){const m=g.children.find(x=>x.name===part.material+'-batch'),p=m.geometry.attributes.position,ix=m.geometry.index;for(let i=part.indexStart;i<part.indexStart+part.indexCount;i+=3)out.push([0,1,2].map(k=>{const n=ix.getX(i+k);return [p.getX(n),p.getY(n),p.getZ(n)];}));}return out;};
  // Curved panels must clear the fitted smooth head at triangle interiors,
  // not only their boundary vertices (low-LOD long chords previously failed).
- for(const name of ['molded-lower-face-shell','molded-forehead-shell','molded-brim'])for(const tri of trianglesFor(name)){
+ for(const name of ['molded-wrap-shell'])for(const tri of trianglesFor(name)){
    const c=[0,1,2].map(k=>tri.reduce((sum,v)=>sum+v[k],0)/3);
    assert.ok(Math.hypot(c[0]/.178,(c[1]-.164)/.176,(c[2]-.014)/.165)>1.04,name+' triangle interior clears head envelope');
  }
- // The visible molded brim lip faces forward, rather than exposing a broad
- // downward-facing return that rendered as a black wedge under neutral light.
- for(const tri of trianglesFor('visor-front-edge')){const a=tri[1].map((x,k)=>x-tri[0][k]),b=tri[2].map((x,k)=>x-tri[0][k]),n=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],len=Math.hypot(...n);assert.ok(Math.abs(n[1]/len)<.01&&n[2]/len>.25,'visible brim lip faces forward');}
- const names=['molded-lower-face-shell','molded-forehead-shell','molded-brim'];
+ const names=['molded-wrap-shell'];
  for(const name of names){const edges=new Map(),welded=[],key=p=>{let i=welded.findIndex(q=>Math.hypot(...p.map((x,k)=>x-q[k]))<1e-6);if(i<0){i=welded.length;welded.push(p);}return String(i);};for(const tri of trianglesFor(name)){const a=tri[1].map((x,i)=>x-tri[0][i]),b=tri[2].map((x,i)=>x-tri[0][i]);assert.ok(Math.hypot(a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])>1e-12,'nondegenerate panel');for(let i=0;i<3;i++){const a=key(tri[i]),b=key(tri[(i+1)%3]),e=[a,b].sort().join('/'),r=edges.get(e)||[0,0];r[0]++;r[1]+=a<b?1:-1;edges.set(e,r);}}assert.ok(edges.size>100);for(const [e,[n,d]]of edges){assert.equal(n,2,name+' closed edge '+e);assert.equal(d,0,name+' consistent winding '+e);}}
- const shell=g.userData.parts.find(p=>p.name==='molded-lower-face-shell'),fore=g.userData.parts.find(p=>p.name==='molded-forehead-shell');assert.ok(shell.bounds.max.y-shell.bounds.min.y>.13);assert.ok(fore.bounds.max.y-fore.bounds.min.y>.06);
- assert.equal(g.userData.parts.filter(p=>p.name.startsWith('vent-recess-')).length,15);assert.equal(g.userData.parts.filter(p=>p.name==='central-slot-web-0').length,18);assert.ok(g.userData.parts.some(p=>p.name==='central-block-perimeter-0'));assert.equal(g.userData.parts.filter(p=>p.name==='cheek-ink-inlay').length,20);
+ const shell=g.userData.parts.find(p=>p.name==='molded-wrap-shell');assert.ok(shell.bounds.max.y-shell.bounds.min.y>.28);
+ assert.equal(g.userData.parts.filter(p=>p.name.startsWith('vent-recess-')).length,17);assert.equal(g.userData.parts.filter(p=>p.name==='central-slot-web-0').length,18);assert.equal(g.userData.parts.filter(p=>p.name==='cheek-ink-inlay').length,20);
+ assert.ok(!g.userData.parts.some(p=>/central-block-perimeter|visor-|eye-side-frame/.test(p.name)),'no detached ring, shelf or side posts');
+ const section=g.userData.construction.browSection;for(let i=1;i<section.length;i++){assert.ok(section[i].point[1]<section[i-1].point[1],'brow slopes down toward lens');assert.ok(section[i].point[2]>section[i-1].point[2],'brow projects forward toward lens');}
+ assert.ok(g.userData.construction.centralExtraDepth>.015&&g.userData.construction.centralExtraDepth<.025,'central breathing unit integrated within shallow cheek relief');
+ for(const a of g.userData.construction.templeAnchors)assert.ok(Math.abs(a.strapDepth-a.shellDepth)<.009,'strap ends overlap thick temple shell');
  const lens=g.children.find(x=>x.name==='lens-batch');assert.equal(lens.material.depthWrite,false);assert.ok(lens.material.opacity>=.25&&lens.material.opacity<.4);const lp=lens.geometry.attributes.position;let maxY=-1,minY=1;for(let i=0;i<lp.count;i++){maxY=Math.max(maxY,lp.getY(i));minY=Math.min(minY,lp.getY(i));}assert.ok(maxY-minY<.14,'compact eye opening');
  const ink=g.children.find(x=>x.name==='ink-batch').material;g.setInkColor(0xff0000);assert.equal(ink.color.getHex(),0xff0000);let gd=0,md=0;for(const m of g.children){m.geometry.addEventListener('dispose',()=>gd++);m.material.addEventListener('dispose',()=>md++);}g.dispose();g.dispose();assert.equal(gd,4);assert.equal(md,4);
  console.log(lod,JSON.stringify(g.userData.stats));
 }
-assert.ok(counts[0]>counts[1]&&counts[1]>counts[2]);assert.throws(()=>createFaceGoggles({lod:'bad'}),RangeError);assert.throws(()=>createFaceGoggles({clearance:()=>NaN}),TypeError);console.log('PASS molded panels, closed topology, compact lens, source feature structure, LOD budget and lifecycle');
+assert.ok(counts[0]>counts[1]&&counts[1]>counts[2]);assert.throws(()=>createFaceGoggles({lod:'bad'}),RangeError);assert.throws(()=>createFaceGoggles({clearance:()=>NaN}),TypeError);console.log('PASS joined wrap shell, manifold topology, compact lens, allLOD clearance, no detached framework and lifecycle');
 
 for(const lod of ['hero','game','far']){const a=authoredFactory({lod}),b=createFaceGoggles({lod});assert.equal(a.children.length,b.children.length);for(let i=0;i<a.children.length;i++){const x=a.children[i],y=b.children[i];assert.equal(x.name,y.name);assert.deepEqual(Object.keys(x.geometry.attributes),Object.keys(y.geometry.attributes));for(const key of Object.keys(x.geometry.attributes))assert.deepEqual(x.geometry.attributes[key].array,y.geometry.attributes[key].array,lod+' emitted '+key+' parity');assert.deepEqual(x.geometry.index.array,y.geometry.index.array,lod+' emitted index parity');}a.dispose();b.dispose();}
