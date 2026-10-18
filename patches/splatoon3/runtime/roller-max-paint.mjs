@@ -1,4 +1,7 @@
-// #189 pins the maximum-speed edge; #649 scales the floor-only side bands by
+// Contact widths are calibrated to the existing handheld models (.3 of the
+// ballistic source scale); raw 11.3.0 tables remain unchanged. This is an
+// image-guided INKWAVE calibration, not a recovered retail conversion.
+// #649 scales the floor-only side bands by
 // actual ground speed. Leanny's table supplies SpeedMax and WidthHalfMax but
 // no intermediate curve, so the linear bridge below is an explicit INKWAVE
 // approximation, not a claim about the retail interpolation.
@@ -9,20 +12,21 @@ export function paintRollerMaximumWidth(game,runner,weapon,paintSource,scale,ref
       !Number.isFinite(weapon.rollWidth) || !Number.isFinite(hs) ||
       !Number.isFinite(paintSource?.SpeedMax) || !Number.isFinite(paintSource?.WidthHalfMax) ||
       !(paintSource.SpeedMax>0) || !(paintSource.WidthHalfMax>0)) return 0;
-  const target=paintSource.WidthHalfMax*scale;
-  // #979 reconciles the CPU edge with native GLSL: BAND_W=.62, BAND_R=.1,
-  // plus the .03/.018 ripple amplitudes at the visible sd=0 boundary. Use
+  const target=paintSource.WidthHalfMax*scale*.3;
+  // Keep the CPU edge within GLSL: BAND_W=.62, BAND_R=.1,
+  // plus the .08/.04 angular tooth amplitudes at the sd=0 boundary. Use
   // that analytic maximum so the new parity edge cannot exceed sourced width.
   // Preserve native y=.35 projection, interior waves and the existing body.
-  const bandHalfMax=.62+.1+.03+.018;
-  const nativeHalf=weapon.rollWidth*.33+Math.sqrt(.62**2-.35**2)*bandHalfMax;
+  const bandHalfMax=.62+.1+.08+.04;
+  const nativeHalf=(weapon.rollWidth*.33+Math.sqrt(.62**2-.35**2)*bandHalfMax)*.3;
   if(!(target>nativeHalf))return 0;
   const maxSpeed=paintSource.SpeedMax*referenceHz*scale;
   if(!(maxSpeed>0))return 0;
   const speedRatio=Math.max(0,Math.min(1,hs/maxSpeed));
   const targetHalf=nativeHalf+(target-nativeHalf)*speedRatio;
   if(!(targetHalf>nativeHalf))return 0;
-  const overlap=Math.min(.1*scale,nativeHalf/4);
+  // Teeth must never expose an internal seam between the core and side ink.
+  const overlap=Math.min(.14*scale,nativeHalf/2);
   const half=(targetHalf-nativeHalf+overlap)/2,offset=targetHalf-half;
   const radius=Math.hypot(half/bandHalfMax,.35);
   const state=runner.s3MaxRollPaint||(runner.s3MaxRollPaint={point:a.pos.clone(),direction:a.pos.clone(),sequence:0});

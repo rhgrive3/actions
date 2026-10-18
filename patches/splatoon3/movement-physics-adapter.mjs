@@ -92,7 +92,7 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     replace('    const side = _v2.set(mv.x, 0, mv.z);',
       '    const side = _v2.set(mv.x, 0, mv.z);\n    if (mh > 1) side.multiplyScalar(1 / mh);', 'wall lateral magnitude');
     replace('    } else if (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub) {',
-      '    } else if (rollingMovementActive(this) && !this.intent.sub) {\n      if (hs > 0.1) target = Math.atan2(this.vel.x, this.vel.z);\n    } else if (!reverseShotRelease(this) && (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub)) {', 'roller authoritative heading');
+      '    } else if (!isSquid && (this.weaponRunner.rolling || (this.intent.fire && (this.weapon.behaviorKind === "roller" || this.weapon.behaviorKind === "brush"))) && !this.intent.sub) {\n      target = this.aimYaw; omega = P.aimFaceOmega; maxRate = P.aimFaceMaxRate; maxAcc = P.aimFaceMaxAcc;\n    } else if (!reverseShotRelease(this) && (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub)) {', 'roller authoritative heading');
     const airStart = code.indexOf('    // ---- airborne: vector steering with light air control (momentum is kept)');
     const airEnd = code.indexOf('\n    // ---- grounded: speed + heading model', airStart);
     if (airStart < 0 || airEnd < airStart) throw new Error('Movement physics: missing airborne movement block');

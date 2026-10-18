@@ -1,0 +1,50 @@
+{
+  "inspected": "2026-10-18",
+  "gameVersion": "capture version unknown; runtime tables pinned to 11.3.0",
+  "gear": "unknown",
+  "redistributed": false,
+  "items": [
+    {
+      "file": "official-card-2.png",
+      "page": "https://www.nintendo.com/jp/switch/av5ja/customize/index.html",
+      "image": "https://www.nintendo.com/jp/switch/av5ja/assets/images/customize/sp/buki/card/main_weapon_2.png",
+      "sha256": "1a00e0d186af98fea52b7f9fbf571ecaefc6f1c2c0bc6ea81ad8ca380cc38482",
+      "observation": "Roller on ground: continuous filled band, irregular lateral edge and splashes; promotional perspective only."
+    },
+    {
+      "file": "official-card-6.png",
+      "page": "https://www.nintendo.com/jp/switch/av5ja/customize/index.html",
+      "image": "https://www.nintendo.com/jp/switch/av5ja/assets/images/customize/sp/buki/card/main_weapon_6.png",
+      "sha256": "449af401b7b54f32d0047b3571c2a757b88b1ad48524e9ee20e334b4002d6129",
+      "observation": "Brush swing appearance only; not a measurement of rolling width."
+    },
+    {
+      "file": "brush-note.jpg",
+      "page": "https://note.com/rbaconv/n/n5f6f4bfb753b",
+      "image": "https://assets.st-note.com/img/1669588225072-IVBOWcqajG.jpg?fit=bounds&height=2000&quality=85&width=2000",
+      "sha256": "b5c0a351195251118fcf564ade9c77cd5bfd4596872101d2f940be46c2ed7c5b",
+      "observation": "Lobby brush trail: narrow continuous curved paths, chipped/scalloped sides. No gear/version/input trace."
+    },
+    {
+      "file": "roller-altema.jpg",
+      "page": "https://altema.jp/splatoon3/dynamoroller",
+      "image": "https://img.altema.jp/splatoon3/kakudai/splatoon3_tatahuri.jpg",
+      "sha256": "5eaefe699a202de64b32f410ef135e42431d7393338c9459688229a84678597e",
+      "observation": "Vertical flick only: excluded from rolling-width measurement."
+    },
+    {
+      "file": "pablo_1.gif",
+      "page": "https://altema.jp/splatoon3/pablo",
+      "image": "https://img.altema.jp/splatoon3/pablo_1.gif",
+      "sha256": "94cbeed492c1f1597174102391a994fe22eb86b34002084caf8645c9ecb7b9e5",
+      "observation": "Viewed eight frames: busy match swings; excluded from isolated rolling geometry."
+    },
+    {
+      "file": "pablo_2.gif",
+      "page": "https://altema.jp/splatoon3/pablo",
+      "image": "https://img.altema.jp/splatoon3/pablo_2.gif",
+      "sha256": "1b6d525bfd4d5618f20f0f34eadbaf8b620762838bd30db1c69dc70b1e3502d4",
+      "observation": "Viewed eight frames: busy match swings; excluded from isolated rolling geometry."
+    }
+  ]
+}

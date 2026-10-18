@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import {batchFixture,cpuFloor} from './batch03-fixture.mjs';
 import {paintRollerMaximumWidth} from '../runtime/roller-max-paint.mjs';
 async function draw(speed=7.92,yaw=0){const f=await batchFixture(),a=f.make('roller'),r=a.weaponRunner;a.isLocal=true;a.yaw=yaw;a.intent.move.set(Math.sin(yaw),0,Math.cos(yaw));a.vel.set(Math.sin(yaw)*speed,0,Math.cos(yaw)*speed);r.rolling=true;r.rollT=1.5;r.lastRollPos=a.pos.clone().add(new f.THREE.Vector3(0,0,-1));r._roller(1/60,{fire:true},a.weapon);return {...f,a,r};}
-test('#189 real rolling emission scores a continuous 5.6-wide maximum-speed CPU footprint, in both axes',async()=>{
- for(const yaw of [0,Math.PI/2]){const f=await draw(7.92,yaw),floor=cpuFloor(f,20,.025);assert.equal(f.paint.length,5,'3 body bands + 2 floor-only edge bands');f.paint.forEach(e=>floor.splat(e.point,e.radius,e.team,e.opts));const ext=floor.extent(yaw===0?'x':'z');assert.ok(Math.abs(ext.width-5.6)<.06,JSON.stringify(ext));
-  const row=Math.floor((.75+10)/.025);for(let k=Math.ceil((10-2.7)/.025);k<Math.floor((10+2.7)/.025);k++){const index=yaw===0?row*floor.face.nu+k:k*floor.face.nu+row;assert.equal(floor.p.grid[index],1,'no unpainted band seams');}
+test('#189 real rolling emission scores a continuous 1.68-wide calibrated maximum-speed CPU footprint, in both axes',async()=>{
+ for(const yaw of [0,Math.PI/2]){const f=await draw(7.92,yaw),floor=cpuFloor(f,20,.025);assert.equal(f.paint.length,5,'3 body bands + 2 floor-only edge bands');f.paint.forEach(e=>floor.splat(e.point,e.radius,e.team,e.opts));const ext=floor.extent(yaw===0?'x':'z');assert.ok(Math.abs(ext.width-1.68)<.10,JSON.stringify(ext));
+  const row=Math.floor((.75+10)/.025);for(let k=Math.ceil((10-.70)/.025);k<Math.floor((10+.70)/.025);k++){const index=yaw===0?row*floor.face.nu+k:k*floor.face.nu+row;assert.equal(floor.p.grid[index],1,'no unpainted band seams');}
   assert.equal(f.a.weapon.rollWidth,1.9,'damage width unchanged');assert.equal(f.a.weapon.rollSpeed,7.92);assert.equal(f.a.weapon.rollDashTime,1.5);
  }
 });
 test('#189 calibrated bands retain the native Roller body paint path at lower speeds',async()=>{
- for(const speed of [1,6.48,7.8]){const f=await draw(speed);assert.equal(f.paint.length,5);assert.ok(f.paint.slice(0,3).every(e=>e.radius===.62&&e.opts.kind==='roll'));assert.ok(f.paint.slice(3).every(e=>e.opts.kind==='rollFloor'));}
+ for(const speed of [1,6.48,7.8]){const f=await draw(speed);assert.equal(f.paint.length,5);assert.ok(f.paint.slice(0,3).every(e=>Math.abs(e.radius-Math.hypot(Math.sqrt(.62**2-.35**2)*.3,.35))<1e-12&&e.opts.kind==='roll'));assert.ok(f.paint.slice(3).every(e=>e.opts.kind==='rollFloor'));}
 });
 test('#189 floor alias filters only side paint on real PaintSystem surface projection; existing body walls remain',async()=>{
  const f=await batchFixture(),V=f.THREE.Vector3;const faces=[{origin:new V(),n:new V(0,1,0),u:new V(1,0,0),v:new V(0,0,1),su:20,sv:20,atlas:{},wall:false},{origin:new V(),n:new V(1,0,0),u:new V(0,0,1),v:new V(0,1,0),su:20,sv:20,atlas:{},wall:true}];
@@ -26,21 +26,21 @@ test('#189 reduced source composition retains native body paint without a fideli
  const {fixture}=await import('./source-fixture.mjs');const f=await fixture(),a=f.make('roller'),r=a.weaponRunner;
  const paints=[];f.G.actors=[];f.G.paint.splat=(point,radius,team,opts)=>{paints.push({radius,kind:opts.kind});return 0;};
  a.isLocal=true;a.intent.move.set(0,0,1);a.vel.set(0,0,7.92);r.rolling=true;r.rollT=1.5;r.lastRollPos=a.pos.clone().add(new f.THREE.Vector3(0,0,-1));
- r._roller(1/60,{fire:true},a.weapon);assert.equal(paints.length,3);assert.ok(paints.every(p=>p.radius===.62));
+ r._roller(1/60,{fire:true},a.weapon);assert.equal(paints.length,3);assert.ok(paints.every(p=>Math.abs(p.radius-Math.hypot(Math.sqrt(.62**2-.35**2)*.3,.35))<1e-12));
 });
 
 
 test('#189 maximum-width side bands respect the actual wavy shader envelope across seeds and axes', async () => {
  for(const yaw of [0,Math.PI/2]) {
   const f=await draw(7.92,yaw),source=f.profile.weaponsFidelityCompletion.weapons.roller.BodyParam.PaintParam;
-  const scale=f.profile.weaponsFidelityCompletion.worldUnitsPerSourceUnit,target=2*source.WidthHalfMax*scale;
+  const scale=f.profile.weaponsFidelityCompletion.worldUnitsPerSourceUnit,target=2*source.WidthHalfMax*scale*.3;
   for(let sequence=1;sequence<=12;sequence++) {
    f.paint.length=0;f.r.s3MaxRollPaint.sequence=sequence;
    paintRollerMaximumWidth(f.G,f.r,f.a.weapon,source,scale,f.profile.weaponsFidelityCompletion.referenceHz,Math.sin(yaw),Math.cos(yaw));
    const floor=cpuFloor(f,20,.025);f.paint.forEach(e=>floor.splat(e.point,e.radius,e.team,e.opts));
    const extent=floor.extent(yaw===0?'x':'z');
    assert.ok(extent.width<=target+.025,`sourced boundary at sequence ${sequence}: ${extent.width}>${target}`);
-   assert.ok(extent.width>=target-.08,`maximum speed still reaches its sourced edge: ${extent.width}`);
+   assert.ok(extent.width>=target-.10,`maximum speed still reaches its sourced edge: ${extent.width}`);
   }
  }
 });

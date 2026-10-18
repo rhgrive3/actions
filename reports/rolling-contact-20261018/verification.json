@@ -1,0 +1,30 @@
+{
+  "codeCommit": "8926934bbfa61535fe204c8368e7bfc9032d1938",
+  "contentHash": "5c3105a90b6f90e3d37e71784c5b4218309aba99d6b23d590a13f4a656f5630c",
+  "inputHash": "6774ecd12bf23ed743abfde255f81042add66896f789d580662cc8982fed7929",
+  "regression": {
+    "tests": 306,
+    "passed": 304,
+    "failed": 0,
+    "skipped": 2,
+    "logSHA256": "eb905ac4ada579fff12d57d4ec5dd836388d0d1346549253f3c75bf6c85ac039"
+  },
+  "browser": {
+    "cases": 24,
+    "errors": [],
+    "realCharacter": true,
+    "realPhysics": true
+  },
+  "gpu": {
+    "status": "passed",
+    "cases": 124,
+    "hashQueries": 1512,
+    "boundaryCases": 986,
+    "cpuOnly": 0,
+    "gpuOnly": 0,
+    "boundaryTies": 17,
+    "receipt": "gpu-result.json.gz",
+    "receiptSHA256": "b9412c87780392b67604d0425f4590f227c4008e82f85880da228f356610cd6d"
+  },
+  "hardwareParity": false
+}

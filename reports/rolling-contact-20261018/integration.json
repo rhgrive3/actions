@@ -1,0 +1,25 @@
+{
+  "baseMain": "b349a6c3e34e3f4eb8172795b1b9d86188fdea58",
+  "codeCommit": "90024c76c0693c39b1392c967ca7aed4082b58a3",
+  "contentHash": "2cf999e115418890b3fa61c92fcbbd066cf9d5e96b3b374b0d69bc95c75f4e37",
+  "inputHash": "342642ab0953489fa9a37260d66d05127307af6e00a034f533352aff606bb75e",
+  "regression": {
+    "tests": 63,
+    "passed": 63,
+    "failed": 0,
+    "logSHA256": "72a2f3fc961f0dafbdc34780f045bc94b2cdcc1db7f0298b89f205e09d0f2c35"
+  },
+  "browser": {
+    "cases": 24,
+    "receipt": "browser-integration.json"
+  },
+  "gpu": {
+    "status": "passed",
+    "cases": 1094,
+    "cpuOnly": 0,
+    "gpuOnly": 0,
+    "ties": 17,
+    "receipt": "gpu-integration.json.gz"
+  },
+  "hardwareParity": false
+}
