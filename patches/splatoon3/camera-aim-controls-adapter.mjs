@@ -29,6 +29,14 @@ export function adaptCameraAimControls(rel, input) {
       '    enforceBoomClearance(this.boom, _probe.hard);', 'hard boom clearance');
     replace('    fov = frameBattleCamera(this, fov);',
       '    constrainCameraLens(this, G.physics, fov);\n    fov = frameBattleCamera(this, fov);', 'final lens sweep');
+    if (code.includes('this.scopeUsesTrueFov = true;')) {
+      replace('    const normalFov = vBase + (this.fovKick - this.zoom) * 0.8;',
+        '    const normalFov = vBase + this.fovKick * 0.8;',
+        'true scoped FOV excludes duplicate zoom-subtraction');
+      replace("    this.zoom = damp(this.zoom, a.weapon?.kind === 'charger' && !a.weapon?.scoped ? charging * 1.4 : 0, 9, dt);",
+        '    // Source updateScopeZoom owns the scope gauge; do not overwrite it.',
+        'preserve source-verified scoped zoom signal');
+    }
     replace('    gc.fov = fov; gc.aspect = cam.aspect; gc.near = cam.near; gc.far = cam.far;',
       '    const projectionDirty = gc.fov !== fov || gc.aspect !== cam.aspect || gc.near !== cam.near || gc.far !== cam.far;\n' +
       '    gc.fov = fov; gc.aspect = cam.aspect; gc.near = cam.near; gc.far = cam.far;\n' +
