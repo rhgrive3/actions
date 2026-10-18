@@ -690,7 +690,8 @@ test('held fists remain beside the actual indexed handles after native reach cor
           const socket = bone.localToWorld(hole), grip = w.off.localToWorld(authored.pos.clone());
           const nearestDrawnVertex = Math.min(...vertices.map(v => v.distanceTo(socket)));
           assert.ok(socket.distanceTo(grip) < .025, `${kind} frame=${i} ${side} native socket-to-grip=${socket.distanceTo(grip)}`);
-          assert.ok(nearestDrawnVertex < .035, `${kind} frame=${i} ${side} indexed handle distance=${nearestDrawnVertex}`);
+          // Vertex spacing on a bar scales with the model (FAMILY_MODEL_SCALE): the grip itself is checked above.
+          assert.ok(nearestDrawnVertex < .035 * (w.def.modelScale || 1), `${kind} frame=${i} ${side} indexed handle distance=${nearestDrawnVertex}`);
           return { side, boneSocketToGrip: socket.distanceTo(grip), nearestDrawnVertex, indexedVertices: vertices.length };
         });
       }

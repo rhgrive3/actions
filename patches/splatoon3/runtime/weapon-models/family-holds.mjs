@@ -29,4 +29,7 @@ export function shiftHold(hold, shift) {
 // 2026-10-17 owner review: shooters, dualies and brushes read about 30% too small
 // against the official movies. The muzzle scales with the model, so shot spawn
 // points move outward with it (reports/inkwave-weapon-hold-motion-2026-10-17.md).
-export const FAMILY_MODEL_SCALE = Object.freeze({ shooter: 1.3, dualies: 1.3, brush: 1.3 });
+// 2026-10-18 owner review: the sloshers read far too small (official Slosher movie xnGkyA7kgWr at
+// rest: the pail mouth is wider than the face; INKWAVE's was about 0.6 of it). One family factor for
+// now; per-model sizes are not measured.
+export const FAMILY_MODEL_SCALE = Object.freeze({ shooter: 1.3, dualies: 1.3, brush: 1.3, slosher: 1.6 });

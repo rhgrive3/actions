@@ -1,0 +1,9 @@
+# 塗り輪郭・メニュー画像の追加mainとの統合
+
+最終CIを通過した`0ade58f3`のマージ直前に、mainが`e52f1150b7debd9e4accb4e92750121f2b140c8d`まで更新された。#1582のメニュー画像decode抑制と#1583の23基本ブキの塗り輪郭を取り込み、カタログ2箇所と追記台帳の競合を両方の変更を保持して解消した。以前の`b4c17e8f`合成生成物の423試行・975,360 actor ticks成功は履歴として保持し、新しい輪郭への一致証明に流用しない。
+
+冷却弾の爆発塗りには新しい`mainInkBurstFootprint`を付け、ダメージ側は独立した`DamageOffsetY`中心で距離・LOS・対物を判定する。矢が刺さる瞬間は新しい`mainInkFootprint(r)`を使用し、ownerのみが塗る`!p.ghost`、LACT非爆発条件、相手側の停留fuse寿命延長を保持した。既存Stringer source試験に、owner爆発の中心と新しい`ink-blast`が同時に保持されるassertを追加した。ghost無権限・45F表示は既存の実送受信試験で検査する。
+
+独立レビューで旧8輪郭4096bytesの不変と対象16行mappingを確認した。新kindの受信allowlistと、圧縮辞書に未対応kindがある時に元rowsへ戻る既存fallbackを保持する。新しい輪郭を受信側の現在の装備から推測しない。
+
+合成production contentHashは`2b3607966cb0ccff90fe88cdca02c35d57e58d7e52469b87cce4e4bb1996ca42`。#1583によりシェルター・弓・ワイパーの塗り形状・面積は変わるため、以前の塗りhashやCPU/GPU body条件数を最終生成物の結果として転記しない。新生成物のproduction、全41種の描画周期比較、mask、通信、CI、マージ後mainの最終結果はPR #1577本文の受領記録に記載する。共有輪郭は本家のブキ別原マスクではなく、#1583側が記載する画像由来の近似という限界も保持する。

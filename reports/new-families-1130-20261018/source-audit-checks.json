@@ -1,0 +1,835 @@
+{
+  "auditDate": "2026-10-18",
+  "baseline": "9ef63350385bffee71b3afa0a09290a92e9c862b",
+  "targetVersion": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "officialUpdate": {
+    "url": "https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html",
+    "releaseDateJapan": "2026-08-20",
+    "retrievedSha256": "aec50af64312fa93700a03e5987c64b649c12d3be922af694f608e66c0d658fb"
+  },
+  "rawParameterChecks": [
+    {
+      "id": "s3-maneuver-short",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverShort.game__GameParameterTable.json",
+      "sha256": "61abee93821489b4fc72b93cc080e3463477f09961aee874c9a521a25812fbb7",
+      "expectedSha256": "61abee93821489b4fc72b93cc080e3463477f09961aee874c9a521a25812fbb7",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 14,
+      "retainedGroupCount": 12,
+      "sourceExplicitNumericLeafCount": 73
+    },
+    {
+      "id": "dualies",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "sha256": "55e37c4d8db92b63d48f281015a30a9aaccd1ff838edf88ae4103124c365eb07",
+      "expectedSha256": "55e37c4d8db92b63d48f281015a30a9aaccd1ff838edf88ae4103124c365eb07",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 14,
+      "retainedGroupCount": 12,
+      "sourceExplicitNumericLeafCount": 65
+    },
+    {
+      "id": "s3-maneuver-gallon",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverGallon.game__GameParameterTable.json",
+      "sha256": "a65b5fc265a615263ed826bce09213fa90697bb2cfe44af588625c1887a16c89",
+      "expectedSha256": "a65b5fc265a615263ed826bce09213fa90697bb2cfe44af588625c1887a16c89",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 16,
+      "retainedGroupCount": 14,
+      "sourceExplicitNumericLeafCount": 73
+    },
+    {
+      "id": "s3-maneuver-dual",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+      "sha256": "c2eb9cd1a15a556f533725fca989412d73f5942ffd31fe8448ca87c2d7693ae6",
+      "expectedSha256": "c2eb9cd1a15a556f533725fca989412d73f5942ffd31fe8448ca87c2d7693ae6",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 14,
+      "retainedGroupCount": 12,
+      "sourceExplicitNumericLeafCount": 66
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverStepper.game__GameParameterTable.json",
+      "sha256": "c2a33ed35e87ac3efdd88a3e19d53015f57425e536c01405706d5a030a18d536",
+      "expectedSha256": "c2a33ed35e87ac3efdd88a3e19d53015f57425e536c01405706d5a030a18d536",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 14,
+      "retainedGroupCount": 12,
+      "sourceExplicitNumericLeafCount": 70
+    },
+    {
+      "id": "s3-maneuver-long",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverLong.game__GameParameterTable.json",
+      "sha256": "ca42a0ee6fcb761865496615fc487e17d8529a33369200972ccbc9f8b7855b5f",
+      "expectedSha256": "ca42a0ee6fcb761865496615fc487e17d8529a33369200972ccbc9f8b7855b5f",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 16,
+      "retainedGroupCount": 14,
+      "sourceExplicitNumericLeafCount": 80
+    },
+    {
+      "id": "s3-shelter-normal",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterNormal.game__GameParameterTable.json",
+      "sha256": "a5cfa45bd450b773fd39eccf51ac39cde2cd45367fa6b46eccc8d8c2a2b9b268",
+      "expectedSha256": "a5cfa45bd450b773fd39eccf51ac39cde2cd45367fa6b46eccc8d8c2a2b9b268",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 7,
+      "retainedGroupCount": 7,
+      "sourceExplicitNumericLeafCount": 74
+    },
+    {
+      "id": "s3-shelter-wide",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterWide.game__GameParameterTable.json",
+      "sha256": "ec1fa93b80e3736de425d2d8eeaa74991c8d6020a3da3eabf79ba3a1c3c5fc5d",
+      "expectedSha256": "ec1fa93b80e3736de425d2d8eeaa74991c8d6020a3da3eabf79ba3a1c3c5fc5d",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 7,
+      "retainedGroupCount": 7,
+      "sourceExplicitNumericLeafCount": 111
+    },
+    {
+      "id": "s3-shelter-compact",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterCompact.game__GameParameterTable.json",
+      "sha256": "e53c9b297839e131150d6436bc2844e055728fa1735bf4f15688487d39c713a2",
+      "expectedSha256": "e53c9b297839e131150d6436bc2844e055728fa1735bf4f15688487d39c713a2",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 7,
+      "retainedGroupCount": 7,
+      "sourceExplicitNumericLeafCount": 105
+    },
+    {
+      "id": "s3-shelter-focus",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterFocus.game__GameParameterTable.json",
+      "sha256": "dec8f891b8fae33a9d10837ef592c616471a5de88d2e17cb87c8c4b1a70d5f78",
+      "expectedSha256": "dec8f891b8fae33a9d10837ef592c616471a5de88d2e17cb87c8c4b1a70d5f78",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 7,
+      "retainedGroupCount": 7,
+      "sourceExplicitNumericLeafCount": 115
+    },
+    {
+      "id": "s3-stringer-normal",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponStringerNormal.game__GameParameterTable.json",
+      "sha256": "cb61af8d568193c5c3af677ca8a324aae2afe92a9a681c0483a15f6266e5317f",
+      "expectedSha256": "cb61af8d568193c5c3af677ca8a324aae2afe92a9a681c0483a15f6266e5317f",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 4,
+      "retainedGroupCount": 4,
+      "sourceExplicitNumericLeafCount": 60
+    },
+    {
+      "id": "s3-stringer-short",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponStringerShort.game__GameParameterTable.json",
+      "sha256": "43be11b5a207160d2c06571bfea70041f1bcc8cc95abe028cae6b8134cf1c5d9",
+      "expectedSha256": "43be11b5a207160d2c06571bfea70041f1bcc8cc95abe028cae6b8134cf1c5d9",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 4,
+      "retainedGroupCount": 4,
+      "sourceExplicitNumericLeafCount": 59
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponStringerExplosion.game__GameParameterTable.json",
+      "sha256": "e24399f434d1124229a796e80e57ff5adde94b473d0df40139193237adfdbe89",
+      "expectedSha256": "e24399f434d1124229a796e80e57ff5adde94b473d0df40139193237adfdbe89",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 4,
+      "retainedGroupCount": 4,
+      "sourceExplicitNumericLeafCount": 63
+    },
+    {
+      "id": "s3-saber-normal",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSaberNormal.game__GameParameterTable.json",
+      "sha256": "11d42c2c7616fc2d4318a42d4bcf9ea651fdddc93cb5f9ac75112ea99295c100",
+      "expectedSha256": "11d42c2c7616fc2d4318a42d4bcf9ea651fdddc93cb5f9ac75112ea99295c100",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 7,
+      "retainedGroupCount": 7,
+      "sourceExplicitNumericLeafCount": 242
+    },
+    {
+      "id": "s3-saber-lite",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSaberLite.game__GameParameterTable.json",
+      "sha256": "f6f8238ce0175f50e20bfa8ef70e669179f9da8bda301ecec35f786e0b59d35c",
+      "expectedSha256": "f6f8238ce0175f50e20bfa8ef70e669179f9da8bda301ecec35f786e0b59d35c",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 7,
+      "retainedGroupCount": 7,
+      "sourceExplicitNumericLeafCount": 220
+    },
+    {
+      "id": "s3-saber-heavy",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSaberHeavy.game__GameParameterTable.json",
+      "sha256": "e16c518cdf5fa3180b8b959aa24a80728229de0241f836be854e5cef9431cf6e",
+      "expectedSha256": "e16c518cdf5fa3180b8b959aa24a80728229de0241f836be854e5cef9431cf6e",
+      "sha256Match": true,
+      "curatedParametersMatch": true,
+      "sourceGroupCount": 7,
+      "retainedGroupCount": 7,
+      "sourceExplicitNumericLeafCount": 274
+    }
+  ],
+  "weaponInfoMainSha256": "53641c4b4c96d56d3ed4ca8d4c7426d83a0bf28af6f85e9eafc391b2ae9f663e",
+  "playableKitCount": 41,
+  "playableKits": [
+    {
+      "id": "s3-maneuver-short",
+      "baseId": "s3-maneuver-short",
+      "main": "Maneuver_Short_00",
+      "names": {
+        "en": "Dapple Dualies",
+        "ja": "スパッタリー"
+      },
+      "sub": "beakon",
+      "special": "tacticooler",
+      "specialCost": 180,
+      "sourceWeaponId": 5000,
+      "sourceActorPath": "Work/Actor/WeaponManeuverShort.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-short-01",
+      "baseId": "s3-maneuver-short",
+      "main": "Maneuver_Short_01",
+      "names": {
+        "ja": "スパッタリー・ヒュー",
+        "en": "Dapple Dualies Nouveau"
+      },
+      "sub": "torpedo",
+      "special": "reefslider",
+      "specialCost": 190,
+      "sourceWeaponId": 5001,
+      "sourceActorPath": "Work/Actor/WeaponManeuverShort.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-short-02",
+      "baseId": "s3-maneuver-short",
+      "main": "Maneuver_Short_02",
+      "names": {
+        "ja": "スパッタリーOWL",
+        "en": "Dapple Dualies NOC-T"
+      },
+      "sub": "bomb",
+      "special": "killerWail",
+      "specialCost": 190,
+      "sourceWeaponId": 5002,
+      "sourceActorPath": "Work/Actor/WeaponManeuverShort.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "dualies",
+      "baseId": "dualies",
+      "main": "Maneuver_Normal_00",
+      "names": {
+        "en": "Splat Dualies",
+        "ja": "スプラマニューバー"
+      },
+      "sub": "suction",
+      "special": "crabTank",
+      "specialCost": 200,
+      "sourceWeaponId": 5010,
+      "sourceActorPath": "Work/Actor/WeaponManeuverNormal.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "dualies-01",
+      "baseId": "dualies",
+      "main": "Maneuver_Normal_01",
+      "names": {
+        "ja": "スプラマニューバーコラボ",
+        "en": "Enperry Splat Dualies"
+      },
+      "sub": "curling",
+      "special": "tripleSplashdown",
+      "specialCost": 190,
+      "sourceWeaponId": 5011,
+      "sourceActorPath": "Work/Actor/WeaponManeuverNormal.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "dualies-02",
+      "baseId": "dualies",
+      "main": "Maneuver_Normal_02",
+      "names": {
+        "ja": "スプラマニューバー耀",
+        "en": "Twinklez Splat Dualies"
+      },
+      "sub": "fizzy",
+      "special": "bubbler",
+      "specialCost": 190,
+      "sourceWeaponId": 5012,
+      "sourceActorPath": "Work/Actor/WeaponManeuverNormal.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-gallon",
+      "baseId": "s3-maneuver-gallon",
+      "main": "Maneuver_Gallon_00",
+      "names": {
+        "en": "Glooga Dualies",
+        "ja": "ケルビン525"
+      },
+      "sub": "splashWall",
+      "special": "booyahBomb",
+      "specialCost": 180,
+      "sourceWeaponId": 5020,
+      "sourceActorPath": "Work/Actor/WeaponManeuverGallon.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-gallon-01",
+      "baseId": "s3-maneuver-gallon",
+      "main": "Maneuver_Gallon_01",
+      "names": {
+        "ja": "ケルビン525デコ",
+        "en": "Glooga Dualies Deco"
+      },
+      "sub": "pointSensor",
+      "special": "trizooka",
+      "specialCost": 190,
+      "sourceWeaponId": 5021,
+      "sourceActorPath": "Work/Actor/WeaponManeuverGallon.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-dual",
+      "baseId": "s3-maneuver-dual",
+      "main": "Maneuver_Dual_00",
+      "names": {
+        "en": "Dualie Squelchers",
+        "ja": "デュアルスイーパー"
+      },
+      "sub": "bomb",
+      "special": "waveBreaker",
+      "specialCost": 200,
+      "sourceWeaponId": 5030,
+      "sourceActorPath": "Work/Actor/WeaponManeuverDual.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-dual-01",
+      "baseId": "s3-maneuver-dual",
+      "main": "Maneuver_Dual_01",
+      "names": {
+        "ja": "デュアルスイーパーカスタム",
+        "en": "Custom Dualie Squelchers"
+      },
+      "sub": "beakon",
+      "special": "superChump",
+      "specialCost": 200,
+      "sourceWeaponId": 5031,
+      "sourceActorPath": "Work/Actor/WeaponManeuverDual.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-dual-02",
+      "baseId": "s3-maneuver-dual",
+      "main": "Maneuver_Dual_02",
+      "names": {
+        "ja": "デュアルスイーパー蹄",
+        "en": "Hoofz Dualie Squelchers"
+      },
+      "sub": "pointSensor",
+      "special": "splattercolorScreen",
+      "specialCost": 190,
+      "sourceWeaponId": 5032,
+      "sourceActorPath": "Work/Actor/WeaponManeuverDual.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "baseId": "s3-maneuver-stepper",
+      "main": "Maneuver_Stepper_00",
+      "names": {
+        "en": "Dark Tetra Dualies",
+        "ja": "クアッドホッパーブラック"
+      },
+      "sub": "autobomb",
+      "special": "reefslider",
+      "specialCost": 200,
+      "sourceWeaponId": 5040,
+      "sourceActorPath": "Work/Actor/WeaponManeuverStepper.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-stepper-01",
+      "baseId": "s3-maneuver-stepper",
+      "main": "Maneuver_Stepper_01",
+      "names": {
+        "ja": "クアッドホッパーホワイト",
+        "en": "Light Tetra Dualies"
+      },
+      "sub": "sprinkler",
+      "special": "zipcaster",
+      "specialCost": 190,
+      "sourceWeaponId": 5041,
+      "sourceActorPath": "Work/Actor/WeaponManeuverStepper.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-long",
+      "baseId": "s3-maneuver-long",
+      "main": "Maneuver_Long_00",
+      "names": {
+        "en": "Douser Dualies FF",
+        "ja": "ガエンFF"
+      },
+      "sub": "inkMine",
+      "special": "killerWail",
+      "specialCost": 190,
+      "sourceWeaponId": 5050,
+      "sourceActorPath": "Work/Actor/WeaponManeuverLong.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-maneuver-long-01",
+      "baseId": "s3-maneuver-long",
+      "main": "Maneuver_Long_01",
+      "names": {
+        "ja": "ガエンFFカスタム",
+        "en": "Custom Douser Dualies FF"
+      },
+      "sub": "burst",
+      "special": "tripleInkstrike",
+      "specialCost": 200,
+      "sourceWeaponId": 5051,
+      "sourceActorPath": "Work/Actor/WeaponManeuverLong.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-shelter-normal",
+      "baseId": "s3-shelter-normal",
+      "main": "Shelter_Normal_00",
+      "names": {
+        "en": "Splat Brella",
+        "ja": "パラシェルター"
+      },
+      "sub": "sprinkler",
+      "special": "tripleInkstrike",
+      "specialCost": 210,
+      "sourceWeaponId": 6000,
+      "sourceActorPath": "Work/Actor/WeaponShelterNormal.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-shelter-normal-01",
+      "baseId": "s3-shelter-normal",
+      "main": "Shelter_Normal_01",
+      "names": {
+        "ja": "パラシェルターソレーラ",
+        "en": "Sorella Brella"
+      },
+      "sub": "autobomb",
+      "special": "inkjet",
+      "specialCost": 210,
+      "sourceWeaponId": 6001,
+      "sourceActorPath": "Work/Actor/WeaponShelterNormal_Cstm.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-shelter-wide",
+      "baseId": "s3-shelter-wide",
+      "main": "Shelter_Wide_00",
+      "names": {
+        "en": "Tenta Brella",
+        "ja": "キャンピングシェルター"
+      },
+      "sub": "beakon",
+      "special": "inkVac",
+      "specialCost": 190,
+      "sourceWeaponId": 6010,
+      "sourceActorPath": "Work/Actor/WeaponShelterWide.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-shelter-wide-01",
+      "baseId": "s3-shelter-wide",
+      "main": "Shelter_Wide_01",
+      "names": {
+        "ja": "キャンピングシェルターソレーラ",
+        "en": "Tenta Sorella Brella"
+      },
+      "sub": "inkMine",
+      "special": "trizooka",
+      "specialCost": 200,
+      "sourceWeaponId": 6011,
+      "sourceActorPath": "Work/Actor/WeaponShelterWide_Cstm.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-shelter-wide-02",
+      "baseId": "s3-shelter-wide",
+      "main": "Shelter_Wide_02",
+      "names": {
+        "ja": "キャンピングシェルターCREM",
+        "en": "Tenta Brella CRE-M"
+      },
+      "sub": "toxicMist",
+      "special": "superChump",
+      "specialCost": 180,
+      "sourceWeaponId": 6012,
+      "sourceActorPath": "Work/Actor/WeaponShelterWide_Cstm2.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-shelter-compact",
+      "baseId": "s3-shelter-compact",
+      "main": "Shelter_Compact_00",
+      "names": {
+        "en": "Undercover Brella",
+        "ja": "スパイガジェット"
+      },
+      "sub": "inkMine",
+      "special": "reefslider",
+      "specialCost": 180,
+      "sourceWeaponId": 6020,
+      "sourceActorPath": "Work/Actor/WeaponShelterCompact.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-shelter-compact-01",
+      "baseId": "s3-shelter-compact",
+      "main": "Shelter_Compact_01",
+      "names": {
+        "ja": "スパイガジェットソレーラ",
+        "en": "Undercover Sorella Brella"
+      },
+      "sub": "torpedo",
+      "special": "splattercolorScreen",
+      "specialCost": 180,
+      "sourceWeaponId": 6021,
+      "sourceActorPath": "Work/Actor/WeaponShelterCompact_Cstm.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-shelter-compact-02",
+      "baseId": "s3-shelter-compact",
+      "main": "Shelter_Compact_02",
+      "names": {
+        "ja": "スパイガジェット繚",
+        "en": "Patternz Undercover Brella"
+      },
+      "sub": "curling",
+      "special": "killerWail",
+      "specialCost": 180,
+      "sourceWeaponId": 6022,
+      "sourceActorPath": "Work/Actor/WeaponShelterCompact_Cstm2.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-shelter-focus",
+      "baseId": "s3-shelter-focus",
+      "main": "Shelter_Focus_00",
+      "names": {
+        "en": "Recycled Brella 24 Mk I",
+        "ja": "24式張替傘・甲"
+      },
+      "sub": "angleShooter",
+      "special": "bubbler",
+      "specialCost": 190,
+      "sourceWeaponId": 6030,
+      "sourceActorPath": "Work/Actor/WeaponShelterFocus.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-shelter-focus-01",
+      "baseId": "s3-shelter-focus",
+      "main": "Shelter_Focus_01",
+      "names": {
+        "ja": "24式張替傘・乙",
+        "en": "Recycled Brella 24 Mk II"
+      },
+      "sub": "toxicMist",
+      "special": "tripleSplashdown",
+      "specialCost": 190,
+      "sourceWeaponId": 6031,
+      "sourceActorPath": "Work/Actor/WeaponShelterFocus_Cstm.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-stringer-normal",
+      "baseId": "s3-stringer-normal",
+      "main": "Stringer_Normal_00",
+      "names": {
+        "en": "Tri-Stringer",
+        "ja": "トライストリンガー"
+      },
+      "sub": "toxicMist",
+      "special": "killerWail",
+      "specialCost": 190,
+      "sourceWeaponId": 7010,
+      "sourceActorPath": "Work/Actor/WeaponStringerNormal.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-stringer-normal-01",
+      "baseId": "s3-stringer-normal",
+      "main": "Stringer_Normal_01",
+      "names": {
+        "ja": "トライストリンガーコラボ",
+        "en": "Inkline Tri-Stringer"
+      },
+      "sub": "sprinkler",
+      "special": "superChump",
+      "specialCost": 200,
+      "sourceWeaponId": 7011,
+      "sourceActorPath": "Work/Actor/WeaponStringerNormal.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-stringer-normal-02",
+      "baseId": "s3-stringer-normal",
+      "main": "Stringer_Normal_02",
+      "names": {
+        "ja": "トライストリンガー燈",
+        "en": "Bulbz Tri-Stringer"
+      },
+      "sub": "angleShooter",
+      "special": "inkjet",
+      "specialCost": 200,
+      "sourceWeaponId": 7012,
+      "sourceActorPath": "Work/Actor/WeaponStringerNormal.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-stringer-short",
+      "baseId": "s3-stringer-short",
+      "main": "Stringer_Short_00",
+      "names": {
+        "en": "REEF-LUX 450",
+        "ja": "LACT-450"
+      },
+      "sub": "curling",
+      "special": "tentaMissiles",
+      "specialCost": 210,
+      "sourceWeaponId": 7020,
+      "sourceActorPath": "Work/Actor/WeaponStringerShort.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-stringer-short-01",
+      "baseId": "s3-stringer-short",
+      "main": "Stringer_Short_01",
+      "names": {
+        "ja": "LACT-450デコ",
+        "en": "REEF-LUX 450 Deco"
+      },
+      "sub": "splashWall",
+      "special": "reefslider",
+      "specialCost": 200,
+      "sourceWeaponId": 7021,
+      "sourceActorPath": "Work/Actor/WeaponStringerShort.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-stringer-short-02",
+      "baseId": "s3-stringer-short",
+      "main": "Stringer_Short_02",
+      "names": {
+        "ja": "LACT-450MILK",
+        "en": "REEF-LUX 450 MIL-K"
+      },
+      "sub": "torpedo",
+      "special": "booyahBomb",
+      "specialCost": 210,
+      "sourceWeaponId": 7022,
+      "sourceActorPath": "Work/Actor/WeaponStringerShort.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "baseId": "s3-stringer-explosion",
+      "main": "Stringer_Explosion_00",
+      "names": {
+        "en": "Wellstring V",
+        "ja": "フルイドV"
+      },
+      "sub": "autobomb",
+      "special": "ultraStamp",
+      "specialCost": 200,
+      "sourceWeaponId": 7030,
+      "sourceActorPath": "Work/Actor/WeaponStringerExplosion.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-stringer-explosion-01",
+      "baseId": "s3-stringer-explosion",
+      "main": "Stringer_Explosion_01",
+      "names": {
+        "ja": "フルイドVカスタム",
+        "en": "Custom Wellstring V"
+      },
+      "sub": "pointSensor",
+      "special": "waveBreaker",
+      "specialCost": 190,
+      "sourceWeaponId": 7031,
+      "sourceActorPath": "Work/Actor/WeaponStringerExplosion.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-saber-normal",
+      "baseId": "s3-saber-normal",
+      "main": "Saber_Normal_00",
+      "names": {
+        "en": "Splatana Stamper",
+        "ja": "ジムワイパー"
+      },
+      "sub": "burst",
+      "special": "zipcaster",
+      "specialCost": 210,
+      "sourceWeaponId": 8000,
+      "sourceActorPath": "Work/Actor/WeaponSaberNormal.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-saber-normal-01",
+      "baseId": "s3-saber-normal",
+      "main": "Saber_Normal_01",
+      "names": {
+        "ja": "ジムワイパー・ヒュー",
+        "en": "Splatana Stamper Nouveau"
+      },
+      "sub": "toxicMist",
+      "special": "crabTank",
+      "specialCost": 210,
+      "sourceWeaponId": 8001,
+      "sourceActorPath": "Work/Actor/WeaponSaberNormal.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-saber-normal-02",
+      "baseId": "s3-saber-normal",
+      "main": "Saber_Normal_02",
+      "names": {
+        "ja": "ジムワイパー封",
+        "en": "Stickerz Splatana Stamper"
+      },
+      "sub": "autobomb",
+      "special": "booyahBomb",
+      "specialCost": 190,
+      "sourceWeaponId": 8002,
+      "sourceActorPath": "Work/Actor/WeaponSaberNormal.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-saber-lite",
+      "baseId": "s3-saber-lite",
+      "main": "Saber_Lite_00",
+      "names": {
+        "en": "Splatana Wiper",
+        "ja": "ドライブワイパー"
+      },
+      "sub": "torpedo",
+      "special": "ultraStamp",
+      "specialCost": 190,
+      "sourceWeaponId": 8010,
+      "sourceActorPath": "Work/Actor/WeaponSaberLite.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-saber-lite-01",
+      "baseId": "s3-saber-lite",
+      "main": "Saber_Lite_01",
+      "names": {
+        "ja": "ドライブワイパーデコ",
+        "en": "Splatana Wiper Deco"
+      },
+      "sub": "beakon",
+      "special": "tentaMissiles",
+      "specialCost": 190,
+      "sourceWeaponId": 8011,
+      "sourceActorPath": "Work/Actor/WeaponSaberLite.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-saber-lite-02",
+      "baseId": "s3-saber-lite",
+      "main": "Saber_Lite_02",
+      "names": {
+        "ja": "ドライブワイパーRUST",
+        "en": "Splatana Wiper RUS-T"
+      },
+      "sub": "curling",
+      "special": "trizooka",
+      "specialCost": 190,
+      "sourceWeaponId": 8012,
+      "sourceActorPath": "Work/Actor/WeaponSaberLite.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-saber-heavy",
+      "baseId": "s3-saber-heavy",
+      "main": "Saber_Heavy_00",
+      "names": {
+        "en": "Mint Decavitator",
+        "ja": "デンタルワイパーミント"
+      },
+      "sub": "suction",
+      "special": "bubbler",
+      "specialCost": 210,
+      "sourceWeaponId": 8020,
+      "sourceActorPath": "Work/Actor/WeaponSaberHeavy.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    },
+    {
+      "id": "s3-saber-heavy-01",
+      "baseId": "s3-saber-heavy",
+      "main": "Saber_Heavy_01",
+      "names": {
+        "ja": "デンタルワイパースミ",
+        "en": "Charcoal Decavitator"
+      },
+      "sub": "splashWall",
+      "special": "inkjet",
+      "specialCost": 200,
+      "sourceWeaponId": 8021,
+      "sourceActorPath": "Work/Actor/WeaponSaberHeavy.engine__actor__ActorParam.gyml",
+      "sourceKitMatch": true
+    }
+  ],
+  "unregisteredOrderReplicas": [
+    {
+      "sourceRow": "Maneuver_Normal_O",
+      "sourceWeaponId": 5015,
+      "sourceActorPath": "Work/Actor/WeaponManeuverNormal.engine__actor__ActorParam.gyml",
+      "playableInINKWAVE": false
+    },
+    {
+      "sourceRow": "Saber_Normal_O",
+      "sourceWeaponId": 8005,
+      "sourceActorPath": "Work/Actor/WeaponSaberNormal.engine__actor__ActorParam.gyml",
+      "playableInINKWAVE": false
+    },
+    {
+      "sourceRow": "Shelter_Normal_O",
+      "sourceWeaponId": 6005,
+      "sourceActorPath": "Work/Actor/WeaponShelterNormal_O.engine__actor__ActorParam.gyml",
+      "playableInINKWAVE": false
+    },
+    {
+      "sourceRow": "Stringer_Normal_O",
+      "sourceWeaponId": 7015,
+      "sourceActorPath": "Work/Actor/WeaponStringerNormal.engine__actor__ActorParam.gyml",
+      "playableInINKWAVE": false
+    }
+  ],
+  "sourceMeaningLimit": "Hashes and curated equality validate provenance and retention, not interpretation, retail behavior or full parameter coverage."
+}

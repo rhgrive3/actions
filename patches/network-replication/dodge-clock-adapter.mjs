@@ -8,7 +8,8 @@ function replaceOnce(code, before, after, label) {
 }
 
 export function adaptIssue1163RemoteDodgeClock(code) {
-  code = "import { acceptRemoteDodgeClock, interruptRemoteDodgeClock, clearRemoteDodgeClock, syncRemoteDodgeClock } from '../../patches/splatoon3/runtime/remote-dodge-clock.mjs';\n" + code;
+  code = "import { acceptRemoteDodgeClock, interruptRemoteDodgeClock, clearRemoteDodgeClock, syncRemoteDodgeClock } from '../../patches/splatoon3/runtime/remote-dodge-clock.mjs';\n" +
+    "import { dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLockDuration, dualiesNetworkLock } from '../../patches/splatoon3/runtime/catalog-dualies-motion.mjs';\n" + code;
 
   code = replaceOnce(code,
     '  _rec(e) {',
@@ -16,9 +17,9 @@ export function adaptIssue1163RemoteDodgeClock(code) {
     const at = r3(now());
     let payload = e;
     if (e[0] === 'tr' && e[2] === 'dodge') {
-      const actor = this.byNid.get(e[1]), action = actor?.weaponRunner?.dodge;
+      const actor = this.byNid.get(e[1]), action = dualiesNetworkAction(actor);
       const life = actor?.netLife, tp = actor?.netTp ?? 0;
-      const startupDur = action?.startupDur, duration = action?.dur, lockDur = actor?.weapon?.lockTime;
+      const startupDur = action?.startupDur, duration = action?.dur, lockDur = dualiesNetworkLockDuration(actor,action);
       if (actor && !actor.remote && actor.owner === this.myId
         && Number.isSafeInteger(action?.token) && action.token > 0
         && Number.isSafeInteger(life) && life >= 0 && Number.isSafeInteger(tp) && tp >= 0
@@ -69,6 +70,7 @@ export function adaptIssue1163RemoteDodgeClock(code) {
         Number.isSafeInteger(rl.tp) && rl.tp === S.tp && Number.isFinite(rl.startupDur) && rl.startupDur >= 0 &&
         Number.isFinite(rl.lockDur) && rl.lockDur >= 0 &&
         (rl.phase === 'startup' || rl.phase === 'roll');`, 'sidecar requires accepted epoch and lifecycle');
+  code=replaceOnce(code,'const startupDur = 4 / 60;','const startupDur = rl.startupDur;','validated per-action startup duration');
 
   code = replaceOnce(code,
     `      } else {
@@ -137,5 +139,12 @@ export function adaptIssue1163RemoteDodgeClock(code) {
     '    a.remote = false;',
     '    a.remote = false;\n    clearRemoteDodgeClock(a, true);', 'adoption clears remote action epoch');
 
+  // The existing optional sidecar and flag layout also represents catalogue
+  // Dualies. These are read-only views; native Runner.dodge is never forged.
+  code=code.replaceAll('x.weaponRunner?.dodge','dualiesNetworkAction(x)')
+    .replaceAll('x.weaponRunner.dodge','dualiesNetworkAction(x)')
+    .replaceAll('x.weaponRunner._dodgeDir','dualiesNetworkDirection(x)');
+  code=replaceOnce(code,'if (wr.dodge) f |= F.dodge;','if (dualiesNetworkAction(a)) f |= F.dodge;','catalogue moving flag');
+  code=replaceOnce(code,'r2(wr.lockT || 0),','r2(dualiesNetworkLock(a)),','catalogue recovery clock');
   return code;
 }

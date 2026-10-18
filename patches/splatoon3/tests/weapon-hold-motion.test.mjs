@@ -258,3 +258,92 @@ test('the torso is shorter: the shoulders and everything above drop, the crotch 
     assert.ok(Math.abs(ch.bones[n].position.y - (rest[n].y - rest.chest.y - s)) < 1e-9, n + ' lowered on the chest after the update');
   ch.dispose();
 });
+
+test('rollers stand on the brush legs; sloshers share its source body with the right foot back', async () => {
+  const api = await production(), { registry } = api;
+  for (const id of ['roller', 's3-roller-heavy'])
+    assert.equal(registry.weaponIdleStanceFamily(id), registry.weaponIdleStanceFamily('s3-brush-normal'), `${id}: brush stance`);
+  // The official bucket movie stands the right foot behind the pail, not out to the side.
+  assert.equal(registry.weaponIdleStanceFamily('slosher'), null, 'slosher: ready stance, right foot back');
+  const feet = {};
+  for (const weapon of ['s3-brush-normal', 'roller', 'slosher']) {
+    const ch = await rig(api, weapon), st = state();
+    for (let f = 0; f < 60; f++) ch.update(1 / 60, st);
+    ch.root.updateMatrixWorld(true);
+    assert.ok(ch.sourceMotion.active && !ch.sourceMotion.sourceUpper, `${weapon}: source legs, native weapon arms`);
+    assert.equal(ch.sourceMotion.debug.clips.map(c => c.name).join(), 'WaitHold_Nrml', `${weapon}: ready-stance rest clip`);
+    feet[weapon] = ['footL', 'footR'].map(b => kidPoint(api, ch, ch.bones[b]).toArray());
+    ch.dispose();
+  }
+  feet.roller.flat().forEach((v, i) => assert.ok(Math.abs(v - feet['s3-brush-normal'].flat()[i]) < 1e-6, 'roller: brush feet'));
+  assert.ok(feet.slosher[1][2] < feet.slosher[0][2] - 0.2, 'slosher: right foot behind the left');
+});
+
+test('the bucket rests at the right side, right fist on its rear grip, left hand across on the top handle', async () => {
+  const api = await production(), C = api.CHARACTER_CHANNELS;
+  const ch = await rig(api, 'slosher'), st = state();
+  for (let f = 0; f < 60; f++) ch.update(1 / 60, st);
+  ch.root.updateMatrixWorld(true);
+  const w = ch.weapon, base = w.s3BaseDef, handle = base.s3CarryGrip.L.pos;
+  assert.ok(base && w.def !== base, 'per-instance carry grips');
+  const origin = kidPoint(api, ch, w.off), head = kidPoint(api, ch, ch.bones.head);
+  const top = handle.clone().applyMatrix4(w.off.matrixWorld); ch.kid.worldToLocal(top);
+  const left = kidPoint(api, ch, ch.bones.handL), right = kidPoint(api, ch, ch.bones.handR);
+  assert.ok(ch.P[C.IKL] > 0.99, 'two-handed rest');
+  assert.ok(origin.x < head.x - 0.1, `pail out at the right side (x ${origin.x.toFixed(3)}), not between the legs`);
+  assert.ok(left.distanceTo(top) < 0.09, `left hand on the top handle (${left.distanceTo(top).toFixed(3)} m)`);
+  assert.ok(right.x < head.x - 0.12 && right.distanceTo(origin) < 0.09, 'right fist on the rear grip at the right hip');
+  // A slosh hands the left arm back to the native heave grips inside the 12F windup.
+  ch.trigger('slosh');
+  for (let f = 0; f < 6; f++) ch.update(1 / 60, st);
+  assert.equal(w.s3Grip.k, 0, 'native heave grips before the wave leaves');
+  for (let i = 0; i < 3; i++) assert.ok(Math.abs(w.def.handL.pos.getComponent(i) - base.handL.pos.getComponent(i)) < 1e-12);
+  for (let f = 0; f < 90; f++) ch.update(1 / 60, st);
+  assert.ok(w.s3Grip.k > 0.99, 'back on the top handle after the recovery');
+  ch.dispose();
+});
+
+const SLOSHERS = ['slosher', 's3-slosher-diffusion', 's3-slosher-launcher', 's3-slosher-bathtub', 's3-slosher-washtub', 's3-slosher-double'];
+test('every slosher rests two-handed at the right side: right fist on the rear grip, left hand on the top handle', async () => {
+  const api = await production(), C = api.CHARACTER_CHANNELS;
+  for (const weapon of SLOSHERS) for (const speed of [0, 1.5, 3, 5.76]) {
+    const ch = await rig(api, weapon), st = state();
+    for (let f = 0; f < 90; f++) { ch.root.position.z += speed / 60; st.speed = speed; st.localMove.z = speed ? 1 : 0; ch.update(1 / 60, st); }
+    ch.root.updateMatrixWorld(true);
+    const w = ch.weapon, grip = w.s3BaseDef.s3CarryGrip.L.pos.clone().applyMatrix4(w.off.matrixWorld); ch.kid.worldToLocal(grip);
+    const left = kidPoint(api, ch, ch.bones.handL), head = kidPoint(api, ch, ch.bones.head), origin = kidPoint(api, ch, w.off);
+    assert.ok(ch.P[C.IKL] > 0.99, `${weapon} ${speed} m/s: both hands on`);
+    assert.ok(left.distanceTo(grip) < 0.09, `${weapon} ${speed} m/s: left hand on the top handle (${left.distanceTo(grip).toFixed(3)} m)`);
+    assert.ok(origin.x < head.x - 0.12, `${weapon} ${speed} m/s: carried at the right side (x ${origin.x.toFixed(3)})`);
+    ch.dispose();
+  }
+});
+
+test('the carried slosher clears the legs and torso standing, walking and at full tilt (30/60/120 Hz)', async () => {
+  const api = await production(), { THREE } = api, worst = {};
+  const seg = (p, a, b) => { const ab = b.clone().sub(a), t = Math.max(0, Math.min(1, p.clone().sub(a).dot(ab) / ab.lengthSq())); return p.distanceTo(a.addScaledVector(ab, t)); };
+  for (const weapon of SLOSHERS) for (const hz of [30, 60, 120]) for (const speed of [0, 1.5, 3, 5.76]) {
+    const ch = await rig(api, weapon), st = state(), dt = 1 / hz;
+    let deepest = 0;
+    for (let f = 0; f < Math.round(2.5 * hz); f++) {
+      ch.root.position.z += speed * dt; st.speed = speed; st.localMove.z = speed ? 1 : 0; api.G.time += dt;
+      ch.update(dt, st);
+      if (f < hz) continue;
+      ch.root.updateMatrixWorld(true);
+      const caps = [];
+      for (const s of ['L', 'R']) {
+        const leg = ch.limbs['leg' + s], hip = kidPoint(api, ch, leg.up), knee = kidPoint(api, ch, leg.lo), ankle = kidPoint(api, ch, ch.bones['foot' + s]);
+        caps.push([hip, knee, 0.062], [knee, ankle, 0.045]);
+      }
+      caps.push([kidPoint(api, ch, ch.bones.hips), kidPoint(api, ch, ch.bones.chest), 0.1]);
+      const body = ch.weapon.body, pos = body.geometry.attributes.position, v = new THREE.Vector3();
+      for (let i = 0; i < pos.count; i += 2) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(body.matrixWorld); ch.kid.worldToLocal(v);
+        for (const [a, b, r] of caps) deepest = Math.max(deepest, r - seg(v, a.clone(), b));
+      }
+    }
+    worst[`${weapon} ${hz}Hz ${speed}m/s`] = deepest;
+    ch.dispose();
+  }
+  for (const [k, d] of Object.entries(worst)) assert.ok(d < 0.01, `${k}: ${(d * 100).toFixed(1)} cm into the body`);
+});

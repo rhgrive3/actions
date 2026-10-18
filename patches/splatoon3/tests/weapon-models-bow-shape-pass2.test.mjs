@@ -41,20 +41,16 @@ test('REEF rear casting uses the existing nock channel and moves with the unchan
  d.animate(w,{charge:1,sinceRelease:99});assert.ok(Math.abs(p.position.z-pivot.z+.17)<1e-12);assert.equal(p.position.x,pivot.x);assert.equal(p.position.y,pivot.y);
  d.animate(w,{charge:0,sinceRelease:99});assert.ok(p.position.distanceTo(pivot)<1e-12);
 });
-test('Tri and green Wellstring builders and all existing motion remain byte-identical to the reviewed baseline',()=>{
+test('Tri and green Wellstring builders and string draw remain byte-identical to the reviewed baseline',()=>{
  const s=fs.readFileSync(new URL('../runtime/weapon-models/stringers.mjs',import.meta.url),'utf8'),m=s.indexOf('// ------------------------------------------------------------------------------------------ motion'),hash=x=>crypto.createHash('sha256').update(x).digest('hex');
  // 2026-10-17: the support grip moved from each builder's cfg to the shared nock grip in
  // finishBow, and the family pose/hold gained the draw hold (reports/inkwave-weapon-hold-motion-2026-10-17.md).
  assert.equal(hash(s.slice(s.indexOf('function tri(d){'),s.indexOf('function reef(d){'))),'8fb6efbe41ea9993fa9facf9a141bd4ebb8a2286176f115bc63136174fe777e3');
  assert.equal(hash(s.slice(s.indexOf('function wellstring(d){'),m)),'f055ea02367486a56e570df4a0e545b45ecbf3eb5b80fb38fd5a786a2a411273');
- // Variant-owned models dispatch through the canonical modelId while old
- // base Stringer motion remains byte-identical beyond that one selector.
- const altered='if (!MODELS[ch.weapon?.def?.modelId ?? ch.weaponModel]) return;';
- const original='if (!MODELS[ch.weaponModel]) return;';
- const motion=s.slice(m);
- assert.equal(motion.split(altered).length,2,'exactly one adopted variant model selector');
- assert.equal(hash(motion.replace(altered,original)),'f7418bfe56c09a48b0ba7275bc35024ca91dc48a6c642e26d4124eb0ffecaae3',
-   'all other Stringer family pose and weapon animation bytes remain unchanged');
+ // Family hold rotation now reads the gameplay tilt (stringer-tilt-motion
+ // covers that intentional change). Keep the reviewed release/string/hand
+ // animation and authored carry/aim anchors protected independently.
+ assert.equal(hash(s.slice(s.indexOf('const DRAW ='))),'124acdf27ff386a5f56a255f0fa199b43ad7d92db632232537a1683b235f7404');
 });
 
 test('LACT cast arms have outward closed recessed sections, seated forward roots, and a substantial pull shaft',async()=>{

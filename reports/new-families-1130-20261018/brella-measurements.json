@@ -1,0 +1,511 @@
+{
+  "kind": "CPU source-composed logic, not retail/whole-game/GPU measurement",
+  "node": "v24.19.0",
+  "sourceBase": "9ef63350385bffee71b3afa0a09290a92e9c862b",
+  "groups": [
+    {
+      "id": "s3-shelter-normal",
+      "pellets": 11,
+      "damageCap": 81,
+      "groups": [
+        {
+          "pellets": 1,
+          "horizontal": 0,
+          "vertical": 0,
+          "initVelRandomExplicit": 0,
+          "samples": 20000,
+          "sourceSpeed": 2.6,
+          "observedMin": 2.6,
+          "observedMax": 2.6,
+          "observedMean": 2.5999999999990844,
+          "observedVariance": 2.8279600883251987e-12,
+          "reconstructedUniformExpectedVariance": 0
+        },
+        {
+          "pellets": 6,
+          "horizontal": 7.2,
+          "vertical": 4.8,
+          "initVelRandomExplicit": null,
+          "samples": 20000,
+          "sourceSpeed": 2.6,
+          "observedMin": 2.6,
+          "observedMax": 2.6,
+          "observedMean": 2.5999999999990844,
+          "observedVariance": 2.8279600883251987e-12,
+          "reconstructedUniformExpectedVariance": 0
+        },
+        {
+          "pellets": 4,
+          "horizontal": 2.4,
+          "vertical": 3.6,
+          "initVelRandomExplicit": null,
+          "samples": 20000,
+          "sourceSpeed": 2.6,
+          "observedMin": 2.6,
+          "observedMax": 2.6,
+          "observedMean": 2.5999999999990844,
+          "observedVariance": 2.8279600883251987e-12,
+          "reconstructedUniformExpectedVariance": 0
+        }
+      ]
+    },
+    {
+      "id": "s3-shelter-wide",
+      "pellets": 13,
+      "damageCap": 119,
+      "groups": [
+        {
+          "pellets": 1,
+          "horizontal": 0,
+          "vertical": 0,
+          "initVelRandomExplicit": 0,
+          "samples": 20000,
+          "sourceSpeed": 2.4,
+          "observedMin": 2.4,
+          "observedMax": 2.4,
+          "observedMean": 2.4000000000008708,
+          "observedVariance": 0,
+          "reconstructedUniformExpectedVariance": 0
+        },
+        {
+          "pellets": 6,
+          "horizontal": 7,
+          "vertical": 4.5,
+          "initVelRandomExplicit": 0.35,
+          "samples": 20000,
+          "sourceSpeed": 2.4,
+          "observedMin": 2.0500072580529376,
+          "observedMax": 2.749994822242297,
+          "observedMean": 2.397659061650953,
+          "observedVariance": 0.04048709914130111,
+          "reconstructedUniformExpectedVariance": 0.040833333333333326
+        },
+        {
+          "pellets": 6,
+          "horizontal": 2.5,
+          "vertical": 3,
+          "initVelRandomExplicit": 0.35,
+          "samples": 20000,
+          "sourceSpeed": 2.4,
+          "observedMin": 2.0500191423343495,
+          "observedMax": 2.7499611339764667,
+          "observedMean": 2.3990073447379694,
+          "observedVariance": 0.04048949673983415,
+          "reconstructedUniformExpectedVariance": 0.040833333333333326
+        }
+      ]
+    },
+    {
+      "id": "s3-shelter-compact",
+      "pellets": 7,
+      "damageCap": 40,
+      "groups": [
+        {
+          "pellets": 1,
+          "horizontal": 0,
+          "vertical": 0,
+          "initVelRandomExplicit": 0,
+          "samples": 20000,
+          "sourceSpeed": 2,
+          "observedMin": 2,
+          "observedMax": 2,
+          "observedMean": 2,
+          "observedVariance": 0,
+          "reconstructedUniformExpectedVariance": 0
+        },
+        {
+          "pellets": 2,
+          "horizontal": 4,
+          "vertical": 2.7,
+          "initVelRandomExplicit": 0.2,
+          "samples": 20000,
+          "sourceSpeed": 2,
+          "observedMin": 1.8000041474588215,
+          "observedMax": 2.199997041281313,
+          "observedMean": 1.998662320943385,
+          "observedVariance": 0.01322027727066466,
+          "reconstructedUniformExpectedVariance": 0.013333333333333336
+        },
+        {
+          "pellets": 4,
+          "horizontal": 2,
+          "vertical": 2.6,
+          "initVelRandomExplicit": 0.2,
+          "samples": 20000,
+          "sourceSpeed": 2,
+          "observedMin": 1.800010938476771,
+          "observedMax": 2.1999777908436955,
+          "observedMean": 1.999432768421694,
+          "observedVariance": 0.013221060159951392,
+          "reconstructedUniformExpectedVariance": 0.013333333333333336
+        }
+      ]
+    },
+    {
+      "id": "s3-shelter-focus",
+      "pellets": 11,
+      "damageCap": 90,
+      "groups": [
+        {
+          "pellets": 1,
+          "horizontal": 0,
+          "vertical": 0,
+          "initVelRandomExplicit": 0,
+          "samples": 20000,
+          "sourceSpeed": 3,
+          "observedMin": 3,
+          "observedMax": 3,
+          "observedMean": 3,
+          "observedVariance": 0,
+          "reconstructedUniformExpectedVariance": 0
+        },
+        {
+          "pellets": 6,
+          "horizontal": 3,
+          "vertical": 1.5,
+          "initVelRandomExplicit": 0.4,
+          "samples": 20000,
+          "sourceSpeed": 3,
+          "observedMin": 2.600008294917643,
+          "observedMax": 3.3999940825626256,
+          "observedMean": 2.9973246418867934,
+          "observedVariance": 0.0528811090826089,
+          "reconstructedUniformExpectedVariance": 0.053333333333333344
+        },
+        {
+          "pellets": 4,
+          "horizontal": 2,
+          "vertical": 1.5,
+          "initVelRandomExplicit": null,
+          "samples": 20000,
+          "sourceSpeed": 3,
+          "observedMin": 3,
+          "observedMax": 3,
+          "observedMean": 3,
+          "observedVariance": 0,
+          "reconstructedUniformExpectedVariance": 0
+        }
+      ]
+    }
+  ],
+  "live": [
+    {
+      "id": "s3-shelter-normal",
+      "distance": 1,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0.5,
+      "meanDamage": 34.02,
+      "minDamage": 0,
+      "maxDamage": 81,
+      "damageCap": 81,
+      "seed": 1131
+    },
+    {
+      "id": "s3-shelter-normal",
+      "distance": 5,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0.8,
+      "meanDamage": 46.17,
+      "minDamage": 0,
+      "maxDamage": 81,
+      "damageCap": 81,
+      "seed": 1135
+    },
+    {
+      "id": "s3-shelter-normal",
+      "distance": 10,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 1,
+      "meanDamage": 52.64999999999998,
+      "minDamage": 16.2,
+      "maxDamage": 81,
+      "damageCap": 81,
+      "seed": 1140
+    },
+    {
+      "id": "s3-shelter-normal",
+      "distance": 20,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0,
+      "meanDamage": 0,
+      "minDamage": 0,
+      "maxDamage": 0,
+      "damageCap": 81,
+      "seed": 1150
+    },
+    {
+      "id": "s3-shelter-wide",
+      "distance": 1,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0.45,
+      "meanDamage": 45.9,
+      "minDamage": 0,
+      "maxDamage": 119,
+      "damageCap": 119,
+      "seed": 1131
+    },
+    {
+      "id": "s3-shelter-wide",
+      "distance": 5,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0.75,
+      "meanDamage": 59.5,
+      "minDamage": 0,
+      "maxDamage": 119,
+      "damageCap": 119,
+      "seed": 1135
+    },
+    {
+      "id": "s3-shelter-wide",
+      "distance": 10,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 1,
+      "meanDamage": 56.1,
+      "minDamage": 17,
+      "maxDamage": 119,
+      "damageCap": 119,
+      "seed": 1140
+    },
+    {
+      "id": "s3-shelter-wide",
+      "distance": 20,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0,
+      "meanDamage": 0,
+      "minDamage": 0,
+      "maxDamage": 0,
+      "damageCap": 119,
+      "seed": 1150
+    },
+    {
+      "id": "s3-shelter-compact",
+      "distance": 1,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0.5,
+      "meanDamage": 17.8,
+      "minDamage": 0,
+      "maxDamage": 40,
+      "damageCap": 40,
+      "seed": 1131
+    },
+    {
+      "id": "s3-shelter-compact",
+      "distance": 5,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0.7,
+      "meanDamage": 22.2,
+      "minDamage": 0,
+      "maxDamage": 40,
+      "damageCap": 40,
+      "seed": 1135
+    },
+    {
+      "id": "s3-shelter-compact",
+      "distance": 10,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0.9,
+      "meanDamage": 25.8,
+      "minDamage": 0,
+      "maxDamage": 40,
+      "damageCap": 40,
+      "seed": 1140
+    },
+    {
+      "id": "s3-shelter-compact",
+      "distance": 20,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0,
+      "meanDamage": 0,
+      "minDamage": 0,
+      "maxDamage": 0,
+      "damageCap": 40,
+      "seed": 1150
+    },
+    {
+      "id": "s3-shelter-focus",
+      "distance": 1,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0.4,
+      "meanDamage": 35.25,
+      "minDamage": 0,
+      "maxDamage": 90,
+      "damageCap": 90,
+      "seed": 1131
+    },
+    {
+      "id": "s3-shelter-focus",
+      "distance": 5,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0.55,
+      "meanDamage": 39.75,
+      "minDamage": 0,
+      "maxDamage": 90,
+      "damageCap": 90,
+      "seed": 1135
+    },
+    {
+      "id": "s3-shelter-focus",
+      "distance": 10,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0.75,
+      "meanDamage": 48,
+      "minDamage": 0,
+      "maxDamage": 90,
+      "damageCap": 90,
+      "seed": 1140
+    },
+    {
+      "id": "s3-shelter-focus",
+      "distance": 20,
+      "samples": 40,
+      "lateralTargetRange": [
+        -1.5,
+        1.5
+      ],
+      "anyPelletHitRate": 0,
+      "meanDamage": 0,
+      "minDamage": 0,
+      "maxDamage": 0,
+      "damageCap": 90,
+      "seed": 1150
+    }
+  ],
+  "deterministicOutputSha256": "acb88fe1168102e64c6fb587f50812026ce3d9ac8b40aa42c0e519e22ad1d385",
+  "collisionBenchmark": {
+    "scope": "Primitive CPU time; geometry changed, so hit counts differ. No GPU/GC claim.",
+    "baseline": [
+      {
+        "milliseconds": 30.597600999999486,
+        "calls": 100000,
+        "hits": 4728
+      },
+      {
+        "milliseconds": 11.112205999999787,
+        "calls": 100000,
+        "hits": 4728
+      },
+      {
+        "milliseconds": 9.03843500000039,
+        "calls": 100000,
+        "hits": 4728
+      },
+      {
+        "milliseconds": 7.849420000000464,
+        "calls": 100000,
+        "hits": 4728
+      },
+      {
+        "milliseconds": 7.182318999999552,
+        "calls": 100000,
+        "hits": 4728
+      },
+      {
+        "milliseconds": 6.914056999999957,
+        "calls": 100000,
+        "hits": 4728
+      },
+      {
+        "milliseconds": 6.1067370000000665,
+        "calls": 100000,
+        "hits": 4728
+      }
+    ],
+    "candidate": [
+      {
+        "milliseconds": 4.636000000000422,
+        "calls": 100000,
+        "hits": 4692
+      },
+      {
+        "milliseconds": 5.572376000000077,
+        "calls": 100000,
+        "hits": 4692
+      },
+      {
+        "milliseconds": 4.262806999999157,
+        "calls": 100000,
+        "hits": 4692
+      },
+      {
+        "milliseconds": 4.602745000000141,
+        "calls": 100000,
+        "hits": 4692
+      },
+      {
+        "milliseconds": 21.609608000000662,
+        "calls": 100000,
+        "hits": 4692
+      },
+      {
+        "milliseconds": 6.287861000000703,
+        "calls": 100000,
+        "hits": 4692
+      },
+      {
+        "milliseconds": 4.638428999998723,
+        "calls": 100000,
+        "hits": 4692
+      }
+    ]
+  }
+}

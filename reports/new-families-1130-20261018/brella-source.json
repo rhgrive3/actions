@@ -1,0 +1,75 @@
+{
+  "version": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "scope": "Compare retained catalog fields; additional wall-drop groups are stored separately in catalog-wall-drop-data.mjs",
+  "rows": [
+    {
+      "id": "s3-shelter-normal",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterNormal.game__GameParameterTable.json",
+      "sha256": "a5cfa45bd450b773fd39eccf51ac39cde2cd45367fa6b46eccc8d8c2a2b9b268",
+      "parameterGroups": [
+        "spl__BulletShelterCanopyParam",
+        "spl__BulletShelterShotgunParam",
+        "spl__WeaponShelterCanopyParam",
+        "spl__WeaponShelterShotgunParam"
+      ],
+      "catalogSelectedFieldsMatch": true,
+      "additionalShotgunGroups": [
+        "ShotgunWallDropMoveParam",
+        "SplashWallDropCollisionParam",
+        "SplashWallDropMoveParam"
+      ]
+    },
+    {
+      "id": "s3-shelter-wide",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterWide.game__GameParameterTable.json",
+      "sha256": "ec1fa93b80e3736de425d2d8eeaa74991c8d6020a3da3eabf79ba3a1c3c5fc5d",
+      "parameterGroups": [
+        "spl__BulletShelterCanopyParam",
+        "spl__BulletShelterShotgunParam",
+        "spl__WeaponShelterCanopyParam",
+        "spl__WeaponShelterShotgunParam"
+      ],
+      "catalogSelectedFieldsMatch": true,
+      "additionalShotgunGroups": [
+        "ShotgunWallDropMoveParam",
+        "SplashWallDropCollisionParam",
+        "SplashWallDropMoveParam"
+      ]
+    },
+    {
+      "id": "s3-shelter-compact",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterCompact.game__GameParameterTable.json",
+      "sha256": "e53c9b297839e131150d6436bc2844e055728fa1735bf4f15688487d39c713a2",
+      "parameterGroups": [
+        "spl__BulletShelterCanopyParam",
+        "spl__BulletShelterShotgunParam",
+        "spl__WeaponShelterCanopyParam",
+        "spl__WeaponShelterShotgunParam"
+      ],
+      "catalogSelectedFieldsMatch": true,
+      "additionalShotgunGroups": [
+        "ShotgunWallDropMoveParam",
+        "SplashWallDropCollisionParam",
+        "SplashWallDropMoveParam"
+      ]
+    },
+    {
+      "id": "s3-shelter-focus",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShelterFocus.game__GameParameterTable.json",
+      "sha256": "dec8f891b8fae33a9d10837ef592c616471a5de88d2e17cb87c8c4b1a70d5f78",
+      "parameterGroups": [
+        "spl__BulletShelterCanopyParam",
+        "spl__BulletShelterShotgunParam",
+        "spl__WeaponShelterCanopyParam",
+        "spl__WeaponShelterShotgunParam"
+      ],
+      "catalogSelectedFieldsMatch": true,
+      "additionalShotgunGroups": [
+        "ShotgunWallDropMoveParam",
+        "SplashWallDropCollisionParam",
+        "SplashWallDropMoveParam"
+      ]
+    }
+  ]
+}

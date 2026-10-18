@@ -366,7 +366,13 @@ function bucketSlosher(d) {
   ink.add(pailFill(B));
   const zs = B.zb + B.wall + 0.003, ze = lipZ(B, B.fill) - 0.006, w = 2 * Math.sqrt((B.R - B.wall) ** 2 - (B.fill - B.yc) ** 2) - 0.006;
   const surface = part(new Pieces().add(box(w, 0.003, ze - zs, 0, B.fill, (zs + ze) / 2, 0.22, 16, 4), '#ffffff', M.satin), [0, B.fill, (zs + ze) / 2], 'ink');
-  return rebuild(d, { body, ink, parts: { surface } });
+  const out = rebuild(d, { body, ink, parts: { surface } });
+  // Carry grip (FAMILY_POSE): the right fist stays on the rear upright grip and the left hand reaches
+  // across the body onto the top handle, overhand (official movie xnGkyA7kgWr 0.5-1.1 s at rest; owner
+  // review 2026-10-18). The heave keeps the native under-bar support grip, so the attack is unchanged.
+  // handZ: thumb side along the bar (toward the kid's right); handY: from the fist back to the wrist.
+  out.s3CarryGrip = { L: { pos: V(0.085, HY, HZ), handZ: V(-1, 0, 0), handY: V(0.55, 0.35, -0.75) } };
+  return out;
 }
 
 const BUILD3D = { 'slosher': bucketSlosher, 's3-slosher-diffusion': triSlosher, 's3-slosher-launcher': slosherMachine, 's3-slosher-bathtub': bloblobber,
@@ -389,17 +395,141 @@ function model(d, c) {
   });
 }
 
+// Free (left) arm while carrying a slosher at the right hip. The native run
+// pumps the empty fist forward-in to chin height (elbow ~83 deg) on every
+// step; with the bucket hanging one-handed that read as a hand raised to the
+// mouth from every angle (owner review 2026-10-18). Keep a loose run swing:
+// part of the shoulder swing and of the extra run elbow bend. INKWAVE
+// calibration, not an extracted Splatoon 3 joint curve.
+export const SLOSHER_FREE_ARM = Object.freeze({ swingKeep: 0.55, runBendKeep: 0.45 });
+const clamp01 = v => (v < 0 ? 0 : v > 1 ? 1 : v);
+// Hand frame (wrist origin) in weapon space for a grip spec (as character-weapons handInWeapon).
+const _m4 = new THREE.Matrix4(), _x = new THREE.Vector3(), _y = new THREE.Vector3(), _z = new THREE.Vector3();
+function handFrame(grip, hole) {
+  _y.copy(grip.handY).normalize(); _z.copy(grip.handZ).addScaledVector(_y, -grip.handZ.dot(_y)).normalize();
+  _x.crossVectors(_y, _z).normalize();
+  const quat = new THREE.Quaternion().setFromRotationMatrix(_m4.makeBasis(_x, _y, _z));
+  return { pos: grip.pos.clone().sub(hole.clone().applyQuaternion(quat)), quat };
+}
+/** The fist-hole offset of a hand, read back from the native def's own grip and hand frame (no import of
+ *  character-weapons: it loads this registry). */
+function gripHole(d, side) {
+  const hand = d['hand' + side];
+  return d['grip' + side].pos.clone().sub(hand.pos).applyQuaternion(hand.quat.clone().invert());
+}
+// Seconds the hands take to slide from the carry grips to the native heave grips once a slosh starts
+// (well inside the 12F SwingLiftFrame windup, so the released wave leaves from the unchanged pose), and
+// to slide back once the native recovery has settled.
+export const SLOSHER_CARRY_GRIP = Object.freeze({ toAttack: 0.1, settle: 0.75, back: 0.3 });
+/** Per-instance grips blended between the native heave grips (k = 0) and the carry grips (k = 1). */
+function carryGrip(ch, dt, P, C, s) {
+  const w = ch.weapon, base = w?.s3BaseDef || w?.def, cg = base?.s3CarryGrip;
+  if (!cg || !w.off) return;
+  if (!w.s3BaseDef) {
+    w.s3BaseDef = base;
+    w.def = Object.create(base, {
+      handR: { value: { pos: base.handR.pos.clone(), quat: base.handR.quat.clone() }, writable: true },
+      handL: { value: { pos: base.handL.pos.clone(), quat: base.handL.quat.clone() }, writable: true },
+      // The grip spec moves with its hand frame so the def stays self-consistent (grip <-> hand).
+      gripL: { value: { ...base.gripL, pos: base.gripL.pos.clone() }, writable: true },
+      gripR: { value: { ...base.gripR, pos: base.gripR.pos.clone() }, writable: true },
+    });
+    w.s3Grip = { k: 0, attack: -1, R: cg.R ? handFrame(cg.R, gripHole(base, 'R')) : null, L: cg.L ? handFrame(cg.L, gripHole(base, 'L')) : null, off: w.off.position.clone() };
+  }
+  const g = w.s3Grip, T = SLOSHER_CARRY_GRIP, step = Math.min(0.1, Math.max(0, dt || 0));
+  const carrying = ch.kidForm && !ch.dance && !ch.showcase && !(ch.wSub > 0.01) && !ch.bombHeld;
+  // An attack starts at the trigger press: the native runner only reports 'slosh' at the release,
+  // after its windup, so a held trigger or a pending windup also hands the grip back.
+  const r = ch._runner?.(s), winding = !!s?.firing || r?.slosh >= 0 || !!r?.catalogState?.pending;
+  if (winding && !(g.attack >= 0)) g.attack = 0; else if (winding) g.attack += step; else g.attack = -1;
+  const since = Math.min(ch.lastShot ?? 9, g.attack >= 0 ? g.attack : 9);
+  if (!carrying) g.k = 0;
+  else if (since < T.settle) g.k = Math.min(g.k, since >= T.toAttack - 1e-9 ? 0 : 1 - since / T.toAttack);
+  else g.k = Math.min(1, g.k + step / T.back);
+  const k = g.k * g.k * (3 - 2 * g.k), d = w.def;
+  // Between the two handles the hand has let go: it is moving across, not closing on empty air.
+  if (P && C && k > 0 && k < 1) P[C.IKL] *= 1 - 1.2 * k * (1 - k);
+  // Walking, the pail moves further out so the swinging right thigh passes inside it; at a full-tilt
+  // walk the native run hold places it (owner review 2026-10-18: both hands stay on while moving).
+  const gw = clamp01(ch.gaitW || 0), run = clamp01(ch.runW || 0);
+  const H = ch.hold, walk = gw * (1 - run) * k;
+  if (P && C && H?.walk && H.carry && walk > 1e-4) for (let i = 0; i < 3; i++) {
+    P[C.ANC + i] += (H.walk.p[i] - H.carry.p[i]) * walk; P[C.ANCR + i] += (H.walk.r[i] - H.carry.r[i]) * walk;
+  }
+  if (g.L) {
+    d.handL.pos.lerpVectors(base.handL.pos, g.L.pos, k); d.handL.quat.slerpQuaternions(base.handL.quat, g.L.quat, k);
+    d.gripL.pos.lerpVectors(base.gripL.pos, cg.L.pos, k);
+  }
+  if (g.R) {
+    d.handR.pos.lerpVectors(base.handR.pos, g.R.pos, k); d.handR.quat.slerpQuaternions(base.handR.quat, g.R.quat, k);
+    d.gripR.pos.lerpVectors(base.gripR.pos, cg.R.pos, k);
+    // The weapon hangs from the right fist: keep it at the same anchor by re-seating it in the hand.
+    _m4.compose(d.handR.pos, d.handR.quat, _x.set(1, 1, 1)).invert().decompose(_y, w.off.quaternion, _z);
+    w.off.position.copy(g.off).add(_y).sub(base.inHand.pos);
+  }
+}
+/** Read-only view for regressions. */
+export function slosherCarryGripSnapshot(ch) { return ch.weapon?.s3Grip ? { k: ch.weapon.s3Grip.k } : null; }
+export function FAMILY_POSE(ch, dt, s, C) {
+  carryGrip(ch, dt, ch.P, C, s);
+  if (!C || !ch.kidForm || ch.dance || ch.showcase) return;
+  const P = ch.P;
+  // Only the gait swing the native layer added this frame: a support hand,
+  // a thrown sub, the heave and its recovery own the left arm themselves.
+  const free = (1 - clamp01(ch.wTwo || 0)) * (1 - clamp01(Math.max(P[C.IKL], P[C.LTW]))) *
+    clamp01(((ch.lastShot ?? 9) - 0.35) / 0.3);
+  const gw = clamp01(ch.gaitW || 0), rn = clamp01(ch.runW || 0), aL = ch.armL || 0;
+  if (free <= 1e-4 || gw <= 1e-4) return;
+  const k = SLOSHER_FREE_ARM, fwd = Math.max(0, -aL) * rn;
+  P[C.UARML] -= (1 - k.swingKeep) * aL * free;
+  P[C.UARML + 1] -= (1 - k.swingKeep) * 0.18 * fwd * free;
+  P[C.FARML] += ((1 - k.runBendKeep) * 1.15 * rn * gw + (1 - k.swingKeep) * 0.4 * fwd) * free;
+}
+
+// Left-hand carry grips on each slosher's top handle (weapon space; the right fist keeps the native rear
+// grip). Official movies at rest (owner review 2026-10-18), identified by the weapon's look: Tri-Slosher
+// 1enjE6BlKzy (left hand on the yellow bail), Sloshing Machine b1dl7E3DXYr (on the top handle), Explosher
+// 0zGjN9QDoNb, Dread Wringer OgdjmEejALb (on the front top). No Bloblobber movie was found; it follows
+// the others on its front-left rim (no modelled top handle). handZ: thumb side; handY: fist to wrist.
+const acrossBar = (x, y, z) => ({ pos: V(x, y, z), handZ: V(-1, 0, 0), handY: V(0.55, 0.35, -0.75) });
+const CARRY_GRIP = {
+  's3-slosher-diffusion': acrossBar(0.03, 0.217, 0.091),
+  's3-slosher-launcher': { pos: V(0.012, 0.15, 0.19), handZ: V(0, 0, 1), handY: V(0.6, 0.5, -0.6) },
+  's3-slosher-bathtub': { pos: V(0.063, 0.083, 0.273), handZ: V(-0.6, 0, 0.8), handY: V(0.6, 0.5, -0.6) },
+  's3-slosher-washtub': acrossBar(0.03, 0.152, 0.094),
+  's3-slosher-double': acrossBar(0.03, 0.102, 0.258),
+};
+// Two-handed carry placement per slosher (weapon-origin anchor at rest / walking / full-tilt walk), for
+// the 1.6x family model scale. INKWAVE calibration: on the right side, searched for no leg or torso
+// penetration with the left hand still on the handle (an anchor out of reach rests where the arms allow).
+const CARRY_HOLD = {
+  's3-slosher-diffusion': { carry: { p: [-0.3, 0.48, 0.1], r: [0, 0.2, 0] }, walk: { p: [-0.3, 0.64, 0], r: [0, -0.1, 0] }, run: { p: [-0.36, 0.56, -0.1], r: [0, -0.1, 0] } },
+  's3-slosher-launcher': { carry: { p: [-0.3, 0.64, 0.1], r: [0, 0.2, 0] }, walk: { p: [-0.36, 0.64, -0.1], r: [0, -0.1, 0] }, run: { p: [-0.42, 0.72, -0.14], r: [0, -0.2, 0] } },
+  's3-slosher-bathtub': { carry: { p: [-0.3, 0.48, 0.1], r: [0, 0.5, 0] }, walk: { p: [-0.42, 0.64, -0.1], r: [0, 0.2, 0] }, run: { p: [-0.48, 0.64, -0.1], r: [0, -0.1, 0] } },
+  's3-slosher-washtub': { carry: { p: [-0.3, 0.48, 0.1], r: [0, 0.2, 0] }, walk: { p: [-0.3, 0.64, 0], r: [0, -0.1, 0] }, run: { p: [-0.36, 0.56, -0.1], r: [0, -0.1, 0] } },
+  's3-slosher-double': { carry: { p: [-0.42, 0.64, -0.1], r: [0, 0.5, 0] }, walk: { p: [-0.48, 0.64, -0.1], r: [0, 0.2, 0] }, run: { p: [-0.42, 0.8, -0.14], r: [0, -0.2, 0] } },
+};
 export const MODELS = Object.fromEntries(Object.entries(CFG).map(([id, c]) => [id, {
   sourceModel: id === 'slosher' ? 'Wmn_Slosher_StrongT'
     : id === 's3-slosher-diffusion' ? 'Wmn_Slosher_Diffusion'
     : id === 's3-slosher-launcher' ? 'Wmn_Slosher_Launcher'
     : id === 's3-slosher-bathtub' ? 'Wmn_Slosher_Bathtub'
     : id === 's3-slosher-washtub' ? 'Wmn_Slosher_Washtub' : 'Wmn_Slosher_Double',
-  build: d => (BUILD3D[id] || (dd => model(dd, c)))(d),
+  build: d => {
+    const out = (BUILD3D[id] || (dd => model(dd, c)))(d);
+    if (CARRY_GRIP[id]) out.s3CarryGrip = { L: CARRY_GRIP[id] };
+    return out;
+  },
+  ...(CARRY_HOLD[id] ? { nativeCarry: true, hold: { twoCarry: 1, ...CARRY_HOLD[id] } } : {}),
   // The Bucket's mouth faces forward (not up like the Wii U pitcher the source carry clips hold), so it keeps
   // the native data carry: the pail hangs level at the right side with its mouth to the front.
   // While sloshing, the native heave pitches the bucket ~1.5–1.95 rad down (tuned for an upward-facing pitcher
   // mouth). The Bucket's mouth already faces forward, so its aim tilts the mouth up 0.8 rad first: the ink
   // still leaves with the mouth to the front instead of pointing at the ground.
-  ...(id === 'slosher' ? { nativeCarry: true, hold: { aim: { r: [-0.8, 0.05, 0] } } } : {}),
+  // Carried in both hands (official movie xnGkyA7kgWr at rest; owner review 2026-10-18): the right fist
+  // on the rear grip at the right hip, the pail out at the right side in front of the right leg with
+  // its mouth to the front, the left hand across on the top handle. Placement is INKWAVE calibration
+  // read from the movie by eye; walking with it is not in the official movies.
+  ...(id === 'slosher' ? { nativeCarry: true, hold: { aim: { r: [-0.8, 0.05, 0] }, twoCarry: 1,
+    carry: { p: [-0.48, 0.56, 0], r: [0.2, 0.5, 0] }, walk: { p: [-0.58, 0.72, -0.08], r: [0.2, 0.4, 0] }, run: { p: [-0.6, 0.74, -0.06], r: [0.2, 0.3, -0.25] } } } : {}),
 }]));

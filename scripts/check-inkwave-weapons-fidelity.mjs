@@ -39,6 +39,7 @@ function pinnedFixture(name,hash) {
 }
 const physicalBaseline=pinnedFixture('weapons-physical-bf9a8a92.json','07bcfd60ef35aacd055144413f27ef20e13b8e4e95435dc703bc0aa183719dc3');
 const current=pinnedFixture('weapons-fidelity-main-20261017.json','7dc914f9bbf1a85639ba9562ff8ad2318d7a41ff8ebe58d733471192c02cb548');
+const contours=pinnedFixture('weapons-fidelity-contours-20261018.json','6542db95eef491315ceaa4e854ab05d81199f06f026f87064281cd18e9837e6c');
 assert.equal(physicalBaseline.baselineCommit,'bf9a8a9270b349a3b20c9550ff6ed78a61c9e729');
 assert.deepEqual(Object.keys(current.cases),CASES.map(c=>c.key));
 for(const c of CASES) {
@@ -51,8 +52,10 @@ const golden = Object.fromEntries(Object.entries(current.cases).map(([key, row])
 // forward ink reach, not the pinned source width/depth, projectile births,
 // hit sweeps or stamp timing. These five observed areas/maxZ are fixed from
 // exact-head Validate #39087874007 (02:22 UTC, 2026-10-18), NOT inferred
-// from the old circular/stencil archive. All other cases keep exact hashes.
-// The independent frozen edge oracle below still checks every paint cell.
+// from the old circular/stencil archive. Keep these earlier observations as
+// an additional constraint on the new exact-cell/stamp receipt. The reviewed
+// Blaster/Splatling masks are pinned separately too; all physical history and
+// the independent frozen edge oracle below remain required.
 const chargerOrganic = Object.freeze({
   'charger-0': { maxZ:13.125, area:24.4375 },
   'charger-0.25': { maxZ:15.125, area:25.625 },
@@ -60,24 +63,25 @@ const chargerOrganic = Object.freeze({
   'charger-0.75': { maxZ:22.625, area:51.625 },
   'charger-1': { maxZ:26.625, area:73.5 },
 });
+assert.deepEqual(Object.keys(contours.cases).sort(),['blaster',...Object.keys(chargerOrganic),'splatling-partial','splatling-first','splatling-full'].sort(),'reviewed contour receipt scope');
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
-  const c = data.cases[key], expected = current.cases[key], organic = chargerOrganic[key];
+  const c = data.cases[key], expected = current.cases[key], organic = chargerOrganic[key], contour=contours.cases[key];
   if (organic) {
     assert.notEqual(digest(c.paint.cellsXZ), expected.cellsHash, key + ' new organic Charger contour must differ from the old stamp');
     near(c.paint.area, organic.area, 1e-7);
-  } else {
-    assert.equal(digest(c.paint.cellsXZ), expected.cellsHash, key + ' main scoring cells');
   }
+  assert.equal(digest(c.paint.cellsXZ), contour?.cellsHash ?? expected.cellsHash, key + ' main scoring cells');
+  if(contour)near(c.paint.area,contour.area);
   assert.equal(digest(c.hitSamples), expected.hitSamplesHash, key + ' main full hit sweep');
   assert.equal(digest(c.initialProjectiles), expected.initialProjectilesHash, key + ' main projectile births');
-  if (!organic) assert.equal(digest(c.paintPoints),expected.paintPointsHash,key+' all source stamp dimensions and recorded shape');
+  assert.equal(digest(c.paintPoints),contour?.paintPointsHash ?? expected.paintPointsHash,key+' all source stamp dimensions and recorded shape');
   assert.equal(digest(c.groundImpacts),expected.impactsHash,key+' all terrain impacts');
   if(!key.startsWith('splatling-')) {
     assert.equal(digest(c.hitSamples),expectedCases[key].hitSamplesHash,key+' unaffected hit sweep remains pinned');
     assert.equal(digest(c.initialProjectiles),expectedCases[key].initialProjectilesHash,key+' unaffected birth remains pinned');
   }
   near(c.practicalHitRange,hit); near(c.fullDamageRange,full);
-  near(c.paint.bounds.maxZ,organic?.maxZ ?? paint,.001); assert.equal(c.projectileCount,count,key);
+  near(c.paint.bounds.maxZ,contour?.maxZ ?? paint,.001); assert.equal(c.projectileCount,count,key);
 }
 // Independently execute the current unminified six-adapter source graph at the
 // measured hit boundary and on the real paint grid. The built receipt cannot
@@ -137,6 +141,15 @@ const circleFixture=await fixture({site:path.join(root,'.ci-scratch/unbuilt-weap
 const circleSplat=circleFixture.G.paint.splat;
 let circleCase;
 circleFixture.G.paint.splat=function(center,radius,team,opts={}){
+  if(circleCase.id==='blaster'&&opts.footprint==='ink-blast-rectified'){
+    assert.ok(opts.kind==='source-shot'||opts.kind==='source-splash','only the two reviewed native burst phases');
+    assert.deepEqual(Array.from(opts.stretch.toArray()),[0,0,1],'saved incoming bearing');
+    assert.equal(opts.stretchAmt,0,'orientation does not extend physical radius');
+    // #1583/#1585 added a mask bearing and moved the falling phase from the
+    // generic drop mask to SOURCE_SPLASH. Restore exactly these metadata fields,
+    // retaining center/radius/seed/time/ownership and the complete flight.
+    return circleSplat.call(this,center,radius,team,{...opts,footprint:null,kind:opts.kind==='source-splash'?'drop':'source-shot',stretch:undefined,stretchAmt:undefined});
+  }
   if(circleCase.id==='roller'&&this===circleFixture.G.paint&&circleFixture.G.time===0&&circleFixture.paints.length===0){
     assert.equal(opts.kind,'source-splash','release foot stamp entered the sourced mask');
     assert.equal(opts.footprint,'ink-flick','release foot stamp uses the reviewed Roller profile');
@@ -148,6 +161,22 @@ circleFixture.G.paint.splat=function(center,radius,team,opts={}){
 };
 const plain=value=>JSON.parse(JSON.stringify(value));
 const physicalStamps=stamps=>plain(stamps.map(({area,footprint,...stamp})=>stamp));
+function legacyPhysicalStamps(c,stamps,prior){
+  const result=physicalStamps(stamps);
+  if(c.id==='blaster'){
+    assert.deepEqual(stamps.map((s,i)=>s.footprint==='ink-blast-rectified'?i:null).filter(i=>i!==null),[1,7],'exactly the reviewed sphere/falling stamps');
+    for(const [i,kind] of [[1,'source-shot'],[7,'source-splash']]){
+      const s=result[i],old=physicalStamps(prior.paintPoints)[i];
+      assert.equal(s.kind,kind,'reviewed burst phase kind');
+      assert.deepEqual(s.stretch,[0,0,1],'reviewed burst bearing');
+      assert.equal(s.stretchAmt,0,'reviewed burst keeps spherical dimensions');
+      assert.equal(old.kind,i===1?'source-shot':'drop','immutable historical burst kind');
+      assert.equal(old.stretch,null);assert.equal(old.stretchAmt,null);
+      result[i]={...s,kind:old.kind,stretch:old.stretch,stretchAmt:old.stretchAmt};
+    }
+  }
+  return result;
+}
 for (const c of CASES) {
   const expected=data.cases[c.key];
   let actor=reset(sourceFixture,c);sourceCells=new Uint8Array(paintSystem.grid.length);sourceStampCount=0;
@@ -169,7 +198,7 @@ for (const c of CASES) {
   finish(sourceFixture,actor);
   assert.equal(sourceFixture.draws(),prior.flightDraws,c.key+' unchanged complete-flight RNG consumption');
   if(c.id!=='splatling'&&c.id!=='roller') {
-    assert.deepEqual(physicalStamps(sourceFixture.paints),physicalStamps(prior.paintPoints),c.key+' same historical stamp position, width, depth, seed and time');
+    assert.deepEqual(legacyPhysicalStamps(c,sourceFixture.paints,prior),physicalStamps(prior.paintPoints),c.key+' same historical stamp position, width, depth, seed and time');
     assert.deepEqual(plain(sourceFixture.impacts),prior.impacts,c.key+' unchanged physical terrain impacts');
   }
   assert.ok(sourceStampCount>0,c.key+' sourced stamp oracle exercised');
@@ -182,15 +211,15 @@ for (const c of CASES) {
     circleCase=c;
     const controlActor=reset(circleFixture,c);launch(circleFixture,controlActor,c);finish(circleFixture,controlActor);
     const circlePaint=paintMetrics(circleFixture);
-    assert.equal(digest(circlePaint.cellsXZ),expectedCases[c.key].cellsHash,c.key+' restoring just the prior masks restores every archived scoring cell');
-    const subjectStamps=physicalStamps(sourceFixture.paints);
+    assert.equal(digest(circlePaint.cellsXZ),expectedCases[c.key].cellsHash,c.key+' restoring the prior mask metadata restores every archived scoring cell');
+    const subjectStamps=legacyPhysicalStamps(c,sourceFixture.paints,prior);
     if(c.id==='roller') {
       assert.equal(subjectStamps[0].time,0,'one release-time Roller foot stamp');
       const priorFoot=physicalStamps(prior.paintPoints)[0];
       subjectStamps[0]={...subjectStamps[0],kind:null,stretch:null,stretchAmt:null};
       assert.deepEqual(subjectStamps[0],priorFoot,c.key+' unchanged foot position, radius, seed and time');
     }
-    assert.deepEqual(physicalStamps(circleFixture.paints),subjectStamps,c.key+' mask-only control retains every physical stamp');
+    assert.deepEqual(physicalStamps(circleFixture.paints),subjectStamps,c.key+' historical mask control retains every physical stamp');
   }
   for(const z of [expected.practicalHitRange,Math.round((expected.practicalHitRange+.1)*10)/10]){
     actor=reset(sourceFixture,c,z);sourceCells=new Uint8Array(paintSystem.grid.length);launch(sourceFixture,actor,c);finish(sourceFixture,actor);

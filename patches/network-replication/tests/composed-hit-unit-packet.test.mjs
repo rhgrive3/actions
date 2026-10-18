@@ -196,3 +196,30 @@ test('current 36-field projectile layout validates units without dropping legacy
     assert.ok(result); assert.equal(f.projectiles.list[0].fidelityRollerUnitIndex, unit);
   } finally { nm.dispose(); }
 });
+
+test('Brella trajectory evidence is copied into the retryable hit and scoped only during admitted owner damage',()=>{
+ const f=hitWorld(),a={nid:1,owner:'A',team:0,alive:true},v={nid:2,owner:'B',team:1,remote:true,alive:true,netLife:2,hp:100};
+ f.n.byNid.set(1,a);f.n.byNid.set(2,v);
+ const geometry=[0,1,4,0,1,0,.15];f.G.projectiles.s3HitGeometry=geometry;
+ assert.equal(f.n.sendHit(a,v,20,'shooter'),true);const packet=f.sent[0].data;
+ assert.deepEqual(packet.bg,geometry);assert.notEqual(packet.bg,geometry);
+ geometry[0]=99;assert.equal(packet.bg[0],0,'retry evidence is immutable with respect to the live scratch');
+ a.remote=true;v.remote=false;f.n.myId='B';const outer=['outer'];f.G.projectiles.s3IncomingHitGeometry=outer;
+ const calls=[];f.G.projectiles.applyHit=()=>{calls.push(f.G.projectiles.s3IncomingHitGeometry);};
+ f.n._hit(packet,'A');assert.deepEqual(calls,[packet.bg]);assert.equal(f.G.projectiles.s3IncomingHitGeometry,outer);
+ f.n._hit(packet,'A');assert.equal(calls.length,1,'duplicate receipt never spends canopy HP twice');
+ f.G.projectiles.applyHit=()=>{assert.equal(f.G.projectiles.s3IncomingHitGeometry,undefined);};
+ const legacy={...packet,h:packet.h+1};delete legacy.bg;f.n._hit(legacy,'A');assert.equal(f.G.projectiles.s3IncomingHitGeometry,outer,'legacy packet cannot borrow an outer segment');
+});
+
+test('malformed Brella trajectory is rejected before sequence state; throw restores the prior geometry',()=>{
+ const f=hitWorld(),a={nid:1,owner:'A',team:0,remote:true},v={nid:2,owner:'B',team:1,remote:false,alive:true,netLife:2,hp:100};
+ f.n.byNid.set(1,a);f.n.byNid.set(2,v);f.n.myId='B';
+ const packet={m:'match-A',h:1,a:1,v:2,l:2,d:20,w:'shooter'};
+ for(const bg of [[0,0,1,0,0,0,NaN],[0,0,1,0,0,0,-1],[0,0,1,0,0,0,11],[0,0,100001,0,0,0,.1],[0,0,1,0,0,0],{},null])f.n._hit({...packet,bg},'A');
+ assert.equal(f.calls.length,0);assert.equal(f.n.peers.size,0,'invalid evidence cannot consume a receipt identity');
+ const outer=['outer'];f.G.projectiles.s3IncomingHitGeometry=outer;
+ f.G.projectiles.applyHit=()=>{throw Error('defense sink');};
+ assert.throws(()=>f.n._hit({...packet,bg:[0,1,4,0,1,0,.1]},'A'),/defense sink/);
+ assert.equal(f.G.projectiles.s3IncomingHitGeometry,outer);
+});

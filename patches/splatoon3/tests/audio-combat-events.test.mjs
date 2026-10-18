@@ -6,9 +6,53 @@ import { withBlasterSplashHit, blasterHitCueKind, blasterHitCuePitch, BLASTER_HI
 import { specialActionAudioEvent, specialActivationAudioEvent } from '../runtime/audio/kit-runtime.mjs';
 import { installWeaponAudioRuntime } from '../runtime/audio/runtime.mjs';
 import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
+import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
 
 const manifest=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
 const clip=(id,event)=>manifest.clips.some(c=>c.id===id&&c.event===event);
+
+test('alternate kit fire, impact, charge loop and sub/special prefetch keep base audio only',()=>{
+ const listeners=new Map(),shots=[],loops=[],prepares=[],loads=[];
+ const on=(name,fn)=>{const list=listeners.get(name)||[];list.push(fn);listeners.set(name,list);return ()=>{};};
+ const emit=(name,e)=>{for(const fn of listeners.get(name)||[])fn(e);};
+ class Projectiles { _push(p){return p;} _blastBurst(p){return p;} throwBomb(){} }
+ class Actor {setWeapon(){} _startSpecial(){} _updateSpecial(){}}
+ class WeaponRunner {reset(){} update(){return 'updated';}}
+ const G={audio:{
+   ctx:{state:'running'},play(){return null;},
+   playWeapon(id,event){shots.push([id,event]);return {playing:true};},
+   loopWeapon(id,event){loops.push([id,event]);return {playing:true,set(){},stop(){this.playing=false;}};},
+   prepareWeapon(id){prepares.push(id);},
+   _realS3Loader:{ensure(id,event){loads.push([id,event]);return Promise.resolve({loaded:0});}},
+ },time:0};
+ installWeaponAudioRuntime({G,on,Actor,WeaponRunner,Projectiles});
+ const mkActor=id=>{const kit=ALTERNATE_WEAPON_KITS.find(k=>k.id===id);
+   assert.ok(kit,id);
+   return {alive:true,isLocal:true,remote:false,form:'kid',weapon:{id:kit.id,variantOf:kit.baseId,
+     sub:kit.sub,special:kit.special,catalogRecord:{family:'splatling'}},
+     pos:{x:0,y:0,z:0},vel:{x:0,z:0},grounded:true};
+ };
+ const shooter=mkActor('shooter-01');
+ emit('weapon:fire',{actor:shooter,weapon:shooter.weapon.id,muzzle:shooter.pos});
+ assert.deepEqual(shots.at(-1),['shooter','fire'],'collab projectile keeps its variant ID but audio resolves to base');
+ emit('weapon:impact',{actor:shooter,weapon:shooter.weapon.id,pos:shooter.pos});
+ assert.deepEqual(shots.at(-1),['shooter','impact']);
+ const spinner=mkActor('s3-spinner-quick-01'),runner=new WeaponRunner();
+ spinner.weaponRunner=runner;runner.a=spinner;runner.catalogState={pending:false};
+ runner.charging=true;runner.charge=.5;
+ assert.equal(runner.update(1/60,{}),'updated');
+ assert.ok(prepares.includes('s3-spinner-quick'),'local collab preloads recorded Spinner base');
+ assert.ok(loops.some(x=>x[0]==='s3-spinner-quick'&&x[1]==='charge'),
+   'native Spinner colllab charge loop uses base Motor recording');
+ assert.ok(loads.some(x=>x[0]==='sub:'+spinner.weapon.sub),'collab keeps its own sub');
+ assert.ok(loads.some(x=>x[0]==='special:'+spinner.weapon.special),'collab keeps its own special');
+ emit('weapon:fire',{actor:spinner,weapon:spinner.weapon.id,muzzle:spinner.pos});
+ assert.deepEqual(shots.at(-1),['s3-spinner-quick','fire']);
+ runner.charging=false;runner.streaming=true;runner.burstFrac=.5;
+ runner.update(1/60,{});
+ assert.ok(loops.some(x=>x[0]==='s3-spinner-quick'&&x[1]==='spin'),
+   'collab stream uses the base MotorFire recording');
+});
 
 test('Blaster direct and indirect body-hit cues remain different without altering damage data',()=>{
   const a={weapon:{id:'blaster',kind:'blaster'}};
@@ -17,6 +61,17 @@ test('Blaster direct and indirect body-hit cues remain different without alterin
   assert.equal(blasterHitCuePitch(a,'blaster'),BLASTER_HIT_PITCH.direct);
   assert.equal(blasterHitCuePitch(other,'shooter'),1);
   assert.equal(blasterHitCuePitch(a,'storm'),1,'special is never misclassified');
+  assert.equal(blasterHitCuePitch(a,'blaster-01'),BLASTER_HIT_PITCH.direct,
+    'alternate native Blaster retains its direct-hit sound');
+  assert.equal(blasterHitCuePitch(a,'blaster-02'),BLASTER_HIT_PITCH.direct);
+  assert.equal(blasterHitCuePitch(a,'s3-blaster-light-01'),BLASTER_HIT_PITCH.direct,
+    'catalog Blaster Deco resolves to its source main');
+  withBlasterSplashHit(a,()=>{
+    assert.equal(blasterHitCuePitch(a,'blaster-01'),BLASTER_HIT_PITCH.indirect);
+    assert.equal(blasterHitCuePitch(a,'s3-blaster-light-01'),BLASTER_HIT_PITCH.indirect);
+  });
+  assert.equal(blasterHitCuePitch(a,'sub:bomb'),1,'kit audio is never a direct-hit cue');
+
   assert.equal(blasterHitCuePitch(a,'s3-blaster-light'),BLASTER_HIT_PITCH.direct);
   const sample={damage:57,killed:false,weaponId:'blaster'};
   withBlasterSplashHit(a,()=>{

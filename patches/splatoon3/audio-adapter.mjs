@@ -41,9 +41,22 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace(/G\.audio\?\.play\('blaster_pump'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
     code=code.replace(/G\.audio\?\.play\(snd\s*,\s*\{[^{}]*\}\);/g,'void 0;');
     code=code.replace(/G\.audio\?\.play\('dualies_roll'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
-    for(const [old,event] of Object.entries({charger_charge:'charge',charger_full:'ready',roller_flick:'windup',roll:'roll',slosh_throw:'windup',splatling_wind:'windup',splatling_spin:'spin',splatling_ready:'ready'})){
+    for(const [old,event] of Object.entries({charger_charge:'charge',charger_full:'ready',roller_flick:'windup',roll:'roll',slosh_throw:'windup',splatling_wind:'windup',splatling_spin:'charge',splatling_ready:'ready'})){
       code=code.replace(new RegExp("G\\.audio\\?\\.(play|loop)\\('"+old+"',\\s*\\{",'g'),(_,method)=>`G.audio?.${method}Weapon?.(a.weapon.id, '${event}', { actor:a, `);
     }
+    // Native Splatling keeps one loop handle through charging and streaming.
+    // Its existing 'splatling_spin' starts during CHARGE, so play the sourced
+    // motor-charge MP3 there. At the admitted release, change ownership to
+    // MotorFire (spin) rather than continuing the charge motor or duplicating
+    // the legacy procedural oscillator.
+    code=once(code,
+      "this.streaming = true; this.cooldown = 0; this.bloom = 0;",
+      `this.streaming = true; this.cooldown = 0; this.bloom = 0;
+      this.spinLoop?.stop(0.06);
+      this.spinLoop = (a.isLocal || a._nearCamera())
+        ? G.audio?.loopWeapon?.(w.id, 'spin', {actor:a,pos,volume:a.isLocal?0.6:0.4,pitch:1.5})
+        : null;`,
+      'native Splatling motor phase transition');
   }
   if(rel==='src/net/netmatch.js'){
     code=code.replace(/G\.audio\?\.play\('dualies_roll'\s*,\s*\{[^{}]*\}\);/g,'void 0;');

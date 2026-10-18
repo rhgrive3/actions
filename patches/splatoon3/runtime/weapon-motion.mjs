@@ -96,7 +96,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     const remoteTurret = this.s3RemoteTurretPose === true;
     const catalog = r?.a?.weapon?.catalogRecord?.family === 'dualies' ? r.catalogState : null;
     if (this.s3WeaponMotionEnabled === false || !this.dual || !r ||
-        !(r.s3Turret || remoteTurret || catalog?.roll || catalog?.turret > 0)) return r;
+        !(r.s3Turret || remoteTurret || catalog?.roll || catalog?.turret > 0 || catalog?.turretHeld)) return r;
     // Character already has the correct stationary dualies stance. Its old
     // lockT-only input misses continued turret fire after movement unlocks.
     // Remote state is a Character-only view, never a gameplay-runner mutation.
@@ -111,8 +111,8 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
         const cs=target.a?.weapon?.catalogRecord?.family === 'dualies' ? target.catalogState : null;
         if (name === 'dodge' && cs?.roll) return cs.roll;
         if (name === '_dodgeDir' && cs?.roll) return cs.roll.direction;
-        if (name === 's3Turret' && (character.s3RemoteTurretPose === true || cs?.turret > 0)) return true;
-        return name === 'lockT' && (target.s3Turret || character.s3RemoteTurretPose === true || cs?.turret > 0)
+        if (name === 's3Turret' && (character.s3RemoteTurretPose === true || cs?.turret > 0 || cs?.turretHeld)) return true;
+        return name === 'lockT' && (target.s3Turret || character.s3RemoteTurretPose === true || cs?.turret > 0 || cs?.turretHeld)
           ? Math.max(EPS, value || 0) : value;
       } });
       views.set(this, { runner: r, view });

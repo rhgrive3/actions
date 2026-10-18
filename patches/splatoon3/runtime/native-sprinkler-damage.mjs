@@ -121,8 +121,10 @@ export function installNativeSprinklerDamage(api){
   for(const b of this.bombs||[]){
    if(!sprinkler(b)||b.s3Mode!=='sprinkling'||b.s3Destroyed||b.dead||b===source||b.team===sourceTeam)continue;
    const point=b.pos.clone().add(new api.THREE.Vector3(0,.45,0)),distance=point.distanceTo(center);
-   if(distance>radius||!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))continue;
-   const amount=damageAt(distance,sprinklerView(b));
+   const view=sprinklerView(b);
+   if(options.shapeContact?!options.shapeContact(view,point):distance>radius)continue;
+   if(!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))continue;
+   const amount=damageAt(point.distanceTo(center),view,point);
    if(!Number.isFinite(amount)||amount<=0||amount>2200)continue;
    const row=objectDamageRow(source,cause),accepted=b.ghost||b.owner?.remote
     ?proposal(api,b,source,point,amount,row):damage(api,b,amount,attacker,row);
