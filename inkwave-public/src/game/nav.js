@@ -145,14 +145,15 @@ export class NavGraph {
   path(a, b, team, maxIter = 6000) {
     if (a < 0 || b < 0) return null;
     const N = this.nodes.length;
-    if (!this._g || this._g.length !== N) { this._g = new Float32Array(N); this._from = new Int32Array(N); this._seen = new Uint32Array(N); this._closed = new Uint32Array(N); this._stamp = 0; }
+    if (!this._g || this._g.length !== N) { this._h = new Float64Array(N); this._g = new Float32Array(N); this._from = new Int32Array(N); this._seen = new Uint32Array(N); this._closed = new Uint32Array(N); this._stamp = 0; }
+    const heuristic = this._h;
     const g = this._g, from = this._from, seen = this._seen, closed = this._closed;
     const st = ++this._stamp;
     const nodes = this.nodes, goal = nodes[b];
     const h = (n) => Math.hypot(n.x - goal.x, n.z - goal.z) + Math.abs(n.y - goal.y) * 0.5;
     const heap = new Heap();
     g[a] = 0; from[a] = -1; seen[a] = st;
-    heap.push(a, h(nodes[a]));
+    heap.push(a, heuristic[a] = h(nodes[a]));
     let it = 0;
     while (heap.size && it++ < maxIter) {
       const cur = heap.pop();
@@ -165,8 +166,9 @@ export class NavGraph {
         if (m.zone >= 0 && m.zone !== team) continue;
         const ng = g[cur] + e.cost;
         if (seen[e.to] !== st || ng < g[e.to]) {
+          if (seen[e.to] !== st) heuristic[e.to] = h(m);
           seen[e.to] = st; g[e.to] = ng; from[e.to] = cur;
-          heap.push(e.to, ng + h(m));
+          heap.push(e.to, ng + heuristic[e.to]);
         }
       }
     }
