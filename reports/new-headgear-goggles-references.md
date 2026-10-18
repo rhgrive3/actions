@@ -155,3 +155,29 @@ Fixture SHAcc65e442ca0881482830189ecae077b81c9c9eadd99ea05164cb0a8c4b34acdf.
 
 ## Pending rendered gate
 Inspect actual front, oblique, both sides, rear, top, isolated underside, allLOD and alternate hair: coherent sloping brow/temple profile; integrated cheek/chin transition; readable three slot bands; no open seams; rear bands meet anchors and do not cut exposed skull; lens remains readable. CPU construction preview is not native visual acceptance. No exact-match claim.
+
+
+## User-marked cap bill and lateral shell revision
+
+# Marked-reference cap visor and lateral shell correction
+
+Authority/reference: user's marked image1000001371.png, explicitly identifying a cap-like forward brim and the outer white lateral shell. Original S3 item pixels https://img.gamewith.jp/article_tools/splatoon3/gacha/ge429.png and worn front https://img.gamewith.jp/img/9a245d07c6dfa3b4460b237694dd6bba.png. True S3 rear remains unverified.
+
+## Changed construction from944
+944 was a single broad sloping forehead ending near the shield. It lacked a distinct cap bill. New closed shallow curved canopy has a rooted seam below forehead windows, a free curved leading edge,0.010 thick lip and underside. Center bone-local profile: root[0,.29519,.21861]→tip[0,.26605,.31211], lens upper[0,.24956,.26175]. Thus tip projects0.05036 beyond shield and drops0.02915 from root. Edges sweep lower toward temples. This is geometric projection, not opacity or color compensation.
+
+The outer lateral white shell extends rearward to azimuth1.70, then curves downward into cheek. An ear aperture and two broad ink inset patches per side distinguish this white shaped shell from the rear green securing straps. Lower integrated cheek/chin and three connected breathing slots preserved. Rear strap endpoints moved to solid side-shell areas: upperaz±1.62,e+.23; loweraz±1.52,e−.23, radialdepth matched to shell. A radial ray regression confirms each end hits solid shell within0.02, not the new ear aperture. Existing raised scalp-clearing rear band routing retained behind anchors.
+
+## Verification
+Commands in this folder:
+node --loader ./loader.mjs headgear-face-goggles.fixture.mjs
+node --loader ./loader.mjs audit-fit.mjs > audit-fit-results.jsonl
+Both exit0. Tests cover closed consistent shell/canopy topology, nondegenerate triangles, indices/finite normals, lens outward faces, vertex/triangle-centroid native-sculpt clearance, positive analytic scalp margin, root/tip slope and overhang, anchor solid-shell hits, four batches and idempotent disposal. Original944 module preserved in face-goggles-944.js.
+
+Hero/game/far8132/5516/3932 triangles, four batches/materials, zero textures, one transparent lens. Budget increased for actual closed cap bill and extended lateral shell; no additional render pass. Less-visible canopy tessellation reduced to keep increase bounded.
+
+Module SHAc825d6c758807089cd785920cbe85e0a07daac8e88c86d45757f4db772dff8e6.
+Fixture SHA5bac992a841ea61c9fa07eef4d67a70fe643919ef3134f35593eb4efb10e67a7.
+
+## Pending actual rendered gate
+Reference reviewer inspected construction front/oblique/side/back and confirms direction addresses both marked regions. This is not native acceptance. Inspect actual source-comparable oblique, left/right/back: bill visibly ahead of shield, distinct curved root and tip, lateral white shell reads as substantial swept structure rather than two thin posts around an oversized opening; strap endpoints closed; no exposed-head penetration or problematic ear/hair clipping. No full-exact-match claim.

@@ -52,7 +52,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   // triangulated in angular space, with continuous front/back and wall surfaces.
   function panel(name,outline,holes=[],depth=.055,thickness=.009,key='shell'){
     const S=name==='molded-wrap-shell'?1:(lod==='hero'?2:1);
-    const step=lod==='hero'?.23:lod==='game'?.28:.34;
+    const step=lod==='hero'?.25:lod==='game'?.31:.38;
     const densify=loop=>loop.flatMap((A,i)=>{const B=loop[(i+1)%loop.length],n=Math.max(1,Math.ceil(Math.hypot(B[0]-A[0],B[1]-A[1])/step));return Array.from({length:n},(_,j)=>[A[0]+(B[0]-A[0])*j/n,A[1]+(B[1]-A[1])*j/n]);});
     if(name==='molded-wrap-shell'){outline=densify(outline);holes=holes.map(densify);}
     const outer=outline.map(p=>new THREE.Vector2(...p)),hs=holes.map(h=>h.map(p=>new THREE.Vector2(...p)));
@@ -97,9 +97,9 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   };
   const stations=lod==='far'?16:24,outline=[],window=[];
   for(let i=0;i<=stations;i++){const a=-span+2*span*i/stations;outline.push([a,crown(a)]);}
-  for(let i=1;i<=8;i++){const t=i/8;outline.push([span-.16*t*t+.03*Math.sin(Math.PI*t),crown(span)+(lower(span-.16)-crown(span))*t]);}
+  const sideContour=[[1.48,.62],[1.64,.40],[1.70,.15],[1.67,-.14],[1.48,-.43],[span-.16,lower(span-.16)]];for(const p of sideContour)outline.push(p);
   for(let i=stations-1;i>=0;i--){const a=-(span-.16)+2*(span-.16)*i/stations;outline.push([a,lower(a)]);}
-  for(let i=7;i>=1;i--){const t=i/8;outline.push([-(span-.16*t*t+.03*Math.sin(Math.PI*t)),crown(span)+(lower(span-.16)-crown(span))*t]);}
+  for(const p of sideContour.slice(0,-1).reverse())outline.push([-p[0],p[1]]);
   for(let i=0;i<=stations;i++){const a=-eyeSpan+2*eyeSpan*i/stations;window.push([a,eyeTop(a)]);}
   for(let i=stations;i>=0;i--){const a=-eyeSpan+2*eyeSpan*i/stations;window.push([a,eyeBottom(a)]);}
   const vents=[];
@@ -117,7 +117,8 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   // grouped source apertures rather than a row of separate perforations.
   const forehead=[];
   for(const side of [-1,1]){const h=[];for(let i=0;i<=8;i++){const a=side*(.23+i*.105);h.push([a,crown(a)-.065]);}for(let i=8;i>=0;i--){const a=side*(.23+i*.105);h.push([a,crown(a)-.205]);}forehead.push(h);}
-  panel('molded-wrap-shell',outline,[window,...vents,...forehead],depth,.012);
+  const earWindows=[-1,1].map(side=>[[1.19,.25],[1.49,.36],[1.60,.16],[1.58,-.04],[1.28,-.17],[1.15,-.10]].map(([a,e])=>[a*side,e]));
+  panel('molded-wrap-shell',outline,[window,...vents,...forehead,...earWindows],depth,.012);
   for(const [i,h]of [...vents,...forehead].entries())panel('vent-recess-'+i,h,[],(a,e)=>depth(a,e)-.012,.002,'dark');
   // Three dominant connected breathing slots with restrained inset lattice.
   for(let row=0;row<3;row++)for(const side of [-1,1])for(let i=0;i<3;i++){
@@ -130,6 +131,23 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
     const a=side*(.43+i*.15),b=a+side*.105,at=x=>eyeBottom(x)+(lower(x)-eyeBottom(x))*row;
     panel('cheek-ink-inlay',[[a,at(a)+.023],[b,at(b)+.023],[b,at(b)-.023],[a,at(a)-.023]],[],(a,e)=>depth(a,e)+.0068,.001,'ink');
   }
+  // Rear-swept lateral white shell carries broad inset ink panels above and
+  // below the open ear region; these are not the securing straps.
+  for(const side of [-1,1])for(const row of [0,1]){
+    const h=(row===0?[[1.26,.47],[1.47,.49],[1.53,.40],[1.32,.37]]:[[1.28,-.25],[1.53,-.15],[1.50,-.30],[1.32,-.40]]).map(([a,e])=>[side*a,e]);
+    panel('temple-ink-inlay',h,[],(a,e)=>depth(a,e)+.0068,.001,'ink');
+  }
+  // A distinct cap-like canopy projects in front of the shield. The rooted
+  // seam, free rounded leading edge and underside remain separate in profile.
+  const canopy=(u,v,bottom=false)=>{const a=(u-.5)*2*1.22;
+    const A=pt(a,.55-.035*Math.sin(a)**2,.075),B=pt(a,.34-.080*Math.sin(a)**2,.130);B[2]+=.020*Math.cos(a)**2;B[0]*=1-.10*Math.sin(a)**2;
+    const p=A.map((x,k)=>x+(B[k]-x)*v);p[1]+=.010*Math.sin(Math.PI*v)*Math.cos(a)**2;if(bottom)p[1]-=.010;return p;};
+  const canopyEdge=(u,v,at)=>{const A=canopy(u,at,true),B=canopy(u,at,false);return A.map((x,k)=>x+(B[k]-x)*v);};
+  add(grid(Math.ceil(N*.75),4,(u,v)=>canopy(u,1-v)),'shell','cap-visor-top');
+  add(grid(Math.ceil(N*.75),4,(u,v)=>canopy(u,v,true)),'shell','cap-visor-bottom');
+  add(grid(Math.ceil(N*.75),1,(u,v)=>canopyEdge(u,v,1)),'shell','cap-visor-front');
+  add(grid(Math.ceil(N*.75),1,(u,v)=>canopyEdge(1-u,v,0)),'shell','cap-visor-root');
+  for(const side of [0,1])add(grid(4,1,(u,v)=>canopyEdge(side,v,side?1-u:u)),'shell','cap-visor-side');
   // The lens is seated inside the heavy sloping brow and temple surround.
   add(grid(N,6,(u,v)=>{const a=(u-.5)*2*eyeSpan,e=eyeBottom(a)+(eyeTop(a)-eyeBottom(a))*v,d0=depth(a,eyeBottom(a)),d1=depth(a,eyeTop(a));return pt(a,e,d0+(d1-d0)*v+.008*Math.sin(Math.PI*v));}),'lens','panoramic-lens');
   rail('eye-upper-gasket',u=>{const a=(u-.5)*2*eyeSpan;return [a,eyeTop(a)-.009,depth(a,eyeTop(a))-.006];},.018,.004,'dark');
@@ -137,7 +155,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   panel('forehead-emblem',[[-.05,.815],[.05,.83],[.03,.85],[-.04,.84]],[],(a,e)=>depth(a,e)+.009,.001,'ink');
   // Two actual crossed straps around the exposed rear head, not a helmet crown.
   for(const s of [-1,1]){
-    const fn=u=>{const a=1.20+u*(Math.PI*2-2.40),e=s*.23*Math.cos(u*Math.PI),base=.042+(s>0?.007:0),join=Math.max(0,1-Math.min(u,1-u)/.12)**2;const frontAz=a>Math.PI?a-Math.PI*2:a;return [a,e,base+(depth(frontAz,e)-base)*join];};
+    const fn=u=>{const start=s>0?1.62:1.52,end=Math.PI*2-(s>0?1.52:1.62),a=start+u*(end-start),e=s*.23*Math.cos(u*Math.PI),base=.042+(s>0?.007:0),join=Math.max(0,1-Math.min(u,1-u)/.12)**2;const frontAz=a>Math.PI?a-Math.PI*2:a;return [a,e,base+(depth(frontAz,e)-base)*join];};
     rail('crossed-rear-strap',fn,.22,.006,'dark',N,true);
     rail('rear-strap-ink-center',u=>{const p=fn(u);p[2]+=.0033;return p;},.165,.001,'ink',N,true);
   }
@@ -149,7 +167,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   }
   let disposed=false;const dispose=()=>{if(disposed)return;disposed=true;root.removeFromParent();root.traverse(o=>o.geometry?.dispose());Object.values(mats).forEach(m=>m.dispose());};
   const setInkColor=value=>{mats.ink.color.set(value);return root;};root.dispose=dispose;root.setInkColor=setInkColor;
-  root.userData={construction:{browSection:[.90,.65,.45,.32].map(e=>({e,point:pt(0,e,depth(0,e))})),templeAnchors:[-1,1].flatMap(side=>[-1,1].map(s=>{const a=side*1.20,e=s*.23,d=depth(a,e);return {a,e,point:pt(a,e,d),strapDepth:d,shellDepth:depth(a,e)};})),centralExtraDepth:depth(0,-.4)-depth(.6,-.4)},id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'S3 rear unverified; native scalp-clearing X bands with overlapping temple anchors'}};
+  root.userData={construction:{visorSection:{root:canopy(.5,0),tip:canopy(.5,1),lensUpper:pt(0,eyeTop(0),depth(0,eyeTop(0)))},browSection:[.90,.65,.45,.32].map(e=>({e,point:pt(0,e,depth(0,e))})),templeAnchors:[-1,1].flatMap(side=>[-1,1].map(s=>{const a=side*(s>0?1.62:1.52),e=s*.23,d=depth(a,e);return {a,e,point:pt(a,e,d),strapDepth:d,shellDepth:depth(a,e)};})),centralExtraDepth:depth(0,-.4)-depth(.6,-.4)},id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'S3 rear unverified; native scalp-clearing X bands with overlapping temple anchors'}};
   return root;
 }
 

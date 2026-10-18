@@ -1,3 +1,4 @@
+import {Vector3,Raycaster} from 'three';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -13,22 +14,24 @@ for(const lod of ['hero','game','far']){
  assert.equal(index.count%3,0);
  for(let i=0;i<index.count;i+=3){const ids=[index.getX(i),index.getX(i+1),index.getX(i+2)];assert.ok(ids.every(n=>Number.isInteger(n)&&n>=0&&n<pos.count));const v=ids.map(n=>[pos.getX(n),pos.getY(n),pos.getZ(n)]),a=v[1].map((x,j)=>x-v[0][j]),b=v[2].map((x,j)=>x-v[0][j]),n=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];assert.ok(Math.hypot(...n)>1e-12,'All meshes have nondegenerate triangles');if(m.name==='lens-batch'){const c=v[0].map((x,j)=>(x+v[1][j]+v[2][j])/3-[0,.164,.014][j]);assert.ok(n.reduce((sum,x,j)=>sum+x*c[j],0)>0,'Lens triangles face outward');}}
 for(const key of ['position','normal','uv'])assert.ok([...m.geometry.attributes[key].array].every(Number.isFinite));t+=m.geometry.index.count/3;}
- assert.equal(t,g.userData.stats.triangles);counts.push(t);assert.ok(t<8000);
- const trianglesFor=name=>{const out=[];for(const part of g.userData.parts.filter(p=>p.name===name||(name==='molded-brim'&&p.name.startsWith('visor-')))){const m=g.children.find(x=>x.name===part.material+'-batch'),p=m.geometry.attributes.position,ix=m.geometry.index;for(let i=part.indexStart;i<part.indexStart+part.indexCount;i+=3)out.push([0,1,2].map(k=>{const n=ix.getX(i+k);return [p.getX(n),p.getY(n),p.getZ(n)];}));}return out;};
+ assert.equal(t,g.userData.stats.triangles);counts.push(t);assert.ok(t<10000);
+ const trianglesFor=name=>{const out=[];for(const part of g.userData.parts.filter(p=>p.name===name||(name==='cap-visor'&&p.name.startsWith('cap-visor-')))){const m=g.children.find(x=>x.name===part.material+'-batch'),p=m.geometry.attributes.position,ix=m.geometry.index;for(let i=part.indexStart;i<part.indexStart+part.indexCount;i+=3)out.push([0,1,2].map(k=>{const n=ix.getX(i+k);return [p.getX(n),p.getY(n),p.getZ(n)];}));}return out;};
  // Curved panels must clear the fitted smooth head at triangle interiors,
  // not only their boundary vertices (low-LOD long chords previously failed).
- for(const name of ['molded-wrap-shell'])for(const tri of trianglesFor(name)){
+ for(const name of ['molded-wrap-shell','cap-visor'])for(const tri of trianglesFor(name)){
    const c=[0,1,2].map(k=>tri.reduce((sum,v)=>sum+v[k],0)/3);
    assert.ok(Math.hypot(c[0]/.178,(c[1]-.164)/.176,(c[2]-.014)/.165)>1.04,name+' triangle interior clears head envelope');
  }
- const names=['molded-wrap-shell'];
+ const names=['molded-wrap-shell','cap-visor'];
  for(const name of names){const edges=new Map(),welded=[],key=p=>{let i=welded.findIndex(q=>Math.hypot(...p.map((x,k)=>x-q[k]))<1e-6);if(i<0){i=welded.length;welded.push(p);}return String(i);};for(const tri of trianglesFor(name)){const a=tri[1].map((x,i)=>x-tri[0][i]),b=tri[2].map((x,i)=>x-tri[0][i]);assert.ok(Math.hypot(a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])>1e-12,'nondegenerate panel');for(let i=0;i<3;i++){const a=key(tri[i]),b=key(tri[(i+1)%3]),e=[a,b].sort().join('/'),r=edges.get(e)||[0,0];r[0]++;r[1]+=a<b?1:-1;edges.set(e,r);}}assert.ok(edges.size>100);for(const [e,[n,d]]of edges){assert.equal(n,2,name+' closed edge '+e);assert.equal(d,0,name+' consistent winding '+e);}}
  const shell=g.userData.parts.find(p=>p.name==='molded-wrap-shell');assert.ok(shell.bounds.max.y-shell.bounds.min.y>.28);
  assert.equal(g.userData.parts.filter(p=>p.name.startsWith('vent-recess-')).length,17);assert.equal(g.userData.parts.filter(p=>p.name==='central-slot-web-0').length,18);assert.equal(g.userData.parts.filter(p=>p.name==='cheek-ink-inlay').length,20);
- assert.ok(!g.userData.parts.some(p=>/central-block-perimeter|visor-|eye-side-frame/.test(p.name)),'no detached ring, shelf or side posts');
+ const vs=g.userData.construction.visorSection;assert.ok(vs.tip[2]-vs.lensUpper[2]>.04,'cap visor overhangs shield');assert.ok(vs.tip[1]<vs.root[1]-.015,'cap visor slopes down beyond root');
+ assert.ok(!g.userData.parts.some(p=>/central-block-perimeter|^visor-|eye-side-frame/.test(p.name)),'no detached ring, shelf or side posts');
  const section=g.userData.construction.browSection;for(let i=1;i<section.length;i++){assert.ok(section[i].point[1]<section[i-1].point[1],'brow slopes down toward lens');assert.ok(section[i].point[2]>section[i-1].point[2],'brow projects forward toward lens');}
  assert.ok(g.userData.construction.centralExtraDepth>.015&&g.userData.construction.centralExtraDepth<.025,'central breathing unit integrated within shallow cheek relief');
- for(const a of g.userData.construction.templeAnchors)assert.ok(Math.abs(a.strapDepth-a.shellDepth)<.009,'strap ends overlap thick temple shell');
+ for(const a of g.userData.construction.templeAnchors)assert.ok(Math.abs(a.strapDepth-a.shellDepth)<.009,'strap ends overlap thick temple shell');g.updateMatrixWorld(true);for(const a of g.userData.construction.templeAnchors){const p=new Vector3(...a.point),d=p.clone().sub(new Vector3(0,.164,.014)).normalize(),ray=new Raycaster(p.clone().addScaledVector(d,.1),d.clone().negate()),hit=ray.intersectObject(g.children.find(m=>m.name==='shell-batch'))[0];assert.ok(hit&&hit.point.distanceTo(p)<.02,'each rear strap attaches to solid side shell, not ear opening');}
+
  const lens=g.children.find(x=>x.name==='lens-batch');assert.equal(lens.material.depthWrite,false);assert.ok(lens.material.opacity>=.25&&lens.material.opacity<.4);const lp=lens.geometry.attributes.position;let maxY=-1,minY=1;for(let i=0;i<lp.count;i++){maxY=Math.max(maxY,lp.getY(i));minY=Math.min(minY,lp.getY(i));}assert.ok(maxY-minY<.14,'compact eye opening');
  const ink=g.children.find(x=>x.name==='ink-batch').material;g.setInkColor(0xff0000);assert.equal(ink.color.getHex(),0xff0000);let gd=0,md=0;for(const m of g.children){m.geometry.addEventListener('dispose',()=>gd++);m.material.addEventListener('dispose',()=>md++);}g.dispose();g.dispose();assert.equal(gd,4);assert.equal(md,4);
  console.log(lod,JSON.stringify(g.userData.stats));
