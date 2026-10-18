@@ -30,18 +30,19 @@ export function integrateLookAxis(state, axis, target, dt, rate = 60) {
 
 export function isScopedCharger(weapon) {
   if ((weapon?.behaviorKind || weapon?.kind) !== 'charger') return false;
-  return weapon.scopedCharge === true || weapon.catalogRecord?.parameters?.WeaponScopeParam != null;
+  return weapon.scoped === true || weapon.scopedCharge === true || weapon.catalogRecord?.parameters?.WeaponScopeParam != null;
 }
 
-/** Sparse-table presence is a capability, even when the override object is {}.
- * Only E-liter Scope's 20 degree CameraFovy is explicitly present in the pinned
- * 11.3.0 table. For a missing default retain the old full-zoom endpoint (43.8),
- * rather than disguising a guessed 25/30 degree number as extracted data.
+/** Source CameraFovy overrides the wiki-derived vertical lens endpoints:
+ * Splatterscope 28 degrees and E-liter 4K Scope 20 degrees (S3).
+ * Interpolation cadence is still local INKWAVE tuning, not console-traced.
  */
 export function scopeVerticalFov(weapon) {
   const source = weapon?.catalogRecord?.parameters?.WeaponScopeParam?.CameraFovy;
-  const value = Number.isFinite(source) ? source : weapon?.scopeFov;
-  return Number.isFinite(value) && value >= 5 && value <= 55 ? value : 43.8;
+  const value = Number.isFinite(source) ? source : (weapon?.scopeFovY ?? weapon?.scopeFov);
+  if (Number.isFinite(value) && value >= 5 && value <= 55) return value;
+  const id = String(weapon?.id || weapon?.referenceNames?.en || '').toLowerCase();
+  return /e.?liter|long.?scope/.test(id) ? 20 : 28;
 }
 
 export function updateScopeZoom(rig, actor, dt) {
@@ -50,6 +51,7 @@ export function updateScopeZoom(rig, actor, dt) {
   if (!active) { rig.zoom = 0; rig.scopeCharge = 0; return 0; }
   const charge = actor.weaponRunner?.charging ? clamp01(actor.weaponRunner.charge) : 0;
   rig.scopeCharge = charge;
+  if (rig.scopeUsesTrueFov) { rig.zoom = 0; return charge; }
   // Wiki scope descriptions: zoom begins after half charge. The smoothing
   // curve/time constant remain INKWAVE tuning, not measured retail timing.
   const zoomCharge = clamp01((charge - .5) * 2);
