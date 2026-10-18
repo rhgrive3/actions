@@ -47,13 +47,17 @@ import { SPLASH_SHOOTER_PAINT_DEFAULTS, SPLASH_SHOOTER_SPAWN_DEFAULTS, SPLASH_DR
 // defaults share the provenance documented in blaster-flight-paint.mjs.
 // Families without these source fields stay on their existing path; this does
 // not invent missing slosher/roller/stringer physics or certify retail parity.
-export function catalogSplashDropSpec(source) {
+export function catalogSplashDropSpec(source, sourceActor = null) {
   const move = source?.MoveParam;
   // Inkipedia Shooter_data_S3 records FreeGravity=0.016 as the default of
-  // spl__BulletSimpleMoveParam. Some 11.3.0 rows (TripleQuick) omit this
-  // default while retaining the type. Never infer it for a different type.
+  // spl__BulletSimpleMoveParam. The packed catalogue intentionally strips
+  // $type; the pinned 11.3.0 TripleQuick source row proves that exact actor's
+  // type. Other untyped rows never inherit this missing-field default.
+  const missing = move && !Object.hasOwn(move, 'FreeGravity');
+  const typedSimple = move?.$type === 'spl__BulletSimpleMoveParam' ||
+    sourceActor === 'WeaponShooterTripleQuick';
   const gravity = Number.isFinite(move?.FreeGravity) ? move.FreeGravity
-    : move?.$type === 'spl__BulletSimpleMoveParam' && !Object.hasOwn(move, 'FreeGravity') ? 0.016 : undefined;
+    : missing && typedSimple ? 0.016 : undefined;
   const spawn=source?.SplashSpawnParam, paintSource=source?.SplashPaintParam;
   if(!(Number.isFinite(gravity)&&gravity>0)||!spawn||!paintSource)return null;
   const paint={...SPLASH_SHOOTER_PAINT_DEFAULTS,...paintSource};
