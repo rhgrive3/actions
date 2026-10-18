@@ -1,0 +1,65 @@
+{
+  "baseline": "9ef63350385bffee71b3afa0a09290a92e9c862b",
+  "candidate": "29aa372e3b66235078eeb68b05293c3df9807c6b",
+  "node": "v24.19.0",
+  "iterationsPerSample": 3000,
+  "targetsPerExplosion": 24,
+  "samples": 8,
+  "results": [
+    {
+      "name": "baseline",
+      "ms": [
+        4888.137062999998,
+        8645.007440999994,
+        8439.837231000005,
+        7910.760003999996,
+        2543.2535389999975,
+        5360.103937000007,
+        5553.277103,
+        2244.8919929999975
+      ],
+      "heapRetainedBytes": [
+        -1515280,
+        44912,
+        51904,
+        43200,
+        43200,
+        42648,
+        43056,
+        43056
+      ],
+      "medianMs": 5456.690520000004,
+      "medianRetainedBytes": 43128
+    },
+    {
+      "name": "candidate",
+      "ms": [
+        7052.849458000004,
+        10052.165990000001,
+        7286.343408999994,
+        5238.1446959999885,
+        5357.519206000012,
+        2991.573590999993,
+        2997.5532909999893,
+        5190.746152000007
+      ],
+      "heapRetainedBytes": [
+        40800,
+        48128,
+        54680,
+        46304,
+        47480,
+        46112,
+        46552,
+        46112
+      ],
+      "medianMs": 5297.831951,
+      "medianRetainedBytes": 46428
+    }
+  ],
+  "candidateTimeRatio": 0.9708873779046565,
+  "limitations": [
+    "Node VM logic only; no GPU rendering, browser GC, network latency or Switch comparison.",
+    "Median retained heap uses explicit full GC; it does not measure temporary allocation volume."
+  ]
+}
