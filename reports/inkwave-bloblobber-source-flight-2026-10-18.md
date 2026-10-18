@@ -37,22 +37,23 @@ The current source table has **no verified lifetime/expiry key**. A fixed value 
 
 ## Fixes
 
-1. Preserve the sourced **true-birth** 5F spacing. For *Bloblobber only*, delay-queued bubbles now acquire the actor's **current camera aim at their own birth**, not an aim vector frozen at the initial release. Real players can rotate their view while the four bubbles emerge, which changes their directions and fan-out. This interpretation is corroborated by community technique descriptions, but not proven at the level of a Nintendo engine code trace. Other Slosher families preserve their existing admission-time aim.
-2. When the camera changes during delayed birth, reconstruct the velocity with the same sourced ground/air speed (including the -0.01 index offset) and recalculated `AddSpawnSpeedYRateByXZ` against the *current horizontal* velocity. Apply owner movement contribution once at true birth. No additional RNG rolls, duplicate packets or turf writes.
-3. Relax the **non-retail void-safety cleanup guard** to 480 F (8 sec). Ordinary level-ground bubbles still terminate from the source-backed third ground impact, often much earlier. The longer guard prevents high-origin arcs disappearing midair before that impact. No finite lifetime was recovered from the S3 source record; **480 F remains an INKWAVE value**, not a Nintendo one.
+1. Preserve the sourced **true-birth** 5F spacing and ground/air speed choice. The community [Slosher sweeping explanation](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%AD%E3%83%83%E3%82%B7%E3%83%A3%E3%83%BC%E5%B1%9E) says fan angles derive from aim movement in the frame just before **release**, not independent post-release retargeting. Thus the initially proposed live camera re-aim at each subsequent bubble was **retracted**: retain the admitted volley direction for deferred bubbles. An exact commercial angular-sweep formula is still unverified.
+2. For every delayed bubble, select the source ground/air speed, including the -0.01 per-index change, while retaining the admitted angle and its `AddSpawnSpeedYRateByXZ` factor. Apply owner velocity once, without extra randomness, duplicate network packet or turf event.
+3. **Downward-angle cause:** the large `EndRadiusForField` (0.75 on the first bubble) grows over 4F. INKWAVE erroneously treated an early tangential contact of that **expanded shell** with the floor as a complete ground rebound. Moderate downward pitches spent two rebounds almost under the player and ended at the third contact, far short of a normal S3 arc. The existing `weapons-fidelity.mjs` Slosher `GLOB_GRAZE` collision rule already distinguishes the source's small initial terrain core from the growing outer field. Apply its **sourced `InitRadiusForField` core (0.075 for the large bubble)** to Bloblobber ground contacts and the post-bounce clearance too. Keep enlarged field radius for wall hits and player radius for player damage. The bubble graze does not create an extra paint event. This is a source-informed INKWAVE interpretation, not a recovered proprietary collision routine.
+4. Relax the **non-retail void-safety cleanup guard** to 480 F (8 sec). Ordinary stages still end bubbles on the third physical ground contact. A raised origin can take more than 240F to complete its bounce arc. No finite lifetime was recovered from the pinned game parameters, so 480F remains an INKWAVE fallback rather than a Nintendo constant.
 
 Previously merged PR #1578 already corrects short-range ground-reticle steering and other source-backed bounce physics. This PR extends that fix rather than reverting it.
 
 ## Executable coverage
 
-- `catalog-slosher-birth-speed.test.mjs`: all catalog Sloshers' 30/60/120 fixed time, speed selection, packet timing, RNG; plus Bloblobber view rotation during the volley and ghost replay with verbatim owner velocity.
-- `catalog-projectile-vfx-range.test.mjs`: physical Actor→WeaponRunner→Projectiles emission, source flight integrator and true swept OBB ground contacts; horizontal, 5°, 20°, 40°, 60°, 75°, 90°, plus 20m elevated vertical fire; 2 floor bounces then 3rd-contact end without arbitrary midair retirement.
+- `catalog-slosher-birth-speed.test.mjs`: all catalog Sloshers' 30/60/120 fixed time, speed selection, packet timing, RNG; plus Bloblobber admitted angle preservation across a subsequent view change and ghost replay with verbatim owner velocity.
+- `catalog-projectile-vfx-range.test.mjs`: physical Actor→WeaponRunner→Projectiles emission, source flight integrator and swept OBB ground contacts; horizontal, -10/-20/-30/-40/-60°, 5/20/40/60/75/90°, plus elevated vertical fire; verify down-angled first contact is not prematurely consumed by the grown outer collider, then 2 actual floor bounces and a 3rd-contact end. Preserve native muzzle offset when comparing reach.
 - Rendering, damage, ink authority and web deployment are separate integration checks. A model-only numeric test does **not** establish hardware or Nintendo pixel parity.
 
 ## Explicitly unverified retail details
 
 - Exact maximum time or bounds of a bubble in a stage with no reachable floor, infinite wall rebounds or unusual moving collision objects.
-- Precise camera-pitch-to-release conversion, including any original animation-dependent muzzle rise during the 6-frame windup.
+- Precise camera-pitch-to-release conversion, original animation-dependent muzzle rise during the 6-frame windup, and the formula for one-frame pre-release sweeping.
 - Console actor hurtbox dimensions and simultaneous four-bubble *hit range*, as opposed to the last floor impact of one bubble.
 - Pixel/VFX/frame-by-frame equality to captured S3 11.3.0.
 
