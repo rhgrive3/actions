@@ -77,12 +77,12 @@ export function adaptQueueNine(rel, input) {
   code = "import { sanitizeSettings, sanitizeProfile } from './core/save-validation.mjs';\n" + code;
   code = once(code, 'DEFAULT_SETTINGS, effectiveQuality,',
     'DEFAULT_SETTINGS, QUALITY, effectiveQuality,', 'quality import');
-  const settingsAssign = /^    this\\.settings = G\\.settings = [^\\n]+;$/gm;
+  const settingsAssign = /^    this\.settings = G\.settings = [^\n]+;$/gm;
   const settingsMatches = [...code.matchAll(settingsAssign)];
   if (settingsMatches.length !== 1) throw new Error('INKWAVE queue patch conflict: settings assignment not unique');
   code = code.replace(settingsAssign, value =>
     value + '\n    this.settings = G.settings = sanitizeSettings(this.settings, DEFAULT_SETTINGS, QUALITY);');
-  const profileAssign = /^    this\\.profile = [^\\n]+;$/gm;
+  const profileAssign = /^    this\.profile = [^\n]+;$/gm;
   const profileMatches = [...code.matchAll(profileAssign)];
   if (profileMatches.length !== 1) throw new Error('INKWAVE queue patch conflict: profile boot assignment not unique (' + profileMatches.length + ')');
   code = code.replace(profileAssign, line =>
