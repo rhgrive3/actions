@@ -3,7 +3,9 @@
 // is preserved for unscoped chargers, non-chargers and released trigger states.
 const clamp01 = x => Math.max(0, Math.min(1, Number.isFinite(x) ? x : 0));
 export function chargerScopeFactor(weapon, charge, charging = true) {
-  if (!charging || weapon?.kind !== 'charger' || !weapon.scoped) return 0;
+  const family = weapon?.behaviorKind || weapon?.kind;
+  if (!charging || family !== 'charger' ||
+      !(weapon?.scoped || weapon?.scopedCharge || weapon?.catalogRecord?.parameters?.WeaponScopeParam != null)) return 0;
   const k = clamp01((charge - 0.5) * 2);
   return k * k * (3 - 2 * k);
 }
@@ -11,6 +13,16 @@ export function chargerScopeFactor(weapon, charge, charging = true) {
 // The previous line used ~0.55-0.66 radius stamps WITH 1.2x directional
 // stretching and splatter lobes. These clean stamps share the same CPU/GPU
 // footprint; the impact may be broader than the narrow flight stripe.
+// Retail Splatterscope ends at 28 degrees; E-liter 4K Scope at 20.
+// A calibrated native CameraFovy takes precedence when the catalog has one.
+export function chargerScopeFov(weapon) {
+  const pinned = weapon?.catalogRecord?.parameters?.WeaponScopeParam?.CameraFovy;
+  const override = Number.isFinite(pinned) ? pinned : (weapon?.scopeFovY ?? weapon?.scopeFov);
+  if (Number.isFinite(override) && override >= 5 && override <= 55) return override;
+  const id = String(weapon?.id || weapon?.referenceNames?.en || '').toLowerCase();
+  return /e.?liter|long.?scope/.test(id) ? 20 : 28;
+}
+
 // Native S3 SplashPaintParam: width/depth half (raw x 0.2) and overlap ratio.
 // Half charge reaches Max values; the distinct Full values apply at 100%.
 // These are source-based proportions in the project's unit scale, not a
