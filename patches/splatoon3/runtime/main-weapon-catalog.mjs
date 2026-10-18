@@ -1030,15 +1030,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(!ground)p.vel.multiplyScalar(.8); // sourced wall reflection, no wall-bounce cap
       if(!p.ghost&&(p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
         G.fx?.burst(at,h.normal,p.owner.color,{count:5,speed:1.8,size:.09,spread:.8,paint:false});
-      // The three small bubbles have an explicit BounceAfterMaxSpeed=.35.
-      // It limits the outward NORMAL component on a ground rebound, not the
-      // whole velocity vector. Truncating |vel| also cut horizontal momentum
-      // by a third on shallow-downward shots (three of the four bubbles died
-      // near the muzzle) and broke the source's exact x0.8 WALL speed rule.
-      // Preserve surface-tangential travel and the independent wall .8x.
+      // BounceAfterMaxSpeed=.35 is an explicit total-speed cap for the small
+      // bubbles after a FLOOR bounce; never apply it to a wall reflection.
+      // S3 wall rebounds retain their independently sourced exact x0.8 speed.
+      // The initial field-shell floor false-contact was the actual downhill
+      // reach bug; dropping this cap would overextend the trailing bubbles.
       if(ground&&bp.BounceAfterMaxSpeed!=null){
-        const normalSpeed=p.vel.dot(h.normal),cap=Math.max(0,bp.BounceAfterMaxSpeed)*HZ;
-        if(normalSpeed>cap)p.vel.addScaledVector(h.normal,cap-normalSpeed);
+        const cap=Math.max(0,bp.BounceAfterMaxSpeed)*HZ;
+        if(p.vel.lengthSq()>cap*cap)p.vel.setLength(cap);
       }
       s.bounces++;if(ground)s.groundBounces++;
       updateCatalogVisual(p);return false;
