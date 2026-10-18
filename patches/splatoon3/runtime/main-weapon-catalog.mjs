@@ -799,8 +799,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }return 0;
   }
   function explosion(system,p,descriptor,skip=null) {
-    if (p.ghost) return;
     const bands=descriptor?.DistanceDamage||[],radius=Math.max(...bands.map(b=>b.Distance),0);
+    if(p.ghost){
+      // Replicated frozen arrows retain their visible fuse and burst, while
+      // damage and paint remain exclusively owned by the originating client.
+      if(p.catalog.r.family==='stringer'){
+        G.fx?.explosion(p.pos,p.owner.color,radius);
+        emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
+      }
+      return;
+    }
     const paintRadius=finite(descriptor?.PaintRadius,0)||finite(p.catalog.descriptor.b.BlasterBurstParam?.SplashDropPaintRadius,0);
     if(p.catalog.r.family==='stringer'){
       // A lodged arrow may be on a wall. A downward-only floor probe discarded
@@ -920,7 +928,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function finishContact(system,p,h) {
     const s=p.catalog,d=s.descriptor,r=s.r;
-    if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub')return true;
+    if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub'&&d.key!=='arrow')return true;
     const at=h.point||p.pos;
     if(startCatalogWallDrop(system,p,h,CATALOG_WALL_DROP[r.id]))return true;
     if(r.family==='blaster'){p.pos.copy(at);explosion(system,p,d.b.BlastParam);return true;}
@@ -933,9 +941,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(r.sourceActor!=='WeaponStringerShort'&&det&&(d.charge+EPS>=1||det.IsExplosiveBoltMidCharge&&frames+EPS>=finite(chargeParam(r).ChargeFrameMidCharge,30))) {
         // Lodging and detonation are separate paint events. Previously the
         // early return discarded the charge-dependent arrow impact entirely.
-        const footprint=impactPaint(p);
-        paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face);
-        s.stuck=true;s.fuse=finite(det.DetonationFrame,45)/HZ;p.pos.copy(at);p.vel.set(0,0,0);p.life=p.age+s.fuse+DT;return false;
+        if(!p.ghost){
+          const footprint=impactPaint(p);
+          paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face);
+        }
+        s.stuck=true;s.fuse=finite(det.DetonationFrame,45)/HZ;p.pos.copy(at);p.vel.set(0,0,0);p.life=p.age+s.fuse+DT;
+        // The birth packet's flight lifetime precedes lodging. Allow this
+        // bounded source fuse when impact is near the end of a remote flight.
+        if(p.ghost&&Number.isFinite(p._netMaxSteps))p._netMaxSteps=Math.max(p._netMaxSteps,(p._netSteps||0)+Math.ceil(s.fuse*HZ)+2);
+        return false;
       }
     }
     if(r.parameters.BlastParam?.BlastParam){p.pos.copy(at);explosion(system,p,r.parameters.BlastParam.BlastParam);return true;}
@@ -1292,6 +1306,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(c+EPS>=1&&n>1)s.rounds=n-1;
       }
       s.chargeF=0;s.paid=0;runner.charging=false;runner.charge=0;
+      // Endpoints are explicit 1130 fields. Linear recovery between them is
+      // the catalogue's interpolation model, not a recovered engine rule.
       if(r.family==='stringer')runner.cooldown=stageValue(r,{
         FreezeMin:finite(t.FreezeFrameMinCharge,15),FreezeMid:finite(t.FreezeFrameMidCharge,15),
         FreezeMax:finite(t.FreezeFrameFullCharge,15)},'Freeze',frames,15)/HZ;

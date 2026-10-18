@@ -133,3 +133,50 @@ test('all Stringers and derived kits cap actual full-charge jump admission at th
     }
   }
 });
+
+test('LACT mid recovery gates the next admitted volley; fractional in-between recovery is explicit reconstruction',async()=>{
+  const f=await world(),r=rows.find(r=>r.sourceActor==='WeaponStringerShort');
+  for(const [frames,recovery] of [[12,15],[9,11.5]]){
+    f.G.projectiles.clear();f.G.actors.length=0;
+    const a=release(f,r,frames),first=f.G.projectiles.list.length;
+    for(let i=1;i<Math.ceil(recovery);i++){
+      a.weaponRunner.update(DT,{fire:true,firePressed:i===1});
+      close(a.weaponRunner.catalogState.chargeF,0,'no charge during source recovery');
+      assert.equal(f.G.projectiles.list.length,first,'no early second volley');
+    }
+    a.weaponRunner.update(DT,{fire:true});close(a.weaponRunner.catalogState.chargeF,1,'first eligible recharge frame');
+    for(let i=1;i<6;i++)a.weaponRunner.update(DT,{fire:true});
+    a.weaponRunner.update(DT,{fire:false});
+    assert.equal(f.G.projectiles.list.length,first+3,'subsequent six-frame funded tap emits one volley');
+  }
+});
+
+test('replicated explosive arrows preserve lodging and fuse presentation without any damage or paint authority',async()=>{
+  const f=await world();
+  for(const r of rows){
+    f.G.projectiles.clear();f.G.actors.length=0;
+    const a=release(f,r,r.parameters.spl__WeaponStringerParam.ChargeParam.ChargeFrameFullCharge),p=f.G.projectiles.list[0];
+    a.nid=1;let packet;
+    f.NetMatch.prototype.recProj.call({_rec:row=>{packet=[0,...row,0,1];return packet;},cfg:{id:'stringer-source'}},p);
+    const remote=f.make(r.id);remote.remote=true;
+    f.G.projectiles.ghostProjectile(remote,packet);const ghost=f.G.projectiles.list.at(-1);
+    assert.ok(ghost.ghost&&ghost.catalog,'actual recorder/ghost reconstitution');
+    assert.ok(ghost.vel.distanceTo(p.vel)<.02,'source launch vector survives quantization');
+    f.G.actors.length=0;let paint=0,damage=0,explosions=0;
+    f.G.paint.splat=()=>{paint++;return 0;};f.G.projectiles.applyHit=()=>{damage++;};
+    f.G.projectiles.s3DamageSubObjects=()=>{damage++;};f.G.projectiles.s3DamageSpecialObjects=()=>{damage++;};
+    f.G.fx={explosion:()=>{explosions++;}};
+    f.G.physics.segment=(from,to,h)=>{h.hit=true;h.dist=from.distanceTo(to)*.5;h.point.copy(from).lerp(to,.5);h.normal.set(0,0,-1);h.face=-1;return h;};
+    ghost._netSteps=70;ghost._netMaxSteps=74;
+    const explosive=r.sourceActor!=='WeaponStringerShort';
+    assert.equal(f.G.projectiles._step(ghost,DT),!explosive,r.id+' remote impact');
+    if(explosive){
+      assert.equal(ghost.catalog.stuck,true,'remote bolt remains lodged');
+      assert.ok(ghost._netMaxSteps>=117,'bounded late lodging extends the cosmetic fuse lifetime');
+      for(let i=0;i<44;i++)assert.equal(f.G.projectiles._step(ghost,DT),false);
+      assert.equal(explosions,0,'no early remote explosion');
+      assert.equal(f.G.projectiles._step(ghost,DT),true);assert.equal(explosions,1,'one source-timed remote burst');
+    }else assert.equal(explosions,0,'LACT remote bolt has no explosive capability');
+    assert.equal(paint,0,'only owner splat packets can paint');assert.equal(damage,0,'visual bolt has no hit authority');
+  }
+});
