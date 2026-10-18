@@ -47,7 +47,7 @@ test('real composed START gates offline and online first shot on decoded origina
  assert.ok(composed.includes("prepareWeapon?.(self.profile.weapon||'shooter',{urgent:true})"),'trusted START prefetch');
  const gate=String.raw`const selectedShotReady=G.audio.requireRecordedMainShot(`;
  assert.equal(composed.split(gate).length-1,2,'offline + online must both wait for the selected recording');
- const iOffline=composed.indexOf('  async startMatch(o = {}, flow = this._beginMatchFlow()) {');
+ const iOffline=composed.indexOf('  async startMatch(o = {}, flow = null) {');
  const iOnline=composed.indexOf('  async startNetMatch(cfg, nm) {',iOffline);
  assert.ok(iOffline>0&&iOnline>iOffline);
  const offline=composed.slice(iOffline,iOnline),online=composed.slice(iOnline,composed.indexOf('  // Compile every shader variant',iOnline));
