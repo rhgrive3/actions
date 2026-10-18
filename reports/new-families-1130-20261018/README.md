@@ -123,3 +123,5 @@ CIで発見した検査側の問題も修正した。productionで消えるSaber
 最新mainでsource塗りへ切り替わった既存ブラスターの所有権も[実着弾と汎用growthを分離して検証](native-source-owners.md)した。
 
 main `b349a6c3`（#1585）の床投影補正と方向保持も[独立に統合・実地形で補完](integration-main-b349.md)した。履歴表c597/81bと、PR本文・最終受領にある最新生成物の結果を区別する。
+
+main #1584の接地塗り校正と#1586のメニュー更新も取り込んだ。旧archiveを維持した[輪郭checker・独立oracle・旧mask復元対照](contour-checker-integration.md)により、意図した輪郭差と物理の退行を分けて検証した。最終受領では全41種の全対応モードへ拡張した235条件×3周期＝705件の検証と、120秒×8actor×16種の継続負荷も記録する。
