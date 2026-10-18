@@ -40,6 +40,6 @@ node scripts/check-inkwave-startup-budget.mjs _site
 
 `_site/` がパッチ適用済みの配信物です。テストの選び方、ローカル表示、ブラウザ検証は [開発ガイド](docs/inkwave-development.md) を参照してください。公開配信は [`pages-inkwave.yml`](.github/workflows/pages-inkwave.yml) が対象パスの `main` 更新または手動実行で行います。
 
-パッチからゲーム本体への移行は [直接ソース移行ガイド](docs/inkwave-direct-source-migration.md) を参照してください。元サイトの再取得は候補アーカイブの作成までとし、既存ゲームコードを自動上書きしません。
+パッチからゲーム本体への移行は [直接ソース移行ガイド](docs/inkwave-direct-source-migration.md) を参照してください。残るビルド時書き換えの確認は `node scripts/inkwave-source-migration-audit.mjs --all` で実行できます。元サイトの再取得は候補アーカイブの作成までとし、既存ゲームコードを自動上書きしません。
 
 挙動を変更するときは [AGENTS.md](AGENTS.md) の比較・記録ルールに従います。ロジックテスト、ブラウザの確認、本家の実機比較は、それぞれ確認できる範囲が異なります。
