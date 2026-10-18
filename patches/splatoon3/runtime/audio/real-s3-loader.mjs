@@ -82,9 +82,13 @@ export class RealS3SampleLoader {
       if(result?.loaded>0)this.loaded.add(id);
       return result;
     });
-    this.inFlight.set(key,job);
-    this.queue=job.catch(()=>{}).finally(()=>{if(this.inFlight.get(key)===job)this.inFlight.delete(key);});
-    return job;
+    // Cleanup belongs to the same promise returned to callers. Otherwise
+    // an immediate second START can observe the previous failed, already-
+    // fulfilled job and never actually retry the 2022 MP3.
+    const tracked=job.finally(()=>{if(this.inFlight.get(key)===tracked)this.inFlight.delete(key);});
+    this.inFlight.set(key,tracked);
+    this.queue=tracked.catch(()=>{});
+    return tracked;
   }
   stats(){return {status:this.status,loadedKinds:this.loaded.size,pendingKinds:this.inFlight.size,
     errors:this.errors.slice(-6),unmappedEvents:this.notMapped.size,manifestURL:String(this.manifestURL),cacheBytes:this.bank.authorized.bytes};}
