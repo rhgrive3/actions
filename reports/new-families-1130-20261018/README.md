@@ -86,4 +86,25 @@ Issue #532は現在4+1=5の専用経路を既に持ち、旧2.8継承という�
 
 ## 統合検証・性能・main反映
 
-実行中。最終検証が完了した時点で、対象SHA・CI・PR/main・性能比較を `verification.json` と本節へ追記する。系統別の既済結果は各報告書に保持している。
+最終ランタイムは `c597a70f3e90ada457fc1928b3edac14dd0ef25b`、production contentHashは `81b086c1911466a57c5d1b5f65d55e60cf91b29c0a8d7d13340d294e39c7780f`。その後の報告書・検査script・UI固定値更新は、ランタイム生成物を変更しない。変更ファイル/実装コミットと機械可読結果は [verification.json](verification.json)、16種の発射・塗り・CPU/GC比較は [production-comparison.md](production-comparison.md) を参照する。
+
+| 検査 | 結果・範囲 |
+|---|---|
+| 最終production重点試験 | 75成功・0失敗。近接4F/境界、step、slide位相、傘、防御/相手表示、Stringer段階・傾斜、中断 |
+| 実Actor/Character/Physicsの描画周期比較 | 16ベース＋25キット、141条件×3周期＝423成功。固定60Hz、30/60/120Hz表示。乱数.37固定 |
+| 射撃原点の既存ブラウザ回帰 | 12条件、原点/発射event誤差0 |
+| 飛沫/塗りの既存ブラウザ回帰 | 15追加ベース×3周期＝45成功、ownerless=0 |
+| 2ブラウザ通信 | 実WebSocket＋production RoomDurableObject、遅延6F、130件対応、位置誤差最大.007966、速度誤差0。弾/飛沫の表示退場を確認 |
+| CPU/GPU塗り | source/built各124 mask＋782 body条件、hash query1512。CPU-only/GPU-only=0、浮動小数の境界同値9。Nintendo maskの一致を示すものではない |
+| 起動/配信予算 | 145 preload（core131+range14）、初期JS2,702,863B、precache6,885,590B。既存予算内 |
+| 独立レビュー | 最終wire/tilt6件成功、blocking指摘0。表示専用データとHP/塗り/移動権限の分離を再確認 |
+
+ブラウザ根拠は [変更前](browser-before.json)・[変更後](browser-after.json)、[原点](browser-origins.json)、[塗り](browser-paint.json)、[通信](network-summary.json)、[mask](paint-mask-summary.json)、[配信](startup-budget.json)。通信fixtureの5種のnative攻撃と、追加系統のowner/receiver状態試験は別の検査であり、全41種を2ブラウザ実対戦したという意味ではない。
+
+継続射撃は全16種それぞれ、単独21,120 actor ticks、8人同時は各測定168,960 actor ticks（各版2回、順序反転）。15秒の連射/チャージ反復と7秒の退場待ち、インクを毎秒補充する制御負荷で、弾・飛沫の残留0を確認する。候補ではパージ傘の退場も別にassertする。CPU/描画submit・GC・明示GC後heapを変更前→変更後で順次計測する。GPU塗りの時間とハードウェアGPU時間は測定していない。結果/数値と測定限界は比較報告に保持する。
+
+必要な衝突細分化で追加マニューバー5種のCPU中央値は138.34→178.97µs/actor tick（+29.37%、5人合計約+.203ms/tick）。近接も旧矩形から4Fの複合形状へ増える。軽量化のために必要な判定を削ってはいない。ベクトル/形状/受信送信scratchの再利用、距離/team/既hitの早期除外、明示的な物理stepを使用する。
+
+CIで発見した検査側の問題も修正した。productionで消えるSaber内部leafへのimportは公開registry経由へ変更し、実Characterのchannel差分を検査する。`packActor`だけを切り出す既存テストには実dualies helperを明示的に注入する。menu-focusのinstaller固定SHAは、Brella表示登録の追加2行を独立レビューし来歴付きで更新した。メニュー本体/レイアウトの固定値とfocusの合否基準は維持し、実ブラウザで成功を確認した。
+
+統合先は [PR #1577](https://github.com/rhgrive3/actions/pull/1577)。最終CIの各job、レビュー結果、merge commit、マージ後mainのビルド/回帰readbackは同PR本文の最終受領記録と作業完了時の報告へ記載する。自己のmerge SHAをこのソースへ埋め込むことはできないため、ランタイムSHAと成果物hashを固定して照合する。#992・#532は上記の未確定範囲が残るためOPENを維持し、完了closeしたとは報告しない。
