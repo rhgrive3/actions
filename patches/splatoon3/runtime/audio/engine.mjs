@@ -63,7 +63,8 @@ export function installWeaponAudioEngine(Engine){
   // user-gesture audio unlock/fade is in progress. Never synthesize on failure.
   p.requireRecordedMainShot=async function(weaponId){
     const id=mainAudioSourceId(weaponId);
-    if(!id||id.includes(':')||!AUDIO_RECIPES[id])return {ready:false,unrecorded:true,id};
+    if(!id)throw new Error('録音SEを確認するメインブキを特定できません');
+    if(id.includes(':')||!AUDIO_RECIPES[id])return {ready:false,unrecorded:true,id};
     if(!this.ctx)this.init();
     const bank=this.weaponBank(),loader=this._realS3Loader;
     if(!bank||!loader)throw new Error('録音SEを再生するAudioContextを初期化できません');
@@ -128,6 +129,12 @@ export function installWeaponAudioEngine(Engine){
       }
       const declared=loader?.declares(id,event);
       const hasBase=mainAttack&&event!=='fire'&&loader?.declares(id,'fire')===true;
+      // This ShooterNormal MP3 is shipped in the pinned pack. An invalid
+      // or incomplete manifest never authorizes synthesizing its gunshot.
+      if(id==='shooter'){
+        this._realAudioSuppressed=(this._realAudioSuppressed||0)+1;
+        return null;
+      }
       // Unknown manifest also fails closed. Only an explicit confirmation
       // that neither requested nor base real MP3 exists enables authored PCM.
       if(declared!==false||hasBase||!bank.audibleShotFallback||options.actor?.isLocal!==true||
