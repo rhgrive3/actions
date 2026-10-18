@@ -122,6 +122,48 @@ test('native Charger full charge and hold still emit real-only events',()=>{
    'release stops the charging audio without a stale loop');
 });
 
+test('real production loadout and START events eagerly request recorded Shooter MP3',()=>{
+ const source=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
+ const adapted=adaptWeaponAudio('src/main.js',source);
+ assert.ok(adapted.includes("self.profile.weapon = weapon; saveJSON('inkwave.profile', self.profile); G.audio?.prepareWeapon?.(weapon,{urgent:true});"),
+   'changing to Splattershot on loadout must initiate the real MP3 before match');
+ assert.ok(adapted.includes("G.audio?.prepareWeapon?.(self.profile.weapon||'shooter',{urgent:true}); self._prepareGyro();"),
+   'START gesture unlocks the AudioContext and actively pages the equipped recording');
+ const assets=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
+ const sourceRow=assets.clips.find(c=>c.id==='shooter'&&c.event==='fire');
+ assert.equal(sourceRow.sourceName,'Wp_ShooterNormal_Shot_00.mp3');
+ assert.ok(fs.existsSync(new URL('../runtime/audio/'+sourceRow.file,import.meta.url)),
+   'real ShooterNormal MP3 must be present in the published patch source tree');
+});
+
+test('failed Shooter MP3 fetch never silences local firing, and a successful retry upgrades to recorded PCM',async()=>{
+ const {ctx,sources}=mkctx(),a=new MixerStub(ctx);
+ a.weaponBank();
+ let fail=true;
+ a._realS3Loader.fetcher=async()=>fail?{ok:false,status:503}:
+   {ok:true,json:async()=>manifest([clip('shooter','fire','Wp_ShooterNormal_Shot_00.mp3')])};
+ a._realS3Loader.bank.authorized.fetcher=async()=>res;
+ const local={isLocal:true},remote={isLocal:false};
+ assert.equal(a.playWeapon('shooter','fire',{actor:local})?.weaponId,'shooter');
+ const first=sources.at(-1).buffer;
+ assert.equal(a.playWeapon('shooter','fire',{actor:remote}),null,
+   'do not create extra remote fallback effects during a cold load');
+ const attempted=await a._realS3Loader.ensure('shooter','fire');
+ assert.equal(attempted.unavailable,true);
+ assert.equal(a._realS3Loader.status,'unavailable');
+ assert.equal(a.playWeapon('shooter','fire',{actor:local})?.weaponId,'shooter',
+   'network 503 must not silence player weapon');
+ fail=false;a._realS3Loader.manifestRetryAt=Date.now()-1;
+ const retried=await a._realS3Loader.ensure('shooter','fire');
+ assert.equal(retried.loaded,1);
+ assert.equal(a.playWeapon('shooter','fire',{actor:local})?.weaponId,'shooter');
+ assert.equal(sources.at(-1).buffer,a.weaponBank().authorized.pick('shooter','fire').buffer);
+ assert.notEqual(sources.at(-1).buffer,first);
+ assert.equal(a.stats().authoredFallbackShots,2,'only two shots occurred before decoded MP3 arrived');
+ assert.equal(a.stats().coldRecordedFallbackShots,2);
+ a.disposeWeaponAudio();
+});
+
 test('2022-unrecorded alternate kits keep their own source-family authored cue after negative proof',async()=>{
  const {ctx,sources}=mkctx(),audio=new MixerStub(ctx);
  audio.weaponBank();
