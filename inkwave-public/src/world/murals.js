@@ -1,8 +1,8 @@
 // Procedural wall murals / signage, drawn into one canvas atlas that the level shader samples underneath the ink
 // layer. Rows 0-3 are the original tileable 2048x256 strips (ids 0-3, unchanged pixels); below them sit face-fitted
-// decals (ids 4…11) in one stage region, (re)drawn for the loaded stage by texture.userData.setStage(id): a stage that
-// owns its decals (src/world/stages/<id>/murals.js — Cargo Terminal) draws its own there, every other stage keeps
-// Halyard Marina's (the ferry's car-deck floor markings and cabin livery), exactly as before. The placement table
+// decals (ids 4…11) in one stage region, (re)drawn for the loaded stage by texture.userData.setStage(id).
+// Stages with their own decals (src/world/stages/<id>/murals.js) draw them into the expanded atlas.
+// Stages without decals use only the four shared strip rows; Halyard explicitly draws its ferry livery. The placement table
 // travels on texture.userData.murals (indexed by mural id) and is read by levelMaterial.js:
 //   rect  [u0, uw, v0, vh]     atlas rectangle in texture space (v from the bottom: CanvasTexture flips Y)
 //   place [x0, xLen, y0, yLen] where it sits on the face in metres (face u / v); xLen < 0 = strip repeating every
@@ -45,7 +45,7 @@ export async function createMuralTexture(stageId = 'tidewater') {
   tex.minFilter = THREE.LinearMipmapLinearFilter;
   const rect = (r) => [r.x / W, r.w / W, 1 - (r.y + r.h) / H, r.h / H];
   const kit = { font, fontB: (px) => `800 ${px}px Rubik, "Arial Black", sans-serif`, NAVY, CORAL, TEAL, MUSTARD, CREAM, SKY, squid, blob };
-  // Halyard's decals (the default for every stage without its own): the same pixels and table as always
+  // Halyard-specific decals: kept in the expanded stage atlas only when Halyard is selected.
   const halyard = () => {
     drawCarDeck(g, DECK);
     drawCabinSide(g, CSIDE);
@@ -113,7 +113,7 @@ function squid(g, x, y, s, color, eye = CREAM) {
   g.restore();
 }
 
-// Row 0: big "INKWAVE" banner for the back walls
+// Row 0: ZEVANT banner for the back walls
 function drawBanner(g, y0, font) {
   g.save(); g.translate(0, y0);
   // stripe band
