@@ -46,6 +46,15 @@ for(const c of CASES) {
   assert.equal(digest(prior.initialProjectiles),baseline.cases[c.key].initialProjectilesHash,c.key+' independent old checkout reproduces every archived birth');
   assert.equal(prior.oldCellsHash,baseline.cases[c.key].cellsHash,c.key+' independent old checkout reproduces archived scoring');
 }
+// The shared Roller spawn base (ROLLER_SPAWN_BASE, 1.30 -> 1.35 m) moves only
+// the two Roller rows' births, and with them their landings, scoring cells,
+// stamps and hit-sweep samples. The ranges, reach and glob counts stay equal to
+// the main receipt. Keep that receipt intact and pin the two rows separately;
+// the inverse-birth proof below removes the base shift as well.
+const spawnBase=pinnedFixture('weapons-fidelity-roller-spawn-base-20261018.json','14188c7eb7ee27db12cca9ffd4af765cb573d7756db68fd619d13426fdc318b5');
+assert.deepEqual(Object.keys(spawnBase.cases),['roller-horizontal','roller-vertical']);
+assert.equal(spawnBase.contentHash,digest(spawnBase.cases));
+for(const [key,row] of Object.entries(spawnBase.cases))assert.deepEqual(row.golden,current.cases[key].golden,key+' spawn base keeps reach and counts');
 const golden = Object.fromEntries(Object.entries(current.cases).map(([key, row]) => [key, row.golden]));
 // The reviewed Charger silhouette intentionally changes scoring pixels and
 // forward ink reach, not the pinned source width/depth, projectile births,
@@ -61,7 +70,7 @@ const chargerOrganic = Object.freeze({
   'charger-1': { maxZ:26.625, area:73.5 },
 });
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
-  const c = data.cases[key], expected = current.cases[key], organic = chargerOrganic[key];
+  const c = data.cases[key], expected = spawnBase.cases[key] || current.cases[key], organic = chargerOrganic[key];
   if (organic) {
     assert.notEqual(digest(c.paint.cellsXZ), expected.cellsHash, key + ' new organic Charger contour must differ from the old stamp');
     near(c.paint.area, organic.area, 1e-7);
@@ -72,7 +81,7 @@ for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
   assert.equal(digest(c.initialProjectiles), expected.initialProjectilesHash, key + ' main projectile births');
   if (!organic) assert.equal(digest(c.paintPoints),expected.paintPointsHash,key+' all source stamp dimensions and recorded shape');
   assert.equal(digest(c.groundImpacts),expected.impactsHash,key+' all terrain impacts');
-  if(!key.startsWith('splatling-')) {
+  if(!key.startsWith('splatling-')&&!spawnBase.cases[key]) {
     assert.equal(digest(c.hitSamples),expectedCases[key].hitSamplesHash,key+' unaffected hit sweep remains pinned');
     assert.equal(digest(c.initialProjectiles),expectedCases[key].initialProjectilesHash,key+' unaffected birth remains pinned');
   }
@@ -83,6 +92,8 @@ for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
 // measured hit boundary and on the real paint grid. The built receipt cannot
 // become a replacement for source/build equivalence.
 const sourceFixture = await fixture({ site:path.join(root,'.ci-scratch/unbuilt-weapons-source'), fidelity:true });
+// The archives were captured with the native 1.30 m Roller birth height.
+const ROLLER_BASE_SHIFT = sourceFixture.ROLLER_SPAWN_BASE.height - 1.3;
 // Independently remove only the two sourced birth-coordinate deltas from raw
 // pre-integration rounds, then compare the complete legacy birth record. This
 // catches changes to speed, radii, damage, lifetime, RNG-derived appearance,
@@ -101,6 +112,7 @@ for (const c of CASES.filter(row => row.id === 'roller')) {
     const offset = offsets.get(group) || 0;
     offsets.set(group, offset + 1);
     const start = p.start.clone();
+    start.y -= ROLLER_BASE_SHIFT;
     if (c.vertical) start.y += (1 - offset) * (unit.SpawnPositionHeight || 0);
     else {
       const count = unit.BulletNum ?? 1, fan = count > 1 ? 2 * offset / (count - 1) - 1 : 0;
@@ -182,7 +194,9 @@ for (const c of CASES) {
     circleCase=c;
     const controlActor=reset(circleFixture,c);launch(circleFixture,controlActor,c);finish(circleFixture,controlActor);
     const circlePaint=paintMetrics(circleFixture);
-    assert.equal(digest(circlePaint.cellsXZ),expectedCases[c.key].cellsHash,c.key+' restoring just the prior masks restores every archived scoring cell');
+    // Moved Roller births land elsewhere, so their mask-only control is pinned
+    // with the spawn-base receipt instead of the pre-base archive.
+    assert.equal(digest(circlePaint.cellsXZ),spawnBase.cases[c.key]?.circleCellsHash??expectedCases[c.key].cellsHash,c.key+' restoring just the prior masks restores every archived scoring cell');
     const subjectStamps=physicalStamps(sourceFixture.paints);
     if(c.id==='roller') {
       assert.equal(subjectStamps[0].time,0,'one release-time Roller foot stamp');
