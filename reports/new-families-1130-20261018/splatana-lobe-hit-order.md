@@ -12,4 +12,8 @@
 
 近接slashの4F・seen・対物経路とStringerの独立damage centreは変更しておらず、近接/対物/爆発offset/LOS等の重点21試験も修正後に成功。sourceとemittedのCI列へ新試験を接続した。最終production・ブラウザ・mask・通信・負荷は親作業の新生成物受領に記録する。
 
+実productionの235条件×3周期=705確認も全成功。旧`fb8eea6e`との差はジムのfull（基本＋2キット、3条件／9周期）のpaint checksum `527116735→254132684`だけで、観測cloneも一致した。
+frame62／step24では壁Z=25・face9のCoreIndex3終端`t=.21896321001042965`より、外側0／6の接触`t=.3439723926520866`が後着し、従来の2スタンプ・壁3セルだけを除去する。Turfcounts323は不変。
+残る16スタンプの位置・半径・face・seed・順序、RNG6386回、全25stepの移動状態は一致した。近敵の独立再現に加え、この実production差の因果を`/workspace/final-runtime-matrix-lobe.json`へ保存した。
+
 これは#1579の外側lobeモデル内部で接触時刻と所有権を整合した修正。本家の外側退役アルゴリズムを新たに立証するものではない。退役lobeとBossの集約半径・描画meshの形状対応は別の未検証項目として残る。
