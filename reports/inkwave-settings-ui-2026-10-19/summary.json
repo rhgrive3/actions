@@ -2,7 +2,7 @@
   "scope": "production-composed settings screen and Chromium native-game UI probe; no physical-device or FPS equivalence claim",
   "baselineSourceSha": "dfbdcc9c523790f66fa56a22e4cf7873bdb3af03",
   "runtimeSourceSha": "936fec672eaabefd98cc2afc8c778557229373a1",
-  "checkerSha256": "f7237defaa22ff5acf50a2faddd1eddde2b972ae527d2df0a711e27ecab67d76",
+  "checkerSha256": "07c7f3372034fb245f77e0434b3c1b76af4ff3c3fba149b1a53793d4ae3bccad",
   "settingsUi": {
     "results": [
       {
@@ -80,5 +80,58 @@
       "passed": 10,
       "skipped": 0
     }
+  },
+  "settingsUiEnglish": {
+    "results": [
+      {
+        "language": "en",
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "passed": true,
+        "snapshotsPerRefresh": 1,
+        "stableFrames": 120,
+        "stableListGeometryReads": 0,
+        "scrollGeometryReads": 3,
+        "trustedMouseDragAndTabClick": true
+      },
+      {
+        "language": "en",
+        "viewport": {
+          "width": 844,
+          "height": 390
+        },
+        "passed": true,
+        "snapshotsPerRefresh": 1,
+        "stableFrames": 120,
+        "stableListGeometryReads": 0,
+        "scrollGeometryReads": 3,
+        "trustedMouseDragAndTabClick": true,
+        "trustedTouchTabs": true
+      },
+      {
+        "language": "en",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "passed": true,
+        "snapshotsPerRefresh": 1,
+        "stableFrames": 120,
+        "stableListGeometryReads": 0,
+        "scrollGeometryReads": 3,
+        "trustedMouseDragAndTabClick": true,
+        "trustedTouchTabs": true
+      }
+    ],
+    "errors": []
+  },
+  "localQualitySuite": {
+    "tests": 1124,
+    "passed": 1115,
+    "failed": 0,
+    "skipped": 9,
+    "durationMs": 669033.95402
   }
 }

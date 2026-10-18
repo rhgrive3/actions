@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 const arg = name => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw new Error('Required ' + name); return path.resolve(process.argv[i + 1]); };
 const site = arg('--site'), evidence = arg('--evidence-dir');
+const language = process.argv.includes('--english') ? 'en' : 'ja';
 fs.mkdirSync(evidence, { recursive: true });
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
 const mime = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
@@ -36,6 +37,7 @@ const results = [], errors = [];
 try {
   for (const viewport of [{ width: 1280, height: 800 }, { width: 844, height: 390 }, { width: 390, height: 844 }]) {
     const page = await browser.newPage({ viewport, hasTouch: viewport.width < 1000, isMobile: viewport.width < 1000, reducedMotion: 'reduce' });
+    await page.addInitScript(lang => localStorage.setItem('inkwave.settings', JSON.stringify({ lang })), language);
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/__settings.html`);
     await page.waitForFunction(() => window.ready);
@@ -121,7 +123,7 @@ try {
     const tabLabelsFit = await page.locator('.iw-settings .iw-tab > span').evaluateAll(labels => labels.every(el => el.getBoundingClientRect().height <= parseFloat(getComputedStyle(el).lineHeight) + 1));
     assert(tabLabelsFit, 'settings tab labels stay on one line');
     await page.screenshot({ path: path.join(evidence, `settings-${viewport.width}x${viewport.height}.png`) });
-    results.push({ viewport, ...result });
+    results.push({ language, viewport, ...result });
     await page.evaluate(() => window.menu.dispose());
     await page.close();
   }
