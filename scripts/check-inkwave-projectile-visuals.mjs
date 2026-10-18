@@ -14,6 +14,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { projectileDrawRadius, projectileVisualWidth } from '../patches/splatoon3/runtime/projectile-visuals.mjs';
 import { startProjectileThroughMenu } from './lib/inkwave-projectile-menu-start.mjs';
+import { atomicIntroFunction, requireAtomicIntro } from './lib/inkwave-projectile-atomic-intro.mjs';
 import { completeNativeTurfIntro } from './lib/inkwave-projectile-ci-intro.mjs';
 import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';
 
@@ -263,18 +264,19 @@ async function openGameContext({ mobile = false } = {}) {
     phaseMark('admission','begin');
     await requireNativePhase(admissionReady, 'native Turf actor/controller admission');
     phaseMark('admission','end');
-    phaseMark('intro','begin');
-    const introTransition = await page.evaluate(completeNativeTurfIntro);
-    phaseMark('intro','end');
-    (report.provenance.introTransitions ||= []).push({ mobile, ...introTransition });
     const playingReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return !!(G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
         !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer);
     };
+    phaseMark('intro','begin');
     phaseMark('playing','begin');
-    await requireNativePhase(playingReady, 'native Turf playing transition');
+    const atomicReceipt = await requireAtomicIntro(page,
+      atomicIntroFunction(completeNativeTurfIntro,playingReady),deadline);
+    phaseMark('intro','end');
     phaseMark('playing','end');
+    (report.provenance.introTransitions ||= []).push({mobile,...atomicReceipt.intro});
+    (report.provenance.atomicPlayingReceipts ||= []).push({mobile,...atomicReceipt.readiness,playingReady:atomicReceipt.playingReady});
   } catch (error) {
     const failedAt=Date.now();phaseReceipt.events.push({phase:'failure',event:'caught',atMs:failedAt,elapsedMs:failedAt-phaseReceipt.startedAtMs,remainingMs:Math.max(0,phaseReceipt.deadlineAtMs-failedAt)});
     const observed = await page.evaluate(() => {
