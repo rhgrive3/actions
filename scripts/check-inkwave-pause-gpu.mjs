@@ -67,6 +67,8 @@ try {
       for(const undo of restore)undo();
       return pause;
     });
+    console.log(spec.name+': measured '+JSON.stringify(row));
+    fs.writeFileSync(path.join(output,spec.name+'-measurement.json'),JSON.stringify(row,null,2)+'\n');
     assert.equal(row.stateUnchanged,true);assert.equal(row.paused,true);assert.equal(row.menu,'pause');assert.equal(row.glError,0);
     assert.equal(row.counts.world,0,'existing offline world cache stays idle');
     assert.ok(row.animations.length>0,'HUD animation sensitivity');

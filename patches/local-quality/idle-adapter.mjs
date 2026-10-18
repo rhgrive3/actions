@@ -21,10 +21,25 @@ export function adaptIdleSource(rel, code, replace) {
     this.el.classList.toggle('is-world-paused', on);
     this.overLayer.classList.toggle('is-world-paused', on);
     if (on) {
+      // CSS animation-play-state does not own CSS transitions or animations
+      // started through Element.animate(). Park those finite effects too.
+      this._worldPausedAnimations = [];
+      for (const root of [this.el, this.overLayer]) {
+        for (const animation of root.getAnimations?.({ subtree: true }) || []) {
+          if (typeof animation.animationName === 'string' || animation.playState !== 'running') continue;
+          animation.pause(); this._worldPausedAnimations.push(animation);
+        }
+      }
       cancelAnimationFrame(this._rafId); this._rafId = 0;
-    } else if (this._fxMap?.size && !this._rafId) {
-      this._lastFx = performance.now();
-      this._rafId = requestAnimationFrame(this._fxLoop);
+    } else {
+      for (const animation of this._worldPausedAnimations || []) {
+        if (animation.playState === 'paused' && animation.effect?.target?.isConnected !== false) animation.play();
+      }
+      this._worldPausedAnimations = null;
+      if (this._fxMap?.size && !this._rafId) {
+        this._lastFx = performance.now();
+        this._rafId = requestAnimationFrame(this._fxLoop);
+      }
     }
   }
 

@@ -10,12 +10,16 @@ const hudSource = composed('src/ui/hud.js'), gameSource = composed('src/main.js'
 
 test('offline HUD effects park without losing work; resume resets the wall clock and keeps debug pause independent', async () => {
   const h = await fixture({ hudSource, gameSource });
+  const moving = { playState:'running', pause(){this.playState='paused';}, play(){this.playState='running';} };
+  const userPaused = {playState:'paused',play(){throw Error('foreign pause ownership');}};
+  h.hud.el.getAnimations = () => [moving,userPaused];
   let elapsed = 0;
   h.hud._addFx('lens', dt => { elapsed += dt; });
   await h.advance(100);
   const before = elapsed;
   h.hud.paused = true;
   h.hud.setWorldPaused(true);
+  assert.equal(moving.playState,'paused','finite Web Animations/transitions also stop behind the blur');
   assert.equal(h.rafs.size, 0);
   assert.equal(h.hud.el.classList.contains('is-world-paused'), true);
   assert.equal(h.hud.overLayer.classList.contains('is-world-paused'), true);
@@ -27,6 +31,7 @@ test('offline HUD effects park without losing work; resume resets the wall clock
   h.hud._fxLoop(h.now());
   assert.equal(h.rafs.size, 0);
   h.hud.setWorldPaused(false);
+  assert.equal(moving.playState,'running');
   assert.equal(h.hud.paused, true);
   assert.equal(h.rafs.size, 1);
   h.hud.paused = false;
