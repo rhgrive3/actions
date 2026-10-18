@@ -56,5 +56,28 @@ for(const sourceEnabled of [true,false]){
  }
  scene.remove(ch.root);ch.dispose();G.actors=[];
 }
-scene.environment=null;env.dispose();renderer.dispose();return {status:'rendered-awaiting-visual-review',caseCount:rows.length,scope:'actual emitted unposed squid geometry-rest surface (local placement transforms excluded) plus actual Actor source/fallback dry/swim/turn/emergence sequence; production day Environment; driven actors, not full match physics',rows,geometry,states,coverage,actorFrame:ACTOR_FRAME,lightingReceipt};
+// Existing source jump, driven ballistic input; this is not full match physics.
+// A fresh actor leaves the original 80-frame matrix and its timing unchanged.
+const jumpStates=[];
+{
+ class JumpCharacter extends Character{constructor(opts){super({...opts,sourceMotion:true});}}
+ const a=new Actor({team:0,isLocal:true,name:'squid-jump-qa-fixed',weapon:'shooter',CharacterClass:JumpCharacter,style:{hair:0,hat:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
+ ch.actor=a;ch.onEvent=null;scene.add(ch.root);G.actors=[a];a.grounded=a.ground.hit=true;
+ await ch._sourceMotionLoader;await ch.sourceMotion?.ready;if(ch.sourceMotion?.status!=='ready')throw Error('Jump source not ready');
+ const dt=1/60;for(let i=0;i<60;i++){G.time+=dt;a._finishFrame(dt);ch.root.updateMatrixWorld(true);}
+ a.form='squid';a.submerged=false;for(let i=0;i<60;i++){G.time+=dt;a._finishFrame(dt);ch.root.updateMatrixWorld(true);}
+ a.grounded=a.ground.hit=false;
+ for(let i=1;i<=12;i++){
+  a.vel.set(0,4-9.8*(i-1)*dt,1);a.pos.addScaledVector(a.vel,dt);G.time+=dt;a._finishFrame(dt);ch.root.updateMatrixWorld(true);
+  if(![1,3,6,12].includes(i))continue;
+  const debug=ch.sourceMotion?.debug?.squid;if(debug?.name!=='Sqd_Jump')throw Error('Expected existing Sqd_Jump: '+JSON.stringify(debug));
+  jumpStates.push({sampleFrame:i,milliseconds:i*1000/60,grounded:a.grounded,position:a.pos.toArray(),velocity:a.vel.toArray(),sourceDebug:debug});
+  for(const [view,v]of Object.entries({front:[0,.25,-2],oblique:[1.3,.9,-1.3],side:[2,.4,0],back:[0,.4,2]})){
+   const target=ch.root.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,ACTOR_FRAME.centerY,0));camera.position.copy(target).add(new THREE.Vector3(...v).normalize().multiplyScalar(ACTOR_FRAME.distance));camera.lookAt(target);camera.updateMatrixWorld(true);
+   await renderer.compileAsync(scene,camera);renderer.render(scene,camera);renderer.getContext().finish();const name='source-jump-'+i+'-'+view;progress.stage=name;assertCoverage(ch.root,name);await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL());rows.push({name,view,sampleFrame:i,sourceDebug:debug});
+  }
+ }
+ scene.remove(ch.root);ch.dispose();G.actors=[];
+}
+scene.environment=null;env.dispose();renderer.dispose();return {status:'rendered-awaiting-visual-review',caseCount:rows.length,scope:'actual emitted unposed squid geometry-rest surface (local placement transforms excluded) plus actual Actor source/fallback dry/swim/turn/emergence sequence; production day Environment; driven actors, not full match physics',rows,geometry,states,jumpStates,coverage,actorFrame:ACTOR_FRAME,lightingReceipt};
 }

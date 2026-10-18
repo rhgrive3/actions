@@ -18,3 +18,15 @@ The existing production source-motion bank is Wii U-derived; it is not an S3 key
 `patches/local-quality/tests/squid-source-presentation.test.mjs` loads actual fully composed Actor/Character and awaits the real source bank. It covers three LODs and 30/60/120 Hz, long/short skin chain ownership, source-only deformation, finite pose during turns/stops, emergence and preserved native fallback. Result: 2/2 tests, 2,625 driven Actor frames, 1,260 source deformation checks, no skips. Existing swim-motion, motion-five-regression and source-motion-assets suites: 16/16 pass, including native physics/gameplay clocks/pose channels and existing action-pose boundaries.
 
 The fixture drives Actor presentation on an isolated own-ink floor; this is not full-match parity. Browser before/after capture with exact emitted artifact receipts is required before visual acceptance. Local Chromium execution is blocked by the environment, so native captures are delegated to the dedicated CI workflow. No browser result is claimed here.
+
+## Follow-on: eye-band skin alignment
+
+Native 8d597 before/after images showed restored band orientation but a jagged upper edge. The overlay used `Sqd_head0/Sqd_forehead` weights while the adjoining mantle uses `Sqd_head0/1/2`. An identical-position comparison at the actual dry `Sqd_Wait` frame45 measured max6.8075mm (mean4.2735mm) differential displacement; swimming `Sqd_Walk` frame4.72 measured max1.0190mm. This is material relative to the authored band's embedded5mm perimeter.
+
+The bounded follow-on routes the band through the same y-based mantle weighting, without changing geometry, surface offset, topology, materials or any human rig. Corrected same-position differential is below5.8e-9 host units (Float32 weight rounding) in both sampled poses. The regression asserts every band vertex's exact chain and interpolated weights at each LOD/rate. This proves skin alignment, not the final quality of the deliberately intersecting perimeter: native visual acceptance remains required.
+
+## Follow-on: retain authored dry orientation in the source path
+
+The actual Character returns from `_updateSquid` as soon as its source rig succeeds. This skipped the existing S3-look adapter's flat dry coordinate frame entirely: the native fallback used pitch `PI/2-.52`, while source `Sqd_Wait` and slow `Sqd_Jump` retained an upright identity pivot. Actual airborne Actor input reproduced `Sqd_Jump` frames0/2/5/11 at16.7/50/100/200ms with that identity pivot. Comparing the upright idle to Nintendo's forward-leaning jump therefore conflated pose with shape.
+
+This repair retains the already authored dry resting axis and offset in the source path. The source bank continues to own hop/deformation; no native bob or procedural wave is stacked on it. Fast airborne dry movement uses the existing native flight-direction pitch formula. Manual source-clip previews, swim/climb, source clip selection/timing and humanoid paths are unchanged. This does not claim that the existing bank is S3-identical. A matched existing-jump native comparison is still required before shape proportions or motion quality can be accepted.

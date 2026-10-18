@@ -30,8 +30,41 @@ const HALF_TURN = `
 // body, so players saw an unexplained own-colour ellipse under the squid. The local swimmer now uses the same
 // squid-shaped ghost on every weapon path.
 
+const SQUID_EYE_MATERIAL = `export function makeSquidEyeMaterial(u) {
+  // Squid-only painted eyes. Nintendo ikahito_pc.mp4 2.9–3.4s shows broad
+  // white patches with dark pupils, without the human coloured iris spokes.
+  const m = new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:0.18,metalness:0,clearcoat:1,clearcoatRoughness:0.05,specularIntensity:0.5});
+  m.onBeforeCompile = shader => {
+    shader.uniforms.uLook=u.uLook;shader.uniforms.uFlash=u.uFlash;
+    inject(shader, {
+      vPars:'varying vec2 vSquidEyeUv;',
+      vBegin:'vSquidEyeUv=uv;',
+      fPars:'varying vec2 vSquidEyeUv; uniform vec2 uLook; uniform vec3 uFlash;',
+      fColor:\`
+        vec2 p=vSquidEyeUv;
+        vec2 gaze=clamp(uLook,vec2(-0.16),vec2(0.16));
+        vec2 q=(p-gaze-vec2(0.0,0.27))/vec2(0.38,0.43);
+        float d=length(q)-1.0,aa=max(fwidth(d),0.001);
+        float pupil=1.0-smoothstep(-aa,aa,d);
+        float r=length(p),ra=max(fwidth(r),0.001);
+        float rim=smoothstep(0.94-ra,0.94+ra,r);
+        diffuseColor.rgb=mix(vec3(0.94,0.95,0.97),vec3(0.008,0.007,0.018),max(pupil,rim));
+      \`,
+      fEmissive:'totalEmissiveRadiance += uFlash * 0.5;',
+    });
+  };
+  m.customProgramCacheKey=()=> 'squid-eye-white-dark-v1';
+  return m;
+}
+
+`;
+
 export function adaptS3SquidLook(rel, code) {
   if (rel === 'src/game/character.js') {
+    code = once(code, 'getDarkMaterial, makeEyeMaterial,', 'getDarkMaterial, makeEyeMaterial, makeSquidEyeMaterial,', 'squid eye factory import');
+    code = once(code, '      eye: makeEyeMaterial(u),', '      eye: makeEyeMaterial(u),\n      squidEye: makeSquidEyeMaterial(u),', 'owned squid eye material');
+    code = once(code, 'new THREE.Mesh(sh.eyes, this.mats.eye)', 'new THREE.Mesh(sh.eyes, this.mats.squidEye)', 'squid eye attachment');
+    code = once(code, "'eye', 'fill', 'squid',", "'eye', 'squidEye', 'fill', 'squid',", 'squid eye disposal');
     code = once(code, '    this.squid = { pivot, body, ghost, dark, eyes };\n', '    this.squid = { pivot, body, ghost, dark, eyes };' + HALF_TURN + '\n', 'trailing face');
     // Dry ground: the clips show the squid lying flat, mantle pointing along travel and eyes up (move02 0.0–0.25 s
     // and 6.6 s), not standing on its arms. Keep the native hop/squash/yaw clocks; only the resting axis changes.
@@ -39,6 +72,24 @@ export function adaptS3SquidLook(rel, code) {
       "      _e1.set(tilt, this.sqYaw, 0.05 * Math.sin(t * 2.3), 'YXZ'); q.setFromEuler(_e1);\n      p.set(0, 0.165 + hop, 0);",
       "      _e1.set(Math.PI / 2 - 0.52 - tilt * 0.5, this.sqYaw, 0.05 * Math.sin(t * 2.3), 'YXZ'); q.setFromEuler(_e1);\n      p.set(0, 0.09 + hop * 0.8, 0);\n      _v2.set(0, -0.11, 0).applyQuaternion(q); p.add(_v2);", 'flat dry squid');
     return code;
+  }
+  if (rel === 'src/game/character-mats.js') {
+    if(code.includes('export function makeSquidEyeMaterial(')) throw new Error('INKWAVE S3 squid look conflict (eye factory already adapted)');
+    const split=code.indexOf('export function makeSquidMaterial(u, ghost = false) {');
+    if(split<0) throw new Error('INKWAVE S3 squid look conflict (squid material missing)');
+    const head=code.slice(0,split);let body=code.slice(split);
+    body=once(body,'          diffuseColor.rgb *= mix(0.7, 1.0, iwAO);', `          // Dark violet club coating and pale spots observed across 2.9–3.4s.
+          // Negative tint is authored only for the two long feeler tips.
+          if(vSqPart > 0.5 && vTint < -0.05) {
+            float tip=smoothstep(0.05,0.9,-vTint);
+            vec3 club=vec3(0.075,0.04,0.16);
+            if(vSqPart > 1.5 && vSqPart < 2.5) club=mix(vec3(0.13,0.08,0.24),vec3(0.38,0.29,0.56),smoothstep(0.1,0.65,vSq.y-1.0));
+            else if(vSqPart < 1.5) club=mix(club,vec3(0.38,0.29,0.56),iwSuck);
+            diffuseColor.rgb=mix(diffuseColor.rgb,club,tip);
+          }
+          diffuseColor.rgb *= mix(0.7, 1.0, iwAO);`, 'two long club coating');
+    code=head+body;
+    return once(code, 'export function makeSquidMaterial(u, ghost = false) {', SQUID_EYE_MATERIAL + 'export function makeSquidMaterial(u, ghost = false) {', 'squid-only eye surface');
   }
   if (rel === 'src/game/character-geo.js') {
     // the two long feelers hang in front of the face (the +Z side, which faces the camera after the half turn),
@@ -56,6 +107,7 @@ export function adaptS3SquidLook(rel, code) {
     code = once(code,
       'color: (p, i) => _c.setRGB(tint(tA[i]), tA[i], k / N)',
       'color: (p, i) => _c.setRGB(feeler ? lerp(tint(tA[i]), -0.95, sstep(0.5, 0.8, tA[i])) : tint(tA[i]), tA[i], k / N)', 'dark feeler clubs');
+    code = once(code, '_c.setRGB(tint(ct[i]) + 0.1, ct[i], k / N)', '_c.setRGB(feeler ? lerp(tint(ct[i]) + 0.1, -0.95, sstep(0.5, 0.8, ct[i])) : tint(ct[i]) + 0.1, ct[i], k / N)', 'club spot coating marker');
     // bigger eyes in a slightly taller mask band, as the clips' squid face reads mostly as eyes
     code = once(code, 'const hh = 0.045 * Math.pow(', 'const hh = 0.053 * Math.pow(', 'taller mask band');
     code = once(code, 'sqSurfN(sx * 0.5 + u * 0.31, 0.092 + v * 0.037,', 'sqSurfN(sx * 0.5 + u * 0.37, 0.092 + v * 0.045,', 'bigger squid eyes');
