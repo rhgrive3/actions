@@ -75,11 +75,12 @@ export function adaptQueueNine(rel, input) {
   if (matches.length !== 1) throw new Error('INKWAVE queue patch conflict: settings assignment not unique');
   code = code.replace(settingsAssign, value =>
     value + '\n    this.settings = G.settings = sanitizeSettings(this.settings, DEFAULT_SETTINGS, QUALITY);');
-  code = once(code, "    this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);",
-    "    const storedProfile = loadJSON('inkwave.profile', DEFAULT_PROFILE);\n" +
-    '    this.profile = sanitizeProfile(storedProfile, DEFAULT_PROFILE, WEAPONS);\n' +
-    "    if (JSON.stringify(storedProfile) !== JSON.stringify(this.profile)) saveJSON('inkwave.profile', this.profile);",
-    'persisted profile admission');
+  // Existing gear/profile migration overlays may wrap the source load expression.
+  // Sanitize the *already migrated* profile, instead of assuming its old literal.
+  const profileAssignments = [...code.matchAll(/^    this\.profile = [^\n]+;$/gm)];
+  if (profileAssignments.length !== 1) throw new Error('INKWAVE queue patch conflict: profile boot assignment not unique (' + profileAssignments.length + ')');
+  code = code.replace(/^    this\.profile = [^\n]+;$/gm, line =>
+    line + '\n    this.profile = sanitizeProfile(this.profile, DEFAULT_PROFILE, WEAPONS);');
   code = once(code, '    Object.assign(this.settings, partial);',
     '    Object.assign(this.settings, sanitizeSettings({ ...this.settings, ...partial }, DEFAULT_SETTINGS, QUALITY));',
     'live settings admission');
