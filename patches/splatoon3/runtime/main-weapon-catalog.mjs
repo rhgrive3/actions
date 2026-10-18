@@ -1188,8 +1188,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const paintSpeedMin=finite(paintParam.SpeedMin,0)*HZ,paintSpeedMax=finite(paintParam.SpeedMax,max/HZ)*HZ;
     // Missing sparse width defaults stay calibrated; interpolate only an
     // explicit pair, instead of declaring an invented minimum sourced.
-    const radius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
+    const sourceRadius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
       paintSpeedMax>paintSpeedMin?clamp((speed-paintSpeedMin)/(paintSpeedMax-paintSpeedMin)):1);
+    // Contact-only visual calibration: source half-widths were previously
+    // rendered at ballistic scale, several times wider than the drum/bristles.
+    // Preserve raw tables and damage radius; these are image-guided estimates.
+    const radius=sourceRadius*(r.family==='brush'?.25:.3);
     const at=a.pos.clone().addScaledVector(a.aimDir,.6);
     // Drum/brush floor contact follows body yaw, not reticle pitch. An aimed-down
     // camera formerly pushed the ray origin below the floor and lost every mark.
@@ -1203,10 +1207,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const from=stroke.from;
     if (stroke.face!==a.ground?.face) stroke.active=false;
     const distance=stroke.active?Math.hypot(to.x-from.x,to.z-from.z):0;
-    // On a normal 60Hz frame there is one native source-width stamp; only a
-    // discontinuous long frame is subdivided, with a strict six-splat cap.
-    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.28,radius*.52))));
-    const depth=1+speed*dt/Math.max(.1,radius);
+    // Sample the narrower contact band at half its radius, including fast
+    // brushes. Share the frame depth across subdivisions; cap at six splats.
+    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.04,radius*.52))));
+    const depth=1+speed*dt/(stamps*Math.max(.1,radius));
     for(let i=1;i<=stamps;i++){
       const t=i/stamps;
       stroke.point.set(from.x+(to.x-from.x)*t,to.y,from.z+(to.z-from.z)*t);
@@ -1214,7 +1218,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     from.copy(to);stroke.active=true;stroke.face=a.ground?.face;
     s.contactTimes ||= new Map();
-    for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<radius+PLAYER.radius&&
+    for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<sourceRadius+PLAYER.radius&&
       G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(at,enemy.pos)){
       withObjectDamageCause({owner:a,type:r.family==='brush'?'brush-body':'roller',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id));s.contactTimes.set(enemy,G.time);
     }

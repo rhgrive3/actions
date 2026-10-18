@@ -1,0 +1,227 @@
+{
+  "build": "2cf999e115418890b3fa61c92fcbbd066cf9d5e96b3b374b0d69bc95c75f4e37",
+  "browser": "154.0.8037.57",
+  "realCharacter": true,
+  "realPhysics": true,
+  "cpuPaint": true,
+  "hardwareParity": false,
+  "checks": [
+    {
+      "id": "roller",
+      "hz": 30,
+      "stamps": 211,
+      "cells": 328,
+      "headingSamples": 62,
+      "maxHalf": 0.84,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "roller",
+      "hz": 60,
+      "stamps": 211,
+      "cells": 328,
+      "headingSamples": 62,
+      "maxHalf": 0.84,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "roller",
+      "hz": 120,
+      "stamps": 211,
+      "cells": 328,
+      "headingSamples": 62,
+      "maxHalf": 0.84,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-compact",
+      "hz": 30,
+      "stamps": 180,
+      "cells": 503,
+      "headingSamples": 59,
+      "maxHalf": 0.66,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-compact",
+      "hz": 60,
+      "stamps": 180,
+      "cells": 503,
+      "headingSamples": 59,
+      "maxHalf": 0.66,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-compact",
+      "hz": 120,
+      "stamps": 180,
+      "cells": 503,
+      "headingSamples": 59,
+      "maxHalf": 0.66,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-heavy",
+      "hz": 30,
+      "stamps": 145,
+      "cells": 339,
+      "headingSamples": 24,
+      "maxHalf": 1.02,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-heavy",
+      "hz": 60,
+      "stamps": 145,
+      "cells": 339,
+      "headingSamples": 24,
+      "maxHalf": 1.02,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-heavy",
+      "hz": 120,
+      "stamps": 145,
+      "cells": 339,
+      "headingSamples": 24,
+      "maxHalf": 1.02,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-hunter",
+      "hz": 30,
+      "stamps": 171,
+      "cells": 441,
+      "headingSamples": 50,
+      "maxHalf": 0.78,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-hunter",
+      "hz": 60,
+      "stamps": 171,
+      "cells": 441,
+      "headingSamples": 50,
+      "maxHalf": 0.78,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-hunter",
+      "hz": 120,
+      "stamps": 171,
+      "cells": 441,
+      "headingSamples": 50,
+      "maxHalf": 0.78,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-wide",
+      "hz": 30,
+      "stamps": 172,
+      "cells": 623,
+      "headingSamples": 51,
+      "maxHalf": 1.02,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-wide",
+      "hz": 60,
+      "stamps": 172,
+      "cells": 623,
+      "headingSamples": 51,
+      "maxHalf": 1.02,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-roller-wide",
+      "hz": 120,
+      "stamps": 172,
+      "cells": 623,
+      "headingSamples": 51,
+      "maxHalf": 1.02,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-brush-mini",
+      "hz": 30,
+      "stamps": 485,
+      "cells": 159,
+      "headingSamples": 84,
+      "maxHalf": 0.15,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-brush-mini",
+      "hz": 60,
+      "stamps": 485,
+      "cells": 159,
+      "headingSamples": 84,
+      "maxHalf": 0.15,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-brush-mini",
+      "hz": 120,
+      "stamps": 485,
+      "cells": 159,
+      "headingSamples": 84,
+      "maxHalf": 0.15,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-brush-normal",
+      "hz": 30,
+      "stamps": 278,
+      "cells": 155,
+      "headingSamples": 80,
+      "maxHalf": 0.225,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-brush-normal",
+      "hz": 60,
+      "stamps": 278,
+      "cells": 155,
+      "headingSamples": 80,
+      "maxHalf": 0.225,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-brush-normal",
+      "hz": 120,
+      "stamps": 278,
+      "cells": 155,
+      "headingSamples": 80,
+      "maxHalf": 0.225,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-brush-heavy",
+      "hz": 30,
+      "stamps": 222,
+      "cells": 232,
+      "headingSamples": 55,
+      "maxHalf": 0.325,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-brush-heavy",
+      "hz": 60,
+      "stamps": 222,
+      "cells": 232,
+      "headingSamples": 55,
+      "maxHalf": 0.325,
+      "yaw": 1.5707959132012859
+    },
+    {
+      "id": "s3-brush-heavy",
+      "hz": 120,
+      "stamps": 222,
+      "cells": 232,
+      "headingSamples": 55,
+      "maxHalf": 0.325,
+      "yaw": 1.5707959132012859
+    }
+  ],
+  "errors": []
+}

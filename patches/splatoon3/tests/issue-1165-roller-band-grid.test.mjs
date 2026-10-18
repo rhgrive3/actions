@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 
+const tooth=x=>1-4*Math.abs(x-Math.floor(x)-.5);
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const RAW = fs.readFileSync(path.join(ROOT, 'inkwave-public/src/world/paint.js'), 'utf8');
 const COMPOSED = adaptSource('src/world/paint.js', RAW);
@@ -21,12 +22,12 @@ assert.ok(cpuRoll, 'CPU roller branch remains in the composed source');
 
 test('#1165 composed GLSL and CPU share the seeded wobble and the zero-inset boundary', () => {
   // Shader: sd = band SDF with the wobble added to the across-stroke half width.
-  assert.match(glslBand[1], /0\.03 \* sin\(q\.x \/ r \* 9\.0 \+ seed \* 30\.0\)/);
-  assert.match(glslBand[1], /0\.018 \* sin\(q\.x \/ r \* 23\.0 \+ seed \* 11\.0\)/);
+  assert.match(glslBand[1], /0\.08 .*fract\(q\.x \/ r \* 2\.1 \+ seed \* 4\.7/);
+  assert.match(glslBand[1], /0\.04 .*fract\(q\.x \/ r \* 5\.3 \+ seed \* 2\.3/);
   assert.match(glslBand[1], /abs\(q\) - vec2\(r \* \$\{BAND_L\} \* grow, r \* \$\{BAND_W\} \+ wv\)/);
   // CPU: same terms, same boundary (sd <= 0), no -0.03 * r inset.
-  assert.match(cpuRoll[1], /0\.03 \* Math\.sin\(along \/ r \* 9\.0 \+ seed \* 30\.0\)/);
-  assert.match(cpuRoll[1], /0\.018 \* Math\.sin\(along \/ r \* 23\.0 \+ seed \* 11\.0\)/);
+  assert.match(cpuRoll[1], /0\.08 .*Math\.abs\(toothA - Math\.floor\(toothA\)/);
+  assert.match(cpuRoll[1], /0\.04 .*Math\.abs\(toothB - Math\.floor\(toothB\)/);
   assert.match(cpuRoll[1], /if \(sd > 0\) continue;/);
   assert.doesNotMatch(cpuRoll[1], /-0\.03 \* r/);
 });
@@ -37,7 +38,7 @@ test('#1165 CPU/GPU roller body agree at grid-aligned cells over radii, seeds an
   // GPU oracle: the composed shader's band expression for grow = 1 (final body).
   const gpuOwns = (px, py, dx, dy, r, seed) => {
     const along = px * dx + py * dy, across = -px * dy + py * dx;
-    const wv = r * (0.03 * Math.sin(along / r * 9.0 + seed * 30.0) + 0.018 * Math.sin(along / r * 23.0 + seed * 11.0));
+    const wv = r * (.08*tooth(along/r*2.1+seed*4.7+.25)+.04*tooth(along/r*5.3+seed*2.3+.25));
     const qa = Math.abs(along) - r * 0.55, qb = Math.abs(across) - (r * 0.62 + wv);
     return Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * 0.1 <= 0;
   };

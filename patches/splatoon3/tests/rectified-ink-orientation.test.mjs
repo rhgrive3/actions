@@ -11,11 +11,14 @@ const options={fullRuntime:true,productionComposition:true,realProjectiles:true}
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const reference=JSON.parse(fs.readFileSync(new URL('../reference/rectified-blast-contour-20261018.json',import.meta.url)));
 
-test('floor guides reproduce the photograph within 0.26px; all legacy profile bytes remain stable',()=>{
+test('floor guides reproduce the photograph within 0.26px; legacy airborne profile bytes remain stable beside the calibrated contact band',()=>{
   const r=reference.profiles['ink-blast-rectified'],c=r.floorCalibration;
   assert.deepEqual(INK_PROFILE_SECTIONS[9],r.sections);
   for(let i=0;i<c.guideY.length;i++)assert.ok(Math.abs((c.a*i+c.b)/(c.c*i+1)-c.guideY[i])<.26);
-  assert.equal(digest(INK_PROFILE_BYTES.subarray(0,9*512)),'4d570bc95ba89e8b459f8200a19432eaaeeb571ff2d17d7f87ce9ad393d0cd94');
+  // Row 4 is intentionally changed by the rolling-contact calibration.
+  // Every airborne legacy row still matches the independent prior main.
+  assert.equal(digest(Buffer.concat([INK_PROFILE_BYTES.subarray(0,4*512),INK_PROFILE_BYTES.subarray(5*512,9*512)])),
+    '4b9e95684601aa345989e1049cc3dea39a42f4cda0a074f827961dc6debc4dc7');
   assert.notEqual(digest(INK_PROFILE_BYTES.subarray(8*512,9*512)),digest(INK_PROFILE_BYTES.subarray(9*512,10*512)));
 });
 
