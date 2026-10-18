@@ -66,8 +66,15 @@ export function adaptWeaponAudio(rel,code){
   }
   if(rel==='src/main.js'){
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
-      'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); self._prepareGyro(); },',
-      'iPad start tap initializes audio before deferred screen wipe');
+      'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
+      'iPad start tap initializes audio and warms the selected recorded shot before screen wipe');
+    // Loadout changes occur in the real menu, well before the shooting clock.
+    // The 2022 shooter MP3 is demand-paged on that user gesture, not first
+    // discovered by the shot that is supposed to play it.
+    code=once(code,
+      "self.profile.weapon = weapon; saveJSON('inkwave.profile', self.profile);",
+      "self.profile.weapon = weapon; saveJSON('inkwave.profile', self.profile); G.audio?.prepareWeapon?.(weapon,{urgent:true});",
+      'main-weapon loadout MP3 prefetch');
 
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
