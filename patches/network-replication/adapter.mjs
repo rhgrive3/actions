@@ -2137,8 +2137,10 @@ function firstSplatStateFor(session,cfg) {
         throw Error('Network draw counter anchor mismatch');
       code = code.slice(0, at) + '    let n = 0, remoteDrawn = 0;' + code.slice(at + '    let n = 0;'.length);
     }
-    patch('      if (n >= MAX_BLOBS - 5) break;\n      if (p.delay > 0) continue;',
-      `      if (n >= MAX_BLOBS - 5) break;
+    const drawCap = code.includes('      if (n >= MAX_BLOBS - 5 - reserve) break;')
+      ? 'MAX_BLOBS - 5 - reserve' : 'MAX_BLOBS - 5';
+    patch(`      if (n >= ${drawCap}) break;\n      if (p.delay > 0) continue;`,
+      `      if (n >= ${drawCap}) break;
       if (p.ghost && remoteDrawn >= MAX_BLOBS - 64) continue;
       if (p.delay > 0) continue;
       // No ephemeral arrays or callbacks in the 60Hz ink renderer.
