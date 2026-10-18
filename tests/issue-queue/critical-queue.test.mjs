@@ -4,8 +4,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { adaptBuildSource } from '../../scripts/inkwave-source-composition.mjs';
-import { sanitizeSettings, sanitizeProfile, awardProfileXP, validWeaponId, validStartRoster } from '../../inkwave-public/src/core/save-validation.mjs';
+import { sanitizeSettings, sanitizeSettingsChange, sanitizeProfile, awardProfileXP, validWeaponId, validStartRoster } from '../../inkwave-public/src/core/save-validation.mjs';
 import { crabTankShotGeometry } from '../../patches/splatoon3/runtime/crab-tank-aim.mjs';
+import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';
+import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';
+import { kitPaintRadiusAllowed, consumeKitPaint } from '../../patches/network-replication/kit-paint-admission.mjs';
+import { migrateAimProfiles, applyAimSettingsChange } from '../../patches/local-quality/aim-profile.mjs';
+import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
 
 class Vec {
   constructor(x=0,y=0,z=0){ this.set(x,y,z); }
@@ -44,6 +49,27 @@ test('corrupt persisted input scalars are finite on load and live changes',()=>{
   }
   assert.equal(sanitizeSettings({gyroSens:-5,touchSens:-5,sensitivity:.75},settings,quality).gyroSens,-5);
   assert.equal(sanitizeSettings({sensitivity:.75},settings,quality).sensitivity,.75);
+});
+test('S3 signed sensitivities and profile-only changes preserve the native aim owner',()=>{
+  for(const value of [-5,0,5]) {
+    const saved=sanitizeSettings({padSensitivityScale:'s3',padSensitivity:value,gyroSens:value,
+      aimProfiles:{tv:{padSensitivity:value,gyroSens:value},handheld:{padSensitivity:-value,gyroSens:-value}}},settings,quality);
+    assert.equal(saved.padSensitivity,value);assert.equal(saved.gyroSens,value);
+    assert.equal(saved.aimProfiles.tv.padSensitivity,value);assert.equal(saved.aimProfiles.handheld.padSensitivity,-value);
+    const live=sanitizeSettingsChange({padSensitivity:value,gyroSens:value}, {...settings,padSensitivityScale:'s3'},quality);
+    assert.equal(live.padSensitivity,value);assert.equal(live.gyroSens,value);
+  }
+  const current=migrateAimProfiles({...settings,padSensitivityScale:'s3',aimProfiles:{
+    tv:{padSensitivity:-4,gyroSens:-3},handheld:{padSensitivity:4,gyroSens:3}}},settings);
+  const change=sanitizeSettingsChange({aimProfile:'handheld'},current,quality);
+  assert.deepEqual(change,{aimProfile:'handheld'},'do not copy TV flat values into a Handheld-only switch');
+  applyAimSettingsChange(current,change);
+  assert.equal(current.padSensitivity,4);assert.equal(current.gyroSens,3);
+  assert.equal(current.aimProfiles.tv.padSensitivity,-4);
+  const invalid=sanitizeSettingsChange({padSensitivity:NaN,gyroSens:Infinity,
+    aimProfiles:{tv:{padSensitivity:'bad',gyroSens:{}}}},current,quality);
+  assert.equal(invalid.padSensitivity,4);assert.equal(invalid.gyroSens,3);
+  assert.equal(invalid.aimProfiles.tv.padSensitivity,-4);assert.equal(invalid.aimProfiles.tv.gyroSens,-3);
 });
 test('unknown saved weapon and inherited keys repair to playable loadout',()=>{
   for(const value of ['ghost','constructor','__proto__',{},null]){
@@ -126,7 +152,7 @@ test('composed fixed-step player aim uses current input yaw, not stale gameCam',
   const fn=method('../../inkwave-public/src/game/player.js','  computeAim(simulation = false) {','\n  }\n}',{
     G,_v:new Vec(),_v2:new Vec(),_fwd:new Vec(),_c:new Vec(),_hit:{},
     simulationAimCamera:()=>tickCam,
-    Physics:{},PLAYER:{radius:.5},clamp:(v,a,b)=>Math.max(a,Math.min(b,v))
+    Physics:{},PLAYER:{radius:.5},clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),updateShotGuide,
   },composed);
   const controller={a:actor,rig,onTarget:null,inRange:false};
   fn.call(controller,true);
@@ -135,17 +161,28 @@ test('composed fixed-step player aim uses current input yaw, not stale gameCam',
   fn.call(controller,false);
   assert.ok(Math.abs(Math.atan2(actor.aimPoint.x,actor.aimPoint.z))<1e-9);
 });
+function paintOwners(source) {
+  const start=source.indexOf("const PAINT_ORDER_TAG ="),end=source.indexOf('const firstSplatSessions',start);
+  assert.ok(start>=0 && end>start,'actual composed paint owner helpers');
+  return new Function('isPaintOrderClock','nextPaintOrderClock','paintClockComesAfter','kitPaintRadiusAllowed',
+    source.slice(start,end)+'\nreturn {readPaintOrder,receivePaintOrder};')(
+      isPaintOrderClock,nextPaintOrderClock,paintClockComesAfter,kitPaintRadiusAllowed);
+}
+function splatRig(composed, splat) {
+  const fn=method('../../inkwave-public/src/net/netmatch.js',
+    '  _applyRemoteSplatEvent(e, commitReplay = true) {','\n  commitDeadlinePaint()',{
+      G:{paint:{splat}},_v:new Vec(),_v2:new Vec(),consumeKitPaint,...paintOwners(composed),
+    },composed);
+  const nm={applying:false,_paintReplayWarned:false,_paintClockState:{clock:0,applied:new Map()},
+    s:{hostId:'host',_members:new Set(['host'])},cfg:{id:'game'},byNid:new Map()};
+  const event=(kind,seed=1)=>Object.assign([0,'s',0,0,1,1,0,seed,kind,0,0,0,0,-1],{_netPeer:'host'});
+  return {fn,nm,event};
+}
 test('composed malformed remote splat never traps replay or suppresses later paint',()=>{
   const composed=adaptBuildSource('src/net/netmatch.js',
     readFileSync(new URL('../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8'));
   const splats=[];
-  const G={paint:{splat(c,r,t,o){splats.push([r,t,o.kind]);if(o.seed===999)throw Error('test paint failure');}}};
-  const fn=method('../../inkwave-public/src/net/netmatch.js',
-    '  _applyRemoteSplatEvent(e, commitReplay = true) {','\n  commitDeadlinePaint()',{
-      G,_v:new Vec(),_v2:new Vec(),readPaintOrder:()=>null,receivePaintOrder:()=>{},
-    },composed);
-  const nm={applying:false,_paintReplayWarned:false,_paintClockState:{applied:new Map()}};
-  const event=(kind,seed=1)=>[0,'s',0,0,1,1,0,seed,kind,0,0,0,0,-1];
+  const {fn,nm,event}=splatRig(composed,(c,r,t,o)=>{splats.push([r,t,o.kind]);if(o.seed===999)throw Error('test paint failure');});
   assert.equal(fn.call(nm,event({toString:null})),false);
   assert.equal(nm.applying,false);
   assert.equal(fn.call(nm,event('shot')),true);
@@ -156,6 +193,31 @@ test('composed malformed remote splat never traps replay or suppresses later pai
   assert.equal(nm.applying,false);
   assert.equal(fn.call(nm,event('line')),true);
   assert.equal(splats.length,3);
+});
+test('composed paint admission keeps every source kind and rejects malformed owners before replay mutation',()=>{
+  const composed=adaptBuildSource('src/net/netmatch.js',readFileSync(new URL('../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8'));
+  const seen=[],{fn,nm,event}=splatRig(composed,(_c,_r,_t,o)=>seen.push(o));
+  const kinds=['shot','line','blast','bomb','trail','drop','roll','rollFloor','speck',
+    'source-shot','source-splash','ink-shot','ink-slosh','ink-brush','ink-flick','ink-contact',
+    'ink-charger-a','ink-charger-b','ink-charger-c','ink-blast','ink-blast-rectified'];
+  for(const kind of kinds)assert.equal(fn.call(nm,event(kind)),true,kind+' legitimate legacy-shaped paint');
+  assert.deepEqual(seen.map(o=>o.kind),kinds,'source contour identifiers survive replay');
+  const canonical=()=>Object.assign([...event('ink-shot'),['inkwave-paint-order-v1','game',7,1],1,1],{_netPeer:'host',_netTick:1,_netSeq:1});
+  const invalid=[
+    e=>{e[8]='constructor';},e=>{e[8]={};},e=>{e[2]=1e308;},e=>{e[7]=NaN;},
+    e=>{e[5]=0;},e=>{e[6]=2;},e=>{e[13]=-2;},e=>{e[14][1]='other-match';},
+    e=>{e._netPeer='stranger';},e=>{e._netTick=undefined;},
+  ];
+  for(const corrupt of invalid) {
+    const e=canonical();corrupt(e);const count=seen.length;
+    assert.equal(fn.call(nm,e),false);
+    assert.equal(nm._paintClockState.applied.size,0);assert.equal(nm._paintClockState.clock,0);
+    assert.equal(nm.applying,false);assert.equal(seen.length,count);
+  }
+  nm.applying=true;
+  assert.equal(fn.call(nm,canonical()),true);assert.equal(nm.applying,true,'nested replay owner is restored');
+  assert.equal(nm._paintClockState.applied.get('host'),1);assert.equal(nm._paintClockState.clock,7);
+  const count=seen.length;assert.equal(fn.call(nm,canonical()),false);assert.equal(seen.length,count,'same source event paints once');
 });
 test('composed late menu attract callback cannot dispose a newly started match',async()=>{
   const composed=adaptBuildSource('src/main.js',
@@ -182,10 +244,13 @@ test('real production composition retains source-admission and bounded progressi
   const cfg=adaptBuildSource('src/config.js',base('src/config.js'));
   const session=adaptBuildSource('src/net/session.js',base('src/net/session.js'));
   const paint=adaptBuildSource('src/world/paint.js',base('src/world/paint.js'));
-  assert.match(main,/sanitizeProfile\(storedProfile/);
-  assert.match(main,/sanitizeSettings\(this.settings, DEFAULT_SETTINGS, QUALITY\)/);
-  assert.match(main,/awardProfileXP\(p, gained, PROGRESSION.xpForLevel\)/);
-  assert.ok(!main.includes('p.xp += gained;'));
+  for(const [name,source] of Object.entries({main,cfg,session,paint}))
+    assert.doesNotThrow(()=>parse(source,{ecmaVersion:'latest',sourceType:'module'}),name+' full composition must parse without duplicate imports');
+  assert.match(main,/normalizeQueueProfile\(loadJSON\('inkwave.profile'/);
+  assert.match(main,/sanitizeSettings\(loadJSON\('inkwave.settings'/);
+  assert.match(main,/sanitizeSettingsChange\(partial, this.settings, QUALITY\)/);
+  assert.equal(main.split('settleProgression(p, PROGRESSION);').length-1,2);
+  assert.equal(main.split('p.xp += gained;').length-1,2,'original score owners still award exactly once');
   assert.ok(!main.includes('while (p.xp >= PROGRESSION.xpForLevel(p.level))'));
   assert.match(main,/validStartRoster\(cfg\?\.roster, G.net\?\.myId/);
   assert.match(session,/validStartRoster\(cfg\?\.roster, this.myId/);
