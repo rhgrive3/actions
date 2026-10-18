@@ -55,6 +55,12 @@ test('all selected main Actors use their CPU silhouettes through real release/co
       a.intent.fire=i<120;f.G.time+=1/60;a.update(1/60);f.G.projectiles.update(1/60);paint.advanceSimulation(1/60);
     }
     assert.ok(stamps.length>0,r.id);assert.ok(paint.counts[0]>0,r.id);
+    if(r.family==='charger'){
+      const sourceEvents=stamps.filter(s=>s.kind==='source-shot'||s.kind==='source-splash');
+      assert.ok(sourceEvents.length>0,r.id+' emits Charger physical ink');
+      assert.ok(sourceEvents.every(s=>s.footprint===CHARGER_FOOTPRINT),
+        r.id+' Charger feet, travel and terminal ink must all use the organic outline');
+    }
     // Explosher's explosion is a separate existing blast owner, not Bucket's sheet.
     if(r.sourceActor!=='WeaponSlosherWashtub')assert.ok([...kinds].some(k=>k>=10&&k<=17),r.id+' selected live silhouette');
     assert.equal(a.stats.turf,paint.counts[0]*.0625,r.id+' exact once-only turf credit');
