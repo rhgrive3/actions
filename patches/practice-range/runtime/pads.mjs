@@ -84,7 +84,8 @@ export class RangePads {
     this.labels = new THREE.Mesh(lg, this.labelMat);
     this.labels.renderOrder = 2;
     // ---- dwell ring (one, moved to the active pad)
-    this.ringGeo = new THREE.RingGeometry(PAD_R * 0.98, PAD_R * 1.16, 64, 1, Math.PI / 2, 0.001);
+    this.ringGeo = new THREE.RingGeometry(PAD_R * 0.98, PAD_R * 1.16, 48, 1, Math.PI / 2, 0.001);
+    this.ringGeo.attributes.position.setUsage(THREE.DynamicDrawUsage);
     this.ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthWrite: false, side: THREE.DoubleSide });
     this.ring = new THREE.Mesh(this.ringGeo, this.ringMat);
     this.ring.rotation.x = -Math.PI / 2; this.ring.visible = false; this.ring.renderOrder = 3;
@@ -116,20 +117,41 @@ export class RangePads {
   update(dt, on, k, weapon) {
     this.t += dt;
     const glow = 0.35 + 0.15 * Math.sin(this.t * 3);
-    this.defs.forEach((d, i) => {
-      const equipped = d.kind === 'weapon' && d.weapon === weapon;
-      const c = equipped ? _gold : this._col[i];
-      this.rim.setColorAt(i, _tmp.copy(c).multiplyScalar(d === on ? 1.6 : equipped ? 1.3 : 1));
-    });
-    this.rim.instanceColor.needsUpdate = true;
+    if (on !== this._lastOn || weapon !== this._lastWeapon) {
+      this._lastOn = on;
+      this._lastWeapon = weapon;
+      for (let i = 0; i < this.defs.length; i++) {
+        const d = this.defs[i];
+        const equipped = d.kind === 'weapon' && d.weapon === weapon;
+        const c = equipped ? _gold : this._col[i];
+        this.rim.setColorAt(i, _tmp.copy(c).multiplyScalar(d === on ? 1.6 : equipped ? 1.3 : 1));
+      }
+      this.rim.instanceColor.needsUpdate = true;
+    }
     this.rimMat.emissiveIntensity = glow * 0.25;
     if (on && k > 0 && k < 1) {
       this.ring.visible = true;
       this.ring.position.set(on.x, Y + 0.06, on.z);
       if (Math.abs(k - this._k) > 0.01) {
         this._k = k;
-        this.ring.geometry.dispose();
-        this.ring.geometry = new THREE.RingGeometry(PAD_R * 0.98, PAD_R * 1.16, 48, 1, Math.PI / 2, Math.max(0.001, k * Math.PI * 2));
+        const pos = this.ring.geometry.attributes.position;
+        const arr = pos.array;
+        // Retain the original 48-sector tessellation. Update local XY before the
+        // mesh rotation, rather than rebuilding a GPU geometry on each tick.
+        const segs = 48, r0 = PAD_R * 0.98, r1 = PAD_R * 1.16;
+        const span = Math.max(0.001, k * Math.PI * 2);
+        for (let j = 0; j < 2; j++) {
+          const r = j === 0 ? r0 : r1;
+          const row = j * (segs + 1) * 3;
+          for (let s = 0; s <= segs; s++) {
+            const ang = Math.PI / 2 + (s / segs) * span;
+            const idx = row + s * 3;
+            arr[idx] = r * Math.cos(ang);
+            arr[idx + 1] = r * Math.sin(ang);
+            arr[idx + 2] = 0;
+          }
+        }
+        pos.needsUpdate = true;
       }
     } else { this.ring.visible = false; this._k = -1; }
   }
