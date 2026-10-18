@@ -10,7 +10,16 @@ test('direct-piece sampling preserves every type, stretch and boundary predicate
  for(const wall of [false,true])for(const sa of [0,.4,1.7])for(const seed of [0,.37,.99999])for(const tn of [.01,.5,1.2,3]){
   const face={wall,atlas:{ppm:32}},g={R:2.7,kind:3,seed,dripDur:wall?3:0};
   const mask=old.prepareAncillary(g,face,10,12,.2,.6,.8,sa,tn,Math.min(1,tn/3),contract);
-  assert.deepEqual(current.prepareAncillary(g,face,10,12,.2,.6,.8,sa,tn,Math.min(1,tn/3),contract),mask);
+  const actual=current.prepareAncillary(g,face,10,12,.2,.6,.8,sa,tn,Math.min(1,tn/3),contract);
+  assert.ok(actual,'production ancillary mask exists');
+  assert.equal(actual.pieces.length,mask.pieces.length,'same generated paint-piece count');
+  // The production hot path pools uniform scratch records with zero-valued
+  // fields for other piece types. Compare every field the immutable baseline
+  // actually defines, then test the exact inside/outside predicate below.
+  // Requiring identical object key sets would reject a safe allocation change.
+  const semantic={...actual,pieces:actual.pieces.map((p,i)=>
+    Object.fromEntries(Object.keys(mask.pieces[i]).map(key=>[key,p[key]])))};
+  assert.deepEqual(semantic,mask);
   for(let index=0;index<mask.pieces.length;index++){
    const p=mask.pieces[index];types.add(p.type);
    const samples=[];for(const x of[p.minX-mask.margin,p.maxX+mask.margin])for(const y of[p.minY-mask.margin,p.maxY+mask.margin])for(const eps of[-1e-12,0,1e-12])samples.push([x+eps,y-eps]);
