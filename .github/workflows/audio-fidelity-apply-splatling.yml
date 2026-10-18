@@ -1,0 +1,58 @@
+name: Apply tested Splatling fidelity batch
+on:
+  push:
+    branches: [work/inkwave-audio-fidelity-20261019]
+    paths: ['.github/workflows/audio-fidelity-apply-splatling.yml', 'tools/audio/fidelity-splatling-batch.patch']
+permissions:
+  contents: write
+concurrency:
+  group: audio-fidelity-apply-splatling
+  cancel-in-progress: false
+jobs:
+  apply-and-verify:
+    if: github.ref == 'refs/heads/work/inkwave-audio-fidelity-20261019'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/inkwave-audio-fidelity-20261019
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply only the exact locally tested patch
+        run: |
+          echo '1bff2de94dbfe90ed69088acba84d9cea55aa93d48db329e49eea46881e5218d  tools/audio/fidelity-splatling-batch.patch' | sha256sum -c -
+          git apply --check tools/audio/fidelity-splatling-batch.patch
+          git apply tools/audio/fidelity-splatling-batch.patch
+          python3 - <<'PY'
+          import subprocess
+          expected={
+            'patches/local-quality/splatling-reticle.mjs':'3ba5288a6996f78745d94822f947c91b4f49d49f',
+            'patches/local-quality/tests/splatling-catalogue-stages.test.mjs':'7bd093294fe6940c41f40fd872b7d38cc07d10ec',
+            'patches/splatoon3/runtime/main-weapon-catalog.mjs':'8790623df5e80a0b39c22851f26ffd2d5415c8b2',
+            'patches/splatoon3/tests/spinner-recharge-mode.test.mjs':'14c04b8e5ca42c26ae8c1a56b7fb2b335a8ebcf7'
+          }
+          for path,sha in expected.items():
+            actual=subprocess.check_output(['git','hash-object',path],text=True).strip()
+            assert actual==sha,(path,actual,sha)
+          PY
+      - name: Verify Splatling stages, recharge and existing catalogue physics
+        run: |
+          mkdir -p reports/audio-fidelity-batch01
+          node --experimental-vm-modules --test patches/local-quality/tests/splatling-reticle.test.mjs patches/local-quality/tests/splatling-catalogue-stages.test.mjs patches/splatoon3/tests/spinner-recharge-mode.test.mjs patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/spinner-charge-family.test.mjs patches/splatoon3/tests/spinner-kinematics-source.test.mjs patches/splatoon3/tests/splatling-startup-phases.test.mjs | tee reports/audio-fidelity-batch01/tests.txt
+          git diff --check
+      - name: Commit verified runtime checkpoint without force
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add patches/local-quality/splatling-reticle.mjs patches/local-quality/tests/splatling-catalogue-stages.test.mjs patches/splatoon3/runtime/main-weapon-catalog.mjs patches/splatoon3/tests/spinner-recharge-mode.test.mjs
+          git commit -m 'fix(spinner): restore two-stage charge HUD and preserve Ballpoint recharge mode'
+          git rev-parse HEAD | tee reports/audio-fidelity-batch01/commit.txt
+          git push origin HEAD:refs/heads/work/inkwave-audio-fidelity-20261019
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audio-fidelity-batch01-tests
+          path: reports/audio-fidelity-batch01/
+          retention-days: 3
