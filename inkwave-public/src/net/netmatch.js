@@ -463,27 +463,14 @@ export class NetMatch {
   _play(from, e) {
     switch (e[1]) {
       case 's': {
-        // A malformed peer paint kind must not trap replay state or corrupt
-        // local turf recording. 0 is the protocol's "infer kind" sentinel.
-        const kind = e[8];
-        if (!(kind === 0 || kind == null || (typeof kind === 'string' &&
-          ['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'speck'].includes(kind)))) break;
-        if (![2, 3, 4, 5, 7, 9, 10, 11, 12].every(i => Number.isFinite(e[i] ?? 0)) ||
-          !(e[5] > 0 && e[5] <= 64) || (e[6] !== 0 && e[6] !== 1)) break;
-        const prior = this.applying;
         this.applying = true;
-        try {
-          const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
-          const opts = { seed: e[7] };
-          if (typeof kind === 'string') opts.kind = kind;
-          if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
-          if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
-          G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
-        } catch (err) {
-          if (!this._paintReplayWarned) { console.warn('[net] invalid remote paint discarded', err); this._paintReplayWarned = true; }
-        } finally {
-          this.applying = prior;
-        }
+        const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
+        const opts = { seed: e[7] };
+        if (e[8]) opts.kind = e[8];
+        if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+        if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
+        G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
+        this.applying = false;
         break;
       }
       case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }

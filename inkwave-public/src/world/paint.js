@@ -383,7 +383,7 @@ export class PaintSystem {
   setView(pos) { this.viewPos = pos; }
 
   _kind(opts, radius, st, sAmt) {
-    if (typeof opts.kind === 'string' && Object.hasOwn(K, opts.kind)) { const k = K[opts.kind]; if (k !== K_ROLL || st) return k; }
+    if (opts.kind !== undefined) { const k = K[opts.kind]; if (k !== undefined && (k !== K_ROLL || st)) return k; }
     if (st) return sAmt >= 1 ? K_LINE : K_SHOT;
     if (radius >= 1.9) return K_BOMB;
     if (radius >= 1.05) return K_BLAST;

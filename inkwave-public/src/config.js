@@ -286,7 +286,7 @@ export const QUALITY = {
 // Mobile variants are cached so callers can compare them by identity without forcing rebuilds.
 const EFFECTIVE_QUALITY = new Map();
 export function effectiveQuality(settings, mobile) {
-  const name = typeof settings?.quality === 'string' && Object.hasOwn(QUALITY, settings.quality) ? settings.quality : 'high';
+  const name = QUALITY[settings?.quality] ? settings.quality : 'high';
   const base = QUALITY[name];
   if (!mobile?.touch) return base;
   const key = name + ':' + (mobile.ios ? 'ios' : 'touch');
