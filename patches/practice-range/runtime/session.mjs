@@ -59,6 +59,7 @@ export class RangeSession {
       const name = d.kind === 'endurance' ? `${L('Endurance target')} ${d.label}` : d.kind === 'rail' ? d.label : `${L('Target')} ${d.label}`;
       const a = new Actor({ team: 1, slot: i, weapon: 'shooter', isLocal: false, isBot: false, name, style: null, CharacterClass: TargetDummyCharacter });
       a.rangeTarget = { ...d, index: i, yaw: Math.atan2(d.face[0] - d.x, d.face[1] - d.z), phase: 0, combo: null, deaths: 0, hidden: false };
+      a._stationaryRangeDummy = d.kind !== 'rail';
       // a popped target re-inflates where it stood (the engine would send it to Bravo's spawn pad)
       a.respawn = () => this._reinflate(a);
       a.character.actor = a;
