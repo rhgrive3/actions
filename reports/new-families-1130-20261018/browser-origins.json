@@ -1,0 +1,140 @@
+{
+  "build": "81b086c1911466a57c5d1b5f65d55e60cf91b29c0a8d7d13340d294e39c7780f",
+  "browser": "154.0.8037.57",
+  "realCharacter": true,
+  "checks": [
+    {
+      "id": "s3-saber-lite",
+      "yaw": 0,
+      "birth": [
+        3,
+        5,
+        -3.6
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-lite",
+      "yaw": 1.5707963267948966,
+      "birth": [
+        4.4,
+        5,
+        -5
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-lite",
+      "yaw": 3.141592653589793,
+      "birth": [
+        3,
+        5,
+        -6.4
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-lite",
+      "yaw": -1.5707963267948966,
+      "birth": [
+        1.6,
+        5,
+        -5
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-normal",
+      "yaw": 0,
+      "birth": [
+        3,
+        5,
+        -3.6
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-normal",
+      "yaw": 1.5707963267948966,
+      "birth": [
+        4.4,
+        5,
+        -5
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-normal",
+      "yaw": 3.141592653589793,
+      "birth": [
+        3,
+        5,
+        -6.4
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-normal",
+      "yaw": -1.5707963267948966,
+      "birth": [
+        1.6,
+        5,
+        -5
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-heavy",
+      "yaw": 0,
+      "birth": [
+        3,
+        5,
+        -3.6
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-heavy",
+      "yaw": 1.5707963267948966,
+      "birth": [
+        4.4,
+        5,
+        -5
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-heavy",
+      "yaw": 3.141592653589793,
+      "birth": [
+        3,
+        5,
+        -6.4
+      ],
+      "error": 0,
+      "fxError": 0
+    },
+    {
+      "id": "s3-saber-heavy",
+      "yaw": -1.5707963267948966,
+      "birth": [
+        1.6,
+        5,
+        -5
+      ],
+      "error": 0,
+      "fxError": 0
+    }
+  ],
+  "errors": []
+}
