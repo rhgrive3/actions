@@ -176,6 +176,8 @@ jobs:
           retention-days: 14
       - name: Verify local quality regressions
         run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs scripts/tests/inkwave-idle-resources-gates.test.mjs
+      - name: Verify migrated direct game source ownership
+        run: node --test scripts/tests/inkwave-direct-source-ownership.test.mjs
       - name: Verify platform lifecycle smoke regressions
         run: node --test tests/platform-lifecycle/platform-smoke.test.mjs
       - name: Verify movement physics smoke regressions
