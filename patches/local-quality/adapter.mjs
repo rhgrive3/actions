@@ -2,6 +2,7 @@ import { adaptHeadgear } from './headgear-adapter.mjs';
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
 import { adaptNavHeuristic } from './nav-heuristic-adapter.mjs';
 import { adaptBotNavigation } from './bot-navigation-adapter.mjs';
+import { adaptFirefightTierBudget } from './firefight-tier-budget.mjs';
 import { adaptRootHairSpring } from './root-hair-spring-adapter.mjs';
 import { adaptPoseRotation } from './pose-rotation-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
@@ -145,7 +146,7 @@ const IDENTITY_FILES = [
   'paint-hotpath-adapter.mjs',
   'distance-hotpath-adapter.mjs',
   'nav-heuristic-adapter.mjs',
-  'bot-navigation-adapter.mjs', 'bot-navigation.mjs',
+  'bot-navigation-adapter.mjs', 'bot-navigation.mjs', 'firefight-tier-budget.mjs',
   'root-hair-spring-adapter.mjs',
   'pose-rotation-adapter.mjs',
   'collision-hotpath-adapter.mjs',
@@ -174,7 +175,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptIssue482(rel, code);
   code = adaptIssue405(rel, code);
   code = adaptIssue484(rel, code);
-  const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
+  const framed = adaptFrameOrder(rel, adaptFirefightTierBudget(rel, adaptQualityLayer(rel, code), replaceOnce));
   const paced = adaptRangeFramePacing(rel, framed);
   let broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
   if (rel === 'src/game/physics.js') {
