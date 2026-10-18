@@ -33,6 +33,7 @@ import { paintDualiesSlide } from './dualies-slide-paint.mjs';
 import { catalogDualiesTurret, writeCatalogDualiesVelocity } from './catalog-dualies-motion.mjs';
 import { saberSlashShape, saberSlashContact, saberSlashWallContact, placeSaberSlash } from './saber-melee.mjs';
 import { recordSaberStick, saberStepRequested, createSaberStep, saberStepSpeed } from './saber-step.mjs';
+import { encodeSaberSwingVisual, decodeSaberSwingVisual } from './saber-presentation.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
 // retain their mature owners. Canonical kit identities use the pinned table.
@@ -617,8 +618,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0}});
     // Keep the five-entry catalogue tuple readable by existing peers. Older
-    // receivers ignore this named visual-only extension on the same object.
+    // receivers ignore these named visual-only extensions on the same object.
     if(descriptor.key==='arrow')p.inkMeta.s3StringerTilt=options.bowTilt;
+    if(options.saberSwing)p.inkMeta.s3SaberSwing=options.saberSwing;
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
     p.vel.y += finite(options.lift,0);
     if(!queueCatalogBirth(p,G,muzzle))applyCatalogPlayerVelocity(p);
@@ -671,7 +673,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,jumpAge);
     }
     runner.spread=spread;
-    spawn(a,r,desc,aim,muzzle,{volley,
+    spawn(a,r,desc,aim,muzzle,{volley,saberSwing:saber?encodeSaberSwingVisual(r,key,s.saberSwing):null,
       speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
     if(horizontal)s.saberShotOrdinal++;
     if(familySplash){s.familyPaintOrdinals||={};s.familyPaintOrdinals[key]=ordinal+1;}
@@ -1133,11 +1135,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(a.remote&&r.family==='splatana'&&a.weapon?.catalogRecord?.id===r.id&&
           Number.isFinite(e[0])&&meta[1].startsWith('saber-')){
           const s=state(a.weaponRunner);
-          if(s.remoteSaberTick==null||e[0]>s.remoteSaberTick){
-            s.remoteSaberTick=e[0];s.saberSwing={serial:(s.saberSwing?.serial||0)+1,
-              key:meta[1],ordinal:s.saberShotOrdinal,stepped:false,
-              ageOffset:finite(r.parameters.spl__WeaponSaberParam.SwingParam[meta[1]==='saber-horizontal'?'WeakSwingShotBulletFrame':'ChargeSwingShotBulletFrame'],0)/HZ};
-            if(meta[1]==='saber-horizontal')s.saberShotOrdinal++;
+          const visual=decodeSaberSwingVisual(r,meta[1],meta[3],e[27]?.s3SaberSwing,s.saberShotOrdinal);
+          if(visual&&(s.remoteSaberTick==null||e[0]>s.remoteSaberTick)){
+            s.remoteSaberTick=e[0];s.saberSwing={serial:(s.saberSwing?.serial||0)+1,...visual};
+            if(meta[1]==='saber-horizontal')s.saberShotOrdinal=visual.ordinal+1;
           }
         }
         if(a.remote&&d.key==='arrow'&&a.weapon?.catalogRecord?.id===r.id&&a.weaponRunner)

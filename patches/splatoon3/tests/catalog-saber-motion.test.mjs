@@ -25,6 +25,8 @@ test('validated remote slash metadata reproduces mode/side once without gameplay
  a.weaponRunner.update(1/60,{fire:true});for(let i=0;i<12;i++)a.weaponRunner.update(1/60,{fire:false});
  const p=f.G.projectiles.list.find(p=>p.catalog);let packet;
  f.NetMatch.prototype.recProj.call({_rec:row=>{packet=[1,...row,0,1];return packet;},cfg:{id:'saber-motion'}},p);
+ // Legacy packets omit named metadata and retain the inferred side sequence.
+ delete packet[27].s3SaberSwing;
  const remote=f.make('s3-saber-lite');remote.remote=true;remote.form='kid';
  f.G.projectiles.ghostProjectile(remote,packet);const s=remote.weaponRunner.catalogState;
  assert.equal(s.saberSwing.key,'saber-horizontal');assert.equal(s.saberSwing.ordinal,0);
