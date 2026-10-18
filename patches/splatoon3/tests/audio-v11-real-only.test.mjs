@@ -109,9 +109,9 @@ test('recorded Spinner normal shot replaces an unavailable full-charge articulat
 test('production Splatling charge and stream use separate sourced motor events',()=>{
  const source=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const compiled=adaptWeaponAudio('src/game/weapons.js',source);
- assert.match(compiled,/this\\.spinLoop = G\\.audio\\?\\.loopWeapon\\?\\.\\(a\\.weapon\\.id, 'charge'/);
- assert.match(compiled,/G\\.audio\\?\\.loopWeapon\\?\\.\\(w\\.id, 'spin'/);
- assert.doesNotMatch(compiled,/G\\.audio\\?\\.play\\(snd,/,'generic shot is not layered over the recording');
+ assert.ok(compiled.includes("this.spinLoop = G.audio?.loopWeapon?.(a.weapon.id, 'charge'"), 'native charge loop must use recorded Motor');
+ assert.ok(compiled.includes("G.audio?.loopWeapon?.(w.id, 'spin'"), 'native stream loop must use recorded MotorFire');
+ assert.ok(!compiled.includes('G.audio?.play(snd,'), 'generic shot is not layered over the recording');
  const installed=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
  for(const event of ['fire','charge','spin'])assert.ok(installed.clips.some(c=>c.id==='splatling'&&c.event===event),
    'authentic 2022 Splatling source is installed: '+event);
