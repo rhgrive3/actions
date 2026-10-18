@@ -135,3 +135,47 @@ test('native ink and catalogue sweep entry points and AABB early-outs live in re
   assert.equal(adaptBuildSource('src/game/inkCollision.js', collision), collision);
   assert.equal(adaptBuildSource('patches/splatoon3/runtime/weapons-collision.mjs', catalogue), catalogue);
 });
+
+
+test('standalone native sweep keeps Node collision regression free of the full stage engine and three dependency', async () => {
+  const { sweepNativeCatalogueSphere, sweepNativeLevelSphere } =
+    await import('../../patches/native-stages/runtime/native-projectile-sweep.mjs');
+  const { sweptWorldHit } = await import('../../patches/splatoon3/runtime/weapons-collision.mjs');
+  assert.equal(typeof sweptWorldHit, 'function', 'shared weapons solver remains directly importable by Node');
+
+  class Vec {
+    constructor(x = 0, y = 0, z = 0) { this.x = x; this.y = y; this.z = z; }
+    distanceTo(other) { return Math.hypot(this.x - other.x, this.y - other.y, this.z - other.z); }
+    copy(other) { this.x = other.x; this.y = other.y; this.z = other.z; return this; }
+  }
+  const from = new Vec(0, 0, 0), to = new Vec(5, 0, 0);
+  const level = {
+    blocks: [], faces: [], data: { triangleFace: new Int32Array([-1]) },
+    triangleWorld: { sweepSphere: () => null },
+    queryDynamicBlocks: () => [],
+    blockForTriangle: () => 7,
+  };
+  const out = () => ({ hit: false, point: new Vec(), normal: new Vec(), block: -1, face: -1 });
+  const misses = (view, a, b, r0, r1, result) => {
+    assert(result.point instanceof Vec && result.normal instanceof Vec);
+    return { hit: false, dist: 5 };
+  };
+  const first = out();
+  assert.equal(sweepNativeCatalogueSphere({ level }, from, to, 0.2, 0.2, first, true, misses), first);
+  assert.equal(first.hit, false);
+  assert.equal(first.dist, 5);
+  const second = out();
+  assert.equal(sweepNativeLevelSphere(level, from, to, 0.2, second, true,
+    (view, a, b, radius, result) => misses(view, a, b, radius, radius, result)), second);
+  assert.equal(second.hit, false);
+  level.triangleWorld.sweepSphere = () => ({
+    distance: 1.25, point: new Vec(1.25, 0, 0), normal: new Vec(-1, 0, 0), triangle: 0,
+  });
+  const impact = out();
+  sweepNativeCatalogueSphere({ level }, from, to, 0.2, 0.2, impact, true, misses);
+  assert.equal(impact.hit, true);
+  assert.equal(impact.dist, 1.25);
+  assert.equal(impact.block, 7);
+  assert.equal(impact.face, -1);
+  assert.deepEqual([impact.point.x, impact.normal.x], [1.25, -1]);
+});
