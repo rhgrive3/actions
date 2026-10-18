@@ -15,6 +15,7 @@ test('actual source-loaded actor isolates squid eyes at all LODs and disposes on
  const f=await sourceLoadedActorFixture({random:()=>.4});const a=await f.make(),c=a.character;
  assert(c.mats.eye!==c.mats.squidEye);assert.equal(c.squid.eyes.material,c.mats.squidEye);
  for(const lod of ['hero','game','far']){c.setLod(lod);assert.equal(c.squid.eyes.material,c.mats.squidEye);
+  const eye=c.squid.eyes.geometry;assert.equal(eye.userData.squidConnectedEye,true);const ep=eye.attributes.position,en=eye.attributes.normal;let center=0,front=0;for(let j=0;j<ep.count;j++){if(Math.abs(ep.getX(j))<.005)center++;front+=en.getZ(j);}assert(center>0,'white field crosses center');assert(front/en.count>.4,'eye normals point outward');const adj=Array.from({length:ep.count},()=>[]);for(let j=0;j<eye.index.count;j+=3){const tri=[0,1,2].map(k=>eye.index.getX(j+k));for(const a of tri)for(const b of tri)adj[a].push(b);}const seen=new Set([0]),todo=[0];while(todo.length){for(const n of adj[todo.pop()])if(!seen.has(n)){seen.add(n);todo.push(n);}}assert.equal(seen.size,ep.count,'one connected white eye surface');
   const g=c.squid.body.geometry,p=g.attributes.position,e=g.attributes.aEx,col=g.attributes.color,uv=g.attributes.uv;
   let maxDepth=0,shortMin=Infinity,shortMax=-Infinity,shortN=0;const ids=new Set(),roots=new Map();
   for(let i=0;i<p.count;i++){

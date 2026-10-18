@@ -43,20 +43,45 @@ const SQUID_EYE_MATERIAL = `export function makeSquidEyeMaterial(u) {
       fColor:\`
         vec2 p=vSquidEyeUv;
         vec2 gaze=clamp(uLook,vec2(-0.16),vec2(0.16));
-        vec2 q=(p-gaze-vec2(0.0,0.27))/vec2(0.38,0.43);
-        float d=length(q)-1.0,aa=max(fwidth(d),0.001);
+        vec2 q0=(p-gaze-vec2(-0.45,0.23))/vec2(0.24,0.72);
+        vec2 q1=(p-gaze-vec2(0.45,0.23))/vec2(0.24,0.72);
+        float d=min(length(q0),length(q1))-1.0,aa=max(fwidth(d),0.001);
         float pupil=1.0-smoothstep(-aa,aa,d);
-        float r=length(p),ra=max(fwidth(r),0.001);
-        float rim=smoothstep(0.94-ra,0.94+ra,r);
-        diffuseColor.rgb=mix(vec3(0.94,0.95,0.97),vec3(0.008,0.007,0.018),max(pupil,rim));
+        diffuseColor.rgb=mix(vec3(0.94,0.95,0.97),vec3(0.008,0.007,0.018),pupil);
       \`,
       fEmissive:'totalEmissiveRadiance += uFlash * 0.5;',
     });
   };
-  m.customProgramCacheKey=()=> 'squid-eye-white-dark-v1';
+  m.customProgramCacheKey=()=> 'squid-eye-connected-white-dark-v2';
   return m;
 }
 
+`;
+
+const ORIGINAL_SQUID_FACE = "  // ---- raised visor band with rolled edges + eye sockets\n  {\n    const nu = Math.max(40, Math.round(SD.around * 0.55)), nv = Math.max(10, Math.round(SD.rows * 0.22));\n    const rows = [];\n    for (let j = 0; j <= nv; j++) {\n      const v = j / nv;\n      rows.push(Array.from({ length: nu + 1 }, (_, i) => {\n        const u = i / nu; const ang = lerp(-2.05, 2.05, u);\n        const c = 0.09 + 0.02 * (Math.abs(ang) / 2.05) ** 2;\n        const hh = 0.045 * Math.pow(Math.max(0, 1 - (Math.abs(ang) / 2.05) ** 2), 0.6);\n        const y = c + (v * 2 - 1) * (hh + 0.004);\n        const e = Math.abs(v * 2 - 1);\n        const lift = 0.0078 * Math.sqrt(Math.max(0, 1 - Math.pow(e, 6))) - 0.003 * sstep(0.9, 1, e);\n        const endK = sstep(2.05, 1.35, Math.abs(ang));\n        return sqSurfN(ang, y, -0.002 + lift * endK, new V3());\n      }));\n    }\n    const g = gridGeo(rows, { wrapU: false, outward: (p, out) => out.set(0, p.y, 0) });\n    dark.add(g, { color: new THREE.Color(0.018, 0.02, 0.03) });\n  }\n  for (const sx of [1, -1]) {\n    const g = polarPatch(lod === 'far' ? 4 : 9, lod === 'far' ? 16 : 36, (u, v, r, out) => sqSurfN(sx * 0.5 + u * 0.31, 0.092 + v * 0.037, 0.0092 + 0.0042 * (1 - r * r), out));\n    eyes.add(g, { uv: true, ex: sx });\n  }\n";
+const CONNECTED_SQUID_FACE = `  // Connected white squid eye mask and narrow dark outline, both follow the mantle.
+  // The user's figure is a structural reference; physical lighting remains native.
+  {
+    const nu = lod === 'far' ? 16 : 32, nv = lod === 'far' ? 6 : 10;
+    for (const outline of [true, false]) {
+      const rows=[];
+      for(let j=0;j<=nv;j++) {
+        const v=j/nv;
+        rows.push(Array.from({length:nu+1},(_,i)=>{
+          const u=(i/nu*2-1)*0.995;
+          const h=0.068*Math.sqrt(Math.max(0,1-u*u));
+          const top=0.112+h-0.030*Math.exp(-Math.pow(u/0.24,2));
+          const bottom=0.112-h+0.008*Math.exp(-Math.pow(u/0.22,2));
+          const y=lerp(bottom-(outline?0.004:0),top+(outline?0.004:0),v);
+          return sqSurfN(u*(outline?1.18:1.10),y,outline?0.006:0.008,new V3());
+        }));
+      }
+      const g=gridGeo(rows,{wrapU:false,outward:(p,out)=>out.set(p.x,0,p.z)});
+      const idx=g.index.array;for(let i=0;i<idx.length;i+=3){const t=idx[i+1];idx[i+1]=idx[i+2];idx[i+2]=t;}g.computeVertexNormals();
+      if(outline) dark.add(g,{color:new THREE.Color(0.018,0.02,0.03)});
+      else eyes.add(g,{uv:(i)=>[g.attributes.uv.getX(i)*2-1,g.attributes.uv.getY(i)*2-1],ex:0});
+    }
+  }
 `;
 
 export function adaptS3SquidLook(rel, code) {
@@ -120,13 +145,13 @@ export function adaptS3SquidLook(rel, code) {
     code = once(code, '    const a = (k / N) * TAU + 0.31;', '    if (![0, 2, 4, 6, 8, 9].includes(k)) continue;\n    const a = (k / N) * TAU + 0.31;', 'four short lobes and two long outer arms');
     code = once(code,
       '    const raw = [[dx * 0.055, 0.012, dz * 0.055], [dx * 0.09, -0.04, dz * 0.09], [dx * 0.118, -0.035 - len * 0.55, dz * 0.118], [dx * 0.15, -0.035 - len * 0.86, dz * 0.15], [dx * (0.178 + curl * 0.6), -0.032 - len * 0.98, dz * (0.178 + curl * 0.6)]].map((q) => new V3(...q));',
-      '    const side = k === 0 ? 1 : -1;\n    const shortX = ({2:0.050,4:0.017,6:-0.017,8:-0.050})[k];\n    const raw = (feeler ? [[side*0.095,0.012,0.035],[side*0.106,-0.04,0.043],[side*0.112,-0.035-len*0.55,0.050],[side*0.116,-0.035-len*0.86,0.055],[side*0.117,-0.032-len*0.98,0.055]] : [[shortX,0.012,0.035],[shortX,-0.035,0.035],[shortX,-0.035-len*0.55,0.040],[shortX,-0.035-len*0.86,0.043],[shortX,-0.032-len*0.98,0.043]]).map((q) => new V3(...q));', 'outer long roots and four compact supports');
+      '    const side = k === 0 ? 1 : -1;\n    const shortX = ({2:0.050,4:0.017,6:-0.017,8:-0.050})[k];\n    const outerShort = k === 2 || k === 8;\n    const raw = (feeler ? [[side*0.095,0.012,0.035],[side*0.106,-0.04,0.043],[side*0.112,-0.035-len*0.55,0.050],[side*0.116,-0.035-len*0.86,0.055],[side*0.117,-0.032-len*0.98,0.055]] : [[shortX,0.045,0.020],[shortX,-0.015,0.020],[shortX,-0.025-len*0.55,0.024],[shortX,-0.025-len*0.86,0.028],[shortX,-0.024-len*0.98,0.028]]).map((q) => new V3(q[0], q[1]+(!feeler && outerShort ? 0.012 : 0), q[2]-(!feeler && outerShort ? 0.030 : 0)));', 'outer long roots and four compact supports');
     code = once(code, 'const out = new V3(dx, 0.35, dz).normalize();', 'const out = new V3(0, 0.35, 1).normalize();', 'club curl follows face plane');
     code = once(code, 'outward: (P, o) => o.set(P.x, 0.25, P.z).normalize(),', 'outward: (P, o) => o.set(0, 0.25, 1).normalize(),', 'broad clubs face the eyes');
     // Short arms are compact rounded fingers, not thin curled wires.
-    code = once(code, 'const pts = curlTip(raw, (feeler ? 0.9 : 0.75) + 0.1 * (k % 3), () => out, 0.5);', 'const pts = feeler ? curlTip(raw, 0.9 + 0.1 * (k % 3), () => out, 0.5) : raw;', 'uncurled short arm group');
-    code = once(code, 'lerp(0.0255, 0.0062, Math.pow(t, 0.78))', 'lerp(feeler ? 0.0255 : 0.036, feeler ? 0.0062 : 0.024, Math.pow(t, 0.78))', 'rounded short arms');
-    code = once(code, 'tipSteps: D.tipSteps, tipLen: 1.1 });', 'tipSteps: D.tipSteps, tipLen: feeler ? 1.1 : 0.35 });', 'rounded short arm terminal caps');
+    code = once(code, 'const pts = curlTip(raw, (feeler ? 0.9 : 0.75) + 0.1 * (k % 3), () => out, 0.5);', 'const pts = raw;', 'uncurled short arm group');
+    code = once(code, 'lerp(0.0255, 0.0062, Math.pow(t, 0.78))', 'lerp(feeler ? 0.0255 : 0.036, feeler ? 0.0062 : 0.014, Math.pow(t, 0.78))', 'rounded short arms');
+    code = once(code, 'tipSteps: D.tipSteps, tipLen: 1.1 });', 'tipSteps: D.tipSteps, tipLen: feeler ? 1.1 : 0.65 });', 'rounded short arm terminal caps');
     // Tiny repeated relief cups made the short lobes read as spindly legs.
     // Preserve the hidden long-arm cups; short arm surfaces stay smooth.
     code = once(code, '    if (SD.cups) {', '    if (SD.cups && feeler) {', 'simplified short arm surface');
@@ -138,12 +163,11 @@ export function adaptS3SquidLook(rel, code) {
       'color: (p, i) => _c.setRGB(tint(tA[i]), tA[i], k / N)',
       'color: (p, i) => _c.setRGB(feeler ? lerp(tint(tA[i]), -0.95, sstep(0.5, 0.8, tA[i])) : tint(tA[i]), tA[i], k / N)', 'dark feeler clubs');
     code = once(code, '_c.setRGB(tint(ct[i]) + 0.1, ct[i], k / N)', '_c.setRGB(feeler ? lerp(tint(ct[i]) + 0.1, -0.95, sstep(0.5, 0.8, ct[i])) : tint(ct[i]) + 0.1, ct[i], k / N)', 'club spot coating marker');
-    // bigger eyes in a slightly taller mask band, as the clips' squid face reads mostly as eyes
-    code = once(code, 'const hh = 0.045 * Math.pow(', 'const hh = 0.053 * Math.pow(', 'taller mask band');
-    code = once(code, 'sqSurfN(sx * 0.5 + u * 0.31, 0.092 + v * 0.037,', 'sqSurfN(sx * 0.5 + u * 0.37, 0.092 + v * 0.045,', 'bigger squid eyes');
+    code=once(code,ORIGINAL_SQUID_FACE,CONNECTED_SQUID_FACE,'connected squid eye mask');
+    code=once(code,"  _squid.set(key, res);","  res.eyes.userData.squidConnectedEye = true;\n  _squid.set(key, res);",'connected eye binding marker');
     return once(code,
       "(feeler ? 0.22 * gauss(t - 0.8, 0.07) : 0)",
-      "(feeler ? 4.2 * gauss(t - 0.8, 0.13) : 0)", 'feeler club tips');
+      "(feeler ? 4.5 * gauss(t - 0.74, 0.24) : 0)", 'feeler club tips');
   }
   return code;
 }
