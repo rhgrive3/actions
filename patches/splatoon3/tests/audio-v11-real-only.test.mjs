@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { adaptWeaponAudio } from '../audio-adapter.mjs';
 import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
 import { WeaponSoundBank, AUDIO_RECIPES } from '../runtime/audio/bank.mjs';
 import { fireArticulation } from '../runtime/audio/weapon-recipes.mjs';
@@ -35,46 +37,84 @@ class MixerStub {
 }
 installWeaponAudioEngine(MixerStub);
 
-test('v11 connects real game AudioEngine._def to decoded weapon buffers', async()=>{
- const {ctx,sources}=mkctx();const a=new MixerStub(ctx);
- // The first *local* admitted shot must remain audible even before its MP3
- // finishes decoding on a slow iPad. It is an original, per-weapon cue only.
+test('a declared recorded shot never uses authored PCM while decoding',async()=>{
+ const {ctx,sources}=mkctx(),a=new MixerStub(ctx);
  const local={isLocal:true};
- assert.equal(a.playWeapon(id,'fire',{actor:local})?.weaponId,id);
- assert.equal(a.played.length,1);
- assert.equal(a.weaponBank().stats().realOnly,true);
- assert.equal(a.weaponBank().stats().audibleShotFallback,true);
- assert.equal(a.stats().authoredFallbackShots,1);
- // Supply the same-origin manifest and bytes through the real loader.
+ a.weaponBank();
  a._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest([clip(id,'fire')])});
- a._realS3Loader.manifestPromise=null;
  a._realS3Loader.bank.authorized.fetcher=async()=>res;
+ // The manifest can still be loading: never pretend a recorded Nintendo MP3
+ // exists by emitting INKWAVE's parametric fallback.
+ assert.equal(a.playWeapon(id,'fire',{actor:local}),null);
+ assert.equal(a.played.length,0);
+ assert.equal(a.stats().authoredFallbackShots,0);
+ assert.equal(a._realS3Loader.declares(id,'fire'),null);
  const ready=await a._realS3Loader.ensure(id,'fire');
  assert.equal(ready.loaded,1,JSON.stringify(ready));
- const result=a.playWeapon(id,'fire',{actor:local});
- assert.equal(result.weaponId,id);
- assert.equal(a.played.at(-1).name,`main:${id}:fire`);
- assert.equal(a.played.at(-1).def.legacy,undefined);
- assert.equal(sources.length,2,'authored first shot then real MP3');
- assert.equal(sources[1].buffer,a.weaponBank().authorized.pick(id,'fire').buffer);
- assert.notEqual(sources[0].buffer,sources[1].buffer,'real sample replaces only later shots');
- assert.equal(a.weaponBank().cache.size,1,'a bounded single local fallback was cached');
- assert.equal(a._def('ui_click').legacy,true,'unrelated legacy UI audio remains intact');
- assert.equal(a.stats().realAudioSuppressed,0,'a local cold shot is no longer silent');
+ assert.equal(a._realS3Loader.declares(id,'fire'),true);
+ assert.equal(a._realS3Loader.declares('s3-charger-pencil','fire'),false);
+ assert.equal(a.playWeapon(id,'fire',{actor:local})?.weaponId,id);
+ assert.equal(a.played.length,1);
+ assert.equal(sources.length,1,'only the actual recorded sample may play');
+ assert.equal(sources[0].buffer,a.weaponBank().authorized.pick(id,'fire').buffer);
+ assert.equal(a.weaponBank().cache.size,0,'no redundant synth PCM generated for recorded weapon');
+ assert.equal(a._def('ui_click').legacy,true);
+ assert.equal(a.stats().realAudioSuppressed,1,'cold shot stays silent rather than counterfeit its timbre');
+ a.disposeWeaponAudio();
 });
 
-test('local unrecorded mains are audible, while unknown events and remote cold shots stay silent',async()=>{
+test('genuinely unrecorded mains may use authored shots only after negative manifest proof',async()=>{
  const {ctx}=mkctx(),a=new MixerStub(ctx);
+ a.weaponBank();
+ a._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest([clip(id,'fire')])});
+ a._realS3Loader.bank.authorized.fetcher=async()=>res;
+ assert.equal(a.playWeapon('s3-charger-pencil','fire_full',{actor:{isLocal:true}}),null,
+   'an unknown manifest does not authorize authored substitution');
+ await a._realS3Loader.getManifest();
+ assert.equal(a._realS3Loader.declares('s3-charger-pencil','fire_full'),false);
  assert.equal(a.playWeapon('s3-charger-pencil','fire_full',{actor:{isLocal:true}})?.weaponId,'s3-charger-pencil');
  assert.equal(a.playWeapon('s3-charger-pencil','fire',{actor:{isLocal:false}}),null);
  assert.equal(a.playWeapon('s3-charger-long','scope'),null);
  const suspended=a.loopWeapon('s3-charger-long','charge');
  assert.equal(suspended.playing,true,'cold loops await real MP3 decoding without synthesis');
  suspended.stop();assert.equal(suspended.playing,false);
- assert.equal(a.played.length,1,'only the local main shot can use original fallback');
+ assert.equal(a.played.length,1,'only the confirmed unrecorded local main shot may synthesize');
  assert.ok(a._def('main:s3-charger-pencil:fire_full'));
  assert.equal(a._def('main:special:inkjet:open'),null,'no synth replacement for unrecorded kits');
  assert.equal(a.weaponBank().stats().generatedOffThread,0);
+ a.disposeWeaponAudio();
+});
+
+test('recorded Spinner normal shot replaces an unavailable full-charge articulation',async()=>{
+ const {ctx,sources}=mkctx(),a=new MixerStub(ctx);
+ a.weaponBank();
+ const pack=manifest([clip('splatling','fire','standard.mp3'),clip('s3-spinner-quick','fire','mini.mp3')]);
+ a._realS3Loader.fetcher=async()=>({ok:true,json:async()=>pack});
+ a._realS3Loader.bank.authorized.fetcher=async()=>res;
+ const local={isLocal:true};
+ assert.equal(a.playWeapon('splatling','fire',{actor:local}),null,'initial Splatling shot must not synthesize');
+ await a._realS3Loader.ensure('splatling','fire');
+ await a._realS3Loader.ensure('s3-spinner-quick','fire');
+ assert.equal(a.playWeapon('splatling','fire',{actor:local})?.weaponId,'splatling');
+ const charged=fireArticulation(AUDIO_RECIPES['s3-spinner-quick'],{charge:1});
+ assert.equal(charged,'fire_full','catalog full-charge requests a distinct articulation');
+ assert.equal(a._realS3Loader.declares('s3-spinner-quick',charged),false);
+ assert.equal(a.playWeapon('s3-spinner-quick',charged,{actor:local})?.weaponId,'s3-spinner-quick');
+ assert.equal(a.played.at(-1).name,'main:s3-spinner-quick:fire');
+ assert.equal(sources.at(-1).buffer,a.weaponBank().authorized.pick('s3-spinner-quick','fire').buffer);
+ assert.equal(a.stats().authoredFallbackShots,0);
+ a.disposeWeaponAudio();
+});
+
+test('production Splatling charge and stream use separate sourced motor events',()=>{
+ const source=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
+ const compiled=adaptWeaponAudio('src/game/weapons.js',source);
+ assert.match(compiled,/this\\.spinLoop = G\\.audio\\?\\.loopWeapon\\?\\.\\(a\\.weapon\\.id, 'charge'/);
+ assert.match(compiled,/G\\.audio\\?\\.loopWeapon\\?\\.\\(w\\.id, 'spin'/);
+ assert.doesNotMatch(compiled,/G\\.audio\\?\\.play\\(snd,/,'generic shot is not layered over the recording');
+ const installed=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
+ for(const event of ['fire','charge','spin'])assert.ok(installed.clips.some(c=>c.id==='splatling'&&c.event===event),
+   'authentic 2022 Splatling source is installed: '+event);
 });
 
 test('evicted decoded sound re-loads on demand instead of trusting stale v10 loaded bit',async()=>{
