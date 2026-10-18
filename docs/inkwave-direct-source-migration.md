@@ -71,6 +71,16 @@ Previously `patches/local-quality/prop-retention-adapter.mjs` rewrote the native
 
 Mechanical code migration does not itself prove a faster frame rate or lower peak memory. Keep geometry, UV and gameplay equivalence as release gates.
 
+## Completed slice: canonical stage registry
+
+`inkwave-public/src/world/maps.js` now owns Scorch Gorge registration and native-stage layout overrides using normal imports and an explicit exported registry. The two old source rewrites in `scorch-gorge-adapter.mjs` and `native-stages/adapter.mjs` have been removed. The Scorch adapter still manages the locked `src/config.js` and `src/i18n.js` entries; those remain intentionally unmigrated. Native layout override order stays after the ordinary and Scorch entries.
+
+## Completed slice: ink collision and catalogue sweep
+
+The real `inkwave-public/src/game/inkCollision.js` owns both the native triangle-world swept-sphere bridge and the existing 3D AABB early-out for its OBB and capsule collision checks. Its source-rewrite blocks have been removed from `local-quality/adapter.mjs` and `native-stages/adapter.mjs`. A separate normal runtime module, `patches/splatoon3/runtime/weapons-collision.mjs`, now directly owns native catalogue projectile sweep dispatch.
+
+`inkCollision.js` was independently reconstructed from the pinned migration base plus all three previously applied transformations, and its resulting source matched the historical emitted code **byte-for-byte**. Keep the existing native projectile/paint, boundary and 30/60/120Hz regressions as release gates.
+
 ## Next migration batches
 
 1. Audit and migrate simple performance and UI adapters with isolated upstream anchors. Keep each change small enough to compare composed output against the previous behavior.
