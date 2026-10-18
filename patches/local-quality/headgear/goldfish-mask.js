@@ -1,0 +1,93 @@
+/** Golden Gala Masque / キンギョマスケラ. Original procedural reconstruction.
+ * Public in-game front, right and rear photographs are recorded in REFERENCES.md.
+ * +Z front, head-bone local centre [0,.164,.014]. No extracted game assets.
+ * The crest visible in the reference is HAIR, deliberately not reproduced here.
+ */
+import * as THREE from 'three';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+export const GOLDFISH_MASK_ID='goldfish-mask';
+export const GOLDFISH_MASK_FIT=Object.freeze({name:GOLDFISH_MASK_ID,preserveHair:true});
+// Trace coordinates are an original simplified design study, not a source texture.
+// Screen-right tail is +X when viewed from the front (+Z).
+function outline(){const p=new THREE.Shape();p.moveTo(114,156);p.bezierCurveTo(108,129,104,216,112,290);p.bezierCurveTo(111,369,137,401,194,408);p.bezierCurveTo(246,412,275,394,304,404);p.quadraticCurveTo(333,418,357,406);p.bezierCurveTo(391,400,454,423,499,402);p.bezierCurveTo(542,380,548,332,547,279);p.bezierCurveTo(551,222,540,179,509,152);p.bezierCurveTo(485,128,473,86,429,66);p.bezierCurveTo(393,48,363,66,353,99);p.quadraticCurveTo(343,124,349,147);p.bezierCurveTo(391,135,414,158,391,191);p.quadraticCurveTo(370,221,334,249);p.bezierCurveTo(291,215,268,204,216,201);p.bezierCurveTo(169,197,133,188,114,156);p.closePath();return p;}
+function eye(side,expand=0){const p=new THREE.Path();const cx=side<0?232:433,cy=318;const cv=(x,y)=>[cx+(x-cx)*(1+expand),cy+(y-cy)*(1+expand)];const m=(...a)=>p.moveTo(...cv(...a)),b=(...a)=>p.bezierCurveTo(...cv(a[0],a[1]),...cv(a[2],a[3]),...cv(a[4],a[5]));if(side<0){m(173,282);b(201,273,249,279,276,300);b(283,315,289,339,291,350);b(246,372,180,357,173,328);b(170,314,167,297,173,282);}else{m(382,304);b(409,279,458,279,485,290);b(492,326,482,351,459,358);b(426,367,396,360,375,351);b(376,334,377,318,382,304);}p.closePath();return p;}
+function path(commands){const s=new THREE.Shape();for(const [fn,...v] of commands)s[fn](...v);return s;}
+// Ear clipping can join almost-collinear outline samples across the whole nose.
+// Locally flip only interior diagonals to a constrained Delaunay layout before
+// bending: boundaries and eye openings remain exact; thin interior slivers vanish.
+function improvePanelTriangles(position,index){
+ const pts=Array.from({length:position.count},(_,i)=>[position.getX(i),position.getY(i)]);
+ const orient=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+ const tris=[];for(let i=0;i<index.count;i+=3){const t=[index.getX(i),index.getX(i+1),index.getX(i+2)];if(orient(...t.map(v=>pts[v]))<0)[t[1],t[2]]=[t[2],t[1]];tris.push(t);}
+ const inside=(a,b,c,d)=>{const x=a[0]-d[0],y=a[1]-d[1],u=b[0]-d[0],v=b[1]-d[1],s=c[0]-d[0],t=c[1]-d[1];return (x*x+y*y)*(u*t-v*s)-(u*u+v*v)*(x*t-y*s)+(s*s+t*t)*(x*v-y*u)>1e-7;};
+ for(let pass=0;pass<40;pass++){
+  const edges=new Map();tris.forEach((t,i)=>{for(let k=0;k<3;k++){const a=t[k],b=t[(k+1)%3],key=a<b?a+':'+b:b+':'+a;if(!edges.has(key))edges.set(key,[]);edges.get(key).push({i,a,b,c:t[(k+2)%3]});}});
+  const changed=new Set();for(const pair of edges.values()){
+   if(pair.length!==2)continue;const [e,f]=pair;if(changed.has(e.i)||changed.has(f.i))continue;
+   const a=e.a,b=e.b,c=e.c,d=f.c,A=pts[a],B=pts[b],C=pts[c],D=pts[d];
+   if(orient(C,D,A)*orient(C,D,B)>=-1e-8||!inside(A,B,C,D))continue;
+   const one=[c,d,b],two=[d,c,a];if(orient(...one.map(v=>pts[v]))<0)[one[1],one[2]]=[one[2],one[1]];if(orient(...two.map(v=>pts[v]))<0)[two[1],two[2]]=[two[2],two[1]];
+   tris[e.i]=one;tris[f.i]=two;changed.add(e.i);changed.add(f.i);
+  }
+  if(!changed.size)break;
+ }
+ return tris;
+}
+
+export function createGoldfishMask({lod='hero',inkColor=0x20bc91}={}){
+ if(!['hero','game','far'].includes(lod))throw new RangeError('Unknown headgear LOD');
+ const root=new THREE.Group();root.name=GOLDFISH_MASK_ID;const d=lod==='hero'?2:lod==='game'?1:0, curves=[5,9,14][d], maxEdge=[.075,.045,.028][d];
+ const white=new THREE.MeshPhysicalMaterial({color:0xeeeeda,roughness:.29,metalness:.04,clearcoat:.72,clearcoatRoughness:.17,side:THREE.DoubleSide});
+ const gold=new THREE.MeshPhysicalMaterial({color:0xb9a34e,roughness:.32,metalness:.75,clearcoat:.35,clearcoatRoughness:.24,side:THREE.DoubleSide});
+ const lining=new THREE.MeshStandardMaterial({color:0x6a695b,roughness:.71,side:THREE.DoubleSide});
+ const ribbon=new THREE.MeshStandardMaterial({color:new THREE.Color(inkColor).multiplyScalar(.65),roughness:.78,side:THREE.DoubleSide});
+ const mats=[white,gold,lining,ribbon],buckets=mats.map(()=>[]),parts=[];
+ const xyz=(px,py,offset=0)=>{const x=(px-334)*.0008,y=.174+(310-py)*.0008;return [x,y,.205-.069*(x/.18)**2-.15*Math.max(0,y-.255)+.009*Math.exp(-((x/.035)**2)-(((y-.131)/.025)**2))+offset];};
+ function add(g,mat,name){parts.push({name,bounds:new THREE.Box3().setFromBufferAttribute(g.attributes.position)});const out=g.index?g.toNonIndexed():g;if(g.index)g.dispose();
+  // Tight curved trim corners may average across a fold. Keep each lighting normal
+  // in the same hemisphere as its triangle; do not change colours to hide bad normals.
+  const p=out.attributes.position,n=out.attributes.normal,A=new THREE.Vector3(),B=new THREE.Vector3(),C=new THREE.Vector3(),N=new THREE.Vector3();
+  for(let i=0;i<p.count;i+=3){A.fromBufferAttribute(p,i);B.fromBufferAttribute(p,i+1);C.fromBufferAttribute(p,i+2);const face=B.sub(A).cross(C.sub(A)).normalize();if([0,1,2].some(k=>N.fromBufferAttribute(n,i+k).dot(face)<=0))for(let k=0;k<3;k++)n.setXYZ(i+k,face.x,face.y,face.z);}
+  buckets[mats.indexOf(mat)].push(out);
+ }
+ // Image-space Y maps to decreasing local Y, so reverse every authored panel triangle.
+ // Keep geometric winding aligned with the analytic +Z normal; DoubleSide flips back faces.
+ function panel(s,mat,name,off=0){const g=new THREE.ShapeGeometry(s,curves),a=g.attributes.position,ix=g.index,p=[],uv=[];const emit=(A,B,C,depth=0)=>{const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1])*.0008;if(depth<12&&Math.max(dist(A,B),dist(B,C),dist(C,A))>maxEdge){const ab=dist(A,B),bc=dist(B,C),ca=dist(C,A);if(ab>=bc&&ab>=ca){const m=A.map((v,i)=>(v+B[i])/2);emit(A,m,C,depth+1);emit(m,B,C,depth+1);}else if(bc>=ca){const m=B.map((v,i)=>(v+C[i])/2);emit(A,B,m,depth+1);emit(A,m,C,depth+1);}else{const m=C.map((v,i)=>(v+A[i])/2);emit(A,B,m,depth+1);emit(m,B,C,depth+1);}return;}for(const q of (off<0?[A,B,C]:[A,C,B])){p.push(...xyz(...q,off));uv.push(q[0]/655,1-q[1]/515);}};for(const ids of improvePanelTriangles(a,ix)){emit(...ids.map(j=>[a.getX(j),a.getY(j)]));}g.dispose();const out=new THREE.BufferGeometry();out.setAttribute('position',new THREE.Float32BufferAttribute(p,3));out.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));const normal=[];for(let i=0;i<p.length;i+=3){const x=p[i],y=p[i+1],e=.0001;const px=334+x/.0008,py=310-(y-.174)/.0008;const dx=(xyz(px+e/.0008,py,off)[2]-xyz(px-e/.0008,py,off)[2])/(2*e),dy=(xyz(px,py-e/.0008,off)[2]-xyz(px,py+e/.0008,off)[2])/(2*e);const n=new THREE.Vector3(-dx,-dy,1).normalize();if(off<0)n.negate();normal.push(n.x,n.y,n.z);}// Very thin boundary triangles can tilt away from the analytic tangent after bending.
+const A3=new THREE.Vector3(),B3=new THREE.Vector3(),C3=new THREE.Vector3(),N3=new THREE.Vector3();for(let i=0;i<p.length;i+=9){A3.fromArray(p,i);B3.fromArray(p,i+3);C3.fromArray(p,i+6);const face=B3.sub(A3).cross(C3.sub(A3)).normalize();if([0,3,6].some(k=>N3.fromArray(normal,i+k).dot(face)<=0)){for(const k of [0,3,6])face.toArray(normal,i+k);}}out.setAttribute('normal',new THREE.Float32BufferAttribute(normal,3));add(out,mat,name);}
+ const shell=outline();shell.holes=[eye(-1),eye(1)];panel(shell,white,'pierced-ivory-shell');panel(shell,lining,'inner-shell',-.0038);
+ // A narrow continuous metal rolled edge, never a necklace of separate beads.
+ function border(p,width,name){const pts=p.getPoints(curves);const verts=[],uv=[];for(let i=0;i<pts.length;i++){const q=pts[i],prev=pts[(i+pts.length-1)%pts.length],next=pts[(i+1)%pts.length],t=new THREE.Vector2().subVectors(next,prev).normalize();for(const sign of [-1,1]){verts.push(...xyz(q.x-sign*t.y*width,q.y+sign*t.x*width,.0015));uv.push(i/pts.length,(sign+1)/2);}}const ix=[];for(let i=0;i<pts.length-1;i++){const k=i*2;ix.push(k,k+1,k+2,k+1,k+3,k+2);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();add(g,gold,name);}
+ border(outline(),5.8,'continuous-gold-perimeter');
+ for(const side of [-1,1]){const p=new THREE.Shape();p.curves=eye(side,.14).curves;p.holes=[eye(side)];panel(p,gold,`goldfish-eye-${side}`, .001);}
+ const flourishes=[
+ [['moveTo',161,290],['bezierCurveTo',146,261,128,224,122,192],['bezierCurveTo',144,215,181,209,192,241],['bezierCurveTo',167,209,161,242,158,263],['bezierCurveTo',200,263,229,271,241,276],['lineTo',241,241],['bezierCurveTo',210,237,210,219,229,219],['bezierCurveTo',269,215,284,256,285,284],['lineTo',271,278],['lineTo',264,248],['lineTo',253,245],['lineTo',251,281],['lineTo',291,346],['bezierCurveTo',316,361,303,385,290,375],['lineTo',270,351],['lineTo',177,350],['lineTo',192,374],['lineTo',164,368],['bezierCurveTo',186,399,234,391,279,380],['lineTo',276,394],['bezierCurveTo',226,405,183,407,154,384],['bezierCurveTo',133,352,143,311,161,290],['closePath']],
+ [['moveTo',364,352],['bezierCurveTo',374,316,373,265,404,243],['bezierCurveTo',426,225,462,226,459,244],['bezierCurveTo',457,257,445,253,435,252],['lineTo',433,281],['lineTo',420,285],['lineTo',418,256],['bezierCurveTo',396,261,391,289,387,306],['lineTo',383,346],['bezierCurveTo',371,375,362,386,352,376],['bezierCurveTo',342,368,353,357,364,352],['closePath']],
+ [['moveTo',477,292],['bezierCurveTo',501,256,506,224,505,184],['bezierCurveTo',535,211,535,263,520,303],['lineTo',492,343],['bezierCurveTo',482,364,463,376,444,373],['lineTo',470,392],['bezierCurveTo',434,400,413,378,407,361],['lineTo',477,292],['closePath']]
+ ];const goldArt=flourishes.map(c=>path(c));
+ const tail=path([['moveTo',364,118],['bezierCurveTo',376,74,405,69,432,87],['bezierCurveTo',475,114,480,143,508,169],['bezierCurveTo',527,196,524,246,510,273],['bezierCurveTo',493,286,478,288,471,288],['bezierCurveTo',495,214,496,156,458,131],['bezierCurveTo',423,104,398,108,364,118],['closePath']]);border(tail,3.6,'tail-gold-outline');
+ const innerTail=path([['moveTo',428,143],['bezierCurveTo',453,155,466,182,467,211],['bezierCurveTo',447,191,427,185,413,192],['bezierCurveTo',415,173,419,156,428,143],['closePath']]);
+ // Original analytic artwork rasterized once into flat colour/metalness/roughness.
+ // Sampling only the pierced shell guarantees that paint can never close an eye hole.
+ // Subpixel coverage, not nearest-region classification, keeps the printed curves
+ // smooth under magnification. Hero needs 512px; mipmaps handle distant minification.
+ const size=lod==='hero'?512:lod==='game'?256:128,rgba=new Uint8Array(size*size*4),surface=new Uint8Array(size*size*4),coverage=new Uint8Array(size*size*2);
+ const loops=[...goldArt,tail,innerTail].map(p=>p.getPoints(20));
+ // Scan-convert at 2x resolution, then retain fractional coverage for every pixel.
+ // Typed span fills avoid millions of point-in-polygon tests during avatar creation.
+ const ss=size*2,samples=new Uint8Array(ss*ss);
+ for(let sy=0;sy<ss;sy++){const py=(1-(sy+.5)/ss)*515;for(let k=0;k<loops.length;k++){const poly=loops[k],cuts=[];for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a.y>py)!==(b.y>py))cuts.push(a.x+(py-a.y)*(b.x-a.x)/(b.y-a.y));}cuts.sort((a,b)=>a-b);for(let i=0;i+1<cuts.length;i+=2){const lo=Math.max(0,Math.ceil(cuts[i]/655*ss-.5)),hi=Math.min(ss,Math.ceil(cuts[i+1]/655*ss-.5));if(hi>lo)samples.fill(k<3?1:2,sy*ss+lo,sy*ss+hi);}}}
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){const i=y*size+x,v=i*4;let g=0,k=0;for(const dy of [0,1])for(const dx of [0,1]){const r=samples[(y*2+dy)*ss+x*2+dx];if(r===1)g++;if(r===2)k++;}coverage[i*2]=g;coverage[i*2+1]=k;const w=4-g-k;surface[v]=255;surface[v+1]=(94*g+105*k+90*w)/4;surface[v+2]=(190*g+60*k+10*w)/4;surface[v+3]=255;}
+ const makeTex=data=>{const t=new THREE.DataTexture(data,size,size);t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.needsUpdate=true;return t;};
+ const map=makeTex(rgba),pbr=makeTex(surface);map.colorSpace=THREE.SRGBColorSpace;white.color.set(0xffffff);white.map=map;white.metalness=1;white.roughness=1;white.metalnessMap=pbr;white.roughnessMap=pbr;
+ function paint(value){const col=new THREE.Color(value).multiplyScalar(.48);const h=col.getHex(),inkRGB=[h>>16&255,h>>8&255,h&255];for(let i=0;i<size*size;i++){const v=i*4,g=coverage[i*2]/4,k=coverage[i*2+1]/4,w=1-g-k,grain=.76+.38*((Math.sin(i*127.1)*43758.5453)%1+1)/2;for(let c=0;c<3;c++)rgba[v+c]=[238,238,218][c]*w+[185,163,78][c]*g+inkRGB[c]*grain*k;rgba[v+3]=255;}map.needsUpdate=true;}
+ paint(inkColor);
+ // Ribbon follows rear of skull; no opaque helmet/dome is added behind the face.
+ function strip(points,width,name,perpendicular=false){const p=[],uv=[],ix=[],n=points.length;for(let i=0;i<n;i++){const q=points[i],prev=points[Math.max(0,i-1)],next=points[Math.min(n-1,i+1)],dx=next[0]-prev[0],dy=next[1]-prev[1],len=Math.hypot(dx,dy)||1,nx=perpendicular?-dy/len:0,ny=perpendicular?dx/len:1;for(const v of [-1,1]){p.push(q[0]+v*width/2*nx,q[1]+v*width/2*ny,q[2]);uv.push(i/(n-1),(v+1)/2);}}for(let i=0;i<n-1;i++){const k=i*2;ix.push(k,k+2,k+1,k+1,k+2,k+3);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();add(g,ribbon,name);}
+ const n=[20,32,48][d],band=[];for(let i=0;i<=n;i++){const a=.98+i/n*(Math.PI*2-1.96);band.push([.191*Math.sin(a),.181,.014+.183*Math.cos(a)]);}band.unshift([.173,.181,.140]);band.push([-.173,.181,.140]);strip(band,.016,'rear-tie-band');
+ for(const sign of [-1,1]){const loop=[];for(let i=0;i<=n/2;i++){const t=i/(n/2)*Math.PI*2;loop.push([sign*(.014+.115*Math.sin(t/2)),.178+.027*Math.sin(t),-.179-.018*Math.sin(t/2)]);}strip(loop,.013,'bow-loop-'+sign,true);const tail=[];for(let i=0;i<=8;i++){const t=i/8;tail.push([sign*(.012+.025*t),.172-.135*t,-.184-.016*Math.sin(t*Math.PI)]);}strip(tail,.018,'bow-tail-'+sign,true);}
+ const knot=new THREE.BoxGeometry(.028,.025,.015);knot.translate(0,.181,-.185);add(knot,ribbon,'ribbon-knot');
+ const meshes=[];for(let i=0;i<mats.length;i++){if(!buckets[i].length)continue;const g=mergeGeometries(buckets[i],false);buckets[i].forEach(x=>x.dispose());const m=new THREE.Mesh(g,mats[i]);m.name=['ivory-and-flat-goldfish-art','gold-rim','inner-lining','ribbon'][i];m.castShadow=m.receiveShadow=true;root.add(m);meshes.push(m);}
+ let disposed=false;const dispose=()=>{if(disposed)return;disposed=true;root.removeFromParent();meshes.forEach(m=>m.geometry.dispose());mats.forEach(m=>m.dispose());map.dispose();pbr.dispose();};
+ const setInkColor=v=>{paint(v);ribbon.color.set(v).multiplyScalar(.65);return root;};
+ root.dispose=dispose;root.setInkColor=setInkColor;root.userData={id:GOLDFISH_MASK_ID,lod,parts,dispose,setInkColor,stats:{triangles:meshes.reduce((s,m)=>s+m.geometry.attributes.position.count/3,0),vertices:meshes.reduce((s,m)=>s+m.geometry.attributes.position.count,0),meshes:meshes.length,materials:mats.length,textures:2},fit:{headCenter:[0,.164,.014],attachment:'head bone',hairPolicy:'Face accessory. No crown or hair geometry edits; explicit preserveHair contract.'}};return root;
+}

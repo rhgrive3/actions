@@ -5143,3 +5143,7 @@ User clarified the remaining material request as a coating finish. Shell materia
 ### 顎・首の背面追加確認とnormal補正
 
 背面を加えた44+44ケース版 `33e8bec5a2fbb17d4b7eb89854e8dc56fc5bffc3` は描画とPNG照合に成功したが、後首上端の小暗斑2つを検出した。三角反転ではなく、trimで露出した首へ旧skull normalを強制していたことを数値で特定したため、この版は最終採用しない。trim後head fieldも用いてnormal適用を局所制限し、全5detailのposition/index/skinweightを完全保持した。既存15＋追加4の19/19試験は成功。normal修正版 exact head `e89f829591271e4bf1e4613cdd3bde4cd844cad7` の44+44 native再撮影は本追記時点では未確認。詳細・現行ファイルhashは[顎と首の比較記録](inkwave-chin-neck-2026-10-18.md)に更新した。
+
+
+## 2026-10-18: four additional cosmetic headgear
+IDs 8–11 add キンギョマスケラ / サムライヘルメット / フェイスゴーグル / カイトウ・フック. See [integration and historical native evidence](inkwave-new-headgear-2026-10-18.md) and the four source-reference reports. These additions do not implement the original gear abilities or change movement, swimming, shooting, ink recovery, damage, respawn, or camera gameplay logic. Face-only accessories preserve existing hair geometry; crown accessories use supported native fit. Actual S3 gameplay parity and unmeasured frame values remain unconfirmed. Native rendering, geometric tests, and source reference review are recorded separately; successful CI alone is not visual acceptance.
