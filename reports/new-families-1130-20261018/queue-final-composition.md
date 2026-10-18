@@ -61,3 +61,11 @@ cache破損ではなく、source input identityの追跡不足である。登録
 最終mainの705条件・mask・通信・長時間stress・CIは親作業で新生成物を受領する。
 以前の `b93bfef0` 等を新contentの実行結果へ読み替えない。本家の未確認仕様や
 Issue #532／#992の残項目を解消したという報告でもない。
+
+mainへのmerge自体でも同じ数値・browser検査が自動起動するよう、mainブランチpushを
+workflowへ追加した。既存PR／手動起動、両jobの処理とimmutable checkoutを保持し、
+core／game／network／paint／reliability／合成・buildとqueue testの変更も両eventのpathsへ
+含める。main pushは `github.sha` を検査する。push欠落・別branch・core coverage欠落・
+可変checkoutの負対照を追加し、実YAML構文と既存jobの不変を確認した。これは起動設定の
+検証であり、未実行のGitHub CIが成功したという記録ではない。workflow／test／本追補だけの
+変更のため、runtime・1298入力・content／1902生成物は上記の最終候補と不変。
