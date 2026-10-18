@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptQualitySource, qualityIdentity, replaceOnce } from '../adapter.mjs';
-import { adaptStaticMenuArt, STATIC_MENU_SCREENS } from '../static-menu-adapter.mjs';
+import { adaptStaticMenuArt } from '../static-menu-adapter.mjs';
+const STATIC_MENU_SCREENS = ['main', 'mode', 'setup', 'loadout', 'locker', 'settings', 'howto', 'credits', 'online'];
 
 const fromRepo = path => fs.readFileSync(new URL('../../../' + path, import.meta.url), 'utf8');
 const rawGame = fromRepo('inkwave-public/src/main.js');

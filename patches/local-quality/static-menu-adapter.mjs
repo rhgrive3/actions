@@ -1,7 +1,7 @@
 // Static decorative menu backdrops, built from original generated artwork.
 // The actual game arena, result podium, pause screen and network room must keep
 // their existing simulation/render lifecycle. Do not change combat or loadout data.
-export const STATIC_MENU_SCREENS = Object.freeze([
+const STATIC_MENU_SCREENS = Object.freeze([
   'main', 'mode', 'setup', 'loadout', 'locker', 'settings', 'howto', 'credits', 'online',
 ]);
 
