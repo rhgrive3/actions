@@ -19,7 +19,7 @@ export async function run(config){
   const target=c.bones.head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,.15,0));let half=.46;
   if(c.style.hat>=8){const head=c.bones.head.getWorldPosition(new THREE.Vector3()),box=new THREE.Box3().setFromObject(gear);box.expandByPoint(head.clone().add(new THREE.Vector3(-.26,-.13,-.25)));box.expandByPoint(head.clone().add(new THREE.Vector3(.26,.40,.25)));const sphere=box.getBoundingSphere(new THREE.Sphere());half=Math.max(.50,Math.ceil((sphere.radius*1.12+.025)/.025)*.025);target.copy(sphere.center);}
   const baseView=view.replace('sunlit-',''),offset=new THREE.Vector3(...{front:[0,.045,3],oblique:[2.3,1.1,2.3]}[baseView]).applyAxisAngle(new THREE.Vector3(0,1,0),angle);
-  camera.position.copy(target).add(offset);camera.fov=THREE.MathUtils.radToDeg(2*Math.atan(half/offset.length()));camera.lookAt(target);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
+  camera.position.copy(target).add(offset);camera.fov=(360/Math.PI)*Math.atan(half/offset.length());camera.lookAt(target);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
   check(camera.isPerspectiveCamera&&Math.abs(camera.projectionMatrix.elements[11]+1)<1e-9,'production sky requires perspective projection');
   return{projection:'perspective',fov:camera.fov,target:target.toArray(),halfExtent:half,characterYaw:angle,orientation:sunFacing?'sun-facing-character':'default-backlit-character',cameraPosition:camera.position.toArray()};
  }

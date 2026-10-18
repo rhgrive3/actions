@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import {pathToFileURL} from 'node:url';
 import {createProductionLighting,PRODUCTION_LIGHTING_CONFIG,PRODUCTION_EXPOSURE} from '../../../tools/headgear-production-ibl/lighting.mjs';
 test('production illumination guard requires actual environment and official intensity/exposure',()=>{
  const official=fs.readFileSync(new URL('../../../inkwave-public/src/world/environment.js',import.meta.url),'utf8'),main=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');assert(official.includes('this._pmrem.fromScene(this._envScene'));assert(official.includes('this.scene.environmentIntensity = T.envK ?? 0.66'));assert(main.includes('G.renderer.toneMappingExposure = 0.94'));assert.equal(PRODUCTION_EXPOSURE,.94);assert.equal(PRODUCTION_LIGHTING_CONFIG.theme,'day');
@@ -10,7 +10,10 @@ test('production illumination guard requires actual environment and official int
 test('production sky uses perspective projection and explicit sun-facing yaw cases',()=>{const browser=fs.readFileSync(new URL('../../../tools/headgear-production-ibl/browser.mjs',import.meta.url),'utf8');assert(browser.includes('new THREE.PerspectiveCamera'));assert(!browser.includes('new THREE.OrthographicCamera'));assert(browser.includes('camera.projectionMatrix.elements[11]+1'));assert(browser.includes("['front','oblique','sunlit-front','sunlit-oblique']"));assert(browser.includes('Math.atan2(env.sun.position.x,env.sun.position.z)'));});
 
 test('perspective framing contains raised gear and rotates view with actual sun yaw',async()=>{
- const THREE=await import('../../../inkwave-public/vendor/three/build/three.module.js');
+ const threeURL=process.env.INKWAVE_HEADGEAR_SITE ? pathToFileURL(path.join(process.env.INKWAVE_HEADGEAR_SITE,'vendor/three/build/three.module.js')).href : new URL('../../../inkwave-public/vendor/three/build/three.module.js',import.meta.url).href;
+ const rawThree=await import(threeURL);
+ // Emitted target deliberately has no MathUtils namespace export.
+ const THREE={...rawThree,MathUtils:undefined};
  const source=fs.readFileSync(new URL('../../../tools/headgear-production-ibl/browser.mjs',import.meta.url),'utf8');
  const body=source.slice(source.indexOf('function frame('),source.indexOf('\n try{'));
  const camera=new THREE.PerspectiveCamera(25,1,.01,5000),env={sun:{position:new THREE.Vector3(-92.4051199835844,100.69126256797398,-83.20194374704654)}};
