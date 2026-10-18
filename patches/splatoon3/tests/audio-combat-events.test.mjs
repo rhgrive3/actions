@@ -61,6 +61,17 @@ test('Blaster direct and indirect body-hit cues remain different without alterin
   assert.equal(blasterHitCuePitch(a,'blaster'),BLASTER_HIT_PITCH.direct);
   assert.equal(blasterHitCuePitch(other,'shooter'),1);
   assert.equal(blasterHitCuePitch(a,'storm'),1,'special is never misclassified');
+  assert.equal(blasterHitCuePitch(a,'blaster-01'),BLASTER_HIT_PITCH.direct,
+    'alternate native Blaster retains its direct-hit sound');
+  assert.equal(blasterHitCuePitch(a,'blaster-02'),BLASTER_HIT_PITCH.direct);
+  assert.equal(blasterHitCuePitch(a,'s3-blaster-light-01'),BLASTER_HIT_PITCH.direct,
+    'catalog Blaster Deco resolves to its source main');
+  withBlasterSplashHit(a,()=>{
+    assert.equal(blasterHitCuePitch(a,'blaster-01'),BLASTER_HIT_PITCH.indirect);
+    assert.equal(blasterHitCuePitch(a,'s3-blaster-light-01'),BLASTER_HIT_PITCH.indirect);
+  });
+  assert.equal(blasterHitCuePitch(a,'sub:bomb'),1,'kit audio is never a direct-hit cue');
+
   assert.equal(blasterHitCuePitch(a,'s3-blaster-light'),BLASTER_HIT_PITCH.direct);
   const sample={damage:57,killed:false,weaponId:'blaster'};
   withBlasterSplashHit(a,()=>{
