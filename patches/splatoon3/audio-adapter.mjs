@@ -98,7 +98,8 @@ export function adaptWeaponAudio(rel,code){
         label+' wait for MP3 before gameplay');
       code=code.slice(0,lo)+method+code.slice(hi);
     };
-    patchStartShot('  async startMatch(o = {}, flow = this._beginMatchFlow()) {',
+    // Native-stage admission rewrites the offline signature before the audio pass.
+    patchStartShot('  async startMatch(o = {}, flow = null) {',
       '\n  // ---- online (src/net/session.js', "this.profile.weapon||'shooter'",'offline');
     patchStartShot('  async startNetMatch(cfg, nm) {',
       '\n  // Compile every shader variant',
