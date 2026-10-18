@@ -16,7 +16,8 @@ export async function run(config){
  for(const pose of ['neck-left','neck-right','neck-up','neck-down'])for(const view of ['front','under'])cases.push({lod:'game',hat:0,view,pose});
  for(const hat of [4,5,6,7])for(const view of ['front','under'])cases.push({lod:'game',hat,view,pose:'neutral'});
  for(const [view,light] of [['front','soft'],['side','natural'],['side','soft']])cases.push({lod:'hero',hat:0,view,pose:'neutral',light});
- check(cases.length===43,'fixed 43-case denominator');
+ cases.push({lod:'hero',hat:0,view:'rear-quarter',pose:'neutral',light:'natural'});
+ check(cases.length===44,'fixed 44-case denominator');
  let c;
  try{for(const spec of cases){
   const {lod,hat,view,pose}=spec,name=[lod,'hat'+hat,pose,view,...(spec.light?[spec.light]:[])].join('-');progress.stage=name;
@@ -39,7 +40,7 @@ export async function run(config){
   }
   check(maxWeightError<1e-5&&chinVertices>10,'normalized skin and chin sample coverage');
   const q=c.bones.head.getWorldQuaternion(new THREE.Quaternion()),target=c.getHeadPosition(new THREE.Vector3());
-  const dir=new THREE.Vector3(...({front:[0,0,1],'left-quarter':[-.7071,0,.7071],'right-quarter':[.7071,0,.7071],under:[0,-.45,1],side:[1,0,0]}[view])).normalize().applyQuaternion(q),up=new THREE.Vector3(0,1,0).applyQuaternion(q);
+  const dir=new THREE.Vector3(...({front:[0,0,1],'left-quarter':[-.7071,0,.7071],'right-quarter':[.7071,0,.7071],under:[0,-.45,1],side:[1,0,0],'rear-quarter':[.7071,0,-.7071]}[view])).normalize().applyQuaternion(q),up=new THREE.Vector3(0,1,0).applyQuaternion(q);
   camera.position.copy(target).addScaledVector(dir,3);camera.up.copy(up);camera.lookAt(target);camera.updateMatrixWorld(true);
   const soft=spec.light==='soft';hemi.color.set(soft?'#ffffff':'#f4f6ff');hemi.groundColor.set(soft?'#ffffff':'#485266');hemi.intensity=soft?2.8:2.2;sun.color.set(soft?'#ffffff':'#fff2dd');sun.intensity=soft?.5:2.5;
   hemi.position.copy(up);sun.position.copy(target).add(new THREE.Vector3(3,5,4).applyQuaternion(q));sun.target.position.copy(target);sun.target.updateMatrixWorld(true);
@@ -48,6 +49,6 @@ export async function run(config){
   progress.rows.push({...spec,name,skinVertices:a.position.count,chinVertices,maxWeightError,chinWorldBounds:[bounds.min.toArray(),bounds.max.toArray()],headWorldQuaternion:q.toArray(),neckQuaternion:c.bones.neck.quaternion.toArray(),jawAngle:c.xb.jaw?.rotation.x,faceUniform:c.u.uMouth.value.toArray(),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,sourceMotion:false,expressionProbe:pose==='open'||pose==='smile'?'controlled native rig/uniform channels; not full expression animation':'settled idle or neck rotation probe'});
   scene.remove(c.root);c.dispose();check(!headgearState(c),'owned gear disposal');c=null;renderer.renderLists.dispose();
  }
- return{status:'rendered-awaiting-visual-review',caseCount:43,rows:progress.rows,limitations:'Same production Character, camera and light in baseline/candidate. Synthetic jaw/cheek and neck probes exercise deformation only; not source-motion gameplay or all facial animation. Hat coverage game LOD only. Finite normalized skinning is not automatic no-intersection certification.'};
+ return{status:'rendered-awaiting-visual-review',caseCount:44,rows:progress.rows,limitations:'Same production Character, camera and light in baseline/candidate. Synthetic jaw/cheek and neck probes exercise deformation only; not source-motion gameplay or all facial animation. Hat coverage game LOD only. Finite normalized skinning is not automatic no-intersection certification.'};
  }finally{c?.dispose();renderer.dispose();}
 }
