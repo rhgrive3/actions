@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "revision": "20ea0a411bb40926f37bd37db91c61ea4f4857ab527baca11436c041d3059312",
+  "initialJSRequests": 146,
+  "modulePreloads": 145,
+  "coreModulePreloads": 131,
+  "practiceRangeModulePreloads": 14,
+  "practiceRangePreloadBytes": 77425,
+  "initialJSBytes": 2704306,
+  "criticalHTMLBytes": 15945,
+  "precacheCount": 445,
+  "precacheBytes": 6862040,
+  "workerBytes": 69374,
+  "declaredBytes": 11948174,
+  "measurementKind": "deterministic file and dependency gates; not native browser timings"
+}

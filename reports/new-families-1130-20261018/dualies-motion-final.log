@@ -1,0 +1,38 @@
+(node:5007) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ calibrated braking and explicit .98 air retention consume exact distances at 30/60/120Hz (2.426562ms)
+✔ added roll substeps stay within half a body radius and discard blocked motion without accumulating debt (5.879733ms)
+✔ production Actor integrates source Dapple 3+.6 and Douser 5.5+1.2, including a thin wall (3293.061119ms)
+BASE_DUALIES_ACTOR {"id":"s3-maneuver-short","team":0,"shots":20,"ticks":180,"moved":[true,true],"near":[true,false]}
+BASE_DUALIES_ACTOR {"id":"s3-maneuver-short","team":1,"shots":20,"ticks":180,"moved":[true,true],"near":[true,false]}
+BASE_DUALIES_ACTOR {"id":"s3-maneuver-gallon","team":0,"shots":12,"ticks":180,"moved":[true,true],"near":[true,false]}
+BASE_DUALIES_ACTOR {"id":"s3-maneuver-gallon","team":1,"shots":12,"ticks":180,"moved":[true,true],"near":[true,false]}
+BASE_DUALIES_ACTOR {"id":"s3-maneuver-dual","team":0,"shots":17,"ticks":180,"moved":[true,true],"near":[true,false]}
+BASE_DUALIES_ACTOR {"id":"s3-maneuver-dual","team":1,"shots":17,"ticks":180,"moved":[true,true],"near":[true,false]}
+BASE_DUALIES_ACTOR {"id":"s3-maneuver-stepper","team":0,"shots":17,"ticks":180,"moved":[true,true],"near":[true,false]}
+BASE_DUALIES_ACTOR {"id":"s3-maneuver-stepper","team":1,"shots":17,"ticks":180,"moved":[true,true],"near":[true,false]}
+BASE_DUALIES_ACTOR {"id":"s3-maneuver-long","team":0,"shots":13,"ticks":180,"moved":[true,true],"near":[true,false]}
+BASE_DUALIES_ACTOR {"id":"s3-maneuver-long","team":1,"shots":13,"ticks":180,"moved":[true,true],"near":[true,false]}
+(node:5079) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-maneuver-short native Actor advances both hand triggers through near/far and reset (50465.309245ms)
+✔ s3-maneuver-gallon native Actor advances both hand triggers through near/far and reset (8279.049429ms)
+✔ s3-maneuver-dual native Actor advances both hand triggers through near/far and reset (7312.368089ms)
+✔ s3-maneuver-stepper native Actor advances both hand triggers through near/far and reset (6000.588689ms)
+✔ s3-maneuver-long native Actor advances both hand triggers through near/far and reset (4259.769401ms)
+✔ catalog Dualies feed native roll and turret Character pose without mutating gameplay runner (1370.622131ms)
+(node:5344) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tetra moving rounds retain 7.4 degree / 6F / .26 radius until the physical roll ends (2881.390576ms)
+✔ every added Dualies base and alternate kit starts in moving mode, never planted mode (2189.445035ms)
+✔ sourced slide recovery blocks squid, preserves stationary planted fire and releases on movement (1900.566302ms)
+✔ Dapple and Squelcher slide ink recovery uses the SideStep 50F / 60F source (2230.569985ms)
+✔ Tetra four-roll chain resets after complete recovery; a rejected fifth never spends ink or changes the stroke (2086.966781ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100128.044913

@@ -1,0 +1,332 @@
+{
+  "version": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "retrievedOn": "2026-10-18",
+  "rows": [
+    {
+      "id": "s3-maneuver-short",
+      "sourceActor": "WeaponManeuverShort",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverShort.game__GameParameterTable.json",
+      "sha256": "61abee93821489b4fc72b93cc080e3463477f09961aee874c9a521a25812fbb7",
+      "checkedGroups": [
+        "SideStepParam",
+        "WeaponParam",
+        "CollisionParam",
+        "CollisionLapOverParam",
+        "DamageParam",
+        "MoveParam",
+        "PaintParam",
+        "SplashPaintParam",
+        "SplashSpawnParam"
+      ],
+      "allCheckedGroupsMatch": true,
+      "sideStep": {
+        "InkConsume": 0.05,
+        "InkRecoverStop": 50,
+        "MoveDist": 3,
+        "MoveFrame": 8,
+        "SlipMoveDistAir": 0.6,
+        "SlipMoveDistGnd": 0.6,
+        "SlipMoveFrame": 30,
+        "SplashSlideParam": {
+          "MoveLength": 4,
+          "PaintWidthHalf": 1.8
+        },
+        "UnrelaxFrameMove": 28,
+        "UnrelaxFrameMove_Last": 28,
+        "UnrelaxFrameNoSideStep": 28,
+        "UnrelaxFrameNoSideStep_Last": 28,
+        "UnrelaxFrameNoSquid": 28,
+        "UnrelaxFrameNoSquid_Last": 28,
+        "UnrelaxFrameOneMuzzle": 28,
+        "UnrelaxFrameOneMuzzle_Last": 28
+      },
+      "weapon": {
+        "InkConsume": 0.00663,
+        "Jump_DegBiasDecreaseStartFrame": 25,
+        "Jump_DegBiasEndFrame": 70,
+        "Jump_DegBiasMax": 0.4,
+        "Jump_DegSwerve": 11.66,
+        "LapOver_DegSwerve": 3.89,
+        "LapOver_RepeatFrame": 4,
+        "MoveSpeed": 0.084,
+        "RepeatFrame": 5,
+        "ShotGuideFrame": 7,
+        "Stand_DegBiasDecrease": 0.005,
+        "Stand_DegBiasKf": 0.03,
+        "Stand_DegBiasMax": 0.4,
+        "Stand_DegBiasMin": 0.05,
+        "Stand_DegSwerve": 6.8
+      }
+    },
+    {
+      "id": "dualies",
+      "sourceActor": "WeaponManeuverNormal",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "sha256": "55e37c4d8db92b63d48f281015a30a9aaccd1ff838edf88ae4103124c365eb07",
+      "checkedGroups": [
+        "SideStepParam",
+        "WeaponParam",
+        "CollisionParam",
+        "CollisionLapOverParam",
+        "DamageParam",
+        "MoveParam",
+        "PaintParam",
+        "SplashPaintParam",
+        "SplashSpawnParam"
+      ],
+      "allCheckedGroupsMatch": true,
+      "sideStep": {
+        "InkConsume": 0.07,
+        "MoveFrame": 12,
+        "SplashSlideParam": {
+          "PaintWidthHalf": 1.8
+        },
+        "UnrelaxFrameMove": 32,
+        "UnrelaxFrameMove_Last": 32,
+        "UnrelaxFrameNoSideStep": 32,
+        "UnrelaxFrameNoSideStep_Last": 32,
+        "UnrelaxFrameNoSquid": 32,
+        "UnrelaxFrameNoSquid_Last": 32,
+        "UnrelaxFrameOneMuzzle": 32,
+        "UnrelaxFrameOneMuzzle_Last": 32
+      },
+      "weapon": {
+        "InkConsume": 0.0072,
+        "Jump_DegBiasDecreaseStartFrame": 25,
+        "Jump_DegBiasEndFrame": 70,
+        "Jump_DegBiasMax": 0.4,
+        "Jump_DegSwerve": 7.5,
+        "LapOver_DegSwerve": 0,
+        "LapOver_RepeatFrame": 4,
+        "MoveSpeed": 0.08,
+        "RepeatFrame": 5,
+        "ShotGuideFrame": 7,
+        "Stand_DegBiasDecrease": 0.005,
+        "Stand_DegBiasKf": 0.01,
+        "Stand_DegBiasMin": 0.01,
+        "Stand_DegSwerve": 2
+      }
+    },
+    {
+      "id": "s3-maneuver-gallon",
+      "sourceActor": "WeaponManeuverGallon",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverGallon.game__GameParameterTable.json",
+      "sha256": "a65b5fc265a615263ed826bce09213fa90697bb2cfe44af588625c1887a16c89",
+      "checkedGroups": [
+        "SideStepParam",
+        "WeaponParam",
+        "CollisionParam",
+        "DamageParam",
+        "DamageLapOverParam",
+        "MoveParam",
+        "MoveLapOverParam",
+        "PaintParam",
+        "SplashPaintParam",
+        "SplashSpawnParam",
+        "SplashSpawnLapOverParam"
+      ],
+      "allCheckedGroupsMatch": true,
+      "sideStep": {
+        "InkConsume": 0.08,
+        "SlipMoveDistAir": 1.2,
+        "SlipMoveDistGnd": 1.2,
+        "SplashSlideParam": {
+          "PaintWidthHalf": 2
+        },
+        "UnrelaxFrameMove": 40,
+        "UnrelaxFrameMove_Last": 40,
+        "UnrelaxFrameNoSideStep": 40,
+        "UnrelaxFrameNoSideStep_Last": 40,
+        "UnrelaxFrameNoSquid": 40,
+        "UnrelaxFrameNoSquid_Last": 40,
+        "UnrelaxFrameNoWeapon": 8,
+        "UnrelaxFrameNoWeapon_Last": 8,
+        "UnrelaxFrameOneMuzzle": 40,
+        "UnrelaxFrameOneMuzzle_Last": 40
+      },
+      "weapon": {
+        "InkConsume": 0.014,
+        "Jump_DegBiasDecreaseStartFrame": 25,
+        "Jump_DegBiasEndFrame": 70,
+        "Jump_DegBiasMax": 0.4,
+        "Jump_DegSwerve": 8,
+        "LapOver_DegSwerve": 2.7,
+        "LapOver_RepeatFrame": 9,
+        "MoveSpeed": 0.06,
+        "PreDelayFrame_SquidShot": 4,
+        "RepeatFrame": 9,
+        "ShotGuideFrame": 7,
+        "Stand_DegBiasDecrease": 0.005,
+        "Stand_DegBiasKf": 0.03,
+        "Stand_DegBiasMin": 0.03,
+        "Stand_DegSwerve": 3.2
+      }
+    },
+    {
+      "id": "s3-maneuver-dual",
+      "sourceActor": "WeaponManeuverDual",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+      "sha256": "c2eb9cd1a15a556f533725fca989412d73f5942ffd31fe8448ca87c2d7693ae6",
+      "checkedGroups": [
+        "SideStepParam",
+        "WeaponParam",
+        "CollisionParam",
+        "CollisionLapOverParam",
+        "DamageParam",
+        "MoveParam",
+        "PaintParam",
+        "SplashPaintParam",
+        "SplashSpawnParam"
+      ],
+      "allCheckedGroupsMatch": true,
+      "sideStep": {
+        "InkConsume": 0.08,
+        "InkRecoverStop": 60,
+        "MoveDist": 3.5,
+        "MoveFrame": 12,
+        "SlipMoveFrame": 45,
+        "SplashSlideParam": {
+          "MoveLength": 4.5,
+          "PaintWidthHalf": 1.8
+        },
+        "UnrelaxFrameMove": 8,
+        "UnrelaxFrameMove_Last": 8,
+        "UnrelaxFrameNoWeapon": 8,
+        "UnrelaxFrameNoWeapon_Last": 8
+      },
+      "weapon": {
+        "InkConsume": 0.012,
+        "Jump_DegBiasDecreaseStartFrame": 25,
+        "Jump_DegBiasEndFrame": 70,
+        "Jump_DegBiasMax": 0.4,
+        "Jump_DegSwerve": 8,
+        "LapOver_DegSwerve": 2,
+        "LapOver_RepeatFrame": 6,
+        "MoveSpeed": 0.072,
+        "RepeatFrame": 6,
+        "ShotGuideFrame": 9,
+        "Stand_DegBiasDecrease": 0.01,
+        "Stand_DegBiasKf": 0.02,
+        "Stand_DegBiasMax": 0.3,
+        "Stand_DegBiasMin": 0.04,
+        "Stand_DegSwerve": 4
+      }
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "sourceActor": "WeaponManeuverStepper",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverStepper.game__GameParameterTable.json",
+      "sha256": "c2a33ed35e87ac3efdd88a3e19d53015f57425e536c01405706d5a030a18d536",
+      "checkedGroups": [
+        "SideStepParam",
+        "WeaponParam",
+        "CollisionParam",
+        "CollisionLapOverParam",
+        "DamageParam",
+        "MoveParam",
+        "PaintParam",
+        "SplashPaintParam",
+        "SplashSpawnParam"
+      ],
+      "allCheckedGroupsMatch": true,
+      "sideStep": {
+        "ChargeFrame": 5,
+        "InkConsume": 0.03,
+        "IsShootableInMove": true,
+        "MoveDist": 3.5,
+        "RepeatCnt": 4,
+        "SplashSlideParam": {
+          "PaintWidthHalf": 1.8
+        },
+        "UnrelaxFrameMove": 45,
+        "UnrelaxFrameMove_Last": 45,
+        "UnrelaxFrameNoSideStep": 45,
+        "UnrelaxFrameNoSideStep_Last": 45,
+        "UnrelaxFrameNoSquid": 45,
+        "UnrelaxFrameNoSquid_Last": 45,
+        "UnrelaxFrameNoWeapon": 8,
+        "UnrelaxFrameNoWeapon_Last": 8,
+        "UnrelaxFrameOneMuzzle": 45,
+        "UnrelaxFrameOneMuzzle_Last": 45
+      },
+      "weapon": {
+        "InkConsume": 0.008,
+        "Jump_DegBiasDecreaseStartFrame": 25,
+        "Jump_DegBiasEndFrame": 70,
+        "Jump_DegBiasMax": 0.4,
+        "Jump_DegSwerve": 12.8,
+        "LapOver_DegSwerve": 2.7,
+        "LapOver_RepeatFrame": 5,
+        "MoveSpeed": 0.072,
+        "RepeatFrame": 6,
+        "ShotGuideFrame": 8,
+        "Stand_DegBiasDecrease": 0.005,
+        "Stand_DegBiasKf": 0.04,
+        "Stand_DegBiasMin": 0.04,
+        "Stand_DegSwerve": 7.4
+      }
+    },
+    {
+      "id": "s3-maneuver-long",
+      "sourceActor": "WeaponManeuverLong",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverLong.game__GameParameterTable.json",
+      "sha256": "ca42a0ee6fcb761865496615fc487e17d8529a33369200972ccbc9f8b7855b5f",
+      "checkedGroups": [
+        "SideStepParam",
+        "WeaponParam",
+        "CollisionParam",
+        "DamageParam",
+        "DamageLapOverParam",
+        "MoveParam",
+        "MoveLapOverParam",
+        "PaintParam",
+        "SplashPaintParam",
+        "SplashSpawnParam",
+        "SplashSpawnLapOverParam"
+      ],
+      "allCheckedGroupsMatch": true,
+      "sideStep": {
+        "InkConsume": 0.1,
+        "MoveDist": 5.5,
+        "MoveFrame": 16,
+        "MoveStepKd_Air": 0.98,
+        "RepeatCnt": 1,
+        "SlipMoveDistAir": 1.2,
+        "SlipMoveDistGnd": 1.2,
+        "SlipMoveFrame": 50,
+        "SplashSlideParam": {
+          "PaintWidthHalf": 2
+        },
+        "UnrelaxFrameMove": 40,
+        "UnrelaxFrameMove_Last": 40,
+        "UnrelaxFrameNoSideStep": 40,
+        "UnrelaxFrameNoSideStep_Last": 40,
+        "UnrelaxFrameNoSquid": 40,
+        "UnrelaxFrameNoSquid_Last": 40,
+        "UnrelaxFrameNoWeapon": 6,
+        "UnrelaxFrameNoWeapon_Last": 6,
+        "UnrelaxFrameOneMuzzle": 40,
+        "UnrelaxFrameOneMuzzle_Last": 40
+      },
+      "weapon": {
+        "InkConsume": 0.012,
+        "Jump_DegBiasDecreaseStartFrame": 25,
+        "Jump_DegBiasEndFrame": 70,
+        "Jump_DegBiasMax": 0.4,
+        "Jump_DegSwerve": 8,
+        "LapOver_DegSwerve": 2.3,
+        "LapOver_RepeatFrame": 4,
+        "MoveSpeed": 0.07,
+        "PreDelayFrame_SquidShot": 4,
+        "RepeatFrame": 8,
+        "ShotGuideFrame": 9,
+        "Stand_DegBiasDecrease": 0.005,
+        "Stand_DegBiasKf": 0.04,
+        "Stand_DegBiasMax": 0.3,
+        "Stand_DegBiasMin": 0.1,
+        "Stand_DegSwerve": 2.5
+      }
+    }
+  ]
+}

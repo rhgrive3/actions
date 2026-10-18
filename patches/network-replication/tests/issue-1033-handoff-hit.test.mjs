@@ -13,6 +13,7 @@ import { C1088_SURGE_TAG, clearRemoteC1088Surge } from '../issue-1088-surge-pres
 import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
 import { clearRemoteDodgeClock } from '../../splatoon3/runtime/remote-dodge-clock.mjs';
 import { KIT_FORWARD } from '../../splatoon3/runtime/kit-network.mjs';
+import { dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLock } from '../../splatoon3/runtime/catalog-dualies-motion.mjs';
 
 const raw = fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js', import.meta.url), 'utf8');
 const source = adaptBuildSource('src/net/netmatch.js', raw);
@@ -36,9 +37,11 @@ const productionPackActor = new Function(
   'PLAYER', 'F', 'SPAWN_ARMOR_FLAG', 'RESPAWN_PUNISHER_FLAG', 'chargerSightVisible', 'slamProtected',
   'spawnProtectionRemaining', 'respawnPunisherEquipped', 'swimTrailVisible', 'swimSplashVisible', 'r2', 'r3',
   'packAdoptionState', 'packC1088SurgePresentation', 'objectShredderEquipped', 'OBJECT_SHREDDER_FLAG', 'splashdownProtected',
+  'dualiesNetworkAction', 'dualiesNetworkDirection', 'dualiesNetworkLock',
   `${hitAuthoritySource}\n${sourceFunction('packActor')}\nreturn packActor;`,
 )({ hp: 100 }, {}, 0, 0, () => false, () => false, () => 0, () => false, () => true, () => true,
-  (x) => Math.round(x * 100) / 100, (x) => Math.round(x * 1000) / 1000, () => null, () => null, objectShredderEquipped, OBJECT_SHREDDER_FLAG, splashdownProtected);
+  (x) => Math.round(x * 100) / 100, (x) => Math.round(x * 1000) / 1000, () => null, () => null, objectShredderEquipped, OBJECT_SHREDDER_FLAG, splashdownProtected,
+  dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLock);
 const productionUnpackActor = new Function('PLAYER',
   `${hitAuthoritySource}\n${sourceFunction('unpackActor')}\nreturn unpackActor;`,
 )({ hp: 100 });

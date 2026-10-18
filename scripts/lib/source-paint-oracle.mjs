@@ -37,7 +37,27 @@ chargerProfileKinds.forEach((kind,row)=>{
   });
 });
 assert.equal(createHash('sha256').update(chargerBytes).digest('hex'),chargerReference.rgbaSha256,'Charger immutable RGBA8 edges');
-const allProfiles=Object.freeze({...reference.profiles,...chargerReference.profiles});
+// Keep the original five-profile and Charger receipts immutable. The reviewed
+// burst masks and later contact calibration live in a separate frozen table;
+// the scalar oracle still reads no production generator, texture or raster.
+const extensionReferenceBytes=fs.readFileSync(new URL('../fixtures/main-ink-profile-extensions-20261018.json', import.meta.url));
+assert.equal(createHash('sha256').update(extensionReferenceBytes).digest('hex'),'a701ea6a3865091eb149b067998ddc35e0dce69fbc4cce0e820df1eb3ff1f399','immutable burst/contact silhouette fixture');
+const extensionReference=JSON.parse(extensionReferenceBytes);
+assert.equal(extensionReference.columns,128);
+const extensionProfileKinds=Object.keys(extensionReference.profiles);
+assert.deepEqual(extensionProfileKinds,['ink-contact','ink-blast','ink-blast-rectified']);
+const extensionBytes=new Uint8Array(128*extensionProfileKinds.length*4);
+extensionProfileKinds.forEach((kind,row)=>{
+  const points=extensionReference.profiles[kind];
+  assert.equal(points.length,128,kind+' profile width');
+  points.forEach(([left,right],column)=>{
+    assert.ok(Number.isInteger(left)&&left>=0&&left<=255&&Number.isInteger(right)&&right>=0&&right<=255,kind+' RGBA8 endpoints');
+    const i=(row*128+column)*4;
+    extensionBytes[i]=left;extensionBytes[i+1]=right;extensionBytes[i+3]=255;
+  });
+});
+assert.equal(createHash('sha256').update(extensionBytes).digest('hex'),extensionReference.rgbaSha256,'burst/contact immutable RGBA8 edges');
+const allProfiles=Object.freeze({...reference.profiles,...chargerReference.profiles,...extensionReference.profiles});
 const allProfileKinds=Object.keys(allProfiles);
 
 function selectedProfile(stamp) {

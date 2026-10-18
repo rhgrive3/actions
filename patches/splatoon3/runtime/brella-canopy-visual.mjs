@@ -30,7 +30,9 @@ export function showDetachedCanopy(api, owner, canopy, id) {
     canopy.mesh = group;G.scene.add(group);
   }
   canopy.mesh.position.copy(canopy.pos);
-  canopy.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), canopy.dir.clone().normalize());
+  canopy.visualForward ||= new THREE.Vector3(0,0,1);
+  canopy.visualDirection ||= new THREE.Vector3();
+  canopy.mesh.quaternion.setFromUnitVectors(canopy.visualForward, canopy.visualDirection.copy(canopy.dir).normalize());
 }
 export function retireDetachedCanopy(canopy) {
   const mesh = canopy?.mesh; if (!mesh) return;

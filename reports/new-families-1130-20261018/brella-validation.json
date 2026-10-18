@@ -1,0 +1,82 @@
+{
+  "runtimeCommit": "545e4f0",
+  "node": "v24.19.0",
+  "baselineCommit": "9ef63350385bffee71b3afa0a09290a92e9c862b",
+  "sourceVersion": "11.3.0",
+  "sourceParameterCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "suites": [
+    {
+      "kind": "broad related source-composed regressions",
+      "tests": 117,
+      "passed": 117,
+      "failed": 0,
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/catalog-brella-1130.test.mjs patches/splatoon3/tests/brella-physics.test.mjs patches/splatoon3/tests/catalog-added-family-paint.test.mjs patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/brella-special-controls.test.mjs patches/splatoon3/tests/brella-detached-paper.test.mjs patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs patches/splatoon3/tests/weapon-variant-brella-palette.test.mjs patches/network-replication/tests/composed-hit-unit-packet.test.mjs",
+      "note": "Executed before later added boundary/contact regressions; same implementation apart from scoped array reuse and explicit local step model clarifications, then focused checks rerun."
+    },
+    {
+      "kind": "final focused source-composed regressions",
+      "tests": 26,
+      "passed": 26,
+      "failed": 0,
+      "command": "node --experimental-vm-modules --test patches/splatoon3/tests/brella-physics.test.mjs patches/splatoon3/tests/catalog-brella-1130.test.mjs patches/network-replication/tests/composed-hit-unit-packet.test.mjs"
+    },
+    {
+      "kind": "additional owner death and fixed contact clock",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "command": "node --experimental-vm-modules --test --test-name-pattern='additional audit: a launched|contact owns' patches/splatoon3/tests/catalog-brella-1130.test.mjs"
+    },
+    {
+      "kind": "real Character local-to-wire-to-remote presentation and native victim-owner hit roundtrip",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "command": "node --experimental-vm-modules --test patches/network-replication/tests/brella-presentation.test.mjs",
+      "independentReviewRunPassed": true
+    },
+    {
+      "kind": "idle repress, squid repair and Spy shooting/repair regression",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "command": "node --experimental-vm-modules --test --test-name-pattern='discards old|Undercover|squid form' patches/splatoon3/tests/catalog-brella-1130.test.mjs patches/splatoon3/tests/main-weapon-catalog.test.mjs"
+    },
+    {
+      "kind": "final remote presentation plus real cloth model regressions",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "command": "node --experimental-vm-modules --test patches/network-replication/tests/brella-presentation.test.mjs patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs"
+    }
+  ],
+  "measurements": {
+    "command": "node --experimental-vm-modules scripts/measure-brella-1130.mjs",
+    "repeatCommand": "node --experimental-vm-modules scripts/measure-brella-1130.mjs .ci-scratch/brella-1130/repeated-measurements.json",
+    "seededHashEqual": true,
+    "groups": 12,
+    "samplesPerGroup": 20000,
+    "liveVolleys": 640
+  },
+  "baselineFailingRegressions": [
+    "gravity-free launched canopy intersects old plane",
+    "explicit outer pellet InitVelRandom ignored",
+    "capsule blocks above rendered guard reference",
+    "frontal attacker with no trajectory consumes shield HP",
+    "squid retains open canopy and freezes rebuild/cure",
+    "remote held canopy absent from real Character cloth animation",
+    "closed idle time funds instant purge/open on renewed press"
+  ],
+  "scopeLimits": [
+    "No retail hardware measurement",
+    "No browser/GPU benchmark in family branch",
+    "Integrated production build, browser, CI and main status owned by parent integration",
+    "No recovered Nintendo RNG algorithm",
+    "No authoritative retail canopy full outline",
+    "No lag rewind or complete attack-trajectory history"
+  ],
+  "followupRuntimeCommits": [
+    "1e484e5",
+    "1cc2343"
+  ]
+}

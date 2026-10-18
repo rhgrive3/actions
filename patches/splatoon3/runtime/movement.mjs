@@ -257,6 +257,13 @@ function beginSurgeLaunchArmor(actor, surge) {
 export function normalJumpVelocity(a, velocity) {
   const r = a.weaponRunner;
   if (a.form === 'squid') return velocity;
+  // Stringers share the explicit full-charge takeoff cap, but their runtime
+  // kind is 'catalog', so the native Charger branch below cannot admit it.
+  // JumpHeightFullCharge is source world-units/frame, as for native Chargers.
+  const stringer=a.weapon.catalogRecord?.family==='stringer'
+    ?a.weapon.catalogRecord.parameters.spl__WeaponStringerParam.ChargeParam:null;
+  if(stringer&&a.intent.fire&&r.charging&&r.charge+1e-9>=1&&Number.isFinite(stringer.JumpHeightFullCharge))
+    return Math.min(velocity,stringer.JumpHeightFullCharge*60);
   // #251: only a held full-charge Charger lowers the takeoff impulse.
   if (a.weapon.kind === 'charger') {
     const cap = a.weapon.fullChargeJumpVelocity;

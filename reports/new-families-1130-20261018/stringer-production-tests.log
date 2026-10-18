@@ -1,0 +1,33 @@
+INKWAVE built fixture /workspace/actions-stringer/_site contentHash=159ac627a30fafe4f30df504e9813d7464614a3dfc2e83c6153433031d00454f
+INKWAVE built fixture /workspace/actions-stringer/_site contentHash=159ac627a30fafe4f30df504e9813d7464614a3dfc2e83c6153433031d00454f
+INKWAVE built fixture /workspace/actions-stringer/_site contentHash=159ac627a30fafe4f30df504e9813d7464614a3dfc2e83c6153433031d00454f
+INKWAVE built fixture /workspace/actions-stringer/_site contentHash=159ac627a30fafe4f30df504e9813d7464614a3dfc2e83c6153433031d00454f
+INKWAVE built fixture /workspace/actions-stringer/_site contentHash=159ac627a30fafe4f30df504e9813d7464614a3dfc2e83c6153433031d00454f
+INKWAVE built fixture /workspace/actions-stringer/_site contentHash=159ac627a30fafe4f30df504e9813d7464614a3dfc2e83c6153433031d00454f
+INKWAVE built fixture /workspace/actions-stringer/_site contentHash=159ac627a30fafe4f30df504e9813d7464614a3dfc2e83c6153433031d00454f
+(node:9606) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ all three Stringer gameplay records match the retained pinned 1130 primary rows (46.73043ms)
+✔ Stringer min/mid/full releases use each explicit recovery stage and charge-dependent damage/speed (4574.68742ms)
+✔ Stringer explosion damage and LOS use DamageOffsetY, including sub/special objects and boss (1850.32914ms)
+✔ LACT arrows never inherit explosive bolt capability; Tri/Wellstring lodge from first ring (853.912442ms)
+✔ Stringer offset blast keeps wall/step occlusion and independent arrow overlaps (1733.159824ms)
+✔ all Stringers and derived kits cap actual full-charge jump admission at the explicit source impulse (1699.668695ms)
+✔ LACT mid recovery gates the next admitted volley; fractional in-between recovery is explicit reconstruction (1268.20975ms)
+✔ replicated explosive arrows preserve lodging and fuse presentation without any damage or paint authority (1597.229107ms)
+INKWAVE built fixture /workspace/actions-stringer/_site contentHash=159ac627a30fafe4f30df504e9813d7464614a3dfc2e83c6153433031d00454f
+INKWAVE built fixture /workspace/actions-stringer/_site contentHash=159ac627a30fafe4f30df504e9813d7464614a3dfc2e83c6153433031d00454f
+INKWAVE built fixture /workspace/actions-stringer/_site contentHash=159ac627a30fafe4f30df504e9813d7464614a3dfc2e83c6153433031d00454f
+(node:9607) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ local Stringer models and every kit read the emitted fan tilt without a second render clock (3055.950137ms)
+✔ standalone/remote Stringer previews retain their bounded pose interpolation (1751.571124ms)
+✔ all Stringer kits transmit the real fan tilt for remote posing, with legacy and malformed metadata guards (1981.229875ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16529.429392

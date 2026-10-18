@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { confirmResponsiveMockHostTeams } from '../inkwave-responsive-fixture.mjs';
+import { checkCoreMenus } from '../check-inkwave-responsive-core.mjs';
 
 test('responsive menu fixture installs the published runtime before constructing native Menus', () => {
   // Fixture-generation contract only; real DOM/storage remains a browser gate.
@@ -39,4 +40,61 @@ test('responsive host confirmation is explicit, recorded, and confined to the of
     assert.throws(() => confirmResponsiveMockHostTeams(net), /Expected a guest MockNet/);
     assert.equal(net.lobby.teamsConfirmed, undefined);
   }
+});
+
+// Exercise the real capture callback with an outgoing screen retained after
+// its animation. The production menu removes that owner on a later timer.
+async function panelCapture({ overflow = false, neverRetire = false } = {}) {
+  const savedDocument = globalThis.document, savedWidth = globalThis.innerWidth;
+  let leaving = true;
+  const events = [], next = new Error('next screen');
+  globalThis.innerWidth = 390;
+  globalThis.document = { querySelector: () => leaving ? {} : null };
+  const rect = (left, right) => ({ getBoundingClientRect: () => ({ left, right }) });
+  const page = {
+    evaluate: async () => {},
+    waitForFunction: async predicate => {
+      events.push('retirement');
+      assert.equal(predicate(), false, 'the outgoing owner is initially present');
+      if (neverRetire) throw new Error('outgoing screen did not retire');
+      leaving = false;
+      assert.equal(predicate(), true, 'the owner has now been removed');
+    },
+    locator: () => ({ evaluateAll: async predicate => {
+      events.push('bounds');
+      return predicate([...(leaving ? [rect(-32, 358)] : []), rect(overflow ? -1.01 : 0, 390)]);
+    } }),
+    screenshot: async () => events.push('screenshot'),
+  };
+  let error;
+  try {
+    await checkCoreMenus({ page, entry: { name: 'phone-portrait', screens: {} },
+      engineName: 'webkit', evidence: '/unused', config: { viewport: { width: 390, height: 844 } },
+      show: async (_page, name) => { if (name !== 'loading') throw next; },
+      settle: async () => {}, geometry: async () => [], tap: async () => {},
+      audit: false, testContinuation: false });
+  } catch (caught) { error = caught; }
+  finally {
+    if (savedDocument === undefined) delete globalThis.document; else globalThis.document = savedDocument;
+    if (savedWidth === undefined) delete globalThis.innerWidth; else globalThis.innerWidth = savedWidth;
+  }
+  return { error, next, events };
+}
+
+test('responsive capture waits for outgoing DOM retirement before measuring all content panels', async () => {
+  const result = await panelCapture();
+  assert.equal(result.error, result.next);
+  assert.deepEqual(result.events, ['retirement', 'bounds', 'screenshot']);
+});
+
+test('responsive capture still rejects a current panel outside the unchanged one-pixel boundary', async () => {
+  const result = await panelCapture({ overflow: true });
+  assert.match(result.error?.message || '', /content panels must fit the viewport/);
+  assert.deepEqual(result.events, ['retirement', 'bounds']);
+});
+
+test('responsive capture fails when the outgoing owner never retires', async () => {
+  const result = await panelCapture({ neverRetire: true });
+  assert.equal(result.error?.message, 'outgoing screen did not retire');
+  assert.deepEqual(result.events, ['retirement']);
 });

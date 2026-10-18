@@ -1,0 +1,732 @@
+{
+  "contentHash": "81b086c1911466a57c5d1b5f65d55e60cf91b29c0a8d7d13340d294e39c7780f",
+  "buildRevision": "190d1362b36e0b5ae55262f4455ab994d8a0f043367a8fb38bb89b941d13ef29",
+  "browser": "151.0.7922.34",
+  "bases": [
+    {
+      "id": "s3-maneuver-short",
+      "name": "スパッタリー",
+      "variants": 0
+    },
+    {
+      "id": "dualies",
+      "name": "スプラマニューバー",
+      "variants": 0
+    },
+    {
+      "id": "s3-maneuver-gallon",
+      "name": "ケルビン525",
+      "variants": 0
+    },
+    {
+      "id": "s3-maneuver-dual",
+      "name": "デュアルスイーパー",
+      "variants": 0
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "name": "クアッドホッパーブラック",
+      "variants": 0
+    },
+    {
+      "id": "s3-maneuver-long",
+      "name": "ガエンFF",
+      "variants": 0
+    },
+    {
+      "id": "s3-shelter-normal",
+      "name": "パラシェルター",
+      "variants": 0
+    },
+    {
+      "id": "s3-shelter-wide",
+      "name": "キャンピングシェルター",
+      "variants": 0
+    },
+    {
+      "id": "s3-shelter-compact",
+      "name": "スパイガジェット",
+      "variants": 0
+    },
+    {
+      "id": "s3-shelter-focus",
+      "name": "24式張替傘・甲",
+      "variants": 0
+    },
+    {
+      "id": "s3-stringer-normal",
+      "name": "トライストリンガー",
+      "variants": 0
+    },
+    {
+      "id": "s3-stringer-short",
+      "name": "LACT-450",
+      "variants": 0
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "name": "フルイドV",
+      "variants": 0
+    },
+    {
+      "id": "s3-saber-normal",
+      "name": "ジムワイパー",
+      "variants": 0
+    },
+    {
+      "id": "s3-saber-lite",
+      "name": "ドライブワイパー",
+      "variants": 0
+    },
+    {
+      "id": "s3-saber-heavy",
+      "name": "デンタルワイパーミント",
+      "variants": 0
+    }
+  ],
+  "cases": [
+    {
+      "id": "s3-maneuver-short",
+      "base": "s3-maneuver-short",
+      "mode": "stress",
+      "shots": 1440,
+      "firstShot": 0,
+      "chargeFrames": null,
+      "paint": 1728225365,
+      "cells": [
+        1440,
+        0
+      ]
+    },
+    {
+      "id": "dualies",
+      "base": "dualies",
+      "mode": "stress",
+      "shots": 1440,
+      "firstShot": 2,
+      "chargeFrames": null,
+      "paint": 1409433541,
+      "cells": [
+        1432,
+        0
+      ]
+    },
+    {
+      "id": "s3-maneuver-gallon",
+      "base": "s3-maneuver-gallon",
+      "mode": "stress",
+      "shots": 800,
+      "firstShot": 0,
+      "chargeFrames": null,
+      "paint": 2621837701,
+      "cells": [
+        1896,
+        0
+      ]
+    },
+    {
+      "id": "s3-maneuver-dual",
+      "base": "s3-maneuver-dual",
+      "mode": "stress",
+      "shots": 1200,
+      "firstShot": 0,
+      "chargeFrames": null,
+      "paint": 3393487717,
+      "cells": [
+        1936,
+        0
+      ]
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "base": "s3-maneuver-stepper",
+      "mode": "stress",
+      "shots": 1200,
+      "firstShot": 0,
+      "chargeFrames": null,
+      "paint": 289824277,
+      "cells": [
+        1688,
+        0
+      ]
+    },
+    {
+      "id": "s3-maneuver-long",
+      "base": "s3-maneuver-long",
+      "mode": "stress",
+      "shots": 904,
+      "firstShot": 0,
+      "chargeFrames": null,
+      "paint": 2018075797,
+      "cells": [
+        2336,
+        0
+      ]
+    },
+    {
+      "id": "s3-shelter-normal",
+      "base": "s3-shelter-normal",
+      "mode": "stress",
+      "shots": 8,
+      "firstShot": 10,
+      "chargeFrames": null,
+      "paint": 151539237,
+      "cells": [
+        2820,
+        0
+      ]
+    },
+    {
+      "id": "s3-shelter-wide",
+      "base": "s3-shelter-wide",
+      "mode": "stress",
+      "shots": 8,
+      "firstShot": 12,
+      "chargeFrames": null,
+      "paint": 1996963721,
+      "cells": [
+        4512,
+        0
+      ]
+    },
+    {
+      "id": "s3-shelter-compact",
+      "base": "s3-shelter-compact",
+      "mode": "stress",
+      "shots": 280,
+      "firstShot": 10,
+      "chargeFrames": null,
+      "paint": 2192943845,
+      "cells": [
+        1568,
+        0
+      ]
+    },
+    {
+      "id": "s3-shelter-focus",
+      "base": "s3-shelter-focus",
+      "mode": "stress",
+      "shots": 8,
+      "firstShot": 10,
+      "chargeFrames": null,
+      "paint": 1817464645,
+      "cells": [
+        3450,
+        0
+      ]
+    },
+    {
+      "id": "s3-stringer-normal",
+      "base": "s3-stringer-normal",
+      "mode": "stress",
+      "shots": 80,
+      "firstShot": 72,
+      "chargeFrames": null,
+      "paint": 2220724808,
+      "cells": [
+        3380,
+        0
+      ]
+    },
+    {
+      "id": "s3-stringer-short",
+      "base": "s3-stringer-short",
+      "mode": "stress",
+      "shots": 136,
+      "firstShot": 34,
+      "chargeFrames": null,
+      "paint": 1683209653,
+      "cells": [
+        2240,
+        0
+      ]
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "base": "s3-stringer-explosion",
+      "mode": "stress",
+      "shots": 72,
+      "firstShot": 80,
+      "chargeFrames": null,
+      "paint": 3908423685,
+      "cells": [
+        6498,
+        0
+      ]
+    },
+    {
+      "id": "s3-saber-normal",
+      "base": "s3-saber-normal",
+      "mode": "stress",
+      "shots": 184,
+      "firstShot": 26,
+      "chargeFrames": null,
+      "paint": 151398101,
+      "cells": [
+        3040,
+        0
+      ]
+    },
+    {
+      "id": "s3-saber-lite",
+      "base": "s3-saber-lite",
+      "mode": "stress",
+      "shots": 216,
+      "firstShot": 20,
+      "chargeFrames": null,
+      "paint": 3752676165,
+      "cells": [
+        2192,
+        0
+      ]
+    },
+    {
+      "id": "s3-saber-heavy",
+      "base": "s3-saber-heavy",
+      "mode": "stress",
+      "shots": 184,
+      "firstShot": 43,
+      "chargeFrames": null,
+      "paint": 1352694133,
+      "cells": [
+        3592,
+        0
+      ]
+    }
+  ],
+  "measurements": [
+    {
+      "id": "s3-maneuver-short",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 1440,
+      "peakProjectiles": 40,
+      "cpuMeanMs": 1.3748062015496656,
+      "cpuP95Ms": 3.5,
+      "draws": 3,
+      "drawSubmitMeanMs": 270.5333333333644,
+      "drawSubmitP95Ms": 805.1000000000931,
+      "cells": [
+        1440,
+        0
+      ],
+      "paint": 1728225365,
+      "renderInfo": {
+        "calls": 55,
+        "triangles": 89452,
+        "geometries": 19,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "dualies",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 1440,
+      "peakProjectiles": 16,
+      "cpuMeanMs": 1.1745736434106362,
+      "cpuP95Ms": 3.1999999997206032,
+      "draws": 3,
+      "drawSubmitMeanMs": 248.53333333336437,
+      "drawSubmitP95Ms": 738.2000000001863,
+      "cells": [
+        1432,
+        0
+      ],
+      "paint": 1409433541,
+      "renderInfo": {
+        "calls": 55,
+        "triangles": 77720,
+        "geometries": 26,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-maneuver-gallon",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 800,
+      "peakProjectiles": 32,
+      "cpuMeanMs": 0.8510852713152304,
+      "cpuP95Ms": 2.2999999998137355,
+      "draws": 3,
+      "drawSubmitMeanMs": 224.76666666660458,
+      "drawSubmitP95Ms": 668.7999999998137,
+      "cells": [
+        1896,
+        0
+      ],
+      "paint": 2621837701,
+      "renderInfo": {
+        "calls": 55,
+        "triangles": 91044,
+        "geometries": 33,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-maneuver-dual",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 1200,
+      "peakProjectiles": 48,
+      "cpuMeanMs": 0.839534883723818,
+      "cpuP95Ms": 1.7999999998137355,
+      "draws": 3,
+      "drawSubmitMeanMs": 225.6333333333023,
+      "drawSubmitP95Ms": 673.7999999998137,
+      "cells": [
+        1936,
+        0
+      ],
+      "paint": 3393487717,
+      "renderInfo": {
+        "calls": 55,
+        "triangles": 74000,
+        "geometries": 39,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 1200,
+      "peakProjectiles": 32,
+      "cpuMeanMs": 0.6133333333323948,
+      "cpuP95Ms": 1.2000000001862645,
+      "draws": 3,
+      "drawSubmitMeanMs": 210.7666666667598,
+      "drawSubmitP95Ms": 628.6000000000931,
+      "cells": [
+        1688,
+        0
+      ],
+      "paint": 289824277,
+      "renderInfo": {
+        "calls": 55,
+        "triangles": 87780,
+        "geometries": 45,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-maneuver-long",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 904,
+      "peakProjectiles": 40,
+      "cpuMeanMs": 0.8326356589144399,
+      "cpuP95Ms": 1.6999999997206032,
+      "draws": 3,
+      "drawSubmitMeanMs": 211.93333333342648,
+      "drawSubmitP95Ms": 632.3999999999069,
+      "cells": [
+        2336,
+        0
+      ],
+      "paint": 2018075797,
+      "renderInfo": {
+        "calls": 55,
+        "triangles": 88572,
+        "geometries": 51,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-shelter-normal",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 8,
+      "peakProjectiles": 104,
+      "cpuMeanMs": 0.6764341085304528,
+      "cpuP95Ms": 1.6000000000931323,
+      "draws": 3,
+      "drawSubmitMeanMs": 212.10000000009313,
+      "drawSubmitP95Ms": 633.1000000000931,
+      "cells": [
+        2820,
+        0
+      ],
+      "paint": 151539237,
+      "renderInfo": {
+        "calls": 60,
+        "triangles": 77898,
+        "geometries": 56,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-shelter-wide",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 8,
+      "peakProjectiles": 128,
+      "cpuMeanMs": 0.9876744186047234,
+      "cpuP95Ms": 2.1999999997206032,
+      "draws": 3,
+      "drawSubmitMeanMs": 220.33333333333334,
+      "drawSubmitP95Ms": 627.7000000001863,
+      "cells": [
+        4512,
+        0
+      ],
+      "paint": 1996963721,
+      "renderInfo": {
+        "calls": 74,
+        "triangles": 103678,
+        "geometries": 61,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-shelter-compact",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 280,
+      "peakProjectiles": 72,
+      "cpuMeanMs": 0.9806976744193988,
+      "cpuP95Ms": 2.2000000001862645,
+      "draws": 3,
+      "drawSubmitMeanMs": 234.6333333333023,
+      "drawSubmitP95Ms": 685.6000000000931,
+      "cells": [
+        1568,
+        0
+      ],
+      "paint": 2192943845,
+      "renderInfo": {
+        "calls": 62,
+        "triangles": 121682,
+        "geometries": 67,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-shelter-focus",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 8,
+      "peakProjectiles": 112,
+      "cpuMeanMs": 0.5003100775193077,
+      "cpuP95Ms": 1.1000000000931323,
+      "draws": 3,
+      "drawSubmitMeanMs": 214.9999999998448,
+      "drawSubmitP95Ms": 624.6999999997206,
+      "cells": [
+        3450,
+        0
+      ],
+      "paint": 1817464645,
+      "renderInfo": {
+        "calls": 61,
+        "triangles": 87216,
+        "geometries": 72,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-stringer-normal",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 80,
+      "peakProjectiles": 72,
+      "cpuMeanMs": 1.0656589147262998,
+      "cpuP95Ms": 2.5,
+      "draws": 3,
+      "drawSubmitMeanMs": 209.70000000003105,
+      "drawSubmitP95Ms": 624,
+      "cells": [
+        3380,
+        0
+      ],
+      "paint": 2220724808,
+      "renderInfo": {
+        "calls": 49,
+        "triangles": 85854,
+        "geometries": 84,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-stringer-short",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 136,
+      "peakProjectiles": 48,
+      "cpuMeanMs": 0.724496124029636,
+      "cpuP95Ms": 1.8999999999068677,
+      "draws": 3,
+      "drawSubmitMeanMs": 213.2666666667598,
+      "drawSubmitP95Ms": 635.6000000000931,
+      "cells": [
+        2240,
+        0
+      ],
+      "paint": 1683209653,
+      "renderInfo": {
+        "calls": 48,
+        "triangles": 68652,
+        "geometries": 96,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 72,
+      "peakProjectiles": 80,
+      "cpuMeanMs": 0.9937209302335689,
+      "cpuP95Ms": 2.1000000000931323,
+      "draws": 3,
+      "drawSubmitMeanMs": 222.66666666666666,
+      "drawSubmitP95Ms": 663.6000000000931,
+      "cells": [
+        6498,
+        0
+      ],
+      "paint": 3908423685,
+      "renderInfo": {
+        "calls": 49,
+        "triangles": 96376,
+        "geometries": 107,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-saber-normal",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 184,
+      "peakProjectiles": 56,
+      "cpuMeanMs": 0.816356589148081,
+      "cpuP95Ms": 1.7000000001862645,
+      "draws": 3,
+      "drawSubmitMeanMs": 224.33333333333334,
+      "drawSubmitP95Ms": 669.1999999997206,
+      "cells": [
+        3040,
+        0
+      ],
+      "paint": 151398101,
+      "renderInfo": {
+        "calls": 43,
+        "triangles": 87638,
+        "geometries": 112,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-saber-lite",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 216,
+      "peakProjectiles": 56,
+      "cpuMeanMs": 0.7151937984500456,
+      "cpuP95Ms": 1.8000000002793968,
+      "draws": 3,
+      "drawSubmitMeanMs": 220.29999999996895,
+      "drawSubmitP95Ms": 657.6999999997206,
+      "cells": [
+        2192,
+        0
+      ],
+      "paint": 3752676165,
+      "renderInfo": {
+        "calls": 42,
+        "triangles": 62778,
+        "geometries": 116,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    },
+    {
+      "id": "s3-saber-heavy",
+      "mode": "stress",
+      "hz": 60,
+      "steps": 1320,
+      "shots": 184,
+      "peakProjectiles": 64,
+      "cpuMeanMs": 0.8559689922474845,
+      "cpuP95Ms": 1.8000000002793968,
+      "draws": 3,
+      "drawSubmitMeanMs": 261.20000000018626,
+      "drawSubmitP95Ms": 766.7000000001863,
+      "cells": [
+        3592,
+        0
+      ],
+      "paint": 1352694133,
+      "renderInfo": {
+        "calls": 43,
+        "triangles": 103466,
+        "geometries": 121,
+        "textures": 8
+      },
+      "heapHintBytes": 68000000
+    }
+  ],
+  "renderer": "SwiftShader",
+  "fixedHz": 60,
+  "renderHz": [
+    30,
+    60,
+    120
+  ],
+  "randomMode": "constant .37; angular distributions require separate statistical tests",
+  "stress": {
+    "actors": 8,
+    "actorTicks": 168960,
+    "firingSeconds": 15,
+    "drainSeconds": 7,
+    "refill": "100 ink each second",
+    "remainingProjectiles": 0,
+    "remainingDrops": 0,
+    "canopyRetirementChecked": true
+  },
+  "evidence": "production modules, actual Character/Actor/Physics, CPU paint, first quarter-second rendered at each display rate for sixteen base hold scenarios; three sampled renders in other scenarios; no hardware GPU or Nintendo parity claim",
+  "memory": {
+    "heapBefore": 527096,
+    "heapBeforeGC": 110413188,
+    "heapAfterGC": 64429192,
+    "gcEvents": 517,
+    "gcPauseTotalMs": 314.5500000000002,
+    "gcPauseMaxMs": 7.13,
+    "scope": "whole sixteen-case fixture including module/model setup; memory hints inside synchronous page task are coarsely cached"
+  },
+  "errors": [],
+  "actualMeasuredDisplayHz": [
+    60
+  ],
+  "metadataNote": "The original renderHz header reused the matrix rates; all stress measurements have hz=60. This annotation corrects the scope without changing measured values."
+}

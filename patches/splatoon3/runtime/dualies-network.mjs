@@ -2,6 +2,7 @@
 // The reserved snapshot flag rides NetMatch's existing 20 Hz playback timeline;
 // remote weapon logic remains disabled and owner-authoritative.
 // Bits 20–26 are already owned by swim, Roller, armor, gear and special readiness.
+import { isDualiesWeapon,catalogDualiesTurret } from './catalog-dualies-motion.mjs';
 export const DUALIES_TURRET_FLAG = 1 << 27;
 const TURRET = DUALIES_TURRET_FLAG;
 const INTERRUPT = 2 | 2048 | 8192 | 16384 | 32768; // squid, sub aim, special, Super Jump phases
@@ -54,8 +55,8 @@ export function installDualiesNetwork({ NetMatch, Actor } = {}) {
           for (const sample of message.a) {
             if (!Array.isArray(sample) || !Number.isInteger(sample[10])) continue;
             const actor = this.byNid.get(sample[0]);
-            if (!actor || actor.weapon?.kind !== 'dualies') continue;
-            sample[10] = actor.weaponRunner?.s3Turret
+            if (!isDualiesWeapon(actor)) continue;
+            sample[10] = (actor.weaponRunner?.s3Turret||catalogDualiesTurret(actor.weaponRunner?.catalogState))
               ? sample[10] | TURRET
               : sample[10] & ~TURRET;
           }
@@ -83,7 +84,7 @@ export function installDualiesNetwork({ NetMatch, Actor } = {}) {
       const acceptedOwner = n?.s3TurretSource === actor.owner;
       const freshSample = Number.isFinite(sample?.t) && sample.t > invalidAt;
       const flags = actor.alive && !waitingForSpawnSample && acceptedOwner && freshSample ? sample?.f : 0;
-      actor.character.s3RemoteTurretPose = actor.weapon?.kind === 'dualies'
+      actor.character.s3RemoteTurretPose = isDualiesWeapon(actor)
         && Number.isInteger(flags) && !!(flags & 1) && !(flags & INTERRUPT) && !!(flags & TURRET);
     }
     return applyRemote.call(this, actor, dt, ...args);

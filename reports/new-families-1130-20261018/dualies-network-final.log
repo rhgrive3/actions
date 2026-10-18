@@ -1,0 +1,18 @@
+(node:5845) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ all added Dualies and kits send accepted roll epochs and planted state over the native snapshot/event transport (1229.24858ms)
+(node:5865) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #1156 full production composition reserves an independent turret pose flag (23407.61123ms)
+(node:6134) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ remote Dualies pose uses the accepted sender epoch across snapshot boundaries and lifecycle changes (12013.505331ms)
+✔ #1163 metadata preserves canonical paint return values and shared event sequence (25312.216477ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 63439.617776

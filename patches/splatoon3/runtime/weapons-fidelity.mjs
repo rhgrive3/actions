@@ -1,3 +1,4 @@
+import { withProjectileHitGeometry } from './brella-physics.mjs';
 import { withMainDirectDamage } from './private-tracking.mjs';
 import { VARIANT_BASE_WEAPON } from './alternate-weapon-kits-data.mjs';
 import { configureRollerVerticalPaint, paintRollerVerticalFlight } from './roller-vertical-paint.mjs';
@@ -834,7 +835,6 @@ export function beginFidelityWallDrop(system, p, hit) {
   };
   p.pos.copy(hit.point).addScaledVector(hit.normal, .025);
   p.prev.copy(p.pos);
-  p.vel.set(0, -firstSpeed * 60, 0);
   // #975: the wall-impact footprint is NOT the subsequent wall-drop shock.
   // 2.2 source units is the verified wall-impact value exported with Issue #975;
   // the pinned top-level 1.3 / 1.0 / 0.6 drop record remains unchanged.
@@ -866,6 +866,9 @@ export function beginFidelityWallDrop(system, p, hit) {
     api.emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });
     api.G.fx?.burst(hit.point, hit.normal, p.owner.color, { count: 5, speed: 3, size: .07, paint: false });
   }
+  // Snapshot the incoming bearing in the terrain-burst queue before entering
+  // vertical fall. The queued paint must not inherit the wall-drop velocity.
+  p.vel.set(0, -firstSpeed * 60, 0);
   return true;
 }
 
@@ -1569,8 +1572,8 @@ export function applyFidelityProjectileHit(system,p,victim,amount,point) {
   amount=fidelityDamage(p,point);
   const weapon=p.s3Weapon||p.owner.weapon;
   if(weapon.kind==='slosher'&&p.s3DamageGroup)
-    return withMainDirectDamage(p.owner,victim,()=>applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||p.type||'slosher'));
-  return applyGroupedProjectileHit(system,p,victim,amount);
+    return withProjectileHitGeometry(system,p.prev,point,p.size,()=>withMainDirectDamage(p.owner,victim,()=>applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||p.type||'slosher')));
+  return withProjectileHitGeometry(system,p.prev,point,p.size,()=>applyGroupedProjectileHit(system,p,victim,amount));
 }
 
 export function splatlingLaunchSpeed(weapon,charge) {

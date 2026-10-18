@@ -123,7 +123,7 @@ function decavitator(d) {
 const SABER = { 's3-saber-normal': { tap: 26 / 60, full: 22 / 60 }, 's3-saber-lite': { tap: 16 / 60, full: 22 / 60 }, 's3-saber-heavy': { tap: 30 / 60, full: 32 / 60 } };
 const state = new WeakMap();
 function sabState(ch) { let m = state.get(ch); if (!m) state.set(ch, m = { age: 99, full: false, dur: 0.3, was: false, chg: 0, raise: 0, side: 1, k: 0 }); return m; }
-export function sabreSnapshot(ch) { const m = state.get(ch); return m ? { age: m.age, full: m.full, raise: m.raise, k: m.k } : null; }
+export function sabreSnapshot(ch) { const m = state.get(ch); return m ? { age: m.age, full: m.full, raise: m.raise, k: m.k, side:m.side, serial:m.serial, horizontal:m.horizontal, yaw:m.yaw, pitch:m.pitch } : null; }
 
 export function FAMILY_TRIGGER(ch, name) {
   // the shooter recoil is replaced by the slash played from catalogState (nothing to start here)
@@ -134,10 +134,16 @@ const mix = (a, b, t) => a + (b - a) * t;
 export function FAMILY_POSE(ch, dt, s, C) {
   const cfg = SABER[ch.weapon?.def?.modelId || ch.weaponModel]; if (!cfg) return;
   const m = sabState(ch), r = ch._runner?.(s), cs = r?.catalogState;
+  const weaponId=ch.weapon?.def?.modelId||ch.weaponModel;
+  if(m.weaponId!==weaponId){m.weaponId=weaponId;m.serial=undefined;m.was=false;}
   dt = Math.min(0.1, Math.max(0, dt || 0));
   const busy = !!cs && !!(cs.pending || cs.melee);
-  if (busy && !m.was) {                         // release: a swing starts
-    m.age = 0; m.full = m.chg > 0.97; m.dur = m.full ? cfg.full : cfg.tap; m.side = -m.side;
+  const swing=cs?.saberSwing;
+  if (swing&&swing.serial!==m.serial || !swing&&busy&&!m.was) {
+    m.serial=swing?.serial;
+    m.age=Number.isFinite(swing?.ageOffset)?swing.ageOffset:0;m.full=swing?swing.key==='saber-vertical':m.chg>.97;
+    m.dur=Number.isFinite(swing?.duration)?swing.duration:m.full?cfg.full:cfg.tap;
+    m.side=swing?(swing.ordinal%2===0?1:-1):-m.side;
   }
   m.was = busy;
   m.age += dt;
@@ -150,10 +156,11 @@ export function FAMILY_POSE(ch, dt, s, C) {
   if (u < 1) {
     const ee = smooth((u - 0.12) / 0.4);                // sweep 12..52 % of the swing
     k = Math.min(1, u * 8) * (1 - smooth((u - 0.6) / 0.4));
-    if (m.full) { pitch = mix(-1.15, 0.55, ee); lift = mix(0.14, -0.05, ee); }       // raised guard → vertical chop
-    else { yaw = mix(-0.9, 0.9, ee); x = mix(-0.08, 0.1, ee); pitch = 0.1; }          // right → left horizontal slash
+    m.horizontal=!m.full||(ch.weapon?.def?.modelId||ch.weaponModel)==='s3-saber-heavy';
+    if (!m.horizontal) { pitch = mix(-1.15, 0.55, ee); lift = mix(0.14, -0.05, ee); }       // raised guard → vertical chop
+    else { yaw = mix(-0.9, 0.9, ee)*m.side; x = mix(-0.08, 0.1, ee)*m.side; pitch = 0.1; }          // right → left horizontal slash
   }
-  m.k = k;
+  m.k = k;m.yaw=yaw;m.pitch=pitch;
   const rs = smooth(m.raise);                           // charging guard
   const w = k;
   P[C.ANC] += x * w; P[C.ANC + 1] += lift * w + 0.12 * rs * (1 - w); P[C.ANC + 2] += 0.02 * w;

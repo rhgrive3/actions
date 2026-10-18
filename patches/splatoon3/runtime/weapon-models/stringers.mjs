@@ -233,7 +233,13 @@ function bowState(ch) { let m = st8.get(ch); if (!m) st8.set(ch, m = { roll: 0 }
 export function FAMILY_POSE(ch, dt, s, C) {
   if (!MODELS[ch.weapon?.def?.modelId ?? ch.weaponModel]) return;
   const m = bowState(ch); dt = Math.min(0.1, Math.max(0, dt || 0));
-  m.roll = damp(m.roll, ch.grounded ? 1 : 0, 9, dt);
+  const runner=ch._runner?.(),tilt=runner?.a?.remote?runner.catalogState?.remoteBowTilt:runner?.catalogState?.bowTilt;
+  // The local shot fan already owns the forward/reverse tilt clock. Reading
+  // that state keeps jump/landing/squid changes in the same simulation phase
+  // at every render rate; a second grounded damp lagged the emitted arrows.
+  // Retain the rig's existing hold calibration. It is not a retail bone pose.
+  const max=runner?.a?.weapon?.catalogRecord?.parameters.spl__WeaponStringerParam?.ShotParam?.BowTiltDegreeMax??90;
+  m.roll=Number.isFinite(tilt)?1-clamp(tilt/Math.max(1,max)):damp(m.roll,ch.grounded?1:0,9,dt);
   // The bow lies flat only in the grounded draw; at rest it hangs upright at the side.
   ch.P[C.ANCR + 2] += GROUND_ROLL * m.roll * (ch.wAim || 0);
 }

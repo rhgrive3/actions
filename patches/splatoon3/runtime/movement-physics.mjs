@@ -1,4 +1,5 @@
 import { weaponAccelerationClass } from './weapon-weight.mjs';
+import { integrateCatalogDualies } from './catalog-dualies-motion.mjs';
 // Authoritative root physics only. No input, network, Character or visual pose writes.
 // Rates are world units/second; duration/age are seconds. Reference decisions and
 // deliberately retained calibration are in reports/movement-physics-fidelity-report.md.
@@ -200,6 +201,7 @@ export function writeDodgeVelocity(r, vel, dt = 1 / 60, offset = 0) {
  * controller in spatially bounded slices so a thin wall cannot be skipped.
  */
 export function integrateMovement(a, dt, isSquid, jumped, radius) {
+  if(integrateCatalogDualies(a,dt,isSquid,jumped,radius))return;
   const r = a.weaponRunner, d = r.dodge;
   if (d && !d.s3DiveInitiated) { d.s3DiveInitiated = true; beginDualiesRoll(r); }
   if (!d || a.climbing || a.specialActive || a.superJumpState || !(dt > 0)) {

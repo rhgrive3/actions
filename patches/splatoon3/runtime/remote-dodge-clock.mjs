@@ -1,3 +1,4 @@
+import { isDualiesWeapon } from './catalog-dualies-motion.mjs';
 const EPS = 1e-9;
 
 function identity(actor, life, tp) {
@@ -27,7 +28,7 @@ function candidate(actor, owner, epoch, meta, source, playbackTime) {
   const duration = meta?.dur;
   const startupDur = meta?.startupDur;
   const lockDur = meta?.lockDur;
-  if (!actor?.remote || actor.owner !== owner || actor.weapon?.kind !== 'dualies' || !actor.alive
+  if (!actor?.remote || actor.owner !== owner || !isDualiesWeapon(actor) || !actor.alive
     || !Number.isFinite(epoch) || !Number.isSafeInteger(life) || life < 0
     || !Number.isSafeInteger(tp) || tp < 0 || !Number.isSafeInteger(token) || token < 1
     || !Number.isFinite(meta?.start) || Math.abs(meta.start - epoch) > EPS
@@ -40,7 +41,9 @@ function candidate(actor, owner, epoch, meta, source, playbackTime) {
   const knownTp = newestCounter(actor.net?.remoteDodgeTp, latest?.tp, actor.net?.tp, actor.netTp);
   if (knownLife >= 0 && knownLife !== life) return null;
   if (knownTp >= 0 && knownTp !== tp) return null;
-  if (Number.isFinite(actor.weapon.rollTime) && Math.abs(duration - actor.weapon.rollTime) > 0.0011) return null;
+  const expectedDuration=actor.weapon.catalogRecord?.family==='dualies'
+    ?(actor.weapon.catalogRecord.parameters.SideStepParam.MoveFrame??12)/60:actor.weapon.rollTime;
+  if (Number.isFinite(expectedDuration) && Math.abs(duration - expectedDuration) > 0.0011) return null;
 
   const key = identity(actor, life, tp), mark = actionWatermark(actor, key);
   if (epoch < mark.epoch - EPS || token < mark.token) return null;
@@ -95,7 +98,7 @@ export function syncRemoteDodgeClock(actor, playbackTime, sample, hasDodge, inte
   let clock = actor.remoteDodgeClock;
   if (clock) {
     const currentSample = Number.isFinite(sample?.stateAt) && sample.stateAt >= clock.epoch - EPS;
-    if (actor.owner !== clock.owner || actor.weapon?.kind !== 'dualies' || !actor.alive
+    if (actor.owner !== clock.owner || !isDualiesWeapon(actor) || !actor.alive
       || currentSample && (sample.life !== clock.life || sample.tp !== clock.tp || interrupted)) {
       clearRemoteDodgeClock(actor);
       clock = null;

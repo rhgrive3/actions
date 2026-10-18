@@ -722,8 +722,9 @@ function damageSubObjectsInRadius(api,projectiles,source,center,radius,damageAt,
     const sourceTeam=source?.team??source?.owner?.team;
     if(target===source||target.dead||!isSubObjectBlastTarget(target)||target.team===sourceTeam)continue;
     const point=subObjectBlastPoint(api,target,center),distance=point.distanceTo(center);
-    if(distance>radius||!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))continue;
-    damageCustomObject(api,source,target,point,damageAt(distance,target),cause);
+    if(options.shapeContact?!options.shapeContact(target,point):distance>radius)continue;
+    if(!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))continue;
+    damageCustomObject(api,source,target,point,damageAt(point.distanceTo(center),target,point),cause);
   }
   projectiles.nativeSprinklerAoE?.(source,center,radius,damageAt,cause,options);
   if(includeSpecials)projectiles.s3DamageSpecialObjects?.(source,center,radius,damageAt,cause);

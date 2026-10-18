@@ -65,3 +65,36 @@ test('delayed terrain burst snapshots its direction before the projectile is poo
   const blast=stamps.find(s=>s.footprint==='ink-blast-rectified');assert.ok(blast);
   assert.ok(blast.stretch.distanceTo(direction)<1e-12);assert.equal(blast.stretchAmt,0);
 });
+
+test('real wall contact snapshots the incoming Blaster bearing before entering vertical wall-drop',async()=>{
+  for(const [x,z] of [[0,1],[.2,1],[-.2,1]]){
+    const f=await fixture(options),{paint}=makePaintWorld(f,{wall:true}),owner=f.make('blaster');
+    f.G.settings={};f.setRandom(()=>.37);
+    owner.pos.y=3;owner.character.root.position.copy(owner.pos);
+    owner.aimDir.set(x,0,z).normalize();owner.aimPoint.copy(owner.pos).addScaledVector(owner.aimDir,10);owner.aimPoint.y+=1.05;
+    const stamps=[],nativeSplat=paint.splat;
+    paint.splat=function(at,radius,team,o={}){
+      if(o.footprint==='ink-blast-rectified'&&(Math.abs(radius-1.4)<1e-9||Math.abs(radius-2.5)<1e-9))
+        stamps.push({at:at.clone(),radius,owner:o.claimOwner,direction:o.stretch?.clone()});
+      return nativeSplat.call(this,at,radius,team,o);
+    };
+    f.G.projectiles.fireBlaster(owner,owner.weapon,0);
+    const p=f.G.projectiles.list.at(-1),bearing=p.vel.clone().setY(0).normalize();let contact=0;
+    for(let frame=0;frame<120;frame++){
+      const dropping=!!p.fidelityWallDrop;f.G.time+=1/60;f.G.projectiles.update(1/60);
+      if(!dropping&&p.fidelityWallDrop){
+        contact++;
+        assert.equal(p.vel.x,0);assert.equal(p.vel.z,0);
+        assert.equal(p.vel.y,-p.fidelityWallDrop.firstSpeed*60,'contact still enters the sourced vertical fall immediately');
+      }
+    }
+    assert.equal(contact,1,'actual Physics admits exactly one wall transition');
+    assert.equal(stamps.length,2,'one collision sphere and one physical falling burst stamp');
+    assert.ok(stamps.some(s=>Math.abs(s.radius-1.4)<1e-9&&s.at.y>3));
+    assert.ok(stamps.some(s=>Math.abs(s.radius-2.5)<1e-9&&s.at.y<.11));
+    for(const s of stamps){
+      assert.equal(s.owner,owner,'source claimant survives the transition');
+      assert.ok(s.direction&&s.direction.distanceTo(bearing)<1e-12,'queued sphere and falling burst retain the actual incoming horizontal bearing');
+    }
+  }
+});

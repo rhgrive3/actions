@@ -1,0 +1,749 @@
+[
+  {
+    "restoreOldAutoKind": false,
+    "restored": 0,
+    "emissionCount": 25,
+    "kinds": {
+      "10": 22,
+      "18": 3
+    },
+    "before": {
+      "all": 977,
+      "floor": 656,
+      "turf": 41,
+      "version": 11
+    },
+    "after": {
+      "all": 977,
+      "floor": 656,
+      "turf": 41,
+      "version": 11
+    },
+    "emissions": [
+      {
+        "time": 0.11666666666666665,
+        "radius": 1.4,
+        "point": [
+          0,
+          3.57,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 79
+      },
+      {
+        "time": 0.13333333333333333,
+        "radius": 2.2,
+        "point": [
+          0,
+          4.05,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 113
+      },
+      {
+        "time": 0.13333333333333333,
+        "radius": 1.3,
+        "point": [
+          0,
+          4.05,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.15,
+        "radius": 1.4,
+        "point": [
+          0,
+          4.05,
+          8
+        ],
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.15,
+        "radius": 1.2,
+        "point": [
+          0,
+          4.05,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-blast",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.24999999999999997,
+        "radius": 1,
+        "point": [
+          0,
+          3.07,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.26666666666666666,
+        "radius": 1,
+        "point": [
+          0,
+          3.55,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.36666666666666664,
+        "radius": 1,
+        "point": [
+          0,
+          2.57,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 9
+      },
+      {
+        "time": 0.3833333333333333,
+        "radius": 1,
+        "point": [
+          0,
+          3.05,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.41666666666666663,
+        "radius": 2.43,
+        "point": [
+          0.9936576927142214,
+          0.004999999999999889,
+          0.8710262781442126
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 17.375,
+        "newAllCells": 278
+      },
+      {
+        "time": 0.44999999999999996,
+        "radius": 1.62,
+        "point": [
+          0.8829961863577869,
+          0.005,
+          2.4650720694110166
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 1.3125,
+        "newAllCells": 21
+      },
+      {
+        "time": 0.4666666666666666,
+        "radius": 1.62,
+        "point": [
+          -0.8122423720122145,
+          0.004999999999999889,
+          3.9310218767553424
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 6.1875,
+        "newAllCells": 99
+      },
+      {
+        "time": 0.49999999999999994,
+        "radius": 1.62,
+        "point": [
+          -0.9281455385217293,
+          0.005,
+          5.442297659356927
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 4.375,
+        "newAllCells": 70
+      },
+      {
+        "time": 0.49999999999999994,
+        "radius": 1,
+        "point": [
+          0,
+          2.55,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.5333333333333333,
+        "radius": 2.5,
+        "point": [
+          0,
+          0.0999999999999999,
+          7.6
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-blast",
+        "ownerCorrect": true,
+        "immediateArea": 11.75,
+        "newAllCells": 306
+      },
+      {
+        "time": 0.5666666666666668,
+        "radius": 1,
+        "point": [
+          0,
+          2.07,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 1
+      },
+      {
+        "time": 0.6166666666666669,
+        "radius": 1,
+        "point": [
+          0,
+          2.05,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 1
+      },
+      {
+        "time": 0.7666666666666674,
+        "radius": 1,
+        "point": [
+          0,
+          1.5699999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.8166666666666675,
+        "radius": 1,
+        "point": [
+          0,
+          1.5499999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.9833333333333347,
+        "radius": 1,
+        "point": [
+          0,
+          1.0699999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 1.0333333333333345,
+        "radius": 1,
+        "point": [
+          0,
+          1.0499999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 1.183333333333334,
+        "radius": 1,
+        "point": [
+          0,
+          0.5699999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 1.2333333333333338,
+        "radius": 1,
+        "point": [
+          0,
+          0.5499999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 1.4499999999999997,
+        "radius": 1,
+        "point": [
+          0,
+          0.04999999999999991,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 1.4666666666666663,
+        "radius": 0.6,
+        "point": [
+          0,
+          0.02000000000000007,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      }
+    ]
+  },
+  {
+    "restoreOldAutoKind": true,
+    "restored": 1,
+    "emissionCount": 25,
+    "kinds": {
+      "3": 1,
+      "10": 22,
+      "18": 2
+    },
+    "before": {
+      "all": 1048,
+      "floor": 705,
+      "turf": 44.0625,
+      "version": 9
+    },
+    "after": {
+      "all": 1066,
+      "floor": 719,
+      "turf": 44.9375,
+      "version": 16
+    },
+    "emissions": [
+      {
+        "time": 0.11666666666666665,
+        "radius": 1.4,
+        "point": [
+          0,
+          3.57,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 79
+      },
+      {
+        "time": 0.13333333333333333,
+        "radius": 2.2,
+        "point": [
+          0,
+          4.05,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 113
+      },
+      {
+        "time": 0.13333333333333333,
+        "radius": 1.3,
+        "point": [
+          0,
+          4.05,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.15,
+        "radius": 1.4,
+        "point": [
+          0,
+          4.05,
+          8
+        ],
+        "kind": "source-shot",
+        "footprint": "ink-blast",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.15,
+        "radius": 1.2,
+        "point": [
+          0,
+          4.05,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-blast",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.24999999999999997,
+        "radius": 1,
+        "point": [
+          0,
+          3.07,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.26666666666666666,
+        "radius": 1,
+        "point": [
+          0,
+          3.55,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.36666666666666664,
+        "radius": 1,
+        "point": [
+          0,
+          2.57,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 9
+      },
+      {
+        "time": 0.3833333333333333,
+        "radius": 1,
+        "point": [
+          0,
+          3.05,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.41666666666666663,
+        "radius": 2.43,
+        "point": [
+          0.9936576927142214,
+          0.004999999999999889,
+          0.8710262781442126
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 17.375,
+        "newAllCells": 278
+      },
+      {
+        "time": 0.44999999999999996,
+        "radius": 1.62,
+        "point": [
+          0.8829961863577869,
+          0.005,
+          2.4650720694110166
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 1.3125,
+        "newAllCells": 21
+      },
+      {
+        "time": 0.4666666666666666,
+        "radius": 1.62,
+        "point": [
+          -0.8122423720122145,
+          0.004999999999999889,
+          3.9310218767553424
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 6.1875,
+        "newAllCells": 99
+      },
+      {
+        "time": 0.49999999999999994,
+        "radius": 1.62,
+        "point": [
+          -0.9281455385217293,
+          0.005,
+          5.442297659356927
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 4.375,
+        "newAllCells": 70
+      },
+      {
+        "time": 0.49999999999999994,
+        "radius": 1,
+        "point": [
+          0,
+          2.55,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.5333333333333333,
+        "radius": 2.5,
+        "point": [
+          0,
+          0.0999999999999999,
+          7.6
+        ],
+        "kind": null,
+        "footprint": null,
+        "ownerCorrect": true,
+        "immediateArea": 14.8125,
+        "newAllCells": 379
+      },
+      {
+        "time": 0.5666666666666668,
+        "radius": 1,
+        "point": [
+          0,
+          2.07,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.6166666666666669,
+        "radius": 1,
+        "point": [
+          0,
+          2.05,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.7666666666666674,
+        "radius": 1,
+        "point": [
+          0,
+          1.5699999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.8166666666666675,
+        "radius": 1,
+        "point": [
+          0,
+          1.5499999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 0.9833333333333347,
+        "radius": 1,
+        "point": [
+          0,
+          1.0699999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 1.0333333333333345,
+        "radius": 1,
+        "point": [
+          0,
+          1.0499999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 1.183333333333334,
+        "radius": 1,
+        "point": [
+          0,
+          0.5699999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 1.2333333333333338,
+        "radius": 1,
+        "point": [
+          0,
+          0.5499999999999998,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 1.4499999999999997,
+        "radius": 1,
+        "point": [
+          0,
+          0.04999999999999991,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      },
+      {
+        "time": 1.4666666666666663,
+        "radius": 0.6,
+        "point": [
+          0,
+          0.02000000000000007,
+          7.975
+        ],
+        "kind": "source-splash",
+        "footprint": "ink-shot",
+        "ownerCorrect": true,
+        "immediateArea": 0,
+        "newAllCells": 0
+      }
+    ]
+  }
+]
