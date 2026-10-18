@@ -47,8 +47,13 @@ export function crabTankMuzzle(actor, mode, out, direction = null) {
 // half-step and check the *final muzzle-to-target* residual. No allocation.
 export function crabTankShotGeometry(actor, mode, origin, direction) {
   crabTankAimDirection(actor, direction);
-  const target = actor?.aimPoint;
-  if (target && [target.x, target.y, target.z].every(Number.isFinite)) {
+  const target = actor?.aimPoint, feet = actor?.pos;
+  // A freshly activated tank may still have the default aimPoint at its feet.
+  // That is not a valid crosshair target: keep the current aimDir until the
+  // actual camera/weapon calculation publishes a forward target.
+  const hasTarget = target && feet && [target.x, target.y, target.z].every(Number.isFinite) &&
+    ((target.x - feet.x) ** 2 + (target.y - feet.y) ** 2 + (target.z - feet.z) ** 2 > 1e-12);
+  if (hasTarget) {
     for (let i = 0; i < 24; i++) {
       crabTankMuzzle(actor, mode, origin, direction);
       const dx = target.x - origin.x, dy = target.y - origin.y, dz = target.z - origin.z;
@@ -58,7 +63,7 @@ export function crabTankShotGeometry(actor, mode, origin, direction) {
       if (!(d > 1e-6) || dx * direction.x + dy * direction.y + dz * direction.z <= 0) break;
       const x = dx / d, y = dy / d, z = dz / d;
       const error = (x - direction.x) ** 2 + (y - direction.y) ** 2 + (z - direction.z) ** 2;
-      if (error < 1e-12) break;
+      if (error < 1e-18) break;
       direction.set(direction.x + x, direction.y + y, direction.z + z).normalize();
     }
   }
