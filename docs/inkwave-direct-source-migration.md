@@ -30,6 +30,7 @@ The navigation regression tests require `adaptBuildSource('src/game/nav.js', sou
 
 Validation targets:
 ```sh
+node --test scripts/tests/inkwave-direct-source-ownership.test.mjs
 node --experimental-vm-modules --test patches/local-quality/tests/nav-heuristic.test.mjs
 node --experimental-vm-modules --test patches/local-quality/tests/bot-navigation.test.mjs
 node scripts/check-inkwave-patches.mjs --quick
@@ -37,6 +38,12 @@ node --experimental-vm-modules scripts/check-inkwave-patches.mjs
 node scripts/build-inkwave.mjs inkwave-public _site
 ```
 The full production composition and browser checks must pass before a merge. Passing Node tests alone is not equivalent to an in-browser frame-time measurement. Record actual test results rather than assuming success.
+
+## Completed slice: stage mural atlas and world title
+
+The five `src/world/murals.js` transformations previously applied by `patches/local-quality/mural-atlas-adapter.mjs`, and the three final `INKWAVE` to `ZEVANT` text replacements in `scripts/inkwave-source-composition.mjs`, have moved to `inkwave-public/src/world/murals.js` itself. The adapter is retained **only** for its still-required `src/main.js` selected-stage hook. The final `applyZevantDisplayName` map no longer rewrites murals. Direct source and the old composed murals were independently compared and matched exactly before this cleanup.
+
+`inkwave-direct-source-ownership.test.mjs` requires the composed mural output to equal the directly tracked source. No visual layout, painted geometry, text or memory policy is intentionally changed.
 
 ## Next migration batches
 
