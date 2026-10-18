@@ -49,7 +49,7 @@ The five `src/world/murals.js` transformations previously applied by `patches/lo
 
 The final build-time ZEVANT string-replacement map has been retired for `src/world/props.js`, `src/world/props-marina-vessels.js`, `src/game/lobbySet-tex.js` and `src/ui/ui-icons.js`. Their displayed names now live in the actual source modules; `src/ui/ui-icons.js` still receives unrelated weapon/icon adapters, so it is not claimed to be fully source-owned yet. `src/world/props.js` still receives separate prop atlas and retention adapters, so **only its lettering** has been directly migrated. Of these four, the direct-source identity test applies to `props-marina-vessels.js` and `lobbySet-tex.js`; `ui-icons.js` and `props.js` still have unrelated adapters.
 
-The remaining five display-only final substitutions are associated with locked/unmigrated inputs (index.html, config.js, menus.js, i18n.js, and a runtime UI string module). Do not silently invalidate SHA-256 upstream locks during their migration.
+The runtime UI string translation key has also moved to `patches/splatoon3/runtime/ui-strings.mjs` directly. Only **four** final display-name substitutions remain, all for locked/unmigrated upstream files: `index.html`, `src/config.js`, `src/ui/menus.js`, and `src/i18n.js`. Do not silently invalidate SHA-256 upstream locks during their migration.
 
 ## Next migration batches
 
