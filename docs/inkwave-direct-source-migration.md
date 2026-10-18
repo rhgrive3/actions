@@ -50,4 +50,4 @@ The full production composition and browser checks must pass before a merge. Pas
 - Convert implementation code, not merely rename `patches/` paths; retain reusable runtime modules as conventional imports.
 - Require source syntax, existing native graph parity, boot/build, and browser behavior, including 30/60/120 Hz cases where applicable.
 - Stop at the faulty migration slice and fix it rather than masking failures with optional fallbacks or weakening compatibility validation.
-- The fetch workflow currently replaces `inkwave-public/` outright and must be made safe before any direct-source change reaches main.
+- The fetch workflow stages external data under `RUNNER_TEMP`, emits a read-only compatibility report, and uploads a candidate archive. It never removes or commits over `inkwave-public/` automatically.
