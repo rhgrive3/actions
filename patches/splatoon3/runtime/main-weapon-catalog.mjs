@@ -1,3 +1,4 @@
+import { brellaPelletSpeed, canopyEntry, withProjectileHitGeometry, validProjectileHitGeometry } from './brella-physics.mjs';
 import { familyDescription } from './content-language.mjs';
 import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
@@ -29,6 +30,10 @@ import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catal
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
 import { paintDualiesSlide } from './dualies-slide-paint.mjs';
+import { catalogDualiesTurret, writeCatalogDualiesVelocity } from './catalog-dualies-motion.mjs';
+import { saberSlashShape, saberSlashContact, saberSlashWallContact, placeSaberSlash } from './saber-melee.mjs';
+import { recordSaberStick, saberStepRequested, createSaberStep, saberStepSpeed } from './saber-step.mjs';
+import { encodeSaberSwingVisual, decodeSaberSwingVisual } from './saber-presentation.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
 // retain their mature owners. Canonical kit identities use the pinned table.
@@ -61,7 +66,7 @@ export const CATALOG_MODEL_LIMITS = Object.freeze([
   'Brella geometry/damage rates: incomplete.',
   'Wall drips/Slosher spiral: incomplete.',
   'Scope: capability and explicit FOV applied; sparse defaults/transition timing unverified.',
-  'Stringer: continuous shot tilt applied; retail tilt-keep/reset and presentation timing unverified.',
+  'Stringer: source-rate local tilt and remote shot snapshots; retail tilt-keep/reset and bone axes unverified.',
   'Model/animation: placeholders.'
 ]);
 
@@ -251,7 +256,7 @@ function initialState(r,actor) {
     stream:0, streamF:0, streamCharge:0, streamTime:0, rounds:0, burst:0, burstWait:0,
     turret:0, rolls:0, roll:null, lunge:null, melee:null, stored:null, swingCount:0, canopy:null, naked:0,
     accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0,
-    rollingFrames:0, rollingDash:false, bowTilt:0, saberShotOrdinal:0,
+    rollingFrames:0, rollingDash:false, bowTilt:0, remoteBowTilt:null, saberShotOrdinal:0,
     jumpSerial:actor?.s3JumpSerial || 0, jumpAge:null };
 }
 
@@ -296,9 +301,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
     slidePaint(r,s,true);
-    s.roll = null; s.slideRunner = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;
+    s.roll = null; s.slip=null; s.slideRunner = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;s.turretHeld=false;s.rolls=0;
+    // A hard-cancelled main never resumes its old recovery after a special,
+    // jump or respawn. Ink recovery remains owned by the separate resource timer.
+    s.stop=0;
     s.rollingFrames=0;s.rollingDash=false;
-    if (s.canopy && !s.canopy.launched) { s.canopy.open = false; if (s.canopy.preparing) s.canopy.preparing = false; }
+    if (s.canopy && !s.canopy.launched) { s.canopy.open = false; s.canopy.age = 0; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
     runner.slosh = -1;
   }
@@ -306,7 +314,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);
     const s = this.catalogState;
-    if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee) return false;
+    if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee && !((this.a.weapon.catalogRecord.family==='splatana'||this.a.weapon.catalogRecord.family==='dualies')&&s?.stop>EPS)) return false;
     return !!(s && (s.pending || s.melee || s.chargeF>0 || s.stream>0 || s.roll || s.lunge || s.stop>EPS));
   };
   R.moveSpeed = function() {
@@ -398,6 +406,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     G.projectiles._aimFrom(a,muzzle,dir);
     return muzzle;
   }
+  // Feet-relative, same as the native Splat Roller flick birth (Projectiles.fireFlick:
+  // 1.0 m + 0.3 m up, 0.6 m forward). INKWAVE convention; S3's swing birth point is not extracted.
+  const BRUSH_SWING_ORIGIN=Object.freeze({X:0,Y:1.3,Z:0.6});
   function angle(direction,yaw=0,pitch=0) {
     const y = Math.atan2(direction.x,direction.z)+yaw*RAD;
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
@@ -616,6 +627,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0}});
+    // Keep the five-entry catalogue tuple readable by existing peers. Older
+    // receivers ignore these named visual-only extensions on the same object.
+    if(descriptor.key==='arrow')p.inkMeta.s3StringerTilt=options.bowTilt;
+    if(options.saberSwing)p.inkMeta.s3SaberSwing=options.saberSwing;
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
     p.vel.y += finite(options.lift,0);
     if(!queueCatalogBirth(p,G,muzzle))applyCatalogPlayerVelocity(p);
@@ -668,7 +683,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,jumpAge);
     }
     runner.spread=spread;
-    spawn(a,r,desc,aim,muzzle,{volley,
+    spawn(a,r,desc,aim,muzzle,{volley,saberSwing:saber?encodeSaberSwingVisual(r,key,s.saberSwing):null,
       speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
     if(horizontal)s.saberShotOrdinal++;
     if(familySplash){s.familyPaintOrdinals||={};s.familyPaintOrdinals[key]=ordinal+1;}
@@ -696,7 +711,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function emitUnits(runner,r,key,charge=0) {
     const a=runner.a,p=r.parameters,s=state(runner),group=key==='slosh'?p.UnitGroupParam:
       key==='vertical'?p.VerticalSwingUnitGroupParam:key==='brush'?p.SwingUnitGroupParam:p.WideSwingUnitGroupParam;
-    origin(a);
+    // A brush flings its swing from the body, not from the rendered bristles:
+    // the 1F follow-up swings start from the low sweep pose, so the rendered tip
+    // dropped every swing's birth from 1.6 m to 0.36 m (owner review 2026-10-18).
+    origin(a,null,key==='brush'?BRUSH_SWING_ORIGIN:null);
     // Roller swings leave from the shared player-relative base plus each
     // glob's sourced Spawn* offset (weapons-fidelity ROLLER_SPAWN_BASE), as the
     // native Splat Roller does -- not from the drawn drum, which the swing
@@ -800,7 +818,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const birth=at.clone().addScaledVector(spreadAxis,(i-(count-1)/2)*finite(t.ArrowMargin,0));
       // Separated nocks must obey the same muzzle obstruction guard.
       constrainMuzzle(G.physics,at,birth);
-      spawn(a,r,desc,aim,birth,{index:i});
+      spawn(a,r,desc,aim,birth,{index:i,bowTilt:s.bowTilt});
     }
     s.arrowShotOrdinal=(s.arrowShotOrdinal||0)+1;
     notify(a,r,at,direction,charge);
@@ -819,7 +837,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           .addScaledVector(up,Math.sin(az)*finite(g.VerticalOffset,0));
         constrainMuzzle(G.physics,at,birth);
         // Sparse shotgun groups inherit the volley centre speed, not 1 DU/F.
-        const speed=finite(g.MoveParam?.SpawnSpeed,p.GroupParams[0].MoveParam.SpawnSpeed)*HZ;
+        const speed=brellaPelletSpeed(g,p.GroupParams[0].MoveParam.SpawnSpeed)*HZ;
         const round=spawn(a,r,d,angle(direction,Math.cos(az)*finite(g.HorizontalDegree,0),Math.sin(az)*finite(g.VerticalDegree,0)),birth,{index:i,volley,speed});
         if(flight){const node={volley:flight,distance:0,ended:false,samples:new Map()};flight.nodes.push(node);round.catalog.brellaFlight=node;}
       }
@@ -833,26 +851,40 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }return 0;
   }
   function explosion(system,p,descriptor,skip=null) {
-    if (p.ghost) return;
     const bands=descriptor?.DistanceDamage||[],radius=Math.max(...bands.map(b=>b.Distance),0);
+    if(p.ghost){
+      // Replicated frozen arrows retain their visible fuse and burst, while
+      // damage and paint remain exclusively owned by the originating client.
+      if(p.catalog.r.family==='stringer'){
+        G.fx?.explosion(p.pos,p.owner.color,radius);
+        emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
+      }
+      return;
+    }
     const paintRadius=finite(descriptor?.PaintRadius,0)||finite(p.catalog.descriptor.b.BlasterBurstParam?.SplashDropPaintRadius,0);
+    const inkDirection=p.catalog.inkDirection||p.vel.clone().setY(0).normalize();
     if(p.catalog.r.family==='stringer'){
       // A lodged arrow may be on a wall. A downward-only floor probe discarded
       // its detonation paint there; use the explicit blast centre offset and
       // the existing multi-surface sphere footprint, including nearby floor.
       const centre=p.pos.clone();centre.y+=finite(descriptor?.PaintOffsetY,0);
-      paint(p.owner,centre,paintRadius,1,null,-1,mainInkBurstFootprint(p.catalog.r));
-    }else floorPaint(p.owner,p.pos,paintRadius,1,null,mainInkBurstFootprint(p.catalog.r));
+      paint(p.owner,centre,paintRadius,1,inkDirection,-1,mainInkBurstFootprint(p.catalog.r));
+    }else floorPaint(p.owner,p.pos,paintRadius,1,inkDirection,mainInkBurstFootprint(p.catalog.r));
+    // Damage and paint offsets are separate source fields. Use the same damage
+    // centre for distance, occlusion and every damage recipient; moving p.pos
+    // would also move the lodged bolt and its impact/presentation position.
+    const damageCentre=p.catalog.r.family==='stringer'?p.pos.clone():p.pos;
+    if(p.catalog.r.family==='stringer')damageCentre.y+=finite(descriptor?.DamageOffsetY,0);
     for(const a of G.actors||[])if(a.alive&&a.team!==p.team){
       if(a===skip)continue;
-      base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(p.pos);
-      if(distance>radius||!G.physics.los(p.pos,base))continue;
+      base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(damageCentre);
+      if(distance>radius||!G.physics.los(damageCentre,base))continue;
       const damage=damageBands(bands,distance);if(damage>0)withObjectDamageCause({...p,type:'area'},()=>withBlasterSplashHit(p.owner,()=>system.applyHit(p.owner,a,damage,p.wid)));
     }
     const area={...p,type:'area'},cause=catalogueAttackRow(area);
-    system.s3DamageSubObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
-    system.s3DamageSpecialObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
-    G.boss?.splash(p.owner,p.pos,radius,bands[0]?.Damage/10||0,0,p.wid);
+    system.s3DamageSubObjects?.(area,damageCentre,radius,d=>damageBands(bands,d),cause);
+    system.s3DamageSpecialObjects?.(area,damageCentre,radius,d=>damageBands(bands,d),cause);
+    G.boss?.splash(p.owner,damageCentre,radius,bands[0]?.Damage/10||0,0,p.wid);
     G.fx?.explosion(p.pos,p.owner.color,radius);
     emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
   }
@@ -949,18 +981,29 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function finishContact(system,p,h) {
     const s=p.catalog,d=s.descriptor,r=s.r;
-    if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub')return true;
+    if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub'&&d.key!=='arrow')return true;
     const at=h.point||p.pos;
     if(startCatalogWallDrop(system,p,h,CATALOG_WALL_DROP[r.id]))return true;
     if(r.family==='blaster'){p.pos.copy(at);explosion(system,p,d.b.BlastParam);return true;}
     if(d.key==='arrow') {
       const det=d.b.DetonationParam,frames=d.charge*chargeFrames(r);
-      if(det&&(d.charge+EPS>=1||det.IsExplosiveBoltMidCharge&&frames>=finite(chargeParam(r).ChargeFrameMidCharge,30))) {
+      // The common parameter struct also contains a DetonationParam for LACT,
+      // but that actor has no frozen/explosive shots, at any charge level.
+      // Nintendo capability, also documented by audio/s3-articulation.mjs:
+      // https://www.nintendo.com/jp/switch/av5ja/weapon/index.html
+      if(r.sourceActor!=='WeaponStringerShort'&&det&&(d.charge+EPS>=1||det.IsExplosiveBoltMidCharge&&frames+EPS>=finite(chargeParam(r).ChargeFrameMidCharge,30))) {
         // Lodging and detonation are separate paint events. Previously the
         // early return discarded the charge-dependent arrow impact entirely.
-        const footprint=impactPaint(p);
-        paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face,mainInkFootprint(r));
-        s.stuck=true;s.fuse=finite(det.DetonationFrame,45)/HZ;p.pos.copy(at);p.vel.set(0,0,0);p.life=p.age+s.fuse+DT;return false;
+        if(!p.ghost){
+          const footprint=impactPaint(p);
+          paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face,mainInkFootprint(r));
+        }
+        s.inkDirection=p.vel.clone().setY(0).normalize();
+        s.stuck=true;s.fuse=finite(det.DetonationFrame,45)/HZ;p.pos.copy(at);p.vel.set(0,0,0);p.life=p.age+s.fuse+DT;
+        // The birth packet's flight lifetime precedes lodging. Allow this
+        // bounded source fuse when impact is near the end of a remote flight.
+        if(p.ghost&&Number.isFinite(p._netMaxSteps))p._netMaxSteps=Math.max(p._netMaxSteps,(p._netSteps||0)+Math.ceil(s.fuse*HZ)+2);
+        return false;
       }
     }
     if(r.parameters.BlastParam?.BlastParam){p.pos.copy(at);explosion(system,p,r.parameters.BlastParam.BlastParam);return true;}
@@ -1103,7 +1146,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
         if(target){
-          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>this.applyHit(p.owner,target,amount,p.wid));}
+          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>withProjectileHitGeometry(this,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>this.applyHit(p.owner,target,amount,p.wid)));}
           if(s.r.family==='charger'&&d.charge+EPS>=1&&d.m.ThroughFullCharge!==false){s.seen.add(target);continue;}
           if(s.r.family==='blaster'&&!p.ghost)explosion(this,p,d.b.BlastParam,target);
           if(s.r.parameters.BlastParam?.BlastParam&&!p.ghost)explosion(this,p,s.r.parameters.BlastParam.BlastParam);
@@ -1139,11 +1182,33 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const p=this.list.length>before?this.list[this.list.length-1]:result;
     const r=RECORDS.get(e[4]),meta=e[27]?.s3Catalog;
     const allowed=['normal','blaster-jump','variable','turret','horizontal','vertical','brush','slosh','pellet','arrow','saber-horizontal','saber-vertical'];
-    if(p&&r&&!r.legacy&&Array.isArray(meta)&&meta.length===5&&meta[0]===1&&allowed.includes(meta[1])&&
+    const maxTilt=finite(r?.parameters.spl__WeaponStringerParam?.ShotParam?.BowTiltDegreeMax,90);
+    const namedTilt=Object.hasOwn(e[27]||{},'s3StringerTilt');
+    const hasTilt=namedTilt||Array.isArray(meta)&&meta.length===6;
+    const tilt=namedTilt?e[27].s3StringerTilt:meta?.[5];
+    const layout=Array.isArray(meta)&&(meta.length===5||meta.length===6)&&(!hasTilt||
+      r?.family==='stringer'&&meta[1]==='arrow'&&Number.isFinite(tilt)&&tilt>=0&&tilt<=maxTilt);
+    if(p&&r&&!r.legacy&&layout&&meta[0]===1&&allowed.includes(meta[1])&&
       Number.isSafeInteger(meta[2])&&meta[2]>=0&&meta[2]<30&&Number.isFinite(meta[3])&&meta[3]>=0&&meta[3]<=1){
       try {const d=mode(r,meta[1],meta[2],meta[3]);p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
         hit:new Hit(),seen:new Set(),index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0};
-        p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index);updateCatalogVisual(p);}
+        p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index);updateCatalogVisual(p);
+        // A remote Splatana consumes generic Shooter recoil in FAMILY_TRIGGER.
+        // Feed only validated shot metadata into its presentation clock, never
+        // a melee collider, ink payment or lunge. Old/repeated births cannot
+        // rewind the visible attack. Projectile/event authority stays upstream.
+        if(a.remote&&r.family==='splatana'&&a.weapon?.catalogRecord?.id===r.id&&
+          Number.isFinite(e[0])&&meta[1].startsWith('saber-')){
+          const s=state(a.weaponRunner);
+          const visual=decodeSaberSwingVisual(r,meta[1],meta[3],e[27]?.s3SaberSwing,s.saberShotOrdinal);
+          if(visual&&(s.remoteSaberTick==null||e[0]>s.remoteSaberTick)){
+            s.remoteSaberTick=e[0];s.saberSwing={serial:(s.saberSwing?.serial||0)+1,...visual};
+            if(meta[1]==='saber-horizontal')s.saberShotOrdinal=visual.ordinal+1;
+          }
+        }
+        if(a.remote&&d.key==='arrow'&&a.weapon?.catalogRecord?.id===r.id&&a.weaponRunner)
+          state(a.weaponRunner).remoteBowTilt=hasTilt?tilt:null;
+      }
       catch { /* malformed visual packet cannot create a gameplay object */ }
     }return result;
   };
@@ -1167,8 +1232,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const paintSpeedMin=finite(paintParam.SpeedMin,0)*HZ,paintSpeedMax=finite(paintParam.SpeedMax,max/HZ)*HZ;
     // Missing sparse width defaults stay calibrated; interpolate only an
     // explicit pair, instead of declaring an invented minimum sourced.
-    const radius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
+    const sourceRadius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
       paintSpeedMax>paintSpeedMin?clamp((speed-paintSpeedMin)/(paintSpeedMax-paintSpeedMin)):1);
+    // Contact-only visual calibration: source half-widths were previously
+    // rendered at ballistic scale, several times wider than the drum/bristles.
+    // Preserve raw tables and damage radius; these are image-guided estimates.
+    const radius=sourceRadius*(r.family==='brush'?.25:.3);
     const at=a.pos.clone().addScaledVector(a.aimDir,.6);
     // Drum/brush floor contact follows body yaw, not reticle pitch. An aimed-down
     // camera formerly pushed the ray origin below the floor and lost every mark.
@@ -1182,10 +1251,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const from=stroke.from;
     if (stroke.face!==a.ground?.face) stroke.active=false;
     const distance=stroke.active?Math.hypot(to.x-from.x,to.z-from.z):0;
-    // On a normal 60Hz frame there is one native source-width stamp; only a
-    // discontinuous long frame is subdivided, with a strict six-splat cap.
-    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.28,radius*.52))));
-    const depth=1+speed*dt/Math.max(.1,radius);
+    // Sample the narrower contact band at half its radius, including fast
+    // brushes. Share the frame depth across subdivisions; cap at six splats.
+    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.04,radius*.52))));
+    const depth=1+speed*dt/(stamps*Math.max(.1,radius));
     for(let i=1;i<=stamps;i++){
       const t=i/stamps;
       stroke.point.set(from.x+(to.x-from.x)*t,to.y,from.z+(to.z-from.z)*t);
@@ -1193,7 +1262,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     from.copy(to);stroke.active=true;stroke.face=a.ground?.face;
     s.contactTimes ||= new Map();
-    for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<radius+PLAYER.radius&&
+    for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<sourceRadius+PLAYER.radius&&
       G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(at,enemy.pos)){
       withObjectDamageCause({owner:a,type:r.family==='brush'?'brush-body':'roller',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id));s.contactTimes.set(enemy,G.time);
     }
@@ -1209,7 +1278,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const burst=param.TripleShotSpanFrame!=null;
     const fire=()=> {
       if(!pay(runner,finite(param.InkConsume,.0092)*100*inkMod(a))){s.burst=0;runner.cooldown=finite(param.RepeatFrame,6)/HZ;return;}
-      const key = r.sourceActor==='WeaponBlasterPrecision'&&!a.grounded?'blaster-jump':s.turret>0?'turret':variable?'variable':'normal';
+      const key = r.sourceActor==='WeaponBlasterPrecision'&&!a.grounded?'blaster-jump':r.family==='dualies'&&catalogDualiesTurret(s)?'turret':variable?'variable':'normal';
       emitSingle(runner,r,key);runner.firingT=.35;
       if(burst){if(!s.burst)s.burst=3;s.burst--;s.burstWait=finite(param.RepeatFrame,4)/HZ;
         if(!s.burst)runner.cooldown=(finite(param.TripleShotSpanFrame,8)+finite(param.PostDelayFrame,2))/HZ;}
@@ -1272,7 +1341,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(s.chargeF>0 && !input.fire && !s.pending) {
       // Empty-ink charge animation may continue; emitted power/ammunition
       // must still be funded. Match the existing owners' no-free-shot policy.
-      if(s.paid<=EPS||s.paid+EPS<inkAt(r,0)*inkMod(a)){cancel(runner);runner._empty();return;}
+      // Wiper's exported weak swing costs3%, below its3.5% charge
+      // reservation. A funded weak attack must remain legal at that edge.
+      const minimumPaid=(r.family==='splatana'?Math.min(inkAt(r,0),
+        finite(p.spl__WeaponSaberParam.SwingParam.InkConsume,.035)*100):inkAt(r,0))*inkMod(a);
+      if(s.paid<=EPS||s.paid+EPS<minimumPaid){cancel(runner);runner._empty();return;}
       const frames=Math.min(s.chargeF,fundedChargeFrames(r,s.paid,inkMod(a))),c=clamp(frames/full),min=finite(t.ChargeFrameMinCharge,r.family==='splatana'?1:8);
       if(frames+1e-6<min && r.family!=='splatling'&&r.family!=='splatana') {
         // A physical tap still completes the source minimum charge, rather than
@@ -1306,34 +1379,78 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           if(extra>0&&!pay(runner,extra)){cancel(runner);return;}
           if(extra<0)a.ink=Math.min(100,a.ink-extra);
         }
-        const forward=a.intent.move?.clone().normalize().dot(a.aimDir)||0;
-        const stepped=c+EPS>=1&&a.grounded&&forward>=finite(swing.StepStartStickThresholdY,.9);
-        if(stepped){const step=swing.SideStepParam,duration=step.MoveFrame/HZ;
-          s.lunge={remaining:duration,direction:a.aimDir.clone().setY(0).normalize(),speed:step.MoveDist/duration};}
+        const stepped=c+EPS>=1&&a.grounded&&saberStepRequested(s,swing);
+        if(stepped)s.lunge=createSaberStep(a,swing);
         const delay=c+EPS>=1?(stepped?swing.ChargeSwingStepShotBulletFrame:swing.ChargeSwingShotBulletFrame):swing.WeakSwingShotBulletFrame;
+        s.saberSwing={serial:(s.saberSwing?.serial||0)+1,key,ordinal:s.saberShotOrdinal,stepped};
         const meleeDelay=c+EPS>=1?(stepped?swing.ChargeSwingStepShotSlashFrame:swing.ChargeSwingShotSlashFrame):swing.WeakSwingShotSlashFrame;
-        s.melee={remaining:finite(meleeDelay,3)/HZ,fire:()=>saberMelee(runner,r,key)};
+        s.melee=beginSaberMelee(runner,r,key,finite(meleeDelay,3),s.saberShotOrdinal);
         beginPending(s,finite(delay,6),()=>{emitSingle(runner,r,key,c);runner.firingT=.35;});
         runner.cooldown=(finite(c+EPS>=1?swing.ChargeSwingFrame:swing.WeakSwingFrame,26)+(stepped?finite(swing.ChargeSwingFrameStepAdd,10):0))/HZ;
+        s.saberSwing.duration=runner.cooldown;
+        s.stop=(finite(c+EPS>=1?swing.ChargeSwingPostDelayFrame:swing.WeakSwingPostDelayFrame,0)+
+          (stepped?finite(swing.ChargeSwingFrameStepAdd,0):0))/HZ;
       }else {
         emitSingle(runner,r,'normal',c);runner.cooldown=finite(t.PostDelayFrame,6)/HZ;
         const n=p.WeaponDivideChargerParam?.FullChargeDivideNum;
         if(c+EPS>=1&&n>1)s.rounds=n-1;
       }
       s.chargeF=0;s.paid=0;runner.charging=false;runner.charge=0;
-      if(r.family==='stringer')runner.cooldown=finite(c+EPS>=1?t.FreezeFrameFullCharge:t.FreezeFrameMinCharge,15)/HZ;
+      // Endpoints are explicit 1130 fields. Linear recovery between them is
+      // the catalogue's interpolation model, not a recovered engine rule.
+      if(r.family==='stringer')runner.cooldown=stageValue(r,{
+        FreezeMin:finite(t.FreezeFrameMinCharge,15),FreezeMid:finite(t.FreezeFrameMidCharge,15),
+        FreezeMax:finite(t.FreezeFrameFullCharge,15)},'Freeze',frames,15)/HZ;
     }
   }
-  function saberMelee(runner,r,key) {
-    const a=runner.a,b=key==='saber-vertical'?r.parameters.BulletSaberSlashVerticalParam:r.parameters.BulletSaberSlashHorizontalParam;
-    const sh=b.ShapeParam,ext=sh.BoxHalfExtents,center=sh.BoxCenter,cy=Math.cos(a.yaw),sy=Math.sin(a.yaw);
-    for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team){
-      const dx=enemy.pos.x-a.pos.x,dz=enemy.pos.z-a.pos.z;
-      const x=dx*cy-dz*sy-center.X,z=dx*sy+dz*cy-center.Z;
-      if(Math.abs(x)<ext.X+PLAYER.radius&&Math.abs(z)<ext.Z+PLAYER.radius&&
-        Math.abs(enemy.pos.y-a.pos.y)<ext.Y+PLAYER.height&&G.physics.los(a.pos,enemy.pos))
-        withObjectDamageCause({owner:a,type:'saber-melee',catalog:{r,descriptor:{key}}},()=>G.projectiles.applyHit(a,enemy,b.DamageParam.DamageValue/10,r.id));
-    }
+  function saberMeleeContact(melee,target,feet,radius,height,mark=true){
+    if(melee.seen.has(target)||!feet)return false;
+    const shape=melee.shape,bound=shape.bound+radius;
+    if(Math.abs(feet.x-melee.origin.x)>bound||Math.abs(feet.z-melee.origin.z)>bound)return false;
+    if(!saberSlashContact(shape,melee.origin,melee.yaw,feet,radius,height,melee.contact)||
+      G.physics.los&&!G.physics.los(melee.origin,melee.contact))return false;
+    if(mark)melee.seen.add(target);return true;
+  }
+  function beginSaberMelee(runner,r,key,delay,ordinal){
+    const shape=saberSlashShape(r,key,ordinal),a=runner.a;
+    const attack={owner:a,team:a.team,type:'saber-melee',catalog:{r,descriptor:{key}}};
+    const melee={age:-delay,shape,attack,cause:catalogueAttackRow(attack),damage:shape.bullet.DamageParam.DamageValue/10,
+      origin:new THREE.Vector3(),contact:new THREE.Vector3(),objectFeet:new THREE.Vector3(),seen:new Set(),key,yaw:0,active:false};
+    // Allocate device callbacks once per swing. Their existing owners supply
+    // actual target geometry and HP/peer authority; do not mistake sphere
+    // centres for capsule feet or special blast radii for collider sizes.
+    melee.options={shapeContact:(object,point)=>{
+      if(melee.seen.has(object)||!object.pos)return false;
+      if(object.subId==='splashWall')return saberSlashWallContact(shape,melee.origin,melee.yaw,object.pos,
+        object.yaw||0,object.spec.wallWidth,object.spec.wallHeight,point);
+      const radius=object.kind==='wave'?.72:object.kind==='decoy'?.48:object.subId==='torpedo'?.3:
+        ['sprinkler','beakon'].includes(object.subId)?.42:finite(object.collisionRadius,finite(object.spec?.collisionRadius,0));
+      melee.objectFeet.copy(object.pos);melee.objectFeet.y-=radius;
+      const hit=saberMeleeContact(melee,object,melee.objectFeet,radius,2*radius,false);
+      if(hit)point.copy(melee.contact);return hit;
+    }};
+    melee.objectDamage=(_distance,object)=>{
+      if(!object||melee.seen.has(object))return 0;
+      melee.seen.add(object);return melee.damage;
+    };
+    return melee;
+  }
+  function saberMelee(runner,r,melee,dt) {
+    const a=runner.a,shape=melee.shape;
+    melee.age+=dt*HZ;
+    if(melee.age<-EPS)return;
+    // Sample ages 0,1,2,3 for AliveFrame=4. The expired fifth frame must
+    // never hit a newly entering actor; each victim/device is hit once.
+    if(melee.age+EPS>=finite(shape.bullet.MoveParam?.AliveFrame,0)){state(runner).melee=null;return;}
+    if(!melee.active){melee.yaw=placeSaberSlash(a,shape,melee.origin);melee.active=true;}
+    for(const enemy of G.actors||[])if(enemy!==a&&enemy.alive&&enemy.team!==a.team&&
+      saberMeleeContact(melee,enemy,enemy.pos,hurtboxRadius(enemy,PLAYER),hurtboxHeight(enemy,PLAYER)))
+      withObjectDamageCause(melee.attack,()=>G.projectiles.applyHit(a,enemy,melee.damage,r.id));
+    // Existing device APIs retain HP authority, object multipliers and network
+    // proposals. Their radius query is broad phase only; share the same shape
+    // and per-attack ledger across all four collision frames.
+    G.projectiles.s3DamageSubObjects?.(melee.attack,melee.origin,shape.bound,melee.objectDamage,melee.cause,melee.options);
+    G.projectiles.s3DamageSpecialObjects?.(melee.attack,melee.origin,shape.bound,melee.objectDamage,melee.cause,melee.options);
   }
   function swing(runner,r,input,s,dt) {
     const p=r.parameters,a=runner.a,brush=r.family==='brush';
@@ -1369,36 +1486,63 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function dualies(runner,r,input,s,dt) {
     const a=runner.a,t=r.parameters.SideStepParam||{};
     if(s.slideRunner){
-      slidePaint(r,s,!s.roll);
-      if(!s.roll)s.slideRunner=null;
+      slidePaint(r,s,!s.roll&&!s.slip);
+      if(!s.roll&&!s.slip)s.slideRunner=null;
     }
+    if(s.slip){s.slip.t=Math.min(s.slip.dur,s.slip.t+dt);if(s.slip.t+EPS>=s.slip.dur){s.slip=null;a.vel.x=a.vel.z=0;}}
     if(s.roll){
+      // Explicit SideStep.ChargeFrame is pre-roll anticipation, separate from
+      // MoveFrame. Match the existing native startup clock contract; omitted
+      // defaults on the other additions remain unchanged.
+      if(s.roll.startup>EPS){s.roll.startup=Math.max(0,s.roll.startup-dt);return;}
       const roll=s.roll;roll.remaining-=dt;roll.t=Math.min(roll.dur,roll.t+dt);
-      a.vel.x=roll.direction.x*roll.speed;a.vel.z=roll.direction.z*roll.speed;
-      if(roll.remaining<=EPS)s.roll=null;
-      if(!t.IsShootableInMove)return;
+      if(roll.remaining<=EPS){
+        s.roll=null;s.turret=roll.recovery;s.turretHeld=true;
+        // Sparse omitted distances or timing are not fabricated. Only the
+        // explicit ground/air distance + frame pair admits a new slip phase.
+        const slipDistance=a.grounded?t.SlipMoveDistGnd:t.SlipMoveDistAir;
+        if(slipDistance>0&&t.SlipMoveFrame>0)s.slip={t:0,dur:t.SlipMoveFrame/HZ,distance:slipDistance,direction:roll.direction};
+        else a.vel.x=a.vel.z=0;
+      }else{
+        // Tetra may fire while travelling, but those rounds still use the
+        // ordinary cone, collision row and cadence. Recovery starts only once
+        // the physical movement phase ends, including on chained dodges.
+        if(t.IsShootableInMove)auto(runner,r,input,s,dt);
+        return;
+      }
+    }else if(s.turret>0){
+      s.turret=Math.max(0,s.turret-dt);if(s.turret<=EPS)s.rolls=0;
     }
-    if(s.turret>0){s.turret=Math.max(0,s.turret-dt);if(s.turret<=EPS)s.rolls=0;}
+    const funded=a.ink+EPS>=finite(weaponParam(r).InkConsume,.0092)*100*inkMod(a);
+    if(s.turret>EPS&&input.fire&&funded)s.turretHeld=true;
+    if(s.turretHeld&&(!input.fire||s.turret<=EPS&&a.intent.move.lengthSq()>.0001||!funded))s.turretHeld=false;
+    const shot=weaponParam(r),ground=finite(shot.Stand_DegSwerve,0);
+    runner.spread=catalogDualiesTurret(s)?finite(shot.LapOver_DegSwerve,0)
+      :catalogAngularEnvelope('dualies',!!a.grounded,ground,finite(shot.Jump_DegSwerve,ground),s.jumpAge,a.s3?.modifiers?.actionAirSpread??0,shot);
     const old=runner.cooldown;auto(runner,r,input,s,dt);
-    if(runner.cooldown>old+EPS&&s.turret>0)runner.cooldown=finite(weaponParam(r).LapOver_RepeatFrame,4)/HZ;
+    if(runner.cooldown>old+EPS&&catalogDualiesTurret(s))runner.cooldown=finite(weaponParam(r).LapOver_RepeatFrame,4)/HZ;
   }
   const nativeDodge=R.tryDodge,nativeHorizontal=Actor.prototype._horizontal;
   R.tryDodge=function(move){
     const a=this.a,r=a.weapon.catalogRecord;
     if(!r)return nativeDodge?.call(this,move);
-    if(r.family!=='dualies'||!a.intent.fire||!move||move.lengthSq()<=EPS)return false;
+    if(r.family!=='dualies'||a.remote||!a.alive||a.form!=='kid'||a.specialActive||a.superJumpState||a.climbing||this.aimingSub||a.intent.sub||!a.intent.fire||!move||move.lengthSq()<=EPS)return false;
     const s=state(this),t=r.parameters.SideStepParam||{};
-    if(s.roll||s.rolls>=finite(t.RepeatCnt,2)||!pay(this,finite(t.InkConsume,.07)*100*inkMod(a)))return false;
+    if(s.roll||s.rolls>=finite(t.RepeatCnt,2)||!pay(this,finite(t.InkConsume,.07)*100*inkMod(a),finite(t.InkRecoverStop,a.weapon.inkRecoverStop*HZ)/HZ))return false;
     // Flush the previous endpoint before a same-tick chained roll replaces
     // its distance accumulator; otherwise the last fraction of the stroke
     // disappears at turns. Denied rolls never create a new stroke.
     slidePaint(r,s,true);
-    const duration=finite(t.MoveFrame,12)/HZ,direction=move.clone().setY(0).normalize();
-    s.roll={remaining:duration,t:0,dur:duration,speed:finite(t.MoveDist,5)/duration,direction,paintStart:a.pos.clone()};s.rolls++;
+    const duration=finite(t.MoveFrame,12)/HZ,direction=move.clone().setY(0).normalize(),startup=Math.max(0,finite(t.ChargeFrame,0))/HZ;
+    s.slip=null;s.turretHeld=false;
+    s.roll={remaining:duration,t:0,dur:duration,distance:finite(t.MoveDist,5),speed:finite(t.MoveDist,5)/duration,
+      kd:a.grounded?t.MoveStepKd:t.MoveStepKd_Air,direction,paintStart:a.pos.clone(),startup,startupDur:startup,
+      token:this.s3CatalogDodgeSequence=(this.s3CatalogDodgeSequence||0)+1};s.rolls++;
     s.slideRunner={a,dodge:s.roll,_dodgeDir:direction};
-    s.turret=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameMove_Last:t.UnrelaxFrameMove,32)/HZ;
-    s.stop=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameNoSquid_Last:t.UnrelaxFrameNoSquid,32)/HZ+duration;
-    a.vel.x=direction.x*s.roll.speed;a.vel.z=direction.z*s.roll.speed;
+    s.roll.recovery=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameMove_Last:t.UnrelaxFrameMove,32)/HZ;
+    s.turret=0;
+    s.stop=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameNoSquid_Last:t.UnrelaxFrameNoSquid,32)/HZ+duration+startup;
+    writeCatalogDualiesVelocity(a,DT);
     this.cooldown=finite(t.UnrelaxFrameNoWeapon,0)/HZ;
     // The native Character expects the world move transformed to root space
     // and this weapon's sourced MoveFrame. The gameplay roll above is unchanged.
@@ -1407,11 +1551,28 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     emit('weapon:dodge',{actor:a,dir:direction.clone()});return true;
   };
   Actor.prototype._horizontal=function(dt,...args){
+    if(writeCatalogDualiesVelocity(this,dt))return;
     const s=this.weaponRunner?.catalogState,motion=s?.roll||s?.lunge;
-    if(this.weapon.catalogRecord&&motion){this.vel.x=motion.direction.x*motion.speed;this.vel.z=motion.direction.z*motion.speed;return;}
+    if(this.weapon.catalogRecord&&motion){
+      if(motion===s.lunge)saberStepSpeed(motion,dt,this.grounded); // retail slide-ground state is not recovered
+      this.vel.x=motion.direction.x*motion.speed;this.vel.z=motion.direction.z*motion.speed;return;}
     return nativeHorizontal.call(this,dt,...args);
   };
   const launchedCanopies = new Set();
+  let canopyVisualSerial=0;
+  // Read-only, bounded serialization of world-owned purge poses. Remote
+  // presentation consumers never receive this Set or enter its simulation.
+  P.s3WriteBrellaCanopyPresentation=function(owner,row,offset,max){
+    let count=0;
+    for(const c of launchedCanopies){
+      if(c.owner!==owner||c.remaining<=EPS||c.hp<=0||count>=max)continue;
+      const k=offset+count*9;
+      row[k]=c.visualSerial;row[k+1]=c.visualWeaponId;row[k+2]=c.remaining;
+      row[k+3]=c.pos.x;row[k+4]=c.pos.y;row[k+5]=c.pos.z;
+      row[k+6]=c.dir.x;row[k+7]=c.dir.y;row[k+8]=c.dir.z;
+      count++;
+    }return count;
+  };
   function canopyTrail(c){
     const spacing=Math.max(.1,c.paintRadius*.5);
     const stamp=point=>{
@@ -1433,19 +1594,50 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   P.s3FlushCatalogSplashBirths=function(){advanceSplashDrops(this,0,G,PLAYER.waterY);};
   P.update = function(dt,...args){
     if(Number.isFinite(dt)&&dt>0)for(const c of launchedCanopies){
-      const next=c.pos.clone().addScaledVector(c.dir,c.speed*dt);
-      // The old canopy crossed a solid wall and painted the floor behind it.
-      // Stop at the visible obstruction; this is an INKWAVE guard, not a
-      // reconstruction of retail canopy sliding/climbing physics.
-      const obstruction=G.physics.segment(c.pos,next,hit,true);
-      if(obstruction.hit){next.copy(obstruction.point).addScaledVector(obstruction.normal,.02);c.speed=0;}
-      c.pos.copy(next);c.remaining-=dt;
-      if(c.remaining<=EPS||c.hp<=0){retireDetachedCanopy(c);launchedCanopies.delete(c);continue;}
-      canopyTrail(c);showDetachedCanopy(api,c.owner,c,c.weaponId);
-      c.contacts ||= new Map();
-      for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==c.owner.team&&enemy.pos.distanceTo(c.pos)<c.radius+PLAYER.radius&&G.time-(c.contacts.get(enemy)??-Infinity)>=30/HZ&&G.physics.los(c.pos,enemy.pos)){
-        withObjectDamageCause({owner:c.owner,type:'canopy',catalog:{r:c.record}},()=>G.projectiles.applyHit(c.owner,enemy,finite(c.record.parameters.spl__BulletShelterCanopyParam.CanopyDamage,300)/10,c.weaponId));c.contacts.set(enemy,G.time);
+      // Physics owns one 60Hz clock; 30/120Hz rendering cannot change gravity,
+      // terrain contacts, damage cadence or the distance-based paint budget.
+      c.carry+=dt;
+      while(c.carry+EPS>=DT&&c.remaining>EPS&&c.hp>0){
+        c.carry=Math.max(0,c.carry-DT);c.contactTime+=DT;c.prev.copy(c.pos);
+        c.velocity.y-=c.gravity*DT;
+        c.next.copy(c.pos).addScaledVector(c.velocity,DT);
+        const length=c.pos.distanceTo(c.next);let fraction=Infinity;
+        // Three reused probes cover center and lateral cloth rim. Do not move
+        // the shield centre to a rim hit point. Floor support remains separate.
+        for(let side=-1;side<=1;side++){
+          c.edgeFrom.copy(c.pos).addScaledVector(c.side,side*c.radius);
+          c.edgeTo.copy(c.next).addScaledVector(c.side,side*c.radius);
+          const obstruction=G.physics.segment(c.edgeFrom,c.edgeTo,hit,true);
+          if(obstruction.hit&&obstruction.normal.y<.5){
+            const t=obstruction.dist/Math.max(EPS,length);
+            if(t<fraction){fraction=t;c.wallNormal.copy(obstruction.normal);}
+          }
+        }
+        if(fraction<=1){
+          c.next.lerpVectors(c.pos,c.next,Math.max(0,fraction)).addScaledVector(c.wallNormal,.02);
+          // Slide on a contact plane, retaining gravity on a vertical wall.
+          const inward=c.velocity.dot(c.wallNormal);
+          if(inward<0)c.velocity.addScaledVector(c.wallNormal,-inward);
+        }
+        // The local support probe cannot snap from a high ledge to a distant
+        // floor. Step allowance is an INKWAVE reconstruction; Nintendo's
+        // FootSplashShapeCastOffset is a paint field, not a step-height source.
+        c.probe.copy(c.next);c.probe.y+=c.supportStep;
+        const floor=G.physics.raycast(c.probe,down,c.clearance+c.supportStep+Math.max(0,c.prev.y-c.next.y),floorHit,true);
+        if(floor.hit&&floor.normal.y>=.5&&c.velocity.y<=0&&floor.point.y+c.clearance>=c.next.y-EPS&&floor.point.y<=c.prev.y-c.clearance+c.supportStep+EPS){
+          c.next.y=floor.point.y+c.clearance;c.velocity.y=0;c.grounded=true;
+        }else c.grounded=false;
+        c.pos.copy(c.next);c.remaining=Math.max(0,c.remaining-DT);
+        if(c.pos.y<PLAYER.waterY-1.8)c.remaining=0;
+        if(c.remaining<=EPS||c.hp<=0)break;
+        canopyTrail(c);
+        c.contacts ||= new Map();
+        for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==c.owner.team&&enemy.pos.distanceTo(c.pos)<c.radius+PLAYER.radius&&c.contactTime-(c.contacts.get(enemy)??-Infinity)+EPS>=30/HZ&&G.physics.los(c.pos,enemy.pos)){
+          withObjectDamageCause({owner:c.owner,type:'canopy',catalog:{r:c.record}},()=>G.projectiles.applyHit(c.owner,enemy,finite(c.record.parameters.spl__BulletShelterCanopyParam.CanopyDamage,300)/10,c.weaponId));c.contacts.set(enemy,c.contactTime);
+        }
       }
+      if(c.remaining<=EPS||c.hp<=0){retireDetachedCanopy(c);launchedCanopies.delete(c);continue;}
+      showDetachedCanopy(api,c.owner,c,c.weaponId);
     }
     return worldUpdate.call(this,dt,...args);
   };
@@ -1470,11 +1662,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function brella(runner,r,input,s,dt) {
     const a=runner.a,p=r.parameters,measure=BRELLA_MEASURED[r.sourceActor],t=weaponParam(r),c=p.spl__BulletShelterCanopyParam||{};
-    s.naked=Math.max(0,s.naked-dt);
     const canopy=s.canopy;
     if(canopy){
       const wasOpen=canopy.open;
-      canopy.age+=dt;
+      // Released/closed time cannot fund the next press's opening or purge.
+      // A newly admitted shot still supplies its own startup/open clocks.
+      canopy.age=input.fire?canopy.age+dt:0;
       {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
         // Prep belongs to the admitted pre-opening canopy only; do not prolong after input cancellation.
         if(canopy.preparing)canopy.preparing=!!input.fire&&canopy.age*HZ+EPS<measure.open;
@@ -1482,12 +1675,25 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(canopy.open){
           const total=p.spl__WeaponShelterCanopyParam.InkConsumeUmbrella||0;
           if(!pay(runner,Number.isFinite(measure.launch)?total*100/measure.launch*HZ*dt*inkMod(a):0,finite(t.InkRecoverStopCharge,20)/HZ))canopy.open=false;
-        }else if(a.submerged||a.climbing) canopy.hp=Math.min(finite(c.CanopyHP,measure.hp*10)/10,canopy.hp+finite(c.CanopyCureHPPerFrame,25)/10*HZ*dt);
+        }
         heldCanopyFoot(a,canopy,c,measure,wasOpen,dt);
         if(canopy.open&&canopy.age*HZ+EPS>=measure.open+measure.launch&&p.spl__WeaponShelterCanopyParam.IsCanopyShot!==false){
           canopy.launched=true;canopy.remaining=finite(c.CanopyFrame,300)/HZ;
           s.naked=finite(c.CanopyNakedFrame,330)/HZ;
           canopy.owner=a;canopy.weaponId=r.id;canopy.speed=finite(c.CanopyInitSpeed,7.92);canopy.paintRadius=finite(c.CanopyPaintRadius,1);
+          // Preserve the existing canopy world-unit speed convention. Gravity is
+          // interpreted in the same seconds domain; retail unit conversion and
+          // slope friction remain unverified, recorded in the family audit.
+          canopy.velocity=canopy.dir.clone().multiplyScalar(canopy.speed);
+          const inherit=a.grounded?finite(c.CanopySpeedGroundAddScale,0):finite(c.CanopySpeedAirAddScaleXZ,0);
+          canopy.velocity.x+=a.vel.x*inherit;canopy.velocity.z+=a.vel.z*inherit;
+          if(a.grounded)canopy.velocity.y+=a.vel.y*inherit;
+          canopy.gravity=finite(c.CanopyGravity,0);canopy.carry=0;canopy.contactTime=G.time;canopy.clearance=.8;
+          canopy.supportStep=.4; // reconstruction, not an extracted canopy movement default
+          canopy.prev=canopy.pos.clone();canopy.next=canopy.pos.clone();canopy.probe=canopy.pos.clone();
+          canopy.edgeFrom=canopy.pos.clone();canopy.edgeTo=canopy.pos.clone();canopy.wallNormal=canopy.pos.clone();
+          canopy.side=new THREE.Vector3(canopy.dir.z,0,-canopy.dir.x).normalize();
+          canopy.visualSerial=++canopyVisualSerial;canopy.visualWeaponId=a.weapon.id;
           canopy.record=r;canopy.visualSource=a.character?.weapon?.def;launchedCanopies.add(canopy);showDetachedCanopy(api,a,canopy,r.id);s.canopy=null;
           canopyTrail(canopy);
         }}
@@ -1518,26 +1724,33 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   P.kitDefenseCandidate=function(p){
     let best=nativeDefense?.call(this,p)||null;
     const len=p.prev.distanceTo(p.pos);
-    const guards=[...(G.actors||[]).map(a=>({a,s:a.weaponRunner?.catalogState,c:a.weaponRunner?.catalogState?.canopy})),...Array.from(launchedCanopies,c=>({a:c.owner,s:c.owner.weaponRunner?.catalogState,c}))];
-    for(const {a,s,c} of guards){
-      if(!a.alive||a.team===p.team||!c||!c.open&&!c.launched||c.hp<=0)continue;
-      const t=capsuleEntry(p.prev,p.pos,c.pos,c.radius,c.radius*2,.1);
-      if(t==null||t*len>=(best?.distance??Infinity))continue;
-      best={distance:t*len,point:p.prev.clone().lerp(p.pos,t),onHit:shot=>{
+    const consider=(a,s,c)=>{
+      if(a.team===p.team||!c||!c.launched&&!a.alive||!c.open&&!c.launched||c.hp<=0)return;
+      const t=canopyEntry(p.prev,p.pos,c,Math.max(0,finite(p.size,.1)));
+      if(t==null||t*len>=(best?.distance??Infinity))return;
+      best={brella:true,distance:t*len,point:p.prev.clone().lerp(p.pos,t),onHit:(shot=p)=>{
         if(shot.ghost)return;
         hurtCanopy(a,s,c,finite(shot.catalog?.descriptor.damage,finite(shot.damage,0)));
       }};
-    }return best;
+    };
+    for(const a of G.actors||[])consider(a,a.weaponRunner?.catalogState,a.weaponRunner?.catalogState?.canopy);
+    for(const c of launchedCanopies)consider(c.owner,c.owner.weaponRunner?.catalogState,c);
+    return best;
   };
-  // Incoming online damage is adjudicated by the victim owner. Remote canopy
-  // meshes are deferred with modeling; its front-facing body guard still owns
-  // HP here. Arrival-position approximation is documented, not retail parity.
+  // Owner-side online defense uses the actual final projectile segment sent
+  // with this hit. Missing legacy evidence leaves actor damage to its existing
+  // owner; a frontal attacker is never proof of a canopy intersection.
   const nativeApplyHit=P.applyHit;
   P.applyHit=function(attacker,victim,damage,wid,...args){
-    const s=victim?.weaponRunner?.catalogState,c=s?.canopy;
-    if(G.netm?._applyingHit&&victim&&!victim.remote&&attacker?.remote&&WEAPONS[wid]&&c?.open&&!c.launched&&c.hp>0){
-      const incoming=attacker.pos.clone().sub(victim.pos).setY(0).normalize();
-      if(victim.aimDir.clone().setY(0).normalize().dot(incoming)>0){hurtCanopy(victim,s,c,Math.max(0,damage));return 'accepted';}
+    const geometry=this.s3IncomingHitGeometry;
+    if(G.netm?._applyingHit&&victim&&!victim.remote&&attacker?.remote&&WEAPONS[wid]&&validProjectileHitGeometry(geometry)){
+      const from=base.set(geometry[0],geometry[1],geometry[2]),to=dir.set(geometry[3],geometry[4],geometry[5]);
+      const probe={owner:attacker,team:attacker.team,prev:from,pos:to,size:geometry[6],damage,ghost:false};
+      const candidate=this.kitDefenseCandidate(probe);
+      if(candidate?.brella&&candidate.distance<=from.distanceTo(to)+EPS){
+        const terrain=G.physics.segment(from,candidate.point,hit,true);
+        if(!terrain.hit){candidate.onHit(probe);return 'accepted';}
+      }
     }
     return nativeApplyHit.call(this,attacker,victim,damage,wid,...args);
   };
@@ -1562,7 +1775,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=state(this);
     if(s.canopy?.preparing&&(!input.fire||input.sub||a.form!=='kid'||a.remote||!a.alive||a.specialActive||a.superJumpState||this.aimingSub))s.canopy.preparing=false;
     // Cancel BEFORE the installed sub preparation owner checks main busy state.
-    if(input.sub||a.specialActive||!a.alive)cancel(this);
+    if(input.sub||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid'||r.family==='brella'&&a.form!=='kid')cancel(this);
+    if(r.family==='splatana'&&a.form!=='kid'&&(s.pending||s.melee||s.lunge))cancel(this);
+    // Rebuild/cure belong to elapsed weapon life, including squid form and
+    // sub/special use. Previously both clocks lived behind the kid/fire gate.
+    if(r.family==='brella'&&Number.isFinite(dt)&&dt>0&&!a.remote&&a.alive){
+      s.naked=Math.max(0,s.naked-dt);
+      const canopy=s.canopy,c=r.parameters.spl__BulletShelterCanopyParam;
+      if(canopy&&!canopy.open&&!canopy.launched&&(a.submerged||a.climbing))
+        canopy.hp=Math.min(finite(c.CanopyHP,BRELLA_MEASURED[r.sourceActor].hp*10)/10,
+          canopy.hp+finite(c.CanopyCureHPPerFrame,25)/10*HZ*dt);
+    }
     if(a.form==='squid'){
       if(s.chargeF>0||s.stream>0)cancel(this,true);
       if(s.stored){s.stored.remaining-=dt;if(s.stored.remaining<=EPS)s.stored=null;}
@@ -1581,6 +1804,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.bowTilt=clamp(s.bowTilt+finite(a.grounded?shot.BowJumpTiltSpeedReverse:shot.BowJumpTiltSpeedForward,a.grounded?-12:9)*dt*HZ,
         0,finite(shot.BowTiltDegreeMax,90));
     }
+    if(r.family==='splatana'){
+      if(a.form==='kid')recordSaberStick(s,a,dt*HZ,r.parameters.spl__WeaponSaberParam.SwingParam.StepStartStickHistoryFrame);
+      else if(s.stepStick){s.stepStick.fill(0);s.stepStickFrames=0;s.stepStickAt=0;}
+    }
     s.stop=Math.max(0,s.stop-dt);
     if(r.family!=='splatling') {
       s.accuracy.advance(dt);
@@ -1594,12 +1821,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const t=weaponParam(r),ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
       const age=r.family==='splatling'&&Number.isFinite(a.s3SplatlingJumpAgeFrames)
         ?a.s3SplatlingJumpAgeFrames/HZ:s.jumpAge;
-      this.spread=r.family==='dualies'&&s.turret>0?finite(t.LapOver_DegSwerve,0)
+      this.spread=r.family==='dualies'&&catalogDualiesTurret(s)?finite(t.LapOver_DegSwerve,0)
         :catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,age,
           a.s3?.modifiers?.actionAirSpread??0,t);
     }
-    if(s.lunge){s.lunge.remaining-=dt;if(s.lunge.remaining<=EPS)s.lunge=null;}
-    if(s.melee){s.melee.remaining-=dt;if(s.melee.remaining<=EPS){const melee=s.melee;s.melee=null;melee.fire();}}
+    if(s.lunge&&s.lunge.remaining<=EPS)s.lunge=null;
+    if(s.melee)saberMelee(this,r,s.melee,dt);
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){const pending=s.pending;s.pending=null;pending.fire();}}
     if(r.family==='slosher')this.slosh=s.pending?Math.max(0,a.weapon.windup-s.pending.remaining):-1;
     if(a.form!=='kid'||input.sub||this.aimingSub){
