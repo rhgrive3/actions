@@ -64,7 +64,7 @@ export const CATALOG_MODEL_LIMITS = Object.freeze([
   'Brella geometry/damage rates: incomplete.',
   'Wall drips/Slosher spiral: incomplete.',
   'Scope: capability and explicit FOV applied; sparse defaults/transition timing unverified.',
-  'Stringer: continuous shot tilt applied; retail tilt-keep/reset and presentation timing unverified.',
+  'Stringer: source-rate local tilt and remote shot snapshots; retail tilt-keep/reset and bone axes unverified.',
   'Model/animation: placeholders.'
 ]);
 
@@ -254,7 +254,7 @@ function initialState(r,actor) {
     stream:0, streamF:0, streamCharge:0, streamTime:0, rounds:0, burst:0, burstWait:0,
     turret:0, rolls:0, roll:null, lunge:null, melee:null, stored:null, swingCount:0, canopy:null, naked:0,
     accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0,
-    rollingFrames:0, rollingDash:false, bowTilt:0, saberShotOrdinal:0,
+    rollingFrames:0, rollingDash:false, bowTilt:0, remoteBowTilt:null, saberShotOrdinal:0,
     jumpSerial:actor?.s3JumpSerial || 0, jumpAge:null };
 }
 
@@ -612,6 +612,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0}});
+    // Optional visual-only extension; legacy five-entry catalogue metadata
+    // stays unchanged for every other family and remains accepted on receive.
+    if(descriptor.key==='arrow')p.inkMeta.s3Catalog.push(options.bowTilt);
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
     p.vel.y += finite(options.lift,0);
     if(!queueCatalogBirth(p,G,muzzle))applyCatalogPlayerVelocity(p);
@@ -766,7 +769,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const birth=at.clone().addScaledVector(spreadAxis,(i-(count-1)/2)*finite(t.ArrowMargin,0));
       // Separated nocks must obey the same muzzle obstruction guard.
       constrainMuzzle(G.physics,at,birth);
-      spawn(a,r,desc,aim,birth,{index:i});
+      spawn(a,r,desc,aim,birth,{index:i,bowTilt:s.bowTilt});
     }
     s.arrowShotOrdinal=(s.arrowShotOrdinal||0)+1;
     notify(a,r,at,direction,charge);
@@ -1108,7 +1111,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const p=this.list.length>before?this.list[this.list.length-1]:result;
     const r=RECORDS.get(e[4]),meta=e[27]?.s3Catalog;
     const allowed=['normal','blaster-jump','variable','turret','horizontal','vertical','brush','slosh','pellet','arrow','saber-horizontal','saber-vertical'];
-    if(p&&r&&!r.legacy&&Array.isArray(meta)&&meta.length===5&&meta[0]===1&&allowed.includes(meta[1])&&
+    const maxTilt=finite(r?.parameters.spl__WeaponStringerParam?.ShotParam?.BowTiltDegreeMax,90);
+    const layout=Array.isArray(meta)&&(meta.length===5||meta.length===6&&r?.family==='stringer'&&meta[1]==='arrow'&&
+      Number.isFinite(meta[5])&&meta[5]>=0&&meta[5]<=maxTilt);
+    if(p&&r&&!r.legacy&&layout&&meta[0]===1&&allowed.includes(meta[1])&&
       Number.isSafeInteger(meta[2])&&meta[2]>=0&&meta[2]<30&&Number.isFinite(meta[3])&&meta[3]>=0&&meta[3]<=1){
       try {const d=mode(r,meta[1],meta[2],meta[3]);p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
         hit:new Hit(),seen:new Set(),index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0};
@@ -1126,7 +1132,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
               ageOffset:finite(r.parameters.spl__WeaponSaberParam.SwingParam[meta[1]==='saber-horizontal'?'WeakSwingShotBulletFrame':'ChargeSwingShotBulletFrame'],0)/HZ};
             if(meta[1]==='saber-horizontal')s.saberShotOrdinal++;
           }
-        }}
+        }
+        if(a.remote&&d.key==='arrow'&&a.weapon?.catalogRecord?.id===r.id&&a.weaponRunner)
+          state(a.weaponRunner).remoteBowTilt=meta.length===6?meta[5]:null;
+      }
       catch { /* malformed visual packet cannot create a gameplay object */ }
     }return result;
   };

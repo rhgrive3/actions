@@ -233,7 +233,7 @@ function bowState(ch) { let m = st8.get(ch); if (!m) st8.set(ch, m = { roll: 0 }
 export function FAMILY_POSE(ch, dt, s, C) {
   if (!MODELS[ch.weapon?.def?.modelId ?? ch.weaponModel]) return;
   const m = bowState(ch); dt = Math.min(0.1, Math.max(0, dt || 0));
-  const runner=ch._runner?.(),tilt=runner?.a?.remote?null:runner?.catalogState?.bowTilt;
+  const runner=ch._runner?.(),tilt=runner?.a?.remote?runner.catalogState?.remoteBowTilt:runner?.catalogState?.bowTilt;
   // The local shot fan already owns the forward/reverse tilt clock. Reading
   // that state keeps jump/landing/squid changes in the same simulation phase
   // at every render rate; a second grounded damp lagged the emitted arrows.
