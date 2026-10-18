@@ -125,6 +125,11 @@ export function adaptS3SquidLook(rel, code) {
             diffuseColor.rgb=mix(diffuseColor.rgb,club,tip);
           }
           diffuseColor.rgb *= mix(0.7, 1.0, iwAO);`, 'two long club coating');
+    // Wet ink coating: neutral dielectric reflection, without cloth sheen.
+    // Keep team albedo, lighting, clearcoat and transmission ownership unchanged.
+    body=once(body, 'roughness: 0.3, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, sheen: 1,', 'roughness: 0.22, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, sheen: 0,', 'smooth squid ink surface');
+    body=once(body, '        if (iwGumOn > 0.5) { vec3 iwST = mix(vec3(1.0), iwGumTrans / max(max(iwGumTrans.r, max(iwGumTrans.g, iwGumTrans.b)), 1e-3), 0.6); material.specularColor *= iwST; material.specularColorBlended *= iwST; }', '        // Squid ink retains neutral dielectric specular response.', 'neutral squid coating reflection');
+    body=once(body, "m.customProgramCacheKey = () => (ghost ? 'iw-squid-ghost5' : 'iw-squid4');", "m.customProgramCacheKey = () => (ghost ? 'iw-squid-ghost-neutral6' : 'iw-squid-neutral5');", 'squid coating shader identity');
     code=head+body;
     return once(code, 'export function makeSquidMaterial(u, ghost = false) {', SQUID_EYE_MATERIAL + 'export function makeSquidMaterial(u, ghost = false) {', 'squid-only eye surface');
   }
@@ -177,6 +182,9 @@ export function adaptS3SquidLook(rel, code) {
     code = once(code, '_c.setRGB(tint(ct[i]) + 0.1, ct[i], k / N)', '_c.setRGB(feeler ? lerp(tint(ct[i]) + 0.1, -0.95, sstep(0.5, 0.8, ct[i])) : tint(ct[i]) + 0.1, ct[i], k / N)', 'club spot coating marker');
     code=once(code,ORIGINAL_SQUID_FACE,CONNECTED_SQUID_FACE,'connected squid eye mask');
     code=once(code,"  _squid.set(key, res);","  res.eyes.userData.squidConnectedEye = true;\n  res.body.userData.squidCompactSupports = true;\n  _squid.set(key, res);",'connected eye binding marker');
+    // C2-continuous proximal widening. Roots and distal club profile are exact;
+    // the unchanged peak width is reached through a longer, softer transition.
+    code=once(code, '* lerp(1, 0.6, sstep(0.9, 1, t));', '* lerp(1, 0.6, sstep(0.9, 1, t)) + (feeler ? 0.006 * Math.pow(Math.sin(Math.PI * sstep(0.10, 0.65, t)), 2) : 0);', 'continuous arm to club widening');
     return once(code,
       "(feeler ? 0.22 * gauss(t - 0.8, 0.07) : 0)",
       "(feeler ? 4.5 * gauss(t - 0.74, 0.24) : 0)", 'feeler club tips');
