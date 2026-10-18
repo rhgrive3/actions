@@ -1,6 +1,5 @@
 import { nativeStageEnabled, NATIVE_LAYOUTS } from '../../patches/native-stages/runtime/registry.mjs';
 import { LAYOUT as SCORCH } from '../../patches/splatoon3/stage/scorch-layout.mjs';
-import { LAYOUT as RANGE } from '../../patches/practice-range/stage/layout.mjs';
 // Map layouts. A map is a list of oriented boxes. Everything in `half` is also mirrored by a 180° rotation about the
 // Y axis ((x,z) -> (-x,-z)) so both teams get an identical arena. Team Alpha spawns at -Z, Bravo at +Z.
 //
@@ -13,6 +12,7 @@ import { LAYOUT as RANGE } from '../../patches/practice-range/stage/layout.mjs';
 // original layouts and every existing importer
 import { PATTERN } from './mapkit.js';
 import { LAYOUT as CARGO } from './stages/cargo/layout.js';
+import { LAYOUT as RANGE } from '../../patches/practice-range/stage/layout.mjs';
 export { PATTERN };
 
 const C = {
