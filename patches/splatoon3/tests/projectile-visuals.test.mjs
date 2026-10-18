@@ -190,13 +190,14 @@ test('source-aware renderer assigns distinct geometry to shooter, Roller, and Sl
       r: { sourceActor: 'WeaponSlosherBathtub', family: 'slosher' }, descriptor: { key: 'slosh', unit: 0, index: 0 } }, vis: 0.8 } },
     { name: 'explosive', p: { type: 'slosh', wid: 'slosher', catalog: {
       r: { sourceActor: 'WeaponSlosherWashtub', family: 'slosher' }, descriptor: { key: 'slosh', unit: 0, index: 0 } }, vis: 0.8 } },
-    { name: 'tri-sheet', p: { type: 'slosh', wid: 'slosher', catalog: {
+    // Tri-Slosher and Dread Wringer use the Bucket sheet (owner request 2026-10-18).
+    { name: 'tri-sheet', kind: 'bucket-front', p: { type: 'slosh', wid: 's3-slosher-diffusion', catalog: {
       r: { sourceActor: 'WeaponSlosherDiffusion', family: 'slosher' }, descriptor: { key: 'slosh', unit: 0, index: 0 } }, vis: 0.8 } },
-    { name: 'paired-sheet', p: { type: 'slosh', wid: 'slosher', catalog: {
+    { name: 'paired-sheet', kind: 'bucket-front', p: { type: 'slosh', wid: 's3-slosher-double-01', catalog: {
       r: { sourceActor: 'WeaponSlosherDouble', family: 'slosher' }, descriptor: { key: 'slosh', unit: 0, index: 0 } }, vis: 0.8 } },
   ];
-  for (const { name, p } of cases) {
-    assert.equal(projectileVisualKind(p), name);
+  for (const { name, kind = name, p } of cases) {
+    assert.equal(projectileVisualKind(p), kind);
     Object.assign(p, { pos: new THREE.Vector3(), prev: new THREE.Vector3(), vel: new THREE.Vector3(12, 0, 4),
       age: 0, life: 2, delay: 0, seed: 0.25, owner: { color } });
     system.list.push(p);
@@ -247,7 +248,7 @@ test('source-aware renderer assigns distinct geometry to shooter, Roller, and Sl
   assert.notDeepEqual(shapes.get('roller-horizontal'), shapes.get('roller-vertical'));
   assert.notDeepEqual(shapes.get('bucket-front'), shapes.get('bucket-rear'));
   assert.notDeepEqual(shapes.get('bubble'), shapes.get('explosive'));
-  assert.notDeepEqual(shapes.get('tri-sheet'), shapes.get('paired-sheet'));
+  assert.notDeepEqual(shapes.get('tri-sheet'), shapes.get('bubble'));
 
   for (let i = 0; i < 120; i++) runtime.draw(i % 2 ? 0.5 : 1);
   assert.equal(runtime.position.array, positions);

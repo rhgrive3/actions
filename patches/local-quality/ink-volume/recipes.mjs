@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { INK_LOOK, shotTailFrames, fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../splatoon3/runtime/weapons-fidelity.mjs';
 import { captureRollerVolume, ROLLER_VOLUME } from './roller.mjs';
+import { usesBucketSlosherSheet } from '../../splatoon3/runtime/projectile-visuals.mjs';
 
 const states = new WeakMap();
 const X = new THREE.Vector3(1,0,0), Y = new THREE.Vector3(0,1,0), Z = new THREE.Vector3(0,0,1);
@@ -58,8 +59,9 @@ export function submitInkVolume(engine,p) {
   const s=state(engine,p),part=s.parts[0];part.position.copy(p.pos);
   if(recipe==='slosher') {
     // Machine/vortex, bouncing bubbles and explosive Sloshers own different
-    // artwork. Do not relabel the Roller sheet as those assets.
-    const name=engine.assets.has(specific)?specific:(p.wid==='slosher'||p.wid==='s3-slosher-diffusion'?'roller':null);
+    // artwork. Do not relabel the Roller sheet as those assets. Bucket,
+    // Tri-Slosher, Dread Wringer and their alternate kits share Bucket's sheet.
+    const name=engine.assets.has(specific)?specific:(usesBucketSlosherSheet(p.wid)?'roller':null);
     if(!name)return false;
     const radius=p.fidelitySloshDraw?fidelitySlosherDrawRadius(p):nativeRadius(p),width=radius*2*INK_LOOK.slosh[4];
     const d=p.catalog?.descriptor?.b?.DrawSizeParam,min=Math.max(0,d?.TailLengthMin||0),max=Math.max(min,d?.TailLengthMax||0),solid=Math.max(0,(d?.TailSolidFrame||0)/60);

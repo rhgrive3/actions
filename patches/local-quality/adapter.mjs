@@ -422,8 +422,8 @@ function adaptQualityLayer(rel, code) {
       '   this.mixUpper(locomotionProfile(this.bank,name).centerPose,this.pivotWeight,false);',
       'skip intermediate FK on pivot upper-body mix');
     code = replaceOnce(code,
-      '    if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);if(moving)this.mixUpper(this.overlay,weight);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly:moving});}',
-      '    if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);if(moving)this.mixUpper(this.overlay,weight,false);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly:moving});}',
+      '    if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);const upperOnly=moving||sourceActionUpperOnly(family,action);if(upperOnly)this.mixUpper(this.overlay,weight);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly});}',
+      '    if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);const upperOnly=moving||sourceActionUpperOnly(family,action);if(upperOnly)this.mixUpper(this.overlay,weight,false);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly});}',
       'skip intermediate FK on action overlay sample and mix');
     code = replaceOnce(code,
       ' mixUpper(pose,weight){for(let i=0;i<this.upperMask.length;i++)if(this.upperMask[i]){this.pose.p[i].lerp(pose.p[i],weight);this.pose.q[i].slerp(pose.q[i],weight);this.pose.s[i].lerp(pose.s[i],weight);}this.pose.fk();}',

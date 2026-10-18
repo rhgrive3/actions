@@ -279,6 +279,8 @@ test('model parts follow the S3 icons: framed Splat pyramid, ringed Suction can 
   const suction = parts('suction');
   const all = new T.Box3(); for (const x of suction.meshes) all.union(box(x));
   near(all.min.y, -0.207, 1e-3, 'cup rim on the contact surface (record centre 0.21 above it)');
+  // Owner request 2026-10-18: 1.5x about the rim (unscaled top 0.218).
+  near(all.max.y, (0.218 + 0.207) * 1.5 - 0.207, 2e-3, 'Suction Bomb drawn 1.5x tall');
   const can = box(suction.inkMesh);
   assert.ok(can.max.y > 0.19 && can.min.y < -0.15, 'ink can, neck and cup dots share the team ink');
   assert.ok(suction.m.light?.isMesh, 'the base flash ring blinks');
