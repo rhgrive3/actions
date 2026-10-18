@@ -102,7 +102,7 @@ function radialRib(P, k, n, R, depth, zH, color, radius = 0.0032, power = 1.6, s
 // ------------------------------------------------------------------------------------------ canopy animation
 function makeAnimate(cfg) {
   return function animateCanopy(w, st) {
-    const cs = st.runner && st.runner.catalogState, c = cs && cs.canopy, ps = w.ps, dt = Math.min(0.1, Math.max(0, st.dt || 0));
+    const cs = st.runner?.a?.remote ? st.runner.a.character?.s3BrellaPresentation : st.runner?.catalogState, c = cs && cs.canopy, ps = w.ps, dt = Math.min(0.1, Math.max(0, st.dt || 0));
     const hidden = !!cs && ((!!c && c.launched) || (!c && cs.naked > 0));
     const want = c && !c.launched && c.open ? 1 : 0;
     ps.bo = damp(ps.bo || 0, want, want ? cfg.openRate : cfg.foldRate, dt);
@@ -325,7 +325,7 @@ const guardEuler = new THREE.Euler(0,0,0,'YXZ'), guardQ = new THREE.Quaternion()
 const GUARD_PLANE = { 's3-shelter-normal': .5, 's3-shelter-wide': .74, 's3-shelter-focus': .525 };
 function guardPose(ch, dt, s, C) {
   const plane = GUARD_PLANE[ch.weapon?.def?.modelId ?? ch.weaponModel]; if (plane === undefined) return;
-  const r = ch._runner?.(s), canopy = r?.catalogState?.canopy;
+  const r = ch._runner?.(s), canopy = r?.a?.remote ? ch.s3BrellaPresentation?.canopy : r?.catalogState?.canopy;
   let m = guardStates.get(ch);
   const active = !!canopy?.open && !canopy.launched;
   if (!m && !active) return;

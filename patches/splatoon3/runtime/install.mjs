@@ -69,6 +69,7 @@ import { installWallMotion } from './wall-motion.mjs';
 import { installFormMotion } from './form-motion.mjs';
 import { installDualiesMotion } from './dualies-motion.mjs';
 import { installDualiesNetwork } from './dualies-network.mjs';
+import { installBrellaNetwork } from './brella-network.mjs';
 import { installRollerDetailMotion } from './roller-detail-motion.mjs';
 import { installRollerFold } from './roller-fold.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
@@ -192,6 +193,7 @@ export function install(profile) {
   installSplatGhostReturn(api);
   installTurfCombatGate(api);
   installDualiesNetwork(api);
+  installBrellaNetwork(api);
   // Installed after the native special/gear/net wrappers: owns the two Triple
   // Splashdown fists (#912) and their 15F-delayed impact, separate from the player's blast.
   installTripleSlamFists(api, profile);

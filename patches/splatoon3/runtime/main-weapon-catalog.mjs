@@ -1489,6 +1489,20 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     return nativeHorizontal.call(this,dt,...args);
   };
   const launchedCanopies = new Set();
+  let canopyVisualSerial=0;
+  // Read-only, bounded serialization of world-owned purge poses. Remote
+  // presentation consumers never receive this Set or enter its simulation.
+  P.s3WriteBrellaCanopyPresentation=function(owner,row,offset,max){
+    let count=0;
+    for(const c of launchedCanopies){
+      if(c.owner!==owner||c.remaining<=EPS||c.hp<=0||count>=max)continue;
+      const k=offset+count*9;
+      row[k]=c.visualSerial;row[k+1]=c.visualWeaponId;row[k+2]=c.remaining;
+      row[k+3]=c.pos.x;row[k+4]=c.pos.y;row[k+5]=c.pos.z;
+      row[k+6]=c.dir.x;row[k+7]=c.dir.y;row[k+8]=c.dir.z;
+      count++;
+    }return count;
+  };
   function canopyTrail(c){
     const spacing=Math.max(.1,c.paintRadius*.5);
     const stamp=point=>{
@@ -1607,6 +1621,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           canopy.prev=canopy.pos.clone();canopy.next=canopy.pos.clone();canopy.probe=canopy.pos.clone();
           canopy.edgeFrom=canopy.pos.clone();canopy.edgeTo=canopy.pos.clone();canopy.wallNormal=canopy.pos.clone();
           canopy.side=new THREE.Vector3(canopy.dir.z,0,-canopy.dir.x).normalize();
+          canopy.visualSerial=++canopyVisualSerial;canopy.visualWeaponId=a.weapon.id;
           canopy.record=r;canopy.visualSource=a.character?.weapon?.def;launchedCanopies.add(canopy);showDetachedCanopy(api,a,canopy,r.id);s.canopy=null;
           canopyTrail(canopy);
         }}
