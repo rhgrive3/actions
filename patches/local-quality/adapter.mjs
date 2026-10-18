@@ -216,28 +216,6 @@ function adaptQualityLayer(rel, code) {
   code = adaptAudioListener(rel, code);
   code = adaptRetargetBranchUpdates(rel, code);
   code = adaptMotionFkHotpath(rel, code, replaceOnce);
-  if (rel === 'src/game/inkCollision.js') {
-    code = replaceOnce(code,
-      '  let best = Infinity;\n  for (const id of candidates) {\n    const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;',
-      `  const xLo = Math.min(from.x, to.x) - radius - 1e-6, xHi = Math.max(from.x, to.x) + radius + 1e-6;
-  const yLo = Math.min(from.y, to.y) - radius - 1e-6, yHi = Math.max(from.y, to.y) + radius + 1e-6;
-  const zLo = Math.min(from.z, to.z) - radius - 1e-6, zHi = Math.max(from.z, to.z) + radius + 1e-6;
-  let best = Infinity;
-  for (const id of candidates) {
-    const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;
-    if (box.aabbMin && (box.aabbMin.y > yHi || box.aabbMax.y < yLo || box.aabbMin.x > xHi || box.aabbMax.x < xLo || box.aabbMin.z > zHi || box.aabbMax.z < zLo)) continue;`,
-      'skip 3D AABB-disjoint blocks in sweepLevelSphere');
-    code = replaceOnce(code,
-      'export function capsuleEntry(from, to, base, actorRadius, height, bulletRadius) {\n  const lo = base.y + Math.min(actorRadius, height * 0.5), hi = base.y + Math.max(height - actorRadius, height * 0.5);\n  const r = actorRadius + bulletRadius, ox = from.x - base.x, oz = from.z - base.z;',
-      `export function capsuleEntry(from, to, base, actorRadius, height, bulletRadius) {
-  const r = actorRadius + bulletRadius;
-  if (Math.min(from.x, to.x) - base.x > r + 1e-7 || Math.max(from.x, to.x) - base.x < -r - 1e-7 ||
-      Math.min(from.z, to.z) - base.z > r + 1e-7 || Math.max(from.z, to.z) - base.z < -r - 1e-7) return Infinity;
-  const lo = base.y + Math.min(actorRadius, height * 0.5), hi = base.y + Math.max(height - actorRadius, height * 0.5);
-  if (Math.min(from.y, to.y) > hi + r + 1e-7 || Math.max(from.y, to.y) < lo - r - 1e-7) return Infinity;
-  const ox = from.x - base.x, oz = from.z - base.z;`,
-      'skip 3D bounding-box disjoint segments in inkCollision capsuleEntry');
-  }
   if (rel === 'src/game/motion/source-bank.js') {
     code = replaceOnce(code,
       `  fromRaw(mode) {
