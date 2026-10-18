@@ -118,3 +118,7 @@ New counts hero/game/far6652/3784/2848;4draw batches/materials,0textures,1transp
 Module SHA25684f1e19af3e184ce8494ed4605ac63a32391e097dcffeecb8d0c20551f306ae3.
 Fixture SHA256e9a19f8327ccc3b4b3f8f229165c03e8198ad40a0e745e479efbf10977f7f4fd.
 New native rendering is pending. Software preview proves construction only; no visual acceptance claim.
+
+
+## Native8fa lip diagnosis
+The material/winding were not the cause of the black wedge: the authored white lip faced downward. The new underside path preserves closed topology but returns through the inner frame before ending directly below the outer peak, making a short vertical front lip. Gold appearance remains independently unresolved; no lighting or material compensation is used.

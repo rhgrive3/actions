@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 const {createFaceGoggles,FACE_GOGGLES_FIT}=await import(pathToFileURL(path.join(process.env.INKWAVE_HEADGEAR_SITE,'patches/local-quality/headgear/face-goggles.js')).href);
+const {createFaceGoggles:authoredFactory}=await import(new URL('../headgear/face-goggles.js',import.meta.url));
 assert.equal(FACE_GOGGLES_FIT.preserveHair,true);assert.equal(FACE_GOGGLES_FIT.rim,undefined);
 const counts=[];
 for(const lod of ['hero','game','far']){
@@ -20,6 +21,9 @@ for(const key of ['position','normal','uv'])assert.ok([...m.geometry.attributes[
    const c=[0,1,2].map(k=>tri.reduce((sum,v)=>sum+v[k],0)/3);
    assert.ok(Math.hypot(c[0]/.178,(c[1]-.164)/.176,(c[2]-.014)/.165)>1.04,name+' triangle interior clears head envelope');
  }
+ // The visible molded brim lip faces forward, rather than exposing a broad
+ // downward-facing return that rendered as a black wedge under neutral light.
+ for(const tri of trianglesFor('visor-front-edge')){const a=tri[1].map((x,k)=>x-tri[0][k]),b=tri[2].map((x,k)=>x-tri[0][k]),n=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],len=Math.hypot(...n);assert.ok(Math.abs(n[1]/len)<.01&&n[2]/len>.25,'visible brim lip faces forward');}
  const names=['molded-lower-face-shell','molded-forehead-shell','molded-brim'];
  for(const name of names){const edges=new Map(),welded=[],key=p=>{let i=welded.findIndex(q=>Math.hypot(...p.map((x,k)=>x-q[k]))<1e-6);if(i<0){i=welded.length;welded.push(p);}return String(i);};for(const tri of trianglesFor(name)){const a=tri[1].map((x,i)=>x-tri[0][i]),b=tri[2].map((x,i)=>x-tri[0][i]);assert.ok(Math.hypot(a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])>1e-12,'nondegenerate panel');for(let i=0;i<3;i++){const a=key(tri[i]),b=key(tri[(i+1)%3]),e=[a,b].sort().join('/'),r=edges.get(e)||[0,0];r[0]++;r[1]+=a<b?1:-1;edges.set(e,r);}}assert.ok(edges.size>100);for(const [e,[n,d]]of edges){assert.equal(n,2,name+' closed edge '+e);assert.equal(d,0,name+' consistent winding '+e);}}
  const shell=g.userData.parts.find(p=>p.name==='molded-lower-face-shell'),fore=g.userData.parts.find(p=>p.name==='molded-forehead-shell');assert.ok(shell.bounds.max.y-shell.bounds.min.y>.13);assert.ok(fore.bounds.max.y-fore.bounds.min.y>.06);
@@ -29,3 +33,5 @@ for(const key of ['position','normal','uv'])assert.ok([...m.geometry.attributes[
  console.log(lod,JSON.stringify(g.userData.stats));
 }
 assert.ok(counts[0]>counts[1]&&counts[1]>counts[2]);assert.throws(()=>createFaceGoggles({lod:'bad'}),RangeError);assert.throws(()=>createFaceGoggles({clearance:()=>NaN}),TypeError);console.log('PASS molded panels, closed topology, compact lens, source feature structure, LOD budget and lifecycle');
+
+for(const lod of ['hero','game','far']){const a=authoredFactory({lod}),b=createFaceGoggles({lod});assert.equal(a.children.length,b.children.length);for(let i=0;i<a.children.length;i++){const x=a.children[i],y=b.children[i];assert.equal(x.name,y.name);assert.deepEqual(Object.keys(x.geometry.attributes),Object.keys(y.geometry.attributes));for(const key of Object.keys(x.geometry.attributes))assert.deepEqual(x.geometry.attributes[key].array,y.geometry.attributes[key].array,lod+' emitted '+key+' parity');assert.deepEqual(x.geometry.index.array,y.geometry.index.array,lod+' emitted index parity');}a.dispose();b.dispose();}
