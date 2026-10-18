@@ -89,12 +89,12 @@ export function adaptWeaponAudio(rel,code){
         '    G.audio?.init?.();\n    if (!flow.current()) return;',
         '    G.audio?.init?.();\n    if (!flow.current()) return;\n' +
         "    if(typeof G.audio?.requireRecordedMainShot!=='function') throw new Error('Recorded weapon audio is not installed');\n" +
-        '    const selectedShotReady=G.audio.requireRecordedMainShot('+selected+');',
+        '    const selectedShotReady=G.audio.requireRecordedMainShot('+selected+').then(value=>({value}),error=>({error}));',
         label+' start selected recorded MP3');
       method=once(method,
         '    await this._fade(1, 350);\n    if (!flow.current()) return;',
         '    await this._fade(1, 350);\n    if (!flow.current()) return;\n' +
-        '    await selectedShotReady;\n    if (!flow.current()) return;',
+        '    const selectedShotState=await selectedShotReady;\n    if (!flow.current()) return;\n    if(selectedShotState.error)throw selectedShotState.error;',
         label+' wait for MP3 before gameplay');
       code=code.slice(0,lo)+method+code.slice(hi);
     };
