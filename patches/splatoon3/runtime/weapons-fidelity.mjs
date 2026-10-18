@@ -1,3 +1,4 @@
+import { withProjectileHitGeometry } from './brella-physics.mjs';
 import { withMainDirectDamage } from './private-tracking.mjs';
 import { VARIANT_BASE_WEAPON } from './alternate-weapon-kits-data.mjs';
 import { configureRollerVerticalPaint, paintRollerVerticalFlight } from './roller-vertical-paint.mjs';
@@ -1567,8 +1568,8 @@ export function applyFidelityProjectileHit(system,p,victim,amount,point) {
   amount=fidelityDamage(p,point);
   const weapon=p.s3Weapon||p.owner.weapon;
   if(weapon.kind==='slosher'&&p.s3DamageGroup)
-    return withMainDirectDamage(p.owner,victim,()=>applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||p.type||'slosher'));
-  return applyGroupedProjectileHit(system,p,victim,amount);
+    return withProjectileHitGeometry(system,p.prev,point,p.size,()=>withMainDirectDamage(p.owner,victim,()=>applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||p.type||'slosher')));
+  return withProjectileHitGeometry(system,p.prev,point,p.size,()=>applyGroupedProjectileHit(system,p,victim,amount));
 }
 
 export function splatlingLaunchSpeed(weapon,charge) {

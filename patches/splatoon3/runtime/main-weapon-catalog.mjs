@@ -1,3 +1,4 @@
+import { brellaPelletSpeed, canopyEntry, withProjectileHitGeometry, validProjectileHitGeometry } from './brella-physics.mjs';
 import { familyDescription } from './content-language.mjs';
 import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
@@ -788,7 +789,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           .addScaledVector(up,Math.sin(az)*finite(g.VerticalOffset,0));
         constrainMuzzle(G.physics,at,birth);
         // Sparse shotgun groups inherit the volley centre speed, not 1 DU/F.
-        const speed=finite(g.MoveParam?.SpawnSpeed,p.GroupParams[0].MoveParam.SpawnSpeed)*HZ;
+        const speed=brellaPelletSpeed(g,p.GroupParams[0].MoveParam.SpawnSpeed)*HZ;
         const round=spawn(a,r,d,angle(direction,Math.cos(az)*finite(g.HorizontalDegree,0),Math.sin(az)*finite(g.VerticalDegree,0)),birth,{index:i,volley,speed});
         if(flight){const node={volley:flight,distance:0,ended:false,samples:new Map()};flight.nodes.push(node);round.catalog.brellaFlight=node;}
       }
@@ -1075,7 +1076,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
         if(target){
-          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>this.applyHit(p.owner,target,amount,p.wid));}
+          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>withProjectileHitGeometry(this,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>this.applyHit(p.owner,target,amount,p.wid)));}
           if(s.r.family==='charger'&&d.charge+EPS>=1&&d.m.ThroughFullCharge!==false){s.seen.add(target);continue;}
           if(s.r.family==='blaster'&&!p.ghost)explosion(this,p,d.b.BlastParam,target);
           if(s.r.parameters.BlastParam?.BlastParam&&!p.ghost)explosion(this,p,s.r.parameters.BlastParam.BlastParam);
@@ -1499,19 +1500,50 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   P.s3FlushCatalogSplashBirths=function(){advanceSplashDrops(this,0,G,PLAYER.waterY);};
   P.update = function(dt,...args){
     if(Number.isFinite(dt)&&dt>0)for(const c of launchedCanopies){
-      const next=c.pos.clone().addScaledVector(c.dir,c.speed*dt);
-      // The old canopy crossed a solid wall and painted the floor behind it.
-      // Stop at the visible obstruction; this is an INKWAVE guard, not a
-      // reconstruction of retail canopy sliding/climbing physics.
-      const obstruction=G.physics.segment(c.pos,next,hit,true);
-      if(obstruction.hit){next.copy(obstruction.point).addScaledVector(obstruction.normal,.02);c.speed=0;}
-      c.pos.copy(next);c.remaining-=dt;
-      if(c.remaining<=EPS||c.hp<=0){retireDetachedCanopy(c);launchedCanopies.delete(c);continue;}
-      canopyTrail(c);showDetachedCanopy(api,c.owner,c,c.weaponId);
-      c.contacts ||= new Map();
-      for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==c.owner.team&&enemy.pos.distanceTo(c.pos)<c.radius+PLAYER.radius&&G.time-(c.contacts.get(enemy)??-Infinity)>=30/HZ&&G.physics.los(c.pos,enemy.pos)){
-        withObjectDamageCause({owner:c.owner,type:'canopy',catalog:{r:c.record}},()=>G.projectiles.applyHit(c.owner,enemy,finite(c.record.parameters.spl__BulletShelterCanopyParam.CanopyDamage,300)/10,c.weaponId));c.contacts.set(enemy,G.time);
+      // Physics owns one 60Hz clock; 30/120Hz rendering cannot change gravity,
+      // terrain contacts, damage cadence or the distance-based paint budget.
+      c.carry+=dt;
+      while(c.carry+EPS>=DT&&c.remaining>EPS&&c.hp>0){
+        c.carry=Math.max(0,c.carry-DT);c.contactTime+=DT;c.prev.copy(c.pos);
+        c.velocity.y-=c.gravity*DT;
+        c.next.copy(c.pos).addScaledVector(c.velocity,DT);
+        const length=c.pos.distanceTo(c.next);let fraction=Infinity;
+        // Three reused probes cover center and lateral cloth rim. Do not move
+        // the shield centre to a rim hit point. Floor support remains separate.
+        for(let side=-1;side<=1;side++){
+          c.edgeFrom.copy(c.pos).addScaledVector(c.side,side*c.radius);
+          c.edgeTo.copy(c.next).addScaledVector(c.side,side*c.radius);
+          const obstruction=G.physics.segment(c.edgeFrom,c.edgeTo,hit,true);
+          if(obstruction.hit&&obstruction.normal.y<.5){
+            const t=obstruction.dist/Math.max(EPS,length);
+            if(t<fraction){fraction=t;c.wallNormal.copy(obstruction.normal);}
+          }
+        }
+        if(fraction<=1){
+          c.next.lerpVectors(c.pos,c.next,Math.max(0,fraction)).addScaledVector(c.wallNormal,.02);
+          // Slide on a contact plane, retaining gravity on a vertical wall.
+          const inward=c.velocity.dot(c.wallNormal);
+          if(inward<0)c.velocity.addScaledVector(c.wallNormal,-inward);
+        }
+        // The local support probe cannot snap from a high ledge to a distant
+        // floor. Step allowance is an INKWAVE reconstruction; Nintendo's
+        // FootSplashShapeCastOffset is a paint field, not a step-height source.
+        c.probe.copy(c.next);c.probe.y+=c.supportStep;
+        const floor=G.physics.raycast(c.probe,down,c.clearance+c.supportStep+Math.max(0,c.prev.y-c.next.y),floorHit,true);
+        if(floor.hit&&floor.normal.y>=.5&&c.velocity.y<=0&&floor.point.y+c.clearance>=c.next.y-EPS&&floor.point.y<=c.prev.y-c.clearance+c.supportStep+EPS){
+          c.next.y=floor.point.y+c.clearance;c.velocity.y=0;c.grounded=true;
+        }else c.grounded=false;
+        c.pos.copy(c.next);c.remaining=Math.max(0,c.remaining-DT);
+        if(c.pos.y<PLAYER.waterY-1.8)c.remaining=0;
+        if(c.remaining<=EPS||c.hp<=0)break;
+        canopyTrail(c);
+        c.contacts ||= new Map();
+        for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==c.owner.team&&enemy.pos.distanceTo(c.pos)<c.radius+PLAYER.radius&&c.contactTime-(c.contacts.get(enemy)??-Infinity)+EPS>=30/HZ&&G.physics.los(c.pos,enemy.pos)){
+          withObjectDamageCause({owner:c.owner,type:'canopy',catalog:{r:c.record}},()=>G.projectiles.applyHit(c.owner,enemy,finite(c.record.parameters.spl__BulletShelterCanopyParam.CanopyDamage,300)/10,c.weaponId));c.contacts.set(enemy,c.contactTime);
+        }
       }
+      if(c.remaining<=EPS||c.hp<=0){retireDetachedCanopy(c);launchedCanopies.delete(c);continue;}
+      showDetachedCanopy(api,c.owner,c,c.weaponId);
     }
     return worldUpdate.call(this,dt,...args);
   };
@@ -1536,7 +1568,6 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function brella(runner,r,input,s,dt) {
     const a=runner.a,p=r.parameters,measure=BRELLA_MEASURED[r.sourceActor],t=weaponParam(r),c=p.spl__BulletShelterCanopyParam||{};
-    s.naked=Math.max(0,s.naked-dt);
     const canopy=s.canopy;
     if(canopy){
       const wasOpen=canopy.open;
@@ -1548,12 +1579,24 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(canopy.open){
           const total=p.spl__WeaponShelterCanopyParam.InkConsumeUmbrella||0;
           if(!pay(runner,Number.isFinite(measure.launch)?total*100/measure.launch*HZ*dt*inkMod(a):0,finite(t.InkRecoverStopCharge,20)/HZ))canopy.open=false;
-        }else if(a.submerged||a.climbing) canopy.hp=Math.min(finite(c.CanopyHP,measure.hp*10)/10,canopy.hp+finite(c.CanopyCureHPPerFrame,25)/10*HZ*dt);
+        }
         heldCanopyFoot(a,canopy,c,measure,wasOpen,dt);
         if(canopy.open&&canopy.age*HZ+EPS>=measure.open+measure.launch&&p.spl__WeaponShelterCanopyParam.IsCanopyShot!==false){
           canopy.launched=true;canopy.remaining=finite(c.CanopyFrame,300)/HZ;
           s.naked=finite(c.CanopyNakedFrame,330)/HZ;
           canopy.owner=a;canopy.weaponId=r.id;canopy.speed=finite(c.CanopyInitSpeed,7.92);canopy.paintRadius=finite(c.CanopyPaintRadius,1);
+          // Preserve the existing canopy world-unit speed convention. Gravity is
+          // interpreted in the same seconds domain; retail unit conversion and
+          // slope friction remain unverified, recorded in the family audit.
+          canopy.velocity=canopy.dir.clone().multiplyScalar(canopy.speed);
+          const inherit=a.grounded?finite(c.CanopySpeedGroundAddScale,0):finite(c.CanopySpeedAirAddScaleXZ,0);
+          canopy.velocity.x+=a.vel.x*inherit;canopy.velocity.z+=a.vel.z*inherit;
+          if(a.grounded)canopy.velocity.y+=a.vel.y*inherit;
+          canopy.gravity=finite(c.CanopyGravity,0);canopy.carry=0;canopy.contactTime=G.time;canopy.clearance=.8;
+          canopy.supportStep=.4; // reconstruction, not an extracted canopy movement default
+          canopy.prev=canopy.pos.clone();canopy.next=canopy.pos.clone();canopy.probe=canopy.pos.clone();
+          canopy.edgeFrom=canopy.pos.clone();canopy.edgeTo=canopy.pos.clone();canopy.wallNormal=canopy.pos.clone();
+          canopy.side=new THREE.Vector3(canopy.dir.z,0,-canopy.dir.x).normalize();
           canopy.record=r;canopy.visualSource=a.character?.weapon?.def;launchedCanopies.add(canopy);showDetachedCanopy(api,a,canopy,r.id);s.canopy=null;
           canopyTrail(canopy);
         }}
@@ -1584,26 +1627,33 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   P.kitDefenseCandidate=function(p){
     let best=nativeDefense?.call(this,p)||null;
     const len=p.prev.distanceTo(p.pos);
-    const guards=[...(G.actors||[]).map(a=>({a,s:a.weaponRunner?.catalogState,c:a.weaponRunner?.catalogState?.canopy})),...Array.from(launchedCanopies,c=>({a:c.owner,s:c.owner.weaponRunner?.catalogState,c}))];
-    for(const {a,s,c} of guards){
-      if(!a.alive||a.team===p.team||!c||!c.open&&!c.launched||c.hp<=0)continue;
-      const t=capsuleEntry(p.prev,p.pos,c.pos,c.radius,c.radius*2,.1);
-      if(t==null||t*len>=(best?.distance??Infinity))continue;
-      best={distance:t*len,point:p.prev.clone().lerp(p.pos,t),onHit:shot=>{
+    const consider=(a,s,c)=>{
+      if(a.team===p.team||!c||!c.launched&&!a.alive||!c.open&&!c.launched||c.hp<=0)return;
+      const t=canopyEntry(p.prev,p.pos,c,Math.max(0,finite(p.size,.1)));
+      if(t==null||t*len>=(best?.distance??Infinity))return;
+      best={brella:true,distance:t*len,point:p.prev.clone().lerp(p.pos,t),onHit:(shot=p)=>{
         if(shot.ghost)return;
         hurtCanopy(a,s,c,finite(shot.catalog?.descriptor.damage,finite(shot.damage,0)));
       }};
-    }return best;
+    };
+    for(const a of G.actors||[])consider(a,a.weaponRunner?.catalogState,a.weaponRunner?.catalogState?.canopy);
+    for(const c of launchedCanopies)consider(c.owner,c.owner.weaponRunner?.catalogState,c);
+    return best;
   };
-  // Incoming online damage is adjudicated by the victim owner. Remote canopy
-  // meshes are deferred with modeling; its front-facing body guard still owns
-  // HP here. Arrival-position approximation is documented, not retail parity.
+  // Owner-side online defense uses the actual final projectile segment sent
+  // with this hit. Missing legacy evidence leaves actor damage to its existing
+  // owner; a frontal attacker is never proof of a canopy intersection.
   const nativeApplyHit=P.applyHit;
   P.applyHit=function(attacker,victim,damage,wid,...args){
-    const s=victim?.weaponRunner?.catalogState,c=s?.canopy;
-    if(G.netm?._applyingHit&&victim&&!victim.remote&&attacker?.remote&&WEAPONS[wid]&&c?.open&&!c.launched&&c.hp>0){
-      const incoming=attacker.pos.clone().sub(victim.pos).setY(0).normalize();
-      if(victim.aimDir.clone().setY(0).normalize().dot(incoming)>0){hurtCanopy(victim,s,c,Math.max(0,damage));return 'accepted';}
+    const geometry=this.s3IncomingHitGeometry;
+    if(G.netm?._applyingHit&&victim&&!victim.remote&&attacker?.remote&&WEAPONS[wid]&&validProjectileHitGeometry(geometry)){
+      const from=base.set(geometry[0],geometry[1],geometry[2]),to=dir.set(geometry[3],geometry[4],geometry[5]);
+      const probe={owner:attacker,team:attacker.team,prev:from,pos:to,size:geometry[6],damage,ghost:false};
+      const candidate=this.kitDefenseCandidate(probe);
+      if(candidate?.brella&&candidate.distance<=from.distanceTo(to)+EPS){
+        const terrain=G.physics.segment(from,candidate.point,hit,true);
+        if(!terrain.hit){candidate.onHit(probe);return 'accepted';}
+      }
     }
     return nativeApplyHit.call(this,attacker,victim,damage,wid,...args);
   };
@@ -1628,8 +1678,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=state(this);
     if(s.canopy?.preparing&&(!input.fire||input.sub||a.form!=='kid'||a.remote||!a.alive||a.specialActive||a.superJumpState||this.aimingSub))s.canopy.preparing=false;
     // Cancel BEFORE the installed sub preparation owner checks main busy state.
-    if(input.sub||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid')cancel(this);
+    if(input.sub||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid'||r.family==='brella'&&a.form!=='kid')cancel(this);
     if(r.family==='splatana'&&a.form!=='kid'&&(s.pending||s.melee||s.lunge))cancel(this);
+    // Rebuild/cure belong to elapsed weapon life, including squid form and
+    // sub/special use. Previously both clocks lived behind the kid/fire gate.
+    if(r.family==='brella'&&Number.isFinite(dt)&&dt>0&&!a.remote&&a.alive){
+      s.naked=Math.max(0,s.naked-dt);
+      const canopy=s.canopy,c=r.parameters.spl__BulletShelterCanopyParam;
+      if(canopy&&!canopy.open&&!canopy.launched&&(a.submerged||a.climbing))
+        canopy.hp=Math.min(finite(c.CanopyHP,BRELLA_MEASURED[r.sourceActor].hp*10)/10,
+          canopy.hp+finite(c.CanopyCureHPPerFrame,25)/10*HZ*dt);
+    }
     if(a.form==='squid'){
       if(s.chargeF>0||s.stream>0)cancel(this,true);
       if(s.stored){s.stored.remaining-=dt;if(s.stored.remaining<=EPS)s.stored=null;}

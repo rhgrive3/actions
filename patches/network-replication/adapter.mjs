@@ -46,11 +46,12 @@ export function adaptNetworkSource(rel, code) {
       'Match constructor protects offline and network deadlines');
   }
   if (rel === 'src/game/inkFlightRuntime.js') {
+    code = "import { withProjectileHitGeometry } from '../../patches/splatoon3/runtime/brella-physics.mjs';\n" + code;
     patch('      for (const actor of G.actors) {',
       '      for (const actor of G.actors) {\n        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head',
       'source-guided head collision authority');
     patch('this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
-      '{ p._netHitActor = true; p._netHitX = p.pos.x; p._netHitY = p.pos.y; p._netHitZ = p.pos.z; this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey); }',
+      '{ p._netHitActor = true; p._netHitX = p.pos.x; p._netHitY = p.pos.y; p._netHitZ = p.pos.z; withProjectileHitGeometry(this.system,p.prev,p.pos,p.size,()=>this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey)); }',
       'source-guided head terminal identity');
     return code;
   }
@@ -2436,6 +2437,10 @@ ${bombHit}`;
     return code;
   }
   if (rel === 'patches/splatoon3/runtime/weapons-charger-flight.mjs') {
+    code = "import { withProjectileHitGeometry } from './brella-physics.mjs';\n" + code;
+    patch('system.applyHit(job.owner,a.actor,amount,job.weapon.id);',
+      'withProjectileHitGeometry(system,job.prev,job.moved.copy(job.prev).addScaledVector(job.dir,a.d),0,()=>system.applyHit(job.owner,a.actor,amount,job.weapon.id));',
+      'charger contact carries actual beam segment');
     patch("emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});",
       "emit('weapon:fire',{actor,weapon:w.id,muzzle:origin,dir:direction,charge,len:distance});",
       'charger flight fire payload');
@@ -2653,6 +2658,21 @@ function canAllocateNetworkGhost(projectiles, actor) {
     patch("      case 'weapon:fire': G.projectiles?.ghostFire(a, e); break;",
       "      case 'weapon:fire':\n        if (a.alive && (a.weapon?.behaviorKind || a.weapon?.kind) === 'dualies' && e.weapon === (a.weapon.catalogRecord?.id || a.weapon.id) && (e.hand === 0 || e.hand === 1)) {\n          a.weaponRunner.hand = e.hand;\n          a.weaponRunner.sinceHand[e.hand] = 0;\n        }\n        G.projectiles?.ghostFire(a, e); break;", 'accepted remote dualies hand presentation');
     patch('    const wr = a.weaponRunner;', "    const wr = a.weaponRunner;\n    if ((a.weapon?.behaviorKind || a.weapon?.kind) === 'dualies' && Number.isFinite(dt) && dt > 0) { wr.sinceHand[0] += dt; wr.sinceHand[1] += dt; }", 'remote dualies presentation clocks');
+  }
+  if (rel === 'src/net/netmatch.js') {
+    patch('    const sent = this.s.tr?.sendTo(victim.owner, message) === true;',
+      `    const hitGeometry = G.projectiles?.s3HitGeometry;
+    if (Array.isArray(hitGeometry) && hitGeometry.length === 7 && hitGeometry.every(n => Number.isFinite(n) && Math.abs(n) <= 100000) && hitGeometry[6] >= 0 && hitGeometry[6] <= 10) message.bg = hitGeometry.slice();
+    const sent = this.s.tr?.sendTo(victim.owner, message) === true;`, 'record bounded actual projectile segment on retryable hit');
+    patch('  _hit(d, from) {', `  _hit(d, from) {
+    if (d?.bg !== undefined && (!Array.isArray(d.bg) || d.bg.length !== 7 || !d.bg.every(n => Number.isFinite(n) && Math.abs(n) <= 100000) || d.bg[6] < 0 || d.bg[6] > 10)) return;`, 'validate hit segment before receipt or HP mutation');
+    patch("const hitAdmission = d.d > 0 ? G.projectiles?.applyHit(atk, v, d.d, d.w, d.g) : 'accepted';",
+      `const hitAdmission = (() => {
+      const system = G.projectiles, oldGeometry = system?.s3IncomingHitGeometry;
+      if (system) system.s3IncomingHitGeometry = d.bg;
+      try { return d.d > 0 ? system?.applyHit(atk, v, d.d, d.w, d.g) : 'accepted'; }
+      finally { if (system) system.s3IncomingHitGeometry = oldGeometry; }
+    })();`, 'scope authenticated hit trajectory through owner defense');
   }
   if (rel === 'src/net/netmatch.js') {code = adaptGearLoadout(code, once);code = adaptConditionalGear(code, once);code = adaptTransientGear(code, once);}
   code = adaptQueuedBugRecovery(rel, code, once);
