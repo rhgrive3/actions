@@ -51,6 +51,12 @@ The final build-time ZEVANT string-replacement map has been retired for `src/wor
 
 The runtime UI string translation key has also moved to `patches/splatoon3/runtime/ui-strings.mjs` directly. Only **four** final display-name substitutions remain, all for locked/unmigrated upstream files: `index.html`, `src/config.js`, `src/ui/menus.js`, and `src/i18n.js`. Do not silently invalidate SHA-256 upstream locks during their migration.
 
+## Completed slice: level classification and home Super Jump stage data
+
+The original Splatoon3 source adapter blocks for `src/world/level.js`, `src/world/maps.js` and `src/world/stages/cargo/layout.js` have been removed. The readable game sources now own `squidReturner` classification and all four stage-specific home Super Jump destinations. The current direct sources were independently reconstructed from the base snapshot with the exact removed replacements, with **byte-for-byte equal outputs for all three files**.
+
+These changes only migrate previously established behavior. Other adapters can still modify these modules for unrelated features; do not treat `level.js` or `maps.js` as globally adapter-free until they pass full identity composition.
+
 ## Next migration batches
 
 1. Audit and migrate simple performance and UI adapters with isolated upstream anchors. Keep each change small enough to compare composed output against the previous behavior.
