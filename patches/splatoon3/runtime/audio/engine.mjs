@@ -67,9 +67,10 @@ export function installWeaponAudioEngine(Engine){
     const loader=this._realS3Loader;
     const recorded=bank.authorized.byEvent.has(`${id}:${event}`);
     if(!recorded){
-      // Never start a synthesized substitute for a known MP3. A cold fetch,
-      // failed response, or LRU eviction may delay the real sample, but must
-      // not change an already-recorded main's timbre into INKWAVE PCM.
+      // Attempt the recorded MP3 first. While the network/decode is cold,
+      // allow only the local player's admitted attack its bounded emergency
+      // authored cue. The real decoded sample replaces it immediately when
+      // resident; there is never a duplicate late voice.
       loader?.ensure(id,event);
       const mainAttack=!id.includes(':')&&/^fire(?:_[a-z0-9]+)?$/.test(event);
       // The S3 catalog can emit fire_full/fire_alt even when the 2022 source
