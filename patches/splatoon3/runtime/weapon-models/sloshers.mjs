@@ -434,11 +434,9 @@ function carryGrip(ch, dt, P, C) {
   else if (since < T.settle) g.k = Math.min(g.k, since >= T.toAttack - 1e-9 ? 0 : 1 - since / T.toAttack);
   else g.k = Math.min(1, g.k + step / T.back);
   const k = g.k * g.k * (3 - 2 * g.k), d = w.def;
-  // Running, the left hand lets go and swings (the pail rides out at the right side in the right fist,
-  // clear of the swinging right thigh; INKWAVE estimate, walking is not in the official movies).
+  // Walking, the pail moves further out so the swinging right thigh passes inside it; at a full-tilt
+  // walk the native run hold places it (owner review 2026-10-18: both hands stay on while moving).
   const gw = clamp01(ch.gaitW || 0), run = clamp01(ch.runW || 0);
-  if (P && C) P[C.IKL] *= 1 - k * gw * run;
-  // Walking two-handed, the pail moves further out so the swinging right thigh passes inside it.
   const H = ch.hold, walk = gw * (1 - run) * k;
   if (P && C && H?.walk && H.carry && walk > 1e-4) for (let i = 0; i < 3; i++) {
     P[C.ANC + i] += (H.walk.p[i] - H.carry.p[i]) * walk; P[C.ANCR + i] += (H.walk.r[i] - H.carry.r[i]) * walk;
@@ -469,13 +467,34 @@ export function FAMILY_POSE(ch, dt, s, C) {
   P[C.FARML] += ((1 - k.runBendKeep) * 1.15 * rn * gw + (1 - k.swingKeep) * 0.4 * fwd) * free;
 }
 
+// Left-hand carry grips on each slosher's top handle (weapon space; the right fist keeps the native rear
+// grip). Official movies at rest (owner review 2026-10-18), identified by the weapon's look: Tri-Slosher
+// 1enjE6BlKzy (left hand on the yellow bail), Sloshing Machine b1dl7E3DXYr (on the top handle), Explosher
+// 0zGjN9QDoNb, Dread Wringer OgdjmEejALb (on the front top). No Bloblobber movie was found; it follows
+// the others on its front-left rim (no modelled top handle). handZ: thumb side; handY: fist to wrist.
+const acrossBar = (x, y, z) => ({ pos: V(x, y, z), handZ: V(-1, 0, 0), handY: V(0.55, 0.35, -0.75) });
+const CARRY_GRIP = {
+  's3-slosher-diffusion': acrossBar(0.03, 0.217, 0.091),
+  's3-slosher-launcher': { pos: V(0.012, 0.15, 0.19), handZ: V(0, 0, 1), handY: V(0.6, 0.5, -0.6) },
+  's3-slosher-bathtub': { pos: V(0.063, 0.083, 0.273), handZ: V(-0.6, 0, 0.8), handY: V(0.6, 0.5, -0.6) },
+  's3-slosher-washtub': acrossBar(0.03, 0.152, 0.094),
+  's3-slosher-double': acrossBar(0.03, 0.102, 0.258),
+};
+// Two-handed carry placement per slosher (weapon-origin anchor at rest / walking / full-tilt walk).
+// INKWAVE calibration: placed on the right side and searched for no leg or torso penetration.
+const CARRY_HOLD = {};
 export const MODELS = Object.fromEntries(Object.entries(CFG).map(([id, c]) => [id, {
   sourceModel: id === 'slosher' ? 'Wmn_Slosher_StrongT'
     : id === 's3-slosher-diffusion' ? 'Wmn_Slosher_Diffusion'
     : id === 's3-slosher-launcher' ? 'Wmn_Slosher_Launcher'
     : id === 's3-slosher-bathtub' ? 'Wmn_Slosher_Bathtub'
     : id === 's3-slosher-washtub' ? 'Wmn_Slosher_Washtub' : 'Wmn_Slosher_Double',
-  build: d => (BUILD3D[id] || (dd => model(dd, c)))(d),
+  build: d => {
+    const out = (BUILD3D[id] || (dd => model(dd, c)))(d);
+    if (CARRY_GRIP[id]) out.s3CarryGrip = { L: CARRY_GRIP[id] };
+    return out;
+  },
+  ...(CARRY_HOLD[id] ? { nativeCarry: true, hold: { twoCarry: 1, ...CARRY_HOLD[id] } } : {}),
   // The Bucket's mouth faces forward (not up like the Wii U pitcher the source carry clips hold), so it keeps
   // the native data carry: the pail hangs level at the right side with its mouth to the front.
   // While sloshing, the native heave pitches the bucket ~1.5–1.95 rad down (tuned for an upward-facing pitcher
@@ -486,5 +505,5 @@ export const MODELS = Object.fromEntries(Object.entries(CFG).map(([id, c]) => [i
   // its mouth to the front, the left hand across on the top handle. Placement is INKWAVE calibration
   // read from the movie by eye; walking with it is not in the official movies.
   ...(id === 'slosher' ? { nativeCarry: true, hold: { aim: { r: [-0.8, 0.05, 0] }, twoCarry: 1,
-    carry: { p: [-0.37, 0.56, 0.11], r: [0.2, 0.5, 0] }, walk: { p: [-0.38, 0.58, 0.04], r: [0.2, 0.3, 0] }, run: { p: [-0.3, 0.53, 0.04], r: [0.25, -0.2, 0] } } } : {}),
+    carry: { p: [-0.37, 0.56, 0.11], r: [0.2, 0.5, 0] }, walk: { p: [-0.38, 0.58, 0.04], r: [0.2, 0.3, 0] }, run: { p: [-0.42, 0.58, -0.08], r: [0.2, 0.1, 0] } } } : {}),
 }]));
