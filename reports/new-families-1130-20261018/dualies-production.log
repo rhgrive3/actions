@@ -1,0 +1,34 @@
+INKWAVE built fixture /workspace/actions-dualies/_site-dualies contentHash=deed182266385d73ff107763309c8c6fb6e8af7e796dbd92c630c758828c54cc
+(node:8338) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ all added Dualies and kits send accepted roll epochs and planted state over the native snapshot/event transport (1243.189479ms)
+INKWAVE built fixture /workspace/actions-dualies/_site-dualies contentHash=deed182266385d73ff107763309c8c6fb6e8af7e796dbd92c630c758828c54cc
+INKWAVE built fixture /workspace/actions-dualies/_site-dualies contentHash=deed182266385d73ff107763309c8c6fb6e8af7e796dbd92c630c758828c54cc
+INKWAVE built fixture /workspace/actions-dualies/_site-dualies contentHash=deed182266385d73ff107763309c8c6fb6e8af7e796dbd92c630c758828c54cc
+(node:8345) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ calibrated braking and explicit .98 air retention consume exact distances at 30/60/120Hz (6.23913ms)
+✔ added roll substeps stay within half a body radius and discard blocked motion without accumulating debt (1.021343ms)
+✔ production Actor integrates source Dapple 3+.6 and Douser 5.5+1.2, including a thin wall (1213.520129ms)
+✔ all six base Dualies retain exact 60Hz Actor/round traces under 30/60/120Hz presentation scheduling (2474.031709ms)
+✔ Splat Dualies alternate kits retain the dedicated native owner and the same real Actor trace (1278.33445ms)
+INKWAVE built fixture /workspace/actions-dualies/_site-dualies contentHash=deed182266385d73ff107763309c8c6fb6e8af7e796dbd92c630c758828c54cc
+INKWAVE built fixture /workspace/actions-dualies/_site-dualies contentHash=deed182266385d73ff107763309c8c6fb6e8af7e796dbd92c630c758828c54cc
+INKWAVE built fixture /workspace/actions-dualies/_site-dualies contentHash=deed182266385d73ff107763309c8c6fb6e8af7e796dbd92c630c758828c54cc
+INKWAVE built fixture /workspace/actions-dualies/_site-dualies contentHash=deed182266385d73ff107763309c8c6fb6e8af7e796dbd92c630c758828c54cc
+INKWAVE built fixture /workspace/actions-dualies/_site-dualies contentHash=deed182266385d73ff107763309c8c6fb6e8af7e796dbd92c630c758828c54cc
+(node:8372) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tetra moving rounds retain 7.4 degree / 6F / .26 radius until the physical roll ends (1079.129687ms)
+✔ every added Dualies base and alternate kit starts in moving mode, never planted mode (829.295898ms)
+✔ sourced slide recovery blocks squid, preserves stationary planted fire and releases on movement (831.200368ms)
+✔ Dapple and Squelcher slide ink recovery uses the SideStep 50F / 60F source (995.435257ms)
+✔ Tetra four-roll chain resets after complete recovery; a rejected fifth never spends ink or changes the stroke (881.678635ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13180.08164

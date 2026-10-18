@@ -1,0 +1,14 @@
+(node:6755) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ calibrated braking and explicit .98 air retention consume exact distances at 30/60/120Hz (20.951233ms)
+✔ added roll substeps stay within half a body radius and discard blocked motion without accumulating debt (1.106304ms)
+✔ production Actor integrates source Dapple 3+.6 and Douser 5.5+1.2, including a thin wall (2870.280122ms)
+✔ all six base Dualies retain exact 60Hz Actor/round traces under 30/60/120Hz presentation scheduling (3071.705857ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6793.973063

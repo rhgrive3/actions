@@ -1,0 +1,85 @@
+(node:7752) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ Tetra moving rounds retain 7.4 degree / 6F / .26 radius until the physical roll ends (1595.404729ms)
+✖ every added Dualies base and alternate kit starts in moving mode, never planted mode (1609.766399ms)
+✖ sourced slide recovery blocks squid, preserves stationary planted fire and releases on movement (1013.937708ms)
+✖ Dapple and Squelcher slide ink recovery uses the SideStep 50F / 60F source (898.572814ms)
+✔ Tetra four-roll chain resets after complete recovery; a rejected fifth never spends ink or changes the stroke (915.609106ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 1
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6651.524586
+
+✖ failing tests:
+
+test at ../actions-dualies-before/patches/splatoon3/tests/catalog-dualies-phases-1130.test.mjs:16:1
+✖ Tetra moving rounds retain 7.4 degree / 6F / .26 radius until the physical roll ends (1595.404729ms)
+  AssertionError [ERR_ASSERTION]: post-roll mode is not active at moving admission
+
+  0.75 !== 0
+
+      at TestContext.<anonymous> (file:///workspace/actions-dualies-before/patches/splatoon3/tests/catalog-dualies-phases-1130.test.mjs:18:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0.75,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../actions-dualies-before/patches/splatoon3/tests/catalog-dualies-phases-1130.test.mjs:35:1
+✖ every added Dualies base and alternate kit starts in moving mode, never planted mode (1609.766399ms)
+  AssertionError [ERR_ASSERTION]: s3-maneuver-short no post-roll cone during motion
+  + actual - expected
+
+  + 0.4666666666666667
+  - 0
+
+      at TestContext.<anonymous> (file:///workspace/actions-dualies-before/patches/splatoon3/tests/catalog-dualies-phases-1130.test.mjs:43:12)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0.4666666666666667,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../actions-dualies-before/patches/splatoon3/tests/catalog-dualies-phases-1130.test.mjs:53:1
+✖ sourced slide recovery blocks squid, preserves stationary planted fire and releases on movement (1013.937708ms)
+  AssertionError [ERR_ASSERTION]: 40F NoSquid gate survives a squid request
+
+  false !== true
+
+      at TestContext.<anonymous> (file:///workspace/actions-dualies-before/patches/splatoon3/tests/catalog-dualies-phases-1130.test.mjs:58:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../actions-dualies-before/patches/splatoon3/tests/catalog-dualies-phases-1130.test.mjs:70:1
+✖ Dapple and Squelcher slide ink recovery uses the SideStep 50F / 60F source (898.572814ms)
+  AssertionError [ERR_ASSERTION]: 0.3333333333333333 != 0.8333333333333334
+      at near (file:///workspace/actions-dualies-before/patches/splatoon3/tests/catalog-dualies-phases-1130.test.mjs:7:36)
+      at TestContext.<anonymous> (file:///workspace/actions-dualies-before/patches/splatoon3/tests/catalog-dualies-phases-1130.test.mjs:75:5)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

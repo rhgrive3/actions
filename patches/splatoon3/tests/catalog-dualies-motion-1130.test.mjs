@@ -67,3 +67,23 @@ test('all six base Dualies retain exact 60Hz Actor/round traces under 30/60/120H
     assert.deepEqual(runs[0],runs[1],id+' 30/60');assert.deepEqual(runs[1],runs[2],id+' 60/120');
   }
 });
+
+test('Splat Dualies alternate kits retain the dedicated native owner and the same real Actor trace',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  f.G.level=new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}],half:[],spawnPads:[[-80,0,0],[80,0,0]],spawnBarrier:0});
+  f.G.physics=new f.Physics(f.G.level);const runs=[];
+  for(const id of ['dualies','dualies-01','dualies-02']){
+    f.G.projectiles.clear();f.G.actors.length=0;f.G.time=0;f.setRandom(()=>.37);
+    const a=f.make(id),trace=[];a._integrate=f.Actor.prototype._integrate;a.form='kid';a.intent.fire=true;
+    assert.ok(a.weaponRunner.tryDodge(new f.THREE.Vector3(1,0,0)));
+    assert.ok(a.weaponRunner.dodge);assert.equal(a.weapon.catalogRecord,undefined,id+' remains native');
+    for(let frame=0;frame<120;frame++){
+      f.G.time+=1/60;a.intent.fire=frame<80;a.update(1/60);f.G.projectiles.update(1/60);
+      assert.ok(f.G.projectiles.list.every(p=>!p.catalog),id+' no catalogue projectiles');
+      trace.push([a.pos.x,a.pos.y,a.ink,a.weaponRunner.cooldown,a.weaponRunner.spread,
+        ...f.G.projectiles.list.flatMap(p=>[p.age,p.pos.x,p.pos.y,p.pos.z,p.damage,p.radius])]);
+    }
+    runs.push(trace);
+  }
+  assert.deepEqual(runs[0],runs[1]);assert.deepEqual(runs[0],runs[2]);
+});

@@ -1,0 +1,38 @@
+✔ S3 11.3 standard Dualies: 4WU core + 1WU glide, never five WU inside the 12F roll (12.767574ms)
+✔ admitted aerial dodge starts a bounded downward dive; no unsupported side effects on grounded fixtures (0.287481ms)
+✔ only the sourced standard 5WU Dualies roll receives a distinct 1WU post-roll slide (1.136985ms)
+(node:6980) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #532 Splat Dualies profile sets the sourced 5.0 roll distance and keeps the 12F roll time (844.319958ms)
+✔ #532 12F moving roll covers 4.0 units before the separate 1.0 glide in direction (0, 1) (802.373956ms)
+✔ #532 12F moving roll covers 4.0 units before the separate 1.0 glide in direction (0, -1) (735.992883ms)
+✔ #532 12F moving roll covers 4.0 units before the separate 1.0 glide in direction (1, 0) (657.429038ms)
+✔ #532 12F moving roll covers 4.0 units before the separate 1.0 glide in direction (-1, 0) (680.32702ms)
+(node:7026) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #992 source distances interpolate near/middle/far width using one explicit world scale (3.095715ms)
+✔ #992 straight impact angle uses 10/35 degree source envelope independently of width (0.737689ms)
+✔ #992 unrelated, ghost, wall, malformed and special projectiles stay outside the floor contract (0.451566ms)
+✔ #992 generic fallback Dualies impact sends source width/angle to CPU paint and credits its returned area (1732.659087ms)
+✔ #992 generic fallback break/free width keeps the existing unknown depth (927.740516ms)
+✔ #992 actual ghost paint remains suppressed and sink restoration survives an exception (1630.978359ms)
+✔ #992 live Dualies wall collision retains the separate sourced wall-drop owner (885.429193ms)
+✔ #992 30/60/120 Hz render schedules agree on live fixed-60Hz Dualies floor paint (2648.951201ms)
+✔ #992 direct generic fallback under the complete installer preserves its terminal paint owner (1896.659484ms)
+(node:7140) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #992 pinned Dualies PaintParam widths and depth endpoints are wired into the native profile (0.96155ms)
+✔ #992 near floor hits use WidthHalfNear and far floor hits use WidthHalfFar (0.309969ms)
+✔ #992 pre-fall depth scale takes the sourced DepthScaleMax / DepthScaleMin endpoints (0.256216ms)
+✔ #992 falling depth scale takes the sourced DepthScaleMaxBreakFree / MinBreakFree endpoints (0.232663ms)
+✔ #992 droplet path: one droplet per shot, 14-unit spacing, feet only on the 7th split (0.34329ms)
+✔ #992 droplet radius: normal 1.55825 vs nearest 2.18155 (0.130614ms)
+✔ #992 live Dualies normal shots are owned by the native ink-flight profile, not the generic trail (1564.819729ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18279.676124
