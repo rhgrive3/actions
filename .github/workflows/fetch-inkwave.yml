@@ -6,7 +6,7 @@ on:
       - .github/workflows/fetch-inkwave.yml
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
   fetch:
     runs-on: ubuntu-latest
@@ -16,9 +16,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf inkwave-public
-          mkdir -p inkwave-public
-          cd inkwave-public
+          candidate="${RUNNER_TEMP}/inkwave-upstream-candidate"
+          rm -rf "$candidate"
+          mkdir -p "$candidate"
+          cd "$candidate"
           python3 - <<'PY2'
           import os, re, json, urllib.parse, urllib.request, hashlib
           from pathlib import Path
@@ -95,16 +96,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate patch compatibility before accepting upstream
-        run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
-      - name: Commit mirror
+      - name: Review fetched candidate without touching committed source
+        shell: bash
         run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add inkwave-public
-          if git diff --cached --quiet; then
-            echo "No changes"
-          else
-            git commit -m "Mirror public INKWAVE deployment assets"
-            git push
+          set -euo pipefail
+          node scripts/review-inkwave-upstream.mjs "$RUNNER_TEMP/inkwave-upstream-candidate" > "$RUNNER_TEMP/inkwave-upstream-review.json" || review_status=$?
+          if [ "${review_status:-0}" -ne 0 ]; then
+            echo "Upstream candidate requires manual review; committed game source was not changed."
           fi
+          test -s "$RUNNER_TEMP/inkwave-upstream-review.json"
+      - name: Package upstream candidate and review
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -C "$RUNNER_TEMP" -czf "$RUNNER_TEMP/inkwave-upstream-candidate.tar.gz" inkwave-upstream-candidate
+      - name: Upload upstream candidate for manual integration
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-upstream-candidate-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            ${{ runner.temp }}/inkwave-upstream-candidate.tar.gz
+            ${{ runner.temp }}/inkwave-upstream-review.json
