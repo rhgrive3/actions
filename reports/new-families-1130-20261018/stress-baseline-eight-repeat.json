@@ -724,5 +724,9 @@
     "gcPauseMaxMs": 8.019,
     "scope": "whole sixteen-case fixture including module/model setup; memory hints inside synchronous page task are coarsely cached"
   },
-  "errors": []
+  "errors": [],
+  "actualMeasuredDisplayHz": [
+    60
+  ],
+  "metadataNote": "The original renderHz header reused the matrix rates; all stress measurements have hz=60. This annotation corrects the scope without changing measured values."
 }
