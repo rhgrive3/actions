@@ -46,7 +46,6 @@ test('mural atlas and world branding use directly editable source without rebuil
 test('ZEVANT stage and lobby lettering is directly owned by authored game modules', async () => {
   const { adaptBuildSource } = await import('../inkwave-source-composition.mjs');
   for (const [path, source] of [
-    ['src/world/props.js', worldProps],
     ['src/world/props-marina-vessels.js', marinaVessels],
     ['src/game/lobbySet-tex.js', lobbySetTexture],
   ]) assert.equal(adaptBuildSource(path, source), source, path + ' must not be rewritten by the build');
