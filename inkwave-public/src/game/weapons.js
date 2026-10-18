@@ -595,7 +595,8 @@ export class Projectiles {
     this.clouds.length = 0;
     for (const b of this.beams) { b.mesh.visible = false; this.beamPool.push(b.mesh); }
     this.beams.length = 0;
-    this.chargerDropPool.push(...this.chargerDrops); this.chargerDrops.length = 0;
+    for (const p of this.chargerDrops) { p.owner = null; this.chargerDropPool.push(p); }
+    this.chargerDrops.length = 0;
     for (const [, s] of this.sights) { this.scene.remove(s); s.material.dispose(); }
     this.sights.clear();
     this.blobs.count = 0;
@@ -1249,7 +1250,7 @@ export class Projectiles {
         emit('weapon:impact', { pos: p.target.clone(), normal: p.normal.clone(), team: p.team, kind: 'drop', radius: p.radius });
       }
       this.chargerDrops[i] = this.chargerDrops[this.chargerDrops.length - 1];
-      this.chargerDrops.pop(); this.chargerDropPool.push(p);
+      this.chargerDrops.pop(); p.owner = null; this.chargerDropPool.push(p);
     }
   }
 
