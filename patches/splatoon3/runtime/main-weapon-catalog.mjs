@@ -3,7 +3,7 @@ import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
-import { mainInkFootprint } from './main-ink-footprints.mjs';
+import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
 import { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 import { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
@@ -679,7 +679,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(radius>0&&a.grounded){
         base.copy(a.pos);base.y+=.15;
         const h=G.physics.raycast(base,down,.4,floorHit,true);
-        if(h.hit&&h.normal.y>=.5)paint(a,h.point,radius,1,null,h.face);
+        if(h.hit&&h.normal.y>=.5)paint(a,h.point,radius,1,null,h.face,mainInkFootprint(a.weapon));
       }
     }
     // Only an admitted, spawned catalogue round consumes the chosen hand.
@@ -823,8 +823,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // its detonation paint there; use the explicit blast centre offset and
       // the existing multi-surface sphere footprint, including nearby floor.
       const centre=p.pos.clone();centre.y+=finite(descriptor?.PaintOffsetY,0);
-      paint(p.owner,centre,paintRadius);
-    }else floorPaint(p.owner,p.pos,paintRadius);
+      paint(p.owner,centre,paintRadius,1,null,-1,mainInkBurstFootprint(p.catalog.r));
+    }else floorPaint(p.owner,p.pos,paintRadius,1,null,mainInkBurstFootprint(p.catalog.r));
     for(const a of G.actors||[])if(a.alive&&a.team!==p.team){
       if(a===skip)continue;
       base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(p.pos);
@@ -941,7 +941,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // Lodging and detonation are separate paint events. Previously the
         // early return discarded the charge-dependent arrow impact entirely.
         const footprint=impactPaint(p);
-        paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face);
+        paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face,mainInkFootprint(r));
         s.stuck=true;s.fuse=finite(det.DetonationFrame,45)/HZ;p.pos.copy(at);p.vel.set(0,0,0);p.life=p.age+s.fuse+DT;return false;
       }
     }
@@ -1039,7 +1039,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const end=p.prev.clone().lerp(p.pos,fraction);
         collectBrellaSplashes(s.brellaFlight,p,end,stop<=1||p.age+EPS>=p.life||s.travel+EPS>=s.range||p.pos.y<PLAYER.waterY-1.8,
           (from,radius,spec,salt,birthFrame)=>spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:s.brellaFlight.volley.seed,salt,from,
-            direction:s.brellaFlight.volley.direction,radius,spec,depth:true,
+            direction:s.brellaFlight.volley.direction,radius,spec,depth:true,footprint:mainInkFootprint(s.r),
             catchUpSeconds:Math.max(0,p.age+s.carry-birthFrame/HZ)}));
       }
       // Admit every crossed release distance on the unobstructed part of this
@@ -1088,7 +1088,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(s.r.family==='splatana'&&!p.ghost){
           const spec=addedFamilySplash(d.b,'splatana',0)?.spec;
           const terminal=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:255,from:p.pos,
-            direction:p.vel,radius:d.b.BurstParam?.SplashPaintRadius,spec,depth:false,kind:SOURCE_SHOT_PAINT_KIND,catchUpSeconds:s.carry});
+            direction:p.vel,radius:d.b.BurstParam?.SplashPaintRadius,spec,depth:false,kind:SOURCE_SHOT_PAINT_KIND,footprint:mainInkBurstFootprint(s.r),catchUpSeconds:s.carry});
           if(terminal)terminal.drawRadius=d.b.BurstParam.SplashDrawRadius;
         }
         return true;
@@ -1379,7 +1379,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const stamp=point=>{
       base.copy(point);base.y+=.15;
       const h=G.physics.raycast(base,down,1.5,floorHit,true);
-      if(h.hit&&h.normal.y>=.5)paint(c.owner,h.point,c.paintRadius,1,null,h.face);
+      if(h.hit&&h.normal.y>=.5)paint(c.owner,h.point,c.paintRadius,1,null,h.face,mainInkFootprint('brella'));
     };
     if(!c.paintLast){c.paintLast=c.pos.clone();c.paintCarry=0;stamp(c.pos);return;}
     const distance=c.paintLast.distanceTo(c.pos);
@@ -1426,7 +1426,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(a.grounded&&!a.remote&&a.alive!==false){
         base.copy(a.pos);base.y+=.15;
         const h=G.physics.raycast(base,down,.4,floorHit,true);
-        if(h.hit&&h.normal.y>=.5)paint(a,h.point,radius,1,null,h.face);
+        if(h.hit&&h.normal.y>=.5)paint(a,h.point,radius,1,null,h.face,mainInkFootprint(a.weapon));
       }
     }
   }

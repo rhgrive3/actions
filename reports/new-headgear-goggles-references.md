@@ -35,3 +35,30 @@ Native 79ce corrected structural folding but remained too skeletal, with a flat 
 
 ## Reproducible integrated regression
 From repository root, build with `node scripts/build-inkwave.mjs inkwave-public _site`, then run `INKWAVE_HEADGEAR_SITE="$PWD/_site" node --experimental-loader ./patches/local-quality/tests/headgear-production-loader.mjs --test patches/local-quality/tests/headgear-goggles.fixture.mjs`. Earlier candidate-folder commands and local image paths above document development history; this committed fixture is the reproducible emitted-module gate. Native capture and visual acceptance are recorded in the integration report.
+
+
+## User-requested solid-shell revision
+
+# Face goggles solid-shell rebuild
+
+Baseline: rhgrive3/actions commit 6eb64043ca9e06d584ffe7f8ce4e9ab45990a9b9, exact GitHub connector recovery. Original module saved as face-goggles.js.baseline. Baseline SHA256 8515379a751a60a6db01c1b7030405652e5c14f0dbe198f6d836d4bab9d812ed. Only module + focused fixture are candidate deliverables; no other gear, face, hair, body or lifecycle code changed.
+
+## Pixels inspected
+- S3 near-frontal worn source: https://img.gamewith.jp/img/9a245d07c6dfa3b4460b237694dd6bba.png (worn.png).
+- S3 item 3/4 source: https://img.gamewith.jp/article_tools/splatoon3/gacha/ge429.png (item.png).
+- Japanese identity/source page: https://gamewith.jp/splatoon3/390028 . フェイスゴーグル = Paintball Mask, Forge.
+- Actual emitted native front/right/top from e964a6036c92e1919c0197ffbc45cbce76dfcf80: examined as rejected current result. Source/current composition from reference reviewer corroborates broad-form differences.
+
+## Diagnosis and changes
+Rejected current asset had a large face window exposing brows, shallow top rail, narrow repeated cage rails and long face-wide chevrons. Actual source has a tall solid white forehead with short vents, broad projecting brim, compact framed blue-gray lens, molded cheek shell with ink squares and one vent band, and a distinct compact central three-chevron vent block.
+
+New construction uses fully closed triangulated curved shell panels with real punched apertures and recessed dark inner lining. No horizontal-rail skeleton is hidden with opaque fill. Side cheeks are solid with one row of 6 triangular vents each side and two ink-square bands. The central 3 rows of short alternating triangular apertures sit in a protruding, compact region with raised sidewalls; lower outline is curved. Forehead is a domed full panel. Lens stays one simple alpha surface, bows outward, and eye opening height is reduced; alpha .30 replaces .19, blue-gray material color unchanged, metalness0 for dielectric plastic, no transmission/refraction framebuffer. Neutral signal adapter was independently verified to preserve opacity, depthWrite and transparency.
+
+## Validation
+Run node --loader loader.mjs headgear-face-goggles.fixture.mjs. PASS finite positions/normals/UV, closed edge incidence2 and consistent winding for forehead/lower perforated panels, nondegenerate triangles, native zero-offset anchor-only fitting, compact eye window, feature counts, strict decreasing LOD,4 material batches,1 alpha lens, color update and exact-once disposal.
+Hero/game/far triangles:7216/3112/2312. Textures0, meshes4. Hero extra topology supports perforated solid shells rather than many independent details. No external assets imported; source images are reference-only.
+
+## Boundaries
+CPU software-preview.png is shape inspection only and is not native shading, fitted hair/face, or gameplay validation. Parent must run native new-head QA and inspect genuine perspective+IBL front/3/4/side, visor hair fit, eye visibility, center mask coverage and source comparison before acceptance. Current candidate has not passed that review. No verified S3 rear orthographic source; existing rear construction deliberately unchanged. Hidden padding/buckle and exact dimensions remain approximations. No gameplay parity claim.
+
+Candidate module SHA256:89499687c7bfd950e2bd96d73399a19363f5a92d189bdc2d0473d138fed55b14.

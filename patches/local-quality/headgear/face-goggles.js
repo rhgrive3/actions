@@ -4,7 +4,7 @@
  * No downloaded mesh or texture. +Z forward; native head-bone local space.
  */
 import * as THREE from 'three';
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+function mergeGeometries(list){const pos=[],normal=[],uv=[],indices=[];let offset=0;for(const g of list){pos.push(...g.attributes.position.array);normal.push(...g.attributes.normal.array);uv.push(...g.attributes.uv.array);for(const i of g.index.array)indices.push(i+offset);offset+=g.attributes.position.count;}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(normal,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(indices);return g;}
 export const FACE_GOGGLES_ID='face-goggles';
 export const FACE_GOGGLES_FIT=Object.freeze({name:'faceGoggles',preserveHair:true});
 export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null,offIn=null,clearance=null}={}) {
@@ -13,9 +13,9 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   const mats={shell:new THREE.MeshStandardMaterial({color:0xe3e4df,roughness:.43,metalness:.04}),
     dark:new THREE.MeshStandardMaterial({color:0x222c2d,roughness:.86}),
     ink:new THREE.MeshStandardMaterial({color:inkColor,roughness:.55}),
-    lens:new THREE.MeshStandardMaterial({color:0x9acbd3,roughness:.16,metalness:.08,transparent:true,opacity:.19,depthWrite:false,side:THREE.FrontSide})};
+    lens:new THREE.MeshStandardMaterial({color:0x9acbd3,roughness:.19,metalness:0,transparent:true,opacity:.30,depthWrite:false,side:THREE.FrontSide})};
   const buckets=Object.fromEntries(Object.keys(mats).map(k=>[k,[]])),parts=[];
-  function add(g,key,name){g.computeVertexNormals();g.computeBoundingBox();parts.push({name,material:key,indexStart:buckets[key].reduce((n,x)=>n+x.index.count,0),indexCount:g.index.count,bounds:g.boundingBox.clone()});buckets[key].push(g);}
+  function add(g,key,name){if(!g.attributes.normal)g.computeVertexNormals();g.computeBoundingBox();parts.push({name,material:key,indexStart:buckets[key].reduce((n,x)=>n+x.index.count,0),indexCount:g.index.count,bounds:g.boundingBox.clone()});buckets[key].push(g);}
   function grid(n,m,fn){const p=[],uv=[],ix=[];for(let j=0;j<=m;j++)for(let i=0;i<=n;i++){p.push(...fn(i/n,j/m));uv.push(i/n,j/m);}for(let j=0;j<m;j++)for(let i=0;i<n;i++){const a=j*(n+1)+i,b=a+n+1;ix.push(a,a+1,b,a+1,b+1,b);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);return g;}
   // A rigid mask MUST NOT follow per-vertex face normals: the nose/jaw sculpt
   // changes those abruptly and would fold the lens and rails into each other.
@@ -48,59 +48,78 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
     for(const end of [0,1])add(grid(1,1,(u,v)=>point(end,(end?u:1-u)-.5,v-.5)),key,name+'-end');
   }
 
-  const az=u=>(u-.5)*2.42;
-  const nose=a=>Math.max(0,1-Math.sqrt(a*a+.0001)/.30);
-  const bottom=a=>-.24+.22*nose(a);
-  const brow=a=>.40+.22*Math.cos(a)**2;
-  const crown=a=>brow(a)+.22;
-  // Single uninterrupted eye opening, nose cut-out, and generous side wrap.
-  add(grid(N,Math.max(3,N/8|0),(u,v)=>{const a=az(u);return pt(a,bottom(a)+(brow(a)-.035-bottom(a))*v,.050+.032*Math.sin(v*Math.PI)*Math.cos(a));}), 'lens','single-clear-eye-shield');
-  rail('lens-top-gasket',u=>[az(u),brow(az(u))-.025,.046],.030,.008,'dark');
-  rail('lens-lower-gasket',u=>[az(u),bottom(az(u)),.045],.055,.008,'dark');
-  rail('lens-top-frame',u=>[az(u),brow(az(u)),.054],.115,.012);
-  rail('lens-lower-frame',u=>[az(u),bottom(az(u))-.025,.052],.105,.010);
-  for(const s of [-1,1])rail('temple-frame',u=>[s*(1.21+.008*Math.sin(u*Math.PI)),-.28+(brow(1.21)+.28)*u,.052],.110,.013,'shell',Math.max(5,N/4|0));
-  // Overhanging cap-like peak, visibly forward of lens (not a flat brow bar).
-  const peak=(u,v,h)=>{const a=az(u)*1.02,p=pt(a,brow(a)+.025-.075*v*Math.cos(a),.052+.045*v*Math.pow(Math.max(0,Math.cos(a)),.5));p[1]+=h;return p;};
-  add(grid(N,3,(u,v)=>peak(u,1-v,.0045)),'shell','visor-top');
-  add(grid(N,3,(u,v)=>peak(u,v,-.0045)),'shell','visor-bottom');
-  add(grid(N,1,(u,v)=>peak(u,1,(v-.5)*.009)),'shell','visor-front-edge');
-  add(grid(N,1,(u,v)=>peak(1-u,0,(v-.5)*.009)),'shell','visor-rear-edge');
-  for(const side of [0,1])add(grid(3,1,(u,v)=>peak(side,side?1-u:u,(v-.5)*.009)),'shell','visor-side-edge');
-  // Open upper ventilation band, with small central forehead badge plate.
-  rail('forehead-upper-rim',u=>[az(u),crown(az(u)),.034],.075,.010);
-  rail('forehead-lower-rim',u=>[az(u),brow(az(u))+.055,.039],.055,.010);
-  for(const side of [-1,1])for(let i=0;i<12;i++){
-    const a=side*(.20+i*.083),b=a+side*.083;
-    rail('forehead-triangular-web',u=>{const x=a+(b-a)*u,t=i%2?1-u:u;return [x,brow(x)+.075+.12*t,.038];},.026,.007,'shell',2);
-  }
-  add(grid(4,2,(u,v)=>pt((u-.5)*.28,brow((u-.5)*.28)+.04+.20*v,.042)),'shell','forehead-badge-plate');
-  add(grid(4,2,(u,v)=>pt((u-.5)*.12,.71+.09*v,.045)),'dark','original-forehead-emblem');
-  add(grid(3,1,(u,v)=>pt((u-.5)*.09,.75+.018*v,.046)),'ink','emblem-slash');
-  // Continuous joined rails form the nose chevrons and cheek cage together.
-  // No mirrored half-rails, coincident end caps, or crossing central plates.
-  const cheek=(a,row)=>bottom(a)-.025-row*.19;
-  for(let row=0;row<3;row++){
-    rail('joined-cheek-chevron-'+row,u=>{const a=az(u);return [a,cheek(a,row),.052+.014*nose(a)];},.110,.010);
-    for(const side of [-1,1])for(let i=0;i<(lod==='far'?3:5);i++){
-      const a=side*(.40+i*.16),b=a+side*.10;
-      add(grid(1,1,(u,v)=>pt(a+(b-a)*(side<0?1-u:u),cheek(a,row)+(v-.5)*.041,.058)),'ink','recessed-arrow-stripe');
+  // Molded panels, not separate horizontal bars. Holes are actual apertures
+  // triangulated in angular space, with continuous front/back and wall surfaces.
+  const S=lod==='hero'?2:1;
+  function panel(name,outline,holes=[],depth=.055,thickness=.009,key='shell'){
+    const outer=outline.map(p=>new THREE.Vector2(...p)),hs=holes.map(h=>h.map(p=>new THREE.Vector2(...p)));
+    if(THREE.ShapeUtils.isClockWise(outer))outer.reverse();
+    for(const h of hs)if(!THREE.ShapeUtils.isClockWise(h))h.reverse();
+    const points=[...outer,...hs.flat()],tri=THREE.ShapeUtils.triangulateShape(outer,hs),p=[],uv=[],ix=[];
+    const d=(a,e)=>typeof depth==='function'?depth(a,e):depth;
+    const put=(a,e,z)=>{const i=p.length/3;p.push(...pt(a,e,d(a,e)+z));uv.push(a,e);return i;};
+    for(const face of [1,-1])for(const t of tri){const A=points[t[0]],B=points[t[1]],C=points[t[2]],ids=[];
+      for(let j=0;j<=S;j++){ids[j]=[];for(let i=0;i<=S-j;i++){const a=A.x+(B.x-A.x)*i/S+(C.x-A.x)*j/S,e=A.y+(B.y-A.y)*i/S+(C.y-A.y)*j/S;ids[j][i]=put(a,e,face*thickness/2);}}
+      for(let j=0;j<S;j++)for(let i=0;i<S-j;i++){const t=[ids[j][i],ids[j][i+1],ids[j+1][i]];ix.push(...(face>0?t:t.reverse()));if(i<S-j-1){const t2=[ids[j][i+1],ids[j+1][i+1],ids[j+1][i]];ix.push(...(face>0?t2:t2.reverse()));}}
     }
+    for(const loop of [outer,...hs])for(let k=0;k<loop.length;k++){const A=loop[k],B=loop[(k+1)%loop.length];for(let i=0;i<S;i++){const a=A.x+(B.x-A.x)*i/S,e=A.y+(B.y-A.y)*i/S,a1=A.x+(B.x-A.x)*(i+1)/S,e1=A.y+(B.y-A.y)*(i+1)/S;const q=[put(a,e,-thickness/2),put(a1,e1,-thickness/2),put(a,e,thickness/2),put(a1,e1,thickness/2)];ix.push(q[0],q[1],q[2],q[1],q[3],q[2]);}}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();const faceVertices=tri.length*(S+1)*(S+2)/2;for(let i=0;i<faceVertices*2;i++){const sign=i<faceVertices?1:-1,q=new THREE.Vector3(p[i*3]/(rx*rx),(p[i*3+1]-.164)/(ry*ry),(p[i*3+2]-.014)/(rz*rz)).normalize().multiplyScalar(sign);g.attributes.normal.setXYZ(i,q.x,q.y,q.z);}add(g,key,name);
   }
-  for(const side of [-1,1]){
-    rail('jaw-side-upright',u=>[side*1.17,-.66+.42*u,.052],.105,.010,'shell',8);
-    const cells=lod==='far'?8:lod==='game'?14:18;
-    for(let row=0;row<2;row++)for(let i=0;i<cells;i++){
-      const a=side*(i*1.15/cells),b=side*((i+1)*1.15/cells);
-      rail('triangular-vent-web',u=>{const x=a+(b-a)*u,t=i%2?1-u:u;return [x,cheek(x,row)-.045-.10*t,.052+.014*nose(x)];},.025,.006,'shell',2);
-    }
+  const span=1.20,az=u=>(u-.5)*2*span;
+  const bump=a=>Math.max(0,1-Math.abs(a)/.32);
+  const eyeTop=a=>.285+.115*Math.cos(a)**2;
+  const eyeBottom=a=>-.19+.235*bump(a);
+  const lower=a=>-.63-.09*Math.cos(a)**6;
+  const stations=lod==='far'?12:20;
+  const upper=[],bottom=[];for(let i=0;i<=stations;i++){const a=-span+2*span*i/stations;upper.push([a,eyeBottom(a)-.025-.012*(a/span)**2]);bottom.push([a,lower(a)]);}
+  const vents=[];
+  // Three short chevron slots occupy only the compact central mouth block.
+  // Small triangular apertures leave integral diagonal white webs between them.
+  for(let row=0;row<3;row++)for(const side of [-1,1])for(let i=0;i<3;i++){
+    const a=side*(.020+i*.085),b=side*(.010+(i+1)*.085),at=x=>-.055-row*.19-.22*Math.abs(x)/.30+.018*(x/.30)**2;
+    const lo=at((a+b)/2)-.100;
+    vents.push(i%2?[[a,at(a)-.100],[b,at(b)-.100],[(a+b)/2,lo+.100]]:[[a,at(a)],[b,at(b)],[(a+b)/2,lo]]);
   }
-  const chin=a=>-.77+.045*(Math.abs(a)/.31)**2;
-  rail('joined-chin-chevron',u=>{const a=(u-.5)*.62;return [a,chin(a),.056];},.090,.010);
-  for(const side of [-1,1]){
-    rail('chin-side-join',u=>{const a=side*.31;return [a,cheek(a,2)+(chin(a)-cheek(a,2))*u,.056];},.060,.010,'shell',3);
-    for(let i=0;i<5;i++)rail('chin-triangular-web',u=>{const a=side*(i+u)*.31/5,t=i%2?1-u:u;return [a,cheek(a,2)-.04+(chin(a)-cheek(a,2)+.08)*t,.056];},.022,.006,'shell',2);
+  // Side cheeks have ONE dark vent band between two broad solid ink-marked bands.
+  for(const side of [-1,1])for(let i=0;i<6;i++){
+    const a=side*(.40+i*.125),b=side*(.38+(i+1)*.125),m=(a+b)/2;
+    vents.push([[a,-.40+.02*a*a],[b,-.40+.02*b*b],[m,-.505+.02*m*m]]);
   }
+  const shellDepth=(a,e)=>{const central=e<-.60?Math.max(0,Math.cos(Math.min(1,Math.abs(a)/.36)*Math.PI/2))**2:bump(a);return .050+.031*central*Math.max(0,Math.min(1,(-e+.06)/.30));};
+  panel('molded-lower-face-shell',[...upper,...bottom.reverse()],vents,shellDepth,.012);
+  // Rounded compact central block perimeter; the long cheek bands do not form
+  // repeated chevrons across the full face.
+  for(const side of [-1,1])rail('central-block-sidewall',u=>[side*(.32-.145*u*u),-.17-.51*u,.070],.036,.009,'shell',10);
+  // Recessed dark lining behind punched vents provides cavity depth without
+  // filling the eye window or replacing the real aperture geometry with paint.
+  for(const [i,h]of vents.entries())panel('vent-recess-'+i,h,[],(a,e)=>shellDepth(a,e)-.012,.002,'dark');
+  for(const side of [-1,1])for(const row of [-.285,-.60])for(let i=0;i<5;i++){
+    const a=side*(.40+i*.15),b=a+side*.105;
+    panel('cheek-ink-inlay',[[a,row+.032],[b,row+.025],[b,row-.025],[a,row-.032]],[],.057,.001,'ink');
+  }
+  // Thick outer frame. Window is compact and follows the original nose saddle.
+  rail('eye-upper-frame',u=>[az(u),eyeTop(az(u))+.025,.055],.105,.013);
+  rail('eye-lower-frame',u=>[az(u),eyeBottom(az(u))-.015,.056],.100,.012);
+  for(const side of [-1,1])rail('eye-side-frame',u=>[side*span,eyeBottom(span)+(eyeTop(span)-eyeBottom(span))*u,.054],.140,.014,'shell',8);
+  rail('eye-upper-gasket',u=>[az(u),eyeTop(az(u))-.020,.050],.022,.006,'dark');
+  // One bowed transparent shield stands in front of eyes and below the broad cap.
+  add(grid(N,6,(u,v)=>{const a=az(u);return pt(a,eyeBottom(a)+(eyeTop(a)-eyeBottom(a))*v,.059+.030*Math.sin(Math.PI*v)*Math.cos(a));}),'lens','panoramic-lens');
+  // Tall broad forehead plate with short angular vents, not an open hair rail.
+  const browBase=a=>eyeTop(a)+.13,crown=a=>.70+.33*Math.cos(a)**2;
+  const foreTop=[],foreBot=[];for(let i=0;i<=stations;i++){const a=-span+2*span*i/stations;foreTop.push([a,crown(a)]);foreBot.push([a,browBase(a)]);}
+  const foreHoles=[];for(const side of [-1,1])for(let i=0;i<5;i++){const a=side*(.25+i*.17),b=a+side*.14;foreHoles.push([[a,browBase(a)+.10],[b,browBase(b)+.10],[(a+b)/2,crown((a+b)/2)-.055]]);}
+  panel('molded-forehead-shell',[...foreBot,...foreTop.reverse()],foreHoles,.039,.012);
+  for(const [i,h]of foreHoles.entries())panel('forehead-vent-recess-'+i,h,[],.027,.002,'dark');
+  // Broad domed forward brim joins the forehead plate to the eye-frame arch.
+  const peak=(u,v,h)=>{const a=az(u)*1.025;const p=pt(a,eyeTop(a)+.16*(1-v)+.025,.042+.065*v*Math.cos(a/1.8));p[1]+=h;return p;};
+  add(grid(N,5,(u,v)=>peak(u,1-v,.005)),'shell','visor-top');
+  add(grid(N,5,(u,v)=>peak(u,v,-.005)),'shell','visor-bottom');
+  add(grid(N,1,(u,v)=>peak(u,1,(v-.5)*.010)),'shell','visor-front-edge');
+  add(grid(N,1,(u,v)=>peak(1-u,0,(v-.5)*.010)),'shell','visor-rear-edge');
+  for(const side of [0,1])add(grid(5,1,(u,v)=>peak(side,side?1-u:u,(v-.5)*.010)),'shell','visor-side-edge');
+  // Small original forehead emblem; not a recovered game texture.
+  panel('forehead-badge',[[-.075,.74],[.075,.74],[.065,.83],[-.065,.83]],[],.047,.001,'dark');
+  panel('forehead-emblem',[[-.05,.775],[.05,.79],[.03,.81],[-.04,.80]],[],.049,.001,'ink');
   // Two actual crossed straps around the exposed rear head, not a helmet crown.
   for(const s of [-1,1]){
     const fn=u=>[1.20+u*(Math.PI*2-2.40),s*.23*Math.cos(u*Math.PI),.014+(s>0?.007:0)];
@@ -118,3 +137,4 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   root.userData={id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'Reference-informed approximation; hidden buckle unverified'}};
   return root;
 }
+
