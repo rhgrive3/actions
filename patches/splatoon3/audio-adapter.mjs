@@ -103,6 +103,12 @@ export function adaptWeaponAudio(rel,code){
     patchStartShot('  async startNetMatch(cfg, nm) {',
       '\n  // Compile every shader variant',
       "cfg?.roster?.find(r=>r.owner===G.net?.myId&&!r.bot)?.weapon",'online');
+    // A missing MP3 must be visible, rather than leaving a silent game
+    // running with no clue why the selected main weapon cannot fire audio.
+    code=once(code,
+      "this.menus.toast?.(t('Could not start the match. Please try again.'), { kind: 'error' });",
+      "this.menus.toast?.(/音源|MP3|音声出力|Recorded weapon/.test(String(error?.message||'')) ? '本家ブキ射撃音源を読み込めませんでした。通信・音声設定を確認して再試行してください。' : t('Could not start the match. Please try again.'), { kind: 'error' });",
+      'visible recorded sound preload failure');
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
