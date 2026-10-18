@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { fixture } from './source-fixture.mjs';
 import { adaptCameraAimControls } from '../camera-aim-controls-adapter.mjs';
 import { simulateMatchInterval } from '../runtime/turf-finish.mjs';
@@ -168,17 +170,92 @@ test('mouse displacement is not multiplied by dt; stick traces agree across dire
   close(Math.max(...values)-Math.min(...values),0);
 });
 
-test('camera final pass fails closed on incompatible/duplicate upstream anchors', () => {
+// Observe the real composition's adapter boundaries; every transform still
+// executes its production implementation against the unmodified public source.
+async function observedComposition(source) {
+  const url = new URL('../../../scripts/inkwave-source-composition.mjs', import.meta.url);
+  const events = [];
+  const observed = new Set(['adaptRange', 'adaptProjectileVisuals', 'adaptCameraAimControls',
+    'adaptStaticMenuArt', 'adaptQueueNine']);
+  const module = new vm.SourceTextModule(source ?? fs.readFileSync(url, 'utf8'), { identifier: url.href });
+  await module.link(async spec => {
+    const actual = await import(new URL(spec, url));
+    return new vm.SyntheticModule(Object.keys(actual), function () {
+      for (const [name, value] of Object.entries(actual)) this.setExport(name, observed.has(name)
+        ? (...args) => {
+          const output = value(...args);
+          events.push({ name, input: args[1], output });
+          return output;
+        } : value);
+    });
+  });
+  await module.evaluate();
+  return { adapt: module.namespace.adaptBuildSource, events };
+}
+
+function cameraCompositionOrder(events) {
+  assert.deepEqual(events.map(e => e.name), ['adaptRange', 'adaptProjectileVisuals',
+    'adaptCameraAimControls', 'adaptStaticMenuArt', 'adaptQueueNine'],
+  'camera owns aim after presentation VFX; static menu and queue guards run once afterwards');
+}
+
+test('camera composition rejects incompatible/duplicate anchors and preserves aim through final guards', async () => {
   assert.throws(()=>adaptCameraAimControls('src/game/player.js',''),/missing/);
   assert.equal(adaptCameraAimControls('src/game/actor.js','unchanged'),'unchanged');
-  const s=fs.readFileSync(new URL('../../../scripts/inkwave-source-composition.mjs',import.meta.url),'utf8');
-  const range=s.indexOf('code = adaptRange');
-  const visuals=s.indexOf('code = adaptProjectileVisuals');
-  const camera=s.indexOf('return adaptCameraAimControls');
-  assert.ok(range>=0&&visuals>range,'VFX observes the composed range and gameplay adapters');
-  assert.ok(camera>visuals,'the fail-closed camera and aim pass remains terminal after presentation VFX');
-  assert.equal((s.match(/return adaptCameraAimControls\(/g)||[]).length,1,
-    'one terminal camera composition owns its fail-closed anchor');
+  const composed = await observedComposition();
+  const anchors = {
+    'src/game/player.js': "const gyroActive = inp.lastDevice === 'touch' && !!touch?.gyro?.enabled;",
+    'src/game/cameraRig.js': '    _back.copy(fwd).negate();',
+    'src/game/weapons.js': 'if (d < 2.0 || out.dot(a.aimDir) < 0) out.copy(a.aimDir);',
+  };
+  for (const [rel, anchor] of Object.entries(anchors)) {
+    const raw = fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
+    composed.events.length = 0;
+    const output = composed.adapt(rel, raw);
+    cameraCompositionOrder(composed.events);
+    const [, , camera, menu, queue] = composed.events;
+    assert.notEqual(camera.output, camera.input, `${rel}: camera pass performs its real corrections`);
+    assert.equal(menu.input, camera.output);
+    assert.equal(menu.output, camera.output, `${rel}: decorative menu pass preserves aim/state bytes`);
+    assert.equal(queue.input, camera.output);
+    assert.equal(queue.output, camera.output, `${rel}: queue pass preserves aim/state bytes`);
+    assert.equal(output, adaptBuildSource(rel, raw), 'observed output is the actual production composition');
+    assert.ok(camera.input.includes(anchor), `${rel}: negative control uses a real upstream anchor`);
+    assert.throws(() => adaptCameraAimControls(rel, camera.input.replace(anchor, '/* incompatible upstream */')),
+      /camera-aim-controls:.*missing/, `${rel}: incompatible upstream must fail closed`);
+    assert.throws(() => adaptCameraAimControls(rel, camera.input + '\n' + anchor),
+      /camera-aim-controls:.*ambiguous/, `${rel}: duplicate upstream must fail closed`);
+    assert.throws(() => adaptCameraAimControls(rel, camera.output), /camera-aim-controls:.*missing/,
+      `${rel}: applying camera twice must fail closed`);
+  }
+  const rel = 'src/game/actor.js';
+  const raw = fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
+  composed.events.length = 0;
+  const output = composed.adapt(rel, raw);
+  cameraCompositionOrder(composed.events);
+  const [, , camera, menu, queue] = composed.events;
+  assert.equal(camera.output, camera.input, 'camera preserves the Actor simulation owner');
+  assert.equal(menu.output, camera.output, 'static menus preserve Actor state');
+  assert.equal(queue.output, camera.output, 'final queue guards preserve Actor aim/state');
+  assert.equal(output, adaptBuildSource(rel, raw));
+});
+
+test('camera composition order checks reject reordered and repeated real passes', async () => {
+  const url = new URL('../../../scripts/inkwave-source-composition.mjs', import.meta.url);
+  const source = fs.readFileSync(url, 'utf8');
+  const final = 'adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce))';
+  assert.equal(source.split(final).length - 1, 1, 'the mutation has one actual final composition anchor');
+  const rel = 'src/game/player.js';
+  const raw = fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
+  const reordered = await observedComposition(source.replace(final,
+    'adaptCameraAimControls(rel, adaptStaticMenuArt(rel, adaptQueueNine(rel, code), replaceOnce))'));
+  reordered.adapt(rel, raw);
+  assert.throws(() => cameraCompositionOrder(reordered.events), /camera owns aim/,
+    'moving final guards ahead of camera cannot silently satisfy the order contract');
+  const repeated = await observedComposition(source.replace('adaptCameraAimControls(rel, code)',
+    'adaptCameraAimControls(rel, adaptCameraAimControls(rel, code))'));
+  assert.throws(() => repeated.adapt(rel, raw), /camera-aim-controls:.*missing/,
+    'a repeated camera pass fails on real already-replaced anchors');
 });
 
 test('same-tick optical origin cannot rotate through a nearby wall before the render step',async()=>{

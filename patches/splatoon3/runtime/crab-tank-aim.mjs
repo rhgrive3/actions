@@ -48,8 +48,14 @@ export function crabTankMuzzle(actor, mode, out, direction = null) {
 export function crabTankShotGeometry(actor, mode, origin, direction) {
   crabTankAimDirection(actor, direction);
   const target = actor?.aimPoint;
-  if (target && [target.x, target.y, target.z].every(Number.isFinite)) {
-    for (let i = 0; i < 24; i++) {
+  // Actor.aimPoint starts at its feet until a real aim sample exists. Keep
+  // the same sentinel guard as crabTankAimDirection(..., muzzle); the feet
+  // must never become an accidental close-range crosshair target.
+  const fromFeet = target && (target.x - actor.pos.x) ** 2 + (target.y - actor.pos.y) ** 2 + (target.z - actor.pos.z) ** 2;
+  if (target && [target.x, target.y, target.z].every(Number.isFinite) && fromFeet > 1e-12) {
+    // Damping avoids the old near-target two-cycle. Retain the original
+    // direction precision after damping rather than stopping at 1e-6 rad.
+    for (let i = 0; i < 48; i++) {
       crabTankMuzzle(actor, mode, origin, direction);
       const dx = target.x - origin.x, dy = target.y - origin.y, dz = target.z - origin.z;
       const d = Math.hypot(dx, dy, dz);
@@ -58,7 +64,7 @@ export function crabTankShotGeometry(actor, mode, origin, direction) {
       if (!(d > 1e-6) || dx * direction.x + dy * direction.y + dz * direction.z <= 0) break;
       const x = dx / d, y = dy / d, z = dz / d;
       const error = (x - direction.x) ** 2 + (y - direction.y) ** 2 + (z - direction.z) ** 2;
-      if (error < 1e-12) break;
+      if (error < 1e-20) break;
       direction.set(direction.x + x, direction.y + y, direction.z + z).normalize();
     }
   }
