@@ -4,7 +4,16 @@
 // existing source owners. These profiles only replace the circular body.
 // A 128 x 8 RGBA8 strip (4 KiB) stores left/right edges. One GPU lookup,
 // two CPU edge reads; no per-cell trigonometry, extra stamps or simulation.
-export const INK_FOOTPRINT_KINDS = Object.freeze(['ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact']);
+export const CHARGER_FOOTPRINT = 'ink-charger';
+export const INK_FOOTPRINT_KINDS = Object.freeze(['ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact',
+  'ink-charger-a', 'ink-charger-b', 'ink-charger-c']);
+// Three precomputed variants retain the old seeded organic Charger character
+// without the original per-pixel/per-cell trig, satellite ink or extra turf.
+// The variants live in the three previously unused rows of the same 4 KiB texture.
+export function chargerInkProfileKind(seed) {
+  const n=Number.isFinite(seed)?Math.max(0,Math.min(1-Number.EPSILON,seed)):0;
+  return INK_FOOTPRINT_KINDS[5+Math.min(2,Math.floor(n*3))];
+}
 export const INK_PROFILE_SIZE = 128;
 export const INK_PROFILE_HEIGHT = 8;
 
@@ -31,11 +40,19 @@ export const INK_PROFILE_SECTIONS = Object.freeze([
   // by the existing .52R contact-sampling interval, so neighboring stamps
   // overlap without drawing a disk at every sample. Literal lateral width R.
   [[-1,0,0],[-.60,0,0],[-.58,.84,.84],[-.53,.97,.97],[-.45,1,1],[.45,1,1],[.53,.97,.97],[.58,.84,.84],[.60,0,0],[1,0,0]],
+  // Charger: old pre-#1443 blobWobble contour sampled at three fixed seeds
+  // (.13/.47/.83), with both axes bounded by the pinned source WidthHalf
+  // and DepthHalf envelope. These are silhouette approximations, not retail
+  // Nintendo ink-mask textures. Source splat number/timing/radius stay intact.
+  [[-1,0,0],[-.94,0,.56],[-.84,.10,.76],[-.72,.61,.91],[-.59,.62,1],[-.47,.64,.97],[-.33,.75,.88],[-.20,.81,.81],[-.08,.91,.82],[.06,.98,.86],[.19,1,.90],[.33,.92,.88],[.48,.46,.85],[.61,.40,.58],[.74,.35,.54],[.85,.24,.46],[.94,.18,.37],[1,0,0]],
+  [[-1,0,0],[-.94,.74,0],[-.84,.78,0],[-.72,.80,.47],[-.59,.79,.83],[-.47,.75,.93],[-.33,.74,.96],[-.20,.85,.95],[-.08,.85,.96],[.06,.91,1],[.19,.98,.95],[.33,1,.95],[.48,.94,.87],[.61,.77,.35],[.74,.70,.30],[.85,.37,.17],[.94,.21,.09],[1,0,0]],
+  [[-1,0,0],[-.94,.13,.65],[-.84,.38,.75],[-.72,.51,.77],[-.59,.54,.75],[-.47,.55,.72],[-.33,.73,.72],[-.20,.76,.71],[-.08,.81,.89],[.06,.88,.99],[.19,.98,1],[.33,.98,.96],[.48,.87,.92],[.61,.35,.89],[.74,.29,.47],[.85,.27,.17],[.94,.23,0],[1,0,0]],
 ].map(sections => Object.freeze(sections.map(section => Object.freeze(section)))));
 
 export function mainInkFootprint(weapon, contact = false) {
   const kind = typeof weapon === 'string' ? weapon : weapon?.catalogRecord?.family ?? weapon?.family ?? weapon?.kind;
   if (contact) return kind === 'brush' || kind === 'roller' ? 'ink-contact' : null;
+  if (kind === 'charger') return CHARGER_FOOTPRINT;
   if (kind === 'shooter' || kind === 'dualies') return 'ink-shot';
   if (kind === 'brush') return 'ink-brush';
   if (kind === 'roller') return 'ink-flick';
