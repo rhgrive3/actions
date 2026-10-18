@@ -32,6 +32,7 @@ Validation targets:
 ```sh
 node --test scripts/tests/inkwave-direct-source-ownership.test.mjs
 node --experimental-vm-modules --test patches/local-quality/tests/nav-heuristic.test.mjs
+node --test patches/local-quality/tests/prop-atlas.test.mjs patches/local-quality/tests/prop-retention.test.mjs
 node --experimental-vm-modules --test patches/local-quality/tests/bot-navigation.test.mjs
 node scripts/check-inkwave-patches.mjs --quick
 node --experimental-vm-modules scripts/check-inkwave-patches.mjs
@@ -47,7 +48,7 @@ The five `src/world/murals.js` transformations previously applied by `patches/lo
 
 ## Completed slice: 3D world lettering, lobby text and logo default
 
-The final build-time ZEVANT string-replacement map has been retired for `src/world/props.js`, `src/world/props-marina-vessels.js`, `src/game/lobbySet-tex.js` and `src/ui/ui-icons.js`. Their displayed names now live in the actual source modules; `src/ui/ui-icons.js` still receives unrelated weapon/icon adapters, so it is not claimed to be fully source-owned yet. `src/world/props.js` still receives separate prop atlas and retention adapters, so **only its lettering** has been directly migrated. Of these four, the direct-source identity test applies to `props-marina-vessels.js` and `lobbySet-tex.js`; `ui-icons.js` and `props.js` still have unrelated adapters.
+The final build-time ZEVANT string-replacement map has been retired for `src/world/props.js`, `src/world/props-marina-vessels.js`, `src/game/lobbySet-tex.js` and `src/ui/ui-icons.js`. Their displayed names now live in the actual source modules; `src/ui/ui-icons.js` still receives unrelated weapon/icon adapters, so it is not claimed to be fully source-owned yet. `src/world/props.js` initially retained independent atlas and retention adapters, but those have **now been migrated into the directly authored `PropKit` implementation** (see the dedicated slice below). It is required to pass direct-source composition identity alongside `props-marina-vessels.js` and `lobbySet-tex.js`. `ui-icons.js` still has unrelated adapters.
 
 The runtime UI string translation key has also moved to `patches/splatoon3/runtime/ui-strings.mjs` directly. Only **four** final display-name substitutions remain, all for locked/unmigrated upstream files: `index.html`, `src/config.js`, `src/ui/menus.js`, and `src/i18n.js`. Do not silently invalidate SHA-256 upstream locks during their migration.
 
@@ -56,6 +57,19 @@ The runtime UI string translation key has also moved to `patches/splatoon3/runti
 The original Splatoon3 source adapter blocks for `src/world/level.js`, `src/world/maps.js` and `src/world/stages/cargo/layout.js` have been removed. The readable game sources now own `squidReturner` classification and all four stage-specific home Super Jump destinations. The current direct sources were independently reconstructed from the base snapshot with the exact removed replacements, with **byte-for-byte equal outputs for all three files**.
 
 These changes only migrate previously established behavior. Other adapters can still modify these modules for unrelated features; do not treat `level.js` or `maps.js` as globally adapter-free until they pass full identity composition.
+
+## Completed slice: PropKit static memory and mobile atlas
+
+Previously `patches/local-quality/prop-retention-adapter.mjs` rewrote the native `PropKit` constructor, placement builder, merge, clear and same-instance rebuild logic. `prop-atlas-adapter.mjs` resized the textures and **wrapped prototype methods at module evaluation time**. Those runtime ownership paths now live as directly readable methods in `inkwave-public/src/world/props.js`.
+
+- The existing `_placements` / `_released` bookkeeping and deterministic same-instance replay live next to `PropKit.add/build/clear`.
+- Atlas scale and GPU allocation release live in `propAtlasDimension`, `syncPropAtlas`, `_makeMaterials`, `build`, `update` and `dispose`. The prior prototype overrides have been replaced by regular method calls and a `finally` cleanup, preserving the existing lifecycle order.
+- Both legacy adapters have been deleted and removed from quality composition, quality identity and build-only exclusions.
+- The exact `PropKit` source immediately before migration, including the already-migrated ZEVANT text, is retained in `patches/local-quality/tests/fixtures/props-before-direct-migration.js.txt` **only as a negative-control fixture**. The test loader maps that fixture to the original `src/world/props.js` URL so its relative imports remain valid.
+- Existing `prop-atlas.test.mjs` and `prop-retention.test.mjs` continue comparing the real directly authored `PropKit` against the pre-migration behavior for geometry, memory, redraw, GPU disposal, quality changes and repeated rebuilds.
+- The source ownership test rejects reintroduced build-time transformations and prototype monkey-patching.
+
+Mechanical code migration does not itself prove a faster frame rate or lower peak memory. Keep geometry, UV and gameplay equivalence as release gates.
 
 ## Next migration batches
 
