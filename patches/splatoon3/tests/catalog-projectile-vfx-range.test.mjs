@@ -223,6 +223,13 @@ test('Bloblobber physical launch remains level against a short ground reticle an
   const traces=angles.map(deg=>({deg,...simulate(fire(deg*Math.PI/180,false))}));
   assert.ok(traces.find(x=>x.deg===20).reach>flatShot.reach,
     'slightly raised shots reach farther when the ground is level');
+  // Include down-aim angles: bouncing physics cannot be validated only
+  // against level/upward shots. Preserve the bounce timeline for root cause
+  // analysis and comparison with published S3 range/angle captures.
+  const downward=[-10,-20,-30,-40,-60].map(deg=>({deg,...simulate(fire(deg*Math.PI/180,false))}));
+  console.log('BLOBLOBBER_ACTUAL_PITCH_TRACES '+JSON.stringify({
+    level:flatShot,upward:traces,downward
+  }));
   assert.ok(traces.find(x=>x.deg===90).reach<1e-4,
     'straight-up input must remain vertical instead of drifting toward the reticle');
   assert.ok(traces.every(x=>x.contacts.length===2),'every pitch has precisely two floor rebounds');
