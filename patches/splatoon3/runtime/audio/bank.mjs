@@ -1,18 +1,19 @@
-import { WEAPON_AUDIO, LOOP_EVENTS } from './weapon-recipes.mjs';
+import { WEAPON_AUDIO, LOOP_EVENTS, mainAudioSourceId } from './weapon-recipes.mjs';
 import { KIT_AUDIO } from './kit-recipes.mjs';
 export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO});
 import { renderSound } from './render.mjs';
 export const MAIN_AUDIO_PREFIX='main:';
 // Source-recorded MP3s always win. Only MAIN-weapon attack one-shots may use
 // an explicitly authored INKWAVE fallback when the real sample is not resident.
-export const mainAttackFallbackEligible=(id,event)=>typeof id==='string'&&!id.includes(':')&&/^fire(?:_[a-z0-9]+)?$/.test(event)&&!!WEAPON_AUDIO[id]?.events.includes(event);
+export const mainAttackFallbackEligible=(id,event)=>typeof id==='string'&&!id.includes(':')&&/^fire(?:_[a-z0-9]+)?$/.test(event)&&!!WEAPON_AUDIO[mainAudioSourceId(id)]?.events.includes(event);
 import { AuthorizedSamplePack } from './authorized-samples.mjs';
 const MAX_BYTES=12*1024*1024;
 export class WeaponSoundBank {
   constructor(ctx,{maxBytes=MAX_BYTES,workerFactory,realOnly=false,audibleShotFallback=false}={}){this.realOnly=realOnly;this.audibleShotFallback=!!audibleShotFallback;this.ctx=ctx;this.maxBytes=Math.max(1024*1024,maxBytes);this.cache=new Map();this.defs=new Map();this.roundRobin=new Map();this.bytes=0;this.hits=0;this.misses=0;this.evicted=0;this.jobs=[];this.pending=new Set();this.timer=null;this.disposed=false;this.workerFactory=workerFactory;this.worker=null;this.workerFailed=false;this.workerError=null;this.inFlight=null;this.generatedOffThread=0;this.authorized=new AuthorizedSamplePack(ctx);}
-  has(id,event='fire'){return !!AUDIO_RECIPES[id]?.events.includes(event);}
-  name(id,event='fire'){return this.has(id,event)?`${MAIN_AUDIO_PREFIX}${id}:${event}`:null;}
+  has(id,event='fire'){return !!AUDIO_RECIPES[mainAudioSourceId(id)]?.events.includes(event);}
+  name(id,event='fire'){id=mainAudioSourceId(id);return this.has(id,event)?`${MAIN_AUDIO_PREFIX}${id}:${event}`:null;}
   get(id,event,variant=0){
+    id=mainAudioSourceId(id);
     if(this.realOnly&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Procedural weapon audio disabled for non-main-shot events');
     const key=`${id}:${event}:${variant}`;let item=this.cache.get(key);
     if(item){this.cache.delete(key);this.cache.set(key,item);this.hits++;return item.buffer;}
@@ -56,7 +57,10 @@ export class WeaponSoundBank {
   resolve(name){
     if(!name?.startsWith(MAIN_AUDIO_PREFIX))return null;
     if(this.defs.has(name))return this.defs.get(name);
-    const sep=name.lastIndexOf(':'),id=name.slice(MAIN_AUDIO_PREFIX.length,sep),event=name.slice(sep+1);
+    const sep=name.lastIndexOf(':'),id=mainAudioSourceId(name.slice(MAIN_AUDIO_PREFIX.length,sep)),event=name.slice(sep+1);
+    // Canonical cache/decoded MP3 identity is the source base, never the kit skin.
+    name=`${MAIN_AUDIO_PREFIX}${id}:${event}`;
+    if(this.defs.has(name))return this.defs.get(name);
     if(!this.has(id,event))return null;
     // Strict deployment must never substitute a synthesized waveform, even if
     // an authorized file is still decoding, missing, or evicted from the LRU.
@@ -83,6 +87,7 @@ export class WeaponSoundBank {
   // Newest local weapon is likely to fire first: prioritize its attack/charge buffers.
   // Keep worker jobs bounded even after rapid weapon switches or many remote actors.
   warm(id,{focus=true,events=null}={}){
+    id=mainAudioSourceId(id);
     if(this.disposed||(this.realOnly&&!this.audibleShotFallback)||!AUDIO_RECIPES[id])return;
     const priority=['fire','fire_full','fire_left','fire_alt','fire_vertical','ready'];
     const eventNames=AUDIO_RECIPES[id].events.filter(e=>!events||events.includes(e)).filter(e=>!this.realOnly||mainAttackFallbackEligible(id,e)).sort((a,b)=>{
