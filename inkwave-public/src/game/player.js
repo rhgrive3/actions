@@ -169,14 +169,27 @@ export class PlayerController {
     return as;
   }
 
-  computeAim() {
-    // the gameplay view — while the map diorama is up the rendered camera is overhead, aim stays with the player
-    const a = this.a, cam = G.rig?.gameCam || G.camera;
-    const fwd = cam.getWorldDirection(_fwd);
-    // start the ray level with the player so geometry between camera and player is ignored
+  computeAim(fixedStep = false) {
+    // A fixed-step FIRE is simulated before CameraRig.update() refreshes gameCam.
+    // Use the current controller yaw/pitch and an aligned eye ray for that tick,
+    // never a previous rendered frame's orientation. Presentation still uses
+    // gameCam and keeps its existing camera/cover and recoil correction.
+    const a = this.a, rig = this.rig, cam = G.rig?.gameCam || G.camera;
+    const tickFollow = fixedStep && rig?.mode === 'follow' && rig.target === a;
+    const fwd = tickFollow ? rig.forward(_fwd) : cam.getWorldDirection(_fwd);
+    const cameraPos = tickFollow ? _c.copy(a.pos).addScaledVector(fwd, -Math.max(0.45, rig.curDist || 4.5)) : cam.position;
+    if (tickFollow) {
+      cameraPos.y += 1.3;
+      // When behind cover the camera shifts laterally; preserve that offset
+      // without advancing the visual camera springs or doing another raycast.
+      const shoulder = Number.isFinite(rig.shoulder) ? rig.shoulder : 0;
+      cameraPos.x -= Math.cos(rig.yaw) * shoulder;
+      cameraPos.z += Math.sin(rig.yaw) * shoulder;
+    }
+    // Start the ray level with the player so geometry behind the player is ignored.
     _v.copy(a.pos); _v.y += 1.3;
-    const along = Math.max(0, _v.sub(cam.position).dot(fwd));
-    const start = _v2.copy(cam.position).addScaledVector(fwd, along);
+    const along = Math.max(0, _v.sub(cameraPos).dot(fwd));
+    const start = _v2.copy(cameraPos).addScaledVector(fwd, along);
     const hit = G.physics.raycast(start, fwd, 70, _hit, true);
     const dist = hit.hit ? hit.dist : 70;
     a.aimPoint.copy(start).addScaledVector(fwd, dist);
