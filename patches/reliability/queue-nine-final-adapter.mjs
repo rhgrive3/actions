@@ -81,8 +81,11 @@ export function adaptQueueNine(rel, input) {
   if (profileAssignments.length !== 1) throw new Error('INKWAVE queue patch conflict: profile boot assignment not unique (' + profileAssignments.length + ')');
   code = code.replace(/^    this\.profile = [^\n]+;$/gm, line =>
     line + '\n    this.profile = sanitizeProfile(this.profile, DEFAULT_PROFILE, WEAPONS);');
-  code = once(code, '    Object.assign(this.settings, partial);',
-    '    Object.assign(this.settings, sanitizeSettings({ ...this.settings, ...partial }, DEFAULT_SETTINGS, QUALITY));',
+  // Preserve the camera overlay's normalized partial update and side effects.
+  // Validate the final settings before the existing persistence step.
+  code = once(code, '    applyAimSettingsChange(this.settings, partial);',
+    '    applyAimSettingsChange(this.settings, partial);\n' +
+    '    Object.assign(this.settings, sanitizeSettings(this.settings, DEFAULT_SETTINGS, QUALITY));',
     'live settings admission');
   code = once(code, '  async startNetMatch(cfg, nm) {',
     '  async startNetMatch(cfg, nm) {\n' +
