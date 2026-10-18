@@ -15,7 +15,6 @@ export function adaptNativeStages(rel,code){
   code="import { nativeStageEnabled, NATIVE_MAPS } from '../patches/native-stages/runtime/registry.mjs';\n"+code;
   once('export const OFFLINE_MAPS =',"if (nativeStageEnabled) { for (const m of NATIVE_MAPS) { const i = MAPS.findIndex(x => x.id === m.id); if (i >= 0) MAPS[i] = m; else MAPS.push(m); } }\nexport const OFFLINE_MAPS =");
  }
- if(rel==='src/world/maps.js')code="import { nativeStageEnabled, NATIVE_LAYOUTS } from '../../patches/native-stages/runtime/registry.mjs';\n"+code+"\nif (nativeStageEnabled) Object.assign(MAP_LAYOUTS, NATIVE_LAYOUTS);\n";
  if(rel==='styles/ui.css')code+='\n/* Long stage lists stay inside their column and scroll above match settings. */\n.iw-ss__list{overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scroll-padding-block:calc(var(--u)*.8);padding-left:calc(var(--u)*.9);margin-left:calc(var(--u)*-.9);}\n.iw-native-unavailable{display:flex;flex-direction:column;gap:.35em;flex-shrink:0;padding:1em;text-align:left;color:var(--text,#fff);background:rgba(20,23,35,.8);border:1px solid rgba(255,255,255,.25);border-radius:.5em;cursor:not-allowed;opacity:.7;font:inherit}.iw-native-unavailable strong{font-size:1.05em}.iw-native-unavailable small{line-height:1.5;white-space:normal}\n';
  if(rel==='src/ui/menus.js'){
   code="import { UNAVAILABLE_NATIVE_STAGES } from '../../patches/native-stages/runtime/registry.mjs';\nimport { nativeStageArt } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
