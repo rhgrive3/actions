@@ -115,6 +115,7 @@ test('Spinner gravity-unknown fallback paints each crossed release coordinate on
  assert.equal(p.catalog.descriptor.splashDropSpec,null,'missing Spinner gravity remains explicitly unresolved');
  let stamps=[];f.G.paint.splat=(at,radius)=>{stamps.push({z:at.z,radius});return 0;};
  f.G.physics.raycast=(at,dir,d,out)=>{out.hit=true;out.point.copy(at).setY(0);out.face=0;out.normal.set(0,1,0);return out;};
+ f.G.physics.level=null; // isolate deterministic step/cutoffs from scenario meshes
  const d=p.catalog.descriptor,s=p.catalog;
  p.pos.set(0,8,0);p.prev.copy(p.pos);p.start.copy(p.pos);p.age=0;p.life=2;p.vel.set(0,0,600);
  d.m={};d.splashDropSpec=null;d.sloshFall=null;d.splashCount=5;d.splashSpacing=2;
