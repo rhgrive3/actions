@@ -5148,6 +5148,14 @@ User clarified the remaining material request as a coating finish. Shell materia
 
 公開版開始点 `b4c17e8f7`、数値は11.3.0固定。ブラスター7・スピナー6・シェルター4・弓3・ワイパー3の計23基本ブキに既存のCPU/GPU共有輪郭を接続。冷却弾の着弾と爆発、ブラスターの爆発球と落下塗り、ワイパーの先端塗り、傘の共有飛沫とパージの形状取り落としを修正。爆発の外周は実際に開いた床写真から測定した正規化断面を追加したが、クマブラスターから他の爆発への転用は近似で、ブキ別原マスクではない。詳細な根拠・写真の採否・再現条件・コード所有箇所・回帰結果・残件は [比較記録](added-ink-shapes-20261018/README.md)。射程・弾道・塗り位置・半径・回数は前後46ケースで同じ。泳げる輪郭と塗り面積は新しい外周に対応して変化する。全ブキ固有マスク、穴、独立飛沫、壁専用形状、実機との画素一致は未確認のまま。
 
+## 2026-10-18：ローラー・筆の斜め移動と転がし塗り
 
-## 2026-10-18: four additional cosmetic headgear
-IDs 8–11 add キンギョマスケラ / サムライヘルメット / フェイスゴーグル / カイトウ・フック. See [integration and historical native evidence](inkwave-new-headgear-2026-10-18.md) and the four source-reference reports. These additions do not implement the original gear abilities or change movement, swimming, shooting, ink recovery, damage, respawn, or camera gameplay logic. Face-only accessories preserve existing hair geometry; crown accessories use supported native fit. Actual S3 gameplay parity and unmeasured frame values remain unconfirmed. Native rendering, geometric tests, and source reference review are recorded separately; successful CI alone is not visual acceptance.
+公開版 `e52f1150b` からの変更。[調査・校正・再現操作](rolling-contact-20261018/README.md)。速度方向へドラムを回す処理を照準方向へ変更し、追加ローラー／筆の保持開始も含める。モデルと釣り合っていなかった接地塗り幅をローラー0.3倍・筆0.25倍で画像校正し、中心帯／側帯の接続と側面の歯形をCPU/GPUで統一。原典11.3.0の数値表、飛沫の塗り幅、ダメージ用半径は保持する。公式の接地ローラー画像と筆の試し撃ち画像は表示確認済み。ただし、撮影条件を揃えた本家の入力計測・投影補正は未取得。校正値と向きの補間は本家実測値ではなく、完全一致を認定しない。
+
+## 2026-10-18 追補：爆発塗りの床投影と、落下・時限爆発の方向
+
+公開版開始点 `e52f1150b7debd9e4accb4e92750121f2b140c8d`、数値は11.3.0固定。前回のクマブラスター床写真を、等間隔の床ガイド5本で相対平面へ逆投影し、爆発の膨らみ・肩の位置を再校正した。ガイドへの再投影残差は最大0.257画像画素。写真の版・ギア・射角と正確なカメラ内部値は不明で、他ブキへの転用は近似のまま。床補正を壁には適用しない。新しいkindを追加して既存の9輪郭と記録済みイベントを維持した。
+
+深さ1の落下飛沫で方向が消える経路、地形接触後の遅延ブラスター爆発でプールに戻った弾の方向を失う経路、刺さって速度0になった弓の時限爆発で方向を失う経路を修正。所有者の現在の照準ではなく、発射済み弾・飛沫の保存方向を使う。比較7ケース44塗り要求で位置・半径・回数・種・位相・面指定は同一。最終の泳げる領域と面積は校正輪郭・向きに応じて変わる。
+
+再現条件、実写の採否、担当コード、CPU/GPU検証、実機未確認の範囲は [追補記録](ink-contour-refinement-20261018/README.md)。全ブキ固有マスク、穴、独立飛沫、壁専用マスク、Switchとの画素一致は未確認を維持する。

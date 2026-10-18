@@ -56,12 +56,16 @@ export function adaptIssueBatch1171(rel, code, replaceOnce) {
           const sd = Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * BAND_R;
           if (sd > -0.03 * r) continue;`,
       `const along = px * sdu + py * sdv, across = -px * sdv + py * sdu;
-          const wobble = r * (0.03 * Math.sin(along / r * 9.0 + seed * 30.0)
-            + 0.018 * Math.sin(along / r * 23.0 + seed * 11.0));
+          const toothA = along / r * 2.1 + seed * 4.7 + .25, toothB = along / r * 5.3 + seed * 2.3 + .25;
+          const wobble = r * (0.08 * (1 - 4 * Math.abs(toothA - Math.floor(toothA) - .5))
+            + 0.04 * (1 - 4 * Math.abs(toothB - Math.floor(toothB) - .5)));
           const qa = Math.abs(along) - r * BAND_L, qb = Math.abs(across) - r * BAND_W - wobble;
           const sd = Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * BAND_R;
           if (sd > 0) continue;`,
       '#1165 CPU follows GPU roller band core signed distance');
+    patch('float wv = r * (0.03 * sin(q.x / r * 9.0 + seed * 30.0) + 0.018 * sin(q.x / r * 23.0 + seed * 11.0));',
+      'float wv = r * (0.08 * (1.0 - 4.0 * abs(fract(q.x / r * 2.1 + seed * 4.7 + 0.25) - 0.5)) + 0.04 * (1.0 - 4.0 * abs(fract(q.x / r * 5.3 + seed * 2.3 + 0.25) - 0.5)));',
+      'rolling ink angular lateral teeth shared with CPU');
   }
 
   if (rel === 'src/main.js') {

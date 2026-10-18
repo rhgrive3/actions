@@ -37,3 +37,19 @@ Historical e964 has all 528 PNGs and six suites independently verified for artif
 The user rejected the prior rail-like goggles silhouette. The new candidate uses broad closed perforated forehead/cheek shells, short central chevrons and a compact curved eye window. Lens opacity changes explicitly from .19 to .30 while tint, roughness, lighting and the preserve-hair contract remain stable. Four batches and zero textures remain; hero/game/far triangles are 7216/3112/2312. General index/finite/nondegenerate checks, closed shell topology, outward lens winding and idempotent disposal pass locally. This is source/CPU evidence only; native visual acceptance is pending.
 
 The prior head6eb640 created no native runs because an upstream report-append conflict made the PR unmergeable. The integration resolves only that common report by preserving both complete appendices, inherits current main's menu-memory adapter and all disjoint upstream changes, and retains the prior 35 headgear paths. The next merged-history candidate must pass all560 captures and required checks; no previous-head result substitutes for this gate.
+
+
+## Relocated historical common-report appendix
+
+The following exact 765-byte headgear appendix was originally appended to the common behavior report by this PR. It is retained here verbatim so the common report can inherit current main without repeated unrelated EOF conflicts. Its statements retain their historical context; later rejection and pending visual gates above supersede any earlier status.
+
+
+## 2026-10-18: four additional cosmetic headgear
+IDs 8–11 add キンギョマスケラ / サムライヘルメット / フェイスゴーグル / カイトウ・フック. See [integration and historical native evidence](inkwave-new-headgear-2026-10-18.md) and the four source-reference reports. These additions do not implement the original gear abilities or change movement, swimming, shooting, ink recovery, damage, respawn, or camera gameplay logic. Face-only accessories preserve existing hair geometry; crown accessories use supported native fit. Actual S3 gameplay parity and unmeasured frame values remain unconfirmed. Native rendering, geometric tests, and source reference review are recorded separately; successful CI alone is not visual acceptance.
+
+
+## Bounded final geometry checks
+Samurai closes side-wing/medallion boundary surfaces and removes polar zero-area triangles, preserving visible relief and materials; far/game/hero triangles are 3684/6856/19084. Goggles shortens forehead openings, keeps central chevrons inside the shell and adds low-LOD forehead subdivision to avoid native sculpt penetration; hero/game/far triangles are 7216/3796/2868. Closed topology, winding, nondegeneracy and ownership tests pass locally. Existing rear-strap/hair overlap remains a disclosed visual review item; no character or hair edit is made. Native acceptance is pending on the new head.
+
+
+The subsequent native9851 side/top comparison still rejected insufficient outer wing curl and narrow border. The final bounded candidate corrects the suppressed curl mask (corner displacement approximately .0225), widens the gold border from4.5% to6%, retains topology closure, unchanged palette and zero sampled front guard crossings. Counts remain unchanged. All66 non-wing/medallion pieces are byte-identical; actual-corner-roll regression passes. Final native review is still required.

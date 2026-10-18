@@ -1,5 +1,5 @@
-// #857 was already fixed by the active movement adapter in the supplied base.
-// Verify that native owner, paint and wire playback share body yaw, not aim yaw.
+// Held rolling keeps the drum facing the camera, including diagonal strafing.
+// Body yaw remains the shared owner for physical paint and remote presentation.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { batchFixture } from './batch03-fixture.mjs';
@@ -8,7 +8,7 @@ async function trace(hz){
  const f=await batchFixture(),a=f.make('roller'),r=a.weaponRunner,clock=new f.FixedClock();
  a.isLocal=true;a.character.update=()=>{};delete a._finishFrame;
  r.rolling=true;r.rollT=1.5;r.flick=-1;r.flickRecover=0;
- const phases=[{x:0,z:1,aim:0},{x:1,z:0,aim:0},{x:1,z:0,aim:Math.PI},{x:-1,z:0,aim:Math.PI}];
+ const phases=[{x:0,z:1,aim:0},{x:Math.SQRT1_2,z:Math.SQRT1_2,aim:0},{x:1,z:0,aim:Math.PI/2},{x:-1,z:0,aim:Math.PI/2}];
  const rows=[],ends=[];
  for(const phase of phases){
   a.vel.set(phase.x*6.48,0,phase.z*6.48);a.intent.move.set(phase.x,0,phase.z);a.intent.fire=true;a.aimYaw=phase.aim;
@@ -21,12 +21,12 @@ async function trace(hz){
    for(const p of f.paint){near(p.opts.stretch.x,Math.sin(a.yaw));near(p.opts.stretch.z,Math.cos(a.yaw));}
    rows.push([a.yaw,a.character.root.rotation.y,f.paint[1].point.x,f.paint[1].point.z]);
   });
-  near(Math.sin(a.yaw),phase.x,2e-4);near(Math.cos(a.yaw),phase.z,2e-4);ends.push(a.yaw);
+  near(Math.sin(a.yaw),Math.sin(phase.aim),2e-4);near(Math.cos(a.yaw),Math.cos(phase.aim),2e-4);ends.push(a.yaw);
  }
  return {rows,ends};
 }
-test('#857 sustained forward/90 degree/camera-only/turnaround share owner, drum and paint heading at 30/60/120 Hz',async()=>{
- const ref=await trace(120);near(ref.ends[1],ref.ends[2],2e-4);
+test('#857 forward/diagonal strafe/camera turn/reverse strafe share owner, drum and paint heading at 30/60/120 Hz',async()=>{
+ const ref=await trace(120);near(ref.ends[0],ref.ends[1],2e-4);near(ref.ends[2],ref.ends[3],2e-4);
  for(const hz of [30,60]){const got=await trace(hz);assert.deepEqual(got.rows,ref.rows);}
 });
 test('#857 native remote playback retains independent body yaw and camera aim yaw; shooter aiming is unchanged',async()=>{

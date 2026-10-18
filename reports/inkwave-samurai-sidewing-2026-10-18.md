@@ -17,3 +17,45 @@ Tests:
 - far 2740→3588, game5272→6712, hero16636→18860 triangles. Main cost is the explicitly requested large concentric medallions and full curved/closed wing surface. No unrelated detail added.
 
 Next gate: actual native perspective front/side/rear with correct source lighting/reflection environment. Gold-lighting diagnosis remains independent; no gold RGB/metalness/roughness/envMap compensation in this change.
+
+
+## Topology follow-up
+
+# Samurai wing topology audit and bounded correction
+
+Protected input: side-wing module SHA256 67867b78004bcfd933435c384f30e52e1303ded9fde1e9203133ea432b000b2e. No edits to that candidate or tested PR head.
+
+## Findings
+- All original wing nondegenerate triangles have consistent winding; no nonmanifold internal edges.
+- Original medallion polar grid had 16/24/40 zero-area triangles per side at far/game/hero, and its outer boundary was open.
+- Curved medallion relief sits ahead of the panel: minimum sampled front gap 0.001707–0.001850, maximum 0.019728. No relief vertex was buried. Small outer vertices extend beyond the ivory field onto the frame, not necessarily beyond the plate.
+- Original wing front and back were separate sheets; only a lower lip joined them, with a 0.001 mismatch at its front join. Top/side thickness was open.
+- Six-angle per-triangle ray audit (0,45,80,100,135,180 degrees) across all LODs: no guard crossing in front/45-degree views. Near edge-on, the guard can occlude the far wing; this is depth ordering, not proof of source mismatch. Rear views see black backing and no medallion. Native images still needed to adjudicate apparent source fidelity.
+
+## Bounded correction
+Closed top/side plate thickness, joined existing lower lip exactly to front/back and reduced its unnecessary 2-row segmentation to 1. Added a buried rear cap and outer wall to each medallion, removing zero-area polar faces. Existing visible medallion relief vertex positions are byte-identical. No new ornament/detail or material/color/light changes.
+
+## Validation
+Fixture passed all existing finite/index/LOD/native-fit/color/disposal/rebuild tests, plus welded edge incidence, opposite shared-edge winding, strictly nondegenerate triangles and positive signed volume for both closed plates and both closed medallions at every LOD.
+Preservation test: 72 unaffected pieces retain byte-identical positions, indices, normals and UVs; all four material properties identical. Visible medallion relief position arrays unchanged.
+Triangle counts far 3588 -> 3684, game 6712 -> 6856, hero 18860 -> 19084; four draw batches throughout.
+Post-correction six-angle rays still show zero front/45-degree guard crossings and zero directly rear-visible medallion triangles. New buried medallion base vertices intentionally lie below the ivory face. Native capture review remains pending.
+
+Reproduce from this directory:
+INKWAVE_HEADGEAR_SITE=$PWD node --experimental-loader ./loader.mjs patches/local-quality/tests/headgear-samurai.fixture.mjs
+node --experimental-loader ./loader.mjs preservation-check.mjs
+node --experimental-loader ./loader.mjs wing-acceptance-audit.mjs
+node --experimental-loader ./loader.mjs wing-angle-audit.mjs
+
+
+## Native broad-shape correction
+
+# Native 9851 wing review
+
+Inspected actual hero front, left, right, back, top and isolated-head-under PNGs from /workspace/shared/newgear-9851-proof/headgear-shard-multi-8-9-9851e5587d687c6c0e30a6b5387b20276d298a5a/.qa-evidence/multi-8-9 against the recovered S3 front-source wing crop.
+
+Confirmed: broad ivory fields and large concentric gold ornaments are present; gold relief carries highlights. The neck guard no longer covers the pale front in front view. Rear shows dark wing backing and no backwards medallion. The six-angle geometric visibility findings agree with these captures. No new catastrophic hole in hero front/side/rear is visible at this image scale. Top/under show thin sheet-like edges, motivating bounded closure rather than unsupported ornament detail.
+
+Remaining source-fidelity caution: original lower/outer wing curls into a broader dark/ink underside and its gold perimeter reads heavier. Current plate remains comparatively flat and sharp-cornered in side/top views, with thin gold edging. The bounded topology correction is not claimed to remove this difference. Lighting differences prevent direct albedo/roughness inference.
+
+These captures predate topology SHA7147a63e63db854832bf61692590583f4cd080996db147457e63ea2e968d33ca; final integration should verify the closed geometry in native scene. No source/material changes made during this visual review.

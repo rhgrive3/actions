@@ -80,15 +80,20 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
   add('broad-gold-kuwagata-'+side,hornGeo,'gold');
   // Broad fukigaeshi: preserve inner/top attachment, extend outer/lower
   // panel and roll the lower lip rearward. All points stay ahead of shikoro.
-  const wing=(u,v,front=0)=>{const pu=(u-.5)*2,pv=(v-.5)*2,ru=pu*Math.sqrt(1-.06*pv*pv)*.5,rv=pv*Math.sqrt(1-.06*pu*pu)*.5;const x=.263+ru*.135+rv*.100,y=.233-ru*.095+rv*.145,z=.185-.045*ru+.030*rv+.025*ru*ru-.045*Math.pow(Math.max(0,-rv)*2,2)*Math.max(0,Math.min(1,(x-.28)/.07))+.018*(1-v)+front;return [side*x,y,z];};
+  const wing=(u,v,front=0)=>{const pu=(u-.5)*2,pv=(v-.5)*2,ru=pu*Math.sqrt(1-.06*pv*pv)*.5,rv=pv*Math.sqrt(1-.06*pu*pu)*.5;const x=.263+ru*.135+rv*.100,y=.233-ru*.095+rv*.145,z=.185-.045*ru+.030*rv+.025*ru*ru-.025*Math.pow(Math.max(0,-rv)*2,2)*Math.max(0,Math.min(1,(ru-.15)/.35))+.018*(1-v)+front;return [side*x,y,z];};
   const W=[5,8,12][d],H=[4,6,8][d];
   add('wing-black-outer-binding-'+side,grid(W,H,(u,v)=>wing(side>0?u:1-u,v,-.001)),'dark');
   add('wing-gold-frame-'+side,grid(W,H,(u,v)=>wing(side>0?.025+.95*u:.975-.95*u,.025+.95*v,.001)),'gold');
-  add('wing-pattern-field-'+side,grid(W,H,(u,v)=>wing(side>0?.070+.86*u:.930-.86*u,.070+.86*v,.003)),'wing');
+  add('wing-pattern-field-'+side,grid(W,H,(u,v)=>wing(side>0?.085+.83*u:.915-.83*u,.085+.83*v,.003)),'wing');
   add('wing-back-'+side,grid(W,H,(u,v)=>wing(side>0?1-u:u,v,-.010)),'dark');
   // Close the rolling lip with its actual ink-colored underside, rather than
   // allowing the unrelated neck-guard triangle to cross over the pale front.
-  add('wing-rolled-lower-edge-'+side,grid(W,2,(u,t)=>wing(side>0?1-u:u,0,-.010*t)),'ink');
+  add('wing-rolled-lower-edge-'+side,grid(W,1,(u,t)=>wing(side>0?1-u:u,0,-.001-.009*t)),'ink');
+  // Close the remaining plate thickness; contour follows the front face boundary.
+  const edgePoint=(u,v,t)=>wing(side>0?u:1-u,v,-.001-.009*t);
+  add('wing-closed-top-edge-'+side,grid(W,1,(u,t)=>edgePoint(u,1,t)),'dark');
+  add('wing-closed-outer-edge-'+side,grid(H,1,(v,t)=>edgePoint(1,1-v,t)),'dark');
+  add('wing-closed-inner-edge-'+side,grid(H,1,(v,t)=>edgePoint(0,v,t)),'dark');
   // Turned concentric gold medallion, roughly half the plate width. Its
   // circular profile is aligned with the curved panel, not the camera plane.
   const c=new THREE.Vector3(...wing(.40,.69,.006));
@@ -96,8 +101,12 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
   const dy0=new THREE.Vector3(...wing(.40,.691)).sub(new THREE.Vector3(...wing(.40,.689))).normalize();
   const normal=dx.clone().cross(dy0).normalize().multiplyScalar(side);
   const tangentY=normal.clone().cross(dx).normalize();
-  const profile=[[0,.016],[.016,.013],[.022,.005],[.025,.011],[.029,.011],[.032,.004],[.035,.009],[.039,.009],[.042,.003],[.045,.007],[.048,.007],[.051,.001]];
+  const profile=[[0,.016],[.016,.013],[.022,.005],[.025,.011],[.029,.011],[.032,.004],[.035,.009],[.039,.009],[.042,.003],[.045,.007],[.048,.007],[.051,.001],[.051,-.010],[0,-.010]];
   const medallion=grid([16,24,40][d],profile.length-1,(u,v)=>{const i=Math.min(profile.length-2,Math.floor(v*(profile.length-1))),f=v*(profile.length-1)-i;const r=profile[i][0]*(1-f)+profile[i+1][0]*f,h=profile[i][1]*(1-f)+profile[i+1][1]*f,a=-u*PI*2;return c.clone().addScaledVector(dx,Math.cos(a)*r).addScaledVector(tangentY,Math.sin(a)*r).addScaledVector(normal,h).toArray();});
+  // Collapse the polar grid triangles instead of retaining zero-area faces.
+  const mp=medallion.attributes.position,mi=medallion.index.array,clean=[];
+  for(let i=0;i<mi.length;i+=3){const a=new THREE.Vector3().fromBufferAttribute(mp,mi[i]),b=new THREE.Vector3().fromBufferAttribute(mp,mi[i+1]),c=new THREE.Vector3().fromBufferAttribute(mp,mi[i+2]);if(b.sub(a).cross(c.sub(a)).lengthSq()>1e-24)clean.push(mi[i],mi[i+1],mi[i+2]);}
+  medallion.setIndex(clean);
   add('wing-concentric-gold-medallion-'+side,medallion,'gold');
 
  }

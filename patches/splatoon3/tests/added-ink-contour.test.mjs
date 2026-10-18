@@ -16,14 +16,15 @@ function inside(x,y,points){
   return result;
 }
 
-test('blast table preserves the photographed lobes more closely than an ellipse',()=>{
-  const sections=reference.profiles['ink-blast'].sections;
-  assert.deepEqual(INK_PROFILE_SECTIONS[8],sections,'documented measurement owns runtime control sections');
+const rectified=JSON.parse(fs.readFileSync(new URL('../reference/rectified-blast-contour-20261018.json',import.meta.url)));
+for(const [input,profile,row] of [[reference,'ink-blast',8],[rectified,'ink-blast-rectified',9]])test(profile+' preserves measured lobes more closely than an ellipse',()=>{
+  const sections=input.profiles[profile].sections;
+  assert.deepEqual(INK_PROFILE_SECTIONS[row],sections,'documented measurement owns runtime control sections');
   const polygon=[...sections.map(([y,l])=>[-l,y]),...sections.toReversed().map(([y,,r])=>[r,y])];
   let union=0,intersection=0,circleUnion=0,circleIntersection=0;
   for(let j=0;j<512;j++)for(let i=0;i<512;i++){
     const x=2*(i+.5)/512-1,y=2*(j+.5)/512-1;
-    const expected=inside(x,y,polygon),actual=inkFootprintContains(y,x,18,0),circle=x*x+y*y<1;
+    const expected=inside(x,y,polygon),actual=inkFootprintContains(y,x,10+row,0),circle=x*x+y*y<1;
     if(expected||actual)union++;if(expected&&actual)intersection++;
     if(expected||circle)circleUnion++;if(expected&&circle)circleIntersection++;
   }

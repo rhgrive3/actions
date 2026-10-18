@@ -28,7 +28,7 @@ async function rollAt(speed, startFrame, {sideTarget=false, ink=100}={}) {
   return {f,a,r,hits,width:floor.extent('x').width};
 }
 
-test('#649 rolling side paint widens by ground speed from low roll to the sourced dash maximum',async()=>{
+test('#649 rolling side paint widens by ground speed from low roll to the calibrated dash maximum',async()=>{
   const profile=await batchFixture();
   const movementOwner={a:{weapon:profile.WEAPONS.roller}};
   const beforeDashSpeed=rollingMovementSpeed({...movementOwner,rollT:89/60});
@@ -53,17 +53,17 @@ test('#649 rolling side paint widens by ground speed from low roll to the source
 
   for(const sample of [low,normal,beforeDash,dash]){
     assert.equal(sample.f.paint.length,5,'three native drum bands plus two floor side splashes');
-    assert.ok(sample.f.paint.slice(0,3).every(e=>e.opts.kind==='roll'&&e.radius===.62));
+    assert.ok(sample.f.paint.slice(0,3).every(e=>e.opts.kind==='roll'&&Math.abs(e.radius-Math.hypot(Math.sqrt(.62**2-.35**2)*.3,.35))<1e-12));
     assert.ok(sample.f.paint.slice(3).every(e=>e.opts.kind==='rollFloor'));
   }
   assert.ok(low.width<normal.width,`low=${low.width}, normal=${normal.width}`);
   assert.ok(Math.abs(normal.width-beforeDash.width)<.04,`normal=${normal.width}, 89F=${beforeDash.width}`);
   assert.ok(normal.width<dash.width,`normal=${normal.width}, dash=${dash.width}`);
-  const nativeHalf=dash.a.weapon.rollWidth*.33+Math.sqrt(.62**2-.35**2)*(.62+.1+.03+.018);
+  const nativeHalf=(dash.a.weapon.rollWidth*.33+Math.sqrt(.62**2-.35**2)*(.62+.1+.08+.04))*.3;
   const maxSpeed=source.SpeedMax*completion.referenceHz*completion.worldUnitsPerSourceUnit;
   for(const [sample,speed] of [[low,1],[normal,beforeDashSpeed],[beforeDash,beforeDashSpeed],[dash,dashSpeed]]){
     const ratio=Math.max(0,Math.min(1,speed/maxSpeed));
-    const expectedHalf=nativeHalf+(source.WidthHalfMax*completion.worldUnitsPerSourceUnit-nativeHalf)*ratio;
+    const expectedHalf=nativeHalf+(source.WidthHalfMax*completion.worldUnitsPerSourceUnit*.3-nativeHalf)*ratio;
     assert.ok(Math.abs(sample.width-2*expectedHalf)<.1,
       `speed=${speed}: measured=${sample.width}, linear proxy=${2*expectedHalf}`);
   }
@@ -78,7 +78,7 @@ test('#649 rolling side paint widens by ground speed from low roll to the source
 test('#649 stopped and low-ink rolls keep the native body-only footprint; ink level does not scale width',async()=>{
   const stopped=await rollAt(0,60);
   assert.equal(stopped.f.paint.length,3,'a stopped drum emits only the three native body bands: hs=0 clamps the side bands away');
-  assert.ok(stopped.f.paint.every(e=>e.opts.kind==='roll'&&e.radius===.62));
+  assert.ok(stopped.f.paint.every(e=>e.opts.kind==='roll'&&Math.abs(e.radius-Math.hypot(Math.sqrt(.62**2-.35**2)*.3,.35))<1e-12));
   const dry=await rollAt(6.48,30,{ink:.4});
   assert.equal(dry.f.paint.length,0,'ink at or below the 0.5 roll gate stops rolling before any paint emission');
   const lowInk=await rollAt(6.48,30,{ink:.6});
@@ -129,6 +129,6 @@ test('#649 real composed paint and speed trace match at 30/60/120 Hz render sche
   assert.ok(splats.some(s=>s.kind==='roll')&&splats.some(s=>s.kind==='rollFloor'));
   const early=footprintOf(f,splats,0,10),dash=footprintOf(f,splats,145,150);
   assert.ok(early<dash,`early roll width ${early} < settled dash width ${dash}`);
-  assert.ok(Math.abs(dash-5.6)<.06,`dash reaches the #189 max width: ${dash}`);
+  assert.ok(Math.abs(dash-1.68)<.10,`dash reaches the #189 max width: ${dash}`);
   assert.ok(Math.abs(speeds[149]-f.WEAPONS.roller.rollSpeed)<1e-9,'settled at sourced dash speed');
 });

@@ -61,7 +61,7 @@ test('all selected main Actors use their CPU silhouettes through real release/co
       assert.ok(sourceEvents.every(s=>s.footprint===CHARGER_FOOTPRINT),
         r.id+' Charger feet, travel and terminal ink must all use the organic outline');
     }
-    assert.ok([...kinds].some(k=>k>=10&&k<=18),r.id+' selected live silhouette');
+    assert.ok([...kinds].some(k=>k>=10&&k<=19),r.id+' selected live silhouette');
     assert.equal(a.stats.turf,paint.counts[0]*.0625,r.id+' exact once-only turf credit');
     rows.push({id:r.id,family:r.family,kinds:[...kinds].sort((a,b)=>a-b),stamps:stamps.length,cells:paint.counts[0],
       grid:digest(paint.grid),events:digest(JSON.stringify(stamps))});
@@ -70,7 +70,7 @@ test('all selected main Actors use their CPU silhouettes through real release/co
   if(process.env.INK_FOOTPRINT_RECEIPT)fs.writeFileSync(process.env.INK_FOOTPRINT_RECEIPT,JSON.stringify({version:'11.3.0',profileBytes:8192,rows},null,2)+'\n');
 });
 
-test('oriented contact band has parallel sides and continuous center coverage without circular scallops',async()=>{
+test('oriented contact band keeps jagged sides and continuous center coverage',async()=>{
   const f=await fixture(options),{paint,V}=makePaintWorld(f,{cell:.125});
   const direction=V(0,0,1);
   for(let z=4;z<12;z+=.25)paint.splat(V(0,0,z),.6,0,{kind:'source-shot',footprint:'ink-contact',seed:.37,face:0,stretch:direction,stretchAmt:0});
@@ -80,7 +80,7 @@ test('oriented contact band has parallel sides and continuous center coverage wi
     for(let x=-1;x<1;x+=.125)if(paint.sampleWorld(0,V(x,0,z))===1){lo=Math.min(lo,x);hi=Math.max(hi,x);}
     assert.ok(lo<0&&hi>0,'center path remains swimmable');halfWidths.push(hi-lo);
   }
-  assert.equal(new Set(halfWidths).size,1,'straight stroke keeps a constant width');
+  assert.ok(new Set(halfWidths).size>1,'continuous stroke retains lateral nicks instead of perfectly straight edges');
   assert.equal(paint.sampleWorld(0,V(1,0,8)),0,'does not claim turf beyond the brush width');
   assert.ok(face.nu>0);
 });

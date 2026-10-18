@@ -6,7 +6,7 @@
 // two CPU edge reads; no per-cell trigonometry, extra stamps or simulation.
 export const CHARGER_FOOTPRINT = 'ink-charger';
 export const INK_FOOTPRINT_KINDS = Object.freeze(['ink-shot', 'ink-slosh', 'ink-brush', 'ink-flick', 'ink-contact',
-  'ink-charger-a', 'ink-charger-b', 'ink-charger-c', 'ink-blast']);
+  'ink-charger-a', 'ink-charger-b', 'ink-charger-c', 'ink-blast', 'ink-blast-rectified']);
 // Three precomputed variants retain the old seeded organic Charger character
 // without the original per-pixel/per-cell trig, satellite ink or extra turf.
 // Existing Charger row indices and bytes remain stable in the expanded strip.
@@ -16,6 +16,13 @@ export function chargerInkProfileKind(seed) {
 }
 export const INK_PROFILE_SIZE = 128;
 export const INK_PROFILE_HEIGHT = 16;
+export const LEGACY_BLAST_KIND = 18;
+export const RECTIFIED_BLAST_KIND = 19;
+// Wall drips have their own simulation; the floor-only camera calibration
+// must not deform a wall stamp or change older recorded paint events.
+export function inkProfileSurfaceKind(kind, wall) {
+  return kind === RECTIFIED_BLAST_KIND && wall ? LEGACY_BLAST_KIND : kind;
+}
 export const INK_PROFILE_LAST_KIND = 10 + INK_FOOTPRINT_KINDS.length - 1;
 
 // Longitudinal coordinate, left half-width, right half-width. These control
@@ -37,10 +44,10 @@ export const INK_PROFILE_SECTIONS = Object.freeze([
   // Roller flick: uneven broad head and tapered connecting fingers. The
   // horizontal/vertical unit distributions remain separate source volleys.
   [[-1,0,0],[-.93,.12,.09],[-.82,.21,.25],[-.69,.18,.16],[-.56,.38,.30],[-.42,.51,.60],[-.29,.47,.50],[-.16,.78,.73],[-.02,.86,.91],[.12,.81,.85],[.26,1,.93],[.40,.90,1],[.54,.91,.82],[.68,.72,.84],[.80,.61,.55],[.92,.31,.36],[1,0,0]],
-  // Contact: parallel edges, short rounded ends. Half-length .58 is bounded
+  // Contact: irregular bitten edges, short rounded ends. Half-length .58 is bounded
   // by the existing .52R contact-sampling interval, so neighboring stamps
   // overlap without drawing a disk at every sample. Literal lateral width R.
-  [[-1,0,0],[-.60,0,0],[-.58,.84,.84],[-.53,.97,.97],[-.45,1,1],[.45,1,1],[.53,.97,.97],[.58,.84,.84],[.60,0,0],[1,0,0]],
+  [[-1,0,0],[-.60,0,0],[-.58,.72,.80],[-.53,.94,.87],[-.45,1,.96],[-.36,.87,1],[-.27,.97,.83],[-.17,.84,.96],[-.06,1,.88],[.04,.86,1],[.15,.98,.85],[.25,.83,.97],[.36,1,.86],[.45,.89,1],[.53,.94,.88],[.58,.76,.81],[.60,0,0],[1,0,0]],
   // Charger: old pre-#1443 blobWobble contour sampled at three fixed seeds
   // (.13/.47/.83), with both axes bounded by the pinned source WidthHalf
   // and DepthHalf envelope. These are silhouette approximations, not retail
@@ -108,6 +115,67 @@ export const INK_PROFILE_SECTIONS = Object.freeze([
     [0.94011976,0.33333333,0.0],[0.95209581,0.32038835,0.0],[0.96407186,0.31391586,0.0],
     [0.9760479,0.29449838,0.0],[0.98802395,0.2815534,0.0],[1,0,0],
   ],
+  // Same connected retail body, with floor perspective removed using five
+  // equally spaced range guides. Calibration/uncertainty are recorded in
+  // reference/rectified-blast-contour-20261018.json. Legacy row 18 stays intact.
+  [
+    [-1,0,0],[-0.99212954,0.10496434,0.0],[-0.98422651,0.12579723,0.0],
+    [-0.9762907,0.14671653,0.03234385],[-0.96832191,0.15234284,0.04246956],[-0.96031994,0.1631299,0.05777475],
+    [-0.95228456,0.16881394,0.06284775],[-0.94421558,0.17452175,0.06794196],[-0.93611279,0.1854231,0.07305752],
+    [-0.92797596,0.20673116,0.08337504],[-0.9198049,0.22293754,0.08854461],[-0.91159937,0.23400994,0.09373597],
+    [-0.90335916,0.23470252,0.10416259],[-0.89508405,0.24062239,0.11985772],[-0.88677382,0.24656738,0.13038403],
+    [-0.87842824,0.24729108,0.15669482],[-0.8700471,0.24801787,0.29353053],[-0.86163015,0.24874777,0.3044952],
+    [-0.85317717,0.24948079,0.3155068],[-0.84468793,0.25550853,0.32127406],[-0.8361622,0.26156219,0.32706611],
+    [-0.82759973,0.27295632,0.33288312],[-0.8190003,0.27907378,0.33872524],[-0.81036365,0.28521771,0.34459264],
+    [-0.80168956,0.28603934,0.35048548],[-0.79297777,0.29222511,0.36712507],[-0.78422804,0.29843782,0.37309265],
+    [-0.77544012,0.30467764,0.37908627],[-0.76661376,0.31094476,0.37971036],[-0.7577487,0.32264692,0.38574476],
+    [-0.7488447,0.40485334,0.39180567],[-0.73990149,0.42224515,0.39789327],[-0.73091882,0.42882699,0.39856437],
+    [-0.72189642,0.43543793,0.41014924],[-0.71283403,0.44207817,0.41631796],[-0.70373138,0.44874792,0.42799372],
+    [-0.69458821,0.44995552,0.4452133],[-0.68540424,0.45116851,0.4680138],[-0.6761792,0.44687053,0.46885069],
+    [-0.66691281,0.43149578,0.44757632],[-0.65760479,0.43267549,0.43174754],[-0.64825487,0.43941415,0.43250845],
+    [-0.63886276,0.46288175,0.50563309],[-0.62942817,0.46971919,0.51214328],[-0.61995081,0.47658763,0.51868297],
+    [-0.6104304,0.48348727,0.51964827],[-0.60086664,0.49041833,0.52623484],[-0.59125923,0.50301071,0.52722177],
+    [-0.58160787,0.51566069,0.53385578],[-0.57191226,0.53967966,0.54052021],[-0.5621721,0.563809,0.54154678],
+    [-0.55238708,0.58236794,0.54257807],[-0.54255688,0.59531789,0.54930878],[-0.53268119,0.61403561,0.5503628],
+    [-0.52275971,0.62711906,0.55714278],[-0.5127921,0.63452897,0.56968865],[-0.50277804,0.63622567,0.58229298],
+    [-0.49271721,0.6494526,0.61223963],[-0.48260929,0.66274145,0.6307772],[-0.47245394,0.83816185,0.68413087],
+    [-0.46225082,0.84615519,0.70292469],[-0.4519996,0.84837075,0.72180712],[-0.44169993,0.85059678,0.72912036],
+    [-0.43135148,0.84699033,0.74231125],[-0.42095389,0.84336675,0.74970788],[-0.41050682,0.83972593,0.75126889],
+    [-0.4000099,0.83606775,0.75283735],[-0.38946279,0.82649316,0.7544133],[-0.37886512,0.82278572,0.75599681],
+    [-0.36821653,0.81906046,0.75166068],[-0.35751664,0.81531726,0.74730366],[-0.3467651,0.81155599,0.74292561],
+    [-0.33596151,0.8137468,0.73852636],[-0.32510551,0.80996347,0.72812101],[-0.31419671,0.80616174,0.72966369],
+    [-0.30323473,0.80835541,0.73121389],[-0.29221917,0.80453117,0.7388003],[-0.28114965,0.8067316,0.74642388],
+    [-0.27002576,0.80894284,0.7540849],[-0.2588471,0.81116496,0.76178365],[-0.24761326,0.81339805,0.76952038],
+    [-0.23632385,0.81564219,0.7772954],[-0.22497844,0.81789746,0.78510898],[-0.21357662,0.8262975,0.79296142],
+    [-0.20211796,0.83473942,0.79470415],[-0.19060204,0.84322352,0.8026198],[-0.17902842,0.85175012,0.80439546],
+    [-0.16739669,0.86031955,0.80618003],[-0.15570638,0.86893212,0.80176283],[-0.14395707,0.87758816,0.80354977],
+    [-0.1321483,0.94870992,0.79910356],[-0.12027963,0.97638633,0.80089282],[-0.10835058,0.98538168,0.80269117],
+    [-0.09636071,0.99442289,0.8044987],[-0.08430955,0.99720432,0.80631547],[-0.07219661,1.0,0.80814155],
+    [-0.06002144,0.99647163,0.80997702],[-0.04778355,0.99927983,0.81182194],[-0.03548244,0.99573137,0.81367638],
+    [-0.02311764,0.98577689,0.81554044],[-0.01068864,0.9693665,0.81100993],[0.00180505,0.93360799,0.81929765],
+    [0.01436395,0.91697582,0.82119096],[0.02698856,0.88734763,0.82309418],[0.03967941,0.87697828,0.83147881],
+    [0.05243701,0.84708905,0.85937289],[0.06526189,0.84306442,0.87440297],[0.07815459,0.84554126,0.89603528],
+    [0.09111565,0.84149119,0.92432233],[0.1041456,0.84397702,0.95275976],[0.11724501,0.84647609,0.96819895],
+    [0.13041443,0.84239605,0.98372065],[0.14365441,0.83829414,0.99271538],[0.15696554,0.83417019,0.99513054],
+    [0.17034838,0.83002403,0.99755871],[0.18380352,0.82585546,1.0],[0.19733154,0.81498256,0.99577276],
+    [0.21093304,0.81075051,0.98482266],[0.22460862,0.79977726,0.96709478],[0.23835888,0.78874409,0.94927008],
+    [0.25218444,0.78440543,0.92459284],[0.26608591,0.75294902,0.89300661],[0.28006393,0.7416958,0.88162285],
+    [0.29411913,0.72356956,0.88379799],[0.30825215,0.71217269,0.87915544],[0.32246364,0.70071255,0.87448711],
+    [0.33675425,0.69605636,0.87666055],[0.35112465,0.68448725,0.8719592],[0.3655755,0.67975957,0.86032531],
+    [0.38010749,0.66807975,0.82784931],[0.3947213,0.66327927,0.80908065],[0.40941762,0.65148698,0.79020603],
+    [0.42419715,0.63962792,0.77820894],[0.4390606,0.62069728,0.76614374],[0.45400869,0.59463464,0.76805821],
+    [0.46904214,0.57546742,0.76293937],[0.48416169,0.57031927,0.75779122],[0.49936808,0.55805684,0.72427467],
+    [0.51466206,0.55282889,0.7118804],[0.53004438,0.55469636,0.67091201],[0.54551582,0.55657466,0.65114509],
+    [0.56107715,0.55846387,0.63126332],[0.57672916,0.55317618,0.63282944],[0.59247264,0.54785758,0.62719579],
+    [0.6083084,0.54250781,0.62875916],[0.62423725,0.5298753,0.63758302],[0.64026001,0.52444098,0.63918623],
+    [0.65637751,0.51168035,0.64079892],[0.67259061,0.49152824,0.64973698],[0.68890015,0.47859382,0.65872821],
+    [0.705307,0.45822278,0.66041363],[0.72181202,0.43772984,0.66210913],[0.73841611,0.42451752,0.64900757],
+    [0.75512015,0.41122566,0.53186445],[0.77192506,0.41275019,0.52573888],[0.78883175,0.4366966,0.51957621],
+    [0.80584114,0.44580134,0.49838896],[0.82295418,0.45496156,0.0],[0.84017181,0.45663838,0.0],
+    [0.857495,0.45832549,0.0],[0.87492472,0.45243724,0.0],[0.89246196,0.44651266,0.0],
+    [0.91010771,0.44055142,0.0],[0.92786299,0.42689682,0.0],[0.94572881,0.4208374,0.0],
+    [0.96370622,0.39933177,0.0],[0.98179626,0.38541972,0.0],[1,0,0],
+  ],
 ].map(sections => Object.freeze(sections.map(section => Object.freeze(section)))));
 
 export function mainInkFootprint(weapon, contact = false) {
@@ -132,7 +200,7 @@ export function mainInkFootprint(weapon, contact = false) {
 // Keep phase selection explicit; do not infer from the owner's current weapon.
 export function mainInkBurstFootprint(weapon) {
   const family=typeof weapon==='string'?weapon:weapon?.catalogRecord?.family??weapon?.family??weapon?.kind;
-  return ['blaster','stringer','splatana','slosher'].includes(family)?'ink-blast':null;
+  return ['blaster','stringer','splatana','slosher'].includes(family)?'ink-blast-rectified':null;
 }
 
 // Pure data, created once, shared by every paint world. RG hold positive
@@ -145,7 +213,8 @@ for (let row = 0; row < INK_PROFILE_SECTIONS.length; row++) {
     while (segment < sections.length - 2 && sections[segment + 1][0] < along) segment++;
     const a = sections[segment], b = sections[segment + 1], t = (along - a[0]) / (b[0] - a[0]);
     const offset = (row * INK_PROFILE_SIZE + i) * 4;
-    const ease = t * t * (3 - 2 * t);
+    // Contact keeps angular nicks; airborne pools retain rounded shoulders.
+    const ease = row === 4 ? t : t * t * (3 - 2 * t);
     for (let channel = 0; channel < 2; channel++) {
       const av = a[channel + 1], bv = b[channel + 1];
       // Round a closing cap instead of making each puddle a pointed polygon.
@@ -186,7 +255,7 @@ export function createInkProfileTexture(THREE) {
 
 export const INK_FOOTPRINT_GLSL = `
 uniform highp sampler2D uMainInkProfiles;
-float mainInkDistance(vec2 p, vec2 direction, float radius, float kind, float word) {
+float mainInkDistance(vec2 p, vec2 direction, float radius, float kind, float word, float isWall) {
   vec2 d = dot(direction, direction) > 0.5 ? direction : vec2(1.0, 0.0);
   float along = dot(p, d) / radius;
   float across = dot(p, vec2(-d.y, d.x)) / radius;
@@ -195,8 +264,9 @@ float mainInkDistance(vec2 p, vec2 direction, float radius, float kind, float wo
   // carry both exact RGBA8 endpoints, so one nearest fetch is sufficient.
   float x = (clamp(along, -1.0, 1.0) + 1.0) * 0.5 * 127.0;
   float i = floor(x), t = x - i;
+  float profileKind = kind == ${RECTIFIED_BLAST_KIND}.0 && isWall > 0.5 ? ${LEGACY_BLAST_KIND}.0 : kind;
   vec4 packedEdges = texture2D(uMainInkProfiles,
-    vec2((i + 0.5) / 128.0, (kind - 10.0 + 0.5) / ${INK_PROFILE_HEIGHT}.0));
+    vec2((i + 0.5) / 128.0, (profileKind - 10.0 + 0.5) / ${INK_PROFILE_HEIGHT}.0));
   vec2 edges = packedEdges.rg * (1.0 - t) + packedEdges.ba * t;
   // A zero-width section is empty. Its centerline is not an ink boundary:
   // returning zero there would leave a half-alpha hair beyond a contact band.
