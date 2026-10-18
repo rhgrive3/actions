@@ -174,10 +174,10 @@ test('Bloblobber physical launch remains level against a short ground reticle an
     blocks:[box],faces:[],
     queryBlocks:(_x0,_z0,_x1,_z1,out)=>{out.length=0;out.push(0);return out;},
   };
-  function fire(pitch,nearbyGroundReticle) {
+  function fire(pitch,nearbyGroundReticle,birthHeight=0) {
     system.clear();f.G.actors.length=0;f.G.physics.level=null;
     const a=f.make(r.id);a.form='kid';a.ink=100;a.aimYaw=0;a.aimPitch=pitch;
-    a.pos.set(0,0,0);a.character.root.position.copy(a.pos);
+    a.pos.set(0,birthHeight,0);a.character.root.position.copy(a.pos);
     if(nearbyGroundReticle)a.aimPoint.set(0,-.4,4);
     else a.aimPoint.set(0,1.05+70*Math.sin(pitch),70*Math.cos(pitch));
     a.intent.fire=true;
@@ -187,7 +187,7 @@ test('Bloblobber physical launch remains level against a short ground reticle an
     assert.equal(globs.length,4,'one source volley emits one big and three delayed small bubbles');
     const first=globs.find(p=>p.catalog.descriptor.unit===0);
     assert.ok(first,'unit zero owns the large bubble');
-    assert.equal(first.life,240/60,'finite void guard replaces the generic 1.2s catalogue cutoff');
+    assert.equal(first.life,480/60,'source-based bounces use a finite non-retail void guard');
     const source=r.parameters.UnitGroupParam.Unit[0],speed=source.SpawnSpeedGround*60;
     assert.ok(Math.abs(first.vel.x)<1e-8,'zero yaw has no lateral drift');
     assert.ok(Math.abs(first.vel.z-speed*Math.cos(pitch))<1e-7,'pitch follows the stick, not near-floor reticle convergence');
@@ -197,22 +197,36 @@ test('Bloblobber physical launch remains level against a short ground reticle an
   }
   function simulate(p,requireAfterDefaultLife=false) {
     f.G.physics.level=flat;
-    let sawBounce=false,survived72=false,ended=0,distance=0;
-    for(let frame=1;frame<=241;frame++){
+    let sawBounce=false,survived72=false,ended=0,distance=0;const contacts=[];
+    for(let frame=1;frame<=481;frame++){
+      const before=p.catalog.groundBounces;
       const dead=system._step(p,1/60);
+      if(p.catalog.groundBounces>before)contacts.push({frame,distance:p.pos.z});
       if(p.catalog.groundBounces>0)sawBounce=true;
       if(frame===74){assert.equal(dead,false,'bubble must not vanish at old 1.2s limit');survived72=true;}
       if(dead){ended=frame;distance=p.pos.z;break;}
     }
     assert.ok(sawBounce,'real ground geometry must cause a bounce');
     assert.equal(p.catalog.groundBounces,2,'third floor contact ends the bubble after two rebounds');
-    assert.ok(ended>0&&ended<240,'ordinary floor shots end on terrain, not on the cleanup timer');
+    assert.ok(ended>0&&ended<480,'ordinary floor shots end on terrain, not on the cleanup timer');
     if(requireAfterDefaultLife)assert.ok(survived72,'high arcs must survive the previous generic cutoff');
-    return {frames:ended,reach:distance};
+    return {frames:ended,reach:distance,contacts};
   }
   const flatShot=simulate(fire(0,true));
   assert.ok(flatShot.reach>19, 'level shot must not plunge into the near-floor crosshair and truncate range');
   const elevatedShot=simulate(fire(Math.PI/3,false),true);
   assert.ok(elevatedShot.frames>72,'60-degree trajectory reaches the third floor after 1.2s');
   assert.ok(elevatedShot.reach>14,'high-arc bubble survives to a distant contact');
+  // These are physical trajectory endpoints, not the community wiki's
+  // player-hurtbox effective range (5.3 lines without a lob/5.4 with one).
+  const angles=[5,20,40,75,90];
+  const traces=angles.map(deg=>({deg,...simulate(fire(deg*Math.PI/180,false))}));
+  assert.ok(traces.find(x=>x.deg===20).reach>flatShot.reach,
+    'slightly raised shots reach farther when the ground is level');
+  assert.ok(traces.find(x=>x.deg===90).reach<1e-4,
+    'straight-up input must remain vertical instead of drifting toward the reticle');
+  assert.ok(traces.every(x=>x.contacts.length===2),'every pitch has precisely two floor rebounds');
+  const cliffShot=simulate(fire(Math.PI/2,false,20),true);
+  assert.ok(cliffShot.frames>240,'high-ground near-vertical fire must not vanish at old 240F cutoff');
+  assert.ok(cliffShot.frames<480,'high-ground projectile still ends at the sourced third floor contact');
 });
