@@ -183,3 +183,19 @@ test('standalone native sweep keeps Node collision regression free of the full s
   assert.equal(impact.face, -1);
   assert.deepEqual([impact.point.x, impact.normal.x], [1.25, -1]);
 });
+
+
+test('practice-stage registry and surface slots are authored without string adapters', async () => {
+  const { adaptBuildSource } = await import('../inkwave-source-composition.mjs');
+  const range = fs.readFileSync(new URL('../../patches/practice-range/adapter.mjs', import.meta.url), 'utf8');
+  for (const [path,pattern] of [
+    ['src/world/stages/index.js', /range: \{ \.\.\.rangeLayout, \.\.\.rangeProps, \.\.\.rangeSurfaces, \.\.\.rangeMurals \}/],
+    ['src/world/stages/surfaces.js', /range: \[31, 32, 33\]/],
+  ]) {
+    const source = fs.readFileSync(new URL('../../inkwave-public/' + path, import.meta.url), 'utf8');
+    assert.match(source, pattern);
+    assert.equal(adaptBuildSource(path, source), source, path + ' must not be modified by the build');
+    assert(!range.includes("if (rel === '" + path + "') {"), path + ' must not be rewritten by Practice Range');
+  }
+  assert(!range.includes("if (rel === 'src/world/maps.js') {"));
+});
