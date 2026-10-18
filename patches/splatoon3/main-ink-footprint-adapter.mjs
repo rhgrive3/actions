@@ -8,18 +8,19 @@ export function adaptMainInkFootprints(rel, code) {
     code = code.replace(a, b);
   };
   if (rel === 'src/world/paint.js') {
-    code = "import { INK_FOOTPRINT_KINDS, inkFootprintContains, createInkProfileTexture } from '../../patches/splatoon3/runtime/main-ink-footprints.mjs';\n" + code;
-    once("'source-shot': 8, 'source-splash': 9", "'source-shot': 8, 'source-splash': 9, 'ink-shot': 10, 'ink-slosh': 11, 'ink-brush': 12, 'ink-flick': 13, 'ink-contact': 14");
-    once('1.25, 1.35, 1, 1];', '1.25, 1.35, 1, 1, 1.42, 1.42, 1.42, 1.42, 1.42];');
+    code = "import { CHARGER_FOOTPRINT, INK_FOOTPRINT_KINDS, chargerInkProfileKind, inkFootprintContains, createInkProfileTexture } from '../../patches/splatoon3/runtime/main-ink-footprints.mjs';\n" + code;
+    once("'source-shot': 8, 'source-splash': 9", "'source-shot': 8, 'source-splash': 9, 'ink-shot': 10, 'ink-slosh': 11, 'ink-brush': 12, 'ink-flick': 13, 'ink-contact': 14, 'ink-charger-a': 15, 'ink-charger-b': 16, 'ink-charger-c': 17");
+    once('1.25, 1.35, 1, 1];', '1.25, 1.35, 1, 1, 1.42, 1.42, 1.42, 1.42, 1.42, 1.42, 1.42, 1.42];');
     once('float hsh(float n)', INK_FOOTPRINT_GLSL + '\nfloat hsh(float n)');
-    once('    } else if (kind > 7.5) {', '    } else if (kind > 9.5 && kind < 14.5) {\n      sd = mainInkDistance(p, dir, r * grow, kind, paintSeed);\n    } else if (kind > 7.5) {');
+    once('    } else if (kind > 7.5) {', '    } else if (kind > 9.5 && kind < 17.5) {\n      sd = mainInkDistance(p, dir, r * grow, kind, paintSeed);\n    } else if (kind > 7.5) {');
     once('  splat(center, radius, team, opts = {}) {', `  splat(center, radius, team, opts = {}) {
     // Materialize the silhouette before recording the event. Receivers need
     // only the existing kind and seed fields, never the owner's current gun.
-    if ((opts.kind === 'source-shot' || opts.kind === 'source-splash') && INK_FOOTPRINT_KINDS.includes(opts.footprint))
-      opts = { ...opts, kind: opts.footprint };`);
-    once('const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH;', `const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH || (kind >= 10 && kind <= 14);
-    const stencil = kind >= 10 && kind <= 14;
+    if ((opts.kind === 'source-shot' || opts.kind === 'source-splash') &&
+      (INK_FOOTPRINT_KINDS.includes(opts.footprint) || opts.footprint === CHARGER_FOOTPRINT))
+      opts = { ...opts, kind: opts.footprint === CHARGER_FOOTPRINT ? chargerInkProfileKind(opts.seed) : opts.footprint };`);
+    once('const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH;', `const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH || (kind >= 10 && kind <= 17);
+    const stencil = kind >= 10 && kind <= 17;
     const inkWord = stencil ? paintShapeSeed(seed) : 0;
     const inkDu = sdu || sdv ? sdu : 1, inkDv = sdu || sdv ? sdv : 0;
     const inkInvR = stencil ? 1 / r : 0;

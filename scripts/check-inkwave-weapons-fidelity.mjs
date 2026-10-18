@@ -47,19 +47,37 @@ for(const c of CASES) {
   assert.equal(prior.oldCellsHash,baseline.cases[c.key].cellsHash,c.key+' independent old checkout reproduces archived scoring');
 }
 const golden = Object.fromEntries(Object.entries(current.cases).map(([key, row]) => [key, row.golden]));
+// The reviewed Charger silhouette intentionally changes scoring pixels and
+// forward ink reach, not the pinned source width/depth, projectile births,
+// hit sweeps or stamp timing. These five observed areas/maxZ are fixed from
+// exact-head Validate #39087874007 (02:22 UTC, 2026-10-18), NOT inferred
+// from the old circular/stencil archive. All other cases keep exact hashes.
+// The independent frozen edge oracle below still checks every paint cell.
+const chargerOrganic = Object.freeze({
+  'charger-0': { maxZ:13.125, area:24.4375 },
+  'charger-0.25': { maxZ:15.125, area:25.625 },
+  'charger-0.5': { maxZ:18.875, area:35.5625 },
+  'charger-0.75': { maxZ:22.625, area:51.625 },
+  'charger-1': { maxZ:26.625, area:73.5 },
+});
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
-  const c = data.cases[key], expected = current.cases[key];
-  assert.equal(digest(c.paint.cellsXZ), expected.cellsHash, key + ' main scoring cells');
+  const c = data.cases[key], expected = current.cases[key], organic = chargerOrganic[key];
+  if (organic) {
+    assert.notEqual(digest(c.paint.cellsXZ), expected.cellsHash, key + ' new organic Charger contour must differ from the old stamp');
+    near(c.paint.area, organic.area, 1e-7);
+  } else {
+    assert.equal(digest(c.paint.cellsXZ), expected.cellsHash, key + ' main scoring cells');
+  }
   assert.equal(digest(c.hitSamples), expected.hitSamplesHash, key + ' main full hit sweep');
   assert.equal(digest(c.initialProjectiles), expected.initialProjectilesHash, key + ' main projectile births');
-  assert.equal(digest(c.paintPoints),expected.paintPointsHash,key+' all source stamp dimensions and recorded shape');
+  if (!organic) assert.equal(digest(c.paintPoints),expected.paintPointsHash,key+' all source stamp dimensions and recorded shape');
   assert.equal(digest(c.groundImpacts),expected.impactsHash,key+' all terrain impacts');
   if(!key.startsWith('splatling-')) {
     assert.equal(digest(c.hitSamples),expectedCases[key].hitSamplesHash,key+' unaffected hit sweep remains pinned');
     assert.equal(digest(c.initialProjectiles),expectedCases[key].initialProjectilesHash,key+' unaffected birth remains pinned');
   }
   near(c.practicalHitRange,hit); near(c.fullDamageRange,full);
-  near(c.paint.bounds.maxZ,paint,.001); assert.equal(c.projectileCount,count,key);
+  near(c.paint.bounds.maxZ,organic?.maxZ ?? paint,.001); assert.equal(c.projectileCount,count,key);
 }
 // Independently execute the current unminified six-adapter source graph at the
 // measured hit boundary and on the real paint grid. The built receipt cannot
