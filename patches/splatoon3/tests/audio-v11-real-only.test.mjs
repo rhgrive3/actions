@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import { adaptWeaponAudio } from '../audio-adapter.mjs';
 import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
 import { WeaponSoundBank, AUDIO_RECIPES } from '../runtime/audio/bank.mjs';
-import { fireArticulation } from '../runtime/audio/weapon-recipes.mjs';
+import { fireArticulation, mainAudioSourceId, WEAPON_AUDIO } from '../runtime/audio/weapon-recipes.mjs';
+import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
 import { RealS3SampleLoader } from '../runtime/audio/real-s3-loader.mjs';
 import { AuthorizedSamplePack } from '../runtime/audio/authorized-samples.mjs';
 
@@ -36,6 +37,67 @@ class MixerStub {
  stats(){return{played:this.played.length};}
 }
 installWeaponAudioEngine(MixerStub);
+
+test('95 alternate main kits resolve to their original sound identity, no synthetic collab bank',()=>{
+ const recorded=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
+ const recordedBase=new Set(recorded.clips.filter(c=>c.event==='fire'&&!c.id.includes(':')).map(c=>c.id));
+ assert.equal(ALTERNATE_WEAPON_KITS.length,95);
+ assert.equal(recordedBase.size,54);
+ const {ctx}=mkctx(),bank=new WeaponSoundBank(ctx,{realOnly:true,audibleShotFallback:true});
+ for(const kit of ALTERNATE_WEAPON_KITS){
+   assert.equal(mainAudioSourceId(kit.id),kit.baseId,kit.main);
+   assert.equal(mainAudioSourceId(kit.baseId),kit.baseId);
+   assert.equal(mainAudioSourceId('special:'+kit.special),'special:'+kit.special,'special remains independent');
+   assert.equal(mainAudioSourceId('sub:'+kit.sub),'sub:'+kit.sub,'sub remains independent');
+   assert.equal(bank.has(kit.id,'fire'),true,kit.main);
+   assert.equal(bank.name(kit.id,'fire'),`main:${kit.baseId}:fire`,kit.main);
+   assert.equal(bank.has(kit.id,'charge'),bank.has(kit.baseId,'charge'),kit.main);
+   assert.equal(bank.has(kit.id,'explosion'),bank.has(kit.baseId,'explosion'),kit.main);
+   assert.ok(WEAPON_AUDIO[kit.baseId]);
+   assert.equal(WEAPON_AUDIO[kit.id],undefined,'variant must not be a separate pseudo-recipe');
+   assert.equal(recorded.clips.some(c=>c.id===kit.id),false,'no duplicate MP3 required for '+kit.main);
+   if(recordedBase.has(kit.baseId))
+     assert.ok(recorded.clips.some(c=>c.id===kit.baseId&&c.event==='fire'),'source base exists for '+kit.main);
+ }
+ assert.equal(mainAudioSourceId('shooter-01'),'shooter','Tentatek Splattershot');
+ assert.equal(mainAudioSourceId('s3-spinner-quick-01'),'s3-spinner-quick','Zink Mini Splatling');
+ assert.equal(mainAudioSourceId('splatling-01'),'splatling','Heavy Splatling Deco');
+ assert.equal(mainAudioSourceId('s3-shooter-expert-01'),'s3-shooter-expert','Forge Splattershot Pro');
+ bank.dispose();
+});
+
+test('collab and original share the same decoded shooter/spinner buffers, with no fallback synthesis',async()=>{
+ const {ctx,sources}=mkctx(),a=new MixerStub(ctx);
+ a.weaponBank();
+ const pack=manifest([clip('shooter','fire','Wp_ShooterNormal_Shot_00.mp3'),
+   clip('s3-spinner-quick','fire','Wp_SpinnerQuick_Shot_00.mp3'),
+   clip('s3-spinner-quick','charge','Wp_SpinnerQuick_Motor_00.mp3'),
+   clip('s3-spinner-quick','spin','Wp_SpinnerQuick_MotorFire_00.mp3'),
+   clip('splatling','fire','Wp_SpinnerStandard_Shot_00.mp3')]);
+ a._realS3Loader.fetcher=async()=>({ok:true,json:async()=>pack});
+ a._realS3Loader.bank.authorized.fetcher=async()=>res;
+ const actor={isLocal:true};
+ for(const variantId of ['shooter-01','shooter-02','s3-spinner-quick-01','s3-spinner-quick-02','splatling-01']){
+   assert.equal(a.playWeapon(variantId,'fire',{actor}),null,'unknown/cold MP3 stays silent: '+variantId);
+ }
+ for(const id of ['shooter','s3-spinner-quick','splatling'])
+   assert.equal((await a._realS3Loader.ensure(id,'fire')).rejected,0);
+ for(const [variantId,baseId] of [['shooter-01','shooter'],['shooter-02','shooter'],
+   ['s3-spinner-quick-01','s3-spinner-quick'],['s3-spinner-quick-02','s3-spinner-quick'],['splatling-01','splatling']]){
+   const played=a.playWeapon(variantId,'fire',{actor});
+   assert.equal(played?.weaponId,baseId);
+   assert.equal(a.played.at(-1).name,`main:${baseId}:fire`);
+   assert.equal(sources.at(-1).buffer,a.weaponBank().authorized.pick(baseId,'fire').buffer);
+ }
+ const spin=a.loopWeapon('s3-spinner-quick-01','spin',{actor,volume:.4});
+ assert.ok(spin?.playing,'variant Spinner has a real, deferred motor-fire loop');
+ await a._realS3Loader.ensure('s3-spinner-quick','spin');await new Promise(r=>setImmediate(r));
+ assert.equal(a.played.at(-1).name,'main:s3-spinner-quick:spin');
+ spin.stop();
+ assert.equal(a._realS3Loader.notMapped.size,0,'no variant-only load attempt');
+ assert.equal(a.stats().authoredFallbackShots,0,'every recorded kit uses MP3s');
+ a.disposeWeaponAudio();
+});
 
 test('Splattershot uses its recorded ShooterNormal MP3, never the generic synth shooter',async()=>{
  const installed=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
