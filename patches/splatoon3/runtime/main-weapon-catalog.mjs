@@ -2,7 +2,7 @@ import { brellaPelletSpeed, canopyEntry, withProjectileHitGeometry, validProject
 import { familyDescription } from './content-language.mjs';
 import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
-import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';
+import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
 import { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
@@ -602,6 +602,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       splashDropSpec:catalogSplashDropSpec(b),
       splashFirst:Math.max(0,finite(splash.SpawnNearestLength,1)),
       splashRadius:finite(b.SplashPaintParam?.WidthHalf,finite(sloshSplash?.DrawSizeCollisionPaintParam?.PaintWidthHalf,.4)),
+      splashNearestRadius:finite(b.SplashPaintParam?.WidthHalfNearest,0),
       splashSpacing:finite(splash.DropInterval,finite(splash.SpawnBetweenLength,3)),
       splashCount:Math.max(0,Math.ceil(finite(splash.SplashNumMax,finite(splash.SpawnNum,0)))),
       sloshFall:key==='slosh'?sloshFallSpec(sloshSplash):null};
@@ -653,7 +654,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         Number.isFinite(sourceNum) && sourceNum >= 0) {
       const ordinal=s.paintShotOrdinal||0;
       desc.splashCount=catalogFractionalSplashCount(sourceNum,ordinal);
-      desc.splashFirst=catalogSplashFirst(desc.b.SplashSpawnParam,ordinal);desc.splashStaggered=true;
+      desc.splashFirst=catalogSplashFirst(desc.b.SplashSpawnParam,ordinal);
+      desc.splashNearest=catalogSplashNearestSlot(desc.b.SplashSpawnParam,ordinal);
+      desc.splashStaggered=true;
       s.paintShotOrdinal=ordinal+1;
     }
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
@@ -702,7 +705,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(hand!==null){runner.hand=hand;runner.sinceHand[hand]=0;}
     notify(a,r,muzzle,aim,charge,hand);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
-    if(['shooter','splatling','dualies'].includes(r.family)&&Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
+    // Staggered source rounds already own the nearest event in their splash
+    // budget. Re-stamping here double-counts feet paint (and bypasses occlusion).
+    if(!desc.splashStaggered&&['shooter','splatling','dualies'].includes(r.family)&&Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
       const at=a.pos.clone().addScaledVector(a.aimDir.clone().setY(0).normalize(),finite(splash.SpawnNearestLength,0));
       floorPaint(a,at,nearest.WidthHalfNearest,1,null,mainInkFootprint(r));
@@ -1163,9 +1168,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const endTravel=Math.min(s.travel,lifeTravel,travelBefore+len*clamp(Math.min(1,stop)));
         const direction=p.vel.clone().setY(0).normalize();
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
+          // A drop at the impact boundary belongs to the head impact, not a
+          // second paint event behind/inside the struck surface.
+          if(stop<=1&&s.nextSplash>=endTravel-EPS)break;
           const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
           const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
-            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,catchUpSeconds:s.carry,footprint:mainInkFootprint(s.r)});
+            from,direction,radius:catalogSplashRadius(d,s.dropCount),spec:d.splashDropSpec||d.sloshFall.spec,depth:true,catchUpSeconds:s.carry,footprint:mainInkFootprint(s.r)});
           if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
           s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
         }
@@ -1191,7 +1199,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       if(!p.ghost&&!d.splashDropSpec&&!d.sloshFall&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){
         const direction=p.vel.clone().setY(0).normalize();
-        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction,mainInkFootprint(s.r));
+        floorPaint(p.owner,p.pos,catalogSplashRadius(d,s.dropCount),d.depth,direction,mainInkFootprint(s.r));
         s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
       }
       if(p.age+EPS>=p.life||s.travel+EPS>=s.range){
