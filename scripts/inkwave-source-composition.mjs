@@ -55,17 +55,6 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
     ['The squidkids and code behind INKWAVE', 'The squidkids and code behind ZEVANT'],
   ],
   // In-world text is rendered into procedural textures / 3-D lettering.
-  'src/game/lobbySet-tex.js': [
-    ["const word = 'INKWAVE', size =", "const word = 'ZEVANT', size ="],
-  ],
-  'src/world/props.js': [
-    ['INKWAVE HARBOR · SEWER · INKWAVE HARBOR · SEWER · ', 'ZEVANT HARBOR · SEWER · ZEVANT HARBOR · SEWER · '],
-  ],
-  'src/world/props-marina-vessels.js': [
-    ["text(B, 'INKWAVE', 0.19", "text(B, 'ZEVANT', 0.19"],
-    ["text(B, 'INKWAVE', 0.1,", "text(B, 'ZEVANT', 0.1,"],
-    ["text(B, 'INKWAVE', 0.11", "text(B, 'ZEVANT', 0.11"],
-  ],
   'patches/splatoon3/runtime/ui-strings.mjs': [
     ['The INKWAVE servers didn’t answer. Check your connection, then try again.', 'The ZEVANT servers didn’t answer. Check your connection, then try again.'],
   ],
