@@ -36,6 +36,29 @@ Both primary JSON records explicitly have the type spl__BulletSimpleMoveParam. T
 
 The Wiki explains SpawnNum=1.5 using cumulative-floor accounting (1, 2, 1, 2 candidate droplets). Actual births are capped by travel to a collision or expiration. The wiki describes feet and intermediate ink as a fixed linked cycle.
 
+## Maneuver and Spinner family cross-check
+
+The source-backed controls are NOT exclusive to Shooters. Splatoon3 Wiki documents a shared intermediate/feet paint concept across Shooters, Blasters, Spinners, Maneuvers and Wipers. The current revision checked all five *additional* Spinner and all five *additional* Maneuver 11.3.0 numerical rows, in addition to the seven original base-owner weapons.
+
+| Source actor | SpawnNum | SplitNum | BetweenLength | Forced extra nearest shots | Middle/feet WidthHalf |
+| --- | ---: | ---: | ---: | --- | --- |
+| SpinnerQuick | 1.6 | 6 | 10 | 3 | 1.449 / 1.7388 |
+| SpinnerHyper | 1 | 8 | 23.5 | none | 1.288 / 1.5456 |
+| SpinnerDownpour | 1 | 6 | 11 | none | 1.472 / 1.7664 |
+| SpinnerSerein | 1.5 | 8 | 12 | 4 | 1.449 / 2.10105 |
+| SpinnerHyperShort | 0.6 | 10 | 24 | 5 | 1.594 / 1.913 |
+| ManeuverShort | 1 | 5 | 11 | none | 1.5525 / 2.1735 |
+| ManeuverGallon | 2 | 5 | 7 | none | 1.518 / 2.1252 |
+| ManeuverDual | 2 | 8 | 9 | none | 1.38 / 1.932 |
+| ManeuverStepper | 1.2 | 7 | 13.5 | none | 1.541 / 2.1574 |
+| ManeuverLong | 2 | 8 | 10 | 4 | 1.38 / 1.932 |
+
+All 5 Maneuver MoveParam rows explicitly specify FreeGravity=0.016; all 5 Spinner MoveParam rows are source-typed spl__BulletSpinnerMoveParam and omit FreeGravity. **Do not** claim that Shooter SimpleMove defaults prove Spinner gravity. The current Spinner projected-footprint fallback is therefore still an approximation, not a byte-identical retail falling-drop simulation. It has been tightened so every release threshold is consumed at its exact travelled coordinate, stopping before terrain collision and lifetime/range, even with multiple releases in one reference frame. It also uses WidthHalfNearest on the single source-defined nearest first drop rather than stamping an additional muzzle-floor paint.
+
+A preexisting main-weapon numerical test previously demanded two immediate muzzle-floor stamps from Jr. at shot births 3/7; this contradicted the single-source falling queue contract and caused numerical-main to fail (42/43). The regression now checks accepted shot slots, no premature turf, and independent falling drops with sourced feet width. The screenshot/engine phase ordering remains unresolved.
+
+See patches/splatoon3/tests/catalog-spinner-dualies-splash-1130.test.mjs for all 10 pinned rows and real projectile ownership checks.
+
 ## Observed INKWAVE mismatches and fixes
 
 1. Added catalogue Shooters/Spinners/Dualies double-paid a source nearest splash: once through the projectile release schedule and again via an eager muzzle-ground stamp. Staggered sourced rounds no longer perform that second stamp.
