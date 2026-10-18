@@ -16,7 +16,7 @@ test('actual source-loaded actor isolates squid eyes at all LODs and disposes on
  const f=await sourceLoadedActorFixture({random:()=>.4});const a=await f.make(),c=a.character;
  assert(c.mats.eye!==c.mats.squidEye);assert.equal(c.squid.eyes.material,c.mats.squidEye);
  for(const lod of ['hero','game','far']){c.setLod(lod);assert.equal(c.squid.eyes.material,c.mats.squidEye);
-  const eye=c.squid.eyes.geometry;assert.equal(eye.userData.squidConnectedEye,true);const ep=eye.attributes.position,en=eye.attributes.normal;let center=0,front=0;for(let j=0;j<ep.count;j++){if(Math.abs(ep.getX(j))<.005)center++;front+=en.getZ(j);}assert(center>0,'white field crosses center');assert(front/en.count>.4,'eye normals point outward');const adj=Array.from({length:ep.count},()=>[]);for(let j=0;j<eye.index.count;j+=3){const tri=[0,1,2].map(k=>eye.index.getX(j+k));for(const a of tri)for(const b of tri)adj[a].push(b);}const seen=new Set([0]),todo=[0];while(todo.length){for(const n of adj[todo.pop()])if(!seen.has(n)){seen.add(n);todo.push(n);}}assert.equal(seen.size,ep.count,'one connected white eye surface');
+  const eye=c.squid.eyes.geometry;assert.equal(eye.userData.squidConnectedEye,true);const ep=eye.attributes.position,en=eye.attributes.normal;const euv=eye.attributes.uv;const columns=(lod==='far'?16:32)+1;for(let j=0;j<ep.count;j++){const mirror=Math.floor(j/columns)*columns+columns-1-j%columns;assert(Math.hypot(ep.getX(j)+ep.getX(mirror),ep.getY(j)-ep.getY(mirror),ep.getZ(j)-ep.getZ(mirror))<.00005,'neutral eye field mirrors within sampling tolerance');assert(Math.hypot(euv.getX(j)+euv.getX(mirror),euv.getY(j)-euv.getY(mirror))<.00005,'neutral pupil UVs mirror');}let center=0,front=0;for(let j=0;j<ep.count;j++){if(Math.abs(ep.getX(j))<.005)center++;front+=en.getZ(j);}assert(center>0,'white field crosses center');assert(front/en.count>.4,'eye normals point outward');const adj=Array.from({length:ep.count},()=>[]);for(let j=0;j<eye.index.count;j+=3){const tri=[0,1,2].map(k=>eye.index.getX(j+k));for(const a of tri)for(const b of tri)adj[a].push(b);}const seen=new Set([0]),todo=[0];while(todo.length){for(const n of adj[todo.pop()])if(!seen.has(n)){seen.add(n);todo.push(n);}}assert.equal(seen.size,ep.count,'one connected white eye surface');
   const g=c.squid.body.geometry,p=g.attributes.position,e=g.attributes.aEx,col=g.attributes.color,uv=g.attributes.uv;
   let mantleMinY=Infinity,mantleMaxY=-Infinity,mantleMaxX=0;let maxDepth=0,shortMin=Infinity,shortMax=-Infinity,shortN=0;const ids=new Set(),roots=new Map();
   for(let i=0;i<p.count;i++){
@@ -27,7 +27,7 @@ test('actual source-loaded actor isolates squid eyes at all LODs and disposes on
   }
   assert.deepEqual([...ids].sort((a,b)=>a-b),[0,2,4,6,8,9],'six semantic arm IDs');
   const rootX=k=>{const r=roots.get(k);assert(r&&r[1]>0);return r[0]/r[1];};assert(rootX(0)>.085&&rootX(9)<-.085,'long roots attach outside');for(const k of [2,4,6,8])assert(Math.abs(rootX(k))<.07,'four short supports sit inside long roots');
-  assert(mantleMaxY>.454&&mantleMaxY<.456,'measured taller cap');assert(mantleMaxX>.225&&mantleMaxX<.245,'measured wider cap');assert(g.userData.squidCompactSupports);
+  assert(mantleMaxY>.414&&mantleMaxY<.416,'measured shoulder-relative cap height');assert(mantleMaxX>.225&&mantleMaxX<.245,'measured wider cap');assert(g.userData.squidCompactSupports);let wingY=0,wingN=0;for(let i=0;i<p.count;i++)if(e.getX(i)===0&&Math.abs(p.getX(i))>mantleMaxX-.001){wingY+=p.getY(i);wingN++;}const shoulderRatio=(wingY/wingN-.111)/(mantleMaxX*2);assert(shoulderRatio>.025&&shoulderRatio<.105,'frontal shoulder/eye vertical relationship');
   assert(mantleMinY>.005&&mantleMinY<.007,'lower mantle closure shortened beneath eye field');
   assert(maxDepth<.074&&maxDepth>.065,'flattened mantle preserves nonzero thickness');
   assert(shortN>0&&shortMax-shortMin<.17,'short tips form a compact group');
@@ -36,6 +36,15 @@ test('actual source-loaded actor isolates squid eyes at all LODs and disposes on
  const g=c.squid.body.geometry,co=g.attributes.color,ex=g.attributes.aEx;let marked=0,cups=0;for(let i=0;i<co.count;i++)if(ex.getX(i)>.5&&co.getX(i)<-.05){const arm=Math.round(co.getZ(i)*10)%10;assert(arm===0||arm===9,'only two long feelers carry dark coating');marked++;if(ex.getX(i)===2)cups++;}assert(marked>0);for(let i=0;i<co.count;i++)if(ex.getX(i)===2){const k=Math.round(co.getZ(i)*10)%10;assert(k===0||k===9,'short lobes omit microcup geometry');}
  const shader={uniforms:{},vertexShader:'#include <common>\n#include <begin_vertex>',fragmentShader:'#include <common>\n#include <color_fragment>\n#include <emissivemap_fragment>'};
  c.mats.squidEye.onBeforeCompile(shader);assert(shader.fragmentShader.includes('float pupil='));assert(!shader.fragmentShader.includes('uIris'));assert(!shader.fragmentShader.includes('sin(ang'));
+ // Human gaze can be stale on entry to squid form; it must not move painted pupils.
+ const compiled=[];for(const look of [[0,0],[-.22,.157254],[.22,-.157254]]){
+  c.u.uLook.value.set(...look);const before=c.u.uLook.value.toArray();
+  const probe={uniforms:{},vertexShader:'#include <common>\n#include <begin_vertex>',fragmentShader:'#include <common>\n#include <color_fragment>\n#include <emissivemap_fragment>'};
+  c.mats.squidEye.onBeforeCompile(probe);assert(!probe.fragmentShader.includes('uLook'));assert(!('uLook' in probe.uniforms));assert.deepEqual(c.u.uLook.value.toArray(),before,'human gaze unchanged');compiled.push(probe.fragmentShader);
+ }assert.equal(compiled[0],compiled[1]);assert.equal(compiled[1],compiled[2]);
+ // The authored paired ellipse signed distances mirror exactly, independent of pose.
+ const pupilDistance=(x,y)=>Math.min(Math.hypot((x+.34)/.25,(y-.35)/.46),Math.hypot((x-.34)/.25,(y-.35)/.46))-1;
+ for(let y=-1;y<=1;y+=.025)for(let x=0;x<=1;x+=.025)assert(Math.abs(pupilDistance(x,y)-pupilDistance(-x,y))<1e-12);
  const bodyShader={uniforms:{},vertexShader:'#include <common>\n#include <begin_vertex>',fragmentShader:'#include <common>\n#include <color_fragment>\n#include <emissivemap_fragment>'};c.mats.squid.onBeforeCompile(bodyShader);assert(bodyShader.fragmentShader.includes('smoothstep(0.05,0.25,cs)'));assert(bodyShader.fragmentShader.includes('fwidth(d),0.03'));
  let disposed=0;c.mats.squidEye.addEventListener('dispose',()=>disposed++);f.reset();assert.equal(disposed,1);
 });

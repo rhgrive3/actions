@@ -35,16 +35,16 @@ const SQUID_EYE_MATERIAL = `export function makeSquidEyeMaterial(u) {
   // white patches with dark pupils, without the human coloured iris spokes.
   const m = new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:0.18,metalness:0,clearcoat:1,clearcoatRoughness:0.05,specularIntensity:0.5});
   m.onBeforeCompile = shader => {
-    shader.uniforms.uLook=u.uLook;shader.uniforms.uFlash=u.uFlash;
+    shader.uniforms.uFlash=u.uFlash;
     inject(shader, {
       vPars:'varying vec2 vSquidEyeUv;',
       vBegin:'vSquidEyeUv=uv;',
-      fPars:'varying vec2 vSquidEyeUv; uniform vec2 uLook; uniform vec3 uFlash;',
+      fPars:'varying vec2 vSquidEyeUv; uniform vec3 uFlash;',
       fColor:\`
         vec2 p=vSquidEyeUv;
-        vec2 gaze=clamp(uLook,vec2(-0.16),vec2(0.16));
-        vec2 q0=(p-gaze-vec2(-0.34,0.35))/vec2(0.25,0.46);
-        vec2 q1=(p-gaze-vec2(0.34,0.35))/vec2(0.25,0.46);
+        // Neutral squid gaze is independent of human form transitions.
+        vec2 q0=(p-vec2(-0.34,0.35))/vec2(0.25,0.46);
+        vec2 q1=(p-vec2(0.34,0.35))/vec2(0.25,0.46);
         float d=min(length(q0),length(q1))-1.0,aa=max(fwidth(d),0.001);
         float pupil=1.0-smoothstep(-aa,aa,d);
         diffuseColor.rgb=mix(vec3(0.94,0.95,0.97),vec3(0.008,0.007,0.018),pupil);
@@ -52,7 +52,7 @@ const SQUID_EYE_MATERIAL = `export function makeSquidEyeMaterial(u) {
       fEmissive:'totalEmissiveRadiance += uFlash * 0.5;',
     });
   };
-  m.customProgramCacheKey=()=> 'squid-eye-connected-white-dark-v2';
+  m.customProgramCacheKey=()=> 'squid-eye-connected-neutral-v3';
   return m;
 }
 
@@ -141,10 +141,11 @@ export function adaptS3SquidLook(rel, code) {
     code=once(code, 'start: new V3(0, -0.034, 0), end: new V3(0, 0.375, 0)', 'start: new V3(0, 0.006, 0), end: new V3(0, 0.375, 0)', 'short lower mantle pole');
     // Whole-model reference landmarks: broaden the cap relative to the eye field,
     // and raise its rounded apex without changing the lower mantle or attachments.
-    code=once(code, '[0.099, 0.214], [0.081, 0.254], [0.059, 0.298], [0.035, 0.34], [0.015, 0.366], [0, 0.375]', '[0.099, 0.2296], [0.081, 0.2856], [0.059, 0.3472], [0.035, 0.406], [0.015, 0.4424], [0, 0.455]', 'measured taller cap profile');
-    code=once(code, 'return 0.108 * sstep(0.158, 0.222, y) * Math.pow(1 - sstep(0.222, 0.374, y), 1.05);', 'return 0.138 * sstep(0.158, 0.2408, y) * Math.pow(1 - sstep(0.2408, 0.4536, y), 1.05);', 'measured broader rounded cap');
-    code=once(code, 'densitySamples(SD.rows, 0.006, 0.375,', 'densitySamples(SD.rows, 0.006, 0.455,', 'taller cap sampling');
-    code=once(code, 'end: new V3(0, 0.375, 0)', 'end: new V3(0, 0.455, 0)', 'taller cap pole');
+    code=once(code, '[0.099, 0.214], [0.081, 0.254], [0.059, 0.298], [0.035, 0.34], [0.015, 0.366], [0, 0.375]', '[0.099, 0.2218], [0.081, 0.2698], [0.059, 0.3226], [0.035, 0.373], [0.015, 0.4042], [0, 0.415]', 'measured taller cap profile');
+    code=once(code, 'return 0.108 * sstep(0.158, 0.222, y) * Math.pow(1 - sstep(0.222, 0.374, y), 1.05);', 'return 0.118 * sstep(0.100, 0.145, y) * Math.pow(1 - sstep(0.145, 0.4138, y), 1.05);', 'measured broader rounded cap');
+    code=once(code, 'densitySamples(SD.rows, 0.006, 0.375,', 'densitySamples(SD.rows, 0.006, 0.415,', 'taller cap sampling');
+    code=once(code, 'end: new V3(0, 0.375, 0)', 'end: new V3(0, 0.415, 0)', 'taller cap pole');
+    code=once(code, 'const f = sqFin(y) * Math.pow(Math.abs(s), 7);', 'const f = sqFin(y) * Math.pow(Math.abs(s), 24);', 'lateral shoulders preserve frontal eye field');
     // the two long feelers hang in front of the face (the +Z side, which faces the camera after the half turn),
     // as in the clips; the other arms are short, stubby and hang close together instead of splaying out
     code = once(code, '    const feeler = k === 4 || k === 6;', '    const feeler = k === 0 || k === N - 1;', 'feelers under the face');

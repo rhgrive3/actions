@@ -3,7 +3,7 @@ on:
   push:
     branches: ['codex/squid-*']
   pull_request:
-    paths: ['tools/squid-production-qa/**', 'patches/local-quality/s3-squid-look-adapter.mjs', 'patches/splatoon3/runtime/swim-motion.mjs', 'patches/splatoon3/*squid*', 'patches/local-quality/squid-motion-binding-adapter.mjs', 'patches/local-quality/tests/squid-source-presentation.test.mjs', 'patches/local-quality/tests/squid-surface-material.test.mjs', 'patches/local-quality/tests/squid-connected-eye-binding.test.mjs', 'patches/local-quality/tests/s3-squid-look.test.mjs', 'patches/local-quality/tests/squid-compact-support-binding.test.mjs', '.github/workflows/inkwave-squid-visual-qa.yml']
+    paths: ['tools/squid-motion-qa/**', 'tools/squid-production-qa/**', 'patches/local-quality/s3-squid-look-adapter.mjs', 'patches/splatoon3/runtime/swim-motion.mjs', 'patches/splatoon3/*squid*', 'patches/local-quality/squid-motion-binding-adapter.mjs', 'patches/local-quality/tests/squid-source-presentation.test.mjs', 'patches/local-quality/tests/squid-surface-material.test.mjs', 'patches/local-quality/tests/squid-connected-eye-binding.test.mjs', 'patches/local-quality/tests/s3-squid-look.test.mjs', 'patches/local-quality/tests/squid-compact-support-binding.test.mjs', '.github/workflows/inkwave-squid-visual-qa.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 40
     env:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      BASE_SHA: 7b440133ba1e775713ceb7e9c31e79eb04a46860
+      BASE_SHA: 3b4bb02e53d057fedffb1c3f641fad3453ae0451
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,6 +31,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify source presentation regression
         run: node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/squid-compact-support-binding.test.mjs
+      - name: Verify continuous motion timeline
+        run: node --experimental-vm-modules --test tools/squid-motion-qa/timeline.test.mjs
       - name: Build and capture preserved baseline
         run: |
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
@@ -44,6 +46,13 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/squid-compact-support-binding.test.mjs
           node tools/squid-production-qa/run.mjs --site _site --out .qa-evidence/squid-candidate
+      - name: Record continuous baseline motion
+        run: |
+          cd _squid_baseline
+          SOURCE_SHA="$BASE_SHA" node ../tools/squid-motion-qa/run.mjs --site _site --out ../.qa-evidence/squid-motion-baseline
+      - name: Record continuous candidate motion
+        if: ${{ !cancelled() }}
+        run: node tools/squid-motion-qa/run.mjs --site _site --out .qa-evidence/squid-motion-candidate
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -51,6 +60,8 @@ jobs:
           path: |
             .qa-evidence/squid-baseline/**
             .qa-evidence/squid-candidate/**
+            .qa-evidence/squid-motion-baseline/**
+            .qa-evidence/squid-motion-candidate/**
             _site/inkwave-build.json
             _squid_baseline/_site/inkwave-build.json
           include-hidden-files: true
