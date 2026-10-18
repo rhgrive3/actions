@@ -599,7 +599,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (r.family==='charger') radius=full?finite(paintParam.RadiusFullCharge,1):lerp(finite(paintParam.RadiusMinCharge,.9),finite(paintParam.RadiusMaxCharge,2.7),charge);
     return {key,unit,index,charge,packet,b,m,d,c,speed,damage,life,range,radius,
       depth:finite(paintParam.DepthScaleMax,finite(paintParam.DepthScaleNear,1)),
-      splashDropSpec:catalogSplashDropSpec(b,r.sourceActor),
+      splashDropSpec:catalogSplashDropSpec(b,r.sourceActor,key),
       splashFirst:Math.max(0,finite(splash.SpawnNearestLength,1)),
       splashRadius:finite(b.SplashPaintParam?.WidthHalf,finite(sloshSplash?.DrawSizeCollisionPaintParam?.PaintWidthHalf,.4)),
       splashNearestRadius:finite(b.SplashPaintParam?.WidthHalfNearest,0),
