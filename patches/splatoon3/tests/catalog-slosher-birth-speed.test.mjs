@@ -131,23 +131,33 @@ test('stationary delayed globs preserve the admitted velocity exactly when groun
   }
 });
 
-test('pitched births retain their admitted aim and use new source speed before one motion contribution and remote replay', () => {
+test('Bloblobber delayed bubbles use aim from their own 5F birth tick and transmit it exactly', () => {
   const r = delayed.find(r => r.id === 's3-slosher-bathtub');
   const result = launch(r.id, true, 60, { pitch: .3, turnAtBirth: true });
+  const aim=[1,-.5,1].map(v=>v/1.5);
+  const originalAim=[0,Math.sin(.3),Math.cos(.3)];
+  assert.ok(result.births.some(b=>b.tick===0),'the large first bubble keeps its initial aim');
   for (const b of result.births.filter(b => b.tick >= 3)) {
-    const u = r.parameters.UnitGroupParam.Unit[b.unit], pre = result.prepared.get(b.p);
-    const ratio = sourceSpeed(u, b.index, false) / sourceSpeed(u, b.index, true);
+    const u = r.parameters.UnitGroupParam.Unit[b.unit];
+    const speed = sourceSpeed(u,b.index,false);
     const delta = inertia(r, b.ownerVelocity);
-    for (let axis = 0; axis < 3; axis++)
-      close(b.velocity[axis] - delta[axis], pre.velocity[axis] * ratio, 'admitted aim/lift is retained');
+    const expected=[
+      speed*aim[0] + delta[0],
+      speed*(aim[1] + (u.AddSpawnSpeedYRateByXZ||0)*Math.hypot(aim[0],aim[2])) + delta[1],
+      speed*aim[2] + delta[2],
+    ];
+    for(let axis=0;axis<3;axis++)
+      close(b.velocity[axis],expected[axis],'live birth aims at current camera and source XZ lift');
+    assert.ok(Math.abs(b.velocity[0]-originalAim[0]*speed)>1,
+      'changing view between bubbles must visibly fan their trajectories');
     const remote = f.make(r.id);
-    Object.assign(remote, { remote: true, grounded: true }); remote.vel.set(60, 80, 100);
+    Object.assign(remote, { remote: true, grounded: true }); remote.vel.set(60,80,100);
     const sent = result.births.length;
     ps.ghostProjectile(remote, b.wire);
     const ghost = ps.list.at(-1);
     assert.ok(ghost.ghost && ghost.catalog, 'actual catalog replay');
-    assert.deepEqual(Array.from(ghost.vel.toArray()), b.wire.slice(8, 11), 'receiver uses transmitted birth velocity');
-    assert.equal(ghost.catalog.birthPending, undefined, 'receiver does not queue or resample again');
-    assert.equal(result.births.length, sent, 'replay publishes no second owner packet');
+    assert.deepEqual(Array.from(ghost.vel.toArray()), b.wire.slice(8,11), 'remote uses transmitted birth velocity');
+    assert.equal(ghost.catalog.birthPending, undefined, 'remote does not reroll or re-aim');
+    assert.equal(result.births.length, sent, 'replay never publishes a second owner packet');
   }
 });
