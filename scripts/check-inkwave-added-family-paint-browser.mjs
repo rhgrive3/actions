@@ -106,7 +106,7 @@ try{
         const grid=Array.from(G.paint.grid),cells=G.paint.counts[0];
         if(!cells||(!slide&&!splashes)||(slide&&!rolls)||ownerless||a.stats.turf!==cells*.0625)throw Error(JSON.stringify({id,hz,cells,splashes,rolls,ownerless,turf:a.stats.turf}));
         if(previous&&JSON.stringify(previous)!==JSON.stringify(grid))throw Error(id+' different final ownership at '+hz+'Hz');previous=grid;
-        checks.push({id,hz,cells,turf:a.stats.turf,splashes,rolls,ownerless,temporalSamples:trace.length,streamChecks,landings:G.projectiles._s3SplashLandings?.length||0});
+        checks.push({id,hz,cells,turf:a.stats.turf,splashes,rolls,ownerless,temporalSamples:trace.length,streamChecks,landings:G.projectiles._s3SplashLandings?.length||0,...(blob?{downhill:{contacts:blobContacts,reach:blobEndpoint,birthHeight:blobHead.start.y}}:{})});
         G.scene.remove(a.character.root);a.character.dispose();
       }
     }}finally{Math.random=random;}
@@ -115,5 +115,5 @@ try{
   if(errors.length)throw Error(errors.join('\n'));
   const report={build:build.contentHash,browser:browser.version(),...result,errors};
   if(reportPath){fs.mkdirSync(path.dirname(path.resolve(reportPath)),{recursive:true});fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');}
-  console.log(JSON.stringify({cases:result.checks.length,realCharacter:result.realCharacter,realPhysics:result.realPhysics,errors}));
+  console.log(JSON.stringify({cases:result.checks.length,realCharacter:result.realCharacter,realPhysics:result.realPhysics,downhill:result.checks.filter(x=>x.downhill).map(x=>({hz:x.hz,...x.downhill})),errors}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
