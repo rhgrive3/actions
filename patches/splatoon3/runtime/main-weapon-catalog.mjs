@@ -119,6 +119,17 @@ function shootingFrames(r, frames) {
   if(r.sourceActor==='WeaponSpinnerSerein'&&frames<=first)return a*clamp((frames-8)/(first-8));
   return frames<=first?a*frames/first:lerp(a,b,(frames-first)/(full-first));
 }
+// Ballpoint's short/long boundary belongs to the highest charged gauge, not
+// to each release. Community primary measurements describe recharge rewinding
+// across that fixed boundary until a higher peak is reached or ink runs out:
+// https://wikiwiki.jp/splatoon3mix/ブキ/クーゲルシュライバー (機構解説).
+// The existing 30F switch and 10F interpolation remain unchanged.
+function ballpointModeFrame(s) {
+  const elapsed=Math.max(0,finite(s?.streamElapsed,0))*HZ;
+  if(!(s?.ballpointPeakShooting>0))return elapsed;
+  const remaining=Math.max(0,finite(s.streamTime,0)*HZ-elapsed);
+  return Math.max(0,s.ballpointPeakShooting-remaining);
+}
 function remainingCharge(r,s) {
   const remaining=Math.max(0,(s.streamTime-Math.max(0,s.streamElapsed))*HZ);
   let lo=0,hi=chargeFrames(r);
@@ -253,7 +264,7 @@ export function catalogAngularEnvelope(family, grounded, ground, jump, jumpAge, 
 
 function initialState(r,actor) {
   return { id:r.id, pressed:false, frame:0, pending:null, chargeF:0, paid:0, reserved:0,
-    stream:0, streamF:0, streamCharge:0, streamTime:0, rounds:0, burst:0, burstWait:0,
+    stream:0, streamF:0, streamCharge:0, streamTime:0, ballpointPeakShooting:0, rounds:0, burst:0, burstWait:0,
     turret:0, rolls:0, roll:null, lunge:null, melee:null, stored:null, swingCount:0, canopy:null, naked:0,
     accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0,
     rollingFrames:0, rollingDash:false, bowTilt:0, remoteBowTilt:null, saberShotOrdinal:0,
@@ -298,6 +309,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))))
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
+    s.ballpointPeakShooting=0; // a cancelled Ballpoint gauge loses its short/long boundary
     s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
     slidePaint(r,s,true);
@@ -356,9 +368,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         : PLAYER.runSpeed * (this.a.grounded ? (this.a.s3?.modifiers?.runSpeed ?? 1) : 1);
     }
     if (this.charging) return w.moveSpeedCharging*mod;
-    if (r.sourceActor==='WeaponSpinnerDownpour'&&s?.streamElapsed+EPS>=.5)
+    if (r.sourceActor==='WeaponSpinnerDownpour'&&(this.firingT>0||s?.stream>0)&&ballpointModeFrame(s)+EPS>=30)
       return lerp(finite(t.MoveSpeed,.086),finite(p.VariableShotParam?.MoveSpeed,.05),
-        clamp((s.streamElapsed*HZ-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)))*HZ*mod;
+        clamp((ballpointModeFrame(s)-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)))*HZ*mod;
     return this.firingT>0 || s?.pending || s?.stream>0 ? w.moveSpeedFiring*mod : PLAYER.runSpeed*(this.a.grounded?(this.a.s3?.modifiers?.runSpeed??1):1);
   };
   function pay(runner, amount, recover = runner.a.weapon.inkRecoverStop) {
@@ -1324,11 +1336,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(s.stream>0 && !(input.fire&&t.EnableRecharge)) {
       s.streamElapsed+=dt;
       s.streamF-=dt;
-      if(s.streamElapsed>s.streamTime+EPS){s.stream=0;runner.streaming=false;runner.cooldown=finite(t.PostDelayFrame,4)/HZ;return;}
+      if(s.streamElapsed>s.streamTime+EPS){s.stream=0;s.ballpointPeakShooting=0;runner.streaming=false;runner.cooldown=finite(t.PostDelayFrame,4)/HZ;return;}
       if(s.streamF<=EPS){
-        if(s.streamUsed>=s.streamLimit){s.stream=0;runner.streaming=false;runner.cooldown=finite(t.PostDelayFrame,4)/HZ;return;}
-        const variable=r.sourceActor==='WeaponSpinnerDownpour'&&s.streamElapsed*HZ+EPS>=30;
-        const transition=variable?clamp((s.streamElapsed*HZ-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)):s.streamCharge;
+        if(s.streamUsed>=s.streamLimit){s.stream=0;s.ballpointPeakShooting=0;runner.streaming=false;runner.cooldown=finite(t.PostDelayFrame,4)/HZ;return;}
+        const modeFrame=ballpointModeFrame(s);
+        const variable=r.sourceActor==='WeaponSpinnerDownpour'&&modeFrame+EPS>=30;
+        const transition=variable?clamp((modeFrame-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)):s.streamCharge;
         emitSingle(runner,r,variable?'variable':'normal',transition);
         const fullRate=p.WeaponFullChargeParam?.RepeatFrame??t.RepeatFrame;
         s.streamUsed++;s.streamF+=finite(variable?p.VariableShotParam?.RepeatFrame:s.streamCharge+EPS>=1?fullRate:t.RepeatFrame,4)/HZ;
@@ -1342,6 +1355,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       if(s.stored){s.chargeF=s.stored.frames;s.paid=s.stored.paid;s.stored=null;}
       if(s.stream>0){
+        if(s.streamTime-Math.max(0,s.streamElapsed)<=EPS)s.ballpointPeakShooting=0;
         s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(a);
         s.stream=0;runner.streaming=false;
       }
@@ -1387,6 +1401,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       if(r.family==='splatling'){
         const shooting=shootingFrames(r,frames);
+        if(r.sourceActor==='WeaponSpinnerDownpour')
+          s.ballpointPeakShooting=Math.max(s.ballpointPeakShooting||0,shooting);
         // MaxShootingFrame is the last eligible emission time, not an ammo
         // count. Include the initial round at t=0 and advance the actual
         // current-mode cadence (Ballpoint switches from 3F to 5F).
