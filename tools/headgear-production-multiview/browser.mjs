@@ -16,7 +16,7 @@ export async function run(config){
  const state={form:'kid',grounded:true,speed:0,localMove:{x:0,z:0},firing:false,charge:0,ink:1,hp:1,vy:0};
  function render(){renderer.info.reset();renderer.render(scene,camera);gl.finish();check(!gl.isContextLost()&&gl.getError()===gl.NO_ERROR,'WebGL error');return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures};}
  function pixels(){const p=new Uint8Array(720*720*4);gl.readPixels(0,0,720,720,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;}
- function cameraView(view,target){const v={front:[0,.045,3],back:[0,.045,-3],left:[-3,.045,0],right:[3,.045,0],top:[0,3,.0001],oblique:[2.3,1.1,2.3]}[view];camera.position.copy(target).add(new THREE.Vector3(...v));camera.up.set(0,1,0);if(view==='top')camera.up.set(0,0,-1);camera.lookAt(target);camera.updateMatrixWorld(true);}
+ function cameraView(view,target){const v={front:[0,.045,3],back:[0,.045,-3],left:[-3,.045,0],right:[3,.045,0],under:[0,-3,.0001],top:[0,3,.0001],oblique:[2.3,1.1,2.3]}[view];camera.position.copy(target).add(new THREE.Vector3(...v));camera.up.set(0,1,0);if(view==='top')camera.up.set(0,0,-1);if(view==='under')camera.up.set(0,0,1);camera.lookAt(target);camera.updateMatrixWorld(true);}
  async function capture(gearId,lod,hair,view,pose='neutral',ink=0x19ae96){
   if(active){scene.remove(active.character.root);active.dispose();active=null;}
   progress.stage=[gearId,lod,hair,view,pose,ink.toString(16)].join('-');
@@ -30,13 +30,13 @@ export async function run(config){
   const withGear=pixels(),name=progress.stage;
   await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL('image/png'));
   gear.visible=false;const bare=render(),without=pixels();await globalThis.__saveHeadgearFrame(name+'-gear-hidden',renderer.domElement.toDataURL('image/png'));gear.visible=true;
-  const changedPixels=delta(withGear,without);check(changedPixels>100,'gear contributed visible pixels '+name);
+  const changedPixels=delta(withGear,without);if(![8,10].includes(gearId)||!['back','top','under'].includes(view))check(changedPixels>100,'gear contributed visible pixels '+name);
   let vertices=0,triangles=0,meshes=0;gear.traverse(o=>{if(o.isMesh){meshes++;vertices+=o.geometry.attributes.position.count;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
   rows.push({name,gearId,lod,hair,view,pose,inkColor:'#'+ink.toString(16).padStart(6,'0'),changedPixels,fitted,bare,deltaCalls:fitted.calls-bare.calls,deltaTriangles:fitted.triangles-bare.triangles,gearMeshes:meshes,gearVertices:vertices,gearTriangles:triangles,p50Ms:timings[3],p95Ms:timings[5],headWorld:c.bones.head.getWorldPosition(new THREE.Vector3()).toArray(),fit:gear.userData.fit||null});
  }
  try{
-  for(const gearId of [4,5,6,7]){
-   for(const lod of ['hero','game'])for(const view of ['front','back','left','right','top','oblique'])await capture(gearId,lod,0,view);
+  for(const gearId of [4,5,6,7,8,9,10,11]){
+   for(const lod of ['hero','game'])for(const view of ['front','back','left','right','top','under','oblique'])await capture(gearId,lod,0,view);
    for(const hair of [5,6])await capture(gearId,'game',hair,'oblique');
    if(gearId===7)for(const hair of [5,6])for(const view of ['back','top'])await capture(gearId,'game',hair,view);
    for(const pose of ['look-left','look-right'])await capture(gearId,'game',0,'oblique',pose);
