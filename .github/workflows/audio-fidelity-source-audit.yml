@@ -1,0 +1,40 @@
+name: Audio fidelity source audit
+on:
+  push:
+    branches: [work/inkwave-audio-fidelity-20261019]
+    paths:
+      - '.github/workflows/audio-fidelity-source-audit.yml'
+      - 'tools/audio/collect-fidelity-sources.py'
+permissions:
+  contents: read
+jobs:
+  sources:
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        lane: [code, drive, public, baseline]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install reference readers
+        if: matrix.lane != 'baseline'
+        run: python3 -m pip install --quiet requests beautifulsoup4 gdown
+      - name: Collect source references and provenance
+        if: matrix.lane != 'baseline'
+        run: python3 tools/audio/collect-fidelity-sources.py '${{ matrix.lane }}'
+      - name: Record existing audio regressions without waiting on unrelated CI
+        if: matrix.lane == 'baseline'
+        run: |
+          mkdir -p reports/audio-fidelity-source-audit
+          node --experimental-vm-modules --test patches/splatoon3/tests/audio-v11-real-only.test.mjs patches/splatoon3/tests/real-s3-loader-v7.test.mjs patches/splatoon3/tests/audio-combat-events.test.mjs patches/splatoon3/tests/audio-loader-lifetime.test.mjs > reports/audio-fidelity-source-audit/baseline.txt 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audio-fidelity-${{ matrix.lane }}
+          path: reports/audio-fidelity-source-audit/
+          retention-days: 3
