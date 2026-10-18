@@ -14,11 +14,16 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
  mats.wing.onBeforeCompile=s=>{s.vertexShader='#define USE_UV\n'+s.vertexShader;s.fragmentShader='#define USE_UV\nuniform vec3 samuraiInk;\n'+s.fragmentShader;s.uniforms.samuraiInk=inkUniform;s.fragmentShader=s.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
  vec2 q=vUv;float edge=min(min(q.x,1.0-q.x),min(q.y,1.0-q.y));
  float aa=max(fwidth(edge),.001);float border=1.0-smoothstep(.055-aa,.055+aa,edge);
- vec2 cell=fract(q*vec2(14.,10.));float dots=1.0-smoothstep(.13,.23,length(cell-.5));
- float fade=1.0-smoothstep(.7,1.5,max(fwidth(q.x*14.),fwidth(q.y*10.)));
- diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.14,.17,.15),dots*.7*fade);
+ // Uneven low-frequency mottled cloth; no regular polka-dot rows.
+ vec2 cellId=floor(q*vec2(15.,13.));vec2 cell=fract(q*vec2(15.,13.));
+ float h=fract(sin(dot(cellId,vec2(127.1,311.7)))*43758.5453);
+ float h2=fract(sin(dot(cellId+3.7,vec2(269.5,183.3)))*43758.5453);
+ vec2 center=vec2(.25+.5*h,.25+.5*h2);float radius=.13+.20*h2;
+ float dots=1.-smoothstep(radius,radius+.08,length((cell-center)*vec2(1.,.7+.6*h)));
+ float fade=1.-smoothstep(.7,1.5,max(fwidth(q.x*15.),fwidth(q.y*13.)));
+ diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.14,.17,.15),dots*(.50+.35*h)*fade);
  diffuseColor.rgb=mix(diffuseColor.rgb,samuraiInk,border);`);};
- mats.wing.customProgramCacheKey=()=> 'samurai-flat-wing-v1';
+ mats.wing.customProgramCacheKey=()=> 'samurai-flat-wing-v2-mottle';
  mats.ink.onBeforeCompile=s=>{s.vertexShader='#define USE_UV\n'+s.vertexShader;s.fragmentShader='#define USE_UV\n'+s.fragmentShader;s.fragmentShader=s.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
  vec2 q=vUv*vec2(40.,4.);float aa=max(fwidth(q.x),.025);
  // Dark lamellar plates crossed by broad, diagonal ink-colored lace stitches.
@@ -73,12 +78,28 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
   // Reflection across X reverses winding, including the thin edge faces.
   if(side<0){for(const key of ['position','normal','uv']){const at=hornGeo.attributes[key];for(let i=0;i<at.count;i+=3)for(let k=0;k<at.itemSize;k++){const p=(i+1)*at.itemSize+k,q=(i+2)*at.itemSize+k,v=at.array[p];at.array[p]=at.array[q];at.array[q]=v;}}}
   add('broad-gold-kuwagata-'+side,hornGeo,'gold');
-  // Curved rectangular fukigaeshi with pale speckled field and gold border.
-  const wing=(u,v,front=0)=>{const pu=(u-.5)*2,pv=(v-.5)*2,ru=pu*Math.sqrt(1-.25*pv*pv)*.5,rv=pv*Math.sqrt(1-.25*pu*pu)*.5;const x=.263+ru*.115+rv*.082,y=.250-ru*.082+rv*.115,z=.103-.047*ru+.055*ru*ru+.040*rv*rv+front;return [side*x,y,z];};
-  add('wing-gold-frame-'+side,grid([4,6,10][d],[3,4,6][d],(u,v)=>wing(side>0?u:1-u,v)),'gold');
-  add('wing-pattern-field-'+side,grid([4,6,10][d],[3,4,6][d],(u,v)=>wing(side>0?.055+.89*u:.945-.89*u,.07+.86*v,.002)),'wing');
-  add('wing-back-'+side,grid([4,6,10][d],[3,4,6][d],(u,v)=>wing(side>0?1-u:u,v,-.009)),'dark');
-  const disc=new THREE.SphereGeometry(.028,[6,10,16][d],[4,5,8][d]);disc.scale(1,1,.28);disc.translate(side*.263,.278,.116);add('wing-gold-roundel-'+side,disc,'gold');
+  // Broad fukigaeshi: preserve inner/top attachment, extend outer/lower
+  // panel and roll the lower lip rearward. All points stay ahead of shikoro.
+  const wing=(u,v,front=0)=>{const pu=(u-.5)*2,pv=(v-.5)*2,ru=pu*Math.sqrt(1-.06*pv*pv)*.5,rv=pv*Math.sqrt(1-.06*pu*pu)*.5;const x=.263+ru*.135+rv*.100,y=.233-ru*.095+rv*.145,z=.185-.045*ru+.030*rv+.025*ru*ru-.045*Math.pow(Math.max(0,-rv)*2,2)*Math.max(0,Math.min(1,(x-.28)/.07))+.018*(1-v)+front;return [side*x,y,z];};
+  const W=[5,8,12][d],H=[4,6,8][d];
+  add('wing-black-outer-binding-'+side,grid(W,H,(u,v)=>wing(side>0?u:1-u,v,-.001)),'dark');
+  add('wing-gold-frame-'+side,grid(W,H,(u,v)=>wing(side>0?.025+.95*u:.975-.95*u,.025+.95*v,.001)),'gold');
+  add('wing-pattern-field-'+side,grid(W,H,(u,v)=>wing(side>0?.070+.86*u:.930-.86*u,.070+.86*v,.003)),'wing');
+  add('wing-back-'+side,grid(W,H,(u,v)=>wing(side>0?1-u:u,v,-.010)),'dark');
+  // Close the rolling lip with its actual ink-colored underside, rather than
+  // allowing the unrelated neck-guard triangle to cross over the pale front.
+  add('wing-rolled-lower-edge-'+side,grid(W,2,(u,t)=>wing(side>0?1-u:u,0,-.010*t)),'ink');
+  // Turned concentric gold medallion, roughly half the plate width. Its
+  // circular profile is aligned with the curved panel, not the camera plane.
+  const c=new THREE.Vector3(...wing(.40,.69,.006));
+  const dx=new THREE.Vector3(...wing(.401,.69)).sub(new THREE.Vector3(...wing(.399,.69))).normalize();
+  const dy0=new THREE.Vector3(...wing(.40,.691)).sub(new THREE.Vector3(...wing(.40,.689))).normalize();
+  const normal=dx.clone().cross(dy0).normalize().multiplyScalar(side);
+  const tangentY=normal.clone().cross(dx).normalize();
+  const profile=[[0,.016],[.016,.013],[.022,.005],[.025,.011],[.029,.011],[.032,.004],[.035,.009],[.039,.009],[.042,.003],[.045,.007],[.048,.007],[.051,.001]];
+  const medallion=grid([16,24,40][d],profile.length-1,(u,v)=>{const i=Math.min(profile.length-2,Math.floor(v*(profile.length-1))),f=v*(profile.length-1)-i;const r=profile[i][0]*(1-f)+profile[i+1][0]*f,h=profile[i][1]*(1-f)+profile[i+1][1]*f,a=-u*PI*2;return c.clone().addScaledVector(dx,Math.cos(a)*r).addScaledVector(tangentY,Math.sin(a)*r).addScaledVector(normal,h).toArray();});
+  add('wing-concentric-gold-medallion-'+side,medallion,'gold');
+
  }
  // Original stylized squid crest silhouette, broad surface rather than filigree.
  // Enlarged S3 comparison reveals a diamond backing under the squid relief.

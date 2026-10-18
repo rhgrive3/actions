@@ -7,11 +7,17 @@ Actual boot in `inkwave-public/src/main.js` creates `Environment(renderer, scene
 
 Samurai gold uses the normal Physical material lighting path without a custom gold shader override. Goldfish artwork correctly uses the green roughness and blue metalness channels of a linear-data PBR texture. Neither asset is changed to compensate for missing diagnostic IBL. High metalness suppresses diffuse contribution; the old hemisphere-only fill does not replace specular image-based lighting. This source finding is distinct from a final native visual acceptance.
 
-## Additional production illumination suite
+## Initial production illumination suite (e964, historical)
 `tools/headgear-production-ibl` invokes the actual emitted `Environment` constructor with its day theme. It retains the production sky/cloud PMREM and actual theme lights/scenery, exposure 0.94, and explicitly records shadows disabled. It uses an isolated-character review camera without a playable stage, so it is not described as a complete gameplay screenshot or a fabricated metallic studio.
 
 IDs 4–11 each receive front and oblique hero views with same-frame gear-hidden controls: 16 cases, 32 PNGs. The full prior 496-frame suite remains separate and unchanged in lighting. The aggregate requires all 528 images, not a substituted subset. Character and old gear are not modified.
 
 Receipts identify emitted Environment source SHA256, harness/function hashes, configuration SHA256, theme values, environment texture dimensions/type/mapping, sun/hemisphere values, exposure, camera framing, material parameters, and per-item resource cleanup. Runtime checks fail when PMREM is absent or official theme intensity/exposure differs. Eight one-character build/dispose cycles must return geometry/texture counts exactly to the warmed baseline. Environment-owned render targets and textures are disposed at suite exit.
 
-Native execution and visual review of this added suite are pending on the next PR head. No claim of corrected gold appearance is made until those captures are inspected. The historical no-IBL images and failures remain recorded; they are not silently relabeled as production illumination.
+Native execution of this initial suite completed, but its visible sky projection failed visual review as detailed below. No claim of corrected gold appearance is made. The historical no-IBL images and failures remain recorded; they are not silently relabeled as production illumination.
+
+
+## Projection audit after e964 native capture
+The e964 illumination job completed its 32 images and resource checks, but native visual review rejected the striped/circular sky and did not clear gold appearance. Production SKY_VERT projects a direction sphere and forces far depth via homogeneous p.w; an orthographic review camera overlaps sky hemispheres. The separately generated PMREM uses cube-perspective cameras, but visible sky parity in those frames is invalid. Those captures remain historical evidence and are not a gold-response pass.
+
+The corrected QA uses a PerspectiveCamera fitted to the same headgear bounds. It retains default backlit front/oblique views and adds sun-facing-character front/oblique views by rotating character and review camera toward the unchanged actual day sun. It does not increase light intensity, alter environment/material color, or manufacture a brighter room. Every row records projection, FOV, camera position, character yaw and orientation. The suite now requires 32 cases/64 PNGs, bringing the complete denominator to 560 (496 historical controlled plus 64 production-illumination). Native pixel review remains mandatory.

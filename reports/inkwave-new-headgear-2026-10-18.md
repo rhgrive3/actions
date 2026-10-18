@@ -27,3 +27,8 @@ Final-head 496-frame QA, required CI, independent four-item visual acceptance, i
 
 ## Subsequent user feedback and illumination gate
 The user identified insufficient samurai crown/crest prominence and dull gold appearance. PR remains draft. The [illumination audit](inkwave-headgear-production-lighting-2026-10-18.md) establishes that the earlier harness omitted the actual production PMREM. A separate actual-emitted-Environment suite adds32 images while retaining496 historical controlled frames. Gold palette compensation is explicitly excluded; new crown/crest geometry and production-illumination native visual review remain merge gates.
+
+## User-requested side-wing and projection follow-up
+The next candidate broadens Samurai's two curved side wings, enlarges their concentric medallions, refines the flat cloth field and closes the lower rolled lip. All 64 non-wing geometry parts remain byte-equivalent at every LOD; material properties are unchanged. Focused fixture passes, and the sampled front skirt intrusions fall from 11 to zero. Full source/evidence limits are in `inkwave-samurai-sidewing-2026-10-18.md`. Native appearance remains pending.
+
+Historical e964 has all 528 PNGs and six suites independently verified for artifact/source/resource integrity. Its orthographic visible sky is visually invalid and does not clear gold appearance. The revised actual-Environment suite uses perspective projection, retains backlit views, and adds sun-facing character/view yaw with unchanged day lights and material palettes. Three projection/illumination guards pass locally. All 560 next-head captures and required CI must rerun; PR1581 remains draft until visual acceptance.

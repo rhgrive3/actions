@@ -8,6 +8,9 @@ for(const lod of ['far','game','hero']){
  let calls=0;const headSurface=(a,e,o,q)=>{calls++;q.set((.178+o)*Math.sin(a)*Math.cos(e),1.214+(.176+o)*Math.sin(e),.012+(.165+o)*Math.cos(a)*Math.cos(e));};
  const g=createSamuraiHelmet({lod,headSurface,offIn:()=>.024,inkColor:0xff0066});
  assert(calls>0);assert.equal(g.children.length,4);
+ assert.equal(g.userData.parts.filter(p=>p.name.startsWith('wing-concentric-gold-medallion-')).length,2);
+ assert.equal(g.userData.parts.filter(p=>p.name.startsWith('wing-rolled-lower-edge-')).length,2);
+ assert(!g.userData.parts.some(p=>p.name.startsWith('wing-gold-roundel-')),'plain dome replaced by concentric relief');
  const bowlBox=g.children.find(c=>c.name==='dark').geometry.boundingBox;assert(bowlBox.max.y>.42,'raised crown survives native-fit callback');
  assert(g.userData.parts.some(p=>p.name==='crest-diamond-backing'));
  assert.equal(g.userData.parts.filter(p=>p.name.startsWith('crest-squid-tentacle-')).length,4);
