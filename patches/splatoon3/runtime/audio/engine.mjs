@@ -1,6 +1,7 @@
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
+import { mainAudioSourceId } from './weapon-recipes.mjs';
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 
 // Extends the existing mixer; its unlock, mute, compressor and spatial paths remain authoritative.
@@ -24,6 +25,7 @@ export function installWeaponAudioEngine(Engine){
   p.resolveWeaponSound=function(name){return this.weaponBank()?.resolve(name)||null;};
   p.loadAuthorizedWeaponAudio=async function(manifest,options={}){if(!this.ctx)this.init();if(!this.ctx)throw new Error("Web Audio context not initialized; unlock with a user gesture first");return this.weaponBank().authorized.load(manifest,options);};
   p.prepareWeapon=function(id,{urgent=true}={}){
+    id=mainAudioSourceId(id);
     if(!AUDIO_RECIPES[id]||!urgent)return;
     // Remote bots must not block the iPad player's first shot behind an
     // unbounded serial MP3 decode queue. Admit the active local weapon first.
@@ -52,6 +54,7 @@ export function installWeaponAudioEngine(Engine){
   // Preserve the exact admitted projectile clock: never delay a missed one-shot.
   // Preload after a first cold miss; the following shots will use real samples.
   p.playWeapon=function(id,event='fire',options={}){
+    id=mainAudioSourceId(id);
     const bank=this.weaponBank(),name=bank?.name(id,event);
     if(!name)return null;
     const loader=this._realS3Loader;
@@ -84,6 +87,7 @@ export function installWeaponAudioEngine(Engine){
     return this.play(name,{...options,priority:options.priority??(options.actor?.isLocal?88:64)});
   };
   p.loopWeapon=function(id,event,options={}){
+    id=mainAudioSourceId(id);
     const bank=this.weaponBank(),name=bank?.name(id,event);
     if(!name)return null;
     if(bank.authorized.byEvent.has(`${id}:${event}`))return this.loop(name,options);
