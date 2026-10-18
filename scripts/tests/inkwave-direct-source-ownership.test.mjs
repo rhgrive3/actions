@@ -79,3 +79,28 @@ test('level, stage map and Cargo spawn/return geometry live in game source, not 
     assert(!s3.includes("if (rel === '" + path + "') {"), path + ' must not have the old Splatoon3 world-source rewrite');
   }
 });
+
+test('PropKit atlas, lifetime and rematch behavior are authored in the real module, without prototype rewriting', async () => {
+  const { adaptBuildSource } = await import('../inkwave-source-composition.mjs');
+  const legacy = fs.readFileSync(new URL('../../patches/local-quality/tests/fixtures/props-before-direct-migration.js.txt', import.meta.url), 'utf8');
+  const loader = fs.readFileSync(new URL('../../patches/local-quality/tests/prop-retention-loader.mjs', import.meta.url), 'utf8');
+  const buildOnly = fs.readFileSync(new URL('../lib/inkwave-build-only-modules.mjs', import.meta.url), 'utf8');
+  assert.notEqual(legacy, worldProps, 'negative control must remain the pre-migration module');
+  assert.match(legacy, /cv\.width = AW; cv\.height = AH/);
+  assert.doesNotMatch(legacy, /this\._placements = \[\]/);
+  assert.match(loader, /fixtures\/props-before-direct-migration\.js\.txt/);
+  assert.match(worldProps, /import \{ G as propAtlasGame \} from '\.\.\/core\/ctx\.js'/);
+  assert.match(worldProps, /_replayBuckets\(\)/);
+  assert.match(worldProps, /this\._buckets\.clear\(\);\s*this\._released = true/);
+  assert.match(worldProps, /build\(\) \{\s*syncPropAtlas\(this\)/);
+  assert.match(worldProps, /update\(dt, time\) \{\s*syncPropAtlas\(this\)/);
+  assert.match(worldProps, /this\._propAtlasRedraw = null/);
+  assert.doesNotMatch(worldProps, /PropKit\.prototype\./);
+  assert.doesNotMatch(composition, /adaptProp(?:Retention|Atlas)/);
+  assert.doesNotMatch(buildOnly, /prop-(?:retention|atlas)-adapter\.mjs/);
+  for (const p of ['prop-atlas-adapter.mjs', 'prop-retention-adapter.mjs']) {
+    assert(!fs.existsSync(new URL('../../patches/local-quality/' + p, import.meta.url)), p + ' must be retired');
+  }
+  assert.equal(adaptBuildSource('src/world/props.js', worldProps), worldProps,
+    'production must use the authored PropKit class, not a build-time transformed copy');
+});
