@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import {
   selectNearInvisibleClipTail, shouldDeferCosmeticDrop, flatFootHeightAt,
   adaptFirefightTierBudget,
-} from '../patches/local-quality/firefight-tier-budget.mjs';
+} from '../firefight-tier-budget.mjs';
 
 const once = (source, before, after, label) => {
   const index = source.indexOf(before);
