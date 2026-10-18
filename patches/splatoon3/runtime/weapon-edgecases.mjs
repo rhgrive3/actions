@@ -3,7 +3,7 @@ import { mainInkFootprint } from './main-ink-footprints.mjs';
 import { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
-import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
+import { rollerFlickDrawRadius, ROLLER_SPAWN_BASE } from './weapons-fidelity.mjs';
 
 const EPS = 1e-10, DEG = Math.PI / 180;
 const EMPTY_SUB_GATE_INPUT = Object.freeze({});
@@ -145,7 +145,9 @@ export function appendRollerNearUnit(system, a, w) {
     radius: 1, damage: w.flickDamageNear, dmgFar: w.flickDamageFar, size: .15, trail: 0, trailEvery: 1.8, trailRadius: .45,
     grav: w.flickGravity ?? 26, drag: w.flickDrag ?? .4, seed: Math.random(), vis: rollerFlickDrawRadius(w, false, Math.max(0, (w.flickDrops ?? 2) - 1), 0, .185, depleted), tail0: .4, tailK: 1, wob: .1, wobF: 19, nose: 0, sats: 2,
     s3FlickUnit: 1, s3DepletionRound: depleted, fidelityMode: 'horizontal', fidelityYaw: angle - a.yaw, fidelitySectorYaw: a.yaw });
-  p.pos.set(a.pos.x + fx * .6 + fz * lateral, a.pos.y + 1.3, a.pos.z + fz * .6 - fx * lateral);
+  // Same shared Roller base as the main volley (sourced SpawnPositionOffsetHeight 0).
+  const forward = ROLLER_SPAWN_BASE.forward;
+  p.pos.set(a.pos.x + fx * forward + fz * lateral, a.pos.y + ROLLER_SPAWN_BASE.height, a.pos.z + fz * forward - fx * lateral);
   p.prev.copy(p.pos); p.start.copy(p.pos);
   p.vel.set(Math.sin(angle) * cp * speed, Math.sin(pitch) * speed, Math.cos(angle) * cp * speed);
   // The existing enclosing fireFlick wrapper assigns one shared damage group
