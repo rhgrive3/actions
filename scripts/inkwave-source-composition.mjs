@@ -55,11 +55,6 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
     ['The squidkids and code behind INKWAVE', 'The squidkids and code behind ZEVANT'],
   ],
   // In-world text is rendered into procedural textures / 3-D lettering.
-  'src/world/murals.js': [
-    ["strokeText('INKWAVE', ox + 300, 186)", "strokeText('ZEVANT', ox + 300, 186)"],
-    ["fillText('INKWAVE', ox + 300, 186)", "fillText('ZEVANT', ox + 300, 186)"],
-    ["fillText('INKWAVE', ox + 294, 180)", "fillText('ZEVANT', ox + 294, 180)"],
-  ],
   'src/game/lobbySet-tex.js': [
     ["const word = 'INKWAVE', size =", "const word = 'ZEVANT', size ="],
   ],
