@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Read-only map of the production source files still rewritten at build time.
+// Read-only audit of the authored game source tree and selected runtime entry points.
 // The report measures code ownership, not game behavior or performance.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -13,6 +13,7 @@ const DIRECT = Object.freeze([
   'src/game/nav.js',
   'src/game/inkCollision.js',
   'src/world/murals.js',
+  'src/world/stages/cargo/layout.js',
   'src/world/props.js',
   'src/world/props-marina-vessels.js',
   'src/game/lobbySet-tex.js',
