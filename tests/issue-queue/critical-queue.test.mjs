@@ -185,11 +185,16 @@ test('real production composition retains source-admission and bounded progressi
   assert.match(main,/sanitizeProfile\(this.profile, DEFAULT_PROFILE, WEAPONS\)/);
   assert.match(main,/sanitizeSettings\(this.settings, DEFAULT_SETTINGS, QUALITY\)/);
   assert.match(main,/applyAimSettingsChange\(this\.settings, partial\);\n    Object.assign\(this\.settings, sanitizeSettings\(this\.settings, DEFAULT_SETTINGS, QUALITY\)\)/);
-  assert.match(main,/awardProfileXP\(p, gained, PROGRESSION.xpForLevel\)/);
-  assert.ok(!main.includes('p.xp += gained;'));
+  // The earlier network guard already sanitizes the profile and provides
+  // bounded O(1) XP settlement; the last pass must not duplicate progression.
+  assert.equal(main.split('settleProgression(p, PROGRESSION);').length-1,2);
   assert.ok(!main.includes('while (p.xp >= PROGRESSION.xpForLevel(p.level))'));
+  assert.match(main,/getLoadout: \(\) => \(\{ weapon: safeWeaponId\(self.profile.weapon, WEAPONS\) \}\)/);
   assert.match(main,/validStartRoster\(cfg\?\.roster, G.net\?\.myId/);
   assert.match(session,/validStartRoster\(cfg\?\.roster, this.myId/);
+  assert.equal(session.split("import { validStartRoster } from '../../patches/network-replication/queue-recovery.mjs';").length-1,1,
+    'one authoritative START validator import, never duplicate declarations');
+  parse(session,{ecmaVersion:'latest',sourceType:'module'});
   assert.match(cfg,/Object.hasOwn\(QUALITY, settings.quality\)/);
   assert.match(paint,/Object.hasOwn\(K, opts.kind\)/);
 });
