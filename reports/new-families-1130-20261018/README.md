@@ -81,6 +81,12 @@ Nintendo公式11.3.0変更: ケルビンのスライド後ブレ約10%軽減、�
 27. #1592のpad感度clampが正当なS3 -5/0/+5を.2/.2/3へ変更 → 保存済みS3／liveの-5..+5とlegacy移行を分離し、独立profileとgyro/touch/mouseの既存範囲・0/無効設定を保持。[設定の前後比較](queue-final-composition.md)。
 28. #1592のactive final adapterがsource input identityの明示リスト外 → 実SHAを登録してunit検査。生成物由来の配信cacheは従来も正常であり、exact source/input追跡の不足を補完したもの。[identityの範囲](queue-final-composition.md)。
 
+29. #1592のCrab共通照準solverが足元sentinelを実目標にし、方向残差も旧contractより粗くなった → 既存guardと方向精度を復元し、近接二周期を防ぐdampingを保持。元の表示期待値は変更せず、入力vector・最終socket→targetの独立oracleと3変異で検査。[原因と検証範囲](crab-aim-regression.md)。
+
+30. 既存の実モデル検査がSlosherの共有rest定義を個体別carry gripへ当て、正常な支持手を誤差0.652964と判定 → 各frameの実モデル定義へ接続し、閾値.006を維持。実支持点の誤差は約6.0e-15、拳穴の第二幾何比較・実モデル+.2移動・旧socketの負対照で検査。runtimeと21画像は不変。[所有者と数値](../inkwave-weapon-models-motion-2026-10-10.md)。
+
+camera合成の既存CIも、cameraが文字列上の最後のreturnであるとの旧前提を修正した。実VFX→camera→static menu→queueの順序と、後置passがcamera所有の3モジュールとActorを変更しないこと、missing/duplicate/reapplyの拒否を検査する。射撃・照準runtimeの変更ではない。[合成契約の追補](camera-queue-composition-ci.md)。
+
 ## 検証の読み方と残る限界
 
 ロジック試験、productionモジュールの実行、Chromium/WebGL表示、原典数値の照合を別の証拠として扱う。`check-inkwave-new-families-browser.mjs` は実Actor/Character/Physics/CPU Paintを使い、固定60Hzを30/60/120Hzの表示更新へグループ化する。全16ベース＋25キット、通常・保持・空中・潜伏キャンセル・段階charge・jump・slideを対象とし、固定時点の発射/座標/速度/インク/塗りhashを比較する。最初の0.25秒のbase保持射撃では各表示frameをWebGL描画し、他は3時点を描画する。全3秒を全ケースで実表示した検査ではない。乱数は.37固定で、分布の証拠には使用しない。
