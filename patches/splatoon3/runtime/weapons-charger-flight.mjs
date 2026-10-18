@@ -175,7 +175,7 @@ export function installChargerFlight(api,completion) {
   }
   function postponePaint(system,job,from,hit,radius,seed) {
     // Pooling shares the live Projectiles renderer, keeping zero new draw calls.
-    if(!system.chargerDrops||system.chargerDrops.length>=192)return;
+    if(!system.chargerDrops)return; // gameplay paint is not limited by the 64 visible-instance reservation
     const drop=system.chargerDropPool.pop()||{
       pos:new THREE.Vector3(),start:new THREE.Vector3(),target:new THREE.Vector3(),
       normal:new THREE.Vector3(),direction:new THREE.Vector3()
@@ -197,9 +197,16 @@ export function installChargerFlight(api,completion) {
     const h=groundUnder(at),seed=Math.random();
     if(h.hit&&h.dist<=3.5){
       if(!terminal&&beginChargerWallDrop(system,job,h,completion.weapons.charger,api,true))return 0;
-      return G.paint.splat(h.point.clone().addScaledVector(h.normal,.015),radius,job.team,
+      paintTangent.copy(job.dir).addScaledVector(h.normal,-job.dir.dot(h.normal));
+      if(paintTangent.lengthSq()<1e-8)paintTangent.set(1,0,0);else paintTangent.normalize();
+      // Match the packed source WidthHalf/DepthHalf ellipse in both immediate
+      // and delayed paths. GPU footprint and CPU ownership share this centre.
+      const stretch=Math.max(0,job.paint.depth/radius-1)*1.6;
+      paintPoint.copy(h.point).addScaledVector(h.normal,.015)
+        .addScaledVector(paintTangent,-radius*stretch*.375);
+      return G.paint.splat(paintPoint,radius,job.team,
         {seed,footprint:CHARGER_FOOTPRINT,kind:SOURCE_SPLASH_PAINT_KIND,
-         stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/radius-1),claimOwner:job.owner});
+         stretch:paintTangent,stretchAmt:stretch,claimOwner:job.owner});
     }
     // Airborne ink is not destroyed: it remains a pooled bead until actual
     // ground contact. A miss only expires after falling through the water plane.
