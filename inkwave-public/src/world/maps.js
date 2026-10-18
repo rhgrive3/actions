@@ -1,3 +1,5 @@
+import { nativeStageEnabled, NATIVE_LAYOUTS } from '../../patches/native-stages/runtime/registry.mjs';
+import { LAYOUT as SCORCH } from '../../patches/splatoon3/stage/scorch-layout.mjs';
 // Map layouts. A map is a list of oriented boxes. Everything in `half` is also mirrored by a 180° rotation about the
 // Y axis ((x,z) -> (-x,-z)) so both teams get an identical arena. Team Alpha spawns at -Z, Bravo at +Z.
 //
@@ -279,4 +281,5 @@ export const HALYARD = {
   },
 };
 
-export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO };
+export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO, scorch: SCORCH };
+if (nativeStageEnabled) Object.assign(MAP_LAYOUTS, NATIVE_LAYOUTS);
