@@ -5,9 +5,10 @@ import fs from 'node:fs';
 import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
-import { mainInkFootprint, INK_PROFILE_BYTES, INK_FOOTPRINT_KINDS } from '../runtime/main-ink-footprints.mjs';
+import { mainInkFootprint, CHARGER_FOOTPRINT, chargerInkProfileKind, INK_PROFILE_BYTES, INK_FOOTPRINT_KINDS } from '../runtime/main-ink-footprints.mjs';
+import { chargerPaintParameters } from '../runtime/weapons-charger-flight.mjs';
 
-const families=new Set(['shooter','dualies','roller','brush','slosher']);
+const families=new Set(['shooter','dualies','roller','brush','slosher','charger']);
 const options={fullRuntime:true,productionComposition:true,realProjectiles:true,
   extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"};
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -16,6 +17,9 @@ test('profile resource is bounded and only the requested main families opt in',(
   assert.equal(INK_PROFILE_BYTES.byteLength,4096);
   for(const r of MAIN_WEAPON_CATALOG.records)assert.equal(!!mainInkFootprint(r),families.has(r.family),r.id);
   assert.equal(mainInkFootprint('shooter'),mainInkFootprint('dualies'),'both fire discrete ink shots');
+  assert.equal(mainInkFootprint('charger'),CHARGER_FOOTPRINT);
+  assert.deepEqual([chargerInkProfileKind(.13),chargerInkProfileKind(.47),chargerInkProfileKind(.83)],
+    ['ink-charger-a','ink-charger-b','ink-charger-c']);
   assert.notEqual(mainInkFootprint('brush'),mainInkFootprint('slosher'));
   assert.equal(mainInkFootprint({family:'slosher',sourceActor:'WeaponSlosherBathtub'}),'ink-shot','bubbles retain discrete puddles');
 });
@@ -32,7 +36,7 @@ test('single nearest GPU fetch packs both linear profile endpoints exactly', () 
   }
 });
 
-test('all 34 main Actors use the new CPU silhouette through real release/contact paths and credit it once',async()=>{
+test('all selected main Actors use their CPU silhouettes through real release/contact paths and credit once',async()=>{
   const f=await fixture(options);f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
   const rows=[];
   for(const r of MAIN_WEAPON_CATALOG.records.filter(r=>families.has(r.family))) {
@@ -52,12 +56,12 @@ test('all 34 main Actors use the new CPU silhouette through real release/contact
     }
     assert.ok(stamps.length>0,r.id);assert.ok(paint.counts[0]>0,r.id);
     // Explosher's explosion is a separate existing blast owner, not Bucket's sheet.
-    if(r.sourceActor!=='WeaponSlosherWashtub')assert.ok([...kinds].some(k=>k>=10&&k<=14),r.id+' selected live silhouette');
+    if(r.sourceActor!=='WeaponSlosherWashtub')assert.ok([...kinds].some(k=>k>=10&&k<=17),r.id+' selected live silhouette');
     assert.equal(a.stats.turf,paint.counts[0]*.0625,r.id+' exact once-only turf credit');
     rows.push({id:r.id,family:r.family,kinds:[...kinds].sort((a,b)=>a-b),stamps:stamps.length,cells:paint.counts[0],
       grid:digest(paint.grid),events:digest(JSON.stringify(stamps))});
   }
-  assert.equal(rows.length,34);
+  assert.equal(rows.length, MAIN_WEAPON_CATALOG.records.filter(r=>families.has(r.family)).length);
   if(process.env.INK_FOOTPRINT_RECEIPT)fs.writeFileSync(process.env.INK_FOOTPRINT_RECEIPT,JSON.stringify({version:'11.3.0',profileBytes:4096,rows},null,2)+'\n');
 });
 
@@ -114,4 +118,41 @@ test('canonical event records the chosen kind before replication and replay uses
   const {paint:remote}=makePaintWorld(f);
   for(const e of events){delete e.opts.footprint;delete e.opts.claimOwner;remote.splat(e.at,e.R,e.team,e.opts);}
   assert.equal(digest(remote.grid),expected);
+});
+
+test('Charger old organic outline uses three repeatable seed variants with unchanged source widths',async()=>{
+  const f=await fixture(options),{V}=makePaintWorld(f,{cell:.125});
+  const source=JSON.parse(fs.readFileSync(new URL('../profile.json',import.meta.url),'utf8'))
+    .weaponsFidelityCompletion.weapons.charger;
+  for(const [charge,width,depth,impact,spacing] of [
+    [8/60,.78,2.73,.906,4.7775],
+    [34/60,1.17,2.145,1.8125,3.485625],
+    [1,1.56,1.56,3.263,2.0592],
+  ]){
+    const p=chargerPaintParameters(source,charge);
+    for(const [value,expected] of [[p.width,width],[p.depth,depth],[p.impact,impact],[p.interval,spacing],[p.nearest,1.2]])
+      assert.ok(Math.abs(value-expected)<1e-9,charge+' sourced numeric endpoint '+value+' != '+expected);
+  }
+  const kinds=[],grids=[],events=[];
+  for(const seed of [.13,.47,.83]){
+    const {paint}=makePaintWorld(f,{cell:.125});
+    const received=[];f.G.netm={mute:0,applying:false,recSplat(_at,R,_team,opts){received.push({R,opts:{...opts}});}};
+    const center=V(0,0,8),r=1.56;
+    const claimed=paint.splat(center,r,0,{kind:'source-splash',footprint:CHARGER_FOOTPRINT,seed,face:0,stretch:V(0,0,1),stretchAmt:0});
+    assert.ok(claimed>0);
+    const stamp=paint.growing.at(-1);
+    assert.equal(stamp.R,r,'no arbitrary global size correction');
+    assert.ok(stamp.kind>=15&&stamp.kind<=17);
+    assert.equal(received.length,1);assert.equal(received[0].opts.kind,chargerInkProfileKind(seed));
+    const local=Array.from(paint.grid);kinds.push(stamp.kind);grids.push(crypto.createHash('sha256').update(Buffer.from(local)).digest('hex'));
+    f.G.netm=null;
+    const {paint:replayed}=makePaintWorld(f,{cell:.125});
+    const opts={...received[0].opts};delete opts.footprint;delete opts.claimOwner;
+    replayed.splat(center,received[0].R,0,opts);
+    assert.deepEqual(Array.from(replayed.grid),local,'wire kind must reconstruct authoritative CPU coverage');
+    events.push(received[0].opts.kind);
+  }
+  assert.deepEqual(kinds,[15,16,17]);
+  assert.equal(new Set(grids).size,3,'each old-style shape must be visibly distinct');
+  assert.deepEqual(events,['ink-charger-a','ink-charger-b','ink-charger-c']);
 });
