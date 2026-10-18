@@ -29,6 +29,11 @@ export function adaptCameraAimControls(rel, input) {
       '    enforceBoomClearance(this.boom, _probe.hard);', 'hard boom clearance');
     replace('    fov = frameBattleCamera(this, fov);',
       '    constrainCameraLens(this, G.physics, fov);\n    fov = frameBattleCamera(this, fov);', 'final lens sweep');
+    replace('    gc.fov = fov; gc.aspect = cam.aspect; gc.near = cam.near; gc.far = cam.far;',
+      '    const projectionDirty = gc.fov !== fov || gc.aspect !== cam.aspect || gc.near !== cam.near || gc.far !== cam.far;\n' +
+      '    gc.fov = fov; gc.aspect = cam.aspect; gc.near = cam.near; gc.far = cam.far;\n' +
+      '    if (projectionDirty) gc.updateProjectionMatrix();',
+      'scope gameplay camera projection follows rendered vertical FOV');
     replace('    gc.updateMatrixWorld();', '    gc.updateMatrixWorld();\n    recordAimPose(this);', 'simulation pose snapshot');
     replace('if (Math.abs(cam.fov - fov) > 0.01)', 'if (cam.fov !== fov)', 'optical/HUD projection parity');
   }
