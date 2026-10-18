@@ -108,3 +108,13 @@ Both exit0. Audit baseline uses unchanged baseline geometry code, replacing only
 
 Final module SHA256:315453ebff2871792af71cda1c2c8022979489dd416bbe6e8395a14d70aade76.
 Native screenshot gate remains pending for this correction. No CPU preview acceptance.
+
+
+## Connected-slot candidate 84f1e19a (09:51 UTC)
+Inspected actual270e315453 front and oblique. Three separated triangle-hole rows remained unlike source's continuous short dark chevron slots. New bounded geometry: three full six-corner chevron apertures across central block with18 thin recessed diagonal webs, continuous rounded oval perimeter, shallower crown silhouette and gently bulged forehead, closed underside return joining projecting brim to eye-frame top. Compact forehead aperture dimensions, eye aperture/lens material, cheek construction and rear routing unchanged. Broad pattern, not added engraving.
+
+New counts hero/game/far6652/3784/2848;4draw batches/materials,0textures,1transparent lens. All fixture topology/index/normal/lifecycle/LOD checks pass. Added closed consistent welded-edge topology for complete brim and triangle-centroid envelope clearance across allLOD. Actual raw9851 headShape audit passes at every front triangle vertex/centroid. This does not establish animated hair/face universal clearance; prior unchanged rear caveat remains.
+
+Module SHA25684f1e19af3e184ce8494ed4605ac63a32391e097dcffeecb8d0c20551f306ae3.
+Fixture SHA256e9a19f8327ccc3b4b3f8f229165c03e8198ad40a0e745e479efbf10977f7f4fd.
+New native rendering is pending. Software preview proves construction only; no visual acceptance claim.

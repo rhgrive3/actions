@@ -53,3 +53,7 @@ Samurai closes side-wing/medallion boundary surfaces and removes polar zero-area
 
 
 The subsequent native9851 side/top comparison still rejected insufficient outer wing curl and narrow border. The final bounded candidate corrects the suppressed curl mask (corner displacement approximately .0225), widens the gold border from4.5% to6%, retains topology closure, unchanged palette and zero sampled front guard crossings. Counts remain unchanged. All66 non-wing/medallion pieces are byte-identical; actual-corner-roll regression passes. Final native review is still required.
+
+
+## Further requested goggles correction
+The user requested additional improvement after the solid-shell revision. Actual270e front/oblique comparison motivated three connected central chevron slots with thin inset webs and a rounded closed perimeter, plus a shallow rounded forehead and closed brim underside return. Eye/lens material, cheek construction, hair contract and rear routing stay unchanged. Hero/game/far triangles are6652/3784/2848 in four batches. Topology, winding, triangle-centroid clearance and disposal tests pass locally; a new native comparison is required. Existing rear-strap intersection caveats remain open and are not relabeled as accepted.

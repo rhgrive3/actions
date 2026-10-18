@@ -73,12 +73,10 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   const stations=lod==='far'?12:20;
   const upper=[],bottom=[];for(let i=0;i<=stations;i++){const a=-span+2*span*i/stations;upper.push([a,eyeBottom(a)-.025-.012*(a/span)**2]);bottom.push([a,lower(a)]);}
   const vents=[];
-  // Three short chevron slots occupy only the compact central mouth block.
-  // Small triangular apertures leave integral diagonal white webs between them.
-  for(let row=0;row<3;row++)for(const side of [-1,1])for(let i=0;i<3;i++){
-    const a=side*(.020+i*.085),b=side*(.010+(i+1)*.085),at=x=>-.09-row*.175-.145*Math.abs(x)/.30+.018*(x/.30)**2;
-    const lo=at((a+b)/2)-.100;
-    vents.push(i%2?[[a,at(a)-.100],[b,at(b)-.100],[(a+b)/2,lo+.100]]:[[a,at(a)],[b,at(b)],[(a+b)/2,lo]]);
+  // Three continuous short chevron slots, with inset diagonal webs.
+  for(let row=0;row<3;row++){
+    const w=.285-row*.020,base=-.085-row*.18,h=.105,slope=.100;
+    vents.push([[-w,base-slope],[0,base],[w,base-slope],[w,base-slope-h],[0,base-h],[-w,base-slope-h]]);
   }
   // Side cheeks have ONE dark vent band between two broad solid ink-marked bands.
   for(const side of [-1,1])for(let i=0;i<6;i++){
@@ -87,9 +85,13 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   }
   const shellDepth=(a,e)=>{const central=Math.max(0,Math.cos(Math.min(1,Math.max(0,Math.abs(a)-.15)/.21)*Math.PI/2))**2;return .050+.031*central*Math.max(0,Math.min(1,(-e+.06)/.30));};
   panel('molded-lower-face-shell',[...upper,...bottom.reverse()],vents,shellDepth,.012);
-  // Rounded compact central block perimeter; the long cheek bands do not form
-  // repeated chevrons across the full face.
-  for(const side of [-1,1])rail('central-block-sidewall',u=>[side*(.32-.11*Math.max(0,(u-.65)/.35)**2),-.17-.51*u,.070],.036,.009,'shell',10);
+  // Continuous rounded oval perimeter around the projecting central block.
+  rail('central-block-perimeter',u=>{const t=u*Math.PI*2,a=.305*Math.sin(t),e=-.335+.365*Math.cos(t);return [a,e,shellDepth(a,e)+.008];},.050,.010,'shell',36);
+  // Thin recessed webs preserve the three dominant connected slot bands.
+  for(let row=0;row<3;row++)for(const side of [-1,1])for(let i=0;i<3;i++){
+    const w=.285-row*.020,base=-.085-row*.18,h=.105;
+    rail('central-slot-web',u=>{const a=side*w*(i+.18+.64*u)/3,e=base-.100*Math.abs(a)/w-h*(i%2?u:1-u);return [a,e,shellDepth(a,e)-.002];},.012,.004,'shell',2);
+  }
   // Recessed dark lining behind punched vents provides cavity depth without
   // filling the eye window or replacing the real aperture geometry with paint.
   for(const [i,h]of vents.entries())panel('vent-recess-'+i,h,[],(a,e)=>shellDepth(a,e)-.012,.002,'dark');
@@ -105,18 +107,22 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   // One bowed transparent shield stands in front of eyes and below the broad cap.
   add(grid(N,6,(u,v)=>{const a=az(u);return pt(a,eyeBottom(a)+(eyeTop(a)-eyeBottom(a))*v,.059+.030*Math.sin(Math.PI*v)*Math.cos(a));}),'lens','panoramic-lens');
   // Tall broad forehead plate with short angular vents, not an open hair rail.
-  const browBase=a=>eyeTop(a)+.13,crown=a=>.70+.33*Math.cos(a)**2;
+  const browBase=a=>eyeTop(a)+.13,crown=a=>.80+.21*Math.cos(a)**2;
   const foreTop=[],foreBot=[];for(let i=0;i<=stations;i++){const a=-span+2*span*i/stations;foreTop.push([a,crown(a)]);foreBot.push([a,browBase(a)]);}
   const foreHoles=[];for(const side of [-1,1])for(let i=0;i<5;i++){const a=side*(.25+i*.17),b=a+side*.14;foreHoles.push([[a,browBase(a)+.075],[b,browBase(b)+.075],[(a+b)/2,browBase((a+b)/2)+.205]]);}
-  panel('molded-forehead-shell',[...foreBot,...foreTop.reverse()],foreHoles,.039,.012);
+  panel('molded-forehead-shell',[...foreBot,...foreTop.reverse()],foreHoles,(a,e)=>.039+.009*Math.sin(Math.PI*Math.max(0,Math.min(1,(e-browBase(a))/(crown(a)-browBase(a))))),.012);
   for(const [i,h]of foreHoles.entries())panel('forehead-vent-recess-'+i,h,[],.027,.002,'dark');
   // Broad domed forward brim joins the forehead plate to the eye-frame arch.
-  const peak=(u,v,h)=>{const a=az(u)*1.025;const p=pt(a,eyeTop(a)+.16*(1-v)+.025,.042+.065*v*Math.cos(a/1.8));p[1]+=h;return p;};
-  add(grid(N,5,(u,v)=>peak(u,1-v,.005)),'shell','visor-top');
-  add(grid(N,5,(u,v)=>peak(u,v,-.005)),'shell','visor-bottom');
-  add(grid(N,1,(u,v)=>peak(u,1,(v-.5)*.010)),'shell','visor-front-edge');
-  add(grid(N,1,(u,v)=>peak(1-u,0,(v-.5)*.010)),'shell','visor-rear-edge');
-  for(const side of [0,1])add(grid(5,1,(u,v)=>peak(side,side?1-u:u,(v-.5)*.010)),'shell','visor-side-edge');
+  const peak=(u,v)=>{const a=az(u)*1.025;const p=pt(a,eyeTop(a)+.16*(1-v)+.025,.042+.065*v*Math.cos(a/1.8));p[1]+=.005+.008*v*Math.cos(a)**2;return p;};
+  // The underside returns continuously to the thick eye frame, making one
+  // molded brim instead of two separated flat shelves.
+  const under=(u,v)=>{const a=az(u)*1.025,A=peak(u,0),B=pt(a,eyeTop(a)+.025,.062);A[1]-=.010;return A.map((x,k)=>x+(B[k]-x)*v);};
+  const edge=(u,v,at)=>{const A=under(u,at),B=peak(u,at);return A.map((x,k)=>x+(B[k]-x)*v);};
+  add(grid(N,5,(u,v)=>peak(u,1-v)),'shell','visor-top');
+  add(grid(N,5,(u,v)=>under(u,v)),'shell','visor-bottom');
+  add(grid(N,1,(u,v)=>edge(u,v,1)),'shell','visor-front-edge');
+  add(grid(N,1,(u,v)=>edge(1-u,v,0)),'shell','visor-rear-edge');
+  for(const side of [0,1])add(grid(5,1,(u,v)=>edge(side,v,side?1-u:u)),'shell','visor-side-edge');
   // Small original forehead emblem; not a recovered game texture.
   panel('forehead-badge',[[-.075,.74],[.075,.74],[.065,.83],[-.065,.83]],[],.047,.001,'dark');
   panel('forehead-emblem',[[-.05,.775],[.05,.79],[.03,.81],[-.04,.80]],[],.049,.001,'ink');
