@@ -1,0 +1,15 @@
+{
+  "baseMain": "2630ce48fdcf5f84360c212b38e0d4673047dc3f",
+  "buildPassed": true,
+  "paintModulesByteIdenticalToExactGpuBuild": {
+    "src/world/paint.js": "98a53d30cef631c0036081d93719e99374d5791dc1d7620dac6289f0a34137fb",
+    "patches/splatoon3/runtime/main-ink-footprints.mjs": "ebba22f83bb077c98a3a40ace50e4c14abe19f5d9352346a863937bd0dbba671",
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": "3de7314bcd31a9cb97f6d25ee02b21a490a171ac8508d51bb17768d89a1563bb",
+    "patches/splatoon3/runtime/weapons-fidelity.mjs": "e514a8cb8e5e3f2c343c22e9e6babb13394f73b08f7dd0c18c5c625762839e29"
+  },
+  "additionalTests": {
+    "passed": 5,
+    "failed": 0
+  },
+  "incomingTestCorrection": "Already-composed menu rejects at the earlier lobby-slot anchor guard; correct the expected error only. No menu runtime changes in this fix."
+}

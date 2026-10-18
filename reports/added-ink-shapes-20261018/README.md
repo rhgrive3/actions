@@ -73,3 +73,7 @@ python scripts/extract-inkwave-ink-contours.py reference-directory output.json
 ![変更前後の12ブキ](before-after.png)
 
 ![個別の共有輪郭とチャージャー](profile-gallery.png)
+
+## 最新mainとの統合
+
+作業中にmainへ入った `2630ce48f` のメニュー画像メモリ修正を統合。ビルド成功、GPU検証済みのpaint本体・共通輪郭・カタログ・fidelity各生成モジュールはバイト一致した（[結果](integration.json)）。追加5試験も成功。取り込まれたメニューテストの二重適用検査が、実際には先にlobby-slotガードで拒否されるのに後段のエラー文を期待していたため、その期待値だけ修正した。メニューの実行時コードは変更していない。
