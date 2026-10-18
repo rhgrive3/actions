@@ -18,9 +18,11 @@
 
 - `node --test patches/local-quality/tests/settings-ui.test.mjs`: 9件成功。旧実装で第二ポインターによる誤操作が成立する negative control を含む。
 - メニュー・ナビゲーション・ring・profile・view-settings の関連既存テスト: 82件成功。
-- `scripts/check-inkwave-settings-ui.mjs`: 本番ビルドの Menus と quality installer を Chromium 上で起動。1280×800 / 844×390 / 390×844 の3条件で成功。実マウスの click / drag / pointer capture、入力方式切替、default reset、preview、1 snapshot refresh、タブ変更時のドラッグ終了、タブ名の改行を検証。
+- `scripts/check-inkwave-settings-ui.mjs`: 本番ビルドの Menus と quality installer を Chromium 上で起動。1280×800 / 844×390 / 390×844 の3条件で成功。実マウスの click / drag / pointer capture、入力方式切替、default reset、preview、1 snapshot refresh、タブ変更時のドラッグ終了、タブ名の改行を検証。狭い2条件はタッチ端末をエミュレートし、trusted tap によるタブ選択も確認。
 - 選択リングの意図的な追従処理を除外して一覧フェード処理だけを計測すると、静止中120フレームの一覧 geometry read は0回、scroll 後は3プロパティを1回ずつ読む。GPU負荷・FPS・電力の測定ではない。
-- スクリーンショットと JSON、ビルド・テストログはローカル `work/` に保存。チェック用 HTML は検証スクリプトのHTTPサーバーだけが返し、配信物に追加しない。
+- 本番ゲームの `check-inkwave-browser.mjs --exact-source --ui-probes-only`: 成功。runtime commit `936fec672eaabefd98cc2afc8c778557229373a1`、486応答の内容を検証し errors は0。設定専用チェッカーとは別に起動・試合UIの経路を通した。
+- `INKWAVE_BUILT_SITE=work/site node --test scripts/tests/inkwave-build-packaging.test.mjs`: 10件成功、skip 0。quick互換性チェックとstartup配信予算も成功。
+- 主要な機械可読結果は [summary.json](inkwave-settings-ui-2026-10-19/summary.json)。スクリーンショットと JSON、ビルド・テストログはローカル `work/` に保存。チェック用 HTML は検証スクリプトのHTTPサーバーだけが返し、配信物に追加しない。
 
 ## 本家比較と限界
 

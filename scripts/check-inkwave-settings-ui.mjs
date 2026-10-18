@@ -18,7 +18,7 @@ installMenuQuality(Menus);
 let settings={...DEFAULT_SETTINGS},reads=0,writes=[];
 const api={getSettings(){reads++;return {...settings}},setSettings(p){Object.assign(settings,p);writes.push(p)}};
 window.testUI={get reads(){return reads},get writes(){return writes},get settings(){return settings},api};
-const m=window.menu=new Menus(document.getElementById('ui-root'),api);m.setPlatformDriven(true);m.show('settings',{wipe:false,light:false});
+const m=window.menu=new Menus(document.getElementById('ui-root'),api);m.setPlatformDriven(true);m.setInputMode('kbm');m.show('settings',{wipe:false,light:false});const controls=m._scr.el.querySelector('[data-id="tab-controls"]');m._binds.get(controls).accept();
 window.ready=true;
 </script></html>`;
 const server = http.createServer((req, res) => {
@@ -35,7 +35,7 @@ const browser = await chromium.launch({ headless: true, executablePath: process.
 const results = [], errors = [];
 try {
   for (const viewport of [{ width: 1280, height: 800 }, { width: 844, height: 390 }, { width: 390, height: 844 }]) {
-    const page = await browser.newPage({ viewport, reducedMotion: 'reduce' });
+    const page = await browser.newPage({ viewport, hasTouch: viewport.width < 1000, isMobile: viewport.width < 1000, reducedMotion: 'reduce' });
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/__settings.html`);
     await page.waitForFunction(() => window.ready);
@@ -91,6 +91,7 @@ try {
     });
     // Trusted browser input exercises click admission and actual pointer capture.
     await page.locator('[data-id="tab-audio"]').click();
+    await page.evaluate(() => window.menu.setInputMode('kbm'));
     const master = page.locator('[data-id="set-master"] .iw-slider__track');
     await master.scrollIntoViewIfNeeded();
     const box = await master.boundingBox();
@@ -110,6 +111,12 @@ try {
     assert.equal(await page.evaluate(() => window.testUI.settings.quality), 'low');
     await page.evaluate(() => { const m = window.menu; m._setFocus(m._scr.el.querySelector('[data-id="set-quality"]')); m.update(1 / 60); });
     result.trustedMouseDragAndTabClick = true;
+    if (viewport.width < 1000) {
+      await page.locator('[data-id="tab-audio"]').tap();
+      await page.locator('[data-id="tab-video"]').tap();
+      assert.equal(await page.evaluate(() => window.menu._input), 'touch');
+      result.trustedTouchTabs = true;
+    }
     await page.waitForTimeout(350);
     const tabLabelsFit = await page.locator('.iw-settings .iw-tab > span').evaluateAll(labels => labels.every(el => el.getBoundingClientRect().height <= parseFloat(getComputedStyle(el).lineHeight) + 1));
     assert(tabLabelsFit, 'settings tab labels stay on one line');
