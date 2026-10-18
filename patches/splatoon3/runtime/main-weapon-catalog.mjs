@@ -1015,7 +1015,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // Retain the existing single paint owner and do not duplicate paint events.
       const bounceRadius=(finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index)*Math.pow(.85,s.bounces);
       if(!p.ghost)paint(p.owner,at,bounceRadius,1,null,-1,mainInkFootprint(r));
-      const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index,s.bounces+1));
+      // Ground bounce begins only when the sourced small FIELD *core* reaches
+      // the terrain. Offsetting by the grown radius put the bubble far above
+      // the surface, then its next impact happened prematurely on the grown
+      // envelope; short downward throws spent all three contacts near the
+      // muzzle. Walls continue using the full grown collision envelope.
+      const nextScale=s.bounces+1;
+      const reboundRadius=ground
+        ?collisionRadius(d.c,'Field',0,s.index,nextScale)
+        :collisionRadius(d.c,'Field',p.age*HZ,s.index,nextScale);
+      const clearance=catalogReboundSeparation(reboundRadius);
       p.pos.copy(at).addScaledVector(h.normal,clearance);
       p.vel.reflect(h.normal);
       if(!ground)p.vel.multiplyScalar(.8); // sourced wall reflection, no wall-bounce cap
@@ -1053,7 +1062,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       let world=s.hit;world.hit=false;
       // Added Rollers/Sloshers share the native glob graze rule (weapons-fidelity GLOB_GRAZE):
       // any contact of the grown sphere is re-tested with the unit's sourced initial Field radius.
-      const graze=(s.r.family==='roller'||s.r.family==='slosher')&&s.r.sourceActor!=='WeaponSlosherBathtub';
+      const bubble=s.r.sourceActor==='WeaponSlosherBathtub';
+      const graze=(s.r.family==='roller'||s.r.family==='slosher')&&!bubble;
       // A multi-lobe round (Splatana waves) ends only when its sourced CoreIndex
       // lobe reaches terrain. An outer lobe that meets a wall, pillar or the floor
       // splashes there and leaves the wave; the untouched lobes fly on. q.stop is
@@ -1065,7 +1075,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         q.stop=Infinity;
         const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
         let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
-        if(graze&&candidate.hit){
+        if(candidate.hit && (graze || bubble && candidate.normal.y>.35)){
           const core=collisionRadius(q.param,'Field',0,s.index,bounceScale);
           // The first step grows from the core radius itself (f0 === core), so
           // compare with the largest swept radius: a level swing born near the
@@ -1075,7 +1085,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
             touch.point.copy(candidate.point);touch.normal.copy(candidate.normal);const face=candidate.face;
             candidate=sweptWorldHit(G.physics,q.from,q.to,core,core,q.hit,true);
             // The grazed part splashes where it touched; the rest of the glob flies on.
-            if(!candidate.hit)globGrazePaint(G,p,touch.point,touch.normal,f1,face);
+            if(!candidate.hit && graze)globGrazePaint(G,p,touch.point,touch.normal,f1,face);
           }
         }
         if(!candidate.hit)continue;
@@ -1926,21 +1936,15 @@ export function releaseCatalogBirth(system, projectile, game) {
   if (launch) {
     const unit = state.descriptor.packet;
     const baseSpeed = finite(actor.grounded ? unit.SpawnSpeedGround : unit.SpawnSpeedAir, 1);
-    const bubble = state.r.sourceActor === 'WeaponSlosherBathtub';
-    // Four Bloblobber bubbles are born 0/5/10/15 F apart. Camera changes
-    // during that window fan the bubbles in retail play: their birth aim is
-    // live, rather than frozen at the first swing. Other Sloshers retain
-    // their previously admitted aim/angle and RNG ordering.
-    const liveAim = bubble && actor.aimDir?.lengthSq?.() > EPS ? actor.aimDir : null;
-    const changedAim = !!liveAim && liveAim.distanceToSquared(launch.direction) > 1e-12;
-    if (baseSpeed !== launch.sourceBaseSpeed || changedAim) {
+    // Existing S3 slosher action is admitted as one swing. The referenced
+    // sweep technique derives the fan from the change in aim DURING windup;
+    // no source proves that later bubbles adopt arbitrary post-release aim.
+    // Keep the admitted volley direction; update only the sourced ground/air
+    // launch-speed choice at true birth without rerolling its random or lift.
+    if (baseSpeed !== launch.sourceBaseSpeed) {
       const speed = launch.speed + (baseSpeed - launch.sourceBaseSpeed) * HZ;
-      projectile.vel.copy(liveAim || launch.direction).normalize().multiplyScalar(speed);
-      // Source AddSpawnSpeedYRateByXZ is an XZ-speed launch addition, not a
-      // fixed full-speed vertical boost; recompute it for a changed pitch.
-      projectile.vel.y += bubble
-        ? finite(unit.AddSpawnSpeedYRateByXZ, 0) * Math.hypot(projectile.vel.x, projectile.vel.z)
-        : speed * launch.liftRate;
+      projectile.vel.copy(launch.direction).multiplyScalar(speed);
+      projectile.vel.y += speed * launch.liftRate;
     }
   }
   applyCatalogPlayerVelocity(projectile);
