@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { adaptBuildSource } from '../../scripts/inkwave-source-composition.mjs';
 import { sanitizeSettings, sanitizeSettingsChange, sanitizeProfile, awardProfileXP, validWeaponId, validStartRoster } from '../../inkwave-public/src/core/save-validation.mjs';
 import { crabTankShotGeometry } from '../../patches/splatoon3/runtime/crab-tank-aim.mjs';
@@ -11,6 +12,8 @@ import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '..
 import { kitPaintRadiusAllowed, consumeKitPaint } from '../../patches/network-replication/kit-paint-admission.mjs';
 import { migrateAimProfiles, applyAimSettingsChange } from '../../patches/local-quality/aim-profile.mjs';
 import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
+import { adaptQueueNine } from '../../patches/reliability/queue-nine-final-adapter.mjs';
+import { reliabilityIdentity } from '../../patches/reliability/adapter.mjs';
 
 class Vec {
   constructor(x=0,y=0,z=0){ this.set(x,y,z); }
@@ -70,6 +73,8 @@ test('S3 signed sensitivities and profile-only changes preserve the native aim o
     aimProfiles:{tv:{padSensitivity:'bad',gyroSens:{}}}},current,quality);
   assert.equal(invalid.padSensitivity,4);assert.equal(invalid.gyroSens,3);
   assert.equal(invalid.aimProfiles.tv.padSensitivity,-4);assert.equal(invalid.aimProfiles.tv.gyroSens,-3);
+  const disabled={gyro:false,padSensitivity:0,gyroSens:0,touchSens:0,rumble:0,aimAssist:0,cameraShake:0,master:0,music:0,sfx:0};
+  assert.deepEqual(sanitizeSettingsChange(disabled,current,quality),disabled,'valid disabled/centered controls are not repaired away');
 });
 test('unknown saved weapon and inherited keys repair to playable loadout',()=>{
   for(const value of ['ghost','constructor','__proto__',{},null]){
@@ -256,4 +261,25 @@ test('real production composition retains source-admission and bounded progressi
   assert.match(session,/validStartRoster\(cfg\?\.roster, this.myId/);
   assert.match(cfg,/Object.hasOwn\(QUALITY, settings.quality\)/);
   assert.match(paint,/Object.hasOwn\(K, opts.kind\)/);
+});
+test('final queue composition fails closed when an existing admission or scoring owner is removed',()=>{
+  const main=adaptBuildSource('src/main.js',readFileSync(new URL('../../inkwave-public/src/main.js',import.meta.url),'utf8'));
+  for(const [anchor,label] of [
+    ["this.profile = normalizeQueueProfile(loadJSON('inkwave.profile', DEFAULT_PROFILE), WEAPONS);",'persisted profile owner'],
+    ['getLoadout: () => ({ weapon: safeWeaponId(self.profile.weapon, WEAPONS) })','loadout getter owner'],
+    ['if (!validWeaponId(weapon, WEAPONS)) return;','loadout admission owner'],
+    ['weapon: safeWeaponId(this.profile.weapon, WEAPONS),','offline loadout owner'],
+    ['if (!validStartRoster(cfg?.roster, G.net?.myId, WEAPONS, cfg?.mode, G.net?.hostId))','online roster owner'],
+    ['if (!a?.weapon || !a.weaponRunner) return;','HUD local actor owner'],
+    ['normalizeQueueProfile(p, WEAPONS);','result profile owner'],
+    ['settleProgression(p, PROGRESSION);','bounded progression owner'],
+    ['const privateBattle = !!G.netm;','private battle XP owner'],
+  ]) {
+    assert.ok(main.includes(anchor));
+    assert.throws(()=>adaptQueueNine('src/main.js',main.replace(anchor,'')),new RegExp(label));
+  }
+});
+test('build input identity includes the actual terminal queue transformer',()=>{
+  const source=readFileSync(new URL('../../patches/reliability/queue-nine-final-adapter.mjs',import.meta.url));
+  assert.equal(reliabilityIdentity()['queue-nine-final-adapter.mjs'],createHash('sha256').update(source).digest('hex'));
 });
