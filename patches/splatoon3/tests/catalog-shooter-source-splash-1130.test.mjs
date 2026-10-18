@@ -41,9 +41,10 @@ test('11.3.0 Splattershot: fractional schedule, 8-cycle nearest slots and two di
 test('11.3.0 TripleQuick uses the typed FreeGravity=0.016 schema default and preserves missing-field guards',()=>{
  const r=MAIN_WEAPON_CATALOG.records.find(r=>r.id==='s3-shooter-triplequick');
  assert.ok(r);
- assert.equal(r.parameters.MoveParam.$type,'spl__BulletSimpleMoveParam');
+ assert.equal(r.sourceActor,'WeaponShooterTripleQuick');
+ assert.equal(r.parameters.MoveParam.$type,undefined,'packed catalogue keeps numbers, not type strings');
  assert.equal(Object.hasOwn(r.parameters.MoveParam,'FreeGravity'),false);
- assert.equal(catalogSplashDropSpec(r.parameters).gravity,0.016*3600);
+ assert.equal(catalogSplashDropSpec(r.parameters,r.sourceActor).gravity,0.016*3600);
  assert.equal(catalogSplashDropSpec({MoveParam:{$type:'Unknown'},SplashSpawnParam:r.parameters.SplashSpawnParam,
    SplashPaintParam:r.parameters.SplashPaintParam}),null);
  assert.equal(catalogSplashDropSpec({MoveParam:{$type:'spl__BulletSimpleMoveParam',FreeGravity:0},
