@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "provenance": {
+    "kind": "INKWAVE reviewed silhouette regression receipt; not Nintendo measurements",
+    "runtimeContentHash": "7cebf05e56f4b0147d4bf8a49a2b076639c512363d4531828fe3edb6be89c4d9",
+    "mainCommits": [
+      "e52f1150b7debd9e4accb4e92750121f2b140c8d",
+      "b349a6c3e34e3f4eb8172795b1b9d86188fdea58",
+      "b1c550c54e53f20e0c924c50b44c8d1b7e0beeb1"
+    ],
+    "scope": "Scoring cells and stamp masks only. Birth, hit, impact, RNG and physical-dimension history remain independently asserted."
+  },
+  "cases": {
+    "blaster": {
+      "cellsHash": "711abcf4139b3bbc04508f380183eadfd58519fa0d4aba3ca6bbacffd56aa5c7",
+      "paintPointsHash": "8033c48aa4cf6a12ed8e1ee5a5c936c841a57dd393209b4ec8c8f7bfc320e4be",
+      "area": 53.4375,
+      "maxZ": 13.125
+    },
+    "splatling-partial": {
+      "cellsHash": "64ad6c98ecf3d48a125e4c2c89da6f6a6ff2ecaf44bfd603725fcc7ff0b200f4",
+      "paintPointsHash": "832168136780f498d603b2f0d13fb79b72dceeb3869c4c9b09d708797f1d3440",
+      "area": 13.1875,
+      "maxZ": 16.375
+    },
+    "splatling-first": {
+      "cellsHash": "3afb112b352aa920e9a7eca516373282449647a485d876b38b169d86a28fc360",
+      "paintPointsHash": "1a8bc8189f9f67e311816c352e6fcca2306b41388c7c467a8c7f78e5ee32ada5",
+      "area": 13.0625,
+      "maxZ": 21.875
+    },
+    "splatling-full": {
+      "cellsHash": "3afb112b352aa920e9a7eca516373282449647a485d876b38b169d86a28fc360",
+      "paintPointsHash": "1a8bc8189f9f67e311816c352e6fcca2306b41388c7c467a8c7f78e5ee32ada5",
+      "area": 13.0625,
+      "maxZ": 21.875
+    },
+    "charger-0": {
+      "cellsHash": "47c635ba2a40eb27fa447bb69f0882c4c275997c8150b613eec39f67cde1b79f",
+      "paintPointsHash": "74d911486045659e12517165a74064ed8fad4e412834b2cbb4d8d4c73e99cf63",
+      "area": 24.4375,
+      "maxZ": 13.125
+    },
+    "charger-0.25": {
+      "cellsHash": "1cb7d2cda211c7edc70de0ef4b49fe24c4ad879ced4110ae8c7806ff696607e7",
+      "paintPointsHash": "dca3763fbbfa749a9fd7e0044693fdc6ab72e1564a2081f780f820f69ebaf204",
+      "area": 25.625,
+      "maxZ": 15.125
+    },
+    "charger-0.5": {
+      "cellsHash": "6ad75eb6c81497e5f0ff341c874b0f81136debb23e53f2f7c3c1705ea924534f",
+      "paintPointsHash": "bf7c936760d8e20db6b3b7f45a737e8fabdd06a06b705cacd8b31650b0fc809a",
+      "area": 35.5625,
+      "maxZ": 18.875
+    },
+    "charger-0.75": {
+      "cellsHash": "10345d60efaf943485bc9ea88e33505660fd5b41fbaec0956ff897e04b9d7889",
+      "paintPointsHash": "0a6814bca8f343f616b9fb46da01f75ec2c8ddf0909c2605fb8468228a28e956",
+      "area": 51.625,
+      "maxZ": 22.625
+    },
+    "charger-1": {
+      "cellsHash": "6984517a6653c01673bd33f9c6bfa12926d5416f0fba5c994772f781fc0ca512",
+      "paintPointsHash": "c7c4af6ed82ffe0130c30f36f697b3dd8db943b8e8610f4d74ab4f09c4101efb",
+      "area": 73.5,
+      "maxZ": 26.625
+    }
+  }
+}
