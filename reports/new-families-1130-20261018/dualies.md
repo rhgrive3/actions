@@ -101,3 +101,7 @@
 Tetraのみ入力受理と3%支払いを即時実行し、5固定tickは選択方向を保持して水平移動・slide paint・core時計を停止。6tick目から既存のcore距離積分を始める。startup終了後もmoving shotは通常modeを使い、core終了後に45F回復を開始する。remote event/sidecarにはstartup5Fとcore時長を別々に送り、受信側の旧固定4F proxy値も検証済みsidecar値へ接続した。他4追加ブキの省略startupを5Fや4Fと創作していない。
 
 新回帰は変更前`startupDur=0`で失敗し、変更後は5tickの速度0・core時計0、tick6の移動、3%の即時支払いを確認。moving/planted mode、4連roll、全kit network、remote startup→roll、固定60Hz/描画30・60・120Hzとnative派生を含む更新後のsource試験は**12/12**。[ログ](dualies-startup-5f.log)。先に掲げたproduction11/11はこの追補前の33b478d生成物であり、最終追補を含むproduction・ブラウザ・実リレーは親の再ビルド結果を別途記録する。
+
+## 統合後の検証記録
+
+最終ランタイム`c597a70`を再ビルドし、production重点75/75、全16ベース＋25キットの141条件×3周期＝423試行を確認した。中間コミットの測定と区別し、最終の負荷・通信・塗り・CI/main反映は[総合報告](README.md)、[機械可読結果](verification.json)、[production比較](production-comparison.md)を参照する。

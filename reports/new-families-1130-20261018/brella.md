@@ -64,3 +64,7 @@ F05の制御実験: Focusを高さ8、水平照準で放出し60step後、固定
 実際のsource-composed `NetMatch` / `Character` / `Projectiles`を使う `patches/network-replication/tests/brella-presentation.test.mjs` は、修正前にremote開傘が存在せず失敗し、修正後は成功した。準備・開傘・閉傘・裸状態、パージmeshの位置、duplicate/reorder、malformed、死亡と新life、所有者交代を通しで検証した。リモート開傘の見えるところへnative Shooterを実際に発射しても攻撃側で消えず、通常のhit packetがvictim ownerへ送られ、その所有者の実際の盾HPだけが消費されることも確認した。死亡callbackで古い表示を無効化し、その後の新しい受理snapshotが生存中のパージを明示する場合は、持ち主死亡後も独立した布を表示する。
 
 この試験は単独と独立レビュー双方で成功し、再押下修正後の実モデル回帰と合わせた6/6も成功した。`1cc2343`の再押下修正は別の失敗回帰から実施し、4種の長時間閉傘→再押下、Spy連射/回復、水中修復の関連4/4が成功した。production/minified・実ブラウザ・CIの最終結果は、これらを取り込んだ親統合ブランチの記録を参照する。
+
+## 統合後の検証記録
+
+最終ランタイム`c597a70`を再ビルドし、production重点75/75、全16ベース＋25キットの141条件×3周期＝423試行を確認した。中間コミットの測定と区別し、最終の負荷・通信・塗り・CI/main反映は[総合報告](README.md)、[機械可読結果](verification.json)、[production比較](production-comparison.md)を参照する。

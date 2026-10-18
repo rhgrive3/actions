@@ -76,8 +76,12 @@ Reproducible before/after microbenchmark: `node scripts/measure-inkwave-saber-11
 | Dental weak |11.94 |56.08 |
 | Dental charged |10.49 |139.87 |
 
-New math costs roughly0.053–0.140 microseconds/contact on this host and now runs for4 collision frames instead of one. No speedup is claimed. Capsule/box/cylinder tests allocate no per-contact vectors/arrays; the wall clip range, vectors, device callbacks and target ledger are reused for a swing. Only actual actor HP delivery allocates a transient callback. Actor broadphase excludes teams/dead/previously hit/far targets before detailed geometry. GPU draws/effects/pools are unchanged. Whole-match browser CPU/GPU/memory/GC comparison remains root integration work; this microbenchmark cannot certify it.
+New math costs roughly0.053–0.140 microseconds/contact on this host and now runs for4 collision frames instead of one. No speedup is claimed. Capsule/box/cylinder tests allocate no per-contact vectors/arrays; the wall clip range, vectors, device callbacks and target ledger are reused for a swing. Only actual actor HP delivery allocates a transient callback. Actor broadphase excludes teams/dead/previously hit/far targets before detailed geometry. GPU draws/effects/pools are unchanged. Integrated production throughput, eight-Actor CPU and GC diagnostics are recorded in [production-comparison.md](production-comparison.md). They do not measure hardware GPU time or certify a complete live-match frame budget.
 
 ## Integration
 
 Implementation commits: `f36f9a8fe5ae45955b4da95a4ab721895d79cbc5` plus low-ink/history follow-up `84e3aa6` on `fix/inkwave-saber-1130`; report/benchmark and any follow-up commits recorded by root. No push/PR/merge performed from this family worktree. Global behavior ledger and Issue/PR state are coordinated by root to avoid conflicting family edits.
+
+## 統合後の検証記録
+
+最終ランタイム`c597a70`を再ビルドし、production重点75/75、全16ベース＋25キットの141条件×3周期＝423試行を確認した。中間コミットの測定と区別し、最終の負荷・通信・塗り・CI/main反映は[総合報告](README.md)、[機械可読結果](verification.json)、[production比較](production-comparison.md)を参照する。
