@@ -51,11 +51,11 @@ export function catalogSplashDropSpec(source, sourceActor = null) {
   const move = source?.MoveParam;
   // Inkipedia Shooter_data_S3 records FreeGravity=0.016 as the default of
   // spl__BulletSimpleMoveParam. The packed catalogue intentionally strips
-  // $type; the pinned 11.3.0 TripleQuick source row proves that exact actor's
-  // type. Other untyped rows never inherit this missing-field default.
+  // $type; the pinned 11.3.0 TripleQuick/TripleMiddle rows prove these two
+  // source actors are SimpleMove. Other untyped rows never inherit a default.
   const missing = move && !Object.hasOwn(move, 'FreeGravity');
   const typedSimple = move?.$type === 'spl__BulletSimpleMoveParam' ||
-    sourceActor === 'WeaponShooterTripleQuick';
+    sourceActor === 'WeaponShooterTripleQuick' || sourceActor === 'WeaponShooterTripleMiddle';
   const gravity = Number.isFinite(move?.FreeGravity) ? move.FreeGravity
     : missing && typedSimple ? 0.016 : undefined;
   const spawn=source?.SplashSpawnParam, paintSource=source?.SplashPaintParam;
