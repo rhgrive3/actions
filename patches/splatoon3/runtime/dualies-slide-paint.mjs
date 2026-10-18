@@ -1,11 +1,11 @@
 /** #979: source-width, distance-sampled Dualies slide paint.
  * Source: bundled profile -> SideStepParam.SplashSlideParam.PaintWidthHalf.
  * The shared CPU/GPU roll outline includes corner rounding and two edge
- * waves. Fit their maximum extent inside the sourced half-width; the old
+ * angular teeth. Fit their maximum extent inside the sourced half-width; the old
  * CPU-only .03 inset no longer describes the permanent visible footprint.
  */
 const EPS = 1e-9;
-const ROLL_LATERAL_HALF = .62 + .10 + .03 + .018;
+const ROLL_LATERAL_HALF = .62 + .10 + .08 + .04;
 const SURFACE_OFFSET = .03;
 
 export function configureDualiesSlidePaint(weapons, profile) {

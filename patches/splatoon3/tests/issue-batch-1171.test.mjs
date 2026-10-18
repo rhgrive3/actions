@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptIssueBatch1171 } from '../issue-batch-1171-adapter.mjs';
 
+const tooth=x=>1-4*Math.abs(x-Math.floor(x)-.5);
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 function checkedReplace(source, before, after, label) {
   assert.equal(source.split(before).length - 1, 1, label + ': unique protected source anchor');
@@ -110,7 +111,7 @@ test('#1165 CPU owner shares the shader roller body outline across seeds and dir
     m[1].replace('continue;', 'return false;') + '\nreturn true;');
   const gpu = (px,py,dx,dy,r,seed) => {
     const along=px*dx+py*dy, across=-px*dy+py*dx;
-    const wob=r*(.03*Math.sin(along/r*9+seed*30)+.018*Math.sin(along/r*23+seed*11));
+    const wob=r*(.08*tooth(along/r*2.1+seed*4.7+.25)+.04*tooth(along/r*5.3+seed*2.3+.25));
     const qa=Math.abs(along)-r*.55, qb=Math.abs(across)-r*.62-wob;
     return Math.hypot(Math.max(qa,0),Math.max(qb,0)) + Math.min(Math.max(qa,qb),0)-r*.1 <= 0;
   };

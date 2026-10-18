@@ -37,10 +37,10 @@ export const INK_PROFILE_SECTIONS = Object.freeze([
   // Roller flick: uneven broad head and tapered connecting fingers. The
   // horizontal/vertical unit distributions remain separate source volleys.
   [[-1,0,0],[-.93,.12,.09],[-.82,.21,.25],[-.69,.18,.16],[-.56,.38,.30],[-.42,.51,.60],[-.29,.47,.50],[-.16,.78,.73],[-.02,.86,.91],[.12,.81,.85],[.26,1,.93],[.40,.90,1],[.54,.91,.82],[.68,.72,.84],[.80,.61,.55],[.92,.31,.36],[1,0,0]],
-  // Contact: parallel edges, short rounded ends. Half-length .58 is bounded
+  // Contact: irregular bitten edges, short rounded ends. Half-length .58 is bounded
   // by the existing .52R contact-sampling interval, so neighboring stamps
   // overlap without drawing a disk at every sample. Literal lateral width R.
-  [[-1,0,0],[-.60,0,0],[-.58,.84,.84],[-.53,.97,.97],[-.45,1,1],[.45,1,1],[.53,.97,.97],[.58,.84,.84],[.60,0,0],[1,0,0]],
+  [[-1,0,0],[-.60,0,0],[-.58,.72,.80],[-.53,.94,.87],[-.45,1,.96],[-.36,.87,1],[-.27,.97,.83],[-.17,.84,.96],[-.06,1,.88],[.04,.86,1],[.15,.98,.85],[.25,.83,.97],[.36,1,.86],[.45,.89,1],[.53,.94,.88],[.58,.76,.81],[.60,0,0],[1,0,0]],
   // Charger: old pre-#1443 blobWobble contour sampled at three fixed seeds
   // (.13/.47/.83), with both axes bounded by the pinned source WidthHalf
   // and DepthHalf envelope. These are silhouette approximations, not retail
@@ -145,7 +145,8 @@ for (let row = 0; row < INK_PROFILE_SECTIONS.length; row++) {
     while (segment < sections.length - 2 && sections[segment + 1][0] < along) segment++;
     const a = sections[segment], b = sections[segment + 1], t = (along - a[0]) / (b[0] - a[0]);
     const offset = (row * INK_PROFILE_SIZE + i) * 4;
-    const ease = t * t * (3 - 2 * t);
+    // Contact keeps angular nicks; airborne pools retain rounded shoulders.
+    const ease = row === 4 ? t : t * t * (3 - 2 * t);
     for (let channel = 0; channel < 2; channel++) {
       const av = a[channel + 1], bv = b[channel + 1];
       // Round a closing cap instead of making each puddle a pointed polygon.
