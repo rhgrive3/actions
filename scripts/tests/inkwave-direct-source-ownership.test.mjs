@@ -19,4 +19,6 @@ test('migrated A-star heuristic owner is the readable game source', () => {
   assert.match(navigation, /this\._h = new Float64Array\(N\)/);
   assert.match(navigation, /heap\.push\(e\.to, ng \+ heuristic\[e\.to\]\)/);
   assert.doesNotMatch(composition, /adaptNavHeuristic/);
+  assert.match(navigation, /buildNativeNav\(this\)/);
+  assert.match(navigation, /const heap = this\._heap \|\| \(this\._heap = new Heap\(\)\)/);
 });
