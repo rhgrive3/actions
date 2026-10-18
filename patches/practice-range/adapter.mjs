@@ -3,7 +3,7 @@
 // anchor stops the build (no unpatched fallback is published).
 //
 // What is connected (nothing here changes weapon, movement, damage, network or animation code):
-//   src/world/maps.js            the 'range' layout joins MAP_LAYOUTS (not MAPS: no stage picker ever lists it)
+//   src/world/maps.js            the range layout is now owned directly by readable game source
 //   src/world/stages/index.js    the stage-module registry (props, murals) gains the range stage
 //   src/world/stages/surfaces.js the range's three texlib surfaces on slots 31–33
 //   src/world/levelMaterial.js   measuring lines drawn from world coordinates, only on slots 31 (floors) / 32 (walls)
@@ -26,16 +26,10 @@ export function replaceOnce(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 
-const CONNECTED = ['src/world/maps.js', 'src/world/stages/index.js', 'src/world/stages/surfaces.js', 'src/main.js', 'src/world/levelMaterial.js', 'index.html'];
+const CONNECTED = ['src/world/stages/index.js', 'src/world/stages/surfaces.js', 'src/main.js', 'src/world/levelMaterial.js', 'index.html'];
 export function adaptRange(rel, code) {
   // a second application (or an upstream that already carries the range) must stop the build, not stack connections
   if (CONNECTED.includes(rel) && /practice-range|rangeLine\(/.test(code)) throw new Error(`INKWAVE practice range conflict (${rel}): already connected. Review upstream changes; site was not built.`);
-  if (rel === 'src/world/maps.js') {
-    code = replaceOnce(code, "import { LAYOUT as CARGO } from './stages/cargo/layout.js';",
-      "import { LAYOUT as CARGO } from './stages/cargo/layout.js';\nimport { LAYOUT as RANGE } from '../../patches/practice-range/stage/layout.mjs';", 'range layout import');
-    return replaceOnce(code, 'export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO };',
-      'export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO, range: RANGE };', 'range layout registry');
-  }
   if (rel === 'src/world/stages/index.js') {
     code = replaceOnce(code, "import * as cargoMurals from './cargo/murals.js';",
       "import * as cargoMurals from './cargo/murals.js';\n" +
