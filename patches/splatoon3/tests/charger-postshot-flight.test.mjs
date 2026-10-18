@@ -85,3 +85,21 @@ for(const charge of [.5,1])test(`actual finite Charger ${charge} shot holds squi
 test('ghost and rejected finite Charger launch do not arm local recovery; sub/reset retain their own owners',async t=>{const f=await boot();t.after(f.close);const a=f.make({weapon:'charger'});f.tick(a);const ps=f.G.projectiles;ps.ghostFire(a,{weapon:a.weapon.id,charge:.5,muzzle:a.pos,dir:new f.THREE.Vector3(0,0,1)});assert.equal(a.weaponRunner.s3ChargerPostShot,0);const n=ps._fidelityChargerFlights.length;const aim=ps._aimFrom;ps._aimFrom=(_a,_o,out)=>out.set(0,0,0);ps.fireCharger(a,a.weapon,.5);assert.equal(ps._fidelityChargerFlights.length,n);assert.equal(a.weaponRunner.s3ChargerPostShot,0);ps._aimFrom=aim;ps.fireCharger(a,a.weapon,.5);a.intent.sub=true;for(let frame=1;frame<=15;frame++){f.tick(a);assert.equal(a.weaponRunner.aimingSub,frame===15,'#837 reuses actual-shot recovery until15F');}a.weaponRunner.reset();assert.equal(a.weaponRunner.s3ChargerPostShot,0);});
 
 test('negative control: missing finite-flight writer bypasses sub gate despite independent squid lock',async t=>{const f=await boot({omitPostShot:true});t.after(f.close);const a=f.make({weapon:'charger'});f.tick(a);f.G.projectiles.fireCharger(a,a.weapon,.5);assert.equal(f.G.projectiles._fidelityChargerFlights.length,1);assert.equal(a.weaponRunner.s3ChargerPostShot,0);a.intent.squid=true;f.tick(a);assert.equal(a.form,'kid','independent ChargerSurface still owns its squid gate');a.intent.squid=false;a.intent.sub=true;f.tick(a);assert.equal(a.weaponRunner.aimingSub,true,'missing actual-flight writer incorrectly admits sub before15F');});
+
+test('high-stage Charger paint remains airborne until its receiving surface, even above the old 3.5-unit limit', async t => {
+  const f = await boot(); t.after(f.close);
+  const a = f.make({weapon:'charger',pos:[0,18,0]});
+  const ps=f.G.projectiles;
+  f.tick(a);
+  f.painted.length=0;
+  ps.fireCharger(a,a.weapon,1);
+  assert.equal(f.painted.length,0,'ground is too far for immediate feet ink');
+  for(let i=0;i<10;i++)ps.update(STEP);
+  assert.ok(ps.chargerDrops.length>0,'forward paint is kept in visible falling droplet records');
+  assert.equal(f.painted.length,0,'no paint is credited in the air');
+  for(let i=0;i<180;i++)ps.update(STEP);
+  assert.ok(f.painted.length>0,'high falling ink finally lands on the floor');
+  assert.ok(f.painted.some(p=>Math.abs(p.y)<.2),'landed paint is on real geometry');
+  assert.ok(f.painted.some(p=>Math.abs(p.radius-.312)<1e-8),'full-charge lateral width stays narrow after the long fall');
+  assert.equal(ps.chargerDrops.length,0,'all falling ink records retire after landing');
+});
