@@ -8,7 +8,12 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import { chromium, webkit } from 'playwright';
 import { transformSync } from 'esbuild';
-const originalMural=transformSync(fs.readFileSync('inkwave-public/src/world/murals.js','utf8'),{loader:'js',minify:true,charset:'utf8',legalComments:'inline'}).code;
+import { applyZevantDisplayName } from './inkwave-source-composition.mjs';
+// The public rename deliberately changes the shared banner's INKWAVE text
+// to ZEVANT. Apply only that exact production display substitution to the
+// immutable source oracle; keep strict per-pixel parity for all mural rows,
+// stage decals and GPU texture reuse.
+const originalMural=transformSync(applyZevantDisplayName('src/world/murals.js',fs.readFileSync('inkwave-public/src/world/murals.js','utf8')),{loader:'js',minify:true,charset:'utf8',legalComments:'inline'}).code;
 const site=path.resolve(process.argv[2]||'_site');
 const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 for(const [file,digest] of Object.entries(manifest.artifacts))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(site,file))).digest('hex'),digest,file);
