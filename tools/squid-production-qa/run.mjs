@@ -12,7 +12,7 @@ const args=process.argv.slice(2),option=(n,d)=>{let i=args.indexOf(n);return i<0
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const safe=(root,rel)=>{const p=fs.realpathSync(path.resolve(root,rel));assert(p.startsWith(root+path.sep),'path containment');return p;};
 async function main(){
- const gearIds=[],expectedRows=100;
+ const gearIds=[],expectedRows=104;
  const site=fs.realpathSync(option('--site','_site')),out=path.resolve(option('--out','.qa-evidence/squid'));fs.mkdirSync(out,{recursive:true});
  const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash,'artifact map identity');
  for(const [file,digest]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(safe(site,file))),digest,'build receipt '+file);

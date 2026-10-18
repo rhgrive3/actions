@@ -1,0 +1,11 @@
+# Local submerged squid depth ownership
+
+The user observed transparent-looking legs during backward-facing swimming in the verified240-frame browser trajectory. The duplicate local-only squid ghost used GreaterDepth, alpha blending, depthWrite=false, and renderOrder3 in the transparent queue. Opaque squid body depth had already been written. Consequently, hidden arm/cup surfaces passed the ghost test against the squid's own nearer body and blended over it. The same effect was visible without any terrain occluder in the diagnostic scene.
+
+The candidate keeps local/submerged admission, GreaterDepth, the existing opacity/alpha shader, depthWrite=false and all geometry. It moves only the ghost to the opaque queue with explicit equivalent custom alpha blend factors. Render order is world0/painted props1, ghost2, visible squid body3, dark/eyes4. The visible body then covers the duplicate; terrain-hidden portions retain the local indicator. Source-rig replacement preserves these mesh orders. Production has stencil:false, so no global renderer/stencil change is introduced.
+
+This is not a blanket opacity increase or removal of submerged visibility. Dry and remote submerged ghost visibility remain unchanged. The ordinary body, human materials, gameplay, source timing and illumination are untouched.
+
+The source regression checks all three LODs through the actual loaded source Actor. Native QA adds four diagnostic images using the same actual source swimmer and production lighting: ghost off/on with no scene occluder, then off/on behind an opaque terrain proxy. The new material must produce zero changed pixels in the open pair and nonzero changed pixels in the occluded pair. Existing104-view paired capture and the same240-frame trajectory provide visual acceptance; passing source tests alone is insufficient.
+
+Nintendo ikahito_pc.mp4 and feature ika.mp4 show ink occlusion rather than exposed internal leg surfaces. These observations inform the intended appearance, not a claim to know Nintendo's renderer implementation. Sources: https://www.nintendo.com/jp/switch/av5ja/assets/images/index/movie/ikahito_pc.mp4 and https://www.nintendo.com/jp/games/feature/splatoon/assets/mov/ika.mp4.

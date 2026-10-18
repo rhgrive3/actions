@@ -1,7 +1,9 @@
+import {adaptSquidFormEase} from './squid-form-ease-adapter.mjs';
 // Source squid presentation binding only. Existing S3 geometry places the long
 // feelers at0/9 and turns body/face together; preserve those authored contracts
 // when the optional source skeleton replaces the native meshes.
 export function adaptSquidMotionBinding(rel,code,replaceOnce){
+  code=adaptSquidFormEase(rel,code,replaceOnce);
   if(rel!=='src/game/motion/squid-rig.js')return code;
   code=replaceOnce(code,"const ARM_FOR_VERTEX=['B','B','A','A','L','C','R','D','D','C'];\n","const ARM_FOR_VERTEX=['L','B','A','A','B','C','C','D','D','R'];\n","source squid binding 0");
   code=replaceOnce(code,"  this.root=new THREE.Group();this.root.name='source-squid-rig';sq.pivot.add(this.root);this.root.add(...this.bones);\n","  this.root=new THREE.Group();this.root.name='source-squid-rig';this.root.position.copy(sq.body.position);this.root.quaternion.copy(sq.body.quaternion);this.root.scale.copy(sq.body.scale);sq.pivot.add(this.root);this.root.add(...this.bones);\n","source squid binding 1");

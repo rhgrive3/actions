@@ -3,7 +3,7 @@ on:
   push:
     branches: ['codex/squid-*']
   pull_request:
-    paths: ['tools/squid-motion-qa/**', 'tools/squid-production-qa/**', 'patches/local-quality/s3-squid-look-adapter.mjs', 'patches/splatoon3/runtime/swim-motion.mjs', 'patches/splatoon3/*squid*', 'patches/local-quality/squid-motion-binding-adapter.mjs', 'patches/local-quality/tests/squid-source-presentation.test.mjs', 'patches/local-quality/tests/squid-surface-material.test.mjs', 'patches/local-quality/tests/squid-connected-eye-binding.test.mjs', 'patches/local-quality/tests/s3-squid-look.test.mjs', 'patches/local-quality/tests/squid-compact-support-binding.test.mjs', '.github/workflows/inkwave-squid-visual-qa.yml']
+    paths: ['tools/squid-motion-qa/**', 'tools/squid-production-qa/**', 'patches/local-quality/s3-squid-look-adapter.mjs', 'patches/splatoon3/runtime/swim-motion.mjs', 'patches/splatoon3/*squid*', 'patches/local-quality/squid-motion-binding-adapter.mjs', 'patches/local-quality/tests/squid-source-presentation.test.mjs', 'patches/local-quality/tests/squid-surface-material.test.mjs', 'patches/local-quality/tests/squid-connected-eye-binding.test.mjs', 'patches/local-quality/tests/s3-squid-look.test.mjs', 'patches/local-quality/tests/squid-compact-support-binding.test.mjs', 'patches/local-quality/tests/squid-ghost-depth.test.mjs', 'patches/local-quality/tests/squid-form-ease.test.mjs', 'patches/local-quality/squid-form-ease-adapter.mjs', '.github/workflows/inkwave-squid-visual-qa.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 40
     env:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      BASE_SHA: bc0c4dfceb3c5b72dfc819c654bb133f1a1b4396
+      BASE_SHA: ad809c1d71ce06af96b6e4db60db336507393c22
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,7 +30,7 @@ jobs:
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
       - name: Verify source presentation regression
-        run: node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/squid-compact-support-binding.test.mjs
+        run: node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/squid-compact-support-binding.test.mjs patches/local-quality/tests/squid-ghost-depth.test.mjs patches/local-quality/tests/squid-form-ease.test.mjs
       - name: Verify continuous motion timeline
         run: node --experimental-vm-modules --test tools/squid-motion-qa/timeline.test.mjs
       - name: Build and capture preserved baseline
@@ -44,7 +44,7 @@ jobs:
         run: |
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
-          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/squid-compact-support-binding.test.mjs
+          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/squid-compact-support-binding.test.mjs patches/local-quality/tests/squid-ghost-depth.test.mjs patches/local-quality/tests/squid-form-ease.test.mjs
           node tools/squid-production-qa/run.mjs --site _site --out .qa-evidence/squid-candidate
       - name: Capture uniform native motion samples
         run: node tools/squid-motion-qa/run.mjs --site _site --mode sampled --out .qa-evidence/squid-motion-sampled

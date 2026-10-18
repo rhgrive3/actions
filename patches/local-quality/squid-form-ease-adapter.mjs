@@ -1,0 +1,18 @@
+// Presentation-only return envelope. Official ikahito_pc.mp4 around4.63–4.83s
+// supports a compact continuous rise; input-aligned exact timing is unavailable.
+// Keep gameplay form changes, source clip speed and ToHuman admission untouched.
+export function adaptSquidFormEase(rel,code,replaceOnce){
+ if(rel==='src/game/motion/source-controller.js'){
+  code=replaceOnce(code,'  this.formKid=true;this.formWeight=1;this.formFrom=1;this.formTime=99;this.formDuration=0;this.formEvent=false;', '  this.formKid=true;this.formWeight=1;this.formFrom=1;this.formTime=99;this.formDuration=0;this.formEvent=false;this.returnPivotP=new THREE.Vector3();this.returnPivotQ=new THREE.Quaternion();', 'return pivot scratch allocated once');
+  code=replaceOnce(code,'if(nextKid!==this.formKid){this.formKid=nextKid;', 'if(nextKid!==this.formKid){this.returnInterrupted=this.formEvent&&this.formTime<this.formDuration;this.returnPivotBlend=nextKid||this.returnInterrupted;if(this.returnPivotBlend){this.returnPivotP.copy(c.squid.pivot.position);this.returnPivotQ.copy(c.squid.pivot.quaternion);}this.formKid=nextKid;', 'capture rendered return pivot');
+  code=replaceOnce(code,'this.formDuration=Math.min(human.frames,squid.frames)/HOST_MOTION.fps;', 'this.formDuration=nextKid?0.15:Math.min(human.frames,squid.frames)/HOST_MOTION.fps;', 'squid return visual duration');
+  code=replaceOnce(code,'*SMOOTH(this.formTime/Math.max(1e-6,this.formDuration));','*(this.formKid?smooth5:SMOOTH)(this.formTime/Math.max(1e-6,this.formDuration));','squid return continuous endpoint curve');
+  code=replaceOnce(code,"   if(this.formEvent&&this.formTime<this.squidBank.clips.get(this.formKid?'Sqd_ToHuman':'Sqd_ToSquid').frames/HOST_MOTION.fps){", "   if(this.formEvent&&this.formKid&&this.formTime<this.formDuration){name='Sqd_ToHuman';frame=Math.min(this.formTime*HOST_MOTION.fps,Math.max(0,this.squidBank.clips.get(name).frames-1));}\n   else if(this.formEvent&&this.formTime<this.squidBank.clips.get(this.formKid?'Sqd_ToHuman':'Sqd_ToSquid').frames/HOST_MOTION.fps){", 'squid return authored-rate terminal hold');
+  code=replaceOnce(code,"   if(this.squidBlendTime<HOST_MOTION.transitionSeconds&&!name.startsWith('Sqd_To')){", "   if((name==='Sqd_ToHuman'||name==='Sqd_ToSquid'&&this.returnInterrupted)&&this.formTime<this.formDuration){const out=this.squidBlendPose||(this.squidBlendPose=new SourcePose(this.squidBank));out.copy(this.previousSquid).mix(this.squidPose,smooth5(this.formTime/this.formDuration));this.squidPose.copy(out).fk();}\n   else if(this.squidBlendTime<HOST_MOTION.transitionSeconds&&!name.startsWith('Sqd_To')){", 'return from rendered squid pose');
+  code=replaceOnce(code,'  this.debug.squid={name,frame};return true;', '  if(this.formEvent&&this.returnPivotBlend&&this.formTime<this.formDuration){const keep=1-smooth5(this.formTime/this.formDuration),pivot=this.character.squid.pivot;pivot.position.lerp(this.returnPivotP,keep);pivot.quaternion.slerp(this.returnPivotQ,keep);this.squidRig.root.updateWorldMatrix(true,true);this.squidRig.skeleton.update();}\n  this.debug.squid={name,frame};return true;', 'continuous return presentation pivot');
+ }else if(rel==='src/game/character.js'){
+  code=replaceOnce(code,'      sU = t < 0.06 ? 1 : 1 - easeIn((t - 0.06) / 0.035);','      const returnU = clamp(t / 0.15, 0, 1);\n      const returnW = returnU * returnU * returnU * (10 + returnU * (-15 + 6 * returnU));\n      sU = 1 - returnW;','fallback squid return continuous endpoint curve');
+  code=replaceOnce(code,'      kU = t < 0.045 ? 0 : easeOut((t - 0.045) / 0.055);','      kU = returnW;','fallback squid return matching silhouette exchange');
+ }
+ return code;
+}

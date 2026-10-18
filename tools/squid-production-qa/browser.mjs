@@ -19,7 +19,7 @@ G.teamColors=[new THREE.Color(0xe6e900),new THREE.Color(0x6340db)];G.level={bloc
 // radius 1.1m about root+[0,.5,0], including 10cm shader-deformation reserve.
 // Fit that common sphere analytically at 25 degrees, with a further 10% margin.
 const ACTOR_FRAME={centerY:.5,radius:1.1,distance:1.1/Math.sin(25*Math.PI/360)*1.1};
-const states=[];
+const states=[];let ghostDepth=null;
 // Verify actual visible posed vertices, including skinning, stay inside the fixed camera.
 // Identical camera rules are used for both revisions; never auto-reframe per candidate.
 const coverage=[];
@@ -53,6 +53,24 @@ for(const sourceEnabled of [true,false]){
   for(const [view,v]of Object.entries({front:[0,.25,-2],oblique:[1.3,.9,-1.3],side:[2,.4,0],back:[0,.4,2]})){
    const target=ch.root.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,ACTOR_FRAME.centerY,0));camera.position.copy(target).add(new THREE.Vector3(...v).normalize().multiplyScalar(ACTOR_FRAME.distance));camera.lookAt(target);camera.updateMatrixWorld(true);await renderer.compileAsync(scene,camera);renderer.render(scene,camera);renderer.getContext().finish();const name=mode+'-'+spec.name+'-'+view;progress.stage=name;assertCoverage(ch.root,name);await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL());rows.push({name,mode,state:spec.name,view,sourceStatus:snap.sourceStatus,sourceActive:snap.sourceActive,sourceDebug:snap.sourceDebug});
   }
+  if(sourceEnabled&&spec.name==='swim'){
+   // Actual local squid, with only unrelated scene meshes hidden for a depth A/B.
+   // The proxy is an opaque terrain occluder, not a replacement lighting setup.
+   const hidden=[];scene.traverse(o=>{if(!o.isMesh)return;let q=o,owned=false;while(q){if(q===ch.root){owned=true;break;}q=q.parent;}if(!owned){hidden.push([o,o.visible]);o.visible=false;}});
+   const target=ch.root.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,ACTOR_FRAME.centerY,0));camera.position.copy(target).add(new THREE.Vector3(1,.8,1.5).normalize().multiplyScalar(ACTOR_FRAME.distance));camera.lookAt(target);camera.updateMatrixWorld(true);
+   const plane=new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.MeshBasicMaterial({color:0x334455}));plane.position.copy(target).add(camera.position.clone().sub(target).normalize().multiplyScalar(.5));plane.quaternion.copy(camera.quaternion);plane.renderOrder=0;scene.add(plane);
+   const pixels=new Map(),gl=renderer.getContext(),previous=ch.squid.ghost.visible;
+   for(const occluded of [false,true])for(const enabled of [false,true]){
+    plane.visible=occluded;ch.squid.ghost.visible=enabled;await renderer.compileAsync(scene,camera);renderer.render(scene,camera);gl.finish();
+    const name='source-ghost-depth-'+(occluded?'occluded':'open')+'-'+(enabled?'on':'off'),data=new Uint8Array(900*900*4);gl.readPixels(0,0,900,900,gl.RGBA,gl.UNSIGNED_BYTE,data);pixels.set(name,data);assertCoverage(ch.root,name);await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL());rows.push({name,diagnostic:'ghost-depth',occluded,enabled});
+   }
+   const different=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=4)if(a[i]!==b[i]||a[i+1]!==b[i+1]||a[i+2]!==b[i+2])n++;return n;};
+   const openChangedPixels=different(pixels.get('source-ghost-depth-open-off'),pixels.get('source-ghost-depth-open-on')),occludedChangedPixels=different(pixels.get('source-ghost-depth-occluded-off'),pixels.get('source-ghost-depth-occluded-on'));
+   ghostDepth={openChangedPixels,occludedChangedPixels,transparent:ch.squid.ghost.material.transparent,blending:ch.squid.ghost.material.blending,orders:{ghost:ch.squid.ghost.renderOrder,body:ch.squid.body.renderOrder,dark:ch.squid.dark.renderOrder,eyes:ch.squid.eyes.renderOrder}};
+   if(ch.squid.ghost.material.transparent===false&&openChangedPixels!==0)throw Error('Local ghost overlays visible body: '+openChangedPixels);if(occludedChangedPixels===0)throw Error('Local submerged ghost disappeared behind terrain');
+   ch.squid.ghost.visible=previous;scene.remove(plane);plane.geometry.dispose();plane.material.dispose();for(const [o,v] of hidden)o.visible=v;
+  }
+
  }
  scene.remove(ch.root);ch.dispose();G.actors=[];
 }
@@ -79,5 +97,5 @@ const jumpStates=[];
  }
  scene.remove(ch.root);ch.dispose();G.actors=[];
 }
-scene.environment=null;env.dispose();renderer.dispose();return {status:'rendered-awaiting-visual-review',caseCount:rows.length,scope:'actual emitted unposed squid geometry-rest surface (local placement transforms excluded) plus actual Actor source/fallback dry/swim/turn/emergence sequence; production day Environment; driven actors, not full match physics',rows,geometry,states,jumpStates,coverage,actorFrame:ACTOR_FRAME,lightingReceipt};
+scene.environment=null;env.dispose();renderer.dispose();return {status:'rendered-awaiting-visual-review',caseCount:rows.length,scope:'actual emitted unposed squid geometry-rest surface (local placement transforms excluded) plus actual Actor source/fallback dry/swim/turn/emergence sequence; production day Environment; driven actors, not full match physics',rows,geometry,states,jumpStates,ghostDepth,coverage,actorFrame:ACTOR_FRAME,lightingReceipt};
 }

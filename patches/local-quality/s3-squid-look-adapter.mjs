@@ -93,6 +93,7 @@ export function adaptS3SquidLook(rel, code) {
     code = once(code, '    this.squid = { pivot, body, ghost, dark, eyes };\n', '    this.squid = { pivot, body, ghost, dark, eyes };' + HALF_TURN + '\n', 'trailing face');
     // Dry ground: the clips show the squid lying flat, mantle pointing along travel and eyes up (move02 0.0–0.25 s
     // and 6.6 s), not standing on its arms. Keep the native hop/squash/yaw clocks; only the resting axis changes.
+    code=once(code, '    pivot.add(body, ghost, dark, eyes);', '    ghost.renderOrder = 2; body.renderOrder = 3; dark.renderOrder = eyes.renderOrder = 4;\n    pivot.add(body, ghost, dark, eyes);', 'local ghost depth pass order');
     code = once(code,
       "      _e1.set(tilt, this.sqYaw, 0.05 * Math.sin(t * 2.3), 'YXZ'); q.setFromEuler(_e1);\n      p.set(0, 0.165 + hop, 0);",
       "      _e1.set(Math.PI / 2 - 0.52 - tilt * 0.5, this.sqYaw, 0.05 * Math.sin(t * 2.3), 'YXZ'); q.setFromEuler(_e1);\n      p.set(0, 0.09 + hop * 0.8, 0);\n      _v2.set(0, -0.11, 0).applyQuaternion(q); p.add(_v2);", 'flat dry squid');
@@ -103,6 +104,11 @@ export function adaptS3SquidLook(rel, code) {
     const split=code.indexOf('export function makeSquidMaterial(u, ghost = false) {');
     if(split<0) throw new Error('INKWAVE S3 squid look conflict (squid material missing)');
     const head=code.slice(0,split);let body=code.slice(split);
+    // Draw the occluded local silhouette against world depth before drawing the
+    // visible squid. Custom alpha blending retains translucency in the opaque
+    // queue; otherwise GreaterDepth mistakes the squid's own body for terrain.
+    body=once(body, 'm.transparent = true; m.depthWrite = false; m.depthFunc = THREE.GreaterDepth; m.opacity = 0.42;', 'm.transparent = false; m.blending = THREE.CustomBlending; m.blendEquation = THREE.AddEquation; m.blendSrc = THREE.SrcAlphaFactor; m.blendDst = THREE.OneMinusSrcAlphaFactor; m.blendEquationAlpha = THREE.AddEquation; m.blendSrcAlpha = THREE.OneFactor; m.blendDstAlpha = THREE.OneMinusSrcAlphaFactor; m.depthWrite = false; m.depthFunc = THREE.GreaterDepth; m.opacity = 0.42;', 'local ghost before visible squid depth');
+
     body=once(body,'          diffuseColor.rgb *= mix(0.7, 1.0, iwAO);', `          // Dark violet club coating and pale spots observed across 2.9–3.4s.
           // Negative tint is authored only for the two long feeler tips.
           if(vSqPart > 0.5 && vTint < -0.05) {
@@ -129,7 +135,7 @@ export function adaptS3SquidLook(rel, code) {
     // Keep team albedo, lighting, clearcoat and transmission ownership unchanged.
     body=once(body, 'roughness: 0.3, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, sheen: 1,', 'roughness: 0.22, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, sheen: 0,', 'smooth squid ink surface');
     body=once(body, '        if (iwGumOn > 0.5) { vec3 iwST = mix(vec3(1.0), iwGumTrans / max(max(iwGumTrans.r, max(iwGumTrans.g, iwGumTrans.b)), 1e-3), 0.6); material.specularColor *= iwST; material.specularColorBlended *= iwST; }', '        // Squid ink retains neutral dielectric specular response.', 'neutral squid coating reflection');
-    body=once(body, "m.customProgramCacheKey = () => (ghost ? 'iw-squid-ghost5' : 'iw-squid4');", "m.customProgramCacheKey = () => (ghost ? 'iw-squid-ghost-neutral6' : 'iw-squid-neutral5');", 'squid coating shader identity');
+    body=once(body, "m.customProgramCacheKey = () => (ghost ? 'iw-squid-ghost5' : 'iw-squid4');", "m.customProgramCacheKey = () => (ghost ? 'iw-squid-ghost-world-depth7' : 'iw-squid-neutral5');", 'squid coating shader identity');
     code=head+body;
     return once(code, 'export function makeSquidMaterial(u, ghost = false) {', SQUID_EYE_MATERIAL + 'export function makeSquidMaterial(u, ghost = false) {', 'squid-only eye surface');
   }
