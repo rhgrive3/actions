@@ -1,0 +1,35 @@
+{
+  "runtimeCommit": "1385f8f645e67f6fe9f2c5564dc3a529c4fb94c1",
+  "scope": "Deterministic INKWAVE regression for the shared Roller spawn base (ROLLER_SPAWN_BASE 1.35 m, was 1.30 m) and sourced per-glob offsets; replaces only the two Roller rows of weapons-fidelity-main-20261017.json. Estimated base, not Nintendo measurements.",
+  "contentHash": "139de7f369df5e559002492c8f945f0034c8a3ab9ee9cd1b53c20854ae81068f",
+  "cases": {
+    "roller-horizontal": {
+      "golden": [
+        11.6,
+        6.1,
+        14.125,
+        13
+      ],
+      "cellsHash": "102b025ac30b7a220aafd774c023561e8594fd597f9a5859911ce0e65a6fd5d9",
+      "hitSamplesHash": "fa155e929fd074e399330809b3b39be1a5839ea6068cec9fcec0578a98bf30d5",
+      "initialProjectilesHash": "2bf635266ff7f313e030cf3152d65cf90e83860a1a02578af27dbc9c8c3a3c31",
+      "paintPointsHash": "355ee1f03d637800cb855a540cf376f36921768a642d08b67d429dfa275db852",
+      "impactsHash": "46390da17cd0faa4f0f145df30c476871bbb20a0bc1efd387e1b68e2068ee467",
+      "circleCellsHash": "57e2098a04ab53e37a7965bf35cecc87cc159c61be13c36064f703376a20c229"
+    },
+    "roller-vertical": {
+      "golden": [
+        16.4,
+        6.9,
+        18.625,
+        5
+      ],
+      "cellsHash": "7651e3474dca2e9b213c6188b433c0b1444d4ce242b8d6116b2adefb4456f19c",
+      "hitSamplesHash": "bd2a5c4ff30e00a0f607c2c276cd1534f3adbfe203e08364b6a897ced9052df8",
+      "initialProjectilesHash": "9cc3c072c6036e620f578c2a46b8b5fd2bfa598b856e53ae8986716ded58a290",
+      "paintPointsHash": "f0916588b2158110111116526230c1c34939effc084a0d6e5ca795294b3116b4",
+      "impactsHash": "87c35df92ae9c934ba4cb403bbbe02628278a948e2c74d068bd78182ce6e8e61",
+      "circleCellsHash": "5afe34c339160f2176263b93246db3e46ba0b7201d57a2634d8d9ffde4ec759b"
+    }
+  }
+}
