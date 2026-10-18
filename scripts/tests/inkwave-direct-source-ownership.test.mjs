@@ -23,6 +23,17 @@ test('public-source fetch is a read-only candidate workflow, never a direct-sour
   assert.doesNotMatch(fetchWorkflow, /git (?:push|commit|add inkwave-public)/);
 });
 
+test('native catalogue sweep helper ships as a non-eager immutable runtime dependency', () => {
+  const build = fs.readFileSync(new URL('../build-inkwave.mjs', import.meta.url), 'utf8');
+  const stageRule = build.match(/if \(prefix === 'patches\\/native-stages' && !unminified && rel\.startsWith\('runtime\\/'\) && !\[([^\]]+)\]\.includes\(rel\)\) continue;/);
+  assert(stageRule, 'production native module staging guard must remain inspectable');
+  assert.match(stageRule[1], /'runtime\\/native-projectile-sweep\\.mjs'/, 'standalone helper must be emitted');
+  const deferred = build.split('const deferredIntegrationPreloads = new Set([')[1]?.split(']);')[0];
+  assert(deferred, 'deferred startup hints must remain defined');
+  assert.match(deferred, /'patches\\/native-stages\\/runtime\\/native-projectile-sweep\\.mjs'/,
+    'the new runtime dependency must be offline cached without a new eager modulepreload');
+});
+
 test('migrated A-star heuristic owner is the readable game source', () => {
   assert.match(navigation, /this\._h = new Float64Array\(N\)/);
   assert.match(navigation, /heap\.push\(e\.to, ng \+ heuristic\[e\.to\]\)/);
