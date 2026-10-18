@@ -41,7 +41,7 @@ node scripts/check-inkwave-rolling-paint-browser.mjs _site reports/rolling-conta
 node scripts/check-inkwave-paint-mask.mjs --site _site --executable /usr/bin/chromium --evidence-dir work/roller-gpu --profile-dir work/roller-gpu-profile
 ```
 
-## 確認結果
+## 初回の確認結果
 
 コードコミット `8926934bbfa61535fe204c8368e7bfc9032d1938`。公開用生成物のcontent hashは `5c3105a90b6f90e3d37e71784c5b4218309aba99d6b23d590a13f4a656f5630c`。
 
@@ -52,3 +52,12 @@ node scripts/check-inkwave-paint-mask.mjs --site _site --executable /usr/bin/chr
 - [検証要約](verification.json)、[全GPU結果](gpu-result.json.gz)、[実際のアトラス描画](gpu-profiles.png)。
 
 ロジック／ブラウザ確認を本家実機の検証に読み替えない。今回の校正で確認できるのはINKWAVE内の一貫性と画像に見える特徴の改善であり、本家の全条件での一致ではない。
+
+
+## main統合後の確認
+
+作業中に入った `b349a6c3e`（#1585：床投影・飛沫の保存方向）を統合。競合した比較記録は両方の追記を保持した。旧プロファイルのバイト固定テストは、今回意図的に変更した接地帯だけを除外し、他の旧飛沫輪郭を独立したmainの固定ハッシュと照合する。
+
+統合コード `90024c76c0693c39b1392c967ca7aed4082b58a3` でビルド・起動予算成功、影響範囲63テスト成功、実Character／Physicsの24ケース成功。コミット固定の実WebGL検査は既存124ケース・1512問合せと1094境界条件を通過し、明確なCPU/GPU不一致0、境界同値17点。新しい爆発輪郭と方向の保持も同時に検査した。
+
+[統合結果](integration.json)、[ブラウザ](browser-integration.json)、[全GPU結果](gpu-integration.json.gz)、[アトラス画像](gpu-profiles-integration.png)。本家実機の未確認範囲は冒頭のとおり維持する。
