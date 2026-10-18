@@ -13,3 +13,18 @@ Source, emitted and native checks are required before acceptance. The source ban
 ## Build-input identity closure
 
 Independent review found that the two new build-only squid adapters were absent from qualityIdentity's IDENTITY_FILES. Emitted runtime artifacts were already hashed correctly, so the prior native evidence remains valid; inputHash nevertheless omitted those authored inputs. Both files are now included without changing adapter behavior. A focused regression imports the actual identity function from an isolated copied tree, mutates each adapter independently, runs the actual build-script quality merge/inputHash expressions, and checks restoration. The emitted form of the same test verifies build.quality, files and the final inputHash against actual source bytes. Both QA runners now record these authored adapter hashes explicitly.
+
+## Final CI fixture alignment
+
+The full current-main CI exposed two stale test fixtures. The paint test's
+independent allocating reference now supplies expected active fields to an
+explicit 24-field retained-slot oracle. Complete record equality, object reuse,
+empty/truncated calls and the existing >30,000 / >400,000 sampling checks remain
+strict. Four independent negative controls (initial zero, ellipse assignment,
+slot reuse, strict boundary) fail as expected. Production paint code is unchanged.
+
+The material-handoff mock now provides the squid-specific eye material owned by
+the actual composed Character and verifies disposal for both the cancelled
+pending character and live replacement. The original warm cancellation and
+program-cache assertions remain. These two source suites pass 28/28 locally;
+exact-head emitted and full CI remain the acceptance gate.
