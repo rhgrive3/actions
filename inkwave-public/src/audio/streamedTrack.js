@@ -31,7 +31,8 @@ export class StreamedTrack {
       const started = this.element.play();
       if (started && typeof started.catch === 'function') started.catch(() => this._fail());
     } catch (_) {
-      this._fail();
+      // Let MusicEngine finish selecting the current player before starting its fallback.
+      Promise.resolve().then(() => this._fail());
     }
   }
 
