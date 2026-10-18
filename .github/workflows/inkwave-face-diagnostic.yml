@@ -1,0 +1,71 @@
+name: INKWAVE bounded chin and neck comparison
+on:
+  push:
+    branches: ['diagnostic/inkwave-chin-fix-20261018']
+permissions:
+  contents: read
+concurrency:
+  group: chin-diagnostic-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  render-face:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+      BASE_SHA: a505ef6523e708c1c6aa339da0d8233f1f8170a3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - name: Verify exact head and bounded diagnostic diff
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          git diff --exit-code "$BASE_SHA" HEAD -- inkwave-public
+          git diff --name-only "$BASE_SHA" HEAD > /tmp/chin-changes.txt
+          test -s /tmp/chin-changes.txt
+          if grep -Ev '^(tools/face-production-diagnostic/(browser|run)\.mjs|\.github/workflows/inkwave-face-diagnostic\.yml|patches/local-quality/s3-face-look-adapter\.mjs|patches/local-quality/tests/s3-chin-neck\.test\.mjs)$' /tmp/chin-changes.txt; then
+            echo 'Unexpected chin diagnostic scope'; exit 1
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact build and browser tools
+        run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+      - name: Syntax and face regressions
+        run: |
+          node --check tools/face-production-diagnostic/browser.mjs
+          node --check tools/face-production-diagnostic/run.mjs
+          node --experimental-vm-modules --test patches/local-quality/tests/s3-face-look.test.mjs patches/local-quality/tests/s3-chin-neck.test.mjs
+      - name: Install CI browser
+        run: npx playwright install --with-deps chromium
+      - name: Build candidate through normal production adapters
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+          INKWAVE_HEADGEAR_SITE="$PWD/_site" node --experimental-loader ./patches/local-quality/tests/headgear-production-loader.mjs --test patches/local-quality/tests/headgear-lifecycle.fixture.mjs
+      - name: Render candidate native face and fitted gear probes
+        run: node tools/face-production-diagnostic/run.mjs --site _site --out .qa-evidence/face-candidate
+      - name: Build and render exact baseline using the identical diagnostic harness
+        run: |
+          git worktree add --detach /tmp/chin-baseline "$BASE_SHA"
+          mkdir -p /tmp/chin-baseline/tools/face-production-diagnostic
+          cp tools/face-production-diagnostic/{browser,run}.mjs /tmp/chin-baseline/tools/face-production-diagnostic/
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          export PLAYWRIGHT_MODULE="$GITHUB_WORKSPACE/node_modules/playwright/index.mjs"
+          cd /tmp/chin-baseline
+          test "$(git rev-parse HEAD)" = "$BASE_SHA"
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+          SOURCE_SHA="$BASE_SHA" node tools/face-production-diagnostic/run.mjs --site _site --out "$GITHUB_WORKSPACE/.qa-evidence/face-baseline"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chin-diagnostic-${{ github.sha }}
+          path: |
+            .qa-evidence/face-candidate/**
+            .qa-evidence/face-baseline/**
+            _site/inkwave-build.json
+          if-no-files-found: warn
+          retention-days: 14
