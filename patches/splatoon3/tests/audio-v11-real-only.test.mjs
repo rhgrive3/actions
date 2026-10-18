@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptWeaponAudio } from '../audio-adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
 import { WeaponSoundBank, AUDIO_RECIPES, mainAudioSourceId } from '../runtime/audio/bank.mjs';
 import { fireArticulation, WEAPON_AUDIO } from '../runtime/audio/weapon-recipes.mjs';
@@ -37,6 +38,85 @@ class MixerStub {
  stats(){return{played:this.played.length};}
 }
 installWeaponAudioEngine(MixerStub);
+
+test('real composed START gates offline and online first shot on decoded original MP3, never authored fallback',()=>{
+ const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
+ const composed=adaptBuildSource('src/main.js',src);
+ const loadout=String.raw`self.profile.weapon = weapon; saveJSON('inkwave.profile', self.profile); G.audio?.prepareWeapon?.(weapon,{urgent:true});`;
+ assert.ok(composed.includes(loadout),'selecting a weapon begins the MP3 load');
+ assert.ok(composed.includes("prepareWeapon?.(self.profile.weapon||'shooter',{urgent:true})"),'trusted START prefetch');
+ const gate=String.raw`const selectedShotReady=G.audio.requireRecordedMainShot(`;
+ assert.equal(composed.split(gate).length-1,2,'offline + online must both wait for the selected recording');
+ const iOffline=composed.indexOf('  async startMatch(o = {}, flow = this._beginMatchFlow()) {');
+ const iOnline=composed.indexOf('  async startNetMatch(cfg, nm) {',iOffline);
+ assert.ok(iOffline>0&&iOnline>iOffline);
+ const offline=composed.slice(iOffline,iOnline),online=composed.slice(iOnline,composed.indexOf('  // Compile every shader variant',iOnline));
+ for(const [code,type] of [[offline,'offline'],[online,'online']]){
+   const fetch=code.indexOf('G.audio.requireRecordedMainShot(');
+   const settle=code.indexOf('const selectedShotState=await selectedShotReady;');
+   const failure=code.indexOf('if(selectedShotState.error)throw selectedShotState.error;');
+   const fade=code.indexOf('await this._fade(1, 350)');
+   const battle=type==='offline'?code.indexOf('    m.start();'):code.indexOf('    nm.bind(m);');
+   assert.ok(fetch>0&&fade>fetch&&settle>fade&&failure>settle&&battle>failure,
+     type+' cannot admit first gameplay tick before original decoded shot or ignore load failure');
+ }
+ assert.ok(!composed.includes('emergency authored'), 'start does not offer synthesized fallback');
+});
+
+test('Splattershot and collab START only resolve after their original decoded ShooterNormal recording',async()=>{
+ const {ctx,sources}=mkctx(),audio=new MixerStub(ctx);
+ audio.weaponBank();
+ let unblock;
+ const gate=new Promise(resolve=>{unblock=resolve;});
+ const sample=manifest([clip('shooter','fire','Wp_ShooterNormal_Shot_00.mp3')]);
+ audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>sample});
+ audio._realS3Loader.bank.authorized.fetcher=async()=>{await gate;return res;};
+ const waiting=audio.requireRecordedMainShot('shooter-01');
+ let finished=false;waiting.then(()=>{finished=true;});
+ await new Promise(r=>setImmediate(r));
+ assert.equal(finished,false,'START is still held while MP3 download/decode is pending');
+ assert.equal(audio.playWeapon('shooter','fire',{actor:{isLocal:true}}),null,
+   'cold recorded Shooter must never play fabricated PCM');
+ assert.equal(audio.weaponBank().cache.size,0);
+ unblock();
+ const ready=await waiting;
+ assert.deepEqual(ready,{ready:true,id:'shooter',recording:'fire'});
+ assert.equal(finished,true);
+ assert.equal(audio.playWeapon('shooter-02','fire',{actor:{isLocal:true}})?.weaponId,'shooter');
+ assert.equal(sources.at(-1).buffer,audio.weaponBank().authorized.pick('shooter','fire').buffer);
+ assert.equal(audio.stats().authoredFallbackShots,0,'no synthesized substitute was ever played');
+ audio.disposeWeaponAudio();
+});
+
+test('missing Shooter MP3 blocks START visibly, then retry can load real file without a fake gunshot',async()=>{
+ const {ctx,sources}=mkctx(),audio=new MixerStub(ctx);
+ audio.weaponBank();
+ const recorded=manifest([clip('shooter','fire','Wp_ShooterNormal_Shot_00.mp3')]);
+ let fail=true,attempts=0;
+ audio._realS3Loader.fetcher=async()=>{attempts++;return fail?{ok:false,status:503}:{ok:true,json:async()=>recorded};};
+ audio._realS3Loader.bank.authorized.fetcher=async()=>res;
+ await assert.rejects(audio.requireRecordedMainShot('shooter'),/音源の一覧を読み込めません/);
+ assert.equal(audio.played.length,0);
+ assert.equal(audio.weaponBank().cache.size,0,'failure may never render authored Shooter PCM');
+ fail=false;audio._realS3Loader.manifestRetryAt=Date.now()-1;
+ assert.equal((await audio.requireRecordedMainShot('shooter')).ready,true);
+ assert.equal(attempts,2,'settled 503 request cannot mask retry');
+ assert.equal(audio.playWeapon('shooter','fire',{actor:{isLocal:true}})?.weaponId,'shooter');
+ assert.equal(sources.at(-1).buffer,audio.weaponBank().authorized.pick('shooter','fire').buffer);
+ assert.equal(audio.stats().authoredFallbackShots,0);
+ audio.disposeWeaponAudio();
+});
+
+test('Shooter sample omitted from a corrupt/incomplete list never admits synthetic substitute',async()=>{
+ const {ctx,sources}=mkctx(),audio=new MixerStub(ctx);
+ audio.weaponBank();
+ audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest([clip('charger','fire','other.mp3')])});
+ audio._realS3Loader.bank.authorized.fetcher=async()=>res;
+ await assert.rejects(audio.requireRecordedMainShot('shooter'),/スプラシューターの本家MP3/);
+ assert.equal(audio.played.length,0);
+ assert.equal(sources.length,0);
+ audio.disposeWeaponAudio();
+});
 
 test('all recorded Charger families have short hold, ready and full-shot cues (2022, not retail 11.3.0)',()=>{
  const installed=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
