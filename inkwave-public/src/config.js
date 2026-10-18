@@ -117,7 +117,17 @@ export const WEAPONS = {
     blurb: 'Hold to charge, release for a long piercing line. Full charge splats.',
     stats: { range: 1.0, damage: 1.0, rate: 0.25, mobility: 0.35, paint: 0.45 },
     chargeTime: 1.0, rangeMin: 11, rangeMax: 27, damageMin: 40, damageMax: 160,
-    inkFull: 18, lineSplatEvery: 1.2, lineRadius: 0.55, impactRadius: 1.2,
+    inkFull: 18, lineSplatEvery: 0.6, lineRadius: 0.30, impactRadius: 0.67,
+    moveSpeedFiring: 1.8,
+    special: 'storm', specialCost: 180,
+  },
+  charger_scope: {
+    id: 'charger_scope', name: 'Glint Charger Scope', kind: 'charger', class: 'Charger', sub: 'bomb',
+    blurb: 'A telescopic charger: lens view narrows from half charge, reaching a 28-degree vertical FOV.',
+    stats: { range: 1.0, damage: 1.0, rate: 0.25, mobility: 0.35, paint: 0.45 },
+    scoped: true, scopeFovY: 28,
+    chargeTime: 1.0, rangeMin: 11, rangeMax: 27, damageMin: 40, damageMax: 160,
+    inkFull: 18, lineSplatEvery: 0.6, lineRadius: 0.30, impactRadius: 0.67,
     moveSpeedFiring: 1.8,
     special: 'storm', specialCost: 180,
   },
@@ -168,7 +178,7 @@ export const WEAPONS = {
     special: 'storm', specialCost: 195,
   },
 };
-export const WEAPON_ORDER = ['shooter', 'dualies', 'splatling', 'roller', 'slosher', 'charger', 'blaster'];
+export const WEAPON_ORDER = ['shooter', 'dualies', 'splatling', 'roller', 'slosher', 'charger', 'charger_scope', 'blaster'];
 
 export const SUB = {
   bomb: {
