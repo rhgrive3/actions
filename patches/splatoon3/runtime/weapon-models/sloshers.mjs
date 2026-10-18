@@ -480,14 +480,15 @@ const CARRY_GRIP = {
   's3-slosher-washtub': acrossBar(0.03, 0.152, 0.094),
   's3-slosher-double': acrossBar(0.03, 0.102, 0.258),
 };
-// Two-handed carry placement per slosher (weapon-origin anchor at rest / walking / full-tilt walk).
-// INKWAVE calibration: placed on the right side and searched for no leg or torso penetration.
+// Two-handed carry placement per slosher (weapon-origin anchor at rest / walking / full-tilt walk), for
+// the 1.6x family model scale. INKWAVE calibration: on the right side, searched for no leg or torso
+// penetration with the left hand still on the handle (an anchor out of reach rests where the arms allow).
 const CARRY_HOLD = {
-  's3-slosher-diffusion': { carry: { p: [-0.3, 0.46, 0.08], r: [0, 0.2, 0] }, walk: { p: [-0.26, 0.54, 0.1], r: [0, -0.1, 0] }, run: { p: [-0.32, 0.46, -0.06], r: [0, -0.1, 0] } },
-  's3-slosher-launcher': { carry: { p: [-0.34, 0.5, 0.08], r: [0, 0.2, 0] }, walk: { p: [-0.26, 0.62, -0.06], r: [0, -0.1, 0] }, run: { p: [-0.32, 0.62, -0.06], r: [0, -0.1, 0] } },
-  's3-slosher-bathtub': { carry: { p: [-0.3, 0.5, 0.08], r: [0, 0.2, 0] }, walk: { p: [-0.26, 0.62, -0.06], r: [0, -0.1, 0] }, run: { p: [-0.32, 0.62, -0.1], r: [0, 0.05, 0] } },
-  's3-slosher-washtub': { carry: { p: [-0.3, 0.46, 0.08], r: [0, 0.2, 0] }, walk: { p: [-0.26, 0.54, 0.02], r: [0, -0.1, 0] }, run: { p: [-0.32, 0.62, -0.06], r: [0, -0.1, 0] } },
-  's3-slosher-double': { carry: { p: [-0.26, 0.46, 0.14], r: [0, 0.4, 0] }, walk: { p: [-0.32, 0.62, -0.06], r: [0, 0.2, 0] }, run: { p: [-0.38, 0.62, -0.06], r: [0, -0.1, 0] } },
+  's3-slosher-diffusion': { carry: { p: [-0.3, 0.48, 0.1], r: [0, 0.2, 0] }, walk: { p: [-0.3, 0.64, 0], r: [0, -0.1, 0] }, run: { p: [-0.36, 0.56, -0.1], r: [0, -0.1, 0] } },
+  's3-slosher-launcher': { carry: { p: [-0.3, 0.64, 0.1], r: [0, 0.2, 0] }, walk: { p: [-0.36, 0.64, -0.1], r: [0, -0.1, 0] }, run: { p: [-0.42, 0.72, -0.14], r: [0, -0.2, 0] } },
+  's3-slosher-bathtub': { carry: { p: [-0.3, 0.48, 0.1], r: [0, 0.5, 0] }, walk: { p: [-0.42, 0.64, -0.1], r: [0, 0.2, 0] }, run: { p: [-0.48, 0.64, -0.1], r: [0, -0.1, 0] } },
+  's3-slosher-washtub': { carry: { p: [-0.3, 0.48, 0.1], r: [0, 0.2, 0] }, walk: { p: [-0.3, 0.64, 0], r: [0, -0.1, 0] }, run: { p: [-0.36, 0.56, -0.1], r: [0, -0.1, 0] } },
+  's3-slosher-double': { carry: { p: [-0.42, 0.64, -0.1], r: [0, 0.5, 0] }, walk: { p: [-0.48, 0.64, -0.1], r: [0, 0.2, 0] }, run: { p: [-0.42, 0.8, -0.14], r: [0, -0.2, 0] } },
 };
 export const MODELS = Object.fromEntries(Object.entries(CFG).map(([id, c]) => [id, {
   sourceModel: id === 'slosher' ? 'Wmn_Slosher_StrongT'
@@ -511,5 +512,5 @@ export const MODELS = Object.fromEntries(Object.entries(CFG).map(([id, c]) => [i
   // its mouth to the front, the left hand across on the top handle. Placement is INKWAVE calibration
   // read from the movie by eye; walking with it is not in the official movies.
   ...(id === 'slosher' ? { nativeCarry: true, hold: { aim: { r: [-0.8, 0.05, 0] }, twoCarry: 1,
-    carry: { p: [-0.37, 0.56, 0.11], r: [0.2, 0.5, 0] }, walk: { p: [-0.38, 0.58, 0.04], r: [0.2, 0.3, 0] }, run: { p: [-0.42, 0.58, -0.08], r: [0.2, 0.1, 0] } } } : {}),
+    carry: { p: [-0.48, 0.56, 0], r: [0.2, 0.5, 0] }, walk: { p: [-0.58, 0.72, -0.08], r: [0.2, 0.4, 0] }, run: { p: [-0.6, 0.74, -0.06], r: [0.2, 0.3, -0.25] } } } : {}),
 }]));

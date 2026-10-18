@@ -250,6 +250,8 @@ export function scaleWeaponDef(d, k) {
   const rz = d.gripR?.pos ? d.gripR.pos.z : 0;
   if (d.gripR?.pos) d.gripR = { ...d.gripR, pos: d.gripR.pos.clone().multiplyScalar(k) };
   if (d.gripL?.pos) d.gripL = { ...d.gripL, pos: d.gripL.pos.clone().set(d.gripL.pos.x * k, d.gripL.pos.y * k, rz * k + d.gripL.pos.z - rz) };
+  // Slosher carry grips sit on the model's own top handle, so they scale with it.
+  if (d.s3CarryGrip) d.s3CarryGrip = Object.fromEntries(Object.entries(d.s3CarryGrip).map(([h, g]) => [h, { ...g, pos: g.pos.clone().multiplyScalar(k) }]));
   d.modelScale = (d.modelScale || 1) * k;
   return d;
 }
