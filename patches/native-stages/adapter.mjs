@@ -6,11 +6,6 @@ export function adaptNativeStages(rel,code){
   const signature='export function sweptWorldHit(physics, from, to, r0, r1, out, skipGrates = true) {';
   once(signature,signature+'\n  if (physics?.level?.native) return sweepNativeCatalogueSphere(physics, from, to, r0, r1, out, skipGrates, sweptWorldHit);');
  }
- if(rel==='src/game/inkCollision.js'){
-  code="import { sweepNativeLevelSphere } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
-  const signature='export function sweepLevelSphere(level, from, to, radius, out, skipGrates = true) {';
-  once(signature,signature+'\n  if (level.native) return sweepNativeLevelSphere(level, from, to, radius, out, skipGrates, sweepLevelSphere);');
- }
  if(rel==='src/config.js'){
   code="import { nativeStageEnabled, NATIVE_MAPS } from '../patches/native-stages/runtime/registry.mjs';\n"+code;
   once('export const OFFLINE_MAPS =',"if (nativeStageEnabled) { for (const m of NATIVE_MAPS) { const i = MAPS.findIndex(x => x.id === m.id); if (i >= 0) MAPS[i] = m; else MAPS.push(m); } }\nexport const OFFLINE_MAPS =");
