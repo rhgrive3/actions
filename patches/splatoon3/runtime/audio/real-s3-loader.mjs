@@ -9,14 +9,16 @@ import { validateAuthorizedManifest } from './authorized-samples.mjs';
 const directory = new URL('./',import.meta.url);
 export const FILE_MANIFEST = new URL('./real-s3-installed.json',import.meta.url);
 export const AUDIO_CACHE_BYTES=40*1024*1024;
-export function sameModuleFetch(relative,fetcher=globalThis.fetch){
+// WebKit requires Window.fetch's receiver. Detached references throw
+// "Can only call Window.fetch on instances of Window" even for HTTP 200 assets.
+export function sameModuleFetch(relative,fetcher=globalThis.fetch?.bind(globalThis)){
   if(typeof relative!=='string'||!/^\.\/s3-real\/[A-Za-z0-9_.+()\-]+\.mp3$/i.test(relative))
     throw new TypeError('Invalid local real-S3 sound path');
   return fetcher(new URL(relative,directory));
 }
 
 export class RealS3SampleLoader {
-  constructor(bank,{fetcher=globalThis.fetch,manifestURL=FILE_MANIFEST,assetFetcher}={}){
+  constructor(bank,{fetcher=globalThis.fetch?.bind(globalThis),manifestURL=FILE_MANIFEST,assetFetcher}={}){
     this.bank=bank;this.fetcher=fetcher;this.assetFetcher=assetFetcher||((url)=>sameModuleFetch(url,fetcher));
     this.manifestURL=manifestURL;this.manifestPromise=null;this.queue=Promise.resolve();this.inFlight=new Map();
     this.loaded=new Set();this.notMapped=new Set();this.retryAfter=new Map();this.status='uninitialized';this.errors=[];this.declaredEvents=null;
