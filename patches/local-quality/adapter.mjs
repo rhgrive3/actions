@@ -103,7 +103,7 @@ const IDENTITY_FILES = [
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
   'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
-  'menu-navigation-timer-adapter.mjs', 'static-menu-adapter.mjs',
+  'menu-navigation-timer-adapter.mjs', 'static-menu-adapter.mjs', 'locker-stage.mjs',
   'assets/menu/weapon.webp', 'assets/menu/lobby.webp', 'assets/menu/locker.webp',
   'mural-atlas-adapter.mjs',
   'bot-paint-observation-adapter.mjs',
