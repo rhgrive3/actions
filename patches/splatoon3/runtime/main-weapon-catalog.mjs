@@ -818,13 +818,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (p.ghost) return;
     const bands=descriptor?.DistanceDamage||[],radius=Math.max(...bands.map(b=>b.Distance),0);
     const paintRadius=finite(descriptor?.PaintRadius,0)||finite(p.catalog.descriptor.b.BlasterBurstParam?.SplashDropPaintRadius,0);
+    const inkDirection=p.catalog.inkDirection||p.vel.clone().setY(0).normalize();
     if(p.catalog.r.family==='stringer'){
       // A lodged arrow may be on a wall. A downward-only floor probe discarded
       // its detonation paint there; use the explicit blast centre offset and
       // the existing multi-surface sphere footprint, including nearby floor.
       const centre=p.pos.clone();centre.y+=finite(descriptor?.PaintOffsetY,0);
-      paint(p.owner,centre,paintRadius,1,null,-1,mainInkBurstFootprint(p.catalog.r));
-    }else floorPaint(p.owner,p.pos,paintRadius,1,null,mainInkBurstFootprint(p.catalog.r));
+      paint(p.owner,centre,paintRadius,1,inkDirection,-1,mainInkBurstFootprint(p.catalog.r));
+    }else floorPaint(p.owner,p.pos,paintRadius,1,inkDirection,mainInkBurstFootprint(p.catalog.r));
     for(const a of G.actors||[])if(a.alive&&a.team!==p.team){
       if(a===skip)continue;
       base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(p.pos);
@@ -942,6 +943,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // early return discarded the charge-dependent arrow impact entirely.
         const footprint=impactPaint(p);
         paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face,mainInkFootprint(r));
+        s.inkDirection=p.vel.clone().setY(0).normalize();
         s.stuck=true;s.fuse=finite(det.DetonationFrame,45)/HZ;p.pos.copy(at);p.vel.set(0,0,0);p.life=p.age+s.fuse+DT;return false;
       }
     }

@@ -61,7 +61,7 @@ test('all selected main Actors use their CPU silhouettes through real release/co
       assert.ok(sourceEvents.every(s=>s.footprint===CHARGER_FOOTPRINT),
         r.id+' Charger feet, travel and terminal ink must all use the organic outline');
     }
-    assert.ok([...kinds].some(k=>k>=10&&k<=18),r.id+' selected live silhouette');
+    assert.ok([...kinds].some(k=>k>=10&&k<=19),r.id+' selected live silhouette');
     assert.equal(a.stats.turf,paint.counts[0]*.0625,r.id+' exact once-only turf credit');
     rows.push({id:r.id,family:r.family,kinds:[...kinds].sort((a,b)=>a-b),stamps:stamps.length,cells:paint.counts[0],
       grid:digest(paint.grid),events:digest(JSON.stringify(stamps))});

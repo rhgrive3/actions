@@ -766,10 +766,12 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   const sphereRadius = (collision ? burst.collisionSplashRadius : burst.timedSplashRadius) * scale;
   const dropRadius = (collision ? burst.radius : burst.timedDropRadius) * scale;
   const seed = Number.isFinite(p.seed) ? p.seed : seededUnit(point.x * 7.1 + point.y * 3.3 + point.z * 1.7, 0x1188);
+  const inkDirection = system._s3BlasterBurstInkDir || (system._s3BlasterBurstInkDir = new api.THREE.Vector3());
+  inkDirection.set(p.vel?.x || 0, 0, p.vel?.z || 0).normalize();
   if (sphereRadius > 0 && api.G.paint?.splat) {
     const centre = system._s3BlasterBurstCentre || (system._s3BlasterBurstCentre = new api.THREE.Vector3());
     centre.copy(point);
-    const area = api.G.paint.splat(centre, sphereRadius, p.team, { seed: seededUnit(seed, collision ? 0x1001 : 0x1106), kind: SOURCE_SHOT_PAINT_KIND, footprint: mainInkBurstFootprint(source.w), claimOwner: p.owner });
+    const area = api.G.paint.splat(centre, sphereRadius, p.team, { seed: seededUnit(seed, collision ? 0x1001 : 0x1106), kind: SOURCE_SHOT_PAINT_KIND, footprint: mainInkBurstFootprint(source.w), stretch: inkDirection, stretchAmt: 0, claimOwner: p.owner });
     if (Number.isFinite(area) && area) p.owner?.addTurf?.(area);
   }
   if (burst.timedDropOn && dropRadius > 0) {
@@ -783,7 +785,7 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
       from.addScaledVector(normal, Math.max(.05, burst.timedDropCollisionRadius * scale));
     else if (collision) from.y += .05;
     spawnSplashDrop(api.G, { owner: p.owner, team: p.team, seed, salt: collision ? 0x1107 : 0x1106, from,
-      radius: dropRadius, spec: blasterBurstDropSpec(contract), depth: false, kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkBurstFootprint(source.w),
+      direction: inkDirection, radius: dropRadius, spec: blasterBurstDropSpec(contract), depth: false, kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkBurstFootprint(source.w),
       initialDownSpeed: Math.max(0, burst.timedDropInitialSpeed) * scale * 60 });
   }
   const dirs = blasterBurstAxisDirections(contract);
