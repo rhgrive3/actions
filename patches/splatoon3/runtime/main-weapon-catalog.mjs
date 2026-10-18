@@ -414,10 +414,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
     return new THREE.Vector3(Math.sin(y)*Math.cos(p),Math.sin(p),Math.cos(y)*Math.cos(p));
   }
-  function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null) {
+  function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null, seed=null) {
     if (!(radius>0) || !owner || owner.remote) return;
     // The recorded paint packet carries this seed; receivers never reroll it.
-    const options = {seed:Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face,footprint};
+    const options = {seed:seed??Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face,footprint};
     let centre=at,paintRadius=radius;
     if (direction) {
       const normal=G.level?.faces?.[face]?.n||down.clone().negate();
@@ -929,7 +929,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function lobes(p){
     const s=p.catalog,c=s.descriptor.c,params=c.ParamArray||[c],offsets=c.OffsetArray||[];
-    s.lobes ||= params.map(()=>({from:new THREE.Vector3(),to:new THREE.Vector3(),hit:new Hit()}));
+    s.lobes ||= params.map(()=>({from:new THREE.Vector3(),to:new THREE.Vector3(),hit:new Hit(),paintSeed:null}));
     const yaw=Math.atan2(p.vel.x,p.vel.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
     for(let i=0;i<params.length;i++){
       const q=s.lobes[i],v=offsets[i]||{},x=finite(v.X,0),y=finite(v.Y,0),z=finite(v.Z,0);
@@ -1080,8 +1080,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         }
         if(!candidate.hit)continue;
         if(i!==coreLobe){
-          (s.lobeGone||=[])[i]=true;q.stop=candidate.dist/Math.max(EPS,len);
-          if(!p.ghost)paint(p.owner,candidate.point,f1,1,null,candidate.face,mainInkFootprint(s.r));
+          q.stop=candidate.dist/Math.max(EPS,len);
+          // Keep the existing candidate-order seed budget, including a later
+          // rejected contact. Reserving here avoids shifting subsequent shots;
+          // only the reached contact may commit paint or retire the lobe.
+          q.paintSeed=!p.ghost&&p.owner&&!p.owner.remote&&f1>0?Math.random():null;
           continue;
         }
         if(!world.hit||candidate.dist<world.dist)world=candidate;
@@ -1110,6 +1113,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       if(G.boss){const b=G.boss.segHit(p.prev,p.pos,pr1);const t=b?p.prev.distanceTo(b.point)/Math.max(EPS,len):Infinity;
         if(t<stop-EPS){stop=t;boss=b;target=null;defense=null;}}
+      // Resolve the whole wave's first actor/core/boss/defense contact before
+      // committing any peripheral splash. The per-lobe cutoff above still
+      // prevents that lobe from hitting an actor beyond its own terrain.
+      if(shapes.length>1)for(let i=0;i<shapes.length;i++){
+        const q=shapes[i];
+        if(i===coreLobe||!Number.isFinite(q.stop)||q.stop<0||q.stop>Math.min(1,stop)+EPS)continue;
+        (s.lobeGone||=[])[i]=true;
+        if(!p.ghost)paint(p.owner,q.hit.point,collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale),
+          1,null,q.hit.face,mainInkFootprint(s.r),q.paintSeed);
+      }
       if(!p.ghost&&s.r.family==='charger') {
         const end=p.prev.clone().lerp(p.pos,Math.min(1,stop)),spacing=Math.max(.2,d.radius*.5);
         const count=Math.ceil(p.prev.distanceTo(end)/spacing);

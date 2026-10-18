@@ -37,7 +37,14 @@ export function installWeaponAudioEngine(Engine){
       // Fetch the actual selected recording first. Generating synthetic PCM for
       // all 54 already-recorded mains before checking the manifest wastes CPU
       // and causes the perceptual "Splatling sounds synthesized" regression.
-      const main=loader?.ensure(id,'fire');
+      // Charger hold noise must be resident before the player holds fire.
+      // First fetch the very short charging loop, then batch the rest of the
+      // selected weapon's actual source events (full shot and ready included).
+      // The second request reuses the decoded hold buffer, rather than
+      // serializing four separate event-specific fetch/decode transactions.
+      const isCharger=AUDIO_RECIPES[id].family==='charger';
+      const main=loader?.ensure(id,isCharger?'charge':'fire');
+      if(isCharger)loader?.ensure(id);
       if(AUDIO_RECIPES[id].family==='splatling'){
         // 2022 Spinner sources have distinct Motor (charge) and MotorFire
         // (stream) recordings. Demand-page both while the loadout is active.
