@@ -14,6 +14,8 @@ const STEP = 1 / 60;
 const close = (actual, expected, label, eps = 1e-9) => assert.ok(Math.abs(actual - expected) <= eps, `${label}: ${actual} != ${expected}`);
 
 // #816: post-shot admission must attach to the final installed finite-flight owner.
+// Native source radii stay pinned separately in issue-620; this regression measures the
+// emitted INKWAVE world-space paint radius after the 0.2 lateral calibration.
 // Same composition and installer as build-inkwave (native Actor, Projectiles,
 // Physics, Level); only display/audio objects are headless. No GPU claim.
 async function boot({ wall = false, omitPostShot = false } = {}) {
@@ -65,14 +67,14 @@ test('#1007/#1052 finite Charger keeps feet paint and forward trajectory widths 
   const a = f.make({ weapon: 'charger' });
   f.tick(a);
   const ps = f.G.projectiles;
-  for (const [charge, forwardWidth] of [[8 / 60, .78], [1, 1.56]]) {
+  for (const [charge, forwardWidth] of [[8 / 60, .156], [1, .312]]) {
     ps.clear(); f.painted.length = 0;
     ps.fireCharger(a, a.weapon, charge);
     assert.equal(f.painted.length, 1, 'accepted shot creates exactly one immediate feet splat');
     close(f.painted[0].radius, 1.2, 'feet splat uses RadiusSpawnNearest');
     ps.update(STEP);
     assert.ok(f.painted.length >= 2, 'flight creates a forward trajectory stamp');
-    close(f.painted[1].radius, 1.2, 'first forward stamp consumes sourced RadiusSpawnNearest');
+    close(f.painted[1].radius, forwardWidth, 'first forward stamp uses calibrated lateral WidthHalf, not feet-only RadiusSpawnNearest');
     for(let frame=0;frame<8 && f.painted.length<3;frame++) ps.update(STEP);
     assert.ok(f.painted.length>=3, 'the following paint stamp uses the charge-dependent width');
     close(f.painted[2].radius, forwardWidth, 'later trajectory stamp uses charge-dependent WidthHalf');
