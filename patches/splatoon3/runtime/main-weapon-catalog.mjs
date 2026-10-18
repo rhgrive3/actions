@@ -406,6 +406,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     G.projectiles._aimFrom(a,muzzle,dir);
     return muzzle;
   }
+  // Feet-relative, same as the native Splat Roller flick birth (Projectiles.fireFlick:
+  // 1.0 m + 0.3 m up, 0.6 m forward). INKWAVE convention; S3's swing birth point is not extracted.
+  const BRUSH_SWING_ORIGIN=Object.freeze({X:0,Y:1.3,Z:0.6});
   function angle(direction,yaw=0,pitch=0) {
     const y = Math.atan2(direction.x,direction.z)+yaw*RAD;
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
@@ -708,7 +711,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function emitUnits(runner,r,key,charge=0) {
     const a=runner.a,p=r.parameters,s=state(runner),group=key==='slosh'?p.UnitGroupParam:
       key==='vertical'?p.VerticalSwingUnitGroupParam:key==='brush'?p.SwingUnitGroupParam:p.WideSwingUnitGroupParam;
-    origin(a);const at=muzzle.clone(), direction=dir.clone(), volleys=new Map();
+    // A brush flings its swing from the body, not from the rendered bristles:
+    // the 1F follow-up swings start from the low sweep pose, so the rendered tip
+    // dropped every swing's birth from 1.6 m to 0.36 m (owner review 2026-10-18).
+    origin(a,null,key==='brush'?BRUSH_SWING_ORIGIN:null);const at=muzzle.clone(), direction=dir.clone(), volleys=new Map();
     // This particular main weapon lobs a ballistic row. The generic muzzle
     // -> reticle-point convergence can angle it sharply toward a nearby floor
     // crosshair hit, even when the player is looking horizontally. Fire along

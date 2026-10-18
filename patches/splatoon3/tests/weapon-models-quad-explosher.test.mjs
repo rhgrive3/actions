@@ -15,7 +15,8 @@ function authored(f,id){
  const geo=g=>g.clone().scale(1/k,1/k,1/k),v=x=>x.clone().multiplyScalar(1/k);
  // Hand sockets = grip point + a fixed fist offset: undo only the grip point's move (kit.mjs scaleWeaponDef:
  // the support grip keeps its axial reach from the main grip).
- const gR=d.gripR.pos,gRa=v(gR),gL=d.gripL.pos,gLa=gL.clone().set(gL.x/k,gL.y/k,gL.z-gRa.z*(k-1));
+ // A slosher's support grip scales in full with its bar (kit.mjs).
+ const gR=d.gripR.pos,gRa=v(gR),gL=d.gripL.pos,gLa=d.kind==='slosher'?v(gL):gL.clone().set(gL.x/k,gL.y/k,gL.z-gRa.z*(k-1));
  const handR={...d.handR,pos:d.handR.pos.clone().sub(gR).add(gRa)},handL={...d.handL,pos:d.handL.pos.clone().sub(gL).add(gLa)};
  const inHand={...d.inHand,pos:handR.pos.clone().negate().applyQuaternion(handR.quat.clone().invert())};
  return {...d,body:geo(d.body),ink:geo(d.ink),muzzle:v(d.muzzle),handR,handL,inHand,parts:Object.fromEntries(Object.entries(d.parts).map(([n,p])=>[n,{...p,pivot:v(p.pivot)}]))};
@@ -85,15 +86,17 @@ test('rebuilds are bounded merged volumetric assemblies with open loop and reces
  console.log('QUAD_EXPLOSHER_METRICS '+JSON.stringify(rows));
 });
 test('angle-only Explosher trial keeps the fe242 mouth centre fixed',async()=>{
- const f=await production(),g=f.getWeaponDef(IDS[1]).body,p=g.attributes.position,c=g.attributes.color;
- const centre=new f.THREE.Vector3(0,.069+Math.sin(.48)*.05472,.249+Math.cos(.48)*.05472),axis=new f.THREE.Vector3(0,Math.sin(.70),Math.cos(.70));
+ const f=await production(),def=f.getWeaponDef(IDS[1]),g=def.body,p=g.attributes.position,c=g.attributes.color;
+ // The family model scale (FAMILY_MODEL_SCALE.slosher) scales the authored geometry about the grip.
+ const k=def.modelScale||1;
+ const centre=new f.THREE.Vector3(0,.069+Math.sin(.48)*.05472,.249+Math.cos(.48)*.05472).multiplyScalar(k),axis=new f.THREE.Vector3(0,Math.sin(.70),Math.cos(.70));
  const brass=new f.THREE.Color('#d1b76e'),bounds=new f.THREE.Box3();let witnesses=0;
  for(let i=0;i<p.count;i++){
   if(Math.max(Math.abs(c.getX(i)-brass.r),Math.abs(c.getY(i)-brass.g),Math.abs(c.getZ(i)-brass.b))>1e-6)continue;
   const point=new f.THREE.Vector3().fromBufferAttribute(p,i),delta=point.clone().sub(centre),axial=delta.dot(axis),radius=Math.sqrt(Math.max(0,delta.lengthSq()-axial*axial));
-  if(Math.abs(axial)<.0016&&radius>.0538&&radius<.0582){bounds.expandByPoint(point);witnesses++;}
+  if(Math.abs(axial)<.0016*k&&radius>.0538*k&&radius<.0582*k){bounds.expandByPoint(point);witnesses++;}
  }
- assert.ok(witnesses>=140,'lip-ring vertex witnesses');assert.ok(bounds.getCenter(new f.THREE.Vector3()).distanceTo(centre)<2e-6,'authored lip centre stays within 2 micrometres');
+ assert.ok(witnesses>=140,'lip-ring vertex witnesses');assert.ok(bounds.getCenter(new f.THREE.Vector3()).distanceTo(centre)<2e-6*k,'authored lip centre stays within 2 micrometres');
 });
 test('Dark Tetra target palette does not inherit Light Tetra colour volumes',async()=>{
  const f=await production(),d=authored(f,IDS[0]),p=d.body.attributes.position,c=d.body.attributes.color,ip=d.ink.attributes.position;
