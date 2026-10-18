@@ -2,12 +2,13 @@
 import * as THREE from 'three';
 import { G, on, emit, clamp, damp } from './core/ctx.js';
 import { Renderer } from './core/renderer.js';
+import { sanitizeSettings, sanitizeProfile, awardProfileXP, validWeaponId, validStartRoster } from './core/save-validation.mjs';
 import { Input } from './core/input.js';
 import { deviceProfile } from './core/device.js';
 import { ShadowCache } from './core/shadowcache.js';
 import { t, setTextMode } from './i18n.js';
 import { mapTheme,
-  DEFAULT_SETTINGS, effectiveQuality, TEAM_PALETTES, COLORBLIND_PALETTE, TEAM_NAMES, WEAPONS, WEAPON_ORDER, SUB, SPECIALS,
+  DEFAULT_SETTINGS, QUALITY, effectiveQuality, TEAM_PALETTES, COLORBLIND_PALETTE, TEAM_NAMES, WEAPONS, WEAPON_ORDER, SUB, SPECIALS,
   MAPS, DIFFICULTY, PLAYER, PROGRESSION, VERSION, MATCH, OFFLINE_MAPS, mapOfflineOk, mapNoBots, mapBossOk,
 } from './config.js';
 import { Level } from './world/level.js';
@@ -54,11 +55,15 @@ class Game {
     const t0 = performance.now();
     // real top-down thumbnails for the stage cards, generated from each layout's geometry
     for (const m of MAPS) { try { m.thumb = layoutThumbSVG(MAP_LAYOUTS[m.layout || m.id], m.theme); } catch (e) { console.warn('thumb', m.id, e); } }
-    this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);
+    const storedSettings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);
+    this.settings = G.settings = sanitizeSettings(storedSettings, DEFAULT_SETTINGS, QUALITY);
+    if (JSON.stringify(storedSettings) !== JSON.stringify(this.settings)) saveJSON('inkwave.settings', this.settings);
     this.mobile = G.mobile = deviceProfile();
     // v1.1: fov became horizontal — migrate old vertical values once
     if (this.settings.fovMode !== 'h') { this.settings.fov = DEFAULT_SETTINGS.fov; this.settings.fovMode = 'h'; saveJSON('inkwave.settings', this.settings); }
-    this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);
+    const storedProfile = loadJSON('inkwave.profile', DEFAULT_PROFILE);
+    this.profile = sanitizeProfile(storedProfile, DEFAULT_PROFILE, WEAPONS);
+    if (JSON.stringify(storedProfile) !== JSON.stringify(this.profile)) saveJSON('inkwave.profile', this.profile);
     const app = document.getElementById('app');
     this.uiRoot = document.getElementById('ui-root');
     this.fadeEl = document.getElementById('fade');
@@ -359,9 +364,9 @@ class Game {
       setProfileName: (n) => { self.profile.name = String(n || 'Player').slice(0, 16); saveJSON('inkwave.profile', self.profile); },
       // locker look ({ hair, skin, outfit, eyes, hat, brows, … } — indices into character-style.js tables)
       setProfileStyle: (st) => { self.profile.style = { ...(st || {}) }; saveJSON('inkwave.profile', self.profile); },
-      getLoadout: () => ({ weapon: self.profile.weapon || 'shooter' }),
+      getLoadout: () => ({ weapon: validWeaponId(WEAPONS, self.profile.weapon) ? self.profile.weapon : 'shooter' }),
       setLoadout: ({ weapon }) => {
-        if (!WEAPONS[weapon]) return;
+        if (!validWeaponId(WEAPONS, weapon)) return;
         self.profile.weapon = weapon; saveJSON('inkwave.profile', self.profile);
         if (self.menus?.current === 'loadout') self.showcase.showLoadout(weapon, G.teamColors[0], self.profile.style);
       },
@@ -382,7 +387,8 @@ class Game {
   }
 
   _setSettings(partial) {
-    Object.assign(this.settings, partial);
+    const safe = partial && typeof partial === 'object' && !Array.isArray(partial) ? partial : {};
+    Object.assign(this.settings, sanitizeSettings({ ...this.settings, ...safe }, DEFAULT_SETTINGS, QUALITY));
     saveJSON('inkwave.settings', this.settings);
     const mob = this.input?.mobile;
     if (mob) {
@@ -595,7 +601,12 @@ class Game {
     }
     const cov = G.paint.coverage();
     if (this.attractT > 110 || cov[0] + cov[1] > 0.72) {
-      this._fade(1, 400).then(() => { this._setPalette(this._pickPalette()); this._startAttract(); this._fade(0, 600); });
+      const previous = this.match, generation = this._attractGeneration || 0;
+      this._fade(1, 400).then(() => {
+        // An async menu callback must never dispose a match launched in the meantime.
+        if (this._attractGeneration !== generation || this.match !== previous || !previous?.attract || G.mode !== 'menu') return;
+        this._setPalette(this._pickPalette()); this._startAttract(); this._fade(0, 600);
+      });
       this.attractT = -999;
     }
   }
@@ -616,6 +627,7 @@ class Game {
   }
 
   async startMatch(o = {}) {
+    this._attractGeneration = (this._attractGeneration || 0) + 1;
     const opts = {
       mapId: o.mapId === 'sunset' ? 'tidewater' : (o.mapId || this.mapDef.id),
       time: o.mapId === 'sunset' ? 'dusk' : (o.time || this.time || 'day'),
@@ -655,7 +667,7 @@ class Game {
     this.mapDef = map;
     this._setPalette(this._pickPalette());
     const m = (this.match = G.match = new Match({
-      attract: false, duration: opts.duration, difficulty: opts.difficulty, mode: opts.mode, weapon: this.profile.weapon || 'shooter',
+      attract: false, duration: opts.duration, difficulty: opts.difficulty, mode: opts.mode, weapon: validWeaponId(WEAPONS, this.profile.weapon) ? this.profile.weapon : 'shooter',
       bossModule, playerName: this.profile.name || 'Player', CharacterClass: this.CharacterClass, rig: this.rig, input: this.input,
       autopilot: params.has('autopilot'), style: this.profile.style || null, noBots: mapNoBots(map.id),   // (devstage: a solo walk)
     }));
@@ -674,6 +686,8 @@ class Game {
   // ---- online (src/net/session.js drives these) -----------------------------------------------------------------
   // Build the host's match: same stage / time / palette / roster on every client; the intro starts on netMatchGo.
   async startNetMatch(cfg, nm) {
+    if (!validStartRoster(cfg?.roster, G.net?.myId, cfg?.mode)) throw new Error('Invalid local START roster');
+    this._attractGeneration = (this._attractGeneration || 0) + 1;
     G.audio?.init?.();
     this.menus?.show(null);
     await this._fade(1, 350);
@@ -855,11 +869,13 @@ class Game {
     m.setState('results');
     this.hud?.setVisible(false);
     const local = m.local, p = this.profile;
-    const turf = Math.round(local.stats.turf), dmg = Math.round(local.stats.bossDmg || 0);
-    const gained = Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat + dmg * 0.04);
+    const turf = Math.round(local?.stats?.turf || 0), dmg = Math.round(local?.stats?.bossDmg || 0);
+    const gained = local ? Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat + dmg * 0.04) : 0;
     const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };
-    p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;
-    while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }
+    if (local) {
+      awardProfileXP(p, gained, PROGRESSION.xpForLevel);
+      p.matches++; if (won) p.wins++; p.totalTurf += turf;
+    }
     saveJSON('inkwave.profile', p);
     const data = {
       mode: 'boss', win: won, percents: [cov[0] * 100, cov[1] * 100], colors: [G.teamHex[0], G.teamHex[1]], teamNames: this.palette.names || TEAM_NAMES,
@@ -894,8 +910,8 @@ class Game {
     // profile / XP
     const local = m.local;
     const p = this.profile;
-    const turf = Math.round(local.stats.turf);
-    const gained = Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);
+    const turf = Math.round(local?.stats?.turf || 0);
+    const gained = local ? Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat) : 0;
     const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };
     p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;
     while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }
@@ -1192,7 +1208,8 @@ class Game {
   }
 
   _updateHud(dt) {
-    const m = this.match, a = m.local, cam = G.camera;
+    const m = this.match, a = m?.local, cam = G.camera;
+    if (!a) return; // a malformed or removed online roster must not break the render loop
     const showMinimap = this.settings.minimap !== false;
     if (showMinimap) this.minimap.update(dt);
     else this.minimap.tickHidden?.(dt);

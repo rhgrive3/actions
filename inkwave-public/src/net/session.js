@@ -9,6 +9,7 @@ import { MAPS, WEAPONS, WEAPON_ORDER, MATCH, BOT_NAMES, TEAM_PALETTES, mapNoBots
 import { randomStyle } from '../game/character-style.js';
 import { Transport } from './transport.js';
 import { NetMatch } from './netmatch.js';
+import { validStartRoster } from '../core/save-validation.mjs';
 
 // no 0/O or 1/I (misread), and no W/A/S/D: those move the menu cursor, so any other key typed on the online hub can
 // only mean a room code (28⁵ ≈ 17 M codes)
@@ -286,6 +287,13 @@ export class NetSession {
   }
 
   async _begin(cfg) {
+    // Refuse an inconsistent host START while still in the usable lobby, before
+    // creating any actors, changing state, or acknowledging READY to the host.
+    if (!validStartRoster(cfg?.roster, this.myId, cfg?.mode)) {
+      this.error = 'Invalid match roster: your player is absent or duplicated';
+      this._emit('error', { message: this.error });
+      return;
+    }
     this._startCfg = cfg;
     this._ready = new Set();
     for (const p of this.lobby.players) p.ready = false;
