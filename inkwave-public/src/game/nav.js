@@ -45,10 +45,7 @@ export class NavGraph {
           // headroom + clearance (not inside geometry, not hugging walls)
           if (!this._clear(x, y, z)) continue;
           const node = { id: this.nodes.length, x, y, z, ix, iz, nb: [], zone: -1 };
-          for (let t = 0; t < 2; t++) {
-            const pad = L.spawnPads[t];
-            if (Math.hypot(x - pad.x, z - pad.z) < L.spawnBarrier + 0.6 && y > pad.y - 1) node.zone = t;
-          }
+          // No global spawn-radius navigation exclusion in the S3 composition.
           this.nodes.push(node);
           list.push(node.id);
         }
@@ -151,7 +148,7 @@ export class NavGraph {
     const st = ++this._stamp;
     const nodes = this.nodes, goal = nodes[b];
     const h = (n) => Math.hypot(n.x - goal.x, n.z - goal.z) + Math.abs(n.y - goal.y) * 0.5;
-    const heap = new Heap();
+    const heap = this._heap || (this._heap = new Heap()); heap.clear();
     g[a] = 0; from[a] = -1; seen[a] = st;
     heap.push(a, heuristic[a] = h(nodes[a]));
     let it = 0;
@@ -185,20 +182,21 @@ export class NavGraph {
 }
 
 class Heap {
-  constructor() { this.ids = []; this.pr = []; }
-  get size() { return this.ids.length; }
+  constructor() { this.ids = []; this.pr = []; this.n = 0; }
+  clear() { this.n = 0; }
+  get size() { return this.n; }
   push(id, p) {
     const ids = this.ids, pr = this.pr;
-    let i = ids.length; ids.push(id); pr.push(p);
+    let i = this.n++; ids[i] = id; pr[i] = p;
     while (i > 0) { const j = (i - 1) >> 1; if (pr[j] <= p) break; ids[i] = ids[j]; pr[i] = pr[j]; i = j; }
     ids[i] = id; pr[i] = p;
   }
   pop() {
     const ids = this.ids, pr = this.pr;
     const top = ids[0];
-    const lid = ids.pop(), lp = pr.pop();
-    if (ids.length) {
-      let i = 0; const n = ids.length;
+    const n = --this.n, lid = ids[n], lp = pr[n];
+    if (n) {
+      let i = 0;
       while (true) {
         let l = i * 2 + 1, r = l + 1, m = i;
         let mp = lp;
