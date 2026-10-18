@@ -259,7 +259,8 @@ async function assertReleaseShape(mode, y, grounded) {
     assert.ok(projectiles.list.every(p => p.trailEvery === 0),
       'primary vertical-paint owner keeps legacy random trail disabled (no double paint)');
     const normalizedY = Array.from(projectileSnapshot(projectiles, actor.pos.y), p => Number(p.start[1].toFixed(6)));
-    assert.deepEqual(normalizedY, [1.8, 1.05, 1.3, 0.05, 0.3], 'airborne release shifts the five distinct #278 birth origins only by actor height');
+    // Shared ROLLER_SPAWN_BASE height 1.35 plus the #278 indexed source offsets.
+    assert.deepEqual(normalizedY, [1.85, 1.1, 1.35, 0.1, 0.35], 'airborne release shifts the five distinct #278 birth origins only by actor height');
   } else {
     assert.equal(projectilePhysicsDigest(projectiles), heightControl,
       'airborne height preserves the current horizontal projectile payload');

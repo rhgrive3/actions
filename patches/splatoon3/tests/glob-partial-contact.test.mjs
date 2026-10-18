@@ -10,12 +10,12 @@ async function setup(id,{muzzleY=1.05,blocks=[]}={}){
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
   const {paint,level,V}=makePaintWorld(f);f.G.settings={};f.setRandom(()=>.37);
   const axes=level.blocks[0].axes;
-  for(const [x0,y1,z0,x1,z1] of blocks){
+  for(const [x0,y1,z0,x1,z1,y0=0] of blocks){
     const fi=level.faces.length;
-    level.faces.push({origin:V(x0,0,z0),u:V(1,0,0),v:V(0,1,0),n:V(0,0,-1),su:x1-x0,sv:y1,wall:true,turf:false,paintable:true});
+    level.faces.push({origin:V(x0,y0,z0),u:V(1,0,0),v:V(0,1,0),n:V(0,0,-1),su:x1-x0,sv:y1-y0,wall:true,turf:false,paintable:true});
     level.faces.push({origin:V(x0,y1,z0),u:V(1,0,0),v:V(0,0,1),n:V(0,1,0),su:x1-x0,sv:z1-z0,wall:false,turf:true,paintable:true});
-    level.blocks.push({id:level.blocks.length,solid:true,grate:false,center:V((x0+x1)/2,y1/2,(z0+z1)/2),half:V((x1-x0)/2,y1/2,(z1-z0)/2),
-      axes,faces:[-1,-1,fi+1,-1,-1,fi],aabbMin:V(x0,0,z0),aabbMax:V(x1,y1,z1)});
+    level.blocks.push({id:level.blocks.length,solid:true,grate:false,center:V((x0+x1)/2,(y0+y1)/2,(z0+z1)/2),half:V((x1-x0)/2,(y1-y0)/2,(z1-z0)/2),
+      axes,faces:[-1,-1,fi+1,-1,-1,fi],aabbMin:V(x0,y0,z0),aabbMax:V(x1,y1,z1)});
   }
   const a=f.make(id);a.form='kid';a.pos.set(0,0,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,100);a.aimPitch=0;
   a.character.getMuzzle=out=>out.copy(a.pos).add(new f.THREE.Vector3(0,muzzleY,.3));
@@ -35,16 +35,30 @@ function swing(x){
   return [...rounds.values()];
 }
 
-test('a level Big Swig swing born near the floor is not ended by its first-step floor graze',async()=>{
+test('Big Swig globs leave the shared Roller base with the sourced 1.9 m span, not the drawn drum',async()=>{
   // The drawn drum releases the horizontal swing ~0.31 m above the floor.
   const x=await setup('s3-roller-wide',{muzzleY:.31});
-  const rounds=swing(x);
+  const {ROLLER_SPAWN_BASE:B}=await import('../runtime/weapons-fidelity.mjs');
+  const rounds=swing(x),main=rounds.slice(0,8);
   assert.equal(rounds.length,16);
+  // setRandom(.37) gives every glob the same SpawnPositionRandomCube draw.
+  const jitter=(2*.37-1)*.1;
   for(const r of rounds){
-    assert.ok(r.steps>=6,'glob flies on after its edge touches the floor: '+r.steps);
-    assert.ok(r.end.z>3,'glob travels forward: '+r.end.z);
+    assert.ok(Math.abs(r.start.y-(B.height+jitter))<1e-9,'base height + sourced zero offset: '+r.start.y);
+    assert.ok(Math.abs(r.start.z-(B.forward+jitter))<1e-9,'base forward: '+r.start.z);
+    assert.ok(r.steps>=6&&r.end.z>3,'glob flies forward: '+r.steps+' '+r.end.z);
   }
-  assert.ok(x.paint.counts[0]>0,'grazes and landings paint the floor');
+  const xs=main.map(r=>r.start.x);
+  assert.ok(Math.abs(Math.max(...xs)-Math.min(...xs)-1.9)<1e-9,'SpawnPositionWidth 1.9 is the whole span');
+  assert.ok(x.paint.counts[0]>0,'landings paint the floor');
+});
+
+test('a glob whose grown sphere grazes a low ceiling on its first step flies on',async()=>{
+  // Base 1.35 m: the Field sphere reaches 0.45 m on the first step and touches
+  // a 1.6 m ceiling while the 0.1 m core clears it. The first step used to skip
+  // the core retest (core < min(f0, f1) is false while growing from the core).
+  const x=await setup('s3-roller-wide',{blocks:[[-40,3,-5,40,40,1.6]]});
+  for(const r of swing(x))assert.ok(r.steps>=6&&r.end.z>3,'glob flies on under the ceiling: '+r.steps+' '+r.end.toArray());
 });
 
 test('a Roller glob whose centre clears a low wall passes over it; one below the top lands on the face',async()=>{

@@ -20,7 +20,7 @@ import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { withShotBias, accuracyEnvelope, recoveringJumpBias } from './weapon-accuracy.mjs';
 import { spreadWeaponRound } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
-import { rollerSpeedSwerveDegrees, globGrazePaint, startCatalogWallDrop } from './weapons-fidelity.mjs';
+import { rollerSpeedSwerveDegrees, globGrazePaint, startCatalogWallDrop, rollerSpawnBase, addRollerSpawnOffset } from './weapons-fidelity.mjs';
 import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
@@ -689,7 +689,19 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function emitUnits(runner,r,key,charge=0) {
     const a=runner.a,p=r.parameters,s=state(runner),group=key==='slosh'?p.UnitGroupParam:
       key==='vertical'?p.VerticalSwingUnitGroupParam:key==='brush'?p.SwingUnitGroupParam:p.WideSwingUnitGroupParam;
-    origin(a);const at=muzzle.clone(), direction=dir.clone(), volleys=new Map();
+    origin(a);
+    // Roller swings leave from the shared player-relative base plus each
+    // glob's sourced Spawn* offset (weapons-fidelity ROLLER_SPAWN_BASE), as the
+    // native Splat Roller does -- not from the drawn drum, which the swing
+    // motion puts ~0.15-0.25 m above the floor at release and which ignored
+    // SpawnPositionWidth (every Big Swig glob left one point, not a 1.9 m span).
+    const swing=r.family==='roller'&&(key==='horizontal'||key==='vertical');
+    if(swing){
+      base.copy(a.pos);base.y+=1.05;
+      constrainMuzzle(G.physics,base,rollerSpawnBase(a,muzzle));
+      G.projectiles._aimFrom(a,muzzle,dir);
+    }
+    const at=muzzle.clone(), direction=dir.clone(), volleys=new Map(), birth=new THREE.Vector3();
     group.Unit.forEach((u,j)=> {
       const desc=mode(r,key,j,charge), count=finite(u.BulletNum,1);
       for(let i=0;i<count;i++) {
@@ -707,7 +719,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const yaw=finite(u.BaseRotateYDegree,0)+fan;
         const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
         const d={...desc,index:i},liftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
-        const p=spawn(a,r,d,aim,at,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
+        birth.copy(at);
+        if(swing){
+          addRollerSpawnOffset(birth,a,u,i,count,key==='vertical');
+          // A glob offset into a wall or below the floor starts at the obstruction.
+          constrainMuzzle(G.physics,base,birth);
+        }
+        const p=spawn(a,r,d,aim,birth,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
           index:i,volley,lift:speed*liftRate});
         // Like the existing native Slosher owner, select ground/air speed at
         // each glob's actual birth. Retain the admitted direction, per-index

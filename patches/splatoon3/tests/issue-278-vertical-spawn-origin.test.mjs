@@ -12,8 +12,9 @@ test('#278 vertical1+2+2 groups admit per-glob birth offsets before integration'
   const units=[0,1,1,2,2],offsets=[.5,-.25,0,-1.25,-1];
   for(let i=0;i<5;i++){
    const p=all[i];assert.equal(p.age,0);assert.equal(p.fidelityRollerUnitIndex,units[i]);
-   near(p.start.x,a.pos.x+Math.sin(yaw)*.6);near(p.start.z,a.pos.z+Math.cos(yaw)*.6);
-   near(p.start.y,a.pos.y+1.3+offsets[i]);near(p.pos.distanceTo(p.start),0);near(p.prev.distanceTo(p.start),0);
+   const B=f.ROLLER_SPAWN_BASE;
+   near(p.start.x,a.pos.x+Math.sin(yaw)*B.forward);near(p.start.z,a.pos.z+Math.cos(yaw)*B.forward);
+   near(p.start.y,a.pos.y+B.height+offsets[i]);near(p.pos.distanceTo(p.start),0);near(p.prev.distanceTo(p.start),0);
    rows.push({unit:units[i],start:Array.from(p.start.toArray())});
   }
   assert.equal(new Set(rows.map(x=>JSON.stringify(x.start))).size,5, 'every one of the 5 vertical globs has a distinct birth position');
