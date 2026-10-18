@@ -14,14 +14,29 @@ export function catalogFractionalSplashCount(value, ordinal) {
 // Without it every added shooter released at SpawnNearestLength + k*spacing on
 // every shot: a Jet Squelcher (1.0 + k*10.0) left the floor between ~4 m and
 // ~10 m unpainted under sustained fire, unlike the native Splattershot.
+// One nearest/feet splash belongs to the round's ordinary release budget.
+// The same shot ordinal must decide both its release distance and its radius.
+export function catalogSplashNearestSlot(spawn, sequence) {
+  if (!Number.isSafeInteger(sequence) || sequence < 0) throw new RangeError('Invalid splash shot ordinal');
+  const split = spawn?.SplitNum;
+  if (!Number.isInteger(split) || split < 1) return false;
+  const slot = sequence % split + 1;
+  const force = Array.isArray(spawn.ForceSpawnNearestAddNumArray) ? spawn.ForceSpawnNearestAddNumArray : [];
+  return slot === split || force.includes(slot);
+}
+
+export function catalogSplashRadius(descriptor, index) {
+  return index === 0 && descriptor.splashNearest && Number.isFinite(descriptor.splashNearestRadius) &&
+    descriptor.splashNearestRadius > 0 ? descriptor.splashNearestRadius : descriptor.splashRadius;
+}
+
 export function catalogSplashFirst(spawn, sequence) {
   const nearest = Number.isFinite(spawn?.SpawnNearestLength) ? Math.max(0, spawn.SpawnNearestLength) : 1;
   const spacing = spawn?.SpawnBetweenLength, split = spawn?.SplitNum;
   if (!Number.isSafeInteger(sequence) || sequence < 0 || !Number.isInteger(split) || split < 1 ||
       !(Number.isFinite(spacing) && spacing > 0)) return nearest;
   const ordinal = sequence % split + 1;
-  const force = Array.isArray(spawn.ForceSpawnNearestAddNumArray) ? spawn.ForceSpawnNearestAddNumArray : [];
-  return ordinal === split || force.includes(ordinal) ? nearest : nearest + spacing * (split - ordinal) / split;
+  return catalogSplashNearestSlot(spawn, sequence) ? nearest : nearest + spacing * (split - ordinal) / split;
 }
 
 import { SPLASH_SHOOTER_PAINT_DEFAULTS, SPLASH_SHOOTER_SPAWN_DEFAULTS, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
@@ -33,7 +48,13 @@ import { SPLASH_SHOOTER_PAINT_DEFAULTS, SPLASH_SHOOTER_SPAWN_DEFAULTS, SPLASH_DR
 // Families without these source fields stay on their existing path; this does
 // not invent missing slosher/roller/stringer physics or certify retail parity.
 export function catalogSplashDropSpec(source) {
-  const gravity=source?.MoveParam?.FreeGravity, spawn=source?.SplashSpawnParam, paintSource=source?.SplashPaintParam;
+  const move = source?.MoveParam;
+  // Inkipedia Shooter_data_S3 records FreeGravity=0.016 as the default of
+  // spl__BulletSimpleMoveParam. Some 11.3.0 rows (TripleQuick) omit this
+  // default while retaining the type. Never infer it for a different type.
+  const gravity = Number.isFinite(move?.FreeGravity) ? move.FreeGravity
+    : move?.$type === 'spl__BulletSimpleMoveParam' && !Object.hasOwn(move, 'FreeGravity') ? 0.016 : undefined;
+  const spawn=source?.SplashSpawnParam, paintSource=source?.SplashPaintParam;
   if(!(Number.isFinite(gravity)&&gravity>0)||!spawn||!paintSource)return null;
   const paint={...SPLASH_SHOOTER_PAINT_DEFAULTS,...paintSource};
   const random={...SPLASH_SHOOTER_SPAWN_DEFAULTS,...spawn};
