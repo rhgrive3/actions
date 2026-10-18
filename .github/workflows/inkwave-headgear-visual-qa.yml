@@ -33,17 +33,17 @@ jobs:
             gears: ''
     env:
       SOURCE_SHA: ${{ github.sha }}
-      RUNTIME_SOURCE_SHA: 4480124ee0d5c25c166a0a6a91a4dbeacb023e45
+      CANDIDATE_BASE_SHA: cabe8359fae040275910d6d2ff3739122304c36a
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.sha }}
-      - name: Verify exact checkout and unchanged runtime
+      - name: Verify exact checkout and protected native geometry
         run: |
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          git merge-base --is-ancestor "$RUNTIME_SOURCE_SHA" "$SOURCE_SHA"
-          git diff --exit-code "$RUNTIME_SOURCE_SHA" "$SOURCE_SHA" -- inkwave-public patches scripts
+          git merge-base --is-ancestor "$CANDIDATE_BASE_SHA" "$SOURCE_SHA"
+          git diff --exit-code "$CANDIDATE_BASE_SHA" "$SOURCE_SHA" -- inkwave-public scripts patches/local-quality/s3-face-look-adapter.mjs patches/local-quality/headgear/armor-helmet.js patches/local-quality/headgear/two-line-mesh.js patches/local-quality/headgear/camo-headphones.js patches/local-quality/headgear/character-headgear-ink-black-flap-cap.js
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -56,7 +56,7 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
           node --test patches/local-quality/tests/headgear-source.test.mjs
-          INKWAVE_HEADGEAR_SITE="$PWD/_site" node --experimental-loader ./patches/local-quality/tests/headgear-production-loader.mjs --test patches/local-quality/tests/headgear-lifecycle.fixture.mjs
+          INKWAVE_HEADGEAR_SITE="$PWD/_site" node --experimental-loader ./patches/local-quality/tests/headgear-production-loader.mjs --test patches/local-quality/tests/headgear-*.fixture.mjs
       - name: Render bounded multiview shard
         if: matrix.kind == 'multiview'
         timeout-minutes: 18

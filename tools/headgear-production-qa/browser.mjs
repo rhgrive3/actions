@@ -14,7 +14,18 @@ export async function run(config){
  function memory(){return {geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures};}
  function render(cam=G.camera){renderer.info.reset();renderer.render(scene,cam);gl.finish();check(!gl.isContextLost()&&gl.getError()===gl.NO_ERROR,'WebGL error at '+p.stage);return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,...memory()};}
  function pixels(){const a=new Uint8Array(720*720*4);gl.readPixels(0,0,720,720,gl.RGBA,gl.UNSIGNED_BYTE,a);return a;}
- function view(c,angle='oblique'){const target=c.bones.head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,.18,0));camera.position.copy(target).add(new THREE.Vector3(...(angle==='front'?[0,.03,3]:[2.3,1.1,2.3])));camera.lookAt(target);camera.updateMatrixWorld(true);G.camera=camera;}
+
+ // New tall gear only: fit a sphere around the complete rigid attachment and head.
+ // The old four use their original target/frustum verbatim for regression comparison.
+ function frameNewGear(c,gear,target){
+  const head=c.bones.head.getWorldPosition(new THREE.Vector3()),box=new THREE.Box3().setFromObject(gear);
+  box.expandByPoint(head.clone().add(new THREE.Vector3(-.26,-.13,-.25)));
+  box.expandByPoint(head.clone().add(new THREE.Vector3(.26,.40,.25)));
+  const sphere=box.getBoundingSphere(new THREE.Sphere()),half=Math.max(.50,Math.ceil((sphere.radius*1.12+.025)/.025)*.025);
+  target.copy(sphere.center);camera.left=camera.bottom=-half;camera.right=camera.top=half;camera.updateProjectionMatrix();
+  return {halfExtent:half,target:target.toArray(),min:box.min.toArray(),max:box.max.toArray()};
+ }
+ function view(c,angle='oblique'){const target=c.bones.head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,.18,0));camera.left=camera.bottom=-.46;camera.right=camera.top=.46;camera.updateProjectionMatrix();if(c.style.hat>=8)frameNewGear(c,active(c),target);camera.position.copy(target).add(new THREE.Vector3(...(angle==='front'?[0,.03,3]:[2.3,1.1,2.3])));camera.lookAt(target);camera.updateMatrixWorld(true);G.camera=camera;}
  async function save(name){await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL('image/png'));}
  function remove(c){scene.remove(c.root);c.dispose();live.delete(c);check(headgearState(c)===null,'disposed lifecycle state');renderer.renderLists.dispose();render(camera);}
  async function effects(hat){const c=make(hat);try{for(const angle of ['front','oblique']){view(c,angle);await renderer.compileAsync(scene,camera);const gear=active(c);c.setHurt(0);c.u.uFlash.value.set(0,0,0);render();const neutral=pixels();gear.visible=false;render();const hidden=pixels();gear.visible=true;const mask=new Uint8Array(720*720);for(let i=0;i<neutral.length;i+=4)mask[i/4]=Math.max(...[0,1,2].map(k=>Math.abs(neutral[i+k]-hidden[i+k])))>8?1:0;check(mask.reduce((a,b)=>a+b,0)>100,'gear mask');

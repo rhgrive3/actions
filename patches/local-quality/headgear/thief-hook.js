@@ -9,22 +9,24 @@ const rim=()=>.53;
 export const THIEF_HOOK_FIT=Object.freeze({name:'thief-hook',cls:2,col:[-1,1],thick:.006,exitMax:.05,flare:.006,rows:[0,.025,.07,.14,.22,.32],crown:8,rim,lift:()=>.012,shape:()=>0});
 function grid(n,m,fn,reverse=false){const p=[],uv=[],ix=[];for(let j=0;j<=m;j++)for(let i=0;i<=n;i++){p.push(...fn(i/n,j/m));uv.push(i/n,j/m);}for(let j=0;j<m;j++)for(let i=0;i<n;i++){const a=j*(n+1)+i,b=a+1,c=a+n+1,d=c+1;ix.push(...(reverse?[a,c,b,b,c,d]:[a,b,c,b,d,c]));}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();return g;}
 function merge(geometries){const p=[],n=[],uv=[],ix=[];let off=0;for(const g of geometries){p.push(...g.attributes.position.array);n.push(...g.attributes.normal.array);uv.push(...g.attributes.uv.array);const idx=g.index?g.index.array:Array.from({length:g.attributes.position.count},(_,i)=>i);ix.push(...Array.from(idx,i=>i+off));off+=g.attributes.position.count;g.dispose();}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(n,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);return g;}
-function cap(n,rx,rz,y,z,up=true){const p=[0,y,z],uv=[.5,.5],ix=[];for(let i=0;i<=n;i++){const a=TAU*i/n;p.push(rx*Math.sin(a),y,z+rz*Math.cos(a));uv.push(.5+.5*Math.sin(a),.5+.5*Math.cos(a));}for(let i=1;i<=n;i++)ix.push(...(up?[0,i+1,i]:[0,i,i+1]));const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();return g;}
+function cap(n,rx,rz,y,z,up=true){const p=[0,y,z],uv=[.5,.5],ix=[];for(let i=0;i<=n;i++){const a=TAU*i/n;p.push(rx*Math.sin(a),y,z+rz*Math.cos(a));uv.push(.5+.5*Math.sin(a),.5+.5*Math.cos(a));}for(let i=1;i<=n;i++)ix.push(...(up?[0,i,i+1]:[0,i+1,i]));const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();return g;}
 export function createThiefHook({lod='hero',inkColor=0xe637ab,headSurface=null,offIn=null,clearance=null,ctx=null}={}){
  const tier=lod==='far'?0:lod==='game'?1:2,N=[20,32,48][tier],root=new THREE.Group();root.name='thief-hook';
- const cloth=new THREE.MeshStandardMaterial({color:0x171819,roughness:.78,metalness:0});
+ const cloth=new THREE.MeshStandardMaterial({color:0x353933,roughness:.90,metalness:0});
  const satin=new THREE.MeshStandardMaterial({color:new THREE.Color(inkColor).multiplyScalar(.48),roughness:.32,metalness:.08});
  const gold=new THREE.MeshStandardMaterial({color:0xc9a84d,roughness:.28,metalness:.72});
  const glass=new THREE.MeshStandardMaterial({color:0xcde3df,roughness:.11,metalness:.08,transparent:true,opacity:.10,depthWrite:false,side:THREE.DoubleSide});
+ // A single planar lens needs both view directions, but never two transparency passes.
+ glass.forceSinglePass=true;
  // Flat satin checker/weave shading, never embossed geometric tiles.
  satin.onBeforeCompile=shader=>{shader.vertexShader='#define USE_UV\n'+shader.vertexShader;shader.fragmentShader='#define USE_UV\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
  vec2 ribbonCell=vec2(vUv.x*14.0+vUv.y*.65,vUv.y*2.0);
- float ribbonCheck=mod(floor(ribbonCell.x)+floor(ribbonCell.y),2.0);
+ float weave=sin(ribbonCell.x*3.14159265)*sin(ribbonCell.y*3.14159265);
  float ribbonAA=1.0-smoothstep(.35,1.0,max(fwidth(ribbonCell.x),fwidth(ribbonCell.y)));
- diffuseColor.rgb*=mix(1.0,mix(.86,1.07,ribbonCheck),ribbonAA);
- `);};satin.customProgramCacheKey=()=> 'thief-hook-flat-satin-v1';
+ diffuseColor.rgb*=1.0+.045*weave*ribbonAA;
+ `);};satin.customProgramCacheKey=()=> 'thief-hook-flat-satin-v2';
  const materials={cloth,satin,gold,glass},bins={cloth:[],satin:[],gold:[],glass:[]},parts=[];
- const add=(name,g,key)=>{parts.push({name,triangles:(g.index?.count??g.attributes.position.count)/3});bins[key].push(g);};
+ const add=(name,g,key)=>{parts.push({name,material:key,triangles:(g.index?.count??g.attributes.position.count)/3});bins[key].push(g);};
  const fit=clearance||offIn||ctx?.offIn;
  // Only the lower opening follows the native under-hat envelope. The cylinder
  // above it is independently authored, so a tall hat never stretches scalp/hair.
@@ -36,23 +38,29 @@ export function createThiefHook({lod='hero',inkColor=0xe637ab,headSurface=null,o
  const profileAt=t=>{for(let i=1;i<profile.length;i++){if(t<=profile[i][0]){const [a,x]=profile[i-1],[b,y]=profile[i];return x+(y-x)*(t-a)/(b-a);}}return profile.at(-1)[1];};
  const crown=(a,t,extra=0)=>{const k=profileAt(t);return [(bx*k+extra)*Math.sin(a),by+H*t,zc+(bz*k+extra)*Math.cos(a)];};
  add('gently-flared-black-crown',grid(N,12,(u,v)=>crown(u*TAU,v)),'cloth');
+ // Close the structural 6mm opening between cylinder base and brim.
+ add('crown-to-brim-closed-skirt',grid(N,1,(u,v)=>{const p=crown(u*TAU,0);p[1]-=.015*(1-v);return p;}),'cloth');
  add('flat-crown-top',cap(N,bx*1.147,bz*1.147,by+H,zc),'cloth');
  // Brim is a thin, complete elliptical flange, subtly curled at the side edges.
  const brim=(a,t,yoff=0)=>{const rx=bx+.090*t,rz=bz+.067*t;return [rx*Math.sin(a),by-.006+.014*Math.sin(a)**2*t*t+yoff,zc+rz*Math.cos(a)];};
  add('elliptical-brim-upper',grid(N,3,(u,v)=>brim(u*TAU,v),true),'cloth');
- add('elliptical-brim-under',grid(N,3,(u,v)=>brim(u*TAU,v,-.006)),'cloth');
- add('fine-bound-brim-edge',grid(N,2,(u,v)=>brim(u*TAU,1,-.006*v),true),'cloth');
- add('inner-opening-wall',grid(N,2,(u,v)=>brim(u*TAU,0,-.006*v)),'cloth');
+ add('elliptical-brim-under',grid(N,3,(u,v)=>brim(u*TAU,v,-.012)),'cloth');
+ add('fine-bound-brim-edge',grid(N,2,(u,v)=>brim(u*TAU,1,-.012*v),true),'cloth');
+ add('inner-opening-wall',grid(N,2,(u,v)=>brim(u*TAU,0,-.012*v)),'cloth');
  // Wide satin ribbon sits on the crown. No solid embossed logos or invented print.
  add('ink-satin-ribbon',grid(N,3,(u,v)=>crown(u*TAU,.035+.295*v,.0015)),'satin');
  // Folded ribbon bow: low relief cloth panels rather than blocks or metal buckle.
  const bowAz=1.65;
- const bowPoint=(s,t)=>{const a=bowAz+s*.29,base=crown(a,.16+t*.125,.003);const pleat=.002+.006*(Math.sin(Math.abs(s)*Math.PI)**2)*Math.cos(t*Math.PI/2);base[0]+=Math.sin(a)*pleat;base[2]+=Math.cos(a)*pleat;return base;};
+ const bowPoint=(s,t)=>{const a=bowAz+s*.29,base=crown(a,.16+t*.125,.003);const pleat=.004+.014*(Math.sin(Math.abs(s)*Math.PI)**2)*Math.cos(t*Math.PI/2);base[0]+=Math.sin(a)*pleat;base[2]+=Math.cos(a)*pleat;return base;};
  for(const side of [-1,1])add('folded-satin-bow-'+side,grid([4,6,8][tier],4,(u,v)=>{const s=side*(.09+.91*u),t=(v*2-1)*(.42+.58*u);return bowPoint(s,t);},side<0),'satin');
- add('bow-center-wrap',grid(4,4,(u,v)=>bowPoint((u*2-1)*.10,(v*2-1)*.48)),'satin');
+ add('bow-center-wrap',grid(4,4,(u,v)=>{const s=(u*2-1)*.10,p=bowPoint(s,(v*2-1)*.48),a=bowAz+s*.29;p[0]+=.012*Math.sin(a);p[2]+=.012*Math.cos(a);return p;}),'satin');
  // The complete hat tilts down at the forehead / up behind the head. Apply
  // this only to hat meshes, not the optical assembly or its ear support.
  for(const key of ['cloth','satin'])for(const g of bins[key])g.translate(0,-by,-zc).rotateX(.14).translate(0,by,zc);
+ // A fitted inner sweatband connects the tilted opening to the native lower
+ // envelope. It closes the rear floating gap without changing hair geometry.
+ const tilt=new THREE.Matrix4().makeRotationX(.14);
+ add('native-opening-fit-collar',grid(N,2,(u,v)=>{const a=u*TAU,top=new V(...brim(a,0,-.004)).sub(new V(0,by,zc)).applyMatrix4(tilt).add(new V(0,by,zc));const bottom=lower(a);bottom.y=Math.min(bottom.y-.014,top.y-.008);return bottom.lerp(top,v).toArray();}),'cloth');
  // Verified in the actual front/side S3 screenshot: wearer RIGHT (-X), viewer left.
  // Author the assembly in +X space, then mirror its positions/winding once below.
  // Use current native headSurface at the adopted eye centre, never mutate face.

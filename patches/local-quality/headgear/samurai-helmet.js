@@ -20,9 +20,13 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
  diffuseColor.rgb=mix(diffuseColor.rgb,samuraiInk,border);`);};
  mats.wing.customProgramCacheKey=()=> 'samurai-flat-wing-v1';
  mats.ink.onBeforeCompile=s=>{s.vertexShader='#define USE_UV\n'+s.vertexShader;s.fragmentShader='#define USE_UV\n'+s.fragmentShader;s.fragmentShader=s.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
- vec2 q=vUv*vec2(40.,4.);float aa=max(fwidth(q.x),.02);float lace=smoothstep(.12-aa,.12+aa,abs(fract(q.x+q.y*.35)-.5));
- float row=smoothstep(.08,.17,abs(fract(q.y)-.5));float fade=1.-smoothstep(.7,1.5,max(fwidth(q.x),fwidth(q.y)));
- diffuseColor.rgb*=mix(1.,.42+.58*lace*row,fade);`);};
+ vec2 q=vUv*vec2(40.,4.);float aa=max(fwidth(q.x),.025);
+ // Dark lamellar plates crossed by broad, diagonal ink-colored lace stitches.
+ float diagonal=abs(fract(q.x+floor(q.y)*.5+fract(q.y)*.65)-.5);
+ float stitch=1.-smoothstep(.19-aa,.19+aa,diagonal);
+ float row=smoothstep(.04,.14,fract(q.y))*(1.-smoothstep(.84,.96,fract(q.y)));
+ float fade=1.-smoothstep(.7,1.5,max(fwidth(q.x),fwidth(q.y)));
+ diffuseColor.rgb*=mix(.48,.14+.86*stitch*row,fade);`);};
  mats.ink.customProgramCacheKey=()=> 'samurai-flat-lacing-v1';
  const chunks=Object.fromEntries(Object.keys(mats).map(k=>[k,[]])),parts=[];
  const add=(name,g,k)=>{if(!g.attributes.uv)g.setAttribute('uv',new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count*2),2));g.computeVertexNormals();chunks[k].push(g);parts.push({name,triangles:(g.index?g.index.count:g.attributes.position.count)/3});};
@@ -41,7 +45,7 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
  const top=scalp(0,PI/2);const topG=new THREE.CylinderGeometry(.035,.042,.011,[8,12,24][d]);topG.translate(0,top[1]+.012,.014);add('crown-top-ring',topG,'gold');
  // Wide, shallow, flared shikoro. S3 rear reference has a horizontal sweep,
  // not a long vertical neck skirt. Its opening leaves cheeks/eyes unobstructed.
- const skirt=(u,v,extra=0)=>{const a=.95+u*(PI*2-1.9),r=.205+v*.103;return [Math.sin(a)*r,.220-v*.075+.023*v*v*Math.abs(Math.sin(a))+extra,.003+Math.cos(a)*(r+.012)];};
+ const skirt=(u,v,extra=0)=>{const a=.95+u*(PI*2-1.9),r=.205+v*.103;return [Math.sin(a)*r,.220-v*.075+.085*v*v*v*Math.pow(Math.abs(Math.sin(a)),4)+extra,.003+Math.cos(a)*(r+.012)];};
  add('ink-laced-wide-neck-guard',grid(N,[3,4,8][d],(u,v)=>skirt(1-u,v)),'ink');
  add('neck-guard-underface',grid(N,[1,2,4][d],(u,v)=>skirt(u,v,-.009)),'dark');
  add('neck-guard-outer-black-binding',grid(N,d===2?2:1,(u,v)=>skirt(u,1,-v*.009)),'dark');
@@ -49,17 +53,26 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
  // Shape extrusion with triangulated concave front/back, true gold thickness.
  const plate=(xy,depth,z,transform=null)=>{const s=new THREE.Shape();xy.forEach((p,i)=>i?s.lineTo(...p):s.moveTo(...p));s.closePath();const g=new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:false,curveSegments:3});g.translate(0,0,z-depth/2);if(transform)g.applyMatrix4(transform);return g;};
  // Tall outward-curving kuwagata: wide gold sheet horns, not thin antlers.
- const horn=[[.063,.285],[.128,.298],[.190,.352],[.221,.422],[.218,.493],[.182,.552],[.167,.579],[.151,.565],[.163,.511],[.168,.468],[.151,.409],[.120,.365],[.073,.338]];
+ // Smooth, broad sheet profile; bevel-sized edge stays physical, ornament is not subdivided.
+ const hornShape=new THREE.Shape();hornShape.moveTo(.064,.282);
+ hornShape.bezierCurveTo(.126,.284,.213,.316,.244,.383);
+ hornShape.bezierCurveTo(.268,.432,.257,.479,.218,.524);
+ hornShape.bezierCurveTo(.199,.546,.180,.569,.168,.579);
+ hornShape.bezierCurveTo(.153,.574,.151,.566,.157,.552);
+ hornShape.bezierCurveTo(.183,.500,.189,.458,.173,.415);
+ hornShape.bezierCurveTo(.155,.368,.120,.344,.071,.337);hornShape.closePath();
  for(const side of [-1,1]){
-  const hornGeo=plate(horn.map(([x,y])=>[side*x,y]),.013,.194);
-  const hp=hornGeo.attributes.position;for(let i=0;i<hp.count;i++)hp.setZ(i,hp.getZ(i)-.055*Math.max(0,(hp.getY(i)-.37)/.21));
+  const hornGeo=new THREE.ExtrudeGeometry(hornShape,{depth:.013,bevelEnabled:false,curveSegments:[3,5,8][d]});
+  const hp=hornGeo.attributes.position;for(let i=0;i<hp.count;i++){hp.setX(i,hp.getX(i)*side);hp.setZ(i,hp.getZ(i)+.1875-.19*(hp.getY(i)-.30));}
+  // Reflection across X reverses winding, including the thin edge faces.
+  if(side<0){for(const key of ['position','normal','uv']){const at=hornGeo.attributes[key];for(let i=0;i<at.count;i+=3)for(let k=0;k<at.itemSize;k++){const p=(i+1)*at.itemSize+k,q=(i+2)*at.itemSize+k,v=at.array[p];at.array[p]=at.array[q];at.array[q]=v;}}}
   add('broad-gold-kuwagata-'+side,hornGeo,'gold');
   // Curved rectangular fukigaeshi with pale speckled field and gold border.
-  const wing=(u,v,front=0)=>{const x=.263+(u-.5)*.105+(v-.5)*.075,y=.250-(u-.5)*.075+(v-.5)*.105,z=.125-u*.063+.027*u*u+front;return [side*x,y,z];};
-  add('wing-gold-frame-'+side,grid([3,5,10][d],[1,2,6][d],(u,v)=>wing(side>0?u:1-u,v)),'gold');
-  add('wing-pattern-field-'+side,grid([3,5,10][d],[1,2,6][d],(u,v)=>wing(side>0?.055+.89*u:.945-.89*u,.07+.86*v,.002)),'wing');
-  add('wing-back-'+side,grid([3,5,10][d],[1,2,6][d],(u,v)=>wing(side>0?1-u:u,v,-.009)),'dark');
-  const disc=new THREE.CylinderGeometry(.029,.029,.009,[8,12,24][d]);disc.rotateX(PI/2);disc.translate(side*.263,.278,.111);add('wing-gold-roundel-'+side,disc,'gold');
+  const wing=(u,v,front=0)=>{const pu=(u-.5)*2,pv=(v-.5)*2,ru=pu*Math.sqrt(1-.25*pv*pv)*.5,rv=pv*Math.sqrt(1-.25*pu*pu)*.5;const x=.263+ru*.115+rv*.082,y=.250-ru*.082+rv*.115,z=.103-.047*ru+.055*ru*ru+.040*rv*rv+front;return [side*x,y,z];};
+  add('wing-gold-frame-'+side,grid([4,6,10][d],[3,4,6][d],(u,v)=>wing(side>0?u:1-u,v)),'gold');
+  add('wing-pattern-field-'+side,grid([4,6,10][d],[3,4,6][d],(u,v)=>wing(side>0?.055+.89*u:.945-.89*u,.07+.86*v,.002)),'wing');
+  add('wing-back-'+side,grid([4,6,10][d],[3,4,6][d],(u,v)=>wing(side>0?1-u:u,v,-.009)),'dark');
+  const disc=new THREE.SphereGeometry(.028,[6,10,16][d],[4,5,8][d]);disc.scale(1,1,.28);disc.translate(side*.263,.278,.116);add('wing-gold-roundel-'+side,disc,'gold');
  }
  // Original stylized squid crest silhouette, broad surface rather than filigree.
  const crest=[[0,.414],[-.035,.376],[-.049,.339],[-.093,.314],[-.086,.287],[-.054,.267],[0,.257],[.054,.267],[.086,.287],[.093,.314],[.049,.339],[.035,.376]];
@@ -70,7 +83,7 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
  // Thick ink-colored chin tie follows adopted lower-face surface without editing it.
  const jaw=(a,e)=>{if(headSurface){const q=new THREE.Vector3();headSurface(a,e,.018,q);return [q.x,q.y-1.05,q.z+.002];}return [.178*Math.sin(a)*Math.cos(e),.164+.16*Math.sin(e),.014+.17*Math.cos(a)*Math.cos(e)];};
  const chin=jaw(0,-1.02);chin[1]-=.016;chin[2]+=.014;
- for(const side of [-1,1]){tube('thick-chin-cord-'+side,[[side*.174,.215,.095],jaw(side*1.15,-.40),jaw(side*.62,-.84),chin],.011,'ink');tube('bow-loop-'+side,[chin,[side*.058,chin[1]+.019,chin[2]+.018],[side*.075,chin[1]-.009,chin[2]+.024],[side*.044,chin[1]-.022,chin[2]+.026],chin],.009,'ink');tube('bow-tail-'+side,[chin,[side*.026,chin[1]-.038,chin[2]+.009],[side*.038,chin[1]-.060,chin[2]+.013]],.010,'ink');}
+ for(const side of [-1,1]){tube('thick-chin-cord-'+side,[[side*.174,.215,.095],jaw(side*1.15,-.40),jaw(side*.62,-.84),chin],.015,'ink');tube('bow-loop-'+side,[chin,[side*.058,chin[1]+.019,chin[2]+.018],[side*.075,chin[1]-.009,chin[2]+.024],[side*.044,chin[1]-.022,chin[2]+.026],chin],.014,'ink');tube('bow-tail-'+side,[chin,[side*.026,chin[1]-.038,chin[2]+.009],[side*.038,chin[1]-.060,chin[2]+.013]],.013,'ink');}
  const knot=new THREE.SphereGeometry(.018,[6,8,10][d],[4,5,6][d]);knot.scale(1,.8,.7);knot.translate(...chin);add('chin-bow-knot',knot,'ink');
  // One draw per material, independent of decorative part count.
  for(const [key,gs] of Object.entries(chunks)){const positions=[],normals=[],uv=[],indices=[];let base=0;for(const g of gs){positions.push(...g.attributes.position.array);normals.push(...g.attributes.normal.array);uv.push(...g.attributes.uv.array);const index=g.index?Array.from(g.index.array):Array.from({length:g.attributes.position.count},(_,i)=>i);indices.push(...index.map(i=>i+base));base+=g.attributes.position.count;g.dispose();}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(indices);g.computeBoundingBox();g.computeBoundingSphere();const mesh=new THREE.Mesh(g,mats[key]);mesh.name=key;mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);}
