@@ -8,13 +8,14 @@ import {catalogSplashDropSpec,catalogFractionalSplashCount} from '../runtime/cat
 const selected=MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&r.family==='shooter'&&Number.isFinite(r.parameters.SplashSpawnParam?.SpawnNum)&&!Number.isInteger(r.parameters.SplashSpawnParam.SpawnNum));
 const expectedSupported=['first','flash','gravity','heavy','precision','quicklong','quickmiddle','short','triplequick'].map(x=>'s3-shooter-'+x).sort();
 test('all nine fractional Shooter rows have explicit or typed default falling physics',()=>{
- assert.deepEqual(selected.filter(r=>catalogSplashDropSpec(r.parameters)).map(r=>r.id).sort(),expectedSupported);
- assert.deepEqual(selected.filter(r=>!catalogSplashDropSpec(r.parameters)).map(r=>r.id),[]);
+ assert.deepEqual(selected.filter(r=>catalogSplashDropSpec(r.parameters,r.sourceActor)).map(r=>r.id).sort(),expectedSupported);
+ assert.deepEqual(selected.filter(r=>!catalogSplashDropSpec(r.parameters,r.sourceActor)).map(r=>r.id),[]);
  const r=selected.find(r=>r.id==='s3-shooter-triplequick');
  assert.equal(r.parameters.SplashSpawnParam.SpawnNum,1.5);
- assert.equal(r.parameters.MoveParam.$type,'spl__BulletSimpleMoveParam');
+ assert.equal(r.sourceActor,'WeaponShooterTripleQuick');
+ assert.equal(r.parameters.MoveParam.$type,undefined,'packed catalogue strips type metadata');
  assert.equal(Object.hasOwn(r.parameters.MoveParam,'FreeGravity'),false);
- assert.equal(catalogSplashDropSpec(r.parameters).gravity,.016*3600,'documented Shooter type default, not a fabricated per-weapon value');
+ assert.equal(catalogSplashDropSpec(r.parameters,r.sourceActor).gravity,.016*3600,'documented Shooter type default, not a fabricated per-weapon value');
 });
 test('cumulative-floor arithmetic is local policy, not retail evidence',()=>{
  for(const value of [1.4,1.5,2.4,3.4])assert.equal(Array.from({length:80},(_,i)=>catalogFractionalSplashCount(value,i)).reduce((a,b)=>a+b,0),Math.floor(80*value+1e-9));
