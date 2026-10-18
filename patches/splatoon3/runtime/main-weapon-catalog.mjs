@@ -305,7 +305,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // jump or respawn. Ink recovery remains owned by the separate resource timer.
     s.stop=0;
     s.rollingFrames=0;s.rollingDash=false;
-    if (s.canopy && !s.canopy.launched) { s.canopy.open = false; if (s.canopy.preparing) s.canopy.preparing = false; }
+    if (s.canopy && !s.canopy.launched) { s.canopy.open = false; s.canopy.age = 0; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
     runner.slosh = -1;
   }
@@ -1595,7 +1595,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const canopy=s.canopy;
     if(canopy){
       const wasOpen=canopy.open;
-      canopy.age+=dt;
+      // Released/closed time cannot fund the next press's opening or purge.
+      // A newly admitted shot still supplies its own startup/open clocks.
+      canopy.age=input.fire?canopy.age+dt:0;
       {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
         // Prep belongs to the admitted pre-opening canopy only; do not prolong after input cancellation.
         if(canopy.preparing)canopy.preparing=!!input.fire&&canopy.age*HZ+EPS<measure.open;

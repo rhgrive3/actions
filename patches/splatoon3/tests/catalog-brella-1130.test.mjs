@@ -150,3 +150,13 @@ for(const hz of [30,60,120])test('F05 canopy contact owns a 30F cooldown indepen
  for(let i=0;i<hz*2;i++)f.G.projectiles.update(1/hz);
  assert.equal(contacts,3);
 });
+
+test('additional audit: releasing a held canopy discards old opening/purge progress before the next press',async()=>{
+ for(const [id,frames]of [['s3-shelter-normal',30],['s3-shelter-wide',65],['s3-shelter-compact',30],['s3-shelter-focus',30]]){
+  const {f,a}=await world(id,0);hold(a,frames);const c=a.weaponRunner.catalogState.canopy;assert.equal(c.open,true,id);
+  for(let i=0;i<300;i++)a.weaponRunner.update(1/60,{fire:false});
+  a.weaponRunner.update(1/60,{fire:true,firePressed:true});
+  assert.equal(a.weaponRunner.catalogState.canopy,c,id+' cannot get a free instant purge on re-press');
+  assert.equal(c.launched,false,id);assert.equal(c.open,false,id+' renewed hold must wait to open');
+ }
+});
