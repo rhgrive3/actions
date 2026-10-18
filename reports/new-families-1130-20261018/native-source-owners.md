@@ -9,3 +9,5 @@ HEAD `2040978e`の全体CIで、既存のブラスター所有権テスト2件�
 テストを次の契約へ更新した。全emissionが同じownerを保持し、発射後の実着弾・降下が新規所有を生むこと、床セル面積とowner加点の厳密一致、無得点壁の所有、飛行`ink-shot`と爆発`ink-blast`の両方を検証する。実塗り後はgrid・version・turfの全てが不変で、二重塗り・未加点の後発所有も拒否する。チャージャーの壁だけの落下が床加点を作らない制約は維持。
 
 汎用growthを省略する変更ではない。suction/curling/death/Slamの後発加点とno-special、kind0–5の壁・床に対する独立oracle、所有権順序・dead-cell・sub-cell境界・seed fuzzをそのまま実行した。関連5ファイル25/25成功。production生成物への変更はなく、runtime contentHashは`2b3607966cb0ccff90fe88cdca02c35d57e58d7e52469b87cce4e4bb1996ca42`を維持する。
+
+同じ統合でSplatling ground range probeの旧楕円期待も失敗した。4回の乱数・seed・14Fの着弾・位置・速度からの半径/DepthScaleは維持され、新mainの`ink-shot`が楕円内の輪郭を選択していた。期待セルはprofileの隣接RGから独立列挙し、runtimeのcontainsやBA補間を使わず全セルと面積を照合した。同じeventからfootprintだけを除いた実Paint再生は旧楕円を復元し、正例の輪郭とは一致しない負対照も検証。jump・wireを含む当該4件成功。ランタイムの変更や形状の巻き戻しは行っていない。
