@@ -18,7 +18,7 @@ const mkctx=(dur=0.2)=>{
  const ctx={sampleRate:48000,currentTime:10,
    createBuffer(ch,n,sr){const cells=Array.from({length:ch},()=>new Float32Array(n));return {sampleRate:sr,numberOfChannels:ch,length:n,duration:n/sr,getChannelData:i=>cells[i]};},
    async decodeAudioData(){decodeCount++;return ctx.createBuffer(1,Math.round(dur*48000),48000);},
-   createBufferSource(){const s={connect(){},start(t){this.started=t;},loop:false,playbackRate:{value:1,setTargetAtTime(){}},buffer:null};sources.push(s);return s;},
+   createBufferSource(){const s={connect(){},start(t){this.started=t;},loop:false,playbackRate:{value:1,automation:[],setTargetAtTime(q,t,smoothing){this.value=q;this.automation.push({q,t,smoothing});}},buffer:null};sources.push(s);return s;},
    createGain(){return{gain:{value:1},connect(){}};}
  };
  return{ctx,sources,count:()=>decodeCount};
@@ -37,6 +37,90 @@ class MixerStub {
  stats(){return{played:this.played.length};}
 }
 installWeaponAudioEngine(MixerStub);
+
+test('all recorded Charger families have short hold, ready and full-shot cues (2022, not retail 11.3.0)',()=>{
+ const installed=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
+ const names=['s3-charger-quick','charger','s3-charger-normalscope','s3-charger-long',
+   's3-charger-longscope','s3-charger-light','s3-charger-keeper'];
+ for(const id of names){
+   const entries=installed.clips.filter(c=>c.id===id);
+   for(const event of ['charge','ready','fire','fire_full'])
+     assert.ok(entries.some(c=>c.event===event),id+' has original source event '+event);
+   const hold=entries.find(c=>c.event==='charge');
+   assert.ok(hold.durationSeconds>=.20&&hold.durationSeconds<=.35,
+     '2022 HoldNoise is a short loop texture, not a whole charge ramp '+id);
+ }
+ assert.ok(!installed.clips.some(c=>c.id==='s3-charger-pencil'),
+   'the newer R-PEN has no 2022 recording and must not be called verified');
+ assert.equal(mainAudioSourceId('charger-01'),'charger');
+ assert.equal(mainAudioSourceId('s3-charger-long-01'),'s3-charger-long');
+});
+
+test('selected Charger preloads HoldNoise first then the other actual cues in one batch',async()=>{
+ const {ctx}=mkctx(),a=new MixerStub(ctx),id='charger',local={isLocal:true};
+ const bank=a.weaponBank(),loader=a._realS3Loader,orders=[];
+ const archive=manifest([
+   clip(id,'charge','Wp_Charger_HoldNoise_00.mp3'),
+   clip(id,'ready','Wp_ChargeKeepReady_00.mp3'),
+   clip(id,'fire_full','Wp_ChargerNormal_Shot_Full_01.mp3'),
+   clip(id,'fire','Wp_ChargerNormal_Shot_00.mp3')]);
+ loader.fetcher=async()=>({ok:true,json:async()=>archive});
+ bank.authorized.fetcher=async()=>res;
+ const originalEnsure=loader.ensure.bind(loader);
+ loader.ensure=(source,event)=>{orders.push([source,event]);return originalEnsure(source,event);};
+ a.prepareWeapon('charger-01',{urgent:true});
+ assert.deepEqual(orders.slice(0,2),[[id,'charge'],[id,undefined]],
+   'a collab must load its base hold immediately before the batch');
+ await loader.ensure(id);
+ for(const event of ['charge','ready','fire','fire_full']){
+   assert.equal(loader.declares(id,event),true,'manifest declares '+event);
+   assert.ok(bank.authorized.pick(id,event),'resident decoded recording '+event);
+ }
+ assert.equal(a.playWeapon('charger-01','ready',{actor:local})?.event,'ready');
+ assert.equal(a.playWeapon('charger-01','fire_full',{actor:local})?.event,'fire_full');
+ assert.equal(a.stats().authoredFallbackShots,0);
+ assert.equal(bank.cache.size,0,'recorded Charger never generates authored PCM');
+ a.disposeWeaponAudio();
+});
+
+test('recorded Charger hold keeps 1x pitch; old native 2.5x oscillator pitch does not warp MP3',async()=>{
+ const {ctx,sources}=mkctx(),a=new MixerStub(ctx),id='s3-charger-light';
+ a.weaponBank();
+ const archive=manifest([
+   clip(id,'charge','Wp_Charger_HoldNoise_Bamboo_00.mp3'),
+   clip('s3-spinner-quick','charge','Wp_SpinnerQuick_Motor_00.mp3')]);
+ a._realS3Loader.fetcher=async()=>({ok:true,json:async()=>archive});
+ a._realS3Loader.bank.authorized.fetcher=async()=>res;
+ await a._realS3Loader.ensure(id,'charge');
+ await a._realS3Loader.ensure('s3-spinner-quick','charge');
+ const recorded=a._def(`main:${id}:charge`);
+ const voice=()=>({ctx,t:ctx.currentTime,out:{},nodes:[],srcs:[],end:0,endless:false});
+ const v=voice(),control=recorded.loop(v,2.5,{});
+ assert.equal(v.srcs[0].buffer,a.weaponBank().authorized.pick(id,'charge').buffer);
+ assert.equal(v.srcs[0].playbackRate.value,1,'recorded hold remains at actual recorded speed');
+ control.pitch(2.5,ctx.currentTime+.05);
+ assert.equal(v.srcs[0].playbackRate.value,1,'old native chirp controls cannot rewrite source pitch');
+ assert.equal(v.srcs[0].playbackRate.automation.length,0,'no per-frame unnecessary AudioParam automation');
+ const spin=a._def('main:s3-spinner-quick:charge'),v2=voice();
+ const spinControl=spin.loop(v2,1.5,{});
+ assert.equal(v2.srcs[0].playbackRate.value,1.5,'Spinner motor modulation is unchanged');
+ spinControl.pitch(1.2,ctx.currentTime+.05);
+ assert.equal(v2.srcs[0].playbackRate.value,1.2);
+ assert.equal(v2.srcs[0].playbackRate.automation.length,1);
+ assert.equal(sources.length,2,'both recorded buffers create exactly one source');
+ a.disposeWeaponAudio();
+});
+
+test('native Charger full charge and hold still emit real-only events',()=>{
+ const source=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
+ const adapted=adaptWeaponAudio('src/game/weapons.js',source);
+ assert.ok(adapted.includes("this.chargeLoop = G.audio?.loopWeapon?.(a.weapon.id, 'charge'"),
+   'native press starts the sourced hold loop');
+ assert.ok(adapted.includes("G.audio?.playWeapon?.(a.weapon.id, 'ready'"),
+   'native full charge sends the original ready event');
+ assert.ok(adapted.includes("this.chargeLoop?.stop(0.05)"),
+   'release stops the charging audio without a stale loop');
+});
 
 test('2022-unrecorded alternate kits keep their own source-family authored cue after negative proof',async()=>{
  const {ctx,sources}=mkctx(),audio=new MixerStub(ctx);
