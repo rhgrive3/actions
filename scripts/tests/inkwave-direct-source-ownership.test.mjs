@@ -5,6 +5,10 @@ import fs from 'node:fs';
 const fetchWorkflow = fs.readFileSync(new URL('../../.github/workflows/fetch-inkwave.yml', import.meta.url), 'utf8');
 const navigation = fs.readFileSync(new URL('../../inkwave-public/src/game/nav.js', import.meta.url), 'utf8');
 const murals = fs.readFileSync(new URL('../../inkwave-public/src/world/murals.js', import.meta.url), 'utf8');
+const worldProps = fs.readFileSync(new URL('../../inkwave-public/src/world/props.js', import.meta.url), 'utf8');
+const marinaVessels = fs.readFileSync(new URL('../../inkwave-public/src/world/props-marina-vessels.js', import.meta.url), 'utf8');
+const lobbySetTexture = fs.readFileSync(new URL('../../inkwave-public/src/game/lobbySet-tex.js', import.meta.url), 'utf8');
+const uiIcons = fs.readFileSync(new URL('../../inkwave-public/src/ui/ui-icons.js', import.meta.url), 'utf8');
 const muralAdapter = fs.readFileSync(new URL('../../patches/local-quality/mural-atlas-adapter.mjs', import.meta.url), 'utf8');
 const mainComposition = fs.readFileSync(new URL('../inkwave-source-composition.mjs', import.meta.url), 'utf8');
 const composition = fs.readFileSync(new URL('../../patches/local-quality/adapter.mjs', import.meta.url), 'utf8');
@@ -37,4 +41,22 @@ test('mural atlas and world branding use directly editable source without rebuil
   assert.doesNotMatch(muralAdapter, /if \(rel !== 'src\/world\/murals\.js'\)/);
   assert.doesNotMatch(mainComposition, /'src\/world\/murals\.js':/);
   assert.match(muralAdapter, /if \(rel === 'src\/main\.js'\)/, 'selected-stage main hook remains until main.js is migrated');
+});
+
+test('ZEVANT stage and lobby lettering is directly owned by authored game modules', async () => {
+  const { adaptBuildSource } = await import('../inkwave-source-composition.mjs');
+  for (const [path, source] of [
+    ['src/world/props.js', worldProps],
+    ['src/world/props-marina-vessels.js', marinaVessels],
+    ['src/game/lobbySet-tex.js', lobbySetTexture],
+  ]) assert.equal(adaptBuildSource(path, source), source, path + ' must not be rewritten by the build');
+  assert.match(worldProps, /ZEVANT HARBOR · SEWER · ZEVANT HARBOR · SEWER/);
+  assert.match(marinaVessels, /text\(B, 'ZEVANT', 0\.19/);
+  assert.match(marinaVessels, /text\(B, 'ZEVANT', 0\.1,/);
+  assert.match(marinaVessels, /text\(B, 'ZEVANT', 0\.11/);
+  assert.match(lobbySetTexture, /const word = 'ZEVANT', size =/);
+  assert.match(uiIcons, /logoMarkup\(title = 'ZEVANT'/);
+  for (const path of ['src/world/props.js', 'src/world/props-marina-vessels.js', 'src/game/lobbySet-tex.js', 'src/ui/ui-icons.js']) {
+    assert(!mainComposition.includes("  '" + path + "': ["), path + ' must not require late string replacement');
+  }
 });
