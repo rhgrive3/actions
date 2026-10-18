@@ -26,30 +26,34 @@ for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} re
     assert.ok(paint.growing.length > 0);
     assert.ok(paint.growing.every(g => g.paintOwner === owner));
     const before = owner.stats.turf, cellsBefore = paint.counts[owner.team];
+    const gridBefore = Array.from(paint.grid), versionBefore = paint.version;
     for (let tick = 0; tick < 32; tick++) paint.advanceSimulation(1 / 60);
     const lateCredit = owner.stats.turf - before;
     assert.equal(lateCredit, (paint.counts[owner.team] - cellsBefore) * face.cu * face.cv,
       `every native later cell credits its actual owner for seed ${seed}`);
-    if (weapon === 'slosher') {
+    if (weapon === 'slosher' || weapon === 'blaster') {
       assert.ok(before > releaseTurf && cellsBefore > releaseCells, 'genuine post-release projectile landings claim additional floor cells');
       assert.equal(before - releaseTurf, (cellsBefore - releaseCells) * face.cu * face.cv,
         'physical delayed landing credit reaches its emitting owner exactly');
       assert.ok(emissions.every(e => e.kind === 'source-shot' || e.kind === 'source-splash'),
-        'all native Slosher release and landing masks use their explicit source kind');
+        'all native release and landing masks use their explicit source kind');
       assert.ok(before > 0 && cellsBefore > 0, 'real source body paint already earns positive turf');
       assert.equal(before, cellsBefore * face.cu * face.cv, 'immediate source cells credit the emitting actor exactly');
       assert.equal(lateCredit, 0, 'completed source masks add no procedural ancillary turf');
+      assert.deepEqual(Array.from(paint.grid), gridBefore, 'completed source masks cannot add uncredited ownership');
+      assert.equal(paint.version, versionBefore, 'completed source masks cannot invalidate caches again');
+      if (weapon === 'blaster') assert.ok(emissions.some(e => e.footprint === 'ink-shot') &&
+        emissions.some(e => e.footprint === 'ink-blast'), 'native Blaster preserves flight and burst source profiles');
     }
     totalLateCredit += lateCredit;
   }
-  // Source-stencil Roller now claims its bounded body immediately, just like
-  // Slosher. The per-emission actor, raster cell and exact m² ledger assertions
-  // above remain enabled; generic Blaster must still yield real late credit.
+  // These source masks claim their bounded bodies at physical emission.
+  // Generic bomb/death/Slam ancillary growth remains covered below and in
+  // paint-piece-local-ownership / issue-264-paint-hash; it is not a source drop.
   if (weapon === 'roller') {
     assert.ok(sourcedRollerFootprints > 0, 'the native Roller selected ink-flick at emission');
     assert.equal(totalLateCredit, 0, 'source-stencil Roller never invents late turf');
-  } else if (weapon === 'slosher') assert.equal(totalLateCredit, 0);
-  else assert.ok(totalLateCredit > 0, `native ${weapon} later cells reach the emitting actor`);
+  } else assert.equal(totalLateCredit, 0, `native ${weapon} source masks cannot invent later credit`);
 });
 
 for (const sub of ['suction', 'curling']) test(`native ${sub} detonation retains its owner for every core and satellite splat`, async () => {

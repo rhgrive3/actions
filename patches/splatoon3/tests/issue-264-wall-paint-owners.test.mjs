@@ -11,7 +11,7 @@ for (const weapon of ['charger', 'blaster']) test(`native ${weapon} wall contact
   owner.aimDir.set(0, 0, 1); owner.aimPoint.set(0, 4.05, 10);
   const emissions = [], nativeSplat = paint.splat;
   paint.splat = function (center, radius, team, opts = {}) {
-    emissions.push({ owner: opts.claimOwner, point: center.clone(), face: opts.face, kind: opts.kind });
+    emissions.push({ owner: opts.claimOwner, point: center.clone(), face: opts.face, kind: opts.kind, footprint: opts.footprint });
     return nativeSplat.call(this, center, radius, team, opts);
   };
   if (weapon === 'charger') G.projectiles.fireCharger(owner, owner.weapon, 1);
@@ -31,20 +31,23 @@ for (const weapon of ['charger', 'blaster']) test(`native ${weapon} wall contact
   const before = owner.stats.turf, cellsBefore = paint.counts[owner.team];
   const gridBefore = Array.from(paint.grid), versionBefore = paint.version;
   for (let tick = 0; tick < 120; tick++) paint.advanceSimulation(1 / 60);
-  if (weapon === 'charger') {
-    assert.ok(gridBefore.some((v,i) => v !== releaseGrid[i]), 'later physical wall-drop emissions claim new ownership');
-    assert.equal(before, releaseTurf, 'physical wall-only drops add ownership without inventing floor credit');
-    assert.ok(emissions.every(e => e.kind === 'source-shot' || e.kind === 'source-splash'));
-    assert.ok(wallStamps.some(e => e.point.y < wallStamps[0].point.y), 'native descending source stamps are exercised');
-    assert.ok(before > 0 && cellsBefore > 0, 'native source floor emissions earn positive credit');
-    assert.ok(gridBefore.filter(Boolean).length > paint.counts[0] + paint.counts[1], 'real wall stamps paint additional unscored cells');
-    assert.deepEqual(Array.from(paint.grid), gridBefore, 'source wall drops are explicit emissions, not later procedural drips');
-    assert.equal(paint.version, versionBefore, 'completed source stamps cannot invalidate ownership a second time');
-    assert.equal(owner.stats.turf, before, 'completed source stamps cannot add duplicate floor credit');
-  } else {
-    assert.ok(paint.grid.some((value, index) => value !== gridBefore[index]), 'native wall/drop growth changes actual grid ownership');
-    assert.ok(paint.version > versionBefore, 'wall growth invalidates paint caches even without scoring');
+  assert.ok(gridBefore.some((v,i) => v !== releaseGrid[i]), 'later physical wall-drop emissions claim new ownership');
+  if (weapon === 'charger') assert.equal(before, releaseTurf, 'physical wall-only drops add ownership without inventing floor credit');
+  else {
+    assert.ok(before > releaseTurf, 'Blaster physical flight and burst drops add genuine floor credit');
+    assert.ok(emissions.some(e => e.footprint === 'ink-shot') && emissions.some(e => e.footprint === 'ink-blast'),
+      'Blaster retains distinct source flight and burst silhouettes');
   }
+  assert.ok(emissions.every(e => e.kind === 'source-shot' || e.kind === 'source-splash'));
+  assert.ok(wallStamps.some(e => e.point.y < wallStamps[0].point.y), 'native descending source stamps are exercised');
+  assert.ok(before > 0 && cellsBefore > 0, 'native source floor emissions earn positive credit');
+  assert.equal(before, cellsBefore * face.cu * face.cv, 'all physical floor credit belongs to the emitting actor exactly');
+  assert.ok(gridBefore.filter(Boolean).length > paint.counts[0] + paint.counts[1], 'real wall stamps paint additional unscored cells');
+  // Both native paths now emit source masks from the projectile clock. A
+  // second procedural drip here would double-paint beyond those source drops.
+  assert.deepEqual(Array.from(paint.grid), gridBefore, 'source wall drops are explicit emissions, not later procedural drips');
+  assert.equal(paint.version, versionBefore, 'completed source stamps cannot invalidate ownership a second time');
+  assert.equal(owner.stats.turf, before, 'completed source stamps cannot add duplicate floor credit');
   assert.equal(owner.stats.turf - before, (paint.counts[owner.team] - cellsBefore) * face.cu * face.cv,
     'only newly claimed eligible floor cells reach the turf ledger; walls remain unscored');
 });
