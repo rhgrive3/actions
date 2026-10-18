@@ -5,6 +5,7 @@
 // The captures are intentionally browser evidence, not the isolated geometry
 // fixtures used by the numeric weapon tests.
 import fs from 'node:fs';
+import {audioDiagnosticURL,audioBuildManifestReceipt,sha256 as audioReceiptSha256} from './lib/inkwave-audio-readiness-diagnostics.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -127,6 +128,51 @@ async function openGameContext({ mobile = false } = {}) {
   });
   const page = await context.newPage();
   page.setDefaultTimeout(30000);
+
+  const audioNetwork = [], audioSnapshots = [];
+  const audioReceipt = { checkoutSha: process.env.GITHUB_SHA || null,
+    build: audioBuildManifestReceipt(site), network: audioNetwork, snapshots: audioSnapshots };
+  report.audioReadiness ||= [];
+  report.audioReadiness.push(audioReceipt);
+  const snapshotAudio = async reason => {
+    const state = await page.evaluate(() => {
+      const a = window.__G?.audio, l = a?._realS3Loader, b = a?._weaponBank?.authorized;
+      return { audioContext: a?.ctx?.state ?? null, currentTime: a?.ctx?.currentTime ?? null,
+        userActivation: { active: navigator.userActivation?.isActive ?? null, everActive: navigator.userActivation?.hasBeenActive ?? null },
+        loader: l?.stats?.() ?? null, queuedKeys: l?.inFlight ? [...l.inFlight.keys()] : [],
+        shooterDeclared: l?.declares?.('shooter','fire') ?? null,
+        shooterResident: b?.byEvent?.has('shooter:fire') ?? null,
+        authorized: b?.stats?.() ?? null,
+        authorizedErrors: b?.errors?.slice(-6).map(e=>({id:e.id,error:String(e.error).slice(0,300)})) ?? [],
+        bankDisposed: a?._weaponBank?.disposed ?? null };
+    }).catch(error => ({ evaluationError: String(error.message).slice(0,300) }));
+    audioSnapshots.push({ reason, observedAt: new Date().toISOString(), state });
+  };
+  page.on('response', response => {
+    if (!response.url().includes('/runtime/audio/') || audioNetwork.length >= 96) return;
+    const row = { url: audioDiagnosticURL(response.url()), status: response.status(),
+      contentType: response.headers()['content-type'] || null, at: new Date().toISOString() };
+    audioNetwork.push(row);
+    if (response.url().split('?')[0].endsWith('/real-s3-installed.json'))
+      response.body().then(bytes => { row.bytes=bytes.length; row.sha256=audioReceiptSha256(bytes); })
+        .catch(error => { row.error=String(error.message).slice(0,300); });
+  });
+  page.on('requestfinished', request => {
+    if (request.url().includes('/runtime/audio/') && audioNetwork.length < 96)
+      audioNetwork.push({ url: audioDiagnosticURL(request.url()), event:'finished', timing:request.timing() });
+  });
+  page.on('requestfailed', request => {
+    if (request.url().includes('/runtime/audio/') && audioNetwork.length < 96)
+      audioNetwork.push({ url: audioDiagnosticURL(request.url()), failure:request.failure()?.errorText });
+  });
+  let recordedAudioFailureObserved = false;
+  page.on('console', message => {
+    if (!recordedAudioFailureObserved && message.type()==='error' && /MP3|録音|音源|音声出力/.test(message.text())) {
+      recordedAudioFailureObserved = true;
+      void snapshotAudio('recorded-audio-failure');
+    }
+  });
+
   page.on('crash', () => report.browserDiagnostics.push({ event: 'page-crash', mobile, at: new Date().toISOString() }));
   page.on('pageerror', e => mimeErrors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') mimeErrors.push(m.text().slice(0, 1000)); });
@@ -221,6 +267,7 @@ async function openGameContext({ mobile = false } = {}) {
         actors: m?.actors?.length, matchedMap: g?.mapDef?.id,
         bootError: document.querySelector('#boot-error')?.textContent };
     }).catch(error => ({ snapshotFailure: error.message }));
+    await snapshotAudio('native-startup-timeout');
     report.browserDiagnostics.push({ event: 'native-startup-timeout', mobile, observed });
     throw error;
   }

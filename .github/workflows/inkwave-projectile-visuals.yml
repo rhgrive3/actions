@@ -8,6 +8,8 @@ on:
       - 'patches/splatoon3/reference/projectile-*.json'
       - 'patches/splatoon3/tests/projectile-visuals.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
+      - 'scripts/lib/inkwave-audio-readiness-diagnostics.mjs'
+      - 'scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs'
       - 'scripts/lib/inkwave-projectile-ci-roster.mjs'
       - 'scripts/tests/inkwave-projectile-ci-roster.test.mjs'
       - 'scripts/lib/inkwave-roller-birth-baseline.mjs'
@@ -74,7 +76,7 @@ jobs:
           node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs scripts/tests/inkwave-projectile-pool-reset.test.mjs
           python3 scripts/tests/inkwave-projectile-captures.test.py
           node --experimental-vm-modules --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-ci-roster.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs
-          node --test scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs
+          node --test scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs
       - name: Replay reviewed Roller births, pool reset and pinned paint in the main reference
         if: ${{ matrix.side == 'before' }}
         run: node scripts/prepare-inkwave-projectile-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
