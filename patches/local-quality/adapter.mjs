@@ -1,6 +1,5 @@
 import { adaptHeadgear } from './headgear-adapter.mjs';
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
-import { adaptNavHeuristic } from './nav-heuristic-adapter.mjs';
 import { adaptBotNavigation } from './bot-navigation-adapter.mjs';
 import { adaptFirefightTierBudget } from './firefight-tier-budget.mjs';
 import { adaptRootHairSpring } from './root-hair-spring-adapter.mjs';
@@ -165,7 +164,6 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
-  code = adaptNavHeuristic(rel, code, replaceOnce);
   code = adaptRootHairSpring(rel, code, replaceOnce);
   code = adaptPoseRotation(rel, code, replaceOnce);
   code = adaptLobbySlotTransform(rel, code);
