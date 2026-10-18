@@ -145,7 +145,6 @@ const IDENTITY_FILES = [
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
   'paint-hotpath-adapter.mjs',
   'distance-hotpath-adapter.mjs',
-  'nav-heuristic-adapter.mjs',
   'bot-navigation-adapter.mjs', 'bot-navigation.mjs', 'firefight-tier-budget.mjs',
   'root-hair-spring-adapter.mjs',
   'pose-rotation-adapter.mjs',
