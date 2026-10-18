@@ -198,13 +198,14 @@ test('Bloblobber physical launch remains level against a short ground reticle an
   function simulate(p,requireAfterDefaultLife=false) {
     f.G.physics.level=flat;
     let sawBounce=false,survived72=false,ended=0,distance=0;const contacts=[];
+    const originZ=p.start.z;
     for(let frame=1;frame<=481;frame++){
       const before=p.catalog.groundBounces;
       const dead=system._step(p,1/60);
-      if(p.catalog.groundBounces>before)contacts.push({frame,distance:p.pos.z});
+      if(p.catalog.groundBounces>before)contacts.push({frame,distance:p.pos.z-originZ});
       if(p.catalog.groundBounces>0)sawBounce=true;
       if(frame===74){assert.equal(dead,false,'bubble must not vanish at old 1.2s limit');survived72=true;}
-      if(dead){ended=frame;distance=p.pos.z;break;}
+      if(dead){ended=frame;distance=p.pos.z-originZ;break;}
     }
     assert.ok(sawBounce,'real ground geometry must cause a bounce');
     assert.equal(p.catalog.groundBounces,2,'third floor contact ends the bubble after two rebounds');
@@ -230,6 +231,13 @@ test('Bloblobber physical launch remains level against a short ground reticle an
   console.log('BLOBLOBBER_ACTUAL_PITCH_TRACES '+JSON.stringify({
     level:flatShot,upward:traces,downward
   }));
+  const descendingShallow=downward.find(x=>x.deg===-20);
+  assert.ok(descendingShallow.contacts[0].distance>3,
+    'downward launch should not count the grown outer field shell as an instant floor rebound');
+  assert.ok(descendingShallow.reach>15,
+    'a modest downward aim must continue after two floor rebounds instead of expiring beside the shooter');
+  assert.ok(downward.every(x=>x.contacts.length===2),
+    'downward pitch preserves the two ground rebounds before final impact');
   assert.ok(traces.find(x=>x.deg===90).reach<1e-4,
     'straight-up input must remain vertical instead of drifting toward the reticle');
   assert.ok(traces.every(x=>x.contacts.length===2),'every pitch has precisely two floor rebounds');
