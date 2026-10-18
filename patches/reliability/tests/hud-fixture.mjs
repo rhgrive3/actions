@@ -77,6 +77,9 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
   await config.evaluate();
   Object.assign(context, util.namespace, config.namespace);
   const hudMethods = [
+    ...(hudSource.includes('  setWorldPaused(on) {')
+      ? [section(hudSource, '  setWorldPaused(on) {', '\n  setVisible(v) {')]
+      : []),
     // Quality composition adds this dependency to setVisible/dispose. Extract
     // the real cleanup method as well; a no-op fixture would hide stale signals.
     ...(hudSource.includes('this._clearTeamSpecialSignals()')
