@@ -3,7 +3,7 @@ on:
   push:
     branches: ['codex/squid-*']
   pull_request:
-    paths: ['tools/squid-production-qa/**', 'patches/local-quality/s3-squid-look-adapter.mjs', 'patches/splatoon3/runtime/swim-motion.mjs', 'patches/splatoon3/*squid*', 'patches/local-quality/squid-motion-binding-adapter.mjs', 'patches/local-quality/tests/squid-source-presentation.test.mjs', 'patches/local-quality/tests/squid-surface-material.test.mjs', 'patches/local-quality/tests/squid-connected-eye-binding.test.mjs', '.github/workflows/inkwave-squid-visual-qa.yml']
+    paths: ['tools/squid-production-qa/**', 'patches/local-quality/s3-squid-look-adapter.mjs', 'patches/splatoon3/runtime/swim-motion.mjs', 'patches/splatoon3/*squid*', 'patches/local-quality/squid-motion-binding-adapter.mjs', 'patches/local-quality/tests/squid-source-presentation.test.mjs', 'patches/local-quality/tests/squid-surface-material.test.mjs', 'patches/local-quality/tests/squid-connected-eye-binding.test.mjs', 'patches/local-quality/tests/s3-squid-look.test.mjs', '.github/workflows/inkwave-squid-visual-qa.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -30,7 +30,7 @@ jobs:
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
       - name: Verify source presentation regression
-        run: node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs
+        run: node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs
       - name: Build and capture preserved baseline
         run: |
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
@@ -42,7 +42,7 @@ jobs:
         run: |
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
-          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs
+          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs
           node tools/squid-production-qa/run.mjs --site _site --out .qa-evidence/squid-candidate
       - uses: actions/upload-artifact@v4
         if: always()
