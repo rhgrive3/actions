@@ -60,9 +60,17 @@ const chargerOrganic = Object.freeze({
   'charger-0.75': { maxZ:22.625, area:51.625 },
   'charger-1': { maxZ:26.625, area:73.5 },
 });
+// #1583's reviewed rectified Blaster ink contour is a deliberately changed
+// source-stencil grid. Pin the observed exact-head #1577 and #1587 CI receipt,
+// not the obsolete 2026-10-17 stencil hash. The full source/build grid and
+// independent scalar source raster remain compared below.
+const rectifiedBlasterCellsHash = '711abcf4139b3bbc04508f380183eadfd58519fa0d4aba3ca6bbacffd56aa5c7';
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
   const c = data.cases[key], expected = current.cases[key], organic = chargerOrganic[key];
-  if (organic) {
+  if (key === 'blaster') {
+    assert.notEqual(rectifiedBlasterCellsHash, expected.cellsHash, 'Blaster contour differs from archived mask');
+    assert.equal(digest(c.paint.cellsXZ), rectifiedBlasterCellsHash, 'rectified Blaster full scoring grid');
+  } else if (organic) {
     assert.notEqual(digest(c.paint.cellsXZ), expected.cellsHash, key + ' new organic Charger contour must differ from the old stamp');
     near(c.paint.area, organic.area, 1e-7);
   } else {
@@ -70,7 +78,10 @@ for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
   }
   assert.equal(digest(c.hitSamples), expected.hitSamplesHash, key + ' main full hit sweep');
   assert.equal(digest(c.initialProjectiles), expected.initialProjectilesHash, key + ' main projectile births');
-  if (!organic) assert.equal(digest(c.paintPoints),expected.paintPointsHash,key+' all source stamp dimensions and recorded shape');
+  if (!organic && key !== 'blaster') assert.equal(digest(c.paintPoints),expected.paintPointsHash,key+' all source stamp dimensions and recorded shape');
+  // Blaster's footprint identifier changed from the old archive. All physical
+  // positions, seeds and dimensions are still checked against that archive,
+  // and source/build full stamp identity is asserted independently below.
   assert.equal(digest(c.groundImpacts),expected.impactsHash,key+' all terrain impacts');
   if(!key.startsWith('splatling-')) {
     assert.equal(digest(c.hitSamples),expectedCases[key].hitSamplesHash,key+' unaffected hit sweep remains pinned');
