@@ -111,10 +111,14 @@ test('registered Scorch and native layouts live directly in the stage map module
   const native = fs.readFileSync(new URL('../../patches/native-stages/adapter.mjs', import.meta.url), 'utf8');
   assert.match(maps, /import \{ LAYOUT as SCORCH \} from/);
   assert.match(maps, /import \{ nativeStageEnabled, NATIVE_LAYOUTS \} from/);
-  assert.match(maps, /cargo: CARGO, scorch: SCORCH/);
+  assert.match(maps, /cargo: CARGO, range: RANGE/);
+  assert.match(maps, /MAP_LAYOUTS\.scorch = SCORCH/);
+  assert.match(maps, /import \{ LAYOUT as RANGE \} from/);
   assert.match(maps, /if \(nativeStageEnabled\) Object\.assign\(MAP_LAYOUTS, NATIVE_LAYOUTS\)/);
   assert(!scorch.includes("if (rel === 'src/world/maps.js') {"));
   assert(!native.includes("if(rel==='src/world/maps.js')"));
+  const practice = fs.readFileSync(new URL('../../patches/practice-range/adapter.mjs', import.meta.url), 'utf8');
+  assert(!practice.includes("if (rel === 'src/world/maps.js') {"));
 });
 
 test('native ink and catalogue sweep entry points and AABB early-outs live in real collision source', async () => {
