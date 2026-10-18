@@ -98,7 +98,9 @@ function repairLoopSeam(ctx,buffer,startSeconds,endSeconds){
 export class AuthorizedSamplePack {
   constructor(ctx,{maxBytes=DEFAULT_BYTES,fetcher}={}){
     if(!finite(maxBytes)||maxBytes<1024)throw new RangeError('Invalid authorized audio cache budget');
-    this.ctx=ctx;this.maxBytes=maxBytes;this.fetcher=fetcher||globalThis.fetch;
+    // WebKit brand-checks Window.fetch: never store its unbound method.
+    // Explicit test/operator fetchers keep their original call semantics.
+    this.ctx=ctx;this.maxBytes=maxBytes;this.fetcher=fetcher||globalThis.fetch?.bind(globalThis);
     this.loaded=new Map();this.byEvent=new Map();this.bytes=0;this.errors=[];
     this.manifest=null;this.source='none';this.pending=0;this.generation=0;this.repaired=0;
   }

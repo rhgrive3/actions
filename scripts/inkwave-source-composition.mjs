@@ -34,5 +34,54 @@ export function adaptBuildSource(rel, code) {
   code = adaptMainInkFootprints(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
-  return adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce));
+  return applyZevantDisplayName(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)));
+}
+
+// Display-only rename applied after all gameplay/UI adapters. Keep the upstream
+// input snapshot, storage keys, JS identifiers and source hash lock unchanged.
+const ZEVANT_DISPLAY_REPLACEMENTS = {
+  'index.html': [
+    ['<title>INKWAVE — ナワバリバトル</title>', '<title>ZEVANT — ナワバリバトル</title>'],
+    ['content="INKWAVE：4対4', 'content="ZEVANT：4対4'],
+  ],
+  'src/config.js': [
+    ["export const GAME_TITLE = 'INKWAVE';", "export const GAME_TITLE = 'ZEVANT';"],
+  ],
+  'src/ui/ui-icons.js': [
+    ["logoMarkup(title = 'INKWAVE'", "logoMarkup(title = 'ZEVANT'"],
+  ],
+  'src/ui/menus.js': [
+    ['The INKWAVE servers didn', 'The ZEVANT servers didn'],
+    ['The squidkids and code behind INKWAVE', 'The squidkids and code behind ZEVANT'],
+  ],
+  // In-world text is rendered into procedural textures / 3-D lettering.
+  'src/world/murals.js': [
+    ["strokeText('INKWAVE', ox + 300, 186)", "strokeText('ZEVANT', ox + 300, 186)"],
+    ["fillText('INKWAVE', ox + 300, 186)", "fillText('ZEVANT', ox + 300, 186)"],
+    ["fillText('INKWAVE', ox + 294, 180)", "fillText('ZEVANT', ox + 294, 180)"],
+  ],
+  'src/game/lobbySet-tex.js': [
+    ["const word = 'INKWAVE', size =", "const word = 'ZEVANT', size ="],
+  ],
+  'src/world/props.js': [
+    ['INKWAVE HARBOR · SEWER · INKWAVE HARBOR · SEWER · ', 'ZEVANT HARBOR · SEWER · ZEVANT HARBOR · SEWER · '],
+  ],
+  'src/world/props-marina-vessels.js': [
+    ["text(B, 'INKWAVE', 0.19", "text(B, 'ZEVANT', 0.19"],
+    ["text(B, 'INKWAVE', 0.1,", "text(B, 'ZEVANT', 0.1,"],
+    ["text(B, 'INKWAVE', 0.11", "text(B, 'ZEVANT', 0.11"],
+  ],
+  'patches/splatoon3/runtime/ui-strings.mjs': [
+    ['The INKWAVE servers didn’t answer. Check your connection, then try again.', 'The ZEVANT servers didn’t answer. Check your connection, then try again.'],
+  ],
+  'src/i18n.js': [
+    ["'The squidkids and code behind INKWAVE': 'INKWAVE をつくった仲間たち'", "'The squidkids and code behind ZEVANT': 'ZEVANT をつくった仲間たち'"],
+  ],
+};
+
+export function applyZevantDisplayName(rel, code) {
+  for (const [before, after] of ZEVANT_DISPLAY_REPLACEMENTS[rel] || []) {
+    code = replaceOnce(code, before, after, 'ZEVANT public display name (' + rel + ')');
+  }
+  return code;
 }

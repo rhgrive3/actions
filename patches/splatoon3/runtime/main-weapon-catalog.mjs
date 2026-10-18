@@ -582,13 +582,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     if (key==='arrow') { speed=stageValue(r,m,'SpawnSpeed',frames,2.1)*HZ; damage=stageValue(r,d,'DirectHitDamage',frames,300)/10; }
     if (key==='slosh') { speed=finite(packet.SpawnSpeedGround,1)*HZ; }
-    // The Bloblobber is terrain-rebound terminated, not an ordinary 1.2s
-    // catalogue glob. From its pinned 11.3.0 initial speed, gravity and drag,
-    // a near-vertical level-ground throw takes ~200 fixed frames to reach its
-    // third ground contact. Keep a separate 240F safety deadline for voids and
-    // exceptional geometry. This is an INKWAVE cleanup bound, NOT a Nintendo
-    // extracted lifetime; ordinary ground shots end on their third contact.
-    if (r.sourceActor==='WeaponSlosherBathtub') life=240/HZ;
+    // Bloblobber ends on its third floor contact, and walls bounce at 0.8x.
+    // Its pinned S3 11.3.0 data does NOT expose a projectile age limit.
+    // 240F could still erase high-angle shots fired from elevated terrain
+    // midair, before the third contact. Use a deliberately loose, finite 480F
+    // *void/degenerate geometry guard*, not an asserted retail lifetime.
+    // Ordinary stages retire the projectile on the sourced contact rule.
+    if (r.sourceActor==='WeaponSlosherBathtub') life=480/HZ;
     if (packet?.SpawnSpeedBase != null) speed=packet.SpawnSpeedBase*HZ;
     if (r.family==='blaster') life=finite(b.BlasterBurstParam?.BurstFrame,13)/HZ;
     if (key.startsWith('saber-')) life=finite(b.BurstParam?.BurstFrame,6)/HZ;
@@ -1015,14 +1015,30 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // Retain the existing single paint owner and do not duplicate paint events.
       const bounceRadius=(finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index)*Math.pow(.85,s.bounces);
       if(!p.ghost)paint(p.owner,at,bounceRadius,1,null,-1,mainInkFootprint(r));
-      const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index,s.bounces+1));
+      // Ground bounce begins only when the sourced small FIELD *core* reaches
+      // the terrain. Offsetting by the grown radius put the bubble far above
+      // the surface, then its next impact happened prematurely on the grown
+      // envelope; short downward throws spent all three contacts near the
+      // muzzle. Walls continue using the full grown collision envelope.
+      const nextScale=s.bounces+1;
+      const reboundRadius=ground
+        ?collisionRadius(d.c,'Field',0,s.index,nextScale)
+        :collisionRadius(d.c,'Field',p.age*HZ,s.index,nextScale);
+      const clearance=catalogReboundSeparation(reboundRadius);
       p.pos.copy(at).addScaledVector(h.normal,clearance);
       p.vel.reflect(h.normal);
       if(!ground)p.vel.multiplyScalar(.8); // sourced wall reflection, no wall-bounce cap
       if(!p.ghost&&(p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
         G.fx?.burst(at,h.normal,p.owner.color,{count:5,speed:1.8,size:.09,spread:.8,paint:false});
-      // BounceAfterMaxSpeed is explicit only for the smaller bubble group.
-      if(bp.BounceAfterMaxSpeed!=null&&p.vel.length()>bp.BounceAfterMaxSpeed*HZ)p.vel.setLength(bp.BounceAfterMaxSpeed*HZ);
+      // BounceAfterMaxSpeed=.35 is an explicit total-speed cap for the small
+      // bubbles after a FLOOR bounce; never apply it to a wall reflection.
+      // S3 wall rebounds retain their independently sourced exact x0.8 speed.
+      // The initial field-shell floor false-contact was the actual downhill
+      // reach bug; dropping this cap would overextend the trailing bubbles.
+      if(ground&&bp.BounceAfterMaxSpeed!=null){
+        const cap=Math.max(0,bp.BounceAfterMaxSpeed)*HZ;
+        if(p.vel.lengthSq()>cap*cap)p.vel.setLength(cap);
+      }
       s.bounces++;if(ground)s.groundBounces++;
       updateCatalogVisual(p);return false;
     }
@@ -1053,7 +1069,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       let world=s.hit;world.hit=false;
       // Added Rollers/Sloshers share the native glob graze rule (weapons-fidelity GLOB_GRAZE):
       // any contact of the grown sphere is re-tested with the unit's sourced initial Field radius.
-      const graze=(s.r.family==='roller'||s.r.family==='slosher')&&s.r.sourceActor!=='WeaponSlosherBathtub';
+      const bubble=s.r.sourceActor==='WeaponSlosherBathtub';
+      const graze=(s.r.family==='roller'||s.r.family==='slosher')&&!bubble;
       // A multi-lobe round (Splatana waves) ends only when its sourced CoreIndex
       // lobe reaches terrain. An outer lobe that meets a wall, pillar or the floor
       // splashes there and leaves the wave; the untouched lobes fly on. q.stop is
@@ -1065,7 +1082,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         q.stop=Infinity;
         const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
         let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
-        if(graze&&candidate.hit){
+        if(candidate.hit && (graze || bubble && candidate.normal.y>.35)){
           const core=collisionRadius(q.param,'Field',0,s.index,bounceScale);
           // The first step grows from the core radius itself (f0 === core), so
           // compare with the largest swept radius: a level swing born near the
@@ -1075,7 +1092,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
             touch.point.copy(candidate.point);touch.normal.copy(candidate.normal);const face=candidate.face;
             candidate=sweptWorldHit(G.physics,q.from,q.to,core,core,q.hit,true);
             // The grazed part splashes where it touched; the rest of the glob flies on.
-            if(!candidate.hit)globGrazePaint(G,p,touch.point,touch.normal,f1,face);
+            if(!candidate.hit && graze)globGrazePaint(G,p,touch.point,touch.normal,f1,face);
           }
         }
         if(!candidate.hit)continue;
@@ -1926,6 +1943,11 @@ export function releaseCatalogBirth(system, projectile, game) {
   if (launch) {
     const unit = state.descriptor.packet;
     const baseSpeed = finite(actor.grounded ? unit.SpawnSpeedGround : unit.SpawnSpeedAir, 1);
+    // Existing S3 slosher action is admitted as one swing. The referenced
+    // sweep technique derives the fan from the change in aim DURING windup;
+    // no source proves that later bubbles adopt arbitrary post-release aim.
+    // Keep the admitted volley direction; update only the sourced ground/air
+    // launch-speed choice at true birth without rerolling its random or lift.
     if (baseSpeed !== launch.sourceBaseSpeed) {
       const speed = launch.speed + (baseSpeed - launch.sourceBaseSpeed) * HZ;
       projectile.vel.copy(launch.direction).multiplyScalar(speed);

@@ -51,11 +51,11 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   // Molded panels, not separate horizontal bars. Holes are actual apertures
   // triangulated in angular space, with continuous front/back and wall surfaces.
   function panel(name,outline,holes=[],depth=.055,thickness=.009,key='shell'){
-    const S=name.startsWith('temple-')?3:name==='central-chevron-inlay'?2:(name==='molded-wrap-shell'||name.startsWith('vent-recess-'))?1:(lod==='hero'?2:1);
+    const S=name.startsWith('temple-')?3:name==='central-chevron-inlay'?2:(name==='molded-wrap-shell'||(name.startsWith('vent-recess-')||name==='bill-slot-recess'))?1:(lod==='hero'?2:1);
     const step=lod==='hero'?.26:lod==='game'?.33:.40;
     const densify=loop=>loop.flatMap((A,i)=>{const B=loop[(i+1)%loop.length],n=Math.max(1,Math.ceil(Math.hypot(B[0]-A[0],B[1]-A[1])/step));return Array.from({length:n},(_,j)=>[A[0]+(B[0]-A[0])*j/n,A[1]+(B[1]-A[1])*j/n]);});
     if(name==='molded-wrap-shell'){outline=densify(outline);holes=holes.map(densify);}
-    const surface=name==='molded-wrap-shell'?shellSurface:pt;
+    const surface=(name==='molded-wrap-shell'||name==='bill-slot-recess')?shellSurface:pt;
     const outer=outline.map(p=>new THREE.Vector2(...p)),hs=holes.map(h=>h.map(p=>new THREE.Vector2(...p)));
     if(THREE.ShapeUtils.isClockWise(outer))outer.reverse();
     for(const h of hs)if(!THREE.ShapeUtils.isClockWise(h))h.reverse();
@@ -107,6 +107,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
     const section=e>=edge?smooth((.68-e)/(.68-edge)):smooth((e-(edge-.10))/.10);
     p[1]+=.01815238116820922*weight*lateral*section;
     p[2]+=.05507595553898685*weight*lateral*section*Math.cos(a);
+    const t=Math.max(0,Math.min(1,(e-edge)/(.68-edge))),ac=Math.max(0,1-(a/.38)**2);p[1]+=.003*Math.sin(Math.PI*t)**2*ac*ac;
     return p;
   }
   const stations=lod==='far'?16:24,outline=[],window=[];
@@ -135,7 +136,17 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   const forehead=[];
   for(const side of [-1,1]){const h=[];for(let i=0;i<=8;i++){const a=side*(.23+i*.105);h.push([a,crown(a)-.075]);}for(let i=8;i>=0;i--){const a=side*(.23+i*.105);h.push([a,crown(a)-.255]);}forehead.push(h);}
   const sideInsets=[-1,1].map(side=>[[1.14,.17],[1.25,.23],[1.36,.17],[1.39,.02],[1.31,-.10],[1.18,-.09]].map(([a,e])=>[a*side,e]));
-  panel('molded-wrap-shell',outline,[window,...vents,...forehead],depth,.012);
+  // Three long rounded dark recesses on each bill shoulder. The visible
+  // S3 wing supports three; the hidden side is a mirrored inference.
+  const billSlots=[];
+  for(const side of [-1,1])for(const center of [.48,.69,.90]){
+    const h=[],w=.022,lo=.39,hi=center<.6?.63:center<.8?.60:.56,r=.022;
+    for(const [da,e]of [[-w,lo+r],[-w*.65,lo],[w*.65,lo],[w,lo+r],[w,hi-r],[w*.65,hi],[-w*.65,hi],[-w,hi-r]])
+      h.push([side*(center+da+.045*(e-lo)/(hi-lo)),e]);
+    billSlots.push(h);
+  }
+  panel('molded-wrap-shell',outline,[window,...vents,...forehead,...billSlots],depth,.012);
+  for(const h of billSlots)panel('bill-slot-recess',h,[],(a,e)=>depth(a,e),.002,'dark');
   for(const [i,h]of [...vents,...forehead].entries())panel('vent-recess-'+i,h,[],(a,e)=>depth(a,e)-.012,.002,'dark');
   // Three dominant connected breathing slots with restrained inset lattice.
   for(let row=0;row<3;row++)for(const side of [-1,1])for(let i=0;i<3;i++){
@@ -213,7 +224,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   }
   let disposed=false;const dispose=()=>{if(disposed)return;disposed=true;root.removeFromParent();root.traverse(o=>o.geometry?.dispose());Object.values(mats).forEach(m=>m.dispose());};
   const setInkColor=value=>{mats.ink.color.set(value);return root;};root.dispose=dispose;root.setInkColor=setInkColor;
-  root.userData={construction:{billSection:Array.from({length:10},(_,i)=>{const e=.68-(.68-eyeTop(0))*i/9;return shellSurface(0,e,depth(0,e));}),billRootContinuity:[.6801,.68,.6799].map(e=>shellSurface(0,e,depth(0,e))),billPlan:[0,.25,.5,.75,1].map(u=>({root:canopy(u,0),tip:canopy(u,1)})),foreheadProfile:[-.6,-.01,0,.01,.6].map(a=>pt(a,crown(a),depth(a,crown(a)))),centralSlotHalfWidths:[.35,.325,.30],sideInsets:'closed compact inset; no ear opening',rearSection:{width:.23,thickness:.015,layerSeparation:.016},visorSection:{root:canopy(.5,0),tip:canopy(.5,1),lensUpper:pt(0,eyeTop(0),depth(0,eyeTop(0)))},browSection:[.90,.65,.45,.32].map(e=>({e,point:pt(0,e,depth(0,e))})),templeAnchors:[-1,1].flatMap(side=>[-1,1].map(s=>{const a=side*(s>0?1.44:1.40),e=s*.22,d=depth(a,e);return {a,e,point:pt(a,e,d),strapDepth:d,shellDepth:depth(a,e)};})),centralExtraDepth:depth(0,-.4)-depth(.6,-.4)},id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'S3 rear unverified; S2-informed convex layered bands with compact side anchors'}};
+  root.userData={construction:{billPattern:{slots:6,visibleWingSlots:3,hiddenWing:'mirrored inference',maxRelief:.003,recessFloorOffset:0},billSection:Array.from({length:10},(_,i)=>{const e=.68-(.68-eyeTop(0))*i/9;return shellSurface(0,e,depth(0,e));}),billRootContinuity:[.6801,.68,.6799].map(e=>shellSurface(0,e,depth(0,e))),billPlan:[0,.25,.5,.75,1].map(u=>({root:canopy(u,0),tip:canopy(u,1)})),foreheadProfile:[-.6,-.01,0,.01,.6].map(a=>pt(a,crown(a),depth(a,crown(a)))),centralSlotHalfWidths:[.35,.325,.30],sideInsets:'closed compact inset; no ear opening',rearSection:{width:.23,thickness:.015,layerSeparation:.016},visorSection:{root:canopy(.5,0),tip:canopy(.5,1),lensUpper:pt(0,eyeTop(0),depth(0,eyeTop(0)))},browSection:[.90,.65,.45,.32].map(e=>({e,point:pt(0,e,depth(0,e))})),templeAnchors:[-1,1].flatMap(side=>[-1,1].map(s=>{const a=side*(s>0?1.44:1.40),e=s*.22,d=depth(a,e);return {a,e,point:pt(a,e,d),strapDepth:d,shellDepth:depth(a,e)};})),centralExtraDepth:depth(0,-.4)-depth(.6,-.4)},id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'S3 rear unverified; S2-informed convex layered bands with compact side anchors'}};
   return root;
 }
 

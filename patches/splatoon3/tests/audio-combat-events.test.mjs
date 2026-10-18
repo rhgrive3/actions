@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { adaptWeaponAudio } from '../audio-adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { withBlasterSplashHit, blasterHitCueKind, blasterHitCuePitch, BLASTER_HIT_PITCH } from '../runtime/audio/blaster-hit.mjs';
 import { specialActionAudioEvent, specialActivationAudioEvent } from '../runtime/audio/kit-runtime.mjs';
 import { installWeaponAudioRuntime } from '../runtime/audio/runtime.mjs';
@@ -128,7 +128,7 @@ test('real AudioEngine prototype owns the hit-cue even when Game assigns G.audio
 
 test('production HUD keeps one hit marker; damage/death/kill sounds remain connected',()=>{
   const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
-  const built=adaptWeaponAudio('src/main.js',src);
+  const built=adaptBuildSource('src/main.js',src);
   assert.match(built,/G\.audio\?\.blasterHitCuePitch\?\.\(attacker, weaponId\)/);
   assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId \}\)/);
   assert.equal((built.match(/hit_marker', \{ volume: 0\.6, pitch: G\.audio\?\.blasterHitCuePitch/g)||[]).length,1);

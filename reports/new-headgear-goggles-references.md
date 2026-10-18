@@ -401,3 +401,29 @@ Independent source reviewer viewed front/oblique/side/back/top construction and 
 - Top: front-focused outline preserved; no pinched tongue.
 - Rear, all LODs and hair5/6: existing joins/fit preserved.
 Source/emitted fixture and exact native screenshots remain integration gates. No full source-match or user acceptance claim.
+
+
+## Explicitly requested billtop pattern, 2026-10-18 16:16 UTC
+
+# Requested bill-top details
+
+User explicitly requested bill-top patterns at16:07UTC. Isolated successor to tested singlebill89c087/bdb, with its continuous single-shell profile preserved.
+
+Sources viewed: actual S3 item https://img.gamewith.jp/article_tools/splatoon3/gacha/ge429.png ; worn https://img.gamewith.jp/img/9a245d07c6dfa3b4460b237694dd6bba.png ; user annotated1000001375; exact nearest-neighbor slot crop goggles-source-bill-slot-count.png.
+Visible wing contains THREE elongated dark features, inner longest/middle intermediate/outer shortest, with rounded ends and white bridges. Center shows a shallow pale molded rise; no reliable fine lettering or exact engraving outline. Opposite-wing count and through-hole depth are unverified.
+
+Implemented:
+- Three rounded elongated recesses per shoulder, outward shortening (.24/.21/.17 angular lengths), spaced without joining or breaking the free lip.
+- Dark floor at baseline surface depth, .005 below outer shell face; this deliberately reads as shallow recess rather than an unverified deep through-hole. Opposite side is explicitly mirrored inference.
+- Shallow central molded relief, maximum .003, integrated into existing shell surface; fades to zero at bill root/tip and center relief edges.
+- No separate slab, no colored decal or new fine graphics, no material/texture/shader/draw increase. Existing tip/root, central unit, side/rear and lens preserved.
+
+Local commands:
+node --loader ./loader.mjs headgear-face-goggles.fixture.mjs
+node --loader ./loader.mjs audit-fit.mjs
+
+AllLOD source tests pass: finite/index/nondegenerate/winding, unified closed shell/rear topology, continuous monotonic bill and root tangent, fitting/clearance, ink/lens visibility and disposal. New tests require six recess floors and ray visibility of each recess center through its opening. Corner floor triangles may be naturally occluded by their narrow sidewalls; no claim every corner is visible.
+Counts hero9292/game6928/far5272 triangles, compared with bdb9112/6660/4780. Four mesh/material batches, one transparent lens, zero textures.
+
+Independent reference construction review inspected front/oblique/side/back/top before publication: slot count/order, white bridges and single lip/root retained. Central relief appearance cannot be validated in CPU preview.
+Native gates: actual source/current top/oblique/front, three readable shallow recesses on shoulder, central relief remains shallow and molded (no new plate), no dark root rail, same side/rear/central fit across LODs. Exact unseen top/back fidelity not asserted. Source/emitted tests and native capture pending.

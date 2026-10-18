@@ -78,6 +78,23 @@ test('requested portrait previews retain on-demand offscreen generation, not a c
   assert.equal(runGate('locker').calls.includes('portrait'), false);
 });
 
+test('only the locker draws its art and live pedestal kid into the canvas', () => {
+  const draw = (screen) => {
+    const G = { mode: 'menu', time: 0, renderer: {} }, calls = [];
+    const menus = { current: screen, _scr: { name: screen }, update: () => calls.push('menu') };
+    const owner = { menus, showcase: { _pq: [] }, match: { attract: true }, input: { pollPad() {}, endFrame: () => calls.push('end') }, _padMenus() {} };
+    const gate = new Function('G', 'INKWAVE_ART_MENU_SCREENS', 'renderInkwaveLockerStage',
+      'return function(dt) {' + framePrefix(game) + '\nthrow new Error("full-world-frame");\n}')(
+      G, new Set(STATIC_MENU_SCREENS), (who, g, dt) => calls.push(['stage', who === owner, g === G, dt]));
+    gate.call(owner, 1 / 60);
+    return calls;
+  };
+  assert.deepEqual(draw('locker'), [['stage', true, true, 1 / 60], 'menu', 'end']);
+  for (const name of STATIC_MENU_SCREENS.filter((s) => s !== 'locker')) assert.deepEqual(draw(name), ['menu', 'end'], name);
+  assert.match(game, /import \{ renderLockerStage as renderInkwaveLockerStage \} from '\.\.\/patches\/local-quality\/locker-stage\.mjs';/);
+  assert.ok(qualityIdentity()['locker-stage.mjs']);
+});
+
 test('title, real match, room, pause and results preserve the original 3D/game frame', () => {
   for (const screen of ['loading', 'title', 'lobby', 'pause', 'results', null]) {
     const r = runGate(screen);
@@ -89,15 +106,14 @@ test('title, real match, room, pause and results preserve the original 3D/game f
   assert.equal(runGate('locker', { mismatch: true }).full, true, 'wiped screen is not yet mounted');
 });
 
-test('static screens do not construct hidden 3D loadout, locker or Online hub showcases', () => {
+test('static screens do not construct hidden 3D loadout or Online hub showcases', () => {
   assert.match(rawGame, /if \(s === 'loadout'\) this\.showcase\.showLoadout\(/);
   assert.doesNotMatch(game, /if \(s === 'loadout'\) this\.showcase\.showLoadout\(/);
   assert.match(game, /if \(s === 'loadout'\) this\.showcase\.hide\(\);/);
   assert.match(rawMenus, /if \(sc && sc\.showHub\)/);
-  assert.match(rawMenus, /if \(sc && sc\.showLocker\)/);
   assert.doesNotMatch(menus, /if \(sc && sc\.showHub\)/);
-  assert.doesNotMatch(menus, /if \(sc && sc\.showLocker\)/);
-  assert.equal((menus.match(/if \(sc\) safeCall\(\(\) => sc\.hide\?\.\(\)\);/g) || []).length, 2);
+  assert.match(menus, /if \(sc && sc\.showLocker\)/, 'locker keeps its visible pedestal kid');
+  assert.equal((menus.match(/if \(sc\) safeCall\(\(\) => sc\.hide\?\.\(\)\);/g) || []).length, 1);
   assert.match(menus, /if \(sc && sc\.showLobby\)/, 'actual network room still has its showcase');
   assert.match(menus, /this\._portraitInto\(lookAv, \{ kind: 'head', size: 128 \}\)/);
 });
@@ -107,7 +123,9 @@ test('CSS maps exactly three generated locally hosted WebP backgrounds to the co
   const generated = checkedStaticMenuCss(css);
   for (const name of ['weapon', 'lobby', 'locker']) {
     const url = `../patches/local-quality/assets/menu/${name}.webp`;
-    assert.match(generated, new RegExp(url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    // The locker image is drawn under the canvas kid by locker-stage.mjs instead.
+    if (name === 'locker') assert.ok(!generated.includes(url) && fromRepo('patches/local-quality/locker-stage.mjs').includes("'./assets/menu/locker.webp'"));
+    else assert.match(generated, new RegExp(url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     const file = new URL('../assets/menu/' + name + '.webp', import.meta.url);
     const bytes = fs.readFileSync(file);
     assert.equal(bytes.subarray(0, 4).toString(), 'RIFF', name);
