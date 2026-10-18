@@ -104,3 +104,34 @@ test('PropKit atlas, lifetime and rematch behavior are authored in the real modu
   assert.equal(adaptBuildSource('src/world/props.js', worldProps), worldProps,
     'production must use the authored PropKit class, not a build-time transformed copy');
 });
+
+test('registered Scorch and native layouts live directly in the stage map module', () => {
+  const maps = fs.readFileSync(new URL('../../inkwave-public/src/world/maps.js', import.meta.url), 'utf8');
+  const scorch = fs.readFileSync(new URL('../../patches/splatoon3/scorch-gorge-adapter.mjs', import.meta.url), 'utf8');
+  const native = fs.readFileSync(new URL('../../patches/native-stages/adapter.mjs', import.meta.url), 'utf8');
+  assert.match(maps, /import \{ LAYOUT as SCORCH \} from/);
+  assert.match(maps, /import \{ nativeStageEnabled, NATIVE_LAYOUTS \} from/);
+  assert.match(maps, /cargo: CARGO, scorch: SCORCH/);
+  assert.match(maps, /if \(nativeStageEnabled\) Object\.assign\(MAP_LAYOUTS, NATIVE_LAYOUTS\)/);
+  assert(!scorch.includes("if (rel === 'src/world/maps.js') {"));
+  assert(!native.includes("if(rel==='src/world/maps.js')"));
+});
+
+test('native ink and catalogue sweep entry points and AABB early-outs live in real collision source', async () => {
+  const collision = fs.readFileSync(new URL('../../inkwave-public/src/game/inkCollision.js', import.meta.url), 'utf8');
+  const catalogue = fs.readFileSync(new URL('../../patches/splatoon3/runtime/weapons-collision.mjs', import.meta.url), 'utf8');
+  const native = fs.readFileSync(new URL('../../patches/native-stages/adapter.mjs', import.meta.url), 'utf8');
+  const quality = fs.readFileSync(new URL('../../patches/local-quality/adapter.mjs', import.meta.url), 'utf8');
+  const { adaptBuildSource } = await import('../inkwave-source-composition.mjs');
+  assert.match(collision, /import \{ sweepNativeLevelSphere \} from/);
+  assert.match(collision, /if \(level\.native\) return sweepNativeLevelSphere/);
+  assert.match(collision, /if \(box\.aabbMin &&/);
+  assert.match(collision, /if \(Math\.min\(from\.y, to\.y\) > hi \+ r \+ 1e-7/);
+  assert.match(catalogue, /import \{ sweepNativeCatalogueSphere \} from/);
+  assert.match(catalogue, /if \(physics\?\.level\?\.native\) return sweepNativeCatalogueSphere/);
+  assert(!quality.includes("if (rel === 'src/game/inkCollision.js') {"));
+  assert(!native.includes("if(rel==='src/game/inkCollision.js')"));
+  assert(!native.includes("if(rel==='patches/splatoon3/runtime/weapons-collision.mjs')"));
+  assert.equal(adaptBuildSource('src/game/inkCollision.js', collision), collision);
+  assert.equal(adaptBuildSource('patches/splatoon3/runtime/weapons-collision.mjs', catalogue), catalogue);
+});
