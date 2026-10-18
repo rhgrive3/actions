@@ -207,6 +207,8 @@ async function openGameContext({ mobile = false } = {}) {
     };
   }, { setting: quality, bootSeed: BOOT_SEED });
   await page.goto(address + '?map=tidewater&difficulty=normal&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  const phaseReceipt={mobile,events:[]};
+  (report.provenance.nativePhaseTimings ||= []).push(phaseReceipt);
   try {
     // In SwiftShader an intro frame can take over a second to render. Finish
     // only the noninteractive 4.2s native Turf intro through Game._frame while
@@ -216,7 +218,10 @@ async function openGameContext({ mobile = false } = {}) {
     // Probe the exact same predicate from Node, with the same strict wall-clock
     // budget, without relying on a browser timer/rAF callback.
     // One original admission budget includes boot, menu navigation and START.
+    phaseReceipt.startedAtMs=Date.now();
     const deadline = Date.now() + NATIVE_BOOT_TIMEOUT_MS;
+    phaseReceipt.deadlineAtMs=deadline;
+    const phaseMark=(phase,event)=>{const now=Date.now();phaseReceipt.events.push({phase,event,atMs:now,elapsedMs:now-phaseReceipt.startedAtMs,remainingMs:Math.max(0,deadline-now)});};
     const requireNativePhase = async (predicate, label) => {
       let lastFailure = null;
       while (Date.now() < deadline) {
@@ -242,27 +247,36 @@ async function openGameContext({ mobile = false } = {}) {
     };
     const menuReceipt={mobile,route:'native-menu-start',coldAutostart:'not exercised; prior failure retained separately',events:[]};
     (report.provenance.menuStarts ||= []).push(menuReceipt);
+    phaseMark('menu','begin');
     await startProjectileThroughMenu(page,{waitForPhase:requireNativePhase,remainingMs:()=>deadline-Date.now(),receipt:menuReceipt.events});
+    phaseMark('menu','end');
     await snapshotAudio('native-menu-start-clicked');
     const admissionReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
-      return G?.mode === 'match' && m === G.match &&
+      return !!(G?.mode === 'match' && m === G.match &&
         (m?.state === 'intro' || m?.state === 'playing') &&
         !m.attract && m.local?.isLocal && m.controller && g.debug &&
-        G.projectiles && G.renderer;
+        G.projectiles && G.renderer);
     };
     // SwiftShader may finish the transition between timer ticks. Probe once
     // synchronously first, then retain the identical strict timed gate.
+    phaseMark('admission','begin');
     await requireNativePhase(admissionReady, 'native Turf actor/controller admission');
+    phaseMark('admission','end');
+    phaseMark('intro','begin');
     const introTransition = await page.evaluate(completeNativeTurfIntro);
+    phaseMark('intro','end');
     (report.provenance.introTransitions ||= []).push({ mobile, ...introTransition });
     const playingReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
-      return G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
-        !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer;
+      return !!(G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
+        !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer);
     };
+    phaseMark('playing','begin');
     await requireNativePhase(playingReady, 'native Turf playing transition');
+    phaseMark('playing','end');
   } catch (error) {
+    const failedAt=Date.now();phaseReceipt.events.push({phase:'failure',event:'caught',atMs:failedAt,elapsedMs:failedAt-phaseReceipt.startedAtMs,remainingMs:Math.max(0,phaseReceipt.deadlineAtMs-failedAt)});
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return { mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
