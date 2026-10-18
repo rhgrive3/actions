@@ -33,10 +33,10 @@ const RIP_N = 24;
 const DRY_SECONDS = 255 / 40 + 0.1;
 const _rel = new THREE.Vector3();
 
-const K = { shot: 0, line: 1, blast: 2, bomb: 3, trail: 4, drop: 5, roll: 6, speck: 7 };
-const K_SHOT = 0, K_LINE = 1, K_BLAST = 2, K_BOMB = 3, K_TRAIL = 4, K_DROP = 5, K_ROLL = 6, K_SPECK = 7;
+const K = { shot: 0, line: 1, blast: 2, bomb: 3, trail: 4, drop: 5, roll: 6, speck: 7, 'charger-line': 8 };
+const K_SHOT = 0, K_LINE = 1, K_BLAST = 2, K_BOMB = 3, K_TRAIL = 4, K_DROP = 5, K_ROLL = 6, K_SPECK = 7, K_CHARGER_LINE = 8;
 // quad half-extent in footprint radii (satellites / spatter reach) and the extra reach below wall splats (drips)
-const REACH = [2.45, 2.1, 2.7, 2.75, 2.3, 1.9, 1.25, 1.35];
+const REACH = [2.45, 2.1, 2.7, 2.75, 2.3, 1.9, 1.25, 1.35, 1.25];
 const DRIP_REACH = 3.9;
 
 // Main-blob outline: organic lobes + two narrow "fingers" thrown out by the impact. The GPU splat shader evaluates the
@@ -126,6 +126,9 @@ void main() {
       float wv = r * (0.03 * sin(q.x / r * 9.0 + seed * 30.0) + 0.018 * sin(q.x / r * 23.0 + seed * 11.0));
       vec2 dq = abs(q) - vec2(r * ${BAND_L} * grow, r * ${BAND_W} + wv);
       sd = length(max(dq, 0.0)) + min(max(dq.x, dq.y), 0.0) - r * ${BAND_R};
+    } else if (kind > 7.5) {
+      // A charger stripe is clean, narrow and shader/grid-aligned: no random lobes.
+      sd = length(p) - r * grow * 0.97;
     } else if (kind > 6.5) {
       sd = length(p) - r * grow * (1.0 + 0.12 * sin(3.0 * atan(p.y, p.x) + seed * 20.0));
     } else {
@@ -546,8 +549,8 @@ export class PaintSystem {
   _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind) {
     if (r <= 0.02) return 0;
     const val = team + 1;
-    const roll = kind === K_ROLL;
-    const ext = roll ? r * (Math.hypot(BAND_L, BAND_W) + BAND_R + 0.05) : r * (1 + sa) * WOB_MAX;
+    const roll = kind === K_ROLL, chargerLine = kind === K_CHARGER_LINE;
+    const ext = roll ? r * (Math.hypot(BAND_L, BAND_W) + BAND_R + 0.05) : r * (1 + sa) * (chargerLine ? 1 : WOB_MAX);
     const i0 = Math.max(0, Math.floor((lu - ext) / f.cu)), i1 = Math.min(f.nu - 1, Math.floor((lu + ext) / f.cu));
     const j0 = Math.max(0, Math.floor((lv - ext) / f.cv)), j1 = Math.min(f.nv - 1, Math.floor((lv + ext) / f.cv));
     if (i1 < i0 || j1 < j0) return 0;
@@ -568,8 +571,12 @@ export class PaintSystem {
             px = qx + sdu * (a / s); py = qy + sdv * (a / s);
           }
           const d = Math.hypot(px, py);
-          if (d > r * WOB_MAX) continue;
-          if (d / (r * blobWobble(Math.atan2(py, px), seed)) > 0.97) continue;
+          if (chargerLine) {
+            if (d > r * 0.97) continue;
+          } else {
+            if (d > r * WOB_MAX) continue;
+            if (d / (r * blobWobble(Math.atan2(py, px), seed)) > 0.97) continue;
+          }
         }
         const k = f.grid + j * f.nu + i;
         const prev = this.grid[k];
