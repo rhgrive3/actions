@@ -131,7 +131,7 @@ test('stationary delayed globs preserve the admitted velocity exactly when groun
   }
 });
 
-test('pitched births retain their admitted aim and use new source speed before one motion contribution and remote replay', () => {
+test('Bloblobber delayed bubbles retain the windup-release direction and replay without double-aim', () => {
   const r = delayed.find(r => r.id === 's3-slosher-bathtub');
   const result = launch(r.id, true, 60, { pitch: .3, turnAtBirth: true });
   for (const b of result.births.filter(b => b.tick >= 3)) {
@@ -139,7 +139,8 @@ test('pitched births retain their admitted aim and use new source speed before o
     const ratio = sourceSpeed(u, b.index, false) / sourceSpeed(u, b.index, true);
     const delta = inertia(r, b.ownerVelocity);
     for (let axis = 0; axis < 3; axis++)
-      close(b.velocity[axis] - delta[axis], pre.velocity[axis] * ratio, 'admitted aim/lift is retained');
+      close(b.velocity[axis] - delta[axis], pre.velocity[axis] * ratio,
+        'release direction is preserved while birth-time grounded speed is selected');
     const remote = f.make(r.id);
     Object.assign(remote, { remote: true, grounded: true }); remote.vel.set(60, 80, 100);
     const sent = result.births.length;

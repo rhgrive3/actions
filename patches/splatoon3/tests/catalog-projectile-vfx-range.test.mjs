@@ -174,10 +174,10 @@ test('Bloblobber physical launch remains level against a short ground reticle an
     blocks:[box],faces:[],
     queryBlocks:(_x0,_z0,_x1,_z1,out)=>{out.length=0;out.push(0);return out;},
   };
-  function fire(pitch,nearbyGroundReticle) {
+  function fire(pitch,nearbyGroundReticle,birthHeight=0) {
     system.clear();f.G.actors.length=0;f.G.physics.level=null;
     const a=f.make(r.id);a.form='kid';a.ink=100;a.aimYaw=0;a.aimPitch=pitch;
-    a.pos.set(0,0,0);a.character.root.position.copy(a.pos);
+    a.pos.set(0,birthHeight,0);a.character.root.position.copy(a.pos);
     if(nearbyGroundReticle)a.aimPoint.set(0,-.4,4);
     else a.aimPoint.set(0,1.05+70*Math.sin(pitch),70*Math.cos(pitch));
     a.intent.fire=true;
@@ -187,7 +187,7 @@ test('Bloblobber physical launch remains level against a short ground reticle an
     assert.equal(globs.length,4,'one source volley emits one big and three delayed small bubbles');
     const first=globs.find(p=>p.catalog.descriptor.unit===0);
     assert.ok(first,'unit zero owns the large bubble');
-    assert.equal(first.life,240/60,'finite void guard replaces the generic 1.2s catalogue cutoff');
+    assert.equal(first.life,480/60,'source-based bounces use a finite non-retail void guard');
     const source=r.parameters.UnitGroupParam.Unit[0],speed=source.SpawnSpeedGround*60;
     assert.ok(Math.abs(first.vel.x)<1e-8,'zero yaw has no lateral drift');
     assert.ok(Math.abs(first.vel.z-speed*Math.cos(pitch))<1e-7,'pitch follows the stick, not near-floor reticle convergence');
@@ -197,22 +197,116 @@ test('Bloblobber physical launch remains level against a short ground reticle an
   }
   function simulate(p,requireAfterDefaultLife=false) {
     f.G.physics.level=flat;
-    let sawBounce=false,survived72=false,ended=0,distance=0;
-    for(let frame=1;frame<=241;frame++){
+    let sawBounce=false,survived72=false,ended=0,distance=0;const contacts=[];
+    const originZ=p.start.z;
+    for(let frame=1;frame<=481;frame++){
+      const before=p.catalog.groundBounces;
       const dead=system._step(p,1/60);
+      if(p.catalog.groundBounces>before)contacts.push({frame,distance:p.pos.z-originZ});
       if(p.catalog.groundBounces>0)sawBounce=true;
-      if(frame===74){assert.equal(dead,false,'bubble must not vanish at old 1.2s limit');survived72=true;}
-      if(dead){ended=frame;distance=p.pos.z;break;}
+      if(frame===74 && requireAfterDefaultLife){assert.equal(dead,false,'high-arc bubble must not vanish at old 1.2s limit');survived72=true;}
+      if(dead){ended=frame;distance=p.pos.z-originZ;break;}
     }
     assert.ok(sawBounce,'real ground geometry must cause a bounce');
     assert.equal(p.catalog.groundBounces,2,'third floor contact ends the bubble after two rebounds');
-    assert.ok(ended>0&&ended<240,'ordinary floor shots end on terrain, not on the cleanup timer');
+    assert.ok(ended>0&&ended<480,'ordinary floor shots end on terrain, not on the cleanup timer');
     if(requireAfterDefaultLife)assert.ok(survived72,'high arcs must survive the previous generic cutoff');
-    return {frames:ended,reach:distance};
+    return {frames:ended,reach:distance,contacts};
   }
   const flatShot=simulate(fire(0,true));
   assert.ok(flatShot.reach>19, 'level shot must not plunge into the near-floor crosshair and truncate range');
   const elevatedShot=simulate(fire(Math.PI/3,false),true);
   assert.ok(elevatedShot.frames>72,'60-degree trajectory reaches the third floor after 1.2s');
   assert.ok(elevatedShot.reach>14,'high-arc bubble survives to a distant contact');
+  // These are physical trajectory endpoints, not the community wiki's
+  // player-hurtbox effective range (5.3 lines without a lob/5.4 with one).
+  const angles=[5,20,40,75,90];
+  const traces=angles.map(deg=>({deg,...simulate(fire(deg*Math.PI/180,false))}));
+  assert.ok(traces.find(x=>x.deg===20).reach>flatShot.reach,
+    'slightly raised shots reach farther when the ground is level');
+  // Include down-aim angles: bouncing physics cannot be validated only
+  // against level/upward shots. Preserve the bounce timeline for root cause
+  // analysis and comparison with published S3 range/angle captures.
+  const downward=[-10,-20,-30,-40,-60].map(deg=>({deg,...simulate(fire(deg*Math.PI/180,false))}));
+  console.log('BLOBLOBBER_ACTUAL_PITCH_TRACES '+JSON.stringify({
+    level:flatShot,upward:traces,downward
+  }));
+  const descendingShallow=downward.find(x=>x.deg===-20);
+  assert.ok(descendingShallow.contacts[0].distance>3,
+    'downward launch should not count the grown outer field shell as an instant floor rebound');
+  assert.ok(descendingShallow.reach>15,
+    'a modest downward aim must continue after two floor rebounds instead of expiring beside the shooter');
+  assert.ok(downward.every(x=>x.contacts.length===2),
+    'downward pitch preserves the two ground rebounds before final impact');
+  assert.ok(traces.find(x=>x.deg===90).reach<1e-4,
+    'straight-up input must remain vertical instead of drifting toward the reticle');
+  assert.ok(traces.every(x=>x.contacts.length===2),'every pitch has precisely two floor rebounds');
+  const cliffShot=simulate(fire(Math.PI/2,false,20),true);
+  assert.ok(cliffShot.frames>240,'high-ground near-vertical fire must not vanish at old 240F cutoff');
+  assert.ok(cliffShot.frames<480,'high-ground projectile still ends at the sourced third floor contact');
+});
+
+test("Bloblobber actual 60Hz velocity integrator honors source 3F straight, brake and free-fall transitions",async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const row=record('WeaponSlosherBathtub'),unit=row.parameters.UnitGroupParam.Unit[0],m=unit.MoveParam;
+  assert.equal(m.GoStraightToBrakeStateFrame,3);
+  assert.equal(m.BrakeToFreeStateFrame,1);
+  assert.equal(m.BrakeAirResist,.01);assert.equal(m.FreeAirResist,.01);
+  assert.equal(m.BrakeGravity,.01);assert.equal(m.FreeGravity,.015);
+  const a=f.make(row.id);a.form='kid';a.ink=100;a.aimYaw=0;a.aimPitch=0;
+  a.aimPoint.set(0,1.05,70);a.intent.fire=true;
+  for(let i=0;i<24&&!f.G.projectiles.list.some(p=>p.catalog?.r?.sourceActor==='WeaponSlosherBathtub');i++)f.tick(a);
+  a.intent.fire=false;
+  const p=f.G.projectiles.list.find(x=>x.catalog?.r?.sourceActor==='WeaponSlosherBathtub'&&x.catalog.descriptor.unit===0);
+  assert.ok(p);
+  f.G.physics.level=null;
+  f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+  const initial=p.vel.clone();
+  for(let frame=1;frame<=3;frame++){
+    assert.equal(f.G.projectiles._step(p,1/60),false);
+    assert.ok(p.vel.distanceTo(initial)<1e-8,'source keeps exact launch velocity during first three frames');
+  }
+  assert.equal(f.G.projectiles._step(p,1/60),false);
+  const afterBrake=initial.clone().multiplyScalar(1-m.BrakeAirResist);
+  afterBrake.y-=m.BrakeGravity*60;
+  assert.ok(p.vel.distanceTo(afterBrake)<1e-8,'frame 4 uses brake drag and gravity');
+  assert.equal(p.catalog.phase,2,'one brake frame advances to free fall');
+  assert.equal(f.G.projectiles._step(p,1/60),false);
+  const afterFree=afterBrake.multiplyScalar(1-m.FreeAirResist);
+  afterFree.y-=m.FreeGravity*60;
+  assert.ok(p.vel.distanceTo(afterFree)<1e-8,'frame 5 uses free drag and gravity');
+});
+
+test('Bloblobber small-bubble floor speed cap and independent 0.8x wall speed',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const row=record('WeaponSlosherBathtub'),actor=f.make(row.id);
+  actor.form='kid';actor.ink=100;actor.intent.fire=true;f.tick(actor,15);actor.intent.fire=false;
+  const p=f.G.projectiles.list.find(q=>q.catalog?.r?.sourceActor==='WeaponSlosherBathtub'&&q.catalog.descriptor.unit===1&&q.catalog.index===0);
+  assert.ok(p,'the first of the three small source bubbles exists');
+  f.G.physics.level=null;let floor=true;
+  f.G.physics.segment=(from,to,h)=>{
+    h.hit=true;h.dist=from.distanceTo(to)*.5;
+    h.point.copy(from).lerp(to,.5);
+    h.normal.set(floor?0:1,floor?1:0,0);
+    h.face=-1;return h;
+  };
+  p.catalog.birthPending=null;p.delay=0;
+  function reset(vx,vy,vz){
+    p.pos.set(0,5,0);p.prev.copy(p.pos);p.start.copy(p.pos);
+    p.vel.set(vx,vy,vz);p.age=0;p.life=480/60;
+    Object.assign(p.catalog,{phase:0,travel:0,range:Infinity,carry:0,bounces:0,groundBounces:0});
+  }
+  reset(30,-25,0);
+  assert.equal(f.G.projectiles._step(p,1/60),false,'first floor touch rebounds');
+  assert.ok(Math.abs(p.vel.length()-.35*60)<1e-8,
+    'sourced 0.35 speed cap applies to the entire outgoing floor-bounce velocity');
+  assert.ok(p.vel.x>0 && p.vel.y>0,
+    'the floor rebound keeps forward travel and reflects upward without reversing its direction');
+  assert.equal(p.catalog.groundBounces,1);
+  floor=false;reset(30,0,4);
+  const before=p.vel.length();
+  assert.equal(f.G.projectiles._step(p,1/60),false,'wall always rebounds');
+  assert.ok(Math.abs(p.vel.length()-.8*before)<1e-8,
+    'wall source .8 multiplier must not be overridden by the small-bubble ground cap');
+  assert.equal(p.catalog.groundBounces,0,'wall does not consume a floor bounce');
 });
