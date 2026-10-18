@@ -69,4 +69,6 @@ node scripts/check-inkwave-paint-mask.mjs --site _site --executable /usr/bin/chr
 
 ブラウザ検査は、8ブキ×前後左右・斜め4方向×30/60/120Hzへ拡張。読み込み済みSourceMotionと代替手続きアニメーションの両方を確認する。手首pivotとブキ本体offは別の座標系なので、筆の計測にはoffを使う。実際のドラム／ブキ座標、頂点からの接地高さ、両手の握り、前後の基準方向に対する横ずれを検査する。ここでの許容差はINKWAVEの回帰検査用であり、本家の関節値ではない。
 
-追補の確定コミットと最終結果はpose-verification.jsonへ記録する。本家実機の未確認範囲は冒頭のとおり。
+追補コード `d5608e342e721258f2d5e872c102778b065fb43c` でビルド・起動予算・quick check成功、関連40テスト成功。実ブラウザは読み込み済みSourceMotion 192ケース、代替動作192ケース、計384ケースが成功。横軸・接地・握りと塗りを同時に検査した。旧rollerだけに戻す負の対照は床接線の検査で失敗し、検査が不具合を検出することも確認した。
+
+[確定結果と入力ハッシュ](pose-verification.json)、[SourceMotion全結果](pose-source.json.gz)、[代替動作全結果](pose-procedural.json.gz)、[旧コードでの失敗](pose-negative-control.log)。姿勢追補は塗りシェーダー／輪郭を変更していない。本家実機の未確認範囲は冒頭のとおり。

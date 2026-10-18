@@ -1,0 +1,15 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: Error: {"id":"roller","hz":30,"axisTilt":-0.036098679560439814,"direction":"forward"}
+    at eval (eval at evaluate (:311:30), <anonymous>:63:48)
+    at b (http://127.0.0.1:43301/patches/splatoon3/runtime/clock.mjs:1:570)
+    at F.advance (http://127.0.0.1:43301/patches/splatoon3/runtime/clock.mjs:1:984)
+    at eval (eval at evaluate (:311:30), <anonymous>:44:52)
+    at async <anonymous>:337:30
+    at /workspace/actions/scripts/check-inkwave-rolling-paint-browser.mjs:33:27 {
+  log: []
+}
+
+Node.js v24.19.0
