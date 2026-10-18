@@ -806,16 +806,21 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const centre=p.pos.clone();centre.y+=finite(descriptor?.PaintOffsetY,0);
       paint(p.owner,centre,paintRadius);
     }else floorPaint(p.owner,p.pos,paintRadius);
+    // Damage and paint offsets are separate source fields. Use the same damage
+    // centre for distance, occlusion and every damage recipient; moving p.pos
+    // would also move the lodged bolt and its impact/presentation position.
+    const damageCentre=p.catalog.r.family==='stringer'?p.pos.clone():p.pos;
+    if(p.catalog.r.family==='stringer')damageCentre.y+=finite(descriptor?.DamageOffsetY,0);
     for(const a of G.actors||[])if(a.alive&&a.team!==p.team){
       if(a===skip)continue;
-      base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(p.pos);
-      if(distance>radius||!G.physics.los(p.pos,base))continue;
+      base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(damageCentre);
+      if(distance>radius||!G.physics.los(damageCentre,base))continue;
       const damage=damageBands(bands,distance);if(damage>0)withObjectDamageCause({...p,type:'area'},()=>withBlasterSplashHit(p.owner,()=>system.applyHit(p.owner,a,damage,p.wid)));
     }
     const area={...p,type:'area'},cause=catalogueAttackRow(area);
-    system.s3DamageSubObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
-    system.s3DamageSpecialObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
-    G.boss?.splash(p.owner,p.pos,radius,bands[0]?.Damage/10||0,0,p.wid);
+    system.s3DamageSubObjects?.(area,damageCentre,radius,d=>damageBands(bands,d),cause);
+    system.s3DamageSpecialObjects?.(area,damageCentre,radius,d=>damageBands(bands,d),cause);
+    G.boss?.splash(p.owner,damageCentre,radius,bands[0]?.Damage/10||0,0,p.wid);
     G.fx?.explosion(p.pos,p.owner.color,radius);
     emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
   }
@@ -918,7 +923,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(r.family==='blaster'){p.pos.copy(at);explosion(system,p,d.b.BlastParam);return true;}
     if(d.key==='arrow') {
       const det=d.b.DetonationParam,frames=d.charge*chargeFrames(r);
-      if(det&&(d.charge+EPS>=1||det.IsExplosiveBoltMidCharge&&frames>=finite(chargeParam(r).ChargeFrameMidCharge,30))) {
+      // The common parameter struct also contains a DetonationParam for LACT,
+      // but that actor has no frozen/explosive shots, at any charge level.
+      // Nintendo capability, also documented by audio/s3-articulation.mjs:
+      // https://www.nintendo.com/jp/switch/av5ja/weapon/index.html
+      if(r.sourceActor!=='WeaponStringerShort'&&det&&(d.charge+EPS>=1||det.IsExplosiveBoltMidCharge&&frames+EPS>=finite(chargeParam(r).ChargeFrameMidCharge,30))) {
         // Lodging and detonation are separate paint events. Previously the
         // early return discarded the charge-dependent arrow impact entirely.
         const footprint=impactPaint(p);
@@ -1264,7 +1273,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(c+EPS>=1&&n>1)s.rounds=n-1;
       }
       s.chargeF=0;s.paid=0;runner.charging=false;runner.charge=0;
-      if(r.family==='stringer')runner.cooldown=finite(c+EPS>=1?t.FreezeFrameFullCharge:t.FreezeFrameMinCharge,15)/HZ;
+      if(r.family==='stringer')runner.cooldown=stageValue(r,{
+        FreezeMin:finite(t.FreezeFrameMinCharge,15),FreezeMid:finite(t.FreezeFrameMidCharge,15),
+        FreezeMax:finite(t.FreezeFrameFullCharge,15)},'Freeze',frames,15)/HZ;
     }
   }
   function saberMelee(runner,r,key) {
