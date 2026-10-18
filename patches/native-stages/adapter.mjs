@@ -130,12 +130,6 @@ export function adaptNativeStages(rel,code){
   if(code.split(initial).length!==3)throw Error('Native match initial placement adapter conflict');
   code=code.replaceAll(initial,'a.spawnAt(_v, nativeSpawnYaw(G.level, a.team, a.team === 0 ? 0 : Math.PI));');
  }
- if(rel==='src/game/nav.js'){
-  code="import { buildNativeNav } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
-  once('  _build() {','  _build() {\n    if (this.level.native) return buildNativeNav(this);');
-  once('  path(a, b, team, maxIter = 6000) {', '  path(a, b, team, maxIter = 6000, acceptEdge = null) {');
-  once('      for (const e of n.nb) {', '      for (const e of n.nb) {\n        if (acceptEdge && !acceptEdge(e)) continue;');
- }
  if(rel==='src/game/minimap.js'){
   code="import { buildNativeMinimap } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('  _build() {','  _build() {\n    if (this.level.native) return buildNativeMinimap(this);');
