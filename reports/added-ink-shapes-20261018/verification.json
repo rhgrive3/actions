@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "f92f48f8bae4d70c99e8ccf061d234be637eadd7",
+  "buildContentHash": "a8f2ce332e90edd0ccb1a325598a2b521e2484ef55a37a3634c70d0313efee1f",
+  "inputHash": "a4ebcff889a6d797d5b6b127df5cf3c490a0d3e088abcb0a7cf3e8366f2d82d1",
+  "receiptSha256": "9729ecda956543c70896669670f0c25d0c067ae0b2b6a8ae2ffefd6db5eaf118",
+  "receiptGzipSha256": "20e533d0cfcb3aa4def325d3e4c29007a49ac88c02d97b80a0ce4cde610ad5e4",
+  "status": "passed",
+  "engine": "chromium",
+  "sourceEqualsBuilt": true,
+  "bodyCases": 986,
+  "bodyCpuOnly": 0,
+  "bodyGpuOnly": 0,
+  "bodyFloat32Ties": 17,
+  "priorAncillaryCases": 124,
+  "profileAtlasCases": 10,
+  "volleyPanels": 24
+}
