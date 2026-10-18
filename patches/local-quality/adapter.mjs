@@ -192,7 +192,8 @@ export function adaptQualitySource(rel, code) {
   const painted = adaptFxEmptyPools(rel, adaptPerfReadout(rel, adaptPaintHotpath(rel, broadphased, replaceOnce), replaceOnce), replaceOnce);
   const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
-  return adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce), replaceOnce);
+  const botNav = adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce), replaceOnce);
+  return adaptEnginePerformanceHotpaths(rel, botNav, replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
@@ -298,6 +299,57 @@ function adaptQualityLayer(rel, code) {
       '    return out.fromRaw(c.rotationMode, doFk);\n',
       'pass doFk to out.fromRaw in SourceBank.sample');
   }
+  if (rel === 'src/game/motion/root-hair.js') {
+    code = replaceOnce(code,
+      `  const c=this.c;c._kidXform(c.bones.head,this.p,this.head);this.q.copy(this.head).invert();this.axis.set(0,rootTurnRate,0).applyQuaternion(this.q);`,
+      `  const c=this.c;this.head.identity();for(let x=c.bones.head;x&&x!==c.kid;x=x.parent)this.head.premultiply(x.quaternion);this.q.copy(this.head).invert();this.axis.set(0,rootTurnRate,0).applyQuaternion(this.q);`,
+      'use quaternion-only walk for head in RootHairInertia.update');
+    code = replaceOnce(code,
+      `    const input=this.axis.getComponent(k)*e.gain;`,
+      `    const input=(k===0?this.axis.x:k===1?this.axis.y:this.axis.z)*e.gain;`,
+      'inline axis component access in RootHairInertia.update');
+    code = replaceOnce(code,
+      `   c._kidXform(e.bone.parent,this.p,this.parent);`,
+      `   if(e.bone.parent===c.bones.head)this.parent.copy(this.head);else{this.parent.identity();for(let x=e.bone.parent;x&&x!==c.kid;x=x.parent)this.parent.premultiply(x.quaternion);}`,
+      'use quaternion-only walk for hair parent in RootHairInertia.update');
+  }
+
+  if (rel === 'src/game/motion/locomotion-profile.js') {
+    code = replaceOnce(code,
+      ` const hairIndices=bank.bones.map((b,i)=>/^Hair/.test(b.name)?i:-1).filter(i=>i>=0);
+ const hairMean=bank.bones.map(()=>new THREE.Vector3()),headInverse=new THREE.Quaternion(),hairAxis=new THREE.Vector3();
+ for(let i=0;i<n;i++){
+  bank.sample(clip,i/n*clip.frames,pose,true);
+  // The cycle centre, not an unrelated idle clock, is the neutral pose for
+  // shortened steps. Full FK centres also retain independent torso helpers.
+  for(let k=0;k<bank.bones.length;k++)centers[k].addScaledVector(pose.wp[k],1/n);
+  if(!i)centerPose.copy(pose);else centerPose.mix(pose,1/(i+1));
+  headInverse.copy(pose.wq[bank.index.head]).invert();
+  for(const k of hairIndices){
+   const child=bank.bones.findIndex(b=>b.parent===k&&/^Hair/.test(b.name));
+   if(child>=0)hairAxis.subVectors(pose.wp[child],pose.wp[k]);
+   else {const parent=bank.bones[k].parent;hairAxis.subVectors(bank.rest.wp[k],bank.rest.wp[parent]);hairAxis.applyQuaternion(bank.rest.wq[k].clone().invert()).applyQuaternion(pose.wq[k]);}
+   if(hairAxis.lengthSq()>1e-12)hairMean[k].add(hairAxis.normalize().applyQuaternion(headInverse));
+  }`,
+      ` const hairIndices=bank.bones.map((b,i)=>/^Hair/.test(b.name)?i:-1).filter(i=>i>=0);
+ const hairMeta=bank._hairMeta||(bank._hairMeta=hairIndices.map(k=>{const child=bank.bones.findIndex(b=>b.parent===k&&/^Hair/.test(b.name));const parent=bank.bones[k].parent;return {k,child,restDir:child<0?bank.rest.wp[k].clone().sub(bank.rest.wp[parent]).applyQuaternion(bank.rest.wq[k].clone().invert()):null};}));
+ const hairMean=bank.bones.map(()=>new THREE.Vector3()),headInverse=new THREE.Quaternion(),hairAxis=new THREE.Vector3();
+ for(let i=0;i<n;i++){
+  bank.sample(clip,i/n*clip.frames,pose,true);
+  // The cycle centre, not an unrelated idle clock, is the neutral pose for
+  // shortened steps. Full FK centres also retain independent torso helpers.
+  for(let k=0;k<bank.bones.length;k++)centers[k].addScaledVector(pose.wp[k],1/n);
+  if(!i)centerPose.copy(pose);else centerPose.mix(pose,1/(i+1));
+  headInverse.copy(pose.wq[bank.index.head]).invert();
+  for(let hi=0;hi<hairMeta.length;hi++){
+   const {k,child,restDir}=hairMeta[hi];
+   if(child>=0)hairAxis.subVectors(pose.wp[child],pose.wp[k]);
+   else hairAxis.copy(restDir).applyQuaternion(pose.wq[k]);
+   if(hairAxis.lengthSq()>1e-12)hairMean[k].add(hairAxis.normalize().applyQuaternion(headInverse));
+  }`,
+      'precompute hair child indices and rest directions in locomotionProfile');
+  }
+
   if (rel === 'src/game/motion/retarget.js') {
     code = replaceOnce(code,
       '  this.accessories.push({bone,i,hairReady:false,hairQ:new THREE.Quaternion(),restSourceQ:this.bank.rest.wq[i].clone().invert(),...options});',
@@ -876,8 +928,607 @@ function adaptQualityLayer(rel, code) {
       'skip stable offscreen leg-joint IK while retaining replant transitions');
     code = replaceOnce(code,
       '    const lv = this.lifeLv;\n    // ---- face',
-      '    if (this._oobPoseTailSkip && !this.replant && this.feetValid) {\n      this._headQW.copy(B.head.quaternion); this._headSet = true;\n      for (const f of this.feet) f.dispOK = false;\n      this._oobPoseTailSkipped = true;\n      return; // weapon rig is current; rebuild display-only state before the next replant.\n    }\n    const lv = this.lifeLv;\n    // ---- face',
+      '    if (this._oobPoseTailSkip && ((!this.replant && this.feetValid) || (this.sourceMotion?.active && this.sourceMotion.grounded && this.sourceMotion.activationTime >= 0.12))) {\n      this._headQW.copy(B.head.quaternion); this._headSet = true;\n      for (const f of this.feet) f.dispOK = false;\n      if (this.sourceMotion?.active) { this.sourceMotion.finalState = this.sourceMotion.state; this.sourceMotion._renderedPoseFromBones = true; }\n      this._oobPoseTailSkipped = true;\n      return; // weapon rig is current; rebuild display-only state before the next replant.\n    }\n    const lv = this.lifeLv;\n    // ---- face',
       'skip stable offscreen decorative pose tail after authoritative weapon rig');
+  }
+
+  return code;
+}
+
+
+function adaptEnginePerformanceHotpaths(rel, code, replaceOnce) {
+  if (rel === 'src/game/actor.js') {
+    if (code.includes('_integrateMovementStep(dt, isSquid, jumped) {')) {
+      code = replaceOnce(code,
+        '  _integrateMovementStep(dt, isSquid, jumped) {\n    const P = PLAYER;',
+        '  _integrateMovementStep(dt, isSquid, jumped) {\n    if (this._stationaryRangeDummy && this.grounded && !jumped && !isSquid && !this.climbing && !this.superJumpState && this.vel.x === 0 && this.vel.y === 0 && this.vel.z === 0 && this.ground.hit) { this.airTime = 0; return; }\n    const P = PLAYER;',
+        'skip stationary practice-range dummy collision and 9-ray ground probes once settled');
+    }
+  }
+
+  if (rel === 'src/game/character.js') {
+    if (code.includes('const _sourceLegsOwnPose = !!(this.sourceMotion?.active')) {
+      code = replaceOnce(code,
+        '    const _sourceLegsOwnPose = !!(this.sourceMotion?.active && this.sourceMotion.pose &&\n      this.sourceMotion.activationPose && this.sourceMotion.activationTime >= 0.12);',
+        '    if (this.sourceMotion?._renderedPoseFromBones && this.sourceMotion.state === \'air\' && !this.sourceMotion.manual && this.sourceMotion.finalState !== \'air\') this.sourceMotion._syncRenderedPose();\n    const _sourceLegsOwnPose = !!(this.sourceMotion?.active && this.sourceMotion.pose &&\n      this.sourceMotion.activationPose && this.sourceMotion.activationTime >= 0.12);',
+        'lazily snapshot previous frame renderedPose only on air transition entry');
+    }
+  }
+
+  if (rel === 'src/game/character-face.js') {
+    code = replaceOnce(code,
+      '    const key = (x, y, z) => (x + 1024) + (y + 1024) * 2048 + (z + 1024) * 4194304;',
+      '    const key = (x, y, z) => x >= -512 && x < 512 && y >= -512 && y < 512 && z >= -512 && z < 512 ? ((x + 512) | ((y + 512) << 10) | ((z + 512) << 20)) : String(x) + "," + y + "," + z;',
+      'pack bakeAO spatial hash key into 30-bit Smi integer');
+  }
+
+  if (rel === 'src/game/character-outfit.js') {
+    code = replaceOnce(code,
+      '      const key = `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)},${ax}`;',
+      '      const ix = Math.floor(x / cell), iy = Math.floor(y / cell), iz = Math.floor(z / cell);\n      const key = ix >= -256 && ix < 256 && iy >= -256 && iy < 256 && iz >= -256 && iz < 256 ? (((ix + 256) << 21) | ((iy + 256) << 12) | ((iz + 256) << 3) | ax) : String(ix) + "," + iy + "," + iz + "," + ax;',
+      'pack bakeBodyAO emitter cluster key into 30-bit Smi integer');
+    code = replaceOnce(code,
+      `          const dot = nx * vx + ny * vy + nz * vz;
+          if (dot <= 0.02 * Math.sqrt(d2)) continue;
+          const d = Math.sqrt(d2), cr = dot / d;`,
+      `          const dot = nx * vx + ny * vy + nz * vz;
+          if (dot <= 0) continue;
+          const d = Math.sqrt(d2);
+          if (dot <= 0.02 * d) continue;
+          const cr = dot / d;`,
+      'reject back-facing emitters before sqrt and reuse d in bakeBodyAO');
+  }
+
+  if (rel === 'src/game/character-lod.js') {
+    code = replaceOnce(code,
+      'const _farCache = new WeakMap();',
+      `const _farCache = new WeakMap();
+const _vtxSigCache = new WeakMap();
+function getVertexSigs(src) {
+  let sigs = _vtxSigCache.get(src);
+  if (sigs) return sigs;
+  const A = src.attributes, P = A.position, n = P.count;
+  const SI = A.skinIndex, SW = A.skinWeight, EX = A.aEx, CL = A.aCloth, TI = A.aTint;
+  const siArr = SI && !SI.normalized && !SI.isInterleavedBufferAttribute && SI.itemSize === 4 ? SI.array : null;
+  const swArr = SW && !SW.normalized && !SW.isInterleavedBufferAttribute && SW.itemSize === 4 ? SW.array : null;
+  const exArr = EX && !EX.normalized && !EX.isInterleavedBufferAttribute ? EX.array : null, exS = EX ? EX.itemSize : 0;
+  const clArr = CL && !CL.normalized && !CL.isInterleavedBufferAttribute ? CL.array : null, clS = CL ? CL.itemSize : 0;
+  const tiArr = TI && !TI.normalized && !TI.isInterleavedBufferAttribute ? TI.array : null, tiS = TI ? TI.itemSize : 0;
+  sigs = new Int32Array(n);
+  const dMap = new Map(), rareSigs = new Map();
+  let nextRareSig = -1;
+  for (let i = 0; i < n; i++) {
+    let dom = 0;
+    if (siArr && swArr) {
+      const i4 = i * 4;
+      let bw = swArr[i4]; dom = siArr[i4];
+      if (swArr[i4 + 1] > bw) { bw = swArr[i4 + 1]; dom = siArr[i4 + 1]; }
+      if (swArr[i4 + 2] > bw) { bw = swArr[i4 + 2]; dom = siArr[i4 + 2]; }
+      if (swArr[i4 + 3] > bw) { bw = swArr[i4 + 3]; dom = siArr[i4 + 3]; }
+    } else if (SI && SW) {
+      let bw = -1; for (let k = 0; k < 4; k++) { const w = SW.getComponent(i, k); if (w > bw) { bw = w; dom = SI.getComponent(i, k); } }
+    }
+    // Preserve every original material/tint distinction. Packed integers are
+    // collision-free only inside the common signed-byte attribute domain.
+    const exV = EX ? Math.round(exArr ? exArr[i * exS] : EX.getX(i)) : 0;
+    const clX = CL ? Math.round(clArr ? clArr[i * clS] : CL.getX(i)) : 0;
+    const clY = CL ? Math.round(clArr ? clArr[i * clS + 1] : CL.getY(i)) : 0;
+    const tiRaw = TI ? (tiArr ? tiArr[i * tiS] : TI.getX(i)) : 0;
+    const tiV = tiRaw <= -1.5 ? Math.round(tiRaw) : 0;
+    const fits = exV >= -128 && exV <= 127 && clX >= -128 && clX <= 127 && clY >= -128 && clY <= 127 && tiV >= -128 && tiV <= 127;
+    const dKey = fits ? (((exV + 128) << 24) | ((clX + 128) << 16) | ((clY + 128) << 8) | (tiV + 128)) : String(exV) + ':' + clX + ':' + clY + ':' + tiV;
+    let dId = dMap.get(dKey);
+    if (dId === undefined) { dId = dMap.size; dMap.set(dKey, dId); }
+    // 16 descriptor bits, not 8. Rare overflow signatures get negative IDs.
+    if (dId < 65536 && Number.isInteger(dom) && dom >= 0 && dom < 16384) sigs[i] = (dom << 16) | dId;
+    else {
+      const rareKey = String(dom) + ':' + dId;
+      let rare = rareSigs.get(rareKey);
+      if (rare === undefined) { rare = nextRareSig--; rareSigs.set(rareKey, rare); }
+      sigs[i] = rare;
+    }
+  }
+  _vtxSigCache.set(src, sigs);
+  return sigs;
+}
+let _htSize = 1 << 17, _htMask = _htSize - 1;
+let _htStamp = null, _htK1 = null, _htK2 = null, _htVal = null; // allocate on first LOD use, not on page startup
+let _htGen = 1, _scratchCap = 0, _vc, _rx, _ry, _rz, _sx, _sy, _sz, _cn;
+const _lodTris = [], _lodCorners = [];
+function ensureLodScratch(n, triangleCount) {
+  // A full hash table otherwise loops forever. Grow only for exceptional meshes.
+  const needed = Math.max(n, triangleCount);
+  if (!_htStamp || needed >= _htSize) {
+    while (_htSize <= needed) _htSize *= 2;
+    _htMask = _htSize - 1;
+    _htStamp = new Int32Array(_htSize); _htK1 = new Int32Array(_htSize); _htK2 = new Int32Array(_htSize); _htVal = new Int32Array(_htSize);
+    _htGen = 1;
+  }
+  if (n <= _scratchCap) return;
+  // Typical 35k-vertex actors keep their 64k capacity; small meshes no longer
+  // reserve the same memory as a full actor. Very large meshes grow exactly.
+  let cap = 1024;
+  while (cap < n && cap < 65536) cap *= 2;
+  _scratchCap = Math.max(n, cap);
+  _vc = new Int32Array(_scratchCap); _rx = new Float32Array(_scratchCap); _ry = new Float32Array(_scratchCap); _rz = new Float32Array(_scratchCap);
+  _sx = new Float64Array(_scratchCap); _sy = new Float64Array(_scratchCap); _sz = new Float64Array(_scratchCap); _cn = new Int32Array(_scratchCap);
+}
+function clusterTopology(src, cell, sigs) {
+  const A = src.attributes, P = A.position, n = P.count, N = A.normal;
+  const src3 = src.index ? src.index.array : null, nt = (src3 ? src3.length : n) / 3;
+  ensureLodScratch(n, nt);
+  const pArr = !P.normalized && !P.isInterleavedBufferAttribute && P.itemSize === 3 ? P.array : null;
+  const nArr = N && !N.normalized && !N.isInterleavedBufferAttribute && N.itemSize === 3 ? N.array : null, inv = 1 / cell;
+  const vc = _vc, rx = _rx, ry = _ry, rz = _rz, stamp = _htStamp, hk1 = _htK1, hk2 = _htK2, hval = _htVal;
+  let overflow = null;
+  if (_htGen > 0x7ffffff0) { stamp.fill(0); _htGen = 1; }
+  let gen = ++_htGen, nc = 0;
+  for (let i = 0; i < n; i++) {
+    const i3 = i * 3, x = pArr ? pArr[i3] : P.getX(i), y = pArr ? pArr[i3 + 1] : P.getY(i), z = pArr ? pArr[i3 + 2] : P.getZ(i);
+    const nx = N ? (nArr ? nArr[i3] : N.getX(i)) : 0, ny = N ? (nArr ? nArr[i3 + 1] : N.getY(i)) : 0, nz = N ? (nArr ? nArr[i3 + 2] : N.getZ(i)) : 0;
+    const fx = Math.floor(x * inv), fy = Math.floor(y * inv), fz = Math.floor(z * inv);
+    // Avoid 10-bit wraparound merging distant surfaces. Overflow uses a rare
+    // string-key path while ordinary meshes retain the allocation-free hash.
+    if (fx < -512 || fx >= 512 || fy < -512 || fy >= 512 || fz < -512 || fz >= 512) {
+      if (!overflow) overflow = new Map();
+      const key = String(fx) + ',' + fy + ',' + fz + ',' + sigs[i];
+      let c = overflow.get(key);
+      if (c === undefined) { c = nc++; overflow.set(key, c); rx[c] = nx; ry[c] = ny; rz[c] = nz; }
+      else if (N && nx * rx[c] + ny * ry[c] + nz * rz[c] < -0.09) {
+        const back = key + '#'; let other = overflow.get(back);
+        if (other === undefined) { other = nc++; overflow.set(back, other); rx[other] = nx; ry[other] = ny; rz[other] = nz; }
+        c = other;
+      }
+      vc[i] = c;
+      continue;
+    }
+    const k1 = ((fx + 512) << 20) | ((fy + 512) << 10) | (fz + 512), k2 = sigs[i] << 1;
+    let h = (Math.imul(k1 ^ Math.imul(k2, 0x9e3779b1), 0x85ebca6b) >>> 0) & _htMask, c = -1;
+    while (stamp[h] === gen) { if (hk1[h] === k1 && hk2[h] === k2) { c = hval[h]; break; } h = (h + 1) & _htMask; }
+    if (c === -1) {
+      c = nc++; stamp[h] = gen; hk1[h] = k1; hk2[h] = k2; hval[h] = c;
+      rx[c] = nx; ry[c] = ny; rz[c] = nz;
+    } else if (N && nx * rx[c] + ny * ry[c] + nz * rz[c] < -0.09) {
+      const k2b = k2 | 1;
+      let h2 = (Math.imul(k1 ^ Math.imul(k2b, 0x9e3779b1), 0x85ebca6b) >>> 0) & _htMask, c2 = -1;
+      while (stamp[h2] === gen) { if (hk1[h2] === k1 && hk2[h2] === k2b) { c2 = hval[h2]; break; } h2 = (h2 + 1) & _htMask; }
+      if (c2 === -1) {
+        c2 = nc++; stamp[h2] = gen; hk1[h2] = k1; hk2[h2] = k2b; hval[h2] = c2;
+        rx[c2] = nx; ry[c2] = ny; rz[c2] = nz;
+      }
+      c = c2;
+    }
+    vc[i] = c;
+  }
+  gen = ++_htGen;
+  const tris = _lodTris, sourceCorners = _lodCorners, wantCorners = !!(A.aMat && A.color);
+  tris.length = 0; sourceCorners.length = 0;
+  const wideTris = nc > 65535 ? new Set() : null;
+  for (let t = 0; t < nt; t++) {
+    const t3 = t * 3, i0 = src3 ? src3[t3] : t3, i1 = src3 ? src3[t3 + 1] : t3 + 1, i2 = src3 ? src3[t3 + 2] : t3 + 2;
+    const a = vc[i0], b = vc[i1], c = vc[i2];
+    if (a === b || b === c || a === c) continue;
+    let u, v, w;
+    if (a <= b && a <= c) { u = a; v = b; w = c; }
+    else if (b <= a && b <= c) { u = b; v = c; w = a; }
+    else { u = c; v = a; w = b; }
+    if (wideTris) {
+      const key = String(u) + ',' + v + ',' + w;
+      if (wideTris.has(key)) continue;
+      wideTris.add(key);
+    } else {
+      const tk1 = (u << 16) | v, tk2 = w;
+      let h = (Math.imul(tk1 ^ Math.imul(tk2, 0x9e3779b1), 0x85ebca6b) >>> 0) & _htMask, dup = false;
+      while (stamp[h] === gen) { if (hk1[h] === tk1 && hk2[h] === tk2) { dup = true; break; } h = (h + 1) & _htMask; }
+      if (dup) continue;
+      stamp[h] = gen; hk1[h] = tk1; hk2[h] = tk2;
+    }
+    tris.push(a, b, c);
+    if (wantCorners) sourceCorners.push(i0, i1, i2);
+  }
+  return { nc, tris, sourceCorners };
+}`,
+      'cache vertex signature and use flat Int32Array hash table for clusterTopology');
+    code = replaceOnce(code,
+      `export function clusterDecimate(src, cell) {
+  const A = src.attributes, P = A.position, n = P.count;
+  const N = A.normal, SI = A.skinIndex, SW = A.skinWeight, EX = A.aEx, CL = A.aCloth, TI = A.aTint;
+  const inv = 1 / cell;
+  const key2c = new Map(), vc = new Int32Array(n);
+  const sx = [], sy = [], sz = [], cn = [], rx = [], ry = [], rz = [];
+  const newC = (key, i) => {
+    const c = cn.length; key2c.set(key, c); sx.push(0); sy.push(0); sz.push(0); cn.push(0);
+    rx.push(N ? N.getX(i) : 0); ry.push(N ? N.getY(i) : 0); rz.push(N ? N.getZ(i) : 0);
+    return c;
+  };
+  for (let i = 0; i < n; i++) {
+    const x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+    let dom = 0;
+    if (SI && SW) { let bw = -1; for (let k = 0; k < 4; k++) { const w = SW.getComponent(i, k); if (w > bw) { bw = w; dom = SI.getComponent(i, k); } } }
+    let d = '';
+    if (EX) d += Math.round(EX.getX(i));
+    if (CL) d += ':' + Math.round(CL.getX(i)) + '.' + Math.round(CL.getY(i));
+    if (TI) { const t = TI.getX(i); d += ':' + (t <= -1.5 ? Math.round(t) : 0); }
+    const key = \`\${Math.floor(x * inv)},\${Math.floor(y * inv)},\${Math.floor(z * inv)},\${dom},\${d}\`;
+    let c = key2c.get(key);
+    if (c === undefined) c = newC(key, i);
+    // a member facing away from the cluster's first normal (the other face of a thin shell, a > 95° crease) gets its own
+    // cluster — smooth curvature never splits, so the count stays low while sheets keep both faces
+    else if (N && N.getX(i) * rx[c] + N.getY(i) * ry[c] + N.getZ(i) * rz[c] < -0.09) { const k2 = key + '#'; c = key2c.get(k2); if (c === undefined) c = newC(k2, i); }
+    vc[i] = c; sx[c] += x; sy[c] += y; sz[c] += z; cn[c]++;
+  }
+  const nc = cn.length;
+  // representative = member nearest the centroid
+  const rep = new Int32Array(nc).fill(-1), rd = new Float64Array(nc).fill(Infinity);
+  for (let i = 0; i < n; i++) {
+    const c = vc[i], k = 1 / cn[c];
+    const dx = P.getX(i) - sx[c] * k, dy = P.getY(i) - sy[c] * k, dz = P.getZ(i) - sz[c] * k, d = dx * dx + dy * dy + dz * dz;
+    if (d < rd[c]) { rd[c] = d; rep[c] = i; }
+  }
+  const out = new THREE.BufferGeometry();
+  for (const name in A) {
+    const a = A[name], s = a.itemSize, arr = new a.array.constructor(nc * s);
+    for (let c = 0; c < nc; c++) { const r = rep[c]; for (let k = 0; k < s; k++) arr[c * s + k] = a.getComponent(r, k); }
+    out.setAttribute(name, new THREE.BufferAttribute(arr, s, a.normalized));
+  }
+  if (N) {
+    const acc = new Float32Array(nc * 3);
+    for (let i = 0; i < n; i++) { const c = vc[i] * 3; acc[c] += N.getX(i); acc[c + 1] += N.getY(i); acc[c + 2] += N.getZ(i); }
+    const on = out.attributes.normal;
+    for (let c = 0; c < nc; c++) {
+      const x = acc[c * 3], y = acc[c * 3 + 1], z = acc[c * 3 + 2], l = Math.hypot(x, y, z);
+      if (l > 0.3 * cn[c]) on.setXYZ(c, x / l, y / l, z / l);
+    }
+  }
+  // triangles: remap, drop collapsed ones and exact duplicates (orientation kept: both faces of a sheet survive)
+  const src3 = src.index ? src.index.array : null, nt = (src3 ? src3.length : n) / 3;
+  const tris = [], sourceCorners = [], seen = new Set();
+  for (let t = 0; t < nt; t++) {
+    const a = vc[src3 ? src3[t * 3] : t * 3], b = vc[src3 ? src3[t * 3 + 1] : t * 3 + 1], c = vc[src3 ? src3[t * 3 + 2] : t * 3 + 2];
+    if (a === b || b === c || a === c) continue;
+    const m = Math.min(a, b, c), key = m === a ? \`\${a},\${b},\${c}\` : m === b ? \`\${b},\${c},\${a}\` : \`\${c},\${a},\${b}\`;
+    if (seen.has(key)) continue;
+    seen.add(key); tris.push(a, b, c);
+    if (A.aMat && A.color) sourceCorners.push(src3 ? src3[t * 3] : t * 3, src3 ? src3[t * 3 + 1] : t * 3 + 1, src3 ? src3[t * 3 + 2] : t * 3 + 2);
+  }`,
+      `export function clusterDecimate(src, cell, precomputed = null) {
+  const A = src.attributes, P = A.position, n = P.count, N = A.normal;
+  const top = precomputed || clusterTopology(src, cell, getVertexSigs(src));
+  const { nc, tris, sourceCorners } = top;
+  const pArr = !P.normalized && !P.isInterleavedBufferAttribute && P.itemSize === 3 ? P.array : null;
+  const nArr = N && !N.normalized && !N.isInterleavedBufferAttribute && N.itemSize === 3 ? N.array : null;
+  const vc = _vc, sx = _sx, sy = _sy, sz = _sz, cn = _cn;
+  for (let c = 0; c < nc; c++) { sx[c] = 0; sy[c] = 0; sz[c] = 0; cn[c] = 0; }
+  for (let i = 0; i < n; i++) {
+    const c = vc[i], i3 = i * 3;
+    sx[c] += pArr ? pArr[i3] : P.getX(i); sy[c] += pArr ? pArr[i3 + 1] : P.getY(i); sz[c] += pArr ? pArr[i3 + 2] : P.getZ(i); cn[c]++;
+  }
+  const rep = new Int32Array(nc).fill(-1), rd = new Float64Array(nc).fill(Infinity);
+  for (let i = 0; i < n; i++) {
+    const c = vc[i], k = 1 / cn[c], i3 = i * 3;
+    const dx = (pArr ? pArr[i3] : P.getX(i)) - sx[c] * k, dy = (pArr ? pArr[i3 + 1] : P.getY(i)) - sy[c] * k, dz = (pArr ? pArr[i3 + 2] : P.getZ(i)) - sz[c] * k, d = dx * dx + dy * dy + dz * dz;
+    if (d < rd[c]) { rd[c] = d; rep[c] = i; }
+  }
+  const out = new THREE.BufferGeometry();
+  for (const name in A) {
+    const a = A[name], s = a.itemSize, srcArr = !a.normalized && !a.isInterleavedBufferAttribute ? a.array : null;
+    const arr = new a.array.constructor(nc * s);
+    if (srcArr) {
+      for (let c = 0; c < nc; c++) { const r = rep[c] * s, cs = c * s; for (let k = 0; k < s; k++) arr[cs + k] = srcArr[r + k]; }
+    } else {
+      for (let c = 0; c < nc; c++) { const r = rep[c]; for (let k = 0; k < s; k++) arr[c * s + k] = a.getComponent(r, k); }
+    }
+    out.setAttribute(name, new THREE.BufferAttribute(arr, s, a.normalized));
+  }
+  if (N) {
+    const acc = new Float32Array(nc * 3);
+    for (let i = 0; i < n; i++) { const c = vc[i] * 3, i3 = i * 3; acc[c] += nArr ? nArr[i3] : N.getX(i); acc[c + 1] += nArr ? nArr[i3 + 1] : N.getY(i); acc[c + 2] += nArr ? nArr[i3 + 2] : N.getZ(i); }
+    const onArr = out.attributes.normal.array;
+    for (let c = 0; c < nc; c++) {
+      const c3 = c * 3, x = acc[c3], y = acc[c3 + 1], z = acc[c3 + 2], l = Math.hypot(x, y, z);
+      if (l > 0.3 * cn[c]) { onArr[c3] = x / l; onArr[c3 + 1] = y / l; onArr[c3 + 2] = z / l; }
+    }
+  }`,
+      'use clusterTopology and direct typed-array copy in clusterDecimate');
+    code = replaceOnce(code,
+      `  let cell = 0.018;
+  let g = clusterDecimate(geo, cell);
+  for (let it = 0; it < 3 && triCount(g) > target * 1.12; it++) {
+    cell *= Math.sqrt(triCount(g) / target) * 1.02;
+    g.dispose(); g = clusterDecimate(geo, cell);
+  }`,
+      `  const sigs = getVertexSigs(geo);
+  let cell = 0.018;
+  let top = clusterTopology(geo, cell, sigs);
+  for (let it = 0; it < 3 && (top.tris.length / 3) > target * 1.12; it++) {
+    cell *= Math.sqrt((top.tris.length / 3) / target) * 1.02;
+    top = clusterTopology(geo, cell, sigs);
+  }
+  const g = clusterDecimate(geo, cell, top);`,
+      'solve cell size via topology-only pass before building final far BufferGeometry');
+  }
+
+  if (rel === 'src/game/motion/retarget.js') {
+    code = replaceOnce(code,
+      ` add(target,source,sourceChild,targetChild) {
+  const bone=this.character.bones[target],i=this.bank.index[source],j=this.bank.index[sourceChild];
+  if(!bone||i===undefined)return;
+  const entry={target,source,bone,i,j,correction:new THREE.Quaternion(),restSourceQ:this.bank.rest.wq[i].clone().invert(),dir:null};
+  if(j!==undefined&&this.character.rest[targetChild]){
+   entry.dir=this.character.rest[targetChild].clone().sub(this.character.rest[target]).normalize();
+   const sourceDir=this.bank.rest.wp[j].clone().sub(this.bank.rest.wp[i]).normalize();
+   entry.correction.setFromUnitVectors(entry.dir,sourceDir);
+  }
+  this.entries.push(entry);this.byTarget.set(target,entry);
+ }`,
+      ` add(target,source,sourceChild,targetChild) {
+  const bone=this.character.bones[target],i=this.bank.index[source],j=this.bank.index[sourceChild];
+  if(!bone||i===undefined)return;
+  const isHips=target==='hips';
+  const isUpper=!isHips&&!target.startsWith('thigh')&&!target.startsWith('shin')&&!target.startsWith('foot');
+  const parentName=bone.parent?.name;
+  const restOffset=(!isHips&&this.character.rest[parentName]&&this.character.rest[target])?this.character.rest[target].clone().sub(this.character.rest[parentName]):null;
+  const worldQ=this.worldQ.get(target)||null;
+  const parentWorldQ=parentName?(this.worldQ.get(parentName)||null):null;
+  const entry={target,source,bone,i,j,isHips,isUpper,restOffset,worldQ,parentWorldQ,correction:new THREE.Quaternion(),restSourceQ:this.bank.rest.wq[i].clone().invert(),dir:null};
+  if(j!==undefined&&this.character.rest[targetChild]){
+   entry.dir=this.character.rest[targetChild].clone().sub(this.character.rest[target]).normalize();
+   const sourceDir=this.bank.rest.wp[j].clone().sub(this.bank.rest.wp[i]).normalize();
+   entry.correction.setFromUnitVectors(entry.dir,sourceDir);
+  }
+  this.entries.push(entry);this.byTarget.set(target,entry);
+ }`,
+      'prebind worldQ, parentWorldQ, restOffset, and upper/hips flags on HumanRetarget entries');
+    code = replaceOnce(code,
+      ` setBoneWorld(bone,world) {
+  const parent=this.worldQ.get(bone.parent?.name);
+  if(parent)this.q2.copy(parent).invert().multiply(world);else this.q2.copy(world);
+  bone.quaternion.copy(this.q2).normalize();this.worldQ.get(bone.name)?.copy(world);
+ }
+ apply(pose,{upper=true,aimPitch=0,rootScale=1,trajectory=pose,pelvisTrajectory=null}={}) {
+  const c=this.character,B=c.bones,rest=this.bank.rest;this.locomotion=!!pelvisTrajectory;this.pelvisDelta.set(0,0,0);
+  // Do not multiply the old procedural gait, lean and squash onto a complete source pose.
+  c.kid.position.set(0,0,0);c.kid.quaternion.identity();c.kid.scale.setScalar(Math.max(0.001,rootScale));
+  this.aim.setFromAxisAngle(X_AXIS,-clamp(aimPitch,-1,1.15));
+  for(const entry of this.entries){
+   const {target,bone,i,j,dir}=entry,isUpper=!target.startsWith('thigh')&&!target.startsWith('shin')&&!target.startsWith('foot')&&target!=='hips';
+   if(!upper&&isUpper){c._kidXform(bone,this.p,this.q);this.worldQ.get(target).copy(this.q);continue;}
+   if(target==='hips'){
+    this.v.subVectors(pose.wp[i],rest.wp[i]);
+    this.v.x*=this.lateralScale;this.v.y*=this.scale;this.v.z*=this.scale;
+    bone.position.copy(c.rest.hips).add(this.v);
+   }else{
+    const parentName=bone.parent?.name;
+    if(c.rest[parentName])bone.position.copy(c.rest[target]).sub(c.rest[parentName]);
+   }
+   // Swing/twist from the complete source FK, including helper joints and mirrored right bind frames.
+   this.q.copy(pose.wq[i]).multiply(entry.restSourceQ).multiply(entry.correction);
+   if(dir&&j!==undefined){
+    this.v.copy(dir).applyQuaternion(this.q).normalize();this.v2.subVectors(pose.wp[j],pose.wp[i]);
+    if(this.v2.lengthSq()>1e-12)this.q.premultiply(this.q3.setFromUnitVectors(this.v,this.v2.normalize()));
+   }
+   sourcePostureBone(this,target,this.q,dir,isUpper&&upper);
+   if(isUpper&&upper)this.q.premultiply(this.aim);
+   this.setBoneWorld(bone,this.q);bone.scale.set(1,1,1);
+  }`,
+      ` setBoneWorld(bone,world,entry=null) {
+  const parent=entry?entry.parentWorldQ:this.worldQ.get(bone.parent?.name);
+  if(parent)this.q2.copy(parent).invert().multiply(world);else this.q2.copy(world);
+  bone.quaternion.copy(this.q2).normalize();
+  if(entry){if(entry.worldQ)entry.worldQ.copy(world);}else this.worldQ.get(bone.name)?.copy(world);
+ }
+ _kidQuat(bone,outQ){
+  const c=this.character;outQ.identity();
+  for(let x=bone;x&&x!==c.kid;x=x.parent)outQ.premultiply(x.quaternion);
+  return outQ;
+ }
+ apply(pose,{upper=true,aimPitch=0,rootScale=1,trajectory=pose,pelvisTrajectory=null}={}) {
+  const c=this.character,B=c.bones,rest=this.bank.rest;this.locomotion=!!pelvisTrajectory;this.pelvisDelta.set(0,0,0);
+  // Do not multiply the old procedural gait, lean and squash onto a complete source pose.
+  c.kid.position.set(0,0,0);c.kid.quaternion.identity();c.kid.scale.setScalar(Math.max(0.001,rootScale));
+  this.aim.setFromAxisAngle(X_AXIS,-clamp(aimPitch,-1,1.15));
+  for(const entry of this.entries){
+   const {target,bone,i,j,dir,isUpper,isHips,restOffset,worldQ}=entry;
+   if(!upper&&isUpper){this._kidQuat(bone,this.q);if(worldQ)worldQ.copy(this.q);continue;}
+   if(isHips){
+    this.v.subVectors(pose.wp[i],rest.wp[i]);
+    this.v.x*=this.lateralScale;this.v.y*=this.scale;this.v.z*=this.scale;
+    bone.position.copy(c.rest.hips).add(this.v);
+   }else if(restOffset){
+    bone.position.copy(restOffset);
+   }
+   // Swing/twist from the complete source FK, including helper joints and mirrored right bind frames.
+   this.q.copy(pose.wq[i]).multiply(entry.restSourceQ).multiply(entry.correction);
+   if(dir&&j!==undefined){
+    this.v.copy(dir).applyQuaternion(this.q).normalize();this.v2.subVectors(pose.wp[j],pose.wp[i]);
+    if(this.v2.lengthSq()>1e-12)this.q.premultiply(this.q3.setFromUnitVectors(this.v,this.v2.normalize()));
+   }
+   sourcePostureBone(this,target,this.q,dir,isUpper&&upper);
+   if(isUpper&&upper)this.q.premultiply(this.aim);
+   this.setBoneWorld(bone,this.q,entry);bone.scale.set(1,1,1);
+  }`,
+      'use prebound worldQ, restOffset, and quaternion-only walk in HumanRetarget.apply');
+    code = replaceOnce(code,
+      "  this.v2.copy(this.targetHipOffset).applyQuaternion(this.worldQ.get('hips'));",
+      "  this.v2.copy(this.targetHipOffset).applyQuaternion(this._hipsWorldQ||(this._hipsWorldQ=this.worldQ.get('hips')));",
+      'cache hips worldQ reference in adaptPelvis');
+    code = replaceOnce(code,
+      "   this.q.copy(pose.wq[footIdx]).multiply(this.byTarget.get('foot'+label).restSourceQ);",
+      "   this.q.copy(pose.wq[footIdx]).multiply(f.footRestSourceQ||(f.footRestSourceQ=this.byTarget.get('foot'+label).restSourceQ));",
+      'cache foot restSourceQ reference in adaptLegFootpaths');
+    code = replaceOnce(code,
+      `    if(!headWorldReady){c._kidXform(c.bones.head,this.p,headWorldQ);headWorldReady=true;}
+    this.q.premultiply(headWorldQ);
+   }else this.q.copy(pose.wq[e.i]).multiply(e.restSourceQ);
+   if(e.bone.parent===c.bones.head&&headWorldReady)this.q2.copy(headWorldQ);
+   else c._kidXform(e.bone.parent,this.p,this.q2);`,
+      `    if(!headWorldReady){this._kidQuat(c.bones.head,headWorldQ);headWorldReady=true;}
+    this.q.premultiply(headWorldQ);
+   }else this.q.copy(pose.wq[e.i]).multiply(e.restSourceQ);
+   if(e.bone.parent===c.bones.head&&headWorldReady)this.q2.copy(headWorldQ);
+   else this._kidQuat(e.bone.parent,this.q2);`,
+      'use quaternion-only walk in applyAccessories');
+    code = replaceOnce(code,
+      '  this.pelvisDelta.set(0,lowering,0);c.bones.hips.position.add(this.pelvisDelta);c.kid.updateWorldMatrix(true,true);\n  for(let side=0;side<2;side++){',
+      '  this.pelvisDelta.set(0,lowering,0);c.bones.hips.position.add(this.pelvisDelta);\n  if(c._oobPoseTailSkip){for(let side=0;side<2;side++){const f=this.contacts[side];c.feet[side].planted=f.locked;c.feet[side].sw=!f.locked;}return;}\n  c.kid.updateWorldMatrix(true,true);\n  for(let side=0;side<2;side++){',
+      'skip offscreen post-pelvis leg IK and CCD clearance in HumanRetarget.ground');
+    code = replaceOnce(code,
+      '  c._kidXform(f.limb.end.parent,this.ccdA,this.ccdParent);',
+      '  this._kidQuat(f.limb.end.parent,this.ccdParent);',
+      'use quaternion-only walk in liftFreeFoot');
+    code = replaceOnce(code,
+      '   c._kidXform(f.limb.end,this.v2,f.endQ);',
+      '   this._kidQuat(f.limb.end,f.endQ);',
+      'use quaternion-only walk in protectTurningFeet');
+  }
+
+  if (rel === 'src/game/motion/body-balance.js') {
+    code = replaceOnce(code,
+      "  this.rotationGain=new Map([['hip',HOST_BALANCE.pelvisRotation],['spine1',HOST_BALANCE.torsoRotation],['spine2',HOST_BALANCE.torsoRotation],['chest',HOST_BALANCE.torsoRotation],['neck',HOST_BALANCE.headRotation],['head',HOST_BALANCE.headRotation]]);",
+      "  this.rotationGain=new Map([['hip',HOST_BALANCE.pelvisRotation],['spine1',HOST_BALANCE.torsoRotation],['spine2',HOST_BALANCE.torsoRotation],['chest',HOST_BALANCE.torsoRotation],['neck',HOST_BALANCE.headRotation],['head',HOST_BALANCE.headRotation]]);\n  this.rotationGainByIndex=bank.bones.map(b=>this.rotationGain.get(b.name));\n  this.hipIndex=bank.index.hip;",
+      'precompute rotationGainByIndex in BodyBalance');
+    code = replaceOnce(code,
+      "   const b=this.bank.bones[i],rawGain=this.rotationGain.get(b.name),gain=rawGain===undefined?undefined:rawGain*(b.name==='hip'?1-.85*pivot:1)*(1-.78*clamp(strafe,0,1)),parent=b.parent;",
+      "   const b=this.bank.bones[i],rawGain=this.rotationGainByIndex[i],gain=rawGain===undefined?undefined:rawGain*(i===this.hipIndex?1-.85*pivot:1)*(1-.78*clamp(strafe,0,1)),parent=b.parent;",
+      'use direct array lookup for rotationGain in BodyBalance.apply');
+    code = replaceOnce(code,
+      `  const chain=['spine','chest','neck'];let length=0;
+  for(const n of chain)length+=character.rest[n].distanceTo(character.rest[character.bones[n].parent.name]);
+  for(const n of chain){const b=character.bones[n],share=character.rest[n].distanceTo(character.rest[b.parent.name])/length;
+   character._kidXform(b.parent,this.p,this.parent);this.v.set(0,this.reachCorrection*share,0).applyQuaternion(this.parent.invert());b.position.add(this.v);
+  }`,
+      `  let entries=this._reachChain;
+  if(!entries||this._reachChar!==character){
+   this._reachChar=character;
+   const chain=['spine','chest','neck'];let length=0;
+   for(const n of chain)length+=character.rest[n].distanceTo(character.rest[character.bones[n].parent.name]);
+   entries=this._reachChain=chain.map(n=>{const b=character.bones[n];return {b,parent:b.parent,share:character.rest[n].distanceTo(character.rest[b.parent.name])/length};});
+  }
+  for(let i=0;i<entries.length;i++){
+   const {b,parent,share}=entries[i];
+   this.parent.identity();for(let x=parent;x&&x!==character.kid;x=x.parent)this.parent.premultiply(x.quaternion);
+   this.v.set(0,this.reachCorrection*share,0).applyQuaternion(this.parent.invert());b.position.add(this.v);
+  }`,
+      'cache reach chain shares and use quaternion-only parent walk in compensateReach');
+  }
+
+  if (rel === 'src/game/motion/source-controller.js') {
+    code = replaceOnce(code,
+      `  const walkClips=[this.directionClips(family,false,false),this.directionClips(family,true,false)];
+  const runClips=[this.directionClips(family,false,true),this.directionClips(family,true,true)];`,
+      `  let famTables=this._famTables?.get(family);
+  if(!famTables||this._famTablesBank!==this.bank){
+   if(!this._famTables||this._famTablesBank!==this.bank){this._famTables=new Map();this._famTablesBank=this.bank;}
+   famTables={
+    walk:[this.directionClips(family,false,false),this.directionClips(family,true,false)],
+    run:[this.directionClips(family,false,true),this.directionClips(family,true,true)],
+    jump0:this.choose([\`Jump_\${family}00\`,'Jump_Nrml00']),
+    jump1:this.choose([\`JumpShoot_\${family}00\`,\`Jump_\${family}00\`,'Jump_Nrml00']),
+    wait0:this.choose([\`WaitHold_\${family}\`,'WaitHold_Nrml','Wait']),
+    wait1:this.choose([\`WaitShoot_\${family}\`,\`WaitHold_\${family}\`,'WaitHold_Nrml','Wait']),
+    pivot0:this.choose([\`WaitHold_\${family}\`,'WaitHold_Nrml']),
+    pivot1:this.choose([\`WaitShoot_\${family}\`,'WaitHold_Nrml']),
+   };
+   this._famTables.set(family,famTables);
+  }
+  const walkClips=famTables.walk,runClips=famTables.run;`,
+      'cache per-family directional clip tables and resolved jump/wait/pivot clip names');
+    code = replaceOnce(code,
+      `  let stride=0;const list=[];
+  for(let j=0;j<2;j++)for(let i=0;i<4;i++)for(let mode=0;mode<2;mode++){
+   const weight=this.direction[i]*(j?run:1-run)*(mode?this.shootBlend:1-this.shootBlend);if(weight<1e-6)continue;
+   const item=(j?runClips:walkClips)[mode][i],p=locomotionProfile(this.bank,item.name);
+   // This is a convex blend of full authored stride lengths. The old code
+   // projected each clip onto the blended heading a SECOND time; diagonals
+   // consequently gained a much higher cadence than forward/side motion.
+   const axis=p.axis;
+   stride+=p.stride*weight*(Math.abs(axis[0])*this.retarget.lateralScale+Math.abs(axis[2])*this.retarget.scale);list.push({name:item.name,weight,profile:p});
+  }`,
+      `  let stride=0;
+  const list=this._locoList||(this._locoList=[]);list.length=0;
+  const locoPool=this._locoPool||(this._locoPool=[]);let locoIdx=0;
+  for(let j=0;j<2;j++)for(let i=0;i<4;i++)for(let mode=0;mode<2;mode++){
+   const weight=this.direction[i]*(j?run:1-run)*(mode?this.shootBlend:1-this.shootBlend);if(weight<1e-6)continue;
+   const item=(j?runClips:walkClips)[mode][i],p=locomotionProfile(this.bank,item.name);
+   // This is a convex blend of full authored stride lengths. The old code
+   // projected each clip onto the blended heading a SECOND time; diagonals
+   // consequently gained a much higher cadence than forward/side motion.
+   const axis=p.axis;
+   stride+=p.stride*weight*(Math.abs(axis[0])*this.retarget.lateralScale+Math.abs(axis[2])*this.retarget.scale);
+   let entry=locoPool[locoIdx];if(!entry)entry=locoPool[locoIdx]={name:'',weight:0,profile:null};locoIdx++;
+   entry.name=item.name;entry.weight=weight;entry.profile=p;list.push(entry);
+  }`,
+      'reuse locomotion blend list and item descriptors in SourceMotionController.advance');
+    code = replaceOnce(code,
+      '  const nominalCadence=list.reduce((sum,item)=>sum+item.weight*HOST_MOTION.fps/this.bank.clips.get(item.name).frames,0);',
+      '  let nominalCadence=0;for(let i=0;i<list.length;i++){const item=list[i];nominalCadence+=item.weight*HOST_MOTION.fps/this.bank.clips.get(item.name).frames;}',
+      'compute nominalCadence without closure allocation');
+    code = replaceOnce(code,
+      "  const jumpBase=this.choose([`Jump${shooting?'Shoot':''}_${family}00`,`Jump_${family}00`,`Jump_Nrml00`]);",
+      "  const jumpBase=shooting?famTables.jump1:famTables.jump0;",
+      'use cached jumpBase clip name');
+    code = replaceOnce(code,
+      "   const name=this.choose([`Wait${shooting?'Shoot':'Hold'}_${family}`,`WaitHold_${family}`,'WaitHold_Nrml','Wait']);",
+      "   const name=shooting?famTables.wait1:famTables.wait0;",
+      'use cached idle wait clip name');
+    code = replaceOnce(code,
+      "   const name=this.choose([`Wait${shooting?'Shoot':'Hold'}_${family}`,'WaitHold_Nrml']);",
+      "   const name=shooting?famTables.pivot1:famTables.pivot0;",
+      'use cached pivot clip name');
+    code = replaceOnce(code,
+      ` applyBody(dt,s){
+  if(!this.active||!this.pose)return;
+  if(!this.activationPose)this.activationPose=this.character.boneList.map(b=>({p:b.position.clone(),q:b.quaternion.clone(),s:b.scale.clone()}));`,
+      ` _syncRenderedPose(){
+  if(!this._renderedPoseFromBones)return;
+  this._renderedPoseFromBones=false;
+  for(let i=0;i<this.character.boneList.length;i++){const b=this.character.boneList[i],saved=this.renderedPose[i];saved.p.copy(b.position);saved.q.copy(b.quaternion);saved.s.copy(b.scale);}
+ }
+ applyBody(dt,s){
+  if(!this.active||!this.pose)return;
+  if(this._renderedPoseFromBones&&this.state==='air'&&!this.manual&&this.finalState!=='air')this._syncRenderedPose();
+  if(!this.activationPose)this.activationPose=this.character.boneList.map(b=>({p:b.position.clone(),q:b.quaternion.clone(),s:b.scale.clone()}));`,
+      'sync renderedPose lazily before retarget overwrites bones');
+    code = replaceOnce(code,
+      ` applyAccessories(dt){if(this.active&&this.pose){this.retarget.applyAccessories(this.pose,{hairTargets:!this.manual?this.hairTargets:null,shootBlend:this.shootBlend,dt});if(!this.manual)this.rootHair.update(dt,this.turnRate);for(let i=0;i<this.character.boneList.length;i++){const b=this.character.boneList[i],saved=this.renderedPose[i];saved.p.copy(b.position);saved.q.copy(b.quaternion);saved.s.copy(b.scale);}this.finalState=this.state;}}`,
+      ` applyAccessories(dt){if(this.active&&this.pose){this.retarget.applyAccessories(this.pose,{hairTargets:!this.manual?this.hairTargets:null,shootBlend:this.shootBlend,dt});if(!this.manual)this.rootHair.update(dt,this.turnRate);this._renderedPoseFromBones=true;this.finalState=this.state;}}`,
+      'defer renderedPose bone copies until air transition');
+    code = replaceOnce(code,
+      '    this.bank.sample(clip,frame,this.tmp,true);this.bodyBalance.add(p,item.weight);this.hairTargets.add(this.tmp,p,item.weight);',
+      '    this.bank.sample(clip,frame,this.tmp,true);this.bodyBalance.add(p,item.weight);if(!c._oobBudget)this.hairTargets.add(this.tmp,p,item.weight);',
+      'skip offscreen hairTargets accumulation during locomotion blend');
+    code = replaceOnce(code,
+      '  if(transition<1)this.hairTargets.mix(this.previousHairTargets,1-transition);',
+      '  if(transition<1&&!c._oobBudget)this.hairTargets.mix(this.previousHairTargets,1-transition);',
+      'skip offscreen hairTargets transition mix');
+    code = replaceOnce(code,
+      'this.gaitTargets.add(this.tmp,item.weight,p,mod(frame/clip.frames,1));this.shortTargets.add({wp:p.centers,wq:this.tmp.wq},item.weight);',
+      'this.gaitTargets.add(this.tmp,item.weight,p,mod(frame/clip.frames,1));if(stepAmplitude<1){const st=this._shortPoseArg||(this._shortPoseArg={wp:null,wq:null});st.wp=p.centers;st.wq=this.tmp.wq;this.shortTargets.add(st,item.weight);}',
+      'only accumulate shortTargets when stepAmplitude < 1 and reuse descriptor');
+    code = replaceOnce(code,
+      '   c._kidXform(c.bones.handR.parent,this.gripV,this.parentQ);',
+      '   this.retarget._kidQuat(c.bones.handR.parent,this.parentQ);',
+      'use quaternion-only walk for single-hand weapon wrist alignment');
+  }
+
+  if (rel === 'src/core/shadowcache.js') {
+    code = replaceOnce(code,
+      '      if (o.isSkinnedMesh || o.customDepthMaterial || o.morphTargetInfluences) { this.dynamic.add(o); return; }',
+      '      if (o.isSkinnedMesh || o.customDepthMaterial || o.morphTargetInfluences || o.name?.startsWith(\'props:spin:\')) { this.dynamic.add(o); return; }',
+      'classify spinning prop instanced meshes as dynamic shadow casters on first collect');
+    code = replaceOnce(code,
+      '  _cullActors(camera) {\n    const out = [];',
+      '  _cullActors(camera) {\n    const out = this._skippedOut || (this._skippedOut = []);\n    out.length = 0;',
+      'reuse _cullActors skipped array');
+  }
+
+  if (rel === 'src/world/paint.js') {
+    if (code.includes('const orderState = ownerOrder && !cosmetic ? { accepted: false } : null;')) {
+      code = replaceOnce(code,
+        '    const orderState = ownerOrder && !cosmetic ? { accepted: false } : null;',
+        '    const orderState = ownerOrder && !cosmetic ? ((this._orderState || (this._orderState = { accepted: false })), (this._orderState.accepted = false, this._orderState)) : null;',
+        'reuse _orderState in PaintSystem.splat');
+    }
   }
 
   return code;

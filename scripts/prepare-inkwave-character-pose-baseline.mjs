@@ -13,6 +13,19 @@ const plan = planCharacterPoseBaseline(before, after);
 const evidence = { schema: 1, scope: CHARACTER_POSE_MANIFEST.purpose, sourceBase: CHARACTER_POSE_MANIFEST.sourceBase,
   sourceHead: CHARACTER_POSE_MANIFEST.sourceHead, manifestGitBlob: CHARACTER_POSE_MANIFEST_BLOB,
   reviewedDiffSha256: CHARACTER_POSE_MANIFEST.reviewedDiffSha256, paths: plan.evidence };
+const currentOwners = plan.evidence.filter(row => row.mode === 'identical-current-pose');
+if (currentOwners.length) {
+  const unchanged = plan.changes.length === 0 && [...before].every(([rel, value]) => value === after.get(rel));
+  evidence.mode = unchanged ? 'unchanged-current-pose-identity' : 'current-pose-identity-with-reviewed-legacy-replay';
+  evidence.scope = unchanged
+    ? 'Verify identical reviewed current pose source on both sides; no pose source replay or production writes. Historical pose identity is not claimed.'
+    : 'Preserve identical reviewed current-owner poses; only separately reviewed legacy pose/registration edits may replay elsewhere. Mixed current/old owner pose files are rejected.';
+  evidence.historicalReplaySourceBase = evidence.sourceBase;
+  evidence.historicalReplaySourceHead = evidence.sourceHead;
+  delete evidence.sourceBase; delete evidence.sourceHead;
+  evidence.writtenPaths = plan.changes.map(row => row.path);
+}
+
 for (const row of plan.changes) { const file = path.join(baseline, row.path); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, row.source); }
 fs.mkdirSync(path.dirname(receipt), { recursive: true }); fs.writeFileSync(receipt, JSON.stringify(evidence, null, 2) + '\n');
 console.log(JSON.stringify({ receipt, writtenPaths: plan.changes.map(row => row.path), manifestGitBlob: CHARACTER_POSE_MANIFEST_BLOB }));
