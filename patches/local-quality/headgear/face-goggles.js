@@ -55,6 +55,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
     const step=lod==='hero'?.26:lod==='game'?.33:.40;
     const densify=loop=>loop.flatMap((A,i)=>{const B=loop[(i+1)%loop.length],n=Math.max(1,Math.ceil(Math.hypot(B[0]-A[0],B[1]-A[1])/step));return Array.from({length:n},(_,j)=>[A[0]+(B[0]-A[0])*j/n,A[1]+(B[1]-A[1])*j/n]);});
     if(name==='molded-wrap-shell'){outline=densify(outline);holes=holes.map(densify);}
+    const surface=name==='molded-wrap-shell'?shellSurface:pt;
     const outer=outline.map(p=>new THREE.Vector2(...p)),hs=holes.map(h=>h.map(p=>new THREE.Vector2(...p)));
     if(THREE.ShapeUtils.isClockWise(outer))outer.reverse();
     for(const h of hs)if(!THREE.ShapeUtils.isClockWise(h))h.reverse();
@@ -76,13 +77,13 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
     }
     for(let i=tri.length-1;i>=0;i--){const [A,B,C]=tri[i].map(k=>points[k]);if(Math.abs((B.x-A.x)*(C.y-A.y)-(B.y-A.y)*(C.x-A.x))<1e-12)tri.splice(i,1);}
     const d=(a,e)=>typeof depth==='function'?depth(a,e):depth;
-    const put=(a,e,z)=>{const i=p.length/3;p.push(...pt(a,e,d(a,e)+z));uv.push(a,e);return i;};
+    const put=(a,e,z)=>{const i=p.length/3;p.push(...surface(a,e,d(a,e)+z));uv.push(a,e);return i;};
     for(const face of [1,-1])for(const t of tri){const A=points[t[0]],B=points[t[1]],C=points[t[2]],ids=[];
       for(let j=0;j<=S;j++){ids[j]=[];for(let i=0;i<=S-j;i++){const a=A.x+(B.x-A.x)*i/S+(C.x-A.x)*j/S,e=A.y+(B.y-A.y)*i/S+(C.y-A.y)*j/S;ids[j][i]=put(a,e,face*thickness/2);}}
       for(let j=0;j<S;j++)for(let i=0;i<S-j;i++){const t=[ids[j][i],ids[j][i+1],ids[j+1][i]];ix.push(...(face>0?t:t.reverse()));if(i<S-j-1){const t2=[ids[j][i+1],ids[j+1][i+1],ids[j+1][i]];ix.push(...(face>0?t2:t2.reverse()));}}
     }
     for(const loop of [outer,...hs])for(let k=0;k<loop.length;k++){const A=loop[k],B=loop[(k+1)%loop.length];for(let i=0;i<S;i++){const a=A.x+(B.x-A.x)*i/S,e=A.y+(B.y-A.y)*i/S,a1=A.x+(B.x-A.x)*(i+1)/S,e1=A.y+(B.y-A.y)*(i+1)/S;const q=[put(a,e,-thickness/2),put(a1,e1,-thickness/2),put(a,e,thickness/2),put(a1,e1,thickness/2)];ix.push(q[0],q[1],q[2],q[1],q[3],q[2]);}}
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();const faceVertices=tri.length*(S+1)*(S+2)/2;for(let i=0;i<faceVertices*2;i++){const sign=i<faceVertices?1:-1,a=uv[i*2],e=uv[i*2+1],eps=1e-4,z=sign*thickness/2,P=new THREE.Vector3(...pt(a,e,d(a,e)+z)),A=new THREE.Vector3(...pt(a+eps,e,d(a+eps,e)+z)).sub(P),B=new THREE.Vector3(...pt(a,e+eps,d(a,e+eps)+z)).sub(P),q=A.cross(B).normalize().multiplyScalar(sign);g.attributes.normal.setXYZ(i,q.x,q.y,q.z);}add(g,key,name);
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();const faceVertices=tri.length*(S+1)*(S+2)/2;for(let i=0;i<faceVertices*2;i++){const sign=i<faceVertices?1:-1,a=uv[i*2],e=uv[i*2+1],eps=1e-4,z=sign*thickness/2,P=new THREE.Vector3(...surface(a,e,d(a,e)+z)),A=new THREE.Vector3(...surface(a+eps,e,d(a+eps,e)+z)).sub(P),B=new THREE.Vector3(...surface(a,e+eps,d(a,e+eps)+z)).sub(P),q=A.cross(B).normalize().multiplyScalar(sign);g.attributes.normal.setXYZ(i,q.x,q.y,q.z);}add(g,key,name);
   }
   // One continuous molded surround: sloping brow, broad temples, cheeks and
   // rounded chin share a closed shell, rather than a shelf on thin posts.
@@ -95,6 +96,19 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
     if(e>=eyeTop(a)){const t=(e-eyeTop(a))/(crown(a)-eyeTop(a));return .046+.050*Math.exp(-((t/.38)**2))*Math.cos(a/1.6)**2;}
     return .046+.050*Math.exp(-(((e-eyeTop(a))/.12)**2))*Math.cos(a/1.6)**2+.020*Math.max(0,Math.cos(Math.min(1,Math.abs(a)/.38)*Math.PI/2))**2*Math.max(0,Math.min(1,(-e+.08)/.26));
   };
+  // One molded forehead-to-bill surface. There is no overlapping canopy
+  // slab or exposed rear slab wall. The existing eye boundary becomes the
+  // free projecting lip; above it the displacement fades with zero tangent.
+  const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
+  function shellSurface(a,e,d){
+    const p=pt(a,e,d),aa=Math.abs(a);if(aa>=1.18)return p;
+    const edge=eyeTop(a),weight=.12+.88*Math.cos(a/1.18*Math.PI/2)**2;
+    const lateral=smooth((1.18-aa)/.14);
+    const section=e>=edge?smooth((.68-e)/(.68-edge)):smooth((e-(edge-.10))/.10);
+    p[1]+=.01815238116820922*weight*lateral*section;
+    p[2]+=.05507595553898685*weight*lateral*section*Math.cos(a);
+    return p;
+  }
   const stations=lod==='far'?16:24,outline=[],window=[];
   for(let i=0;i<=stations;i++){const a=-span+2*span*i/stations;outline.push([a,crown(a)]);}
   const sideContour=[[1.39,.65],[1.48,.46],[1.53,.25],[1.52,.04],[1.44,-.19],[1.30,-.39],[span-.16,lower(span-.16)]];for(const p of sideContour)outline.push(p);
@@ -154,17 +168,8 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
     const ca=h.reduce((n,p)=>n+p[0],0)/h.length,ce=h.reduce((n,p)=>n+p[1],0)/h.length;
     panel('temple-ink-inlay',h.map(([a,e])=>[ca+(a-ca)*.70,ce+(e-ce)*.75]),[],(a,e)=>depth(a,e)+.012,.001,'ink');
   }
-  // A distinct cap-like canopy projects in front of the shield. The rooted
-  // seam, free rounded leading edge and underside remain separate in profile.
-  const canopy=(u,v,bottom=false)=>{const a=(u-.5)*2*1.18;
-    const A=pt(a,.55-.050*Math.sin(a)**2,.075),B=pt(a,.34-.045*Math.sin(a)**2,.105+.030*Math.cos(a)**2);B[2]+=.020*Math.cos(a)**2;B[0]*=1-.17*Math.sin(a)**2;
-    const reach=.12+.88*Math.cos(a/1.18*Math.PI/2)**2;const p=A.map((x,k)=>x+(B[k]-x)*v*reach);p[1]+=.003*Math.sin(Math.PI*v)*Math.cos(a)**2;if(bottom)p[1]-=.007;return p;};
-  const canopyEdge=(u,v,at)=>{const A=canopy(u,at,true),B=canopy(u,at,false);return A.map((x,k)=>x+(B[k]-x)*v);};
-  add(grid(Math.ceil(N*.75),4,(u,v)=>canopy(u,1-v)),'shell','cap-visor-top');
-  add(grid(Math.ceil(N*.75),4,(u,v)=>canopy(u,v,true)),'shell','cap-visor-bottom');
-  add(grid(Math.ceil(N*.75),1,(u,v)=>canopyEdge(u,v,1)),'shell','cap-visor-front');
-  add(grid(Math.ceil(N*.75),1,(u,v)=>canopyEdge(1-u,v,0)),'shell','cap-visor-root');
-  for(const side of [0,1])add(grid(4,1,(u,v)=>canopyEdge(side,v,side?1-u:u)),'shell','cap-visor-side');
+  // The bill is part of molded-wrap-shell, including its closed lip.
+  const canopy=(u,v)=>{const a=(u-.5)*2*1.18,e=.68+(eyeTop(a)-.68)*v;return shellSurface(a,e,depth(a,e));};
   // The lens is seated inside the heavy sloping brow and temple surround.
   add(grid(N,6,(u,v)=>{const a=(u-.5)*2*eyeSpan,e=eyeBottom(a)+(eyeTop(a)-eyeBottom(a))*v,d0=depth(a,eyeBottom(a)),d1=depth(a,eyeTop(a));return pt(a,e,d0+(d1-d0)*v+.008*Math.sin(Math.PI*v));}),'lens','panoramic-lens');
   rail('eye-upper-gasket',u=>{const a=(u-.5)*2*eyeSpan;return [a,eyeTop(a)-.009,depth(a,eyeTop(a))-.006];},.018,.004,'dark');
@@ -208,7 +213,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   }
   let disposed=false;const dispose=()=>{if(disposed)return;disposed=true;root.removeFromParent();root.traverse(o=>o.geometry?.dispose());Object.values(mats).forEach(m=>m.dispose());};
   const setInkColor=value=>{mats.ink.color.set(value);return root;};root.dispose=dispose;root.setInkColor=setInkColor;
-  root.userData={construction:{billPlan:[0,.25,.5,.75,1].map(u=>({root:canopy(u,0),tip:canopy(u,1)})),foreheadProfile:[-.6,-.01,0,.01,.6].map(a=>pt(a,crown(a),depth(a,crown(a)))),centralSlotHalfWidths:[.35,.325,.30],sideInsets:'closed compact inset; no ear opening',rearSection:{width:.23,thickness:.015,layerSeparation:.016},visorSection:{root:canopy(.5,0),tip:canopy(.5,1),lensUpper:pt(0,eyeTop(0),depth(0,eyeTop(0)))},browSection:[.90,.65,.45,.32].map(e=>({e,point:pt(0,e,depth(0,e))})),templeAnchors:[-1,1].flatMap(side=>[-1,1].map(s=>{const a=side*(s>0?1.44:1.40),e=s*.22,d=depth(a,e);return {a,e,point:pt(a,e,d),strapDepth:d,shellDepth:depth(a,e)};})),centralExtraDepth:depth(0,-.4)-depth(.6,-.4)},id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'S3 rear unverified; S2-informed convex layered bands with compact side anchors'}};
+  root.userData={construction:{billSection:Array.from({length:10},(_,i)=>{const e=.68-(.68-eyeTop(0))*i/9;return shellSurface(0,e,depth(0,e));}),billRootContinuity:[.6801,.68,.6799].map(e=>shellSurface(0,e,depth(0,e))),billPlan:[0,.25,.5,.75,1].map(u=>({root:canopy(u,0),tip:canopy(u,1)})),foreheadProfile:[-.6,-.01,0,.01,.6].map(a=>pt(a,crown(a),depth(a,crown(a)))),centralSlotHalfWidths:[.35,.325,.30],sideInsets:'closed compact inset; no ear opening',rearSection:{width:.23,thickness:.015,layerSeparation:.016},visorSection:{root:canopy(.5,0),tip:canopy(.5,1),lensUpper:pt(0,eyeTop(0),depth(0,eyeTop(0)))},browSection:[.90,.65,.45,.32].map(e=>({e,point:pt(0,e,depth(0,e))})),templeAnchors:[-1,1].flatMap(side=>[-1,1].map(s=>{const a=side*(s>0?1.44:1.40),e=s*.22,d=depth(a,e);return {a,e,point:pt(a,e,d),strapDepth:d,shellDepth:depth(a,e)};})),centralExtraDepth:depth(0,-.4)-depth(.6,-.4)},id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'S3 rear unverified; S2-informed convex layered bands with compact side anchors'}};
   return root;
 }
 

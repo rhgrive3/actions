@@ -363,3 +363,41 @@ The actual geometric top aperture spans29.7% of the complete shell's front-proje
 AllLOD source topology/normal/closure/inlay-visibility/lifecycle and native radial fit audit pass. Counts hero9608/game6976/far4976,4mesh/material batches,0textures.
 Actual050 top/left/right/back confirms broad bill lobe with receded sides and continuous joins, no obvious pinched tongue. Remaining bill root-step and historical rear detail differences disclosed; no further speculative bill changes.
 Native next front/oblique whole-mask normalization is required before central-width acceptance.
+
+
+## Single integrated bill construction, 2026-10-18 14:49 UTC
+
+# Single continuous bill correction
+
+## Confirmed defect and source
+User rejected a500's bill. Actual a500 front/oblique/right shows a raised second plate, long root rail, and exposed lateral step.
+Source pixels inspected: user1000001375/1000001380; S3 worn https://img.gamewith.jp/img/9a245d07c6dfa3b4460b237694dd6bba.png ; S3 oblique https://img.gamewith.jp/article_tools/splatoon3/gacha/ge429.png ; focused goggles-bill-transition-S3-vs-a500 comparison.
+The original shows a single cap-bill sweep emerging from forehead into a rounded free lip. True source top is unverified.
+
+## Root cause and actual change
+Previous code built a separate closed canopy slab rooted at fixed radial depth .075, including rear and side walls, over a forehead shell that continued underneath to the eye. Overlap and exposed slab walls created the competing contours.
+Removed that separate canopy entirely. The upper part of the existing closed molded-wrap-shell now smoothly bends forward into its free eye-boundary lip. Displacement fades to zero with zero tangent at e=.68 and at the lateral blend. One closed shell, no hidden duplicate brow shelf or separate rear slab wall.
+Center section in native head-local coordinates:
+- Continuous root: [0,.3121362989,.1886337589]
+- Free tip: [0,.2677144857,.3168263997]
+- Lens upper: [0,.2495621045,.2617504441]
+The free tip is exactly retained from a500; .055076 forward lens clearance remains. Lateral projection still recedes toward temples. The broad front-focused planform is retained, not claimed to match an unavailable source top exactly.
+Central width/height/ink chevrons, compact sides, rear bands, lens material and body/hair remain unchanged. No palette/emission workaround or new detail.
+
+## Verification
+Commands:
+node --loader ./loader.mjs headgear-face-goggles.fixture.mjs
+node --loader ./loader.mjs audit-fit.mjs
+
+All source checks pass three LODs: closed consistent manifold shell and rear bands, finite/nondegenerate/index/normal checks, native fitting anchors, head/scalp clearance, ink visibility, lens winding/rays, resource disposal.
+Replaced obsolete detached-canopy closure check with the unified shell closure; added absence of canopy slab parts, monotonic continuous bill profile, and finite-difference C1 root continuity.
+Counts hero9112/game6660/far4780 triangles, four mesh/material batches, one transparent lens, zero textures. Lower than a500.
+Independent source reviewer viewed front/oblique/side/back/top construction and confirms the double-shelf structure is removed. This clears construction for native capture only.
+
+## Native visual gates still required
+- Front and oblique: one rounded leading lip, no raised root rail/stacked plate bands.
+- Both sides: one coherent sweep from forehead through free projection into temple, no exposed slab end.
+- Under/oblique: no broad dark wedge or unexpected lens/gasket exposure.
+- Top: front-focused outline preserved; no pinched tongue.
+- Rear, all LODs and hair5/6: existing joins/fit preserved.
+Source/emitted fixture and exact native screenshots remain integration gates. No full source-match or user acceptance claim.
