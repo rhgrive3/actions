@@ -47,9 +47,6 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
   'src/config.js': [
     ["export const GAME_TITLE = 'INKWAVE';", "export const GAME_TITLE = 'ZEVANT';"],
   ],
-  'src/ui/ui-icons.js': [
-    ["logoMarkup(title = 'INKWAVE'", "logoMarkup(title = 'ZEVANT'"],
-  ],
   'src/ui/menus.js': [
     ['The INKWAVE servers didn', 'The ZEVANT servers didn'],
     ['The squidkids and code behind INKWAVE', 'The squidkids and code behind ZEVANT'],
