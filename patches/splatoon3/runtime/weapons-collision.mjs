@@ -1,4 +1,4 @@
-import { sweepNativeCatalogueSphere } from '../../native-stages/runtime/engine.mjs';
+import { sweepNativeCatalogueSphere } from '../../native-stages/runtime/native-projectile-sweep.mjs';
 // Continuous time-of-impact primitives, independent of weapon tuning and render Hz.
 // Radii may grow linearly within one fixed tick. Expanded-box corner false positives
 // are avoided by solving the true distance to the OBB (rounded Minkowski boundary).
