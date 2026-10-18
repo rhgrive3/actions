@@ -15,6 +15,23 @@ const rawMenus = fromRepo('inkwave-public/src/ui/menus.js');
 const menus = adaptBuildSource('src/ui/menus.js', rawMenus);
 const css = adaptBuildSource('styles/ui.css', rawStyle);
 
+function checkedStaticMenuCss(code) {
+  const marker = '/* INKWAVE generated static menu backdrops: no live attract/composer rendering. */';
+  const start = code.indexOf(marker);
+  assert.ok(start >= 0, 'generated menu CSS has its ownership marker');
+  assert.equal(code.lastIndexOf(marker), start, 'one generated menu CSS block');
+  const inherited = code.slice(0, start), generated = code.slice(start);
+  for (const screen of ['title', 'lobby', 'pause', 'results', 'loading']) {
+    assert.equal(generated.includes('data-screen="' + screen + '"'), false, screen + ' stays unchanged');
+  }
+  // Online room cursors and toast rules already belong to the native sheet;
+  // they must survive, even though the new background block excludes lobby.
+  const lobbyRules = rawStyle.match(/[^{}]*\[data-screen="lobby"\][^{]*\{[^{}]*\}/g);
+  assert.ok(lobbyRules?.length, 'native sheet contains actual online-room rules');
+  for (const rule of lobbyRules) assert.ok(inherited.includes(rule.trim()), 'existing lobby CSS remains intact');
+  return generated;
+}
+
 function framePrefix(code) {
   const from = code.indexOf('  _frame(dt) {');
   const to = code.indexOf('    const tA = performance.now();', from);
@@ -87,9 +104,10 @@ test('static screens do not construct hidden 3D loadout, locker or Online hub sh
 
 test('CSS maps exactly three generated locally hosted WebP backgrounds to the correct menu screens', () => {
   assert.equal((css.match(/INKWAVE generated static menu backdrops/g) || []).length, 1);
+  const generated = checkedStaticMenuCss(css);
   for (const name of ['weapon', 'lobby', 'locker']) {
     const url = `../patches/local-quality/assets/menu/${name}.webp`;
-    assert.match(css, new RegExp(url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(generated, new RegExp(url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     const file = new URL('../assets/menu/' + name + '.webp', import.meta.url);
     const bytes = fs.readFileSync(file);
     assert.equal(bytes.subarray(0, 4).toString(), 'RIFF', name);
@@ -97,14 +115,21 @@ test('CSS maps exactly three generated locally hosted WebP backgrounds to the co
     assert.ok(bytes.length < 250000, 'mobile image compressed: ' + name);
     assert.ok(qualityIdentity()['assets/menu/' + name + '.webp'], name + ' has a build identity');
   }
-  assert.ok(css.includes('data-screen="main"'));
-  assert.ok(css.includes('data-screen="loadout"'));
-  assert.ok(css.includes('data-screen="locker"'));
-  for (const screen of ['title', 'lobby', 'pause', 'results', 'loading']) {
-    assert.equal(css.includes('data-screen="' + screen + '"'), false, screen + ' stays unchanged');
-  }
-  assert.match(css, /background-size: cover/);
+  assert.ok(generated.includes('data-screen="main"'));
+  assert.ok(generated.includes('data-screen="loadout"'));
+  assert.ok(generated.includes('data-screen="locker"'));
+  assert.match(generated, /background-size: cover/);
   assert.ok(qualityIdentity()['static-menu-adapter.mjs']);
+});
+
+test('CSS ownership rejects a new static lobby background and loss of existing room rules', () => {
+  const injected = css + '\n.iw-ui.is-active[data-screen="lobby"] { background-image: url("lobby.webp"); }';
+  assert.throws(() => checkedStaticMenuCss(injected), /lobby stays unchanged/);
+  const nativeToast = rawStyle.match(/\.iw-ui\[data-screen="lobby"\] \.iw-toasts \{[^{}]*\}/)?.[0];
+  assert.ok(nativeToast, 'negative control removes a real native room rule');
+  const missingRoomRule = css.replace(nativeToast, '');
+  assert.notEqual(missingRoomRule, css);
+  assert.throws(() => checkedStaticMenuCss(missingRoomRule), /existing lobby CSS remains intact/);
 });
 
 test('source transform is strict, idempotence fails closed, and unrelated source is unchanged', () => {
