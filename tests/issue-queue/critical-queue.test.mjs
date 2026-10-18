@@ -116,14 +116,14 @@ test('composed fixed-step player aim uses current input yaw, not stale gameCam',
   // Player prototype. No extra camera spring step or world raycast is added.
   const base = readFileSync(new URL('../../inkwave-public/src/game/player.js', import.meta.url), 'utf8');
   const composed = adaptBuildSource('src/game/player.js', base);
-  assert.match(composed, /simulationAimCamera\\(this, G.physics\\)/);
+  assert.match(composed, /simulationAimCamera\(this, G.physics\)/);
   const actor={pos:new Vec(),aimPoint:new Vec(),weapon:{kind:'shooter',range:12},team:0,aimYaw:Math.PI/6,aimPitch:0};
   const cam={position:new Vec(0,1.3,-4.5),getWorldDirection(out){return out.set(0,0,1)}};
   const tickCam={position:new Vec(-2.25,1.3,-3.897114317),getWorldDirection(out){return out.set(.5,0,Math.sqrt(3)/2)}};
   const rig={mode:'follow',target:actor,yaw:Math.PI/6,
     forward(out){return out.set(.5,0,Math.sqrt(3)/2);}};
   const G={rig:{gameCam:cam},camera:cam,physics:{raycast(){return {hit:false}}},actors:[],boss:null};
-  const fn=method('../../inkwave-public/src/game/player.js','  computeAim(simulation = false) {','\\n  }\\n}',{
+  const fn=method('../../inkwave-public/src/game/player.js','  computeAim(simulation = false) {','\n  }\n}',{
     G,_v:new Vec(),_v2:new Vec(),_fwd:new Vec(),_c:new Vec(),_hit:{},
     simulationAimCamera:()=>tickCam,
     Physics:{},PLAYER:{radius:.5},clamp:(v,a,b)=>Math.max(a,Math.min(b,v))
