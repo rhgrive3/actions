@@ -82,7 +82,7 @@ test('Stringer explosion damage and LOS use DamageOffsetY, including sub/special
     for(const [kind,at] of objects){close(at.x,0);close(at.y,1.6,r.id+' '+kind);close(at.z,10);}
     close(p.pos.y,1,'damage offset must not relocate the lodged arrow');
     assert.ok(paintRows.length>0,r.id+' owner blast still paints');
-    for(const stamp of paintRows){close(stamp.at.y,1.6,r.id+' independent paint centre');assert.equal(stamp.footprint,'ink-blast-rectified','latest main blast contour survives damage-offset integration');assert.deepEqual(stamp.direction.toArray(),[1,0,0],'lodged bearing survives independent paint and damage offsets');}
+    for(const stamp of paintRows){close(stamp.at.y,1.6,r.id+' independent paint centre');assert.equal(stamp.footprint,'ink-blast-rectified','latest main blast contour survives damage-offset integration');assert.deepEqual(Array.from(stamp.direction.toArray()),[1,0,0],'lodged bearing survives independent paint and damage offsets');}
     f.G.boss=null;
   }
 });

@@ -835,7 +835,6 @@ export function beginFidelityWallDrop(system, p, hit) {
   };
   p.pos.copy(hit.point).addScaledVector(hit.normal, .025);
   p.prev.copy(p.pos);
-  p.vel.set(0, -firstSpeed * 60, 0);
   // #975: the wall-impact footprint is NOT the subsequent wall-drop shock.
   // 2.2 source units is the verified wall-impact value exported with Issue #975;
   // the pinned top-level 1.3 / 1.0 / 0.6 drop record remains unchanged.
@@ -867,6 +866,9 @@ export function beginFidelityWallDrop(system, p, hit) {
     api.emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });
     api.G.fx?.burst(hit.point, hit.normal, p.owner.color, { count: 5, speed: 3, size: .07, paint: false });
   }
+  // Snapshot the incoming bearing in the terrain-burst queue before entering
+  // vertical fall. The queued paint must not inherit the wall-drop velocity.
+  p.vel.set(0, -firstSpeed * 60, 0);
   return true;
 }
 
