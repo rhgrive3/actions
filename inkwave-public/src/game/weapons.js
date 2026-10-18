@@ -1035,6 +1035,7 @@ export class Projectiles {
           normal: new THREE.Vector3(), direction: new THREE.Vector3(),
         };
         p.pos.copy(_v2); p.start.copy(_v2);
+        p.landed = !!g.hit;
         if (g.hit) { p.target.copy(g.point); p.normal.copy(g.normal); p.face = g.face; }
         else { p.target.copy(_v2).setY(PLAYER.waterY - 1.8); p.normal.copy(UP); p.face = -1; }
         p.direction.copy(dir).addScaledVector(p.normal, -dir.dot(p.normal));
@@ -1238,7 +1239,7 @@ export class Projectiles {
       p.pos.copy(p.start);
       p.pos.y = Math.max(p.target.y, p.start.y - 0.5 * CHARGER_FALL_GRAVITY * p.age * p.age);
       if (p.age < p.life) continue;
-      if (p.face >= 0) {
+      if (p.landed) {
         _v.copy(p.target).addScaledVector(p.normal, 0.015).addScaledVector(p.direction, -p.shift);
         const area = G.paint.splat(_v, p.radius, p.team, {
           seed: p.seed, kind: 'source-splash', footprint: 'ink-charger', face: p.face,
@@ -1612,6 +1613,7 @@ export class Projectiles {
     n = this.inkFlight.draw(B, shp, n, MAX_BLOBS - reserve);
     // Persistent falling charger beads share the existing instanced ink mesh:
     // no new draw calls, shaders or per-frame geometries.
+    const chargerDrawStart = n;
     _q.setFromUnitVectors(ZAX, DOWN);
     for (const p of this.chargerDrops) {
       if (n >= MAX_BLOBS) break;
