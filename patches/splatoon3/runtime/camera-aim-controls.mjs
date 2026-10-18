@@ -51,7 +51,8 @@ export function updateScopeZoom(rig, actor, dt) {
   if (!active) { rig.zoom = 0; rig.scopeCharge = 0; return 0; }
   const charge = actor.weaponRunner?.charging ? clamp01(actor.weaponRunner.charge) : 0;
   rig.scopeCharge = charge;
-  if (rig.scopeUsesTrueFov) { rig.zoom = 0; return charge; }
+  // Retain the scope zoom gauge for catalog HUD and diagnostics. The actual
+  // camera uses scopeK with a true FOV and must not subtract this twice.
   // Wiki scope descriptions: zoom begins after half charge. The smoothing
   // curve/time constant remain INKWAVE tuning, not measured retail timing.
   const zoomCharge = clamp01((charge - .5) * 2);
