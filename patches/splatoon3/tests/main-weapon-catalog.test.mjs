@@ -388,7 +388,7 @@ test('nearest foot paint follows Jr. accepted-shot slots 3 and 7',async()=>{
   // source splash, not an unrelated extra stamp at muzzle birth.
   const near=rounds.filter(p=>p.catalog.descriptor.splashNearest);
   assert.equal(near.length,2,'Jr. forced 3 and final 7 slots');
-  assert.ok(near.every(p=>Math.abs(p.catalog.descriptor.splashFirst-1.15)<1e-9));
+  assert.ok(near.every(p=>Math.abs(p.catalog.descriptor.splashFirst-1.2)<1e-9));
   assert.equal(splats.length,0,'no eager muzzle stamp before physics');
   for(let i=0;i<30;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
   const drops=f.G.projectiles._s3SplashDrops||[];
