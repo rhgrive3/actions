@@ -73,7 +73,12 @@ function boot(source, held = []) {
   const G = {
     scene, renderer: { compileAsync: () => { record('compile'); return Promise.resolve(); } }, teamColors: [null, null],
     net: { tr: {}, state: 'starting', code: 'ABCDE', myId: 'me', isHost: true }, netm: null,
-    audio: { init: () => record('audio'), duck: () => record('duck') }, music: { stop: () => record('musicStop') },
+    audio: { init: () => record('audio'), duck: () => record('duck'),
+      // Match-start ownership tests do not exercise MP3 I/O. Resolve the
+      // production recorded-shot admission gate so the async world/error
+      // paths under test can still be reached; audio loading has separate
+      // tests with real decoder and failure/retry fixtures.
+      requireRecordedMainShot: async () => ({ ready: true, id: 'shooter', recording: 'fire' }) }, music: { stop: () => record('musicStop') },
     projectiles: { clear: () => record('clearProjectiles') }, fx: { clear: () => record('clearFx'), setLighting: () => record('lighting') },
     paint: resource('paint:old', { clear: () => record('clearPaint'), texture: {}, size: 64 }),
     level: { id: 'old' }, physics: { id: 'old' }, mode: 'menu',
