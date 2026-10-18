@@ -495,12 +495,13 @@ function specialObjectDamage(rt,attack,object,amount,cause=null,at=object.pos) {
   if(object.hp<=0)removeWorld(rt,object,'destroy');else emitObject(rt,object,'hit');
   return true;
 }
-function specialObjectRadius(rt,attack,center,radius,damageAt,cause=null,includeSubs=true) {
+function specialObjectRadius(rt,attack,center,radius,damageAt,cause=null,includeSubs=true,options={}) {
   for(const object of rt.system?._s3AllSpecialObjects||[]){
     if(object.dead||!(object.hp>0)||object.owner?.team===attack?.team)continue;
-    const d=object.pos.distanceTo(center);if(d>radius)continue;
-    if(rt.api.G.physics?.los&&!rt.api.G.physics.los(center,object.pos))continue;
-    const amount=damageAt(d,object);if(amount>0)specialObjectDamage(rt,attack,object,amount,cause,center);
+    const point=options.shapeContact?(rt.shapeObjectPoint||(rt.shapeObjectPoint=new rt.api.THREE.Vector3())).copy(object.pos):object.pos;
+    if(options.shapeContact?!options.shapeContact(object,point):point.distanceTo(center)>radius)continue;
+    if(rt.api.G.physics?.los&&!rt.api.G.physics.los(center,point))continue;
+    const amount=damageAt(point.distanceTo(center),object,point);if(amount>0)specialObjectDamage(rt,attack,object,amount,cause,point);
   }
   if(includeSubs)rt.system?.s3DamageSubObjects?.(attack,center,radius,damageAt,cause);
 }
@@ -2378,9 +2379,9 @@ function installRuntime(api) {
   api.allSpecialObjectHit=(p,object)=>objectHitProposal(rt,p,object);
   api.superChumpLandingPreview=superChumpLandingPreview;
   api.tentaMissilesLockPreview=tentaMissilesLockPreview;
-  P.s3DamageSpecialObjects=function(attack,center,radius,damageAtDistance,cause=null){
+  P.s3DamageSpecialObjects=function(attack,center,radius,damageAtDistance,cause=null,options={}){
     if(!attack||!center||!(radius>=0)||typeof damageAtDistance!=='function')return false;
-    rt.system=this;specialObjectRadius(rt,attack,center,radius,damageAtDistance,cause,false);return true;
+    rt.system=this;specialObjectRadius(rt,attack,center,radius,damageAtDistance,cause,false,options);return true;
   };
   return rt;
 }

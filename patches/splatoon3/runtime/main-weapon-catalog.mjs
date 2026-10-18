@@ -30,6 +30,8 @@ import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
 import { paintDualiesSlide } from './dualies-slide-paint.mjs';
 import { catalogDualiesTurret, writeCatalogDualiesVelocity } from './catalog-dualies-motion.mjs';
+import { saberSlashShape, saberSlashContact, saberSlashWallContact, placeSaberSlash } from './saber-melee.mjs';
+import { recordSaberStick, saberStepRequested, createSaberStep, saberStepSpeed } from './saber-step.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
 // retain their mature owners. Canonical kit identities use the pinned table.
@@ -307,7 +309,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);
     const s = this.catalogState;
-    if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee && !(s?.stop>EPS)) return false;
+    if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee && !((this.a.weapon.catalogRecord.family==='splatana'||this.a.weapon.catalogRecord.family==='dualies')&&s?.stop>EPS)) return false;
     return !!(s && (s.pending || s.melee || s.chargeF>0 || s.stream>0 || s.roll || s.lunge || s.stop>EPS));
   };
   R.moveSpeed = function() {
@@ -1096,7 +1098,21 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       Number.isSafeInteger(meta[2])&&meta[2]>=0&&meta[2]<30&&Number.isFinite(meta[3])&&meta[3]>=0&&meta[3]<=1){
       try {const d=mode(r,meta[1],meta[2],meta[3]);p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
         hit:new Hit(),seen:new Set(),index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0};
-        p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index);updateCatalogVisual(p);}
+        p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index);updateCatalogVisual(p);
+        // A remote Splatana consumes generic Shooter recoil in FAMILY_TRIGGER.
+        // Feed only validated shot metadata into its presentation clock, never
+        // a melee collider, ink payment or lunge. Old/repeated births cannot
+        // rewind the visible attack. Projectile/event authority stays upstream.
+        if(a.remote&&r.family==='splatana'&&a.weapon?.catalogRecord?.id===r.id&&
+          Number.isFinite(e[0])&&meta[1].startsWith('saber-')){
+          const s=state(a.weaponRunner);
+          if(s.remoteSaberTick==null||e[0]>s.remoteSaberTick){
+            s.remoteSaberTick=e[0];s.saberSwing={serial:(s.saberSwing?.serial||0)+1,
+              key:meta[1],ordinal:s.saberShotOrdinal,stepped:false,
+              ageOffset:finite(r.parameters.spl__WeaponSaberParam.SwingParam[meta[1]==='saber-horizontal'?'WeakSwingShotBulletFrame':'ChargeSwingShotBulletFrame'],0)/HZ};
+            if(meta[1]==='saber-horizontal')s.saberShotOrdinal++;
+          }
+        }}
       catch { /* malformed visual packet cannot create a gameplay object */ }
     }return result;
   };
@@ -1259,15 +1275,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           if(extra>0&&!pay(runner,extra)){cancel(runner);return;}
           if(extra<0)a.ink=Math.min(100,a.ink-extra);
         }
-        const forward=a.intent.move?.clone().normalize().dot(a.aimDir)||0;
-        const stepped=c+EPS>=1&&a.grounded&&forward>=finite(swing.StepStartStickThresholdY,.9);
-        if(stepped){const step=swing.SideStepParam,duration=step.MoveFrame/HZ;
-          s.lunge={remaining:duration,direction:a.aimDir.clone().setY(0).normalize(),speed:step.MoveDist/duration};}
+        const stepped=c+EPS>=1&&a.grounded&&saberStepRequested(s,swing);
+        if(stepped)s.lunge=createSaberStep(a,swing);
         const delay=c+EPS>=1?(stepped?swing.ChargeSwingStepShotBulletFrame:swing.ChargeSwingShotBulletFrame):swing.WeakSwingShotBulletFrame;
+        s.saberSwing={serial:(s.saberSwing?.serial||0)+1,key,ordinal:s.saberShotOrdinal,stepped};
         const meleeDelay=c+EPS>=1?(stepped?swing.ChargeSwingStepShotSlashFrame:swing.ChargeSwingShotSlashFrame):swing.WeakSwingShotSlashFrame;
-        s.melee={remaining:finite(meleeDelay,3)/HZ,fire:()=>saberMelee(runner,r,key)};
+        s.melee=beginSaberMelee(runner,r,key,finite(meleeDelay,3),s.saberShotOrdinal);
         beginPending(s,finite(delay,6),()=>{emitSingle(runner,r,key,c);runner.firingT=.35;});
         runner.cooldown=(finite(c+EPS>=1?swing.ChargeSwingFrame:swing.WeakSwingFrame,26)+(stepped?finite(swing.ChargeSwingFrameStepAdd,10):0))/HZ;
+        s.saberSwing.duration=runner.cooldown;
+        s.stop=(finite(c+EPS>=1?swing.ChargeSwingPostDelayFrame:swing.WeakSwingPostDelayFrame,0)+
+          (stepped?finite(swing.ChargeSwingFrameStepAdd,0):0))/HZ;
       }else {
         emitSingle(runner,r,'normal',c);runner.cooldown=finite(t.PostDelayFrame,6)/HZ;
         const n=p.WeaponDivideChargerParam?.FullChargeDivideNum;
@@ -1279,16 +1297,54 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         FreezeMax:finite(t.FreezeFrameFullCharge,15)},'Freeze',frames,15)/HZ;
     }
   }
-  function saberMelee(runner,r,key) {
-    const a=runner.a,b=key==='saber-vertical'?r.parameters.BulletSaberSlashVerticalParam:r.parameters.BulletSaberSlashHorizontalParam;
-    const sh=b.ShapeParam,ext=sh.BoxHalfExtents,center=sh.BoxCenter,cy=Math.cos(a.yaw),sy=Math.sin(a.yaw);
-    for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team){
-      const dx=enemy.pos.x-a.pos.x,dz=enemy.pos.z-a.pos.z;
-      const x=dx*cy-dz*sy-center.X,z=dx*sy+dz*cy-center.Z;
-      if(Math.abs(x)<ext.X+PLAYER.radius&&Math.abs(z)<ext.Z+PLAYER.radius&&
-        Math.abs(enemy.pos.y-a.pos.y)<ext.Y+PLAYER.height&&G.physics.los(a.pos,enemy.pos))
-        withObjectDamageCause({owner:a,type:'saber-melee',catalog:{r,descriptor:{key}}},()=>G.projectiles.applyHit(a,enemy,b.DamageParam.DamageValue/10,r.id));
-    }
+  function saberMeleeContact(melee,target,feet,radius,height,mark=true){
+    if(melee.seen.has(target)||!feet)return false;
+    const shape=melee.shape,bound=shape.bound+radius;
+    if(Math.abs(feet.x-melee.origin.x)>bound||Math.abs(feet.z-melee.origin.z)>bound)return false;
+    if(!saberSlashContact(shape,melee.origin,melee.yaw,feet,radius,height,melee.contact)||
+      G.physics.los&&!G.physics.los(melee.origin,melee.contact))return false;
+    if(mark)melee.seen.add(target);return true;
+  }
+  function beginSaberMelee(runner,r,key,delay,ordinal){
+    const shape=saberSlashShape(r,key,ordinal),a=runner.a;
+    const attack={owner:a,team:a.team,type:'saber-melee',catalog:{r,descriptor:{key}}};
+    const melee={age:-delay,shape,attack,cause:catalogueAttackRow(attack),damage:shape.bullet.DamageParam.DamageValue/10,
+      origin:new THREE.Vector3(),contact:new THREE.Vector3(),objectFeet:new THREE.Vector3(),seen:new Set(),key,yaw:0,active:false};
+    // Allocate device callbacks once per swing. Their existing owners supply
+    // actual target geometry and HP/peer authority; do not mistake sphere
+    // centres for capsule feet or special blast radii for collider sizes.
+    melee.options={shapeContact:(object,point)=>{
+      if(melee.seen.has(object)||!object.pos)return false;
+      if(object.subId==='splashWall')return saberSlashWallContact(shape,melee.origin,melee.yaw,object.pos,
+        object.yaw||0,object.spec.wallWidth,object.spec.wallHeight,point);
+      const radius=object.kind==='wave'?.72:object.kind==='decoy'?.48:object.subId==='torpedo'?.3:
+        ['sprinkler','beakon'].includes(object.subId)?.42:finite(object.collisionRadius,finite(object.spec?.collisionRadius,0));
+      melee.objectFeet.copy(object.pos);melee.objectFeet.y-=radius;
+      const hit=saberMeleeContact(melee,object,melee.objectFeet,radius,2*radius,false);
+      if(hit)point.copy(melee.contact);return hit;
+    }};
+    melee.objectDamage=(_distance,object)=>{
+      if(!object||melee.seen.has(object))return 0;
+      melee.seen.add(object);return melee.damage;
+    };
+    return melee;
+  }
+  function saberMelee(runner,r,melee,dt) {
+    const a=runner.a,shape=melee.shape;
+    melee.age+=dt*HZ;
+    if(melee.age<-EPS)return;
+    // Sample ages 0,1,2,3 for AliveFrame=4. The expired fifth frame must
+    // never hit a newly entering actor; each victim/device is hit once.
+    if(melee.age+EPS>=finite(shape.bullet.MoveParam?.AliveFrame,0)){state(runner).melee=null;return;}
+    if(!melee.active){melee.yaw=placeSaberSlash(a,shape,melee.origin);melee.active=true;}
+    for(const enemy of G.actors||[])if(enemy!==a&&enemy.alive&&enemy.team!==a.team&&
+      saberMeleeContact(melee,enemy,enemy.pos,hurtboxRadius(enemy,PLAYER),hurtboxHeight(enemy,PLAYER)))
+      withObjectDamageCause(melee.attack,()=>G.projectiles.applyHit(a,enemy,melee.damage,r.id));
+    // Existing device APIs retain HP authority, object multipliers and network
+    // proposals. Their radius query is broad phase only; share the same shape
+    // and per-attack ledger across all four collision frames.
+    G.projectiles.s3DamageSubObjects?.(melee.attack,melee.origin,shape.bound,melee.objectDamage,melee.cause,melee.options);
+    G.projectiles.s3DamageSpecialObjects?.(melee.attack,melee.origin,shape.bound,melee.objectDamage,melee.cause,melee.options);
   }
   function swing(runner,r,input,s,dt) {
     const p=r.parameters,a=runner.a,brush=r.family==='brush';
@@ -1386,7 +1442,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   Actor.prototype._horizontal=function(dt,...args){
     if(writeCatalogDualiesVelocity(this,dt))return;
     const s=this.weaponRunner?.catalogState,motion=s?.roll||s?.lunge;
-    if(this.weapon.catalogRecord&&motion){this.vel.x=motion.direction.x*motion.speed;this.vel.z=motion.direction.z*motion.speed;return;}
+    if(this.weapon.catalogRecord&&motion){
+      if(motion===s.lunge)saberStepSpeed(motion,dt,this.grounded); // retail slide-ground state is not recovered
+      this.vel.x=motion.direction.x*motion.speed;this.vel.z=motion.direction.z*motion.speed;return;}
     return nativeHorizontal.call(this,dt,...args);
   };
   const launchedCanopies = new Set();
@@ -1541,6 +1599,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(s.canopy?.preparing&&(!input.fire||input.sub||a.form!=='kid'||a.remote||!a.alive||a.specialActive||a.superJumpState||this.aimingSub))s.canopy.preparing=false;
     // Cancel BEFORE the installed sub preparation owner checks main busy state.
     if(input.sub||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid')cancel(this);
+    if(r.family==='splatana'&&a.form!=='kid'&&(s.pending||s.melee||s.lunge))cancel(this);
     if(a.form==='squid'){
       if(s.chargeF>0||s.stream>0)cancel(this,true);
       if(s.stored){s.stored.remaining-=dt;if(s.stored.remaining<=EPS)s.stored=null;}
@@ -1559,6 +1618,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.bowTilt=clamp(s.bowTilt+finite(a.grounded?shot.BowJumpTiltSpeedReverse:shot.BowJumpTiltSpeedForward,a.grounded?-12:9)*dt*HZ,
         0,finite(shot.BowTiltDegreeMax,90));
     }
+    if(r.family==='splatana'&&a.form==='kid')recordSaberStick(s,a,dt*HZ,r.parameters.spl__WeaponSaberParam.SwingParam.StepStartStickHistoryFrame);
     s.stop=Math.max(0,s.stop-dt);
     if(r.family!=='splatling') {
       s.accuracy.advance(dt);
@@ -1576,8 +1636,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         :catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,age,
           a.s3?.modifiers?.actionAirSpread??0,t);
     }
-    if(s.lunge){s.lunge.remaining-=dt;if(s.lunge.remaining<=EPS)s.lunge=null;}
-    if(s.melee){s.melee.remaining-=dt;if(s.melee.remaining<=EPS){const melee=s.melee;s.melee=null;melee.fire();}}
+    if(s.lunge&&s.lunge.remaining<=EPS)s.lunge=null;
+    if(s.melee)saberMelee(this,r,s.melee,dt);
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){const pending=s.pending;s.pending=null;pending.fire();}}
     if(r.family==='slosher')this.slosh=s.pending?Math.max(0,a.weapon.windup-s.pending.remaining):-1;
     if(a.form!=='kid'||input.sub||this.aimingSub){
