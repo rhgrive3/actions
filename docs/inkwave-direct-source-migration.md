@@ -89,6 +89,12 @@ Run `node scripts/inkwave-source-migration-audit.mjs --all` to enumerate how man
 
 The October 18 head (`58466a1`) failed multiple GitHub Actions checks with `ERR_MODULE_NOT_FOUND: Cannot find package 'three' imported from native-level.mjs`. The direct `weapons-collision.mjs` import had unintentionally pulled the entire native-stage `engine.mjs` re-export graph into Node during build and test setup, whereas the old build-only injection had not. Both `weapons-collision.mjs` and `inkCollision.js` now import the narrow `native-projectile-sweep.mjs` helper instead. That helper uses the caller's Vector3 constructor for two scratch buffers, rather than introducing a second Three.js import or the full engine dependency. Dedicated Node regression coverage checks both catalogue and native swept collision without installing the `three` package. Browser geometry and performance parity still require full CI verification; static import changes are not automatically assumed to preserve runtime behavior.
 
+## Completed slice: Practice Range stage registries
+
+Previously `patches/practice-range/adapter.mjs` required the exact historical `MAP_LAYOUTS` literal. Moving Scorch and native stage entries into source invalidated that anchor and stopped multiple actual CI test cases. Practice Range is now inserted directly in `src/world/maps.js`, preserving the original order before Scorch/native entries. Its stage-module registry and surface slots (31–33) are also directly owned by `src/world/stages/index.js` and `src/world/stages/surfaces.js`. Their prior string rewrites and fail-closed duplicate-application checks were removed only for these three migrated source files. Unmigrated Practice Range adapters in `src/main.js`, shaders, menu and HTML remain guarded.
+
+The direct-source audit and Practice Range isolation tests now check that stage registry composition is unchanged. This explicitly fixes `INKWAVE practice range conflict (range layout registry)` introduced by the earlier incomplete migration.
+
 ## Next migration batches
 
 1. Audit and migrate simple performance and UI adapters with isolated upstream anchors. Keep each change small enough to compare composed output against the previous behavior.
