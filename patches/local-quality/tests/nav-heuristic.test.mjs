@@ -73,13 +73,20 @@ test('heuristic optimization is owned by readable source, not applied by a build
   assert(!BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/nav-heuristic-adapter.mjs'));
   const source = fs.readFileSync(new URL('../../../inkwave-public/src/game/nav.js', import.meta.url), 'utf8');
   const quality = fs.readFileSync(new URL('../adapter.mjs', import.meta.url), 'utf8');
+  const s3 = fs.readFileSync(new URL('../../splatoon3/adapter.mjs', import.meta.url), 'utf8');
+  const native = fs.readFileSync(new URL('../../native-stages/adapter.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(quality, /adaptNavHeuristic/);
+  assert.doesNotMatch(s3, /if \(rel === 'src\/game\/nav\.js'\)/);
+  assert.doesNotMatch(native, /if\(rel==='src\/game\/nav\.js'\)/);
+  assert.match(source, /import \{ buildNativeNav \} from/);
+  assert.match(source, /this\._heap \|\| \(this\._heap = new Heap\(\)\)/);
+  assert.match(source, /if \(acceptEdge && !acceptEdge\(e\)\) continue/);
   assert.match(source, /this\._h = new Float64Array\(N\)/);
   assert.match(source, /heap\.push\(a, heuristic\[a\] = h\(nodes\[a\]\)\)/);
   assert.match(source, /if \(seen\[e\.to\] !== st\) heuristic\[e\.to\] = h\(m\)/);
   assert.match(source, /heap\.push\(e\.to, ng \+ heuristic\[e\.to\]\)/);
   const composed = adaptBuildSource('src/game/nav.js', source);
-  assert.match(composed, /acceptEdge && !acceptEdge\(e\)/);
+  assert.equal(composed, source, 'NavGraph is now emitted without any source-rewrite adapter');
   assert.equal((composed.match(/this\._h = new Float64Array\(N\)/g) || []).length, 1);
 });
 
