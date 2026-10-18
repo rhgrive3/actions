@@ -23,15 +23,19 @@ test('#402 emitted Roller units retain distinct 0..4F field/player growth',async
  }
 });
 
-test('#402 actual field sweep catches mature near-wall glob without centerline crossing',async()=>{
+test('#402 actual field sweep: mature near-wall edge grazes, core stops the glob before its centerline crosses',async()=>{
  const f=await fixture({fidelity:true,floor:false}),a=f.make('roller');
  f.wall(5);a.weaponRunner.s3FlickVertical=false;f.projectiles.fireFlick(a,a.weapon);
  const p=f.projectiles.list.find(p=>p.fidelityRollerUnitIndex===0);
  p.prev.set(0,1,3.7);p.pos.set(0,1,4.6);
  p.age=0;p.fidelityPrevAge=0;f.projectiles._fidelityCollision=null;
  assert.equal(f.fidelityWorldHit(f.projectiles,p).hit,false,'initial .1 misses wall at4.95');
+ // The mature .6 sphere's edge reaching the wall is a graze (GLOB_GRAZE): the
+ // glob flies on until its core (.1) meets the face, still before the centerline crosses.
  p.age=2/60;p.fidelityPrevAge=2/60;f.projectiles._fidelityCollision=null;
+ assert.equal(f.fidelityWorldHit(f.projectiles,p).hit,false,'mature edge contact grazes');
+ p.prev.set(0,1,4.6);p.pos.set(0,1,5.5);f.projectiles._fidelityCollision=null;
  const hit=f.fidelityWorldHit(f.projectiles,p);assert.equal(hit.hit,true);
- near(hit.point.z,4.95);assert.ok(p.pos.z<4.95,'centerline has not crossed terrain');
+ near(hit.point.z,4.95);near(hit.dist,.25);assert.ok(p.prev.z+hit.dist<4.95,'centerline has not crossed terrain');
  f.projectiles.clear();
 });
