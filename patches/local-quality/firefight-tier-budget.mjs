@@ -13,13 +13,23 @@
  */
 export function selectNearInvisibleClipTail(list, maxTail) {
   if (!(maxTail > 0) || list.length <= 2) return false;
-  const ranked = [...list].sort((a, b) => b.weight - a.weight);
-  const tail = ranked.slice(2).reduce((sum, item) => sum + item.weight, 0);
-  const kept = ranked[0].weight + ranked[1].weight;
-  if (!(kept > 0) || !Number.isFinite(tail) || tail > maxTail) return false;
-  const a = ranked[0], b = ranked[1];
+  // Allocation-free O(n) selection. Sorting and spreading a fresh array on
+  // every enemy's 60Hz motion tick would itself become a new hotspot.
+  let a = -1, b = -1, sum = 0;
+  for (let i = 0; i < list.length; i++) {
+    const w = list[i].weight;
+    if (!(w >= 0) || !Number.isFinite(w)) return false;
+    sum += w;
+    if (a < 0 || w > list[a].weight) { b = a; a = i; }
+    else if (b < 0 || w > list[b].weight) b = i;
+  }
+  if (b < 0 || !Number.isFinite(sum)) return false;
+  const kept = list[a].weight + list[b].weight;
+  const tail = Math.max(0, sum - kept);
+  if (!(kept > 0) || tail > maxTail) return false;
+  const first = list[a], second = list[b];
   for (let i = list.length - 1; i >= 0; i--) {
-    if (list[i] !== a && list[i] !== b) list.splice(i, 1);
+    if (list[i] !== first && list[i] !== second) list.splice(i, 1);
   }
   for (const item of list) item.weight /= kept;
   return true;
