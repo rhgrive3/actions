@@ -16,6 +16,19 @@ const rows=progress.rows;for(const [view,v] of Object.entries({front:[0,0,2],obl
 const geometry=root.children.map(m=>({vertices:m.geometry.attributes.position.count,triangles:m.geometry.index?m.geometry.index.count/3:m.geometry.attributes.position.count/3}));scene.remove(root);c.dispose();
 G.teamColors=[new THREE.Color(0xe6e900),new THREE.Color(0x6340db)];G.level={blocks:[],groundHeight:()=>0};G.paint={sample:()=>1,splat:()=>0};G.match={playing:()=>true,canRespawn:()=>false};G.physics={los:()=>true,raycast:(_a,_b,_c,hit)=>{hit.hit=false;return hit;}};G.projectiles=Object.fromEntries(['fireShooter','fireDualies','fireCharger','fireSplatling','fireBlaster','fireSlosh','throwBomb','fireFlick'].map(n=>[n,()=>{}]));
 const states=[];
+// Verify actual visible posed vertices, including skinning, stay inside the fixed camera.
+// Identical camera rules are used for both revisions; never auto-reframe per candidate.
+const coverage=[];
+function assertCoverage(root,name){
+ root.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+ const p=new THREE.Vector3();let count=0,maxX=0,maxY=0;
+ root.traverseVisible(o=>{if(!o.isMesh||!o.geometry?.attributes.position)return;
+ const mats=Array.isArray(o.material)?o.material:[o.material];if(mats.every(m=>!m.visible||m.opacity===0))return;
+ for(let i=0;i<o.geometry.attributes.position.count;i++){o.getVertexPosition(i,p);p.applyMatrix4(o.matrixWorld).project(camera);if(p.z< -1||p.z>1)throw Error(name+' depth clipping');maxX=Math.max(maxX,Math.abs(p.x));maxY=Math.max(maxY,Math.abs(p.y));count++;}
+ });
+ coverage.push({name,count,maxX,maxY});if(maxX>.98||maxY>.98)throw Error(name+' actor clipping '+JSON.stringify({maxX,maxY}));
+}
+
 for(const sourceEnabled of [true,false]){
  class SelectedCharacter extends Character{constructor(opts){super({...opts,sourceMotion:sourceEnabled});}}
  const a=new Actor({team:0,isLocal:true,name:'squid-source-qa-fixed',weapon:'shooter',CharacterClass:SelectedCharacter,style:{hair:0,hat:0,skin:2,outfit:0,eyes:0}}),ch=a.character;ch.actor=a;ch.onEvent=null;scene.add(ch.root);G.actors=[a];a.grounded=a.ground.hit=true;
@@ -29,15 +42,15 @@ for(const sourceEnabled of [true,false]){
   for(let i=0;i<=spec.frames;i++){
    if(i>0)step(spec.speed,spec.dir||[0,1]);
    if(samples.includes(i)){
-    const target=ch.root.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,.4,0));camera.position.copy(target).add(new THREE.Vector3(1.3,.9,-1.3));camera.lookAt(target);camera.updateMatrixWorld(true);await renderer.compileAsync(scene,camera);renderer.render(scene,camera);renderer.getContext().finish();const name=mode+'-'+spec.name+'-temporal-'+i;progress.stage=name;await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL());rows.push({name,mode,state:spec.name,sampleFrame:i,temporal:true,sourceDebug:ch.sourceMotion?.debug?.squid??null,wig:ch.u.uWig.value.toArray()});
+    const target=ch.root.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,.65,0));camera.position.copy(target).add(new THREE.Vector3(3.2,1.2,-3.2));camera.lookAt(target);camera.updateMatrixWorld(true);await renderer.compileAsync(scene,camera);renderer.render(scene,camera);renderer.getContext().finish();const name=mode+'-'+spec.name+'-temporal-'+i;progress.stage=name;assertCoverage(ch.root,name);await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL());rows.push({name,mode,state:spec.name,sampleFrame:i,temporal:true,sourceDebug:ch.sourceMotion?.debug?.squid??null,wig:ch.u.uWig.value.toArray()});
    }
   }
   const snap={mode,state:spec.name,form:ch.form,wig:ch.u.uWig.value.toArray(),pivot:{position:ch.squid.pivot.position.toArray(),quaternion:ch.squid.pivot.quaternion.toArray(),scale:ch.squid.pivot.scale.toArray()},rotations:Object.fromEntries(['body','ghost','dark','eyes'].map(k=>[k,ch.squid[k].rotation.toArray()])),sourceRigRootQuaternion:ch.sourceMotion?.squidRig?.root.quaternion.toArray()??null,sourceStatus:ch.sourceMotion?.status??null,sourceActive:!!ch.sourceMotion?.active,sourceDebug:ch.sourceMotion?.debug?.squid??null};states.push(snap);
   for(const [view,v]of Object.entries({front:[0,.25,-2],oblique:[1.3,.9,-1.3],side:[2,.4,0],back:[0,.4,2]})){
-   const target=ch.root.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,spec.form==='kid'?.65:.12,0));camera.position.copy(target).add(new THREE.Vector3(...v));camera.lookAt(target);camera.updateMatrixWorld(true);await renderer.compileAsync(scene,camera);renderer.render(scene,camera);renderer.getContext().finish();const name=mode+'-'+spec.name+'-'+view;progress.stage=name;await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL());rows.push({name,mode,state:spec.name,view,sourceStatus:snap.sourceStatus,sourceActive:snap.sourceActive,sourceDebug:snap.sourceDebug});
+   const target=ch.root.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,spec.form==='kid'?.65:.12,0));camera.position.copy(target).add(new THREE.Vector3(...v).multiplyScalar(spec.form==='kid'?1.8:1.35));camera.lookAt(target);camera.updateMatrixWorld(true);await renderer.compileAsync(scene,camera);renderer.render(scene,camera);renderer.getContext().finish();const name=mode+'-'+spec.name+'-'+view;progress.stage=name;assertCoverage(ch.root,name);await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL());rows.push({name,mode,state:spec.name,view,sourceStatus:snap.sourceStatus,sourceActive:snap.sourceActive,sourceDebug:snap.sourceDebug});
   }
  }
  scene.remove(ch.root);ch.dispose();G.actors=[];
 }
-scene.environment=null;env.dispose();renderer.dispose();return {status:'rendered-awaiting-visual-review',caseCount:rows.length,scope:'actual emitted unposed squid geometry-rest surface (local placement transforms excluded) plus actual Actor source/fallback dry/swim/turn/emergence sequence; production day Environment; driven actors, not full match physics',rows,geometry,states,lightingReceipt};
+scene.environment=null;env.dispose();renderer.dispose();return {status:'rendered-awaiting-visual-review',caseCount:rows.length,scope:'actual emitted unposed squid geometry-rest surface (local placement transforms excluded) plus actual Actor source/fallback dry/swim/turn/emergence sequence; production day Environment; driven actors, not full match physics',rows,geometry,states,coverage,lightingReceipt};
 }
