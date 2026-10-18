@@ -29,6 +29,7 @@ import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catal
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
 import { paintDualiesSlide } from './dualies-slide-paint.mjs';
+import { catalogDualiesTurret, writeCatalogDualiesVelocity } from './catalog-dualies-motion.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
 // retain their mature owners. Canonical kit identities use the pinned table.
@@ -296,7 +297,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
     slidePaint(r,s,true);
-    s.roll = null; s.slideRunner = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;
+    s.roll = null; s.slip=null; s.slideRunner = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;s.turretHeld=false;s.rolls=0;
     s.rollingFrames=0;s.rollingDash=false;
     if (s.canopy && !s.canopy.launched) { s.canopy.open = false; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
@@ -306,7 +307,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);
     const s = this.catalogState;
-    if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee) return false;
+    if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee && !(s?.stop>EPS)) return false;
     return !!(s && (s.pending || s.melee || s.chargeF>0 || s.stream>0 || s.roll || s.lunge || s.stop>EPS));
   };
   R.moveSpeed = function() {
@@ -1161,7 +1162,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const burst=param.TripleShotSpanFrame!=null;
     const fire=()=> {
       if(!pay(runner,finite(param.InkConsume,.0092)*100*inkMod(a))){s.burst=0;runner.cooldown=finite(param.RepeatFrame,6)/HZ;return;}
-      const key = r.sourceActor==='WeaponBlasterPrecision'&&!a.grounded?'blaster-jump':s.turret>0?'turret':variable?'variable':'normal';
+      const key = r.sourceActor==='WeaponBlasterPrecision'&&!a.grounded?'blaster-jump':r.family==='dualies'&&catalogDualiesTurret(s)?'turret':variable?'variable':'normal';
       emitSingle(runner,r,key);runner.firingT=.35;
       if(burst){if(!s.burst)s.burst=3;s.burst--;s.burstWait=finite(param.RepeatFrame,4)/HZ;
         if(!s.burst)runner.cooldown=(finite(param.TripleShotSpanFrame,8)+finite(param.PostDelayFrame,2))/HZ;}
@@ -1323,14 +1324,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function dualies(runner,r,input,s,dt) {
     const a=runner.a,t=r.parameters.SideStepParam||{};
     if(s.slideRunner){
-      slidePaint(r,s,!s.roll);
-      if(!s.roll)s.slideRunner=null;
+      slidePaint(r,s,!s.roll&&!s.slip);
+      if(!s.roll&&!s.slip)s.slideRunner=null;
     }
+    if(s.slip){s.slip.t=Math.min(s.slip.dur,s.slip.t+dt);if(s.slip.t+EPS>=s.slip.dur)s.slip=null;}
     if(s.roll){
       const roll=s.roll;roll.remaining-=dt;roll.t=Math.min(roll.dur,roll.t+dt);
-      a.vel.x=roll.direction.x*roll.speed;a.vel.z=roll.direction.z*roll.speed;
       if(roll.remaining<=EPS){
-        s.roll=null;s.turret=roll.recovery;
+        s.roll=null;s.turret=roll.recovery;s.turretHeld=true;
+        // Sparse omitted distances or timing are not fabricated. Only the
+        // explicit ground/air distance + frame pair admits a new slip phase.
+        const slipDistance=a.grounded?t.SlipMoveDistGnd:t.SlipMoveDistAir;
+        if(slipDistance>0&&t.SlipMoveFrame>0)s.slip={t:0,dur:t.SlipMoveFrame/HZ,distance:slipDistance,direction:roll.direction};
       }else{
         // Tetra may fire while travelling, but those rounds still use the
         // ordinary cone, collision row and cadence. Recovery starts only once
@@ -1341,27 +1346,36 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }else if(s.turret>0){
       s.turret=Math.max(0,s.turret-dt);if(s.turret<=EPS)s.rolls=0;
     }
+    const funded=a.ink+EPS>=finite(weaponParam(r).InkConsume,.0092)*100*inkMod(a);
+    if(s.turret>EPS&&input.fire&&funded)s.turretHeld=true;
+    if(s.turretHeld&&(!input.fire||s.turret<=EPS&&a.intent.move.lengthSq()>.0001||!funded))s.turretHeld=false;
+    const shot=weaponParam(r),ground=finite(shot.Stand_DegSwerve,0);
+    runner.spread=catalogDualiesTurret(s)?finite(shot.LapOver_DegSwerve,0)
+      :catalogAngularEnvelope('dualies',!!a.grounded,ground,finite(shot.Jump_DegSwerve,ground),s.jumpAge,a.s3?.modifiers?.actionAirSpread??0,shot);
     const old=runner.cooldown;auto(runner,r,input,s,dt);
-    if(runner.cooldown>old+EPS&&s.turret>0)runner.cooldown=finite(weaponParam(r).LapOver_RepeatFrame,4)/HZ;
+    if(runner.cooldown>old+EPS&&catalogDualiesTurret(s))runner.cooldown=finite(weaponParam(r).LapOver_RepeatFrame,4)/HZ;
   }
   const nativeDodge=R.tryDodge,nativeHorizontal=Actor.prototype._horizontal;
   R.tryDodge=function(move){
     const a=this.a,r=a.weapon.catalogRecord;
     if(!r)return nativeDodge?.call(this,move);
-    if(r.family!=='dualies'||!a.intent.fire||!move||move.lengthSq()<=EPS)return false;
+    if(r.family!=='dualies'||a.remote||!a.alive||a.form!=='kid'||a.specialActive||a.superJumpState||a.climbing||this.aimingSub||a.intent.sub||!a.intent.fire||!move||move.lengthSq()<=EPS)return false;
     const s=state(this),t=r.parameters.SideStepParam||{};
-    if(s.roll||s.rolls>=finite(t.RepeatCnt,2)||!pay(this,finite(t.InkConsume,.07)*100*inkMod(a)))return false;
+    if(s.roll||s.rolls>=finite(t.RepeatCnt,2)||!pay(this,finite(t.InkConsume,.07)*100*inkMod(a),finite(t.InkRecoverStop,a.weapon.inkRecoverStop*HZ)/HZ))return false;
     // Flush the previous endpoint before a same-tick chained roll replaces
     // its distance accumulator; otherwise the last fraction of the stroke
     // disappears at turns. Denied rolls never create a new stroke.
     slidePaint(r,s,true);
     const duration=finite(t.MoveFrame,12)/HZ,direction=move.clone().setY(0).normalize();
-    s.roll={remaining:duration,t:0,dur:duration,speed:finite(t.MoveDist,5)/duration,direction,paintStart:a.pos.clone()};s.rolls++;
+    s.slip=null;s.turretHeld=false;
+    s.roll={remaining:duration,t:0,dur:duration,distance:finite(t.MoveDist,5),speed:finite(t.MoveDist,5)/duration,
+      kd:a.grounded?t.MoveStepKd:t.MoveStepKd_Air,direction,paintStart:a.pos.clone(),startup:0,startupDur:0,
+      token:this.s3CatalogDodgeSequence=(this.s3CatalogDodgeSequence||0)+1};s.rolls++;
     s.slideRunner={a,dodge:s.roll,_dodgeDir:direction};
     s.roll.recovery=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameMove_Last:t.UnrelaxFrameMove,32)/HZ;
     s.turret=0;
     s.stop=finite(s.rolls===finite(t.RepeatCnt,2)?t.UnrelaxFrameNoSquid_Last:t.UnrelaxFrameNoSquid,32)/HZ+duration;
-    a.vel.x=direction.x*s.roll.speed;a.vel.z=direction.z*s.roll.speed;
+    writeCatalogDualiesVelocity(a,DT);
     this.cooldown=finite(t.UnrelaxFrameNoWeapon,0)/HZ;
     // The native Character expects the world move transformed to root space
     // and this weapon's sourced MoveFrame. The gameplay roll above is unchanged.
@@ -1370,6 +1384,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     emit('weapon:dodge',{actor:a,dir:direction.clone()});return true;
   };
   Actor.prototype._horizontal=function(dt,...args){
+    if(writeCatalogDualiesVelocity(this,dt))return;
     const s=this.weaponRunner?.catalogState,motion=s?.roll||s?.lunge;
     if(this.weapon.catalogRecord&&motion){this.vel.x=motion.direction.x*motion.speed;this.vel.z=motion.direction.z*motion.speed;return;}
     return nativeHorizontal.call(this,dt,...args);
@@ -1525,7 +1540,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=state(this);
     if(s.canopy?.preparing&&(!input.fire||input.sub||a.form!=='kid'||a.remote||!a.alive||a.specialActive||a.superJumpState||this.aimingSub))s.canopy.preparing=false;
     // Cancel BEFORE the installed sub preparation owner checks main busy state.
-    if(input.sub||a.specialActive||!a.alive)cancel(this);
+    if(input.sub||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid')cancel(this);
     if(a.form==='squid'){
       if(s.chargeF>0||s.stream>0)cancel(this,true);
       if(s.stored){s.stored.remaining-=dt;if(s.stored.remaining<=EPS)s.stored=null;}
@@ -1557,7 +1572,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const t=weaponParam(r),ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
       const age=r.family==='splatling'&&Number.isFinite(a.s3SplatlingJumpAgeFrames)
         ?a.s3SplatlingJumpAgeFrames/HZ:s.jumpAge;
-      this.spread=r.family==='dualies'&&s.turret>0?finite(t.LapOver_DegSwerve,0)
+      this.spread=r.family==='dualies'&&catalogDualiesTurret(s)?finite(t.LapOver_DegSwerve,0)
         :catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,age,
           a.s3?.modifiers?.actionAirSpread??0,t);
     }

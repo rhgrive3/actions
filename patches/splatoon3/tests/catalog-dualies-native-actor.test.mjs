@@ -57,7 +57,8 @@ test('catalog Dualies feed native roll and turret Character pose without mutatin
     assert.equal(view.dodge.t,0,'sourced roll age is initially zero');
     assert.equal(view.dodge.dur,a.weapon.catalogRecord.parameters.SideStepParam.MoveFrame/60);
     assert.strictEqual(view._dodgeDir,r.catalogState.roll.direction,'native smooth motion reads actual world dodge direction');
-    assert.ok(view.lockT>0&&view.s3Turret,'render view sees the source post-roll turret');
+    assert.equal(view.lockT,0,'a moving roll has not entered recovery');
+    assert.equal(view.s3Turret??false,false,'a moving roll is not post-roll turret presentation');
     assert.equal(ch.dodgeDur,a.weapon.catalogRecord.parameters.SideStepParam.MoveFrame/60);
     assert.ok(Math.abs(ch.dodgeX)<1e-8&&Math.abs(ch.dodgeZ-1)<1e-8,'animation direction is root-relative');
     // Drive the actual Character state/pose owner first, including the
