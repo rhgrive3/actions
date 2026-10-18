@@ -10,6 +10,7 @@ import { G, emit, clamp, lerp, smoothstep } from '../core/ctx.js';
 import { WEAPONS, SUB, SPECIALS, PLAYER } from '../config.js';
 import { Physics, Hit } from './physics.js';
 import { InkFlightRuntime } from './inkFlightRuntime.js';
+import { chargerLineRadius, chargerLineSpacing, chargerEndRadius, chargerFallTime, CHARGER_FALL_GRAVITY } from './chargerTuning.js';
 import { profileFor, launchSpeed, correctInkAim, referenceReach } from './inkFlight.js';
 
 // local-player gamepad rumble (subtle; no-op without a pad or with settings.rumble = 0)
@@ -538,6 +539,8 @@ export class Projectiles {
     this.bombs = [];
     this.clouds = [];
     this.beams = [];
+    // Delayed charger ink from high platforms; fixed landing targets avoid per-frame raycasts.
+    this.chargerDrops = []; this.chargerDropPool = [];
     // glossy ink teardrops (+ satellite droplets), one instanced draw
     const geo = new THREE.SphereGeometry(1, 14, 12).rotateX(Math.PI / 2);
     this.blobShape = new THREE.InstancedBufferAttribute(new Float32Array(MAX_BLOBS * 4), 4);
@@ -591,6 +594,7 @@ export class Projectiles {
     this.clouds.length = 0;
     for (const b of this.beams) { b.mesh.visible = false; this.beamPool.push(b.mesh); }
     this.beams.length = 0;
+    this.chargerDropPool.push(...this.chargerDrops); this.chargerDrops.length = 0;
     for (const [, s] of this.sights) { this.scene.remove(s); s.material.dispose(); }
     this.sights.clear();
     this.blobs.count = 0;
@@ -1000,24 +1004,46 @@ export class Projectiles {
       if (bh && (!victim || bh.dist < victim.d)) { victim = null; len = bh.dist; bossHit = true; G.boss.hit(a, dmg, bh.target, 'charger', bh.point.clone()); }
     }
     if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger'); }
-    // paint along the line (projected to the ground)
+    // Paint one *narrow* strip regardless of charge. The previous circular
+    // 0.55-0.66-radius lobed stamps and spatter shader made this several times
+    // wider than the intended tracer (including the first tap).
     let area = 0;
-    const step = w.lineSplatEvery;
+    const stripRadius = chargerLineRadius(w, charge);
+    const step = chargerLineSpacing(charge);
     for (let s = 1.2; s < len - 0.3; s += step) {
       _v2.copy(m).addScaledVector(dir, s);
-      const g = G.physics.raycast(_v2, DOWN, 3.5, _hit2, true);
-      if (g.hit) area += G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.lineRadius * (0.8 + charge * 0.4), a.team, { seed: Math.random(), stretch: dir, stretchAmt: 1.2 });
+      const g = G.physics.raycast(_v2, DOWN, Math.max(3.5, _v2.y - PLAYER.waterY + 6), _hit2, true);
+      const seed = Math.random();
+      if (g.hit && g.dist <= 3.5) {
+        area += G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.015), stripRadius, a.team,
+          { seed, kind: 'charger-line', face: g.face, stretch: dir, stretchAmt: 0.65 });
+      } else if (this.chargerDrops.length < 192) {
+        // A shallow ground probe is not a licence to delete airborne ink.
+        // Cache the nearest vertical impact once, let the drop remain visibly
+        // airborne, and claim turf only at its actual landing time.
+        const p = this.chargerDropPool.pop() || {
+          pos: new THREE.Vector3(), start: new THREE.Vector3(), target: new THREE.Vector3(),
+          normal: new THREE.Vector3(), direction: new THREE.Vector3(),
+        };
+        p.pos.copy(_v2); p.start.copy(_v2); p.direction.copy(dir);
+        if (g.hit) { p.target.copy(g.point); p.normal.copy(g.normal); p.face = g.face; }
+        else { p.target.copy(_v2).setY(PLAYER.waterY - 1.8); p.normal.copy(UP); p.face = -1; }
+        p.age = 0; p.life = Math.max(0.05, chargerFallTime(p.start.y - p.target.y));
+        p.owner = a; p.team = a.team; p.seed = seed; p.radius = stripRadius;
+        this.chargerDrops.push(p);
+      }
     }
     if (hit.hit && !victim && !bossHit) {
-      _v2.copy(hit.point).addScaledVector(hit.normal, 0.12);
-      area += G.paint.splat(_v2, w.impactRadius * (0.6 + 0.4 * charge), a.team, { seed: Math.random(), stretch: dir, stretchAmt: 0.6 });
+      _v2.copy(hit.point).addScaledVector(hit.normal, 0.015);
+      area += G.paint.splat(_v2, chargerEndRadius(w, charge), a.team,
+        { seed: Math.random(), kind: 'charger-line', face: hit.face, stretch: dir, stretchAmt: 0.4 });
       G.fx?.burst(hit.point, hit.normal, a.color, { count: 10, speed: 4, size: 0.09, paint: false });
       if (a.isLocal || a._nearCamera()) G.audio?.play('ink_hit_wall', { pos: hit.point, volume: 0.6 });
     }
     {
       const end = new THREE.Vector3().copy(m).addScaledVector(dir, len);
       emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone(), charge, len });
-      emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal.clone() : dir.clone().negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });
+      emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal.clone() : dir.clone().negate(), team: a.team, kind: 'charger', radius: chargerEndRadius(w, charge) });
     }
     a.addTurf(area);
     // beam visual: tracer front races out, white-hot core snaps off, the ink sheath thins and breaks into dashes
@@ -1184,10 +1210,33 @@ export class Projectiles {
       finally { if (p.ghost && nm) nm.mute--; }
     }
     this.inkFlight.updateDrops();
+    this._updateChargerDrops(dt);
     this._updateBombs(dt);
     this._updateClouds(dt);
     this._updateBeams(dt);
     this._draw();
+  }
+
+  // High-angle / high-platform charger paint persists in flight and is
+  // promoted to turf on impact. O(active drops), no collision sweep per frame.
+  _updateChargerDrops(dt) {
+    for (let i = this.chargerDrops.length - 1; i >= 0; i--) {
+      const p = this.chargerDrops[i];
+      p.age = Math.min(p.life, p.age + dt);
+      p.pos.copy(p.start);
+      p.pos.y = Math.max(p.target.y, p.start.y - 0.5 * CHARGER_FALL_GRAVITY * p.age * p.age);
+      if (p.age < p.life) continue;
+      if (p.face >= 0) {
+        _v.copy(p.target).addScaledVector(p.normal, 0.015);
+        const area = G.paint.splat(_v, p.radius, p.team, {
+          seed: p.seed, kind: 'charger-line', face: p.face, stretch: p.direction, stretchAmt: 0.65,
+        });
+        p.owner.addTurf(area);
+        emit('weapon:impact', { pos: p.target.clone(), normal: p.normal.clone(), team: p.team, kind: 'drop', radius: p.radius });
+      }
+      this.chargerDrops[i] = this.chargerDrops[this.chargerDrops.length - 1];
+      this.chargerDrops.pop(); this.chargerDropPool.push(p);
+    }
   }
 
   // one round, one frame; true = it's done
@@ -1504,8 +1553,9 @@ export class Projectiles {
   _draw() {
     let n = 0;
     const B = this.blobs, shp = this.blobShape.array;
+    const reserve = Math.min(64, this.chargerDrops.length);
     for (const p of this.list) {
-      if (n >= MAX_BLOBS - 5) break;
+      if (n >= MAX_BLOBS - 5 - reserve) break;
       if (p.delay > 0) continue;
       const sp = p.vel.length();
       _dir.copy(p.vel).multiplyScalar(1 / Math.max(sp, 1e-3));
@@ -1546,7 +1596,19 @@ export class Projectiles {
         n++;
       }
     }
-    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);
+    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS - reserve);
+    // Persistent falling charger beads share the existing instanced ink mesh:
+    // no new draw calls, shaders or per-frame geometries.
+    _q.setFromUnitVectors(ZAX, DOWN);
+    for (const p of this.chargerDrops) {
+      if (n >= MAX_BLOBS) break;
+      _s.setScalar(Math.min(0.11, p.radius * 0.33));
+      _m.compose(p.pos, _q, _s);
+      B.setMatrixAt(n, _m); B.setColorAt(n, p.owner.color);
+      const o = n * 4;
+      shp[o] = 1.4; shp[o + 1] = 0.025; shp[o + 2] = p.seed * 40 + p.age * 11; shp[o + 3] = 0;
+      n++;
+    }
     B.count = n;
     // count=0 already suppresses the draw; do not upload unchanged backing buffers.
     if (!n) return;
