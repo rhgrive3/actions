@@ -277,7 +277,7 @@ test("Bloblobber actual 60Hz velocity integrator honors source 3F straight, brak
   assert.ok(p.vel.distanceTo(afterFree)<1e-8,'frame 5 uses free drag and gravity');
 });
 
-test('Bloblobber small-bubble floor rebounds preserve horizontal momentum, wall remains exactly 0.8x',async()=>{
+test('Bloblobber small-bubble floor speed cap and independent 0.8x wall speed',async()=>{
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
   const row=record('WeaponSlosherBathtub'),actor=f.make(row.id);
   actor.form='kid';actor.ink=100;actor.intent.fire=true;f.tick(actor,15);actor.intent.fire=false;
@@ -298,8 +298,10 @@ test('Bloblobber small-bubble floor rebounds preserve horizontal momentum, wall 
   }
   reset(30,-25,0);
   assert.equal(f.G.projectiles._step(p,1/60),false,'first floor touch rebounds');
-  assert.ok(Math.abs(p.vel.x-30)<1e-8,'ground contact must not shorten forward horizontal speed');
-  assert.ok(Math.abs(p.vel.y-.35*60)<1e-8,'sourced .35 cap applies to outward bounce-normal velocity only');
+  assert.ok(Math.abs(p.vel.length()-.35*60)<1e-8,
+    'sourced 0.35 speed cap applies to the entire outgoing floor-bounce velocity');
+  assert.ok(p.vel.x>0 && p.vel.y>0,
+    'the floor rebound keeps forward travel and reflects upward without reversing its direction');
   assert.equal(p.catalog.groundBounces,1);
   floor=false;reset(30,0,4);
   const before=p.vel.length();
