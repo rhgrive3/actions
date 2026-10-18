@@ -9,6 +9,7 @@ const worldProps = fs.readFileSync(new URL('../../inkwave-public/src/world/props
 const marinaVessels = fs.readFileSync(new URL('../../inkwave-public/src/world/props-marina-vessels.js', import.meta.url), 'utf8');
 const lobbySetTexture = fs.readFileSync(new URL('../../inkwave-public/src/game/lobbySet-tex.js', import.meta.url), 'utf8');
 const uiIcons = fs.readFileSync(new URL('../../inkwave-public/src/ui/ui-icons.js', import.meta.url), 'utf8');
+const runtimeUiStrings = fs.readFileSync(new URL('../../patches/splatoon3/runtime/ui-strings.mjs', import.meta.url), 'utf8');
 const muralAdapter = fs.readFileSync(new URL('../../patches/local-quality/mural-atlas-adapter.mjs', import.meta.url), 'utf8');
 const mainComposition = fs.readFileSync(new URL('../inkwave-source-composition.mjs', import.meta.url), 'utf8');
 const composition = fs.readFileSync(new URL('../../patches/local-quality/adapter.mjs', import.meta.url), 'utf8');
@@ -55,6 +56,8 @@ test('ZEVANT stage and lobby lettering is directly owned by authored game module
   assert.match(marinaVessels, /text\(B, 'ZEVANT', 0\.11/);
   assert.match(lobbySetTexture, /const word = 'ZEVANT', size =/);
   assert.match(uiIcons, /logoMarkup\(title = 'ZEVANT'/);
+  assert.match(runtimeUiStrings, /The ZEVANT servers didn’t answer/);
+  assert(!mainComposition.includes("  'patches/splatoon3/runtime/ui-strings.mjs': ["));
   for (const path of ['src/world/props.js', 'src/world/props-marina-vessels.js', 'src/game/lobbySet-tex.js', 'src/ui/ui-icons.js']) {
     assert(!mainComposition.includes("  '" + path + "': ["), path + ' must not require late string replacement');
   }
