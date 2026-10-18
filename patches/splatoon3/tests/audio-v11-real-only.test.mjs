@@ -114,6 +114,9 @@ test('Shooter sample omitted from a corrupt/incomplete list never admits synthet
  audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest([clip('charger','fire','other.mp3')])});
  audio._realS3Loader.bank.authorized.fetcher=async()=>res;
  await assert.rejects(audio.requireRecordedMainShot('shooter'),/スプラシューターの本家MP3/);
+ assert.equal(audio.playWeapon('shooter','fire',{actor:{isLocal:true}}),null,
+   'an incomplete manifest may not create a fabricated Splattershot gunshot');
+ assert.equal(audio.weaponBank().cache.size,0,'Shooter synthesis remains prohibited');
  assert.equal(audio.played.length,0);
  assert.equal(sources.length,0);
  audio.disposeWeaponAudio();
