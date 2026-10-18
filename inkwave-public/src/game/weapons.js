@@ -10,7 +10,7 @@ import { G, emit, clamp, lerp, smoothstep } from '../core/ctx.js';
 import { WEAPONS, SUB, SPECIALS, PLAYER } from '../config.js';
 import { Physics, Hit } from './physics.js';
 import { InkFlightRuntime } from './inkFlightRuntime.js';
-import { chargerLineRadius, chargerLineSpacing, chargerEndRadius, chargerFallTime, CHARGER_FALL_GRAVITY } from './chargerTuning.js';
+import { chargerLineRadius, chargerLineSpacing, chargerLineStretch, chargerEndRadius, chargerFallTime, CHARGER_FALL_GRAVITY } from './chargerTuning.js';
 import { profileFor, launchSpeed, correctInkAim, referenceReach } from './inkFlight.js';
 
 // local-player gamepad rumble (subtle; no-op without a pad or with settings.rumble = 0)
@@ -1009,14 +1009,15 @@ export class Projectiles {
     // wider than the intended tracer (including the first tap).
     let area = 0;
     const stripRadius = chargerLineRadius(w, charge);
-    const step = chargerLineSpacing(charge);
+    const stripStretch = chargerLineStretch(w, charge);
+    const step = chargerLineSpacing(w, charge);
     for (let s = 1.2; s < len - 0.3; s += step) {
       _v2.copy(m).addScaledVector(dir, s);
       const g = G.physics.raycast(_v2, DOWN, Math.max(3.5, _v2.y - PLAYER.waterY + 6), _hit2, true);
       const seed = Math.random();
       if (g.hit && g.dist <= 3.5) {
         area += G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.015), stripRadius, a.team,
-          { seed, kind: 'charger-line', face: g.face, stretch: dir, stretchAmt: 0.65 });
+          { seed, kind: 'charger-line', face: g.face, stretch: dir, stretchAmt: stripStretch });
       } else if (this.chargerDrops.length < 192) {
         // A shallow ground probe is not a licence to delete airborne ink.
         // Cache the nearest vertical impact once, let the drop remain visibly
@@ -1029,7 +1030,7 @@ export class Projectiles {
         if (g.hit) { p.target.copy(g.point); p.normal.copy(g.normal); p.face = g.face; }
         else { p.target.copy(_v2).setY(PLAYER.waterY - 1.8); p.normal.copy(UP); p.face = -1; }
         p.age = 0; p.life = Math.max(0.05, chargerFallTime(p.start.y - p.target.y));
-        p.owner = a; p.team = a.team; p.seed = seed; p.radius = stripRadius;
+        p.owner = a; p.team = a.team; p.seed = seed; p.radius = stripRadius; p.stretchAmt = stripStretch;
         this.chargerDrops.push(p);
       }
     }
@@ -1229,7 +1230,7 @@ export class Projectiles {
       if (p.face >= 0) {
         _v.copy(p.target).addScaledVector(p.normal, 0.015);
         const area = G.paint.splat(_v, p.radius, p.team, {
-          seed: p.seed, kind: 'charger-line', face: p.face, stretch: p.direction, stretchAmt: 0.65,
+          seed: p.seed, kind: 'charger-line', face: p.face, stretch: p.direction, stretchAmt: p.stretchAmt,
         });
         p.owner.addTurf(area);
         emit('weapon:impact', { pos: p.target.clone(), normal: p.normal.clone(), team: p.team, kind: 'drop', radius: p.radius });
