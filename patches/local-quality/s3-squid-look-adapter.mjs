@@ -92,15 +92,23 @@ export function adaptS3SquidLook(rel, code) {
     return once(code, 'export function makeSquidMaterial(u, ghost = false) {', SQUID_EYE_MATERIAL + 'export function makeSquidMaterial(u, ghost = false) {', 'squid-only eye surface');
   }
   if (rel === 'src/game/character-geo.js') {
+    // Bounded silhouette correction from Nintendo ikahito 2.9–3.4s:
+    // flatten the inflated mantle without scaling the rig or human geometry.
+    // Surface-following eye/band coordinates and thickness metadata use SQ_ZS too.
+    code = once(code, 'const SQ_ZS = 0.86;', 'const SQ_ZS = 0.62;', 'flatter squid mantle');
+    code = once(code, '[0.126, 0.03], [0.131, 0.08], [0.127, 0.13]', '[0.108, 0.03], [0.112, 0.08], [0.116, 0.13]', 'less bulbous lower mantle');
     // the two long feelers hang in front of the face (the +Z side, which faces the camera after the half turn),
     // as in the clips; the other arms are short, stubby and hang close together instead of splaying out
     code = once(code, '    const feeler = k === 4 || k === 6;', '    const feeler = k === 0 || k === N - 1;', 'feelers under the face');
     code = once(code,
       '    const len = lerp(0.15, 0.108, Math.max(0, Math.cos(a))) * (k % 2 ? 0.92 : 1.0) * (feeler ? 1.3 : 1);',
-      '    const len = lerp(0.15, 0.108, Math.max(0, Math.cos(a))) * (k % 2 ? 0.92 : 1.0) * (feeler ? 2.0 : 0.62);', 'bundled arms and long feelers');
+      '    const len = lerp(0.15, 0.108, Math.max(0, Math.cos(a))) * (k % 2 ? 0.92 : 1.0) * (feeler ? 2.0 : 0.52);', 'bundled arms and long feelers');
     code = once(code,
       '    const raw = [[dx * 0.055, 0.012, dz * 0.055], [dx * 0.09, -0.04, dz * 0.09], [dx * 0.118, -0.035 - len * 0.55, dz * 0.118], [dx * 0.15, -0.035 - len * 0.86, dz * 0.15], [dx * (0.178 + curl * 0.6), -0.032 - len * 0.98, dz * (0.178 + curl * 0.6)]].map((q) => new V3(...q));',
-      '    const raw = [[dx * 0.055, 0.012, dz * 0.055], [dx * 0.08, -0.04, dz * 0.08], [dx * 0.088, -0.035 - len * 0.55, dz * 0.088], [dx * 0.094, -0.035 - len * 0.86, dz * 0.094], [dx * (0.1 + curl * 0.3), -0.032 - len * 0.98, dz * (0.1 + curl * 0.3)]].map((q) => new V3(...q));', 'arms hang bundled');
+      '    const raw = [[dx * 0.055, 0.012, dz * 0.055], [dx * (feeler ? 0.08 : 0.06), -0.04, dz * (feeler ? 0.08 : 0.06)], [dx * (feeler ? 0.088 : 0.066), -0.035 - len * 0.55, dz * (feeler ? 0.088 : 0.066)], [dx * (feeler ? 0.094 : 0.069), -0.035 - len * 0.86, dz * (feeler ? 0.094 : 0.069)], [dx * (feeler ? 0.1 + curl * 0.3 : 0.07), -0.032 - len * 0.98, dz * (feeler ? 0.1 + curl * 0.3 : 0.07)]].map((q) => new V3(...q));', 'arms hang bundled');
+    // Short arms are compact rounded fingers, not thin curled wires.
+    code = once(code, 'const pts = curlTip(raw, (feeler ? 0.9 : 0.75) + 0.1 * (k % 3), () => out, 0.5);', 'const pts = feeler ? curlTip(raw, 0.9 + 0.1 * (k % 3), () => out, 0.5) : raw;', 'uncurled short arm group');
+    code = once(code, 'lerp(0.0255, 0.0062, Math.pow(t, 0.78))', 'lerp(feeler ? 0.0255 : 0.032, feeler ? 0.0062 : 0.016, Math.pow(t, 0.78))', 'rounded short arms');
     // S3 squid colours follow the tentacle scheme: the two longest tentacles shade darker toward their club
     // tips (negative tint = the material's dark ink shade); the cups keep their pale tint, so the club reads
     // as a dark tip with light spots.
@@ -113,7 +121,7 @@ export function adaptS3SquidLook(rel, code) {
     code = once(code, 'sqSurfN(sx * 0.5 + u * 0.31, 0.092 + v * 0.037,', 'sqSurfN(sx * 0.5 + u * 0.37, 0.092 + v * 0.045,', 'bigger squid eyes');
     return once(code,
       "(feeler ? 0.22 * gauss(t - 0.8, 0.07) : 0)",
-      "(feeler ? 2.4 * gauss(t - 0.8, 0.1) : 0)", 'feeler club tips');
+      "(feeler ? 4.2 * gauss(t - 0.8, 0.13) : 0)", 'feeler club tips');
   }
   return code;
 }

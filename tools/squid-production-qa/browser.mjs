@@ -72,7 +72,7 @@ const jumpStates=[];
   if(![1,3,6,12].includes(i))continue;
   const debug=ch.sourceMotion?.debug?.squid;if(debug?.name!=='Sqd_Jump')throw Error('Expected existing Sqd_Jump: '+JSON.stringify(debug));
   jumpStates.push({sampleFrame:i,milliseconds:i*1000/60,grounded:a.grounded,position:a.pos.toArray(),velocity:a.vel.toArray(),sourceDebug:debug});
-  for(const [view,v]of Object.entries({front:[0,.25,-2],oblique:[1.3,.9,-1.3],side:[2,.4,0],back:[0,.4,2]})){
+  for(const [view,v]of Object.entries({front:[0,.25,-2],oblique:[1.3,.9,-1.3],side:[2,.4,0],back:[0,.4,2],upperfront:[0,Math.sin(35*Math.PI/180),-Math.cos(35*Math.PI/180)]})){
    const target=ch.root.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,ACTOR_FRAME.centerY,0));camera.position.copy(target).add(new THREE.Vector3(...v).normalize().multiplyScalar(ACTOR_FRAME.distance));camera.lookAt(target);camera.updateMatrixWorld(true);
    await renderer.compileAsync(scene,camera);renderer.render(scene,camera);renderer.getContext().finish();const name='source-jump-'+i+'-'+view;progress.stage=name;assertCoverage(ch.root,name);await globalThis.__saveHeadgearFrame(name,renderer.domElement.toDataURL());rows.push({name,view,sampleFrame:i,sourceDebug:debug});
   }
