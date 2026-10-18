@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {fixture} from './source-fixture.mjs';
 import {makePaintWorld} from './paint-authority-fixture.mjs';
-async function emit({wall=false,ghost=false,range=100,life=2}={}){
+async function emit({wall=false,ghost=false,range=100,life=2,contactDistance=2.5}={}){
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);makePaintWorld(f);f.G.settings={};f.setRandom(()=>.37);
  const a=f.make('s3-shooter-short');a.pos.set(0,8,0);a.aimDir.set(0,0,1);a.weaponRunner.update(1/60,{fire:true,firePressed:true});
@@ -11,7 +11,7 @@ async function emit({wall=false,ghost=false,range=100,life=2}={}){
  p.catalog.descriptor.m={};p.catalog.descriptor.splashCount=8;p.catalog.descriptor.splashSpacing=1;
  p.catalog.nextSplash=1;p.catalog.range=range;p.life=life;
  f.G.physics.level=null; // Isolate a deterministic contact distance, not the mesh sweep algorithm.
- f.G.physics.segment=(from,to,out)=>{out.hit=wall;out.dist=2.5;if(wall){out.point.set(0,8,2.5);out.normal.set(0,0,-1);out.face=0;}return out;};
+ f.G.physics.segment=(from,to,out)=>{out.hit=wall;out.dist=contactDistance;if(wall){out.point.set(0,8,contactDistance);out.normal.set(0,0,-1);out.face=0;}return out;};
  f.G.projectiles._step(p,1/60);
  return {drops:f.G.projectiles._s3SplashDrops||[],p};
 }
@@ -22,6 +22,10 @@ test('multiple splash thresholds in one fixed step emit at their distance rather
 test('a collision retains earlier splash releases but emits no splash beyond the obstruction',async()=>{
  const {drops}=await emit({wall:true});assert.ok(drops.length>0);assert.ok(drops.every(d=>d.releaseZ<=2.5));
  assert.deepEqual(Array.from(drops,d=>d.releaseZ),[1,2]);
+});
+test('splash exactly at head-impact distance is suppressed (no double stamp)',async()=>{
+ const {drops}=await emit({wall:true,contactDistance:2});
+ assert.deepEqual(Array.from(drops,d=>d.releaseZ),[1]);
 });
 test('remote ghost contact emits no authoritative splash',async()=>{assert.equal((await emit({wall:true,ghost:true})).drops.length,0);});
 
