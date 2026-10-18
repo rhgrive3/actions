@@ -85,6 +85,10 @@ The real `inkwave-public/src/game/inkCollision.js` owns both the native triangle
 
 Run `node scripts/inkwave-source-migration-audit.mjs --all` to enumerate how many `inkwave-public/src/**/*.js`, CSS files, `index.html` and the native catalogue collision entrypoint are still rewritten by the actual production composition. The script calls `adaptBuildSource` for each candidate and asserts that declared source-owned modules are emitted unchanged. It never edits code, runs builds or changes deployment. The displayed source-file count is **not** a count of the remaining individual patch adapters, and no benchmark improvement is inferred from it.
 
+## CI incident: isolate native collision helpers for Node
+
+The October 18 head (`58466a1`) failed multiple GitHub Actions checks with `ERR_MODULE_NOT_FOUND: Cannot find package 'three' imported from native-level.mjs`. The direct `weapons-collision.mjs` import had unintentionally pulled the entire native-stage `engine.mjs` re-export graph into Node during build and test setup, whereas the old build-only injection had not. Both `weapons-collision.mjs` and `inkCollision.js` now import the narrow `native-projectile-sweep.mjs` helper instead. That helper uses the caller's Vector3 constructor for two scratch buffers, rather than introducing a second Three.js import or the full engine dependency. Dedicated Node regression coverage checks both catalogue and native swept collision without installing the `three` package. Browser geometry and performance parity still require full CI verification; static import changes are not automatically assumed to preserve runtime behavior.
+
 ## Next migration batches
 
 1. Audit and migrate simple performance and UI adapters with isolated upstream anchors. Keep each change small enough to compare composed output against the previous behavior.
