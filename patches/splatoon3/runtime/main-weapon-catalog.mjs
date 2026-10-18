@@ -582,13 +582,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     if (key==='arrow') { speed=stageValue(r,m,'SpawnSpeed',frames,2.1)*HZ; damage=stageValue(r,d,'DirectHitDamage',frames,300)/10; }
     if (key==='slosh') { speed=finite(packet.SpawnSpeedGround,1)*HZ; }
-    // The Bloblobber is terrain-rebound terminated, not an ordinary 1.2s
-    // catalogue glob. From its pinned 11.3.0 initial speed, gravity and drag,
-    // a near-vertical level-ground throw takes ~200 fixed frames to reach its
-    // third ground contact. Keep a separate 240F safety deadline for voids and
-    // exceptional geometry. This is an INKWAVE cleanup bound, NOT a Nintendo
-    // extracted lifetime; ordinary ground shots end on their third contact.
-    if (r.sourceActor==='WeaponSlosherBathtub') life=240/HZ;
+    // Bloblobber ends on its third floor contact, and walls bounce at 0.8x.
+    // Its pinned S3 11.3.0 data does NOT expose a projectile age limit.
+    // 240F could still erase high-angle shots fired from elevated terrain
+    // midair, before the third contact. Use a deliberately loose, finite 480F
+    // *void/degenerate geometry guard*, not an asserted retail lifetime.
+    // Ordinary stages retire the projectile on the sourced contact rule.
+    if (r.sourceActor==='WeaponSlosherBathtub') life=480/HZ;
     if (packet?.SpawnSpeedBase != null) speed=packet.SpawnSpeedBase*HZ;
     if (r.family==='blaster') life=finite(b.BlasterBurstParam?.BurstFrame,13)/HZ;
     if (key.startsWith('saber-')) life=finite(b.BurstParam?.BurstFrame,6)/HZ;
@@ -1926,10 +1926,21 @@ export function releaseCatalogBirth(system, projectile, game) {
   if (launch) {
     const unit = state.descriptor.packet;
     const baseSpeed = finite(actor.grounded ? unit.SpawnSpeedGround : unit.SpawnSpeedAir, 1);
-    if (baseSpeed !== launch.sourceBaseSpeed) {
+    const bubble = state.r.sourceActor === 'WeaponSlosherBathtub';
+    // Four Bloblobber bubbles are born 0/5/10/15 F apart. Camera changes
+    // during that window fan the bubbles in retail play: their birth aim is
+    // live, rather than frozen at the first swing. Other Sloshers retain
+    // their previously admitted aim/angle and RNG ordering.
+    const liveAim = bubble && actor.aimDir?.lengthSq?.() > EPS ? actor.aimDir : null;
+    const changedAim = !!liveAim && liveAim.distanceToSquared(launch.direction) > 1e-12;
+    if (baseSpeed !== launch.sourceBaseSpeed || changedAim) {
       const speed = launch.speed + (baseSpeed - launch.sourceBaseSpeed) * HZ;
-      projectile.vel.copy(launch.direction).multiplyScalar(speed);
-      projectile.vel.y += speed * launch.liftRate;
+      projectile.vel.copy(liveAim || launch.direction).normalize().multiplyScalar(speed);
+      // Source AddSpawnSpeedYRateByXZ is an XZ-speed launch addition, not a
+      // fixed full-speed vertical boost; recompute it for a changed pitch.
+      projectile.vel.y += bubble
+        ? finite(unit.AddSpawnSpeedYRateByXZ, 0) * Math.hypot(projectile.vel.x, projectile.vel.z)
+        : speed * launch.liftRate;
     }
   }
   applyCatalogPlayerVelocity(projectile);
