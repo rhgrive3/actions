@@ -26,8 +26,6 @@ import { adaptIssue483 } from '../splatoon3/issue-483-adapter.mjs';
 import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
 import { patchLobbySetShowcase } from './lobby-quality-adapter.mjs';
 import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
-import { adaptPropRetention } from './prop-retention-adapter.mjs';
-import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
 import { adaptIssue482 } from '../splatoon3/issue-482-adapter.mjs';
 import { adaptIssue405 } from '../splatoon3/issue-405-adapter.mjs';
 import { adaptIssue484 } from '../splatoon3/issue-484-adapter.mjs';
@@ -123,7 +121,6 @@ const IDENTITY_FILES = [
   'final-count-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
-  'prop-retention-adapter.mjs', 'prop-atlas-adapter.mjs',
   'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
   'audio-listener-adapter.mjs', 'runtime/audio-listener.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'portrait-work.mjs', 'depth-cache.mjs',
@@ -200,8 +197,6 @@ function adaptQualityLayer(rel, code) {
       'carry bot identity to visual-only Character scheduling');
   }
   code = adaptBotPaintObservation(rel, code);
-  code = adaptPropRetention(rel, code);
-  code = adaptPropAtlas(rel, code);
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);
   code = adaptScreenfxLensRelease(rel, code, replaceOnce);
   code = adaptActorWeaponInput(rel, code, replaceOnce);
