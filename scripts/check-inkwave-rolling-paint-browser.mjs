@@ -128,8 +128,9 @@ try{
         lateralDelta=Math.max(lateralDelta,Math.abs(p.x-q.x));
       });
       row.maxYawDeltaDegrees=yawDelta*180/Math.PI;row.maxLateralDelta=lateralDelta;
-      // Regression tolerances for this rig, not measured Nintendo joint values.
-      if(yawDelta>3*Math.PI/180||lateralDelta>.04)throw Error(JSON.stringify({id:row.id,hz:row.hz,yawDegrees:row.maxYawDeltaDegrees,lateralDelta}));
+      // Keep native body-balance translation (up to 5 cm in this rig); reject
+      // a turned drum or large anchor displacement. Not Nintendo joint values.
+      if(yawDelta>3*Math.PI/180||lateralDelta>.05)throw Error(JSON.stringify({id:row.id,hz:row.hz,yawDegrees:row.maxYawDeltaDegrees,lateralDelta}));
     }
     return {realCharacter:true,realPhysics:true,cpuPaint:true,hardwareParity:false,checks:rows.map(({poseSamples,...r})=>({...r,settledPoseSamples:poseSamples.length,maxGripL:Math.max(...poseSamples.map(p=>p.gripL)),maxGripR:Math.max(...poseSamples.map(p=>p.gripR)),minBottom:poseSamples[0].bottom==null?null:Math.min(...poseSamples.map(p=>p.bottom)),maxBottom:poseSamples[0].bottom==null?null:Math.max(...poseSamples.map(p=>p.bottom))}))};
   },{procedural});
