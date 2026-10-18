@@ -1,62 +1,43 @@
-# Actions
+# Actions / INKWAVE
 
-汎用 GitHub Actions worker。対象リポジトリを runner 上へ clone / checkout し、調査・テスト・任意コマンド・同一 branch への安全な push・artifact 保存を行う。
+`rhgrive3/actions` は、INKWAVE の公開サイトをビルド・検証・配信するコードと、他リポジトリの調査・修正・計測を実行する GitHub Actions worker を管理するリポジトリです。
 
-## Workflow
+## 目的から探す
 
-`.github/workflows/pr-worker.yml`
+| やりたいこと | 入口 |
+| --- | --- |
+| INKWAVE をローカルでビルド・確認する | [開発ガイド](docs/inkwave-development.md) |
+| 修正先とパッチの役割を調べる | [パッチ構成](patches/README.md) |
+| 並行作業で変更を持ち込む | [コントリビューション手順](CONTRIBUTING.md) |
+| テスト結果・比較資料を探す | [ドキュメント案内](docs/README.md) |
+| 他リポジトリでコマンド・テストを実行する | [PR Worker の運用](docs/pr-worker.md) |
+| Hex の性能・実ゲーム・品質を並行計測する | [Hex worker lanes](lanes/README.md) |
 
-### 主な用途
+## リポジトリ構成
 
-- `inspect`: clone / fetch / checkout、HEAD / base、status / log、差分一覧を取得
-- `test`: 指定した test command を実行
-- `command`: runner 上で指定 command を実行
-- `command-and-test`: command 実行後に test command を実行
-- `fix-and-push`: command → test → HEAD競合確認 → commit → 同じ branch へ push
+| パス | 内容 |
+| --- | --- |
+| [`inkwave-public/`](inkwave-public/) | 取得済み公開サイトの入力スナップショット。原作者の完全なソースリポジトリを保証するものではない |
+| [`patches/`](patches/) | ビルド時の変換、実行時の追加機能、参照値、回帰テスト |
+| [`scripts/`](scripts/) | ビルド、検証、計測、画像生成。共通処理は `scripts/lib/`、回帰テストは `scripts/tests/` |
+| [`server/`](server/) | Cloudflare Workers / Durable Objects によるオンライン対戦リレー |
+| [`tools/`](tools/) | キャラクター制作・アセット QA・音声関連の補助ツール |
+| [`docs/`](docs/)、[`reports/`](reports/) | 開発・運用手順と、変更ごとの調査結果・証跡 |
+| [`remaining/`](remaining/) | 各作業が残した未完了範囲の記録。現在の完了状況は関連 PR・後続レポートと照合する |
+| [`.github/workflows/`](.github/workflows/) | INKWAVE の検証・Pages 配信、汎用 worker、Hex 計測 |
+| [`lanes/`](lanes/)、[`bootstrap/`](bootstrap/) | Hex 計測 lane の契約と専用 worker リポジトリの準備 |
 
-### Push の安全策
+## INKWAVE の最初の確認
 
-`fix-and-push` で `push=true` の場合だけ push する。
+Node.js 22 以上を使用し、リポジトリのルートで実行します。ルートに `package.json` はなく、ビルド用ツールは CI と同じバージョンで個別に導入します。
 
-push 前に checkout 時点の branch HEAD と remote branch HEAD を比較する。不一致なら中止する。force-push は行わない。working tree に変更がなければ commit / push もしない。
+```sh
+npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
+node scripts/check-inkwave-patches.mjs --quick
+node scripts/build-inkwave.mjs inkwave-public _site
+node scripts/check-inkwave-startup-budget.mjs _site
+```
 
-### Cross-repository push
+`_site/` がパッチ適用済みの配信物です。テストの選び方、ローカル表示、ブラウザ検証は [開発ガイド](docs/inkwave-development.md) を参照してください。公開配信は [`pages-inkwave.yml`](.github/workflows/pages-inkwave.yml) が対象パスの `main` 更新または手動実行で行います。
 
-`rhgrive3/actions` の `GITHUB_TOKEN` だけでは別 repository の branch push に使えないため、Actions repository に `GH_PAT` secret を登録する。
-
-必要権限は対象 repository の branch を push できる範囲だけに絞る。Fork PR など、token の権限モデルが異なる対象は別途確認する。
-
-## 例
-
-### 調査
-
-- repository: `rhgrive3/hex-ida`
-- ref: `codex/...`
-- operation: `inspect`
-
-### テスト
-
-- operation: `test`
-- test_command: `npm test -- --runInBand`
-
-### 修正 + 検証 + push
-
-- operation: `fix-and-push`
-- command: 修正スクリプト / patch 適用コマンド
-- test_command: 対象テスト
-- push: `true`
-
-実行結果は artifact に `inspect.txt`, `command.log`, `test.log`, `push.txt`, `final.txt` として保存される。
-
-
-## Hex parallel lanes
-
-Hex completion work has three bounded measurement lanes that can run concurrently against an exact `rhgrive3/hex-ida` SHA:
-
-- `.github/workflows/hex-lane-perf.yml`
-- `.github/workflows/hex-lane-realgames.yml`
-- `.github/workflows/hex-lane-quality.yml`
-
-All three use `.github/workflows/hex-lane-worker-reusable.yml`, enforce a finite hard watchdog, verify the exact target SHA, and upload only bounded evidence (structured JSON plus the last 200 command lines). See `lanes/README.md`.
-
-A one-shot bootstrap for permanent worker repositories is also present at `.github/workflows/bootstrap-hex-worker-repos.yml` with its requested repository list in `bootstrap/worker-repos.json`.
+挙動を変更するときは [AGENTS.md](AGENTS.md) の比較・記録ルールに従います。ロジックテスト、ブラウザの確認、本家の実機比較は、それぞれ確認できる範囲が異なります。
