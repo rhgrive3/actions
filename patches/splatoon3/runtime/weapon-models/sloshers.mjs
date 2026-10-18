@@ -4,7 +4,6 @@
 // lying on the silhouette's top edge above the opening (kept level by animateWeapon), and the native pitcher
 // handle, its thumb lever and the native right-hand grip are kept at the origin. Scale is an estimate (see the
 // reference doc). Everything is procedural geometry.
-import { GRIP_HOLE_L, GRIP_HOLE_R } from '../../../../src/game/character-weapons.js';
 import { THREE, Pieces, M, V, box, sphere, slab, part, rebuild, pipe, pipeR, cyl, ring, zlathe, ylathe, rotateAbout, sweep } from './kit.mjs';
 
 // Reference pixel -> weapon space for a side render: (gx, gy) = origin in the image, s = metres/pixel.
@@ -412,12 +411,18 @@ function handFrame(grip, hole) {
   const quat = new THREE.Quaternion().setFromRotationMatrix(_m4.makeBasis(_x, _y, _z));
   return { pos: grip.pos.clone().sub(hole.clone().applyQuaternion(quat)), quat };
 }
+/** The fist-hole offset of a hand, read back from the native def's own grip and hand frame (no import of
+ *  character-weapons: it loads this registry). */
+function gripHole(d, side) {
+  const hand = d['hand' + side];
+  return d['grip' + side].pos.clone().sub(hand.pos).applyQuaternion(hand.quat.clone().invert());
+}
 // Seconds the hands take to slide from the carry grips to the native heave grips once a slosh starts
 // (well inside the 12F SwingLiftFrame windup, so the released wave leaves from the unchanged pose), and
 // to slide back once the native recovery has settled.
 export const SLOSHER_CARRY_GRIP = Object.freeze({ toAttack: 0.1, settle: 0.75, back: 0.3 });
 /** Per-instance grips blended between the native heave grips (k = 0) and the carry grips (k = 1). */
-function carryGrip(ch, dt, P, C) {
+function carryGrip(ch, dt, P, C, s) {
   const w = ch.weapon, base = w?.s3BaseDef || w?.def, cg = base?.s3CarryGrip;
   if (!cg || !w.off) return;
   if (!w.s3BaseDef) {
@@ -425,15 +430,25 @@ function carryGrip(ch, dt, P, C) {
     w.def = Object.create(base, {
       handR: { value: { pos: base.handR.pos.clone(), quat: base.handR.quat.clone() }, writable: true },
       handL: { value: { pos: base.handL.pos.clone(), quat: base.handL.quat.clone() }, writable: true },
+      // The grip spec moves with its hand frame so the def stays self-consistent (grip <-> hand).
+      gripL: { value: { ...base.gripL, pos: base.gripL.pos.clone() }, writable: true },
+      gripR: { value: { ...base.gripR, pos: base.gripR.pos.clone() }, writable: true },
     });
-    w.s3Grip = { k: 0, R: cg.R ? handFrame(cg.R, GRIP_HOLE_R) : null, L: cg.L ? handFrame(cg.L, GRIP_HOLE_L) : null, off: w.off.position.clone() };
+    w.s3Grip = { k: 0, attack: -1, R: cg.R ? handFrame(cg.R, gripHole(base, 'R')) : null, L: cg.L ? handFrame(cg.L, gripHole(base, 'L')) : null, off: w.off.position.clone() };
   }
-  const g = w.s3Grip, T = SLOSHER_CARRY_GRIP, since = ch.lastShot ?? 9, step = Math.min(0.1, Math.max(0, dt || 0));
+  const g = w.s3Grip, T = SLOSHER_CARRY_GRIP, step = Math.min(0.1, Math.max(0, dt || 0));
   const carrying = ch.kidForm && !ch.dance && !ch.showcase && !(ch.wSub > 0.01) && !ch.bombHeld;
+  // An attack starts at the trigger press: the native runner only reports 'slosh' at the release,
+  // after its windup, so a held trigger or a pending windup also hands the grip back.
+  const r = ch._runner?.(s), winding = !!s?.firing || r?.slosh >= 0 || !!r?.catalogState?.pending;
+  if (winding && !(g.attack >= 0)) g.attack = 0; else if (winding) g.attack += step; else g.attack = -1;
+  const since = Math.min(ch.lastShot ?? 9, g.attack >= 0 ? g.attack : 9);
   if (!carrying) g.k = 0;
   else if (since < T.settle) g.k = Math.min(g.k, since >= T.toAttack - 1e-9 ? 0 : 1 - since / T.toAttack);
   else g.k = Math.min(1, g.k + step / T.back);
   const k = g.k * g.k * (3 - 2 * g.k), d = w.def;
+  // Between the two handles the hand has let go: it is moving across, not closing on empty air.
+  if (P && C && k > 0 && k < 1) P[C.IKL] *= 1 - 1.2 * k * (1 - k);
   // Walking, the pail moves further out so the swinging right thigh passes inside it; at a full-tilt
   // walk the native run hold places it (owner review 2026-10-18: both hands stay on while moving).
   const gw = clamp01(ch.gaitW || 0), run = clamp01(ch.runW || 0);
@@ -441,9 +456,13 @@ function carryGrip(ch, dt, P, C) {
   if (P && C && H?.walk && H.carry && walk > 1e-4) for (let i = 0; i < 3; i++) {
     P[C.ANC + i] += (H.walk.p[i] - H.carry.p[i]) * walk; P[C.ANCR + i] += (H.walk.r[i] - H.carry.r[i]) * walk;
   }
-  if (g.L) { d.handL.pos.lerpVectors(base.handL.pos, g.L.pos, k); d.handL.quat.slerpQuaternions(base.handL.quat, g.L.quat, k); }
+  if (g.L) {
+    d.handL.pos.lerpVectors(base.handL.pos, g.L.pos, k); d.handL.quat.slerpQuaternions(base.handL.quat, g.L.quat, k);
+    d.gripL.pos.lerpVectors(base.gripL.pos, cg.L.pos, k);
+  }
   if (g.R) {
     d.handR.pos.lerpVectors(base.handR.pos, g.R.pos, k); d.handR.quat.slerpQuaternions(base.handR.quat, g.R.quat, k);
+    d.gripR.pos.lerpVectors(base.gripR.pos, cg.R.pos, k);
     // The weapon hangs from the right fist: keep it at the same anchor by re-seating it in the hand.
     _m4.compose(d.handR.pos, d.handR.quat, _x.set(1, 1, 1)).invert().decompose(_y, w.off.quaternion, _z);
     w.off.position.copy(g.off).add(_y).sub(base.inHand.pos);
@@ -452,7 +471,7 @@ function carryGrip(ch, dt, P, C) {
 /** Read-only view for regressions. */
 export function slosherCarryGripSnapshot(ch) { return ch.weapon?.s3Grip ? { k: ch.weapon.s3Grip.k } : null; }
 export function FAMILY_POSE(ch, dt, s, C) {
-  carryGrip(ch, dt, ch.P, C);
+  carryGrip(ch, dt, ch.P, C, s);
   if (!C || !ch.kidForm || ch.dance || ch.showcase) return;
   const P = ch.P;
   // Only the gait swing the native layer added this frame: a support hand,

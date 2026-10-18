@@ -247,9 +247,10 @@ export function scaleWeaponDef(d, k) {
   // The support hand keeps its reach from the main grip along the weapon axis (Z)
   // and moves out only with the thicker body: a 1.3x foregrip would leave the
   // kid's arm span in two-hand and sub-throw poses.
-  const rz = d.gripR?.pos ? d.gripR.pos.z : 0;
+  // A slosher's support hand closes on a bar of the scaled body itself, so it scales in full.
+  const rz = d.gripR?.pos ? d.gripR.pos.z : 0, full = d.kind === 'slosher';
   if (d.gripR?.pos) d.gripR = { ...d.gripR, pos: d.gripR.pos.clone().multiplyScalar(k) };
-  if (d.gripL?.pos) d.gripL = { ...d.gripL, pos: d.gripL.pos.clone().set(d.gripL.pos.x * k, d.gripL.pos.y * k, rz * k + d.gripL.pos.z - rz) };
+  if (d.gripL?.pos) d.gripL = { ...d.gripL, pos: full ? d.gripL.pos.clone().multiplyScalar(k) : d.gripL.pos.clone().set(d.gripL.pos.x * k, d.gripL.pos.y * k, rz * k + d.gripL.pos.z - rz) };
   // Slosher carry grips sit on the model's own top handle, so they scale with it.
   if (d.s3CarryGrip) d.s3CarryGrip = Object.fromEntries(Object.entries(d.s3CarryGrip).map(([h, g]) => [h, { ...g, pos: g.pos.clone().multiplyScalar(k) }]));
   d.modelScale = (d.modelScale || 1) * k;
