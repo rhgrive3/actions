@@ -8,6 +8,8 @@ const fromRepo = path => fs.readFileSync(new URL('../../../' + path, import.meta
 const rawGame = fromRepo('inkwave-public/src/main.js');
 const rawStyle = fromRepo('inkwave-public/styles/ui.css');
 const game = adaptQualitySource('src/main.js', rawGame);
+const rawMenus = fromRepo('inkwave-public/src/ui/menus.js');
+const menus = adaptQualitySource('src/ui/menus.js', rawMenus);
 const css = adaptQualitySource('styles/ui.css', rawStyle);
 
 function framePrefix(code) {
@@ -65,6 +67,19 @@ test('title, real match, room, pause and results preserve the original 3D/game f
   assert.equal(runGate('main', { attract: false }).full, true, 'real match');
   assert.equal(runGate('main', { mode: 'match' }).full, true, 'match startup');
   assert.equal(runGate('locker', { mismatch: true }).full, true, 'wiped screen is not yet mounted');
+});
+
+test('static screens do not construct hidden 3D loadout, locker or Online hub showcases', () => {
+  assert.match(rawGame, /if \(s === 'loadout'\) this\.showcase\.showLoadout\(/);
+  assert.doesNotMatch(game, /if \(s === 'loadout'\) this\.showcase\.showLoadout\(/);
+  assert.match(game, /if \(s === 'loadout'\) this\.showcase\.hide\(\);/);
+  assert.match(rawMenus, /if \(sc && sc\.showHub\)/);
+  assert.match(rawMenus, /if \(sc && sc\.showLocker\)/);
+  assert.doesNotMatch(menus, /if \(sc && sc\.showHub\)/);
+  assert.doesNotMatch(menus, /if \(sc && sc\.showLocker\)/);
+  assert.equal((menus.match(/if \(sc\) safeCall\(\(\) => sc\.hide\?\.\(\)\);/g) || []).length, 2);
+  assert.match(menus, /if \(sc && sc\.showLobby\)/, 'actual network room still has its showcase');
+  assert.match(menus, /this\._portraitInto\(lookAv, \{ kind: 'head', size: 128 \}\)/);
 });
 
 test('CSS maps exactly three generated locally hosted WebP backgrounds to the correct menu screens', () => {

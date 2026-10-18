@@ -30,7 +30,26 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
     }
     const tA = performance.now();`;
     code = replaceOnce(code, anchor, replacement, 'static menu world-frame gate');
+    // The old loadout handler eagerly instantiates a second 3D squidkid,
+    // despite the display now being a static illustration.
+    code = replaceOnce(code,
+      "    if (s === 'loadout') this.showcase.showLoadout(this.profile.weapon || 'shooter', G.teamColors[0], this.profile.style);",
+      "    if (s === 'loadout') this.showcase.hide();",
+      'weapon screen no longer constructs an invisible showcase stage');
     code = `const INKWAVE_ART_MENU_SCREENS = new Set(${JSON.stringify(STATIC_MENU_SCREENS)});\n` + code;
+    return code;
+  }
+  if (rel === 'src/ui/menus.js') {
+    // Locker editing and Online create/join remain native DOM interactions,
+    // but no invisible stage or LobbySet is constructed behind the artwork.
+    code = replaceOnce(code,
+      '        if (sc && sc.showLocker) safeCall(() => sc.showLocker(style, teamColor(), this._loadout().weapon));',
+      '        if (sc) safeCall(() => sc.hide?.());',
+      'gear customization keeps DOM/portrait previews, drops invisible pedestal');
+    code = replaceOnce(code,
+      '        if (sc && sc.showHub) safeCall(() => sc.showHub(this._style(), (G.teamColors && G.teamColors[0]) || this._accent()[0], this._loadout().weapon));',
+      '        if (sc) safeCall(() => sc.hide?.());',
+      'online hub keeps network flow, drops invisible LobbySet construction');
     return code;
   }
   if (rel !== 'styles/ui.css') return code;
