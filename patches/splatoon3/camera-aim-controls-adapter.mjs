@@ -20,7 +20,7 @@ export function adaptCameraAimControls(rel, input) {
         throw new Error('camera-aim-controls: unexpected charging owner count ' + candidates.length);
       }
     } else {
-      replace("const charging = a.weapon?.kind === 'charger' && a.weaponRunner?.charging ? a.weaponRunner.charge : 0;\\n    this.zoom = damp(this.zoom, charging > 0.99 ? 14 : charging * 6, 8, dt);",
+      replace("const charging = a.weapon?.kind === 'charger' && a.weaponRunner?.charging ? a.weaponRunner.charge : 0;\n    this.zoom = damp(this.zoom, charging > 0.99 ? 14 : charging * 6, 8, dt);",
         'const charging = updateScopeZoom(this, a, dt);', 'scope capability after reliability pass');
     }
     replace('    _back.copy(fwd).negate();',
