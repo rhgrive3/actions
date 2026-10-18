@@ -1,0 +1,307 @@
+diff --git a/patches/local-quality/splatling-reticle.mjs b/patches/local-quality/splatling-reticle.mjs
+index 7e08178..3ba5288 100644
+--- a/patches/local-quality/splatling-reticle.mjs
++++ b/patches/local-quality/splatling-reticle.mjs
+@@ -1,18 +1,45 @@
+ const unit=x=>Math.max(0,Math.min(1,Number.isFinite(x)?x:0));
++const positive=(x,fallback)=>Number.isFinite(x)&&x>0?x:fallback;
++
++// The original seven-weapon HUD reads legacy seconds. Added catalogue weapons
++// instead expose sourced frame counts and a separate catalogue stream clock.
++// Neither missing legacy fields nor runner.charge=0 after release means that
++// the second charge stage does not exist.
+ export function splatlingStages(charge,runner,w,out={}){
+- const first=w?.firstChargeTime,full=w?.chargeTime;
++ const record=w?.catalogRecord;
++ const parameter=record?.family==='splatling'?record.parameters?.WeaponParam:null;
++ const catalogue=parameter&&!record.legacy;
++ const full=catalogue?positive(parameter.ChargeFrame_Second,60):w?.chargeTime;
++ // Ballpoint's raw ChargeFrame_First=1 controls ballistic charging, not its
++ // visible first circle. The game's measured first-circle time is 50/100F:
++ // https://wikiwiki.jp/splatoon3mix/ブキ/クーゲルシュライバー (main table, 11.0.0).
++ // Keep the raw gameplay table unchanged; this is a presentation-only split.
++ const ballpoint=record?.sourceActor==='WeaponSpinnerDownpour';
++ const first=catalogue?(ballpoint?full/2:positive(parameter.ChargeFrame_First,full/2)):w?.firstChargeTime;
+  if(!(first>0&&full>first))return Object.assign(out,{first:unit(charge),second:0});
+  const boundary=first/full;
+- // During a stream native charge is remaining / this release's duration,
+- // which jumps near1 even after a partial release. Read remaining duration
+- // against the already-authoritative two-stage burst curve instead.
++ const state=runner?.catalogState;
++ if(catalogue&&runner?.streaming&&state?.stream>0&&Number.isFinite(state.streamTime)&&Number.isFinite(state.streamElapsed)){
++  const normalMax=positive(parameter.MaxShootingFrame_Second,160);
++  const burstMax=state.streamCharge>=1-1e-9?
++    positive(record.parameters?.WeaponFullChargeParam?.MaxShootingFrame_Second,normalMax):normalMax;
++  // Mirror the catalogue's admitted shooting-duration curve. Ballpoint is
++  // linear after its existing eight-frame minimum, not a 1F first UI ring.
++  const burstFirst=ballpoint?normalMax*unit((first-8)/(full-8)):
++    positive(parameter.MaxShootingFrame_First,burstMax/2);
++  const left=Math.max(0,(state.streamTime-Math.max(0,state.streamElapsed))*60);
++  out.first=unit(left/burstFirst);
++  out.second=unit((left-burstFirst)/Math.max(1e-9,burstMax-burstFirst));
++  return out;
++ }
++ // Native remaining charge is a fraction of this release's duration. Read its
++ // duration instead so a partial release cannot jump up to a false full ring.
+  if(runner?.streaming&&w.burstFirst>0&&w.burstMax>w.burstFirst&&Number.isFinite(runner.burstT)){
+-  // The source-aware reservation includes a terminal reference frame after
+-  // the last cadence slot. That frame is not second-stage charge progress.
+   const left=Math.max(0,runner.burstT-(runner.s3Spin?1/60:0));
+   out.first=unit(left/w.burstFirst);out.second=unit((left-w.burstFirst)/(w.burstMax-w.burstFirst));return out;
+  }
+- const c=unit(charge);out.first=unit(c/boundary);out.second=unit((c-boundary)/(1-boundary));return out;
++ const c=catalogue&&runner?.charging&&Number.isFinite(state?.chargeF)?unit(state.chargeF/full):unit(charge);
++ out.first=unit(c/boundary);out.second=unit((c-boundary)/(1-boundary));return out;
+ }
+ export function updateSplatlingStages(hud,charge,runner,w){
+  const p=splatlingStages(charge,runner,w,hud._splatStages ||= {}),L=hud._L;
+diff --git a/patches/local-quality/tests/splatling-catalogue-stages.test.mjs b/patches/local-quality/tests/splatling-catalogue-stages.test.mjs
+new file mode 100644
+index 0000000..7bd0932
+--- /dev/null
++++ b/patches/local-quality/tests/splatling-catalogue-stages.test.mjs
+@@ -0,0 +1,79 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { MAIN_WEAPON_CATALOG } from '../../splatoon3/runtime/main-weapon-catalog-data.mjs';
++import { ALTERNATE_WEAPON_KITS } from '../../splatoon3/runtime/alternate-weapon-kits-data.mjs';
++import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
++import { splatlingStages } from '../splatling-reticle.mjs';
++const records=MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='splatling');
++const close=(a,b,label)=>assert.ok(Math.abs(a-b)<1e-6,`${label}: ${a} != ${b}`);
++const firstFrame=r=>r.sourceActor==='WeaponSpinnerDownpour'?50:r.parameters.WeaponParam.ChargeFrame_First;
++
++test('all six sourced Splatlings and eight alternate kits display both charge circles from actual Actor state',async()=>{
++ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
++ f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
++ let mains=0,alternates=0;
++ for(const r of records)for(const id of [r.id,...ALTERNATE_WEAPON_KITS.filter(k=>k.baseId===r.id).map(k=>k.id)]){
++  id===r.id?mains++:alternates++;
++  f.G.actors.length=0;f.G.projectiles.clear();
++  const a=f.make(id);a.form='kid';a.ink=100;a.intent.fire=true;
++  const before=JSON.stringify(a.weapon.catalogRecord||a.weapon),out={};
++  const full=r.parameters.WeaponParam.ChargeFrame_Second,first=firstFrame(r);
++  // The native Heavy Splatling has one input-admission frame; catalogue
++  // runners count the first funded frame immediately. Do not change either.
++  if(r.legacy)f.tick(a);
++  for(let frame=1;frame<=full;frame++){
++   f.tick(a);
++   const runner=a.weaponRunner,p=splatlingStages(runner.charge,runner,a.weapon,out);
++   assert.equal(p,out,'caller-owned output is reused');
++   if(frame===first){close(p.first,1,id+' first circle');close(p.second,0,id+' no early second circle');}
++   if(frame===full){close(p.first,1,id+' full first');close(p.second,1,id+' full second');}
++   if(frame>first&&frame<full)assert.ok(p.second>0&&p.second<1,id+' actually enters second stage');
++   for(const v of Object.values(p))assert.ok(Number.isFinite(v)&&v>=0&&v<=1,id+' bounded ring');
++  }
++  assert.equal(JSON.stringify(a.weapon.catalogRecord||a.weapon),before,id+' no gameplay/source mutation');
++  a.intent.fire=false;f.tick(a,2);
++  const release=splatlingStages(a.weaponRunner.charge,a.weaponRunner,a.weapon,out);
++  assert.ok(release.second>.9,id+' release does not erase second-stage ammo');
++  f.tick(a,20);
++  const firing=splatlingStages(a.weaponRunner.charge,a.weaponRunner,a.weapon,out);
++  assert.ok(firing.second<1&&firing.first>0,id+' rings follow consumed charge');
++  a.weaponRunner.reset();
++ }
++ assert.equal(mains,6);assert.equal(alternates,8);
++});
++
++test('catalogue charge and stream progress are independent of 30/60/120Hz HUD updates',()=>{
++ for(const r of records.filter(r=>!r.legacy)){
++  const w={catalogRecord:r},full=r.parameters.WeaponParam.ChargeFrame_Second,first=firstFrame(r);
++  const runner={charging:true,catalogState:{chargeF:0}},out={};
++  for(const hz of [30,60,120]){
++   for(const frame of [first/2,first,(first+full)/2,full]){
++    runner.catalogState.chargeF=frame;
++    // Renderer could pass stale zero/NaN. The fixed-step actor is authority.
++    const p=splatlingStages(hz===120?NaN:0,runner,w,out);
++    close(p.first,Math.min(frame/first,1),r.id+' fixed first '+hz);
++    close(p.second,Math.max(0,(frame-first)/(full-first)),r.id+' fixed second '+hz);
++   }
++  }
++ }
++});
++
++test('Nautilus and Ballpoint recharge retain ring progress; ordinary Splatlings still cannot recharge midstream',async()=>{
++ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
++ f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
++ for(const r of records.filter(r=>!r.legacy)){
++  f.G.actors.length=0;f.G.projectiles.clear();
++  const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;
++  f.tick(a,r.parameters.WeaponParam.ChargeFrame_Second);
++  a.intent.fire=false;f.tick(a,10);
++  a.intent.fire=true;f.tick(a);
++  if(r.parameters.WeaponParam.EnableRecharge){
++   assert.equal(a.weaponRunner.charging,true,r.id+' recharge is enabled by source');
++   assert.equal(a.weaponRunner.streaming,false);
++   assert.ok(splatlingStages(0,a.weaponRunner,a.weapon).second>0,r.id+' recharging retained second circle');
++  }else{
++   assert.equal(a.weaponRunner.charging,false,r.id+' do not invent recharging');
++   assert.equal(a.weaponRunner.streaming,true,r.id+' original stream remains live');
++  }
++ }
++});
+diff --git a/patches/splatoon3/runtime/main-weapon-catalog.mjs b/patches/splatoon3/runtime/main-weapon-catalog.mjs
+index ab09e1e..8790623 100644
+--- a/patches/splatoon3/runtime/main-weapon-catalog.mjs
++++ b/patches/splatoon3/runtime/main-weapon-catalog.mjs
+@@ -119,6 +119,17 @@ function shootingFrames(r, frames) {
+   if(r.sourceActor==='WeaponSpinnerSerein'&&frames<=first)return a*clamp((frames-8)/(first-8));
+   return frames<=first?a*frames/first:lerp(a,b,(frames-first)/(full-first));
+ }
++// Ballpoint's short/long boundary belongs to the highest charged gauge, not
++// to each release. Community primary measurements describe recharge rewinding
++// across that fixed boundary until a higher peak is reached or ink runs out:
++// https://wikiwiki.jp/splatoon3mix/ブキ/クーゲルシュライバー (機構解説).
++// The existing 30F switch and 10F interpolation remain unchanged.
++function ballpointModeFrame(s) {
++  const elapsed=Math.max(0,finite(s?.streamElapsed,0))*HZ;
++  if(!(s?.ballpointPeakShooting>0))return elapsed;
++  const remaining=Math.max(0,finite(s.streamTime,0)*HZ-elapsed);
++  return Math.max(0,s.ballpointPeakShooting-remaining);
++}
+ function remainingCharge(r,s) {
+   const remaining=Math.max(0,(s.streamTime-Math.max(0,s.streamElapsed))*HZ);
+   let lo=0,hi=chargeFrames(r);
+@@ -253,7 +264,7 @@ export function catalogAngularEnvelope(family, grounded, ground, jump, jumpAge,
+ 
+ function initialState(r,actor) {
+   return { id:r.id, pressed:false, frame:0, pending:null, chargeF:0, paid:0, reserved:0,
+-    stream:0, streamF:0, streamCharge:0, streamTime:0, rounds:0, burst:0, burstWait:0,
++    stream:0, streamF:0, streamCharge:0, streamTime:0, ballpointPeakShooting:0, rounds:0, burst:0, burstWait:0,
+     turret:0, rolls:0, roll:null, lunge:null, melee:null, stored:null, swingCount:0, canopy:null, naked:0,
+     accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0,
+     rollingFrames:0, rollingDash:false, bowTilt:0, remoteBowTilt:null, saberShotOrdinal:0,
+@@ -298,6 +309,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
+         (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))))
+       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
+     else if (!keep) s.stored = null;
++    s.ballpointPeakShooting=0; // a cancelled Ballpoint gauge loses its short/long boundary
+     s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
+     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
+     slidePaint(r,s,true);
+@@ -356,9 +368,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
+         : PLAYER.runSpeed * (this.a.grounded ? (this.a.s3?.modifiers?.runSpeed ?? 1) : 1);
+     }
+     if (this.charging) return w.moveSpeedCharging*mod;
+-    if (r.sourceActor==='WeaponSpinnerDownpour'&&s?.streamElapsed+EPS>=.5)
++    if (r.sourceActor==='WeaponSpinnerDownpour'&&(this.firingT>0||s?.stream>0)&&ballpointModeFrame(s)+EPS>=30)
+       return lerp(finite(t.MoveSpeed,.086),finite(p.VariableShotParam?.MoveSpeed,.05),
+-        clamp((s.streamElapsed*HZ-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)))*HZ*mod;
++        clamp((ballpointModeFrame(s)-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)))*HZ*mod;
+     return this.firingT>0 || s?.pending || s?.stream>0 ? w.moveSpeedFiring*mod : PLAYER.runSpeed*(this.a.grounded?(this.a.s3?.modifiers?.runSpeed??1):1);
+   };
+   function pay(runner, amount, recover = runner.a.weapon.inkRecoverStop) {
+@@ -1324,11 +1336,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
+     if(s.stream>0 && !(input.fire&&t.EnableRecharge)) {
+       s.streamElapsed+=dt;
+       s.streamF-=dt;
+-      if(s.streamElapsed>s.streamTime+EPS){s.stream=0;runner.streaming=false;runner.cooldown=finite(t.PostDelayFrame,4)/HZ;return;}
++      if(s.streamElapsed>s.streamTime+EPS){s.stream=0;s.ballpointPeakShooting=0;runner.streaming=false;runner.cooldown=finite(t.PostDelayFrame,4)/HZ;return;}
+       if(s.streamF<=EPS){
+-        if(s.streamUsed>=s.streamLimit){s.stream=0;runner.streaming=false;runner.cooldown=finite(t.PostDelayFrame,4)/HZ;return;}
+-        const variable=r.sourceActor==='WeaponSpinnerDownpour'&&s.streamElapsed*HZ+EPS>=30;
+-        const transition=variable?clamp((s.streamElapsed*HZ-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)):s.streamCharge;
++        if(s.streamUsed>=s.streamLimit){s.stream=0;s.ballpointPeakShooting=0;runner.streaming=false;runner.cooldown=finite(t.PostDelayFrame,4)/HZ;return;}
++        const modeFrame=ballpointModeFrame(s);
++        const variable=r.sourceActor==='WeaponSpinnerDownpour'&&modeFrame+EPS>=30;
++        const transition=variable?clamp((modeFrame-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)):s.streamCharge;
+         emitSingle(runner,r,variable?'variable':'normal',transition);
+         const fullRate=p.WeaponFullChargeParam?.RepeatFrame??t.RepeatFrame;
+         s.streamUsed++;s.streamF+=finite(variable?p.VariableShotParam?.RepeatFrame:s.streamCharge+EPS>=1?fullRate:t.RepeatFrame,4)/HZ;
+@@ -1342,6 +1355,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
+       }
+       if(s.stored){s.chargeF=s.stored.frames;s.paid=s.stored.paid;s.stored=null;}
+       if(s.stream>0){
++        if(s.streamTime-Math.max(0,s.streamElapsed)<=EPS)s.ballpointPeakShooting=0;
+         s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(a);
+         s.stream=0;runner.streaming=false;
+       }
+@@ -1387,6 +1401,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
+       }
+       if(r.family==='splatling'){
+         const shooting=shootingFrames(r,frames);
++        if(r.sourceActor==='WeaponSpinnerDownpour')
++          s.ballpointPeakShooting=Math.max(s.ballpointPeakShooting||0,shooting);
+         // MaxShootingFrame is the last eligible emission time, not an ammo
+         // count. Include the initial round at t=0 and advance the actual
+         // current-mode cadence (Ballpoint switches from 3F to 5F).
+diff --git a/patches/splatoon3/tests/spinner-recharge-mode.test.mjs b/patches/splatoon3/tests/spinner-recharge-mode.test.mjs
+new file mode 100644
+index 0000000..14c04b8
+--- /dev/null
++++ b/patches/splatoon3/tests/spinner-recharge-mode.test.mjs
+@@ -0,0 +1,74 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {fixture} from './source-fixture.mjs';
++async function setup(id='s3-spinner-downpour'){
++ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
++ f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
++ const a=f.make(id);a.form='kid';a.ink=100;
++ return {...f,a};
++}
++function release(f,chargeFrames,fireFrames=2){
++ f.a.intent.fire=true;f.tick(f.a,chargeFrames);
++ f.a.intent.fire=false;f.tick(f.a,fireFrames);
++ return f.G.projectiles.list.at(-1)?.catalog?.descriptor;
++}
++
++test('Ballpoint long-range firing survives small recharges for both registered kits',async()=>{
++ for(const id of ['s3-spinner-downpour','s3-spinner-downpour-01']){
++  const f=await setup(id),a=f.a;
++  release(f,100,70);
++  assert.equal(f.G.projectiles.list.at(-1).catalog.descriptor.key,'variable');
++  const peak=a.weaponRunner.catalogState.ballpointPeakShooting;
++  const ink=a.ink,descriptor=release(f,1);
++  assert.equal(descriptor.key,'variable',id+' re-release must not restart the short-range phase');
++  assert.equal(descriptor.charge,1,id+' completed long-range interpolation stays completed');
++  assert.equal(a.weaponRunner.catalogState.ballpointPeakShooting,peak,id+' old peak is retained');
++  assert.ok(ink-a.ink>0&&ink-a.ink<1,id+' only new charge consumes ink');
++  for(let cycle=0;cycle<5;cycle++)assert.equal(release(f,1,6).key,'variable',id+' repeated long-range recharge');
++ }
++});
++
++test('Ballpoint recharge across its prior switch boundary actually returns to short range',async()=>{
++ const f=await setup();release(f,100,70);
++ assert.equal(release(f,1).key,'variable');
++ const peak=f.a.weaponRunner.catalogState.ballpointPeakShooting;
++ assert.equal(release(f,30).key,'normal','enough recharging rewinds over the switching point');
++ assert.equal(f.a.weaponRunner.catalogState.ballpointPeakShooting,peak,'full prior peak is not invented again');
++ f.a.intent.fire=false;f.tick(f.a,45);
++ assert.equal(f.G.projectiles.list.at(-1).catalog.descriptor.key,'variable','firing traverses the boundary again');
++});
++
++test('Ballpoint raises its mode boundary only when the new charge exceeds its previous peak',async()=>{
++ const f=await setup();release(f,50,42);
++ const oldPeak=f.a.weaponRunner.catalogState.ballpointPeakShooting;
++ assert.ok(oldPeak>90&&oldPeak<92);
++ assert.equal(f.G.projectiles.list.at(-1).catalog.descriptor.key,'variable');
++ assert.equal(release(f,35).key,'normal');
++ assert.ok(f.a.weaponRunner.catalogState.ballpointPeakShooting>oldPeak,'higher charge establishes higher boundary');
++});
++
++test('Ballpoint reset, cancellation and spent gauge clear the previous mode boundary',async()=>{
++ const f=await setup();release(f,100,50);assert.ok(f.a.weaponRunner.catalogState.ballpointPeakShooting>0);
++ f.a.form='squid';f.a.intent.fire=false;f.a.weaponRunner.update(1/60,{fire:false,firePressed:false});
++ assert.equal(f.a.weaponRunner.catalogState.ballpointPeakShooting,0,'submerging cancels Ballpoint gauge');
++ f.a.form='kid';f.a.ink=100;assert.equal(release(f,25,2).key,'normal');
++ f.tick(f.a,160);
++ assert.equal(f.a.weaponRunner.streaming,false);
++ assert.equal(f.a.weaponRunner.catalogState.ballpointPeakShooting,0,'spent gauge returns neutral');
++ // Expired stream history must not permanently impose long-range walk speed.
++ f.a.weaponRunner.firingT=0;
++ assert.ok(f.a.weaponRunner.moveSpeed()>f.a.weapon.moveSpeedFiring,'idle player resumes normal walking');
++});
++
++test('only source-enabled Nautilus/Ballpoint recharge; Hydra, Mini and Heavy Edit remain committed to firing',async()=>{
++ for(const [id,enabled,full] of [
++  ['s3-spinner-serein',true,76],['s3-spinner-serein-01',true,76],
++  ['s3-spinner-downpour',true,100],['s3-spinner-quick',false,27],
++  ['s3-spinner-hyper',false,150],['s3-spinner-hypershort',false,120]]){
++  const f=await setup(id),a=f.a;release(f,full,15);
++  const ink=a.ink;a.intent.fire=true;f.tick(a);
++  assert.equal(a.weaponRunner.charging,enabled,id);
++  assert.equal(a.weaponRunner.streaming,!enabled,id);
++  if(enabled){assert.ok(a.weaponRunner.catalogState.chargeF>full*.5,id+' retains paid charge');assert.ok(ink-a.ink<1,id+' no repayment');}
++ }
++});
