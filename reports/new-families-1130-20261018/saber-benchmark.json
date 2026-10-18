@@ -1,0 +1,90 @@
+{
+  "node": "v24.19.0",
+  "kind": "single-thread pure collision microbenchmark",
+  "results": [
+    {
+      "id": "s3-saber-normal",
+      "key": "saber-horizontal",
+      "iterations": 1000000,
+      "before": {
+        "ms": 11.213558999999975,
+        "hits": 133770
+      },
+      "after": {
+        "ms": 52.862032,
+        "hits": 110631
+      },
+      "basis": "old terrain-envelope rectangle vs new receiving capsule/source compound shape; changed hit totals are expected"
+    },
+    {
+      "id": "s3-saber-normal",
+      "key": "saber-vertical",
+      "iterations": 1000000,
+      "before": {
+        "ms": 10.793049999999994,
+        "hits": 34986
+      },
+      "after": {
+        "ms": 115.08777399999997,
+        "hits": 56349
+      },
+      "basis": "old terrain-envelope rectangle vs new receiving capsule/source compound shape; changed hit totals are expected"
+    },
+    {
+      "id": "s3-saber-lite",
+      "key": "saber-horizontal",
+      "iterations": 1000000,
+      "before": {
+        "ms": 11.492318999999952,
+        "hits": 82026
+      },
+      "after": {
+        "ms": 59.183266,
+        "hits": 53901
+      },
+      "basis": "old terrain-envelope rectangle vs new receiving capsule/source compound shape; changed hit totals are expected"
+    },
+    {
+      "id": "s3-saber-lite",
+      "key": "saber-vertical",
+      "iterations": 1000000,
+      "before": {
+        "ms": 9.556066999999985,
+        "hits": 26754
+      },
+      "after": {
+        "ms": 115.70506100000011,
+        "hits": 42217
+      },
+      "basis": "old terrain-envelope rectangle vs new receiving capsule/source compound shape; changed hit totals are expected"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "key": "saber-horizontal",
+      "iterations": 1000000,
+      "before": {
+        "ms": 11.938159999999698,
+        "hits": 164346
+      },
+      "after": {
+        "ms": 56.084342000000106,
+        "hits": 136942
+      },
+      "basis": "old terrain-envelope rectangle vs new receiving capsule/source compound shape; changed hit totals are expected"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "key": "saber-vertical",
+      "iterations": 1000000,
+      "before": {
+        "ms": 10.489586000000145,
+        "hits": 172774
+      },
+      "after": {
+        "ms": 139.86648700000023,
+        "hits": 197745
+      },
+      "basis": "old terrain-envelope rectangle vs new receiving capsule/source compound shape; changed hit totals are expected"
+    }
+  ]
+}
