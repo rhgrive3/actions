@@ -29,9 +29,9 @@ assert(result[0].triangles<result[1].triangles&&result[1].triangles<result[2].tr
 for(let i=0;i<40;i++){const g=createSamuraiHelmet({lod:'game',clearance:SAMURAI_HELMET_FIT});g.userData.dispose();}
 // Inspect pre-batch wing pieces without changing the shipped factory contract.
 const {readFile}=await import('node:fs/promises');
-const source=await readFile(path.join(process.env.INKWAVE_HEADGEAR_SITE,'patches/local-quality/headgear/samurai-helmet.js'),'utf8');
+const source=await readFile(new URL('../headgear/samurai-helmet.js',import.meta.url),'utf8');
 const instrumented=source.replace("from 'three'",`from '${import.meta.resolve('three')}'`).replace('chunks[k].push(g);parts.push',"chunks[k].push(g);(root.userData.auditParts??=[]).push({name,g:g.clone()});parts.push");
-assert.notEqual(instrumented,source);
+assert(source.includes('chunks[k].push(g);parts.push'),'authored topology instrumentation anchor required');assert(instrumented.includes('root.userData.auditParts'),'topology instrumentation applied');assert.notEqual(instrumented,source);
 const {createSamuraiHelmet:auditFactory}=await import('data:text/javascript;base64,'+Buffer.from(instrumented).toString('base64'));
 function closedSurface(geometries,label){const edges=new Map();let volume=0;
  for(const g of geometries){const p=g.attributes.position,ix=g.index.array;const at=i=>new THREE.Vector3().fromBufferAttribute(p,i);const key=i=>at(i).toArray().map(v=>Math.round(v*1e7)).join(',');
@@ -39,7 +39,7 @@ function closedSurface(geometries,label){const edges=new Map();let volume=0;
  for(let k=0;k<3;k++){let a=key(ix[i+k]),b=key(ix[i+(k+1)%3]),keyEdge=[a,b].sort().join('|'),e=edges.get(keyEdge)||{count:0,sign:0};e.count++;e.sign+=a<b?1:-1;edges.set(keyEdge,e);}}}
  for(const e of edges.values()){assert.equal(e.count,2,label+' open/nonmanifold edge');assert.equal(e.sign,0,label+' winding mismatch');}assert(volume>0,label+' inward winding');
 }
-for(const lod of ['far','game','hero']){const g=auditFactory({lod});for(const side of [-1,1]){
+for(const lod of ['far','game','hero']){const g=auditFactory({lod}),emitted=createSamuraiHelmet({lod});assert.equal(g.children.length,emitted.children.length);for(let i=0;i<g.children.length;i++){const a=g.children[i],b=emitted.children[i];assert.equal(a.name,b.name);assert.deepEqual(Object.keys(a.geometry.attributes),Object.keys(b.geometry.attributes));for(const key of Object.keys(a.geometry.attributes))assert.deepEqual(a.geometry.attributes[key].array,b.geometry.attributes[key].array,lod+' emitted '+key+' parity');assert.deepEqual(a.geometry.index.array,b.geometry.index.array,lod+' emitted index parity');}emitted.userData.dispose();for(const side of [-1,1]){
  const pieces=g.userData.auditParts;
  const plate=pieces.find(p=>p.name==='wing-black-outer-binding-'+side).g;
  const W={far:5,game:8,hero:12}[lod],corner=side>0?W:0,ru=Math.sqrt(.94)*.5,rv=-Math.sqrt(.94)*.5;
