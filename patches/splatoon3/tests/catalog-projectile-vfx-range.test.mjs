@@ -276,3 +276,35 @@ test("Bloblobber actual 60Hz velocity integrator honors source 3F straight, brak
   afterFree.y-=m.FreeGravity*60;
   assert.ok(p.vel.distanceTo(afterFree)<1e-8,'frame 5 uses free drag and gravity');
 });
+
+test('Bloblobber small-bubble floor rebounds preserve horizontal momentum, wall remains exactly 0.8x',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const row=record('WeaponSlosherBathtub'),actor=f.make(row.id);
+  actor.form='kid';actor.ink=100;actor.intent.fire=true;f.tick(actor,15);actor.intent.fire=false;
+  const p=f.G.projectiles.list.find(q=>q.catalog?.r?.sourceActor==='WeaponSlosherBathtub'&&q.catalog.descriptor.unit===1&&q.catalog.index===0);
+  assert.ok(p,'the first of the three small source bubbles exists');
+  f.G.physics.level=null;let floor=true;
+  f.G.physics.segment=(from,to,h)=>{
+    h.hit=true;h.dist=from.distanceTo(to)*.5;
+    h.point.copy(from).lerp(to,.5);
+    h.normal.set(floor?0:1,floor?1:0,0);
+    h.face=-1;return h;
+  };
+  p.catalog.birthPending=null;p.delay=0;
+  function reset(vx,vy,vz){
+    p.pos.set(0,5,0);p.prev.copy(p.pos);p.start.copy(p.pos);
+    p.vel.set(vx,vy,vz);p.age=0;p.life=480/60;
+    Object.assign(p.catalog,{phase:0,travel:0,range:Infinity,carry:0,bounces:0,groundBounces:0});
+  }
+  reset(30,-25,0);
+  assert.equal(f.G.projectiles._step(p,1/60),false,'first floor touch rebounds');
+  assert.ok(Math.abs(p.vel.x-30)<1e-8,'ground contact must not shorten forward horizontal speed');
+  assert.ok(Math.abs(p.vel.y-.35*60)<1e-8,'sourced .35 cap applies to outward bounce-normal velocity only');
+  assert.equal(p.catalog.groundBounces,1);
+  floor=false;reset(30,0,4);
+  const before=p.vel.length();
+  assert.equal(f.G.projectiles._step(p,1/60),false,'wall always rebounds');
+  assert.ok(Math.abs(p.vel.length()-.8*before)<1e-8,
+    'wall source .8 multiplier must not be overridden by the small-bubble ground cap');
+  assert.equal(p.catalog.groundBounces,0,'wall does not consume a floor bounce');
+});
