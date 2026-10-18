@@ -81,6 +81,10 @@ The real `inkwave-public/src/game/inkCollision.js` owns both the native triangle
 
 `inkCollision.js` was independently reconstructed from the pinned migration base plus all three previously applied transformations, and its resulting source matched the historical emitted code **byte-for-byte**. Keep the existing native projectile/paint, boundary and 30/60/120Hz regressions as release gates.
 
+## Residual adapter inventory (read-only)
+
+Run `node scripts/inkwave-source-migration-audit.mjs --all` to enumerate how many `inkwave-public/src/**/*.js`, CSS files, `index.html` and the native catalogue collision entrypoint are still rewritten by the actual production composition. The script calls `adaptBuildSource` for each candidate and asserts that declared source-owned modules are emitted unchanged. It never edits code, runs builds or changes deployment. The displayed source-file count is **not** a count of the remaining individual patch adapters, and no benchmark improvement is inferred from it.
+
 ## Next migration batches
 
 1. Audit and migrate simple performance and UI adapters with isolated upstream anchors. Keep each change small enough to compare composed output against the previous behavior.
