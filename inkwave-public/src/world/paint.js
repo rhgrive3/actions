@@ -109,7 +109,7 @@ void main() {
   vec2 p = p0;
   if (sa > 0.0) {                                        // shots: smeared forward along the travel direction
     float a = dot(p, dir); vec2 perp = p - a * dir;
-    float s = a > 0.0 ? 1.0 + sa : 1.0 + 0.25 * sa;
+    float s = kind > 7.5 ? 1.0 + sa : (a > 0.0 ? 1.0 + sa : 1.0 + 0.25 * sa);
     p = perp + dir * (a / s);
   }
   float tn = vGrow.x;
@@ -459,7 +459,7 @@ export class PaintSystem {
           if (dx * dx + dy * dy + dz * dz < rs * rs) { this._emitGrowth(g, 3, 1, false); this.growing.splice(i, 1); }
         }
       }
-      const drips = wall && kind !== K_SPECK && kind !== K_ROLL ? 1 : 0;
+      const drips = wall && kind !== K_SPECK && kind !== K_ROLL && kind !== K_CHARGER_LINE ? 1 : 0;
       const g = {
         entries, R: radius, team, seed, kind, age: 0,
         // the body floods out in ≈ 0.1–0.3 s (bigger = heavier), droplets land up to ~1.3× that later; drips run on
@@ -567,7 +567,7 @@ export class PaintSystem {
           if (sa > 0) {
             const a = px * sdu + py * sdv;
             const qx = px - a * sdu, qy = py - a * sdv;
-            const s = a > 0 ? 1 + sa : 1 + 0.25 * sa;
+            const s = chargerLine ? 1 + sa : a > 0 ? 1 + sa : 1 + 0.25 * sa;
             px = qx + sdu * (a / s); py = qy + sdv * (a / s);
           }
           const d = Math.hypot(px, py);
