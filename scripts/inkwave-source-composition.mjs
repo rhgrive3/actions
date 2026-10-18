@@ -6,7 +6,8 @@ import { adaptWeaponAudio } from '../patches/splatoon3/audio-adapter.mjs';
 import { adaptSource } from '../patches/splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
 import { adaptReliability } from '../patches/reliability/adapter.mjs';
-import { adaptQualitySource } from '../patches/local-quality/adapter.mjs';
+import { adaptQualitySource, replaceOnce } from '../patches/local-quality/adapter.mjs';
+import { adaptStaticMenuArt } from '../patches/local-quality/static-menu-adapter.mjs';
 import { adaptNetworkSource } from '../patches/network-replication/adapter.mjs';
 import { adaptRange } from '../patches/practice-range/adapter.mjs';
 import { adaptRanked } from '../patches/splatoon3/ranked-adapter.mjs';
@@ -32,5 +33,5 @@ export function adaptBuildSource(rel, code) {
   code = adaptMainInkFootprints(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
-  return adaptCameraAimControls(rel, code);
+  return adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce);
 }
