@@ -82,7 +82,12 @@ test('adapter: exact single connections, re-application fails closed, upstream u
   const mapSource = read('src/world/maps.js');
   assert.equal(compose('src/world/maps.js', mapSource), mapSource, 'range layout is no longer added by source rewriting');
   assert.equal(adaptRange('src/world/maps.js', mapSource), mapSource);
-  const files = ['src/world/stages/index.js', 'src/world/stages/surfaces.js', 'src/main.js', 'src/world/levelMaterial.js', 'src/ui/hud.js', 'index.html'];
+  for (const direct of ['src/world/stages/index.js', 'src/world/stages/surfaces.js']) {
+    const source = read(direct);
+    assert.equal(compose(direct, source), source, direct + ' directly authored stage registry');
+    assert.equal(adaptRange(direct, source), source);
+  }
+  const files = [ 'src/main.js', 'src/world/levelMaterial.js', 'src/ui/hud.js', 'index.html'];
   for (const rel of files) {
     const once = compose(rel, read(rel));
     assert.notEqual(once, read(rel), rel);
