@@ -341,6 +341,17 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
         cases.push({wall,kind,R:shape.radius,sa:shape.stretchAmt,seed,depth,angle});
       }
   const mainCount = cases.length - mainStart;
+  // Charger has three seed-dependent legacy-style silhouettes in the formerly
+  // unused rows 5-7 of the same 4 KiB profile. Exercise both surface flags,
+  // charge-width endpoints and oblique bearings, with no extra shot producers.
+  const chargerStart = cases.length;
+  for(const wall of [false,true]) for(const kind of [15,16,17])
+    for(const radius of [.78,1.56]) for(const depth of [1,3.5])
+      for(const seed of [.11,.93]) for(const angle of [0,Math.PI/4]){
+        const shape=catalogPaintEllipse(radius,depth);
+        cases.push({wall,kind,R:shape.radius,sa:shape.stretchAmt,seed,depth,angle});
+      }
+  const chargerCount=cases.length-chargerStart;
   for (const { kind, sa, R, seed, rotate=false, depth=null, wall=false, angle=null } of cases) {
     face.wall = wall;
     face.turf = !wall;
@@ -373,7 +384,7 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
     ties: rows.reduce((t, r) => t + r.ties, 0), cpuCells: rows.reduce((t, r) => t + r.cpu, 0), gpuCells: rows.reduce((t, r) => t + r.gpu, 0) };
   // Only float32 ties on the SDF zero crossing (|sd| < 1e-3 WU, 1/16 texel) may disagree.
   check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
-  check(rows.length === 227 + wallRadii.length * 3 + mainCount
+  check(rows.length === 227 + wallRadii.length * 3 + mainCount + chargerCount
     && rows.filter(r => r.kind < 8).length === 99 + wallRadii.length * 3 && result.cpuCells > 0,
     'all original body cases, 128 sourced floor/wall cases and catalog wall-drop radii exercised');
   for (const wall of [false, true]) for (const kind of [8, 9]) {
@@ -385,6 +396,11 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
     const main=rows.filter(row=>row.kind===kind);
     check(main.length===108 && main.some(row=>row.cpu>0), 'main footprint CPU path exercised');
     check(main.some(row=>row.negativeDifferences>0), 'circle-only counterfactual must change main footprint');
+  }
+  for(const kind of [15,16,17]){
+    const charger=rows.filter(row=>row.kind===kind);
+    check(charger.length===32&&charger.some(row=>row.cpu>0),'Charger profile paints on both surfaces');
+    check(charger.some(row=>row.negativeDifferences>0),'Charger must not regress to a plain ellipse');
   }
   return result;
 }

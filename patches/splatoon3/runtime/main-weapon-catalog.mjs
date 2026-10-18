@@ -1048,7 +1048,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(!p.ghost&&s.r.family==='charger') {
         const end=p.prev.clone().lerp(p.pos,Math.min(1,stop)),spacing=Math.max(.2,d.radius*.5);
         const count=Math.ceil(p.prev.distanceTo(end)/spacing);
-        for(let i=0;i<count;i++)floorPaint(p.owner,p.prev.clone().lerp(end,(i+1)/count),d.radius);
+        for(let i=0;i<count;i++)floorPaint(p.owner,p.prev.clone().lerp(end,(i+1)/count),d.radius,1,null,mainInkFootprint(s.r));
       }
       if(!p.ghost&&s.brellaFlight&&s.brellaFlight.volley.next<s.brellaFlight.volley.plan.count){
         const fraction=Math.min(1,clamp(stop),clamp((p.life-(p.age-DT))/DT));
