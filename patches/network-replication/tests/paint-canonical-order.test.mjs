@@ -29,8 +29,8 @@ function paintRenderer(THREE) {
   };
 }
 
-async function client(id, memberIds = ['a', 'b', 'c'], host = 'a', large = false) {
-  const f = await fixture();
+async function client(id, memberIds = ['a', 'b', 'c'], host = 'a', large = false, productionComposition = false) {
+  const f = await fixture({productionComposition});
   const session = f.makeSession(id, host, memberIds.map((owner, i) => [owner, `P${i}`]));
   const nm = f.makeNetMatch(session, { id: 'canonical-paint' });
   const actors = memberIds.map((owner, i) => f.makeActor({ nid: i, owner, remote: id !== owner, team: i % 2, roller: false }));
@@ -66,6 +66,17 @@ function applyRemote(clientState, from, event) {
   clientState.nm._peer(from);
   clientState.nm._play(from, received(event));
 }
+
+test('measured blast contour survives the canonical wire path without weapon inference',async()=>{
+  const sender=await client('a',undefined,'a',true,true),observer=await client('c',undefined,'a',true,true);
+  const center=new sender.f.THREE.Vector3(0,0,0);
+  sender.paint.splat(center,1.7,0,{seed:.37,kind:'source-splash',footprint:'ink-blast',claimOwner:sender.actors[0]});
+  const event=sender.nm.out[0];assert.equal(event[8],'ink-blast');
+  applyRemote(observer,'a',event);
+  assert.ok(sender.paint.counts[0]>0);
+  assert.deepEqual(Array.from(observer.paint.grid),Array.from(sender.paint.grid),'new event kind must be admitted and rasterized identically');
+  assert.equal(observer.paint.growing.at(-1).kind,18);
+});
 
 function visibleQuads(paint) {
   for (const growth of paint.growing) paint._emitGrowth(growth, 3, 1, false);
