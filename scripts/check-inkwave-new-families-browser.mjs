@@ -112,7 +112,7 @@ try{
    }
    summaries.push({id:r.id,name:r.names.ja,variants:ids.length-1});console.log('new-family checked '+r.id);
   }}finally{off();Math.random=random;clear();renderer.dispose();}
-  return {bases:summaries,cases,measurements,renderer:'SwiftShader',fixedHz:60,renderHz:[30,60,120],
+  return {bases:summaries,cases,measurements,renderer:'SwiftShader',fixedHz:60,renderHz:stressOnly?[60]:[30,60,120],
    randomMode:'constant .37; angular distributions require separate statistical tests',
    stress:stressOnly?{actors:actorCount,actorTicks:actorCount*1320*target.length,firingSeconds:15,drainSeconds:7,refill:'100 ink each second',remainingProjectiles:G.projectiles.list.length,remainingDrops:G.projectiles._s3SplashDrops?.length||0,canopyRetirementChecked:typeof G.projectiles.s3WriteBrellaCanopyPresentation==='function'}:null,
    evidence:'production modules, actual Character/Actor/Physics, CPU paint, first quarter-second rendered at each display rate for sixteen base hold scenarios; three sampled renders in other scenarios; no hardware GPU or Nintendo parity claim'};

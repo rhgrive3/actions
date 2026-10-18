@@ -916,5 +916,10 @@
     "modulePreloadsAfter": 145,
     "initialJSBytesBefore": 2704042,
     "initialJSBytesAfter": 2702863
-  }
+  },
+  "stressMeasuredDisplayHz": [
+    60
+  ],
+  "currentVerifierSha256": "2f3a026856df0ad0fd4b9543894b8c24ff0687127056c7f8c9f6ca6dbbaee627",
+  "verifierMetadataCorrection": "Stress records were executed with stressVerifierSha256; current verifier corrects only the generic renderHz header to [60]. Existing raw stress receipts annotate the actual 60Hz scope."
 }
