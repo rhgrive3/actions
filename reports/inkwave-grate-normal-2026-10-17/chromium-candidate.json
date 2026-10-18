@@ -1,0 +1,269 @@
+{
+  "status": "passed",
+  "measurement": "chromium WebGL2; emitted level material / authored Level geometry / fallback surface branch; deterministic static render; software timings only; concurrent workloads may confound timing",
+  "sourceSha": "5d82908b96c199de14b3d79d048e7474f98365d8",
+  "sourceRoot": "/workspace/render-1565",
+  "verifierSha256": "9dbea84c1affaeec716513c72257358339a51261a796c0832cbd845c5e1cfc77",
+  "inputHash": "db87521e2a1443bb87dec9babfd4822d9b3dd755559832f211c481798c12978b",
+  "contentHash": "50b919d25d49699574f9846c99400b8486c70c60d1634d94bc7bc75121211bb3",
+  "result": {
+    "rows": [
+      {
+        "name": "top",
+        "orientation": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 40260,
+        "referenceCoveredPixels": 40260,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 1,
+          "textures": 2,
+          "programs": 2
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 1,
+          "textures": 2,
+          "programs": 2
+        },
+        "imageSHA256": "be7ad9f790972e286da10bf2bd16ed68903bc68003679b38d4b9f2de2c3c4be9",
+        "referenceImageSHA256": "be7ad9f790972e286da10bf2bd16ed68903bc68003679b38d4b9f2de2c3c4be9",
+        "pixelSHA256": "2f2aeb306a01f968702d1b1e378001f1bbd84d99baeb837e4c362e0737862fc5"
+      },
+      {
+        "name": "back-toplight",
+        "orientation": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 40260,
+        "referenceCoveredPixels": 40260,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 2,
+          "textures": 2,
+          "programs": 2
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 2,
+          "textures": 2,
+          "programs": 2
+        },
+        "imageSHA256": "023623b4cc06212ca0cd0a7c388c110ce323b298ebaa6756ea53bf1b2d189280",
+        "referenceImageSHA256": "023623b4cc06212ca0cd0a7c388c110ce323b298ebaa6756ea53bf1b2d189280",
+        "pixelSHA256": "6ff8988b7d9d2ccefc9d8cad96b01d9e2e27f3246f38c73e2da3a40c9e232c99"
+      },
+      {
+        "name": "back-underlight",
+        "orientation": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 40260,
+        "referenceCoveredPixels": 40260,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 2,
+          "textures": 2,
+          "programs": 2
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 2,
+          "textures": 2,
+          "programs": 2
+        },
+        "imageSHA256": "f65a65126ed850ff22f653d54b25c9d267597aca2d68be1f97720bb4144bd108",
+        "referenceImageSHA256": "f65a65126ed850ff22f653d54b25c9d267597aca2d68be1f97720bb4144bd108",
+        "pixelSHA256": "f4f8b55317eef29f1744dc329953e8e6e655e9de1e872e14e4af8478c69c72ef"
+      }
+    ],
+    "frontRows": [
+      {
+        "name": "ink-flat",
+        "independentExpression": true,
+        "useLibrary": false,
+        "inked": true,
+        "tilted": false,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 55348,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "8f62a3367e92115c68a13320bda3a3a295ce161dcd765caf7b352d0133d9e839",
+        "referenceImageSHA256": "8f62a3367e92115c68a13320bda3a3a295ce161dcd765caf7b352d0133d9e839"
+      },
+      {
+        "name": "ink-tilted",
+        "independentExpression": true,
+        "useLibrary": false,
+        "inked": true,
+        "tilted": true,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 69296,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "c8c3e8637a3a270efdf3d92fbd2c78fba2cd7fcdb18c996f33aa86361a667afc",
+        "referenceImageSHA256": "c8c3e8637a3a270efdf3d92fbd2c78fba2cd7fcdb18c996f33aa86361a667afc"
+      },
+      {
+        "name": "texlib-dry-tilted",
+        "independentExpression": true,
+        "useLibrary": true,
+        "inked": false,
+        "tilted": true,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 69296,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "8b57ef6775497a1199ce6a431cdb1bea7d82d0a2e5c3f5062b0b322e5adc0dce",
+        "referenceImageSHA256": "8b57ef6775497a1199ce6a431cdb1bea7d82d0a2e5c3f5062b0b322e5adc0dce"
+      },
+      {
+        "name": "texlib-ink-tilted",
+        "independentExpression": true,
+        "useLibrary": true,
+        "inked": true,
+        "tilted": true,
+        "difference": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "stable": {
+          "pixels": 172800,
+          "changedPixels": 0,
+          "maxChannelError": 0
+        },
+        "coveredPixels": 69296,
+        "cost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "referenceCost": {
+          "calls": 1,
+          "triangles": 2,
+          "geometries": 3,
+          "textures": 6,
+          "programs": 4
+        },
+        "imageSHA256": "f6145eca292aa9f00cfeb904d81af5d16af143b5320623a133fc805ea5b21d8e",
+        "referenceImageSHA256": "f6145eca292aa9f00cfeb904d81af5d16af143b5320623a133fc805ea5b21d8e"
+      }
+    ],
+    "gpu": {
+      "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "timerQuery": true
+    },
+    "shader": {
+      "textureAccesses": 15,
+      "normalizationExpressions": 14,
+      "doubleSided": true,
+      "cacheKey": "inkwave-level-v6-quality3-range1-grate",
+      "customOrientation": true
+    },
+    "webglError": 0,
+    "authoredFaceIndices": 6,
+    "width": 480,
+    "height": 360,
+    "texlib": {
+      "layers": 25,
+      "resolution": 64
+    },
+    "timingExcludedReason": "Concurrent correctness work; software draw/drain samples do not qualify performance acceptance."
+  },
+  "errors": []
+}
