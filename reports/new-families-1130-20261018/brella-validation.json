@@ -26,6 +26,28 @@
       "passed": 4,
       "failed": 0,
       "command": "node --experimental-vm-modules --test --test-name-pattern='additional audit: a launched|contact owns' patches/splatoon3/tests/catalog-brella-1130.test.mjs"
+    },
+    {
+      "kind": "real Character local-to-wire-to-remote presentation and native victim-owner hit roundtrip",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "command": "node --experimental-vm-modules --test patches/network-replication/tests/brella-presentation.test.mjs",
+      "independentReviewRunPassed": true
+    },
+    {
+      "kind": "idle repress, squid repair and Spy shooting/repair regression",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "command": "node --experimental-vm-modules --test --test-name-pattern='discards old|Undercover|squid form' patches/splatoon3/tests/catalog-brella-1130.test.mjs patches/splatoon3/tests/main-weapon-catalog.test.mjs"
+    },
+    {
+      "kind": "final remote presentation plus real cloth model regressions",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "command": "node --experimental-vm-modules --test patches/network-replication/tests/brella-presentation.test.mjs patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs"
     }
   ],
   "measurements": {
@@ -41,7 +63,9 @@
     "explicit outer pellet InitVelRandom ignored",
     "capsule blocks above rendered guard reference",
     "frontal attacker with no trajectory consumes shield HP",
-    "squid retains open canopy and freezes rebuild/cure"
+    "squid retains open canopy and freezes rebuild/cure",
+    "remote held canopy absent from real Character cloth animation",
+    "closed idle time funds instant purge/open on renewed press"
   ],
   "scopeLimits": [
     "No retail hardware measurement",
@@ -49,6 +73,10 @@
     "Integrated production build, browser, CI and main status owned by parent integration",
     "No recovered Nintendo RNG algorithm",
     "No authoritative retail canopy full outline",
-    "No lag rewind or full remote canopy presentation"
+    "No lag rewind or complete attack-trajectory history"
+  ],
+  "followupRuntimeCommits": [
+    "1e484e5",
+    "1cc2343"
   ]
 }
