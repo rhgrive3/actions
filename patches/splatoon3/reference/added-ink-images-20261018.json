@@ -1,0 +1,451 @@
+{
+  "inspectedUTC": "2026-10-18",
+  "runtimeRedistribution": false,
+  "images": [
+    {
+      "file": "grizzblast.webp",
+      "sha256": "ce916106d909f671f50ac915cb20dd7ef84c2b8d2392520a8fc6fedbb1d4b89b",
+      "size": [
+        542,
+        720
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%83%9E%E3%82%B5%E3%83%B3%E5%8D%B0%E3%81%AE%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC/%3A%3Aref/%E5%A1%97%E3%82%8A%E8%B7%A1_%E5%BA%8A.webp",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "body edge measurement; cross-weapon transfer is approximate"
+    },
+    {
+      "file": "hot.webp",
+      "sha256": "0d40fec1f61d18eea31bfa7ea1b2268e02e20a7f30b27bb854bbfafe120554ea",
+      "size": [
+        600,
+        680
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC/%E4%BD%BF%E7%94%A8%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8/%3A%3Aref/%E3%83%9B%E3%83%83%E3%83%88%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC.webp",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery"
+    },
+    {
+      "file": "nova.webp",
+      "sha256": "2400e09f04fd5dfd9d9f902b2fc51504eae748641af510661ff10807e61a028e",
+      "size": [
+        600,
+        680
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC/%E4%BD%BF%E7%94%A8%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8/%3A%3Aref/%E3%83%8E%E3%83%B4%E3%82%A1%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC.webp",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery"
+    },
+    {
+      "file": "sblast.webp",
+      "sha256": "1903a75205ed9089c451435cfc0f5b9c8820ed7a3e6ffa7d3c4546c79f3f61cd",
+      "size": [
+        600,
+        680
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC/%E4%BD%BF%E7%94%A8%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8/%3A%3Aref/S-BLAST92.webp",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery"
+    },
+    {
+      "file": "drive.webp",
+      "sha256": "640a6ef7a4c31edee30d02cdc045348d33907123b2c1e07d941eeca4dd63e95d",
+      "size": [
+        600,
+        680
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AF%E3%82%A4%E3%83%91%E3%83%BC/%E4%BD%BF%E7%94%A8%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8/%3A%3Aref/%E3%83%89%E3%83%A9%E3%82%A4%E3%83%96%E3%83%AF%E3%82%A4%E3%83%91%E3%83%BC.webp",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery"
+    },
+    {
+      "file": "tri-famitsu.jpg",
+      "sha256": "a7ea0599aca0808070ec12a09e71d019652f1e09149de844ffa926a2865ff04b",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://www.famitsu.com/images/000/273/691/y_630adf877bd22.jpg",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery"
+    },
+    {
+      "file": "drive-inside.jpg",
+      "sha256": "945581f505da1b6ce834ff72c7fb139759206b3712eec2ba8ee740f200e0375f",
+      "size": [
+        640,
+        450
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://www.inside-games.jp/imgs/zoom/1145483.jpg",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery"
+    },
+    {
+      "file": "Sbura1.gif",
+      "sha256": "e9bf923577b42e9a13b4331a2403b3ab80d6b443684258b74c16ea88f4a1d64d",
+      "size": [
+        640,
+        360
+      ],
+      "viewedFrames": [
+        0,
+        14,
+        29,
+        43,
+        57
+      ],
+      "url": "https://img.altema.jp/splatoon3/Sbura1.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/sblast92"
+    },
+    {
+      "file": "sbura2.gif",
+      "sha256": "da9c036c9b33d35a098a638564ed1971e265ab1dec02af6a136337dc15bd7199",
+      "size": [
+        640,
+        360
+      ],
+      "viewedFrames": [
+        0,
+        13,
+        26,
+        39,
+        52
+      ],
+      "url": "https://img.altema.jp/splatoon3/sbura2.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/sblast92"
+    },
+    {
+      "file": "Sbura6.gif",
+      "sha256": "06b92947b1af23f113028505a0daa1587a473bf1d8f7deeb46c22cbdae3e9ef3",
+      "size": [
+        640,
+        360
+      ],
+      "viewedFrames": [
+        0,
+        12,
+        24,
+        36,
+        47
+      ],
+      "url": "https://img.altema.jp/splatoon3/Sbura6.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/sblast92"
+    },
+    {
+      "file": "torasuto_1.gif",
+      "sha256": "e322c9712e2a5f565f4afd2f7b0ac6844ffb09f52ec2fd86920c02dd875c290d",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0,
+        8,
+        17,
+        25,
+        33
+      ],
+      "url": "https://img.altema.jp/splatoon3/torasuto_1.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/tristringer"
+    },
+    {
+      "file": "torasuto_2.gif",
+      "sha256": "a9e7c947624a91e4386082cdd69b4a49227fe48a894f59c8131f0f040c169961",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0,
+        7,
+        14,
+        21,
+        28
+      ],
+      "url": "https://img.altema.jp/splatoon3/torasuto_2.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/tristringer"
+    },
+    {
+      "file": "torasuto_3.gif",
+      "sha256": "b69912438345204f25320d2ef45a59355a156fa80aeb39af3c654a37afca2b57",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0,
+        7,
+        15,
+        23,
+        30
+      ],
+      "url": "https://img.altema.jp/splatoon3/torasuto_3.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/tristringer"
+    },
+    {
+      "file": "lact_1.gif",
+      "sha256": "dbbcbf53e0b76838bad7d41eec2bc52b8c9b37e937531ab1136bfdeb26df9773",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0,
+        7,
+        14,
+        21,
+        28
+      ],
+      "url": "https://img.altema.jp/splatoon3/lact_1.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/lact450"
+    },
+    {
+      "file": "lact_2.gif",
+      "sha256": "5c104972522d43d88c7a30162391e27e6c02a5724ba072079fd1d2f4f4d67ae8",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0,
+        7,
+        14,
+        21,
+        27
+      ],
+      "url": "https://img.altema.jp/splatoon3/lact_2.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/lact450"
+    },
+    {
+      "file": "zimu1.gif",
+      "sha256": "b27e6ddeb97af86246aade53354490ae321b645c24e289ebc65aaa9a5dc86a13",
+      "size": [
+        640,
+        360
+      ],
+      "viewedFrames": [
+        0,
+        10,
+        21,
+        32,
+        42
+      ],
+      "url": "https://img.altema.jp/splatoon3/zimu1.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/jimwiper"
+    },
+    {
+      "file": "zimu2.gif",
+      "sha256": "31ed086a60959e6fcfb647bfda935ce5a4c9eff90bd0b95da857219bfe9482d9",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0,
+        11,
+        22,
+        33,
+        44
+      ],
+      "url": "https://img.altema.jp/splatoon3/zimu2.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/jimwiper"
+    },
+    {
+      "file": "zimu3.gif",
+      "sha256": "8f9427af577899101a29cf2cb2f902acd1eeb9a00cafeb97f5f583b2e4d5cc0f",
+      "size": [
+        960,
+        540
+      ],
+      "viewedFrames": [
+        0,
+        18,
+        37,
+        56,
+        74
+      ],
+      "url": "https://img.altema.jp/splatoon3/zimu3.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/jimwiper"
+    },
+    {
+      "file": "parashe_1.gif",
+      "sha256": "1a5ed17c00516f470883f834ff15f1a57918ee2d54039686b8b22509c5b5be2f",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0,
+        5,
+        11,
+        17,
+        22
+      ],
+      "url": "https://img.altema.jp/splatoon3/parashe_1.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/parashelter"
+    },
+    {
+      "file": "parashe_3.gif",
+      "sha256": "559dbe8758dc9586aab6ef5c822ef46706266b7da8ae40f97d999aed7070bb03",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0,
+        7,
+        15,
+        22,
+        29
+      ],
+      "url": "https://img.altema.jp/splatoon3/parashe_3.gif",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "view": "perspective"
+      },
+      "use": "qualitative comparison; overlapping shots, occlusion or promotional composition prevent exact single-stamp recovery",
+      "page": "https://altema.jp/splatoon3/parashelter"
+    }
+  ]
+}

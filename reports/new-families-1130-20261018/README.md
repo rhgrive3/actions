@@ -112,3 +112,7 @@ CIで発見した検査側の問題も修正した。productionで消えるSaber
 ## 最新main取り込み後の検証
 
 検証中に更新されたmain `57de1208`（PR #1574）を取り込み、再ビルド・production82件・native24件・GPU mask・6F遅延リレーを再検証した。共有塗りの既存2560bytesと16種mappingは独立に不変を確認。[統合追補](integration-main-57de.md) / [受領JSON](integration-main-57de.json)を参照。上のc597a70の比較履歴と、最新mainを含む最終生成物を区別する。
+
+## さらに更新されたmainの塗り輪郭との統合
+
+マージ直前の最新main `e52f1150`（#1582・#1583）も取り込んだ。新輪郭と今回の爆発中心・ghost権限を同時に保持して競合を解消し、統合assertを追加した。[統合経緯と証拠の境界](integration-main-e52.md)を参照。以前の塗り/性能結果は履歴として保持し、新生成物とマージ後mainの最終受領はPR #1577本文で確認できる。

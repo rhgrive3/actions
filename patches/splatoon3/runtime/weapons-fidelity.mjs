@@ -11,7 +11,7 @@ import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
 import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint, SHOOTER_PARAMTABLE_DEFAULTS } from './shooter-impact-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
-import { mainInkFootprint } from './main-ink-footprints.mjs';
+import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
@@ -628,7 +628,7 @@ function detachedPaint(system, state, point, radius, salt, face = state.paintFac
   if (state.ghost || !(radius > 0) || !api?.G?.paint) return 0;
   const area = api.G.paint.splat(point, radius, state.team, {
     ...(Number.isInteger(face) && face >= 0 ? { face } : {}),
-    seed: seededUnit(state.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: state.owner,
+    seed: seededUnit(state.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, footprint: state.footprint, claimOwner: state.owner,
     ...(state.noSpecial?{claimMode:'no-special'}:{}),
   });
   if (Number.isFinite(area)) {
@@ -646,7 +646,7 @@ function startDetachedWallDrop(system, p, hit, move, paint, tag, salt, paintFace
   const firstSpeed = Number(move.FallPeriodFirstTargetSpeed ?? 0), secondSpeed = Number(move.FallPeriodSecondTargetSpeed ?? 0);
   if (![firstSpeed, secondSpeed].every(v => Number.isFinite(v) && v >= 0)) throw new RangeError('Invalid detached wall-drop speed');
   const state = {
-    tag, paintFace, owner: p.owner, team: p.team, seed: Number.isFinite(p.seed) ? p.seed : 0, ghost: !!p.ghost, noSpecial:!!p.s3PaintNoSpecial,
+    tag, paintFace, footprint: tag === 'burst' ? mainInkBurstFootprint(p.s3Weapon || p.catalog?.r) : mainInkFootprint(p.s3Weapon || p.catalog?.r), owner: p.owner, team: p.team, seed: Number.isFinite(p.seed) ? p.seed : 0, ghost: !!p.ghost, noSpecial:!!p.s3PaintNoSpecial,
     frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames,
     firstSpeed, secondSpeed,
     shockRadius: Number(paint.PaintRadiusShock) || 0,
@@ -770,7 +770,7 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   if (sphereRadius > 0 && api.G.paint?.splat) {
     const centre = system._s3BlasterBurstCentre || (system._s3BlasterBurstCentre = new api.THREE.Vector3());
     centre.copy(point);
-    const area = api.G.paint.splat(centre, sphereRadius, p.team, { seed: seededUnit(seed, collision ? 0x1001 : 0x1106), kind: SOURCE_SHOT_PAINT_KIND, claimOwner: p.owner });
+    const area = api.G.paint.splat(centre, sphereRadius, p.team, { seed: seededUnit(seed, collision ? 0x1001 : 0x1106), kind: SOURCE_SHOT_PAINT_KIND, footprint: mainInkBurstFootprint(source.w), claimOwner: p.owner });
     if (Number.isFinite(area) && area) p.owner?.addTurf?.(area);
   }
   if (burst.timedDropOn && dropRadius > 0) {
@@ -784,7 +784,7 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
       from.addScaledVector(normal, Math.max(.05, burst.timedDropCollisionRadius * scale));
     else if (collision) from.y += .05;
     spawnSplashDrop(api.G, { owner: p.owner, team: p.team, seed, salt: collision ? 0x1107 : 0x1106, from,
-      radius: dropRadius, spec: blasterBurstDropSpec(contract), depth: false, kind: undefined,
+      radius: dropRadius, spec: blasterBurstDropSpec(contract), depth: false, kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkBurstFootprint(source.w),
       initialDownSpeed: Math.max(0, burst.timedDropInitialSpeed) * scale * 60 });
   }
   const dirs = blasterBurstAxisDirections(contract);
