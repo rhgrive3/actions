@@ -106,7 +106,7 @@ function method(file, signature, endAnchor, deps) {
   assert.ok(start>=0,signature+' missing');
   const stop=src.indexOf(endAnchor,start);
   assert.ok(stop>start,signature+' end missing');
-  const methodText=src.slice(start,stop).trim();
+  const methodText=src.slice(start,stop+(endAnchor.includes('}') ? 4 : 0)).trim();
   const name=signature.trim().slice(0,signature.indexOf('(')-signature.indexOf(signature.trim()));
   return new Function(...Object.keys(deps),'return ({'+methodText+'}).'+name)(...Object.values(deps));
 }
