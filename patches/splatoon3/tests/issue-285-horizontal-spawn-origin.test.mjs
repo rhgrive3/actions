@@ -11,7 +11,7 @@ test('#285 twelve main horizontal globs have seeded spatial width before integra
   const main=all.filter(p=>p.fidelityRollerUnitIndex===0);assert.equal(main.length,12);
   const rows=main.map((p,i)=>{
    assert.equal(p.age,0);close(p.prev.distanceTo(p.start),0);close(p.pos.distanceTo(p.start),0);
-   const fan=2*i/11-1,base=[a.pos.x+Math.sin(yaw)*.6,a.pos.y+1.3,a.pos.z+Math.cos(yaw)*.6];
+   const B=f.ROLLER_SPAWN_BASE,fan=2*i/11-1,base=[a.pos.x+Math.sin(yaw)*B.forward,a.pos.y+B.height,a.pos.z+Math.cos(yaw)*B.forward];
    const x=p.start.x-base[0]-Math.cos(yaw)*fan*.4;
    const z=p.start.z-base[2]+Math.sin(yaw)*fan*.4;
    assert.ok(Math.abs(x)<=.1&&Math.abs(z)<=.1&&Math.abs(p.start.y-base[1])<=.1,'source .1 cube about .8 total-width fan');

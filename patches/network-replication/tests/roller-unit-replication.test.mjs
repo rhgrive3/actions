@@ -119,8 +119,8 @@ test('moving vertical lower unit replicates the floor core and grown X/Z wall co
   const V=world.THREE.Vector3,b={id:0,solid:true,center:new V(0,-.1,0),half:new V(10,.1,10),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
   world.G.physics=new world.Physics({blocks:[b],faces:[],queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;}});world.G.actors=[];
   particle.prev.set(0,2,0);particle.pos.set(0,-1,0);particle.age=.1;particle.fidelityPrevAge=.1;world.fidelityProjectileTargets(world.projectiles,particle);const hit=world.fidelityWorldHit(world.projectiles,particle);assert.equal(hit.hit,true);distances.push(hit.dist);
-  // A lower contact now grazes until the sourced 0.1 core reaches the floor.
-  // A side wall still terminates at the fully grown 0.55 field radius.
+  // Any contact of the grown 0.55 field sphere (floor or wall) grazes until
+  // the sourced 0.1 core reaches terrain (weapons-fidelity GLOB_GRAZE).
   assert.equal(particle.fidelityFieldCollision.initRadius,.1);assert.equal(particle.fidelityFieldCollision.endRadius,.55);
   b.center.set(-.1,0,0);b.half.set(.1,10,10);particle.prev.set(2,0,0);particle.pos.set(-1,0,0);
   world.fidelityProjectileTargets(world.projectiles,particle);const side=world.fidelityWorldHit(world.projectiles,particle);
@@ -131,8 +131,8 @@ test('moving vertical lower unit replicates the floor core and grown X/Z wall co
   assert.equal(front.hit,true);assert.ok(Math.abs(front.normal.y)<1e-9);assert.ok(Math.abs(front.normal.z)>.99);frontDistances.push(front.dist);
  }
  assert.ok(Math.abs(distances[0]-1.9)<1e-9);assert.equal(distances[0],distances[1]);
- assert.ok(Math.abs(sideDistances[0]-1.45)<1e-9);assert.equal(sideDistances[0],sideDistances[1]);
- assert.ok(Math.abs(frontDistances[0]-1.45)<1e-9);assert.equal(frontDistances[0],frontDistances[1]);
+ assert.ok(Math.abs(sideDistances[0]-1.9)<1e-9);assert.equal(sideDistances[0],sideDistances[1]);
+ assert.ok(Math.abs(frontDistances[0]-1.9)<1e-9);assert.equal(frontDistances[0],frontDistances[1]);
 });
 test('legacy27/30/32 packets retain the historical inference fallback',async()=>{
  for(const length of [27,30,32]){
