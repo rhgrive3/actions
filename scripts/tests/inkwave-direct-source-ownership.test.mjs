@@ -62,3 +62,20 @@ test('ZEVANT stage and lobby lettering is directly owned by authored game module
     assert(!mainComposition.includes("  '" + path + "': ["), path + ' must not require late string replacement');
   }
 });
+
+test('level, stage map and Cargo spawn/return geometry live in game source, not Splatoon3 string patches', () => {
+  const level = fs.readFileSync(new URL('../../inkwave-public/src/world/level.js', import.meta.url), 'utf8');
+  const maps = fs.readFileSync(new URL('../../inkwave-public/src/world/maps.js', import.meta.url), 'utf8');
+  const cargo = fs.readFileSync(new URL('../../inkwave-public/src/world/stages/cargo/layout.js', import.meta.url), 'utf8');
+  const s3 = fs.readFileSync(new URL('../../patches/splatoon3/adapter.mjs', import.meta.url), 'utf8');
+  assert.match(level, /squidReturner: !!d\.squidReturner/);
+  assert.match(level, /this\.homeSuperJumpPoints = \(layout\.homeSuperJumpPoints \|\| layout\.spawnPads\)/);
+  assert.match(maps, /homeSuperJumpPoints: \[\[0, 0, -33\.5\], \[0, 0, 33\.5\]\]/);
+  assert.match(maps, /homeSuperJumpPoints: \[\[0, 0, -38\.5\], \[0, 0, 38\.5\]\]/);
+  assert.match(maps, /homeSuperJumpPoints: \[\[0, 0, -31\.5\], \[0, 0, 31\.5\]\]/);
+  assert.match(cargo, /const home = W\(0, 0, -36\.5\)/);
+  assert.match(cargo, /homeSuperJumpPoints: \[home, \[-home\[0\], home\[1\], -home\[2\]\]\]/);
+  for (const path of ['src/world/level.js', 'src/world/maps.js', 'src/world/stages/cargo/layout.js']) {
+    assert(!s3.includes("if (rel === '" + path + "') {"), path + ' must not have the old Splatoon3 world-source rewrite');
+  }
+});
