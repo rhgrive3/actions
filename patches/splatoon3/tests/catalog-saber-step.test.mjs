@@ -44,3 +44,13 @@ test('live source post-swing lock lasts beyond the slash lifetime and releases o
  assert.equal(a.weaponRunner.busy(),true,'22F PostDelay still has one frame');
  a.weaponRunner.update(1/60,{fire:false});assert.equal(a.weaponRunner.busy(),false);
 });
+
+test('swimming clears old forward history before a later neutral charged release',async()=>{
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+ const a=f.make('s3-saber-heavy');a.form='kid';a.aimDir.set(0,0,1);a.intent.move.set(0,0,1);
+ a.weaponRunner.update(1/60,{fire:false});a.form='squid';a.weaponRunner.update(1/60,{fire:false});
+ assert.ok([...a.weaponRunner.catalogState.stepStick].every(v=>v===0),'squid cannot preserve a forward input from earlier humanoid frames');
+ a.form='kid';a.intent.move.set(0,0,0);
+ for(let i=0;i<20;i++)a.weaponRunner.update(1/60,{fire:true});
+ a.weaponRunner.update(1/60,{fire:false});assert.equal(a.weaponRunner.catalogState.lunge,null);
+});

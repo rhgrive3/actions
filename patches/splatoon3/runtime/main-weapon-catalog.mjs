@@ -1264,7 +1264,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(s.chargeF>0 && !input.fire && !s.pending) {
       // Empty-ink charge animation may continue; emitted power/ammunition
       // must still be funded. Match the existing owners' no-free-shot policy.
-      if(s.paid<=EPS||s.paid+EPS<inkAt(r,0)*inkMod(a)){cancel(runner);runner._empty();return;}
+      // Wiper's exported weak swing costs3%, below its3.5% charge
+      // reservation. A funded weak attack must remain legal at that edge.
+      const minimumPaid=(r.family==='splatana'?Math.min(inkAt(r,0),
+        finite(p.spl__WeaponSaberParam.SwingParam.InkConsume,.035)*100):inkAt(r,0))*inkMod(a);
+      if(s.paid<=EPS||s.paid+EPS<minimumPaid){cancel(runner);runner._empty();return;}
       const frames=Math.min(s.chargeF,fundedChargeFrames(r,s.paid,inkMod(a))),c=clamp(frames/full),min=finite(t.ChargeFrameMinCharge,r.family==='splatana'?1:8);
       if(frames+1e-6<min && r.family!=='splatling'&&r.family!=='splatana') {
         // A physical tap still completes the source minimum charge, rather than
@@ -1644,7 +1648,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.bowTilt=clamp(s.bowTilt+finite(a.grounded?shot.BowJumpTiltSpeedReverse:shot.BowJumpTiltSpeedForward,a.grounded?-12:9)*dt*HZ,
         0,finite(shot.BowTiltDegreeMax,90));
     }
-    if(r.family==='splatana'&&a.form==='kid')recordSaberStick(s,a,dt*HZ,r.parameters.spl__WeaponSaberParam.SwingParam.StepStartStickHistoryFrame);
+    if(r.family==='splatana'){
+      if(a.form==='kid')recordSaberStick(s,a,dt*HZ,r.parameters.spl__WeaponSaberParam.SwingParam.StepStartStickHistoryFrame);
+      else if(s.stepStick){s.stepStick.fill(0);s.stepStickFrames=0;s.stepStickAt=0;}
+    }
     s.stop=Math.max(0,s.stop-dt);
     if(r.family!=='splatling') {
       s.accuracy.advance(dt);

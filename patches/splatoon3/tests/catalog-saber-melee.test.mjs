@@ -109,3 +109,10 @@ test('all three vertical source compound boundaries are sampled every 0.1 unit a
   assert.equal(count,140056);
  }
 });
+
+test('a Wiper with exactly its exported3% weak-swing cost can tap despite the higher3.5% minimum-charge reservation',async()=>{
+ const {f,a}=await setup('s3-saber-lite');a.ink=3;
+ tick(a,true);tick(a,false,12);
+ assert.equal(f.G.projectiles.list.filter(p=>p.catalog?.descriptor.key==='saber-horizontal').length,1);
+ assert.equal(a.ink,0);
+});
