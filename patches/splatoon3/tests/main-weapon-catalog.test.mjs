@@ -380,6 +380,12 @@ test('Nautilus recharge and squid keep retain prepaid remaining gauge',async()=>
 test('nearest foot paint follows Jr. accepted-shot slots 3 and 7',async()=>{
   const f=await setup(),a=f.make('s3-shooter-first');a.form='kid';
   const splats=[];f.G.paint.splat=(at,radius)=>{splats.push({at:at.clone(),radius});return 0;};
+  // Drops may land or retire before the later fixed-step observation.
+  // Record real splash-queue admission without retaining expired droplets.
+  const emittedDropRadii=[];
+  const splashQueue=f.G.projectiles._s3SplashDrops ||= [];
+  const queuePush=splashQueue.push;
+  splashQueue.push=function(...drops){emittedDropRadii.push(...drops.map(d=>d.radius));return queuePush.apply(this,drops);};
   f.G.physics.raycast=(at,down,d,h)=>{h.hit=true;h.point.copy(at).setY(0);return h;};
   a.intent.fire=true;f.tick(a,31);
   const rounds=f.G.projectiles.list.filter(p=>p.catalog?.r?.id==='s3-shooter-first');
@@ -392,9 +398,8 @@ test('nearest foot paint follows Jr. accepted-shot slots 3 and 7',async()=>{
   assert.equal(splats.length,0,'no eager muzzle stamp before physics');
   f.G.physics.level=null; // deterministic no-obstruction flight, independent of stage geometry
   for(let i=0;i<30;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
-  const drops=f.G.projectiles._s3SplashDrops||[];
-  assert.ok(drops.filter(p=>Math.abs(p.radius-2.0769)<1e-9).length>=2,
-    'nearest drops are physical and use their source-specific feet radius');
+  assert.ok(emittedDropRadii.filter(radius=>Math.abs(radius-2.0769)<1e-9).length>=2,
+    'nearest drops were physically queued at the source-specific feet radius');
   assert.equal(splats.length,0,'unlanded droplets cannot claim authoritative paint');
   assert.ok(Math.abs(a.ink-(100-7*.43/1.1))<1e-6,'110-unit tank retains normalized gauge');
 });
