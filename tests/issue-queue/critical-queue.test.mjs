@@ -182,7 +182,7 @@ test('real production composition retains source-admission and bounded progressi
   const cfg=adaptBuildSource('src/config.js',base('src/config.js'));
   const session=adaptBuildSource('src/net/session.js',base('src/net/session.js'));
   const paint=adaptBuildSource('src/world/paint.js',base('src/world/paint.js'));
-  assert.match(main,/sanitizeProfile\(storedProfile/);
+  assert.match(main,/sanitizeProfile\(this.profile, DEFAULT_PROFILE, WEAPONS\)/);
   assert.match(main,/sanitizeSettings\(this.settings, DEFAULT_SETTINGS, QUALITY\)/);
   assert.match(main,/awardProfileXP\(p, gained, PROGRESSION.xpForLevel\)/);
   assert.ok(!main.includes('p.xp += gained;'));
