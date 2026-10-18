@@ -82,13 +82,20 @@ export function installWeaponAudioEngine(Engine){
       }
       const declared=loader?.declares(id,event);
       const hasBase=mainAttack&&event!=='fire'&&loader?.declares(id,'fire')===true;
-      // Unknown manifest also fails closed. Only an explicit confirmation
-      // that neither requested nor base real MP3 exists enables authored PCM.
-      if(declared!==false||hasBase||!bank.audibleShotFallback||options.actor?.isLocal!==true||
-         !bank.has(id,event)||!mainAttack){
+      // The recorded S3 MP3 is still absolute priority; once decoded it wins
+      // through bank.authorized.pick() with no synthetic layer. Before that,
+      // a local player's admitted shot MUST remain audible, including when
+      // the manifest/MP3 is cold, HTTP-failed, or decode is unavailable.
+      // Only local MAIN attack one-shots may borrow their own authored PCM;
+      // never manufacture special/kit sounds, loops, impacts or remote shots.
+      const localFallback=mainAttack&&options.actor?.isLocal===true&&
+        bank.audibleShotFallback&&bank.has(id,event);
+      if(!localFallback){
         this._realAudioSuppressed=(this._realAudioSuppressed||0)+1;
         return null;
       }
+      if(declared!==false||hasBase)
+        this._realAudioColdFallbackShots=(this._realAudioColdFallbackShots||0)+1;
       this._realAudioFallbackShots=(this._realAudioFallbackShots||0)+1;
     }
     return this.play(name,{...options,priority:options.priority??(options.actor?.isLocal?88:64)});
@@ -127,7 +134,7 @@ export function installWeaponAudioEngine(Engine){
     return result;
   };
   const stats=p.stats;p.stats=function(){const result=stats.call(this);for(const [key,list] of this.byName){if(!list.some(v=>!v.v.dead&&!v.stolen))this.byName.delete(key);}return {...result,weaponBank:this._weaponBank?.stats()||null,
-    realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
+    realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,coldRecordedFallbackShots:this._realAudioColdFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
   p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmWeapons?.clear();};
 }
