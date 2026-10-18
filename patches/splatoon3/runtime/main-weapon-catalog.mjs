@@ -20,7 +20,7 @@ import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { withShotBias, accuracyEnvelope, recoveringJumpBias } from './weapon-accuracy.mjs';
 import { spreadWeaponRound } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
-import { rollerSpeedSwerveDegrees, GLOB_GRAZE, globGrazePaint, startCatalogWallDrop } from './weapons-fidelity.mjs';
+import { rollerSpeedSwerveDegrees, globGrazePaint, startCatalogWallDrop } from './weapons-fidelity.mjs';
 import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
@@ -972,14 +972,25 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const bounceScale=s.r.sourceActor==='WeaponSlosherBathtub'?s.bounces:0;
       let world=s.hit;world.hit=false;
       // Added Rollers/Sloshers share the native glob graze rule (weapons-fidelity GLOB_GRAZE):
-      // a contact below the glob centre is re-tested with the unit's sourced initial Field radius.
+      // any contact of the grown sphere is re-tested with the unit's sourced initial Field radius.
       const graze=(s.r.family==='roller'||s.r.family==='slosher')&&s.r.sourceActor!=='WeaponSlosherBathtub';
-      for(const q of shapes){
+      // A multi-lobe round (Splatana waves) ends only when its sourced CoreIndex
+      // lobe reaches terrain. An outer lobe that meets a wall, pillar or the floor
+      // splashes there and leaves the wave; the untouched lobes fly on. q.stop is
+      // the fraction of this step a lobe still exists for (-1: already gone).
+      const coreLobe=shapes.length>1?Math.max(0,Math.min(shapes.length-1,Math.round(finite(d.c.CoreIndex,0)))):0;
+      for(let i=0;i<shapes.length;i++){
+        const q=shapes[i];
+        if(s.lobeGone?.[i]){q.stop=-1;continue;}
+        q.stop=Infinity;
         const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
         let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
-        if(graze&&candidate.hit&&candidate.normal.y>GLOB_GRAZE.normalY){
+        if(graze&&candidate.hit){
           const core=collisionRadius(q.param,'Field',0,s.index,bounceScale);
-          if(core<Math.min(f0,f1)){
+          // The first step grows from the core radius itself (f0 === core), so
+          // compare with the largest swept radius: a level swing born near the
+          // floor must not end on its first step when only its edge touched.
+          if(core<Math.max(f0,f1)){
             const touch=s.grazeTouch||(s.grazeTouch={point:candidate.point.clone(),normal:candidate.normal.clone()});
             touch.point.copy(candidate.point);touch.normal.copy(candidate.normal);const face=candidate.face;
             candidate=sweptWorldHit(G.physics,q.from,q.to,core,core,q.hit,true);
@@ -987,7 +998,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
             if(!candidate.hit)globGrazePaint(G,p,touch.point,touch.normal,f1,face);
           }
         }
-        if(candidate.hit&&(!world.hit||candidate.dist<world.dist))world=candidate;
+        if(!candidate.hit)continue;
+        if(i!==coreLobe){
+          (s.lobeGone||=[])[i]=true;q.stop=candidate.dist/Math.max(EPS,len);
+          if(!p.ghost)paint(p.owner,candidate.point,f1,1,null,candidate.face,mainInkFootprint(s.r));
+          continue;
+        }
+        if(!world.hit||candidate.dist<world.dist)world=candidate;
       }
       let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=this.kitDefenseCandidate?.(p);
       if(defense&&defense.distance/Math.max(EPS,len)<stop)stop=defense.distance/Math.max(EPS,len);
@@ -1000,8 +1017,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
         let entry=null;
         for(const q of shapes){
+          if(q.stop<0)continue;
           const pr0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale),radius=collisionRadius(q.param,'Player',p.age*HZ,s.index,bounceScale);
           const contact=capsuleEntry(q.from,q.to,a.pos,hurtboxRadius(a,PLAYER),hurtboxHeight(a,PLAYER),pr0,radius);
+          // A lobe that splashed on terrain this step cannot reach past it.
+          if(contact!=null&&contact>q.stop+EPS)continue;
           if(contact!=null&&!spiralContactClear(p,q,a,contact))continue;
           if(contact!=null&&(entry==null||contact<entry))entry=contact;
         }

@@ -943,16 +943,21 @@ export function fidelityWorldCollisionRadius(p) { return p.inkProfile?.collision
 // made a level Splat Bucket throw (born ~0.7-0.9 m high, Field 0.5-0.8) die
 // after ~8 F at ~11 m with its centre still 0.92 m above the floor (sourced
 // BaseDistance 14), and made a glob clipping a low wall with its lower half
-// vanish instead of carrying on above it. A contact BELOW the glob centre
-// (contact normal pointing up into the glob) is now a graze: the glob ends when
-// its core, the unit's sourced InitRadiusForField, reaches terrain. Side walls
-// and ceilings still end it on first contact of the grown sphere.
-// INKWAVE rule (normal threshold included); retail collision code is not public.
+// vanish instead of carrying on above it. Any contact of the grown sphere --
+// floor, a low wall's top edge, a wall face or pillar beside the path, or a
+// ceiling -- is a graze: the glob ends when its core, the unit's sourced
+// InitRadiusForField, reaches terrain. Previously only upward-facing contacts
+// grazed, so a glob whose centre cleared a low wall still ended on the wall's
+// top edge (and hung there as a wall drop), and a glob passing a pillar
+// vanished when only its edge touched it.
+// INKWAVE rule; retail collision code is not public.
 // The grazed part is not discarded: like water it splashes where it touched.
-// Each graze paints the floor/wall under the glob with the cross-section the
-// grown sphere cuts through that surface (r^2 - h^2), at most once per that
-// radius of travel, so a glob skimming a floor leaves a continuous wet trail
-// and a low wall's top is painted while the rest of the glob carries on.
+// Each graze paints the touched surface with the cross-section the grown
+// sphere cuts through it (r^2 - h^2), at most once per that radius of travel,
+// so a glob skimming a floor or wall leaves a continuous wet trail and a low
+// wall's top is painted while the rest of the glob carries on. normalY only
+// separates floor-like contacts (paint under the glob centre) from walls,
+// edges and ceilings (paint at the touched point).
 export const GLOB_GRAZE = Object.freeze({ normalY: 0.3, minPaintFraction: 0.25 });
 export function globGrazePaint(game, p, point, normal, radius, face = -1) {
   const owner = p?.owner;
@@ -960,7 +965,9 @@ export function globGrazePaint(game, p, point, normal, radius, face = -1) {
   const h = (p.pos.x - point.x) * normal.x + (p.pos.y - point.y) * normal.y + (p.pos.z - point.z) * normal.z;
   const cut = Math.sqrt(Math.max(0, radius * radius - Math.max(0, h) * h));
   const paintRadius = Math.max(radius * GLOB_GRAZE.minPaintFraction, cut);
-  const center = p.pos.clone().addScaledVector(normal, -Math.max(0, h)).addScaledVector(normal, 0.05);
+  const center = normal.y > GLOB_GRAZE.normalY
+    ? p.pos.clone().addScaledVector(normal, -Math.max(0, h)).addScaledVector(normal, 0.05)
+    : point.clone().addScaledVector(normal, 0.05);
   const last = p.s3GrazePaint;
   if (last && last.face === face && last.at.distanceTo(center) < paintRadius * 0.8) return 0;
   p.s3GrazePaint = { at: center, face };
@@ -1359,9 +1366,9 @@ export function fidelityWorldHit(system,p) {
     else {
       const age0=p.fidelityPrevAge??p.age;
       sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,age0,p.prev?.y),fieldRadiusAt(p,p.age,p.pos?.y),s.world,true);
-      // A grown Slosher/Roller glob whose LOWER part meets the floor or a low
-      // wall's top keeps flying; only its core ends it (see GLOB_GRAZE).
-      if(s.world.hit&&globGrazeEligible(p)&&s.world.normal.y>GLOB_GRAZE.normalY){
+      // A grown Slosher/Roller glob whose edge meets the floor, a low wall's
+      // top or a wall beside it keeps flying; only its core ends it (see GLOB_GRAZE).
+      if(s.world.hit&&globGrazeEligible(p)){
         const touch=s.grazeTouch||(s.grazeTouch={point:s.world.point.clone(),normal:s.world.normal.clone()});
         touch.point.copy(s.world.point);touch.normal.copy(s.world.normal);const face=s.world.face;
         sweptWorldHit(api.G.physics,p.prev,p.pos,globCoreRadius(p,p.prev?.y),globCoreRadius(p,p.pos?.y),s.world,true);
