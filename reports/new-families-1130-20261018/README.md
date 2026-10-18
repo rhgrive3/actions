@@ -86,7 +86,7 @@ Issue #532は現在4+1=5の専用経路を既に持ち、旧2.8継承という�
 
 ## 統合検証・性能・main反映
 
-最終ランタイムは `c597a70f3e90ada457fc1928b3edac14dd0ef25b`、production contentHashは `81b086c1911466a57c5d1b5f65d55e60cf91b29c0a8d7d13340d294e39c7780f`。その後の報告書・検査script・UI固定値更新は、ランタイム生成物を変更しない。変更ファイル/実装コミットと機械可読結果は [verification.json](verification.json)、16種の発射・塗り・CPU/GC比較は [production-comparison.md](production-comparison.md) を参照する。
+本ブキ改修単体の比較ランタイムは `c597a70f3e90ada457fc1928b3edac14dd0ef25b`、production contentHashは `81b086c1911466a57c5d1b5f65d55e60cf91b29c0a8d7d13340d294e39c7780f`。その後の報告書・検査script・UI固定値更新は、ランタイム生成物を変更しない。変更ファイル/実装コミットと機械可読結果は [verification.json](verification.json)、16種の発射・塗り・CPU/GC比較は [production-comparison.md](production-comparison.md) を参照する。
 
 | 検査 | 結果・範囲 |
 |---|---|
@@ -108,3 +108,7 @@ Issue #532は現在4+1=5の専用経路を既に持ち、旧2.8継承という�
 CIで発見した検査側の問題も修正した。productionで消えるSaber内部leafへのimportは公開registry経由へ変更し、実Characterのchannel差分を検査する。`packActor`だけを切り出す既存テストには実dualies helperを明示的に注入する。menu-focusのinstaller固定SHAは、Brella表示登録の追加2行を独立レビューし来歴付きで更新した。メニュー本体/レイアウトの固定値とfocusの合否基準は維持し、実ブラウザで成功を確認した。
 
 統合先は [PR #1577](https://github.com/rhgrive3/actions/pull/1577)。最終CIの各job、レビュー結果、merge commit、マージ後mainのビルド/回帰readbackは同PR本文の最終受領記録と作業完了時の報告へ記載する。自己のmerge SHAをこのソースへ埋め込むことはできないため、ランタイムSHAと成果物hashを固定して照合する。#992・#532は上記の未確定範囲が残るためOPENを維持し、完了closeしたとは報告しない。
+
+## 最新main取り込み後の検証
+
+検証中に更新されたmain `57de1208`（PR #1574）を取り込み、再ビルド・production82件・native24件・GPU mask・6F遅延リレーを再検証した。共有塗りの既存2560bytesと16種mappingは独立に不変を確認。[統合追補](integration-main-57de.md) / [受領JSON](integration-main-57de.json)を参照。上のc597a70の比較履歴と、最新mainを含む最終生成物を区別する。

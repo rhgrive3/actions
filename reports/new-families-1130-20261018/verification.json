@@ -872,6 +872,8 @@
     "reports/new-families-1130-20261018/dualies-startup-budget.log",
     "reports/new-families-1130-20261018/dualies-startup-source.json",
     "reports/new-families-1130-20261018/dualies.md",
+    "reports/new-families-1130-20261018/integration-main-57de.json",
+    "reports/new-families-1130-20261018/integration-main-57de.md",
     "reports/new-families-1130-20261018/menu-focus.json",
     "reports/new-families-1130-20261018/network-summary.json",
     "reports/new-families-1130-20261018/paint-mask-summary.json",
@@ -921,5 +923,6 @@
     60
   ],
   "currentVerifierSha256": "2f3a026856df0ad0fd4b9543894b8c24ff0687127056c7f8c9f6ca6dbbaee627",
-  "verifierMetadataCorrection": "Stress records were executed with stressVerifierSha256; current verifier corrects only the generic renderHz header to [60]. Existing raw stress receipts annotate the actual 60Hz scope."
+  "verifierMetadataCorrection": "Stress records were executed with stressVerifierSha256; current verifier corrects only the generic renderHz header to [60]. Existing raw stress receipts annotate the actual 60Hz scope.",
+  "latestMainIntegrationReceipt": "integration-main-57de.json"
 }
