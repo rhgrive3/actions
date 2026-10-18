@@ -1,4 +1,5 @@
-import { WEAPON_AUDIO, fireArticulation, mainAudioSourceId } from './weapon-recipes.mjs';
+import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
+import { mainAudioSourceId } from './bank.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
 import { withBlasterSplashHit } from './blaster-hit.mjs';
 const INSTALL=Symbol.for('inkwave.weapon-audio.runtime.v1');
