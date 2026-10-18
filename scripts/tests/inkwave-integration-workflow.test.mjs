@@ -5,6 +5,50 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
+const weaponWorkflow = fs.readFileSync(new URL('../../.github/workflows/inkwave-main-weapons.yml', import.meta.url), 'utf8');
+
+// Configuration ownership checks, not a simulation of GitHub's scheduler.
+function mainWeaponTriggerContract(source) {
+  const trigger = /^on:\n([\s\S]*?)^permissions:/m.exec(source)?.[1];
+  assert.ok(trigger, 'weapon workflow triggers must exist');
+  assert.match(trigger, /^  workflow_dispatch:/m, 'manual diagnostics remain available');
+  const files = [
+    'patches/splatoon3/runtime/main-weapon-catalog.mjs',
+    'patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs',
+    'patches/reliability/queue-nine-final-adapter.mjs',
+    'patches/reliability/adapter.mjs',
+    'patches/network-replication/queue-recovery-adapter.mjs',
+    'inkwave-public/src/core/save-validation.mjs',
+    'inkwave-public/src/game/actor.js', 'inkwave-public/src/net/netmatch.js',
+    'inkwave-public/src/world/paint.js', 'inkwave-public/src/config.js', 'inkwave-public/src/main.js',
+    'scripts/inkwave-source-composition.mjs', 'scripts/build-inkwave.mjs',
+    'tests/issue-queue/critical-queue.test.mjs', '.github/workflows/inkwave-main-weapons.yml',
+  ];
+  const matches = (pattern, file) => new RegExp('^' + pattern.split('**').map(part =>
+    part.split('*').map(text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*')).join('.*') + '$').test(file);
+  for (const event of ['pull_request', 'push']) {
+    const block = new RegExp('^  ' + event + ':\\n((?:    .*(?:\\n|$))*)', 'm').exec(trigger)?.[1];
+    assert.ok(block, event + ' must be configured');
+    if (event === 'push') assert.match(block, /^    branches: \[main\]$/m, 'only pushed main runs this gate');
+    const paths = [...block.matchAll(/^      - '([^']+)'$/gm)].map(row => row[1]);
+    for (const file of files) assert.ok(paths.some(pattern => matches(pattern, file)), event + ': ' + file);
+  }
+  assert.equal((source.match(/ref: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/g) || []).length, 2,
+    'both jobs keep immutable PR heads and the exact pushed main SHA');
+}
+
+test('main-weapon numerical and browser gates run on exact pushed main and relevant queued-owner changes', () => {
+  mainWeaponTriggerContract(weaponWorkflow);
+});
+test('main-weapon trigger contract rejects missing main coverage and mutable checkout', () => {
+  const push = /^  push:\n(?:    .*(?:\n|$))*/m;
+  for (const mutant of [
+    weaponWorkflow.replace(push, ''),
+    weaponWorkflow.replace('branches: [main]', 'branches: [other]'),
+    weaponWorkflow.replace(push, block => block.replace("      - 'inkwave-public/src/core/**'\n", '')),
+    weaponWorkflow.replace('github.event.pull_request.head.sha || github.sha', 'github.ref'),
+  ]) assert.throws(() => mainWeaponTriggerContract(mutant));
+});
 
 test('integration retains immutable source and independently rebuilt artifact identity checks', () => {
   const checkoutCount = (workflow.match(/uses: actions\/checkout@v4/g) || []).length;

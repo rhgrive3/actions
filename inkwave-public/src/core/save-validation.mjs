@@ -4,7 +4,7 @@ const OWN = Object.prototype.hasOwnProperty;
 export const MAX_PROFILE_LEVEL = 100000;
 export const MAX_PROFILE_XP = 1e12;
 const RANGES = Object.freeze({
-  sensitivity: [0.2, 3], padSensitivity: [0.2, 3], fov: [65, 100],
+  sensitivity: [0.2, 3], fov: [65, 100],
   gyroSens: [-5, 5], touchSens: [-5, 5], touchScale: [0.7, 1.4],
   touchOpacity: [0.25, 1], cameraShake: [0, 1], aimAssist: [0, 1],
   rumble: [0, 1], master: [0, 1], music: [0, 1], sfx: [0, 1],
@@ -12,15 +12,41 @@ const RANGES = Object.freeze({
 export function validWeaponId(weapons, id) {
   return typeof id === 'string' && OWN.call(weapons, id) && !!weapons[id];
 }
-export function sanitizeSettings(raw, defaults, quality) {
-  const src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
-  const value = { ...defaults, ...src };
-  if (typeof value.quality !== 'string' || !OWN.call(quality, value.quality)) value.quality = defaults.quality;
-  for (const [key, [min, max]] of Object.entries(RANGES)) {
-    const n = value[key];
-    value[key] = typeof n !== 'number' || !Number.isFinite(n) ? defaults[key] : Math.max(min, Math.min(max, n));
+const record = value => value && typeof value === 'object' && !Array.isArray(value);
+function finiteSetting(value, fallback, range) {
+  const n = typeof value === 'number' && Number.isFinite(value) ? value : Number.isFinite(fallback) ? fallback : 0;
+  return Math.max(range[0], Math.min(range[1], n));
+}
+function settingsPatch(raw, fallback, quality, modernPad) {
+  const value = { ...raw };
+  if (OWN.call(value, 'quality') && (typeof value.quality !== 'string' || !OWN.call(quality, value.quality)))
+    value.quality = typeof fallback.quality === 'string' && OWN.call(quality, fallback.quality) ? fallback.quality : 'high';
+  for (const [key, range] of Object.entries(RANGES)) if (OWN.call(value, key))
+    value[key] = finiteSetting(value[key], fallback[key], range);
+  // Saved pre-S3 multipliers are migrated by the existing aim owner. Live
+  // sliders and already-migrated saves use the independent -5..+5 S3 scale.
+  const padRange = modernPad ? [-5, 5] : [.2, 3];
+  const padFallback = modernPad && fallback.padSensitivityScale !== 's3' ? 0 : fallback.padSensitivity;
+  if (OWN.call(value, 'padSensitivity')) value.padSensitivity = finiteSetting(value.padSensitivity, padFallback, padRange);
+  if (record(value.aimProfiles)) {
+    value.aimProfiles = { ...value.aimProfiles };
+    for (const mode of ['tv', 'handheld']) if (record(value.aimProfiles[mode])) {
+      const p = value.aimProfiles[mode] = { ...value.aimProfiles[mode] };
+      const prev = fallback.aimProfiles?.[mode];
+      if (OWN.call(p, 'gyroSens')) p.gyroSens = finiteSetting(p.gyroSens, prev?.gyroSens ?? fallback.gyroSens, [-5, 5]);
+      if (OWN.call(p, 'padSensitivity')) p.padSensitivity = finiteSetting(p.padSensitivity, prev?.padSensitivity ?? padFallback, padRange);
+    }
   }
   return value;
+}
+export function sanitizeSettings(raw, defaults, quality) {
+  const src = record(raw) ? raw : {};
+  return settingsPatch({ ...defaults, ...src }, defaults, quality, src.padSensitivityScale === 's3');
+}
+export function sanitizeSettingsChange(raw, current, quality) {
+  // Preserve the partial's key set: merging old flat aim values here would
+  // overwrite the destination profile when only aimProfile was switched.
+  return settingsPatch(record(raw) ? raw : {}, current, quality, true);
 }
 export function sanitizeProfile(raw, defaults, weapons) {
   const src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};

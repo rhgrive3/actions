@@ -7,11 +7,10 @@ function once(code, before, after, label) {
     throw new Error('INKWAVE queue patch conflict (' + label + '): expected one anchor');
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
-function all(code, before, after, count, label) {
-  const parts = code.split(before);
-  if (parts.length !== count + 1)
-    throw new Error('INKWAVE queue patch conflict (' + label + '): expected ' + count + ', found ' + (parts.length - 1));
-  return parts.join(after);
+function requireOwner(code, anchor, count, label) {
+  const found = code.split(anchor).length - 1;
+  if (found !== count)
+    throw new Error('INKWAVE queue patch conflict (' + label + '): expected ' + count + ', found ' + found);
 }
 export function adaptQueueNine(rel, input) {
   let code = input;
@@ -27,15 +26,10 @@ export function adaptQueueNine(rel, input) {
       'paint kind own-key lookup');
   }
   if (rel === 'src/net/session.js') {
-    code = "import { validStartRoster } from '../core/save-validation.mjs';\n" + code;
-    return once(code, '  async _begin(cfg) {',
-      '  async _begin(cfg) {\n' +
-      '    // Do not enter START, send READY or build HUD without a local human.\n' +
-      '    if (!validStartRoster(cfg?.roster, this.myId, cfg?.mode)) {\n' +
-      "      this.error = 'Invalid match roster: recipient-owned player missing or duplicated';\n" +
-      "      this._emit('error', { message: this.error });\n" +
-      '      return;\n' +
-      '    }', 'START roster admission');
+    // The network owner also checks registered weapons, modes and host-owned
+    // bots before START/READY. Do not import a second, weaker same-name guard.
+    requireOwner(code, 'if (!validStartRoster(cfg?.roster, this.myId, WEAPONS, cfg?.mode, this.hostId))', 1, 'session roster owner');
+    return code;
   }
   if (rel === 'src/net/netmatch.js') {
     // Earlier network overlays replace the raw _play switch with this owner.
@@ -44,15 +38,9 @@ export function adaptQueueNine(rel, input) {
     const end = code.indexOf('\n  commitDeadlinePaint()', begin);
     if (begin < 0 || end < 0) throw new Error('INKWAVE queue patch conflict: deadline paint owner missing');
     let method = code.slice(begin, end);
-    method = once(method,
-      '    const order = readPaintOrder(this, e._netPeer, e);',
-      '    // Validate before touching sequencing or replay suppression.\n' +
-      '    const kind = e[8];\n' +
-      "    if (!(kind === 0 || kind == null || (typeof kind === 'string' &&\n" +
-      "      ['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'speck'].includes(kind)))) return false;\n" +
-      '    if (![2, 3, 4, 5, 7, 9, 10, 11, 12].every(i => Number.isFinite(e[i] ?? 0)) ||\n' +
-      '      !(e[5] > 0 && e[5] <= 64) || (e[6] !== 0 && e[6] !== 1)) return false;\n' +
-      '    const order = readPaintOrder(this, e._netPeer, e);', 'remote splat validation');
+    // readPaintOrder owns membership/team, Float32, source-kind/capability,
+    // epoch and replay admission. A second legacy-kind list drops real ink.
+    requireOwner(method, '    const order = readPaintOrder(this, e._netPeer, e);', 1, 'remote paint admission owner');
     method = once(method, '    this.applying = true;',
       '    const wasApplying = this.applying;\n    this.applying = true;', 'replay capture');
     method = once(method,
@@ -67,43 +55,28 @@ export function adaptQueueNine(rel, input) {
     return code.slice(0, begin) + method + code.slice(end);
   }
   if (rel !== 'src/main.js') return code;
-  code = "import { sanitizeSettings, sanitizeProfile, awardProfileXP, validWeaponId, validStartRoster } from './core/save-validation.mjs';\n" + code;
+  // All of these guards were composed by queue-recovery before this final
+  // pass. Verify their ownership instead of replaying raw-upstream patches.
+  for (const [anchor, count, label] of [
+    ["this.profile = normalizeQueueProfile(loadJSON('inkwave.profile', DEFAULT_PROFILE), WEAPONS);", 1, 'persisted profile owner'],
+    ['getLoadout: () => ({ weapon: safeWeaponId(self.profile.weapon, WEAPONS) })', 1, 'loadout getter owner'],
+    ['if (!validWeaponId(weapon, WEAPONS)) return;', 1, 'loadout admission owner'],
+    ['weapon: safeWeaponId(this.profile.weapon, WEAPONS),', 1, 'offline loadout owner'],
+    ['if (!validStartRoster(cfg?.roster, G.net?.myId, WEAPONS, cfg?.mode, G.net?.hostId))', 1, 'online roster owner'],
+    ['if (!a?.weapon || !a.weaponRunner) return;', 1, 'HUD local actor owner'],
+    ['normalizeQueueProfile(p, WEAPONS);', 2, 'result profile owner'],
+    ['settleProgression(p, PROGRESSION);', 2, 'bounded progression owner'],
+    ['const privateBattle = !!G.netm;', 1, 'private battle XP owner'],
+  ]) requireOwner(code, anchor, count, label);
+  code = "import { sanitizeSettings, sanitizeSettingsChange } from './core/save-validation.mjs';\n" + code;
   code = once(code, 'DEFAULT_SETTINGS, effectiveQuality,',
     'DEFAULT_SETTINGS, QUALITY, effectiveQuality,', 'quality import');
-  const settingsAssign = /^    this\.settings = G\.settings = [^\n]+;$/gm;
-  const matches = [...code.matchAll(settingsAssign)];
-  if (matches.length !== 1) throw new Error('INKWAVE queue patch conflict: settings assignment not unique');
-  code = code.replace(settingsAssign, value =>
-    value + '\n    this.settings = G.settings = sanitizeSettings(this.settings, DEFAULT_SETTINGS, QUALITY);');
-  code = once(code, "    this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);",
-    "    const storedProfile = loadJSON('inkwave.profile', DEFAULT_PROFILE);\n" +
-    '    this.profile = sanitizeProfile(storedProfile, DEFAULT_PROFILE, WEAPONS);\n' +
-    "    if (JSON.stringify(storedProfile) !== JSON.stringify(this.profile)) saveJSON('inkwave.profile', this.profile);",
-    'persisted profile admission');
-  code = once(code, '    Object.assign(this.settings, partial);',
-    '    Object.assign(this.settings, sanitizeSettings({ ...this.settings, ...partial }, DEFAULT_SETTINGS, QUALITY));',
-    'live settings admission');
-  code = once(code, '  async startNetMatch(cfg, nm) {',
-    '  async startNetMatch(cfg, nm) {\n' +
-    "    if (!validStartRoster(cfg?.roster, G.net?.myId, cfg?.mode)) throw new Error('Invalid local START roster');",
-    'secondary net START guard');
   code = once(code,
-    "getLoadout: () => ({ weapon: self.profile.weapon || 'shooter' }),",
-    "getLoadout: () => ({ weapon: validWeaponId(WEAPONS, self.profile.weapon) ? self.profile.weapon : 'shooter' }),",
-    'loadout getter');
-  code = once(code, '        if (!WEAPONS[weapon]) return;',
-    '        if (!validWeaponId(WEAPONS, weapon)) return;', 'loadout validation');
-  code = once(code, "weapon: this.profile.weapon || 'shooter',",
-    "weapon: validWeaponId(WEAPONS, this.profile.weapon) ? this.profile.weapon : 'shooter',",
-    'offline weapon');
-  // The composed scoring and private-battle guard remain authoritative.
-  code = all(code, 'p.xp += gained;', 'awardProfileXP(p, gained, PROGRESSION.xpForLevel);',
-    2, 'bounded result XP');
-  code = all(code,
-    'while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }',
-    '/* Bounded XP calculation already advanced the level. */',
-    2, 'remove non-terminating loops');
-  code = once(code, '  _updateHud(dt) {',
-    '  _updateHud(dt) {\n    if (!this.match?.local) return;', 'orphan HUD guard');
+    "normalizeViewSettings(loadJSON('inkwave.settings', initialGyroDefaults(DEFAULT_SETTINGS, this.mobile)), DEFAULT_SETTINGS)",
+    "normalizeViewSettings(sanitizeSettings(loadJSON('inkwave.settings', initialGyroDefaults(DEFAULT_SETTINGS, this.mobile)), DEFAULT_SETTINGS, QUALITY), DEFAULT_SETTINGS)",
+    'finite settings before aim migration');
+  code = once(code, '    partial = normalizeViewSettings({ ...partial }, this.settings);',
+    '    partial = normalizeViewSettings(sanitizeSettingsChange(partial, this.settings, QUALITY), this.settings);',
+    'finite partial before aim owner');
   return code;
 }

@@ -76,6 +76,10 @@ Nintendo公式11.3.0変更: ケルビンのスライド後ブレ約10%軽減、�
 22. 追加main #1585の方向保持がnative Blasterの実壁衝突では届かない → 爆発queueが入射速度を保存してから鉛直落下へ遷移。実地形3方向で、接触時刻/戻り速度/爆発と落下の位置・時刻・半径を維持した方向復元を確認。
 23. 追加main #1579のワイパー波が近い敵・core地形・盾より後の外側接触塗りを先に確定 → 波全体の最短終端を決めてから到達範囲内だけ塗り・lobe退役を確定。既存の射撃乱数列・命中・ghost権限を保持。[再現と二相処理の検証](splatana-lobe-hit-order.md)。
 24. 追加main #1580の配信DSP workerと生成元の別キット音声ID変換が不整合 → #1590で同じ定義を生成元へ復元し、配信済みworker全163,668byteを不変で再生成。関連118試験と独立771 PCM比較が成功。本家音響一致の追加認定ではない。[生成元・生成物の証拠](audio-worker-source-sync.md)。
+25. 同時main #1592のfinal queue passが既存ownerの置換前raw anchorを要求しproduction build停止、Sessionでは同名importも重複 → 既存profile/loadout/roster/XP/HUD ownerを保存して合成し、全production構文・ビルドとowner消失負対照を検査。[統合修正](queue-final-composition.md)。
+26. #1592の旧kind限定リストが正当なsource-shot/source-splash/ink-*等の通信塗りを拒否 → 既存のsource/capability/所有権admissionを維持し、例外後のreplay復元だけ補完。実codec・CPUgrid・deadline・重複も検査。[通信塗りの証拠](queue-final-composition.md)。
+27. #1592のpad感度clampが正当なS3 -5/0/+5を.2/.2/3へ変更 → 保存済みS3／liveの-5..+5とlegacy移行を分離し、独立profileとgyro/touch/mouseの既存範囲・0/無効設定を保持。[設定の前後比較](queue-final-composition.md)。
+28. #1592のactive final adapterがsource input identityの明示リスト外 → 実SHAを登録してunit検査。生成物由来の配信cacheは従来も正常であり、exact source/input追跡の不足を補完したもの。[identityの範囲](queue-final-composition.md)。
 
 ## 検証の読み方と残る限界
 
