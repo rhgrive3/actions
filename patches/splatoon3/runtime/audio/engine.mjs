@@ -58,6 +58,33 @@ export function installWeaponAudioEngine(Engine){
       }).catch(()=>{});
     }else this._realS3Loader?.ensure(id,'fire');
   };
+  // The selected player's first shot must be an actual decoded recording.
+  // Run from the START operation before the game becomes playable, while the
+  // user-gesture audio unlock/fade is in progress. Never synthesize on failure.
+  p.requireRecordedMainShot=async function(weaponId){
+    const id=mainAudioSourceId(weaponId);
+    if(!id||id.includes(':')||!AUDIO_RECIPES[id])return {ready:false,unrecorded:true,id};
+    if(!this.ctx)this.init();
+    const bank=this.weaponBank(),loader=this._realS3Loader;
+    if(!bank||!loader)throw new Error('録音SEを再生するAudioContextを初期化できません');
+    const result=await loader.ensure(id,'fire');
+    const recorded=loader.declares(id,'fire');
+    // Some modern catalogue weapons have no 2022 MP3. Their authored sound is
+    // their only source, not a substitute for an existing recording.
+    if(recorded===false)return {ready:false,unrecorded:true,id};
+    if(recorded!==true)throw new Error('ブキ音源の一覧を読み込めません: '+id);
+    if(!bank.authorized.byEvent.has(id+':fire')){
+      const error=result?.errors?.[0]?.error||loader.errors?.at(-1)||'MP3をデコードできません';
+      throw new Error('本家射撃MP3の準備に失敗しました: '+id+' ('+error+')');
+    }
+    // AudioContext can be temporarily suspended by the browser. The caller
+    // must enter the game only after the selected recording and device are live.
+    if(this.ctx.state==='suspended'){
+      try{await this.ctx.resume?.();}catch{}
+      if(this.ctx.state==='suspended')throw new Error('音声出力の有効化が必要です。もう一度STARTを押してください');
+    }
+    return {ready:true,id,recording:'fire'};
+  };
   // Preserve the exact admitted projectile clock: never delay a missed one-shot.
   // Preload after a first cold miss; the following shots will use real samples.
   p.playWeapon=function(id,event='fire',options={}){
