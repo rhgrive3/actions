@@ -81,8 +81,6 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/fx-empty-pools-adapter.mjs',
   'patches/local-quality/platform-adapter.mjs',
   'patches/local-quality/portrait-guard-adapter.mjs',
-  'patches/local-quality/prop-atlas-adapter.mjs',
-  'patches/local-quality/prop-retention-adapter.mjs',
   'patches/local-quality/refl-skip-adapter.mjs',
   'patches/local-quality/runtime-frame-scratch-adapter.mjs',
   'patches/local-quality/resource-adapter.mjs',
