@@ -230,3 +230,34 @@ test('Bloblobber physical launch remains level against a short ground reticle an
   assert.ok(cliffShot.frames>240,'high-ground near-vertical fire must not vanish at old 240F cutoff');
   assert.ok(cliffShot.frames<480,'high-ground projectile still ends at the sourced third floor contact');
 });
+
+test("Bloblobber actual 60Hz velocity integrator honors source 3F straight, brake and free-fall transitions",async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const row=record('WeaponSlosherBathtub'),unit=row.parameters.UnitGroupParam.Unit[0],m=unit.MoveParam;
+  assert.equal(m.GoStraightToBrakeStateFrame,3);
+  assert.equal(m.BrakeToFreeStateFrame,1);
+  assert.equal(m.BrakeAirResist,.01);assert.equal(m.FreeAirResist,.01);
+  assert.equal(m.BrakeGravity,.01);assert.equal(m.FreeGravity,.015);
+  const a=f.make(row.id);a.form='kid';a.ink=100;a.aimYaw=0;a.aimPitch=0;
+  a.aimPoint.set(0,1.05,70);a.intent.fire=true;
+  for(let i=0;i<24&&!f.G.projectiles.list.some(p=>p.catalog?.r?.sourceActor==='WeaponSlosherBathtub');i++)f.tick(a);
+  a.intent.fire=false;
+  const p=f.G.projectiles.list.find(x=>x.catalog?.r?.sourceActor==='WeaponSlosherBathtub'&&x.catalog.descriptor.unit===0);
+  assert.ok(p);
+  f.G.physics.level=null;
+  f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+  const initial=p.vel.clone();
+  for(let frame=1;frame<=3;frame++){
+    assert.equal(f.G.projectiles._step(p,1/60),false);
+    assert.ok(p.vel.distanceTo(initial)<1e-8,'source keeps exact launch velocity during first three frames');
+  }
+  assert.equal(f.G.projectiles._step(p,1/60),false);
+  const afterBrake=initial.clone().multiplyScalar(1-m.BrakeAirResist);
+  afterBrake.y-=m.BrakeGravity*60;
+  assert.ok(p.vel.distanceTo(afterBrake)<1e-8,'frame 4 uses brake drag and gravity');
+  assert.equal(p.catalog.phase,2,'one brake frame advances to free fall');
+  assert.equal(f.G.projectiles._step(p,1/60),false);
+  const afterFree=afterBrake.multiplyScalar(1-m.FreeAirResist);
+  afterFree.y-=m.FreeGravity*60;
+  assert.ok(p.vel.distanceTo(afterFree)<1e-8,'frame 5 uses free drag and gravity');
+});
