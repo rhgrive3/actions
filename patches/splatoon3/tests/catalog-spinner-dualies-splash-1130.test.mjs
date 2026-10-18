@@ -123,7 +123,16 @@ test('Spinner gravity-unknown fallback paints each crossed release coordinate on
  s.travel=0;s.nextSplash=0;s.dropCount=0;s.range=100;s.phase=0;s.carry=0;
  f.G.projectiles._step(p,1/60);
  assert.equal(s.dropCount,5);
- assert.deepEqual(stamps.map(x=>Math.round(x.z*1e6)/1e6),[0,2,4,6,8],
-  'even fast Spinner travel must consume all crossed release locations');
- assert.deepEqual(stamps.map(x=>x.radius),[1.7388,1.449,1.449,1.449,1.449]);
+ const radii=[1.7388,1.449,1.449,1.449,1.449];
+ assert.deepEqual(stamps.map(x=>x.radius),radii);
+ // Release thresholds are 0,2,4,6,8 m along the flight path. The production
+ // floor painter subsequently offsets the paint centre backward by 0.375
+ // radius times 1.6(depth-1) for its elongated footprint. It is incorrect to
+ // compare projected paint centres directly with raw release distances.
+ assert.ok(d.depth>1,'source elongated footprint applies a backward centre offset');
+ for(let i=0;i<radii.length;i++){
+  const release=i*2, projected=release-.6*radii[i]*(d.depth-1);
+  assert.ok(Math.abs(stamps[i].z-projected)<1e-5,
+   'fast Spinner must paint every crossed release at its correct projected centre, '+i);
+ }
 });
