@@ -101,6 +101,7 @@ const IDENTITY_FILES = [
   'cloth-derivative-adapter.mjs',
   'retarget-branch-update-adapter.mjs',
   'motion-fk-hotpath-adapter.mjs',
+  'squid-motion-binding-adapter.mjs', 'squid-form-ease-adapter.mjs',
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
   'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',

@@ -20,7 +20,7 @@ async function main(){
  basis.productionEnvironmentSourceHash=manifest.artifacts['_versions/'+manifest.build.revision+'/src/world/environment.js'];assert(basis.productionEnvironmentSourceHash,'production Environment emitted source');basis.lightingConfigHash=hash(JSON.stringify({config:PRODUCTION_LIGHTING_CONFIG,exposure:PRODUCTION_EXPOSURE}));
  if(basis.sourceSha){basis.checkoutSha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();assert.equal(basis.checkoutSha,basis.sourceSha,'exact candidate checkout');}
  for(const f of ['browser.mjs','run.mjs','lighting.mjs'])basis.harnessHashes[f]=hash(fs.readFileSync(path.join(here,f)));
- basis.authoredSquidHashes={};for(const file of ['inkwave-public/src/game/character-geo.js','inkwave-public/src/game/character-mats.js','inkwave-public/src/game/motion/squid-rig.js','patches/local-quality/s3-squid-look-adapter.mjs','patches/splatoon3/runtime/swim-motion.mjs'])basis.authoredSquidHashes[file]=hash(fs.readFileSync(file));
+ basis.authoredSquidHashes={};for(const file of ['inkwave-public/src/game/character-geo.js','inkwave-public/src/game/character-mats.js','inkwave-public/src/game/motion/squid-rig.js','patches/local-quality/s3-squid-look-adapter.mjs','patches/splatoon3/runtime/swim-motion.mjs','patches/local-quality/squid-motion-binding-adapter.mjs','patches/local-quality/squid-form-ease-adapter.mjs'])basis.authoredSquidHashes[file]=hash(fs.readFileSync(file));
  const write=r=>fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({...basis,...r},null,2));write({status:'verified-build',browserRun:false});
  let server,browser,page;const errors=[],warnings=[],blocked=[],loaded=new Set();
  try{
