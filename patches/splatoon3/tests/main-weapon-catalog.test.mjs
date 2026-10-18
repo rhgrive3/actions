@@ -382,8 +382,19 @@ test('nearest foot paint follows Jr. accepted-shot slots 3 and 7',async()=>{
   const splats=[];f.G.paint.splat=(at,radius)=>{splats.push({at:at.clone(),radius});return 0;};
   f.G.physics.raycast=(at,down,d,h)=>{h.hit=true;h.point.copy(at).setY(0);return h;};
   a.intent.fire=true;f.tick(a,31);
-  assert.equal(f.G.projectiles.list.length,7);assert.equal(splats.length,2);
-  assert.ok(splats.every(p=>Math.abs(p.radius-2.0769)<1e-9));
+  const rounds=f.G.projectiles.list.filter(p=>p.catalog?.r?.id==='s3-shooter-first');
+  assert.equal(rounds.length,7);
+  // Source feet slots are 3/7, but their paint arrives with a falling
+  // source splash, not an unrelated extra stamp at muzzle birth.
+  const near=rounds.filter(p=>p.catalog.descriptor.splashNearest);
+  assert.equal(near.length,2,'Jr. forced 3 and final 7 slots');
+  assert.ok(near.every(p=>Math.abs(p.catalog.descriptor.splashFirst-1.15)<1e-9));
+  assert.equal(splats.length,0,'no eager muzzle stamp before physics');
+  for(let i=0;i<30;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
+  const drops=f.G.projectiles._s3SplashDrops||[];
+  assert.ok(drops.filter(p=>Math.abs(p.radius-2.0769)<1e-9).length>=2,
+    'nearest drops are physical and use their source-specific feet radius');
+  assert.equal(splats.length,0,'unlanded droplets cannot claim authoritative paint');
   assert.ok(Math.abs(a.ink-(100-7*.43/1.1))<1e-6,'110-unit tank retains normalized gauge');
 });
 
