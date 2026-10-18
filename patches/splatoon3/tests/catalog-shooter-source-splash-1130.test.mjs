@@ -38,17 +38,26 @@ test('11.3.0 Splattershot: fractional schedule, 8-cycle nearest slots and two di
  }
 });
 
-test('11.3.0 TripleQuick uses the typed FreeGravity=0.016 schema default and preserves missing-field guards',()=>{
- const r=MAIN_WEAPON_CATALOG.records.find(r=>r.id==='s3-shooter-triplequick');
- assert.ok(r);
- assert.equal(r.sourceActor,'WeaponShooterTripleQuick');
- assert.equal(r.parameters.MoveParam.$type,undefined,'packed catalogue keeps numbers, not type strings');
- assert.equal(Object.hasOwn(r.parameters.MoveParam,'FreeGravity'),false);
- assert.equal(catalogSplashDropSpec(r.parameters,r.sourceActor).gravity,0.016*3600);
- assert.equal(catalogSplashDropSpec({MoveParam:{$type:'Unknown'},SplashSpawnParam:r.parameters.SplashSpawnParam,
-   SplashPaintParam:r.parameters.SplashPaintParam}),null);
- assert.equal(catalogSplashDropSpec({MoveParam:{$type:'spl__BulletSimpleMoveParam',FreeGravity:0},
-   SplashSpawnParam:r.parameters.SplashSpawnParam,SplashPaintParam:r.parameters.SplashPaintParam}),null);
+test('11.3.0 two Triple Shooter rows use the typed SimpleMove FreeGravity=0.016 default only when allowed',()=>{
+ for(const [id,actor,count,split,force] of [
+  ['s3-shooter-triplequick','WeaponShooterTripleQuick',1.5,12,[3,6,9]],
+  ['s3-shooter-triplemiddle','WeaponShooterTripleMiddle',3,5,[3]]
+ ]){
+  const r=MAIN_WEAPON_CATALOG.records.find(r=>r.id===id);
+  assert.ok(r);
+  assert.equal(r.sourceActor,actor);
+  assert.equal(r.parameters.MoveParam.$type,undefined,'packed catalogue retains numbers, not type strings');
+  assert.equal(Object.hasOwn(r.parameters.MoveParam,'FreeGravity'),false);
+  assert.equal(r.parameters.SplashSpawnParam.SpawnNum,count);
+  assert.equal(r.parameters.SplashSpawnParam.SplitNum,split);
+  assert.deepEqual(Array.from(r.parameters.SplashSpawnParam.ForceSpawnNearestAddNumArray),force);
+  assert.equal(catalogSplashDropSpec(r.parameters,r.sourceActor).gravity,0.016*3600);
+  assert.equal(catalogSplashDropSpec(r.parameters,'Unknown'),null,'no actor-agnostic invented default');
+  assert.equal(catalogSplashDropSpec({MoveParam:{$type:'Unknown'},SplashSpawnParam:r.parameters.SplashSpawnParam,
+    SplashPaintParam:r.parameters.SplashPaintParam}),null);
+  assert.equal(catalogSplashDropSpec({MoveParam:{$type:'spl__BulletSimpleMoveParam',FreeGravity:0},
+    SplashSpawnParam:r.parameters.SplashSpawnParam,SplashPaintParam:r.parameters.SplashPaintParam}),null);
+ }
 });
 
 test('catalog Shooter: source feet radius is attached to the ONE queued first drop, not an instant second paint',async()=>{
