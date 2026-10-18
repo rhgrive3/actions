@@ -1,4 +1,4 @@
-// Builder regression suite, executed against the emitted native production module.
+// Builder regression executed against emitted production module.
 import path from 'node:path';import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
@@ -20,4 +20,3 @@ const native=createSamuraiHelmet({lod:'game',ctx:nativeContext,clearance:nativeC
 const legacyClearance=createSamuraiHelmet({lod:'far',clearance:()=>.028});assert.equal(legacyClearance.children.length,4);legacyClearance.userData.dispose();
 assert(result[0].triangles<result[1].triangles&&result[1].triangles<result[2].triangles);
 for(let i=0;i<40;i++){const g=createSamuraiHelmet({lod:'game',clearance:SAMURAI_HELMET_FIT});g.userData.dispose();}
-console.log(JSON.stringify(result,null,2));

@@ -8,7 +8,7 @@ const PI=Math.PI;
 export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=null,offIn=null,clearance=null,ctx=null}={}){
  const d=lod==='far'?0:lod==='game'?1:2,N=[16,28,48][d],R=[5,8,14][d];
  const root=new THREE.Group();root.name='samurai-helmet';
- const mats={dark:new THREE.MeshStandardMaterial({color:0x232629,roughness:.57,metalness:.35}),gold:new THREE.MeshStandardMaterial({color:0xcda32f,roughness:.3,metalness:.78}),ink:new THREE.MeshStandardMaterial({color:inkColor,roughness:.83,metalness:.03}),wing:new THREE.MeshStandardMaterial({color:0xd8d4bb,roughness:.7,metalness:.12})};
+ const mats={dark:new THREE.MeshStandardMaterial({color:0x232629,roughness:.57,metalness:.35}),gold:new THREE.MeshPhysicalMaterial({color:0xcda32f,roughness:.26,metalness:.78,clearcoat:.65,clearcoatRoughness:.18}),ink:new THREE.MeshStandardMaterial({color:inkColor,roughness:.83,metalness:.03}),wing:new THREE.MeshStandardMaterial({color:0xd8d4bb,roughness:.7,metalness:.12})};
  // Flat analytic lacing/pattern, not hundreds of tiny cord/dot meshes.
  const inkUniform={value:new THREE.Color(inkColor)};
  mats.wing.onBeforeCompile=s=>{s.vertexShader='#define USE_UV\n'+s.vertexShader;s.fragmentShader='#define USE_UV\nuniform vec3 samuraiInk;\n'+s.fragmentShader;s.uniforms.samuraiInk=inkUniform;s.fragmentShader=s.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
@@ -46,7 +46,13 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
  // Wide, shallow, flared shikoro. S3 rear reference has a horizontal sweep,
  // not a long vertical neck skirt. Its opening leaves cheeks/eyes unobstructed.
  const skirt=(u,v,extra=0)=>{const a=.95+u*(PI*2-1.9),r=.205+v*.103;return [Math.sin(a)*r,.220-v*.075+.085*v*v*v*Math.pow(Math.abs(Math.sin(a)),4)+extra,.003+Math.cos(a)*(r+.012)];};
- add('ink-laced-wide-neck-guard',grid(N,[3,4,8][d],(u,v)=>skirt(1-u,v)),'ink');
+ for(let row=0;row<3;row++){
+  const band=grid(N,[1,2,3][d],(u,t)=>{const p=skirt(1-u,(row+t)/3);p[1]+=.004*(1-t);return p;});
+  // Keep continuous lacing UVs while the three broad plate lips overlap.
+  const uv=band.attributes.uv;for(let i=0;i<uv.count;i++)uv.setY(i,(row+uv.getY(i))/3);
+  add('ink-laced-neck-guard-plate-'+row,band,'ink');
+  add('neck-guard-plate-lip-'+row,grid(N,1,(u,t)=>{const p=skirt(u,(row+1)/3);p[1]-=.003*t;return p;}),'dark');
+ }
  add('neck-guard-underface',grid(N,[1,2,4][d],(u,v)=>skirt(u,v,-.009)),'dark');
  add('neck-guard-outer-black-binding',grid(N,d===2?2:1,(u,v)=>skirt(u,1,-v*.009)),'dark');
  for(const v of [.0,.34,.67,1])add('flat-neck-guard-row-'+v,grid(N,1,(u,t)=>skirt(1-u,Math.max(0,Math.min(1,v+(t-.5)*.026)),.001)),'dark');
@@ -62,7 +68,7 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
  hornShape.bezierCurveTo(.183,.500,.189,.458,.173,.415);
  hornShape.bezierCurveTo(.155,.368,.120,.344,.071,.337);hornShape.closePath();
  for(const side of [-1,1]){
-  const hornGeo=new THREE.ExtrudeGeometry(hornShape,{depth:.013,bevelEnabled:false,curveSegments:[3,5,8][d]});
+  const hornGeo=new THREE.ExtrudeGeometry(hornShape,{depth:.009,bevelEnabled:true,bevelSize:.003,bevelThickness:.002,bevelSegments:1,curveSegments:[3,5,8][d]});
   const hp=hornGeo.attributes.position;for(let i=0;i<hp.count;i++){hp.setX(i,hp.getX(i)*side);hp.setZ(i,hp.getZ(i)+.1875-.19*(hp.getY(i)-.30));}
   // Reflection across X reverses winding, including the thin edge faces.
   if(side<0){for(const key of ['position','normal','uv']){const at=hornGeo.attributes[key];for(let i=0;i<at.count;i+=3)for(let k=0;k<at.itemSize;k++){const p=(i+1)*at.itemSize+k,q=(i+2)*at.itemSize+k,v=at.array[p];at.array[p]=at.array[q];at.array[q]=v;}}}
@@ -75,11 +81,26 @@ export function createSamuraiHelmet({lod='hero',inkColor=0xe637ab,headSurface=nu
   const disc=new THREE.SphereGeometry(.028,[6,10,16][d],[4,5,8][d]);disc.scale(1,1,.28);disc.translate(side*.263,.278,.116);add('wing-gold-roundel-'+side,disc,'gold');
  }
  // Original stylized squid crest silhouette, broad surface rather than filigree.
- const crest=[[0,.414],[-.035,.376],[-.049,.339],[-.093,.314],[-.086,.287],[-.054,.267],[0,.257],[.054,.267],[.086,.287],[.093,.314],[.049,.339],[.035,.376]];
- add('gold-squid-forecrest',plate(crest,.014,.223),'gold');
+ const crestShape=new THREE.Shape();crestShape.moveTo(0,.430);
+ crestShape.bezierCurveTo(-.027,.407,-.046,.377,-.052,.345);
+ crestShape.bezierCurveTo(-.085,.351,-.121,.337,-.137,.310);
+ crestShape.bezierCurveTo(-.141,.282,-.104,.257,-.057,.251);
+ crestShape.quadraticCurveTo(0,.238,.057,.251);
+ crestShape.bezierCurveTo(.104,.257,.141,.282,.137,.310);
+ crestShape.bezierCurveTo(.121,.337,.085,.351,.052,.345);
+ crestShape.bezierCurveTo(.046,.377,.027,.407,0,.430);crestShape.closePath();
+ const crestBase=new THREE.ExtrudeGeometry(crestShape,{depth:.010,bevelEnabled:true,bevelSize:.004,bevelThickness:.004,bevelSegments:1,curveSegments:[3,4,6][d]});crestBase.translate(0,0,.219);add('broad-embossed-crest-base',crestBase,'gold');
  const tube=(name,points,r,k,closed=false)=>{const c=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),closed,'centripetal');add(name,new THREE.TubeGeometry(c,d===2?28:name.startsWith('bow-tail')?[3,4][d]:name.startsWith('crest-')?[6,8][d]:[8,12][d],r,[4,5,9][d],closed),k);};
- // Sparse embossed crest strokes. Keeps the readable raised squid center.
- for(const side of [-1,1]){tube('crest-swept-tentacle-'+side,[[side*.01,.273,.234],[side*.052,.283,.238],[side*.070,.306,.237],[side*.050,.314,.237]],.005,'gold');const eye=new THREE.SphereGeometry(.009,[4,6,8][d],[3,4,6][d]);eye.scale(1,.65,.35);eye.translate(side*.022,.333,.234);add('crest-eye-inset-'+side,eye,'dark');}
+ // Raised central squid mantle: broad convex volume catches the same native
+ // light as the bowl studs. Its two eyes sit within a brow, not a smiling face.
+ const mantle=grid([10,14,20][d],[6,8,12][d],(u,v)=>{const y=.280+v*.137,w=.055*Math.pow(Math.sin(PI*v),.8),a=u*PI;return [Math.cos(a)*w,y,.235+Math.sin(a)*.026*Math.sin(PI*v)];});
+ // u runs from right to left, v up: front-facing winding is reversed.
+ const mi=mantle.index.array;for(let i=0;i<mi.length;i+=3){const q=mi[i+1];mi[i+1]=mi[i+2];mi[i+2]=q;}add('raised-squid-mantle',mantle,'gold');
+ for(const side of [-1,1]){
+  tube('crest-broad-scroll-'+side,[[side*.012,.260,.239],[side*.065,.262,.243],[side*.113,.286,.242],[side*.113,.312,.242],[side*.087,.322,.244],[side*.075,.303,.247],[side*.088,.293,.248]],.009,'gold');
+  tube('crest-squid-tentacle-'+side,[[side*.013,.321,.263],[side*.027,.299,.258],[side*.023,.278,.251],[side*.041,.268,.244]],.006,'gold');
+  const eye=new THREE.SphereGeometry(.008,[4,6,8][d],[3,4,6][d]);eye.scale(1,.65,.35);eye.translate(side*.022,.338,.259);add('crest-eye-inset-'+side,eye,'dark');
+ }
  // Thick ink-colored chin tie follows adopted lower-face surface without editing it.
  const jaw=(a,e)=>{if(headSurface){const q=new THREE.Vector3();headSurface(a,e,.018,q);return [q.x,q.y-1.05,q.z+.002];}return [.178*Math.sin(a)*Math.cos(e),.164+.16*Math.sin(e),.014+.17*Math.cos(a)*Math.cos(e)];};
  const chin=jaw(0,-1.02);chin[1]-=.016;chin[2]+=.014;

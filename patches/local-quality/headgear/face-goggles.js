@@ -51,46 +51,56 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   const az=u=>(u-.5)*2.42;
   const nose=a=>Math.max(0,1-Math.sqrt(a*a+.0001)/.30);
   const bottom=a=>-.24+.22*nose(a);
+  const brow=a=>.40+.22*Math.cos(a)**2;
+  const crown=a=>brow(a)+.22;
   // Single uninterrupted eye opening, nose cut-out, and generous side wrap.
-  add(grid(N,Math.max(3,N/8|0),(u,v)=>{const a=az(u);return pt(a,bottom(a)+(.37-bottom(a))*v,.044);}), 'lens','single-clear-eye-shield');
-  rail('lens-top-gasket',u=>[az(u),.375,.043],.058,.008,'dark');
+  add(grid(N,Math.max(3,N/8|0),(u,v)=>{const a=az(u);return pt(a,bottom(a)+(brow(a)-.035-bottom(a))*v,.050+.032*Math.sin(v*Math.PI)*Math.cos(a));}), 'lens','single-clear-eye-shield');
+  rail('lens-top-gasket',u=>[az(u),brow(az(u))-.025,.046],.030,.008,'dark');
   rail('lens-lower-gasket',u=>[az(u),bottom(az(u)),.045],.055,.008,'dark');
-  rail('lens-top-frame',u=>[az(u),.40,.051],.075,.010);
-  rail('lens-lower-frame',u=>[az(u),bottom(az(u))-.025,.052],.075,.010);
-  for(const s of [-1,1])rail('temple-frame',u=>[s*(1.21+.008*Math.sin(u*Math.PI)),-.28+.72*u,.048],.070,.013,'shell',Math.max(5,N/4|0));
+  rail('lens-top-frame',u=>[az(u),brow(az(u)),.054],.115,.012);
+  rail('lens-lower-frame',u=>[az(u),bottom(az(u))-.025,.052],.105,.010);
+  for(const s of [-1,1])rail('temple-frame',u=>[s*(1.21+.008*Math.sin(u*Math.PI)),-.28+(brow(1.21)+.28)*u,.052],.110,.013,'shell',Math.max(5,N/4|0));
   // Overhanging cap-like peak, visibly forward of lens (not a flat brow bar).
-  const peak=(u,v,h)=>{const a=az(u)*1.02,p=pt(a,.405+.035*v,.047+.052*v*Math.pow(Math.max(0,Math.cos(a)),.5));p[1]+=h;return p;};
-  add(grid(N,3,(u,v)=>peak(u,1-v,.003)),'shell','visor-top');
-  add(grid(N,3,(u,v)=>peak(u,v,-.003)),'shell','visor-bottom');
-  add(grid(N,1,(u,v)=>peak(u,1,(v-.5)*.006)),'shell','visor-front-edge');
-  add(grid(N,1,(u,v)=>peak(1-u,0,(v-.5)*.006)),'shell','visor-rear-edge');
-  for(const side of [0,1])add(grid(3,1,(u,v)=>peak(side,side?1-u:u,(v-.5)*.006)),'shell','visor-side-edge');
+  const peak=(u,v,h)=>{const a=az(u)*1.02,p=pt(a,brow(a)+.025-.075*v*Math.cos(a),.052+.045*v*Math.pow(Math.max(0,Math.cos(a)),.5));p[1]+=h;return p;};
+  add(grid(N,3,(u,v)=>peak(u,1-v,.0045)),'shell','visor-top');
+  add(grid(N,3,(u,v)=>peak(u,v,-.0045)),'shell','visor-bottom');
+  add(grid(N,1,(u,v)=>peak(u,1,(v-.5)*.009)),'shell','visor-front-edge');
+  add(grid(N,1,(u,v)=>peak(1-u,0,(v-.5)*.009)),'shell','visor-rear-edge');
+  for(const side of [0,1])add(grid(3,1,(u,v)=>peak(side,side?1-u:u,(v-.5)*.009)),'shell','visor-side-edge');
   // Open upper ventilation band, with small central forehead badge plate.
-  rail('forehead-upper-rim',u=>[az(u),.70-.08*Math.abs(az(u)),.034],.046,.008);
-  rail('forehead-lower-rim',u=>[az(u),.48,.039],.032,.008);
-  for(const s of [-1,1])for(let i=0;i<6;i++){const a=s*(.23+i*.16);rail('forehead-diagonal-vent',u=>[a+s*.11*u,.49+(.17-.07*Math.abs(a))*u,.038],.022,.006,'shell',2);}
-  add(grid(4,2,(u,v)=>pt((u-.5)*.28,.49+.22*v,.042)),'shell','forehead-badge-plate');
-  add(grid(4,2,(u,v)=>pt((u-.5)*.12,.56+.09*v,.045)),'dark','original-forehead-emblem');
-  add(grid(3,1,(u,v)=>pt((u-.5)*.09,.60+.018*v,.046)),'ink','emblem-slash');
+  rail('forehead-upper-rim',u=>[az(u),crown(az(u)),.034],.075,.010);
+  rail('forehead-lower-rim',u=>[az(u),brow(az(u))+.055,.039],.055,.010);
+  for(const side of [-1,1])for(let i=0;i<12;i++){
+    const a=side*(.20+i*.083),b=a+side*.083;
+    rail('forehead-triangular-web',u=>{const x=a+(b-a)*u,t=i%2?1-u:u;return [x,brow(x)+.075+.12*t,.038];},.026,.007,'shell',2);
+  }
+  add(grid(4,2,(u,v)=>pt((u-.5)*.28,brow((u-.5)*.28)+.04+.20*v,.042)),'shell','forehead-badge-plate');
+  add(grid(4,2,(u,v)=>pt((u-.5)*.12,.71+.09*v,.045)),'dark','original-forehead-emblem');
+  add(grid(3,1,(u,v)=>pt((u-.5)*.09,.75+.018*v,.046)),'ink','emblem-slash');
   // Continuous joined rails form the nose chevrons and cheek cage together.
   // No mirrored half-rails, coincident end caps, or crossing central plates.
-  const cheek=(a,row)=>bottom(a)-.025-row*.22;
+  const cheek=(a,row)=>bottom(a)-.025-row*.19;
   for(let row=0;row<3;row++){
-    rail('joined-cheek-chevron-'+row,u=>{const a=az(u);return [a,cheek(a,row),.052+.014*nose(a)];},.075,.009);
+    rail('joined-cheek-chevron-'+row,u=>{const a=az(u);return [a,cheek(a,row),.052+.014*nose(a)];},.110,.010);
     for(const side of [-1,1])for(let i=0;i<(lod==='far'?3:5);i++){
       const a=side*(.40+i*.16),b=a+side*.10;
       add(grid(1,1,(u,v)=>pt(a+(b-a)*(side<0?1-u:u),cheek(a,row)+(v-.5)*.041,.058)),'ink','recessed-arrow-stripe');
     }
   }
   for(const side of [-1,1]){
-    rail('jaw-side-upright',u=>[side*1.17,-.72+.48*u,.048],.075,.010,'shell',8);
-    for(let row=0;row<2;row++)for(let i=0;i<(lod==='far'?4:7);i++){
-      const a=side*(.16+i*.14);
-      rail('vent-diagonal',u=>{const x=a+side*.10*u;return [x,cheek(x,row)-.035-.15*u,.052+.014*nose(x)];},.020,.005,'shell',2);
+    rail('jaw-side-upright',u=>[side*1.17,-.66+.42*u,.052],.105,.010,'shell',8);
+    const cells=lod==='far'?8:lod==='game'?14:18;
+    for(let row=0;row<2;row++)for(let i=0;i<cells;i++){
+      const a=side*(i*1.15/cells),b=side*((i+1)*1.15/cells);
+      rail('triangular-vent-web',u=>{const x=a+(b-a)*u,t=i%2?1-u:u;return [x,cheek(x,row)-.045-.10*t,.052+.014*nose(x)];},.025,.006,'shell',2);
     }
   }
-  rail('joined-chin-chevron',u=>{const a=(u-.5)*.60;return [a,cheek(a,3),.052+.014*nose(a)];},.060,.009);
-  for(const side of [-1,1])rail('chin-side-join',u=>{const a=side*(.30-.06*u);return [a,cheek(a,2)-.22*u,.052+.014*nose(a)];},.045,.008,'shell',3);
+  const chin=a=>-.77+.045*(Math.abs(a)/.31)**2;
+  rail('joined-chin-chevron',u=>{const a=(u-.5)*.62;return [a,chin(a),.056];},.090,.010);
+  for(const side of [-1,1]){
+    rail('chin-side-join',u=>{const a=side*.31;return [a,cheek(a,2)+(chin(a)-cheek(a,2))*u,.056];},.060,.010,'shell',3);
+    for(let i=0;i<5;i++)rail('chin-triangular-web',u=>{const a=side*(i+u)*.31/5,t=i%2?1-u:u;return [a,cheek(a,2)-.04+(chin(a)-cheek(a,2)+.08)*t,.056];},.022,.006,'shell',2);
+  }
   // Two actual crossed straps around the exposed rear head, not a helmet crown.
   for(const s of [-1,1]){
     const fn=u=>[1.20+u*(Math.PI*2-2.40),s*.23*Math.cos(u*Math.PI),.014+(s>0?.007:0)];

@@ -46,13 +46,18 @@ const A3=new THREE.Vector3(),B3=new THREE.Vector3(),C3=new THREE.Vector3(),N3=ne
  const innerTail=path([['moveTo',428,143],['bezierCurveTo',453,155,466,182,467,211],['bezierCurveTo',447,191,427,185,413,192],['bezierCurveTo',415,173,419,156,428,143],['closePath']]);
  // Original analytic artwork rasterized once into flat colour/metalness/roughness.
  // Sampling only the pierced shell guarantees that paint can never close an eye hole.
- const size=lod==='far'?128:256, rgba=new Uint8Array(size*size*4),surface=new Uint8Array(size*size*4),regions=new Uint8Array(size*size);
+ // Subpixel coverage, not nearest-region classification, keeps the printed curves
+ // smooth under magnification. Hero needs 512px; mipmaps handle distant minification.
+ const size=lod==='hero'?512:lod==='game'?256:128,rgba=new Uint8Array(size*size*4),surface=new Uint8Array(size*size*4),coverage=new Uint8Array(size*size*2);
  const loops=[...goldArt,tail,innerTail].map(p=>p.getPoints(20));
- const inside=(x,y,poly)=>{let odd=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)odd=!odd;}return odd;};
- for(let y=0;y<size;y++)for(let x=0;x<size;x++){const px=x/(size-1)*655,py=(1-y/(size-1))*515,i=y*size+x;let reg=0;for(let k=0;k<3;k++)if(inside(px,py,loops[k]))reg=1;if(inside(px,py,loops[3])||inside(px,py,loops[4]))reg=2;regions[i]=reg;const v=i*4;surface[v]=255;surface[v+1]=reg===1?94:reg===2?105:90;surface[v+2]=reg===1?190:reg===2?60:10;surface[v+3]=255;}
+ // Scan-convert at 2x resolution, then retain fractional coverage for every pixel.
+ // Typed span fills avoid millions of point-in-polygon tests during avatar creation.
+ const ss=size*2,samples=new Uint8Array(ss*ss);
+ for(let sy=0;sy<ss;sy++){const py=(1-(sy+.5)/ss)*515;for(let k=0;k<loops.length;k++){const poly=loops[k],cuts=[];for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a.y>py)!==(b.y>py))cuts.push(a.x+(py-a.y)*(b.x-a.x)/(b.y-a.y));}cuts.sort((a,b)=>a-b);for(let i=0;i+1<cuts.length;i+=2){const lo=Math.max(0,Math.ceil(cuts[i]/655*ss-.5)),hi=Math.min(ss,Math.ceil(cuts[i+1]/655*ss-.5));if(hi>lo)samples.fill(k<3?1:2,sy*ss+lo,sy*ss+hi);}}}
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){const i=y*size+x,v=i*4;let g=0,k=0;for(const dy of [0,1])for(const dx of [0,1]){const r=samples[(y*2+dy)*ss+x*2+dx];if(r===1)g++;if(r===2)k++;}coverage[i*2]=g;coverage[i*2+1]=k;const w=4-g-k;surface[v]=255;surface[v+1]=(94*g+105*k+90*w)/4;surface[v+2]=(190*g+60*k+10*w)/4;surface[v+3]=255;}
  const makeTex=data=>{const t=new THREE.DataTexture(data,size,size);t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.needsUpdate=true;return t;};
  const map=makeTex(rgba),pbr=makeTex(surface);map.colorSpace=THREE.SRGBColorSpace;white.color.set(0xffffff);white.map=map;white.metalness=1;white.roughness=1;white.metalnessMap=pbr;white.roughnessMap=pbr;
- function paint(value){const col=new THREE.Color(value).multiplyScalar(.48);const h=col.getHex(),inkRGB=[h>>16&255,h>>8&255,h&255];for(let i=0;i<regions.length;i++){const reg=regions[i],v=i*4,grain=reg===2?.76+.38*((Math.sin(i*127.1)*43758.5453)%1+1)/2:1,c=reg===0?[238,238,218]:reg===1?[185,163,78]:inkRGB;for(let k=0;k<3;k++)rgba[v+k]=c[k]*grain;rgba[v+3]=255;}map.needsUpdate=true;}
+ function paint(value){const col=new THREE.Color(value).multiplyScalar(.48);const h=col.getHex(),inkRGB=[h>>16&255,h>>8&255,h&255];for(let i=0;i<size*size;i++){const v=i*4,g=coverage[i*2]/4,k=coverage[i*2+1]/4,w=1-g-k,grain=.76+.38*((Math.sin(i*127.1)*43758.5453)%1+1)/2;for(let c=0;c<3;c++)rgba[v+c]=[238,238,218][c]*w+[185,163,78][c]*g+inkRGB[c]*grain*k;rgba[v+3]=255;}map.needsUpdate=true;}
  paint(inkColor);
  // Ribbon follows rear of skull; no opaque helmet/dome is added behind the face.
  function strip(points,width,name,perpendicular=false){const p=[],uv=[],ix=[],n=points.length;for(let i=0;i<n;i++){const q=points[i],prev=points[Math.max(0,i-1)],next=points[Math.min(n-1,i+1)],dx=next[0]-prev[0],dy=next[1]-prev[1],len=Math.hypot(dx,dy)||1,nx=perpendicular?-dy/len:0,ny=perpendicular?dx/len:1;for(const v of [-1,1]){p.push(q[0]+v*width/2*nx,q[1]+v*width/2*ny,q[2]);uv.push(i/(n-1),(v+1)/2);}}for(let i=0;i<n-1;i++){const k=i*2;ix.push(k,k+2,k+1,k+1,k+2,k+3);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();add(g,ribbon,name);}

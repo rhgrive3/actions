@@ -33,7 +33,7 @@ jobs:
             gears: ''
     env:
       SOURCE_SHA: ${{ github.sha }}
-      CANDIDATE_BASE_SHA: cabe8359fae040275910d6d2ff3739122304c36a
+      CANDIDATE_BASE_SHA: 79ce7541e3a4bbbe079498e33a32d6869caf6816
     steps:
       - uses: actions/checkout@v4
         with:
@@ -92,7 +92,7 @@ jobs:
           pattern: headgear-shard-*-${{ github.sha }}
           path: _headgear-shards
           merge-multiple: false
-      - name: Verify all 480 PNG readbacks and five complete suites
+      - name: Verify all 496 PNG readbacks and five complete suites
         env:
           SOURCE_SHA: ${{ github.sha }}
         run: node tools/headgear-production-qa/verify-shards.mjs _headgear-shards .qa-evidence/headgear-combined.json

@@ -1,6 +1,5 @@
-// Builder regression suite, executed against the emitted native production module.
-import path from 'node:path';import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
+import path from 'node:path';import {pathToFileURL} from 'node:url';
 const {createFaceGoggles,FACE_GOGGLES_FIT}=await import(pathToFileURL(path.join(process.env.INKWAVE_HEADGEAR_SITE,'patches/local-quality/headgear/face-goggles.js')).href);
 assert.equal(FACE_GOGGLES_FIT.preserveHair,true);assert.equal(FACE_GOGGLES_FIT.rim,undefined);
 const report=[];
@@ -32,3 +31,15 @@ for(const lod of ['hero','game','far']){
  g.dispose();
 }
 console.log('PASS rigid-envelope, outward lens/decals, closed joined-rail and peak edge continuity/winding');
+// Reference silhouette invariants: domed brow, closed rounded chin, triangular
+// vent web, and lens bulge clear of the eye region instead of a flat face sheet.
+for(const lod of ['hero','game','far']){
+ const g=createFaceGoggles({lod}),lens=g.children.find(x=>x.name==='lens-batch').geometry.attributes.position;
+ let centerTop=-Infinity,sideTop=-Infinity,centerFront=-Infinity;
+ for(let i=0;i<lens.count;i++){const x=lens.getX(i),y=lens.getY(i),z=lens.getZ(i);if(Math.abs(x)<.012){centerTop=Math.max(centerTop,y);centerFront=Math.max(centerFront,z);}if(Math.abs(x)>.19)sideTop=Math.max(sideTop,y);}
+ assert.ok(centerTop-sideTop>.02,'Eye window must arch over the forehead');assert.ok(centerFront>.245,'Panoramic lens must bow forward clear of eyes');
+ assert.ok(g.userData.parts.filter(p=>p.name.startsWith('triangular-vent-web')).length>=192,'Continuous triangle vent web must remain at all LODs');
+ const chin=g.userData.parts.filter(p=>p.name.startsWith('joined-chin-chevron'));assert.ok(chin.length===6,'Chin is one closed continuous rail');
+ g.dispose();
+}
+console.log('PASS source silhouette: arched brow, bowed lens, triangle web and single rounded chin');

@@ -1,4 +1,4 @@
-// Builder regression suite, executed against the emitted native production module.
+// Builder regression executed against emitted production module.
 import path from 'node:path';import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
@@ -19,7 +19,9 @@ for(const lod of ['hero','game','far']){
  }
  for(const mesh of o.children){const p=mesh.geometry.attributes.position,n=mesh.geometry.attributes.normal;for(let i=0;i<p.count;i+=3){const a=new THREE.Vector3().fromBufferAttribute(p,i),b=new THREE.Vector3().fromBufferAttribute(p,i+1),c=new THREE.Vector3().fromBufferAttribute(p,i+2),f=b.sub(a).cross(c.sub(a));for(let k=0;k<3;k++)assert(f.dot(new THREE.Vector3().fromBufferAttribute(n,i+k))>0,'Every authored normal must agree with geometric face');}}
  const material=shell.material;assert.equal(material.map.colorSpace,THREE.SRGBColorSpace);assert.equal(material.metalnessMap.colorSpace,THREE.NoColorSpace);assert.equal(material.emissive.getHex(),0);
+ assert.equal(material.map.image.width,lod==='hero'?512:lod==='game'?256:128);assert.equal(material.map.magFilter,THREE.LinearFilter);assert.equal(material.map.minFilter,THREE.LinearMipmapLinearFilter);assert(material.map.generateMipmaps);
+ const packed=material.metalnessMap.image.data;let edgePixels=0;for(let i=0;i<packed.length;i+=4)if(![10,60,190].includes(packed[i+2]))edgePixels++;assert(edgePixels>100,'Artwork edges must contain subpixel fractional coverage');
  const rgba=o.children[0].material.map.image.data;const before=Array.from(rgba);o.setInkColor(0xff2277);let changed=0;for(let i=0;i<rgba.length;i++)if(before[i]!==rgba[i])changed++;assert(changed>100);assert.deepEqual(Array.from(rgba.slice(0,4)),before.slice(0,4));
- let disposed=0;for(const r of [...geos,...mats,...tex])r.addEventListener('dispose',()=>disposed++);o.dispose();o.dispose();assert.equal(disposed,geos.size+mats.size+tex.size);results.push({lod,...st,bounds:{min:box.min.toArray(),max:box.max.toArray()},changedInkChannels:changed});
+ let disposed=0;for(const r of [...geos,...mats,...tex])r.addEventListener('dispose',()=>disposed++);o.dispose();o.dispose();assert.equal(disposed,geos.size+mats.size+tex.size);results.push({lod,...st,bounds:{min:box.min.toArray(),max:box.max.toArray()},changedInkChannels:changed,antialiasedBoundaryPixels:edgePixels,textureResolution:material.map.image.width});
 }
 assert.throws(()=>createGoldfishMask({lod:'bad'}),RangeError);console.log(JSON.stringify({passed:true,results},null,2));
