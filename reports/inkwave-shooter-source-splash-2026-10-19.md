@@ -4,6 +4,7 @@
 
 - Primary S3 11.3.0 [Splattershot parameters](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json)
 - Primary S3 11.3.0 [TripleQuick parameters](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShooterTripleQuick.game__GameParameterTable.json)
+- Primary S3 11.3.0 [TripleMiddle parameters](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShooterTripleMiddle.game__GameParameterTable.json)
 - [Splatoon3 攻略＆検証 Wiki: 中間塗り・足元塗り](https://wikiwiki.jp/splatoon3mix/システム詳細仕様)
 - [Splatoon3 Wiki: パラメータ情報・メイン](https://wikiwiki.jp/splatoon3mix/検証/パラメータ情報/メイン)
 - [Inkipedia S3 Shooter schema defaults](https://splatoonwiki.org/wiki/Template:Shooter_data_S3)
@@ -24,13 +25,22 @@ These are source parameter tables plus community reverse-engineering description
 | SplashPaintParam.DepthMaxDropHeight / DepthMinDropHeight | 3 / 10 | falling drop paint-depth envelope |
 | MoveParam.FreeGravity | 0.016 | SimpleMove free-fall gravity |
 
+## Typed omissions in two burst Shooters
+
+| Source actor | SpawnNum | SplitNum | Forced near shots | SplashPaintParam widths | FreeGravity in 11.3.0 JSON |
+| --- | ---: | ---: | --- | --- | --- |
+| WeaponShooterTripleQuick | 1.5 | 12 | 3, 6, 9, 12 | 1.7825 / 2.4955 near | omitted, typed SimpleMove |
+| WeaponShooterTripleMiddle | 3 | 5 | 3, 5 | 1.633 / 2.2862 near | omitted, typed SimpleMove |
+
+Both primary JSON records explicitly have the type spl__BulletSimpleMoveParam. The INKWAVE catalogue packs numbers and strips type labels, so the typed default is restored via a strict two-actor allowlist, not by assuming that every missing gravity field means 0.016. This enables source-guided detached falling splashes for all 13 added Shooter rows.
+
 The Wiki explains SpawnNum=1.5 using cumulative-floor accounting (1, 2, 1, 2 candidate droplets). Actual births are capped by travel to a collision or expiration. The wiki describes feet and intermediate ink as a fixed linked cycle.
 
 ## Observed INKWAVE mismatches and fixes
 
 1. Added catalogue Shooters/Spinners/Dualies double-paid a source nearest splash: once through the projectile release schedule and again via an eager muzzle-ground stamp. Staggered sourced rounds no longer perform that second stamp.
 2. Detached catalogue splashes always used the regular WidthHalf even for the nearest event. The first drop on a nearest slot now uses WidthHalfNearest. Second and subsequent drops retain WidthHalf, including in the projected fallback.
-3. The 11.3.0 TripleQuick row omits MoveParam.FreeGravity but explicitly identifies spl__BulletSimpleMoveParam. Inkipedia documents 0.016 as this typed schema default. The compact MAIN_WEAPON_CATALOG records strip type-string metadata. The fix therefore identifies the pinned source actor WeaponShooterTripleQuick as the documented SimpleMove type (or reads an explicit retained type), and uses 0.016 only when that row omits FreeGravity. Unidentified missing-field rows receive no inferred physics. This restores a physical falling droplet instead of instant projected paint. Explicit bad values and other types are not given invented physics.
+3. Both 11.3.0 burst Shooter rows, TripleQuick and TripleMiddle, omit MoveParam.FreeGravity while identifying spl__BulletSimpleMoveParam in the primary JSON. Inkipedia documents 0.016 as this type's default. The compact catalogue strips type strings, so only these two verified source actors (or a retained explicit type) may inherit the missing-field default. Other unknown omissions remain unsupported, preventing unsourced physics from changing their paint. Explicit bad values and other types are not given invented physics.
 4. A drop exactly at the main shot collision boundary could be released and painted in addition to the main impact. Catalogue rounds now stop releases before that boundary as native InkFlightRuntime already did.
 
 No source damage, firing rate, ammo, player physics, weapon models, or unrelated classes are retuned.
