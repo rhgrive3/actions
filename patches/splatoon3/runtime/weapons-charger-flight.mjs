@@ -7,6 +7,14 @@ import { chargerDamage, isChargerFullCharge } from './weapons.mjs';
 // #961: linear authoritative charge reaches the legal minimum at 8/60.
 // Paint and launch endpoints must share this coordinate; retaining the old
 // 1/6 early-boost boundary would create a second plateau after frame 8.
+// INKWAVE visual/gameplay paint calibration only: pinned SplashPaintParam
+// WidthHalf source units are five times the existing world-space lateral
+// stripe target. Do NOT change the source-derived job.paint.* parameters,
+// charge timing, distance, damage, depth or longitudinal sampling density.
+export const CHARGER_PAINT_WORLD_WIDTH_SCALE = 0.2;
+export function chargerPaintWorldRadius(sourceWidth) {
+  return Math.max(0, Number.isFinite(sourceWidth) ? sourceWidth * CHARGER_PAINT_WORLD_WIDTH_SCALE : 0);
+}
 export const CHARGER_FIRST_LEGAL_CHARGE = 8 / 60;
 export function chargerPartialCharge(charge) {
   const c = Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0));
@@ -223,7 +231,7 @@ export function installChargerFlight(api,completion) {
       // forward line sample. Using 1.2 here overpainted every tap and full shot.
       job.nearestPending=false;
       paintPoint.copy(job.origin).addScaledVector(job.dir,job.nextPaint);
-      area+=splatTravelPoint(system,job,paintPoint,paint.width);
+      area+=splatTravelPoint(system,job,paintPoint,chargerPaintWorldRadius(paint.width));
     }
     job.owner.addTurf(area);
   }
@@ -272,16 +280,16 @@ export function installChargerFlight(api,completion) {
     if(ended){
       // Final trail stamp at the stopping point, never beyond an obstruction.
       if(!job.ghost && target!=='defense' && !(world.hit && !target)){
-        job.owner.addTurf(splatTravelPoint(system,job,job.pos,job.paint.width*job.paint.terminalRate,true));
+        job.owner.addTurf(splatTravelPoint(system,job,job.pos,chargerPaintWorldRadius(job.paint.width)*job.paint.terminalRate,true));
       }
       if(world.hit&&!target&&!job.ghost){
         if (!beginChargerWallDrop(system,job,world,completion.weapons.charger,api)) {
-          const area=G.paint.splat(world.point.clone().addScaledVector(world.normal,.12),job.paint.impact,job.team,
+          const area=G.paint.splat(world.point.clone().addScaledVector(world.normal,.12),chargerPaintWorldRadius(job.paint.impact),job.team,
             {seed:Math.random(),footprint:CHARGER_FOOTPRINT,kind:SOURCE_SHOT_PAINT_KIND,stretch:job.dir,stretchAmt:.6,claimOwner:job.owner});job.owner.addTurf(area);
         }
         G.fx?.burst(world.point,world.normal,job.owner.color,{count:10,speed:4,size:.09,paint:false});
       }
-      if(!job.ghost)emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});
+      if(!job.ghost)emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:chargerPaintWorldRadius(job.paint.impact),victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});
     }
     return ended;
   }
