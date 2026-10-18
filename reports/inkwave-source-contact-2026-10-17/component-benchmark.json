@@ -1,0 +1,64 @@
+{
+  "scope": "actual Three.Vector3 + ContactTransition only; 500000 advances/window, periodic .13s transitions, ABBA x2; not renderer/whole-game/device FPS",
+  "node": "v24.19.0",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "iterations": 500000,
+  "order": [
+    0,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0
+  ],
+  "wallMs": [
+    [
+      111.994319,
+      110.40401000000003,
+      107.54706899999996,
+      112.39340600000003
+    ],
+    [
+      109.113472,
+      106.07213899999999,
+      107.28968900000007,
+      106.64717399999995
+    ]
+  ],
+  "cpuMs": [
+    [
+      117.592,
+      118.123,
+      108.465,
+      112.409
+    ],
+    [
+      117.212,
+      113.121,
+      108.176,
+      106.432
+    ]
+  ],
+  "medianWallMs": [
+    111.19916450000002,
+    106.96843150000001
+  ],
+  "medianCpuMs": [
+    115.0005,
+    110.6485
+  ],
+  "sizes": [
+    {
+      "sourceBytes": 1503,
+      "minifiedBytes": 1009,
+      "gzipBytes": 424
+    },
+    {
+      "sourceBytes": 1545,
+      "minifiedBytes": 996,
+      "gzipBytes": 456
+    }
+  ]
+}

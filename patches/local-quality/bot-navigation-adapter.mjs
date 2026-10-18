@@ -17,8 +17,8 @@ export function adaptBotNavigation(rel, code, once) {
     "    } else if (this.mode === 'retreat') {\n      if (this.repath <= 0) this._pickRetreat();", 'retreat retry budget');
   patch('    } else if (this.goalTimer <= 0 || !this.path || this.pi >= this.path.length) {\n      this._pickPaintGoal();',
     '    } else if (this.goalTimer <= 0 || (this.path && this.pi >= this.path.length)) {\n      this._pickPaintGoal();', 'failed paint goal retry budget');
-  patch('        const pref = family',
-    '        const directCombat = this._combatDirectTarget === this.target && Math.abs(t.pos.y - a.pos.y) < 0.9;\n        if (directCombat) {\n        const pref = family', 'combat follows route to other floors');
+  patch('        const pref = family === \'charger\' ? range * 0.8 : family === \'roller\' ? 0.5 : range * 0.7;\n        if (this.strafeT <= 0) { this.strafeT = 0.6 + Math.random() * 1.2; this.strafe = Math.random() < 0.5 ? -1 : 1; this.strafeAmp = 0.5 + Math.random() * 0.5; }\n        this.strafeS += (this.strafe * this.strafeAmp - this.strafeS) * (1 - Math.exp(-5 * dt));\n        const nx = dx / Math.max(dist, 0.01), nz = dz / Math.max(dist, 0.01);',
+    '        const nx = dx / Math.max(dist, 0.01), nz = dz / Math.max(dist, 0.01);\n        const directCombat = this._combatDirectTarget === this.target && Math.abs(t.pos.y - a.pos.y) < 0.9;\n        if (directCombat) {\n        const pref = family === \'charger\' ? range * 0.8 : family === \'roller\' ? 0.5 : range * 0.7;\n        if (this.strafeT <= 0) { this.strafeT = 0.6 + Math.random() * 1.2; this.strafe = Math.random() < 0.5 ? -1 : 1; this.strafeAmp = 0.5 + Math.random() * 0.5; }\n        this.strafeS += (this.strafe * this.strafeAmp - this.strafeS) * (1 - Math.exp(-5 * dt));', 'combat follows route to other floors');
   patch('        // fire only when the *actual* aim is on the body',
     '        }\n        // fire only when the *actual* aim is on the body', 'retain ordinary firing decisions');
   patch('    if (best) {\n      if (best !== this.target)',

@@ -26,5 +26,41 @@ export async function run(config){
  for(const quality of ['low','high']){G.settings.quality=quality;c.inWorld=false;c.setLod('game');for(let i=0;i<3;i++)c._updateLod(1/60);await record('quality-'+quality);}
  }finally{G.settings.quality='high';G.camera=camera;remove(c);}}
  async function batch(count){const chars=[];try{for(let i=0;i<count;i++){const c=make(4+i%4);c.root.position.set((i%4)*.8-1.2,0,-Math.floor(i/4)*.8);chars.push(c);for(const tier of ['hero','far','game'])c.setLod(tier);active(c);}camera.position.set(0,3,5);camera.lookAt(0,1,0);G.camera=camera;await renderer.compileAsync(scene,camera);render();return memory();}finally{for(const c of chars)remove(c);render(camera);}}
- try{for(const hat of [4,5,6,7]){await effects(hat);await lod(hat);}p.stage='memory-warm';await batch(8);await batch(8);const baseline=memory();for(let cycle=0;cycle<6;cycle++){p.stage='memory-'+cycle;const count=cycle%2?8:1,loaded=await batch(count),after=memory();check(after.geometries===baseline.geometries&&after.textures===baseline.textures,'post-warm GPU retained counts stable');p.cycles.push({cycle,count,loaded,after,baseline});}p.stage='complete';return{status:'passed-awaiting-pixel-review',threeRevision:THREE.REVISION,rows:p.rows,lodRows:p.lodRows,cycles:p.cycles,limitations:'Production Character and lifecycle modules; hurt uses public setHurt, flash directly sets existing shader uniform. Automatic LOD drives native _updateLod with perspective camera, no full gameplay physics. Pixel evidence is not all animation coverage. Timings/performance not measured.'};}finally{for(const c of live)remove(c);renderer.dispose();}
+ // Bounded same-head Standard-versus-Physical comparison. Only temporary QA
+ // materials are swapped; geometry, native signals, lights and camera stay fixed.
+ async function coatingCost(count){
+  const chars=[],swaps=[],samples={standard:[],physical:[]},pairs=[];const readback=new Uint8Array(4);
+  const frame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
+  const completedRender=()=>{const counts=render();gl.readPixels(360,360,1,1,gl.RGBA,gl.UNSIGNED_BYTE,readback);check(gl.getError()===gl.NO_ERROR,'coating readback barrier');return counts;};
+  const frustum=[camera.left,camera.right,camera.top,camera.bottom];let expected=null;
+  const select=variant=>{for(const s of swaps)s.mesh.material=s[variant];};
+  const quantile=(values,q)=>{if(!values.length)return null;const a=[...values].sort((a,b)=>a-b);return a[Math.ceil(q*a.length)-1];};
+  try{
+   for(let i=0;i<count;i++){
+    const c=make(4);if(count>1)c.root.position.set((i%4-1.5)*.75,0,-Math.floor(i/4)*.9);chars.push(c);
+    const mesh=active(c).children.find(x=>x.name==='shell');check(mesh?.material.isMeshPhysicalMaterial,'coating candidate physical shell');
+    const physical=mesh.material,standard=new THREE.MeshStandardMaterial().copy(physical);
+    standard.onBeforeCompile=physical.onBeforeCompile;standard.customProgramCacheKey=physical.customProgramCacheKey;
+    check(!standard.isMeshPhysicalMaterial&&standard.defines.STANDARD!==undefined&&standard.defines.PHYSICAL===undefined,'true Standard baseline');
+    check(standard.roughness===physical.roughness&&standard.metalness===physical.metalness&&standard.color.equals(physical.color),'same substrate');
+    swaps.push({mesh,physical,standard});
+   }
+   if(count===1)view(chars[0]);else{camera.left=-1.9;camera.right=1.9;camera.top=1.9;camera.bottom=-1.9;camera.updateProjectionMatrix();camera.position.set(0,2.5,6);camera.lookAt(0,.8,-.45);camera.updateMatrixWorld(true);G.camera=camera;}
+   for(const variant of ['standard','physical']){select(variant);await renderer.compileAsync(scene,camera);for(let i=0;i<12;i++){await frame();completedRender();}await frame();await frame();}
+   for(let pair=0;pair<24;pair++){
+    const order=pair%2?['physical','standard']:['standard','physical'],values={};
+    for(const variant of order){
+     select(variant);await frame();p.stage=`coating-cost-${count}-${pair}-${variant}`;
+     const start=performance.now();const counts=completedRender();const syncWallMs=performance.now()-start;
+     if(!expected)expected={calls:counts.calls,triangles:counts.triangles};check(counts.calls===expected.calls&&counts.triangles===expected.triangles,'coating variants share geometry and draw counts');
+     samples[variant].push({pair,order:order.join('-'),syncWallMs});values[variant]=syncWallMs;
+    }
+    pairs.push({pair,order:order.join('-'),...values,physicalMinusStandardMs:values.physical-values.standard});
+   }
+   const summary={};for(const variant of ['standard','physical']){const a=samples[variant].map(x=>x.syncWallMs);summary[variant]={sampleCount:a.length,syncWallP50Ms:quantile(a,.5),syncWallP95Ms:quantile(a,.95),minMs:Math.min(...a),maxMs:Math.max(...a)};}
+   const debug=gl.getExtension('WEBGL_debug_renderer_info');
+   return{methodVersion:2,count,lod:'game',comparison:'same scene and substrate; original Standard shell versus Physical clearcoat .55/.18',draws:expected,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),gpuTiming:'not requested: previous SwiftShader run timed out on all 96 timer queries',warmupPerVariant:12,syncBarrier:'render + gl.finish + 1-pixel readPixels; RAF outside timed samples',summary,samples,pairs,pairedMedianDeltaMs:quantile(pairs.map(x=>x.physicalMinusStandardMs),.5),discardedSamples:0,limitations:'Synchronized render/readback wall time includes JavaScript, driver, GPU/software completion and readback. No GPU-only timer measurement. Headless SwiftShader is not physical-device GPU performance or gameplay FPS. Single fixed camera per count; all samples retained; no performance acceptance threshold.'};
+  }finally{for(const s of swaps){s.mesh.material=s.physical;s.standard.dispose();}for(const c of chars)remove(c);[camera.left,camera.right,camera.top,camera.bottom]=frustum;camera.updateProjectionMatrix();G.camera=camera;}
+ }
+ try{for(const hat of [4,5,6,7]){await effects(hat);await lod(hat);}p.stage='memory-warm';await batch(8);await batch(8);const baseline=memory();for(let cycle=0;cycle<6;cycle++){p.stage='memory-'+cycle;const count=cycle%2?8:1,loaded=await batch(count),after=memory();check(after.geometries===baseline.geometries&&after.textures===baseline.textures,'post-warm GPU retained counts stable');p.cycles.push({cycle,count,loaded,after,baseline});}p.coatingCost=[];for(const count of [1,8])p.coatingCost.push(await coatingCost(count));p.stage='complete';return{status:'passed-awaiting-pixel-review',threeRevision:THREE.REVISION,rows:p.rows,lodRows:p.lodRows,cycles:p.cycles,coatingCost:p.coatingCost,limitations:'Production Character and lifecycle modules; hurt uses public setHurt, flash directly sets existing shader uniform. Automatic LOD drives native _updateLod with perspective camera, no full gameplay physics. Pixel evidence is not all animation coverage. Bounded coating-cost measurements are separate headless diagnostics, not device FPS.'};}finally{for(const c of live)remove(c);renderer.dispose();}
 }

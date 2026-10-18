@@ -20,7 +20,7 @@ export function createArmorHelmetReplica({lod='hero', inkColor=0xe637ab, headSur
   const detail = lod==='far'?0:lod==='game'?1:2;
   const N=[24,40,56][detail], R=[7,12,18][detail];
   const mats = {
-    shell:new THREE.MeshStandardMaterial({color:0x363b3e,roughness:.58,metalness:.13}),
+    shell:new THREE.MeshPhysicalMaterial({color:0x363b3e,roughness:.58,metalness:.13,clearcoat:.55,clearcoatRoughness:.18}),
     trim:new THREE.MeshStandardMaterial({color:0x171b1e,roughness:.82,metalness:.04}),
     inset:new THREE.MeshStandardMaterial({color:0xa0a6a5,roughness:.48,metalness:.4}),
     earPrint:new THREE.MeshStandardMaterial({color:0x171b1e,roughness:.82,metalness:.04}),

@@ -69,6 +69,24 @@ test('successful browser artifacts require validated reports and source-bound su
   assert.ok(workflow.includes("for name in checks: assert reports[name]['sourceSha']==os.environ['SOURCE_SHA']"));
 });
 
+test('active browser CI requires source-bound grate and painted-normal evidence from both installed engines', () => {
+  const name = '      - name: Verify grate orientation and painted level normals in Chromium and WebKit';
+  const start = workflow.indexOf(name), end = workflow.indexOf('      - name:', start + name.length);
+  assert.ok(start > workflow.indexOf('      - name: Verify mobile post depth allocation and exact pixels'));
+  const step = workflow.slice(start, end);
+  assert.ok(step.includes("if: matrix.suite == 'active'"));
+  for (const [browser, suffix] of [['chromium', ''], ['webkit', '-webkit']]) {
+    assert.ok(step.includes('node scripts/check-inkwave-grate-normal.mjs --site .built-site/_site --source-root "$GITHUB_WORKSPACE" --source-sha "$SOURCE_SHA" --browser ' + browser + ' --evidence-dir "$CI_STORAGE/evidence/grate-normal' + suffix + '"'));
+    assert.ok(workflow.includes("'grate-normal" + suffix + "/grate-normal-result.json'"));
+  }
+  assert.ok(workflow.includes("assert reports[name]['sourceSha']==os.environ['SOURCE_SHA'], name"));
+  assert.ok(!step.includes('--executable-path'));
+  const verifier = fs.readFileSync(new URL('../check-inkwave-grate-normal.mjs', import.meta.url), 'utf8');
+  assert.ok(verifier.includes("browserName === 'webkit' ? undefined : process.env.CHROMIUM_PATH"));
+  assert.ok(!verifier.includes("'/usr/bin/chromium'"));
+  assert.ok(verifier.includes('verifyRuntimeBuild(site, sourceRoot, sourceSha)'));
+});
+
 test('ancillary paint WebGL source and emitted masks are mandatory exact-head network evidence', () => {
   assert.ok(workflow.includes('node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site'));
   assert.match(workflow, /check-inkwave-paint-mask\.mjs[^\n]+--exact-source/);
