@@ -63,10 +63,11 @@ test('Stringer explosion damage and LOS use DamageOffsetY, including sub/special
     const a=release(f,r,r.parameters.spl__WeaponStringerParam.ChargeParam.ChargeFrameFullCharge);
     const p=f.G.projectiles.list[0],victim=f.make();victim.team=1;
     p.pos.set(0,1,10);p.catalog.stuck=true;p.catalog.fuse=DT;
+    p.catalog.inkDirection=new f.THREE.Vector3(1,0,0);
     const radius=r.parameters.spl__BulletStringerParam.DetonationParam.BlastParam.DistanceDamage[0].Distance;
     victim.pos.set(0,1+.6+radius-.01-.7,10);
     const hits=[],origins=[],objects=[],paintRows=[];
-    f.G.paint.splat=(at,_radius,_team,opts)=>{paintRows.push({at:at.clone(),footprint:opts.footprint});return 0;};
+    f.G.paint.splat=(at,_radius,_team,opts)=>{paintRows.push({at:at.clone(),footprint:opts.footprint,direction:opts.stretch?.clone()});return 0;};
     f.G.physics.los=(from)=>{origins.push(from.clone());return from.y>1.5;};
     f.G.projectiles.applyHit=(owner,target,damage)=>hits.push({owner,target,damage});
     f.G.projectiles.s3DamageSubObjects=(_area,at)=>objects.push(['sub',at.clone()]);
@@ -81,7 +82,7 @@ test('Stringer explosion damage and LOS use DamageOffsetY, including sub/special
     for(const [kind,at] of objects){close(at.x,0);close(at.y,1.6,r.id+' '+kind);close(at.z,10);}
     close(p.pos.y,1,'damage offset must not relocate the lodged arrow');
     assert.ok(paintRows.length>0,r.id+' owner blast still paints');
-    for(const stamp of paintRows){close(stamp.at.y,1.6,r.id+' independent paint centre');assert.equal(stamp.footprint,'ink-blast','latest main blast contour survives damage-offset integration');}
+    for(const stamp of paintRows){close(stamp.at.y,1.6,r.id+' independent paint centre');assert.equal(stamp.footprint,'ink-blast-rectified','latest main blast contour survives damage-offset integration');assert.deepEqual(stamp.direction.toArray(),[1,0,0],'lodged bearing survives independent paint and damage offsets');}
     f.G.boss=null;
   }
 });
@@ -112,6 +113,7 @@ test('Stringer offset blast keeps wall/step occlusion and independent arrow over
   f.G.projectiles.s3DamageSubObjects=()=>{};f.G.projectiles.s3DamageSpecialObjects=()=>{};
   for(let i=0;i<shots.length;i++){
     const p=shots[i];p.pos.set(0,1,10);p.catalog.stuck=true;p.catalog.fuse=DT;
+    p.catalog.inkDirection=new f.THREE.Vector3(1,0,0);
     f.G.physics.los=()=>i!==1; // One arrow is behind a wall; four have clear LOS.
     f.G.projectiles._step(p,DT);
   }

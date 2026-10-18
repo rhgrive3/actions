@@ -1,0 +1,86 @@
+{
+  "inspectedUTC": "2026-10-18",
+  "runtimeRedistribution": false,
+  "images": [
+    {
+      "file": "blast-floor.webp",
+      "sha256": "ce916106d909f671f50ac915cb20dd7ef84c2b8d2392520a8fc6fedbb1d4b89b",
+      "size": [
+        542,
+        720
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%83%9E%E3%82%B5%E3%83%B3%E5%8D%B0%E3%81%AE%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC/%3A%3Aref/%E5%A1%97%E3%82%8A%E8%B7%A1_%E5%BA%8A.webp",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "input": "unknown",
+        "view": "perspective"
+      },
+      "use": "five-guide floor calibration and connected body"
+    },
+    {
+      "file": "blast-wall.webp",
+      "sha256": "20fb60ee7677722dd775e9ef27c6fe1192674ad7dd2183c48ce472cae3d5069b",
+      "size": [
+        736,
+        694
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%83%9E%E3%82%B5%E3%83%B3%E5%8D%B0%E3%81%AE%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC/%3A%3Aref/%E5%A1%97%E3%82%8A%E8%B7%A1_%E5%A3%81.webp",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "input": "unknown",
+        "view": "perspective"
+      },
+      "use": "rejected as a floor stencil; wall drips are separate paint events"
+    },
+    {
+      "file": "stringer-floor.webp",
+      "sha256": "bcc8dca41fb46d7851332af016f36029da242496c46904bdc546484d72d576b9",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%83%9E%E3%82%B5%E3%83%B3%E5%8D%B0%E3%81%AE%E3%82%B9%E3%83%88%E3%83%AA%E3%83%B3%E3%82%AC%E3%83%BC/%3A%3Aref/%E3%82%AF%E3%83%9E%E3%82%B9%E3%83%88%E5%A1%97%E3%82%8A%E8%B7%A1_%E5%BA%8A_1%E7%99%BA.webp",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "input": "unknown",
+        "view": "perspective"
+      },
+      "use": "rejected as an isolated arrow stencil; nine-arrow composite"
+    },
+    {
+      "file": "stringer-wall.webp",
+      "sha256": "b0c453c16926522809d0760571b55b21c595c137c7fdfec4d802c53d49b4cf27",
+      "size": [
+        1280,
+        720
+      ],
+      "viewedFrames": [
+        0
+      ],
+      "url": "https://cdn.wikiwiki.jp/to/w/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%83%9E%E3%82%B5%E3%83%B3%E5%8D%B0%E3%81%AE%E3%82%B9%E3%83%88%E3%83%AA%E3%83%B3%E3%82%AC%E3%83%BC/%3A%3Aref/%E3%82%AF%E3%83%9E%E3%82%B9%E3%83%88%E5%A1%97%E3%82%8A%E8%B7%A1_%E5%A3%81.webp",
+      "conditions": {
+        "game": "Splatoon 3",
+        "version": "unknown",
+        "gear": "unknown",
+        "input": "unknown",
+        "view": "perspective"
+      },
+      "use": "rejected as an isolated stencil; composite and drips"
+    }
+  ]
+}

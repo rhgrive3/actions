@@ -35,7 +35,7 @@ for (const weapon of ['charger', 'blaster']) test(`native ${weapon} wall contact
   if (weapon === 'charger') assert.equal(before, releaseTurf, 'physical wall-only drops add ownership without inventing floor credit');
   else {
     assert.ok(before > releaseTurf, 'Blaster physical flight and burst drops add genuine floor credit');
-    assert.ok(emissions.some(e => e.footprint === 'ink-shot') && emissions.some(e => e.footprint === 'ink-blast'),
+    assert.ok(emissions.some(e => e.footprint === 'ink-shot') && emissions.some(e => e.footprint === 'ink-blast-rectified'),
       'Blaster retains distinct source flight and burst silhouettes');
   }
   assert.ok(emissions.every(e => e.kind === 'source-shot' || e.kind === 'source-splash'));

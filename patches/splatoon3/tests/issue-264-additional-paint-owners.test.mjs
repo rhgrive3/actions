@@ -43,7 +43,7 @@ for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} re
       assert.deepEqual(Array.from(paint.grid), gridBefore, 'completed source masks cannot add uncredited ownership');
       assert.equal(paint.version, versionBefore, 'completed source masks cannot invalidate caches again');
       if (weapon === 'blaster') assert.ok(emissions.some(e => e.footprint === 'ink-shot') &&
-        emissions.some(e => e.footprint === 'ink-blast'), 'native Blaster preserves flight and burst source profiles');
+        emissions.some(e => e.footprint === 'ink-blast-rectified'), 'native Blaster preserves flight and burst source profiles');
     }
     totalLateCredit += lateCredit;
   }

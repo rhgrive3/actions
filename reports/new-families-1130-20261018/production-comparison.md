@@ -1,6 +1,6 @@
 # Productionの変更前後比較
 
-基準main `9ef63350385bffee71b3afa0a09290a92e9c862b` と、最終ランタイム `c597a70f3e90ada457fc1928b3edac14dd0ef25b` を、それぞれ独立にproductionビルドした。最終contentHashは `81b086c1911466a57c5d1b5f65d55e60cf91b29c0a8d7d13340d294e39c7780f`。これはINKWAVE間の比較で、Nintendoの実測値との一致の証明ではない。
+基準main `9ef63350385bffee71b3afa0a09290a92e9c862b` と、比較時点のランタイム `c597a70f3e90ada457fc1928b3edac14dd0ef25b` を、それぞれ独立にproductionビルドした。比較時点のcontentHashは `81b086c1911466a57c5d1b5f65d55e60cf91b29c0a8d7d13340d294e39c7780f`。これはINKWAVE間の比較で、Nintendoの実測値との一致の証明ではない。
 
 ## 全16種の射撃・塗り観測
 

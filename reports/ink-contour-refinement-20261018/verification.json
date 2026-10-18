@@ -1,0 +1,65 @@
+{
+  "baseline": "e52f1150b7debd9e4accb4e92750121f2b140c8d",
+  "localExactSourceCommit": "9ce217e98a0715a3697b34169679a63aec021f73",
+  "localExactSourceTree": "163d62594236719b379aa459a88390f33d057e7e",
+  "buildContentHash": "b05c5530dff267559c729e629e9b7101e23e67d86aaefb750b826c383c752160",
+  "buildInputHash": "61cf37848679d65abb42bd9e1b85d71cc41540d4b5a5f7759a1ed5288658ebac",
+  "hardwareParity": false,
+  "unit": {
+    "passed": 67,
+    "failed": 0,
+    "groups": {
+      "physicsProfilesAndDirection": 47,
+      "networkCanonicalOrder": 18,
+      "measuredContours": 2
+    }
+  },
+  "browser": {
+    "cases": 45,
+    "errors": [],
+    "realCharacter": true,
+    "cadences": [
+      30,
+      60,
+      120
+    ]
+  },
+  "webgl": {
+    "status": "passed",
+    "bodyCases": 1094,
+    "cpuOnly": 0,
+    "gpuOnly": 0,
+    "boundaryTies": 17,
+    "hashQueries": 1512,
+    "existingCases": 124,
+    "sourceAndBuiltIdentical": true
+  },
+  "requestComparison": {
+    "cases": 7,
+    "events": 44,
+    "equalFields": [
+      "at",
+      "R",
+      "team",
+      "seed",
+      "kind",
+      "face"
+    ],
+    "equalCounts": true,
+    "intentionalChanges": [
+      "footprint",
+      "stretch",
+      "stretchAmt"
+    ]
+  },
+  "profileBytes": 8192,
+  "legacyRowsSha256": "4d570bc95ba89e8b459f8200a19432eaaeeb571ff2d17d7f87ce9ad393d0cd94",
+  "evidenceHashes": {
+    "before-after.png": "704ea8e7afa64c6f79c9dbb2bdfda5b8d236691aa67cfc49edcbb8b7b5b7881d",
+    "browser-cadence.json": "cbf78fad2485284b1d745adeea5522dbed8a807a9f3e8b834a6a7de9592d277b",
+    "paint-mask-result.json.gz": "779c8403798d0b54bb07c33ce3ee0d5d5a394390c6ed4a105b42ceb76328ccca",
+    "profile-gallery.png": "575564c7036d23d99f7b66d62bd8053f7af518965eb1e45b834fd7be9bd73d07",
+    "rectification-review.png": "285e853af182f25ff1bb84ba9d8ca5b3d5a7e273fc556dd9098b397e24c46e81",
+    "volley-captures.json": "2d629da0902fbe74b9f460d34a30a09e322e56c98fdbf01f248c7993b212b6c8"
+  }
+}
