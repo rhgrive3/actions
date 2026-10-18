@@ -116,7 +116,10 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   const peak=(u,v)=>{const a=az(u)*1.025;const p=pt(a,eyeTop(a)+.16*(1-v)+.025,.042+.065*v*Math.cos(a/1.8));p[1]+=.005+.008*v*Math.cos(a)**2;return p;};
   // The underside returns continuously to the thick eye frame, making one
   // molded brim instead of two separated flat shelves.
-  const under=(u,v)=>{const a=az(u)*1.025,A=peak(u,0),B=pt(a,eyeTop(a)+.025,.062);A[1]-=.010;return A.map((x,k)=>x+(B[k]-x)*v);};
+  const under=(u,v)=>{const a=az(u)*1.025,A=peak(u,0),B=pt(a,eyeTop(a)+.025,.062),C=peak(u,1);A[1]-=.010;C[1]-=.010;
+    // A short vertical outer lip catches frontal light; the deeper return stays
+    // underneath, rather than presenting a broad downward-facing black wedge.
+    const t=v<.6?v/.6:(v-.6)/.4,P=v<.6?A:B,Q=v<.6?B:C;return P.map((x,k)=>x+(Q[k]-x)*t);};
   const edge=(u,v,at)=>{const A=under(u,at),B=peak(u,at);return A.map((x,k)=>x+(B[k]-x)*v);};
   add(grid(N,5,(u,v)=>peak(u,1-v)),'shell','visor-top');
   add(grid(N,5,(u,v)=>under(u,v)),'shell','visor-bottom');

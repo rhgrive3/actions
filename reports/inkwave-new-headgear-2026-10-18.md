@@ -57,3 +57,7 @@ The subsequent native9851 side/top comparison still rejected insufficient outer 
 
 ## Further requested goggles correction
 The user requested additional improvement after the solid-shell revision. Actual270e front/oblique comparison motivated three connected central chevron slots with thin inset webs and a rounded closed perimeter, plus a shallow rounded forehead and closed brim underside return. Eye/lens material, cheek construction, hair contract and rear routing stay unchanged. Hero/game/far triangles are6652/3784/2848 in four batches. Topology, winding, triangle-centroid clearance and disposal tests pass locally; a new native comparison is required. Existing rear-strap intersection caveats remain open and are not relabeled as accepted.
+
+
+## Native visor-lip correction
+Actual8fa front/oblique frames revealed a dark broad forehead wedge. Its white material was unchanged; the visible return faced down (normal approximately[0,-.849,.528]). A bounded geometry correction gives a short vertical forward-facing lip and recessed underside return. Counts, material values and all non-brim geometry remain unchanged. The fixture now requires forward-facing lip normals and exact authored-versus-emitted geometry/index parity across allLOD, alongside closed topology and clearance checks. Native image confirmation remains pending.
