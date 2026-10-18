@@ -53,6 +53,34 @@ test('all 5 source Spinner and all 5 source Maneuver rows preserve family-owned 
  }
 });
 
+test('11.3.0 Maneuver post-slide turret rows use their distinct sourced splash budgets and SimpleMove gravity default',()=>{
+ for(const [id,budget,split,spacing,near] of [
+  ['s3-maneuver-gallon',3,5,7,1],
+  ['s3-maneuver-long',1.5,8,9,1.1]
+ ]){
+  const r=MAIN_WEAPON_CATALOG.records.find(r=>r.id===id);assert.ok(r);
+  const p=r.parameters,lap={...p,MoveParam:p.MoveLapOverParam,
+    SplashSpawnParam:p.SplashSpawnLapOverParam};
+  assert.ok(p.MoveLapOverParam&&p.SplashSpawnLapOverParam);
+  assert.equal(Object.hasOwn(p.MoveLapOverParam,'FreeGravity'),false,
+    'pinned source omits a typed SimpleMove default only on the turret variant');
+  assert.equal(lap.SplashSpawnParam.SpawnNum,budget);
+  assert.equal(lap.SplashSpawnParam.SplitNum,split);
+  assert.equal(lap.SplashSpawnParam.SpawnBetweenLength,spacing);
+  assert.equal(lap.SplashSpawnParam.SpawnNearestLength,near);
+  assert.equal(catalogSplashDropSpec(lap,r.sourceActor,'turret')?.gravity,.016*3600,
+    'pinned 11.3.0 type default gives real falling turret splashes');
+  assert.equal(catalogSplashDropSpec(lap,r.sourceActor,'normal'),null,
+    'never infer an unverified variant with only an actor name');
+  for(let i=0;i<2*split;i++){
+   const n=catalogFractionalSplashCount(budget,i);
+   assert.ok(n>=0&&n<=Math.ceil(budget));
+   const first=catalogSplashFirst(lap.SplashSpawnParam,i);
+   assert.ok(first>=near && first<near+spacing+1e-9);
+  }
+ }
+});
+
 test('actual added Maneuver rounds queue source-width feet droplets without double muzzle stamps',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
  f.G.settings={};f.G.physics.segment=(a,b,h)=>{h.hit=false;return h;};
