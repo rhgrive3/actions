@@ -746,11 +746,12 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   // Solve the displayed roller around the *actual right wrist*. The weapon
   // is attached to handR, not to the nominal IK target: translating that target
   // past the arm's finite reach never translates the drum, but it detaches the
-  // support hand. Rotate the weapon around handR so both actual wrists meet
-  // their authored sockets without changing the gameplay Runner or hit volume.
+  // support hand. Raised swings rotate around handR. Ground contact instead
+  // fixes the drum axis and projects the paired wrist targets into both reach
+  // spheres, retaining the authored sockets and gameplay hit volume.
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
   let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, searchAxis, turn;
-  let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ, shoulderShift, chestQ;
+  let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ, shoulderShift, chestQ, contactPoint, bestPoint;
   const SEARCH_AXES = [[1,0,0],[0,1,0],[0,0,1]];
   const rotCos = v => Math.max(-1, Math.min(1, v));
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
@@ -767,7 +768,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       turn = orientation.clone(); weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
       candidateQ = orientation.clone(); bestQ = orientation.clone(); baseQ = orientation.clone(); trialQ = orientation.clone();
       center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone();
-      shoulderShift = target.clone(); chestQ = orientation.clone();
+      shoulderShift = target.clone(); chestQ = orientation.clone(); contactPoint = target.clone(); bestPoint = target.clone();
     }
     // The native solver clamps exactly at 99.95% of the rest-chain length.
     // Keep the visual grip target just inside that physical limit.
@@ -781,6 +782,33 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     const reachL = (arms.armL.a + arms.armL.b) * .9995 - .001;
     const armLeftHeld = this.P[C.IKL] > .99 && this.P[C.LTW] < .001;
     const alignLeft = q => {
+      if (contacting) {
+        // A grounded drum owns its cross-floor axis. Reach correction must move
+        // the paired wrist targets, not yaw the roller away from the ink band.
+        weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());
+        axis.set(1,0,0).applyQuaternion(weaponQ).normalize();
+        const n=this.actor?.groundN,yaw=this.actor?.yaw||0,cy=Math.cos(yaw),sy=Math.sin(yaw);
+        toLeft.set(n?n.x*cy-n.z*sy:0,n?n.y:1,n?n.x*sy+n.z*cy:0).normalize();
+        delta.set(Math.cos(ROLL_ROTATION[1]),0,-Math.sin(ROLL_ROTATION[1]));
+        delta.addScaledVector(toLeft,-delta.dot(toLeft)).applyQuaternion(inverseHandQ.copy(this.kid.quaternion).invert());
+        const scale=this.kid.scale;
+        if(Math.abs(scale.x)>1e-4&&Math.abs(scale.y)>1e-4&&Math.abs(scale.z)>1e-4)delta.divide(scale);
+        q.premultiply(turn.setFromUnitVectors(axis,delta.normalize()));
+        if (armLeftHeld) {
+          weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());
+          delta.copy(d.handL.pos).sub(d.handR.pos).applyQuaternion(weaponQ);
+          toLeft.copy(leftOrigin).sub(delta);
+          // Intersection of the right reach sphere and the translated left
+          // reach sphere. No stretching or independent hand/weapon offsets.
+          for(let i=0;i<12;i++) {
+            delta.subVectors(target,toLeft);
+            if(delta.lengthSq()>reachL*reachL)target.copy(toLeft).add(delta.setLength(reachL));
+            delta.subVectors(target,rightOrigin);
+            if(delta.lengthSq()>reachR*reachR)target.copy(rightOrigin).add(delta.setLength(reachR));
+          }
+        }
+        return;
+      }
       if (!armLeftHeld) return;
       weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());
       delta.copy(d.handL.pos).sub(d.handR.pos).applyQuaternion(weaponQ);
@@ -797,6 +825,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       q.premultiply(turn.setFromAxisAngle(axis.normalize(),now-allowable + .003));
     };
     const contacting = !!this._s3RollerContactPose;
+    if (contacting) contactPoint.copy(target);
     // The later shortening moves each clavicle along the chest's local Y,
     // which is tilted while pushing/landing. Use that exact world displacement;
     // subtracting a vertical 5cm over-corrects the leaned drum into a hover.
@@ -808,7 +837,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     }
     // Landing recovery can outlive the runner's flick token. Keep the drum
     // above the floor through that grounded recovery as well as the swing.
-    const neededGround = !!this.grounded;
+    const neededGround = !!this.grounded && !!this.weapon.drum;
     let bound;
     const bottom = q => {
       if (!bound) {
@@ -842,6 +871,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       return center.y + shoulderShift.y - bound.halfWidth*Math.abs(axisX.y) - bound.radius*Math.hypot(axisY.y,axisZ.y);
     };
     const evaluate = q => {
+      if (contacting) target.copy(contactPoint);
       alignLeft(q);
       const floor = neededGround ? bottom(q) : .1;
       // Native rolling already provides an acceptable near-ground drum. Only
@@ -851,6 +881,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     };
     bestQ.copy(orientation);
     let bestGroundError = evaluate(bestQ);
+    if (contacting) bestPoint.copy(target);
     // A roll surface must sit near the floor; a windup must never clip it.
     // Search purely in orientation, so the right hand remains the pivot and
     // the left hand remains reachable after every tested candidate.
@@ -864,11 +895,12 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
           candidateQ.copy(trialQ.setFromAxisAngle(searchAxis,sign*a)).multiply(baseQ);
           const floorError=evaluate(candidateQ);
           const cost=floorError*30+a*.06;
-          if(cost<bestCost){bestCost=cost;bestGroundError=floorError;bestQ.copy(candidateQ);}
+          if(cost<bestCost){bestCost=cost;bestGroundError=floorError;bestQ.copy(candidateQ);if(contacting)bestPoint.copy(target);}
           if(floorError<=.003)break;
         }
       }
     }
+    if (contacting) target.copy(bestPoint);
     // An upright vertical release can place the actual drum below the floor
     // even after orientation search. Recover the remaining penetration from
     // the live drum geometry, not a weapon-wide guessed height offset. Lift
@@ -932,6 +964,21 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     for (let i = 0; i < 3; i++) {
       P[C.ANC + i] = mix(READY_ANCHOR[i], ROLL_ANCHOR[i], roll);
       P[C.ANCR + i] = mix(READY_ROTATION[i], ROLL_ROTATION[i], roll);
+    }
+    // The floor contact anchor is independent of the strafe chest transform.
+    // Both wrists are kept reachable by the contact solver below.
+    if (contact) {
+      P[C.AFOLT] = 0; P[C.AFOLR] = 0;
+      // Keep the pushing torso in its forward reach envelope. Feet retain
+      // native diagonal targets; the held drum does not follow a strafe bank.
+      if (this.gaitW > .001) {
+        const twist = this.hipTwist || 0;
+        P[C.HIPS + 1] -= twist;
+        P[C.SPINE + 1] += twist * .45;
+        P[C.CHEST + 1] += twist * .55;
+        const bank = Math.max(-1, Math.min(1, (this.kgx || 0) / 6)) * this.gaitW * (1 - .3 * (this.wGoo || 0));
+        P[C.HIPS + 2] += bank * .03; P[C.SPINE + 2] += bank * .07; P[C.CHEST + 2] += bank * .04;
+      }
     }
     // Pushing the wider drum the footage shows a low crouch, the back bent over
     // the handle and both arms reaching down to it (on top of the native lean).
