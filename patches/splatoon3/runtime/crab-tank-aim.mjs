@@ -42,15 +42,31 @@ export function crabTankMuzzle(actor, mode, out, direction = null) {
     actor.pos.z - bx * sb + bz * cb + scale * (-x * sy - y * cy * sp + z * cy * cp));
 }
 
-// Solve the muzzle/axis pair together because pitching an offset barrel also
-// moves its socket. Both gameplay and presentation consume this same pair.
+// The socket rotates together with the barrel. An undamped fixed-point update
+// enters a 2-cycle when the target is near the muzzle, so converge with a
+// half-step and check the *final muzzle-to-target* residual. No allocation.
 export function crabTankShotGeometry(actor, mode, origin, direction) {
   crabTankAimDirection(actor, direction);
-  for (let i = 0; i < 16; i++) {
-    crabTankMuzzle(actor, mode, origin, direction);
-    const x = direction.x, y = direction.y, z = direction.z;
-    crabTankAimDirection(actor, direction, origin);
-    if ((x - direction.x) ** 2 + (y - direction.y) ** 2 + (z - direction.z) ** 2 < 1e-20) break;
+  const target = actor?.aimPoint;
+  // Actor.aimPoint starts at its feet until a real aim sample exists. Keep
+  // the same sentinel guard as crabTankAimDirection(..., muzzle); the feet
+  // must never become an accidental close-range crosshair target.
+  const fromFeet = target && (target.x - actor.pos.x) ** 2 + (target.y - actor.pos.y) ** 2 + (target.z - actor.pos.z) ** 2;
+  if (target && [target.x, target.y, target.z].every(Number.isFinite) && fromFeet > 1e-12) {
+    // Damping avoids the old near-target two-cycle. Retain the original
+    // direction precision after damping rather than stopping at 1e-6 rad.
+    for (let i = 0; i < 48; i++) {
+      crabTankMuzzle(actor, mode, origin, direction);
+      const dx = target.x - origin.x, dy = target.y - origin.y, dz = target.z - origin.z;
+      const d = Math.hypot(dx, dy, dz);
+      // A point inside/behind the barrel is physically unreachable; keep the
+      // valid forward aim axis rather than emitting a NaN or reversing fire.
+      if (!(d > 1e-6) || dx * direction.x + dy * direction.y + dz * direction.z <= 0) break;
+      const x = dx / d, y = dy / d, z = dz / d;
+      const error = (x - direction.x) ** 2 + (y - direction.y) ** 2 + (z - direction.z) ** 2;
+      if (error < 1e-20) break;
+      direction.set(direction.x + x, direction.y + y, direction.z + z).normalize();
+    }
   }
   crabTankMuzzle(actor, mode, origin, direction);
   return origin;

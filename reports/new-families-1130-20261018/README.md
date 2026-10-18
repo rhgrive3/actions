@@ -74,6 +74,18 @@ Nintendo公式11.3.0変更: ケルビンのスライド後ブレ約10%軽減、�
 20. 相手の開閉・パージ状態を再現する情報がない → 所有者の有界snapshotをCharacter表示専用へ接続。相手の表示は盾HP・判定・塗りを持たず、実攻撃は被弾側へ提案される。
 21. 放した傘の年齢が待機中も進み、再押下で即パージ → 放す/キャンセル時に開傘・パージ進捗をリセット。4ベースで失敗→成功を確認。
 22. 追加main #1585の方向保持がnative Blasterの実壁衝突では届かない → 爆発queueが入射速度を保存してから鉛直落下へ遷移。実地形3方向で、接触時刻/戻り速度/爆発と落下の位置・時刻・半径を維持した方向復元を確認。
+23. 追加main #1579のワイパー波が近い敵・core地形・盾より後の外側接触塗りを先に確定 → 波全体の最短終端を決めてから到達範囲内だけ塗り・lobe退役を確定。既存の射撃乱数列・命中・ghost権限を保持。[再現と二相処理の検証](splatana-lobe-hit-order.md)。
+24. 追加main #1580の配信DSP workerと生成元の別キット音声ID変換が不整合 → #1590で同じ定義を生成元へ復元し、配信済みworker全163,668byteを不変で再生成。関連118試験と独立771 PCM比較が成功。本家音響一致の追加認定ではない。[生成元・生成物の証拠](audio-worker-source-sync.md)。
+25. 同時main #1592のfinal queue passが既存ownerの置換前raw anchorを要求しproduction build停止、Sessionでは同名importも重複 → 既存profile/loadout/roster/XP/HUD ownerを保存して合成し、全production構文・ビルドとowner消失負対照を検査。[統合修正](queue-final-composition.md)。
+26. #1592の旧kind限定リストが正当なsource-shot/source-splash/ink-*等の通信塗りを拒否 → 既存のsource/capability/所有権admissionを維持し、例外後のreplay復元だけ補完。実codec・CPUgrid・deadline・重複も検査。[通信塗りの証拠](queue-final-composition.md)。
+27. #1592のpad感度clampが正当なS3 -5/0/+5を.2/.2/3へ変更 → 保存済みS3／liveの-5..+5とlegacy移行を分離し、独立profileとgyro/touch/mouseの既存範囲・0/無効設定を保持。[設定の前後比較](queue-final-composition.md)。
+28. #1592のactive final adapterがsource input identityの明示リスト外 → 実SHAを登録してunit検査。生成物由来の配信cacheは従来も正常であり、exact source/input追跡の不足を補完したもの。[identityの範囲](queue-final-composition.md)。
+
+29. #1592のCrab共通照準solverが足元sentinelを実目標にし、方向残差も旧contractより粗くなった → 既存guardと方向精度を復元し、近接二周期を防ぐdampingを保持。元の表示期待値は変更せず、入力vector・最終socket→targetの独立oracleと3変異で検査。[原因と検証範囲](crab-aim-regression.md)。
+
+30. 既存の実モデル検査がSlosherの共有rest定義を個体別carry gripへ当て、正常な支持手を誤差0.652964と判定 → 各frameの実モデル定義へ接続し、閾値.006を維持。実支持点の誤差は約6.0e-15、拳穴の第二幾何比較・実モデル+.2移動・旧socketの負対照で検査。runtimeと21画像は不変。[所有者と数値](../inkwave-weapon-models-motion-2026-10-10.md)。
+
+camera合成の既存CIも、cameraが文字列上の最後のreturnであるとの旧前提を修正した。実VFX→camera→static menu→queueの順序と、後置passがcamera所有の3モジュールとActorを変更しないこと、missing/duplicate/reapplyの拒否を検査する。射撃・照準runtimeの変更ではない。[合成契約の追補](camera-queue-composition-ci.md)。シェルターの静的CIも、合成段階の異なるroller条件名を同一視せず、実Actorの_face内のspecial/superjump→held roller/brush→Brellaを検査し、既存の姿勢・他ブキ退避を保つ。[優先動作の追補](brella-facing-ci-contract.md)。
 
 ## 検証の読み方と残る限界
 

@@ -1,11 +1,47 @@
 name: INKWAVE main-weapon numerical regressions
 on:
-  pull_request:
+  push:
+    branches: [main]
     paths:
+      - 'inkwave-public/src/core/**'
+      - 'inkwave-public/src/game/**'
+      - 'inkwave-public/src/net/**'
+      - 'inkwave-public/src/world/paint.js'
+      - 'inkwave-public/src/config.js'
+      - 'inkwave-public/src/main.js'
+      - 'patches/reliability/**'
+      - 'patches/network-replication/**'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - 'tests/issue-queue/**'
       - 'patches/splatoon3/runtime/**'
       - 'patches/splatoon3/weapon-catalog-adapter.mjs'
       - 'patches/splatoon3/tests/main-weapon-catalog*.test.mjs'
       - 'patches/splatoon3/tests/catalog-*.test.mjs'
+      - 'patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs'
+      - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'scripts/check-inkwave-saber-origins-browser.mjs'
+      - 'scripts/check-inkwave-added-family-paint-browser.mjs'
+      - 'scripts/check-inkwave-new-families-browser.mjs'
+      - '.github/workflows/inkwave-main-weapons.yml'
+  pull_request:
+    paths:
+      - 'inkwave-public/src/core/**'
+      - 'inkwave-public/src/game/**'
+      - 'inkwave-public/src/net/**'
+      - 'inkwave-public/src/world/paint.js'
+      - 'inkwave-public/src/config.js'
+      - 'inkwave-public/src/main.js'
+      - 'patches/reliability/**'
+      - 'patches/network-replication/**'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - 'tests/issue-queue/**'
+      - 'patches/splatoon3/runtime/**'
+      - 'patches/splatoon3/weapon-catalog-adapter.mjs'
+      - 'patches/splatoon3/tests/main-weapon-catalog*.test.mjs'
+      - 'patches/splatoon3/tests/catalog-*.test.mjs'
+      - 'patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
       - 'scripts/check-inkwave-saber-origins-browser.mjs'
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
@@ -37,7 +73,7 @@ jobs:
       - name: Verify Roller swing and Curling bomb production paths
         run: node --experimental-vm-modules --test patches/splatoon3/tests/roller-flick-movement.test.mjs patches/splatoon3/tests/roller.test.mjs patches/splatoon3/tests/bomb-kit-fidelity.test.mjs patches/splatoon3/tests/air-attack-acceleration.test.mjs patches/splatoon3/tests/catalog-rolling-form-reset.test.mjs
       - name: Verify sourced Splatana origins and Slosher flight contact/cover
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs patches/splatoon3/tests/catalog-splash-contact-distance.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs patches/splatoon3/tests/catalog-splash-contact-distance.test.mjs patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs
       - name: Verify Stringer, Splatana, Brella and added Dualies floor paint
         run: node --experimental-vm-modules --test patches/splatoon3/tests/catalog-added-family-paint.test.mjs patches/splatoon3/tests/catalog-paint-timing-boundaries.test.mjs
       - name: Verify 11.3.0 attack volumes, motion phases and remote state
@@ -57,7 +93,7 @@ jobs:
       - name: Build production gameplay composition
         run: node scripts/build-inkwave.mjs inkwave-public work/site
       - name: Verify emitted source offsets, detached release clipping and lateral cover
-        run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs
+        run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs
       - name: Verify emitted added-family floor paint and falling splashes
         run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/catalog-added-family-paint.test.mjs patches/splatoon3/tests/catalog-paint-timing-boundaries.test.mjs
       - name: Verify emitted 11.3.0 attack volumes and charge stages

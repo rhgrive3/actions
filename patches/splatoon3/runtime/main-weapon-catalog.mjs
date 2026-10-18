@@ -21,7 +21,7 @@ import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { withShotBias, accuracyEnvelope, recoveringJumpBias } from './weapon-accuracy.mjs';
 import { spreadWeaponRound } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
-import { rollerSpeedSwerveDegrees, GLOB_GRAZE, globGrazePaint, startCatalogWallDrop } from './weapons-fidelity.mjs';
+import { rollerSpeedSwerveDegrees, globGrazePaint, startCatalogWallDrop, rollerSpawnBase, addRollerSpawnOffset } from './weapons-fidelity.mjs';
 import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
@@ -414,10 +414,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
     return new THREE.Vector3(Math.sin(y)*Math.cos(p),Math.sin(p),Math.cos(y)*Math.cos(p));
   }
-  function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null) {
+  function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null, seed=null) {
     if (!(radius>0) || !owner || owner.remote) return;
     // The recorded paint packet carries this seed; receivers never reroll it.
-    const options = {seed:Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face,footprint};
+    const options = {seed:seed??Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face,footprint};
     let centre=at,paintRadius=radius;
     if (direction) {
       const normal=G.level?.faces?.[face]?.n||down.clone().negate();
@@ -582,13 +582,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     if (key==='arrow') { speed=stageValue(r,m,'SpawnSpeed',frames,2.1)*HZ; damage=stageValue(r,d,'DirectHitDamage',frames,300)/10; }
     if (key==='slosh') { speed=finite(packet.SpawnSpeedGround,1)*HZ; }
-    // The Bloblobber is terrain-rebound terminated, not an ordinary 1.2s
-    // catalogue glob. From its pinned 11.3.0 initial speed, gravity and drag,
-    // a near-vertical level-ground throw takes ~200 fixed frames to reach its
-    // third ground contact. Keep a separate 240F safety deadline for voids and
-    // exceptional geometry. This is an INKWAVE cleanup bound, NOT a Nintendo
-    // extracted lifetime; ordinary ground shots end on their third contact.
-    if (r.sourceActor==='WeaponSlosherBathtub') life=240/HZ;
+    // Bloblobber ends on its third floor contact, and walls bounce at 0.8x.
+    // Its pinned S3 11.3.0 data does NOT expose a projectile age limit.
+    // 240F could still erase high-angle shots fired from elevated terrain
+    // midair, before the third contact. Use a deliberately loose, finite 480F
+    // *void/degenerate geometry guard*, not an asserted retail lifetime.
+    // Ordinary stages retire the projectile on the sourced contact rule.
+    if (r.sourceActor==='WeaponSlosherBathtub') life=480/HZ;
     if (packet?.SpawnSpeedBase != null) speed=packet.SpawnSpeedBase*HZ;
     if (r.family==='blaster') life=finite(b.BlasterBurstParam?.BurstFrame,13)/HZ;
     if (key.startsWith('saber-')) life=finite(b.BurstParam?.BurstFrame,6)/HZ;
@@ -714,7 +714,19 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // A brush flings its swing from the body, not from the rendered bristles:
     // the 1F follow-up swings start from the low sweep pose, so the rendered tip
     // dropped every swing's birth from 1.6 m to 0.36 m (owner review 2026-10-18).
-    origin(a,null,key==='brush'?BRUSH_SWING_ORIGIN:null);const at=muzzle.clone(), direction=dir.clone(), volleys=new Map();
+    origin(a,null,key==='brush'?BRUSH_SWING_ORIGIN:null);
+    // Roller swings leave from the shared player-relative base plus each
+    // glob's sourced Spawn* offset (weapons-fidelity ROLLER_SPAWN_BASE), as the
+    // native Splat Roller does -- not from the drawn drum, which the swing
+    // motion puts ~0.15-0.25 m above the floor at release and which ignored
+    // SpawnPositionWidth (every Big Swig glob left one point, not a 1.9 m span).
+    const swing=r.family==='roller'&&(key==='horizontal'||key==='vertical');
+    if(swing){
+      base.copy(a.pos);base.y+=1.05;
+      constrainMuzzle(G.physics,base,rollerSpawnBase(a,muzzle));
+      G.projectiles._aimFrom(a,muzzle,dir);
+    }
+    const at=muzzle.clone(), direction=dir.clone(), volleys=new Map(), birth=new THREE.Vector3();
     // This particular main weapon lobs a ballistic row. The generic muzzle
     // -> reticle-point convergence can angle it sharply toward a nearby floor
     // crosshair hit, even when the player is looking horizontally. Fire along
@@ -744,7 +756,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // Store the resolved factor for delayed ground/air births as well.
         const liftRate=r.sourceActor==='WeaponSlosherBathtub'
           ?sourceLiftRate*Math.hypot(aim.x,aim.z):sourceLiftRate;
-        const p=spawn(a,r,d,aim,at,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
+        birth.copy(at);
+        if(swing){
+          addRollerSpawnOffset(birth,a,u,i,count,key==='vertical');
+          // A glob offset into a wall or below the floor starts at the obstruction.
+          constrainMuzzle(G.physics,base,birth);
+        }
+        const p=spawn(a,r,d,aim,birth,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
           index:i,volley,lift:speed*liftRate});
         // Like the existing native Slosher owner, select ground/air speed at
         // each glob's actual birth. Retain the admitted direction, per-index
@@ -911,7 +929,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function lobes(p){
     const s=p.catalog,c=s.descriptor.c,params=c.ParamArray||[c],offsets=c.OffsetArray||[];
-    s.lobes ||= params.map(()=>({from:new THREE.Vector3(),to:new THREE.Vector3(),hit:new Hit()}));
+    s.lobes ||= params.map(()=>({from:new THREE.Vector3(),to:new THREE.Vector3(),hit:new Hit(),paintSeed:null}));
     const yaw=Math.atan2(p.vel.x,p.vel.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
     for(let i=0;i<params.length;i++){
       const q=s.lobes[i],v=offsets[i]||{},x=finite(v.X,0),y=finite(v.Y,0),z=finite(v.Z,0);
@@ -997,14 +1015,30 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // Retain the existing single paint owner and do not duplicate paint events.
       const bounceRadius=(finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index)*Math.pow(.85,s.bounces);
       if(!p.ghost)paint(p.owner,at,bounceRadius,1,null,-1,mainInkFootprint(r));
-      const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index,s.bounces+1));
+      // Ground bounce begins only when the sourced small FIELD *core* reaches
+      // the terrain. Offsetting by the grown radius put the bubble far above
+      // the surface, then its next impact happened prematurely on the grown
+      // envelope; short downward throws spent all three contacts near the
+      // muzzle. Walls continue using the full grown collision envelope.
+      const nextScale=s.bounces+1;
+      const reboundRadius=ground
+        ?collisionRadius(d.c,'Field',0,s.index,nextScale)
+        :collisionRadius(d.c,'Field',p.age*HZ,s.index,nextScale);
+      const clearance=catalogReboundSeparation(reboundRadius);
       p.pos.copy(at).addScaledVector(h.normal,clearance);
       p.vel.reflect(h.normal);
       if(!ground)p.vel.multiplyScalar(.8); // sourced wall reflection, no wall-bounce cap
       if(!p.ghost&&(p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
         G.fx?.burst(at,h.normal,p.owner.color,{count:5,speed:1.8,size:.09,spread:.8,paint:false});
-      // BounceAfterMaxSpeed is explicit only for the smaller bubble group.
-      if(bp.BounceAfterMaxSpeed!=null&&p.vel.length()>bp.BounceAfterMaxSpeed*HZ)p.vel.setLength(bp.BounceAfterMaxSpeed*HZ);
+      // BounceAfterMaxSpeed=.35 is an explicit total-speed cap for the small
+      // bubbles after a FLOOR bounce; never apply it to a wall reflection.
+      // S3 wall rebounds retain their independently sourced exact x0.8 speed.
+      // The initial field-shell floor false-contact was the actual downhill
+      // reach bug; dropping this cap would overextend the trailing bubbles.
+      if(ground&&bp.BounceAfterMaxSpeed!=null){
+        const cap=Math.max(0,bp.BounceAfterMaxSpeed)*HZ;
+        if(p.vel.lengthSq()>cap*cap)p.vel.setLength(cap);
+      }
       s.bounces++;if(ground)s.groundBounces++;
       updateCatalogVisual(p);return false;
     }
@@ -1034,22 +1068,43 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const bounceScale=s.r.sourceActor==='WeaponSlosherBathtub'?s.bounces:0;
       let world=s.hit;world.hit=false;
       // Added Rollers/Sloshers share the native glob graze rule (weapons-fidelity GLOB_GRAZE):
-      // a contact below the glob centre is re-tested with the unit's sourced initial Field radius.
-      const graze=(s.r.family==='roller'||s.r.family==='slosher')&&s.r.sourceActor!=='WeaponSlosherBathtub';
-      for(const q of shapes){
+      // any contact of the grown sphere is re-tested with the unit's sourced initial Field radius.
+      const bubble=s.r.sourceActor==='WeaponSlosherBathtub';
+      const graze=(s.r.family==='roller'||s.r.family==='slosher')&&!bubble;
+      // A multi-lobe round (Splatana waves) ends only when its sourced CoreIndex
+      // lobe reaches terrain. An outer lobe that meets a wall, pillar or the floor
+      // splashes there and leaves the wave; the untouched lobes fly on. q.stop is
+      // the fraction of this step a lobe still exists for (-1: already gone).
+      const coreLobe=shapes.length>1?Math.max(0,Math.min(shapes.length-1,Math.round(finite(d.c.CoreIndex,0)))):0;
+      for(let i=0;i<shapes.length;i++){
+        const q=shapes[i];
+        if(s.lobeGone?.[i]){q.stop=-1;continue;}
+        q.stop=Infinity;
         const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
         let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
-        if(graze&&candidate.hit&&candidate.normal.y>GLOB_GRAZE.normalY){
+        if(candidate.hit && (graze || bubble && candidate.normal.y>.35)){
           const core=collisionRadius(q.param,'Field',0,s.index,bounceScale);
-          if(core<Math.min(f0,f1)){
+          // The first step grows from the core radius itself (f0 === core), so
+          // compare with the largest swept radius: a level swing born near the
+          // floor must not end on its first step when only its edge touched.
+          if(core<Math.max(f0,f1)){
             const touch=s.grazeTouch||(s.grazeTouch={point:candidate.point.clone(),normal:candidate.normal.clone()});
             touch.point.copy(candidate.point);touch.normal.copy(candidate.normal);const face=candidate.face;
             candidate=sweptWorldHit(G.physics,q.from,q.to,core,core,q.hit,true);
             // The grazed part splashes where it touched; the rest of the glob flies on.
-            if(!candidate.hit)globGrazePaint(G,p,touch.point,touch.normal,f1,face);
+            if(!candidate.hit && graze)globGrazePaint(G,p,touch.point,touch.normal,f1,face);
           }
         }
-        if(candidate.hit&&(!world.hit||candidate.dist<world.dist))world=candidate;
+        if(!candidate.hit)continue;
+        if(i!==coreLobe){
+          q.stop=candidate.dist/Math.max(EPS,len);
+          // Keep the existing candidate-order seed budget, including a later
+          // rejected contact. Reserving here avoids shifting subsequent shots;
+          // only the reached contact may commit paint or retire the lobe.
+          q.paintSeed=!p.ghost&&p.owner&&!p.owner.remote&&f1>0?Math.random():null;
+          continue;
+        }
+        if(!world.hit||candidate.dist<world.dist)world=candidate;
       }
       let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=this.kitDefenseCandidate?.(p);
       if(defense&&defense.distance/Math.max(EPS,len)<stop)stop=defense.distance/Math.max(EPS,len);
@@ -1062,8 +1117,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
         let entry=null;
         for(const q of shapes){
+          if(q.stop<0)continue;
           const pr0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale),radius=collisionRadius(q.param,'Player',p.age*HZ,s.index,bounceScale);
           const contact=capsuleEntry(q.from,q.to,a.pos,hurtboxRadius(a,PLAYER),hurtboxHeight(a,PLAYER),pr0,radius);
+          // A lobe that splashed on terrain this step cannot reach past it.
+          if(contact!=null&&contact>q.stop+EPS)continue;
           if(contact!=null&&!spiralContactClear(p,q,a,contact))continue;
           if(contact!=null&&(entry==null||contact<entry))entry=contact;
         }
@@ -1072,6 +1130,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       if(G.boss){const b=G.boss.segHit(p.prev,p.pos,pr1);const t=b?p.prev.distanceTo(b.point)/Math.max(EPS,len):Infinity;
         if(t<stop-EPS){stop=t;boss=b;target=null;defense=null;}}
+      // Resolve the whole wave's first actor/core/boss/defense contact before
+      // committing any peripheral splash. The per-lobe cutoff above still
+      // prevents that lobe from hitting an actor beyond its own terrain.
+      if(shapes.length>1)for(let i=0;i<shapes.length;i++){
+        const q=shapes[i];
+        if(i===coreLobe||!Number.isFinite(q.stop)||q.stop<0||q.stop>Math.min(1,stop)+EPS)continue;
+        (s.lobeGone||=[])[i]=true;
+        if(!p.ghost)paint(p.owner,q.hit.point,collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale),
+          1,null,q.hit.face,mainInkFootprint(s.r),q.paintSeed);
+      }
       if(!p.ghost&&s.r.family==='charger') {
         const end=p.prev.clone().lerp(p.pos,Math.min(1,stop)),spacing=Math.max(.2,d.radius*.5);
         const count=Math.ceil(p.prev.distanceTo(end)/spacing);
@@ -1875,6 +1943,11 @@ export function releaseCatalogBirth(system, projectile, game) {
   if (launch) {
     const unit = state.descriptor.packet;
     const baseSpeed = finite(actor.grounded ? unit.SpawnSpeedGround : unit.SpawnSpeedAir, 1);
+    // Existing S3 slosher action is admitted as one swing. The referenced
+    // sweep technique derives the fan from the change in aim DURING windup;
+    // no source proves that later bubbles adopt arbitrary post-release aim.
+    // Keep the admitted volley direction; update only the sourced ground/air
+    // launch-speed choice at true birth without rerolling its random or lift.
     if (baseSpeed !== launch.sourceBaseSpeed) {
       const speed = launch.speed + (baseSpeed - launch.sourceBaseSpeed) * HZ;
       projectile.vel.copy(launch.direction).multiplyScalar(speed);

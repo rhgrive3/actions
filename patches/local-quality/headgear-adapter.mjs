@@ -2,11 +2,11 @@
 function once(code,before,after,label){const i=code.indexOf(before);if(i<0||code.indexOf(before,i+before.length)!==-1)throw Error('INKWAVE headgear conflict: '+label);return code.slice(0,i)+after+code.slice(i+before.length);}
 export function adaptHeadgear(rel,code){
  if(rel==='src/game/character-style.js'){
-  code=once(code,"export const HATS = ['none', 'cap', 'beanie', 'bucket'];","export const HATS = ['none', 'cap', 'beanie', 'bucket', 'armor-helmet-replica', 'two-line-mesh', 'camo-headphones-suiton', 'ink-black-flap-cap'];",'catalog IDs');
-  code=once(code,"export const HAT_NAMES = ['None', 'Snapback', 'Beanie', 'Bucket Hat'];","export const HAT_NAMES = ['None', 'Snapback', 'Beanie', 'Bucket Hat', 'Armor Helmet Replica', 'Two-Stripe Mesh', \"Seafoam 'Phones\", 'Ink-Black Flap Cap'];",'catalog names');
+  code=once(code,"export const HATS = ['none', 'cap', 'beanie', 'bucket'];","export const HATS = ['none', 'cap', 'beanie', 'bucket', 'armor-helmet-replica', 'two-line-mesh', 'camo-headphones-suiton', 'ink-black-flap-cap', 'goldfish-mask', 'samurai-helmet', 'face-goggles', 'thief-hook'];",'catalog IDs');
+  code=once(code,"export const HAT_NAMES = ['None', 'Snapback', 'Beanie', 'Bucket Hat'];","export const HAT_NAMES = ['None', 'Snapback', 'Beanie', 'Bucket Hat', 'Armor Helmet Replica', 'Two-Stripe Mesh', \"Seafoam 'Phones\", 'Ink-Black Flap Cap', 'Golden Gala Masque', 'Samurai Helmet', 'Paintball Mask', 'Dapperdasher Hat'];",'catalog names');
   code=once(code,'1 + pick(HATS.length - 1)','1 + pick(3)','preserve existing random pool');
  }
- if(rel==='src/i18n.js')code=once(code,"HAT_NAMES: ['なし', 'スナップバック', 'ニット帽', 'バケットハット'],","HAT_NAMES: ['なし', 'スナップバック', 'ニット帽', 'バケットハット', 'アーマーメット レプリカ', '2ラインメッシュ', 'カモヘッドホン スイトン', 'シェーディングキャップ スミ'],",'Japanese labels');
+ if(rel==='src/i18n.js')code=once(code,"HAT_NAMES: ['なし', 'スナップバック', 'ニット帽', 'バケットハット'],","HAT_NAMES: ['なし', 'スナップバック', 'ニット帽', 'バケットハット', 'アーマーメット レプリカ', '2ラインメッシュ', 'カモヘッドホン スイトン', 'シェーディングキャップ スミ', 'キンギョマスケラ', 'サムライヘルメット', 'フェイスゴーグル', 'カイトウ・フック'],",'Japanese labels');
  if(rel==='src/game/character-geo.js'){
   code="import { HEADGEAR_FITS } from '../../patches/local-quality/headgear/catalog.mjs';\n"+code;
   code=once(code,'];\n\n/** Classify every strand against a dome hat','  ...HEADGEAR_FITS,\n];\n\n/** Classify every strand against a dome hat','fit catalog');

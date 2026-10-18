@@ -9,6 +9,7 @@ import { normalizeViewSettings } from '../../local-quality/view-settings.mjs';
 import { initialGyroDefaults } from '../../local-quality/gyro-permission.mjs';
 import { notePausedWorldChange } from '../../local-quality/idle-resources.mjs';
 import { legacyPadToS3, s3PadMultiplier } from '../runtime/pad-sensitivity.mjs';
+import { sanitizeSettings, sanitizeSettingsChange } from '../../../inkwave-public/src/core/save-validation.mjs';
 
 const compose = rel => adaptBuildSource(rel, fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8'));
 const main = compose('src/main.js'), menu = compose('src/ui/menus.js');
@@ -19,11 +20,12 @@ function span(source, start, end) {
   return source.slice(at, until);
 }
 async function settingsRig(saved) {
-  const { DEFAULT_SETTINGS } = await fixture({ productionComposition: true });
+  const { DEFAULT_SETTINGS, QUALITY } = await fixture({ productionComposition: true });
   const storage = new Map(saved ? [['inkwave.settings', JSON.stringify(saved)]] : []);
   const G = { mode:'match' };
   const context = {
     DEFAULT_SETTINGS, G, migrateAimProfiles, applyAimSettingsChange, initialGyroDefaults,
+    QUALITY, sanitizeSettings, sanitizeSettingsChange,
     legacyPadToS3, notePausedWorldChange, normalizeViewSettings,
     localStorage: { getItem:k=>storage.get(k) ?? null, setItem:(k,v)=>storage.set(k,v) },
     // Display/resource owners are irrelevant to settings storage and are inert.
@@ -89,4 +91,29 @@ test('#287 real boot keeps each legacy and already-S3 profile choice until expli
       assert.equal(r.reload().settings.padSensitivity, 0);
     }
   }
+});
+
+test('composed settings hardening retains signed S3 profiles through switch, live changes and reload', async () => {
+  const r = await settingsRig({padSensitivityScale:'s3',aimProfile:'tv',fovMode:'h',
+    aimProfiles:{tv:{padSensitivity:0,gyroSens:-5},handheld:{padSensitivity:-5,gyroSens:5}}});
+  assert.equal(r.game.settings.padSensitivity,0);
+  assert.equal(r.game.settings.gyroSens,-5);
+  r.game._setSettings({aimProfile:'handheld'});
+  assert.equal(r.game.settings.padSensitivity,-5,'switch uses the destination profile, without resubmitting TV flat values');
+  assert.equal(r.game.settings.gyroSens,5);
+  for (const value of [-5,0,5]) {
+    r.game._setSettings({padSensitivity:value,gyroSens:value,touchSens:value});
+    assert.equal(r.game.settings.padSensitivity,value);
+    assert.equal(r.game.settings.gyroSens,value);
+    assert.equal(r.game.settings.touchSens,value);
+    const saved=r.reload();
+    assert.equal(saved.settings.padSensitivity,value);assert.equal(saved.settings.gyroSens,value);
+    assert.equal(saved.settings.aimProfiles.tv.padSensitivity,0,'inactive centered profile survives');
+  }
+  for(const sensitivity of [.2,1,3]) {
+    r.game._setSettings({sensitivity});assert.equal(r.reload().settings.sensitivity,sensitivity);
+  }
+  r.game._setSettings({padSensitivity:NaN,gyroSens:'bad',touchSens:Infinity,quality:'constructor'});
+  assert.equal(r.game.settings.padSensitivity,5);assert.equal(r.game.settings.gyroSens,5);
+  assert.equal(r.game.settings.touchSens,5);assert.equal(r.game.settings.quality,'high');
 });

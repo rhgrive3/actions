@@ -40,3 +40,38 @@ Visual review: [seven models, moving carry and firing](assets/weapon-models-moti
 ## Unverified comparison
 
 Exact retail dimensions, hidden construction, every Switch joint trajectory, camera/gear combination and all online combinations remain unmeasured. Browser/native regressions establish INKWAVE contracts and the covered states; they do not establish complete S3 console equivalence. Wii U carry assets, stylized character proportions, and INKWAVE's existing grip locations limit a pixel-identical comparison. No outstanding retail-parity issue is automatically closed by this change.
+
+## 2026-10-18: production browser gate follows the active grip owner
+
+The exact-head browser gate on `0136cc8aadef23a92680f80486439a6fbd590541`
+failed with a Slosher support distance of `0.6529640249757029`. The earlier
+Slosher carry updates (`66d59a87`, `4821928a`, `79be214b`) create an instance
+`weapon.def` and move its left-hand/grip frame onto the top carry handle.
+The checker still read the shared `getWeaponDef('slosher')` heave socket.
+It was measuring a different handle from the one the rendered model and hand
+were using. This is a stale fixture owner, not evidence of a detached hand or
+a new retail mismatch.
+
+The checker now measures the real posed left-hand bone against the active
+instance's socket, transformed through the actual rendered `weapon.off`.
+The fully held threshold remains **0.006 world units** across all 270 frames
+of every base-model scenario. In the same emitted production build
+(`a269fb57fad3ff7b166af9dd2d382f3c8b66c3a2e04155ff6d776df2d53e73e7`),
+Slosher's active maximum is below `7e-15`; the discarded cached socket still
+misses by `0.6529640249757022` at frame 80. The other six models retain their
+covered contracts and all seven retain native ownership for 100 firing frames.
+
+Two geometric controls prevent the change from hiding a real gap. At frame 80,
+the unchanged hand rig's authored fist aperture is transformed through the
+actual left-hand bone and compared with the model's live `gripL` contact point;
+all six two-handed models are within `1.2e-15`. Moving the actual rendered
+`weapon.off` by +0.2 on local X, without moving the solved hand, produces a
+0.2-unit gap and fails the unchanged contact threshold for all six. The model
+transform is restored in `finally`; all 21 screenshots match the run without
+this displacement control byte for byte. Dualies retain their independent
+one-pistol-per-hand behavior and existing attack-owner assertions.
+
+Validation: the production/minified browser gate passes; the base-model and
+source-posture suites pass 14 tests with no failures or skips. This change only
+updates the checker and this record. It does not alter gameplay, geometry,
+rigs, motion, rendering budgets, or claim exact Splatoon 3 joint trajectories.

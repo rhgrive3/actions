@@ -28,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 import { fixture as composedFixture } from '../../../scripts/weapons-fixture.mjs';
 import { adaptSource } from '../adapter.mjs';
+import { ROLLER_SPAWN_BASE } from '../runtime/weapons-fidelity.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -191,7 +192,11 @@ test('#750: CollisionParam gameplay radii, spawn, speed, RNG order and draw coun
     const { draws, a } = await flick(vertical);
     assert.equal(draws, fp.draws, `${key}: Math.random() draw count is unchanged`);
     assert.equal(p.list.length, fp.count, `${key}: glob count`);
-    const correctedPositions = fp.pos.map(([x,y,z],i) => {
+    // The fingerprint was captured with the native 1.3 m birth height; the
+    // shared ROLLER_SPAWN_BASE moves every glob by the same vertical amount.
+    const baseShift = ROLLER_SPAWN_BASE.height - 1.3;
+    const correctedPositions = fp.pos.map(([x,y0,z],i) => {
+      const y = y0 + baseShift;
       if (vertical) {
         // #278 indexed birth: the two-shot groups separate by .25 source units.
         // In the first three rounds, only the first of group 1 changes height.

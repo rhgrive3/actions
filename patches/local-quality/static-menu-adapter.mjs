@@ -24,6 +24,8 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       // Character thumbnails are still generated only when requested. No
       // showcase/world render loop runs behind these decorative backgrounds.
       if (this.showcase?._pq?.length) this.showcase._portraitStep?.();
+      // The locker keeps its live pedestal kid, drawn over the same art.
+      if (artScreen === 'locker' && this.showcase && G.renderer) renderInkwaveLockerStage(this, G, dt);
       this.menus.update(dt);
       this.input.endFrame();
       return;
@@ -36,16 +38,13 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       "    if (s === 'loadout') this.showcase.showLoadout(this.profile.weapon || 'shooter', G.teamColors[0], this.profile.style, G.teamColors[1]);",
       "    if (s === 'loadout') this.showcase.hide();",
       'weapon screen no longer constructs an invisible showcase stage');
-    code = `const INKWAVE_ART_MENU_SCREENS = new Set(${JSON.stringify(STATIC_MENU_SCREENS)});\n` + code;
+    code = `import { renderLockerStage as renderInkwaveLockerStage } from '../patches/local-quality/locker-stage.mjs';\nconst INKWAVE_ART_MENU_SCREENS = new Set(${JSON.stringify(STATIC_MENU_SCREENS)});\n` + code;
     return code;
   }
   if (rel === 'src/ui/menus.js') {
-    // Locker editing and Online create/join remain native DOM interactions,
-    // but no invisible stage or LobbySet is constructed behind the artwork.
-    code = replaceOnce(code,
-      '        if (sc && sc.showLocker) safeCall(() => sc.showLocker(style, teamColor(), this._loadout().weapon, G.teamColors?.[1]));',
-      '        if (sc) safeCall(() => sc.hide?.());',
-      'gear customization keeps DOM/portrait previews, drops invisible pedestal');
+    // Online create/join remains a native DOM interaction, but no invisible
+    // LobbySet is constructed behind the artwork. The locker keeps its
+    // pedestal: locker-stage.mjs draws the art into the canvas beneath it.
     code = replaceOnce(code,
       '        if (sc && sc.showHub) safeCall(() => sc.showHub(this._style(), (G.teamColors && G.teamColors[0]) || this._accent()[0], this._loadout().weapon, G.teamColors?.[1]));',
       '        if (sc) safeCall(() => sc.hide?.());',
@@ -76,12 +75,10 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
   background-size: cover;
   background-position: center;
 }
+/* Locker art is drawn in the canvas (locker-stage.mjs) under the live kid. */
 .iw-ui.is-active[data-screen="locker"] {
-  background-color: #192134;
-  background-image: linear-gradient(90deg, rgba(13,12,28,.80), rgba(13,12,28,.46) 54%, rgba(13,12,28,.10)),
-    url('../patches/local-quality/assets/menu/locker.webp');
-  background-size: cover;
-  background-position: center;
+  background-color: transparent;
+  background-image: linear-gradient(90deg, rgba(13,12,28,.80), rgba(13,12,28,.46) 54%, rgba(13,12,28,.10));
 }
 `;
 }
