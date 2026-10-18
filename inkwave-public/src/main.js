@@ -907,15 +907,18 @@ class Game {
     const won = m.result.winner === myTeam;
     m.setState('results');
     this.hud?.setVisible(false);
-    // profile / XP
+    // profile / XP. Online Private Battles intentionally never mutate XP.
     const local = m.local;
     const p = this.profile;
+    const privateBattle = !!G.netm;
     const turf = Math.round(local?.stats?.turf || 0);
-    const gained = local ? Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat) : 0;
+    const gained = local && !privateBattle ? Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat) : 0;
     const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };
-    p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;
-    while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }
-    saveJSON('inkwave.profile', p);
+    if (local && !privateBattle) {
+      awardProfileXP(p, gained, PROGRESSION.xpForLevel);
+      p.matches++; if (won) p.wins++; p.totalTurf += turf;
+      saveJSON('inkwave.profile', p);
+    }
     const data = {
       win: won, percents: [cov[0] * 100, cov[1] * 100], colors: [G.teamHex[0], G.teamHex[1]], teamNames: this.palette.names || TEAM_NAMES,
       players: m.actors.map((a) => ({ name: a.name, team: a.team, weapon: a.weaponId, turf: Math.round(a.stats.turf), splats: a.stats.splats, deaths: a.stats.deaths, isSelf: a.isLocal, bot: !!a.isBot })),
