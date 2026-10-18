@@ -14,3 +14,17 @@ From a normal checkout with the existing native dependencies and built site:
 For a preserved3b4bb02e53d057fedffb1c3f641fad3453ae0451 worktree, invoke the same current harness from its parent, with SOURCE_SHA set to that worktree's exact commit. This keeps the baseline runtime frozen while allowing one identical QA harness on baseline and candidate. Add both `squid-motion-baseline/**` and `squid-motion-candidate/**` to the existing artifact upload. Include timeline.test.mjs in source checks; it replays the actual Actor twice and verifies the entire240-frame-at30Hz sequence.
 
 Local source timeline regression passes. Local native Chromium remains unavailable under the previously confirmed sandbox restriction; the WebM/coverage path requires the authorized native CI runner. Raw video byte hashes, build/source receipts, and pacing metadata are written to result.json. Native playback must still be inspected before visual acceptance.
+
+## Uniform sampled trajectory review
+
+`SOURCE_SHA="$(git rev-parse HEAD)" node tools/squid-motion-qa/run.mjs --site _site --out .qa-evidence/squid-motion-sampled --mode sampled`
+
+This mode saves exactly 240 PNGs, one after every two actual 60 Hz Actor ticks. Each frame has a verified SHA256 and simulation timestamp; wall time, Actor advancement, rendering, PNG readback, coverage checks and file transfer are timed separately. Native visible-vertex coverage is checked on the exact captured state. The runtime is unchanged.
+
+Playback at 30 fps lasts eight seconds and shows the actual animation trajectory at 1× simulation speed. It does NOT demonstrate real-time rendering performance. The first live attempt on the software-rendering CI runner achieved only ~1.9 fps, and its `smoothnessReviewEligible` flag correctly remained false. Sampled capture also keeps this flag false and uses `trajectoryReviewEligible` instead.
+
+After verifying every artifact hash, use an existing local ffmpeg installation to assemble a review video without interpolation:
+
+`ffmpeg -framerate 30 -i frame-%04d.png -c:v libx264 -pix_fmt yuv420p -movflags +faststart sampled-trajectory-1x.mp4`
+
+No video package is added to CI. Do not infer gameplay collisions or full-match behavior from the driven-input harness.

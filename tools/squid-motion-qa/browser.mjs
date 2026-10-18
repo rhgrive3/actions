@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {createProductionLighting,PRODUCTION_LIGHTING_CONFIG} from './lighting.mjs';
 import {CLIP,driveInput} from './timeline.mjs';
-export async function run({prefix}){
+export async function run({prefix,mode='live'}){
  const progress=globalThis.__headgearQA={stage:'continuous-init'};
  const {install}=await import(prefix+'patches/splatoon3/runtime/install.mjs');
  const api=install(await fetch(prefix+'patches/splatoon3/profile.json').then(r=>r.json()));const {Character,Actor,G}=api;
@@ -25,6 +25,23 @@ export async function run({prefix}){
  }
  function frameCamera(ch){target.copy(ch.root.position);target.y+=CLIP.centerY;camera.position.copy(target).add(offset);camera.lookAt(target);camera.updateMatrixWorld(true);}
  const state=await make();frameCamera(state.ch);await renderer.compileAsync(scene,camera);renderer.render(scene,camera);renderer.getContext().finish();
+ if(mode==='sampled'){
+  // Every output frame is actual runtime state after two 60 Hz ticks. Wall time
+  // is deliberately independent; this proves trajectory, not real-time FPS.
+  const frames=[],coverage=[],p=new THREE.Vector3(),start=performance.now();
+  for(let i=0;i<CLIP.duration*CLIP.fps;i++){
+   const tick=(i+1)*CLIP.simulationHz/CLIP.fps,beforeAdvance=performance.now();advance(state,tick);const afterAdvance=performance.now();frameCamera(state.ch);
+   renderer.render(scene,camera);renderer.getContext().finish();const afterRender=performance.now();
+   const data=renderer.domElement.toDataURL('image/png'),afterReadback=performance.now();
+   let count=0,maxX=0,maxY=0;state.ch.root.traverseVisible(o=>{if(!o.isMesh||!o.geometry?.attributes.position)return;const mats=Array.isArray(o.material)?o.material:[o.material];if(mats.every(m=>!m.visible||m.opacity===0))return;for(let j=0;j<o.geometry.attributes.position.count;j++){o.getVertexPosition(j,p);p.applyMatrix4(o.matrixWorld).project(camera);if(p.z< -1||p.z>1)throw Error('Sampled depth clipping');maxX=Math.max(maxX,Math.abs(p.x));maxY=Math.max(maxY,Math.abs(p.y));count++;}});
+   if(maxX>.98||maxY>.98)throw Error('Sampled frame clipping '+JSON.stringify({frame:i,maxX,maxY}));
+   const afterCoverage=performance.now();await globalThis.__saveSquidFrame(i,data);const afterSave=performance.now(),debug=state.ch.sourceMotion?.debug?.squid;
+   frames.push({frame:i,wallMs:afterSave-start,simulationMs:tick*1000/CLIP.simulationHz,ticks:tick,state:state.previous,form:state.ch.form,grounded:state.a.grounded,position:state.a.pos.toArray(),sourceDebug:debug?{...debug}:null,sourceActive:!!state.ch.sourceMotion?.active,uLook:state.ch.u.uLook.value.toArray(),advanceMs:afterAdvance-beforeAdvance,renderMs:afterRender-afterAdvance,readbackMs:afterReadback-afterRender,coverageMs:afterCoverage-afterReadback,saveMs:afterSave-afterCoverage});coverage.push({frame:i,count,maxX,maxY});progress.stage='sampled-capture';progress.frames=frames.length;
+  }
+  const distinct=[...new Set(frames.map(f=>f.state))];for(const name of ['dry','jump','land','swim','turn90','turn180','stop','emerge'])if(!distinct.includes(name))throw Error('Missing sampled state '+name);
+  scene.remove(state.ch.root);state.ch.dispose();G.actors=[];scene.environment=null;env.dispose();renderer.dispose();
+  return {status:'sampled-native-awaiting-review',mode,scope:'Actual emitted Actor, uniform 30fps simulation samples for 1x trajectory playback. Offline capture; NOT real-time performance or achieved-FPS proof.',clipConfig:CLIP,frames,coverage,lightingReceipt,states:distinct,pacing:{nominalPlaybackFPS:CLIP.fps,simulationDurationMs:8000,elapsedWallMs:performance.now()-start,smoothnessReviewEligible:false,trajectoryReviewEligible:true}};
+ }
  if(!globalThis.MediaRecorder||!renderer.domElement.captureStream)throw Error('Native canvas video recording unavailable');
  const mime=['video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));if(!mime)throw Error('No native WebM encoder');
  const stream=renderer.domElement.captureStream(CLIP.fps),recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4500000}),chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};

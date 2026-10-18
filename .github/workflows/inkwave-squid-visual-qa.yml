@@ -46,13 +46,8 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/squid-compact-support-binding.test.mjs
           node tools/squid-production-qa/run.mjs --site _site --out .qa-evidence/squid-candidate
-      - name: Record continuous baseline motion
-        run: |
-          cd _squid_baseline
-          SOURCE_SHA="$BASE_SHA" node ../tools/squid-motion-qa/run.mjs --site _site --out ../.qa-evidence/squid-motion-baseline
-      - name: Record continuous candidate motion
-        if: ${{ !cancelled() }}
-        run: node tools/squid-motion-qa/run.mjs --site _site --out .qa-evidence/squid-motion-candidate
+      - name: Capture uniform native motion samples
+        run: node tools/squid-motion-qa/run.mjs --site _site --mode sampled --out .qa-evidence/squid-motion-sampled
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -60,8 +55,7 @@ jobs:
           path: |
             .qa-evidence/squid-baseline/**
             .qa-evidence/squid-candidate/**
-            .qa-evidence/squid-motion-baseline/**
-            .qa-evidence/squid-motion-candidate/**
+            .qa-evidence/squid-motion-sampled/**
             _site/inkwave-build.json
             _squid_baseline/_site/inkwave-build.json
           include-hidden-files: true
