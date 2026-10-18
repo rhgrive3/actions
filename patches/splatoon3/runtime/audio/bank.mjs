@@ -1,9 +1,5 @@
-import { WEAPON_AUDIO, LOOP_EVENTS } from './weapon-recipes.mjs';
-import { VARIANT_BASE_WEAPON } from '../alternate-weapon-kits-data.mjs';
-// Alias mapping belongs to the playback bank, NOT the procedural DSP worker.
-// Preserve independent sub/special event IDs and gameplay/network kit identities.
-export const mainAudioSourceId = id => typeof id === 'string' && Object.hasOwn(VARIANT_BASE_WEAPON,id)
-  ? VARIANT_BASE_WEAPON[id] : id;
+import { WEAPON_AUDIO, LOOP_EVENTS, mainAudioSourceId } from './weapon-recipes.mjs';
+export { mainAudioSourceId } from './weapon-recipes.mjs';
 import { KIT_AUDIO } from './kit-recipes.mjs';
 export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO});
 import { renderSound } from './render.mjs';
