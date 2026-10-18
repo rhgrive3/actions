@@ -22,6 +22,7 @@ const SIM_DT = 1 / 60;
 
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _dir = new THREE.Vector3(), _fwd = new THREE.Vector3(), _vh = new THREE.Vector3();
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _c = new THREE.Color();
+const _chargerPlanar = new THREE.Vector3();
 const UP = new THREE.Vector3(0, 1, 0), DOWN = new THREE.Vector3(0, -1, 0), ZAX = new THREE.Vector3(0, 0, 1);
 const _hit = new Hit(), _hit2 = new Hit();
 const _res = { t: 0, dist: 0 };
@@ -1009,15 +1010,22 @@ export class Projectiles {
     // wider than the intended tracer (including the first tap).
     let area = 0;
     const stripRadius = chargerLineRadius(w, charge);
-    const stripStretch = chargerLineStretch(w, charge);
+    // Existing source-envelope painter encodes a symmetric half-depth using
+    // an asymmetric stretch of 1.6*(depth/width-1) and a 0.375Rsa back shift.
+    const stripStretch = 1.6 * chargerLineStretch(w, charge);
+    const stripShift = stripRadius * stripStretch * 0.375;
     const step = chargerLineSpacing(w, charge);
     for (let s = 1.2; s < len - 0.3; s += step) {
       _v2.copy(m).addScaledVector(dir, s);
       const g = G.physics.raycast(_v2, DOWN, Math.max(3.5, _v2.y - PLAYER.waterY + 6), _hit2, true);
       const seed = Math.random();
       if (g.hit && g.dist <= 3.5) {
-        area += G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.015), stripRadius, a.team,
-          { seed, kind: 'charger-line', face: g.face, stretch: dir, stretchAmt: stripStretch });
+        _chargerPlanar.copy(dir).addScaledVector(g.normal, -dir.dot(g.normal));
+        if (_chargerPlanar.lengthSq() < 1e-8) _chargerPlanar.set(1, 0, 0); else _chargerPlanar.normalize();
+        area += G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.015)
+          .addScaledVector(_chargerPlanar, -stripShift), stripRadius, a.team,
+          { seed, kind: 'source-splash', footprint: 'ink-charger', face: g.face,
+            stretch: _chargerPlanar, stretchAmt: stripStretch, claimOwner: a });
       } else if (this.chargerDrops.length < 192) {
         // A shallow ground probe is not a licence to delete airborne ink.
         // Cache the nearest vertical impact once, let the drop remain visibly
@@ -1026,18 +1034,21 @@ export class Projectiles {
           pos: new THREE.Vector3(), start: new THREE.Vector3(), target: new THREE.Vector3(),
           normal: new THREE.Vector3(), direction: new THREE.Vector3(),
         };
-        p.pos.copy(_v2); p.start.copy(_v2); p.direction.copy(dir);
+        p.pos.copy(_v2); p.start.copy(_v2);
         if (g.hit) { p.target.copy(g.point); p.normal.copy(g.normal); p.face = g.face; }
         else { p.target.copy(_v2).setY(PLAYER.waterY - 1.8); p.normal.copy(UP); p.face = -1; }
+        p.direction.copy(dir).addScaledVector(p.normal, -dir.dot(p.normal));
+        if (p.direction.lengthSq() < 1e-8) p.direction.set(1, 0, 0); else p.direction.normalize();
         p.age = 0; p.life = Math.max(0.05, chargerFallTime(p.start.y - p.target.y));
-        p.owner = a; p.team = a.team; p.seed = seed; p.radius = stripRadius; p.stretchAmt = stripStretch;
+        p.owner = a; p.team = a.team; p.seed = seed; p.radius = stripRadius; p.stretchAmt = stripStretch; p.shift = stripShift;
         this.chargerDrops.push(p);
       }
     }
     if (hit.hit && !victim && !bossHit) {
       _v2.copy(hit.point).addScaledVector(hit.normal, 0.015);
       area += G.paint.splat(_v2, chargerEndRadius(w, charge), a.team,
-        { seed: Math.random(), kind: 'charger-line', face: hit.face, stretch: dir, stretchAmt: 0.4 });
+        { seed: Math.random(), kind: 'source-splash', footprint: 'ink-charger', face: hit.face,
+          stretch: dir, stretchAmt: 0.4, claimOwner: a });
       G.fx?.burst(hit.point, hit.normal, a.color, { count: 10, speed: 4, size: 0.09, paint: false });
       if (a.isLocal || a._nearCamera()) G.audio?.play('ink_hit_wall', { pos: hit.point, volume: 0.6 });
     }
@@ -1228,9 +1239,10 @@ export class Projectiles {
       p.pos.y = Math.max(p.target.y, p.start.y - 0.5 * CHARGER_FALL_GRAVITY * p.age * p.age);
       if (p.age < p.life) continue;
       if (p.face >= 0) {
-        _v.copy(p.target).addScaledVector(p.normal, 0.015);
+        _v.copy(p.target).addScaledVector(p.normal, 0.015).addScaledVector(p.direction, -p.shift);
         const area = G.paint.splat(_v, p.radius, p.team, {
-          seed: p.seed, kind: 'charger-line', face: p.face, stretch: p.direction, stretchAmt: p.stretchAmt,
+          seed: p.seed, kind: 'source-splash', footprint: 'ink-charger', face: p.face,
+          stretch: p.direction, stretchAmt: p.stretchAmt, claimOwner: p.owner,
         });
         p.owner.addTurf(area);
         emit('weapon:impact', { pos: p.target.clone(), normal: p.normal.clone(), team: p.team, kind: 'drop', radius: p.radius });
