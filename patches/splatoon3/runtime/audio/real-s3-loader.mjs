@@ -19,7 +19,7 @@ export class RealS3SampleLoader {
   constructor(bank,{fetcher=globalThis.fetch,manifestURL=FILE_MANIFEST,assetFetcher}={}){
     this.bank=bank;this.fetcher=fetcher;this.assetFetcher=assetFetcher||((url)=>sameModuleFetch(url,fetcher));
     this.manifestURL=manifestURL;this.manifestPromise=null;this.queue=Promise.resolve();this.inFlight=new Map();
-    this.loaded=new Set();this.notMapped=new Set();this.retryAfter=new Map();this.status='uninitialized';this.errors=[];
+    this.loaded=new Set();this.notMapped=new Set();this.retryAfter=new Map();this.status='uninitialized';this.errors=[];this.declaredEvents=null;
     this.manifestRetryAt=0;
     this.bank.authorized.fetcher=this.assetFetcher;
     this.bank.authorized.maxBytes=Math.max(this.bank.authorized.maxBytes,AUDIO_CACHE_BYTES);
@@ -37,12 +37,16 @@ export class RealS3SampleLoader {
         const clips=validateAuthorizedManifest(data);
         // Never fetch arbitrary sourceDrive URLs: only same-origin local assets.
         for(const c of clips)if(!/^s3-real\/[A-Za-z0-9_.+()\-]+\.mp3$/i.test(c.file))throw new Error('Unsafe real-S3 asset path');
+        this.declaredEvents=new Set(clips.map(c=>`${c.id}:${c.event}`));
         this.status='ready';return {...data,clips};
-      }catch(error){if(!this._current())return null;this.status='unavailable';this.manifestRetryAt=Date.now()+4000;
+      }catch(error){if(!this._current())return null;this.status='unavailable';this.declaredEvents=null;this.manifestRetryAt=Date.now()+4000;
         this.errors.push(String(error?.message||error));return null;}
     })();
     return this.manifestPromise;
   }
+  // null means the index is still unavailable. Only an explicit false means
+  // an event is absent: never synthesize over a declared but not-yet-decoded MP3.
+  declares(id,event){return this.status==='ready'&&this.declaredEvents?this.declaredEvents.has(`${id}:${event}`):null;}
   // Event-aware demand paging. A previous v10 `loaded` bit stayed true even
   // after a 40 MiB LRU eviction, permanently skipping future real-file loads.
   // Re-check the actual decoded resident events instead of that stale bit.
