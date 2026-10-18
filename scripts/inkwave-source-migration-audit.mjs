@@ -13,6 +13,8 @@ const DIRECT = Object.freeze([
   'src/game/nav.js',
   'src/game/inkCollision.js',
   'src/world/murals.js',
+  'src/world/stages/index.js',
+  'src/world/stages/surfaces.js',
   'src/world/stages/cargo/layout.js',
   'src/world/props.js',
   'src/world/props-marina-vessels.js',
