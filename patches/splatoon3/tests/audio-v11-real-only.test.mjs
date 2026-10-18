@@ -37,6 +37,41 @@ class MixerStub {
 }
 installWeaponAudioEngine(MixerStub);
 
+test('Splattershot uses its recorded ShooterNormal MP3, never the generic synth shooter',async()=>{
+ const installed=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
+ const originalMains=new Set(installed.clips.filter(c=>c.event==='fire'&&!c.id.includes(':')).map(c=>c.id));
+ assert.equal(originalMains.size,54,'all original 2022 recorded main weapons have their own shot');
+ for(const id of originalMains){
+   assert.ok(AUDIO_RECIPES[id],'gameplay audio recipe must map the recorded weapon '+id);
+   assert.equal(fireArticulation(AUDIO_RECIPES[id],{}),'fire','ordinary shot must choose the actual recording: '+id);
+ }
+ const real=installed.clips.find(c=>c.id==='shooter'&&c.event==='fire');
+ assert.equal(AUDIO_RECIPES.shooter.sourceActor,'WeaponShooterNormal');
+ assert.equal(real?.sourceName,'Wp_ShooterNormal_Shot_00.mp3');
+ assert.match(real?.sha256||'',/^[0-9a-f]{64}$/);
+ const source=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
+ const compiled=adaptWeaponAudio('src/game/weapons.js',source);
+ assert.ok(!compiled.includes("G.audio?.play('shoot_shooter'"),
+   'legacy synthesized shooter fire must never run alongside the event listener');
+ assert.ok(compiled.includes("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone() });"),
+   'authoritative native shot emission remains intact');
+ const {ctx,sources}=mkctx(),a=new MixerStub(ctx);
+ a.weaponBank();
+ a._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest([clip('shooter','fire','Wp_ShooterNormal_Shot_00.mp3')])});
+ a._realS3Loader.bank.authorized.fetcher=async()=>res;
+ const actor={isLocal:true};
+ assert.equal(a.playWeapon('shooter','fire',{actor}),null,'cold ShooterNormal never synthesizes a counterfeit shot');
+ assert.equal(a.stats().authoredFallbackShots,0);
+ await a._realS3Loader.ensure('shooter','fire');
+ assert.equal(a._realS3Loader.declares('shooter','fire'),true);
+ assert.equal(a.playWeapon('shooter','fire',{actor})?.weaponId,'shooter');
+ assert.equal(a.played.at(-1).name,'main:shooter:fire');
+ assert.equal(sources.at(-1).buffer,a.weaponBank().authorized.pick('shooter','fire').buffer);
+ assert.equal(a.weaponBank().cache.size,0,'no Shooter synth PCM is generated');
+ assert.equal(a.stats().authoredFallbackShots,0);
+ a.disposeWeaponAudio();
+});
+
 test('a declared recorded shot never uses authored PCM while decoding',async()=>{
  const {ctx,sources}=mkctx(),a=new MixerStub(ctx);
  const local={isLocal:true};
