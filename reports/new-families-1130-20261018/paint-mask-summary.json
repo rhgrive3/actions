@@ -1,0 +1,54 @@
+{
+  "status": "passed",
+  "engine": "chromium",
+  "sourceSha": "c597a70f3e90ada457fc1928b3edac14dd0ef25b",
+  "contentHash": "81b086c1911466a57c5d1b5f65d55e60cf91b29c0a8d7d13340d294e39c7780f",
+  "inputHash": "3bad9cf306dd5b6fa2aeed3c3b279f56e928234b0916d18593311fcb8e49cd89",
+  "verifierHash": "1f96001f64f056690695b0bc23ca044b4a59f3642a6e7da78f7d287afd808094",
+  "fixtureHash": "e835463dc0319df726ee5dddecf078883d718bb9efa34a6c60ba70892a7e061f",
+  "loadedArtifacts": 146,
+  "results": {
+    "source": {
+      "renderer": "WebKit WebGL",
+      "hashQueries": 1512,
+      "activeFamilies": {
+        "rays": true,
+        "satellites": false,
+        "spatter": false,
+        "drips": true
+      },
+      "cells": 15295,
+      "negativeUnsupported": 4261,
+      "cases": 124,
+      "body": {
+        "cpuCells": 119521,
+        "gpuCells": 119512,
+        "cpuOnly": 0,
+        "gpuOnly": 0,
+        "ties": 9,
+        "cases": 782
+      }
+    },
+    "built": {
+      "renderer": "WebKit WebGL",
+      "hashQueries": 1512,
+      "activeFamilies": {
+        "rays": true,
+        "satellites": false,
+        "spatter": false,
+        "drips": true
+      },
+      "cells": 15295,
+      "negativeUnsupported": 4261,
+      "cases": 124,
+      "body": {
+        "cpuCells": 119521,
+        "gpuCells": 119512,
+        "cpuOnly": 0,
+        "gpuOnly": 0,
+        "ties": 9,
+        "cases": 782
+      }
+    }
+  }
+}
