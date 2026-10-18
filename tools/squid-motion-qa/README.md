@@ -1,6 +1,6 @@
 # Continuous native squid motion acceptance
 
-This QA-only harness uses the manifest-verified emitted Actor, source animation bank, and existing production Environment. It does not change model, animation, physics, or human sources. Its eight-second sequence covers dry idle, a ballistic-input jump/landing, straight swimming,90/180-degree direction changes, stopping, and emergence. As with the existing multiview harness, inputs are driven; this is not a full match-physics recording.
+This QA-only harness uses the manifest-verified emitted Actor, source animation bank, and existing production Environment. It does not change model, animation, physics, or human sources. Its ten-second sequence covers dry idle, a ballistic-input jump/landing, straight swimming,90/180-degree direction changes, stopping, emergence, a complete dive, and rapid direction reversals between forms. The original first eight seconds are unchanged. As with the existing multiview harness, inputs are driven; this is not a full match-physics recording.
 
 Chromium's canvas MediaRecorder writes a native WebM at real wall-clock speed, with a nominal30fps capture stream and60Hz fixed simulation catch-up. There is no slow GIF, interpolated frame generation, or retimed playback. Every rendered frame records wall time, presentation time, simulation ticks, state, source clip/frame, position, gaze uniform, and render duration. The result reports achieved FPS and frame gaps. `smoothnessReviewEligible` is false below24fps or above70ms p95 gaps; a slow software capture must not be presented as proof of smooth gameplay.
 
@@ -11,7 +11,7 @@ From a normal checkout with the existing native dependencies and built site:
     node --experimental-vm-modules --test tools/squid-motion-qa/timeline.test.mjs
     SOURCE_SHA="$(git rev-parse HEAD)" node tools/squid-motion-qa/run.mjs --site _site --out .qa-evidence/squid-motion-candidate
 
-For a preserved3b4bb02e53d057fedffb1c3f641fad3453ae0451 worktree, invoke the same current harness from its parent, with SOURCE_SHA set to that worktree's exact commit. This keeps the baseline runtime frozen while allowing one identical QA harness on baseline and candidate. Add both `squid-motion-baseline/**` and `squid-motion-candidate/**` to the existing artifact upload. Include timeline.test.mjs in source checks; it replays the actual Actor twice and verifies the entire240-frame-at30Hz sequence.
+For a preserved fbaf105eb310daf10ef7bd72675805ccf3f5a8bc worktree, invoke the same current harness from its parent, with SOURCE_SHA set to that worktree's exact commit. This keeps the baseline runtime frozen while allowing one identical QA harness on baseline and candidate. Add both `squid-motion-baseline/**` and `squid-motion-candidate/**` to the existing artifact upload. Include timeline.test.mjs in source checks; it replays the actual Actor twice and verifies the entire300-frame-at30Hz sequence.
 
 Local source timeline regression passes. Local native Chromium remains unavailable under the previously confirmed sandbox restriction; the WebM/coverage path requires the authorized native CI runner. Raw video byte hashes, build/source receipts, and pacing metadata are written to result.json. Native playback must still be inspected before visual acceptance.
 
@@ -19,9 +19,9 @@ Local source timeline regression passes. Local native Chromium remains unavailab
 
 `SOURCE_SHA="$(git rev-parse HEAD)" node tools/squid-motion-qa/run.mjs --site _site --out .qa-evidence/squid-motion-sampled --mode sampled`
 
-This mode saves exactly 240 PNGs, one after every two actual 60 Hz Actor ticks. Each frame has a verified SHA256 and simulation timestamp; wall time, Actor advancement, rendering, PNG readback, coverage checks and file transfer are timed separately. Native visible-vertex coverage is checked on the exact captured state. The runtime is unchanged.
+This mode saves exactly 300 PNGs, one after every two actual 60 Hz Actor ticks. Each frame has a verified SHA256 and simulation timestamp; wall time, Actor advancement, rendering, PNG readback, coverage checks and file transfer are timed separately. Native visible-vertex coverage is checked on the exact captured state. The runtime is unchanged.
 
-Playback at 30 fps lasts eight seconds and shows the actual animation trajectory at 1× simulation speed. It does NOT demonstrate real-time rendering performance. The first live attempt on the software-rendering CI runner achieved only ~1.9 fps, and its `smoothnessReviewEligible` flag correctly remained false. Sampled capture also keeps this flag false and uses `trajectoryReviewEligible` instead.
+Playback at 30 fps lasts ten seconds and shows the actual animation trajectory at 1× simulation speed. It does NOT demonstrate real-time rendering performance. The first live attempt on the software-rendering CI runner achieved only ~1.9 fps, and its `smoothnessReviewEligible` flag correctly remained false. Sampled capture also keeps this flag false and uses `trajectoryReviewEligible` instead.
 
 After verifying every artifact hash, use an existing local ffmpeg installation to assemble a review video without interpolation:
 

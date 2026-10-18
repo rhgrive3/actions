@@ -1,0 +1,18 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const a=fs.readFileSync(new URL('../adapter.mjs',import.meta.url).pathname,'utf8');
+const s=a.indexOf('function adaptEnginePerformanceHotpaths('),e=a.indexOf('\nexport function qualityIdentity()',s);
+const hot=vm.runInNewContext(a.slice(s,e)+'\nadaptEnginePerformanceHotpaths',{});
+const replaceOnce=(code,old,replacement,name)=>{assert.equal(code.split(old).length-1,1,name);return code.replace(old,replacement)};
+const face='    const key = (x, y, z) => (x + 1024) + (y + 1024) * 2048 + (z + 1024) * 4194304;';
+const f=hot('src/game/character-face.js',face,replaceOnce);
+const fKey=vm.runInNewContext(f+'\nkey');
+assert.equal(typeof fKey(0,0,0),'number');
+assert.notEqual(fKey(0,0,0),fKey(1024,0,0));
+const key="      const key = `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)},${ax}`;";
+const dot=`          const dot = nx * vx + ny * vy + nz * vz;\n          if (dot <= 0.02 * Math.sqrt(d2)) continue;\n          const d = Math.sqrt(d2), cr = dot / d;`;
+const body=key+'\nfunction check(){for(let i=0;i<1;i++){'+dot+'\n}}';
+const out=hot('src/game/character-outfit.js',body,replaceOnce);
+const fun=new Function('x','y','z','cell','ax','nx','vx','ny','vy','nz','vz','d2',out+'\nreturn key;');
+const key0=fun(0,0,0,1,0,1,1,0,0,0,0,1),key512=fun(512,0,0,1,0,1,1,0,0,0,0,1);
+assert.equal(typeof key0,'number');assert.notEqual(key0,key512);
+console.log(JSON.stringify({status:'PASS',AOFaceKeyOverflow:'distinct',AOBodyKeyOverflow:'distinct',generatedCode:'compiles'}));

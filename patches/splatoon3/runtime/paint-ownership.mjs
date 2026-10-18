@@ -69,13 +69,28 @@ function sdRay(px, py, ax, ay, bx, by, ra, rb) {
 
 function counts(kind, shapes) { return shapes[kind] || [0, 0, 0, 0]; }
 
+const _ancillaryPiecePool = [];
+const _ancillaryPieces = [];
+const _ancillaryMask = { pieces: _ancillaryPieces, sa: 0, sdu: 0, sdv: 0, margin: 0, seed: 0, dT: 0 };
+function allocPiece(idx) {
+  let p = _ancillaryPiecePool[idx];
+  if (!p) {
+    p = { type: 0, ax: 0, ay: 0, bx: 0, by: 0, ra: 0, rb: 0, x: 0, y: 0, radius: 0, ux: 0, uy: 0, el: 0, x0: 0, yTop: 0, len: 0, w: 0, h2: 0, k: 0, r: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    _ancillaryPiecePool[idx] = p;
+  }
+  _ancillaryPieces.push(p);
+  return p;
+}
+
 function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const R = g.R, r2 = R * R - dn * dn;
   if (r2 <= 0 || R <= 0) return null;
   const r = Math.sqrt(r2), fall = clamp(r / Math.max(R, 1e-3), 0, 1);
   const kind = g.kind, [rayCount, satelliteCount, spatterCount, dripCount] = counts(kind, contract.shapes);
   if (rayCount + satelliteCount + spatterCount + dripCount === 0) return null;
-  const pieces = [], seed = f32(g.seed), word = paintShapeSeed(seed), pixel = 1 / Math.max(face.atlas?.ppm || 1, 1);
+  _ancillaryPieces.length = 0;
+  let pIdx = 0;
+  const seed = f32(g.seed), word = paintShapeSeed(seed), pixel = 1 / Math.max(face.atlas?.ppm || 1, 1);
   const dirAng = sa > 0 ? Math.atan2(sdv, sdu) : 0;
   const spread = 6.2831 + (2.5 - 6.2831) * clamp(sa * 1.2, 0, 1);
   const big = kind > 1.5 && kind < 3.5;
@@ -93,12 +108,14 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
     const ax = ux * edge * 0.72, ay = uy * edge * 0.72;
     const tipX = ux * (edge + len) - uy * len * 0.18 * (h1 - 0.5);
     const tipY = uy * (edge + len) + ux * len * 0.18 * (h1 - 0.5);
-    pieces.push({ type: 0, ax, ay, bx: tipX, by: tipY, ra: wB, rb: tipR,
-      minX: Math.min(ax, tipX) - wB, maxX: Math.max(ax, tipX) + wB,
-      minY: Math.min(ay, tipY) - wB, maxY: Math.max(ay, tipY) + wB });
+    const p0 = allocPiece(pIdx++);
+    p0.type = 0; p0.ax = ax; p0.ay = ay; p0.bx = tipX; p0.by = tipY; p0.ra = wB; p0.rb = tipR;
+    p0.minX = Math.min(ax, tipX) - wB; p0.maxX = Math.max(ax, tipX) + wB;
+    p0.minY = Math.min(ay, tipY) - wB; p0.maxY = Math.max(ay, tipY) + wB;
     const headR = tipR * (1.6 + 1.4 * h2);
-    pieces.push({ type: 1, x: tipX, y: tipY, radius: headR,
-      minX: tipX - headR, maxX: tipX + headR, minY: tipY - headR, maxY: tipY + headR });
+    const p1 = allocPiece(pIdx++);
+    p1.type = 1; p1.x = tipX; p1.y = tipY; p1.radius = headR;
+    p1.minX = tipX - headR; p1.maxX = tipX + headR; p1.minY = tipY - headR; p1.maxY = tipY + headR;
   }
 
   for (let k = 0; k < satelliteCount; k++) {
@@ -112,8 +129,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
     const rad = r * (0.028 + 0.085 * h3) * fall * (1 - 0.4 * h2) * (big ? 0.8 : 1) * land;
     const el = 1 + (0.5 + 1.6 * sa) * h2;
     const extent = rad * el;
-    pieces.push({ type: 2, x: ux * dist, y: uy * dist, ux, uy, el, radius: rad,
-      minX: ux * dist - extent, maxX: ux * dist + extent, minY: uy * dist - extent, maxY: uy * dist + extent });
+    const p2 = allocPiece(pIdx++);
+    p2.type = 2; p2.x = ux * dist; p2.y = uy * dist; p2.ux = ux; p2.uy = uy; p2.el = el; p2.radius = rad;
+    p2.minX = ux * dist - extent; p2.maxX = ux * dist + extent; p2.minY = uy * dist - extent; p2.maxY = uy * dist + extent;
   }
 
   for (let k = 0; k < spatterCount; k++) {
@@ -124,7 +142,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
     if (face.wall) { const nx = ux * 0.75, ny = uy * 0.75 - 0.25; const l = Math.hypot(nx, ny) || 1; ux = nx / l; uy = ny / l; }
     const rad = Math.max(r * (0.011 + 0.02 * h3) * fall, pixel * 0.9), dist = r * (1.3 + 1.2 * h2);
     const x = ux * dist, y = uy * dist;
-    pieces.push({ type: 1, x, y, radius: rad, minX: x - rad, maxX: x + rad, minY: y - rad, maxY: y + rad });
+    const p1 = allocPiece(pIdx++);
+    p1.type = 1; p1.x = x; p1.y = y; p1.radius = rad;
+    p1.minX = x - rad; p1.maxX = x + rad; p1.minY = y - rad; p1.maxY = y + rad;
   }
 
   if (face.wall && fall > 0.3 && dripCount > 0) {
@@ -137,11 +157,15 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
       const yTop = -c * r * 0.7;
       const len = c * r * 0.25 + r * (0.3 + 2.3 * h2 * h2) * fall * dT;
       const w = r * (0.042 + 0.04 * h3) * (0.75 + 0.35 * fall);
-      pieces.push({ type: 3, x0, yTop, len, w, h2, k, r,
-        minX: x0 - w * 2, maxX: x0 + w * 2, minY: yTop - len - w * 2, maxY: yTop + w * 2 });
+      const p3 = allocPiece(pIdx++);
+      p3.type = 3; p3.x0 = x0; p3.yTop = yTop; p3.len = len; p3.w = w; p3.h2 = h2; p3.k = k; p3.r = r;
+      p3.minX = x0 - w * 2; p3.maxX = x0 + w * 2; p3.minY = yTop - len - w * 2; p3.maxY = yTop + w * 2;
     }
   }
-  return pieces.length ? { pieces, sa, sdu, sdv, margin: pixel * 1.5, seed, dT } : null;
+  if (!_ancillaryPieces.length) return null;
+  _ancillaryMask.sa = sa; _ancillaryMask.sdu = sdu; _ancillaryMask.sdv = sdv;
+  _ancillaryMask.margin = pixel * 1.5; _ancillaryMask.seed = seed; _ancillaryMask.dT = dT;
+  return _ancillaryMask;
 }
 
 function pointInsideAncillary(mask, x, y, seed, p) {
@@ -289,10 +313,16 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
   const E = g.entries;
   if (g.R <= 0.02 || !Array.isArray(E) || !E.length || g.kind === contract.kind.speck) return 0;
   const value = g.team + 1, order = g.paintOrder || 0;
+  // Growth records can be reused or acquire extra faces: do not let a stale
+  // completion marker silently suppress a newly paintable surface.
+  const settledGeometry = E.length === g._ancillaryDoneEntries && g.R === g._ancillaryDoneRadius;
+  if (order > 0 && tn >= 1.45 && settledGeometry && g._ancillaryAllDone === order && g.age >= g._ancillaryDoneAge) return 0;
+  const floorSettled = order > 0 && tn >= 1.45 && E.length === g._ancillaryFloorEntries && g.R === g._ancillaryFloorRadius && g._ancillaryFloorDone === order && g.age >= g._ancillaryFloorDoneAge;
   let claimed = 0, changed = false;
   for (let n = 0; n < E.length; n += 7) {
     const face = E[n], lu = E[n + 1], lv = E[n + 2], dn = E[n + 3], sdu = E[n + 4], sdv = E[n + 5], sa = E[n + 6];
     if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0) continue;
+    if (floorSettled && (!face.wall || !g.dripDur)) continue;
     const r = Math.sqrt(Math.max(0, g.R * g.R - dn * dn));
     if (r <= 0.02) continue;
     const reach = contract.reach[g.kind] || 1;
@@ -351,6 +381,18 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
           }
         }
       }
+    }
+  }
+  if (order > 0 && tn >= 1.45) {
+    g._ancillaryFloorDone = order;
+    g._ancillaryFloorDoneAge = g.age;
+    g._ancillaryFloorEntries = E.length;
+    g._ancillaryFloorRadius = g.R;
+    if (dT >= 1 || !g.dripDur) {
+      g._ancillaryAllDone = order;
+      g._ancillaryDoneAge = g.age;
+      g._ancillaryDoneEntries = E.length;
+      g._ancillaryDoneRadius = g.R;
     }
   }
   if (changed) paint.version++;

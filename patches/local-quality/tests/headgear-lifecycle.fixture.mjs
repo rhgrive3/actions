@@ -57,6 +57,27 @@ for(const hat of [4,5,6,7,8,9,10,11])test('headgear '+hat+' warmup borrows owned
  assert.equal(hairStats().entries,0);assert.equal(hairStats().liveUsers,0);
 });
 
+// The locker portrait kid is pooled: restyling keeps hair keys from earlier looks.
+test('pooled portrait kid restyled through every look borrows the current look fit',async()=>{
+ const {HEADGEAR}=await load('patches/local-quality/headgear/catalog.mjs');
+ const c=make(0);
+ try{
+  assert.equal(typeof c.resetPortraitForRequest,'function');
+  for(const hat of [4,5,6,7,8,9,10,11,0,9,4]){
+   const item=HEADGEAR.find(x=>x.id===hat),create=item?.create,calls=[];
+   if(item)item.create=options=>{calls.push(options.ctx);return create(options);};
+   try{c.resetPortraitForRequest({style:{hair:hat%8,skin:2,outfit:0,eyes:0,hat,brows:0},weapon:'shooter'});}finally{if(item)item.create=create;}
+   if(!item){assert.equal(headgearState(c),null);continue;}
+   assert.equal(headgearState(c).active,'game');assert.equal(visible(c),1);assert.equal(group(c).parent,c.bones.head);
+   const own=c.hairKeys483.find(r=>r.key.startsWith(`${hat%8}.${hat}.0.game.`));
+   assert(own,'current look hair is held');assert(c.hairKeys483.length>1,'earlier looks are still held');
+   if(item.fit.preserveHair)assert(calls.every(ctx=>ctx.preserveHair));
+   else{assert(own.entry.hatContext);assert.deepEqual(calls,[own.entry.hatContext],'fit must come from the current look');}
+  }
+ }finally{c.dispose();}
+ assert.equal(headgearState(c),null);
+});
+
 for(const lod of ['far','game','hero'])test('armor flat earprint '+lod+' preserves ink and native hurt/flash shader contracts',()=>{
  const c=make(4);c.setLod(lod);c.setColor('#8844bb');let count=0;const materials=new Set();group(c).traverse(o=>{if(o.material)materials.add(o.material);});
  try{for(const material of materials){const shader={uniforms:{},vertexShader:'#include <common>\n#include <begin_vertex>',fragmentShader:'#include <common>\n#include <color_fragment>\n#include <roughnessmap_fragment>\n#include <emissivemap_fragment>'};material.onBeforeCompile(shader,{});if(!shader.uniforms.earInk)continue;count++;const ink=shader.uniforms.earInk;assert.equal(ink.value.getHex(),0x8844bb);assert.equal(shader.uniforms.uHurt,c.u.uHurt);assert.equal(shader.uniforms.uFlash,c.u.uFlash);assert(shader.fragmentShader.indexOf('dotInk')<shader.fragmentShader.indexOf('float iwHurtM'),'native damage must follow print color');assert(shader.fragmentShader.includes('totalEmissiveRadiance += uFlash'));assert(material.customProgramCacheKey().includes('inkwave-armor-flat-earprint-v1'));assert(material.customProgramCacheKey().includes('iw-headgear-signals-v1'));c.setColor('#33cc88');assert.equal(shader.uniforms.earInk,ink);assert.equal(ink.value.getHex(),0x33cc88);assert(!shader.vertexShader.includes('\\n'));assert(!shader.fragmentShader.includes('\\n'));}assert.equal(count,1,'one material owns flat non-emissive ear print');}finally{c.dispose();}

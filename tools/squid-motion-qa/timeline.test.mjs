@@ -13,8 +13,8 @@ test('continuous clip uses the actual Actor at60Hz and covers the full sequence 
    if(state.previous==='land'){landed=true;assert(a.grounded);assert.equal(a.pos.y,0);}
    if(i%2===1)frames.push({tick:i+1,state:state.previous,form:ch.form,grounded:a.grounded,position:a.pos.toArray(),debug:{...ch.sourceMotion.debug.squid}});
   }
-  assert(airborne&&landed);assert.equal(ch.form,'kid');assert.equal(frames.length,CLIP.duration*CLIP.fps);assert.equal(frames.at(-1).tick/CLIP.simulationHz,8);
-  assert.deepEqual([...new Set(frames.map(f=>f.state))],['dry','jump','land','swim','turn90','turn180','stop','emerge']);sequences.push(frames);f.reset();
+  assert(airborne&&landed);assert.equal(ch.form,'kid');assert.equal(frames.length,CLIP.duration*CLIP.fps);assert.equal(frames.at(-1).tick/CLIP.simulationHz,10);
+  assert.deepEqual([...new Set(frames.map(f=>f.state))],['dry','jump','land','swim','turn90','turn180','stop','emerge','dive','return-settle','dive-reverse-start','dive-reverse','dive-double-reverse','return-final']);sequences.push(frames);f.reset();
  }
  assert.deepEqual(sequences[0],sequences[1],'post-recording coverage replay preserves actual source state');
  assert.equal(inputAt(0).state,'dry');assert.equal(inputAt(7.99).state,'emerge');

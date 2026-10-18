@@ -104,13 +104,16 @@ export class TargetDummyCharacter {
   }
   update(dt) {
     // tilt spring (critically under-damped: two or three rocks, then still)
-    const w = 11, z = 0.32;
-    for (const k of ['x', 'y']) {
-      const a = -w * w * this._tilt[k] - 2 * z * w * this._tiltV[k];
-      this._tiltV[k] += a * dt; this._tilt[k] += this._tiltV[k] * dt;
-      this._tilt[k] = Math.max(-0.5, Math.min(0.5, this._tilt[k]));
+    if (this._tilt.x !== 0 || this._tilt.y !== 0 || this._tiltV.x !== 0 || this._tiltV.y !== 0) {
+      const w = 11, z = 0.32, w2 = w * w, c = 2 * z * w;
+      const ax = -w2 * this._tilt.x - c * this._tiltV.x;
+      this._tiltV.x += ax * dt; this._tilt.x = Math.max(-0.5, Math.min(0.5, this._tilt.x + this._tiltV.x * dt));
+      const ay = -w2 * this._tilt.y - c * this._tiltV.y;
+      this._tiltV.y += ay * dt; this._tilt.y = Math.max(-0.5, Math.min(0.5, this._tilt.y + this._tiltV.y * dt));
+      if (Math.abs(this._tilt.x) < 1e-5 && Math.abs(this._tiltV.x) < 1e-5) { this._tilt.x = 0; this._tiltV.x = 0; }
+      if (Math.abs(this._tilt.y) < 1e-5 && Math.abs(this._tiltV.y) < 1e-5) { this._tilt.y = 0; this._tiltV.y = 0; }
+      this.pivot.rotation.set(this._tilt.x, 0, this._tilt.y);
     }
-    this.pivot.rotation.set(this._tilt.x, 0, this._tilt.y);
     // reinflate after a pop: springs up from a quarter size with a little overshoot
     if (this._grow !== 1 || this._growV !== 0) {
       const wg = 14, a = -wg * wg * (this._grow - 1) - 2 * 0.45 * wg * this._growV;

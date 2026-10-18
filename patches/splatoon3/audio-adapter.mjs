@@ -66,9 +66,50 @@ export function adaptWeaponAudio(rel,code){
   }
   if(rel==='src/main.js'){
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
-      'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); self._prepareGyro(); },',
-      'iPad start tap initializes audio before deferred screen wipe');
+      'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
+      'iPad start tap initializes audio and warms the selected recorded shot before screen wipe');
+    // Loadout changes occur in the real menu, well before the shooting clock.
+    // The 2022 shooter MP3 is demand-paged on that user gesture, not first
+    // discovered by the shot that is supposed to play it.
+    code=once(code,
+      "self.profile.weapon = weapon; saveJSON('inkwave.profile', self.profile);",
+      "self.profile.weapon = weapon; saveJSON('inkwave.profile', self.profile); G.audio?.prepareWeapon?.(weapon,{urgent:true});",
+      'main-weapon loadout MP3 prefetch');
 
+    // A recorded first shot must not race MP3 download/decoding. Reserve the
+    // preload synchronously while the start gesture still owns AudioContext;
+    // await the exact recording before the existing START flow proceeds past
+    // its guarded fade. On load failure the existing menu startup recovery
+    // handles the rejection instead of admitting an inaudible battle.
+    const patchStartShot=(start,end,selected,label)=>{
+      const lo=code.indexOf(start),hi=code.indexOf(end,lo+start.length);
+      if(lo<0||hi<0)throw new Error('audio adapter start boundary: '+label);
+      let method=code.slice(lo,hi);
+      method=once(method,
+        '    G.audio?.init?.();\n    if (!flow.current()) return;',
+        '    G.audio?.init?.();\n    if (!flow.current()) return;\n' +
+        "    if(typeof G.audio?.requireRecordedMainShot!=='function') throw new Error('Recorded weapon audio is not installed');\n" +
+        '    const selectedShotReady=G.audio.requireRecordedMainShot('+selected+').then(value=>({value}),error=>({error}));',
+        label+' start selected recorded MP3');
+      method=once(method,
+        '    await this._fade(1, 350);\n    if (!flow.current()) return;',
+        '    await this._fade(1, 350);\n    if (!flow.current()) return;\n' +
+        '    const selectedShotState=await selectedShotReady;\n    if (!flow.current()) return;\n    if(selectedShotState.error)throw selectedShotState.error;',
+        label+' wait for MP3 before gameplay');
+      code=code.slice(0,lo)+method+code.slice(hi);
+    };
+    // Native-stage admission rewrites the offline signature before the audio pass.
+    patchStartShot('  async startMatch(o = {}, flow = null) {',
+      '\n  // ---- online (src/net/session.js', "this.profile.weapon||'shooter'",'offline');
+    patchStartShot('  async startNetMatch(cfg, nm) {',
+      '\n  // Compile every shader variant',
+      "cfg?.roster?.find(r=>r.owner===G.net?.myId&&!r.bot)?.weapon",'online');
+    // A missing MP3 must be visible, rather than leaving a silent game
+    // running with no clue why the selected main weapon cannot fire audio.
+    code=once(code,
+      "this.menus.toast?.(t('Could not start the match. Please try again.'), { kind: 'error' });",
+      "this.menus.toast?.(/音源|MP3|音声出力|Recorded weapon/.test(String(error?.message||'')) ? '本家ブキ射撃音源を読み込めませんでした。通信・音声設定を確認して再試行してください。' : t('Could not start the match. Please try again.'), { kind: 'error' });",
+      'visible recorded sound preload failure');
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",

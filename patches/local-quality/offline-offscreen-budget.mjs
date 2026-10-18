@@ -79,7 +79,10 @@ function catchUpBeforeVisible(ch, nativeUpdateHair, nativeUpdateMaterials) {
       ch._updateFeet(0, s);
       ch._buildPose(0, s);
       ch._applyPose(0, s);
-      if (typeof nativeUpdateHair === 'function') {
+      if (ch.sourceMotion?.active && typeof ch.sourceMotion.applyAccessories === 'function') {
+        ch.sourceMotion.applyAccessories(dt);
+        ch._oobHairCatchUps++;
+      } else if (typeof nativeUpdateHair === 'function') {
         nativeUpdateHair.call(ch, dt);
         ch._oobHairCatchUps++;
       }
@@ -233,8 +236,10 @@ export function installOfflineOffscreenBudget(api, G) {
     const returning = !budget && this._oobWasBudgeted;
     this._oobWasBudgeted = budget;
     this._oobBudget = budget;
-    this._oobGroundBudget = budget && s?.grounded !== false && this.feetValid && !this.replant;
-    this._oobPoseTailSkip = budget && s?.grounded !== false && this.feetValid && !this.replant;
+    const feetReady = (this.feetValid && !this.replant) ||
+      !!(this.sourceMotion?.active && this.sourceMotion.grounded && this.sourceMotion.activationTime >= 0.12);
+    this._oobGroundBudget = budget && s?.grounded !== false && feetReady;
+    this._oobPoseTailSkip = budget && s?.grounded !== false && feetReady;
     this._oobTicks++;
     this._oobLastDt = dt;
     this._oobLastState = s;

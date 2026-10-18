@@ -17,8 +17,11 @@ function state(c){
 // Native fit analysis precedes tessellation and is identical across LODs. Borrow it
 // from Character's live owned hair entry, including during headgear-only warmup.
 // Never call legacy getHairStyle: it permanently retains geometry in native _hair.
+// A restyled Character (the pooled locker portrait kid) still holds entries for
+// earlier looks, so only entries keyed on the current hair.hat.brows qualify.
 function ownedFit(c,lod){
- const held=c.hairKeys483||[];
+ const look=[c.style.hair,c.style.hat,c.style.brows].map(v=>Math.round(Number(v)||0)).join('.')+'.';
+ const held=(c.hairKeys483||[]).filter(r=>typeof r.key!=='string'||r.key.startsWith(look));
  return (held.find(r=>r.lod===lod)?.entry||held[0]?.entry||c.hairAnatomy483?.entry)?.hatContext;
 }
 function obtain(c,s,lod){

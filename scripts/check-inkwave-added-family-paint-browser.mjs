@@ -48,7 +48,8 @@ try{
     };
     const ids=['s3-stringer-normal','s3-stringer-short','s3-stringer-explosion','s3-saber-normal','s3-saber-lite','s3-saber-heavy',
       's3-shelter-normal','s3-shelter-wide','s3-shelter-compact','s3-shelter-focus',
-      's3-maneuver-short','s3-maneuver-gallon','s3-maneuver-dual','s3-maneuver-stepper','s3-maneuver-long'];
+      's3-maneuver-short','s3-maneuver-gallon','s3-maneuver-dual','s3-maneuver-stepper','s3-maneuver-long',
+      's3-slosher-bathtub'];
     const checks=[];
     const random=Math.random;Math.random=()=>.37;
     try{for(const id of ids){let previous,previousTrace;
@@ -56,7 +57,11 @@ try{
         G.projectiles?.clear();floor();
         const a=new Actor({team:0,weapon:id,isLocal:false,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
         a.character.actor=a;a.form='kid';a.grounded=true;a.ground.hit=true;a.ground.face=0;a.ink=100;
-        const slide=id.includes('maneuver');a.pos.set(0,slide?0:8,0);a.yaw=0;a.aimDir.set(0,0,1);a.aimPoint.set(0,a.pos.y+1.05,100);
+        const slide=id.includes('maneuver'),blob=id==='s3-slosher-bathtub';
+        a.pos.set(0,slide||blob?0:8,0);a.yaw=0;
+        a.aimPitch=blob?-.35:0;
+        a.aimDir.set(0,Math.sin(a.aimPitch),Math.cos(a.aimPitch));
+        a.aimPoint.set(0,a.pos.y+1.05+100*Math.sin(a.aimPitch),100*Math.cos(a.aimPitch));
         a.character.root.position.copy(a.pos);G.actors=[a];G.scene.add(a.character.root);
         let splashes=0,rolls=0,ownerless=0;const raw=G.paint.splat;
         G.paint.splat=function(at,r,t,o={}){if(o.kind==='source-splash')splashes++;if(o.kind==='roll')rolls++;if(!o.claimOwner)ownerless++;return raw.call(this,at,r,t,o);};
@@ -68,8 +73,18 @@ try{
           for(let i=0;i<50;i++)a.weaponRunner.update(1/60,{fire:false});
         }
         const trace=[];let streamChecks=0;const matrix=new THREE.Matrix4(),centre=new THREE.Vector3();
+        const blobHead=blob?G.projectiles.list.find(p=>p.catalog?.r?.sourceActor==='WeaponSlosherBathtub'&&p.catalog.descriptor.unit===0):null;
+        if(blob&&!blobHead)throw Error('Bloblobber actual Character did not emit its 4 bubbles');
+        const blobBirth=blobHead?.start.z??0,blobContacts=[];let blobLastBounce=0,blobEndpoint=0;
         for(let i=0;i<hz*3;i++){
           G.time+=1/hz;G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);
+          if(blobHead){
+            if(blobHead.catalog.groundBounces>blobLastBounce){
+              blobLastBounce=blobHead.catalog.groundBounces;
+              blobContacts.push({frame:Math.round((i+1)*60/hz),z:+(blobHead.pos.z-blobBirth).toFixed(4)});
+            }
+            blobEndpoint=+(blobHead.pos.z-blobBirth).toFixed(4);
+          }
           if(i<hz&&(i+1)%(hz/30)===0){
             const queue=G.projectiles._s3SplashDrops||[];
             const positions=[];for(let n=0;n<G.projectiles.blobs.count;n++){
@@ -83,10 +98,15 @@ try{
           }
         }
         if(previousTrace&&JSON.stringify(previousTrace)!==JSON.stringify(trace)){const frame=trace.findIndex((t,i)=>JSON.stringify(t)!==JSON.stringify(previousTrace[i]));throw Error(JSON.stringify({id,hz,frame,before:previousTrace[frame],after:trace[frame]}));}previousTrace=trace;
+        if(blob){
+          if(blobLastBounce!==2||!(blobEndpoint>0)||blobContacts.length!==2)
+            throw Error('Bloblobber downhill real Character must bounce twice and move forward: '+JSON.stringify({hz,blobContacts,blobEndpoint,birthHeight:blobHead.start.y}));
+          console.log('BLOBLOBBER_BROWSER_DOWNHILL '+JSON.stringify({hz,firstBounce:blobContacts[0],secondBounce:blobContacts[1],endpoint:blobEndpoint,birthHeight:blobHead.start.y}));
+        }
         const grid=Array.from(G.paint.grid),cells=G.paint.counts[0];
         if(!cells||(!slide&&!splashes)||(slide&&!rolls)||ownerless||a.stats.turf!==cells*.0625)throw Error(JSON.stringify({id,hz,cells,splashes,rolls,ownerless,turf:a.stats.turf}));
         if(previous&&JSON.stringify(previous)!==JSON.stringify(grid))throw Error(id+' different final ownership at '+hz+'Hz');previous=grid;
-        checks.push({id,hz,cells,turf:a.stats.turf,splashes,rolls,ownerless,temporalSamples:trace.length,streamChecks,landings:G.projectiles._s3SplashLandings?.length||0});
+        checks.push({id,hz,cells,turf:a.stats.turf,splashes,rolls,ownerless,temporalSamples:trace.length,streamChecks,landings:G.projectiles._s3SplashLandings?.length||0,...(blob?{downhill:{contacts:blobContacts,reach:blobEndpoint,birthHeight:blobHead.start.y}}:{})});
         G.scene.remove(a.character.root);a.character.dispose();
       }
     }}finally{Math.random=random;}
@@ -95,5 +115,5 @@ try{
   if(errors.length)throw Error(errors.join('\n'));
   const report={build:build.contentHash,browser:browser.version(),...result,errors};
   if(reportPath){fs.mkdirSync(path.dirname(path.resolve(reportPath)),{recursive:true});fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');}
-  console.log(JSON.stringify({cases:result.checks.length,realCharacter:result.realCharacter,realPhysics:result.realPhysics,errors}));
+  console.log(JSON.stringify({cases:result.checks.length,realCharacter:result.realCharacter,realPhysics:result.realPhysics,downhill:result.checks.filter(x=>x.downhill).map(x=>({hz:x.hz,...x.downhill})),errors}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
