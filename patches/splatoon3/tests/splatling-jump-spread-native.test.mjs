@@ -6,6 +6,7 @@ import { INK_PROFILES } from '../../../inkwave-public/src/game/inkFlight.js';
 import { FixedClock } from '../runtime/clock.mjs';
 import { splatlingJumpRecoveryAt } from '../runtime/splatling-jump-spread.mjs';
 import { signedBiasSample } from '../runtime/weapon-edgecases.mjs';
+import { INK_PROFILE_BYTES, INK_PROFILE_SIZE } from '../runtime/main-ink-footprints.mjs';
 import { fixture, productionComposition } from './weapon-edgecases-fixture.mjs';
 import { fixture as fidelityFixture } from '../../../scripts/weapons-fixture.mjs';
 import { CASES, finish as finishFidelity, launch as launchFidelity, paintMetrics, reset as resetFidelity } from '../../../scripts/measure-weapons-fidelity.mjs';
@@ -296,6 +297,7 @@ test('zero-spread ground Splatling range probe preserves its native projectile a
   assert.equal(f.paints.length, 1, 'one native ground impact');
   const impact = f.paints[0];
   assert.equal(impact.kind, 'source-shot');
+  assert.equal(impact.footprint, 'ink-shot', 'native Splatling retains its released shot silhouette');
   assert.equal(impact.seed, 0.715884089237079, 'the original seeded impact sequence is retained');
   assert.equal(impact.cosmetic, false);
   assert.deepEqual(structuredClone(f.impacts), structuredClone(control.impacts), 'physical landing events retain time, position and order');
@@ -315,26 +317,46 @@ test('zero-spread ground Splatling range probe preserves its native projectile a
   close(impact.center[2], landing.pos[2]-.375*expectedRadius*expectedStretch);
 
   assert.deepEqual([...impact.stretch], [0, 0, 1]);
-  // Source WidthHalf uses a literal ellipse rather than the historical PR1188
-  // generic wobble body. Independently enumerate cell centres from the emitted
-  // radius and front/rear DepthScale contract; do not copy a new pixel snapshot.
-  const expectedCells = []; let expectedArea = 0;
+  // WidthHalf and DepthScale still own the physical envelope. #1583 selects
+  // the existing shot outline inside it. Independently project each cell into
+  // that profile and interpolate adjacent RG samples (not the runtime predicate
+  // or its packed BA neighbor), retaining the recorded seed's mirror direction.
+  const expectedCells = [], ellipseCells = []; let expectedArea = 0;
+  const mirror = Math.floor(Math.fround(impact.seed) * 65536) % 2 ? -1 : 1;
   for (const face of f.G.paint.paintFaces) {
     assert.equal(face.wall, false);
     const radiusSquared = impact.radius ** 2 - (impact.center[1] - face.origin.y) ** 2;
+    const surfaceRadius = Math.sqrt(radiusSquared);
     for (let j=0;j<face.nv;j++) for (let i=0;i<face.nu;i++) {
       const x=face.origin.x+(i+.5)*face.cu, z=face.origin.z+(j+.5)*face.cv;
       const dx=x-impact.center[0], dz=z-impact.center[2];
       const depth=1+(dz>0?impact.stretchAmt:.25*impact.stretchAmt);
-      if (dx*dx+(dz/depth)**2 <= radiusSquared) {
-        expectedCells.push([Math.round(x*1e6)/1e6,Math.round(z*1e6)/1e6]);
+      const point=[Math.round(x*1e6)/1e6,Math.round(z*1e6)/1e6];
+      if (dx*dx+(dz/depth)**2 <= radiusSquared) ellipseCells.push(point);
+      const along=dz/(surfaceRadius*depth), across=-dx/surfaceRadius*mirror;
+      if (along<=-1 || along>=1) continue;
+      const sample=(along+1)*.5*(INK_PROFILE_SIZE-1), left=Math.floor(sample), t=sample-left;
+      const channel=across<0?0:1, next=Math.min(left+1,INK_PROFILE_SIZE-1);
+      const width=(INK_PROFILE_BYTES[left*4+channel]*(1-t)+INK_PROFILE_BYTES[next*4+channel]*t)/255;
+      if (Math.abs(across)<width) {
+        expectedCells.push(point);
         expectedArea += face.cu*face.cv;
       }
     }
   }
   assert.ok(expectedCells.length>0);
-  assert.deepEqual(paint.cellsXZ, expectedCells, 'every scored cell follows the source ellipse');
+  assert.deepEqual(paint.cellsXZ, expectedCells, 'every scored cell follows the shot outline within the sourced width/depth envelope');
   assert.equal(paint.cells, expectedCells.length);
   assert.equal(paint.area, Math.round(expectedArea*1e6)/1e6);
   assert.equal(paint.bounds.maxZ, Math.max(...expectedCells.map(p=>p[1])));
+
+  // Negative control: replay the exact same source event with only its profile
+  // omitted. The actual production rasterizer must recover the old ellipse,
+  // and that fallback must fail the scored-cell contract above.
+  const fallback = await fidelityFixture({ fidelity: true });
+  fallback.G.paint.splat(new fallback.THREE.Vector3(...impact.center),impact.radius,impact.team,{
+    kind:impact.kind,seed:impact.seed,stretch:new fallback.THREE.Vector3(...impact.stretch),stretchAmt:impact.stretchAmt,
+  });
+  assert.deepEqual(paintMetrics(fallback).cellsXZ,ellipseCells,'omitting the footprint reproduces the original ellipse');
+  assert.notDeepEqual(ellipseCells,expectedCells,'ellipse/source fallback must not satisfy the selected shot outline');
 });
