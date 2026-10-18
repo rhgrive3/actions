@@ -67,15 +67,15 @@ function applyRemote(clientState, from, event) {
   clientState.nm._play(from, received(event));
 }
 
-test('measured blast contour survives the canonical wire path without weapon inference',async()=>{
+for(const [footprint,kind] of [['ink-blast',18],['ink-blast-rectified',19]])test(footprint+' survives the canonical wire path without weapon inference',async()=>{
   const sender=await client('a',undefined,'a',true,true),observer=await client('c',undefined,'a',true,true);
   const center=new sender.f.THREE.Vector3(0,0,0);
-  sender.paint.splat(center,1.7,0,{seed:.37,kind:'source-splash',footprint:'ink-blast',claimOwner:sender.actors[0]});
-  const event=sender.nm.out[0];assert.equal(event[8],'ink-blast');
+  sender.paint.splat(center,1.7,0,{seed:.37,kind:'source-splash',footprint,stretch:new sender.f.THREE.Vector3(.6,0,.8),stretchAmt:0,claimOwner:sender.actors[0]});
+  const event=sender.nm.out[0];assert.equal(event[8],footprint);
   applyRemote(observer,'a',event);
   assert.ok(sender.paint.counts[0]>0);
   assert.deepEqual(Array.from(observer.paint.grid),Array.from(sender.paint.grid),'new event kind must be admitted and rasterized identically');
-  assert.equal(observer.paint.growing.at(-1).kind,18);
+  assert.equal(observer.paint.growing.at(-1).kind,kind);
 });
 
 function visibleQuads(paint) {

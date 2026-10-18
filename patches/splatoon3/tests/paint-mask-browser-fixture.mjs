@@ -275,18 +275,21 @@ function mainInkAtlasRows() {
   gallery.dataset.mainInkGallery='';document.body.appendChild(gallery);
   const ctx=gallery.getContext('2d');ctx.fillStyle='#101b25';ctx.fillRect(0,0,1200,1210);
   ctx.fillStyle='#e4f6fa';ctx.font='bold 24px sans-serif';ctx.fillText('INKWAVE / actual GPU paint footprints',30,36);
-  ctx.font='14px sans-serif';ctx.fillText('Existing width / depth / seed. Individual bodies; volley and drop placement stay with each weapon.',30,61);
+  ctx.font='14px sans-serif';ctx.fillText('Controlled bodies: radius 1.6, seed .37. Blast/contact depth 1; other rows illustrate forward stretch.',30,61);
   const names=['Ellipse control','Shooter / Dualies / Pellet','Bucket body','Brush / Saber drop','Roller flick','Brush / Roller contact',
-    'Measured blast body','Charger A','Charger B','Charger C'];
+    'Legacy blast body','Charger A','Charger B','Charger C','Floor-rectified blast'];
   try {
     for(let k=0;k<names.length;k++) {
       const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
       const face={origin:V(-8,0,-8),u:V(1,0,0),v:V(0,0,1),n:V(0,1,0),su:16,sv:16,wall:false,turf:true,paintable:true};
       const level={faces:[face],blocks:[{faces:[0,-1,-1,-1,-1,-1],aabbMin:V(-8,-.01,-8),aabbMax:V(8,.01,8)}],
         pointInside:()=>false,queryBlocks:(_a,_b,_c,_d,out=[])=>{out.length=0;out.push(0);return out;}};
-      const paint=new PaintSystem(renderer,level,{atlasSize:512,maxDensity:28,cell:.125});
-      const footprint=['ink-shot','ink-slosh','ink-brush','ink-flick','ink-contact','ink-blast','ink-charger-a','ink-charger-b','ink-charger-c'][k-1];
-      const area=paint.splat(V(),1.6,0,{kind:'source-shot',footprint,seed:.37,face:0,stretch:V(0,0,1),stretchAmt:k===5?0:1.5,instant:true});
+      // Seven atlas texels per grid cell: sample CPU centers at exact GPU
+      // texel centers, rather than rounding the old 3.5-texel cell midpoint.
+      const paint=new PaintSystem(renderer,level,{atlasSize:512,maxDensity:28,cell:.25});
+      const footprint=['ink-shot','ink-slosh','ink-brush','ink-flick','ink-contact','ink-blast','ink-charger-a','ink-charger-b','ink-charger-c','ink-blast-rectified'][k-1];
+      const galleryStretch=[5,6,10].includes(k)?0:1.5;
+      const area=paint.splat(V(),1.6,0,{kind:'source-shot',footprint,seed:.37,face:0,stretch:V(0,0,1),stretchAmt:galleryStretch,instant:true});
       paint.flush(0);
       const pixels=new Uint8Array(512*512*4);renderer.readRenderTargetPixels(paint.rt,0,0,512,512,pixels);
       const image=new ImageData(512,512);
@@ -304,7 +307,7 @@ function mainInkAtlasRows() {
         // Even translucent pixels must stay inside the sourced rectangle
         // plus its AA border. A steep table edge formerly emitted hairlines
         // far outside it, which a solid-alpha-only ownership check missed.
-        const a=face.atlas,R=1.6,sa=k===5?0:1.5,pad=2/a.ppm;
+        const a=face.atlas,R=1.6,sa=galleryStretch,pad=2/a.ppm;
         let escaped=0;
         for(let y=0;y<512;y++)for(let x=0;x<512;x++){
           const across=(x+.5-a.x-a.pad)/a.ppm-8;
@@ -318,7 +321,7 @@ function mainInkAtlasRows() {
         const gx=Math.floor(a.x+a.pad+(i+.5)*face.cu*a.ppm),gy=Math.floor(a.y+a.pad+(j+.5)*face.cv*a.ppm),at=(gy*512+gx)*4;
         if(pixels[at+3]>250){solid++;if(!paint.grid[face.grid+j*face.nu+i])mismatches++;}
       }
-      check(area>0&&solid>20&&mismatches===0,'real main atlas must show only owned solid ink');
+      check(area>0&&solid>20&&mismatches===0,'real main atlas must show only owned solid ink: '+JSON.stringify({k,area,solid,mismatches,ppm:a.ppm,cu:face.cu,cv:face.cv}));
       if(k===5){
         const gx=Math.floor(a.x+a.pad+8*a.ppm),gy=Math.floor(a.y+a.pad+9.35*a.ppm);
         for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)check(pixels[((gy+dy)*512+gx+dx)*4+3]===0,
@@ -342,7 +345,7 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
   check(bodyShader.split(sourceBoundary).length === 2, 'one dedicated sourced paint boundary');
   const genericSource = program(bodyShader.replace(sourceBoundary,
     'sd = length(p) - r * grow * wob(atan(p.y, p.x), seed);'));
-  const circleMain = program(bodyShader.replace('sd = mainInkDistance(p, dir, r * grow, kind, paintSeed);', 'sd = length(p) - r * grow;'));
+  const circleMain = program(bodyShader.replace('sd = mainInkDistance(p, dir, r * grow, kind, paintSeed, isWall);', 'sd = length(p) - r * grow;'));
   const size = 32, cell = 0.25, n = size / cell;
   const face = { atlas: { x: 0, y: 0, pad: 2, ppm: 64 }, su: size, sv: size, nu: n, nv: n, cu: cell, cv: cell,
     grid: 0, wall: false, turf: true };
@@ -366,7 +369,7 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
     .filter(R => Number.isFinite(R) && R > 0);
   for (const R of wallRadii) for (const seed of [.11, .5, .93]) cases.push({ kind:0, sa:0, R, seed, wall:true });
   const mainStart = cases.length;
-  for (const wall of [false,true]) for (const kind of [10,11,12,13,14,18])
+  for (const wall of [false,true]) for (const kind of [10,11,12,13,14,18,19])
     for (const radius of [.2,.65,1.93]) for (const depth of [.25,1,2.24]) for (const seed of [.11,.93])
       for (const angle of [0, Math.PI/4, 2.4]) {
         const shape=catalogPaintEllipse(radius,depth);
@@ -424,7 +427,7 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
     check(sourced.length === 32 && sourced.some(row => row.cpu > 0), 'sourced mask claims actual cells');
     check(sourced.some(row => row.negativeDifferences > 0), 'reverting only sourced boundary must change GPU cells');
   }
-  for(const kind of [10,11,12,13,14,18]) {
+  for(const kind of [10,11,12,13,14,18,19]) {
     const main=rows.filter(row=>row.kind===kind);
     check(main.length===108 && main.some(row=>row.cpu>0), 'main footprint CPU path exercised');
     check(main.some(row=>row.negativeDifferences>0), 'circle-only counterfactual must change main footprint');
