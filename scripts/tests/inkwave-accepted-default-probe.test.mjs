@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {ACCEPTED_DEFAULT_ROWS as rows,observeAcceptedDefaults,checkAcceptedDefaultConsumption} from '../lib/inkwave-accepted-default-probe.mjs';
-const revision='a'.repeat(64),manifest={build:{revision},artifacts:Object.fromEntries(['src/core/ctx.js','src/config.js','patches/splatoon3/runtime/weapon-appearance.mjs','patches/splatoon3/runtime/weapon-models/registry.mjs','patches/splatoon3/runtime/alternate-weapon-kits-data.mjs'].map(p=>['_versions/'+revision+'/'+p,'b'.repeat(64)]))};
+import {ACCEPTED_DEFAULT_ROWS as rows,observeAcceptedDefaults,withNativeAcceptedDefaultFixture,acceptedDefaultErrorDetails,checkAcceptedDefaultConsumption} from '../lib/inkwave-accepted-default-probe.mjs';
+const revision='a'.repeat(64),manifest={build:{revision},artifacts:Object.fromEntries(['src/core/ctx.js','src/config.js','src/game/showcase.js','patches/splatoon3/runtime/weapon-appearance.mjs','patches/splatoon3/runtime/weapon-models/registry.mjs','patches/splatoon3/runtime/alternate-weapon-kits-data.mjs'].map(p=>['_versions/'+revision+'/'+p,'b'.repeat(64)]))};
 function fixture(fault){
  const saved='{"original":"base"}',data=new Map([['preferences',saved]]),storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
  let prefs=JSON.parse(saved),ticks=0,renders=0;const hooks=[];
@@ -56,4 +56,81 @@ for (const savedPalette of [true,false]) test('default probe supplies and restor
  observeAcceptedDefaults(f.args);assert.equal(calls.length,51);
  for(const args of calls.slice(0,50))assert.equal(args[3],original??other,'native four-argument palette contract');
  assert.equal(calls[50][3],original,'restore exact previous palette');assert.equal(f.sc.weaponOpponentColor,original);
+});
+
+function nativeObservationFixture(fault){
+ const f=fixture(fault),G=f.args.G,profile={weapon:'original',style:{nativeStyle:true}},colors=[{team:0},{team:1}];
+ const api={getLoadout:()=>({weapon:profile.weapon})},screen={name:'loadout',el:{isConnected:true}};
+ Object.assign(G,{teamColors:colors});Object.assign(G.game,{profile,api,menus:{api,current:'loadout',_scr:screen}});
+ f.args.WEAPONS.original={};f.sc.mode=null;f.sc.chars=[];
+ const calls=[],show=f.sc.showLoadout,update=f.sc.update;let retire=0;
+ f.sc.showLoadout=function(...args){calls.push(['show',...args]);this.mode='loadout';this.chars=[{}];show.apply(this,args);if(fault==='prepare-throw'&&calls.filter(c=>c[0]==='show').length===1)throw Error('prepare primary');};
+ f.sc.hide=function(){calls.push(['hide']);this.mode=null;retire=12;if(fault==='hide-throw')throw Error('hide secondary');};
+ f.sc.update=function(dt){calls.push(['update',dt]);update.call(this,dt);if(this.mode==null&&retire>0&&!--retire)this.chars=[];};
+ return {f,G,profile,colors,calls,run:fn=>withNativeAcceptedDefaultFixture({G,WEAPONS:f.args.WEAPONS},fn??(()=>observeAcceptedDefaults(f.args)))};
+}
+test('static menu observation prepares the real API with exact profile/palette, preserves all50 proofs, then hides and retires',()=>{
+ const {f,profile,colors,calls,run}=nativeObservationFixture();const result=run();
+ assert.equal(result.value.rows.length,50);assert.equal(f.renders,50);assert.deepEqual(calls[0],['show','original',colors[0],profile.style,colors[1]]);
+ assert.equal(calls.filter(c=>c[0]==='show').length,53,'prepare, unchanged50 defaults, original restoration, then public color restoration');
+ assert.equal(f.ticks,53*180);assert.equal(result.fixture.prepared,true);assert.equal(result.fixture.initialMode,null);assert.equal(result.fixture.finalMode,null);assert.equal(result.fixture.finalCharacters,0);assert.equal(result.fixture.restored,true);
+ assert.equal(f.storage.getItem('preferences'),f.saved);assert.equal(f.sc.mode,null);assert.equal(f.sc.chars.length,0);
+});
+test('existing loadout owner is neither prepared nor hidden and retains its original live owner',()=>{
+ const {f,calls,run}=nativeObservationFixture();f.sc.mode='loadout';f.sc.chars=[{}];
+ const result=run();assert.equal(result.value.rows.length,50);assert.equal(result.fixture.prepared,false);assert.equal(calls.filter(c=>c[0]==='hide').length,0);assert.equal(calls.filter(c=>c[0]==='show').length,51);assert.equal(f.sc.mode,'loadout');assert.equal(f.sc.chars.length,1);
+});
+for(const fault of ['menu','screen','detached','api','profile','palette'])test('observation rejects '+fault+' mismatch before native owner mutation',()=>{
+ const {f,G,calls,run}=nativeObservationFixture();
+ if(fault==='menu')G.game.menus.current='settings';if(fault==='screen')G.game.menus._scr.name='settings';if(fault==='detached')G.game.menus._scr.el.isConnected=false;
+ if(fault==='api')G.game.menus.api={getLoadout:()=>({weapon:'original'})};if(fault==='profile')G.game.profile.weapon='foreign';if(fault==='palette')G.teamColors[1]=null;
+ assert.throws(()=>run(),/Default fixture:/);assert.equal(calls.length,0);assert.equal(f.sc.mode,null);
+});
+test('partial native preparation failure still hides/retires and preserves the primary error',()=>{
+ const {f,calls,run}=nativeObservationFixture('prepare-throw');assert.throws(()=>run(),e=>e.message==='prepare primary'&&e.defaultFixture.prepared&&e.defaultFixture.restored);
+ assert.equal(f.sc.mode,null);assert.equal(f.sc.chars.length,0);assert.equal(calls.filter(c=>c[0]==='hide').length,1);
+});
+test('unchanged default geometry failure remains fatal while the observation owner is retired',()=>{
+ const {f,run}=nativeObservationFixture('wrong-geometry');assert.throws(()=>run(),e=>/mounted native geometry/.test(e.message)&&e.defaultPartial.rows.length===0&&e.defaultFixture.restored);
+ assert.equal(f.sc.mode,null);assert.equal(f.sc.chars.length,0);assert.equal(f.storage.getItem('preferences'),f.saved);
+});
+test('default render error and fixture cleanup failure preserve primary, partial and both failures',()=>{
+ const {f,run}=nativeObservationFixture('hide-throw');f.sc.render=()=>{throw Error('render primary');};
+ assert.throws(()=>run(),e=>e instanceof AggregateError&&e.cause.message==='render primary'&&e.errors.length===2&&e.errors[0]===e.cause&&e.errors[1].message==='hide secondary'&&e.defaultPartial.rows.length===0&&!e.defaultFixture.restored);
+ assert.equal(f.sc.mode,null);assert.equal(f.sc.chars.length,0);
+});
+test('observer cannot mutate the live menu/profile while producing otherwise successful output',()=>{
+ const {G,run}=nativeObservationFixture();assert.throws(()=>run(()=>{G.game.menus.current='main';return {rows:[]};}),e=>e instanceof AggregateError&&e.errors.some(x=>/menu owner restored/.test(x.message)));
+});
+
+test('public Showcase preparation restores Color.copy values and identity before retiring a hidden owner',()=>{
+ const {f,G,profile,run}=nativeObservationFixture();
+ const color=value=>({value,clone(){return color(this.value);},copy(other){this.value=other.value;return this;},equals(other){return this.value===other.value;}});
+ const original=color('old-native'),team0=color('actual-team0'),team1=color('actual-team1');f.sc.color=original;G.teamColors=[team0,team1];
+ const show=f.sc.showLoadout;f.sc.showLoadout=function(weapon,palette,...rest){this.color.copy(palette);return show.call(this,weapon,palette,...rest);};
+ const result=run(()=>{assert.equal(f.sc.color.value,'actual-team0');assert.equal(f.sc.weapon,profile.weapon);return {observed:true};});
+ assert.equal(result.fixture.restored,true);assert.equal(f.sc.color,original);assert.equal(original.value,'old-native');assert.equal(f.sc.mode,null);assert.equal(f.sc.chars.length,0);
+});
+test('serialized cleanup failure preserves primary and secondary diagnostics across the page boundary',async()=>{
+ const primary=new Error('render primary'),secondary=new Error('hide secondary'),error=new AggregateError([primary,secondary],'default fixture restoration: render primary',{cause:primary});
+ const failure=acceptedDefaultErrorDetails(error);assert.equal(failure.cause.message,'render primary');assert.deepEqual(failure.errors.map(e=>e.message),['render primary','hide secondary']);
+ const dir=fs.mkdtempSync('/tmp/default-fixture-failure-');
+ try{await assert.rejects(checkAcceptedDefaultConsumption({page:{evaluate:async()=>({ok:false,error:String(error),failure,partial:{rows:[]}})},evidence:dir,manifest}),/render primary/);
+  const saved=JSON.parse(fs.readFileSync(dir+'/accepted-default-consumption.json'));assert.equal(saved.failure.cause.message,'render primary');assert.equal(saved.failure.errors[1].message,'hide secondary');
+ }finally{fs.rmSync(dir,{recursive:true});}
+});
+test('replacing the live Showcase cannot pass by retiring only the old observation instance',()=>{
+ const {G,run}=nativeObservationFixture();assert.throws(()=>run(()=>{G.game.showcase={};return {}; }),e=>e instanceof AggregateError&&e.errors.some(x=>/menu owner restored/.test(x.message)));
+});
+test('hidden Patternz profile restores via an explicit opponent palette even when its previous hidden cache was empty',()=>{
+ const {f,G,run}=nativeObservationFixture();const other={isColor:true,team:1};G.teamColors[1]=other;
+ f.sc.weaponOpponentColor=null;f.args.WEAPONS.original.sourceRow='Shelter_Compact_02';
+ const show=f.sc.showLoadout;let guardedCalls=0;
+ f.sc.showLoadout=function(weapon,color,style,opponent){
+  // Same public API contract as the Patternz preview palette guard.
+  if(weapon==='original'&&opponent?.isColor!==true)throw Error('Explicit opponent palette Color required');
+  guardedCalls++;this.weaponOpponentColor=opponent;return show.call(this,weapon,color,style,opponent);
+ };
+ const result=run(()=>({ok:true}));assert.equal(guardedCalls,2,'preparation and hidden restoration both traverse the real palette contract');
+ assert.equal(result.fixture.restored,true);assert.equal(f.sc.weaponOpponentColor,other);assert.equal(f.sc.mode,null);assert.equal(f.sc.chars.length,0);
 });
