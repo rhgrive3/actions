@@ -2448,8 +2448,12 @@ ${bombHit}`;
     patch("emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});",
       "emit('weapon:fire',{actor,weapon:w.id,muzzle:origin,dir:direction,charge,len:distance});",
       'charger flight fire payload');
-    patch("emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});",
-      "emit('weapon:impact',{pos:job.pos,normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});",
+    // Keep the sourced radius in both raw and width-calibrated Charger flight.
+    // The network optimization may change vector ownership, not paint sizing.
+    const chargerFlightImpactRadius = code.includes('radius:chargerPaintWorldRadius(job.paint.impact),victim:')
+      ? 'chargerPaintWorldRadius(job.paint.impact)' : 'job.paint.impact';
+    patch(`emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:${chargerFlightImpactRadius},victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});`,
+      `emit('weapon:impact',{pos:job.pos,normal,team:job.team,kind:'charger',radius:${chargerFlightImpactRadius},victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});`,
       'charger flight impact payload');
     return code;
   }
