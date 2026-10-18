@@ -181,3 +181,41 @@ Fixture SHA5bac992a841ea61c9fa07eef4d67a70fe643919ef3134f35593eb4efb10e67a7.
 
 ## Pending actual rendered gate
 Reference reviewer inspected construction front/oblique/side/back and confirms direction addresses both marked regions. This is not native acceptance. Inspect actual source-comparable oblique, left/right/back: bill visibly ahead of shield, distinct curved root and tip, lateral white shell reads as substantial swept structure rather than two thin posts around an oversized opening; strap endpoints closed; no exposed-head penetration or problematic ear/hair clipping. No full-exact-match claim.
+
+
+## Resumed rounded-body and rear-band correction
+
+# Rounded-body candidate (native capture pending)
+
+## Source pixels inspected
+- User red/green annotation: 1000001375.png. Green follows the rounded main mask; red encloses the distinct projecting bill.
+- S3 item: https://img.gamewith.jp/article_tools/splatoon3/gacha/ge429.png
+- S3 worn front: https://img.gamewith.jp/img/9a245d07c6dfa3b4460b237694dd6bba.png
+- S2 historical rear: https://cdn.wikimg.net/en/splatoonwiki/images/6/6f/S2_Paintball_Mask_back.png
+- Compared actual 23a native oblique/right/back. S2 rear is historical structural evidence, not confirmation of unchanged S3 construction.
+
+## Implemented geometry
+- Removed unsupported large polygonal through-open ear hoop. Side shell is closed, shortened and curved around two compact dark/ink insets.
+- Rounded lower envelope with a flatter central chin arc rather than the previous narrowing tip. Existing continuous cheek-to-central shell retained.
+- Bill has narrower tapered corners, center-weighted projection and retained closed rounded lip. Center root y/z .295/.219, tip .268/.317; tip ahead of upper lens by .055.
+- Replaced flat rectangular rear ribbons with closed elliptical-section bands, .015 total radial thickness, dark rolled margins and curved longitudinal routing. Unequal .016 layer offset at rear crossing; ends return to solid side anchors.
+- Ink bands include low-amplitude broad corrugation in hero/game only. No extra draw/material/texture.
+- Lens material, body/hair/face geometry and other gear untouched.
+
+## Tests
+Commands run from this candidate:
+- node --loader ./loader.mjs headgear-face-goggles.fixture.mjs
+- node --loader ./loader.mjs audit-fit.mjs
+
+All three LODs pass index/finite/nondegenerate tests, shell and bill closed edge continuity, newly added closed rear-band edge continuity and positive signed-volume winding, outward lens normals, actual fitted native-anchor contract, attachment ray tests, disposal and ink-color API.
+Native face snapshot audit tests vertex and triangle-centroid radial clearance against sculpted head plus analytic scalp. Minimum skin .02453; rear scalp .02253/.02253/.02211. Lens rays 384/240/144 visible, zero blocked/backside in this analytic test. Animated hair is not covered by that proof.
+Triangles hero/game/far: 9232/6068/4212. Four mesh/material batches, one transparent lens, zero textures. Previous23a: 8132/5516/3932. Increase is mainly the convex rear-band sections.
+Authored/emitted parity and production capture remain integration gates.
+
+## Native visual gates, not passed by software preview
+Capture front, oblique, both true sides and rear in actual fitted native scene, all LODs; rear also hair5/6. Compare source/item at comparable gear width.
+1. Rounded forehead/cheek/chin perimeter without a long pointed lower stack.
+2. Bill visibly projects ahead of lens, tapered outer corners return into body.
+3. Compact closed side body replaces the large ear hoop; no disconnected strap endpoints.
+4. Rear bands show curved volume and unequal overlap, no scalp/hair cutting or floating returns.
+5. Check actual gasket occlusion at bill/temple and mouth relief. The software preview includes uncullled far-side faces and is not evidence of depth-order correctness or material appearance.

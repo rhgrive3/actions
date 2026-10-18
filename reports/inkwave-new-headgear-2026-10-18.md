@@ -79,3 +79,14 @@ The 944ad800 coherent-wrap build passed all 582 native technical readbacks, but 
 Module SHA-256: `c825d6c758807089cd785920cbe85e0a07daac8e88c86d45757f4db772dff8e6`. Hero/game/far triangles 8132/5516/3932; four batches, one lens, zero textures. Source fixture passes closed canopy/shell topology, finite/nondegenerate/index checks, all-LOD native-envelope clearance, strap-to-shell radial-ray attachment, color and exact-once lifecycle. Integrated authored/emitted parity remains required in the new-head CI; local source execution passed, actual emitted execution is pending.
 
 The existing 582-frame matrix is unchanged and must complete on the new head. Full oblique/left/right/back comparison, cap-bill projection, substantial lateral shell, rear-band fit and all-LOD views remain visual gates. True S3 rear source details remain uncertain. Goldfish metallic appearance remains unresolved. PR1589 stays draft and must not be merged solely from historical technical success.
+
+
+## Rounded mask and volumetric rear-band candidate
+
+The user rejected the 23a cap/side interpretation and later explicitly resumed correction. The rejected visual gate remains unresolved; dba976c only reconciled current main and repaired three approved test assertions/measurements, without changing goggles geometry.
+
+This next isolated model revision (SHA-256 `8ca29c92730b29a66fd53f51346a044a72f4cde5b572dca7c369cef5b97a9276`) removes the unsupported large ear hoop, rounds the lower body/chin, tapers the projecting bill, and replaces flat rear ribbons with closed elliptical-section curved bands and unequal crossing depth. Side anchors remain connected. S3 front/item evidence and historical S2 rear evidence are identified separately; unchanged S3 rear construction is not established.
+
+Hero/game/far triangles9232/6068/4212, four batches, one transparent lens, no textures. Source fixture passes closed shell/bill/rear-band topology and winding, finite/index/nondegenerate geometry, compact side/anchor criteria, color/disposal and native-envelope checks. Integrated authored/emitted attribute/index parity is retained; local source execution passed, actual emitted API execution and native appearance remain CI gates. Native audit minimum skin clearance .02453, scalp .02211, all lens rays visible; this does not establish animated-hair clearance.
+
+Existing582 matrix remains unchanged, including front/oblique/both sides/rear/top/under across all LODs and hair5/6 rear/top. Actual four-angle comparison must show rounded main mask, distinct tapered projecting bill, compact substantial side shell and curved rear-band volume without floating joins or hair cutting. Construction preview permits capture only. No full visual acceptance or merge permission is claimed. Goldfish metallic appearance remains unresolved.
