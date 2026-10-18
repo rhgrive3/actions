@@ -85,7 +85,7 @@ Nintendo公式11.3.0変更: ケルビンのスライド後ブレ約10%軽減、�
 
 30. 既存の実モデル検査がSlosherの共有rest定義を個体別carry gripへ当て、正常な支持手を誤差0.652964と判定 → 各frameの実モデル定義へ接続し、閾値.006を維持。実支持点の誤差は約6.0e-15、拳穴の第二幾何比較・実モデル+.2移動・旧socketの負対照で検査。runtimeと21画像は不変。[所有者と数値](../inkwave-weapon-models-motion-2026-10-10.md)。
 
-camera合成の既存CIも、cameraが文字列上の最後のreturnであるとの旧前提を修正した。実VFX→camera→static menu→queueの順序と、後置passがcamera所有の3モジュールとActorを変更しないこと、missing/duplicate/reapplyの拒否を検査する。射撃・照準runtimeの変更ではない。[合成契約の追補](camera-queue-composition-ci.md)。
+camera合成の既存CIも、cameraが文字列上の最後のreturnであるとの旧前提を修正した。実VFX→camera→static menu→queueの順序と、後置passがcamera所有の3モジュールとActorを変更しないこと、missing/duplicate/reapplyの拒否を検査する。射撃・照準runtimeの変更ではない。[合成契約の追補](camera-queue-composition-ci.md)。シェルターの静的CIも、合成段階の異なるroller条件名を同一視せず、実Actorの_face内のspecial/superjump→held roller/brush→Brellaを検査し、既存の姿勢・他ブキ退避を保つ。[優先動作の追補](brella-facing-ci-contract.md)。
 
 ## 検証の読み方と残る限界
 
