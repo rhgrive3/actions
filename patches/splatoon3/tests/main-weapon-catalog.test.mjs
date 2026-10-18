@@ -390,6 +390,7 @@ test('nearest foot paint follows Jr. accepted-shot slots 3 and 7',async()=>{
   assert.equal(near.length,2,'Jr. forced 3 and final 7 slots');
   assert.ok(near.every(p=>Math.abs(p.catalog.descriptor.splashFirst-1.2)<1e-9));
   assert.equal(splats.length,0,'no eager muzzle stamp before physics');
+  f.G.physics.level=null; // deterministic no-obstruction flight, independent of stage geometry
   for(let i=0;i<30;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
   const drops=f.G.projectiles._s3SplashDrops||[];
   assert.ok(drops.filter(p=>Math.abs(p.radius-2.0769)<1e-9).length>=2,
