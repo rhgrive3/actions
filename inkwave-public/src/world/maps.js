@@ -29,6 +29,7 @@ export const TIDEWATER = {
   id: 'tidewater',
   bounds: { minX: -25, maxX: 25, minZ: -44, maxZ: 44 },
   spawnPads: [[0, 2.2, -39.2], [0, 2.2, 39.2]],
+  homeSuperJumpPoints: [[0, 0, -33.5], [0, 0, 33.5]],
   spawnBarrier: 4.2,
   // Blocks that are their own mirror image (centered on the origin).
   single: [
@@ -113,6 +114,7 @@ export const KELPLINE = {
   id: 'kelpline',
   bounds: { minX: -24, maxX: 24, minZ: -48, maxZ: 48 },
   spawnPads: [[0, 3.2, -44], [0, 3.2, 44]],
+  homeSuperJumpPoints: [[0, 0, -38.5], [0, 0, 38.5]],
   spawnBarrier: 4.2,
   single: [
     // sunken service trench across the middle
@@ -206,6 +208,7 @@ export const HALYARD = {
   water: 'marina',   // sheltered marina water (environment.js keys the sea look on this)
   bounds: { minX: -24, maxX: 24, minZ: -46, maxZ: 46 },
   spawnPads: [[0, 2.4, -42], [0, 2.4, 42]],
+  homeSuperJumpPoints: [[0, 0, -31.5], [0, 0, 31.5]],
   spawnBarrier: 4.2,
   // match intro opens high over the ferry's sun deck, then sweeps back down the fuel dock to your spawn (ending in
   // front of the clubhouse wall, not inside the building behind it)
