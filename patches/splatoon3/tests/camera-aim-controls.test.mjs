@@ -82,6 +82,17 @@ test('Splatterscope full zoom uses the 28 degree class default; any FOV setting 
   delete f.G.settings.fov;
 });
 
+test('scope rim strength follows the local follow camera zoom only', async () => {
+  const { scopeOverlayStrength } = await world();
+  const rig = { mode: 'follow', target: { isLocal: true }, zoom: 10, mapK: 0 };
+  assert.equal(scopeOverlayStrength(rig, 20), .5);
+  assert.equal(scopeOverlayStrength({ ...rig, zoom: 40 }, 20), 1);
+  assert.equal(scopeOverlayStrength({ ...rig, target: { isLocal: false } }, 20), 0);
+  assert.equal(scopeOverlayStrength({ ...rig, mode: 'spectate' }, 20), 0);
+  assert.equal(scopeOverlayStrength({ ...rig, mapOpen: true }, 20), 0);
+  assert.equal(scopeOverlayStrength(rig, 0), 0);
+});
+
 test('scope zoom has no charge=0.99 discontinuity and resets on squid/weapon change', async () => {
   const f = await world('s3-charger-longscope'); f.a.weaponRunner.charging = true;
   const values = [];

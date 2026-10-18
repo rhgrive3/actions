@@ -149,7 +149,9 @@ for (const hz of HZ) {
     assert.deepEqual([r.remote.s3.squidSpawn.to.x, r.remote.s3.squidSpawn.to.y, r.remote.s3.squidSpawn.to.z], selected);
     assert.deepEqual(ownerEvents, { splat: 1, respawn: 1, launch: 0, land: 0 });
     assert.deepEqual(hostEvents, { splat: 0, respawn: 0, launch: 1, land: 0 }, 'adoption itself emits no second spawn or splat');
-    assert.equal(countActorEvents(r.host, r.remote, 'spawn'), 1, 'the resumed aim launches once');
+    // 2026-10-18: the launch ejects a squid; the rig's 'spawn' presentation
+    // fires once at the kid-form touchdown switch (respawn-lifecycle kidAt).
+    assert.equal(countActorEvents(r.host, r.remote, 'spawn'), 0, 'the resumed aim launches as a squid');
     const armor = r.remote.s3.spawnArmor;
     assert.equal(armor.hp, r.host.profile.spawnArmor.hp);
     assert.equal(armor.remaining, r.host.profile.spawnArmor.duration);
@@ -163,6 +165,7 @@ for (const hz of HZ) {
     close(armor.remaining, r.host.profile.spawnArmor.duration - elapsed, 'aim launch armor consumes only owner flight time');
     assert.deepEqual(hostEvents, { splat: 0, respawn: 0, launch: 1, land: 1 });
     assert.deepEqual(ownerEvents, { splat: 1, respawn: 1, launch: 0, land: 0 });
+    assert.equal(countActorEvents(r.host, r.remote, 'spawn'), 1, 'one touchdown presentation for the resumed launch');
   });
 
   test(`#93 flight snapshot handoff consumes the existing remaining clock and armor once at ${hz}Hz`, async () => {
@@ -222,7 +225,9 @@ for (const hz of HZ) {
     assert.deepEqual(counts, { sourceLaunch: 1, sourceLand: 0, hostLaunch: 0, hostLand: 1, hostRespawn: 0, hostSplat: 0 });
     assert.equal(r.actor.stats.deaths, 1, 'the source life was splatted once');
     assert.equal(r.remote.stats.deaths, 1, 'adoption did not replay the accepted splat');
-    assert.equal(countActorEvents(r.host, r.remote, 'spawn'), 0, 'flight adoption did not replay the spawn trigger');
+    // The adopted flight (taken over at 0.2 s) still reaches the kid-form
+    // touchdown switch once; the launch itself is not replayed.
+    assert.equal(countActorEvents(r.host, r.remote, 'spawn'), 1, 'flight adoption shows one touchdown, no replayed launch');
   });
 }
 

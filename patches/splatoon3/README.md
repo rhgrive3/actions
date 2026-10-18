@@ -49,6 +49,7 @@
 | `runtime/s3-sweps-assets.mjs` | SplatoonSWEPs からそのまま取り込んだ muzzlesplash・inkring テクスチャ（α）（所有者の許可による） |
 | `runtime/s3-projectile-shapes.mjs` | シューター・シェルター・ストリンガー・ワイパー・スクリュー・エクスプロッシャー・オーバーフロッシャーの飛行中の弾の形（棒・紡錘・針・三日月板・螺旋・光点・透明な泡）。表示のみ。根拠は `reports/inkwave-s3-projectile-shapes-2026-10-15.md` |
 | `runtime/camera-aim-controls.mjs`（スコープの縁） | スコープ付きチャージャーのズーム中に表示する縁（周囲を暗くする円形の視界）。強さはズームに追従。表示のみで、半径・濃さは校正値 |
+| `runtime/squid-spawn-presentation.mjs` | ナワバリのイカスポーンの表示：足元の浮遊スポナー、自分と味方のイカ形の着地矢印、発射の案内、飛行中のインクの帯。表示のみ（目標・発射・飛行・アーマーは `respawn-lifecycle.mjs`） |
 | `runtime/bomb-models.mjs` | ボム3種の見た目（スプラッシュ＝丸い三角錐、キューバン＝吸盤付きの缶、カーリング＝取っ手付きの黒い円筒と緑→赤ランプ）を投擲・ゴースト・手持ちに適用。表示のみ |
 | `runtime/ui.mjs`, `runtime/render.mjs` | 公開版のメニュー・影無効時の起動不具合を補正 |
 | `profile.json` | 挙動の設定、数値の出典との対応、未確認事項 |

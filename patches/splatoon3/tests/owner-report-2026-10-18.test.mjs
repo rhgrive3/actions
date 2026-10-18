@@ -1,10 +1,9 @@
 // Owner report 2026-10-18: Roller held-swing rest, Slosher attack overlay,
-// scope rim strength. Pure-module checks; browser/console comparison is separate.
+// Squid Spawn presentation. Pure-module checks; browser/console comparison is separate.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { horizontalRollerPose, verticalRollerPose, ROLLER_POSE } from '../runtime/roller.mjs';
 import { sourceActionUpperOnly } from '../runtime/source-weapon-owner.mjs';
-import { scopeOverlayStrength } from '../runtime/camera-aim-controls.mjs';
 
 test('a held ZR keeps the released drum down instead of lifting it back to the carry', () => {
   for (const [pose, windup, interval] of [[horizontalRollerPose, 10 / 60, 31 / 60], [verticalRollerPose, 12 / 60, 33 / 60]]) {
@@ -35,12 +34,18 @@ test('the Wii U Slosher attack clip never drives the legs', () => {
   assert.equal(sourceActionUpperOnly('Chrg', 'Shoot_Chrg'), false);
 });
 
-test('scope rim strength follows the local follow camera zoom only', () => {
-  const rig = { mode: 'follow', target: { isLocal: true }, zoom: 10, mapK: 0 };
-  assert.equal(scopeOverlayStrength(rig, 20), .5);
-  assert.equal(scopeOverlayStrength({ ...rig, zoom: 40 }, 20), 1);
-  assert.equal(scopeOverlayStrength({ ...rig, target: { isLocal: false } }, 20), 0);
-  assert.equal(scopeOverlayStrength({ ...rig, mode: 'spectate' }, 20), 0);
-  assert.equal(scopeOverlayStrength({ ...rig, mapOpen: true }, 20), 0);
-  assert.equal(scopeOverlayStrength(rig, 0), 0);
+test('Squid Spawn prompt names the launch input for each device in both languages', async () => {
+  const { squidSpawnPrompt, SPAWNER_LOOK } = await import('../runtime/squid-spawn-presentation.mjs');
+  assert.equal(squidSpawnPrompt('ja', 'pad'), 'ZRでとびだす');
+  assert.equal(squidSpawnPrompt('ja', 'kbm'), 'クリックでとびだす');
+  assert.equal(squidSpawnPrompt('en', 'touch'), 'Tap FIRE to launch');
+  assert.equal(squidSpawnPrompt('xx', 'unknown'), 'クリックでとびだす');
+  assert.ok(SPAWNER_LOOK.vanishAfter > 0 && SPAWNER_LOOK.vanishTime > 0);
+});
+
+test('Squid Spawn flight switches back to the kid form only for the touchdown', async () => {
+  const { SQUID_SPAWN_PRESENTATION, SQUID_SPAWN_FLIGHT_DURATION } = await import('../runtime/respawn-lifecycle.mjs');
+  assert.equal(SQUID_SPAWN_FLIGHT_DURATION, 1, '60F flight unchanged');
+  assert.ok(SQUID_SPAWN_PRESENTATION.kidAt > .5 && SQUID_SPAWN_PRESENTATION.kidAt < 1);
+  assert.ok(SQUID_SPAWN_PRESENTATION.initialAutoLaunch > 0);
 });
