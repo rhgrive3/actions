@@ -67,11 +67,23 @@ export function installWeaponAudioEngine(Engine){
     if(!this.ctx)this.init();
     const bank=this.weaponBank(),loader=this._realS3Loader;
     if(!bank||!loader)throw new Error('録音SEを再生するAudioContextを初期化できません');
-    const result=await loader.ensure(id,'fire');
+    // A failed HTTP/decode cannot hold the game's loading transition forever.
+    // This bound affects START only, never the actual projectile fire cadence.
+    let timeoutId;
+    let result;
+    try{result=await Promise.race([
+      loader.ensure(id,'fire'),
+      new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error('本家射撃MP3の読み込みが完了しません: '+id)),12000);})
+    ]);}finally{clearTimeout(timeoutId);}
     const recorded=loader.declares(id,'fire');
     // Some modern catalogue weapons have no 2022 MP3. Their authored sound is
     // their only source, not a substitute for an existing recording.
-    if(recorded===false)return {ready:false,unrecorded:true,id};
+    if(recorded===false){
+      // ShooterNormal MP3 is part of the pinned source release. A missing or
+      // incomplete manifest may never reinterpret it as an authored gunshot.
+      if(id==='shooter')throw new Error('スプラシューターの本家MP3が音源一覧にありません');
+      return {ready:false,unrecorded:true,id};
+    }
     if(recorded!==true)throw new Error('ブキ音源の一覧を読み込めません: '+id);
     if(!bank.authorized.byEvent.has(id+':fire')){
       const error=result?.errors?.[0]?.error||loader.errors?.at(-1)||'MP3をデコードできません';
@@ -79,9 +91,16 @@ export function installWeaponAudioEngine(Engine){
     }
     // AudioContext can be temporarily suspended by the browser. The caller
     // must enter the game only after the selected recording and device are live.
-    if(this.ctx.state==='suspended'){
-      try{await this.ctx.resume?.();}catch{}
-      if(this.ctx.state==='suspended')throw new Error('音声出力の有効化が必要です。もう一度STARTを押してください');
+    if(this.ctx.state&&this.ctx.state!=='running'){
+      let wakeTimeout;
+      try{
+        const resumed=this.ctx.resume?.();
+        if(resumed)await Promise.race([resumed,new Promise((_,reject)=>{
+          wakeTimeout=setTimeout(()=>reject(new Error('音声出力の有効化が必要です。もう一度STARTを押してください')),4500);
+        })]);
+      }catch(error){throw new Error('音声出力を開始できません。再度STARTを押してください ('+String(error?.message||error)+')');}
+      finally{clearTimeout(wakeTimeout);}
+      if(this.ctx.state!=='running')throw new Error('音声出力が有効ではありません。もう一度STARTを押してください');
     }
     return {ready:true,id,recording:'fire'};
   };
