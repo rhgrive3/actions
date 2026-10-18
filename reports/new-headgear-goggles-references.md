@@ -315,3 +315,51 @@ Limits/gates:
 ## Bill planform clarification
 No slot/ridge decoration added. Root-to-tip reach now tapers smoothly from100% at center to56% halfway and12% at outer corners. This replaces the uniform wrapping-crescent character with a front-focused cap bill. Center projection and closed lip retained. Actual construction top is included in software-preview.png, not a synthesized source view.
 Added allLOD planform reach monotonicity regression. Exact retail overhead dimensions remain unknown. Native front/oblique/right/left/top must jointly validate this relative shape.
+
+
+## Central aperture width restoration, 2026-10-18 14:13 UTC
+
+# Marked forehead and central-unit correction
+
+Isolated successor to 7da688 (native534 pending). User's green annotation1000001380 and enlarged S3 worn/c1bb comparison identify two remaining broad structural errors. No full visual acceptance.
+
+Sources actually viewed:
+- https://img.gamewith.jp/img/9a245d07c6dfa3b4460b237694dd6bba.png (S3 worn front)
+- https://img.gamewith.jp/article_tools/splatoon3/gacha/ge429.png (S3 item oblique)
+- User red/green1000001375 and green1000001380.
+- Exact c1bb native front, oblique, left/right/back/under, far right/back, hair5/6 back.
+- Historical S2 rear: https://cdn.wikimg.net/en/splatoonwiki/images/6/6f/S2_Paintball_Mask_back.png
+
+Changes:
+1. Raised forehead into a broad cosine arch with zero center tangent; raised shoulders to avoid a pointed roof. Forehead aperture groups follow that contour and have deeper angular height.
+2. Central slot halfwidths .32/.30/.28 → .28/.26/.24. Rounded aperture corner returns, steeper chevron slope .10→.13, preserved three rows. Lowered oversized nose peak by reducing angular nose bump .215→.165.
+3. Added three broad source-visible ink chevrons on the central separators. No invented fine lettering/engraving.
+4. Preserved distinct projecting bill, compact side shell, rear bands, connected cheek aperture bands and far inset correction from prior candidate.
+5. Reduced hidden dark recess tessellation and retuned shell refinement to keep hero under10k. No material/draw increase.
+
+Tests run:
+node --loader ./loader.mjs headgear-face-goggles.fixture.mjs
+node --loader ./loader.mjs audit-fit.mjs
+
+Pass allLOD topology, nondegenerate/index/normal checks, native callback, shell/bill/rear closure, positive rear volume, outward lens, native radial head/scalp clearance, inset ray visibility and disposal. Added rounded-crown center-tangent/height checks, three ink-chevron count, and front-facing ink triangle visibility for both temple and central inlays.
+Counts hero9720/game6948/far4980 triangles;4mesh/material batches,1transparent lens,0textures.
+Source/emitted parity and native captures still required.
+
+Limits/gates:
+- Source frontal/oblique perspectives differ; observations do not establish exact dimensional ratios.
+- Genuine S3 true-top and rear views remain unverified. No fabricated overhead projection. True source top is unavailable; user clarified bill shape was the goal. Planform correction uses only directly supported relative center projection and lateral recession.
+- S2 rear supports rounded layered crossed bands, not exact S3 identity; native rear remains smoother/more regular than historical reference.
+- Compare actual next native closeups: forehead should read rounded (not trapezoid/roof), central unit narrower/taller with rounded slot corners and visible chevron separators. Also recheck left/right/back and far inset.
+
+## Bill planform clarification
+No slot/ridge decoration added. Root-to-tip reach now tapers smoothly from100% at center to56% halfway and12% at outer corners. This replaces the uniform wrapping-crescent character with a front-focused cap bill. Center projection and closed lip retained. Actual construction top is included in software-preview.png, not a synthesized source view.
+Added allLOD planform reach monotonicity regression. Exact retail overhead dimensions remain unknown. Native front/oblique/right/left/top must jointly validate this relative shape.
+
+## Whole-mask central-width restoration after actual050 review
+The prior independently enlarged detail crops were not valid width measurements. An equal-whole-mask-width comparison showed original central outer body roughly35–40% of the mask while050 was about25–28%, with perspective uncertainty. Do not confuse body width with aperture width.
+
+This candidate changes ONLY central slot/diagonal/ink-chevron horizontal extent: angular halfwidths .28/.26/.24 → .35/.325/.30. Height, rounded corner shape, lowered nose peak, bill arch/planform, sides, rear and material settings remain unchanged.
+The actual geometric top aperture spans29.7% of the complete shell's front-projected width; the surrounding central white body is broader. Added full-shell-normalized aperture regression .28–.32, explicitly an authored construction bound rather than a claimed exact retail measurement.
+AllLOD source topology/normal/closure/inlay-visibility/lifecycle and native radial fit audit pass. Counts hero9608/game6976/far4976,4mesh/material batches,0textures.
+Actual050 top/left/right/back confirms broad bill lobe with receded sides and continuous joins, no obvious pinched tongue. Remaining bill root-step and historical rear detail differences disclosed; no further speculative bill changes.
+Native next front/oblique whole-mask normalization is required before central-width acceptance.

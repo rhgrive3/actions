@@ -104,7 +104,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   for(let i=stations;i>=0;i--){const a=-eyeSpan+2*eyeSpan*i/stations;window.push([a,eyeBottom(a)]);}
   const vents=[];
   for(let row=0;row<3;row++){
-    const w=.28-row*.020,base=-.09-row*.16,h=.085,slope=.13;
+    const w=.35-row*.025,base=-.09-row*.16,h=.085,slope=.13;
     vents.push([[-w+.018,base-slope+.009],[-.02,base-.009],[0,base],[.02,base-.009],[w-.018,base-slope+.009],[w,base-slope-.008],[w,base-slope-h+.018],[w-.018,base-slope-h],[.02,base-h-.009],[0,base-h],[-.02,base-h-.009],[-w+.018,base-slope-h],[-w,base-slope-h+.018],[-w,base-slope-.008]]);
   }
   // Each cheek is one continuous dark perforated band with slender
@@ -125,7 +125,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   for(const [i,h]of [...vents,...forehead].entries())panel('vent-recess-'+i,h,[],(a,e)=>depth(a,e)-.012,.002,'dark');
   // Three dominant connected breathing slots with restrained inset lattice.
   for(let row=0;row<3;row++)for(const side of [-1,1])for(let i=0;i<3;i++){
-    const w=.28-row*.020,base=-.09-row*.16,h=.085;
+    const w=.35-row*.025,base=-.09-row*.16,h=.085;
     rail('central-slot-web',u=>{const a=side*w*(i+.15+.70*u)/3,e=base-.13*Math.abs(a)/w-h*(i%2?u:1-u);return [a,e,depth(a,e)-.002];},.009,.003,'shell',2);
   }
   for(const side of [-1,1])for(let i=0;i<6;i++)rail('cheek-slot-web',u=>{
@@ -136,7 +136,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   // Broad ink chevrons are a source-visible part of each central separator.
   // They follow the narrowed rounded breathing unit without adding a rim.
   for(let row=0;row<3;row++){
-    const w=.28-row*.020,base=-.09-row*.16;
+    const w=.35-row*.025,base=-.09-row*.16;
     const edge=a=>base-.13*Math.abs(a)/w+.030;
     const h=[];for(const a of [-w+.03,-.02,0,.02,w-.03])h.push([a,edge(a)+.013]);
     for(const a of [w-.03,.02,0,-.02,-w+.03])h.push([a,edge(a)-.010]);
@@ -208,7 +208,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   }
   let disposed=false;const dispose=()=>{if(disposed)return;disposed=true;root.removeFromParent();root.traverse(o=>o.geometry?.dispose());Object.values(mats).forEach(m=>m.dispose());};
   const setInkColor=value=>{mats.ink.color.set(value);return root;};root.dispose=dispose;root.setInkColor=setInkColor;
-  root.userData={construction:{billPlan:[0,.25,.5,.75,1].map(u=>({root:canopy(u,0),tip:canopy(u,1)})),foreheadProfile:[-.6,-.01,0,.01,.6].map(a=>pt(a,crown(a),depth(a,crown(a)))),centralSlotHalfWidths:[.28,.26,.24],sideInsets:'closed compact inset; no ear opening',rearSection:{width:.23,thickness:.015,layerSeparation:.016},visorSection:{root:canopy(.5,0),tip:canopy(.5,1),lensUpper:pt(0,eyeTop(0),depth(0,eyeTop(0)))},browSection:[.90,.65,.45,.32].map(e=>({e,point:pt(0,e,depth(0,e))})),templeAnchors:[-1,1].flatMap(side=>[-1,1].map(s=>{const a=side*(s>0?1.44:1.40),e=s*.22,d=depth(a,e);return {a,e,point:pt(a,e,d),strapDepth:d,shellDepth:depth(a,e)};})),centralExtraDepth:depth(0,-.4)-depth(.6,-.4)},id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'S3 rear unverified; S2-informed convex layered bands with compact side anchors'}};
+  root.userData={construction:{billPlan:[0,.25,.5,.75,1].map(u=>({root:canopy(u,0),tip:canopy(u,1)})),foreheadProfile:[-.6,-.01,0,.01,.6].map(a=>pt(a,crown(a),depth(a,crown(a)))),centralSlotHalfWidths:[.35,.325,.30],sideInsets:'closed compact inset; no ear opening',rearSection:{width:.23,thickness:.015,layerSeparation:.016},visorSection:{root:canopy(.5,0),tip:canopy(.5,1),lensUpper:pt(0,eyeTop(0),depth(0,eyeTop(0)))},browSection:[.90,.65,.45,.32].map(e=>({e,point:pt(0,e,depth(0,e))})),templeAnchors:[-1,1].flatMap(side=>[-1,1].map(s=>{const a=side*(s>0?1.44:1.40),e=s*.22,d=depth(a,e);return {a,e,point:pt(a,e,d),strapDepth:d,shellDepth:depth(a,e)};})),centralExtraDepth:depth(0,-.4)-depth(.6,-.4)},id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'S3 rear unverified; S2-informed convex layered bands with compact side anchors'}};
   return root;
 }
 
