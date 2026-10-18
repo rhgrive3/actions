@@ -61,6 +61,7 @@ test('real composed START gates offline and online first shot on decoded origina
      type+' cannot admit first gameplay tick before original decoded shot or ignore load failure');
  }
  assert.ok(!composed.includes('emergency authored'), 'start does not offer synthesized fallback');
+ assert.match(composed,/本家ブキ射撃音源を読み込めませんでした/,'missing recorded MP3 must show a specific load error to the player');
 });
 
 test('Splattershot and collab START only resolve after their original decoded ShooterNormal recording',async()=>{
