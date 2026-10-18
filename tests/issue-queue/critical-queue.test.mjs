@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { adaptBuildSource } from '../../scripts/inkwave-source-composition.mjs';
 import { sanitizeSettings, sanitizeProfile, awardProfileXP, validWeaponId, validStartRoster } from '../../inkwave-public/src/core/save-validation.mjs';
 import { crabTankShotGeometry } from '../../patches/splatoon3/runtime/crab-tank-aim.mjs';
 
@@ -100,8 +101,8 @@ test('Crab Tank muzzle converges on attainable close targets in both modes',()=>
 });
 // Compile the real source methods (rather than a modelled duplicate) against
 // deterministic stand-ins for the graphics/physics/network shell.
-function method(file, signature, endAnchor, deps) {
-  const src=readFileSync(new URL(file,import.meta.url),'utf8');
+function method(file, signature, endAnchor, deps, source = null) {
+  const src=source ?? readFileSync(new URL(file,import.meta.url),'utf8');
   const start=src.indexOf(signature);
   assert.ok(start>=0,signature+' missing');
   const stop=src.indexOf(endAnchor,start);
@@ -110,16 +111,23 @@ function method(file, signature, endAnchor, deps) {
   const name=signature.trim().slice(0,signature.indexOf('(')-signature.indexOf(signature.trim()));
   return new Function(...Object.keys(deps),'return ({'+methodText+'}).'+name)(...Object.values(deps));
 }
-test('fixed-step player aim uses current yaw, not stale gameCam',()=>{
+test('composed fixed-step player aim uses current input yaw, not stale gameCam',()=>{
+  // Verify the production-composed camera adapter, not the pre-adapter
+  // Player prototype. No extra camera spring step or world raycast is added.
+  const base = readFileSync(new URL('../../inkwave-public/src/game/player.js', import.meta.url), 'utf8');
+  const composed = adaptBuildSource('src/game/player.js', base);
+  assert.match(composed, /simulationAimCamera\\(this, G.physics\\)/);
   const actor={pos:new Vec(),aimPoint:new Vec(),weapon:{kind:'shooter',range:12},team:0,aimYaw:Math.PI/6,aimPitch:0};
   const cam={position:new Vec(0,1.3,-4.5),getWorldDirection(out){return out.set(0,0,1)}};
-  const rig={mode:'follow',target:actor,curDist:4.5,shoulder:0,yaw:Math.PI/6,
+  const tickCam={position:new Vec(-2.25,1.3,-3.897114317),getWorldDirection(out){return out.set(.5,0,Math.sqrt(3)/2)}};
+  const rig={mode:'follow',target:actor,yaw:Math.PI/6,
     forward(out){return out.set(.5,0,Math.sqrt(3)/2);}};
   const G={rig:{gameCam:cam},camera:cam,physics:{raycast(){return {hit:false}}},actors:[],boss:null};
-  const fn=method('../../inkwave-public/src/game/player.js','  computeAim(fixedStep = false) {','\n  }\n}',{
+  const fn=method('../../inkwave-public/src/game/player.js','  computeAim(simulation = false) {','\\n  }\\n}',{
     G,_v:new Vec(),_v2:new Vec(),_fwd:new Vec(),_c:new Vec(),_hit:{},
+    simulationAimCamera:()=>tickCam,
     Physics:{},PLAYER:{radius:.5},clamp:(v,a,b)=>Math.max(a,Math.min(b,v))
-  });
+  },composed);
   const controller={a:actor,rig,onTarget:null,inRange:false};
   fn.call(controller,true);
   assert.ok(Math.abs(Math.atan2(actor.aimPoint.x,actor.aimPoint.z)*180/Math.PI-30)<.01);
