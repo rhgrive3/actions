@@ -43,8 +43,8 @@ const SQUID_EYE_MATERIAL = `export function makeSquidEyeMaterial(u) {
       fColor:\`
         vec2 p=vSquidEyeUv;
         vec2 gaze=clamp(uLook,vec2(-0.16),vec2(0.16));
-        vec2 q0=(p-gaze-vec2(-0.45,0.23))/vec2(0.24,0.72);
-        vec2 q1=(p-gaze-vec2(0.45,0.23))/vec2(0.24,0.72);
+        vec2 q0=(p-gaze-vec2(-0.34,0.35))/vec2(0.25,0.46);
+        vec2 q1=(p-gaze-vec2(0.34,0.35))/vec2(0.25,0.46);
         float d=min(length(q0),length(q1))-1.0,aa=max(fwidth(d),0.001);
         float pupil=1.0-smoothstep(-aa,aa,d);
         diffuseColor.rgb=mix(vec3(0.94,0.95,0.97),vec3(0.008,0.007,0.018),pupil);
@@ -79,7 +79,7 @@ const CONNECTED_SQUID_FACE = `  // Connected white squid eye mask and narrow dar
       const g=gridGeo(rows,{wrapU:false,outward:(p,out)=>out.set(p.x,0,p.z)});
       const idx=g.index.array;for(let i=0;i<idx.length;i+=3){const t=idx[i+1];idx[i+1]=idx[i+2];idx[i+2]=t;}g.computeVertexNormals();
       if(outline) dark.add(g,{color:new THREE.Color(0.018,0.02,0.03)});
-      else eyes.add(g,{uv:(i)=>[g.attributes.uv.getX(i)*2-1,g.attributes.uv.getY(i)*2-1],ex:0});
+      else eyes.add(g,{uv:(i)=>[g.attributes.uv.getX(i)*2-1,(g.attributes.position.getY(i)-0.112)/0.068],ex:0});
     }
   }
 `;
@@ -134,6 +134,17 @@ export function adaptS3SquidLook(rel, code) {
     // Surface-following eye/band coordinates and thickness metadata use SQ_ZS too.
     code = once(code, 'const SQ_ZS = 0.86;', 'const SQ_ZS = 0.62;', 'flatter squid mantle');
     code = once(code, '[0.126, 0.03], [0.131, 0.08], [0.127, 0.13]', '[0.108, 0.03], [0.112, 0.08], [0.116, 0.13]', 'less bulbous lower mantle');
+    // Shorten only the lower mantle beneath the connected white field. Keep the
+    // surface sampler, profile domain and closing pole in the same coordinates.
+    code=once(code, '[[0, -0.034], [0.07, -0.03], [0.108, -0.009], [0.108, 0.03]', '[[0, 0.006], [0.07, 0.009], [0.108, 0.023], [0.108, 0.045]', 'short lower mantle profile');
+    code=once(code, 'densitySamples(SD.rows, -0.034, 0.375,', 'densitySamples(SD.rows, 0.006, 0.375,', 'short lower mantle sampling');
+    code=once(code, 'start: new V3(0, -0.034, 0), end: new V3(0, 0.375, 0)', 'start: new V3(0, 0.006, 0), end: new V3(0, 0.375, 0)', 'short lower mantle pole');
+    // Whole-model reference landmarks: broaden the cap relative to the eye field,
+    // and raise its rounded apex without changing the lower mantle or attachments.
+    code=once(code, '[0.099, 0.214], [0.081, 0.254], [0.059, 0.298], [0.035, 0.34], [0.015, 0.366], [0, 0.375]', '[0.099, 0.2296], [0.081, 0.2856], [0.059, 0.3472], [0.035, 0.406], [0.015, 0.4424], [0, 0.455]', 'measured taller cap profile');
+    code=once(code, 'return 0.108 * sstep(0.158, 0.222, y) * Math.pow(1 - sstep(0.222, 0.374, y), 1.05);', 'return 0.138 * sstep(0.158, 0.2408, y) * Math.pow(1 - sstep(0.2408, 0.4536, y), 1.05);', 'measured broader rounded cap');
+    code=once(code, 'densitySamples(SD.rows, 0.006, 0.375,', 'densitySamples(SD.rows, 0.006, 0.455,', 'taller cap sampling');
+    code=once(code, 'end: new V3(0, 0.375, 0)', 'end: new V3(0, 0.455, 0)', 'taller cap pole');
     // the two long feelers hang in front of the face (the +Z side, which faces the camera after the half turn),
     // as in the clips; the other arms are short, stubby and hang close together instead of splaying out
     code = once(code, '    const feeler = k === 4 || k === 6;', '    const feeler = k === 0 || k === N - 1;', 'feelers under the face');
@@ -145,7 +156,7 @@ export function adaptS3SquidLook(rel, code) {
     code = once(code, '    const a = (k / N) * TAU + 0.31;', '    if (![0, 2, 4, 6, 8, 9].includes(k)) continue;\n    const a = (k / N) * TAU + 0.31;', 'four short lobes and two long outer arms');
     code = once(code,
       '    const raw = [[dx * 0.055, 0.012, dz * 0.055], [dx * 0.09, -0.04, dz * 0.09], [dx * 0.118, -0.035 - len * 0.55, dz * 0.118], [dx * 0.15, -0.035 - len * 0.86, dz * 0.15], [dx * (0.178 + curl * 0.6), -0.032 - len * 0.98, dz * (0.178 + curl * 0.6)]].map((q) => new V3(...q));',
-      '    const side = k === 0 ? 1 : -1;\n    const shortX = ({2:0.050,4:0.017,6:-0.017,8:-0.050})[k];\n    const outerShort = k === 2 || k === 8;\n    const raw = (feeler ? [[side*0.095,0.012,0.035],[side*0.106,-0.04,0.043],[side*0.112,-0.035-len*0.55,0.050],[side*0.116,-0.035-len*0.86,0.055],[side*0.117,-0.032-len*0.98,0.055]] : [[shortX,0.045,0.020],[shortX,-0.015,0.020],[shortX,-0.025-len*0.55,0.024],[shortX,-0.025-len*0.86,0.028],[shortX,-0.024-len*0.98,0.028]]).map((q) => new V3(q[0], q[1]+(!feeler && outerShort ? 0.012 : 0), q[2]-(!feeler && outerShort ? 0.030 : 0)));', 'outer long roots and four compact supports');
+      '    const side = k === 0 ? 1 : -1;\n    const shortX = ({2:0.050,4:0.017,6:-0.017,8:-0.050})[k];\n    const outerShort = k === 2 || k === 8;\n    const raw = (feeler ? [[side*0.095,0.012,0.035],[side*0.106,-0.04,0.043],[side*0.112,-0.035-len*0.55,0.050],[side*0.116,-0.035-len*0.86,0.055],[side*0.117,-0.032-len*0.98,0.055]] : [[shortX,0.045,0.020],[shortX,-0.015,0.020],[shortX,-0.025-len*0.55,0.024],[shortX,-0.025-len*0.86,0.028],[shortX,-0.024-len*0.98,0.028]]).map((q) => new V3(q[0], q[1]+(feeler ? 0.025 : 0.035+(outerShort ? 0.012 : 0)), q[2]-(!feeler && outerShort ? 0.030 : 0)));', 'outer long roots and four compact supports');
     code = once(code, 'const out = new V3(dx, 0.35, dz).normalize();', 'const out = new V3(0, 0.35, 1).normalize();', 'club curl follows face plane');
     code = once(code, 'outward: (P, o) => o.set(P.x, 0.25, P.z).normalize(),', 'outward: (P, o) => o.set(0, 0.25, 1).normalize(),', 'broad clubs face the eyes');
     // Short arms are compact rounded fingers, not thin curled wires.
@@ -164,7 +175,7 @@ export function adaptS3SquidLook(rel, code) {
       'color: (p, i) => _c.setRGB(feeler ? lerp(tint(tA[i]), -0.95, sstep(0.5, 0.8, tA[i])) : tint(tA[i]), tA[i], k / N)', 'dark feeler clubs');
     code = once(code, '_c.setRGB(tint(ct[i]) + 0.1, ct[i], k / N)', '_c.setRGB(feeler ? lerp(tint(ct[i]) + 0.1, -0.95, sstep(0.5, 0.8, ct[i])) : tint(ct[i]) + 0.1, ct[i], k / N)', 'club spot coating marker');
     code=once(code,ORIGINAL_SQUID_FACE,CONNECTED_SQUID_FACE,'connected squid eye mask');
-    code=once(code,"  _squid.set(key, res);","  res.eyes.userData.squidConnectedEye = true;\n  _squid.set(key, res);",'connected eye binding marker');
+    code=once(code,"  _squid.set(key, res);","  res.eyes.userData.squidConnectedEye = true;\n  res.body.userData.squidCompactSupports = true;\n  _squid.set(key, res);",'connected eye binding marker');
     return once(code,
       "(feeler ? 0.22 * gauss(t - 0.8, 0.07) : 0)",
       "(feeler ? 4.5 * gauss(t - 0.74, 0.24) : 0)", 'feeler club tips');

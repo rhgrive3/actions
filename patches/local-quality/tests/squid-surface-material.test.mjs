@@ -10,6 +10,7 @@ test('squid eye material addition preserves entire human eye factory and owns di
  const c=adaptS3SquidLook('src/game/character.js',raw('src/game/character.js'));
  assert(c.includes('new THREE.Mesh(sh.eyes, this.mats.squidEye)'));
  assert(c.includes("'eye', 'squidEye', 'fill'"));
+ const geo=adaptS3SquidLook('src/game/character-geo.js',raw('src/game/character-geo.js'));assert(geo.includes('(g.attributes.position.getY(i)-0.112)/0.068'),'pupils use common authored height, not per-column stretched v');assert(o.includes('vec2(0.25,0.46)'));assert(o.includes('vec2(-0.34,0.35)')); 
 });
 test('actual source-loaded actor isolates squid eyes at all LODs and disposes once',async()=>{
  const f=await sourceLoadedActorFixture({random:()=>.4});const a=await f.make(),c=a.character;
@@ -17,15 +18,17 @@ test('actual source-loaded actor isolates squid eyes at all LODs and disposes on
  for(const lod of ['hero','game','far']){c.setLod(lod);assert.equal(c.squid.eyes.material,c.mats.squidEye);
   const eye=c.squid.eyes.geometry;assert.equal(eye.userData.squidConnectedEye,true);const ep=eye.attributes.position,en=eye.attributes.normal;let center=0,front=0;for(let j=0;j<ep.count;j++){if(Math.abs(ep.getX(j))<.005)center++;front+=en.getZ(j);}assert(center>0,'white field crosses center');assert(front/en.count>.4,'eye normals point outward');const adj=Array.from({length:ep.count},()=>[]);for(let j=0;j<eye.index.count;j+=3){const tri=[0,1,2].map(k=>eye.index.getX(j+k));for(const a of tri)for(const b of tri)adj[a].push(b);}const seen=new Set([0]),todo=[0];while(todo.length){for(const n of adj[todo.pop()])if(!seen.has(n)){seen.add(n);todo.push(n);}}assert.equal(seen.size,ep.count,'one connected white eye surface');
   const g=c.squid.body.geometry,p=g.attributes.position,e=g.attributes.aEx,col=g.attributes.color,uv=g.attributes.uv;
-  let maxDepth=0,shortMin=Infinity,shortMax=-Infinity,shortN=0;const ids=new Set(),roots=new Map();
+  let mantleMinY=Infinity,mantleMaxY=-Infinity,mantleMaxX=0;let maxDepth=0,shortMin=Infinity,shortMax=-Infinity,shortN=0;const ids=new Set(),roots=new Map();
   for(let i=0;i<p.count;i++){
    assert(Number.isFinite(p.getX(i))&&Number.isFinite(p.getY(i))&&Number.isFinite(p.getZ(i)));
-   if(e.getX(i)===0)maxDepth=Math.max(maxDepth,Math.abs(p.getZ(i)));
+   if(e.getX(i)===0){maxDepth=Math.max(maxDepth,Math.abs(p.getZ(i)));mantleMinY=Math.min(mantleMinY,p.getY(i));mantleMaxY=Math.max(mantleMaxY,p.getY(i));mantleMaxX=Math.max(mantleMaxX,Math.abs(p.getX(i)));}
    const k=Math.round(col.getZ(i)*10)%10;if(e.getX(i)>.5&&e.getX(i)!==2){ids.add(k);if(uv.getX(i)<.001){const v=roots.get(k)||[0,0];v[0]+=p.getX(i);v[1]++;roots.set(k,v);}}
    if(e.getX(i)!==0&&e.getX(i)!==2&&k!==0&&k!==9&&uv.getX(i)>.65){shortMin=Math.min(shortMin,p.getX(i));shortMax=Math.max(shortMax,p.getX(i));shortN++;}
   }
   assert.deepEqual([...ids].sort((a,b)=>a-b),[0,2,4,6,8,9],'six semantic arm IDs');
   const rootX=k=>{const r=roots.get(k);assert(r&&r[1]>0);return r[0]/r[1];};assert(rootX(0)>.085&&rootX(9)<-.085,'long roots attach outside');for(const k of [2,4,6,8])assert(Math.abs(rootX(k))<.07,'four short supports sit inside long roots');
+  assert(mantleMaxY>.454&&mantleMaxY<.456,'measured taller cap');assert(mantleMaxX>.225&&mantleMaxX<.245,'measured wider cap');assert(g.userData.squidCompactSupports);
+  assert(mantleMinY>.005&&mantleMinY<.007,'lower mantle closure shortened beneath eye field');
   assert(maxDepth<.074&&maxDepth>.065,'flattened mantle preserves nonzero thickness');
   assert(shortN>0&&shortMax-shortMin<.17,'short tips form a compact group');
   assert(g.index.count/3<18000,'bounded triangle cost');

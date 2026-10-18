@@ -39,5 +39,24 @@ export function adaptSquidMotionBinding(rel,code,replaceOnce){
    p.needsUpdate=true;n.needsUpdate=true;this.eyeGeometry.computeBoundingSphere();return;
   }
 `,'connected squid eye continuous deformation');
+  code=replaceOnce(code,"    const waist=1-clamp(u*5,0,1);",`    const shortBlend=clamp((u-0.35)/0.5,0,1);
+    const waist=(chain==='L'||chain==='R'||!original.userData.squidCompactSupports)?1-clamp(u*5,0,1):1-shortBlend*shortBlend*(3-2*shortBlend);`,'short squid lobe embedded attachment');
+  code=replaceOnce(code,"  this.root=new THREE.Group();this.root.name='source-squid-rig';",`  this.compactLegMaps=new Array(this.bones.length).fill(null);
+  if(base.userData.squidCompactSupports){
+   const p=base.attributes.position,ex=base.attributes.aEx,col=base.attributes.color,uv=base.attributes.uv;
+   const center=(k,target)=>{let error=Infinity,u=0;for(let i=0;i<p.count;i++)if(ex.getX(i)>0.5&&ex.getX(i)!==2&&Math.round(col.getZ(i)*10)%10===k){const d=Math.abs(uv.getX(i)-target);if(d<error){error=d;u=uv.getX(i);}}const lo=new THREE.Vector3(Infinity,Infinity,Infinity),hi=new THREE.Vector3(-Infinity,-Infinity,-Infinity),v=new THREE.Vector3();for(let i=0;i<p.count;i++)if(ex.getX(i)>0.5&&ex.getX(i)!==2&&Math.round(col.getZ(i)*10)%10===k&&Math.abs(uv.getX(i)-u)<1e-6){v.fromBufferAttribute(p,i);lo.min(v);hi.max(v);}return lo.add(hi).multiplyScalar(0.5);};
+   for(const [k,chain]of [[2,'A'],[4,'B'],[6,'C'],[8,'D']]){
+    const first=this.index['Sqd_leg'+chain+'1'],last=this.index['Sqd_leg'+chain+'2'];
+    const sourceA=new THREE.Vector3().setFromMatrixPosition(this.bones[first].matrix),sourceB=new THREE.Vector3().setFromMatrixPosition(this.bones[last].matrix),hostA=center(k,0.35),hostB=center(k,0.95);
+    const sourceAxis=sourceB.sub(sourceA),hostAxis=hostB.sub(hostA),scale=hostAxis.length()/sourceAxis.length();
+    if(!Number.isFinite(scale)||scale<=0)throw new Error('Invalid compact squid support '+k);
+    const q=new THREE.Quaternion().setFromUnitVectors(sourceAxis.normalize(),hostAxis.normalize());
+    const retarget=new THREE.Matrix4().compose(hostA,q,new THREE.Vector3(scale,scale,scale)).multiply(new THREE.Matrix4().makeTranslation(-sourceA.x,-sourceA.y,-sourceA.z));
+    this.compactLegMaps[first]=this.compactLegMaps[last]=retarget;this.bones[first].matrix.premultiply(retarget);this.bones[last].matrix.premultiply(retarget);
+   }
+  }
+  this.root=new THREE.Group();this.root.name='source-squid-rig';`,'compact squid source leg rest pivots');
+  code=replaceOnce(code,"this.bones[i].matrix.multiplyMatrices(this.map,pose.world[i]);this.bones[i].matrixWorldNeedsUpdate=true;","this.bones[i].matrix.multiplyMatrices(this.map,pose.world[i]);if(this.compactLegMaps[i])this.bones[i].matrix.premultiply(this.compactLegMaps[i]);this.bones[i].matrixWorldNeedsUpdate=true;",'compact squid source leg posed pivots');
+  code=replaceOnce(code,"this.bones[i].matrix.multiplyMatrices(this.map,this.bank.rest.world[i]);this.bones[i].matrixWorldNeedsUpdate=true;","this.bones[i].matrix.multiplyMatrices(this.map,this.bank.rest.world[i]);if(this.compactLegMaps[i])this.bones[i].matrix.premultiply(this.compactLegMaps[i]);this.bones[i].matrixWorldNeedsUpdate=true;",'compact squid source leg reset pivots');
   return code;
 }
