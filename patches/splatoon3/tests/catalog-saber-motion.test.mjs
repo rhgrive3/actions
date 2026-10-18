@@ -3,19 +3,19 @@ import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 test('actual swing serial controls tap/full pose and horizontal handedness, including charged Dental',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
-  extraExports:"export * as SABER_POSE from './patches/splatoon3/runtime/weapon-models/splatanas.mjs';"});
+  extraExports:"export {weaponFamilyPose} from './patches/splatoon3/runtime/weapon-models/registry.mjs';"});
  const C={ANC:0,ANCR:3,CHEST:6,SPINE:9,IKL:12};
  for(const id of ['s3-saber-lite','s3-saber-normal','s3-saber-heavy']){
   const runner={charge:0,catalogState:{pending:{},saberSwing:{serial:1,key:'saber-horizontal',ordinal:0}}};
   const ch={weapon:{def:{modelId:id}},_runner:()=>runner,kidForm:true,P:new Float64Array(16)};
-  f.SABER_POSE.FAMILY_POSE(ch,1/60,{},C);const first=f.SABER_POSE.sabreSnapshot(ch);
+  const pose=f.weaponFamilyPose(id);pose(ch,1/60,{},C);const firstYaw=ch.P[C.ANCR+1];assert.notEqual(firstYaw,0);
   runner.catalogState.saberSwing={serial:2,key:'saber-horizontal',ordinal:1};
-  f.SABER_POSE.FAMILY_POSE(ch,1/60,{},C);const second=f.SABER_POSE.sabreSnapshot(ch);
-  assert.equal(second.yaw,-first.yaw,id+' opposite horizontal sweep, even without rendered idle frame');
+  ch.P.fill(0);pose(ch,1/60,{},C);
+  assert.equal(ch.P[C.ANCR+1],-firstYaw,id+' opposite horizontal sweep, even without rendered idle frame');
   runner.catalogState.saberSwing={serial:3,key:'saber-vertical',ordinal:2};
-  f.SABER_POSE.FAMILY_POSE(ch,1/60,{},C);const full=f.SABER_POSE.sabreSnapshot(ch);
-  assert.equal(full.full,true,'mode comes from the actual swing, with no prior charged render');
-  assert.equal(full.horizontal,id==='s3-saber-heavy');assert.ok([...ch.P].every(Number.isFinite));
+  ch.P.fill(0);pose(ch,1/60,{},C);
+  assert.notEqual(ch.P[C.SPINE],0,'full mode comes from the actual swing, with no prior charged render');
+  assert.equal(Math.abs(ch.P[C.ANCR+1])>0,id==='s3-saber-heavy','only charged Dental uses the horizontal yaw axis');assert.ok([...ch.P].every(Number.isFinite));
  }
 });
 
