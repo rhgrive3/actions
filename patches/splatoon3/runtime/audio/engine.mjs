@@ -1,6 +1,7 @@
-import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX } from './bank.mjs';
+import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
+
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 
 // Extends the existing mixer; its unlock, mute, compressor and spatial paths remain authoritative.
@@ -24,6 +25,7 @@ export function installWeaponAudioEngine(Engine){
   p.resolveWeaponSound=function(name){return this.weaponBank()?.resolve(name)||null;};
   p.loadAuthorizedWeaponAudio=async function(manifest,options={}){if(!this.ctx)this.init();if(!this.ctx)throw new Error("Web Audio context not initialized; unlock with a user gesture first");return this.weaponBank().authorized.load(manifest,options);};
   p.prepareWeapon=function(id,{urgent=true}={}){
+    id=mainAudioSourceId(id);
     if(!AUDIO_RECIPES[id]||!urgent)return;
     // Remote bots must not block the iPad player's first shot behind an
     // unbounded serial MP3 decode queue. Admit the active local weapon first.
@@ -31,24 +33,52 @@ export function installWeaponAudioEngine(Engine){
     if(this._warmWeapons.size>8)this._warmWeapons.delete(this._warmWeapons.values().next().value);
     const bank=this.weaponBank();if(!bank)return;
     if(!id.includes(':')){
-      // Existing per-weapon authored PCM is generated off the render thread
-      // where Worker is available, and stays a bounded emergency fallback.
-      bank.warm(id,{focus:true,events:['fire','fire_full','fire_alt','fire_left','fire_vertical']});
-      this._realS3Loader?.ensure(id,'fire');
+      const loader=this._realS3Loader;
+      // Fetch the actual selected recording first. Generating synthetic PCM for
+      // all 54 already-recorded mains before checking the manifest wastes CPU
+      // and causes the perceptual "Splatling sounds synthesized" regression.
+      const main=loader?.ensure(id,'fire');
+      if(AUDIO_RECIPES[id].family==='splatling'){
+        // 2022 Spinner sources have distinct Motor (charge) and MotorFire
+        // (stream) recordings. Demand-page both while the loadout is active.
+        for(const event of ['charge','spin'])if(bank.has(id,event))loader?.ensure(id,event);
+      }
+      main?.then(()=>{
+        // Only weapons confirmed to lack a recorded base shot can be authored.
+        // The existing Worker and 12 MiB LRU keep this off the game loop.
+        if(this._weaponBank===bank&&loader?.declares(id,'fire')===false)
+          bank.warm(id,{focus:true,events:['fire','fire_full','fire_alt','fire_left','fire_vertical']});
+      }).catch(()=>{});
     }else this._realS3Loader?.ensure(id,'fire');
   };
   // Preserve the exact admitted projectile clock: never delay a missed one-shot.
   // Preload after a first cold miss; the following shots will use real samples.
   p.playWeapon=function(id,event='fire',options={}){
+    id=mainAudioSourceId(id);
     const bank=this.weaponBank(),name=bank?.name(id,event);
     if(!name)return null;
+    const loader=this._realS3Loader;
     const recorded=bank.authorized.byEvent.has(`${id}:${event}`);
     if(!recorded){
-      // Never replay a shot late: fetch/decode the genuine MP3 for the next
-      // shot, but let this admitted MAIN-weapon shot remain audible using its
-      // own authored INKWAVE articulation (never a generic family sound).
-      this._realS3Loader?.ensure(id,event);
-      if(!bank.audibleShotFallback||options.actor?.isLocal!==true||!bank.has(id,event)||id.includes(':')||!/^fire(?:_[a-z0-9]+)?$/.test(event)){
+      // Never start a synthesized substitute for a known MP3. A cold fetch,
+      // failed response, or LRU eviction may delay the real sample, but must
+      // not change an already-recorded main's timbre into INKWAVE PCM.
+      loader?.ensure(id,event);
+      const mainAttack=!id.includes(':')&&/^fire(?:_[a-z0-9]+)?$/.test(event);
+      // The S3 catalog can emit fire_full/fire_alt even when the 2022 source
+      // only recorded fire (notably Spinners at full charge). Prefer the real
+      // regular shot over a non-existent specialized synthesized sample.
+      if(mainAttack&&event!=='fire'&&bank.has(id,'fire')){
+        if(bank.authorized.byEvent.has(`${id}:fire`))
+          return this.play(bank.name(id,'fire'),{...options,priority:options.priority??(options.actor?.isLocal?88:64)});
+        if(loader?.declares(id,'fire')===true)loader?.ensure(id,'fire');
+      }
+      const declared=loader?.declares(id,event);
+      const hasBase=mainAttack&&event!=='fire'&&loader?.declares(id,'fire')===true;
+      // Unknown manifest also fails closed. Only an explicit confirmation
+      // that neither requested nor base real MP3 exists enables authored PCM.
+      if(declared!==false||hasBase||!bank.audibleShotFallback||options.actor?.isLocal!==true||
+         !bank.has(id,event)||!mainAttack){
         this._realAudioSuppressed=(this._realAudioSuppressed||0)+1;
         return null;
       }
@@ -57,6 +87,7 @@ export function installWeaponAudioEngine(Engine){
     return this.play(name,{...options,priority:options.priority??(options.actor?.isLocal?88:64)});
   };
   p.loopWeapon=function(id,event,options={}){
+    id=mainAudioSourceId(id);
     const bank=this.weaponBank(),name=bank?.name(id,event);
     if(!name)return null;
     if(bank.authorized.byEvent.has(`${id}:${event}`))return this.loop(name,options);

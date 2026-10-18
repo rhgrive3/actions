@@ -1,3 +1,4 @@
+import { mainAudioSourceId } from './bank.mjs';
 // Audio-only scoped classification for admitted Blaster body contacts.
 // Neither projectile physics nor damage/kill authority may depend on this flag.
 // Nintendo's exact hit-confirm PCM is not part of the installed 2022 weapon bank.
@@ -18,8 +19,9 @@ export function withBlasterSplashHit(actor, callback) {
 
 export function blasterHitCueKind(actor, weaponId) {
   // Never classify a special, sub, or an unrelated weapon as a Blaster hit.
-  if (weaponId !== 'blaster' &&
-      !(typeof weaponId === 'string' && weaponId.startsWith('s3-blaster-'))) return null;
+  const mainId=mainAudioSourceId(weaponId);
+  if (mainId !== 'blaster' &&
+      !(typeof mainId === 'string' && mainId.startsWith('s3-blaster-'))) return null;
   const weapon = actor?.weapon;
   if (!weapon || (weapon.kind !== 'blaster' && weapon.behaviorKind !== 'blaster' &&
       weapon.catalogRecord?.family !== 'blaster')) return null;

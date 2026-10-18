@@ -52,5 +52,7 @@ test('Gold Dynamo canonical row executes nonzero native rolling pose; families w
  const make=id=>{const def=R.buildWeaponModel(id,fresh(id)),runner={a:{weapon:{catalogRecord:record},grounded:true,remote:false},catalogState:{swingCount:0}};return{weaponModel:R.weaponModelKey(id),weapon:{def},P:new Float64Array(8),wRoll:1,_runner(){return runner;}};};
  const a=make(row.main),b=make(row.baseId);for(let i=0;i<30;i++){a.P.fill(0);b.P.fill(0);R.weaponFamilyPose(row.main)(a,1/60,{}, {ANCR:0});R.weaponFamilyPose(row.baseId)(b,1/60,{}, {ANCR:0});assert.deepEqual(a.P,b.P);assert(a.P.some(v=>v!==0));assert([...a.P].every(Number.isFinite));}
  const bad=make(row.main);delete bad.weapon.def.drumAt;R.weaponFamilyPose(row.main)(bad,1/60,{}, {ANCR:0});assert(bad.P.every(v=>v===0));dispose(a.weapon.def);dispose(b.weapon.def);dispose(bad.weapon.def);
- for(const id of ['Slosher_Washtub_01','Slosher_Diffusion_01','Maneuver_Short_02']){const spec=R.weaponModelSpec(id);assert.equal(R.weaponFamilyPose(id),null);assert.equal(spec.pose,R.weaponModelSpec(spec.baseId).pose);}
+ for(const id of ['Maneuver_Short_02']){const spec=R.weaponModelSpec(id);assert.equal(R.weaponFamilyPose(id),null);assert.equal(spec.pose,R.weaponModelSpec(spec.baseId).pose);}
+ // Slosher variants share their base's two-handed carry layer (sloshers.mjs FAMILY_POSE).
+ for(const id of ['Slosher_Washtub_01','Slosher_Diffusion_01']){const spec=R.weaponModelSpec(id);assert.equal(typeof R.weaponFamilyPose(id),'function');assert.equal(R.weaponFamilyPose(id),R.weaponFamilyPose(spec.baseId));assert.equal(spec.pose,R.weaponModelSpec(spec.baseId).pose);}
 });
