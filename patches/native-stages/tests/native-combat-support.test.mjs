@@ -96,3 +96,81 @@ test('protected-target route fallback delegates legacy, normal goals and stale w
  const path=brain.path;brain.path=path.slice();assert.equal(resolve(),blocked);brain.path=path;
  L.native=false;assert.equal(resolve(),blocked);
 });
+
+test('source combat edge steering reuses only the identical starting foot ring, with unchanged steering',()=>{
+ for(const variant of [{},{ramp:true},{grate:true},{noPaint:true}]){
+  const {G,a,brain}=setup(variant);
+  a.vel.set(8,0,0);
+  assert.equal(typeof brain._edgeGuardUncached,'function','the uncached path stays available for A/B');
+  const raw=G.physics.groundProbe;let calls=0;
+  G.physics.groundProbe=function(...args){calls++;return raw.apply(this,args);};
+  const before=new f.THREE.Vector3(1,0,0);
+  brain._edgeClear=null;
+  brain._edgeGuardUncached(a,before);
+  const baselineCalls=calls;
+  calls=0;brain._edgeClear=null;
+  const after=new f.THREE.Vector3(1,0,0);
+  brain._edgeGuard(a,after);
+  const cachedCalls=calls;
+  assert.deepEqual(after.toArray(),before.toArray(), 'the original corner/cliff decision is preserved');
+  assert(cachedCalls<baselineCalls,'the repeated starting foot ring must be eliminated');
+  assert.equal(brain._nativeCombatEdgeProbe.active,false,'edge-scope cache never survives the call');
+  // The same physical probe outside steering remains live, not reused on a
+  // later simulation tick or across a rank-object/dynamic-deck change.
+  calls=0;brain._wet(1.1,0,a.pos.y);const normalCalls=calls;
+  calls=0;brain._wet(1.1,0,a.pos.y);
+  assert.equal(calls,normalCalls,'ordinary wet checks must not reuse an edge check');
+ }
+});
+
+test('edge-guard cache clears on exception and never serves a moved actor',()=>{
+ const {G,a,brain}=setup();
+ const original=brain._edgeGuardUncached;
+ brain._edgeGuardUncached=function(){throw new Error('edge-probe-test');};
+ assert.throws(()=>brain._edgeGuard(a,new f.THREE.Vector3(1,0,0)),/edge-probe-test/);
+ assert.equal(brain._nativeCombatEdgeProbe.active,false);
+ brain._edgeGuardUncached=original;
+ const raw=G.physics.groundProbe;let calls=0;
+ G.physics.groundProbe=function(...args){calls++;return raw.apply(this,args);};
+ const cache=brain._nativeCombatEdgeProbe;
+ cache.active=true;cache.ready=true;cache.actor=a;cache.physics=G.physics;cache.level=G.level;
+ cache.x=a.pos.x;cache.y=a.pos.y;cache.z=a.pos.z;cache.squid=false;cache.safe=true;cache.height=a.pos.y;
+ a.pos.x+=.01;
+ brain._wet(a.pos.x+.1,a.pos.z,a.pos.y);
+ assert(calls>1,'movement during a scope invalidates a cached starting foot ring');
+ cache.active=false;
+});
+
+test('native all-dead paint charts skip pure CPU work but retain identical ownership and GPU splat path',()=>{
+ const {G}=setup();
+ const paint=G.paint,face=paint.paintFaces.find(f=>f.turf&&f.atlas&&f.nu>0&&f.nv>0);
+ assert(face,'fixture must expose source turf');
+ const begin=face.grid,end=begin+face.nu*face.nv;
+ const oldDead=paint.dead.slice(begin,end),oldEmpty=face.nativeEmpty,oldGrid=paint.grid.slice(),oldVersion=paint.version;
+ const position=face.origin.clone().addScaledVector(face.u,face.su*.5).addScaledVector(face.v,face.sv*.5);
+ const raw=paint._cpuSplat;
+ let cpuCalls=0,pushCalls=0;
+ const rawPush=paint._pushQuad;
+ paint._cpuSplat=function(...args){cpuCalls++;return raw.apply(this,args);};
+ paint._pushQuad=function(...args){pushCalls++;return rawPush.apply(this,args);};
+ try{
+  paint.dead.fill(1,begin,end);face.nativeEmpty=true;
+  const cached=paint.regionStats(position.x,position.y,position.z,.65,0,{});
+  face.nativeEmpty=false;
+  const scanned=paint.regionStats(position.x,position.y,position.z,.65,0,{});
+  assert.deepEqual(cached,scanned,'all-dead tiles contribute zero ownership either way');
+  face.nativeEmpty=true;
+  paint.splat(position,.45,0,{seed:.5,face:face.id,instant:true});
+  assert.equal(cpuCalls,0,'a provably all-dead chart has no CPU ink cells to visit');
+  assert(pushCalls>0,'GPU splat entries remain even when authoritative cells are dead');
+  assert.deepEqual(paint.grid,oldGrid,'authoritative ink cells remain unchanged');
+  assert.equal(paint.version,oldVersion,'no turf grid version changes');
+  face.nativeEmpty=false;
+  paint.splat(position,.45,0,{seed:.5,face:face.id,instant:true});
+  assert(cpuCalls>0,'unknown/nonempty native charts retain original CPU ownership work');
+ } finally {
+  face.nativeEmpty=oldEmpty;
+  paint.dead.set(oldDead,begin);
+  paint._cpuSplat=raw;paint._pushQuad=rawPush;
+ }
+});

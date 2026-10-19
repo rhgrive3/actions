@@ -125,6 +125,15 @@ export function adaptNativeStages(rel,code){
   code="import { initNativeGrid, layoutNativePaint } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('  _layout(maxDensity) {','  _layout(maxDensity) {\n    if (this.level.native) return layoutNativePaint(this, maxDensity);');
   once('    const shouldRebuild = this._mipsDirty &&', '    const shouldRebuild = !this.level.native && this._mipsDirty &&');
+  // A native chart with no live mask cells is provably unable to claim ink:
+  // _cpuSplat already skips every dead cell. Elide that CPU scan only; retain
+  // the identical visual GPU splat/drip entries, owner order and render path.
+  once('        if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);',
+       '        if (!cosmetic && (!this.level.native || !f.nativeEmpty)) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);');
+  // regionStats likewise counted zero cells for an all-dead native chart.
+  once('        if (!f.turf || !f.atlas) continue;',
+       '        if (!f.turf || !f.atlas || (this.level.native && f.nativeEmpty)) continue;');
+
   once('  _initGrid() {','  _initGrid() {\n    if (this.level.native) return initNativeGrid(this);');
   once('        let px = (i + 0.5) * f.cu - lu, py = (j + 0.5) * f.cv - lv;', '        if (this.level.native && this.dead[f.grid + j * f.nu + i]) continue;\n        let px = (i + 0.5) * f.cu - lu, py = (j + 0.5) * f.cv - lv;');
   once('        const prev = this.grid[k];','        if (this.level.native && this.dead[k]) continue;\n        const prev = this.grid[k];');
@@ -137,6 +146,20 @@ export function adaptNativeStages(rel,code){
   once('    this.think -= dt; this.jumpCd -= dt;', '    if (!nativeTowerRider(G,this.a) && (updateNativeApproach(this,G,dt)||updateNativeJumpAttach(this,G,dt)||updateNativeSurge(this,G,dt)||updateNativeDrop(this,G,dt)||updateNativeClimb(this,G,dt))) { this._nativeTraversalHandled=true; return; }\n    this.think -= dt; this.jumpCd -= dt;');
   once('    const p = nav.path(s, g, this.a.team);', '    const p = nav.path(s, g, this.a.team, G.level.native ? Math.max(6000, nav.nodes.length * 4) : undefined, G.level.native && G.level.manifest?.sourceNavigation?.wallApproach ? edge=>nativeApproachEdgeAllowed(this.a,edge) : undefined);');
   once('  _wet(x, z, y) { const gy =', '  _wet(x, z, y) { const sourceWet=nativeCombatWet(this,G,x,z,y); if(sourceWet!==null)return sourceWet; if (G.level.native && typeof G.level.hasGroundAbove === "function") return !G.level.hasGroundAbove(x, z, y + 0.6, PLAYER.fallDeathY); const gy =');
+  // Native combat cliff checks sample the same actor-foot centre for every
+  // candidate steering direction. Reuse that exact first probe only within one
+  // synchronous _edgeGuard call; NEVER across actor ticks/physics mutations.
+  // The original method remains callable for uncached A/B regression tests.
+  once('  _edgeGuard(a, mv) {', `  _edgeGuard(a, mv) {
+    if (!G.level?.native) return this._edgeGuardUncached(a, mv);
+    const cache = this._nativeCombatEdgeProbe || (this._nativeCombatEdgeProbe = { active: false, ready: false });
+    if (cache.active) return this._edgeGuardUncached(a, mv);
+    cache.active = true; cache.ready = false;
+    try { return this._edgeGuardUncached(a, mv); }
+    finally { cache.active = false; }
+  }
+  _edgeGuardUncached(a, mv) {`);
+
   once('    const g = nav.nearest(pos, maxUp);','    const g = nativeCombatPathGoal(this,G,pos,nav.nearest(pos,maxUp));');
   once('    this.path = p; this.pi =', '    if (G.level.native) this._nativeCombatPath={nav,level:G.level,physics:G.physics,path:p,goal:g};\n    this.path = p; this.pi =');
   once('      if (this.repath <= 0) this._pathTo(this.target.pos, 0.6);','      if (this.repath <= 0 && !nativeOrdinaryJumpCommitted(this,G)) this._pathTo(this.target.pos, 0.6);');
