@@ -19,6 +19,13 @@ import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adap
 
 // Keep the tested source path identical to the production build's adapters.
 export function adaptBuildSource(rel, code) {
+  // Source lives under inkwave-public/, whereas compiled modules share the
+  // versioned site's root with patches/. Keep direct Node imports working and
+  // remap exactly this import in published output.
+  if (rel === 'src/game/inkCollision.js') code = replaceOnce(code,
+    "from '../../../patches/native-stages/runtime/native-projectile-sweep.mjs'",
+    "from '../../patches/native-stages/runtime/native-projectile-sweep.mjs'",
+    'native sweep source/site relocation');
   code = adaptSource(rel, code);
   code = adaptTouchLayout(rel, code);
   code = adaptReliability(rel, code);
