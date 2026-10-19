@@ -58,6 +58,55 @@ test('runner keeps original failure gate, workload and local server byte-identic
  assert.ok(runner.includes(gate));assert.ok(runner.includes("report.status = report.errors.length ? 'failed' : 'passed';"));
  let restored=runner;
  const revert=(current,prior)=>{assert.equal(restored.split(current).length,2);restored=restored.replace(current,prior);};
+  revert('  const serverClosed = new Promise(resolve => server.close(resolve));', '  await new Promise(resolve => server.close(resolve));');
+  revert('  await serverClosed;\n', '');
+  revert(`    let visualFailed = false;
+    try { await runVisuals(visual.page); }
+    catch (error) { visualFailed = true; throw error; }
+    finally {
+      try { await visual.close(); }
+      catch (cleanupError) {
+        if (!visualFailed) throw cleanupError;
+        report.browserDiagnostics.push({ event: 'streamed-music-cleanup-failed', route: 'visual',
+          error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+      }
+    }`, '    try { await runVisuals(visual.page); } finally { await visual.close(); }');
+  revert(`  try { await browser.close(); }
+  catch (cleanupError) {
+    report.browserDiagnostics.push({ event: 'browser-cleanup-failed',
+      error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+    if (report.status !== 'failed') {
+      report.status = 'failed';
+      report.error = String(cleanupError?.stack || cleanupError).slice(0, 4000);
+    }
+  }`, '  await browser.close();');
+  // Remove the exception-safe cleanup hunks first; the original exact-byte
+  // assertion below still protects every workload and failure-gate statement.
+  revert('  try {\n  const audioNetwork = [], audioSnapshots = [];', '  const audioNetwork = [], audioSnapshots = [];');
+  revert(`  return { context, page, close: streamedMusic.close };
+  } catch (error) {
+    try { await streamedMusic.close(); }
+    catch (cleanupError) {
+      report.browserDiagnostics.push({ event: 'streamed-music-cleanup-failed', route: 'open', mobile,
+        error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+    }
+    throw error;
+  }
+}`, '  return { context, page, close: streamedMusic.close };\n}');
+  revert('  let performanceFailed = false;\n  try {\n', '');
+  revert(`  return record;
+  } catch (error) {
+    performanceFailed = true;
+    throw error;
+  } finally {
+    try { await close(); }
+    catch (cleanupError) {
+      if (!performanceFailed) throw cleanupError;
+      report.browserDiagnostics.push({ event: 'streamed-music-cleanup-failed', route: 'performance', mobile,
+        error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+    }
+  }
+}`, '  await close();\n  return record;\n}');
  revert("import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.mjs';\n",'');
  revert(`  const streamedMusicReceipt = { mobile };
   (report.streamedMusicDiagnostics ||= []).push(streamedMusicReceipt);
@@ -83,4 +132,140 @@ test('both harnesses explicitly resolve their actual game global and report miss
   await f.observer.snapshot('bound');assert.equal(f.receipt.snapshots[0].state.ownerGlobal,ownerGlobal);assert.equal(f.receipt.snapshots[0].state.ownerPresent,true);assert.equal(f.receipt.snapshots[0].state.musicPresent,true);assert.equal(f.receipt.snapshots[0].state.current.element.currentTime,1);
   delete f.window[ownerGlobal];await f.observer.snapshot('unbound');assert.equal(f.receipt.snapshots[1].state.ownerPresent,false);assert.equal(f.receipt.snapshots[1].state.musicPresent,false);
  }
+});
+
+// Execute the verbatim runner functions with bounded Playwright API doubles.
+// These test cleanup ownership, not browser playback or native game behavior.
+const runnerSource=fs.readFileSync(process.env.INKWAVE_MEDIA_RUNNER_TEST_SOURCE || new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
+const functionText=(from,to)=>{
+ const start=runnerSource.indexOf(from), end=runnerSource.indexOf(to,start+from.length);
+ assert.ok(start>=0&&end>start,'runner function boundaries exist');return runnerSource.slice(start,end).trim();
+};
+const openText=functionText('async function openGameContext(', 'async function setCamera(');
+const performanceText=functionText('async function runFiringPerformance(', '\ntry {\n  if (capture');
+const summaryText=functionText('function summary(', 'async function runFiringPerformance(');
+async function lifecycleFixture({failAt=null,closeFailure=false}={}) {
+ const calls=[],events=new Map(), primary=new Error('injected '+failAt), cleanup=new Error('injected close');
+ const report={browserDiagnostics:[],provenance:{},performanceWarmups:[],performanceFailures:[]};
+ const state={__G:{music:{track:'battle',players:[]},match:{state:'playing'}}};
+ const observed={nativeFrames:3,frameSamples:3,rafSamples:3,renderSamples:3,fireCalls:1,nonemptyProjectileUpdates:1,end:{inputMouseLeft:true,actorIntentFire:true}};
+ const measured={elapsedMs:200,simulatedSeconds:.2,rAF:[16,16],nativeLoopTimestamps:[0,16,32],frameCpuMs:[1,1,1],projectileCpuMs:[1],renderCpuMs:[1,1,1],
+  visualGeometryCpuMs:[0],visualBodies:[1],visualVertices:[3],visualOwnerCounts:[],nonemptyVisualRenders:3,visualBackend:'legacy-native',renderCalls:[1],triangles:[1],
+  gpuRenderMs:[],gpuTimer:'unavailable',gpuDisjoint:false,maxProjectiles:1,projectileUpdates:3,nonemptyProjectileUpdates:3,fireCalls:1,renderer:{},game:{state:'playing'},browser:{viewport:[1280,720],dpr:1}};
+ const cdp={on:(n,fn)=>events.set(n,fn),off:n=>events.delete(n),send:async name=>{
+  calls.push(name);if(failAt==='performance-enable'&&name==='Performance.enable')throw primary;
+  if(name==='Network.enable')events.get('Network.requestWillBeSent')?.({requestId:'jet',request:{url:assetURL,method:'GET',headers:{}},type:'Media'});
+  if(name==='Tracing.end')events.get('Tracing.tracingComplete')?.({});return {metrics:[]};
+ }};
+ const page={on:()=>{},setDefaultTimeout:()=>{},isClosed:()=>false,bringToFront:async()=>{},
+  addInitScript:async()=>{if(failAt==='open-init')throw primary;},goto:async()=>{if(failAt==='open-goto')throw primary;},
+  waitForFunction:async()=>{if(failAt==='performance-warmup')throw primary;},evaluate:async(fn,arg)=>{
+   if(arg?.ownerGlobal){calls.push('snapshot');return vm.runInNewContext('('+fn.toString()+')(arg)',{window:state,arg});}
+   const text=fn.toString();
+   if(text.includes('g.R.setDynamicScale')&&failAt==='open-placement')throw primary;
+   if(text.includes('const G = window.__G, g = window.__inkwave, perf = window.__inkwavePerf, w = perf.warmup'))return observed;
+   if(text.includes('window.__inkwavePerfDone'))return {status:failAt==='performance-window'?'failed':'passed'};
+   if(text.includes('windowStatus: perf.windowStatus'))return measured;
+   if(text==='() => navigator.userAgent')return 'bounded-double';
+   return {};
+  }};
+ const context={newPage:async()=>page,newCDPSession:async()=>cdp,close:async()=>{
+  calls.push('context-close');events.get('Network.loadingFailed')?.({requestId:'jet',errorText:'net::ERR_ABORTED',canceled:true});if(closeFailure)throw cleanup;
+ }};
+ const realm={browser:{newContext:async()=>context},report,observeStreamedMusic,manifest:{build:{revision:'rev'}},address:'http://127.0.0.1:9999/',
+  URL,Date,setTimeout,clearTimeout,process:{env:{}},quality:'low',BOOT_SEED:1,NATIVE_BOOT_TIMEOUT_MS:50,MIN_PERFORMANCE_FRAMES:3,PERFORMANCE_TIMEOUT_MS:200,durationMs:50,
+  installAudioTimingObserver(){},audioBuildManifestReceipt:()=>({}),audioDiagnosticURL:x=>x,audioReceiptSha256:()=>'',site:'/site',mimeErrors:[],
+  startProjectileThroughMenu:async()=>{if(failAt==='open-menu')throw primary;},completeNativeTurfIntro(){},atomicIntroFunction(){},
+  requireAtomicIntro:async()=>({intro:{},readiness:{},playingReady:true}),installProjectileCaptureRoster(){}};
+ vm.createContext(realm);vm.runInContext(summaryText+'\n'+openText+'\n'+performanceText,realm);
+ return {realm,report,calls,primary,cleanup,context,page};
+}
+const assertClosed=(f)=>{
+ assert.equal(f.calls.filter(x=>x==='context-close').length,1,'one observed context close');
+ const receipt=f.report.streamedMusicDiagnostics[0];assert.ok(receipt.closeStartedAt);assert.ok(receipt.closeFinishedAt);
+ assert.equal(receipt.snapshots.at(-1).reason,'before-context-close');
+ assert.equal(receipt.network.at(-1).phase,'context-close');assert.equal(receipt.network.at(-1).autoAccepted,false);
+ assert.ok(f.calls.lastIndexOf('snapshot')<f.calls.indexOf('context-close'),'snapshot precedes context close');
+};
+for(const failAt of ['open-init','open-goto','open-menu','open-placement'])test('open route closes observed context after '+failAt+' and preserves the error',async()=>{
+ const f=await lifecycleFixture({failAt});await assert.rejects(f.realm.openGameContext(),e=>e===f.primary);assertClosed(f);
+});
+for(const failAt of ['performance-enable','performance-warmup','performance-window'])test('performance route closes observed context after '+failAt,async()=>{
+ const f=await lifecycleFixture({failAt});await assert.rejects(f.realm.runFiringPerformance(),e=>failAt==='performance-enable'?e===f.primary:/warmup|performance window/.test(e.message));assertClosed(f);
+ if(failAt==='performance-warmup')assert.equal(f.report.performanceWarmups[0].admitted,false);
+ if(failAt==='performance-window')assert.equal(f.report.performanceFailures.length,1);
+});
+test('successful opening transfers cleanup ownership and successful performance closes exactly once',async()=>{
+ const f=await lifecycleFixture();const opened=await f.realm.openGameContext();assert.equal(f.calls.includes('context-close'),false);await opened.close();assertClosed(f);
+ const p=await lifecycleFixture();const result=await p.realm.runFiringPerformance();assert.equal(result.scenario,'desktop-long-fire');assert.equal(result.warmup.admitted,true);assertClosed(p);
+});
+for(const failAt of ['open-goto','performance-enable'])test('secondary close error cannot replace '+failAt+' error',async()=>{
+ const f=await lifecycleFixture({failAt,closeFailure:true});await assert.rejects(f.realm[failAt.startsWith('open')?'openGameContext':'runFiringPerformance'](),e=>e===f.primary);assertClosed(f);
+ assert.equal(f.report.browserDiagnostics.at(-1).event,'streamed-music-cleanup-failed');assert.equal(f.report.browserDiagnostics.at(-1).error,f.cleanup.message);
+});
+test('normal performance close rejection remains a failure and is not retried',async()=>{
+ const f=await lifecycleFixture({closeFailure:true});await assert.rejects(f.realm.runFiringPerformance(),e=>e===f.cleanup);assertClosed(f);
+});
+
+test('performance opening failure leaves cleanup with the opener and does not close twice',async()=>{
+ const f=await lifecycleFixture({failAt:'open-goto'});await assert.rejects(f.realm.runFiringPerformance(),e=>e===f.primary);assertClosed(f);
+});
+
+const outerText=runnerSource.slice(runnerSource.indexOf("\ntry {\n  if (capture !== 'performance')"));
+async function outerFixture({visualFailure=false,contextFailure=false,browserFailure=false,performanceFailure=false,requestFailure=false,longCleanup=false,serverPending=false}={}) {
+ const primary=new Error('first capture failure'), secondary=new Error(longCleanup?'secondary context '+ 'x'.repeat(12000):'secondary context close'),
+  tertiary=new Error(longCleanup?'secondary browser '+ 'x'.repeat(12000):'secondary browser close');
+ let finishServer, persistedWhileServerPending=false;
+ const writes=[],calls=[],report={errors:[],performance:[],screenshots:[],visualScenarios:[],browserDiagnostics:[]};
+ const realm={capture:performanceFailure?'performance':'visuals',device:'desktop',mode:'diagnostic',report,
+  mimeErrors:requestFailure?['request failed Jet_Arrow.mp3: net::ERR_ABORTED']:[],NATIVE_BOOT_TIMEOUT_MS:180000,evidence:'/evidence',process:{},
+  path:{join:(...args)=>args.join('/')},console:{log(){}},fs:{writeFileSync:(p,b)=>writes.push({path:p,body:b})},
+  browser:{close:async()=>{calls.push('browser-close');if(browserFailure)throw tertiary;}},server:{close:done=>{calls.push('server-close');if(serverPending)finishServer=done;else done();}},
+  openGameContext:async()=>({page:{},close:async()=>{calls.push('context-close');if(contextFailure)throw secondary;}}),
+  runVisuals:async()=>{calls.push('visual');if(visualFailure)throw primary;},
+  runFiringPerformance:async()=>{calls.push('performance');if(performanceFailure)throw primary;return {};}};
+ vm.createContext(realm);const completing=vm.runInContext('(async()=>{'+outerText+'})()',realm);
+ if(serverPending){
+  for(let i=0;i<12;i++)await Promise.resolve();
+  assert.equal(typeof finishServer,'function','server close was initiated');
+  persistedWhileServerPending=writes.some(x=>x.path.endsWith('/projectile-visuals-result.json'));
+  finishServer();
+ }
+ await completing;
+ const saved=writes.find(x=>x.path.endsWith('/projectile-visuals-result.json'));
+ assert.ok(saved,'bounded result is persisted even on cleanup rejection');
+ assert.equal(writes.length,2);assert.equal(calls.filter(x=>x==='browser-close').length,1);assert.equal(calls.at(-1),'server-close');
+ return {report:JSON.parse(saved.body),primary,secondary,tertiary,calls,exitCode:realm.process.exitCode,persistedWhileServerPending};
+}
+for(const options of [
+ {name:'normal',expected:'passed'},
+ {name:'visual failure',visualFailure:true},
+ {name:'visual and context close failure',visualFailure:true,contextFailure:true},
+ {name:'visual and browser close failure',visualFailure:true,browserFailure:true},
+ {name:'visual and both cleanup failures',visualFailure:true,contextFailure:true,browserFailure:true},
+ {name:'performance and browser close failure',performanceFailure:true,browserFailure:true},
+ {name:'normal capture then context close failure',contextFailure:true},
+ {name:'normal capture then browser close failure',browserFailure:true},
+ {name:'failed request then browser close failure',requestFailure:true,browserFailure:true},
+])test('outer report preserves first failure and writes result: '+options.name,async()=>{
+ const f=await outerFixture(options);assert.equal(f.report.status,options.expected||'failed');
+ assert.equal(f.exitCode,options.expected==='passed'?undefined:1);
+ if(options.visualFailure||options.performanceFailure)assert.equal(f.report.error,f.primary.stack);
+ else if(options.contextFailure)assert.equal(f.report.error,f.secondary.stack);
+ else if(options.browserFailure&&!options.requestFailure)assert.equal(f.report.error,f.tertiary.stack);
+ if(options.requestFailure){assert.deepEqual(f.report.errors,['request failed Jet_Arrow.mp3: net::ERR_ABORTED']);assert.equal(f.report.error,undefined);}
+ const cleanup=f.report.browserDiagnostics.filter(x=>x.event.endsWith('cleanup-failed'));
+ assert.equal(cleanup.length,Number(!!(options.visualFailure&&options.contextFailure))+Number(!!options.browserFailure));
+ if(options.visualFailure&&options.contextFailure)assert.equal(cleanup[0].route,'visual');
+});
+test('cleanup-only diagnostics are bounded and do not truncate an existing primary error',async()=>{
+ const f=await outerFixture({visualFailure:true,contextFailure:true,browserFailure:true,longCleanup:true});
+ assert.equal(f.report.error,f.primary.stack);assert.equal(f.report.browserDiagnostics.length,2);
+ for(const row of f.report.browserDiagnostics)assert.equal(row.error.length,1000);
+ const g=await outerFixture({browserFailure:true,longCleanup:true});assert.equal(g.report.status,'failed');assert.equal(g.report.error.length,4000);
+});
+
+test('browser close rejection persists result before a delayed server close callback',async()=>{
+ const f=await outerFixture({browserFailure:true,serverPending:true});assert.equal(f.persistedWhileServerPending,true);
+ assert.equal(f.report.status,'failed');assert.equal(f.exitCode,1);assert.equal(f.report.error,f.tertiary.stack);
 });

@@ -90,6 +90,10 @@ export async function nativeContextRecoveryProof() {
   const matchIdentity = G.match, paintIdentity = G.paint;
   check(overlay && document.querySelectorAll('.iw-webgl-recovery').length === 1, 'Expected one native reload dialog');
   receipt.lost = snapshot(); mark('context-lost');
+  // A promise resolved by a DOM listener may resume before dispatch finishes.
+  // WEBGL_lose_context forbids restoration until the lost event has completed;
+  // yield one task, not another microtask, before requesting the real restore.
+  await new Promise(resolve => setTimeout(resolve, 0));
   const restored = event('webglcontextrestored'); extension.restoreContext(); receipt.restoredEvent = await restored;
   check(!gl.isContextLost() && g.R._contextLost, 'Restore must recover GL while retaining terminal game latch');
   receipt.restored = snapshot(); mark('context-restored');

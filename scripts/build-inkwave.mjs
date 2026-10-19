@@ -21,6 +21,7 @@ import { networkIdentity, NETWORK_ROOT } from '../patches/network-replication/ad
 import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity, INITIAL_JS_BUDGET_BYTES } from '../patches/loading-cache/adapter.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { staticEsModuleImports } from './lib/inkwave-module-imports.mjs';
+import { REVIEWED_AUDIO_ORPHAN, reviewedAudioOrphanDecision } from './lib/inkwave-reviewed-audio-orphan.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { compactModuleStrings } from './lib/inkwave-source-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
@@ -247,6 +248,33 @@ if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && pro
   fs.writeFileSync(path.join(BUILD, 'vendor/three/build/three.module.js'), compactEsm(Buffer.from(out).toString('utf8'), 'vendor/three/build/three.module.js'));
   fs.rmSync(path.join(BUILD, 'vendor/three/build/three.core.js'));
   console.log(`three.js: ${keep.length} of ${exported.size} exports kept · ${kb(before)} → ${kb(out.length)} (gzip ${kb(gz(Buffer.from(out)))})`);
+}
+
+// The current audio route no longer imports this authored helper. Preserve its
+// source and input identity, but omit the reviewed orphan from deployment. A
+// known reference, changed helper or new opaque loader keeps it fail-closed.
+const audioOrphan = path.join(BUILD, REVIEWED_AUDIO_ORPHAN);
+if (fs.existsSync(audioOrphan)) {
+  const modules = new Map(walk(BUILD).filter(file => /\.m?js$/.test(file)).map(file =>
+    [path.relative(BUILD, file).split(path.sep).join('/'), fs.readFileSync(file, 'utf8')]));
+  // These modules are copied by prepareLoading after this graph pass.
+  for (const file of [...walk(path.join(LOADING_ROOT, 'runtime')), path.join(LOADING_ROOT, 'sw.js')].filter(file => /\.m?js$/.test(file)))
+    modules.set('patches/loading-cache/' + path.relative(LOADING_ROOT, file).split(path.sep).join('/'), fs.readFileSync(file, 'utf8'));
+  let inline = 0;
+  for (const htmlFile of walk(BUILD).filter(file => file.endsWith('.html'))) {
+    const html = fs.readFileSync(htmlFile, 'utf8');
+    for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+      const src = /\bsrc=["']([^"']+)["']/i.exec(match[1]);
+      modules.set('entry-script-' + (++inline) + '.mjs', /type=["']importmap["']/i.test(match[1])
+        ? 'export default ' + JSON.stringify(JSON.parse(match[2])) + ';'
+        : src ? 'import ' + JSON.stringify(src[1]) + ';' : match[2]);
+    }
+  }
+  const composedOwners = new Map(['src/main.js', 'src/game/character.js', 'src/audio/music.js'].map(rel =>
+    [rel, adaptBuildSource(rel, fs.readFileSync(path.join(SRC, rel), 'utf8'))]));
+  const decision = reviewedAudioOrphanDecision(fs.readFileSync(path.join(projectRoot, REVIEWED_AUDIO_ORPHAN), 'utf8'), modules, composedOwners);
+  if (decision.omit) fs.unlinkSync(audioOrphan);
+  console.log('reviewed audio helper: ' + (decision.omit ? 'omitted' : 'retained') + ' (' + decision.reason + ')');
 }
 
 // ---- module graph from src/main.js (static imports + the string-literal dynamic imports the boot always performs)
@@ -533,7 +561,7 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-reviewed-audio-orphan.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 for (const [file, hash] of Object.entries(nativeStageIdentity())) identity.files['native-stages/' + file] = hash;

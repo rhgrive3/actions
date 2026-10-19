@@ -1,6 +1,7 @@
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
+import { borrowedRecordedMainId, isBorrowedRecordedMain } from './borrowed-recorded-mains.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 
@@ -15,7 +16,16 @@ export function installWeaponAudioEngine(Engine){
   // A real game call to playWeapon therefore always hit the legacy SFX registry.
   const originalDef=p._def;
   p._def=function(name){
-    if(typeof name==='string'&&name.startsWith(MAIN_AUDIO_PREFIX))return this.resolveWeaponSound(name);
+    if(typeof name==='string'&&name.startsWith(MAIN_AUDIO_PREFIX)){
+      const pos=name.lastIndexOf(':'),mainId=mainAudioSourceId(name.slice(MAIN_AUDIO_PREFIX.length,pos));
+      if(isBorrowedRecordedMain(mainId)){
+        const source=borrowedRecordedMainId(mainId),event=name.slice(pos+1);
+        // Even a direct play('main:unsourced:fire') may never generate PCM.
+        if(!this.weaponBank()?.authorized.byEvent.has(source+':'+event))return null;
+        return this.resolveWeaponSound(MAIN_AUDIO_PREFIX+source+':'+event);
+      }
+      return this.resolveWeaponSound(name);
+    }
     return originalDef.call(this,name);
   };
   p.weaponBank=function(){if(!this.ctx)return null;if(!this._weaponBank||this._weaponBank.ctx!==this.ctx){
@@ -25,7 +35,8 @@ export function installWeaponAudioEngine(Engine){
   p.resolveWeaponSound=function(name){return this.weaponBank()?.resolve(name)||null;};
   p.loadAuthorizedWeaponAudio=async function(manifest,options={}){if(!this.ctx)this.init();if(!this.ctx)throw new Error("Web Audio context not initialized; unlock with a user gesture first");return this.weaponBank().authorized.load(manifest,options);};
   p.prepareWeapon=function(id,{urgent=true}={}){
-    id=mainAudioSourceId(id);
+    const requested=mainAudioSourceId(id),borrowed=isBorrowedRecordedMain(requested);
+    id=borrowedRecordedMainId(requested);
     if(!AUDIO_RECIPES[id]||!urgent)return;
     // Remote bots must not block the iPad player's first shot behind an
     // unbounded serial MP3 decode queue. Admit the active local weapon first.
@@ -58,7 +69,7 @@ export function installWeaponAudioEngine(Engine){
       main?.then(()=>{
         // Only weapons confirmed to lack a recorded base shot can be authored.
         // The existing Worker and 12 MiB LRU keep this off the game loop.
-        if(this._weaponBank===bank&&loader?.declares(id,'fire')===false)
+        if(this._weaponBank===bank&&!borrowed&&loader?.declares(id,'fire')===false)
           bank.warm(id,{focus:true,events:['fire','fire_full','fire_alt','fire_left','fire_vertical']});
       }).catch(()=>{});
     }else this._realS3Loader?.ensure(id,'fire');
@@ -67,7 +78,8 @@ export function installWeaponAudioEngine(Engine){
   // Run from the START operation before the game becomes playable, while the
   // user-gesture audio unlock/fade is in progress. Never synthesize on failure.
   p.requireRecordedMainShot=async function(weaponId){
-    const id=mainAudioSourceId(weaponId);
+    const requested=mainAudioSourceId(weaponId),id=borrowedRecordedMainId(requested);
+    const borrowed=isBorrowedRecordedMain(requested);
     if(!id)throw new Error('録音SEを確認するメインブキを特定できません');
     if(id.includes(':')||!AUDIO_RECIPES[id])return {ready:false,unrecorded:true,id};
     if(!this.ctx)this.init();
@@ -87,6 +99,7 @@ export function installWeaponAudioEngine(Engine){
     if(recorded===false){
       // ShooterNormal MP3 is part of the pinned source release. A missing or
       // incomplete manifest may never reinterpret it as an authored gunshot.
+      if(borrowed)throw new Error('代用する2022年実録MP3が見つかりません: '+requested+' -> '+id);
       if(id==='shooter')throw new Error('スプラシューターの本家MP3が音源一覧にありません');
       return {ready:false,unrecorded:true,id};
     }
@@ -125,7 +138,8 @@ export function installWeaponAudioEngine(Engine){
   // Preserve the exact admitted projectile clock: never delay a missed one-shot.
   // Preload after a first cold miss; the following shots will use real samples.
   p.playWeapon=function(id,event='fire',options={}){
-    id=mainAudioSourceId(id);
+    const requested=mainAudioSourceId(id),borrowed=isBorrowedRecordedMain(requested);
+    id=borrowedRecordedMainId(requested);
     const bank=this.weaponBank(),name=bank?.name(id,event);
     if(!name)return null;
     const loader=this._realS3Loader;
@@ -152,6 +166,9 @@ export function installWeaponAudioEngine(Engine){
         this._realAudioSuppressed=(this._realAudioSuppressed||0)+1;
         return null;
       }
+      // Family-borrowed sounds still require a real recorded AudioBuffer.
+      // A manifest/HTTP failure may NEVER enable authored synthetic PCM.
+      if(borrowed){this._realAudioSuppressed=(this._realAudioSuppressed||0)+1;return null;}
       // Unknown manifest also fails closed. Only an explicit confirmation
       // that neither requested nor base real MP3 exists enables authored PCM.
       if(declared!==false||hasBase||!bank.audibleShotFallback||options.actor?.isLocal!==true||
@@ -164,7 +181,7 @@ export function installWeaponAudioEngine(Engine){
     return this.play(name,{...options,priority:options.priority??(options.actor?.isLocal?88:64)});
   };
   p.loopWeapon=function(id,event,options={}){
-    id=mainAudioSourceId(id);
+    id=borrowedRecordedMainId(mainAudioSourceId(id));
     const bank=this.weaponBank(),name=bank?.name(id,event);
     if(!name)return null;
     if(bank.authorized.byEvent.has(`${id}:${event}`))return this.loop(name,options);

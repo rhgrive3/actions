@@ -138,6 +138,7 @@ async function openGameContext({ mobile = false } = {}) {
     assetURL: new URL(`_versions/${manifest.build.revision}/assets/audio/Jet_Arrow.mp3`, address).href,
     receipt: streamedMusicReceipt });
 
+  try {
   const audioNetwork = [], audioSnapshots = [];
   const audioReceipt = { checkoutSha: process.env.GITHUB_SHA || null,
     build: audioBuildManifestReceipt(site), network: audioNetwork, snapshots: audioSnapshots };
@@ -399,6 +400,14 @@ async function openGameContext({ mobile = false } = {}) {
   if (!report.provenance.browser) report.provenance.browser = version;
   await streamedMusic.snapshot('native-playing-capture-ready');
   return { context, page, close: streamedMusic.close };
+  } catch (error) {
+    try { await streamedMusic.close(); }
+    catch (cleanupError) {
+      report.browserDiagnostics.push({ event: 'streamed-music-cleanup-failed', route: 'open', mobile,
+        error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+    }
+    throw error;
+  }
 }
 
 async function setCamera(page, perspective) {
@@ -1244,6 +1253,8 @@ function summary(values) {
 
 async function runFiringPerformance({ mobile = false } = {}) {
   const { context, page, close } = await openGameContext({ mobile });
+  let performanceFailed = false;
+  try {
   const cdp = await context.newCDPSession(page);
   await cdp.send('Performance.enable');
   const gcEvents = [];
@@ -1636,14 +1647,34 @@ async function runFiringPerformance({ mobile = false } = {}) {
     garbageCollection: gcSummary,
     notes: ['Long-firing window uses the normal live match loop and debug fire input; slow software rendering extends the requested duration to collect at least 12 frames, bounded at 120 seconds.', 'GPU time is EXT_disjoint_timer_query when exposed; unavailable/disjoint is reported as such.', 'V8/devtools.timeline GC tracing brackets the firing window and adds instrumentation overhead to both builds.', 'Chromium mobile emulation is landscape and is not native Android.'],
   };
-  await close();
   return record;
+  } catch (error) {
+    performanceFailed = true;
+    throw error;
+  } finally {
+    try { await close(); }
+    catch (cleanupError) {
+      if (!performanceFailed) throw cleanupError;
+      report.browserDiagnostics.push({ event: 'streamed-music-cleanup-failed', route: 'performance', mobile,
+        error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+    }
+  }
 }
 
 try {
   if (capture !== 'performance') {
     const visual = await openGameContext();
-    try { await runVisuals(visual.page); } finally { await visual.close(); }
+    let visualFailed = false;
+    try { await runVisuals(visual.page); }
+    catch (error) { visualFailed = true; throw error; }
+    finally {
+      try { await visual.close(); }
+      catch (cleanupError) {
+        if (!visualFailed) throw cleanupError;
+        report.browserDiagnostics.push({ event: 'streamed-music-cleanup-failed', route: 'visual',
+          error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+      }
+    }
   }
   if (capture !== 'visuals') {
     if (device !== 'mobile') report.performance.push(await runFiringPerformance({ mobile: false }));
@@ -1654,8 +1685,16 @@ try {
 } catch (error) {
   report.status = 'failed'; report.error = error.stack || String(error); report.errors.push(...mimeErrors);
 } finally {
-  await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  try { await browser.close(); }
+  catch (cleanupError) {
+    report.browserDiagnostics.push({ event: 'browser-cleanup-failed',
+      error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+    if (report.status !== 'failed') {
+      report.status = 'failed';
+      report.error = String(cleanupError?.stack || cleanupError).slice(0, 4000);
+    }
+  }
+  const serverClosed = new Promise(resolve => server.close(resolve));
   const tracePath = path.join(evidence, 'chromium-browser-stderr.log');
   const browserLogBlock = report.error?.split('Browser logs:\n')[1]?.split(/\n\s+at (?:openGameContext|file:\/\/)/)[0];
   fs.writeFileSync(tracePath, browserLogBlock
@@ -1674,5 +1713,6 @@ try {
     bootTimeoutMs: NATIVE_BOOT_TIMEOUT_MS,
     output: outfile, browserTrace: tracePath,
   }));
+  await serverClosed;
 }
 if (report.status !== 'passed') process.exitCode = 1;

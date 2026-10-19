@@ -62,10 +62,20 @@ export function installMusicPlatform(MusicEngine, env = globalThis) {
     if (m.timer != null) env.clearInterval(m.timer);
     m.timer = null;
   }
-  function rebase(m, r) {
+  function rebase(m, r, schedulerGap = false) {
     const now = m.ctx?.currentTime;
     if (!Number.isFinite(now)) return;
     if (r.time !== null && (now - r.time > .25 || now < r.time)) {
+      // StreamedTrack owns a self-scheduled HTMLMediaElement. A busy main
+      // thread does not invalidate playback with paused=false (including a
+      // pending play() promise). Paused/failed media keep existing recovery.
+      // Keep explicit lifecycle resume/clock rollback recovery below unchanged.
+      const current = m.current, media = current?.element;
+      if (schedulerGap && now >= r.time && media && !current.disposed && !current.failed &&
+          media.paused === false && !media.ended && !media.error) {
+        r.time = now;
+        return;
+      }
       const id = m.current?.id;
       for (const player of m.players) player.dispose();
       m.players.length = 0; m.current = null; r.restarts++;
@@ -94,7 +104,7 @@ export function installMusicPlatform(MusicEngine, env = globalThis) {
     if (this.offline) return tick.call(this);
     const r = ensure(this);
     if (!lifecycle.active || !this.ctx) return;
-    rebase(this, r);
+    rebase(this, r, true);
     return tick.call(this);
   };
   P.dispose = function (...args) {

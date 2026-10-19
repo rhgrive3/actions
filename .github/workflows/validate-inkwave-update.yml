@@ -309,7 +309,7 @@ jobs:
           PY
       - name: Build patched site at the checkout commit
         run: |
-          node --test scripts/tests/inkwave-worker-compaction.test.mjs
+          node --test scripts/tests/inkwave-worker-compaction.test.mjs scripts/tests/inkwave-reviewed-audio-orphan.test.mjs
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
