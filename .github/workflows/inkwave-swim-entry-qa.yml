@@ -1,0 +1,71 @@
+name: INKWAVE swim owner entry native QA
+on:
+  pull_request:
+    paths:
+      - patches/splatoon3/runtime/swim-motion.mjs
+      - patches/splatoon3/tests/swim-motion.test.mjs
+      - tools/swim-entry-qa/**
+      - .github/workflows/inkwave-swim-entry-qa.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: swim-entry-native-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  compare-swim-entry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BASE_SHA: b75bc56e2e3fa970357b3bc92f63395c7c397353
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing native QA tools
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify existing native swim contracts
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/swim-motion.test.mjs
+      - name: Verify normal input and native QA contracts
+        run: node --experimental-vm-modules --test --test-concurrency=1 tools/swim-entry-qa/probe.test.mjs tools/swim-entry-qa/compare.test.mjs tools/swim-entry-qa/workflow.test.mjs
+      - name: Checkout fixed baseline without repository history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASE_SHA }}
+          fetch-depth: 1
+          path: _swim_entry_baseline
+      - name: Build and capture fixed main baseline
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C _swim_entry_baseline rev-parse HEAD)" = "$BASE_SHA"
+          cd _swim_entry_baseline
+          node scripts/build-inkwave.mjs inkwave-public _site
+          SOURCE_SHA="$BASE_SHA" node ../tools/swim-entry-qa/run.mjs --site _site --out ../.qa-evidence/swim-entry-baseline --expect baseline
+      - name: Build and capture exact candidate
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test --test-concurrency=1 tools/swim-entry-qa/probe.test.mjs tools/swim-entry-qa/compare.test.mjs tools/swim-entry-qa/workflow.test.mjs
+          node tools/swim-entry-qa/run.mjs --site _site --out .qa-evidence/swim-entry-candidate --expect candidate
+      - name: Verify matched camera, light, inputs, source phase and preserved shape
+        run: node tools/swim-entry-qa/compare.mjs .qa-evidence/swim-entry-baseline/result.json .qa-evidence/swim-entry-candidate/result.json "$SOURCE_SHA" .qa-evidence/swim-entry-comparison.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: swim-entry-native-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            .qa-evidence/swim-entry-baseline/**
+            .qa-evidence/swim-entry-candidate/**
+            .qa-evidence/swim-entry-comparison.json
+            _swim_entry_baseline/_site/inkwave-build.json
+            _site/inkwave-build.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
