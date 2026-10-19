@@ -6,6 +6,9 @@ on:
       - 'tools/spawner-production-qa/**'
       - 'tools/rainmaker-production-qa/**'
       - 'tools/rainmaker-air-production-qa/**'
+      - 'tools/rainmaker-form-production-qa/**'
+      - 'patches/local-quality/squid-form-ease-adapter.mjs'
+      - 'patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs'
       - 'tools/clam-production-qa/**'
       - 'patches/splatoon3/runtime/squid-spawn-presentation.mjs'
       - 'patches/splatoon3/runtime/weapon-handoff-motion.mjs'
@@ -51,7 +54,7 @@ jobs:
       - name: Verify comparison, artifact and production-source contracts
         run: node --experimental-vm-modules --test tools/object-presentation-qa/artifact-budget.test.mjs tools/object-presentation-qa/frame-contract.test.mjs tools/object-presentation-qa/identity.test.mjs tools/object-presentation-qa/harness-contract.test.mjs tools/object-presentation-qa/runtime-overlay.test.mjs
       - name: Verify Rainmaker presentation and hands
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-motion.test.mjs patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs tools/rainmaker-production-qa/grip-metrics.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-motion.test.mjs patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs tools/rainmaker-production-qa/grip-metrics.test.mjs
       - name: Verify spawner geometry and unchanged lifecycle
         run: node --experimental-vm-modules --test patches/splatoon3/tests/spawner-geometry-fidelity.test.mjs patches/splatoon3/tests/owner-report-2026-10-18.test.mjs patches/splatoon3/tests/respawn-lifecycle.test.mjs patches/splatoon3/tests/remote-respawn.test.mjs patches/splatoon3/tests/issue-879-spawn-pose.test.mjs
       - name: Verify Clam Blitz presentation and rules
@@ -64,7 +67,7 @@ jobs:
       - name: Verify real actors against the exact emitted site
         env:
           INKWAVE_BUILT_SITE: _site
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs patches/splatoon3/tests/ranked-clam-presentation.test.mjs patches/splatoon3/tests/ranked-clam-muzzle.test.mjs patches/splatoon3/tests/ranked-clam-swim-boundary.test.mjs patches/splatoon3/tests/ranked-clam-transient-lifecycle.test.mjs patches/splatoon3/tests/ranked-clam-visible-dive.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs patches/splatoon3/tests/ranked-clam-presentation.test.mjs patches/splatoon3/tests/ranked-clam-muzzle.test.mjs patches/splatoon3/tests/ranked-clam-swim-boundary.test.mjs patches/splatoon3/tests/ranked-clam-transient-lifecycle.test.mjs patches/splatoon3/tests/ranked-clam-visible-dive.test.mjs
       # One expensive emitted source-loaded surface gate. The ordinary
       # source/native CPU regressions above are separate and reuse this build.
       - name: Verify source-loaded Rainmaker surfaces against exact emitted site
@@ -100,12 +103,18 @@ jobs:
         if: always() && steps.production-build.outcome == 'success'
         timeout-minutes: 10
         run: node tools/object-presentation-qa/run.mjs --site _site --suite clam --out .qa-evidence/clam
-      # Same immutable production build, a separate 381319 handoff baseline,
+      # Same immutable production build, a separate 8a903662 handoff baseline,
       # and nested receipts under the existing Rainmaker artifact budget.
       - name: Capture Rainmaker full-jump and descent comparison
         if: always() && steps.production-build.outcome == 'success'
         timeout-minutes: 5
         run: node tools/object-presentation-qa/run.mjs --site _site --suite rainmaker-air --out .qa-evidence/rainmaker/air
+      # Same build, separate009 landing handoff baseline;20 form PNGs do not
+      # alter the existing128 Rainmaker or20 air/landing denominators.
+      - name: Capture Rainmaker interrupted-form comparison
+        if: always() && steps.production-build.outcome == 'success'
+        timeout-minutes: 5
+        run: node tools/object-presentation-qa/run.mjs --site _site --suite rainmaker-form --out .qa-evidence/rainmaker/form
       - name: Check every complete artifact before any upload, including failure logs
         id: artifact-budgets
         if: always()
