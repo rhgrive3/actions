@@ -3,9 +3,9 @@
 // anchor stops the build (no unpatched fallback is published).
 //
 // What is connected (nothing here changes weapon, movement, damage, network or animation code):
-//   src/world/maps.js            the 'range' layout joins MAP_LAYOUTS (not MAPS: no stage picker ever lists it)
-//   src/world/stages/index.js    the stage-module registry (props, murals) gains the range stage
-//   src/world/stages/surfaces.js the range's three texlib surfaces on slots 31–33
+//   src/world/maps.js            the range layout is now owned directly by readable game source
+//   src/world/stages/index.js    directly authored stage registry (no rewrite)
+//   src/world/stages/surfaces.js directly authored texlib slots 31–33
 //   src/world/levelMaterial.js   measuring lines drawn from world coordinates, only on slots 31 (floors) / 32 (walls)
 //   src/ui/hud.js                upstream bug fix: the missing `isJa` import (see the branch below)
 //   src/main.js                  startMatch resolves 'range' (humans-only, no bots), the attract backdrop stays empty on
@@ -26,33 +26,10 @@ export function replaceOnce(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 
-const CONNECTED = ['src/world/maps.js', 'src/world/stages/index.js', 'src/world/stages/surfaces.js', 'src/main.js', 'src/world/levelMaterial.js', 'index.html'];
+const CONNECTED = ['src/main.js', 'src/world/levelMaterial.js', 'index.html'];
 export function adaptRange(rel, code) {
   // a second application (or an upstream that already carries the range) must stop the build, not stack connections
   if (CONNECTED.includes(rel) && /practice-range|rangeLine\(/.test(code)) throw new Error(`INKWAVE practice range conflict (${rel}): already connected. Review upstream changes; site was not built.`);
-  if (rel === 'src/world/maps.js') {
-    code = replaceOnce(code, "import { LAYOUT as CARGO } from './stages/cargo/layout.js';",
-      "import { LAYOUT as CARGO } from './stages/cargo/layout.js';\nimport { LAYOUT as RANGE } from '../../patches/practice-range/stage/layout.mjs';", 'range layout import');
-    return replaceOnce(code, 'export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO };',
-      'export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO, range: RANGE };', 'range layout registry');
-  }
-  if (rel === 'src/world/stages/index.js') {
-    code = replaceOnce(code, "import * as cargoMurals from './cargo/murals.js';",
-      "import * as cargoMurals from './cargo/murals.js';\n" +
-      "import * as rangeLayout from '../../../patches/practice-range/stage/layout.mjs';\n" +
-      "import * as rangeProps from '../../../patches/practice-range/stage/props.mjs';\n" +
-      "import * as rangeSurfaces from '../../../patches/practice-range/stage/surfaces.mjs';\n" +
-      "import * as rangeMurals from '../../../patches/practice-range/stage/murals.mjs';", 'range stage imports');
-    return replaceOnce(code, '  cargo: { ...cargoLayout, ...cargoProps, ...cargoSurfaces, ...cargoMurals },',
-      '  cargo: { ...cargoLayout, ...cargoProps, ...cargoSurfaces, ...cargoMurals },\n  range: { ...rangeLayout, ...rangeProps, ...rangeSurfaces, ...rangeMurals },', 'range stage registry');
-  }
-  if (rel === 'src/world/stages/surfaces.js') {
-    code = replaceOnce(code, "import * as cargo from './cargo/surfaces.js';",
-      "import * as cargo from './cargo/surfaces.js';\nimport * as range from '../../../patches/practice-range/stage/surfaces.mjs';", 'range surfaces import');
-    code = replaceOnce(code, 'const PACKS = { cargo };', 'const PACKS = { cargo, range };', 'range surface pack');
-    code = replaceOnce(code, 'export const STAGE_SLOTS = { cargo: [28, 29, 30] };', 'export const STAGE_SLOTS = { cargo: [28, 29, 30], range: [31, 32, 33] };', 'range surface slots');
-    return replaceOnce(code, 'export const FIRST_STAGE_SLOT = 28, LAST_STAGE_SLOT = 30;', 'export const FIRST_STAGE_SLOT = 28, LAST_STAGE_SLOT = 33;', 'stage slot table size');
-  }
   if (rel === 'src/main.js') {
     code = replaceOnce(code, '    let map = MAPS.find((m) => m.id === opts.mapId) || MAPS[0];',
       '    let map = MAPS.find((m) => m.id === opts.mapId) || rangeMapFor(opts.mapId) || MAPS[0];', 'range map lookup');
