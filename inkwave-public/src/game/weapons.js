@@ -999,14 +999,7 @@ export class Projectiles {
       const bh = G.boss.segHit(m, _v2.copy(m).addScaledVector(dir, len), 0.1);
       if (bh && (!victim || bh.dist < victim.d)) { victim = null; len = bh.dist; bossHit = true; G.boss.hit(a, dmg, bh.target, 'charger', bh.point.clone()); }
     }
-    if (victim) { len = victim.d;
-      // Purely synchronous presentation scope. Do not add a sixth parameter:
-      // all network/final-damage wrappers own the fifth volley/group argument.
-      const oldHitAudio=a._sourceChargerAudioHit;
-      a._sourceChargerAudioHit={chargerDirect:true,charge};
-      try{this.applyHit(a,victim.e,dmg,'charger');}
-      finally{a._sourceChargerAudioHit=oldHitAudio;}
-    }
+    if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger'); }
     // paint along the line (projected to the ground)
     let area = 0;
     const step = w.lineSplatEvery;
@@ -1168,9 +1161,7 @@ export class Projectiles {
     if (route === 'drop') return;
     if (route === 'send') nm.sendHit(attacker, victim, dmg, weaponId);   // the kill confirm arrives with their splat
     else killed = victim.damage(dmg, attacker, weaponId);
-    // Presentation-only source identity. HP, network damage and kill ownership
-    // remain under the existing authoritative applyHit path.
-    emit('hit', { attacker, victim, damage: dmg, killed, weaponId, hitMeta:attacker?._sourceChargerAudioHit??null });
+    emit('hit', { attacker, victim, damage: dmg, killed, weaponId });
     // ink smacking the body, at the body (heavier + lower for big hits); the UI tick / kill sting are main.js's
     if (G.audio && (attacker.isLocal || victim.isLocal || victim._nearCamera?.())) {
       _vh.copy(victim.pos); _vh.y += victim.form === 'squid' ? 0.3 : 0.9;
