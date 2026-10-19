@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
-import { createPowerClamResources } from '../runtime/ranked/power-clam-model.mjs';
+import {fixture} from './source-fixture.mjs';
+// Source and exact emitted runs must exercise the same namespace end to end.
+const {context,THREE,createPowerClamResources,RankedWorld,ClamsRule}=await fixture({extraExports:`
+ export {createPowerClamResources} from './patches/splatoon3/runtime/ranked/power-clam-model.mjs';
+ export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';
+ export {ClamsRule} from './patches/splatoon3/runtime/ranked/clams.mjs';
+`});
+context.structuredClone=structuredClone;
 
 test('power silhouette, broad colors, bounded one-draw shared resources', () => {
  const r=createPowerClamResources(THREE),g=r.geometry,p=g.attributes.position,n=g.attributes.normal;
@@ -46,8 +52,6 @@ test('independent creations preserve exact geometry while resources are separate
  for(const r of[a,b]){r.geometry.dispose();r.material.dispose();}
 });
 
-import { RankedWorld } from '../runtime/ranked/world.mjs';
-import { ClamsRule } from '../runtime/ranked/clams.mjs';
 for(const kind of ['small','power'])test(`real ${kind} throw keeps rule trajectory and reuses visual resources`,()=>{
  for(const team of[0,1]){
   const stage={clams:{spawns:[],goals:[[50,0,50],[-50,0,-50]]}},scene=new THREE.Scene();
@@ -65,10 +69,27 @@ for(const kind of ['small','power'])test(`real ${kind} throw keeps rule trajecto
    const before=r.snapshot();world.update(engine,1/60);assert.deepEqual(r.snapshot(),before);assert.deepEqual(r.snapshot(),control.snapshot());
    const m=world._clamMarkers.get(c.id).mesh,res=kind==='power'?world.powerClamResources:world.smallClamResources;
    assert.equal(m.geometry,res.geometry);assert.equal(m.material,res.material);assert.equal(m.visible,true);
-   assert.equal(m.position.x,c.pos[0]);assert.equal(m.position.z,c.pos[2]);assert.equal(m.position.y,c.pos[1],'Flight centers no longer receive the ground-only half-height');assert.ok(m.rotation.toArray().slice(0,3).every(Number.isFinite));
+   assert.equal(m.position.x,c.pos[0]);assert.equal(m.position.z,c.pos[2]);assert.equal(m.position.y,c.pos[1]+(kind==='power'?.255:.066),'Held ball changes must preserve the existing main flight lift');assert.equal(JSON.stringify(m.scale.toArray()),'[1,1,1]');assert.ok(m.rotation.toArray().slice(0,3).every(Number.isFinite));
   }
   assert.equal(world._inventoryMarkers.get('carrier').visible,false);assert.ok(c.pos[2]>-3);
   r.state.clams=[];world.update(engine,1/60);assert.equal(world._clamMarkers.get(c.id).mesh.visible,false);
   world.dispose();assert.equal(scene.children.length,0);
  }
+});
+
+// Exercise the exact QA measurement body without starting a browser.
+import {readFileSync} from 'node:fs';
+test('native QA shell metric measures transformed triangles, not a rule-height proxy',()=>{
+ const text=readFileSync(new URL('../../../tools/clam-production-qa/browser.mjs',import.meta.url),'utf8');
+ const body=text.match(/const shellDistance=\(mesh,hand\)=>\{([\s\S]*?)\n  \};/);assert.ok(body,'bounded exact QA measurement body');
+ assert.equal(text.includes('lowerShellResidual:'),false,'ambiguous proxy removed');
+ const distance=new Function('THREE','assert',`return (mesh,hand)=>{${body[1]}}`)(THREE,(v,m)=>assert.ok(v,m));
+ const r=createPowerClamResources(THREE),m=new THREE.Mesh(r.geometry,r.material);m.position.set(.7,1.405,-.3);m.rotation.set(.2,.4,.6);m.scale.set(1.2,.8,1.1);m.updateMatrixWorld(true);
+ const p=r.geometry.attributes.position,ix=r.geometry.index,tri=new THREE.Triangle();const i=100*3;
+ [tri.a,tri.b,tri.c].forEach((v,k)=>v.fromBufferAttribute(p,ix.getX(i+k)).applyMatrix4(m.matrixWorld));
+ const center=tri.getMidpoint(new THREE.Vector3()),normal=tri.getNormal(new THREE.Vector3());if(normal.dot(center.clone().sub(m.position))<0)normal.negate();
+ const hand=center.clone().addScaledVector(normal,.123),q=distance(m,hand);assert.ok(Math.abs(q.handToSurfaceDistance-.123)<1e-7);assert.equal(q.triangles,216);
+ assert.ok(distance(m,tri.a).handToSurfaceDistance<1e-10,'actual shell vertex is surface contact');
+ let low=Infinity;for(let k=0;k<216*3;k++)low=Math.min(low,new THREE.Vector3().fromBufferAttribute(p,ix.getX(k)).applyMatrix4(m.matrixWorld).y);assert.equal(q.lowestWorldY,low);
+ r.geometry.dispose();r.material.dispose();
 });

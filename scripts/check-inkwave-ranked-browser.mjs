@@ -96,11 +96,19 @@ try{
      const support=physics.groundProbe(target.pos.x,target.pos.y,target.pos.z,.3,.3,foot,target.ground,false);
      if(!support.hit)throw Error('Rainmaker proof target has no native floor support');
      target.pos.y=support.y;target.grounded=true;target.groundN.copy(support.normal);
+     // This is a stationary attack target. Releasing a pre-existing charged
+     // Splatana or retaining an active Dualies roll otherwise moves it away.
+     target.weaponRunner.reset();
      target.invuln=0;target.s3.spawnArmor=null;target.intent.move.set(0,0,0);
      target.intent.fire=target.intent.sub=target.intent.special=target.intent.squid=target.intent.jump=false;
     }
     // END RAINMAKER PROOF TARGET SETUP
-    const targetState=()=>({id:target.nid,pos:target.pos.toArray(),vel:target.vel.toArray(),hp:target.hp,alive:target.alive,grounded:target.grounded,groundHit:target.ground.hit,groundBlock:target.ground.block,groundNormal:target.groundN.toArray(),form:target.form,jump:target.superJumpState?.phase??null,spawn:target.s3?.squidSpawn?.phase??null});
+    const targetState=()=>{
+     const r=target.weaponRunner,c=r.catalogState;
+     const phase=v=>v?Object.fromEntries(['t','dur','remaining','startup','elapsed','delay','duration','speed'].filter(k=>Number.isFinite(v[k])).map(k=>[k,v[k]])):null;
+     return {id:String(target.nid??`${target.team}:${target.slot}`),weapon:target.weaponId,pos:target.pos.toArray(),vel:target.vel.toArray(),hp:target.hp,alive:target.alive,grounded:target.grounded,groundHit:target.ground.hit,groundBlock:target.ground.block,groundNormal:target.groundN.toArray(),form:target.form,jump:target.superJumpState?.phase??null,spawn:target.s3?.squidSpawn?.phase??null,
+      runner:{charging:r.charging,charge:r.charge,cooldown:r.cooldown,dodge:phase(r.dodge),glide:phase(r.s3DualiesGlide),catalogId:c?.id??null,chargeF:c?.chargeF??0,stop:c?.stop??0,roll:phase(c?.roll),slip:phase(c?.slip),lunge:phase(c?.lunge),pending:!!c?.pending,stepStick:Array.from(c?.stepStick||[])}};
+    };
     const targetBefore=targetState();
     prepareRainmakerProofTarget(target,lane,w.floorAt(lane.x,lane.z),RG.physics,PLAYER.footRadius);
     const targetPrepared=targetState();

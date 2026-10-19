@@ -5308,6 +5308,15 @@ root yawの保持に加え、転がしの接地軸を床の接線に保持する
 
 main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.5が残り、HUDは+12、次のガチアサリ投入で本カウント77→68.5となる本番consumer差を再現。InkipediaのS2/S3共通Scoring節（取得2026-10-19、reported revision 730528）が示す閉鎖時の半分切捨てに合わせ、窓全体の得点を合計した後で新規ペナルティだけを整数化した。S3Wikiの小アサリ1個あたり1.5は合計前に切り捨てない。双方チーム・3種dt、複数窓、残ペナルティ、延長、実Match/HUD/host-client consumerを回帰。今回の根拠はWikiでありSwitch実機で端数処理を新規計測したものではない。投射物理・表示モデル・PR1627の別イベント修復とは分離する。詳細は [専用記録](inkwave-clam-penalty-consumer-2026-10-19.md)。
 
+
+## 2026-10-19：Rainmaker 公開 smoke の静止標的に残る武器動作を初期化
+
+公開 main `fbed2d4ef5a2708307036c167d0a9df0461e8597` は Pages artifact と公開 manifest/runtime の同一性が確認できたが、その後の公開 Rainmaker smoke が damage `[]` で失敗した（[run39226266615 / job117973196264](https://github.com/rhgrive3/actions/actions/runs/39226266615/job/117973196264)）。trace は HTTP503・capture timeout・boot例外ではなく、1発の60/180攻撃に対する標的移動後の実assert不一致。
+
+実 Actor/WeaponRunner/Physics の平床診断では、残存Splatana charge＋前入力履歴や Dualies roll/slip が、標的の速度とintentだけを0にしても後続updateで移動を発生させる。静止標的の準備で既存 `WeaponRunner.reset()` を呼び、武器/charge/roll/slip等を前後receiptへ記録する。変更はbrowser QAと専用回帰だけで、game runtime・boot・timeout・shot1・damage60/180・壁800→380の判定は維持。
+
+専用7/7成功、reset1行だけを除く負対照は3件失敗。普通シューター、Splatana3種のcharge有無、native Dualies roll、catalogue `s3-maneuver-long` のrollと別slipを実consumerで確認。旧失敗の移動量はcharged `s3-saber-lite` と一致するが、旧receiptに武器状態がないため歴史的原因の一意確定には至らない。参照版11.3.0の実機比較や本家新数値の変更ではなく、静止QA条件の修復。固定headのCI/browser/公開後検証はこの記録時点で未完了。詳細は [専用短report](rainmaker-proof-weapon-reset-2026-10-19.md)。
+
 ## 2026-10-19: 変身・オブジェクト表示・ルール/ギアの比較記録
 
 この節は 2026-10-19 06:31 UTC 時点の受入範囲を記録する。コード保存、PR公開、exact-head CI、実ブラウザ、main統合、公開サイト反映は別の段階である。以下の未確認項目を、CPUテストだけで本家実機との一致へ昇格しない。
@@ -5359,3 +5368,12 @@ The preceding 789378 native result (252 original PNGs and two contact sheets) is
 Four runtime paths separate the unaccepted arm overlay; ordinary bomb behavior and the three Rainmaker restoration hooks remain. Five Clam test paths are retained in source and emitted lanes, now requiring main-equivalent arms and source history. Their 21 source cases pass; the old 789378 negative control passes 10 ball/barrier cases and fails 11 arm cases. Shared contracts pass 24/24, Rainmaker source 27/27, and ordinary bomb/Clam rules 44/44. These counts overlap with additional drivers and must not be summed as unique cases.
 
 The 80 Clam captures retain all views/timing and record contact residual without claiming a faithful grip. Air comparison overlays the historical 381319 handoff and contemporaneous bomb module together, with Clam inactive in Rainmaker mode. The capture denominator stays 252 PNGs plus two sheets. New exact-head emitted tests, browser capture, official readback and final visual review remain required before integration. No new stage browser completion is claimed here.
+
+
+## 2026-10-19 PR1627 Clam ball display held back after native collision evidence
+
+Native8a capture and exact football-shell diagnostics found the head center inside the displayed shell at release0/16.7ms. The old display's head-center signed face distances were +0.04348/+0.264996 WU (outside), while new display distances were -0.13258/-0.080389 WU (inside). Scale, center offset removal and velocity-axis orientation each contributed; reverting scale alone would not resolve the observed problem. These are head-center containment measurements, not full head-surface intersection volume or proof of retail dimensions.
+
+The next stage restores the old-main ball size/pose across inventory and field/flight together to avoid a new carry-to-flight scale jump. It retains successful-event repair, barrier fracture/reuse, bounded inventory marker cache, spawner and Rainmaker improvements, and the previous Clam arm deferral. Full Clam enlargement and preparation/release motion remain unfinished; no physical shot origin or gameplay radius is silently adjusted. The8a original code, tests, PNGs and diagnostic prototypes remain preserved.
+
+The central report preserves the full new-main9af3006e prefix including PR1637, followed by this PR's existing appendices and this note. The new head requires its own source/emitted/browser/visual acceptance; earlier8a green CI is not substituted for it.

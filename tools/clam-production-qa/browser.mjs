@@ -18,7 +18,7 @@ export async function run({prefix,baselinePrefix}){
   const engine=new RankedEngine('clams',stage),rule=engine.rule,match=G.match={mode:'clams',state:'playing',ranked:engine,actors:[actor],playing:()=>true,rankedGains:[0,0],rankedEffects:{event(){}}};
   const world=match.rankedWorld=new RankedWorld(api,match,stage),floor=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.MeshStandardMaterial({color:0x70777f,roughness:.9}));
   floor.rotation.x=-Math.PI/2;floor.position.y=-.005;scene.add(floor);
-  const metric={variant,release:[],ground:[],load:{},armPresentation:'deferred',eventArmParity:[]};metrics.push(metric);
+  const metric={variant,release:[],ground:[],load:{},armPresentation:'deferred',ballPresentation:'existing-main-size-position-rotation',ballTransformChecks:0,eventArmParity:[]};metrics.push(metric);
   // A successful rule event must not introduce an unaccepted arm action.
   // Keep this capture gate in both native/source and before/after lanes.
   const deliverEvents=(events,ch)=>{
@@ -33,7 +33,19 @@ export async function run({prefix,baselinePrefix}){
    assert(parity&&solves===0&&poses===0&&clamActions===0,'Deferred Clam arms must preserve both wrists, native clocks, pose and IK without extra evaluation');
   };
   const physics=()=>JSON.stringify({pos:actor.pos.toArray(),vel:actor.vel.toArray(),hp:actor.hp,ink:actor.ink,special:actor.special,alive:actor.alive,weapon:actor.weapon.id});
-  const update=(dt=0)=>{const before=JSON.stringify(engine.snapshot());world.update(engine,dt);assert(JSON.stringify(engine.snapshot())===before,'Presentation mutated rules');};
+  const update=(dt=0)=>{const before=JSON.stringify(engine.snapshot());world.update(engine,dt);assert(JSON.stringify(engine.snapshot())===before,'Presentation mutated rules');
+   // Hold all ball transforms at main while reviewing a separate throw design.
+   // This does not certify the legacy geometry is free of existing clipping.
+   const expected=new THREE.Quaternion(),euler=new THREE.Euler();
+   const check=(c,mesh)=>{
+    assert(mesh&&mesh.scale.x===1&&mesh.scale.y===1&&mesh.scale.z===1,'Deferred ball scale differs from main');
+    assert(mesh.position.distanceTo(new THREE.Vector3(c.pos[0],c.pos[1]+(c.kind==='power'?.255:.066),c.pos[2]))<1e-10,'Deferred ball position differs from main');
+    const v=c.velocity;euler.set(v?.[0]*.04||0,(v?.[1]*.04||0)+G.time*1.4,c.drilling?G.time*24:(v?.[2]*.04||0));expected.setFromEuler(euler);
+    assert(mesh.quaternion.angleTo(expected)<1e-7,'Deferred ball rotation differs from main');metric.ballTransformChecks++;
+   };
+   for(const c of engine.rule.state.clams||[])if(c.carrier==null){const marker=world._clamMarkers.get(String(c.id));if(marker?.mesh.visible)check(c,marker.mesh);}
+   for(const b of engine.rule.state.baskets||[])if(b.pendingBreak)check({kind:'power',pos:b.pendingBreak.pos,drilling:true},world._clamMarkers.get('drill-'+b.team)?.mesh);
+   for(const group of world._inventoryMarkers.values())for(const model of [group.userData.smallClams,group.userData.powerClam])assert(model.scale.x===1&&model.scale.y===1&&model.scale.z===1,'Deferred inventory scale differs from main');};
   const view=(target,direction,distance)=>{camera.position.copy(new THREE.Vector3(...target)).add(new THREE.Vector3(...direction).normalize().multiplyScalar(distance));camera.lookAt(...target);};
   const save=async(name,extra={})=>{const row=await capture(variant+'-'+name);rows.push({...row,variant,...extra});if(!beforeLighting)beforeLighting=row.lighting;else assert(JSON.stringify(row.lighting)===JSON.stringify(beforeLighting),'Unequal native lighting/post');};
   const baskets=visible=>world.baskets.forEach((b,i)=>b.marker.visible=visible&&i===0);
@@ -47,7 +59,7 @@ export async function run({prefix,baselinePrefix}){
   for(const kind of ['small','power']){
    const c=rule._newClam(kind,0,[.8,0,0]);update();const mesh=world._clamMarkers.get(c.id).mesh;
    const bounds=new THREE.Box3().setFromObject(mesh);metric.ground.push({kind,min:bounds.min.toArray(),max:bounds.max.toArray(),scale:mesh.scale.toArray()});
-   if(variant==='after')assert(bounds.min.y>=-.002,'Clam penetrates the floor');view([.3,.65,0],[.8,.35,1],5.1);await save('ground-'+kind,{kind});
+   assert(bounds.min.y>=-.002,'Legacy supported clam penetrates the floor');view([.3,.65,0],[.8,.35,1],5.1);await save('ground-'+kind,{kind});
    rule.state.clams=[];update();
   }
   actor.character.root.visible=false;
@@ -60,13 +72,25 @@ export async function run({prefix,baselinePrefix}){
   deliverEvents(engine.events.splice(0),actor.character);assert(physics()===physical,'Throw presentation changed actor gameplay');
   const clam=rule.state.clams.at(-1),origin=[...clam.pos],velocity=[...clam.velocity];
   const sampled=bombReleasePosition(actor,new THREE.Vector3(...origin));metric.sampledRelease=sampled.toArray();
+  // True distance to the 216-triangle visual shell, excluding the stitches.
+  // The old rule.pos-minus-half-height proxy was not a rotated mesh boundary.
+  const shellDistance=(mesh,hand)=>{
+   mesh.updateMatrixWorld(true);const p=mesh.geometry.attributes.position,ix=mesh.geometry.index;
+   assert(ix&&ix.count>=216*3,'Power shell topology changed');
+   const tri=new THREE.Triangle(),nearest=new THREE.Vector3();let minDistance=Infinity,lowestY=Infinity;
+   for(let i=0;i<216*3;i+=3){
+    for(const[v,k]of [[tri.a,i],[tri.b,i+1],[tri.c,i+2]]){v.fromBufferAttribute(p,ix.getX(k)).applyMatrix4(mesh.matrixWorld);lowestY=Math.min(lowestY,v.y);}
+    tri.closestPointToPoint(hand,nearest);minDistance=Math.min(minDistance,nearest.distanceTo(hand));
+   }
+   return{triangles:216,handToSurfaceDistance:minDistance,lowestWorldY:lowestY,method:'world-transformed shell triangles; unsigned closest surface distance, not a grip acceptance'};
+  };
   let previous=0;
   for(const t of [0,1/60,2/60,.05,.15,.30,.52]){
    while(previous<t-1e-10){const dt=Math.min(1/60,t-previous);previous+=dt;G.time+=dt;actor._finishFrame(dt);engine.update(dt,{actors:[],inputs:{},floorAt:()=>0,blocked:()=>false});update(dt);}update();
    actor.character.root.updateMatrixWorld(true);const mesh=world._clamMarkers.get(clam.id).mesh,hand=new THREE.Vector3().setFromMatrixPosition(actor.character.bones.handL.matrixWorld);
    if(t===0)assert(hand.distanceTo(handBefore)===0,'Deferred throw cannot add an event-frame hand jump');
    if(t===0)metric.eventFrameHandJump=hand.distanceTo(handBefore);
-   metric.release.push({t,lowerShellResidual:hand.distanceTo(new THREE.Vector3(...clam.pos).add(new THREE.Vector3(0,-.255*1.2,0))),hand:hand.toArray(),model:mesh.position.toArray(),rule:[...clam.pos],motion:bombMotionSnapshot(actor.character)});
+   metric.release.push({t,shellSurface:shellDistance(mesh,hand),hand:hand.toArray(),model:mesh.position.toArray(),rule:[...clam.pos],motion:bombMotionSnapshot(actor.character)});
    await save('release-'+Math.round(t*1000)+'ms',{t});
   }
   assert(projectileCalls===0,'Clam animation spawned a weapon projectile');rule.state.clams=[];rule.state.inventories={};update();
@@ -152,5 +176,5 @@ export async function run({prefix,baselinePrefix}){
   assert(metric.load.geometryReused&&metric.load.materialReused&&metric.load.barrierGeometryReused,'Resource replaced');if(variant==='after')assert(metric.load.markerCache<=48,'Unbounded marker cache');
   world.dispose();actor.character.dispose();floor.geometry.dispose();floor.material.dispose();ctx.dispose();
  }
- return{status:'passed',expectedFrames:80,rows,metrics,contactSheets:['before','after'].map(variant=>({name:variant+'-clam-release-sequence',frames:['release-before','release-0ms','release-17ms','release-33ms'].map(name=>({name:variant+'-'+name}))})),scope:'Ten additional rear-view frames use real jump/throw input and head/ball depth receipts at FOV82 in 900-square output; Nintendo camera intrinsics, input timing and 16:9 framing are not recovered. Native installed Actor/RankedWorld and production Environment/PMREM/Renderer post. Before overlays three main3839 ranked modules plus bomb-motion and the shared final handoff owner (five modules total), not an entire historical build. Scale and break-tail are provisional visual calibration, not retail dimensions/timing; pre-event/event/1-frame/2-frame hand rows expose contact jumps and release residual instead of claiming exact retail motion. Clam arm presentation is deferred for every weapon: no new event-frame arm action is installed. Successful event receipts require both wrists/native clocks/pose/IK unchanged and zero extra pose or limb solves. Lower-shell residual is recorded, not accepted as contact; official preparation/release motion remains unfinished.'};
+ return{status:'passed',expectedFrames:80,rows,metrics,contactSheets:['before','after'].map(variant=>({name:variant+'-clam-release-sequence',frames:['release-before','release-0ms','release-17ms','release-33ms'].map(name=>({name:variant+'-'+name}))})),scope:'Ball size, ground/carry/flight/drilling position and rotation are held exactly at existing main; every world update verifies the legacy transform and unit scale. The former 1.4/1.2 scale, flight-center lift removal and velocity-axis calibration are withheld after added head-center containment was measured. Barrier fracture, bounded cache and canonical event repair remain. Ten additional rear-view frames use real jump/throw input and head/ball depth receipts at FOV82 in 900-square output; Nintendo camera intrinsics, input timing and 16:9 framing are not recovered. Native installed Actor/RankedWorld and production Environment/PMREM/Renderer post. Before overlays three main3839 ranked modules plus bomb-motion and the shared final handoff owner (five modules total), not an entire historical build. The retained break-tail is provisional visual calibration, not retail timing; legacy ball sizes are not certified retail dimensions; pre-event/event/1-frame/2-frame hand rows expose contact jumps and release residual instead of claiming exact retail motion. Clam arm presentation is deferred for every weapon: no new event-frame arm action is installed. Successful event receipts require both wrists/native clocks/pose/IK unchanged and zero extra pose or limb solves. Unsigned closest distance to 216 world-transformed shell triangles and lowest shell world Y are recorded; the old rule-position half-height proxy is retired and no contact is accepted; official preparation/release motion remains unfinished.'};
 }

@@ -1,7 +1,7 @@
 import { createRankedStage } from './stages.mjs';
-import { createSmallClamResources, createSmallClamInventory, updateSmallClamInventory } from './small-clam-model.mjs';
+import { createSmallClamResources, createSmallClamInventory, updateSmallClamInventory, SMALL_CLAM_HALF_HEIGHT } from './small-clam-model.mjs';
 import { createPowerClamResources } from './power-clam-model.mjs';
-import { createClamPose, createClamBarrier, CLAM_VISUAL_SCALE } from './clam-presentation.mjs';
+import { createClamBarrier } from './clam-presentation.mjs';
 import { createRainmakerModel, createRainmakerPresentation } from './rainmaker-model.mjs';
 
 const TEAM_INK_FALLBACK = [0x35c9df, 0xf35bce];
@@ -280,7 +280,6 @@ export class RankedWorld {
     }
     if (this.mode === 'clams') {
       this.baskets = [];
-      this._poseClam = createClamPose(THREE);
       for (let team = 0; team < 2; team++) {
         const marker = new THREE.Group();
         const color = this.teamInk[team];
@@ -750,12 +749,8 @@ export class RankedWorld {
     if (this.mode !== 'clams' || !this.clamGeometry) return;
     const state = engine?.rule?.state;
     const clams = [...(state?.clams || [])];
-    for (const basket of state?.baskets || []) if (basket.pendingBreak) {
-      const goal = vec(basket.goal) || this.stage?.clams?.goals?.[basket.team] || basket.pendingBreak.pos;
-      clams.push({ id: `drill-${basket.team}`, kind: 'power', team: basket.team, pos: basket.pendingBreak.pos, drilling: true,
-        age: Math.max(0, 1.2 - basket.pendingBreak.remaining),
-        velocity: [goal[0] - basket.pendingBreak.pos[0], goal[1] + .55 - basket.pendingBreak.pos[1], goal[2] - basket.pendingBreak.pos[2]] });
-    }
+    for (const basket of state?.baskets || []) if (basket.pendingBreak)
+      clams.push({ id: `drill-${basket.team}`, kind: 'power', team: basket.team, pos: basket.pendingBreak.pos, drilling: true });
     const present = new Set();
     for (const clam of clams) {
       if (!clam || clam.id === undefined || clam.carrier !== null && clam.carrier !== undefined) continue;
@@ -764,8 +759,12 @@ export class RankedWorld {
       const key = idKey(clam.id), marker = this._clamMarker(clam);
       present.add(key);
       marker.mesh.visible = true;
-      this._poseClam(marker.mesh, clam);
-
+      marker.mesh.position.set(p[0], p[1] + (clam.kind === 'power' ? .255 : SMALL_CLAM_HALF_HEIGHT), p[2]);
+      const velocity = vec(clam.velocity);
+      const clock = finite(this.G.time) ? this.G.time : 0;
+      if (velocity) marker.mesh.rotation.set(velocity[0] * 0.04, velocity[1] * 0.04 + clock * 1.4, velocity[2] * 0.04);
+      else marker.mesh.rotation.y = clock * 1.4;
+      if (clam.drilling) marker.mesh.rotation.z = clock * 24;
     }
     for (const [key, marker] of this._clamMarkers) {
       if (!present.has(key)) {
@@ -801,8 +800,6 @@ export class RankedWorld {
       updateSmallClamInventory(this.THREE, small, inventory.power ? 0 : inventory.small);
       small.visible = !inventory.power && small.count > 0;
       power.visible = !!inventory.power;
-      small.scale.setScalar(CLAM_VISUAL_SCALE.small);
-      power.scale.setScalar(CLAM_VISUAL_SCALE.power);
       // A carried clam trails behind the carrier; this is presentation only.
       // Local visual offsets do not change rule positions or throw origins.
       const yaw = finite(actor.yaw) ? actor.yaw : 0;

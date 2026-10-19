@@ -19,51 +19,47 @@ function setup() {
 }
 const same=(a,b)=>assert.deepEqual(JSON.parse(JSON.stringify(a)),JSON.parse(JSON.stringify(b)));
 
-test('display scale and ground support change only meshes; inventory uses the same factor',()=>{
- const {world,engine}=setup();
- for(const kind of ['small','power']) {
+// Production ball presentation is deliberately held at the existing main
+// transform. The unused calibration helper remains only as a negative control.
+function legacyPose(mesh,clam,clock){
+ const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(
+  clam.velocity?.[0]*.04||0,(clam.velocity?.[1]*.04||0)+clock*1.4,
+  clam.drilling?clock*24:(clam.velocity?.[2]*.04||0)));
+ assert.equal(JSON.stringify(mesh.scale.toArray()),'[1,1,1]','main ball scale');
+ same(mesh.position.toArray(),[clam.pos[0],clam.pos[1]+(clam.kind==='power'?.255:.066),clam.pos[2]]);
+ assert.ok(mesh.quaternion.angleTo(q)<1e-7,'main clock/velocity ball rotation');
+}
+test('field and inventory sizes and ground support remain main-equivalent',()=>{
+ const {world,engine,G}=setup();
+ for(const kind of ['small','power']){
   const c=engine.rule._newClam(kind,0,[1,2,3]);
   engine.rule.state.inventories.player={team:0,small:kind==='small'?7:0,power:kind==='power'};
-  const before=engine.snapshot(); world.update(engine,1/60); same(engine.snapshot(),before);
-  const field=world._clamMarkers.get(c.id).mesh,group=world._inventoryMarkers.get('player');
-  assert.equal(field.scale.x,CLAM_VISUAL_SCALE[kind]);
-  assert.equal(field.position.y,2+CLAM_VISUAL_HALF_HEIGHT[kind]);
+  const before=engine.snapshot();world.update(engine,1/60);same(engine.snapshot(),before);
+  const mesh=world._clamMarkers.get(c.id).mesh,group=world._inventoryMarkers.get('player');legacyPose(mesh,c,G.time);
   const held=kind==='small'?group.userData.smallClams:group.userData.powerClam;
-  assert.equal(held.scale.x,field.scale.x);
- }
- world.dispose();
+  same(held.scale.toArray(),[1,1,1]);same(group.position.toArray(),[0,kind==='power'?.34:.16,-.72]);
+ }world.dispose();
 });
-
-test('football X long-axis follows velocity for opposite/vertical directions; phase is age, not global time',()=>{
- const pose=createClamPose(THREE),mesh=new THREE.Mesh();
- for(const v of [[1,0,0],[-1,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[3,4,-2]]) {
-  const c={kind:'power',pos:[2,3,4],velocity:v,age:.17,grounded:false};
-  pose(mesh,c);const long=new THREE.Vector3(1,0,0).applyQuaternion(mesh.quaternion);
-  assert.ok(long.dot(new THREE.Vector3(...v).normalize())>1-1e-10);
-  const q=mesh.quaternion.clone();pose(mesh,c);assert.ok(q.angleTo(mesh.quaternion)<1e-7);
-  c.age+=.1;pose(mesh,c);assert.ok(q.angleTo(mesh.quaternion)>.1);
- }
-});
-
-test('grounded clams stop clock spin and reused markers clear flight/drill scale and pose',()=>{
+test('flight and same-id kind reuse retain main scale, lift and clock rotation',()=>{
  const {world,engine,G}=setup(),r=engine.rule;
- const c=r._newClam('power',0,[0,0,0],{grounded:false,age:1,velocity:[1,2,3]});
- world.update(engine);const mesh=world._clamMarkers.get(c.id).mesh;
- c.kind='small';c.grounded=true;c.velocity=[0,0,0];world.update(engine);const q=mesh.quaternion.clone();
- G.time=10000;c.age=10000;world.update(engine);assert.ok(q.angleTo(mesh.quaternion)<1e-9);
- assert.equal(mesh.scale.x,CLAM_VISUAL_SCALE.small);assert.equal(mesh.userData.clamPhase,'grounded');
- world.dispose();
+ const c=r._newClam('power',0,[2,3,4],{grounded:false,age:.17,velocity:[1,2,3]});
+ for(const kind of ['power','small'])for(const v of [[1,0,0],[-1,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[3,4,-2]]){
+  c.kind=kind;c.velocity=v;G.time+=.17;const before=engine.snapshot();world.update(engine);same(engine.snapshot(),before);legacyPose(world._clamMarkers.get(c.id).mesh,c,G.time);
+ }
+ c.grounded=true;c.velocity=[0,0,0];G.time=10000;world.update(engine);legacyPose(world._clamMarkers.get(c.id).mesh,c,G.time);world.dispose();
 });
-
-test('drill rolls about the barrier-entry direction and preserves authority countdown',()=>{
- const {world,engine}=setup(),b=engine.rule.state.baskets[0];
- b.pendingBreak={remaining:1,pos:[0,.55,19],sequence:1};const before=engine.snapshot();
- world.update(engine,1/60);same(engine.snapshot(),before);
+test('rejected 8a calibration fails the production main-equivalence gate',()=>{
+ const pose=createClamPose(THREE),mesh=new THREE.Mesh(),c={kind:'power',pos:[0,1.15,0],grounded:false,velocity:[0,4,9.84],age:0};
+ pose(mesh,c);assert.throws(()=>legacyPose(mesh,c,1),/main ball scale/);
+ mesh.scale.setScalar(1);assert.throws(()=>legacyPose(mesh,c,1));
+ mesh.position.y+=.255;assert.throws(()=>legacyPose(mesh,c,1),/main clock\/velocity/);
+});
+test('drilling marker remains main-equivalent while the barrier follows authority countdown',()=>{
+ const {world,engine,G}=setup(),b=engine.rule.state.baskets[0];
+ b.pendingBreak={remaining:1,pos:[0,.55,19],sequence:1};G.time=.3;const before=engine.snapshot();world.update(engine,1/60);same(engine.snapshot(),before);
  const mesh=world._clamMarkers.get('drill-0').mesh;
- assert.equal(mesh.userData.clamPhase,'drilling');
- const long=new THREE.Vector3(1,0,0).applyQuaternion(mesh.quaternion);assert.ok(long.z>1-1e-10);
- b.pendingBreak.remaining=.7;world.update(engine,1/60);
- assert.ok(new THREE.Vector3(1,0,0).applyQuaternion(mesh.quaternion).z>1-1e-10);
+ legacyPose(mesh,{kind:'power',pos:b.pendingBreak.pos,drilling:true},G.time);
+ b.pendingBreak.remaining=.7;G.time=.6;world.update(engine,1/60);legacyPose(mesh,{kind:'power',pos:b.pendingBreak.pos,drilling:true},G.time);
  assert.equal(world.baskets[0].gate.userData.clamBarrierPhase,'drilling');world.dispose();
 });
 
