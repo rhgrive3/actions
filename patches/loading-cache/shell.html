@@ -1,15 +1,33 @@
 <style>
-#inkwave-startup-shell{position:fixed;inset:0;z-index:51;display:grid;place-content:center;gap:16px;padding:24px;background:#101018;color:#fff;font:16px/1.65 system-ui,-apple-system,sans-serif;text-align:center}
+/* Static boot shell: same markup classes as the native loading screen (patches/local-quality/loading-screen-adapter.mjs, styles/ui.css). */
+#inkwave-startup-shell{--u:min(1vw,1.7778vh);--k:#15121c;--a:#ff8a14;--a-rgb:255,138,20;--b:#2f5bff;--b-rgb:47,91,255;--fs-xs:max(11px,calc(var(--u)*.8));--fs-s:max(12px,calc(var(--u)*.95));position:fixed;inset:0;z-index:51;overflow:hidden;margin:0;color:#fff;font:500 16px/1.5 Rubik,system-ui,-apple-system,sans-serif;background:#05050b}
+@media (pointer:coarse){#inkwave-startup-shell{--u:clamp(6px,1.5vmin,12px)}}
 #inkwave-startup-shell[hidden],#inkwave-startup-retry[hidden],#inkwave-cache-status[hidden]{display:none}
-#inkwave-startup-shell h1{font-size:clamp(32px,8vw,56px);line-height:1.1;letter-spacing:.04em;margin:0}
-#inkwave-startup-shell p{margin:0;max-width:36em}
-#inkwave-startup-retry{color:#b6f477;min-height:44px;display:grid;place-items:center}
+.iw-load-shell *{box-sizing:border-box}
+/* Layout also holds when styles/ui.css itself is unavailable (offline startup failure). */
+.iw-load-shell .iw-zl__center{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:max(260px,calc(var(--u)*46));max-width:calc(100vw - 48px)}
+.iw-load-shell .iw-zl__mark{margin:0;line-height:0}
+.iw-load-shell svg{display:block;width:100%;height:auto;overflow:visible}
+.iw-load-shell .iw-zl__label{white-space:normal;letter-spacing:.12em;color:rgba(255,255,255,.72)}
+.iw-load-shell .iw-zl__fill{right:62%;animation:iw-zl-scan 1.5s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes iw-zl-scan{from{transform:translateX(-100%)}to{transform:translateX(265%)}}
+#inkwave-startup-retry{display:inline-grid;place-items:center;min-height:44px;margin-top:calc(var(--u)*2.4);padding:0 1.6em;border:1.5px solid var(--a);color:#fff;font:700 var(--fs-s)/1 Rubik,system-ui,sans-serif;letter-spacing:.2em;text-decoration:none;background:rgba(var(--a-rgb),.14)}
 #inkwave-cache-status{position:fixed;bottom:max(8px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:45;max-width:90vw;box-sizing:border-box;padding:6px 12px;border-radius:8px;background:#101018ed;color:#fff;font:14px/1.5 system-ui;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.iw-load-shell .iw-zl__fill{animation:none;transform:translateX(80%)}}
 </style>
-<section id="inkwave-startup-shell" aria-label="INKWAVE 起動中">
-<h1>INKWAVE</h1><p id="inkwave-startup-status" role="status">ゲームを準備しています…</p>
+<link rel="preload" href="patches/local-quality/assets/loading/arena.webp" as="image" type="image/webp" fetchpriority="high">
+<section id="inkwave-startup-shell" class="iw-load-shell iw-zl" aria-label="ZEVANT 起動中">
+<div class="iw-zl__bg" aria-hidden="true"><i class="iw-zl__art"></i><i class="iw-zl__shade"></i><i class="iw-zl__beam"></i></div>
+<i class="iw-zl__c iw-zl__c--tl" aria-hidden="true"></i><i class="iw-zl__c iw-zl__c--tr" aria-hidden="true"></i><i class="iw-zl__c iw-zl__c--bl" aria-hidden="true"></i><i class="iw-zl__c iw-zl__c--br" aria-hidden="true"></i>
+<div class="iw-zl__status" aria-hidden="true"><i class="iw-zl__dot"></i>NOW LOADING</div>
+<div class="iw-zl__center">
+<h1 class="iw-zl__mark" aria-label="ZEVANT"><svg viewBox="0 0 568 100" aria-hidden="true"><defs><linearGradient id="zvs-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#dfe4f0"/><stop offset="1" stop-color="#8e98b2"/></linearGradient></defs><g transform="translate(21 0) skewX(-12)"><path d="M0 0H80V18L26 82H80V100H0V82L54 18H0ZM94 0H164V18H114V41H154V59H114V82H164V100H94ZM178 0H199L221 74L243 0H264L232 100H210ZM310 0H332L364 100H343L321 28L299 100H278ZM378 0H398L436 64V0H456V100H436L398 36V100H378ZM470 0H546V18H518V100H498V18H470Z" transform="translate(-3 0)" style="fill:var(--a)" opacity=".8"/><path d="M0 0H80V18L26 82H80V100H0V82L54 18H0ZM94 0H164V18H114V41H154V59H114V82H164V100H94ZM178 0H199L221 74L243 0H264L232 100H210ZM310 0H332L364 100H343L321 28L299 100H278ZM378 0H398L436 64V0H456V100H436L398 36V100H378ZM470 0H546V18H518V100H498V18H470Z" transform="translate(3 0)" style="fill:var(--b)" opacity=".8"/><path d="M0 0H80V18L26 82H80V100H0V82L54 18H0ZM94 0H164V18H114V41H154V59H114V82H164V100H94ZM178 0H199L221 74L243 0H264L232 100H210ZM310 0H332L364 100H343L321 28L299 100H278ZM378 0H398L436 64V0H456V100H436L398 36V100H378ZM470 0H546V18H518V100H498V18H470Z" fill="url(#zvs-g)"/></g></svg><span class="iw-zl__shine"></span></h1>
+<i class="iw-zl__rule"></i>
+<div class="iw-zl__meta"><p id="inkwave-startup-status" class="iw-zl__label" role="status">ゲームを準備しています…</p></div>
+<div class="iw-zl__bar" aria-hidden="true"><i class="iw-zl__fill"></i></div>
 <a id="inkwave-startup-retry" href="" hidden>もう一度開く</a>
-<noscript>このゲームにはJavaScriptが必要です。</noscript>
+<noscript><p class="iw-zl__label">このゲームにはJavaScriptが必要です。</p></noscript>
+</div>
 </section>
 <p id="inkwave-cache-status" role="status" hidden></p>
 <script>
