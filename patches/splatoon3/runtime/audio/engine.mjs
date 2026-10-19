@@ -110,16 +110,19 @@ export function installWeaponAudioEngine(Engine){
       finally{clearTimeout(wakeTimeout);}
       if(this.ctx.state!=='running')throw new Error('音声出力が有効ではありません。もう一度STARTを押してください');
     }
-    // The source-backed body-hit, critical-hit and enemy-splat recordings
-    // are only needed for the selected Charger's fight. They are tiny and
-    // remain in the 40 MiB decoded MP3 cache. No authored hit approximation.
-    if(AUDIO_RECIPES[id].family==='charger'){
-      for(const cue of ['combat:critical','combat:damage','combat:splat']){
-        const row=await loader.ensure(cue,'fire');
-        if(!bank.authorized.byEvent.has(cue+':fire')){
-          const why=row?.errors?.[0]?.error||loader.errors?.at(-1)||'source asset missing';
-          throw new Error('チャージャーの本家命中SEを読み込めません: '+cue+' ('+why+')');
-        }
+    // During START, all four current 2022 source combat cues are admitted
+    // before the first playable frame, not only a Charger's. The test harness
+    // may provide a focused older manifest without combat clips; production
+    // manifest declares all four source events. A declared source that fails
+    // HTTP/decode cannot quietly fall back to invented combat audio.
+    for(const cue of ['combat:critical','combat:ink_focus_normal',
+      'combat:ink_focus_strong','combat:splat']){
+      if(loader.declares(cue,'fire')===false)continue;
+      const row=await loader.ensure(cue,'fire');
+      if(loader.declares(cue,'fire')===true &&
+          !bank.authorized.byEvent.has(cue+':fire')){
+        const why=row?.errors?.[0]?.error||loader.errors?.at(-1)||'source asset missing';
+        throw new Error('本家命中・撃破SEを読み込めません: '+cue+' ('+why+')');
       }
     }
     return {ready:true,id,recording:'fire'};
