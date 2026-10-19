@@ -80,7 +80,15 @@ export function adaptPaintOwnership(rel, code, replaceOnce) {
       ['w.impactRadius, p.team, { seed: Math.random() }', "w.impactRadius, p.team, { seed: projectileBurstPaintSeed(p, Math.random()), claimOwner: p.owner, claimMode: (p.s3SpecialWeapon || p.s3PaintNoSpecial) ? 'no-special' : undefined }", 'blaster burst ownership credit'],
       ["c.team, { seed: Math.random() }));", "c.team, { seed: Math.random(), claimOwner: c.owner }));", 'special rain ownership credit'],
     ];
-    for (const [before, after, label] of edits) code = replaceOnce(code, before, after, label);
+    for (const [before, after, label] of edits) {
+      if ((label === 'charger line ownership credit' || label === 'charger impact ownership credit') &&
+          code.includes("footprint: 'ink-charger'")) {
+        // Modern charger stamps already carry claimOwner and the source profile;
+        // retaining the obsolete 1.2/0.6 literal anchors would reject the build.
+        continue;
+      }
+      code = replaceOnce(code, before, after, label);
+    }
     code = replaceOnce(code,
       'if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius',
       "if (g.hit) p.owner[(p.s3SpecialWeapon || p.s3PaintNoSpecial) ? 'addTurfNoSpecial' : 'addTurf'](G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius",

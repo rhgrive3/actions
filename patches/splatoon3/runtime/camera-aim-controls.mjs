@@ -30,7 +30,7 @@ export function integrateLookAxis(state, axis, target, dt, rate = 60) {
 
 export function isScopedCharger(weapon) {
   if ((weapon?.behaviorKind || weapon?.kind) !== 'charger') return false;
-  return weapon.scopedCharge === true || weapon.catalogRecord?.parameters?.WeaponScopeParam != null;
+  return weapon.scoped === true || weapon.scopedCharge === true || weapon.catalogRecord?.parameters?.WeaponScopeParam != null;
 }
 
 /** Sparse-table presence is a capability, even when the override object is {}.
@@ -43,7 +43,7 @@ export function isScopedCharger(weapon) {
 export const SCOPE_DEFAULT_CAMERA_FOVY = 28;
 export function scopeVerticalFov(weapon) {
   const source = weapon?.catalogRecord?.parameters?.WeaponScopeParam?.CameraFovy;
-  const value = Number.isFinite(source) ? source : weapon?.scopeFov;
+  const value = Number.isFinite(source) ? source : (weapon?.scopeFovY ?? weapon?.scopeFov);
   return Number.isFinite(value) && value >= 5 && value <= 55 ? value : SCOPE_DEFAULT_CAMERA_FOVY;
 }
 /** The rig's un-zoomed vertical FOV (its Hor+ 16:9 reference), in degrees. */

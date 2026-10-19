@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { INK_PROFILES as P, INK_MODEL, splashPlan, launchSpeed, advanceInkFrame, damageAt, referenceReach, paintShape, splashShape, correctInkAim, seededUnit } from '../../inkwave-public/src/game/inkFlight.js';
+import { WEAPONS } from '../../inkwave-public/src/config.js';
+import { chargerLineRadius, chargerLineDepth, chargerLineStretch, chargerLineSpacing, chargerEndRadius, chargerScopeFactor, chargerScopeFov, chargerFallTime, CHARGER_FALL_GRAVITY } from '../../inkwave-public/src/game/chargerTuning.js';
 const near = (a,b,e=1e-9) => assert.ok(Math.abs(a-b)<e, `${a} != ${b}`);
 function projectile(profile=P.shooter) { return { pos:{x:0,y:0,z:0}, vel:{x:0,y:0,z:launchSpeed(profile)},inkFrame:0,inkPhase:0}; }
 
@@ -65,4 +67,49 @@ test('aim correction and guide use the actual fixed-frame flight',()=>{
   let y;for(let i=0;i<30;i++){const old={...p.pos};advanceInkFrame(p,P.shooter);if(p.pos.z>=10.5){y=old.y+(p.pos.y-old.y)*(10.5-old.z)/(p.pos.z-old.z);break;}}
   near(y,0,.025);
   assert.equal(correctInkAim(P.shooter,from,{x:0,y:0,z:1},{x:0,y:1,z:50},135.96,referenceReach(P.shooter)),false);
+});
+
+test('source-derived charger paint is narrow at tap, half and full charge', () => {
+  const w = WEAPONS.charger, scope = WEAPONS.charger_scope;
+  for (const weapon of [w, scope]) {
+    near(chargerLineRadius(weapon,0),0.156);
+    near(chargerLineRadius(weapon,0.5),0.312);
+    near(chargerLineDepth(weapon,0),0.546);
+    near(chargerLineDepth(weapon,0.5),0.312);
+    near(chargerEndRadius(weapon,0),0.1812);
+    near(chargerLineSpacing(weapon,0),2*.546*(1-.125));
+    near(chargerLineSpacing(weapon,.5),2*.312*(1-.25));
+    assert.ok(chargerLineSpacing(weapon,1) > 0);
+    assert.ok(chargerLineRadius(weapon,1) < .35, 'no old 0.55+ shader spatter radius');
+  }
+  near(chargerLineRadius(w,1),.312);
+  near(chargerLineRadius(scope,1),.2965);
+  near(chargerEndRadius(w,1),.6526);
+  near(chargerEndRadius(scope,1),.617);
+  near(chargerLineStretch(w,0),.546/.156-1);
+  near(chargerLineStretch(w,1),0);
+});
+
+test('scope optics activate only after half charge and restore on release', () => {
+  const scope = WEAPONS.charger_scope;
+  for (const charge of [0,.2,.5,.9,1])
+    near(chargerScopeFactor(WEAPONS.charger,charge,true),0);
+  near(chargerScopeFactor(scope,.5,true),0);
+  near(chargerScopeFactor(scope,.75,true),.5);
+  near(chargerScopeFactor(scope,1,true),1);
+  near(chargerScopeFactor(scope,1,false),0);
+  near(chargerScopeFov(scope),28);
+  near(chargerScopeFov({id:'e_liter_scope',kind:'charger',scopedCharge:true}),20);
+  near(chargerScopeFov({kind:'charger',scopedCharge:true,catalogRecord:{parameters:{WeaponScopeParam:{CameraFovy:23}}}}),23);
+  assert.ok(WEAPONS.charger_scope && WEAPONS.charger_scope.scoped);
+});
+
+test('falling charger ink reaches high-stage paint at its physical landing time', () => {
+  near(chargerFallTime(0),0);
+  near(chargerFallTime(10),1);
+  near(chargerFallTime(40),2);
+  for (const height of [0,1,3.5,10,25,40]) {
+    const t = chargerFallTime(height);
+    near(Math.max(0,height-.5*CHARGER_FALL_GRAVITY*t*t),0,1e-7);
+  }
 });

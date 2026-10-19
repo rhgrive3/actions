@@ -2137,8 +2137,10 @@ function firstSplatStateFor(session,cfg) {
         throw Error('Network draw counter anchor mismatch');
       code = code.slice(0, at) + '    let n = 0, remoteDrawn = 0;' + code.slice(at + '    let n = 0;'.length);
     }
-    patch('      if (n >= MAX_BLOBS - 5) break;\n      if (p.delay > 0) continue;',
-      `      if (n >= MAX_BLOBS - 5) break;
+    const drawCap = code.includes('      if (n >= MAX_BLOBS - 5 - reserve) break;')
+      ? 'MAX_BLOBS - 5 - reserve' : 'MAX_BLOBS - 5';
+    patch(`      if (n >= ${drawCap}) break;\n      if (p.delay > 0) continue;`,
+      `      if (n >= ${drawCap}) break;
       if (p.ghost && remoteDrawn >= MAX_BLOBS - 64) continue;
       if (p.delay > 0) continue;
       // No ephemeral arrays or callbacks in the 60Hz ink renderer.
@@ -2209,8 +2211,10 @@ function firstSplatStateFor(session,cfg) {
       '      const end = _v3.copy(m).addScaledVector(dir, len);', 'charger endpoint reuses existing scratch');
     patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone(), charge, len });",
       "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir, charge, len });", 'charger fire payload');
-    patch("emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal.clone() : dir.clone().negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });",
-      "emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal : _v2.copy(dir).negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });",
+    const chargerImpactRadius = code.includes('radius: chargerEndRadius(w, charge) })')
+      ? 'chargerEndRadius(w, charge)' : 'w.impactRadius * (0.6 + 0.4 * charge)';
+    patch(`emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal.clone() : dir.clone().negate(), team: a.team, kind: 'charger', radius: ${chargerImpactRadius} });`,
+      `emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal : _v2.copy(dir).negate(), team: a.team, kind: 'charger', radius: ${chargerImpactRadius} });`,
       'charger impact payload');
     patch("if (p.type !== 'blast') emit('weapon:impact', { pos: _v.clone(), normal: _v2.clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: e });",
       "if (p.type !== 'blast') emit('weapon:impact', { pos: _v, normal: _v2, team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: e });",
@@ -2444,8 +2448,12 @@ ${bombHit}`;
     patch("emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});",
       "emit('weapon:fire',{actor,weapon:w.id,muzzle:origin,dir:direction,charge,len:distance});",
       'charger flight fire payload');
-    patch("emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});",
-      "emit('weapon:impact',{pos:job.pos,normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});",
+    // Keep the sourced radius in both raw and width-calibrated Charger flight.
+    // The network optimization may change vector ownership, not paint sizing.
+    const chargerFlightImpactRadius = code.includes('radius:chargerPaintWorldRadius(job.paint.impact),victim:')
+      ? 'chargerPaintWorldRadius(job.paint.impact)' : 'job.paint.impact';
+    patch(`emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:${chargerFlightImpactRadius},victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});`,
+      `emit('weapon:impact',{pos:job.pos,normal,team:job.team,kind:'charger',radius:${chargerFlightImpactRadius},victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});`,
       'charger flight impact payload');
     return code;
   }

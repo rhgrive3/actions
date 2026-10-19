@@ -144,6 +144,41 @@ try {
       };
 
       const {CANONICAL_KITS}=await import('/patches/splatoon3/runtime/canonical-kits-data.mjs');
+      // BEGIN_LEGACY_SCOPE_ADMISSION_PROBE
+      const scopeAdmissionChecks=[];
+      {
+        const {Level}=await import('/src/world/level.js');
+        const {updateScopeZoom,scopeVerticalFov}=await import('/patches/splatoon3/runtime/camera-aim-controls.mjs');
+        const saved={level:G.level,physics:G.physics,paint:G.paint,actors:G.actors,time:G.time};
+        const originalFire=G.projectiles.fireCharger;
+        try {
+          G.level=new Level({bounds:{minX:-50,maxX:50,minZ:-50,maxZ:50},spawnPads:[[-40,0,0],[40,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-50,-.5,-50],max:[50,0,50]}]});
+          G.physics=new api.Physics(G.level);G.paint={sample:()=>1,splat:()=>0};
+          for(const count of [15,140]) {
+            G.projectiles.clear();const actor=makeActor('charger_scope');G.actors=[actor];
+            const tick=n=>{for(let i=0;i<n;i++){G.time+=1/60;actor.update(1/60);}};
+            tick(5);actor.intent.fire=true;tick(count);
+            const charge=actor.weaponRunner.charge,ink=actor.ink;
+            check(Number.isFinite(charge)&&Number.isFinite(ink),'legacy scope finite charge/ink');
+            check(count===140?charge===1:charge>0&&charge<1,'legacy scope partial/full boundary');
+            const rig={zoom:0,scopeCharge:0,baseFov:82};for(let i=0;i<180;i++)updateScopeZoom(rig,actor,1/60);
+            check(scopeVerticalFov(actor.weapon)===28,'legacy scoped 28-degree presentation retained');
+            check(count===140?Math.abs(rig.zoom-rig.scopeFullZoom)<1e-7:rig.zoom===0,'legacy half-charge optical threshold');
+            let shots=0,firedCharge=null;G.projectiles.fireCharger=function(...args){shots++;firedCharge=args[2];return originalFire.apply(this,args);};
+            actor.intent.fire=false;tick(3);
+            check(shots===1&&Number.isFinite(firedCharge),'legacy release calls actual fireCharger once');
+            check(Number.isFinite(actor.ink)&&actor.ink>=ink-1e-8,'legacy prepaid release ink finite');
+            G.projectiles.fireCharger=originalFire;
+            scopeAdmissionChecks.push({count,charge,ink,shots,firedCharge,scopeFov:scopeVerticalFov(actor.weapon),zoom:rig.zoom});
+          }
+          const actor=makeActor('charger_scope');G.actors=[actor];actor.intent.fire=true;
+          for(let i=0;i<145;i++){G.time+=1/60;actor.update(1/60);}
+          actor.intent.squid=true;for(let i=0;i<5;i++){G.time+=1/60;actor.update(1/60);}
+          check(!actor.weaponRunner.s3Stored&&!actor.weaponRunner.catalogState?.stored,'legacy scope never creates stored state');
+          scopeAdmissionChecks.push({squidInput:true,form:actor.form,stored:false});
+        } finally {G.projectiles.fireCharger=originalFire;G.projectiles.clear();Object.assign(G,saved);}
+      }
+      // END_LEGACY_SCOPE_ADMISSION_PROBE
       const {WEAPON_WEIGHTS}=await import('/patches/splatoon3/runtime/weapon-weight-data.mjs');
       const {WEIGHT_SPEED_CURVES}=await import('/patches/splatoon3/runtime/weapon-weight.mjs');
       const {gearCurve,emptyLoadout}=await import('/patches/splatoon3/runtime/gear.mjs');
@@ -507,7 +542,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        wallFacingChecks, catalogueSubChecks, directSubChecks, accelerationChecks, mistChecks, mistQueryChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
+        scopeAdmissionChecks, wallFacingChecks, catalogueSubChecks, directSubChecks, accelerationChecks, mistChecks, mistQueryChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,

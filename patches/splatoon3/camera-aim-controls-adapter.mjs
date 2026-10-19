@@ -9,14 +9,39 @@ export function adaptCameraAimControls(rel, input) {
   }
   if (rel === 'src/game/cameraRig.js') {
     code = `import { updateScopeZoom, enforceBoomClearance, constrainCameraLens, recordAimPose } from '../../patches/splatoon3/runtime/camera-aim-controls.mjs';\n` + code;
-    replace("const charging = a.weapon?.kind === 'charger' && a.weaponRunner?.charging ? a.weaponRunner.charge : 0;\n    this.zoom = damp(this.zoom, charging > 0.99 ? 14 : charging * 6, 8, dt);",
-      'const charging = updateScopeZoom(this, a, dt);', 'scope capability after reliability pass');
+    if (code.includes('this.scopeK = damp(this.scopeK, chargerScopeFactor(')) {
+      // Native and previous passes may have normalized charge source syntax.
+      // Accept one real follow-camera charging owner; never mask duplicates.
+      const candidates = [...code.matchAll(/^    const charging = [^\n;]+;$/gm)];
+      if (candidates.length === 1) {
+        replace(candidates[0][0], '    const charging = updateScopeZoom(this, a, dt);',
+          'true scope FOV source charge');
+      } else if (!code.includes('    const charging = updateScopeZoom(this, a, dt);')) {
+        throw new Error('camera-aim-controls: unexpected charging owner count ' + candidates.length);
+      }
+    } else {
+      replace("const charging = a.weapon?.kind === 'charger' && a.weaponRunner?.charging ? a.weaponRunner.charge : 0;\n    this.zoom = damp(this.zoom, charging > 0.99 ? 14 : charging * 6, 8, dt);",
+        'const charging = updateScopeZoom(this, a, dt);', 'scope capability after reliability pass');
+    }
     replace('    _back.copy(fwd).negate();',
       '    // Super-jump yaw/pitch may have changed since the pivot calculation.\n    this.forward(fwd);\n    _right.set(-Math.cos(this.yaw), 0, Math.sin(this.yaw));\n    _back.copy(fwd).negate();', 'same-frame automated aim');
     replace('    if (this.boom.x > _probe.hard + 1.6) { this.boom.x = _probe.hard + 1.6; this.boom.v = Math.min(this.boom.v, 0); }\n    if (_probe.floor && this.boom.x > _probe.hard) { this.boom.x = _probe.hard; this.boom.v = Math.min(this.boom.v, 0); }\n    if (this.boom.x < 0.45) { this.boom.x = 0.45; this.boom.v = Math.max(0, this.boom.v); }',
       '    enforceBoomClearance(this.boom, _probe.hard);', 'hard boom clearance');
     replace('    fov = frameBattleCamera(this, fov);',
       '    constrainCameraLens(this, G.physics, fov);\n    fov = frameBattleCamera(this, fov);', 'final lens sweep');
+    if (code.includes('this.scopeUsesTrueFov = true;')) {
+      replace('    const normalFov = vBase + (this.fovKick - this.zoom) * 0.8;',
+        '    const normalFov = vBase + this.fovKick * 0.8;',
+        'true scoped FOV excludes duplicate zoom-subtraction');
+      replace("    this.zoom = damp(this.zoom, a.weapon?.kind === 'charger' && !a.weapon?.scoped ? charging * 1.4 : 0, 9, dt);",
+        '    // Source updateScopeZoom owns the scope gauge; do not overwrite it.',
+        'preserve source-verified scoped zoom signal');
+    }
+    replace('    gc.fov = fov; gc.aspect = cam.aspect; gc.near = cam.near; gc.far = cam.far;',
+      '    const projectionDirty = gc.fov !== fov || gc.aspect !== cam.aspect || gc.near !== cam.near || gc.far !== cam.far;\n' +
+      '    gc.fov = fov; gc.aspect = cam.aspect; gc.near = cam.near; gc.far = cam.far;\n' +
+      '    if (projectionDirty) gc.updateProjectionMatrix();',
+      'scope gameplay camera projection follows rendered vertical FOV');
     replace('    gc.updateMatrixWorld();', '    gc.updateMatrixWorld();\n    recordAimPose(this);', 'simulation pose snapshot');
     replace('if (Math.abs(cam.fov - fov) > 0.01)', 'if (cam.fov !== fov)', 'optical/HUD projection parity');
   }
