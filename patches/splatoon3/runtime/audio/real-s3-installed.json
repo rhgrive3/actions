@@ -4039,9 +4039,57 @@
       "verification": "locally-decoded-mp3",
       "sha256": "890f797dc2f32e3c707e42fbd6668691c67fdaaff13af13c43cd3d4bdd531260",
       "durationSeconds": 2.544
+    },
+    {
+      "id": "fx:combat",
+      "event": "hit",
+      "variant": 0,
+      "file": "s3-real/HitEf_Damage_00.mp3",
+      "gain": 1,
+      "sourceName": "HitEf_Damage_00.mp3",
+      "sourceFileId": "1LUw7POiMu8C8UNYPDPRC-B5LG3h3Ndzf",
+      "sourceURL": "https://drive.google.com/file/d/1LUw7POiMu8C8UNYPDPRC-B5LG3h3Ndzf/view",
+      "sourceFolderURL": "https://drive.google.com/drive/folders/1D7So33YcZJaU_W5eC_H8OMFnUxGA8lYJ",
+      "sourceVersion": "2022-extract",
+      "sourceKind": "Splatoon3-ripped-MP3",
+      "verification": "locally-decoded-mp3",
+      "sha256": "c4b6ac316315ee76f06392821db008334daf6f162e106347f164196ac64a85db",
+      "durationSeconds": 0.13061
+    },
+    {
+      "id": "fx:combat",
+      "event": "critical_hit",
+      "variant": 0,
+      "file": "s3-real/HitEf_CriticalHit_00.mp3",
+      "gain": 1,
+      "sourceName": "HitEf_CriticalHit_00.mp3",
+      "sourceFileId": "1nEMOajEu8AVSGIBIdK9pxm4sMOD9Q4GP",
+      "sourceURL": "https://drive.google.com/file/d/1nEMOajEu8AVSGIBIdK9pxm4sMOD9Q4GP/view",
+      "sourceFolderURL": "https://drive.google.com/drive/folders/1D7So33YcZJaU_W5eC_H8OMFnUxGA8lYJ",
+      "sourceVersion": "2022-extract",
+      "sourceKind": "Splatoon3-ripped-MP3",
+      "verification": "locally-decoded-mp3",
+      "sha256": "5366114895aca376f4780aa1123d90a7c4542bcad24a464afc374f47f28169cd",
+      "durationSeconds": 0.65306
+    },
+    {
+      "id": "fx:combat",
+      "event": "splat",
+      "variant": 0,
+      "file": "s3-real/Pl_DeadBubbleSplash_00.mp3",
+      "gain": 1,
+      "sourceName": "Pl_DeadBubbleSplash_00.mp3",
+      "sourceFileId": "1X3SjFdDCFEC1KzSPXOKmgedM7VPh-EP7",
+      "sourceURL": "https://drive.google.com/file/d/1X3SjFdDCFEC1KzSPXOKmgedM7VPh-EP7/view",
+      "sourceFolderURL": "https://drive.google.com/drive/folders/1D7So33YcZJaU_W5eC_H8OMFnUxGA8lYJ",
+      "sourceVersion": "2022-extract",
+      "sourceKind": "Splatoon3-ripped-MP3",
+      "verification": "locally-decoded-mp3",
+      "sha256": "8963d67e781c415a6247e0b7725e0c8f891dd313d4a98cceadadde566797e40c",
+      "durationSeconds": 1.35837
     }
   ],
-  "installedFiles": 236,
-  "plannedFiles": 236,
-  "installedEventVariants": 268
+  "installedFiles": 239,
+  "plannedFiles": 239,
+  "installedEventVariants": 271
 }
