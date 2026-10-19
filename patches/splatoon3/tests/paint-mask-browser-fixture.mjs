@@ -116,6 +116,9 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     'six complete ancillary count vectors plus the body-only fallback');
   const activeFamilies = Object.fromEntries(Object.keys(families).map((name, i) =>
     [name, shapeCounts.some(counts => (counts[i] || 0) > 0)]));
+  const witnessPrograms = { negative:program(revertedShader(0,12).replace(`sd < -${margin}`,`sd < -${.25/ppm}`)) };
+  for(const [i,name] of Object.keys(families).entries())
+    witnessPrograms[name]=program(revertedShader(i*3,i*3+3).replace(`sd < -${margin}`,`sd < -${.25/ppm}`));
   const face = { atlas: { x: 0, y: 0, pad: 2, ppm }, su: 32, sv: 32, nu: 128, nv: 128, cu: 0.25, cv: 0.25,
     grid: 0, wall: false, turf: true };
   // #1165: exercise the *actual WebGL shader and CPU ownership* for Roller
@@ -160,12 +163,16 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     const word = paint.aGrow[3]; check(word === paintShapeSeed(seed), 'native emitted quad seed packing');
     const args = [points, [g.R, 0, Math.fround(seed), (wall ? 1 : 0) + 2 * kind], [tn, dT, 0, word], [sdu, sdv, sa]];
     const actual = query(positive, ...args), reverted = query(negative, ...args);
-    const witnessed = new Set();
+    const witnessed = new Set(), counterWitnesses = Object.fromEntries(Object.keys(witnessPrograms).map(name=>[name,new Set()]));
     if (witnesses.length) {
       const pixels = query(dotPositive, witnesses, args[1], args[2], args[3]);
       for (let i = 0; i < witnessCells.length; i++) {
         check(pixels[i * 4] === 255, 'dot-cell intersection must contain actual GPU core ink');
         witnessed.add(witnessCells[i]);
+      }
+      for(const [name,p] of Object.entries(witnessPrograms)) {
+        const pixels=query(p,witnesses,args[1],args[2],args[3]);
+        for(let i=0;i<witnessCells.length;i++)if(pixels[i*4]===255)counterWitnesses[name].add(witnessCells[i]);
       }
     }
     const familyPixels = Object.fromEntries(Object.entries(families).filter(([name]) => name !== 'drips' || wall)
@@ -176,11 +183,11 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     }
     let unsupported = 0, negativeUnsupported = 0;
     for (let cell = 0; cell < cells; cell++) {
-      let seen = false, revertedSeen = false;
+      let seen = false, revertedSeen = counterWitnesses.negative.has(cell);
       for (let sample = 0; sample < 5; sample++) { const i = (cell * 5 + sample) * 4; seen ||= actual[i] === 255; revertedSeen ||= reverted[i] === 255; }
       if (!seen && !witnessed.has(cell)) unsupported++; if (!revertedSeen) negativeUnsupported++;
       for (const [name, pixels] of Object.entries(familyPixels)) {
-        let familySeen = false;
+        let familySeen = counterWitnesses[name].has(cell);
         for (let sample = 0; sample < 5; sample++) familySeen ||= pixels[(cell * 5 + sample) * 4] === 255;
         if (!familySeen) familyUnsupported[name]++;
       }

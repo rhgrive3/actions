@@ -42,19 +42,26 @@ at zero forever. No Contest can likewise wait for an unavailable host's end.
 
 ## Validation
 
-- Focused source ownership/hidden-host/order/hotpath set: 99 passed before the
-  final No Contest case (which also passes). Emitted ownership/hidden-host set:
-  73 passed before that final case.
+- Focused source ownership/hidden-host/order/hotpath set: 101 passed; emitted
+  ownership/hidden-host set: 75 passed, zero failures/skips. Adjacent platform,
+  input, cell sampling and native-cache regressions: 50 passed.
 - New transformed intersection test covers 5,184 forward-generated core points.
 - Removing only the new dot-intersection predicate makes the new production
   bead regression fail at R=0.2 / seed 0.11; the fixed test passes.
+- Chromium 141 headless / SwiftShader: actual source-composed and emitted shader
+  probes pass and give identical receipts. 124 ancillary cases / 15,813 cells;
+  1,512 exact hash queries; 1,094 body cases with CPU-only=0 and GPU-only=0
+  outside the existing 17 zero-crossing float ties. Twelve additional sub-cell
+  rows check ten bead centres on both surfaces, three cell sizes and two radii,
+  repainted by both teams. Reverted active-family hashes still fail the probe;
+  disabled satellite/spatter families remain inert.
 - Existing hidden-host tests cover 5/20/120-second hiding, result delivery,
-  migration, nested renderer suspension, replacement and disposal. Added tests
-  deliver no host timeout callbacks at all.
-- Production build and quick source compatibility pass. Local Chromium could
-  not start because the execution environment rejects its process-singleton
-  socket. Actual Chromium/WebKit shader checks therefore remain CI gates, not
-  claimed local evidence. Source and emitted P0 suites are explicitly in CI.
+  migration, nested renderer suspension, replacement and disposal. Six new
+  cases cover missing host callbacks, No Contest, and a guest's own suspension.
+- Production build and quick source compatibility pass. Source and emitted P0
+  suites are explicitly in CI. Chromium's full-browser process singleton could
+  not create its socket here; its headless shell successfully ran the same
+  verifier. WebKit and remote full CI remain separate acceptance gates.
 
 ## Splatoon 3 comparison
 
