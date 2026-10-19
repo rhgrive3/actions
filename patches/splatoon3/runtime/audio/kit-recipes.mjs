@@ -41,4 +41,7 @@ export const SPECIAL_AUDIO_IDS=Object.freeze(Object.keys(special));
 export const KIT_AUDIO=Object.freeze(Object.fromEntries([...Object.entries(sub).map(([id,c],i)=>['sub:'+id,{id:'sub:'+id,family:'sub',coefficients:Object.freeze(c),seed:0xacc0+i*4789,
   events:Object.freeze(['fire','impact','shield_hit','explosion','open','ready','release','spin','break']),reference:'original-unverified'}]),
  ...Object.entries(special).map(([id,c],i)=>['special:'+id,{id:'special:'+id,family:'special',coefficients:Object.freeze(c),seed:0xfec0+i*6113,
-  events:Object.freeze(['fire','fire_alt','impact','shield_hit','explosion','open','charge','ready','release','spin','dodge','break']),reference:'original-unverified'}])].map(([id,r])=>[id,Object.freeze(r)])));
+  events:Object.freeze(['fire','fire_alt','impact','shield_hit','explosion','open','charge','ready','release','spin','dodge','break']),reference:'original-unverified'}]),
+ ['fx:combat',{id:'fx:combat',family:'feedback',coefficients:Object.freeze([]),seed:0,
+   events:Object.freeze(['hit','critical_hit','splat']),reference:'2022 source-linked HitEf/Pl recordings (not a retail SLINK claim)'}]
+ ].map(([id,r])=>[id,Object.freeze(r)])));
