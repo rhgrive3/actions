@@ -120,6 +120,8 @@ jobs:
           retention-days: 14
       - name: Verify queued InkFlight and catalogue bot liveness fixes
         run: node --experimental-vm-modules --test patches/network-replication/tests/queue-inkflight-owned-profile.test.mjs patches/local-quality/tests/catalog-charge-bot-release.test.mjs
+      - name: Verify paint ownership and frozen-host P0 regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-264-*.test.mjs patches/reliability/tests/hidden-host-*.test.mjs
       - name: Verify source session admission and finite view settings
         run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs
       - name: Verify claimed room startup and gyro health regressions
@@ -347,6 +349,11 @@ jobs:
         env:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs
+      - name: Verify emitted paint ownership and frozen-host P0 regressions
+        env:
+          INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-264-*.test.mjs patches/reliability/tests/hidden-host-*.test.mjs
       - name: Verify emitted session admission and finite view settings
         env:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site

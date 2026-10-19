@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './robustness-fixture.mjs';
 
 // CPU PaintSystem and actual composed NetMatch. Socket/rendering are controlled.
-// This only rejects malformed optional capability columns, not arbitrary plain
-// paint from an authenticated member; action provenance remains a separate issue.
+// Capability validation composes with explicit actor ownership admission.
 function world(f) {
   const V=f.THREE.Vector3;
   const face={origin:new V(-5,0,-5),u:new V(1,0,0),v:new V(0,0,1),n:new V(0,1,0),su:10,sv:10,paintable:true,turf:true,block:0};
@@ -18,7 +17,7 @@ function world(f) {
   const session=f.makeSession('p2','host',[['host','Host'],['p2','P2']]);session.tr.broadcast=p=>{packet=structuredClone(p);};
   const sender=new f.NetMatch(session,{id:'paint-522'});sender.match=receiver.match;sender.byNid.set(actor.nid,actor);
   actor.remote=false;
-  try { sender.recSplat(new V(0,0,0),2,1,{kind:'shot',seed:.4,face:0});sender._sendTick(); }
+  try { sender.recSplat(new V(0,0,0),2,1,{kind:'shot',seed:.4,face:0,claimOwner:actor});sender._sendTick(); }
   finally { actor.remote=true; }
   assert.equal(packet.e.length,1);assert.equal(packet.e[0].length,17);
   const peer=receiver._peer('p2');
@@ -58,10 +57,11 @@ test('overflow paint admission rejects a malformed capability before direct Pain
     h.peer.events.length=0;recover(h);
   } finally { h.close(); }
 });
-test('plain canonical 17 and legacy 16 column paints retain exactly-once compatibility',async()=>{
+test('owned canonical paint applies once; legacy rows reject without reserving sequence',async()=>{
   const f=await fixture({productionComposition:true});
   for(const legacy of [false,true]) { const h=world(f);
-    try { if(legacy)h.packet.e[0].splice(14,1);assert.equal(h.packet.e[0].length,legacy?16:17);
+    try { const canonical=structuredClone(h.packet);if(legacy)h.packet.e[0].splice(14,1);assert.equal(h.packet.e[0].length,legacy?16:17);
+      if(legacy){const before=state(h);receive(h,h.packet);assert.deepEqual(state(h),before);canonical.ts+=.1;h.packet=canonical;}
       receive(h,h.packet);assert.ok(h.paint.coverage()[1]>0);const applied=state(h);
       receive(h,{...structuredClone(h.packet),ts:h.packet.ts+.1});assert.deepEqual(state(h),applied);
     } finally { h.close(); }
@@ -80,11 +80,11 @@ test('team epoch and unknown-array capability rejection retain sequence recovery
   }
 });
 
-test('plain victim death blast remains paint-compatible after its owner dies',async()=>{
+test('victim death signature without death authority is rejected even after owner death',async()=>{
   const f=await fixture({productionComposition:true}),h=world(f);
   try { const e=h.packet.e[0];e[5]=5;e[6]=0;e[7]=0;e[8]=0;e[9]=e[10]=e[11]=e[12]=0;e[13]=-1;
     h.actor.alive=false;h.actor.netLife=1;h.actor.net.lastLife=1;
-    receive(h,h.packet);assert.ok(h.paint.coverage()[0]>0);assert.equal(h.peer._lastEventSeq,e.at(-1));
+    const before=state(h);receive(h,h.packet);assert.deepEqual(state(h),before);
     const applied=state(h);receive(h,{...structuredClone(h.packet),ts:h.packet.ts+.1});assert.deepEqual(state(h),applied);
   } finally {h.close();}
 });

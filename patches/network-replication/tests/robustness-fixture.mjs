@@ -31,7 +31,7 @@ const netRoot = path.join(ROOT, 'patches/network-replication');
 // `productionComposition` uses the shared complete build adapter and S3 installer.
 // Both built selectors read emitted modules without applying adapters twice.
 export async function fixture({ network = true, flow = false, fullRuntime = false,
-  productionComposition = false, built = null, includeSession = false, rankedNetwork = false } = {}) {
+  productionComposition = false, built = null, includeSession = false, rankedNetwork = false, includeMatch = false } = {}) {
   const builtRoot = built || BUILT ? path.resolve(built || BUILT) : null;
   const UPSTREAM = builtRoot || process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
   const PATCH_ROOT = builtRoot ? path.join(builtRoot, 'patches/splatoon3') : path.join(ROOT, 'patches/splatoon3');
@@ -88,6 +88,8 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
     export { PaintSystem } from './inkwave-public/src/world/paint.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/actor.js';
+    ${includeMatch ? "export { Match } from './inkwave-public/src/game/match.js';" : ''}
+    ${includeMatch ? "export { BossHazards } from './inkwave-public/src/boss/bossHazards.js'; export { RankedWorld } from './patches/splatoon3/runtime/ranked/world.mjs';" : ''}
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/net/netmatch.js';
     ${includeSession ? "export { NetSession } from './inkwave-public/src/net/session.js';" : ''}

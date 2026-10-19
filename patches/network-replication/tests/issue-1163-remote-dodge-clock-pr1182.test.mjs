@@ -298,7 +298,7 @@ test('#1163 metadata preserves canonical paint return values and shared event se
   try {
     sender._eventSeq = 2;
     sender.s._inkwaveEventSeq = 100;
-    const paint = sender.recSplat(new world.THREE.Vector3(0, 0, 0), 0.4, 0, { seed: 1 });
+    const paint = sender.recSplat(new world.THREE.Vector3(0, 0, 0), 0.4, 0, { seed: 1, claimOwner: owner });
     assert.equal(paint.seq, 101, 'paint uses the session watermark rather than restarting at the match-local counter');
     assert.equal(sender.out.at(-1)._netSeq, paint.seq);
     const next = sender._rec(['ev', 'actor:jump', {}]);

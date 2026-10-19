@@ -200,6 +200,59 @@ function pointInsideAncillary(mask, x, y, seed, p) {
   return false;
 }
 
+// A sub-cell dot can miss every fixed sample. Find a real point of its
+// opaque core inside the cell instead. The circle/ellipse and directional
+// stretch are affine on each side of the travel axis; minimize their SDF on
+// the clipped rectangle edges. The returned witness is also GPU-testable.
+const dotWitness = new Float64Array(2);
+export function paintDotCellWitness(mask, face, x, y, piece) {
+  if (piece.type !== 1 && piece.type !== 2) return null;
+  const radius = piece.radius - Math.min(mask.margin, piece.radius * 0.5);
+  if (!(radius > 0)) return null;
+  const x0 = x - face.cu * 0.5, x1 = x + face.cu * 0.5;
+  const y0 = y - face.cv * 0.5, y1 = y + face.cv * 0.5;
+  const du = mask.sdu, dv = mask.sdv, stretched = mask.sa > 0;
+  const along = piece.x * du + piece.y * dv;
+  const scale = stretched ? (along > 0 ? 1 + mask.sa : 1 + mask.sa * 0.25) : 1;
+  const cx = piece.x + du * along * (scale - 1), cy = piece.y + dv * along * (scale - 1);
+  if (cx >= x0 && cx < x1 && cy >= y0 && cy < y1) {
+    dotWitness[0] = cx; dotWitness[1] = cy; return dotWitness;
+  }
+  for (let side = 0; side < 4; side++) {
+    const ax = side === 0 || side === 3 ? x0 : x1, ay = side < 2 ? y0 : y1;
+    const bx = side < 2 ? x1 : x0, by = side === 0 || side === 3 ? y0 : y1;
+    for (let branch = 0; branch < (stretched ? 2 : 1); branch++) {
+      let lo = 0, hi = 1;
+      if (stretched) {
+        const a = (ax * du + ay * dv) * (branch ? 1 : -1);
+        const b = (bx * du + by * dv) * (branch ? 1 : -1);
+        if (a < 0 && b < 0) continue;
+        if (a < 0) lo = a / (a - b);
+        if (b < 0) hi = a / (a - b);
+      }
+      const invScale = stretched ? 1 / (1 + mask.sa * (branch ? 1 : 0.25)) : 1;
+      let qx = ax + (bx - ax) * lo, qy = ay + (by - ay) * lo;
+      let vx = (bx - ax) * (hi - lo), vy = (by - ay) * (hi - lo);
+      let a = qx * du + qy * dv, b = vx * du + vy * dv;
+      qx += du * a * (invScale - 1); qy += dv * a * (invScale - 1);
+      vx += du * b * (invScale - 1); vy += dv * b * (invScale - 1);
+      qx -= piece.x; qy -= piece.y;
+      if (piece.type === 2) {
+        a = (qx * piece.ux + qy * piece.uy) * (1 / piece.el - 1);
+        b = (vx * piece.ux + vy * piece.uy) * (1 / piece.el - 1);
+        qx += piece.ux * a; qy += piece.uy * a;
+        vx += piece.ux * b; vy += piece.uy * b;
+      }
+      const t = clamp(-(qx * vx + qy * vy) / Math.max(vx * vx + vy * vy, 1e-30), 0, 1);
+      if (Math.hypot(qx + t * vx, qy + t * vy) >= radius) continue;
+      const at = lo + t * (hi - lo);
+      dotWitness[0] = ax + (bx - ax) * at; dotWitness[1] = ay + (by - ay) * at;
+      return dotWitness;
+    }
+  }
+  return null;
+}
+
 function cellIsSolidlyVisible(mask, face, x, y, piece) {
   const dx = face.cu * 0.32, dy = face.cv * 0.32;
   // A paint cell owns its area when its center or one of four interior samples
@@ -210,7 +263,7 @@ function cellIsSolidlyVisible(mask, face, x, y, piece) {
     const sy = y + (i === 1 || i === 2 ? -dy : i > 2 ? dy : 0);
     if (pointInsideAncillary(mask, sx, sy, mask.seed, piece)) return true;
   }
-  return false;
+  return !!paintDotCellWitness(mask, face, x, y, piece);
 }
 
 function ensureOwnershipState(paint) {
@@ -334,14 +387,11 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     const cellArea = face.cu * face.cv;
     const mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);
     if (!mask) continue;
-    // A cell can only be claimed when one of its five samples lies inside some
-    // piece's bounding box (pointInsideAncillary rejects everything else first).
-    // Visit exactly the cells whose centre is within a piece box widened by the
-    // sample offset and the mask margin, instead of the whole reach square every
-    // growth frame. Per-cell evaluation and claims are unchanged.
+    // Visit only cells overlapping a piece box. Dot cores also intersect the
+    // cell area between fixed samples, so include the complete half-cell extent.
     const stamp = nextVisitStamp(paint);
     const visit = paint._paintVisitStamp;
-    const pad = Math.max(face.cu, face.cv) * 0.32 + mask.margin * (1 + Math.max(0, sa)) + 1e-9;
+    const pad = Math.max(face.cu, face.cv) * 0.5 + mask.margin * (1 + Math.max(0, sa)) + 1e-9;
     const yLo = -Math.max(ext, down);
     for (let n2 = 0; n2 < mask.pieces.length; n2++) {
       const piece = mask.pieces[n2];
@@ -350,11 +400,11 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
       const bj0 = Math.max(j0, Math.ceil((box[2] + lv) / face.cv - 0.5)), bj1 = Math.min(j1, Math.floor((box[3] + lv) / face.cv - 0.5));
       for (let j = bj0; j <= bj1; j++) {
         const y = (j + 0.5) * face.cv - lv;
-        if (y < yLo || y > ext) continue;
+        if (y + face.cv * 0.5 < yLo || y - face.cv * 0.5 > ext) continue;
         for (let i = bi0; i <= bi1; i++) {
           const x = (i + 0.5) * face.cu - lu;
           const index = face.grid + j * face.nu + i;
-          if (x < -ext || x > ext) continue;
+          if (x + face.cu * 0.5 < -ext || x - face.cu * 0.5 > ext) continue;
           if (visit[index] === stamp) continue;
           const previousOrder = paint._paintOwnershipOrder[index] || 0;
           if (previousOrder && order && !paintOrderComesAfter(paint, order, previousOrder)) { visit[index] = stamp; continue; }
@@ -577,3 +627,5 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
   Object.defineProperty(proto, INSTALLED, { value: true });
   return true;
 }
+
+export { prepareAncillary as preparePaintAncillary };
