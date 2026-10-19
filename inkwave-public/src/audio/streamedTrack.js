@@ -20,6 +20,17 @@ export class StreamedTrack {
     element.addEventListener('error', this._onError);
   }
 
+  // Start under the trusted START/REMATCH gesture, routed through a zero-gain node.
+  // Keep playback alive until GO: iOS Safari may reject a fresh play() after the wipe.
+  prime() {
+    try {
+      const started = this.element.play();
+      if (started && typeof started.catch === 'function') started.catch(() => this._fail());
+    } catch (_) {
+      Promise.resolve().then(() => this._fail());
+    }
+  }
+
   fadeIn(at, duration) {
     const now = this.engine.now();
     const g = this.gain.gain;
