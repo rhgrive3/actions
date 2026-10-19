@@ -1382,6 +1382,8 @@ INKWAVE の native `inkwave-public/src/game/weapons.js` と source adapter に�
 
 2026-10-19追記（PR #1651）：元PR #1603のCharger飛翔・光学変更を現mainへ整合し、legacy scopeで欠落したpinned 11.3.0の2値と無保持条件だけを補う後継候補。元kit/paint設定を保持し、遅延床塗りと壁creditを分ける回帰を追加した。実shader・最終合成headのbrowser受入は未完。元PRの機能追加と最小修復の根拠・比較は[専用報告](inkwave-legacy-scoped-charger-admission-2026-10-19.md)に記録する。
 
+2026-10-19 QA追記：610で再現したbaseline前処理8失敗は歴史replayとPR差分比較を分離して修復する。元48場面の比較条件は維持し、実描画の合格とは区別する。[基準・CLI負例・未完点](inkwave-projectile-baseline-modes-2026-10-19.md)。
+
 S3（Ver.11.3.0、`WeaponKeepChargeParam.KeepChargeFullFrame = 75`）では、イカ→ヒトへの有効な遷移でチャージ保持の残り時間がリフレッシュされ、再潜伏で次の保持サイクルがフル 75F / 1.25 s から始まる。`patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._charger` は従来、潜伏中のみ同一レコードを減算し、浮上時は減算分岐に入らないだけで残量を戻さなかったため、60F 消費後の再潜伏は約 15F で失効していた。今回、ZR 保持中の有効な squid→kid エッジで `s3Stored.remaining` を `w.keepChargeTime` に戻す（edge-triggered の `s3WasSquid`、レコードの再生成なし）。この変更は既存レコードのタイマーのみを書き換え、#359 の初回保持可否ルールは変更しない。focused reset test は実 Actor の `submerged === true` を事前条件として確認する。#390 の ZR 解放キャンセル、#291/#101 の浮上後射撃/レーザー遅延（emergeDelay 経路）は既存経路のままで、火力・射程・速度・塗り・インク消費も変更しない。別の focused boundary checks では、dry/enemy squid と保持中のインク補充抑止、および ZR キャンセル後の補充再開を確認した。これらは #359 の dry/enemy/air 初回保持可否を検証したものではない。
 
 | 項目 | 内容 |

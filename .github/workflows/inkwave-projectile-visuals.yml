@@ -21,6 +21,13 @@ on:
       - 'scripts/tests/inkwave-projectile-ci-roster.test.mjs'
       - 'scripts/lib/inkwave-roller-birth-baseline.mjs'
       - 'scripts/lib/inkwave-main-ink-baseline.mjs'
+      - 'scripts/lib/inkwave-historical-baseline-sources.mjs'
+      - 'scripts/fixtures/inkwave-historical-baseline-sources.json.gz'
+      - 'scripts/lib/inkwave-projectile-pr-diff-baseline.mjs'
+      - 'scripts/fixtures/inkwave-projectile-pr1651-source-pair.json'
+      - 'scripts/verify-inkwave-projectile-pr-diff-baseline.mjs'
+      - 'scripts/tests/inkwave-projectile-pr-diff-baseline.test.mjs'
+      - 'scripts/tests/inkwave-projectile-pr-diff-cli.test.mjs'
       - 'scripts/fixtures/inkwave-main-ink-pr1525-baseline.json'
       - 'scripts/prepare-inkwave-projectile-baseline.mjs'
       - 'scripts/prepare-inkwave-character-pose-baseline.mjs'
@@ -67,7 +74,7 @@ jobs:
         if: ${{ matrix.side == 'before' }}
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha || 'main' }}
+          ref: ${{ github.event.pull_request.number == 1651 && 'd42f3f26372361332bdf596ac88155b153557538' || github.event.pull_request.base.sha || 'main' }}
           path: .ci-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -83,13 +90,19 @@ jobs:
           node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs scripts/tests/inkwave-projectile-pool-reset.test.mjs
           python3 scripts/tests/inkwave-projectile-captures.test.py
           node --experimental-vm-modules --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-ci-roster.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs
+          node --test scripts/tests/inkwave-projectile-pr-diff-cli.test.mjs
           node --test scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-boolean-gate.test.mjs scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-audio-timing-observer.test.mjs scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs
       - name: Replay reviewed Roller births, pool reset and pinned paint in the main reference
-        if: ${{ matrix.side == 'before' }}
+        if: ${{ matrix.side == 'before' && github.event.pull_request.number != 1651 }}
         run: node scripts/prepare-inkwave-projectile-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
       - name: Align only the reviewed character pose for exact projectile comparison
-        if: ${{ matrix.side == 'before' }}
+        if: ${{ matrix.side == 'before' && github.event.pull_request.number != 1651 }}
         run: node scripts/prepare-inkwave-character-pose-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/character-pose-adjustment.json
+      - name: Verify reviewed PR 1651 sources without rewriting the official reference
+        if: ${{ matrix.side == 'before' && github.event.pull_request.number == 1651 }}
+        run: |
+          node scripts/verify-inkwave-projectile-pr-diff-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/pr-diff-reference.json
+          INKWAVE_PR_DIFF_BASELINE=.ci-baseline node --test scripts/tests/inkwave-projectile-pr-diff-baseline.test.mjs
       - name: Build main reference with reviewed births, pool reset, paint and character pose
         if: ${{ matrix.side == 'before' }}
         run: node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/baseline
