@@ -128,6 +128,27 @@ test('occluded projectile segment is checked with engine Vector3 inputs',()=>{
     e:[[100.1,'p',1,'shot','shooter',0,1,0,0,0,45]]});
   assert.equal(nm.hitCalls.length,1);
 });
+test('equipped damage-dealing sub projectile uses its own wire cause',()=>{
+  const nm=new Stub(),attacker=nm.byNid.get(1);
+  attacker.weapon.sub='angleShooter';
+  nm.onMessage('peerA',hit(2,1,'angleShooter'));
+  fire(nm,{kind:'angleShooter'});
+  assert.equal(nm.hitCalls.length,1,'Angle Shooter shot must survive proof gate');
+});
+test('explosive sub birth with generic bomb visual still admits its real equipped kind',()=>{
+  const nm=new Stub(),attacker=nm.byNid.get(1);
+  attacker.weapon.sub='burst';
+  nm.onMessage('peerA',hit(2,1,'burst'));
+  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],
+    e:[[100,'b',1,'bomb',0,1,0,0,0,45]]});
+  assert.equal(nm.hitCalls.length,1);
+});
+test('wrong sub cause cannot spoof a different equipped weapon',()=>{
+  const nm=new Stub();nm.byNid.get(1).weapon.sub='bomb';
+  nm.onMessage('peerA',hit(2,1,'angleShooter'));
+  fire(nm,{kind:'angleShooter'});
+  assert.equal(nm.hitCalls.length,0);
+});
 test('long lived tabs still admit timestamps above 2000s',()=>{
   const nm=new Stub();
   nm.onMessage('peerA',hit());

@@ -3,6 +3,7 @@
 // plausibility gate, not a claim that an untrusted client cannot forge its own
 // action stream; fully trustworthy combat needs host projectile simulation.
 const MAX_PROOFS = 160, MAX_PENDING = 48;
+const EXPLOSIVE_SUBS = new Set(['bomb','suction','burst','curling','autobomb','fizzy','torpedo','inkMine']);
 const PROOF_AGE = 3.5, PENDING_AGE = 0.95;
 const finite = Number.isFinite;
 const safe = Number.isSafeInteger;
@@ -49,11 +50,17 @@ function proofFromEvent(nm,from,e,poses,ts,t) {
   if(e[1]==='p') {
     id=e[2]; source=ownerActor(nm,from,id);
     if(!source)return null;
-    cause=weaponId(source);
-    if(e[4] && e[4]!==cause && e[4]!==source.weapon?.id)return null;
-    origin=e.slice(5,8); direction=e.slice(8,11); kind='main';
-    const family=source.weapon?.kind;
-    maxUses=['blaster','slosher','stringer','roller','brush'].includes(family)?6:2;
+    const wire=e[4],main=weaponId(source);
+    if(!wire || wire===main || wire===source.weapon?.id) {
+      cause=main;kind='main';
+      const family=source.weapon?.kind;
+      maxUses=['blaster','slosher','stringer','roller','brush'].includes(family)?6:2;
+    } else if(wire===source.weapon?.sub) {
+      cause=wire;kind='sub';maxUses=8;
+    } else if(wire===source.weapon?.special) {
+      cause=wire;kind='special';maxUses=8;
+    } else return null;
+    origin=e.slice(5,8);direction=e.slice(8,11);
   } else if(e[1]==='ev' && e[2]==='weapon:fire') {
     const ev=e[3];id=ev?.actor?.n;
     source=ownerActor(nm,from,id);
@@ -64,9 +71,10 @@ function proofFromEvent(nm,from,e,poses,ts,t) {
     id=e[2];source=ownerActor(nm,from,id);
     if(!source)return null;
     // The actual actor's equipped sub must produce this bomb class.
-    if(e[3]!=='bomb' && e[3]!==source.weapon?.sub)return null;
-    if(source.weapon?.sub!=='bomb' && source.weapon?.sub!==e[3])return null;
-    origin=e.slice(4,7);direction=e.slice(7,10);cause=e[3];kind='sub';maxUses=8;
+    const sub=source.weapon?.sub;
+    if(e[3]!==sub && !(e[3]==='bomb' && EXPLOSIVE_SUBS.has(sub)))return null;
+    origin=e.slice(4,7);direction=e.slice(7,10);
+    cause=sub;kind='sub';maxUses=8;
   } else if(e[1]==='ev' && (e[2]==='special:use' || e[2]==='special:slam')) {
     const ev=e[3];id=ev?.actor?.n;
     source=ownerActor(nm,from,id);
@@ -146,7 +154,9 @@ function equippedCause(actor,d,type) {
   if(type==='boss' && d.c>=0 && d.w==='crab')return true; // crablet-target marker
   const id=weaponId(actor);
   if(d.w!==id && d.w!==w.id && d.w!==w.kind && d.w!==w.sub && d.w!==w.special &&
-     d.w!=='shot' && d.w!=='slosh' && d.w!=='blast' && d.w!=='drop' && d.w!=='roller')return false;
+     d.w!=='shot' && d.w!=='slosh' && d.w!=='blast' && d.w!=='drop' && d.w!=='roller' &&
+     !(d.w==='bomb' && EXPLOSIVE_SUBS.has(w.sub)) &&
+     !(d.w==='torpedo-splash' && w.sub==='torpedo'))return false;
   // Generic fallbacks cannot pretend a main-weapon shot is a Special.
   if(d.w==='roller' && w.kind!=='roller')return false;
   return true;
@@ -198,7 +208,9 @@ function take(nm,from,d,type,t) {
   for(const p of shots) {
     if(p.actor!==d.a || p.uses>=p.maxUses || !rayNear(p,target,type==='boss'?6:5.5))continue;
     if(p.kind==='main'&& ![weaponId(actor),actor.weapon.id,actor.weapon.kind,'shot','slosh','blast','drop','roller','crab'].includes(d.w))continue;
-    if(p.kind==='sub' && d.w!==p.cause && d.w!=='crab')continue;
+    if(p.kind==='sub' && d.w!==p.cause && d.w!=='crab' &&
+      !(d.w==='bomb'&&EXPLOSIVE_SUBS.has(p.cause)) &&
+      !(d.w==='torpedo-splash'&&p.cause==='torpedo'))continue;
     if(p.kind==='special' && d.w!==p.cause)continue;
     if(type==='pvp') {
       if(!hitSegmentOk(p,d.bg,target))continue;
