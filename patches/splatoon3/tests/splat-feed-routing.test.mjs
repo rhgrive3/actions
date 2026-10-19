@@ -30,7 +30,7 @@ function router({ match }) {
   const code = section(composed('src/main.js'), "    on('splatted',", '\n    on(');
   const handlers = {};
   const feeds = [], audios = [], deaths = [];
-  const G = { teamHex: ['#ff8a14', '#2f5bff'], audio: { play: id => audios.push(id), duck: () => {} } };
+  const G = { teamHex: ['#ff8a14', '#2f5bff'], audio: { play: id => audios.push(id), playRecordedCombatCue: id => audios.push('combat:'+id), duck: () => {} } };
   const game = {
     match,
     hud: { feed: v => feeds.push(v), showSplatted: v => deaths.push(v) },
@@ -76,7 +76,7 @@ test('#614 local splat confirmation still feeds the kill card path', () => {
   assert.equal(r.feeds.length, 1);
   assert.equal(r.feeds[0].kind, 'kill');
   assert.equal(r.feeds[0].text, 'You splatted Bob!');
-  assert.ok(r.audios.includes('splat_enemy'));
+  assert.ok(r.audios.includes('combat:direct'), 'local kill uses repo-bundled recorded cue');
 });
 
 test('#614 own death still identifies who splatted the local player', () => {
