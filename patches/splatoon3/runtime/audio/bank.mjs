@@ -15,6 +15,8 @@ export class WeaponSoundBank {
   name(id,event='fire'){id=mainAudioSourceId(id);return this.has(id,event)?`${MAIN_AUDIO_PREFIX}${id}:${event}`:null;}
   get(id,event,variant=0){
     id=mainAudioSourceId(id);
+    // Recording-only recipes are routing IDs, not parameters for the DSP.
+    if(AUDIO_RECIPES[id]?.reference==='operator-recorded-only')throw new Error('Recorded-only cue cannot generate PCM: '+id+'/'+event);
     if(this.realOnly&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Procedural weapon audio disabled for non-main-shot events');
     const key=`${id}:${event}:${variant}`;let item=this.cache.get(key);
     if(item){this.cache.delete(key);this.cache.set(key,item);this.hits++;return item.buffer;}
@@ -63,6 +65,8 @@ export class WeaponSoundBank {
     name=`${MAIN_AUDIO_PREFIX}${id}:${event}`;
     if(this.defs.has(name))return this.defs.get(name);
     if(!this.has(id,event))return null;
+    // Never expose a procedural definition for a cue without a resident source.
+    if(AUDIO_RECIPES[id]?.reference==='operator-recorded-only'&&!this.authorized.byEvent.has(`${id}:${event}`))return null;
     // Strict deployment must never substitute a synthesized waveform, even if
     // an authorized file is still decoding, missing, or evicted from the LRU.
     if(this.realOnly&&!this.authorized.byEvent.has(`${id}:${event}`)&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))return null;
@@ -94,7 +98,7 @@ export class WeaponSoundBank {
   // Keep worker jobs bounded even after rapid weapon switches or many remote actors.
   warm(id,{focus=true,events=null}={}){
     id=mainAudioSourceId(id);
-    if(this.disposed||(this.realOnly&&!this.audibleShotFallback)||!AUDIO_RECIPES[id])return;
+    if(this.disposed||AUDIO_RECIPES[id]?.reference==='operator-recorded-only'||(this.realOnly&&!this.audibleShotFallback)||!AUDIO_RECIPES[id])return;
     const priority=['fire','fire_full','fire_left','fire_alt','fire_vertical','ready'];
     const eventNames=AUDIO_RECIPES[id].events.filter(e=>!events||events.includes(e)).filter(e=>!this.realOnly||mainAttackFallbackEligible(id,e)).sort((a,b)=>{
       const pa=priority.indexOf(a),pb=priority.indexOf(b);
