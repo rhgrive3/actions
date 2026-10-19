@@ -65,6 +65,21 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }
   if(rel==='src/game/weapons.js'){
+    // Preserve any installed Slosher volley argument: the sixth optional
+    // field carries the actual admitted shot's charge, NOT its damage.
+    const signature5='applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {';
+    const signature4='applyHit(attacker, victim, dmg, weaponId) {';
+    const signature=code.includes(signature5)?signature5:signature4;
+    code=once(code,signature,signature.slice(0,-3)+', chargeFraction = null) {',
+      'admitted hit records original shot charge fraction');
+    code=once(code,
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, charge: chargeFraction });",
+      'hit event charge metadata');
+    code=once(code,
+      "this.applyHit(a, victim.e, dmg, 'charger');",
+      "this.applyHit(a, victim.e, dmg, 'charger', undefined, charge);",
+      'native Charger hit uses shot charge, never damage proxy');
     code=once(code,
       "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
       "if (!/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))) " +
@@ -72,6 +87,7 @@ export function adaptWeaponAudio(rel,code){
       'do not layer authored body-hit noise over original Charger direct hit MP3');
   }
   if(rel==='src/main.js'){
+    code="import { sourceChargerHitCue } from '../patches/splatoon3/runtime/audio/combat-hit-classifier.mjs';\n"+code;
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
       'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); if(self.menus?._setup?.mode!==\'boss\') G.music?.preloadFile?.(\'battle\',{prime:true}); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
       'iPad start tap initializes audio and warms the selected recorded shot before screen wipe');
@@ -121,7 +137,7 @@ export function adaptWeaponAudio(rel,code){
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
-      "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
+      "on('hit', ({ attacker, victim, damage, killed, weaponId, charge }) => {",'Blaster hit event identity');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
     // Real S3 recorded body-hit and splat cues are separate from the gunshot.
@@ -130,8 +146,8 @@ export function adaptWeaponAudio(rel,code){
     // like a full-charge Charger direct.
     code=once(code,
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
-      "if (/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))) " +
-      "G.audio?.playWeapon?.(damage>=95?'combat:critical':'combat:damage','fire',{volume:.76,priority:95}); " +
+      "const chargerCue=sourceChargerHitCue(weaponId,charge); " +
+      "if (chargerCue) G.audio?.playWeapon?.(chargerCue,'fire',{volume:.76,priority:95}); " +
       "else G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
       'source verified Charger hit feedback only');
     code=once(code,
@@ -156,6 +172,14 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,activeGrid,activeGrid.replace('if (cur &&',"if (opts.sync !== false && track !== 'battle_final' && cur &&"),'final minute grid');
     code=once(code,'let t0 = now + 0.06, sync = false;',"let t0 = Number.isFinite(opts.at) ? Math.max(now,opts.at) : now + (track==='battle_final' ? .015 : .06), sync = false;",'music clock');
   }
+  if(rel==='patches/splatoon3/runtime/weapons.mjs'){
+    // Full-charge bypass hits must retain the actual shot ratio, not a
+    // synthetic 95+ damage test. No collision/damage behavior is modified.
+    code=once(code,
+      "this.applyHit(a, actor, w.damageMax, 'charger')",
+      "this.applyHit(a, actor, w.damageMax, 'charger', undefined, charge)",
+      'native full-charge through hit metadata');
+  }
   if(rel==='patches/splatoon3/runtime/weapons-charger-flight.mjs'){
     code=code.replace("emit('weapon:impact',{pos:job.pos,","emit('weapon:impact',{actor:job.owner,weapon:job.weapon?.id||'charger',pos:job.pos,");
   }
@@ -165,6 +189,10 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace(/emit\('weapon:impact',\s*\{\s*pos:/g,"emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:");
   }
   if(rel==='patches/splatoon3/runtime/main-weapon-catalog.mjs'){
+    code=once(code,
+      'this.applyHit(p.owner,target,amount,p.wid)',
+      'this.applyHit(p.owner,target,amount,p.wid,undefined,d.charge)',
+      'catalogued Charger original shot charge metadata');
     // Added S3 catalogue weapons already emit weapon:fire. Avoid a second
     // legacy family shot alongside the admitted weapon-specific real sample.
     code=once(code,
