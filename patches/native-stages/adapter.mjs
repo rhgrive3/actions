@@ -92,6 +92,15 @@ export function adaptNativeStages(rel,code){
   code="import { initNativeGrid, layoutNativePaint } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('  _layout(maxDensity) {','  _layout(maxDensity) {\n    if (this.level.native) return layoutNativePaint(this, maxDensity);');
   once('    const shouldRebuild = this._mipsDirty &&', '    const shouldRebuild = !this.level.native && this._mipsDirty &&');
+  // A native chart with no live mask cells is provably unable to claim ink:
+  // _cpuSplat already skips every dead cell. Elide that CPU scan only; retain
+  // the identical visual GPU splat/drip entries, owner order and render path.
+  once('        if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);',
+       '        if (!cosmetic && (!this.level.native || !f.nativeEmpty)) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);');
+  // regionStats likewise counted zero cells for an all-dead native chart.
+  once('        if (!f.turf || !f.atlas) continue;',
+       '        if (!f.turf || !f.atlas || (this.level.native && f.nativeEmpty)) continue;');
+
   once('  _initGrid() {','  _initGrid() {\n    if (this.level.native) return initNativeGrid(this);');
   once('        let px = (i + 0.5) * f.cu - lu, py = (j + 0.5) * f.cv - lv;', '        if (this.level.native && this.dead[f.grid + j * f.nu + i]) continue;\n        let px = (i + 0.5) * f.cu - lu, py = (j + 0.5) * f.cv - lv;');
   once('        const prev = this.grid[k];','        if (this.level.native && this.dead[k]) continue;\n        const prev = this.grid[k];');
