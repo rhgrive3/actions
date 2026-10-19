@@ -177,14 +177,22 @@ export class NativeInkMesh extends THREE.Mesh {
       this._lastViewValid = false;
       return;
     }
-    let changed = false;
+    let changed = false, intersectsSource = false;
     for (let i = 0; i < this.chunks.length; i++) {
-      if (this._painted[i]) continue;
       const b = this.chunks[i].boundingBox;
       if (loX > b.max.x || hiX < b.min.x || loY > b.max.y || hiY < b.min.y ||
           loZ > b.max.z || hiZ < b.min.z) continue;
+      intersectsSource = true;
+      if (this._painted[i]) continue;
       this._painted[i] = 1;
       this._paintedCount++;
+      changed = true;
+    }
+    // If exporter paint/geometry coordinates ever diverge, favour visible
+    // ink over performance. A conservative full draw is never a paint bug.
+    if (!intersectsSource && this.chunks.length) {
+      this._painted.fill(1);
+      this._paintedCount = this._painted.length;
       changed = true;
     }
     if (changed) this._lastViewValid = false;
