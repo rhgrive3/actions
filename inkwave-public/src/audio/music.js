@@ -1,4 +1,6 @@
-// INKWAVE — procedural music engine + shared Web Audio DSP core.
+import { StreamedTrack } from './streamedTrack.js';
+
+// INKWAVE — procedural music engine + shared Web Audio DSP core (with optional streamed battle BGM).
 //
 // Everything here is synthesized: no audio files. The DSP helpers (Voice builder `V`, envelopes, noise buffers,
 // impulse responses, instrument voices) are exported so src/audio/audio.js can build its SFX with the same parts.
@@ -1246,15 +1248,65 @@ class Player {
   }
 }
 
+// Same-origin, on-demand MP3; no full-track decodeAudioData allocation on memory-limited devices.
+const FILE_TRACK_URLS = Object.freeze({ battle: new URL('../../assets/audio/Jet_Arrow.mp3', import.meta.url).href });
 const LOOKAHEAD = 0.16, TICK_MS = 25;
 
 export class MusicEngine {
   constructor() {
     this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined;
+    this._fileFailures = new Set(); this._preloadedFile = null;
   }
   get track() { return this.current ? this.current.id : null; }
   get tracks() { return Object.keys(SONGS); }
   now() { return this.offline ? this.vnow : this.ctx.currentTime; }
+
+  // Called after entering match setup. Fetch only when a turf match is actually chosen.
+  preloadFile(track, { prime = false } = {}) {
+    const url = FILE_TRACK_URLS[track];
+    if (!url || !this.ctx || this.offline || typeof Audio !== 'function' ||
+        !this.ctx.createMediaElementSource || this._fileFailures.has(track)) return;
+    if (this._preloadedFile?.id !== track) {
+      this._dropPreload();
+      try {
+        const element = new Audio();
+        element.preload = 'auto';
+        element.src = url;
+        element.load();
+        this._preloadedFile = { id: track, element, player: null };
+      } catch (_) {
+        this._fileFailures.add(track);
+        this._dropPreload();
+        return;
+      }
+    }
+    // The WebAudio source must be attached exactly once to this media element.
+    if (prime && !this._preloadedFile.player) {
+      try {
+        const pending = this._preloadedFile;
+        const player = new StreamedTrack(this, track, { bpm: SONGS[track].bpm }, pending.element,
+          (failed) => this._onFileFailed(failed));
+        pending.player = player;
+        player.prime();
+      } catch (error) {
+        console.warn('[music] Unable to prime MP3 on the START gesture', error);
+        this._fileFailures.add(track);
+        this._dropPreload();
+      }
+    }
+  }
+
+  _dropPreload() {
+    const pending = this._preloadedFile;
+    this._preloadedFile = null;
+    if (!pending) return;
+    if (pending.player) pending.player.dispose();
+    else {
+      pending.element.pause();
+      pending.element.removeAttribute('src');
+      pending.element.load();
+    }
+  }
 
   // dest = the music bus (audio.js). opt.offline → no timer; drive with advance(t).
   _init(ctx, dest, opt = {}) {
@@ -1324,15 +1376,56 @@ export class MusicEngine {
     if (this.remap) { try { const r = this.remap(track); if (r !== undefined) track = r; } catch (e) { /* keep the request */ } }
     const fade = Math.max(0, opts.fade ?? 1.0);
     if (track != null && !SONGS[track]) { console.warn('[music] unknown track', track); return; }
+    // The pre-GO Opening sting plays while the silent battle MP3 stays primed.
+    if (track && track !== 'opening' && !FILE_TRACK_URLS[track]) this._dropPreload();
     if (!this.ctx) { this._want = { track, opts }; return; }
     const cur = this.current;
     if (cur && cur.id === track) return;
     const now = this.now();
     if (track == null) { if (cur) cur.fadeOut(now, Math.max(0.03, fade)); this.current = null; return; }
     const song = getSong(track);
+    const useFile = !!FILE_TRACK_URLS[track] && !this.offline && typeof Audio === 'function' &&
+      !!this.ctx.createMediaElementSource && !this._fileFailures.has(track);
+    let element = null, primedPlayer = null;
+    if (useFile) {
+      try {
+        if (this._preloadedFile?.id === track) {
+          element = this._preloadedFile.element;
+          primedPlayer = this._preloadedFile.player;
+          this._preloadedFile = null;
+        } else {
+          element = new Audio();
+          element.preload = 'auto';
+          element.src = FILE_TRACK_URLS[track];
+        }
+      } catch (_) {
+        this._fileFailures.add(track);
+      }
+    } else if (this._preloadedFile && track !== 'opening') {
+      this._dropPreload();
+    }
     let t0 = now + 0.06, sync = false;
-    if (cur && fade > 0 && cur.song.bpm === song.bpm) { t0 = cur.nextBarTime(now + 0.12); sync = true; }
-    const p = new Player(this, track, t0, opts);
+    // A fixed recording cannot be beat-synced to the procedural tracks.
+    if (cur && !element && !(cur instanceof StreamedTrack) && fade > 0 && cur.song.bpm === song.bpm) {
+      t0 = cur.nextBarTime(now + 0.12); sync = true;
+    }
+    let p = primedPlayer;
+    if (p) {
+      // The silent primed recording has been advancing during the intro.
+      // Rewind precisely at GO without requesting a fresh activation on iOS.
+      p.song = song;
+      try { p.element.currentTime = 0; }
+      catch (e) { console.warn('[music] Could not seek primed MP3 to its opening', e); }
+    } else if (element) {
+      try { p = new StreamedTrack(this, track, song, element, (player) => this._onFileFailed(player)); }
+      catch (e) {
+        this._fileFailures.add(track);
+        element.removeAttribute('src');
+        element.load();
+        console.warn('[music] MP3 streaming unavailable, falling back to synthesized battle track', e);
+      }
+    }
+    if (!p) p = new Player(this, track, t0, opts);
     this.players.push(p);
     const beat = 60 / song.bpm;
     this.dA.delayTime.setTargetAtTime(beat * 0.75, t0, 0.05); this.dB.delayTime.setTargetAtTime(beat * 0.75, t0, 0.05);
@@ -1352,6 +1445,19 @@ export class MusicEngine {
     this._tick();
   }
 
+  _onFileFailed(player) {
+    this._fileFailures.add(player.id);
+    if (this._preloadedFile?.player === player) {
+      this._dropPreload();
+      return;
+    }
+    if (this.current !== player) return;
+    player.dispose();
+    this.players = this.players.filter((p) => p !== player);
+    this.current = null;
+    this.play(player.id, { fade: 0.2 });
+  }
+
   setIntensity(x) {
     this.intensity = Math.min(1, Math.max(0, +x || 0));
     if (!this.ctx) return;
@@ -1362,6 +1468,7 @@ export class MusicEngine {
   stop(fade = 1) { this.play(null, { fade }); }
 
   dispose() {
+    this._dropPreload();
     for (const p of this.players) p.dispose();
     this.players.length = 0; this.current = null;
     if (this.worker) { this.worker.postMessage(0); this.worker.terminate(); this.worker = null; }

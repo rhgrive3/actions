@@ -4,7 +4,7 @@
   "files": {
     "src/fx/fx.js": "4f73310a0d6d190601a29811eb39548f223b68226c2d8581ea9e3388e6e0cb90",
     "index.html": "13e4485f3974f806a1672e60200d6c86efd419a1cd41b18c9aa3e9cbf461a580",
-    "src/main.js": "af8d0c1e0d5850ba10b5a1e5f1b5be15860927aab78fd85390775876bd41bcd1",
+    "src/main.js": "0d2323593dfbb078dc88a3cf0782314deb94ace0ac1dca5350bb2349df62dd09",
     "src/game/actor.js": "f8c85831733661d6e40aa58f8d588ca576ab2affece932d7f2a574bd49cb2d5d",
     "src/game/weapons.js": "a7dfed27d9e67f2b47cde32d12b319cb8d7f77d50b70baa89daee50df0bb78f5",
     "src/game/player.js": "96b7ebb2e1c8715f08d15aeb292f9090d64c38f255361cfd78a0a095a53f9dfa",
