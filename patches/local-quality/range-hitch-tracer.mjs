@@ -145,7 +145,18 @@ export function installHitchTracer(game, {
     else pendingEvents.push(item);
   };
   const rebind = () => {
-    for (const [name, owner, method] of stageOwners()) {
+    const owners = stageOwners();
+    // World swaps replace stage/actor owners. Do not retain old native actor
+    // objects (and their complete Character graphs) just because the debug
+    // recorder stays open across several matches.
+    const names = new Set(owners.map(([name]) => name));
+    for (const [name, prior] of stageState) {
+      if (name === 'dynamicScale' || names.has(name)) continue;
+      if (prior.owner?.[prior.method] === prior.wrapper)
+        prior.owner[prior.method] = prior.original;
+      stageState.delete(name);
+    }
+    for (const [name, owner, method] of owners) {
       const prior = stageState.get(name);
       if (prior && (prior.owner !== owner || owner?.[method] !== prior.wrapper)) {
         if (prior.owner?.[prior.method] === prior.wrapper) prior.owner[prior.method] = prior.original;
