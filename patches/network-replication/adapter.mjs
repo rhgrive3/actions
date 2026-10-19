@@ -1,4 +1,5 @@
 import { adaptTransientGear } from './transient-gear-adapter.mjs';
+import { adaptPaintAuthority } from './paint-authority-adapter.mjs';
 import { adaptQueuedBugRecovery } from './queue-recovery-adapter.mjs';
 import { adaptGearLoadout } from './gear-loadout-adapter.mjs';
 import { adaptConditionalGear } from './conditional-gear-adapter.mjs';
@@ -27,7 +28,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -64,7 +65,7 @@ export function adaptNetworkSource(rel, code) {
       '    const cosmetic = !!opts.cosmetic;\n    const netOrderId = !cosmetic && paintOrder ? this._paintOrderId(paintOrder) : 0;\n    const ownerOrder = netOrderId || this._paintCurrentOrder || 0;\n    const orderState = ownerOrder && !cosmetic ? { accepted: false } : null;',
       'shared local and network cell owner');
     patch('if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n          entries.push(f, lu, lv, dn, sdu, sdv, sa);',
-      'if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);\n          if (netOrderId || !orderState || orderState.accepted) entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      'if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);\n          entries.push(f, lu, lv, dn, sdu, sdv, sa); // Ancillary ink can hit cells even when the body hits none.',
       'retain ordered ancillary growth while masking rejected body cells');
     patch('          if (g.team === team || g.kind === K_SPECK) continue;',
       '          if (g.netOrderId || netOrderId || g.team === team || g.kind === K_SPECK) continue;',
@@ -2676,5 +2677,6 @@ function canAllocateNetworkGhost(projectiles, actor) {
   }
   if (rel === 'src/net/netmatch.js') {code = adaptGearLoadout(code, once);code = adaptConditionalGear(code, once);code = adaptTransientGear(code, once);}
   code = adaptQueuedBugRecovery(rel, code, once);
+  code = adaptPaintAuthority(rel, code, once);
   return code;
 }
