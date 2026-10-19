@@ -160,22 +160,45 @@ test('actual native source ink flight retains separate head and detached splash 
 });
 
 test('same full-precision sourced event gives identical CPU ownership on local and replay clients', async () => {
-  const collect = async applying => {
-    const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
-    const { paint, V, face } = makePaintWorld(f);
-    const messages = [];
-    f.G.netm = { mute: 0, applying, recSplat(_at, r, _team, options) {
-      messages.push({ radius: r, kind: options.kind, face: options.face });
-    }};
-    const r = f.profile.weaponsFidelityCompletion.weapons.shooter.PaintParam.WidthHalfNear;
-    const area = paint.splat(V(0,0,8), r, 0,
-      { kind: SOURCE_SHOT_PAINT_KIND, face: 0, seed: .37, stretch: V(0,0,1), stretchAmt: 1.24 });
-    assert.ok(area > 0);
-    return { area, cells: Array.from(paint.grid), radius: paint.growing.at(-1).R,
-      kind: paint.growing.at(-1).kind, messages, faceCells: face.nu*face.nv };
+  const clients=[];
+  const client=async id=>{
+    const f=await fixture({productionComposition:true,fullRuntime:true,realProjectiles:true});
+    const {paint,V,face}=makePaintWorld(f),wire=[],messages=[],areas=[];
+    const actor=f.make('shooter');Object.assign(actor,{nid:1,owner:'owner',remote:id!=='owner',isLocal:id==='owner',team:0});
+    const trigger=actor.character.trigger;
+    const nm=new f.NetMatch({myId:id,hostId:'owner',isHost:id==='owner',_members:new Map([['owner','Owner'],['receiver','Receiver']]),tr:{broadcast(msg){wire.push(JSON.parse(JSON.stringify(msg)));},sendTo(){return false;}}},{id:'source-shot-parity'});
+    const recSplat=nm.recSplat,splat=paint.splat;
+    const c={f,paint,V,face,actor,trigger,nm,recSplat,splat,wire,messages,areas};clients.push(c);
+    nm.bind({actors:[actor],state:'playing',time:180,follower:id!=='owner'});
+    // Observe the production boundary while retaining its authority/order receipt.
+    nm.recSplat=function(at,r,team,options){messages.push({radius:r,kind:options.kind,face:options.face});return recSplat.call(this,at,r,team,options);};
+    paint.splat=function(...args){const area=splat.apply(this,args);areas.push(area);return area;};
+    return c;
   };
-  const local = await collect(false), remote = await collect(true);
-  near(local.radius, 1.93);
-  assert.deepEqual(local.messages, [{ radius: 1.93, kind: SOURCE_SHOT_PAINT_KIND, face: 0 }]);
-  assert.deepEqual({ ...remote, messages: local.messages }, local);
+  try{
+    const a=await client('owner'),b=await client('receiver');
+    const r=a.f.profile.weaponsFidelityCompletion.weapons.shooter.PaintParam.WidthHalfNear;
+    const area=a.paint.splat(a.V(0,0,8),r,0,{kind:SOURCE_SHOT_PAINT_KIND,face:0,seed:.37,stretch:a.V(0,0,1),stretchAmt:1.24,claimOwner:a.actor});
+    assert.ok(area>0);
+    a.nm._sendTick();
+    const tick=a.wire.find(msg=>msg.k==='t');assert.ok(tick);assert.equal(tick.e.filter(e=>e[1]==='s').length,1);
+    const row=tick.e.find(e=>e[1]==='s');near(row[5],1.93);assert.equal(row[8],SOURCE_SHOT_PAINT_KIND);
+    assert.deepEqual(row[14][4],['inkwave-paint-authority-v1','actor',1,0]);
+    b.nm.onMessage('owner',JSON.parse(JSON.stringify(tick)));
+    for(let i=0;i<12;i++){b.f.G.time+=1/60;b.nm.update(1/60);}
+    assert.equal(b.areas.length,1,'the real JSON receiver applies the paint exactly once');
+    const collect=c=>({area:c.areas[0],cells:Array.from(c.paint.grid),radius:c.paint.growing.at(-1).R,kind:c.paint.growing.at(-1).kind,messages:c.messages,faceCells:c.face.nu*c.face.nv});
+    const local=collect(a),remote=collect(b);
+    near(local.radius,1.93);
+    assert.deepEqual(local.messages,[{radius:1.93,kind:SOURCE_SHOT_PAINT_KIND,face:0}]);
+    assert.deepEqual(remote.messages,[],'remote playback does not record a new local stamp');
+    assert.deepEqual({...remote,messages:local.messages},local);
+    // A replayed tick must not repaint cells, add another growth, or re-credit turf.
+    const before={cells:Array.from(b.paint.grid),growth:b.paint.growing.length,credit:b.actor.stats.turf};
+    b.nm.onMessage('owner',JSON.parse(JSON.stringify(tick)));
+    for(let i=0;i<12;i++){b.f.G.time+=1/60;b.nm.update(1/60);}
+    assert.equal(b.areas.length,1);assert.deepEqual({cells:Array.from(b.paint.grid),growth:b.paint.growing.length,credit:b.actor.stats.turf},before);
+  }finally{
+    for(const c of clients){try{c.nm.dispose();}finally{c.nm.recSplat=c.recSplat;c.paint.splat=c.splat;c.actor.character.trigger=c.trigger;delete c.actor.character._netTrig;c.nm.byNid.clear();c.nm.match=null;const i=c.f.G.actors.indexOf(c.actor);if(i>=0)c.f.G.actors.splice(i,1);}}
+  }
 });
