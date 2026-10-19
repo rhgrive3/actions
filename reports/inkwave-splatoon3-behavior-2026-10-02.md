@@ -5316,3 +5316,11 @@ main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.
 実 Actor/WeaponRunner/Physics の平床診断では、残存Splatana charge＋前入力履歴や Dualies roll/slip が、標的の速度とintentだけを0にしても後続updateで移動を発生させる。静止標的の準備で既存 `WeaponRunner.reset()` を呼び、武器/charge/roll/slip等を前後receiptへ記録する。変更はbrowser QAと専用回帰だけで、game runtime・boot・timeout・shot1・damage60/180・壁800→380の判定は維持。
 
 専用7/7成功、reset1行だけを除く負対照は3件失敗。普通シューター、Splatana3種のcharge有無、native Dualies roll、catalogue `s3-maneuver-long` のrollと別slipを実consumerで確認。旧失敗の移動量はcharged `s3-saber-lite` と一致するが、旧receiptに武器状態がないため歴史的原因の一意確定には至らない。参照版11.3.0の実機比較や本家新数値の変更ではなく、静止QA条件の修復。固定headのCI/browser/公開後検証はこの記録時点で未完了。詳細は [専用短report](rainmaker-proof-weapon-reset-2026-10-19.md)。
+
+## 2026-10-19: Issue #1608 公開 boot 失敗の診断改善候補
+
+旧 run 38600452106 attempt 1 の保存 trace では、同一 version の `runtime/audio/weapon-recipes.mjs` が HTTP 503 を返し、起動失敗表示後も harness が 180 秒待機していた。PR #1625 の公開 identity／deploy 順序修正とは原因を区別する。
+
+別候補は同一 origin・アプリ配下の document/JavaScript 配信失敗と明示 loader failure を早期失敗として記録する。reload は追加せず、optional 音声・画像は critical 判定の対象外。各 failure の時刻、検証対象 inputHash/revision、runAttempt を保存し、初回障害を後の run 成功で消さない。既存の厳格 identity と pageerror 検査、180 秒 readiness、failure result／画像／trace 保存を保持。
+
+PR #1630 d947 の target setup を基準に全バイト保持。診断・cleanup・CI 導線の専用 12/12、既存 target consumer 3/3 成功。親による専用 12/12 独立再実行も成功。現在はローカル候補で、公開・新 exact-head CI・本番 browser は未実施。これは配信障害自体の解消報告ではない。
