@@ -379,12 +379,15 @@ export function installGear(api, tuning) {
     const penalty = deathGearPenalty(this, attacker, cause, tuning, conditionalPoints(this, abilityPoints(this.s3?.loadout), G.match, tuning.conditionalGear), gearCurve);
     const enemyDeath = attacker && attacker !== this && attacker.team !== this.team &&
       !['water', 'fall', 'out', 'bounds', 'void'].includes(cause);
+    // Rainmaker carrier timeout is a distinct objective death. It advances
+    // ordinary QR history without inventing an enemy attacker or a kill.
+    const quickRespawnDeath = enemyDeath || (!attacker && cause === 'rainmaker-timeout');
     const result = splat.apply(this, args);
     if (alive && !this.alive) {
       clearDropRollerLife(this); equip(this, true);
       this.special = before * Math.max(0, (penalty.incoming || penalty.cooler ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
       const history = this.s3.quickRespawnHistory;
-      if (enemyDeath) {
+      if (quickRespawnDeath) {
         // A Tacticooler drink supplies 57AP Quick Respawn on any enemy splat,
         // independently of the ordinary zero-splat eligibility condition.
         // RP still adds its extra frames, but cannot negate the drink (#835).
