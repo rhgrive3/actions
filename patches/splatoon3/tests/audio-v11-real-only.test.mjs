@@ -39,6 +39,29 @@ class MixerStub {
 }
 installWeaponAudioEngine(MixerStub);
 
+test('three battle-combat source recordings are resident before Charger first shot',async()=>{
+ const {ctx}=mkctx(),audio=new MixerStub(ctx),b=audio.weaponBank();
+ const mock=manifest([
+   clip('charger','fire','Wp_ChargerNormal_Shot_00.mp3'),
+   clip('combat:critical','fire','HitEf_CriticalHit_00.mp3'),
+   clip('combat:damage','fire','HitEf_Damage_00.mp3'),
+   clip('combat:splat','fire','Pl_DeadSplash_00.mp3')
+ ]);
+ audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>mock});
+ b.authorized.fetcher=async()=>res;
+ assert.equal((await audio.requireRecordedMainShot('charger')).ready,true);
+ for(const id of ['combat:critical','combat:damage','combat:splat']){
+  assert.ok(b.authorized.pick(id,'fire'),id+' resident before first shot');
+  assert.equal(audio.playWeapon(id,'fire',{actor:{isLocal:true}})?.weaponId,id);
+  assert.equal(audio.played.at(-1).voice.srcs[0].buffer,b.authorized.pick(id,'fire').buffer,
+   'real authorized source buffer, not generated oscillator: '+id);
+ }
+ assert.equal(audio.stats().authoredFallbackShots,0,'combat sample playback never invokes a synth backup');
+ audio.disposeWeaponAudio();
+});
+
+
+
 test('real composed START gates offline and online first shot on decoded original MP3, never authored fallback',()=>{
  const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const composed=adaptBuildSource('src/main.js',src);
