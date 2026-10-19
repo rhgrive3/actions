@@ -93,9 +93,12 @@ test('real composed network/damage wrappers preserve ONLY an actor-scoped sound 
 
 test('real runtime carries source charge metadata, built game prefers source sound when resident',()=>{
  const raw=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
+ const weapon=adaptBuildSource('src/game/weapons.js',raw);
  const catalog=fs.readFileSync(new URL('../runtime/main-weapon-catalog.mjs',import.meta.url),'utf8');
- assert.match(raw,/a\._sourceChargerAudioHit=\{chargerDirect:true,charge\}/);
- assert.match(raw,/emit\('hit', \{ attacker, victim, damage: dmg, killed, weaponId, hitMeta:attacker\?\._sourceChargerAudioHit\?\?null \}\)/);
+ assert.doesNotMatch(raw,/a\._sourceChargerAudioHit=\{chargerDirect:true,charge\}/,
+   'locked original weapons.js is not altered merely to install audio');
+ assert.match(weapon,/a\._sourceChargerAudioHit=\{chargerDirect:true,charge\}/);
+ assert.match(weapon,/emit\('hit', \{ attacker, victim, damage: dmg, killed, weaponId, hitMeta:attacker\?\._sourceChargerAudioHit\?\?null \}\)/);
  assert.match(catalog,/if\(s\.r\.family==='charger'\)owner\._sourceChargerAudioHit=\{chargerDirect:true,charge:d\.charge\}/);
  const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const built=adaptBuildSource('src/main.js',src);
