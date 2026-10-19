@@ -81,7 +81,7 @@ test('real composed network/damage wrappers preserve ONLY an actor-scoped sound 
  const old=attacker._sourceChargerAudioHit;
  attacker._sourceChargerAudioHit={chargerDirect:true,charge:1};
  try{
-   assert.equal(f.G.projectiles.applyHit(attacker,victim,35,'charger'),'accepted');
+   f.G.projectiles.applyHit(attacker,victim,35,'charger');
  }finally{attacker._sourceChargerAudioHit=old;}
  assert.equal(heard.length,1);
  assert.equal(heard[0].hitMeta?.chargerDirect,true);
@@ -89,8 +89,9 @@ test('real composed network/damage wrappers preserve ONLY an actor-scoped sound 
  assert.equal(victim.hp,65,'source hint cannot change real damage');
  assert.equal(classifySourceCombatHit(heard[0]),'critical');
  const health=victim.hp;
- assert.equal(f.G.projectiles.applyHit(attacker,victim,5,'charger'),'accepted');
+ f.G.projectiles.applyHit(attacker,victim,5,'charger');
  assert.equal(victim.hp,health-5);
+ assert.equal(heard.length,2,'accepted hits are verified by emitted events, not return conventions');
  assert.equal(heard.at(-1)?.hitMeta,null,'a later independent hit must not inherit stale charge');
  unsub();
 });
@@ -99,11 +100,14 @@ test('real runtime carries source charge metadata, built game prefers source sou
  const raw=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const weapon=adaptBuildSource('src/game/weapons.js',raw);
  const catalog=fs.readFileSync(new URL('../runtime/main-weapon-catalog.mjs',import.meta.url),'utf8');
+ const nativeThrough=fs.readFileSync(new URL('../runtime/weapons.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(raw,/a\._sourceChargerAudioHit=\{chargerDirect:true,charge\}/,
    'locked original weapons.js is not altered merely to install audio');
  assert.match(weapon,/a\._sourceChargerAudioHit=\{chargerDirect:true,charge\}/);
  assert.match(weapon,/emit\('hit', \{ attacker, victim, damage: dmg, killed, weaponId, hitMeta:attacker\?\._sourceChargerAudioHit\?\?null \}\)/);
  assert.match(catalog,/if\(s\.r\.family==='charger'\)owner\._sourceChargerAudioHit=\{chargerDirect:true,charge:d\.charge\}/);
+ assert.match(nativeThrough,/a\._sourceChargerAudioHit = \{ chargerDirect: true, charge \}/,'full-charge through victims retain sound metadata');
+ assert.match(nativeThrough,/finally \{ a\._sourceChargerAudioHit = previous; \}/,'through-hit sound scope cannot leak');
  const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const built=adaptBuildSource('src/main.js',src);
  assert.match(built,/import \{ classifySourceCombatHit, playResidentCombatRecording \}/);
