@@ -87,8 +87,17 @@ try {
     assert.equal(row.counts.world,0,'existing offline world cache stays idle');
     assert.ok(row.animations.length>0,'HUD animation sensitivity');
     if(baseline) {
-      assert.equal(row.counts.hud,120);assert.ok(row.animations.some(a=>a.playState==='running'));
-      assert.equal(row.unchangedAnimationTimes,false);
+      // Main already has the #1616 offline HUD/CSS pause budget. The regression
+      // this PR fixes is its missing *GPU backdrop*, not repeated HUD updates.
+      // Keep a real baseline negative: the old engine does not retain or
+      // present a pause frame, and its cleared GL drawing buffer is black.
+      assert.deepEqual(row.counts,{world:0,hud:0,minimap:0,tank:0,presents:0,captures:0});
+      assert.equal(row.retained,false,'baseline has no retained GPU pause texture');
+      assert.equal(row.glProbe.lit,0,'unfixed baseline has no visible stage pixels');
+      assert.equal(row.glProbe.brightness,0,'baseline cleared GL buffer stays black');
+      assert.ok(row.animations.every(a=>a.playState==='paused'));
+      assert.equal(row.preservedEntryPhases,true);
+      assert.equal(row.unchangedAnimationTimes,true);
     } else {
       assert.deepEqual(row.counts,{world:0,hud:0,minimap:0,tank:0,presents:120,captures:0});
       assert.equal(row.retained,true,'paused backdrop keeps its last finished frame in GPU memory');
