@@ -2,7 +2,7 @@
 
 ## Scope
 
-Test-only repair of `tests/issue-queue/critical-queue.test.mjs`. No gameplay,
+Test-only repair of the critical-queue and weapon-edgecases fixtures. No gameplay,
 network protocol, build adapter, model or production file changes. The Validate
 workflow receives only two trigger-path additions described below.
 The existing [S3 behavior comparison](inkwave-splatoon3-behavior-2026-10-02.md)
@@ -82,3 +82,37 @@ checkout identity and timeouts remain byte-for-byte unchanged. An independent
 contract checks both matching events, every previous path, and complete parsed
 workflow equality after removing the two additions; omitted-trigger and
 removed-existing-path negative controls must fail.
+
+## Launch-packet fixture uses the real owner and roster
+
+[PR #1656 patch-shard-6 job 118025852569](https://github.com/rhgrive3/actions/actions/runs/39242322009/job/118025852569)
+failed `weapon-edgecases.test.mjs` at the launch paint-count assertion. The
+roller correctly produced 13 projectile packets but zero paint packets: its
+fixture actor had no owner and was absent from `NetMatch.byNid`. Main00b
+reproduced the same failure; the original test blob is identical on both heads.
+
+The additional setup-only change assigns the actor's owner, host and match
+identity and calls real `NetMatch.bind({actors:[a]})`. It removes the fake
+`isMine=()=>true` override. The production authority gate remains unchanged.
+All original assertions remain: roller13/splatling1 projectile packets,
+paint1/0, transmitted velocity tolerance, ghost cardinality and no duplicate
+owner output. The corrected roller proof identifies actor1/generation0.
+
+Independent full source suite: baseline27/28, candidate28/28; 429 consumed
+source paths checked against main00b with no mismatches. Candidate SHA-256:
+`6596fa84026f5bfdb81ec7628a076d013d960662781d4001d84081e931733603`.
+Five negative controls reject missing owner, missing binding, foreign owner,
+and isolated missing paint owner/roster after binding. The last two diagnostic
+negatives retain the historical fake ownership override only to isolate the
+paint guard; they are not part of the candidate. This test deliberately uses
+its existing source fixture, so these results are not emitted/browser proof.
+
+The prior `cff0b2ddaeab208432bb462f521b9b02f70737e9` Validate run had no
+assigned runners or executed steps at the pre-update check. Updating the same
+PR activates its existing concurrency policy and supersedes that queued run;
+it does not turn that old run into a success. Final-head full CI remains required.
+
+Combined core, actual #522 authority consumers and full weapon-edgecases: **52/52**
+passed (zero skipped/failed, 650 consumed paths with strict official-source
+binding and only the two declared test overlays). This supplements, not replaces,
+the required final-head workflow.
