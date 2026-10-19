@@ -24,7 +24,10 @@ const cap = (weapon,kind) => {
     weapon.splashDamage,weapon.splashDamageMax,
     weapon.fullDamage,weapon.fullChargeDamage,weapon.chargeDamageMax
   ].filter(n => Number.isFinite(n) && n > 0);
-  return Math.min(300,Math.max(120,...values)*1.25);
+  // The trusted weapon's own damage, not an arbitrary 120-point floor,
+  // limits a remote claimed hit. Some alternate actions expose no scalar here;
+  // their admission requires a separate source-backed rule before widening it.
+  return Math.min(300,(values.length ? Math.max(...values) : 80)*1.25);
 };
 function plausiblePath(origin, velocity, shield, reach, tolerance=3) {
   if (!isVec(origin) || !isVec(velocity) || !isVec(shield)) return false;
@@ -103,7 +106,7 @@ function shieldOf(nm) {
   return [s.pos[0],s.pos[1]+1,s.pos[2]];
 }
 export function noteRankedBarrierShots(nm,from,packet,now) {
-  if(!active(nm) || !Array.isArray(packet?.e) || !Number.isFinite(now)) return;
+  if(!active(nm) || !Array.isArray(packet?.e) || packet.e.length>512 || !Number.isFinite(now)) return;
   prune(nm,now);
   const shield=shieldOf(nm);
   const receipts=nm.rankedBarrierProofs.get(from) || [];
@@ -158,7 +161,8 @@ export function flushRankedBarrierHits(nm,now) {
       if(!a) continue;
       const shot=shots.find(s=>!s.used && s.id===h.data.id && h.data.damage<=s.maxDamage
         && distance(h.data.pos,s.origin)<s.reach+7
-        && plausiblePath(s.origin,s.velocity,shield,s.reach,s.kind==='bomb'?22:4.5));
+        && (s.kind==='bomb' ? distance(s.origin,shield)<=22
+            : plausiblePath(s.origin,s.velocity,shield,s.reach,4.5)));
       if(!shot) continue;
       shot.used=true;
       (nm.rankedHitSeq ||= new Map()).set(peer,h.data.seq);
