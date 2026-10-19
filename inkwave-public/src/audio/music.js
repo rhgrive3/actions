@@ -1262,24 +1262,49 @@ export class MusicEngine {
   now() { return this.offline ? this.vnow : this.ctx.currentTime; }
 
   // Called after entering match setup. Fetch only when a turf match is actually chosen.
-  preloadFile(track) {
+  preloadFile(track, { prime = false } = {}) {
     const url = FILE_TRACK_URLS[track];
     if (!url || !this.ctx || this.offline || typeof Audio !== 'function' ||
         !this.ctx.createMediaElementSource || this._fileFailures.has(track)) return;
-    if (this._preloadedFile?.id === track) return;
-    if (this._preloadedFile) {
-      this._preloadedFile.element.removeAttribute('src');
-      this._preloadedFile.element.load();
-      this._preloadedFile = null;
+    if (this._preloadedFile?.id !== track) {
+      this._dropPreload();
+      try {
+        const element = new Audio();
+        element.preload = 'auto';
+        element.src = url;
+        element.load();
+        this._preloadedFile = { id: track, element, player: null };
+      } catch (_) {
+        this._fileFailures.add(track);
+        this._dropPreload();
+        return;
+      }
     }
-    try {
-      const element = new Audio();
-      element.preload = 'auto';
-      element.src = url;
-      element.load();
-      this._preloadedFile = { id: track, element };
-    } catch (_) {
-      this._fileFailures.add(track);
+    // The WebAudio source must be attached exactly once to this media element.
+    if (prime && !this._preloadedFile.player) {
+      try {
+        const pending = this._preloadedFile;
+        const player = new StreamedTrack(this, track, { bpm: SONGS[track].bpm }, pending.element,
+          (failed) => this._onFileFailed(failed));
+        pending.player = player;
+        player.prime();
+      } catch (error) {
+        console.warn('[music] Unable to prime MP3 on the START gesture', error);
+        this._fileFailures.add(track);
+        this._dropPreload();
+      }
+    }
+  }
+
+  _dropPreload() {
+    const pending = this._preloadedFile;
+    this._preloadedFile = null;
+    if (!pending) return;
+    if (pending.player) pending.player.dispose();
+    else {
+      pending.element.pause();
+      pending.element.removeAttribute('src');
+      pending.element.load();
     }
   }
 
@@ -1351,6 +1376,7 @@ export class MusicEngine {
     if (this.remap) { try { const r = this.remap(track); if (r !== undefined) track = r; } catch (e) { /* keep the request */ } }
     const fade = Math.max(0, opts.fade ?? 1.0);
     if (track != null && !SONGS[track]) { console.warn('[music] unknown track', track); return; }
+    if (track && !FILE_TRACK_URLS[track]) this._dropPreload();
     if (!this.ctx) { this._want = { track, opts }; return; }
     const cur = this.current;
     if (cur && cur.id === track) return;
@@ -1359,11 +1385,12 @@ export class MusicEngine {
     const song = getSong(track);
     const useFile = !!FILE_TRACK_URLS[track] && !this.offline && typeof Audio === 'function' &&
       !!this.ctx.createMediaElementSource && !this._fileFailures.has(track);
-    let element = null;
+    let element = null, primedPlayer = null;
     if (useFile) {
       try {
         if (this._preloadedFile?.id === track) {
           element = this._preloadedFile.element;
+          primedPlayer = this._preloadedFile.player;
           this._preloadedFile = null;
         } else {
           element = new Audio();
@@ -1373,19 +1400,22 @@ export class MusicEngine {
       } catch (_) {
         this._fileFailures.add(track);
       }
-    } else if (track && this._preloadedFile) {
-      // A cancelled match should not keep a full MP3 in the browser cache.
-      this._preloadedFile.element.removeAttribute('src');
-      this._preloadedFile.element.load();
-      this._preloadedFile = null;
+    } else if (this._preloadedFile) {
+      this._dropPreload();
     }
     let t0 = now + 0.06, sync = false;
     // A fixed recording cannot be beat-synced to the procedural tracks.
     if (cur && !element && !(cur instanceof StreamedTrack) && fade > 0 && cur.song.bpm === song.bpm) {
       t0 = cur.nextBarTime(now + 0.12); sync = true;
     }
-    let p = null;
-    if (element) {
+    let p = primedPlayer;
+    if (p) {
+      // The silent primed recording has been advancing during the intro.
+      // Rewind precisely at GO without requesting a fresh activation on iOS.
+      p.song = song;
+      try { p.element.currentTime = 0; }
+      catch (e) { console.warn('[music] Could not seek primed MP3 to its opening', e); }
+    } else if (element) {
       try { p = new StreamedTrack(this, track, song, element, (player) => this._onFileFailed(player)); }
       catch (e) {
         this._fileFailures.add(track);
@@ -1416,6 +1446,10 @@ export class MusicEngine {
 
   _onFileFailed(player) {
     this._fileFailures.add(player.id);
+    if (this._preloadedFile?.player === player) {
+      this._dropPreload();
+      return;
+    }
     if (this.current !== player) return;
     player.dispose();
     this.players = this.players.filter((p) => p !== player);
@@ -1433,11 +1467,7 @@ export class MusicEngine {
   stop(fade = 1) { this.play(null, { fade }); }
 
   dispose() {
-    if (this._preloadedFile) {
-      this._preloadedFile.element.removeAttribute('src');
-      this._preloadedFile.element.load();
-      this._preloadedFile = null;
-    }
+    this._dropPreload();
     for (const p of this.players) p.dispose();
     this.players.length = 0; this.current = null;
     if (this.worker) { this.worker.postMessage(0); this.worker.terminate(); this.worker = null; }
