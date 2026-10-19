@@ -1320,7 +1320,7 @@ export class MusicEngine {
   // Recorded music is the ONLY soundtrack for live turf battles. Retry transient
   // loading/decoding failures twice, then leave music silent; never synthesize Turf Riot.
   _retryFile(track, reason) {
-    if (this.offline || this._desiredTrack !== track || !FILE_TRACK_URLS[track]) return;
+    if (this.offline || typeof window === 'undefined' || this._desiredTrack !== track || !FILE_TRACK_URLS[track]) return;
     this._fileFailures.add(track);
     if (this._fileRetryTimer != null) return;
     if (this._fileRetryCount >= 2) {
@@ -1411,7 +1411,7 @@ export class MusicEngine {
     if (track != null && !SONGS[track]) { console.warn('[music] unknown track', track); return; }
     // There is no approved recorded final-minute replacement. Keep Jet Arrow
     // running across the one-minute cue; don't switch to the old synthesized score.
-    if (track === 'battle_final' && !this.offline) {
+    if (track === 'battle_final' && !this.offline && typeof window !== 'undefined') {
       if (this._desiredTrack === 'battle') return;
       track = 'battle';
     }
@@ -1477,7 +1477,7 @@ export class MusicEngine {
     }
     // Keep offline render tests procedural, but never select procedural battle
     // music in an actual browser when a recorded MP3 cannot be opened.
-    if (!p && track === 'battle' && !this.offline) {
+    if (!p && track === 'battle' && !this.offline && typeof window !== 'undefined') {
       if (cur) cur.fadeOut(now, Math.max(0.03, fade));
       this.current = null;
       this._retryFile(track, new Error('Jet Arrow stream could not be opened'));
