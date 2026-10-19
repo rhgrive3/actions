@@ -1,6 +1,6 @@
 # 2026-10-19：ギア実consumer再監査（スペ増のガチ自然増加・ジャン短の各相丸め）
 
-監査の比較基準は公開 main `1cbe15538e6fb98a7ab18a58473caf75006bf6ad`、Splatoon 3 Ver.11.3.0。公開時は最新main `56bbf33832563f32f18662353a160d0e049d1672` を親にし、監査対象consumerが変わっていないことを確認した。変更した3 runtime filesと関連 consumer/fixture 計20 pathsを GitHub tree blob と照合した。公開版 `inkwave-public/` の Actor を出荷時 `adaptBuildSource` と全 runtime installer で構成し、Match / NetMatch の実consumerを実行した。画面・音声はfixture、ジャンプは実Physicsの平床。ブラウザ実表示とSwitch実機比較は未実施。
+監査の比較基準は公開 main `1cbe15538e6fb98a7ab18a58473caf75006bf6ad`、Splatoon 3 Ver.11.3.0。公開時は最新main `56bbf33832563f32f18662353a160d0e049d1672` を親にし、監査対象consumerが変わっていないことを確認した。変更した3 runtime filesと関連 consumer/fixture 計20 pathsを GitHub tree blob と照合した。公開版 `inkwave-public/` の Actor を出荷時 `adaptBuildSource` と全 runtime installer で構成し、Match / NetMatch の実consumerを実行した。画面・音声はfixture、ジャンプは実Physicsの平床。このCPU監査ではブラウザ実表示とSwitch実機比較は未実施。後続CIとemitted検証は下段に別記する。
 
 根拠：
 - [任天堂 Ver.11.3.0 更新履歴](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)（参照版の固定。以下の丸め・自然加算の数式を公式が公表したという意味ではない）
@@ -33,4 +33,18 @@
 今回確認した復活時間短縮は、初回敵death不発、連続無kill敵death、kill後の次の無kill life、落下/水没が条件を消さないこと、assist非阻害・死後kill、0/3/6/10/20/30/57AP短縮、復ペナAP補正を既存実consumer回帰で確認。スペシャル減少は通常・水没/落下、復ペナ自身/相手、AP補正・ゲージ維持を確認した。ホコ固有death等の別レーン、実機の同期誤差、今回未実行の全スイートを網羅したとはしない。
 
 
-ローカル環境ではesbuildが未導入で、全build・emitted bundle・ブラウザQAは未実行。PRの固定headでCI/build/browserの結果を別途確認する。149件は対象consumerのCPU回帰結果であり、全build完了の代替ではない。
+初回公開時のローカル環境ではesbuildが未導入で、全build・emitted bundle・ブラウザQAは未実行だった。149件は対象consumerのCPU回帰結果であり、全build完了の代替ではない。
+
+### 固定headの本番build検証とQA fixture補強
+
+初回head `f2dbd6fd1889b672df4812a2a223296e330f7f9d` の [Validate CI](https://github.com/rhgrive3/actions/actions/runs/39209082871) でvalidate/core・全8patch shardは成功し、新規6件もsourceログで成功を確認した。公式 [full-site artifact 12167724902](https://github.com/rhgrive3/actions/actions/runs/39209082871/artifacts/12167724902) の114,031,620 bytes ZIPを取得し、公式SHA256 `beb7cfba8c435a2925c9f0a71bb8bbccdcdeddbe64f1cabd87f49ce8e111c1a1`、同梱source SHA、buildのinput/content hash、全1908 emitted file hashを照合した。変更runtime3 filesは公開GitHub blobとbuild入力SHA256も一致した。全sourceを別途再構築したという意味ではない。
+
+同siteを `INKWAVE_BUILT_SITE` として上記専用2filesの実consumerを再実行し6/6成功。inputHash=`e0c60dded5ebd01fa35406c782f5f7c43c190e40c1ec091f52404acfb1809b83`、contentHash=`ca28272f4960d8ed090aa747c01a55b4ff70c62622b35c20ba29d1f895d0814e`、esbuild=0.28.2。
+
+初回headのbrowserは全成功ではない。ranked proofでRainmaker damage=[]、responsiveではWebKit tablet-splitのpage.evaluateがTarget crashed（他13case成功）。後者のOOM等の原因は未確定で、判定緩和・skipは行わない。公式artifactのZIP digestと結果JSON・画面receiptを保持したが、responsive artifactにはtrace/stderr自体がない。
+
+ranked proofは標的をlaneへ移した後も残存velocityと飛行状態を保持していた。同61+1+20+20Fの平床実consumerで初期vx8ならdamage=[]、vx0なら60+180を原main/候補双方で再現し、SCU57/ジャン短57APを含む42条件でdamage/shot結果が一致した。元CIのtarget状態receiptがなく、その直接原因まで断定はできない。
+
+限定QA修正として `scripts/check-inkwave-ranked-browser.mjs` は飛行/Spawn中を標的から除外し、velocityを0、実Physics.groundProbeで床支持を確定する。元setupの失敗を負対照とする `ranked-browser-target-setup.test.mjs` は3/3成功、独立再確認済み、関連50/50成功。既存shot1・60/180 damage・wall800→380は維持し、target pre/prepared/post状態とshot/damage receiptを追加した。runtime3 filesは初回headから変更しない。
+
+QA追加時は最新main `3e8812d996eea01ad4cab84eb8fbaa3545cb5d5f` を統合し、#1629のヤグラ同点修正3pathsを保持する。次headでも全CI/build/browserを取り直して確認し、初回の失敗をこのCPU証拠だけで解消済みにしない。
