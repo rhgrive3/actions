@@ -48,7 +48,7 @@ export function installWeaponAudioEngine(Engine){
       // Small original impact/hit/splat MP3s are shared by ALL weapons.
       // Preload only for the active local weapon, behind its main shot.
       // This never warms unrelated remote gunshots or authors fallback PCM.
-      for(const cue of ['combat:critical','combat:damage','combat:splat'])
+      for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'])
         loader?.ensure(cue,'fire')?.catch(()=>{});
       if(AUDIO_RECIPES[id].family==='splatling'){
         // 2022 Spinner sources have distinct Motor (charge) and MotorFire
@@ -112,7 +112,7 @@ export function installWeaponAudioEngine(Engine){
     // first playable hit for every weapon. Lightweight audio is decoded once
     // into the shared bounded bank. Tests/operator packs that do not declare
     // these independent cues may still use their own isolated sound fixtures.
-    for(const cue of ['combat:critical','combat:damage','combat:splat']){
+    for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']){
       if(loader.declares(cue,'fire')!==true)continue;
       const row=await loader.ensure(cue,'fire');
       if(!bank.authorized.byEvent.has(cue+':fire')){
