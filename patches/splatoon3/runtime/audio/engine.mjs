@@ -1,6 +1,7 @@
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
+import { installRecordedCombatCues } from './source-combat-cues.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 
@@ -183,4 +184,5 @@ export function installWeaponAudioEngine(Engine){
     realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
   p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmWeapons?.clear();};
+  installRecordedCombatCues(Engine);
 }
