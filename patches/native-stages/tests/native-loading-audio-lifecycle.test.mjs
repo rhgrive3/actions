@@ -19,6 +19,11 @@ const transitions = [
   ['offline', '  async startMatch(o = {}, flow = null) {', '\n  // ---- online (src/net/session.js'],
   ['online', '  async startNetMatch(cfg, nm) {', '\n  // Compile every shader variant'],
 ];
+// Use the real continuation predicate. An always-true stub misses intentional
+// match ownership transfers and let a broken ordinary startup pass before.
+const beginFlow = new Function('G', 'return ({' +
+  method('  _beginMatchFlow() {', '\n  async _startMenuMatch(') +
+  '})._beginMatchFlow;');
 
 for (const [label, start, end] of transitions) {
   test(label + ': outgoing bots and weapon loops stop before asynchronous fade/audio/stage load', () => {
@@ -26,7 +31,7 @@ for (const [label, start, end] of transitions) {
     const freeze = body.indexOf('    // Freeze the outgoing round before any asynchronous loading starts.');
     const fade = body.indexOf('    await this._fade(1, 350);');
     const dispose = body.indexOf('    if (this.match) this.match.dispose();', fade);
-    const detach = body.indexOf('    this.match = G.match = null;', dispose);
+    const detach = body.indexOf('    this.match = G.match = flow.match = null;', dispose);
     const clear = body.indexOf('    G.projectiles.clear();', dispose);
     assert(freeze >= 0 && freeze < fade, 'simulation is stopped before the first awaited fade');
     assert(fade >= 0 && dispose > fade, 'visuals remain until the fade finishes');
@@ -49,21 +54,35 @@ for (const [label, start, end] of transitions) {
     assert.equal(resets, 2, 'continuous weapon sound handles are reset');
     assert.equal(disposal, 0, 'visible actors survive until the fade');
 
-    const flow = { current: () => true };
+    const flow = beginFlow(G).call(game);
     new Function('G', 'flow', body.slice(dispose, clear)).call(game, G, flow);
     assert.equal(disposal, 1);
     assert.equal(game.match, null);
     assert.equal(G.match, null);
+    assert.equal(flow.current(), true, 'intentional disposal must not cancel its own startup');
     game.match?.update(1 / 60);
     assert.equal(updates, 0, 'the old match cannot tick or fire during native loading');
 
     // First launch (no outgoing attract match) is also safe.
     const first = { match: null };
     G.match = null;
+    const firstFlow = beginFlow(G).call(first);
     new Function('G', body.slice(freeze, fade)).call(first, G);
-    new Function('G', 'flow', body.slice(dispose, clear)).call(first, G, flow);
+    new Function('G', 'flow', body.slice(dispose, clear)).call(first, G, firstFlow);
     assert.equal(first.match, null);
     assert.equal(G.match, null);
+    assert.equal(firstFlow.current(), true);
+
+    // A dispose listener can synchronously replace the match. The old flow
+    // must leave that replacement intact rather than detaching its owners.
+    const replacement = { actors: [], dispose() {} };
+    game.match = G.match = old;
+    const interruptedFlow = beginFlow(G).call(game);
+    old.dispose = () => { game.match = G.match = replacement; beginFlow(G).call(game); };
+    new Function('G', 'flow', body.slice(dispose, clear)).call(game, G, interruptedFlow);
+    assert.equal(game.match, replacement);
+    assert.equal(G.match, replacement);
+    assert.equal(interruptedFlow.current(), false);
   });
 }
 

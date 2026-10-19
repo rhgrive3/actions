@@ -92,7 +92,7 @@ export function adaptNativeStages(rel,code){
     if (start < 0 || end < 0) throw Error('Native stage transition boundary: ' + label);
     let section = code.slice(start, end);
     const fade = '    await this._fade(1, 350);';
-    const dispose = '    if (this.match) this.match.dispose();';
+    const dispose = '    if (this.match) this.match.dispose();\n    if (!flow.current()) return;';
     if (section.split(fade).length !== 2 || section.split(dispose).length !== 2)
       throw Error('Native stage transition lifecycle anchor: ' + label);
     section = section.replace(fade,
@@ -101,7 +101,11 @@ export function adaptNativeStages(rel,code){
       '      this.match.paused = true;\n' +
       '      for (const actor of this.match.actors) actor.weaponRunner?.reset?.();\n' +
       '    }\n' + fade);
-    section = section.replace(dispose, dispose + '\n    this.match = G.match = null;');
+    // Disposal can synchronously start another flow. Check ownership first,
+    // then transfer this flow's own match reference with the two live owners.
+    // Clearing only this.match/G.match invalidates flow.current() and silently
+    // cancels every ordinary start before the new world can be assembled.
+    section = section.replace(dispose, dispose + '\n    this.match = G.match = flow.match = null;');
     code = code.slice(0, start) + section + code.slice(end);
   };
   quiesceOutgoingMatch('  async startMatch(o = {}, flow = null) {',
