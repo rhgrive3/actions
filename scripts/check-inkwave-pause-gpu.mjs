@@ -6,6 +6,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
+import {verifyPauseBaselineProvenance,observePausedRafFrames,verifyPausedRafFrames} from './lib/inkwave-pause-baseline-contract.mjs';
 const option = name => process.argv[process.argv.indexOf(name) + 1];
 const site = fs.realpathSync(option('--site')), output = path.resolve(option('--evidence-dir'));
 const baseline = process.argv.includes('--baseline');
@@ -13,6 +14,7 @@ fs.mkdirSync(output, { recursive:true });
 const manifest = JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 const hash = b => crypto.createHash('sha256').update(b).digest('hex');
 assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash);
+const baselineProvenance=baseline?verifyPauseBaselineProvenance(manifest,process.env.PAUSE_BASELINE_SHA):null;
 const {chromium} = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const mime = {'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.woff2':'font/woff2','.png':'image/png','.webp':'image/webp'};
 const server = http.createServer((req,res) => {
@@ -27,7 +29,7 @@ const server = http.createServer((req,res) => {
 });
 await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
 const browser = await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const result = {baseline,contentHash:manifest.contentHash,revision:manifest.build.revision,browser:browser.version(),measurement:'actual browser work counts; software WebGL, no hardware GPU percentage',runs:[]};
+const result = {baseline,baselineProvenance,contentHash:manifest.contentHash,revision:manifest.build.revision,browser:browser.version(),measurement:'actual browser work counts; software WebGL, no hardware GPU percentage',runs:[]};
 try {
   for (const spec of [{name:'desktop',viewport:{width:960,height:540},touch:false},{name:'phone',viewport:{width:844,height:390},touch:true}]) {
     const context = await browser.newContext({viewport:spec.viewport,hasTouch:spec.touch,isMobile:spec.touch,deviceScaleFactor:spec.touch?2:1});
@@ -105,12 +107,17 @@ try {
       assert.ok(row.animations.every(a=>a.playState==='paused'));
       assert.equal(row.preservedEntryPhases,true);assert.equal(row.unchangedAnimationTimes,true);
     }
+    let rafObservation;
+    try { rafObservation=await page.evaluate(observePausedRafFrames); }
+    catch(error) { rafObservation={status:'failed',error:String(error?.stack||error),frames:[],scope:'browser/context terminated before observation receipt returned'}; }
+    fs.writeFileSync(path.join(output,spec.name+'-raf-observation.json'),JSON.stringify(rafObservation,null,2)+'\n');
+    verifyPausedRafFrames(rafObservation,{baseline});
     await page.screenshot({path:path.join(output,spec.name+'-pause.png'),timeout:120000});
     const lifecycle=await page.evaluate(()=>{const g=__G.game;g._setSettings({bloom:!g.settings.bloom});g._frame(1/60);const paused=g.hud._worldPaused;g.resume();g._frame(1/60);return {pausedBeforeResume:paused===true,resumed:!g.match.paused&&!g.hud._worldPaused,snapshotReleased:!g.R._pauseSnapshot,animationsRunning:document.getAnimations().some(a=>g.hud.el.contains(a.effect?.target)&&a.playState==='running')};});
     assert.equal(lifecycle.resumed,true);assert.equal(lifecycle.animationsRunning,true);
     if(!baseline){assert.equal(lifecycle.pausedBeforeResume,true);assert.equal(lifecycle.snapshotReleased,true);}
     assert.deepEqual(errors,[]);
-    result.runs.push({...spec,...row,lifecycle,errors});
+    result.runs.push({...spec,...row,rafObservation,lifecycle,errors});
     fs.writeFileSync(path.join(output,'pause-gpu.json'),JSON.stringify(result,null,2)+'\n');
     await context.close();
     console.log(spec.name+': pause/resume passed '+JSON.stringify(row.counts));

@@ -6,6 +6,8 @@ on:
       - "patches/local-quality/tests/pause-gpu.test.mjs"
       - "patches/reliability/tests/hud-fixture.mjs"
       - "scripts/check-inkwave-pause-gpu.mjs"
+      - "scripts/lib/inkwave-pause-baseline-contract.mjs"
+      - "scripts/tests/inkwave-pause-baseline-contract.test.mjs"
       - ".github/workflows/inkwave-pause-gpu.yml"
 permissions:
   contents: read
@@ -21,16 +23,20 @@ jobs:
       - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.51.1
       - run: npx playwright install --with-deps chromium
       - name: Verify pause ownership and composition
-        run: node --experimental-vm-modules --test patches/local-quality/tests/pause-gpu.test.mjs patches/local-quality/tests/idle-resources.test.mjs patches/local-quality/tests/idle-attract-budget.test.mjs
+        run: node --experimental-vm-modules --test patches/local-quality/tests/pause-gpu.test.mjs patches/local-quality/tests/idle-resources.test.mjs patches/local-quality/tests/idle-attract-budget.test.mjs scripts/tests/inkwave-pause-baseline-contract.test.mjs
       - name: Build candidate
         run: node scripts/build-inkwave.mjs inkwave-public _site
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: 00b8994711809ba6d0469723c858ddef6805e2ae
           path: baseline
       - name: Build unchanged baseline
-        run: node baseline/scripts/build-inkwave.mjs baseline/inkwave-public _baseline
+        run: |
+          test "$(git -C baseline rev-parse HEAD)" = "00b8994711809ba6d0469723c858ddef6805e2ae"
+          node baseline/scripts/build-inkwave.mjs baseline/inkwave-public _baseline
       - name: Verify baseline sensitivity in real browser
+        env:
+          PAUSE_BASELINE_SHA: 00b8994711809ba6d0469723c858ddef6805e2ae
         run: node scripts/check-inkwave-pause-gpu.mjs --site _baseline --evidence-dir .browser-evidence/pause-baseline --baseline
       - name: Verify candidate in real browser
         run: node scripts/check-inkwave-pause-gpu.mjs --site _site --evidence-dir .browser-evidence/pause-candidate
