@@ -35,6 +35,26 @@ class Engine{
 }
 installRecordedCombatCues(Engine);
 
+test('E-liter and E-liter Scope use the separately extracted Heavy Charger source recording',()=>{
+  const installed=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
+  const planned=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-samples.json',import.meta.url),'utf8'));
+  const file='Wp_Charger_HoldNoise_Heavy_00.mp3',source=new URL('../runtime/audio/s3-real/'+file,import.meta.url);
+  const expected='bf195dee1f2ef39e02a2c5f6ae179258008e81157059e10521d1c3bc96f5d655';
+  assert.equal(createHash('sha256').update(fs.readFileSync(source)).digest('hex'),expected);
+  for(const m of [installed,planned]){
+    for(const id of ['s3-charger-long','s3-charger-longscope']){
+      const row=m.clips.find(x=>x.id===id&&x.event==='charge');
+      assert.equal(row.sourceName,file,id+' uses actual Heavy texture');
+      assert.equal(row.sha256,expected,id+' is pinned to Heavy source');
+      assert.equal(row.durationSeconds,.417959);
+    }
+    for(const id of ['charger','s3-charger-normalscope','s3-charger-quick']){
+      const row=m.clips.find(x=>x.id===id&&x.event==='charge');
+      assert.equal(row.sourceName,'Wp_Charger_HoldNoise_00.mp3','normal/Squiffer unchanged');
+    }
+  }
+});
+
 test('recorded 2022 combat sources match pinned SHA and contain no synthesized substitutes',()=>{
   assert.deepEqual(Object.keys(COMBAT_RECORDINGS),['hit','critical','splat','bubble']);
   assert.equal(bytes.get('HitEf_CriticalHit_00.mp3').length,16344);
