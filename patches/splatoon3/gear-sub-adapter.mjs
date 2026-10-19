@@ -13,7 +13,7 @@ export function adaptGearSub(rel,code,replace){
  if(rel==='src/ui/hud.js'){
   patch('    const aim = !!(a && a.alive && a.weaponRunner && a.weaponRunner.aimingSub) || !!f.subAim;',
    "    const costPct = Math.round((f.subCost ?? .7) * 100);\n    if (L.subCostPct !== costPct) { L.subCostPct = costPct; this.subChip.querySelector('b').textContent = costPct + '%'; }\n    const aim = !!(a && a.alive && a.weaponRunner && a.weaponRunner.aimingSub) || !!f.subAim;",'live numeric label');
-  patch('const ok = (f.ink ?? 1) >= (f.subCost ?? 0.7);', 'const ok = f.subReady ?? ((f.ink ?? 1) >= (f.subCost ?? 0.7));','exact sub aim admission');
+  patch('const ok = (f.ink ?? 1) >= (f.subCost ?? 0.7) - 1e-3;', 'const ok = f.subReady ?? ((f.ink ?? 1) >= (f.subCost ?? 0.7));','exact sub aim admission');
   patch('const nosub = sub > 0 && ink < sub;', 'const nosub = sub > 0 && !(f.subReady ?? (ink >= sub));','tank readiness shares raw admission');
  }
  if(rel==='src/core/mobile.js'){
