@@ -921,7 +921,7 @@ export class HUD {
     const aim = !!(a && a.alive && a.weaponRunner && a.weaponRunner.aimingSub) || !!f.subAim;
     if (aim !== L.aim) { L.aim = aim; this.subChip.classList.toggle('is-on', aim); if (aim) this._snd('ui_toggle', { volume: 0.35 }); }
     if (aim) {
-      const ok = (f.ink ?? 1) >= (f.subCost ?? 0.7) - 1e-3;
+      const ok = (f.ink ?? 1) >= (f.subCost ?? 0.7);
       if (ok !== L.aimOk) { L.aimOk = ok; this.subChip.classList.toggle('is-short', !ok); }
       const fr = clamp((f.ink ?? 1) / Math.max(0.01, f.subCost ?? 0.7));
       if (L.aimFr == null || Math.abs(fr - L.aimFr) > 0.01) { L.aimFr = fr; this.subChip.style.setProperty('--f', fr.toFixed(3)); }
