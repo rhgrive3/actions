@@ -44,6 +44,13 @@ export function adaptWeaponAudio(rel,code){
     for(const [old,event] of Object.entries({charger_charge:'charge',charger_full:'ready',roller_flick:'windup',roll:'roll',slosh_throw:'windup',splatling_wind:'windup',splatling_spin:'charge',splatling_ready:'ready'})){
       code=code.replace(new RegExp("G\\.audio\\?\\.(play|loop)\\('"+old+"',\\s*\\{",'g'),(_,method)=>`G.audio?.${method}Weapon?.(a.weapon.id, '${event}', { actor:a, `);
     }
+    // Keep the confirmed MP3 direct-hit/damage notification from main.js
+    // single-layered for the local attacker. Retain positional body impact
+    // for remote victims and for damage the local player receives.
+    code=once(code,
+      "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
+      "if (!attacker.isLocal) G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
+      'source MP3 owns local-player body hit without synthesized duplicate');
     // Native Splatling keeps one loop handle through charging and streaming.
     // Its existing 'splatling_spin' starts during CHARGE, so play the sourced
     // motor-charge MP3 there. At the admitted release, change ownership to
@@ -115,7 +122,7 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
       "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
-      "G.audio?.playWeapon?.('fx:combat', ((attacker?.weapon?.catalogRecord?.family||attacker?.weapon?.kind)==='charger'||attacker?.weapon?.catalogRecord?.sourceActor==='WeaponSlosherLauncher'||attacker?.weapon?.catalogRecord?.sourceActor==='WeaponShooterTripleMiddle'||G.audio?.blasterHitCueKind?.(attacker,weaponId)==='direct')?'critical_hit':'hit', { actor:attacker, volume:0.6 });",'recorded direct/ordinary hit classification');
+      "G.audio?.playWeapon?.('fx:combat', G.audio?.combatFeedbackCue?.(attacker,weaponId,damage)||'hit', { actor:attacker, volume:0.6 });",'recorded hit depends on admitted damage source, not equipped gun');
     code=once(code,"G.audio?.play('splat_enemy', { volume: 0.9 });",
       "G.audio?.playWeapon?.('fx:combat','splat',{actor:attacker,volume:.8});",
       'source-backed local enemy splat instead of parametric alert');
