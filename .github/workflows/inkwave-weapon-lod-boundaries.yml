@@ -3,11 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - inkwave-public/src/game/character-lod.js
-      - patches/splatoon3/tests/weapon-lod-boundaries.test.mjs
-      - scripts/render-inkwave-weapon-lod-boundaries.mjs
-      - scripts/compare-inkwave-weapon-lod-boundaries.py
-      - .github/workflows/inkwave-weapon-lod-boundaries.yml
+      - '.github/workflows/inkwave-weapon-lod-boundaries.yml'
 permissions:
   contents: read
 concurrency:
