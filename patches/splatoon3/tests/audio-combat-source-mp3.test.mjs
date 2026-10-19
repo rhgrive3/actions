@@ -30,6 +30,20 @@ test('2022 original player feedback MP3 identities, hashes and event routes are 
  }
 });
 
+test('E-liter and E-liter Scope preserve the original distinct 2022 Heavy HoldNoise instead of Charger Normal',()=>{
+ for(const id of ['s3-charger-long','s3-charger-longscope']){
+  const clip=index.clips.find(c=>c.id===id&&c.event==='charge');
+  assert.equal(clip?.sourceName,'Wp_Charger_HoldNoise_Heavy_00.mp3');
+  assert.equal(clip.sha256,'bf195dee1f2ef39e02a2c5f6ae179258008e81157059e10521d1c3bc96f5d655');
+  assert.ok(Math.abs(clip.durationSeconds-0.41796)<.00001);
+  const source=fs.readFileSync(new URL('../runtime/audio/'+clip.file,import.meta.url));
+  assert.equal(createHash('sha256').update(source).digest('hex'),clip.sha256);
+ }
+ const normal=index.clips.find(c=>c.id==='charger'&&c.event==='charge');
+ assert.equal(normal.sourceName,'Wp_Charger_HoldNoise_00.mp3',
+   'Normal Charger remains Normal rather than inheriting Heavy sound');
+});
+
 test('fully composed game routes Charger direct hits and splats to recorded S3 feedback, never to legacy synth',()=>{
  const source=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const out=adaptBuildSource('src/main.js',source);
