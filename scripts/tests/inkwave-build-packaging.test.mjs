@@ -35,6 +35,7 @@ const auditedBuildExports = new Map([
   ['patches/local-quality/ink-volume/mesh.mjs', ['VOLUME_SHAPE', 'buildInkMesh']],
   ['patches/local-quality/audio-listener-adapter.mjs', ['AUDIO_LISTENER_SOURCE']],
   ['patches/local-quality/finish-tape-adapter.mjs', ['replaceOnceFinish']],
+  ['patches/local-quality/loading-screen-adapter.mjs', ['WORDMARK_VIEWBOX', 'zevantWordmark']],
   ['patches/local-quality/hud-authority-adapter.mjs', ['SPECIAL_SEGMENTS', 'TOOTH_PITCH_DEG', 'GAUGE_GEN', 'specialGaugeSVG', 'touchRingSVG']],
   ['patches/local-quality/issue-190-adapter.mjs', ['MIP_POLICY', 'shouldRebuildMipmaps', 'replaceOnce']],
   ['patches/local-quality/issue-418-adapter.mjs', ['replaceExact', 'replaceOnce']],
