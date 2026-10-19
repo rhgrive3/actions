@@ -89,18 +89,18 @@ export function adaptNativeStages(rel,code){
     if (section.split(fade).length !== 2 || section.split(dispose).length !== 2)
       throw Error('Native stage transition lifecycle anchor: ' + label);
     section = section.replace(fade,
-      '    // Freeze the outgoing round before any asynchronous loading starts.\\n' +
-      '    if (this.match) {\\n' +
-      '      this.match.paused = true;\\n' +
-      '      for (const actor of this.match.actors) actor.weaponRunner?.reset?.();\\n' +
-      '    }\\n' + fade);
-    section = section.replace(dispose, dispose + '\\n    this.match = G.match = null;');
+      '    // Freeze the outgoing round before any asynchronous loading starts.\n' +
+      '    if (this.match) {\n' +
+      '      this.match.paused = true;\n' +
+      '      for (const actor of this.match.actors) actor.weaponRunner?.reset?.();\n' +
+      '    }\n' + fade);
+    section = section.replace(dispose, dispose + '\n    this.match = G.match = null;');
     code = code.slice(0, start) + section + code.slice(end);
   };
   quiesceOutgoingMatch('  async startMatch(o = {}, flow = null) {',
-    '\\n  // ---- online (src/net/session.js', 'offline');
+    '\n  // ---- online (src/net/session.js', 'offline');
   quiesceOutgoingMatch('  async startNetMatch(cfg, nm) {',
-    '\\n  // Compile every shader variant', 'online');
+    '\n  // Compile every shader variant', 'online');
 
  }
  if(rel==='src/net/session.js'){
