@@ -34,8 +34,8 @@ test('production Charger player-hit and splat cues use source-specific MP3 only'
  const native=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const built=adaptBuildSource('src/main.js',src);
  const weapon=adaptBuildSource('src/game/weapons.js',native);
- assert.match(built,/Number\.isFinite\(charge\)&&charge>=1&&!\/\^s3-charger-/,
-   '2022 HitEf critical requires the admitted FULL shot, never a high damage threshold');
+ assert.match(built,/sourceChargerHitCue\(weaponId,charge\)/,
+   '2022 HitEf critical uses admitted shot charge in the production combat event');
  assert.doesNotMatch(built,/damage>=95\?'combat:critical'/,
    'a lethal partial hit must not be mislabeled critical');
  assert.match(weapon,/emit\('hit', \{ attacker, victim, damage: dmg, killed, weaponId, charge: chargeFraction \}\)/,
