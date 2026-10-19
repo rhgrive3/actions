@@ -8,6 +8,7 @@ import { specialActionAudioEvent, specialActivationAudioEvent } from '../runtime
 import { installWeaponAudioRuntime } from '../runtime/audio/runtime.mjs';
 import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
 import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
+import { withChargedHitAudio, isFullyChargedAudioHit } from '../runtime/audio/charge-hit-cue.mjs';
 
 const manifest=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
 const clip=(id,event)=>manifest.clips.some(c=>c.id===id&&c.event===event);
@@ -29,6 +30,21 @@ test('2022 critical/damage/dead-splash MP3s have strict byte provenance and dist
  }
 });
 
+test('scoped critical-hit metadata preserves original damage-group argument and restores on errors',()=>{
+ const victim={},before=()=>isFullyChargedAudioHit(victim);
+ assert.equal(before(),false);
+ const marker={damageGroup:1234};
+ const call=(group)=>{assert.equal(group,marker,'network/damage group is not repurposed');return before();};
+ assert.equal(withChargedHitAudio(victim,true,()=>call(marker)),true,'full source charge visible only while admitted');
+ assert.equal(before(),false,'metadata is cleared immediately after hit');
+ assert.equal(withChargedHitAudio(victim,false,()=>call(marker)),false,'ordinary hit never inherits previous charge');
+ assert.equal(withChargedHitAudio(victim,true,()=>
+   withChargedHitAudio(victim,false,()=>before())),false,'nested hit scope restores owner');
+ assert.equal(before(),false);
+ assert.throws(()=>withChargedHitAudio(victim,true,()=>{throw Error('rollback');}),/rollback/);
+ assert.equal(before(),false,'failure restores audio scope');
+});
+
 test('production recorded hit/splat MP3 cues replace generic synth across all main families',()=>{
  const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const native=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
@@ -42,13 +58,13 @@ test('production recorded hit/splat MP3 cues replace generic synth across all ma
  assert.doesNotMatch(built,/else G\.audio\?\.play\('hit_marker'/,'no local synth fallback after sample selection');
  assert.doesNotMatch(built,/else G\.audio\?\.play\('splat_enemy'/,'no synth kill fallback');
  assert.match(weapon,/void 0;/,'native duplicate authored body hit is suppressed');
- assert.match(weapon,/this\.applyHit\(a, victim\.e, dmg, 'charger', \{fullCharge:charge>=0\.999\}\)/,
+ assert.match(weapon,/withChargedHitAudio\(victim\.e,charge>=0\.999,\(\)=>this\.applyHit\(a, victim\.e, dmg, 'charger'\)\)/,
    'legacy Charger directly carries true full-charge metadata');
- assert.match(weapon,/fullCharge:audioMeta\?\.fullCharge===true/,
+ assert.match(weapon,/fullCharge:isFullyChargedAudioHit\(victim\)/,
    'hit event carries exact boolean without changing damage/HP');
  const cat=fs.readFileSync(new URL('../runtime/main-weapon-catalog.mjs',import.meta.url),'utf8');
  const compiledCat=adaptBuildSource('patches/splatoon3/runtime/main-weapon-catalog.mjs',cat);
- assert.match(compiledCat,/this\.applyHit\(p\.owner,target,amount,p\.wid,\{fullCharge:s\.r\.family==='charger'/,
+ assert.match(compiledCat,/withChargedHitAudio\(target,s\.r\.family==='charger'/,
    'catalogue Charger passes true charge state on the actual contact');
  assert.doesNotMatch(weapon,/G\.audio\.play\('ink_hit_body'/,'no second synthesized body-hit layer');
  for(const cue of ['combat:critical','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'])
