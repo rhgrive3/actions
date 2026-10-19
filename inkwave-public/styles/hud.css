@@ -193,10 +193,6 @@
 .iw-ret--splatling .iw-ret__track { stroke-width: 4.5; opacity: .28; }
 .iw-ret--splatling .iw-ret__charge { stroke: #fff; stroke-width: 4.5; stroke-linecap: butt; transition: stroke-dashoffset .05s linear; }
 .iw-ret--splatling .iw-ret__segs path { stroke: rgba(0, 0, 0, .55); stroke-width: 1.6; }
-.iw-ret--splatling .iw-ret__stage { stroke: #fff; stroke-width: 3; stroke-linecap: round; opacity: .8; filter: drop-shadow(0 0 2px #000); }
-.iw-ret--splatling.is-first .iw-ret__stage { stroke: var(--self-light); opacity: 1; }
-.iw-ret--splatling.is-stageflash .iw-ret__stage { animation: iw-spinner-first .27s ease-out; }
-@keyframes iw-spinner-first { from { stroke-width: 7; filter: drop-shadow(0 0 5px #fff); } to { stroke-width: 3; } }
 .iw-ret--splatling.is-full .iw-ret__charge, .iw-ret--splatling.is-streaming .iw-ret__charge { stroke: var(--self-light); }
 .iw-ret--splatling.is-streaming { color: var(--self-light); }
 .iw-hit, .iw-kill { position: absolute; left: 0; top: 0; }
