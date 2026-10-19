@@ -202,3 +202,50 @@ test('special phase owners select real installed MP3 events, not nonexistent dod
   assert.equal(specialActionAudioEvent('inkVac','unknown-action'),null);
   assert.equal(specialActionAudioEvent('zipcaster','activate'),'open');
 });
+
+
+test('recorded Charger critical cue bypasses legacy 60ms hit-marker throttle in the real composed HUD',()=>{
+ const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
+ const built=adaptBuildSource('src/main.js',src);
+ const start=built.indexOf("    on('hit', ({ attacker, victim, damage, killed, weaponId }) => {");
+ const end=built.indexOf("    on('damage', ",start);
+ assert.ok(start>0&&end>start,'actual source-local hit handler found');
+ const handlerSource=built.slice(start,end);
+ assert.match(handlerSource,/damage>=95\?'combat:critical':'combat:damage'/);
+ assert.match(handlerSource,/G\.time - lastHitSnd > 0\.06 \|\|/);
+ const handlers=new Map(),played=[],markers=[];
+ const on=(event,cb)=>handlers.set(event,cb);
+ const G={time:0,audio:{
+   playWeapon(...args){played.push({kind:'recorded',args});},
+   play(...args){played.push({kind:'legacy',args});},
+ }};
+ const receiver={match:{attract:false},hud:{hitMarker:(v)=>markers.push(v)}};
+ new Function('on','G', 'let lastHitSnd=0; return function(){'+handlerSource+'}')(
+   on,G
+ ).call(receiver);
+ const hit=handlers.get('hit');
+ assert.equal(typeof hit,'function');
+ const attacker={isLocal:true,weapon:{id:'charger'}},victim={};
+ hit({attacker,victim,damage:100,killed:true,weaponId:'charger'});
+ assert.deepEqual(played.at(-1).args.slice(0,2),['combat:critical','fire'],
+   'first critical of match must not get dropped by initial lastHitSnd=0');
+ assert.equal(played.length,1);
+ G.time=.01;
+ hit({attacker,victim,damage:30,killed:false,weaponId:'charger'});
+ assert.equal(played.length,1,'ordinary partial body hit still respects old 60ms throttle');
+ G.time=.015;
+ hit({attacker,victim,damage:140,killed:true,weaponId:'s3-charger-long'});
+ assert.deepEqual(played.at(-1).args.slice(0,2),['combat:critical','fire'],
+   'second independent fully powered source-critical cannot be silently lost');
+ assert.equal(played.length,2);
+ G.time=.02;
+ hit({attacker,victim,damage:140,killed:true,weaponId:'shooter'});
+ assert.equal(played.length,2,'unrelated weapons never bypass the existing debounce');
+ G.time=.2;
+ hit({attacker,victim,damage:30,killed:false,weaponId:'charger'});
+ assert.deepEqual(played.at(-1).args.slice(0,2),['combat:damage','fire']);
+ G.time=.3;
+ hit({attacker,victim,damage:20,killed:false,weaponId:'shooter'});
+ assert.equal(played.at(-1).kind,'legacy','other weapon remains unchanged');
+ assert.ok(markers.length>=5,'HUD feedback remains independent from audio throttle');
+});
