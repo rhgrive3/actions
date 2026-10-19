@@ -101,4 +101,8 @@ test('real runtime carries source charge metadata, built game prefers source sou
  assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId, hitMeta \}\)/);
  assert.match(built,/sourceChargerHitCue\(weaponId,hitMeta\?\.chargerDirect===true\?hitMeta\.charge:null\)/);
  assert.match(built,/G\.audio\?\.playWeapon\?\.\('combat:splat','fire'/);
+ assert.ok(built.includes("const recordedCue=chargerCue||(directBlaster?'combat:critical':'combat:damage')"),
+   'normal hits and Blaster direct hits must share recorded real-only cues');
+ assert.doesNotMatch(built,/G\.audio\?\.play\('splat_enemy', \{ volume: 0\.9 \}\)/,
+   'no synthesized kill-confirm at non-Charger splats');
 });

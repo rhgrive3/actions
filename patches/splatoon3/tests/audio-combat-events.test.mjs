@@ -43,16 +43,27 @@ test('production Charger player-hit and splat cues use source-specific MP3 only'
  assert.match(weapon,/a\._sourceChargerAudioHit=\{chargerDirect:true,charge\}/,
    'native Charger shot ratio is passed without modifying damage');
  assert.match(built,/G\.audio\?\.playWeapon\?\.\('combat:splat','fire'/,
-   'real 2022 Pl DeadSplash is selected for Charger-owned splat, not every other weapon');
- assert.match(built,/test\(String\(cause\|\|''\)\)/,'splat cue follows the confirmed damage cause');
- assert.match(weapon,/!\/\^\(\?:charger/,'native Charger ink_hit_body synth layer must be gated');
- assert.match(weapon,/G\.audio\.play\('ink_hit_body'/,'other weapon bodies preserve their existing hit cue');
+   'real 2022 Pl DeadSplash is selected for all locally confirmed enemy splats');
+ assert.doesNotMatch(built,/G\.audio\?\.play\('splat_enemy', \{ volume: 0\.9 \}\)/,
+   'do not make an old synthetic enemy-splat notification for non-Chargers');
+ assert.match(weapon,/if \(!attacker\?\.isLocal\) G\.audio\.play\('ink_hit_body'/,
+   'never double-play synthetic contact audio for a local original hit confirmation');
+ assert.match(weapon,/G\.audio\.play\('ink_hit_body'/,
+   'remote/defending actor retains the existing positional body cue');
  const sourceCatalog=fs.readFileSync(new URL('../runtime/main-weapon-catalog.mjs',import.meta.url),'utf8');
  const catalog=adaptBuildSource('patches/splatoon3/runtime/main-weapon-catalog.mjs',sourceCatalog);
  assert.match(catalog,/if\(s\.r\.family==='charger'\)owner\._sourceChargerAudioHit=\{chargerDirect:true,charge:d\.charge\}/,
    'catalogue Charger hits retain charge fraction rather than estimating from damage');
- const index=built.indexOf('if (/^(?:charger');
+ const index=built.indexOf('const chargerCue=sourceChargerHitCue(');
  assert.ok(index>0,'source replacement is inside full production composition');
+ assert.ok(built.includes("const directBlaster=blasterHitCueKind(attacker,weaponId)==='direct'"),
+   'direct Blaster contact uses the recorded sharp HitEf sample');
+ assert.ok(built.includes("const recordedCue=chargerCue||(directBlaster?'combat:critical':'combat:damage')"),
+   'other hits use actual HitEf Damage MP3 instead of authored bleep');
+ assert.ok(built.includes("G.audio?.playWeapon?.(recordedCue,'fire'"),
+   'all locally credited hits route through the recorded-only bank');
+ assert.doesNotMatch(built,/G\.audio\?\.play\('hit_marker', \{ volume: 0\.6/,
+   'no generated HUD hit confirmation remains in composed production code');
 });
 
 test('alternate kit fire, impact, charge loop and sub/special prefetch keep base audio only',()=>{

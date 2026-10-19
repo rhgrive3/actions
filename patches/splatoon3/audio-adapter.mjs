@@ -82,12 +82,13 @@ export function adaptWeaponAudio(rel,code){
       'admitted hit carries transient original-charge sound hint');
     code=once(code,
       "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
-      "if (!/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))) " +
+      "if (!attacker?.isLocal) " +
       "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
       'do not double-play authored body hit over source Charger cue');
   }
   if(rel==='src/main.js'){
-    code="import { sourceChargerHitCue } from '../patches/splatoon3/runtime/audio/combat-hit-classifier.mjs';\n"+code;
+    code="import { sourceChargerHitCue } from '../patches/splatoon3/runtime/audio/combat-hit-classifier.mjs';\n" +
+         "import { blasterHitCueKind } from '../patches/splatoon3/runtime/audio/blaster-hit.mjs';\n"+code;
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
       'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); if(self.menus?._setup?.mode!==\'boss\') G.music?.preloadFile?.(\'battle\',{prime:true}); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
       'iPad start tap initializes audio and warms the selected recorded shot before screen wipe');
@@ -141,25 +142,25 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
     // Real S3 recorded body-hit and splat cues are separate from the gunshot.
-    // This exact conditional uses the admitted projectile weaponId / splat
-    // cause, not the equipped kit's sub/special, so a bomb splat never sounds
-    // like a full-charge Charger direct.
+    // Charge-specific criticals use the admitted projectile's stored charge,
+    // never the equipped kit's sub/special, damage threshold or kill state.
+    // Other hit and splat confirmations use the same verified recorded MP3s.
     code=once(code,
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
       "const chargerCue=sourceChargerHitCue(weaponId,hitMeta?.chargerDirect===true?hitMeta.charge:null); " +
-      "if (chargerCue) G.audio?.playWeapon?.(chargerCue,'fire',{volume:.76,priority:95}); " +
-      "else G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
+      "const directBlaster=blasterHitCueKind(attacker,weaponId)==='direct'; " +
+      "const recordedCue=chargerCue||(directBlaster?'combat:critical':'combat:damage'); " +
+      "G.audio?.playWeapon?.(recordedCue,'fire',{volume:.76,priority:95});",
       'source verified Charger hit feedback only');
     code=once(code,
       "G.audio?.play('splat_enemy', { volume: 0.9 });",
-      "if (/^(?:charger(?:-|$)|s3-charger-)/.test(String(cause||''))) " +
-      "G.audio?.playWeapon?.('combat:splat','fire',{volume:.82,priority:96}); " +
-      "else G.audio?.play('splat_enemy', { volume: 0.9 });",
+      "G.audio?.playWeapon?.('combat:splat','fire',{volume:.82,priority:96});",
       'source verified Charger splat splash only');
     // Native projectile code also played its old INKWAVE synthesized ink
     // body contact sound, even when the exact Charger MP3 is now used by HUD.
-    // Suppress that layer only for charged direct-hit contacts, not wall ink,
-    // other weapons, or authoritative hit/death logic.
+    // Suppress that layer only for the local attacker's hit confirmation
+    // (which now uses recorded HitEf); remote and local-victim positional body
+    // cues, hit/death authority, and paint remain untouched.
         // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
