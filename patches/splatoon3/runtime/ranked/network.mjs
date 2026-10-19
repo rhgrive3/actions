@@ -159,7 +159,8 @@ export function acceptState(nm, packet) {
     const previous = m.rankedGains || [0, 0];
     for (const a of m.actors) if (!a.remote && a.alive && !a.specialActive && !specialGaugeLocked(a)) {
       const gain = Math.max(0, packet.gains[a.team] - previous[a.team]);
-      a.special = Math.min(a.specialCost(), a.special + gain);
+      // Host totals use baseline points, independent of this actor's SCU.
+      a.special = Math.min(a.specialCost(), a.special + gain / (a.s3?.modifiers?.specialCharge || 1));
     }
     m.rankedGains = [...packet.gains];
   }
