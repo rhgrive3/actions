@@ -5273,3 +5273,7 @@ root yawの保持に加え、転がしの接地軸を床の接線に保持する
 - iOS のホーム画面名（`apple-mobile-web-app-title`）を、マニフェストの短縮名と同じ ZEVANT にした。
 
 確認状態：ロジック回帰（`ranked-ui`、`ranked-localization`、`ui-localization`、`adapter`、practice-range `isolation`、pages-source-identity）と、本番ビルドを Chromium（swiftshader）で目視確認した。非タッチは 1280×720・1366×768（英語）・1000×700・1920×1080、タッチは 844×390（日本語・英語）・390×844・1180×820。WebKit・実 iPad・Switch での表示は未確認。
+
+### 2026-10-19：ガチアサリの閉鎖時ペナルティ端数
+
+main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.5が残り、HUDは+12、次のガチアサリ投入で本カウント77→68.5となる本番consumer差を再現。InkipediaのS2/S3共通Scoring節（取得2026-10-19、reported revision 730528）が示す閉鎖時の半分切捨てに合わせ、窓全体の得点を合計した後で新規ペナルティだけを整数化した。S3Wikiの小アサリ1個あたり1.5は合計前に切り捨てない。双方チーム・3種dt、複数窓、残ペナルティ、延長、実Match/HUD/host-client consumerを回帰。今回の根拠はWikiでありSwitch実機で端数処理を新規計測したものではない。投射物理・表示モデル・PR1627の別イベント修復とは分離する。詳細は [専用記録](inkwave-clam-penalty-consumer-2026-10-19.md)。
