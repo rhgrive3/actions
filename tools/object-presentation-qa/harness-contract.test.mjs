@@ -53,9 +53,13 @@ for (const suite of Object.keys(SUITES)) test(suite + ' browser harness statical
     assert.deepEqual(Object.keys(plan['carry-jump']),['109','112','113']);
     assert.deepEqual(Object.keys(plan['charge-jump']),['304','305']);
     assert.equal(Object.values(plan).reduce((n,frames)=>n+Object.keys(frames).length,0)*2*2,20,'five timeline points, two views, two revisions');
-    const row={grip:.0001,translationWorld:.02,angle:.2,poses:1,solves:1};
+    const row={grip:.0001,translationWorld:.02,angle:.2,poses:1,solves:1,clamArmActive:false};
     const valid={airFrames:84,airFramesPerJump:[28,28,28],sourceOwner:{status:'ready',active:true,variant:'Player00',bankSha256:'a'.repeat(64)},events:[{kind:'rainmaker-pickup'}],traces:[row],badFrames:0,worst:{grip:.0001}};
     assert.equal(verifyAirScenario(valid),true);
+    assert.throws(()=>verifyAirScenario({...valid,traces:[{...row,clamArmActive:true}]}),/Historical Clam helper/);
+    const missingClamReceipt={...row};delete missingClamReceipt.clamArmActive;
+    assert.throws(()=>verifyAirScenario({...valid,traces:[missingClamReceipt]}),/Historical Clam helper/);
+    assert.throws(()=>verifyAirScenario({...valid,traces:[{...row,clamArmActive:true}]},{corrected:false}),/Historical Clam helper/,'old namespace must also keep Clam inactive');
     assert.throws(()=>verifyAirScenario({...valid,airFrames:83}),/28 airborne/);
     assert.throws(()=>verifyAirScenario({...valid,airFramesPerJump:[27,28,29]}),/28 airborne/);
     assert.throws(()=>verifyAirScenario({...valid,badFrames:1,worst:{grip:.01}}),/world grip/,'real .01-world shortfall cannot pass');
@@ -72,10 +76,10 @@ for (const suite of Object.keys(SUITES)) test(suite + ' browser harness statical
 });
 
 
-test('air comparison isolates381319 handoff while the original three baselines stay3839',()=>{
+test('air comparison isolates381319 handoff and its historical helper dependency while the original three baselines stay3839',()=>{
   for(const suite of ['spawner','rainmaker','clam'])assert.equal(suiteBase(suite),BASE);
   assert.equal(suiteBase('rainmaker-air'),'381319e16361497c6bb5f4649ce119acd7883f7f');
-  assert.deepEqual(SUITES['rainmaker-air'].before,['patches/splatoon3/runtime/weapon-handoff-motion.mjs']);
+  assert.deepEqual(SUITES['rainmaker-air'].before,['patches/splatoon3/runtime/weapon-handoff-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs']);
   assert.deepEqual(SUITES['rainmaker-air'].added,[]);
   const runner=fs.readFileSync(path.join(root,'tools/object-presentation-qa/run.mjs'),'utf8');
   assert.match(runner,/sourceSha:beforeBase/);

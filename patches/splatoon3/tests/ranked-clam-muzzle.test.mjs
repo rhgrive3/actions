@@ -1,21 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {fixture} from './source-fixture.mjs';
 import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
 const WEAPONS=['shooter','dualies','charger','roller','blaster','slosher','splatling',
   's3-brush-normal','s3-shelter-normal','s3-saber-normal','s3-stringer-normal'];
 async function setup(source=false){
-  const f=source?await sourceLoadedActorFixture({random:()=>.5}):await fixture({fullRuntime:true,productionComposition:true,includeCharacter:true,vmMathRandom:()=>.5});
-  if(!source){
-    f.G.scene=new f.THREE.Scene();
-    f.G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};
-    f.G.physics=new f.Physics(f.G.level);
-  }
+  const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`});
+  const stage={id:'clam-muzzle-staged',clams:{spawns:[],goals:[[0,0,80],[0,0,-80]]}};
+  f.presentThrow=a=>{
+    const e=new f.RankedEngine('clams',stage),m=f.G.match={mode:'clams',state:'playing',ranked:e,actors:[a],playing:()=>true,rankedGains:[0,0],rankedEffects:{event(){}}};
+    const w=m.rankedWorld=new f.RankedWorld(f.installedRuntime||f,m,stage),c=a.character,id=String(a.nid??a.id??1);a.nid=id;
+    e.rule.state.inventories[id]={team:0,power:true,small:0};assert.equal(e.rule._throw({id,team:0,alive:true,pos:a.pos.toArray()},{aim:[0,0,1]},{actors:[],floorAt:()=>0}),true);
+    const before=c.boneList.map(b=>b.quaternion.toArray()),hand=c.bones.handL.getWorldPosition(new f.THREE.Vector3());let solves=0;const solve=c._solveLimb;
+    c._solveLimb=function(...args){solves++;return solve.apply(this,args);};
+    try{f.Match.prototype.playRankedEvents.call(m,e.events.splice(0));assert.equal(solves,0,'Clam success adds no solve');assert.deepEqual(c.boneList.map(b=>b.quaternion.toArray()),before);assert.ok(c.bones.handL.getWorldPosition(new f.THREE.Vector3()).equals(hand),'No event-frame wrist jump');}
+    finally{c._solveLimb=solve;w.dispose();}
+  };
   f.G.match={mode:'clams',playing:()=>true};
-  class NativeCharacter extends f.Character{constructor(options){super({...options,sourceMotion:false});}}
   f.pairActor=async(weapon,pitch=0)=>{
-    const a=source?await f.make():new f.Actor({team:0,name:'matched-clam-muzzle',weapon,CharacterClass:NativeCharacter,style:{hair:0,skin:2,outfit:0,eyes:0}});
-    if(source)a.setWeapon(weapon);
+    const a=await f.make();if(!source)a.character.sourceMotion.setEnabled(false);assert.equal(a.character.sourceMotion.enabled,source);
+    a.setWeapon(weapon);
     a.character.actor=a;a.character.onEvent=null;a.grounded=true;a.ground.hit=true;a.aimPitch=pitch;
     a.aimDir.set(0,-Math.sin(pitch),Math.cos(pitch));a.aimPoint.copy(a.aimDir).multiplyScalar(20).add(a.pos);
     f.G.scene.add(a.character.root);return a;
@@ -24,7 +27,7 @@ async function setup(source=false){
   return f;
 }
 function sameArray(a,b,message){assert.deepEqual(Array.from(a),Array.from(b),message);}
-for(const source of [false,true])test(`clam-only left-arm presentation keeps actual muzzles and simulation identical across 11 families / 3 pitches (${source?'loaded Player00':'native'})`,async t=>{
+for(const source of [false,true])test(`staged Clam delivery keeps all bones, actual muzzles and simulation identical across 11 families / 3 pitches (${source?'loaded Player00':'native'})`,async t=>{
   const f=await setup(source),projectiles=new f.Projectiles(f.G.scene),rows=[];
   const va=new f.THREE.Vector3(),vb=new f.THREE.Vector3(),da=new f.THREE.Vector3(),db=new f.THREE.Vector3();
   for(const weapon of WEAPONS)for(const pitch of [-1.05,0,1.15]){
@@ -33,8 +36,8 @@ for(const source of [false,true])test(`clam-only left-arm presentation keeps act
     for(let i=0;i<60;i++)f.advancePair(a,b);
     a.character.getMuzzle(va);b.character.getMuzzle(vb);assert.ok(va.equals(vb),'Matched actors start with equal actual gun position');
     const beforeTimers=Array.from(b.character.tr);
-    b.character.trigger('clam-throw',{clamRelease:{kind:'power',pos:[0,1.15,0]}});
-    assert.equal(b.character.s3ClamGripActive,weapon!=='dualies','Dualies arm motion remains deferred, not a displaced shot hidden by a getter');
+    f.presentThrow(b);
+    assert.equal(!!b.character.s3ClamGripActive,false,'Every family retains its main-only arms');
     sameArray(b.character.tr,beforeTimers,'Clam success never resets native T_THROW or other action clocks');
     for(let i=0;i<=48;i++){
       const at=`${weapon} pitch=${pitch} tick=${i} source=${source}`;
@@ -46,28 +49,28 @@ for(const source of [false,true])test(`clam-only left-arm presentation keeps act
       sameArray(a.character.tr,b.character.tr,`${at} native clocks`);
       sameArray(a.character.sp,b.character.sp,`${at} native springs`);
       sameArray(a.character.ikErr,b.character.ikErr,`${at} next-frame IK feedback`);
-      for(const name of ['spine','chest','clavR','uArmR','fArmR','handR']){
+      for(const name of Object.keys(a.character.bones)){
         assert.ok(a.character.bones[name].quaternion.equals(b.character.bones[name].quaternion),`${at} ${name}`);
       }
       assert.ok(a.pos.equals(b.pos)&&a.vel.equals(b.vel),`${at} Actor position and velocity`);
       for(const key of ['ink','hp','alive','form','special'])assert.equal(a[key],b[key],`${at} Actor ${key}`);
       f.advancePair(a,b);
     }
-    assert.equal(b.character.s3ClamGripActive,false,'Presentation retires by the end of the full recovery window');
+    assert.equal(!!b.character.s3ClamGripActive,false,'No deferred arm state appears after the event');
     rows.push({weapon,pitch,samples:49,maximumMuzzleDifference:0});
     a.character.dispose();b.character.dispose();f.G.scene.clear();
   }
   t.diagnostic(JSON.stringify({source,rows}));
 });
 
-test('real main-shot emissions preserve origins, directions and round velocities during clam recovery, including both dual guns',async t=>{
+test('real main-shot emissions preserve origins, directions and round velocities after real Clam delivery, including both dual guns',async t=>{
   const f=await setup(),events=[],rows=[];
   f.on('weapon:fire',e=>{if(e.muzzle&&e.dir)events.push({actor:e.actor,weapon:e.weapon,muzzle:e.muzzle.toArray(),dir:e.dir.toArray(),hand:e.hand});});
   for(const weapon of WEAPONS.slice(0,7)){
     const a=await f.pairActor(weapon),b=await f.pairActor(weapon);f.G.actors=[a,b];
     a.isLocal=b.isLocal=true;f.G.projectiles=new f.Projectiles(f.G.scene);
     for(let i=0;i<60;i++)f.advancePair(a,b);
-    b.character.trigger('clam-throw',{clamRelease:{kind:'power',pos:[0,1.15,0]}});events.length=0;
+    f.presentThrow(b);events.length=0;
     for(let i=0;i<100;i++){
       f.G.time+=1/60;
       const input={fire:i<70,firePressed:i===0,fireReleased:i===70,sub:false,subPressed:false,subReleased:false,moveX:0,moveY:0};

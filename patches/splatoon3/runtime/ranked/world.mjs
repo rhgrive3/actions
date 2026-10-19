@@ -281,7 +281,6 @@ export class RankedWorld {
     if (this.mode === 'clams') {
       this.baskets = [];
       this._poseClam = createClamPose(THREE);
-      this._clamThrowEvents = new Set();
       for (let team = 0; team < 2; team++) {
         const marker = new THREE.Group();
         const color = this.teamInk[team];
@@ -709,23 +708,6 @@ export class RankedWorld {
       marker.ring.material.opacity = isOpen ? 0.95 : 0.3;
       marker.group.userData.open = isOpen;
     }
-  }
-
-  presentEvent(event) {
-    if (this.disposed || this.mode !== 'clams' || event?.kind !== 'clam-throw'
-      || !['small', 'power'].includes(event.clamKind) || typeof event.id !== 'string'
-      || this._clamThrowEvents.has(event.id)) return;
-    const actor = this._findActor(event.actor);
-    if (!actor?.alive || !actor.character?.trigger) return;
-    // Desktop clam and sub inputs are independent. Never cancel an existing
-    // bomb hold or overwrite another throw's recovery merely to show a clam.
-    if (actor.weaponRunner?.aimingSub || actor.character.bombHeld) return;
-    this._clamThrowEvents.add(event.id);
-    if (this._clamThrowEvents.size > 64) this._clamThrowEvents.delete(this._clamThrowEvents.values().next().value);
-    // The real success event owns release. Reuse the installed native rig's
-    // recovery curve; rejected inputs never animate and no bomb is created.
-    actor.character.trigger('clam-throw', {clamRelease:{kind:event.clamKind,pos:event.pos}});
-
   }
 
   _updateBaskets(engine, dt = 0) {

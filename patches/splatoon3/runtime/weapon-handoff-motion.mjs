@@ -7,7 +7,6 @@
 // shot positions, timing and every gameplay value stay exactly as before.
 // Fade times are INKWAVE calibration, not retail frame counts.
 // Reference: reports/inkwave-weapon-hold-motion-2026-10-17.md.
-import { applyClamThrowGrip } from './bomb-motion.mjs';
 import { applyRainmakerPose, rainmakerAimQuaternion } from './ranked/rainmaker-motion.mjs';
 const INSTALLED = Symbol.for('inkwave.s3.weapon-handoff-motion.v1');
 export const HANDOFF_FADE = 0.2, HANDOFF_RAISE = 0.1;
@@ -188,7 +187,6 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
     const result = applyPose.call(this, dt, s);
     if (this._rainmakerPose) objectiveSupport(this);
     handoff(this, dt);
-    if (this.s3ClamGripActive && !this._rainmakerPose) applyClamThrowGrip(this);
     return result;
   };
   // Gameplay muzzle: evaluated on the unfaded upper body (the pose every

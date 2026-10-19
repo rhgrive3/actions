@@ -1,9 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
-import { RankedWorld } from '../runtime/ranked/world.mjs';
-import { RankedEngine } from '../runtime/ranked/engine.mjs';
-import { createClamBarrier, createClamPose, CLAM_VISUAL_SCALE, CLAM_VISUAL_HALF_HEIGHT } from '../runtime/ranked/clam-presentation.mjs';
+import {fixture} from './source-fixture.mjs';
+// All tested runtime exports resolve through the same source/emitted namespace.
+const {context,THREE,RankedWorld,RankedEngine,createClamBarrier,createClamPose,CLAM_VISUAL_SCALE,CLAM_VISUAL_HALF_HEIGHT,installWeaponHandoffMotion}=await fixture({extraExports:`
+ export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';
+ export {RankedEngine} from './patches/splatoon3/runtime/ranked/engine.mjs';
+ export {createClamBarrier,createClamPose,CLAM_VISUAL_SCALE,CLAM_VISUAL_HALF_HEIGHT} from './patches/splatoon3/runtime/ranked/clam-presentation.mjs';
+ export {installWeaponHandoffMotion} from './patches/splatoon3/runtime/weapon-handoff-motion.mjs';
+`});
+context.structuredClone=structuredClone;
 const stage = { id:'clam-presentation', clams:{spawns:[],goals:[[0,0,20],[0,0,-20]]} };
 function setup() {
  const scene=new THREE.Scene(), triggers=[];
@@ -87,19 +92,19 @@ test('late joining an already open basket never invents a fracture and cancellin
  a.mesh.dispose();a.mesh.geometry.dispose();a.mesh.material.dispose();
 });
 
-test('actual successful throws retain canonical event type, animate once, and reject empty/dead attempts',()=>{
+test('actual successful throws retain canonical event type without an arm consumer, and reject empty attempts',()=>{
  const {world,engine,actor,triggers}=setup(),r=engine.rule;
  const ra={id:'player',team:0,alive:true,pos:[0,0,0]},frame={actors:[],floorAt:()=>0,blocked:()=>false};
  for(const kind of ['small','power']) {
   r.state.inventories.player={team:0,small:kind==='small'?1:0,power:kind==='power'};
   assert.equal(r._throw(ra,{aim:[0,0,1]},frame),true);
   const event=engine.events.at(-1);assert.equal(event.kind,'clam-throw');assert.equal(event.clamKind,kind);
-  const state=engine.snapshot();world.presentEvent(event);world.presentEvent(event);same(engine.snapshot(),state);
+  const state=engine.snapshot();world.presentEvent?.(event);world.presentEvent?.(event);same(engine.snapshot(),state);
  }
- assert.deepEqual(triggers,['clam-throw','clam-throw']);const count=engine.events.length;
+ assert.deepEqual(triggers,[]);const count=engine.events.length;
  assert.equal(r._throw(ra,{aim:[0,0,1]},frame),false);assert.equal(engine.events.length,count);
- actor.alive=false;world.presentEvent({kind:'clam-throw',clamKind:'power',id:'dead',actor:'player'});
- world.presentEvent({kind:'power',id:'old',actor:'player'});assert.equal(triggers.length,2);world.dispose();
+ actor.alive=false;world.presentEvent?.({kind:'clam-throw',clamKind:'power',id:'dead',actor:'player'});
+ world.presentEvent?.({kind:'power',id:'old',actor:'player'});assert.equal(triggers.length,0);world.dispose();
 });
 
 test('real scoring keeps 1.2 second break, 20/3 points, clean event discriminator and no presentation mutation',()=>{
@@ -111,7 +116,7 @@ test('real scoring keeps 1.2 second break, 20/3 points, clean event discriminato
  engine.update(.1,{actors:[],inputs:{},floorAt:()=>0});assert.equal(b.barrierOpen,true);same(engine.counts,[80,100]);
  const before=engine.snapshot();world.update(engine,1/60);same(engine.snapshot(),before);
  r._score(0,'small',[0,.55,20]);same(engine.counts,[77,100]);
- const score=engine.events.filter(e=>e.kind==='clam-score');assert.deepEqual(score.map(e=>[e.clamKind,e.points]),[['power',20],['small',3]]);
+ const score=engine.events.filter(e=>e.kind==='clam-score');same(score.map(e=>[e.clamKind,e.points]),[['power',20],['small',3]]);
  world.dispose();
 });
 
@@ -126,101 +131,33 @@ test('200 throw/expiry cycles bound scene markers, reuse resources, dispose once
  assert.equal(gd,0);assert.equal(md,0);world.dispose();world.dispose();assert.equal(gd,1);assert.equal(md,1);assert.equal(scene.children.length,0);
 });
 
-import {fixture} from './source-fixture.mjs';
-test('installed event delivery drives native rig recovery, never bomb creation or gameplay mutation',async t=>{
- const f=await fixture({fullRuntime:true,productionComposition:true,includeCharacter:true,extraExports:`
-  export {Match} from './inkwave-public/src/game/match.js';
-  export {installRanked} from './patches/splatoon3/runtime/ranked/install.mjs';
-  export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';
-  export {RankedEngine} from './patches/splatoon3/runtime/ranked/engine.mjs';
-  export {bombMotionSnapshot,bombReleasePosition} from './patches/splatoon3/runtime/bomb-motion.mjs';
- `});f.context.structuredClone=structuredClone;f.installRanked(f.installedRuntime);
- f.G.scene=new f.THREE.Scene();f.G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};
- f.G.physics=new f.Physics(f.G.level);
- const a=new f.Actor({team:0,name:'Clam native release',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
- a.nid='player';a.isLocal=true;a.grounded=true;a.ground.hit=true;a.character.actor=a;a.character.onEvent=null;f.G.actors=[a];f.G.scene.add(a.character.root);
- const e=new f.RankedEngine('clams',stage),m=f.G.match={mode:'clams',ranked:e,actors:[a],playing:()=>true,rankedGains:[0,0],rankedEffects:{event(){}}};
- const w=m.rankedWorld=new f.RankedWorld(f.installedRuntime,m,stage);
- for(let i=0;i<60;i++){f.G.time+=1/60;a._finishFrame(1/60);}
- const physical=()=>JSON.stringify({pos:a.pos.toArray(),vel:a.vel.toArray(),ink:a.ink,hp:a.hp,alive:a.alive,form:a.form,weapon:a.weapon.id,fire:a.fireBuffer,special:a.special});
- const before=physical();e.rule.state.inventories.player={team:0,power:true,small:0};
- assert.equal(e.rule._throw({id:'player',team:0,pos:a.pos.toArray(),alive:true},{aim:[0,0,1]},{actors:[],floorAt:()=>0}),true);
- let leftSolves=0;const solve=a.character._solveLimb;
- a.character._solveLimb=function(...args){if(args[0]===this.limbs.armL)leftSolves++;return solve.apply(this,args);};
- f.Match.prototype.playRankedEvents.call(m,e.events.splice(0));
- assert.equal(leftSolves,1,'Success event performs exactly one arm solve, without replaying the full pose');
- a.character.root.updateMatrixWorld(true);const handAtEvent=a.character.bones.handL.getWorldPosition(new f.THREE.Vector3());
- assert.ok(handAtEvent.distanceTo(new f.THREE.Vector3(0,1.15-.255*1.2,0))<.015,'Power-clam lower-shell grip is present on the event frame');
- assert.equal(f.bombMotionSnapshot(a.character).phase,'clam-recovery');assert.equal(a.character.bombHeld,false);assert.equal(physical(),before);assert.equal(f.shots.length,0);
- const release=f.bombReleasePosition(a,new f.THREE.Vector3(0,1.15,0));assert.ok(release.toArray().every(Number.isFinite));
- const handRows=[];
- for(const dt of [0,1/60,1/60,1/60]) {f.G.time+=dt;leftSolves=0;a._finishFrame(dt);assert.equal(leftSolves,1,'Only the baseline left-arm solve remains on subsequent poses');a.character.root.updateMatrixWorld(true);handRows.push({dt,phase:f.bombMotionSnapshot(a.character),hand:new f.THREE.Vector3().setFromMatrixPosition(a.character.bomb.group.matrixWorld).toArray()});}
- t.diagnostic(JSON.stringify({nativeRelease:release.toArray(),ruleOrigin:e.rule.state.clams.at(-1).pos,handAtEvent:handAtEvent.toArray(),handRows}));
- for(let i=0;i<40;i++){f.G.time+=1/60;a._finishFrame(1/60);assert.ok(Array.from(a.character.P).every(Number.isFinite));}
- assert.equal(f.bombMotionSnapshot(a.character).phase,'idle');assert.equal(a.character.s3ClamGripActive,false);assert.equal(f.shots.length,0);
- const bank=f.Character.prototype[Symbol.for('inkwave.s3.bomb-motion.install.v1')].states.get(a.character).clamCache;
- const originalPose=bank.pose,originalScratch=bank.receiver.PX;
- for(let i=0;i<32;i++)a.character.trigger('clam-throw',{clamRelease:{kind:'power',pos:[0,1.15,0]}});
- const reused=f.Character.prototype[Symbol.for('inkwave.s3.bomb-motion.install.v1')].states.get(a.character).clamCache;
- assert.equal(reused,bank);assert.equal(reused.pose,originalPose);assert.equal(reused.receiver.PX,originalScratch);
- t.diagnostic(JSON.stringify({clamScratchBytes:originalPose.byteLength+originalScratch.byteLength,repeatedThrows:32,reused:true}));
- for(let i=0;i<40;i++)a._finishFrame(1/60);
- a.weaponRunner.aimingSub=true;a.character.bombHeld=true;
- const pose=Array.from(a.character.P),timer=Array.from(a.character.tr);
- w.presentEvent({kind:'clam-throw',clamKind:'power',id:'during-sub-hold',actor:'player'});
- assert.equal(a.character.bombHeld,true);assert.equal(a.weaponRunner.aimingSub,true);
- assert.deepEqual(Array.from(a.character.P),pose);assert.deepEqual(Array.from(a.character.tr),timer);
- assert.equal(f.bombMotionSnapshot(a.character).phase,'aim');
- a.weaponRunner.aimingSub=false;a.character.bombHeld=false;
- // A regular bomb immediately replaces clam presentation, and weapon/death
- // lifecycle cancellation clears it. Native solver clamps unreachable targets.
- a.character.trigger('clam-throw',{clamRelease:{kind:'power',pos:[999,999,999]}});
- assert.equal(f.bombMotionSnapshot(a.character).clamGrip,false);
- for(const weapon of ['shooter','dualies','charger','roller']){
-  a.setWeapon(weapon);for(let i=0;i<40;i++)a._finishFrame(1/60);
-  const L=a.character.limbs.armL,up=L.up.position.clone(),lo=L.lo.position.clone(),end=L.end.position.clone();
-  a.character.trigger('clam-throw',{clamRelease:{kind:'power',pos:[0,1.15,0]}});
-  assert.equal(f.bombMotionSnapshot(a.character).clamGrip,weapon!=='dualies','Dualies arm overlay is deferred until its weapon rules are confirmed');
-  a.character.trigger('throw');assert.equal(f.bombMotionSnapshot(a.character).clamGrip,false);assert.equal(a.character.s3ClamGripActive,false);
-  assert.ok(L.up.position.equals(up)&&L.lo.position.equals(lo)&&L.end.position.equals(end),'No limb lengths/shape changed');
-  assert.ok([...L.up.quaternion.toArray(),...L.lo.quaternion.toArray()].every(Number.isFinite));
- }
- a.character.trigger('clam-throw',{clamRelease:{kind:'power',pos:[0,1.15,0]}});a.alive=false;a._finishFrame(1/60);
- assert.equal(f.bombMotionSnapshot(a.character).clamGrip,false);assert.equal(a.character.s3ClamGripActive,false);a.alive=true;
- m.mode='rainmaker';a.character.trigger('clam-throw',{clamRelease:{kind:'power',pos:[0,1.15,0]}});
- assert.equal(f.bombMotionSnapshot(a.character).clamGrip,false);assert.equal(a.character.s3ClamGripActive,false);m.mode='clams';
- const banners=[];f.G.hud={banner:(...args)=>banners.push(args)};
- e.rule._score(0,'small',[0,.55,20]);const scored=e.snapshot(),scoreEvents=e.events.splice(0);
- f.Match.prototype.playRankedEvents.call(m,scoreEvents,true);
- same(e.snapshot(),scored);assert.equal(banners.length,1,'Canonical score restores exactly one native UI notification');
- a.character.trigger('clam-throw',{clamRelease:{kind:'power',pos:[0,1.15,0]}});a.setWeapon('shooter');
- assert.equal(a.character.s3ClamGripActive,false);
- w.dispose();a.character.dispose();assert.equal(a.character.s3ClamGripActive,false);
-});
-
 import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
-test('real loaded Player00 owner preserves the clam release contact without replaying full pose or changing gameplay',async()=>{
- const f=await sourceLoadedActorFixture(),a=await f.make();for(let i=0;i<60;i++)f.tick(a);
- assert.equal(a.character.sourceMotion.status,'ready');
+for(const source of [false,true])test(`installed Clam success adds zero pose evaluations or wrist discontinuity (${source?'loaded Player00':'native'})`,async t=>{
+ const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs'; export {bombMotionSnapshot} from './patches/splatoon3/runtime/bomb-motion.mjs';`});
+ const a=await f.make();if(!source)a.character.sourceMotion.setEnabled(false);assert.equal(a.character.sourceMotion.enabled,source);
+ a.nid=1;a.character.actor=a;a.character.onEvent=null;f.G.actors=[a];f.G.scene.add(a.character.root);
  const e=new f.RankedEngine('clams',stage),m=f.G.match={mode:'clams',state:'playing',ranked:e,actors:[a],playing:()=>true,rankedGains:[0,0],rankedEffects:{event(){}}};
- m.rankedWorld=new RankedWorld(f,m,stage);let solves=0,fullUpdates=0;
- const original=a.character._solveLimb,update=a.character.update;
- a.character._solveLimb=function(...args){if(args[0]===this.limbs.armL)solves++;return original.apply(this,args);};
- a.character.update=function(...args){fullUpdates++;return update.apply(this,args);};
- e.rule.state.inventories[String(a.nid)]={team:0,power:true,small:0};
- e.rule._throw({id:String(a.nid),team:0,alive:true,pos:a.pos.toArray()},{aim:[0,0,1]},{actors:[],floorAt:()=>0});
- const before=e.snapshot(),physical=JSON.stringify({pos:a.pos.toArray(),vel:a.vel.toArray(),ink:a.ink,hp:a.hp,special:a.special});
- const c=e.rule.state.clams.at(-1),target=new f.THREE.Vector3(...c.pos);target.y-=.255*1.2;
- f.Match.prototype.playRankedEvents.call(m,e.events.splice(0));
- assert.equal(solves,1);assert.equal(fullUpdates,0);same(e.snapshot(),before);
- assert.equal(JSON.stringify({pos:a.pos.toArray(),vel:a.vel.toArray(),ink:a.ink,hp:a.hp,special:a.special}),physical);
- const hand=a.character.bones.handL.getWorldPosition(new f.THREE.Vector3());assert.ok(hand.distanceTo(target)<.02);
- for(let i=0;i<20;i++){solves=0;f.tick(a);assert.ok(solves<=1,'No double left-arm evaluation with source owner');}
- m.rankedWorld.dispose();f.reset();
+ const w=m.rankedWorld=new f.RankedWorld(f,m,stage);for(let i=0;i<60;i++)f.tick(a);
+ const c=a.character;let solves=0,updates=0,triggers=0;const solve=c._solveLimb,update=c.update,trigger=c.trigger;
+ c._solveLimb=function(...args){solves++;return solve.apply(this,args);};c.update=function(...args){updates++;return update.apply(this,args);};
+ c.trigger=function(name,...args){if(name==='clam-throw'||name==='throw')triggers++;return trigger.call(this,name,...args);};
+ const wrist=()=>c.bones.handL.getWorldPosition(new f.THREE.Vector3()).toArray();
+ const pose=()=>({bones:c.boneList.map(b=>b.quaternion.toArray()),P:Array.from(c.P),timers:Array.from(c.tr),springs:Array.from(c.sp),ik:Array.from(c.ikErr),wrist:wrist(),bombHeld:c.bombHeld});
+ const rows=[];
+ for(const kind of ['small','power']){
+  e.rule.state.inventories['1']={team:0,power:kind==='power',small:kind==='small'?1:0};
+  assert.equal(e.rule._throw({id:'1',team:0,pos:a.pos.toArray(),alive:true},{aim:[0,0,1]},{actors:[],floorAt:()=>0}),true);
+  const events=e.events.splice(0),before=pose(),authority=e.snapshot();
+  f.Match.prototype.playRankedEvents.call(m,events);f.Match.prototype.playRankedEvents.call(m,events);
+  same(pose(),before);same(e.snapshot(),authority);assert.equal(solves,0);assert.equal(updates,0);assert.equal(triggers,0);assert.equal(!!c.s3ClamGripActive,false);
+  rows.push({kind,eventCount:events.length,eventWristJump:0,extraSolves:0,extraUpdates:0});
+ }
+ const banners=[];f.G.hud={banner:(...args)=>banners.push(args)};e.rule._score(0,'small',[0,.55,20]);const scored=e.snapshot();
+ f.Match.prototype.playRankedEvents.call(m,e.events.splice(0),true);same(e.snapshot(),scored);assert.equal(banners.length,1,'Score notification repair remains live');
+ assert.equal(f.bombMotionSnapshot(c).phase,'idle');t.diagnostic(JSON.stringify(rows));w.dispose();f.reset();
 });
 
-import {installWeaponHandoffMotion} from '../runtime/weapon-handoff-motion.mjs';
-test('inactive clam adds only a boolean read to the existing fixed-argument final owner, with identical pose output',t=>{
+test('final owner retains one native pose call and performs no inactive Clam checks or IK',t=>{
  const token={},G={match:{mode:'turf'}},C={};let nativeCalls=0,checks=0;
  class Probe{
   constructor(){this.P=new Float32Array(4);this.kidForm=false;}
@@ -228,15 +165,10 @@ test('inactive clam adds only a boolean read to the existing fixed-argument fina
   _solveLimb(){throw Error('Inactive pose attempted IK');}_kidXform(){}_owner(){return null;}
   getMuzzle(out){return out;}setWeapon(){}dispose(){}
  }
- installWeaponHandoffMotion({THREE,G,Character:Probe,CHARACTER_CHANNELS:C});
- assert.equal(Probe.prototype._applyPose.length,2,'Final owner does not allocate rest-argument arrays');
+ installWeaponHandoffMotion({THREE,G,Character:Probe,CHARACTER_CHANNELS:C});assert.equal(Probe.prototype._applyPose.length,2);
  const ch=new Probe();Object.defineProperty(ch,'s3ClamGripActive',{get(){checks++;return false;}});
  const samples=[],params={aim:.3,weight:.8};for(const mode of ['turf','clams','rainmaker']){
-  G.match.mode=mode;const beforeCalls=nativeCalls,beforeChecks=checks,start=performance.now();
-  for(let i=0;i<10000;i++)assert.equal(ch._applyPose(.016,params),token);
-  samples.push({mode,updates:10000,ms:performance.now()-start});
-  assert.equal(nativeCalls-beforeCalls,10000);assert.equal(checks-beforeChecks,10000);
-  assert.deepEqual(Array.from(ch.P),Array.from(new Float32Array([.016,.3,.8,0])));
- }
- t.diagnostic(JSON.stringify({inactiveFinalOwner:samples}));
+  G.match.mode=mode;const beforeCalls=nativeCalls,start=performance.now();for(let i=0;i<10000;i++)assert.equal(ch._applyPose(.016,params),token);
+  samples.push({mode,updates:10000,ms:performance.now()-start});assert.equal(nativeCalls-beforeCalls,10000);assert.equal(checks,0);assert.deepEqual(Array.from(ch.P),Array.from(new Float32Array([.016,.3,.8,0])));
+ }t.diagnostic(JSON.stringify({inactiveFinalOwner:samples}));
 });

@@ -76,7 +76,6 @@ export function installRanked(context) {
         this.rankedGains[e.team] += e.points;
         for (const a of this.actors) if (a.team === e.team && a.alive && !a.remote && !a.specialActive && !specialGaugeLocked(a)) a.special = Math.min(a.specialCost(), a.special + e.points / (a.s3?.modifiers?.specialCharge || 1));
       }
-      this.rankedWorld?.presentEvent?.(e);
       this.rankedEffects.event(e, visualOnly);
       if (['lead', 'checkpoint', 'tower-capture', 'zone-capture', 'clam-score', 'overtime'].includes(e.kind)) {
         api.emit('ranked:event', { match: this, ...e });

@@ -30,7 +30,7 @@ export async function runAirScenario({api,scenario,onFrame=null}){
   // Rule pickup follows Actor.update; presentation begins on the next frame.
   if(!measured){check(frame===61&&!ch._rainmakerPose,'only pickup frame may precede pose ownership');continue;}
   hand.copy(ch.weapon.pivot.position);hand.x=-hand.x;ch.bones.handL.localToWorld(hand);target.set(0,0,.07);mesh.localToWorld(target);ch.bones.clavL.getWorldPosition(afterPosition);
-  const row={frame,cycle,stage,source:ch.sourceMotion.state,grounded:a.grounded,pos:a.pos.toArray(),vel:a.vel.toArray(),form:a.form,kidScale:ch.kidScale,visible:ch.kid.visible,grip:target.distanceTo(hand),translationWorld:afterPosition.distanceTo(baselinePosition),angle:baselineQuaternion.angleTo(ch.bones.clavL.quaternion),rawKid,rawWorld,poses,solves,pending:!!ch.s3RainmakerSupportPending,root:trs(ch.root),kid:trs(ch.kid),model:trs(mesh),P:Array.from(ch.P),springs:Array.from(ch.sp),muzzle:ch.getMuzzle(new THREE.Vector3()).toArray(),left:['clavL','uArmL','fArmL','handL'].map(n=>({name:n,trs:trs(ch.bones[n])})),rngIndex,charge:engine.rule.state.charge.value,recovery:engine.rule.state.charge.recovery||0,jumpSerial:a.s3JumpSerial||0};traces.push(row);
+  const row={frame,cycle,stage,source:ch.sourceMotion.state,grounded:a.grounded,pos:a.pos.toArray(),vel:a.vel.toArray(),form:a.form,kidScale:ch.kidScale,visible:ch.kid.visible,grip:target.distanceTo(hand),translationWorld:afterPosition.distanceTo(baselinePosition),angle:baselineQuaternion.angleTo(ch.bones.clavL.quaternion),rawKid,rawWorld,poses,solves,pending:!!ch.s3RainmakerSupportPending,clamArmActive:!!ch.s3ClamGripActive,root:trs(ch.root),kid:trs(ch.kid),model:trs(mesh),P:Array.from(ch.P),springs:Array.from(ch.sp),muzzle:ch.getMuzzle(new THREE.Vector3()).toArray(),left:['clavL','uArmL','fArmL','handL'].map(n=>({name:n,trs:trs(ch.bones[n])})),rngIndex,charge:engine.rule.state.charge.value,recovery:engine.rule.state.charge.recovery||0,jumpSerial:a.s3JumpSerial||0};traces.push(row);
   if(onFrame)await onFrame({row,a,ch,mesh,scenario,roles:AIR_CAPTURE_FRAMES[scenario][frame]||null});
  }};
  try{
@@ -50,7 +50,7 @@ export function verifyAirScenario(result,{corrected=true}={}){
  check(result.sourceOwner.status==='ready'&&result.sourceOwner.active&&result.sourceOwner.variant==='Player00','real active source owner');
  check(/^[a-f0-9]{64}$/.test(result.sourceOwner.bankSha256),'source bank digest');
  check(result.events.filter(e=>e.kind==='rainmaker-pickup').length===1,'one actual pickup');
- for(const row of result.traces){check(row.poses===1&&row.solves===1,'one pose and support solve per holder frame');check(Number.isFinite(row.grip)&&Number.isFinite(row.translationWorld),'finite world measurements');check(row.angle<=.2+1e-7,'rotation cap retained');check(row.translationWorld<=.03+1e-10,'world translation cap retained');}
+ for(const row of result.traces){check(row.clamArmActive===false,'Historical Clam helper must stay inactive in Rainmaker mode');check(row.poses===1&&row.solves===1,'one pose and support solve per holder frame');check(Number.isFinite(row.grip)&&Number.isFinite(row.translationWorld),'finite world measurements');check(row.angle<=.2+1e-7,'rotation cap retained');check(row.translationWorld<=.03+1e-10,'world translation cap retained');}
  if(corrected)check(result.badFrames===0&&result.worst.grip<.001,'all84 actual air frames keep world grip < .001: '+result.worst.grip);
  return true;
 }
@@ -76,10 +76,10 @@ export async function run({prefix,baselinePrefix}){
    }});verifyAirScenario(result,{corrected:revision==='after'});metrics.push({revision,...result});
    if(revision==='before'){before.set(scenario,result);check(result.badFrames>0,'381319 negative must reproduce actual grip failure');}
    else{const old=before.get(scenario);check(old.traces.length===result.traces.length,'same actual input denominator');let compared=0;
-    for(let i=0;i<result.traces.length;i++){const keys=['frame','cycle','stage','source','grounded','pos','vel','form','kidScale','visible','poses','solves','root','kid','model','P','springs','muzzle','rngIndex','charge','recovery','jumpSerial'];for(const key of keys)check(JSON.stringify(result.traces[i][key])===JSON.stringify(old.traces[i][key]),'gameplay/right-owner parity '+scenario+'/'+i+'/'+key);compared++;}
+    for(let i=0;i<result.traces.length;i++){const keys=['frame','cycle','stage','source','grounded','pos','vel','form','kidScale','visible','poses','solves','root','kid','model','P','springs','muzzle','rngIndex','charge','recovery','jumpSerial','clamArmActive'];for(const key of keys)check(JSON.stringify(result.traces[i][key])===JSON.stringify(old.traces[i][key]),'gameplay/right-owner parity '+scenario+'/'+i+'/'+key);compared++;}
     check(JSON.stringify(result.events)===JSON.stringify(old.events),'authoritative events exact');comparisons.push({scenario,frames:compared,gameplayRootSourceRightMuzzleExact:true,beforeBad:old.badFrames,afterBad:result.badFrames});
    }
   }}finally{G.projectiles.clear();ctx.dispose();}
- }return{status:'passed',expectedFrames:20,rows,metrics,comparisons,scope:'Actual Actor.update -> advanceRanked with flat real Physics and normal pickup/jump inputs. Source Dualies/team0; carry and charge each3 jumps x28 air frames =84,168 total per revision. Before overlays381319 handoff only, not full old main. Shoulder/landing visual acceptance remains a separate human review.'};
+ }return{status:'passed',expectedFrames:20,rows,metrics,comparisons,scope:'Actual Actor.update -> advanceRanked with flat real Physics and normal pickup/jump inputs. Source Dualies/team0; carry and charge each3 jumps x28 air frames =84,168 total per revision. Before overlays381319 handoff and its contemporaneous bomb helper dependency; mode is fixed to Rainmaker and the historical Clam arm branch stays inactive. This is not full old main. Shoulder/landing visual acceptance remains a separate human review.'};
  }finally{Math.random=random;}
 }

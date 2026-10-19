@@ -1,46 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
-const NAMES=['clavL','uArmL','fArmL','handL'];
-const state=c=>c[Symbol.for('inkwave.s3.bomb-motion.install.v1')].states.get(c);
-function persistent(c){const result={};for(const k of Object.keys(c)){
-  if(k==='s3ClamGripActive')continue;const v=c[k];
-  if(v==null||['number','string','boolean'].includes(typeof v))result[k]=v;
-  else if(ArrayBuffer.isView(v))result[k]=Array.from(v);
-  else if(v?.isVector2||v?.isVector3||v?.isVector4||v?.isQuaternion||v?.isEuler||v?.isMatrix3||v?.isMatrix4)result[k]=v.toArray();
-}return result;}
-test('transient clam overlay restores only its four bones before source capture and on cancellation, including world matrices',async t=>{
-  const f=await sourceLoadedActorFixture({random:()=>.5}),a=await f.make(),c=a.character,rows=[];
-  f.G.match={mode:'clams',playing:()=>true,canRespawn:()=>false};
-  const release=()=>c.trigger('clam-throw',{clamRelease:{kind:'power',pos:[0,1.15,0]}});
-  for(const action of ['hide','ordinary-bomb','weapon-switch','source-switch','death','dispose']){
-    a.alive=true;a.hp=100;c.setVisible(true);a.setWeapon('shooter');c.sourceMotion.setEnabled(true);
-    for(let i=0;i<40;i++)f.tick(a);
-    const before=NAMES.map(n=>c.bones[n].quaternion.clone());
-    const positions=c.boneList.map(b=>b.position.toArray()),scales=c.boneList.map(b=>b.scale.toArray());
-    const other=c.boneList.filter(b=>!NAMES.includes(b.name)).map(b=>b.quaternion.toArray());
-    const fields=persistent(c),world=c.bones.handL.getWorldPosition(new f.THREE.Vector3());
-    release();const bank=state(c).clamGrip;
-    assert.ok(bank.restorePending);assert.deepEqual(persistent(c),fields,'Event solve changes no native scalar/vector/timer/spring/IK fields');
-    assert.deepEqual(c.boneList.map(b=>b.position.toArray()),positions);assert.deepEqual(c.boneList.map(b=>b.scale.toArray()),scales);
-    assert.deepEqual(c.boneList.filter(b=>!NAMES.includes(b.name)).map(b=>b.quaternion.toArray()),other,'Event leaves all unrelated bones untouched');
-    release();assert.equal(state(c).clamGrip,bank,'Repeat reuses the same scratch bank');
-    NAMES.forEach((n,i)=>assert.ok(bank.base[i].equals(before[i]),'Repeat does not save its own prior overlay as the baseline'));
-    if(action==='hide')c.setVisible(false);
-    if(action==='ordinary-bomb')c.trigger('throw');
-    if(action==='weapon-switch')a.setWeapon('dualies');
-    if(action==='source-switch'){
-      c.sourceMotion.setEnabled(false);c._updateStates(0,a.anim);
-      assert.equal(bank.restorePending,false,'Existing state owner removes overlay before source may resume');
-      c.setVisible(false);
-    }
-    if(action==='death')a.splat(null,'test');
-    if(action==='dispose')c.dispose();
-    assert.equal(c.s3ClamGripActive,false);assert.equal(bank.restorePending,false);
-    assert.ok(!state(c)?.clamGrip);
-    NAMES.forEach((n,i)=>assert.ok(c.bones[n].quaternion.equals(before[i]),`${action} restores ${n}`));
-    assert.ok(c.bones.handL.getWorldPosition(new f.THREE.Vector3()).distanceTo(world)<1e-12,`${action}: restored world matrices do not retain the event wrist`);
-    rows.push({action,restored:true,eventPersistentStateDifference:0});
+const stage={id:'clam-staged-lifecycle',clams:{spawns:[],goals:[[0,0,80],[0,0,-80]]}};
+const clean=x=>JSON.parse(JSON.stringify(x));
+function pose(c,f){return {q:c.boneList.map(b=>b.quaternion.toArray()),p:c.boneList.map(b=>b.position.toArray()),s:c.boneList.map(b=>b.scale.toArray()),P:Array.from(c.P),tr:Array.from(c.tr),sp:Array.from(c.sp),ik:Array.from(c.ikErr),wrist:c.bones.handL.getWorldPosition(new f.THREE.Vector3()).toArray(),dive:c.sourceMotion.diveFrom.map(b=>b.q.toArray())};}
+test('deferred Clam arms allocate no transient pose and leave lifecycle, source history and matrices identical to no notification',async t=>{
+ const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`}),rows=[];
+ for(const action of ['hide','ordinary-bomb','weapon-switch','source-switch','death','dispose']){
+  const pair=[];
+  for(let lane=0;lane<2;lane++){
+   const a=await f.make();a.nid=1;a.character.onEvent=null;
+   const m={mode:'clams',state:'playing',ranked:new f.RankedEngine('clams',stage),actors:[a],playing:()=>true,canRespawn:()=>false,rankedGains:[0,0],rankedEffects:{event(){}}};
+   const w=m.rankedWorld=new f.RankedWorld(f,m,stage);pair.push({a,m,w});
   }
-  t.diagnostic(JSON.stringify(rows));f.reset();
+  for(let i=0;i<45;i++){f.G.time+=1/60;for(const p of pair){f.G.match=p.m;p.a.update(1/60);}}
+  const [a,b]=pair;assert.deepEqual(pose(a.a.character,f),pose(b.a.character,f));const c=b.a.character,before=pose(c,f);let calls=0;const trigger=c.trigger;
+  c.trigger=function(name,...args){if(name==='clam-throw')calls++;return trigger.call(this,name,...args);};
+  for(let i=0;i<4;i++){
+   b.m.ranked.rule.state.inventories['1']={team:0,power:true,small:0};b.m.ranked.rule._throw({id:'1',team:0,pos:b.a.pos.toArray(),alive:true},{aim:[0,0,1]},{actors:[],floorAt:()=>0});
+   f.G.match=b.m;f.Match.prototype.playRankedEvents.call(b.m,b.m.ranked.events.splice(0));
+   assert.deepEqual(pose(c,f),before,'No event pose or stale matrix write');
+  }
+  assert.equal(calls,0);assert.equal(!!c.s3ClamGripActive,false);const st=c[Symbol.for('inkwave.s3.bomb-motion.install.v1')].states.get(c);assert.ok(!st?.clamGrip&&!st?.clamCache,'No dormant Clam overlay or scratch bank');
+  for(const p of pair){f.G.match=p.m;const x=p.a,ch=x.character;
+   if(action==='hide')ch.setVisible(false);
+   if(action==='ordinary-bomb')ch.trigger('throw');
+   if(action==='weapon-switch')x.setWeapon('dualies');
+   if(action==='source-switch'){ch.sourceMotion.setEnabled(false);ch._updateStates(0,x.anim);ch.setVisible(false);}
+   if(action==='death')x.splat(null,'test');
+   if(action==='dispose')ch.dispose();
+  }
+  assert.deepEqual(clean(pose(a.a.character,f)),clean(pose(c,f)),`${action}: bones and immediate world matrices match`);
+  rows.push({action,successfulThrows:4,armCalls:0,allBoneDifference:0,sourceHistoryDifference:0});pair.forEach(p=>p.w.dispose());f.reset();
+ }t.diagnostic(JSON.stringify(rows));
 });

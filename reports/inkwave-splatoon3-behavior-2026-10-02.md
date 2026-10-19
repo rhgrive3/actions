@@ -5350,3 +5350,12 @@ main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.
 PR1630（自然SP・ジャン短）とPR1633（アサリ閉鎖時端数）は最終head全必須CI・専用emitted・実browserを経てmain136c5346へ統合。先行PR1631のローラー方向修正と中央記録を保持。モデル候補は別PR1627のままで、前節の保留状態を完成へ置き換えるものではない。ホコの通常/チャージjumpで残っていた左手の離れに対し、既存0.2rad上限後だけ最大0.03WUの一時鎖骨位置補正を試作。1条件3jump合計84空中frame、2条件168frameの握りgateとsource履歴・通常射撃/ボム・解除復元を確認した。0.03WUは校正値で実機寸法ではない。新20枚の下降/着地比較と最終headのemitted/CIは未確認。381319で失敗したemitted testの直接importと128画像receipt名の上書きはQA側で修正し、新headで再検証する。詳細は専用air-position報告を参照。
 
 PR1632（ホコ所持時間切れの復活短縮履歴）も最終headの全必須CI、exact emitted5件、統合形browserとmain136合成88件の受入後、main b07bf92へ統合。今回のモデル候補はこの6path差分も公式blob一致で保持し、main反映とモデル側の新native受入を区別する。
+
+
+## 2026-10-19 PR1627 staged Clam arm deferral
+
+The preceding 789378 native result (252 original PNGs and two contact sheets) is historical evidence, not acceptance of the next head. Actual Controller comparison against official main b07 identified newly introduced Clam wrist discontinuity (normal power throw 0.300659 WU; repeated throws up to 0.494475 WU). The new stage removes only the Clam arm event consumer/overlay and retains the ball, barrier, event-envelope, spawner and Rainmaker improvements. The original implementation and continuity prototypes remain preserved. Complete Clam preparation/release motion remains unfinished.
+
+Four runtime paths separate the unaccepted arm overlay; ordinary bomb behavior and the three Rainmaker restoration hooks remain. Five Clam test paths are retained in source and emitted lanes, now requiring main-equivalent arms and source history. Their 21 source cases pass; the old 789378 negative control passes 10 ball/barrier cases and fails 11 arm cases. Shared contracts pass 24/24, Rainmaker source 27/27, and ordinary bomb/Clam rules 44/44. These counts overlap with additional drivers and must not be summed as unique cases.
+
+The 80 Clam captures retain all views/timing and record contact residual without claiming a faithful grip. Air comparison overlays the historical 381319 handoff and contemporaneous bomb module together, with Clam inactive in Rainmaker mode. The capture denominator stays 252 PNGs plus two sheets. New exact-head emitted tests, browser capture, official readback and final visual review remain required before integration. No new stage browser completion is claimed here.

@@ -10,7 +10,9 @@ export const SUITES = {
   },
   'rainmaker-air': {
     beforeBase: '381319e16361497c6bb5f4649ce119acd7883f7f',
-    before: ['patches/splatoon3/runtime/weapon-handoff-motion.mjs'],
+    // Historical handoff imports its contemporaneous Clam helper. Rainmaker
+    // mode keeps that old arm branch inactive; both sources are receipt-hashed.
+    before: ['patches/splatoon3/runtime/weapon-handoff-motion.mjs', 'patches/splatoon3/runtime/bomb-motion.mjs'],
     added: [],
   },
   clam: {
