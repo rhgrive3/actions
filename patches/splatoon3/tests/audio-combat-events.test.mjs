@@ -181,14 +181,19 @@ test('real AudioEngine prototype owns the hit-cue even when Game assigns G.audio
   assert.equal(G.audio.blasterHitCuePitch(blaster,'blaster'),BLASTER_HIT_PITCH.direct);
 });
 
-test('production HUD keeps one hit marker; damage/death/kill sounds remain connected',()=>{
+test('production hit and enemy splat cues are original recorded MP3s; HUD and self-death remain distinct',()=>{
   const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const built=adaptBuildSource('src/main.js',src);
-  assert.match(built,/G\.audio\?\.blasterHitCuePitch\?\.\(attacker, weaponId\)/);
+  assert.match(built,/blasterHitCueKind\(attacker,weaponId\)/,'direct and splash Blaster contact remain distinct');
   assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId, hitMeta \}\)/);
-  assert.equal((built.match(/hit_marker', \{ volume: 0\.6, pitch: G\.audio\?\.blasterHitCuePitch/g)||[]).length,1);
-  for(const cue of ['splat_enemy','splatted_self','ally_splatted','hurt'])
-    assert.ok(src.includes("'"+cue+"'"),'retained combat cue '+cue);
+  assert.ok(built.includes("G.audio?.playWeapon?.(recordedCue,'fire'"),'HitEf recorded source playback');
+  assert.ok(built.includes("G.audio?.playWeapon?.('combat:splat','fire'"),'recorded splat playback');
+  assert.doesNotMatch(built,/G\.audio\?\.play\('hit_marker', \{ volume: 0\.6/,
+    'no synthesized local hit marker overlays the original HitEf');
+  assert.doesNotMatch(built,/G\.audio\?\.play\('splat_enemy', \{ volume: 0\.9 \}\)/,
+    'no synthesized enemy splat overlays Pl_DeadSplash');
+  for(const cue of ['splatted_self','ally_splatted','hurt'])
+    assert.ok(src.includes("'"+cue+"'"),'retained self/ally/victim cue '+cue);
 });
 
 test('catalogue Blaster radius hits carry a scoped audio flag and explosion weapon identity',()=>{
