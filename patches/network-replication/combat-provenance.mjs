@@ -168,7 +168,7 @@ function contactProof(nm,from,d,type,t,target) {
   if(!v3(here)||dist(here,target)>4.0)return false;
   // Roller contact has no projectile or fire-event packet. Require the
   // owner snapshot's currently observed rolling flag and a realistic target.
-  if(w.kind!=='roller'||d.w!=='roller')return false;
+  if(w.kind!=='roller' || (d.w!=='roller' && !(type==='boss' && d.c>=0 && d.w==='crab')))return false;
   if(!((a.net?.cur?.f??0)&256) && !a.weaponRunner?.rolling)return false;
   const s=state(nm),key=[type,from,d.a,type==='pvp'?d.v:d.c].join(':');
   if(t-(s.contacts.get(key)?.at??-Infinity)<.45)return false;
@@ -227,7 +227,7 @@ function take(nm,from,d,type,t) {
     p.uses++;
     return true;
   }
-  if(type==='pvp' && contactProof(nm,from,d,type,t,target))return true;
+  if(contactProof(nm,from,d,type,t,target))return true;
   if(specialProof(nm,from,d,type,t,target))return true;
   return false;
 }
