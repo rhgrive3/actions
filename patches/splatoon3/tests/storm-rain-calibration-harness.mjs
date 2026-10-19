@@ -174,6 +174,24 @@ export async function measureStormRainAtRenderHz(renderHz, {
   owner.remote = false;
   G.actors = [];
 
+  // Native Storm awards the splat return after splat() returns. Issue #264
+  // separately credits newly visible growth while PaintSystem is executing.
+  // Forward the real Actor method; stats.turf is an independent ledger below.
+  const initialOwnerTurfWorldUnitsSquared = owner.stats.turf;
+  let paintMutationDepth = 0, immediateOwnerCreditWorldUnitsSquared = 0, delayedOwnerCreditWorldUnitsSquared = 0;
+  const award = owner.addTurf;
+  owner.addTurf = function (area) {
+    if (paintMutationDepth) delayedOwnerCreditWorldUnitsSquared += area; else immediateOwnerCreditWorldUnitsSquared += area;
+    return award.call(this, area);
+  };
+  for (const method of ['advanceSimulation', 'flush']) {
+    const native = G.paint[method];
+    G.paint[method] = function (...args) {
+      paintMutationDepth++;
+      try { return native.apply(this, args); }
+      finally { paintMutationDepth--; }
+    };
+  }
   const cloud = {
     t: 0,
     dur: durationSeconds,
@@ -228,7 +246,10 @@ export async function measureStormRainAtRenderHz(renderHz, {
   G.paint.splat = (center, radius, team, opts = {}) => {
     const beforeCells = G.paint.counts[team];
     const beforeVersion = G.paint.version;
-    const claimedWorldUnitsSquared = splat(center, radius, team, opts);
+    let claimedWorldUnitsSquared;
+    paintMutationDepth++;
+    try { claimedWorldUnitsSquared = splat(center, radius, team, opts); }
+    finally { paintMutationDepth--; }
     const cellDelta = G.paint.counts[team] - beforeCells;
     const result = {
       candidateIndex: currentCandidateIndex,
@@ -323,7 +344,12 @@ export async function measureStormRainAtRenderHz(renderHz, {
     cosmeticParticleBatchEvents: cosmeticParticleBatchEvents.length,
     paintFlaggedCosmeticEmissions,
     summedCircularBrushFootprintWorldUnitsSquared: round(summedCircularBrushFootprintWorldUnitsSquared),
+    // Retain the original field as immediate splat-return accounting, not union.
     summedClaimedWorldUnitsSquared: round(summedClaimedWorldUnitsSquared),
+    immediateOwnerCreditWorldUnitsSquared: round(immediateOwnerCreditWorldUnitsSquared),
+    delayedOwnerCreditWorldUnitsSquared: round(delayedOwnerCreditWorldUnitsSquared),
+    ownerTurfDeltaWorldUnitsSquared: round(owner.stats.turf - initialOwnerTurfWorldUnitsSquared),
+    pendingGrowthAtMeasurementEnd: G.paint.growing.length,
     finalCpuTurfCellsFromGrid: turf.cells,
     finalCpuTurfUnionWorldUnitsSquared: turf.areaWorldUnitsSquared,
     finalCpuTurfCellsFromPaintCounts: G.paint.counts[cloud.team],
@@ -379,7 +405,12 @@ export async function measureStormRainCalibration({
         paintWriteEvents: 'calls to the composed INKWAVE PaintSystem.splat; CPU turf grid accounting is reported separately',
         cosmeticParticleEmissions: 'FX.rain drop-pool admissions counted at FX._spawnDrop; not Nintendo particles',
         summedCircularBrushFootprintWorldUnitsSquared: 'sum of pi*r^2 for each splat call in WU²; a nominal overlap-prone proxy, not turf union',
-        finalCpuTurfUnionWorldUnitsSquared: 'area in WU² of unique team-owned turf cells in the real PaintSystem CPU grid after the run',
+        summedClaimedWorldUnitsSquared: 'sum of immediate splat return values in WU²; excludes later Issue #264 ownership credit',
+        immediateOwnerCreditWorldUnitsSquared: 'area passed to the real Actor.addTurf outside PaintSystem calls, including the native Storm splat-return award',
+        delayedOwnerCreditWorldUnitsSquared: 'area passed to the real Actor.addTurf from inside splat/growth/flush ownership processing',
+        ownerTurfDeltaWorldUnitsSquared: 'independently measured change of real Actor.stats.turf over the same run',
+        finalCpuTurfUnionWorldUnitsSquared: 'area in WU² of unique team-owned turf cells at the fixed duration boundary; pending growth is not advanced afterward',
+        pendingGrowthAtMeasurementEnd: 'real PaintSystem.growing entries still pending at that same duration boundary',
       },
     },
     runs,
