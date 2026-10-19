@@ -10,7 +10,7 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const adaptProduction = (await import(pathToFileURL(path.join(ROOT,'scripts/inkwave-source-composition.mjs')).href)).adaptBuildSource;
 const RealmBlob = function(parts = [], options) { return new Blob(parts.map(p => ArrayBuffer.isView(p) ? Buffer.from(p.buffer, p.byteOffset, p.byteLength) : p), options); };
 
-export async function sourceLoadedActorFixture({ transform = adaptProduction, emittedTransform = null, random = null, sourceOnly = false } = {}) {
+export async function sourceLoadedActorFixture({ transform = adaptProduction, emittedTransform = null, random = null, sourceOnly = false, extraExports = '' } = {}) {
   const EMITTED = !!process.env.INKWAVE_BUILT_SITE && !sourceOnly;
   const SITE = EMITTED ? path.resolve(process.env.INKWAVE_BUILT_SITE) : path.join(ROOT,'inkwave-public');
   const context = vm.createContext({ console, performance, URL, URLSearchParams, TextEncoder, TextDecoder, Blob: RealmBlob,
@@ -35,6 +35,7 @@ export async function sourceLoadedActorFixture({ transform = adaptProduction, em
     modules.set(file,m); return m;
   }
   const entry = new vm.SourceTextModule(`
+    ${extraExports}
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { installRanked, buildFrame } from './patches/splatoon3/runtime/ranked/install.mjs';
     export { RankedEngine } from './patches/splatoon3/runtime/ranked/engine.mjs';

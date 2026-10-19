@@ -1,0 +1,44 @@
+# Clam presentation calibration — 2026-10-19
+
+Baseline: main `3839b61a6c6c4d5ac998b82168f37b802bc55099`.
+
+## Reference and uncertainty
+
+- [Nintendo's Clam Blitz introduction](https://www.nintendo.com/jp/ichikara/av5ja/03.html) and [English official article](https://www.nintendo.com/en-gb/News/2024/December/Beginner-basics-for-Splatoon-3-the-ins-and-outs-of-playing-online-2645154.html).
+- The English article's official 1920×1080/60fps clip `psz38vtvgegagstkf9xz` shows carry, release around 2.8 seconds, longitudinal flight/drilling, and barrier break. A freeze/slow edit around 4 seconds means its elapsed file time is **not** retail animation timing. Release arms are obscured by the football, HUD and subtitle. One-/two-hand technique and exact arm curves remain unverified.
+- [Nintendo Gachi King rules](https://www.nintendo.com/jp/bankara-king/index.html), image `rule_step02_img_asari.png`, is a **composited explanatory illustration**, not a same-camera gameplay measurement. Its approximate projected widths per nearby illustrated actor height (.38 small / .86 power) are provisional readability references only. Perspective/occlusion prevent a reliable scale ratio from the available gameplay clip.
+- A second official source, [Nintendo's Clam Blitz finals](https://www.youtube.com/watch?v=cRFCFGOJyAo), was verified on the official Nintendo channel. Cloud playback remained at 0:00 after one normal reload; no additional arm/scale observations are claimed.
+
+- [Version-pinned extracted SplPlayer parameters](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#L382-L426) expose normal/Gachi throw speed and guide values, but no arm, storage or shooting-lock rule. GuideRadius is a simulation/guide parameter, not a rendered mesh-size measurement. These values are not applied to existing physics here.
+- The independently measured [S3 attack startup/recovery reference](https://wikiwiki.jp/splatoon3mix/検証/メインウェポン/前隙・後隙#h761a244) includes clam throwing in the definition of the sub-action startup transition. Its five-frame Dualies shooting-interruption recovery is not a five-frame clam-throw lock and does not establish when both guns can resume.
+
+No Nintendo reference images/video are redistributed in this change.
+
+## Local calibration, not retail parity
+
+Small-clam mesh/inventory scale: 1.4×; power-clam scale: 1.2×. Native geometry is unchanged. Resulting maximum widths are .56 and 1.224 world units, versus the local actor height setting 1.45. These are user-requested provisional display increases, not exact Splatoon dimensions. Ground support follows scaled half-height; airborne and drilling rule positions are centers and receive no ground-only lift.
+
+Power-clam long axis is local X. Flight uses velocity direction and age-based axial roll; contact uses the actual goal-entry direction and existing pending-break countdown. Grounded clams stop spinning. The eight-instance barrier shell visibly splits only on an observed closed→open edge. Late joining an already open goal does not invent a break. The .55-second visual fade is a local effect duration; the authoritative 1.2-second pending break and all scoring remain unchanged. Ordinary expiration still disappears and is not presented as an unsupported football fracture.
+
+Success events reach a clam-only presentation branch in the existing bomb-motion installer through internal `Character.trigger('clam-throw', ...)`. They do not invoke native `T_THROW` or ordinary bomb state. Reusing that clock was rejected after paired real Actors showed a .0451-world-unit main muzzle change and a .762-unit dualies-left muzzle change. A muzzle getter override is not used.
+
+The event frame solves the existing free arm once to touch the lower shell, then restores IK feedback. A separate visual clock samples the native curve into isolated buffers. The existing final handoff owner applies only left clavicle/arm/forearm/hand rotations and fades back over .52 seconds; all other pose channels, the right weapon, native clocks, source ownership and the normal pose evaluation remain unchanged. Subsequent frames add no second limb solve. There is no new `_applyPose` wrapper or per-frame rest-argument array. The power-clam event wrist reaches [0,.844,0], the chosen enlarged lower-shell contact, without shifting the physical ball or adding a visual-flight offset. No pre-throw windup is added: the rule already releases on the input edge. The initial pre-event-to-contact jump is recorded separately and remains a native visual gate. This is local post-release contact/follow-through calibration, **not** verification of Nintendo's hand choice or joint curve.
+
+Dualies arm presentation is provisionally suppressed: the left pistol is attached to that hand and its real muzzle is a shot origin. The references do not establish whether/how retail suppresses firing, stows a pistol or switches hands during a clam throw. Size, flight, drilling and barrier visuals still apply. All-family throw parity is not claimed. Actual render clipping and quality remain native-browser gates.
+
+Existing sub-aim/bomb hold takes precedence. A clam success does not clear an already-held bomb. Dead actors, special owners, Rainmaker, hidden/swim presentation and unreachable distant events do not receive a forced grip. Native limb lengths and body/hair geometry are not edited.
+
+## Event contract repair (separate from visuals)
+
+Previously `_event('clam-throw', {kind:'power', ...})` reached `RankedEngine.event` as `{kind, ...data}`, so payload `kind` replaced the event discriminator. All clam calls now name that payload `clamKind`; canonical event names remain intact. This restores throw animation and existing `clam-score` UI notification. Entity/snapshot `kind` remains unchanged. Consumer audit includes install, UI, combat, bots, minimap and network. Only `clam-paint` paints; score presentation does not score again. Wire admission/sequence checks and authoritative snapshots are unchanged. Old autonomy test counters are updated to canonical event names.
+
+## Validation and limits
+
+- `tests/ranked-clam-presentation.test.mjs`: pose axes, scale/ground/inventory, kind reuse, barrier 30/60/144Hz, no late-join fracture, event dedupe, failure/death guard, actual scores/timers, 200 expiry cycles, native arm/event integration, no bomb projectile or gameplay mutation, ordinary-bomb replacement, multiple weapon/owner lifecycles, real loaded Player00 source owner.
+- `tests/ranked-clam-muzzle.test.mjs`: paired native/loaded Player00 Actors, 11 weapon families × three camera pitches, full recovery; actual raw/physical main and alternate muzzles, directions, native pose/timers/springs/IK feedback, and real fire events/rounds. Dualies suppression is explicit.
+- `tests/ranked-clam-events.test.mjs`: full snapshot equality against the exact old event adapter through pickup/throw/expiry/drill/score/close, event order equality after legacy normalization, host→client delivery, replay/ownership rejection and snapshot-only score authority.
+- `tests/bomb-motion.test.mjs`: existing ordinary-bomb regressions, including cross-realm installation and sampler transactions.
+- `tools/clam-production-qa/browser.mjs`: 70 same-camera before/after frames using production PMREM, lighting and complete Renderer post stack. Carries 1/7/power, ground, up/down flight, pre-event / release / first two frames and recovery samples through .52 seconds at real 60Hz ticks, deferred Dualies arm, loaded Player00, barrier stages and 200-cycle resource checks. Before means five main3839 runtime modules overlaid on the same emitted build, **not** a full historical application build.
+- A field marker cache retains at most 48 inactive/reusable markers under tested lifecycle churn; throw IDs retain at most 64. Each barrier uses eight instances and fixed geometry/material. Transparent DoubleSide explicitly requests forceSinglePass; actual hidden/visible/forced-two-pass draw counts (0/1/2) and front/oblique/back transparency remain native QA gates, rather than being inferred solely from mesh count; effects allocate no event particle systems.
+
+Local native-browser execution is not available in this environment. Shared GitHub native QA is the visual acceptance route. CPU success alone does not certify visual equivalence, exact retail timing, size, motion, full online play or native-browser performance.

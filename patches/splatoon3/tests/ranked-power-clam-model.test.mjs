@@ -65,7 +65,7 @@ for(const kind of ['small','power'])test(`real ${kind} throw keeps rule trajecto
    const before=r.snapshot();world.update(engine,1/60);assert.deepEqual(r.snapshot(),before);assert.deepEqual(r.snapshot(),control.snapshot());
    const m=world._clamMarkers.get(c.id).mesh,res=kind==='power'?world.powerClamResources:world.smallClamResources;
    assert.equal(m.geometry,res.geometry);assert.equal(m.material,res.material);assert.equal(m.visible,true);
-   assert.equal(m.position.x,c.pos[0]);assert.equal(m.position.z,c.pos[2]);assert.ok(m.position.y>c.pos[1]);assert.ok(m.rotation.toArray().slice(0,3).every(Number.isFinite));
+   assert.equal(m.position.x,c.pos[0]);assert.equal(m.position.z,c.pos[2]);assert.equal(m.position.y,c.pos[1],'Flight centers no longer receive the ground-only half-height');assert.ok(m.rotation.toArray().slice(0,3).every(Number.isFinite));
   }
   assert.equal(world._inventoryMarkers.get('carrier').visible,false);assert.ok(c.pos[2]>-3);
   r.state.clams=[];world.update(engine,1/60);assert.equal(world._clamMarkers.get(c.id).mesh.visible,false);

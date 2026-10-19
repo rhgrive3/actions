@@ -7,8 +7,11 @@
 // shot positions, timing and every gameplay value stay exactly as before.
 // Fade times are INKWAVE calibration, not retail frame counts.
 // Reference: reports/inkwave-weapon-hold-motion-2026-10-17.md.
+import { applyClamThrowGrip } from './bomb-motion.mjs';
+import { applyRainmakerPose, rainmakerAimQuaternion } from './ranked/rainmaker-motion.mjs';
 const INSTALLED = Symbol.for('inkwave.s3.weapon-handoff-motion.v1');
 export const HANDOFF_FADE = 0.2, HANDOFF_RAISE = 0.1;
+const OBJECTIVE_SUPPORT_BONES = ['uArmL', 'fArmL', 'handL'];
 const BONES = ['spine', 'chest', 'neck', 'clavL', 'clavR', 'uArmL', 'uArmR', 'fArmL', 'fArmR', 'handL', 'handR'];
 const smooth = x => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 
@@ -19,7 +22,7 @@ export function weaponHandoffSnapshot(ch) {
   return st ? { owner: st.owner, elapsed: st.t, duration: st.d, weight: st.w, valid: st.valid } : null;
 }
 
-export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNELS: C }) {
+export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNELS: C, G }) {
   const proto = Character?.prototype;
   if (!proto?._applyPose || !proto?._solveLimb || !proto?._kidXform || !C) throw Error('Weapon handoff motion requires the native Character');
   if (Object.hasOwn(proto, INSTALLED)) return;
@@ -51,9 +54,36 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
     }
   }
 
+  // The same native left-arm solve, replacing the hidden main-weapon grip.
+  // Use this owner's existing scratch values: no frame allocations or new rig.
+  function objectiveSupport(ch) {
+    const a = ch.actor || ch._owner?.(), dir = a?.aimDir, P = ch.P;
+    if (dir && dir.lengthSq() > 1e-12) v5.copy(dir).normalize();
+    else v5.set(Math.sin(a?.yaw || 0), 0, Math.cos(a?.yaw || 0));
+    rainmakerAimQuaternion(q3, v5, ch._rainmakerPitch, a?.yaw, v4, q4);
+    ch.weapon.pivot.getWorldPosition(v3);
+    pT.set(0, 0, .07 * ch.kidScale).applyQuaternion(q3).add(v3);
+    ch.kid.worldToLocal(pT);
+    ch.kid.getWorldQuaternion(q2).invert(); q2.multiply(q3);
+    // The existing fist's pivot is the mirrored canonical left grip-hole.
+    const hole = ch.weapon.pivot.position;
+    v4.set(-hole.x, hole.y, hole.z).applyQuaternion(q2); pT.sub(v4);
+    pN.set(P[C.POLEL], P[C.POLEL + 1], P[C.POLEL + 2]);
+    const err = ch.ikErr[0];
+    ch._solveLimb(ch.limbs.armL, pT, pN, q2, 1, 0);
+    ch.ikErr[0] = err;
+    // Source air/emergence transitions must remember the actually displayed
+    // support, just as the existing handoff fade records its displayed bones.
+    const saved = ch.sourceMotion?.active && ch.sourceMotion.renderedPose;
+    if (saved && ch.boneList) for (const name of OBJECTIVE_SUPPORT_BONES) {
+      const bone = ch.bones[name], i = ch.boneList.indexOf(bone);
+      if (i >= 0) saved[i].q.copy(bone.quaternion);
+    }
+  }
+
   function handoff(ch, dt) {
     const sm = ch.sourceMotion;
-    const on = ch.s3WeaponHandoffEnabled !== false && ch.kidForm && !ch.dance && !!ch.weapon && !!sm?.active && !sm.manual;
+    const on = ch.s3WeaponHandoffEnabled !== false && ch.kidForm && !ch.dance && !!ch.weapon && !!sm?.active && !sm.manual && !ch._rainmakerPose;
     let st = states.get(ch);
     if (st) st.faded = false;
     if (!on) { if (st) { st.valid = false; st.t = st.d = 0; st.w = 0; } return; }
@@ -87,8 +117,13 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
   }
 
   proto._applyPose = function (dt, s) {
+    // Last pose-channel owner, after native one-shots and before the one IK pass.
+    if (G?.match?.mode === 'rainmaker') applyRainmakerPose(this, s, C, G.match, dt);
+    else if (this._rainmakerPose) this._rainmakerPose = false;
     const result = applyPose.call(this, dt, s);
+    if (this._rainmakerPose) objectiveSupport(this);
     handoff(this, dt);
+    if (this.s3ClamGripActive && !this._rainmakerPose) applyClamThrowGrip(this);
     return result;
   };
   // Gameplay muzzle: evaluated on the unfaded upper body (the pose every

@@ -1,3 +1,4 @@
+import { rainmakerAimQuaternion } from './rainmaker-motion.mjs';
 // Lightweight objective presentation. Rule state, shot origins and collision are
 // owned by ranked/rainmaker.mjs and combat.mjs, never by this visual model.
 // Broad silhouette reference: Nintendo's Splatoon 3 beginner guide, 03/006_en.
@@ -88,9 +89,11 @@ export function createRainmakerPresentation(THREE, mesh) {
   const hidden = new Map(), current = new Set();
   const point = new THREE.Vector3(), aim = new THREE.Vector3(), forward = new THREE.Vector3(0, 0, 1);
   const parentQ = new THREE.Quaternion(), aimQ = new THREE.Quaternion();
+  const motionQ = new THREE.Quaternion(), pitchAxis = new THREE.Vector3(1, 0, 0);
   let actor = null;
   function release() {
     for (const [pivot, visible] of hidden) pivot.visible = visible;
+    if (actor?.character?._rainmakerPose) actor.character._rainmakerPose = false;
     hidden.clear(); actor = null;
   }
   function update(carrier, charge = 0) {
@@ -100,6 +103,9 @@ export function createRainmakerPresentation(THREE, mesh) {
     mesh.visible = true;
     if (available) {
       actor = carrier;
+      // Follow the existing form scale while emerging, so both grips remain
+      // reachable instead of a full-size objective on a nearly hidden kid.
+      mesh.scale.setScalar(Number.isFinite(ch.kidScale) ? Math.max(.001, ch.kidScale) : 1);
       // Retain each original value, including intentionally hidden weapons.
       // Reconcile a weapon change while carrying instead of leaking invisibility.
       current.clear();
@@ -111,13 +117,16 @@ export function createRainmakerPresentation(THREE, mesh) {
       const dir = carrier.aimDir;
       if (dir && Number.isFinite(dir.x) && Number.isFinite(dir.y) && Number.isFinite(dir.z) && dir.lengthSq() > 1e-12) aim.copy(dir).normalize();
       else { const yaw = Number.isFinite(carrier.yaw) ? carrier.yaw : 0; aim.set(Math.sin(yaw), 0, Math.cos(yaw)); }
-      aimQ.setFromUnitVectors(forward, aim);
+      if (ch._rainmakerPose) rainmakerAimQuaternion(aimQ, aim, ch._rainmakerPitch, carrier.yaw, pitchAxis, motionQ);
+      else aimQ.setFromUnitVectors(forward, aim);
       mesh.parent.getWorldQuaternion(parentQ); mesh.quaternion.copy(parentQ.invert()).multiply(aimQ);
+      // Rotate about the unchanged live grip; hands/torso and this single mesh
+      // consume the same sampled pose. Never offset the mesh away from the fist.
       // Swimming/death presentation follows the existing hand's visibility tree.
       for (let node = hand; node; node = node.parent) if (!node.visible) mesh.visible = false;
       mesh.userData.carrier = String(carrier.nid ?? `${carrier.team}:${carrier.slot}`);
     } else {
-      mesh.position.set(0, 1, 0); mesh.quaternion.identity(); delete mesh.userData.carrier;
+      mesh.position.set(0, 1, 0); mesh.quaternion.identity(); mesh.scale.setScalar(1); delete mesh.userData.carrier;
     }
     mesh.material.emissive.setHex(charge >= 1 ? 0xffdc5c : 0x000000);
     mesh.material.emissiveIntensity = charge >= 1 ? .45 : 0;

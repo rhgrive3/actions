@@ -21,10 +21,15 @@ function state(ch) {
 export function bombMotionSnapshot(ch) {
   const value = ch && stateMap(ch).get(ch);
   return { throwing: !!value?.throwing, held: !!ch?.bombHeld,
-    phase: value?.throwing ? 'recovery' : ch?.bombHeld ? 'aim' : 'idle',
-    elapsed: value?.throwing ? value.elapsed : null,
+    phase: value?.clamGrip ? 'clam-recovery' : value?.throwing ? 'recovery' : ch?.bombHeld ? 'aim' : 'idle',
+    elapsed: value?.clamGrip ? value.clamGrip.elapsed : value?.throwing ? value.elapsed : null,
     nativeCurveAge: value?.throwing ? RELEASE_AGE + value.elapsed : null,
-    releasePosition: value?.releasePosition?.toArray() ?? null, recovery: RECOVERY };
+    releasePosition: value?.releasePosition?.toArray() ?? null, clamGrip: !!value?.clamGrip, recovery: RECOVERY };
+}
+// Called only by the existing final handoff owner while this one-shot is live.
+// Its ordinary-frame path is one boolean check in that owner, not a new wrapper.
+export function applyClamThrowGrip(ch) {
+  if (ch?.s3ClamGripActive) registry(ch)?.clamGrip(ch);
 }
 function hidden(root) {
   for (let node = root; node; node = node.parent) if (node.visible === false) return true;
@@ -156,7 +161,7 @@ export function bombPreviewPosition(a, out) {
   if (!a?.weaponRunner?.aimingSub) return out;
   return sampleRelease(a, out);
 }
-export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: timers, CHARACTER_BOMB_POSE: curves }) {
+export function installBombMotion({ THREE, G, Character, WeaponRunner, CHARACTER_TIMERS: timers, CHARACTER_CHANNELS: channels, CHARACTER_BOMB_POSE: curves }) {
   if (!Character || !Number.isInteger(timers?.T_THROW))
     throw Error('Bomb motion requires the actual Character and exact exported T_THROW');
   if (typeof curves?.throw !== 'function' || typeof curves?.apply !== 'function')
@@ -165,12 +170,13 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
   // A globally registered own prototype stamp survives imports into other VM
   // realms. Keep the original state/curve registry available to their helpers.
   if (Object.hasOwn(C, INSTALL)) return;
-  Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves, timers, disposed }) });
+  Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves, timers, disposed, clamGrip }) });
   function clear(ch) {
     if (!ch?.tr) return;
     // Retire the presentation, not the native event clock. Native Runner reset
     // and setWeapon may independently reset clocks; preserve those exact calls.
     stateMap(ch).set(ch, { throwing: false, elapsed: 0, cancelled: true });
+    ch.s3ClamGripActive = false;
     ch.bombHeld = false; ch.wSub = 0; ch.bombSwap = 0;
     if (ch.bomb) { ch.bomb.group.visible = false; ch.bomb.group.scale.setScalar(1); }
   }
@@ -184,12 +190,69 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
     };
   }
   const trigger = C.trigger, updateStates = C._updateStates, buildPose = C._buildPose;
+  const clamBones = ['clavL', 'uArmL', 'fArmL', 'handL'];
+  function stopClam(ch, value) {
+    ch.s3ClamGripActive = false;
+    if (value) value.clamGrip = null;
+  }
+  function clamGrip(ch) {
+    const value = stateMap(ch).get(ch), grip = value?.clamGrip;
+    if (!grip || G?.match?.mode !== 'clams' || grip.elapsed >= RECOVERY || !ch.kidForm || hidden(ch.root)) {
+      stopClam(ch, value); return;
+    }
+    const owner = ch._owner();
+    if (ch.dual || owner?.alive === false || owner?.superJumpState || owner?.weaponRunner?.aimingSub || owner?.specialActive || owner?.weapon?.id === 'rainmaker'
+      || owner?.pos && grip.world.distanceToSquared(owner.pos) > 4) { stopClam(ch, value); return; }
+    if (!grip.started) {
+      // Success arrives after the normal pose. One free-arm solve establishes
+      // contact; its feedback must not change next frame's normal weapon pose.
+      grip.target.copy(grip.world); ch.kid.worldToLocal(grip.target);
+      const error = ch.ikErr[0];
+      try { ch._solveLimb(ch.limbs.armL, grip.target, grip.pole, null, 1, 0); }
+      finally { ch.ikErr[0] = error; }
+      for (let i = 0; i < 4; i++) grip.release[i].copy(ch.bones[clamBones[i]].quaternion);
+      grip.started = true; return;
+    }
+    // Sample the existing native curve in isolated buffers, then apply only
+    // left arm/clavicle rotations after the single normal pose evaluation.
+    // Native clocks, source ownership, torso, right gun and IK feedback stay
+    // untouched. Subsequent frames add no second limb solve.
+    const t = grip.elapsed, blend = Math.min(1, t / .10), b = blend * blend * (3 - 2 * blend);
+    const fade = Math.min(1, Math.max(0, (t - .30) / (RECOVERY - .30))), w = 1 - fade * fade * (3 - 2 * fade);
+    grip.pose.set(ch.P); grip.receiver._effort = 0;
+    curves.throw.call(grip.receiver, grip.pose, RELEASE_AGE + t);
+    for (let i = 0; i < 4; i++) {
+      const j = grip.channels[i], bone = ch.bones[clamBones[i]];
+      grip.euler.set(grip.pose[j], grip.pose[j + 1], grip.pose[j + 2], bone.rotation.order);
+      grip.rotation.setFromEuler(grip.euler);
+      grip.shown.copy(grip.release[i]).slerp(grip.rotation, b);
+      bone.quaternion.slerp(grip.shown, w);
+    }
+  }
   const throwing = C._poseThrow, holding = C._poseSubAim;
   const setWeapon = C.setWeapon, setVisible = C.setVisible, dispose = C.dispose;
   C.trigger = function (name, ...args) {
+    const clam = args[0]?.clamRelease;
+    if (name === 'clam-throw') {
+      // Ranked throw is already simulated. Do not enter native T_THROW: that
+      // clock also controls dual guns, source ownership and gameplay muzzles.
+      const value = state(this); stopClam(this, value);
+      if (!enabled(this) || G?.match?.mode !== 'clams' || !THREE || !channels || this.dual
+        || !['small', 'power'].includes(clam?.kind) || !Array.isArray(clam.pos) || clam.pos.length !== 3 || !clam.pos.every(Number.isFinite)) return;
+      // A fixed scratch bank per live Character; repeated throws reuse it.
+      const grip = value.clamCache ||= {
+        world: new THREE.Vector3(), target: new THREE.Vector3(), pole: new THREE.Vector3(1, -.1, .1),
+        pose: new Float32Array(this.P.length), receiver: { PX: new Float32Array(this.P.length), _effort: 0 },
+        channels: [channels.CLAVL, channels.UARML, channels.FARML, channels.HANDL], release: clamBones.map(() => new THREE.Quaternion()),
+        euler: new THREE.Euler(), rotation: new THREE.Quaternion(), shown: new THREE.Quaternion()
+      };
+      grip.elapsed = 0; grip.started = false; grip.world.fromArray(clam.pos);
+      grip.world.y -= clam.kind === 'power' ? .255 * 1.2 : .066 * 1.4;
+      value.clamGrip = grip; this.s3ClamGripActive = true; clamGrip(this); return;
+    }
     const result = trigger.call(this, name, ...args);
     if (enabled(this) && name === 'throw') {
-      const value = state(this);
+      const value = state(this); stopClam(this, value);
       // Storm shares the native event and timer, but its installed special
       // layer owns that throw. Never classify it as a Splat Bomb recovery.
       value.externalThrow = this._owner()?.specialActive?.id === 'storm';
@@ -210,6 +273,10 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
       clear(this); return result;
     }
     const age = this.tr[timers.T_THROW]; value.elapsed = age;
+    if (value.clamGrip) {
+      value.clamGrip.elapsed += Math.max(0, dt || 0);
+      if (value.clamGrip.elapsed >= RECOVERY) stopClam(this, value);
+    }
     if (age >= RECOVERY) value.throwing = false;
     if (age >= NATIVE_END) value.externalThrow = false;
     if (value.cancelled) this.bombSwap = 0;

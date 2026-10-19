@@ -1,6 +1,7 @@
 import { createRankedStage } from './stages.mjs';
-import { createSmallClamResources, createSmallClamInventory, updateSmallClamInventory, SMALL_CLAM_HALF_HEIGHT } from './small-clam-model.mjs';
+import { createSmallClamResources, createSmallClamInventory, updateSmallClamInventory } from './small-clam-model.mjs';
 import { createPowerClamResources } from './power-clam-model.mjs';
+import { createClamPose, createClamBarrier, CLAM_VISUAL_SCALE } from './clam-presentation.mjs';
 import { createRainmakerModel, createRainmakerPresentation } from './rainmaker-model.mjs';
 
 const TEAM_INK_FALLBACK = [0x35c9df, 0xf35bce];
@@ -279,6 +280,8 @@ export class RankedWorld {
     }
     if (this.mode === 'clams') {
       this.baskets = [];
+      this._poseClam = createClamPose(THREE);
+      this._clamThrowEvents = new Set();
       for (let team = 0; team < 2; team++) {
         const marker = new THREE.Group();
         const color = this.teamInk[team];
@@ -289,14 +292,11 @@ export class RankedWorld {
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 1.5, 8),
           this._material(0x4a4b4d, { metalness: 0.2, roughness: 0.7 }));
         post.position.y = 0.75;
-        const gate = new THREE.Mesh(new THREE.SphereGeometry(1.3, 18, 12), new THREE.MeshStandardMaterial({
-          color, transparent: true, opacity: 0.12, wireframe: true, metalness: 0.05, roughness: 0.5,
-        }));
-        gate.position.y = 0.8;
+        const barrier = createClamBarrier(THREE, color), gate = barrier.mesh;
         marker.add(hoop, post, gate);
         marker.name = `ranked-clam-basket-${team}`;
         this.clamsGroup.add(marker);
-        this.baskets.push({ marker, gate, hoop });
+        this.baskets.push({ marker, gate, hoop, barrier });
       }
       this.smallClamResources = createSmallClamResources(THREE);
       this.powerClamResources = createPowerClamResources(THREE);
@@ -650,7 +650,7 @@ export class RankedWorld {
     if (this.mode === 'zones') this._updateZoneColors(engine);
     if (this.mode === 'rainmaker') this._updateRainmaker(engine);
     if (this.mode === 'clams') {
-      this._updateBaskets(engine);
+      this._updateBaskets(engine, dt);
       this._updateClams(engine);
       this._updateInventories(engine);
     }
@@ -711,7 +711,24 @@ export class RankedWorld {
     }
   }
 
-  _updateBaskets(engine) {
+  presentEvent(event) {
+    if (this.disposed || this.mode !== 'clams' || event?.kind !== 'clam-throw'
+      || !['small', 'power'].includes(event.clamKind) || typeof event.id !== 'string'
+      || this._clamThrowEvents.has(event.id)) return;
+    const actor = this._findActor(event.actor);
+    if (!actor?.alive || !actor.character?.trigger) return;
+    // Desktop clam and sub inputs are independent. Never cancel an existing
+    // bomb hold or overwrite another throw's recovery merely to show a clam.
+    if (actor.weaponRunner?.aimingSub || actor.character.bombHeld) return;
+    this._clamThrowEvents.add(event.id);
+    if (this._clamThrowEvents.size > 64) this._clamThrowEvents.delete(this._clamThrowEvents.values().next().value);
+    // The real success event owns release. Reuse the installed native rig's
+    // recovery curve; rejected inputs never animate and no bomb is created.
+    actor.character.trigger('clam-throw', {clamRelease:{kind:event.clamKind,pos:event.pos}});
+
+  }
+
+  _updateBaskets(engine, dt = 0) {
     if (this.mode !== 'clams' || !this.baskets) return;
     const baskets = engine?.rule?.state?.baskets || [];
     for (let team = 0; team < this.baskets.length; team++) {
@@ -719,7 +736,7 @@ export class RankedWorld {
       const goal = vec(state.goalPos) || vec(state.goal) || this.stage?.clams?.goals?.[team] || [0, 0, team ? 25 : -25];
       item.marker.position.set(goal[0], goal[1], goal[2]);
       const open = !!state.barrierOpen;
-      item.gate.visible = !open;
+      item.barrier.update(state, dt);
       item.hoop.material.color.setHex(open ? 0x8dffcf : this.teamInk[team]);
       item.marker.userData.barrierOpen = open;
       item.marker.userData.openTimer = finite(state.openTimer) ? state.openTimer : 0;
@@ -751,8 +768,12 @@ export class RankedWorld {
     if (this.mode !== 'clams' || !this.clamGeometry) return;
     const state = engine?.rule?.state;
     const clams = [...(state?.clams || [])];
-    for (const basket of state?.baskets || []) if (basket.pendingBreak)
-      clams.push({ id: `drill-${basket.team}`, kind: 'power', team: basket.team, pos: basket.pendingBreak.pos, drilling: true });
+    for (const basket of state?.baskets || []) if (basket.pendingBreak) {
+      const goal = vec(basket.goal) || this.stage?.clams?.goals?.[basket.team] || basket.pendingBreak.pos;
+      clams.push({ id: `drill-${basket.team}`, kind: 'power', team: basket.team, pos: basket.pendingBreak.pos, drilling: true,
+        age: Math.max(0, 1.2 - basket.pendingBreak.remaining),
+        velocity: [goal[0] - basket.pendingBreak.pos[0], goal[1] + .55 - basket.pendingBreak.pos[1], goal[2] - basket.pendingBreak.pos[2]] });
+    }
     const present = new Set();
     for (const clam of clams) {
       if (!clam || clam.id === undefined || clam.carrier !== null && clam.carrier !== undefined) continue;
@@ -761,15 +782,15 @@ export class RankedWorld {
       const key = idKey(clam.id), marker = this._clamMarker(clam);
       present.add(key);
       marker.mesh.visible = true;
-      marker.mesh.position.set(p[0], p[1] + (clam.kind === 'power' ? .255 : SMALL_CLAM_HALF_HEIGHT), p[2]);
-      const velocity = vec(clam.velocity);
-      const clock = finite(this.G.time) ? this.G.time : 0;
-      if (velocity) marker.mesh.rotation.set(velocity[0] * 0.04, velocity[1] * 0.04 + clock * 1.4, velocity[2] * 0.04);
-      else marker.mesh.rotation.y = clock * 1.4;
-      if (clam.drilling) marker.mesh.rotation.z = clock * 24;
+      this._poseClam(marker.mesh, clam);
+
     }
     for (const [key, marker] of this._clamMarkers) {
-      if (!present.has(key)) marker.mesh.visible = false;
+      if (!present.has(key)) {
+        marker.mesh.visible = false;
+        // Keep a small reusable cache, never one hidden Mesh per match throw.
+        if (this._clamMarkers.size > 48) { this.clamsGroup.remove(marker.mesh); this._clamMarkers.delete(key); }
+      }
     }
   }
 
@@ -798,6 +819,8 @@ export class RankedWorld {
       updateSmallClamInventory(this.THREE, small, inventory.power ? 0 : inventory.small);
       small.visible = !inventory.power && small.count > 0;
       power.visible = !!inventory.power;
+      small.scale.setScalar(CLAM_VISUAL_SCALE.small);
+      power.scale.setScalar(CLAM_VISUAL_SCALE.power);
       // A carried clam trails behind the carrier; this is presentation only.
       // Local visual offsets do not change rule positions or throw origins.
       const yaw = finite(actor.yaw) ? actor.yaw : 0;
