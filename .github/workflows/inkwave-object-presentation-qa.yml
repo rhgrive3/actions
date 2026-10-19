@@ -1,0 +1,152 @@
+name: INKWAVE object presentation native QA
+on:
+  pull_request:
+    paths:
+      - 'tools/object-presentation-qa/**'
+      - 'tools/spawner-production-qa/**'
+      - 'tools/rainmaker-production-qa/**'
+      - 'tools/rainmaker-air-production-qa/**'
+      - 'tools/clam-production-qa/**'
+      - 'patches/splatoon3/runtime/squid-spawn-presentation.mjs'
+      - 'patches/splatoon3/runtime/weapon-handoff-motion.mjs'
+      - 'patches/splatoon3/runtime/ranked/rainmaker-*.mjs'
+      - 'patches/splatoon3/runtime/ranked/world.mjs'
+      - 'patches/splatoon3/runtime/ranked/clams.mjs'
+      - 'patches/splatoon3/runtime/ranked/clam-presentation.mjs'
+      - 'patches/splatoon3/runtime/bomb-motion.mjs'
+      - 'patches/splatoon3/runtime/ranked/install.mjs'
+      - 'patches/splatoon3/tests/spawner-geometry-fidelity.test.mjs'
+      - 'patches/splatoon3/tests/ranked-clam-*.test.mjs'
+      - 'patches/splatoon3/tests/ranked-rainmaker-motion*.test.mjs'
+      - 'patches/splatoon3/tests/ranked-rainmaker-air-*.test.mjs'
+      - 'patches/splatoon3/tests/rainmaker-model-actor.test.mjs'
+      - 'patches/splatoon3/tests/source-loaded-actor-fixture.mjs'
+      - '.github/workflows/inkwave-object-presentation-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: object-native-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  compare-objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact candidate
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing official QA toolchain
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify comparison, artifact and production-source contracts
+        run: node --experimental-vm-modules --test tools/object-presentation-qa/artifact-budget.test.mjs tools/object-presentation-qa/frame-contract.test.mjs tools/object-presentation-qa/identity.test.mjs tools/object-presentation-qa/harness-contract.test.mjs tools/object-presentation-qa/runtime-overlay.test.mjs
+      - name: Verify Rainmaker presentation and hands
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-motion.test.mjs patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs tools/rainmaker-production-qa/grip-metrics.test.mjs
+      - name: Verify spawner geometry and unchanged lifecycle
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/spawner-geometry-fidelity.test.mjs patches/splatoon3/tests/owner-report-2026-10-18.test.mjs patches/splatoon3/tests/respawn-lifecycle.test.mjs patches/splatoon3/tests/remote-respawn.test.mjs patches/splatoon3/tests/issue-879-spawn-pose.test.mjs
+      - name: Verify Clam Blitz presentation and rules
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-clam-presentation.test.mjs patches/splatoon3/tests/ranked-clam-events.test.mjs patches/splatoon3/tests/ranked-clam-muzzle.test.mjs patches/splatoon3/tests/ranked-clams.test.mjs patches/splatoon3/tests/ranked-power-clam-model.test.mjs patches/splatoon3/tests/bomb-motion.test.mjs patches/splatoon3/tests/ranked-clam-swim-boundary.test.mjs patches/splatoon3/tests/ranked-clam-transient-lifecycle.test.mjs patches/splatoon3/tests/ranked-clam-visible-dive.test.mjs
+      - name: Build production candidate once for all object comparisons
+        id: production-build
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+      - name: Verify real actors against the exact emitted site
+        env:
+          INKWAVE_BUILT_SITE: _site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs patches/splatoon3/tests/ranked-clam-presentation.test.mjs patches/splatoon3/tests/ranked-clam-muzzle.test.mjs patches/splatoon3/tests/ranked-clam-swim-boundary.test.mjs patches/splatoon3/tests/ranked-clam-transient-lifecycle.test.mjs patches/splatoon3/tests/ranked-clam-visible-dive.test.mjs
+      # One expensive emitted source-loaded surface gate. The ordinary
+      # source/native CPU regressions above are separate and reuse this build.
+      - name: Verify source-loaded Rainmaker surfaces against exact emitted site
+        timeout-minutes: 20
+        env:
+          INKWAVE_BUILT_SITE: _site
+          INKWAVE_RAINMAKER_SOURCE: '1'
+        run: |
+          set -o pipefail
+          mkdir -p .qa-evidence/rainmaker
+          node --experimental-vm-modules --test patches/splatoon3/tests/rainmaker-model-actor.test.mjs 2>&1 | tee .qa-evidence/rainmaker/emitted-source-face.log
+      - name: Verify emitted Rainmaker aim endpoints in native and source modes
+        timeout-minutes: 10
+        env:
+          INKWAVE_BUILT_SITE: _site
+          INKWAVE_RAINMAKER_AIM_EXTREMES: '1'
+        run: |
+          set -o pipefail
+          mkdir -p .qa-evidence/rainmaker
+          node --experimental-vm-modules --test patches/splatoon3/tests/rainmaker-model-actor.test.mjs 2>&1 | tee .qa-evidence/rainmaker/emitted-aim-native.log
+          INKWAVE_RAINMAKER_SOURCE=1 node --experimental-vm-modules --test patches/splatoon3/tests/rainmaker-model-actor.test.mjs 2>&1 | tee .qa-evidence/rainmaker/emitted-aim-source.log
+      - name: Capture spawner native before and after
+        if: always() && steps.production-build.outcome == 'success'
+        timeout-minutes: 8
+        run: node tools/object-presentation-qa/run.mjs --site _site --suite spawner --out .qa-evidence/spawner
+      # 62cd: 88 PNGs in 435s (3.86s ordinary interval); 128 plus actor checks
+      # projects to about 615s. The prior failure was a grip assertion, not timeout.
+      - name: Capture Rainmaker native before and after
+        if: always() && steps.production-build.outcome == 'success'
+        timeout-minutes: 15
+        run: node tools/object-presentation-qa/run.mjs --site _site --suite rainmaker --out .qa-evidence/rainmaker
+      - name: Capture Clam Blitz native before and after
+        if: always() && steps.production-build.outcome == 'success'
+        timeout-minutes: 10
+        run: node tools/object-presentation-qa/run.mjs --site _site --suite clam --out .qa-evidence/clam
+      # Same immutable production build, a separate 381319 handoff baseline,
+      # and nested receipts under the existing Rainmaker artifact budget.
+      - name: Capture Rainmaker full-jump and descent comparison
+        if: always() && steps.production-build.outcome == 'success'
+        timeout-minutes: 5
+        run: node tools/object-presentation-qa/run.mjs --site _site --suite rainmaker-air --out .qa-evidence/rainmaker/air
+      - name: Check every complete artifact before any upload, including failure logs
+        id: artifact-budgets
+        if: always()
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import { assertArtifactBudget } from './tools/object-presentation-qa/artifact-budget.mjs';
+          for (const suite of ['spawner', 'rainmaker', 'clam']) {
+            const root = '.qa-evidence/' + suite;
+            let eligible = false;
+            if (fs.existsSync(root)) {
+              try {
+                const inventory = assertArtifactBudget(root);
+                eligible = inventory.files.length > 0;
+                console.log(JSON.stringify({ suite, eligible, totalBytes: inventory.totalBytes, files: inventory.files.length }));
+              } catch (error) { console.error(suite + ': ' + error.message); process.exitCode = 1; }
+            }
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, suite + '=' + eligible + '\n');
+          }
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.artifact-budgets.outputs.spawner == 'true'
+        with:
+          name: object-spawner-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .qa-evidence/spawner/**
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.artifact-budgets.outputs.rainmaker == 'true'
+        with:
+          name: object-rainmaker-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .qa-evidence/rainmaker/**
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.artifact-budgets.outputs.clam == 'true'
+        with:
+          name: object-clam-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .qa-evidence/clam/**
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

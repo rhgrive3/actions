@@ -1,6 +1,7 @@
 import { createRankedStage } from './stages.mjs';
 import { createSmallClamResources, createSmallClamInventory, updateSmallClamInventory, SMALL_CLAM_HALF_HEIGHT } from './small-clam-model.mjs';
 import { createPowerClamResources } from './power-clam-model.mjs';
+import { createClamBarrier } from './clam-presentation.mjs';
 import { createRainmakerModel, createRainmakerPresentation } from './rainmaker-model.mjs';
 
 const TEAM_INK_FALLBACK = [0x35c9df, 0xf35bce];
@@ -289,14 +290,11 @@ export class RankedWorld {
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 1.5, 8),
           this._material(0x4a4b4d, { metalness: 0.2, roughness: 0.7 }));
         post.position.y = 0.75;
-        const gate = new THREE.Mesh(new THREE.SphereGeometry(1.3, 18, 12), new THREE.MeshStandardMaterial({
-          color, transparent: true, opacity: 0.12, wireframe: true, metalness: 0.05, roughness: 0.5,
-        }));
-        gate.position.y = 0.8;
+        const barrier = createClamBarrier(THREE, color), gate = barrier.mesh;
         marker.add(hoop, post, gate);
         marker.name = `ranked-clam-basket-${team}`;
         this.clamsGroup.add(marker);
-        this.baskets.push({ marker, gate, hoop });
+        this.baskets.push({ marker, gate, hoop, barrier });
       }
       this.smallClamResources = createSmallClamResources(THREE);
       this.powerClamResources = createPowerClamResources(THREE);
@@ -650,7 +648,7 @@ export class RankedWorld {
     if (this.mode === 'zones') this._updateZoneColors(engine);
     if (this.mode === 'rainmaker') this._updateRainmaker(engine);
     if (this.mode === 'clams') {
-      this._updateBaskets(engine);
+      this._updateBaskets(engine, dt);
       this._updateClams(engine);
       this._updateInventories(engine);
     }
@@ -711,7 +709,7 @@ export class RankedWorld {
     }
   }
 
-  _updateBaskets(engine) {
+  _updateBaskets(engine, dt = 0) {
     if (this.mode !== 'clams' || !this.baskets) return;
     const baskets = engine?.rule?.state?.baskets || [];
     for (let team = 0; team < this.baskets.length; team++) {
@@ -719,7 +717,7 @@ export class RankedWorld {
       const goal = vec(state.goalPos) || vec(state.goal) || this.stage?.clams?.goals?.[team] || [0, 0, team ? 25 : -25];
       item.marker.position.set(goal[0], goal[1], goal[2]);
       const open = !!state.barrierOpen;
-      item.gate.visible = !open;
+      item.barrier.update(state, dt);
       item.hoop.material.color.setHex(open ? 0x8dffcf : this.teamInk[team]);
       item.marker.userData.barrierOpen = open;
       item.marker.userData.openTimer = finite(state.openTimer) ? state.openTimer : 0;
@@ -769,7 +767,11 @@ export class RankedWorld {
       if (clam.drilling) marker.mesh.rotation.z = clock * 24;
     }
     for (const [key, marker] of this._clamMarkers) {
-      if (!present.has(key)) marker.mesh.visible = false;
+      if (!present.has(key)) {
+        marker.mesh.visible = false;
+        // Keep a small reusable cache, never one hidden Mesh per match throw.
+        if (this._clamMarkers.size > 48) { this.clamsGroup.remove(marker.mesh); this._clamMarkers.delete(key); }
+      }
     }
   }
 

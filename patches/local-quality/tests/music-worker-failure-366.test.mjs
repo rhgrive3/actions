@@ -5,9 +5,9 @@ import { idleFixture, audioFixture } from './idle-fixture.mjs';
 async function rig(failure) {
   const f = audioFixture(), urls = new Set(), revoked = [], timeouts = new Map();
   let sequence = 0;
-  f.globals.URL = {
-    createObjectURL() { const url = `blob:music-${++sequence}`; urls.add(url); return url; },
-    revokeObjectURL(url) { revoked.push(url); urls.delete(url); },
+  f.globals.URL = class TrackedURL extends f.globals.URL {
+    static createObjectURL() { const url = `blob:music-${++sequence}`; urls.add(url); return url; }
+    static revokeObjectURL(url) { revoked.push(url); urls.delete(url); }
   };
   f.globals.setTimeout = (callback, delay) => { const id = ++sequence; timeouts.set(id, { callback, delay }); return id; };
   f.globals.clearTimeout = id => timeouts.delete(id);

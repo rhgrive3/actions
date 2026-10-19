@@ -110,6 +110,12 @@ export class ClamsRule {
   }
 
   _event(kind, data = {}) {
+    // Entity kind must not overwrite RankedEngine's event discriminator.
+    // Keep the small/power tag separate on the existing event/wire envelope.
+    if (Object.hasOwn(data, 'kind')) {
+      const { kind: clamKind, ...details } = data;
+      data = { ...details, clamKind };
+    }
     if (typeof this.engine?.event === 'function') this.engine.event(kind, data);
   }
 
