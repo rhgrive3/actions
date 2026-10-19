@@ -287,6 +287,10 @@ const visit = (rel) => {
 };
 visit('src/main.js');
 visit('patches/splatoon3/bootstrap.mjs');
+// Source-composed audio imports may arrive through layered adapters. Pin these
+// tiny live helpers in the immutable offline module graph, not extra HTML hints.
+visit('patches/splatoon3/runtime/audio/combat-hit-classifier.mjs');
+visit('patches/splatoon3/runtime/audio/blaster-hit.mjs');
 // Worker modules have no main-thread static importer, but must retain their
 // own immutable offline dependencies. The source payload stays outside it.
 visit('patches/native-stages/runtime/source-worker.mjs');

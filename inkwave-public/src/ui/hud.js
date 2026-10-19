@@ -861,6 +861,11 @@ export class HUD {
       this.xh.className = `iw-xh iw-xh--${kind}` + (L.tgt ? ' is-target' : '') + (L.far ? ' is-far' : '');
       this.spIcon.innerHTML = specialIcon(W ? W.special : 'slam');
     }
+    // External weapon-stage probes can restore an old weapon cache while
+    // the reticle DOM has been replaced. Rebuild its charge ring once rather
+    // than dereferencing a missing SVG circle during the next gameplay frame.
+    if ((L.kind === 'charger' || L.kind === 'splatling') &&
+        (!this._chargeEl || !this.ret.contains(this._chargeEl))) this._buildReticle(L.kind);
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)
     this._bloom = Math.max(0, this._bloom - dt * 5);
     this._kick = Math.max(0, (this._kick || 0) - dt * 16);   // per-shot reticle kick (~60 ms), on top of the live spread
