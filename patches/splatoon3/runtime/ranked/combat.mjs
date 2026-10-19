@@ -174,8 +174,8 @@ export function createRankedEffects(api, match) {
         if (a?.alive) {
           const nm = G.netm;
           if (a.remote && nm) nm._sendNow({ k: 'rkdamage', match: nm.cfg.id, seq: nm.rankedDamageNext = (nm.rankedDamageNext || 0) + 1,
-            victim: actorId(a), attacker: null, damage: 2000, life: a.remote ? a.net?.lastLife ?? a.netLife ?? 0 : a.netLife ?? 0 });
-          else a.splat(null, 'rainmaker');
+            victim: actorId(a), attacker: null, damage: 2000, deathReason: 'rainmaker-timeout', life: a.remote ? a.net?.lastLife ?? a.netLife ?? 0 : a.netLife ?? 0 });
+          else a.splat(null, 'rainmaker-timeout');
         }
       }
       explode(e.pos, 1 - e.team, 4, 180, null, visualOnly);

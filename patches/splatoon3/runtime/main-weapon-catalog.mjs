@@ -2,7 +2,7 @@ import { brellaPelletSpeed, canopyEntry, withProjectileHitGeometry, validProject
 import { familyDescription } from './content-language.mjs';
 import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
-import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';
+import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
 import { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
@@ -600,9 +600,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (r.family==='charger') radius=full?finite(paintParam.RadiusFullCharge,1):lerp(finite(paintParam.RadiusMinCharge,.9),finite(paintParam.RadiusMaxCharge,2.7),charge);
     return {key,unit,index,charge,packet,b,m,d,c,speed,damage,life,range,radius,
       depth:finite(paintParam.DepthScaleMax,finite(paintParam.DepthScaleNear,1)),
-      splashDropSpec:catalogSplashDropSpec(b),
+      splashDropSpec:catalogSplashDropSpec(b,r.sourceActor,key),
       splashFirst:Math.max(0,finite(splash.SpawnNearestLength,1)),
       splashRadius:finite(b.SplashPaintParam?.WidthHalf,finite(sloshSplash?.DrawSizeCollisionPaintParam?.PaintWidthHalf,.4)),
+      splashNearestRadius:finite(b.SplashPaintParam?.WidthHalfNearest,0),
       splashSpacing:finite(splash.DropInterval,finite(splash.SpawnBetweenLength,3)),
       splashCount:Math.max(0,Math.ceil(finite(splash.SplashNumMax,finite(splash.SpawnNum,0)))),
       sloshFall:key==='slosh'?sloshFallSpec(sloshSplash):null};
@@ -654,7 +655,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         Number.isFinite(sourceNum) && sourceNum >= 0) {
       const ordinal=s.paintShotOrdinal||0;
       desc.splashCount=catalogFractionalSplashCount(sourceNum,ordinal);
-      desc.splashFirst=catalogSplashFirst(desc.b.SplashSpawnParam,ordinal);desc.splashStaggered=true;
+      desc.splashFirst=catalogSplashFirst(desc.b.SplashSpawnParam,ordinal);
+      desc.splashNearest=catalogSplashNearestSlot(desc.b.SplashSpawnParam,ordinal);
+      desc.splashStaggered=true;
       s.paintShotOrdinal=ordinal+1;
     }
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
@@ -703,7 +706,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(hand!==null){runner.hand=hand;runner.sinceHand[hand]=0;}
     notify(a,r,muzzle,aim,charge,hand);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
-    if(['shooter','splatling','dualies'].includes(r.family)&&Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
+    // Staggered source rounds already own the nearest event in their splash
+    // budget. Re-stamping here double-counts feet paint (and bypasses occlusion).
+    if(!desc.splashStaggered&&['shooter','splatling','dualies'].includes(r.family)&&Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
       const at=a.pos.clone().addScaledVector(a.aimDir.clone().setY(0).normalize(),finite(splash.SpawnNearestLength,0));
       floorPaint(a,at,nearest.WidthHalfNearest,1,null,mainInkFootprint(r));
@@ -1154,20 +1159,30 @@ export function installMainWeaponCatalogRuntime(api, profile) {
             direction:s.brellaFlight.volley.direction,radius,spec,depth:true,footprint:mainInkFootprint(s.r),
             catchUpSeconds:Math.max(0,p.age+s.carry-birthFrame/HZ)}));
       }
-      // Admit every crossed release distance on the unobstructed part of this
-      // fixed simulation step, including the final segment before a collision.
-      // Include Slosher falling drops: they used to skip crossed thresholds
-      // on a contact frame, and at most emit one drop at a later endpoint.
-      // Other families keep their existing unverified projection path.
-      if(!p.ghost&&(d.splashDropSpec||d.sloshFall)&&len>EPS){
+      // Apply one distance/obstruction/lifetime admission law to detached
+      // source splashes and the unsupported-physics projected fallback.
+      // Spinners carry spl__BulletSpinnerMoveParam without source FreeGravity;
+      // keep their established projected paint rather than inventing gravity.
+      // Every crossed source threshold is consumed exactly once, even when
+      // multiple fit in a 60Hz frame. A head-contact boundary is exclusive.
+      if(!p.ghost&&d.splashCount>0&&len>EPS){
         const lifeTravel=travelBefore+p.vel.length()*clamp(p.life-(p.age-DT),0,DT);
         const endTravel=Math.min(s.travel,lifeTravel,travelBefore+len*clamp(Math.min(1,stop)));
         const direction=p.vel.clone().setY(0).normalize();
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
+          if(stop<=1&&s.nextSplash>=endTravel-EPS)break;
           const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
-          const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
-            from,direction,radius:d.splashRadius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,catchUpSeconds:s.carry,footprint:mainInkFootprint(s.r)});
-          if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
+          const radius=catalogSplashRadius(d,s.dropCount);
+          if(d.splashDropSpec||d.sloshFall){
+            const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
+              from,direction,radius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,
+              catchUpSeconds:s.carry,footprint:mainInkFootprint(s.r)});
+            if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
+          }else{
+            // Geometry-aware nearest/intermediate fallback. Its centre is the
+            // exact crossed release coordinate, not the final frame endpoint.
+            floorPaint(p.owner,from,radius,d.depth,direction,mainInkFootprint(s.r));
+          }
           s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
         }
       }
@@ -1189,11 +1204,6 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(s.r.sourceActor==='WeaponSlosherBathtub'&&world.hit)
           s.travel=travelBefore+len*Math.max(0,Math.min(1,stop));
         if(finishContact(this,p,world))return true;
-      }
-      if(!p.ghost&&!d.splashDropSpec&&!d.sloshFall&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){
-        const direction=p.vel.clone().setY(0).normalize();
-        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction,mainInkFootprint(s.r));
-        s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
       }
       if(p.age+EPS>=p.life||s.travel+EPS>=s.range){
         if(s.r.family==='blaster')explosion(this,p,d.b.BlastParam);

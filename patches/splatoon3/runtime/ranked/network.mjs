@@ -94,11 +94,12 @@ export function installRankedNetwork(api) {
     if (d.k === 'rkdamage') {
       if (m.state !== 'playing' || m.ranked.winner != null) return;
       if (!this.isHost && from === this.s.hostId && d.match === this.cfg.id && Number.isSafeInteger(d.seq) && d.seq > (this.rankedDamageSeq || 0)
-          && (d.cause === undefined || damageCauses.has(d.cause))) {
-        const victim = m.actors.find(a => actorId(a) === d.victim), attacker = m.actors.find(a => actorId(a) === d.attacker);
+          && (d.cause === undefined || damageCauses.has(d.cause))
+          && (d.deathReason === undefined || (d.deathReason === 'rainmaker-timeout' && d.attacker === null && d.damage === 2000))) {
+        const victim = m.actors.find(a => actorId(a) === d.victim), attacker = m.actors.find(a => actorId(a) === d.attacker) || null;
         if (victim?.owner === this.myId && victim.alive && (victim.netLife ?? 0) === d.life && Number.isFinite(d.damage) && d.damage > 0 && d.damage <= 2000) {
           this.rankedDamageSeq = d.seq;
-          const killed = withObjectDamageCause(attacker, () => victim.damage(d.damage, attacker || null, 'rainmaker'), d.cause || 'Gachihoko_Bullet');
+          const killed = withObjectDamageCause(attacker, () => victim.damage(d.damage, attacker || null, d.deathReason === 'rainmaker-timeout' ? 'rainmaker-timeout' : 'rainmaker'), d.cause || 'Gachihoko_Bullet');
           api.emit('hit', { attacker, victim, damage: d.damage, killed, weaponId: 'rainmaker' });
         }
       }
@@ -159,7 +160,8 @@ export function acceptState(nm, packet) {
     const previous = m.rankedGains || [0, 0];
     for (const a of m.actors) if (!a.remote && a.alive && !a.specialActive && !specialGaugeLocked(a)) {
       const gain = Math.max(0, packet.gains[a.team] - previous[a.team]);
-      a.special = Math.min(a.specialCost(), a.special + gain);
+      // Host totals use baseline points, independent of this actor's SCU.
+      a.special = Math.min(a.specialCost(), a.special + gain / (a.s3?.modifiers?.specialCharge || 1));
     }
     m.rankedGains = [...packet.gains];
   }

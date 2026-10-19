@@ -194,8 +194,10 @@ export function installGear(api, tuning) {
     m.enemyDamageRate = gearCurve(ap.inkResistance || 0, ...extra.enemyDamageRate) * 6000;
     m.enemyJumpVelocity = gearCurve(ap.inkResistance || 0, ...extra.enemyJumpVelocity) * 60;
     m.rollRetention = gearCurve(ap.actionIntensify || 0, ...extra.rollRetention);
-    a.s3.jumpChargeTime = tuning.superJump.chargeTime * (m.quickSuperJump ?? 1);
-    a.s3.jumpFlightTime = tuning.superJump.flightTime * gearCurve(ap.quickSuperJump || 0, ...extra.jumpFlightTime);
+    // S3 rounds each gear-adjusted phase down to whole simulation frames.
+    // Keep the separately owned initial-form term outside both curves.
+    a.s3.jumpChargeTime = Math.floor(tuning.superJump.chargeTime * 60 * (m.quickSuperJump ?? 1) + 1e-10) / 60;
+    a.s3.jumpFlightTime = Math.floor(tuning.superJump.flightTime * 60 * gearCurve(ap.quickSuperJump || 0, ...extra.jumpFlightTime) + 1e-10) / 60;
     // The S3 initial-form term is form-dependent, not equipment-dependent, so
     // Quick Super Jump must not reach it.
     a.s3.jumpStartupSwimF = tuning.superJump.startupSwimF;
@@ -377,12 +379,15 @@ export function installGear(api, tuning) {
     const penalty = deathGearPenalty(this, attacker, cause, tuning, conditionalPoints(this, abilityPoints(this.s3?.loadout), G.match, tuning.conditionalGear), gearCurve);
     const enemyDeath = attacker && attacker !== this && attacker.team !== this.team &&
       !['water', 'fall', 'out', 'bounds', 'void'].includes(cause);
+    // Rainmaker carrier timeout is a distinct objective death. It advances
+    // ordinary QR history without inventing an enemy attacker or a kill.
+    const quickRespawnDeath = enemyDeath || (!attacker && cause === 'rainmaker-timeout');
     const result = splat.apply(this, args);
     if (alive && !this.alive) {
       clearDropRollerLife(this); equip(this, true);
       this.special = before * Math.max(0, (penalty.incoming || penalty.cooler ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
       const history = this.s3.quickRespawnHistory;
-      if (enemyDeath) {
+      if (quickRespawnDeath) {
         // A Tacticooler drink supplies 57AP Quick Respawn on any enemy splat,
         // independently of the ordinary zero-splat eligibility condition.
         // RP still adds its extra frames, but cannot negate the drink (#835).

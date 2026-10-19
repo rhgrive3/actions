@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import { parse } from '../../loading-cache/vendor/acorn.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { reverseShotRelease } from '../runtime/shooter-movement.mjs';
+import { rollingHeadingActive } from '../runtime/movement-physics.mjs';
 const IDS=['s3-shelter-normal','s3-shelter-wide','s3-shelter-focus'];
 const setup=async(extra={})=>{const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,vmMathRandom:()=>.5,
   extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';",...extra});f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);return f;};
@@ -39,12 +40,14 @@ test('build hook is single-use and preserves special/superjump and roller preced
     'later production overlays preserve the movement and Brella facing owner');
   const special=face.method.value.body.body.find(n=>n.type==='IfStatement'&&code.slice(n.test.start,n.test.end)==='this.specialActive || this.superJumpState');
   assert.ok(special,'special/superjump own the first facing branch');
-  const rolling=special.alternate,guard=rolling?.alternate;
-  assert.equal(rolling?.type,'IfStatement');assert.equal(guard?.type,'IfStatement');
-  const rollingTest=code.slice(rolling.test.start,rolling.test.end),guardTest=code.slice(guard.test.start,guard.test.end);
-  assert.match(rollingTest,/!isSquid/);assert.match(rollingTest,/this\.weaponRunner\.rolling/);
-  assert.match(rollingTest,/this\.intent\.fire.*behaviorKind === "roller".*behaviorKind === "brush"/);
-  assert.match(rollingTest,/!this\.intent\.sub/);
+  // Grounded rolling follows the stick; the held swing before rolling keeps aim.
+  const rolling=special.alternate,held=rolling?.alternate,guard=held?.alternate;
+  assert.equal(rolling?.type,'IfStatement');assert.equal(held?.type,'IfStatement');assert.equal(guard?.type,'IfStatement');
+  const rollingTest=code.slice(rolling.test.start,rolling.test.end),heldTest=code.slice(held.test.start,held.test.end),guardTest=code.slice(guard.test.start,guard.test.end);
+  assert.match(rollingTest,/!isSquid/);assert.match(rollingTest,/rollingHeadingActive\(this\)/);assert.match(rollingTest,/!this\.intent\.sub/);
+  assert.match(heldTest,/!isSquid/);assert.match(heldTest,/!this\.weaponRunner\.rolling/);
+  assert.match(heldTest,/this\.intent\.fire.*behaviorKind === "roller".*behaviorKind === "brush"/);
+  assert.match(heldTest,/!this\.intent\.sub/);
   assert.match(guardTest,/!reverseShotRelease\(this\).*heldBrellaGuardFacing\(this\)/);
   assert.throws(()=>adaptBrellaGuardFacing('src/game/actor.js',code,replaceOnce),/expected exactly one/);
   assert.throws(()=>adaptBrellaGuardFacing('src/game/actor.js','',replaceOnce),/expected exactly one/);
@@ -57,22 +60,22 @@ test('actual Actor facing executes higher-priority owners before held Brella adm
   const f=await setup(),code=adaptBuildSource('src/game/actor.js',actorSource()),{method,source}=faceMethod(code);
   const special=method.value.body.body.find(n=>n.type==='IfStatement'&&code.slice(n.test.start,n.test.end)==='this.specialActive || this.superJumpState');
   const rolling=special.alternate;
-  const compile=(text,guard=heldBrellaGuardFacing)=>new Function('PLAYER','clamp','angleDiff','TAU','reverseShotRelease','heldBrellaGuardFacing',
-    'return (class {'+text+'}).prototype._face;')(f.PLAYER,f.clamp,f.angleDiff,Math.PI*2,reverseShotRelease,guard);
+  const compile=(text,guard=heldBrellaGuardFacing)=>new Function('PLAYER','clamp','angleDiff','TAU','reverseShotRelease','heldBrellaGuardFacing','rollingHeadingActive',
+    'return (class {'+text+'}).prototype._face;')(f.PLAYER,f.clamp,f.angleDiff,Math.PI*2,reverseShotRelease,guard,rollingHeadingActive);
   const without=(node)=>source.slice(0,node.test.start-method.start)+'false'+source.slice(node.test.end-method.start);
   const cases=[...IDS.flatMap(id=>[
     {name:id+' guard',id,target:.8,guard:1,pose:1},
     {name:id+' special',id,special:true,target:Math.PI,guard:0,pose:0},
     {name:id+' superjump',id,jump:true,target:Math.PI,guard:0,pose:0},
     {name:id+' closed',id,closed:true,target:Math.PI/2,guard:1,pose:1}]),
-    {name:'roller',id:'roller',rolling:true,target:.8,guard:0,pose:0},
+    {name:'roller',id:'roller',rolling:true,target:Math.PI/2,guard:0,pose:0}, // follows the stick, not aim
     {name:'held catalog roller',id:'s3-roller-heavy',fire:true,target:.8,guard:0,pose:0},
     {name:'held brush',id:'s3-brush-normal',fire:true,target:.8,guard:0,pose:0},
     {name:'sub supersedes roller',id:'roller',rolling:true,sub:true,target:.8,guard:0,pose:1},
     {name:'squid supersedes held catalog roller',id:'s3-roller-heavy',fire:true,squid:true,target:Math.PI/2,guard:1,pose:1}];
   function actor(c){
     const a=f.make(c.id);a.yaw=a.yawVel=a.fireFacing=0;a._faceTarget=null;a.aimYaw=.8;
-    a.intent.move.set(1,0,0);a.vel.set(0,0,-2);a.weaponRunner.firingPose=()=>false;
+    a.intent.move.set(1,0,0);a.vel.set(0,0,-2);a.grounded=true;a.weaponRunner.firingPose=()=>false;
     a.weaponRunner.rolling=!!c.rolling;a.intent.fire=!!c.fire;a.intent.sub=!!c.sub;
     a.specialActive=c.special?{}:null;a.superJumpState=c.jump?{}:null;a.form=c.squid?'squid':'kid';
     a.weaponRunner.catalogState={id:c.id,canopy:{open:!c.closed,launched:false,hp:100}};return a;
@@ -96,9 +99,12 @@ test('actual Actor facing executes higher-priority owners before held Brella adm
     const a=actor(c);compile(without(special)).call(a,1/60,false);
     assert.notEqual(a._faceTarget,c.target,c.name+' must fail if the special/superjump branch is disabled');
   }
-  const roller=cases.find(c=>c.name==='roller'),a=actor(roller);let lowerCalls=0;
+  // A rolling roller with the stick released holds its heading (target null).
+  const roller=cases.find(c=>c.name==='roller'),still=actor(roller);still.intent.move.set(0,0,0);
+  still._face(1/60,false);assert.equal(still._faceTarget,null,'released stick holds the rolling heading');
+  const a=actor(roller);a.intent.move.set(0,0,0);let lowerCalls=0;
   compile(without(rolling),x=>{lowerCalls++;return heldBrellaGuardFacing(x);}).call(a,1/60,false);
-  assert.notEqual(a._faceTarget,roller.target,'disabling the roller owner loses authoritative aim facing');
+  assert.notEqual(a._faceTarget,null,'disabling the roller owner loses the held rolling heading');
   assert.equal(lowerCalls,1,'disabled roller owner incorrectly reaches the lower Brella branch');
 });
 test('all 160 registered kits and every non-target live guard retain exact existing facing traces',async()=>{
