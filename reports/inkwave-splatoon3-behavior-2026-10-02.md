@@ -5316,3 +5316,7 @@ main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.
 実 Actor/WeaponRunner/Physics の平床診断では、残存Splatana charge＋前入力履歴や Dualies roll/slip が、標的の速度とintentだけを0にしても後続updateで移動を発生させる。静止標的の準備で既存 `WeaponRunner.reset()` を呼び、武器/charge/roll/slip等を前後receiptへ記録する。変更はbrowser QAと専用回帰だけで、game runtime・boot・timeout・shot1・damage60/180・壁800→380の判定は維持。
 
 専用7/7成功、reset1行だけを除く負対照は3件失敗。普通シューター、Splatana3種のcharge有無、native Dualies roll、catalogue `s3-maneuver-long` のrollと別slipを実consumerで確認。旧失敗の移動量はcharged `s3-saber-lite` と一致するが、旧receiptに武器状態がないため歴史的原因の一意確定には至らない。参照版11.3.0の実機比較や本家新数値の変更ではなく、静止QA条件の修復。固定headのCI/browser/公開後検証はこの記録時点で未完了。詳細は [専用短report](rainmaker-proof-weapon-reset-2026-10-19.md)。
+
+## 2026-10-19：P0 #264 / #878 の残存境界
+
+本番で残る縁の飛沫が固定5点から抜ける判定漏れを、円/楕円coreとセルの交差判定で補完。微小bodyがセルを持たなくても成長を保持し、native-stageの早期除外も同じ規則へ接続する。旧遠方spatterは既に無効で、再導入しない。CPUは既存0.25 m格子の面積を所有し、pixel完全一致とは主張しない。ホストのRAFとtimeoutが共に止まりsocketだけ残る場合、ゲストは既存finish待機＋通信復旧猶予後に通常の通信切断退出へ進み、架空の勝敗を作らない。比較版11.3.0、通常塗りとonline Turfの条件。実Switchの切断方針・物理端末GPUは未確認。詳細と検証範囲は [P0記録](inkwave-paint-host-p0-2026-10-19.md)。

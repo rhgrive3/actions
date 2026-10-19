@@ -1,4 +1,5 @@
 import { getPlatformLifecycle, PlatformFrameDriver } from './platform-lifecycle.mjs';
+import { watchGuestMatchEnd } from './platform-match-watch.mjs';
 import { resetPlatformInput } from './platform-input.mjs';
 const INSTALLED = Symbol.for('inkwave.platform.game.v1');
 
@@ -256,7 +257,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
     r.driver = new PlatformFrameDriver(owner, dt => {
       const probe = game._rangeFrameProbe;
       probe?.callback(dt);
-      if (game.frozen) return;
+      if (watchGuestMatchEnd(game, G, env, r) || game.frozen) return;
       const cap = frameRate();
       let frameDt = dt;
       if (cap > 0 && dt > 0) {
