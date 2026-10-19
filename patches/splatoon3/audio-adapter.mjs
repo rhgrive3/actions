@@ -38,14 +38,17 @@ export function adaptWeaponAudio(rel,code){
     // Preserve the exact admitted Charger projectile's charge on its existing
     // authoritative hit event. Never read runner.charge after it has reset
     // or guess from splash/kill state.
-    code=once(code,'  applyHit(attacker, victim, dmg, weaponId) {',
-      '  applyHit(attacker, victim, dmg, weaponId, shotCharge = null) {',
+    // The replication adapter has already installed slosherVolleyId as
+    // the fifth parameter. Preserve it and add a separate sixth argument:
+    // overloading the fifth would corrupt Slosher hit-group authority.
+    code=once(code,'  applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {',
+      '  applyHit(attacker, victim, dmg, weaponId, slosherVolleyId, shotCharge = null) {',
       'charge-aware physical hit metadata');
     code=once(code,"emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
       "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, ...(shotCharge == null ? {} : {charge: shotCharge}) });",
       'source charge in admitted hit event');
     code=once(code,"this.applyHit(a, victim.e, dmg, 'charger');",
-      "this.applyHit(a, victim.e, dmg, 'charger', charge);",
+      "this.applyHit(a, victim.e, dmg, 'charger', undefined, charge);",
       'native Charger projectile charge in body-hit event');
     // The weapon:fire event owns fire audio for local and remote actors. Keep game and VFX code intact.
     code=code.replace(/G\.audio\?\.play\('shoot_(?:shooter|dualies|splatling|blaster|charger)'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
@@ -164,7 +167,7 @@ export function adaptWeaponAudio(rel,code){
   if(rel==='patches/splatoon3/runtime/main-weapon-catalog.mjs'){
     code=once(code,
       "this.applyHit(p.owner,target,amount,p.wid)",
-      "this.applyHit(p.owner,target,amount,p.wid,p.catalog?.descriptor?.charge)",
+      "this.applyHit(p.owner,target,amount,p.wid,undefined,p.catalog?.descriptor?.charge)",
       'catalogued source Charger release charge survives flight to the hit event');
     // Added S3 catalogue weapons already emit weapon:fire. Avoid a second
     // legacy family shot alongside the admitted weapon-specific real sample.
