@@ -8,9 +8,23 @@ import { specialActionAudioEvent, specialActivationAudioEvent } from '../runtime
 import { installWeaponAudioRuntime } from '../runtime/audio/runtime.mjs';
 import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
 import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
+import { sourceChargerHitCue } from '../runtime/audio/combat-hit-classifier.mjs';
 
 const manifest=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
 const clip=(id,event)=>manifest.clips.some(c=>c.id===id&&c.event===event);
+
+test('Charger recorded critical follows only confirmed full-charge direct body contact',()=>{
+ for(const id of ['charger','charger-01','s3-charger-quick','s3-charger-long','s3-charger-longscope','s3-charger-keeper']){
+   assert.equal(sourceChargerHitCue(id,1),'combat:critical',id+' full charge, even if target survives');
+   assert.equal(sourceChargerHitCue(id,.62),'combat:damage',id+' lethal partial charge must not sound critical');
+   assert.equal(sourceChargerHitCue(id,null),'combat:damage',id+' no admitted charge metadata');
+ }
+ for(const id of ['s3-charger-light','s3-charger-light-01','s3-charger-pencil']){
+   assert.equal(sourceChargerHitCue(id,1),'combat:damage',id+' separate native presentation, no guessed critical');
+ }
+ for(const id of ['shooter','splatling','sub:bomb','special:inkjet'])
+   assert.equal(sourceChargerHitCue(id,1),null,'non Charger cannot borrow HitEf_CriticalHit: '+id);
+});
 
 test('2022 critical/damage/dead-splash MP3s have strict byte provenance and distinct combat events',()=>{
  const expected=[
@@ -34,15 +48,27 @@ test('production Charger player-hit and splat cues use source-specific MP3 only'
  const native=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const built=adaptBuildSource('src/main.js',src);
  const weapon=adaptBuildSource('src/game/weapons.js',native);
- assert.match(built,/damage>=95\?'combat:critical':'combat:damage'/,
-   'real 2022 HitEf critical sound is selected only for forceful Charger body contact');
+ assert.match(built,/sourceChargerHitCue\(weaponId,hitMeta\?\.chargerDirect===true\?hitMeta\.charge:null\)/,
+   'Charger critical must follow the actual admitted charge ratio, not lethal damage');
+ assert.doesNotMatch(built,/damage>=95\?'combat:critical'/,
+   'partial charge damage is not a proxy for an original full charge');
  assert.match(built,/G\.audio\?\.playWeapon\?\.\('combat:splat','fire'/,
    'real 2022 Pl DeadSplash is selected for Charger-owned splat, not every other weapon');
  assert.match(built,/test\(String\(cause\|\|''\)\)/,'splat cue follows the confirmed damage cause');
  assert.match(weapon,/!\/\^\(\?:charger/,'native Charger ink_hit_body synth layer must be gated');
  assert.match(weapon,/G\.audio\.play\('ink_hit_body'/,'other weapon bodies preserve their existing hit cue');
- const index=built.indexOf('if (/^(?:charger');
- assert.ok(index>0,'source replacement is inside full production composition');
+ const sourceCatalog=fs.readFileSync(new URL('../runtime/main-weapon-catalog.mjs',import.meta.url),'utf8');
+ const through=fs.readFileSync(new URL('../runtime/weapons.mjs',import.meta.url),'utf8');
+ assert.match(weapon,/hitMeta:attacker\?\._sourceChargerAudioHit\?\?null/,
+   'native accepted damage event exports a scoped, transient hit metadata hint');
+ assert.match(weapon,/a\._sourceChargerAudioHit=\{chargerDirect:true,charge\}/,
+   'native Charger contact temporarily owns the actual shot charge');
+ assert.match(sourceCatalog,/owner\._sourceChargerAudioHit=\{chargerDirect:true,charge:d\.charge\}/,
+   'catalogued Charger contact owns the original projectile charge ratio');
+ assert.match(through,/a\._sourceChargerAudioHit=\{chargerDirect:true,charge\}/,
+   'full-charge through-hit also owns its actual shot ratio');
+ const index=built.indexOf('const chargerCue=sourceChargerHitCue(');
+ assert.ok(index>0,'source-backed cue replacement occurs inside production composition');
 });
 
 test('alternate kit fire, impact, charge loop and sub/special prefetch keep base audio only',()=>{
