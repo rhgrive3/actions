@@ -104,19 +104,55 @@ export async function nativeContextRecoveryProof() {
   check(startResult === false && attractResult === false, 'A terminal restart entry was accepted');
   frame(60);
   // Exercise the final installed platform driver, not only debug/direct-frame.
-  await new Promise((resolve, reject) => {
-    let frames = 0; const timer = setTimeout(() => reject(Error('Native RAF observation did not complete')), 10000);
-    const next = () => { if (++frames === 120) { clearTimeout(timer); resolve(); } else requestAnimationFrame(next); };
-    requestAnimationFrame(next);
-  });
-  receipt.afterResumeAttempts = snapshot();
-  receipt.identities = { match: G.match === matchIdentity, paint: G.paint === paintIdentity, grid: paint.grid === grid,
-    counts: paint.counts === counts, overlay: g.R._contextRecoveryOverlay === overlay,
-    everyGridByte: grid.length === savedGrid.length && grid.every((value, i) => value === savedGrid[i]) };
-  receipt.dialog = { count: document.querySelectorAll('.iw-webgl-recovery').length, role: overlay.getAttribute('role'),
-    connected: overlay.isConnected, buttons: overlay.querySelectorAll('button').length, text: overlay.textContent };
-  receipt.terminal = { contextLost: g.R._contextLost, glRestored: !gl.isContextLost(), frozen: g.frozen,
-    startResult, attractResult, observedRAF: 120, directFrames: 60 };
+  // Persist progress before awaiting: a rejected observation must still leave
+  // evidence, without treating incomplete callbacks as terminal acceptance.
+  const observation = receipt.rafObservation = { callbacks: 0, timestamps: [], startedAt: performance.now(), elapsed: 0, status: 'pending' };
+  const observationState = () => {
+    let platform = null, platformError = null;
+    try { platform = g.platform?.snapshot?.() ?? null; } catch (error) { platformError = String(error); }
+    return { at: performance.now(), hidden: document.hidden, visibilityState: document.visibilityState,
+      hasFocus: document.hasFocus(), platform, platformError };
+  };
+  observation.before = observationState();
+  const captureAfterAttempts = () => {
+    receipt.afterResumeAttempts = snapshot();
+    receipt.identities = { match: G.match === matchIdentity, paint: G.paint === paintIdentity, grid: paint.grid === grid,
+      counts: paint.counts === counts, overlay: g.R._contextRecoveryOverlay === overlay,
+      everyGridByte: grid.length === savedGrid.length && grid.every((value, i) => value === savedGrid[i]) };
+    receipt.dialog = { count: document.querySelectorAll('.iw-webgl-recovery').length, role: overlay.getAttribute('role'),
+      connected: overlay.isConnected, buttons: overlay.querySelectorAll('button').length, text: overlay.textContent };
+    receipt.terminal = { contextLost: g.R._contextLost, glRestored: !gl.isContextLost(), frozen: g.frozen,
+      startResult, attractResult, observedRAF: receipt.rafObservation.callbacks, directFrames: 60 };
+  };
+  try {
+    await new Promise((resolve, reject) => {
+      let pendingRAF = null;
+      const timer = setTimeout(() => {
+        if (pendingRAF !== null) cancelAnimationFrame(pendingRAF);
+        pendingRAF = null;
+        observation.status = 'timed-out';
+        reject(Error('Native RAF observation did not complete'));
+      }, 10000);
+      const next = timestamp => {
+        pendingRAF = null;
+        observation.timestamps.push(timestamp);
+        observation.callbacks++;
+        observation.elapsed = performance.now() - observation.startedAt;
+        if (observation.callbacks === 120) {
+          clearTimeout(timer); observation.status = 'complete'; resolve();
+        } else pendingRAF = requestAnimationFrame(next);
+      };
+      pendingRAF = requestAnimationFrame(next);
+    });
+  } finally {
+    observation.elapsed = performance.now() - observation.startedAt;
+    observation.after = observationState();
+    // Diagnostic collection must not replace the original timeout rejection.
+    try { captureAfterAttempts(); } catch (error) {
+      receipt.postAttemptDiagnosticError = String(error);
+      if (observation.status === 'complete') throw error;
+    }
+  }
   check(Object.values(receipt.identities).every(Boolean), 'Terminal recovery replaced CPU ownership or reload UI');
   for (const key of ['time', 'gameTime', 'ticks', 'frame', 'paintVersion', 'gridLength', 'gridHash'])
     check(receipt.afterResumeAttempts[key] === receipt.lost[key], 'Terminal state advanced: ' + key);

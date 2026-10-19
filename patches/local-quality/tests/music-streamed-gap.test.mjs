@@ -17,7 +17,8 @@ async function rig({ pending = false, streamed = true } = {}) {
   }
   const api = await idleFixture({ globals: { ...f.globals, ...(streamed ? { Audio } : {}), window: {}, document, addEventListener() {}, removeEventListener() {} } });
   const music = new api.MusicEngine(); music._init(f.ctx, f.ctx.createGain()); music.play(streamed ? 'battle' : 'title', { fade: 0 });
-  assert.equal(music.current.constructor.name === 'StreamedTrack', streamed);
+  // Constructor names are minified in production; check the actual media owner.
+  assert.equal(music.current.element instanceof Audio, streamed);
   music._tick();
   return { ...f, music, media, document, listeners, gap(seconds) { f.ctx.currentTime += seconds; music._tick(); } };
 }
