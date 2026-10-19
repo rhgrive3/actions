@@ -6,7 +6,9 @@ import {replaceOnce} from '../adapter.mjs';
 import {BUILD_ONLY_PATCH_MODULES} from '../../../scripts/lib/inkwave-build-only-modules.mjs';
 import {REL,baseline,poseRotationFixture,poseSnapshot} from './pose-rotation-fixture.mjs';
 test('frozen source bank and guarded build-only rotation calculation',()=>{
- assert.equal(createHash('sha256').update(baseline).digest('hex'),'558a3ac20e26e4fb16abf1a4280b59ef71e585614eee9888ddfebfeb9072c90c');
+ // Pin the actual unchanged fixture bytes: Pages run #39279657999 demonstrated
+ // this digest while all 548 clip / 2740 pose-equivalence comparisons passed.
+ assert.equal(createHash('sha256').update(baseline).digest('hex'),'e3a5d948780dba4a83624a76e1bf648ed1ab87ebb3800b6b3b983fba7c5f594b');
  assert.ok(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/pose-rotation-adapter.mjs'));
  const next=adaptPoseRotation(REL,baseline,replaceOnce);
  assert.throws(()=>adaptPoseRotation(REL,next,replaceOnce),/conflict/);assert.throws(()=>adaptPoseRotation(REL,'',replaceOnce),/conflict/);

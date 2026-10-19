@@ -39,18 +39,20 @@ class MixerStub {
 }
 installWeaponAudioEngine(MixerStub);
 
-test('three battle-combat source recordings are resident before Charger first shot',async()=>{
+test('original main shot and normal, strong, critical and splat recordings are resident before a Charger first shot',async()=>{
  const {ctx}=mkctx(),audio=new MixerStub(ctx),b=audio.weaponBank();
  const mock=manifest([
    clip('charger','fire','Wp_ChargerNormal_Shot_00.mp3'),
    clip('combat:critical','fire','HitEf_CriticalHit_00.mp3'),
    clip('combat:damage','fire','HitEf_Damage_00.mp3'),
+   clip('combat:ink_focus_normal','fire','HitEf_InkHit_Focused_Normal_00.mp3'),
+   clip('combat:ink_focus_strong','fire','HitEf_InkHit_Focused_Strong_00.mp3'),
    clip('combat:splat','fire','Pl_DeadSplash_00.mp3')
  ]);
  audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>mock});
  b.authorized.fetcher=async()=>res;
  assert.equal((await audio.requireRecordedMainShot('charger')).ready,true);
- for(const id of ['combat:critical','combat:damage','combat:splat']){
+ for(const id of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']){
   assert.ok(b.authorized.pick(id,'fire'),id+' resident before first shot');
   assert.equal(audio.playWeapon(id,'fire',{actor:{isLocal:true}})?.weaponId,id);
   assert.equal(audio.played.at(-1).voice.srcs[0].buffer,b.authorized.pick(id,'fire').buffer,
