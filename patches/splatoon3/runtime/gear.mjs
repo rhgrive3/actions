@@ -194,8 +194,10 @@ export function installGear(api, tuning) {
     m.enemyDamageRate = gearCurve(ap.inkResistance || 0, ...extra.enemyDamageRate) * 6000;
     m.enemyJumpVelocity = gearCurve(ap.inkResistance || 0, ...extra.enemyJumpVelocity) * 60;
     m.rollRetention = gearCurve(ap.actionIntensify || 0, ...extra.rollRetention);
-    a.s3.jumpChargeTime = tuning.superJump.chargeTime * (m.quickSuperJump ?? 1);
-    a.s3.jumpFlightTime = tuning.superJump.flightTime * gearCurve(ap.quickSuperJump || 0, ...extra.jumpFlightTime);
+    // S3 rounds each gear-adjusted phase down to whole simulation frames.
+    // Keep the separately owned initial-form term outside both curves.
+    a.s3.jumpChargeTime = Math.floor(tuning.superJump.chargeTime * 60 * (m.quickSuperJump ?? 1) + 1e-10) / 60;
+    a.s3.jumpFlightTime = Math.floor(tuning.superJump.flightTime * 60 * gearCurve(ap.quickSuperJump || 0, ...extra.jumpFlightTime) + 1e-10) / 60;
     // The S3 initial-form term is form-dependent, not equipment-dependent, so
     // Quick Super Jump must not reach it.
     a.s3.jumpStartupSwimF = tuning.superJump.startupSwimF;
