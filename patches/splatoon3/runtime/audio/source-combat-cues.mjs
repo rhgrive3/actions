@@ -13,7 +13,11 @@ const SOURCES=Object.freeze({
     bytes:17599,
   }),
 });
-const ROOT=new URL('../../../../assets/audio/combat/',import.meta.url);
+// Build-time module URLs are versioned under /_versions/<hash>/patches/...;
+// the HTML <base> selects matching /_versions/<hash>/assets/... .
+const ROOT=typeof document!=='undefined'&&document.baseURI
+  ? new URL('assets/audio/combat/',document.baseURI)
+  : new URL('../../../../inkwave-public/assets/audio/combat/',import.meta.url);
 const INSTALLED=Symbol.for('inkwave.combat.recorded-cues.v1');
 const own=(map,key)=>Object.prototype.hasOwnProperty.call(map,key);
 
