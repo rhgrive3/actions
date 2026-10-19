@@ -115,7 +115,10 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
       "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
-      "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
+      "if (!killed || attacker?.weapon?.kind === 'charger' || attacker?.weapon?.catalogRecord?.family === 'charger') G.audio?.playRecordedCombatCue?.((attacker?.weapon?.kind === 'charger' || attacker?.weapon?.catalogRecord?.family === 'charger') ? 'chargerDirect' : 'direct', { volume: 0.6 });",'source-confirmed collision cue avoids synthesized common hit marker');
+    code=once(code,"G.audio?.play('splat_enemy', { volume: 0.9 });",
+      "G.audio?.playRecordedCombatCue?.('direct', { volume: 0.9 });",
+      'splat confirmation uses available recorded reference not authored synth');
     // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
