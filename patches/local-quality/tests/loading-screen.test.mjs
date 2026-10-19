@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptLoadingScreen, zevantWordmark } from '../loading-screen-adapter.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { LOADING_ART_PRECACHE } from '../../loading-cache/adapter.mjs';
 
 const read = (rel) => fs.readFileSync(new URL('../../../' + rel, import.meta.url), 'utf8');
 const loadingScreen = (code) => code.slice(code.indexOf('  _scr_loading() {'), code.indexOf('  // ================================================================ SCREEN: title'));
@@ -61,6 +62,10 @@ test('boot shell shows the same ZEVANT wordmark and classes as the native screen
   const art = fs.readFileSync(new URL('../assets/loading/arena.webp', import.meta.url));
   assert.equal(art.subarray(8, 12).toString(), 'WEBP');
   assert.ok(art.length < 250000, 'compressed backdrop');
+  // First launch: the shell preloads it and the offline precache carries it.
+  assert.equal(LOADING_ART_PRECACHE, 'patches/local-quality/assets/loading/arena.webp');
+  assert.ok(shell.includes('<link rel="preload" href="' + LOADING_ART_PRECACHE + '" as="image"'));
+  assert.match(read('patches/loading-cache/adapter.mjs'), /'patches\/splatoon3\/profile\.json',LOADING_ART_PRECACHE,/);
   // Distinct gradient ids: the hidden shell's defs must not be what the native screen paints with.
   assert.notEqual(zevantWordmark('zvs'), zevantWordmark('zvl'));
 });
