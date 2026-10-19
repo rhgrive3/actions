@@ -122,6 +122,7 @@ export function installHitchTracer(game, {
       owners.push(
         ['source-ray', w, 'ray'], ['source-box', w, 'queryBox'],
         ['source-sweep', w, 'sweepSphere'],
+        ['source-capsule-distance', w, '_capsuleDistance'],
         ['native-contact', physics, '_nativeContacts'],
         ['body-collision', physics, 'collideBody'],
         ['ground-ring', physics, 'groundProbe'],
@@ -166,7 +167,8 @@ export function installHitchTracer(game, {
       const original = owner[method];
       const wrapper = function (...args) {
         const rec = active;
-        const t = rec ? now() : 0;
+        const countOnly = name === 'source-capsule-distance';
+        const t = rec && !countOnly ? now() : 0;
         let gpuStarted = false, timer = null;
         if (rec && (name === 'render' || name === 'paint')) {
           if (name === 'render') {
@@ -183,7 +185,8 @@ export function installHitchTracer(game, {
         } finally {
           if (gpuStarted) timer.end();
           if (rec) {
-            rec.cpu[name] = (rec.cpu[name] || 0) + Math.max(0, now() - t);
+            rec.calls[name] = (rec.calls[name] || 0) + 1;
+            if (!countOnly) rec.cpu[name] = (rec.cpu[name] || 0) + Math.max(0, now() - t);
           }
         }
       };
@@ -241,17 +244,22 @@ export function installHitchTracer(game, {
   const wrappedFrame = function (...args) {
     if (disposed) return originalFrame.apply(this, args);
     rebind();
-    const rec = { id: ++nextId, start: now(), cpu: Object.create(null), events: pendingEvents.splice(0), gpuMs: null, gpuPaintMs: null };
-    // BVH counters already maintained by the native collision world. Reading
-    // these is O(1), needs no graphics sync, and adds no instrumentation to
-    // collision itself.
+    const rec = { id: ++nextId, start: now(), cpu: Object.create(null), calls: Object.create(null), events: pendingEvents.splice(0), gpuMs: null, gpuPaintMs: null };
+    // Read the existing ray/sphere-sweep counters in O(1), without graphics sync.
+    // Box queries and capsule-distance work are separate opt-in method counters
+    // installed above; the capsule wrapper counts calls without per-call timing.
     const sourceWorld = getWorld().level?.triangleWorld;
+    const beforeTicks = game.s3Clock?.ticks || 0;
+    const beforeQueued = game.s3Clock?.accumulator || 0;
     const beforeQueries = sourceWorld?.queryCount || 0;
     const beforeTriangles = sourceWorld?.triangleTests || 0;
     active = rec;
     try { return originalFrame.apply(this, args); }
     finally {
       rec.end = now();
+      rec.fixedClock = { elapsedSeconds: Number.isFinite(args[0]) ? args[0] : null,
+        ticks: Math.max(0, (game.s3Clock?.ticks || 0) - beforeTicks),
+        queuedBeforeSeconds: beforeQueued, queuedAfterSeconds: game.s3Clock?.accumulator || 0 }; 
       if (sourceWorld) {
         rec.sourceBVH = {
           queries: Math.max(0, sourceWorld.queryCount-beforeQueries),
@@ -321,6 +329,9 @@ export function installHitchTracer(game, {
     gpuCommandsMs:rec.gpuMs, gpuPaintCommandsMs:rec.gpuPaintMs, longTaskMs:round(rec.longTaskMs),
     stages:Object.fromEntries(Object.entries(rec.cpu).map(([k,v])=>[k,round(v)])),
     sourceBVH: rec.sourceBVH || null,
+    sourceBVHCounterCoverage: rec.sourceBVH ? 'ray and sphere-sweep only; box/capsule work is in methodCalls' : null,
+    methodCalls: { ...rec.calls },
+    fixedClock: rec.fixedClock || null,
     // Exclude inclusive parent groups so the user can see which native
     // method family dominates without mistaking nested totals for a sum.
     topNativeScopes: rec.sourceBVH

@@ -60,7 +60,10 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
           (s.trace ? '\nGPU paint / render: '+(s.trace.latestGPUPaintMs?.toFixed(1) ?? '?')+' / '+(s.trace.latestGPUCommandsMs?.toFixed(1) ?? '?')+'ms ('+s.trace.gpuPaint+' / '+s.trace.gpu+')'+
             ' | long tasks: '+s.trace.longTaskCount+'\nLast hitch: '+(s.trace.recentHitches.at(-1)?.cause || 'none')+
             (s.trace.latest?.sourceBVH ? '\nSource BVH: '+s.trace.latest.sourceBVH.queries+
-              ' queries / '+s.trace.latest.sourceBVH.triangleTests+' triangles'+
+              ' ray/sweep queries / '+s.trace.latest.sourceBVH.triangleTests+' ray/sweep triangles'+
+              ' | box '+(s.trace.latest.methodCalls?.['source-box'] ?? '?')+
+              ' | capsule '+(s.trace.latest.methodCalls?.['source-capsule-distance'] ?? '?')+
+              ' | fixed ticks '+(s.trace.latest.fixedClock?.ticks ?? '?')+
               '\nNative CPU: '+s.trace.latest.topNativeScopes.slice(0,3).map(x=>x.name+' '+x.ms+'ms').join(' | ') : '') : '');
       }
     },
