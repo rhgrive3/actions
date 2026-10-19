@@ -12,7 +12,7 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {verifyRuntimeBuild} from './lib/inkwave-runtime-evidence.mjs';
 import {checkGyroMotionDenial,GYRO_MOTION_DENIAL_CONTEXT} from './lib/inkwave-gyro-motion-denial.mjs';
-import {RoomDurableObject} from '../server/src/index.js';
+import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 const site=path.resolve(process.argv[2]||'_site'), engines=process.argv.includes('--webkit')?['chromium','webkit']:['chromium'];
 const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -34,12 +34,8 @@ const server=http.createServer((req,res)=>{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>relay.once('listening',r));
 const rooms=new Map(),wire=[],withheld=[];
-relay.on('connection',(ws,req)=>{
-  const url=new URL(req.url,'http://localhost'),code=url.pathname.split('/')[2],name=url.searchParams.get('name');
-  let room=rooms.get(code);if(!room)rooms.set(code,room=new RoomDurableObject({},{}));
-  room.handleSession({send(text){if(name==='Delay'&&text.includes('"welcome"'))withheld.push({ws,text});else if(ws.readyState===1)ws.send(text);},
-    addEventListener:(name,fn)=>ws.on(name,name==='message'?data=>{wire.push(data.toString());fn({data:data.toString()});}:fn)},name);
-});
+const connectRelay=createLocalRelay({rooms});
+relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(text,deliver)=>{if(new URL(req.url,'http://localhost').searchParams.get('name')==='Delay'&&text.includes('"welcome"'))withheld.push({ws,text});else deliver(text);},receive:text=>wire.push(text)}));
 const address=`http://127.0.0.1:${server.address().port}/probe?relay=${encodeURIComponent('ws://127.0.0.1:'+relay.address().port)}`;
 const results=[];let browser;
 try{
@@ -70,7 +66,7 @@ try{
     await host.waitForFunction(()=>G.net._members.size===2);
     const owners=await Promise.all(pages.map(p=>p.evaluate(()=>G.net.myId)));
     for(const stage of ['lobby','world','warmup']){
-      const cfg={id:engine+'-'+stage,map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid,slot:0,weapon:'shooter',bot:false}))};
+      const cfg={...await host.evaluate(async()=>{const {PROTO,COMPAT}=await import('/src/net/transport.js');return {proto:PROTO,compat:COMPAT};}),id:engine+'-'+stage,map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid,slot:0,weapon:'shooter',bot:false}))};
       await guest.evaluate(({cfg,stage})=>{hold(stage);globalThis.pending=G.net._begin(cfg);},{cfg,stage});
       await host.evaluate(cfg=>{globalThis.pending=G.net._begin(cfg);},cfg);
       await host.waitForFunction(()=>G.net._setupReady);
@@ -90,7 +86,7 @@ try{
       results.push({engine,stage,readyPackets:packetCount});
       await Promise.all(pages.map(p=>p.evaluate(()=>{G.net.endMatch();stage=null;})));
     }
-    const abandonedCfg={id:engine+'-abandoned',map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid,slot:0,weapon:'shooter',bot:false}))};
+    const abandonedCfg={...await host.evaluate(async()=>{const {PROTO,COMPAT}=await import('/src/net/transport.js');return {proto:PROTO,compat:COMPAT};}),id:engine+'-abandoned',map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid,slot:0,weapon:'shooter',bot:false}))};
     await guest.evaluate(cfg=>{hold('warmup');globalThis.pending=G.net._begin(cfg);},abandonedCfg);
     await guest.waitForFunction(()=>G.net.match!==null);
     await host.evaluate(cfg=>{globalThis.pending=G.net._begin(cfg);},abandonedCfg);
