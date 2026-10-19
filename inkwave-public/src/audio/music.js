@@ -1266,8 +1266,10 @@ export class MusicEngine {
   // Called after entering match setup. Fetch only when a turf match is actually chosen.
   preloadFile(track, { prime = false } = {}) {
     const url = FILE_TRACK_URLS[track];
+    // Every new START/REMATCH is allowed a fresh media load, even if the
+    // previous match exhausted its retries. Never latch the error permanently.
     if (!url || !this.ctx || this.offline || typeof Audio !== 'function' ||
-        !this.ctx.createMediaElementSource || this._fileFailures.has(track)) return;
+        !this.ctx.createMediaElementSource) return;
     if (this._preloadedFile?.id !== track) {
       this._dropPreload();
       try {
