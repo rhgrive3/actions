@@ -65,6 +65,15 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }
   if(rel==='src/game/weapons.js'){
+    code=once(code,"this.applyHit(a, victim.e, dmg, 'charger');",
+      "this.applyHit(a, victim.e, dmg, 'charger', {fullCharge:charge>=0.999});",
+      'native Charger full-charge metadata for audio-only hit');
+    code=once(code,"applyHit(attacker, victim, dmg, weaponId) {",
+      "applyHit(attacker, victim, dmg, weaponId, audioMeta=null) {",
+      'optional hit metadata without damage/authority changes');
+    code=once(code,"emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, fullCharge:audioMeta?.fullCharge===true });",
+      'send actual Charger charge bit to local audio owner');
     code=once(code,
       "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
       "void 0;",
@@ -120,7 +129,7 @@ export function adaptWeaponAudio(rel,code){
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
-      "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
+      "on('hit', ({ attacker, victim, damage, killed, weaponId, fullCharge }) => {",'Charger hit event carries the actual shot charge status');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
     // Real S3 recorded body-hit and splat cues are separate from the gunshot.
@@ -132,7 +141,7 @@ export function adaptWeaponAudio(rel,code){
     // high-damage contact; other hits use source normal/strong ink-contact.
     code=once(code,
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
-      "G.audio?.playWeapon?.(/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))&&damage>=95?" +
+      "G.audio?.playWeapon?.(/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))&&fullCharge===true?" +
       "'combat:critical':damage>=40?'combat:ink_focus_strong':'combat:ink_focus_normal','fire',{volume:.76,priority:95});",
       'source HitEf original all-weapon hit feedback');
     code=once(code,
@@ -164,6 +173,11 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace(/emit\('weapon:impact',\s*\{\s*pos:/g,"emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:");
   }
   if(rel==='patches/splatoon3/runtime/main-weapon-catalog.mjs'){
+    // Preserve the source player's actual charge fraction through a LOCAL
+    // audio hint; do not change projectile damage or network hit proposals.
+    code=once(code,"this.applyHit(p.owner,target,amount,p.wid)",
+      "this.applyHit(p.owner,target,amount,p.wid,{fullCharge:s.r.family==='charger'&&d.charge>=1-1e-6})",
+      'catalogue Charger actual full charge contact audio flag');
     // Added S3 catalogue weapons already emit weapon:fire. Avoid a second
     // legacy family shot alongside the admitted weapon-specific real sample.
     code=once(code,
