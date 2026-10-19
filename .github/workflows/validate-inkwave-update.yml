@@ -17,6 +17,7 @@ on:
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
+      - "tests/issue-queue/**"
   pull_request:
     paths:
       - .github/workflows/validate-inkwave-update.yml
@@ -33,6 +34,7 @@ on:
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
+      - "tests/issue-queue/**"
   workflow_dispatch:
     inputs:
       source_sha:

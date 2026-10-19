@@ -3,7 +3,8 @@
 ## Scope
 
 Test-only repair of `tests/issue-queue/critical-queue.test.mjs`. No gameplay,
-network protocol, build adapter, workflow, model or production file changes.
+network protocol, build adapter, model or production file changes. The Validate
+workflow receives only two trigger-path additions described below.
 The existing [S3 behavior comparison](inkwave-splatoon3-behavior-2026-10-02.md)
 remains authoritative for gameplay findings. This change adds no S3 parity
 claim and does not replace device or browser testing with CPU measurements.
@@ -70,3 +71,14 @@ This verifies deployed import wiring; no live runtime exception was reproduced.
 No new gameplay browser run is needed to establish this isolated test-fixture
 repair because the production tree is unchanged. The final PR head must still
 complete every required CI check; these targeted results are not full-CI approval.
+
+## Workflow trigger correction
+
+The initial two-file draft did not start Validate: its existing push and pull
+request path filters omitted `tests/issue-queue/**`. Add that path to both
+filters so this fixture and future tests in the same suite actually trigger
+the unchanged full gate. All existing filters, jobs, assertions, permissions,
+checkout identity and timeouts remain byte-for-byte unchanged. An independent
+contract checks both matching events, every previous path, and complete parsed
+workflow equality after removing the two additions; omitted-trigger and
+removed-existing-path negative controls must fail.
