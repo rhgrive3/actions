@@ -18,6 +18,7 @@ import { FOLLOWUP_MODELS as ACCEPTED_CARBON } from './variants-accepted-carbon-f
 import { MAIN_WEAPON_CATALOG } from '../main-weapon-catalog-data.mjs';
 import { FAMILY_HOLD_SHIFT, FAMILY_MODEL_SCALE, shiftHold } from './family-holds.mjs';
 import { scaleWeaponDef } from './kit.mjs';
+import { rollerSourceModelScale } from '../roller-source-scale.mjs';
 import { ALTERNATE_WEAPON_KITS, VARIANT_BASE_WEAPON } from '../alternate-weapon-kits-data.mjs';
 import * as SHOOTERS from './shooters.mjs';
 import * as SHOOTERS_B from './shooters-b.mjs';
@@ -167,6 +168,13 @@ export function buildWeaponModel(key, base) {
   if (selected) { d.modelVariantId = selected; d.appearanceName = spec.name; }
   d.referenceModelName = spec.sourceModel ?? null;
   if (spec.animate) d.animate = spec.animate;
+  const rollerScale = rollerSourceModelScale(baseId, d);
+  if (rollerScale !== 1) {
+    // Scale the whole frame, caps, sockets and folding pivot with the drum.
+    // Enlarging only its X axis would change the source silhouette/clearance.
+    scaleWeaponDef(d, rollerScale);
+    if (d.fold?.pivot) d.fold.pivot.multiplyScalar(rollerScale);
+  }
   return scaleWeaponDef(d, scale);
 }
 
