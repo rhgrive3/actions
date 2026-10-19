@@ -3,10 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - .github/workflows/inkwave-pressed-button-center.yml
-      - reports/touch-center/instrument-held-input.mjs
-      - patches/touch-layout/adapter.mjs
-      - patches/reliability/tests/pressed-button-center.test.mjs
+      - '.github/workflows/inkwave-pressed-button-center.yml'
 permissions:
   contents: read
 concurrency:
