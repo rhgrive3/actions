@@ -50,6 +50,16 @@ function interpolateFields(a,b,q){
 const INSTALLED = Symbol.for('inkwave.main-weapon-catalog.v1');
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
 
+// Nintendo10.0.0: the post-Splatana-swing sub lock also blocks Clam throws.
+// Reuse the existing sourced recovery clock; do not invent a throw delay.
+// https://support.nintendo.com/jp/switch/software_support/av5ja/1000.html
+export function catalogSplatanaThrowBlocked(actor) {
+  const s = actor?.weaponRunner?.catalogState;
+  // pending owns the still-cancellable pre-wave swing. Its existing null
+  // transition marks wave emission; only the remaining recovery is blocked.
+  return actor?.weapon?.catalogRecord?.family === 'splatana' && s?.stop > EPS && !s.pending;
+}
+
 // Community 60fps measurements, explicitly v10.0.1, not extracted defaults:
 // wikiwiki.jp/splatoon3mix/検証/メインウェポン (Brella table).
 const BRELLA_MEASURED = Object.freeze({
@@ -1820,8 +1830,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(!r)return legacyUpdate.call(this,dt,input);
     const s=state(this);
     if(s.canopy?.preparing&&(!input.fire||input.sub||a.form!=='kid'||a.remote||!a.alive||a.specialActive||a.superJumpState||this.aimingSub))s.canopy.preparing=false;
-    // Cancel BEFORE the installed sub preparation owner checks main busy state.
-    if(input.sub||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid'||r.family==='brella'&&a.form!=='kid')cancel(this);
+    const throwBlocked=catalogSplatanaThrowBlocked(a);
+    // A held sub may cancel a main charge, but not erase an emitted swing's
+    // existing recovery. Its preparation starts once that same clock expires.
+    if(input.sub&&!throwBlocked||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid'||r.family==='brella'&&a.form!=='kid')cancel(this);
     if(r.family==='splatana'&&a.form!=='kid'&&(s.pending||s.melee||s.lunge))cancel(this);
     // Rebuild/cure belong to elapsed weapon life, including squid form and
     // sub/special use. Previously both clocks lived behind the kid/fire gate.
@@ -1839,7 +1851,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Native/kit update readers use these four flags for sub-weapon logic.
     // Allocate once per runner instead of per 60 Hz update.
     const subInp=this._catalogSubInput||(this._catalogSubInput={fire:false,firePressed:false,sub:false,subReleased:false});
-    subInp.sub=input?.sub;subInp.subReleased=input?.subReleased;
+    subInp.sub=!throwBlocked&&input?.sub;subInp.subReleased=!throwBlocked&&input?.subReleased;
     legacyUpdate.call(this,dt,subInp);
     if(!Number.isFinite(dt)||dt<=0||a.remote||!a.alive||a.specialActive||a.superJumpState)return;
     // Wiki: orientation changes continuously even while swimming/unarmed.

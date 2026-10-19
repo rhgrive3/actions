@@ -10,6 +10,7 @@ import { installRankedCombat, createRankedEffects, isCarrier } from './combat.mj
 
 import { interruptSpecialForObjective } from '../all-specials.mjs';
 import { specialGaugeLocked, clearSpecialGaugeLocks } from '../tacticooler-gauge.mjs';
+import { catalogSplatanaThrowBlocked } from '../main-weapon-catalog.mjs';
 
 const INSTALLED = Symbol.for('inkwave.ranked.v1');
 export function installRanked(context) {
@@ -133,6 +134,9 @@ export function installRanked(context) {
     const yaw = Number.isFinite(this.aimYaw) ? this.aimYaw : this.yaw;
     const pitch = Number.isFinite(this.aimPitch) ? this.aimPitch : 0;
     const aim = [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
+    // Reject at the same pre-update recovery boundary as sub preparation,
+    // before either the local command or follower wire latch can retain it.
+    if (m.mode === 'clams' && catalogSplatanaThrowBlocked(this)) this.intent.throw = false;
     this._rankedInput = { fire: !!this.intent.fire, throw: !!this.intent.throw, aim };
     if (this.intent.throw) this._rankedThrowPending = true;
     if (isCarrier(m, this)) {
