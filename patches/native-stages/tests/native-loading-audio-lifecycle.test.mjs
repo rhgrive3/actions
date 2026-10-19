@@ -7,6 +7,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 // match transition. Native loading awaits both audio preflight and stage assets.
 const source = readFileSync(new URL('../../../inkwave-public/src/main.js', import.meta.url), 'utf8');
 const built = adaptBuildSource('src/main.js', source);
+const clockSource = readFileSync(new URL('../../splatoon3/runtime/clock.mjs', import.meta.url), 'utf8');
 
 function method(start, end) {
   const lo = built.indexOf(start), hi = built.indexOf(end, lo + start.length);
@@ -25,7 +26,7 @@ for (const [label, start, end] of transitions) {
     const freeze = body.indexOf('    // Freeze the outgoing round before any asynchronous loading starts.');
     const fade = body.indexOf('    await this._fade(1, 350);');
     const dispose = body.indexOf('    if (this.match) this.match.dispose();', fade);
-    const detach = body.indexOf('    this.match = G.match = null;', dispose);
+    const detach = body.indexOf('    this.match = G.match = flow.match = null;', dispose);
     const clear = body.indexOf('    G.projectiles.clear();', dispose);
     assert(freeze >= 0 && freeze < fade, 'simulation is stopped before the first awaited fade');
     assert(fade >= 0 && dispose > fade, 'visuals remain until the fade finishes');
@@ -40,6 +41,7 @@ for (const [label, start, end] of transitions) {
     };
     const G = { match: old };
     const game = { match: old };
+    const flow = { current: () => true, match: old };
 
     // Evaluate precisely the transition fragment compiled from the current
     // source. No DOM, WebGL, sound device, or native asset download required.
@@ -48,7 +50,7 @@ for (const [label, start, end] of transitions) {
     assert.equal(resets, 2, 'continuous weapon sound handles are reset');
     assert.equal(disposal, 0, 'visible actors survive until the fade');
 
-    new Function('G', body.slice(dispose, clear)).call(game, G);
+    new Function('G', 'flow', body.slice(dispose, clear)).call(game, G, flow);
     assert.equal(disposal, 1);
     assert.equal(game.match, null);
     assert.equal(G.match, null);
@@ -58,14 +60,15 @@ for (const [label, start, end] of transitions) {
     // First launch (no outgoing attract match) is also safe.
     const first = { match: null };
     G.match = null;
+    flow.match = null;
     new Function('G', body.slice(freeze, fade)).call(first, G);
-    new Function('G', body.slice(dispose, clear)).call(first, G);
+    new Function('G', 'flow', body.slice(dispose, clear)).call(first, G, flow);
     assert.equal(first.match, null);
     assert.equal(G.match, null);
   });
 }
 
 test('paused attract update and pending demo reset cannot spawn bots during native loading', () => {
-  assert.match(built, /if \(m\.attract && !m\.paused\) this\._updateAttract\(dt\);/);
+  assert.match(clockSource, /if \(m\.attract && !m\.paused\) game\._updateAttract\(simDt\);/);
   assert.match(built, /if \(!this\.match\?\.attract \|\| this\.match\.paused\) return;/);
 });
