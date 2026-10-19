@@ -103,7 +103,7 @@ export function installHitchTracer(game, {
   const getWorld = () => env?.__G || {};
   const stageOwners = () => {
     const G = getWorld();
-    return [
+    const owners = [
       ['simulation', game.match, 'update'],
       ['projectiles', G.projectiles, 'update'],
       ['paint', G.paint, 'flush'],
@@ -114,6 +114,30 @@ export function installHitchTracer(game, {
       ['showcase', game.showcase, 'render'],
       ['hud', game, '_updateHud'],
     ];
+    // Deep attribution runs ONLY in the existing opt-in ?profileRange=1.
+    // Inclusive nested timings deliberately overlap: a bot/character call
+    // is part of simulation, a ground ray is part of physics, etc.
+    if (G.level?.native) {
+      const w = G.level.triangleWorld, physics = G.physics, nav = G.nav;
+      owners.push(
+        ['source-ray', w, 'ray'], ['source-box', w, 'queryBox'],
+        ['source-sweep', w, 'sweepSphere'],
+        ['native-contact', physics, '_nativeContacts'],
+        ['body-collision', physics, 'collideBody'],
+        ['ground-ring', physics, 'groundProbe'],
+        ['physics-ray', physics, 'raycast'],
+        ['route-search', nav, 'path'],
+        ['paint-splat', G.paint, 'splat'],
+        ['paint-region', G.paint, 'regionStats']
+      );
+      const actors = G.match?.actors || [];
+      for (let i = 0; i < actors.length; i++) {
+        const a = actors[i];
+        owners.push(['actor-'+i, a, 'update'], ['brain-'+i, a.bot, 'update'],
+          ['character-'+i, a.character, 'update']);
+      }
+    }
+    return owners;
   };
   const note = (event, data) => {
     const item = { event, atMs: active ? round(now() - active.start) : null, ...(data || {}) };
@@ -207,10 +231,22 @@ export function installHitchTracer(game, {
     if (disposed) return originalFrame.apply(this, args);
     rebind();
     const rec = { id: ++nextId, start: now(), cpu: Object.create(null), events: pendingEvents.splice(0), gpuMs: null, gpuPaintMs: null };
+    // BVH counters already maintained by the native collision world. Reading
+    // these is O(1), needs no graphics sync, and adds no instrumentation to
+    // collision itself.
+    const sourceWorld = getWorld().level?.triangleWorld;
+    const beforeQueries = sourceWorld?.queryCount || 0;
+    const beforeTriangles = sourceWorld?.triangleTests || 0;
     active = rec;
     try { return originalFrame.apply(this, args); }
     finally {
       rec.end = now();
+      if (sourceWorld) {
+        rec.sourceBVH = {
+          queries: Math.max(0, sourceWorld.queryCount-beforeQueries),
+          triangleTests: Math.max(0, sourceWorld.triangleTests-beforeTriangles),
+        };
+      }
       active = null;
       last = rec;
     }
@@ -273,6 +309,14 @@ export function installHitchTracer(game, {
     workMs:round(rec.workMs), targetHz:rec.targetHz, scale:rec.scale,
     gpuCommandsMs:rec.gpuMs, gpuPaintCommandsMs:rec.gpuPaintMs, longTaskMs:round(rec.longTaskMs),
     stages:Object.fromEntries(Object.entries(rec.cpu).map(([k,v])=>[k,round(v)])),
+    sourceBVH: rec.sourceBVH || null,
+    // Exclude inclusive parent groups so the user can see which native
+    // method family dominates without mistaking nested totals for a sum.
+    topNativeScopes: rec.sourceBVH
+      ? Object.entries(rec.cpu).filter(([k])=>!['simulation','render','paint','projectiles'].includes(k))
+          .sort((a,b)=>b[1]-a[1]).slice(0,5)
+          .map(([name,ms])=>({name,ms:round(ms)}))
+      : [],
     events:rec.events, cause:rec.cause,
   });
   const result = {
