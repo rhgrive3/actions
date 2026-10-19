@@ -47,7 +47,7 @@ export async function buildNativeWorld(game,map,current){
   const shaderWarmMilliseconds=performance.now()-warmStart;
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
-  inkMesh=new NativeInkMesh(inkGeometry,inkMat);
+  inkMesh=new NativeInkMesh(inkGeometry,inkMat).bindPaint(paint);
   status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   const navStart=performance.now(),nav=new NavGraph(level,physics);
