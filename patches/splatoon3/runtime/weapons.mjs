@@ -1142,7 +1142,12 @@ export function installWeapons(context, profile) {
     const actors = G.actors;
     try { G.actors = []; fireCharger.call(this, a, w, charge); }
     finally { G.actors = actors; }
-    for (const { actor } of victims.sort((x, y) => x.distance - y.distance)) this.applyHit(a, actor, w.damageMax, 'charger');
+    for(const {actor} of victims.sort((x,y)=>x.distance-y.distance)){
+      const previous=a._sourceChargerAudioHit;
+      a._sourceChargerAudioHit={chargerDirect:true,charge};
+      try{this.applyHit(a,actor,w.damageMax,'charger');}
+      finally{a._sourceChargerAudioHit=previous;}
+    }
   };
   const auto = WeaponRunner.prototype._auto;
   WeaponRunner.prototype._auto = function (dt, input, w) {
