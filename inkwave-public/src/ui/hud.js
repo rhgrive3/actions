@@ -839,17 +839,14 @@ export class HUD {
       // spin-up meter (8 segments) that fills while charging and drains while the stream runs + spread ticks
       r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="21" class="iw-ret__track"/>
         <circle r="21" class="iw-ret__charge" pathLength="100" style="stroke-dasharray:100;stroke-dashoffset:100"/>
-        <circle r="28" class="iw-ret__track iw-ret__track-second"/>
-        <circle r="28" class="iw-ret__charge iw-ret__charge-second" pathLength="100" style="stroke-dasharray:100;stroke-dashoffset:100"/>
         <g class="iw-ret__segs">${Array.from({ length: 8 }, (_, i) => `<path d="M0 -17 L0 -25" transform="rotate(${i * 45})"/>`).join('')}</g></svg>
         <i class="iw-ret__tick" style="--a:45deg"></i><i class="iw-ret__tick" style="--a:135deg"></i><i class="iw-ret__tick" style="--a:225deg"></i><i class="iw-ret__tick" style="--a:315deg"></i>`;
-      this._chargeEl = r.querySelector('.iw-ret__charge'); this._chargeSecondEl = r.querySelector('.iw-ret__charge-second'); this._chargeC = 100;
+      this._chargeEl = r.querySelector('.iw-ret__charge'); this._chargeC = 100;
     } else {
       r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__ring thin"/></svg>
         <i class="iw-ret__tick" style="--a:0deg"></i><i class="iw-ret__tick" style="--a:90deg"></i><i class="iw-ret__tick" style="--a:180deg"></i><i class="iw-ret__tick" style="--a:270deg"></i>`;
     }
     this._L.spread = null; this._L.charge = null; this._L.full = null;
-    this._L.twoStage = null; this._L.stageCutoff = null; this._L.firstComplete = null;
   }
 
   _updCrosshair(f, dt) {
@@ -903,26 +900,7 @@ export class HUD {
     } else if (L.kind === 'splatling') {
       const lr = this._local()?.weaponRunner;
       const c = clamp(+f.charge || 0), streaming = !!(lr && lr.streaming);
-      // First-stage and full-stage source frames drive separate reticle rings.
-      const params = WEAPONS[w]?.catalogRecord?.parameters?.WeaponParam;
-      const first = Number(params?.ChargeFrame_First), second = Number(params?.ChargeFrame_Second);
-      const twoStage = Number.isFinite(first) && Number.isFinite(second) && first > 0 && second > first;
-      const cutoff = twoStage ? first / second : 1;
-      if (twoStage !== L.twoStage) { L.twoStage = twoStage; this.ret.classList.toggle('has-two-charge-stages', twoStage); }
-      if (L.charge == null || Math.abs(c - L.charge) > 0.004 || L.stageCutoff !== cutoff) {
-        L.charge = c; L.stageCutoff = cutoff;
-        const firstProgress = twoStage ? Math.min(1, c / cutoff) : c;
-        const secondProgress = twoStage ? Math.min(1, Math.max(0, (c - cutoff) / (1 - cutoff))) : 0;
-        this._chargeEl.style.strokeDashoffset = (100 * (1 - firstProgress)).toFixed(2);
-        if (this._chargeSecondEl) this._chargeSecondEl.style.strokeDashoffset = (100 * (1 - secondProgress)).toFixed(2);
-        this.ret.style.setProperty('--ch', c.toFixed(3));
-      }
-      const firstComplete = twoStage && !streaming && c >= cutoff - 1e-6;
-      if (firstComplete !== L.firstComplete) {
-        L.firstComplete = firstComplete;
-        this.ret.classList.toggle('is-first-complete', firstComplete);
-        if (firstComplete) this._restart(this.ret, 'is-first-flash');
-      }
+      if (L.charge == null || Math.abs(c - L.charge) > 0.004) { L.charge = c; this._chargeEl.style.strokeDashoffset = (100 * (1 - c)).toFixed(2); this.ret.style.setProperty('--ch', c.toFixed(3)); }
       if (streaming !== L.streaming) { L.streaming = streaming; this.ret.classList.toggle('is-streaming', streaming); }
       const full = !streaming && c >= 0.999;
       if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }

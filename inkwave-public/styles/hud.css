@@ -196,10 +196,7 @@
 .iw-ret--splatling.is-full .iw-ret__charge, .iw-ret--splatling.is-streaming .iw-ret__charge { stroke: var(--self-light); }
 .iw-ret--splatling.is-streaming { color: var(--self-light); }
 .iw-ret--splatling.is-first-complete:not(.is-streaming) .iw-ret__charge:not(.iw-ret__charge-second) { stroke: var(--self-light); }
-.iw-ret--splatling .iw-ret__charge-second { stroke-width: 3; opacity: .92; }
-.iw-ret--splatling .iw-ret__track-second { stroke-width: 2.5; opacity: .22; }
-.iw-ret--splatling:not(.has-two-charge-stages) .iw-ret__charge-second,
-.iw-ret--splatling:not(.has-two-charge-stages) .iw-ret__track-second { display: none; }
+.iw-ret--splatling .iw-ret__charge-second { opacity: .92; }
 .iw-ret--splatling.is-first-flash .iw-ret__charge:not(.iw-ret__charge-second) { animation: iw-splat-first .24s ease-out; }
 @keyframes iw-splat-first { from { stroke-width: 8; filter: drop-shadow(0 0 5px white); } to { stroke-width: 4.5; filter: none; } }
 .iw-hit, .iw-kill { position: absolute; left: 0; top: 0; }

@@ -1,5 +1,4 @@
 import test from 'node:test';
-import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { fixture } from './source-fixture.mjs';
@@ -74,18 +73,4 @@ test('midstream recharge occurs only for the two source-enabled Spinners',async(
       assert.equal(a.weaponRunner.streaming,true,r.id+' must keep firing instead of fictional recharge');
     }
   }
-});
-
-test('all six catalogue Spinners have visible separate first- and second-charge reticle rings',()=>{
-  const hud=fs.readFileSync(new URL('../../../inkwave-public/src/ui/hud.js',import.meta.url),'utf8');
-  const css=fs.readFileSync(new URL('../../../inkwave-public/styles/hud.css',import.meta.url),'utf8');
-  assert.ok(hud.includes('catalogRecord?.parameters?.WeaponParam'),'live source record owns HUD');
-  assert.ok(hud.includes('params?.ChargeFrame_First'),'first stage is source-based');
-  assert.ok(hud.includes('params?.ChargeFrame_Second'),'second stage is source-based');
-  assert.ok(hud.includes('const cutoff = twoStage ? first / second : 1'),'source-ratio threshold');
-  assert.ok(hud.includes('const secondProgress = twoStage'),'independent outer meter');
-  assert.ok(hud.includes('iw-ret__charge-second'),'rendered outer circle');
-  assert.ok(hud.includes('is-first-complete'),'distinct first-stage state');
-  assert.ok(css.includes('iw-ret__track-second'),'outer meter track styled');
-  assert.ok(css.includes(':not(.has-two-charge-stages)'),'legacy meters remain single-ring');
 });
