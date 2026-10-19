@@ -44,3 +44,24 @@ export function nativeStageTextureLimit(manifest, quality, {
   const hardware = Number.isFinite(maxTextureSize) && maxTextureSize > 0 ? maxTextureSize : 4096;
   return Math.max(1, Math.min(limit, hardware));
 }
+
+/**
+ * Keep visually critical albedo, cutout silhouettes, and emissive signage
+ * sharper than high-frequency PBR helper maps on exceptionally large scenes.
+ * Older numeric loadNativeTextures callers remain supported.
+ */
+export function nativeStageTextureCaps(manifest, quality, options = {}) {
+  const maxDimension = nativeStageTextureLimit(manifest, quality, options);
+  const count = Object.keys(manifest?.materials || {}).length;
+  const heavy = count >= 30 || (Number(manifest?.geometry?.vertices) || 0) >= 150000;
+  const perRole = {};
+  if (quality === 'high' && heavy) {
+    if (options.mobile && maxDimension >= 1024) {
+      perRole.normal = 512;
+      perRole.roughness = 512;
+    } else if (!options.mobile && maxDimension >= 2048) {
+      perRole.roughness = 1024;
+    }
+  }
+  return { maxDimension, perRole };
+}
