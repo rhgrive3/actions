@@ -9,7 +9,8 @@ export function combatFeedbackCue(actor, weaponId, damage, blasterKind = () => n
   // Verified gameplay distinction: fully charged direct shots can ring even
   // without splatting, while partially charged one-hit splats need not ring.
   // Do not infer full charge from damage (armor, gear and weapon tuning vary).
-  if (charger) return Number.isFinite(chargeFraction) && chargeFraction >= .999 ? 'critical_hit' : 'hit';
+  // Match isChargerFullCharge: any finite q < 1 stays partial, including 0.999.
+  if (charger) return Number.isFinite(chargeFraction) && chargeFraction >= 1 ? 'critical_hit' : 'hit';
   // These direct-hit special announcements have independent public
   // descriptions; source wav's exact trigger is still unverified.
   if (/^s3-slosher-launcher(?:-0[1-9])?$/.test(source) ||
