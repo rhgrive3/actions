@@ -3,10 +3,20 @@
  * Names are extracted resource labels, not proof of the complete S3 11.3.0
  * SLINK event tree or of redistribution rights. No guessed sound synthesis.
  *
- * All four MP3 assets are stored with the original shooter files under
+ * All six MP3 assets are stored with the original shooter files under
  * patches/splatoon3/runtime/audio/s3-real/ and shipped by the Pages builder.
  */
 export const COMBAT_CUE_SOURCES=Object.freeze({
+  ink_hit_body: Object.freeze({
+    file:'HitEf_InkHit_Focused_Normal_00.mp3',
+    sha256:'96b1786ae01eacd7f7f639d5123c070cefb5d44b6c2d74a955b726f90d339bd3',
+    bytes:6381, gain:.64, priority:68
+  }),
+  s3_ink_hit_heavy: Object.freeze({
+    file:'HitEf_InkHit_Focused_Strong_00.mp3',
+    sha256:'bc0a85a307d0379d41bed9845caedaef44b7a3d3385db822ee2f39682a0bfb46',
+    bytes:10413, gain:.7, priority:72
+  }),
   hit_marker: Object.freeze({
     file:'HitEf_Damage_00.mp3',
     sha256:'c4b6ac316315ee76f06392821db008334daf6f162e106347f164196ac64a85db',
@@ -96,7 +106,7 @@ export function installRecordedCombatAudio(AudioEngine){
     };
     state.pending=(async()=>{
       state.errors.length=0;
-      // Four clips total <110 KiB, decoded once per AudioContext, not per hit.
+      // Six clips total <130 KiB, decoded once per AudioContext, not per hit.
       const all=await Promise.allSettled(Object.entries(COMBAT_CUE_SOURCES).map(request));
       for(let i=0;i<all.length;i++)if(all[i].status==='rejected')
         state.errors.push(Object.keys(COMBAT_CUE_SOURCES)[i]+': '+safeError(all[i].reason));
