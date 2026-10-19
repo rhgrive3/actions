@@ -64,9 +64,16 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("G.audio?.play('roller_flick', { pos, volume: 0.8 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.8})");
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }
+  if(rel==='src/game/weapons.js'){
+    code=once(code,
+      "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
+      "if (!/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))) " +
+      "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
+      'do not layer authored body-hit noise over original Charger direct hit MP3');
+  }
   if(rel==='src/main.js'){
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
-      'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
+      'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); if(self.menus?._setup?.mode!==\'boss\') G.music?.preloadFile?.(\'battle\',{prime:true}); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
       'iPad start tap initializes audio and warms the selected recorded shot before screen wipe');
     // Loadout changes occur in the real menu, well before the shooting clock.
     // The 2022 shooter MP3 is demand-paged on that user gesture, not first
@@ -88,6 +95,7 @@ export function adaptWeaponAudio(rel,code){
       method=once(method,
         '    G.audio?.init?.();\n    if (!flow.current()) return;',
         '    G.audio?.init?.();\n    if (!flow.current()) return;\n' +
+        "    if (" + (label === 'offline' ? "o?.mode" : "cfg?.mode") + " !== 'boss') G.music?.preloadFile?.('battle', { prime: true });\n" +
         "    if(typeof G.audio?.requireRecordedMainShot!=='function') throw new Error('Recorded weapon audio is not installed');\n" +
         '    const selectedShotReady=G.audio.requireRecordedMainShot('+selected+').then(value=>({value}),error=>({error}));',
         label+' start selected recorded MP3');
@@ -116,12 +124,36 @@ export function adaptWeaponAudio(rel,code){
       "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
-    // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
+    // Real S3 recorded body-hit and splat cues are separate from the gunshot.
+    // This exact conditional uses the admitted projectile weaponId / splat
+    // cause, not the equipped kit's sub/special, so a bomb splat never sounds
+    // like a full-charge Charger direct.
+    code=once(code,
+      "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
+      "if (/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))) " +
+      "G.audio?.playWeapon?.(damage>=95?'combat:critical':'combat:damage','fire',{volume:.76,priority:95}); " +
+      "else G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
+      'source verified Charger hit feedback only');
+    code=once(code,
+      "G.audio?.play('splat_enemy', { volume: 0.9 });",
+      "if (/^(?:charger(?:-|$)|s3-charger-)/.test(String(cause||''))) " +
+      "G.audio?.playWeapon?.('combat:splat','fire',{volume:.82,priority:96}); " +
+      "else G.audio?.play('splat_enemy', { volume: 0.9 });",
+      'source verified Charger splat splash only');
+    // Native projectile code also played its old INKWAVE synthesized ink
+    // body contact sound, even when the exact Charger MP3 is now used by HUD.
+    // Suppress that layer only for charged direct-hit contacts, not wall ink,
+    // other weapons, or authoritative hit/death logic.
+        // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
     code="import { installOriginalAudioScore } from '../../patches/splatoon3/runtime/audio/music-score.mjs';\n"+code;
     code=once(code,'const compiled = new Map();','installOriginalAudioScore(SONGS);\nconst compiled = new Map();','original score');
-    code=once(code,'if (cur && fade > 0 && cur.song.bpm === song.bpm)',"if (opts.sync !== false && track !== 'battle_final' && cur && fade > 0 && cur.song.bpm === song.bpm)",'final minute grid');
+    const streamingGrid = 'if (cur && !element && !(cur instanceof StreamedTrack) && fade > 0 && cur.song.bpm === song.bpm)';
+    const standardGrid = 'if (cur && fade > 0 && cur.song.bpm === song.bpm)';
+    const activeGrid = code.includes(streamingGrid) ? streamingGrid : standardGrid;
+    if (code.split(activeGrid).length !== 2) throw new Error('audio adapter ambiguous final minute grid');
+    code=once(code,activeGrid,activeGrid.replace('if (cur &&',"if (opts.sync !== false && track !== 'battle_final' && cur &&"),'final minute grid');
     code=once(code,'let t0 = now + 0.06, sync = false;',"let t0 = Number.isFinite(opts.at) ? Math.max(now,opts.at) : now + (track==='battle_final' ? .015 : .06), sync = false;",'music clock');
   }
   if(rel==='patches/splatoon3/runtime/weapons-charger-flight.mjs'){

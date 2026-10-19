@@ -39,6 +39,29 @@ class MixerStub {
 }
 installWeaponAudioEngine(MixerStub);
 
+test('three battle-combat source recordings are resident before Charger first shot',async()=>{
+ const {ctx}=mkctx(),audio=new MixerStub(ctx),b=audio.weaponBank();
+ const mock=manifest([
+   clip('charger','fire','Wp_ChargerNormal_Shot_00.mp3'),
+   clip('combat:critical','fire','HitEf_CriticalHit_00.mp3'),
+   clip('combat:damage','fire','HitEf_Damage_00.mp3'),
+   clip('combat:splat','fire','Pl_DeadSplash_00.mp3')
+ ]);
+ audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>mock});
+ b.authorized.fetcher=async()=>res;
+ assert.equal((await audio.requireRecordedMainShot('charger')).ready,true);
+ for(const id of ['combat:critical','combat:damage','combat:splat']){
+  assert.ok(b.authorized.pick(id,'fire'),id+' resident before first shot');
+  assert.equal(audio.playWeapon(id,'fire',{actor:{isLocal:true}})?.weaponId,id);
+  assert.equal(audio.played.at(-1).voice.srcs[0].buffer,b.authorized.pick(id,'fire').buffer,
+   'real authorized source buffer, not generated oscillator: '+id);
+ }
+ assert.equal(audio.stats().authoredFallbackShots,0,'combat sample playback never invokes a synth backup');
+ audio.disposeWeaponAudio();
+});
+
+
+
 test('real composed START gates offline and online first shot on decoded original MP3, never authored fallback',()=>{
  const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const composed=adaptBuildSource('src/main.js',src);
@@ -131,8 +154,15 @@ test('all recorded Charger families have short hold, ready and full-shot cues (2
    for(const event of ['charge','ready','fire','fire_full'])
      assert.ok(entries.some(c=>c.event===event),id+' has original source event '+event);
    const hold=entries.find(c=>c.event==='charge');
-   assert.ok(hold.durationSeconds>=.20&&hold.durationSeconds<=.35,
-     '2022 HoldNoise is a short loop texture, not a whole charge ramp '+id);
+   assert.ok(hold.durationSeconds>=.20&&hold.durationSeconds<=.44,
+     '2022 HoldNoise stays short, including 0.418s Heavy for E-liter '+id);
+   if(id==='s3-charger-long'||id==='s3-charger-longscope'){
+     assert.equal(hold.sourceName,'Wp_Charger_HoldNoise_Heavy_00.mp3',
+       'E-liter and scope use their dedicated Heavy source, not Normal texture');
+     assert.equal(hold.sha256,'bf195dee1f2ef39e02a2c5f6ae179258008e81157059e10521d1c3bc96f5d655');
+   }else if(id==='s3-charger-light')assert.equal(hold.sourceName,'Wp_Charger_HoldNoise_Bamboo_00.mp3');
+   else if(id==='s3-charger-keeper')assert.equal(hold.sourceName,'Wp_Charger_HoldNoise_Pump_00.mp3');
+   else assert.equal(hold.sourceName,'Wp_Charger_HoldNoise_00.mp3');
  }
  assert.ok(!installed.clips.some(c=>c.id==='s3-charger-pencil'),
    'the newer R-PEN has no 2022 recording and must not be called verified');

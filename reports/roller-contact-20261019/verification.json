@@ -1,0 +1,49 @@
+{
+  "baseline": "00b8994711809ba6d0469723c858ddef6805e2ae",
+  "implementationCommit": "e01fb268d5d9c0bde0323e8f3f8804702ed5f425",
+  "integratedCommit": "bec6c05c4dc6207befaa97fb5fa2da6bda5707c1",
+  "mergedMain": "e07a7c4ee11358f103c40164a65bf485b060d440",
+  "integratedContentHash": "fef9b515bc9ebe89d044343607f35e2a8e3cdee000f697e2e7ce14bd3a5e6f84",
+  "quickChecks": "passed",
+  "startupBudget": {
+    "status": "passed",
+    "revision": "0177c1e7096eb3f596b6d4351683dd51f7ced37f7e7cc520767f8bb334924885",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78144,
+    "initialJSBytes": 2507661,
+    "criticalHTMLBytes": 16099,
+    "precacheCount": 463,
+    "precacheBytes": 7012016,
+    "workerBytes": 72031,
+    "declaredBytes": 12527667,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "integratedNative": {
+    "id": "roller",
+    "hz": 60,
+    "holes": 0,
+    "cpuHoles": 0,
+    "contactError": 0,
+    "contentHash": "fef9b515bc9ebe89d044343607f35e2a8e3cdee000f697e2e7ce14bd3a5e6f84",
+    "browser": "154.0.8037.57",
+    "ticks": 150
+  },
+  "exactSourceMask": {
+    "status": "passed",
+    "sourceSha": "e01fb268d5d9c0bde0323e8f3f8804702ed5f425",
+    "contentHash": "0168cd7104f0a64a8850e0b702fea0e8c57143c6a77b5d7bc1bd48d26efdafed",
+    "inputHash": "8a0087430653933b5a240e69b75e33534c5132bd62eab2c872d50f465936337a"
+  },
+  "logicTests": {
+    "rollingSupportWidth": 219,
+    "rollerNeighbours": 143,
+    "passed": true
+  },
+  "rollingBrowserCases": 192,
+  "physicalGpuCases": 15,
+  "retailHardwareParity": false,
+  "preExistingFixtureFailures": 2
+}

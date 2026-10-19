@@ -3,6 +3,7 @@ import { withMainDirectDamage } from './private-tracking.mjs';
 import { VARIANT_BASE_WEAPON } from './alternate-weapon-kits-data.mjs';
 import { configureRollerVerticalPaint, paintRollerVerticalFlight } from './roller-vertical-paint.mjs';
 import { paintRollerMaximumWidth } from './roller-max-paint.mjs';
+import { queueRollerContactPaint } from './roller-contact-paint.mjs';
 import { configureBlasterFlightPaint, paintBlasterFlight, spawnSplashDrop, advanceSplashDrops } from './blaster-flight-paint.mjs';
 import { applyBlasterBurstKnockback } from './main-knockback.mjs';
 import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
@@ -1679,6 +1680,17 @@ function simulateSplatlingReach(p,weapon,charge,initializeFlight) {
   return Math.hypot(p.pos.x-p.start.x,p.pos.z-p.start.z);
 }
 
+export function fidelityRollerContactPaint(r,w,dt) {
+  const source=completion?.weapons?.roller?.BodyParam?.PaintParam;
+  const scale=completion?.worldUnitsPerSourceUnit,hz=completion?.referenceHz;
+  if(!source||!(scale>0)||!(hz>0))return false;
+  const band=.62+.1+.08+.04;
+  const base=(w.rollWidth*.33+Math.sqrt(.62**2-.35**2)*band)*.3;
+  const max=source.WidthHalfMax*scale*.3;
+  const speed=Math.hypot(r.a.vel.x,r.a.vel.z);
+  const ratio=Math.max(0,Math.min(1,speed/(source.SpeedMax*hz*scale)));
+  return queueRollerContactPaint(r,dt,(base+(max-base)*ratio)/max);
+}
 export function fidelityRollerMaximumPaint(r,w,fx,fz) {
   if(!api?.G || !completion?.weapons?.roller?.BodyParam?.PaintParam)return 0;
   return paintRollerMaximumWidth(api.G,r,w,completion.weapons.roller.BodyParam.PaintParam,completion.worldUnitsPerSourceUnit,completion.referenceHz,fx,fz);
