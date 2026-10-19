@@ -9,6 +9,7 @@ import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { applyShotGuide } from '../runtime/weapons-fidelity.mjs';
 import { selectedSub, selectedSubCost } from '../runtime/kit-composition.mjs';
 import { updateSplatlingStages } from '../../local-quality/splatling-reticle.mjs';
+import { chargerScopeFactor } from '../../../inkwave-public/src/game/chargerTuning.js';
 
 // #594: Splatoon 3 withholds the charge-reticle cluster of charging weapons (Charger,
 // Heavy Splatling) while they are idle. The lifecycle gate must live in the installed
@@ -33,10 +34,13 @@ class Classes {
   toggle(n, on = !this.contains(n)) { on ? this.add(n) : this.remove(n); return on; }
 }
 class El {
-  constructor() { this.classList = new Classes(); this.style = { setProperty: (k, v) => { this.style[k] = v; } }; this.dataset = {}; this.innerHTML = ''; }
+  constructor() { this.classList = new Classes(); this.style = { setProperty: (k, v) => { this.style[k] = v; } }; this.dataset = {}; this._innerHTML = ''; this._parts = new Map(); }
+  set innerHTML(value) { this._innerHTML = String(value); this._parts.clear(); }
+  get innerHTML() { return this._innerHTML; }
   set className(v) { this.classList.names = new Set(String(v).split(/\s+/).filter(Boolean)); }
   get className() { return [...this.classList.names].join(' '); }
-  querySelector() { return new El(); }
+  querySelector(selector) { if (!this._parts.has(selector)) this._parts.set(selector, new El()); return this._parts.get(selector); }
+  contains(node) { return node === this || [...this._parts.values()].some(child => child.contains(node)); }
   remove() {}
   insertAdjacentHTML() {}
   setAttribute(k, v) { this[k] = v; }
@@ -56,11 +60,11 @@ function rig({ local = null } = {}) {
   const Hud = vm.runInNewContext(`${helper}\nclass Hud {\n${methods}\n}; Hud`, {
     WEAPONS, clamp, specialIcon: () => '<svg></svg>', G: {}, innerWidth: 1280, innerHeight: 720,
     SUB: { bomb: { id: 'bomb', inkCost: 70 } }, SUB_ICONS: { bomb: '' },
-    applyShotGuide, selectedSub, selectedSubCost, updateSplatlingStages,
+    applyShotGuide, selectedSub, selectedSubCost, updateSplatlingStages, chargerScopeFactor,
   });
   const h = new Hud();
   Object.assign(h, {
-    _L: {}, _bloom: 0, _kick: 0, ret: new El(), xh: new El(), spIcon: new El(), shield: new El(), subChip: new El(),
+    _L: {}, _bloom: 0, _kick: 0, ret: new El(), xh: new El(), spIcon: new El(), shield: new El(), subChip: new El(), scopeMask: new El(),
     _local: () => local, _restart() {}, _snd() {},
   });
   return h;
