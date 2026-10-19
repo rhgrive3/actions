@@ -812,7 +812,7 @@ export function adaptSource(rel, code) {
       '<script type="module" src="./patches/splatoon3/bootstrap.mjs"></script>', 'entry');
     code = replaceOnce(code, '</head>',
       '<meta name="mobile-web-app-capable" content="yes">\n' +
-      '<meta name="apple-mobile-web-app-title" content="INKWAVE">\n' +
+      '<meta name="apple-mobile-web-app-title" content="ZEVANT">\n' +
       '<link rel="manifest" href="./patches/splatoon3/pwa/manifest.webmanifest">\n' +
       '<link rel="icon" type="image/svg+xml" href="./patches/splatoon3/pwa/icon.svg">\n' +
       '<link rel="apple-touch-icon" sizes="192x192" href="./patches/splatoon3/pwa/icon-192.png">\n' +
