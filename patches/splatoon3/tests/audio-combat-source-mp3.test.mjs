@@ -49,6 +49,8 @@ test('fully composed game routes Charger direct hits and splats to recorded S3 f
  const out=adaptBuildSource('src/main.js',source);
  assert.match(out,/playWeapon\?\.\('fx:combat',[^\n]*critical_hit/,'direct Charger contact has the original CriticalHit source');
  assert.match(out,/blasterHitCueKind\?\.\(attacker,weaponId\)==='direct'/,'Blaster burst keeps indirect category');
+ assert.match(out,/sourceActor==='WeaponSlosherLauncher'/,'Screw Slosher has special direct-hit feedback');
+ assert.match(out,/sourceActor==='WeaponShooterTripleMiddle'/,'H-3 has special direct-hit feedback');
  assert.match(out,/playWeapon\?\.\('fx:combat','splat'/,'confirmed local splat uses the original Pl source');
  assert.doesNotMatch(out,/G\.audio\?\.play\('hit_marker',/,'no synthesized hit click layered over MP3');
  assert.doesNotMatch(out,/G\.audio\?\.play\('splat_enemy',/,'no synthesized kill pop layered over MP3');
