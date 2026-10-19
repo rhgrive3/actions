@@ -15,17 +15,18 @@ test('range runner preserves 420s native admission and trusted route on each dev
 });
 test('shared helper honors existing range timeout and rejects denied admission',async()=>{
  for(const deny of [false,true]){
-  const window={__inkwave:{menus:{current:'main'}},__G:{match:null}},listeners=new Set(),timeouts=[];
-  const document={addEventListener:(_,f)=>listeners.add(f),removeEventListener:(_,f)=>listeners.delete(f)};
-  const run=(fn,arg)=>vm.runInNewContext('('+fn.toString()+')',{window,document})(arg);
+  const root={inert:false,parentNode:null,contains:e=>e===control,opacity:1},control={parentElement:root,disabled:false,opacity:1,closest:s=>s==='[data-nav]'?control:null};
+  const window={__inkwave:{menus:{current:'main',_scr:{name:'main',el:root}}},__G:{match:null}},listeners=new Set(),timeouts=[];
+  const document={querySelectorAll:()=>[control],addEventListener:(_,f)=>listeners.add(f),removeEventListener:(_,f)=>listeners.delete(f)};
+  const run=(fn,arg)=>vm.runInNewContext('('+fn.toString()+')',{window,document,getComputedStyle:e=>({opacity:String(e.opacity)})})(arg);
   const page={goto:async()=>{},evaluate:async(fn,arg)=>run(fn,arg),waitForFunction:async(fn,arg,o)=>{timeouts.push(o.timeout);assert(run(fn,arg),'native range admission');},locator:selector=>({tap:async o=>{
    timeouts.push(o.timeout);for(const f of [...listeners])f({type:'click',isTrusted:true,target:{closest:s=>s===selector?{}:null}});
-   if(selector.includes('"play"'))window.__inkwave.menus.current='mode';
+   if(selector.includes('"play"')){window.__inkwave.menus.current='mode';window.__inkwave.menus._scr.name='mode';}
    else if(!deny)window.__G.match={range:{},state:'playing'};
   }})};
   const promise=enterRangeFromMenu(page,'http://localhost',{touch:true,timeout:420000});
   if(deny)await assert.rejects(promise,/native range admission/);else assert.deepEqual((await promise).route,['main','mode','range']);
-  assert(timeouts.length>=5);assert(timeouts.every(t=>t===420000));
+  assert(timeouts.length>=7);assert.equal(timeouts.at(-1),420000);assert(timeouts.every(t=>t>0&&t<=420000));
  }
 });
 test('all existing gameplay, isolation, profiler and error gates remain present',()=>{
