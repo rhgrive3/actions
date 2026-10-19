@@ -16,7 +16,7 @@ export class StreamedTrack {
     this.source = engine.ctx.createMediaElementSource(element);
     this.source.connect(this.gain);
     this.gain.connect(engine.mix);
-    this._onError = () => this._fail();
+    this._onError = () => this._fail(this.element.error);
     element.addEventListener('error', this._onError);
   }
 
@@ -25,9 +25,9 @@ export class StreamedTrack {
   prime() {
     try {
       const started = this.element.play();
-      if (started && typeof started.catch === 'function') started.catch(() => this._fail());
-    } catch (_) {
-      Promise.resolve().then(() => this._fail());
+      if (started && typeof started.catch === 'function') started.catch(error => this._fail(error));
+    } catch (error) {
+      Promise.resolve().then(() => this._fail(error));
     }
   }
 
@@ -40,10 +40,10 @@ export class StreamedTrack {
     g.linearRampToValueAtTime(0.7, Math.max(now, at) + Math.max(0.01, duration));
     try {
       const started = this.element.play();
-      if (started && typeof started.catch === 'function') started.catch(() => this._fail());
-    } catch (_) {
-      // Let MusicEngine finish selecting the current player before starting its fallback.
-      Promise.resolve().then(() => this._fail());
+      if (started && typeof started.catch === 'function') started.catch(error => this._fail(error));
+    } catch (error) {
+      // Wait for MusicEngine to select the player before handling rejection.
+      Promise.resolve().then(() => this._fail(error));
     }
   }
 
@@ -66,10 +66,10 @@ export class StreamedTrack {
   pump() {}  // HTMLMediaElement schedules its own decoding and playback.
   setIntensity() {}  // A finished recording has no independent stem layers.
 
-  _fail() {
+  _fail(error) {
     if (this.failed || this.disposed) return;
     this.failed = true;
-    this.onFailure(this);
+    this.onFailure(this, error);
   }
 
   dispose() {

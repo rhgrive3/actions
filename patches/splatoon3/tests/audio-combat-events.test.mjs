@@ -58,9 +58,9 @@ test('production Charger player-hit and splat cues use source-specific MP3 only'
  assert.ok(index>0,'source replacement is inside full production composition');
  assert.ok(built.includes("const directBlaster=blasterHitCueKind(attacker,weaponId)==='direct'"),
    'direct Blaster contact uses the recorded sharp HitEf sample');
- assert.ok(built.includes("const recordedCue=(chargerCue==='combat:critical'||directBlaster)?'combat:critical':damage>=40?'combat:ink_focus_strong':'combat:ink_focus_normal'"),
-   'noncritical hits use the recorded normal/strong ink-impact cues and retain real charge criticals');
- for(const kind of ['combat:ink_focus_normal','combat:ink_focus_strong'])
+ assert.ok(built.includes("const recordedCue=(chargerCue==='combat:critical'||directBlaster)?'combat:critical':'combat:damage'"),
+   'noncritical hits use original HitEf_Damage while verified direct contacts use HitEf_CriticalHit');
+ for(const kind of ['combat:damage','combat:ink_focus_normal','combat:ink_focus_strong'])
    assert.ok(clip(kind,'fire'),'recorded impact asset must exist: '+kind);
  assert.ok(built.includes("G.audio?.playWeapon?.(recordedCue,'fire'"),
    'all locally credited hits route through the recorded-only bank');
