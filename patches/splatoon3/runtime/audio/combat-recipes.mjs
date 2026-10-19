@@ -9,4 +9,8 @@ export const COMBAT_AUDIO=Object.freeze({
   'combat:critical':make('combat:critical'),
   'combat:damage':make('combat:damage'),
   'combat:splat':make('combat:splat'),
+  // Source-backed optional variants; not inferred from undocumented SLINK rules.
+  'combat:ink_focus_normal':make('combat:ink_focus_normal'),
+  'combat:ink_focus_strong':make('combat:ink_focus_strong'),
+  'combat:splat_squid':make('combat:splat_squid'),
 });
