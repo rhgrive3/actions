@@ -105,7 +105,7 @@ test('ranked runtime suppresses carrier fire, splats a timed-out carrier, and re
   const effects = f.createRankedEffects({ ...f.installedRuntime, emit: f.emit }, timeoutMatch);
   effects.event({ kind: 'rainmaker-timeout', id: '0:0', pos: [0, 0, 0], team: 0 });
   effects.dispose();
-  assert.deepEqual(timeoutCalls, [{ attacker: null, cause: 'rainmaker' }]);
+  assert.deepEqual(timeoutCalls, [{ attacker: null, cause: 'rainmaker-timeout' }]);
 
   const stage = fixtureStage();
   const hostEngine = new f.RankedEngine('zones', stage);
