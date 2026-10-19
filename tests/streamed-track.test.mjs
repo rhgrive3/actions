@@ -132,7 +132,7 @@ test('MusicEngine preload primes exactly one live source, and GO reuses it', asy
   }
 });
 
-test('failed preload releases player and falls back without holding a silent decoder', async () => {
+test('failed preload releases player without substituting a synthesized soundtrack', async () => {
   const oldAudio = globalThis.Audio;
   let stopped = 0;
   class DeniedAudio {
@@ -160,5 +160,112 @@ test('failed preload releases player and falls back without holding a silent dec
   } finally {
     m.dispose();
     globalThis.Audio = oldAudio;
+  }
+});
+
+test('live browser never replaces Jet Arrow with the old battle or final-minute synth when MP3 is unavailable', () => {
+  const saved = { audio: globalThis.Audio, window: globalThis.window, timeout: globalThis.setTimeout, clear: globalThis.clearTimeout };
+  const jobs = [];
+  const fake = () => ({ value: 0, cancelScheduledValues() {}, setValueAtTime(v) { this.value = v; }, linearRampToValueAtTime(v) { this.value = v; }, setTargetAtTime(v) { this.value = v; } });
+  globalThis.window = {};
+  globalThis.Audio = undefined;
+  globalThis.setTimeout = (fn, ms) => { const job = { fn, ms, canceled: false }; jobs.push(job); return job; };
+  globalThis.clearTimeout = job => { job.canceled = true; };
+  const m = new MusicEngine();
+  m.ctx = { currentTime: 2, createGain: () => ({ gain: fake(), connect() {}, disconnect() {} }) };
+  m.offline = false;
+  m._tick = () => {};
+  let errors = 0;
+  m.onFileError = () => { errors++; };
+  try {
+    m.play('battle');
+    assert.equal(m.current, null, 'unsupported media must leave BGM silent');
+    assert.equal(m.players.length, 0, 'never allocate legacy battle Player');
+    assert.equal(jobs.length, 1, 'first Jet Arrow retry scheduled');
+    m.play('battle_final', { fade: 0 });
+    assert.equal(m.current, null, 'one-minute event must not play the old final-minute song');
+    assert.equal(m._desiredTrack, 'battle');
+    while (jobs.length) {
+      const job = jobs.shift();
+      if (!job.canceled) job.fn();
+    }
+    assert.equal(m._fileRetryCount, 2, 'exactly two bounded MP3 retries');
+    assert.equal(m.players.length, 0);
+    assert.equal(errors, 1, 'notify only after MP3 retries have failed');
+    m.play('battle_final', { fade: 0 });
+    assert.equal(errors, 1, 'final minute must not trigger another error toast');
+    assert.equal(m.current, null, 'silence is preferable to a substituted track');
+  } finally {
+    m.dispose();
+    globalThis.Audio = saved.audio;
+    if (saved.window === undefined) delete globalThis.window; else globalThis.window = saved.window;
+    globalThis.setTimeout = saved.timeout;
+    globalThis.clearTimeout = saved.clear;
+  }
+});
+
+test('live final-minute event leaves the same Jet Arrow decoder playing', async () => {
+  const original = { audio: globalThis.Audio, window: globalThis.window };
+  const elements = [], sources = [];
+  class AudioFile {
+    constructor() { this.listeners = new Map(); this.plays = 0; this.currentTime = 0; elements.push(this); }
+    play() { this.plays++; return Promise.resolve(); }
+    pause() {}
+    load() {}
+    removeAttribute() {}
+    addEventListener(name, callback) { this.listeners.set(name, callback); }
+    removeEventListener(name) { this.listeners.delete(name); }
+  }
+  const param = () => ({ value: 0, cancelScheduledValues() {}, setValueAtTime(v) { this.value = v; }, linearRampToValueAtTime(v) { this.value = v; }, setTargetAtTime(v) { this.value = v; } });
+  const node = () => ({ gain: param(), connect() {}, disconnect() {} });
+  globalThis.Audio = AudioFile;
+  globalThis.window = {};
+  const m = new MusicEngine();
+  m.ctx = { currentTime: 3, createGain: node, createMediaElementSource: element => { sources.push(element); return node(); } };
+  m.offline = false;
+  m.mix = node(); m.dA = { delayTime: param() }; m.dB = { delayTime: param() };
+  m._tick = () => {};
+  try {
+    m.play('battle');
+    await Promise.resolve();
+    const originalPlayer = m.current;
+    assert.ok(originalPlayer instanceof StreamedTrack);
+    m.play('battle_final', { fade: 0 });
+    assert.equal(m.current, originalPlayer, 'Jet Arrow continues through the last minute');
+    assert.equal(m.players.length, 1);
+    assert.equal(elements.length, 1);
+    assert.equal(sources.length, 1, 'do not double-connect the decoder');
+  } finally {
+    m.dispose();
+    globalThis.Audio = original.audio;
+    if (original.window === undefined) delete globalThis.window; else globalThis.window = original.window;
+  }
+});
+
+test('live retry is cancelled when the match soundtrack stops', () => {
+  const saved = { audio: globalThis.Audio, window: globalThis.window, timeout: globalThis.setTimeout, clear: globalThis.clearTimeout };
+  const scheduled = [];
+  globalThis.Audio = undefined;
+  globalThis.window = {};
+  globalThis.setTimeout = fn => { const task = { fn, cleared: false }; scheduled.push(task); return task; };
+  globalThis.clearTimeout = task => { task.cleared = true; };
+  const m = new MusicEngine();
+  m.ctx = { currentTime: 4 };
+  m.offline = false;
+  m._tick = () => {};
+  try {
+    m.play('battle');
+    assert.equal(scheduled.length, 1);
+    m.stop();
+    assert.equal(scheduled[0].cleared, true, 'quitting the match cancels pending network retries');
+    assert.equal(m._desiredTrack, null);
+    assert.equal(m.players.length, 0);
+    assert.equal(m._fileRetryTimer, null);
+  } finally {
+    m.dispose();
+    globalThis.Audio = saved.audio;
+    if (saved.window === undefined) delete globalThis.window; else globalThis.window = saved.window;
+    globalThis.setTimeout = saved.timeout;
+    globalThis.clearTimeout = saved.clear;
   }
 });
