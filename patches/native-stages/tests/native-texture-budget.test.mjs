@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { nativeStageTextureLimit } from '../runtime/native-texture-budget.mjs';
+import { nativeStageTextureLimit, nativeStageTextureCaps } from '../runtime/native-texture-budget.mjs';
 
 const manifest = (materialCount, mapsPerMaterial = true, vertices = 150001) => ({
   geometry: { vertices },
@@ -38,4 +38,20 @@ test('repeated references count once and missing metadata never crashes', () => 
   }
   assert.equal(nativeStageTextureLimit(reused,'high',{deviceMemoryGB:4}),2048);
   assert.equal(nativeStageTextureLimit(null,'high'),4096);
+});
+
+test('large scenes preserve colour, cutout and signage textures ahead of fine PBR detail', () => {
+  const dense=manifest(40);
+  const mobile=nativeStageTextureCaps(dense,'high',{mobile:true});
+  assert.equal(mobile.maxDimension,1024);
+  assert.equal(mobile.perRole.normal,512);
+  assert.equal(mobile.perRole.roughness,512);
+  assert.equal(mobile.perRole.albedo,undefined);
+  assert.equal(mobile.perRole.opacity,undefined);
+  assert.equal(mobile.perRole.emissive,undefined);
+  const desktop=nativeStageTextureCaps(dense,'high',{deviceMemoryGB:16});
+  assert.equal(desktop.maxDimension,2048);
+  assert.equal(desktop.perRole.roughness,1024);
+  assert.equal(desktop.perRole.normal,undefined);
+  assert.equal(nativeStageTextureCaps(manifest(2,true,1000),'high').maxDimension,4096);
 });
