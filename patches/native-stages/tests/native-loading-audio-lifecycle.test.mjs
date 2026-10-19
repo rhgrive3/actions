@@ -64,3 +64,8 @@ for (const [label, start, end] of transitions) {
     assert.equal(G.match, null);
   });
 }
+
+test('paused attract update and pending demo reset cannot spawn bots during native loading', () => {
+  assert.match(built, /if \(m\.attract && !m\.paused\) this\._updateAttract\(dt\);/);
+  assert.match(built, /if \(!this\.match\?\.attract \|\| this\.match\.paused\) return;/);
+});
