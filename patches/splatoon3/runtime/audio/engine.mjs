@@ -69,7 +69,9 @@ export function installWeaponAudioEngine(Engine){
     const bank=this.weaponBank(),loader=this._realS3Loader;
     if(!bank||!loader)throw new Error('録音SEを再生するAudioContextを初期化できません');
     // Source hit/splat cues preload concurrently with the selected shot.
-    const recordedCombatReady=this.prepareRecordedCombatCues?.();
+    // Settle the independent prefetch immediately; do not leak an unhandled
+    // rejection while the weapon's existing fetch/decode is still pending.
+    const recordedCombatReady=this.prepareRecordedCombatCues?.().then(()=>null,e=>e);
     // A failed HTTP/decode cannot hold the game's loading transition forever.
     // This bound affects START only, never the actual projectile fire cadence.
     let timeoutId;
@@ -105,7 +107,10 @@ export function installWeaponAudioEngine(Engine){
       finally{clearTimeout(wakeTimeout);}
       if(this.ctx.state!=='running')throw new Error('音声出力が有効ではありません。もう一度STARTを押してください');
     }
-    if(recordedCombatReady)await recordedCombatReady;
+    if(recordedCombatReady){
+      const combatError=await recordedCombatReady;
+      if(combatError)throw combatError;
+    }
     return {ready:true,id,recording:'fire'};
   };
   // Preserve the exact admitted projectile clock: never delay a missed one-shot.
