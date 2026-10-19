@@ -7,6 +7,8 @@ on:
       - 'patches/splatoon3/ranked*.mjs'
       - 'patches/splatoon3/tests/ranked*.mjs'
       - 'scripts/check-inkwave-ranked-browser.mjs'
+      - 'scripts/lib/ranked-boot-diagnostics.mjs'
+      - 'scripts/tests/ranked-boot-diagnostics.test.mjs'
       - '.github/workflows/validate-inkwave-ranked.yml'
       - '.github/workflows/pages-inkwave.yml'
       - 'scripts/tests/inkwave-ranked-pages-sequencing.test.mjs'
@@ -16,6 +18,8 @@ on:
       - 'patches/splatoon3/ranked*.mjs'
       - 'patches/splatoon3/tests/ranked*.mjs'
       - 'scripts/check-inkwave-ranked-browser.mjs'
+      - 'scripts/lib/ranked-boot-diagnostics.mjs'
+      - 'scripts/tests/ranked-boot-diagnostics.test.mjs'
       - 'scripts/inkwave-source-composition.mjs'
       - '.github/workflows/validate-inkwave-ranked.yml'
       - '.github/workflows/pages-inkwave.yml'
@@ -39,6 +43,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Pages sequencing regression
         run: node --test scripts/tests/inkwave-ranked-pages-sequencing.test.mjs
+      - name: Ranked boot failure diagnostics regression
+        run: node --test scripts/tests/ranked-boot-diagnostics.test.mjs
       - name: Ranked rule and native integration regressions
         env:
           INKWAVE_RANKED_REFERENCE: ${{ github.workspace }}/patches/splatoon3/runtime/ranked

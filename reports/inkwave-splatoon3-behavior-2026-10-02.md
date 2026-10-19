@@ -5325,6 +5325,8 @@ main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.
 
 ## 2026-10-19：Rainmaker 公開 smoke の静止標的に残る武器動作を初期化
 
+2026-10-19追記（PR #1638 / #1608）：公開起動時のcritical配信失敗を早期記録するharness診断を検証中。静止標的の修正を保持し、元の比較記録を[専用報告](inkwave-ranked-boot-diagnostics-2026-10-19.md)へ全byte保存した。180秒条件とidentity判定を維持し、再読込は追加しない。
+
 公開 main `fbed2d4ef5a2708307036c167d0a9df0461e8597` は Pages artifact と公開 manifest/runtime の同一性が確認できたが、その後の公開 Rainmaker smoke が damage `[]` で失敗した（[run39226266615 / job117973196264](https://github.com/rhgrive3/actions/actions/runs/39226266615/job/117973196264)）。trace は HTTP503・capture timeout・boot例外ではなく、1発の60/180攻撃に対する標的移動後の実assert不一致。
 
 実 Actor/WeaponRunner/Physics の平床診断では、残存Splatana charge＋前入力履歴や Dualies roll/slip が、標的の速度とintentだけを0にしても後続updateで移動を発生させる。静止標的の準備で既存 `WeaponRunner.reset()` を呼び、武器/charge/roll/slip等を前後receiptへ記録する。変更はbrowser QAと専用回帰だけで、game runtime・boot・timeout・shot1・damage60/180・壁800→380の判定は維持。
