@@ -268,3 +268,23 @@ test('native opt-in tracer counts actual BVH triangles and nested ground, brain 
  assert.strictEqual(source.ray,originalRay);
  assert.strictEqual(f.game.match.update,fixtureUpdate,'tracer restores the match wrapper installed before profiling');
 });
+
+test('native profiler drops retired world and actor hooks after a stage switch without retaining owners',()=>{
+ const f=worldFixture(),G=f.env.__G;
+ const oldWorld={native:true,triangleWorld:{queryCount:0,triangleTests:0,ray(){}}};
+ const actor={update(){},bot:{update(){}},character:{update(){}}};
+ G.level=oldWorld; G.physics={groundProbe(){}};
+ G.nav={path(){}};f.game.match.actors=[actor];G.match=f.game.match;
+ const originalActor=actor.update,originalBrain=actor.bot.update;
+ const tracer=installHitchTracer(f.game,{env:f.env,now:f.now});
+ f.game._frame(.016);tracer.record(f.now(),18,{phase:'battle'});
+ assert.notStrictEqual(actor.update,originalActor);
+ assert.notStrictEqual(actor.bot.update,originalBrain);
+ G.level={native:false};G.physics={groundProbe(){}};
+ G.nav={path(){}};f.game.match.actors=[];
+ f.game._frame(.016);tracer.record(f.now(),18,{phase:'battle'});
+ assert.strictEqual(actor.update,originalActor,'retired actor hook must be removed');
+ assert.strictEqual(actor.bot.update,originalBrain,'retired bot hook must be removed');
+ assert.equal(tracer.snapshot().latest.sourceBVH,null);
+ tracer.dispose();
+});
