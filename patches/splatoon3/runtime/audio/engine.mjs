@@ -13,7 +13,7 @@ export function installWeaponAudioEngine(Engine){
   // not to an early (null) global audio instance.
   p.blasterHitCuePitch=blasterHitCuePitch;
   p.blasterHitCueKind=blasterHitCueKind;
-  p.combatFeedbackCue=(actor,weaponId,damage)=>combatFeedbackCue(actor,weaponId,damage,blasterHitCueKind);
+  p.combatFeedbackCue=(actor,weaponId,damage,charge)=>combatFeedbackCue(actor,weaponId,damage,blasterHitCueKind,charge);
   // v10 defined resolveWeaponSound but never connected AudioEngine._def to it.
   // A real game call to playWeapon therefore always hit the legacy SFX registry.
   const originalDef=p._def;
