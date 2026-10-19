@@ -999,7 +999,7 @@ export class Projectiles {
       const bh = G.boss.segHit(m, _v2.copy(m).addScaledVector(dir, len), 0.1);
       if (bh && (!victim || bh.dist < victim.d)) { victim = null; len = bh.dist; bossHit = true; G.boss.hit(a, dmg, bh.target, 'charger', bh.point.clone()); }
     }
-    if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger', {chargerDirect:true,charge}); }
+    if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger', undefined, {chargerDirect:true,charge}); }
     // paint along the line (projected to the ground)
     let area = 0;
     const step = w.lineSplatEvery;
@@ -1153,7 +1153,7 @@ export class Projectiles {
   }
 
   // ---- damage routing
-  applyHit(attacker, victim, dmg, weaponId, hitMeta = null) {
+  applyHit(attacker, victim, dmg, weaponId) {
     if (!victim.alive || victim.team === attacker.team) return;
     const nm = G.netm;
     let killed = false;
@@ -1163,7 +1163,7 @@ export class Projectiles {
     else killed = victim.damage(dmg, attacker, weaponId);
     // Presentation-only source identity. HP, network damage and kill ownership
     // remain under the existing authoritative applyHit path.
-    emit('hit', { attacker, victim, damage: dmg, killed, weaponId, hitMeta });
+    emit('hit', { attacker, victim, damage: dmg, killed, weaponId, hitMeta:arguments[5]??null });
     // ink smacking the body, at the body (heavier + lower for big hits); the UI tick / kill sting are main.js's
     if (G.audio && (attacker.isLocal || victim.isLocal || victim._nearCamera?.())) {
       _vh.copy(victim.pos); _vh.y += victim.form === 'squid' ? 0.3 : 0.9;
