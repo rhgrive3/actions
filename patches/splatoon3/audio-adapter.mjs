@@ -30,6 +30,19 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir, hand });", "emit('weapon:fire', { actor:a,weapon:w.id,muzzle:m,dir,hand,mode:a.weaponRunner?.s3Turret||a.weaponRunner?.lockT>0?'turret':'normal' });");
     code=code.replace("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone(), hand });", "emit('weapon:fire', { actor:a,weapon:w.id,muzzle:m.clone(),dir:dir.clone(),hand,mode:a.weaponRunner?.s3Turret||a.weaponRunner?.lockT>0?'turret':'normal' });");
     code=code.replace("weapon: w.id, projectileFirst,", "weapon:w.id,vertical:!!a.weaponRunner?.s3FlickVertical,projectileFirst,");
+    // Preserve the admitted Charger shot's charge status through the actual
+    // player-body hit event. Damage/kill thresholds alone do NOT determine
+    // Nintendo's sharp direct-hit confirmation.
+    code=once(code,
+      "if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger'); }",
+      "if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger', {charge,direct:true}); }",
+      'native Charger source-hit metadata');
+    code=once(code,'applyHit(attacker, victim, dmg, weaponId) {',
+      'applyHit(attacker, victim, dmg, weaponId, combatHit = null) {',
+      'native hit metadata acceptance');
+    code=once(code,"emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, charge:combatHit?.charge, direct:combatHit?.direct });",
+      'native admitted hit event metadata');
 
     code=code.replace(/emit\('weapon:impact', \{ pos: (_v|at|hit\.point|c),/g,"emit('weapon:impact', { actor:p.owner, weapon:p.wid, pos: $1,");
     code=code.replace("emit('weapon:impact', { pos: end,","emit('weapon:impact', { actor:a,weapon:w.id,pos:end,");
@@ -113,10 +126,16 @@ export function adaptWeaponAudio(rel,code){
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
-      "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
+      "on('hit', ({ attacker, victim, damage, killed, weaponId, charge, direct }) => {",
+      'recorded body hit provenance');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
-      "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
-    // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
+      "G.audio?.play(G.audio?.isSourceCriticalHit?.({weaponId,charge,direct}) ? 's3_critical_hit' : 'hit_marker', { volume: 0.6 });",
+      'recorded direct-hit/body-damage selection');
+    code=once(code,"G.audio?.play('splat_enemy', { volume: 0.9 });",
+      "G.audio?.play(victim.form==='squid' ? 's3_splat_squid' : 'splat_enemy', { volume: 0.9 });",
+      'recorded player splat FX; squid vs humanoid');
+    // Ship real 2022 death/body/critical MP3s. No synthesized substitute is
+    // allowed for these cues while awaiting fetch+hash+decode.
   }
   if(rel==='src/audio/music.js'){
     code="import { installOriginalAudioScore } from '../../patches/splatoon3/runtime/audio/music-score.mjs';\n"+code;
@@ -138,6 +157,12 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,
       "G.audio?.play(r.family==='charger'?'shoot_charger':r.family==='blaster'?'shoot_blaster':'shoot_shooter',\n        {pos:a.isLocal?undefined:origin,volume:.45});",
       'void 0;', 'catalogue shared-shot dedup');
+    // The descriptor carries the charge of the specific admitted projectile;
+    // never read the mutable runner charge after the shot has released.
+    code=once(code,
+      "this.applyHit(p.owner,target,amount,p.wid))",
+      "this.applyHit(p.owner,target,amount,p.wid,{charge:d.charge,direct:true}))",
+      'catalog Charger impact charge metadata');
   }
   return code;
 }
