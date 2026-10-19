@@ -67,7 +67,7 @@ test('real delayed Slosher fire emits its birth before impact with no trail or s
  const tagged=sender.nm.out.filter(e=>e[1]==='s'&&e[15]?.[0]==='inkwave-slosher-impact-v1');assert.equal(tagged.length,1);
  for(const e of sender.nm.out)receive(receiver,e);same(sender,receiver);
 });
-test('expired missing birth remains closed and no longer blocks unrelated paint',async()=>{const h=await pair();tick(h.receiver,[h.rows[1]],1000.1);h.receiver.f.clock.advance(3);tick(h.receiver,[h.birth],1000);drain(h.receiver);assert.ok(h.receiver.f.G.paint.grid.every(x=>x===0));h.sender.nm.out=[];h.sender.f.G.paint.splat(new h.sender.f.THREE.Vector3(12,0,0),1,0,{seed:.5});tick(h.receiver,h.sender.nm.out,1000.2);drain(h.receiver);assert.ok(h.receiver.f.G.paint.grid.some(x=>x!==0));});
+test('expired missing birth remains closed and no longer blocks unrelated paint',async()=>{const h=await pair();tick(h.receiver,[h.rows[1]],1000.1);h.receiver.f.clock.advance(3);tick(h.receiver,[h.birth],1000);drain(h.receiver);assert.ok(h.receiver.f.G.paint.grid.every(x=>x===0));h.sender.nm.out=[];h.sender.f.G.paint.splat(new h.sender.f.THREE.Vector3(12,0,0),1,0,{seed:.5,claimOwner:h.sender.actors[0]});tick(h.receiver,h.sender.nm.out,1000.2);drain(h.receiver);assert.ok(h.receiver.f.G.paint.grid.some(x=>x!==0));});
 test('predeadline core commits once after an authenticated earlier birth envelope',async()=>{
  const h=await pair();h.receiver.nm.s.hostId='b';h.receiver.nm.s.isHost=true;
  tick(h.receiver,[h.birth],1000);drain(h.receiver);

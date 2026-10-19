@@ -38,6 +38,11 @@ async function client(id, memberIds = ['a', 'b', 'c'], host = 'a', large = false
   f.G.time = 12;
   f.G.paint = new f.PaintSystem(paintRenderer(f.THREE), paintLevel(f.THREE, large ? 20 : 2, large ? -10 : 0), { atlasSize: large ? 1024 : 128, maxDensity: large ? 30 : 8, cell: 0.25 });
   const paint = f.G.paint, pushQuad = paint._pushQuad.bind(paint), emitGrowth = paint._emitGrowth.bind(paint);
+  // These ordering/numeric tests model an explicit local actor producer.
+  const nativeSplat = paint.splat;
+  paint.splat = function(c, r, team, opts = {}) {
+    return nativeSplat.call(this, c, r, team, { claimOwner: actors.find(a => a.owner === id && a.team === team), ...opts });
+  };
   paint._testQuadRecords = [];
   paint._emitGrowth = (growth, ...args) => {
     paint._testCurrentOrder = growth.netOrderId;
@@ -194,6 +199,7 @@ test('recreated NetMatch keeps owner event sequence and a tenth player can repli
   assert.deepEqual(Array.from(observer.paint.grid), Array.from(sender.paint.grid));
 
   const restarted = sender.f.makeNetMatch(sender.session, { id: 'canonical-paint-reconnect' });
+  sender.f.bind(restarted, sender.actors);
   sender.paint.splat(new sender.f.THREE.Vector3(1.5, 0, 1), 0.2, 1, { seed: 0.19 });
   const afterReconnect = restarted.out.at(-1);
   assert.equal(afterReconnect._netSeq, first._netSeq + 1, 'owner sequence survives NetMatch recreation');
@@ -284,8 +290,8 @@ test('opposing temporal paint converges after reverse concurrent delivery at 30/
     const c = await client('c', undefined, 'a', true);
     a.f.G.time = 120; b.f.G.time = 10; c.f.G.time = 10000;
     const center = new a.f.THREE.Vector3(0, 0, 0);
-    a.paint.splat(center, 2, 0, { seed: 1 / 26 });
-    b.paint.splat(center, 2.5, 1, { seed: 0.47 });
+    a.paint.splat(center, 2, 0, { seed: 1 / 26, claimOwner: a.actors[0] });
+    b.paint.splat(center, 2.5, 1, { seed: 0.47, claimOwner: b.actors[1] });
     const first = a.nm.out.at(-1), second = b.nm.out.at(-1);
     applyRemote(a, 'b', second);
     applyRemote(b, 'a', first);
@@ -405,8 +411,8 @@ test('opposing wall drips converge after older paint arrives past the newer grow
       { atlasSize: 1024, maxDensity: 30, cell: 0.25 });
   }
   const center = new a.f.THREE.Vector3(0, 0, 0);
-  a.paint.splat(center, 2, 0, { seed: 1 / 26 });
-  b.paint.splat(center, 2.5, 1, { seed: 0.47 });
+  a.paint.splat(center, 2, 0, { seed: 1 / 26, claimOwner: a.actors[0] });
+  b.paint.splat(center, 2.5, 1, { seed: 0.47, claimOwner: b.actors[1] });
   const first = a.nm.out.at(-1), second = b.nm.out.at(-1);
   applyRemote(c, 'a', first); applyRemote(c, 'b', second);
   applyRemote(d, 'b', second); settle(d); applyRemote(d, 'a', first);

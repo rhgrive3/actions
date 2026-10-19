@@ -20,3 +20,14 @@ Cleanup regression: after an early network failure, delayed start completion can
 The publication candidate is stacked on PR #1637, commit `35caa2427d7a161d2c756c95714aa119a746d1a4` (itself based on main `fbed2d4ef5a2708307036c167d0a9df0461e8597`). Its target reset, four-mode proof bodies, weapon-state receipts and dedicated target regression remain unchanged. The central behavior report preserves that base's complete 1,224,971-byte prefix and appends only the boot-diagnostics record.
 
 Independent composition acceptance: diagnostic tests 12/12 and exact target consumer tests 7/7. These are CPU/source checks; new-head native browser and complete CI are required before integration. The historical HTTP 503 is retained as a delivery failure, without asserting that its upstream cause has been fixed.
+
+
+## Original central comparison record (byte-preserved)
+
+## 2026-10-19: Issue #1608 公開 boot 失敗の診断改善候補
+
+旧 run 38600452106 attempt 1 の保存 trace では、同一 version の `runtime/audio/weapon-recipes.mjs` が HTTP 503 を返し、起動失敗表示後も harness が 180 秒待機していた。PR #1625 の公開 identity／deploy 順序修正とは原因を区別する。
+
+別候補は同一 origin・アプリ配下の document/JavaScript 配信失敗と明示 loader failure を早期失敗として記録する。reload は追加せず、optional 音声・画像は critical 判定の対象外。各 failure の時刻、検証対象 inputHash/revision、runAttempt を保存し、初回障害を後の run 成功で消さない。既存の厳格 identity と pageerror 検査、180 秒 readiness、failure result／画像／trace 保存を保持。
+
+PR #1630 d947 の target setup を基準に全バイト保持。診断・cleanup・CI 導線の専用 12/12、既存 target consumer 3/3 成功。親による専用 12/12 独立再実行も成功。現在はローカル候補で、公開・新 exact-head CI・本番 browser は未実施。これは配信障害自体の解消報告ではない。

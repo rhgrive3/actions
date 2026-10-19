@@ -5309,7 +5309,13 @@ root yawの保持に加え、転がしの接地軸を床の接線に保持する
 main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.5が残り、HUDは+12、次のガチアサリ投入で本カウント77→68.5となる本番consumer差を再現。InkipediaのS2/S3共通Scoring節（取得2026-10-19、reported revision 730528）が示す閉鎖時の半分切捨てに合わせ、窓全体の得点を合計した後で新規ペナルティだけを整数化した。S3Wikiの小アサリ1個あたり1.5は合計前に切り捨てない。双方チーム・3種dt、複数窓、残ペナルティ、延長、実Match/HUD/host-client consumerを回帰。今回の根拠はWikiでありSwitch実機で端数処理を新規計測したものではない。投射物理・表示モデル・PR1627の別イベント修復とは分離する。詳細は [専用記録](inkwave-clam-penalty-consumer-2026-10-19.md)。
 
 
+### 2026-10-19：#522 塗りイベントの送信者・所有者検証
+
+公開版のオンライン塗りを、リレーが確定した送信者・試合ID・連番と、発生元アクターの現所有者・所有権世代に結び付けた。所有者不一致・旧世代・発生元不明の塗りはCPUグリッド、塗りポイント、スペシャル増加、勝敗集計の前で拒否する。被撃破時の塗りは被撃破者の所有者、ボスとエリア確保は明示されたホストの権限で扱う。正規の塗り形状、武器の数値、シード、30/60/120 Hzの再生順序は維持する。参照は既存のスプラトゥーン3 Ver. 11.3.0。任天堂の非公開通信方式との一致や、新規のSwitch実機計測は主張しない。これは既存のクライアント所有者主導のシミュレーション内の送信者検証であり、所有者自身の不正なシミュレーションまで検証するサーバー化ではない。詳細と確認範囲は [専用記録](inkwave-paint-authority-522-2026-10-19.md)。
+
 ## 2026-10-19：Rainmaker 公開 smoke の静止標的に残る武器動作を初期化
+
+2026-10-19追記（PR #1638 / #1608）：公開起動時のcritical配信失敗を早期記録するharness診断を検証中。静止標的の修正を保持し、元の比較記録を[専用報告](inkwave-ranked-boot-diagnostics-2026-10-19.md)へ全byte保存した。180秒条件とidentity判定を維持し、再読込は追加しない。
 
 公開 main `fbed2d4ef5a2708307036c167d0a9df0461e8597` は Pages artifact と公開 manifest/runtime の同一性が確認できたが、その後の公開 Rainmaker smoke が damage `[]` で失敗した（[run39226266615 / job117973196264](https://github.com/rhgrive3/actions/actions/runs/39226266615/job/117973196264)）。trace は HTTP503・capture timeout・boot例外ではなく、1発の60/180攻撃に対する標的移動後の実assert不一致。
 
@@ -5317,10 +5323,6 @@ main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.
 
 専用7/7成功、reset1行だけを除く負対照は3件失敗。普通シューター、Splatana3種のcharge有無、native Dualies roll、catalogue `s3-maneuver-long` のrollと別slipを実consumerで確認。旧失敗の移動量はcharged `s3-saber-lite` と一致するが、旧receiptに武器状態がないため歴史的原因の一意確定には至らない。参照版11.3.0の実機比較や本家新数値の変更ではなく、静止QA条件の修復。固定headのCI/browser/公開後検証はこの記録時点で未完了。詳細は [専用短report](rainmaker-proof-weapon-reset-2026-10-19.md)。
 
-## 2026-10-19: Issue #1608 公開 boot 失敗の診断改善候補
+## 2026-10-19：P0 #264 / #878 の残存境界
 
-旧 run 38600452106 attempt 1 の保存 trace では、同一 version の `runtime/audio/weapon-recipes.mjs` が HTTP 503 を返し、起動失敗表示後も harness が 180 秒待機していた。PR #1625 の公開 identity／deploy 順序修正とは原因を区別する。
-
-別候補は同一 origin・アプリ配下の document/JavaScript 配信失敗と明示 loader failure を早期失敗として記録する。reload は追加せず、optional 音声・画像は critical 判定の対象外。各 failure の時刻、検証対象 inputHash/revision、runAttempt を保存し、初回障害を後の run 成功で消さない。既存の厳格 identity と pageerror 検査、180 秒 readiness、failure result／画像／trace 保存を保持。
-
-PR #1630 d947 の target setup を基準に全バイト保持。診断・cleanup・CI 導線の専用 12/12、既存 target consumer 3/3 成功。親による専用 12/12 独立再実行も成功。現在はローカル候補で、公開・新 exact-head CI・本番 browser は未実施。これは配信障害自体の解消報告ではない。
+本番で残る縁の飛沫が固定5点から抜ける判定漏れを、円/楕円coreとセルの交差判定で補完。微小bodyがセルを持たなくても成長を保持し、native-stageの早期除外も同じ規則へ接続する。旧遠方spatterは既に無効で、再導入しない。CPUは既存0.25 m格子の面積を所有し、pixel完全一致とは主張しない。ホストのRAFとtimeoutが共に止まりsocketだけ残る場合、ゲストは既存finish待機＋通信復旧猶予後に通常の通信切断退出へ進み、架空の勝敗を作らない。比較版11.3.0、通常塗りとonline Turfの条件。実Switchの切断方針・物理端末GPUは未確認。詳細と検証範囲は [P0記録](inkwave-paint-host-p0-2026-10-19.md)。

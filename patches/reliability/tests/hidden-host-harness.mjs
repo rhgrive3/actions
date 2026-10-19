@@ -33,7 +33,7 @@ export async function pair(){
   const p={f,s,m,nm,game,env,socket,frame(){const entry=raf.entries().next().value;if(entry){raf.delete(entry[0]);entry[1](ms);}},hide(value){env.document.hidden=value;env.document.dispatchEvent(new Event('visibilitychange'));},runTimers(){for(const [id,t] of [...timers])if(t.at<=ms){timers.delete(id);t.fn();}},timerCount(){return timers.size;},snapshot(){return {time:m.time,state:m.state,follower:m.follower,host:s.isHost,sends,physics,raf:raf.size,session:s.state,aborted};},close(){game.disposePlatform();owner.dispose();nm.dispose();}};participants.push(p);return p;
  }
  const host=await client('host'),guest=await client('guest');for(const p of participants){p.s._members=new Map([...relay.members].map(([id,m])=>[id,m.name]));p.s.lobby.players=[...relay.members].map(([id,m])=>({id,name:m.name,host:id===relay.hostId,team:0,ready:true}));}
- function frames(seconds,which=participants){for(let i=0;i<seconds*60;i++){ms+=1000/60;for(const p of participants)p.runTimers();for(const p of which)p.frame();}}
+ function frames(seconds,which=participants,{timers=true}={}){for(let i=0;i<seconds*60;i++){ms+=1000/60;if(timers)for(const p of participants)p.runTimers();for(const p of which)p.frame();}}
  for(const p of participants)p.frame();return {relay,host,guest,frames,close(){for(const p of participants)p.close();}};
 }
 
