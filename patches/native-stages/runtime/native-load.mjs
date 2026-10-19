@@ -26,8 +26,8 @@ export async function loadNativeData(id,signal){
  return data;
 }
 export async function loadNativeTextures(id,data,renderer,quality,signal,textureLimit){
- const cap=typeof textureLimit==='object' ? textureLimit.maxDimension : textureLimit;
- const roleCaps=typeof textureLimit==='object' ? textureLimit.perRole : null;
+ const cap=textureLimit && typeof textureLimit==='object' ? textureLimit.maxDimension : textureLimit;
+ const roleCaps=textureLimit && typeof textureLimit==='object' ? textureLimit.perRole : null;
  const jobs=new Map(),textures=new Map(),limit=Math.min(cap||Infinity,quality==='low'?512:quality==='high'?4096:1024);
  const materials=Object.values(data.manifest.materials);
  for(const src of materials){
