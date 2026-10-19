@@ -35,6 +35,18 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("emit('weapon:impact', { pos: end,","emit('weapon:impact', { actor:a,weapon:w.id,pos:end,");
     code=code.replace(/G\.audio\?\.play\('bomb_throw'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
     code=code.replace(/G\.audio\?\.play\('bomb_explode'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
+    // Preserve the exact admitted Charger projectile's charge on its existing
+    // authoritative hit event. Never read runner.charge after it has reset
+    // or guess from splash/kill state.
+    code=once(code,'  applyHit(attacker, victim, dmg, weaponId) {',
+      '  applyHit(attacker, victim, dmg, weaponId, shotCharge = null) {',
+      'charge-aware physical hit metadata');
+    code=once(code,"emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, ...(shotCharge == null ? {} : {charge: shotCharge}) });",
+      'source charge in admitted hit event');
+    code=once(code,"this.applyHit(a, victim.e, dmg, 'charger');",
+      "this.applyHit(a, victim.e, dmg, 'charger', charge);",
+      'native Charger projectile charge in body-hit event');
     // The weapon:fire event owns fire audio for local and remote actors. Keep game and VFX code intact.
     code=code.replace(/G\.audio\?\.play\('shoot_(?:shooter|dualies|splatling|blaster|charger)'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
     code=code.replace(/G\.audio\?\.play\('blaster_boom'\s*,\s*(\{[^{}]*\})\);/g,"if(!G.audio?.weaponBank?.()?.realOnly&&!G.audio?.weaponBank?.()?.has(p.wid,'explosion'))G.audio?.play('blaster_boom',$1);");
@@ -121,9 +133,9 @@ export function adaptWeaponAudio(rel,code){
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
-      "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
+      "on('hit', ({ attacker, victim, damage, killed, weaponId, charge }) => {",'source projectile charge in hit event');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
-      "G.audio?.playRecordedCombat?.(G.audio?.recordedCueForHit?.({attacker,weaponId,damage,killed}) || 'hit',{volume:0.7});",'source-recorded hit confirmation');
+      "G.audio?.playRecordedCombat?.(G.audio?.recordedCueForHit?.({attacker,weaponId,damage,killed,charge}) || 'hit',{volume:0.7});",'source-recorded hit confirmation');
     code=once(code,
       "G.audio?.play('splat_enemy', { volume: 0.9 });",
       "G.audio?.playRecordedCombat?.('splat',{volume:0.75}); G.audio?.playRecordedCombat?.('bubble',{volume:0.36});",
@@ -131,7 +143,7 @@ export function adaptWeaponAudio(rel,code){
     // A critical Charger/Blaster direct-hit may follow another damage
     // marker within 60ms: don't drop its distinctive original event.
     code=once(code,"if (G.time - lastHitSnd > 0.06) { lastHitSnd = G.time;",
-      "if (G.time - lastHitSnd > 0.06 || G.audio?.recordedCueForHit?.({attacker,weaponId,damage,killed})==='critical') { lastHitSnd = G.time;",
+      "if (G.time - lastHitSnd > 0.06 || G.audio?.recordedCueForHit?.({attacker,weaponId,damage,killed,charge})==='critical') { lastHitSnd = G.time;",
       'prioritise source critical hit over ordinary damage UI cooldown');
     // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
@@ -150,6 +162,10 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace(/emit\('weapon:impact',\s*\{\s*pos:/g,"emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:");
   }
   if(rel==='patches/splatoon3/runtime/main-weapon-catalog.mjs'){
+    code=once(code,
+      "this.applyHit(p.owner,target,amount,p.wid)",
+      "this.applyHit(p.owner,target,amount,p.wid,p.catalog?.descriptor?.charge)",
+      'catalogued source Charger release charge survives flight to the hit event');
     // Added S3 catalogue weapons already emit weapon:fire. Avoid a second
     // legacy family shot alongside the admitted weapon-specific real sample.
     code=once(code,
