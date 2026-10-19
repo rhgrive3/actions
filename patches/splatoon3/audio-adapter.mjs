@@ -44,6 +44,21 @@ export function adaptWeaponAudio(rel,code){
     for(const [old,event] of Object.entries({charger_charge:'charge',charger_full:'ready',roller_flick:'windup',roll:'roll',slosh_throw:'windup',splatling_wind:'windup',splatling_spin:'charge',splatling_ready:'ready'})){
       code=code.replace(new RegExp("G\\.audio\\?\\.(play|loop)\\('"+old+"',\\s*\\{",'g'),(_,method)=>`G.audio?.${method}Weapon?.(a.weapon.id, '${event}', { actor:a, `);
     }
+    // Direct damage confirmation is a separate audio event. Keep the fifth
+    // existing slosherVolleyId argument unchanged and append the shot charge
+    // ratio as a SIXTH optional argument. None of this changes damage math.
+    code=once(code,
+      'applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {',
+      'applyHit(attacker, victim, dmg, weaponId, slosherVolleyId, chargeFraction = null) {',
+      'admitted hit receives optional S3 Charger charge ratio');
+    code=once(code,
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, charge: chargeFraction });",
+      'published hit event carries original charge fraction');
+    code=once(code,
+      "this.applyHit(a, victim.e, dmg, 'charger');",
+      "this.applyHit(a, victim.e, dmg, 'charger', undefined, charge);",
+      'native Charger hit is classified by full or partial source shot');
     // Keep the confirmed MP3 direct-hit/damage notification from main.js
     // single-layered for the local attacker. Retain positional body impact
     // for remote victims and for damage the local player receives.
@@ -120,9 +135,9 @@ export function adaptWeaponAudio(rel,code){
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
-      "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
+      "on('hit', ({ attacker, victim, damage, killed, weaponId, charge }) => {",'Blaster hit event identity');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
-      "G.audio?.playWeapon?.('fx:combat', G.audio?.combatFeedbackCue?.(attacker,weaponId,damage)||'hit', { actor:attacker, volume:0.6 });",'recorded hit depends on admitted damage source, not equipped gun');
+      "G.audio?.playWeapon?.('fx:combat', G.audio?.combatFeedbackCue?.(attacker,weaponId,damage,charge)||'hit', { actor:attacker, volume:0.6 });",'recorded hit depends on admitted damage source, not equipped gun');
     code=once(code,"G.audio?.play('splat_enemy', { volume: 0.9 });",
       "G.audio?.playWeapon?.('fx:combat','splat',{actor:attacker,volume:.8});",
       'source-backed local enemy splat instead of parametric alert');
@@ -134,6 +149,12 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,'if (cur && fade > 0 && cur.song.bpm === song.bpm)',"if (opts.sync !== false && track !== 'battle_final' && cur && fade > 0 && cur.song.bpm === song.bpm)",'final minute grid');
     code=once(code,'let t0 = now + 0.06, sync = false;',"let t0 = Number.isFinite(opts.at) ? Math.max(now,opts.at) : now + (track==='battle_final' ? .015 : .06), sync = false;",'music clock');
   }
+  if(rel==='patches/splatoon3/runtime/weapons.mjs'){
+    code=once(code,
+      "this.applyHit(a, actor, w.damageMax, 'charger')",
+      "this.applyHit(a, actor, w.damageMax, 'charger', undefined, charge)",
+      'legacy full-through Charger accepted hit is tagged full charged');
+  }
   if(rel==='patches/splatoon3/runtime/weapons-charger-flight.mjs'){
     code=code.replace("emit('weapon:impact',{pos:job.pos,","emit('weapon:impact',{actor:job.owner,weapon:job.weapon?.id||'charger',pos:job.pos,");
   }
@@ -143,6 +164,10 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace(/emit\('weapon:impact',\s*\{\s*pos:/g,"emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:");
   }
   if(rel==='patches/splatoon3/runtime/main-weapon-catalog.mjs'){
+    code=once(code,
+      'this.applyHit(p.owner,target,amount,p.wid)',
+      'this.applyHit(p.owner,target,amount,p.wid,undefined,d.charge)',
+      'catalogue S3 Charger hit retains source charge metadata');
     // Added S3 catalogue weapons already emit weapon:fire. Avoid a second
     // legacy family shot alongside the admitted weapon-specific real sample.
     code=once(code,
