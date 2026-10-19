@@ -10,7 +10,7 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
-import {RoomDurableObject} from '../server/src/index.js';
+import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const option=n=>{const i=process.argv.indexOf(n);assert(i>=0&&process.argv[i+1],n+' required');return path.resolve(process.argv[i+1]);};
 const baseline=process.argv.includes('--baseline');
@@ -44,10 +44,8 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>relay.once('listening',r));
 const rooms=new Map(),wire=[],pending=[];let wireFrame=0;
 const flushWire=()=>{wireFrame++;while(pending.length&&pending[0].due<=wireFrame){const p=pending.shift();if(p.ws.readyState===1)p.ws.send(p.text);}};
-relay.on('connection',(ws,req)=>{const url=new URL(req.url,'http://localhost'),code=url.pathname.split('/')[2];let room=rooms.get(code);if(!room)rooms.set(code,room=new RoomDurableObject({},{}));
- const bridge={send:s=>{if(delayFrames&&s.startsWith('m|')&&JSON.parse(s.slice(s.indexOf('|',2)+1)).k==='t')pending.push({ws,text:s,due:wireFrame+delayFrames});else ws.send(s);},addEventListener:(n,fn)=>ws.on(n,n==='message'?data=>{const s=data.toString();wire.push({at:Date.now(),bytes:Buffer.byteLength(s),text:s});fn({data:s});}:fn)};
- room.handleSession(bridge,url.searchParams.get('name')||'Player');
-});
+const connectRelay=createLocalRelay({rooms});
+relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(s,deliver)=>{if(delayFrames&&s.startsWith('m|')&&JSON.parse(s.slice(s.indexOf('|',2)+1)).k==='t')pending.push({ws,text:s,due:wireFrame+delayFrames});else deliver(s);},receive:s=>wire.push({at:Date.now(),bytes:Buffer.byteLength(s),text:s})}));
 const address='http://127.0.0.1:'+server.address().port+'/network-fixture.html?relay='+encodeURIComponent('ws://127.0.0.1:'+relay.address().port);
 const contexts=[],pages=[],errors=[],receipts=new Set();let result;
 try{
@@ -190,7 +188,7 @@ try{
   assert(sides[receiverIndex].damage.some(x=>!x.remote&&x.amount>0));
   assert(sides[receiverIndex].nativeReplicaClock,'receiver must use the authenticated native replay handle');
  }
- result={status:baseline?'baseline-reproduced':'passed',bombAuthority,baseline,delayFrames,sourceSha,contentHash:build.contentHash,fixtureHash:hash(fixtureCode),transport:'real WebSocket + production RoomDurableObject.handleSession',arena:'native replication modules and physics; UI/character meshes/audio omitted',players:2,attacksPerPlayer:5,paired, maxSpawnError,maxVelocityError,maxPositionError,virtualSeconds:(15+275+120)/60,tickPackets:ticks.length,tickBytes:ticks.reduce((s,p)=>s+p.bytes,0),traces:traces.map(x=>({actors:x.actors,remaining:x.remaining,stats:x.stats,puffSourceSlots:x.puffSourceSlots,puffGenerationBytes:x.puffGenerationBytes,maxProjectiles:x.trace.maxProjectiles,maxFx:x.trace.maxFx,maxPuffs:x.trace.maxPuffs,maxRemote:x.trace.maxRemote,projectileAllocations:x.trace.projectileAllocations,puffLinkedFrames:x.trace.puffLinkedFrames,remoteDropLinks:x.trace.remoteDropLinks,remotePuffLinks:x.trace.remotePuffLinks,curtains:x.trace.curtains,unboundCurtains:x.trace.unboundCurtains,puffEnvelopeError:x.trace.puffEnvelopeError,invalidPuffVisible:x.trace.invalidPuffVisible,linkedFrames:x.trace.linkedFrames,maxEnvelopeError:x.trace.maxEnvelopeError})),loadedArtifacts:[...receipts],errors};
+ result={status:baseline?'baseline-reproduced':'passed',bombAuthority,baseline,delayFrames,sourceSha,contentHash:build.contentHash,fixtureHash:hash(fixtureCode),transport:'real WebSocket + production Worker fetch + RoomDurableObject',arena:'native replication modules and physics; UI/character meshes/audio omitted',players:2,attacksPerPlayer:5,paired, maxSpawnError,maxVelocityError,maxPositionError,virtualSeconds:(15+275+120)/60,tickPackets:ticks.length,tickBytes:ticks.reduce((s,p)=>s+p.bytes,0),traces:traces.map(x=>({actors:x.actors,remaining:x.remaining,stats:x.stats,puffSourceSlots:x.puffSourceSlots,puffGenerationBytes:x.puffGenerationBytes,maxProjectiles:x.trace.maxProjectiles,maxFx:x.trace.maxFx,maxPuffs:x.trace.maxPuffs,maxRemote:x.trace.maxRemote,projectileAllocations:x.trace.projectileAllocations,puffLinkedFrames:x.trace.puffLinkedFrames,remoteDropLinks:x.trace.remoteDropLinks,remotePuffLinks:x.trace.remotePuffLinks,curtains:x.trace.curtains,unboundCurtains:x.trace.unboundCurtains,puffEnvelopeError:x.trace.puffEnvelopeError,invalidPuffVisible:x.trace.invalidPuffVisible,linkedFrames:x.trace.linkedFrames,maxEnvelopeError:x.trace.maxEnvelopeError})),loadedArtifacts:[...receipts],errors};
 }catch(error){const diagnostic=await Promise.all(pages.map(async p=>{const d=await p.evaluate(()=>({mode:globalThis.NG?.mode,s3:globalThis.NG?.s3,game:!!globalThis.NG?.game,bootError:document.querySelector('#boot-error')?.textContent,base:document.baseURI})).catch(e=>({error:e.message}));await p.screenshot({path:path.join(evidence,'failure-'+pages.indexOf(p)+'.png'),timeout:15000}).catch(()=>{});return d;}));result={diagnostic,status:'failed',sourceSha,contentHash:build.contentHash,error:error.stack,errors};process.exitCode=1;}
 finally{for(const c of contexts)await c.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));}
 const out=path.join(evidence,'network-browser-result.json');fs.writeFileSync(out+'.pending',JSON.stringify(result,null,2)+'\n');fs.renameSync(out+'.pending',out);console.log(JSON.stringify({...result,loadedArtifacts:result.loadedArtifacts?.length}));

@@ -34,7 +34,7 @@ test('pre-upgrade admission refuses invalid paths and methods without allocating
   for (const path of ['/room/TOOLONG?v=2&compat=' + compatible,
     '/room/ABCDE?v=2&compat=' + compatible,
     '/room/BCEFG/extra?v=2&compat=' + compatible,
-    '/room/%2e%2e?v=2&compat=' + compatible]) {
+    '/room/%252e%252e?v=2&compat=' + compatible]) {
     assert.equal((await relay.fetch(req(path), env)).status, 400);
   }
   assert.equal((await relay.fetch(req('/room/BCEFG?v=2&compat=' + compatible, 'POST'), env)).status, 405);
@@ -42,6 +42,13 @@ test('pre-upgrade admission refuses invalid paths and methods without allocating
   assert.equal((await relay.fetch(req('/room/BCEFG?v=1&compat=' + compatible), env)).status, 426);
   assert.equal((await relay.fetch(req('/room/BCEFG?v=2&compat=bad'), env)).status, 426);
   assert.equal(called, 0, 'invalid requests must never touch ROOMS');
+  // WHATWG URL parsing normalizes this encoded dot segment to the health root.
+  const normalized = req('/room/%2e%2e?v=2&compat=' + compatible);
+  assert.equal(new URL(normalized.url).pathname, '/');
+  const health = await relay.fetch(normalized, env);
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), {status:'ok',service:'inkwave-relay'});
+  assert.equal(called, 0, 'normalized health requests never allocate a room');
   assert.equal((await relay.fetch(req('/room/BCEFG?v=2&compat=' + compatible), env)).status, 200);
   assert.equal(called, 3);
 });
@@ -84,7 +91,8 @@ test('broadcast and directed packets require bounded, recognized JSON envelopes'
   const previous = h.sent.length;
   g.emit('message', huge);
   assert.equal(g.closed?.code, 1009);
-  assert.equal(h.sent.length, previous);
+  assert.deepEqual(h.sent.slice(previous).map(x=>JSON.parse(x)), [{t:'leave',id:g.id,host:h.id}], 'only one membership cleanup control is sent; the oversized data is never relayed');
+  assert.equal(h.sent.filter(x=>x.startsWith('m|')).length, 1, 'only the prior valid state envelope was relayed');
   assert.ok(!room.members.has(g.id));
 });
 
@@ -113,9 +121,15 @@ test('incompatible peers rejected before WebSocketPair allocation', async () => 
   const host = new Socket();
   room.compat = compatible;
   room.handleSession(host, 'H');
-  const response = await room.fetch(req('/room/BCEFG?v=2&compat=iw-gameplay-OLDER0001'));
-  assert.equal(response.status, 409);
-  assert.equal(room.members.size, 1);
-  const old = await room.fetch(req('/room/BCEFG?v=1&compat=' + compatible));
-  assert.equal(old.status, 426);
+  const saved=globalThis.WebSocketPair;let allocations=0;
+  globalThis.WebSocketPair=class{constructor(){allocations++;throw new Error('Rejected peers must not allocate sockets');}};
+  try {
+    const response = await room.fetch(req('/room/BCEFG?v=2&compat=iw-gameplay-OLDER0001'));
+    assert.equal(response.status, 409);
+    assert.equal(room.members.size, 1);
+    assert.equal(room.compat, compatible);
+    const old = await room.fetch(req('/room/BCEFG?v=1&compat=' + compatible));
+    assert.equal(old.status, 426);
+    assert.equal(allocations, 0);
+  } finally {if(saved===undefined)delete globalThis.WebSocketPair;else globalThis.WebSocketPair=saved;}
 });

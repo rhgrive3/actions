@@ -151,6 +151,7 @@ try {
       await page.locator('[data-c="fire"]').tap();
       await runFocusLossCase(page, entry);
       const network = await page.evaluate(async () => {
+        const {PROTO,COMPAT}=await import(new URL('src/net/transport.js',document.baseURI));
         const real = { WebSocket, setTimeout, clearTimeout, setInterval, clearInterval }, sockets = [], timers = new Map(); let seq = 0;
         window.setTimeout = (fn, ms) => { const id = ++seq; timers.set(id, { fn, ms }); return id; };
         window.clearTimeout = id => timers.delete(id); window.setInterval = window.setTimeout; window.clearInterval = window.clearTimeout;
@@ -161,7 +162,7 @@ try {
           const oldTimeout = [...timers.values()].find(t => t.ms === 8000).fn;
           const savedWelcome = sockets[0].onmessage; net.leave();
           const joined = net.join('BC235', 'New');
-          sockets[1].onmessage({ data: JSON.stringify({ t: 'welcome', id: 'new', host: 'new', members: [{ id: 'new', name: 'New' }] }) });
+          sockets[1].onmessage({ data: JSON.stringify({ t: 'welcome', proto: PROTO, compat: COMPAT, id: 'new', host: 'new', members: [{ id: 'new', name: 'New' }] }) });
           await joined; oldTimeout(); savedWelcome({ data: JSON.stringify({ t: 'welcome', id: 'old', host: 'old', members: [] }) }); await Promise.resolve();
           const result = { cancelled: await cancelled, state: net.state, code: net.code, id: net.myId, socketOpen: net.tr?.open };
           net.leave(); result.remainingTimers = timers.size; return result;

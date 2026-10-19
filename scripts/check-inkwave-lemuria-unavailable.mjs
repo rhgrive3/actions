@@ -7,7 +7,7 @@ import http from 'node:http';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
-import {RoomDurableObject} from '../server/src/index.js';
+import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 
 const site=path.resolve(process.argv[2]||'_site-native-lemuria');
 const evidence=path.resolve(process.argv[3]||'.browser-evidence/lemuria');
@@ -24,15 +24,8 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const relay=new WebSocketServer({host:'127.0.0.1',port:0});
 await new Promise(resolve=>relay.once('listening',resolve));
 const rooms=new Map(),wireStarts=[];
-relay.on('connection',(socket,req)=>{
- const url=new URL(req.url,'http://local'),code=url.pathname.split('/')[2];
- if(!rooms.has(code))rooms.set(code,new RoomDurableObject({},{}));
- rooms.get(code).handleSession({send:data=>{if(socket.readyState===1)socket.send(data);},addEventListener:(name,fn)=>socket.on(name,name==='message'?data=>{
-  const raw=data.toString();
-  try{const payload=JSON.parse(raw.startsWith('b|')?raw.slice(2):raw.startsWith('s|')?raw.slice(raw.indexOf('|',2)+1):raw);if(payload.k==='start')wireStarts.push({map:payload.map,mode:payload.mode,id:payload.id});}catch{}
-  fn({data:raw});
- }:fn)},url.searchParams.get('name')||'Player');
-});
+const connectRelay=createLocalRelay({rooms});
+relay.on('connection',(ws,req)=>connectRelay(ws,req,{receive:raw=>{try{const payload=JSON.parse(raw.startsWith('b|')?raw.slice(2):raw.startsWith('s|')?raw.slice(raw.indexOf('|',2)+1):raw);if(payload.k==='start')wireStarts.push({map:payload.map,mode:payload.mode,id:payload.id});}catch{}}}));
 const address='http://127.0.0.1:'+server.address().port;
 const relayURL='ws://127.0.0.1:'+relay.address().port;
 const proxyURL=process.env.HTTPS_PROXY?new URL(process.env.HTTPS_PROXY):null;

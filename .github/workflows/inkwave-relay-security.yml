@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - "server/**"
+      - "scripts/lib/inkwave-local-relay-fixture.mjs"
+      - "patches/reliability/tests/relay-compatibility.test.mjs"
       - "inkwave-public/src/net/transport.js"
       - "patches/reliability/net-adapter.mjs"
       - ".github/workflows/inkwave-relay-security.yml"
@@ -10,6 +12,8 @@ on:
     branches: [main]
     paths:
       - "server/**"
+      - "scripts/lib/inkwave-local-relay-fixture.mjs"
+      - "patches/reliability/tests/relay-compatibility.test.mjs"
       - "inkwave-public/src/net/transport.js"
       - "patches/reliability/net-adapter.mjs"
       - ".github/workflows/inkwave-relay-security.yml"
@@ -28,3 +32,5 @@ jobs:
         run: node --check server/src/index.js
       - name: Relay security and existing hit NACK regressions
         run: node --test server/tests/*.test.mjs
+      - name: Production-composed client compatibility and legacy rejection
+        run: node --experimental-vm-modules --test patches/reliability/tests/relay-compatibility.test.mjs

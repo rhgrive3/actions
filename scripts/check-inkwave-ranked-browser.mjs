@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
-import {RoomDurableObject} from '../server/src/index.js';
+import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 const site=path.resolve(process.argv[2]||'_site-ranked'),out=path.resolve(process.argv[3]||'reports/ranked-browser');fs.mkdirSync(out,{recursive:true});
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 const publicUrl=process.env.RANKED_PUBLIC_URL;
@@ -28,7 +28,8 @@ const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript'
 const server=http.createServer((req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(site,'.'+(pathname==='/'?'/index.html':pathname));if(!file.startsWith(site+path.sep)||!fs.statSync(file).isFile())throw Error();res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});served.add(path.relative(site,file));fs.createReadStream(file).pipe(res);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>relay.once('listening',r));const rooms=new Map();
-relay.on('connection',(ws,req)=>{const u=new URL(req.url,'http://localhost'),code=u.pathname.split('/')[2];let room=rooms.get(code);if(!room)rooms.set(code,room=new RoomDurableObject({},{}));room.handleSession({send:s=>{if(delay&&s.startsWith('m|'))setTimeout(()=>ws.readyState===1&&ws.send(s),delay);else if(ws.readyState===1)ws.send(s);},addEventListener:(n,fn)=>ws.on(n,n==='message'?d=>fn({data:d.toString()}):fn)},u.searchParams.get('name')||'Player');});
+const connectRelay=createLocalRelay({rooms});
+relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(text,deliver)=>{if(delay&&text.startsWith('m|'))setTimeout(()=>deliver(text),delay);else deliver(text);}}));
 const url=`${publicUrl||'http://127.0.0.1:'+server.address().port+'/'}?relay=${encodeURIComponent('ws://127.0.0.1:'+relay.address().port)}`;
 const errors=[],results=[],contexts=[],pages=[];let browser,browserInfo=null;
 async function boot(){const c=await browser.newContext({viewport:{width:1280,height:800}});contexts.push(c);await c.tracing.start({screenshots:true,snapshots:true,sources:false});const p=await c.newPage();pages.push(p);p.on('crash',()=>console.error('ranked browser page crashed'));p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));await p.goto(url,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await p.waitForFunction(()=>RG.game?.menus&&RG.s3?.installed&&RG.mode!=='boot',null,{timeout:180000});return p;}

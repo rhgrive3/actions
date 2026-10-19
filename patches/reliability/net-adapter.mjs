@@ -10,6 +10,10 @@ function replaceOnce(code, before, after, rel) {
 
 export function adaptNet(rel, code) {
   if (rel === 'src/net/session.js') {
+    code = replaceOnce(code, "import { Transport } from './transport.js';",
+      "import { Transport, PROTO, COMPAT } from './transport.js';", rel);
+    code = replaceOnce(code, "const cfg = { k: 'start', roster,",
+      "const cfg = { k: 'start', proto: PROTO, compat: COMPAT, roster,", rel);
     code = "import { validLobbySnapshot, validMeUpdate } from '../../patches/reliability/session-admission.mjs';\n" + code;
     code = replaceOnce(code, '  _applyMe(id, o) {', '  _applyMe(id, o) {\n    if (!validMeUpdate(o, WEAPONS)) return;', rel);
     code = replaceOnce(code, '          const l = d.l;', '          const l = d.l;\n          if (!validLobbySnapshot(l, MAPS, WEAPONS, TEAM_PALETTES.length)) return;', rel);
@@ -170,6 +174,12 @@ export function adaptNet(rel, code) {
       this._goT = setTimeout(() => {
         if (this.state === 'starting' && this._roomAttempt === attempt && this._startCfg === cfg && this.tr === tr) this._go();
       }, 12000);
+    }`, rel);
+    // Admission precedes world construction and any readiness/GO side effects.
+    code = replaceOnce(code, '  async _begin(cfg) {', `  async _begin(cfg) {
+    if (cfg?.proto !== PROTO || cfg?.compat !== COMPAT) {
+      this._fail(new Error('Incompatible game version. Refresh this tab and reconnect to the room.'));
+      return;
     }`, rel);
     // #1154: GO may beat lobby launch, world build or shader warmup.
     // Readiness belongs to this exact cfg; a packet never skips local setup.
@@ -374,6 +384,13 @@ NetMatch.prototype.dispose = function(...args) {
   }
   if (rel === 'src/net/transport.js') {
     // Apply after the legacy full-method replacement, without drifting its anchor.
+    code = replaceOnce(code, `        if (o.t === 'welcome') {
+          if (settled) return;`, `        if (o.t === 'welcome') {
+          if (settled) return;
+          if (o.proto !== PROTO || o.compat !== COMPAT) {
+            disconnect(new Error('Incompatible game or room service version. Refresh this tab and reconnect after the room service is updated.'));
+            return;
+          }`, rel);
     code = replaceOnce(code, '&v=${PROTO}${create ? ', '&v=${PROTO}&compat=${encodeURIComponent(COMPAT)}${create ? ', rel);
     code = replaceOnce(code, '        this.bytesIn += s.length;',
       '        if (s.length > MAX_RELAY_FRAME_CHARS) return;\n        this.bytesIn += s.length;', rel);

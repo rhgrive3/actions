@@ -54,10 +54,11 @@ export async function fixture({ search = '', adapt = true } = {}) {
   const net = new session.namespace.NetSession();
   return {
     net, G, sockets, timers, Transport: transport.namespace.Transport,
+    PROTO: transport.namespace.PROTO, COMPAT: transport.namespace.COMPAT,
     constructionFails: () => { failConstructor = true; },
     message(socket, data) { socket.onmessage?.({ data: typeof data === 'string' ? data : JSON.stringify(data) }); },
     welcome(socket, { id = 'me', host = id, members = [...new Set([host, id])].map(id=>({id,name:'Player'})) } = {}) {
-      socket.onmessage?.({ data: JSON.stringify({ t: 'welcome', id, host, members }) });
+      socket.onmessage?.({ data: JSON.stringify({ t: 'welcome', proto: transport.namespace.PROTO, compat: transport.namespace.COMPAT, id, host, members }) });
     },
     run(id) { const item = timers.get(id); if (!item) throw new Error('Missing fixture timer'); if (!item.interval) timers.delete(id); now += item.ms; item.fn(); },
     timer(ms) { return [...timers].find(([, item]) => item.ms === ms)?.[0]; },
