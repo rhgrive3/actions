@@ -453,6 +453,12 @@ function adaptQualityLayer(rel, code) {
   }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
+      "    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)",
+      "    // Rebuild the source Charger/Spinner charge ring when an older weapon cache outlives its DOM.\n" +
+      "    if ((L.kind === 'charger' || L.kind === 'splatling') && (!this._chargeEl || !this.ret.contains(this._chargeEl))) this._buildReticle(L.kind);\n" +
+      "    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)",
+      'reticle ring stale-DOM recovery without changing locked original UI input');
+    code = replaceOnce(code,
       "      this._killCard(victim, 'kill');",
       "      this._killCard(victim, 'kill');\n      // #593: Turf uses ordinary splat confirmation and independent team WIPEOUT.\n      if (G.match?.mode === 'turf') return;",
       'Turf excludes arcade personal streak ribbons');
