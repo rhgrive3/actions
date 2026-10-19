@@ -80,6 +80,10 @@ export function adaptWeaponAudio(rel,code){
       'do not layer authored body-hit noise over original source HitEf MP3');
   }
   if(rel==='src/main.js'){
+    code=once(code,
+      'G.audio = audioMod.audio; G.music = musicMod.music;',
+      "G.audio = audioMod.audio; G.music = musicMod.music; if (G.music) G.music.onFileError = () => this.menus?.toast?.(this.settings?.lang === 'en' ? 'Jet Arrow could not play. Check your connection or audio settings. No substitute music will play.' : 'Jet Arrowを再生できません。通信・音声設定を確認してください。旧BGMには切り替えません。', { kind: 'error', ms: 7000 });",
+      'visible Jet Arrow error without old-BGM fallback');
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
       'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); if(self.menus?._setup?.mode!==\'boss\') G.music?.preloadFile?.(\'battle\',{prime:true}); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
       'iPad start tap initializes audio and warms the selected recorded shot before screen wipe');
