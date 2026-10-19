@@ -5311,3 +5311,20 @@ root yawの保持に加え、転がしの接地軸を床の接線に保持する
 ### 2026-10-19：ガチアサリの閉鎖時ペナルティ端数
 
 main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.5が残り、HUDは+12、次のガチアサリ投入で本カウント77→68.5となる本番consumer差を再現。InkipediaのS2/S3共通Scoring節（取得2026-10-19、reported revision 730528）が示す閉鎖時の半分切捨てに合わせ、窓全体の得点を合計した後で新規ペナルティだけを整数化した。S3Wikiの小アサリ1個あたり1.5は合計前に切り捨てない。双方チーム・3種dt、複数窓、残ペナルティ、延長、実Match/HUD/host-client consumerを回帰。今回の根拠はWikiでありSwitch実機で端数処理を新規計測したものではない。投射物理・表示モデル・PR1627の別イベント修復とは分離する。詳細は [専用記録](inkwave-clam-penalty-consumer-2026-10-19.md)。
+
+
+### 2026-10-19：#522 塗りイベントの送信者・所有者検証
+
+公開版のオンライン塗りを、リレーが確定した送信者・試合ID・連番と、発生元アクターの現所有者・所有権世代に結び付けた。所有者不一致・旧世代・発生元不明の塗りはCPUグリッド、塗りポイント、スペシャル増加、勝敗集計の前で拒否する。被撃破時の塗りは被撃破者の所有者、ボスとエリア確保は明示されたホストの権限で扱う。正規の塗り形状、武器の数値、シード、30/60/120 Hzの再生順序は維持する。参照は既存のスプラトゥーン3 Ver. 11.3.0。任天堂の非公開通信方式との一致や、新規のSwitch実機計測は主張しない。これは既存のクライアント所有者主導のシミュレーション内の送信者検証であり、所有者自身の不正なシミュレーションまで検証するサーバー化ではない。詳細と確認範囲は [専用記録](inkwave-paint-authority-522-2026-10-19.md)。
+
+## 2026-10-19：Rainmaker 公開 smoke の静止標的に残る武器動作を初期化
+
+公開 main `fbed2d4ef5a2708307036c167d0a9df0461e8597` は Pages artifact と公開 manifest/runtime の同一性が確認できたが、その後の公開 Rainmaker smoke が damage `[]` で失敗した（[run39226266615 / job117973196264](https://github.com/rhgrive3/actions/actions/runs/39226266615/job/117973196264)）。trace は HTTP503・capture timeout・boot例外ではなく、1発の60/180攻撃に対する標的移動後の実assert不一致。
+
+実 Actor/WeaponRunner/Physics の平床診断では、残存Splatana charge＋前入力履歴や Dualies roll/slip が、標的の速度とintentだけを0にしても後続updateで移動を発生させる。静止標的の準備で既存 `WeaponRunner.reset()` を呼び、武器/charge/roll/slip等を前後receiptへ記録する。変更はbrowser QAと専用回帰だけで、game runtime・boot・timeout・shot1・damage60/180・壁800→380の判定は維持。
+
+専用7/7成功、reset1行だけを除く負対照は3件失敗。普通シューター、Splatana3種のcharge有無、native Dualies roll、catalogue `s3-maneuver-long` のrollと別slipを実consumerで確認。旧失敗の移動量はcharged `s3-saber-lite` と一致するが、旧receiptに武器状態がないため歴史的原因の一意確定には至らない。参照版11.3.0の実機比較や本家新数値の変更ではなく、静止QA条件の修復。固定headのCI/browser/公開後検証はこの記録時点で未完了。詳細は [専用短report](rainmaker-proof-weapon-reset-2026-10-19.md)。
+
+## 2026-10-19：P0 #264 / #878 の残存境界
+
+本番で残る縁の飛沫が固定5点から抜ける判定漏れを、円/楕円coreとセルの交差判定で補完。微小bodyがセルを持たなくても成長を保持し、native-stageの早期除外も同じ規則へ接続する。旧遠方spatterは既に無効で、再導入しない。CPUは既存0.25 m格子の面積を所有し、pixel完全一致とは主張しない。ホストのRAFとtimeoutが共に止まりsocketだけ残る場合、ゲストは既存finish待機＋通信復旧猶予後に通常の通信切断退出へ進み、架空の勝敗を作らない。比較版11.3.0、通常塗りとonline Turfの条件。実Switchの切断方針・物理端末GPUは未確認。詳細と検証範囲は [P0記録](inkwave-paint-host-p0-2026-10-19.md)。

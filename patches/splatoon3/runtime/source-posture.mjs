@@ -1,4 +1,4 @@
-// Splatoon 3 posture over the Wii U (Splatoon 1) source locomotion bank.
+// INKWAVE-specific posture correction over an optional Splatoon 1 (Wii U) reference-motion bank.
 //
 // The optional source controller retargets Player00 clips onto the INKWAVE rig
 // by copying each source bone's WORLD direction. The Splatoon 1 "Hold" clips
