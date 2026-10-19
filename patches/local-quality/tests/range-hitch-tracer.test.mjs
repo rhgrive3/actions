@@ -229,3 +229,41 @@ test('Playwright polls an entirely synchronous, completed Practice Range trace',
   env.__inkwaveRangePerf.snapshot = () => ({ traceError: 'failed dynamic import' });
   assert.deepEqual(profileRangeAcceptanceSnapshot(env), { traceError: 'failed dynamic import' });
 });
+
+test('native opt-in tracer counts actual BVH triangles and nested ground, brain and paint CPU without changing calls',()=>{
+ const f=worldFixture(),G=f.env.__G;
+ const source={
+   queryCount:0,triangleTests:0,
+   ray(){this.queryCount++;this.triangleTests+=37;f.tick(.6);},
+   queryBox(){f.tick(.1);},sweepSphere(){f.tick(.1);}
+ };
+ G.level={native:true,triangleWorld:source};
+ G.physics={
+   raycast(){source.ray();f.tick(.2);},
+   groundProbe(){this.raycast();f.tick(.3);},
+   collideBody(){f.tick(.15);},_nativeContacts(){f.tick(.2);}
+ };
+ G.nav={path(){f.tick(.4);}};
+ G.paint.splat=function(){f.tick(.5);};
+ G.paint.regionStats=function(){f.tick(.2);};
+ const actor={bot:{update(){G.physics.groundProbe();f.tick(.4);}},
+   character:{update(){f.tick(.5);}},update(){this.character.update();f.tick(.25);}};
+ f.game.match.actors=[actor];G.match=f.game.match;
+ const originalBrain=actor.bot.update,originalRay=source.ray;
+ f.game.match.update=function(dt){actor.bot.update(dt);actor.update(dt);G.nav.path();G.paint.splat();f.tick(.2);};
+ const trace=installHitchTracer(f.game,{env:f.env,now:f.now,gpuEvery:4});
+ f.game._frame(1/60);trace.record(f.now(),35,{frameRateHz:60,phase:'battle'});
+ const last=trace.snapshot().latest;
+ assert.deepEqual(last.sourceBVH,{queries:1,triangleTests:37});
+ assert(last.stages['ground-ring']>=.9);
+ assert(last.stages['source-ray']>=.6);
+ assert(last.stages['brain-0']>=1.3);
+ assert(last.stages['character-0']>=.5);
+ assert(last.stages['paint-splat']>=.5);
+ assert(last.topNativeScopes.some(x=>x.name==='brain-0'));
+ assert.match(trace.report(),/"sourceBVH"/);
+ trace.dispose();
+ assert.strictEqual(actor.bot.update,originalBrain);
+ assert.strictEqual(source.ray,originalRay);
+ assert.equal(f.game.match.update.name,'','tracer restores the fixture-installed update wrapper without lingering hooks');
+});
