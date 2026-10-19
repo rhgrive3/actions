@@ -5307,3 +5307,9 @@ root yawの保持に加え、転がしの接地軸を床の接線に保持する
 ### 2026-10-19：ガチアサリの閉鎖時ペナルティ端数
 
 main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.5が残り、HUDは+12、次のガチアサリ投入で本カウント77→68.5となる本番consumer差を再現。InkipediaのS2/S3共通Scoring節（取得2026-10-19、reported revision 730528）が示す閉鎖時の半分切捨てに合わせ、窓全体の得点を合計した後で新規ペナルティだけを整数化した。S3Wikiの小アサリ1個あたり1.5は合計前に切り捨てない。双方チーム・3種dt、複数窓、残ペナルティ、延長、実Match/HUD/host-client consumerを回帰。今回の根拠はWikiでありSwitch実機で端数処理を新規計測したものではない。投射物理・表示モデル・PR1627の別イベント修復とは分離する。詳細は [専用記録](inkwave-clam-penalty-consumer-2026-10-19.md)。
+
+## 2026-10-19：追加主武器のチャージ保持入力
+
+基底fbed2d4ef5a2708307036c167d0a9df0461e8597。通常Fireを保持したまま後からSquidを押すと、catalogのスクイックリン/リッター/ソイチューバーがbusyで潜伏できず、既存保持ownerへ届かないことを実Actorで再現した。保持可能なcharge状態だけ既存cancel(keep)へ接続し、保持clock・威力・インク支払を変更しない。保持不可scope/不十分charge等の負対照、30/60/120Hz、失効/再潜伏/releaseを検証した。専用5件・関連122件成功、元runtimeでは4件失敗/対照1件成功。
+
+実browser向けには通常Actor入力で3武器の保持→復帰→1発releaseとscope拒否を追加し、同block/factoryを第6専用testとして確認する。既存Chromium/WebKit catalog jobでsource/emitted専用testと実browserを実行し、exact-headの結果は別途記録する。現時点でnative成功・実機一致を主張しない。詳細は[専用報告](inkwave-catalog-charge-keep-input-2026-10-19.md)。既存報告本文を保持した末尾追記。

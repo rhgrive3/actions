@@ -143,6 +143,48 @@ try {
         return actor;
       };
 
+      const {Level}=await import('/src/world/level.js');
+      // BEGIN_CHARGE_KEEP_INPUT_PROBE
+      const chargeKeepChecks = [];
+      {
+        const saved = { level:G.level, physics:G.physics, paint:G.paint, actors:G.actors, time:G.time };
+        try {
+          G.level = new Level({bounds:{minX:-50,maxX:50,minZ:-50,maxZ:50},spawnPads:[[-40,0,0],[40,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-50,-.5,-50],max:[50,0,50]}]});
+          G.physics = new api.Physics(G.level);
+          G.paint = {sample:()=>1,splat:()=>0};
+          for (const id of ['s3-charger-quick','s3-charger-long','s3-charger-keeper','s3-charger-longscope']) {
+            G.projectiles.clear();
+            const actor = makeActor(id); G.actors = [actor];
+            const tick = count => { for(let i=0;i<count;i++){G.time+=1/60;actor.update(1/60);} };
+            tick(5); actor.intent.fire=true; tick(140);
+            check(actor.weaponRunner.charge===1,id+' full charge through actual Actor');
+            const ink=actor.ink;
+            actor.intent.squid=true; tick(5);
+            const stored=actor.weaponRunner.catalogState?.stored;
+            if(id==='s3-charger-longscope') {
+              check(actor.form==='kid'&&!stored,id+' scope cannot store charge');
+              chargeKeepChecks.push({id,heldFire:true,squidInput:true,form:actor.form,stored:false});
+              continue;
+            }
+            check(actor.form==='squid'&&actor.submerged&&stored,id+' newer Squid input stores held charge');
+            check(actor.ink>=ink-1e-8,id+' keep does not debit ink again');
+            const storedFrames=stored.frames,remaining=stored.remaining;
+            actor.intent.squid=false; tick(8);
+            check(actor.form==='kid'&&actor.weaponRunner.charge===1,id+' emerges with full charge');
+            const before=G.projectiles.list.length;
+            actor.intent.fire=false; tick(3);
+            check(G.projectiles.list.length-before===1,id+' release emits exactly one projectile');
+            check(!actor.weaponRunner.catalogState.stored,id+' released storage is retired');
+            check(actor.ink>=ink-1e-8,id+' release does not duplicate prepaid cost');
+            chargeKeepChecks.push({id,heldFire:true,squidInput:true,storedFrames,remaining,releaseProjectiles:G.projectiles.list.length-before,inkBeforeDive:ink,inkAfterRelease:actor.ink});
+          }
+        } finally {
+          G.projectiles.clear();
+          Object.assign(G,saved);
+        }
+      }
+      // END_CHARGE_KEEP_INPUT_PROBE
+
       const {CANONICAL_KITS}=await import('/patches/splatoon3/runtime/canonical-kits-data.mjs');
       const {WEAPON_WEIGHTS}=await import('/patches/splatoon3/runtime/weapon-weight-data.mjs');
       const {WEIGHT_SPEED_CURVES}=await import('/patches/splatoon3/runtime/weapon-weight.mjs');
@@ -507,7 +549,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        wallFacingChecks, catalogueSubChecks, directSubChecks, accelerationChecks, mistChecks, mistQueryChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
+        chargeKeepChecks, wallFacingChecks, catalogueSubChecks, directSubChecks, accelerationChecks, mistChecks, mistQueryChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
