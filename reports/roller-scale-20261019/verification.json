@@ -1,0 +1,280 @@
+{
+  "schema": 1,
+  "basis": "9b0e4023",
+  "retailComparison": false,
+  "cases": [
+    {
+      "id": "roller",
+      "hz": 30,
+      "physicalHalf": 1.285599946975711,
+      "sourceHalf": 2.8,
+      "gpuMinWidth": 5.424999999999989,
+      "gpuMaxWidth": 5.699999999999989,
+      "contactError": 6.938893903907228e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "roller",
+      "hz": 60,
+      "physicalHalf": 1.285599946975711,
+      "sourceHalf": 2.8,
+      "gpuMinWidth": 5.424999999999989,
+      "gpuMaxWidth": 5.699999999999989,
+      "contactError": 6.938893903907228e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "roller",
+      "hz": 120,
+      "physicalHalf": 1.285599946975711,
+      "sourceHalf": 2.8,
+      "gpuMinWidth": 5.424999999999989,
+      "gpuMaxWidth": 5.699999999999989,
+      "contactError": 6.938893903907228e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-compact",
+      "hz": 30,
+      "physicalHalf": 1.2832000255584746,
+      "sourceHalf": 2.2,
+      "gpuMinWidth": 4.299999999999994,
+      "gpuMaxWidth": 4.424999999999993,
+      "contactError": 0,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-compact",
+      "hz": 60,
+      "physicalHalf": 1.2832000255584746,
+      "sourceHalf": 2.2,
+      "gpuMinWidth": 4.299999999999994,
+      "gpuMaxWidth": 4.424999999999993,
+      "contactError": 0,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-compact",
+      "hz": 120,
+      "physicalHalf": 1.2832000255584746,
+      "sourceHalf": 2.2,
+      "gpuMinWidth": 4.299999999999994,
+      "gpuMaxWidth": 4.424999999999993,
+      "contactError": 0,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-heavy",
+      "hz": 30,
+      "physicalHalf": 1.2907999753952022,
+      "sourceHalf": 3.4,
+      "gpuMinWidth": 6.799999999999985,
+      "gpuMaxWidth": 6.899999999999984,
+      "contactError": 3.469446951953614e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-heavy",
+      "hz": 60,
+      "physicalHalf": 1.2907999753952022,
+      "sourceHalf": 3.4,
+      "gpuMinWidth": 6.799999999999985,
+      "gpuMaxWidth": 6.899999999999984,
+      "contactError": 3.469446951953614e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-heavy",
+      "hz": 120,
+      "physicalHalf": 1.2907999753952022,
+      "sourceHalf": 3.4,
+      "gpuMinWidth": 6.799999999999985,
+      "gpuMaxWidth": 6.899999999999984,
+      "contactError": 3.469446951953614e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-hunter",
+      "hz": 30,
+      "physicalHalf": 1.3021999597549474,
+      "sourceHalf": 2.6,
+      "gpuMinWidth": 5.12499999999999,
+      "gpuMaxWidth": 5.249999999999989,
+      "contactError": 6.938893903907228e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-hunter",
+      "hz": 60,
+      "physicalHalf": 1.3021999597549474,
+      "sourceHalf": 2.6,
+      "gpuMinWidth": 5.12499999999999,
+      "gpuMaxWidth": 5.249999999999989,
+      "contactError": 6.938893903907228e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-hunter",
+      "hz": 120,
+      "physicalHalf": 1.3021999597549474,
+      "sourceHalf": 2.6,
+      "gpuMinWidth": 5.12499999999999,
+      "gpuMaxWidth": 5.249999999999989,
+      "contactError": 6.938893903907228e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-wide",
+      "hz": 30,
+      "physicalHalf": 1.6280000209808347,
+      "sourceHalf": 3.4,
+      "gpuMinWidth": 6.674999999999985,
+      "gpuMaxWidth": 6.899999999999984,
+      "contactError": 3.469446951953614e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-wide",
+      "hz": 60,
+      "physicalHalf": 1.6280000209808347,
+      "sourceHalf": 3.4,
+      "gpuMinWidth": 6.674999999999985,
+      "gpuMaxWidth": 6.899999999999984,
+      "contactError": 3.469446951953614e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    },
+    {
+      "id": "s3-roller-wide",
+      "hz": 120,
+      "physicalHalf": 1.6280000209808347,
+      "sourceHalf": 3.4,
+      "gpuMinWidth": 6.674999999999985,
+      "gpuMaxWidth": 6.899999999999984,
+      "contactError": 3.469446951953614e-18,
+      "cpuHoles": 0,
+      "holes": 0,
+      "ticks": 150,
+      "contentHash": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9"
+    }
+  ],
+  "allDirections": {
+    "cases": 192,
+    "build": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9",
+    "errors": [],
+    "realCharacter": true,
+    "realPhysics": true
+  },
+  "negative": "negative-control.json",
+  "sourceMeasurement": "../../patches/splatoon3/reference/roller-source-scale-2026-10-19.json",
+  "finalBuild": "2bfa02d263ad4ad7abfe4e27114cee8e26b69cb40110215066b4937443cfb91c",
+  "nativeRange": "range.json",
+  "nativeFinal": "final-native.json",
+  "startupBudget": {
+    "status": "passed",
+    "revision": "10905be53b0b300f1b0fe793c9e4aff077fbef8c90c1faf43ee8bdffed6f5dc1",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78140,
+    "initialJSBytes": 2433972,
+    "criticalHTMLBytes": 19497,
+    "precacheCount": 468,
+    "precacheBytes": 7198823,
+    "workerBytes": 72757,
+    "declaredBytes": 14669327,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "sourceTests": {
+    "sourceScaleAndMeasurement": {
+      "passed": 8,
+      "failed": 0
+    },
+    "sourceScaleFoldAndContact": {
+      "passed": 10,
+      "failed": 0
+    },
+    "nativeLoadingAndRangeZones": {
+      "passed": 11,
+      "failed": 0
+    },
+    "rangeAll": {
+      "passed": 46,
+      "failed": 0
+    },
+    "startupAndAttract": {
+      "passed": 152,
+      "failed": 0
+    },
+    "focusedRollerCatalogAndFold": {
+      "passed": 236,
+      "failed": 0
+    }
+  },
+  "privateScopeBinding": {
+    "measuredBuild": "ae837027bd1355578afffc85875492e55b76425a5e23b03e5897a595bcad51a9",
+    "finalBuild": "2bfa02d263ad4ad7abfe4e27114cee8e26b69cb40110215066b4937443cfb91c",
+    "changeAfterMatrix": "Native startMatch/startNetMatch intentional ownership transfer only; final native Game/Range and final private GPU Roller case passed. Roller scale, models, contact, floor paint and clock unchanged after matrix."
+  },
+  "publicRuntimeFiles": {
+    "patches/splatoon3/runtime/roller-source-scale.mjs": "1316e8074a16a63f6ba22602cbd63a714254d8a52fb4821c96f6b66568570c99",
+    "patches/splatoon3/runtime/source-distance.mjs": "086ef127a559b0abd19687d3bd7448ea02e01d02c95ee1361aa60553f619843c",
+    "patches/splatoon3/runtime/weapon-models/registry.mjs": "36dded97fb7e0c806c607c6e28eaff2bc67cf74e1d5a0e9658378ef22887ecaa",
+    "patches/splatoon3/runtime/roller-contact-paint.mjs": "7387fb4e6b000fae4ed0170a3e4e14c3280f4dad6e7655bcfed4902bffee2c86",
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": "76e4924d3c77e770c40f2c9c72be2ea6cc6716b553db5e8f126b878ff7c146ea",
+    "src/world/levelMaterial.js": "a5ecdbaca75c519e79789d24ef67436b6dabc78e9501eae5464baaa06b50e626",
+    "src/main.js": "ef7b5afec5b8b89806709083ff17b2d2753bae1debd1b23c6a3aa45a024f8075"
+  },
+  "sourceModelFile": {
+    "path": "patches/splatoon3/runtime/weapon-models/rollers.mjs",
+    "sha256": "5cdc04a798d1c3e0d5fc4f390ddef557cedf3f9dcb9cf77a518898a2f7d8b9e6",
+    "buildNote": "Roller definitions are folded into the optimized registry in this build."
+  },
+  "sourceMeasurementReproduced": true,
+  "gitLfsPointerHashesVerifiedForAllFiveModels": true,
+  "nativeLoadingFixCommit": "7680febf",
+  "nativeRangeImage": "range.png",
+  "nativeGameplayImage": "gameplay.png"
+}

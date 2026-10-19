@@ -5394,3 +5394,9 @@ main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.
 - INKWAVE 表記を ZEVANT にした：オフライン用の代替ページ、更新通知、試し撃ちラボの見出し・看板・英語説明、ステージの仮サムネイル。
 
 確認状態：`loading-screen.test.mjs`、local-quality・practice-range の回帰、`camera-aim-controls`（合成順）、`inkwave-build-packaging`、`check-inkwave-startup-budget`、`test-inkwave-startup-dom.py` を実行した。本番ビルドを Chromium で目視確認した（起動シェル 1280×720・390×844・844×390、ゲーム内ロード画面は swiftshader での実起動 1280×720）。native-stages の回帰は、この環境に numpy がないため Python と worker の照合1件が実行できない（変更前と同条件）。実機 GPU、WebKit、実 iOS/Android 端末での動きの滑らかさは未確認。
+
+## 2026-10-19 ローラー・塗り・床ラインの尺度を分離して照合
+
+本家数値は11.3.0の固定抽出。1.12はライン本数であり、モデル幅への倍率ではない。旧表示ドラム1.5は画像校正だったため、パラメータ全幅5.6との比3.733を本家一致として扱えなかった。KiTrix固定コミットの変換メッシュから描画対象のRoll頂点だけを測定し、5種のドラム幅を独立に取得。モデル・キャップ・フレーム・ヒンジ・表示放出口をその幅へ校正し、床の太線は共通の5単位規約に接続した。塗りは引き続きPaintParamを使用し、接地点・連続塗りの修正を維持する。実Actor/Character/Physics/PaintSystemのGPU横幅とモデルworld幅を別々に検証し、旧作図寸法を残した負例が寸法検査で失敗することも確認する。[根拠・比較画像・検証と未確認範囲](roller-scale-20261019/README.md)。変換メッシュの11.3.0版同定、本家の実行時モデル倍率、キャラ体格、低速曲線、最終塗りマスク、Switch/iPad実機一致は未確認。
+
+実Gameの練習場への起動確認では、現在のmainのロード停止も再現した。native-stagesがdispose後にthis.match/G.matchだけをnullにし、実際のflow.current()条件から自分の起動を外していた。dispose後の既存の所有権検査を先に通し、継続中flow.matchも同時にnullへ引き継ぐ。dispose中の別フローへの再入は引き続き拒否する。以前の常にtrueを返す検査用flowを本物の述語へ置換し、offline/online・初回・再入を検査する。練習場の旧ロジック検査は、現在のphysical paintのfootprintを記録して実転がしを識別するよう修正し、初回の振りと範囲外の負例を維持する。
