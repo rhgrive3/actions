@@ -1,0 +1,75 @@
+{
+  "version": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "sources": [
+    {
+      "actor": "WeaponRollerNormal",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "sha256": "5b423eb35d4cac268a1e4085ec8321d27639ddbfc8f3775bb65696af5c2449c7",
+      "paint": {
+        "SpeedMax": 0.132,
+        "WidthHalfMax": 2.8
+      },
+      "collision": {
+        "Radius": 0.4,
+        "WidthHalf": 1.4
+      }
+    },
+    {
+      "actor": "WeaponRollerCompact",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerCompact.game__GameParameterTable.json",
+      "sha256": "0c586351a0d16bae0fcb416ed053e69790b14ca4660dc3a1771516f740332415",
+      "paint": {
+        "Depth": 1.5,
+        "SpeedMax": 0.16,
+        "WidthAddWallCut": 0.4,
+        "WidthHalfMax": 2.2
+      },
+      "collision": {
+        "Radius": 0.4,
+        "WidthHalf": 1.4
+      }
+    },
+    {
+      "actor": "WeaponRollerHeavy",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerHeavy.game__GameParameterTable.json",
+      "sha256": "7206012122ec2faf48713f313ed58002bd77fe4f7e9923aee667bc518102a37a",
+      "paint": {
+        "SpeedMax": 0.108,
+        "WidthHalfMax": 3.4
+      },
+      "collision": {
+        "Radius": 0.4,
+        "WidthHalf": 1.4
+      }
+    },
+    {
+      "actor": "WeaponRollerHunter",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerHunter.game__GameParameterTable.json",
+      "sha256": "3de9fc1dd3a57939bceac11ddc04f110fad3f51677cec60ff57a83a78f54a23e",
+      "paint": {
+        "SpeedMax": 0.132,
+        "WidthHalfMax": 2.6
+      },
+      "collision": {
+        "Radius": 0.4,
+        "WidthHalf": 1.4
+      }
+    },
+    {
+      "actor": "WeaponRollerWide",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerWide.game__GameParameterTable.json",
+      "sha256": "3e4d368b04c78ce4ee81dc09862136b9aee214397d96990e98609d91209b2f80",
+      "paint": {
+        "Depth": 1.5,
+        "SpeedMax": 0.142,
+        "WidthAddWallCut": 0.4,
+        "WidthHalfMax": 3.4
+      },
+      "collision": {
+        "Radius": 0.4,
+        "WidthHalf": 2.1
+      }
+    }
+  ]
+}
