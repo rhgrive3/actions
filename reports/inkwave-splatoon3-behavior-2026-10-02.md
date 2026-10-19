@@ -4599,7 +4599,10 @@ Splatoon3 Ver11.3.0 identity／WeaponBlasterShort・0AP、KiTrix0611原典を参
 
 Modern native catalogue shots use source-triangle contact rather than source bookkeeping OBBs; fresh natural Bluefin five-mode full-grid settlement passes. Retail masks/units and hardware speed remain unverified. [Source sweep](native-stages/catalogue-source-sweep.md).
 
-## 2026-10-14 Native-stage authorized resume
+### 2026-10-19: native stage 公開失敗と WebGL 喪失の終端停止候補（#1652 / #1642）
+
+ステージ公開の単発失敗は旧 world を維持して再試行可能にし、復元処理自体が失敗した場合は候補資源を独立に破棄して元の例外を保持する。復元不能または WebGL context loss は同じ終端 gate で simulation / render / Start / resume / 遅延起動を止め、明示的な再読み込みを案内する。元 Environment の GPU 再構築に成功したとは扱わない。これは INKWAVE のブラウザ障害処理で、Splatoon 3 11.3.0 の機器復帰・入力時間の同値を示すものではない。source / fault 注入の限定受入済み、同一 production build の emitted と実 browser 2 lane は未実行。詳細と残条件は [専用記録](inkwave-terminal-recovery-2026-10-19.md)。
+ 2026-10-14 Native-stage authorized resume
 
 The dry opted source-climb stance releases only ordinary SQ input after static source/Pnt/polygon/body guards. Actual Shipshape Zones team1 at30/60/120 recovers normally and reaches the original support; own-painted SQ input/recovery is preserved. Retail parameters/physics/units remain unverified. [Dry refill](native-stages/source-climb-dry-refill.md).
 
