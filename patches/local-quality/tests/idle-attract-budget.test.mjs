@@ -129,6 +129,16 @@ test('menu frame hitches and quality changes never pass a larger interval to act
   assert.ok(Math.abs(h.G.time - elapsed) < 1e-9, 'no elapsed time is lost or applied twice');
 });
 
+test('paused attract never advances its camera/reset driver through the real fixed clock', () => {
+  const h = fixture();
+  h.game.match.paused = true;
+  for (let i = 0; i < 60; i++) h.frame(1 / 60);
+  assert.equal(h.calls.attractDt.length, 0, 'loading cannot schedule another attract reset');
+  h.game.match.paused = false;
+  h.frame(1 / 60);
+  assert.ok(h.calls.attractDt.length > 0, 'ordinary attract still advances');
+});
+
 test('composed offline pause compares fixed controls without enumerating settings and invalidates through real settings writes', () => {
   const h = fixture({ mode: 'match', attract: false, touch: false });
   h.game.match.paused = true;

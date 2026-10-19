@@ -22,9 +22,10 @@ export function installRollerContactPaint(api, emitStroke) {
     return result;
   };
 }
-export function queueRollerContactPaint(runner, dt, widthRatio = 1) {
+export function queueRollerContactPaint(runner, dt, radius) {
   const a = runner.a;
-  if (!context || !a.character?.weapon?.drum || !a.character.weapon.def?.drum)
+  if (!context || !a.character?.weapon?.drum || !a.character.weapon.def?.drum ||
+      !Number.isFinite(radius) || radius <= 0)
     return false;
   if (
     !a.alive ||
@@ -55,7 +56,7 @@ export function queueRollerContactPaint(runner, dt, widthRatio = 1) {
     };
   }
   stroke.pending = true;
-  stroke.widthRatio = widthRatio;
+  stroke.radius = radius;
   stroke.dt = dt;
   return true;
 }

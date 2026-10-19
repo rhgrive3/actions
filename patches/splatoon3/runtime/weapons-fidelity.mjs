@@ -1685,11 +1685,13 @@ export function fidelityRollerContactPaint(r,w,dt) {
   const scale=completion?.worldUnitsPerSourceUnit,hz=completion?.referenceHz;
   if(!source||!(scale>0)||!(hz>0))return false;
   const band=.62+.1+.08+.04;
-  const base=(w.rollWidth*.33+Math.sqrt(.62**2-.35**2)*band)*.3;
-  const max=source.WidthHalfMax*scale*.3;
+  // Use the same source/world mapping as projectile paint. The .3 visual
+  // calibration and the later drum-width cap both shrank the gameplay width.
+  const base=w.rollWidth*.33+Math.sqrt(.62**2-.35**2)*band;
+  const max=source.WidthHalfMax*scale;
   const speed=Math.hypot(r.a.vel.x,r.a.vel.z);
   const ratio=Math.max(0,Math.min(1,speed/(source.SpeedMax*hz*scale)));
-  return queueRollerContactPaint(r,dt,(base+(max-base)*ratio)/max);
+  return queueRollerContactPaint(r,dt,base+(max-base)*ratio);
 }
 export function fidelityRollerMaximumPaint(r,w,fx,fz) {
   if(!api?.G || !completion?.weapons?.roller?.BodyParam?.PaintParam)return 0;
