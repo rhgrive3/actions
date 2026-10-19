@@ -1212,7 +1212,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
         if(target){
-          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>withProjectileHitGeometry(this,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>this.applyHit(p.owner,target,amount,p.wid)));}
+          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0){
+            const owner=p.owner,previous=owner._sourceChargerAudioHit;
+            if(s.r.family==='charger')owner._sourceChargerAudioHit={chargerDirect:true,charge:d.charge};
+            try{withObjectDamageCause(p,()=>withProjectileHitGeometry(this,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>this.applyHit(owner,target,amount,p.wid)));}
+            finally{if(s.r.family==='charger')owner._sourceChargerAudioHit=previous;}
+          }}
           if(s.r.family==='charger'&&d.charge+EPS>=1&&d.m.ThroughFullCharge!==false){s.seen.add(target);continue;}
           if(s.r.family==='blaster'&&!p.ghost)explosion(this,p,d.b.BlastParam,target);
           if(s.r.parameters.BlastParam?.BlastParam&&!p.ghost)explosion(this,p,s.r.parameters.BlastParam.BlastParam);

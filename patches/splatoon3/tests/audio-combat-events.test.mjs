@@ -34,13 +34,13 @@ test('production Charger player-hit and splat cues use source-specific MP3 only'
  const native=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const built=adaptBuildSource('src/main.js',src);
  const weapon=adaptBuildSource('src/game/weapons.js',native);
- assert.match(built,/sourceChargerHitCue\(weaponId,charge\)/,
+ assert.match(built,/sourceChargerHitCue\(weaponId,hitMeta\?\.chargerDirect===true\?hitMeta\.charge:null\)/,
    '2022 HitEf critical uses admitted shot charge in the production combat event');
  assert.doesNotMatch(built,/damage>=95\?'combat:critical'/,
    'a lethal partial hit must not be mislabeled critical');
- assert.match(weapon,/emit\('hit', \{ attacker, victim, damage: dmg, killed, weaponId, charge: chargeFraction \}\)/,
+ assert.match(weapon,/emit\('hit', \{ attacker, victim, damage: dmg, killed, weaponId, hitMeta:attacker\?\._sourceChargerAudioHit\?\?null \}\)/,
    'actual native damage event carries original shot charge ratio');
- assert.match(weapon,/this\.applyHit\(a, victim\.e, dmg, 'charger', undefined, charge\)/,
+ assert.match(weapon,/a\._sourceChargerAudioHit=\{chargerDirect:true,charge\}/,
    'native Charger shot ratio is passed without modifying damage');
  assert.match(built,/G\.audio\?\.playWeapon\?\.\('combat:splat','fire'/,
    'real 2022 Pl DeadSplash is selected for Charger-owned splat, not every other weapon');
@@ -49,7 +49,7 @@ test('production Charger player-hit and splat cues use source-specific MP3 only'
  assert.match(weapon,/G\.audio\.play\('ink_hit_body'/,'other weapon bodies preserve their existing hit cue');
  const sourceCatalog=fs.readFileSync(new URL('../runtime/main-weapon-catalog.mjs',import.meta.url),'utf8');
  const catalog=adaptBuildSource('patches/splatoon3/runtime/main-weapon-catalog.mjs',sourceCatalog);
- assert.match(catalog,/this\.applyHit\(p\.owner,target,amount,p\.wid,undefined,d\.charge\)/,
+ assert.match(catalog,/if\(s\.r\.family==='charger'\)owner\._sourceChargerAudioHit=\{chargerDirect:true,charge:d\.charge\}/,
    'catalogue Charger hits retain charge fraction rather than estimating from damage');
  const index=built.indexOf('if (/^(?:charger');
  assert.ok(index>0,'source replacement is inside full production composition');
@@ -174,7 +174,7 @@ test('production HUD keeps one hit marker; damage/death/kill sounds remain conne
   const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const built=adaptBuildSource('src/main.js',src);
   assert.match(built,/G\.audio\?\.blasterHitCuePitch\?\.\(attacker, weaponId\)/);
-  assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId \}\)/);
+  assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId, hitMeta \}\)/);
   assert.equal((built.match(/hit_marker', \{ volume: 0\.6, pitch: G\.audio\?\.blasterHitCuePitch/g)||[]).length,1);
   for(const cue of ['splat_enemy','splatted_self','ally_splatted','hurt'])
     assert.ok(src.includes("'"+cue+"'"),'retained combat cue '+cue);
