@@ -78,7 +78,7 @@ export function rangeWorld(R) {
   G.level = new Level(LAYOUT, colliders);
   G.physics = new Physics(G.level);
   const splats = [], paintEvents = [];
-  G.paint = { splat: (p, r, team, options) => { const point = [p.x, p.y, p.z, r, team]; splats.push(point); paintEvents.push({ point, kind: options?.kind ?? null }); return 0; }, sample: () => 0, clear() { splats.length = 0; paintEvents.length = 0; }, version: 0 };
+  G.paint = { splat: (p, r, team, options) => { const point = [p.x, p.y, p.z, r, team]; splats.push(point); paintEvents.push({ point, kind: options?.kind ?? null, footprint: options?.footprint ?? null }); return 0; }, sample: () => 0, clear() { splats.length = 0; paintEvents.length = 0; }, version: 0 };
   G.projectiles = { clear() {} };
   G.time = 0; G.actors = [];
   return { splats, paintEvents };

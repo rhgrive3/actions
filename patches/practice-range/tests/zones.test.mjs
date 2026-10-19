@@ -65,8 +65,9 @@ test('swim course: swimming in your own ink on the straight reaches the game swi
   } finally { w.done(); }
 });
 
+const rollingEvent = e => e.kind === 'roll' || e.footprint === 'ink-contact';
 function assertRollStripe(events, sx0, sx1) {
-  const stripe = events.filter(e => e.kind === 'roll').map(e => e.point);
+  const stripe = events.filter(rollingEvent).map(e => e.point);
   assert.ok(stripe.length > 10, `${stripe.length} actual rolling splats`);
   assert.ok(new Set(stripe.map(sp => sp[2])).size > 10, 'rolling stripe advances along the strip');
   assert.ok(stripe.every(sp => sp[0] > sx0 - 2 && sp[0] < sx1 + 2), 'stripe stays on the strip');
@@ -82,7 +83,7 @@ test('roller court: rolling along the strip lays a stripe on the court floor', a
     tick(150, () => { a.intent.fire = true; a.intent.move.set(0, 0, 1); a.aimYaw = 0; });
     a.intent.fire = false; a.intent.move.set(0, 0, 0);
     // First press necessarily flicks. Its stochastic projectile impacts are not drum stripes.
-    assert.ok(W.paintEvents.some(e => e.kind !== 'roll'), 'initial flick paint remains exercised');
+    assert.ok(W.paintEvents.some(e => !rollingEvent(e)), 'initial flick paint remains exercised');
     assertRollStripe(W.paintEvents, sx0, sx1);
     assert.ok(a.pos.z > R.ZONES.ROLL_STAND[1] + 5, 'rolled forward');
   } finally { w.done(); }

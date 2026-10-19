@@ -2,7 +2,9 @@
 
 対象: `runtime/weapon-models/rollers.mjs`。形状は Inkipedia の公式 3D レンダー（`S3 Weapon Main <Name> 3D` 相当の 400px 画像）、回転動画 `S3 <Name> model rotating.mp4`（カーボンは `S3 Carbon Roller Deco model rotating.mp4`、ヴァリアブルは `S3 Foil Flingza Roller model rotating.mp4`）、スプラローラーは `S3 Splat Roller Promotional 3D Render.jpg` と `S3 Splat Roller promo image.jpg`（ゲーム画面）から読み取った。内部モデル名は Leanny/splat3 ActorInfo。
 
-## 共通の決め方
+**2026-10-19訂正**: 下記の1.5 mなどは旧作図時の寸法。最終モデルはregistryで、公開変換メッシュの描画対象頂点から測ったドラム幅へ全体を校正する。塗りの`WidthHalfMax`から表示サイズを決めない。[測定と未確認範囲](../../../../reports/roller-scale-20261019/README.md)、[取得元・境界](../roller-source-scale-2026-10-19.json)を参照。柄・キャップ・放出口・折り畳み支点も同じ変換に従う。
+
+## 共通の決め方（旧作図寸法）
 
 - 座標: 柄は右手から +Z、ドラム軸は X、フレームは X–Z 平面（公式レンダーは柄・フレーム・ドラムが同一平面にあり、その面を +Y 側から見た図。上面ビューで比較した）。持ち手の右 = −X。
 - ドラム幅: 11.3.0 パラメータ `BodyParam.PaintParam.WidthHalfMax` を代理値に使い、スプラローラー 2.8 → 1.5 m の比で換算（`drumWidth()`）。1.5 m は既存 `roller.test` の比率帯（ドラム長 > 背丈×0.8、直径 0.22〜0.32×背丈）に入る値。直径・柄などはレンダー上の比から。**ドラム幅の代理値は塗り幅であり、本家のメッシュ寸法ではない（画像から推定）**。

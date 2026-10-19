@@ -3,10 +3,10 @@
 // promotional render. Weapon space: the handle runs along +Z from the right
 // hand, the drum axis lies along X, the frame lies in the X–Z plane (the
 // renders show handle, frame and drum in one plane, seen from +Y), the holder's
-// right = −X. Drum widths come from the 11.3.0 parameter tables
-// (BodyParam.PaintParam.WidthHalfMax, scaled so the Splat Roller drum is 1.5 m, inside the
-// roller.test proportion bands); other sizes are read off each render relative to that
-// drum. Internal model names: Leanny/splat3 ActorInfo (Fmdb).
+// right = −X. Construction dimensions below are the original image estimates.
+// Registry applies the independently measured source model scale to the entire
+// completed model (including variants); PaintParam never sets its final width.
+// Internal model names: Leanny/splat3 ActorInfo (Fmdb).
 import { heavyRollerSwingEnd } from '../roller-heavy-swing.mjs';
 import { weaponWeight } from '../weapon-weight.mjs';
 import { THREE, Pieces, M, V, box, sphere, xlathe, zlathe, ylathe, zcyl, xcyl, ycyl, cyl, ring, pipe, sweep, lathe, part, rebuild, gripSpec, clamp, damp, smooth, slab} from './kit.mjs';
@@ -17,7 +17,7 @@ const TAU = Math.PI * 2;
 // so models keep it and place their handle around it.
 const GRIP_R = () => gripSpec([0, 0, -0.022], [0, 0, 1], [-0.3, 1, 0]);
 const GRIP_L = z => gripSpec([0, 0, z], [0, 0, 1], [0.5, 1, 0]);
-/** Paint half width (BodyParam.PaintParam.WidthHalfMax) → drum width, Splat Roller 2.8 → 1.5 m. */
+/** Legacy construction ratio, also used by brushes. Not the final Roller width. */
 export const drumWidth = halfMax => +(halfMax * 1.5 / 2.8).toFixed(3);
 
 // ------------------------------------------------------------------------------------------ helpers
@@ -431,7 +431,7 @@ function flingzaExtend(w, st) {
   const ch = st.runner?.a?.character, a = ch?.s3RollerFlick, dt = Math.min(0.1, Math.max(0, st.dt || 0));
   const want = a && a.vertical && a.elapsed < a.interval ? 1 : 0;
   w.flingExt = damp(w.flingExt || 0, want, want ? 16 : 7, dt);
-  if (w.fold && w.def.fold) w.fold.position.z = w.def.fold.pivot.z + FLING_EXT * w.flingExt;
+  if (w.fold && w.def.fold) w.fold.position.z = w.def.fold.pivot.z + FLING_EXT * (w.def.modelScale || 1) * w.flingExt;
 }
 
 export const MODELS = {

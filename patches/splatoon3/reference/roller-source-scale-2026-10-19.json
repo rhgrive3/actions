@@ -1,0 +1,112 @@
+{
+  "schema": 1,
+  "sourceRevision": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "meshVersion1130Verified": false,
+  "method": "Indexed X extent of the named Roll material; exported bind geometry, not retail motion capture.",
+  "worldUnitsPerSourceUnit": 1,
+  "sourceUnitsPerRangeLine": 5,
+  "retailRuntimeModelScaleVerified": false,
+  "retailPaintMaskVerified": false,
+  "records": [
+    {
+      "id": "roller",
+      "sourceModel": "Wmn_Roller_NormalT",
+      "object": "Wmn_Roller_NormalT_Roll__M_Roll",
+      "url": "https://media.githubusercontent.com/media/kirakira-dev/KiTrix/0611f51b35c9736ee986fb2218461e2585b7875e/models/weapons/Wmn_Roller_NormalT/Wmn_Roller_NormalT.obj",
+      "sha256": "0833d1166e405a3dc5ac734dde6896b85ba3d2647f3f4a40884da7e6bfc9350c",
+      "triangles": 96,
+      "indexedVertices": 98,
+      "min": [
+        -1.269,
+        1.503,
+        -0.2538
+      ],
+      "max": [
+        1.3022,
+        2.0106,
+        0.2538
+      ],
+      "width": 2.5712
+    },
+    {
+      "id": "s3-roller-compact",
+      "sourceModel": "Wmn_Roller_Compact",
+      "object": "Wmn_Roller_Compact_Roll__M_CustomRoll",
+      "url": "https://media.githubusercontent.com/media/kirakira-dev/KiTrix/0611f51b35c9736ee986fb2218461e2585b7875e/models/weapons/Wmn_Roller_Compact/Wmn_Roller_Compact.obj",
+      "sha256": "757313114d2cdb1220bd8d7cff036a0626499263a53058415f07c085dcc01588",
+      "triangles": 96,
+      "indexedVertices": 100,
+      "min": [
+        -1.2832,
+        1.5071,
+        -0.2465
+      ],
+      "max": [
+        1.2832,
+        2,
+        0.2465
+      ],
+      "width": 2.5664
+    },
+    {
+      "id": "s3-roller-heavy",
+      "sourceModel": "Wmn_Roller_Heavy",
+      "object": "Wmn_Roller_Heavy_Roll__M_Roll",
+      "url": "https://media.githubusercontent.com/media/kirakira-dev/KiTrix/0611f51b35c9736ee986fb2218461e2585b7875e/models/weapons/Wmn_Roller_Heavy/Wmn_Roller_Heavy.obj",
+      "sha256": "367e446cad7624fe6423c661e0efff3264629c1b168e10d0c0eeebc86d08def7",
+      "triangles": 40,
+      "indexedVertices": 44,
+      "min": [
+        -1.293,
+        1.5258,
+        -0.2409
+      ],
+      "max": [
+        1.2886,
+        1.9813,
+        0.2365
+      ],
+      "width": 2.5816
+    },
+    {
+      "id": "s3-roller-hunter",
+      "sourceModel": "Wmn_Roller_Hunter",
+      "object": "Wmn_Roller_Hunter_model__M_Roll",
+      "url": "https://media.githubusercontent.com/media/kirakira-dev/KiTrix/0611f51b35c9736ee986fb2218461e2585b7875e/models/weapons/Wmn_Roller_Hunter/Wmn_Roller_Hunter.obj",
+      "sha256": "431c46a9d67ad94fd121bd863e8fb5b98b8048195002298d9f0c348c300238ed",
+      "triangles": 468,
+      "indexedVertices": 393,
+      "min": [
+        -1.2958,
+        -0.2529,
+        -0.2568
+      ],
+      "max": [
+        1.3086,
+        0.2529,
+        0.2568
+      ],
+      "width": 2.6044
+    },
+    {
+      "id": "s3-roller-wide",
+      "sourceModel": "Wmn_Roller_Wide",
+      "object": "Wmn_Roller_Wide_Roll__M_Roll",
+      "url": "https://media.githubusercontent.com/media/kirakira-dev/KiTrix/0611f51b35c9736ee986fb2218461e2585b7875e/models/weapons/Wmn_Roller_Wide/Wmn_Roller_Wide.obj",
+      "sha256": "876f6f49da4f1017901302a432b4f889ec1f640e136e139ca6af27273e20c027",
+      "triangles": 160,
+      "indexedVertices": 130,
+      "min": [
+        -1.628,
+        1.5235,
+        -0.2315
+      ],
+      "max": [
+        1.628,
+        1.9866,
+        0.2315
+      ],
+      "width": 3.256
+    }
+  ]
+}

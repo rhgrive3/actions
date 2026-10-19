@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { WORLD_UNITS_PER_RANGE_LINE } from '../splatoon3/runtime/source-distance.mjs';
 
 export const RANGE_ROOT = path.dirname(fileURLToPath(import.meta.url));
 
@@ -86,7 +87,7 @@ export function adaptRange(rel, code) {
       '    // practice range measuring grid (floors): thin lines on every world metre, bold on every 5 m\n' +
       '    if (pid == 31 && isTop) {\n' +
       '      float mn = max(rangeLine(vWPos.x, 1.0, 0.011), rangeLine(vWPos.z, 1.0, 0.011));\n' +
-      '      float mj = max(rangeLine(vWPos.x, 5.0, 0.04), rangeLine(vWPos.z, 5.0, 0.04));\n' +
+      `      float mj = max(rangeLine(vWPos.x, ${WORLD_UNITS_PER_RANGE_LINE.toFixed(1)}, 0.04), rangeLine(vWPos.z, ${WORLD_UNITS_PER_RANGE_LINE.toFixed(1)}, 0.04));\n` +
       '      base = mix(base, base * 0.6, mn * 0.8);\n' +
       '      base = mix(base, base * 0.34, mj);\n' +
       '    }\n' +

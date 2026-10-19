@@ -12,6 +12,11 @@ const overlay=new Map(baselineRef?['main-weapon-catalog.mjs','weapons-fidelity.m
   const rel='patches/splatoon3/runtime/'+name;
   return ['/'+rel,execFileSync('git',['show',baselineRef+':'+rel])];
 }):[]);
+// A declared diagnostic mutant retains the old authored model sizes. This is
+// deliberately not labelled a reconstruction of an entire historical build.
+const withoutModelScale=process.argv.includes('--without-model-scale');
+if(withoutModelScale)overlay.set('/patches/splatoon3/runtime/roller-source-scale.mjs',
+  Buffer.from('export function rollerSourceModelScale(){return 1;}'));
 const site = path.resolve(process.argv[2]),
   out = path.resolve(process.argv[3]),
   id = process.argv[4] || "roller",
@@ -236,6 +241,8 @@ try {
       // as full firing-range-line widths 1.12/.88/1.36/1.04/1.36 (one line=5).
       const sourceHalf = {roller:2.8,'s3-roller-compact':2.2,'s3-roller-heavy':3.4,
         's3-roller-hunter':2.6,'s3-roller-wide':3.4}[id];
+      const sourceDrumWidth = {roller:2.5712,'s3-roller-compact':2.5664,
+        's3-roller-heavy':2.5816,'s3-roller-hunter':2.6044,'s3-roller-wide':3.256}[id];
       const spans=[];
       for(let z=a.pos.z-4;z<a.pos.z-2;z+=.1){
         let lo=Infinity,hi=-Infinity;
@@ -269,6 +276,7 @@ try {
         hz,
         physicalHalf,
         sourceHalf,
+        sourceDrumWidth,
         gpuMinWidth:Math.min(...spans),gpuMaxWidth:Math.max(...spans),
         contactError,
         cpuHoles,
@@ -295,6 +303,7 @@ try {
     browser: browser.version(),
     errors,
     baselineRef,
+    withoutModelScale,
     runtimeOverlayPaths:[...overlay.keys()],
   });
   fs.writeFileSync(
@@ -329,6 +338,8 @@ try {
       'paint width uses the sourced endpoint, independently of drum geometry');
     assert.ok(result.gpuMaxWidth>=2*result.sourceHalf*.93&&result.gpuMaxWidth<=2*result.sourceHalf+.15,
       'actual GPU stripe reaches the source width, not just the model width');
+    assert.ok(Math.abs(2*result.physicalHalf-result.sourceDrumWidth)<1e-4,
+      'rendered drum width uses measured model coordinates, independently of paint width');
     assert.equal(result.ticks, 150);
   }
 } finally {
