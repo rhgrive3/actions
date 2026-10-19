@@ -1,4 +1,5 @@
 import { validRankedSnapshot } from './engine.mjs';
+import { admitRankedPose } from './pose-admission.mjs';
 import { noteRankedBarrierShots, queueRankedBarrierHit, resetRankedBarrierAdmission } from './barrier-admission.mjs';
 import { withObjectDamageCause } from '../sub-resistance.mjs';
 import { specialGaugeLocked } from '../tacticooler-gauge.mjs';
@@ -105,6 +106,21 @@ export function installRankedNetwork(api) {
       }
       return;
     }
+    // Score from only kinematically admitted owner snapshots, not a smoothed
+    // visual interpolation of a one-frame forged teleport.
+    if (d.k === 't' && this.isHost && Array.isArray(d.a)) {
+      this.rankedPose ||= new Map();
+      const accepted = [];
+      for (const row of d.a) {
+        const actor = this.byNid.get(row?.[0]);
+        if (!actor?.remote || actor.owner !== from) continue;
+        const id = actorId(actor), state = this.rankedPose.get(id) || {};
+        if (!admitRankedPose(state, row, actor, d.ts, m.rankedWorld)) continue;
+        this.rankedPose.set(id, state);
+        accepted.push(row);
+      }
+      if (accepted.length !== d.a.length) d = { ...d, a: accepted };
+    }
     const result = incoming.call(this, from, d);
     if (d.k === 't' && this.isHost && m.mode === 'rainmaker' && m.state === 'playing')
       noteRankedBarrierShots(this, from, d, G.time);
@@ -120,7 +136,7 @@ export function installRankedNetwork(api) {
     const r = leave.call(this, id, changed);
     if (m?.ranked && changed) {
       clearTowerPaintSupport(this);
-      this.rankedInputs?.clear(); this.rankedHitSeq?.clear();
+      this.rankedInputs?.clear(); this.rankedHitSeq?.clear(); this.rankedPose?.clear();
       resetRankedBarrierAdmission(this);
       this.rankedEventSeq = this.rankedDamageSeq = 0;
       if (this.isHost) {
@@ -133,7 +149,7 @@ export function installRankedNetwork(api) {
   const dispose = P.dispose;
   P.dispose = function () {
     clearTowerPaintSupport(this);
-    this.rankedInputs?.clear(); this.rankedHitSeq?.clear();
+    this.rankedInputs?.clear(); this.rankedHitSeq?.clear(); this.rankedPose?.clear();
     resetRankedBarrierAdmission(this);
     return dispose.call(this);
   };
