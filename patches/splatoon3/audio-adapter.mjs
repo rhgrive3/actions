@@ -24,21 +24,6 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\nexport const audio = new AudioEngine();','installation');
   }
   if(rel==='src/game/weapons.js'){
-    // Keep upstream weapons.js byte-for-byte locked; install synchronous
-    // hit-sound metadata only in the production-composed adapter.
-    code=once(code,
-      "if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger'); }",
-      `if (victim) { len = victim.d;
-      const oldHitAudio=a._sourceChargerAudioHit;
-      a._sourceChargerAudioHit={chargerDirect:true,charge};
-      try{this.applyHit(a,victim.e,dmg,'charger');}
-      finally{a._sourceChargerAudioHit=oldHitAudio;}
-    }`,
-      'native Charger original-shot metadata scope');
-    code=once(code,
-      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
-      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, hitMeta:attacker?._sourceChargerAudioHit??null });",
-      'authoritative hit event recorded-source metadata');
     code=code.replace("emit('bomb:explode', { actor: b.owner,","emit('bomb:explode', { subId:b.s3Sub?.id||'bomb',actor:b.owner,");
     code=code.replace("emit('bomb:arm', { actor: b.owner,","emit('bomb:arm', { subId:b.s3Sub?.id||'bomb',actor:b.owner,");
     code=code.replace("type: 'blast', owner: a,", "type: 'blast', wid:w.id, owner: a,");
@@ -80,14 +65,29 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }
   if(rel==='src/game/weapons.js'){
+    // Keep the locked upstream's argument ABI intact: runtime Slosher and
+    // host/owner wrappers do not forward a sixth positional argument.
+    code=once(code,
+      "if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger'); }",
+      `if (victim) { len = victim.d;
+      const oldHitAudio=a._sourceChargerAudioHit;
+      a._sourceChargerAudioHit={chargerDirect:true,charge};
+      try{this.applyHit(a,victim.e,dmg,'charger');}
+      finally{a._sourceChargerAudioHit=oldHitAudio;}
+    }`,
+      'native admitted Charger shot sound metadata');
+    code=once(code,
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, hitMeta:attacker?._sourceChargerAudioHit??null });",
+      'admitted hit carries transient original-charge sound hint');
     code=once(code,
       "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
       "if (!/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))) " +
       "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
-      'do not layer authored body-hit noise over original Charger direct hit MP3');
+      'do not double-play authored body hit over source Charger cue');
   }
   if(rel==='src/main.js'){
-    code="import { classifySourceCombatHit, playResidentCombatRecording } from '../../patches/splatoon3/runtime/audio/source-hit-rules.mjs';\n"+code;
+    code="import { sourceChargerHitCue } from '../patches/splatoon3/runtime/audio/combat-hit-classifier.mjs';\n"+code;
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
       'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); if(self.menus?._setup?.mode!==\'boss\') G.music?.preloadFile?.(\'battle\',{prime:true}); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
       'iPad start tap initializes audio and warms the selected recorded shot before screen wipe');
@@ -146,14 +146,14 @@ export function adaptWeaponAudio(rel,code){
     // like a full-charge Charger direct.
     code=once(code,
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
-      "if (/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))) " +
-      "playResidentCombatRecording(G.audio,classifySourceCombatHit({attacker,weaponId,hitMeta}),attacker,.76); " +
+      "const chargerCue=sourceChargerHitCue(weaponId,hitMeta?.chargerDirect===true?hitMeta.charge:null); " +
+      "if (chargerCue) G.audio?.playWeapon?.(chargerCue,'fire',{volume:.76,priority:95}); " +
       "else G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
       'source verified Charger hit feedback only');
     code=once(code,
       "G.audio?.play('splat_enemy', { volume: 0.9 });",
       "if (/^(?:charger(?:-|$)|s3-charger-)/.test(String(cause||''))) " +
-      "playResidentCombatRecording(G.audio,'splat',attacker,.82); " +
+      "G.audio?.playWeapon?.('combat:splat','fire',{volume:.82,priority:96}); " +
       "else G.audio?.play('splat_enemy', { volume: 0.9 });",
       'source verified Charger splat splash only');
     // Native projectile code also played its old INKWAVE synthesized ink

@@ -110,6 +110,12 @@ export class ClamsRule {
   }
 
   _event(kind, data = {}) {
+    // Entity kind must not overwrite RankedEngine's event discriminator.
+    // Keep the small/power tag separate on the existing event/wire envelope.
+    if (Object.hasOwn(data, 'kind')) {
+      const { kind: clamKind, ...details } = data;
+      data = { ...details, clamKind };
+    }
     if (typeof this.engine?.event === 'function') this.engine.event(kind, data);
   }
 
@@ -287,21 +293,23 @@ export class ClamsRule {
     const inv = this.state.inventories[id];
     if (!inv || (!inv.small && !inv.power)) return;
     const pos = vec(position ?? this.state.actorPositions[id]);
+    let grounded = true;
     if (typeof frame?.floorAt === 'function') {
       const floor = this._floorAt(frame, pos[0], pos[2], pos[1] + 0.25);
-      if (floor !== null) pos[1] = floor;
+      grounded = floor !== null;
+      if (grounded) pos[1] = floor;
     }
     const smallDrop = this._smallDeathDropCount(inv.small);
     for (let i = 0; i < smallDrop; i++) {
       this._newClam('small', null, [pos[0] + (i - (smallDrop - 1) / 2) * 0.18, pos[1], pos[2]], {
-        grounded: true,
+        grounded,
         expiresIn: CLAM_LIFETIME,
       });
     }
     if (smallDrop) this._event('clam-drop', { actor: id, team, kind: 'small', count: smallDrop, pos: [...pos] });
     if (inv.power) {
       const power = this._newClam('power', validTeam(team) ? team : inv.team, [pos[0], pos[1], pos[2]], {
-        grounded: true,
+        grounded,
         expiresIn: CLAM_LIFETIME,
       });
       this._event('clam-drop', { actor: id, team, kind: 'power', count: 1, id: power.id, pos: [...power.pos] });

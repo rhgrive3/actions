@@ -16,10 +16,29 @@ export function nativeCombatWet(brain,G,x,z,y){
  const hit=brain._nativeCombatGround||(brain._nativeCombatGround=new GroundHit());
  const squid=a.form==='squid',up=squid?PLAYER.squidStepUp:PLAYER.stepUp;
  const count=Math.max(1,Math.ceil(distance/PLAYER.footRadius));let height=y;
+ // Edge steering calls this repeatedly for the same actor position and form.
+ // The starting foot-ring is identical in every direction. Reuse only inside
+ // one synchronous _edgeGuard call (see native-stages/adapter.mjs), never for
+ // another tick, move, world, form or physics owner. Every subsequent sample
+ // retains the original installed 9-ray groundProbe, order and thresholds.
+ const cache=brain._nativeCombatEdgeProbe;
  for(let i=0;i<=count;i++){
+  if(i===0&&cache?.active&&cache.ready&&cache.actor===a&&
+      cache.level===G.level&&cache.physics===G.physics&&
+      cache.x===a.pos.x&&cache.y===y&&cache.z===a.pos.z&&cache.squid===squid){
+   if(!cache.safe)return true;
+   height=cache.height;
+   continue;
+  }
   const t=i/count;
   G.physics.groundProbe(a.pos.x+(x-a.pos.x)*t,height,a.pos.z+(z-a.pos.z)*t,up,PLAYER.stepDown,PLAYER.footRadius,hit,squid);
-  if(!hit.hit||hit.block<0||!G.level.blocks[hit.block]?.solid||!Number.isFinite(hit.y))return true;
+  const safe=!!(hit.hit&&hit.block>=0&&G.level.blocks[hit.block]?.solid&&Number.isFinite(hit.y));
+  if(i===0&&cache?.active){
+   cache.actor=a;cache.level=G.level;cache.physics=G.physics;
+   cache.x=a.pos.x;cache.y=y;cache.z=a.pos.z;cache.squid=squid;
+   cache.height=hit.y;cache.safe=safe;cache.ready=true;
+  }
+  if(!safe)return true;
   height=hit.y;
  }
  return false;

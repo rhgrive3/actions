@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { classifySourceCombatHit, playResidentCombatRecording } from '../runtime/audio/source-hit-rules.mjs';
+import { sourceChargerHitCue } from '../runtime/audio/combat-hit-classifier.mjs';
 import { COMBAT_AUDIO } from '../runtime/audio/combat-recipes.mjs';
 import { validateAuthorizedManifest } from '../runtime/audio/authorized-samples.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
@@ -15,54 +15,41 @@ const e=(id,charge,killed=false,direct=true,sourceActor)=>({
  hitMeta:{chargerDirect:direct,charge}
 });
 
+const cue=event=>sourceChargerHitCue(event.weaponId,event.hitMeta?.chargerDirect===true?event.hitMeta.charge:null);
+
 test('admitted charged direct contact uses critical source even without killing',()=>{
  for(const [id,actor] of [
   ['charger',null],['s3-charger-quick','WeaponChargerQuick'],
   ['s3-charger-long','WeaponChargerLong'],['s3-charger-longscope','WeaponChargerLongScope'],
   ['s3-charger-keeper','WeaponChargerKeeper']
  ]){
-  assert.equal(classifySourceCombatHit(e(id,1,false,true,actor)),'critical',id);
-  assert.equal(classifySourceCombatHit(e(id,1,true,true,actor)),'critical',id+' lethal');
-  assert.equal(classifySourceCombatHit(e(id,.65,true,true,actor)),'damage',id+' lethal partial is NOT critical');
-  assert.equal(classifySourceCombatHit(e(id,1,true,false,actor)),'damage',id+' no direct collision');
+  assert.equal(cue(e(id,1,false,true,actor)),'combat:critical',id);
+  assert.equal(cue(e(id,1,true,true,actor)),'combat:critical',id+' lethal');
+  assert.equal(cue(e(id,.65,true,true,actor)),'combat:damage',id+' lethal partial is NOT critical');
+  assert.equal(cue(e(id,1,true,false,actor)),'combat:damage',id+' no direct collision');
  }
 });
 
 test('Bamboo and R-PEN and non-Chargers never borrow classic Charger critical hit',()=>{
- assert.equal(classifySourceCombatHit(e('s3-charger-light',1,true,true,'WeaponChargerLight')),'damage');
- assert.equal(classifySourceCombatHit(e('s3-charger-pencil',1,true,true,'WeaponChargerPencil')),'damage');
- assert.equal(classifySourceCombatHit(e('s3-charger-light-01',1,true,true)),'damage','Bamboo variant excluded');
- assert.equal(classifySourceCombatHit(e('s3-charger-pencil-01',1,true,true)),'damage','R-PEN variant excluded');
- assert.equal(classifySourceCombatHit({attacker:charger(),weaponId:'sub:bomb',
-   hitMeta:{chargerDirect:true,charge:1}}),'damage','a bomb cannot inherit the held Charger critical cue');
- assert.equal(classifySourceCombatHit({weaponId:'shooter',attacker:{weapon:{kind:'shooter'}},
-   hitMeta:{chargerDirect:true,charge:1},killed:true}),'damage');
- assert.equal(classifySourceCombatHit({weaponId:'charger',attacker:charger(),
-   hitMeta:null,killed:true}),'damage','kill is not a guessed charger critical event');
+ assert.equal(cue(e('s3-charger-light',1,true,true,'WeaponChargerLight')),'combat:damage');
+ assert.equal(cue(e('s3-charger-pencil',1,true,true,'WeaponChargerPencil')),'combat:damage');
+ assert.equal(cue(e('s3-charger-light-01',1,true,true)),'combat:damage','Bamboo variant excluded');
+ assert.equal(cue(e('s3-charger-pencil-01',1,true,true)),'combat:damage','R-PEN variant excluded');
+ assert.equal(cue({attacker:charger(),weaponId:'sub:bomb',
+   hitMeta:{chargerDirect:true,charge:1}}),null,'a bomb cannot inherit the held Charger critical cue');
+ assert.equal(cue({weaponId:'shooter',attacker:{weapon:{kind:'shooter'}},
+   hitMeta:{chargerDirect:true,charge:1},killed:true}),null,'non-Charger cannot borrow direct-hit source');
+ assert.equal(cue({weaponId:'charger',attacker:charger(),
+   hitMeta:null,killed:true}),'combat:damage','kill is not a guessed charger critical event');
 });
 
-test('authorized source samples are the ONLY accepted combat cue input',()=>{
+test('source combat cue IDs are accepted only in the verified recording library',()=>{
  const rights='Operator-provided local recording; rights to distribute must be checked';
  const clips=['critical','damage','splat'].map((kind,i)=>({
    id:'combat:'+kind,event:'fire',file:'s3-real/fixture-'+kind+'.mp3',variant:0
  }));
  const entries=validateAuthorizedManifest({schema:1,usageRights:rights,clips});
  assert.equal(entries.length,3);
- const played=[],bank={authorized:{byEvent:new Map()}};
- const audio={weaponBank:()=>bank,playWeapon:(id,event,opts)=>{
-   played.push({id,event,opts});return {event,id};
- }};
- const actor={isLocal:true};
- assert.equal(playResidentCombatRecording(audio,'critical',actor,.8),false,
-   'missing source must NEVER fabricate a Nintendo sound');
- assert.deepEqual(played,[]);
- bank.authorized.byEvent.set('combat:critical:fire',[{file:'s3-real/fixture-critical.mp3'}]);
- assert.equal(playResidentCombatRecording(audio,'critical',actor,.8),true);
- assert.deepEqual(played.map(x=>x.id),['combat:critical']);
- assert.equal(played[0].opts.actor,actor);
- assert.equal(playResidentCombatRecording(audio,'splat',actor,.9),false,
-   'death and critical hit are separate unverified recordings');
- assert.equal(playResidentCombatRecording(audio,'unknown',actor,.8),false);
  for(const kind of ['critical','damage','splat']){
    const r=COMBAT_AUDIO['combat:'+kind];
    assert.equal(r.family,'combat');assert.deepEqual(r.events,['fire']);
@@ -87,7 +74,7 @@ test('real composed network/damage wrappers preserve ONLY an actor-scoped sound 
  assert.equal(heard[0].hitMeta?.chargerDirect,true);
  assert.equal(heard[0].hitMeta?.charge,1);
  assert.equal(victim.hp,65,'source hint cannot change real damage');
- assert.equal(classifySourceCombatHit(heard[0]),'critical');
+ assert.equal(cue(heard[0]),'combat:critical');
  const health=victim.hp;
  f.G.projectiles.applyHit(attacker,victim,5,'charger');
  assert.equal(victim.hp,health-5);
@@ -110,8 +97,8 @@ test('real runtime carries source charge metadata, built game prefers source sou
  assert.match(nativeThrough,/finally \{ a\._sourceChargerAudioHit = previous; \}/,'through-hit sound scope cannot leak');
  const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const built=adaptBuildSource('src/main.js',src);
- assert.match(built,/import \{ classifySourceCombatHit, playResidentCombatRecording \}/);
+ assert.match(built,/import \{ sourceChargerHitCue \}/);
  assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId, hitMeta \}\)/);
- assert.match(built,/playResidentCombatRecording\(G\.audio,classifySourceCombatHit\(\{attacker,weaponId,hitMeta\}\),attacker,\.76\)/);
- assert.match(built,/playResidentCombatRecording\(G\.audio,'splat',attacker,\.82\)/);
+ assert.match(built,/sourceChargerHitCue\(weaponId,hitMeta\?\.chargerDirect===true\?hitMeta\.charge:null\)/);
+ assert.match(built,/G\.audio\?\.playWeapon\?\.\('combat:splat','fire'/);
 });

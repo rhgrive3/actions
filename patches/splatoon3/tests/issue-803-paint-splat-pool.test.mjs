@@ -96,14 +96,23 @@ function makeOwner(Actor) {
   });
 }
 
-test('#803: installed adapter preserves native seeded Turf area, cell ownership, and special credit', async () => {
+test('#803: pooled allocation preserves current canonical ownership and native immediate body credit', async () => {
   const native = await loadPaintSystem({ adapted: false });
   const installed = await loadPaintSystem({ adapted: true });
+  const allocating = await loadPaintSystem({ adapted: true });
   const { Actor } = await fixture();
 
-  function run(runtime, adapted) {
+  function run(runtime, adapted, freshAllocations = false) {
     const events = [];
     const { paint, THREE } = makePaint(runtime, { events, adapted });
+    // Compare allocation policies under the SAME canonical ownership rules.
+    // The pre-#264 raw paint class owns only the immediate body; it cannot be
+    // an oracle for the later visible rays/drips now counted by both paths.
+    if (freshAllocations) {
+      const takeEntries = paint._takeSplatEntries, takeGrowth = paint._takeSplatGrowth;
+      paint._takeSplatEntries = function () { this._splatEntryPool.length = 0; return takeEntries.call(this); };
+      paint._takeSplatGrowth = function () { this._splatGrowthPool.length = 0; return takeGrowth.call(this); };
+    }
     const owner = makeOwner(Actor);
     const areas = [];
     const shots = [
@@ -124,15 +133,29 @@ test('#803: installed adapter preserves native seeded Turf area, cell ownership,
     return {
       areas, grid: [...paint.grid], counts: [...paint.counts], version: paint.version,
       actorTurf: owner.stats.turf, special: owner.special, events,
+      allocations: adapted ? { ...paint._splatPoolStats } : null,
     };
   }
 
-  const before = run(native, false);
+  const nativeBody = run(native, false);
+  const before = run(allocating, true, true);
   const after = run(installed, true);
   const immediate = e => e[2] === 3 && e[3] === 0 && e[4] === false;
   assert.equal(after.events.filter(immediate).length, 5, 'current #570 submits exactly one immediate body for each non-instant splat');
   assert.deepEqual(after.events.filter(immediate).map(e => e.slice(0, 5)), [[0,.14,3,0,false],[1,.73,3,0,false],[1,.8,3,0,false],[0,.37,3,0,false],[1,.91,3,0,false]]);
-  assert.deepEqual({ ...after, events: after.events.filter(e => !immediate(e)) }, before);
+  const { allocations: referenceAllocations, ...reference } = before;
+  const { allocations: pooledAllocations, ...pooled } = after;
+  assert.deepEqual(pooled, reference, 'pool reuse cannot change current canonical cell ownership, growth or credit');
+  assert.equal(referenceAllocations.entryArraysCreated, 5);
+  assert.equal(referenceAllocations.growthRecordsCreated, 5);
+  assert.equal(referenceAllocations.entryArraysReused, 0);
+  assert.equal(referenceAllocations.growthRecordsReused, 0);
+  assert.ok(pooledAllocations.entryArraysReused > 0);
+  assert.ok(pooledAllocations.growthRecordsReused > 0);
+  assert.deepEqual(after.areas, nativeBody.areas, 'immediate native body area remains unchanged');
+  assert.equal(after.actorTurf, nativeBody.actorTurf, 'native immediate Actor credit remains unchanged');
+  assert.equal(after.special, nativeBody.special);
+  assert.notDeepEqual(after.grid, nativeBody.grid, 'raw pre-#264 body-only grid deliberately omits canonical late visible cells');
   assert.ok(before.areas.some(area => area > 0));
   assert.ok(before.special > 0);
 });

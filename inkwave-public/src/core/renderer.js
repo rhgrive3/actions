@@ -116,12 +116,60 @@ export class Renderer {
     r.setClearColor(0x9fd8f0, 1);
     container.appendChild(r.domElement);
     r.domElement.id = 'game-canvas';
+    // GPU render targets (notably the paint atlas) do not survive WebGL context
+    // restoration even if CPU turf ownership survives. Never silently resume
+    // a match showing blank ink with an authoritative nonempty score.
+    this._contextLost = false;
+    this._contextRecoveryOverlay = null;
+    r.domElement.addEventListener('webglcontextlost', event => this._onContextLost(event), false);
+    r.domElement.addEventListener('webglcontextrestored', () => this._onContextRestored(), false);
     this.container = container;
     this.scene = null; this.camera = null;
     this.settings = settings;
     this.mobile = G.mobile || deviceProfile();
     this.q = effectiveQuality(settings, this.mobile);
     this._w = 0; this._h = 0;
+  }
+
+  _onContextLost(event) {
+    event?.preventDefault?.(); // allow restoration notification on supporting browsers
+    if (this._contextLost) return;
+    this._contextLost = true;
+    // The CPU turf grid may remain valid but the game-owned GPU atlas no
+    // longer is. Freeze gameplay and stop sending divergent online updates.
+    if (G.match) G.match.paused = true;
+    if (G.net?.active) {
+      try { G.net.leave(); } catch (error) { console.warn('[inkwave] relay leave on context loss',error); }
+    }
+    this._showContextRecovery();
+  }
+
+  _onContextRestored() {
+    // Deliberately do not call _buildComposer() and resume: the ink render
+    // target's *contents* are gone. A clean reload rebuilds CPU and GPU from
+    // one consistent match state rather than displaying incorrect turf.
+    this._contextLost = true;
+    this._showContextRecovery();
+  }
+
+  _showContextRecovery() {
+    if (this._contextRecoveryOverlay || typeof document === 'undefined') return;
+    const overlay = document.createElement('div');
+    overlay.className = 'iw-webgl-recovery';
+    overlay.setAttribute('role', 'alertdialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Graphics recovery required');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483640;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;background:rgba(12,14,28,.94);color:#fff;font:600 16px/1.5 system-ui;text-align:center';
+    const message = document.createElement('p');
+    message.textContent = 'グラフィックの接続が失われたため、バトルを停止しました。塗りとスコアのずれを防ぐため、再読み込みしてください。';
+    const button = document.createElement('button');
+    button.type = 'button'; button.textContent = 'ゲームを再読み込み';
+    button.style.cssText = 'padding:12px 24px;border-radius:10px;border:2px solid #fff;background:#333e68;color:#fff;font:inherit;cursor:pointer';
+    button.addEventListener('click', () => window.location.reload());
+    overlay.append(message, button);
+    (document.body || this.container).appendChild(overlay);
+    this._contextRecoveryOverlay = overlay;
+    button.focus?.();
   }
 
   setScene(scene, camera) {
@@ -239,6 +287,7 @@ export class Renderer {
   }
 
   render() {
+    if (this._contextLost) return;
     this.resize();
     // colour grade recommended by the environment theme (day / dusk)
     const gr = G.env && G.env.grade;

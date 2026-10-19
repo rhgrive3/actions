@@ -51,6 +51,16 @@ function interpolateFields(a,b,q){
 const INSTALLED = Symbol.for('inkwave.main-weapon-catalog.v1');
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
 
+// Nintendo10.0.0: the post-Splatana-swing sub lock also blocks Clam throws.
+// Reuse the existing sourced recovery clock; do not invent a throw delay.
+// https://support.nintendo.com/jp/switch/software_support/av5ja/1000.html
+export function catalogSplatanaThrowBlocked(actor) {
+  const s = actor?.weaponRunner?.catalogState;
+  // pending owns the still-cancellable pre-wave swing. Its existing null
+  // transition marks wave emission; only the remaining recovery is blocked.
+  return actor?.weapon?.catalogRecord?.family === 'splatana' && s?.stop > EPS && !s.pending;
+}
+
 // Community 60fps measurements, explicitly v10.0.1, not extracted defaults:
 // wikiwiki.jp/splatoon3mix/検証/メインウェポン (Brella table).
 const BRELLA_MEASURED = Object.freeze({
@@ -286,18 +296,23 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(s.slideRunner&&width>0)paintDualiesSlide(G,s.slideRunner,
       {kind:'dualies',rollPaintWidthHalf:width,rollPaintWorldScale:1},ending);
   }
+  function canKeepCharge(r, s) {
+    const kp = r.parameters.WeaponKeepChargeParam || r.parameters.spl__WeaponStringerParam?.ChargeKeepParam;
+    // LACT charge keep: https://www.nintendo.com/jp/character/splatoon/fashion/index.html
+    return !!(kp && (s.chargeF > 0 || s.stream > 0 && kp.EnableKeepChargeAnytime) &&
+      (kp.EnableKeepChargeAnytime || s.chargeF + EPS >= chargeFrames(r)) &&
+      (r.family !== 'stringer' || r.parameters.spl__WeaponStringerParam.IsEnableChargeKeep ||
+        (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))));
+  }
   function cancel(runner, keep = false) {
     const s = runner.catalogState;
     if (!s) return;
     s.birthEpoch = (s.birthEpoch || 0) + 1;
     const r = RECORDS.get(s.id), kp = r.parameters.WeaponKeepChargeParam || r.parameters.spl__WeaponStringerParam?.ChargeKeepParam;
     if(keep&&s.stream>0&&kp?.EnableKeepChargeAnytime){s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(runner.a);}
-    if (keep && s.chargeF > 0 && kp && (kp.EnableKeepChargeAnytime || s.chargeF+EPS >= chargeFrames(r)) &&
-      (r.family !== 'stringer' || r.parameters.spl__WeaponStringerParam.IsEnableChargeKeep ||
-        // Nintendo's LACT-450 guide explicitly confirms charge keep. Its pinned
-        // row omits this flag; this source-actor exception is not a schema default.
-        // https://www.nintendo.com/jp/character/splatoon/fashion/index.html
-        (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))))
+    // Keep capability is shared with Actor's busy admission, including the
+    // source-backed LACT sparse-flag exception. No new storage owner or clock.
+    if (keep && s.chargeF > 0 && canKeepCharge(r, s))
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
     s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
@@ -316,6 +331,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);
     const s = this.catalogState;
+    // A newer Squid press while holding Fire must reach the existing keep
+    // transition. Actor still owns input precedence and form selection.
+    if (s && this.a.intent?.squid && this.a.intent.fire && !s.roll && !s.lunge &&
+      !s.pending && !s.melee && canKeepCharge(this.a.weapon.catalogRecord, s)) return false;
     if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee && !((this.a.weapon.catalogRecord.family==='splatana'||this.a.weapon.catalogRecord.family==='dualies')&&s?.stop>EPS)) return false;
     return !!(s && (s.pending || s.melee || s.chargeF>0 || s.stream>0 || s.roll || s.lunge || s.stop>EPS));
   };
@@ -1857,8 +1876,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(!r)return legacyUpdate.call(this,dt,input);
     const s=state(this);
     if(s.canopy?.preparing&&(!input.fire||input.sub||a.form!=='kid'||a.remote||!a.alive||a.specialActive||a.superJumpState||this.aimingSub))s.canopy.preparing=false;
-    // Cancel BEFORE the installed sub preparation owner checks main busy state.
-    if(input.sub||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid'||r.family==='brella'&&a.form!=='kid')cancel(this);
+    const throwBlocked=catalogSplatanaThrowBlocked(a);
+    // A held sub may cancel a main charge, but not erase an emitted swing's
+    // existing recovery. Its preparation starts once that same clock expires.
+    if(input.sub&&!throwBlocked||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid'||r.family==='brella'&&a.form!=='kid')cancel(this);
     if(r.family==='splatana'&&a.form!=='kid'&&(s.pending||s.melee||s.lunge))cancel(this);
     // Rebuild/cure belong to elapsed weapon life, including squid form and
     // sub/special use. Previously both clocks lived behind the kid/fire gate.
@@ -1876,7 +1897,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Native/kit update readers use these four flags for sub-weapon logic.
     // Allocate once per runner instead of per 60 Hz update.
     const subInp=this._catalogSubInput||(this._catalogSubInput={fire:false,firePressed:false,sub:false,subReleased:false});
-    subInp.sub=input?.sub;subInp.subReleased=input?.subReleased;
+    subInp.sub=!throwBlocked&&input?.sub;subInp.subReleased=!throwBlocked&&input?.subReleased;
     legacyUpdate.call(this,dt,subInp);
     if(!Number.isFinite(dt)||dt<=0||a.remote||!a.alive||a.specialActive||a.superJumpState)return;
     // Wiki: orientation changes continuously even while swimming/unarmed.

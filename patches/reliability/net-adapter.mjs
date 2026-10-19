@@ -372,5 +372,11 @@ NetMatch.prototype.dispose = function(...args) {
     else { this._stopPing(); this.ws = null; this.id = null; this._pingSent = 0; }
   }`, rel);
   }
+  if (rel === 'src/net/transport.js') {
+    // Apply after the legacy full-method replacement, without drifting its anchor.
+    code = replaceOnce(code, '&v=${PROTO}${create ? ', '&v=${PROTO}&compat=${encodeURIComponent(COMPAT)}${create ? ', rel);
+    code = replaceOnce(code, '        this.bytesIn += s.length;',
+      '        if (s.length > MAX_RELAY_FRAME_CHARS) return;\n        this.bytesIn += s.length;', rel);
+  }
   return code;
 }

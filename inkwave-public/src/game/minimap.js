@@ -28,7 +28,7 @@ function lin2s(c) { return Math.round(255 * (c <= 0.0031308 ? c * 12.92 : 1.055 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 export class Minimap {
-  constructor(level, paint, pxPerM = 7) {
+  constructor(level, paint, pxPerM = 7, { deferActivation = false } = {}) {
     this.level = level; this.paint = paint;
     const B = level.bounds;
     this.s = pxPerM;
@@ -48,14 +48,24 @@ export class Minimap {
     this.time = 0;
     this.flashT = 9;
     this._team = [null, null];
-    CURRENT = this;
-    fxList.length = 0;
+    if (!deferActivation) this.activate();
     this._built = false;
     this._band = 0;
     this._composeAcc = 1 / 30;   // first visible update composes immediately
     // the raster + shading pass (~0.1–0.3 s) runs when the browser is idle after loading; a match forces it early
     const idle = typeof requestIdleCallback === 'function' ? (fn) => requestIdleCallback(fn, { timeout: 1500 }) : (fn) => setTimeout(fn, 60);
     if (G.settings?.minimap !== false) idle(() => { if (!this._built && CURRENT === this) this._build(); });
+  }
+
+  // A native-world candidate can prepare a Minimap without replacing the
+  // currently visible map. Reactivation also repairs a failed publication.
+  activate() {
+    CURRENT = this;
+    fxList.length = 0;
+    if (G.settings?.minimap !== false && !this._built) {
+      const idle = typeof requestIdleCallback === 'function' ? (fn) => requestIdleCallback(fn, { timeout: 1500 }) : (fn) => setTimeout(fn, 60);
+      idle(() => { if (!this._built && CURRENT === this) this._build(); });
+    }
   }
 
   setViewerTeam(team) {

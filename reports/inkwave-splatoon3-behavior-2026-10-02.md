@@ -36,6 +36,11 @@
 
 ## 2026-10-18：ナワバリのイカスポーン（リスポーン）の表示（所有者の指摘）
 
+### 2026-10-19：スポナー・ホコ・アサリ表示の段階統合候補
+
+スポナー形状、ホコの保持・攻撃と空中支持、アサリのイベント・バリア表現を候補として検証しています。アサリの新しい球サイズ・姿勢と投げ腕は保留し、球表示は既存 main の挙動を維持します。大型化・予備動作・投げの改善依頼は継続中で、本家の完全再現や接触の解消は未確認です。最新統合 head の emitted/native 受入は未実施です。旧比較記録と根拠は[段階統合の記録](inkwave-object-presentation-integration-2026-10-19.md)に一字も失わず保存しています。
+
+
 参照版は Ver.11.3.0。本家の根拠は公開資料のみで、フレーム値・寸法は無い：Inkipedia「[Spawner](https://splatoonwiki.org/wiki/Spawner)」「[Squid Spawn](https://splatoonwiki.org/wiki/Squid_Spawn)」（各自の浮遊スポナー、エスプレッソマシン型、地面に置かれるイカ形の矢印で着地点と同時に飛ぶ味方の着地点を示す、ZR で発射、試合開始時は自動で発射、発射後数秒でスポナーが消える、着地後は白く光るアーマー）、同ページのブキ種別の待機ポーズ画像、公式の初出画像（`S3_first_twitter_preview_-_spawners.jpg`：スポナーの上にブキを構えて立つ、`..._flying_cephalapods.jpg`：スポナーからイカの姿でらせん状のインクを引いて飛ぶ）、攻略 wiki（[gameisbest](https://gameisbest.jp/archives/51844)：傾けて着地点を選び ZR で発射、飛行中も左スティックで調整）。INKWAVE の比較は試し撃ちではなくナワバリ（タイドウォーター、ボット停止）を Chromium で 60 Hz 固定ステップ駆動して撮影した（試合開始→自動発射→着地、やられ→約 8.5 秒後に待機→クリックで発射→着地）。
 
 - **飛行中に姿勢が固まって滑っていた**：イカスポーンの待機・飛行の間、`respawn-lifecycle.mjs` は Actor の更新を早期に終え、キャラの姿勢更新（`Actor._finishFrame`）を一度も呼ばずに位置だけ動かしていた。そのため待機中は空中で直立したまま、飛行中は人の姿で固まったまま弧を滑り、着地後に急に動き出していた。待機・飛行の各フレームで姿勢更新を行う。
@@ -242,6 +247,8 @@ Chromium 154 / SwiftShaderの実ブラウザでも、修正前後の本番合成
 | D09 | 高 | 標準ナワバリバトルの制限時間は3分。[任天堂のルール説明](https://www.nintendo.com/jp/switch/av5ja/battle-nawabari/index.html) | `src/main.js:961` で経過時間を1/24秒以下に切り捨て、`:1026` と `src/game/match.js:169` はその時間で進む。描画が遅いと試合時間・移動・回復も遅くなる。固定60Hzの蓄積方式ではない。 | 毎秒20回のフレームを与えると、実時間1秒でシミュレーションは約0.833秒しか進まない。180秒は計算上216秒になる。これは時間更新の数式の検証であり、実端末を20fpsにして測定した結果ではない。 |
 
 ## 歩行と泳ぎの測定
+
+2026-10-19 追補候補: 通常泳ぎの表示owner取得直後、微入力でイカの長軸が約0.55rad跳ぶ内部不整合を、既存world quaternionから初期yawを得る1箇所で修正。移動/変身時間/source保存状態は対照と同値。bank軸校正・source-heading修正とは別候補で、emitted/native24画像の受入は未完。[専用比較記録](swim-owner-entry-20261019.md)を参照。
 
 以下は INKWAVE の `_horizontal` をそのまま実行した結果。平地で衝突なし、射撃なし、最大入力から2秒移動し、その後の停止・90度旋回・反転を別々に測定した。距離の単位は INKWAVE 内の m。本家の距離単位を同じ m に換算した結果ではない。
 
@@ -511,6 +518,8 @@ Nintendoの非公開protocolや通信時刻を推定して本家一致とはし�
 
 
 ## チャージ保持の ZR 解放（#390、2026-10-04）
+
+2026-10-19追記（PR #1636）：通常Fire→Squid入力から追加主武器の既存charge-keepへ接続する限定修正を検証中。元の比較記録を全byte保存した[専用報告](inkwave-catalog-charge-keep-input-2026-10-19.md)を参照。保持clock・威力・インク支払は変更しない。
 
 潜伏中のチャージ保持は「ZR を押したまま」という保持条件に紐づいており、ZL を離す前に ZR を離すとチャージは解除される。Issue #390 で、この解放時キャンセルを `patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._charger` に実装した。
 
@@ -4893,6 +4902,8 @@ Current-base follow-up (2026-10-13): the final reconciliation preserves external
 
 ## 2026-10-16: native collision query lifetime optimization
 
+- 2026-10-19: #1671 の iPad Safari 遅延切分けに伴い、#1670 の native paint adapter が先行 network の ownerOrder/orderState を落とさず合成できる2行修正と、opt-in の box/capsule 呼出・fixed tick 計測を追加。既存の ray/sweep カウンタ0を接触処理0と解釈しない。実機FPS改善、本家同等性、長時間rawtraceは未確認。source回帰・計測負荷の範囲は [専用記録](inkwave-native-profiler-repair-2026-10-19.md) を参照。
+
 - Reference/conditions: retain the documented Splatoon 3 11.3.0 baseline; all
   weapon/gear settings unchanged. No new retail numeric values are inferred.
 - INKWAVE implementation: `patches/native-stages/runtime/triangle-world.mjs`
@@ -5313,11 +5324,17 @@ root yawの保持に加え、転がしの接地軸を床の接線に保持する
 main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.5が残り、HUDは+12、次のガチアサリ投入で本カウント77→68.5となる本番consumer差を再現。InkipediaのS2/S3共通Scoring節（取得2026-10-19、reported revision 730528）が示す閉鎖時の半分切捨てに合わせ、窓全体の得点を合計した後で新規ペナルティだけを整数化した。S3Wikiの小アサリ1個あたり1.5は合計前に切り捨てない。双方チーム・3種dt、複数窓、残ペナルティ、延長、実Match/HUD/host-client consumerを回帰。今回の根拠はWikiでありSwitch実機で端数処理を新規計測したものではない。投射物理・表示モデル・PR1627の別イベント修復とは分離する。詳細は [専用記録](inkwave-clam-penalty-consumer-2026-10-19.md)。
 
 
+### 2026-10-19：水没時に落としたアサリの延長維持
+
+床のない地点で死亡すると所持ガチアサリがgroundedのまま水中に10秒残り、最後の球でも延長が続く実consumer差を修正。S3Wikiの落下・水没時の消滅条件に沿い、floorAtがnullを返す死亡dropだけを既存の落下・void消滅経路へ渡す。床上の10秒寿命とfloor照会のない既存経路は維持する。散乱した小アサリ個別の端部判定や全水面モデル、実機の消滅frameは未確認。source/emittedとnative Actor/Worldの水没・床上対照を検証する。根拠・確認状態は[専用記録](inkwave-clam-void-drop-2026-10-19.md)。
+
 ### 2026-10-19：#522 塗りイベントの送信者・所有者検証
 
 公開版のオンライン塗りを、リレーが確定した送信者・試合ID・連番と、発生元アクターの現所有者・所有権世代に結び付けた。所有者不一致・旧世代・発生元不明の塗りはCPUグリッド、塗りポイント、スペシャル増加、勝敗集計の前で拒否する。被撃破時の塗りは被撃破者の所有者、ボスとエリア確保は明示されたホストの権限で扱う。正規の塗り形状、武器の数値、シード、30/60/120 Hzの再生順序は維持する。参照は既存のスプラトゥーン3 Ver. 11.3.0。任天堂の非公開通信方式との一致や、新規のSwitch実機計測は主張しない。これは既存のクライアント所有者主導のシミュレーション内の送信者検証であり、所有者自身の不正なシミュレーションまで検証するサーバー化ではない。詳細と確認範囲は [専用記録](inkwave-paint-authority-522-2026-10-19.md)。
 
 ## 2026-10-19：Rainmaker 公開 smoke の静止標的に残る武器動作を初期化
+
+2026-10-19追記（PR #1638 / #1608）：公開起動時のcritical配信失敗を早期記録するharness診断を検証中。静止標的の修正を保持し、元の比較記録を[専用報告](inkwave-ranked-boot-diagnostics-2026-10-19.md)へ全byte保存した。180秒条件とidentity判定を維持し、再読込は追加しない。
 
 公開 main `fbed2d4ef5a2708307036c167d0a9df0461e8597` は Pages artifact と公開 manifest/runtime の同一性が確認できたが、その後の公開 Rainmaker smoke が damage `[]` で失敗した（[run39226266615 / job117973196264](https://github.com/rhgrive3/actions/actions/runs/39226266615/job/117973196264)）。trace は HTTP503・capture timeout・boot例外ではなく、1発の60/180攻撃に対する標的移動後の実assert不一致。
 
