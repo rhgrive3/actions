@@ -77,8 +77,8 @@ complete every required CI check; these targeted results are not full-CI approva
 The initial two-file draft did not start Validate: its existing push and pull
 request path filters omitted `tests/issue-queue/**`. Add that path to both
 filters so this fixture and future tests in the same suite actually trigger
-the unchanged full gate. All existing filters, jobs, assertions, permissions,
-checkout identity and timeouts remain byte-for-byte unchanged. An independent
+the unchanged full gate. At that trigger-only revision, all existing filters, jobs, assertions,
+permissions, checkout identity and timeouts remained byte-for-byte unchanged. An independent
 contract checks both matching events, every previous path, and complete parsed
 workflow equality after removing the two additions; omitted-trigger and
 removed-existing-path negative controls must fail.
@@ -109,10 +109,43 @@ its existing source fixture, so these results are not emitted/browser proof.
 
 The prior `cff0b2ddaeab208432bb462f521b9b02f70737e9` Validate run had no
 assigned runners or executed steps at the pre-update check. Updating the same
-PR activates its existing concurrency policy and supersedes that queued run;
-it does not turn that old run into a success. Final-head full CI remains required.
+PR is subject to its existing concurrency policy. The old run was still queued
+at the last observation; cancellation was not assumed or manually requested.
+It does not turn that old run into a success. Final-head full CI remains required.
 
 Combined core, actual #522 authority consumers and full weapon-edgecases: **52/52**
 passed (zero skipped/failed, 650 consumed paths with strict official-source
 binding and only the two declared test overlays). This supplements, not replaces,
 the required final-head workflow.
+
+
+## Exact emitted launch verification
+
+The source launch fixture deliberately uses its original source namespace. A
+separate required core step now runs `scripts/check-inkwave-launch-packets.mjs`
+immediately after the existing `_site` build. It reuses that build, requires its
+exact manifest SHA-256, checks every immutable JavaScript/JSON byte hash, and
+rejects imports outside that manifest namespace. No extra build is introduced.
+The existing `full_site` artifact also preserves `_site-launch-packets.json`.
+All previous jobs, gates, permissions and timeouts are retained.
+
+The runner was executed on the official main00b Pages artifact identified above:
+500 hashed files and 186 actual imported modules; roller13/splatling1 projectile
+packets, paint1/0, ghost cardinality, no duplicate output and transmitted velocity
+error0 all passed. It uses real owner identity and `NetMatch.bind`, with no fake
+ownership override. Missing/mismatched manifests, altered immutable bytes and
+source namespace fallback fail closed; the original ownerless fixture fails its
+paint assertion against the same emitted modules. These are CPU emitted-module
+checks, not a browser, device, or online-session result.
+
+Runner SHA-256:
+`911c48d239b8d4b6ffa017ccbe4ef843455aec20ad34e083d6a3ec6688822ba3`.
+Emitted receipt SHA-256:
+`16976a809e2dfbd87ee07ffa49bdbc0532c6badf93e4649b64b9ad82652cede1`.
+The existing source fixture remains byte-identical to the previously verified
+candidate. At 2026-10-19 12:26 UTC, the prior 9fd Validate run39250337225 had zero
+jobs and no runner had started. That observation allowed this same-purpose step
+to be integrated before execution; the old head and evidence remain distinct.
+The final published head must pass its own entire required CI, including this
+emitted step. Main00b results are not substituted for those pending final-head
+results.
