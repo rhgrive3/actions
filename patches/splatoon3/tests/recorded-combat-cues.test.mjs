@@ -116,8 +116,14 @@ test('normal gameplay hit/splatted events play original recording and never the 
   assert.match(adapted,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId, charge \}\)/);
   const weapons=adaptBuildSource('src/game/weapons.js',
     fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8'));
-  assert.match(weapons,/applyHit\(attacker, victim, dmg, weaponId, shotCharge = null\)/);
-  assert.match(weapons,/this\.applyHit\(a, victim\.e, dmg, 'charger', charge\)/);
+  assert.match(weapons,/applyHit\(attacker, victim, dmg, weaponId, slosherVolleyId, shotCharge = null\)/);
+  assert.match(weapons,/this\.applyHit\(a, victim\.e, dmg, 'charger', undefined, charge\)/);
+  assert.match(weapons,/nm\.sendHit\(attacker, victim, dmg, weaponId, slosherVolleyId\)/,
+    'replication must retain Slosher volley identity in fifth slot');
+  const catalog=adaptBuildSource('patches/splatoon3/runtime/main-weapon-catalog.mjs',
+    fs.readFileSync(new URL('../runtime/main-weapon-catalog.mjs',import.meta.url),'utf8'));
+  assert.match(catalog,/this\.applyHit\(p\.owner,target,amount,p\.wid,undefined,p\.catalog\?\.descriptor\?\.charge\)/,
+    'the native collision owner must pass the actual original projectile charge, not current runner state');
   assert.match(adapted,/playRecordedCombat\?\.\('splat'/);
   assert.doesNotMatch(adapted,/G\.audio\?\.play\('hit_marker'/);
   assert.doesNotMatch(adapted,/G\.audio\?\.play\('splat_enemy'/);
