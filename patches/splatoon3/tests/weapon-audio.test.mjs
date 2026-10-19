@@ -17,12 +17,31 @@ test('65 independent main recipes, all 14 subs and 19 specials are addressable',
 });
 test('every authored event and all three variants are finite, bounded and non-silent',()=>{
  const fires=new Set();let total=0;
- for(const r of [...Object.values(WEAPON_AUDIO),...Object.values(KIT_AUDIO)])for(const event of r.events){const variants=new Set();
+ // The three combat feedback IDs accept verified MP3 only; they have no
+ // authored waveform, so synthetic-sound metrics cannot apply to them.
+ const authoredKit=Object.values(KIT_AUDIO).filter(r=>r.reference!=='operator-recorded-only');
+ for(const r of [...Object.values(WEAPON_AUDIO),...authoredKit])for(const event of r.events){const variants=new Set();
   for(let variant=0;variant<3;variant++){const pcm=renderSound(r,event,variant),m=pcmMetrics(pcm,48000);total++;
    assert.ok(m.peak>.01&&m.peak<=.761,`${r.id}/${event} peak ${m.peak}`);assert.ok(Math.abs(m.dc)<.045,`${r.id}/${event} DC ${m.dc}`);
    assert.ok(m.duration>=.08&&m.duration<=1.1);variants.add(digest(pcm));if(event==='fire'&&variant===0&&WEAPON_AUDIO[r.id])fires.add(digest(pcm));
   }assert.equal(variants.size,3,`${r.id}/${event} round robin must change excitation`);
  }assert.equal(fires.size,65);console.log('rendered PCM variants',total);
+});
+test('recorded-only combat feedback cannot be mistaken for synthesized audio',()=>{
+ const ids=['combat:critical','combat:damage','combat:splat'];
+ const recordedOnly=Object.values(KIT_AUDIO).filter(r=>r.reference==='operator-recorded-only');
+ assert.deepEqual(recordedOnly.map(r=>r.id).sort(),ids.slice().sort(),'all source-only cues remain explicitly enumerated');
+ const bank=new WeaponSoundBank(context);
+ for(const r of recordedOnly){
+   assert.deepEqual(r.coefficients,[],'recorded-only feedback has no authored sound parameters');
+   assert.deepEqual(r.events,['fire']);
+   assert.equal(bank.resolve('main:'+r.id+':fire'),null,'unavailable recording may not expose a synthetic definition');
+   assert.throws(()=>bank.get(r.id,'fire'),/Recorded-only cue cannot generate PCM/);
+   bank.warm(r.id);
+   assert.equal(bank.jobs.length,0,'warming a source-only event may not create PCM jobs');
+ }
+ assert.equal(bank.cache.size,0);
+ bank.dispose();
 });
 test('rendering is deterministic and independent of cache order',()=>{const r=WEAPON_AUDIO.shooter;assert.equal(digest(renderSound(r)),digest(renderSound(r)));assert.notEqual(digest(renderSound(r,'fire',0)),digest(renderSound(r,'fire',1)));assert.throws(()=>renderSound(r,'unknown'));assert.throws(()=>renderSound(r,'fire',0,4));});
 test('LRU cache obeys byte budget, returns cached AudioBuffers and bounds warm jobs',()=>{
