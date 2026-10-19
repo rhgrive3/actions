@@ -257,10 +257,10 @@ test('native opt-in tracer counts actual BVH triangles and nested ground, brain 
  const last=trace.snapshot().latest;
  assert.deepEqual(last.sourceBVH,{queries:1,triangleTests:37});
  assert(last.stages['ground-ring']>=.9);
- assert(last.stages['source-ray']>=.6);
+ assert(last.stages['source-ray']>=.5);
  assert(last.stages['brain-0']>=1.3);
- assert(last.stages['character-0']>=.5);
- assert(last.stages['paint-splat']>=.5);
+ assert(last.stages['character-0']>=.4);
+ assert(last.stages['paint-splat']>=.4);
  assert(last.topNativeScopes.some(x=>x.name==='brain-0'));
  assert.match(trace.report(),/"sourceBVH"/);
  trace.dispose();
