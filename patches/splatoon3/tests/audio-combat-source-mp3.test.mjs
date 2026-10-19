@@ -48,26 +48,35 @@ test('E-liter and E-liter Scope preserve the original distinct 2022 Heavy HoldNo
 test('fully composed game routes Charger direct hits and splats to recorded S3 feedback, never to legacy synth',()=>{
  const source=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const out=adaptBuildSource('src/main.js',source);
- assert.match(out,/playWeapon\?\.\('fx:combat', G\.audio\?\.combatFeedbackCue\?\.\(attacker,weaponId,damage\)/,
+ assert.match(out,/playWeapon\?\.\('fx:combat', G\.audio\?\.combatFeedbackCue\?\.\(attacker,weaponId,damage,charge\)/,
    'recorded direct/ordinary cue must follow the admitted hit payload');
  assert.match(out,/playWeapon\?\.\('fx:combat','splat'/,'confirmed local splat uses the original Pl source');
  const native=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const shot=adaptBuildSource('src/game/weapons.js',native);
  assert.match(shot,/if \(!attacker\.isLocal\) G\.audio\.play\('ink_hit_body'/,
    'recorded attacker hit must not layer the old parametric body impact');
- assert.match(shot,/emit\('hit', \{ attacker, victim, damage: dmg, killed, weaponId \}\)/,
-   'critical cue classification follows admitted hit source without changing damage authority');
+ assert.match(shot,/emit\('hit', \{ attacker, victim, damage: dmg, killed, weaponId, charge: chargeFraction \}\)/,
+   'critical cue classification follows admitted hit source and actual projectile charge');
+ assert.match(shot,/this\.applyHit\(a, victim\.e, dmg, 'charger', undefined, charge\)/,
+   'native Charger passes full-charge fraction, not damage-derived guess');
  assert.doesNotMatch(out,/G\.audio\?\.play\('hit_marker',/,'no synthesized hit click layered over MP3');
  assert.doesNotMatch(out,/G\.audio\?\.play\('splat_enemy',/,'no synthesized kill pop layered over MP3');
 });
 
 test('recorded hit event follows accepted projectile, not attacker selected Charger',()=>{
  const charger={weapon:{kind:'charger'}};
- assert.equal(combatFeedbackCue(charger,'charger',159), 'critical_hit');
- assert.equal(combatFeedbackCue(charger,'charger-01',120), 'critical_hit');
- assert.equal(combatFeedbackCue(charger,'s3-charger-long',180), 'critical_hit');
- assert.equal(combatFeedbackCue(charger,'s3-charger-longscope-01',160), 'critical_hit');
- assert.equal(combatFeedbackCue(charger,'s3-charger-quick',40), 'hit','partial-charge hit does not pretend to be a full direct cue');
+ assert.equal(combatFeedbackCue(charger,'charger',159,()=>null,1), 'critical_hit');
+ assert.equal(combatFeedbackCue(charger,'charger-01',120,()=>null,.999), 'critical_hit');
+ assert.equal(combatFeedbackCue(charger,'s3-charger-long',180,()=>null,1), 'critical_hit');
+ assert.equal(combatFeedbackCue(charger,'s3-charger-longscope-01',160,()=>null,1), 'critical_hit');
+ assert.equal(combatFeedbackCue(charger,'s3-charger-quick',40,()=>null,.49), 'hit',
+   'partial-charge hit does not pretend to be a full direct cue');
+ assert.equal(combatFeedbackCue(charger,'charger',160,()=>null,.8), 'hit',
+   'a partial charged one-hit splat must not ring even if damage is >= 95');
+ assert.equal(combatFeedbackCue(charger,'charger',85,()=>null,1), 'critical_hit',
+   'a full-charge hit must ring even when an armored target takes less than 95 damage');
+ assert.equal(combatFeedbackCue(charger,'charger',160,()=>null,null), 'hit',
+   'unknown online charge metadata cannot be guessed from damage');
  for(const source of ['bomb','sub:bomb','special:inkjet','storm','water','s3-shooter-normal']){
    assert.equal(combatFeedbackCue(charger,source,160), 'hit',
      'not a critical Charger hit when accepted damage source was '+source);
