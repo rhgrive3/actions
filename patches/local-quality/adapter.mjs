@@ -1,6 +1,5 @@
 import { adaptHeadgear } from './headgear-adapter.mjs';
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
-import { adaptNavHeuristic } from './nav-heuristic-adapter.mjs';
 import { adaptBotNavigation } from './bot-navigation-adapter.mjs';
 import { adaptFirefightTierBudget } from './firefight-tier-budget.mjs';
 import { adaptRootHairSpring } from './root-hair-spring-adapter.mjs';
@@ -29,8 +28,6 @@ import { adaptIssue483 } from '../splatoon3/issue-483-adapter.mjs';
 import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
 import { patchLobbySetShowcase } from './lobby-quality-adapter.mjs';
 import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
-import { adaptPropRetention } from './prop-retention-adapter.mjs';
-import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
 import { adaptIssue482 } from '../splatoon3/issue-482-adapter.mjs';
 import { adaptIssue405 } from '../splatoon3/issue-405-adapter.mjs';
 import { adaptIssue484 } from '../splatoon3/issue-484-adapter.mjs';
@@ -127,7 +124,6 @@ const IDENTITY_FILES = [
   'final-count-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
-  'prop-retention-adapter.mjs', 'prop-atlas-adapter.mjs',
   'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
   'audio-listener-adapter.mjs', 'runtime/audio-listener.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'portrait-work.mjs', 'depth-cache.mjs',
@@ -149,7 +145,6 @@ const IDENTITY_FILES = [
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
   'paint-hotpath-adapter.mjs',
   'distance-hotpath-adapter.mjs',
-  'nav-heuristic-adapter.mjs',
   'bot-navigation-adapter.mjs', 'bot-navigation.mjs', 'firefight-tier-budget.mjs',
   'root-hair-spring-adapter.mjs',
   'pose-rotation-adapter.mjs',
@@ -168,7 +163,6 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
-  code = adaptNavHeuristic(rel, code, replaceOnce);
   code = adaptRootHairSpring(rel, code, replaceOnce);
   code = adaptPoseRotation(rel, code, replaceOnce);
   code = adaptLobbySlotTransform(rel, code);
@@ -207,8 +201,6 @@ function adaptQualityLayer(rel, code) {
       'carry bot identity to visual-only Character scheduling');
   }
   code = adaptBotPaintObservation(rel, code);
-  code = adaptPropRetention(rel, code);
-  code = adaptPropAtlas(rel, code);
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);
   code = adaptScreenfxLensRelease(rel, code, replaceOnce);
   code = adaptActorWeaponInput(rel, code, replaceOnce);
@@ -229,28 +221,6 @@ function adaptQualityLayer(rel, code) {
   code = adaptRetargetBranchUpdates(rel, code);
   code = adaptMotionFkHotpath(rel, code, replaceOnce);
   code = adaptSquidMotionBinding(rel, code, replaceOnce);
-  if (rel === 'src/game/inkCollision.js') {
-    code = replaceOnce(code,
-      '  let best = Infinity;\n  for (const id of candidates) {\n    const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;',
-      `  const xLo = Math.min(from.x, to.x) - radius - 1e-6, xHi = Math.max(from.x, to.x) + radius + 1e-6;
-  const yLo = Math.min(from.y, to.y) - radius - 1e-6, yHi = Math.max(from.y, to.y) + radius + 1e-6;
-  const zLo = Math.min(from.z, to.z) - radius - 1e-6, zHi = Math.max(from.z, to.z) + radius + 1e-6;
-  let best = Infinity;
-  for (const id of candidates) {
-    const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;
-    if (box.aabbMin && (box.aabbMin.y > yHi || box.aabbMax.y < yLo || box.aabbMin.x > xHi || box.aabbMax.x < xLo || box.aabbMin.z > zHi || box.aabbMax.z < zLo)) continue;`,
-      'skip 3D AABB-disjoint blocks in sweepLevelSphere');
-    code = replaceOnce(code,
-      'export function capsuleEntry(from, to, base, actorRadius, height, bulletRadius) {\n  const lo = base.y + Math.min(actorRadius, height * 0.5), hi = base.y + Math.max(height - actorRadius, height * 0.5);\n  const r = actorRadius + bulletRadius, ox = from.x - base.x, oz = from.z - base.z;',
-      `export function capsuleEntry(from, to, base, actorRadius, height, bulletRadius) {
-  const r = actorRadius + bulletRadius;
-  if (Math.min(from.x, to.x) - base.x > r + 1e-7 || Math.max(from.x, to.x) - base.x < -r - 1e-7 ||
-      Math.min(from.z, to.z) - base.z > r + 1e-7 || Math.max(from.z, to.z) - base.z < -r - 1e-7) return Infinity;
-  const lo = base.y + Math.min(actorRadius, height * 0.5), hi = base.y + Math.max(height - actorRadius, height * 0.5);
-  if (Math.min(from.y, to.y) > hi + r + 1e-7 || Math.max(from.y, to.y) < lo - r - 1e-7) return Infinity;
-  const ox = from.x - base.x, oz = from.z - base.z;`,
-      'skip 3D bounding-box disjoint segments in inkCollision capsuleEntry');
-  }
   if (rel === 'src/game/motion/source-bank.js') {
     code = replaceOnce(code,
       `  fromRaw(mode) {
