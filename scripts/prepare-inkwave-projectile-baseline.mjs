@@ -47,6 +47,19 @@ const evidence = {
   changes, paint: paint.evidence, writtenPaths: writes.map(([rel]) => rel),
 };
 
+const currentOwners = paint.evidence.paths.filter(row => row.mode === 'identical-current-owner');
+if (currentOwners.length) {
+  const unchanged = writes.length === 0 && [...originals].every(([rel, value]) => value === candidates.get(rel));
+  evidence.mode = unchanged ? 'unchanged-current-owner-identity' : 'current-owner-identity-with-reviewed-legacy-replay';
+  evidence.scope = unchanged
+    ? 'Verify identical reviewed current physics/paint source on both sides; no birth, pool or paint source replay and no production writes. This is not the historical physics epoch or a performance-only comparison.'
+    : 'Preserve exact identical current-owner modules; replay only still-reviewed legacy contexts elsewhere. Mixed old/current owner modules are rejected.';
+  evidence.currentOwnerPaths = currentOwners.map(({path, ownerCommit, originalSha256}) => ({path, ownerCommit, sha256: originalSha256}));
+  evidence.paint.historicalReplaySourceBase = evidence.paint.sourceBase;
+  evidence.paint.historicalReplaySourceHead = evidence.paint.sourceHead;
+  delete evidence.paint.sourceBase; delete evidence.paint.sourceHead;
+}
+
 // This is a validation transaction, not a claim of crash-atomic filesystem
 // writes: every known/unknown-source check finishes before the first write.
 for (const [rel, value] of writes) {
