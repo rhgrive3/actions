@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {fixture} from './controls-fixture.mjs';
-import {RoomDurableObject} from '../../../server/src/index.js';
+import fs from 'node:fs';
+import vm from 'node:vm';
 const {installPlatformGame} = await import(process.env.INKWAVE_CONTROLS_SITE
   ? pathToFileURL(path.resolve(process.env.INKWAVE_CONTROLS_SITE, 'patches/local-quality/platform-game.mjs')).href
   : '../../local-quality/platform-game.mjs');
@@ -11,12 +12,23 @@ const {installDisconnectFidelity} = await import(process.env.INKWAVE_CONTROLS_SI
   ? pathToFileURL(path.resolve(process.env.INKWAVE_CONTROLS_SITE, 'patches/splatoon3/runtime/disconnect-fidelity.mjs')).href
   : '../../splatoon3/runtime/disconnect-fidelity.mjs');
 let ms=1000000;
+// The relay quota and the clients must observe the same elapsed fixture time.
+// Evaluate the unchanged server module with a local Date; never replace Node's
+// global clock or relax the production frame/byte admission limits.
+const relaySource = new URL('../../../server/src/index.js', import.meta.url);
+const relayModule = new vm.SourceTextModule(fs.readFileSync(relaySource, 'utf8'), {
+ identifier: relaySource.href,
+ context: vm.createContext({ Date: class extends Date { static now(){return ms;} }, TextEncoder }),
+});
+await relayModule.link(spec => { throw new Error('Unexpected relay dependency: ' + spec); });
+await relayModule.evaluate();
+export const { RoomDurableObject } = relayModule.namespace;
 class Socket {
  constructor(){this.handlers=new Map();this.sent=[];this.live=true;}
  send(data){this.sent.push(data);this.deliver?.(data);}
  addEventListener(k,fn){this.handlers.set(k,fn);}
  receive(data){if(this.live)this.handlers.get('message')?.({data});}
- close(){if(!this.live)return;this.live=false;this.handlers.get('close')?.();this.closed?.();}
+ close(code,reason){if(!this.live)return;this.closedWith={code,reason};this.live=false;this.handlers.get('close')?.();this.closed?.();}
 }
 export async function pair(){
  const relay=new RoomDurableObject({},{}),participants=[];
