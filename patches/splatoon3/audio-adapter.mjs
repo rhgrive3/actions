@@ -35,10 +35,10 @@ export function adaptWeaponAudio(rel,code){
     // Nintendo's sharp direct-hit confirmation.
     code=once(code,
       "if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger'); }",
-      "if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger', {charge,direct:true}); }",
+      "if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger', undefined, {charge,direct:true}); }",
       'native Charger source-hit metadata');
-    code=once(code,'applyHit(attacker, victim, dmg, weaponId) {',
-      'applyHit(attacker, victim, dmg, weaponId, combatHit = null) {',
+    code=once(code,'applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {',
+      'applyHit(attacker, victim, dmg, weaponId, slosherVolleyId, combatHit = null) {',
       'native hit metadata acceptance');
     code=once(code,"emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
       "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, charge:combatHit?.charge, direct:combatHit?.direct });",
@@ -161,7 +161,7 @@ export function adaptWeaponAudio(rel,code){
     // never read the mutable runner charge after the shot has released.
     code=once(code,
       "this.applyHit(p.owner,target,amount,p.wid))",
-      "this.applyHit(p.owner,target,amount,p.wid,{charge:d.charge,direct:true}))",
+      "this.applyHit(p.owner,target,amount,p.wid,undefined,{charge:d.charge,direct:true}))",
       'catalog Charger impact charge metadata');
   }
   return code;
