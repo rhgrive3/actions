@@ -5,7 +5,7 @@ import { catalogPaintEllipse } from '/ASSET/patches/splatoon3/runtime/catalog-sp
 // Only raster derivatives/AA are replaced: points query exact gameplay samples,
 // with tx fixed to the actual atlas density instead of unrelated neighbor points.
 import { PaintSystem } from '/ASSET/src/world/paint.js';
-import { paintShapeSeed, paintShapeHash } from '/ASSET/patches/splatoon3/runtime/paint-ownership.mjs';
+import { paintShapeSeed, paintShapeHash, preparePaintAncillary, paintDotCellWitness } from '/ASSET/patches/splatoon3/runtime/paint-ownership.mjs';
 
 const check = (condition, message) => { if (!condition) throw Error(message); };
 export function createPaintMaskProbe() {
@@ -102,6 +102,7 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     }
     return result;
   }
+  const dotPositive = program(maskShader.replace(`sd < -${margin}`, `sd < -${0.25 / ppm}`));
   const positive = program(maskShader), negative = program(revertedShader(0, 12)), rows = [];
   const families = { rays: program(revertedShader(0, 3)), satellites: program(revertedShader(3, 6)),
     spatter: program(revertedShader(6, 9)), drips: program(revertedShader(9, 12)) };
@@ -115,6 +116,9 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     'six complete ancillary count vectors plus the body-only fallback');
   const activeFamilies = Object.fromEntries(Object.keys(families).map((name, i) =>
     [name, shapeCounts.some(counts => (counts[i] || 0) > 0)]));
+  const witnessPrograms = { negative:program(revertedShader(0,12).replace(`sd < -${margin}`,`sd < -${.25/ppm}`)) };
+  for(const [i,name] of Object.keys(families).entries())
+    witnessPrograms[name]=program(revertedShader(i*3,i*3+3).replace(`sd < -${margin}`,`sd < -${.25/ppm}`));
   const face = { atlas: { x: 0, y: 0, pad: 2, ppm }, su: 32, sv: 32, nu: 128, nv: 128, cu: 0.25, cv: 0.25,
     grid: 0, wall: false, turf: true };
   // #1165: exercise the *actual WebGL shader and CPU ownership* for Roller
@@ -138,13 +142,19 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     }
     const dT = wall ? 1 - Math.pow(1 - Math.min(1, tn / 3), 2.2) : 1;
     const count = paint._paintOrderRuns(face, order, 0, 32, 0, 32), runs = paint._paintOrderRunScratch.slice(0, count * 4);
-    const points = []; let cells = 0;
+    const shapes = Object.fromEntries(shapeCounts.slice(0, 6).map((counts, kind) => [kind, counts]));
+    const mask = preparePaintAncillary(g, face, 16, 20, 0, sdu, sdv, sa, tn, dT, { shapes });
+    const points = [], witnesses = [], witnessCells = []; let cells = 0;
     for (let i = 0; i < paint.grid.length; i++) if (paint.grid[i]) {
       const x = (i % 128 + 0.5) * 0.25, y = (Math.floor(i / 128) + 0.5) * 0.25;
       let included = false;
       for (let j = 0; j < runs.length; j += 4) if (x >= runs[j] && x <= runs[j + 1] && y >= runs[j + 2] && y <= runs[j + 3]) { included = true; break; }
       check(included, 'claimed cell missing from canonical GPU run');
       for (const [dx, dy] of [[0, 0], [-0.08, -0.08], [0.08, -0.08], [-0.08, 0.08], [0.08, 0.08]]) points.push(x - 16 + dx, y - 20 + dy, 0);
+      if (mask) for (const piece of mask.pieces) {
+        const witness = paintDotCellWitness(mask, face, x - 16, y - 20, piece);
+        if (witness) { witnesses.push(witness[0], witness[1], 0); witnessCells.push(cells); break; }
+      }
       cells++;
     }
     if (!cells) continue;
@@ -153,6 +163,18 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     const word = paint.aGrow[3]; check(word === paintShapeSeed(seed), 'native emitted quad seed packing');
     const args = [points, [g.R, 0, Math.fround(seed), (wall ? 1 : 0) + 2 * kind], [tn, dT, 0, word], [sdu, sdv, sa]];
     const actual = query(positive, ...args), reverted = query(negative, ...args);
+    const witnessed = new Set(), counterWitnesses = Object.fromEntries(Object.keys(witnessPrograms).map(name=>[name,new Set()]));
+    if (witnesses.length) {
+      const pixels = query(dotPositive, witnesses, args[1], args[2], args[3]);
+      for (let i = 0; i < witnessCells.length; i++) {
+        check(pixels[i * 4] === 255, 'dot-cell intersection must contain actual GPU core ink');
+        witnessed.add(witnessCells[i]);
+      }
+      for(const [name,p] of Object.entries(witnessPrograms)) {
+        const pixels=query(p,witnesses,args[1],args[2],args[3]);
+        for(let i=0;i<witnessCells.length;i++)if(pixels[i*4]===255)counterWitnesses[name].add(witnessCells[i]);
+      }
+    }
     const familyPixels = Object.fromEntries(Object.entries(families).filter(([name]) => name !== 'drips' || wall)
       .map(([name, p]) => [name, query(p, ...args)]));
     const familyUnsupported = Object.fromEntries(Object.keys(familyPixels).map(name => [name, 0]));
@@ -161,11 +183,11 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     }
     let unsupported = 0, negativeUnsupported = 0;
     for (let cell = 0; cell < cells; cell++) {
-      let seen = false, revertedSeen = false;
+      let seen = false, revertedSeen = counterWitnesses.negative.has(cell);
       for (let sample = 0; sample < 5; sample++) { const i = (cell * 5 + sample) * 4; seen ||= actual[i] === 255; revertedSeen ||= reverted[i] === 255; }
-      if (!seen) unsupported++; if (!revertedSeen) negativeUnsupported++;
+      if (!seen && !witnessed.has(cell)) unsupported++; if (!revertedSeen) negativeUnsupported++;
       for (const [name, pixels] of Object.entries(familyPixels)) {
-        let familySeen = false;
+        let familySeen = counterWitnesses[name].has(cell);
         for (let sample = 0; sample < 5; sample++) familySeen ||= pixels[(cell * 5 + sample) * 4] === 255;
         if (!familySeen) familyUnsupported[name]++;
       }
@@ -207,10 +229,11 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     else check(rows.every(row => !row.familyUnsupported[name]), `${name} is disabled in every production kind`);
   }
   check(rows.length === 124, 'six original kinds plus final-growth Roller body: real WebGL and CPU cells exercised');
+  const subcell = subcellDotRows(paint, nativeShader, program, query, tx, tail, shapeCounts);
   const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail);
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, activeFamilies, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
-    body, mainAtlas: mainInkAtlasRows(), volleys:mainInkVolleyGallery(), hidden: hiddenPresentationRows(), ownedRunScan: ownedRunScanRows(), localOrderMap: localOrderMapRows() };
+    body, subcell, mainAtlas: mainInkAtlasRows(), volleys:mainInkVolleyGallery(), hidden: hiddenPresentationRows(), ownedRunScan: ownedRunScanRows(), localOrderMap: localOrderMapRows() };
 }
 
 function mainInkVolleyGallery() {
@@ -594,4 +617,36 @@ function localOrderMapRows() {
   check(p._paintOrderId(network)===1,'new match restarts network identity');
   check(p._paintOrderId()===2&&p._paintOrderIds.size===1,'new local identity remains outside dedupe map');
   return {...result,clear:true};
+}
+
+// GPU -> CPU direction at retained sub-cell ray beads. Every CPU-derived
+// witness is first required to be visible in the actual emitted GPU shader.
+function subcellDotRows(paint, nativeShader, program, query, tx, tail, shapes) {
+  const gpu = program(nativeShader.replace(tx, 'float tx = 1.0 / 64.0;')
+    .replace(tail, '  gl_FragColor = vec4(sd < -0.00390625 ? 1.0 : 0.0, 0.0, 0.0, 1.0);'));
+  const rows = [];
+  for (const wall of [false, true]) for (const cell of [.125, .25, .5]) for (const R of [.2, 2.7]) {
+    const n = 32 / cell;
+    const face = { atlas:{x:0,y:0,pad:2,ppm:64},su:32,sv:32,nu:n,nv:n,cu:cell,cv:cell,grid:0,wall,turf:!wall };
+    paint.grid = new Uint8Array(n*n); paint.dead = new Uint8Array(n*n); paint.counts = [0,0];
+    paint._paintOwnershipOrder = new Uint32Array(n*n);
+    const word = paintShapeSeed(.5), points = [], indices = [];
+    const mask=preparePaintAncillary({R,seed:.5,kind:3},face,16,20,0,0,0,0,3,1,{shapes});
+    for (const piece of mask.pieces) if(piece.type===1) {
+      points.push(piece.x,piece.y,0);
+      indices.push(Math.floor((20+piece.y)/cell)*n+Math.floor((16+piece.x)/cell));
+    }
+    const pixels=query(gpu,points,[R,0,.5,6+(wall?1:0)],[3,1,0,word],[0,0,0]);
+    for(const team of [0,1]) {
+      const g={R,team,seed:.5,kind:3,age:3,dur:1,dripDur:wall?3:0,entries:[face,16,20,0,0,0,0],paintOrder:paint._paintOrderId()};
+      paint._advanceSplatOwnership(g);
+      for(let k=0;k<indices.length;k++){
+        check(pixels[k*4]===255,'each forward sub-cell witness must actually be opaque GPU ink');
+        check(paint.grid[indices[k]]===team+1,'GPU bead centre has wrong CPU team');
+      }
+    }
+    rows.push({wall,cell,R,dots:indices.length,teams:2});
+  }
+  check(rows.every(row=>row.dots===10),'all retained production ray-tip beads exercised');
+  return rows;
 }

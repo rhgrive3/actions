@@ -19,3 +19,7 @@ Source: https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c3264715
 - Workflow adds the dedicated source and emitted regression to the existing seven_claims job. Existing Chromium/WebKit catalog runner records the new partial/full release,28-degree optical settings and scope no-keep checks.
 
 Native browser execution, actual rendered optical/model appearance, emitted execution and complete final-head CI remain pending. This is not a claim of exact retail paint scale or full PR visual acceptance.
+
+## Latest-main paint ownership integration
+
+The original PR1603 finite-flight floor beads land after release. On main9ad, an older wall regression incorrectly assumed the entire floor credit was already present at release. A three-layer comparison (main alone, original1603, minimal scope repair) isolates this timing assumption; the two PR variants have identical emissions. The revised regression preserves zero wall credit, checks four actual delayed floor contacts and submitted source-mask quads, and derives ledger growth from new eligible floor cells. Injected wall credit and suppressed floor credit both fail. This is a test-only correction; no paint runtime or numeric endpoint was adjusted. Actual shader acceptance on the final composed build remains pending.

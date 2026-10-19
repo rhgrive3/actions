@@ -57,9 +57,10 @@ test('#1283 malformed owner Slam does not block subsequent valid Slam, trigger, 
   const sender = f.makeNetMatch(f.makeSession('p2', 'me', members));
   sender._rec(['ev', 'special:slam', slam()]);
   sender._rec(['tr', 17, 'jump', null]);
-  sender.recSplat(new f.THREE.Vector3(1, 0, 1), 0.4, 0, { seed: .31 });
   const owner = f.makeActor({ nid: 17, owner: 'p2', remote: false, roller: false });
   owner.character.getMuzzle = out => out.copy(owner.pos).setY(30);
+  sender.byNid.set(owner.nid,owner);
+  sender.recSplat(new f.THREE.Vector3(1, 0, 1), 0.4, 0, { seed: .31,claimOwner:owner });
   f.G.netm = sender;
   f.projectiles.fireShooter(owner, owner.weapon, 0);
   const projectile = sender.out.filter(e => e[1] === 'p');
