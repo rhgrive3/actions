@@ -8,9 +8,9 @@ import { COMBAT_CUE_SOURCES, installRecordedCombatAudio, isSourceCriticalHit } f
 const root=new URL('../runtime/audio/s3-real/',import.meta.url);
 const read=name=>fs.readFileSync(new URL(name,root));
 
-test('four real combat MP3 assets are physically committed and SHA-256 exact',()=>{
+test('six real combat MP3 assets are physically committed and SHA-256 exact',()=>{
  const keys=Object.keys(COMBAT_CUE_SOURCES);
- assert.deepEqual(keys,['hit_marker','s3_critical_hit','splat_enemy','s3_splat_squid']);
+ assert.deepEqual(keys,['ink_hit_body','s3_ink_hit_heavy','hit_marker','s3_critical_hit','splat_enemy','s3_splat_squid']);
  for(const [name,spec] of Object.entries(COMBAT_CUE_SOURCES)){
    const bytes=read(spec.file);
    assert.equal(bytes.length,spec.bytes,name+' original MP3 length');
@@ -25,6 +25,7 @@ test('the installed production audio routes only source-based direct Charger con
  const source=[
   ['src/audio/audio.js','installRecordedCombatAudio'],
   ['src/game/weapons.js','charge:combatHit?.charge'],
+  ['src/game/weapons.js',"'s3_ink_hit_heavy'"],
   ['src/main.js',"'s3_critical_hit'"],
   ['src/main.js',"'s3_splat_squid'"],
   ['patches/splatoon3/runtime/main-weapon-catalog.mjs','{charge:d.charge,direct:true}']
@@ -83,11 +84,11 @@ test('Safari-style Window.fetch loads original clips once per AudioContext, neve
    assert.equal(first.ready,true,JSON.stringify(first));
    assert.equal(first.decoded,4);
    assert.deepEqual(first.errors,[]);
-   assert.equal(decodes,4);
-   assert.equal(requests.length,4);
+   assert.equal(decodes,6);
+   assert.equal(requests.length,6);
    const again=await m.prepareRecordedCombatCues();
    assert.equal(again.ready,true);
-   assert.equal(decodes,4,'never re-decodes every hit');
+   assert.equal(decodes,6,'never re-decodes every hit');
    assert.equal(m._def('unrelated')?.synth,true);
    for(const name of Object.keys(COMBAT_CUE_SOURCES)){
      const def=m._def(name);
@@ -97,6 +98,6 @@ test('Safari-style Window.fetch loads original clips once per AudioContext, neve
      assert.equal(v.srcs.length,1,name+' uses exactly one decoded original');
      assert.deepEqual(v.srcs[0].starts,[1.25]);
    }
-   assert.equal(m.recordedCombatCueStats().loaded,4);
+   assert.equal(m.recordedCombatCueStats().loaded,6);
  }finally{globalThis.fetch=oldFetch;}
 });
