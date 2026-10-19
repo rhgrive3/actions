@@ -69,6 +69,7 @@ export function adaptNativeStages(rel,code){
       catch (error) {
         if (!map.nativeSource) throw error;
         if (!flow.current()) return;
+        if (this._nativeWorldRecoveryFatal) { this.input?.exitLock?.(); return; }
         this.input.exitLock();this._startAttract();G.mode='menu';this.menus?.show('setup');
         this.menus?.toast?.('ステージを読み込めませんでした。接続を確認して再試行してください。');
         await this._fade(0,200);return;
@@ -79,10 +80,14 @@ export function adaptNativeStages(rel,code){
 
   // Pausing a demo match must also stop its attract camera/reset driver.
   // Otherwise the timed 110s/coverage reset can recreate bots mid-loader.
-  once('      if (m.attract) this._updateAttract(dt);',
-    '      if (m.attract && !m.paused) this._updateAttract(dt);');
-  once('this._fade(1, 400).then(() => { this._setPalette(this._pickPalette()); this._startAttract(); this._fade(0, 600); });',
-    'this._fade(1, 400).then(() => { if (!this.match?.attract || this.match.paused) return; this._setPalette(this._pickPalette()); this._startAttract(); this._fade(0, 600); });');
+  // The S3 adapter replaces the legacy frame callsite with runSimulation.
+  // Guard the shared method so both frame owners retain the pause contract.
+  once('  _updateAttract(dt) {',
+    '  _updateAttract(dt) {\n    if (this.match?.paused) return;');
+  // Reliability already owns the delayed-reset match/flow identity guard.
+  // Keep it intact and add the native loader's paused-attract condition.
+  once('        if (this.match !== resetMatch || this._matchFlow !== resetFlow) return;',
+    '        if (this.match !== resetMatch || this._matchFlow !== resetFlow) return;\n        if (!this.match?.attract || this.match.paused) return;');
   // The outgoing attract/live match stays visible during the fade, but it must
   // not simulate or emit weapon audio while MP3 preflight / native assets await.
   // Dispose it after the fade as before, then clear BOTH owners so _frame cannot
@@ -101,7 +106,12 @@ export function adaptNativeStages(rel,code){
       '      this.match.paused = true;\n' +
       '      for (const actor of this.match.actors) actor.weaponRunner?.reset?.();\n' +
       '    }\n' + fade);
-    section = section.replace(dispose, dispose + '\n    this.match = G.match = null;');
+    // Disposal can synchronously transfer the match/room/flow owner. Never
+    // clear that newer owner; only the still-current operation adopts null.
+    const disposedCurrent = dispose + '\n    if (!flow.current()) return;';
+    if (section.split(disposedCurrent).length !== 2)
+      throw Error('Native stage disposal ownership anchor: ' + label);
+    section = section.replace(disposedCurrent, disposedCurrent + '\n    this.match = G.match = flow.match = null;');
     code = code.slice(0, start) + section + code.slice(end);
   };
   quiesceOutgoingMatch('  async startMatch(o = {}, flow = null) {',

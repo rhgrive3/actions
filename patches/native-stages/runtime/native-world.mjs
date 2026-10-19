@@ -10,7 +10,7 @@ import { NativePhysics } from './native-physics.mjs';
 import { nativeDisplay,nativeInkGeometry,nativeInkMaterial } from './native-render.mjs';
 import { NativeInkMesh } from './native-ink-chunks.mjs';
 import { nativeStageTextureCaps } from './native-texture-budget.mjs';
-import {sourceLoadingStatus} from './source-menu.mjs';
+import {sourceLoadingStatus,showNativeWorldRecovery} from './source-menu.mjs';
 
 // Snapshot keeps the previous playable world alive until every fallible
 // publication step has completed. Never dispose active resources first.
@@ -50,6 +50,7 @@ export async function buildNativeWorld(game,map,current){
  game._nativeAbort?.abort();const controller=game._nativeAbort=new AbortController(),signal=controller.signal,start=performance.now();
  let display,paint,inkGeometry,inkMat,inkMesh,pendingTextures;
  let snapshot=null,published=false,committed=false;
+ const safely=(fn,label)=>{try{fn();}catch(e){console.warn('[native] cleanup',label,e);}};
  const status=sourceLoadingStatus(map.name);
  try{
   const data=await loadNativeData(map.id,signal);if(!current())return;
@@ -63,7 +64,7 @@ export async function buildNativeWorld(game,map,current){
   });
   const textureLimit=textureCaps.maxDimension;
   const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
-  if(!current()){display.dispose();return;}
+  if(!current())throw new DOMException('Aborted','AbortError');
   paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
   // Compact charts use a 2-texel guard. Avoid sampling other charts through
   // distant mip levels; source material maps retain their normal mip chains.
@@ -108,26 +109,41 @@ export async function buildNativeWorld(game,map,current){
   committed=true;
   disposeOldWorld(game,snapshot);
  }catch(error){
-  // Even when a late Minimap/environment/shadow/palette step throws, a prior
-  // active world is still alive and can be reinstated without dead GPU refs.
-  if(published && !committed && snapshot){
-   if(display?.group)G.scene?.remove?.(display.group);
-   if(inkMesh)G.scene?.remove?.(inkMesh);
-   restoreWorld(game,snapshot);
-   try { if(snapshot.level?.bounds && G.env?.rebuildForArena)
-     G.env.rebuildForArena(snapshot.level.bounds,game._footprint(snapshot.level));
-   }catch(e){console.warn('[native] previous environment recovery',e);}
-   try{game._shadowRoots();if(G.teamColors[0])game._setPalette(game.palette||game._pickPalette());}
-   catch(e){console.warn('[native] previous stage lighting recovery',e);}
+  const recoveryErrors=[];
+  const recover=(fn)=>{try{fn();}catch(e){recoveryErrors.push(e);}};
+  try{
+   if(published && !committed && snapshot){
+    recover(()=>{if(display?.group)G.scene?.remove?.(display.group);});
+    recover(()=>{if(inkMesh)G.scene?.remove?.(inkMesh);});
+    // Restore pointer ownership even when a later activation/rebuild fails.
+    recover(()=>restoreWorld(game,snapshot));
+    recover(()=>{if(snapshot.level?.bounds && G.env?.rebuildForArena)
+      G.env.rebuildForArena(snapshot.level.bounds,game._footprint(snapshot.level));});
+    recover(()=>game._shadowRoots());
+    recover(()=>{if(G.teamColors[0])game._setPalette(game.palette||game._pickPalette());});
+   }
+  }finally{
+   // A recovery exception must not bypass disposal of the detached candidate.
+   // Attempt each independently, while preserving the original publication error.
+   for(const t of pendingTextures?.values()||[]){
+    safely(()=>t.image?.close?.(),'pending image');safely(()=>t.dispose(),'pending texture');
+   }
+   pendingTextures?.clear();
+   if(!committed){
+    safely(()=>{if(display?.group)G.scene?.remove?.(display.group);},'display detach');
+    safely(()=>{if(inkMesh)G.scene?.remove?.(inkMesh);},'ink detach');
+    safely(()=>display?.dispose(),'display');safely(()=>paint?.dispose(),'paint');
+    safely(()=>{if(inkMesh)inkMesh.dispose();else inkGeometry?.dispose();},'ink');
+    safely(()=>inkMat?.dispose(),'material');
+   }
   }
-  for(const t of pendingTextures?.values()||[]){t.image?.close?.();t.dispose();}pendingTextures?.clear();
-  if(!committed){
-   if(display?.group)G.scene?.remove?.(display.group);
-   if(inkMesh)G.scene?.remove?.(inkMesh);
-   display?.dispose();paint?.dispose();if(inkMesh)inkMesh.dispose();else inkGeometry?.dispose();inkMat?.dispose();
+  if(recoveryErrors.length){
+   // The old world could not be made playable. Do not update/draw dead handles.
+   game._nativeWorldRecoveryFatal={error,recoveryErrors};game.frozen=true;
+   safely(()=>showNativeWorldRecovery(game),'recovery dialog');
   }
   if(error.name!=='AbortError'&&current())throw error;
- }finally{status.close();}
+ }finally{safely(()=>status.close(),'loading status');}
 }
 
 export function releaseNativeWorld(game){
