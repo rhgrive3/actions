@@ -29,8 +29,12 @@ const sourceDir=new URL('./s3-real/',import.meta.url);
 export function recordedHitCue({attacker,weaponId,damage,charge}={}){
   const id=mainAudioSourceId(weaponId||attacker?.weapon?.id);
   const charger=id==='charger'||typeof id==='string'&&id.startsWith('s3-charger-');
+  // Bamboozler and R-PEN are exceptional Charger actors; the ubiquitous
+  // full-charge critical cue belongs to the standard sniping class, not
+  // automatically to their multi-hit or lower-damage round.
+  const exceptional=id==='s3-charger-light'||id==='s3-charger-pencil';
   const full=Number.isFinite(charge)?charge>=1-1e-6:Number.isFinite(damage)&&damage>=100;
-  if(charger&&full)return 'critical';
+  if(charger&&!exceptional&&full)return 'critical';
   if(blasterHitCueKind(attacker,id)==='direct')return 'critical';
   return 'hit';
 }
