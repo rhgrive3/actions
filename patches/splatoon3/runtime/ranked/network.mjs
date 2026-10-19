@@ -1,4 +1,5 @@
 import { validRankedSnapshot } from './engine.mjs';
+import { noteRankedBarrierShots, queueRankedBarrierHit, resetRankedBarrierAdmission } from './barrier-admission.mjs';
 import { withObjectDamageCause } from '../sub-resistance.mjs';
 import { specialGaugeLocked } from '../tacticooler-gauge.mjs';
 import { recordTowerHostSnapshot, clearTowerPaintSupport } from '../../../network-replication/tower-paint-support.mjs';
@@ -77,10 +78,9 @@ export function installRankedNetwork(api) {
       if (d.seq <= (this.rankedHitSeq?.get(from) || 0)) return;
       const s = m.ranked.rule.state;
       if (m.mode !== 'rainmaker' || !s.barrier?.active || !finiteVector(s.pos) || Math.hypot(...s.pos.map((n, i) => n - d.pos[i])) > 6) return;
-      (this.rankedHitSeq ||= new Map()).set(from, d.seq);
-      // Shooter-owned collision is the existing game's combat authority. The
-      // host admits identity/proximity and applies only the objective outcome.
-      m.rankedBarrierHits.push({ id: d.id, team: a.team, damage: d.damage, kind: String(d.kind || 'main').slice(0, 32) });
+      // A client's impact is a proposal only. Admission waits for matching
+      // owner-stamped, geometrically plausible shot evidence in the tick stream.
+      queueRankedBarrierHit(this, from, d, G.time);
       return;
     }
     if (d.k === 'rkevent') {
@@ -105,6 +105,8 @@ export function installRankedNetwork(api) {
       return;
     }
     const result = incoming.call(this, from, d);
+    if (d.k === 't' && this.isHost && m.mode === 'rainmaker' && m.state === 'playing')
+      noteRankedBarrierShots(this, from, d, G.time);
     if (d.k === 'res' && from === this.s.hostId && !this.isHost && m.ranked.winner !== null) m.result = { ...m.result, ...m.ranked.result() };
     return result;
   };
@@ -118,6 +120,7 @@ export function installRankedNetwork(api) {
     if (m?.ranked && changed) {
       clearTowerPaintSupport(this);
       this.rankedInputs?.clear(); this.rankedHitSeq?.clear();
+      resetRankedBarrierAdmission(this);
       this.rankedEventSeq = this.rankedDamageSeq = 0;
       if (this.isHost) {
         m.follower = false;
@@ -130,6 +133,7 @@ export function installRankedNetwork(api) {
   P.dispose = function () {
     clearTowerPaintSupport(this);
     this.rankedInputs?.clear(); this.rankedHitSeq?.clear();
+    resetRankedBarrierAdmission(this);
     return dispose.call(this);
   };
 }
