@@ -1,6 +1,7 @@
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
 import { blasterHitCuePitch, blasterHitCueKind } from './blaster-hit.mjs';
+import { combatFeedbackCue } from './combat-hit-classifier.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 
@@ -12,6 +13,7 @@ export function installWeaponAudioEngine(Engine){
   // not to an early (null) global audio instance.
   p.blasterHitCuePitch=blasterHitCuePitch;
   p.blasterHitCueKind=blasterHitCueKind;
+  p.combatFeedbackCue=(actor,weaponId,damage)=>combatFeedbackCue(actor,weaponId,damage,blasterHitCueKind);
   // v10 defined resolveWeaponSound but never connected AudioEngine._def to it.
   // A real game call to playWeapon therefore always hit the legacy SFX registry.
   const originalDef=p._def;
