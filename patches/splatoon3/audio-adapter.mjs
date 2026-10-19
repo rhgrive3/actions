@@ -44,6 +44,14 @@ export function adaptWeaponAudio(rel,code){
     for(const [old,event] of Object.entries({charger_charge:'charge',charger_full:'ready',roller_flick:'windup',roll:'roll',slosh_throw:'windup',splatling_wind:'windup',splatling_spin:'charge',splatling_ready:'ready'})){
       code=code.replace(new RegExp("G\\.audio\\?\\.(play|loop)\\('"+old+"',\\s*\\{",'g'),(_,method)=>`G.audio?.${method}Weapon?.(a.weapon.id, '${event}', { actor:a, `);
     }
+    // The existing localized hit event now owns original HitEf source PCM.
+    // Do not stack the legacy generated ink-hit-body cue over the same
+    // attacker's recorded direct-hit signal. Keep local victim/distant
+    // world-impact foley independently audible.
+    code=once(code,
+      "if (G.audio && (attacker.isLocal || victim.isLocal || victim._nearCamera?.())) {",
+      "if (G.audio && !attacker.isLocal && (victim.isLocal || victim._nearCamera?.())) {",
+      'recorded local hit supersedes authored body impact layer');
     // Native Splatling keeps one loop handle through charging and streaming.
     // Its existing 'splatling_spin' starts during CHARGE, so play the sourced
     // motor-charge MP3 there. At the admitted release, change ownership to
@@ -120,6 +128,11 @@ export function adaptWeaponAudio(rel,code){
       "G.audio?.play('splat_enemy', { volume: 0.9 });",
       "G.audio?.playRecordedCombat?.('splat',{volume:0.75}); G.audio?.playRecordedCombat?.('bubble',{volume:0.36});",
       'source-recorded opponent splat and bubble instead of synth notification');
+    // A critical Charger/Blaster direct-hit may follow another damage
+    // marker within 60ms: don't drop its distinctive original event.
+    code=once(code,"if (G.time - lastHitSnd > 0.06) { lastHitSnd = G.time;",
+      "if (G.time - lastHitSnd > 0.06 || G.audio?.recordedCueForHit?.({attacker,weaponId,damage,killed})==='critical') { lastHitSnd = G.time;",
+      'prioritise source critical hit over ordinary damage UI cooldown');
     // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
