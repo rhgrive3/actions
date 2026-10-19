@@ -15,8 +15,9 @@ test('four real combat MP3 assets are physically committed and SHA-256 exact',()
    const bytes=read(spec.file);
    assert.equal(bytes.length,spec.bytes,name+' original MP3 length');
    assert.equal(createHash('sha256').update(bytes).digest('hex'),spec.sha256,name+' source SHA');
-   assert.equal(bytes[0],0xff,name+' MPEG sync byte');
-   assert.equal(bytes[1]&0xe0,0xe0,name+' MPEG sync bits');
+   assert.equal(bytes.subarray(0,3).toString('ascii'),'ID3',name+' includes an ID3 header');
+   assert.ok(bytes.includes(Buffer.from([0xff,0xfb]))||bytes.includes(Buffer.from([0xff,0xf3])),
+     name+' contains an MPEG audio frame after metadata');
  }
 });
 
