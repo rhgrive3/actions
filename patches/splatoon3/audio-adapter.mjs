@@ -24,6 +24,21 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\nexport const audio = new AudioEngine();','installation');
   }
   if(rel==='src/game/weapons.js'){
+    // Keep upstream weapons.js byte-for-byte locked; install synchronous
+    // hit-sound metadata only in the production-composed adapter.
+    code=once(code,
+      "if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger'); }",
+      `if (victim) { len = victim.d;
+      const oldHitAudio=a._sourceChargerAudioHit;
+      a._sourceChargerAudioHit={chargerDirect:true,charge};
+      try{this.applyHit(a,victim.e,dmg,'charger');}
+      finally{a._sourceChargerAudioHit=oldHitAudio;}
+    }`,
+      'native Charger original-shot metadata scope');
+    code=once(code,
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, hitMeta:attacker?._sourceChargerAudioHit??null });",
+      'authoritative hit event recorded-source metadata');
     code=code.replace("emit('bomb:explode', { actor: b.owner,","emit('bomb:explode', { subId:b.s3Sub?.id||'bomb',actor:b.owner,");
     code=code.replace("emit('bomb:arm', { actor: b.owner,","emit('bomb:arm', { subId:b.s3Sub?.id||'bomb',actor:b.owner,");
     code=code.replace("type: 'blast', owner: a,", "type: 'blast', wid:w.id, owner: a,");
