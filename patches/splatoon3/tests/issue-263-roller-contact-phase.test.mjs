@@ -8,12 +8,17 @@ async function trace(held=true,hz=60){
  const {f,api}=await setup();
  const {Actor,Character,G,THREE}=api;
  f.setRandom(()=>.5);G.time=0;G.scene=new THREE.Scene();G.camera=new THREE.PerspectiveCamera();G.boss=G.fx=G.audio=null;
+ G.level=new f.Level({bounds:{minX:-20,maxX:20,minZ:-20,maxZ:40},spawnPads:[[-15,0,0],[15,0,0]],spawnBarrier:0,
+  single:[{kind:'box',min:[-20,-1,-20],max:[20,0,40]}],half:[]});
+ G.physics=new api.Physics(G.level);
  const a=new Actor({team:0,name:'roller contact phase',weapon:'roller',CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
  const c=a.character,r=a.weaponRunner;c.actor=a;G.scene.add(c.root);a.grounded=a.ground.hit=true;a.ink=100;
+ const support=G.physics.raycast(new THREE.Vector3(0,1,0),new THREE.Vector3(0,-1,0),2,new api.Hit(),true);
+ assert.ok(support.hit);a.ground.face=support.face;a.groundN.copy(support.normal);
  const enemy={team:1,alive:true,pos:new THREE.Vector3(0,0,1),hp:100};G.actors=[a,enemy];
  let tick=-90,painted=false,hit=false,shots=0;
  G.projectiles.fireFlick=()=>shots++;G.projectiles.applyHit=()=>{hit=true;};
- G.paint.splat=(_p,_r,_t,o)=>{if(o?.kind==='roll')painted=true;return 0;};
+ G.paint.splat=(_p,_r,_t,o)=>{if(o?.kind==='roll'||o?.footprint==='ink-contact')painted=true;return 0;};
  const rows=[],v=new THREE.Vector3();
  function step(fire,pressed=false,moving=false){
   painted=hit=false;a.intent.fire=fire;a.intent.move.set(0,0,moving?1:0);a.vel.set(0,0,moving?r.moveSpeed():0);a.pos.addScaledVector(a.vel,DT);enemy.pos.copy(a.pos);enemy.pos.z+=1;

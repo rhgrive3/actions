@@ -5,6 +5,7 @@ import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
+import { installRollerContactPaint } from './roller-contact-paint.mjs';
 import { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 import { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
@@ -1254,6 +1255,46 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }return result;
   };
 
+  // Emit after the current Character pose, so the ink follows the actual
+  // lowered cylinder rather than a shared .6 m body offset. Runner-only
+  // simulations without a model retain the existing analytical contact path.
+  installRollerContactPaint(api,paintRollingStroke);
+  function paintRollingStroke(a,stroke,physical=false){
+    const {to,from,heading}=stroke;
+    let radius=stroke.radius;
+    if(physical){
+      const drum=a.character.weapon.drum,geo=a.character.weapon.def.drum;
+      if(!geo.boundingBox)geo.computeBoundingBox();
+      const bounds=geo.boundingBox;
+      drum.updateWorldMatrix(true,false);
+      // Only the ink-bearing cylinder determines paint width, excluding caps,
+      // axle and frame. Source speed/width ratios still own speed widening.
+      to.copy(bounds.min).add(bounds.max).multiplyScalar(.5);
+      drum.localToWorld(to);
+      const m=drum.matrixWorld.elements;
+      const axleLength=Math.hypot(m[0],m[2]);
+      radius=(bounds.max.x-bounds.min.x)*.5*axleLength*stroke.widthRatio;
+      heading.set(-m[2],0,m[0]).normalize();
+      if(heading.x*Math.sin(a.yaw)+heading.z*Math.cos(a.yaw)<0)heading.negate();
+      // The contact profile ends at .6R. Put its leading edge at the drum,
+      // instead of painting an entire half-stamp ahead of the cylinder.
+      to.addScaledVector(heading,-radius*.6);
+    }
+    if(stroke.face!==a.ground?.face)stroke.active=false;
+    if(!stroke.active)from.copy(to);
+    const distance=Math.hypot(to.x-from.x,to.z-from.z);
+    // Overlap the filled body, including small rollers at maximum speed.
+    // A new stroke never sweeps from the player's feet or an old location.
+    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.04,radius*(physical?.4:.52)))));
+    const depth=physical?1:1+stroke.speed*stroke.dt/(stamps*Math.max(.1,radius));
+    for(let i=1;i<=stamps;i++){
+      const t=i/stamps;
+      stroke.point.set(from.x+(to.x-from.x)*t,to.y,from.z+(to.z-from.z)*t);
+      rollingPaint(a,stroke.point,radius,depth,heading,stroke.contact);
+    }
+    from.copy(to);stroke.active=true;stroke.face=a.ground?.face;
+  }
+
   function rolling(runner,r,dt) {
     const a=runner.a,p=r.parameters,roll=p.WeaponRollParam||{},body=p.BodyParam||{};
     const s=state(runner),speed=Math.hypot(a.vel.x,a.vel.z),stick=Math.hypot(a.intent.move?.x||0,a.intent.move?.z||0);
@@ -1287,20 +1328,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       contact:{point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone(),hit:new Hit()},face:-1,
     });
     const heading=stroke.heading.set(Math.sin(a.yaw),0,Math.cos(a.yaw));
-    const to=stroke.to.set(a.pos.x+heading.x*.6,a.pos.y+.35,a.pos.z+heading.z*.6);
-    const from=stroke.from;
-    if (stroke.face!==a.ground?.face) stroke.active=false;
-    const distance=stroke.active?Math.hypot(to.x-from.x,to.z-from.z):0;
-    // Sample the narrower contact band at half its radius, including fast
-    // brushes. Share the frame depth across subdivisions; cap at six splats.
-    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.04,radius*.52))));
-    const depth=1+speed*dt/(stamps*Math.max(.1,radius));
-    for(let i=1;i<=stamps;i++){
-      const t=i/stamps;
-      stroke.point.set(from.x+(to.x-from.x)*t,to.y,from.z+(to.z-from.z)*t);
-      rollingPaint(a,stroke.point,radius,depth,heading,stroke.contact);
-    }
-    from.copy(to);stroke.active=true;stroke.face=a.ground?.face;
+    stroke.to.set(a.pos.x+heading.x*.6,a.pos.y+.35,a.pos.z+heading.z*.6);
+    stroke.radius=radius;stroke.widthRatio=sourceRadius/paintMax;stroke.speed=speed;stroke.dt=dt;
+    stroke.pending=r.family==='roller'&&!!a.character?.weapon?.drum&&!!a.character.weapon.def?.drum;
+    if(!stroke.pending)paintRollingStroke(a,stroke);
     s.contactTimes ||= new Map();
     // Owner report 2026-10-18: contact follows the body heading like the paint
     // above, and occlusion is tested at body height. The former aimDir point
