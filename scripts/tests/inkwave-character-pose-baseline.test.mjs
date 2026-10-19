@@ -1,3 +1,5 @@
+// Historical 0dec529d source replay; latest PR sources use the separate reviewed-pair gate.
+import {historicalSource} from '../lib/inkwave-historical-baseline-sources.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -9,7 +11,7 @@ import { CHARACTER_POSE_PATHS, CHARACTER_POSE_MANIFEST as manifest, parseCharact
 const root = fileURLToPath(new URL('../../', import.meta.url));
 // Current-owner unchanged-pose branch requires the same bytes on both sides.
 const currentPosePaths = new Set(['roller.mjs', 'family-holds.mjs', 'kit.mjs', 'registry.mjs', 'stringers.mjs'].map(name => CHARACTER_POSE_PATHS.find(path => path.endsWith('/' + name))));
-const candidate = () => new Map(CHARACTER_POSE_PATHS.map(rel => [rel, fs.readFileSync(path.join(root, rel), 'utf8')]));
+const candidate = () => new Map(CHARACTER_POSE_PATHS.map(rel => [rel, historicalSource('pose',rel)]));
 test('only the reviewed sixteen character paths and exact final source blobs are accepted', () => {
   const files = candidate(), snapshot = [...files];
   assert.equal(CHARACTER_POSE_PATHS.length, 16);
@@ -58,7 +60,7 @@ test('late candidate rejection leaves planned new modules and previous receipt u
   fs.mkdirSync(before); fs.mkdirSync(after);
   const originals = new Map();
   for (const row of manifest.files) {
-    const source = fs.readFileSync(path.join(root, row.path), 'utf8');
+    const source = historicalSource('pose',row.path);
     const target = path.join(after, row.path); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.writeFileSync(target, source);
     if (row.beforeSha256 === null && !currentPosePaths.has(row.path)) continue;
     let reference = source;
