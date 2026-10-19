@@ -67,6 +67,21 @@ function proofFromEvent(nm,from,e,poses,ts,t) {
     if(!source || ev.weapon!==weaponId(source) && ev.weapon!==source.weapon?.id)return null;
     origin=ev.muzzle;direction=ev.dir;cause=weaponId(source);kind='main';
     maxUses=['blaster','slosher','stringer','roller','brush'].includes(source.weapon?.kind)?6:2;
+  } else if(e[1]==='ac' && e[2]==='sub') {
+    // S3's native all:sub transport: [time,'ac','sub',nid,life,payload,tick,seq].
+    // The 'spawn' phase is the independently ordered, life-bound weapon birth;
+    // neither a later explosion proposal nor a cosmetic ghost mints evidence.
+    id=e[3];source=ownerActor(nm,from,id);
+    const payload=e[5],life=Math.max(source?.netLife??0,source?.net?.lastLife??0);
+    if(!source || e[4]!==life || !payload || payload.v!==1 ||
+      payload.phase!=='spawn' || payload.subId!==source.weapon?.sub ||
+      !safe(payload.seq) || payload.seq<1 || !safe(payload.life) ||
+      payload.life!==life)return null;
+    origin=[payload.x,payload.y,payload.z];
+    direction=[payload.vx,payload.vy,payload.vz];
+    // A stationary mine still has an owner-authenticated placement birth.
+    if(payload.subId==='inkMine' && magnitude(direction)<.001)direction=[0,1,0];
+    cause=payload.subId;kind='sub';maxUses=8;
   } else if(e[1]==='b') {
     id=e[2];source=ownerActor(nm,from,id);
     if(!source)return null;
@@ -180,6 +195,10 @@ function specialProof(nm,from,d,type,t,target) {
   if(!a || !equippedCause(a,d,type) || d.w!==w.special)return false;
   if(type==='boss'&&d.weak===1)return false;
   if(d.w==='storm' && d.d>160)return false;
+  // Close-range Kraken dash/splat, not the default 45m duration-wide reach.
+  // Active/snapshotted special plus the native special-use event must be near
+  // its victim; off-stage or remote-distant body hits are never legal.
+  if(d.w==='krakenRoyale' && (d.d>120 || dist(point(a)||[0,0,0],target)>5.5))return false;
   const here=point(a);
   if(!v3(here)||dist(here,target)>45)return false;
   const s=state(nm),key=[type,from,d.a,d.w].join(':');

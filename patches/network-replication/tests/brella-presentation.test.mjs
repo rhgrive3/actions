@@ -7,15 +7,15 @@ async function world(id='s3-shelter-focus'){
   extraExports:"export {animateWeapon} from './inkwave-public/src/game/character-weapons.js';"});
  const instances=[];const {G,THREE}=f;G.scene=new THREE.Scene();G.camera=new THREE.PerspectiveCamera();G.level.spawnPads=[new THREE.Vector3(),new THREE.Vector3()];G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
  const make=(local,weapon=id,nid=1,team=0)=>{const a=new f.Actor({team,name:'Brella view',weapon,isLocal:local,CharacterClass:f.Character,style:{hair:0}});a.nid=nid;a.owner=local?'owner':'owner';a.netLife=0;a.form='kid';a.grounded=true;a.ink=100;a.invuln=0;a.character.actor=a;a.character.onEvent=null;a._nearCamera=()=>false;a.pos.set(0,0,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,100);G.scene.add(a.character.root);instances.push(a);return a;};
- const owner=make(true),remote=make(false),packets=[],hits=[],members=new Set(['owner','viewer']);
+ const owner=make(true),remote=make(false),packets=[],hits=[],attackTicks=[],members=new Set(['owner','viewer']);
  const sender=new f.NetMatch({myId:'owner',hostId:'owner',isHost:true,_members:members,tr:{broadcast:m=>packets.push(JSON.parse(JSON.stringify(m))),sendTo(){return true;}}},{id:'brella-view'});
- const receiver=new f.NetMatch({myId:'viewer',hostId:'owner',isHost:false,_members:members,tr:{broadcast(){return true;},sendTo:(to,m)=>{hits.push({to,packet:JSON.parse(JSON.stringify(m))});return true;}}},{id:'brella-view'});
+ const receiver=new f.NetMatch({myId:'viewer',hostId:'owner',isHost:false,_members:members,tr:{broadcast:m=>{attackTicks.push(JSON.parse(JSON.stringify(m)));return true;},sendTo:(to,m)=>{hits.push({to,packet:JSON.parse(JSON.stringify(m))});return true;}}},{id:'brella-view'});
  sender.bind({actors:[owner],state:'playing',time:180});receiver.bind({actors:[remote],state:'playing',time:180});
  const advance=(frames,fire=true)=>{G.netm=sender;owner.intent.fire=fire;for(let i=0;i<frames;i++){G.time+=1/60;time+=1000/60;owner.weaponRunner.update(1/60,{fire,firePressed:i===0});}};
  const send=()=>{G.netm=sender;time+=50;G.time+=.05;sender._sendTick();return packets.at(-1);};
  const receive=packet=>{G.netm=receiver;receiver.onMessage('owner',packet);const peer=receiver._peer('owner');peer.tr=packet.ts;receiver._sample(remote,peer.tr,1/60);receiver.applyRemote(remote,1/60);};
  const animate=()=>{for(let i=0;i<45;i++)f.animateWeapon(remote.character.weapon,{dt:1/60,near:true,color:remote.color,runner:remote.weaponRunner});};
- return {f,owner,remote,sender,receiver,packets,hits,make,advance,send,receive,animate,close(){receiver.dispose();sender.dispose();G.projectiles.clear();for(const a of instances)a.character.dispose();}};
+ return {f,owner,remote,sender,receiver,packets,hits,attackTicks,make,advance,send,receive,animate,close(){receiver.dispose();sender.dispose();G.projectiles.clear();for(const a of instances)a.character.dispose();}};
 }
 
 test('actual local canopy snapshot opens remote cloth without creating a gameplay canopy',async()=>{
@@ -42,7 +42,16 @@ test('actual local canopy snapshot opens remote cloth without creating a gamepla
   const proposal=x.hits.find(h=>h.packet.k==='hit');assert.ok(proposal,'remote visual cloth never retires the attack-side projectile');
   assert.equal(proposal.to,'owner');assert.ok(proposal.packet.bg?.length===7);
   assert.equal(remote.weaponRunner.catalogState?.canopy??null,null);
-  f.G.actors=[owner,attackProxy];f.G.netm=sender;sender.onMessage('viewer',proposal.packet);
+  // The shooter already produced real projectile births during fireShooter.
+  // Forward its authenticated 20Hz owner tick before the independently
+  // addressed damage proposal, rather than accepting an unproved hit.
+  f.G.netm=receiver;receiver._sendTick();
+  const attackTick=x.attackTicks.at(-1);
+  assert.ok(attackTick?.e?.some(e=>e[1]==='p'||e[1]==='ev'),
+    'native owner projectile/fire evidence is present on the actor tick');
+  f.G.actors=[owner,attackProxy];f.G.netm=sender;
+  sender.onMessage('viewer',attackTick);
+  sender.onMessage('viewer',proposal.packet);
   assert.equal(owner.hp,hp,'victim owner adjudicates the actual intercepted segment');
   assert.ok(owner.weaponRunner.catalogState.canopy.hp<shieldHp);
   f.G.actors=[owner,remote];f.G.projectiles.list.length=0;

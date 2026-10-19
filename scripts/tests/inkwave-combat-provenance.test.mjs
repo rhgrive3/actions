@@ -178,6 +178,32 @@ test('pending hit proof queue retains no arbitrary network baggage',()=>{
   assert.equal(Object.hasOwn(pending[0].d,'padding'),false);
   assert.equal(JSON.stringify(pending[0]).length<400,true);
 });
+test('native all:sub spawn proof admits legitimate Burst with owner life; deployment forgery does not',()=>{
+  const nm=new Stub(),a=nm.byNid.get(1);a.weapon.sub='burst';a.netLife=0;
+  nm.onMessage('peerA',hit(2,1,'burst'));
+  const payload={v:1,phase:'spawn',subId:'burst',life:0,seq:1,x:0,y:1,z:0,vx:0,vy:0,vz:45};
+  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'ac','sub',1,0,payload,6000,1]]});
+  assert.equal(nm.hitCalls.length,1);
+  const wrong=new Stub();wrong.byNid.get(1).weapon.sub='burst';wrong.byNid.get(1).netLife=0;
+  wrong.onMessage('peerA',hit(2,1,'burst'));
+  wrong._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],
+    e:[[100,'ac','sub',1,99,payload,6000,1]]});
+  assert.equal(wrong.hitCalls.length,0);
+  const deployed=new Stub();deployed.byNid.get(1).weapon.sub='burst';deployed.byNid.get(1).netLife=0;
+  deployed.onMessage('peerA',hit(2,1,'burst'));
+  deployed._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],
+    e:[[100,'ac','sub',1,0,{...payload,phase:'deploy'},6000,1]]});
+  assert.equal(deployed.hitCalls.length,0);
+});
+test('native life-bound Kraken Special activation admits contact, not absent attack proof',()=>{
+  const nm=new Stub(),a=nm.byNid.get(1);a.weapon.special='krakenRoyale';
+  nm.byNid.get(2).pos.z=3;
+  const h={...hit(2,1,'krakenRoyale'),d:120};
+  nm.onMessage('peerA',h);assert.equal(nm.hitCalls.length,0);
+  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],
+    e:[[100,'ev','special:use',{actor:{n:1},id:'krakenRoyale',pos:[0,0,0]}]]});
+  assert.equal(nm.hitCalls.length,1);
+});
 test('long lived tabs still admit timestamps above 2000s',()=>{
   const nm=new Stub();
   nm.onMessage('peerA',hit());

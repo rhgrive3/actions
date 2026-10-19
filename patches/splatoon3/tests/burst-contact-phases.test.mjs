@@ -174,6 +174,10 @@ test('Burst actual contact uses separate authoritative JSON hits and one causal 
   const birth=source.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='spawn');
   assert.ok(birth);
   playRows(receiver,[birth]);
+  // The S3 catalogue 'ac' spawn is the actual life-scoped owner fire event.
+  // Deliver it through the authenticated 20Hz tick too. A raw hit alone must
+  // never authorize HP changes without its preceding causal birth.
+  receiver.nm.onMessage('a',{k:'t',ts:birth[0]+.05,a:[],e:[wire(birth)]});
   source.step();
   const first=source.packets.filter(p=>p.packet.k==='hit');
   assert.equal(first.length,1);assert.equal(first[0].packet.d,25);
