@@ -419,6 +419,7 @@ jobs:
             patches/splatoon3/tests/deployed-special-gauge-display.test.mjs \
             patches/splatoon3/tests/retained-special-deep-fidelity.test.mjs \
             patches/splatoon3/tests/special-device-flight.test.mjs \
+            patches/splatoon3/tests/special-device-sparse-replay.test.mjs \
             patches/splatoon3/tests/combat-special-terrain.test.mjs \
             patches/splatoon3/tests/combat-special-native-bands.test.mjs \
             patches/splatoon3/tests/killer-wail-trace-lifecycle.test.mjs \

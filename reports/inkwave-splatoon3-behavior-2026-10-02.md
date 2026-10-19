@@ -497,6 +497,12 @@ INKWAVE の差分は、成功した異ブキ切替後も `installKitInkVac()` �
 
 ## Batch C の着地と通信状態の確認（2026-10-04）
 
+### 2026-10-19: #1606 の Wave / Screen birth replay 候補
+
+Wave Breaker / スミナガシートの疎な companion イベントを先に受信すると、remote object の寿命・半径・AP が初期値へ落ちる経路を source 合成で再現。既存 serializer による完全な birth、同 life の遅延 sibling による巻戻り防止、bounded ledger の終端再出現防止を別候補で検査する。通常 transport 内の逆順は既存並替えで正常であり、欠落・再包装は診断入力と区別する。本家値や通信順を新たに測定した結果ではなく、emitted / 実 browser / exact-head CI は未受入。[専用記録](inkwave-special-device-sparse-replay-2026-10-19.md)。
+
+
+
 比較条件は公開INKWAVE、既存Splatoon 3 Ver.11.3.0参照、通常装備・通常着地。
 [#90](https://github.com/rhgrive3/actions/issues/90)は着地の全体scaleが剛体ブキまで変形させる問題を扱う。
 着地専用のscale impulseを除き、膝・骨盤・腕・頭・ブキanchorの既存応答と時刻を保持する。
