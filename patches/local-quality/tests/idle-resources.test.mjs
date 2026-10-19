@@ -160,10 +160,13 @@ test('actual composed Game._frame skips only offline paused world; UI/net/input 
   f.R={render:count('worldRender'),grade:{uniforms:{uHurt:{value:0}}}};f.decor={update:count('decor')};f.props={update:count('props')};
   f.levelMat={userData:{uniforms:{uTime:{value:0},uSeeOn:{value:0},uSeeA: {value:vector},uSeeB:{value:vector}}}};f.rig={update:count('rig'),setMap(){},mapK:0};f._dioFog=count('fog');f.menus={update:count('ui')};f.screenfx={update:count('screenfx')};
   f._updateLocalLoops=count('loops');f._updateAmbience=count('ambience');
+  f.hud={setWorldPaused(on){this.worldPaused=on;}};f._updateHud=count('hud');
   for(let i=0;i<120;i++)f._frame(1/60);
   assert.equal(calls.worldRender,1);assert.equal(calls.ui,120);assert.equal(calls.simulation,120);assert.equal(calls.env,undefined);assert.equal(calls.paint,undefined);assert.equal(calls.rig,undefined);assert.equal(G.renderer.shadowMap.needsUpdate,false);
+  assert.equal(calls.hud,1,'only the first offline paused frame refreshes the HUD');assert.equal(f.hud.worldPaused,true);
   f._skipRender=true;f.settings.bloom=true;f._frame(1/60);assert.equal(calls.worldRender,1);f._skipRender=false;f._frame(1/60);assert.equal(calls.worldRender,2);
   G.netm={};f._frame(1/60);assert.equal(calls.worldRender,3);assert.equal(calls.env,1);assert.equal(calls.paint,1);assert.equal(calls.rig,1);assert.equal(G.renderer.shadowMap.needsUpdate,true);
+  assert.equal(f.hud.worldPaused,false,'online menu keeps HUD animation live');
   delete G.netm;f.match.paused=false;f._frame(1/60);assert.equal(calls.worldRender,4);
 });
 

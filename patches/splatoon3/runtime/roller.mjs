@@ -454,12 +454,24 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     // native stripe and roll-contact damage admission, so `stillWall` stays no-stick.
     const drumWallTouch = !!(inp.fire && !onFlickPath && sup?.wall && !a.remote);
     const stillWall = drumWallTouch && !stick;
-    const fireIn = (onFlickPath || (sup?.supported && stick) || stillWall) ? inp : { ...inp, fire: false, firePressed: false };
+    // Owner report 2026-10-18: S3 keeps the drum down while ZR is held and the
+    // Left Stick is released. Keep the native roll state on a supported drum,
+    // but (#847) residual displacement must not admit contact damage, roll ink
+    // or the native stripe: speed is hidden during the call and the paint/ink
+    // anchors follow the actor, exactly as for a still drum.
+    const stillHold = !!(inp.fire && !onFlickPath && sup?.supported && !stick && !a.remote);
+    const fireIn = (onFlickPath || sup?.supported || stillWall) ? inp : { ...inp, fire: false, firePressed: false };
     const restoreAirborne = !!(sup?.wall && !sup.floor && !a.grounded);
     // Native contact damage reads horizontal speed; prevent no-stick damage
     // without mutating authoritative actor movement outside the native call.
     const savedVelX = a.vel.x, savedVelZ = a.vel.z;
-    if (stillWall) { a.vel.x = 0; a.vel.z = 0; }
+    if (stillWall || stillHold) {
+      a.vel.x = 0; a.vel.z = 0;
+      if (this.rolling === true && a.pos) {
+        if (this.lastRollPos?.copy) this.lastRollPos.copy(a.pos);
+        if (this.lastRollInkPos?.copy) this.lastRollInkPos.copy(a.pos);
+      }
+    }
     if (restoreAirborne) a.grounded = true;
     try {
 
@@ -508,6 +520,8 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       }
     }
     if (state && !starting) state.elapsed += dt;
+    // Presentation only: a held ZR keeps the released drum down until the roll.
+    if (state) state.holdRoll = inp.fire === true && !!a.grounded;
     // #1056: if ZR was first pressed in the air, touching down in the first
     // five 60Hz frames turns that pending vertical flick into the faster
     // horizontal flick. #1041 grounded-start jump conversions stay separate.
@@ -648,7 +662,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     else this.s3WallPaintElapsed = 0;
     return result;
     } finally {
-      if (stillWall) { a.vel.x = savedVelX; a.vel.z = savedVelZ; }
+      if (stillWall || stillHold) { a.vel.x = savedVelX; a.vel.z = savedVelZ; }
       if (restoreAirborne && a.grounded) a.grounded = false;
     }
   };
@@ -706,32 +720,42 @@ function hermiteKeys(keys, times, t) {
 // The former stretched spline coiled for 65% of the windup and whipped for the
 // remaining 35% (7F on the Splat Roller, 16F on the Dynamo), so ink left with
 // the drum still at chest height.
-function s3SwingPose(elapsed, windup, interval, keys, heavy) {
+// Held ZR after the swing (owner report 2026-10-18, Carbon Roller): the drum
+// stays down and the roll takes over; it must not first lift back to the carry
+// (READY) and drop again when the runner admits the roll. The drum then rests
+// on the floor at full weight until the roll contact pose takes it over.
+const ROLL_GRIP = Object.freeze({ a: ROLL_ANCHOR, r: ROLL_ROTATION });
+function s3SwingPose(elapsed, windup, interval, keys, heavy, held = false) {
   const H = HEAVY_ROLLER_SWING, S = STANDARD_ROLLER_SWING, release = Math.max(1e-6, windup);
   const whip = Math.min(heavy ? H.whip : S.whip, release * .5), hold = release - whip;
   const coilAt = heavy ? Math.min(H.coilAt, hold * .9) : Math.min(S.coilMax, S.coilFraction * release, hold * .9);
   let restEnd, end;
   if (heavy) { restEnd = Math.max(release + H.rest, interval); end = restEnd + H.ret; }
   else { end = Math.max(release + 1 / 60, interval); restEnd = end - Math.min(S.ret, (end - release) * .5); }
+  // Held vertical swing: the upright drum lies down into the roll grip on the
+  // floor between the release and the runner's roll admission (interval),
+  // instead of flipping from upright to level in the roll's first frame.
+  const layDown = held && keys === VERTICAL_GRIPS;
+  if (layDown) { end = Math.max(release + 2 / 60, interval); restEnd = release + (end - release) * .5; }
   // Release must sample the release grip (key 2), especially for the vertical
   // flick. Jumping to follow-through (key 3) rotates the roller sideways
   // exactly when ink leaves the drum. Preserve the established horizontal track.
   const releaseGrip = keys === VERTICAL_GRIPS ? keys[2] : keys[3];
-  const k = [keys[0], keys[1], keys[1], releaseGrip, keys[3], keys[4]];
+  const k = [keys[0], keys[1], keys[1], releaseGrip, keys[3], layDown ? ROLL_GRIP : held ? keys[3] : keys[4]];
   const times = [0, coilAt, hold, release, restEnd, end];
   const t = Math.max(0, Math.min(end, elapsed));
   const { anchor, rotation } = hermiteKeys(k, times, t);
-  return { anchor, rotation, weight: ease(t / (2 / 60)) * (1 - ease((t - restEnd) / (end - restEnd))),
+  return { anchor, rotation, weight: ease(t / (2 / 60)) * (held ? 1 : 1 - ease((t - restEnd) / (end - restEnd))),
     coil: ease(t / coilAt) * (1 - ease((t - hold) / whip)),
     whip: ease((t - hold) / whip) * (1 - ease((t - restEnd) / (end - restEnd))) };
 }
-export function horizontalRollerPose(elapsed, windup, interval, shape = null) {
-  return s3SwingPose(elapsed, windup, interval, HORIZONTAL_GRIPS, shape === 'heavy');
+export function horizontalRollerPose(elapsed, windup, interval, shape = null, held = false) {
+  return s3SwingPose(elapsed, windup, interval, HORIZONTAL_GRIPS, shape === 'heavy', held);
 }
 // The X axis across the drum turns upright around the handle (local +Z).
 // This is a pose target for the existing two-arm IK, not a second bone rig.
-export function verticalRollerPose(elapsed, windup, interval, shape = null) {
-  return s3SwingPose(elapsed, windup, interval, VERTICAL_GRIPS, shape === 'heavy');
+export function verticalRollerPose(elapsed, windup, interval, shape = null, held = false) {
+  return s3SwingPose(elapsed, windup, interval, VERTICAL_GRIPS, shape === 'heavy', held);
 }
 
 export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }, _profile) {
@@ -753,6 +777,9 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, searchAxis, turn;
   let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ, shoulderShift, chestQ, contactPoint, bestPoint;
   const SEARCH_AXES = [[1,0,0],[0,1,0],[0,0,1]];
+  // Cost per radian of changing the floor correction between frames (same
+  // units as the existing .06/rad small-angle preference). Visual calibration.
+  const ROLLER_SEARCH_COHERENCE = .1;
   const rotCos = v => Math.max(-1, Math.min(1, v));
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
     const isRightRoller = limb === this.limbs.armR && this.weaponKind === 'roller' &&
@@ -885,21 +912,32 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     // A roll surface must sit near the floor; a windup must never clip it.
     // Search purely in orientation, so the right hand remains the pivot and
     // the left hand remains reachable after every tested candidate.
+    // Owner report 2026-10-18 (Dynamo vertical swing): solutions about
+    // different axes with almost equal floor error alternated frame to frame
+    // and the long upright drum jumped about. Keep the search coherent: a
+    // correction far from last frame's pays for the angular distance.
+    const memory = this._s3RollerFloorSearch || (this._s3RollerFloorSearch = { valid: false, axis: -1, sign: 0, a: 0 });
+    const prevValid = memory.valid, prevAxis = memory.axis, prevSign = memory.sign, prevA = memory.a;
+    const switchCost = (axisIndex, sign, a) => !prevValid ? 0
+      : ROLLER_SEARCH_COHERENCE * (prevA > 0 && prevAxis === axisIndex && prevSign === sign ? Math.abs(a - prevA) : a + prevA);
+    let chosenAxis = -1, chosenSign = 0, chosenA = 0;
     if (neededGround && bestGroundError > .003) {
-      let bestCost = bestGroundError*30;
+      let bestCost = bestGroundError*30 + switchCost(-1, 0, 0);
       baseQ.copy(orientation);
-      for(const [x,y,z] of SEARCH_AXES)for(const sign of [-1,1]) {
+      for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(const sign of [-1,1]) {
+        const [x,y,z] = SEARCH_AXES[axisIndex];
         searchAxis.set(x,y,z);
         for(let step=1;step<=30;step++){
           const a=step*.05;
           candidateQ.copy(trialQ.setFromAxisAngle(searchAxis,sign*a)).multiply(baseQ);
           const floorError=evaluate(candidateQ);
-          const cost=floorError*30+a*.06;
-          if(cost<bestCost){bestCost=cost;bestGroundError=floorError;bestQ.copy(candidateQ);if(contacting)bestPoint.copy(target);}
+          const cost=floorError*30+a*.06+switchCost(axisIndex,sign,a);
+          if(cost<bestCost){bestCost=cost;bestGroundError=floorError;bestQ.copy(candidateQ);if(contacting)bestPoint.copy(target);chosenAxis=axisIndex;chosenSign=sign;chosenA=a;}
           if(floorError<=.003)break;
         }
       }
     }
+    memory.valid = neededGround; memory.axis = chosenAxis; memory.sign = chosenSign; memory.a = chosenA;
     if (contacting) target.copy(bestPoint);
     // An upright vertical release can place the actual drum below the floor
     // even after orientation search. Recover the remaining penetration from
@@ -1005,7 +1043,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         : .23 + (state.elapsed - state.windup) / Math.max(1 / 60, state.interval - state.windup) * .45;
       const base = P.slice();
       flick.call(this, P, age);
-      const curve = horizontalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape);
+      const curve = horizontalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape, state.holdRoll === true);
       for (let i = 0; i < 3; i++) {
         P[C.ANC + i] = curve.anchor[i];
         P[C.ANCR + i] = curve.rotation[i];
@@ -1014,7 +1052,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       for (let i = 0; i < P.length; i++) P[i] = mix(base[i], P[i], weight);
       return;
     }
-    const p = verticalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape), w = p.weight * (state.released && state.rolling ? 1 - this.wRoll : 1);
+    const p = verticalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape, state.holdRoll === true), w = p.weight * (state.released && state.rolling ? 1 - this.wRoll : 1);
     for (let i = 0; i < 3; i++) {
       P[C.ANC + i] = mix(P[C.ANC + i], p.anchor[i], w);
       P[C.ANCR + i] = mix(P[C.ANCR + i], p.rotation[i], w);

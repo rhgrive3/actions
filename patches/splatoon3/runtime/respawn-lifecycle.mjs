@@ -1,5 +1,6 @@
 // Respawn-only state ownership. Fresh match/spawnAt still clears the gauge;
 // teammate Super Jump and its invulnerability keep their existing owners.
+import { holdSpawnPose } from './spawn-pose-motion.mjs';
 const EPS = 1e-10, KEYS = ['fire', 'jump', 'sub', 'special', 'squid'];
 const INSTALL = Symbol.for('inkwave.s3.respawn-lifecycle.v1');
 let beginInitialImpl = null, syncRemoteInitialImpl = null;
@@ -10,6 +11,15 @@ export function squidSpawnState(actor) { return actor?.s3?.squidSpawn || null; }
 export const SPAWN_ARMOR_FLAG = 8388608;
 export const SQUID_SPAWN_FLIGHT_DURATION = 60 / 60;
 export const SQUID_SPAWN_FLIGHT_INVULNERABILITY = SQUID_SPAWN_FLIGHT_DURATION + 1e-6;
+// Presentation of the Squid Spawn (owner report 2026-10-18: unclear, stiff
+// descent). Official S3 preview art shows players launched from the spawners
+// as squids trailing ink and posing on the spawner before that; the rig was
+// previously never re-posed during the wait or the flight (Actor._finishFrame
+// was skipped), so a frozen humanoid slid along the arc. The flight now runs
+// the ordinary squid presentation and turns back to the kid form for the
+// touchdown, like the native Super Jump (its k > 0.82 switch). KID_AT is that
+// same INKWAVE calibration, not a Nintendo frame value.
+export const SQUID_SPAWN_PRESENTATION = Object.freeze({ kidAt: 0.82, initialAutoLaunch: 1.0 });
 export function spawnProtectionRemaining(actor) {
   if (actor?.remote && actor.s3?.spawnArmorManaged) return actor.s3.spawnArmorRemote ? .1 : 0;
   if (!actor?.s3?.spawnArmorManaged) return actor?.invuln || 0; // legacy non-respawn preview/spawnAt
@@ -135,7 +145,7 @@ export function installRespawnLifecycle(api, profile) {
   const setPos = (actor, p) => { actor.pos.set(p.x,p.y,p.z); actor.character.root.position.copy(actor.pos); };
   function finishLanding(actor) {
     actor._surface?.();
-    actor.vel.set(0,0,0); actor.grounded = true;
+    actor.vel.set(0,0,0); actor.grounded = true; actor.form = 'kid';
     actor.invuln = 0;
     actor.character.root.position.copy(actor.pos);
     delete actor.s3.squidSpawn;
@@ -150,7 +160,10 @@ export function installRespawnLifecycle(api, profile) {
     // Preserve #1005's launch-owned finite armor clock; advanceSpawnProtection
     // consumes it during flight just as it does during other live actor time.
     actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
-    actor.invuln = SQUID_SPAWN_FLIGHT_INVULNERABILITY; actor.grounded = false; actor.vel.set(0,0,0); actor.character.trigger('spawn');
+    actor.invuln = SQUID_SPAWN_FLIGHT_INVULNERABILITY; actor.grounded = false; actor.vel.set(0,0,0);
+    // Ejected from the spawner as a squid; the 'spawn' landing presentation
+    // starts when the flight turns back to the kid form (see the flight phase).
+    holdSpawnPose(actor.character, false); actor.form = 'squid'; s.kidShown = false;
     emit?.('squidspawn:launch', { actor, initial: s.initial, target: { ...s.to } });
     return true;
   }
@@ -181,6 +194,8 @@ export function installRespawnLifecycle(api, profile) {
     actor.s3.squidSpawn = { phase:'aim', initial:!!initial, wait:0, fireArmed:!actor.intent.fire,
       target: ownerReplicated ? null : ((initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor)) };
     if (ownerReplicated) actor.s3.squidSpawn.ownerReplicated = true;
+    // Standing on the spawner in the weapon-family spawn pose until launch.
+    actor.form = 'kid'; actor.grounded = true; holdSpawnPose(actor.character, true);
     actor.netTp = (actor.netTp || 0) + 1;
     if (wasDead && !actor.isBot && !actor.remote) actor.s3.respawnRearm = new Set(KEYS);
     emit?.('respawn', { actor }); emit?.('squidspawn:aim', { actor, initial:!!initial });
@@ -261,9 +276,20 @@ export function installRespawnLifecycle(api, profile) {
         }
         if (!this.intent.fire) spawn.fireArmed = true;
         const pressed = spawn.fireArmed && this.intent.fire && !this._prevIntent.fire;
-        const auto = this.isBot || this.remote;
+        // S3: at the match start the spawners fire on their own (a ZR press
+        // only locks the spot earlier). INKWAVE's opening fly-by camera leaves
+        // no aiming time, so the player gets initialAutoLaunch seconds of play
+        // first (INKWAVE calibration). Respawns wait for ZR as in S3.
+        if (spawn.initial && !spawn.ownerReplicated && G.match?.state === 'playing') spawn.playWait = (spawn.playWait || 0) + (dt > 0 ? dt : 0);
+        const auto = this.isBot || this.remote || (spawn.initial && !spawn.ownerReplicated &&
+          (spawn.playWait || 0) + EPS >= SQUID_SPAWN_PRESENTATION.initialAutoLaunch);
         this._prevIntent.fire = this.intent.fire;
-        if (pressed || auto) launch(this);
+        if ((pressed || auto) && launch(this)) { this._finishFrame?.(dt); return; }
+        // Waiting on the spawner: keep the rig alive (idle breathing, aim turn,
+        // held family pose) instead of a frozen pose.
+        this.vel.set(0, 0, 0); this.grounded = true; this.form = 'kid';
+        holdSpawnPose(this.character, true);
+        this._finishFrame?.(dt);
         return;
       }
       if (spawn.phase === 'landing') {
@@ -293,8 +319,17 @@ export function installRespawnLifecycle(api, profile) {
         }
         spawn.t = Math.min(spawn.duration, spawn.t + dt); const u=Math.min(1,spawn.t/spawn.duration),arc=Math.sin(Math.PI*u)*2.2;
         this.pos.set(spawn.from.x+(spawn.to.x-spawn.from.x)*u, spawn.from.y+(spawn.to.y-spawn.from.y)*u+arc, spawn.from.z+(spawn.to.z-spawn.from.z)*u);
-        this.character.root.position.copy(this.pos); if(dt>0&&oldT<spawn.duration)this.vel.set((this.pos.x-oldX)/dt,(this.pos.y-oldY)/dt,(this.pos.z-oldZ)/dt);
+        if(dt>0&&oldT<spawn.duration)this.vel.set((this.pos.x-oldX)/dt,(this.pos.y-oldY)/dt,(this.pos.z-oldZ)/dt);
         this._prevIntent.fire = this.intent.fire;
+        // Squid for the flight, kid for the touchdown; the native 'spawn'
+        // presentation (fall pose, then crouch-and-pop landing) starts there.
+        if (u + EPS < SQUID_SPAWN_PRESENTATION.kidAt) this.form = 'squid';
+        else {
+          this.form = 'kid';
+          if (!spawn.kidShown) { spawn.kidShown = true; this.character.trigger('spawn'); }
+        }
+        if (typeof this._finishFrame === 'function') this._finishFrame(dt);
+        else this.character.root.position.copy(this.pos);
         if (u >= 1-1e-10) {
           // A selected point stays eligible only while the native stage still
           // has support there. A ground-probe miss hands off to native gravity.

@@ -1,4 +1,5 @@
 import { PROJECTILE_VISUAL_SOURCE } from './projectile-visual-source-data.mjs';
+import { VARIANT_BASE_WEAPON } from './alternate-weapon-kits-data.mjs';
 
 // Visual reconstruction only. Extracted DrawSizeParam/tail frames are read
 // verbatim; cross-section topology, Hermite smoothing and liquid links are
@@ -53,6 +54,14 @@ for(const kind of ['shooter','bubble','explosive','spiral','bucket-front','bucke
     }
     profile.width[ring]=width*cap;profile.thickness[ring]=width*thin*cap;profile.axial[ring]=axial;
   }
+}
+// Sloshers drawn with the Bucket Slosher sheet: Bucket, Tri-Slosher and Dread
+// Wringer, including every alternate kit of those bases (owner request
+// 2026-10-18). Sloshing Machine, Bloblobber and Explosher keep their own art.
+export const BUCKET_SHEET_SLOSHERS = Object.freeze(['slosher', 's3-slosher-diffusion', 's3-slosher-double']);
+export function usesBucketSlosherSheet(wid) {
+  const base = typeof wid === 'string' && Object.hasOwn(VARIANT_BASE_WEAPON, wid) ? VARIANT_BASE_WEAPON[wid] : wid;
+  return BUCKET_SHEET_SLOSHERS.includes(base);
 }
 const BASE_ACTOR = Object.freeze({ shooter:'WeaponShooterNormal', dualies:'WeaponManeuverDual',
   splatling:'WeaponSpinnerStandard', roller:'WeaponRollerNormal', slosher:'WeaponSlosherStrong' });
@@ -140,9 +149,9 @@ export function projectileVisualKind(p) {
   if(actor==='WeaponSlosherBathtub')return 'bubble';
   if(actor==='WeaponSlosherLauncher')return 'spiral';
   if(actor==='WeaponSlosherWashtub')return 'explosive';
-  if(actor==='WeaponSlosherDiffusion')return 'tri-sheet';
-  if(actor==='WeaponSlosherDouble')return 'paired-sheet';
-  if(actor==='WeaponSlosherStrong' || p.type==='slosh' && p.wid==='slosher') {
+  // Tri-Slosher and Dread Wringer share the Bucket sheet (see BUCKET_SHEET_SLOSHERS).
+  if(actor==='WeaponSlosherDiffusion'||actor==='WeaponSlosherDouble')return 'bucket-front';
+  if(actor==='WeaponSlosherStrong' || p.type==='slosh' && usesBucketSlosherSheet(p.wid)) {
     const u=p.catalog?.descriptor?.unit;
     return u!=null ? (u===2?'bucket-rear':'bucket-front') :
       (finite(p.fidelitySloshPacketIndex,-1)>=4 || p.fidelitySloshUnit?.UnitDelayFrame===4 ? 'bucket-rear':'bucket-front');
@@ -213,7 +222,7 @@ export function nativeVolumeOwns(p, engine) {
     return assets.has('roller');
   if (recipe === 'shooter') return assets.has('shooter');
   if (recipe === 'slosher')
-    return (p.wid === 'slosher' || p.wid === 's3-slosher-diffusion') && assets.has('roller');
+    return usesBucketSlosherSheet(p.wid) && assets.has('roller');
   return false;
 }
 

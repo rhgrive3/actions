@@ -130,8 +130,11 @@ test('invalid out-of-range barrier hits cannot consume valid owner sequence or e
   assert.equal(f.nm.rankedHitSeq?.get('guest') || 0, 0);
   f.nm.onMessage('guest', { ...packet, seq: 8, damage: '30' });
   assert.equal(f.m.rankedBarrierHits.length, 0);
-  f.nm.onMessage('guest', packet); assert.equal(f.m.rankedBarrierHits.length, 1);
-  f.nm.onMessage('guest', packet); assert.equal(f.m.rankedBarrierHits.length, 1);
+  f.nm.onMessage('guest', packet);
+  assert.equal(f.m.rankedBarrierHits.length, 0, 'a near-impact claim without a corroborating shot must not affect the barrier');
+  assert.equal(f.nm.rankedHitSeq?.get('guest') || 0, 0, 'unauthenticated proposals cannot consume hit sequencing');
+  f.nm.onMessage('guest', packet);
+  assert.equal(f.m.rankedBarrierHits.length, 0, 'repeating an unsupported hit is still harmless');
 });
 
 test('stale remote ranked special input expires together with fire/throw and cannot block clam pickups', async () => {

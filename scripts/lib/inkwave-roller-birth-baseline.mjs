@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 
 // The render comparator requires identical physics. PR #1512 intentionally
 // changes two birth expressions; replay exactly those expressions in the
@@ -15,7 +16,31 @@ const verticalLegacyReference = 'p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(v
 const verticalReference = verticalAfter;
 
 const count = (source, text) => source.split(text).length - 1;
+// Owner 82c8fe571891003cf9b939967e3e4c455fbe12d7 changed birth physics.
+// Admit only an unchanged reviewed helper on BOTH sides. Never replay this
+// onto legacy physics or pretend it is an equivalent variable rename.
+const currentHelperStart = 'export const ROLLER_SPAWN_BASE';
+const currentHelperEnd = 'export function configureFidelityFlick';
+const currentHelperSha256 = '7afeabdfb6bbe8a074697e42583488be4e1449ccf97c6882b00413d7a536cbc0';
+const currentCall = '  const count=vertical?1:(depleted?(unit.DepletionBulletNum??unit.BulletNum):unit.BulletNum)??1;\n  addRollerSpawnOffset(rollerSpawnBase(actor,p.pos),actor,unit,offset,count,vertical);';
+function assertCurrentBirth(source, side) {
+  assert.equal(count(source, currentHelperStart), 1, side + ': one reviewed current birth helper');
+  assert.equal(count(source, currentHelperEnd), 1, side + ': one reviewed configure entry');
+  const start = source.indexOf(currentHelperStart), end = source.indexOf(currentHelperEnd, start);
+  assert.ok(end > start, side + ': current helper boundaries');
+  assert.equal(createHash('sha256').update(source.slice(start, end)).digest('hex'), currentHelperSha256, side + ': unreviewed current birth physics');
+  assert.equal(count(source, currentCall), 1, side + ': reviewed current birth call');
+  assert.equal(count(source, 'export function addRollerSpawnOffset('), 1, side + ': unique offset helper');
+  assert.equal(count(source, 'addRollerSpawnOffset(rollerSpawnBase('), 1, side + ': unique current call');
+  assert.equal(count(source, lateralAfter), 1, side + ': unique half-width rule');
+  assert.equal(count(source, verticalAfter) + count(source, verticalBefore) + count(source, verticalLegacyReference) + count(source, lateralBefore), 0, side + ': no mixed legacy birth physics');
+}
 export function alignRollerBirthBaseline(baseline, candidate) {
+  if (candidate.includes(currentHelperStart) || baseline.includes(currentHelperStart)) {
+    assertCurrentBirth(candidate, 'candidate');
+    assertCurrentBirth(baseline, 'baseline');
+    return { source: baseline, changes: [] };
+  }
   assert.equal(count(candidate, lateralAfter), 1, 'candidate must contain the reviewed horizontal total-width rule exactly once');
   assert.equal(count(candidate, verticalAfter), 1, 'candidate must contain the reviewed indexed-height rule exactly once');
   assert.equal(count(candidate, lateralBefore) + count(candidate, verticalBefore) + count(candidate, verticalLegacyReference), 0, 'candidate contains no legacy birth rule');

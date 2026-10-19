@@ -47,6 +47,8 @@ const INSTALL = Symbol.for('inkwave.s3.bomb-models.install.v1');
 const HELD = Symbol('inkwave.s3.bomb-models.held');
 const TAU = Math.PI * 2;
 const CONTACT_BIAS = 0.21;   // native bomb centre offset from the contact surface
+export const SUCTION_MODEL_SCALE = 1.5;   // owner request 2026-10-18 (presentation only)
+const SUCTION_RIM_Y = -0.207;   // Suction cup rim, on the contact surface
 
 export const CURLING_WARNING_REST = CURLING.warningAnimRestFrame;   // 90F = 1.5 s
 export const CURLING_CHARGE_GROWTH = CURLING.paintRadiusMaxCharge / CURLING.paintRadiusMinCharge;
@@ -151,7 +153,7 @@ function splatParts(THREE) {
 
 function suctionParts(THREE) {
   // Cup rim on the contact surface (y -0.21), can above it.
-  const cupProfile = [[0.0, -0.207], [0.112, -0.207], [0.12, -0.2], [0.116, -0.186], [0.106, -0.16],
+  const cupProfile = [[0.0, SUCTION_RIM_Y], [0.112, SUCTION_RIM_Y], [0.12, -0.2], [0.116, -0.186], [0.106, -0.16],
     [0.09, -0.135], [0.066, -0.116], [0.036, -0.104], [0.0, -0.1]].map(([x, y]) => new THREE.Vector2(x, y));
   const black = [new THREE.LatheGeometry(cupProfile, 28), new THREE.CylinderGeometry(0.02, 0.024, 0.02, 12).translate(0, -0.092, 0)];
   // Team-coloured dots on the dome (two rows).
@@ -176,8 +178,12 @@ function suctionParts(THREE) {
   }
   // Flash ring at the can's base (the warning blink).
   const flash = new THREE.TorusGeometry(0.086, 0.007, 8, 28).rotateX(Math.PI / 2).translate(0, -0.042, 0);
+  // Owner request 2026-10-18: the Suction Bomb reads 1.5x larger. Scale about the cup rim (y -0.207,
+  // on the contact surface 0.21 below the record centre) so the cup still sits where it sticks.
+  // Presentation only: collision, fuse, blast and paint keep their native owners.
+  const grow = geo => geo.translate(0, -SUCTION_RIM_Y, 0).scale(SUCTION_MODEL_SCALE, SUCTION_MODEL_SCALE, SUCTION_MODEL_SCALE).translate(0, SUCTION_RIM_Y, 0);
   return [['ink', merge(THREE, ink)], ['black', merge(THREE, black)], ['chrome', merge(THREE, chrome)],
-    ['eye', merge(THREE, eye)], ['pupil', merge(THREE, pupil)], ['flash', flash]];
+    ['eye', merge(THREE, eye)], ['pupil', merge(THREE, pupil)], ['flash', flash]].map(([kind, geo]) => [kind, grow(geo)]);
 }
 
 function curlingParts(THREE) {
@@ -351,7 +357,8 @@ export function poseThrownBombModel(THREE, b, scratch, dt = 0) {
 // origin, cap axis +Y, body hanging below, so the native inHandL transform holds.
 let heldShared = null;
 // Drop (in thrown-model units) that puts each model's top/handle at the grip.
-const HELD_DROP = { bomb: -0.23, suction: -0.24, curling: -0.36 };
+// Suction: the scaled can's top (0.218 unscaled) rises with SUCTION_MODEL_SCALE about the cup rim.
+const HELD_DROP = { bomb: -0.23, suction: -0.24 - ((0.218 - SUCTION_RIM_Y) * SUCTION_MODEL_SCALE + SUCTION_RIM_Y - 0.218), curling: -0.36 };
 function heldGeometries(THREE) {
   if (heldShared) return heldShared;
   const s = HELD_SCALE;   // shared with every sub prop (sub-models.mjs HELD_SCALE)

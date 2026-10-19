@@ -37,7 +37,7 @@ test('composite reservation is atomic, reuses batches, keeps nonuniform transfor
   const camera=new f.THREE.PerspectiveCamera(60,1,.1,100);p.pos.set(4,0,-3);e.begin(camera);assert(e.submitComposite(p,[part]));e.end();assert.equal(e.metrics.culled,0,'stretched body intersects view although its centre does not');
   e.dispose();assert(e.plans.every(plan=>plan.batch===null),'preflight scratch releases disposed GPU/CPU buffers');
 });
-test('all 22 supported main definitions emit classified native rounds and render without changing gameplay',async()=>{
+test('all 23 supported main definitions emit classified native rounds and render without changing gameplay',async()=>{
   const f=await api(),system=f.G.projectiles,e=renderer(f,1024);e.register('roller',pack(f,16,16,16));const line=pack(f,32,8),dot=pack(f);e.register('shooter',{...line,patterns:[line.patterns[0],dot.patterns[0]]});
   // Shooter rounds are owned by the S3 rod silhouette (s3-projectile-shapes.mjs).
   for(const r of f.MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='shooter')){
@@ -45,7 +45,7 @@ test('all 22 supported main definitions emit classified native rounds and render
     assert(system.list.every(p=>p._inkVolumeRecipe===null),r.id+' leaves the volume rod');
     e.begin();for(const p of system.list)assert.equal(f.submitInkVolume(e,p),false,r.id+' no volume submission');e.end();
   }
-  const records=f.MAIN_WEAPON_CATALOG.records.filter(r=>['roller','brush','dualies','splatling'].includes(r.family)||['slosher','s3-slosher-diffusion'].includes(r.id));assert.equal(records.length,22);
+  const records=f.MAIN_WEAPON_CATALOG.records.filter(r=>['roller','brush','dualies','splatling'].includes(r.family)||['slosher','s3-slosher-diffusion','s3-slosher-double'].includes(r.id));assert.equal(records.length,23);
   for(const r of records){
     system.clear();f.G.actors.length=0;const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;f.tick(a,130);a.intent.fire=false;f.tick(a,35);assert(system.list.length,r.id+' native action');
     assert(system.list.every(p=>p._inkVolumeRecipe),r.id+' classification');for(let i=0;i<3;i++)system.update(1/60);assert(system.list.length,r.id+' actual flight');const before=system.list.map(snapshot);e.begin();let drawn=0;for(const p of system.list)if(f.submitInkVolume(e,p))drawn++;e.end();assert(drawn>0,r.id+' positive finite presentation');assert.deepEqual(system.list.map(snapshot),before,r.id+' authoritative state');
@@ -122,4 +122,12 @@ test('catalogue local and JSON-wire births keep immutable family/mode through we
     assert.equal(system.list.length,packets.length);assert.equal(JSON.stringify(packets),original);
     for(const p of system.list){assert.equal(p._inkVolumeRecipe,recipe,id+' remote classification after metadata');assert.equal(p.wid,id);assert.equal(p.damage,0);assert.equal(p.ghost,true);if(recipe)assert.deepEqual(p._inkVolumeDirection.toArray(),p.vel.toArray());}
   }
+});
+
+test('Bucket, Tri-Slosher, Dread Wringer and their alternate kits share the Bucket sheet; other Sloshers keep their art',async()=>{
+  const {usesBucketSlosherSheet}=await import('../../splatoon3/runtime/projectile-visuals.mjs');
+  for(const id of ['slosher','slosher-01','s3-slosher-diffusion','s3-slosher-diffusion-01','s3-slosher-diffusion-02','s3-slosher-double','s3-slosher-double-01','s3-slosher-double-02'])
+    assert.equal(usesBucketSlosherSheet(id),true,id);
+  for(const id of ['s3-slosher-launcher','s3-slosher-launcher-01','s3-slosher-bathtub','s3-slosher-washtub-01','roller',undefined,null])
+    assert.equal(usesBucketSlosherSheet(id),false,String(id));
 });

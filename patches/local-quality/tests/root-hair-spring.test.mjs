@@ -20,7 +20,7 @@ test('frozen pre-optimization spring and strict build-only connections',()=>{
 });
 
 test('exact spring state and bone transforms through rates, saturation, reset and coefficient changes',async()=>{
- const apis=await Promise.all([rootHairFixture(true),rootHairFixture()]);
+ const apis=await Promise.all([rootHairFixture(true),rootHairFixture(false,{springOnly:true})]);
  const pair=apis.map(api=>makeHair(api));let compared=0;
  for(const hz of [30,60,120])for(let i=0;i<240;i++){
   const dt=i%61===0?-0:i%31===0?0:i%19===0?.041:i%23===0?1/144:1/hz;
