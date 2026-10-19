@@ -129,7 +129,7 @@ export function adaptWeaponAudio(rel,code){
       "on('hit', ({ attacker, victim, damage, killed, weaponId, charge, direct }) => {",
       'recorded body hit provenance');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
-      "G.audio?.play(G.audio?.isSourceCriticalHit?.({weaponId,charge,direct}) ? 's3_critical_hit' : 'hit_marker', { volume: 0.6 });",
+      "G.audio?.play(G.audio?.isSourceCriticalHit?.({attacker,weaponId,charge,direct}) ? 's3_critical_hit' : 'hit_marker', { volume: 0.6 });",
       'recorded direct-hit/body-damage selection');
     code=once(code,"G.audio?.play('splat_enemy', { volume: 0.9 });",
       "G.audio?.play(victim.form==='squid' ? 's3_splat_squid' : 'splat_enemy', { volume: 0.9 });",
