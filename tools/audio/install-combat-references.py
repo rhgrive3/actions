@@ -32,11 +32,11 @@ for name, url, sha256, size, source in REFERENCES:
             payload = response.read(128 * 1024)
         assert len(payload) == size, f'{name}: incorrect size {len(payload)}'
         assert hashlib.sha256(payload).hexdigest() == sha256, f'{name}: SHA256 mismatch'
-        assert payload[:3] == b'ID3' or payload[:1] == b'\\xff', f'{name}: MP3 signature missing'
+        assert payload[:3] == b'ID3' or payload[:1] == b'\xff', f'{name}: MP3 signature missing'
         target.write_bytes(payload)
     manifest.append({'file': name, 'path': str(target), 'bytes': size, 'sha256': sha256,
         'page': source, 'classification': 'third-party user-posted reference; game version and rights not verified'})
 (DEST / 'PROVENANCE.json').write_text(json.dumps({'schema': 1, 'sources': manifest,
     'note': 'These reference recordings are NOT verified original game sound events.'},
-    ensure_ascii=False, indent=2) + '\\n')
+    ensure_ascii=False, indent=2) + '\n')
 print(json.dumps({'installed': manifest}, ensure_ascii=False))
