@@ -12,6 +12,7 @@ import { adaptSquidMotionBinding } from './squid-motion-binding-adapter.mjs';
 import { adaptMotionFkHotpath } from './motion-fk-hotpath-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
+import { adaptSettingsUi } from './settings-ui-adapter.mjs';
 import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
 import { adaptMuralAtlas } from './mural-atlas-adapter.mjs';
 import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
@@ -105,7 +106,7 @@ const IDENTITY_FILES = [
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
   'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
-  'menu-navigation-timer-adapter.mjs', 'static-menu-adapter.mjs', 'locker-stage.mjs',
+  'settings-ui-adapter.mjs', 'menu-navigation-timer-adapter.mjs', 'static-menu-adapter.mjs', 'locker-stage.mjs',
   'assets/menu/weapon.webp', 'assets/menu/lobby.webp', 'assets/menu/locker.webp',
   'mural-atlas-adapter.mjs',
   'bot-paint-observation-adapter.mjs',
@@ -195,7 +196,7 @@ export function adaptQualitySource(rel, code) {
   const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
   const botNav = adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce), replaceOnce);
-  return adaptEnginePerformanceHotpaths(rel, botNav, replaceOnce);
+  return adaptSettingsUi(rel, adaptEnginePerformanceHotpaths(rel, botNav, replaceOnce), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {

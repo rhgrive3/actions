@@ -1,0 +1,137 @@
+{
+  "scope": "production-composed settings screen and Chromium native-game UI probe; no physical-device or FPS equivalence claim",
+  "baselineSourceSha": "dfbdcc9c523790f66fa56a22e4cf7873bdb3af03",
+  "runtimeSourceSha": "936fec672eaabefd98cc2afc8c778557229373a1",
+  "checkerSha256": "07c7f3372034fb245f77e0434b3c1b76af4ff3c3fba149b1a53793d4ae3bccad",
+  "settingsUi": {
+    "results": [
+      {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "passed": true,
+        "snapshotsPerRefresh": 1,
+        "stableFrames": 120,
+        "stableListGeometryReads": 0,
+        "scrollGeometryReads": 3,
+        "trustedMouseDragAndTabClick": true
+      },
+      {
+        "viewport": {
+          "width": 844,
+          "height": 390
+        },
+        "passed": true,
+        "snapshotsPerRefresh": 1,
+        "stableFrames": 120,
+        "stableListGeometryReads": 0,
+        "scrollGeometryReads": 3,
+        "trustedMouseDragAndTabClick": true,
+        "trustedTouchTabs": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "passed": true,
+        "snapshotsPerRefresh": 1,
+        "stableFrames": 120,
+        "stableListGeometryReads": 0,
+        "scrollGeometryReads": 3,
+        "trustedMouseDragAndTabClick": true,
+        "trustedTouchTabs": true
+      }
+    ],
+    "errors": []
+  },
+  "nativeGameUi": {
+    "status": "passed",
+    "sourceSha": "936fec672eaabefd98cc2afc8c778557229373a1",
+    "contentHash": "11fdf7a32d0101ffe8b8016df124dbc6f56e853e6e73a2bd10dbfcb8ebe39717",
+    "verifiedResponses": 486,
+    "errors": []
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "259da4cab5150f2f19be03ebe88c9ee904ade70f11bde1ebfd614033126811d8",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78144,
+    "initialJSBytes": 2496735,
+    "criticalHTMLBytes": 16065,
+    "precacheCount": 457,
+    "precacheBytes": 6966678,
+    "workerBytes": 71242,
+    "declaredBytes": 12471863,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "focusedRegressions": {
+    "settingsInput": {
+      "passed": 9
+    },
+    "adjacentMenuAndProfiles": {
+      "passed": 82
+    },
+    "builtPackaging": {
+      "passed": 10,
+      "skipped": 0
+    }
+  },
+  "settingsUiEnglish": {
+    "results": [
+      {
+        "language": "en",
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "passed": true,
+        "snapshotsPerRefresh": 1,
+        "stableFrames": 120,
+        "stableListGeometryReads": 0,
+        "scrollGeometryReads": 3,
+        "trustedMouseDragAndTabClick": true
+      },
+      {
+        "language": "en",
+        "viewport": {
+          "width": 844,
+          "height": 390
+        },
+        "passed": true,
+        "snapshotsPerRefresh": 1,
+        "stableFrames": 120,
+        "stableListGeometryReads": 0,
+        "scrollGeometryReads": 3,
+        "trustedMouseDragAndTabClick": true,
+        "trustedTouchTabs": true
+      },
+      {
+        "language": "en",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "passed": true,
+        "snapshotsPerRefresh": 1,
+        "stableFrames": 120,
+        "stableListGeometryReads": 0,
+        "scrollGeometryReads": 3,
+        "trustedMouseDragAndTabClick": true,
+        "trustedTouchTabs": true
+      }
+    ],
+    "errors": []
+  },
+  "localQualitySuite": {
+    "tests": 1124,
+    "passed": 1115,
+    "failed": 0,
+    "skipped": 9,
+    "durationMs": 669033.95402
+  }
+}

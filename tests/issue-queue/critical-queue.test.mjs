@@ -1,6 +1,8 @@
 // Regression fixtures for queued critical INKWAVE defects.
 // Run: node --test tests/issue-queue/critical-queue.test.mjs
 import test from 'node:test';
+// Keep the camera aliasing regression in the existing critical-queue CI gate.
+import './camera-collision-probe.test.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
