@@ -37,6 +37,20 @@ test('streamed track connects a looping element, fades in and releases it', asyn
   assert.equal(a.removed, 1);
 });
 
+test('START gesture primes the same media element without audible output', async () => {
+  const a = makeMock();
+  a.track.prime();
+  await Promise.resolve();
+  assert.equal(a.played, 1, 'trusted tap starts muted-by-WebAudio streaming early');
+  assert.ok(!a.calls.some(c => c[0] === 'ramp' && c[1] > 0),
+    'music stays silent until GO');
+  a.track.element.currentTime = 0;
+  a.track.fadeIn(7.1, 0.1);
+  assert.equal(a.played, 2, 'GO reuses the already-playing media element');
+  assert.equal(a.track.element.currentTime, 0);
+  a.track.dispose();
+});
+
 test('media load failure is reported only once', () => {
   const a = makeMock();
   a.listeners.get('error')();
