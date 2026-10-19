@@ -105,6 +105,7 @@ const IDENTITY_FILES = [
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
   'settings-ui-adapter.mjs', 'menu-navigation-timer-adapter.mjs', 'static-menu-adapter.mjs', 'locker-stage.mjs',
   'assets/menu/weapon.webp', 'assets/menu/lobby.webp', 'assets/menu/locker.webp',
+  'loading-screen-adapter.mjs', 'assets/loading/arena.webp',
   'mural-atlas-adapter.mjs',
   'bot-paint-observation-adapter.mjs',
   'issue-418-adapter.mjs','world-quality.mjs','quality-probe.mjs','texlib-adapter.mjs','texlib.mjs',
