@@ -11,7 +11,7 @@ const response={ok:true,headers:{get:()=>null},arrayBuffer:async()=>new ArrayBuf
  test('2022 real S3 source list is compatible with main/kit audio registry',()=>{
   const valid=validateAuthorizedManifest(manifest);
   assert.equal(valid.length,271);
-  assert.ok(valid.every(x=>x.file.startsWith('s3-real/Wp_')||x.file.startsWith('s3-real/Sp_')));
+  assert.ok(valid.every(x=>/^s3-real\/(?:Wp_|Sp_|HitEf_|Pl_)/.test(x.file)));
   // 260 catalogued file/Drive-ID associations from v10, plus 8 new SHA-audited
   // local files whose individual Drive IDs have not been independently indexed.
   const originals=valid.filter(x=>x.sourceFileId!=null);
