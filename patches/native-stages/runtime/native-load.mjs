@@ -26,12 +26,20 @@ export async function loadNativeData(id,signal){
  return data;
 }
 export async function loadNativeTextures(id,data,renderer,quality,signal,textureLimit){
- const jobs=new Map(),textures=new Map(),limit=Math.min(textureLimit||Infinity,quality==='low'?512:quality==='high'?4096:1024);
+ const cap=textureLimit && typeof textureLimit==='object' ? textureLimit.maxDimension : textureLimit;
+ const roleCaps=textureLimit && typeof textureLimit==='object' ? textureLimit.perRole : null;
+ const jobs=new Map(),textures=new Map(),limit=Math.min(cap||Infinity,quality==='low'?512:quality==='high'?4096:1024);
  const materials=Object.values(data.manifest.materials);
  for(const src of materials){
   const roles={albedo:src.albedo,opacity:src.maps?.opacity};
   if(quality==='high')Object.assign(roles,{normal:src.maps?.normal,roughness:src.maps?.roughness,emissive:src.maps?.emissive});
-  for(const [role,file] of Object.entries(roles))if(file)jobs.set(file,{role,encoding:src.normalEncoding});
+  for(const [role,file] of Object.entries(roles))if(file){
+   // A file may serve more than one material role. Retain its existing
+   // last-role decode precedence, but never downsize a shared colour map
+   // merely because another material uses it as roughness/normal data.
+   const requestedCap=Math.min(limit,roleCaps?.[role]||Infinity);
+   jobs.set(file,{role,encoding:src.normalEncoding,roleLimit:Math.max(jobs.get(file)?.roleLimit||0,requestedCap)});
+  }
  }
  // Index each material once, including unrequested roles that share a selected
  // file. Keep the job's original last-role precedence and material order.
@@ -47,7 +55,7 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
   const [file,job]=rows[next++],{role}=job;let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
   let bitmap,texture,transferred=false;
   try{
-  bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});checkAbort();const ratio=Math.min(1,limit/Math.max(bitmap.width,bitmap.height));
+  bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});checkAbort();const ratio=Math.min(1,job.roleLimit/Math.max(bitmap.width,bitmap.height));
   if(ratio<1){const original=bitmap;bitmap=null;try{bitmap=await createImageBitmap(original,{resizeWidth:Math.max(1,Math.round(original.width*ratio)),resizeHeight:Math.max(1,Math.round(original.height*ratio)),resizeQuality:'high'});}finally{original.close();}checkAbort();}
    let pixels;
    const readPixels=()=>{if(!pixels){const canvas=new OffscreenCanvas(bitmap.width,bitmap.height),ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;}return pixels;};

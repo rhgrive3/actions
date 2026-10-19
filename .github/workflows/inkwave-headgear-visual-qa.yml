@@ -98,7 +98,7 @@ jobs:
           pattern: headgear-shard-*-${{ github.event.pull_request.head.sha || github.sha }}
           path: _headgear-shards
           merge-multiple: false
-      - name: Verify 496 controlled and 64 production-IBL PNG readbacks
+      - name: Verify 518 controlled and 64 production-IBL PNG readbacks
         env:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node tools/headgear-production-qa/verify-shards.mjs _headgear-shards .qa-evidence/headgear-combined.json
@@ -109,3 +109,4 @@ jobs:
           path: .qa-evidence/headgear-combined.json
           include-hidden-files: true
           if-no-files-found: warn
+

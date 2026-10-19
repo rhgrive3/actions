@@ -59,6 +59,69 @@ The subsequent native9851 side/top comparison still rejected insufficient outer 
 The user requested additional improvement after the solid-shell revision. Actual270e front/oblique comparison motivated three connected central chevron slots with thin inset webs and a rounded closed perimeter, plus a shallow rounded forehead and closed brim underside return. Eye/lens material, cheek construction, hair contract and rear routing stay unchanged. Hero/game/far triangles are6652/3784/2848 in four batches. Topology, winding, triangle-centroid clearance and disposal tests pass locally; a new native comparison is required. Existing rear-strap intersection caveats remain open and are not relabeled as accepted.
 
 
+## Native visor-lip correction
+Actual8fa front/oblique frames revealed a dark broad forehead wedge. Its white material was unchanged; the visible return faced down (normal approximately[0,-.849,.528]). A bounded geometry correction gives a short vertical forward-facing lip and recessed underside return. Counts, material values and all non-brim geometry remain unchanged. The fixture now requires forward-facing lip normals and exact authored-versus-emitted geometry/index parity across allLOD, alongside closed topology and clearance checks. Native image confirmation remains pending.
+
+
+## Follow-up coherent goggles form correction (after f336 lip evidence)
+
+The narrow white-lip correction passed its bounded native gate, but the user's oblique comparison reopened full goggles shape acceptance: the shelf-like visor, thin temple posts and detached central mouth frame did not match the reference. This revision replaces them with a joined sloping brow/temple/cheek/chin shell and grouped forehead windows. Rear bands blend into the shell anchors and are lifted using the existing native-head audit; character and hair geometry remain unchanged. True Splatoon 3 rear source imagery is unavailable, so reconstructed rear details are explicitly uncertain.
+
+Authored module SHA-256: `4c5958e21735a39f0240b27ef3068cfc9f4d3e923dd82959b87d0476b2f5c863`. Hero/game/far triangles: 6964/4844/3400; four material batches, one transparent lens, no textures. Local source fixtures pass finite/index/nondegenerate geometry, closed topology, native-envelope clearance, coarse shell cross-sections, joined anchors, color update and exact-once disposal. The integrated fixture retains exact authored-to-emitted attribute/index parity; actual emitted execution is required in the new-head CI and has not yet run locally.
+
+Native matrix expands by exactly 11 cases/22 PNGs for goggles only: far front/back/left/right/top/under plus isolated underside, and game hair5/6 back/top. Existing cases remain unchanged. Combined denominator is 582 PNGs (518 controlled structural views/signals plus 64 actual production-environment views). A source-executed matrix fixture and aggregate per-view receipts enforce coverage. Source construction preview is suitable for capture, not visual acceptance. New fitted front/oblique/left/right/back/top/under, all LODs, rear-band fit, and all exact-head CI remain pending. Goldfish metallic appearance remains unresolved; rejected isolated F0/roughness probes are not production changes. PR1589 remains held for full goggles visual acceptance.
+
+
+## User-marked cap bill / lateral shell correction after 944ad800
+
+The 944ad800 coherent-wrap build passed all 582 native technical readbacks, but the user's marked source comparison rejected the cap profile and lateral white-shell shape. That visual rejection supersedes the earlier bounded wrap review. This next revision adds a distinct curved cap bill (measured lens-relative overhang .05036) and rear-swept lateral white shell with an ear opening and ink panels. Gear strap endpoints attach to the solid rear shell; character and hair are untouched. Source construction review permits native capture only, with a specific gate that the lateral opening must not read as thin disconnected posts.
+
+Module SHA-256: `c825d6c758807089cd785920cbe85e0a07daac8e88c86d45757f4db772dff8e6`. Hero/game/far triangles 8132/5516/3932; four batches, one lens, zero textures. Source fixture passes closed canopy/shell topology, finite/nondegenerate/index checks, all-LOD native-envelope clearance, strap-to-shell radial-ray attachment, color and exact-once lifecycle. Integrated authored/emitted parity remains required in the new-head CI; local source execution passed, actual emitted execution is pending.
+
+The existing 582-frame matrix is unchanged and must complete on the new head. Full oblique/left/right/back comparison, cap-bill projection, substantial lateral shell, rear-band fit and all-LOD views remain visual gates. True S3 rear source details remain uncertain. Goldfish metallic appearance remains unresolved. PR1589 stays draft and must not be merged solely from historical technical success.
+
+
+## Rounded mask and volumetric rear-band candidate
+
+The user rejected the 23a cap/side interpretation and later explicitly resumed correction. The rejected visual gate remains unresolved; dba976c only reconciled current main and repaired three approved test assertions/measurements, without changing goggles geometry.
+
+This next isolated model revision (SHA-256 `8ca29c92730b29a66fd53f51346a044a72f4cde5b572dca7c369cef5b97a9276`) removes the unsupported large ear hoop, rounds the lower body/chin, tapers the projecting bill, and replaces flat rear ribbons with closed elliptical-section curved bands and unequal crossing depth. Side anchors remain connected. S3 front/item evidence and historical S2 rear evidence are identified separately; unchanged S3 rear construction is not established.
+
+Hero/game/far triangles9232/6068/4212, four batches, one transparent lens, no textures. Source fixture passes closed shell/bill/rear-band topology and winding, finite/index/nondegenerate geometry, compact side/anchor criteria, color/disposal and native-envelope checks. Integrated authored/emitted attribute/index parity is retained; local source execution passed, actual emitted API execution and native appearance remain CI gates. Native audit minimum skin clearance .02453, scalp .02211, all lens rays visible; this does not establish animated-hair clearance.
+
+Existing582 matrix remains unchanged, including front/oblique/both sides/rear/top/under across all LODs and hair5/6 rear/top. Actual four-angle comparison must show rounded main mask, distinct tapered projecting bill, compact substantial side shell and curved rear-band volume without floating joins or hair cutting. Construction preview permits capture only. No full visual acceptance or merge permission is claimed. Goldfish metallic appearance remains unresolved.
+
+
+## Rounded goggles follow-on and current-main reconciliation (2026-10-18 13:19 UTC)
+
+The c1bbfd48 candidate completed all 582 source-bound native screenshots. Actual side/rear review found continuous compact shell/band joins and improved rounded rear volume, but exact S3 rear fidelity remains unverified (the available rear reference is S2). Front review justified flattening the inflated bill and replacing isolated cheek triangles with connected curved perforated bands. Actual far-LOD images also exposed a temple ink inset sliced by the shell; bounded inset subdivision/separation now has a per-front-facing-triangle first-hit regression.
+
+The follow-on authored module is SHA256 7da688fe42656d7466941f7bfbf07d37e8260f86b0af21bb281c198c74beaf6b, hero/game/far 9712/6436/4692 triangles and four batches. Source topology, native-head clearance, lens visibility and lifecycle checks pass. Authored/emitted geometry parity remains enforced. New native visual acceptance is pending; prior image success does not certify this changed geometry. Goldfish metallic appearance remains unresolved.
+
+Reconciliation inherits main da97926a21e0e7c6170d76864f896123d979f915 verbatim outside the nine goggles/QA/report paths. Its upstream-owned Crab target-admission/convergence repair and stronger camera, Brella and live weapon-contact tests supersede our earlier three test-only candidates. Historical dba shard0 failed two unchanged Crab presentation checks; current main fixes their runtime cause without weakening their expectations. No weapon behavior was independently edited in this goggles update. Both PRs remain draft and no merge is authorized until final visual and exact-head technical gates.
+
+
+## Marked forehead/central region and bill planform follow-on (2026-10-18 13:35 UTC)
+
+After the user's clarified markings, the next isolated candidate raises and rounds the forehead, narrows/rounds the central three slots with ink chevrons, and recesses bill corners into a front-focused rounded planform. It adds no unsupported bill slots or decorative ridge. Module SHA256 6c27d16998cfa00949f6709efaea1be149f018a6b1080d9e628be04725f7c664 preserves the previous compact side shell, rounded rear-band routing and bounded far-inset occlusion correction. Hero/game/far counts9720/6948/4980, four batches.
+
+Source fixtures and actual native-head analytic audit pass. Construction review clears native capture only; the next visual gate specifically checks for a pinched central bill tongue or abrupt shoulders, alongside forehead/central-mask proportions. Exact source fidelity and true S3 rear remain unverified. The preceding534d emitted fixture and newgear/IBL capture succeeded and artifacts were preserved before this update; those pixels are historical evidence, not acceptance of the new geometry. Full exact-head CI and native582 remain required, draft/no-merge hold unchanged.
+
+
+## Whole-mask central aperture width correction (2026-10-18 14:13 UTC)
+
+Actual050 front/oblique/left/right/back/top/under and production-IBL captures were preserved before this bounded update. Review identified that the previous narrowing affected the central apertures too much relative to the full shell. This candidate restores only central slot/web/ink breadth and retains the bill, forehead body, compact sides, far-inset correction and rear bands. The new regression explicitly measures aperture width against whole-shell width, distinguishing holes from the body silhouette.
+
+Module SHA256 e4ba632796c4872b11331c65f3d7fc89e7cb35764bb08eb0712e2d2b3e7e321a; hero/game/far9608/6976/4976 triangles and four batches. Source fixtures and native-head analytic audit pass; authored/emitted exact parity remains mandatory. Construction is cleared for native capture, but actual whole-mask visual validation and exact new-head full CI remain pending. True S3 rear fidelity and goldfish metallic appearance remain unresolved. Draft/no-merge hold is unchanged.
+
+
+## User-rejected double-bill root correction (2026-10-18 14:49 UTC)
+
+The user rejected the bill in actual a500 imagery. That head's central-width correction was boundedly verified, but its full goggles appearance is not accepted. The isolated follow-on removes the separate canopy slab and its root/side walls, bending the existing closed shell into the same center tip. This eliminates duplicate brow-shelf construction rather than hiding it with colors or lighting.
+
+Module SHA25689c0873dd37ceb6ebf0cb65b5d2bd90c76221b7a1de9d7feb3cf1a675e867742; hero/game/far9112/6660/4780 triangles, four batches. Added monotonic profile and C1 root continuity checks; existing manifold, clearance, lens/ink visibility and lifecycle checks pass. Independent construction review cleared this shape before publication. Actual native front/oblique/top/side must verify a single bill without a new dark underside wedge or exposed gasket. New exact-head CI/native582 remain pending. Historical a500 pixels are retained, not visual acceptance. All other gear, character/hair, lighting and upstream repairs remain unchanged; draft/no-merge hold persists.
+
+
 ## Locker selection and portrait fit (2026-10-18 follow-up)
 The user asked to pick the new head models where hairstyles are chosen, as appearance only. The locker HAIR tab already lists all twelve `hat` IDs under アタマ, and choosing one saves `profile.style.hat`. No gear abilities, gear loadout slots or random-pool changes were added. In Splatoon 3, headgear is gear with abilities chosen from the Equip screen. INKWAVE keeps it as a cosmetic style field on purpose.
 
@@ -70,3 +133,22 @@ Checks: a new emitted-site fixture restyles one pooled kid through IDs 4–11, 0
 The user pointed out that the right side of the locker showed no character. #1586 had replaced `showcase.showLocker` with `hide()`, and the opaque CSS art covered the canvas. As a result, the worn headgear could only be seen on the small tiles, and the "ドラッグで回転" prompt rotated nothing. Now the locker alone draws `locker.webp` into the canvas with the same cover/centre framing (`patches/local-quality/locker-stage.mjs`). The native pedestal kid is composited over it. The UI layer keeps only the readability gradient. Other art screens are unchanged. On the locker the attract world is still neither simulated nor drawn. Only the showcase pedestal renders while the locker is open.
 
 Checks: `static-menu-art.test.mjs` 8/8 pass, with a new gate test that only the locker draws its stage. All local-quality tests pass: 1100 passed, 0 failed, 9 not run. The build-packaging/default-probe tests 51/51 pass, and the startup budget check passes. SwiftShader Chromium at 1280×720 and 844×390 showed the kid on the pedestal over the art, wearing the selected gear. Selecting another headgear updated the kid, dragging spun it, and leaving the locker returned to the main menu as before. This is browser evidence only, not a device performance measurement.
+
+
+## Requested shallow billtop details and upstream preservation (2026-10-18 16:16 UTC)
+
+After actual bdb full-angle review cleared the bounded single-bill root correction, the user explicitly requested billtop details. This candidate adds three shallow shoulder recesses per side, shortening outward, and a .003 integrated center relief while retaining the continuous single shell and no separate slab. Hidden-side symmetry is an inference; recess depth is deliberately shallow. Independent construction review inspected five views before publication.
+
+Module SHA256 c566a5090bf65c961d3ca58f64021a8529ab742a29fc21d307706cb80e0554d5; hero/game/far9292/6928/5272 triangles, four batches. Source fixtures/native-head audit pass, including six-recess count and center-floor visibility; authored/emitted parity remains enforced. Actual new-head front/oblique/top/side rendering must confirm the pattern without black through-holes, z-fighting or reintroduced double-bill silhouette. No overall visual acceptance or merge is implied.
+
+Reconciliation preserves current-main6d3b8b5089bdb34d9cbf2f63ed54240a2cbb641c upstream lifecycle, pooled portrait fixture, audio admission, branding and other30 changed paths. This report preserves both exact EOF appendices from main and the goggles branch rather than replacing either. New exact-head full CI and native582 remain mandatory; draft/no-merge hold persists.
+
+### Bill-top bevel and rounded recess follow-up
+
+The 8164cd6c capture completed all 582 saved PNGs with locally verified source, build, image and resource receipts. That technical result does not establish final source fidelity. The next bounded goggles candidate adds actual inner/outer center-bevel vertices to the existing continuous shell and rounds/widens the six shoulder recesses, preserving their outward-shortening order. It keeps the single bill and existing side/rear fit, without a second canopy slab. Hero/game/far budgets are 9,268 / 6,892 / 5,268 triangles, four batches and zero textures.
+
+The source-mode integrated fixture passes topology, finite geometry, clearance, ink/floor visibility, center-bevel vertex and lifecycle checks. The published native build must still run the emitted-factory geometry parity guard and provide neutral plus production-IBL front/oblique/top images for center-relief readability. Construction review cleared capture only; no final visual acceptance is claimed.
+
+### Current-main CI fixture reconciliation
+
+The 8164cd6c required checks exposed stale test inputs: the startup mock omitted the newly required recorded-shot readiness contract, while the projectile reference helpers still recognized historical weapon/pose/paint source epochs. The startup fixture now exercises held readiness, rejection/retry and missing-contract/old-menu negative controls; its exact-composition local run passes 143 tests. The helper suite passes 33 tests, including legacy replay coverage, strict reviewed-current identity checks, mixed-epoch/unknown/duplicate mutation rejection, and current/current zero-write receipts. Historical manifest pins and all physical, claimed-area and paint-coverage assertions remain intact. New helper tests are wired into the existing projectile workflow. This is an unchanged-current-physics comparison; it makes no new performance-baseline or old/new physics-equivalence claim. Native required checks remain pending on the final published head.

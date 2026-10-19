@@ -125,10 +125,13 @@ test('candidate legacy/partial paint and unreviewed module revisions are rejecte
   }
 });
 
-test('the actual candidate checkout has exactly the reviewed paint blocks and final GPU module', () => {
+test('actual current owner source requires identical current baseline; legacy/current mixing is rejected', () => {
   const { baseline } = maps();
   const candidate = new Map(MAIN_INK_BASELINE_PATHS.map(rel => [rel, fs.readFileSync(path.join(root, rel), 'utf8')]));
-  assert.equal(planMainInkBaseline(baseline, candidate).evidence.paths.length, 13);
+  assert.throws(() => planMainInkBaseline(baseline, candidate), /mixed physics\/paint epochs/);
+  const plan = planMainInkBaseline(new Map(candidate), candidate);
+  assert.equal(plan.evidence.paths.length, 13);
+  assert.equal(plan.changes.length, 0);
 });
 
 test('prepare rejects a last-path candidate drift before writing any source or receipt', t => {
