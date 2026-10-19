@@ -1,19 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { fixture } from './source-fixture.mjs';
-import { paintShapeSeed, paintShapeHash } from '../runtime/paint-ownership.mjs';
+import fs from 'node:fs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { preparePaintAncillary } from '../runtime/paint-ownership.mjs';
 
-// Issue #264: the native GLSL draws fine spatter dots in the ordinary team-ink
-// channel. For seed 0.5, kind bomb (K_BOMB = 3), R = 2.7, each dot k sits at
-// distance R*(1.3+1.2*h2) along angle h1*2*pi with radius R*(0.011+0.02*h3)*fall
-// (fall = 1 on the face that was hit). Those dots are far smaller than the
-// 0.25 m CPU paint grid. A centre-cell claim for them was tried and reverted: the
-// browser paint-mask probe (paint-mask-browser-fixture.mjs) found owned cells whose
-// five GPU samples were all unpainted, breaking "CPU-owned cells are GPU-visible".
-// No GPU-backed rule exists yet, so these dots stay an unowned residual (未確認),
-// pinned by the first test below.
+// Sub-cell ink uses a real circle/ellipse core intersection instead of only
+// five fixed points. Ownership is discretized to the existing 0.25 m cells;
+// a newly claimed cell must contain a GPU-visible witness.
 
-const SEED = 0.5, R = 2.7, BOMB_SPATTER = 14;
+const SEED = 0.5, R = 2.7;
+const source = adaptBuildSource('src/world/paint.js', fs.readFileSync(new URL('../../../inkwave-public/src/world/paint.js', import.meta.url),'utf8'));
+const shapes = [...source.match(/vec4 kindShape\(float k\) \{[^}]+\}/)[0].matchAll(/return vec4\(([^)]+)\)/g)]
+  .map(m=>m[1].split(',').map(Number));
 
 function makePaintWorld(f) {
   const { G, THREE, PaintSystem } = f;
@@ -43,31 +42,28 @@ function makePaintWorld(f) {
   return { paint, face, V };
 }
 
-test('fine-spatter dots of a seed 0.5 bomb stay an unowned residual: no centre-cell claim (#264)', async () => {
-  const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
-  const { paint, face, V } = makePaintWorld(f);
-  const cx = 0, cz = 5;
-  const lu0 = cx - face.origin.x, lv0 = cz - face.origin.z;
-
-  paint.useFixedPaintClock();
-  paint.splat(V(cx, 0, cz), R, 0, { seed: SEED, kind: 'bomb' });
-  for (let tick = 0; tick < 900 && paint.growing.length > 0; tick++) paint.advanceSimulation(1 / 60);
-  assert.equal(paint.growing.length, 0, 'the full native growth lifetime was exercised');
-
-  const word = paintShapeSeed(SEED);
-  const missed = [];
-  for (let k = 0; k < BOMB_SPATTER; k++) {
-    const h1 = paintShapeHash(word, 6, k), h2 = paintShapeHash(word, 7, k);
-    const dist = R * (1.3 + 1.2 * h2), angle = h1 * 6.2831;
-    const x = lu0 + Math.cos(angle) * dist, y = lv0 + Math.sin(angle) * dist;
-    const i = Math.floor(x / face.cu), j = Math.floor(y / face.cv);
-    assert.ok(i >= 0 && j >= 0 && i < face.nu && j < face.nv, `dot ${k} lies on the face`);
-    if (paint.grid[j * face.nu + i] !== 1) missed.push({ k, distOverR: +(dist / R).toFixed(3) });
+test('all production ray beads have matching CPU ownership at multiple sizes (#264)', async () => {
+  const f = await fixture({ productionComposition:true, fullRuntime:true, realProjectiles:true,
+    adaptRuntime:(_rel,code)=>process.env.INKWAVE_PAINT_DOT_BASELINE==='1'
+      ? code.replace('return !!paintDotCellWitness(mask, face, x, y, piece);','return false;') : code });
+  for(const radius of [.2,.65,2.7]) for(const seed of [.11,.5,.93]) for(const team of [0,1]) {
+    const {paint,face,V}=makePaintWorld(f);
+    paint.useFixedPaintClock();
+    paint.splat(V(0,0,5),radius,team,{seed,kind:'bomb',instant:true});
+    const mask=preparePaintAncillary({R:radius,seed,kind:3},face,40,10,0,0,0,0,3,1,{shapes});
+    const beads=mask.pieces.filter(p=>p.type===1);
+    assert.equal(beads.length,10,'current production bomb retains ten ray-tip beads');
+    for(const bead of beads) {
+      const i=Math.floor((40+bead.x)/face.cu),j=Math.floor((10+bead.y)/face.cv);
+      assert.equal(paint.grid[face.grid+j*face.nu+i],team+1,`R=${radius}, seed=${seed}, bead centre must be owned`);
+    }
   }
-  // Residual, recorded: all 14 centre cells stay unowned by this rule. Owning them needs a GPU-backed
-  // rule; re-record the residual in reports/inkwave-splatoon3-behavior-2026-10-02.md if it changes.
-  assert.deepEqual(missed.map(m => m.k), Array.from({ length: BOMB_SPATTER }, (_, k) => k),
-    'the sub-cell dots must stay an unowned residual until a GPU-backed rule owns them');
+});
+
+test('removed legacy bomb satellites/spatter stay disabled on both CPU and GPU (#264)',()=>{
+  assert.equal(shapes[3][1],0);
+  assert.equal(shapes[3][2],0);
+  assert.match(source,/shapes: \[\[5, 0, 0, 3\]/);
 });
 
 test('owned cells of the bomb stay within the native reach', async () => {

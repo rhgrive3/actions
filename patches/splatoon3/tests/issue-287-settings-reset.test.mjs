@@ -36,16 +36,17 @@ async function settingsRig(saved) {
   const set = span(main, '  _setSettings(partial) {', '\n  _applyAudioVolumes()');
   const Game = vm.runInNewContext(`${persistence}\nclass Game { bootSettings(){${load}} ${set} }; Game`, context);
   const make = () => { const game = new Game(); game.mobile={touch:false}; game._applyAudioVolumes=()=>{}; game.bootSettings(); return game; };
-  const game = make(), calls = [], refreshed = new Map();
+  const game = make(), calls = [], refreshed = new Map(), previewSynced = [];
   const controls = new Map(['padSensitivity','aimProfile','gyroSens','invertY'].map(k=>[k,{refresh:v=>refreshed.set(k,v)}]));
   const node = { classList:{add(){},remove(){}}, querySelector:()=>({textContent:''}) };
   let button;
   const ui = { _btn(options){button=options;return node;}, _sfx(){}, _settings:()=>game.settings, _accentExternal:true,
     api:{setSettings(p){calls.push(p);game._setSettings(p);}} };
   const buildReset = vm.runInNewContext(`(function(){${span(menu,'    let resetArmed = 0;', "    const saved = h('div', { class: 'iw-saved'")}\n})`,
-    {...context, GLYPHS:{reset:''}, tr:v=>v, safeCall:fn=>fn(), controls, rowsEl:{querySelectorAll:()=>[]}, restartAnim(){}, savedPulse(){}});
+    {...context, GLYPHS:{reset:''}, tr:v=>v, safeCall:fn=>fn(), controls, rowsEl:{querySelectorAll:()=>[]}, restartAnim(){}, savedPulse(){},
+     syncPreview:s=>previewSynced.push({aimProfile:s.aimProfile,padSensitivity:s.padSensitivity,gyroSens:s.gyroSens})});
   buildReset.call(ui);
-  return {game, DEFAULT_SETTINGS, storage, calls, refreshed, reload:make, accept:()=>button.accept()};
+  return {game, DEFAULT_SETTINGS, storage, calls, refreshed, previewSynced, reload:make, accept:()=>button.accept()};
 }
 
 test('#287 native Settings reset restores the same centered stick gain as fresh boot, including saved reload', async () => {
@@ -55,9 +56,12 @@ test('#287 native Settings reset restores the same centered stick gain as fresh 
   r.game._setSettings({aimProfile:'handheld', padSensitivity:-3, gyroSens:-2});
   r.accept();
   assert.equal(r.calls.length, 0, 'first click only arms native confirmation');
+  assert.equal(r.previewSynced.length, 0, 'arming reset must not refresh the preview');
   assert.equal(r.game.settings.padSensitivity, -3);
   r.accept();
   assert.equal(r.calls.length, 1);
+  assert.deepEqual(r.previewSynced, [{aimProfile:'tv',padSensitivity:0,gyroSens:0}],
+    'confirmed reset forwards the applied defaults to the live preview owner');
   assert.equal(r.game.settings.aimProfile, 'tv');
   assert.equal(r.game.settings.padSensitivity, 0, 'legacy 1x must not be saved as S3 setting +1');
   for (const p of Object.values(r.game.settings.aimProfiles)) {
@@ -88,6 +92,7 @@ test('#287 real boot keeps each legacy and already-S3 profile choice until expli
     for(let i=0;i<4;i++) {
       r.accept(); r.accept();
       assert.equal(r.game.settings.padSensitivity, 0);
+      assert.equal(r.previewSynced.length, i + 1, 'one preview refresh per confirmed reset');
       assert.equal(r.reload().settings.padSensitivity, 0);
     }
   }

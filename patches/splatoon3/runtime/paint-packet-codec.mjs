@@ -2,7 +2,7 @@
 // A caller must negotiate this exact version with every current recipient;
 // mixed/unknown peers keep the original rows. Existing sender/HLC admission
 // must run on decoded rows, using the transport sender, never payload identity.
-export const PAINT_PACKET_CODEC_VERSION = 'inkwave-paint-dictionary-v2';
+export const PAINT_PACKET_CODEC_VERSION = 'inkwave-paint-dictionary-v3';
 export const PAINT_PACKET_LIMITS = Object.freeze({ rows:512, dictionary:64, nodes:65536, depth:8, string:1024 });
 const COMMON=[5,6,8,9,10,11,12,13];
 function utf8Bytes(s){let size=s.length;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if(c<128)continue;if(c<2048)size++;else if(c>=0xd800&&c<=0xdbff&&i+1<s.length&&s.charCodeAt(i+1)>=0xdc00&&s.charCodeAt(i+1)<=0xdfff){size+=2;i++;}else size+=2;}return size;}
@@ -20,8 +20,8 @@ function bounded(value){
  return visit(value,0);
 }
 const PAINT_KINDS=new Set([0,'shot','line','blast','bomb','trail','drop','roll','rollFloor','speck','source-shot','source-splash','ink-shot','ink-slosh','ink-brush','ink-flick','ink-contact']);
-function common(c){return Array.isArray(c)&&c.length===11&&c.slice(0,8).every((x,i)=>i===2?PAINT_KINDS.has(x):typeof x==='number'&&Number.isFinite(x))&&c[8]==='inkwave-paint-order-v1'&&typeof c[9]==='string'&&(c[10]===0||c[10]===1);}
-function paint(row){return Array.isArray(row)&&row.length===17&&row[1]==='s'&&Array.isArray(row[14])&&row[14].length===4&&row[14][0]==='inkwave-paint-order-v1'&&typeof row[14][1]==='string';}
+function common(c){return Array.isArray(c)&&(c.length===11||c.length===12)&&c.slice(0,8).every((x,i)=>i===2?PAINT_KINDS.has(x):typeof x==='number'&&Number.isFinite(x))&&c[8]==='inkwave-paint-order-v1'&&typeof c[9]==='string'&&(c[10]===0||c[10]===1);}
+function paint(row){return Array.isArray(row)&&row.length===17&&row[1]==='s'&&Array.isArray(row[14])&&(row[14].length===4||row[14].length===5)&&row[14][0]==='inkwave-paint-order-v1'&&typeof row[14][1]==='string';}
 /** Returns null when the unchanged legacy encoding is preferable or required. */
 function encodePaintPayload(rows){
  if(!Array.isArray(rows)||rows.length>512)return null;
@@ -32,7 +32,7 @@ function encodePaintPayload(rows){
  const dict=[],index=new Map(),out=[];
  for(const row of rows){
   if(!paint(row)){out.push([0,row]);continue;}
-  const c=[...COMMON.map(i=>row[i]),row[14][0],row[14][1],row[14][3]],key=JSON.stringify(c);
+  const c=[...COMMON.map(i=>row[i]),row[14][0],row[14][1],row[14][3],...(row[14].length===5?[row[14][4]]:[])],key=JSON.stringify(c);
   if(!common(c))return null;
   let id=index.get(key);if(id===undefined){if(dict.length>=64)return null;id=dict.length;index.set(key,id);dict.push(c);}
   // No delta arithmetic or quantization. Each original value is preserved.
@@ -59,7 +59,7 @@ export function decodePaintEvents(payload){
  for(const r of rows){if(!Array.isArray(r))return null;if(r[0]===0){if(r.length!==2||!Array.isArray(r[1]))return null;}
   else if(r[0]!==1||r.length!==10||!Number.isInteger(r[1])||r[1]<0||r[1]>=dict.length)return null;
  }
- return rows.map(r=>{if(r[0]===0)return r[1];const c=dict[r[1]];return[r[2],'s',r[3],r[4],r[5],c[0],c[1],r[6],c[2],c[3],c[4],c[5],c[6],c[7],[c[8],c[9],r[7],c[10]],r[8],r[9]];});
+ return rows.map(r=>{if(r[0]===0)return r[1];const c=dict[r[1]];return[r[2],'s',r[3],r[4],r[5],c[0],c[1],r[6],c[2],c[3],c[4],c[5],c[6],c[7],[c[8],c[9],r[7],c[10],...(c.length===12?[c[11]]:[])],r[8],r[9]];});
 }
 
 // Membership comes from the relay. The relay silently drops failed sends, so

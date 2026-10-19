@@ -5,6 +5,8 @@ import * as THREE from 'three';
 const _o = new THREE.Vector3(), _d = new THREE.Vector3(), _p = new THREE.Vector3(), _q = new THREE.Vector3();
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _s = new THREE.Vector3(), _ab = new THREE.Vector3();
 const _n = new THREE.Vector3(), _go = new THREE.Vector3();
+// Camera-only scratch: raycast() uses _p for face UVs and must never overwrite the boom basis.
+const _camSide = new THREE.Vector3(), _camUp = new THREE.Vector3();
 const DOWNV = new THREE.Vector3(0, -1, 0);
 // footprint ring (unit directions) for the ground probe: 8 samples so a ledge edge is caught at any heading
 const RING = Array.from({ length: 8 }, (_, i) => [Math.cos((i / 8) * Math.PI * 2), Math.sin((i / 8) * Math.PI * 2)]);
@@ -283,13 +285,13 @@ export class Physics {
   cameraProbe(pivot, back, want, radius, out, pad = 0.3) {
     const h = this._camHit || (this._camHit = new Hit());
     _a.set(0, 1, 0); if (Math.abs(back.y) > 0.95) _a.set(1, 0, 0);
-    _p.crossVectors(back, _a).normalize();     // side
-    _q.crossVectors(_p, back).normalize();     // up-ish
+    _camSide.crossVectors(back, _a).normalize(); // side
+    _camUp.crossVectors(_camSide, back).normalize(); // up-ish
     let hard = want, soft = want;
     out.floor = false;
     for (let i = 0; i < CAM_RAYS.length; i++) {
       const ox = CAM_RAYS[i][0], oy = CAM_RAYS[i][1], w = CAM_RAYS[i][2];
-      _s.copy(pivot).addScaledVector(_p, ox * radius).addScaledVector(_q, oy * radius);
+      _s.copy(pivot).addScaledVector(_camSide, ox * radius).addScaledVector(_camUp, oy * radius);
       this.raycast(_s, back, want + pad, h, true);
       if (!h.hit) continue;
       const lim = Math.max(0, h.dist - pad);

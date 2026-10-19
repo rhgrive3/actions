@@ -1,4 +1,5 @@
 import { getPlatformLifecycle, PlatformFrameDriver } from './platform-lifecycle.mjs';
+import { watchGuestMatchEnd } from './platform-match-watch.mjs';
 import { resetPlatformInput } from './platform-input.mjs';
 const INSTALLED = Symbol.for('inkwave.platform.game.v1');
 
@@ -201,6 +202,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
     };
     r.off = owner.subscribe({
       suspend() {
+        r.guestEndWait = null;
         r.hiddenHostClock = captureHiddenHostClock(game, G, env); clear();
         scheduleHiddenHostDeadline(r.hiddenHostClock, game, G, env, r);
         scheduleHiddenHostResult(captureHiddenHostResult(game, G, env), game, G, env, r);
@@ -222,6 +224,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
         }
       },
       prepareResume() {
+        r.guestEndWait = null;
         clear(); resumeHiddenHostDeadlines(game, G, env, r); game.R?.resize?.();
       },
       blur() { resetPlatformInput(game.input, game.match?.controller); },
@@ -256,7 +259,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
     r.driver = new PlatformFrameDriver(owner, dt => {
       const probe = game._rangeFrameProbe;
       probe?.callback(dt);
-      if (game.frozen) return;
+      if (watchGuestMatchEnd(game, G, env, r) || game.frozen) return;
       const cap = frameRate();
       let frameDt = dt;
       if (cap > 0 && dt > 0) {
@@ -299,6 +302,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
   P.disposePlatform = function () {
     const r = this.platform; if (!r || r.disposed) return;
     r.disposed = true;
+    r.guestEndWait = null;
     r.hiddenHostClock = null;
     clearHiddenHostDeadline(r, env); clearHiddenHostResult(r, env);
     r.driver.dispose(); r.off(); this._rangeFrameProbe?.dispose(); this._rangeFrameProbe = null;

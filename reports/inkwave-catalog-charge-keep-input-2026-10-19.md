@@ -21,3 +21,12 @@ Pinned raw source: [1130, commit7280ff9](https://github.com/Leanny/splat3/tree/7
 ## Ownership
 
 [PR1603](https://github.com/rhgrive3/actions/pull/1603), inspected at `13f57387a0b579a1d894f0bc6c8db7f02f4abd88`, edits charger optics/paint/flight and older tests but not the catalog runtime changed here. This test has a new filename. Any later Clam sub-lock correction in the same runtime must be merged by separate hunks, retaining both owners.
+
+
+## Original central comparison record (byte-preserved)
+
+## 2026-10-19：追加主武器のチャージ保持入力
+
+基底fbed2d4ef5a2708307036c167d0a9df0461e8597。通常Fireを保持したまま後からSquidを押すと、catalogのスクイックリン/リッター/ソイチューバーがbusyで潜伏できず、既存保持ownerへ届かないことを実Actorで再現した。保持可能なcharge状態だけ既存cancel(keep)へ接続し、保持clock・威力・インク支払を変更しない。保持不可scope/不十分charge等の負対照、30/60/120Hz、失効/再潜伏/releaseを検証した。専用5件・関連122件成功、元runtimeでは4件失敗/対照1件成功。
+
+実browser向けには通常Actor入力で3武器の保持→復帰→1発releaseとscope拒否を追加し、同block/factoryを第6専用testとして確認する。既存Chromium/WebKit catalog jobでsource/emitted専用testと実browserを実行し、exact-headの結果は別途記録する。現時点でnative成功・実機一致を主張しない。詳細は[専用報告](inkwave-catalog-charge-keep-input-2026-10-19.md)。既存報告本文を保持した末尾追記。
