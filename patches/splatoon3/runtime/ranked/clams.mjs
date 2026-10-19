@@ -546,9 +546,11 @@ export class ClamsRule {
     basket.tucked = true;
     basket.cooldown = BASKET_COOLDOWN_SECONDS;
     const points = basket.chancePoints;
-    if (points > 0 && typeof this.engine?.addPenalty === 'function') this.engine.addPenalty(team, points / 2);
+    // Floor once for the complete scoring window, after counting penalty repayments.
+    const penalty = Math.floor(points / 2);
+    if (points > 0 && typeof this.engine?.addPenalty === 'function') this.engine.addPenalty(team, penalty);
     else if (points > 0 && Array.isArray(this.engine?.penalties)) {
-      this.engine.penalties[team] = Math.max(0, Number(this.engine.penalties[team]) || 0) + points / 2;
+      this.engine.penalties[team] = Math.max(0, Number(this.engine.penalties[team]) || 0) + penalty;
     }
     basket.chancePoints = 0;
     basket.openedWhileLeading = false;
@@ -556,7 +558,7 @@ export class ClamsRule {
     opposite.tucked = false;
     opposite.cooldown = 0;
     this._counterPower(defender, basket.goal ?? [0, 0, 0], frame);
-    this._event('clam-barrier-close', { team, defendingTeam: defender, seconds: BASKET_COOLDOWN_SECONDS, penalty: points / 2, goal: basket.goal });
+    this._event('clam-barrier-close', { team, defendingTeam: defender, seconds: BASKET_COOLDOWN_SECONDS, penalty, goal: basket.goal });
     if (this.state.overtime.active && this.state.overtime.mode === 'comeback') {
       if (team === this.state.overtime.losingTeam)
         this._finish(this.state.overtime.winningTeam, 'clam-overtime-chance-ended');

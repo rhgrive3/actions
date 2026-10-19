@@ -156,3 +156,17 @@ test('ranked HUD exposes the Clams throw controls and wraps within a tiny viewpo
   assert.match(rankedUiSource, /@media \(max-width:560px\) \{ \.iw-ranked-hud \{ width:calc\(100vw - 12px\)/);
   assert.match(rankedUiSource, /display:flex; flex-wrap:wrap; align-items:center; justify-content:center/);
 });
+
+test('ranked mode grid owns card size and title size over the practice range and touch sheets', () => {
+  const rangeCss = readFileSync(new URL('../../practice-range/styles/range.css', import.meta.url), 'utf8');
+  // A more specific .has-range rule re-enlarged every title tape over its blurb and widened cards past their cells.
+  assert.doesNotMatch(rangeCss, /^\.iw-modesel__row\.has-range \.iw-mode \{/m);
+  assert.doesNotMatch(rangeCss, /\.has-range \.iw-mode__tape \.iw-display/);
+  assert.doesNotMatch(rangeCss, /^\.iw-modesel__row\.has-range \{/m);
+  const transformed = adaptRankedUi('src/ui/menus.js', menusSource);
+  assert.match(transformed, /@media \(min-width:901px\) \{ \.iw-modesel__row\.has-range \{ grid-template-columns:repeat\(4,minmax\(0,1fr\)\); \} \}/);
+  assert.match(transformed, /:is\(html\.iw-touch \.iw-ui, \.iw-ui\.is-touch\) \.iw-mode__tape \.iw-display \{ font-size:clamp\(20px,2\.9vw,34px\); \}/);
+  assert.match(transformed, /\.iw-mode__tape \.iw-display \{ word-break:keep-all; overflow-wrap:anywhere; \}/);
+  assert.match(transformed, /blurb: tr\('Everyone is one squad against \{boss\}\. Defeat it before time runs out!', \{ boss: tr\(BOSS_NAME\) \}\)/);
+  assert.match(transformed, /sub: tr\('Pick a stage and the time of day · your squad of 8 vs \{boss\}', \{ boss: tr\(BOSS_NAME\) \}\)/);
+});

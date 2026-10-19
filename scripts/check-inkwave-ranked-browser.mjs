@@ -76,7 +76,7 @@ try{
   await advance(p,120);
   const initial=await p.evaluate(()=>({mode:RG.match.mode,state:RG.match.state,time:RG.match.time,actors:RG.match.actors.length,ranked:!!RG.match.ranked,hud:document.querySelector('.iw-ranked-hud')?.textContent}));assert(initial.ranked&&initial.actors===8&&initial.time<=300&&initial.time>290);assert(initial.hud?.length>5);
   await capture(p,{path:path.join(out,mode+'-offline.jpg'),type:'jpeg',quality:60});
-  const proof=await p.evaluate(mode=>{
+  const proof=await p.evaluate(async mode=>{
    const m=RG.match,e=m.ranked,w=m.rankedWorld,a=m.local;RG.game.debug.freezeBots();
    if(mode==='zones'){e.stage.zones.forEach((_,i)=>w.captureZone(i,0));m.advanceRanked(1.2);if(e.counts[0]>98)throw Error('Native paint capture did not score');}
    if(mode==='tower'){a.pos.fromArray(e.rule.state.position);a.grounded=true;a._rankedOnTower=true;m.advanceRanked(1);if(e.rule.state.controllingTeam!==a.team)throw Error('Real tower rider not detected');}
@@ -84,11 +84,34 @@ try{
    if(mode==='clams'){const c=e.rule.state.clams[0];a.pos.fromArray(c.pos);a.grounded=true;m.advanceRanked(1/60);const id=String(a.nid??`${a.team}:${a.slot}`);if(!(e.rule.state.inventories[id]?.small||e.rule.state.inventories[id]?.power))throw Error('Real actor failed clam pickup');}
    let weapon = null;
    if(mode==='rainmaker'){
-    const target=m.actors.find(v=>v.team!==a.team&&v.alive&&!v.specialActive);if(!target)throw Error('No real actor for Rainmaker attack');
+    const {PLAYER}=await import(new URL('src/config.js',document.baseURI));
+    const target=m.actors.find(v=>v.team!==a.team&&v.alive&&!v.specialActive&&!v.superJumpState&&!v.s3?.squidSpawn);if(!target)throw Error('No settled real actor for Rainmaker attack');
     const lane=[[0,2],[2,0],[0,-2],[-2,0]].map(([x,z])=>({x:a.pos.x+x,z:a.pos.z+z,dx:x/2,dz:z/2})).find(q=>{
      const y=w.floorAt(q.x,q.z);return Number.isFinite(y)&&Math.abs(y-a.pos.y)<.2&&RG.physics.los(a.pos.clone().add({x:0,y:1,z:0}),target.pos.clone().set(q.x,y+.7,q.z));
     });if(!lane)throw Error('No clear native floor lane for Rainmaker attack');
-    target.pos.set(lane.x,w.floorAt(lane.x,lane.z),lane.z);target.invuln=0;target.s3.spawnArmor=null;target.intent.move.set(0,0,0);target.intent.fire=target.intent.sub=target.intent.special=target.intent.squid=false;
+    // BEGIN RAINMAKER PROOF TARGET SETUP (exercised verbatim by the CPU regression)
+    function prepareRainmakerProofTarget(target,lane,floor,physics,foot){
+     if(!target.alive||target.specialActive||target.superJumpState||target.s3?.squidSpawn)throw Error('Rainmaker proof requires a settled target');
+     target.pos.set(lane.x,floor,lane.z);target.vel.set(0,0,0);
+     const support=physics.groundProbe(target.pos.x,target.pos.y,target.pos.z,.3,.3,foot,target.ground,false);
+     if(!support.hit)throw Error('Rainmaker proof target has no native floor support');
+     target.pos.y=support.y;target.grounded=true;target.groundN.copy(support.normal);
+     // This is a stationary attack target. Releasing a pre-existing charged
+     // Splatana or retaining an active Dualies roll otherwise moves it away.
+     target.weaponRunner.reset();
+     target.invuln=0;target.s3.spawnArmor=null;target.intent.move.set(0,0,0);
+     target.intent.fire=target.intent.sub=target.intent.special=target.intent.squid=target.intent.jump=false;
+    }
+    // END RAINMAKER PROOF TARGET SETUP
+    const targetState=()=>{
+     const r=target.weaponRunner,c=r.catalogState;
+     const phase=v=>v?Object.fromEntries(['t','dur','remaining','startup','elapsed','delay','duration','speed'].filter(k=>Number.isFinite(v[k])).map(k=>[k,v[k]])):null;
+     return {id:String(target.nid??`${target.team}:${target.slot}`),weapon:target.weaponId,pos:target.pos.toArray(),vel:target.vel.toArray(),hp:target.hp,alive:target.alive,grounded:target.grounded,groundHit:target.ground.hit,groundBlock:target.ground.block,groundNormal:target.groundN.toArray(),form:target.form,jump:target.superJumpState?.phase??null,spawn:target.s3?.squidSpawn?.phase??null,
+      runner:{charging:r.charging,charge:r.charge,cooldown:r.cooldown,dodge:phase(r.dodge),glide:phase(r.s3DualiesGlide),catalogId:c?.id??null,chargeF:c?.chargeF??0,stop:c?.stop??0,roll:phase(c?.roll),slip:phase(c?.slip),lunge:phase(c?.lunge),pending:!!c?.pending,stepStick:Array.from(c?.stepStick||[])}};
+    };
+    const targetBefore=targetState();
+    prepareRainmakerProofTarget(target,lane,w.floorAt(lane.x,lane.z),RG.physics,PLAYER.footRadius);
+    const targetPrepared=targetState();
     a.form='kid';a.aimYaw=Math.atan2(lane.dx,lane.dz);a.aimPitch=0;a.aimDir.set(lane.dx,0,lane.dz);a.intent.move.set(0,0,0);a.vel.set(0,0,0);
     const events=[],damage=[],play=m.playRankedEvents,hurt=target.damage,beforeInk=a.ink,beforeSpecial=a.special;
     m.playRankedEvents=function(es,...args){events.push(...es.filter(e=>e.kind==='rainmaker-shot'));return play.call(this,es,...args);};
@@ -98,7 +121,7 @@ try{
      if(events.length!==1||e.rule.state.charge.seconds>1e-8)throw Error('Rainmaker recovery admitted another shot/charge');
      step(20,false);if(!damage.includes(60)||!damage.includes(180)||target.alive)throw Error('Native Rainmaker direct/delayed blast did not splat: '+JSON.stringify(damage));
      if(a.ink<beforeInk||a.special!==beforeSpecial)throw Error('Carrier attack consumed ink or gained special');
-     weapon={targetCondition:'unarmored',shots:events.length,charge:events[0].charge,direct:events[0].damage,blast:events[0].blastDamage,damage,inkBefore:beforeInk,inkAfter:a.ink,targetSplat:!target.alive};
+     weapon={targetCondition:'unarmored',shots:events.length,charge:events[0].charge,direct:events[0].damage,blast:events[0].blastDamage,damage,inkBefore:beforeInk,inkAfter:a.ink,targetSplat:!target.alive,targetState:{before:targetBefore,prepared:targetPrepared,after:targetState()}};
      const wallOwner=m.actors.find(v=>v.team!==a.team&&v.alive&&!v.specialActive);
      if(!wallOwner)throw Error('No native owner for Rainmaker wall proof');
      wallOwner.weapon={...wallOwner.weapon,sub:'splashWall'};
@@ -111,7 +134,7 @@ try{
      if(a.ink<beforeInk||a.special!==beforeSpecial)throw Error('Wall attack consumed ink or gained special');
      weapon.wall={shots:1,hpBefore:wallBefore,hpAfter:wall.hp,direct:60,blast:360};
 
-    }finally{m.playRankedEvents=play;target.damage=hurt;a.intent.fire=false;}
+    }catch(error){throw Error(error.message+'; Rainmaker proof receipt '+JSON.stringify({targetBefore,targetPrepared,targetAfter:targetState(),damage,shots:events,shooter:{pos:a.pos.toArray(),vel:a.vel.toArray(),special:a.special}}));}finally{m.playRankedEvents=play;target.damage=hurt;a.intent.fire=false;}
    }
    const snap=e.snapshot();if(!e.restore(snap))throw Error('Own snapshot rejected');return {counts:[...e.counts],snapshotBytes:JSON.stringify(snap).length,weapon};
   },mode);

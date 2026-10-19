@@ -205,7 +205,7 @@ test('Power Clam breaks the barrier for twenty points; clams score three and add
   assert.equal(rule.state.baskets[0].barrierOpen, false);
   assert.equal(rule.state.baskets[0].tucked, true);
   assert.equal(rule.state.baskets[1].tucked, false, 'the attacked team can counterattack after the basket closes');
-  assert.equal(engine.penalties[0], 21.5, 'half of the 43 scored points is added, including all scoring-window clams');
+  assert.equal(engine.penalties[0], 21, 'half of all 43 window points is rounded down once at closure');
   const counter = rule.state.clams.find(clam => clam.counterPower);
   assert.equal(counter?.team, 1);
   assert.equal(counter?.persistent, true);

@@ -120,6 +120,8 @@ jobs:
           retention-days: 14
       - name: Verify queued InkFlight and catalogue bot liveness fixes
         run: node --experimental-vm-modules --test patches/network-replication/tests/queue-inkflight-owned-profile.test.mjs patches/local-quality/tests/catalog-charge-bot-release.test.mjs
+      - name: Verify paint ownership and frozen-host P0 regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-264-*.test.mjs patches/reliability/tests/hidden-host-*.test.mjs
       - name: Verify source session admission and finite view settings
         run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs
       - name: Verify claimed room startup and gyro health regressions
@@ -198,7 +200,7 @@ jobs:
           sudo mkdir -p "$browser_tmp"
           sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs scripts/tests/inkwave-responsive-fixture.test.mjs
+        run: node --test scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs scripts/tests/inkwave-range-menu-entry.test.mjs scripts/tests/inkwave-range-trusted-entry.test.mjs scripts/tests/inkwave-responsive-fixture.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -347,6 +349,11 @@ jobs:
         env:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs
+      - name: Verify emitted paint ownership and frozen-host P0 regressions
+        env:
+          INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-264-*.test.mjs patches/reliability/tests/hidden-host-*.test.mjs
       - name: Verify emitted session admission and finite view settings
         env:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
@@ -852,6 +859,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node --test scripts/tests/inkwave-mural-branding-reference.test.mjs
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/seven-site
           node scripts/check-inkwave-seven-claims.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/seven-browser.json
       - name: Verify compiled main weapon catalog in Chromium and WebKit

@@ -1,0 +1,7 @@
+# Read-only audio readiness failure diagnostics
+
+Failed run39137883069 / job117706087230 checked out merge99fed3f662429ff1eee644bd3de94447c9a2a3d6 (squid67a2720 plus mainf5de1e77). Its geometry19/19 and build passed; game START failed with `ブキ音源の一覧を読み込めません: shooter` and the unchanged240s playing wait timed out. The branch-only squid native run39137879693 succeeded; it is not proof of merge-head game startup.
+
+The real installed manifest blob3483c5e10a4b3c69618514a689f31b25e1ed844c is identical on merge and branch. The same authorized-manifest validator and recipe blobs validate268clips and declare shooter:fire. Branch native build identity lists matching root and immutable-version manifest artifacts. Those facts do not prove the failing merge-page HTTP response.
+
+This patch only records existing-test failure diagnostics: checkout SHA, emitted build revision/manifest file hashes/existence, audio request URL without query/hash, status/content type, manifest response length/SHA256, request failures, and live loader status/errors/manifestURL/context state. No response body or credentials are stored. The strict production audio admission gate, fallback rules, assets, test pass criteria and240s timeout remain unchanged. Two pure receipt tests pass. Existing alpha-volume workflow runs them and uploads its existing evidence directory even on failure. The next actual merge-head run is needed to identify route/validation/lifecycle cause. No runtime fix is claimed.

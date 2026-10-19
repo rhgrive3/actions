@@ -5,10 +5,12 @@ import {
   MOVEMENT_EPSILON,
   dodgeIntervalDistance,
   groundAcceleration,
+  rollingHeadingActive,
   rollingMovementActive,
   rollingMovementSpeed,
   shedFormExitOverspeed,
   stepGroundVelocity,
+  stepRollingVelocity,
 } from '../../splatoon3/runtime/movement-physics.mjs';
 import { adaptMovementPhysics } from '../../splatoon3/movement-physics-adapter.mjs';
 import { FixedClock } from '../../splatoon3/runtime/clock.mjs';
@@ -43,7 +45,7 @@ const angleDiff = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 const adaptedRoller = (active = rollingMovementActive, speed = rollingMovementSpeed) => {
   const scope = { PLAYER, clamp, lerp, smoothstep, angleDiff, TAU: Math.PI * 2,
     rollingMovementActive: active, rollingMovementSpeed: speed, groundAcceleration,
-    shedFormExitOverspeed, stepGroundVelocity, toxicMistScale, reverseShotRelease,
+    shedFormExitOverspeed, stepGroundVelocity, stepRollingVelocity, rollingHeadingActive, toxicMistScale, reverseShotRelease,
     _ZERO_MOVE: { x: 0, z: 0 } };
   const actorCode = adaptMovementPhysics('src/game/actor.js', read('src/game/actor.js'), replaceOnce);
   const runnerCode = adaptMovementPhysics('src/game/weapons.js', read('src/game/weapons.js'), replaceOnce);
@@ -119,6 +121,7 @@ test('build-only adapter changes only its explicit actor/weapons anchors', () =>
 test('adapted Actor consumes Runner roll speed and preserves every admission gate', () => {
   const verify = (active, speed) => {
     const a = adaptedRoller(active, speed), r = a.weaponRunner;
+    a.yaw = Math.PI / 2; // rolling travels along the body heading, already turned to the +x stick
     close(r.moveSpeed(), 6.48);
     for (let i = 0; i < 60; i++) a._horizontal(1 / 60, false, false);
     close(a.vel.x, 6.48); close(a.vel.z, 0);
@@ -158,7 +161,7 @@ test('adapted held-roll facing is independent of speed admission and preserves o
     close(Math.sin(a.yaw), Math.sin(target), 2e-4);
     close(Math.cos(a.yaw), Math.cos(target), 2e-4);
   };
-  heading(() => {}, 0); // native roll strafes without turning away from aim
+  heading(() => {}, Math.PI / 2); // native roll turns the body to the stick, never strafes square to the drum
   for (const kind of ['roller', 'brush']) {
     heading((a, r) => { r.rolling = false; a.weapon.kind = 'catalog'; a.weapon.behaviorKind = kind; }, 0);
     heading((a, r) => { r.rolling = false; a.weapon.kind = 'catalog'; a.weapon.behaviorKind = kind; a.form = 'squid'; }, Math.PI / 2);

@@ -99,7 +99,7 @@ test('847 flat rolling unchanged on full production composition', async () => {
   f.G.actors = [];
 });
 
-test('847 no-stick residual stops native paint, ink drain, and damage without changing velocity', async () => {
+test('847 no-stick residual keeps the drum down but stops native paint, ink drain, and damage without changing velocity', async () => {
   const f = await production();
   const a = new f.Actor({ team: 0, name: 'r847stick', isLocal: true, weapon: 'roller', CharacterClass: f.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   a.character.onEvent = null;
@@ -119,7 +119,8 @@ test('847 no-stick residual stops native paint, ink drain, and damage without ch
   f.G.time += 1 / 60;
   a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
   assert.equal(v.hp, 500, 'no Left Stick input admits no roll damage despite residual speed');
-  assert.equal(a.weaponRunner.rolling, false, 'native roll state stops when stick contact is absent');
+  // Owner report 2026-10-18: releasing Left Stick keeps the drum down while ZR is held.
+  assert.equal(a.weaponRunner.rolling, true, 'held ZR keeps the roll state without Left Stick');
   assert.equal(a.ink, inkBefore, 'residual displacement does not drain rolling ink');
   assert.equal(f.G.paint.version, paintBefore, 'residual displacement does not paint a roller stripe');
   assert.deepEqual([a.vel.x, a.vel.y, a.vel.z], [0, 0, 3], 'roller admission leaves native velocity intact');

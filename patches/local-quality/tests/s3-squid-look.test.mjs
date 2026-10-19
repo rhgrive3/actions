@@ -19,14 +19,16 @@ test('S3 squid look: no floor-level own-colour mound; the local swimmer keeps th
   assert.ok(JSON.stringify(qualityIdentity()).includes('s3-squid-look-adapter.mjs'));
 });
 
-test('S3 squid look: face trails travel, dry squid lies flat, arms bundle and feelers sit under the face', () => {
+test('S3 squid look: face trails travel, dry squid lies flat, arms bundle and long feelers attach outside four short supports', () => {
   const ch = compose('src/game/character.js');
   assert.match(ch, /for \(const m of \[body, ghost, dark, eyes\]\) m\.rotation\.y = Math\.PI;/);
   assert.match(ch, /_e1\.set\(Math\.PI \/ 2 - 0\.52 - tilt \* 0\.5, this\.sqYaw/);
   const geo = compose('src/game/character-geo.js');
   new vm.SourceTextModule(geo);
   assert.match(geo, /const feeler = k === 0 \|\| k === N - 1;/);
-  assert.match(geo, /\(feeler \? 2\.0 : 0\.62\)/);
+  assert.match(geo, /\(feeler \? 2\.0 : 0\.28\)/);
+  assert.match(geo, /!\[0, 2, 4, 6, 8, 9\]\.includes\(k\)/);
+  assert.match(geo, /res\.eyes\.userData\.squidConnectedEye = true/);
   assert.match(geo, /feeler \? lerp\(tint\(tA\[i\]\), -0\.95/);
 });
 

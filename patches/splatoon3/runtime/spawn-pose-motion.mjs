@@ -26,6 +26,20 @@ function clear(ch, reason = 'cancelled') {
   const s = hooks(ch)?.states.get(ch);
   if (s) { s.phase = 'off'; s.weight = 0; s.reason = reason; }
 }
+// Squid Spawn: while the player waits on the spawner the weapon-family pose is
+// held at full weight (S3 Spawner gallery: each class poses ON the spawner).
+// The standing rig is grounded there, which would otherwise release the pose.
+export function holdSpawnPose(ch, on) {
+  const h = hooks(ch);
+  if (!h || ch.s3SpawnPoseMotionEnabled === false || ch.s3HitSpawnMotionEnabled === false) return false;
+  const family = ch.weaponKind;
+  if (!on) { const s = h.states.get(ch); if (s?.phase === 'hold') clear(ch, 'launched'); return true; }
+  if (!SPAWN_POSE_CALIBRATION[family]) { clear(ch, 'unsupported-weapon'); return false; }
+  const s = h.states.get(ch);
+  if (s?.phase === 'hold' && s.family === family) return true;
+  h.states.set(ch, { family, phase: 'hold', age: 0, weight: s?.phase === 'hold' ? s.weight : 0, reason: null });
+  return true;
+}
 export function spawnPoseSnapshot(ch) {
   const s = hooks(ch)?.states.get(ch);
   return s ? { family: s.family, phase: s.phase, age: s.age, weight: s.weight, reason: s.reason } : null;
@@ -55,7 +69,8 @@ export function installSpawnPoseMotion({ Character, Actor, CHARACTER_CHANNELS: c
       if (SPAWN_POSE_CALIBRATION[family])
         states.set(this, { family, phase: 'launch', age: 0, weight: 0, reason: null });
       else clear(this, 'unsupported-weapon');
-    } else if (['land', 'splat', 'shoot', 'slosh', 'flick', 'throw', 'dodge', 'jump', 'special_leap', 'special_slam'].includes(name)) clear(this, name);
+    } else if (['land', 'splat', 'shoot', 'slosh', 'flick', 'throw', 'dodge', 'jump', 'special_leap', 'special_slam'].includes(name) &&
+      !(name === 'land' && states.get(this)?.phase === 'hold')) clear(this, name);
     return result;
   };
   C._updateStates = function (dt, frame) {
@@ -63,6 +78,16 @@ export function installSpawnPoseMotion({ Character, Actor, CHARACTER_CHANNELS: c
     const s = states.get(this);
     if (!s || s.phase === 'off') return result;
     const owner = this._owner?.();
+    if (s.phase === 'hold') {
+      // Standing on the spawner: only leaving the kid form, dying, hiding or a
+      // weapon change end the hold; it eases in over the family's peak frames.
+      if (this.s3SpawnPoseMotionEnabled === false || !this.visible || !this.kidForm || owner?.alive === false ||
+          owner?.s3?.squidSpawn?.phase !== 'aim') { clear(this, 'launched'); return result; }
+      const cfg = SPAWN_POSE_CALIBRATION[s.family];
+      s.age += Math.max(0, Number.isFinite(dt) ? dt : 0);
+      s.weight = smooth(s.age * 60 / cfg.peakFrame);
+      return result;
+    }
     // Grounded/life/action bits come from Actor (including sampled remote
     // Actors). Armor and character-coating timers do not own this pose.
     if (this.s3SpawnPoseMotionEnabled === false || this.s3HitSpawnMotionEnabled === false || !this.visible || this.dance || !this.kidForm || owner?.alive === false || this.grounded || owner?.grounded || owner?.specialActive || owner?.superJumpState || frame?.firing || frame?.charge > 0 || frame?.subAim || frame?.rolling || owner?.weaponRunner?.dodge) {

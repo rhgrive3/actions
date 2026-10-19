@@ -46,3 +46,12 @@ test('installed catalogue content uses localized names and gameplay instructions
  assert.equal(WEAPONS.x.name,'トライストリンガー');assert.equal(WEAPONS.x.class,'ストリンガー');assert.match(WEAPONS.x.blurb,/チャージ/);
  assert.equal(SUB.bomb.name,'スプラッシュボム');assert.equal(SPECIALS.inkjet.name,'ジェットパック');assert.equal(SPECIALS.inkjet.duration,8);assert.equal(WEAPONS.x.sub,'bomb');
 });
+test('update news cards translate every label and keep the bullet separator outside the translated text',()=>{
+ const raw=fs.readFileSync(new URL('../../../inkwave-public/src/ui/news.js',import.meta.url),'utf8');
+ const adapted=adaptUiLocalization('src/ui/news.js',raw);
+ assert.match(adapted,/h\('span', null, h\('b', null, b\), ' — ', t\)/);
+ const literals=[...raw.slice(raw.indexOf('const PAGES = ['),raw.indexOf('export class WhatsNew')).matchAll(/'([^'\n]*[A-Za-z][^'\n]*)'/g)].map(m=>m[1])
+  .filter(s=>!/^(?:mp|boss|a|b|is-new|NEW!)$/.test(s)&&!s.endsWith('.webp'));
+ for(const label of [...literals,'What’s new','CONTINUE','Skip','TRY IT','LATER','Locker']) assert.notEqual(translate(label),label,label);
+ assert.equal(translate('TRY IT'),'あそんでみる');
+});

@@ -118,7 +118,8 @@ test('player, projectile and paint replay stay outside the Boss admission gate',
   let splats = 0;
   f.G.paint.splat = () => { splats++; return 0; };
   // paint: the sender's own team (p3 owns team 1), unchanged by the Boss gate
-  nm._play('p3', [1000, 's', 0, 0, 0, 1, 1, 0.5, 0]);
+  const paint=[1000,'s',0,0,0,1,1,.5,0,0,0,0,0,-1,['inkwave-paint-order-v1',nm.cfg.id,1,0,['inkwave-paint-authority-v1','actor',9,0]],0,1];
+  paint._netTick=0;paint._netSeq=1;nm._play('p3',paint);
   assert.equal(splats, 1, 'remote paint replay was blocked');
   // projectile: still owned by its sender
   const before = f.projectiles.list.length;

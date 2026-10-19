@@ -146,6 +146,31 @@ export function rollingMovementActive(a) {
     r.flick < 0 && !r.aimingSub;
 }
 
+/** Grounded Roller/Brush rolling (native and catalogue). The body, drum, contact
+ * and paint share one heading; travel is never perpendicular to it. Owner
+ * report 2026-10-19: S3 cannot strafe square to the drum. The turn uses the
+ * ordinary walking face spring because no rolling turn rate is published.
+ */
+export function rollingHeadingActive(a) {
+  const r = a.weaponRunner, kind = a.weapon?.behaviorKind || a.weapon?.kind;
+  return !!r?.rolling && (kind === 'roller' || kind === 'brush') && a.form === 'kid' &&
+    a.grounded && !a.climbing && !a.specialActive && !a.superJumpState && !(r.flick >= 0) && !r.aimingSub;
+}
+
+/** Speed along the body heading only, so steering is a turn and no lateral
+ * component survives a tick. The stick magnitude scales the target speed and
+ * the ordinary ground acceleration owns the speed change.
+ */
+export function stepRollingVelocity(a, moveX, moveZ, targetSpeed, accel, dt) {
+  if (!(dt > 0) || !(accel >= 0) || !(targetSpeed >= 0)) return;
+  const target = targetSpeed * Math.min(1, Math.hypot(moveX, moveZ));
+  const yaw = Number.isFinite(a.yaw) ? a.yaw : 0, fx = Math.sin(yaw), fz = Math.cos(yaw);
+  const step = accel * dt;
+  let speed = Math.max(0, a.vel.x * fx + a.vel.z * fz);
+  speed = speed < target ? Math.min(target, speed + step) : Math.max(target, speed - step);
+  a.vel.x = fx * speed; a.vel.z = fz * speed;
+}
+
 /** #466: a dash-turn reversal is a stick more than 90 degrees away from the current
  * world-space travel direction. Both vectors are world-space (Actor._horizontal uses
  * the same comparison). The 90-degree threshold is an INKWAVE choice: the S3 trigger

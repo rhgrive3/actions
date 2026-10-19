@@ -1,0 +1,88 @@
+name: INKWAVE squid regression native QA
+on:
+  push:
+    branches: ['codex/squid-*']
+  pull_request:
+    paths: ['tools/squid-motion-qa/**', 'tools/squid-production-qa/**', 'patches/local-quality/s3-squid-look-adapter.mjs', 'patches/splatoon3/runtime/swim-motion.mjs', 'patches/splatoon3/*squid*', 'patches/local-quality/squid-motion-binding-adapter.mjs', 'patches/local-quality/tests/squid-source-presentation.test.mjs', 'patches/local-quality/tests/squid-surface-material.test.mjs', 'patches/local-quality/tests/squid-connected-eye-binding.test.mjs', 'patches/local-quality/tests/s3-squid-look.test.mjs', 'patches/local-quality/tests/squid-compact-support-binding.test.mjs', 'patches/local-quality/tests/squid-ghost-depth.test.mjs', 'patches/local-quality/tests/squid-form-ease.test.mjs', 'patches/local-quality/tests/squid-build-identity.test.mjs', 'patches/local-quality/squid-form-ease-adapter.mjs', '.github/workflows/inkwave-squid-visual-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: squid-native-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  compare-squid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BASE_SHA: fbaf105eb310daf10ef7bd72675805ccf3f5a8bc
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact existing native QA tools
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify source presentation regression
+        run: node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/squid-compact-support-binding.test.mjs patches/local-quality/tests/squid-ghost-depth.test.mjs patches/local-quality/tests/squid-form-ease.test.mjs patches/local-quality/tests/squid-build-identity.test.mjs
+      - name: Verify reconciled main performance and pause behavior
+        run: node --experimental-vm-modules --test patches/local-quality/tests/performance-v2-geometry.test.mjs patches/local-quality/tests/performance-v2-topology.test.mjs patches/local-quality/tests/performance-v2-ao.test.mjs patches/local-quality/tests/pause-gpu.test.mjs
+      - name: Verify continuous motion timeline
+        run: node --experimental-vm-modules --test tools/squid-motion-qa/timeline.test.mjs tools/squid-production-qa/timestamp.test.mjs tools/squid-production-qa/artifacts.test.mjs
+      - name: Build and capture preserved baseline
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          git worktree add --detach _squid_baseline "$BASE_SHA"
+          cd _squid_baseline
+          node scripts/build-inkwave.mjs inkwave-public _site
+          SOURCE_SHA="$BASE_SHA" node ../tools/squid-production-qa/run.mjs --site _site --out ../.qa-evidence/squid-baseline
+          SOURCE_SHA="$BASE_SHA" node ../tools/squid-motion-qa/run.mjs --site _site --mode sampled --out ../.qa-evidence/squid-motion-baseline
+      - name: Build and capture exact candidate
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/squid-compact-support-binding.test.mjs patches/local-quality/tests/squid-ghost-depth.test.mjs patches/local-quality/tests/squid-form-ease.test.mjs patches/local-quality/tests/squid-build-identity.test.mjs
+          node tools/squid-production-qa/run.mjs --site _site --out .qa-evidence/squid-candidate
+      - name: Capture uniform native motion samples
+        run: node tools/squid-motion-qa/run.mjs --site _site --mode sampled --out .qa-evidence/squid-motion-sampled
+      - name: Capture actual source and fallback spawn return
+        run: node tools/squid-motion-qa/run.mjs --site _site --mode sampled --scenario spawn --out .qa-evidence/squid-spawn
+      - name: Verify complete bounded artifact partitions
+        run: node tools/squid-production-qa/artifacts.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: squid-native-baseline-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            .qa-evidence/squid-baseline/**
+            .qa-evidence/squid-motion-baseline/**
+            _squid_baseline/_site/inkwave-build.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: squid-native-candidate-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            .qa-evidence/squid-candidate/**
+            .qa-evidence/squid-motion-sampled/**
+            _site/inkwave-build.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: squid-native-spawn-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            .qa-evidence/squid-spawn/**
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

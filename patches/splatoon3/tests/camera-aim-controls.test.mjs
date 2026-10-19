@@ -67,6 +67,32 @@ test('catalog scopes are recognized from sparse source capability; E-liter uses 
   close(f.cam.fov, 55, 1e-9);
 });
 
+test('Splatterscope full zoom uses the 28 degree class default; any FOV setting lands on CameraFovy', async () => {
+  const f = await world('s3-charger-normalscope');
+  assert.equal(f.scopeVerticalFov(f.a.weapon), 28);
+  assert.equal(f.SCOPE_DEFAULT_CAMERA_FOVY, 28);
+  f.a.weaponRunner.charging = true; f.a.weaponRunner.charge = 1;
+  for (let i = 0; i < 300; i++) f.rig.update(1 / 60);
+  close(f.cam.fov, 28, 1e-9);
+  for (const fov of [70, 100]) {
+    f.G.settings.fov = fov;
+    for (let i = 0; i < 300; i++) f.rig.update(1 / 60);
+    close(f.rig.camera.userData.s3ReferenceVerticalFov ?? f.cam.fov, 28, 1e-9);
+  }
+  delete f.G.settings.fov;
+});
+
+test('scope rim strength follows the local follow camera zoom only', async () => {
+  const { scopeOverlayStrength } = await world();
+  const rig = { mode: 'follow', target: { isLocal: true }, zoom: 10, mapK: 0 };
+  assert.equal(scopeOverlayStrength(rig, 20), .5);
+  assert.equal(scopeOverlayStrength({ ...rig, zoom: 40 }, 20), 1);
+  assert.equal(scopeOverlayStrength({ ...rig, target: { isLocal: false } }, 20), 0);
+  assert.equal(scopeOverlayStrength({ ...rig, mode: 'spectate' }, 20), 0);
+  assert.equal(scopeOverlayStrength({ ...rig, mapOpen: true }, 20), 0);
+  assert.equal(scopeOverlayStrength(rig, 0), 0);
+});
+
 test('scope zoom has no charge=0.99 discontinuity and resets on squid/weapon change', async () => {
   const f = await world('s3-charger-longscope'); f.a.weaponRunner.charging = true;
   const values = [];

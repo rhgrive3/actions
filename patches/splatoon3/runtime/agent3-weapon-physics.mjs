@@ -74,6 +74,7 @@ export function slosherWallDropPlan(unit, order = 0, seed = 0, scale = 1) {
   return { main, wallHits };
 }
 
+const ROLLER_BODY_FORWARD = 0.75;
 export function rollerBodyOverlap(fwd, lat, dy, horizontalSpeed, body, playerRadius, scale = 1, intentAdmitted = false) {
   scale = Number.isFinite(scale) && scale > 0 ? scale : 1;
   const radius = Number(body?.Radius) * scale;
@@ -82,7 +83,13 @@ export function rollerBodyOverlap(fwd, lat, dy, horizontalSpeed, body, playerRad
   if (![radius, widthHalf, targetRadius].every(Number.isFinite) || radius < 0 || widthHalf < radius || targetRadius < 0) return false;
   // A valid #1109 stick-driven roll can be almost stationary. The old
   // direct callers still require the original 1-unit/s speed threshold.
-  if (!((intentAdmitted || horizontalSpeed > 1) && fwd > -0.2 && fwd < 1.35 && Math.abs(dy) < 1.2)) return false;
+  // Owner report 2026-10-18: a target touching the front of the drawn drum
+  // (centre 1.35-1.6 ahead) took no damage. The old fixed 1.35 front gate was
+  // tighter than the sourced body (Radius) around the existing 0.75 drum
+  // offset (roller.mjs DRUM_FORWARD); the front now ends where that body plus
+  // the target radius ends, the same bound as rollerContactCandidate.
+  const front = ROLLER_BODY_FORWARD + radius + targetRadius + EPSILON;
+  if (!((intentAdmitted || horizontalSpeed > 1) && fwd > -0.2 && fwd < front && Math.abs(dy) < 1.2)) return false;
   const coreHalf = widthHalf - radius;
   const lateralFromCore = Math.max(0, Math.abs(lat) - coreHalf);
   return lateralFromCore <= radius + targetRadius + EPSILON;
