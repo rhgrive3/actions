@@ -3,20 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - patches/splatoon3/**
-      - patches/network-replication/**
-      - scripts/render-inkwave-circled-weapon-gallery.mjs
-      - scripts/compare-inkwave-circled-weapon-gallery.py
-      - scripts/render-inkwave-brella-gallery.mjs
-      - scripts/native-gallery-day.mjs
-      - scripts/native-gallery-day.test.mjs
-      - scripts/tests/inkwave-brella-lifecycle-observer.test.mjs
-      - scripts/tests/inkwave-brella-paper-role.test.mjs
-      - scripts/compare-inkwave-brella-gallery.py
-      - scripts/verify-inkwave-nine-model-crowd.mjs
-      - scripts/render-inkwave-nine-model-crowd.mjs
-      - scripts/render-inkwave-nine-far-gallery.mjs
-      - .github/workflows/inkwave-circled-weapon-models.yml
+      - '.github/workflows/inkwave-circled-weapon-models.yml'
 permissions:
   contents: read
 concurrency:
