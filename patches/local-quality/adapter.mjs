@@ -137,7 +137,7 @@ const IDENTITY_FILES = [
   'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'ui-actor-lifetime-adapter.mjs',
   'tenacity-adapter.mjs', 'tenacity.mjs',
-  'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
+  'idle-adapter.mjs', 'idle-resources.mjs', 'pause-frame-retention.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs', 'refl-skip-adapter.mjs', 'finish-tape-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'offline-offscreen-budget.mjs',

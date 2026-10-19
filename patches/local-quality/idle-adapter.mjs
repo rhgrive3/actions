@@ -94,6 +94,11 @@ export function adaptIdleSource(rel, code, replace) {
     patch(init, '    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.master > 0 && this.vol.music > 0);\n' + init, 'initial mute state before music initialization');
     patch("    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", "    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.master > 0 && this.vol.music > 0);\n    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", 'live and pre-init mute');
   }
+  if (rel === 'src/core/renderer.js') {
+    // Install the GPU framebuffer presentation on the real Renderer class.
+    code = "import { installPausedFrameRetention } from '../../patches/local-quality/pause-frame-retention.mjs';\n" + code;
+    code += "\ninstallPausedFrameRetention(Renderer);\n";
+  }
   if (rel === 'src/main.js') {
     code = "import { idleAttractMenuBudget, notePausedWorldChange, pausedWorldFrame, refreshEnvironmentBudget } from '../patches/local-quality/idle-resources.mjs';\n" + code;
     patch('  _setSettings(partial) {', '  _setSettings(partial) {\n    notePausedWorldChange(this, partial);', 'settings writes invalidate paused backdrop');
@@ -105,7 +110,7 @@ export function adaptIdleSource(rel, code, replace) {
     // Compose it with pause/attract budgeting without dropping either owner.
     const worldGate = code.includes('    const worldHidden = setUp || document.hidden;')
       ? 'setUp || document.hidden' : 'setUp';
-    patch(`    const worldHidden = ${worldGate};`, `    const pausedFrame = pausedWorldFrame(this, G);\n    const menuAttractBudget = idleAttractMenuBudget(this, G);\n    const worldHidden = ${worldGate} || pausedFrame.paused || (menuAttractBudget && !this._menuAttractFrame);\n    const worldDt = menuAttractBudget ? this._menuAttractFrameDelta : dt;`, 'offline pause and idle attract budget');
+    patch(`    const worldHidden = ${worldGate};`, `    const pausedFrame = pausedWorldFrame(this, G);\n    if (!pausedFrame.paused) this.R?.releasePausedFrame?.();\n    const menuAttractBudget = idleAttractMenuBudget(this, G);\n    const worldHidden = ${worldGate} || pausedFrame.paused || (menuAttractBudget && !this._menuAttractFrame);\n    const worldDt = menuAttractBudget ? this._menuAttractFrameDelta : dt;`, 'offline pause and idle attract budget');
     patch('G.fx.update(dt, G.camera);', 'G.fx.update(worldDt, G.camera);', 'attract FX cadence');
     patch('this.fxHooks?.update?.(dt);', 'this.fxHooks?.update?.(worldDt);', 'attract FX hooks cadence');
     patch('this.screenfx?.update?.(dt, this);', 'this.screenfx?.update?.(worldDt, this);', 'attract screen FX cadence');
@@ -131,13 +136,26 @@ export function adaptIdleSource(rel, code, replace) {
       '    if (this.attractT > 110 || (cov && cov[0] + cov[1] > 0.72)) {',
       'throttle menu-only turf reset coverage scan');
     patch('  _dynRes(dt) {', '  _dynRes(dt) {\n    if (this.match?.paused && !this.match.attract && !G.netm) return;', 'paused frames are not GPU headroom samples');
-    patch('      if (!setUp) this.R.render();', `      if (!setUp && pausedFrame.draw && (!menuAttractBudget || this._menuAttractFrame)) {
-        // A paused quality/context invalidation may have retired the sun map.
-        // Refresh it once with the backdrop; unchanged paused frames stay idle.
-        if (pausedFrame.paused && sm.enabled) sm.needsUpdate = true;
-        this.R.render();
-        if (pausedFrame.paused) sm.needsUpdate = false;
-        pausedFrame.commit?.();
+    patch('      if (!setUp) this.R.render();', `      if (!setUp && (!menuAttractBudget || this._menuAttractFrame)) {
+        if (pausedFrame.paused && !pausedFrame.draw) {
+          // Preserve the WebGL backdrop through page composition without
+          // rerendering the world/composer. A missing snapshot falls back.
+          if (this.R.presentPausedFrame?.() === false) {
+            this._pausedWorld = null;
+            if (sm.enabled) sm.needsUpdate = true;
+            this.R.render();
+            this.R.capturePausedFrame?.();
+            sm.needsUpdate = false;
+          }
+        } else {
+          if (pausedFrame.paused && sm.enabled) sm.needsUpdate = true;
+          this.R.render();
+          if (pausedFrame.paused) {
+            sm.needsUpdate = false;
+            if (this.R.capturePausedFrame?.() !== false) pausedFrame.commit?.();
+            else this._pausedWorld = null;
+          }
+        }
       }`, 'frozen pause or budgeted menu backdrop');
     patch('    this.menus?.update?.(dt);', '    this.menus?.update?.(dt);\n    if (pausedFrame.paused) G.renderer.shadowMap.needsUpdate = false;', 'paused shadow flag retirement');
     patch("    if (m && !m.attract && this.hud && (m.state === 'playing' || m.state === 'intro' || m.state === 'finish')) this._updateHud(dt);",
