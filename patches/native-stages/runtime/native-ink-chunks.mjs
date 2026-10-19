@@ -39,12 +39,27 @@ export class NativeInkMesh extends THREE.Mesh {
     this._frustum = new THREE.Frustum();
     this._ready = true;
     this.geometry = geometry;
-    this.onBeforeRender = (_renderer, _scene, camera) => this.selectVisible(camera);
+    this.onBeforeRender = (_renderer, scene, camera) => {
+      // GTAO normal/depth override must not render transparent paint as opaque.
+      // Restore the last colour range *before* the camera-cache fast path.
+      if (scene?.overrideMaterial) {
+        if (!this._overrideHidden) this._colourDrawCount = this.geometry.drawRange.count;
+        this._overrideHidden = true;
+        this.geometry.setDrawRange(0, 0);
+        return;
+      }
+      if (this._overrideHidden) {
+        this._overrideHidden = false;
+        this.geometry.setDrawRange(0, this._colourDrawCount);
+      }
+      this.selectVisible(camera);
+    };
   }
   get geometry() { return this._geometry; }
   set geometry(next) {
     if (!this._ready) { this._geometry = next; return; }
     const chunks = partitionNativeInk(next, this.tileSize);
+    this._detachPaint();
     this._disposeChunks();
     this._geometry = next;
     this.chunks = chunks;
@@ -86,7 +101,103 @@ export class NativeInkMesh extends THREE.Mesh {
     this._lastReversedDepth = undefined;
     this._lastVisibleCount = 0;
     this._fullDraw = false;
+    // Null means no paint binding (existing callers keep full geometry).
+    this._painted = null;
+    this._paintedCount = 0;
+    this._overrideHidden = false;
+    this._colourDrawCount = 0;
   }
+
+  /** Bind only this native world's paint instance, never global prototypes. */
+  bindPaint(paint) {
+    this._detachPaint();
+    if (!paint || typeof paint._pushQuad !== 'function' || typeof paint.clear !== 'function')
+      throw new TypeError('Native ink paint binding requires a paint system');
+    const mesh = this, push = paint._pushQuad, clear = paint.clear;
+    this._painted = new Uint8Array(this.chunks.length);
+    this._paintedCount = 0;
+    // Binding an already painted atlas must not hide previously stored ink.
+    if (paint.grid?.some?.(value => value !== 0)) {
+      this._painted.fill(1);
+      this._paintedCount = this._painted.length;
+    }
+    this._lastViewValid = false;
+    this._visible.fill(255);
+    const wrappedPush = function(f, u0, u1, v0, v1) {
+      const result = push.apply(this, arguments);
+      const a = f?.atlas;
+      if (a) {
+        const pad = (a.pad - 0.5) / a.ppm;
+        const minU = Math.max(-pad, u0), maxU = Math.min(f.su + pad, u1);
+        const minV = Math.max(-pad, v0), maxV = Math.min(f.sv + pad, v1);
+        if (minU < maxU && minV < maxV) mesh._markPaintBounds(f, minU, maxU, minV, maxV);
+      }
+      return result;
+    };
+    const wrappedClear = function() {
+      const result = clear.apply(this, arguments);
+      mesh.clearPainted();
+      return result;
+    };
+    paint._pushQuad = wrappedPush;
+    paint.clear = wrappedClear;
+    this._paintBinding = { paint, push, clear, wrappedPush, wrappedClear };
+    return this;
+  }
+
+  clearPainted() {
+    if (!this._painted) return;
+    this._painted.fill(0);
+    this._paintedCount = 0;
+    this._lastViewValid = false;
+    this._visible.fill(255);
+  }
+
+  _markPaintBounds(face, u0, u1, v0, v1) {
+    if (!this._painted || this._paintedCount === this.chunks.length) return;
+    const { origin: o, u, v } = face;
+    // Paint and collision use the same local-space face basis. Every chunk
+    // contains complete triangle bounds, not just its centroid tile: AABB
+    // overlap is conservative even for a triangle crossing many 16m tiles.
+    if (!o || !u || !v) {
+      this._painted.fill(1);
+      this._paintedCount = this._painted.length;
+      this._lastViewValid = false;
+      return;
+    }
+    const loX = o.x + Math.min(u.x * u0, u.x * u1) + Math.min(v.x * v0, v.x * v1) - 0.05;
+    const hiX = o.x + Math.max(u.x * u0, u.x * u1) + Math.max(v.x * v0, v.x * v1) + 0.05;
+    const loY = o.y + Math.min(u.y * u0, u.y * u1) + Math.min(v.y * v0, v.y * v1) - 0.05;
+    const hiY = o.y + Math.max(u.y * u0, u.y * u1) + Math.max(v.y * v0, v.y * v1) + 0.05;
+    const loZ = o.z + Math.min(u.z * u0, u.z * u1) + Math.min(v.z * v0, v.z * v1) - 0.05;
+    const hiZ = o.z + Math.max(u.z * u0, u.z * u1) + Math.max(v.z * v0, v.z * v1) + 0.05;
+    if (![loX, hiX, loY, hiY, loZ, hiZ].every(Number.isFinite)) {
+      this._painted.fill(1);
+      this._paintedCount = this._painted.length;
+      this._lastViewValid = false;
+      return;
+    }
+    let changed = false;
+    for (let i = 0; i < this.chunks.length; i++) {
+      if (this._painted[i]) continue;
+      const b = this.chunks[i].boundingBox;
+      if (loX > b.max.x || hiX < b.min.x || loY > b.max.y || hiY < b.min.y ||
+          loZ > b.max.z || hiZ < b.min.z) continue;
+      this._painted[i] = 1;
+      this._paintedCount++;
+      changed = true;
+    }
+    if (changed) this._lastViewValid = false;
+  }
+
+  _detachPaint() {
+    const binding = this._paintBinding;
+    if (!binding) return;
+    if (binding.paint._pushQuad === binding.wrappedPush) binding.paint._pushQuad = binding.push;
+    if (binding.paint.clear === binding.wrappedClear) binding.paint.clear = binding.clear;
+    this._paintBinding = null;
+  }
+
   selectVisible(camera) {
     // World transform and renderer depth convention are part of the
     // frustum contract, including transformed stage objects and reverse Z.
@@ -112,7 +223,8 @@ export class NativeInkMesh extends THREE.Mesh {
 
     let changed = false, visibleCount = 0;
     for (let tile = 0; tile < this.chunks.length; tile++) {
-      const visible = this._frustum.intersectsSphere(this.chunks[tile].boundingSphere) ? 1 : 0;
+      const visible = (this._painted === null || this._painted[tile]) &&
+        this._frustum.intersectsSphere(this.chunks[tile].boundingSphere) ? 1 : 0;
       if (visible !== this._visible[tile]) changed = true;
       this._visible[tile] = visible;
       visibleCount += visible;
@@ -183,6 +295,7 @@ export class NativeInkMesh extends THREE.Mesh {
   }
   _disposeChunks() { for (const g of this.chunks || []) g.dispose(); this.chunks = []; }
   dispose() {
+    this._detachPaint();
     this.removeFromParent();
     this._disposeChunks();
     this._geometry?.dispose();
