@@ -217,6 +217,16 @@ export function rollerDrumSupport(a, G, scratch) {
     }
     if (floor && wall) break;
   }
+  // On low stage slabs, the actor's admitted ground pose may sit 0.05m
+  // above the rendered top. The drum has a 0.4m radius, so an exact
+  // capsule-AABB intersection misses such a floor by that same pose offset.
+  // Resolve the *actual world floor under the drum* within its short pose
+  // clearance instead of treating the established grounded roll as airborne.
+  // This does not project beyond an edge or admit wall-only/dry damage.
+  if (!floor && a.grounded && typeof level.groundHeight === 'function') {
+    const height=level.groundHeight(cx,cz,a.pos.y+0.09);
+    if (Number.isFinite(height) && Math.abs(a.pos.y-height)<=0.075) floor=true;
+  }
   return { floor, wall, supported: floor || wall };
 }
 
