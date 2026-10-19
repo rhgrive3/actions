@@ -34,7 +34,7 @@ export async function nativeFixture(options={}){
  export {nativeSourceGroundedForm} from './patches/native-stages/runtime/native-bot-form.mjs';
 
  export { NativeInkMesh,partitionNativeInk } from './patches/native-stages/runtime/native-ink-chunks.mjs';
- export { nativeInkGeometry,nativeInkMaterial } from './patches/native-stages/runtime/native-render.mjs';
+ export { nativeInkGeometry,nativeInkMaterial,nativeDisplay } from './patches/native-stages/runtime/native-render.mjs';
  `});
 }
 export function readStage(root,id){
