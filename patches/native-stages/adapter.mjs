@@ -128,8 +128,8 @@ export function adaptNativeStages(rel,code){
   // A native chart with no live mask cells is provably unable to claim ink:
   // _cpuSplat already skips every dead cell. Elide that CPU scan only; retain
   // the identical visual GPU splat/drip entries, owner order and render path.
-  once('        if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);',
-       '        if (!cosmetic && (!this.level.native || !f.nativeEmpty)) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);');
+  once('        if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);',
+       '        if (!cosmetic && (!this.level.native || !f.nativeEmpty)) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);');
   // regionStats likewise counted zero cells for an all-dead native chart.
   once('        if (!f.turf || !f.atlas) continue;',
        '        if (!f.turf || !f.atlas || (this.level.native && f.nativeEmpty)) continue;');

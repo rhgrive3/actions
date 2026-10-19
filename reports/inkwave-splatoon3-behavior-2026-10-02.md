@@ -4895,6 +4895,8 @@ Current-base follow-up (2026-10-13): the final reconciliation preserves external
 
 ## 2026-10-16: native collision query lifetime optimization
 
+- 2026-10-19: #1671 の iPad Safari 遅延切分けに伴い、#1670 の native paint adapter が先行 network の ownerOrder/orderState を落とさず合成できる2行修正と、opt-in の box/capsule 呼出・fixed tick 計測を追加。既存の ray/sweep カウンタ0を接触処理0と解釈しない。実機FPS改善、本家同等性、長時間rawtraceは未確認。source回帰・計測負荷の範囲は [専用記録](inkwave-native-profiler-repair-2026-10-19.md) を参照。
+
 - Reference/conditions: retain the documented Splatoon 3 11.3.0 baseline; all
   weapon/gear settings unchanged. No new retail numeric values are inferred.
 - INKWAVE implementation: `patches/native-stages/runtime/triangle-world.mjs`
