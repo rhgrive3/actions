@@ -96,3 +96,47 @@ test('protected-target route fallback delegates legacy, normal goals and stale w
  const path=brain.path;brain.path=path.slice();assert.equal(resolve(),blocked);brain.path=path;
  L.native=false;assert.equal(resolve(),blocked);
 });
+
+test('source combat edge steering reuses only the identical starting foot ring, with unchanged steering',()=>{
+ for(const variant of [{},{ramp:true},{grate:true},{noPaint:true}]){
+  const {G,a,brain}=setup(variant);
+  a.vel.set(8,0,0);
+  assert.equal(typeof brain._edgeGuardUncached,'function','the uncached path stays available for A/B');
+  const raw=G.physics.groundProbe;let calls=0;
+  G.physics.groundProbe=function(...args){calls++;return raw.apply(this,args);};
+  const before=new f.THREE.Vector3(1,0,0);
+  brain._edgeClear=null;
+  brain._edgeGuardUncached(a,before);
+  const baselineCalls=calls;
+  calls=0;brain._edgeClear=null;
+  const after=new f.THREE.Vector3(1,0,0);
+  brain._edgeGuard(a,after);
+  const cachedCalls=calls;
+  assert.deepEqual(after.toArray(),before.toArray(), 'the original corner/cliff decision is preserved');
+  assert(cachedCalls<baselineCalls,'the repeated starting foot ring must be eliminated');
+  assert.equal(brain._nativeCombatEdgeProbe.active,false,'edge-scope cache never survives the call');
+  // The same physical probe outside steering remains live, not reused on a
+  // later simulation tick or across a rank-object/dynamic-deck change.
+  calls=0;brain._wet(1.1,0,a.pos.y);const normalCalls=calls;
+  calls=0;brain._wet(1.1,0,a.pos.y);
+  assert.equal(calls,normalCalls,'ordinary wet checks must not reuse an edge check');
+ }
+});
+
+test('edge-guard cache clears on exception and never serves a moved actor',()=>{
+ const {G,a,brain}=setup();
+ const original=brain._edgeGuardUncached;
+ brain._edgeGuardUncached=function(){throw new Error('edge-probe-test');};
+ assert.throws(()=>brain._edgeGuard(a,new f.THREE.Vector3(1,0,0)),/edge-probe-test/);
+ assert.equal(brain._nativeCombatEdgeProbe.active,false);
+ brain._edgeGuardUncached=original;
+ const raw=G.physics.groundProbe;let calls=0;
+ G.physics.groundProbe=function(...args){calls++;return raw.apply(this,args);};
+ const cache=brain._nativeCombatEdgeProbe;
+ cache.active=true;cache.ready=true;cache.actor=a;cache.physics=G.physics;cache.level=G.level;
+ cache.x=a.pos.x;cache.y=a.pos.y;cache.z=a.pos.z;cache.squid=false;cache.safe=true;cache.height=a.pos.y;
+ a.pos.x+=.01;
+ brain._wet(a.pos.x+.1,a.pos.z,a.pos.y);
+ assert(calls>1,'movement during a scope invalidates a cached starting foot ring');
+ cache.active=false;
+});
