@@ -76,6 +76,13 @@ export function adaptNativeStages(rel,code){
     }
     if (!flow.current()) return;
     const theme = mapTheme(map, opts.time);`);
+
+  // Pausing a demo match must also stop its attract camera/reset driver.
+  // Otherwise the timed 110s/coverage reset can recreate bots mid-loader.
+  once('      if (m.attract) this._updateAttract(dt);',
+    '      if (m.attract && !m.paused) this._updateAttract(dt);');
+  once('this._fade(1, 400).then(() => { this._setPalette(this._pickPalette()); this._startAttract(); this._fade(0, 600); });',
+    'this._fade(1, 400).then(() => { if (!this.match?.attract || this.match.paused) return; this._setPalette(this._pickPalette()); this._startAttract(); this._fade(0, 600); });');
   // The outgoing attract/live match stays visible during the fade, but it must
   // not simulate or emit weapon audio while MP3 preflight / native assets await.
   // Dispose it after the fade as before, then clear BOTH owners so _frame cannot
