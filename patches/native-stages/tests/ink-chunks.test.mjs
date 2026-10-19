@@ -197,6 +197,10 @@ test('native painted-only culling keeps crossing triangles, clears and restores 
  assert.equal(paint.clear(),'cleared');
  assert.equal(mesh.selectVisible(camera),0,'clear makes every chunk unpainted again');
  assert.equal(g.drawRange.count,0);
+ // Unexpected face-coordinate mismatch must not silently hide ink.
+ paint._pushQuad({...face,origin:new THREE.Vector3(300,0,300)},1,2,1,2);
+ assert.equal(mesh.selectVisible(camera),2,'unknown paint mapping fails open');
+ assert.equal(g.drawRange.count,6);
  mesh.dispose();mesh.material.dispose();
  assert.equal(paint._pushQuad,originalPush,'disposing restores paint callbacks');
  assert.equal(paint.clear,originalClear);
