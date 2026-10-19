@@ -73,7 +73,7 @@ export function adaptWeaponAudio(rel,code){
   }
   if(rel==='src/main.js'){
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
-      'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
+      'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); if(self.menus?._setup?.mode!==\'boss\') G.music?.preloadFile?.(\'battle\',{prime:true}); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
       'iPad start tap initializes audio and warms the selected recorded shot before screen wipe');
     // Loadout changes occur in the real menu, well before the shooting clock.
     // The 2022 shooter MP3 is demand-paged on that user gesture, not first
@@ -95,6 +95,7 @@ export function adaptWeaponAudio(rel,code){
       method=once(method,
         '    G.audio?.init?.();\n    if (!flow.current()) return;',
         '    G.audio?.init?.();\n    if (!flow.current()) return;\n' +
+        "    if (" + (label === 'offline' ? "o?.mode" : "cfg?.mode") + " !== 'boss') G.music?.preloadFile?.('battle', { prime: true });\n" +
         "    if(typeof G.audio?.requireRecordedMainShot!=='function') throw new Error('Recorded weapon audio is not installed');\n" +
         '    const selectedShotReady=G.audio.requireRecordedMainShot('+selected+').then(value=>({value}),error=>({error}));',
         label+' start selected recorded MP3');
@@ -148,7 +149,11 @@ export function adaptWeaponAudio(rel,code){
   if(rel==='src/audio/music.js'){
     code="import { installOriginalAudioScore } from '../../patches/splatoon3/runtime/audio/music-score.mjs';\n"+code;
     code=once(code,'const compiled = new Map();','installOriginalAudioScore(SONGS);\nconst compiled = new Map();','original score');
-    code=once(code,'if (cur && fade > 0 && cur.song.bpm === song.bpm)',"if (opts.sync !== false && track !== 'battle_final' && cur && fade > 0 && cur.song.bpm === song.bpm)",'final minute grid');
+    const streamingGrid = 'if (cur && !element && !(cur instanceof StreamedTrack) && fade > 0 && cur.song.bpm === song.bpm)';
+    const standardGrid = 'if (cur && fade > 0 && cur.song.bpm === song.bpm)';
+    const activeGrid = code.includes(streamingGrid) ? streamingGrid : standardGrid;
+    if (code.split(activeGrid).length !== 2) throw new Error('audio adapter ambiguous final minute grid');
+    code=once(code,activeGrid,activeGrid.replace('if (cur &&',"if (opts.sync !== false && track !== 'battle_final' && cur &&"),'final minute grid');
     code=once(code,'let t0 = now + 0.06, sync = false;',"let t0 = Number.isFinite(opts.at) ? Math.max(now,opts.at) : now + (track==='battle_final' ? .015 : .06), sync = false;",'music clock');
   }
   if(rel==='patches/splatoon3/runtime/weapons-charger-flight.mjs'){

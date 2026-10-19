@@ -55,7 +55,7 @@ test('normal resolved AudioContext has no unnecessary second resume on the next 
 test('real START touch initializes the configured music/SFX bus before the deferred wipe',()=>{
   const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const patched=adaptBuildSource('src/main.js',src);
-  assert.match(patched,/prepareMatch: \(\) => \{ G\.audio\?\.init\?\.\(\); self\._applyAudioVolumes\(\); G\.audio\?\.prepareWeapon\?\.\(self\.profile\.weapon\|\|'shooter',\{urgent:true\}\); self\._prepareGyro\(\); \}/);
+  assert.match(patched,/prepareMatch: \(\) => \{ G\.audio\?\.init\?\.\(\); self\._applyAudioVolumes\(\); if\(self\.menus\?\._setup\?\.mode!=='boss'\) G\.music\?\.preloadFile\?\.\('battle',\{prime:true\}\); G\.audio\?\.prepareWeapon\?\.\(self\.profile\.weapon\|\|'shooter',\{urgent:true\}\); self\._prepareGyro\(\); \}/);
   assert.match(patched,/self\.profile\.weapon = weapon; saveJSON\('inkwave\.profile', self\.profile\); G\.audio\?\.prepareWeapon\?\.\(weapon,\{urgent:true\}\);/,'loadout begins recorded-shot prefetch during selection');
   assert.match(src,/prepareMatch: \(\) => self\._prepareGyro\(\)/,'negative control: main does not unlock in START callback');
   assert.match(src,/async startMatch\(o = \{\}\)/,'normal match constructor remains intact');
