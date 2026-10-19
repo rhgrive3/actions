@@ -17,7 +17,7 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
   let state = seed >>> 0, draws = 0;
   const math = Object.create(Math);
   math.random = () => { draws++; state |= 0; state = state + 0x6d2b79f5 | 0; let t = Math.imul(state ^ state >>> 15, 1 | state); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-  const context = vm.createContext({console, performance, Math: math, structuredClone});
+  const context = vm.createContext({console, performance, TextEncoder, Math: math, structuredClone});
   const modules = new Map();
   const entry = new vm.SourceTextModule(`
     export * as THREE from 'three';

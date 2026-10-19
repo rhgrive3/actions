@@ -21,7 +21,7 @@ export const productionComposition = (rel, source) => adaptRange(rel,
 
 export async function fixture({ profileTransform, composeProductionAdapters = false, jumpSpreadControl = false } = {}) {
   const math = Object.create(Math); math.random = Math.random;
-  const context = vm.createContext({ console, performance, Math: math });
+  const context = vm.createContext({ console, performance, TextEncoder, Math: math });
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');

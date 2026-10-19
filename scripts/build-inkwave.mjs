@@ -293,6 +293,7 @@ visit('patches/splatoon3/runtime/audio/combat-hit-classifier.mjs');
 visit('patches/splatoon3/runtime/audio/blaster-hit.mjs');
 // Worker modules have no main-thread static importer, but must retain their
 // own immutable offline dependencies. The source payload stays outside it.
+visit('patches/native-stages/runtime/native-world.mjs');
 visit('patches/native-stages/runtime/source-worker.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
@@ -301,6 +302,8 @@ visit('patches/native-stages/runtime/source-worker.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  'patches/native-stages/runtime/native-world.mjs',
+  'patches/native-stages/runtime/source-menu.mjs',
   'patches/native-stages/runtime/source-worker.mjs',
   // The catalogue and native ink collision solvers import this small standalone module.
   // Include it in the immutable offline graph, not as an eager startup request.
