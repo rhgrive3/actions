@@ -4,13 +4,21 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { chromium } from "playwright";
+import { execFileSync } from 'node:child_process';
 const diagnostic = process.argv.includes("--diagnostic");
+const baselineIndex=process.argv.indexOf('--baseline-ref');
+const baselineRef=baselineIndex<0?null:process.argv[baselineIndex+1];
+const overlay=new Map(baselineRef?['main-weapon-catalog.mjs','weapons-fidelity.mjs','roller-contact-paint.mjs'].map(name=>{
+  const rel='patches/splatoon3/runtime/'+name;
+  return ['/'+rel,execFileSync('git',['show',baselineRef+':'+rel])];
+}):[]);
 const site = path.resolve(process.argv[2]),
   out = path.resolve(process.argv[3]),
   id = process.argv[4] || "roller",
   hz = Number(process.argv[5] || 60);
 fs.mkdirSync(out, { recursive: true });
 const server = http.createServer((req, res) => {
+  if(overlay.has(req.url)){res.setHeader('content-type','text/javascript');return res.end(overlay.get(req.url));}
   if (req.url === "/probe") {
     res.setHeader("content-type", "text/html");
     return res.end(
@@ -124,8 +132,8 @@ try {
       };
       G.physics = new Physics(G.level);
       G.paint = new PaintSystem(renderer, G.level, {
-        atlasSize: 2048,
-        maxDensity: 60,
+        atlasSize: 1024,
+        maxDensity: 30,
         cell: 0.05,
       });
       G.projectiles = new Projectiles(G.scene);
@@ -224,6 +232,16 @@ try {
           row = Math.floor(atlas.y + atlas.pad + (z + 5) * atlas.ppm);
         return pixels[4 * (row * G.paint.size + col) + 3];
       };
+      // Independent 11.3.0 BodyParam.PaintParam endpoints, also transcribed
+      // as full firing-range-line widths 1.12/.88/1.36/1.04/1.36 (one line=5).
+      const sourceHalf = {roller:2.8,'s3-roller-compact':2.2,'s3-roller-heavy':3.4,
+        's3-roller-hunter':2.6,'s3-roller-wide':3.4}[id];
+      const spans=[];
+      for(let z=a.pos.z-4;z<a.pos.z-2;z+=.1){
+        let lo=Infinity,hi=-Infinity;
+        for(let x=-4.5;x<=4.5;x+=.025)if(sample(x,z)>=128){lo=Math.min(lo,x);hi=Math.max(hi,x);}
+        if(hi>=lo)spans.push(hi-lo);
+      }
       let holes = 0,
         rows = 0;
       for (let z = 2; z < a.pos.z - 0.5; z += 0.05) {
@@ -250,6 +268,8 @@ try {
         id,
         hz,
         physicalHalf,
+        sourceHalf,
+        gpuMinWidth:Math.min(...spans),gpuMaxWidth:Math.max(...spans),
         contactError,
         cpuHoles,
         actor: a.pos.toArray(),
@@ -274,6 +294,8 @@ try {
     contentHash: build.contentHash,
     browser: browser.version(),
     errors,
+    baselineRef,
+    runtimeOverlayPaths:[...overlay.keys()],
   });
   fs.writeFileSync(
     path.join(out, "result.json"),
@@ -288,6 +310,7 @@ try {
       cpuHoles: result.cpuHoles,
       contactError: result.contactError,
       width: result.events.at(-1).r * 2,
+      gpuMaxWidth: result.gpuMaxWidth,
     }),
   );
   if (!diagnostic) {
@@ -302,10 +325,10 @@ try {
       result.events.every((e) => e.footprint === "ink-contact"),
       "one continuous physical band",
     );
-    assert.ok(
-      result.events.every((e) => e.r <= result.physicalHalf + 1e-5),
-      "paint stays within cylinder width",
-    );
+    assert.ok(result.events.every(e=>Math.abs(e.r-result.sourceHalf)<1e-5),
+      'paint width uses the sourced endpoint, independently of drum geometry');
+    assert.ok(result.gpuMaxWidth>=2*result.sourceHalf*.93&&result.gpuMaxWidth<=2*result.sourceHalf+.15,
+      'actual GPU stripe reaches the source width, not just the model width');
     assert.equal(result.ticks, 150);
   }
 } finally {
