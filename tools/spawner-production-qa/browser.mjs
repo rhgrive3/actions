@@ -1,4 +1,20 @@
 import {productionScene} from './shared/production-scene.mjs';
+export const SPAWNER_ACTOR_CAPTURE_DISTANCE=6.9;
+// Capture-only framing guard. Runtime model and launch behavior are unchanged.
+export function spawnerFrameBounds(THREE,camera,pod){
+ camera.updateMatrixWorld(true);pod.updateWorldMatrix(true,true);
+ const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity],point=new THREE.Vector3();
+ pod.traverse(mesh=>{
+  const positions=mesh.geometry?.attributes?.position;if(!positions)return;
+  for(let i=0;i<positions.count;i++){
+   point.fromBufferAttribute(positions,i).applyMatrix4(mesh.matrixWorld).project(camera);
+   const values=[point.x,point.y,point.z];
+   for(let axis=0;axis<3;axis++){if(!Number.isFinite(values[axis]))throw Error('Non-finite spawner frame');min[axis]=Math.min(min[axis],values[axis]);max[axis]=Math.max(max[axis],values[axis]);}
+  }
+ });
+ if(min[0]<-.98||min[1]<-.98||max[0]>.98||max[1]>.98||min[2]<-1||max[2]>1)throw Error('Spawner frame clips model envelope: '+JSON.stringify({min,max}));
+ return{min,max,margin:.98};
+}
 export async function run({prefix,baselinePrefix}){
  const rows=[],metrics=[];let beforeLighting;
  for(const[variant,source]of [['before',baselinePrefix],['after',prefix]]){
@@ -15,10 +31,10 @@ export async function run({prefix,baselinePrefix}){
   if(metric.meshes!==5||metric.textures!==0)throw Error('Model batch/texture budget');if(variant==='after'&&metric.triangles>2800)throw Error('Model triangle budget');metrics.push(metric);
   for(const actorVisible of [false,true]){
    a.character.root.visible=actorVisible;
-   const target=new THREE.Vector3(0,actorVisible?.55:-.29,actorVisible?0:.09),distance=actorVisible?6.3:3.5;
+   const target=new THREE.Vector3(0,actorVisible?.55:-.29,actorVisible?0:.09),distance=actorVisible?SPAWNER_ACTOR_CAPTURE_DISTANCE:3.5;
    for(const[view,dir]of Object.entries({front:[0,.05,1],side:[1,.05,0],back:[0,.05,-1],oblique:[.7,.45,1]})){
     camera.position.copy(target).add(new THREE.Vector3(...dir).normalize().multiplyScalar(distance));camera.lookAt(target);
-    const name=variant+'-'+(actorVisible?'native-actor-':'model-')+view,row=await capture(name);rows.push({...row,variant,actorVisible,view});
+    const frameBounds=spawnerFrameBounds(THREE,camera,pod),name=variant+'-'+(actorVisible?'native-actor-':'model-')+view,row=await capture(name);rows.push({...row,variant,actorVisible,view,frameBounds});
     if(!beforeLighting)beforeLighting=row.lighting;else if(JSON.stringify(row.lighting)!==JSON.stringify(beforeLighting))throw Error('Unequal native lighting/post state');
    }
   }
@@ -45,8 +61,8 @@ export async function run({prefix,baselinePrefix}){
   const sourceOwner={variant:sa.character.sourceMotion.variant,status:sa.character.sourceMotion.status,active:!!sa.character.sourceMotion.active,sourceUpper:sa.character.sourceMotion.sourceUpper??null,seed:sa.character.seed,footBones:Object.fromEntries(['footL','footR'].map(name=>[name,sa.character.bones[name].getWorldPosition(new THREE.Vector3()).toArray()])),podBounds:{min:new THREE.Box3().setFromObject(sourcePod).min.toArray(),max:new THREE.Box3().setFromObject(sourcePod).max.toArray()}};
   metric.sourceOwner=sourceOwner;
   for(const[view,dir]of Object.entries({front:[0,.05,1],side:[1,.05,0],back:[0,.05,-1],oblique:[.7,.45,1]})){
-    const target=new THREE.Vector3(0,.55,0);camera.position.copy(target).add(new THREE.Vector3(...dir).normalize().multiplyScalar(6.3));camera.lookAt(target);
-    const row=await capture(variant+'-source-loaded-actor-'+view);rows.push({...row,variant,actorVisible:true,view,sourceOwner});
+    const target=new THREE.Vector3(0,.55,0);camera.position.copy(target).add(new THREE.Vector3(...dir).normalize().multiplyScalar(SPAWNER_ACTOR_CAPTURE_DISTANCE));camera.lookAt(target);
+    const frameBounds=spawnerFrameBounds(THREE,camera,sourcePod),row=await capture(variant+'-source-loaded-actor-'+view);rows.push({...row,variant,actorVisible:true,view,sourceOwner,frameBounds});
     if(JSON.stringify(row.lighting)!==JSON.stringify(beforeLighting))throw Error('Unequal source/native lighting/post state');
   }
   scene.remove(sa.character.root);sa.character.dispose();ctx.dispose();

@@ -100,6 +100,37 @@ export async function run({prefix,baselinePrefix}){
   Match.prototype.playRankedEvents.call(match,engine.events.splice(0));update();view([0,.95,.3],[1,.15,1],5.1);await save('source-release-0ms');
   G.time+=.1;sourceActor._finishFrame(.1);engine.update(.1,{actors:[],inputs:{},floorAt:()=>0,blocked:()=>false});update(.1);await save('source-release-100ms');
   metric.sourceOwner={status:sourceActor.character.sourceMotion.status,active:sourceActor.character.sourceMotion.active};
+  // Rear-view reference diagnostic. Nintendo JP is 16:9 with unknown camera
+  // intrinsics; this keeps the suite's 900-square contract. Actual inputs only.
+  const {Level}=await import(source+'src/world/level.js');
+  G.level=new Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});
+  G.physics=new Physics(G.level);match.canRespawn=()=>false;match.rankedEffects.update=()=>{};match.rankedBarrierHits=[];
+  match.playRankedEvents=events=>Match.prototype.playRankedEvents.call(match,events);
+  rule.state.clams=[];rule.state.inventories={};update();
+  sourceActor.pos.set(0,0,0);sourceActor.vel.set(0,0,0);sourceActor.grounded=sourceActor.ground.hit=true;sourceActor.ground.block=0;sourceActor.groundN.set(0,1,0);sourceActor.aimPitch=.6;
+  const rearTick=()=>{G.time+=1/60;sourceActor.update(1/60);Match.prototype.advanceRanked.call(match,1/60);};
+  for(let i=0;i<45;i++)rearTick();
+  rule.state.inventories['source-player']={team:0,power:true,small:0};update();
+  sourceActor.intent.jump=true;rearTick();sourceActor.intent.jump=false;
+  let jumpTicks=1;while(sourceActor.vel.y>0&&jumpTicks<90){rearTick();jumpTicks++;}
+  assert(!sourceActor.grounded&&sourceActor.vel.y<=0&&jumpTicks<90,'Rear diagnostic requires the real descending jump');
+  const rearOrigin=sourceActor.pos.clone();camera.fov=82;camera.updateProjectionMatrix();
+  camera.position.copy(rearOrigin).add(new THREE.Vector3(0,.3,-3.25));camera.lookAt(rearOrigin.clone().add(new THREE.Vector3(0,1.25,0)));camera.updateMatrixWorld(true);
+  metric.rearReference={cameraScope:'Rear 900-square, FOV82; not recovered Nintendo intrinsics or matched 16:9 framing',aimPitch:.6,jumpTicks,rows:[]};
+  const rearSave=async(label,eventRelativeTime)=>{
+   sourceActor.character.root.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+   const point=v=>{const view=v.clone().applyMatrix4(camera.matrixWorldInverse),ndc=v.clone().project(camera);return{world:v.toArray(),cameraDepth:-view.z,pixel:[(ndc.x+1)*450,(1-ndc.y)*450]};};
+   const ch=sourceActor.character,head=point(ch.bones.head.localToWorld(new THREE.Vector3(0,.164,.014))),hands={};
+   for(const side of ['L','R'])hands[side]=point(ch.bones['hand'+side].getWorldPosition(new THREE.Vector3()));
+   const c=rule.state.clams.at(-1),inventory=world._inventoryMarkers.get('source-player'),ball=c?point(new THREE.Vector3(...c.pos)):point(inventory.getWorldPosition(new THREE.Vector3()));
+   const extra={eventRelativeTime,head,hands,ball,headMinusBallDepth:head.cameraDepth-ball.cameraDepth,actor:{pos:sourceActor.pos.toArray(),vel:sourceActor.vel.toArray(),aimPitch:sourceActor.aimPitch},ballState:c?{pos:[...c.pos],velocity:[...c.velocity],age:c.age}:null};
+   metric.rearReference.rows.push(extra);await save('jp-rear-'+label,extra);
+  };
+  await rearSave('pre-2',-2/60);rearTick();await rearSave('pre-1',-1/60);
+  sourceActor.intent.throw=true;rearTick();sourceActor.intent.throw=false;
+  assert(rule.state.clams.at(-1)?.kind==='power','Actual input did not release a power clam');
+  await rearSave('0ms',0);rearTick();await rearSave('17ms',1/60);rearTick();await rearSave('33ms',2/60);
+  assert(projectileCalls===0,'Rear diagnostic spawned an unrelated weapon projectile');
   sourceActor.character.dispose();scene.remove(sourceActor.character.root);G.actors=match.actors=[actor];G.local=actor;rule.state.clams=[];rule.state.inventories={};update();
   const geometry=world.powerClamResources.geometry,material=world.powerClamResources.material,gateGeometry=world.baskets[0].gate.geometry;
   const start=performance.now();
@@ -108,5 +139,5 @@ export async function run({prefix,baselinePrefix}){
   assert(metric.load.geometryReused&&metric.load.materialReused&&metric.load.barrierGeometryReused,'Resource replaced');if(variant==='after')assert(metric.load.markerCache<=48,'Unbounded marker cache');
   world.dispose();actor.character.dispose();floor.geometry.dispose();floor.material.dispose();ctx.dispose();
  }
- return{status:'passed',expectedFrames:70,rows,metrics,contactSheets:['before','after'].map(variant=>({name:variant+'-clam-release-sequence',frames:['release-before','release-0ms','release-17ms','release-33ms'].map(name=>({name:variant+'-'+name}))})),scope:'Native installed Actor/RankedWorld and production Environment/PMREM/Renderer post. Before overlays three main3839 ranked modules plus bomb-motion and the shared final handoff owner (five modules total), not an entire historical build. Scale and break-tail are provisional visual calibration, not retail dimensions/timing; pre-event/event/1-frame/2-frame hand rows expose contact jumps and release residual instead of claiming exact retail motion. Dualies arm presentation is deferred to preserve both visible shot origins until its retail throw/stow rules are established.'};
+ return{status:'passed',expectedFrames:80,rows,metrics,contactSheets:['before','after'].map(variant=>({name:variant+'-clam-release-sequence',frames:['release-before','release-0ms','release-17ms','release-33ms'].map(name=>({name:variant+'-'+name}))})),scope:'Ten additional rear-view frames use real jump/throw input and head/ball depth receipts at FOV82 in 900-square output; Nintendo camera intrinsics, input timing and 16:9 framing are not recovered. Native installed Actor/RankedWorld and production Environment/PMREM/Renderer post. Before overlays three main3839 ranked modules plus bomb-motion and the shared final handoff owner (five modules total), not an entire historical build. Scale and break-tail are provisional visual calibration, not retail dimensions/timing; pre-event/event/1-frame/2-frame hand rows expose contact jumps and release residual instead of claiming exact retail motion. Dualies arm presentation is deferred to preserve both visible shot origins until its retail throw/stow rules are established.'};
 }

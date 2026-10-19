@@ -334,7 +334,10 @@ export class TowerRule {
       this.state.countProgress[team] = countProgress;
       this.state.bestProgress[team] = Math.max(this.state.bestProgress[team], countProgress / 100);
       const count = atGoal ? 0 : Math.max(1, Math.ceil(100 - countProgress - EPSILON));
-      this.engine.setCount?.(team, count);
+      // Only the current owner can earn rail/checkpoint counts. Otherwise a
+      // neutral/retaken tower still inside the same count bin immediately
+      // erases resolveTie's +1 correction for the team that just lost control.
+      if (team === this.state.controllingTeam) this.engine.setCount?.(team, count);
     }
   }
 

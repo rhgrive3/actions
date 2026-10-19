@@ -27,6 +27,25 @@ for (const suite of Object.keys(SUITES)) test(suite + ' browser harness statical
   const browserPath = 'tools/' + suite + '-production-qa/browser.mjs';
   const module = await load(browserPath);
   assert.equal(module.status, 'linked', 'Imports resolve without evaluating a browser');
+  if(suite==='spawner'){
+    await module.evaluate();
+    const THREE=await import('../../inkwave-public/vendor/three/build/three.module.js');
+    const {buildSpawnerGeometry}=await import('../../patches/splatoon3/runtime/squid-spawn-presentation.mjs');
+    const pod=new THREE.Group(),parts=buildSpawnerGeometry(THREE);
+    for(const geometry of Object.values(parts))pod.add(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial()));
+    const camera=new THREE.PerspectiveCamera(25,1,.01,5000),target=new THREE.Vector3(0,.55,0);
+    for(const dir of [[0,.05,1],[1,.05,0],[0,.05,-1],[.7,.45,1]]){
+      camera.position.copy(target).add(new THREE.Vector3(...dir).normalize().multiplyScalar(module.namespace.SPAWNER_ACTOR_CAPTURE_DISTANCE));camera.lookAt(target);
+      module.namespace.spawnerFrameBounds(THREE,camera,pod);
+    }
+    camera.position.copy(target).add(new THREE.Vector3(1,.05,0).normalize().multiplyScalar(6.3));camera.lookAt(target);
+    assert.throws(()=>module.namespace.spawnerFrameBounds(THREE,camera,pod),/clips/,'old actor side camera crops the new lower skid');
+    for(const [view,dir]of Object.entries({front:[0,.05,1],side:[1,.05,0],back:[0,.05,-1],oblique:[.7,.45,1]})){
+      target.set(0,-.29,.09);camera.position.copy(target).add(new THREE.Vector3(...dir).normalize().multiplyScalar(3.5));camera.lookAt(target);
+      module.namespace.spawnerFrameBounds(THREE,camera,pod);
+    }
+    pod.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
+  }
   assert(cache.has('tools/object-presentation-qa/production-scene.mjs'), 'Uses actual common Environment/Renderer setup');
   const source = fs.readFileSync(path.join(root, browserPath), 'utf8');
   assert.match(source, /export\s+async\s+function\s+run\s*\(/, 'Shared runner entry point');

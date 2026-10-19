@@ -1,4 +1,10 @@
 import {productionScene} from './shared/production-scene.mjs';
+// Solver ikErr is in kid coordinates. Transform the actual target and hand
+// into world coordinates so nonuniform form/root scale is included exactly.
+export function worldReachResidual(ch,target,targetWorld,handWorld){
+ targetWorld.copy(target);ch.kid.localToWorld(targetWorld);
+ ch.bones.handL.getWorldPosition(handWorld);return targetWorld.distanceTo(handWorld);
+}
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 const near=(a,b,e=1e-8)=>a.length===b.length&&a.every((v,i)=>Math.abs(v-b[i])<=e);
 // Actual composed Actor + source controller + native renderer, driven in the
@@ -26,8 +32,9 @@ export async function run({prefix,baselinePrefix}){
      const events=[],rule=new RainmakerRule({event:(kind,data)=>events.push({kind,charge:data.charge,pos:data.pos,aim:data.aim,tick})},{rainmaker:{center:[0,0,0]}}),state=rule.state;
      const match={mode:'rainmaker',ranked:{rule},playing:()=>true,canRespawn:()=>false};G.match=match;
      state.barrier.active=false;state.carrier=null;const mesh=createRainmakerModel(THREE);scene.add(mesh);const display=createRainmakerPresentation(THREE,mesh);
-     let tick=0,poseCalls=0,leftSolves=0,maxLeft=0,maxRight=0,maxReach=0,maxPoseCalls=0,maxLeftSolves=0;
-     const apply=ch._applyPose,solve=ch._solveLimb;ch._applyPose=function(...args){poseCalls++;return apply.apply(this,args);};ch._solveLimb=function(limb,...args){if(limb===this.limbs.armL)leftSolves++;const r=solve.call(this,limb,...args);if(limb===this.limbs.armL&&this._rainmakerPose)maxReach=Math.max(maxReach,this.ikErr[0]);return r;};
+     let tick=0,poseCalls=0,leftSolves=0,maxLeft=0,maxRight=0,maxReach=0,maxLocalReach=0,maxSolvedReach=0,maxPoseCalls=0,maxLeftSolves=0;
+     const reachTarget=new THREE.Vector3(),reachHand=new THREE.Vector3(),solvedTarget=new THREE.Vector3();
+     const apply=ch._applyPose,solve=ch._solveLimb;ch._applyPose=function(...args){poseCalls++;return apply.apply(this,args);};ch._solveLimb=function(limb,...args){if(limb===this.limbs.armL)leftSolves++;const r=solve.call(this,limb,...args);if(limb===this.limbs.armL&&this._rainmakerPose){maxLocalReach=Math.max(maxLocalReach,this.ikErr[0]);solvedTarget.copy(args[0]);maxSolvedReach=Math.max(maxSolvedReach,worldReachResidual(this,args[0],reachTarget,reachHand));}return r;};
      const right=new THREE.Vector3(),origin=new THREE.Vector3(),left=new THREE.Vector3(),support=new THREE.Vector3();
      const receipt=()=>({pose:Array.from(ch.P),opacity:ch.u.uOpacity.value,pivotVisible:ch.weapon.pivot.visible,material:mesh.material.uuid,sourceUpper:ch.sourceMotion?.sourceUpper??null,keepSourceArms:ch.sourceMotion?.keepSourceArms??null,constrainLeft:ch.sourceMotion?.constrainLeft??null,poseCalls,leftSolves,rngIndex});
      const normal=(name)=>{const sample=receipt(),id=key+'-'+name;if(revision==='before')ordinary.set(id,sample);else{const old=ordinary.get(id);const poseEqual=near(sample.pose,old.pose),sameRandomIndex=sample.rngIndex===old.rngIndex;ordinaryComparisons.push({id,poseEqual,rngBefore:old.rngIndex,rngAfter:sample.rngIndex,maxPoseDelta:Math.max(...sample.pose.map((v,i)=>Math.abs(v-old.pose[i]))),history:name==='before'?'identical nonholder history':'objective path may suppress the ordinary left regrip random draw'});if(name==='before'){check(sameRandomIndex,id+' nonholder RNG count changed');check(poseEqual,id+' nonholder pose changed');}check(sample.opacity===old.opacity&&sample.poseCalls===old.poseCalls&&sample.leftSolves===old.leftSolves,id+' ordinary opacity/solver changed');check(sample.sourceUpper===old.sourceUpper&&sample.keepSourceArms===old.keepSourceArms&&sample.constrainLeft===old.constrainLeft,id+' source ownership changed');}};
@@ -36,6 +43,7 @@ export async function run({prefix,baselinePrefix}){
       if(advanceRule&&state.carrier)rule._updateShot(1/60,{id:'carrier',team,pos:a.pos.toArray(),aim:a.aimDir.toArray(),swimming:a.form==='squid'},{fire});
       display.update(state.carrier?a:null,state.charge.value);scene.updateMatrixWorld(true);
       if(ch._rainmakerPose){
+       maxReach=Math.max(maxReach,worldReachResidual(ch,solvedTarget,reachTarget,reachHand));
        ch.weapon.pivot.getWorldPosition(right);mesh.getWorldPosition(origin);maxRight=Math.max(maxRight,right.distanceTo(origin));
        left.copy(ch.weapon.pivot.position);left.x=-left.x;ch.bones.handL.localToWorld(left);support.set(0,0,.07);mesh.localToWorld(support);maxLeft=Math.max(maxLeft,left.distanceTo(support));
        maxPoseCalls=Math.max(maxPoseCalls,poseCalls);maxLeftSolves=Math.max(maxLeftSolves,leftSolves);
@@ -78,19 +86,19 @@ export async function run({prefix,baselinePrefix}){
       ch.trigger(weapon==='roller'?'flick':'throw');for(let i=0;i<15;i++)step(false,false);
       // Camera pitch, jump and re-emergence use the same live grip frame.
       for(const pitch of [-1.05,1.15]){a.aimPitch=pitch;a.aimDir.set(Math.sin(a.yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(a.yaw)*Math.cos(pitch));for(let i=0;i<8;i++)step(false,false);}
-      a.aimPitch=0;a.aimDir.set(0,0,1);a.grounded=a.ground.hit=false;a.vel.set(0,2,0);for(let i=0;i<8;i++)step(false,false);a.grounded=a.ground.hit=true;a.vel.set(0,0,0);
+      a.aimPitch=0;a.aimDir.set(0,0,1);a.grounded=a.ground.hit=false;a.vel.set(0,2,0);for(let i=0;i<8;i++)step(false,false);await snap('jump');a.grounded=a.ground.hit=true;a.vel.set(0,0,0);
       a.form='squid';for(let i=0;i<12;i++)step(false,false);check(!ch._rainmakerPose,key+' squid releases pose');a.form='kid';for(let i=0;i<18;i++)step(false,false);
-      if(revision==='after'){check(maxRight<1e-6,key+' right grip');check(maxLeft<.001,key+' left grip '+maxLeft);check(maxReach<.001,key+' arm overextension '+maxReach);}
+      if(revision==='after'){check(maxRight<1e-6,key+' right grip');check(maxLeft<.001,key+' left grip '+maxLeft);check(maxReach<.001,key+' world arm reach residual '+maxReach);}
       if(source){ch.sourceMotion.setEnabled(false);for(let i=0;i<12;i++)step(false,false);ch.sourceMotion.setEnabled(true);for(let i=0;i<30;i++)step(false,false);}
       state.carrier=null;for(let i=0;i<120;i++)step(false,false);check(ch.weapon.pivot.visible,key+' restored weapon');check(!ch._rainmakerPose,key+' released pose');normal('drop');await snap('drop');
       a.alive=false;state.carrier='carrier';step(false,false);check(!ch._rainmakerPose,key+' dead releases pose');a.alive=true;state.carrier=null;
       match.mode='clams';ch.trigger('throw');for(let i=0;i<6;i++)step(false,false);normal('ordinary-throw-in-clams-mode');
       match.mode='rainmaker';state.carrier='carrier';for(let i=0;i<5;i++)step(false,false);if(revision==='after')check(ch._rainmakerPose,key+' reacquired');
-      metrics.push({revision,mode,weapon,team,maxLeft,maxRight,maxReach,maxPoseCalls,maxLeftSolves,events,triangles:mesh.geometry.index.count/3,geometryBytes:Object.values(mesh.geometry.attributes).reduce((n,a)=>n+a.array.byteLength,0)+mesh.geometry.index.array.byteLength,opacity:ch.u.uOpacity.value,sourceReady:ch.sourceMotion?.status??null,rngSeed:ch.seed,rngCalls:rngIndex,rngTrace});
+      metrics.push({revision,mode,weapon,team,maxLeft,maxRight,maxReach,maxLocalReach,maxSolvedReach,reachUnits:{maxReach:'world after final owner',maxSolvedReach:'world immediately after solver',maxLocalReach:'kid immediately after solver'},maxPoseCalls,maxLeftSolves,events,triangles:mesh.geometry.index.count/3,geometryBytes:Object.values(mesh.geometry.attributes).reduce((n,a)=>n+a.array.byteLength,0)+mesh.geometry.index.array.byteLength,opacity:ch.u.uOpacity.value,sourceReady:ch.sourceMotion?.status??null,rngSeed:ch.seed,rngCalls:rngIndex,rngTrace});
      }finally{display.release();scene.remove(mesh,ch.root);mesh.geometry.dispose();mesh.material.dispose();ch.dispose();G.actors=[];}
     }
    }finally{ctx.dispose();}
   }
-  return{status:'passed',expectedFrames:120,rows,metrics,ordinaryComparisons,scope:'Production composed Actor/source/native driven sequence and real render pipeline; before is main3839 motion modules only; not full match/network. Nintendo angles are calibration, not extracted joints.'};
+  return{status:'passed',expectedFrames:128,rows,metrics,ordinaryComparisons,scope:'Production composed Actor/source/native driven sequence and real render pipeline; before is main3839 motion modules only; not full match/network. Nintendo angles are calibration, not extracted joints.'};
  }finally{Math.random=random;}
 }

@@ -85,6 +85,7 @@ function sampleRelease(a, out) {
   const ch = a?.character, value = ch && stateMap(ch).get(ch), installation = ch && registry(ch), curves = installation?.curves;
   if (!curves || !enabled(ch) || !ch.bomb || !ch.weapon || hidden(ch.root) || ch.dance || a.alive === false || a.form === 'squid'
     || !specialAllows(ch, a, installation.timers) || a.superJumpState) return out;
+  if (ch.s3RainmakerSupportPending) ch._restoreRainmakerSupport();
   // Evaluate the exported native curve into isolated buffers. The receiver
   // deliberately has no gameplay clocks, springs, footsteps or hair to mutate.
   const cache = sampleCache(ch), pose = cache.pose;
@@ -173,6 +174,8 @@ export function installBombMotion({ THREE, G, Character, WeaponRunner, CHARACTER
   Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves, timers, disposed, clamGrip }) });
   function clear(ch) {
     if (!ch?.tr) return;
+    if (ch.s3RainmakerSupportPending) ch._restoreRainmakerSupport();
+    restoreClamPose(ch, stateMap(ch).get(ch));
     // Retire the presentation, not the native event clock. Native Runner reset
     // and setWeapon may independently reset clocks; preserve those exact calls.
     stateMap(ch).set(ch, { throwing: false, elapsed: 0, cancelled: true });
@@ -191,18 +194,30 @@ export function installBombMotion({ THREE, G, Character, WeaponRunner, CHARACTER
   }
   const trigger = C.trigger, updateStates = C._updateStates, buildPose = C._buildPose;
   const clamBones = ['clavL', 'uArmL', 'fArmL', 'handL'];
+  function restoreClamPose(ch, value) {
+    const grip = value?.clamGrip;
+    if (!grip?.restorePending) return;
+    for (let i = 0; i < 4; i++) ch.bones[clamBones[i]].quaternion.copy(grip.base[i]);
+    grip.restorePending = false;
+  }
   function stopClam(ch, value) {
+    restoreClamPose(ch, value);
     ch.s3ClamGripActive = false;
     if (value) value.clamGrip = null;
   }
   function clamGrip(ch) {
     const value = stateMap(ch).get(ch), grip = value?.clamGrip;
-    if (!grip || G?.match?.mode !== 'clams' || grip.elapsed >= RECOVERY || !ch.kidForm || hidden(ch.root)) {
+    if (!grip || G?.match?.mode !== 'clams' || grip.elapsed >= RECOVERY || !(ch.kidScale > .001) || hidden(ch.root)) {
       stopClam(ch, value); return;
     }
     const owner = ch._owner();
     if (ch.dual || owner?.alive === false || owner?.superJumpState || owner?.weaponRunner?.aimingSub || owner?.specialActive || owner?.weapon?.id === 'rainmaker'
       || owner?.pos && grip.world.distanceToSquared(owner.pos) > 4) { stopClam(ch, value); return; }
+    // A final-owner overlay is transient. Preserve the normal pose before
+    // either the event solve or recovery, then remove it before next frame's
+    // source controller captures its dive/return history.
+    for (let i = 0; i < 4; i++) grip.base[i].copy(ch.bones[clamBones[i]].quaternion);
+    grip.restorePending = true;
     if (!grip.started) {
       // Success arrives after the normal pose. One free-arm solve establishes
       // contact; its feedback must not change next frame's normal weapon pose.
@@ -218,7 +233,7 @@ export function installBombMotion({ THREE, G, Character, WeaponRunner, CHARACTER
     // Native clocks, source ownership, torso, right gun and IK feedback stay
     // untouched. Subsequent frames add no second limb solve.
     const t = grip.elapsed, blend = Math.min(1, t / .10), b = blend * blend * (3 - 2 * blend);
-    const fade = Math.min(1, Math.max(0, (t - .30) / (RECOVERY - .30))), w = 1 - fade * fade * (3 - 2 * fade);
+    const fade = Math.min(1, Math.max(0, (t - .30) / (RECOVERY - .30))), w = (1 - fade * fade * (3 - 2 * fade)) * Math.min(1, Math.max(0, ch.kidScale));
     grip.pose.set(ch.P); grip.receiver._effort = 0;
     curves.throw.call(grip.receiver, grip.pose, RELEASE_AGE + t);
     for (let i = 0; i < 4; i++) {
@@ -237,13 +252,13 @@ export function installBombMotion({ THREE, G, Character, WeaponRunner, CHARACTER
       // Ranked throw is already simulated. Do not enter native T_THROW: that
       // clock also controls dual guns, source ownership and gameplay muzzles.
       const value = state(this); stopClam(this, value);
-      if (!enabled(this) || G?.match?.mode !== 'clams' || !THREE || !channels || this.dual
+      if (!enabled(this) || !this.kidForm || G?.match?.mode !== 'clams' || !THREE || !channels || this.dual
         || !['small', 'power'].includes(clam?.kind) || !Array.isArray(clam.pos) || clam.pos.length !== 3 || !clam.pos.every(Number.isFinite)) return;
       // A fixed scratch bank per live Character; repeated throws reuse it.
       const grip = value.clamCache ||= {
         world: new THREE.Vector3(), target: new THREE.Vector3(), pole: new THREE.Vector3(1, -.1, .1),
         pose: new Float32Array(this.P.length), receiver: { PX: new Float32Array(this.P.length), _effort: 0 },
-        channels: [channels.CLAVL, channels.UARML, channels.FARML, channels.HANDL], release: clamBones.map(() => new THREE.Quaternion()),
+        channels: [channels.CLAVL, channels.UARML, channels.FARML, channels.HANDL], release: clamBones.map(() => new THREE.Quaternion()), base: clamBones.map(() => new THREE.Quaternion()), restorePending: false,
         euler: new THREE.Euler(), rotation: new THREE.Quaternion(), shown: new THREE.Quaternion()
       };
       grip.elapsed = 0; grip.started = false; grip.world.fromArray(clam.pos);
@@ -265,12 +280,35 @@ export function installBombMotion({ THREE, G, Character, WeaponRunner, CHARACTER
     return result;
   };
   C._updateStates = function (dt, s) {
+    if (this.s3RainmakerSupportPending) this._restoreRainmakerSupport();
+    // Character.update calls this before sourceMotion.advance. Restoring here
+    // keeps the displayed left-arm overlay out of source diveFrom/air history
+    // and therefore out of the ordinary bomb's real pose-based release origin.
+    if (this.s3ClamGripActive) restoreClamPose(this, stateMap(this).get(this));
     const result = updateStates.call(this, dt, s);
     if (!enabled(this)) return result;
     const owner = this._owner(), value = state(this);
+    // Once the human has disappeared, never resume an old recovery on return.
+    if (value.clamGrip && !(this.kidScale > .001)) stopClam(this, value);
     if (!this.kidForm || this.dance || hidden(this.root) || owner?.alive === false
       || owner?.superJumpState || owner?.specialActive?.id !== 'storm' && !specialAllows(this, owner, timers)) {
-      clear(this); return result;
+      // Ordinary bomb state still clears exactly as before. A fading human
+      // may display the same bounded Clam recovery until its existing form
+      // envelope hides it; its clean baseline was restored before this call.
+      const retain = !this.kidForm && this.kidScale > .001 && !this.dance && !hidden(this.root)
+        && owner?.alive !== false && !owner?.superJumpState && !owner?.specialActive
+        && !owner?.weaponRunner?.aimingSub && ['swim', 'squid', 'climb'].includes(this.form)
+        && G?.match?.mode === 'clams' && value.clamGrip;
+      const grip = retain && value.clamGrip, bank = value.clamCache;
+      clear(this);
+      if (grip) {
+        grip.elapsed += Math.max(0, dt || 0);
+        if (grip.elapsed < RECOVERY) {
+          const next = state(this); next.clamGrip = grip; next.clamCache = bank;
+          this.s3ClamGripActive = true;
+        }
+      }
+      return result;
     }
     const age = this.tr[timers.T_THROW]; value.elapsed = age;
     if (value.clamGrip) {
