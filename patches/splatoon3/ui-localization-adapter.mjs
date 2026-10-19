@@ -16,6 +16,12 @@ export function adaptUiLocalization(rel, code) {
     code = code.replace('if (!isJa) return s;\n  const v = JA[s];', 'if (!isJa) return UI_EN[s] ?? s;\n  const v = JA[s];');
     return "import { makeUiTranslator, UI_JA, UI_EN } from '../patches/splatoon3/runtime/ui-strings.mjs';\n" + code + '\nexport const tu = makeUiTranslator(t, JA, isJa);\n';
   }
+  if (rel === 'src/ui/news.js') {
+    // h() localises each literal text child; keep the bullet's separator out of its text so the text matches an entry.
+    const bullet = "h('span', null, h('b', null, b), ` — ${t}`)";
+    if (!code.includes(bullet)) throw Error('Missing update news bullet localization anchor');
+    return code.replace(bullet, "h('span', null, h('b', null, b), ' — ', t)");
+  }
   if (!/^src\/ui\/(menus|menu-art|hud|hud-boss|diorama)\.js$/.test(rel)) return code;
   if (rel === 'src/ui/menus.js' && code.includes('const TITLE_ADJ =')) {
     const title = 'return `${TITLE_ADJ[x % TITLE_ADJ.length]} ${TITLE_NOUN[(x >>> 8) % TITLE_NOUN.length]}`;';

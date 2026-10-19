@@ -25,6 +25,9 @@ const MODE_STYLE = `
 .iw-mode--rainmaker { --mc:#f0b53e; --mc-rgb:240,181,62; --mc-l:#ffe6a4; --mc-d:#80521c; --mc-ink:#30200c; }
 .iw-mode--clams { --mc:#d46ad9; --mc-rgb:212,106,217; --mc-l:#f5b7fa; --mc-d:#67336f; --mc-ink:#301532; }
 .iw-mode.is-picked { outline:2px solid var(--mc); outline-offset:4px; }
+.iw-mode__tape .iw-display { word-break:keep-all; overflow-wrap:anywhere; }
+@media (min-width:901px) { .iw-modesel__row.has-range { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-mode__tape .iw-display { font-size:clamp(20px,2.9vw,34px); }
 .iw-ui .iw-ranked-result { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-items:stretch; width:min(100%,780px); margin:0 auto; padding:14px; border:2px solid #15121c; border-radius:16px; color:#fff; background:linear-gradient(145deg,rgba(45,34,66,.96),rgba(21,18,28,.96)); box-shadow:0 0 0 3px #fff,0 6px 0 3px #15121c; }
 .iw-ranked-result__team { display:grid; grid-template-columns:1fr auto; align-items:center; gap:3px 12px; min-width:0; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,.08); border-top:4px solid var(--team); }
 .iw-ranked-result__team b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:900 11px/1.1 'Rubik',sans-serif; letter-spacing:.12em; }
@@ -62,9 +65,9 @@ export function adaptRankedUi(rel, code) {
     "const diffText = (v) => tr((boss ? BOSS_DIFF_INFO[v] : DIFF_INFO[v]?.text) || '');", 'setup difficulty explanation');
 
   code = once(code, "blurb: `Everyone's one squad against ${BOSS_NAME}, a giant crab in a rusted container. Sink it before time runs out!`",
-    "blurb: tr('Everyone is one squad against {boss}. Defeat it before time runs out!', { boss: BOSS_NAME })", 'boss mode description');
+    "blurb: tr('Everyone is one squad against {boss}. Defeat it before time runs out!', { boss: tr(BOSS_NAME) })", 'boss mode description');
   code = once(code, "sub: `Pick a stage and the time of day · your squad of 8 vs ${BOSS_NAME}`",
-    "sub: tr('Pick a stage and the time of day · your squad of 8 vs {boss}', { boss: BOSS_NAME })", 'boss setup description');
+    "sub: tr('Pick a stage and the time of day · your squad of 8 vs {boss}', { boss: tr(BOSS_NAME) })", 'boss setup description');
 
   code = once(code, "sub: 'Turf War · Boss Battle'", "sub: 'Turf War · Ranked · Boss Battle'", 'main menu ranked modes');
   code = once(code, ": this._header('TURF WAR', { sub: 'Pick a stage and the time of day · 4 v 4 against bots' })",

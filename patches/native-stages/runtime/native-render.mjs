@@ -69,11 +69,29 @@ export function nativeDisplay(data,textures,quality){
     if(mat.alphaMap&&opacity==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <alphamap_fragment>',THREE.ShaderChunk.alphamap_fragment.replace('.g;','.r;'));
     if(mat.roughnessMap&&rough==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',THREE.ShaderChunk.roughnessmap_fragment.replace('texelRoughness.g','max(texelRoughness.r, 0.55)'));
    };
-   mat.customProgramCacheKey=()=>`native-channels-${opacity}-${rough}`;mat.name=o.material;cache.set(o.material,mat);materials.push(mat);
+   mat.customProgramCacheKey=()=>`native-channels-${mat.alphaMap&&opacity==='r'?'r':'g'}-${mat.roughnessMap&&rough==='r'?'r':'g'}`;mat.name=o.material;cache.set(o.material,mat);materials.push(mat);
   }
   const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(ib,1));g.computeBoundingSphere();
-  const mesh=new THREE.Mesh(g,mat);mesh.name=o.name;mesh.castShadow=o.collidable&&!glass&&!alpha;mesh.receiveShadow=!glass;mesh.userData.nativeObject=o;group.add(mesh);geometries.push(g);
+  const mesh=new THREE.Mesh(g,mat);
+  mesh.name=o.name;
+  // Keep silhouette and contact shadows: a blanket 0.75m exclusion
+  // erased visible railings, poles and gameplay landmarks.
+  // Limit omission to genuinely tiny (< 2.5cm radius) native objects.
+  const sphere=g.boundingSphere;
+  const subTexelCaster=!!sphere&&Number.isFinite(sphere.radius)&&sphere.radius<0.025;
+  mesh.castShadow=o.collidable&&!glass&&!alpha&&!subTexelCaster;
+  mesh.receiveShadow=!glass;
+  if(glass||alpha){
+    // GTAO normal/depth override would turn transparent materials opaque.
+    // Always restore the exact source draw range for colour rendering.
+    const drawStart=g.drawRange.start,drawCount=g.drawRange.count;
+    mesh.onBeforeRender=(_renderer,scene)=>{
+      if(scene?.overrideMaterial)g.setDrawRange(0,0);
+      else if(g.drawRange.start!==drawStart||g.drawRange.count!==drawCount)g.setDrawRange(drawStart,drawCount);
+    };
+  }
+  mesh.userData.nativeObject=o;group.add(mesh);geometries.push(g);
  }
  return {group,updateTextures(next,quality){
   for(const [name,mat] of cache){const src=m.materials[name]||{};mat.map=next.get(src.albedo)||null;mat.alphaMap=next.get(src.maps?.opacity)||null;

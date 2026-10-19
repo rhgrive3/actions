@@ -195,6 +195,10 @@
 .iw-ret--splatling .iw-ret__segs path { stroke: rgba(0, 0, 0, .55); stroke-width: 1.6; }
 .iw-ret--splatling.is-full .iw-ret__charge, .iw-ret--splatling.is-streaming .iw-ret__charge { stroke: var(--self-light); }
 .iw-ret--splatling.is-streaming { color: var(--self-light); }
+.iw-ret--splatling.is-first-complete:not(.is-streaming) .iw-ret__charge:not(.iw-ret__charge-second) { stroke: var(--self-light); }
+.iw-ret--splatling .iw-ret__charge-second { opacity: .92; }
+.iw-ret--splatling.is-first-flash .iw-ret__charge:not(.iw-ret__charge-second) { animation: iw-splat-first .24s ease-out; }
+@keyframes iw-splat-first { from { stroke-width: 8; filter: drop-shadow(0 0 5px white); } to { stroke-width: 4.5; filter: none; } }
 .iw-hit, .iw-kill { position: absolute; left: 0; top: 0; }
 .iw-hit { scale: var(--hs, 1); }
 .iw-hit i, .iw-kill i { position: absolute; left: -1.75px; top: -6px; width: 3.5px; height: 12px; border-radius: 2px; background: #fff; opacity: 0; box-shadow: 0 0 0 1px rgba(0, 0, 0, .6); }

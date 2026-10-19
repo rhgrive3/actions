@@ -126,7 +126,9 @@ function draw(ch, m) {
   m.baseWig.copy(ch.u.uWig.value);
   pivot.position.copy(m.position); pivot.quaternion.copy(m.quaternion); pivot.scale.copy(m.scale);
   const frequency = 12 + 8 * m.power;
-  ch.u.uWig.value.set(.018 + .022 * m.power, frequency, m.power);
+  // Source bones already own tentacle deformation; keep their shader neutral.
+  if (ch.sourceMotion?.active && ch.sourceMotion?.squidRig) ch.u.uWig.value.set(0,0,0);
+  else ch.u.uWig.value.set(.018 + .022 * m.power, frequency, m.power);
   // uTime is exclusively the native squid material's visual uniform. Retiming
   // it keeps its existing travelling-arm field and ghost material identical;
   // Character.t, timers, gameplay/weapon clocks and root transforms stay native.

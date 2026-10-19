@@ -83,6 +83,7 @@ test('#466 the composed actor holds the turn-break target while reversing, then 
       near(r.moveSpeed(), TURN_BREAK, `reversal frame ${i} target`);
     }
     a._horizontal(DT, false, false);
+    a._face(DT, false); // the body turns toward the stick; travel follows the body
     r.update(DT, { fire: true });
     a.intent.move.set(0, 0, -1);
   }
