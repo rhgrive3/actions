@@ -87,6 +87,7 @@ export function adaptWeaponAudio(rel,code){
       'do not layer authored body-hit noise over original Charger direct hit MP3');
   }
   if(rel==='src/main.js'){
+    code="import { sourceChargerHitCue } from '../patches/splatoon3/runtime/audio/combat-hit-classifier.mjs';\n"+code;
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
       'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); if(self.menus?._setup?.mode!==\'boss\') G.music?.preloadFile?.(\'battle\',{prime:true}); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
       'iPad start tap initializes audio and warms the selected recorded shot before screen wipe');
@@ -145,8 +146,8 @@ export function adaptWeaponAudio(rel,code){
     // like a full-charge Charger direct.
     code=once(code,
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
-      "if (/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))) " +
-      "G.audio?.playWeapon?.(Number.isFinite(charge)&&charge>=1&&!/^s3-charger-(?:light|pencil)(?:-|$)/.test(String(weaponId||''))?'combat:critical':'combat:damage','fire',{volume:.76,priority:95}); " +
+      "const chargerCue=sourceChargerHitCue(weaponId,charge); " +
+      "if (chargerCue) G.audio?.playWeapon?.(chargerCue,'fire',{volume:.76,priority:95}); " +
       "else G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
       'source verified Charger hit feedback only');
     code=once(code,
