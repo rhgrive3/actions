@@ -11,6 +11,7 @@
 //   node scripts/check-inkwave-range.mjs --site <built site> --evidence-dir <dir> --profile-dir <dir> [--quick]
 //   (RANGE_BROWSERS=chromium limits the browsers for a local run; CI runs all of them)
 import fs from 'node:fs';
+import {enterRangeFromMenu} from './lib/inkwave-range-menu-entry.mjs';
 import {waitForPauseEntrance,collectPauseEntranceEvidence} from './inkwave-range-pause-readiness.mjs';
 import path from 'node:path';
 import http from 'node:http';
@@ -66,10 +67,27 @@ for (const run of RUNS) {
     page.on('pageerror', (e) => out.errors.push(String(e.message).slice(0, 400)));
     page.on('response', (r) => { if (r.status() >= 400) out.missing.push(r.status() + ' ' + r.url()); });
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', lang: 'en' })));
-    await page.goto(base + '?range&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForFunction(() => (window.__G?.match?.range && window.__G.match.state === 'playing') || document.getElementById('boot-error')?.textContent, null, { timeout: 420000 });
-    const bootError = await page.evaluate(() => document.getElementById('boot-error')?.textContent || '');
-    if (bootError) throw new Error('boot error: ' + bootError);
+    // Enter through native trusted input so prepareMatch owns audio activation.
+    // Retain the original range-playing admission timeout and all checks below.
+    const entryConsoleErrors=[];
+    page.on('console', message => {
+      if(message.type()==='error' && entryConsoleErrors.length<12)
+        entryConsoleErrors.push(message.text().slice(0,400));
+    });
+    try {
+      out.checks.entry=await enterRangeFromMenu(page,base.replace(/\/$/,''),{
+        touch:run.touch,timeout:420000,onProgress:receipt=>{out.checks.entry=receipt;},
+      });
+    } catch(error) {
+      out.entryFailure={consoleErrors:entryConsoleErrors,state:await page.evaluate(()=>{
+        const G=window.__G,g=window.__inkwave,a=G?.audio;
+        return {menu:g?.menus?.current??null,mode:g?.mode??null,state:G?.match?.state??null,
+          range:!!G?.match?.range,bootError:document.getElementById('boot-error')?.textContent||'',
+          audioContext:a?.ctx?.state??null,everActive:navigator.userActivation?.hasBeenActive??null,
+          shooterResident:a?._weaponBank?.authorized?.byEvent?.has('shooter:fire')??null};
+      }).catch(e=>({evaluationError:String(e.message).slice(0,300)}))};
+      throw error;
+    }
     await page.waitForTimeout(1500);
     out.checks.stage = await page.evaluate(() => {
       const G = window.__G, g = window.__inkwave, s = G.match.range;

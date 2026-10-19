@@ -7,6 +7,7 @@ import http from 'node:http';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { chromium, webkit } from 'playwright';
+import { enterRangeFromMenu } from './lib/inkwave-range-menu-entry.mjs';
 const [siteArg,outArg]=process.argv.slice(2);
 if(!outArg)throw Error('Usage: node scripts/check-inkwave-small-tank.mjs <built-site> <evidence> [--webkit] [--dpr 1|2]');
 const dprIndex=process.argv.indexOf('--dpr'),dprs=dprIndex<0?[1,2]:[Number(process.argv[dprIndex+1])];
@@ -34,10 +35,10 @@ try {
   page=await browser.newPage({viewport:{width:320,height:568},deviceScaleFactor:dpr,hasTouch:useWebkit,isMobile:useWebkit});
   page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
   const bootStarted=Date.now();
-  await page.goto('http://127.0.0.1:'+server.address().port+'/?range&skipTitle');
-  await page.waitForFunction(()=>window.__G?.match?.range&&window.__G.match.state==='playing',null,{timeout:240000});
+  const startup={dpr,elapsedMs:null,entry:null};result.startups.push(startup);
+  const entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{touch:useWebkit,timeout:240000,onProgress:receipt=>{startup.entry=receipt;save();}});
   await page.evaluate(()=>{window.__inkwave.debug.freeze();window.__inkwave.debug.freezeBots();});
-  result.startups.push({dpr,elapsedMs:Date.now()-bootStarted});save();console.log('startup',JSON.stringify(result.startups.at(-1)));
+  Object.assign(startup,{elapsedMs:Date.now()-bootStarted,entry});save();console.log('startup',JSON.stringify(result.startups.at(-1)));
   for(const [width,height] of [[320,568],[360,800],[390,844],[960,640],[320,200],[844,390],[960,640]]) {
    await page.setViewportSize({width,height});
    const caseStarted=Date.now();
