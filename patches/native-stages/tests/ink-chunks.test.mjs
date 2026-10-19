@@ -165,3 +165,78 @@ test('signed projection zero is recognized by the cached view comparison', async
  assert.match(f.NativeInkMesh.prototype.selectVisible.toString(),/Object\.is\(elements\[i\], previous\[i\]\)/);
  mesh.dispose();mesh.material.dispose();
 });
+
+
+test('native painted-only culling keeps crossing triangles, clears and restores the colour pass',async()=>{
+ const f=await nativeFixture(), {THREE}=f, g=new THREE.BufferGeometry();
+ // The giant source triangle is assigned by centroid, but paint hits an edge.
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  -20,0,0, 20,0,0, 0,0,20,
+  70,0,70, 72,0,70, 70,0,72
+ ],3));
+ const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial()),originalPush=function(){return 7;},
+       originalClear=function(){this.grid.fill(0);return 'cleared';};
+ const paint={grid:new Uint8Array(4),_pushQuad:originalPush,clear:originalClear};
+ mesh.bindPaint(paint);
+ const camera=new THREE.OrthographicCamera(-100,100,100,-100,.1,300);
+ camera.position.set(20,120,20);camera.lookAt(20,0,20);camera.updateMatrixWorld();mesh.updateMatrixWorld();
+ assert.equal(mesh.selectVisible(camera),0,'never shade empty ink mesh');
+ assert.equal(g.drawRange.count,0);
+ const face={atlas:{pad:1,ppm:2},su:40,sv:20,
+   origin:new THREE.Vector3(-20,0,0),u:new THREE.Vector3(1,0,0),v:new THREE.Vector3(0,0,1)};
+ assert.equal(paint._pushQuad(face,1,2,1,2),7);
+ assert.equal(mesh.selectVisible(camera),1,'source triangle must survive edge paint');
+ assert.equal(g.drawRange.count,3);
+ assert.deepEqual(Array.from(g.index.array.slice(0,3)),[0,1,2]);
+ const version=g.index.version;
+ mesh.onBeforeRender(null,{overrideMaterial:new THREE.MeshNormalMaterial()},camera);
+ assert.equal(g.drawRange.count,0,'GTAO never writes opaque ink normals');
+ mesh.onBeforeRender(null,{overrideMaterial:null},camera);
+ assert.equal(g.drawRange.count,3,'same-camera colour pass must restore drawRange');
+ assert.equal(g.index.version,version,'restoring GTAO must not reupload indices');
+ assert.equal(paint.clear(),'cleared');
+ assert.equal(mesh.selectVisible(camera),0,'clear makes every chunk unpainted again');
+ assert.equal(g.drawRange.count,0);
+ mesh.dispose();mesh.material.dispose();
+ assert.equal(paint._pushQuad,originalPush,'disposing restores paint callbacks');
+ assert.equal(paint.clear,originalClear);
+});
+test('prepainted binding fails open rather than hiding an existing ink atlas',async()=>{
+ const f=await nativeFixture(), {THREE}=f, g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,1,0,0,0,0,1],3));
+ const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial());
+ const paint={grid:new Uint8Array([1]),_pushQuad(){},clear(){}};
+ mesh.bindPaint(paint);
+ const camera=new THREE.PerspectiveCamera(60,1,.1,40);
+ camera.position.set(0,5,12);camera.lookAt(0,0,0);camera.updateMatrixWorld();mesh.updateMatrixWorld();
+ assert.equal(mesh.selectVisible(camera),1);
+ assert.equal(g.drawRange.count,3);
+ mesh.dispose();mesh.material.dispose();
+});
+test('native display excludes alpha and glass from AO without losing tiny-feature shadows',async()=>{
+ const f=await nativeFixture(),{THREE}=f;
+ const tri=(size)=>[[0,0,0],[size,0,0],[0,size,0]].flatMap((p)=>[...p,0,1,0,0,0]);
+ const verts=new Float32Array([...tri(.01),...tri(1),...tri(1),...tri(1)]);
+ const objects=['tiny','solid','glass','alpha'].map((name,i)=>({
+  name,material:name==='tiny'?'solid':name,active:true,glass:name==='glass',
+  collidable:true,vo:i*3,vc:3,io:i*3,ic:3
+ }));
+ const data={manifest:{objects,materials:{solid:{},glass:{},alpha:{maps:{opacity:'mask.png'}}}},
+  vertices:verts,indices:new Uint32Array([0,1,2,0,1,2,0,1,2,0,1,2])};
+ const d=f.nativeDisplay(data,new Map(),'balanced');
+ const [tiny,solid,glass,alpha]=d.group.children;
+ assert.equal(tiny.castShadow,false,'sub-5cm detail is the only omitted caster');
+ assert.equal(solid.castShadow,true,'visible small and large shadows stay intact');
+ assert.equal(glass.castShadow,false);
+ assert.equal(alpha.castShadow,false);
+ for(const mesh of [glass,alpha]){
+  const before=mesh.geometry.drawRange.count;
+  assert.equal(typeof mesh.onBeforeRender,'function');
+  mesh.onBeforeRender(null,{overrideMaterial:new THREE.MeshNormalMaterial()});
+  assert.equal(mesh.geometry.drawRange.count,0);
+  mesh.onBeforeRender(null,{overrideMaterial:null});
+  assert.equal(mesh.geometry.drawRange.count,before);
+ }
+ assert.equal(solid.onBeforeRender,THREE.Object3D.prototype.onBeforeRender);
+ d.dispose();
+});
