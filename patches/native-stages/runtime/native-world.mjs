@@ -9,6 +9,7 @@ import { NativeLevel } from './native-level.mjs';
 import { NativePhysics } from './native-physics.mjs';
 import { nativeDisplay,nativeInkGeometry,nativeInkMaterial } from './native-render.mjs';
 import { NativeInkMesh } from './native-ink-chunks.mjs';
+import { nativeStageTextureLimit } from './native-texture-budget.mjs';
 import {sourceLoadingStatus} from './source-menu.mjs';
 
 function releaseCurrent(game){
@@ -30,7 +31,12 @@ export async function buildNativeWorld(game,map,current){
   status.update('textures');
   const level=new NativeLevel(data),physics=new NativePhysics(level);
   const quality=['high','ultra'].includes(game.settings.quality)?'high':game.settings.quality==='low'?'low':'balanced';
-  const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,game.mobile?.touch?1024:undefined);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
+  const textureLimit=nativeStageTextureLimit(data.manifest,quality,{
+    mobile:!!game.mobile?.touch,
+    deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
+    maxTextureSize:G.renderer.capabilities.maxTextureSize
+  });
+  const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureLimit);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
   if(!current()){display.dispose();return;}
   paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
   // Compact charts use a 2-texel guard. Avoid sampling other charts through
@@ -62,7 +68,7 @@ export async function buildNativeWorld(game,map,current){
   game.decor={group:display.group,setTeamColors(){},update(){},setNight(){},dispose(){}};
   (game.swimWake||(game.swimWake=new SwimWake())).reset();
   game.minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)));
-  game.nativeWorld={display,level,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,quality,version1130Verified:false},
+  game.nativeWorld={display,level,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
    dispose(){display.dispose();inkMesh.dispose();inkMat.dispose();}};
   if(G.env?.rebuildForArena)G.env.rebuildForArena(level.bounds,game._footprint(level));
   game._shadowRoots();if(G.teamColors[0])game._setPalette(game.palette||game._pickPalette());
