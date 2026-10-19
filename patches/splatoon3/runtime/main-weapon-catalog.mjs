@@ -1285,19 +1285,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   installRollerContactPaint(api,paintRollingStroke);
   function paintRollingStroke(a,stroke,physical=false){
     const {to,from,heading}=stroke;
-    let radius=stroke.radius;
+    const radius=stroke.radius;
     if(physical){
       const drum=a.character.weapon.drum,geo=a.character.weapon.def.drum;
       if(!geo.boundingBox)geo.computeBoundingBox();
       const bounds=geo.boundingBox;
       drum.updateWorldMatrix(true,false);
-      // Only the ink-bearing cylinder determines paint width, excluding caps,
-      // axle and frame. Source speed/width ratios still own speed widening.
+      // The mesh locates the contact only. PaintParam owns the ink width;
+      // changing a display model must never change scored/swimmable turf.
       to.copy(bounds.min).add(bounds.max).multiplyScalar(.5);
       drum.localToWorld(to);
       const m=drum.matrixWorld.elements;
-      const axleLength=Math.hypot(m[0],m[2]);
-      radius=(bounds.max.x-bounds.min.x)*.5*axleLength*stroke.widthRatio;
       heading.set(-m[2],0,m[0]).normalize();
       if(heading.x*Math.sin(a.yaw)+heading.z*Math.cos(a.yaw)<0)heading.negate();
       // The contact profile ends at .6R. Put its leading edge at the drum,
@@ -1340,10 +1338,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // explicit pair, instead of declaring an invented minimum sourced.
     const sourceRadius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
       paintSpeedMax>paintSpeedMin?clamp((speed-paintSpeedMin)/(paintSpeedMax-paintSpeedMin)):1);
-    // Contact-only visual calibration: source half-widths were previously
-    // rendered at ballistic scale, several times wider than the drum/bristles.
-    // Preserve raw tables and damage radius; these are image-guided estimates.
-    const radius=sourceRadius*(r.family==='brush'?.25:.3);
+    // Roller WidthHalfMax is a paint half-width, not a display drum width.
+    // Keep the established source-to-world mapping (1:1 for catalogue ink).
+    // Brushes retain their separate existing contact calibration.
+    const radius=sourceRadius*(r.family==='brush'?.25:1);
     // Drum/brush floor contact follows body yaw, not reticle pitch. An aimed-down
     // camera formerly pushed the ray origin below the floor and lost every mark.
     // Keep the existing 'at' for damage contact; only paint is floor-anchored.
@@ -1353,7 +1351,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     });
     const heading=stroke.heading.set(Math.sin(a.yaw),0,Math.cos(a.yaw));
     stroke.to.set(a.pos.x+heading.x*.6,a.pos.y+.35,a.pos.z+heading.z*.6);
-    stroke.radius=radius;stroke.widthRatio=sourceRadius/paintMax;stroke.speed=speed;stroke.dt=dt;
+    stroke.radius=radius;stroke.speed=speed;stroke.dt=dt;
     stroke.pending=r.family==='roller'&&!!a.character?.weapon?.drum&&!!a.character.weapon.def?.drum;
     if(!stroke.pending)paintRollingStroke(a,stroke);
     s.contactTimes ||= new Map();

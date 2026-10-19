@@ -120,7 +120,7 @@ export function runSimulation(game, dt) {
         } else if (!results) {
           simulateMatchInterval(m, simDt, G);
         }
-        if (m.attract) game._updateAttract(simDt);
+        if (m.attract && !m.paused) game._updateAttract(simDt);
         else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);
       }
     }
