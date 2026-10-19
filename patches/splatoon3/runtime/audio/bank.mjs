@@ -81,13 +81,25 @@ export class WeaponSoundBank {
       // ramps up to 2.5x. Preserve the recorded sample at original pitch.
       // Retail SLINK pitch automation is not verified; do not invent one.
       const sourceChargerHold=!!authorized&&AUDIO_RECIPES[id]?.family==='charger'&&event==='charge';
+      // Small, original HoldNoise buffers communicate charge progression through
+      // playback rate only; no synthesized layer. This is an INKWAVE calibration.
+      const sourceChargeRate=()=>{
+        const charge=o.actor?.weaponRunner?.charge;
+        return Number.isFinite(charge)?.94+.40*Math.max(0,Math.min(1,charge)):1;
+      };
+      let sourceRate=sourceChargerHold?sourceChargeRate():null;
       if(loop&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
       if(authorized&&authorized.gain!==1){const g=v.ctx.createGain();g.gain.value=authorized.gain;s.connect(g);g.connect(v.out);v.nodes.push(g);}else s.connect(v.out);
       // Small playback variation is additional to independently rendered round-robin samples.
-      s.playbackRate.value=sourceChargerHold?1:Math.max(.3,Math.min(3,p));s.start(v.t,0);
+      s.playbackRate.value=sourceChargerHold?sourceRate:Math.max(.3,Math.min(3,p));s.start(v.t,0);
       s._end=loop?Infinity:v.t+buffer.duration/s.playbackRate.value;
       v.nodes.push(s);v.srcs.push(s);v.end=Math.max(v.end,s._end);v.endless=loop;
-      return {pitch(q,t){if(!sourceChargerHold)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);}};
+      return {pitch(q,t){
+        if(sourceChargerHold){
+          const next=sourceChargeRate();
+          if(Math.abs(next-sourceRate)>.006){s.playbackRate.setTargetAtTime(next,t,.045);sourceRate=next;}
+        }else s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);
+      }};
     };
     const d={gain:loop?.23:(event==='explosion'?.7:.68),max:16,jitter:loop?0:.008,minGap:['impact','shield_hit'].includes(event)?.024:event==='explosion'?.008:0,
       reverb:loop?.025:.055,ref:event==='explosion'?5:3,priority:event==='ready'?90:65,weaponId:id,event,
