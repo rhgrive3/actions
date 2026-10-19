@@ -45,6 +45,9 @@ export function installWeaponAudioEngine(Engine){
       const isCharger=AUDIO_RECIPES[id].family==='charger';
       const main=loader?.ensure(id,isCharger?'charge':'fire');
       if(isCharger)loader?.ensure(id);
+      // Priority is shot and charge, then combat notifications. Never block
+      // the first shot behind unrelated cue download/decoding.
+      if(isCharger)for(const cue of ['combat:critical','combat:damage','combat:splat'])loader?.ensure(cue,'fire')?.catch(()=>{});
       if(AUDIO_RECIPES[id].family==='splatling'){
         // 2022 Spinner sources have distinct Motor (charge) and MotorFire
         // (stream) recordings. Demand-page both while the loadout is active.
@@ -102,6 +105,18 @@ export function installWeaponAudioEngine(Engine){
       }catch(error){throw new Error('音声出力を開始できません。再度STARTを押してください ('+String(error?.message||error)+')');}
       finally{clearTimeout(wakeTimeout);}
       if(this.ctx.state!=='running')throw new Error('音声出力が有効ではありません。もう一度STARTを押してください');
+    }
+    // The source-backed body-hit, critical-hit and enemy-splat recordings
+    // are only needed for the selected Charger's fight. They are tiny and
+    // remain in the 40 MiB decoded MP3 cache. No authored hit approximation.
+    if(AUDIO_RECIPES[id].family==='charger'){
+      for(const cue of ['combat:critical','combat:damage','combat:splat']){
+        const row=await loader.ensure(cue,'fire');
+        if(!bank.authorized.byEvent.has(cue+':fire')){
+          const why=row?.errors?.[0]?.error||loader.errors?.at(-1)||'source asset missing';
+          throw new Error('チャージャーの本家命中SEを読み込めません: '+cue+' ('+why+')');
+        }
+      }
     }
     return {ready:true,id,recording:'fire'};
   };

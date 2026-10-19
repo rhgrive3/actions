@@ -64,6 +64,13 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("G.audio?.play('roller_flick', { pos, volume: 0.8 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.8})");
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }
+  if(rel==='src/game/weapons.js'){
+    code=once(code,
+      "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
+      "if (!/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))) " +
+      "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
+      'do not layer authored body-hit noise over original Charger direct hit MP3');
+  }
   if(rel==='src/main.js'){
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
       'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
@@ -116,7 +123,27 @@ export function adaptWeaponAudio(rel,code){
       "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
-    // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
+    // Real S3 recorded body-hit and splat cues are separate from the gunshot.
+    // This exact conditional uses the admitted projectile weaponId / splat
+    // cause, not the equipped kit's sub/special, so a bomb splat never sounds
+    // like a full-charge Charger direct.
+    code=once(code,
+      "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
+      "if (/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||''))) " +
+      "G.audio?.playWeapon?.(damage>=95?'combat:critical':'combat:damage','fire',{volume:.76,priority:95}); " +
+      "else G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
+      'source verified Charger hit feedback only');
+    code=once(code,
+      "G.audio?.play('splat_enemy', { volume: 0.9 });",
+      "if (/^(?:charger(?:-|$)|s3-charger-)/.test(String(cause||''))) " +
+      "G.audio?.playWeapon?.('combat:splat','fire',{volume:.82,priority:96}); " +
+      "else G.audio?.play('splat_enemy', { volume: 0.9 });",
+      'source verified Charger splat splash only');
+    // Native projectile code also played its old INKWAVE synthesized ink
+    // body contact sound, even when the exact Charger MP3 is now used by HUD.
+    // Suppress that layer only for charged direct-hit contacts, not wall ink,
+    // other weapons, or authoritative hit/death logic.
+        // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
     code="import { installOriginalAudioScore } from '../../patches/splatoon3/runtime/audio/music-score.mjs';\n"+code;
