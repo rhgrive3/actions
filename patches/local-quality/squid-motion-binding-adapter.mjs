@@ -4,6 +4,29 @@ import {adaptSquidFormEase} from './squid-form-ease-adapter.mjs';
 // when the optional source skeleton replaces the native meshes.
 export function adaptSquidMotionBinding(rel,code,replaceOnce){
   code=adaptSquidFormEase(rel,code,replaceOnce);
+  if(rel==='src/game/motion/source-controller.js'){
+   code=replaceOnce(code,'if(nextKid!==this.formKid){','if(nextKid!==this.formKid){if(!nextKid)this.squidTravelYaw=undefined;','reset squid travel heading on a new dive');
+   code=replaceOnce(code,'if(teleport){this.pivotWeight=0;','if(teleport){this.squidTravelYaw=undefined;this.pivotWeight=0;','reset squid travel heading after teleport');
+   return replaceOnce(code,"  const wantedYaw=this.speed>1e-5?Math.atan2(this.localX,this.localZ):this.squidYaw;this.squidYaw+=(mod(wantedYaw-this.squidYaw+Math.PI,2*Math.PI)-Math.PI)*(1-Math.exp(-16*dt));",`  // The Actor root turns toward input independently of its current velocity.
+  // Smooth squid travel in the scene frame, then convert to the current root
+  // frame. Filtering old local headings while that frame turns double-counts
+  // the turn and can point the mantle past its direction of travel.
+  if(!this.manual){
+   const rootYaw=this.character.root.rotation.y;
+   if(!Number.isFinite(this.squidTravelYaw))this.squidTravelYaw=rootYaw;
+   // Retain the existing source tracker's sub-centimeter noise confidence.
+   const confidence=clamp((this.speed-.06)/.30,0,1);
+   if(confidence>0){
+    const move=s.localMove||{};
+    const wantedYaw=this.treadmill?rootYaw+Math.atan2(-(move.x||0),move.z||0):Math.atan2(this.motionVX,this.motionVZ);
+    this.squidTravelYaw+=(mod(wantedYaw-this.squidTravelYaw+Math.PI,2*Math.PI)-Math.PI)*(1-Math.exp(-16*dt*confidence));
+   }
+   this.squidTravelYaw=mod(this.squidTravelYaw+Math.PI,2*Math.PI)-Math.PI;
+   this.squidYaw=mod(this.squidTravelYaw-rootYaw+Math.PI,2*Math.PI)-Math.PI;
+  }else{
+   const wantedYaw=this.speed>1e-5?Math.atan2(this.localX,this.localZ):this.squidYaw;this.squidYaw+=(mod(wantedYaw-this.squidYaw+Math.PI,2*Math.PI)-Math.PI)*(1-Math.exp(-16*dt));
+  }`,'squid travel heading uses one scene frame');
+  }
   if(rel!=='src/game/motion/squid-rig.js')return code;
   code=replaceOnce(code,"const ARM_FOR_VERTEX=['B','B','A','A','L','C','R','D','D','C'];\n","const ARM_FOR_VERTEX=['L','B','A','A','B','C','C','D','D','R'];\n","source squid binding 0");
   code=replaceOnce(code,"  this.root=new THREE.Group();this.root.name='source-squid-rig';sq.pivot.add(this.root);this.root.add(...this.bones);\n","  this.root=new THREE.Group();this.root.name='source-squid-rig';this.root.position.copy(sq.body.position);this.root.quaternion.copy(sq.body.quaternion);this.root.scale.copy(sq.body.scale);sq.pivot.add(this.root);this.root.add(...this.bones);\n","source squid binding 1");
