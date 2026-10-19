@@ -1,49 +1,61 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { adaptLoadingScreen, loadingArtMarquee, LOADING_ART_MARQUEE_REPEAT } from '../loading-screen-adapter.mjs';
+import { adaptLoadingScreen, zevantWordmark } from '../loading-screen-adapter.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 const read = (rel) => fs.readFileSync(new URL('../../../' + rel, import.meta.url), 'utf8');
+const loadingScreen = (code) => code.slice(code.indexOf('  _scr_loading() {'), code.indexOf('  // ================================================================ SCREEN: title'));
 
-test('native loading screen gains one decorative art layer without text nodes', () => {
+test('native loading screen keeps its tick/label/tip owners and drops the splat logo', () => {
   const raw = read('inkwave-public/src/ui/menus.js');
-  const out = adaptLoadingScreen('src/ui/menus.js', raw);
-  assert.notEqual(out, raw);
-  const scr = out.slice(out.indexOf('  _scr_loading() {'), out.indexOf('  // ================================================================ SCREEN: title'));
-  assert.match(scr, /h\('div', \{ class: 'iw-load-art', 'aria-hidden': 'true' \}/);
-  assert.match(scr, /h\('div', \{ class: 'iw-screen iw-loading' \}, blobs, art,/);
-  assert.match(scr, new RegExp('`\\$\\{GAME_TITLE\\} • TURF RIOT • NOW LOADING • `\\.repeat\\(' + LOADING_ART_MARQUEE_REPEAT + '\\)'));
-  // Band text lives in data-t (CSS content), keeping .iw-loading textContent unchanged.
-  const art = scr.slice(scr.indexOf('const art'), scr.indexOf('const el'));
-  assert.doesNotMatch(art, /h\('i', \{[^}]*\}, '/);
-  assert.throws(() => adaptLoadingScreen('src/ui/menus.js', out), /loading screen art layer/);
+  const scr = loadingScreen(adaptBuildSource('src/ui/menus.js', raw));
+  assert.match(scr, /const fill = h\('i', \{ class: 'iw-zl__fill' \}\);/);
+  assert.match(scr, /const pctEl = h\('span', \{ class: 'iw-zl__pct' \}, '0%'\);/);
+  assert.match(scr, /const label = h\('div', \{ class: 'iw-zl__label' \}, this\._loading\.label\);/);
+  assert.match(scr, /const tipText = h\('div', \{ class: 'iw-tip__text' \}\);/);
+  assert.match(scr, /h\('div', \{ class: 'iw-screen iw-loading iw-zl' \}/);
+  assert.match(scr, /'aria-label': GAME_TITLE/);
+  assert.ok(scr.includes(JSON.stringify(zevantWordmark('zvl'))));
+  assert.doesNotMatch(scr, /logoMarkup|GAME_SUBTITLE|iw-bgblob/);
+  // The (localized) version line survives verbatim apart from its entrance class.
+  assert.match(scr, /h\('div', \{ class: 'iw-corner iw-corner--br' \}, tu\(`v\$\{this\._version\(\)\}`\)\)\);/);
+  // tick() / setLabel() / setTip() are untouched.
+  for (const owner of ["fill.style.transform = `translateX(${(-100 + p * 100).toFixed(2)}%)`", 'pctEl.textContent = pr', 'label.textContent = t', 'tipText.innerHTML = richText']) {
+    assert.ok(scr.includes(owner), owner);
+  }
+  const once = adaptLoadingScreen('src/ui/menus.js', raw);
+  assert.throws(() => adaptLoadingScreen('src/ui/menus.js', once), /loading screen layout/);
 });
 
-test('loading art stylesheet is appended once and only animates compositor properties', () => {
+test('logo subtitle is removed everywhere the logo is drawn', () => {
+  const config = adaptBuildSource('src/config.js', read('inkwave-public/src/config.js'));
+  assert.match(config, /export const GAME_SUBTITLE = '';/);
+  assert.match(config, /export const GAME_TITLE = 'ZEVANT';/);
+});
+
+test('loading stylesheet is appended once and only animates compositor properties', () => {
   const raw = read('inkwave-public/styles/ui.css');
   const out = adaptLoadingScreen('styles/ui.css', raw);
   assert.ok(out.startsWith(raw));
   assert.throws(() => adaptLoadingScreen('styles/ui.css', out), /applied twice/);
   const added = out.slice(raw.length);
-  for (const [, body] of added.matchAll(/@keyframes iw-load-[\w-]+ \{([^@]*?)\}\n/g)) {
+  for (const [, body] of added.matchAll(/@keyframes iw-zl-[\w-]+ \{([^@]*?)\}\n/g)) {
     for (const [, prop] of body.matchAll(/([a-z-]+):/g)) assert.ok(['transform', 'opacity'].includes(prop), prop);
   }
   assert.match(added, /prefers-reduced-motion: reduce/);
   assert.equal(adaptLoadingScreen('src/game/match.js', 'match=1;'), 'match=1;');
 });
 
-test('production composition renames the marquee and keeps the shell on the same art classes', () => {
-  const menus = adaptBuildSource('src/ui/menus.js', read('inkwave-public/src/ui/menus.js'));
-  assert.equal(menus.split("class: 'iw-load-art'").length - 1, 1);
+test('boot shell shows the same ZEVANT wordmark and classes as the native screen', () => {
   const css = adaptBuildSource('styles/ui.css', read('inkwave-public/styles/ui.css'));
-  assert.equal(css.split('.iw-load-art {').length - 1, 1);
   const shell = read('patches/loading-cache/shell.html');
-  assert.doesNotMatch(shell, /INKWAVE(?![_-])/, 'no public INKWAVE text in the boot shell');
-  assert.match(shell, /aria-label="ZEVANT"/);
-  for (const cls of ['iw-load-art__rays', 'iw-load-art__flash', 'iw-load-art__streaks', 'iw-load-art__band--top', 'iw-load-art__band--bot']) {
+  assert.doesNotMatch(shell, /INKWAVE(?![_-])|Turf Riot|TURF RIOT/);
+  assert.ok(shell.includes('<h1 class="iw-zl__mark" aria-label="ZEVANT">' + zevantWordmark('zvs') + '</h1>'));
+  for (const cls of ['iw-zl__glow--a', 'iw-zl__glow--b', 'iw-zl__grid', 'iw-zl__beam', 'iw-zl__c--tl', 'iw-zl__status', 'iw-zl__rule', 'iw-zl__label', 'iw-zl__bar', 'iw-zl__fill', 'iw-zl__shine']) {
     assert.ok(shell.includes(cls), cls);
     assert.ok(css.includes('.' + cls), cls);
   }
-  assert.equal(shell.split(`data-t="${loadingArtMarquee('ZEVANT')}"`).length - 1, 2);
+  // Distinct gradient ids: the hidden shell's defs must not be what the native screen paints with.
+  assert.notEqual(zevantWordmark('zvs'), zevantWordmark('zvl'));
 });
