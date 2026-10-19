@@ -25,12 +25,12 @@ test('public-source fetch is a read-only candidate workflow, never a direct-sour
 
 test('native catalogue sweep helper ships as a non-eager immutable runtime dependency', () => {
   const build = fs.readFileSync(new URL('../build-inkwave.mjs', import.meta.url), 'utf8');
-  const stageRule = build.match(/if \(prefix === 'patches\\/native-stages' && !unminified && rel\.startsWith\('runtime\\/'\) && !\[([^\]]+)\]\.includes\(rel\)\) continue;/);
+  const stageRule = build.match(/if \(prefix === 'patches\/native-stages' && !unminified && rel\.startsWith\('runtime\/'\) && !\[([^\]]+)\]\.includes\(rel\)\) continue;/);
   assert(stageRule, 'production native module staging guard must remain inspectable');
-  assert.match(stageRule[1], /'runtime\\/native-projectile-sweep\\.mjs'/, 'standalone helper must be emitted');
+  assert.match(stageRule[1], /'runtime\/native-projectile-sweep\.mjs'/, 'standalone helper must be emitted');
   const deferred = build.split('const deferredIntegrationPreloads = new Set([')[1]?.split(']);')[0];
   assert(deferred, 'deferred startup hints must remain defined');
-  assert.match(deferred, /'patches\\/native-stages\\/runtime\\/native-projectile-sweep\\.mjs'/,
+  assert.match(deferred, /'patches\/native-stages\/runtime\/native-projectile-sweep\.mjs'/,
     'the new runtime dependency must be offline cached without a new eager modulepreload');
 });
 
@@ -57,10 +57,22 @@ test('mural atlas and world branding use directly editable source without rebuil
 
 test('ZEVANT stage and lobby lettering is directly owned by authored game modules', async () => {
   const { adaptBuildSource } = await import('../inkwave-source-composition.mjs');
-  for (const [path, source] of [
-    ['src/world/props-marina-vessels.js', marinaVessels],
-    ['src/game/lobbySet-tex.js', lobbySetTexture],
-  ]) assert.equal(adaptBuildSource(path, source), source, path + ' must not be rewritten by the build');
+  assert.equal(adaptBuildSource('src/world/props-marina-vessels.js', marinaVessels), marinaVessels,
+    'marina lettering must not be rewritten by the build');
+  // The pre-existing lobby quality pass scales atlas resolution; it does not own branding.
+  const { adaptLobbyResources } = await import('../../patches/local-quality/lobby-resource-adapter.mjs');
+  const lobbyPath = 'src/game/lobbySet-tex.js';
+  const expectedLobby = adaptLobbyResources(lobbyPath, lobbySetTexture);
+  const builtLobby = adaptBuildSource(lobbyPath, lobbySetTexture);
+  assert.notEqual(expectedLobby, lobbySetTexture, 'existing atlas quality transform must remain active');
+  assert.equal(builtLobby, expectedLobby, 'lobby build may apply only the existing quality transform');
+  for (const [label, body] of [['source', lobbySetTexture], ['built', builtLobby]]) {
+    assert.equal((body.match(/const word = 'ZEVANT', size =/g) || []).length, 1,
+      label + ' owns exactly one authored ZEVANT lettering definition');
+    assert.doesNotMatch(body, /const word = 'INKWAVE'/);
+  }
+  assert.throws(() => adaptLobbyResources(lobbyPath, builtLobby), /quality patch conflict/,
+    'the existing quality transform must not be applied twice');
   assert.match(worldProps, /ZEVANT HARBOR · SEWER · ZEVANT HARBOR · SEWER/);
   assert.match(marinaVessels, /text\(B, 'ZEVANT', 0\.19/);
   assert.match(marinaVessels, /text\(B, 'ZEVANT', 0\.1,/);

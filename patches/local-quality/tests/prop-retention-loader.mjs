@@ -6,6 +6,20 @@ export function initialize(data) { sourceRoot = data.sourceRoot; }
 export function resolve(specifier, context, nextResolve) {
   if (specifier === 'three') return { url: pathToFileURL(sourceRoot + '/vendor/three/build/three.module.js').href, shortCircuit: true };
   if (specifier.startsWith('three/addons/')) return { url: pathToFileURL(sourceRoot + '/vendor/three/jsm/' + specifier.slice(13)).href, shortCircuit: true };
+  // Authored modules use the emitted site's sibling src/ and patches/ layout.
+  // Keep the source checkout bridge explicit; unresolved files still fail in Node.
+  if (specifier.startsWith('.') && context.parentURL) {
+    const target = new URL(specifier, context.parentURL);
+    const sourcePatches = pathToFileURL(sourceRoot + '/patches/');
+    const repoPatches = new URL('../../../patches/', import.meta.url);
+    const repoSource = new URL('../../../src/', import.meta.url);
+    if (target.href.startsWith(sourcePatches.href)) {
+      return nextResolve(new URL(target.href.slice(sourcePatches.href.length), repoPatches).href, context);
+    }
+    if (context.parentURL.startsWith(repoPatches.href) && target.href.startsWith(repoSource.href)) {
+      return nextResolve(new URL(target.href.slice(repoSource.href.length), pathToFileURL(sourceRoot + '/src/')).href, context);
+    }
+  }
   return nextResolve(specifier, context);
 }
 export async function load(url, context, nextLoad) {
