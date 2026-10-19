@@ -65,7 +65,8 @@ export function installRecordedCombatAudio(AudioEngine){
     if(!state||state.context!==this.ctx)return null;
     const buffer=state.buffers.get(name);
     if(!buffer)return null;
-    return {gain:spec.gain,max:8,jitter:0,minGap:.018,reverb:0,ref:3,priority:spec.priority,
+    if(state.defs.has(name))return state.defs.get(name);
+    const def={gain:spec.gain,max:8,jitter:0,minGap:.018,reverb:0,ref:3,priority:spec.priority,
       build(v){
         const source=v.ctx.createBufferSource();
         source.buffer=buffer;
@@ -76,12 +77,14 @@ export function installRecordedCombatAudio(AudioEngine){
         v.end=Math.max(v.end,source._end);
       }
     };
+    state.defs.set(name,def);
+    return def;
   };
 
   p.prepareRecordedCombatCues=function(){
     if(!this.ctx)return Promise.resolve({ready:false,reason:'no-audio-context'});
     if(!this._s3CombatCues||this._s3CombatCues.context!==this.ctx)
-      this._s3CombatCues={context:this.ctx,buffers:new Map(),pending:null,errors:[]};
+      this._s3CombatCues={context:this.ctx,buffers:new Map(),defs:new Map(),pending:null,errors:[]};
     const state=this._s3CombatCues,context=this.ctx;
     if(state.pending)return state.pending;
     const request=async([name,spec])=>{
