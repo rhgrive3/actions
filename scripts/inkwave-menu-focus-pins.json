@@ -2,12 +2,17 @@
   "inputs": {
     "upstream/src/ui/menus.js": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e",
     "patch/runtime/menu-layout.mjs": "d55eec5cb3019d12d05bc689ec72f81d285394163cebafa358d3f6ec00280871",
-    "patch/runtime/install.mjs": "f80bad203b3d4b42e9fc50169a8e430beb482df9b0a408c0b429d0ed38596ad4"
+    "patch/runtime/install.mjs": "6ac7121f3d649c893d66668df2b8c823331cd41259865e563b94462c84d02c91"
   },
   "baseCommit": "e8b89e5588bb95aab5be54b9f8346ceca50cf177",
   "reviewedGameplayInstaller": {
     "commit": "e70dde7",
     "previousSha256": "ccd430296341650d745b2cacb4f92564371125b2ca79cdd79a25a22f89484c13",
     "reason": "Install the Squid Spawn presentation owner (spawner, landing marker, prompt) after the respawn lifecycle; two added installer lines only. Native menu and menu-layout pins and all focus assertions remain unchanged."
+  },
+  "integratedInstallerPin": {
+    "previousSha256": "f80bad203b3d4b42e9fc50169a8e430beb482df9b0a408c0b429d0ed38596ad4",
+    "observedSha256": "6ac7121f3d649c893d66668df2b8c823331cd41259865e563b94462c84d02c91",
+    "evidence": "Validate INKWAVE update browser(ui) failure at a3d6ee2745aa; source installer unchanged through this integration checkpoint. Keep exact source-hash guard while rebasing the obsolete focus fixture onto the consolidated installer."
   }
 }
