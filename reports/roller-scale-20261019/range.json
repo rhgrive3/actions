@@ -1,0 +1,69 @@
+{
+  "build": "2bfa02d263ad4ad7abfe4e27114cee8e26b69cb40110215066b4937443cfb91c",
+  "errors": [],
+  "requests": [
+    {
+      "url": "http://127.0.0.1:42205/_versions/10905be53b0b300f1b0fe793c9e4aff077fbef8c90c1faf43ee8bdffed6f5dc1/assets/audio/Jet_Arrow.mp3",
+      "failure": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    }
+  ],
+  "console": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "state": {
+    "mode": "match",
+    "match": "playing",
+    "menu": null,
+    "layout": "range",
+    "range": true,
+    "text": "OK!\nF\n125\np\nインク不足\n65%\n+13\np\n+14\np\n+19\np\n+19\np\nスプラローラー\n速度\n7.9m/s\nゾーン\nD · ローラーコート\nターゲット\n最後のヒット\n合計\nヒット\nローラーコート\nR\n塗りリセット\nT\nターゲットリセット\nG\nスタートへ"
+  },
+  "entry": {
+    "route": [
+      "main",
+      "mode",
+      "range"
+    ],
+    "gestures": [
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"play\"]"
+      },
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"mode-range\"]"
+      }
+    ]
+  },
+  "measurement": {
+    "layout": "range",
+    "start": [
+      -26.5,
+      0,
+      11.839333333333345
+    ],
+    "end": [
+      -26.5,
+      0,
+      22.971333333333437
+    ],
+    "face": 9,
+    "floorTag": "floor:roller",
+    "drumWidth": 2.57119989395142,
+    "paintHalf": 2.8,
+    "gpuMinWidth": 4.874999999999723,
+    "gpuMaxWidth": 5.699999999999676,
+    "rows": 97,
+    "holes": 0,
+    "contactError": 0,
+    "events": 90,
+    "debugFixedTicks": 180,
+    "controller": "shipped KeyW + held fire",
+    "inspectionCameraOnly": true
+  },
+  "passed": true
+}
