@@ -1,4 +1,5 @@
 import { getPlatformLifecycle } from './platform-lifecycle.mjs';
+export const PLATFORM_CONNECTION_RECOVERY_MS = 6000;
 const INSTALLED = Symbol.for('inkwave.platform.transport.v1');
 export function installTransportPlatform(Transport, env = globalThis) {
   const P = Transport.prototype;
@@ -21,7 +22,7 @@ export function installTransportPlatform(Transport, env = globalThis) {
           if (!owner.active || owner.epoch !== epoch || tr.ws !== ws || ws.readyState !== 1) return;
           const age = tr._pingSent ? env.performance.now() - tr._pingSent : 0;
           if (age >= 5500) ws.close(1000, 'Connection did not recover after background');
-        }, 6000);
+        }, PLATFORM_CONNECTION_RECOVERY_MS);
       },
     });
     return r;

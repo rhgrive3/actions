@@ -64,7 +64,7 @@ export function adaptNetworkSource(rel, code) {
       '    const cosmetic = !!opts.cosmetic;\n    const netOrderId = !cosmetic && paintOrder ? this._paintOrderId(paintOrder) : 0;\n    const ownerOrder = netOrderId || this._paintCurrentOrder || 0;\n    const orderState = ownerOrder && !cosmetic ? { accepted: false } : null;',
       'shared local and network cell owner');
     patch('if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n          entries.push(f, lu, lv, dn, sdu, sdv, sa);',
-      'if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);\n          if (netOrderId || !orderState || orderState.accepted) entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      'if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);\n          entries.push(f, lu, lv, dn, sdu, sdv, sa); // Ancillary ink can hit cells even when the body hits none.',
       'retain ordered ancillary growth while masking rejected body cells');
     patch('          if (g.team === team || g.kind === K_SPECK) continue;',
       '          if (g.netOrderId || netOrderId || g.team === team || g.kind === K_SPECK) continue;',

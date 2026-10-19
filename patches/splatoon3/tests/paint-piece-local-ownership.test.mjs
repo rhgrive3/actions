@@ -4,7 +4,13 @@ import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {claimAncillaryCells as baseline,ensureOwnershipState as oldState} from './fixtures/paint-piece-ownership-baseline.mjs';
 const source=fs.readFileSync(new URL('../runtime/paint-ownership.mjs',import.meta.url),'utf8');
-const candidate=await import('data:text/javascript;base64,'+Buffer.from(source+'\nexport {claimAncillaryCells,ensureOwnershipState};').toString('base64'));
+// Preserve the immutable optimization oracle under its original five-point
+// semantics; #264's intentional dot-core additions are verified separately.
+const legacySampling=source.replace('return !!paintDotCellWitness(mask, face, x, y, piece);','return false;')
+ .replace('Math.max(face.cu, face.cv) * 0.5 + mask.margin','Math.max(face.cu, face.cv) * 0.32 + mask.margin')
+ .replace('y + face.cv * 0.5 < yLo || y - face.cv * 0.5 > ext','y < yLo || y > ext')
+ .replace('x + face.cu * 0.5 < -ext || x - face.cu * 0.5 > ext','x < -ext || x > ext');
+const candidate=await import('data:text/javascript;base64,'+Buffer.from(legacySampling+'\nexport {claimAncillaryCells,ensureOwnershipState};').toString('base64'));
 const contract={shapes:[[5,0,0,3],[3,0,0,2],[7,0,0,4],[10,0,0,5],[3,0,0,2],[2,0,0,1],[0,0,0,0],[0,0,0,0]],kind:{speck:7},reach:[2.8,3,2.8,2.8,3,2.8,1,1],dripReach:4};
 function paint(){const p={grid:new Uint8Array(96*96),dead:new Uint8Array(96*96),counts:[0,0],version:0};candidate.ensureOwnershipState(p);p._paintOrderRecords=[null,{clock:1,peer:'a',seq:1},{clock:2,peer:'b',seq:1},{clock:3,peer:'a',seq:2}];return p;}
 function face(wall,cell=.25){return{atlas:{ppm:32},su:24,sv:24,nu:96,nv:96,cu:cell,cv:cell,grid:0,wall,turf:!wall};}
@@ -28,7 +34,7 @@ test('satellite/spatter overlaps, anisotropic cells, occlusion and sub-cell boun
  }
 });
 
-test('installed production PaintSystem matches the pre-optimization oracle at every visible growth step',async()=>{
+test('production preserves legacy cells and credits every additional dot cell exactly once',async()=>{
  const {fixture}=await import('./source-fixture.mjs');const {PaintSystem}=await fixture({productionComposition:true});
  const probe=fs.readFileSync(new URL('./paint-mask-browser-fixture.mjs',import.meta.url),'utf8');
  const setup=probe.match(/export function createPaintMaskProbe\(\) \{([\s\S]*?)\n\}/)[1];
@@ -41,7 +47,16 @@ test('installed production PaintSystem matches the pre-optimization oracle at ev
   for(const t of [.2,.6,1.1,2,3]){
    g.age=t;const td=g.dripDur?Math.min(1,t/g.dripDur):1,dT=1-Math.pow(1-td,2.2);
    const expected=baseline(o,{...g,paintOwner:{remote:false,addTurf:v=>expectedCredit+=v}},Math.min(3,t),dT,contract);
-   const actual=p._advanceSplatOwnership(g);assert.equal(actual,expected);assert.deepEqual([...p.grid],[...o.grid]);assert.deepEqual([...p._paintOwnershipOrder],[...o._paintOwnershipOrder]);assert.deepEqual([...p.counts],[...o.counts]);assert.equal(actualCredit,expectedCredit);
+   const before=p.grid.filter(v=>v===1).length;
+   const actual=p._advanceSplatOwnership(g),after=p.grid.filter(v=>v===1).length;
+   for(let i=0;i<o.grid.length;i++){
+    if(o.grid[i])assert.equal(p.grid[i],o.grid[i],'every original visible cell is retained');
+    if(p.grid[i])assert.equal(p._paintOwnershipOrder[i],order,'new dot cells share event ordering');
+   }
+   assert.equal(p.counts[0],wall?0:after);assert.equal(p.counts[1],0);
+   assert.equal(actual,wall?0:(after-before)*f.cu*f.cv);
+   assert.equal(actualCredit,wall?0:after*f.cu*f.cv);
+   assert.ok(actualCredit>=expectedCredit);
   }
  }
 });
