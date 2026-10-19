@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { classifySourceCombatHit, playResidentCombatRecording } from '../runtime/audio/source-hit-rules.mjs';
-import { KIT_AUDIO } from '../runtime/audio/kit-recipes.mjs';
+import { COMBAT_AUDIO } from '../runtime/audio/combat-recipes.mjs';
 import { validateAuthorizedManifest } from '../runtime/audio/authorized-samples.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
@@ -64,9 +64,9 @@ test('authorized source samples are the ONLY accepted combat cue input',()=>{
    'death and critical hit are separate unverified recordings');
  assert.equal(playResidentCombatRecording(audio,'unknown',actor,.8),false);
  for(const kind of ['critical','damage','splat']){
-   const r=KIT_AUDIO['combat:'+kind];
+   const r=COMBAT_AUDIO['combat:'+kind];
    assert.equal(r.family,'combat');assert.deepEqual(r.events,['fire']);
-   assert.equal(r.reference,'operator-recorded-only');
+   assert.match(r.reference,/source-verified/,'recording is routed by the existing source-only library');
  }
 });
 
