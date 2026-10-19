@@ -65,14 +65,14 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }
   if(rel==='src/game/weapons.js'){
+    code="import { withChargedHitAudio, isFullyChargedAudioHit } from '../../patches/splatoon3/runtime/audio/charge-hit-cue.mjs';\n"+code;
     code=once(code,"this.applyHit(a, victim.e, dmg, 'charger');",
-      "this.applyHit(a, victim.e, dmg, 'charger', {fullCharge:charge>=0.999});",
-      'native Charger full-charge metadata for audio-only hit');
-    code=once(code,"applyHit(attacker, victim, dmg, weaponId) {",
-      "applyHit(attacker, victim, dmg, weaponId, audioMeta=null) {",
-      'optional hit metadata without damage/authority changes');
+      "withChargedHitAudio(victim.e,charge>=0.999,()=>this.applyHit(a, victim.e, dmg, 'charger'));",
+      'native Charger full-charge audio scope, preserving all damage-group args');
+    // The fifth applyHit argument belongs to existing damage-group/network
+    // controls. Read the temporary WeakMap hint, never alter its signature.
     code=once(code,"emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
-      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, fullCharge:audioMeta?.fullCharge===true });",
+      "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, fullCharge:isFullyChargedAudioHit(victim) });",
       'send actual Charger charge bit to local audio owner');
     code=once(code,
       "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
@@ -173,11 +173,12 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace(/emit\('weapon:impact',\s*\{\s*pos:/g,"emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:");
   }
   if(rel==='patches/splatoon3/runtime/main-weapon-catalog.mjs'){
+    code="import { withChargedHitAudio } from './audio/charge-hit-cue.mjs';\n"+code;
     // Preserve the source player's actual charge fraction through a LOCAL
     // audio hint; do not change projectile damage or network hit proposals.
     code=once(code,"this.applyHit(p.owner,target,amount,p.wid)",
-      "this.applyHit(p.owner,target,amount,p.wid,{fullCharge:s.r.family==='charger'&&d.charge>=1-1e-6})",
-      'catalogue Charger actual full charge contact audio flag');
+      "withChargedHitAudio(target,s.r.family==='charger'&&d.charge>=1-1e-6,()=>this.applyHit(p.owner,target,amount,p.wid))",
+      'catalogue Charger scoped full-charge audio flag without fifth argument');
     // Added S3 catalogue weapons already emit weapon:fire. Avoid a second
     // legacy family shot alongside the admitted weapon-specific real sample.
     code=once(code,
