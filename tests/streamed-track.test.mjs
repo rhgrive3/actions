@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { adaptWeaponAudio } from '../patches/splatoon3/audio-adapter.mjs';
 import { StreamedTrack } from '../inkwave-public/src/audio/streamedTrack.js';
 
 function makeMock() {
@@ -51,4 +53,20 @@ test('fade out stops and pauses without full-file decoding', () => {
   assert.ok(Number.isFinite(a.track.stopAt));
   a.track.dispose();
   assert.equal(a.paused, 1);
+});
+
+
+test('streamed music passes production audio adapter without skipping final-minute grid', () => {
+  const original = readFileSync(new URL('../inkwave-public/src/audio/music.js', import.meta.url), 'utf8');
+  const streamedPredicate = 'if (cur && !element && !(cur instanceof StreamedTrack) && fade > 0 && cur.song.bpm === song.bpm)';
+  const standardPredicate = 'if (cur && fade > 0 && cur.song.bpm === song.bpm)';
+  assert.equal(original.split(streamedPredicate).length - 1, 1);
+  const streamBuilt = adaptWeaponAudio('src/audio/music.js', original);
+  const guard = "opts.sync !== false && track !== 'battle_final'";
+  assert.equal(streamBuilt.split(guard).length - 1, 1, 'retain final-minute unsynced transition');
+  assert.ok(streamBuilt.includes('cur && !element && !(cur instanceof StreamedTrack) && fade > 0'), 'never beat-sync a streamed recording');
+  assert.ok(streamBuilt.includes('let t0 = Number.isFinite(opts.at)'), 'scheduled final-minute clock survives');
+  const legacyBuilt = adaptWeaponAudio('src/audio/music.js', original.replace(streamedPredicate, standardPredicate));
+  assert.equal(legacyBuilt.split(guard).length - 1, 1, 'normal procedural player keeps the same cutoff');
+  assert.ok(legacyBuilt.includes('track !== \'battle_final\' && cur && fade > 0'), 'legacy beat-grid adapter remains accepted');
 });

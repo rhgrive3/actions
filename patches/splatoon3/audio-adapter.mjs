@@ -121,7 +121,11 @@ export function adaptWeaponAudio(rel,code){
   if(rel==='src/audio/music.js'){
     code="import { installOriginalAudioScore } from '../../patches/splatoon3/runtime/audio/music-score.mjs';\n"+code;
     code=once(code,'const compiled = new Map();','installOriginalAudioScore(SONGS);\nconst compiled = new Map();','original score');
-    code=once(code,'if (cur && fade > 0 && cur.song.bpm === song.bpm)',"if (opts.sync !== false && track !== 'battle_final' && cur && fade > 0 && cur.song.bpm === song.bpm)",'final minute grid');
+    const streamingGrid = 'if (cur && !element && !(cur instanceof StreamedTrack) && fade > 0 && cur.song.bpm === song.bpm)';
+    const standardGrid = 'if (cur && fade > 0 && cur.song.bpm === song.bpm)';
+    const activeGrid = code.includes(streamingGrid) ? streamingGrid : standardGrid;
+    if (code.split(activeGrid).length !== 2) throw new Error('audio adapter ambiguous final minute grid');
+    code=once(code,activeGrid,activeGrid.replace('if (cur &&',"if (opts.sync !== false && track !== 'battle_final' && cur &&"),'final minute grid');
     code=once(code,'let t0 = now + 0.06, sync = false;',"let t0 = Number.isFinite(opts.at) ? Math.max(now,opts.at) : now + (track==='battle_final' ? .015 : .06), sync = false;",'music clock');
   }
   if(rel==='patches/splatoon3/runtime/weapons-charger-flight.mjs'){
