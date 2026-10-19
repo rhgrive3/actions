@@ -5,7 +5,7 @@
 // Major wire changes require a relay update. Bump COMPAT when gameplay,
 // authoritative rules or network schema changes; UI-only releases remain compatible.
 export const PROTO = 2;
-export const COMPAT = 'iw-gameplay-20261019-r2';
+export const COMPAT = 'iw-gameplay-20261020-r3';
 export const MAX_RELAY_FRAME_CHARS = 64 * 1024 + 64;
 
 // Where the relay lives: ?relay=… wins; a page served from this machine or the LAN talks to a local `wrangler dev`

@@ -32,11 +32,32 @@ export async function nativeContextRecoveryProof() {
   const frame = count => { for (let i = 0; i < count; i++) g._frame(1 / 60); };
   check(match?.state === 'playing' && !G.netm, 'Recovery lane requires a real offline playing match');
   g.debug.freeze(); g.debug.freezeBots(); g._skipRender = true;
-  const face = G.level.faces.find(f => f.paintable && f.turf && f.atlas && f.grid >= 0 && f.su > 3 && f.sv > 3);
-  check(face, 'No real paintable floor for nonempty atlas control');
-  const center = face.origin.clone().addScaledVector(face.u, face.su / 2).addScaledVector(face.v, face.sv / 2).addScaledVector(face.n, .005);
-  paint.splat(center, 1, 1, { face: face.id, kind: 'shot', seed: .37, instant: true });
-  const seededArea = paint.splat(center, 1, 0, { face: face.id, kind: 'shot', seed: .37, instant: true });
+  // A paintable top-level face can have a fully buried midpoint; choose a
+  // genuinely live CPU turf cell instead of assuming the geometric centre is
+  // playable. Preserve a real game-owned paint splat and the real GPU atlas.
+  let sample = null;
+  for (const f of G.level.faces) {
+    if (!f.paintable || !f.turf || !f.atlas || f.grid < 0 || f.su <= 3 || f.sv <= 3) continue;
+    const cx = (f.nu - 1) / 2, cy = (f.nv - 1) / 2;
+    let best = Infinity;
+    for (let j = 0; j < f.nv; j++) for (let i = 0; i < f.nu; i++) {
+      const k = f.grid + j * f.nu + i;
+      if (paint.dead[k] || paint.grid[k]) continue;
+      const distance = Math.abs(i - cx) + Math.abs(j - cy);
+      if (distance < best) { sample = { face: f, i, j }; best = distance; }
+      if (!best) break;
+    }
+    if (sample) break;
+  }
+  check(sample, 'No live, unpainted CPU turf cell for GPU context recovery seed');
+  const { face, i, j } = sample;
+  const center = face.origin.clone()
+    .addScaledVector(face.u, (i + 0.5) * face.cu)
+    .addScaledVector(face.v, (j + 0.5) * face.cv)
+    .addScaledVector(face.n, .005);
+  const firstArea = paint.splat(center, 1, 1, { face: face.id, kind: 'shot', seed: .37, instant: true });
+  const secondArea = paint.splat(center, 1, 0, { face: face.id, kind: 'shot', seed: .37, instant: true });
+  const seededArea = firstArea + secondArea;
   paint.flush(1 / 60); G.renderer.getContext().finish();
   check(seededArea > 0 && paint.grid.some(value => value !== 0), 'Real CPU/GPU paint seed did not claim turf');
   receipt.seed = { face: face.id, area: seededArea, version: paint.version }; mark('paint-seeded');

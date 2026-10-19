@@ -19,7 +19,7 @@ function roomWith(...names) {
   });
   return { room, sockets };
 }
-const compatible = 'iw-gameplay-20261019-r2';
+const compatible = 'iw-gameplay-20261020-r3';
 const req = (path, method = 'GET', upgrade = 'websocket') => ({
   url: 'https://relay.test' + path, method,
   headers: new Headers(upgrade ? { Upgrade: upgrade } : {}),
