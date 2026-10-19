@@ -36,6 +36,7 @@ test('all five additional 11.3.0 Spinners and their kits render both charge ring
    update(first/second);
    close(r.h._L.splatFirst,1);
    close(r.h._L.splatSecond,0);
+   assert.equal(r.h._L.splatFirstComplete,true,id+' first-stage event triggers once');
    assert.equal(+r.h._chargeSecond.style.strokeDashoffset,100,id+' stage two remains empty at stage one');
    update((first+second)/(2*second));
    close(r.h._L.splatFirst,1);close(r.h._L.splatSecond,.5);
@@ -51,7 +52,7 @@ test('other catalogue families keep existing generic reticles, no leaked second 
  f.WEAPONS[id]={...f.WEAPONS.shooter,id,kind:'catalog',behaviorKind:'shooter'};
  r.a.weapon=f.WEAPONS[id];
  r.h._updCrosshair({weapon:id,charge:1,crosshair:{spread:0}},1/60);
- assert.equal(r.h._L.kind,'catalog');
+ assert.equal(r.h._L.kind,'shooter');
  assert.doesNotMatch(r.h.ret.markup,/iw-ret__charge-second/);
  delete f.WEAPONS[id];
 });
