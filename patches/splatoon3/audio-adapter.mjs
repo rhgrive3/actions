@@ -115,7 +115,7 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
       "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
-      "G.audio?.playWeapon?.('fx:combat', ((attacker?.weapon?.catalogRecord?.family||attacker?.weapon?.kind)==='charger'||G.audio?.blasterHitCueKind?.(attacker,weaponId)==='direct')?'critical_hit':'hit', { actor:attacker, volume:0.6 });",'recorded direct/ordinary hit classification');
+      "G.audio?.playWeapon?.('fx:combat', ((attacker?.weapon?.catalogRecord?.family||attacker?.weapon?.kind)==='charger'||attacker?.weapon?.catalogRecord?.sourceActor==='WeaponSlosherLauncher'||attacker?.weapon?.catalogRecord?.sourceActor==='WeaponShooterTripleMiddle'||G.audio?.blasterHitCueKind?.(attacker,weaponId)==='direct')?'critical_hit':'hit', { actor:attacker, volume:0.6 });",'recorded direct/ordinary hit classification');
     code=once(code,"G.audio?.play('splat_enemy', { volume: 0.9 });",
       "G.audio?.playWeapon?.('fx:combat','splat',{actor:attacker,volume:.8});",
       'source-backed local enemy splat instead of parametric alert');
