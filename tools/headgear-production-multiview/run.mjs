@@ -11,7 +11,7 @@ const args=process.argv.slice(2),option=(n,d)=>{let i=args.indexOf(n);return i<0
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const safe=(root,rel)=>{const p=fs.realpathSync(path.resolve(root,rel));assert(p.startsWith(root+path.sep),'path containment');return p;};
 async function main(){
- const gearIds=option('--gear-ids','4,5,6,7,8,9,10,11').split(',').map(Number);assert(gearIds.length>0&&new Set(gearIds).size===gearIds.length&&gearIds.every(id=>Number.isInteger(id)&&id>=4&&id<=11),'valid unique gear filter');const expectedRows=gearIds.length*20+(gearIds.includes(7)?4:0)+gearIds.filter(id=>id>=8).length*2;
+ const gearIds=option('--gear-ids','4,5,6,7,8,9,10,11').split(',').map(Number);assert(gearIds.length>0&&new Set(gearIds).size===gearIds.length&&gearIds.every(id=>Number.isInteger(id)&&id>=4&&id<=11),'valid unique gear filter');const expectedRows=gearIds.length*20+(gearIds.includes(7)?4:0)+gearIds.filter(id=>id>=8).length*2+(gearIds.includes(10)?11:0);
  const site=fs.realpathSync(option('--site','_site')),out=path.resolve(option('--out','.qa-evidence/headgear-production-views'));fs.mkdirSync(out,{recursive:true});
  const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash,'artifact map identity');
  for(const [file,digest]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(safe(site,file))),digest,'build receipt '+file);
@@ -43,3 +43,4 @@ async function main(){
  finally{await browser?.close();if(server)await new Promise(resolve=>server.close(resolve));}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
+

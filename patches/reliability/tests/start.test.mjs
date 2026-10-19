@@ -41,7 +41,7 @@ function deferred() {
 
 function boot(source, held = []) {
   const calls = [], resources = [], gates = {}, reached = {}, hooks = {};
-  for (const phase of ['fade', 'boss', 'world', 'warm']) { gates[phase] = deferred(); reached[phase] = deferred(); }
+  for (const phase of ['fade', 'audioReady', 'boss', 'world', 'warm']) { gates[phase] = deferred(); reached[phase] = deferred(); }
   const record = (name, ...args) => { calls.push([name, ...args]); hooks[name]?.(); };
   const phase = (name, value) => { record(name); reached[name].resolve(); return held.includes(name) ? gates[name].promise : Promise.resolve(value); };
   const resource = (kind, extra = {}) => {
@@ -73,7 +73,8 @@ function boot(source, held = []) {
   const G = {
     scene, renderer: { compileAsync: () => { record('compile'); return Promise.resolve(); } }, teamColors: [null, null],
     net: { tr: {}, state: 'starting', code: 'ABCDE', myId: 'me', isHost: true }, netm: null,
-    audio: { init: () => record('audio'), duck: () => record('duck') }, music: { stop: () => record('musicStop') },
+    audio: { init: () => record('audio'), duck: () => record('duck'),
+      requireRecordedMainShot: weapon => { record('recordedShot', weapon); return phase('audioReady', true); } }, music: { stop: () => record('musicStop') },
     projectiles: { clear: () => record('clearProjectiles') }, fx: { clear: () => record('clearFx'), setLighting: () => record('lighting') },
     paint: resource('paint:old', { clear: () => record('clearPaint'), texture: {}, size: 64 }),
     level: { id: 'old' }, physics: { id: 'old' }, mode: 'menu',
@@ -601,11 +602,14 @@ function menuStart(h, source = PRODUCTION) {
   return api.startMatch({mapId:'a',mode:'boss'});
 }
 
-for (const phase of ['boss','world','warm']) test(`#1184 real menu API recovers current ${phase} rejection and permits retry`,async()=>{
+for (const phase of ['audioReady','boss','world','warm']) test(`#1184 real menu API recovers current ${phase} rejection and permits retry`,async()=>{
   const h=offlineUi([phase]), toasts=[];
   h.game.menus.toast=(...args)=>toasts.push(args);
   const pending=menuStart(h);
   await h.reached[phase].promise;
+  assert.equal(h.count('recordedShot'),1,'production recorded-audio gate was entered');
+  assert.equal(h.count(phase),1,'the intended failing phase was reached');
+  if(phase==='audioReady') assert.equal(h.count('boss'),0,'audio readiness blocks downstream startup');
   h.gates[phase].reject(new Error('temporary '+phase));
   await pending;
   assert.equal(h.G.mode,'menu'); assert.equal(h.game.menus.current,'main');
@@ -690,3 +694,36 @@ test('#1184 final loading-cache instrumentation still records the real menu atte
   assert.deepEqual(marks,['first-battle-request','first-battle-request']);
   assert.deepEqual(ready,[h.game]);assert.equal(h.game.match.attract,false);
 });
+
+test('recorded audio readiness holds the real menu startup before boss loading',async()=>{
+  const h=offlineUi(['audioReady']);
+  const pending=menuStart(h); await h.reached.audioReady.promise;
+  await Promise.resolve();
+  assert.deepEqual(h.calls.find(c=>c[0]==='recordedShot'),['recordedShot','shooter']);
+  assert.equal(h.count('boss'),0); assert.notEqual(h.G.mode,'match');
+  h.gates.audioReady.resolve(true); await pending;
+  assert.equal(h.count('boss'),1); assert.equal(h.G.mode,'match');
+});
+
+test('negative control: missing recorded-audio contract recovers before boss startup',async()=>{
+  const h=offlineUi(),toasts=[]; h.game.menus.toast=x=>toasts.push(x);
+  delete h.G.audio.requireRecordedMainShot;
+  await menuStart(h);
+  assert.equal(h.G.mode,'menu'); assert.equal(h.game.menus.current,'main');
+  assert.equal(h.count('boss'),0); assert.equal(h.count('recordedShot'),0);
+  // Recovery may warm the replacement attract match; it must not enter boss startup.
+  assert.equal(toasts.length,1);
+  assert.ok(h.calls.some(c=>c[0]==='error' && c.some(x=>String(x).includes('Recorded weapon audio is not installed'))));
+});
+
+test('negative control: old menu entry propagates recorded-audio rejection without recovery',async()=>{
+  const h=offlineUi(['audioReady']);
+  const oldApi=PRODUCTION.replace('startMatch: (o) => self._startMenuMatch(o),','startMatch: (o) => self.startMatch(o),');
+  assert.notEqual(oldApi,PRODUCTION);
+  const pending=menuStart(h,oldApi); await h.reached.audioReady.promise;
+  const rejected=assert.rejects(pending,/recorded MP3 unavailable/);
+  h.gates.audioReady.reject(new Error('recorded MP3 unavailable')); await rejected;
+  assert.equal(h.count('boss'),0); assert.equal(h.count('fadeOut'),0);
+  assert.equal(h.game.menus.current,null);
+});
+
