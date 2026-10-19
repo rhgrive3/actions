@@ -1,4 +1,3 @@
-// Relative Euler-channel traces sampled from the user's Splatoon 1 (Wii U) Player00_anim.szs.
 // 2 source frames per sample; per-clip means subtracted; signed milliradians (int16 LE).
 // NOT Splatoon 3 animation data, original bind-pose angles, or a verified playback-speed law.
 // Channel order: hip XYZ, root XYZ, thigh L/R X, shin L/R X, foot L/R X, upper-arm L/R Y.

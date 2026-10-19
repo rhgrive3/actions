@@ -1,7 +1,8 @@
 import { WEAPON_AUDIO, LOOP_EVENTS, mainAudioSourceId } from './weapon-recipes.mjs';
 export { mainAudioSourceId } from './weapon-recipes.mjs';
 import { KIT_AUDIO } from './kit-recipes.mjs';
-export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO});
+import { COMBAT_AUDIO } from './combat-recipes.mjs';
+export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO});
 import { renderSound } from './render.mjs';
 export const MAIN_AUDIO_PREFIX='main:';
 // Source-recorded MP3s always win. Only MAIN-weapon attack one-shots may use
