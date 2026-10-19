@@ -82,7 +82,9 @@ function stores(nm) {
 function prune(nm,now) {
   stores(nm);
   for(const [peer,shots] of nm.rankedBarrierProofs) {
-    const kept=shots.filter(s => !s.used && now-s.at<=RECEIPT_SECONDS && now>=s.at-0.01);
+    // Retain already-consumed shots until their accounting window ends; otherwise
+    // fast replayed claims could repeatedly evade the weapon fire-rate ceiling.
+    const kept=shots.filter(s => now-s.at<=RECEIPT_SECONDS && now>=s.at-0.01);
     if(kept.length) nm.rankedBarrierProofs.set(peer,kept);
     else nm.rankedBarrierProofs.delete(peer);
   }
@@ -123,7 +125,7 @@ export function noteRankedBarrierShots(nm,from,packet,now) {
     const count=receipts.filter(r=>r.id===shot.id && now-r.at<1).length;
     const weapon=actor.weapon;
     const rate=Number.isFinite(weapon.fireInterval) && weapon.fireInterval>0 ? 1/weapon.fireInterval : 12;
-    const burst=['roller','slosher','stringer','brush'].includes(weapon.kind) ? 10 : 3;
+    const burst=['roller','slosher','stringer','brush'].includes(weapon.kind) ? 10 : 1.5;
     if(count>=Math.min(60,Math.ceil(rate*burst)+2)) continue;
     shot.at=now;
     receipts.push(shot);
