@@ -74,6 +74,19 @@ for (const suite of Object.keys(SUITES)) test(suite + ' browser harness statical
     assert.equal(verifyAirScenario({...valid,landingBadFrames:6,worstLanding:{grip:.01068}},{corrected:false}),true,'pre-fix landing negative can render without weakening after gate');
     assert.throws(()=>verifyAirScenario({...valid,badFrames:1,worst:{grip:.0133}},{corrected:false}),/world grip/,'accepted air contact remains mandatory even in the before lane');
   }
+  if(suite==='rainmaker-form'){
+    await module.evaluate();
+    const {FORM_CAPTURE_PLAN,verifyFormScenario}=module.namespace;
+    const plan=JSON.parse(JSON.stringify(FORM_CAPTURE_PLAN));
+    assert.equal(plan.reduce((n,p)=>n+Object.values(p.frames).reduce((m,v)=>m+v.length,0),0)*2,20,'ten same-input camera pairs');
+    assert.deepEqual(plan.find(p=>p.name==='shooter-lower').frames[3],['rear','side']);
+    assert.deepEqual(plan.find(p=>p.name==='dualies-upper').frames[6],['rear','side']);
+    const history=plan.find(p=>p.name==='dualies-upper-history-event');assert.equal(history.priorFullForm,true);assert.equal(history.deliveryAt,3);assert.deepEqual(history.frames[3],['rear','side']);
+    const valid={deliveryAt:null,rows:Array.from({length:10},(_,i)=>({returnFrame:i,source:{status:'ready',active:true},poses:1,leftSolves:i<9?2:1,clamArmActive:false,pending:i<9,grip:.0001}))};
+    assert.equal(verifyFormScenario(valid),true);
+    for(const mutate of [r=>r.rows.pop(),r=>r.rows[0].returnFrame=1,r=>r.rows[0].poses=2,r=>r.rows[0].leftSolves=3,r=>r.rows[0].grip=.01,r=>r.rows[9].pending=true,r=>r.rows[0].source.active=false,r=>r.rows[0].source.active='yes',r=>delete r.rows[0].source.active,r=>r.rows[0].clamArmActive=true,r=>delete r.rows[0].clamArmActive]){const bad=JSON.parse(JSON.stringify(valid));mutate(bad);assert.throws(()=>verifyFormScenario(bad));}
+    const old=JSON.parse(JSON.stringify(valid));for(const row of old.rows){row.pending=false;row.leftSolves=1;row.grip=.07;}assert.equal(verifyFormScenario(old,{corrected:false}),true,'old gap is measured without weakening after threshold');
+  }
   assert(cache.has('tools/object-presentation-qa/production-scene.mjs'), 'Uses actual common Environment/Renderer setup');
   const source = fs.readFileSync(path.join(root, browserPath), 'utf8');
   assert.match(source, /export\s+async\s+function\s+run\s*\(/, 'Shared runner entry point');
@@ -97,4 +110,11 @@ test('landing comparison isolates8a903662 handoff while the original three basel
   assert.match(workflow,/--suite rainmaker-air --out \.qa-evidence\/rainmaker\/air/);
   assert.equal((workflow.match(/patches\/splatoon3\/tests\/ranked-rainmaker-air-full-jump.test.mjs/g)||[]).length,2,'same full-jump driver runs in source and exact emitted lanes');
   assert(workflow.includes("'tools/rainmaker-air-production-qa/**'"),'dedicated harness changes trigger native QA');
+});
+
+test('form comparison adds only009 handoff baseline and one bounded same-build capture',()=>{
+ assert.equal(suiteBase('rainmaker-form'),'00968835349cb8afac3803c412a48475e40bcae8');
+ assert.deepEqual(SUITES['rainmaker-form'].before,['patches/splatoon3/runtime/weapon-handoff-motion.mjs']);assert.deepEqual(SUITES['rainmaker-form'].added,[]);
+ const adapter=fs.readFileSync(path.join(root,'patches/local-quality/squid-form-ease-adapter.mjs'),'utf8');assert.match(adapter,/if\(this.character.s3RainmakerFormCapture\)this.character._captureRainmakerForm\?\.\(this\);/);
+ const workflow=fs.readFileSync(path.join(root,'.github/workflows/inkwave-object-presentation-qa.yml'),'utf8');assert.equal((workflow.match(/node scripts\/build-inkwave.mjs inkwave-public _site/g)||[]).length,1);assert.match(workflow,/--suite rainmaker-form --out \.qa-evidence\/rainmaker\/form/);assert.equal((workflow.match(/patches\/splatoon3\/tests\/ranked-rainmaker-form-owner.test.mjs/g)||[]).length,3,'trigger and source/emitted tests');
 });
