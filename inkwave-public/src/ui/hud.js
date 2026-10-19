@@ -837,14 +837,16 @@ export class HUD {
       // spin-up meter (8 segments) that fills while charging and drains while the stream runs + spread ticks
       r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="21" class="iw-ret__track"/>
         <circle r="21" class="iw-ret__charge" pathLength="100" style="stroke-dasharray:100;stroke-dashoffset:100"/>
+        <!-- First-charge boundary is weapon-specific (18/27, 48/72, etc.), not a fixed 2/3 ring. -->
+        <path class="iw-ret__stage" d="M16 0 L27 0"/>
         <g class="iw-ret__segs">${Array.from({ length: 8 }, (_, i) => `<path d="M0 -17 L0 -25" transform="rotate(${i * 45})"/>`).join('')}</g></svg>
         <i class="iw-ret__tick" style="--a:45deg"></i><i class="iw-ret__tick" style="--a:135deg"></i><i class="iw-ret__tick" style="--a:225deg"></i><i class="iw-ret__tick" style="--a:315deg"></i>`;
-      this._chargeEl = r.querySelector('.iw-ret__charge'); this._chargeC = 100;
+      this._chargeEl = r.querySelector('.iw-ret__charge'); this._stageEl = r.querySelector('.iw-ret__stage'); this._chargeC = 100;
     } else {
       r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__ring thin"/></svg>
         <i class="iw-ret__tick" style="--a:0deg"></i><i class="iw-ret__tick" style="--a:90deg"></i><i class="iw-ret__tick" style="--a:180deg"></i><i class="iw-ret__tick" style="--a:270deg"></i>`;
     }
-    this._L.spread = null; this._L.charge = null; this._L.full = null;
+    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.first = null; this._L.stageRatio = null;
   }
 
   _updCrosshair(f, dt) {
@@ -887,10 +889,29 @@ export class HUD {
       const charging = c > 0.001;
       if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }
     } else if (L.kind === 'splatling') {
-      const lr = this._local()?.weaponRunner;
+      const actor = this._local(), lr = actor?.weaponRunner;
+      const p = actor?.weapon?.catalogRecord?.parameters?.WeaponParam;
+      const firstF = Number(p?.ChargeFrame_First), secondF = Number(p?.ChargeFrame_Second);
+      // Barrel legacy=48/72; all five added 11.3.0 Spinners must use their
+      // own Source GameParameterTable first/second thresholds, not Barrel's.
+      const firstRatio = firstF > 0 && secondF > firstF ? firstF / secondF :
+        w === 'splatling' ? 48 / 72 : null;
+      if (firstRatio !== L.stageRatio) {
+        L.stageRatio = firstRatio;
+        if (this._stageEl) {
+          this._stageEl.style.display = firstRatio == null ? 'none' : '';
+          if (firstRatio != null) this._stageEl.setAttribute('transform', `rotate(${(360 * firstRatio).toFixed(3)})`);
+        }
+      }
       const c = clamp(+f.charge || 0), streaming = !!(lr && lr.streaming);
       if (L.charge == null || Math.abs(c - L.charge) > 0.004) { L.charge = c; this._chargeEl.style.strokeDashoffset = (100 * (1 - c)).toFixed(2); this.ret.style.setProperty('--ch', c.toFixed(3)); }
       if (streaming !== L.streaming) { L.streaming = streaming; this.ret.classList.toggle('is-streaming', streaming); }
+      const first = !streaming && firstRatio != null && c + 1e-5 >= firstRatio;
+      if (first !== L.first) {
+        L.first = first;
+        this.ret.classList.toggle('is-first', first);
+        if (first) this._restart(this.ret, 'is-stageflash');
+      }
       const full = !streaming && c >= 0.999;
       if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }
     } else if (L.kind === 'dualies') {
