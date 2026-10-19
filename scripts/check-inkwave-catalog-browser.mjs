@@ -143,6 +143,8 @@ try {
         return actor;
       };
 
+
+      const {CANONICAL_KITS}=await import('/patches/splatoon3/runtime/canonical-kits-data.mjs');
       const {Level}=await import('/src/world/level.js');
       // BEGIN_CHARGE_KEEP_INPUT_PROBE
       const chargeKeepChecks = [];
@@ -184,8 +186,6 @@ try {
         }
       }
       // END_CHARGE_KEEP_INPUT_PROBE
-
-      const {CANONICAL_KITS}=await import('/patches/splatoon3/runtime/canonical-kits-data.mjs');
       const {WEAPON_WEIGHTS}=await import('/patches/splatoon3/runtime/weapon-weight-data.mjs');
       const {WEIGHT_SPEED_CURVES}=await import('/patches/splatoon3/runtime/weapon-weight.mjs');
       const {gearCurve,emptyLoadout}=await import('/patches/splatoon3/runtime/gear.mjs');

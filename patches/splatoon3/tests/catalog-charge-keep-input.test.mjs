@@ -52,10 +52,15 @@ test('browser charge-keep receipt block executes actual Actor input without dire
  const block=source.split('// BEGIN_CHARGE_KEEP_INPUT_PROBE')[1].split('// END_CHARGE_KEEP_INPUT_PROBE')[0];
  assert(!/\.form\s*=\s*['"]squid['"]/.test(block));
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
- const factory=source.slice(source.indexOf('      class DisplayCharacter'),source.indexOf("      const {Level}=await import('/src/world/level.js');"));
+ const factory=source.slice(source.indexOf('      class DisplayCharacter'),source.indexOf('      const {CANONICAL_KITS}'));
+ assert(!factory.includes('await '),'legacy helper extraction remains synchronous');
+ assert(source.indexOf('      const {CANONICAL_KITS}')<source.indexOf('// BEGIN_CHARGE_KEEP_INPUT_PROBE'),'keep probe follows existing helper boundary');
  const makeActor=new Function('THREE','Actor','Player',factory+';return makeActor;')(f.THREE,f.Actor,f.PLAYER);
  assert(source.includes("const {Level}=await import('/src/world/level.js');"));
  const run=new Function('api','Level','G','makeActor','check',block+';return chargeKeepChecks;');
+ const saved=Object.fromEntries(['level','physics','paint','actors','time'].map(k=>[k,f.G[k]]));
  const rows=run(f,f.Level,f.G,makeActor,(value,message)=>assert.ok(value,message));
+ for(const [k,v] of Object.entries(saved))assert.equal(f.G[k],v,'keep probe restores '+k);
+ assert.equal(f.G.projectiles.list.length,0,'keep probe clears its projectiles');
  assert.equal(rows.length,4);assert.equal(rows.filter(x=>x.releaseProjectiles===1).length,3);assert.equal(rows.at(-1).stored,false);
 });
