@@ -210,6 +210,12 @@ test('paint: owner drops claim turf, ghost drops never paint', async () => {
 test('visual envelope: curtain follows immutable birth mode, not mutable actor mode', async () => {
   for (const network of [false, true]) {
     const f = await fixture({ network });
+    // Use the same random volley in the baseline and adapted runs.
+    let seed = 13;
+    f.Projectiles.constructor('return globalThis')().Math.random = () => {
+      seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
     const nm = f.makeNetMatch(f.makeSession());
     const a = f.makeActor({ nid: 0, owner: 'me', vertical: true });
     f.bind(nm, [a]);

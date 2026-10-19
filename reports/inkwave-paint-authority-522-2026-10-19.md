@@ -31,3 +31,14 @@ CPU tests use a renderer stub and are distinguished from production build and re
 ## Splatoon 3 comparison
 
 Reference remains the existing Ver. 11.3.0 profile. Paint geometry, weapon/radius tuning, death-blast parameters, seeds and simulation steps are unchanged. This is an INKWAVE authority contract, not a claim about Nintendo's private networking. No new Switch measurement is claimed.
+
+## Local evidence
+
+Production runtime was frozen at `a166bf7e6bd90b255f373ffe4f4ebf2bfe4714c9` (later changes only correct test data and fix the random seed of the baseline/candidate curtain comparison). Build content hash: `d7b816464fd4f510e79a77aa3df2629dfb484b1c7f5e62304d5b62fd15135dbe`.
+
+- Native network comparison: 28 cases passed, including projectiles, bombs, Storm and Charger.
+- Two actual Chromium clients, real WebSocket and production `RoomDurableObject.handleSession`: both zero-delay and two-frame-delay cases passed. Each paired 130 births, zero velocity error, no remaining projectile objects, no browser errors, and correct victim-only Bomb damage in both directions. Every loaded build artifact was checked against the frozen manifest and source commit.
+- All 65 main weapon Actors paint reachable floor and credit its actual ownership; the additional producer matrix covers Boss, zones, Flow, Roller release, sourced falling ink, large specials, death, Inkjet, Super Chump and Storm adoption. The Roller release fixture now supplies the roster owner, rather than constructing an ownerless online actor.
+- The existing unseeded curtain comparison failed once in the full matrix. Its whole file then passed, and the isolated case passed ten repetitions. The baseline/candidate comparison now uses the same fixed seed without changing its assertions; all eight comparisons passed after that test-only change.
+
+GitHub-hosted checks were queued at the time of local verification; these local results do not claim a completed GitHub CI run or a published Pages deployment.
