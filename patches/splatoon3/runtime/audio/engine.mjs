@@ -44,8 +44,10 @@ export function installWeaponAudioEngine(Engine){
       // serializing four separate event-specific fetch/decode transactions.
       const isCharger=AUDIO_RECIPES[id].family==='charger';
       const main=loader?.ensure(id,isCharger?'charge':'fire');
-      if(isCharger)for(const cue of ['combat:critical','combat:damage','combat:splat'])loader?.ensure(cue,'fire')?.catch(()=>{});
       if(isCharger)loader?.ensure(id);
+      // Priority is shot and charge, then combat notifications. Never block
+      // the first shot behind unrelated cue download/decoding.
+      if(isCharger)for(const cue of ['combat:critical','combat:damage','combat:splat'])loader?.ensure(cue,'fire')?.catch(()=>{});
       if(AUDIO_RECIPES[id].family==='splatling'){
         // 2022 Spinner sources have distinct Motor (charge) and MotorFire
         // (stream) recordings. Demand-page both while the loadout is active.
