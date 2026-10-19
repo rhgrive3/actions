@@ -14,6 +14,7 @@ export async function nativeFixture(options={}){
  export {nativeStageBuild} from './patches/native-stages/runtime/build-config.mjs';
  export {nativeStageRuleStatus} from './patches/native-stages/runtime/rule-availability.mjs';
  export {NATIVE_MAPS,UNAVAILABLE_NATIVE_STAGES} from './patches/native-stages/runtime/registry.mjs';
+ export {TIDEWATER} from './inkwave-public/src/world/maps.js';
  export { NativeLevel,NativePhysics } from './patches/native-stages/runtime/engine.mjs';
  export {Match} from './inkwave-public/src/game/match.js';
  export {installRankedBots} from './patches/splatoon3/runtime/ranked/bots.mjs';
