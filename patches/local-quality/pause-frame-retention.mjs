@@ -36,7 +36,7 @@ export function installPausedFrameRetention(Renderer) {
   Renderer.prototype.capturePausedFrame = function () {
     const r = this.renderer, gl = r?.getContext?.();
     if (!r || gl?.isContextLost?.()) { this.releasePausedFrame(); return false; }
-    const size = r.getDrawingBufferSize(new THREE.Vector2());
+    const size = r.getDrawingBufferSize(this._pauseBufferSize || (this._pauseBufferSize = new THREE.Vector2()));
     const width = Math.floor(size.x), height = Math.floor(size.y);
     if (width < 1 || height < 1) { this.releasePausedFrame(); return false; }
     // Only the final default framebuffer has the OutputPass's finished colour.
@@ -66,7 +66,7 @@ export function installPausedFrameRetention(Renderer) {
     if (!r || !snapshot) return false;
     const gl = r.getContext?.();
     if (gl?.isContextLost?.()) { this.releasePausedFrame(); return false; }
-    const size = r.getDrawingBufferSize(new THREE.Vector2());
+    const size = r.getDrawingBufferSize(this._pauseBufferSize || (this._pauseBufferSize = new THREE.Vector2()));
     if (snapshot.image.width !== Math.floor(size.x) || snapshot.image.height !== Math.floor(size.y)) {
       this.releasePausedFrame();
       return false;
