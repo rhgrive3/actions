@@ -16,7 +16,7 @@
     "src/core/input.js": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4",
     "src/ui/hud.js": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a",
     "src/i18n.js": "48f38fafdcbf75d93bbf46a0566b96f2d409025f48e9893c7ad316a6acecef07",
-    "src/game/physics.js": "69cef214461935a77ec3a167b70d50fd0e35a953334cd837ab9b8c037da5bb48",
+    "src/game/physics.js": "129c60ab0f5ed1874b7bbc4bc6d0beb510b08dde0efddc844a9f5289b5d4087d",
     "src/core/ctx.js": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04",
     "src/game/character.js": "1b2f3c7209c661763110254787b06a7ce1ea317c456c41ff717bed854590eb8c",
     "src/game/character-weapons.js": "aa6f865e329016aff6efac127ee69dd288b046a911f89189466a4f18c68f5f89",
@@ -27,5 +27,5 @@
     "src/game/motion/source-controller.js": "1b9c098b4835bcf6dc1e3216cb2d39197b50c13edae45a78ff4fbd37f94d6074",
     "src/game/character-geo.js": "c5540b2e6dcecd7278d47f6e62bd62906b12ff976445d4aac0eb1ebe88e7b693"
   },
-  "integrationNote": "Three upstream-file overrides from INKWAVE PR #1142 are reviewed and pinned here; base sourceCommit describes the imported upstream snapshot, not these local overrides. Motion ContactPolish: src/game/character.js hash updated after reviewing additive source-motion lifecycle hooks, preserving issue-483 exact disposal anchor and all existing upstream pins. Optional source motion now imports dynamically so its ~70KB of JS and 10MiB of cold coefficient packs never increase the immutable 5MiB startup precache; runtime URLs remain versioned and on-demand integrity checked. Reviewed PR #1463 additive legacy Slam damage-radius source change separately against the unchanged S3 adapter actor insertion anchors, native old-radius fallback and tests. Only src/game/actor.js source checksum changes; new 6.4/9.6 local-calibration fields are independently recorded in numeric-status.json. 2026-10-18 PR #1603: reviewed charger paint, optics and HUD upstream connection points against adapters; updated weapons/config/HUD/camera hash after enforcing source/composition compatibility and regression checks."
+  "integrationNote": "Three upstream-file overrides from INKWAVE PR #1142 are reviewed and pinned here; base sourceCommit describes the imported upstream snapshot, not these local overrides. Motion ContactPolish: src/game/character.js hash updated after reviewing additive source-motion lifecycle hooks, preserving issue-483 exact disposal anchor and all existing upstream pins. Optional source motion now imports dynamically so its ~70KB of JS and 10MiB of cold coefficient packs never increase the immutable 5MiB startup precache; runtime URLs remain versioned and on-demand integrity checked. Reviewed PR #1463 additive legacy Slam damage-radius source change separately against the unchanged S3 adapter actor insertion anchors, native old-radius fallback and tests. Only src/game/actor.js source checksum changes; new 6.4/9.6 local-calibration fields are independently recorded in numeric-status.json.\n2026-10-19: reviewed camera basis alias fix; gameplay raycast collision and UV semantics unchanged, fixed 15-ray origins. Rebased physics.js hash."
 }

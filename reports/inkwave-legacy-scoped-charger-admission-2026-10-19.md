@@ -23,3 +23,7 @@ Native browser execution, actual rendered optical/model appearance, emitted exec
 ## Latest-main paint ownership integration
 
 The original PR1603 finite-flight floor beads land after release. On main9ad, an older wall regression incorrectly assumed the entire floor credit was already present at release. A three-layer comparison (main alone, original1603, minimal scope repair) isolates this timing assumption; the two PR variants have identical emissions. The revised regression preserves zero wall credit, checks four actual delayed floor contacts and submitted source-mask quads, and derives ledger growth from new eligible floor cells. Injected wall credit and suppressed floor credit both fail. This is a test-only correction; no paint runtime or numeric endpoint was adjusted. Actual shader acceptance on the final composed build remains pending.
+
+## Original PR1603 integration note (verbatim)
+
+ 2026-10-18 PR #1603: reviewed charger paint, optics and HUD upstream connection points against adapters; updated weapons/config/HUD/camera hash after enforcing source/composition compatibility and regression checks.
