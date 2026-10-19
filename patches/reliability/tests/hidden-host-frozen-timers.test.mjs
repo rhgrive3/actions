@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { pair } from './hidden-host-harness.mjs';
+import { pair, advanceMillis } from './hidden-host-harness.mjs';
 
 test('#878 OS-frozen host timers cannot strand a visible guest at zero', async () => {
   const p = await pair();
@@ -67,5 +67,21 @@ test('#878 pending No Contest also exits when the frozen host cannot announce it
     p.host.hide(true);p.frames(20,[p.guest],{timers:false});
     assert.equal(p.guest.snapshot().aborted,1);
     assert.equal(p.guest.m.result,null,'no ordinary winner is invented for a cancelled battle');
+  } finally {p.close();}
+});
+
+
+test('#878 suspending the guest grants queued host traffic a fresh recovery window on resume', async () => {
+  const p=await pair();
+  try {
+    p.host.hide(true);p.guest.m.time=0;
+    p.frames(1,[p.guest],{timers:false});
+    assert.ok(p.guest.game.platform.guestEndWait);
+    p.guest.hide(true);advanceMillis(120000);p.guest.hide(false);p.guest.frame();
+    assert.equal(p.guest.snapshot().aborted,0,'guest background time cannot consume a visible recovery allowance');
+    p.frames(1,[p.guest],{timers:false});
+    assert.equal(p.guest.snapshot().aborted,0);
+    p.frames(9,[p.guest],{timers:false});
+    assert.equal(p.guest.snapshot().aborted,1,'the fresh window is still bounded');
   } finally {p.close();}
 });
