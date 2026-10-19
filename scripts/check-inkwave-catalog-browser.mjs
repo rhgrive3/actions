@@ -186,6 +186,52 @@ try {
         }
       }
       // END_CHARGE_KEEP_INPUT_PROBE
+      // BEGIN_SPLATANA_POST_WAVE_THROW_PROBE
+      const splatanaThrowChecks = [];
+      {
+        const saved = { level:G.level, physics:G.physics, paint:G.paint, actors:G.actors, time:G.time };
+        try {
+          G.level = new Level({bounds:{minX:-50,maxX:50,minZ:-50,maxZ:50},spawnPads:[[-40,0,0],[40,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-50,-.5,-50],max:[50,0,50]}]});
+          G.physics = new api.Physics(G.level);
+          G.paint = {sample:()=>1,splat:()=>0};
+          for (const id of ['s3-saber-normal','s3-saber-lite','s3-saber-heavy']) for (const phase of ['pre-wave','post-wave']) {
+            G.projectiles.clear();
+            const actor=makeActor(id);G.actors=[actor];let frame=0;
+            const tick=()=>{frame++;G.time+=1/60;actor.update(1/60);};
+            const waves=()=>G.projectiles.list.filter(p=>p.owner===actor&&p.catalog);
+            for(let i=0;i<5;i++)tick();actor.intent.fire=true;tick();actor.intent.fire=false;tick();
+            const state=actor.weaponRunner.catalogState;
+            check(state.pending&&state.stop>0,id+' sourced pending swing');
+            if(phase==='pre-wave') {
+              for(let i=0;state.pending?.remaining>1/60+1e-9&&i<120;i++)tick();
+              check(state.pending&&state.pending.remaining<=1/60+1e-9,id+' pending wave boundary reached within 120 ticks');
+              check(waves().length===0,id+' cancellation input precedes actual wave');
+              const remaining=state.pending.remaining,stop=state.stop;
+              actor.intent.sub=true;tick();
+              check(!state.pending&&state.stop===0&&actor.weaponRunner.aimingSub,id+' existing pre-wave Sub cancellation');
+              for(let i=0;i<30;i++)tick();check(waves().length===0,id+' cancelled wave does not emerge later');
+              splatanaThrowChecks.push({id,phase,remaining,stop,cancelled:true,waves:0});
+            } else {
+              for(let i=0;!waves().length&&i<60;i++)tick();
+              check(waves().length===1&&!state.pending&&state.stop>1/60,id+' actual wave leaves positive recovery');
+              const stop=state.stop;let blockedTicks=0;
+              actor.intent.sub=true;
+              for(let i=0;state.stop>1e-9&&i<120;i++) {
+                const before=state.stop;tick();blockedTicks++;
+                check(state.stop===Math.max(0,before-1/60),id+' rejected Sub preserves original decrement');
+                check(!actor.weaponRunner.aimingSub,id+' post-wave Sub remains unavailable');
+              }
+              check(state.stop<=1e-9,id+' existing recovery expires within 120 ticks');
+              tick();check(actor.weaponRunner.aimingSub,id+' held Sub prepares after natural expiry');
+              check(waves().length===1,id+' rejection retains exactly the admitted main wave');
+              splatanaThrowChecks.push({id,phase,stop,blockedTicks,readyFrame:frame,waves:1});
+            }
+          }
+        } finally {
+          G.projectiles.clear();Object.assign(G,saved);
+        }
+      }
+      // END_SPLATANA_POST_WAVE_THROW_PROBE
       const {WEAPON_WEIGHTS}=await import('/patches/splatoon3/runtime/weapon-weight-data.mjs');
       const {WEIGHT_SPEED_CURVES}=await import('/patches/splatoon3/runtime/weapon-weight.mjs');
       const {gearCurve,emptyLoadout}=await import('/patches/splatoon3/runtime/gear.mjs');
@@ -549,7 +595,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        chargeKeepChecks, wallFacingChecks, catalogueSubChecks, directSubChecks, accelerationChecks, mistChecks, mistQueryChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
+        splatanaThrowChecks, chargeKeepChecks, wallFacingChecks, catalogueSubChecks, directSubChecks, accelerationChecks, mistChecks, mistQueryChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
