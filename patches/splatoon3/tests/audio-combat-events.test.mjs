@@ -36,12 +36,20 @@ test('production recorded hit/splat MP3 cues replace generic synth across all ma
  const weapon=adaptBuildSource('src/game/weapons.js',native);
  for(const cue of ['combat:critical','combat:ink_focus_strong','combat:ink_focus_normal','combat:splat'])
    assert.match(built,new RegExp(cue),'recorded source event for '+cue);
- assert.match(built,/damage>=95\?'combat:critical'/,'strong Charger direct keeps recorded critical');
+ assert.match(built,/fullCharge===true\?'combat:critical'/,'recorded CriticalHit requires the real full-charge flag, not a guessed damage threshold');
  assert.match(built,/damage>=40\?'combat:ink_focus_strong'/,'noncritical large ink hits are sourced');
  assert.match(built,/G\.audio\?\.playWeapon\?\.\('combat:splat','fire'/,'all local kills play recorded DeadSplash');
  assert.doesNotMatch(built,/else G\.audio\?\.play\('hit_marker'/,'no local synth fallback after sample selection');
  assert.doesNotMatch(built,/else G\.audio\?\.play\('splat_enemy'/,'no synth kill fallback');
  assert.match(weapon,/void 0;/,'native duplicate authored body hit is suppressed');
+ assert.match(weapon,/this\.applyHit\(a, victim\.e, dmg, 'charger', \{fullCharge:charge>=0\.999\}\)/,
+   'legacy Charger directly carries true full-charge metadata');
+ assert.match(weapon,/fullCharge:audioMeta\?\.fullCharge===true/,
+   'hit event carries exact boolean without changing damage/HP');
+ const cat=fs.readFileSync(new URL('../runtime/main-weapon-catalog.mjs',import.meta.url),'utf8');
+ const compiledCat=adaptBuildSource('patches/splatoon3/runtime/main-weapon-catalog.mjs',cat);
+ assert.match(compiledCat,/this\.applyHit\(p\.owner,target,amount,p\.wid,\{fullCharge:s\.r\.family==='charger'/,
+   'catalogue Charger passes true charge state on the actual contact');
  assert.doesNotMatch(weapon,/G\.audio\.play\('ink_hit_body'/,'no second synthesized body-hit layer');
  for(const cue of ['combat:critical','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'])
    assert.ok(clip(cue,'fire'),'the source MP3 is present for '+cue);
@@ -166,7 +174,7 @@ test('production HUD retains visual kill marker and recorded body-hit confirmati
  const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const built=adaptBuildSource('src/main.js',src);
  assert.match(built,/this\.hud\?\.hitMarker\(killed \? 'kill' : 'hit'\)/);
- assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId \}\)/);
+ assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId, fullCharge \}\)/);
  assert.equal((built.match(/combat:critical/g)||[]).length,1);
  assert.equal((built.match(/combat:splat/g)||[]).length,1);
  for(const cue of ['splatted_self','ally_splatted','hurt'])
