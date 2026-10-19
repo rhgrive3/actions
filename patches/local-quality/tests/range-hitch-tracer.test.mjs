@@ -251,6 +251,7 @@ test('native opt-in tracer counts actual BVH triangles and nested ground, brain 
  f.game.match.actors=[actor];G.match=f.game.match;
  const originalBrain=actor.bot.update,originalRay=source.ray;
  f.game.match.update=function(dt){actor.bot.update(dt);actor.update(dt);G.nav.path();G.paint.splat();f.tick(.2);};
+ const fixtureUpdate=f.game.match.update;
  const trace=installHitchTracer(f.game,{env:f.env,now:f.now,gpuEvery:4});
  f.game._frame(1/60);trace.record(f.now(),35,{frameRateHz:60,phase:'battle'});
  const last=trace.snapshot().latest;
@@ -265,5 +266,5 @@ test('native opt-in tracer counts actual BVH triangles and nested ground, brain 
  trace.dispose();
  assert.strictEqual(actor.bot.update,originalBrain);
  assert.strictEqual(source.ray,originalRay);
- assert.equal(f.game.match.update.name,'','tracer restores the fixture-installed update wrapper without lingering hooks');
+ assert.strictEqual(f.game.match.update,fixtureUpdate,'tracer restores the match wrapper installed before profiling');
 });
