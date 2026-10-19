@@ -57,7 +57,7 @@ function apply(c,from,rows){for(const row of rows){row._netTick=row.at(-2);row._
 function state(c){return {grid:Array.from(c.paint.grid),counts:Array.from(c.paint.counts),coverage:Array.from(c.paint.coverage()),stats:c.actors.map(a=>a.stats)};}
 test('lossless JSON dictionary keeps real canonical paint ownership under delay, ties and duplicate replay',async()=>{
  const a=await client('a'),b=await client('b'),raw=await client('c'),packed=await client('c');
- for(let i=0;i<24;i++)for(const [c,team]of [[a,0],[b,1]])c.paint.splat(new c.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.42,team,{seed:team?.73:.31});
+ for(let i=0;i<24;i++)for(const [c,team]of [[a,0],[b,1]])c.paint.splat(new c.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.42,team,{seed:team?.73:.31,claimOwner:c.actors.find(actor=>actor.owner===c.session.myId&&actor.team===team)});
  const ar=json(a.nm.out),br=json(b.nm.out);assert.ok(encodePaintEvents(ar));assert.ok(encodePaintEvents(br));
  for(const [from,rows]of [['b',br],['a',ar],['a',ar],['b',br]]){
   apply(raw,from,json(rows));apply(packed,from,decodePaintEvents(json(encodePaintEvents(rows))));assert.deepEqual(state(packed),state(raw));
@@ -69,7 +69,7 @@ function connect(a,b){const clients={a,c:b},queue=[],controls=[],ticks=[];
  for(const [from,c]of Object.entries(clients))c.session.tr={sendTo:(to,d)=>{queue.push([from,to,json(d)]);controls.push([from,to,json(d)]);return true;},broadcast:d=>{ticks.push([from,json(d)]);}};
  const flush=()=>{let guard=30;while(queue.length){assert.ok(guard-->0);const [from,to,d]=queue.shift();if(clients[to])clients[to].f.NetSession.prototype._message.call({match:clients[to].nm},from,d);}};
  a.nm._sendTick();b.nm._sendTick();flush();return{queue,controls,ticks,flush};}
-function stamps(a){for(let i=0;i<24;i++)a.paint.splat(new a.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.3,0,{seed:.31,kind:'drop'});}
+function stamps(a){for(let i=0;i<24;i++)a.paint.splat(new a.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.3,0,{seed:.31,kind:'drop',claimOwner:a.actors.find(actor=>actor.owner===a.session.myId)});}
 test('actual NetMatch JSON hello/ack and compressed tick retain canonical paint and score',async()=>{
  const a=await client('a',['a','c']),packed=await client('c',['a','c']),raw=await client('c',['a','c']);const wire=connect(a,packed);assert.equal(wire.controls.length,4);stamps(a);const rows=json(a.nm.out);a.nm._sendTick();const outbound=wire.ticks.at(-1)[1];assert.ok(outbound.pe);assert.equal(outbound.pc,undefined);assert.deepEqual(decodePaintEvents(outbound.pe),rows);
  const legacy={...outbound,e:rows};delete legacy.pe;delete legacy.pn;

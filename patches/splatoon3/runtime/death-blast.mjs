@@ -75,6 +75,9 @@ export function installDeathBlast(api, profile) {
       // The first call keeps the native options so the ownership slot armed
       // for it (G.paint._paintNextOwner) is consumed exactly as before.
       const callOpts = i === 0 ? { ...opts, seed: p.seed } : { seed: p.seed, claimOwner: attacker };
+      // The victim's owner emits this action; attacker credit is independent.
+      callOpts.paintDeath = [victim.nid, victim.netLife ?? 0, attacker.nid,
+        victim.pos.x, victim.pos.y, victim.pos.z, opts.seed, team, i];
       area += Number(nativeSplat.call(paint, point.set(p.x, p.y, p.z), p.radius, team, callOpts)) || 0;
     }
     return area;

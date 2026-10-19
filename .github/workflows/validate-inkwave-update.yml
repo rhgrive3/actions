@@ -17,6 +17,7 @@ on:
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
+      - "tests/issue-queue/**"
   pull_request:
     paths:
       - .github/workflows/validate-inkwave-update.yml
@@ -33,6 +34,7 @@ on:
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
+      - "tests/issue-queue/**"
   workflow_dispatch:
     inputs:
       source_sha:
@@ -310,6 +312,10 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify exact emitted owner-bound launch packets and ghosts
+        run: |
+          manifest_sha=$(sha256sum _site/inkwave-build.json | cut -d ' ' -f1)
+          node --experimental-vm-modules scripts/check-inkwave-launch-packets.mjs --site _site --manifest-sha256 "$manifest_sha" --out _site-launch-packets.json
       - name: Verify emitted Bot navigation respawn and retry state
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
@@ -442,6 +448,7 @@ jobs:
           path: |
             _site/
             _site-source-sha.txt
+            _site-launch-packets.json
           retention-days: 14
   # The test-file set is partitioned across isolated, independent machines.
   patch_tests:

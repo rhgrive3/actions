@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {createHash} from 'node:crypto';
 import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
 const dt=1/60,clean=x=>JSON.parse(JSON.stringify(x));
 const f=await sourceLoadedActorFixture({random:()=>.5,extraExports: `export {RainmakerRule} from './patches/splatoon3/runtime/ranked/rainmaker.mjs';`}),{G,THREE,RainmakerRule}=f;
@@ -53,4 +56,59 @@ for(const weapon of ['shooter','roller','dualies'])test(weapon+' source-air over
   t.diagnostic(JSON.stringify({weapon,boundary,source:'ready',emitted:!!process.env.INKWAVE_BUILT_SITE,corrected:pair[1].corrected,restores:pair[1].restores,maxFinal:pair[1].maxFinal,bomb:by(pair[1].a),solves:pair.map(p=>p.solves)}));
   G.projectiles.throwBomb=previous;for(const p of pair){G.scene.remove(p.ch.root);p.ch.dispose();}G.actors=[];G.projectiles.clear();
  }
+});
+
+// Actual pickup/jump/landing replay shared with native capture. The control
+// suppresses only the new land post-solve branch after the same legacy solve.
+// Source buffers and actual ordinary bomb births are compared after drop.
+const landingContext=vm.createContext({console});
+const landingModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../../tools/rainmaker-air-production-qa/browser.mjs',import.meta.url),'utf8'),{context:landingContext});
+await landingModule.link(spec=>{
+ assert.equal(spec,'./shared/production-scene.mjs');
+ return new vm.SyntheticModule(['productionScene'],function(){this.setExport('productionScene',()=>{throw Error('CPU history test must not start renderer');});},{context:landingContext});
+});await landingModule.evaluate();
+let landingSeed=1234,landingRngIndex=0,landingRandomValues=[];
+const landingRandom=()=>{landingRngIndex++;landingSeed=(Math.imul(landingSeed,1664525)+1013904223)>>>0;const value=landingSeed/4294967296;landingRandomValues.push(value);return value;};
+const landingFixture=await sourceLoadedActorFixture({random:landingRandom,extraExports:`export {createRankedEffects} from './patches/splatoon3/runtime/ranked/combat.mjs';export {createRainmakerModel,createRainmakerPresentation} from './patches/splatoon3/runtime/ranked/rainmaker-model.mjs';`});
+const landingHash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
+const landingTrs=b=>[...b.position.toArray(),...b.quaternion.toArray(),...b.scale.toArray()];
+for(const scenario of ['carry-jump','charge-jump'])for(const boundary of ['quick-return','same-frame-release'])test(scenario+' land support restores source history and real bomb at '+boundary,async t=>{
+ const {G,THREE}=landingFixture,lanes=[];
+ // Warm the same construction/held-prop/projectile path first. Three UUID
+ // allocation shares Math.random with real bomb spin; cold-vs-warm lanes
+ // cannot establish global RNG parity. Reset the same LCG for all three.
+ for(const lane of ['warmup-control','control','candidate']){const corrected=lane==='candidate';
+  landingSeed=1234;landingRngIndex=0;landingRandomValues=[];
+  let initialized=false,tick=0,beforeDrop=null,actorRngIndex=0;const entries=[],after=[],born=[],stop=Symbol('landing boundary completed'),oldBomb=G.projectiles.throwBomb;
+  G.projectiles.throwBomb=function(a){const n=this.bombs.length,r=oldBomb.call(this,a);for(const b of this.bombs.slice(n))born.push({kind:b.kind,pos:b.pos.toArray(),vel:b.vel.toArray()});return r;};
+  try{
+   await landingModule.namespace.runAirScenario({api:landingFixture,scenario,onFrame:({row,a,ch})=>{
+    tick=row.frame;
+    if(!initialized){
+     initialized=true;const actorRng=ch.rng;ch.rng=()=>{actorRngIndex++;return actorRng();};const sm=ch.sourceMotion,advance=sm.advance;
+     sm.advance=function(...args){entries.push({tick,bones:landingHash(ch.boneList.map(landingTrs)),source:landingHash([this.renderedPose,this.airPose,this.divePose,this.diveFrom]),pending:!!ch.s3RainmakerSupportPending});return advance.apply(this,args);};
+     if(!corrected){
+      const solve=ch._solveLimb,apply=ch._applyPose;let state=null;
+      ch._solveLimb=function(limb,...args){const r=solve.call(this,limb,...args);if(limb===this.limbs.armL&&this._rainmakerPose&&this.sourceMotion.state==='land'){state='land';this.sourceMotion.state='test-control-after-legacy-land-solve';}return r;};
+      ch._applyPose=function(...args){try{return apply.apply(this,args);}finally{if(state!==null){this.sourceMotion.state=state;state=null;}}};
+     }
+    }
+    if(row.frame!==(scenario==='carry-jump'?113:305))return;
+    beforeDrop={frame:row.frame,grip:row.grip,pending:row.pending,source:row.source};assert.equal(row.source,'land');assert.equal(row.solves,1);
+    if(corrected){assert.ok(row.grip<.001);assert.equal(row.pending,true);}else{assert.ok(row.grip>.001,'the control must reproduce a real landing gap');assert.equal(row.pending,false);}
+    G.match.ranked.rule._drop({id:String(a.nid),team:a.team,pos:a.pos.toArray(),grounded:true},'qa-drop');a.intent.fire=a.intent.jump=a.intent.sub=false;
+    if(boundary==='same-frame-release'){ch.trigger('throw');G.projectiles.throwBomb(a);assert.equal(!!ch.s3RainmakerSupportPending,false);}
+    for(let i=0;i<45;i++){
+     tick++;G.time+=dt;a.intent.squid=boundary==='quick-return'&&i<2;a.intent.sub=boundary==='quick-return'&&i>=3&&i<6;a.update(dt);ch.root.updateMatrixWorld(true);
+     const sm=ch.sourceMotion;after.push({i,pos:a.pos.toArray(),vel:a.vel.toArray(),form:a.form,hp:a.hp,ink:a.ink,P:Array.from(ch.P),sp:Array.from(ch.sp),root:landingTrs(ch.root),kid:landingTrs(ch.kid),allBones:landingHash(ch.boneList.map(landingTrs)),source:landingHash([sm.renderedPose,sm.airPose,sm.divePose,sm.diveFrom]),muzzle:ch.getMuzzle(new THREE.Vector3()).toArray(),pending:!!ch.s3RainmakerSupportPending,rng:actorRngIndex,globalRng:landingRngIndex});assert.equal(!!ch.s3RainmakerSupportPending,false);
+    }
+    assert.equal(born.length,1);throw stop;
+   }});assert.fail('target landing frame was not reached');
+  }catch(e){if(e!==stop)throw e;}finally{G.projectiles.throwBomb=oldBomb;}
+  if(lane!=='warmup-control')lanes.push({beforeDrop,entries,after,born,globalCalls:landingRngIndex,globalValues:landingHash(landingRandomValues)});
+ }
+ assert.equal(lanes[0].globalCalls,lanes[1].globalCalls,'warmed global Math.random call count');
+ assert.equal(lanes[0].globalValues,lanes[1].globalValues,'warmed global Math.random value sequence');
+ for(const key of ['entries','after','born'])assert.deepEqual(clean(lanes[0][key]),clean(lanes[1][key]),key+' must match the old land path exactly');
+ t.diagnostic(JSON.stringify({scenario,boundary,emitted:!!process.env.INKWAVE_BUILT_SITE,globalCalls:lanes.map(x=>x.globalCalls),globalValues:lanes.map(x=>x.globalValues),sourceEntryFrames:lanes[1].entries.length,afterDropFrames:45,bomb:lanes[1].born,beforeDrop:lanes.map(x=>x.beforeDrop)}));
 });

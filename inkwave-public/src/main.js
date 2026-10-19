@@ -640,6 +640,7 @@ class Game {
     }
     if (opts.mode === 'boss' && !mapBossOk(map.id)) opts.mode = 'turf';
     const bossModule = opts.mode === 'boss' ? await this._loadBoss() : null;
+    if (opts.mode !== 'boss') G.music?.preloadFile?.('battle');
     opts.duration = requestedDuration || (bossModule ? bossModule.BOSS_MODE.duration : this.settings.matchLength || MATCH.defaultDuration);
     this.lastMatchOpts = { ...opts };
     if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);
@@ -683,6 +684,7 @@ class Game {
     G.projectiles.clear(); G.fx.clear?.(); G.paint.clear();
     const map = MAPS.find((m) => m.id === cfg.map) || MAPS[0];
     const bossModule = cfg.mode === 'boss' ? await this._loadBoss() : null;
+    if (cfg.mode !== 'boss') G.music?.preloadFile?.('battle');
     if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);
     const theme = mapTheme(map, cfg.time);
     this.time = cfg.time === 'dusk' ? 'dusk' : 'day';

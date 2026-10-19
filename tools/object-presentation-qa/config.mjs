@@ -9,10 +9,9 @@ export const SUITES = {
     added: ['patches/splatoon3/runtime/ranked/rainmaker-motion.mjs'],
   },
   'rainmaker-air': {
-    beforeBase: '381319e16361497c6bb5f4649ce119acd7883f7f',
-    // Historical handoff imports its contemporaneous Clam helper. Rainmaker
-    // mode keeps that old arm branch inactive; both sources are receipt-hashed.
-    before: ['patches/splatoon3/runtime/weapon-handoff-motion.mjs', 'patches/splatoon3/runtime/bomb-motion.mjs'],
+    beforeBase: '8a9036623038f051fbdeef1f5057a5b3950ccee6',
+    // The exact pre-landing-fix stage has no deferred Clam arm dependency.
+    before: ['patches/splatoon3/runtime/weapon-handoff-motion.mjs'],
     added: [],
   },
   clam: {

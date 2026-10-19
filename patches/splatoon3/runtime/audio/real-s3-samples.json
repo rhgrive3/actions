@@ -983,14 +983,16 @@
       "id": "s3-charger-long",
       "event": "charge",
       "variant": 0,
-      "file": "s3-real/Wp_Charger_HoldNoise_00.mp3",
+      "file": "s3-real/Wp_Charger_HoldNoise_Heavy_00.mp3",
       "gain": 1,
-      "sourceName": "Wp_Charger_HoldNoise_00.mp3",
-      "sourceFileId": "1YWIaC1QOIrMsvyvimOKS7iltPZ8XFWU5",
-      "sourceURL": "https://drive.google.com/file/d/1YWIaC1QOIrMsvyvimOKS7iltPZ8XFWU5/view",
+      "sourceName": "Wp_Charger_HoldNoise_Heavy_00.mp3",
+      "sourceFileId": "1iFfyS0f8JsQGhRGTyFTplXc0tlyOBKA5",
+      "sourceURL": "https://drive.google.com/file/d/1iFfyS0f8JsQGhRGTyFTplXc0tlyOBKA5/view",
       "sourceVersion": "2022-extract",
       "sourceKind": "Splatoon3-ripped-MP3",
-      "verification": "filename-index-only"
+      "verification": "filename-index-only",
+      "sha256": "bf195dee1f2ef39e02a2c5f6ae179258008e81157059e10521d1c3bc96f5d655",
+      "durationSeconds": 0.417959
     },
     {
       "id": "s3-charger-long",
@@ -1035,14 +1037,16 @@
       "id": "s3-charger-longscope",
       "event": "charge",
       "variant": 0,
-      "file": "s3-real/Wp_Charger_HoldNoise_00.mp3",
+      "file": "s3-real/Wp_Charger_HoldNoise_Heavy_00.mp3",
       "gain": 1,
-      "sourceName": "Wp_Charger_HoldNoise_00.mp3",
-      "sourceFileId": "1YWIaC1QOIrMsvyvimOKS7iltPZ8XFWU5",
-      "sourceURL": "https://drive.google.com/file/d/1YWIaC1QOIrMsvyvimOKS7iltPZ8XFWU5/view",
+      "sourceName": "Wp_Charger_HoldNoise_Heavy_00.mp3",
+      "sourceFileId": "1iFfyS0f8JsQGhRGTyFTplXc0tlyOBKA5",
+      "sourceURL": "https://drive.google.com/file/d/1iFfyS0f8JsQGhRGTyFTplXc0tlyOBKA5/view",
       "sourceVersion": "2022-extract",
       "sourceKind": "Splatoon3-ripped-MP3",
-      "verification": "filename-index-only"
+      "verification": "filename-index-only",
+      "sha256": "bf195dee1f2ef39e02a2c5f6ae179258008e81157059e10521d1c3bc96f5d655",
+      "durationSeconds": 0.417959
     },
     {
       "id": "s3-charger-longscope",
@@ -3519,6 +3523,51 @@
       "verification": "locally-decoded-mp3",
       "sha256": "890f797dc2f32e3c707e42fbd6668691c67fdaaff13af13c43cd3d4bdd531260",
       "durationSeconds": 2.544
+    },
+    {
+      "id": "combat:critical",
+      "event": "fire",
+      "variant": 0,
+      "file": "s3-real/HitEf_CriticalHit_00.mp3",
+      "gain": 1,
+      "sourceName": "HitEf_CriticalHit_00.mp3",
+      "sourceFileId": "1nEMOajEu8AVSGIBIdK9pxm4sMOD9Q4GP",
+      "sourceURL": "https://drive.google.com/file/d/1nEMOajEu8AVSGIBIdK9pxm4sMOD9Q4GP/view",
+      "sourceVersion": "2022-extract",
+      "sourceKind": "Splatoon3-ripped-MP3",
+      "verification": "locally-decoded-mp3",
+      "sha256": "5366114895aca376f4780aa1123d90a7c4542bcad24a464afc374f47f28169cd",
+      "durationSeconds": 0.653061
+    },
+    {
+      "id": "combat:damage",
+      "event": "fire",
+      "variant": 0,
+      "file": "s3-real/HitEf_Damage_00.mp3",
+      "gain": 1,
+      "sourceName": "HitEf_Damage_00.mp3",
+      "sourceFileId": "1LUw7POiMu8C8UNYPDPRC-B5LG3h3Ndzf",
+      "sourceURL": "https://drive.google.com/file/d/1LUw7POiMu8C8UNYPDPRC-B5LG3h3Ndzf/view",
+      "sourceVersion": "2022-extract",
+      "sourceKind": "Splatoon3-ripped-MP3",
+      "verification": "locally-decoded-mp3",
+      "sha256": "c4b6ac316315ee76f06392821db008334daf6f162e106347f164196ac64a85db",
+      "durationSeconds": 0.130612
+    },
+    {
+      "id": "combat:splat",
+      "event": "fire",
+      "variant": 0,
+      "file": "s3-real/Pl_DeadSplash_00.mp3",
+      "gain": 1,
+      "sourceName": "Pl_DeadSplash_00.mp3",
+      "sourceFileId": "1La6s1Zp7ppd91UrwEC24rR2uacyMIskT",
+      "sourceURL": "https://drive.google.com/file/d/1La6s1Zp7ppd91UrwEC24rR2uacyMIskT/view",
+      "sourceVersion": "2022-extract",
+      "sourceKind": "Splatoon3-ripped-MP3",
+      "verification": "locally-decoded-mp3",
+      "sha256": "333f4c0f699adedb573b4bdf2b811bfa0c39b77330a69ced5f31c4a915d8ce1f",
+      "durationSeconds": 2.298776
     }
   ]
 }

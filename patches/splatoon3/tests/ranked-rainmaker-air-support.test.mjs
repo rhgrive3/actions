@@ -85,3 +85,11 @@ test('restoration retains the legacy one-solve pose and clears pending on weapon
 test('translation cap uses actual world coordinates under nonuniform form scale',()=>{
  const rig=new Rig();rig.kid.scale.set(.7,1.3,.8);const result=sample(.9,rig);assert.ok(Math.abs(result.angle-.2)<1e-7);assert.ok(rig.bones.clavL.getWorldPosition(new THREE.Vector3()).length()<=.03+1e-12);assert.ok(rig.finalResidual>.001);rig._restoreRainmakerSupport();assert.deepEqual(Array.from(rig.bones.clavL.position.toArray()),[0,0,0]);
 });
+
+test('bounded landing support is admitted, while idle/ToHuman/ToSquid keep old path',()=>{
+ for(const state of ['land','idle','ToHuman','ToSquid']){
+  const rig=new Rig();rig.sourceMotion.state=state;const row=sample(.4,rig);
+  if(state==='land'){assert.ok(row.rig.finalResidual<.001);assert.equal(row.rig.solves,1);assert.ok(row.angle<=.2+1e-7);rig._restoreRainmakerSupport();assert.deepEqual(Array.from(rig.bones.clavL.position.toArray()),[0,0,0]);}
+  else{assert.equal(row.angle,0);assert.equal(!!rig.s3RainmakerSupportPending,false);}
+ }
+});

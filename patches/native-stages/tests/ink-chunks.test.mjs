@@ -89,6 +89,13 @@ for(const id of sourceIds)test('source ink partition preserves every vertex, tri
  const mesh=new f.NativeInkMesh(g,new f.THREE.MeshBasicMaterial()),sphere=g.boundingSphere,r=Math.max(1,sphere.radius),camera=new f.THREE.OrthographicCamera(-2*r,2*r,2*r,-2*r,.1,10*r);
  camera.position.copy(sphere.center).add(new f.THREE.Vector3(0,5*r,0));camera.lookAt(sphere.center);camera.updateMatrixWorld();mesh.updateMatrixWorld();mesh.selectVisible(camera);
  assert.equal(g.drawRange.count,p.count);for(let i=0;i<p.count;i++)assert.equal(g.index.getX(i),i,'full view must retain exact original triangle order');
+ // Painted-chart selection must bind to the exporter's chart order.
+ paint.grid.fill(0);mesh.bindPaint(paint);
+ const charts=paint.paintFaces.filter(c=>c.atlas&&c.triangles);assert.equal(mesh._facePainted?.length,charts.length,'source chart order not bound');
+ mesh.selectVisible(camera);assert.equal(g.drawRange.count,0);
+ let first=0;const k=Math.floor(charts.length/2);for(let i=0;i<k;i++)first+=charts[i].triangles.length;
+ paint._pushQuad(charts[k],0,charts[k].su,0,charts[k].sv);mesh.selectVisible(camera);
+ assert.equal(g.drawRange.count,charts[k].triangles.length*3);for(let i=0;i<g.drawRange.count;i++)assert.equal(g.index.getX(i),first*3+i);
  mesh.dispose();mesh.material.dispose();
 });
 
@@ -204,6 +211,41 @@ test('native painted-only culling keeps crossing triangles, clears and restores 
  mesh.dispose();mesh.material.dispose();
  assert.equal(paint._pushQuad,originalPush,'disposing restores paint callbacks');
  assert.equal(paint.clear,originalClear);
+});
+test('painted-chart selection draws only reached charts, in source order, and fails open',async()=>{
+ const f=await nativeFixture(),{THREE}=f;
+ // Three charts in one 16m tile: A (2 triangles), B (1), C (1). Source order is A,B,C.
+ const tri=(x)=>[x,0,0,x+1,0,0,x,0,1];
+ const make=()=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute([...tri(0),...tri(2),...tri(4),...tri(6)],3));return g;};
+ const chart=(n,x)=>({atlas:{pad:1,ppm:2},triangles:Array.from({length:n},(_,i)=>i),su:2,sv:2,
+  origin:new THREE.Vector3(x,0,0),u:new THREE.Vector3(1,0,0),v:new THREE.Vector3(0,0,1)});
+ const A=chart(2,0),B=chart(1,4),C=chart(1,6),skipped={...chart(5,0),atlas:null};
+ const camera=new THREE.OrthographicCamera(-20,20,20,-20,.1,100);camera.position.set(3,40,0);camera.lookAt(3,0,0);camera.updateMatrixWorld();
+ const g=make(),mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial());mesh.updateMatrixWorld();
+ const paint={grid:new Uint8Array(4),paintFaces:[A,skipped,B,C],_pushQuad(){},clear(){this.grid.fill(0);}};
+ mesh.bindPaint(paint);
+ const drawn=()=>Array.from(g.index.array.subarray(0,g.drawRange.count));
+ assert.equal(mesh.selectVisible(camera),0);assert.equal(g.drawRange.count,0);
+ paint._pushQuad(C,0,1,0,1);mesh.selectVisible(camera);
+ assert.deepEqual(drawn(),[9,10,11],'unreached charts in a painted tile are not drawn');
+ paint._pushQuad(A,0,1,0,1);mesh.selectVisible(camera);
+ assert.deepEqual(drawn(),[0,1,2,3,4,5,9,10,11],'later paint keeps original triangle order');
+ paint._pushQuad(B,5,6,5,6);mesh.selectVisible(camera);
+ assert.deepEqual(drawn(),[0,1,2,3,4,5,9,10,11],'a quad clipped away from its chart reaches no texels');
+ mesh.faceCulling=false;mesh.selectVisible(camera);assert.equal(g.drawRange.count,12,'diagnostic tile-only selection');
+ mesh.faceCulling=true;mesh.selectVisible(camera);assert.equal(g.drawRange.count,9);
+ paint.clear();mesh.selectVisible(camera);assert.equal(g.drawRange.count,0);
+ paint._pushQuad(chart(1,4),0,1,0,1);mesh.selectVisible(camera);
+ assert.equal(g.drawRange.count,12,'an unbound chart object fails open to tiles');
+ mesh.dispose();
+ // Chart list that disagrees with the geometry: tile-only, never hidden ink.
+ const g2=make(),m2=new f.NativeInkMesh(g2,new THREE.MeshBasicMaterial());m2.updateMatrixWorld();
+ const p2={grid:new Uint8Array(4),paintFaces:[A,B],_pushQuad(){},clear(){}};m2.bindPaint(p2);
+ p2._pushQuad(B,0,1,0,1);m2.selectVisible(camera);assert.equal(g2.drawRange.count,12);m2.dispose();
+ // Prepainted atlas: every chart is treated as reached.
+ const g3=make(),m3=new f.NativeInkMesh(g3,new THREE.MeshBasicMaterial());m3.updateMatrixWorld();
+ m3.bindPaint({grid:new Uint8Array([0,1]),paintFaces:[A,B,C],_pushQuad(){},clear(){}});m3.selectVisible(camera);
+ assert.equal(g3.drawRange.count,12);m3.dispose();mesh.material.dispose();m2.material.dispose();m3.material.dispose();
 });
 test('prepainted binding fails open rather than hiding an existing ink atlas',async()=>{
  const f=await nativeFixture(), {THREE}=f, g=new THREE.BufferGeometry();

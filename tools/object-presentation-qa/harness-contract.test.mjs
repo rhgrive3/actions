@@ -54,19 +54,25 @@ for (const suite of Object.keys(SUITES)) test(suite + ' browser harness statical
     assert.deepEqual(Object.keys(plan['charge-jump']),['304','305']);
     assert.equal(Object.values(plan).reduce((n,frames)=>n+Object.keys(frames).length,0)*2*2,20,'five timeline points, two views, two revisions');
     const row={grip:.0001,translationWorld:.02,angle:.2,poses:1,solves:1,clamArmActive:false};
-    const valid={airFrames:84,airFramesPerJump:[28,28,28],sourceOwner:{status:'ready',active:true,variant:'Player00',bankSha256:'a'.repeat(64)},events:[{kind:'rainmaker-pickup'}],traces:[row],badFrames:0,worst:{grip:.0001}};
+    const valid={landingFrames:48,landingFramesPerJump:[16,16,16],landingBadFrames:0,worstLanding:{grip:.0001},airFrames:84,airFramesPerJump:[28,28,28],sourceOwner:{status:'ready',active:true,variant:'Player00',bankSha256:'a'.repeat(64)},events:[{kind:'rainmaker-pickup'}],traces:[row],badFrames:0,worst:{grip:.0001}};
     assert.equal(verifyAirScenario(valid),true);
+    assert.throws(()=>verifyAirScenario({...valid,landingFrames:47}),/16 landing/);
+    for(const frames of [[],[16],[16,16],[16,16,16,16]])assert.throws(()=>verifyAirScenario({...valid,landingFramesPerJump:frames}),/16 landing/);
+    assert.throws(()=>verifyAirScenario({...valid,landingFramesPerJump:[15,16,17]}),/16 landing/);
+    assert.throws(()=>verifyAirScenario({...valid,landingBadFrames:1,worstLanding:{grip:.01}}),/landing frames keep world grip/,'real .01-world landing shortfall cannot pass');
     assert.throws(()=>verifyAirScenario({...valid,traces:[{...row,clamArmActive:true}]}),/Historical Clam helper/);
     const missingClamReceipt={...row};delete missingClamReceipt.clamArmActive;
     assert.throws(()=>verifyAirScenario({...valid,traces:[missingClamReceipt]}),/Historical Clam helper/);
     assert.throws(()=>verifyAirScenario({...valid,traces:[{...row,clamArmActive:true}]},{corrected:false}),/Historical Clam helper/,'old namespace must also keep Clam inactive');
     assert.throws(()=>verifyAirScenario({...valid,airFrames:83}),/28 airborne/);
+    for(const frames of [[],[28],[28,28],[28,28,28,28]])assert.throws(()=>verifyAirScenario({...valid,airFramesPerJump:frames}),/28 airborne/);
     assert.throws(()=>verifyAirScenario({...valid,airFramesPerJump:[27,28,29]}),/28 airborne/);
     assert.throws(()=>verifyAirScenario({...valid,badFrames:1,worst:{grip:.01}}),/world grip/,'real .01-world shortfall cannot pass');
     assert.throws(()=>verifyAirScenario({...valid,traces:[{...row,translationWorld:.031}]}),/translation cap/);
     assert.throws(()=>verifyAirScenario({...valid,traces:[{...row,angle:.21}]}),/rotation cap/);
     assert.throws(()=>verifyAirScenario({...valid,traces:[{...row,solves:2}]}),/one pose/);
-    assert.equal(verifyAirScenario({...valid,badFrames:35,worst:{grip:.0133}},{corrected:false}),true,'historical negative can render without weakening after gate');
+    assert.equal(verifyAirScenario({...valid,landingBadFrames:6,worstLanding:{grip:.01068}},{corrected:false}),true,'pre-fix landing negative can render without weakening after gate');
+    assert.throws(()=>verifyAirScenario({...valid,badFrames:1,worst:{grip:.0133}},{corrected:false}),/world grip/,'accepted air contact remains mandatory even in the before lane');
   }
   assert(cache.has('tools/object-presentation-qa/production-scene.mjs'), 'Uses actual common Environment/Renderer setup');
   const source = fs.readFileSync(path.join(root, browserPath), 'utf8');
@@ -76,10 +82,12 @@ for (const suite of Object.keys(SUITES)) test(suite + ' browser harness statical
 });
 
 
-test('air comparison isolates381319 handoff and its historical helper dependency while the original three baselines stay3839',()=>{
+test('landing comparison isolates8a903662 handoff while the original three baselines stay3839',()=>{
   for(const suite of ['spawner','rainmaker','clam'])assert.equal(suiteBase(suite),BASE);
-  assert.equal(suiteBase('rainmaker-air'),'381319e16361497c6bb5f4649ce119acd7883f7f');
-  assert.deepEqual(SUITES['rainmaker-air'].before,['patches/splatoon3/runtime/weapon-handoff-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs']);
+  assert.equal(suiteBase('rainmaker-air'),'8a9036623038f051fbdeef1f5057a5b3950ccee6');
+  assert.deepEqual(SUITES['rainmaker-air'].before,['patches/splatoon3/runtime/weapon-handoff-motion.mjs']);
+  const candidateHandoff=fs.readFileSync(path.join(root,'patches/splatoon3/runtime/weapon-handoff-motion.mjs'),'utf8');
+  assert.doesNotMatch(candidateHandoff,/import\s*\{\s*applyClamThrowGrip/,'staged handoff has no historical Clam helper dependency');
   assert.deepEqual(SUITES['rainmaker-air'].added,[]);
   const runner=fs.readFileSync(path.join(root,'tools/object-presentation-qa/run.mjs'),'utf8');
   assert.match(runner,/sourceSha:beforeBase/);

@@ -5,7 +5,7 @@ import {mod} from './source-bank.js';
 // deliberately quick foot recoveries, but the converted short target leg and
 // high host playback cadence magnify them. A symmetric kernel mostly
 // preserves the near-linear stance path, without special frame-boundary gates.
-// Nintendo's curves in the bank remain byte-for-byte unchanged.
+// This smoothing leaves the loaded source-bank curve coefficients unchanged.
 export function prepareRunFootPaths(bank,clip,samples){
  if(!clip.name.startsWith('Run'))return null;
  const count=samples.length,n=count,span=Math.max(1,Math.round(n/clip.frames*3.2));

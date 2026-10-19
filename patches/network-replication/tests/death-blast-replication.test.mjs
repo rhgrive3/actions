@@ -83,6 +83,24 @@ test('death blast rows from the victim owner are admitted and reproduce the send
   assert.equal(observer.nm._peer('b')._lastEventSeq, rows.at(-1)._netSeq, 'every row is admitted in sender order');
   assert.deepEqual(Array.from(observer.paint.grid), Array.from(sender.paint.grid), 'CPU coverage matches the sender');
   assert.deepEqual(Array.from(observer.paint.counts), Array.from(sender.paint.counts), 'turf counts match the sender');
+  assert.equal(observer.nm._paintClockState.clock, rows.at(-1)[14][2], 'death consumption retains causal observation');
+});
+
+test('death authority rejects forged victims, lives and geometry before consuming the exact droplet', async () => {
+  const sender=await client('b'),observer=await client('c');
+  sender.victim.splat(sender.attacker,'shooter');
+  const row=sender.nm.out.find(e=>e[1]==='s'&&e[5]===1);
+  const state=()=>({grid:Array.from(observer.paint.grid),counts:Array.from(observer.paint.counts),
+    growing:observer.paint.growing.length,clock:observer.nm._paintClockState.clock,
+    seq:observer.nm._peer('b')._lastEventSeq||0,applied:Array.from(observer.nm._paintClockState.applied)});
+  const before=state();
+  for(const mutate of [e=>e[14][4][2]=3,e=>e[14][4][4]=99,e=>e[14][4][5]=999,
+    e=>e[14][4][11]=10,e=>e[2]+=20,e=>e[7]+=.1,e=>e[14][4][6]+=50]) {
+    const bad=received(row);mutate(bad);observer.nm._play('b',bad);assert.deepEqual(state(),before);
+  }
+  observer.nm._play('b',received(row));assert.ok(observer.paint.grid.some(Boolean));
+  const applied=state(),duplicate=received(row);duplicate._netSeq+=100;duplicate[duplicate.length-1]=duplicate._netSeq;
+  observer.nm._play('b',duplicate);assert.deepEqual(state(),applied,'new wire sequence cannot replay a consumed death droplet');
 });
 
 test('measured CPU footprint: source death blast versus the replaced radius-1.7 burst (logic measurement)', async () => {
