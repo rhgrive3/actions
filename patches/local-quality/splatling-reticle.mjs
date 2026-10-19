@@ -1,8 +1,31 @@
 const unit=x=>Math.max(0,Math.min(1,Number.isFinite(x)?x:0));
 export function splatlingStages(charge,runner,w,out={}){
- const first=w?.firstChargeTime,full=w?.chargeTime;
+ // Legacy Barrel has firstChargeTime/burstFirst, while the five 11.3.0
+ // catalogue Spinners own ChargeFrame_First / ChargeFrame_Second only inside
+ // their source GameParameterTable. The old HUD was reading the legacy fields
+ // from catalogue weapons, and consequently never filled the second ring.
+ const source=w?.catalogRecord?.parameters, param=source?.WeaponParam;
+ const sourceFirst=param?.ChargeFrame_First,sourceFull=param?.ChargeFrame_Second;
+ const catalog=Number.isFinite(sourceFirst)&&Number.isFinite(sourceFull)&&sourceFirst>0&&sourceFull>sourceFirst;
+ const first=catalog?sourceFirst/60:w?.firstChargeTime;
+ const full=catalog?sourceFull/60:w?.chargeTime;
  if(!(first>0&&full>first))return Object.assign(out,{first:unit(charge),second:0});
  const boundary=first/full;
+ // During catalogue streaming runner.charge resets to zero, but the source
+ // stream owns a fixed duration/elapsed pair. Reconstruct the two ring meters
+ // from the remaining source MaxShootingFrame_First/Second rather than the
+ // legacy Barrel's burstT/burstFirst fields (which catalogue lacks).
+ if(catalog&&runner?.streaming){
+  const state=runner.catalogState;
+  const firstShots=param?.MaxShootingFrame_First;
+  const fullShots=source?.WeaponFullChargeParam?.MaxShootingFrame_Second??param?.MaxShootingFrame_Second;
+  if(Number.isFinite(state?.streamTime)&&Number.isFinite(state?.streamElapsed)&&
+    Number.isFinite(firstShots)&&Number.isFinite(fullShots)&&firstShots>0&&fullShots>firstShots){
+    const left=Math.max(0,state.streamTime-Math.max(0,state.streamElapsed));
+    const firstDur=firstShots/60,fullDur=fullShots/60;
+    out.first=unit(left/firstDur);out.second=unit((left-firstDur)/(fullDur-firstDur));return out;
+  }
+ }
  // During a stream native charge is remaining / this release's duration,
  // which jumps near1 even after a partial release. Read remaining duration
  // against the already-authoritative two-stage burst curve instead.
