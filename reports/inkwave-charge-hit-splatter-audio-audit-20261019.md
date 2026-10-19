@@ -41,3 +41,18 @@ Locally ran actual fixture of six current-source spinners (native+catalog). All 
 - Existing source MP3s `Wp_Charger_HoldNoise_00.mp3`, `Wp_ChargeKeepReady_00.mp3`, and `Wp_ChargerNormal_Shot_Full_01.mp3` were copied for source-to-game comparison into the **research-only private Drive folder**: https://drive.google.com/drive/folders/13DK-NwVCXJVtB9JHcO2WGJ-9uG1o24JV. None of these are verified to include the separate hit or splat-confirm event.
 - The actual Spinner missing two-stage display cause is in `patches/local-quality/splatling-reticle.mjs` reading legacy Barrel `firstChargeTime` and `burstFirst` instead of catalogue `WeaponParam.ChargeFrame_First` and its `catalogState.streamTime`. This is independently fixed/merged in **PR #1623**. Its first attempt touching raw HUD was reverted; the existing two-ring native/quality adapter is preserved.
 - Community sources corroborate that Chargers/Blasters have a separate high-pitched direct-hit sound (Inkipedia Damage), and a charger full-charge direct can chime without splatting, whereas partial lethal shots need not chime. This confirms direct-hit-vs-splat separation as a design requirement, but supplies **no canonical source filename or Nintendo SLINK parameters**. Reference: https://splatoonwiki.org/wiki/Damage ; https://splatoon-torikara.com/archives/29861
+
+## Waveform-matched direct-hit source (new evidence)
+The Google Drive public Splatoon 3 extraction index contained 3,948 filename+file-ID entries. The following source MP3s were located and privately copied to [the player's Drive research folder](https://drive.google.com/drive/folders/13DK-NwVCXJVtB9JHcO2WGJ-9uG1o24JV).
+
+| Candidate | Drive original ID | Encoded bytes | SHA-256 | Encoded duration |
+|---|---|---:|---|---:|
+| `HitEf_CriticalHit_00.mp3` | `1nEMOajEu8AVSGIBIdK9pxm4sMOD9Q4GP` | 16,344 | `5366114895aca376f4780aa1123d90a7c4542bcad24a464afc374f47f28169cd` | ~0.653s |
+| `HitEf_Damage_00.mp3` | `1LUw7POiMu8C8UNYPDPRC-B5LG3h3Ndzf` | 3,805 | `c4b6ac316315ee76f06392821db008334daf6f162e106347f164196ac64a85db` | ~0.131s |
+| `Pl_DeadSplash_00.mp3` | `1La6s1Zp7ppd91UrwEC24rR2uacyMIskT` | 55,841 | `333f4c0f699adedb573b4bdf2b811bfa0c39b77330a69ced5f31c4a915d8ce1f` | ~2.299s |
+
+**Waveform-matched direct-hit evidence:** the decoded `HitEf_CriticalHit_00.mp3` source and the independently posted `direct-hit-upload.mp3` Voicemod sample (SHA256 `3001fbea582cc2c5b5b00f752d852eb36a637eaab185fd11b6107c3657a6e3d2`) have peak **0.9131 normalized PCM cross-correlation** after resampling to 12kHz mono, 200Hz high-pass and sample-exact alignment at +804/12000s (67ms), across their common ~0.615s. This is strong independent evidence that the archive's **CriticalHit** recording is the clip labeled "Splatoon Direct Hit SFX". It is **not** proof of every 11.3.0 SLINK trigger/retail mix parameter.
+
+External play/condition references: https://splatoonwiki.org/wiki/Damage ; https://splatoon-torikara.com/archives/29861 . Reports suggest a charged Charger direct impact can trigger the crisp tone even without killing (armor/barrier), while a half-charge lethal hit can lack the tone. Therefore **never choose critical solely because `killed===true`**. In particular the native Charger synchronous contact can carry charge, while projectile-flight family actors require a persisted launch-charge field. The death splash `Pl_DeadSplash` is likely a victim-local world effect, and must not automatically be treated as the attacker's kill-confirm tone.
+
+No new Nintendo source MP3 has been pushed to the public repository by this audit. The files remain in the user's Drive for source and redistribution-rights review.
