@@ -1,4 +1,3 @@
-// Original Wii U BFRES coefficients. No key resampling; no Catmull-Rom substitution.
 import * as THREE from 'three';
 export const mod = (x, n) => ((x % n) + n) % n;
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));

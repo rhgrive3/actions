@@ -3,7 +3,7 @@ import { specialMotionAllowsFootPlant } from './special-motion.mjs';
 import { sampleLegacyGait, LEGACY_GAIT_CHANNELS as REF, LEGACY_GAIT_INFO } from './legacy-walk-curves.mjs';
 import { resolveWalkFootClearance } from './walk-foot-clearance.mjs';
 // Walking is an animation layer. It never writes actor speed or collision state.
-// Body/foot motion is guided by compact relative FSKA channels from Splatoon 1.
+// INKWAVE computes body/foot animation using compact Splatoon 1 FSKA reference channels.
 // Clip frame counts are source frames, NOT proven Splatoon 3 animation runtime rates.
 // All root speeds, combat actions, surface probing and planted-foot IK remain native.
 let api, tuning;
