@@ -151,6 +151,23 @@ export function adaptNet(rel, code) {
     this.tr = null;
     this.code = null;`, `    this.leave(true);
     this.error = reason === 'bye' ? null : 'Lost connection to the room';`, rel);
+    // Error/state listeners can synchronously enter a new room or replace the game.
+    // Cleanup keeps its existing behavior; only the old game's final notification is owned.
+    code = replaceOnce(code, `  _closed(reason) {
+    const inMatch = this.state === 'match' || this.state === 'starting';`, `  _closed(reason) {
+    const game = G.game, gameMatch = game?.match, session = G.net;
+    const inMatch = this.state === 'match' || this.state === 'starting';`, rel);
+    code = replaceOnce(code, `    if (this.error) this._emit('error', { message: this.error });
+    if (inMatch) G.game?.netMatchAborted?.(this.error);`, `    if (this.error) this._emit('error', { message: this.error });
+    if (inMatch && G.game === game && game?.match === gameMatch && G.net === session &&
+        this._roomAttempt === closedAttempt && this.match === null && this.tr === null &&
+        this.code === null &&
+        G.match === closedMatch && G.netm === closedNetMatch) game?.netMatchAborted?.(closedError);`, rel);
+    code = replaceOnce(code, `    this._setState(this.error ? 'error' : 'offline');
+    if (this.error) this._emit('error', { message: this.error });`, `    const closedAttempt = this._roomAttempt, closedError = this.error;
+    const closedState = this.error ? 'error' : 'offline', closedMatch = G.match, closedNetMatch = G.netm;
+    this._setState(closedState);
+    if (this.error) this._emit('error', { message: this.error });`, rel);
     code = replaceOnce(code, `  async _begin(cfg) {
     this._startCfg = cfg;`, `  async _begin(cfg) {
     clearTimeout(this._goT); this._goT = null;
@@ -236,6 +253,12 @@ NetMatch.prototype.dispose = function(...args) {
 `;
   }
   if (rel === 'src/net/transport.js') {
+    code = "import { OUTBOUND_RECEIPT } from '../../patches/network-replication/outbound-prefix.mjs';\nconst outboundUtf8Encoder = new TextEncoder();\n" + code;
+    code = replaceOnce(code, '  _raw(s) {', '  _raw(s, receipt) {', rel);
+    code = replaceOnce(code, '    if (!ws || ws.readyState !== 1 || s.length > 64 * 1024 || ws.bufferedAmount > 512 * 1024) return false;',
+      "    if (!ws || ws.readyState !== 1 || ws.bufferedAmount > 512 * 1024) { if (receipt) receipt.reason='unavailable'; return false; }\n    if (s.length > 64 * 1024 || outboundUtf8Encoder.encode(s).byteLength > 64 * 1024) { if (receipt) receipt.reason='frame-too-large'; return false; }", rel);
+    code = replaceOnce(code, "  broadcast(obj) { return this._raw('b|' + JSON.stringify(obj)); }", "  broadcast(obj) { return this._raw('b|' + JSON.stringify(obj), obj?.[OUTBOUND_RECEIPT]); }", rel);
+
     code = "import { validRelayControl } from '../../patches/reliability/session-admission.mjs';\n" + code;
     code = replaceOnce(code, `    this.ws = null;
     this.id = null;`, `    this.ws = null;

@@ -34,6 +34,7 @@ export function installRankedNetwork(api) {
     const tr = this.s.tr, broadcast = tr?.broadcast;
     if (!broadcast) return tick.call(this);
     tr.broadcast = d => {
+      let throwActor = null;
       if (d.k === 't') {
         this.rankedTick = (this.rankedTick || 0) + 1;
         if (this.isHost && this.rankedTick % 4 === 0) {
@@ -46,10 +47,14 @@ export function installRankedNetwork(api) {
           d.rki = { match: this.cfg.id, id: actorId(a), seq: this.rankedInputSeq = (this.rankedInputSeq || 0) + 1,
             fire: !!cmd.fire, throw: !!a._rankedThrowPending, aim: cmd.aim || [0, 0, 1], special: a.specialActive?.id ?? null,
             specialDeployed: a.specialActive?.id === 'storm' && a.specialActive?.t > 0, clamDrop: a._rankedClamDrop || 0 };
-          a._rankedThrowPending = false;
+          throwActor = a;
         }
       }
-      return broadcast.call(tr, d);
+      const accepted = broadcast.call(tr, d);
+      // A bounded transport can refuse this tick. Retain the one-shot edge
+      // until a later ordinary tick is accepted, or input lifecycle cancels it.
+      if (accepted === true && throwActor) throwActor._rankedThrowPending = false;
+      return accepted;
     };
     try { return tick.call(this); } finally { tr.broadcast = broadcast; }
   };
