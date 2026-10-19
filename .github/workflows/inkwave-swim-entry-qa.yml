@@ -11,7 +11,7 @@ permissions:
   contents: read
 concurrency:
   group: swim-entry-native-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   compare-swim-entry:
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
       - name: Verify existing native swim contracts
         run: node --experimental-vm-modules --test patches/splatoon3/tests/swim-motion.test.mjs
       - name: Verify normal input and native QA contracts
-        run: node --experimental-vm-modules --test --test-concurrency=1 tools/swim-entry-qa/probe.test.mjs tools/swim-entry-qa/compare.test.mjs tools/swim-entry-qa/workflow.test.mjs
+        run: node --experimental-vm-modules --test --test-concurrency=1 tools/swim-entry-qa/probe.test.mjs tools/swim-entry-qa/compare.test.mjs tools/swim-entry-qa/workflow.test.mjs tools/swim-entry-qa/three-contract.test.mjs
       - name: Checkout fixed baseline without repository history
         uses: actions/checkout@v4
         with:
@@ -52,7 +52,7 @@ jobs:
         run: |
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
-          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test --test-concurrency=1 tools/swim-entry-qa/probe.test.mjs tools/swim-entry-qa/compare.test.mjs tools/swim-entry-qa/workflow.test.mjs
+          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test --test-concurrency=1 tools/swim-entry-qa/probe.test.mjs tools/swim-entry-qa/compare.test.mjs tools/swim-entry-qa/workflow.test.mjs tools/swim-entry-qa/three-contract.test.mjs
           node tools/swim-entry-qa/run.mjs --site _site --out .qa-evidence/swim-entry-candidate --expect candidate
       - name: Verify matched camera, light, inputs, source phase and preserved shape
         run: node tools/swim-entry-qa/compare.mjs .qa-evidence/swim-entry-baseline/result.json .qa-evidence/swim-entry-candidate/result.json "$SOURCE_SHA" .qa-evidence/swim-entry-comparison.json

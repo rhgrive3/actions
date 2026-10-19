@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';import {fileURLToPath,pathToFileURL} from 'node:url';
+import{verifyThreeReferences}from'./three-contract.mjs';
 const here=path.dirname(fileURLToPath(import.meta.url)),args=process.argv.slice(2),option=(n,d)=>{const i=args.indexOf(n);return i<0?d:args[i+1];},hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const safe=(root,rel)=>{const p=fs.realpathSync(path.resolve(root,rel));assert(p.startsWith(root+path.sep),'path containment');return p;};
 async function main(){
@@ -7,8 +8,9 @@ async function main(){
  const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash,'artifact map identity');for(const [file,digest]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(safe(site,file))),digest,'built artifact '+file);
  const sourceSha=process.env.SOURCE_SHA||process.env.GITHUB_SHA;assert.match(sourceSha||'',/^[0-9a-f]{40}$/,'exact source SHA required');assert.equal(execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceSha,'exact source checkout');
  const prefix='/_versions/'+manifest.build.revision+'/',basis={sourceSha,expect,contentHash:manifest.contentHash,buildRevision:manifest.build.revision,expectedFrames:12,harnessHashes:{},authoredHashes:{}};
- for(const name of ['browser.mjs','probe.mjs','axes.mjs','run.mjs'])basis.harnessHashes[name]=hash(fs.readFileSync(path.join(here,name)));basis.harnessHashes['../squid-production-qa/lighting.mjs']=hash(fs.readFileSync(path.join(here,'../squid-production-qa/lighting.mjs')));
+ for(const name of ['browser.mjs','probe.mjs','axes.mjs','run.mjs','three-contract.mjs'])basis.harnessHashes[name]=hash(fs.readFileSync(path.join(here,name)));basis.harnessHashes['../squid-production-qa/lighting.mjs']=hash(fs.readFileSync(path.join(here,'../squid-production-qa/lighting.mjs')));
  for(const name of ['patches/local-quality/squid-motion-binding-adapter.mjs','patches/local-quality/squid-form-ease-adapter.mjs','patches/local-quality/s3-squid-look-adapter.mjs','patches/splatoon3/runtime/swim-motion.mjs','inkwave-public/src/game/character-geo.js','inkwave-public/src/game/character-mats.js','inkwave-public/src/game/motion/source-controller.js','inkwave-public/src/game/motion/squid-rig.js'])basis.authoredHashes[name]=hash(fs.readFileSync(name));
+ const productionThree=await import(pathToFileURL(path.join(site,'vendor/three/build/three.module.js')).href);basis.threeExportContract=verifyThreeReferences(productionThree,['browser.mjs','probe.mjs','axes.mjs'].map(n=>({name:n,source:fs.readFileSync(path.join(here,n),'utf8')})).concat({name:'lighting.mjs',source:fs.readFileSync(path.join(here,'../squid-production-qa/lighting.mjs'),'utf8')}));
  const loaded=new Set(),screenshots=[],errors=[],blocked=[],warnings=[];let server,browser,page;const write=x=>fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({...basis,loaded:[...loaded].sort(),screenshots,errors,blocked,warnings,...x},null,2));write({status:'verified-build',browserRun:false});
  try{
   server=http.createServer((req,res)=>{try{const p=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname);let body,type='text/javascript';
