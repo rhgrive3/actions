@@ -1,8 +1,5 @@
 /** Cadence policy for INKWAVE's retargeted source locomotion.
  *
- * The 40-frame Walk / 32-frame Run clip lengths are sourced from the BFRES
- * animation bank. The world-speed mapping below is a HOST adaptation, not an
- * assertion about Splatoon's original runtime playback-speed state machine.
  *
  * A full gait cycle includes left and right footfalls. In particular, a
  * diagonal blend must not count distance once per cardinal source clip.

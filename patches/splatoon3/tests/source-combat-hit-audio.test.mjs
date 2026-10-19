@@ -31,6 +31,10 @@ test('admitted charged direct contact uses critical source even without killing'
 test('Bamboo and R-PEN and non-Chargers never borrow classic Charger critical hit',()=>{
  assert.equal(classifySourceCombatHit(e('s3-charger-light',1,true,true,'WeaponChargerLight')),'damage');
  assert.equal(classifySourceCombatHit(e('s3-charger-pencil',1,true,true,'WeaponChargerPencil')),'damage');
+ assert.equal(classifySourceCombatHit(e('s3-charger-light-01',1,true,true)),'damage','Bamboo variant excluded');
+ assert.equal(classifySourceCombatHit(e('s3-charger-pencil-01',1,true,true)),'damage','R-PEN variant excluded');
+ assert.equal(classifySourceCombatHit({attacker:charger(),weaponId:'sub:bomb',
+   hitMeta:{chargerDirect:true,charge:1}}),'damage','a bomb cannot inherit the held Charger critical cue');
  assert.equal(classifySourceCombatHit({weaponId:'shooter',attacker:{weapon:{kind:'shooter'}},
    hitMeta:{chargerDirect:true,charge:1},killed:true}),'damage');
  assert.equal(classifySourceCombatHit({weaponId:'charger',attacker:charger(),
@@ -104,6 +108,6 @@ test('real runtime carries source charge metadata, built game prefers source sou
  const built=adaptBuildSource('src/main.js',src);
  assert.match(built,/import \{ classifySourceCombatHit, playResidentCombatRecording \}/);
  assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId, hitMeta \}\)/);
- assert.match(built,/playResidentCombatRecording\(G\.audio,classifySourceCombatHit\(\{attacker,weaponId,hitMeta\}\),attacker,0\.6\)/);
- assert.match(built,/playResidentCombatRecording\(G\.audio,'splat',attacker,0\.9\)/);
+ assert.match(built,/playResidentCombatRecording\(G\.audio,classifySourceCombatHit\(\{attacker,weaponId,hitMeta\}\),attacker,\.76\)/);
+ assert.match(built,/playResidentCombatRecording\(G\.audio,'splat',attacker,\.82\)/);
 });

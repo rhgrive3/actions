@@ -1,7 +1,8 @@
 import { WEAPON_AUDIO, LOOP_EVENTS, mainAudioSourceId } from './weapon-recipes.mjs';
 export { mainAudioSourceId } from './weapon-recipes.mjs';
 import { KIT_AUDIO } from './kit-recipes.mjs';
-export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO});
+import { COMBAT_AUDIO } from './combat-recipes.mjs';
+export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO});
 import { renderSound } from './render.mjs';
 export const MAIN_AUDIO_PREFIX='main:';
 // Source-recorded MP3s always win. Only MAIN-weapon attack one-shots may use
@@ -15,7 +16,7 @@ export class WeaponSoundBank {
   name(id,event='fire'){id=mainAudioSourceId(id);return this.has(id,event)?`${MAIN_AUDIO_PREFIX}${id}:${event}`:null;}
   get(id,event,variant=0){
     id=mainAudioSourceId(id);
-    // Recording-only recipes are routing IDs, not parameters for the DSP.
+    // Recording-only cues are source routes, not parameters for the PCM renderer.
     if(AUDIO_RECIPES[id]?.reference==='operator-recorded-only')throw new Error('Recorded-only cue cannot generate PCM: '+id+'/'+event);
     if(this.realOnly&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Procedural weapon audio disabled for non-main-shot events');
     const key=`${id}:${event}:${variant}`;let item=this.cache.get(key);
@@ -65,7 +66,6 @@ export class WeaponSoundBank {
     name=`${MAIN_AUDIO_PREFIX}${id}:${event}`;
     if(this.defs.has(name))return this.defs.get(name);
     if(!this.has(id,event))return null;
-    // Never expose a procedural definition for a cue without a resident source.
     if(AUDIO_RECIPES[id]?.reference==='operator-recorded-only'&&!this.authorized.byEvent.has(`${id}:${event}`))return null;
     // Strict deployment must never substitute a synthesized waveform, even if
     // an authorized file is still decoding, missing, or evicted from the LRU.

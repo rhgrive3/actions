@@ -1489,8 +1489,8 @@ export function adaptSource(rel, code) {
     }
     code = replaceOnce(code, "  results_win: {\n    name: 'Fresh Victory',", OPENING + "  results_win: {\n    name: 'Fresh Victory',", 'match-start Opening cue');
     code = replaceOnce(code,
-      '  constructor() {\n    this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined;\n  }',
-      '  constructor() {\n    this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined; this._timerPaused = false;\n  }',
+      '    this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined;',
+      '    this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined; this._timerPaused = false;',
       'music visibility state');
     code = replaceOnce(code, '  _startTimer() {\n    const tick = () => this._tick();',
       '  _startTimer() {\n    if (this.offline || this._timerPaused || this.worker || this.timer) return;\n    const tick = () => this._tick();',
@@ -1504,8 +1504,8 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '  _tick() {',
       '  _pauseTimer() {\n    if (this.offline) return;\n    this._timerPaused = true;\n    if (this.worker) this.worker.postMessage(0);\n    if (this.timer) { clearInterval(this.timer); this.timer = null; }\n  }\n\n  _resumeTimer() {\n    if (this.offline || !this.ctx) return;\n    const paused = this._timerPaused; this._timerPaused = false;\n    if (this.worker) this.worker.postMessage(TICK_MS); else if (!this.timer) this._startTimer();\n    if (paused) this._tick();\n  }\n\n  _tick() {',
       'music visibility timer controls');
-    code = replaceOnce(code, '  dispose() {\n    for (const p of this.players) p.dispose();',
-      '  dispose() {\n    this._timerPaused = true;\n    for (const p of this.players) p.dispose();', 'music dispose visibility state');
+    code = replaceOnce(code, '    for (const p of this.players) p.dispose();',
+      '    this._timerPaused = true;\n    for (const p of this.players) p.dispose();', 'music dispose visibility state');
     return code;
   }
   if (rel === 'src/audio/audio.js') {

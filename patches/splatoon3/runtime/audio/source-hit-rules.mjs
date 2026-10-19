@@ -5,10 +5,13 @@ const isChargerId = id => id === 'charger' ||
   /^charger-\d+$/.test(id || '') || /^s3-charger-/.test(id || '');
 
 export function classifySourceCombatHit({attacker,weaponId,hitMeta}={}) {
-  const id=String(weaponId||attacker?.weapon?.id||'');
+  // The admitted hit weapon ID, not the currently equipped Charger, owns
+  // classification. Bomb and special hits must never borrow Charger metadata.
+  const id=typeof weaponId==='string'?weaponId:'';
   const record=attacker?.weapon?.catalogRecord;
-  const charger=(record?.family==='charger'||attacker?.weapon?.kind==='charger'||isChargerId(id));
-  const excluded=CRITICAL_EXCLUSIONS.has(id) ||
+  const charger=isChargerId(id);
+  const canonical=id.replace(/-0[1-9]$/,'');
+  const excluded=CRITICAL_EXCLUSIONS.has(canonical) ||
     record?.sourceActor==='WeaponChargerLight' || record?.sourceActor==='WeaponChargerPencil';
   const charge=Number(hitMeta?.charge);
   // Never infer directness or charge level from killed/damage/attacker aim:

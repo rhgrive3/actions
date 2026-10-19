@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { withBlasterSplashHit, blasterHitCueKind, blasterHitCuePitch, BLASTER_HIT_PITCH } from '../runtime/audio/blaster-hit.mjs';
 import { specialActionAudioEvent, specialActivationAudioEvent } from '../runtime/audio/kit-runtime.mjs';
@@ -10,6 +11,41 @@ import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs
 
 const manifest=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
 const clip=(id,event)=>manifest.clips.some(c=>c.id===id&&c.event===event);
+
+test('2022 critical/damage/dead-splash MP3s have strict byte provenance and distinct combat events',()=>{
+ const expected=[
+  ['combat:critical','HitEf_CriticalHit_00.mp3','5366114895aca376f4780aa1123d90a7c4542bcad24a464afc374f47f28169cd'],
+  ['combat:damage','HitEf_Damage_00.mp3','c4b6ac316315ee76f06392821db008334daf6f162e106347f164196ac64a85db'],
+  ['combat:splat','Pl_DeadSplash_00.mp3','333f4c0f699adedb573b4bdf2b811bfa0c39b77330a69ced5f31c4a915d8ce1f']
+ ];
+ for(const [id,filename,sha] of expected){
+   const c=manifest.clips.filter(c=>c.id===id&&c.event==='fire');
+   assert.equal(c.length,1,'one verified source only: '+id);
+   assert.equal(c[0].sourceName,filename);
+   assert.equal(c[0].sha256,sha);
+   assert.equal(crypto.createHash('sha256').update(
+     fs.readFileSync(new URL('../runtime/audio/s3-real/'+filename,import.meta.url))
+   ).digest('hex'),sha,'source bytes cannot silently change '+id);
+ }
+});
+
+test('production Charger player-hit and splat cues use source-specific MP3 only',()=>{
+ const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
+ const native=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
+ const built=adaptBuildSource('src/main.js',src);
+ const weapon=adaptBuildSource('src/game/weapons.js',native);
+ assert.match(built,/playResidentCombatRecording\(G\.audio,classifySourceCombatHit\(\{attacker,weaponId,hitMeta\}\),attacker,\.76\)/,
+   'real recorded CriticalHit depends on admitted projectile charge, not damage or splat');
+ assert.match(built,/playResidentCombatRecording\(G\.audio,'splat',attacker,\.82\)/,
+   'recorded player-splat cue remains limited to confirmed Charger splat cause');
+ assert.match(built,/test\(String\(cause\|\|''\)\)/,'splat cue follows the confirmed damage cause');
+ assert.match(weapon,/!\/\^\(\?:charger/,'native Charger ink_hit_body synth layer must be gated');
+ assert.match(weapon,/G\.audio\.play\('ink_hit_body'/,'other weapon bodies preserve their existing hit cue');
+ assert.doesNotMatch(built,/damage>=95\?'combat:critical'/,
+   'lethal partial charge may not trigger full-charge critical sound');
+ const index=built.indexOf('if (/^(?:charger');
+ assert.ok(index>0,'source replacement is inside full production composition');
+});
 
 test('alternate kit fire, impact, charge loop and sub/special prefetch keep base audio only',()=>{
  const listeners=new Map(),shots=[],loops=[],prepares=[],loads=[];
