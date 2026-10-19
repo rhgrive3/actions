@@ -10,6 +10,52 @@ const entry=new vm.SourceTextModule("export * from './src/core/ctx.js';export * 
 function rig(f){const h=Object.create(f.HUD.prototype),runner={streaming:false},a={team:0,alive:true,weapon:f.WEAPONS.splatling,weaponRunner:runner};f.G.match={local:a};Object.assign(h,{ret:new El(),xh:new El(),spIcon:new El(),shield:new El(),subChip:new El(),_L:{},_bloom:0,_kick:0,_restart(){}});return{h,a,runner,update:(c)=>h._updCrosshair({weapon:'splatling',charge:c},1/60)};}
 const close=(a,b)=>assert(Math.abs(a-b)<1e-7,`${a} != ${b}`);
 test('full native HUD builds two rings and follows48F/72F profile without weapon mutations',async()=>{const f=await fixture(),r=rig(f),before=JSON.stringify(r.a.weapon);for(const [frame,first,second]of [[0,0,0],[24,.5,0],[47,47/48,0],[48,1,0],[60,1,.5],[72,1,1]]){r.update(frame/72);close(r.h._L.splatFirst,first);close(r.h._L.splatSecond,second);close(+r.h._chargeEl.style.strokeDashoffset,Number((100*(1-first)).toFixed(2)));close(+r.h._chargeSecond.style.strokeDashoffset,Number((100*(1-second)).toFixed(2)));}assert.match(r.h.ret.querySelector('svg').inserted,/iw-ret__charge-second/);assert.equal(JSON.stringify(r.a.weapon),before);});
+test('all five additional 11.3.0 Spinners and their kits render both charge rings through actual HUD dispatch',async()=>{
+ const f=await fixture();
+ const records=[
+  ['s3-spinner-quick',18,27],
+  ['s3-spinner-hyper',120,150],
+  ['s3-spinner-downpour',1,100],
+  ['s3-spinner-serein',38,76],
+  ['s3-spinner-hypershort',60,120],
+ ];
+ for(const [base,first,second] of records){
+  for(const id of [base,base+'-01']){
+   const weapon={...f.WEAPONS.splatling,id,kind:'catalog',behaviorKind:'splatling',
+     catalogRecord:{family:'splatling',parameters:{WeaponParam:{
+       ChargeFrame_First:first,ChargeFrame_Second:second,
+       MaxShootingFrame_First:80,MaxShootingFrame_Second:160
+     }}}};
+   f.WEAPONS[id]=weapon;
+   const r=rig(f);r.a.weapon=weapon;
+   const update=q=>r.h._updCrosshair({weapon:id,charge:q,crosshair:{spread:0}},1/60);
+   update(0);
+   assert.equal(r.h._L.kind,'splatling',id+' must select actual Spinner reticle, not generic catalogue');
+   assert.match(r.h.ret.querySelector('svg').inserted,/iw-ret__charge-second/,id+' must have second ring');
+   assert.ok(r.h._chargeSecond,id+' second ring connects to source stage controller');
+   update(first/second);
+   close(r.h._L.splatFirst,1);
+   close(r.h._L.splatSecond,0);
+   assert.equal(+r.h._chargeSecond.style.strokeDashoffset,100,id+' stage two remains empty at stage one');
+   update((first+second)/(2*second));
+   close(r.h._L.splatFirst,1);close(r.h._L.splatSecond,.5);
+   update(1);close(r.h._L.splatSecond,1);
+   assert.equal(r.h._L.full,true,id+' original full-charge indicator still activates');
+   delete f.WEAPONS[id];
+  }
+ }
+});
+
+test('other catalogue families keep existing generic reticles, no leaked second ring',async()=>{
+ const f=await fixture(),id='s3-shooter-expert',r=rig(f);
+ f.WEAPONS[id]={...f.WEAPONS.shooter,id,kind:'catalog',behaviorKind:'shooter'};
+ r.a.weapon=f.WEAPONS[id];
+ r.h._updCrosshair({weapon:id,charge:1,crosshair:{spread:0}},1/60);
+ assert.equal(r.h._L.kind,'catalog');
+ assert.doesNotMatch(r.h.ret.markup,/iw-ret__charge-second/);
+ delete f.WEAPONS[id];
+});
+
 test('partial stream never jumps to full; both stages unwind against native remaining duration',async()=>{const f=await fixture(),r=rig(f),w=r.a.weapon;r.update(2/3);r.runner.streaming=true;r.runner.burstT=w.burstFirst;r.update(1);close(r.h._L.splatFirst,1);close(r.h._L.splatSecond,0);r.runner.burstT=w.burstFirst/2;r.update(.5);close(r.h._L.splatFirst,.5);close(r.h._L.splatSecond,0);r.runner.burstT=(w.burstMax+w.burstFirst)/2;r.update(.75);close(r.h._L.splatFirst,1);close(r.h._L.splatSecond,.5);r.runner.burstT=0;r.update(0);close(r.h._L.splatFirst,0);close(r.h._L.splatSecond,0);});
 test('30/60/120Hz presentation reads the same fixed60Hz state and reuses progress storage',async()=>{const f=await fixture();for(const hz of [30,60,120]){const r=rig(f);for(let frame=0;frame<=72;frame++){if(hz!==30||frame%2===0)r.update(frame/72);if(hz===120)r.update(frame/72);if(frame===48){close(r.h._L.splatFirst,1);close(r.h._L.splatSecond,0);}}const out=r.h._splatStages;r.update(1);assert.equal(r.h._splatStages,out);close(r.h._L.splatSecond,1);}});
 test('weapon switches rebuild stage nodes and reset scalar cache; Charger remains single ring',async()=>{const f=await fixture(),r=rig(f);r.update(1);const old=r.h._chargeSecond;r.h._updCrosshair({weapon:'charger',charge:.5},1/60);assert.equal(r.h._L.kind,'charger');assert(!r.h.ret.markup.includes('charge-second'));r.update(.25);assert.notEqual(r.h._chargeSecond,old);close(r.h._L.splatFirst,.375);close(r.h._L.splatSecond,0);});
