@@ -58,7 +58,10 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
           'JS work p95: '+s.workP95Ms.toFixed(1)+'ms | rAF p99: '+s.rafP99Ms.toFixed(1)+'ms\n' +
           'Long frames: '+s.framesOverBudget+'/'+Math.min(dc,maxSamples)+' | scale '+s.dynamicScale.toFixed(2) +
           (s.trace ? '\nGPU paint / render: '+(s.trace.latestGPUPaintMs?.toFixed(1) ?? '?')+' / '+(s.trace.latestGPUCommandsMs?.toFixed(1) ?? '?')+'ms ('+s.trace.gpuPaint+' / '+s.trace.gpu+')'+
-            ' | long tasks: '+s.trace.longTaskCount+'\nLast hitch: '+(s.trace.recentHitches.at(-1)?.cause || 'none') : '');
+            ' | long tasks: '+s.trace.longTaskCount+'\nLast hitch: '+(s.trace.recentHitches.at(-1)?.cause || 'none')+
+            (s.trace.latest?.sourceBVH ? '\nSource BVH: '+s.trace.latest.sourceBVH.queries+
+              ' queries / '+s.trace.latest.sourceBVH.triangleTests+' triangles'+
+              '\nNative CPU: '+s.trace.latest.topNativeScopes.slice(0,3).map(x=>x.name+' '+x.ms+'ms').join(' | ') : '') : '');
       }
     },
     reset() { dc=cc=nc=0; prev=0; skipped=0; lastText=0; tracer?.reset(); },
