@@ -1256,6 +1256,8 @@ export class MusicEngine {
   constructor() {
     this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined;
     this._fileFailures = new Set(); this._preloadedFile = null;
+    this._desiredTrack = null; this._fileRetryTimer = null; this._fileRetryCount = 0;
+    this._fileErrorReported = false; this.onFileError = null;
   }
   get track() { return this.current ? this.current.id : null; }
   get tracks() { return Object.keys(SONGS); }
@@ -1306,6 +1308,37 @@ export class MusicEngine {
       pending.element.removeAttribute('src');
       pending.element.load();
     }
+  }
+
+  _cancelFileRetry() {
+    if (this._fileRetryTimer != null) {
+      clearTimeout(this._fileRetryTimer);
+      this._fileRetryTimer = null;
+    }
+  }
+
+  // Recorded music is the ONLY soundtrack for live turf battles. Retry transient
+  // loading/decoding failures twice, then leave music silent; never synthesize Turf Riot.
+  _retryFile(track, reason) {
+    if (this.offline || this._desiredTrack !== track || !FILE_TRACK_URLS[track]) return;
+    this._fileFailures.add(track);
+    if (this._fileRetryTimer != null) return;
+    if (this._fileRetryCount >= 2) {
+      if (!this._fileErrorReported) {
+        this._fileErrorReported = true;
+        console.warn('[music] Jet Arrow unavailable after retries; turf music muted (no legacy fallback)', reason);
+        try { this.onFileError?.(track, reason); } catch (_) { /* reporting must not interrupt gameplay */ }
+      }
+      return;
+    }
+    const delay = ++this._fileRetryCount === 1 ? 750 : 1600;
+    this._fileRetryTimer = setTimeout(() => {
+      this._fileRetryTimer = null;
+      if (this.ctx && this._desiredTrack === track) {
+        this._fileFailures.delete(track);
+        this.play(track, { fade: 0.2, _fileRetry: true });
+      }
+    }, delay);
   }
 
   // dest = the music bus (audio.js). opt.offline → no timer; drive with advance(t).
@@ -1376,6 +1409,23 @@ export class MusicEngine {
     if (this.remap) { try { const r = this.remap(track); if (r !== undefined) track = r; } catch (e) { /* keep the request */ } }
     const fade = Math.max(0, opts.fade ?? 1.0);
     if (track != null && !SONGS[track]) { console.warn('[music] unknown track', track); return; }
+    // There is no approved recorded final-minute replacement. Keep Jet Arrow
+    // running across the one-minute cue; don't switch to the old synthesized score.
+    if (track === 'battle_final' && !this.offline) {
+      if (this._desiredTrack === 'battle') return;
+      track = 'battle';
+    }
+    if (track !== 'battle') {
+      this._cancelFileRetry();
+      this._fileRetryCount = 0;
+      this._fileErrorReported = false;
+    } else if (!opts._fileRetry) {
+      this._cancelFileRetry();
+      this._fileRetryCount = 0;
+      this._fileErrorReported = false;
+      this._fileFailures.delete(track);
+    }
+    this._desiredTrack = track;
     // The pre-GO Opening sting plays while the silent battle MP3 stays primed.
     if (track && track !== 'opening' && !FILE_TRACK_URLS[track]) this._dropPreload();
     if (!this.ctx) { this._want = { track, opts }; return; }
@@ -1422,8 +1472,17 @@ export class MusicEngine {
         this._fileFailures.add(track);
         element.removeAttribute('src');
         element.load();
-        console.warn('[music] MP3 streaming unavailable, falling back to synthesized battle track', e);
+        console.warn('[music] Jet Arrow media setup failed; retrying the recording only', e);
       }
+    }
+    // Keep offline render tests procedural, but never select procedural battle
+    // music in an actual browser when a recorded MP3 cannot be opened.
+    if (!p && track === 'battle' && !this.offline) {
+      if (cur) cur.fadeOut(now, Math.max(0.03, fade));
+      this.current = null;
+      this._retryFile(track, new Error('Jet Arrow stream could not be opened'));
+      this._tick();
+      return;
     }
     if (!p) p = new Player(this, track, t0, opts);
     this.players.push(p);
@@ -1445,17 +1504,17 @@ export class MusicEngine {
     this._tick();
   }
 
-  _onFileFailed(player) {
-    this._fileFailures.add(player.id);
+  _onFileFailed(player, error) {
     if (this._preloadedFile?.player === player) {
+      this._fileFailures.add(player.id);
       this._dropPreload();
-      return;
+      return; // A START-gesture failure can be tried again when GO is requested.
     }
-    if (this.current !== player) return;
+    if (this.current !== player) return; // Ignore failures from already retired players.
     player.dispose();
     this.players = this.players.filter((p) => p !== player);
     this.current = null;
-    this.play(player.id, { fade: 0.2 });
+    this._retryFile(player.id, error);
   }
 
   setIntensity(x) {
@@ -1468,6 +1527,8 @@ export class MusicEngine {
   stop(fade = 1) { this.play(null, { fade }); }
 
   dispose() {
+    this._cancelFileRetry();
+    this._desiredTrack = null;
     this._dropPreload();
     for (const p of this.players) p.dispose();
     this.players.length = 0; this.current = null;
