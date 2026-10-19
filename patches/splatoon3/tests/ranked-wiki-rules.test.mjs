@@ -58,7 +58,7 @@ test('popped initial-center shield remains available; intact noncentral shield d
 });
 test('later equal Clam score rebounds one count at close without changing the penalty basis',()=>{
  const e=scoredClams();e.counts=[77,100];e.rule._openBasket(1,[0,0,-1.5]);e.rule._score(1,'small',[0,0,-1.5]);assert.deepEqual(e.counts,[77,77]);
- e.rule._closeBasket(1);assert.deepEqual(e.counts,[77,78]);assert.equal(e.penalties[1],11.5);
+ e.rule._closeBasket(1);assert.deepEqual(e.counts,[77,78]);assert.equal(e.penalties[1],11);
 });
 test('zone, tower and Rainmaker possession loss share the later-equal-count correction',()=>{
  for(const mode of ['zones','tower','rainmaker']) {

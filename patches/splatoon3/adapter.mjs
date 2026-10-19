@@ -69,6 +69,10 @@ export function adaptSource(rel, code) {
   code = adaptWeaponLodMaterialPacking(rel, code);
   code = adaptBodyProportion(rel, code, replaceOnce);
   if (rel === 'src/game/motion/source-controller.js') {
+    // Owner report 2026-10-18: standing still, the Wii U Attack_BBll clip also lifted the right leg
+    // (Splatoon 3's Slosher heave keeps both feet down). The attack overlay stays on the upper body.
+    code = replaceOnce(code, 'if(moving)this.mixUpper(this.overlay,weight);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly:moving});',
+      'const upperOnly=moving||sourceActionUpperOnly(family,action);if(upperOnly)this.mixUpper(this.overlay,weight);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly});', 'slosher attack overlay keeps the legs');
     code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
     code = replaceOnce(code, "const triggerActive=!!s.firing||Number(s.charge)>0||c.lastShot<0.1;", "const releasedBackpedal=reverseShotRelease(c._owner?.());\n   const triggerActive=!releasedBackpedal&&(!!s.firing||Number(s.charge)>0||c.lastShot<0.1);\n   if(releasedBackpedal)this.shootUntil=this.time;", 'release backpedal source shoot latch');
     code = replaceOnce(code, 'this.shootBlend+=((shooting?1:0)-this.shootBlend)*(1-Math.exp(-12*dt));',
@@ -85,7 +89,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'this.formTime=0;this.formEvent=true;', 'this.formTime=0;this.formEvent=true;this.s3FormClipDeclined=false;', 'source form clip admission reset');
     code = replaceOnce(code, "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)){", "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)&&sourceFormClipAdmitted(this)){", 'source form clip admission');
     code = replaceOnce(code, "if(this.finalState!=='air'){this.airBlendTime=0;", "if(this.finalState!=='air'){this.airBlendTime=sourceAirBlendStart(this,HOST_MOTION.transitionSeconds);", 'airborne form change skips stale dive crossfade');
-    return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
+    return "import { nativeWeaponPoseRequired, sourceActionUpperOnly } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
       "import { sourceAirBlendStart, sourceFormClipAdmitted } from '../../../patches/splatoon3/runtime/source-form-transition.mjs';\n" +
       "import { reverseShotRelease } from '../../../patches/splatoon3/runtime/shooter-movement.mjs';\n" +
       "import { sourceCarryWeapon, sourceStandGrip, sourceStandPole } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
@@ -808,7 +812,7 @@ export function adaptSource(rel, code) {
       '<script type="module" src="./patches/splatoon3/bootstrap.mjs"></script>', 'entry');
     code = replaceOnce(code, '</head>',
       '<meta name="mobile-web-app-capable" content="yes">\n' +
-      '<meta name="apple-mobile-web-app-title" content="INKWAVE">\n' +
+      '<meta name="apple-mobile-web-app-title" content="ZEVANT">\n' +
       '<link rel="manifest" href="./patches/splatoon3/pwa/manifest.webmanifest">\n' +
       '<link rel="icon" type="image/svg+xml" href="./patches/splatoon3/pwa/icon.svg">\n' +
       '<link rel="apple-touch-icon" sizes="192x192" href="./patches/splatoon3/pwa/icon-192.png">\n' +

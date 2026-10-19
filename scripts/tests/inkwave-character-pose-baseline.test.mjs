@@ -7,13 +7,15 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { CHARACTER_POSE_PATHS, CHARACTER_POSE_MANIFEST as manifest, parseCharacterPoseManifest, planCharacterPoseBaseline, poseSourceSha256 as hash } from '../lib/inkwave-character-pose-baseline.mjs';
 const root = fileURLToPath(new URL('../../', import.meta.url));
+// Current-owner unchanged-pose branch requires the same bytes on both sides.
+const currentPosePaths = new Set(['roller.mjs', 'family-holds.mjs', 'kit.mjs', 'registry.mjs', 'stringers.mjs'].map(name => CHARACTER_POSE_PATHS.find(path => path.endsWith('/' + name))));
 const candidate = () => new Map(CHARACTER_POSE_PATHS.map(rel => [rel, fs.readFileSync(path.join(root, rel), 'utf8')]));
 test('only the reviewed sixteen character paths and exact final source blobs are accepted', () => {
   const files = candidate(), snapshot = [...files];
   assert.equal(CHARACTER_POSE_PATHS.length, 16);
   const reference = new Map(manifest.files.map(row => {
     let source = files.get(row.path);
-    for (const edit of row.candidateToReference ?? []) source = source.replace(edit.from, edit.to);
+    for (const edit of currentPosePaths.has(row.path) ? [] : row.candidateToReference ?? []) source = source.replace(edit.from, edit.to);
     return [row.path, source];
   }));
   assert.equal(planCharacterPoseBaseline(reference, files).changes.length, 0);
@@ -58,9 +60,9 @@ test('late candidate rejection leaves planned new modules and previous receipt u
   for (const row of manifest.files) {
     const source = fs.readFileSync(path.join(root, row.path), 'utf8');
     const target = path.join(after, row.path); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.writeFileSync(target, source);
-    if (row.beforeSha256 === null) continue;
+    if (row.beforeSha256 === null && !currentPosePaths.has(row.path)) continue;
     let reference = source;
-    for (const edit of row.candidateToReference ?? []) reference = reference.replace(edit.from, edit.to);
+    for (const edit of currentPosePaths.has(row.path) ? [] : row.candidateToReference ?? []) reference = reference.replace(edit.from, edit.to);
     const baseline = path.join(before, row.path); fs.mkdirSync(path.dirname(baseline), { recursive: true }); fs.writeFileSync(baseline, reference); originals.set(row.path, reference);
   }
   fs.appendFileSync(path.join(after, CHARACTER_POSE_PATHS.at(-1)), '\nunknown last input'); fs.writeFileSync(receipt, 'previous receipt');

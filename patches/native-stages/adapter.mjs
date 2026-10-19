@@ -178,8 +178,13 @@ export function adaptNativeStages(rel,code){
     if (mask === undefined) {
       mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);
       if (nativeMasks && mask) {
-        mask.pieces = mask.pieces.filter(p => nativePieceHasInterior(mask, p));
-        if (!mask.pieces.length) mask = null;
+        // prepareAncillary uses pooled mutable pieces and a shared mask.
+        // Never replace that pool's public .pieces pointer or cache its object:
+        // later face groups would silently reuse the wrong paint shape.
+        const activePieces = mask.pieces.filter(p => nativePieceHasInterior(mask, p));
+        mask = activePieces.length
+          ? { ...mask, pieces: activePieces.map(p => ({ ...p })) }
+          : null;
       }
       nativeMasks?.set(nativeMaskKey, mask);
     }`);

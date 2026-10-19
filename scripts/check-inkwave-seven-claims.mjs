@@ -8,13 +8,18 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import { chromium, webkit } from 'playwright';
 import { transformSync } from 'esbuild';
-const originalMural=transformSync(fs.readFileSync('inkwave-public/src/world/murals.js','utf8'),{loader:'js',minify:true,charset:'utf8',legalComments:'inline'}).code;
+import {brandMuralReference,MURAL_RAW_BLOB,MURAL_BRANDING_OWNER} from './lib/inkwave-mural-branding-reference.mjs';
+const rawMural=fs.readFileSync('inkwave-public/src/world/murals.js','utf8');
+const muralTransform={loader:'js',minify:true,charset:'utf8',legalComments:'inline'};
+const originalMural=transformSync(brandMuralReference(rawMural),muralTransform).code;
+const unbrandedMural=transformSync(rawMural,muralTransform).code;
 const site=path.resolve(process.argv[2]||'_site');
 const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 for(const [file,digest] of Object.entries(manifest.artifacts))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(site,file))).digest('hex'),digest,file);
 const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(url.pathname==='/probe') {res.setHeader('content-type','text/html');res.end('<!doctype html><script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script>');return;}
+  if(url.pathname==='/src/world/unbranded-murals.js'){res.setHeader('content-type','text/javascript');res.end(unbrandedMural);return;}
   const original=url.pathname==='/src/world/original-murals.js';
   if(original){res.setHeader('content-type','text/javascript');res.end(originalMural);return;}
   const file=path.resolve(site,'.'+url.pathname);
@@ -60,7 +65,8 @@ try {
       const getContext=HTMLCanvasElement.prototype.getContext;
       HTMLCanvasElement.prototype.getContext=function(kind,opts){return getContext.call(this,kind,kind==='2d'?{...opts,willReadFrequently:true}:opts);};
       const {createMuralTexture}=await import('/src/world/murals.js'),{createMuralTexture:original}=await import('/src/world/original-murals.js');
-      const atlas=await createMuralTexture('tidewater'),baseline=await original('tidewater');
+      const {createMuralTexture:unbranded}=await import('/src/world/unbranded-murals.js');
+      const atlas=await createMuralTexture('tidewater'),baseline=await original('tidewater'),oldBrand=await unbranded('tidewater');
       const hash=(canvas,height=canvas.height)=>{const data=canvas.getContext('2d').getImageData(0,0,canvas.width,height).data;let h=2166136261;for(const byte of data)h=Math.imul(h^byte,16777619);return h>>>0;};
       const pixelDiff=(a,b,height)=>{
         const x=a.getContext('2d').getImageData(0,0,a.width,height).data,y=b.getContext('2d').getImageData(0,0,b.width,height).data;
@@ -70,6 +76,9 @@ try {
       check(atlas.image.width===2048&&atlas.image.height===1024,'shared-only cold boot');
       const sharedPixelDifference=pixelDiff(atlas.image,baseline.image,1024);
       check(sharedPixelDifference===0,'original shared pixels '+sharedPixelDifference);
+      const unbrandedSharedPixelDifference=pixelDiff(atlas.image,oldBrand.image,1024);
+      check(unbrandedSharedPixelDifference>0,'unbranded negative control must differ');
+      oldBrand.dispose();
       const renderer=new THREE.WebGLRenderer({antialias:false});renderer.setSize(64,64);renderer.initTexture(atlas);check(renderer.info.memory.textures===1,'one texture');
       const sharedHash=hash(atlas.image,1024),stages=[];
       for(const stage of ['halyard','tidewater','cargo','kelpline','range','tidewater','halyard','cargo','tidewater']){
@@ -80,9 +89,9 @@ try {
         stages.push([stage,atlas.image.height,renderer.info.memory.textures]);
       }
       atlas.dispose();check(renderer.info.memory.textures===0,'final GPU release');renderer.dispose();baseline.dispose();
-      return {cadences:[30,60,120],airChargeFrames:164,minimumInk:2.25,pitchDegrees:1.6,straightSlosherDamage:70,swimGraze:true,stages,sharedPixelDifference,canvasBytesBefore:2048*2048*4,canvasBytesAfter:2048*1024*4};
+      return {cadences:[30,60,120],airChargeFrames:164,minimumInk:2.25,pitchDegrees:1.6,straightSlosherDamage:70,swimGraze:true,stages,sharedPixelDifference,unbrandedSharedPixelDifference,canvasBytesBefore:2048*2048*4,canvasBytesAfter:2048*1024*4};
     });
     assert.deepEqual(errors,[]);results.push({engine,...result});await browser.close();browser=null;
   }
-  console.log(JSON.stringify({source:process.env.SOURCE_SHA||null,build:manifest.build.revision,results},null,2));
+  console.log(JSON.stringify({source:process.env.SOURCE_SHA||null,build:manifest.build.revision,muralReference:{rawBlob:MURAL_RAW_BLOB,brandingOwner:MURAL_BRANDING_OWNER,scope:"exact three text draws only; lifecycle adapters excluded"},results},null,2));
 } finally {if(browser)await browser.close();await new Promise(r=>server.close(r));}

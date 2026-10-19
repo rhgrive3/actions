@@ -8,6 +8,7 @@ import { adaptPoseRotation } from './pose-rotation-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
 import { adaptMaterialHandoff } from './material-handoff-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
+import { adaptSquidMotionBinding } from './squid-motion-binding-adapter.mjs';
 import { adaptMotionFkHotpath } from './motion-fk-hotpath-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
@@ -101,6 +102,7 @@ const IDENTITY_FILES = [
   'cloth-derivative-adapter.mjs',
   'retarget-branch-update-adapter.mjs',
   'motion-fk-hotpath-adapter.mjs',
+  'squid-motion-binding-adapter.mjs', 'squid-form-ease-adapter.mjs',
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
   'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
@@ -226,6 +228,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptAudioListener(rel, code);
   code = adaptRetargetBranchUpdates(rel, code);
   code = adaptMotionFkHotpath(rel, code, replaceOnce);
+  code = adaptSquidMotionBinding(rel, code, replaceOnce);
   if (rel === 'src/game/inkCollision.js') {
     code = replaceOnce(code,
       '  let best = Infinity;\n  for (const id of candidates) {\n    const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;',
@@ -423,8 +426,8 @@ function adaptQualityLayer(rel, code) {
       '   this.mixUpper(locomotionProfile(this.bank,name).centerPose,this.pivotWeight,false);',
       'skip intermediate FK on pivot upper-body mix');
     code = replaceOnce(code,
-      '    if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);if(moving)this.mixUpper(this.overlay,weight);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly:moving});}',
-      '    if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);if(moving)this.mixUpper(this.overlay,weight,false);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly:moving});}',
+      '    if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);const upperOnly=moving||sourceActionUpperOnly(family,action);if(upperOnly)this.mixUpper(this.overlay,weight);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly});}',
+      '    if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);const upperOnly=moving||sourceActionUpperOnly(family,action);if(upperOnly)this.mixUpper(this.overlay,weight,false);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly});}',
       'skip intermediate FK on action overlay sample and mix');
     code = replaceOnce(code,
       ' mixUpper(pose,weight){for(let i=0;i<this.upperMask.length;i++)if(this.upperMask[i]){this.pose.p[i].lerp(pose.p[i],weight);this.pose.q[i].slerp(pose.q[i],weight);this.pose.s[i].lerp(pose.s[i],weight);}this.pose.fk();}',
