@@ -17,7 +17,7 @@
 
 | パス | 内容 |
 | --- | --- |
-| [`inkwave-public/`](inkwave-public/) | 取得済み公開サイトの入力スナップショット。原作者の完全なソースリポジトリを保証するものではない |
+| [`inkwave-public/`](inkwave-public/) | 取得済み公開サイトを起点とするゲーム本体。直接統合済みの機能はここが編集対象。原作者の完全なソースリポジトリを保証するものではない |
 | [`patches/`](patches/) | ビルド時の変換、実行時の追加機能、参照値、回帰テスト |
 | [`scripts/`](scripts/) | ビルド、検証、計測、画像生成。共通処理は `scripts/lib/`、回帰テストは `scripts/tests/` |
 | [`server/`](server/) | Cloudflare Workers / Durable Objects によるオンライン対戦リレー |
@@ -39,5 +39,7 @@ node scripts/check-inkwave-startup-budget.mjs _site
 ```
 
 `_site/` がパッチ適用済みの配信物です。テストの選び方、ローカル表示、ブラウザ検証は [開発ガイド](docs/inkwave-development.md) を参照してください。公開配信は [`pages-inkwave.yml`](.github/workflows/pages-inkwave.yml) が対象パスの `main` 更新または手動実行で行います。
+
+パッチからゲーム本体への移行は [直接ソース移行ガイド](docs/inkwave-direct-source-migration.md) を参照してください。残るビルド時書き換えの確認は `node scripts/inkwave-source-migration-audit.mjs --all` で実行できます。元サイトの再取得は候補アーカイブの作成までとし、既存ゲームコードを自動上書きしません。
 
 挙動を変更するときは [AGENTS.md](AGENTS.md) の比較・記録ルールに従います。ロジックテスト、ブラウザの確認、本家の実機比較は、それぞれ確認できる範囲が異なります。

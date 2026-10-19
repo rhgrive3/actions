@@ -1,3 +1,4 @@
+import { sweepNativeLevelSphere } from '../../patches/native-stages/runtime/native-projectile-sweep.mjs';
 // Continuous collision, shared by ink heads, paint-only droplets and aim probes.
 // Analytic swept sphere vs OBB using the piecewise-quadratic distance to a box.
 // This includes rounded edges/corners; it is not an expanded-box approximation.
@@ -6,13 +7,18 @@ const O = [0, 0, 0], D = [0, 0, 0], H = [0, 0, 0], P = [0, 0, 0], N = [0, 0, 0];
 const cuts = new Float64Array(8);
 const ids = [];
 export function sweepLevelSphere(level, from, to, radius, out, skipGrates = true) {
+  if (level.native) return sweepNativeLevelSphere(level, from, to, radius, out, skipGrates, sweepLevelSphere);
   out.hit = false; out.dist = from.distanceTo(to); out.face = -1; out.block = -1;
   const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z, length = out.dist;
   const candidates = level.queryBlocks(Math.min(from.x, to.x) - radius, Math.min(from.z, to.z) - radius,
     Math.max(from.x, to.x) + radius, Math.max(from.z, to.z) + radius, ids);
+  const xLo = Math.min(from.x, to.x) - radius - 1e-6, xHi = Math.max(from.x, to.x) + radius + 1e-6;
+  const yLo = Math.min(from.y, to.y) - radius - 1e-6, yHi = Math.max(from.y, to.y) + radius + 1e-6;
+  const zLo = Math.min(from.z, to.z) - radius - 1e-6, zHi = Math.max(from.z, to.z) + radius + 1e-6;
   let best = Infinity;
   for (const id of candidates) {
     const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;
+    if (box.aabbMin && (box.aabbMin.y > yHi || box.aabbMax.y < yLo || box.aabbMin.x > xHi || box.aabbMax.x < xLo || box.aabbMin.z > zHi || box.aabbMax.z < zLo)) continue;
     const cx = from.x - box.center.x, cy = from.y - box.center.y, cz = from.z - box.center.z;
     H[0] = box.half.x; H[1] = box.half.y; H[2] = box.half.z;
     let count = 2; cuts[0] = 0; cuts[1] = 1;
@@ -81,8 +87,12 @@ function sphereEntry(ox, oy, oz, dx, dy, dz, radius) {
 // Capsule axis uses the actor's original radius; only its collision shell grows
 // by bulletRadius. Expanding the endpoints too would alter capsule height.
 export function capsuleEntry(from, to, base, actorRadius, height, bulletRadius) {
+  const r = actorRadius + bulletRadius;
+  if (Math.min(from.x, to.x) - base.x > r + 1e-7 || Math.max(from.x, to.x) - base.x < -r - 1e-7 ||
+      Math.min(from.z, to.z) - base.z > r + 1e-7 || Math.max(from.z, to.z) - base.z < -r - 1e-7) return Infinity;
   const lo = base.y + Math.min(actorRadius, height * 0.5), hi = base.y + Math.max(height - actorRadius, height * 0.5);
-  const r = actorRadius + bulletRadius, ox = from.x - base.x, oz = from.z - base.z;
+  if (Math.min(from.y, to.y) > hi + r + 1e-7 || Math.max(from.y, to.y) < lo - r - 1e-7) return Infinity;
+  const ox = from.x - base.x, oz = from.z - base.z;
   const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
   const nearY = Math.max(lo, Math.min(hi, from.y));
   if (ox * ox + oz * oz + (from.y - nearY) ** 2 <= r * r) return 0;
