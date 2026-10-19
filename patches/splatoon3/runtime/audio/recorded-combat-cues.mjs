@@ -22,13 +22,15 @@ const sourceDir=new URL('./s3-real/',import.meta.url);
 /**
  * Select a confirmation by the admitted damage event, not by arbitrary input.
  * An ordinary Charger half charge need not receive the iconic critical cue.
- * Damage >=100 is a documented INKWAVE approximation for the full-charge body
- * hit (the original Nintendo trigger threshold/SLINK graph is not audited).
+ * The actual projectile charge accompanies native and catalogue hit events.
+ * Damage >=100 is a last-resort compatibility proxy only when the charge
+ * metadata is genuinely missing; retail Nintendo SLINK is not yet audited.
  */
-export function recordedHitCue({attacker,weaponId,damage}={}){
+export function recordedHitCue({attacker,weaponId,damage,charge}={}){
   const id=mainAudioSourceId(weaponId||attacker?.weapon?.id);
-  if((id==='charger'||typeof id==='string'&&id.startsWith('s3-charger-')) &&
-      Number.isFinite(damage)&&damage>=100)return 'critical';
+  const charger=id==='charger'||typeof id==='string'&&id.startsWith('s3-charger-');
+  const full=Number.isFinite(charge)?charge>=1-1e-6:Number.isFinite(damage)&&damage>=100;
+  if(charger&&full)return 'critical';
   if(blasterHitCueKind(attacker,id)==='direct')return 'critical';
   return 'hit';
 }
