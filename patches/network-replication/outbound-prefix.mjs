@@ -1,8 +1,28 @@
 // Local send acceptance only. No relay acknowledgement or timestamp invention.
 export const OUTBOUND_LIMITS=Object.freeze({rows:512,bytes:512*1024,packetRows:256,frameBytes:64*1024});
 export const OUTBOUND_RECEIPT=Symbol('inkwave outbound local acceptance');
-const encoder=new TextEncoder(), states=new WeakMap();
-const bytes=value=>encoder.encode(JSON.stringify(value)).byteLength;
+// Browser and hermetic VM fixtures do not expose the same globals. Preserve
+// exact UTF-8 queue accounting in either environment; never allocate a new
+// encoder per send on the native browser path.
+const encoder=typeof TextEncoder==='function'?new TextEncoder():null, states=new WeakMap();
+function utf8ByteLength(text){
+ let size=0;
+ for(let i=0;i<text.length;i++){
+  const unit=text.charCodeAt(i);
+  if(unit<0x80){size++;continue;}
+  if(unit<0x800){size+=2;continue;}
+  if(unit>=0xd800&&unit<=0xdbff&&i+1<text.length){
+   const next=text.charCodeAt(i+1);
+   if(next>=0xdc00&&next<=0xdfff){size+=4;i++;continue;}
+  }
+  size+=3;
+ }
+ return size;
+}
+const bytes=value=>{
+ const json=JSON.stringify(value);
+ return encoder?encoder.encode(json).byteLength:utf8ByteLength(json??'');
+};
 function state(n){let s=states.get(n);if(!s){s={window:256,failed:false,rows:0,bytes:0,backlogged:false};states.set(n,s);}return s;}
 function abort(n,s,reason,G){
  if(s.failed)return false;
