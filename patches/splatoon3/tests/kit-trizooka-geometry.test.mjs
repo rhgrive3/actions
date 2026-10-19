@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import { TextEncoder } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {adaptKitSource as adaptSource} from './kit-composed-fixture.mjs';
 import { installKitTrizooka, VOLLEY_CONFIG, throwVolley, trizookaSpecialWeapon } from '../runtime/kit-trizooka.mjs';
@@ -26,7 +27,7 @@ const near = (a, b, m) => assert.ok(Math.abs(a - b) < 1e-4, `${m || ''} ${a} ~ $
 let cached;
 async function production() {
   if (cached) return cached;
-  const context = vm.createContext({ console, performance, URL });
+  const context = vm.createContext({ console, performance, URL, TextEncoder });
   const modules = new Map();
   const map = (f) => (f.startsWith(path.join(SRC, 'patches') + path.sep) ? path.join(ROOT, path.relative(SRC, f))
     : f.startsWith(path.join(ROOT, 'inkwave-public') + path.sep) ? path.join(SRC, path.relative(path.join(ROOT, 'inkwave-public'), f))

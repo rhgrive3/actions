@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import { TextEncoder } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {adaptKitSource as adaptSource} from './kit-composed-fixture.mjs';
 import {
@@ -110,7 +111,7 @@ const gearStorage = new Map();
 let cached;
 async function production() {
   if (cached) return cached;
-  const context = vm.createContext({ console, performance, URL, localStorage: { getItem: key => gearStorage.get(key) ?? null, setItem: (key, value) => gearStorage.set(key, value) } });
+  const context = vm.createContext({ console, performance, URL, TextEncoder, localStorage: { getItem: key => gearStorage.get(key) ?? null, setItem: (key, value) => gearStorage.set(key, value) } });
   const modules = new Map();
   const map = (f) => (f.startsWith(path.join(SRC, 'patches') + path.sep)
     ? path.join(ROOT, path.relative(SRC, f))
