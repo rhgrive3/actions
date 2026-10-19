@@ -94,6 +94,7 @@ function makeActor(api, { remote = false, y = 0, grounded = true, vertical = fal
   actor.remote = remote;
   actor.isLocal = remote ? false : undefined;
   actor.nid = 1;
+  actor.owner = 'owner';
   actor.alive = true;
   actor.pos.set(0, y, 0);
   actor.yaw = yaw;

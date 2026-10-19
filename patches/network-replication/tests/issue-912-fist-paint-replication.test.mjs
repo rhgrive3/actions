@@ -79,9 +79,12 @@ function landFists(sender, team = 1) {
     update(dt) { return dt; }
     reset() { this.specialActive = null; }
     addTurfNoSpecial(amount) { this.turf += amount; }
+    addTurf(amount) { this.turf += amount; }
   }
   installTripleSlamFists({ Actor, G, THREE }, null);
   const actor = new Actor();
+  actor.nid=sender.actors.find(a=>a.owner===sender.session.myId&&a.team===team).nid;
+  actor.owner=sender.session.myId;sender.nm.byNid.set(actor.nid,actor);
   let draw = 0;
   const realRandom = Math.random;
   Math.random = () => (draw++ * 0.618034) % 1;
@@ -118,7 +121,7 @@ test('#912 fist landing: receiver CPU turf and coverage equal the sender after r
 
 test('#912 forged radius-10 row that is not a fist stamp is still rejected by the remote ceiling', async () => {
   const sender = await client('b'), observer = await client('c');
-  sender.paint.splat(new sender.f.THREE.Vector3(0, 0.12, 0), 10, 1, { seed: 0.31 });
+  sender.paint.splat(new sender.f.THREE.Vector3(0, 0.12, 0), 10, 1, { seed: 0.31, claimOwner: sender.actors[1] });
   const forged = sender.nm.out.at(-1), before = Array.from(observer.paint.grid);
   observer.nm._play('b', received(forged));
   assert.equal(observer.nm._peer('b')._lastEventSeq ?? 0, 0, 'radius-10 row reserves no sequence');
