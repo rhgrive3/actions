@@ -37,6 +37,7 @@ export class NativeInkMesh extends THREE.Mesh {
     this.receiveShadow = true;
     this._view = new THREE.Matrix4();
     this._frustum = new THREE.Frustum();
+    this._faceCulling = true;
     this._ready = true;
     this.geometry = geometry;
     this.onBeforeRender = (_renderer, scene, camera) => {
@@ -56,6 +57,13 @@ export class NativeInkMesh extends THREE.Mesh {
     };
   }
   get geometry() { return this._geometry; }
+  /** Diagnostic switch: false restores tile-only selection for A/B checks. */
+  get faceCulling() { return this._faceCulling; }
+  set faceCulling(value) {
+    this._faceCulling = !!value;
+    this._faceDirty = true;
+    this._lastViewValid = false;
+  }
   set geometry(next) {
     if (!this._ready) { this._geometry = next; return; }
     const chunks = partitionNativeInk(next, this.tileSize);
@@ -116,10 +124,12 @@ export class NativeInkMesh extends THREE.Mesh {
     const mesh = this, push = paint._pushQuad, clear = paint.clear;
     this._painted = new Uint8Array(this.chunks.length);
     this._paintedCount = 0;
+    this._bindFaces(paint);
     // Binding an already painted atlas must not hide previously stored ink.
     if (paint.grid?.some?.(value => value !== 0)) {
       this._painted.fill(1);
       this._paintedCount = this._painted.length;
+      this._facePainted?.fill(1);
     }
     this._lastViewValid = false;
     this._visible.fill(255);
@@ -130,7 +140,10 @@ export class NativeInkMesh extends THREE.Mesh {
         const pad = (a.pad - 0.5) / a.ppm;
         const minU = Math.max(-pad, u0), maxU = Math.min(f.su + pad, u1);
         const minV = Math.max(-pad, v0), maxV = Math.min(f.sv + pad, v1);
-        if (minU < maxU && minV < maxV) mesh._markPaintBounds(f, minU, maxU, minV, maxV);
+        if (minU < maxU && minV < maxV) {
+          mesh._markFace(f);
+          mesh._markPaintBounds(f, minU, maxU, minV, maxV);
+        }
       }
       return result;
     };
@@ -149,6 +162,8 @@ export class NativeInkMesh extends THREE.Mesh {
     if (!this._painted) return;
     this._painted.fill(0);
     this._paintedCount = 0;
+    this._facePainted?.fill(0);
+    this._faceDirty = true;
     this._lastViewValid = false;
     this._visible.fill(255);
   }
@@ -198,7 +213,41 @@ export class NativeInkMesh extends THREE.Mesh {
     if (changed) this._lastViewValid = false;
   }
 
+  /** Paint charts own disjoint padded atlas rects, and nativeInkGeometry emits
+   * each chart's triangles contiguously in paintFaces order. A chart no quad
+   * has reached has no ink texels, so its triangles need no draw. Any mismatch
+   * leaves this map off and keeps the tile-only selection. */
+  _bindFaces(paint) {
+    this._faceIndex = this._faceStart = this._facePainted = null;
+    this._faceDirty = true;
+    const triangles = this._triangleTile.length, index = new Map(), starts = [0];
+    for (const f of paint.paintFaces || []) {
+      if (!f?.atlas || !f.triangles) continue;
+      if (index.has(f)) return;
+      index.set(f, starts.length - 1);
+      starts.push(starts[starts.length - 1] + f.triangles.length);
+    }
+    if (starts[starts.length - 1] !== triangles) return;
+    this._faceIndex = index;
+    this._faceStart = Uint32Array.from(starts);
+    this._facePainted = new Uint8Array(index.size);
+  }
+
+  _markFace(face) {
+    const painted = this._facePainted;
+    if (!painted) return;
+    const id = this._faceIndex.get(face);
+    if (id === undefined) {
+      // An atlas write outside the bound chart list: fail open to tiles.
+      this._faceIndex = this._faceStart = this._facePainted = null;
+    } else if (painted[id]) return;
+    else painted[id] = 1;
+    this._faceDirty = true;
+    this._lastViewValid = false;
+  }
+
   _detachPaint() {
+    this._faceIndex = this._faceStart = this._facePainted = null;
     const binding = this._paintBinding;
     if (!binding) return;
     if (binding.paint._pushQuad === binding.wrappedPush) binding.paint._pushQuad = binding.push;
@@ -220,7 +269,7 @@ export class NativeInkMesh extends THREE.Mesh {
         if (!Object.is(elements[i], previous[i])) { same = false; break; }
       }
     }
-    if (same) return this._lastVisibleCount;
+    if (same && !this._faceDirty) return this._lastVisibleCount;
     for (let i = 0; i < 16; i++) previous[i] = elements[i];
     this._lastViewValid = true;
     this._lastCoordinateSystem = camera.coordinateSystem;
@@ -238,6 +287,9 @@ export class NativeInkMesh extends THREE.Mesh {
       visibleCount += visible;
     }
     this._lastVisibleCount = visibleCount;
+    const faces = this._faceCulling ? this._facePainted : null;
+    if (this._faceDirty) changed = true;
+    this._faceDirty = false;
     // Moving a camera without changing the visible set never re-uploads
     // indices. Zero visible indices require only a drawRange update.
     if (!changed) return visibleCount;
@@ -247,6 +299,27 @@ export class NativeInkMesh extends THREE.Mesh {
       return 0;
     }
     const index = this._drawIndex.array, full = this._fullIndex;
+    if (faces) {
+      // Painted charts in visible tiles, still in source triangle order.
+      const starts = this._faceStart, tileOf = this._triangleTile, visible = this._visible;
+      let count = 0;
+      for (let face = 0; face < faces.length; face++) {
+        if (!faces[face]) continue;
+        for (let tri = starts[face], end = starts[face + 1]; tri < end; tri++) {
+          if (!visible[tileOf[tri]]) continue;
+          const i = tri * 3;
+          index[count++] = i; index[count++] = i + 1; index[count++] = i + 2;
+        }
+      }
+      this.geometry.setDrawRange(0, count);
+      if (count) {
+        this._drawIndex.clearUpdateRanges();
+        this._drawIndex.addUpdateRange(0, count);
+        this._drawIndex.needsUpdate = true;
+      }
+      this._fullDraw = false;
+      return visibleCount;
+    }
     if (visibleCount === this.chunks.length) {
       if (!this._fullDraw) {
         index.set(full);
