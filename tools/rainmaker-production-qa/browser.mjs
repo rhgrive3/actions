@@ -57,7 +57,7 @@ export async function run({prefix,baselinePrefix}){
        camera.position.copy(target).add(new THREE.Vector3(...offset).normalize().multiplyScalar(4.1));camera.lookAt(target);
        const label=revision+'-'+mode+'-'+name+'-'+view;progress.stage=label;
        const muzzle=mesh.localToWorld(new THREE.Vector3(...mesh.userData.rainmakerModel.muzzle)),authorityOrigin=a.pos.clone().add(new THREE.Vector3(0,1,0)),muzzleForward=new THREE.Vector3(0,0,1).applyQuaternion(mesh.getWorldQuaternion(new THREE.Quaternion()));
-       const image=await capture(label);rows.push({...image,muzzleAuthorityDistance:muzzle.distanceTo(authorityOrigin),muzzleAimAngle:muzzleForward.angleTo(a.aimDir),revision,mode,name,tick,authority:JSON.parse(JSON.stringify(state.charge)),pose:{active:!!ch._rainmakerPose,ready:ch._rainmakerReady??null,pitch:ch._rainmakerPitch??null,kick:ch._rainmakerKick??null},sourceActive:!!ch.sourceMotion?.active,sourceUpper:ch.sourceMotion?.sourceUpper??null});
+       const image=await capture(label);rows.push({...image,muzzleAuthorityDistance:muzzle.distanceTo(authorityOrigin),muzzleAimAngle:muzzleForward.angleTo(a.aimDir),revision,mode,phase:name,tick,authority:JSON.parse(JSON.stringify(state.charge)),pose:{active:!!ch._rainmakerPose,ready:ch._rainmakerReady??null,pitch:ch._rainmakerPitch??null,kick:ch._rainmakerKick??null},sourceActive:!!ch.sourceMotion?.active,sourceUpper:ch.sourceMotion?.sourceUpper??null});
       }
      };
      // Freeze rule state only for isolated camera-limit keyframe inspection;

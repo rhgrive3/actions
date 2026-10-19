@@ -49,8 +49,8 @@ function sample(required,rig=new Rig()){
  if(rig.s3RainmakerSupportPending)rig._restoreRainmakerSupport();
  const angle=threshold+required;rig.bones.handR.position.set(distance*Math.cos(angle),0,distance*Math.sin(angle)-.07);
  const before=rig.bones.handR.position.toArray();rig._applyPose(1/60,{});
- assert.deepEqual(rig.bones.handR.position.toArray(),before);assert.deepEqual(Array.from(rig.bones.clavL.position.toArray()),[0,0,0]);
- rig.finalResidual=rig.bones.handL.getWorldPosition(new THREE.Vector3()).distanceTo(rig.target);
+ assert.deepEqual(rig.bones.handR.position.toArray(),before);assert.ok(rig.bones.clavL.getWorldPosition(new THREE.Vector3()).length()<=.03+1e-12,'bounded .03 world translation');
+ rig.finalResidual=rig.bones.handL.getWorldPosition(new THREE.Vector3()).distanceTo(rig.kid.localToWorld(rig.target.clone()));
  return{rig,angle:2*Math.acos(Math.min(1,Math.abs(rig.bones.clavL.quaternion.w)))};
 }
 test('air support enters continuously at the reach boundary and stays below the cap',()=>{
@@ -58,12 +58,13 @@ test('air support enters continuously at the reach boundary and stays below the 
   const x=sample(n);assert.ok(Math.abs(x.angle-Math.max(0,n))<1e-7);assert.equal(x.rig.solves,1);assert.ok(x.rig.finalResidual<.001);
  }
 });
-test('0.2 rad cap is continuous and leaves a visible residual for an unreachable synthetic target',()=>{
+test('0.2 rad rotation and .03 world translation caps stay bounded; farther target still fails',()=>{
  for(const n of [.2-1e-5,.2,.2+1e-5])assert.ok(Math.abs(sample(n).angle-Math.min(.2,n))<1e-7);
- const x=sample(.4);assert.ok(Math.abs(x.angle-.2)<1e-7);assert.ok(x.rig.finalResidual>.001,'cap cannot hide unsolved target');assert.equal(x.rig.solves,1);
+ const reachable=sample(.4);assert.ok(reachable.rig.finalResidual<.001);assert.ok(reachable.rig.bones.clavL.position.length()>0);
+ const x=sample(.9);assert.ok(Math.abs(x.angle-.2)<1e-7);assert.ok(x.rig.finalResidual>.001,'cap cannot hide unsolved target');assert.equal(x.rig.solves,1);
 });
 test('repeated frames do not accumulate, and landing/drop/source-off restore native clavicle',()=>{
- const rig=new Rig();for(let i=0;i<100;i++)assert.ok(Math.abs(sample(.14,rig).angle-.14)<1e-7);
+ const rig=new Rig(),reference=sample(.4,rig).rig.bones.clavL.position.clone();for(let i=0;i<100;i++){assert.ok(Math.abs(sample(.4,rig).angle-.2)<1e-7);assert.ok(rig.bones.clavL.position.distanceTo(reference)<1e-12);}
  rig.sourceMotion.state='idle';assert.equal(sample(.14,rig).angle,0);
  rig.sourceMotion.state='air';rig.sourceMotion.active=false;assert.equal(sample(.14,rig).angle,0);
  rig.sourceMotion.active=true;rig.carry=false;const count=rig.solves;assert.equal(sample(.14,rig).angle,0);assert.equal(rig.solves,count);
@@ -71,12 +72,16 @@ test('repeated frames do not accumulate, and landing/drop/source-off restore nat
 
 test('restoration retains the legacy one-solve pose and clears pending on weapon/dispose',()=>{
  for(const action of ['_restoreRainmakerSupport','setWeapon','dispose']){
-  const {rig}=sample(.14),shown=rig.bones.clavL.quaternion.clone();
+  const {rig}=sample(.4),shown=rig.bones.clavL.quaternion.clone();
   assert.equal(rig.s3RainmakerSupportPending,true);assert.ok(shown.angleTo(new THREE.Quaternion())>.1);
   rig[action]();assert.equal(rig.s3RainmakerSupportPending,false);
-  assert.equal(rig.bones.clavL.quaternion.angleTo(new THREE.Quaternion()),0);
+  assert.equal(rig.bones.clavL.quaternion.angleTo(new THREE.Quaternion()),0);assert.deepEqual(Array.from(rig.bones.clavL.position.toArray()),[0,0,0]);
   const targetDir=rig.target.clone().sub(rig.limbs.armL.up.position).normalize();
   assert.ok(new THREE.Vector3(0,0,1).applyQuaternion(rig.bones.uArmL.quaternion).distanceTo(targetDir)<1e-12);
   assert.equal(rig.solves,1);
  }
+});
+
+test('translation cap uses actual world coordinates under nonuniform form scale',()=>{
+ const rig=new Rig();rig.kid.scale.set(.7,1.3,.8);const result=sample(.9,rig);assert.ok(Math.abs(result.angle-.2)<1e-7);assert.ok(rig.bones.clavL.getWorldPosition(new THREE.Vector3()).length()<=.03+1e-12);assert.ok(rig.finalResidual>.001);rig._restoreRainmakerSupport();assert.deepEqual(Array.from(rig.bones.clavL.position.toArray()),[0,0,0]);
 });

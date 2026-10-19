@@ -93,8 +93,9 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
           v3.crossVectors(v4, v5);
           if (angle > 0 && v3.lengthSq() > 1e-12) {
             let support = supportStates.get(ch);
-            if (!support) supportStates.set(ch, support = { bones: OBJECTIVE_SUPPORT_BONES.map(n => ch.bones[n]), base: OBJECTIVE_SUPPORT_BONES.map(() => new THREE.Quaternion()) });
+            if (!support) supportStates.set(ch, support = { bones: OBJECTIVE_SUPPORT_BONES.map(n => ch.bones[n]), base: OBJECTIVE_SUPPORT_BONES.map(() => new THREE.Quaternion()), position: new THREE.Vector3() });
             for (let i = 0; i < 4; i++) support.base[i].copy(support.bones[i].quaternion);
+            support.position.copy(clav.position);
             ch.s3RainmakerSupportPending = true;
             q4.setFromAxisAngle(v3.normalize(), angle); q3.premultiply(q4);
             ch._kidXform(clav.parent, v3, q5); clav.quaternion.copy(q5.invert().multiply(q3));
@@ -106,6 +107,20 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
             q4.setFromUnitVectors(v4, v5); q3.premultiply(q4);
             ch._kidXform(arm.up.parent, v3, q5); arm.up.quaternion.copy(q5.invert().multiply(q3));
             ch._kidXform(ch.bones.handL.parent, v3, q5); ch.bones.handL.quaternion.copy(q5.invert().multiply(q2));
+            // Bounded scapular translation only after the existing rotation
+            // reaches its .2 rad cap. Keep all arm bone lengths unchanged.
+            // .03 world units is a rig calibration, not a retail measurement.
+            // The saved baseline position is restored before source history.
+            if (angle >= .2 - 1e-12) {
+              ch.bones.handL.getWorldPosition(v4);
+              v5.copy(pT); ch.kid.localToWorld(v5); v5.sub(v4);
+              const distance = v5.length();
+              if (distance > 1e-8) {
+                v5.multiplyScalar(Math.min(.03, distance) / distance).add(v4);
+                clav.parent.worldToLocal(v5); clav.parent.worldToLocal(v4);
+                clav.position.add(v5.sub(v4));
+              }
+            }
           }
         }
       }
@@ -159,6 +174,7 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
     if (this.s3RainmakerSupportPending && support) {
       for (let i = 0; i < 4; i++) {
         const bone = support.bones[i]; bone.quaternion.copy(support.base[i]);
+        if (i === 0) bone.position.copy(support.position);
         const index = this.boneList.indexOf(bone);
         if (index >= 0 && this.sourceMotion?.renderedPose) this.sourceMotion.renderedPose[index].q.copy(support.base[i]);
       }

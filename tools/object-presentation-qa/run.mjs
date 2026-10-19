@@ -4,10 +4,10 @@
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {execFileSync}from'node:child_process';import{fileURLToPath,pathToFileURL}from'node:url';
 import { adaptBuildSource } from '../../scripts/inkwave-source-composition.mjs';
 import { verifyFrameComparisons, verifyContactSheetPlan } from './frame-contract.mjs';
-import { BASE, SUITES, sourceKey } from './config.mjs';
+import { SUITES, sourceKey, suiteBase } from './config.mjs';
 import { FRAME_LIMIT, ARTIFACT_LIMIT, assertArtifactBudget, writeBoundedArtifact } from './artifact-budget.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
-const args=process.argv.slice(2),option=(name,def)=>{const i=args.indexOf(name);return i<0?def:args[i+1];},suite=option('--suite');assert(Object.hasOwn(SUITES,suite),'known suite');
+const args=process.argv.slice(2),option=(name,def)=>{const i=args.indexOf(name);return i<0?def:args[i+1];},suite=option('--suite');assert(Object.hasOwn(SUITES,suite),'known suite');const beforeBase=suiteBase(suite);
 const site=fs.realpathSync(option('--site','_site')),out=path.resolve(option('--out','.qa-evidence/'+suite)),here=path.join(ROOT,'tools',suite+'-production-qa');fs.mkdirSync(out,{recursive:true});
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex'),git=(...a)=>execFileSync('git',a,{cwd:ROOT,encoding:'utf8'}).trim();
 const safe=(root,rel)=>{const file=fs.realpathSync(path.resolve(root,rel));assert(file.startsWith(root+path.sep),'path containment');return file;};
@@ -19,9 +19,9 @@ const namespaces={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','t
 for(const[key,digest]of Object.entries(manifest.files)){
  const namespace=Object.keys(namespaces).find(n=>key.startsWith(n));assert(namespace,'known source namespace '+key);const file=namespaces[namespace]+key.slice(namespace.length),bytes=fs.readFileSync(path.join(ROOT,file));assert.equal(hash(bytes),digest,'source receipt '+file);assert.equal(git('hash-object',file),git('rev-parse',sourceSha+':'+file),'source commit '+file);
 }
-const overlay=new Map(),beforeFiles={};for(const file of SUITES[suite].before){const content=execFileSync('git',['show',BASE+':'+file],{cwd:ROOT});const composed=Buffer.from(adaptBuildSource(file,content.toString('utf8')));overlay.set(file,composed);beforeFiles[file]={sourceSha:BASE,sha256:hash(content),gitBlob:git('rev-parse',BASE+':'+file),servedSha256:hash(composed),servedBytes:composed.length,productionAdapterChangedSource:!content.equals(composed)};}
+const overlay=new Map(),beforeFiles={};for(const file of SUITES[suite].before){const content=execFileSync('git',['show',beforeBase+':'+file],{cwd:ROOT});const composed=Buffer.from(adaptBuildSource(file,content.toString('utf8')));overlay.set(file,composed);beforeFiles[file]={sourceSha:beforeBase,sha256:hash(content),gitBlob:git('rev-parse',beforeBase+':'+file),servedSha256:hash(composed),servedBytes:composed.length,productionAdapterChangedSource:!content.equals(composed)};}
 const prefix='/_versions/'+manifest.build.revision+'/',baselinePrefix='/_before'+prefix,loaded=new Set(),beforeLoaded=new Set(),errors=[],warnings=[],blocked=[],screenshots=[],contactSheets=[];
-const basis={suite,sourceSha,contentHash:manifest.contentHash,inputHash:manifest.inputHash,artifactLimit:ARTIFACT_LIMIT,buildRevision:manifest.build.revision,beforeDescription:'Same composed production candidate with listed main3839 runtime sources passed through current production adapters and overlaid without minification; not a full main build',beforeFiles,harnessHashes:{},sourceAndEmittedVerified:true};
+const basis={suite,sourceSha,contentHash:manifest.contentHash,inputHash:manifest.inputHash,artifactLimit:ARTIFACT_LIMIT,buildRevision:manifest.build.revision,beforeBase,beforeDescription:'Same composed production candidate with listed runtime sources from '+beforeBase+' passed through current production adapters and overlaid without minification; not a full baseline build',beforeFiles,harnessHashes:{},sourceAndEmittedVerified:true};
 for(const file of ['tools/object-presentation-qa/run.mjs','tools/object-presentation-qa/production-scene.mjs','tools/object-presentation-qa/artifact-budget.mjs','tools/object-presentation-qa/config.mjs','tools/object-presentation-qa/frame-contract.mjs','tools/'+suite+'-production-qa/browser.mjs']){const bytes=fs.readFileSync(path.join(ROOT,file));basis.harnessHashes[file]=hash(bytes);assert.equal(git('hash-object',file),git('rev-parse',sourceSha+':'+file),'harness commit');}
 const write=result=>writeBoundedArtifact(out,'result.json',JSON.stringify({...basis,...result,loaded:[...loaded].sort(),beforeLoaded:[...beforeLoaded].sort(),screenshots,contactSheets,errors,warnings,blocked},null,2));write({status:'verified-build',browserRun:false});
 let browser,server,page,totalBytes=0;

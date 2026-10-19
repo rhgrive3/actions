@@ -71,8 +71,10 @@ export function installRanked(context) {
         if (a && !a.remote) prepareCarrier(api, a);
       }
       if (e.kind === 'special-gain' && !visualOnly) {
+        // The replicated total stays in baseline points. SCU discounts the
+        // actor gauge cost, so only paint may keep the indirect multiplier.
         this.rankedGains[e.team] += e.points;
-        for (const a of this.actors) if (a.team === e.team && a.alive && !a.remote && !a.specialActive && !specialGaugeLocked(a)) a.special = Math.min(a.specialCost(), a.special + e.points);
+        for (const a of this.actors) if (a.team === e.team && a.alive && !a.remote && !a.specialActive && !specialGaugeLocked(a)) a.special = Math.min(a.specialCost(), a.special + e.points / (a.s3?.modifiers?.specialCharge || 1));
       }
       this.rankedWorld?.presentEvent?.(e);
       this.rankedEffects.event(e, visualOnly);

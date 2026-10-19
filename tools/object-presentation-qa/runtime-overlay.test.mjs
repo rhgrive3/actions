@@ -6,14 +6,15 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { adaptBuildSource } from '../../scripts/inkwave-source-composition.mjs';
 import { fixture } from '../../patches/splatoon3/tests/source-fixture.mjs';
-import { BASE, SUITES } from './config.mjs';
+import { BASE, SUITES, suiteBase } from './config.mjs';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 assert(!process.env.INKWAVE_BUILT_SITE, 'Source overlay-link tests run before build; native runner separately verifies emitted overlays');
-const baseline = file => process.env.INKWAVE_QA_BASELINE_SOURCE
-  ? fs.readFileSync(path.join(process.env.INKWAVE_QA_BASELINE_SOURCE, file), 'utf8')
-  : execFileSync('git', ['show', BASE + ':' + file], { cwd: ROOT, encoding: 'utf8' });
+const baseline = (file, base) => {
+  const local = base === BASE ? process.env.INKWAVE_QA_BASELINE_SOURCE : process.env.INKWAVE_QA_AIR_BASELINE_SOURCE;
+  return local ? fs.readFileSync(path.join(local, file), 'utf8') : execFileSync('git', ['show', base + ':' + file], { cwd: ROOT, encoding: 'utf8' });
+};
 const make = async (suite, before) => {
-  const consumed = new Set(), overlay = new Map(before ? SUITES[suite].before.map(file => [file, baseline(file)]) : []);
+  const consumed = new Set(), overlay = new Map(before ? SUITES[suite].before.map(file => [file, baseline(file, suiteBase(suite))]) : []);
   const f = await fixture({ fullRuntime: true, productionComposition: true, includeCharacter: true, vmMathRandom: () => .5,
     adaptRuntime: (file, source) => { if (overlay.has(file)) { consumed.add(file); source = overlay.get(file); } return adaptBuildSource(file, source); },
     extraExports: "export {installRanked} from './patches/splatoon3/runtime/ranked/install.mjs';" });

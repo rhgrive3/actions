@@ -63,3 +63,15 @@ test('actual final-upload script isolates small, oversized and absent suite dire
   assert.equal(absent.status, 0);
   assert.equal(fs.readFileSync(output, 'utf8'), 'spawner=false\nrainmaker=false\nclam=false\n', 'no build/capture directories means no eligible artifact');
 });
+
+
+test('nested air comparison cannot evade the shared Rainmaker artifact cap',t=>{
+ const root=fixture(t),air=path.join(root,'air');fs.mkdirSync(air);
+ writeBoundedArtifact(root,'result.json',Buffer.alloc(32),64);
+ writeBoundedArtifact(air,'result.json',Buffer.alloc(31),64);
+ assert.equal(assertArtifactBudget(root,64).totalBytes,63);
+ assert.equal(assertArtifactBudget(air,64).totalBytes,31);
+ assert.throws(()=>writeBoundedArtifact(root,'air/extra.png',Buffer.alloc(1),64),/exceed/);
+ fs.writeFileSync(path.join(air,'failed.log'),'!');
+ assert.throws(()=>assertArtifactBudget(root,64),/all suite artifacts/,'final recursive upload check includes nested failure evidence');
+});

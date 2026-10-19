@@ -1,12 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
-import path from 'node:path';
-import {pathToFileURL} from 'node:url';
-const ruleURL=process.env.INKWAVE_BUILT_SITE?pathToFileURL(path.resolve(process.env.INKWAVE_BUILT_SITE,'patches/splatoon3/runtime/ranked/rainmaker.mjs')):new URL('../runtime/ranked/rainmaker.mjs',import.meta.url);
-const {RainmakerRule}=await import(ruleURL.href);
 const dt=1/60,clean=x=>JSON.parse(JSON.stringify(x));
-const f=await sourceLoadedActorFixture({random:()=>.5}),{G,THREE}=f;
+const f=await sourceLoadedActorFixture({random:()=>.5,extraExports: `export {RainmakerRule} from './patches/splatoon3/runtime/ranked/rainmaker.mjs';`}),{G,THREE,RainmakerRule}=f;
 const environment={physics:G.physics,level:G.level,projectiles:G.projectiles};
 for(const weapon of ['shooter','roller','dualies'])test(weapon+' source-air overlay restores legacy source history before real ordinary bomb release',async t=>{
  for(const boundary of ['quick-return','same-frame-release','hidden-reset','source-off']){
