@@ -229,7 +229,7 @@ function rangePause(menus) {
   panel.addEventListener('pointerout', e => { if (!pointerTarget?.contains(e.relatedTarget)) pointerTarget = null; }, true);
   const el = h('div', { class: 'iw-screen iw-pause iwr-pausescr' },
     h('div', { class: 'iw-dimbg' }),
-    menus._header(L('PRACTICE RANGE'), { back: false, sub: 'INKWAVE INK LAB' }),
+    menus._header(L('PRACTICE RANGE'), { back: false, sub: 'ZEVANT INK LAB' }),
     h('nav', { class: 'iw-pause__menu iwr-pause__menu' }, btns),
     panel,
     menus._prompts([['Enter', 'A', 'Select'], [['Q', 'E'], null, L('Tabs')], ['Esc', 'B', 'Back']]));
