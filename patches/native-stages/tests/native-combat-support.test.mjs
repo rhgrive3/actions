@@ -140,3 +140,37 @@ test('edge-guard cache clears on exception and never serves a moved actor',()=>{
  assert(calls>1,'movement during a scope invalidates a cached starting foot ring');
  cache.active=false;
 });
+
+test('native all-dead paint charts skip pure CPU work but retain identical ownership and GPU splat path',()=>{
+ const {G}=setup();
+ const paint=G.paint,face=paint.paintFaces.find(f=>f.turf&&f.atlas&&f.nu>0&&f.nv>0);
+ assert(face,'fixture must expose source turf');
+ const begin=face.grid,end=begin+face.nu*face.nv;
+ const oldDead=paint.dead.slice(begin,end),oldEmpty=face.nativeEmpty,oldGrid=paint.grid.slice(),oldVersion=paint.version;
+ const position=face.origin.clone().addScaledVector(face.u,face.su*.5).addScaledVector(face.v,face.sv*.5);
+ const raw=paint._cpuSplat;
+ let cpuCalls=0,pushCalls=0;
+ const rawPush=paint._pushQuad;
+ paint._cpuSplat=function(...args){cpuCalls++;return raw.apply(this,args);};
+ paint._pushQuad=function(...args){pushCalls++;return rawPush.apply(this,args);};
+ try{
+  paint.dead.fill(1,begin,end);face.nativeEmpty=true;
+  const cached=paint.regionStats(position.x,position.y,position.z,.65,0,{});
+  face.nativeEmpty=false;
+  const scanned=paint.regionStats(position.x,position.y,position.z,.65,0,{});
+  assert.deepEqual(cached,scanned,'all-dead tiles contribute zero ownership either way');
+  face.nativeEmpty=true;
+  paint.splat(position,.45,0,{seed:.5,face:face.id,instant:true});
+  assert.equal(cpuCalls,0,'a provably all-dead chart has no CPU ink cells to visit');
+  assert(pushCalls>0,'GPU splat entries remain even when authoritative cells are dead');
+  assert.deepEqual(paint.grid,oldGrid,'authoritative ink cells remain unchanged');
+  assert.equal(paint.version,oldVersion,'no turf grid version changes');
+  face.nativeEmpty=false;
+  paint.splat(position,.45,0,{seed:.5,face:face.id,instant:true});
+  assert(cpuCalls>0,'unknown/nonempty native charts retain original CPU ownership work');
+ } finally {
+  face.nativeEmpty=oldEmpty;
+  paint.dead.set(oldDead,begin);
+  paint._cpuSplat=raw;paint._pushQuad=rawPush;
+ }
+});
