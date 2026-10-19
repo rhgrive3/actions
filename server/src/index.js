@@ -98,12 +98,12 @@ export class RoomDurableObject {
     const name = (url.searchParams.get('name') || 'Player').slice(0, 16);
     const isCreate = url.searchParams.get('create') === '1';
 
-    const pair = new WebSocketPair();
-    const [client, server] = Object.values(pair);
-
     // Validate compatibility *before* admitting a socket, including after host migration.
     if (this.members.size > 0 && compat !== this.compat)
       return new Response('Incompatible game version: refresh this tab', { status: 409 });
+
+    const pair = new WebSocketPair();
+    const [client, server] = Object.values(pair);
 
     // Validation
     if (isCreate) {
@@ -157,6 +157,8 @@ export class RoomDurableObject {
     // Send welcome frame
     ws.send(JSON.stringify({
       t: 'welcome',
+      proto: Number(WIRE_MAJOR),
+      compat: this.compat,
       id: id,
       host: this.hostId,
       members: memberList
