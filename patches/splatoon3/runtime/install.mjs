@@ -84,6 +84,7 @@ import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion, installSpecialPresentation } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
 import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
+import { installSquidSpawnPresentation } from './squid-spawn-presentation.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
 import { installControllerMotion } from './controller-motion.mjs';
 import { installTripleSlamFists } from './triple-slam-fists.mjs';
@@ -127,6 +128,7 @@ export function install(profile) {
   // Keep respawn-owned gameplay wrappers outside Squid Spawn: its Turf branch
   // starts a new life without invoking the legacy native respawn method.
   installRespawnLifecycle(api, profile);
+  installSquidSpawnPresentation(api);
   installGear(api, profile);
   installFlow(api, profile);
   installResources(api, profile);

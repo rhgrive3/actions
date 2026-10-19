@@ -28,3 +28,6 @@ After verifying every artifact hash, use an existing local ffmpeg installation t
 `ffmpeg -framerate 30 -i frame-%04d.png -c:v libx264 -pix_fmt yuv420p -movflags +faststart sampled-trajectory-1x.mp4`
 
 No video package is added to CI. Do not infer gameplay collisions or full-match behavior from the driven-input harness.
+
+## Spawn return scenario
+`--mode sampled --scenario spawn` records 120 actual browser frames: source and fallback each run the shipped Actor respawn aim, launch, flight and landing for two seconds at 60 Hz, sampled at 30 fps. The launch input is applied at 0.5 seconds. The camera follows the actor; forms, flight positions, source poses and transition clocks are not overridden. Frame receipts retain gameplay state, return scales and visible skinned-vertex coverage. This candidate-only scenario exercises the newly integrated spawn lifecycle; the existing 300-frame paired comparison remains unchanged. The four-second playback is offline trajectory evidence, not measured real-time performance. Native visual acceptance is pending until exact-head artifacts are checked.

@@ -159,7 +159,11 @@ const SHEET_CUT = `
 // pointed and fingered at its leading end, thinning into strands back towards
 // the muzzle, spinning about its flight line. Built as one helicoid ribbon:
 // u runs head (0) -> tail (1) behind the round, v across through the axis.
-export const MACHINE_DRILL = Object.freeze({ length: 2.8, radius: 0.5, turns: 1.1, spin: 12 });
+// Owner request 2026-10-18: the membrane reads 50% larger (length and radius
+// x1.5 from 2.8 / 0.5). Presentation calibration only; the round's collision,
+// paint and flight are unchanged.
+export const MACHINE_DRILL_SCALE = 1.5;
+export const MACHINE_DRILL = Object.freeze({ length: 2.8 * MACHINE_DRILL_SCALE, radius: 0.5 * MACHINE_DRILL_SCALE, turns: 1.1, spin: 12 });
 // aDrill: (length, radius, phase, seed)
 const DRILL_VERTEX = `
   attribute vec4 aDrill;

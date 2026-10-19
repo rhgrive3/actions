@@ -34,29 +34,43 @@ export function isScopedCharger(weapon) {
 }
 
 /** Sparse-table presence is a capability, even when the override object is {}.
- * Only E-liter Scope's 20 degree CameraFovy is explicitly present in the pinned
- * 11.3.0 table. For a missing default retain the old full-zoom endpoint (43.8),
- * rather than disguising a guessed 25/30 degree number as extracted data.
+ * E-liter Scope's 20 degree CameraFovy is explicit in the pinned 11.3.0 table.
+ * Splatterscope's override object is empty, i.e. the class default: Inkipedia's
+ * Splatoon 3 Data section (citing Leanny's 11.x parameter database) gives
+ * 28.0 degrees, and the same page set gives 20.0 for E-liter, matching the
+ * pinned raw value. See reports/inkwave-splatoon3-behavior-2026-10-02.md.
  */
+export const SCOPE_DEFAULT_CAMERA_FOVY = 28;
 export function scopeVerticalFov(weapon) {
   const source = weapon?.catalogRecord?.parameters?.WeaponScopeParam?.CameraFovy;
   const value = Number.isFinite(source) ? source : weapon?.scopeFov;
-  return Number.isFinite(value) && value >= 5 && value <= 55 ? value : 43.8;
+  return Number.isFinite(value) && value >= 5 && value <= 55 ? value : SCOPE_DEFAULT_CAMERA_FOVY;
+}
+/** The rig's un-zoomed vertical FOV (its Hor+ 16:9 reference), in degrees. */
+export function rigVerticalBaseFov(rig) {
+  const h = finite(rig?.baseFov, 82) * Math.PI / 360;
+  return 2 * Math.atan(Math.tan(h) / (16 / 9)) * 180 / Math.PI;
 }
 
 export function updateScopeZoom(rig, actor, dt) {
   const active = actor?.alive !== false && actor.form !== 'squid' && isScopedCharger(actor.weapon);
   // An unscoped weapon must never inherit the preceding weapon's zoom tail.
-  if (!active) { rig.zoom = 0; rig.scopeCharge = 0; return 0; }
+  if (!active) { rig.zoom = 0; rig.scopeCharge = 0; rig.scopeFullZoom = 0; if (rig.target === actor) syncScopeOverlay(0); return 0; }
   const charge = actor.weaponRunner?.charging ? clamp01(actor.weaponRunner.charge) : 0;
   rig.scopeCharge = charge;
   // Wiki scope descriptions: zoom begins after half charge. The smoothing
   // curve/time constant remain INKWAVE tuning, not measured retail timing.
   const zoomCharge = clamp01((charge - .5) * 2);
   const envelope = zoomCharge * zoomCharge * (3 - 2 * zoomCharge);
-  const target = (55 - scopeVerticalFov(actor.weapon)) / 0.8 * envelope;
+  // Full zoom lands exactly on CameraFovy whatever the player's FOV setting
+  // (cameraRig: fov = base + (kick - zoom) * 0.8). The old fixed 55 degree base
+  // overshot by the setting difference.
+  const fullZoom = Math.max(0, rigVerticalBaseFov(rig) - scopeVerticalFov(actor.weapon)) / 0.8;
+  const target = fullZoom * envelope;
   const k = -Math.expm1(-8 * Math.max(0, finite(dt)));
   rig.zoom = finite(rig.zoom) + (target - finite(rig.zoom)) * k;
+  rig.scopeFullZoom = fullZoom;
+  syncScopeOverlay(scopeOverlayStrength(rig, fullZoom));
   return charge;
 }
 
@@ -76,6 +90,8 @@ export function enforceBoomClearance(boom, hard) {
  * Five rays, pooled scratch storage; no per-frame heap allocation.
  */
 export function constrainCameraLens(rig, physics, referenceFov) {
+  // The scope rim belongs to the follow camera's zoom only (map, death, spectate).
+  if (rig.mode !== 'follow' || !rig.target) syncScopeOverlay(0);
   if (rig.mode !== 'follow' || !rig.target || !physics?.raycast) return;
   const cam = rig.camera, pivot = rig.pivot;
   dir.copy(cam.position).sub(pivot);
@@ -158,4 +174,50 @@ export function constrainMuzzle(physics, anchor, out) {
   const h = physics.raycast(anchor, dir, length, muzzleHit, true);
   if (h?.hit && Number.isFinite(h.dist)) out.copy(anchor).addScaledVector(dir, Math.max(0, h.dist - 0.02));
   return out;
+}
+
+// Scope rim shown while a scoped Charger zooms (owner report 2026-10-18: the
+// rim was missing). Presentation only. Its strength follows the same charge
+// envelope as the CameraFovy zoom (scoped view from 50% charge, full at 100%).
+// The rim's radius, width and darkness are INKWAVE calibration: no Nintendo
+// layout value for the scope frame is available, so they are not source data.
+
+export const SCOPE_RIM = Object.freeze({ clear: 0.43, edge: 0.47, outside: 0.78, edgeAlpha: 0.62, outsideAlpha: 0.82 });
+let element = null, shown = -1, frameKey = '';
+// Same centred 16:9 battle frame as battle-framing.mjs battleFrame (kept local:
+// this module's importers are pinned by input-composition fixtures).
+function scopeFrame(width, height) {
+  const w = Math.max(1, Number(width) || 1), h = Math.max(1, Number(height) || 1);
+  const fw = Math.min(w, h * 16 / 9), fh = fw * 9 / 16;
+  return { x: (w - fw) / 2, y: (h - fh) / 2, width: fw, height: fh };
+}
+
+/** Strength 0..1 of the scope rim for a camera rig and its current zoom. */
+export function scopeOverlayStrength(rig, fullZoom) {
+  if (!rig || rig.mode !== 'follow' || !rig.target?.isLocal || !(fullZoom > 0) || rig.mapOpen || rig.mapK > 1e-4) return 0;
+  const z = Number.isFinite(rig.zoom) ? rig.zoom : 0;
+  return Math.max(0, Math.min(1, z / fullZoom));
+}
+
+export function syncScopeOverlay(strength) {
+  const doc = globalThis.document;
+  if (!doc?.body) return;
+  const s = Math.round(Math.max(0, Math.min(1, Number.isFinite(strength) ? strength : 0)) * 100) / 100;
+  if (!element) {
+    if (s <= 0) return;
+    element = doc.createElement('div');
+    element.id = 's3-scope-rim';
+    element.setAttribute('aria-hidden', 'true');
+    Object.assign(element.style, { position: 'fixed', pointerEvents: 'none', zIndex: '1', opacity: '0', left: '0', top: '0', width: '0', height: '0' });
+    doc.body.appendChild(element);
+  }
+  const f = scopeFrame(globalThis.innerWidth, globalThis.innerHeight);
+  const key = Math.round(f.x) + ',' + Math.round(f.y) + ',' + Math.round(f.width) + ',' + Math.round(f.height);
+  if (key !== frameKey) {
+    frameKey = key;
+    const r = SCOPE_RIM, h = f.height;
+    Object.assign(element.style, { left: f.x + 'px', top: f.y + 'px', width: f.width + 'px', height: f.height + 'px',
+      background: `radial-gradient(circle at 50% 50%, rgba(0,0,0,0) ${(r.clear * h).toFixed(1)}px, rgba(0,0,0,${r.edgeAlpha}) ${(r.edge * h).toFixed(1)}px, rgba(0,0,0,${r.outsideAlpha}) ${(r.outside * h).toFixed(1)}px)` });
+  }
+  if (s !== shown) { shown = s; element.style.opacity = String(s); element.style.visibility = s > 0 ? 'visible' : 'hidden'; }
 }

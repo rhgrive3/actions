@@ -21,3 +21,13 @@ Native fallback uses the same scalar envelope while retaining its existing squas
 - Source and emitted execution are both supported by the new fixture; final native before/after sampled video is required for visual acceptance.
 
 Changes are confined to the new build-only presentation adapter, its existing binding-adapter registration, the build-only registry entry, and the focused regression. Prior binding and short-support code is unchanged.
+
+## New-main spawn-flight integration
+
+Main d9a44d6cd3a243c69faf44daabfabdfd7ec62c84 introduces a normal Actor spawn flight ending in a `spawn` character event at flight fraction .82. That event previously reset the fallback displayed form immediately to the human endpoint, bypassing the existing return envelope. The bounded adapter now retains the current displayed form only when that event arrives during an active squid-spawn flight whose gameplay form has already changed to human. The usual frame update enters the same 150 ms curve; ordinary spawn resets, trigger timing, flight positions, armor and collision remain unchanged.
+
+Independent full Actor acceptance covered source/fallback at 30/60/120 Hz: all 546 recorded gameplay frames matched the pre-fix version exactly, and source-backed render scale sequences were unchanged. Both paths now show intermediate return values and settle fully. Direct event, rapid reverse, double reverse and ordinary spawn reset checks pass, alongside 58 existing regressions. Portable event and full-lifecycle regressions are included in the existing form-ease test.
+
+The separate 120-frame actual-browser spawn scenario is prepared for exact-head CI. Its visual evidence is pending; CPU acceptance alone is not reported as browser acceptance. Existing 300-frame paired motion captures remain the preservation gate.
+
+Independent CPU projection of the exact native camera passed all 120 actual Actor frames: max absolute NDC x .493329 and y .721459, minimum Character edge margin 27.85%, no depth clipping. Both source/fallback cover aim-human, flight-squid, flight-human and grounded landing. Coverage intentionally concerns the visible Character, rather than framing a spawner or landing marker. Browser image acceptance remains pending.

@@ -51,6 +51,8 @@ jobs:
           node tools/squid-production-qa/run.mjs --site _site --out .qa-evidence/squid-candidate
       - name: Capture uniform native motion samples
         run: node tools/squid-motion-qa/run.mjs --site _site --mode sampled --out .qa-evidence/squid-motion-sampled
+      - name: Capture actual source and fallback spawn return
+        run: node tools/squid-motion-qa/run.mjs --site _site --mode sampled --scenario spawn --out .qa-evidence/squid-spawn
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -60,6 +62,7 @@ jobs:
             .qa-evidence/squid-candidate/**
             .qa-evidence/squid-motion-sampled/**
             .qa-evidence/squid-motion-baseline/**
+            .qa-evidence/squid-spawn/**
             _site/inkwave-build.json
             _squid_baseline/_site/inkwave-build.json
           include-hidden-files: true

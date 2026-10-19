@@ -37,7 +37,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   }
   // Solid, flattened rectangular rails. All components are batched by material.
   function rail(name,fn,width=.025,depth=.007,key='shell',steps=N,rear=false){
-    steps=Math.max(1,Math.round(steps*(lod==='hero'?.7:lod==='game'?.55:.42)));
+    steps=Math.max(rear?(lod==='hero'?24:lod==='game'?20:16):1,Math.round(steps*(lod==='hero'?.7:lod==='game'?.55:.42)));
     const point=(u,v,w)=>{const a=fn(u),lo=fn(Math.max(0,u-.001)),hi=fn(Math.min(1,u+.001));const da=hi[0]-lo[0],de=hi[1]-lo[1],len=Math.hypot(da,de)||1;return pt(a[0]-de/len*v*width,a[1]+da/len*v*width,(a[2]??.047)+w*depth,rear);};
     for(let edge=0;edge<4;edge++)add(grid(steps,1,(u,v)=>{
       if(edge===0)return point(u,v-.5,.5);
@@ -48,89 +48,194 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
     for(const end of [0,1])add(grid(1,1,(u,v)=>point(end,(end?u:1-u)-.5,v-.5)),key,name+'-end');
   }
 
+  const centerReliefOutline=[[-.24,.65],[.24,.65],[.29,.56],[.21,.43],[0,.37],[-.21,.43],[-.29,.56]];
   // Molded panels, not separate horizontal bars. Holes are actual apertures
   // triangulated in angular space, with continuous front/back and wall surfaces.
   function panel(name,outline,holes=[],depth=.055,thickness=.009,key='shell'){
-    const S=name==='molded-forehead-shell'?2:(lod==='hero'?2:1);
+    const S=name.startsWith('temple-')?3:name==='central-chevron-inlay'?2:(name==='molded-wrap-shell'||(name.startsWith('vent-recess-')||name==='bill-slot-recess'))?1:(lod==='hero'?2:1);
+    const step=lod==='hero'?.26:lod==='game'?.33:.40;
+    const densify=loop=>loop.flatMap((A,i)=>{const B=loop[(i+1)%loop.length],n=Math.max(1,Math.ceil(Math.hypot(B[0]-A[0],B[1]-A[1])/step));return Array.from({length:n},(_,j)=>[A[0]+(B[0]-A[0])*j/n,A[1]+(B[1]-A[1])*j/n]);});
+    if(name==='molded-wrap-shell'){outline=densify(outline);holes=holes.map(densify);}
+    const surface=(name==='molded-wrap-shell'||name==='bill-slot-recess')?shellSurface:pt;
     const outer=outline.map(p=>new THREE.Vector2(...p)),hs=holes.map(h=>h.map(p=>new THREE.Vector2(...p)));
     if(THREE.ShapeUtils.isClockWise(outer))outer.reverse();
     for(const h of hs)if(!THREE.ShapeUtils.isClockWise(h))h.reverse();
-    const points=[...outer,...hs.flat()],tri=THREE.ShapeUtils.triangulateShape(outer,hs),p=[],uv=[],ix=[];
+    const points=[...outer,...hs.flat()],p=[],uv=[],ix=[];
+    let tri;
+    if(name==='molded-wrap-shell'){
+      // Constrained rings make the shallow center bevel real geometry at every
+      // LOD. They partition the existing shell face, never add a second slab.
+      const ring=centerReliefOutline.map(v=>new THREE.Vector2(...v));
+      if(THREE.ShapeUtils.isClockWise(ring))ring.reverse();
+      const start=points.length,inside=ring.map(v=>new THREE.Vector2(v.x*.78,.52+(v.y-.52)*.78));
+      points.push(...ring,...inside);
+      tri=THREE.ShapeUtils.triangulateShape(outer,[...hs,ring]);
+      for(let k=0;k<ring.length;k++){const j=(k+1)%ring.length,o=start+k,oj=start+j,i=start+ring.length+k,ij=start+ring.length+j;tri.push([o,oj,ij],[o,ij,i]);}
+      tri.push(...THREE.ShapeUtils.triangulateShape(inside,[]).map(t=>t.map(i=>i+start+ring.length)));
+    }else tri=THREE.ShapeUtils.triangulateShape(outer,hs);
+    if(name==='molded-wrap-shell'){
+      // Conforming angular refinement: split shared long edges together, so
+      // curved brow/temple surfaces do not become large flat fan triangles.
+      for(let pass=0;pass<8;pass++){
+        const mids=new Map(),edge=(a,b)=>a<b?a+','+b:b+','+a;
+        for(const t of tri)for(let k=0;k<3;k++){const a=t[k],b=t[(k+1)%3],key=edge(a,b);if(!mids.has(key)&&points[a].distanceTo(points[b])>step*1.01){mids.set(key,points.length);points.push(points[a].clone().add(points[b]).multiplyScalar(.5));}}
+        if(!mids.size)break;const next=[];
+        for(const [a,b,c]of tri){const ab=mids.get(edge(a,b)),bc=mids.get(edge(b,c)),ca=mids.get(edge(c,a)),n=[ab,bc,ca].filter(x=>x!==undefined).length;
+          if(n===0)next.push([a,b,c]);
+          else if(n===3)next.push([a,ab,ca],[ab,b,bc],[ca,bc,c],[ab,bc,ca]);
+          else if(n===1){if(ab!==undefined)next.push([a,ab,c],[ab,b,c]);else if(bc!==undefined)next.push([b,bc,a],[bc,c,a]);else next.push([c,ca,b],[ca,a,b]);}
+          else {if(ab===undefined)next.push([c,ca,bc],[ca,a,b],[ca,b,bc]);else if(bc===undefined)next.push([a,ab,ca],[ab,b,c],[ab,c,ca]);else next.push([b,bc,ab],[bc,c,a],[bc,a,ab]);}
+        }tri.splice(0,tri.length,...next);
+      }
+    }
+    for(let i=tri.length-1;i>=0;i--){const [A,B,C]=tri[i].map(k=>points[k]);if(Math.abs((B.x-A.x)*(C.y-A.y)-(B.y-A.y)*(C.x-A.x))<1e-12)tri.splice(i,1);}
     const d=(a,e)=>typeof depth==='function'?depth(a,e):depth;
-    const put=(a,e,z)=>{const i=p.length/3;p.push(...pt(a,e,d(a,e)+z));uv.push(a,e);return i;};
+    const put=(a,e,z)=>{const i=p.length/3;p.push(...surface(a,e,d(a,e)+z));uv.push(a,e);return i;};
     for(const face of [1,-1])for(const t of tri){const A=points[t[0]],B=points[t[1]],C=points[t[2]],ids=[];
       for(let j=0;j<=S;j++){ids[j]=[];for(let i=0;i<=S-j;i++){const a=A.x+(B.x-A.x)*i/S+(C.x-A.x)*j/S,e=A.y+(B.y-A.y)*i/S+(C.y-A.y)*j/S;ids[j][i]=put(a,e,face*thickness/2);}}
       for(let j=0;j<S;j++)for(let i=0;i<S-j;i++){const t=[ids[j][i],ids[j][i+1],ids[j+1][i]];ix.push(...(face>0?t:t.reverse()));if(i<S-j-1){const t2=[ids[j][i+1],ids[j+1][i+1],ids[j+1][i]];ix.push(...(face>0?t2:t2.reverse()));}}
     }
     for(const loop of [outer,...hs])for(let k=0;k<loop.length;k++){const A=loop[k],B=loop[(k+1)%loop.length];for(let i=0;i<S;i++){const a=A.x+(B.x-A.x)*i/S,e=A.y+(B.y-A.y)*i/S,a1=A.x+(B.x-A.x)*(i+1)/S,e1=A.y+(B.y-A.y)*(i+1)/S;const q=[put(a,e,-thickness/2),put(a1,e1,-thickness/2),put(a,e,thickness/2),put(a1,e1,thickness/2)];ix.push(q[0],q[1],q[2],q[1],q[3],q[2]);}}
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();const faceVertices=tri.length*(S+1)*(S+2)/2;for(let i=0;i<faceVertices*2;i++){const sign=i<faceVertices?1:-1,q=new THREE.Vector3(p[i*3]/(rx*rx),(p[i*3+1]-.164)/(ry*ry),(p[i*3+2]-.014)/(rz*rz)).normalize().multiplyScalar(sign);g.attributes.normal.setXYZ(i,q.x,q.y,q.z);}add(g,key,name);
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();const faceVertices=tri.length*(S+1)*(S+2)/2;for(let i=0;i<faceVertices*2;i++){const sign=i<faceVertices?1:-1,a=uv[i*2],e=uv[i*2+1],eps=1e-4,z=sign*thickness/2,P=new THREE.Vector3(...surface(a,e,d(a,e)+z)),A=new THREE.Vector3(...surface(a+eps,e,d(a+eps,e)+z)).sub(P),B=new THREE.Vector3(...surface(a,e+eps,d(a,e+eps)+z)).sub(P),q=A.cross(B).normalize().multiplyScalar(sign);g.attributes.normal.setXYZ(i,q.x,q.y,q.z);}add(g,key,name);
   }
-  const span=1.20,az=u=>(u-.5)*2*span;
-  const bump=a=>Math.max(0,1-Math.abs(a)/.32);
-  const eyeTop=a=>.285+.115*Math.cos(a)**2;
-  const eyeBottom=a=>-.19+.235*bump(a);
-  const lower=a=>-.63-.09*Math.cos(a)**6;
-  const stations=lod==='far'?12:20;
-  const upper=[],bottom=[];for(let i=0;i<=stations;i++){const a=-span+2*span*i/stations;upper.push([a,eyeBottom(a)-.025-.012*(a/span)**2]);bottom.push([a,lower(a)]);}
+  // One continuous molded surround: sloping brow, broad temples, cheeks and
+  // rounded chin share a closed shell, rather than a shelf on thin posts.
+  const span=1.28,az=u=>(u-.5)*2*span;
+  const eyeSpan=1.04,eyeTop=a=>.20+.12*Math.cos(a)**2;
+  const bump=a=>Math.max(0,1-Math.abs(a)/.34);
+  const eyeBottom=a=>-.17+.165*bump(a)+.018*a*a;
+  const lower=a=>-.67+.22*(Math.abs(a)/1.28)**2.5,crown=a=>.78+.37*Math.cos(a);
+  const depth=(a,e)=>{
+    if(e>=eyeTop(a)){const t=(e-eyeTop(a))/(crown(a)-eyeTop(a));return .046+.050*Math.exp(-((t/.38)**2))*Math.cos(a/1.6)**2;}
+    return .046+.050*Math.exp(-(((e-eyeTop(a))/.12)**2))*Math.cos(a/1.6)**2+.020*Math.max(0,Math.cos(Math.min(1,Math.abs(a)/.38)*Math.PI/2))**2*Math.max(0,Math.min(1,(-e+.08)/.26));
+  };
+  // One molded forehead-to-bill surface. There is no overlapping canopy
+  // slab or exposed rear slab wall. The existing eye boundary becomes the
+  // free projecting lip; above it the displacement fades with zero tangent.
+  const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
+  function shellSurface(a,e,d){
+    const p=pt(a,e,d),aa=Math.abs(a);if(aa>=1.18)return p;
+    const edge=eyeTop(a),weight=.12+.88*Math.cos(a/1.18*Math.PI/2)**2;
+    const lateral=smooth((1.18-aa)/.14);
+    const section=e>=edge?smooth((.68-e)/(.68-edge)):smooth((e-(edge-.10))/.10);
+    p[1]+=.01815238116820922*weight*lateral*section;
+    p[2]+=.05507595553898685*weight*lateral*section*Math.cos(a);
+    let inside=false,dist=Infinity;
+    for(let i=0,j=centerReliefOutline.length-1;i<centerReliefOutline.length;j=i++){
+      const A=centerReliefOutline[j],B=centerReliefOutline[i],dx=B[0]-A[0],dy=B[1]-A[1],t=Math.max(0,Math.min(1,((a-A[0])*dx+(e-A[1])*dy)/(dx*dx+dy*dy)));
+      dist=Math.min(dist,Math.hypot(a-A[0]-t*dx,e-A[1]-t*dy));
+      if((A[1]>e)!==(B[1]>e)&&a<(B[0]-A[0])*(e-A[1])/(B[1]-A[1])+A[0])inside=!inside;
+    }
+    if(inside)p[1]+=.0035*smooth(dist/.028);
+    return p;
+  }
+  const stations=lod==='far'?16:24,outline=[],window=[];
+  for(let i=0;i<=stations;i++){const a=-span+2*span*i/stations;outline.push([a,crown(a)]);}
+  const sideContour=[[1.39,.65],[1.48,.46],[1.53,.25],[1.52,.04],[1.44,-.19],[1.30,-.39],[span-.16,lower(span-.16)]];for(const p of sideContour)outline.push(p);
+  for(let i=stations-1;i>=0;i--){const a=-(span-.16)+2*(span-.16)*i/stations;outline.push([a,lower(a)]);}
+  for(const p of sideContour.slice(0,-1).reverse())outline.push([-p[0],p[1]]);
+  for(let i=0;i<=stations;i++){const a=-eyeSpan+2*eyeSpan*i/stations;window.push([a,eyeTop(a)]);}
+  for(let i=stations;i>=0;i--){const a=-eyeSpan+2*eyeSpan*i/stations;window.push([a,eyeBottom(a)]);}
   const vents=[];
-  // Three continuous short chevron slots, with inset diagonal webs.
   for(let row=0;row<3;row++){
-    const w=.285-row*.020,base=-.085-row*.18,h=.105,slope=.100;
-    vents.push([[-w,base-slope],[0,base],[w,base-slope],[w,base-slope-h],[0,base-h],[-w,base-slope-h]]);
+    const w=.35-row*.025,base=-.09-row*.16,h=.085,slope=.13;
+    vents.push([[-w+.018,base-slope+.009],[-.02,base-.009],[0,base],[.02,base-.009],[w-.018,base-slope+.009],[w,base-slope-.008],[w,base-slope-h+.018],[w-.018,base-slope-h],[.02,base-h-.009],[0,base-h],[-.02,base-h-.009],[-w+.018,base-slope-h],[-w,base-slope-h+.018],[-w,base-slope-.008]]);
   }
-  // Side cheeks have ONE dark vent band between two broad solid ink-marked bands.
-  for(const side of [-1,1])for(let i=0;i<6;i++){
-    const a=side*(.40+i*.125),b=side*(.38+(i+1)*.125),m=(a+b)/2;
-    vents.push([[a,-.40+.02*a*a],[b,-.40+.02*b*b],[m,-.505+.02*m*m]]);
+  // Each cheek is one continuous dark perforated band with slender
+  // diagonals, not isolated downward triangular holes in a broad white slab.
+  const cheekEdge=(a,t)=>eyeBottom(a)+(lower(a)-eyeBottom(a))*t;
+  for(const side of [-1,1]){
+    const h=[];
+    for(let i=0;i<=8;i++){const a=side*(.43+i*.085);h.push([a,cheekEdge(a,.39)]);}
+    for(let i=8;i>=0;i--){const a=side*(.43+i*.085);h.push([a,cheekEdge(a,.73)]);}
+    vents.push(h);
   }
-  const shellDepth=(a,e)=>{const central=Math.max(0,Math.cos(Math.min(1,Math.max(0,Math.abs(a)-.15)/.21)*Math.PI/2))**2;return .050+.031*central*Math.max(0,Math.min(1,(-e+.06)/.30));};
-  panel('molded-lower-face-shell',[...upper,...bottom.reverse()],vents,shellDepth,.012);
-  // Continuous rounded oval perimeter around the projecting central block.
-  rail('central-block-perimeter',u=>{const t=u*Math.PI*2,a=.305*Math.sin(t),e=-.335+.365*Math.cos(t);return [a,e,shellDepth(a,e)+.008];},.050,.010,'shell',36);
-  // Thin recessed webs preserve the three dominant connected slot bands.
+  // Two broad forehead windows with internal diagonal webs, matching the
+  // grouped source apertures rather than a row of separate perforations.
+  const forehead=[];
+  for(const side of [-1,1]){const h=[];for(let i=0;i<=8;i++){const a=side*(.23+i*.105);h.push([a,crown(a)-.075]);}for(let i=8;i>=0;i--){const a=side*(.23+i*.105);h.push([a,crown(a)-.255]);}forehead.push(h);}
+  const sideInsets=[-1,1].map(side=>[[1.14,.17],[1.25,.23],[1.36,.17],[1.39,.02],[1.31,-.10],[1.18,-.09]].map(([a,e])=>[a*side,e]));
+  // Three long rounded dark recesses on each bill shoulder. The visible
+  // S3 wing supports three; the hidden side is a mirrored inference.
+  const billSlots=[];
+  for(const side of [-1,1])for(const center of [.48,.69,.90]){
+    const h=[],w=.030,lo=.39,hi=center<.6?.63:center<.8?.60:.56,r=.030;
+    for(const end of [0,1])for(let k=0;k<=4;k++){
+      const angle=(end?0:Math.PI)+Math.PI*k/4,da=w*Math.cos(angle),e=(end?hi-r:lo+r)+r*Math.sin(angle);
+      h.push([side*(center+da+.045*(e-lo)/(hi-lo)),e]);
+    }
+    billSlots.push(h);
+  }
+  panel('molded-wrap-shell',outline,[window,...vents,...forehead,...billSlots],depth,.012);
+  for(const h of billSlots)panel('bill-slot-recess',h,[],(a,e)=>depth(a,e),.002,'dark');
+  for(const [i,h]of [...vents,...forehead].entries())panel('vent-recess-'+i,h,[],(a,e)=>depth(a,e)-.012,.002,'dark');
+  // Three dominant connected breathing slots with restrained inset lattice.
   for(let row=0;row<3;row++)for(const side of [-1,1])for(let i=0;i<3;i++){
-    const w=.285-row*.020,base=-.085-row*.18,h=.105;
-    rail('central-slot-web',u=>{const a=side*w*(i+.18+.64*u)/3,e=base-.100*Math.abs(a)/w-h*(i%2?u:1-u);return [a,e,shellDepth(a,e)-.002];},.012,.004,'shell',2);
+    const w=.35-row*.025,base=-.09-row*.16,h=.085;
+    rail('central-slot-web',u=>{const a=side*w*(i+.15+.70*u)/3,e=base-.13*Math.abs(a)/w-h*(i%2?u:1-u);return [a,e,depth(a,e)-.002];},.009,.003,'shell',2);
   }
-  // Recessed dark lining behind punched vents provides cavity depth without
-  // filling the eye window or replacing the real aperture geometry with paint.
-  for(const [i,h]of vents.entries())panel('vent-recess-'+i,h,[],(a,e)=>shellDepth(a,e)-.012,.002,'dark');
-  for(const side of [-1,1])for(const row of [-.285,-.60])for(let i=0;i<5;i++){
-    const a=side*(.40+i*.15),b=a+side*.105;
-    panel('cheek-ink-inlay',[[a,row+.032],[b,row+.025],[b,row-.025],[a,row-.032]],[],.057,.001,'ink');
+  for(const side of [-1,1])for(let i=0;i<6;i++)rail('cheek-slot-web',u=>{
+    const a=side*(.445+(i+.90*u)*.108),t=.39+.34*(i%2?u:1-u);
+    const e=cheekEdge(a,t);return [a,e,depth(a,e)-.002];
+  },.010,.003,'shell',3);
+  for(const side of [-1,1])for(let i=0;i<5;i++)rail('forehead-window-web',u=>{const a=side*(.25+(i+.90*u)*.16),e=crown(a)-.075-.18*(i%2?u:1-u);return [a,e,depth(a,e)-.001];},.024,.006,'shell',3);
+  // Broad ink chevrons are a source-visible part of each central separator.
+  // They follow the narrowed rounded breathing unit without adding a rim.
+  for(let row=0;row<3;row++){
+    const w=.35-row*.025,base=-.09-row*.16;
+    const edge=a=>base-.13*Math.abs(a)/w+.030;
+    const h=[];for(const a of [-w+.03,-.02,0,.02,w-.03])h.push([a,edge(a)+.013]);
+    for(const a of [w-.03,.02,0,-.02,-w+.03])h.push([a,edge(a)-.010]);
+    panel('central-chevron-inlay',h,[],(a,e)=>depth(a,e)+.010,.001,'ink');
   }
-  // Thick outer frame. Window is compact and follows the original nose saddle.
-  rail('eye-upper-frame',u=>[az(u),eyeTop(az(u))+.025,.055],.105,.013);
-  rail('eye-lower-frame',u=>[az(u),eyeBottom(az(u))-.015,.056],.100,.012);
-  for(const side of [-1,1])rail('eye-side-frame',u=>[side*span,eyeBottom(span)+(eyeTop(span)-eyeBottom(span))*u,.054],.140,.014,'shell',8);
-  rail('eye-upper-gasket',u=>[az(u),eyeTop(az(u))-.020,.050],.022,.006,'dark');
-  // One bowed transparent shield stands in front of eyes and below the broad cap.
-  add(grid(N,6,(u,v)=>{const a=az(u);return pt(a,eyeBottom(a)+(eyeTop(a)-eyeBottom(a))*v,.059+.030*Math.sin(Math.PI*v)*Math.cos(a));}),'lens','panoramic-lens');
-  // Tall broad forehead plate with short angular vents, not an open hair rail.
-  const browBase=a=>eyeTop(a)+.13,crown=a=>.80+.21*Math.cos(a)**2;
-  const foreTop=[],foreBot=[];for(let i=0;i<=stations;i++){const a=-span+2*span*i/stations;foreTop.push([a,crown(a)]);foreBot.push([a,browBase(a)]);}
-  const foreHoles=[];for(const side of [-1,1])for(let i=0;i<5;i++){const a=side*(.25+i*.17),b=a+side*.14;foreHoles.push([[a,browBase(a)+.075],[b,browBase(b)+.075],[(a+b)/2,browBase((a+b)/2)+.205]]);}
-  panel('molded-forehead-shell',[...foreBot,...foreTop.reverse()],foreHoles,(a,e)=>.039+.009*Math.sin(Math.PI*Math.max(0,Math.min(1,(e-browBase(a))/(crown(a)-browBase(a))))),.012);
-  for(const [i,h]of foreHoles.entries())panel('forehead-vent-recess-'+i,h,[],.027,.002,'dark');
-  // Broad domed forward brim joins the forehead plate to the eye-frame arch.
-  const peak=(u,v)=>{const a=az(u)*1.025;const p=pt(a,eyeTop(a)+.16*(1-v)+.025,.042+.065*v*Math.cos(a/1.8));p[1]+=.005+.008*v*Math.cos(a)**2;return p;};
-  // The underside returns continuously to the thick eye frame, making one
-  // molded brim instead of two separated flat shelves.
-  const under=(u,v)=>{const a=az(u)*1.025,A=peak(u,0),B=pt(a,eyeTop(a)+.025,.062);A[1]-=.010;return A.map((x,k)=>x+(B[k]-x)*v);};
-  const edge=(u,v,at)=>{const A=under(u,at),B=peak(u,at);return A.map((x,k)=>x+(B[k]-x)*v);};
-  add(grid(N,5,(u,v)=>peak(u,1-v)),'shell','visor-top');
-  add(grid(N,5,(u,v)=>under(u,v)),'shell','visor-bottom');
-  add(grid(N,1,(u,v)=>edge(u,v,1)),'shell','visor-front-edge');
-  add(grid(N,1,(u,v)=>edge(1-u,v,0)),'shell','visor-rear-edge');
-  for(const side of [0,1])add(grid(5,1,(u,v)=>edge(side,v,side?1-u:u)),'shell','visor-side-edge');
-  // Small original forehead emblem; not a recovered game texture.
-  panel('forehead-badge',[[-.075,.74],[.075,.74],[.065,.83],[-.065,.83]],[],.047,.001,'dark');
-  panel('forehead-emblem',[[-.05,.775],[.05,.79],[.03,.81],[-.04,.80]],[],.049,.001,'ink');
-  // Two actual crossed straps around the exposed rear head, not a helmet crown.
+  // Surface color blocks follow the molded cheek curvature; no separate bars.
+  for(const side of [-1,1])for(const row of [.20,.86])for(let i=0;i<5;i++){
+    const a=side*(.43+i*.15),b=a+side*.105,at=x=>eyeBottom(x)+(lower(x)-eyeBottom(x))*row;
+    panel('cheek-ink-inlay',[[a,at(a)+.023],[b,at(b)+.023],[b,at(b)-.023],[a,at(a)-.023]],[],(a,e)=>depth(a,e)+.0068,.001,'ink');
+  }
+  // Compact shallow side insets belong to the rounded face shell. The
+  // source does not establish a large anatomical ear hole.
+  for(const h of sideInsets){
+    panel('temple-inset-border',h,[],(a,e)=>depth(a,e)+.0105,.001,'dark');
+    const ca=h.reduce((n,p)=>n+p[0],0)/h.length,ce=h.reduce((n,p)=>n+p[1],0)/h.length;
+    panel('temple-ink-inlay',h.map(([a,e])=>[ca+(a-ca)*.70,ce+(e-ce)*.75]),[],(a,e)=>depth(a,e)+.012,.001,'ink');
+  }
+  // The bill is part of molded-wrap-shell, including its closed lip.
+  const canopy=(u,v)=>{const a=(u-.5)*2*1.18,e=.68+(eyeTop(a)-.68)*v;return shellSurface(a,e,depth(a,e));};
+  // The lens is seated inside the heavy sloping brow and temple surround.
+  add(grid(N,6,(u,v)=>{const a=(u-.5)*2*eyeSpan,e=eyeBottom(a)+(eyeTop(a)-eyeBottom(a))*v,d0=depth(a,eyeBottom(a)),d1=depth(a,eyeTop(a));return pt(a,e,d0+(d1-d0)*v+.008*Math.sin(Math.PI*v));}),'lens','panoramic-lens');
+  rail('eye-upper-gasket',u=>{const a=(u-.5)*2*eyeSpan;return [a,eyeTop(a)-.009,depth(a,eyeTop(a))-.006];},.018,.004,'dark');
+  panel('forehead-badge',[[-.075,.90],[.075,.90],[.065,1.03],[-.065,1.03]],[],(a,e)=>depth(a,e)+.007,.001,'dark');
+  panel('forehead-emblem',[[-.05,.95],[.05,.965],[.03,.985],[-.04,.975]],[],(a,e)=>depth(a,e)+.009,.001,'ink');
+  // Historical S2 back: convex webbing with dark rolled edges and an
+  // unequal layered crossing. S3 rear remains unverified. Closed elliptical
+  // cross-sections replace the previous flat rectangular ribbons.
+  function bandPath(s,u){
+    const start=s>0?1.44:1.40,end=Math.PI*2-(s>0?1.40:1.44);
+    const a=start+u*(end-start),e=s*(.22*Math.cos(Math.PI*u)+.045*Math.sin(2*Math.PI*u));
+    const base=.045+(s>0?.016:0)+.012*Math.sin(Math.PI*u)**2;
+    const join=Math.max(0,1-Math.min(u,1-u)/.14)**2,fa=a>Math.PI?a-Math.PI*2:a;
+    return [a,e,base+(depth(fa,e)-base)*join];
+  }
   for(const s of [-1,1]){
-    const fn=u=>[1.20+u*(Math.PI*2-2.40),s*.23*Math.cos(u*Math.PI),.014+(s>0?.007:0)];
-    rail('crossed-rear-strap',fn,.22,.006,'dark',N,true);
-    rail('rear-strap-ink-center',u=>{const p=fn(u);p[2]+=.0033;return p;},.165,.001,'ink',N,true);
+    const steps={hero:48,game:32,far:20}[lod],around=8;
+    const bandPoint=(u,t,ink=false)=>{
+      const q=bandPath(s,u),lo=bandPath(s,Math.max(0,u-.001)),hi=bandPath(s,Math.min(1,u+.001)),da=hi[0]-lo[0],de=hi[1]-lo[1],len=Math.hypot(da,de);
+      const angle=ink?(-Math.PI*.36+t*Math.PI*.72):t*Math.PI*2;
+      const w=Math.sin(angle)*.115,d=Math.cos(angle)*.0075;
+      // Low amplitude broad ridges; silhouette stays rounded at far LOD.
+      const rib=ink&&lod!=='far'?.0012*(.5+.5*Math.cos(u*Math.PI*48))*Math.cos(angle):0;
+      return pt(q[0]-de/len*w,q[1]+da/len*w,q[2]+d+(ink?.0007:0)+rib,true);
+    };
+    add(grid(steps,around,(u,v)=>bandPoint(u,v)),'dark','rounded-rear-band');
+    for(const end of [0,1]){
+      const p=[],uv=[],ix=[],center=pt(...bandPath(s,end),true);
+      p.push(...center);uv.push(0,0);
+      for(let j=0;j<around;j++){p.push(...bandPoint(end,j/around));uv.push(j/around,end);}
+      for(let j=0;j<around;j++){const a=j+1,b=(j+1)%around+1;ix.push(...(end?[0,b,a]:[0,a,b]));}
+      const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);add(g,'dark','rounded-rear-band-cap');
+    }
+    add(grid(steps,4,(u,v)=>bandPoint(u,v,true)),'ink','rounded-rear-ink');
   }
   let triangles=0,vertices=0,meshes=0;
   for(const [key,list]of Object.entries(buckets)){
@@ -140,7 +245,7 @@ export function createFaceGoggles({lod='hero',inkColor=0x20bc91,headSurface=null
   }
   let disposed=false;const dispose=()=>{if(disposed)return;disposed=true;root.removeFromParent();root.traverse(o=>o.geometry?.dispose());Object.values(mats).forEach(m=>m.dispose());};
   const setInkColor=value=>{mats.ink.color.set(value);return root;};root.dispose=dispose;root.setInkColor=setInkColor;
-  root.userData={id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'Reference-informed approximation; hidden buckle unverified'}};
+  root.userData={construction:{billPattern:{slots:6,visibleWingSlots:3,hiddenWing:'mirrored inference',maxRelief:.0035,slotHalfWidth:.030,centerBevel:.028,recessFloorOffset:0},billSection:Array.from({length:10},(_,i)=>{const e=.68-(.68-eyeTop(0))*i/9;return shellSurface(0,e,depth(0,e));}),billRootContinuity:[.6801,.68,.6799].map(e=>shellSurface(0,e,depth(0,e))),billPlan:[0,.25,.5,.75,1].map(u=>({root:canopy(u,0),tip:canopy(u,1)})),foreheadProfile:[-.6,-.01,0,.01,.6].map(a=>pt(a,crown(a),depth(a,crown(a)))),centralSlotHalfWidths:[.35,.325,.30],sideInsets:'closed compact inset; no ear opening',rearSection:{width:.23,thickness:.015,layerSeparation:.016},visorSection:{root:canopy(.5,0),tip:canopy(.5,1),lensUpper:pt(0,eyeTop(0),depth(0,eyeTop(0)))},browSection:[.90,.65,.45,.32].map(e=>({e,point:pt(0,e,depth(0,e))})),templeAnchors:[-1,1].flatMap(side=>[-1,1].map(s=>{const a=side*(s>0?1.44:1.40),e=s*.22,d=depth(a,e);return {a,e,point:pt(a,e,d),strapDepth:d,shellDepth:depth(a,e)};})),centralExtraDepth:depth(0,-.4)-depth(.6,-.4)},id:FACE_GOGGLES_ID,lod,parts,dispose,setInkColor,rigidEnvelope:{rx,ry,rz},stats:{triangles,vertices,meshes,materials:4,textures:0,transparentMeshes:1},fit:{attachment:'head bone',headCenter:[0,.164,.014],hairPolicy:'preserveHair; no coverage or tuck',reference:'S3 Paintball Mask',rearStrapRouting:'S3 rear unverified; S2-informed convex layered bands with compact side anchors'}};
   return root;
 }
 

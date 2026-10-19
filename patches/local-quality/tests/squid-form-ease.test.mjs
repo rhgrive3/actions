@@ -35,3 +35,41 @@ test('actual incoming curve keeps authored duration/rate and symmetric rapid rev
   a.form='kid';a.submerged=false;for(let i=0;i<hz;i++)step();a.form='squid';a.submerged=true;step();step();const before=[c.kidScale,c.sqScale],p=squidPoints(),humanReverse=c.skeleton.bones.flatMap(b=>b.matrixWorld.elements.slice());a.form='kid';a.submerged=false;step(0);near([c.kidScale,c.sqScale],before,'incoming reversal scale continuity');if(source){near(squidPoints(),p,'incoming reversal rendered squid continuity');near(c.skeleton.bones.flatMap(b=>b.matrixWorld.elements.slice()),humanReverse,'incoming reversal visible human continuity');}a.form='squid';a.submerged=true;step(0);near([c.kidScale,c.sqScale],before,'incoming double reverse scale continuity');if(source){near(squidPoints(),p,'incoming double reverse rendered squid continuity');near(c.skeleton.bones.flatMap(b=>b.matrixWorld.elements.slice()),humanReverse,'incoming double reverse visible human continuity');}for(let i=0;i<hz;i++)step();assert.equal(c.kidScale,0);assert.equal(c.sqScale,1);summaries.push({source,hz,maxDelta});f.reset();
  }console.log('SQUID_DIVE_EASE '+JSON.stringify(summaries));
 });
+
+test('spawn flight return retains displayed state and safe reversal while ordinary spawn resets',async()=>{
+const f=await sourceLoadedActorFixture({random:()=>.4});let cases=0;
+for(const source of [true,false])for(const hz of [30,60,120]){
+ const a=await f.make(),c=a.character;if(!source)c.sourceMotion.setEnabled(false);c.onEvent=null;
+ const step=(dt=1/hz)=>{f.G.time+=dt;a._finishFrame(dt);};
+ a.form='squid';for(let i=0;i<hz;i++)step();assert(c.sqScale>.999);
+ a.s3.squidSpawn={phase:'flight'};a.form='kid';const before=[c.form,c.formPrev,c.formT,c.kidScale,c.sqScale];c.trigger('spawn');assert.deepEqual([c.form,c.formPrev,c.formT,c.kidScale,c.sqScale],before,'event preserves displayed transition state');
+ step();step();const scales=[c.kidScale,c.sqScale];assert(c.kidScale>0&&c.kidScale<1);
+ a.form='squid';step(0);assert(Math.abs(c.kidScale-scales[0])<1e-8&&Math.abs(c.sqScale-scales[1])<1e-8,'reverse continuity after spawn trigger');
+ a.form='kid';step(0);assert(Math.abs(c.kidScale-scales[0])<1e-8&&Math.abs(c.sqScale-scales[1])<1e-8,'double reverse after spawn trigger');
+ for(let i=0;i<hz;i++)step();assert.equal(c.kidScale,1);assert.equal(c.sqScale,0);
+ delete a.s3.squidSpawn;a.form='squid';for(let i=0;i<hz;i++)step();c.trigger('spawn');assert.equal(c.form,'kid');assert.equal(c.formPrev,'kid');assert.equal(c.formT,99);assert.equal(c.kidScale,1);assert.equal(c.sqScale,0,'ordinary spawn still resets');
+ cases++;f.reset();
+}assert.equal(cases,6);
+
+});
+
+test('actual respawn flight preserves intermediate return at all source modes and rates',async()=>{
+const f=await sourceLoadedActorFixture({random:()=>.4});
+const receipts=[];
+for(const source of [true,false])for(const hz of [30,60,120]){
+ Object.assign(f.G.match,{mode:'turf',opts:{},state:'playing',canRespawn:()=>true});
+ const a=await f.make(),c=a.character;if(!source)c.sourceMotion.setEnabled(false);a.slot=0;a.alive=false;a.respawn();
+ assert.equal(a.s3.squidSpawn.phase,'aim');
+ for(let i=0;i<hz/2;i++)f.tick(a,1/hz);
+ assert.equal(a.form,'kid');assert(c.kidScale>.999);
+ a.intent.fire=true;f.tick(a,1/hz);assert.equal(a.s3.squidSpawn.phase,'flight');assert.equal(a.form,'squid');
+ const samples=[],gameplay=[];
+ for(let i=0;i<hz+Math.ceil(hz*.3);i++){
+  f.tick(a,1/hz);gameplay.push({pos:a.pos.toArray(),vel:a.vel.toArray(),form:a.form,grounded:a.grounded,invuln:a.invuln,phase:a.s3.squidSpawn?.phase,t:a.s3.squidSpawn?.t,armor:a.s3.spawnArmor?{...a.s3.spawnArmor}:null});assert(Number.isFinite(c.kidScale)&&Number.isFinite(c.sqScale));assert(Math.abs(c.kidScale+c.sqScale-1)<1e-7,'complementary render scales');
+  if(a.s3.squidSpawn?.phase==='flight'){const s=a.s3.squidSpawn;assert.equal(a.form,s.t/s.duration+1e-10<.82?'squid':'kid');samples.push({t:s.t,k:c.kidScale,q:c.sqScale});}
+ }
+ assert.equal(a.form,'kid');assert(c.kidScale>.999);assert(c.sqScale<.001);assert(!a.s3.squidSpawn);assert(samples.some(s=>s.q>.999));const continuous=samples.some(s=>s.t>.82&&s.k>0&&s.k<1);assert(continuous,'source and fallback touchdown curve');
+ receipts.push({source,hz,continuous,samples,gameplay});f.reset();
+}
+assert.equal(receipts.length,6);
+});

@@ -21,3 +21,9 @@ export function nativeWeaponPoseRequired(ch,input={}){
   if(ch.weaponKind==='slosher')return ch.lastShot<Math.max(.5,a?.weapon?.fireInterval||0);
   return ch.lastShot<.25||ch.lockW>.001;
 }
+// The Wii U Slosher attack clip (Attack_BBll) raises the right leg while standing.
+// Splatoon 3's heave keeps both feet down (owner report 2026-10-18), so that
+// overlay is always upper-body only; other action clips keep their full body.
+export function sourceActionUpperOnly(family, clip) {
+  return family === 'BBll' || clip === 'Attack_BBll';
+}

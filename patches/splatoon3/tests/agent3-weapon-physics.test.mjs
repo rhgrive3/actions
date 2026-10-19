@@ -51,7 +51,10 @@ test('Roller body contact consumes pinned WidthHalf/Radius, not rolling paint wi
   assert.equal(rollerBodyOverlap(.5, 1.4, 0, 2, body, .38), true, 'body edge');
   assert.equal(rollerBodyOverlap(.5, 1.779, 0, 2, body, .38), true, 'inside body + native player radius');
   assert.equal(rollerBodyOverlap(.5, 1.781, 0, 2, body, .38), false, 'outside body + native player radius');
-  assert.equal(rollerBodyOverlap(1.36, 0, 0, 2, body, .38), false, 'existing longitudinal gate retained');
+  // Owner report 2026-10-18: the front reaches the sourced body (0.75 offset + Radius 0.4) plus the target.
+  assert.equal(rollerBodyOverlap(1.36, 0, 0, 2, body, .38), true, 'front of the drum body admits a touching target');
+  assert.equal(rollerBodyOverlap(1.529, 0, 0, 2, body, .38), true, 'front body + native player radius');
+  assert.equal(rollerBodyOverlap(1.531, 0, 0, 2, body, .38), false, 'beyond the front body + player radius');
 });
 
 test('Slosher wall-drop plan retains pinned phases and configured 4/1 wall-hit branches', () => {

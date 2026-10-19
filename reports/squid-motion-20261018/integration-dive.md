@@ -28,3 +28,11 @@ the actual composed Character and verifies disposal for both the cancelled
 pending character and live replacement. The original warm cancellation and
 program-cache assertions remain. These two source suites pass 28/28 locally;
 exact-head emitted and full CI remain the acceptance gate.
+
+## Final main reconciliation, 2026-10-19
+
+Preserved PR1604 head `9d6a40bbd78df6fc02544a5ef28d030bbacd4e3d` is reconciled with merged main `295dfb48d0a781d642aeb13521a63ddb9670dacf` (PR1599 after main #1620/#1622). All seven shared QA/oracle paths retain merged-main versions, including the audio diagnostic superset and trusted range-menu readiness checks. Main's 32 upstream changed paths are retained; the quality adapter combines its action-presentation logic with the existing squid registration and identity entries.
+
+The only additional runtime adjustment is the narrowly scoped spawn-flight displayed-form reset described in return-envelope.md. Independent acceptance verifies 546 exact gameplay frame receipts, six source/rate cases, 58 existing regressions, and portable form tests5/5. The unchanged motion timeline tests2/2 pass. New main's Rainmaker admission and identity tests17/17 pass; both new/changed ranked runtime files are covered by writeBuildIdentity.
+
+The existing paired 104-frame surfaces and300-frame motion sequence remain required. A candidate-only120-frame actual Actor spawn scenario adds source/fallback launch/flight/return/landing coverage. Its exact camera passed CPU projection for every frame with at least27.85% Character edge margin. Final emitted/browser evidence and all mandatory checks are pending on the new exact head; local results are not claimed as native acceptance.
