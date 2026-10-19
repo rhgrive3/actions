@@ -73,7 +73,7 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
     ch.ikErr[0] = err;
     // Keep the legacy one-solve pose for the next source-history update.
     // The displayed correction is a rigid shoulder/arm rotation after that solve.
-    if (ch.sourceMotion?.active && ch.sourceMotion.state === 'air') {
+    if (ch.sourceMotion?.active && (ch.sourceMotion.state === 'air' || ch.sourceMotion.state === 'land')) {
       const arm = ch.limbs.armL, clav = ch.bones.clavL;
       ch._kidXform(clav, v3, q3);
       v4.copy(arm.up.position).applyQuaternion(q3).add(v3);
