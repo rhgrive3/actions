@@ -47,32 +47,9 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
   'src/config.js': [
     ["export const GAME_TITLE = 'INKWAVE';", "export const GAME_TITLE = 'ZEVANT';"],
   ],
-  'src/ui/ui-icons.js': [
-    ["logoMarkup(title = 'INKWAVE'", "logoMarkup(title = 'ZEVANT'"],
-  ],
   'src/ui/menus.js': [
     ['The INKWAVE servers didn', 'The ZEVANT servers didn'],
     ['The squidkids and code behind INKWAVE', 'The squidkids and code behind ZEVANT'],
-  ],
-  // In-world text is rendered into procedural textures / 3-D lettering.
-  'src/world/murals.js': [
-    ["strokeText('INKWAVE', ox + 300, 186)", "strokeText('ZEVANT', ox + 300, 186)"],
-    ["fillText('INKWAVE', ox + 300, 186)", "fillText('ZEVANT', ox + 300, 186)"],
-    ["fillText('INKWAVE', ox + 294, 180)", "fillText('ZEVANT', ox + 294, 180)"],
-  ],
-  'src/game/lobbySet-tex.js': [
-    ["const word = 'INKWAVE', size =", "const word = 'ZEVANT', size ="],
-  ],
-  'src/world/props.js': [
-    ['INKWAVE HARBOR · SEWER · INKWAVE HARBOR · SEWER · ', 'ZEVANT HARBOR · SEWER · ZEVANT HARBOR · SEWER · '],
-  ],
-  'src/world/props-marina-vessels.js': [
-    ["text(B, 'INKWAVE', 0.19", "text(B, 'ZEVANT', 0.19"],
-    ["text(B, 'INKWAVE', 0.1,", "text(B, 'ZEVANT', 0.1,"],
-    ["text(B, 'INKWAVE', 0.11", "text(B, 'ZEVANT', 0.11"],
-  ],
-  'patches/splatoon3/runtime/ui-strings.mjs': [
-    ['The INKWAVE servers didn’t answer. Check your connection, then try again.', 'The ZEVANT servers didn’t answer. Check your connection, then try again.'],
   ],
   'src/i18n.js': [
     ["'The squidkids and code behind INKWAVE': 'INKWAVE をつくった仲間たち'", "'The squidkids and code behind ZEVANT': 'ZEVANT をつくった仲間たち'"],

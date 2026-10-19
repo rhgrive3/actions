@@ -2,14 +2,11 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
-  'patches/local-quality/settings-ui-adapter.mjs',
   'patches/local-quality/bot-navigation-adapter.mjs',
   'patches/splatoon3/main-ink-footprint-adapter.mjs',
   'patches/local-quality/cloth-derivative-adapter.mjs',
   'patches/local-quality/retarget-branch-update-adapter.mjs',
   'patches/local-quality/motion-fk-hotpath-adapter.mjs',
-  'patches/local-quality/squid-motion-binding-adapter.mjs',
-  'patches/local-quality/squid-form-ease-adapter.mjs',
   'patches/local-quality/ink-volume-adapter.mjs',
   // Source decoding/shape construction belong to the offline bake, not gameplay.
   'patches/local-quality/ink-volume/vtf.mjs',
@@ -78,15 +75,12 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/collision-hotpath-adapter.mjs',
   'patches/local-quality/paint-hotpath-adapter.mjs',
   'patches/local-quality/distance-hotpath-adapter.mjs',
-  'patches/local-quality/nav-heuristic-adapter.mjs',
   'patches/local-quality/root-hair-spring-adapter.mjs',
   'patches/local-quality/pose-rotation-adapter.mjs',
   'patches/local-quality/perf-readout-adapter.mjs',
   'patches/local-quality/fx-empty-pools-adapter.mjs',
   'patches/local-quality/platform-adapter.mjs',
   'patches/local-quality/portrait-guard-adapter.mjs',
-  'patches/local-quality/prop-atlas-adapter.mjs',
-  'patches/local-quality/prop-retention-adapter.mjs',
   'patches/local-quality/refl-skip-adapter.mjs',
   'patches/local-quality/runtime-frame-scratch-adapter.mjs',
   'patches/local-quality/resource-adapter.mjs',
