@@ -87,6 +87,10 @@ export function installWeaponAudioEngine(Engine){
       // ShooterNormal MP3 is part of the pinned source release. A missing or
       // incomplete manifest may never reinterpret it as an authored gunshot.
       if(id==='shooter')throw new Error('スプラシューターの本家MP3が音源一覧にありません');
+      if(recordedCombatReady){
+        const combatError=await recordedCombatReady;
+        if(combatError)throw combatError;
+      }
       return {ready:false,unrecorded:true,id};
     }
     if(recorded!==true)throw new Error('ブキ音源の一覧を読み込めません: '+id);
