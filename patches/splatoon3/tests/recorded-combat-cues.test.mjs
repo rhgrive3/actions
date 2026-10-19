@@ -68,6 +68,10 @@ test('Charger high-damage direct, partial, other attacks, and Blaster direct vs 
   assert.equal(recordedHitCue({attacker:c,weaponId:'charger-01',damage:110,killed:false}),'critical');
   assert.equal(recordedHitCue({attacker:c,weaponId:'s3-charger-long',damage:160}),'critical');
   assert.equal(recordedHitCue({attacker:c,weaponId:'s3-charger-light',damage:85}),'hit');
+  assert.equal(recordedHitCue({attacker:c,weaponId:'s3-charger-light',damage:85,charge:1}),'hit',
+    'Bamboozler full charge is not a conventional Charger one-shot');
+  assert.equal(recordedHitCue({attacker:c,weaponId:'s3-charger-pencil',damage:60,charge:1}),'hit',
+    'R-PEN multi-round full charge must not inherit the normal sniper ding');
   assert.equal(recordedHitCue({attacker:c,weaponId:'charger',damage:160,charge:.35}),'hit',
     'actual partial-charge hit never becomes critical from numeric damage alone');
   assert.equal(recordedHitCue({attacker:c,weaponId:'charger',damage:160,charge:1}),'critical');
