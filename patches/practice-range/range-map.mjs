@@ -8,7 +8,7 @@ export const RANGE_MAP = Object.freeze({
   id: RANGE_ID,
   name: isJa ? '試し撃ちラボ' : 'Practice Range',
   blurb: isJa ? 'ブキ・ヒト移動・イカ移動・ボム・スペシャルをためせる練習施設。'
-    : 'The INKWAVE test lab: measure range, damage, paint, movement, bombs and specials.',
+    : 'The ZEVANT test lab: measure range, damage, paint, movement, bombs and specials.',
   theme: 'day',
   // one fixed reference light: before/after screenshots must be comparable (dusk is not offered on the range)
   times: { day: 'day', dusk: 'day' },
