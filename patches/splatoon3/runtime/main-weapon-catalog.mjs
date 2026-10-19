@@ -286,18 +286,23 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(s.slideRunner&&width>0)paintDualiesSlide(G,s.slideRunner,
       {kind:'dualies',rollPaintWidthHalf:width,rollPaintWorldScale:1},ending);
   }
+  function canKeepCharge(r, s) {
+    const kp = r.parameters.WeaponKeepChargeParam || r.parameters.spl__WeaponStringerParam?.ChargeKeepParam;
+    // LACT charge keep: https://www.nintendo.com/jp/character/splatoon/fashion/index.html
+    return !!(kp && (s.chargeF > 0 || s.stream > 0 && kp.EnableKeepChargeAnytime) &&
+      (kp.EnableKeepChargeAnytime || s.chargeF + EPS >= chargeFrames(r)) &&
+      (r.family !== 'stringer' || r.parameters.spl__WeaponStringerParam.IsEnableChargeKeep ||
+        (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))));
+  }
   function cancel(runner, keep = false) {
     const s = runner.catalogState;
     if (!s) return;
     s.birthEpoch = (s.birthEpoch || 0) + 1;
     const r = RECORDS.get(s.id), kp = r.parameters.WeaponKeepChargeParam || r.parameters.spl__WeaponStringerParam?.ChargeKeepParam;
     if(keep&&s.stream>0&&kp?.EnableKeepChargeAnytime){s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(runner.a);}
-    if (keep && s.chargeF > 0 && kp && (kp.EnableKeepChargeAnytime || s.chargeF+EPS >= chargeFrames(r)) &&
-      (r.family !== 'stringer' || r.parameters.spl__WeaponStringerParam.IsEnableChargeKeep ||
-        // Nintendo's LACT-450 guide explicitly confirms charge keep. Its pinned
-        // row omits this flag; this source-actor exception is not a schema default.
-        // https://www.nintendo.com/jp/character/splatoon/fashion/index.html
-        (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))))
+    // Keep capability is shared with Actor's busy admission, including the
+    // source-backed LACT sparse-flag exception. No new storage owner or clock.
+    if (keep && s.chargeF > 0 && canKeepCharge(r, s))
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
     s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
@@ -316,6 +321,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);
     const s = this.catalogState;
+    // A newer Squid press while holding Fire must reach the existing keep
+    // transition. Actor still owns input precedence and form selection.
+    if (s && this.a.intent?.squid && this.a.intent.fire && !s.roll && !s.lunge &&
+      !s.pending && !s.melee && canKeepCharge(this.a.weapon.catalogRecord, s)) return false;
     if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee && !((this.a.weapon.catalogRecord.family==='splatana'||this.a.weapon.catalogRecord.family==='dualies')&&s?.stop>EPS)) return false;
     return !!(s && (s.pending || s.melee || s.chargeF>0 || s.stream>0 || s.roll || s.lunge || s.stop>EPS));
   };

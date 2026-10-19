@@ -519,6 +519,8 @@ Nintendoの非公開protocolや通信時刻を推定して本家一致とはし�
 
 ## チャージ保持の ZR 解放（#390、2026-10-04）
 
+2026-10-19追記（PR #1636）：通常Fire→Squid入力から追加主武器の既存charge-keepへ接続する限定修正を検証中。元の比較記録を全byte保存した[専用報告](inkwave-catalog-charge-keep-input-2026-10-19.md)を参照。保持clock・威力・インク支払は変更しない。
+
 潜伏中のチャージ保持は「ZR を押したまま」という保持条件に紐づいており、ZL を離す前に ZR を離すとチャージは解除される。Issue #390 で、この解放時キャンセルを `patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._charger` に実装した。
 
 | 項目 | 内容 |
