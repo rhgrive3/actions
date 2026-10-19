@@ -1,6 +1,6 @@
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
-import { blasterHitCuePitch } from './blaster-hit.mjs';
+import { blasterHitCuePitch, blasterHitCueKind } from './blaster-hit.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 
@@ -11,6 +11,7 @@ export function installWeaponAudioEngine(Engine){
   // gameplay patch installs BEFORE Game assigns G.audio, so bind on Engine,
   // not to an early (null) global audio instance.
   p.blasterHitCuePitch=blasterHitCuePitch;
+  p.blasterHitCueKind=blasterHitCueKind;
   // v10 defined resolveWeaponSound but never connected AudioEngine._def to it.
   // A real game call to playWeapon therefore always hit the legacy SFX registry.
   const originalDef=p._def;
@@ -32,6 +33,13 @@ export function installWeaponAudioEngine(Engine){
     this._warmWeapons||=new Set();this._warmWeapons.add(id);
     if(this._warmWeapons.size>8)this._warmWeapons.delete(this._warmWeapons.values().next().value);
     const bank=this.weaponBank();if(!bank)return;
+    // Demand-page all 3 immutable global combat feedback events only once.
+    // The recorded critical hit supersedes the generic synthesized click,
+    // while the 2022 victim pop replaces the local authored kill alert.
+    if(!this._combatFeedbackRequested){
+      this._combatFeedbackRequested=true;
+      this._realS3Loader?.ensure('fx:combat').catch(()=>{this._combatFeedbackRequested=false;});
+    }
     if(!id.includes(':')){
       const loader=this._realS3Loader;
       // Fetch the actual selected recording first. Generating synthetic PCM for
@@ -89,6 +97,16 @@ export function installWeaponAudioEngine(Engine){
     if(!bank.authorized.byEvent.has(id+':fire')){
       const error=result?.errors?.[0]?.error||loader.errors?.at(-1)||'MP3をデコードできません';
       throw new Error('本家射撃MP3の準備に失敗しました: '+id+' ('+error+')');
+    }
+    // The pinned combat pack is three tiny original files. Keep them decoded
+    // before live gameplay, so the first direct hit and first splat use source
+    // recordings as reliably as the first main-weapon shot.
+    if(loader.declares('fx:combat','critical_hit')===true){
+      const result=await loader.ensure('fx:combat');
+      for(const event of ['hit','critical_hit','splat'])
+        if(!bank.authorized.byEvent.has('fx:combat:'+event))
+          throw new Error('本家命中・撃破MP3の準備に失敗しました: '+event+
+            ' ('+String(result?.errors?.[0]?.error||loader.errors?.at(-1)||'unavailable')+')');
     }
     // AudioContext can be temporarily suspended by the browser. The caller
     // must enter the game only after the selected recording and device are live.
@@ -182,5 +200,5 @@ export function installWeaponAudioEngine(Engine){
   const stats=p.stats;p.stats=function(){const result=stats.call(this);for(const [key,list] of this.byName){if(!list.some(v=>!v.v.dead&&!v.stolen))this.byName.delete(key);}return {...result,weaponBank:this._weaponBank?.stats()||null,
     realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
-  p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmWeapons?.clear();};
+  p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._combatFeedbackRequested=false;this._warmWeapons?.clear();};
 }
