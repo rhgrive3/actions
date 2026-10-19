@@ -20,12 +20,16 @@ function state(nm) {
 }
 function prune(s,t) {
   for(const [peer,arr] of s.proofs) {
-    const live=arr.filter(x=>t-x.at>=0 && t-x.at<=PROOF_AGE);
-    if(live.length)s.proofs.set(peer,live);else s.proofs.delete(peer);
+    let end=0;
+    for(let i=0;i<arr.length;i++)if(t-arr[i].at>=0 && t-arr[i].at<=PROOF_AGE)arr[end++]=arr[i];
+    arr.length=end;
+    if(!end)s.proofs.delete(peer);
   }
   for(const [peer,arr] of s.pending) {
-    const live=arr.filter(x=>t-x.at>=0 && t-x.at<=PENDING_AGE);
-    if(live.length)s.pending.set(peer,live);else s.pending.delete(peer);
+    let end=0;
+    for(let i=0;i<arr.length;i++)if(t-arr[i].at>=0 && t-arr[i].at<=PENDING_AGE)arr[end++]=arr[i];
+    arr.length=end;
+    if(!end)s.pending.delete(peer);
   }
   for(const [k,entry] of s.contacts) if(t-entry.at>1.2)s.contacts.delete(k);
 }
@@ -84,19 +88,21 @@ function proofFromEvent(nm,from,e,poses,ts,t) {
 function record(nm,from,packet,t) {
   if(!Array.isArray(packet?.e) || packet.e.length>512 || !finite(packet.ts) || packet.ts<0 || packet.ts>1e9)return;
   const s=state(nm);prune(s,t);
-  const poses=new Map();
+  const poses=nm._combatPoseScratch||(nm._combatPoseScratch=new Map());poses.clear();
   if(Array.isArray(packet.a))for(const r of packet.a) {
     if(!Array.isArray(r)||r.length<4 || !v3(r.slice(1,4)))continue;
     if(ownerActor(nm,from,r[0]))poses.set(r[0],r.slice(1,4));
   }
   const store=s.proofs.get(from)||[];
-  for(const e of packet.e.slice(0,256)) {
-    const candidate=proofFromEvent(nm,from,e,poses,packet.ts,t);
+  for(let i=0;i<Math.min(packet.e.length,256);i++) {
+    const candidate=proofFromEvent(nm,from,packet.e[i],poses,packet.ts,t);
     if(!candidate || store.some(p=>p.key===candidate.key))continue;
     const actor=ownerActor(nm,from,candidate.actor);
     const interval=actor?.weapon?.fireInterval;
     const rate=finite(interval)&&interval>0 ? Math.min(75,Math.ceil(2/interval)+6):32;
-    if(store.filter(p=>p.actor===candidate.actor && t-p.at<1).length>=rate)continue;
+    let recent=0;
+    for(const shot of store)if(shot.actor===candidate.actor && t-shot.at<1)recent++;
+    if(recent>=rate)continue;
     store.push(candidate);
   }
   if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));
@@ -139,8 +145,8 @@ function equippedCause(actor,d,type) {
   if(!w)return false;
   if(type==='boss' && d.c>=0 && d.w==='crab')return true; // crablet-target marker
   const id=weaponId(actor);
-  const known=new Set([id,w.id,w.kind,w.sub,w.special,'shot','slosh','blast','drop','roller']);
-  if(!known.has(d.w))return false;
+  if(d.w!==id && d.w!==w.id && d.w!==w.kind && d.w!==w.sub && d.w!==w.special &&
+     d.w!=='shot' && d.w!=='slosh' && d.w!=='blast' && d.w!=='drop' && d.w!=='roller')return false;
   // Generic fallbacks cannot pretend a main-weapon shot is a Special.
   if(d.w==='roller' && w.kind!=='roller')return false;
   return true;
@@ -196,9 +202,14 @@ function take(nm,from,d,type,t) {
     if(p.kind==='special' && d.w!==p.cause)continue;
     if(type==='pvp') {
       if(!hitSegmentOk(p,d.bg,target))continue;
-      if(p.kind==='main' && d.bg && nm._combatProvenancePhysics?.los) {
-        const dest=d.bg.slice(3,6);
-        if(!nm._combatProvenancePhysics.los(p.origin,dest))continue;
+      if(p.kind==='main' && d.bg && nm._combatProvenancePhysics?.los && nm._combatProvenanceTHREE?.Vector3) {
+        const V=nm._combatProvenanceTHREE.Vector3;
+        const scratch=nm._combatProvenanceVectors||(nm._combatProvenanceVectors=[new V(),new V()]);
+        const dst=d.bg;
+        scratch[0].set(...p.origin);
+        scratch[1].set(dst[3],dst[4],dst[5]);
+        try { if(!nm._combatProvenancePhysics.los(scratch[0],scratch[1]))continue; }
+        catch { continue; } // malformed collision world never authorizes a hit
       }
     } else if(d.weak===1 && !weakPointOk(nm,p))continue;
     p.uses++;
@@ -287,6 +298,7 @@ export function installCombatProvenance(NetMatch,context={}) {
   // No per-frame allocations: only ordered 20Hz owner ticks and sparse hits
   // touch this gate; physics is optional for offline/unit-test contexts.
   P._combatProvenancePhysics=null;
+  P._combatProvenanceTHREE=context.THREE||null;
   if(context.G) {
     const oldBind=P.bind;
     P.bind=function(...args){this._combatProvenancePhysics=context.G.physics;return oldBind.apply(this,args);};

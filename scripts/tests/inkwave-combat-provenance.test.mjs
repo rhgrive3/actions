@@ -107,6 +107,27 @@ test('roller damage uses a short observed contact gate and target range',()=>{
   nm.byNid.get(2).pos.z=20;
   assert.equal(combatAdmission(nm,'peerA',hit(2,4,'roller'),'pvp',6.3),false);
 });
+test('occluded projectile segment is checked with engine Vector3 inputs',()=>{
+  const nm=new Stub();
+  class V3 {
+    set(x,y,z){this.x=x;this.y=y;this.z=z;return this}
+  }
+  nm._combatProvenanceTHREE={Vector3:V3};
+  let calls=0,allow=false;
+  nm._combatProvenancePhysics={los(a,b){
+    assert.equal(typeof a.x,'number');assert.equal(typeof b.z,'number');
+    calls++;return allow;
+  }};
+  const d={...hit(),bg:[0,1,0,0,1,7,.2]};
+  nm.onMessage('peerA',d);
+  fire(nm);
+  assert.equal(calls,1);
+  assert.equal(nm.hitCalls.length,0,'blocked shot cannot authorize HP change');
+  allow=true;
+  nm._tick('peerA',{k:'t',ts:100.15,a:[[1,0,0,0]],
+    e:[[100.1,'p',1,'shot','shooter',0,1,0,0,0,45]]});
+  assert.equal(nm.hitCalls.length,1);
+});
 test('long lived tabs still admit timestamps above 2000s',()=>{
   const nm=new Stub();
   nm.onMessage('peerA',hit());
