@@ -131,8 +131,12 @@ test('all recorded Charger families have short hold, ready and full-shot cues (2
    for(const event of ['charge','ready','fire','fire_full'])
      assert.ok(entries.some(c=>c.event===event),id+' has original source event '+event);
    const hold=entries.find(c=>c.event==='charge');
-   assert.ok(hold.durationSeconds>=.20&&hold.durationSeconds<=.35,
-     '2022 HoldNoise is a short loop texture, not a whole charge ramp '+id);
+   const heavy=['s3-charger-long','s3-charger-longscope'].includes(id);
+   assert.equal(hold.sourceName,heavy?'Wp_Charger_HoldNoise_Heavy_00.mp3':
+     id==='s3-charger-light'?'Wp_Charger_HoldNoise_Bamboo_00.mp3':
+     id==='s3-charger-keeper'?'Wp_Charger_HoldNoise_Pump_00.mp3':'Wp_Charger_HoldNoise_00.mp3');
+   assert.ok(hold.durationSeconds>=.20&&hold.durationSeconds<=(heavy?.46:.35),
+     '2022 HoldNoise is a verified short loop texture, not a whole charge ramp '+id);
  }
  assert.ok(!installed.clips.some(c=>c.id==='s3-charger-pencil'),
    'the newer R-PEN has no 2022 recording and must not be called verified');
