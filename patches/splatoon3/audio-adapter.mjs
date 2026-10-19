@@ -65,6 +65,7 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }
   if(rel==='src/main.js'){
+    code="import { classifySourceCombatHit, playResidentCombatRecording } from '../../patches/splatoon3/runtime/audio/source-hit-rules.mjs';\n"+code;
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
       'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
       'iPad start tap initializes audio and warms the selected recorded shot before screen wipe');
@@ -113,9 +114,16 @@ export function adaptWeaponAudio(rel,code){
     // The existing one-per-hit HUD click stays authoritative. Source hit events
     // distinguish direct Blaster body contact from radius splash for its pitch.
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
-      "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
+      "on('hit', ({ attacker, victim, damage, killed, weaponId, hitMeta }) => {",'Blaster hit event identity');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
-      "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
+      "if(!playResidentCombatRecording(G.audio,classifySourceCombatHit({attacker,weaponId,hitMeta}),attacker,0.6)) G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
+    // Attacker kill confirmation is a separate event from full-charge direct
+    // contact. Only use an operator-provided, resident S3 source recording
+    // for either event; never mislabel Pl_DeadSplash as a kill-confirm clip.
+    code=once(code,
+      "G.audio?.play('splat_enemy', { volume: 0.9 });",
+      "if(!playResidentCombatRecording(G.audio,'splat',attacker,0.9)) G.audio?.play('splat_enemy', { volume: 0.9 });",
+      'source-only attacker splat cue');
     // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
