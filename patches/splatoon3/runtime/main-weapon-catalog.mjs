@@ -1192,7 +1192,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
         if(target){
-          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>withProjectileHitGeometry(this,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>this.applyHit(p.owner,target,amount,p.wid,s.r.family==='charger'?{chargerDirect:true,charge:d.charge}:null)));}
+          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>withProjectileHitGeometry(this,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>this.applyHit(p.owner,target,amount,p.wid,undefined,s.r.family==='charger'?{chargerDirect:true,charge:d.charge}:null)));}
           if(s.r.family==='charger'&&d.charge+EPS>=1&&d.m.ThroughFullCharge!==false){s.seen.add(target);continue;}
           if(s.r.family==='blaster'&&!p.ghost)explosion(this,p,d.b.BlastParam,target);
           if(s.r.parameters.BlastParam?.BlastParam&&!p.ghost)explosion(this,p,s.r.parameters.BlastParam.BlastParam);
