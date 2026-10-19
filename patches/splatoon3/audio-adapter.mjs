@@ -3,7 +3,7 @@
 function once(code,from,to,label){if(!code.includes(from))throw new Error('audio adapter anchor: '+label);return code.replace(from,to);}
 export function adaptWeaponAudio(rel,code){
   if(rel==='src/audio/audio.js'){
-    code="import { connectOutputSafety } from '../../patches/splatoon3/runtime/audio/output-safety.mjs';\nimport { installWeaponAudioEngine } from '../../patches/splatoon3/runtime/audio/engine.mjs';\nimport { audioEmitterKey, selectVictim } from '../../patches/splatoon3/runtime/audio/bank.mjs';\n"+code;
+    code="import { connectOutputSafety } from '../../patches/splatoon3/runtime/audio/output-safety.mjs';\nimport { installWeaponAudioEngine } from '../../patches/splatoon3/runtime/audio/engine.mjs';\nimport { installRecordedCombatCues } from '../../patches/splatoon3/runtime/audio/recorded-combat-cues.mjs';\nimport { audioEmitterKey, selectVictim } from '../../patches/splatoon3/runtime/audio/bank.mjs';\n"+code;
     code=once(code,'hp.connect(glue); glue.connect(lim); lim.connect(ctx.destination);','hp.connect(glue); glue.connect(lim); this.outputSafety=connectOutputSafety(ctx,lim);','sample peak protection');
     code=once(code,'const d = SFX[name];','const d = this.resolveWeaponSound?.(name) || SFX[name];','definitions');
     code=once(code,'const t = Math.max(now, o.at ?? now) + (o.delay || 0);',`const t = Math.max(now, Number.isFinite(o.at) ? o.at : now) + Math.max(0, Number.isFinite(o.delay) ? o.delay : 0);
@@ -21,7 +21,7 @@ export function adaptWeaponAudio(rel,code){
     voice.priority=priority;
     const obstruction=Math.min(1,Math.max(0,Number(o.occlusion)||0));
     if(obstruction&&voice.lp){voice.lp.frequency.value=Math.min(voice.lp.frequency.value,22000*Math.pow(.055,obstruction));voice.vol*=1-obstruction*.38;voice.out.gain.value=voice.vol;}`,'spatial priority');
-    code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\nexport const audio = new AudioEngine();','installation');
+    code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\ninstallRecordedCombatCues(AudioEngine);\nexport const audio = new AudioEngine();','installation');
   }
   if(rel==='src/game/weapons.js'){
     code=code.replace("emit('bomb:explode', { actor: b.owner,","emit('bomb:explode', { subId:b.s3Sub?.id||'bomb',actor:b.owner,");
@@ -115,7 +115,11 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
       "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
     code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
-      "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
+      "G.audio?.playRecordedCombat?.(G.audio?.recordedCueForHit?.({attacker,weaponId,damage,killed}) || 'hit',{volume:0.7});",'source-recorded hit confirmation');
+    code=once(code,
+      "G.audio?.play('splat_enemy', { volume: 0.9 });",
+      "G.audio?.playRecordedCombat?.('splat',{volume:0.75}); G.audio?.playRecordedCombat?.('bubble',{volume:0.36});",
+      'source-recorded opponent splat and bubble instead of synth notification');
     // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
