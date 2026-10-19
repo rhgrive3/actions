@@ -23,6 +23,15 @@ export function adaptUiLocalization(rel, code) {
     return code.replace(bullet, "h('span', null, h('b', null, b), ' — ', t)");
   }
   if (!/^src\/ui\/(menus|menu-art|hud|hud-boss|diorama)\.js$/.test(rel)) return code;
+  let loadingLabel = false;
+  if (rel === 'src/ui/menus.js' && code.includes('  setLoading(p, label) {')) {
+    // Boot passes some progress labels untranslated (main.js 0.55 / 0.7 / 0.93).
+    // Translate at the single owner; already-Japanese labels pass through.
+    const label = 'if (label != null) this._loading.label = String(label);';
+    if (!code.includes(label)) throw Error('Missing loading label localization anchor');
+    code = code.replace(label, 'if (label != null) this._loading.label = tu(String(label));');
+    loadingLabel = true;
+  }
   if (rel === 'src/ui/menus.js' && code.includes('const TITLE_ADJ =')) {
     const title = 'return `${TITLE_ADJ[x % TITLE_ADJ.length]} ${TITLE_NOUN[(x >>> 8) % TITLE_NOUN.length]}`;';
     if (!code.includes(title)) throw Error('Missing authored splashtag localization anchor');
@@ -74,5 +83,5 @@ export function adaptUiLocalization(rel, code) {
   // A template may contain another UI call. Keep the outer edit only.
   const edits=changes.sort((a,b)=>a[0]-b[0]||b[1]-a[1]).filter((edit,i,all)=>!all.slice(0,i).some(prior=>prior[0]<=edit[0]&&prior[1]>=edit[1]));
   for (const [start,end,value] of edits.reverse()) code=code.slice(0,start)+value+code.slice(end);
-  return edits.length ? "import { tu } from '../i18n.js';\n"+code : code;
+  return edits.length || loadingLabel ? "import { tu } from '../i18n.js';\n"+code : code;
 }

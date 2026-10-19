@@ -5,7 +5,7 @@ import { isJa } from '../../../src/i18n.js';
 const JA = {
   'PRACTICE RANGE': '試し撃ちラボ',
   'Range, damage, paint, movement, bombs and specials — measured on a world-scale grid.': '射程・ダメージ・塗り・移動・ボム・スペシャルを、ワールド座標の目盛りで確かめよう。',
-  'TRAINING': 'トレーニング', 'SOLO': 'ひとりで', '9 TEST ZONES': '9つのテストゾーン', 'NO TIMER': '時間無制限',
+  'START': 'スタート', 'TRAINING': 'トレーニング', 'SOLO': 'ひとりで', '9 TEST ZONES': '9つのテストゾーン', 'NO TIMER': '時間無制限',
   'Stand on a pad to use it': 'パッドに乗って使う',
   'SWITCHING WEAPON': 'ブキを持ちかえ中', 'RESETTING PAINT': '塗りをリセット中', 'RESETTING TARGETS': 'ターゲットをリセット中',
   'INKING THE SWIM COURSE': 'スイムコースを塗っています', 'RESUPPLY': 'インク・スペシャル補給',

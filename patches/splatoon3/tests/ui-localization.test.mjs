@@ -55,3 +55,34 @@ test('update news cards translate every label and keep the bullet separator outs
  for(const label of [...literals,'What’s new','CONTINUE','Skip','TRY IT','LATER','Locker']) assert.notEqual(translate(label),label,label);
  assert.equal(translate('TRY IT'),'あそんでみる');
 });
+test('boot progress labels are translated at the loading owner, including those main.js passes raw',()=>{
+ const composed=adaptBuildSource('src/ui/menus.js',fs.readFileSync(new URL('../../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8'));
+ assert.match(composed,/this\._loading\.label = tu\(String\(label\)\);/);
+ assert.match(composed,/^import \{ tu \} from '\.\.\/i18n\.js';/m);
+ const main=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
+ const labels=[...main.matchAll(/await progress\([\d.]+, (?:t\()?'([^']+)'/g)].map(m=>m[1]);
+ assert.ok(labels.includes('Teaching squids to swim…')&&labels.includes('Tuning the tentacles…'),'raw boot labels still present upstream');
+ const ja=Object.fromEntries([...fs.readFileSync(new URL('../../../inkwave-public/src/i18n.js',import.meta.url),'utf8').matchAll(/'((?:Mixing|Building|Filling|Teaching|Tuning|Warming|Ready)[^']*)': '([^']+)'/g)].map(m=>[m[1],m[2]]));
+ for(const label of labels) assert.ok(ja[label]&&ja[label]!==label&&/[ぁ-んァ-ン一-龯]/.test(ja[label]),label);
+});
+test('control guide map marker and practice range card action are localized',()=>{
+ // map-toggle-adapter makes every Map row show the 'toggle' marker; h() translates it like 'hold'.
+ const composed=adaptBuildSource('src/ui/menus.js',fs.readFileSync(new URL('../../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8'));
+ assert.match(composed,/\['Map', 'toggle', K\('TAB'\)/);
+ assert.equal(UI_JA.toggle,'押して開閉');
+ const range=fs.readFileSync(new URL('../../practice-range/runtime/menu.mjs',import.meta.url),'utf8');
+ assert.match(range,/GLYPHS\.play \}\), L\('START'\)\)/);
+ assert.match(fs.readFileSync(new URL('../../practice-range/runtime/strings.mjs',import.meta.url),'utf8'),/'START': 'スタート'/);
+});
+test('map hints follow the shared TAB/M map toggle instead of the retired hold',async()=>{
+ const {UI_EN}=await import('../runtime/ui-strings.mjs');
+ const hud=adaptBuildSource('src/ui/hud.js',fs.readFileSync(new URL('../../../inkwave-public/src/ui/hud.js',import.meta.url),'utf8'));
+ const menus=adaptBuildSource('src/ui/menus.js',fs.readFileSync(new URL('../../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8'));
+ assert.match(hud,/press \[TAB\] or \[M\] to close/); // map-toggle-adapter owns the toggle
+ for(const [source,code] of [['Hold [TAB] to plan a Super Jump',hud],['Hold [TAB] to open the big map and spot unpainted turf.',menus]]) {
+  assert.ok(code.includes(source),source);
+  assert.doesNotMatch(UI_JA[source],/長押し/);assert.match(UI_JA[source],/\[TAB\]か\[M\]/);
+  assert.match(UI_EN[source],/^Press \[TAB\] or \[M\]/);
+ }
+ assert.doesNotMatch(UI_EN['Minimap <b>hidden</b> — hold TAB for the big map'],/hold/i);
+});

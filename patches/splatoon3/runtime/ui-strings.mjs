@@ -2,6 +2,8 @@
 export const UI_JA = Object.freeze({
   'HULLBREAKER':'ハルブレイカー','BRUSH':'フデ','BRELLA':'シェルター','STRINGER':'ストリンガー','SPLATANA':'ワイパー','SHOOTER':'シューター','ROLLER':'ローラー','CHARGER':'チャージャー','DUALIES':'マニューバー','BLASTER':'ブラスター','SLOSHER':'スロッシャー','SPLATLING':'スピナー',
   'ONLINE':'オンライン','Play with friends · private rooms':'フレンドと遊ぶ・プライベートルーム','LIVE':'接続中',
+  // Control-guide marker beside the Map row (#map-toggle: the map stays open until pressed again).
+  'toggle':'押して開閉',
   'Turf War 4 v 4 — or team up with the bots against HULLBREAKER in a Boss Battle':'4対4のナワバリ、またはボットと協力してハルブレイカーに挑むボスバトル',
   'Private rooms for up to 8 friends — create one or join with a room code':'最大8人のプライベートルーム。部屋を作るか、コードで参加しよう',
   'BOOYAH!':'ナイス！','HEY!':'カモン！','DANCE':'ダンス','FLEX':'ポーズ',
@@ -97,6 +99,9 @@ export const UI_JA = Object.freeze({
   '#2 Super Jump Spot':'ジャンプされた回数 No.2','2nd most super jumped to by teammates':'味方からジャンプされた回数が2番目','#2 Enemy Splatter':'トドメ数 No.2','2nd most splats on your team':'チームでトドメをさした数が2番目','#2 Splat Assister':'アシスト数 No.2','2nd most assists on your team':'チームでアシストが2番目',
   'Press [1] – [4] · [5] – [9] or click · press [TAB] or [M] to close':'[1]〜[9]かクリックで選択・[TAB]か[M]で閉じる',
   'Press [1] – [9] or click · press [TAB] or [M] to close':'[1]〜[9]かクリックで選択・[TAB]か[M]で閉じる',
+  // reliability/map-toggle-adapter: [TAB]/[M] open and close the map (no hold). Touch keeps its own MAP-button text.
+  'Hold [TAB] to open the big map and spot unpainted turf.':'[TAB]か[M]でマップを開いて、塗れていない場所を探そう。',
+  'Hold [TAB] to plan a Super Jump':'[TAB]か[M]でスーパージャンプ先を選べる',
   'D-pad selects · LB/RB cycle Bubblers · right face A confirms · X closes':'十字キーで選択・LB/RBでバリア切替・右のAボタンで決定・Xで閉じる',
   'Right stick to point · D-pad selects allies/base · LB/RB cycle Bubblers · A confirms · release VIEW to close':'右スティックか十字キーで選択・LB/RBでバリア切替・Aで決定・VIEWをはなすと閉じる',
   '#1 Overall Splatter':'バトル No.1','Most splats and assists on your team':'チームでたおした数とアシストが最多',
@@ -108,7 +113,10 @@ export const UI_JA = Object.freeze({
   'HEAVY HITTER':'大ダメージ賞','Dealt the most damage to the boss':'ボスへのダメージが最多','SHELL CRACKER':'弱点ヒット賞','Most weak-point hits':'弱点への命中が最多',
   'BROOD BUSTER':'小ガニ退治賞','Popped the most crablets':'小ガニをたおした数が最多','UNSINKABLE':'不沈のイカ','CLEANUP CREW':'おそうじ賞','Painted over the most boss ink':'ボスのインクを塗り返した面積が最多',
 });
-export const UI_EN = Object.freeze({'Weapon appearance / ブキの見た目':'Weapon appearance','APPEARANCE / 見た目: ':'APPEARANCE: ','Visual only · Local device / 見た目のみ・この端末':'Visual only · Saved on this device'});
+export const UI_EN = Object.freeze({'Weapon appearance / ブキの見た目':'Weapon appearance','APPEARANCE / 見た目: ':'APPEARANCE: ','Visual only · Local device / 見た目のみ・この端末':'Visual only · Saved on this device',
+  'Hold [TAB] to open the big map and spot unpainted turf.':'Press [TAB] or [M] to open the big map and spot unpainted turf.',
+  'Hold [TAB] to plan a Super Jump':'Press [TAB] or [M] to plan a Super Jump',
+  'Minimap <b>hidden</b> — hold TAB for the big map':'Minimap <b>hidden</b> — press TAB for the big map'});
 // Matching happens only at UI-owned template sinks, never in network/chat data.
 export function makeUiTranslator(exact, dictionary, japanese) {
   let patterns;

@@ -45,7 +45,7 @@ function rangeCard(menus) {
     h('span', { class: 'iw-mode__tape' }, h('span', { class: 'iw-display' }, L('PRACTICE RANGE'))),
     h('span', { class: 'iw-mode__blurb' }, L('Range, damage, paint, movement, bombs and specials — measured on a world-scale grid.')),
     h('span', { class: 'iw-mode__chips' }, [[GLYPHS.users, L('SOLO')], [GLYPHS.map, L('9 TEST ZONES')], [GLYPHS.clock, L('NO TIMER')]].map(([ic, t]) => h('span', { class: 'iw-chip' }, h('i', { html: ic }), t))),
-    h('span', { class: 'iw-mode__go' }, h('i', { html: GLYPHS.play }), 'START'));
+    h('span', { class: 'iw-mode__go' }, h('i', { html: GLYPHS.play }), L('START')));
   c.dataset.cur = 'own';
   menus._fx(c, { tilt: 7 });
   menus._bind(c, { id: 'mode-range', accept: () => startRange(menus, c) });
