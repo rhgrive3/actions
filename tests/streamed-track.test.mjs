@@ -269,3 +269,41 @@ test('live retry is cancelled when the match soundtrack stops', () => {
     globalThis.clearTimeout = saved.clear;
   }
 });
+
+test('a new START gesture can re-prime Jet Arrow after an earlier match exhausted retries', async () => {
+  const saved = { audio: globalThis.Audio, window: globalThis.window };
+  const elements = [];
+  class FreshAudio {
+    constructor() { this.listeners = new Map(); this.plays = 0; this.currentTime = 0; elements.push(this); }
+    play() { this.plays++; return Promise.resolve(); }
+    pause() {}
+    load() {}
+    removeAttribute() {}
+    addEventListener(name, callback) { this.listeners.set(name, callback); }
+    removeEventListener(name) { this.listeners.delete(name); }
+  }
+  const param = () => ({ value: 0, cancelScheduledValues() {}, setValueAtTime(v) { this.value = v; }, linearRampToValueAtTime(v) { this.value = v; }, setTargetAtTime(v) { this.value = v; } });
+  const node = () => ({ gain: param(), connect() {}, disconnect() {} });
+  globalThis.Audio = FreshAudio;
+  globalThis.window = {};
+  const m = new MusicEngine();
+  m.ctx = { currentTime: 9, createGain: node, createMediaElementSource: () => node() };
+  m.offline = false;
+  m.mix = node(); m.dA = { delayTime: param() }; m.dB = { delayTime: param() };
+  m._tick = () => {};
+  try {
+    m._fileFailures.add('battle');
+    m.preloadFile('battle', { prime: true });
+    await Promise.resolve();
+    assert.equal(elements.length, 1, 'a new user gesture may retry a previous failure');
+    assert.equal(elements[0].plays, 1);
+    m.play('battle');
+    assert.ok(m.current instanceof StreamedTrack);
+    assert.equal(m.current.element, elements[0]);
+    assert.equal(m._fileFailures.has('battle'), false, 'successful new match clears stale failure');
+  } finally {
+    m.dispose();
+    globalThis.Audio = saved.audio;
+    if (saved.window === undefined) delete globalThis.window; else globalThis.window = saved.window;
+  }
+});
