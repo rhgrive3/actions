@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { deathBlastPlan } from '../../splatoon3/runtime/death-blast.mjs';
 import { fixture } from './robustness-fixture.mjs';
 
 function paintLevel(THREE, size = 2, origin = 0) {
@@ -38,6 +39,11 @@ async function client(id, memberIds = ['a', 'b', 'c'], host = 'a', large = false
   f.G.time = 12;
   f.G.paint = new f.PaintSystem(paintRenderer(f.THREE), paintLevel(f.THREE, large ? 20 : 2, large ? -10 : 0), { atlasSize: large ? 1024 : 128, maxDensity: large ? 30 : 8, cell: 0.25 });
   const paint = f.G.paint, pushQuad = paint._pushQuad.bind(paint), emitGrowth = paint._emitGrowth.bind(paint);
+  // These ordering/numeric tests model an explicit local actor producer.
+  const nativeSplat = paint.splat;
+  paint.splat = function(c, r, team, opts = {}) {
+    return nativeSplat.call(this, c, r, team, { claimOwner: actors.find(a => a.owner === id), ...opts });
+  };
   paint._testQuadRecords = [];
   paint._emitGrowth = (growth, ...args) => {
     paint._testCurrentOrder = growth.netOrderId;
@@ -126,7 +132,7 @@ test('#522 valid built-in paint kinds and same-sequence corrected payload stay c
 });
 
 
-test('#522 legacy optional stretch uses the renderer default and rejects incomplete direction groups',async()=>{
+test('#522 legacy stretch rows lack authority; canonical default stretch remains supported',async()=>{
   const observer=await client('a'),peer=observer.nm._peer('b');
   // Peer 'b' owns team 1 in this fixture, so its own-team rows paint team 1.
   const base=[0,'s',1,0,1,.42,1,.31,0,3e38,0,3e38];
@@ -139,7 +145,11 @@ test('#522 legacy optional stretch uses the renderer default and rejects incompl
   }
   const valid=[0,'s',1,0,1,.42,1,.31,0,1,0,0];valid._netTick=1;valid._netSeq=1;
   observer.nm._play('b',valid);
-  assert.equal(peer._lastEventSeq,1,'safe legacy omitted amount stays supported');
+  assert.equal(peer._lastEventSeq??0,0,'legacy rows cannot authorize paint');
+  const sender=await client('b');
+  sender.paint.splat(new sender.f.THREE.Vector3(1,0,1),.42,1,{seed:.31,stretch:new sender.f.THREE.Vector3(1,0,0)});
+  applyRemote(observer,'b',sender.nm.out.at(-1));
+  assert.equal(peer._lastEventSeq,1,'owned canonical default stretch is supported');
   assert.ok(observer.paint.growing.length>0);
   for(const g of observer.paint.growing)observer.paint._emitGrowth(g,3,1,false);
   assert.ok(Array.from(observer.paint.aStretch).every(Number.isFinite));
@@ -149,9 +159,18 @@ test('#522 legacy optional stretch uses the renderer default and rejects incompl
 // a fresh observer admits it. Admission is the only observable: rejected rows reserve no sequence.
 async function admits(from, radius, team, opts = {}) {
   const sender = await client(from);
-  sender.paint.splat(new sender.f.THREE.Vector3(1, 0, 1), radius, team, { seed: 0.31, ...opts });
-  const event = sender.nm.out.at(-1);
   const observer = await client('c');
+  if(opts.paintBoss){sender.nm.match.boss={};observer.nm.match.boss={};}
+  let center = new sender.f.THREE.Vector3(1,0,1);
+  if(opts.death){
+    const victim=sender.actors.find(a=>a.owner===from),attacker=sender.actors.find(a=>a.team===team);
+    const index=radius===5?0:1,plan=deathBlastPlan(victim.pos,.31,sender.f.profile.deathBlast)[index];
+    center.set(plan.x,plan.y,plan.z);
+    opts={...opts,seed:plan.seed,paintDeath:[victim.nid,0,attacker.nid,victim.pos.x,victim.pos.y,victim.pos.z,.31,team,index]};
+  }
+  sender.paint.splat(center, radius, team, { seed: 0.31, ...opts });
+  const event = sender.nm.out.at(-1);
+  if(!event)return false;
   const peer = observer.nm._peer(from);
   observer.nm._play(from, received(event));
   return peer._lastEventSeq === event._netSeq;
@@ -176,13 +195,13 @@ test('#522 radius ceiling admits the largest legitimate splat and rejects anythi
   assert.deepEqual(Array.from(observer.paint.grid), Array.from(sender.paint.grid));
 });
 
-test('#522 team ownership: own-team rows pass; foreign rows pass only with the exact victim-burst signature', async () => {
+test('#522 actor ownership: own-team rows pass; foreign rows require explicit death or Boss authority', async () => {
   const { THREE } = await fixture();
   assert.equal(await admits('b', 0.42, 1), true, 'own-team paint from b is admitted');
   assert.equal(await admits('b', 0.42, 0), false, 'a foreign-team ordinary row from b is rejected');
   // splatoon3/runtime/death-blast.mjs: SplPlayer DieBlastParam PaintRadius 5.0 + SplashAroundParam PaintRadius 1.0.
-  assert.equal(await admits('b', 5, 0), true, 'a victim death blast paints the attacker team (DieBlastParam.PaintRadius)');
-  assert.equal(await admits('b', 1, 0), true, 'a victim death-blast droplet paints the attacker team (SplashAroundParam.PaintRadius)');
+  assert.equal(await admits('b', 5, 0), false, 'a victim signature alone cannot authorize a death blast');
+  assert.equal(await admits('b', 1, 0), false, 'a victim signature alone cannot authorize a droplet');
   assert.equal(await admits('b', 1.7, 0), false, 'the replaced native radius-1.7 burst is no longer a producer');
   for (const radius of [5, 1]) {
     assert.equal(await admits('b', radius, 0, { kind: 'shot' }), false, `a foreign ${radius} burst carrying a kind is rejected`);
@@ -191,19 +210,19 @@ test('#522 team ownership: own-team rows pass; foreign rows pass only with the e
   }
   assert.equal(await admits('b', 5, 1, { kind: 'shot' }), false, 'only the plain death-blast signature may exceed the ordinary ceiling');
   assert.equal(await admits('c', 0.42, 1), false, 'a team-0 member cannot paint team 1 at ordinary radius');
-  assert.equal(await admits('a', 0.42, 1), true, 'host-owned Boss ink may paint the other team');
+  assert.equal(await admits('a', 0.42, 1), false, 'host status alone cannot authorize foreign-team paint');
 });
 
 test('#522 every legitimate paint producer passes the ceiling and team admission', async () => {
   const producers = [
     ['Tidal Slam centre', 'b', 5.2 * 0.72, 1, {}],
     ['Splat Bomb centre (SUB.bomb.paintRadius)', 'b', 2.7, 1, {}],
-    ['Boss hazard (host, 2.8)', 'a', 2.8, 1, {}],
+    ['Boss hazard (host, 2.8)', 'a', 2.8, 1, {paintBoss:true}],
     ['Ink flight widthNear (2.226)', 'b', 2.226, 1, { kind: 'shot' }],
     ['Blaster impact at 1.15 jitter (1.5 * 1.15)', 'b', 1.5 * 1.15, 1, {}],
     ['Tidal Slam scatter (1.1 + 0.6)', 'b', 1.7, 1, {}],
-    ['Victim death blast (attacker team, DieBlastParam.PaintRadius)', 'b', 5, 0, {}],
-    ['Victim death-blast droplet (attacker team, SplashAroundParam.PaintRadius)', 'b', 1, 0, {}],
+    ['Victim death blast (attacker team, DieBlastParam.PaintRadius)', 'b', 5, 0, {death:true}],
+    ['Victim death-blast droplet (attacker team, SplashAroundParam.PaintRadius)', 'b', 1, 0, {death:true}],
     ['Triple Splashdown fist stamp (#912, FIST_STAMP_RADIUS)', 'b', 3.74, 1, {}],
   ];
   for (const [name, from, radius, team, opts] of producers) assert.equal(await admits(from, radius, team, opts), true, `${name} still admitted`);
