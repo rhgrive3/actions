@@ -1,15 +1,72 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { withBlasterSplashHit, blasterHitCueKind, blasterHitCuePitch, BLASTER_HIT_PITCH } from '../runtime/audio/blaster-hit.mjs';
 import { specialActionAudioEvent, specialActivationAudioEvent } from '../runtime/audio/kit-runtime.mjs';
 import { installWeaponAudioRuntime } from '../runtime/audio/runtime.mjs';
 import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
+import { WeaponSoundBank } from '../runtime/audio/bank.mjs';
+import { RealS3SampleLoader } from '../runtime/audio/real-s3-loader.mjs';
 import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
 
 const manifest=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
 const clip=(id,event)=>manifest.clips.some(c=>c.id===id&&c.event===event);
+
+test('2022 critical/damage/dead-splash MP3s have strict byte provenance and distinct combat events',()=>{
+ const expected=[
+  ['combat:critical','HitEf_CriticalHit_00.mp3','5366114895aca376f4780aa1123d90a7c4542bcad24a464afc374f47f28169cd'],
+  ['combat:damage','HitEf_Damage_00.mp3','c4b6ac316315ee76f06392821db008334daf6f162e106347f164196ac64a85db'],
+  ['combat:splat','Pl_DeadSplash_00.mp3','333f4c0f699adedb573b4bdf2b811bfa0c39b77330a69ced5f31c4a915d8ce1f']
+ ];
+ for(const [id,filename,sha] of expected){
+   const c=manifest.clips.filter(c=>c.id===id&&c.event==='fire');
+   assert.equal(c.length,1,'one verified source only: '+id);
+   assert.equal(c[0].sourceName,filename);
+   assert.equal(c[0].sha256,sha);
+   assert.equal(crypto.createHash('sha256').update(
+     fs.readFileSync(new URL('../runtime/audio/s3-real/'+filename,import.meta.url))
+   ).digest('hex'),sha,'source bytes cannot silently change '+id);
+ }
+});
+
+test('production Charger player-hit and splat cues use source-specific MP3 only',()=>{
+ const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
+ const native=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
+ const built=adaptBuildSource('src/main.js',src);
+ const weapon=adaptBuildSource('src/game/weapons.js',native);
+ assert.match(built,/damage>=95\?'combat:critical':'combat:damage'/,
+   'real 2022 HitEf critical sound is selected only for forceful Charger body contact');
+ assert.match(built,/G\.audio\?\.playWeapon\?\.\('combat:splat','fire'/,
+   'real 2022 Pl DeadSplash is selected for Charger-owned splat, not every other weapon');
+ assert.match(built,/test\(String\(cause\|\|''\)\)/,'splat cue follows the confirmed damage cause');
+ assert.match(weapon,/!\/\^\(\?:charger/,'native Charger ink_hit_body synth layer must be gated');
+ assert.match(weapon,/G\.audio\.play\('ink_hit_body'/,'other weapon bodies preserve their existing hit cue');
+ const index=built.indexOf('if (/^(?:charger');
+ assert.ok(index>0,'source replacement is inside full production composition');
+});
+
+test('three battle-combat source recordings are resident before Charger first shot',async()=>{
+ const {ctx}=mkctx(),audio=new MixerStub(ctx),b=audio.weaponBank();
+ const mock=manifest([
+   clip('charger','fire','Wp_ChargerNormal_Shot_00.mp3'),
+   clip('combat:critical','fire','HitEf_CriticalHit_00.mp3'),
+   clip('combat:damage','fire','HitEf_Damage_00.mp3'),
+   clip('combat:splat','fire','Pl_DeadSplash_00.mp3')
+ ]);
+ audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>mock});
+ b.authorized.fetcher=async()=>res;
+ assert.equal((await audio.requireRecordedMainShot('charger')).ready,true);
+ for(const id of ['combat:critical','combat:damage','combat:splat']){
+  assert.ok(b.authorized.pick(id,'fire'),id+' resident before first shot');
+  assert.equal(audio.playWeapon(id,'fire',{actor:{isLocal:true}})?.weaponId,id);
+  assert.equal(audio.played.at(-1).voice.srcs[0].buffer,b.authorized.pick(id,'fire').buffer,
+   'real authorized source buffer, not generated oscillator: '+id);
+ }
+ assert.equal(audio.stats().authoredFallbackShots,0,'combat sample playback never invokes a synth backup');
+ audio.disposeWeaponAudio();
+});
 
 test('alternate kit fire, impact, charge loop and sub/special prefetch keep base audio only',()=>{
  const listeners=new Map(),shots=[],loops=[],prepares=[],loads=[];
