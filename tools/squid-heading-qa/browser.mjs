@@ -1,14 +1,25 @@
 import * as THREE from 'three';
 import {createProductionLighting,PRODUCTION_LIGHTING_CONFIG} from '../squid-production-qa/lighting.mjs';
 import {collectHeadingFrames} from './probe.mjs';
+// Diagnostic guide geometry only. Production Three intentionally omits the
+// convenience Helper classes; build equivalent lines/cone from existing exports.
+export function createHeadingGuides(){
+ const vertices=[],colors=[],center=new THREE.Color(0x52617a),minor=new THREE.Color(0x8793a4);
+ for(let i=0;i<=16;i++){const k=-2+i*.25,c=i===8?center:minor;vertices.push(-2,0,k,2,0,k,k,0,-2,k,0,2);for(let j=0;j<4;j++)colors.push(c.r,c.g,c.b);}
+ const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ const grid=new THREE.LineSegments(geometry,new THREE.LineBasicMaterial({vertexColors:true,toneMapped:false}));
+ const travel=new THREE.Group(),lineGeometry=new THREE.BufferGeometry();lineGeometry.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,0,1,0],3));
+ travel.line=new THREE.LineSegments(lineGeometry,new THREE.LineBasicMaterial({color:0x2266ff,toneMapped:false}));travel.line.matrixAutoUpdate=false;travel.line.scale.set(1,.75,1);travel.line.updateMatrix();
+ const coneGeometry=new THREE.ConeGeometry(.5,1,5,1);coneGeometry.translate(0,-.5,0);travel.cone=new THREE.Mesh(coneGeometry,new THREE.MeshBasicMaterial({color:0x2266ff,toneMapped:false}));travel.cone.matrixAutoUpdate=false;travel.cone.scale.set(.08,.15,.08);travel.cone.position.y=.9;travel.cone.updateMatrix();
+ travel.add(travel.line,travel.cone);travel.quaternion.setFromAxisAngle(new THREE.Vector3(0,0,-1),Math.PI/2);return{grid,travel};
+}
 export async function run({prefix}){
  const {install}=await import(prefix+'patches/splatoon3/runtime/install.mjs'),api=install(await fetch(prefix+'patches/splatoon3/profile.json').then(r=>r.json()));
  api.Level=(await import(prefix+'src/world/level.js')).Level;
  const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(900,900);renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=.94;document.body.appendChild(renderer.domElement);
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(25,1,.01,5000);Object.assign(api.G,{scene,camera,renderer});
  const {Environment}=await import(prefix+'src/world/environment.js'),env=createProductionLighting(Environment,renderer,scene),images=[];
- const grid=new THREE.GridHelper(4,16,0x52617a,0x8793a4);grid.position.y=-.004;scene.add(grid);
- const travel=new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(),.9,0x2266ff,.15,.08);scene.add(travel);
+ const {grid,travel}=createHeadingGuides();grid.position.y=-.004;scene.add(grid,travel);
  try{
   const result=await collectHeadingFrames(api,async({actor:a,row})=>{
    const target=a.character.root.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,.3,0));grid.position.x=a.pos.x;grid.position.z=a.pos.z;travel.position.copy(a.pos).add(new THREE.Vector3(0,.025,0));

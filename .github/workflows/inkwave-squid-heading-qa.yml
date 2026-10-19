@@ -11,7 +11,7 @@ permissions:
   contents: read
 concurrency:
   group: squid-heading-native-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   compare-heading:
     runs-on: ubuntu-latest
@@ -32,7 +32,7 @@ jobs:
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
       - name: Verify normal input and native QA contracts
-        run: node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/squid-heading-frame.test.mjs patches/local-quality/tests/squid-heading-boundary.test.mjs tools/squid-heading-qa/probe.test.mjs tools/squid-heading-qa/compare.test.mjs tools/squid-heading-qa/workflow.test.mjs
+        run: node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/squid-heading-frame.test.mjs patches/local-quality/tests/squid-heading-boundary.test.mjs tools/squid-heading-qa/probe.test.mjs tools/squid-heading-qa/compare.test.mjs tools/squid-heading-qa/workflow.test.mjs tools/squid-heading-qa/three-contract.test.mjs
       - name: Checkout fixed baseline without repository history
         uses: actions/checkout@v4
         with:
@@ -50,7 +50,7 @@ jobs:
         run: |
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
-          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/squid-heading-frame.test.mjs patches/local-quality/tests/squid-heading-boundary.test.mjs tools/squid-heading-qa/probe.test.mjs tools/squid-heading-qa/compare.test.mjs tools/squid-heading-qa/workflow.test.mjs
+          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/squid-heading-frame.test.mjs patches/local-quality/tests/squid-heading-boundary.test.mjs tools/squid-heading-qa/probe.test.mjs tools/squid-heading-qa/compare.test.mjs tools/squid-heading-qa/workflow.test.mjs tools/squid-heading-qa/three-contract.test.mjs
           node tools/squid-heading-qa/run.mjs --site _site --out .qa-evidence/squid-heading-candidate --expect candidate
       - name: Verify matched camera, light, inputs, source phase and preserved shape
         run: node tools/squid-heading-qa/compare.mjs .qa-evidence/squid-heading-baseline/result.json .qa-evidence/squid-heading-candidate/result.json "$SOURCE_SHA" .qa-evidence/squid-heading-comparison.json

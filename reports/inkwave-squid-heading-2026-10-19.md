@@ -66,3 +66,30 @@ The paired comparison rejects mismatched non-heading state and checks geometry/m
 The existing optional swim overlay writes Euler-Z bank under a roughly 90-degree pitch, which can also appear as a heading oscillation rather than world roll. Its axis composition is a separate confirmed mathematical observation and is not changed by this source-heading patch. Straight-swim oscillation may therefore remain.
 
 The full user-visible symptom, arbitrary external parent rotations, live remote transport behavior, and Nintendo-exact banking aesthetics are not certified here. The proposal is limited to the reproduced double-turn defect and preserving the surrounding game/animation contracts. No merge or final visual acceptance follows from CPU results alone.
+
+## Native QA export compatibility repair
+
+Exact head `473f18ce7fee52d3fae2681d548d717875ba64eb` completed its eight
+source tests and fixed-baseline build, then stopped before the first image:
+production Three intentionally omits `GridHelper` (and `ArrowHelper`).
+[Failed native run](https://github.com/rhgrive3/actions/actions/runs/39253333391)
+produced no heading screenshots; candidate capture and paired review did not run.
+The original failure artifact remains preserved.
+
+The QA-only repair builds the same grid and arrow from existing emitted
+primitives. Tests compare all geometry attributes, indices, matrices and material
+settings against the authored helpers. Neither production Three exports nor any
+runtime, source clip, model geometry, camera, lighting or input was changed.
+Before launching Chromium, an AST-based gate checks browser/probe/axis/lighting
+references and constructors against the exact manifest-bound emitted Three
+namespace. Missing exports, aliases, computed/dynamic access and nonconstructors
+have portable negative controls. All QA modules also undergo a syntax check;
+source and emitted CI run the guide contracts, and paired receipts compare the
+export contract and harness hashes.
+
+The failed run's Three SHA-256
+`941d498aa2f84e571501b2a9de90bed8736307511a877d3f260132d82b38e677`
+was reproduced locally: seven export/guide/syntax tests passed against its 149
+exports, and ten source/workflow/paired contracts passed. An independent repeat
+also passed seven tests. These are CPU contract results; replacement-head native
+images and visual review are still required.

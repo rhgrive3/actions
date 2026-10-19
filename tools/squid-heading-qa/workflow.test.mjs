@@ -14,6 +14,8 @@ function verify(code){
  assert(code.includes('INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test --test-concurrency=1'));
  assert(code.includes('node tools/squid-heading-qa/compare.mjs .qa-evidence/squid-heading-baseline/result.json .qa-evidence/squid-heading-candidate/result.json "$SOURCE_SHA"'));
  assert(code.includes('timeout-minutes: 40'));
+ assert(code.includes('group: squid-heading-native-${{ github.ref }}\n  cancel-in-progress: true')); 
+ assert.equal((code.match(/tools\/squid-heading-qa\/three-contract.test.mjs/g)||[]).length,2,'source and emitted export/guide tests');
 }
 test('native heading workflow keeps two shallow exact-head builds and emitted/paired gates',()=>{
  verify(workflow);
@@ -24,7 +26,10 @@ test('native heading workflow keeps two shallow exact-head builds and emitted/pa
   s=>s.replace('test "$(git -C _squid_heading_baseline rev-parse HEAD)" = "$BASE_SHA"','true'),
   s=>s.replace('SOURCE_SHA="$BASE_SHA" node ../tools/squid-heading-qa/run.mjs','node ../tools/squid-heading-qa/run.mjs'),
   s=>s.replace('INKWAVE_BUILT_SITE="$PWD/_site"','IGNORED_SITE="$PWD/_site"'),
-  s=>s.replace('node tools/squid-heading-qa/compare.mjs','echo tools/squid-heading-qa/compare.mjs')
+  s=>s.replace('node tools/squid-heading-qa/compare.mjs','echo tools/squid-heading-qa/compare.mjs'),
+  s=>s.replace('tools/squid-heading-qa/three-contract.test.mjs',''),
+  s=>s.replace('cancel-in-progress: true','cancel-in-progress: false'),
+  s=>s.replace('group: squid-heading-native-${{ github.ref }}','group: squid-heading-native-all')
  ])assert.throws(()=>verify(mutate(workflow)));
  for(const rel of ['../../patches/local-quality/tests/squid-heading-frame.test.mjs','../../patches/local-quality/tests/squid-heading-boundary.test.mjs','./probe.test.mjs']){
   const code=fs.readFileSync(new URL(rel,import.meta.url),'utf8');
