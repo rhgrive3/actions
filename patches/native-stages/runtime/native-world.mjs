@@ -9,7 +9,7 @@ import { NativeLevel } from './native-level.mjs';
 import { NativePhysics } from './native-physics.mjs';
 import { nativeDisplay,nativeInkGeometry,nativeInkMaterial } from './native-render.mjs';
 import { NativeInkMesh } from './native-ink-chunks.mjs';
-import { nativeStageTextureLimit } from './native-texture-budget.mjs';
+import { nativeStageTextureCaps } from './native-texture-budget.mjs';
 import {sourceLoadingStatus} from './source-menu.mjs';
 
 function releaseCurrent(game){
@@ -31,12 +31,13 @@ export async function buildNativeWorld(game,map,current){
   status.update('textures');
   const level=new NativeLevel(data),physics=new NativePhysics(level);
   const quality=['high','ultra'].includes(game.settings.quality)?'high':game.settings.quality==='low'?'low':'balanced';
-  const textureLimit=nativeStageTextureLimit(data.manifest,quality,{
+  const textureCaps=nativeStageTextureCaps(data.manifest,quality,{
     mobile:!!game.mobile?.touch,
     deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
     maxTextureSize:G.renderer.capabilities.maxTextureSize
   });
-  const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureLimit);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
+  const textureLimit=textureCaps.maxDimension;
+  const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
   if(!current()){display.dispose();return;}
   paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
   // Compact charts use a 2-texel guard. Avoid sampling other charts through
