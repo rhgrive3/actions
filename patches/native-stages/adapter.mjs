@@ -76,6 +76,39 @@ export function adaptNativeStages(rel,code){
     }
     if (!flow.current()) return;
     const theme = mapTheme(map, opts.time);`);
+
+  // Pausing a demo match must also stop its attract camera/reset driver.
+  // Otherwise the timed 110s/coverage reset can recreate bots mid-loader.
+  once('      if (m.attract) this._updateAttract(dt);',
+    '      if (m.attract && !m.paused) this._updateAttract(dt);');
+  once('this._fade(1, 400).then(() => { this._setPalette(this._pickPalette()); this._startAttract(); this._fade(0, 600); });',
+    'this._fade(1, 400).then(() => { if (!this.match?.attract || this.match.paused) return; this._setPalette(this._pickPalette()); this._startAttract(); this._fade(0, 600); });');
+  // The outgoing attract/live match stays visible during the fade, but it must
+  // not simulate or emit weapon audio while MP3 preflight / native assets await.
+  // Dispose it after the fade as before, then clear BOTH owners so _frame cannot
+  // update disposed actors while a native world is assembled asynchronously.
+  const quiesceOutgoingMatch = (signature, next, label) => {
+    const start = code.indexOf(signature), end = code.indexOf(next, start + signature.length);
+    if (start < 0 || end < 0) throw Error('Native stage transition boundary: ' + label);
+    let section = code.slice(start, end);
+    const fade = '    await this._fade(1, 350);';
+    const dispose = '    if (this.match) this.match.dispose();';
+    if (section.split(fade).length !== 2 || section.split(dispose).length !== 2)
+      throw Error('Native stage transition lifecycle anchor: ' + label);
+    section = section.replace(fade,
+      '    // Freeze the outgoing round before any asynchronous loading starts.\n' +
+      '    if (this.match) {\n' +
+      '      this.match.paused = true;\n' +
+      '      for (const actor of this.match.actors) actor.weaponRunner?.reset?.();\n' +
+      '    }\n' + fade);
+    section = section.replace(dispose, dispose + '\n    this.match = G.match = null;');
+    code = code.slice(0, start) + section + code.slice(end);
+  };
+  quiesceOutgoingMatch('  async startMatch(o = {}, flow = null) {',
+    '\n  // ---- online (src/net/session.js', 'offline');
+  quiesceOutgoingMatch('  async startNetMatch(cfg, nm) {',
+    '\n  // Compile every shader variant', 'online');
+
  }
  if(rel==='src/net/session.js'){
   code="import { nativeStageFingerprint, nativeStageCompatible, UNAVAILABLE_NATIVE_STAGES } from '../../patches/native-stages/runtime/registry.mjs';\n"+code;
