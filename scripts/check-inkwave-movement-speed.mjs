@@ -62,6 +62,9 @@ try {
           a.intent.sub=a.intent.squid=a.intent.jump=a.intent.special=false;
           a.intent.fire=mode!=='walk';
           const angle=degrees*Math.PI/180;a.intent.move.set(Math.sin(angle),0,Math.cos(angle));
+          // Rolling travels along the body heading, so the roller faces each tested direction
+          // (camera and body) before the swing; walk/shoot are unaffected by facing.
+          if(mode==='roller'){a.yaw=a.aimYaw=angle;a.yawVel=0;a.aimDir.set(Math.sin(angle),0,Math.cos(angle));}
           let baseRoll=false,dash=false,min=Infinity,max=0;
           for(let i=0;i<150;i++) {
             G.time+=1/60;a.update(1/60);
