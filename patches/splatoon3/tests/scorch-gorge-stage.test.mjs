@@ -58,7 +58,7 @@ async function loadRealm() {
   return entry.namespace;
 }
 
-test('build/adapter: Scorch Gorge adapter connects cleanly, fails closed on re-application, upstream locked', () => {
+test('build/adapter: Scorch layout is directly authored; only locked config/i18n remain guarded', () => {
   checkCompatibility(SRC);
 
   const mapsSrc = fs.readFileSync(path.join(SRC, 'src/world/maps.js'), 'utf8');
@@ -66,8 +66,9 @@ test('build/adapter: Scorch Gorge adapter connects cleanly, fails closed on re-a
   const i18nSrc = fs.readFileSync(path.join(SRC, 'src/i18n.js'), 'utf8');
 
   const adaptedMaps = adaptScorchGorge('src/world/maps.js', mapsSrc, replaceOnce);
+  assert.equal(adaptedMaps, mapsSrc, 'Scorch layout must not be inserted by a build-time adapter');
   assert.ok(adaptedMaps.includes("MAP_LAYOUTS.scorch = SCORCH;"));
-  assert.throws(() => adaptScorchGorge('src/world/maps.js', adaptedMaps, replaceOnce), /already connected/);
+  assert.equal(adaptScorchGorge('src/world/maps.js', adaptedMaps, replaceOnce), mapsSrc);
 
   const adaptedConfig = adaptScorchGorge('src/config.js', configSrc, replaceOnce);
   assert.ok(adaptedConfig.includes("id: 'scorch'"));

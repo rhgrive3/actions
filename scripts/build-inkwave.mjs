@@ -164,7 +164,7 @@ for (const [root, prefix] of [
     const rel = path.relative(root, file).split(path.sep).join('/');
     if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.startsWith('definitions/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
     // One native runtime module avoids inflating the bounded worker manifest.
-    if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs','runtime/source-worker.mjs'].includes(rel)) continue;
+    if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs','runtime/source-worker.mjs','runtime/native-projectile-sweep.mjs'].includes(rel)) continue;
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     if (prefix === 'patches/native-stages' && ['runtime/engine.mjs','runtime/registry.mjs','runtime/source-worker.mjs'].includes(rel) && !unminified) {
@@ -298,6 +298,9 @@ visit('patches/native-stages/runtime/source-worker.mjs');
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
   'patches/native-stages/runtime/source-worker.mjs',
+  // The catalogue and native ink collision solvers import this small standalone module.
+  // Include it in the immutable offline graph, not as an eager startup request.
+  'patches/native-stages/runtime/native-projectile-sweep.mjs',
   // ContactPolish: lazily import source animation at runtime, never a new eager HTML hint.
   'src/game/motion/source-bank.js',
   'src/game/motion/source-controller.js',
