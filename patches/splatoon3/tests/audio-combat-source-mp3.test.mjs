@@ -66,7 +66,9 @@ test('fully composed game routes Charger direct hits and splats to recorded S3 f
 test('recorded hit event follows accepted projectile, not attacker selected Charger',()=>{
  const charger={weapon:{kind:'charger'}};
  assert.equal(combatFeedbackCue(charger,'charger',159,()=>null,1), 'critical_hit');
- assert.equal(combatFeedbackCue(charger,'charger-01',120,()=>null,.999), 'critical_hit');
+ assert.equal(combatFeedbackCue(charger,'charger-01',120,()=>null,1), 'critical_hit');
+ assert.equal(combatFeedbackCue(charger,'charger',160,()=>null,.999), 'hit',
+   'at 0.999 q the authoritative Charger remains partial even if target splats');
  assert.equal(combatFeedbackCue(charger,'s3-charger-long',180,()=>null,1), 'critical_hit');
  assert.equal(combatFeedbackCue(charger,'s3-charger-longscope-01',160,()=>null,1), 'critical_hit');
  assert.equal(combatFeedbackCue(charger,'s3-charger-quick',40,()=>null,.49), 'hit',
