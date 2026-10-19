@@ -15,6 +15,7 @@ import { adaptRanked } from '../patches/splatoon3/ranked-adapter.mjs';
 import { adaptCameraAimControls } from '../patches/splatoon3/camera-aim-controls-adapter.mjs';
 import { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-adapter.mjs';
 import { adaptMainInkFootprints } from '../patches/splatoon3/main-ink-footprint-adapter.mjs';
+import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adapter.mjs';
 
 // Keep the tested source path identical to the production build's adapters.
 export function adaptBuildSource(rel, code) {
@@ -34,7 +35,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptMainInkFootprints(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
-  return applyZevantDisplayName(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)));
+  return applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce))));
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

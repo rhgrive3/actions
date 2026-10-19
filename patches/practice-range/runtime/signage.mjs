@@ -130,7 +130,7 @@ const ART = {
     stripes.forEach((c, i) => { g.fillStyle = c; g.fillRect(w * 0.015 + i * h * 0.12, h * 0.15, h * 0.08, h * 0.7); });
     g.fillStyle = CREAM; g.textAlign = 'left'; g.textBaseline = 'middle';
     const x0 = w * 0.015 + stripes.length * h * 0.12 + h * 0.18;
-    fit(g, 'INKWAVE INK LAB', TITAN, w * 0.6, Math.round(h * 0.46)); g.fillText('INKWAVE INK LAB', x0, h * 0.42);
+    fit(g, 'ZEVANT INK LAB', TITAN, w * 0.6, Math.round(h * 0.46)); g.fillText('ZEVANT INK LAB', x0, h * 0.42);
     g.fillStyle = '#e5b94d'; fit(g, isJa ? '試し撃ちラボ ・ PRACTICE RANGE' : 'PRACTICE RANGE · TEST FACILITY', (p) => RUBIK(p, 800), w * 0.55, Math.round(h * 0.2));
     g.fillText(isJa ? '試し撃ちラボ ・ PRACTICE RANGE' : 'PRACTICE RANGE · TEST FACILITY', x0, h * 0.78);
     g.fillStyle = MUTED; g.textAlign = 'right'; g.font = RUBIK(Math.round(h * 0.13), 600);
