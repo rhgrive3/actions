@@ -52,10 +52,15 @@ test('boot shell shows the same ZEVANT wordmark and classes as the native screen
   const shell = read('patches/loading-cache/shell.html');
   assert.doesNotMatch(shell, /INKWAVE(?![_-])|Turf Riot|TURF RIOT/);
   assert.ok(shell.includes('<h1 class="iw-zl__mark" aria-label="ZEVANT">' + zevantWordmark('zvs') + '</h1>'));
-  for (const cls of ['iw-zl__glow--a', 'iw-zl__glow--b', 'iw-zl__grid', 'iw-zl__beam', 'iw-zl__c--tl', 'iw-zl__status', 'iw-zl__rule', 'iw-zl__label', 'iw-zl__bar', 'iw-zl__fill', 'iw-zl__shine']) {
+  for (const cls of ['iw-zl__art', 'iw-zl__shade', 'iw-zl__beam', 'iw-zl__c--tl', 'iw-zl__status', 'iw-zl__rule', 'iw-zl__label', 'iw-zl__bar', 'iw-zl__fill', 'iw-zl__shine']) {
     assert.ok(shell.includes(cls), cls);
     assert.ok(css.includes('.' + cls), cls);
   }
+  // Arena backdrop is a locally hosted WebP resolved relative to styles/ui.css.
+  assert.match(css, /url\('\.\.\/patches\/local-quality\/assets\/loading\/arena\.webp'\)/);
+  const art = fs.readFileSync(new URL('../assets/loading/arena.webp', import.meta.url));
+  assert.equal(art.subarray(8, 12).toString(), 'WEBP');
+  assert.ok(art.length < 250000, 'compressed backdrop');
   // Distinct gradient ids: the hidden shell's defs must not be what the native screen paints with.
   assert.notEqual(zevantWordmark('zvs'), zevantWordmark('zvl'));
 });

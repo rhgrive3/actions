@@ -26,20 +26,18 @@ const WORDMARK_MASK = `url("data:image/svg+xml,${encodeURIComponent(
 
 const LOADING_CSS = `
 /* ZEVANT loading screen: native .iw-loading.iw-zl and the static startup shell (.iw-load-shell.iw-zl). */
-.iw-zl { background: #05050b; overflow: hidden; color: #fff; }
+/* Accents stay on the arena art's orange/blue even when the menu accent switches palettes mid-load. */
+.iw-zl { --a: #ff8a14; --a-rgb: 255, 138, 20; --b: #2f5bff; --b-rgb: 47, 91, 255; background: #05050b; overflow: hidden; color: #fff; }
 .iw-zl.iw-loading::after, .iw-zl.iw-load-shell::after { content: ''; position: absolute; inset: 0; pointer-events: none; -webkit-mask-image: none; mask-image: none;
   background: radial-gradient(ellipse 115% 95% at 50% 46%, transparent 50%, rgba(0, 0, 0, .7) 100%); }
 .iw-zl__bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .iw-zl__bg > i { position: absolute; display: block; }
-.iw-zl__glow { width: 110vmax; height: 110vmax; border-radius: 50%; will-change: transform; }
-.iw-zl__glow--a { left: -62vmax; top: -70vmax; background: radial-gradient(closest-side, rgba(var(--a-rgb), .42), rgba(var(--a-rgb), 0)); animation: iw-zl-drift-a 16s ease-in-out infinite alternate; }
-.iw-zl__glow--b { right: -62vmax; bottom: -72vmax; background: radial-gradient(closest-side, rgba(var(--b-rgb), .5), rgba(var(--b-rgb), 0)); animation: iw-zl-drift-b 19s ease-in-out infinite alternate; }
-@keyframes iw-zl-drift-a { to { transform: translate(14vmax, 9vmax) scale(1.12); } }
-@keyframes iw-zl-drift-b { to { transform: translate(-12vmax, -7vmax) scale(1.1); } }
-.iw-zl__grid { inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .05) 1px, transparent 1px);
-  background-size: calc(var(--u) * 4) calc(var(--u) * 4); background-position: 50% 50%;
-  -webkit-mask-image: radial-gradient(ellipse 62% 58% at 50% 46%, #000, transparent 78%); mask-image: radial-gradient(ellipse 62% 58% at 50% 46%, #000, transparent 78%); }
-.iw-zl__beam { top: -60%; bottom: -60%; left: 0; width: 34vw; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .07), transparent);
+.iw-zl__art { inset: -3%; background: #05050b url('../patches/local-quality/assets/loading/arena.webp') 50% 50% / cover no-repeat;
+  animation: iw-zl-push 26s ease-in-out infinite alternate; will-change: transform; }
+@keyframes iw-zl-push { to { transform: scale(1.07) translate(-1%, -.6%); } }
+.iw-zl__shade { inset: 0; background: radial-gradient(ellipse 46% 40% at 50% 44%, rgba(4, 4, 10, .62), rgba(4, 4, 10, .2) 70%, transparent),
+  linear-gradient(180deg, rgba(4, 4, 10, .35), transparent 22%, transparent 60%, rgba(4, 4, 10, .86)); }
+.iw-zl__beam { top: -60%; bottom: -60%; left: 0; width: 34vw; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .05), transparent);
   transform: translateX(-50vw) skewX(-22deg); animation: iw-zl-beam 7s cubic-bezier(.45, 0, .2, 1) infinite 1s; will-change: transform; }
 @keyframes iw-zl-beam { 0% { transform: translateX(-50vw) skewX(-22deg); } 42%, 100% { transform: translateX(150vw) skewX(-22deg); } }
 .iw-zl__c { position: absolute; width: calc(var(--u) * 2.2); height: calc(var(--u) * 2.2); border: 0 solid rgba(255, 255, 255, .32); pointer-events: none; }
@@ -88,7 +86,7 @@ const LOADING_CSS = `
 @keyframes iw-zl-tip { from { opacity: 0; transform: translateY(calc(var(--u) * .5)); } }
 .iw-zl > .iw-corner { bottom: calc(var(--u) * 3.1); right: calc(var(--u) * 5.4); letter-spacing: .2em; color: rgba(255, 255, 255, .42); text-shadow: none; }
 @media (prefers-reduced-motion: reduce) {
-  .iw-zl__glow, .iw-zl__beam, .iw-zl__dot, .iw-zl__shine::before { animation: none !important; }
+  .iw-zl__art, .iw-zl__beam, .iw-zl__dot, .iw-zl__shine::before { animation: none !important; }
 }
 `;
 
@@ -113,8 +111,7 @@ export function adaptLoadingScreen(rel, code) {
     const label = h('div', { class: 'iw-zl__label' }, this._loading.label);
     const tipText = h('div', { class: 'iw-tip__text' });
     const tip = h('div', { class: 'iw-zl__tip' }, h('span', { class: 'iw-zl__tag' }, 'TIP'), tipText);
-    const bg = h('div', { class: 'iw-zl__bg', 'aria-hidden': 'true' }, h('i', { class: 'iw-zl__glow iw-zl__glow--a' }), h('i', { class: 'iw-zl__glow iw-zl__glow--b' }),
-      h('i', { class: 'iw-zl__grid' }), h('i', { class: 'iw-zl__beam' }));
+    const bg = h('div', { class: 'iw-zl__bg', 'aria-hidden': 'true' }, h('i', { class: 'iw-zl__art' }), h('i', { class: 'iw-zl__shade' }), h('i', { class: 'iw-zl__beam' }));
     const corners = ['tl', 'tr', 'bl', 'br'].map((c) => h('i', { class: 'iw-zl__c iw-zl__c--' + c, 'aria-hidden': 'true' }));
     const el = h('div', { class: 'iw-screen iw-loading iw-zl' }, bg, corners,
       h('div', { class: 'iw-zl__status', 'aria-hidden': 'true' }, h('i', { class: 'iw-zl__dot' }), 'NOW LOADING'),
