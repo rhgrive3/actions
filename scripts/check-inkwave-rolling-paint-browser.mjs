@@ -115,10 +115,11 @@ try{
           }
         });
         if(!events.length||!headingSamples||poseSamples.length<10||!G.paint.counts[0])throw Error(id+' missing grounded trail');
-        // Literal calibrated contact envelope; no full source-size disk is allowed.
-        const maxHalf=({roller:.84,'s3-roller-compact':.66,'s3-roller-heavy':1.02,'s3-roller-hunter':.78,
-          's3-roller-wide':1.02,'s3-brush-mini':.15,'s3-brush-normal':.225,'s3-brush-heavy':.325})[id];
-        if(id!=='roller'&&(!events.some(e=>e.footprint==='ink-contact')||events.filter(e=>e.footprint==='ink-contact').some(e=>e.radius>maxHalf+1e-10)))throw Error(id+' oversized contact stamp');
+        // Roller paint endpoints come from 11.3.0, independently of mesh size.
+        // Brushes retain their separate existing calibration.
+        const maxHalf=({roller:2.8,'s3-roller-compact':2.2,'s3-roller-heavy':3.4,'s3-roller-hunter':2.6,
+          's3-roller-wide':3.4,'s3-brush-mini':.15,'s3-brush-normal':.225,'s3-brush-heavy':.325})[id];
+        if(!events.some(e=>e.footprint==='ink-contact')||events.filter(e=>e.footprint==='ink-contact').some(e=>e.radius>maxHalf+1e-10))throw Error(id+' oversized contact stamp');
         // A camera-only turn must not steer the drum while the stick is held.
         const held=a.yaw;a.aimYaw=a.yaw+Math.PI/2;a.aimDir.set(Math.sin(a.aimYaw),0,Math.cos(a.aimYaw));
         for(let n=0;n<120;n++){a.ink=100;a.update(1/120);}
