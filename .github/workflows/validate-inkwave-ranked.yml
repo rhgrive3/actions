@@ -8,6 +8,8 @@ on:
       - 'patches/splatoon3/tests/ranked*.mjs'
       - 'scripts/check-inkwave-ranked-browser.mjs'
       - '.github/workflows/validate-inkwave-ranked.yml'
+      - '.github/workflows/pages-inkwave.yml'
+      - 'scripts/tests/inkwave-ranked-pages-sequencing.test.mjs'
   pull_request:
     paths:
       - 'patches/splatoon3/runtime/ranked/**'
@@ -16,6 +18,8 @@ on:
       - 'scripts/check-inkwave-ranked-browser.mjs'
       - 'scripts/inkwave-source-composition.mjs'
       - '.github/workflows/validate-inkwave-ranked.yml'
+      - '.github/workflows/pages-inkwave.yml'
+      - 'scripts/tests/inkwave-ranked-pages-sequencing.test.mjs'
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
@@ -33,6 +37,8 @@ jobs:
           node-version: 22
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - run: npx playwright install --with-deps chromium
+      - name: Pages sequencing regression
+        run: node --test scripts/tests/inkwave-ranked-pages-sequencing.test.mjs
       - name: Ranked rule and native integration regressions
         env:
           INKWAVE_RANKED_REFERENCE: ${{ github.workspace }}/patches/splatoon3/runtime/ranked
@@ -48,14 +54,3 @@ jobs:
         with:
           name: inkwave-ranked-browser
           path: reports/ranked-browser
-      - name: Verify all four modes at the deployed public URL
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          RANKED_PUBLIC_URL: https://rhgrive3.github.io/actions/
-          RANKED_OFFLINE_ONLY: 1
-        run: node scripts/check-inkwave-ranked-browser.mjs _site-ranked reports/ranked-public-browser
-      - uses: actions/upload-artifact@v4
-        if: always() && github.event_name == 'push'
-        with:
-          name: inkwave-ranked-public-browser
-          path: reports/ranked-public-browser
