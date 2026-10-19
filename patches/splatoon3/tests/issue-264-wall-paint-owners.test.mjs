@@ -9,17 +9,21 @@ for (const weapon of ['charger', 'blaster']) test(`native ${weapon} wall contact
   G.settings = {}; f.setRandom(() => 0.37);
   owner.pos.y = 3; owner.character.root.position.copy(owner.pos);
   owner.aimDir.set(0, 0, 1); owner.aimPoint.set(0, 4.05, 10);
+  let flightTick = -1;
   const emissions = [], nativeSplat = paint.splat;
   paint.splat = function (center, radius, team, opts = {}) {
-    emissions.push({ owner: opts.claimOwner, point: center.clone(), face: opts.face, kind: opts.kind, footprint: opts.footprint });
-    return nativeSplat.call(this, center, radius, team, opts);
+    const cellsBefore = paint.counts[team], drawsBefore = paint.submitted.length;
+    const area = nativeSplat.call(this, center, radius, team, opts);
+    emissions.push({ owner: opts.claimOwner, point: center.clone(), face: opts.face, kind: opts.kind, footprint: opts.footprint,
+      tick: flightTick, area, newFloorCells: paint.counts[team] - cellsBefore, submittedQuads: paint.submitted.length - drawsBefore });
+    return area;
   };
   if (weapon === 'charger') G.projectiles.fireCharger(owner, owner.weapon, 1);
   else G.projectiles.fireBlaster(owner, owner.weapon);
   const releaseGrid = Array.from(paint.grid), releaseTurf = owner.stats.turf;
   let sawWallDrop = false;
   for (let tick = 0; tick < 120; tick++) {
-    G.time += 1 / 60; G.projectiles.update(1 / 60);
+    flightTick = tick; G.time += 1 / 60; G.projectiles.update(1 / 60);
     sawWallDrop ||= !!(G.projectiles._s3ChargerWallDrops?.length || G.projectiles._s3DetachedWallDrops?.length ||
       G.projectiles.list.some(p => p.fidelityWallDrop));
   }
@@ -32,7 +36,20 @@ for (const weapon of ['charger', 'blaster']) test(`native ${weapon} wall contact
   const gridBefore = Array.from(paint.grid), versionBefore = paint.version;
   for (let tick = 0; tick < 120; tick++) paint.advanceSimulation(1 / 60);
   assert.ok(gridBefore.some((v,i) => v !== releaseGrid[i]), 'later physical wall-drop emissions claim new ownership');
-  if (weapon === 'charger') assert.equal(before, releaseTurf, 'physical wall-only drops add ownership without inventing floor credit');
+  if (weapon === 'charger') {
+    const later = emissions.filter(e => e.tick >= 0), floor = later.filter(e => e.newFloorCells > 0);
+    assert.equal(wallStamps.reduce((sum, e) => sum + e.area, 0), 0, 'wall-only stamps never earn floor credit');
+    assert.equal(wallStamps.reduce((sum, e) => sum + e.newFloorCells, 0), 0, 'wall stamps leave eligible floor cells unchanged');
+    assert.equal(floor.length, 4, 'this fixed airborne shot lands its four real delayed floor beads');
+    for (const e of floor) {
+      assert.equal(e.face, 0, 'delayed bead reaches the real floor face');
+      assert.ok(e.point.y > 0 && e.point.y < .03 && e.point.z < 8, 'bead hits the floor before the wall');
+      assert.ok(e.submittedQuads > 0, 'the credited floor contact submits a visible source-mask quad');
+      assert.equal(e.area, e.newFloorCells * face.cu * face.cv, 'returned area is backed by newly owned floor cells');
+    }
+    assert.equal(before - releaseTurf, floor.reduce((sum, e) => sum + e.newFloorCells * face.cu * face.cv, 0),
+      'post-release ledger growth equals actual later floor ownership, independently of wall paint');
+  }
   else {
     assert.ok(before > releaseTurf, 'Blaster physical flight and burst drops add genuine floor credit');
     assert.ok(emissions.some(e => e.footprint === 'ink-shot') && emissions.some(e => e.footprint === 'ink-blast-rectified'),

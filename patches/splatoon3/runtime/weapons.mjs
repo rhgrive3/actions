@@ -743,7 +743,7 @@ export function installWeapons(context, profile) {
     if (a.form === 'squid') {
       this.s3WasSquid = true;
       if (this.charging) {
-        if (isChargerFullCharge(this.charge) && held && a.submerged === true) this.s3Stored = {
+        if (w.scopedCharge !== true && w.scoped !== true && isChargerFullCharge(this.charge) && held && a.submerged === true) this.s3Stored = {
           charge: 1, remaining: w.keepChargeTime,
           fireDelay: w.storedFireDelay || 0, laserDelay: w.storedLaserDelay || 0,
           resurfaced: false,
