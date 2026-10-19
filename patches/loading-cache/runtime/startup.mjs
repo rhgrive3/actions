@@ -23,7 +23,7 @@ const badge = document.getElementById('inkwave-cache-status');
 const offlineText = () => navigator.onLine === false ? 'オフラインです。保存済みデータを確認しています。' : 'ゲームを準備しています…';
 if (status) status.textContent = offlineText();
 let menuObserver, profileTimeout, registrationPending = false, registered = false, engine = null, startupFailed = false, updateAvailable = false;
-const updateText = '更新データを準備しました。すべてのINKWAVE画面を閉じると適用されます。';
+const updateText = '更新データを準備しました。すべてのZEVANT画面を閉じると適用されます。';
 const failureText = () => navigator.onLine === false ? '起動に必要なデータが保存されていません。通信が戻ってから開き直してください。' : 'ゲームの読み込みに失敗しました。通信を確認して開き直してください。';
 const menuVisible = () => ['title', 'main'].includes(document.querySelector('.iw-ui')?.dataset.screen);
 const badgeMessage = message => { if (badge) { badge.textContent = message; badge.hidden = !message || !menuVisible(); } };

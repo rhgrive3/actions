@@ -5328,3 +5328,12 @@ main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.
 ## 2026-10-19：P0 #264 / #878 の残存境界
 
 本番で残る縁の飛沫が固定5点から抜ける判定漏れを、円/楕円coreとセルの交差判定で補完。微小bodyがセルを持たなくても成長を保持し、native-stageの早期除外も同じ規則へ接続する。旧遠方spatterは既に無効で、再導入しない。CPUは既存0.25 m格子の面積を所有し、pixel完全一致とは主張しない。ホストのRAFとtimeoutが共に止まりsocketだけ残る場合、ゲストは既存finish待機＋通信復旧猶予後に通常の通信切断退出へ進み、架空の勝敗を作らない。比較版11.3.0、通常塗りとonline Turfの条件。実Switchの切断方針・物理端末GPUは未確認。詳細と検証範囲は [P0記録](inkwave-paint-host-p0-2026-10-19.md)。
+
+### 2026-10-19：ロード画面の演出強化と起動シェルの ZEVANT 表記
+
+ロード画面の見た目だけを変えた。試合中の操作やゲームロジック（移動・射撃・塗り・ダメージ・ルール進行）、読み込み順序、進捗値は変えていないため、スプラトゥーン3との挙動差は増減しない。本家のロード画面との一致は主張しない。
+
+- 起動シェル（`patches/loading-cache/shell.html`）：システムフォントの「INKWAVE」表示を、ゲーム内ロード画面と同じ ZEVANT ロゴ・背景・進捗バー（進捗不明のため往復スキャン）に置き換えた。オフライン失敗時の文言・再試行リンク・`#inkwave-startup-*` の要素は維持し、`styles/ui.css` を読めない場合も読める代替スタイルを残した。オフライン用の代替ページと更新通知の表記も ZEVANT にした。
+- 演出（`patches/local-quality/loading-screen-adapter.mjs`）：ゲーム内ロード画面と起動シェルの共通部品として、回転する放射光、ロゴ背後の発光、斜めのスピード線、上下の「ZEVANT • TURF RIOT • NOW LOADING」帯、進捗バーの光沢と先端の発光を追加した。動きは transform/opacity だけで、チームカラーの CSS 変数に従う。`prefers-reduced-motion` では止める。帯の文字は `data-t` 属性で描くため、`.iw-loading` の textContent は変わらない。
+
+確認状態：`loading-screen.test.mjs`、local-quality 全回帰、`camera-aim-controls`（合成順）、`inkwave-build-packaging`、`check-inkwave-startup-budget`、`test-inkwave-startup-dom.py` を実行した。本番ビルドを Chromium で目視確認した。起動シェルは 1280×720・390×844・844×390、ゲーム内ロード画面は swiftshader での実起動、1280×720・390×844。実機 GPU・WebKit・実 iOS/Android 端末での動きの滑らかさは未確認。
