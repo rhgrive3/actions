@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {normalizeViewSettings} from '../../local-quality/view-settings.mjs';
@@ -16,6 +16,7 @@ const weapons={shooter:{kind:'shooter'},roller:{kind:'roller'},alt_kit:{kind:'sh
 const progression={xpForLevel:level=>800+350*level};
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const built=process.env.INKWAVE_BUILT_SITE;
+const {PROTO,COMPAT}=await import(pathToFileURL(path.join(built || path.join(root,'inkwave-public'),'src/net/transport.js')));
 function composed(rel) {
   const full=path.join(built || path.join(root,'inkwave-public'),rel);
   const native=fs.readFileSync(full,'utf8');
@@ -188,10 +189,10 @@ test('composed NetSession rejects a missing-local START before allocating match 
   // The method is extracted without ES imports. Supply production-equivalent
   // non-native stage admission for this ordinary Turf roster fixture so that
   // missing-local rejection and READY sequencing remain the assertions.
-  const C=(new Function('G','NetMatch','validStartRoster','WEAPONS',
+  const C=(new Function('G','NetMatch','validStartRoster','WEAPONS','PROTO','COMPAT',
     'nativeStageEnabled','nativeStageRuleStatus','UNAVAILABLE_NATIVE_STAGES','nativeStageCompatible',
     'return class NetSession {'+src+'}'))(
-    G,NetMatch,validStartRoster,weapons,false,()=>null,[],cfg=>!cfg?.nativeStage);
+    G,NetMatch,validStartRoster,weapons,PROTO,COMPAT,false,()=>null,[],cfg=>!cfg?.nativeStage);
   const make=()=>{
     const s=Object.create(C.prototype);
     s.myId='guest';s.hostId='host';s.state='lobby';s.lobby={players:[{ready:true}]};
@@ -199,7 +200,7 @@ test('composed NetSession rejects a missing-local START before allocating match 
     s.tr={sendTo:(_host,p)=>sends.push(p)};
     return s;
   };
-  const wrong={id:'game-1',mode:'turf',roster:[member('host',0,0,0)]};
+  const wrong={proto:PROTO,compat:COMPAT,id:'game-1',mode:'turf',roster:[member('host',0,0,0)]};
   const rejected=make();
   assert.equal(await rejected._begin(wrong),false);
   assert.equal(rejected.state,'lobby');

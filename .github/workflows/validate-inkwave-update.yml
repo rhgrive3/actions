@@ -125,7 +125,7 @@ jobs:
       - name: Verify paint ownership and frozen-host P0 regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-264-*.test.mjs patches/reliability/tests/hidden-host-*.test.mjs
       - name: Verify source session admission and finite view settings
-        run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs
+        run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs patches/reliability/tests/relay-compatibility.test.mjs
       - name: Verify claimed room startup and gyro health regressions
         run: |
           node --experimental-vm-modules --test patches/reliability/tests/net.test.mjs patches/reliability/tests/next-seven-room.test.mjs patches/local-quality/tests/gyro-stale.test.mjs patches/local-quality/tests/gyro-viability.test.mjs patches/local-quality/tests/gyro-focus.test.mjs
@@ -363,8 +363,9 @@ jobs:
       - name: Verify emitted session admission and finite view settings
         env:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
           INKWAVE_VIEW_SETTINGS_SITE: ${{ github.workspace }}/_site
-        run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs
+        run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs patches/reliability/tests/relay-compatibility.test.mjs
       - name: Verify emitted active aim-profile sensor transitions
         env:
           INKWAVE_AIM_PROFILE_SITE: ${{ github.workspace }}/_site
