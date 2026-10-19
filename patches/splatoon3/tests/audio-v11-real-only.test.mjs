@@ -216,14 +216,32 @@ test('recorded Charger hold keeps 1x pitch; old native 2.5x oscillator pitch doe
  assert.equal(v.srcs[0].playbackRate.value,1,'recorded hold remains at actual recorded speed');
  control.pitch(2.5,ctx.currentTime+.05);
  assert.equal(v.srcs[0].playbackRate.value,1,'old native chirp controls cannot rewrite source pitch');
- assert.equal(v.srcs[0].playbackRate.automation.length,0,'no per-frame unnecessary AudioParam automation');
+ assert.equal(v.srcs[0].playbackRate.automation.length,0,'without actor metadata a source recording is untouched');
+ // The real game supplies actor.weaponRunner.charge in both original and
+ // catalogue Charger paths. Its value, not legacy oscillator pitch, governs
+ // the recorded HoldNoise playback clock. No second sound is created.
+ const actor={weaponRunner:{charge:0}},vCharged=voice();
+ const rise=recorded.loop(vCharged,2.5,{actor});
+ assert.equal(vCharged.srcs[0].buffer,a.weaponBank().authorized.pick(id,'charge').buffer);
+ assert.ok(Math.abs(vCharged.srcs[0].playbackRate.value-.94)<1e-8);
+ actor.weaponRunner.charge=.5;
+ rise.pitch(2.5,ctx.currentTime+.1);
+ assert.ok(Math.abs(vCharged.srcs[0].playbackRate.value-1.14)<1e-8,'recorded pitch rises during charge');
+ const count=vCharged.srcs[0].playbackRate.automation.length;
+ rise.pitch(2.5,ctx.currentTime+.11);
+ assert.equal(vCharged.srcs[0].playbackRate.automation.length,count,'stable charge does not enqueue redundant AudioParam writes');
+ actor.weaponRunner.charge=1;
+ rise.pitch(2.5,ctx.currentTime+.2);
+ assert.ok(Math.abs(vCharged.srcs[0].playbackRate.value-1.34)<1e-8,'source-based final charge is bounded');
+ assert.equal(vCharged.srcs[0].playbackRate.automation.length,2);
+
  const spin=a._def('main:s3-spinner-quick:charge'),v2=voice();
  const spinControl=spin.loop(v2,1.5,{});
  assert.equal(v2.srcs[0].playbackRate.value,1.5,'Spinner motor modulation is unchanged');
  spinControl.pitch(1.2,ctx.currentTime+.05);
  assert.equal(v2.srcs[0].playbackRate.value,1.2);
  assert.equal(v2.srcs[0].playbackRate.automation.length,1);
- assert.equal(sources.length,2,'both recorded buffers create exactly one source');
+ assert.equal(sources.length,3,'one decoded Charger source is shared, not replaced by oscillators');
  a.disposeWeaponAudio();
 });
 
