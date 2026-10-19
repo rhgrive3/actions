@@ -68,6 +68,11 @@ test('Charger high-damage direct, partial, other attacks, and Blaster direct vs 
   assert.equal(recordedHitCue({attacker:c,weaponId:'charger-01',damage:110,killed:false}),'critical');
   assert.equal(recordedHitCue({attacker:c,weaponId:'s3-charger-long',damage:160}),'critical');
   assert.equal(recordedHitCue({attacker:c,weaponId:'s3-charger-light',damage:85}),'hit');
+  assert.equal(recordedHitCue({attacker:c,weaponId:'charger',damage:160,charge:.35}),'hit',
+    'actual partial-charge hit never becomes critical from numeric damage alone');
+  assert.equal(recordedHitCue({attacker:c,weaponId:'charger',damage:160,charge:1}),'critical');
+  assert.equal(recordedHitCue({attacker:c,weaponId:'s3-charger-long',damage:140,charge:.9}),'hit');
+  assert.equal(recordedHitCue({attacker:c,weaponId:'s3-charger-long',damage:140,charge:1}),'critical');
   assert.equal(recordedHitCue({attacker:c,weaponId:'shooter',damage:100,killed:true}),'hit');
   const b={weapon:{kind:'blaster',id:'blaster'}};
   assert.equal(recordedHitCue({attacker:b,weaponId:'blaster',damage:125}),'critical');
@@ -107,7 +112,12 @@ test('Safari-like Window receiver loads, checks SHA and decodes each recorded cu
 test('normal gameplay hit/splatted events play original recording and never the procedural hit/splat cues',()=>{
   const source=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const adapted=adaptBuildSource('src/main.js',source);
-  assert.match(adapted,/recordedCueForHit\?\.\(\{attacker,weaponId,damage,killed\}\)/);
+  assert.match(adapted,/recordedCueForHit\?\.\(\{attacker,weaponId,damage,killed,charge\}\)/);
+  assert.match(adapted,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId, charge \}\)/);
+  const weapons=adaptBuildSource('src/game/weapons.js',
+    fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8'));
+  assert.match(weapons,/applyHit\(attacker, victim, dmg, weaponId, shotCharge = null\)/);
+  assert.match(weapons,/this\.applyHit\(a, victim\.e, dmg, 'charger', charge\)/);
   assert.match(adapted,/playRecordedCombat\?\.\('splat'/);
   assert.doesNotMatch(adapted,/G\.audio\?\.play\('hit_marker'/);
   assert.doesNotMatch(adapted,/G\.audio\?\.play\('splat_enemy'/);
