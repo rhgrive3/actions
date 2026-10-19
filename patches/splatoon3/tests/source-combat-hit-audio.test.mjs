@@ -69,9 +69,9 @@ test('authorized source samples are the ONLY accepted combat cue input',()=>{
 test('real runtime carries source charge metadata, built game prefers source sound when resident',()=>{
  const raw=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const catalog=fs.readFileSync(new URL('../runtime/main-weapon-catalog.mjs',import.meta.url),'utf8');
- assert.match(raw,/this\.applyHit\(a, victim\.e, dmg, 'charger', \{chargerDirect:true,charge\}\)/);
- assert.match(raw,/emit\('hit', \{ attacker, victim, damage: dmg, killed, weaponId, hitMeta \}\)/);
- assert.match(catalog,/this\.applyHit\(p\.owner,target,amount,p\.wid,s\.r\.family==='charger'\?/);
+ assert.match(raw,/this\.applyHit\(a, victim\.e, dmg, 'charger', undefined, \{chargerDirect:true,charge\}\)/);
+ assert.match(raw,/emit\('hit', \{ attacker, victim, damage: dmg, killed, weaponId, hitMeta:arguments\[5\]\?\?null \}\)/);
+ assert.match(catalog,/this\.applyHit\(p\.owner,target,amount,p\.wid,undefined,s\.r\.family==='charger'\?/);
  const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const built=adaptBuildSource('src/main.js',src);
  assert.match(built,/import \{ classifySourceCombatHit, playResidentCombatRecording \}/);
