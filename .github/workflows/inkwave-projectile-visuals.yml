@@ -8,6 +8,8 @@ on:
       - 'patches/splatoon3/reference/projectile-*.json'
       - 'patches/splatoon3/tests/projectile-visuals.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
+      - 'scripts/lib/inkwave-streamed-music-diagnostics.mjs'
+      - 'scripts/tests/inkwave-streamed-music-diagnostics.test.mjs'
       - 'scripts/lib/inkwave-projectile-menu-start.mjs'
       - 'scripts/tests/inkwave-projectile-menu-start.test.mjs'
       - 'scripts/tests/inkwave-projectile-boolean-gate.test.mjs'
@@ -30,6 +32,7 @@ on:
       - 'scripts/tests/inkwave-projectile-pr-diff-cli.test.mjs'
       - 'scripts/fixtures/inkwave-main-ink-pr1525-baseline.json'
       - 'scripts/prepare-inkwave-projectile-baseline.mjs'
+      - 'scripts/check-inkwave-current-pair-controls.mjs'
       - 'scripts/prepare-inkwave-character-pose-baseline.mjs'
       - 'scripts/lib/inkwave-character-pose-baseline.mjs'
       - 'scripts/fixtures/inkwave-character-pose-baseline.json'
@@ -92,6 +95,9 @@ jobs:
           node --experimental-vm-modules --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-ci-roster.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs
           node --test scripts/tests/inkwave-projectile-pr-diff-cli.test.mjs
           node --test scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-boolean-gate.test.mjs scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-audio-timing-observer.test.mjs scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs
+      - name: Verify current source-pair admission and rejection controls without changing inputs
+        if: ${{ matrix.side == 'before' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.base.sha == '9b0e402313686d8f8ad0f70585b01915e904e641' }}
+        run: node scripts/check-inkwave-current-pair-controls.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
       - name: Replay reviewed Roller births, pool reset and pinned paint in the main reference
         if: ${{ matrix.side == 'before' && github.event.pull_request.number != 1651 }}
         run: node scripts/prepare-inkwave-projectile-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json

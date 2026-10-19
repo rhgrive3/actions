@@ -6,11 +6,13 @@ function verify(code){
  assert.equal((code.match(/uses: actions\/checkout@v4/g)||[]).length,2);
  assert.equal((code.match(/fetch-depth: 1\b/g)||[]).length,2);
  assert(code.includes('ref: ${{ github.event.pull_request.head.sha || github.sha }}'));
- assert(code.includes('BASE_SHA: b75bc56e2e3fa970357b3bc92f63395c7c397353'));
- assert(code.includes('ref: ${{ env.BASE_SHA }}\n          fetch-depth: 1\n          path: _swim_entry_baseline'));
+ assert(!code.includes('BASE_SHA:'),'historical base is not the counterfactual');
+ assert(code.includes('ref: ${{ env.SOURCE_SHA }}\n          fetch-depth: 1\n          path: _swim_entry_reference'));
  assert(code.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
- assert(code.includes('test "$(git -C _swim_entry_baseline rev-parse HEAD)" = "$BASE_SHA"'));
- assert(code.includes('SOURCE_SHA="$BASE_SHA" node ../tools/swim-entry-qa/run.mjs'));
+ assert(code.includes('test "$(git -C _swim_entry_reference rev-parse HEAD)" = "$SOURCE_SHA"'));
+ assert(code.includes('node tools/swim-entry-qa/reference.mjs _swim_entry_reference "$SOURCE_SHA" .qa-evidence/swim-entry-reference.json'));
+ assert(code.includes('--expect baseline --reference-proof ../.qa-evidence/swim-entry-reference.json'));
+ assert.equal((code.match(/node scripts\/build-inkwave.mjs/g)||[]).length,2,'only the existing two builds');
  assert(code.includes('INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test --test-concurrency=1'));
  assert(code.includes('node tools/swim-entry-qa/compare.mjs .qa-evidence/swim-entry-baseline/result.json .qa-evidence/swim-entry-candidate/result.json "$SOURCE_SHA"'));
  assert(code.includes('timeout-minutes: 40'));
@@ -19,10 +21,10 @@ test('native heading workflow keeps two shallow exact-head builds and emitted/pa
  verify(workflow);
  for(const mutate of [
   s=>s.replace('fetch-depth: 1','fetch-depth: 0'),
-  s=>s.replace('BASE_SHA: b75bc56e2e3fa970357b3bc92f63395c7c397353','BASE_SHA: main'),
-  s=>s.replace('ref: ${{ env.BASE_SHA }}','ref: main'),
-  s=>s.replace('test "$(git -C _swim_entry_baseline rev-parse HEAD)" = "$BASE_SHA"','true'),
-  s=>s.replace('SOURCE_SHA="$BASE_SHA" node ../tools/swim-entry-qa/run.mjs','node ../tools/swim-entry-qa/run.mjs'),
+  s=>s.replace('ref: ${{ env.SOURCE_SHA }}','ref: main'),
+  s=>s.replace('node tools/swim-entry-qa/reference.mjs','echo tools/swim-entry-qa/reference.mjs'),
+  s=>s.replace('test "$(git -C _swim_entry_reference rev-parse HEAD)" = "$SOURCE_SHA"','true'),
+  s=>s.replace('--reference-proof ../.qa-evidence/swim-entry-reference.json',''),
   s=>s.replace('INKWAVE_BUILT_SITE="$PWD/_site"','IGNORED_SITE="$PWD/_site"'),
   s=>s.replace('node tools/swim-entry-qa/compare.mjs','echo tools/swim-entry-qa/compare.mjs')
  ])assert.throws(()=>verify(mutate(workflow)));

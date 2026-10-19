@@ -63,6 +63,8 @@ jobs:
             2>&1 | tee .qa-evidence/recovery/source/tests.log
       - name: Build production once for both independent browser lanes
         run: node scripts/build-inkwave.mjs inkwave-public _site-recovery
+      - name: Install CI browser
+        run: npx playwright install --with-deps chromium
       - name: Exact emitted publication and UI faults
         env:
           INKWAVE_BUILT_SITE: _site-recovery
@@ -71,11 +73,8 @@ jobs:
           mkdir -p .qa-evidence/recovery/emitted
           set -o pipefail
           node --experimental-vm-modules --test \
-            patches/native-stages/tests/native-world-recovery.test.mjs \
-            patches/native-stages/tests/native-world-recovery-ui.test.mjs \
+            tools/native-recovery-qa/bundle-recovery.mjs \
             2>&1 | tee .qa-evidence/recovery/emitted/tests.log
-      - name: Install CI browser
-        run: npx playwright install --with-deps chromium
       - name: Real app context loss, restore, Start and ordinary pause
         if: ${{ !cancelled() && success() }}
         run: node scripts/check-inkwave-context-recovery-browser.mjs _site-recovery .qa-evidence/recovery/context
@@ -83,11 +82,12 @@ jobs:
         if: ${{ !cancelled() && hashFiles('_site-recovery/inkwave-build.json') != '' }}
         run: node scripts/check-inkwave-native-recovery-browser.mjs _site-recovery .qa-evidence/recovery/stage
       - name: Enforce bounded diagnostic artifact
+        id: evidence_budget
         if: always()
         run: |
-          node --input-type=module -e 'import fs from "node:fs";import path from "node:path";let bytes=0;function walk(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory())walk(f);else bytes+=fs.statSync(f).size;}}walk(".qa-evidence/recovery");console.log({bytes,limit:128*1024*1024});if(bytes>128*1024*1024)throw Error("Recovery evidence exceeds artifact budget; preserve outputs and fail");'
+          node --input-type=module -e 'import fs from "node:fs";import path from "node:path";let bytes=0;function walk(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory())walk(f);else bytes+=fs.statSync(f).size;}}walk(".qa-evidence/recovery");console.log({bytes,limit:128*1024*1024});if(bytes>128*1024*1024)throw Error("Recovery evidence exceeds artifact budget; preserve outputs and fail");fs.appendFileSync(process.env.GITHUB_OUTPUT,"eligible=true\n");'
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && steps.evidence_budget.outputs.eligible == 'true' }}
         with:
           name: inkwave-terminal-recovery-${{ github.event.pull_request.head.sha || github.sha }}
           path: .qa-evidence/recovery

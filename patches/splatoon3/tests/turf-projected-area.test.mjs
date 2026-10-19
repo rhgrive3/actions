@@ -16,8 +16,12 @@ async function installedPaintRuntime() {
     // The migrated direct source imports patches at its logical build path;
     // remap that virtual namespace to the actual repository for Node VM QA.
     const virtualPatch = path.join(SRC, 'patches') + path.sep;
-    return resolved.startsWith(virtualPatch)
-      ? path.join(ROOT, 'patches', path.relative(virtualPatch, resolved)) : resolved;
+    if (resolved.startsWith(virtualPatch)) return path.join(ROOT, 'patches', path.relative(virtualPatch, resolved));
+    // Authored patch modules use the emitted site's sibling src/ namespace.
+    // Match the existing source-fixture resolver without substituting modules.
+    const virtualSource = path.join(ROOT, 'src') + path.sep;
+    return resolved.startsWith(virtualSource)
+      ? path.join(SRC, 'src', path.relative(virtualSource, resolved)) : resolved;
   };
   const load = file => {
     if (!modules.has(file)) modules.set(file, new vm.SourceTextModule(fs.readFileSync(file, 'utf8'), { context, identifier: file }));

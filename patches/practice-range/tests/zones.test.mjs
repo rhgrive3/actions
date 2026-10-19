@@ -4,9 +4,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rangeRealm, rangeWorld } from './harness.mjs';
+import { SOURCE_SHOT_PAINT_KIND } from '../../splatoon3/runtime/source-shot-footprint.mjs';
 
 async function setup(weapon = 'shooter', inked = () => false) {
-  const R = await rangeRealm();
+  const R = await rangeRealm({productionComposition:true});
   const { G, Actor, Character, THREE, Projectiles, RangeSession } = R;
   const W = rangeWorld(R);
   G.paint.sample = (face) => (inked(G.level.faces[face]) ? 1 : 0);   // team 0 ink where `inked` says so
@@ -65,8 +66,10 @@ test('swim course: swimming in your own ink on the straight reaches the game swi
   } finally { w.done(); }
 });
 
+// The producer tags drum contact independently from projectile flick paint.
+const isRollContact = e => e.kind === SOURCE_SHOT_PAINT_KIND && e.footprint === 'ink-contact';
 function assertRollStripe(events, sx0, sx1) {
-  const stripe = events.filter(e => e.kind === 'roll').map(e => e.point);
+  const stripe = events.filter(isRollContact).map(e => e.point);
   assert.ok(stripe.length > 10, `${stripe.length} actual rolling splats`);
   assert.ok(new Set(stripe.map(sp => sp[2])).size > 10, 'rolling stripe advances along the strip');
   assert.ok(stripe.every(sp => sp[0] > sx0 - 2 && sp[0] < sx1 + 2), 'stripe stays on the strip');
@@ -82,7 +85,7 @@ test('roller court: rolling along the strip lays a stripe on the court floor', a
     tick(150, () => { a.intent.fire = true; a.intent.move.set(0, 0, 1); a.aimYaw = 0; });
     a.intent.fire = false; a.intent.move.set(0, 0, 0);
     // First press necessarily flicks. Its stochastic projectile impacts are not drum stripes.
-    assert.ok(W.paintEvents.some(e => e.kind !== 'roll'), 'initial flick paint remains exercised');
+    assert.ok(W.paintEvents.some(e => !isRollContact(e)), 'initial flick paint remains exercised');
     assertRollStripe(W.paintEvents, sx0, sx1);
     assert.ok(a.pos.z > R.ZONES.ROLL_STAND[1] + 5, 'rolled forward');
   } finally { w.done(); }
@@ -99,6 +102,38 @@ test('roller stripe boundary still rejects real rolling outside the permitted st
     a.intent.fire = false; a.intent.move.set(0, 0, 0);
     assert.throws(() => assertRollStripe(W.paintEvents, sx0, sx1), /stripe stays on the strip/);
   } finally { w.done(); }
+});
+
+for (const boundary of ['ground', 'finish']) test(`roller contact requires real ${boundary} completion`, async () => {
+  const w = await setup('roller');
+  try {
+    const { a, G, W, R, tick, put } = w;
+    const [sx0, sx1] = R.ZONES.ROLL_STRIP.x;
+    put(R.ZONES.ROLL_STAND[0], R.ZONES.ROLL_STAND[1]);
+    W.splats.length = 0; W.paintEvents.length = 0;
+    let boundaryCalls = 0;
+    // Deliberate missing-boundary controls. Never manufacture a paint event.
+    if (boundary === 'ground') {
+      const groundProbe = G.physics.groundProbe;
+      G.physics.groundProbe = function (...args) { boundaryCalls++; const hit = groundProbe.apply(this, args); hit.hit = false; return hit; };
+      a.ground.hit = false;
+    } else a._finishFrame = () => { boundaryCalls++; };
+    tick(150, () => { a.intent.fire = true; a.intent.move.set(0, 0, 1); a.aimYaw = 0; });
+    assert.ok(boundaryCalls > 0, 'the deliberately missing boundary must be reached');
+    assert.equal(W.paintEvents.filter(isRollContact).length, 0);
+    assert.throws(() => assertRollStripe(W.paintEvents, sx0, sx1), /actual rolling splats/);
+  } finally { w.done(); }
+});
+
+test('roller stripe classification rejects flicks and legacy-only tags', () => {
+  for (const tag of [
+    {kind:SOURCE_SHOT_PAINT_KIND,footprint:'ink-flick'},
+    {kind:'source-splash',footprint:'ink-contact'},
+    {kind:'roll',footprint:null}
+  ]) {
+    const events=Array.from({length:12},(_,i)=>({...tag,point:[0,0,i]}));
+    assert.throws(()=>assertRollStripe(events,-1,1),/0 actual rolling splats/);
+  }
 });
 
 test('dodge pad: a dualies dodge roll from the stand moves the player and stays on the pad', async () => {

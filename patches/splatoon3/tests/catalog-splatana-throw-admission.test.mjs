@@ -4,7 +4,7 @@ import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
 const DT=1/60,EPS=1e-9,STAGE={id:'splatana-throw-admission',clams:{spawns:[],goals:[[0,0,80],[0,0,-80]]}};
 const input=()=>({keys:new Set(),pressed:new Set(),padPressed:new Set(),mouse:{dx:0,dy:0,left:false,right:false},down(k){return this.keys.has(k);},wasPressed(k){return this.pressed.has(k);},padButton:()=>false,padValue:()=>0});
 for(const weapon of ['s3-saber-normal','s3-saber-lite','s3-saber-heavy'])test(`${weapon}: actual wave recovery rejects Clam edges and Sub taps, preserves a held Sub until natural expiry`,async t=>{
- const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`}),rows=[];f.G.netm=null;f.G.settings.aimAssist=0;
+ const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`export {Transport} from './src/net/transport.js'; export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`}),rows=[];f.G.netm=null;f.G.settings.aimAssist=0;
  let active=null;
  const push=f.G.projectiles._push;f.G.projectiles._push=function(p){if(p.owner===active?.a&&p.catalog)active.waves.push({frame:active.frame,pos:p.pos.toArray(),vel:p.vel.toArray()});return push.call(this,p);};
  const nativeThrow=f.G.projectiles.throwBomb;f.G.projectiles.throwBomb=function(a,...args){const count=this.bombs.length,result=nativeThrow.call(this,a,...args);if(a===active?.a)for(const b of this.bombs.slice(count))active.subs.push({frame:active.frame,id:a.weapon.sub,pos:b.pos.toArray(),vel:b.vel.toArray(),owner:'native-bomb'});return result;};
@@ -39,12 +39,13 @@ for(const weapon of ['s3-saber-normal','s3-saber-lite','s3-saber-heavy'])test(`$
 });
 
 test('follower real wave rejects the blocked edge before the native actor packet, then sends one fresh unlocked throw',async t=>{
- const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`});
+ const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`export {Transport} from './src/net/transport.js'; export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`});
  const a=await f.make();Object.assign(a,{nid:1,owner:'guest',slot:0});a.setWeapon('s3-saber-lite');a.character.onEvent=null;
  const m=Object.assign(Object.create(f.Match.prototype),{mode:'clams',state:'playing',follower:true,ranked:new f.RankedEngine('clams',STAGE),actors:[a],local:a,rankedGains:[0,0],rankedBarrierHits:[],rankedEffects:{event(){},update(){}},playing:()=>true,canRespawn:()=>false});
  const world=m.rankedWorld=new f.RankedWorld(f,m,STAGE),raw=input(),rig={yaw:0,pitch:0,mode:'follow',target:a},controller=new f.PlayerController(a,rig,raw);
  controller.computeAim=()=>{};f.G.match=m;f.G.rig=rig;f.G.settings.aimAssist=0;
- const packets=[],session={myId:'guest',hostId:'host',isHost:false,_members:new Set(['host','guest']),tr:{broadcast:p=>packets.push(JSON.parse(JSON.stringify(p))),sendTo(){}}};
+ const packets=[],tr=new f.Transport();tr.ws={readyState:1,bufferedAmount:0,send(wire){if(wire.startsWith('b|'))packets.push(JSON.parse(wire.slice(2)));}};
+ const session={myId:'guest',hostId:'host',isHost:false,_members:new Set(['host','guest']),tr};
  const nm=new f.NetMatch(session,{id:'splatana-admission',mode:'clams',map:'tidewater'});nm.bind(m);f.G.netm=nm;
  let waves=0;const push=f.G.projectiles._push;f.G.projectiles._push=function(p){if(p.owner===a&&p.catalog)waves++;return push.call(this,p);};
  const tick=()=>{f.G.time+=DT;controller.update(DT);a.update(DT);m.advanceRanked(DT);raw.pressed.clear();};
@@ -63,7 +64,7 @@ test('follower real wave rejects the blocked edge before the native actor packet
 // Nintendo's note establishes the after-swing interval, not a new windup lock.
 // Preserve the old pending-wave cancel/throw admission, including its last tick.
 test('pre-wave and wave-due inputs retain existing Sub cancellation and Clam admission for all three Splatana sources',async t=>{
- const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`}),rows=[];
+ const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`export {Transport} from './src/net/transport.js'; export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`}),rows=[];
  f.G.netm=null;f.G.settings.aimAssist=0;let active=null;
  const push=f.G.projectiles._push;f.G.projectiles._push=function(p){if(p.owner===active?.a&&p.catalog)active.waves.push({frame:active.frame,pos:p.pos.toArray(),vel:p.vel.toArray()});return push.call(this,p);};
  for(const weapon of ['s3-saber-normal','s3-saber-lite','s3-saber-heavy'])for(const charged of [false,true])for(const phase of ['early','wave-due'])for(const action of ['sub','clam']){

@@ -47,6 +47,13 @@ const evidence = {
   changes, paint: paint.evidence, writtenPaths: writes.map(([rel]) => rel),
 };
 
+if (paint.evidence.mode === 'current-pair-with-gameplay-differences') {
+  assert.equal(changes.length, 0, 'reviewed current pair must not replay birth/pool source');
+  assert.equal(writes.length, 0, 'reviewed current pair must preserve every reference file');
+  evidence.mode = paint.evidence.mode;
+  evidence.scope = 'Preserve the exact reviewed current main/candidate source pair without replay or production writes. Gameplay differences remain; physical-state and image equivalence require the independent browser comparison.';
+}
+
 const currentOwners = paint.evidence.paths.filter(row => row.mode === 'identical-current-owner');
 if (currentOwners.length) {
   const unchanged = writes.length === 0 && [...originals].every(([rel, value]) => value === candidates.get(rel));

@@ -1,6 +1,6 @@
-// 847: Roller-body terrain contact via complete production composition.
-// Current-main baseline and candidate run through all six source adapters,
-// runtime install, and native Actor/Physics/Projectiles/PaintSystem/NetMatch.
+// 847: Roller-body terrain contact through the canonical current composition.
+// The pinned source fixture runs native Actor/Physics/Projectiles/PaintSystem/NetMatch.
+// Fault controls below are counterfactual current-source mutations, not old main.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -8,19 +8,17 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
-import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
-import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptQualitySource } from '../../local-quality/adapter.mjs';
-import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
-import { adaptRange } from '../../practice-range/adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { rollerDrumSupport, rollerStickActive } from '../runtime/roller.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
-const MAIN_BASE_SHA256 = '52e587f60d6211054c2bad04f746471e85ebdb0295e051f797b41a0019847eb7';
-const adaptProductionSource = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
-  adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
+const FROZEN_B34_SHA256 = '52e587f60d6211054c2bad04f746471e85ebdb0295e051f797b41a0019847eb7';
+const adaptProductionSource = adaptBuildSource;
+const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
+  "patches/splatoon3/runtime/roller.mjs": "752d276cb1e7bf82d2715a130a68d987997a95397025bfafb27cd9151d32c17d",
+  "patches/splatoon3/runtime/roller-contact-paint.mjs": "1af024987479096af1af4491ab6409b087b1eac06237b38f5b69a9611c1235dd"
+});
 const headlessPaintRenderer = () => ({
   capabilities: { getMaxAnisotropy: () => 1 }, target: null,
   getRenderTarget() { return this.target; },
@@ -30,14 +28,26 @@ const headlessPaintRenderer = () => ({
   setClearColor() {}, clear() {}, render() {}, // GPU surface stub; native CPU paint/contact still run
 });
 const apis = new Map();
-function mainBaselineRollerSource() {
-  // Frozen exact-main control remains available in shallow CI checkouts.
+// Runner-only calls do not refresh physical support or commit pose-owned paint.
+// Keep pinned movement, but execute the real ground query and frame completion.
+function finishNativeFrame(f,a) {
+  f.G.physics.groundProbe(a.pos.x,a.pos.y,a.pos.z,f.PLAYER.stepUp,f.PLAYER.stepDown,f.PLAYER.footRadius,a.ground,false);
+  a._finishFrame(1/60);
+}
+
+function frozenRollerSource() {
+  // Preserve the historical single-module identity, including shallow CI checkouts.
+  // Its former whole-main paint claim is invalid after independent admission guards.
   const source = fs.readFileSync(new URL('./fixtures/roller.b34a8aaf.source.txt', import.meta.url), 'utf8');
-  assert.equal(createHash('sha256').update(source).digest('hex'), MAIN_BASE_SHA256);
+  assert.equal(createHash('sha256').update(source).digest('hex'), FROZEN_B34_SHA256);
   return source;
 }
-async function production({ baselineRollerSource = null } = {}) {
-  const cacheKey = baselineRollerSource ? 'main' : 'candidate';
+function exactFault(source, needle, replacement, name) {
+  assert.equal(source.split(needle).length-1,1,'counterfactual anchor '+name);
+  return source.replace(needle,replacement);
+}
+async function production({ counterfactual = false } = {}) {
+  const cacheKey = counterfactual ? 'counterfactual' : 'current';
   if (apis.has(cacheKey)) return apis.get(cacheKey);
   const context = vm.createContext({ console, performance, URL, innerHeight: 720 });
   const modules = new Map();
@@ -47,9 +57,18 @@ async function production({ baselineRollerSource = null } = {}) {
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file);
-    const raw = baselineRollerSource && rel === 'patches/splatoon3/runtime/roller.mjs'
-      ? baselineRollerSource + '\n// Compatibility for later native imports: this frozen control intentionally has no new contact guard.\nexport const rollerContactCandidate=()=>true;export const rollerStickActive=()=>true;\n' : fs.readFileSync(file, 'utf8');
-    const source = adaptProductionSource(rel.split(path.sep).join('/'), raw);
+    const raw = fs.readFileSync(file, 'utf8');
+    let source = adaptProductionSource(rel.split(path.sep).join('/'), raw);
+    // Exact input hashes and anchors fail closed if the owners change.
+    if (counterfactual && Object.hasOwn(COUNTERFACTUAL_INPUT_SHA256, rel))
+      assert.equal(createHash('sha256').update(raw).digest('hex'), COUNTERFACTUAL_INPUT_SHA256[rel], 'counterfactual input '+rel);
+    // Production files stay untouched.
+    if(counterfactual && rel==='patches/splatoon3/runtime/roller.mjs') {
+      source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');
+      source=exactFault(source,'const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
+    }
+    if(counterfactual && rel==='patches/splatoon3/runtime/roller-contact-paint.mjs')
+      source=exactFault(source,'    Math.hypot(a.intent?.move?.x || 0, a.intent?.move?.z || 0) <= 1e-9 ||\n','','physical-paint-stick');
     const mod = new vm.SourceTextModule(source,
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, mod); return mod;
@@ -89,9 +108,9 @@ test('847 flat rolling unchanged on full production composition', async () => {
   a.pos.set(0, 0, -5); a.yaw = 0; a.aimYaw = 0; a.grounded = true; a.ink = 100; a.vel.set(0, 0, 3);
   const paintBefore = f.G.paint.version;
   a.intent.move.set(0, 0, 1); a.intent.fire = true;
-  f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
   a.pos.z += 0.35;
-  f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
   assert.equal(a.weaponRunner.rolling, true, 'flat + stick + fire keeps rolling');
   assert.ok(Math.hypot(a.vel.x, a.vel.z) > 1.0, 'roll speed preserved');
   assert.ok(a.ink < 100, 'native roll consumes ink while moving');
@@ -108,7 +127,7 @@ test('847 no-stick residual keeps the drum down but stops native paint, ink drai
   f.G.actors = [a];
   a.pos.set(0, 0, -5); a.yaw = 0; a.aimYaw = 0; a.grounded = true; a.ink = 100; a.vel.set(0, 0, 3);
   a.intent.move.set(0, 0, 1); a.intent.fire = true;
-  f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
   assert.equal(a.weaponRunner.rolling, true);
   assert.ok(Math.hypot(a.vel.x, a.vel.z) > 1.0, 'residual speed present');
   v.pos.set(a.pos.x, a.pos.y, a.pos.z + 0.8); v.hp = 500; v.alive = true; v.invuln = 0;
@@ -117,7 +136,7 @@ test('847 no-stick residual keeps the drum down but stops native paint, ink drai
   const inkBefore = a.ink, paintBefore = f.G.paint.version;
   a.pos.z += 0.35; a.vel.set(0, 0, 3);
   f.G.time += 1 / 60;
-  a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
   assert.equal(v.hp, 500, 'no Left Stick input admits no roll damage despite residual speed');
   // Owner report 2026-10-18: releasing Left Stick keeps the drum down while ZR is held.
   assert.equal(a.weaponRunner.rolling, true, 'held ZR keeps the roll state without Left Stick');
@@ -136,7 +155,7 @@ test('847 airborne wall drum contact preserves rolling', async () => {
   a.yaw = 0; a.aimYaw = 0; a.intent.move.set(0, 0, 1); a.intent.fire = true;
   a.pos.set(0, 1.4, 0.8); a.grounded = false; a.vel.set(0, 0, 1);
   f.G.time += 1 / 60;
-  a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
   assert.equal(a.weaponRunner.rolling, false, 'a nearby wall outside the body volume does not support rolling');
   // The actual Roller body reaches the wall at z=2 with its center at z=1.6.
   a.pos.set(0, 1.4, 0.85); a.vel.set(0, 0, 1);
@@ -144,7 +163,7 @@ test('847 airborne wall drum contact preserves rolling', async () => {
   f.G.physics.raycast(new f.THREE.Vector3(0, 1.8, 1.6), new f.THREE.Vector3(0, 0, 1), 0.4, wallHit, false);
   assert.equal(wallHit.hit, true, 'native physics confirms contact within the body radius');
   f.G.time += 1 / 60;
-  a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
   assert.equal(a.grounded, false, 'actor stays airborne while pinned');
   assert.equal(a.weaponRunner.rolling, true, 'wall drum contact keeps the S3-valid roll while airborne');
   assert.deepEqual([a.vel.x, a.vel.y, a.vel.z], [0, 0, 1], 'wall admission does not overwrite airborne velocity');
@@ -165,12 +184,12 @@ test('847 ledge drum void suppresses rolling while feet stay grounded', async ()
     a.character.onEvent = null; f.G.actors = [a];
     a.pos.set(-1.5, 0, 0); a.yaw = Math.PI / 2; a.aimYaw = Math.PI / 2; a.grounded = true; a.ink = 100;
     a.intent.move.set(1, 0, 0); a.intent.fire = true;
-    f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+    f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
     assert.equal(a.weaponRunner.rolling, true, 'roll establishes on the ledge floor');
     // Pin feet at x=-0.25 (floor under feet) facing +x: drum center x=0.5 over void.
     a.pos.set(-0.25, 0, 0); a.vel.set(0, 0, 0); a.grounded = true;
     const inkBefore = a.ink, paintBefore = f.G.paint.version;
-    f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+    f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
     assert.equal(a.grounded, true, 'feet stay grounded at the edge while pinned');
     assert.equal(a.weaponRunner.rolling, false, 'unsupported drum stops contact behavior at the ledge');
     assert.equal(a.ink, inkBefore, 'unsupported drum does not drain ink');
@@ -215,7 +234,7 @@ test('847 owner and remote share native contact; NetMatch drops remote damage an
   const off = f.on('hit', () => { hitEvents++; owner.vel.x = 2.25; });
   try {
     f.G.time += 1 / 60;
-    owner.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+    owner.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,owner);
     assert.ok(victim.hp < 500, 'the owner applies the native Roller contact hit');
     assert.equal(hitEvents, 1, 'native hit event still dispatches once');
     assert.equal(owner.vel.x, 2.25, 'a synchronous native event velocity update is not restored over');
@@ -223,7 +242,7 @@ test('847 owner and remote share native contact; NetMatch drops remote damage an
     const hpAfterOwner = victim.hp;
     assert.equal(net.shouldApplyHit(remote, victim), 'drop', 'the receiver remains authoritative for its actor');
     f.G.time += 0.6;
-    remote.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+    remote.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,remote);
     assert.equal(victim.hp, hpAfterOwner, 'a remote roller never applies its own contact damage');
     assert.equal(hitEvents, 1, 'the dropped remote hit emits no local hit event');
   } finally {
@@ -231,24 +250,27 @@ test('847 owner and remote share native contact; NetMatch drops remote damage an
   }
 });
 
-test('847 current-main b34 full production composition reproduces the uncovered gates', async () => {
-  const baselineRoller = mainBaselineRollerSource();
-  const f = await production({ baselineRollerSource: baselineRoller });
+test('847 frozen b34 roller source retains its recorded single-module identity', () => {
+  frozenRollerSource();
+});
+
+test('847 explicit current-source admission faults expose the guarded regressions', async () => {
+  const f = await production({ counterfactual:true });
   const a = new f.Actor({ team: 0, name: 'r847main', isLocal: true, weapon: 'roller', CharacterClass: f.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   const v = new f.Actor({ team: 1, name: 'r847mainvictim', isLocal: false, weapon: 'shooter', CharacterClass: f.Character, style: { hair: 0, skin: 0, outfit: 0, eyes: 0 } });
   a.character.onEvent = v.character.onEvent = null;
   a.pos.set(0, 0, -5); a.yaw = 0; a.grounded = true; a.ink = 100; a.vel.set(0, 0, 2);
   a.intent.fire = true; a.intent.move.set(0, 0, 1); f.G.actors = [a];
-  a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
-  assert.equal(a.weaponRunner.rolling, true, 'main admits flat contact');
+  a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
+  assert.equal(a.weaponRunner.rolling, true, 'counterfactual retains flat contact');
   v.pos.set(a.pos.x, a.pos.y, a.pos.z + 0.8); v.hp = 500; v.alive = true;
   const inkBefore = a.ink, paintBefore = f.G.paint.version;
   a.intent.move.set(0, 0, 0); a.pos.z += 0.35; a.vel.set(0, 0, 3); f.G.actors = [a, v];
   f.G.time += 1 / 60;
-  a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
-  assert.ok(v.hp < 500, 'main allows residual-speed damage without Left Stick');
-  assert.ok(a.ink < inkBefore, 'main drains ink from residual displacement');
-  assert.ok(f.G.paint.version > paintBefore, 'main paints from residual displacement');
+  a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
+  assert.ok(v.hp < 500, 'counterfactual permits residual-speed damage without Left Stick');
+  assert.ok(a.ink < inkBefore, 'counterfactual drains ink from residual displacement');
+  assert.ok(f.G.paint.version > paintBefore, 'counterfactual paints from residual displacement');
 
   const ledge = new f.Level({ bounds: { minX: -4, maxX: 4, minZ: -7, maxZ: 4 }, spawnPads: [[-3, 0, 0], [3, 0, 0]],
     spawnBarrier: 0, half: [], single: [{ kind: 'box', min: [-4, -.5, -7], max: [0, 0, 4] }] });
@@ -259,8 +281,8 @@ test('847 current-main b34 full production composition reproduces the uncovered 
   const ledgeActor = new f.Actor({ team: 0, name: 'r847mainledge', isLocal: true, weapon: 'roller', CharacterClass: f.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   ledgeActor.pos.set(-0.25, 0, 0); ledgeActor.yaw = Math.PI / 2; ledgeActor.grounded = true;
   ledgeActor.intent.move.set(1, 0, 0); ledgeActor.intent.fire = true;
-  ledgeActor.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
-  assert.equal(ledgeActor.weaponRunner.rolling, true, 'main uses feet grounding while the physical drum is over void');
+  ledgeActor.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,ledgeActor);
+  assert.equal(ledgeActor.weaponRunner.rolling, true, 'counterfactual feet-only support admits the drum over void');
 
   f.G.level = new f.Level({ bounds: { minX: -4, maxX: 4, minZ: -7, maxZ: 4 }, spawnPads: [[-3, 0, 0], [3, 0, 0]],
     spawnBarrier: 0, half: [], single: [
@@ -273,7 +295,7 @@ test('847 current-main b34 full production composition reproduces the uncovered 
   const wallHit = new f.Hit();
   f.G.physics.raycast(new f.THREE.Vector3(0, 1.8, 1.6), new f.THREE.Vector3(0, 0, 1), 0.4, wallHit, false);
   assert.equal(wallHit.hit, true, 'native stage collision confirms actual Roller-body wall contact');
-  airborne.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
-  assert.equal(airborne.weaponRunner.rolling, false, 'main suppresses the airborne Roller-body wall contact');
+  airborne.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,airborne);
+  assert.equal(airborne.weaponRunner.rolling, false, 'counterfactual feet-only support rejects airborne drum wall contact');
   f.G.actors = [];
 });

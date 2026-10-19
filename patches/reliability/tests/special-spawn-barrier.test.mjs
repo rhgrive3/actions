@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './controls-fixture.mjs';
-import {MAP_LAYOUTS} from '../../../inkwave-public/src/world/maps.js';
+import {fixture as sourceFixture} from '../../splatoon3/tests/source-fixture.mjs';
+// Resolve the shipped source/patch namespace through the existing production fixture.
+const {MAP_LAYOUTS}=await sourceFixture({productionComposition:true,extraExports:"export {MAP_LAYOUTS} from './inkwave-public/src/world/maps.js';"});
 const STEP=1/60;
 async function rig(layout, {id='slam',extra=.05,barrier=true,angle=0}={}) {
  const f=await fixture(),a=f.make('shooter'),pad=new f.THREE.Vector3(...layout.spawnPads[1]),R=layout.spawnBarrier;

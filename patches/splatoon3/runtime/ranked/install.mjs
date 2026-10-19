@@ -177,9 +177,13 @@ export function buildFrame(match, api) {
     if (cmd) inputs[id] = { fire: !!cmd.fire, throw: !!cmd.throw, aim: cmd.aim };
     if (a.remote && received) received.throw = false;
     if (!a.remote) { a.intent.throw = false; if (!nm || nm.isHost) a._rankedThrowPending = false; }
+    const hostRemote = a.remote && nm?.isHost && nm.match === match;
+    const pose = hostRemote ? nm.rankedPose?.get(id) : null;
+    const admitted = pose?.actor === a && pose.match === match && pose.session === nm.s && pose.owner === a.owner && pose.life === a.net?.lastLife;
+    const objectivePos = hostRemote && admitted ? [...pose.last.pos] : a.pos.toArray();
     const special = objectiveSpecialFor(a, a.remote ? cmd : null);
     const specialDeployed = special === 'storm' && (a.specialActive?.t > 0 || (a.remote && cmd?.specialDeployed === true));
-    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: a.pos.toArray(), alive: a.alive && !a.s3Disconnected, grounded: a.grounded,
+    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: objectivePos, alive: a.alive && !a.s3Disconnected && (!hostRemote || admitted), grounded: a.grounded,
       remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming: a.form === 'squid', slot: a.slot };
   });
   return { actors, inputs, zoneCoverage: match.rankedWorld.zoneCoverage(), barrierHits: match.rankedBarrierHits.splice(0),

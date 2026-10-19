@@ -8,6 +8,7 @@ import { adaptSource } from '../adapter.mjs';
 import { fixture } from './source-fixture.mjs';
 import { applyShotGuide } from '../runtime/weapons-fidelity.mjs';
 import { selectedSub, selectedSubCost } from '../runtime/kit-composition.mjs';
+import { chargerScopeFactor } from '../../../inkwave-public/src/game/chargerTuning.js';
 
 // Issue #572 — the standard Splat Charger charge reticle keeps Splatoon 3's 5F
 // display delay: no ring and no gauge progress for frames 1–5, the first
@@ -60,7 +61,7 @@ function install(WEAPONS, G, SUB) {
   const method = slice(source, '  _updCrosshair(f, dt) {', '\n  // ---------------------------------------------------------------- ink tank (canvas, sloshing liquid)');
   const context = vm.createContext({
     clamp: (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)),
-    WEAPONS, G, SUB, SUB_ICONS:{}, applyShotGuide, selectedSub, selectedSubCost, innerWidth:800, innerHeight:600,
+    WEAPONS, G, SUB, SUB_ICONS:{}, chargerScopeFactor, applyShotGuide, selectedSub, selectedSubCost, innerWidth:800, innerHeight:600,
     specialIcon: () => '',
   });
   const built = vm.runInContext(`${helper}\nclass Harness {\n${method}\n}\n({ Harness, chargerReticleView })`, context);
@@ -68,7 +69,7 @@ function install(WEAPONS, G, SUB) {
   Object.assign(h, {
     _L: { weapon: 'charger', kind: 'charger' },
     _bloom: 0, _kick: 0,
-    ret: new Node(), xh: new Node(), shield: new Node(), subChip: new Node(),
+    ret: new Node(), scopeMask: new Node(), xh: new Node(), shield: new Node(), subChip: new Node(),
     _chargeEl: new Node(), _chargeC: 100,
     restarts: [],
     _restart(el, cls) { this.restarts.push([el, cls]); },

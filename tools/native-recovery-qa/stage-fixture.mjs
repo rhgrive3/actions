@@ -7,7 +7,7 @@ export class PaintSystem{
  _pushQuad(){} clear(){} dispose(){if(this.old)state.oldPaintDisposed++;else state.paintDisposed++;this.rt.dispose();this.dryMesh.geometry.dispose();this.dryMesh.material.dispose();}
 }
 export class NativeLevel{constructor(){this.bounds={minX:-4,maxX:4,minZ:-4,maxZ:4};this.faces=[];this.blocks=[];this.spawnPads=[];}}
-export class NativePhysics{constructor(level){this.level=level;}}
 export class NavGraph{constructor(level,physics){this.level=level;this.physics=physics;}}
-export async function loadNativeData(){return{manifest:{geometry:{vertices:3,triangles:1},objects:[{active:true,material:'test',vo:0,vc:3,io:0,ic:3}],materials:{test:{tint:'#3987df'}}},vertices:new Float32Array([-2,0,-2,0,1,0,0,0,2,0,-2,0,1,0,1,0,0,0,2,0,1,0,.5,1]),indices:new Uint32Array([0,1,2])};}
-export async function loadNativeTextures(){return new Map();}
+import {preparedStageAssets,PREPARED_STAGE_ID} from './prepared-assets.mjs';
+export const {config:nativeStageBuild}=await preparedStageAssets(globalThis.crypto);
+export function nativeStageURL(id,file){if(id!==PREPARED_STAGE_ID||!/^[a-zA-Z.-]+$/.test(file))throw Error('Unexpected prepared asset');return new URL('/__qa/assets/'+file,location.href).href;}

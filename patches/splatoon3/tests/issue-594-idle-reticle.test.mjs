@@ -49,12 +49,13 @@ class El {
 
 // Real `_buildReticle` + `_updCrosshair` sections from the installed composed HUD source,
 // evaluated with only the DOM-ish members they touch as fixtures.
-function rig({ local = null } = {}) {
+function rig({ local = null, weapons = {} } = {}) {
   const source = compose('src/ui/hud.js');
   const methods = section(source, '  _buildReticle(kind) {', '\n  _updCrosshair(f, dt) {')
     + section(source, '  _updCrosshair(f, dt) {', '\n  _updTank(f, dt) {');
   const WEAPONS = Object.fromEntries(['shooter', 'blaster', 'charger', 'splatling', 'roller', 'dualies', 'slosher']
     .map(k => [k, { kind: k, special: 'slam' }]));
+  Object.assign(WEAPONS, weapons);
   const clamp = (v, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
   const helper = section(source, 'function chargerReticleView(', '\n}') + '\n}';
   const Hud = vm.runInNewContext(`${helper}\nclass Hud {\n${methods}\n}; Hud`, {
@@ -160,4 +161,41 @@ test('#594: composed HUD source carries the gate and fails closed without its an
   const anchor = "    if (L.kind === 'slosher') {";
   assert.throws(() => adaptSource('src/ui/hud.js', raw.replace(anchor, '')), /idle charge reticle lifecycle/);
   assert.throws(() => adaptSource('src/ui/hud.js', raw.replace(anchor, `${anchor}\n${anchor}`)), /idle charge reticle lifecycle/);
+});
+
+// These fixtures model the DOM ownership and imported scope helper used by the
+// current HUD. They must not turn stale-ring recovery into an always-true stub.
+test('#594 fixture retains a live ring and rebuilds a detached ring exactly once', () => {
+  const h = rig(), frame = { weapon: 'charger', charge: 0 };
+  h._updCrosshair(frame, 1 / 60);
+  const first = h._chargeEl;
+  assert.equal(h.ret.contains(first), true);
+  h._updCrosshair(frame, 1 / 60);
+  assert.equal(h._chargeEl, first, 'a live ring is reused');
+  h.ret.innerHTML = '';
+  assert.equal(h.ret.contains(first), false, 'innerHTML replacement detaches the old ring');
+  h._updCrosshair(frame, 1 / 60);
+  const replacement = h._chargeEl;
+  assert.notEqual(replacement, first);
+  assert.equal(h.ret.contains(replacement), true);
+  assert.equal(idle(h), true, 'recovery preserves the idle gate');
+  h._updCrosshair(frame, 1 / 60);
+  assert.equal(h._chargeEl, replacement, 'recovery does not rebuild on every frame');
+  h._updCrosshair({ weapon: 'shooter', charge: 0 }, 1 / 60);
+  assert.equal(h.ret.contains(replacement), false, 'weapon switch retires the previous ring');
+});
+
+test('#594 fixture consumes the real scoped Charger helper and clears scope on release', () => {
+  const runner = { charging: true, chargeT: 0 };
+  const weapon = { kind: 'charger', special: 'slam', scoped: true };
+  const h = rig({ local: { weaponRunner: runner }, weapons: { charger: weapon } });
+  for (const [charge, opacity] of [[.5, '0.000'], [.75, '0.500'], [1, '1.000']]) {
+    h._updCrosshair({ weapon: 'charger', charge }, 1 / 60);
+    assert.equal(h.scopeMask.style.opacity, opacity);
+  }
+  assert.equal(h.ret.classList.contains('is-scoped'), true);
+  runner.charging = false;
+  h._updCrosshair({ weapon: 'charger', charge: 1 }, 1 / 60);
+  assert.equal(h.scopeMask.style.opacity, '0.000');
+  assert.equal(h.ret.classList.contains('is-scoped'), false);
 });

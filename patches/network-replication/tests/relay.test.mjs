@@ -9,8 +9,8 @@ test('production relay rejects late join to a locked running match',async()=>{
  globalThis.WebSocketPair=class{constructor(){this[0]={};this[1]={accept(){},send(s){frames.push(JSON.parse(s));},close(...args){closed.push(args);}}}};
  globalThis.Response=class{constructor(_body,init){Object.assign(this,init);}};
  try{
-  const room=new RoomDurableObject({},{});room.members.set('owner',{name:'Owner'});room.locked=true;
-  const response=await room.fetch(new Request('https://relay/room/TEST?name=Late',{headers:{Upgrade:'websocket'}}));
+  const room=new RoomDurableObject({},{});room.members.set('owner',{name:'Owner'});room.locked=true;room.compat='fixture-v1';
+  const response=await room.fetch(new Request('https://relay/room/BC235?name=Late&v=2&compat=fixture-v1',{headers:{Upgrade:'websocket'}}));
   assert.equal(response.status,101);assert.deepEqual(frames,[{t:'err',e:'Match in progress'}]);assert.deepEqual(closed,[[1008,'Match in progress']]);assert.equal(room.members.size,1);
  }finally{if(originalPair===undefined)delete globalThis.WebSocketPair;else globalThis.WebSocketPair=originalPair;globalThis.Response=originalResponse;}
 });

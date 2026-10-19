@@ -111,22 +111,37 @@ export function installRankedNetwork(api) {
       }
       return;
     }
-    // Score from only kinematically admitted owner snapshots, not a smoothed
-    // visual interpolation of a one-frame forged teleport.
+    // Stage plausibility without publishing authority before the native packet,
+    // owner-life and adoption-sequence checks have accepted the actual snapshot.
+    const stagedPoses = [], session = this.s;
     if (d.k === 't' && this.isHost && Array.isArray(d.a)) {
       this.rankedPose ||= new Map();
       const accepted = [];
       for (const row of d.a) {
         const actor = this.byNid.get(row?.[0]);
         if (!actor?.remote || actor.owner !== from) continue;
-        const id = actorId(actor), state = this.rankedPose.get(id) || {};
+        const id = actorId(actor), previous = this.rankedPose.get(id);
+        const state = previous?.actor === actor && previous.match === m && previous.session === session && previous.owner === from
+          ? { ...previous } : {};
         if (!admitRankedPose(state, row, actor, d.ts, m.rankedWorld)) continue;
-        this.rankedPose.set(id, state);
+        stagedPoses.push({ id, actor, row, state, tail: actor.net?.buf?.at(-1) });
         accepted.push(row);
       }
       if (accepted.length !== d.a.length) d = { ...d, a: accepted };
     }
     const result = incoming.call(this, from, d);
+    if (current(this) && this.match === m && this.s === session && this.isHost) {
+      for (const { id, actor, row, state, tail } of stagedPoses) {
+        const snap = actor.net?.buf?.at(-1);
+        if (this.byNid.get(actor.nid) !== actor || actor.owner !== from || !actor.remote ||
+            !snap || snap === tail || snap.t !== d.ts || snap.life !== d.l?.[actor.nid] ||
+            snap.x !== row[1] || snap.y !== row[2] || snap.z !== row[3]) continue;
+        state.owner = from; state.life = snap.life;
+        // Keep local object identities out of snapshots/debug JSON.
+        Object.defineProperties(state, { actor: { value: actor }, match: { value: m }, session: { value: session } });
+        this.rankedPose.set(id, state);
+      }
+    }
     if (d.k === 't' && this.isHost && m.mode === 'rainmaker' && m.state === 'playing')
       noteRankedBarrierShots(this, from, d, G.time);
     if (d.k === 'res' && from === this.s.hostId && !this.isHost && m.ranked.winner !== null) m.result = { ...m.result, ...m.ranked.result() };

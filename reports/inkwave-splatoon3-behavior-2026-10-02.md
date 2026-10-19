@@ -4906,6 +4906,10 @@ This private technical composition joins aggregate 60b88072641b632ec387e05f3ab70
 
 ## Ballpoint shared glass current-main reconciliation (2026-10-13)
 
+### 2026-10-19：採用済み Ballpoint の現行 build 検証導線（QA のみ）
+
+既存 `s3-spinner-downpour` の透明スリーブはモデルを変えず、同じ immutable checkout / production build で既存 emitted 回帰1件と既存 gallery 32画像（high post stack 8条件、GTAO 正負対照）を実行する候補を用意した。旧 gallery の結果を現行 head の実描画受入へ流用せず、新しい GitHub native 結果は未確認として残す。本家との形状・投げ/射撃動作の完全一致や FPS 改善は主張しない。詳細は [Ballpoint 現行 build QA](inkwave-ballpoint-current-build-qa-2026-10-19.md)。
+
 PR1278's Ballpoint-only shell/material correction is privately composed onto ee9 with current Mini/Nautilus and all newer special/ranked paths preserved. Source and emitted-mode model contracts10/10 each, the real source-loaded dualies2100-frame probe, and the optimized build pass; current-main rendered/GTAO/completed-output ABBA and final exact-head CI remain pending. Historical c4ef software-renderer medians and all adverse timing limits are preserved in reports/inkwave-weapon-shared-rendering-2026-10-12.md. The gallery's dualies-excluded grip metric is not treated as dual-hand closure; separate real source-loaded module evidence is explicitly distinguished from rendered hands, hardware performance and retail S3 parity.
 
 Current-base follow-up (2026-10-13): the final reconciliation preserves external model head5902e346 and its two f6399281 baseline pins, then includes shared verification head68681bf. The old ee9 probes and software-rendered ABBA figures remain historical. Fresh emitted/visual/ABBA and all final-head gates are required; native-stage rendering changes prohibit carrying the old timing result forward.

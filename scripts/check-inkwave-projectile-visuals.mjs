@@ -5,6 +5,7 @@
 // The captures are intentionally browser evidence, not the isolated geometry
 // fixtures used by the numeric weapon tests.
 import fs from 'node:fs';
+import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.mjs';
 import {installAudioTimingObserver} from './lib/inkwave-audio-timing-observer.mjs';
 import {audioDiagnosticURL,audioBuildManifestReceipt,sha256 as audioReceiptSha256} from './lib/inkwave-audio-readiness-diagnostics.mjs';
 import path from 'node:path';
@@ -131,6 +132,11 @@ async function openGameContext({ mobile = false } = {}) {
   });
   const page = await context.newPage();
   page.setDefaultTimeout(30000);
+  const streamedMusicReceipt = { mobile };
+  (report.streamedMusicDiagnostics ||= []).push(streamedMusicReceipt);
+  const streamedMusic = await observeStreamedMusic({ context, page,
+    assetURL: new URL(`_versions/${manifest.build.revision}/assets/audio/Jet_Arrow.mp3`, address).href,
+    receipt: streamedMusicReceipt });
 
   const audioNetwork = [], audioSnapshots = [];
   const audioReceipt = { checkoutSha: process.env.GITHUB_SHA || null,
@@ -391,7 +397,8 @@ async function openGameContext({ mobile = false } = {}) {
       unmaskedRenderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : null, viewport: [innerWidth, innerHeight], dpr: devicePixelRatio };
   });
   if (!report.provenance.browser) report.provenance.browser = version;
-  return { context, page };
+  await streamedMusic.snapshot('native-playing-capture-ready');
+  return { context, page, close: streamedMusic.close };
 }
 
 async function setCamera(page, perspective) {
@@ -1236,7 +1243,7 @@ function summary(values) {
 }
 
 async function runFiringPerformance({ mobile = false } = {}) {
-  const { context, page } = await openGameContext({ mobile });
+  const { context, page, close } = await openGameContext({ mobile });
   const cdp = await context.newCDPSession(page);
   await cdp.send('Performance.enable');
   const gcEvents = [];
@@ -1629,14 +1636,14 @@ async function runFiringPerformance({ mobile = false } = {}) {
     garbageCollection: gcSummary,
     notes: ['Long-firing window uses the normal live match loop and debug fire input; slow software rendering extends the requested duration to collect at least 12 frames, bounded at 120 seconds.', 'GPU time is EXT_disjoint_timer_query when exposed; unavailable/disjoint is reported as such.', 'V8/devtools.timeline GC tracing brackets the firing window and adds instrumentation overhead to both builds.', 'Chromium mobile emulation is landscape and is not native Android.'],
   };
-  await context.close();
+  await close();
   return record;
 }
 
 try {
   if (capture !== 'performance') {
     const visual = await openGameContext();
-    try { await runVisuals(visual.page); } finally { await visual.context.close(); }
+    try { await runVisuals(visual.page); } finally { await visual.close(); }
   }
   if (capture !== 'visuals') {
     if (device !== 'mobile') report.performance.push(await runFiringPerformance({ mobile: false }));

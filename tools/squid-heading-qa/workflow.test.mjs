@@ -6,11 +6,14 @@ function verify(code){
  assert.equal((code.match(/uses: actions\/checkout@v4/g)||[]).length,2);
  assert.equal((code.match(/fetch-depth: 1\b/g)||[]).length,2);
  assert(code.includes('ref: ${{ github.event.pull_request.head.sha || github.sha }}'));
- assert(code.includes('BASE_SHA: 00b8994711809ba6d0469723c858ddef6805e2ae'));
- assert(code.includes('ref: ${{ env.BASE_SHA }}\n          fetch-depth: 1\n          path: _squid_heading_baseline'));
+ assert(!code.includes('BASE_SHA:'),'historical main is not this counterfactual');
+ assert(code.includes('ref: ${{ env.SOURCE_SHA }}\n          fetch-depth: 1\n          path: _squid_heading_reference'));
  assert(code.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
- assert(code.includes('test "$(git -C _squid_heading_baseline rev-parse HEAD)" = "$BASE_SHA"'));
- assert(code.includes('SOURCE_SHA="$BASE_SHA" node ../tools/squid-heading-qa/run.mjs'));
+ assert(code.includes('test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"'));
+ assert(code.includes('node tools/squid-heading-qa/reference.mjs _squid_heading_reference "$SOURCE_SHA" .qa-evidence/squid-heading-reference.json'));
+ assert(code.includes('--expect baseline --reference-proof ../.qa-evidence/squid-heading-reference.json'));
+ assert.equal((code.match(/node scripts\/build-inkwave.mjs/g)||[]).length,2,'only existing two builds');
+ for(const name of ['reference','bank-contract'])assert.equal((code.match(new RegExp('tools/squid-heading-qa/'+name+'\\.test\\.mjs','g'))||[]).length,2,'source and emitted '+name+' tests');
  assert(code.includes('INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test --test-concurrency=1'));
  assert(code.includes('node tools/squid-heading-qa/compare.mjs .qa-evidence/squid-heading-baseline/result.json .qa-evidence/squid-heading-candidate/result.json "$SOURCE_SHA"'));
  assert(code.includes('timeout-minutes: 40'));
@@ -21,10 +24,11 @@ test('native heading workflow keeps two shallow exact-head builds and emitted/pa
  verify(workflow);
  for(const mutate of [
   s=>s.replace('fetch-depth: 1','fetch-depth: 0'),
-  s=>s.replace('BASE_SHA: 00b8994711809ba6d0469723c858ddef6805e2ae','BASE_SHA: main'),
-  s=>s.replace('ref: ${{ env.BASE_SHA }}','ref: main'),
-  s=>s.replace('test "$(git -C _squid_heading_baseline rev-parse HEAD)" = "$BASE_SHA"','true'),
-  s=>s.replace('SOURCE_SHA="$BASE_SHA" node ../tools/squid-heading-qa/run.mjs','node ../tools/squid-heading-qa/run.mjs'),
+  s=>s.replace('node tools/squid-heading-qa/reference.mjs','echo tools/squid-heading-qa/reference.mjs'),
+  s=>s.replace('ref: ${{ env.SOURCE_SHA }}','ref: main'),
+  s=>s.replace('test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"','true'),
+  s=>s.replace('--reference-proof ../.qa-evidence/squid-heading-reference.json',''),
+  s=>s.replace('tools/squid-heading-qa/bank-contract.test.mjs',''),
   s=>s.replace('INKWAVE_BUILT_SITE="$PWD/_site"','IGNORED_SITE="$PWD/_site"'),
   s=>s.replace('node tools/squid-heading-qa/compare.mjs','echo tools/squid-heading-qa/compare.mjs'),
   s=>s.replace('tools/squid-heading-qa/three-contract.test.mjs',''),
