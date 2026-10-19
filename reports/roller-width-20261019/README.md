@@ -40,3 +40,7 @@ node scripts/check-inkwave-rolling-paint-browser.mjs _site .browser-evidence/rol
 ```
 
 上から2つ目は成功し、3つ目は原典の幅条件で失敗しなければならない。全ケースと実行結果は[検証記録](verification.json)。原典のスカラー幅への適合と、Nintendo実機の最終マスク・速度補間・見た目の完全一致は区別する。公式の動画プレイヤーは今回HTTP 403で再取得できず、未確認の映像寸法を根拠として追加していない。Switch実機・実iPadの比較も未実施。
+
+## 最新mainとの統合
+
+幅実装を変えずにmain `80f19b43`を取り込んだところ、main側のnativeロード音対策が、FixedClock化で既に消えた`src/main.js`のattract更新行を探して通常ビルドが停止した。停止条件を実際の`runtime/clock.mjs`へ置き、遅延リセットは既存のmatch/flow所有者チェックへpaused条件を追加して接続し直した。起動中の旧試合停止・破棄・両owner解除は保持する。nativeロード・実FixedClock・既存attract寿命の回帰23件が成功し、通常ビルドと起動予算も通過した。VM fixtureにも現在の音楽モジュールが使う標準URL構築と`import.meta.url`を供給した。統合後の実GPUで基本ローラー全幅5.6、中央欠損0、接地点誤差0を再確認した。

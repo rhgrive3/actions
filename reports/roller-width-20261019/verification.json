@@ -224,5 +224,332 @@
     "declaredBytes": 14482092,
     "measurementKind": "deterministic file and dependency gates; not native browser timings"
   },
-  "retailDeviceComparison": false
+  "retailDeviceComparison": false,
+  "integration": {
+    "main": "80f19b439356bc1feef6741ecc66621f448fed4e",
+    "issue": "Native stage loading patch targeted an attract tick already moved into FixedClock and an auto-reset already owned by the reliability pass.",
+    "repair": "Apply pause gate in FixedClock; augment existing match/flow reset lease; preserve full loader cleanup.",
+    "regressionTestsPassed": 23,
+    "postMergeNative": {
+      "id": "roller",
+      "hz": 60,
+      "physicalHalf": 0.7500000000000011,
+      "sourceHalf": 2.8,
+      "gpuMinWidth": 5.474999999999989,
+      "gpuMaxWidth": 5.674999999999988,
+      "contactError": 0,
+      "cpuHoles": 0,
+      "actor": [
+        0,
+        0,
+        15.127999999999995
+      ],
+      "drum": [
+        -0.02962254925440444,
+        0.17110666672183936,
+        16.18256397498588
+      ],
+      "events": [
+        {
+          "at": [
+            -0.12755606376303474,
+            8.326672684688674e-17,
+            13.85269595289321
+          ],
+          "r": 2.8,
+          "stretch": [
+            0.05996400647944401,
+            0,
+            0.9982005399352042
+          ],
+          "amount": 0,
+          "kind": "source-shot",
+          "footprint": "ink-contact"
+        },
+        {
+          "at": [
+            -0.12816344421562423,
+            8.326672684688674e-17,
+            13.983761743707602
+          ],
+          "r": 2.8,
+          "stretch": [
+            0.05996400647944451,
+            0,
+            0.9982005399352043
+          ],
+          "amount": 0,
+          "kind": "source-shot",
+          "footprint": "ink-contact"
+        },
+        {
+          "at": [
+            -0.1287777715406686,
+            8.326672684688674e-17,
+            14.114362012200063
+          ],
+          "r": 2.8,
+          "stretch": [
+            0.05996400647944483,
+            0,
+            0.9982005399352043
+          ],
+          "amount": 0,
+          "kind": "source-shot",
+          "footprint": "ink-contact"
+        },
+        {
+          "at": [
+            -0.1293797342898363,
+            8.326672684688674e-17,
+            14.244726760480242
+          ],
+          "r": 2.8,
+          "stretch": [
+            0.05996400647944595,
+            0,
+            0.9982005399352042
+          ],
+          "amount": 0,
+          "kind": "source-shot",
+          "footprint": "ink-contact"
+        },
+        {
+          "at": [
+            -0.12992696675379287,
+            8.326672684688674e-17,
+            14.375070717884048
+          ],
+          "r": 2.8,
+          "stretch": [
+            0.059964006479444665,
+            0,
+            0.9982005399352042
+          ],
+          "amount": 0,
+          "kind": "source-shot",
+          "footprint": "ink-contact"
+        },
+        {
+          "at": [
+            -0.1303620801398711,
+            8.326672684688674e-17,
+            14.505587067894735
+          ],
+          "r": 2.8,
+          "stretch": [
+            0.05996400647944445,
+            0,
+            0.9982005399352042
+          ],
+          "amount": 0,
+          "kind": "source-shot",
+          "footprint": "ink-contact"
+        }
+      ],
+      "rows": 253,
+      "holes": 0,
+      "samples": [
+        {
+          "x": -0.5,
+          "values": [
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "x": -0.25,
+          "values": [
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "x": 0,
+          "values": [
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "x": 0.25,
+          "values": [
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "x": 0.5,
+          "values": [
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255,
+            255
+          ]
+        }
+      ],
+      "sourceActive": true,
+      "ticks": 150,
+      "contentHash": "7b8572c22e80309093f7ca9fd282865d405bfb9df2624391b711942263705773",
+      "browser": "154.0.8037.57",
+      "errors": [],
+      "baselineRef": null,
+      "runtimeOverlayPaths": []
+    },
+    "postMergeStartupBudget": {
+      "status": "passed",
+      "revision": "144a2dd4c7a4f4174a1567aece3feb9b9480128419ea6b014466a8182af6bca6",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 78140,
+      "initialJSBytes": 2507678,
+      "criticalHTMLBytes": 19405,
+      "precacheCount": 465,
+      "precacheBytes": 7195811,
+      "workerBytes": 72373,
+      "declaredBytes": 14665127,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "fixtureDependentTestsPassed": 49
+  }
 }

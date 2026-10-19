@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
@@ -15,7 +15,11 @@ export const compose = (rel, baseline = false) => {
 export async function idleFixture({ baseline = false, globals = {}, transform = (_rel, code) => code, built = process.env.INKWAVE_IDLE_BUILD } = {}) {
   if (baseline) built = null;
   const upstream = built || path.join(ROOT, "inkwave-public");
-  const context = vm.createContext({ console, performance, ...globals });
+  // Music now resolves its streamed asset with new URL(..., import.meta.url).
+  // Keep the fixture's object-URL stubs without losing the browser constructor.
+  const ModuleURL = class extends URL {};
+  Object.assign(ModuleURL, globals.URL);
+  const context = vm.createContext({ console, performance, ...globals, URL: ModuleURL });
   const modules = new Map();
   const resolve = (spec, from) => spec === 'three' ? path.join(upstream, 'vendor/three/build/three.module.js')
     : spec.startsWith('three/addons/') ? path.join(upstream, 'vendor/three/jsm', spec.slice(13))
@@ -24,7 +28,8 @@ export async function idleFixture({ baseline = false, globals = {}, transform = 
     if (modules.has(file)) return modules.get(file);
     const rel = path.relative(upstream, file);
     const code = built || rel.startsWith('..') ? fs.readFileSync(file, 'utf8') : compose(rel, baseline);
-    const mod = new vm.SourceTextModule(transform(rel, code), { context, identifier: file }); modules.set(file, mod); return mod;
+    const mod = new vm.SourceTextModule(transform(rel, code), { context, identifier: file,
+      initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } }); modules.set(file, mod); return mod;
   }
   let entry = `
     export * from './inkwave-public/src/core/ctx.js';
