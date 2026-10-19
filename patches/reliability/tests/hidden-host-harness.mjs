@@ -36,7 +36,14 @@ export async function pair(){
   const f=await fixture({match:true,network:true,session:true,clock:{now:()=>ms}}),s=new f.NetSession();installDisconnectFidelity({NetMatch:f.NetMatch,G:f.G});s.myId=welcome.id;s.hostId=welcome.host;s.state='match';s.code='room';s._members=new Map(welcome.members.map(x=>[x.id,x.name]));s.lobby.players=welcome.members.map(x=>({...x,host:x.id===s.hostId,team:0,ready:true}));
   const m=new f.Match({duration:10,mode:'turf',roster:[],host:s.isHost});m.follower=!s.isHost;m.setState('playing');
   const nm=new f.NetMatch(s,{map:'reef'});s.match=nm;nm.bind(m);let sends=0,physics=0,aborted=0;
-  s.tr={broadcast(data){sends++;socket.receive('b|'+JSON.stringify(data));},sendTo(id,data){socket.receive('s|'+id+'|'+JSON.stringify(data));},close(){socket.close();},rtt:0};
+  // Retain the actual Transport's boolean acceptance and byte/backpressure gates.
+  // Only its WebSocket endpoint is bridged to the same synchronous real relay.
+  const transport = new f.Transport();
+  transport.ws = { get readyState(){return socket.live ? 1 : 3;}, bufferedAmount:0,
+   send(data){if(data.startsWith('b|'))sends++;socket.receive(data);},
+   close(code,reason){socket.close(code,reason);},
+  };
+  s.tr=transport;
   socket.deliver=data=>{if(data.startsWith('m|')){const k=data.indexOf('|',2);s._message(data.slice(2,k),JSON.parse(data.slice(k+1)));}else if(data!=='pong')s._control(JSON.parse(data));};
   socket.closed=()=>s._closed('Connection closed');
   const env=new EventTarget();env.document=new EventTarget();env.document.hidden=false;env.document.hasFocus=()=>true;env.performance={now:()=>ms};env.Date={now:()=>ms};let timerId=0;const timers=new Map();env.setTimeout=(fn,delay)=>{timers.set(++timerId,{fn,at:ms+delay});return timerId;};env.clearTimeout=id=>timers.delete(id);env.screen={orientation:new EventTarget()};env.console=console;let rid=0;const raf=new Map();env.requestAnimationFrame=fn=>{raf.set(++rid,fn);return rid;};env.cancelAnimationFrame=id=>raf.delete(id);

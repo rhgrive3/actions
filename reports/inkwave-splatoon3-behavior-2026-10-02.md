@@ -459,6 +459,8 @@ emitted-graph cases. See [sources, reproduction, limits and merge resolutions](i
 
 ## Network replication の修復（2026-10-04）
 
+2026-10-19: #1692 のローカル送信拒否時イベント消失について、受理prefix保持・所有者再入guardの候補を検証。source受入と未実行のemitted/browserを分離し、[専用記録](inkwave-local-send-acceptance-2026-10-19.md)へ保存した。
+
 ローラー横／縦振りの owner physics を packet 化する順序を修正し、remote の trajectory と projectile に紐付く curtain の時間軸を一致させた。基準射程・威力・spread・local physics・animation pose の変更はない。全武器の native replay、二人の WebSocket arena、遅延／重複／退出回帰の詳細は [Network replication report](network-replication-report.md) に記録する。これは INKWAVE 内の同期比較であり、本家の実機比較、原作の射程校正、physical iOS 検証の未確認項目を解消したという意味ではない。
 
 ## Remote Dualies 固定姿勢の同期（#1156、2026-10-09）
@@ -4800,6 +4802,10 @@ MAP/PAUSEとGYROに触れて24pxより外へ動かし、元へ戻して離す操
 
 
 ## 2026-10-15 ranked input / network lifetime follow-up
+
+### 2026-10-19: refused follower tick retains its Clam throw edge (#1692)
+
+A local C / pad / touch throw could disappear when the existing bounded Transport refused its 20Hz tick: the ranked sidecar cleared the pending edge before checking the boolean send result. The candidate clears it only on explicit `true`, preserving existing input cancellation and host sequence admission. Source evidence uses actual composed input, Actor, NetMatch, Transport, JSON and host ClamsRule; this is local transport acceptance, not a new delivery acknowledgement or a retail protocol claim. The sender event-prefix repair is separate. Emitted and live two-client verification remain pending. See [the acceptance record](inkwave-ranked-throw-send-acceptance-2026-10-19.md).
 
 Comparison target remains Splatoon 3 11.3.0, existing pinned Leanny reference `7280ff9cde8bb1c5dcef46c700c326471584d2e6`. No retail frame, damage, movement, or special table values changed. This follow-up repairs INKWAVE input arbitration and wire admission; it does not establish retail protocol equivalence.
 

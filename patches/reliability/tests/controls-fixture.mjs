@@ -30,7 +30,7 @@ export async function fixture({ diorama = false, match = false, character = fals
   }
   const listeners = new Map(), storage = new Map(); let pads = [];
   const classes = {add(){},remove(){},toggle(){},contains(){return false;}};
-  const context = vm.createContext({ console, performance: clock, URL, URLSearchParams, AbortController, setTimeout, clearTimeout,
+  const context = vm.createContext({ console, performance: clock, URL, URLSearchParams, TextEncoder, AbortController, setTimeout, clearTimeout,
     screen:{width:1000,height:700,orientation:{angle:0}},innerWidth:1000,innerHeight:700,
     localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},
     navigator:{userAgent:'controls fixture',maxTouchPoints:0,getGamepads:()=>pads},

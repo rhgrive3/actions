@@ -28,7 +28,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'outbound-prefix.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -2655,8 +2655,11 @@ function canAllocateNetworkGhost(projectiles, actor) {
   }
   if (rel === 'src/net/netmatch.js') {
     code = "import { packPaintTick, acceptPaintTick, forgetPaintPeer } from '../../patches/splatoon3/runtime/paint-packet-codec.mjs';\n" + code;
+    code = "import { queueOutboundEvent, sendOutboundTick } from '../../patches/network-replication/outbound-prefix.mjs';\n" + code;
+    patch('this.out.push(event); return event;', 'return queueOutboundEvent(this, event, G);', 'retain bounded outbound event identity');
+    patch('if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'if (this.out.length) msg.r = 2;', 'retain events until local send acceptance');
     patch('    this.s.tr?.broadcast(msg);',
-      '    this.s.tr?.broadcast(packPaintTick(this, msg));',
+      '    return sendOutboundTick(this, msg, packPaintTick, G);',
       'negotiate lossless paint rows with current relay members');
     patch('  onMessage(from, d) {',
       '  onMessage(from, d) {\n    d = acceptPaintTick(this, from, d);\n    if (!d) return;',

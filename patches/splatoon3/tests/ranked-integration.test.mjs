@@ -120,7 +120,7 @@ test('ranked runtime suppresses carrier fire, splats a timed-out carrier, and re
   const guestSession = {
     myId: 'guest', hostId: 'host', isHost: false,
     _members: new Set(['host', 'guest']),
-    tr: { broadcast: packet => guestPackets.push(packet), sendTo() {} },
+    tr: { broadcast: packet => { guestPackets.push(packet); return true; }, sendTo() {} },
   };
   const owner = f.make('shooter');
   Object.assign(owner, { nid: 23, owner: 'guest', team: 0, slot: 1, remote: false });
