@@ -71,6 +71,9 @@ test('all seven actual movement targets are radial at 72 angles, micro/full inpu
         const angle = degrees * Math.PI / 180;
         a.intent.move.set(Math.sin(angle)*magnitude,0,Math.cos(angle)*magnitude);
         a.vel.set(0,0,0);
+        // Rolling travels along the body heading (never square to the drum), so
+        // radial speed is measured with the body already turned to the stick.
+        if (state === 'roll' || state === 'dash') a.yaw = angle;
         for (let i=0;i<30;i++) a._horizontal(DT,false,false);
         near(a.vel.x,Math.sin(angle)*target*magnitude,`${kind}/${state}/${ap}AP/${degrees}deg X`);
         near(a.vel.z,Math.cos(angle)*target*magnitude,`${kind}/${state}/${ap}AP/${degrees}deg Z`);
@@ -151,7 +154,7 @@ test('actual collision travel at every 15-degree angle has the same length for w
       const angle=degrees*Math.PI/180;
       a.intent.move.set(Math.sin(angle),0,Math.cos(angle));
       if(mode==='fire')r.s3ShooterMoveRemaining=.1;
-      if(mode==='roll'||mode==='dash'){r.rolling=true;r.rollT=mode==='dash'?2:0;}
+      if(mode==='roll'||mode==='dash'){r.rolling=true;r.rollT=mode==='dash'?2:0;a.yaw=angle;}
       for(let i=0;i<60;i++){a._horizontal(DT,false,false);a._integrate(DT,false,false);}
       const distance=Math.hypot(a.pos.x,a.pos.z);
       if(reference===undefined)reference=distance;
