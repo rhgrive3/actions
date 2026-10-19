@@ -133,6 +133,13 @@ export function adaptWeaponAudio(rel,code){
       "G.audio?.playWeapon?.(damage>=95?'combat:critical':'combat:damage','fire',{volume:.76,priority:95}); " +
       "else G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
       'source verified Charger hit feedback only');
+    // A verified direct-critical sound must not disappear merely because a
+    // low-damage event happened within the legacy 60 ms HUD sound throttle.
+    // Keep all other hit sounds and their existing debounce behavior.
+    code=once(code,
+      'if (G.time - lastHitSnd > 0.06) { lastHitSnd = G.time;',
+      "if (G.time - lastHitSnd > 0.06 || (/^(?:charger(?:-|$)|s3-charger-)/.test(String(weaponId||'')) && damage>=95)) { lastHitSnd = G.time;",
+      'preserve full-charge Charger critical cue over ordinary HUD click throttle');
     code=once(code,
       "G.audio?.play('splat_enemy', { volume: 0.9 });",
       "if (/^(?:charger(?:-|$)|s3-charger-)/.test(String(cause||''))) " +
