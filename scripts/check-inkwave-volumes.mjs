@@ -6,6 +6,7 @@ import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import { chromium, webkit } from 'playwright';
+import {audioDiagnosticURL,audioBuildManifestReceipt,sha256} from './lib/inkwave-audio-readiness-diagnostics.mjs';
 const [siteArg, packArg, evidenceArg] = process.argv.slice(2);
 if (!siteArg || !packArg || !evidenceArg) throw Error('Usage: node scripts/check-inkwave-volumes.mjs <built-site> <local-pack> <local-evidence>');
 const site = path.resolve(siteArg), pack = path.resolve(packArg), evidence = path.resolve(evidenceArg); fs.mkdirSync(evidence, { recursive: true });
@@ -26,6 +27,13 @@ let browser; const errors = [], result = { environment: (useWebkit?'WebKit softw
 try {
  browser=useWebkit?await webkit.launch({headless:true}):await chromium.launch({executablePath:process.env.VOLUME_CHROMIUM || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : chromium.executablePath()),headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
  const page=await browser.newPage({viewport:touch?{width:844,height:390}:{width:960,height:640},hasTouch:touch,isMobile:touch});page.on('pageerror',e=>{errors.push(String(e));console.error(String(e));});page.on('console',m=>{if(m.type()==='error'){errors.push(m.text());console.error(m.text());}});
+ const audioNetwork=[],audioPending=[];
+ page.on('response',response=>{if(!response.url().includes('/runtime/audio/'))return;
+  const receipt={url:audioDiagnosticURL(response.url()),status:response.status(),contentType:response.headers()['content-type']||null};
+  if(audioNetwork.length<48)audioNetwork.push(receipt);
+  if(response.url().split('?')[0].endsWith('/real-s3-installed.json'))audioPending.push(response.body().then(bytes=>{receipt.bytes=bytes.length;receipt.sha256=sha256(bytes);}).catch(error=>{receipt.error=String(error.message).slice(0,300);}));
+ });
+ page.on('requestfailed',request=>{if(request.url().includes('/runtime/audio/')&&audioNetwork.length<48)audioNetwork.push({url:audioDiagnosticURL(request.url()),failure:request.failure()?.errorText});});
  await page.goto(base+'/inspect');
  result.comparison=await page.evaluate(async()=>{
   const T=await import('three'),{InkVolumes}=await import('/patches/local-quality/ink-volume/runtime.mjs'),{loadVolumePack}=await import('/patches/local-quality/ink-volume/pack.mjs');
@@ -80,7 +88,13 @@ try {
  for (const view of result.comparison.grazingViews) {assert.equal(view.darkTransparent,0,'black transparent interior seam: '+JSON.stringify(view));assert.equal(view.blackPixels,0,'unlit black interior seam: '+JSON.stringify(view));}
  if (!process.argv.includes('--shape-only')) {
  await page.addInitScript(()=>{globalThis.INKWAVE_INK_VOLUME_URLS={roller:'/local-ink/manifest.json'};});
- await page.goto(base+'/?range&skipTitle');console.log('loaded document');await page.waitForFunction(()=>window.__G?.match?.range && window.__G.match.state==='playing',null,{timeout:240000});
+ await page.goto(base+'/?range&skipTitle');console.log('loaded document');try{await page.waitForFunction(()=>window.__G?.match?.range && window.__G.match.state==='playing',null,{timeout:240000});}
+ catch(error){
+  await Promise.allSettled(audioPending);
+  const runtime=await page.evaluate(()=>{const a=window.__G?.audio,l=a?._realS3Loader;return {matchState:window.__G?.match?.state??null,audioContext:a?.ctx?.state??null,bankDisposed:a?._weaponBank?.disposed??null,loader:l?.stats?.()??null};}).catch(e=>({evaluationError:String(e.message).slice(0,300)}));
+  fs.writeFileSync(path.join(evidence,'audio-readiness-failure.json'),JSON.stringify({checkoutSha:process.env.GITHUB_SHA||null,headRef:process.env.GITHUB_HEAD_REF||null,build:audioBuildManifestReceipt(site),network:audioNetwork,runtime,errors:errors.slice(-8),failure:String(error.message).slice(0,300)},null,2));
+  throw error;
+ }
  console.log('playing range');result.integration=await page.evaluate(async()=>{
   const G=window.__G,g=window.__inkwave,a=G.local;g.debug.freeze();a.setWeapon('roller');a.ink=100;
   const beforeRegistration={...G.renderer.info.memory};
