@@ -43,6 +43,13 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,"emit('hit', { attacker, victim, damage: dmg, killed, weaponId });",
       "emit('hit', { attacker, victim, damage: dmg, killed, weaponId, charge:combatHit?.charge, direct:combatHit?.direct });",
       'native admitted hit event metadata');
+    // The native body impact had an independent synthesized wet layer in
+    // addition to the HUD hit-confirmation chime. Both now use original
+    // source MP3s, normal/strong selected by the pre-existing 60 damage band.
+    code=once(code,
+      "G.audio.play('ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260), pitch: dmg >= 60 ? 0.8 : 1.05 });",
+      "G.audio.play(dmg >= 60 ? 's3_ink_hit_heavy' : 'ink_hit_body', { pos: _vh, volume: (victim.isLocal ? 0.3 : 0.4) + Math.min(0.45, dmg / 260) });",
+      'original 2022 normal/strong impact PCM');
 
     code=code.replace(/emit\('weapon:impact', \{ pos: (_v|at|hit\.point|c),/g,"emit('weapon:impact', { actor:p.owner, weapon:p.wid, pos: $1,");
     code=code.replace("emit('weapon:impact', { pos: end,","emit('weapon:impact', { actor:a,weapon:w.id,pos:end,");
