@@ -1,6 +1,7 @@
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
+import { installRecordedCombatAudio } from './combat-recordings.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 
@@ -177,10 +178,15 @@ export function installWeaponAudioEngine(Engine){
   };
   const init=p.init;p.init=function(...args){const result=init.apply(this,args);
     if(this.ctx){for(const id of this._warmWeapons||[])this.prepareWeapon(id,{urgent:true});}
+    // Browser-only asynchronous demand page, once per AudioContext. Never
+    // block the render thread or generate a substitute cue during loading.
+    if(this.ctx&&typeof window!=='undefined'&&!this.offline)
+      this.prepareRecordedCombatCues?.().catch(error=>console.warn('[audio] recorded combat preload',error));
     return result;
   };
   const stats=p.stats;p.stats=function(){const result=stats.call(this);for(const [key,list] of this.byName){if(!list.some(v=>!v.v.dead&&!v.stolen))this.byName.delete(key);}return {...result,weaponBank:this._weaponBank?.stats()||null,
-    realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
+    realS3Loader:this._realS3Loader?.stats()||null,recordedCombat:this.recordedCombatCueStats?.()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
-  p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmWeapons?.clear();};
+  p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmWeapons?.clear();this._s3CombatCues=null;};
+  installRecordedCombatAudio(Engine);
 }
