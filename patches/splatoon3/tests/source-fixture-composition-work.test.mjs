@@ -26,6 +26,7 @@ function exercise({ built, upstream, production, custom }) {
   const native = (rel, raw) => { calls.push(['native', rel]); return `native(${raw})`; };
   const globals = {
     ROOT, UPSTREAM, BUILT: built, productionComposition: production,
+    generation: null,
     path, modules, context: {}, pathToFileURL,
     fs: { readFileSync(file, encoding) { reads.push([file, encoding]); return 'raw'; } },
     adaptNative: native,
