@@ -324,6 +324,14 @@ export async function measureStormRainAtRenderHz(renderHz, {
     paintFlaggedCosmeticEmissions,
     summedCircularBrushFootprintWorldUnitsSquared: round(summedCircularBrushFootprintWorldUnitsSquared),
     summedClaimedWorldUnitsSquared: round(summedClaimedWorldUnitsSquared),
+    // #226/#264: the splat() return value is only the cells claimed at the call.
+    // The composed #264 ownership layer claims sub-cell ancillary pieces later, while
+    // the paint grows, and credits them to the same owner. Keep the two separate so the
+    // accounting still closes: splat claims + ancillary claims = owner credit = CPU union.
+    ownerCreditedWorldUnitsSquared: round(owner.stats.turf),
+    ancillaryClaimedWorldUnitsSquared: round(owner.stats.turf - summedClaimedWorldUnitsSquared),
+    ancillaryClaimedCells: turf.cells - events.filter((e) => e.kind === 'paint_splat_write')
+      .reduce((sum, e) => sum + e.cpuTurfCellsDelta, 0),
     finalCpuTurfCellsFromGrid: turf.cells,
     finalCpuTurfUnionWorldUnitsSquared: turf.areaWorldUnitsSquared,
     finalCpuTurfCellsFromPaintCounts: G.paint.counts[cloud.team],
@@ -379,6 +387,7 @@ export async function measureStormRainCalibration({
         paintWriteEvents: 'calls to the composed INKWAVE PaintSystem.splat; CPU turf grid accounting is reported separately',
         cosmeticParticleEmissions: 'FX.rain drop-pool admissions counted at FX._spawnDrop; not Nintendo particles',
         summedCircularBrushFootprintWorldUnitsSquared: 'sum of pi*r^2 for each splat call in WU²; a nominal overlap-prone proxy, not turf union',
+        ancillaryClaimedWorldUnitsSquared: 'owner turf credit minus the summed splat() returns, in WU²: sub-cell cells the composed #264 ownership layer claims after splat() returns while the paint grows (zero in the public-source scope)',
         finalCpuTurfUnionWorldUnitsSquared: 'area in WU² of unique team-owned turf cells in the real PaintSystem CPU grid after the run',
       },
     },

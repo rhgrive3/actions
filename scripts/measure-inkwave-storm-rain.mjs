@@ -124,7 +124,7 @@ function csvFor(data) {
 function markdownFor(data, artifactHashes) {
   const row = (run) => {
     const s = run.summary;
-    return `| ${s.scope} | ${s.renderHz} | ${s.fixedSimulationTicks} | ${s.candidateRayEmissions} | ${s.rayGroundHits} | ${s.paintWriteEvents} | ${s.cosmeticParticleEmissions} | ${s.summedCircularBrushFootprintWorldUnitsSquared} | ${s.summedClaimedWorldUnitsSquared} | ${s.finalCpuTurfCellsFromGrid} | ${s.finalCpuTurfUnionWorldUnitsSquared} |`;
+    return `| ${s.scope} | ${s.renderHz} | ${s.fixedSimulationTicks} | ${s.candidateRayEmissions} | ${s.rayGroundHits} | ${s.paintWriteEvents} | ${s.cosmeticParticleEmissions} | ${s.summedCircularBrushFootprintWorldUnitsSquared} | ${s.summedClaimedWorldUnitsSquared} | ${s.ancillaryClaimedWorldUnitsSquared} | ${s.finalCpuTurfCellsFromGrid} | ${s.finalCpuTurfUnionWorldUnitsSquared} |`;
   };
   const rows = data.runs.map(row).join('\n');
   const sourceSnapshot = data.measurement.sourceSnapshot;
@@ -150,13 +150,14 @@ The terms are deliberately local to INKWAVE:
 - **Ground hit**: a successful return from INKWAVE's composed physics raycast against this fixture plane.
 - **Paint write**: one call to the real PaintSystem.splat. Its returned newly claimed area and its CPU grid cell changes are separately recorded.
 - **Cosmetic particle emission**: one drop-pool admission through INKWAVE FX.rain → FX._spawnDrop. These are not Nintendo particles; the Storm rain path does not set the FX paint flag.
+- **Ancillary claim**: turf cells claimed after the splat call has returned, by the composed #264 sub-cell ownership layer while the paint grows. They are credited to the same owner but are not part of the splat() return value; in the 'public-source' scope there are none. The splat() claims plus the ancillary claims equal the owner credit and the final CPU turf union.
 - **Summed circular brush footprint**: Σπr² in WU² for paint calls. This nominal footprint sum can overlap and is not an area of unique turf.
 - **CPU turf union**: unique team-owned cells read from the real PaintSystem.grid after the run. The area is in WU²; the radial/angle distribution is reported in both data files.
 
 ## Results
 
-| Scope | Render Hz | Simulation updates | INKWAVE candidate rays | Ray ground hits | Paint writes | Cosmetic FX drop emissions | Sum of nominal πr² (WU²) | Sum newly claimed (WU²) | Final CPU turf cells | Final CPU turf union (WU²) |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Scope | Render Hz | Simulation updates | INKWAVE candidate rays | Ray ground hits | Paint writes | Cosmetic FX drop emissions | Sum of nominal πr² (WU²) | Sum of splat() claims (WU²) | Ancillary claims after splat() (WU²) | Final CPU turf cells | Final CPU turf union (WU²) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 ${rows}
 
 The detailed timestamped event ledger, per-write areas, final CPU-grid radial/angle bins, and summary counters are retained in [CSV](./${REPORT_STEM}.csv) and [JSON](./${REPORT_STEM}.json). Within the 'production' scope, simulation events and CPU turf distribution match across render rates after omitting only the render-frame index. Within the 'public-source' scope they do not: candidate counts are 172, 172, and 171 at 30, 60, and 120 Hz, and the CPU turf differs. That scope's cloud time is accumulated per render frame, so the window check falls on a different update at each cadence. At 30 and 60 Hz the cloud is still listed at the end of the run because accumulated floating-point time stops just below 8 s; the window had already closed, so no further emissions occur.
