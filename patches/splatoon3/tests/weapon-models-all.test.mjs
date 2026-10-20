@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
+import { nativeRollerGripGap } from './roller-support-contact.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 
 const ALL_IDS = MAIN_WEAPON_CATALOG.records.map(r => r.id);
@@ -87,7 +88,7 @@ test('the real Actor/Runner/Character holds every main weapon through carry and 
       // first frames after spawn: the shoulder-reach integrator is still settling; a bow's
       // drawing hand rides its string (supportZ)
       if (n >= 10 && !ch.dual && ch.P[C.IKL] > .99 && ch.P[C.LTW] < .001)
-        maxGrip = Math.max(maxGrip, ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone().setZ(ch.weapon.def.handL.pos.z + (ch.weapon.supportZ || 0))).distanceTo(ch.bones.handL.getWorldPosition(hand)));
+        maxGrip = Math.max(maxGrip, ch.weaponKind === 'roller' ? nativeRollerGripGap(ch, THREE, 'handL', C) : ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone().setZ(ch.weapon.def.handL.pos.z + (ch.weapon.supportZ || 0))).distanceTo(ch.bones.handL.getWorldPosition(hand)));
     }
     assert.ok(maxGrip < 0.008, `${id} support hand stays on its grip (${maxGrip.toFixed(4)} m)`);
     assert.ok(attacked > 0, `${id} really attacks during the held-fire window`);

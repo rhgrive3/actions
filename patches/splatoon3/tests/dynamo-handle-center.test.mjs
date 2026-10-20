@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 const BEFORE_DYNAMO=fs.readFileSync(new URL('./fixtures/dynamo-before-model.txt',import.meta.url),'utf8');
 import { fixture } from './source-fixture.mjs';
+import { nativeRollerGripGap } from './roller-support-contact.mjs';
 const ID='s3-roller-heavy';
 const sourceDynamo=JSON.parse(fs.readFileSync(new URL('../reference/roller-source-scale-2026-10-19.json',import.meta.url))).records.find(r=>r.id===ID);
 // Main now calibrates the model to the independently measured indexed source
@@ -116,7 +117,7 @@ async function run(f,hz){
   a.ink=100;a.intent.fire=fire;a.grounded=a.ground.hit=!(t>=3&&t<4.4);a.intent.move.set(0,0,fire?1:0);a.vel.set(0,0,fire?2.4:0);a.aimPitch=0;
   G.time+=1/hz;a.weaponRunner.update(1/hz,{fire,firePressed:n===hz/2||n===hz*3});a._finishFrame(1/hz);ch.root.updateMatrixWorld(true);
   assert.ok(Array.from(ch.P).every(Number.isFinite),'finite pose '+hz+' '+n);
-  const C=f.CHARACTER_CHANNELS;if(n>hz/3&&ch.P[C.IKL]>.99&&ch.P[C.LTW]<.001)maxGrip=Math.max(maxGrip,ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3())));
+  const C=f.CHARACTER_CHANNELS;if(n>hz/3&&ch.P[C.IKL]>.99&&ch.P[C.LTW]<.001)maxGrip=Math.max(maxGrip,nativeRollerGripGap(ch,THREE,'handL',C));
   maxSpin=Math.max(maxSpin,Math.abs(ch.weapon.drum?.rotation.x||0));maxFold=Math.max(maxFold,Math.abs(ch.weapon.fold?.rotation.x||0));rolling+=a.weaponRunner.rolling?1:0;
   rows.push([a.ink,a.weaponRunner.cooldown,a.weaponRunner.catalogState.swingCount,a.weaponRunner.rolling]);
  }
