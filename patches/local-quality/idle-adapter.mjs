@@ -112,6 +112,11 @@ export function adaptIdleSource(rel, code, replace) {
     // #923: freeze gameplay projectiles at the very same Turf terminal
     // state boundary, while preserving cinematic boss/ranked/attract paths.
     // FX/HUD/renderer continue independently for the judge reveal.
+    if (!code.includes('      if (!m.paused) G.projectiles.update(dt);')) {
+      const lineMatches = code.split('\\n').filter(line => line.includes('projectiles') && line.includes('update')).slice(0, 8);
+      const tickPos = code.indexOf('m.update(dt / sub);');
+      throw new Error('POSTMATCH_ADAPTER_DIAGNOSTIC ' + JSON.stringify({lines:lineMatches,aroundTick:code.slice(Math.max(0,tickPos-150),tickPos+350),tickPos}));
+    }
     patch('      if (!m.paused) G.projectiles.update(dt);',
       "      if (!m.paused && (m.bossMode || m.ranked || m.attract || (m.state !== 'finish' && m.state !== 'judge'))) G.projectiles.update(dt);",
       '#923 freeze Turf projectile gameplay after TIME UP');
