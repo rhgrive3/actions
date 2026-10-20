@@ -553,6 +553,36 @@ try {
         sim.match.update = dt => a.update(dt); sim.s3Clock.reset();
         mobile.reset(); mobile.setVisible(true); mobile.moveX = .8; input.lastDevice = 'touch';
       });
+      // #1430: a pressed button must keep its visible center on its fixed hitbox. The pressed scale shrinks the button
+      // about its own center; when a translate3d position was scaled too, the visible button moved ~75 px away from the
+      // hitbox, so a later press dispatched at the visible center (as the held release/repress trial below does) hit nothing
+      // and returned 0 actions, depending on how far the 40 ms CSS transition had progressed. Settle on the finished
+      // transition rather than on a timer, then compare the real layout.
+      const pressedCenters = await page.evaluate(async () => {
+        const settled = id => Promise.all(mobile.els[id].getAnimations().map(animation => animation.finished.catch(() => {})));
+        const rows = [];
+        for (const id of ['fire', 'jump', 'sub', 'squid', 'special']) {
+          const el = mobile.els[id], box = mobile._box(id);
+          const dispatch = (type, pointerId) => el.dispatchEvent(new PointerEvent(type, { pointerId, pointerType: 'touch', bubbles: true, cancelable: true, clientX: box.x, clientY: box.y }));
+          await settled(id);
+          dispatch('pointerdown', 700);
+          await settled(id);
+          const rect = el.getBoundingClientRect(), cx = rect.x + rect.width / 2, cy = rect.y + rect.height / 2;
+          rows.push({ id, down: el.classList.contains('is-down'), scale: getComputedStyle(el).scale, drift: Math.hypot(cx - box.x, cy - box.y), radius: box.d / 2, hit: mobile._hitButton(cx, cy) });
+          dispatch('pointerup', 700);
+          await settled(id);
+        }
+        // Back to the neutral state the following trial starts from.
+        mobile.reset(); mobile.moveX = .8; input.lastDevice = 'touch';
+        return rows;
+      });
+      for (const row of pressedCenters) {
+        assert.equal(row.down, true, row.id + ' enters its pressed state');
+        assert.notEqual(row.scale, '1', row.id + ' is actually scaled while pressed');
+        assert(row.drift <= 1, row.id + ' pressed visible center is ' + row.drift.toFixed(2) + 'px from its hitbox');
+        assert.equal(row.hit, row.id, row.id + ' is hit at its pressed visible center');
+      }
+      entry.checks.push('pressed-touch-buttons-keep-visible-center-on-hitbox');
       await page.locator('[data-c="fire"]').tap(); await page.locator('[data-c="jump"]').tap();
       await page.evaluate(() => advance(1 / 120));
       assert.equal(await page.evaluate(() => actionDodges), 0);
