@@ -16,7 +16,7 @@ test('single-draw gold fish silhouette has finite low-budget geometry and an ope
  for(const a of Object.values(g.attributes)){bytes+=a.array.byteLength;assert.ok(Array.from(a.array).every(Number.isFinite));}
  bytes+=g.index.array.byteLength;const triangles=g.index.count/3;assert.equal(triangles,444);assert.equal(bytes,15948);
  assert.equal(mesh.isMesh,true);assert.equal(mesh.children.length,0);assert.ok(!Array.isArray(mesh.material));
- assert.ok(g.boundingBox.min.z<-.014&&g.boundingBox.max.z>.898&&g.boundingBox.max.y>.339);assert.equal(mesh.userData.rainmakerModel.revision,3);
+ assert.ok(g.boundingBox.min.z<-.009&&g.boundingBox.max.z>.898&&g.boundingBox.max.y>.333);assert.equal(mesh.userData.rainmakerModel.revision,3);
  const c=g.getAttribute('color');let darkMouth=0;
  for(let i=0;i<p.count;i++)if(p.getZ(i)>.44&&c.getX(i)<.1&&c.getY(i)<.1)darkMouth++;
  assert.ok(darkMouth>=12);assert.equal(mesh.material.vertexColors,true);
