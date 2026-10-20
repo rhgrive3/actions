@@ -5,11 +5,22 @@ import { readFileSync } from 'node:fs';
 const dependency="import { closeReceiverSprinklers } from './sprinkler-contact-commit.mjs';";
 let birthSource=readFileSync(new URL('../sub-birth-commit.mjs',import.meta.url),'utf8');
 assert.equal(birthSource.split(dependency).length,2,'exact audited lifecycle dependency');
+const gearDependency="import { abilityPoints } from '../splatoon3/runtime/gear.mjs';";
+assert.equal(birthSource.split(gearDependency).length,2,'exact audited native AP dependency');
+birthSource=birthSource.replace(gearDependency,'');
+const section=(text,start,end)=>{assert.equal(text.split(start).length,2);assert.equal(text.split(end).length,2);const i=text.indexOf(start),j=text.indexOf(end,i);assert.ok(j>i);return text.slice(i,j);};
+const runtime=name=>readFileSync(new URL('../../splatoon3/runtime/'+name,import.meta.url),'utf8');
+const gear=section(runtime('gear.mjs'),'export const ABILITIES =','/** True while enemy-ink');
+const clothing=section(runtime('clothing-gear.mjs'),'export const CLOTHING_ABILITIES =','export function respawnPunisherEquipped');
+const conditional=runtime('conditional-gear.mjs'),heads=[...conditional.matchAll(/^export const HEAD_ABILITIES = Object\.freeze\([^\n]+\);$/gm)];
+assert.equal(heads.length,1,'exactly one native slot restriction declaration');
+const gearSource=(clothing+'\n'+heads[0][0]+'\n'+gear).replaceAll('export const ','const ').replaceAll('export function ','function ');
+assert.doesNotMatch(gearSource,/\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,'new AP capabilities require a fresh audit');
 birthSource=birthSource.replace(dependency,'').replaceAll('export function ','function ');
 const contactSource=readFileSync(new URL('../sprinkler-contact-commit.mjs',import.meta.url),'utf8').replaceAll('export function ','function ');
 for(const code of [birthSource,contactSource])assert.doesNotMatch(code,/\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,'new capabilities require a fresh boundary audit');
 // Execute the actual lifecycle helper in its own lexical scope, not a no-op stub.
-const source='const closeReceiverSprinklers=(()=>{'+contactSource+';return closeReceiverSprinklers;})();\n'+birthSource;
+const source='const abilityPoints=(()=>{'+gearSource+';return abilityPoints;})();\n'+'const closeReceiverSprinklers=(()=>{'+contactSource+';return closeReceiverSprinklers;})();\n'+birthSource;
 const setup=`
 const actor={nid:1,owner:'peer',remote:true,weapon:{sub:'sprinkler'},netLife:2,net:{lastLife:2,buf:[{t:1,life:2,x:0,y:1,z:0}]}},peer={};
 const nm={match:{},cfg:{id:'match'},s:{_members:new Set(['peer'])},byNid:new Map([[1,actor]]),peers:new Map([['peer',peer]])};
