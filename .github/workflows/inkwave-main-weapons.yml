@@ -271,7 +271,7 @@ jobs:
           assert.equal(ids.baseline, process.env.BASELINE_SHA);
           assert.equal(ids.candidate, process.env.CANDIDATE_SHA);
           for (const key of ['captureScript', 'entryHelper', 'workflow']) sha(ids[key]);
-          const names = ['rear', 'side', 'front-oblique'];
+          const names = ['rear', 'side', 'front-oblique', 'right-side'];
           const sides = ['before', 'before-control', 'after', 'after-control'].map((side, index) => {
             const result = read(`${side}/result.json`), build = read(`${index < 2 ? 'before' : 'after'}-build.json`);
             const cameras = read(`${side}/grip-cameras.json`), m = result.measurement;
