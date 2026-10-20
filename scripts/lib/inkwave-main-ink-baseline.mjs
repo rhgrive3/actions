@@ -207,14 +207,30 @@ const INTEGRATION_SOURCE_PAIR = Object.freeze({
     "scripts/lib/inkwave-build-only-modules.mjs": {base: '1d8e49ac806e7b9cfcbc058131607b57699fe613', candidate: '6509f9e33afa28b82a4e65c1249c9c34179a8074'},
   })
 });
+// Exact ada/dec source admission after reviewed receiver-private sub birth hooks.
+// This does not assert paint, HP or physics equality, and never rewrites inputs.
+// Keep the previous integration epoch independently admissible.
+const SUB_BIRTH_SOURCE_PAIR = Object.freeze({
+  baseCommit: 'ada098a8fe5f2b9f2990f10812c01acb70bde190',
+  candidateCommit: 'dec9dfc1d6cacc8023f72834c32891b2f121a0bf',
+  blobs: Object.freeze({
+    ...INTEGRATION_SOURCE_PAIR.blobs,
+    'patches/network-replication/adapter.mjs': Object.freeze({
+      base: '0e92045cd74352a38260876c9d9dddc197c74fb2',
+      candidate: 'df640991c36dbacc3b0c7b9bb4ac5b57e59a4a9e'
+    })
+  })
+});
 function reviewedCurrentPair(baseline, candidate) {
   const present = path => typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string';
   const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
     sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate);
-  const integrated = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
-    gitBlobSha1(baseline.get(path)) === INTEGRATION_SOURCE_PAIR.blobs[path].base &&
-    gitBlobSha1(candidate.get(path)) === INTEGRATION_SOURCE_PAIR.blobs[path].candidate);
+  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR].find(pair =>
+    MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
+      gitBlobSha1(baseline.get(path)) === pair.blobs[path].base &&
+      gitBlobSha1(candidate.get(path)) === pair.blobs[path].candidate));
+  const integrated = Boolean(integratedPair);
   if (!old && !integrated) {
     const path = 'patches/splatoon3/runtime/main-weapon-catalog.mjs';
     const known = (typeof baseline.get(path) === 'string' &&
@@ -226,8 +242,8 @@ function reviewedCurrentPair(baseline, candidate) {
     if (known) fail('current source pair differs; mixed, missing or modified source cannot be replayed');
     return null;
   }
-  const sourceBase = integrated ? INTEGRATION_SOURCE_PAIR.baseCommit : '9b0e402313686d8f8ad0f70585b01915e904e641';
-  const sourceHead = integrated ? INTEGRATION_SOURCE_PAIR.candidateCommit : '67db773cf2d2ef49bea7a6187cc412c3c5590ef9';
+  const sourceBase = integrated ? integratedPair.baseCommit : '9b0e402313686d8f8ad0f70585b01915e904e641';
+  const sourceHead = integrated ? integratedPair.candidateCommit : '67db773cf2d2ef49bea7a6187cc412c3c5590ef9';
   return { sources: new Map(baseline), changes: [], evidence: {
     schema: 1, mode: 'current-pair-with-gameplay-differences',
     sourceBase, sourceHead,
