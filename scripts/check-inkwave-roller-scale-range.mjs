@@ -27,6 +27,9 @@ function makeGripCameras(anchor){
   return validateGripCameras({schema:1,views});
 }
 // END GRIP CAMERA CONTRACT
+const seedIndex=process.argv.indexOf('--grip-seed');
+const gripSeed=seedIndex<0?null:Number(process.argv[seedIndex+1]);
+if(seedIndex>=0&&(!/^\d+$/.test(process.argv[seedIndex+1]||'')||!Number.isInteger(gripSeed)||gripSeed<0||gripSeed>0xffffffff))throw Error('Invalid grip seed: expected uint32');
 const cameraIndex=process.argv.indexOf('--grip-camera-reference');
 if(cameraIndex>=0&&!process.argv[cameraIndex+1])throw Error('Missing grip camera reference');
 const cameraReference=cameraIndex<0?null:validateGripCameras(JSON.parse(fs.readFileSync(process.argv[cameraIndex+1],'utf8')));
@@ -58,7 +61,7 @@ try{
   receipt.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:240000,
     onProgress:r=>{receipt.entry=r;fs.writeFileSync(path.join(out,'progress.json'),JSON.stringify(receipt,null,2));}});
   console.log('Native Range ready');
-  receipt.measurement=await page.evaluate(async(cameraReference)=>{
+  receipt.measurement=await page.evaluate(async({cameraReference,gripSeed})=>{
     const G=window.__G,g=window.__inkwave,a=G.local;
     const {Vector3,OrthographicCamera,PerspectiveCamera}=await import('three');
     g.debug.freeze();G.match.range.setWeapon('roller');
@@ -67,21 +70,63 @@ try{
     G.match.range.travel('roller');
     a.pos.set(-26.5,.04,4);a.vel.set(0,0,0);a.yaw=a.aimYaw=0;g.rig.yaw=0;g.rig.pitch=-.3;
     g.input.keys.clear();g.debug.key('KeyW',true);g.debug.fire(true);
+    // BEGIN SCOPED ROLL RNG CONTRACT
+    // Opt-in QA randomness only. Default capture leaves the game's RNG untouched.
+    // No await occurs until both shipped 90-tick batches finish and RNG is restored.
+    const originalRandom=Math.random,originalSplat=G.paint.splat;
+    const recipeRandom={mode:gripSeed===null?'unseeded':'seeded-synchronous-180-tick',
+      algorithm:gripSeed===null?null:'mulberry32-u32-v1',seed:gripSeed,draws:0,restored:false,contactSeeds:[]};
+    let word=gripSeed,recipePhase='settle',recipeMeasurement;
+    if(gripSeed!==null)Math.random=()=>{
+      recipeRandom.draws++;
+      let t=word=(word+0x6D2B79F5)|0;
+      t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);
+      return ((t^(t>>>14))>>>0)/4294967296;
+    };
+    G.paint.splat=function(at,r,team,o){
+      const contact=o?.footprint==='ink-contact'?{order:recipeRandom.contactSeeds.length,
+        phase:recipePhase,seed:o.seed,face:o.face??null,kind:o.kind??null,completed:false}:null;
+      if(contact)recipeRandom.contactSeeds.push(contact);
+      const result=originalSplat.call(this,at,r,team,o);
+      if(contact){contact.completed=true;contact.returnedClaimedArea=result;}
+      return result;
+    };
+    try{
     // Batch the shipped 60 Hz debug steps: simulate every tick and draw once,
     // instead of forcing ninety unnecessary full-world software renders.
     a.ink=100;g.debug.step(1500);
     if(!a.weaponRunner.rolling)throw Error('Native controller did not enter rolling');
     G.paint.clear();G.projectiles.clear();
+    recipePhase='measurement';
     const start=a.pos.clone(), events=[],splat=G.paint.splat;
     G.paint.splat=function(at,r,team,o){if(o?.footprint==='ink-contact')events.push({at:at.toArray(),r,heading:o.stretch?.toArray(),amount:o.stretchAmt});return splat.call(this,at,r,team,o);};
     try{a.ink=100;g.debug.step(1500);}
     finally{G.paint.splat=splat;g.debug.fire(false);g.debug.key('KeyW',false);}
+    recipeMeasurement={start,events};
+    }finally{
+      Math.random=originalRandom;G.paint.splat=originalSplat;
+      recipeRandom.restored=Math.random===originalRandom&&G.paint.splat===originalSplat;
+      g.debug.fire(false);g.debug.key('KeyW',false);
+    }
+    const {start,events}=recipeMeasurement;
+    // END SCOPED ROLL RNG CONTRACT
     const gameplayPng=G.renderer.domElement.toDataURL('image/png').split(',')[1];
     G.paint.flush(0);
     const f=G.level.faces[a.ground.face],atlas=f.atlas;
     if(!atlas)throw Error('Native roller court has no paint atlas');
     const pixels=new Uint8Array(G.paint.size**2*4);
     G.renderer.readRenderTargetPixels(G.paint.rt,0,0,G.paint.size,G.paint.size,pixels);
+    // BEGIN GPU FOOTPRINT CONTRACT
+    // Hash the already-read full GPU atlas, not CPU owners or team RGB.
+    // Use the same alpha admission boundary as the existing width/hole probes.
+    const gpuMask=new Uint8Array(G.paint.size**2);
+    let occupiedPixels=0;
+    for(let i=0;i<gpuMask.length;i++)occupiedPixels+=(gpuMask[i]=pixels[4*i+3]>=128?1:0);
+    const gpuDigest=await globalThis.crypto.subtle.digest('SHA-256',gpuMask);
+    const gpuFootprint={schema:1,width:G.paint.size,height:G.paint.size,alphaThreshold:128,
+      encoding:'uint8-row-major-0-or-1',algorithm:'SHA-256',occupiedPixels,
+      sha256:Array.from(new Uint8Array(gpuDigest),b=>b.toString(16).padStart(2,'0')).join('')};
+    // END GPU FOOTPRINT CONTRACT
     const p=new Vector3(),sample=(x,z)=>{
       p.set(x,f.origin.y,z).sub(f.origin);
       const u=p.dot(f.u),v=p.dot(f.v);
@@ -128,11 +173,11 @@ try{
     if(state()!==frozen)throw Error('Restoring inspection changed simulation');
     return {layout:G.level.layout.id,start:start.toArray(),end:a.pos.toArray(),face:f.id,
       floorTag:G.level.blocks[f.block].tag,drumWidth,paintHalf:event.r,contactDepth:1.2*event.r*(1+event.amount),
-      gpuMinWidth:Math.min(...widths),gpuMaxWidth:Math.max(...widths),rows,holes,
+      gpuMinWidth:Math.min(...widths),gpuMaxWidth:Math.max(...widths),rows,holes,gpuFootprint,recipeRandom,
       contactError:Math.hypot(centre.x-front.x,centre.z-front.z),events:events.length,
       debugFixedTicks:180,controller:'shipped KeyW + held fire',inspectionCameraOnly:true,
       gameplayPng,inspectionPng,cameraPlan,gripViews,renderSize,renderAspect,frozenState:JSON.parse(frozen),gripCameraReference:!!cameraReference};
-  },cameraReference);
+  },{cameraReference,gripSeed});
   validateGripCameras(receipt.measurement.cameraPlan);
   assert.deepEqual(receipt.measurement.cameraPlan,cameraReference||makeGripCameras(receipt.measurement.end));
   fs.writeFileSync(path.join(out,'grip-cameras.json'),JSON.stringify(receipt.measurement.cameraPlan,null,2)+'\n');
@@ -150,6 +195,43 @@ try{
   assert.ok(Math.abs(m.contactDepth-1.5)<1e-10);
   assert.ok(m.gpuMaxWidth>4.3&&m.gpuMaxWidth<4.8);
   assert.equal(receipt.errors.length,0);
-  receipt.passed=true;console.log(JSON.stringify(m));
+  // Persist the complete steady comparison before any release simulation.
+  fs.writeFileSync(path.join(out,'steady-result.json'),JSON.stringify({...receipt,passed:true},null,2)+'\n');
+  receipt.release=await page.evaluate(async({side,expectedState})=>{
+    const {Vector3,PerspectiveCamera}=await import('three');
+    // BEGIN RELEASE CAMERA CONTRACT
+    const G=window.__G,g=window.__inkwave,a=G.local;
+    const state=()=>({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,
+      phase:a.character.phase,pose:Array.from(a.character.P)});
+    if(JSON.stringify(state())!==JSON.stringify(expectedState))throw Error('Steady state changed before release capture');
+    const hands=()=>({right:a.character.bones.handR.getWorldPosition(new Vector3()).toArray(),
+      left:a.character.bones.handL.getWorldPosition(new Vector3()).toArray()});
+    const camera=new PerspectiveCamera(side.fov,side.aspect,side.near,side.far);
+    camera.position.fromArray(side.position);camera.up.set(0,1,0);camera.lookAt(new Vector3(...side.target));camera.updateMatrixWorld(true);
+    const actualCamera={name:'side',position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),projection:camera.projectionMatrix.toArray()};
+    const start={...state(),hands:hands()},frames=[];let previousTick=0;
+    // Continue walking as in the numerical release trace; do not reset any pose.
+    g.debug.fire(false);g.debug.key('KeyW',true);
+    try{for(const tick of [1,4,12]){
+      g.debug.step((tick-previousTick)*1000/60);previousTick=tick;
+      a.character.root.updateMatrixWorld(true);
+      const frame={tick,...state(),hands:hands()},frozen=JSON.stringify(state());
+      G.renderer.setRenderTarget(null);G.renderer.render(G.scene,camera);
+      if(JSON.stringify(state())!==frozen)throw Error('Release inspection changed simulation');
+      frame.png=G.renderer.domElement.toDataURL('image/png').split(',')[1];frames.push(frame);
+    }}finally{g.debug.fire(false);g.debug.key('KeyW',false);}
+    return {schema:1,controller:'shipped fire released + KeyW held',start,frames,cameraSpec:side,actualCamera,
+      renderSize:{width:G.renderer.domElement.width,height:G.renderer.domElement.height}};
+    // END RELEASE CAMERA CONTRACT
+  },{side:m.cameraPlan.views.find(v=>v.name==='side'),expectedState:m.frozenState});
+  for(const frame of receipt.release.frames){
+    fs.writeFileSync(path.join(out,'release-side-'+frame.tick+'.png'),Buffer.from(frame.png,'base64'));delete frame.png;
+  }
+  assert.deepEqual(receipt.release.frames.map(f=>f.tick),[1,4,12]);
+  assert.deepEqual(receipt.release.actualCamera,m.gripViews.find(v=>v.name==='side'));
+  assert.deepEqual(receipt.release.renderSize,m.renderSize);
+  for(const frame of receipt.release.frames)assert.ok(Math.abs(frame.time-receipt.release.start.time-frame.tick/60)<1e-8);
+  assert.equal(receipt.errors.length,0);
+  receipt.passed=true;console.log(JSON.stringify({measurement:m,release:receipt.release}));
 }catch(error){receipt.passed=false;receipt.failure=String(error.stack||error);receipt.state=await snapshot();await page?.screenshot({path:path.join(out,'failure.png'),timeout:30000}).catch(()=>{});throw error;}
 finally{clearInterval(diagnosticTimer);fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2)+'\n');await browser?.close();await new Promise(r=>server.close(r));}
