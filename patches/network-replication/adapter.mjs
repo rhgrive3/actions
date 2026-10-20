@@ -28,7 +28,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'combat-provenance.mjs', 'sub-birth-commit.mjs', 'sprinkler-contact-commit.mjs', 'torpedo-contact-commit.mjs', 'torpedo-birth-envelope.mjs', 'torpedo-launch-set.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -618,7 +618,13 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         if (receivePaintOrder(this, from, e) === false) continue;
         if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
       }
-      if (p.events.length < 512) p.events.push(e);
+      if (p.events.length < 512) {
+        p.events.push(e);
+        if (d.r === 2 && ownerSimulationTickAccepted) {
+          stageAcceptedSubBirth(this, from, e, d.ts, d.u);
+          stageAcceptedSprinklerBirth(this, from, e, d.ts, d.u);
+        }
+      }
     }`, 'receive event identity');
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
     patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
@@ -888,6 +894,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     // (which also carries event sequence/tick and optional paint metadata).
     const bombKitIndex = code.includes('G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12])') ? 11
       : code.includes('G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11])') ? 10 : -1;
+    code = "import { stageAcceptedSubBirth, stageAcceptedSprinklerBirth, commitCreatedSprinklerBirth } from '../../patches/network-replication/sub-birth-commit.mjs';\n" + code;
     code = "import { retireReplacedGhostSprinklers } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n" + code;
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
     if (e[1] === 's') e._netPeer = from;
@@ -965,6 +972,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
           b._netBornLocal = Number.isFinite(b._netPeer?.off) ? e[0] + b._netPeer.off : NaN;
+          commitCreatedSprinklerBirth(this, from, e, b);
         }
         break;
       }`, 'bomb timeline birth with optional metadata and kit identity');
@@ -2138,8 +2146,10 @@ function firstSplatStateFor(session,cfg) {
         throw Error('Network draw counter anchor mismatch');
       code = code.slice(0, at) + '    let n = 0, remoteDrawn = 0;' + code.slice(at + '    let n = 0;'.length);
     }
-    patch('      if (n >= MAX_BLOBS - 5) break;\n      if (p.delay > 0) continue;',
-      `      if (n >= MAX_BLOBS - 5) break;
+    const drawCap = code.includes('      if (n >= MAX_BLOBS - 5 - reserve) break;')
+      ? 'MAX_BLOBS - 5 - reserve' : 'MAX_BLOBS - 5';
+    patch(`      if (n >= ${drawCap}) break;\n      if (p.delay > 0) continue;`,
+      `      if (n >= ${drawCap}) break;
       if (p.ghost && remoteDrawn >= MAX_BLOBS - 64) continue;
       if (p.delay > 0) continue;
       // No ephemeral arrays or callbacks in the 60Hz ink renderer.
@@ -2210,8 +2220,10 @@ function firstSplatStateFor(session,cfg) {
       '      const end = _v3.copy(m).addScaledVector(dir, len);', 'charger endpoint reuses existing scratch');
     patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone(), charge, len });",
       "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir, charge, len });", 'charger fire payload');
-    patch("emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal.clone() : dir.clone().negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });",
-      "emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal : _v2.copy(dir).negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });",
+    const chargerImpactRadius = code.includes('radius: chargerEndRadius(w, charge) })')
+      ? 'chargerEndRadius(w, charge)' : 'w.impactRadius * (0.6 + 0.4 * charge)';
+    patch(`emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal.clone() : dir.clone().negate(), team: a.team, kind: 'charger', radius: ${chargerImpactRadius} });`,
+      `emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal : _v2.copy(dir).negate(), team: a.team, kind: 'charger', radius: ${chargerImpactRadius} });`,
       'charger impact payload');
     patch("if (p.type !== 'blast') emit('weapon:impact', { pos: _v.clone(), normal: _v2.clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: e });",
       "if (p.type !== 'blast') emit('weapon:impact', { pos: _v, normal: _v2, team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: e });",
@@ -2445,8 +2457,12 @@ ${bombHit}`;
     patch("emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});",
       "emit('weapon:fire',{actor,weapon:w.id,muzzle:origin,dir:direction,charge,len:distance});",
       'charger flight fire payload');
-    patch("emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});",
-      "emit('weapon:impact',{pos:job.pos,normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});",
+    // Keep the sourced radius in both raw and width-calibrated Charger flight.
+    // The network optimization may change vector ownership, not paint sizing.
+    const chargerFlightImpactRadius = code.includes('radius:chargerPaintWorldRadius(job.paint.impact),victim:')
+      ? 'chargerPaintWorldRadius(job.paint.impact)' : 'job.paint.impact';
+    patch(`emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:${chargerFlightImpactRadius},victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});`,
+      `emit('weapon:impact',{pos:job.pos,normal,team:job.team,kind:'charger',radius:${chargerFlightImpactRadius},victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});`,
       'charger flight impact payload');
     return code;
   }
@@ -2647,8 +2663,11 @@ function canAllocateNetworkGhost(projectiles, actor) {
   }
   if (rel === 'src/net/netmatch.js') {
     code = "import { packPaintTick, acceptPaintTick, forgetPaintPeer } from '../../patches/splatoon3/runtime/paint-packet-codec.mjs';\n" + code;
+    code = "import { queueOutboundEvent, sendOutboundTick } from '../../patches/network-replication/outbound-prefix.mjs';\n" + code;
+    patch('this.out.push(event); return event;', 'return queueOutboundEvent(this, event, G);', 'retain bounded outbound event identity');
+    patch('if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'if (this.out.length) msg.r = 2;', 'retain events until local send acceptance');
     patch('    this.s.tr?.broadcast(msg);',
-      '    this.s.tr?.broadcast(packPaintTick(this, msg));',
+      '    return sendOutboundTick(this, msg, packPaintTick, G);',
       'negotiate lossless paint rows with current relay members');
     patch('  onMessage(from, d) {',
       '  onMessage(from, d) {\n    d = acceptPaintTick(this, from, d);\n    if (!d) return;',

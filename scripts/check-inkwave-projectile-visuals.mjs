@@ -5,6 +5,8 @@
 // The captures are intentionally browser evidence, not the isolated geometry
 // fixtures used by the numeric weapon tests.
 import fs from 'node:fs';
+import { captureSourceIdentity } from './lib/inkwave-capture-source-identity.mjs';
+import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.mjs';
 import {installAudioTimingObserver} from './lib/inkwave-audio-timing-observer.mjs';
 import {audioDiagnosticURL,audioBuildManifestReceipt,sha256 as audioReceiptSha256} from './lib/inkwave-audio-readiness-diagnostics.mjs';
 import path from 'node:path';
@@ -19,6 +21,7 @@ import { completeNativeTurfIntro } from './lib/inkwave-projectile-ci-intro.mjs';
 import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const sourceIdentity = captureSourceIdentity({ cwd: ROOT });
 const option = (name, fallback) => {
   const i = process.argv.indexOf(name);
   return i >= 0 ? process.argv[i + 1] : fallback;
@@ -53,6 +56,7 @@ for (const [file, expected] of Object.entries(manifest.artifacts)) {
   const built = path.join(site, file);
   if (!fs.existsSync(built) || hash(fs.readFileSync(built)) !== expected) throw new Error('Built artifact checksum mismatch: ' + file);
 }
+const { serveProjectileCaptureFile } = await import('./lib/inkwave-projectile-http-file.mjs');
 const mime = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png',
@@ -66,8 +70,7 @@ const server = http.createServer((req, res) => {
     const file = path.resolve(site, rel);
     if (file !== site && !file.startsWith(site + path.sep)) throw new Error('Path outside build');
     if (!fs.statSync(file).isFile()) throw new Error('Not a file');
-    res.writeHead(200, { 'content-type': mime[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
-    fs.createReadStream(file).pipe(res);
+    serveProjectileCaptureFile(req, res, file, mime);
   } catch {
     res.writeHead(404); res.end('Not found');
   }
@@ -131,9 +134,15 @@ async function openGameContext({ mobile = false } = {}) {
   });
   const page = await context.newPage();
   page.setDefaultTimeout(30000);
+  const streamedMusicReceipt = { mobile };
+  (report.streamedMusicDiagnostics ||= []).push(streamedMusicReceipt);
+  const streamedMusic = await observeStreamedMusic({ context, page,
+    assetURL: new URL(`_versions/${manifest.build.revision}/assets/audio/Jet_Arrow.mp3`, address).href,
+    receipt: streamedMusicReceipt });
 
+  try {
   const audioNetwork = [], audioSnapshots = [];
-  const audioReceipt = { checkoutSha: process.env.GITHUB_SHA || null,
+  const audioReceipt = { ...sourceIdentity,
     build: audioBuildManifestReceipt(site), network: audioNetwork, snapshots: audioSnapshots };
   report.audioReadiness ||= [];
   report.audioReadiness.push(audioReceipt);
@@ -259,29 +268,31 @@ async function openGameContext({ mobile = false } = {}) {
         !m.attract && m.local?.isLocal && m.controller && g.debug &&
         G.projectiles && G.renderer);
     };
-    // SwiftShader may finish the transition between timer ticks. Probe once
-    // synchronously first, then retain the identical strict timed gate.
-    phaseMark('admission','begin');
-    await requireNativePhase(admissionReady, 'native Turf actor/controller admission');
-    phaseMark('admission','end');
     const playingReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return !!(G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
         !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer);
     };
+    // Admission and intro share one browser task: no redundant queued hop
+    // after admission succeeds. Incomplete admission polls without frame steps.
+    phaseMark('admission','begin');
     phaseMark('intro','begin');
     phaseMark('playing','begin');
     const atomicReceipt = await requireAtomicIntro(page,
-      atomicIntroFunction(completeNativeTurfIntro,playingReady),deadline);
+      atomicIntroFunction(completeNativeTurfIntro,playingReady,admissionReady),deadline,{receipt:phaseReceipt.atomicIntro={}});
+    phaseMark('admission','end');
     phaseMark('intro','end');
     phaseMark('playing','end');
     (report.provenance.introTransitions ||= []).push({mobile,...atomicReceipt.intro});
     (report.provenance.atomicPlayingReceipts ||= []).push({mobile,...atomicReceipt.readiness,playingReady:atomicReceipt.playingReady});
   } catch (error) {
     const failedAt=Date.now();phaseReceipt.events.push({phase:'failure',event:'caught',atMs:failedAt,elapsedMs:failedAt-phaseReceipt.startedAtMs,remainingMs:Math.max(0,phaseReceipt.deadlineAtMs-failedAt)});
+    phaseReceipt.failureSnapshotRequestedAtMs=Date.now();
+    try {
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
-      return { mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
+      return { observedAtMs:Date.now(),atomicIntro:window.__iwProjectileAtomicIntroReceipt??null,
+        mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
         matchIdentity: m === G?.match, local: m?.local?.isLocal, controller: !!m?.controller, debug: !!g?.debug,
         projectiles: !!G?.projectiles,
         frozen: g?.frozen, paused: m?.paused, visibility: document.visibilityState,
@@ -291,8 +302,12 @@ async function openGameContext({ mobile = false } = {}) {
         actors: m?.actors?.length, matchedMap: g?.mapDef?.id,
         bootError: document.querySelector('#boot-error')?.textContent };
     }).catch(error => ({ snapshotFailure: error.message }));
+    phaseReceipt.failureSnapshotReturnedAtMs=Date.now();
     await snapshotAudio('native-startup-timeout');
     report.browserDiagnostics.push({ event: 'native-startup-timeout', mobile, observed });
+    } catch (diagnosticError) {
+      report.browserDiagnostics.push({event:'native-startup-diagnostics-failed',mobile,error:String(diagnosticError?.message||diagnosticError).slice(0,500)});
+    }
     throw error;
   }
   await page.waitForFunction(() => !document.querySelector('.iw-lineup') && !!window.__inkwave?.hud?._visible, null, { timeout: 30000 }).catch(() => {});
@@ -391,7 +406,16 @@ async function openGameContext({ mobile = false } = {}) {
       unmaskedRenderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : null, viewport: [innerWidth, innerHeight], dpr: devicePixelRatio };
   });
   if (!report.provenance.browser) report.provenance.browser = version;
-  return { context, page };
+  await streamedMusic.snapshot('native-playing-capture-ready');
+  return { context, page, close: streamedMusic.close };
+  } catch (error) {
+    try { await streamedMusic.close(); }
+    catch (cleanupError) {
+      report.browserDiagnostics.push({ event: 'streamed-music-cleanup-failed', route: 'open', mobile,
+        error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+    }
+    throw error;
+  }
 }
 
 async function setCamera(page, perspective) {
@@ -1236,7 +1260,9 @@ function summary(values) {
 }
 
 async function runFiringPerformance({ mobile = false } = {}) {
-  const { context, page } = await openGameContext({ mobile });
+  const { context, page, close } = await openGameContext({ mobile });
+  let performanceFailed = false;
+  try {
   const cdp = await context.newCDPSession(page);
   await cdp.send('Performance.enable');
   const gcEvents = [];
@@ -1629,14 +1655,34 @@ async function runFiringPerformance({ mobile = false } = {}) {
     garbageCollection: gcSummary,
     notes: ['Long-firing window uses the normal live match loop and debug fire input; slow software rendering extends the requested duration to collect at least 12 frames, bounded at 120 seconds.', 'GPU time is EXT_disjoint_timer_query when exposed; unavailable/disjoint is reported as such.', 'V8/devtools.timeline GC tracing brackets the firing window and adds instrumentation overhead to both builds.', 'Chromium mobile emulation is landscape and is not native Android.'],
   };
-  await context.close();
   return record;
+  } catch (error) {
+    performanceFailed = true;
+    throw error;
+  } finally {
+    try { await close(); }
+    catch (cleanupError) {
+      if (!performanceFailed) throw cleanupError;
+      report.browserDiagnostics.push({ event: 'streamed-music-cleanup-failed', route: 'performance', mobile,
+        error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+    }
+  }
 }
 
 try {
   if (capture !== 'performance') {
     const visual = await openGameContext();
-    try { await runVisuals(visual.page); } finally { await visual.context.close(); }
+    let visualFailed = false;
+    try { await runVisuals(visual.page); }
+    catch (error) { visualFailed = true; throw error; }
+    finally {
+      try { await visual.close(); }
+      catch (cleanupError) {
+        if (!visualFailed) throw cleanupError;
+        report.browserDiagnostics.push({ event: 'streamed-music-cleanup-failed', route: 'visual',
+          error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+      }
+    }
   }
   if (capture !== 'visuals') {
     if (device !== 'mobile') report.performance.push(await runFiringPerformance({ mobile: false }));
@@ -1647,8 +1693,16 @@ try {
 } catch (error) {
   report.status = 'failed'; report.error = error.stack || String(error); report.errors.push(...mimeErrors);
 } finally {
-  await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  try { await browser.close(); }
+  catch (cleanupError) {
+    report.browserDiagnostics.push({ event: 'browser-cleanup-failed',
+      error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
+    if (report.status !== 'failed') {
+      report.status = 'failed';
+      report.error = String(cleanupError?.stack || cleanupError).slice(0, 4000);
+    }
+  }
+  const serverClosed = new Promise(resolve => server.close(resolve));
   const tracePath = path.join(evidence, 'chromium-browser-stderr.log');
   const browserLogBlock = report.error?.split('Browser logs:\n')[1]?.split(/\n\s+at (?:openGameContext|file:\/\/)/)[0];
   fs.writeFileSync(tracePath, browserLogBlock
@@ -1667,5 +1721,6 @@ try {
     bootTimeoutMs: NATIVE_BOOT_TIMEOUT_MS,
     output: outfile, browserTrace: tracePath,
   }));
+  await serverClosed;
 }
 if (report.status !== 'passed') process.exitCode = 1;

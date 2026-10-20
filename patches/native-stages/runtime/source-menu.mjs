@@ -19,3 +19,28 @@ export function sourceLoadingStatus(name){
  globalThis.addEventListener('inkwave:native-source-progress',listener);update('download');
  return {update,close(){globalThis.removeEventListener('inkwave:native-source-progress',listener);el.remove();}};
 }
+
+
+// A failed rollback is terminal for this page instance: the game loop is frozen
+// by the world owner before showing this control. Reload is an explicit user action.
+export function showNativeWorldRecovery(game){
+ if(typeof document==='undefined')return null;
+ const existing=game.R?._contextRecoveryOverlay||game._nativeWorldRecoveryOverlay;
+ if(existing)return existing;
+ const overlay=document.createElement('div');
+ overlay.className='iw-webgl-recovery iw-native-world-recovery';
+ overlay.setAttribute('role','alertdialog');overlay.setAttribute('aria-modal','true');
+ overlay.setAttribute('aria-label','Stage recovery required');
+ overlay.style.cssText='position:fixed;inset:0;z-index:2147483640;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;background:rgba(12,14,28,.96);color:#fff;font:600 16px/1.5 system-ui;text-align:center';
+ const message=document.createElement('p');
+ message.textContent='ステージを安全な状態に戻せなかったため、ゲームを停止しました。再読み込みしてください。';
+ const button=document.createElement('button');button.type='button';button.textContent='ゲームを再読み込み';
+ button.style.cssText='padding:12px 24px;border-radius:10px;border:2px solid #fff;background:#333e68;color:#fff;font:inherit;cursor:pointer';
+ button.addEventListener('click',()=>globalThis.location.reload());
+ overlay.append(message,button);(document.body||game.R?.container||document.documentElement).appendChild(overlay);
+ game._nativeWorldRecoveryOverlay=overlay;
+ // Reuse the optional WebGL recovery owner's existing duplicate-dialog latch.
+ // This does not mark a context as lost or change that owner's render state.
+ if(game.R)game.R._contextRecoveryOverlay=overlay;
+ button.focus?.();return overlay;
+}

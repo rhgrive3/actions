@@ -459,7 +459,7 @@ export function registerMarinaVessels(D, H) {
       // --- livery (reads from the fuel dock): HALYARD + home port at the +X end, Kraken roundel + KRAKEN LINES on
       //     the -X half, draft marks at both ends. Text faces -Z (ry = PI) and runs toward -X for a viewer at -Z.
       text(B, 'HALYARD', 0.46, C.white, 9.6, -0.08, FZ, { ry: PI, weight: 0.16 });
-      text(B, 'INKWAVE', 0.19, C.white, 9.6, -0.5, FZ, { ry: PI, weight: 0.17, spacing: 0.45 });
+      text(B, 'ZEVANT', 0.19, C.white, 9.6, -0.5, FZ, { ry: PI, weight: 0.17, spacing: 0.45 });
       const kl = textGeo('KRAKEN LINES', 0.52, { weight: 0.17, depth: 0.014 });
       const klW = kl.userData.width, klX = -8.7;
       B.add('paint', kl, C.white, klX, -0.34, FZ, { ry: PI });
@@ -1472,7 +1472,7 @@ export function registerMarinaVessels(D, H) {
       // stern: quarter tyres + name/port left of the ramp
       for (const x of [1.75, 2.55]) tyre(B, -x, 1.72, HZ + 0.09, 'z', 0.9);                      // (+X quarter: yard scaffold)
       text(B, 'NUDGE', 0.2, C.white, -2.15, 1.0, HZ + 0.002, { weight: 0.18 });
-      text(B, 'INKWAVE', 0.1, C.white, -2.15, 0.82, HZ + 0.002, { weight: 0.2, spacing: 0.4 });
+      text(B, 'ZEVANT', 0.1, C.white, -2.15, 0.82, HZ + 0.002, { weight: 0.2, spacing: 0.4 });
       // --- low deck-edge rail (0.36 m), open at the ramp; buff paint
       const railY = DK + 0.36, inset = 0.1;
       const railRuns = [
@@ -1681,7 +1681,7 @@ export function registerMarinaVessels(D, H) {
       }
       B.push(-HX, 0, 0, -HP);                                                    // west face (toward the Long Pier)
       text(B, 'SEA SHANTY', 0.26, C.white, 2.75, -0.2, 0.002, { weight: 0.17 });
-      text(B, 'INKWAVE', 0.11, C.white, 2.75, -0.4, 0.002, { weight: 0.2, spacing: 0.4 });
+      text(B, 'ZEVANT', 0.11, C.white, 2.75, -0.4, 0.002, { weight: 0.2, spacing: 0.4 });
       B.pop();
       B.push(HX, 0, 0, HP);                                                      // east face
       text(B, 'SEA SHANTY', 0.26, C.white, 0, -0.2, 0.002, { weight: 0.17 });

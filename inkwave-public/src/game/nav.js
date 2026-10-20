@@ -1,3 +1,4 @@
+import { buildNativeNav } from '../../patches/native-stages/runtime/engine.mjs';
 // Navigation graph auto-generated from the level: 1 m grid of walkable samples on every floor/platform/ramp,
 // connected by walk / jump-up / drop-down edges. A* with a binary heap.
 import * as THREE from 'three';
@@ -18,6 +19,7 @@ export class NavGraph {
   }
 
   _build() {
+    if (this.level.native) return buildNativeNav(this);
     const L = this.level, B = L.bounds, st = this.step;
     this.x0 = B.minX + st / 2; this.z0 = B.minZ + st / 2;
     this.nx = Math.floor((B.maxX - B.minX) / st); this.nz = Math.floor((B.maxZ - B.minZ) / st);
@@ -45,10 +47,7 @@ export class NavGraph {
           // headroom + clearance (not inside geometry, not hugging walls)
           if (!this._clear(x, y, z)) continue;
           const node = { id: this.nodes.length, x, y, z, ix, iz, nb: [], zone: -1 };
-          for (let t = 0; t < 2; t++) {
-            const pad = L.spawnPads[t];
-            if (Math.hypot(x - pad.x, z - pad.z) < L.spawnBarrier + 0.6 && y > pad.y - 1) node.zone = t;
-          }
+          // No global spawn-radius navigation exclusion in the S3 composition.
           this.nodes.push(node);
           list.push(node.id);
         }
@@ -142,17 +141,18 @@ export class NavGraph {
   }
 
   // A* from node a to node b; `team` blocks the enemy spawn zone. Returns array of node ids (incl. a and b) or null.
-  path(a, b, team, maxIter = 6000) {
+  path(a, b, team, maxIter = 6000, acceptEdge = null) {
     if (a < 0 || b < 0) return null;
     const N = this.nodes.length;
-    if (!this._g || this._g.length !== N) { this._g = new Float32Array(N); this._from = new Int32Array(N); this._seen = new Uint32Array(N); this._closed = new Uint32Array(N); this._stamp = 0; }
+    if (!this._g || this._g.length !== N) { this._h = new Float64Array(N); this._g = new Float32Array(N); this._from = new Int32Array(N); this._seen = new Uint32Array(N); this._closed = new Uint32Array(N); this._stamp = 0; }
+    const heuristic = this._h;
     const g = this._g, from = this._from, seen = this._seen, closed = this._closed;
     const st = ++this._stamp;
     const nodes = this.nodes, goal = nodes[b];
     const h = (n) => Math.hypot(n.x - goal.x, n.z - goal.z) + Math.abs(n.y - goal.y) * 0.5;
-    const heap = new Heap();
+    const heap = this._heap || (this._heap = new Heap()); heap.clear();
     g[a] = 0; from[a] = -1; seen[a] = st;
-    heap.push(a, h(nodes[a]));
+    heap.push(a, heuristic[a] = h(nodes[a]));
     let it = 0;
     while (heap.size && it++ < maxIter) {
       const cur = heap.pop();
@@ -161,12 +161,14 @@ export class NavGraph {
       closed[cur] = st;
       const n = nodes[cur];
       for (const e of n.nb) {
+        if (acceptEdge && !acceptEdge(e)) continue;
         const m = nodes[e.to];
         if (m.zone >= 0 && m.zone !== team) continue;
         const ng = g[cur] + e.cost;
         if (seen[e.to] !== st || ng < g[e.to]) {
+          if (seen[e.to] !== st) heuristic[e.to] = h(m);
           seen[e.to] = st; g[e.to] = ng; from[e.to] = cur;
-          heap.push(e.to, ng + h(m));
+          heap.push(e.to, ng + heuristic[e.to]);
         }
       }
     }
@@ -183,20 +185,21 @@ export class NavGraph {
 }
 
 class Heap {
-  constructor() { this.ids = []; this.pr = []; }
-  get size() { return this.ids.length; }
+  constructor() { this.ids = []; this.pr = []; this.n = 0; }
+  clear() { this.n = 0; }
+  get size() { return this.n; }
   push(id, p) {
     const ids = this.ids, pr = this.pr;
-    let i = ids.length; ids.push(id); pr.push(p);
+    let i = this.n++; ids[i] = id; pr[i] = p;
     while (i > 0) { const j = (i - 1) >> 1; if (pr[j] <= p) break; ids[i] = ids[j]; pr[i] = pr[j]; i = j; }
     ids[i] = id; pr[i] = p;
   }
   pop() {
     const ids = this.ids, pr = this.pr;
     const top = ids[0];
-    const lid = ids.pop(), lp = pr.pop();
-    if (ids.length) {
-      let i = 0; const n = ids.length;
+    const n = --this.n, lid = ids[n], lp = pr[n];
+    if (n) {
+      let i = 0;
       while (true) {
         let l = i * 2 + 1, r = l + 1, m = i;
         let mp = lp;

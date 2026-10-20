@@ -1,0 +1,153 @@
+{
+  "schema": 1,
+  "mode": "pr-diff-unmodified-reference",
+  "base": "d42f3f26372361332bdf596ac88155b153557538",
+  "candidate": "610175a583c17933b54548df275268ba19d89676",
+  "paths": [
+    {
+      "path": "patches/network-replication/adapter.mjs",
+      "before": "0e92045cd74352a38260876c9d9dddc197c74fb2",
+      "after": "5618177b8760eec21ffc86f7263df42a389b1a21"
+    },
+    {
+      "path": "patches/network-replication/slosher-paint-admission.mjs",
+      "before": "835ec49ce61f4d623a97f0cdb38fdcb8c592b916",
+      "after": "835ec49ce61f4d623a97f0cdb38fdcb8c592b916"
+    },
+    {
+      "path": "patches/splatoon3/adapter.mjs",
+      "before": "133716b1877c4c2195a11a72830f792905fac6ce",
+      "after": "133716b1877c4c2195a11a72830f792905fac6ce"
+    },
+    {
+      "path": "patches/splatoon3/body-proportion-adapter.mjs",
+      "before": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
+      "after": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf"
+    },
+    {
+      "path": "patches/splatoon3/main-ink-footprint-adapter.mjs",
+      "before": "312de3ac2633a494dc1e783780e5c7a5e35d87ac",
+      "after": "312de3ac2633a494dc1e783780e5c7a5e35d87ac"
+    },
+    {
+      "path": "patches/splatoon3/runtime/blaster-flight-paint.mjs",
+      "before": "629e9a0eb0f7ea67bf27d756bf3f46273396791c",
+      "after": "629e9a0eb0f7ea67bf27d756bf3f46273396791c"
+    },
+    {
+      "path": "patches/splatoon3/runtime/body-proportion.mjs",
+      "before": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
+      "after": "5d7dfb8103b4375379ccb9c8fda53e615d00adff"
+    },
+    {
+      "path": "patches/splatoon3/runtime/idle-motion.mjs",
+      "before": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+      "after": "06d276d899aa764df7e75d41612f7ca1ec22953b"
+    },
+    {
+      "path": "patches/splatoon3/runtime/install.mjs",
+      "before": "e99e141ee2b93f6c368d64ac71fa00ce4680dde9",
+      "after": "83f726bb9958f367bd89ec946ffecb30f903c439"
+    },
+    {
+      "path": "patches/splatoon3/runtime/main-ink-footprints.mjs",
+      "before": "546c48ae0c1b30d669de3756350f20c7e82dfe4e",
+      "after": "546c48ae0c1b30d669de3756350f20c7e82dfe4e"
+    },
+    {
+      "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+      "before": "cc46ae46d450b51535cc909c15bc19c553737af5",
+      "after": "cc46ae46d450b51535cc909c15bc19c553737af5"
+    },
+    {
+      "path": "patches/splatoon3/runtime/paint-packet-codec.mjs",
+      "before": "c5e6f71cddc6d9caba22f687a77869604fced80e",
+      "after": "c5e6f71cddc6d9caba22f687a77869604fced80e"
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller.mjs",
+      "before": "1bd42ad691ae7d6b8862831432d2dcd338e7d8ff",
+      "after": "1bd42ad691ae7d6b8862831432d2dcd338e7d8ff"
+    },
+    {
+      "path": "patches/splatoon3/runtime/slosher-intermediate-paint.mjs",
+      "before": "9914ddcef5472e6314dd9a02ba6f0996ccfd3f05",
+      "after": "9914ddcef5472e6314dd9a02ba6f0996ccfd3f05"
+    },
+    {
+      "path": "patches/splatoon3/runtime/slosher-nearest-paint.mjs",
+      "before": "948517797c8a2de11278e2f96bf324ab80a22aa6",
+      "after": "948517797c8a2de11278e2f96bf324ab80a22aa6"
+    },
+    {
+      "path": "patches/splatoon3/runtime/source-posture.mjs",
+      "before": "a31d8224d129665917632ee7083c4081de5803a4",
+      "after": "a31d8224d129665917632ee7083c4081de5803a4"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-edgecases.mjs",
+      "before": "ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110",
+      "after": "ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+      "before": "88dcc18c462ec32ea636f04e5e736c0ad01fa608",
+      "after": "88dcc18c462ec32ea636f04e5e736c0ad01fa608"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/brushes.mjs",
+      "before": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+      "after": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/family-holds.mjs",
+      "before": "91a672123486114f9849de61509c6ee6ec96363f",
+      "after": "91a672123486114f9849de61509c6ee6ec96363f"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/kit.mjs",
+      "before": "3ab94f55c299b56485880ede17b92d5150101f7d",
+      "after": "3ab94f55c299b56485880ede17b92d5150101f7d"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "before": "12a28f779ad2308387800d4cd4dbb2e90fce7553",
+      "after": "12a28f779ad2308387800d4cd4dbb2e90fce7553"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/stringers.mjs",
+      "before": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
+      "after": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs",
+      "before": "9f68724343748037145c552937025d74ac5df8b9",
+      "after": "9f68724343748037145c552937025d74ac5df8b9"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "before": "f917453ccd9c1f75b60bea1971ea3b2ec9d30a4c",
+      "after": "f917453ccd9c1f75b60bea1971ea3b2ec9d30a4c"
+    },
+    {
+      "path": "patches/splatoon3/upstream-lock.json",
+      "before": "73187fd8c10ee85baf63b6261e1ad60954f4b4e2",
+      "after": "fe2a9cbe5b8deabb3fe682db4b9bbcdf79dbefaf"
+    },
+    {
+      "path": "patches/splatoon3/weapon-catalog-adapter.mjs",
+      "before": "55582fd6109ff814ed107577db74b990d755a926",
+      "after": "55582fd6109ff814ed107577db74b990d755a926"
+    },
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "before": "c4b443cc2a0061eeca79e6788d6fdc6891a654f1",
+      "after": "c4b443cc2a0061eeca79e6788d6fdc6891a654f1"
+    },
+    {
+      "path": "scripts/lib/inkwave-build-only-modules.mjs",
+      "before": "7123fd64cd3e34cd93c230ab5f1a96920e7f2c83",
+      "after": "7123fd64cd3e34cd93c230ab5f1a96920e7f2c83"
+    }
+  ]
+}

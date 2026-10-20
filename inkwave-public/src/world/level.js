@@ -14,6 +14,7 @@ export class Level {
     this.layout = layout;
     this.bounds = layout.bounds;
     this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));
+    this.homeSuperJumpPoints = (layout.homeSuperJumpPoints || layout.spawnPads).map((p) => new THREE.Vector3(...p));
     this.spawnBarrier = layout.spawnBarrier;
     this.blocks = [];
     this.faces = [];
@@ -49,6 +50,7 @@ export class Level {
       noPaint: d.noPaint || null,
       grate: !!d.grate || !!d.rail, // walkable for kids, squids + ink + shots pass through, never inkable
       roof: !!d.roof,              // off-limits top (roofs, crane legs …): never inkable, anyone landing on it slides off
+      squidReturner: !!d.squidReturner,  // explicit anti-climb ceiling; ordinary ceilings do not strip Roll/Surge armor
       perch: !!d.perch,            // a top you can stand on (overhead steel reached by a super jump) but never ink
       noNav: !!d.noNav,            // no route runs along its top (narrow walls a bot would only fall off)
       // rail: railings / fences — kids can't walk through (but can hop up and stand on top), shots + ink + squids pass.

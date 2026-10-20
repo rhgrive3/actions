@@ -16,8 +16,8 @@ const STEP = 1 / 60;
 const close = (actual, expected, message) => assert.ok(Math.abs(actual - expected) < 1e-8,
   `${message}: ${actual} != ${expected}`);
 
-async function world(client = null) {
-  const f = await fixture({ fullRuntime:true, productionComposition:true, realProjectiles:true });
+async function world(client = null, clock = null) {
+  const f = await fixture({ fullRuntime:true, productionComposition:true, realProjectiles:true, ...(clock ? {vmPerformance:{now:()=>clock.ms}} : {}) });
   const { paint } = makePaintWorld(f);
   f.G.settings = {};
   f.setRandom(() => .37);
@@ -39,7 +39,7 @@ async function world(client = null) {
   if (client !== null) {
     nm = new f.NetMatch({ myId:client, isHost:client === 'a', hostId:'a',
       _members:new Map([['a','A'], ['b','B']]),
-      tr:{ broadcast(){}, sendTo(to, packet){ packets.push({to, packet:JSON.parse(JSON.stringify(packet))}); } } },
+      tr:{ broadcast(packet){ packets.push({to:null,packet:JSON.parse(JSON.stringify(packet))}); return true; }, sendTo(to, packet){ packets.push({to, packet:JSON.parse(JSON.stringify(packet))}); return true; } } },
     { id:'burst-contact-phases', map:'map', difficulty:'normal' });
     nm.bind({ actors, state:'playing', time:180, follower:false, playing:()=>true });
     f.G.netm = nm;
@@ -169,16 +169,21 @@ test('a victim killed by the 25 contact is not hit again, while the delayed surr
 });
 
 test('Burst actual contact uses separate authoritative JSON hits and one causal paint replay; ghosts author neither',async()=>{
-  const source=await world('a'),receiver=await world('b');
+  const clock={ms:1000},source=await world('a',clock),receiver=await world('b',clock);
   const bomb=source.fire();
-  const birth=source.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='spawn');
-  assert.ok(birth);
-  playRows(receiver,[birth]);
+  assert.equal(source.nm._sendTick(),true,'the actual owner tick carries the native birth');
+  const tick=source.packets.find(p=>p.packet.k==='t')?.packet;
+  const birth=tick?.e.find(e=>e[1]==='ac'&&e[5]?.phase==='spawn');
+  assert.ok(birth);assert.ok(Number.isInteger(birth[5].seed));assert.ok(Number.isFinite(birth[5].charge));
+  receiver.nm.onMessage('a',tick);
+  assert.equal(receiver.nm._combatProvenance?.proofs.get('a')?.length||0,0,'FIFO alone cannot mint a native birth proof');
   source.step();
   const first=source.packets.filter(p=>p.packet.k==='hit');
   assert.equal(first.length,1);assert.equal(first[0].packet.d,25);
   assert.equal(source.stamps.length,0,'the existing paint phase is preserved without an unsupported retiming');
   receiver.nm.onMessage('a',first[0].packet);
+  assert.equal(receiver.direct.hp,100,'the valid hit waits for native receiver creation');
+  clock.ms+=150;receiver.f.G.time+=.15;receiver.nm.update(.15);
   assert.equal(receiver.direct.hp,75);
   const ghost=receiver.f.G.projectiles._s3SubObjects[0];assert.equal(ghost.ghost,true);
   const ghostCounters=[receiver.hits.length,receiver.stamps.length,receiver.packets.length,receiver.events.length];

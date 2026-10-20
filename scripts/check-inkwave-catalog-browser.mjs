@@ -143,7 +143,130 @@ try {
         return actor;
       };
 
+
       const {CANONICAL_KITS}=await import('/patches/splatoon3/runtime/canonical-kits-data.mjs');
+      // BEGIN_LEGACY_SCOPE_ADMISSION_PROBE
+      const scopeAdmissionChecks=[];
+      {
+        const {Level}=await import('/src/world/level.js');
+        const {updateScopeZoom,scopeVerticalFov}=await import('/patches/splatoon3/runtime/camera-aim-controls.mjs');
+        const saved={level:G.level,physics:G.physics,paint:G.paint,actors:G.actors,time:G.time};
+        const originalFire=G.projectiles.fireCharger;
+        try {
+          G.level=new Level({bounds:{minX:-50,maxX:50,minZ:-50,maxZ:50},spawnPads:[[-40,0,0],[40,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-50,-.5,-50],max:[50,0,50]}]});
+          G.physics=new api.Physics(G.level);G.paint={sample:()=>1,splat:()=>0};
+          for(const count of [15,140]) {
+            G.projectiles.clear();const actor=makeActor('charger_scope');G.actors=[actor];
+            const tick=n=>{for(let i=0;i<n;i++){G.time+=1/60;actor.update(1/60);}};
+            tick(5);actor.intent.fire=true;tick(count);
+            const charge=actor.weaponRunner.charge,ink=actor.ink;
+            check(Number.isFinite(charge)&&Number.isFinite(ink),'legacy scope finite charge/ink');
+            check(count===140?charge===1:charge>0&&charge<1,'legacy scope partial/full boundary');
+            const rig={zoom:0,scopeCharge:0,baseFov:82};for(let i=0;i<180;i++)updateScopeZoom(rig,actor,1/60);
+            check(scopeVerticalFov(actor.weapon)===28,'legacy scoped 28-degree presentation retained');
+            check(count===140?Math.abs(rig.zoom-rig.scopeFullZoom)<1e-7:rig.zoom===0,'legacy half-charge optical threshold');
+            let shots=0,firedCharge=null;G.projectiles.fireCharger=function(...args){shots++;firedCharge=args[2];return originalFire.apply(this,args);};
+            actor.intent.fire=false;tick(3);
+            check(shots===1&&Number.isFinite(firedCharge),'legacy release calls actual fireCharger once');
+            check(Number.isFinite(actor.ink)&&actor.ink>=ink-1e-8,'legacy prepaid release ink finite');
+            G.projectiles.fireCharger=originalFire;
+            scopeAdmissionChecks.push({count,charge,ink,shots,firedCharge,scopeFov:scopeVerticalFov(actor.weapon),zoom:rig.zoom});
+          }
+          const actor=makeActor('charger_scope');G.actors=[actor];actor.intent.fire=true;
+          for(let i=0;i<145;i++){G.time+=1/60;actor.update(1/60);}
+          actor.intent.squid=true;for(let i=0;i<5;i++){G.time+=1/60;actor.update(1/60);}
+          check(!actor.weaponRunner.s3Stored&&!actor.weaponRunner.catalogState?.stored,'legacy scope never creates stored state');
+          scopeAdmissionChecks.push({squidInput:true,form:actor.form,stored:false});
+        } finally {G.projectiles.fireCharger=originalFire;G.projectiles.clear();Object.assign(G,saved);}
+      }
+      // END_LEGACY_SCOPE_ADMISSION_PROBE
+      const {Level}=await import('/src/world/level.js');
+      // BEGIN_CHARGE_KEEP_INPUT_PROBE
+      const chargeKeepChecks = [];
+      {
+        const saved = { level:G.level, physics:G.physics, paint:G.paint, actors:G.actors, time:G.time };
+        try {
+          G.level = new Level({bounds:{minX:-50,maxX:50,minZ:-50,maxZ:50},spawnPads:[[-40,0,0],[40,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-50,-.5,-50],max:[50,0,50]}]});
+          G.physics = new api.Physics(G.level);
+          G.paint = {sample:()=>1,splat:()=>0};
+          for (const id of ['s3-charger-quick','s3-charger-long','s3-charger-keeper','s3-charger-longscope']) {
+            G.projectiles.clear();
+            const actor = makeActor(id); G.actors = [actor];
+            const tick = count => { for(let i=0;i<count;i++){G.time+=1/60;actor.update(1/60);} };
+            tick(5); actor.intent.fire=true; tick(140);
+            check(actor.weaponRunner.charge===1,id+' full charge through actual Actor');
+            const ink=actor.ink;
+            actor.intent.squid=true; tick(5);
+            const stored=actor.weaponRunner.catalogState?.stored;
+            if(id==='s3-charger-longscope') {
+              check(actor.form==='kid'&&!stored,id+' scope cannot store charge');
+              chargeKeepChecks.push({id,heldFire:true,squidInput:true,form:actor.form,stored:false});
+              continue;
+            }
+            check(actor.form==='squid'&&actor.submerged&&stored,id+' newer Squid input stores held charge');
+            check(actor.ink>=ink-1e-8,id+' keep does not debit ink again');
+            const storedFrames=stored.frames,remaining=stored.remaining;
+            actor.intent.squid=false; tick(8);
+            check(actor.form==='kid'&&actor.weaponRunner.charge===1,id+' emerges with full charge');
+            const before=G.projectiles.list.length;
+            actor.intent.fire=false; tick(3);
+            check(G.projectiles.list.length-before===1,id+' release emits exactly one projectile');
+            check(!actor.weaponRunner.catalogState.stored,id+' released storage is retired');
+            check(actor.ink>=ink-1e-8,id+' release does not duplicate prepaid cost');
+            chargeKeepChecks.push({id,heldFire:true,squidInput:true,storedFrames,remaining,releaseProjectiles:G.projectiles.list.length-before,inkBeforeDive:ink,inkAfterRelease:actor.ink});
+          }
+        } finally {
+          G.projectiles.clear();
+          Object.assign(G,saved);
+        }
+      }
+      // END_CHARGE_KEEP_INPUT_PROBE
+      // BEGIN_SPLATANA_POST_WAVE_THROW_PROBE
+      const splatanaThrowChecks = [];
+      {
+        const saved = { level:G.level, physics:G.physics, paint:G.paint, actors:G.actors, time:G.time };
+        try {
+          G.level = new Level({bounds:{minX:-50,maxX:50,minZ:-50,maxZ:50},spawnPads:[[-40,0,0],[40,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-50,-.5,-50],max:[50,0,50]}]});
+          G.physics = new api.Physics(G.level);
+          G.paint = {sample:()=>1,splat:()=>0};
+          for (const id of ['s3-saber-normal','s3-saber-lite','s3-saber-heavy']) for (const phase of ['pre-wave','post-wave']) {
+            G.projectiles.clear();
+            const actor=makeActor(id);G.actors=[actor];let frame=0;
+            const tick=()=>{frame++;G.time+=1/60;actor.update(1/60);};
+            const waves=()=>G.projectiles.list.filter(p=>p.owner===actor&&p.catalog);
+            for(let i=0;i<5;i++)tick();actor.intent.fire=true;tick();actor.intent.fire=false;tick();
+            const state=actor.weaponRunner.catalogState;
+            check(state.pending&&state.stop>0,id+' sourced pending swing');
+            if(phase==='pre-wave') {
+              for(let i=0;state.pending?.remaining>1/60+1e-9&&i<120;i++)tick();
+              check(state.pending&&state.pending.remaining<=1/60+1e-9,id+' pending wave boundary reached within 120 ticks');
+              check(waves().length===0,id+' cancellation input precedes actual wave');
+              const remaining=state.pending.remaining,stop=state.stop;
+              actor.intent.sub=true;tick();
+              check(!state.pending&&state.stop===0&&actor.weaponRunner.aimingSub,id+' existing pre-wave Sub cancellation');
+              for(let i=0;i<30;i++)tick();check(waves().length===0,id+' cancelled wave does not emerge later');
+              splatanaThrowChecks.push({id,phase,remaining,stop,cancelled:true,waves:0});
+            } else {
+              for(let i=0;!waves().length&&i<60;i++)tick();
+              check(waves().length===1&&!state.pending&&state.stop>1/60,id+' actual wave leaves positive recovery');
+              const stop=state.stop;let blockedTicks=0;
+              actor.intent.sub=true;
+              for(let i=0;state.stop>1e-9&&i<120;i++) {
+                const before=state.stop;tick();blockedTicks++;
+                check(state.stop===Math.max(0,before-1/60),id+' rejected Sub preserves original decrement');
+                check(!actor.weaponRunner.aimingSub,id+' post-wave Sub remains unavailable');
+              }
+              check(state.stop<=1e-9,id+' existing recovery expires within 120 ticks');
+              tick();check(actor.weaponRunner.aimingSub,id+' held Sub prepares after natural expiry');
+              check(waves().length===1,id+' rejection retains exactly the admitted main wave');
+              splatanaThrowChecks.push({id,phase,stop,blockedTicks,readyFrame:frame,waves:1});
+            }
+          }
+        } finally {
+          G.projectiles.clear();Object.assign(G,saved);
+        }
+      }
+      // END_SPLATANA_POST_WAVE_THROW_PROBE
       const {WEAPON_WEIGHTS}=await import('/patches/splatoon3/runtime/weapon-weight-data.mjs');
       const {WEIGHT_SPEED_CURVES}=await import('/patches/splatoon3/runtime/weapon-weight.mjs');
       const {gearCurve,emptyLoadout}=await import('/patches/splatoon3/runtime/gear.mjs');
@@ -430,12 +553,138 @@ try {
         for(const ap of [0,10,57]){
           G.projectiles.clear();const o=makeActor('shooter'),v=makeActor('shooter');o.team=0;v.team=1;v.invuln=0;o.pos.set(0,0,-4);v.pos.set(0,0,2);o.aimDir.set(0,0,1);o.weapon={...o.weapon,sub:'burst'};equipCatalogue(v,ap);G.actors=[o,v];const hp=v.hp,hits=[],damage=v.damage;v.damage=function(n,a,w){hits.push([n,w]);return damage.call(this,n,a,w);};const p=G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);for(let i=0;i<10;i++){G.time+=1/60;G.projectiles.update(1/60);}const rate=gearCurve(ap,1,.75,.6),expected=[25,35].reduce((sum,n)=>sum+Math.floor(n*rate*10+1e-9)/10,0);check(hits.length===2&&hits[0][0]===25&&hits[1][0]===35&&Math.abs(hp-v.hp-expected)<1e-8,'Burst preserves the direct and one-frame blast phases');catalogueSubChecks.push({source:'burst',ap,native:true,damage:hp-v.hp});
         }
-        for(const [w,n]of [['burst',35],['fizzy',50],['torpedo',60],['torpedo-splash',12],['inkMine',45]]){
-          const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='catalogue-owner';v.owner='catalogue-victim';o.team=0;v.team=1;v.invuln=0;o.netLife=v.netLife=0;equipCatalogue(v,57);let packet,ack;
-          const tx=new NetMatch({myId:o.owner,hostId:o.owner,isHost:true,tr:{sendTo:(_id,p)=>packet=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,n,w);
-          const rx=new NetMatch({myId:v.owner,hostId:o.owner,isHost:false,tr:{sendTo:(_id,p)=>ack=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;rx.onMessage(o.owner,{...packet,d:n+.1});check(v.hp===hp,'oversized catalogue hit rejected');rx.onMessage(o.owner,packet);const expected=Math.floor(n*(['burst','fizzy'].includes(w)?.6:.5)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8&&ack.d===expected,'catalogue hit victim/ACK match');rx.onMessage(o.owner,packet);check(Math.abs(hp-v.hp-expected)<1e-8,'duplicate catalogue hit inert');catalogueSubChecks.push({source:w,ap:57,wire:true,damage:hp-v.hp});tx.dispose();rx.dispose();G.netm=null;
+        for(const [w,n]of [['burst',35],['fizzy',50],['torpedo',60],['inkMine',45]]){
+          G.projectiles.clear();
+          const sub=w;
+          const makePair=()=>{
+            const o=makeActor('shooter',1),v=makeActor('shooter',2);
+            o.owner='catalogue-owner';v.owner='catalogue-victim';o.team=0;v.team=1;
+            o.netLife=v.netLife=0;v.invuln=0;o.pos.set(0,0,0);v.pos.set(0,0,2);
+            o.aimDir.set(0,0,1);o.weapon={...o.weapon,sub};equipCatalogue(v,57);
+            return {o,v};
+          };
+          const sender=makePair(),receiver=makePair();let packet,ack;const ticks=[];
+          const bind=(pair,myId,tr)=>{
+            const session={myId,hostId:'catalogue-owner',isHost:myId==='catalogue-owner',tr,
+              _members:new Map([['catalogue-owner',{}],['catalogue-victim',{}]])};
+            const match={actors:[pair.o,pair.v],state:'playing',time:180,playing:()=>true};
+            const nm=new NetMatch(session,{id:'catalogue-probe',map:'reef'});
+            nm.bind(match);session.match=nm;G.match=match;G.netm=nm;G.actors=match.actors;
+            return nm;
+          };
+          const tx=bind(sender,'catalogue-owner',{
+            sendTo:(_id,p)=>{if(p.k==='hit')packet=JSON.parse(JSON.stringify(p));return true;},
+            broadcast:p=>{if(p.k==='t')ticks.push(JSON.parse(JSON.stringify(p)));return true;},
+          });
+          let rx;
+          try{
+            // Use the real equipped-sub birth and owner tick, not a hand-written proof.
+            check(!!G.projectiles.throwBomb(sender.o),'native catalogue sub birth');
+            check(tx._sendTick()===true&&ticks.length===1,'native catalogue owner tick');
+            const birth=ticks[0].e?.find(e=>e[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='spawn'&&e[5]?.subId===sub);
+            check(!!birth,'catalogue tick carries actual sub birth');
+            check(Number.isSafeInteger(birth[5].seed)&&Number.isFinite(birth[5].charge),'native catalogue birth carries seed/charge');
+            tx.sendHit(sender.o,sender.v,n,w);check(packet?.d===n,'catalogue raw hit amount');
+            // A second roster prevents bind() from changing the sender Actor identities.
+            G.projectiles.clear();rx=bind(receiver,'catalogue-victim',{
+              sendTo:(_id,p)=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;},
+              broadcast:p=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;},
+            });
+            rx.onMessage('catalogue-owner',ticks[0]);
+            const admitted=rx.peers.get('catalogue-owner');
+            check(admitted?.events.some(e=>e[1]==='ac'&&e[2]==='sub'&&e[5]?.seq===birth[5].seq),'native receiver admitted catalogue birth');
+            const {v}=receiver,hp=v.hp;
+            rx.onMessage('foreign',packet);rx.onMessage('catalogue-owner',{...packet,d:n+.1});
+            check(v.hp===hp,'foreign and oversized catalogue hit rejected');
+            rx.onMessage('catalogue-owner',packet);
+            check(v.hp===hp&&(rx._combatProvenance?.proofs.get('catalogue-owner')?.length||0)===0,'catalogue FIFO alone cannot authorize hit');
+            await new Promise(resolve=>setTimeout(resolve,150));G.time+=.15;rx.update(.15);
+            check(G.projectiles._s3SubObjects.some(o=>o.ghost&&o.owner===receiver.o&&o.seq===birth[5].seq),'native catalogue receiver creates sub');
+            const expected=Math.floor(n*(['burst','fizzy'].includes(w)?.6:.5)*10+1e-9)/10;
+            check(Math.abs(hp-v.hp-expected)<1e-8&&ack?.d===expected,'catalogue hit victim/ACK match');
+            rx.onMessage('catalogue-owner',packet);check(Math.abs(hp-v.hp-expected)<1e-8,'duplicate catalogue hit inert');
+            catalogueSubChecks.push({source:w,ap:57,wire:true,damage:hp-v.hp});
+          }finally{tx.dispose();rx?.dispose();G.projectiles.clear();G.netm=null;}
+
         }
         G.projectiles.clear();Object.assign(G,saved);
+      }
+      // Independently cover attacker subPower57 and victim subResistance57 with native contacts.
+      // Generated hit packets come only from native terrain trajectories, never sendHit stubs.
+      const torpedoGearContactChecks=[];
+      for(const [attackerAP,victimAP] of [[57,0],[0,57]]){
+        const {applyAcceptedGear}=await import('/patches/splatoon3/runtime/gear-loadout-network.mjs');
+        const {receiverTorpedoObservationState}=await import('/patches/splatoon3/runtime/torpedo-receiver-trajectory.mjs');
+        const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics,paint:G.paint,projectiles:G.projectiles,scene:G.scene};
+        const DT=1/60,worlds=[];
+        const activate=w=>Object.assign(G,w.context);
+        const world=myId=>{
+          G.scene=new THREE.Scene();G.time=1;G.netm=null;
+          // Terrain splashes require the native Physics raycast to hit a real floor.
+          const V=THREE.Vector3,floor={id:0,solid:true,grate:false,center:new V(0,-1,47.5),half:new V(40,1,52.5),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1],aabbMin:new V(-40,-2,-5),aabbMax:new V(40,0,100)};
+          G.level={blocks:[floor],faces:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;}};
+          G.physics=new api.Physics(G.level);G.paint={sample:()=>0,splat:()=>0};G.projectiles=new Projectiles(G.scene);
+          const owner=makeActor('shooter',1),victim=makeActor('shooter',2);
+          Object.assign(owner,{owner:'torpedo-owner',team:0,netLife:0});Object.assign(victim,{owner:'torpedo-victim',team:1,netLife:0,invuln:0});
+          owner.pos.set(0,0,26);victim.pos.set(0,0,38);owner.aimDir.set(0,0,1);owner.weapon={...owner.weapon,sub:'torpedo'};owner.weaponRunner.reset();
+          owner.s3.loadout=emptyLoadout();victim.s3.loadout=emptyLoadout();if(victimAP===57)for(const piece of victim.s3.loadout){piece.main='subResistance';piece.subs.fill('subResistance');}owner.s3RefreshGear();victim.s3RefreshGear();
+          const packets=[],transport={sendTo:(_to,p)=>{packets.push(JSON.parse(JSON.stringify(p)));return true;},broadcast:p=>{packets.push(JSON.parse(JSON.stringify(p)));return true;}};
+          const session={myId,hostId:'torpedo-owner',isHost:myId==='torpedo-owner',tr:transport,_members:new Map([['torpedo-owner',{}],['torpedo-victim',{}]])};
+          const nm=new NetMatch(session,{id:'catalogue-torpedo-ap57',map:'reef'}),match={actors:[owner,victim],state:'playing',time:180,playing:()=>true};
+          nm.bind(match);session.match=nm;G.netm=nm;G.match=match;G.actors=match.actors;
+          const w={owner,victim,nm,packets,context:{time:G.time,scene:G.scene,actors:G.actors,netm:nm,match,level:G.level,physics:G.physics,paint:G.paint,projectiles:G.projectiles}};worlds.push(w);return w;
+        };
+        const step=w=>{activate(w);G.time+=DT;w.context.time=G.time;G.projectiles.update(DT);};
+        const land=drop=>{const g=drop.source.spec.gravity,t=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;return drop.pos.clone().addScaledVector(drop.vel,t).setY(0);};
+        try{
+          const tx=world('torpedo-owner');if(attackerAP===57)for(const piece of tx.owner.s3.loadout){piece.main='subPower';piece.subs.fill('subPower');}tx.owner.s3RefreshGear();
+          check((tx.owner.s3.abilityPoints.subPower||0)===attackerAP,'Torpedo sender subPower matches fixture');
+          for(let i=0;i<8;i++)tx.owner.weaponRunner.update(DT,{sub:true});tx.owner.weaponRunner.update(DT,{sub:false,subReleased:true});tx.owner.weaponRunner.update(DT,{sub:false});
+          const parent=G.projectiles._s3SubObjects.find(o=>o.subId==='torpedo');check(!!parent&&tx.owner.ink===35,'Torpedo native paid release');
+          // _sendTick broadcasts a packet; its return value is not the delivery signal.
+          tx.nm._sendTick();
+          const ticks=tx.packets.filter(p=>p.k==='t');check(ticks.length===1,'one first gear plus birth packet');const tick=ticks[0];check(!!tick.gg,'first packet carries accepted gear sidecar');
+          check(tick.e?.some(e=>e[1]==='ac'&&e[5]?.phase==='spawn'&&e[5]?.subId==='torpedo'&&e[5]?.subPowerAP===attackerAP),'actual Torpedo birth gear metadata');
+          for(let i=0;i<300&&!parent.dead;i++)step(tx);check(parent.dead,'native sender parent collision');
+          const drops=G.projectiles._s3TorpedoSplashes.filter(d=>d.kind==='chase');check(drops.length===8,'native sender eight terrain drops');const target=land(drops[0]);
+          const main=tx.packets.find(p=>p.k==='hit'&&p.w==='torpedo');check(main?.d===60,'native sender main claim60');tx.victim.pos.copy(target);
+          for(let i=0;i<200;i++)step(tx);const splash=tx.packets.find(p=>p.k==='hit'&&p.w==='torpedo-splash');check(splash?.d===12,'native sender terrain claim12');
+          tx.nm.dispose();G.projectiles.clear();
+          const rx=world('torpedo-victim');rx.nm.onMessage('torpedo-owner',tick);
+          let replica;const adoptionFrames=[];
+          for(let i=0;i<30;i++){
+            await new Promise(resolve=>setTimeout(resolve,17));activate(rx);G.time+=DT;rx.context.time=G.time;rx.nm.update(DT);
+            if(rx.owner.net.ready)applyAcceptedGear(rx.owner,rx.owner.net.cur.adoption);
+            replica=G.projectiles._s3SubObjects?.find(o=>o.subId==='torpedo');adoptionFrames.push({frame:i+1,attackerSubPowerAP:rx.owner.s3.abilityPoints.subPower||0,born:!!replica});if(replica)break;
+          }
+          check(!!replica&&(rx.owner.s3.abilityPoints.subPower||0)===attackerAP,'receiver adopts attacker gear before native birth');
+          check((rx.victim.s3.abilityPoints.subResistance||0)===victimAP,'receiver victim resistance matches fixture');
+          check(receiverTorpedoObservationState(api,G.projectiles,replica)==='active','accepted receiver native trajectory enrolled');
+          // A correct raw claim before any terrain contact cannot itself mint damage.
+          rx.nm.onMessage('foreign',splash);rx.nm.onMessage('torpedo-owner',{...splash,d:12.1});
+          check(rx.victim.hp===100,'foreign and oversized claims reject before legitimate hit ID');
+          check(!rx.nm.peers.get('torpedo-owner').hitSequences?.has(splash.h),'invalid claims do not consume hit ID');
+          check(!(rx.nm._combatProvenance?.pending.get('torpedo-owner')||[]).some(item=>item.d.h===splash.h),'invalid claims do not reserve pending hit ID');
+          rx.nm.onMessage('torpedo-owner',splash);check(rx.victim.hp===100,'early raw12 cannot replace receiver terrain contact');
+          for(let i=0;i<300&&!replica.dead;i++)step(rx);check(replica.dead,'native receiver parent collision');
+          const receiverDrops=G.projectiles._s3TorpedoSplashes.filter(d=>d.kind==='chase');check(receiverDrops.length===8,'native receiver eight terrain drops');
+          check(land(receiverDrops[0]).distanceTo(target)<1e-6,'accepted receiver trajectory matches native sender landing');
+          const expectedMain=victimAP===57?30:60,expectedSplash=victimAP===57?6:12,expectedHP=100-expectedMain-expectedSplash;
+          rx.nm.onMessage('torpedo-owner',main);check(rx.victim.hp===100-expectedMain,'native receiver main60');
+          rx.victim.pos.copy(target);
+          let deliveredAtTerrain=false;for(let i=0;i<200;i++){step(rx);if(!deliveredAtTerrain&&!G.projectiles._s3TorpedoSplashes.includes(receiverDrops[0])){rx.nm.onMessage('torpedo-owner',splash);deliveredAtTerrain=true;}}
+          check(deliveredAtTerrain,'receiver native drop reaches terrain and retires');
+          // The queued legitimate12 may now flush from actual native contact.
+          check(rx.victim.hp===expectedHP,'actual receiver terrain contact authorizes12 after60');
+          const ack=rx.packets.find(p=>p.k==='hit_ack'&&p.h===splash.h);check(ack?.d===expectedSplash,'terrain claim ACK12');
+          const count=rx.packets.filter(p=>p.k==='hit_ack'&&p.h===splash.h).length;
+          rx.nm.onMessage('foreign',splash);rx.nm.onMessage('torpedo-owner',{...splash,d:12.1});rx.nm.onMessage('torpedo-owner',splash);
+          check(rx.victim.hp===expectedHP,'foreign/overflow/duplicate terrain claims inert');
+          check(rx.packets.filter(p=>p.k==='hit_ack'&&p.h===splash.h).length===count,'duplicate terrain claim does not add ACK');
+          rx.nm.onMessage('torpedo-owner',{...splash,h:splash.h+1,seq:(splash.seq||0)+1});check(rx.victim.hp===expectedHP,'consumed terrain contact cannot authorize a fresh hit ID');
+          if(victimAP===57)catalogueSubChecks.push({source:'torpedo-splash',ap:victimAP,wire:true,nativeContact:true,damage:ack.d});
+          torpedoGearContactChecks.push({attackerSubPowerAP:attackerAP,victimSubResistanceAP:victimAP,firstPacket:true,adoptionFrames,mainRaw:60,terrainRaw:12,hp:rx.victim.hp,ackDamage:ack.d,nativeTerrain:true,duplicateInert:true});
+        }finally{for(const w of worlds){activate(w);w.nm.dispose();w.context.projectiles.clear();}Object.assign(G,saved);}
       }
       const directSubChecks=[];
       {
@@ -451,10 +700,80 @@ try {
           const raw=source==='angleShooter'?40:20,expected=Math.floor(raw*gearCurve(ap,1,.75,.5)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8,'native direct resistance '+source+' '+ap);directSubChecks.push({source,ap,damage:hp-v.hp});
         }
         for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57]){
-          G.projectiles.clear();const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='direct-owner';v.owner='direct-victim';v.team=1;v.invuln=0;o.netLife=v.netLife=0;equipDirect(v,ap);equipDirect(o,57);o.weapon={...o.weapon,sub:source};let packet,ack;
-          const tx=new NetMatch({myId:'direct-owner',hostId:'direct-owner',isHost:true,tr:{sendTo:(_id,p)=>{packet=JSON.parse(JSON.stringify(p));}}},{id:'direct-probe'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,40,source);check(packet.d===40,'raw direct hit on wire');
-          const rx=new NetMatch({myId:'direct-victim',hostId:'direct-owner',isHost:false,tr:{sendTo:(_id,p)=>{ack=JSON.parse(JSON.stringify(p));}}},{id:'direct-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;
-          rx.onMessage('foreign',packet);check(v.hp===hp,'foreign direct hit rejected');if(source==='angleShooter'){rx.onMessage('direct-owner',{...packet,d:40.1});check(v.hp===hp,'oversized direct hit rejected');}rx.onMessage('direct-owner',packet);const damage=hp-v.hp;check(damage===(ap===57?20:40)&&ack.d===damage,'direct victim and ACK agree');rx.onMessage('direct-owner',packet);check(hp-v.hp===damage,'duplicate direct hit rejected');directSubChecks.push({source,ap,wire:true,damage});tx.dispose();rx.dispose();G.netm=null;
+          if(source==='sprinkler'){
+            const packets=[],acks=[],ticks=[];
+            const V=THREE.Vector3,wall={id:0,solid:true,center:new V(0,2,3),half:new V(10,2,.2),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
+            const level={blocks:[wall],faces:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;}},physics=new api.Physics(level);
+            const worlds=[];
+            const activate=w=>Object.assign(G,{netm:w.nm,match:w.match,actors:[w.o,w.v],projectiles:w.projectiles,time:w.time,level,physics});
+            const endpoint=id=>{
+              const o=makeActor('shooter',1),v=makeActor('shooter',2);Object.assign(o,{team:0,owner:'direct-owner',netLife:0});Object.assign(v,{team:1,owner:'direct-victim',netLife:0,invuln:0});o.pos.set(0,0,0);v.pos.set(200,0,0);o.aimDir.set(0,-.9,.435889894);equipDirect(v,ap);o.weapon={...o.weapon,sub:'sprinkler'};o.weaponRunner.reset();
+              const projectiles=new originalProjectiles.constructor({add(){},remove(){}}),tr={sendTo(_to,p){if(p.k==='hit')packets.push(JSON.parse(JSON.stringify(p)));if(p.k==='hit_ack')acks.push(JSON.parse(JSON.stringify(p)));return true;},broadcast(p){if(p.k==='t'&&id==='direct-owner')ticks.push(JSON.parse(JSON.stringify(p)));if(p.k==='hit_ack')acks.push(JSON.parse(JSON.stringify(p)));return true;}};
+              const session={myId:id,hostId:'direct-owner',isHost:id==='direct-owner',tr,_members:new Map([['direct-owner',{}],['direct-victim',{}]])},match={actors:[o,v],playing:()=>true,state:'playing',time:180};
+              const nm=new NetMatch(session,{id:'direct-sprinkler-native',map:'reef'}),w={o,v,nm,match,projectiles,time:0};activate(w);nm.bind(match);session.match=nm;worlds.push(w);return w;
+            };
+            const originalProjectiles=G.projectiles,tx=endpoint('direct-owner'),rx=endpoint('direct-victim');
+            try{
+              activate(tx);tx.projectiles.throwBomb(tx.o);const bomb=tx.projectiles.bombs.find(b=>b.owner===tx.o);check(bomb?.s3Resolved?.spec?.id==='sprinkler'&&tx.o.weaponRunner.s3Sub?.id==='sprinkler','native resolved sprinkler');check(tx.nm._sendTick()===true,'sprinkler birth tick');
+              const birth=ticks[0]?.e?.find(e=>e[1]==='b'&&e[11]==='sprinkler');check(birth?.length===16,'tagged actual sprinkler birth');
+              activate(rx);rx.nm.onMessage('direct-owner',ticks[0]);await new Promise(resolve=>setTimeout(resolve,200));rx.time+=.2;activate(rx);rx.nm.update(.2);check(rx.projectiles.bombs.some(b=>b.ghost&&b.owner===rx.o),'receiver creates native sprinkler');
+              let placed=false,previous=0;
+              for(let frame=0;frame<180&&!acks.length;frame++){
+                await new Promise(resolve=>setTimeout(resolve,17));
+                const st=bomb.s3Sprinkler;if(!placed&&frame>50&&st?.drops.length){const d=st.drops.find(d=>d.pos.y>.15&&d.pos.y<1.7);if(d){tx.v.pos.set(d.pos.x,0,d.pos.z);rx.v.pos.copy(tx.v.pos);placed=true;}}
+                tx.time+=1/60;activate(tx);tx.projectiles.update(1/60);if(frame%10===0)tx.nm._sendTick();
+                rx.time+=1/60;activate(rx);if(frame%10===0)rx.nm.onMessage('direct-owner',ticks.at(-1));rx.nm.update(1/60);rx.projectiles.update(1/60);
+                while(previous<packets.length){const packet=packets[previous++];check(packet.w==='sprinkler'&&packet.d===20,'native generated spray20');const hp=rx.v.hp;
+                  rx.nm.onMessage('foreign',packet);check(rx.v.hp===hp,'foreign native spray rejected');rx.nm.onMessage('direct-owner',{...packet,w:'unknown-sub'});check(rx.v.hp===hp,'unknown native spray rejected');
+                  rx.nm.onMessage('direct-owner',{...packet,d:40});check(rx.v.hp===hp&&!rx.nm._combatProvenance?.pending.get('direct-owner')?.some(x=>x.d.h===packet.h),'raw40 cannot reserve native20 ID');
+                  rx.nm.onMessage('direct-owner',packet);
+                }
+              }
+              const expected=ap===57?10:20;check(acks.length===1&&acks[0].d===expected&&rx.v.hp===100-expected,'native receiver contact and ACK agree');
+              const packet=packets.find(p=>p.h===acks[0].h),hp=rx.v.hp;rx.nm.onMessage('direct-owner',packet);check(rx.v.hp===hp,'native spray duplicate inert');directSubChecks.push({source,ap,wire:true,nativeContact:true,damage:100-rx.v.hp});
+            }finally{for(const w of worlds){activate(w);w.nm.dispose();w.projectiles.clear();}G.projectiles=originalProjectiles;G.netm=null;G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};G.physics=new api.Physics(G.level);}
+            continue;
+          }
+          G.projectiles.clear();
+          const makePair=()=>{
+            const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='direct-owner';v.owner='direct-victim';
+            o.team=0;v.team=1;v.invuln=0;o.netLife=v.netLife=0;o.pos.set(0,0,0);v.pos.set(0,0,2);o.aimDir.set(0,0,1);
+            equipDirect(v,ap);equipDirect(o,57);o.weapon={...o.weapon,sub:source};o.weaponRunner.reset();
+            if(source==='sprinkler')check(o.weaponRunner.s3Sub?.id===source,'runner selected equipped sprinkler');
+            return {o,v};
+          };
+          const sender=makePair(),receiver=makePair();let packet,ack;const ticks=[];
+          const bind=(pair,myId,tr)=>{
+            const session={myId,hostId:'direct-owner',isHost:myId==='direct-owner',tr,_members:new Map([['direct-owner',{}],['direct-victim',{}]])};
+            const match={actors:[pair.o,pair.v],state:'playing',time:180,playing:()=>true};
+            const nm=new NetMatch(session,{id:'direct-probe',map:'reef'});nm.bind(match);session.match=nm;G.netm=nm;G.match=match;G.actors=match.actors;return nm;
+          };
+          const tx=bind(sender,'direct-owner',{sendTo:(_id,p)=>{if(p.k==='hit')packet=JSON.parse(JSON.stringify(p));return true;},broadcast:p=>{if(p.k==='t')ticks.push(JSON.parse(JSON.stringify(p)));return true;}});
+          let rx;
+          try{
+            // Native equipped birth and ordered owner tick; never fabricate provenance.
+            const born=G.projectiles.throwBomb(sender.o);
+            check(!!(source==='angleShooter'?born:G.projectiles.bombs.find(b=>b.owner===sender.o)),'native direct-sub birth');
+            if(source==='sprinkler'){const b=G.projectiles.bombs.find(b=>b.owner===sender.o);check(b?.s3Sub?.id===source&&b?.s3Resolved?.spec?.id===source,'birth resolves equipped sprinkler, not stale suction');}
+            check(tx._sendTick()===true&&ticks.length===1,'native direct-sub owner tick');
+            const isBirth=e=>source==='angleShooter'?e[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='spawn'&&e[5]?.subId===source:e[1]==='b'&&e[2]===1&&e[3]==='bomb'&&e[11]===source;
+            check(ticks[0].e.some(isBirth),'native direct-sub event recorded');
+            // Raw40 is a wire policy probe; native sprinkler contact above is20.
+            tx.sendHit(sender.o,sender.v,40,source);check(packet?.d===40,'raw direct hit on wire');
+            G.projectiles.clear();
+            rx=bind(receiver,'direct-victim',{sendTo:(_id,p)=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;},broadcast:p=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;}});
+            rx.onMessage('direct-owner',ticks[0]);check(rx.peers.get('direct-owner')?.events.some(isBirth),'native direct-sub event admitted');
+            const {v}=receiver,hp=v.hp;
+            rx.onMessage('foreign',packet);check(v.hp===hp,'foreign direct hit rejected');
+            rx.onMessage('direct-owner',{...packet,w:'unknown-sub'});check(v.hp===hp,'unknown direct hit rejected');
+            if(source==='angleShooter'){rx.onMessage('direct-owner',{...packet,d:40.1});check(v.hp===hp,'oversized direct hit rejected');}
+            rx.onMessage('direct-owner',packet);
+            // Advance only the existing receiver clock; native ghost birth must commit.
+            for(let i=0;i<30&&!ack;i++){G.time+=1/60;rx.update(1/60);}
+            if(source==='sprinkler')check(G.projectiles.bombs.some(b=>b.owner===receiver.o&&b.ghost),'native receiver sprinkler materialized');
+            const damage=hp-v.hp;check(damage===(ap===57?20:40)&&ack?.d===damage,'direct victim and ACK agree');
+            rx.onMessage('direct-owner',packet);check(hp-v.hp===damage,'duplicate direct hit rejected');directSubChecks.push({source,ap,wire:true,damage});
+          }finally{tx.dispose();rx?.dispose();G.projectiles.clear();G.netm=null;}
         }
         G.projectiles.clear();Object.assign(G,saved);
       }
@@ -507,7 +826,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        wallFacingChecks, catalogueSubChecks, directSubChecks, accelerationChecks, mistChecks, mistQueryChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
+        splatanaThrowChecks, chargeKeepChecks, scopeAdmissionChecks, wallFacingChecks, catalogueSubChecks, torpedoGearContactChecks, directSubChecks, accelerationChecks, mistChecks, mistQueryChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,

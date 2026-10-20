@@ -25,6 +25,19 @@ function reportHashes() {
     createHash('sha256').update(fs.readFileSync(path.join(ROOT, file))).digest('hex')]));
 }
 
+function assertOwnerAccounting(summary) {
+  const immediate = summary.summedClaimedWorldUnitsSquared;
+  const late = summary.delayedOwnerCreditWorldUnitsSquared;
+  assert.ok(Number.isFinite(immediate) && immediate > 0);
+  assert.ok(Number.isFinite(late) && late >= 0);
+  assert.equal(summary.immediateOwnerCreditWorldUnitsSquared, immediate,
+    'native Storm awards each immediate splat return exactly once');
+  assert.equal(summary.ownerTurfDeltaWorldUnitsSquared, immediate + late,
+    'real Actor turf equals the separate immediate and late callback ledgers');
+  assert.equal(summary.ownerTurfDeltaWorldUnitsSquared, summary.finalCpuTurfUnionWorldUnitsSquared,
+    'real Actor turf equals unique owned cells at the same measurement boundary');
+}
+
 test('#226 compact JSON keeps leaf records on one line without changing parsed data', () => {
   const source = {
     measurement: { units: 'WU', retailMapping: 'unknown' },
@@ -64,8 +77,17 @@ test('#226 production-composed Storm accounting is deterministic at 30/60/120Hz 
     assert.equal(summary.paintFlaggedCosmeticEmissions, 0);
     assert.ok(summary.finalCpuTurfUnionWorldUnitsSquared > 0);
     assert.equal(summary.finalCpuTurfCellsFromGrid, summary.finalCpuTurfCellsFromPaintCounts);
-    assert.equal(summary.summedClaimedWorldUnitsSquared+summary.summedGrowthClaimedWorldUnitsSquared, summary.finalCpuTurfUnionWorldUnitsSquared,
-      'immediate body and later ancillary growth both contribute CPU ownership');
+    assertOwnerAccounting(summary);
+    assert.ok(summary.delayedOwnerCreditWorldUnitsSquared > 0, 'exercise actual late ownership credit');
+    // A consistent callback ledger still cannot hide missing or double late credit.
+    for (const factor of [0, 2]) {
+      const late = summary.delayedOwnerCreditWorldUnitsSquared * factor;
+      assert.throws(() => assertOwnerAccounting({ ...summary,
+        delayedOwnerCreditWorldUnitsSquared: late,
+        ownerTurfDeltaWorldUnitsSquared: summary.summedClaimedWorldUnitsSquared + late,
+      }), /real Actor turf equals unique owned cells/);
+    }
+    assert.ok(Number.isInteger(summary.pendingGrowthAtMeasurementEnd) && summary.pendingGrowthAtMeasurementEnd >= 0);
     assert.equal(distribution.reduce((sum, bin) => sum + bin.cells, 0), summary.finalCpuTurfCellsFromGrid);
     assert.ok(Math.abs(distribution.reduce((sum, bin) => sum + bin.areaWorldUnitsSquared, 0) - summary.finalCpuTurfUnionWorldUnitsSquared) < 1e-9);
     assert.ok(events.every((event) => Number.isInteger(event.simulationTick) && event.simulationTick > 0 && event.simulationTick <= 480));
@@ -86,6 +108,8 @@ test('#226 public-source scope reproduces the issue 172/172/171 candidate-call c
   assert.deepEqual(runs.map((run) => run.summary.candidateRayEmissions), [172, 172, 171]);
   for (const { summary, events, distribution } of runs) {
     assert.equal(summary.scope, 'public-source');
+    assertOwnerAccounting(summary);
+    assert.equal(summary.delayedOwnerCreditWorldUnitsSquared, 0, 'raw public source has no #264 late-owner path');
     assert.equal(summary.auditCandidateRayEmissions, null);
     assert.equal(summary.rayGroundHits, summary.candidateRayEmissions);
     assert.equal(summary.paintWriteEvents, summary.rayGroundHits);

@@ -14,9 +14,16 @@ function placeRoller(world) {
   return attacker.weaponRunner;
 }
 
-function useProductionSendToContract(world) {
-  const tr = world.net.s.tr, sendTo = tr.sendTo;
-  tr.sendTo = (to, data) => { sendTo(to, data); return true; };
+function useProductionTransport(world) {
+  const tr = new world.Transport();
+  tr.ws = { readyState: 1, bufferedAmount: 0, send(text) {
+    if (text.startsWith('b|')) world.wire.push({ data: JSON.parse(text.slice(2)) });
+    else if (text.startsWith('s|')) {
+      const k = text.indexOf('|', 2);
+      world.wire.push({ to: text.slice(2, k), data: JSON.parse(text.slice(k + 1)) });
+    }
+  } };
+  world.net.s.tr = tr;
 }
 
 test('invulnerability rejection emits no generic feedback or Roller success debounce; vulnerable contact still kills', async () => {
@@ -92,7 +99,8 @@ test('real victim update order around expiry does not leave failed-contact immun
 test('remote Roller retries on native cadence after lost confirmation and ignores late ACK for a newer request', async () => {
   const sender = await combatWorld('A', { network: true }), receiver = await combatWorld('B', { network: true });
   try {
-    useProductionSendToContract(sender);
+    useProductionTransport(sender);
+    useProductionTransport(receiver);
     const runner = placeRoller(sender), { victim } = sender, { victim: ownedVictim } = receiver;
     sender.G.time = 1;
     victim.hp = ownedVictim.hp = 500;
@@ -181,7 +189,8 @@ test('remote Roller retries on native cadence after lost confirmation and ignore
 test('remote Roller contact waits for owner acceptance, retries after rejection, and confirms once over the existing event wire', async () => {
   const sender = await combatWorld('A', { network: true }), receiver = await combatWorld('B', { network: true });
   try {
-    useProductionSendToContract(sender);
+    useProductionTransport(sender);
+    useProductionTransport(receiver);
     const runner = placeRoller(sender), { victim } = sender;
     sender.G.time = 1;
     victim.invuln = .1;

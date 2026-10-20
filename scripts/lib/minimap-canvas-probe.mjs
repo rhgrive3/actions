@@ -12,8 +12,19 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
  const sources={baseline:compose(baseline),candidate:compose(candidate)};
  const hash=s=>crypto.createHash('sha256').update(s).digest('hex');
  if(hash(read('patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs'))!=='6310a58e1ad59bfab2bf8af4b5dcd2327ee4b94ce0f76d913538569c5387bda1')throw Error('Baseline minimap adapter binding mismatch');
- const sourceHashes=Object.fromEntries(['inkwave-public/src/game/minimap.js','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs'].map(p=>[p,hash(read(p))]));
- for(const [p,expected] of Object.entries({"inkwave-public/src/game/minimap.js": "0bc4585280c9f5fd11ea859b5e745be531ad75120f7dcecc4a25346629e7b662", "patches/splatoon3/runtime/minimap-dirty.mjs": "88ba5df106df11aad4f3eb53b045b1419f972e5b35775a43f52a6c74f8d1a75e", "patches/splatoon3/minimap-dirty-adapter.mjs": "ad1304e79293b4337bd2b375fc449351fb9e4ad9218992b3c0069340331fa92f", "patches/local-quality/minimap-resource-adapter.mjs": "89ee10db310f4e541219edb0ee16b09d77a3a0e35cabe764a550bd3d665a5538"}))if(sourceHashes[p]!==expected)throw Error('Minimap source pin mismatch: '+p);
+ const sourceHashes=Object.fromEntries(['inkwave-public/src/game/minimap.js','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs'].map(p=>[p,hash(fs.readFileSync(path.join(root,p)))]));
+ // Compare exact bytes with the build manifest's file digests; decoded UTF-8 text is only for execution.
+ // Retain reviewed source pins as well as the external build-input binding.
+ for(const [p,expected] of Object.entries({"inkwave-public/src/game/minimap.js": "ead39a1ac28c0095672394b19a2ae8d141adf1144e51f8c1b0e4f18078a21df6", "patches/splatoon3/runtime/minimap-dirty.mjs": "88ba5df106df11aad4f3eb53b045b1419f972e5b35775a43f52a6c74f8d1a75e", "patches/splatoon3/minimap-dirty-adapter.mjs": "ad1304e79293b4337bd2b375fc449351fb9e4ad9218992b3c0069340331fa92f", "patches/local-quality/minimap-resource-adapter.mjs": "89ee10db310f4e541219edb0ee16b09d77a3a0e35cabe764a550bd3d665a5538"}))if(sourceHashes[p]!==expected)throw Error('Minimap source pin mismatch: '+p);
+ // Match the pinned *current build inputs*, not stale pre-migration hashes.
+ const sourceKeys={
+   'inkwave-public/src/game/minimap.js':'upstream/src/game/minimap.js',
+   'patches/splatoon3/runtime/minimap-dirty.mjs':'patch/runtime/minimap-dirty.mjs',
+   'patches/splatoon3/minimap-dirty-adapter.mjs':'patch/minimap-dirty-adapter.mjs',
+   'patches/local-quality/minimap-resource-adapter.mjs':'local-quality/minimap-resource-adapter.mjs'
+ };
+ for(const [file,key] of Object.entries(sourceKeys))
+   if(sourceHashes[file]!==manifest.files?.[key])throw Error('Minimap source pin mismatch: '+file);
  if(!/^[a-f0-9]{64}$/.test(manifest.build?.revision||''))throw Error('Invalid build revision');
  const prefix='_versions/'+manifest.build.revision+'/';
  const emitted={};

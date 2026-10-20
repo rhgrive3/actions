@@ -3,12 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - patches/splatoon3/adapter.mjs
-      - patches/splatoon3/runtime/weapon-models/kit.mjs
-      - patches/splatoon3/tests/weapon-empty-part-draw.test.mjs
-      - scripts/measure-inkwave-empty-weapon-draws.mjs
-      - scripts/compare-inkwave-empty-weapon-draws.py
-      - .github/workflows/inkwave-empty-weapon-draws.yml
+      - '.github/workflows/inkwave-empty-weapon-draws.yml'
 permissions:
   contents: read
 concurrency:

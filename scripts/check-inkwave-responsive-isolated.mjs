@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { boundedChildStderr } from './lib/inkwave-responsive-diagnostics.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => {
@@ -51,8 +52,12 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
   });
   if(processResult.stdout)process.stdout.write(processResult.stdout);
   if(processResult.stderr)process.stderr.write(processResult.stderr);
+  const stderr = boundedChildStderr(processResult.stderr);
+  fs.writeFileSync(path.join(shardDir, 'child-stderr.txt'), stderr.text);
   const row={engine,name,exitCode:processResult.status,signal:processResult.signal,
-    processError:processResult.error?.message||null};
+    processError:processResult.error?.message||null,
+    stderr: { file: 'child-stderr.txt', totalChars: stderr.totalChars,
+      retainedChars: stderr.retainedChars, truncated: stderr.truncated }};
   let fragment;
   try {
     fragment=JSON.parse(fs.readFileSync(path.join(shardDir,'responsive-result.json'),'utf8'));

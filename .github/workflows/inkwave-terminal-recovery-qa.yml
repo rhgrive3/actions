@@ -1,0 +1,95 @@
+name: INKWAVE terminal recovery native QA
+on:
+  pull_request:
+    paths:
+      - 'inkwave-public/src/core/renderer.js'
+      - 'inkwave-public/src/game/minimap.js'
+      - 'inkwave-public/src/main.js'
+      - 'patches/native-stages/adapter.mjs'
+      - 'patches/native-stages/runtime/native-world.mjs'
+      - 'patches/native-stages/runtime/source-menu.mjs'
+      - 'patches/native-stages/tests/native-world*.mjs'
+      - 'patches/native-stages/tests/native-attract-composition.test.mjs'
+      - 'patches/splatoon3/runtime/clock.mjs'
+      - 'patches/splatoon3/runtime/recovery-gate.mjs'
+      - 'patches/splatoon3/tests/context-recovery-clock.test.mjs'
+      - 'patches/splatoon3/tests/context-recovery-attract.test.mjs'
+      - 'scripts/check-inkwave-*-recovery-browser.mjs'
+      - 'scripts/tests/inkwave-*-recovery*.test.mjs'
+      - 'tools/native-recovery-qa/**'
+      - '.github/workflows/inkwave-terminal-recovery-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: terminal-recovery-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+      - name: Source rollback, actual Game clock, startup and browser contracts
+        run: |
+          mkdir -p .qa-evidence/recovery/source
+          set -o pipefail
+          RECOVERY_RECEIPT_DIR=.qa-evidence/recovery/source node --experimental-vm-modules --test \
+            patches/native-stages/tests/native-attract-composition.test.mjs \
+            patches/native-stages/tests/native-world-cancellation.test.mjs \
+            patches/native-stages/tests/native-world-texture-ownership.test.mjs \
+            patches/native-stages/tests/native-world-recovery.test.mjs \
+            patches/native-stages/tests/native-world-recovery-ui.test.mjs \
+            patches/native-stages/tests/native-world-recovery-start.test.mjs \
+            patches/native-stages/tests/native-world-recovery-clock.test.mjs \
+            patches/splatoon3/tests/context-recovery-clock.test.mjs \
+            patches/splatoon3/tests/context-recovery-attract.test.mjs \
+            patches/reliability/tests/start.test.mjs \
+            scripts/tests/inkwave-native-stage-publish-rollback.test.mjs \
+            scripts/tests/inkwave-context-recovery-browser.test.mjs \
+            scripts/tests/inkwave-webgl-context-recovery.test.mjs \
+            tools/native-recovery-qa/stage-contract.test.mjs \
+            tools/native-recovery-qa/emitted-fixture.test.mjs \
+            tools/native-recovery-qa/workflow.test.mjs \
+            2>&1 | tee .qa-evidence/recovery/source/tests.log
+      - name: Build production once for both independent browser lanes
+        run: node scripts/build-inkwave.mjs inkwave-public _site-recovery
+      - name: Install CI browser
+        run: npx playwright install --with-deps chromium
+      - name: Exact emitted publication and UI faults
+        env:
+          INKWAVE_BUILT_SITE: _site-recovery
+          RECOVERY_RECEIPT_DIR: .qa-evidence/recovery/emitted
+        run: |
+          mkdir -p .qa-evidence/recovery/emitted
+          set -o pipefail
+          node --experimental-vm-modules --test \
+            tools/native-recovery-qa/bundle-recovery.mjs \
+            2>&1 | tee .qa-evidence/recovery/emitted/tests.log
+      - name: Real app context loss, restore, Start and ordinary pause
+        if: ${{ !cancelled() && success() }}
+        run: node scripts/check-inkwave-context-recovery-browser.mjs _site-recovery .qa-evidence/recovery/context
+      - name: Prepared stage late failure, real WebGL disposal and terminal UI
+        if: ${{ !cancelled() && hashFiles('_site-recovery/inkwave-build.json') != '' }}
+        run: node scripts/check-inkwave-native-recovery-browser.mjs _site-recovery .qa-evidence/recovery/stage
+      - name: Enforce bounded diagnostic artifact
+        id: evidence_budget
+        if: always()
+        run: |
+          node --input-type=module -e 'import fs from "node:fs";import path from "node:path";let bytes=0;function walk(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory())walk(f);else bytes+=fs.statSync(f).size;}}walk(".qa-evidence/recovery");console.log({bytes,limit:128*1024*1024});if(bytes>128*1024*1024)throw Error("Recovery evidence exceeds artifact budget; preserve outputs and fail");fs.appendFileSync(process.env.GITHUB_OUTPUT,"eligible=true\n");'
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && steps.evidence_budget.outputs.eligible == 'true' }}
+        with:
+          name: inkwave-terminal-recovery-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .qa-evidence/recovery
+          if-no-files-found: error
+          retention-days: 7

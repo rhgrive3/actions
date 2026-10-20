@@ -80,6 +80,7 @@ function sampleRelease(a, out) {
   const ch = a?.character, value = ch && stateMap(ch).get(ch), installation = ch && registry(ch), curves = installation?.curves;
   if (!curves || !enabled(ch) || !ch.bomb || !ch.weapon || hidden(ch.root) || ch.dance || a.alive === false || a.form === 'squid'
     || !specialAllows(ch, a, installation.timers) || a.superJumpState) return out;
+  if (ch.s3RainmakerSupportPending) ch._restoreRainmakerSupport();
   // Evaluate the exported native curve into isolated buffers. The receiver
   // deliberately has no gameplay clocks, springs, footsteps or hair to mutate.
   const cache = sampleCache(ch), pose = cache.pose;
@@ -168,6 +169,7 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
   Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves, timers, disposed }) });
   function clear(ch) {
     if (!ch?.tr) return;
+    if (ch.s3RainmakerSupportPending) ch._restoreRainmakerSupport();
     // Retire the presentation, not the native event clock. Native Runner reset
     // and setWeapon may independently reset clocks; preserve those exact calls.
     stateMap(ch).set(ch, { throwing: false, elapsed: 0, cancelled: true });
@@ -202,6 +204,7 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
     return result;
   };
   C._updateStates = function (dt, s) {
+    if (this.s3RainmakerSupportPending) this._restoreRainmakerSupport();
     const result = updateStates.call(this, dt, s);
     if (!enabled(this)) return result;
     const owner = this._owner(), value = state(this);

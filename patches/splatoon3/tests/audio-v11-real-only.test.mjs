@@ -39,11 +39,12 @@ class MixerStub {
 }
 installWeaponAudioEngine(MixerStub);
 
-test('four recorded battle hit/splat cues are resident before the first shot of any main',async()=>{
+test('original main shot and normal, strong, critical and splat recordings are resident before a Charger first shot',async()=>{
  const {ctx}=mkctx(),audio=new MixerStub(ctx),b=audio.weaponBank();
  const mock=manifest([
    clip('charger','fire','Wp_ChargerNormal_Shot_00.mp3'),
    clip('combat:critical','fire','HitEf_CriticalHit_00.mp3'),
+   clip('combat:damage','fire','HitEf_Damage_00.mp3'),
    clip('combat:ink_focus_normal','fire','HitEf_InkHit_Focused_Normal_00.mp3'),
    clip('combat:ink_focus_strong','fire','HitEf_InkHit_Focused_Strong_00.mp3'),
    clip('combat:splat','fire','Pl_DeadSplash_00.mp3')
@@ -51,13 +52,12 @@ test('four recorded battle hit/splat cues are resident before the first shot of 
  audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>mock});
  b.authorized.fetcher=async()=>res;
  assert.equal((await audio.requireRecordedMainShot('charger')).ready,true);
- for(const id of ['combat:critical','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']){
+ for(const id of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']){
   assert.ok(b.authorized.pick(id,'fire'),id+' resident before first shot');
   assert.equal(audio.playWeapon(id,'fire',{actor:{isLocal:true}})?.weaponId,id);
   assert.equal(audio.played.at(-1).voice.srcs[0].buffer,b.authorized.pick(id,'fire').buffer,
    'real authorized source buffer, not generated oscillator: '+id);
  }
- assert.equal(b.authorized.pick('combat:damage','fire'),null,'obsolete source variant is not needed for current direct feedback');
  assert.equal(audio.stats().authoredFallbackShots,0,'combat sample playback never invokes a synth backup');
  audio.disposeWeaponAudio();
 });
@@ -199,7 +199,7 @@ test('selected Charger preloads HoldNoise first then the other actual cues in on
  a.disposeWeaponAudio();
 });
 
-test('recorded Charger hold keeps 1x pitch; old native 2.5x oscillator pitch does not warp MP3',async()=>{
+test('recorded Charger hold follows actual charge while ignoring old oscillator pitch',async()=>{
  const {ctx,sources}=mkctx(),a=new MixerStub(ctx),id='s3-charger-light';
  a.weaponBank();
  const archive=manifest([
@@ -216,14 +216,25 @@ test('recorded Charger hold keeps 1x pitch; old native 2.5x oscillator pitch doe
  assert.equal(v.srcs[0].playbackRate.value,1,'recorded hold remains at actual recorded speed');
  control.pitch(2.5,ctx.currentTime+.05);
  assert.equal(v.srcs[0].playbackRate.value,1,'old native chirp controls cannot rewrite source pitch');
- assert.equal(v.srcs[0].playbackRate.automation.length,0,'no per-frame unnecessary AudioParam automation');
+ assert.equal(v.srcs[0].playbackRate.automation.length,0,'absent actor charge leaves recorded source clock unchanged');
+ const actor={weaponRunner:{charge:0}},charged=voice(),rise=recorded.loop(charged,2.5,{actor});
+ assert.equal(charged.srcs[0].buffer,a.weaponBank().authorized.pick(id,'charge').buffer);
+ assert.ok(Math.abs(charged.srcs[0].playbackRate.value-.94)<1e-8);
+ actor.weaponRunner.charge=.5;rise.pitch(2.5,ctx.currentTime+.1);
+ assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1.14)<1e-8);
+ const count=charged.srcs[0].playbackRate.automation.length;
+ rise.pitch(2.5,ctx.currentTime+.11);
+ assert.equal(charged.srcs[0].playbackRate.automation.length,count,'no redundant automation at constant charge');
+ actor.weaponRunner.charge=1;rise.pitch(2.5,ctx.currentTime+.2);
+ assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1.34)<1e-8);
+ assert.equal(charged.srcs[0].playbackRate.automation.length,2);
  const spin=a._def('main:s3-spinner-quick:charge'),v2=voice();
  const spinControl=spin.loop(v2,1.5,{});
  assert.equal(v2.srcs[0].playbackRate.value,1.5,'Spinner motor modulation is unchanged');
  spinControl.pitch(1.2,ctx.currentTime+.05);
  assert.equal(v2.srcs[0].playbackRate.value,1.2);
  assert.equal(v2.srcs[0].playbackRate.automation.length,1);
- assert.equal(sources.length,2,'both recorded buffers create exactly one source');
+ assert.equal(sources.length,3,'reused source buffer, with one additional charge presentation voice');
  a.disposeWeaponAudio();
 });
 
@@ -238,7 +249,7 @@ test('native Charger full charge and hold still emit real-only events',()=>{
    'release stops the charging audio without a stale loop');
 });
 
-test('2022-unrecorded alternate kits keep their own source-family authored cue after negative proof',async()=>{
+test('2022-unsourced alternates never generate PCM when temporary family recording is unavailable',async()=>{
  const {ctx,sources}=mkctx(),audio=new MixerStub(ctx);
  audio.weaponBank();
  audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest([clip('shooter','fire','recorded.mp3')])});
@@ -248,24 +259,16 @@ test('2022-unrecorded alternate kits keep their own source-family authored cue a
    ['s3-spinner-hypershort-01','s3-spinner-hypershort'],
    ['s3-brush-heavy-01','s3-brush-heavy']
  ]){
-   assert.equal(mainAudioSourceId(alt),base);
+   assert.equal(mainAudioSourceId(alt),base,'the original kit identity is unchanged');
    assert.equal(audio.playWeapon(alt,'fire',{actor:{isLocal:true}}),null,
-     'unavailable manifest must not allow premature synthesis: '+alt);
+     'cold or missing family recording must remain silent, not synthesized');
  }
  await audio._realS3Loader.getManifest();
- for(const [alt,base] of [
-   ['s3-shooter-quicklong-01','s3-shooter-quicklong'],
-   ['s3-spinner-hypershort-01','s3-spinner-hypershort'],
-   ['s3-brush-heavy-01','s3-brush-heavy']
- ]){
-   assert.equal(audio._realS3Loader.declares(base,'fire'),false);
-   const voice=audio.playWeapon(alt,'fire',{actor:{isLocal:true}});
-   assert.equal(voice?.weaponId,base,'only the correct family recipe is eligible');
-   assert.equal(audio.played.at(-1).name,`main:${base}:fire`);
- }
- assert.equal(audio.stats().authoredFallbackShots,3);
- assert.equal(sources.length,3);
- assert.ok(sources.every(x=>x.buffer),'each confirmed unrecorded alternate has an authored sample');
+ for(const alt of ['s3-shooter-quicklong-01','s3-spinner-hypershort-01','s3-brush-heavy-01'])
+   assert.equal(audio.playWeapon(alt,'fire',{actor:{isLocal:true}}),null);
+ assert.equal(audio.stats().authoredFallbackShots,0);
+ assert.equal(sources.length,0,'no substitute oscillator/PCM may be generated');
+ assert.equal(audio.weaponBank().cache.size,0);
  audio.disposeWeaponAudio();
 });
 
@@ -391,24 +394,25 @@ test('a declared recorded shot never uses authored PCM while decoding',async()=>
  a.disposeWeaponAudio();
 });
 
-test('genuinely unrecorded mains may use authored shots only after negative manifest proof',async()=>{
+test('unavailable borrowed family recording never becomes a synthesized R-PEN sound',async()=>{
  const {ctx}=mkctx(),a=new MixerStub(ctx);
  a.weaponBank();
  a._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest([clip(id,'fire')])});
  a._realS3Loader.bank.authorized.fetcher=async()=>res;
  assert.equal(a.playWeapon('s3-charger-pencil','fire_full',{actor:{isLocal:true}}),null,
-   'an unknown manifest does not authorize authored substitution');
+   'an unknown manifest must not allow invented family sound');
  await a._realS3Loader.getManifest();
- assert.equal(a._realS3Loader.declares('s3-charger-pencil','fire_full'),false);
- assert.equal(a.playWeapon('s3-charger-pencil','fire_full',{actor:{isLocal:true}})?.weaponId,'s3-charger-pencil');
+ assert.equal(a._realS3Loader.declares('s3-charger-light','fire'),false);
+ assert.equal(a.playWeapon('s3-charger-pencil','fire_full',{actor:{isLocal:true}}),null);
  assert.equal(a.playWeapon('s3-charger-pencil','fire',{actor:{isLocal:false}}),null);
+ await assert.rejects(a.requireRecordedMainShot('s3-charger-pencil'),/代用する2022年実録MP3/);
  assert.equal(a.playWeapon('s3-charger-long','scope'),null);
  const suspended=a.loopWeapon('s3-charger-long','charge');
- assert.equal(suspended.playing,true,'cold loops await real MP3 decoding without synthesis');
+ assert.equal(suspended.playing,true,'existing recorded Charger loops await their source');
  suspended.stop();assert.equal(suspended.playing,false);
- assert.equal(a.played.length,1,'only the confirmed unrecorded local main shot may synthesize');
- assert.ok(a._def('main:s3-charger-pencil:fire_full'));
- assert.equal(a._def('main:special:inkjet:open'),null,'no synth replacement for unrecorded kits');
+ assert.equal(a.played.length,0,'unsourced main never generates an authored shot');
+ assert.equal(a._def('main:s3-charger-pencil:fire_full'),null);
+ assert.equal(a._def('main:special:inkjet:open'),null);
  assert.equal(a.weaponBank().stats().generatedOffThread,0);
  a.disposeWeaponAudio();
 });

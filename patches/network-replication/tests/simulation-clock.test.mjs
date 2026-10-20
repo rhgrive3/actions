@@ -5,10 +5,12 @@ import {fixture} from './robustness-fixture.mjs';
 // A render hitch can execute several 60 Hz physics ticks at one wall timestamp.
 // The event's tick identifies its birth within that batch, not receipt age.
 test('multi-tick render hitch retains owner birth and completed physics steps',async()=>{
- const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',vertical:true});f.bind(nm,[a]);
+ const f=await fixture({includeSession:true}),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',vertical:true});f.bind(nm,[a]);
  f.G.time=10;f.projectiles.fireFlick(a,a.weapon);const p=f.projectiles.list[0],birth=JSON.parse(JSON.stringify(nm.out[0]));
  for(let i=0;i<5;i++){f.G.time=10+i/60;f.projectiles.update(1/60);}
- const position=p.pos.clone(),velocity=p.vel.clone(),age=p.age;let packet;nm.s.tr.broadcast=m=>packet=JSON.parse(JSON.stringify(m));nm._sendTick();
+ const position=p.pos.clone(),velocity=p.vel.clone(),age=p.age;let packet;
+ const transport=new f.Transport();transport.ws={readyState:1,bufferedAmount:0,send(raw){if(raw.startsWith('b|'))packet=JSON.parse(raw.slice(2));}};nm.s.tr=transport;
+ assert.equal(nm._sendTick(),true);assert.equal(nm.out.length,0,'real local acceptance consumes the emitted prefix');
  assert.equal(packet.u,604);assert.equal(birth.at(-2),600);f.projectiles.clear();a.remote=true;a.owner='p2';nm.peers.clear();nm.onMessage('p2',packet);const peer=nm.peers.get('p2');peer.tr=packet.ts;nm.update(0);f.projectiles.update(1/60);
  const q=f.projectiles.list[0];assert(q.ghost);assert.equal(q._netSteps,5);assert.equal(q.age,age);assert(q.pos.distanceTo(position)<.001);assert(q.vel.distanceTo(velocity)<.01);
  // Advancing the recipient alone cannot invent an owner physics tick.

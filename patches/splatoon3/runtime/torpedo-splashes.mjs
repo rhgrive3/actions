@@ -1,3 +1,4 @@
+import {registerLimitedDrop,retireLimitedDrop} from '../../network-replication/torpedo-contact-commit.mjs';
 // S3 11.3.0 WeaponBombTorpedo BlastParamChase.SplashAroundParam supplies
 // Num8, Pitch65deg and Velocity0.42..0.48 DU/frame. Each detached drop explodes
 // on terrain, not together with the parent. Gravity is the existing custom
@@ -9,6 +10,7 @@ import { coolerSegmentContact } from './support-cooler-collision.mjs';
 const MAX_DROPS=768;
 function random(seed){let n=seed>>>0;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};}
 function remove(projectiles,drop){
+  retireLimitedDrop(drop);
   const list=projectiles._s3TorpedoSplashes||[],i=list.indexOf(drop);
   if(i>=0)list.splice(i,1);
   if(drop.mesh){drop.mesh.parent?.remove(drop.mesh);drop.mesh.geometry.dispose();drop.mesh.material.dispose();drop.mesh=null;}
@@ -40,7 +42,7 @@ function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
         new api.THREE.MeshBasicMaterial({color:source.owner.color||api.G.teamColors?.[source.team]||0xffffff}));
       drop.mesh.position.copy(pos);api.G.scene.add(drop.mesh);
     }
-    drops.push(drop);
+    drops.push(drop);registerLimitedDrop(projectiles,drop);
   }
 }
 export function stepTorpedoSplashes(api,projectiles,dt,burst){

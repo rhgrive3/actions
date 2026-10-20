@@ -228,12 +228,14 @@ const bounds = (() => {
 })();
 const W = (x, y, z) => { const [a, b] = toWorld(x, z); return [+a.toFixed(3), y, +b.toFixed(3)]; };
 const pad = W(0, 2.6, -43.6);
+const home = W(0, 0, -36.5);
 
 const CARGO = {
   id: 'cargo',
   envBoats: false,   // no generic moored boats: the flanks are the moored ships
   bounds,
   spawnPads: [pad, [-pad[0], pad[1], -pad[2]]],
+  homeSuperJumpPoints: [home, [-home[0], home[1], -home[2]]],
   spawnBarrier: 4.2,
   // fly in low over the TIDEBANK's bow and the mid bulge, across Block 4A, down onto the ops roof
   intro: { from: W(40, 22, -8), lookFrom: W(0, 4, -12), toBack: 3.0 },

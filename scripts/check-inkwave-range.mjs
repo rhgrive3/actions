@@ -269,7 +269,7 @@ for (const run of RUNS) {
         third: variants.filter(id => id.endsWith('-02')).length };
     });
     const picker = out.checks.weaponPicker;
-    if (picker.count !== 160 || picker.unique !== 160 || picker.bases !== 65 ||
+    if (picker.count !== 161 || picker.unique !== 161 || picker.bases !== 66 ||
         picker.variants !== 95 || picker.second !== 65 || picker.third !== 30 ||
         picker.catalog !== 142 || !picker.last?.startsWith('w-s3-'))
       throw new Error('range weapon picker ' + JSON.stringify(picker));
@@ -393,6 +393,11 @@ for (const run of RUNS) {
           let snap = null;
           try { snap = probe?.snapshot?.() ?? null; } catch (e) { snap = { snapshotError: String(e) }; }
           return {
+            lastPredicateObservation: window.__inkwaveRangeAcceptancePoll ?? null,
+            diagnosticObservedAt: performance.now(),
+            latestFrameId: snap?.trace?.latest?.id ?? null,
+            probeMatchesFrameOwner: !!probe && g?._rangeFrameProbe === probe,
+            frameOwner: g?.platform?.driver ? 'platform-driver' : 'legacy-loop',
             url: location.search, document: document.readyState,
             hidden: document.hidden,
             hasInstrumentedLoop: !!g?._loop?.toString().includes('_rangeFrameProbe'),
@@ -404,7 +409,7 @@ for (const run of RUNS) {
             traceLatest: snap?.trace?.latest?.stages ? Object.keys(snap.trace.latest.stages) : null,
           };
         }).catch(e => ({ diagnosticError: String(e) }));
-        throw new Error('Practice Range tracer never reached 12 frames: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+        throw new Error('Practice Range profiler acceptance was not observed before deadline (post-timeout snapshot follows): ' + JSON.stringify(diagnostic) + '; ' + error.message);
       }
       out.checks.profiler = await profilerHandle.jsonValue();
       const perf = out.checks.profiler;

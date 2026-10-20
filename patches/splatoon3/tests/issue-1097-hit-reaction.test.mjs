@@ -374,6 +374,9 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
         trace.rounds.push({ frame, type: p.type, pos: p.pos.toArray(), velocity: p.vel.toArray(), seed: p.seed });
       const hooks = Character.prototype[Symbol.for('inkwave.s3.weapon-hit-reaction.install.v1')];
       const reactionState = hooks?.states.get(a.character);
+      assert.ok(Array.from(a.character.P).every(Number.isFinite), `${kind} finite hit channels at ${hz}Hz frame ${frame}`);
+      assert.ok(a.character.feet.every(foot => foot.disp.toArray().every(Number.isFinite)),
+        `${kind} finite foot displacement at ${hz}Hz frame ${frame}`);
       trace.state.push({ hp: a.hp, ink: a.ink, pos: a.pos.toArray(), velocity: a.vel.toArray(),
         cooldown: a.weaponRunner.cooldown, charge: a.weaponRunner.charge, hand: a.weaponRunner.hand,
         randomCalls: random.calls, basePose: Array.from(reactionState?.basePose || []),
@@ -452,4 +455,51 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
     for (const restore of wrapped.reverse()) restore();
     f.restoreRandom();
   }
+});
+
+// Catalog insertion/reordering must never change the fixed class shape rows.
+test('hit family rows ignore added weapon IDs and catalog registration order', () => {
+  for (const ids of [
+    ['shooter', 'roller', 'charger', 'charger_scope', 'blaster', 'dualies', 'slosher', 'splatling'],
+    ['new_catalog_id', ...KINDS.slice().reverse()],
+  ]) {
+    const cloneable = () => ({ clone: cloneable });
+    class Character {
+      constructor(kind) {
+        this.weaponKind = kind; this.P = new Float32Array(64);
+        this.root = { position: cloneable(), visible: true };
+        this.kid = { position: cloneable(), quaternion: cloneable(), scale: cloneable() };
+        this.feet = []; this.kidForm = true; this.tr = [.02];
+      }
+      trigger() {}
+      _owner() { return { alive: true }; }
+      _buildPose() { this.P.fill(0); }
+    }
+    const C = Object.fromEntries(['SPINE','CHEST','NECK','HEAD','HIPS','HIPS_P','CLAVL','CLAVR',
+      'UARML','UARMR','ANC','ANCR','ANL','ANLR','IKL','IKR','LTW'].map((key, i) => [key, i * 3]));
+    installWeaponHitReaction({ Character, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: { T_HIT: 0 },
+      WEAPONS: Object.fromEntries(ids.map(id => [id, {}])) });
+    for (const kind of KINDS) {
+      const ch = new Character(kind);
+      ch.trigger('hit', { x: 0, z: 1, amp: 1 }); ch._buildPose(1 / 60, {});
+      assert.ok(Array.from(ch.P).every(Number.isFinite), `${kind} stays in the numeric table`);
+      assert.ok(Math.abs(ch.P[C.SPINE] - SPINE[kind] * .5) < 1e-7, `${kind} keeps its family row`);
+    }
+    const unknown = new Character('new_catalog_id');
+    unknown.trigger('hit'); unknown._buildPose(1 / 60, {});
+    assert.ok(unknown.P.every(value => value === 0), 'unrecognized families do not read a shape row');
+  }
+});
+
+test('scoped charger selects the charger hit family through the production catalog', async () => {
+  const api = await production(), r = rig(api, { kind: 'charger_scope' });
+  try {
+    assert.equal(r.ch.weaponKind, 'charger', 'catalog resolves the scoped model to its family');
+    r.ch.trigger('hit', { x: 0, z: 1, amp: 1 }); stepFor(r, 1);
+    const snap = weaponHitReactionSnapshot(r.ch);
+    assert.equal(snap.motion, 'WaitDamage_Chrg');
+    assert.equal(snap.active, true);
+    assert.ok(Array.from(r.ch.P).every(Number.isFinite));
+    assert.ok(r.ch.feet.every(foot => foot.disp.toArray().every(Number.isFinite)));
+  } finally { r.close(); }
 });

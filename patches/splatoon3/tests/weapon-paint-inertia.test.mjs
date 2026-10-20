@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 import { addPlayerForwardVelocity } from '../runtime/weapon-paint-inertia.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
+// Source paint widths are mapped to INKWAVE world radii; raw depth/spacing stay sourced.
+const CHARGER_WORLD_WIDTH=0.2;
+const lineEllipse=(width,depth)=>{const radius=width*CHARGER_WORLD_WIDTH,stretch=Math.max(0,depth/radius-1)*1.6;return {radius,stretch,shift:radius*stretch*.375};};
 async function setup(kind='charger') {
  const f=await fixture(),a=f.make(kind),ps=new f.Projectiles(new f.THREE.Scene());
  f.G.actors=[];f.G.boss=null;f.setRandom(()=>.5);a.yaw=0;a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,100);return {...f,a,ps};
@@ -42,7 +45,7 @@ test('#407 finite Charger ground impacts and events retain raw endpoint ratios a
   for(const [charge,want] of [[8/60,.906],[34/60,1.8125],[8/60+52/60*.998,2.715374],[.99896,2.7168244],[1,3.263]]){
    const f=await paint(charge,{ground}),impact=f.paint.at(-1);
    assert.equal(f.impacts.length,1);assert.equal(impact.opts.stretchAmt,.6);
-   near(impact.r,want);near(f.impacts[0].radius,impact.r);
+   near(impact.r,want*CHARGER_WORLD_WIDTH);near(f.impacts[0].radius,impact.r);
    assert.ok(f.frames>0);cases.push(f);
   }
   near(cases[0].paint.at(-1).r/cases[4].paint.at(-1).r,.906/3.263);
@@ -53,9 +56,10 @@ test('#420 finite Charger line centers follow raw spacing and keep nearest footp
  const spacings=[];
  for(const [charge,spacing,width,depth] of [[8/60,4.7775,.78,2.73],[34/60,3.485625,1.17,2.145],[8/60+52/60*.998,2.34429117,1.55844,1.56234],[.99896,2.3425744212,1.559064,1.561404],[1,2.0592,1.56,1.56]]){
   const f=await paint(charge),line=f.paint.slice(0,-1);
-  assert.ok(line.length>=2);near(line[0].pos.z,.3+1.2);near(line[0].r,1.2);
-  for(let i=1;i<line.length;i++){near(line[i].pos.z-line[i-1].pos.z,spacing);near(line[i].r,width);}
-  for(const p of line){near(p.opts.stretchAmt,depth/width-1);assert.ok(p.pos.z<7.9,'line centres stop before wall');}
+  assert.ok(line.length>=2);const ellipse=lineEllipse(width,depth);
+  near(line[0].pos.z,.3+1.2-ellipse.shift);near(line[0].r,ellipse.radius);
+  for(let i=1;i<line.length;i++){near(line[i].pos.z-line[i-1].pos.z,spacing);near(line[i].r,ellipse.radius);}
+  for(const p of line){near(p.opts.stretchAmt,ellipse.stretch);assert.ok(p.pos.z<7.9,'line centres stop before wall');}
   spacings.push(line[1].pos.z-line[0].pos.z);
  }
  near(spacings[4]/spacings[0],2.0592/4.7775);

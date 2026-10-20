@@ -17,6 +17,8 @@ on:
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
+      - "scripts/fixtures/inkwave-murals-ba5a2d57.js.txt"
+      - "tests/issue-queue/**"
   pull_request:
     paths:
       - .github/workflows/validate-inkwave-update.yml
@@ -33,6 +35,8 @@ on:
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
+      - "scripts/fixtures/inkwave-murals-ba5a2d57.js.txt"
+      - "tests/issue-queue/**"
   workflow_dispatch:
     inputs:
       source_sha:
@@ -123,7 +127,7 @@ jobs:
       - name: Verify paint ownership and frozen-host P0 regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-264-*.test.mjs patches/reliability/tests/hidden-host-*.test.mjs
       - name: Verify source session admission and finite view settings
-        run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs
+        run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs patches/reliability/tests/relay-compatibility.test.mjs
       - name: Verify claimed room startup and gyro health regressions
         run: |
           node --experimental-vm-modules --test patches/reliability/tests/net.test.mjs patches/reliability/tests/next-seven-room.test.mjs patches/local-quality/tests/gyro-stale.test.mjs patches/local-quality/tests/gyro-viability.test.mjs patches/local-quality/tests/gyro-focus.test.mjs
@@ -160,7 +164,7 @@ jobs:
       - name: Verify nine queued critical INKWAVE fixes
         run: node --test tests/issue-queue/critical-queue.test.mjs
       - name: Verify immutable audio cancellation accounting
-        run: node --test scripts/tests/inkwave-browser-request-failure.test.mjs
+        run: node --test scripts/tests/inkwave-browser-request-failure.test.mjs scripts/tests/inkwave-browser-active-failures.test.mjs
       - name: Verify cancelled native texture ownership
         run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-texture-cancellation.test.mjs patches/native-stages/tests/native-normal-readback.test.mjs patches/native-stages/tests/native-texture-index.test.mjs
       - name: Verify cancelled native world preparation
@@ -180,6 +184,8 @@ jobs:
           retention-days: 14
       - name: Verify local quality regressions
         run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs scripts/tests/inkwave-idle-resources-gates.test.mjs
+      - name: Verify migrated direct game source ownership
+        run: node --test scripts/tests/inkwave-direct-source-ownership.test.mjs
       - name: Verify platform lifecycle smoke regressions
         run: node --test tests/platform-lifecycle/platform-smoke.test.mjs
       - name: Verify movement physics smoke regressions
@@ -202,7 +208,7 @@ jobs:
           sudo mkdir -p "$browser_tmp"
           sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs scripts/tests/inkwave-range-menu-entry.test.mjs scripts/tests/inkwave-range-trusted-entry.test.mjs scripts/tests/inkwave-responsive-fixture.test.mjs
+        run: node --test scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs scripts/tests/inkwave-range-profile-receipt.test.mjs scripts/tests/inkwave-range-menu-entry.test.mjs scripts/tests/inkwave-range-trusted-entry.test.mjs scripts/tests/inkwave-responsive-fixture.test.mjs scripts/tests/inkwave-responsive-diagnostics.test.mjs scripts/tests/inkwave-ballpoint-evidence.test.mjs scripts/tests/inkwave-streamed-music-diagnostics.test.mjs scripts/tests/inkwave-active-media-diagnostics.test.mjs scripts/tests/inkwave-context-raf-diagnostics.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -279,39 +285,19 @@ jobs:
             while IFS= read -r -d '' f; do node --check "$f"; done
       - name: Check local module and stylesheet references
         run: |
-          python3 - <<'PY'
-          import re, pathlib, sys
-          root=pathlib.Path('inkwave-public')
-          missing=[]
-          for p in root.rglob('*'):
-            if not p.is_file() or p.suffix not in {'.js','.mjs','.html','.css'}: continue
-            try: s=p.read_text(encoding='utf-8')
-            except: continue
-            refs=set()
-            if p.suffix in {'.js','.mjs'}:
-              refs.update(re.findall(r'''(?:from\s*|import\s*\()\s*["']([^"']+)["']''',s))
-              refs.update(re.findall(r'''import\s*["']([^"']+)["']''',s))
-            if p.suffix in {'.html','.css'}:
-              refs.update(re.findall(r'''(?:src|href)=["']([^"']+)["']''',s))
-              refs.update(re.findall(r'''@import\s+(?:url\()?["']?([^"'\)\s]+)''',s))
-            for ref in refs:
-              if ref.startswith(('http:','https:','data:','blob:','#')) or ref in {'three'} or ref.startswith('three/addons/'): continue
-              if not ref.startswith(('./','../','/')) and p.suffix in {'.js','.mjs'}: continue
-              q=(root/ref.lstrip('/')) if ref.startswith('/') else (p.parent/ref)
-              q=pathlib.Path(str(q).split('?',1)[0].split('#',1)[0])
-              if not q.exists(): missing.append((str(p),ref,str(q)))
-          if missing:
-            for x in missing: print('MISSING',*x)
-            sys.exit(1)
-          print('references OK')
-          PY
+          node --test scripts/tests/inkwave-local-references.test.mjs
+          node scripts/check-inkwave-local-references.mjs .
       - name: Build patched site at the checkout commit
         run: |
-          node --test scripts/tests/inkwave-worker-compaction.test.mjs
+          node --test scripts/tests/inkwave-worker-compaction.test.mjs scripts/tests/inkwave-reviewed-audio-orphan.test.mjs
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify exact emitted owner-bound launch packets and ghosts
+        run: |
+          manifest_sha=$(sha256sum _site/inkwave-build.json | cut -d ' ' -f1)
+          node --experimental-vm-modules scripts/check-inkwave-launch-packets.mjs --site _site --manifest-sha256 "$manifest_sha" --out _site-launch-packets.json
       - name: Verify emitted Bot navigation respawn and retry state
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
@@ -320,6 +306,18 @@ jobs:
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-hold-motion.test.mjs
+      - name: Verify emitted hit-pose finite feet and gameplay muzzle parity
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test --test-name-pattern='^composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan parity under hit presentation$' patches/splatoon3/tests/issue-1097-hit-reaction.test.mjs
+      - name: Verify emitted streamed music teardown and suspended recovery
+        env:
+          INKWAVE_IDLE_BUILD: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/local-quality/tests/music-streamed-gap.test.mjs
+      - name: Verify existing Ballpoint glass in the same emitted build
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test --test-name-pattern='Ballpoint' patches/splatoon3/tests/weapon-shared-rendering.test.mjs
       - name: Verify real emitted material handoff ownership and cancellation
         env:
           INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site
@@ -329,7 +327,7 @@ jobs:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/local-quality/tests/root-hair-spring.test.mjs patches/local-quality/tests/pose-rotation.test.mjs
       - name: Verify actual built codec and authenticated JSON transport
-        run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/paint-packet-codec.test.mjs patches/network-replication/tests/paint-packet-codec-order.test.mjs
+        run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/paint-packet-codec.test.mjs patches/network-replication/tests/paint-packet-codec-order.test.mjs patches/network-replication/tests/outbound-prefix.test.mjs
       - name: Verify emitted Tenacity lock and passive ownership
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
@@ -350,7 +348,7 @@ jobs:
       - name: Verify emitted ranked input and network lifetime
         env:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs patches/splatoon3/tests/ranked-send-acceptance.test.mjs
       - name: Verify emitted paint ownership and frozen-host P0 regressions
         env:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
@@ -359,8 +357,9 @@ jobs:
       - name: Verify emitted session admission and finite view settings
         env:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
           INKWAVE_VIEW_SETTINGS_SITE: ${{ github.workspace }}/_site
-        run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs
+        run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs patches/reliability/tests/relay-compatibility.test.mjs
       - name: Verify emitted active aim-profile sensor transitions
         env:
           INKWAVE_AIM_PROFILE_SITE: ${{ github.workspace }}/_site
@@ -406,6 +405,7 @@ jobs:
           INKWAVE_BUILT_SITE=_site INKWAVE_OBJECT_DAMAGE_REFERENCE=.reference-data/object-damage.json node --experimental-vm-modules --test patches/splatoon3/tests/object-shredder-1130.test.mjs patches/splatoon3/tests/native-sprinkler-damage.test.mjs
           INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-name-pattern='^full installer (keeps Curling|Curling trail)' patches/splatoon3/tests/kit-defense.test.mjs patches/splatoon3/tests/kit-subs.test.mjs
           INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test scripts/tests/inkwave-slosher-paint-golden.test.mjs
+          node --test scripts/tests/inkwave-charger-calibration-oracle.test.mjs
           node --experimental-vm-modules scripts/check-inkwave-weapons-fidelity.mjs --site _site
       - name: Verify emitted sub and special fidelity boundaries
         run: |
@@ -415,6 +415,7 @@ jobs:
             patches/splatoon3/tests/deployed-special-gauge-display.test.mjs \
             patches/splatoon3/tests/retained-special-deep-fidelity.test.mjs \
             patches/splatoon3/tests/special-device-flight.test.mjs \
+            patches/splatoon3/tests/special-device-sparse-replay.test.mjs \
             patches/splatoon3/tests/combat-special-terrain.test.mjs \
             patches/splatoon3/tests/combat-special-native-bands.test.mjs \
             patches/splatoon3/tests/killer-wail-trace-lifecycle.test.mjs \
@@ -444,6 +445,7 @@ jobs:
           path: |
             _site/
             _site-source-sha.txt
+            _site-launch-packets.json
           retention-days: 14
   # The test-file set is partitioned across isolated, independent machines.
   patch_tests:
@@ -609,12 +611,15 @@ jobs:
       - name: Verify browser movement speed across directions and native firing/rolling transitions
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-movement-speed.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/movement-speed" --profile-dir "$CI_STORAGE/cache/movement-speed"
+      - name: Capture current native Charger paint events for source and emitted redraw
+        if: matrix.suite == 'network'
+        run: node --max-old-space-size=192 --experimental-vm-modules scripts/capture-charger-paint-events.mjs --site .built-site/_site --out "$CI_STORAGE/evidence/charger-current-native-events.json"
       - name: Verify exact ancillary paint hashes and canonical GPU masks
         if: matrix.suite == 'network'
-        run: node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask" --profile-dir "$CI_STORAGE/cache/paint-mask" --exact-source
+        run: node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask" --profile-dir "$CI_STORAGE/cache/paint-mask" --main-ink-captures "$CI_STORAGE/evidence/charger-current-native-events.json" --exact-source
       - name: Verify exact paint masks, ordered scan and local order lifetime in WebKit
         if: matrix.suite == 'network'
-        run: node scripts/check-inkwave-paint-mask.mjs --engine webkit --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask-webkit" --profile-dir "$CI_STORAGE/cache/paint-mask-webkit" --exact-source
+        run: node scripts/check-inkwave-paint-mask.mjs --engine webkit --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask-webkit" --profile-dir "$CI_STORAGE/cache/paint-mask-webkit" --main-ink-captures "$CI_STORAGE/evidence/charger-current-native-events.json" --exact-source
       - name: Verify two-player network trajectories and rendered FX
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-network-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network" --profile-dir "$CI_STORAGE/cache/network" --exact-source
@@ -633,6 +638,13 @@ jobs:
       - name: Verify seven weapon models and source-loaded attack grip ownership
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-weapon-models.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/weapon-models"
+      - name: Verify existing Ballpoint gallery in the current exact-head build
+        if: matrix.suite == 'active'
+        run: |
+          out="$CI_STORAGE/evidence/ballpoint"
+          test ! -e "$out"
+          node scripts/render-inkwave-weapon-shared-gallery.mjs --site .built-site/_site --out "$out" --ids s3-spinner-downpour --size 500
+          node scripts/check-inkwave-ballpoint-evidence.mjs --site .built-site/_site --out "$out" --source-sha "$SOURCE_SHA"
       - name: Verify Flow response lifetime and late-error receipts
         if: matrix.suite == 'active'
         run: node --test scripts/tests/inkwave-flow-route-lifetime.test.mjs
@@ -676,6 +688,9 @@ jobs:
         run: |
           node scripts/check-inkwave-runtime-performance.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/runtime-after" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --quality high
           node scripts/compare-inkwave-runtime-performance.mjs --before "$CI_STORAGE/evidence/runtime-before/runtime-result.json" --after "$CI_STORAGE/evidence/runtime-after/runtime-result.json" --out "$CI_STORAGE/evidence/runtime-comparison.json"
+      - name: Verify catalog audio graph coordinator contracts
+        if: matrix.suite == 'catalog'
+        run: node --test scripts/tests/inkwave-catalog-audio-graph.test.mjs
       - name: Verify built Brella aperture and visible detached flight
         if: matrix.suite == 'catalog'
         run: node scripts/check-inkwave-brella-controls.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/brellas"
@@ -684,7 +699,9 @@ jobs:
         run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/catalog" --profile-dir "$CI_STORAGE/cache/catalog"
       - name: Verify PR1172 volley and vortex in Chromium and WebKit
         if: matrix.suite == 'ui'
-        run: node scripts/check-inkwave-volley-vortex.mjs .built-site/_site --webkit
+        run: |
+          node --test scripts/lib/inkwave-volley-failure-evidence.test.mjs
+          node scripts/check-inkwave-volley-vortex.mjs .built-site/_site --webkit
       - name: Verify room startup and gyro health in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-room-gyro.mjs .built-site/_site --webkit
@@ -723,7 +740,7 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','ballpoint/ballpoint-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
             'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json'],
             'ui':['menu-focus/menu-focus-result.json','identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
@@ -750,6 +767,7 @@ jobs:
           if suite=='active':
             assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
             assert reports['weapon-models/weapon-models-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+            assert reports['ballpoint/ballpoint-result.json']['sourceSha']==os.environ['SOURCE_SHA']
             for name in ['grate-normal/grate-normal-result.json','grate-normal-webkit/grate-normal-result.json']:
               assert reports[name]['sourceSha']==os.environ['SOURCE_SHA'], name
             if runtime_performance:
@@ -854,6 +872,8 @@ jobs:
           npx playwright install --with-deps chromium webkit
       - name: Verify seven claimed gameplay and handoff regressions
         run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/catalog-charge-keep-input.test.mjs patches/splatoon3/tests/catalog-splatana-throw-admission.test.mjs patches/splatoon3/tests/catalog-splatana-throw-browser.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/legacy-scoped-charger-admission.test.mjs
           node --experimental-vm-modules --test patches/splatoon3/tests/seven-charge-swim-falloff.test.mjs patches/network-replication/tests/protection-adoption.test.mjs patches/splatoon3/tests/charger-launch-speed.test.mjs patches/splatoon3/tests/issue-620-charger-min-charge-paint.test.mjs patches/splatoon3/tests/issue-430-humanoid-hurtbox.test.mjs patches/splatoon3/tests/issue-525-form-collision-radius.test.mjs patches/splatoon3/tests/charger-fresh-start.test.mjs patches/splatoon3/tests/charger-store-359.test.mjs patches/splatoon3/tests/issue-1038-charger-low-ink.test.mjs patches/splatoon3/tests/issue-959-slosher-free-state.test.mjs patches/splatoon3/tests/issue-1098-stored-muzzle.test.mjs patches/splatoon3/tests/issue-982-charger-rumble.test.mjs patches/splatoon3/tests/charger-damage-curve.test.mjs
           node --experimental-vm-modules --test --test-name-pattern='splatling retained horizontal' patches/splatoon3/tests/weapon-edgecases.test.mjs
           node --experimental-vm-modules --test --test-name-pattern='1007|1052|airborne Charger charge|407|420' patches/splatoon3/tests/charger-postshot-flight.test.mjs patches/splatoon3/tests/integration.test.mjs patches/splatoon3/tests/weapon-paint-inertia.test.mjs
@@ -863,6 +883,8 @@ jobs:
           set -euo pipefail
           node --test scripts/tests/inkwave-mural-branding-reference.test.mjs
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/seven-site
+          INKWAVE_BUILT_SITE=.ci-scratch/seven-site node --experimental-vm-modules --test patches/splatoon3/tests/catalog-charge-keep-input.test.mjs patches/splatoon3/tests/catalog-splatana-throw-admission.test.mjs patches/splatoon3/tests/catalog-splatana-throw-browser.test.mjs
+          INKWAVE_BUILT_SITE=.ci-scratch/seven-site node --experimental-vm-modules --test patches/splatoon3/tests/legacy-scoped-charger-admission.test.mjs
           node scripts/check-inkwave-seven-claims.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/seven-browser.json
       - name: Verify compiled main weapon catalog in Chromium and WebKit
         shell: bash
@@ -921,3 +943,4 @@ jobs:
           path: .ci-scratch/batch4-browser.json
           if-no-files-found: warn
           retention-days: 14
+

@@ -19,6 +19,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue464 } from '../issue-464-adapter.mjs';
+import { chargerScopeFactor } from '../../../inkwave-public/src/game/chargerTuning.js';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -46,13 +47,13 @@ class FakeList {
 const el = () => ({ classList: new FakeList(), style: { setProperty() {} } });
 
 function makeHud(source) {
-  const context = vm.createContext({ console, Math });
+  const context = vm.createContext({ console, Math, WEAPONS, chargerScopeFactor });
   const clamp = '(v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, +v || 0))';
   const Hud = vm.runInContext(`(() => { const clamp = ${clamp}; class Hud { ${extractCrosshair(source)} } return Hud; })()`, context);
   const hud = new Hud();
   Object.assign(hud, {
     _L: { weapon: 'shooter', kind: 'shooter' },
-    xh: el(), ret: el(), shield: el(), subChip: el(), spIcon: {},
+    xh: el(), ret: el(), scopeMask: el(), shield: el(), subChip: el(), spIcon: {},
     _bloom: 0, _kick: 0,
     _local: () => null, _snd() {}, _restart() {}, _buildReticle() {},
   });

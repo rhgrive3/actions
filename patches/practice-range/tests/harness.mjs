@@ -10,14 +10,16 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptRange } from '../adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 export const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
 export const compose = (rel, code) => adaptRange(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))));
 
-let realm;
-export async function rangeRealm() {
-  if (realm) return realm;
+const realms = new Map();
+export async function rangeRealm({productionComposition=false} = {}) {
+  if (realms.has(productionComposition)) return realms.get(productionComposition);
+  const adapt = productionComposition ? adaptBuildSource : compose;
   const store = new Map();
   const context = vm.createContext({ console, performance, URL, setTimeout, clearTimeout,
     localStorage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) },
@@ -30,7 +32,7 @@ export async function rangeRealm() {
     if (modules.has(file)) return modules.get(file);
     const source = fs.readFileSync(file, 'utf8');
     const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file);
-    const mod = new vm.SourceTextModule(compose(rel.split(path.sep).join('/'), source), { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
+    const mod = new vm.SourceTextModule(adapt(rel.split(path.sep).join('/'), source), { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, mod); return mod;
   };
   const entry = new vm.SourceTextModule(`
@@ -62,7 +64,8 @@ export async function rangeRealm() {
   await entry.evaluate();
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = entry.namespace.install(profile);
-  realm = { ...api, ...entry.namespace, profile };
+  const realm = { ...api, ...entry.namespace, profile };
+  realms.set(productionComposition, realm);
   return realm;
 }
 

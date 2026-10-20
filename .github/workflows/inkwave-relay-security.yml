@@ -1,0 +1,36 @@
+name: INKWAVE relay admission and security
+on:
+  pull_request:
+    paths:
+      - "server/**"
+      - "scripts/lib/inkwave-local-relay-fixture.mjs"
+      - "patches/reliability/tests/relay-compatibility.test.mjs"
+      - "inkwave-public/src/net/transport.js"
+      - "patches/reliability/net-adapter.mjs"
+      - ".github/workflows/inkwave-relay-security.yml"
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - "scripts/lib/inkwave-local-relay-fixture.mjs"
+      - "patches/reliability/tests/relay-compatibility.test.mjs"
+      - "inkwave-public/src/net/transport.js"
+      - "patches/reliability/net-adapter.mjs"
+      - ".github/workflows/inkwave-relay-security.yml"
+permissions:
+  contents: read
+jobs:
+  relay-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check server syntax
+        run: node --check server/src/index.js
+      - name: Relay security and existing hit NACK regressions
+        run: node --test server/tests/*.test.mjs
+      - name: Production-composed client compatibility and legacy rejection
+        run: node --experimental-vm-modules --test patches/reliability/tests/relay-compatibility.test.mjs

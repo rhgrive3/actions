@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {nativeFixture,readStage} from './fixture.mjs';
-import {TIDEWATER} from '../../../inkwave-public/src/world/maps.js';
 
 const root=process.env.NATIVE_WAHOO_SEARCH_ASSETS;
 const sourceReady=!!root&&fs.existsSync(path.join(root,'wahoo','manifest.json'));
@@ -41,7 +40,7 @@ test('ordinary Wahoo source search finds the exact route rejected by 6000 withou
 });
 
 test('real Tidewater blockout retains its default bounded routes and target selection',async()=>{
- const f=await nativeFixture({includeCharacter:true}),{G,THREE}=f,L=G.level=new f.Level(TIDEWATER);G.physics=new f.Physics(L);G.paint=paint(f,L);G.nav=new f.NavGraph(L,G.physics);G.camera=new THREE.PerspectiveCamera();G.match.mode='turf';G.match.opts={};
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE,TIDEWATER}=f,L=G.level=new f.Level(TIDEWATER);G.physics=new f.Physics(L);G.paint=paint(f,L);G.nav=new f.NavGraph(L,G.physics);G.camera=new THREE.PerspectiveCamera();G.match.mode='turf';G.match.opts={};
  const a=actor(f,L.spawnPads[0]),target=G.nav.validIds.map(id=>G.nav.nodes[id]).filter(n=>n.zone<0).sort((a,b)=>a.x*a.x+a.z*a.z-b.x*b.x-b.z*b.z)[0],goal=new THREE.Vector3(target.x,target.y,target.z);
  const start=G.nav.nearest(a.pos,1.2),end=G.nav.nearest(goal,.6),expected=G.nav.path(start,end,0,6000);assert.ok(expected);assert.ok(!L.native);
  const original=G.nav.path,calls=[];G.nav.path=function(...args){calls.push(args[3]);return original.apply(this,args);};

@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {fixture} from './controls-fixture.mjs';
-import {RoomDurableObject} from '../../../server/src/index.js';
+import fs from 'node:fs';
+import vm from 'node:vm';
 const {installPlatformGame} = await import(process.env.INKWAVE_CONTROLS_SITE
   ? pathToFileURL(path.resolve(process.env.INKWAVE_CONTROLS_SITE, 'patches/local-quality/platform-game.mjs')).href
   : '../../local-quality/platform-game.mjs');
@@ -11,12 +12,23 @@ const {installDisconnectFidelity} = await import(process.env.INKWAVE_CONTROLS_SI
   ? pathToFileURL(path.resolve(process.env.INKWAVE_CONTROLS_SITE, 'patches/splatoon3/runtime/disconnect-fidelity.mjs')).href
   : '../../splatoon3/runtime/disconnect-fidelity.mjs');
 let ms=1000000;
+// The relay quota and the clients must observe the same elapsed fixture time.
+// Evaluate the unchanged server module with a local Date; never replace Node's
+// global clock or relax the production frame/byte admission limits.
+const relaySource = new URL('../../../server/src/index.js', import.meta.url);
+const relayModule = new vm.SourceTextModule(fs.readFileSync(relaySource, 'utf8'), {
+ identifier: relaySource.href,
+ context: vm.createContext({ Date: class extends Date { static now(){return ms;} }, TextEncoder }),
+});
+await relayModule.link(spec => { throw new Error('Unexpected relay dependency: ' + spec); });
+await relayModule.evaluate();
+export const { RoomDurableObject } = relayModule.namespace;
 class Socket {
  constructor(){this.handlers=new Map();this.sent=[];this.live=true;}
  send(data){this.sent.push(data);this.deliver?.(data);}
  addEventListener(k,fn){this.handlers.set(k,fn);}
  receive(data){if(this.live)this.handlers.get('message')?.({data});}
- close(){if(!this.live)return;this.live=false;this.handlers.get('close')?.();this.closed?.();}
+ close(code,reason){if(!this.live)return;this.closedWith={code,reason};this.live=false;this.handlers.get('close')?.();this.closed?.();}
 }
 export async function pair(){
  const relay=new RoomDurableObject({},{}),participants=[];
@@ -24,7 +36,14 @@ export async function pair(){
   const f=await fixture({match:true,network:true,session:true,clock:{now:()=>ms}}),s=new f.NetSession();installDisconnectFidelity({NetMatch:f.NetMatch,G:f.G});s.myId=welcome.id;s.hostId=welcome.host;s.state='match';s.code='room';s._members=new Map(welcome.members.map(x=>[x.id,x.name]));s.lobby.players=welcome.members.map(x=>({...x,host:x.id===s.hostId,team:0,ready:true}));
   const m=new f.Match({duration:10,mode:'turf',roster:[],host:s.isHost});m.follower=!s.isHost;m.setState('playing');
   const nm=new f.NetMatch(s,{map:'reef'});s.match=nm;nm.bind(m);let sends=0,physics=0,aborted=0;
-  s.tr={broadcast(data){sends++;socket.receive('b|'+JSON.stringify(data));},sendTo(id,data){socket.receive('s|'+id+'|'+JSON.stringify(data));},close(){socket.close();},rtt:0};
+  // Retain the actual Transport's boolean acceptance and byte/backpressure gates.
+  // Only its WebSocket endpoint is bridged to the same synchronous real relay.
+  const transport = new f.Transport();
+  transport.ws = { get readyState(){return socket.live ? 1 : 3;}, bufferedAmount:0,
+   send(data){if(data.startsWith('b|'))sends++;socket.receive(data);},
+   close(code,reason){socket.close(code,reason);},
+  };
+  s.tr=transport;
   socket.deliver=data=>{if(data.startsWith('m|')){const k=data.indexOf('|',2);s._message(data.slice(2,k),JSON.parse(data.slice(k+1)));}else if(data!=='pong')s._control(JSON.parse(data));};
   socket.closed=()=>s._closed('Connection closed');
   const env=new EventTarget();env.document=new EventTarget();env.document.hidden=false;env.document.hasFocus=()=>true;env.performance={now:()=>ms};env.Date={now:()=>ms};let timerId=0;const timers=new Map();env.setTimeout=(fn,delay)=>{timers.set(++timerId,{fn,at:ms+delay});return timerId;};env.clearTimeout=id=>timers.delete(id);env.screen={orientation:new EventTarget()};env.console=console;let rid=0;const raf=new Map();env.requestAnimationFrame=fn=>{raf.set(++rid,fn);return rid;};env.cancelAnimationFrame=id=>raf.delete(id);

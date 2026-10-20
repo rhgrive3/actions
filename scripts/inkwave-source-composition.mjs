@@ -1,4 +1,5 @@
 import { adaptQueueNine } from '../patches/reliability/queue-nine-final-adapter.mjs';
+import { adaptCombatProvenance } from '../patches/network-replication/combat-provenance-adapter.mjs';
 import { adaptWeaponOpponentPreview } from '../patches/splatoon3/weapon-opponent-preview-adapter.mjs';
 import { adaptWeaponOpponentPalette } from '../patches/splatoon3/weapon-opponent-palette-adapter.mjs';
 import { adaptUiLocalization } from '../patches/splatoon3/ui-localization-adapter.mjs';
@@ -19,6 +20,13 @@ import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adap
 
 // Keep the tested source path identical to the production build's adapters.
 export function adaptBuildSource(rel, code) {
+  // Source lives under inkwave-public/, whereas compiled modules share the
+  // versioned site's root with patches/. Keep direct Node imports working and
+  // remap exactly this import in published output.
+  if (rel === 'src/game/inkCollision.js') code = replaceOnce(code,
+    "from '../../../patches/native-stages/runtime/native-projectile-sweep.mjs'",
+    "from '../../patches/native-stages/runtime/native-projectile-sweep.mjs'",
+    'native sweep source/site relocation');
   code = adaptSource(rel, code);
   code = adaptTouchLayout(rel, code);
   code = adaptReliability(rel, code);
@@ -35,7 +43,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptMainInkFootprints(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
-  return applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce))));
+  return adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))));
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream
@@ -48,32 +56,9 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
   'src/config.js': [
     ["export const GAME_TITLE = 'INKWAVE';", "export const GAME_TITLE = 'ZEVANT';"],
   ],
-  'src/ui/ui-icons.js': [
-    ["logoMarkup(title = 'INKWAVE'", "logoMarkup(title = 'ZEVANT'"],
-  ],
   'src/ui/menus.js': [
     ['The INKWAVE servers didn', 'The ZEVANT servers didn'],
     ['The squidkids and code behind INKWAVE', 'The squidkids and code behind ZEVANT'],
-  ],
-  // In-world text is rendered into procedural textures / 3-D lettering.
-  'src/world/murals.js': [
-    ["strokeText('INKWAVE', ox + 300, 186)", "strokeText('ZEVANT', ox + 300, 186)"],
-    ["fillText('INKWAVE', ox + 300, 186)", "fillText('ZEVANT', ox + 300, 186)"],
-    ["fillText('INKWAVE', ox + 294, 180)", "fillText('ZEVANT', ox + 294, 180)"],
-  ],
-  'src/game/lobbySet-tex.js': [
-    ["const word = 'INKWAVE', size =", "const word = 'ZEVANT', size ="],
-  ],
-  'src/world/props.js': [
-    ['INKWAVE HARBOR · SEWER · INKWAVE HARBOR · SEWER · ', 'ZEVANT HARBOR · SEWER · ZEVANT HARBOR · SEWER · '],
-  ],
-  'src/world/props-marina-vessels.js': [
-    ["text(B, 'INKWAVE', 0.19", "text(B, 'ZEVANT', 0.19"],
-    ["text(B, 'INKWAVE', 0.1,", "text(B, 'ZEVANT', 0.1,"],
-    ["text(B, 'INKWAVE', 0.11", "text(B, 'ZEVANT', 0.11"],
-  ],
-  'patches/splatoon3/runtime/ui-strings.mjs': [
-    ['The INKWAVE servers didn’t answer. Check your connection, then try again.', 'The ZEVANT servers didn’t answer. Check your connection, then try again.'],
   ],
   'src/i18n.js': [
     ["'The squidkids and code behind INKWAVE': 'INKWAVE をつくった仲間たち'", "'The squidkids and code behind ZEVANT': 'ZEVANT をつくった仲間たち'"],

@@ -6,6 +6,44 @@ import { createGpuRenderTimer, installHitchTracer } from '../range-hitch-tracer.
 import { createFrameTimingProbe } from '../range-frame-profiler.mjs';
 import { profileRangeAcceptanceSnapshot } from '../../../scripts/inkwave-range-profile-acceptance.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { FixedClock } from '../../splatoon3/runtime/clock.mjs';
+
+test('native method counters expose zero-ray contact work and distinguish zero, one and twelve fixed ticks',()=>{
+ let now=0,stamp=0,calls=0;
+ const source={queryCount:0,triangleTests:0,queryBox(){calls++;return 11;},_capsuleDistance(){calls++;return 17;}};
+ const physics={_nativeContacts(){assert.equal(source.queryBox(),11);assert.equal(source._capsuleDistance(),17);return 23;}};
+ const game={s3Clock:new FixedClock(),match:{actors:[],update(){assert.equal(physics._nativeContacts(),23);}},_frame(dt){this.s3Clock.advance(dt,()=>this.match.update());return 29;}};
+ const env={__G:{level:{native:true,triangleWorld:source},physics,match:game.match}};
+ const originals=[source.queryBox,source._capsuleDistance,physics._nativeContacts,game.match.update,game._frame];
+ const tracer=installHitchTracer(game,{env,now:()=>++now});
+ try{
+  for(const [dt,ticks]of [[0,0],[.2,12],[1/120,0],[1/120,1]]){
+   const before=calls;assert.equal(game._frame(dt),29);tracer.record(++stamp,1,{frameRateHz:60});
+   const row=tracer.snapshot().latest;
+   assert(row.fixedClock&&row.methodCalls,'per-frame fixed-clock and method-count metadata must be present');
+   assert.equal(row.fixedClock.elapsedSeconds,dt);assert.equal(row.fixedClock.ticks,ticks);
+   assert.equal(row.methodCalls['source-box']||0,ticks);assert.equal(row.methodCalls['source-capsule-distance']||0,ticks);
+   assert.equal(calls-before,2*ticks);assert.deepEqual(row.sourceBVH,{queries:0,triangleTests:0});
+   assert.equal(row.stages['source-capsule-distance'],undefined,'deep capsule wrapper counts without extra timing calls');
+  }
+  const report=JSON.parse(tracer.report());assert.equal(report.latest.fixedClock.ticks,1);
+  assert.match(report.latest.sourceBVHCounterCoverage,/box\/capsule work is in methodCalls/);
+ }finally{tracer.dispose();}
+ assert.deepEqual([source.queryBox,source._capsuleDistance,physics._nativeContacts,game.match.update,game._frame],originals);
+});
+
+test('native count-only wrapper preserves exceptions and restores the exact source method',()=>{
+ const error=new Error('capsule fault'),source={queryCount:0,triangleTests:0,_capsuleDistance(){throw error;}};
+ const game={_frame(){source._capsuleDistance();}},original=source._capsuleDistance;
+ const tracer=installHitchTracer(game,{env:{__G:{level:{native:true,triangleWorld:source}}}});
+ try{
+  assert.throws(()=>game._frame(1/60),e=>e===error);tracer.record(1,1);
+  const calls=tracer.snapshot().latest.methodCalls;
+  assert(calls,'failed capsule attempts must still be counted');
+  assert.equal(calls['source-capsule-distance'],1);
+ }finally{tracer.dispose();}
+ assert.equal(source._capsuleDistance,original);
+});
 
 function fakeWebGL() {
   const events = [];
@@ -228,4 +266,63 @@ test('Playwright polls an entirely synchronous, completed Practice Range trace',
   env.__G.match.state = 'playing';
   env.__inkwaveRangePerf.snapshot = () => ({ traceError: 'failed dynamic import' });
   assert.deepEqual(profileRangeAcceptanceSnapshot(env), { traceError: 'failed dynamic import' });
+});
+
+test('native opt-in tracer counts actual BVH triangles and nested ground, brain and paint CPU without changing calls',()=>{
+ const f=worldFixture(),G=f.env.__G;
+ const source={
+   queryCount:0,triangleTests:0,
+   ray(){this.queryCount++;this.triangleTests+=37;f.tick(.6);},
+   queryBox(){f.tick(.1);},sweepSphere(){f.tick(.1);}
+ };
+ G.level={native:true,triangleWorld:source};
+ G.physics={
+   raycast(){source.ray();f.tick(.2);},
+   groundProbe(){this.raycast();f.tick(.3);},
+   collideBody(){f.tick(.15);},_nativeContacts(){f.tick(.2);}
+ };
+ G.nav={path(){f.tick(.4);}};
+ G.paint.splat=function(){f.tick(.5);};
+ G.paint.regionStats=function(){f.tick(.2);};
+ const actor={bot:{update(){G.physics.groundProbe();f.tick(.4);}},
+   character:{update(){f.tick(.5);}},update(){this.character.update();f.tick(.25);}};
+ f.game.match.actors=[actor];G.match=f.game.match;
+ const originalBrain=actor.bot.update,originalRay=source.ray;
+ f.game.match.update=function(dt){actor.bot.update(dt);actor.update(dt);G.nav.path();G.paint.splat();f.tick(.2);};
+ const fixtureUpdate=f.game.match.update;
+ const trace=installHitchTracer(f.game,{env:f.env,now:f.now,gpuEvery:4});
+ f.game._frame(1/60);trace.record(f.now(),35,{frameRateHz:60,phase:'battle'});
+ const last=trace.snapshot().latest;
+ assert.deepEqual(last.sourceBVH,{queries:1,triangleTests:37});
+ assert(last.stages['ground-ring']>=.9);
+ assert(last.stages['source-ray']>=.5);
+ assert(last.stages['brain-0']>=1.3);
+ assert(last.stages['character-0']>=.4);
+ assert(last.stages['paint-splat']>=.4);
+ assert(last.topNativeScopes.some(x=>x.name==='brain-0'));
+ assert.match(trace.report(),/"sourceBVH"/);
+ trace.dispose();
+ assert.strictEqual(actor.bot.update,originalBrain);
+ assert.strictEqual(source.ray,originalRay);
+ assert.strictEqual(f.game.match.update,fixtureUpdate,'tracer restores the match wrapper installed before profiling');
+});
+
+test('native profiler drops retired world and actor hooks after a stage switch without retaining owners',()=>{
+ const f=worldFixture(),G=f.env.__G;
+ const oldWorld={native:true,triangleWorld:{queryCount:0,triangleTests:0,ray(){}}};
+ const actor={update(){},bot:{update(){}},character:{update(){}}};
+ G.level=oldWorld; G.physics={groundProbe(){}};
+ G.nav={path(){}};f.game.match.actors=[actor];G.match=f.game.match;
+ const originalActor=actor.update,originalBrain=actor.bot.update;
+ const tracer=installHitchTracer(f.game,{env:f.env,now:f.now});
+ f.game._frame(.016);tracer.record(f.now(),18,{phase:'battle'});
+ assert.notStrictEqual(actor.update,originalActor);
+ assert.notStrictEqual(actor.bot.update,originalBrain);
+ G.level={native:false};G.physics={groundProbe(){}};
+ G.nav={path(){}};f.game.match.actors=[];
+ f.game._frame(.016);tracer.record(f.now(),18,{phase:'battle'});
+ assert.strictEqual(actor.update,originalActor,'retired actor hook must be removed');
+ assert.strictEqual(actor.bot.update,originalBrain,'retired bot hook must be removed');
+ assert.equal(tracer.snapshot().latest.sourceBVH,null);
+ tracer.dispose();
 });

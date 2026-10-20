@@ -13,6 +13,12 @@ const plan = planCharacterPoseBaseline(before, after);
 const evidence = { schema: 1, scope: CHARACTER_POSE_MANIFEST.purpose, sourceBase: CHARACTER_POSE_MANIFEST.sourceBase,
   sourceHead: CHARACTER_POSE_MANIFEST.sourceHead, manifestGitBlob: CHARACTER_POSE_MANIFEST_BLOB,
   reviewedDiffSha256: CHARACTER_POSE_MANIFEST.reviewedDiffSha256, paths: plan.evidence };
+if (plan.pairEvidence) {
+  assert.equal(plan.changes.length, 0, 'current pose pair must not replay source');
+  assert.deepEqual([...plan.sources], [...before], 'current pose pair preserves the baseline');
+  Object.assign(evidence, plan.pairEvidence, { writtenPaths: [] });
+  delete evidence.reviewedDiffSha256;
+}
 const currentOwners = plan.evidence.filter(row => row.mode === 'identical-current-pose');
 if (currentOwners.length) {
   const unchanged = plan.changes.length === 0 && [...before].every(([rel, value]) => value === after.get(rel));

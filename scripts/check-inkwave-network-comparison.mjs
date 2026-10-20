@@ -40,7 +40,7 @@ export function nativeBaselineProjectileEvent(e){
  return e.slice(0,26);
 }
 export async function replay(network,kind,{seed=0x1badc0de,realFloor=false}={}){
- const owner=await fixture({network}),receiver=await fixture({network});
+ const owner=await fixture({network,includeSession:true}),receiver=await fixture({network,includeSession:true});
  const draws=[0,0];
  for(const [j,f]of[[0,owner],[1,receiver]]){
   Object.assign(f.SUB.bomb,f.profile.bomb);for(const [id,data]of Object.entries(f.profile.specials||{}))Object.assign(f.SPECIALS[id],data);
@@ -85,7 +85,7 @@ export async function replay(network,kind,{seed=0x1badc0de,realFloor=false}={}){
  const P=owner.projectiles,w=oa.weapon;
  switch(kind){case'horizontal':case'vertical':P.fireFlick(oa,w);break;case'shooter':P.fireShooter(oa,w,0);break;case'dualies':P.fireDualies(oa,w,0,1);break;case'blaster':P.fireBlaster(oa,w,0);break;case'splatling':P.fireSplatling(oa,w,0);break;case'slosher':P.fireSlosh(oa,w);break;case'bomb':P.throwBomb(oa);break;case'storm':oa.specialActive={id:'storm',t:0,phase:'throw',armor:false};onm._rec(['ev','special:use',{actor:{n:oa.nid},id:'storm'}]);P.throwStorm(oa);break;case'charger':case'charger_half':case'charger_full':case'charger_oblique_partial':case'charger_oblique_full':P.fireCharger(oa,w,kind.endsWith('_full')?1:kind.endsWith('_partial')?.3764321:kind==='charger_half'?.5:0);break;}
  const beam=f=>{const b=f.projectiles.beams[0];return{age:b.t,len:b.mesh.scale.z,life:b.life,charge:b.mesh.material.uniforms.uCharge.value,width:b.th,spawn:b.mesh.position.toArray(),end:new f.THREE.Vector3(0,0,b.mesh.scale.z).applyQuaternion(b.mesh.quaternion).add(b.mesh.position).toArray()};};
- const packets=[];os.tr.broadcast=m=>packets.push(JSON.parse(JSON.stringify(m)));
+ const packets=[];os.tr=new owner.Transport();os.tr.ws={readyState:1,bufferedAmount:0,send(wire){if(wire.startsWith('b|'))packets.push(JSON.parse(wire.slice(2)));}};
  let bytes=0,packetCount=0,eventCount=0,maxLocal=0,maxRemote=0,sourceBomb=[],remoteBomb=[],sourceCloud=[],remoteCloud=[],sourceBeam=[],remoteBeam=[];
  for(let frame=0;frame<750;frame++){
   const t=1000+frame*DT;owner.clock.set(t);receiver.clock.set(t);owner.G.time=t;receiver.G.time=t;

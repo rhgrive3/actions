@@ -743,7 +743,7 @@ export function installWeapons(context, profile) {
     if (a.form === 'squid') {
       this.s3WasSquid = true;
       if (this.charging) {
-        if (isChargerFullCharge(this.charge) && held && a.submerged === true) this.s3Stored = {
+        if (w.scopedCharge !== true && w.scoped !== true && isChargerFullCharge(this.charge) && held && a.submerged === true) this.s3Stored = {
           charge: 1, remaining: w.keepChargeTime,
           fireDelay: w.storedFireDelay || 0, laserDelay: w.storedLaserDelay || 0,
           resurfaced: false,
@@ -1142,7 +1142,15 @@ export function installWeapons(context, profile) {
     const actors = G.actors;
     try { G.actors = []; fireCharger.call(this, a, w, charge); }
     finally { G.actors = actors; }
-    for (const { actor } of victims.sort((x, y) => x.distance - y.distance)) this.applyHit(a, actor, w.damageMax, 'charger');
+    for (const { actor } of victims.sort((x, y) => x.distance - y.distance)) {
+      // Full-charge through-body hits bypass the original single-victim path.
+      // Carry the real fired ratio to hit audio without touching authoritative
+      // damage, collision order, group arguments, or network packets.
+      const previous = a._sourceChargerAudioHit;
+      a._sourceChargerAudioHit = { chargerDirect: true, charge };
+      try { this.applyHit(a, actor, w.damageMax, 'charger'); }
+      finally { a._sourceChargerAudioHit = previous; }
+    }
   };
   const auto = WeaponRunner.prototype._auto;
   WeaponRunner.prototype._auto = function (dt, input, w) {

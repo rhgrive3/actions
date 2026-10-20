@@ -1,8 +1,8 @@
 #!/usr/bin/env node
+import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.mjs';
 import { checkAcceptedDefaultConsumption } from './lib/inkwave-accepted-default-probe.mjs';
 import { checkWeaponAppearancePicker } from './lib/inkwave-weapon-appearance-probe.mjs';
 import { clickNativeKitCard } from './lib/inkwave-canonical-kit-input.mjs';
-import { partitionRequestFailures } from './lib/inkwave-browser-request-failure.mjs';
 import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
 import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
 import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
@@ -65,7 +65,7 @@ const address='http://127.0.0.1:'+server.address().port+'/';
 let browser;
 try {
  browser=await chromium.launchPersistentContext(profile,{headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),viewport:{width:1280,height:800},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const page = await browser.newPage(), errors = [], observedFailures = [], consoleErrors = [], receipts = [], verifiedRequests = new WeakSet(), verifications = new Set();
+const page = await browser.newPage(), errors = [], failures = [], consoleErrors = [], receipts = [], verifications = new Set();
 // Fulfill with the exact bytes returned by the local server after verification.
 // API responses retain preload bodies that Chrome's DevTools may discard.
 await page.route(address+'**', route => {
@@ -74,7 +74,6 @@ await page.route(address+'**', route => {
     const response=await route.fetch(), body=await response.body();
     const key=decodeURIComponent(new URL(response.url()).pathname).replace(/^\//,'') || 'index.html';
     if(manifest.artifacts[key] && hash(body)!==manifest.artifacts[key]) throw new Error('Loaded artifact mismatch: '+key);
-    if(manifest.artifacts[key])verifiedRequests.add(route.request());
     receipts.push(key.replace(/^_versions\/[a-f0-9]+\//,'')); await route.fulfill({response,body});
   }catch(error){ errors.push(error.message); await route.abort(); }
  })();
@@ -87,9 +86,25 @@ await page.addInitScript(() => { localStorage.setItem('inkwave.settings', JSON.s
 page.on('pageerror', error => errors.push(error.message));
 page.on('requestfailed', request => {
   const event={url:request.url(),error:request.failure()?.errorText};
-  observedFailures.push({request,event});
+  // A verified upstream body is not proof of browser delivery, playback, or
+  // intentional cancellation. All active-capture request failures fail closed.
+  // Explicit context teardown remains after the pre-close acceptance gate.
+  failures.push(event);
 });
 page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text().slice(0, 1500)); });
+const streamedMusicReceipt = { sourceSha, contentHash:manifest.contentHash };
+const streamedMusic = await observeStreamedMusic({context:browser,page,
+  assetURL:new URL('_versions/'+manifest.build.revision+'/assets/audio/Jet_Arrow.mp3',address).href,
+  ownerGlobal:'s3ProbeG',receipt:streamedMusicReceipt});
+async function closeObservedBrowser() {
+  try { return await streamedMusic.close(); }
+  finally {
+    // Preserve the existing pre-close acceptance gate; closure diagnostics are
+    // saved separately and do not classify a canceled request as harmless.
+    fs.writeFileSync(path.join(evidence,'streamed-music-diagnostics.json.writing'),JSON.stringify(streamedMusicReceipt,null,2));
+    fs.renameSync(path.join(evidence,'streamed-music-diagnostics.json.writing'),path.join(evidence,'streamed-music-diagnostics.json'));
+  }
+}
 let result;
 try {
   await page.goto(address, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -108,6 +123,7 @@ try {
     await page.evaluate(async () => { const G=globalThis.s3ProbeG; G.game.debug.freeze(); G.game.menus.wipe.cancel(); await G.game.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'}); });
     await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
     await page.evaluate(() => { const g=globalThis.s3ProbeG.game; g.debug.freezeBots(); g._skipRender=true; try {for(let i=0;i<270;i++)g._frame(1/60);} finally {g._skipRender=false;} });
+    await streamedMusic.snapshot('native-playing-capture-ready');
     result.hudAuthority = await checkUiVisualProbes({page,evidence,sourceSha,contentHash:manifest.contentHash});
   } else {
   // Exercise the native menu interval that previously pinned an unused LobbySet.
@@ -276,6 +292,7 @@ try {
     return {state:g.match.state, elapsedAt20Hz, movement, movementProbe, hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
+  await streamedMusic.snapshot('native-playing-capture-ready');
   result.turfLead = await probeTurfLead(page, evidence);
   // Native keyboard events traverse the loaded match's complete input/action
   // pipeline. Only ground collision is pinned for this admission-only proof;
@@ -466,18 +483,19 @@ try {
   await page.screenshot({ path:path.join(evidence,'browser-failure.png') }).catch(() => {});
 } finally {
 
+  // Retain main's response-verification ordering without waiving active failures.
+  await Promise.allSettled([...verifications]);
+  result.streamedMusicDiagnostics = 'streamed-music-diagnostics.json';
   result.scope = uiProbesOnly ? 'ui-probes-only' : 'full-active'; result.fullAcceptance = !uiProbesOnly;
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
   result.verifiedRuntimeFiles = [...new Set(receipts)].sort();
   for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
-  await Promise.allSettled([...verifications]);
-  const {failures,audioCancellations}=partitionRequestFailures(observedFailures,verifiedRequests);
   if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
-  result.verifiedAudioCancellations = audioCancellations;
+  result.verifiedAudioCancellations = []; // No active-capture cancellation is waived.
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
   fs.renameSync(evidence + '/browser-result.json.writing', evidence + '/browser-result.json');
-  console.log(JSON.stringify({status:result.status,error:result.error,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,actionReliability:result.actionReliability,verifiedResponses:receipts.length,errors})); await browser.close();
+  console.log(JSON.stringify({status:result.status,error:result.error,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,actionReliability:result.actionReliability,verifiedResponses:receipts.length,errors})); await closeObservedBrowser();
 }
 if (result.status !== 'passed' || errors.length) process.exitCode = 1;
 

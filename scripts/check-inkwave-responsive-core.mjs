@@ -4,7 +4,7 @@ import path from 'node:path';
 
 // Runs the existing menu actions against the caller's fixture API. It tests
 // layout and UI state; it does not simulate gameplay or attest a real device.
-export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, testContinuation = !audit, touchCameraReset = false }) {
+export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, testContinuation = !audit, touchCameraReset = false, onStageComplete = () => {} }) {
   const capture = async (name, selector) => {
     // A finished exit animation can retain its translated panel until the
     // menu's 340ms removal timer. Measure only after that owner is gone.
@@ -14,6 +14,7 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
       const r = el.getBoundingClientRect(); return r.left >= -1 && r.right <= innerWidth + 1;
     })), `${name}: content panels must fit the viewport`);
     await page.screenshot({ path: path.join(evidence, `${engineName}-${entry.name}-${name}.png`) });
+    onStageComplete(name);
   };
   await show(page, 'loading');
   await page.evaluate(() => menus.setLoading(0.65, 'Loading the harbour'));
@@ -64,6 +65,7 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
       await settle(page);
       assert(await page.locator('.iw-ss__name').evaluate((el) => el.scrollWidth <= el.clientWidth + 1), 'every stage caption must fit its ink ticket');
       assert(await page.locator('.iw-ss__caption').evaluate((el) => el.getBoundingClientRect().bottom <= el.parentElement.querySelector('.iw-ss__time').getBoundingClientRect().top + 1), 'time controls must not cover the stage name and description');
+      onStageComplete('setup-stage:' + id);
     }
     const ticket = page.locator('.iw-ticket').nth(1);
     const stage = await ticket.evaluate((el) => el._mid);

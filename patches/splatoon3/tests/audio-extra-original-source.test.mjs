@@ -37,7 +37,9 @@ test('the extra source events never fall back to generated one-shot audio',()=>{
    assert.equal(bank.has(id,'fire'),true);
    assert.equal(bank.name(id,'fire'),`main:${id}:fire`);
    assert.equal(bank.resolve(`main:${id}:fire`),null,'no source resident yet: no synthesized substitute');
-   assert.throws(()=>bank.get(id,'fire'),/Procedural/);
+   assert.throws(()=>bank.get(id,'fire'),{name:'Error',message:'Recorded-only cue cannot generate PCM: '+id+'/fire'});
+   assert.equal(bank.cache.size,0,'a refused source cue cannot allocate authored PCM');
+   assert.equal(bank.bytes,0,'a refused source cue cannot retain authored PCM bytes');
  }
  bank.dispose();
 });

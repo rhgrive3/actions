@@ -9,6 +9,8 @@ function world(walls=[]) {
  f.G.level=new f.Level({bounds:{minX:-20,maxX:20,minZ:-20,maxZ:20},spawnPads:[[-10,0,0],[10,0,0]],spawnBarrier:0,single:[{kind:'box',min:[-20,-.5,-20],max:[20,0,20]},...walls],half:[]});
  f.G.physics=new f.Physics(f.G.level);
 }
+// Actual originator tick captured from the native NetMatch transport.
+let latestKrakenAttackTick=null;
 const wall=(z=1.5,xmin=-5,xmax=5)=>({kind:'box',min:[xmin,0,z],max:[xmax,5,z+.5]});
 function dash(a=f.make()){
  a._integrate=f.Actor.prototype._integrate; // Retain native squid ground/grate/gravity collision.
@@ -39,19 +41,27 @@ function networkRoom(id){
  world();const a=f.make(),v=victim();
  Object.assign(a,{nid:7,owner:'S',netLife:2,team:0,remote:id!=='S'});
  Object.assign(v,{nid:4,owner:'V',netLife:5,remote:id!=='V'});
- a.net={...(a.net||{}),lastLife:2};v.net={...(v.net||{}),lastLife:5};
+ // Native bind must initialize the complete remote snapshot before life counters are assigned.
  a.pos.set(0,0,1);f.G.actors=[a,v];
  const sent=[],session={myId:id,isHost:id==='S',hostId:'S',_members:new Set(['S','V']),tr:{
   sendTo(to,d){sent.push({to,d:JSON.parse(JSON.stringify(d))});return true;},
   broadcast(d){sent.push({to:'*',d:JSON.parse(JSON.stringify(d))});return true;}}};
  const nm=new f.NetMatch(session,{id:'kraken-occlusion-match',map:'tidewater'});
- nm.byNid=new Map([[7,a],[4,v]]);nm.match=f.G.match;f.G.netm=nm;f.G.net=session;
+ nm.byNid=new Map([[7,a],[4,v]]);f.G.match.actors=[a,v];nm.bind(f.G.match);
+ a.net.lastLife=2;v.net.lastLife=5;
+ assert.ok(Array.isArray(a.net.buf)&&Array.isArray(v.net.buf),'native actor snapshots are initialized');
+ f.G.netm=nm;f.G.net=session;
  return {a,v,nm,sent,session};
 }
 function sentHit({guest=false,blocked=false}={}){
  const x=networkRoom('S');if(guest){x.session.isHost=false;x.session.hostId='V';}
  if(blocked){f.G.level=new f.Level({bounds:{minX:-20,maxX:20,minZ:-20,maxZ:20},spawnPads:[[-10,0,0],[10,0,0]],spawnBarrier:0,single:[{kind:'box',min:[-20,-.5,-20],max:[20,0,20]},wall()],half:[]});f.G.physics=new f.Physics(f.G.level);}
- dash(x.a);x.a._updateSpecial(1/60);const hits=x.sent.filter(x=>x.d.k==='hit');
+ dash(x.a);x.a._updateSpecial(1/60);
+ // Commit the real owner-authoritative Special use event and actor snapshot.
+ // Unverified hit packets alone must not bypass the new combat provenance.
+ x.nm._sendTick();
+ latestKrakenAttackTick=x.sent.findLast(p=>p.d.k==='t')?.d||null;
+ const hits=x.sent.filter(x=>x.d.k==='hit');
  assert.equal(x.v.hp,100,'sender never directly damages remote victim');
  assert.equal(hits.length,blocked?0:1);if(blocked)return null;
  const packet=hits[0].d;assert.equal(packet.w,'krakenRoyale');assert.equal(packet.d,120);assert.equal(packet.m,'kraken-occlusion-match');assert.equal(packet.l,5);return packet;
@@ -63,11 +73,17 @@ for(const guest of [false,true]){
 for(const mode of ['valid','duplicate','wrong-match','wrong-owner','future-victim-life','attacker-life-change-keeps-committed-hit','remote-recipient']){
  test(`native receiver: ${mode}`,()=>{
   const packet=sentHit(),x=networkRoom('V');let from='S';
+  x.a.weapon={...x.a.weapon,special:'krakenRoyale'};
+  assert.ok(latestKrakenAttackTick?.e?.some(e=>e[1]==='ev'&&e[2]==='special:use'),
+    'native attacker Special activation travels in the preceding owner timeline');
   if(mode==='wrong-match')packet.m='old-match';if(mode==='wrong-owner')from='X';
   if(mode==='future-victim-life')x.v.netLife=6;
   if(mode==='attacker-life-change-keeps-committed-hit'){x.a.netLife=3;x.a.net.lastLife=3;}
   if(mode==='remote-recipient'){x.v.owner='S';x.v.remote=true;}
   let calls=0;const native=x.v.damage;x.v.damage=function(...args){calls++;return native.apply(this,args);};
+  // Ordered owner tick authenticates the observed Special; subsequent hit still
+  // independently passes sender, current life and duplicate admission.
+  x.nm.onMessage('S',latestKrakenAttackTick);
   x.nm.onMessage(from,packet);if(mode==='duplicate')x.nm.onMessage(from,packet);
   const admitted=['valid','duplicate','attacker-life-change-keeps-committed-hit'].includes(mode);
   assert.equal(calls,admitted?1:0);assert.equal(x.v.hp,admitted?-20:100);

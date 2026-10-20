@@ -114,7 +114,9 @@ function applyPresentation(ch,T,C,s) {
 export function installWeaponHitReaction(api) {
   const {Character,CHARACTER_CHANNELS:C,CHARACTER_TIMERS:T}=api;
   if(!Character||!C||!Number.isInteger(T?.T_HIT)) throw Error('Hit reaction requires Character channels and T_HIT');
-  const proto=Character.prototype,kinds=Object.keys(api.WEAPONS);
+  // SHAPES is family-indexed, not catalog-indexed: added weapon IDs must not
+  // shift a family to another row or beyond the numeric table.
+  const proto=Character.prototype,kinds=['shooter','roller','charger','blaster','dualies','slosher','splatling'];
   if(proto[INSTALL]) return;
   const states=new WeakMap(),applyPose=proto._applyPose,trigger=proto.trigger,buildPose=proto._buildPose,
     poseWeapon=proto._poseWeapon,getMuzzle=proto.getMuzzle,getMuzzleHand=proto.getMuzzleHand,

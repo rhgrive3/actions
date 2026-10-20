@@ -15,7 +15,7 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const BUILT = process.env.INKWAVE_MATCH_HUD_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 export async function fixture({ legacyClothingHit = false } = {}) {
-  const context = vm.createContext({ console, performance, URL, innerWidth: 800, innerHeight: 600 });
+  const context = vm.createContext({ console, performance, URL, TextEncoder, innerWidth: 800, innerHeight: 600 });
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');

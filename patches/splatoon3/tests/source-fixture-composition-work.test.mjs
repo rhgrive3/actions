@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import vm from 'node:vm';
-import { memoizeFixtureSourceAdapter, memoizeFixtureVmCompiler } from './fixture-cache.mjs';
+import { memoizeFixtureSourceAdapter, memoizeFixtureVmCompiler, createFixtureCompilerProfiles } from './fixture-cache.mjs';
 import { pathToFileURL } from 'node:url';
 
 // Exercise the real loader without booting gameplay or replacing its branches.
@@ -14,7 +14,7 @@ const end = source.indexOf('\n  const characterExports', start);
 assert.ok(start >= 0 && end > start, 'fixture loader boundaries remain explicit');
 const loader = source.slice(start, end);
 
-function exercise({ built, upstream, production, custom }) {
+function exercise({ built, upstream, production, custom, profiled }) {
   const ROOT = path.resolve('fixture-test-root');
   const UPSTREAM = path.join(ROOT, 'inkwave-public');
   const file = upstream ? path.join(UPSTREAM, 'src/actor.js') : path.join(ROOT, 'patches/model.mjs');
@@ -24,15 +24,18 @@ function exercise({ built, upstream, production, custom }) {
   const relative = path.relative(resolvedUpstream ? UPSTREAM : ROOT, identifier);
   const calls = [], reads = [], modules = new Map();
   const native = (rel, raw) => { calls.push(['native', rel]); return `native(${raw})`; };
+  const compiles = [];
+  const compile = (source, options, eligible) => { compiles.push({source, options, eligible}); return {source, options}; };
+  const generation = profiled ? createFixtureCompilerProfiles(compile).begin(JSON.stringify([built, upstream, production, custom])) : null;
   const globals = {
     ROOT, UPSTREAM, BUILT: built, productionComposition: production,
-    path, modules, context: {}, pathToFileURL,
+    path, modules, context: {}, pathToFileURL, generation,
     fs: { readFileSync(file, encoding) { reads.push([file, encoding]); return 'raw'; } },
     adaptNative: native,
     adaptConstrainedSource: custom ? () => { throw Error('unused default adapter'); } : native,
     adaptProduction(rel, raw) { calls.push(['production', rel]); return `production(${raw})`; },
     adaptRuntime(rel, raw) { calls.push(['runtime', rel]); return `runtime(${raw})`; },
-    cachedVmModule(source, options) { return { source, options }; },
+    cachedVmModule: compile,
     vm: { SourceTextModule: class {
       constructor(source, options) { this.source = source; this.options = options; }
     } },
@@ -56,6 +59,11 @@ function exercise({ built, upstream, production, custom }) {
     expectedSource = 'production(raw)';
     expectedCalls = custom ? [['native', relative], ['production', relative]] : [['production', relative]];
   }
+  assert.equal(compiles.length, 1, 'cached module identity does not compile twice');
+  assert.equal(compiles[0].source, expectedSource, 'both compiler routes receive the selected bytes');
+  assert.equal(compiles[0].eligible, profiled ? false : undefined, 'fresh profile and direct compiler paths stay distinct');
+  generation?.finish(true);
+  if (generation) assert.throws(() => generation.compile('raw', first.options), /generation is closed/);
   assert.equal(first.source, expectedSource, 'production always receives raw source');
   assert.deepEqual(calls, expectedCalls, 'custom callbacks retain side effects; only default discarded work is skipped');
 }
@@ -64,8 +72,10 @@ for (const built of [false, true]) {
   for (const upstream of [false, true]) {
     for (const production of [false, true]) {
       for (const custom of [false, true]) {
-        const options = { built, upstream, production, custom };
-        test(`fixture loader ${JSON.stringify(options)}`, () => exercise(options));
+        for (const profiled of [false, true]) {
+          const options = { built, upstream, production, custom, profiled };
+          test(`fixture loader ${JSON.stringify(options)}`, () => exercise(options));
+        }
       }
     }
   }

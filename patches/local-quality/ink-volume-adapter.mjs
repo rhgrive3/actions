@@ -48,7 +48,12 @@ Projectiles.prototype.ghostProjectile = function(a, e) {
 };\n`;
     patch('  _draw() {\n    let n = 0;', '  _draw() {\n    const volumes = G.fx?.inkVolumes?.isInkVolumes === true ? G.fx.inkVolumes : null;\n    volumes?.begin(G.camera);\n    let n = 0;', 'begin existing projectile render pass');
     patch('      if (p.delay > 0) continue;\n      const sp = p.vel.length();', '      if (p.delay > 0) continue;\n      if (submitInkVolume(volumes, p)) continue;\n      const sp = p.vel.length();', 'replace only registered projectile recipes');
-    patch('    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);', '    volumes?.end();\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);', 'flush shared frame batches');
+    // Charger flight reserves bounded pooled ink instances ahead of this pass;
+    // preserve the same single shared volume flush for either build shape.
+    const dropAnchor = code.includes('    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS - reserve);')
+      ? '    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS - reserve);'
+      : '    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);';
+    patch(dropAnchor, '    volumes?.end();\n' + dropAnchor, 'flush shared frame batches');
   }
   return code;
 }

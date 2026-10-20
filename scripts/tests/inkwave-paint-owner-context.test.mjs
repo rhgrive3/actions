@@ -1,3 +1,5 @@
+// Historical 0dec529d source replay; latest PR sources use the separate reviewed-pair gate.
+import {historicalSource} from '../lib/inkwave-historical-baseline-sources.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {MAIN_INK_BASELINE_MANIFEST as manifest,planMainInkBaseline} from '../lib/inkwave-main-ink-baseline.mjs';
 const path='patches/network-replication/adapter.mjs';
@@ -8,7 +10,7 @@ test('all three traced owner contexts preserve suffix bytes and all32 legacy pai
 test('unknown duplicate missing and reordered owner suffixes fail rather than broad acceptance',()=>{for(const suffix of [suffixes[2]+", 'unknown'",suffixes[2]+", 'ink-blast'",", 'ink-charger-b', 'ink-charger-a', 'ink-charger-c'",", 'ink-charger-a', 'ink-charger-c'"]){const{before,after}=maps(suffix);assert.throws(()=>planMainInkBaseline(before,after));}});
 test('owner context remains in non-paint digest and unrelated candidate bytes are not copied',()=>{let previous;for(const suffix of suffixes){const{before,after}=maps(suffix);const p=planMainInkBaseline(before,after);const row=p.evidence.paths.find(r=>r.path===path);assert.notEqual(row.nonPaintSha256,previous);previous=row.nonPaintSha256;assert.ok(p.sources.get(path).startsWith('BASELINE PHYSICS'));assert.ok(!p.sources.get(path).includes('CANDIDATE PHYSICS'));const aligned=planMainInkBaseline(p.sources,after);assert.equal(aligned.changes.length,0);assert.equal(aligned.evidence.paths.find(r=>r.path===path).nonPaintSha256,row.nonPaintSha256);}});
 test('current complete paint/physics modules reject mutation, absent and legacy counterparts',async()=>{
- const fs=await import('node:fs');const actual=new Map(manifest.files.map(r=>[r.path,fs.readFileSync(new URL('../../'+r.path,import.meta.url),'utf8')]));
+ const fs=await import('node:fs');const actual=new Map(manifest.files.map(r=>[r.path,historicalSource('paint',r.path)]));
  assert.equal(planMainInkBaseline(actual,actual).changes.length,0);
  for(const path of ['patches/splatoon3/main-ink-footprint-adapter.mjs','patches/splatoon3/runtime/main-ink-footprints.mjs','patches/splatoon3/runtime/main-weapon-catalog.mjs','patches/splatoon3/runtime/weapons-fidelity.mjs']){
  for(const value of [null,actual.get(path)+'\n// changed',actual.get(path).replace(/const /,'let ')]){

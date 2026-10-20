@@ -9,7 +9,9 @@ import assert from 'node:assert/strict';
 import { chromium, webkit } from 'playwright';
 import { transformSync } from 'esbuild';
 import {brandMuralReference,MURAL_RAW_BLOB,MURAL_BRANDING_OWNER} from './lib/inkwave-mural-branding-reference.mjs';
-const rawMural=fs.readFileSync('inkwave-public/src/world/murals.js','utf8');
+// Independent pre-#1613 source: 50bb1931a13d176a87ced6626ff703c8668d5d86, blob ba5a2d57.
+// Keep this frozen: current production murals already owns branding and atlas resizing.
+const rawMural=fs.readFileSync(new URL('./fixtures/inkwave-murals-ba5a2d57.js.txt',import.meta.url),'utf8');
 const muralTransform={loader:'js',minify:true,charset:'utf8',legalComments:'inline'};
 const originalMural=transformSync(brandMuralReference(rawMural),muralTransform).code;
 const unbrandedMural=transformSync(rawMural,muralTransform).code;

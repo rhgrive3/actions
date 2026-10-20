@@ -103,7 +103,7 @@ export function installHitchTracer(game, {
   const getWorld = () => env?.__G || {};
   const stageOwners = () => {
     const G = getWorld();
-    return [
+    const owners = [
       ['simulation', game.match, 'update'],
       ['projectiles', G.projectiles, 'update'],
       ['paint', G.paint, 'flush'],
@@ -114,6 +114,31 @@ export function installHitchTracer(game, {
       ['showcase', game.showcase, 'render'],
       ['hud', game, '_updateHud'],
     ];
+    // Deep attribution runs ONLY in the existing opt-in ?profileRange=1.
+    // Inclusive nested timings deliberately overlap: a bot/character call
+    // is part of simulation, a ground ray is part of physics, etc.
+    if (G.level?.native) {
+      const w = G.level.triangleWorld, physics = G.physics, nav = G.nav;
+      owners.push(
+        ['source-ray', w, 'ray'], ['source-box', w, 'queryBox'],
+        ['source-sweep', w, 'sweepSphere'],
+        ['source-capsule-distance', w, '_capsuleDistance'],
+        ['native-contact', physics, '_nativeContacts'],
+        ['body-collision', physics, 'collideBody'],
+        ['ground-ring', physics, 'groundProbe'],
+        ['physics-ray', physics, 'raycast'],
+        ['route-search', nav, 'path'],
+        ['paint-splat', G.paint, 'splat'],
+        ['paint-region', G.paint, 'regionStats']
+      );
+      const actors = G.match?.actors || [];
+      for (let i = 0; i < actors.length; i++) {
+        const a = actors[i];
+        owners.push(['actor-'+i, a, 'update'], ['brain-'+i, a.bot, 'update'],
+          ['character-'+i, a.character, 'update']);
+      }
+    }
+    return owners;
   };
   const note = (event, data) => {
     const item = { event, atMs: active ? round(now() - active.start) : null, ...(data || {}) };
@@ -121,7 +146,18 @@ export function installHitchTracer(game, {
     else pendingEvents.push(item);
   };
   const rebind = () => {
-    for (const [name, owner, method] of stageOwners()) {
+    const owners = stageOwners();
+    // World swaps replace stage/actor owners. Do not retain old native actor
+    // objects (and their complete Character graphs) just because the debug
+    // recorder stays open across several matches.
+    const names = new Set(owners.map(([name]) => name));
+    for (const [name, prior] of stageState) {
+      if (name === 'dynamicScale' || names.has(name)) continue;
+      if (prior.owner?.[prior.method] === prior.wrapper)
+        prior.owner[prior.method] = prior.original;
+      stageState.delete(name);
+    }
+    for (const [name, owner, method] of owners) {
       const prior = stageState.get(name);
       if (prior && (prior.owner !== owner || owner?.[method] !== prior.wrapper)) {
         if (prior.owner?.[prior.method] === prior.wrapper) prior.owner[prior.method] = prior.original;
@@ -131,7 +167,8 @@ export function installHitchTracer(game, {
       const original = owner[method];
       const wrapper = function (...args) {
         const rec = active;
-        const t = rec ? now() : 0;
+        const countOnly = name === 'source-capsule-distance';
+        const t = rec && !countOnly ? now() : 0;
         let gpuStarted = false, timer = null;
         if (rec && (name === 'render' || name === 'paint')) {
           if (name === 'render') {
@@ -148,7 +185,8 @@ export function installHitchTracer(game, {
         } finally {
           if (gpuStarted) timer.end();
           if (rec) {
-            rec.cpu[name] = (rec.cpu[name] || 0) + Math.max(0, now() - t);
+            rec.calls[name] = (rec.calls[name] || 0) + 1;
+            if (!countOnly) rec.cpu[name] = (rec.cpu[name] || 0) + Math.max(0, now() - t);
           }
         }
       };
@@ -206,11 +244,28 @@ export function installHitchTracer(game, {
   const wrappedFrame = function (...args) {
     if (disposed) return originalFrame.apply(this, args);
     rebind();
-    const rec = { id: ++nextId, start: now(), cpu: Object.create(null), events: pendingEvents.splice(0), gpuMs: null, gpuPaintMs: null };
+    const rec = { id: ++nextId, start: now(), cpu: Object.create(null), calls: Object.create(null), events: pendingEvents.splice(0), gpuMs: null, gpuPaintMs: null };
+    // Read the existing ray/sphere-sweep counters in O(1), without graphics sync.
+    // Box queries and capsule-distance work are separate opt-in method counters
+    // installed above; the capsule wrapper counts calls without per-call timing.
+    const sourceWorld = getWorld().level?.triangleWorld;
+    const beforeTicks = game.s3Clock?.ticks || 0;
+    const beforeQueued = game.s3Clock?.accumulator || 0;
+    const beforeQueries = sourceWorld?.queryCount || 0;
+    const beforeTriangles = sourceWorld?.triangleTests || 0;
     active = rec;
     try { return originalFrame.apply(this, args); }
     finally {
       rec.end = now();
+      rec.fixedClock = { elapsedSeconds: Number.isFinite(args[0]) ? args[0] : null,
+        ticks: Math.max(0, (game.s3Clock?.ticks || 0) - beforeTicks),
+        queuedBeforeSeconds: beforeQueued, queuedAfterSeconds: game.s3Clock?.accumulator || 0 }; 
+      if (sourceWorld) {
+        rec.sourceBVH = {
+          queries: Math.max(0, sourceWorld.queryCount-beforeQueries),
+          triangleTests: Math.max(0, sourceWorld.triangleTests-beforeTriangles),
+        };
+      }
       active = null;
       last = rec;
     }
@@ -273,6 +328,17 @@ export function installHitchTracer(game, {
     workMs:round(rec.workMs), targetHz:rec.targetHz, scale:rec.scale,
     gpuCommandsMs:rec.gpuMs, gpuPaintCommandsMs:rec.gpuPaintMs, longTaskMs:round(rec.longTaskMs),
     stages:Object.fromEntries(Object.entries(rec.cpu).map(([k,v])=>[k,round(v)])),
+    sourceBVH: rec.sourceBVH || null,
+    sourceBVHCounterCoverage: rec.sourceBVH ? 'ray and sphere-sweep only; box/capsule work is in methodCalls' : null,
+    methodCalls: { ...rec.calls },
+    fixedClock: rec.fixedClock || null,
+    // Exclude inclusive parent groups so the user can see which native
+    // method family dominates without mistaking nested totals for a sum.
+    topNativeScopes: rec.sourceBVH
+      ? Object.entries(rec.cpu).filter(([k])=>!['simulation','render','paint','projectiles'].includes(k))
+          .sort((a,b)=>b[1]-a[1]).slice(0,5)
+          .map(([name,ms])=>({name,ms:round(ms)}))
+      : [],
     events:rec.events, cause:rec.cause,
   });
   const result = {

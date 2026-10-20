@@ -55,12 +55,12 @@ test('long-lived mine proof survives same-owner retired births and owner respawn
  a.o.weapon={...a.o.weapon,sub:'angleShooter'};
  for(let i=0;i<110;i++){const shot=a.f.G.projectiles.throwBomb(a.o);shot.age=10;for(let j=0;j<2;j++)a.f.G.projectiles.update(1/60);deliver();}
  assert.ok(a.f.G.projectiles._s3SubObjects.includes(mine),'source mine remained alive');
- a.o.splat(null,'water');a.o.respawn();deliver();let packet;a.nm.s.tr.broadcast=p=>{packet=JSON.parse(JSON.stringify(p));};a.nm._sendTick();b.nm.onMessage('a',packet);const remotePeer=b.nm._peer('a');remotePeer.tr=Math.max(remotePeer.tr||0,packet.ts);b.nm._sample(b.o,remotePeer.tr,0);b.nm.applyRemote(b.o,1/60);assert.equal(b.o.netLife,a.o.netLife);assert.ok(a.o.netLife>mine.sourceLife);
+ a.o.splat(null,'water');a.o.respawn();deliver();let packet;a.nm.s.tr.ws.send=text=>{if(text.startsWith('b|'))packet=JSON.parse(text.slice(2));};a.nm._sendTick();b.nm.onMessage('a',packet);const remotePeer=b.nm._peer('a');remotePeer.tr=Math.max(remotePeer.tr||0,packet.ts);b.nm._sample(b.o,remotePeer.tr,0);b.nm.applyRemote(b.o,1/60);assert.equal(b.o.netLife,a.o.netLife);assert.ok(a.o.netLife>mine.sourceLife);
  a.v.pos.set(0,0,2);a.f.G.projectiles.update(1/60);const rows=a.nm.out.splice(0),mark=rows.find(e=>e[1]==='ac'&&e[5].phase==='mark');assert.ok(mark,'old device marks after owner respawn');assert.equal(mark[5].sourceLife,mine.sourceLife);assert.equal(mark[5].life,a.o.netLife);
  for(const row of rows)b.nm._play('a',JSON.parse(JSON.stringify(row)));near(b.v.s3.revealedUntil[0]-b.f.G.time,5*gearCurve(10,1,.55,.1));
 });
 test('ordered JSON tick replays source mark before wire expiry even after receiver visual removal',async()=>{
- const a=await peer('a','angleShooter',10),b=await peer('b','angleShooter',10);let packet;a.nm.s.tr.broadcast=p=>{packet=JSON.parse(JSON.stringify(p));};
+ const a=await peer('a','angleShooter',10),b=await peer('b','angleShooter',10);let packet;a.nm.s.tr.ws.send=text=>{if(text.startsWith('b|'))packet=JSON.parse(text.slice(2));};
  const flush=()=>{a.f.G.time+=1/60;a.nm._sendTick();b.nm.onMessage('a',packet);const p=b.nm._peer('a');p.tr=packet.ts;p.sim=packet.u;b.nm._playEvents();};
  const shot=a.f.G.projectiles.throwBomb(a.o);flush();b.f.G.projectiles.kitDefenseCandidate=o=>({distance:0,point:o.prev.clone(),onHit(){}});for(let i=0;i<6;i++)b.f.G.projectiles.update(1/60);assert.equal(b.f.G.projectiles._s3SubObjects.length,0);
  shot.pos.set(0,.7,0);shot.prev.copy(shot.pos);shot.vel.set(0,0,60);for(let i=0;i<240;i++)a.f.G.projectiles.update(1/60);

@@ -1220,7 +1220,7 @@ function deployScreen(rt,actor,state) {
   const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{...specialDeviceFlight(rt.api,actor,'splattercolorScreen',state.specialPowerAP),phase:'flight',dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:gearCurve(state.specialPowerAP,.04,.053,.06)*FPS,seed:nextSeed(state),scale:[15/8,2,1]});
   object.target=pos.clone().add(object.normal);
   startSpecialGauge(actor,rt.api.G,'splattercolorScreen',SPECIAL_GAUGE_FRAMES.splattercolorScreen,object);
-  emitAction(rt,actor,'splattercolorScreen',state.serial,'screen',pos,object.target,object.seed,{object:object.serial});
+  emitObject(rt,object,'screen');
   endSpecial(rt,actor,'deployed');
 }
 function paintScreenDrops(rt,o,deviceAge){
@@ -1252,7 +1252,7 @@ function deployWave(rt,actor,state) {
   object.hp=480;object.maxHp=480;object.pulse=0;object.maxWaveFrame=maxFrame;object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
   startSpecialGauge(actor,rt.api.G,'waveBreaker',SPECIAL_GAUGE_FRAMES.waveBreaker,object);
   object.direction=rt.v2.copy(pos).sub(actor.pos).setY(0).normalize();
-  emitAction(rt,actor,'waveBreaker',state.serial,'device',pos,null,object.seed,{object:object.serial});
+  emitObject(rt,object,'device');
   endSpecial(rt,actor,'deployed');
 }
 function spawnWaveFront(rt,device,pulse) {
@@ -2431,12 +2431,22 @@ function replayObjectEvent(rt,actor,event) {
   const serial=Number.isSafeInteger(event.object)&&event.object>0?event.object:0;
   if(!serial)return false;
   const objects=rt.system._s3AllSpecialObjects||(rt.system._s3AllSpecialObjects=[]);
-  let object=objects.find(o=>o.owner===actor&&o.activation===event.activation&&o.serial===serial&&o.id===event.id);
+  const replayLife=actorLife(actor);
+  let object=objects.find(o=>o.owner===actor&&o.activation===event.activation&&o.serial===serial&&o.id===event.id
+    &&((o.kind!=='wave'&&o.kind!=='screen')||o.replayLife===replayLife));
+  // Birth envelopes describe one instant; a delayed sibling cannot rewind a
+  // locally advanced device. Land/active packets remain authoritative updates.
+  const existingDeviceBirth=!!object&&(object.kind==='wave'||object.kind==='screen')
+    &&(event.action==='deploy'||event.action==='device'||event.action==='screen');
   const point=new rt.api.THREE.Vector3(...event.pos);
   const target=Array.isArray(event.target)?new rt.api.THREE.Vector3(...event.target):null;
   if(['deploy','device','screen','balloon','marker'].includes(event.action)&&!object){
     const kind=typeof event.kind==='string'?event.kind:(event.id==='splattercolorScreen'?'screen':event.id==='waveBreaker'?'wave':event.id==='superChump'?'decoy':event.id==='tripleInkstrike'?'marker':'');
     if(!kind)return false;
+    // Older senders emitted sparse companion rows. Wait for their complete
+    // deploy rather than constructing an invalid one-second device.
+    if((kind==='wave'||kind==='screen')&&event.action!=='deploy'
+      &&(!finite(event.duration)||!finite(event.radius)||!finite(event.specialPowerAP)))return false;
     const state={serial:event.activation,objectSerial:serial-1,seed:event.seed,specialPowerAP:finite(event.specialPowerAP)?clamp(event.specialPowerAP,0,57):0};
     const extra={dur:finite(event.duration)?event.duration:1,maxRadius:finite(event.radius)?event.radius:(SPECIALS[event.id]?.radius||1),damage:0,hp:finite(event.hp)?event.hp:0,seed:event.seed,index:event.index||0,target,width:finite(event.width)&&event.width>0?event.width:15,height:finite(event.height)&&event.height>0?event.height:9};
     if(kind==='screen'){
@@ -2445,6 +2455,7 @@ function replayObjectEvent(rt,actor,event) {
     }
     if(kind==='booyahBlast'){extra.startDelay=finite(event.startDelay)?event.startDelay:40/FPS;extra.expand=finite(event.expand)?event.expand:40/FPS;extra.damage=3.3;}
     object=deployObject(rt,actor,event.id,kind,point,state,extra);
+    if(kind==='wave'||kind==='screen')object.replayLife=replayLife;
     if(kind==='marker'){object.phase='warning';object.origin=point.clone();if(target)object.pos.copy(target);}
     if(kind==='decoy'){object.phase='flight';object.origin=point.clone();object.flight=108/FPS;}
     if(kind==='wave'){
@@ -2457,7 +2468,7 @@ function replayObjectEvent(rt,actor,event) {
     if(kind==='screen')object.target=target;
   }
   if(!object)return false;
-  if(['deploy','land','active'].includes(event.action)){
+  if(!existingDeviceBirth&&['deploy','device','screen','land','active'].includes(event.action)){
     if(finite(event.age)&&event.age>=0&&event.age<=3600)object.age=event.age;
     if(finite(event.landedAt)&&event.landedAt>=0&&event.landedAt<=object.age)object.landedAt=event.landedAt;
     if(['flight','warning','active'].includes(event.phase))object.phase=event.phase;
@@ -2508,8 +2519,18 @@ export function replaySpecial(api,event) {
     cheerState=actorStates.get(cheerOwner);
     if(!cheerState||cheerState.id!=='booyahBomb'||cheerState.serial!==event.activation)return false;
   }
-  const key=`${event.id}:${event.activation}:${event.action}:${event.object||0}:${event.index||0}:${event.seed}:${event.tick||0}`;
+  const devicePacket=(event.id==='waveBreaker'&&(event.kind==='wave'||(event.kind===undefined&&event.action==='device')))
+    ||(event.id==='splattercolorScreen'&&(event.kind==='screen'||(event.kind===undefined&&event.action==='screen')));
+  const life=devicePacket?actorLife(actor):0;
+  const deviceKey=devicePacket&&Number.isSafeInteger(event.object)&&event.object>0
+    ?`device:${event.id}:${life}:${event.activation}:${event.object}`:null;
+  const key=`${event.id}:${event.activation}:${event.action}:${event.object||0}:${event.index||0}:${event.seed}:${event.tick||0}${devicePacket?':life:'+life:''}`;
   const ledger=replayLedger(actor);if(ledger.has(key))return false;
+  // A seen/retired device must not return via its previously missing birth
+  // sibling. Keep the marker in the existing bounded per-actor replay ledger.
+  if(deviceKey&&ledger.has(deviceKey)&&['deploy','device','screen'].includes(event.action)
+    &&!(rt.system||api.G.projectiles)?._s3AllSpecialObjects?.some(o=>o.owner===actor&&o.id===event.id
+      &&o.activation===event.activation&&o.serial===event.object&&o.replayLife===life))return false;
   ledger.add(key);if(ledger.size>SEEN_LIMIT)ledger.delete(ledger.values().next().value);
   if(event.action==='cheer'){
     return addBooyahCall(rt,cheerOwner,cheerState,actor,{callId:event.seed});
@@ -2524,6 +2545,9 @@ export function replaySpecial(api,event) {
     }
   }
   const objectAccepted=replayObjectEvent(rt,actor,event);
+  if(deviceKey&&(objectAccepted||event.action==='destroy'||event.action==='expire')){
+    ledger.add(deviceKey);if(ledger.size>SEEN_LIMIT)ledger.delete(ledger.values().next().value);
+  }
   if(event.action==='objectHit')return objectAccepted;
   const accepted=replayFx(rt,actor,event);
   if(accepted&&event.id==='crabTank')api.crabTankPresentationEvent?.(event);

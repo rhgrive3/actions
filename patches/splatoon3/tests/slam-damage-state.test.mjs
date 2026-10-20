@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture, emitMainShot } from './source-fixture.mjs';
 import { finishTidalSlamGauge } from '../runtime/tidal-slam-gauge.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
@@ -31,13 +31,30 @@ test('#573 fixed simulation protects at the same boundary for 30/60/120Hz render
 });
 test('#573 victim-owned hit admission and outgoing invulnerability flag use the same 50F action boundary',async()=>{
  const f=await rig(),a=f.a,attacker=f.make('shooter');attacker.team=1;a.nid=1;a.owner='me';a.netLife=1;attacker.nid=2;attacker.owner='peer';attacker.remote=true;
- const messages=[],session={myId:'me',hostId:'me',isHost:true,_members:new Map([['me',true],['peer',true]]),tr:{broadcast:d=>messages.push(d),sendTo(){}}};
- const nm=new f.NetMatch(session,{id:'slam-wire',map:'tidewater'});f.G.match={mode:'turf',state:'playing',duration:180,time:100,actors:[a,attacker]};nm.bind(f.G.match);
- for(let i=0;i<49;i++)f.step();nm._sendTick();assert.equal(messages.at(-1).a.find(s=>s[0]===1)[10]&262144,0);
- nm.onMessage('peer',{k:'hit',m:'slam-wire',v:1,a:2,d:10,w:'shooter',l:1,h:1,seq:1});near(a.hp,90);
- f.step();nm._sendTick();assert.ok(messages.at(-1).a.find(s=>s[0]===1)[10]&262144);
- let rejected=0;f.on('hit:rejected',()=>rejected++);nm.onMessage('peer',{k:'hit',m:'slam-wire',v:1,a:2,d:50,w:'shooter',l:1,h:2,seq:2});near(a.hp,90);assert.equal(rejected,1);
- nm.dispose();
+ const messages=[],session={myId:'me',hostId:'me',isHost:true,_members:new Map([['me',true],['peer',true]]),tr:{broadcast:d=>{messages.push(d);return true;},sendTo(){return true;}}};
+ const nm=new f.NetMatch(session,{id:'slam-wire',map:'tidewater'});f.G.match={mode:'turf',state:'playing',duration:180,time:100,actors:[a,attacker],playing:()=>true};nm.bind(f.G.match);session.match=nm;
+ const producer=await fixture({productionComposition:true,fullRuntime:true,realProjectiles:true}),source=producer.make('shooter'),target=producer.make('roller');
+ Object.assign(source,{nid:2,owner:'peer',netLife:0,team:1});Object.assign(target,{nid:1,owner:'me',netLife:1,team:0});
+ const ticks=[],claims=[],sender={myId:'peer',hostId:'me',isHost:false,_members:new Map([['me',true],['peer',true]]),tr:{broadcast:p=>{if(p.k==='t')ticks.push(JSON.parse(JSON.stringify(p)));return true;},sendTo:(_id,p)=>{if(p.k==='hit')claims.push(JSON.parse(JSON.stringify(p)));return true;}}};
+ const tx=new producer.NetMatch(sender,{id:'slam-wire',map:'tidewater'}),match={mode:'turf',state:'playing',duration:180,time:100,actors:[source,target],playing:()=>true};tx.bind(match);sender.match=tx;producer.G.match=match;producer.G.netm=tx;
+ try{
+  for(let i=0;i<49;i++)f.step();nm._sendTick();assert.equal(messages.at(-1).a.find(s=>s[0]===1)[10]&262144,0);
+  source.pos.copy(a.pos);source.pos.z-=3;source.character.root.position.copy(source.pos);source.aimDir.set(0,0,1);target.pos.copy(a.pos);attacker.pos.copy(source.pos);
+  emitMainShot(producer,source);assert.equal(tx._sendTick(),true);assert.equal(ticks.length,1);
+  assert.ok(ticks[0].e.some(e=>e[1]==='p'||e[1]==='ev'&&e[2]==='weapon:fire'),'actual native shooter birth');
+  nm.onMessage('peer',ticks[0]);assert.ok(nm.peers.get('peer')?.events.length,'receiver admitted native shooter event');
+  assert.equal(a.invuln,0,'49F has no independent invulnerability timer');
+  tx.sendHit(source,target,10,'shooter');assert.equal(claims.length,1);nm.onMessage('peer',claims[0]);near(a.hp,90);
+  f.step();nm._sendTick();assert.ok(messages.at(-1).a.find(s=>s[0]===1)[10]&262144);
+  assert.equal(a.invuln,0,'50F rejection belongs to Slam, not an independent invulnerability timer');
+  const rejected=[],admissions=[],applyHit=f.G.projectiles.applyHit;
+  f.on('hit:rejected',event=>rejected.push(event));
+  f.G.projectiles.applyHit=function(...args){const result=applyHit.apply(this,args);admissions.push(result);return result;};
+  tx.sendHit(source,target,50,'shooter');assert.equal(claims.length,2);nm.onMessage('peer',claims[1]);near(a.hp,90);
+  assert.deepEqual(admissions,['rejected-invulnerable'],'valid claim reaches native invulnerability rejection, not payload/proof rejection');
+  assert.equal(rejected.length,1);assert.equal(rejected[0].victim,a);assert.equal(rejected[0].attacker,attacker);assert.equal(rejected[0].damage,50);assert.equal(rejected[0].weaponId,'shooter');
+ }finally{nm.dispose();tx.dispose();f.G.projectiles.clear();producer.G.projectiles.clear();}
+
 });
 test('#573 enemy ink contact uses the same 50F admission as weapon damage and the landing owner',async()=>{
  const f=await rig(),a=f.a;f.G.match={mode:'turf',state:'playing',duration:180,time:100,actors:[a]};
@@ -52,3 +69,4 @@ test('#573 enemy ink contact uses the same 50F admission as weapon damage and th
  a.hardLand=.1;hp=a.hp;ink();near(a.hp,hp);
  a.hardLand=0;finishTidalSlamGauge(a);hp=a.hp;ink();assert.ok(a.hp<hp,'enemy ink resumes after the landing owner ends protection');
 });
+

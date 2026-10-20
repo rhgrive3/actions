@@ -1,4 +1,6 @@
-import * as THREE from 'three';
+// This module operates on vectors supplied by the caller rather than importing
+// the entire native-stage engine or a second Three.js module instance.
+const scratchVector = from => new from.constructor();
 const dynamicViews=new WeakMap();
 const catalogueViews=new WeakMap();
 /** Catalogue projectiles use the same source triangles as legacy ink. Only
@@ -8,7 +10,7 @@ export function sweepNativeCatalogueSphere(physics,from,to,r0,r1,out,skipGrates,
  let state=catalogueViews.get(level);
  if(!state){
   const view={get blocks(){return level.blocks;},get faces(){return level.faces;},queryBlocks:(...args)=>level.queryDynamicBlocks(...args)};
-  state={physics:{level:view},hit:{point:new THREE.Vector3(),normal:new THREE.Vector3()}};catalogueViews.set(level,state);
+  state={physics:{level:view},hit:{point:scratchVector(from),normal:scratchVector(from)}};catalogueViews.set(level,state);
  }
  const source=level.triangleWorld.sweepSphere(from,to,r0,{ignoreGrates:skipGrates,endRadius:r1});
  const moving=sweepOBB(state.physics,from,to,r0,r1,state.hit,skipGrates);
@@ -30,7 +32,7 @@ export function sweepNativeLevelSphere(level,from,to,radius,out,skipGrates,sweep
  let state=dynamicViews.get(level);
  if(!state){
   const view={get blocks(){return level.blocks;},get faces(){return level.faces;},queryBlocks:(...args)=>level.queryDynamicBlocks(...args)};
-  state={view,hit:{point:new THREE.Vector3(),normal:new THREE.Vector3()}};dynamicViews.set(level,state);
+  state={view,hit:{point:scratchVector(from),normal:scratchVector(from)}};dynamicViews.set(level,state);
  }
  const source=level.triangleWorld.sweepSphere(from,to,radius,{ignoreGrates:skipGrates});
  const moving=sweepOBB(state.view,from,to,radius,state.hit,skipGrates);

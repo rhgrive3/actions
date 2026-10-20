@@ -5,11 +5,25 @@
 export function profileRangeAcceptanceSnapshot(env = globalThis) {
   env ??= globalThis; // Playwright explicitly passes null as waitForFunction's argument.
   const p = env.__inkwaveRangePerf, match = env.__G?.match;
-  if (!p || !match?.range || match.state !== 'playing') return false;
+  // A timeout snapshot runs later than the last predicate. Preserve that
+  // boundary instead of claiming that frames never existed during the wait.
+  const recordPoll = (reason, snapshot = null) => {
+    const previous = env.__inkwaveRangeAcceptancePoll;
+    env.__inkwaveRangeAcceptancePoll = {
+      count: (previous?.count || 0) + 1,
+      observedAt: env.performance?.now?.() ?? null,
+      reason, matchState: match?.state ?? null, range: !!match?.range,
+      probeInstalled: !!p, probeMatchesFrameOwner: !!p && env.__inkwave?._rangeFrameProbe === p,
+      mode: snapshot?.mode ?? null, capturedFrames: snapshot?.trace?.capturedFrames ?? null,
+      latestFrameId: snapshot?.trace?.latest?.id ?? null,
+    };
+  };
+  if (!p || !match?.range || match.state !== 'playing') { recordPoll('waiting-for-playing-range'); return false; }
   const s = p.snapshot();
-  if (s.traceError) return { traceError: String(s.traceError) };
+  if (s.traceError) { recordPoll('trace-error', s); return { traceError: String(s.traceError) }; }
   const trace = s.trace;
-  if (!trace || trace.capturedFrames < 12) return false;
+  if (!trace || trace.capturedFrames < 12) { recordPoll('waiting-for-native-frames', s); return false; }
+  recordPoll('snapshot-ready', s);
   return {
     mode: s.mode, collected: trace.capturedFrames,
     gpuStatus: trace.gpu, gpuSamples: trace.gpuSamples,

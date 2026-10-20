@@ -6,6 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource, checkCompatibility } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
@@ -69,12 +70,32 @@ test('#605: GO, final-minute, finish and results music hand-offs are unchanged',
   assert.equal((main.match(/G\.music\?\.stop\?\.\(0\.3\)/g) || []).length, 2, 'offline and online launches still stop the menu track before the intro');
 });
 
+// Preserve a file-backed module identity so the composed engine can resolve
+// its actual relative imports and import.meta.url without loading any audio.
+async function composedMusicModule() {
+  const modules = new Map();
+  const load = url => {
+    assert.ok(url.href.startsWith(publicRoot.href), 'music dependency stays inside the selected source root');
+    if (modules.has(url.href)) return modules.get(url.href);
+    const rel = fileURLToPath(url).slice(fileURLToPath(publicRoot).length);
+    const mod = new vm.SourceTextModule(build(rel), {
+      identifier: url.href,
+      initializeImportMeta(meta) { meta.url = url.href; },
+    });
+    modules.set(url.href, mod);
+    return mod;
+  };
+  const entry = load(new URL('src/audio/music.js', publicRoot));
+  await entry.link((specifier, from) => {
+    assert.match(specifier, /^\.\.?\//, 'music dependencies must be local relative modules');
+    return load(new URL(specifier, from.identifier));
+  });
+  await entry.evaluate();
+  return entry.namespace;
+}
+
 test('#605: the Opening cue is a distinct, clean-compiling track that cuts straight into battle', async () => {
-  const dependency=new URL('src/audio/streamedTrack.js',publicRoot).href;
-  const source=build('src/audio/music.js')
-    .replace("'./streamedTrack.js'",JSON.stringify(dependency))
-    .replaceAll('import.meta.url',JSON.stringify(new URL('src/audio/music.js',publicRoot).href));
-  const mod = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+  const mod = await composedMusicModule();
   assert.ok(mod.SONGS.opening, 'dedicated track id registered');
   for (const id of ['battle', 'battle_final']) {
     assert.notEqual(mod.SONGS.opening.name, mod.SONGS[id].name, `distinct name from ${id}`);
@@ -85,7 +106,7 @@ test('#605: the Opening cue is a distinct, clean-compiling track that cuts strai
   assert.equal(song.bars.length, 4, 'four bars at 140 bpm cover the 4.2 s intro before GO cuts it');
   assert.equal(mod.TRACKS.opening.name, 'Opening Sting');
   assert.match(read('src/audio/music.js'), /if \(cur && !element && !\(cur instanceof StreamedTrack\) && fade > 0 && cur\.song\.bpm === song\.bpm\)/,
-    'procedural equal-tempo tracks retain bar-line hand-off; streamed tracks use immediate hand-off');
+    'procedural equal tempos still wait for the next bar; streamed tracks are excluded from that delay');
 });
 
 test('#605: missing, duplicated or re-applied connections fail closed', () => {

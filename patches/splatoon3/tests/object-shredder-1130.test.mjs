@@ -47,13 +47,31 @@ for(const [id,kind,rate] of [['waveBreaker','wave',1.25],['superChump','decoy',2
 });
 
 test('real NetMatch preserves shoes identity through JSON hit, rejects foreign sender, and deduplicates armor damage',async()=>{
- const f=await setup(),a=f.make(),v=f.make();a.team=1;a.nid=2;a.owner='attacker';v.nid=1;v.owner='victim';a.netLife=v.netLife=0;a.s3.loadout[2].main='objectShredder';
- let packet;const sender=new f.NetMatch({myId:'attacker',hostId:'attacker',isHost:true,tr:{sendTo:(_id,d)=>{packet=JSON.parse(JSON.stringify(d));}}},{id:'object-gear'});sender.bind({actors:[a,v],state:'playing',time:180});sender.sendHit(a,v,100,'shooter');assert.equal(packet.os,true);
- const receiver=new f.NetMatch({myId:'victim',hostId:'attacker',isHost:false,tr:{sendTo(){}}},{id:'object-gear'});receiver.bind({actors:[a,v],state:'playing',time:180});f.G.netm=receiver;
- equip(v,'booyahBomb');readySpecialEvidence(v, {placeAtFixtureOrigin:true});v._updateSpecial(1/60);v.invuln=0;const before=v._s3AllSpecialState.armorHP;
- a.s3.loadout[2].main='runSpeed';receiver.onMessage('foreign',packet);assert.equal(v._s3AllSpecialState.armorHP,before);
- receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);assert.equal(a.s3.objectHitGear,undefined);
- receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);
+ const f=await setup(),rf=await setup(),a=f.make(),ghost=f.make(),proxy=rf.make(),v=rf.make();
+ for(const pair of [[a,ghost],[proxy,v]]){pair[0].team=1;pair[0].nid=2;pair[0].owner='attacker';pair[1].nid=1;pair[1].owner='victim';pair[0].netLife=pair[1].netLife=0;pair[0].pos.set(0,0,0);pair[1].pos.set(2,0,0);pair[0].aimDir.set(0,0,1);}
+ a.s3.loadout[2].main='objectShredder';
+ let packet;const ticks=[];
+ const bind=(world,myId,actors,tr)=>{
+  const session={myId,hostId:'attacker',isHost:myId==='attacker',tr,_members:new Map([['attacker',{}],['victim',{}]])};
+  const nm=new world.NetMatch(session,{id:'object-gear',map:'reef'}),match={actors,state:'playing',playing:()=>true,time:180};
+  nm.bind(match);session.match=nm;world.G.match=match;world.G.netm=nm;world.G.actors=actors;return nm;
+ };
+ const sender=bind(f,'attacker',[a,ghost],{sendTo:(_id,d)=>{if(d.k==='hit')packet=JSON.parse(JSON.stringify(d));return true;},broadcast:d=>{if(d.k==='t')ticks.push(JSON.parse(JSON.stringify(d)));return true;}});
+ const receiver=bind(rf,'victim',[proxy,v],{sendTo(){return true;},broadcast(){return true;}});
+ try{
+  // Actual installed projectile emission, then native ordered owner admission.
+  // Raw payload/gear test, not a collision or WeaponRunner input test.
+  f.G.projectiles.fireShooter(a,a.weapon,0);
+  assert.equal(sender._sendTick(),true);
+  const tick=ticks.at(-1),birth=tick.e?.find(e=>e[1]==='ev'&&e[2]==='weapon:fire');assert.ok(birth);
+  receiver.onMessage('attacker',tick);
+  assert.ok(receiver.peers.get('attacker')?.events.some(e=>e[1]==='ev'&&e[2]==='weapon:fire'&&e._netSeq===birth.at(-1)),'native receiver admitted shot');
+  sender.sendHit(a,ghost,100,'shooter');assert.equal(packet.os,true);
+  equip(v,'booyahBomb');readySpecialEvidence(v, {placeAtFixtureOrigin:true});v._updateSpecial(1/60);v.invuln=0;const before=v._s3AllSpecialState.armorHP;
+  proxy.s3.loadout[2].main='runSpeed';receiver.onMessage('foreign',packet);assert.equal(v._s3AllSpecialState.armorHP,before);
+  receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);assert.equal(proxy.s3.objectHitGear,undefined);
+  receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);
+ }finally{sender.dispose();receiver.dispose();f.G.projectiles.clear();rf.G.projectiles.clear();}
 });
 
 test('real owner snapshot bit27 is independent from RP and special ready and rejects stale/foreign rows',async()=>{

@@ -1,43 +1,70 @@
 import { resolveSubForThrow } from '../runtime/kit-subs.mjs';
-import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import vm from 'node:vm';import {fileURLToPath,pathToFileURL} from 'node:url';import {adaptSource} from '../adapter.mjs';
-import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
-import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptQualitySource } from '../../local-quality/adapter.mjs';
-import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
-import { adaptRange } from '../../practice-range/adapter.mjs';
+import test, { after } from 'node:test';import { createHash } from 'node:crypto';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import vm from 'node:vm';import {fileURLToPath,pathToFileURL} from 'node:url';
 import { adaptGearSub } from '../gear-sub-adapter.mjs';
-const adaptBuildSource=(rel,code)=>adaptRange(rel,adaptNetworkSource(rel,adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,code))))));
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),SRC=path.join(ROOT,'inkwave-public'),DT=1/60;
 function compiledModule(rel, source) {
  const base=pathToFileURL(path.join(ROOT,rel));
  const absolute=source.replace(/(from\s*['"])(\.[^'"]+)(['"])/g,(_match,start,spec,end)=>start+new URL(spec,base).href+end);
  return import('data:text/javascript;base64,'+Buffer.from(absolute).toString('base64'));
 }
-async function rig(){
- const context=vm.createContext({console,performance,URL}),mods=new Map();
+// A single evaluated production realm retains only its first real Character.
+// Each scenario still owns fresh actors, runner state and mutable world inputs.
+let cached, keeper, keeperState, epochs=0, actorCount=0;
+const seenActors=new WeakSet(),seenCharacters=new WeakSet(),seenSkeletons=new WeakSet();
+const filtered=process.execArgv.some(x=>/^--test-(?:name-pattern|skip-pattern|only)(?:=|$)/.test(x));
+const geometryDigest=geo=>{const h=createHash('sha256');for(const a of [geo.index,...Object.values(geo.attributes)])if(a)h.update(Buffer.from(a.array.buffer,a.array.byteOffset,a.array.byteLength));return h.digest('hex');};
+const geometryOf=ch=>{const rows=new Map();ch.root.traverse(o=>{if(o.geometry&&!rows.has(o.geometry))rows.set(o.geometry,geometryDigest(o.geometry));});return rows;};
+const checkGeometry=rows=>{for(const[g,h]of rows)assert.equal(geometryDigest(g),h,'fixture reuse cannot mutate source geometry');};
+const retainedState=()=>{const a=keeper.actor,r=a.weaponRunner;return{pos:a.pos.toArray(),vel:a.vel.toArray(),ink:a.ink,hp:a.hp,alive:a.alive,form:a.form,weapon:a.weapon.id,charge:r.charge,chargeT:r.chargeT,charging:r.charging,loadout:JSON.stringify(a.s3.loadout)};};
+after(()=>{
+ try{if(!filtered){assert.equal(actorCount,21,'all original independent Actor/Character/Skeleton constructions');assert.equal(epochs,6,'all original scenario cleanup boundaries');}if(keeper){checkGeometry(keeper.geometry);assert.deepEqual(retainedState(),keeperState);}}
+ finally{keeper?.character.dispose();keeper=null;keeperState=null;}
+ if(cached){assert.equal(cached.hairStats().entries,0,'final native style cache is empty');assert.equal(cached.hairStats().liveUsers,0,'all Character references released');console.log('SUB_GEAR_LIFETIME '+JSON.stringify({actors:actorCount,epochs,hair:cached.hairStats()}));}
+});
+async function production(){
+ if(cached)return cached;
+ const context=vm.createContext({console,performance,URL,URLSearchParams,TextEncoder,TextDecoder}),mods=new Map();
  function load(file){if(mods.has(file))return mods.get(file);const raw=fs.readFileSync(file,'utf8'),s=adaptBuildSource(file.startsWith(SRC+'/')?path.relative(SRC,file):path.relative(ROOT,file),raw);const m=new vm.SourceTextModule(s,{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});mods.set(file,m);return m;}
- const e=new vm.SourceTextModule("export {install} from './patches/splatoon3/runtime/install.mjs';",{context,identifier:ROOT+'entry.mjs'});
+ const e=new vm.SourceTextModule("export {install} from './patches/splatoon3/runtime/install.mjs';export {hairStats} from './patches/splatoon3/runtime/hair-cache.mjs';",{context,identifier:ROOT+'entry.mjs'});
  await e.link((spec,from)=>{let f=spec==='three'?path.join(SRC,'vendor/three/build/three.module.js'):spec.startsWith('three/addons/')?path.join(SRC,'vendor/three/jsm',spec.slice(13)):path.resolve(path.dirname(from.identifier),spec);if(f.startsWith(SRC+'/patches/'))f=path.join(ROOT,path.relative(SRC,f));if(f.startsWith(ROOT+'src/'))f=path.join(SRC,path.relative(ROOT,f));return load(f);});await e.evaluate();
- const profile=JSON.parse(fs.readFileSync(ROOT+'patches/splatoon3/profile.json','utf8')),f=e.namespace.install(profile),{G,THREE}=f;
+ const profile=JSON.parse(fs.readFileSync(ROOT+'patches/splatoon3/profile.json','utf8')),f=e.namespace.install(profile);
+ cached={...f,profile,hairStats:e.namespace.hairStats,subBaseline:JSON.stringify(f.SUB)};assert.equal(cached.hairStats().liveUsers,0,'cold realm starts with no Character references');return cached;
+}
+async function rig(){
+ const f=await production(),{G,THREE}=f;
+ assert.equal(JSON.stringify(f.SUB),f.subBaseline,'prior scenario cannot change shared sub definitions');
+ if(keeper){checkGeometry(keeper.geometry);assert.deepEqual(retainedState(),keeperState,'prior scenario cannot update the retained actor');}
  Object.assign(G,{time:0,teamColors:[new THREE.Color('orange'),new THREE.Color('blue')],level:{blocks:[],groundHeight:()=>0},physics:{los:()=>true,segment:(_a,_b,h)=>{h.hit=false;return h;},raycast:(_a,_b,_d,h)=>{h.hit=false;return h;}},paint:{sample:()=>1,splat:()=>0},match:{playing:()=>true},actors:[],camera:{position:new THREE.Vector3()},audio:null,fx:null,boss:null,netm:null});
- G.projectiles=new f.Projectiles(new THREE.Scene());
- function make(kind,ability,ap){const a=new f.Actor({team:0,name:'sub',weapon:kind,CharacterClass:f.Character});a.s3.loadout=Array.from({length:3},()=>({main:ap?ability:'none',subs:Array(3).fill(ap?ability:'none')}));a.setWeapon(kind);a.grounded=true;a._nearCamera=()=>false;return a;}
- return {...f,profile,make,step(a,input,n=1){for(let i=0;i<n;i++)a.weaponRunner.update(DT,input);}};
+ G.projectiles=new f.Projectiles(new THREE.Scene());const actors=[];
+ assert.equal(G.netm,null);assert.equal(G.time,0);assert.equal(G.projectiles.bombs.length,0);assert.equal(G.projectiles.list.length,0);assert.equal(G.physics.segment(null,null,{hit:true}).hit,false,'prior throwing physics override must be reset');
+ function make(kind,ability,ap){const a=new f.Actor({team:0,name:'sub',weapon:kind,CharacterClass:f.Character});a.s3.loadout=Array.from({length:3},()=>({main:ap?ability:'none',subs:Array(3).fill(ap?ability:'none')}));a.setWeapon(kind);a.grounded=true;a._nearCamera=()=>false;
+  assert.equal(seenActors.has(a),false);assert.equal(seenCharacters.has(a.character),false);assert.equal(seenSkeletons.has(a.character.skeleton),false);seenActors.add(a);seenCharacters.add(a.character);seenSkeletons.add(a.character.skeleton);actorCount++;
+  const row={actor:a,character:a.character,geometry:geometryOf(a.character)};actors.push(row);if(!keeper){keeper=row;keeper.liveReferences=f.hairStats().liveUsers;assert.ok(keeper.liveReferences>0);}return a;}
+ let closed=false;
+ function close(){if(closed)return;closed=true;
+  try{for(const row of actors)checkGeometry(row.geometry);assert.equal(JSON.stringify(f.SUB),f.subBaseline,'all shared sub definitions remain immutable');if(!keeperState)keeperState=retainedState();assert.deepEqual(retainedState(),keeperState,'later actors cannot update the retained actor');}
+  finally{for(const row of actors)if(row!==keeper)row.character.dispose();actors.length=0;G.projectiles.clear();G.netm=null;G.actors.length=0;epochs++;}
+  assert.equal(G.projectiles.bombs.length,0);assert.equal(G.projectiles.list.length,0);assert.equal(f.hairStats().liveUsers,keeper.liveReferences,'only the first Character references remain between cases');
+ }
+ return {...f,make,close,step(a,input,n=1){for(let i=0;i<n;i++)a.weaponRunner.update(DT,input);}};
 }
 test('full installed Kit releases keep nested same-sub cost actor-local',async()=>{
  for(const kind of ['charger','shooter','roller']){
-  const f=await rig(),a=f.make(kind,'inkSaverSub',57),b=f.make(kind,'inkSaverSub',0),base=f.SUB[a.weapon.sub],before=JSON.stringify(base);let nested=false;
+  const f=await rig();try{const a=f.make(kind,'inkSaverSub',57),b=f.make(kind,'inkSaverSub',0),base=f.SUB[a.weapon.sub],before=JSON.stringify(base);let nested=false;
   f.G.netm={recBomb(){if(nested)return;nested=true;f.step(b,{sub:true},8);f.step(b,{subReleased:true});f.step(b,{});}};
   f.step(a,{sub:true},8);f.step(a,{subReleased:true});f.step(a,{});assert.equal(f.G.projectiles.bombs.length,2);
   const cost=base.inkCost??base.inkCostFallback;assert.ok(Math.abs((100-a.ink)-cost*a.s3.modifiers.inkSaverSub)<1e-8);assert.ok(Math.abs((100-b.ink)-cost)<1e-8);assert.equal(JSON.stringify(base),before);
+ }finally{f.close();}
  }
 });
 test('full installed Kit preview and nested throw share actor-local power and restore preview context on error',async()=>{
- const f=await rig(),a=f.make('charger','subPower',57),b=f.make('charger','subPower',0),ps=f.G.projectiles,base=f.SUB.bomb.throwSpeed;let nested=false,preview;
+ const f=await rig();try{const a=f.make('charger','subPower',57),b=f.make('charger','subPower',0),ps=f.G.projectiles,base=f.SUB.bomb.throwSpeed;let nested=false,preview;
  f.G.netm={recBomb(){if(nested)return;nested=true;ps.updateArc(b,true);preview=new f.THREE.Vector3(ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz);f.step(b,{sub:true},8);f.step(b,{subReleased:true});f.step(b,{});}};
  f.step(a,{sub:true},8);f.step(a,{subReleased:true});f.step(a,{});assert.equal(ps.bombs.length,2);assert.ok(ps.bombs[1].vel.distanceTo(preview)<1e-8);
  const inherited=ps.throwVelocity(a,0,new f.THREE.Vector3());const ratio=ps.bombs[0].vel.clone().sub(inherited).length()/ps.bombs[1].vel.clone().sub(ps.throwVelocity(b,0,new f.THREE.Vector3())).length();assert.ok(Math.abs(ratio-a.s3.modifiers.subPower)<1e-8,JSON.stringify({ratio,wanted:a.s3.modifiers.subPower,a:ps.bombs[0].vel.toArray(),b:ps.bombs[1].vel.toArray(),inherited:inherited.toArray()}));assert.equal(f.SUB.bomb.throwSpeed,base);
  ps.updateArc(a,false);f.G.physics.segment=()=>{throw Error('arc collision failed');};assert.throws(()=>ps.updateArc(a,true),/arc collision failed/);assert.equal(ps.s3PreviewSubSpeed,undefined);assert.equal(f.SUB.bomb.throwSpeed,base);
+ }finally{f.close();}
 });
 
 test('actor-local gear resolution preserves unknown cost instead of inventing a free sub',()=>{const a={weapon:{sub:'unknown'},s3:{modifiers:{inkSaverSub:.65,subPower:1.5}}},SUB={unknown:{id:'unknown',inkCost:null,inkCostFallback:null,throwSpeed:1}};const resolved=resolveSubForThrow(a,0,SUB);assert.equal(resolved.inkCost,null);assert.equal(resolved.throwSpeed,1.5);assert.equal(SUB.unknown.throwSpeed,1);});
@@ -83,7 +110,7 @@ function powerLoadout(ap) {
  assert.equal(ap,0);return out;
 }
 test('#968 Curling and Suction use their own extracted AP curves through real gear equip',async()=>{
- const f=await rig();
+ const f=await rig();try{
  for(const kind of ['roller','shooter']) for(const ap of [0,3,10,30,57]){
   const a=f.make(kind,'subPower',0);a.s3.loadout=powerLoadout(ap);a.setWeapon(kind);
   const sub=f.SUB[a.weapon.sub], t=sub.throwSpeedTiers;
@@ -95,9 +122,10 @@ test('#968 Curling and Suction use their own extracted AP curves through real ge
  assert.ok(Math.abs(resolveSubForThrow(a,0,f.SUB).throwSpeed-31.2)<1e-9);
  const baseline=f.SUB.curling.throwSpeedMaxCharge/f.SUB.curling.throwSpeed;
  assert.ok(Math.abs(resolveSubForThrow(a,1,f.SUB).throwSpeed/resolveSubForThrow(a,0,f.SUB).throwSpeed-baseline)<1e-9,'existing charge mapping is independent');
+ }finally{f.close();}
 });
 test('#968 kit swaps and actual authoritative Curling throws do not accumulate power or leak it',async()=>{
- const f=await rig(),a=f.make('roller','subPower',57),b=f.make('roller','subPower',0);
+ const f=await rig();try{const a=f.make('roller','subPower',57),b=f.make('roller','subPower',0);
  const originals=JSON.stringify(f.SUB),packets=[];f.G.netm={recBomb(owner,bomb){packets.push([owner,bomb]);}};
  for(const kind of ['shooter','roller','shooter','roller'])a.setWeapon(kind);
  for(const actor of [a,b]){f.step(actor,{sub:true},8);f.step(actor,{subReleased:true});f.step(actor,{});}
@@ -105,4 +133,5 @@ test('#968 kit swaps and actual authoritative Curling throws do not accumulate p
  const [first,second]=f.G.projectiles.bombs;
  assert.ok(Math.abs(first.s3Resolved.throwSpeed/second.s3Resolved.throwSpeed-1.3)<1e-9);
  assert.equal(JSON.stringify(f.SUB),originals);assert.equal(b.s3.modifiers.subPower,1);
+ }finally{f.close();}
 });

@@ -7,8 +7,11 @@
 // shot positions, timing and every gameplay value stay exactly as before.
 // Fade times are INKWAVE calibration, not retail frame counts.
 // Reference: reports/inkwave-weapon-hold-motion-2026-10-17.md.
+import { applyRainmakerPose, rainmakerAimQuaternion } from './ranked/rainmaker-motion.mjs';
 const INSTALLED = Symbol.for('inkwave.s3.weapon-handoff-motion.v1');
 export const HANDOFF_FADE = 0.2, HANDOFF_RAISE = 0.1;
+const OBJECTIVE_SUPPORT_BONES = ['clavL', 'uArmL', 'fArmL', 'handL'];
+const OBJECTIVE_FORM_BONES = ['spine', 'chest', 'neck', 'head', 'clavL', 'clavR', 'uArmL', 'uArmR', 'fArmL', 'fArmR', 'handL', 'handR'];
 const BONES = ['spine', 'chest', 'neck', 'clavL', 'clavR', 'uArmL', 'uArmR', 'fArmL', 'fArmR', 'handL', 'handR'];
 const smooth = x => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 
@@ -19,13 +22,13 @@ export function weaponHandoffSnapshot(ch) {
   return st ? { owner: st.owner, elapsed: st.t, duration: st.d, weight: st.w, valid: st.valid } : null;
 }
 
-export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNELS: C }) {
+export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNELS: C, G }) {
   const proto = Character?.prototype;
   if (!proto?._applyPose || !proto?._solveLimb || !proto?._kidXform || !C) throw Error('Weapon handoff motion requires the native Character');
   if (Object.hasOwn(proto, INSTALLED)) return;
-  const states = new WeakMap();
-  Object.defineProperty(proto, INSTALLED, { value: { states } });
-  const applyPose = proto._applyPose, getMuzzle = proto.getMuzzle, setWeapon = proto.setWeapon, dispose = proto.dispose;
+  const states = new WeakMap(), supportStates = new WeakMap(), formStates = new WeakMap();
+  Object.defineProperty(proto, INSTALLED, { value: { states, formStates } });
+  const applyPose = proto._applyPose, getMuzzle = proto.getMuzzle, getMuzzleHand = proto.getMuzzleHand, setWeapon = proto.setWeapon, dispose = proto.dispose;
   const v3 = new THREE.Vector3(), v4 = new THREE.Vector3(), v5 = new THREE.Vector3(), pT = new THREE.Vector3(), pN = new THREE.Vector3();
   const q2 = new THREE.Quaternion(), q3 = new THREE.Quaternion(), q4 = new THREE.Quaternion(), q5 = new THREE.Quaternion();
 
@@ -51,9 +54,89 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
     }
   }
 
+  // The same native left-arm solve, replacing the hidden main-weapon grip.
+  // Use this owner's existing scratch values: no frame allocations or new rig.
+  function objectiveSupport(ch, remember = true) {
+    const a = ch.actor || ch._owner?.(), dir = a?.aimDir, P = ch.P;
+    if (dir && dir.lengthSq() > 1e-12) v5.copy(dir).normalize();
+    else v5.set(Math.sin(a?.yaw || 0), 0, Math.cos(a?.yaw || 0));
+    rainmakerAimQuaternion(q3, v5, ch._rainmakerPitch, a?.yaw, v4, q4);
+    ch.weapon.pivot.getWorldPosition(v3);
+    pT.set(0, 0, .07 * ch.kidScale).applyQuaternion(q3).add(v3);
+    ch.kid.worldToLocal(pT);
+    ch.kid.getWorldQuaternion(q2).invert(); q2.multiply(q3);
+    // The existing fist's pivot is the mirrored canonical left grip-hole.
+    const hole = ch.weapon.pivot.position;
+    v4.set(-hole.x, hole.y, hole.z).applyQuaternion(q2); pT.sub(v4);
+    pN.set(P[C.POLEL], P[C.POLEL + 1], P[C.POLEL + 2]);
+    const err = ch.ikErr[0];
+    ch._solveLimb(ch.limbs.armL, pT, pN, q2, 1, 0);
+    ch.ikErr[0] = err;
+    // Keep the legacy one-solve pose for the next source-history update.
+    // The displayed correction is a rigid shoulder/arm rotation after that solve.
+    if (ch.sourceMotion?.active && (ch.sourceMotion.state === 'air' || ch.sourceMotion.state === 'land')) {
+      const arm = ch.limbs.armL, clav = ch.bones.clavL;
+      ch._kidXform(clav, v3, q3);
+      v4.copy(arm.up.position).applyQuaternion(q3).add(v3);
+      ch._kidXform(ch.bones.handL, v5, q5);
+      const reach = v5.distanceTo(v4);
+      const excess = pT.distanceTo(v4) - reach;
+      if (excess > 1e-8) {
+        v5.subVectors(pT, v3); v4.sub(v3);
+        const distance = v5.length(), length = v4.length();
+        if (distance > 1e-8 && length > 1e-8) {
+          const current = Math.max(-1, Math.min(1, v4.dot(v5) / (distance * length)));
+          const needed = Math.max(-1, Math.min(1, (distance * distance + length * length - reach * reach) / (2 * distance * length)));
+          // Rig calibration: observed maximum .1343 rad; .2 is a bounded
+          // margin, not a retail value. An unreachable capped target stays short.
+          const angle = Math.min(.2, Math.max(0, Math.acos(current) - Math.acos(needed)));
+          v3.crossVectors(v4, v5);
+          if (angle > 0 && v3.lengthSq() > 1e-12) {
+            let support = supportStates.get(ch);
+            if (!support) supportStates.set(ch, support = { bones: OBJECTIVE_SUPPORT_BONES.map(n => ch.bones[n]), base: OBJECTIVE_SUPPORT_BONES.map(() => new THREE.Quaternion()), position: new THREE.Vector3() });
+            for (let i = 0; i < 4; i++) support.base[i].copy(support.bones[i].quaternion);
+            support.position.copy(clav.position);
+            ch.s3RainmakerSupportPending = true;
+            q4.setFromAxisAngle(v3.normalize(), angle); q3.premultiply(q4);
+            ch._kidXform(clav.parent, v3, q5); clav.quaternion.copy(q5.invert().multiply(q3));
+            // Rotate the already solved chain about its shoulder toward the
+            // target, then keep the original desired hand orientation.
+            ch._kidXform(arm.up, v3, q3);
+            ch._kidXform(ch.bones.handL, v4, q4);
+            v4.sub(v3).normalize(); v5.subVectors(pT, v3).normalize();
+            q4.setFromUnitVectors(v4, v5); q3.premultiply(q4);
+            ch._kidXform(arm.up.parent, v3, q5); arm.up.quaternion.copy(q5.invert().multiply(q3));
+            ch._kidXform(ch.bones.handL.parent, v3, q5); ch.bones.handL.quaternion.copy(q5.invert().multiply(q2));
+            // Bounded scapular translation only after the existing rotation
+            // reaches its .2 rad cap. Keep all arm bone lengths unchanged.
+            // .03 world units is a rig calibration, not a retail measurement.
+            // The saved baseline position is restored before source history.
+            if (angle >= .2 - 1e-12) {
+              ch.bones.handL.getWorldPosition(v4);
+              v5.copy(pT); ch.kid.localToWorld(v5); v5.sub(v4);
+              const distance = v5.length();
+              if (distance > 1e-8) {
+                v5.multiplyScalar(Math.min(.03, distance) / distance).add(v4);
+                clav.parent.worldToLocal(v5); clav.parent.worldToLocal(v4);
+                clav.position.add(v5.sub(v4));
+              }
+            }
+          }
+        }
+      }
+    }
+    // Source air/emergence transitions must remember the actually displayed
+    // support, just as the existing handoff fade records its displayed bones.
+    const saved = remember && ch.sourceMotion?.active && ch.sourceMotion.renderedPose;
+    if (saved && ch.boneList) for (const name of OBJECTIVE_SUPPORT_BONES) {
+      const bone = ch.bones[name], i = ch.boneList.indexOf(bone);
+      if (i >= 0) saved[i].q.copy(bone.quaternion);
+    }
+  }
+
   function handoff(ch, dt) {
     const sm = ch.sourceMotion;
-    const on = ch.s3WeaponHandoffEnabled !== false && ch.kidForm && !ch.dance && !!ch.weapon && !!sm?.active && !sm.manual;
+    const on = ch.s3WeaponHandoffEnabled !== false && ch.kidForm && !ch.dance && !!ch.weapon && !!sm?.active && !sm.manual && !ch._rainmakerPose;
     let st = states.get(ch);
     if (st) st.faded = false;
     if (!on) { if (st) { st.valid = false; st.t = st.d = 0; st.w = 0; } return; }
@@ -86,14 +169,83 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
     st.owner = owner; st.weapon = ch.weapon; st.time = ch.t; st.valid = true;
   }
 
+  // Interrupted source return still evaluates its canonical pose and history.
+  // Capture only the native upper-body display before that source interpolation.
+  proto._captureRainmakerForm = function (sm) {
+    if (!this.s3RainmakerFormCapture || !this._rainmakerPose || !this.kidForm || !this.visible || !sm.active || !sm.pose || sm.state !== 'ToHuman' || !sm.formEvent || !sm.formKid || !sm.returnInterrupted || sm.formTime >= sm.formDuration) return;
+    let st = formStates.get(this);
+    if (!st) formStates.set(this, st = { bones: OBJECTIVE_FORM_BONES.map(n => this.bones[n]),
+      base: OBJECTIVE_FORM_BONES.map(() => new THREE.Quaternion()), shown: OBJECTIVE_FORM_BONES.map(() => new THREE.Quaternion()), captured: false, busy: false });
+    for (let i = 0; i < OBJECTIVE_FORM_BONES.length; i++) st.shown[i].copy(st.bones[i].quaternion);
+    st.captured = true;
+  };
+  function formMatrices(ch) {
+    ch.weapon?.muzzle?.updateWorldMatrix(true, false);
+    ch.weapon?.left?.muzzle?.updateWorldMatrix(true, false);
+  }
+  function presentForm(ch, st) {
+    if (ch.s3RainmakerSupportPending) throw Error('Rainmaker form/support transactions overlap');
+    for (let i = 0; i < OBJECTIVE_FORM_BONES.length; i++) {
+      st.base[i].copy(st.bones[i].quaternion); st.bones[i].quaternion.copy(st.shown[i]);
+    }
+    // One additional display-only left solve; do not write the canonical bank.
+    objectiveSupport(ch, false);
+    for (let i = 0; i < OBJECTIVE_FORM_BONES.length; i++) st.shown[i].copy(st.bones[i].quaternion);
+    ch.s3RainmakerFormPending = ch.s3RainmakerSupportPending = true;
+  }
+  function sampleFormMuzzle(ch, fn, out, hand) {
+    const st = formStates.get(ch);
+    if (!st || st.busy) return fn.call(ch, out, hand);
+    st.busy = true;
+    for (let i = 0; i < OBJECTIVE_FORM_BONES.length; i++) st.bones[i].quaternion.copy(st.base[i]);
+    try { return fn.call(ch, out, hand); }
+    finally {
+      for (let i = 0; i < OBJECTIVE_FORM_BONES.length; i++) st.bones[i].quaternion.copy(st.shown[i]);
+      st.busy = false; formMatrices(ch);
+    }
+  }
+
+  proto._restoreRainmakerSupport = function () {
+    if (this.s3RainmakerFormPending) {
+      const st = formStates.get(this);
+      if (st) for (let i = 0; i < OBJECTIVE_FORM_BONES.length; i++) st.bones[i].quaternion.copy(st.base[i]);
+      this.s3RainmakerFormPending = this.s3RainmakerSupportPending = false;
+      formMatrices(this);
+    }
+    const support = supportStates.get(this);
+    if (this.s3RainmakerSupportPending && support) {
+      for (let i = 0; i < 4; i++) {
+        const bone = support.bones[i]; bone.quaternion.copy(support.base[i]);
+        if (i === 0) bone.position.copy(support.position);
+        const index = this.boneList.indexOf(bone);
+        if (index >= 0 && this.sourceMotion?.renderedPose) this.sourceMotion.renderedPose[index].q.copy(support.base[i]);
+      }
+    }
+    this.s3RainmakerSupportPending = false;
+  };
   proto._applyPose = function (dt, s) {
-    const result = applyPose.call(this, dt, s);
+    // Last pose-channel owner, after native one-shots and before the one IK pass.
+    if (G?.match?.mode === 'rainmaker') applyRainmakerPose(this, s, C, G.match, dt);
+    else if (this._rainmakerPose) this._rainmakerPose = false;
+    let result;
+    if (this._rainmakerPose && dt > 0) {
+      let st = formStates.get(this); if (st) st.captured = false;
+      this.s3RainmakerFormCapture = true;
+      try { result = applyPose.call(this, dt, s); }
+      finally { this.s3RainmakerFormCapture = false; }
+      objectiveSupport(this);
+      st = formStates.get(this); if (st?.captured) presentForm(this, st);
+    } else {
+      result = applyPose.call(this, dt, s);
+      if (this._rainmakerPose) objectiveSupport(this);
+    }
     handoff(this, dt);
     return result;
   };
   // Gameplay muzzle: evaluated on the unfaded upper body (the pose every
   // previous build rendered), then the faded presentation is restored.
   proto.getMuzzle = function (out) {
+    if (this.s3RainmakerFormPending) return sampleFormMuzzle(this, getMuzzle, out);
     const st = states.get(this);
     if (!st?.faded || this.form !== 'kid' || !this.weapon) return getMuzzle.call(this, out);
     const now = st.shown;
@@ -104,6 +256,10 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
       this.weapon.muzzle.updateWorldMatrix(true, false);
     }
   };
-  proto.setWeapon = function (...args) { states.delete(this); return setWeapon.apply(this, args); };
-  proto.dispose = function (...args) { states.delete(this); return dispose.apply(this, args); };
+  proto.getMuzzleHand = function (out, hand) {
+    if (this.s3RainmakerFormPending) return sampleFormMuzzle(this, getMuzzleHand, out, hand);
+    return getMuzzleHand.call(this, out, hand);
+  };
+  proto.setWeapon = function (...args) { if (this.s3RainmakerSupportPending) this._restoreRainmakerSupport(); supportStates.delete(this); formStates.delete(this); states.delete(this); return setWeapon.apply(this, args); };
+  proto.dispose = function (...args) { if (this.s3RainmakerSupportPending) this._restoreRainmakerSupport(); supportStates.delete(this); formStates.delete(this); states.delete(this); return dispose.apply(this, args); };
 }

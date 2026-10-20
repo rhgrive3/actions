@@ -62,15 +62,38 @@ export function installMusicPlatform(MusicEngine, env = globalThis) {
     if (m.timer != null) env.clearInterval(m.timer);
     m.timer = null;
   }
-  function rebase(m, r) {
+  function rebase(m, r, schedulerGap = false) {
     const now = m.ctx?.currentTime;
     if (!Number.isFinite(now)) return;
     if (r.time !== null && (now - r.time > .25 || now < r.time)) {
+      // StreamedTrack owns a self-scheduled HTMLMediaElement. A busy main
+      // thread does not invalidate playback with paused=false (including a
+      // pending play() promise). Paused/failed media keep existing recovery.
+      // Keep explicit lifecycle resume/clock rollback recovery below unchanged.
+      const current = m.current, media = current?.element;
+      if (schedulerGap && now >= r.time && media && !current.disposed && !current.failed &&
+          media.paused === false && !media.ended && !media.error) {
+        r.time = now;
+        return;
+      }
+      // A scheduler-only rebuild of menu music must not cancel the healthy
+      // zero-gain recording primed by START for the upcoming battle.
+      const pending = m._preloadedFile?.player, pendingMedia = pending?.element;
+      const preservePreload = schedulerGap && now >= r.time && pendingMedia &&
+        !pending.disposed && !pending.failed && pendingMedia.paused === false &&
+        !pendingMedia.ended && !pendingMedia.error;
       const id = m.current?.id;
       for (const player of m.players) player.dispose();
       m.players.length = 0; m.current = null; r.restarts++;
       r.time = now;
-      if (id) m.play(id, { fade: .05 });
+      if (id) {
+        // Scope this token to the synchronous replay. Music-idle retains play
+        // options for later toggles; preservation must never leak into them.
+        const previous = m._platformPreloadReplay;
+        m._platformPreloadReplay = preservePreload ? { track: id, pending: m._preloadedFile } : null;
+        try { m.play(id, { fade: .05 }); }
+        finally { m._platformPreloadReplay = previous; }
+      }
     }
     r.time = now;
   }
@@ -94,7 +117,7 @@ export function installMusicPlatform(MusicEngine, env = globalThis) {
     if (this.offline) return tick.call(this);
     const r = ensure(this);
     if (!lifecycle.active || !this.ctx) return;
-    rebase(this, r);
+    rebase(this, r, true);
     return tick.call(this);
   };
   P.dispose = function (...args) {

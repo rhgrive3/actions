@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {normalizeViewSettings} from '../../local-quality/view-settings.mjs';
@@ -16,6 +16,7 @@ const weapons={shooter:{kind:'shooter'},roller:{kind:'roller'},alt_kit:{kind:'sh
 const progression={xpForLevel:level=>800+350*level};
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const built=process.env.INKWAVE_BUILT_SITE;
+const {PROTO,COMPAT}=await import(pathToFileURL(path.join(built || path.join(root,'inkwave-public'),'src/net/transport.js')));
 function composed(rel) {
   const full=path.join(built || path.join(root,'inkwave-public'),rel);
   const native=fs.readFileSync(full,'utf8');
@@ -133,8 +134,10 @@ test('production composition exposes all queued fixes and retains both Turf and 
   assert.ok(main.includes('normalizeQueueProfile(loadJSON('),'boot profile repair not composed');
   assert.ok(main.includes('weapon: safeWeaponId(this.profile.weapon, WEAPONS)'),'offline weapon admission missing');
   assert.ok(main.includes('const resetMatch = this.match, resetFlow = this._matchFlow;'),'existing operation-owned attract reset must remain');
-  assert.ok(main.includes('if (this.match !== resetMatch || this._matchFlow !== resetFlow || resetMatch?.paused) return;'),
-    'operation ownership and the later native-stage pause guard must both remain');
+  assert.ok(main.includes('if (this.match !== resetMatch || this._matchFlow !== resetFlow) return;'),
+    'operation ownership must remain');
+  assert.ok(main.includes('if (!this.match?.attract || this.match.paused) return;'),
+    'the later native-stage paused-attract guard must remain beside operation ownership');
   // Native-stage admission may move the flow allocation from the default
   // parameter into the method body. Verify the operation guard rather than
   // freezing the pre-native-stage function signature.
@@ -177,6 +180,11 @@ test('composed Game attract callback skips stale live-start and keeps normal men
   assert.equal(pending.game.match,pending.old);
   assert.deepEqual(pending.calls,['fade'],'fresh startup invalidates prior fade without replacing original match');
 
+  const paused=rig();paused.game._updateAttract(1/60);
+  paused.old.paused=true;paused.settle();await Promise.resolve();
+  assert.equal(paused.game.match,paused.old);
+  assert.deepEqual(paused.calls,['fade'],'pause acquired during fade blocks delayed attract replacement');
+
   const b=rig();b.game._updateAttract(1/60);
   b.settle();await Promise.resolve();
   assert.equal(b.calls.includes('reset'),true,'menu-only recycling still runs');
@@ -189,10 +197,10 @@ test('composed NetSession rejects a missing-local START before allocating match 
   // The method is extracted without ES imports. Supply production-equivalent
   // non-native stage admission for this ordinary Turf roster fixture so that
   // missing-local rejection and READY sequencing remain the assertions.
-  const C=(new Function('G','NetMatch','validStartRoster','WEAPONS',
+  const C=(new Function('G','NetMatch','validStartRoster','WEAPONS','PROTO','COMPAT',
     'nativeStageEnabled','nativeStageRuleStatus','UNAVAILABLE_NATIVE_STAGES','nativeStageCompatible',
     'return class NetSession {'+src+'}'))(
-    G,NetMatch,validStartRoster,weapons,false,()=>null,[],cfg=>!cfg?.nativeStage);
+    G,NetMatch,validStartRoster,weapons,PROTO,COMPAT,false,()=>null,[],cfg=>!cfg?.nativeStage);
   const make=()=>{
     const s=Object.create(C.prototype);
     s.myId='guest';s.hostId='host';s.state='lobby';s.lobby={players:[{ready:true}]};
@@ -200,7 +208,7 @@ test('composed NetSession rejects a missing-local START before allocating match 
     s.tr={sendTo:(_host,p)=>sends.push(p)};
     return s;
   };
-  const wrong={id:'game-1',mode:'turf',roster:[member('host',0,0,0)]};
+  const wrong={proto:PROTO,compat:COMPAT,id:'game-1',mode:'turf',roster:[member('host',0,0,0)]};
   const rejected=make();
   assert.equal(await rejected._begin(wrong),false);
   assert.equal(rejected.state,'lobby');

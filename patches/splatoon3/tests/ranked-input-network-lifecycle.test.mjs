@@ -139,6 +139,10 @@ test('invalid out-of-range barrier hits cannot consume valid owner sequence or e
 
 test('stale remote ranked special input expires together with fire/throw and cannot block clam pickups', async () => {
   const f = await world('clams', true), a = f.local; a.remote = true; a.specialActive = null;
+  // The host consumes an admitted owner snapshot, never an uninitialized replica.
+  const p = a.pos, row = [1,p.x,p.y,p.z,0,0,0,0,0,0,17,100,100,0,0,0,0,0,0,0,0];
+  f.nm.onMessage('guest', { k: 't', ts: 10, u: 600, l: { 1: 1 }, a: [row] });
+  assert.ok(f.nm.rankedPose.get('1'), 'the owner snapshot is admitted before pickup');
   f.nm.rankedInputs = new Map([['1',{ seq: 1, at: f.G.time-1, fire: true, throw: true, aim: [0,0,1], special: 'crabTank', specialDeployed: false, clamDrop: 0 }]]);
   f.engine.rule._newClam('small', null, a.pos.toArray());
   const frame = f.buildFrame(f.m, { G: f.G });

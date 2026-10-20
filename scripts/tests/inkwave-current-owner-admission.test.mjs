@@ -1,10 +1,12 @@
+// Historical 0dec529d source replay; latest PR sources use the separate reviewed-pair gate.
+import {historicalSource} from '../lib/inkwave-historical-baseline-sources.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {alignRollerBirthBaseline} from '../lib/inkwave-roller-birth-baseline.mjs';
 import {CHARACTER_POSE_MANIFEST,planCharacterPoseBaseline} from '../lib/inkwave-character-pose-baseline.mjs';
-const read=p=>fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8');
+const read=p=>historicalSource(p.endsWith('/weapons-fidelity.mjs')?'paint':'pose',p);
 const physics=read('patches/splatoon3/runtime/weapons-fidelity.mjs');
 const install=read('patches/splatoon3/runtime/install.mjs');
 const file='patches/splatoon3/runtime/install.mjs';

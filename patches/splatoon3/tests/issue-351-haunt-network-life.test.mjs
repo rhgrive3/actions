@@ -7,6 +7,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 const bootstrap = fs.readFileSync(new URL('../bootstrap.mjs', import.meta.url), 'utf8');
 const imports = [...bootstrap.matchAll(/^import \{ (\w+) \} from '(.*?)';/gm)].filter(m => m[1] !== 'install');
 const extraExports = imports.map(m => `export { ${m[1]} } from './patches/splatoon3/${m[2]}';`).join('\n') + `
+export { Transport } from './inkwave-public/src/net/transport.js';
 export * from './patches/splatoon3/runtime/haunt.mjs';
 export * from './patches/splatoon3/runtime/respawn-lifecycle.mjs';
 export function saveTestLoadout(value) {
@@ -51,9 +52,12 @@ async function pair(t, hz, old = false) {
     f.G.level = level; f.G.physics = new f.Physics(level);
     f.G.match = { mode: 'turf', state: 'playing', time: 180, playing: () => true, canRespawn: () => true,
       local: id === 'A' ? a : b, actors: [a, b, c] };
+    const tr = new f.Transport();
+    tr.ws = { readyState: 1, bufferedAmount: 0, send(text) {
+      if (text.startsWith('b|')) mail[id === 'A' ? 'B' : 'A'].push(JSON.parse(text.slice(2)));
+    } };
     const nm = new f.NetMatch({ myId: id, hostId: 'B', isHost: id === 'B',
-      _members: new Map([['A', 1], ['B', 1]]),
-      tr: { sendTo() {}, broadcast: d => mail[id === 'A' ? 'B' : 'A'].push(wire(d)) } }, { id: 'haunt-life-order', map: 'reef' });
+      _members: new Map([['A', 1], ['B', 1]]), tr }, { id: 'haunt-life-order', map: 'reef' });
     nm.bind(f.G.match); t.after(() => nm.dispose());
     return { ...f, a, b, c, nm, clock: new f.FixedClock() };
   }
