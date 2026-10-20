@@ -227,6 +227,45 @@ NetMatch.prototype.dispose = function(...args) {
   }
   if (rel === 'src/net/transport.js') {
     code = "import { validRelayControl } from '../../patches/reliability/session-admission.mjs';\n" + code;
+    // #1645: frame bounds shared with server/src/index.js (MAX_FRAME_BYTES and MAX_BACKLOG_BYTES).
+    // The relay measures a frame in UTF-8 bytes and removes a sender that exceeds its limit, so
+    // the client refuses first, in the same unit, instead of being dropped from the room.
+    code = replaceOnce(code, 'export const PROTO = 1;', `export const PROTO = 1;
+
+export const MAX_RELAY_FRAME_BYTES = 64 * 1024;
+export const MAX_RELAY_BACKLOG_BYTES = 512 * 1024;
+// Inbound frames are a bounded payload plus the "m|<sender id>|" envelope.
+export const MAX_RELAY_FRAME_CHARS = MAX_RELAY_FRAME_BYTES + 64;
+export function relayFrameFits(text) {
+  if (text.length > MAX_RELAY_FRAME_BYTES) return false;      // UTF-16 length never exceeds UTF-8 length
+  if (text.length * 3 <= MAX_RELAY_FRAME_BYTES) return true;  // even all three-byte units fit
+  let bytes = 0;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    if (c < 0x80) bytes += 1;
+    else if (c < 0x800) bytes += 2;
+    else if (c >= 0xd800 && c < 0xdc00 && i + 1 < text.length && (text.charCodeAt(i + 1) & 0xfc00) === 0xdc00) { bytes += 4; i++; }
+    else bytes += 3;
+  }
+  return bytes <= MAX_RELAY_FRAME_BYTES;
+}`, rel);
+    code = replaceOnce(code, `  _raw(s) {
+    const ws = this.ws;
+    if (!ws || ws.readyState !== 1) return false;
+    this.bytesOut += s.length;
+    ws.send(s);
+    return true;
+  }`, `  // Returns false when the frame was not handed to the socket: no open socket, a frame the
+  // relay would refuse, or a send backlog already past the cap. Callers that must not lose
+  // data keep it and retry (NetMatch._sendTick).
+  _raw(s) {
+    const ws = this.ws;
+    if (!ws || ws.readyState !== 1) return false;
+    if (!relayFrameFits(s) || ws.bufferedAmount > MAX_RELAY_BACKLOG_BYTES) return false;
+    this.bytesOut += s.length;
+    ws.send(s);
+    return true;
+  }`, rel);
     code = replaceOnce(code, `    this.ws = null;
     this.id = null;`, `    this.ws = null;
     this._disconnect = null;
@@ -310,6 +349,7 @@ NetMatch.prototype.dispose = function(...args) {
       const handle = (ev) => {
         if (!current()) return;
         const s = typeof ev.data === 'string' ? ev.data : '';
+        if (s.length > MAX_RELAY_FRAME_CHARS) return;   // the relay never sends more; drop before any JSON.parse
         this.bytesIn += s.length;
         if (s === 'pong') {
           if (this._pingSent) { const r = performance.now() - this._pingSent; this._pingSent = 0; this.rtt = this.rtt ? this.rtt + (r - this.rtt) * 0.3 : r; }

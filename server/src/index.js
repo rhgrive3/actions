@@ -19,6 +19,44 @@ function refusalSocket(message) {
   return new Response(null, { status: 101, webSocket: client });
 }
 
+// ---- Traffic bounds (#1645) -------------------------------------------------
+// A room is at most 8 seats and the relay fans every frame out to the other 7, so
+// what one seat may send is what the whole room must absorb. Limits are per
+// connection and sized from measured play: a normal tick is a few KiB at 20 Hz;
+// the heaviest measured client uplink (reports/inkwave-lossless-paint-codec-
+// prototype-2026-10-11.md) is about 108 KB/s, and one 8-owner special burst is a
+// single ~13-40 KiB frame. The sustained rates leave 2-4x headroom over play and
+// the burst buckets absorb those one-off spikes.
+const MAX_FRAME_BYTES = 64 * 1024;           // one frame, measured in UTF-8 bytes
+const FRAME_RATE = 80, FRAME_BURST = 160;    // frames per second / bucket size
+const BYTE_RATE = 256 * 1024, BYTE_BURST = 512 * 1024; // bytes per second / bucket size
+const MAX_BACKLOG_BYTES = 512 * 1024;        // unsent bytes tolerated on a recipient socket
+const MAX_KIND_LENGTH = 32;
+const encoder = new TextEncoder();
+
+// A relayed game payload is a JSON object with a short string kind ("k"), which
+// is how every client message is built. Returns the parsed object or null.
+function parseEnvelope(payload) {
+  if (payload.charCodeAt(0) !== 123 /* { */) return null;
+  try {
+    const data = JSON.parse(payload);
+    return data !== null && !Array.isArray(data) && typeof data.k === 'string' &&
+      data.k.length > 0 && data.k.length <= MAX_KIND_LENGTH ? data : null;
+  } catch { return null; }
+}
+
+// Never queue onto a socket that is already far behind: closing it lets that
+// player reconnect instead of growing relay memory without bound. The sender is
+// never penalised for a slow recipient. bufferedAmount exists on browser sockets
+// and some runtimes; where it is absent the per-sender quotas still bound input.
+function relaySend(socket, data) {
+  if (Number.isFinite(socket.bufferedAmount) && socket.bufferedAmount > MAX_BACKLOG_BYTES) {
+    try { socket.close(1013, 'Slow connection'); } catch {}
+    return false;
+  }
+  try { socket.send(data); return true; } catch { return false; }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -149,29 +187,47 @@ export class RoomDurableObject {
       try { member.ws.send(joinMsg); } catch (e) {}
     }
 
-    // Save active member
-    this.members.set(id, { id, name, ws, joinedAt });
+    // Save active member. Traffic budgets belong to this connection and start full.
+    this.members.set(id, { id, name, ws, joinedAt,
+      budgetAt: Date.now(), framesLeft: FRAME_BURST, bytesLeft: BYTE_BURST });
+
+    // Remove a misbehaving sender; its peers are never affected.
+    const eject = (code, reason) => { try { ws.close(code, reason); } catch (e) {} };
 
     ws.addEventListener('message', (event) => {
-      const s = typeof event.data === 'string' ? event.data : '';
-      if (!s) return;
       // A socket that already left (or was replaced) has no authority in the room.
-      if (this.members.get(id)?.ws !== ws) return;
+      const member = this.members.get(id);
+      if (member?.ws !== ws) return;
+      // The protocol is text only.
+      if (typeof event.data !== 'string') { eject(1003, 'Unsupported data'); return; }
+      const s = event.data;
+      // Enforce size and rate before any JSON.parse or fan-out. UTF-16 length is a
+      // lower bound of the UTF-8 size, so oversized frames are refused without encoding.
+      if (s.length > MAX_FRAME_BYTES) { eject(1009, 'Message too large'); return; }
+      const size = encoder.encode(s).byteLength;
+      if (size > MAX_FRAME_BYTES) { eject(1009, 'Message too large'); return; }
+      const now = Date.now();
+      const elapsed = Math.max(0, (now - member.budgetAt) / 1000);
+      member.budgetAt = now;
+      member.framesLeft = Math.min(FRAME_BURST, member.framesLeft + elapsed * FRAME_RATE);
+      member.bytesLeft = Math.min(BYTE_BURST, member.bytesLeft + elapsed * BYTE_RATE);
+      if (member.framesLeft < 1 || member.bytesLeft < size) { eject(1008, 'Relay traffic limit'); return; }
+      member.framesLeft -= 1;
+      member.bytesLeft -= size;
 
       // Heartbeat ping -> pong
       if (s === 'ping') {
-        try { ws.send('pong'); } catch (e) {}
+        relaySend(ws, 'pong');
         return;
       }
 
       // Broadcast message: "b|<json>"
       if (s.startsWith('b|')) {
         const payload = s.slice(2);
+        if (!parseEnvelope(payload)) return;
         const forward = `m|${id}|${payload}`;
-        for (const [targetId, member] of this.members) {
-          if (targetId !== id) {
-            try { member.ws.send(forward); } catch (e) {}
-          }
+        for (const [targetId, peer] of this.members) {
+          if (targetId !== id) relaySend(peer.ws, forward);
         }
         return;
       }
@@ -182,16 +238,16 @@ export class RoomDurableObject {
         if (firstPipe !== -1) {
           const targetId = s.slice(2, firstPipe);
           const payload = s.slice(firstPipe + 1);
+          const message = parseEnvelope(payload);
+          if (!message) return;
           const target = this.members.get(targetId);
           if (target) {
-            try { target.ws.send(`m|${id}|${payload}`); } catch (e) {}
+            relaySend(target.ws, `m|${id}|${payload}`);
           } else {
             // Return a delivery failure for directed combat events. Do not
             // silently lose a hit when its owner has just disconnected.
-            let hit;
-            try { hit = JSON.parse(payload); } catch {}
-            if (hit?.k === 'hit' && Number.isInteger(hit.seq) && hit.seq >= 0)
-              try { ws.send(`m|__relay__|${JSON.stringify({k:'hit_nack',seq:hit.seq,to:targetId})}`); } catch {}
+            if (message.k === 'hit' && Number.isInteger(message.seq) && message.seq >= 0)
+              relaySend(ws, `m|__relay__|${JSON.stringify({k:'hit_nack',seq:message.seq,to:targetId})}`);
           }
         }
         return;

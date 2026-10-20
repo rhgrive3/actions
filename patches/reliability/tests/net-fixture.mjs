@@ -53,7 +53,7 @@ export async function fixture({ search = '', adapt = true } = {}) {
   G.game = { netMatchGo() {} };
   const net = new session.namespace.NetSession();
   return {
-    net, G, sockets, timers, Transport: transport.namespace.Transport,
+    net, G, sockets, timers, context, Transport: transport.namespace.Transport,
     constructionFails: () => { failConstructor = true; },
     message(socket, data) { socket.onmessage?.({ data: typeof data === 'string' ? data : JSON.stringify(data) }); },
     welcome(socket, { id = 'me', host = id, members = [...new Set([host, id])].map(id=>({id,name:'Player'})) } = {}) {
