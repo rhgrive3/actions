@@ -2,17 +2,28 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-import { EXTRA_SOURCE_FILES, SOURCE_EXTRA_AUDIO, sourceCueId } from '../runtime/audio/source-cue-registry.mjs';
-import { EXTRA_SOURCE_EVENT_ROUTES, sourceEventRoute, EXTRA_SPECIAL_ACTION_SOURCE, sourceSpecialActionRoute } from '../runtime/audio/extra-source-routes.mjs';
-import { KIT_AUDIO } from '../runtime/audio/kit-recipes.mjs';
-import { specialActionAudioEvent } from '../runtime/audio/kit-runtime.mjs';
-import { WeaponSoundBank } from '../runtime/audio/bank.mjs';
-import { validateAuthorizedManifest } from '../runtime/audio/authorized-samples.mjs';
-import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+const built=process.env.INKWAVE_BUILT_SITE;
+if(Object.hasOwn(process.env,'INKWAVE_BUILT_SITE')){
+ assert.ok(built?.trim(),'INKWAVE_BUILT_SITE must name an emitted site, not fall back to source');
+ const identity=JSON.parse(fs.readFileSync(path.join(built,'inkwave-build.json'),'utf8'));
+ assert.match(identity.contentHash,/^[a-f0-9]{64}$/,'emitted site needs its build identity');
+}
+const audioRoot=built?pathToFileURL(path.resolve(built,'patches/splatoon3/runtime/audio')+path.sep):new URL('../runtime/audio/',import.meta.url);
+const audioModule=name=>import(new URL(name,audioRoot));
+const { EXTRA_SOURCE_FILES, SOURCE_EXTRA_AUDIO, sourceCueId }=await audioModule('source-cue-registry.mjs');
+const { EXTRA_SOURCE_EVENT_ROUTES, sourceEventRoute, EXTRA_SPECIAL_ACTION_SOURCE, sourceSpecialActionRoute }=await audioModule('extra-source-routes.mjs');
+const { KIT_AUDIO }=await audioModule('kit-recipes.mjs');
+const { specialActionAudioEvent }=await audioModule('kit-runtime.mjs');
+const { WeaponSoundBank }=await audioModule('bank.mjs');
+const { validateAuthorizedManifest }=await audioModule('authorized-samples.mjs');
+const { installWeaponAudioEngine }=await audioModule('engine.mjs');
+const { installWeaponAudioRuntime }=await audioModule('runtime.mjs');
 
-const dir = new URL('../runtime/audio/s3-real/', import.meta.url);
-const installed = JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json', import.meta.url),'utf8'));
-const original = JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-samples.json', import.meta.url),'utf8'));
+const dir = new URL('s3-real/',audioRoot);
+const installed = JSON.parse(fs.readFileSync(new URL('real-s3-installed.json',audioRoot),'utf8'));
+const original = JSON.parse(fs.readFileSync(new URL('real-s3-samples.json',audioRoot),'utf8'));
 const gitBlobSha = bytes => crypto.createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
 
 test('every shipped 2022 MP3 is registered exactly, without guessing its game event',()=>{
@@ -106,6 +117,10 @@ test('real-only audio engine redirects absent kit events, but prefers a native r
   const routed=audio.playWeapon('special:tentaMissiles','open',{actor});
   assert.equal(routed?.weaponId,'source:Sp_MultiMissile_Attach_00');
   assert.equal(audio.calls.at(-1).name,'main:source:Sp_MultiMissile_Attach_00:fire');
+  loader.declaredEvents.add('special:tentaMissiles:open');
+  const calls=audio.calls.length;
+  assert.equal(audio.playWeapon('special:tentaMissiles','open',{actor}),null,'a declared but cold native recording must not be replaced');
+  assert.equal(audio.calls.length,calls);
   const native={id:'special:tentaMissiles',event:'open',variant:0,buffer:{},bytes:4};
   bank.authorized.byEvent.set('special:tentaMissiles:open',[native]);
   const nativeResult=audio.playWeapon('special:tentaMissiles','open',{actor});
@@ -115,6 +130,9 @@ test('real-only audio engine redirects absent kit events, but prefers a native r
 });
 
 test('production runtime prefetches routed kit sounds and retains original audio-admission gate',()=>{
+  // Preserve the source composition anchors; emitted semantics below do not
+  // depend on identifier spelling or minifier output.
+  if(!built){
   const engine=fs.readFileSync(new URL('../runtime/audio/engine.mjs',import.meta.url),'utf8');
   const runtime=fs.readFileSync(new URL('../runtime/audio/runtime.mjs',import.meta.url),'utf8');
   assert.match(engine,/sourceEventRoute\(id,event\)/);
@@ -124,4 +142,30 @@ test('production runtime prefetches routed kit sounds and retains original audio
   assert.match(runtime,/EXTRA_SPECIAL_ACTION_SOURCE/);
   const kitRuntime=fs.readFileSync(new URL('../runtime/audio/kit-runtime.mjs',import.meta.url),'utf8');
   assert.match(kitRuntime,/this.specialActive\?\.phase==='ready'/,'Booyah full-hold loop cannot start at activation');
+  }
+  class Actor {setWeapon(){} _startSpecial(){} _updateSpecial(){}}
+  class WeaponRunner {constructor(a){this.a=a;} reset(){} update(){return 'native-update';}}
+  class Projectiles {throwBomb(){} _push(){} _blastBurst(){}}
+  const ensured=[],loops=[],listeners=new Map();
+  const G={time:0,audio:{ctx:{state:'running'},play(){},prepareWeapon(){},
+    _realS3Loader:{ensure(id,event){ensured.push([id,event]);return Promise.resolve();}},
+    loopWeapon(id,event){const h={id,event,playing:true,stops:0,set(){},stop(){this.playing=false;this.stops++;}};loops.push(h);return h;}}};
+  const on=(name,fn)=>{if(!listeners.has(name))listeners.set(name,new Set());listeners.get(name).add(fn);return ()=>listeners.get(name).delete(fn);};
+  const runtime=installWeaponAudioRuntime({G,Actor,WeaponRunner,Projectiles,on});
+  try{
+    const specials=new Set([...Object.keys(EXTRA_SOURCE_EVENT_ROUTES).map(k=>k.split(':')[1]),...Object.keys(EXTRA_SPECIAL_ACTION_SOURCE).map(k=>k.split(':')[0])]);
+    for(const special of specials){
+      const a={isLocal:true,weapon:{id:'shooter',sub:'bomb',special},pos:{x:0,y:0,z:0}},runner=new WeaponRunner(a);
+      assert.equal(runner.update(1/60,{}),'native-update');
+      const before=ensured.length;runner.update(1/60,{});assert.equal(ensured.length,before,'selected kit prefetch is not repeated every frame');
+    }
+    for(const cue of new Set([...Object.values(EXTRA_SOURCE_EVENT_ROUTES),...Object.values(EXTRA_SPECIAL_ACTION_SOURCE)]))
+      assert.ok(ensured.some(([id,event])=>id===cue&&event==='fire'),'actual runtime prefetches '+cue);
+    const a=new Actor();Object.assign(a,{alive:true,isLocal:true,pos:{x:0,y:0,z:0},specialActive:{id:'booyahBomb',phase:'charge'}});G.local=a;
+    a._updateSpecial(1/60);assert.equal(loops.length,0,'full-hold cue cannot start during charging');
+    a.specialActive.phase='ready';a._updateSpecial(1/60);a._updateSpecial(1/60);
+    assert.equal(loops.length,1);assert.equal(loops[0].id,'special:booyahBomb');assert.equal(loops[0].event,'spin');
+    a.specialActive.phase='charge';a._updateSpecial(1/60);assert.equal(loops[0].stops,1);
+  }finally{runtime.dispose();}
+  assert.ok([...listeners.values()].every(set=>set.size===0));
 });

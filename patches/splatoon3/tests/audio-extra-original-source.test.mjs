@@ -2,8 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-import { COMBAT_AUDIO } from '../runtime/audio/combat-recipes.mjs';
-import { WeaponSoundBank } from '../runtime/audio/bank.mjs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+const built=process.env.INKWAVE_BUILT_SITE;
+if(Object.hasOwn(process.env,'INKWAVE_BUILT_SITE')){
+ assert.ok(built?.trim(),'INKWAVE_BUILT_SITE must name an emitted site, not fall back to source');
+ const identity=JSON.parse(fs.readFileSync(path.join(built,'inkwave-build.json'),'utf8'));
+ assert.match(identity.contentHash,/^[a-f0-9]{64}$/,'emitted site needs its build identity');
+}
+const audioRoot=built?pathToFileURL(path.resolve(built,'patches/splatoon3/runtime/audio')+path.sep):new URL('../runtime/audio/',import.meta.url);
+const { COMBAT_AUDIO }=await import(new URL('combat-recipes.mjs',audioRoot));
+const { WeaponSoundBank }=await import(new URL('bank.mjs',audioRoot));
 
 // SHA-pinned existing source blobs, not guessed generated PCM. Their precise
 // original SLINK conditions are unknown; playback is opt-in until verified.
@@ -12,12 +21,12 @@ const originals=[
  ['combat:ink_focus_strong','HitEf_InkHit_Focused_Strong_00.mp3','bc0a85a307d0379d41bed9845caedaef44b7a3d3385db822ee2f39682a0bfb46',10413],
  ['combat:splat_squid','Pl_DeadBubbleSplash_00.mp3','8963d67e781c415a6247e0b7725e0c8f891dd313d4a98cceadadde566797e40c',33271],
 ];
-const manifest=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8'));
-const source=JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-samples.json',import.meta.url),'utf8'));
+const manifest=JSON.parse(fs.readFileSync(new URL('real-s3-installed.json',audioRoot),'utf8'));
+const source=JSON.parse(fs.readFileSync(new URL('real-s3-samples.json',audioRoot),'utf8'));
 
 test('3 additional original 2022 sound binaries are IN THE REPO with pinned exact SHA and byte count',()=>{
  for(const [id,file,sha,length] of originals){
-   const bytes=fs.readFileSync(new URL('../runtime/audio/s3-real/'+file,import.meta.url));
+   const bytes=fs.readFileSync(new URL('s3-real/'+file,audioRoot));
    assert.equal(bytes.length,length,id+' actual shipped bytes');
    assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),sha,id+' unmodified source blob');
    assert.equal(COMBAT_AUDIO[id]?.events[0],'fire',id+' can be requested through real-only bank');
