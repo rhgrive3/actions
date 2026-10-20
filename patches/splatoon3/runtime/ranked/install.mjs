@@ -6,6 +6,7 @@ import { createRankedStage, RankedWorld } from './world.mjs';
 import { installRankedUi } from './ui.mjs';
 import { installRankedBots } from './bots.mjs';
 import { installRankedNetwork, actorId } from './network.mjs';
+import { objectiveSpecialFor } from './objective-special.mjs';
 import { installRankedCombat, createRankedEffects, isCarrier } from './combat.mjs';
 
 import { interruptSpecialForObjective } from '../all-specials.mjs';
@@ -172,8 +173,8 @@ export function buildFrame(match, api) {
     if (cmd) inputs[id] = { fire: !!cmd.fire, throw: !!cmd.throw, aim: cmd.aim };
     if (a.remote && received) received.throw = false;
     if (!a.remote) { a.intent.throw = false; if (!nm || nm.isHost) a._rankedThrowPending = false; }
-    const special = a.remote && cmd ? cmd.special : a.specialActive?.id ?? null;
-    const specialDeployed = a.remote && cmd ? cmd.specialDeployed : special === 'storm' && a.specialActive?.t > 0;
+    const special = objectiveSpecialFor(a, a.remote ? cmd : null);
+    const specialDeployed = special === 'storm' && (a.specialActive?.t > 0 || (a.remote && cmd?.specialDeployed === true));
     return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: a.pos.toArray(), alive: a.alive && !a.s3Disconnected, grounded: a.grounded,
       remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming: a.form === 'squid', slot: a.slot };
   });
