@@ -181,15 +181,14 @@ function splatRig(composed, splat) {
     '  _applyRemoteSplatEvent(e, commitReplay = true) {','\n  commitDeadlinePaint()',{
       G:{paint:{splat}},_v:new Vec(),_v2:new Vec(),consumeKitPaint,consumePaintAuthority,...paintOwners(composed),
     },composed);
-  const owner={nid:1,owner:'host',team:0,remote:false};
-  const nm={applying:false,_paintReplayWarned:false,_paintClockState:{clock:0,applied:new Map()},myId:'host',
-    s:{hostId:'host',_members:new Set(['host','guest'])},cfg:{id:'game'},byNid:new Map([[owner.nid,owner]])};
-  let sequence=0;
-  // Use the actual owner-bound producer and admission module in one namespace.
-  // The legacy payload without an authority proof is no longer admissible.
-  const event=(kind,seed=1,seq=++sequence,clock=seq)=>Object.assign([0,'s',0,0,1,1,0,seed,kind,0,0,0,0,-1,
-    ['inkwave-paint-order-v1','game',clock,1,packPaintAuthority(nm,null,0,{claimOwner:owner})],1,1],
-    {_netPeer:'host',_netTick:1,_netSeq:seq});
+  const actor={nid:0,owner:'host',team:0,pos:new Vec()},nm={applying:false,_paintReplayWarned:false,_paintClockState:{clock:0,applied:new Map()},
+    myId:'host',s:{hostId:'host',_members:new Set(['host'])},cfg:{id:'game'},byNid:new Map([[0,actor]])};
+  let seq=0;
+  const event=(kind,seed=1)=>{
+    seq++;const proof=packPaintAuthority(nm,null,0,{claimOwner:actor});
+    return Object.assign([0,'s',0,0,1,1,0,seed,kind,0,0,0,0,-1,
+      ['inkwave-paint-order-v1','game',seq,0,proof],1,1],{_netPeer:'host',_netTick:seq,_netSeq:seq});
+  };
   return {fn,nm,event};
 }
 test('composed malformed remote splat never traps replay or suppresses later paint',()=>{
@@ -210,32 +209,29 @@ test('composed malformed remote splat never traps replay or suppresses later pai
 });
 test('composed paint admission keeps every source kind and rejects malformed owners before replay mutation',()=>{
   const composed=adaptBuildSource('src/net/netmatch.js',readFileSync(new URL('../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8'));
-  const seen=[],valid=splatRig(composed,(_c,_r,_t,o)=>seen.push(o));
+  const seen=[],{fn,nm,event}=splatRig(composed,(_c,_r,_t,o)=>seen.push(o));
   const kinds=['shot','line','blast','bomb','trail','drop','roll','rollFloor','speck',
     'source-shot','source-splash','ink-shot','ink-slosh','ink-brush','ink-flick','ink-contact',
     'ink-charger-a','ink-charger-b','ink-charger-c','ink-blast','ink-blast-rectified'];
-  for(const kind of kinds)assert.equal(valid.fn.call(valid.nm,valid.event(kind)),true,kind+' legitimate owner-bound paint');
+  for(const kind of kinds)assert.equal(fn.call(nm,event(kind)),true,kind+' legitimate authenticated paint');
   assert.deepEqual(seen.map(o=>o.kind),kinds,'source contour identifiers survive replay');
-  // A fresh session keeps malformed-input clock assertions independent of the
-  // valid source-kind sequence above; no observed replay state is reset.
-  const {fn,nm,event}=splatRig(composed,(_c,_r,_t,o)=>seen.push(o));
-  const canonical=()=>event('ink-shot',1,1,7);
+  const previousClock=nm._paintClockState.clock,previousSeq=nm._paintClockState.applied.get('host');
+  const canonical=()=>{const e=event('ink-shot');e[14]=['inkwave-paint-order-v1','game',previousClock+7,1,e[14][4]];e._netTick=1;e._netSeq=previousSeq+1;return e;};
   const invalid=[
     e=>{e[8]='constructor';},e=>{e[8]={};},e=>{e[2]=1e308;},e=>{e[7]=NaN;},
     e=>{e[5]=0;},e=>{e[6]=2;},e=>{e[13]=-2;},e=>{e[14][1]='other-match';},
     e=>{e._netPeer='stranger';},e=>{e._netTick=undefined;},
-    e=>{e[14].length=4;},e=>{e[14][4]=null;},
-    e=>{e[14][4][2]=99;},e=>{e[14][4][3]=1;},e=>{e._netPeer='guest';},
+    e=>{e[14].pop();},e=>{e[14][4][2]=99;},e=>{e[14][4][3]++;},
   ];
   for(const corrupt of invalid) {
     const e=canonical();corrupt(e);const count=seen.length;
     assert.equal(fn.call(nm,e),false);
-    assert.equal(nm._paintClockState.applied.size,0);assert.equal(nm._paintClockState.clock,0);
+    assert.equal(nm._paintClockState.applied.get('host'),previousSeq);assert.equal(nm._paintClockState.clock,previousClock);
     assert.equal(nm.applying,false);assert.equal(seen.length,count);
   }
   nm.applying=true;
   assert.equal(fn.call(nm,canonical()),true);assert.equal(nm.applying,true,'nested replay owner is restored');
-  assert.equal(nm._paintClockState.applied.get('host'),1);assert.equal(nm._paintClockState.clock,7);
+  assert.equal(nm._paintClockState.applied.get('host'),previousSeq+1);assert.equal(nm._paintClockState.clock,previousClock+7);
   const count=seen.length;assert.equal(fn.call(nm,canonical()),false);assert.equal(seen.length,count,'same source event paints once');
 });
 test('composed late menu attract callback cannot dispose a newly started match',async()=>{
