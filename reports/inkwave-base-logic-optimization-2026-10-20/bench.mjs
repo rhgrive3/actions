@@ -5,6 +5,7 @@ const res=sites.map(s=>({site:s,runs:[]}));
 const order=[];for(let r=0;r<+roundsS;r++){order.push(...(r%2?[...sites.keys()].reverse():[...sites.keys()]));}
 for(const i of order){
  const g=await openGame(sites[i],{warm:60});
+ let cdp=null;if(process.env.THROTTLE){cdp=await g.page.context().newCDPSession(g.page);await cdp.send('Emulation.setCPUThrottlingRate',{rate:+process.env.THROTTLE});}
  const r=await g.page.evaluate(frames=>{const game=probeG.game;game._skipRender=true;const ts=[];const R=window.__realNow;
   // characters only
   const C=game.match.actors[0].character.constructor.prototype;const cu=C.update;let ct=0;C.update=function(...a){const t=R();try{return cu.apply(this,a);}finally{ct+=R()-t;}};
