@@ -12,11 +12,11 @@ import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
 const dir = new URL('../runtime/audio/s3-real/', import.meta.url);
 const installed = JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json', import.meta.url),'utf8'));
 const original = JSON.parse(fs.readFileSync(new URL('../runtime/audio/real-s3-samples.json', import.meta.url),'utf8'));
-const gitBlobSha = bytes => crypto.createHash('sha1').update('blob '+bytes.length+'\\0').update(bytes).digest('hex');
+const gitBlobSha = bytes => crypto.createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
 
 test('every shipped 2022 MP3 is registered exactly, without guessing its game event',()=>{
   const files=fs.readdirSync(dir).filter(x=>x.endsWith('.mp3')).sort();
-  const listed=[...new Set(installed.clips.map(c=>c.file.replace(/^s3-real\\//,'')))].sort();
+  const listed=[...new Set(installed.clips.map(c=>c.file.replace(/^s3-real\//,'')))].sort();
   assert.deepEqual(listed,files,'no orphan MP3 and no phantom asset');
   assert.equal(files.length,388);
   assert.equal(installed.clips.length,419);
@@ -29,7 +29,7 @@ test('every shipped 2022 MP3 is registered exactly, without guessing its game ev
   const seen=new Set();
   for(const file of EXTRA_SOURCE_FILES){
     assert.ok(!seen.has(file),'duplicate original file '+file);seen.add(file);
-    assert.match(file,/^[A-Za-z0-9_.+()-]+\\.mp3$/);
+    assert.match(file,/^[A-Za-z0-9_.+()-]+\.mp3$/);
     const id=sourceCueId(file),recipe=SOURCE_EXTRA_AUDIO[id];
     assert.equal(recipe?.sourceName,file);
     assert.deepEqual(recipe.events,['fire']);
@@ -102,8 +102,8 @@ test('real-only audio engine redirects absent kit events, but prefers a native r
 test('production runtime prefetches routed kit sounds and retains original audio-admission gate',()=>{
   const engine=fs.readFileSync(new URL('../runtime/audio/engine.mjs',import.meta.url),'utf8');
   const runtime=fs.readFileSync(new URL('../runtime/audio/runtime.mjs',import.meta.url),'utf8');
-  assert.match(engine,/sourceEventRoute\\(id,event\\)/);
-  assert.match(engine,/loader\\?\\.declares\\(id,event\\)===false/);
-  assert.match(runtime,/loader\\.ensure\\(extra,'fire'\\)/);
-  assert.match(runtime,/sourceEventRoute\\(kit,event\\)/);
+  assert.match(engine,/sourceEventRoute\(id,event\)/);
+  assert.match(engine,/loader\?\.declares\(id,event\)===false/);
+  assert.match(runtime,/loader\.ensure\(extra,'fire'\)/);
+  assert.match(runtime,/sourceEventRoute\(kit,event\)/);
 });
