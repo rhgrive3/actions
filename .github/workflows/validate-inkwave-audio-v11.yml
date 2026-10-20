@@ -45,4 +45,11 @@ jobs:
           node scripts/check-inkwave-patches.mjs --quick
           node scripts/build-inkwave.mjs inkwave-public /tmp/inkwave-audio-v11-site
           node scripts/check-inkwave-startup-budget.mjs /tmp/inkwave-audio-v11-site
-          INKWAVE_BUILT_SITE=/tmp/inkwave-audio-v11-site node --experimental-vm-modules --test patches/splatoon3/tests/audio-ink-vac-confirmed-source.test.mjs
+          # Node ignores the production HTML import map. For emitted-site testing,
+          # resolve 'three' to the exact shipped vendor files (no npm substitute).
+          site=/tmp/inkwave-audio-v11-site
+          mkdir -p "$site/node_modules/three"
+          printf '%s\n' '{"name":"three","type":"module","exports":{".":"./build/three.module.js","./addons/*":"./jsm/*"}}' > "$site/node_modules/three/package.json"
+          ln -s ../../vendor/three/build "$site/node_modules/three/build"
+          ln -s ../../vendor/three/jsm "$site/node_modules/three/jsm"
+          INKWAVE_BUILT_SITE="$site" node --experimental-vm-modules --test patches/splatoon3/tests/audio-ink-vac-confirmed-source.test.mjs
