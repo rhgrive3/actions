@@ -83,7 +83,8 @@ test('only explicit kit routes can consume a named supplemental sound',()=>{
   assert.equal(specialActionAudioEvent('booyahBomb','cheer'),null,'a cheer is NOT a full-charge ready cue');
   assert.equal(sourceEventRoute('special:krakenRoyale','open'),null,'no 2022 Kraken original can be inferred');
   assert.equal(sourceEventRoute('sub:inkMine','fire'),null,'ground mine must not borrow flying-bomb clip');
-  assert.equal(sourceEventRoute('special:tentaMissiles','open'),null,'long flying-bomb loop must not play as a throw one-shot');
+  assert.equal(sourceEventRoute('special:tentaMissiles','open'),'source:Sp_MultiMissile_Attach_00','explicit activation cue remains routed to its registered attachment recording');
+  assert.equal(sourceEventRoute('sub:bomb','fire'),null,'long flying-bomb loop must not play as a throw one-shot');
   assert.equal(sourceEventRoute('sub:pointSensor','fire'),null,'marker flight sample must not play after landing');
 });
 
