@@ -45,4 +45,6 @@ Node >=22、`esbuild@0.28.2`、`playwright@1.62.1`、`ws@8`、Chromium が必要
 
 インク重ね描画は、視錐台内の描画領域のうち `_pushQuad` が一度でも書き込んだチャートの三角形だけを元の順で描く。判定と失敗時の扱いは [チャート選択の記録](../../reports/inkwave-native-ink-charts-2026-10-19.md) を参照。
 
+全ステージの自動検査は [地形整合性の記録](../../reports/inkwave-terrain-integrity-2026-10-20.md) を参照。固定OBJ/MTLから全三角形・BVH・paint chartとWebGL被覆を検査する。`GroundGrass*` は構造的地面で、古い私的変換物が装飾として除外していた場合は再変換が必要。原典の穴や境界を箱で埋める処理は行わない。
+
 本体の品質変更は CPU 塗り・物理・ナビを保持する。塗り atlas の再配置は元の三角形に paint UV を再生成し、テクスチャ表現だけを変更する。オンラインではモデル/チャートと native runtime の fingerprint を検査する。元のガチ4ルール placement/geometry は未復元で、到達可能な Pnt 地形上のローカル調整値を使う。

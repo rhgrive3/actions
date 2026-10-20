@@ -1,0 +1,1296 @@
+{
+  "schema": 1,
+  "baselineSha": "b77b51df6a4e6683ca23a213c8ba4b0bc2f0c8ae",
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "static": {
+    "schema": 1,
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "stages": [
+      {
+        "id": "scorch",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "vertices": 319113,
+        "displayTriangles": 279299,
+        "activeTriangles": 279299,
+        "collisionTriangles": 133737,
+        "sourceDegenerateTriangles": 5,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 45171,
+        "gridCells": 1469898,
+        "sourceGeometrySha256": "6b3a5553bca96325739458bda929d98162ffec171ca9027f628fc42a05c020f1",
+        "sourceIndexSha256": "5b1b09b385449222d67469610144f7bd43e021282a8e7cee86753c385398b7e6",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 4925.685705
+      },
+      {
+        "id": "hagglefish",
+        "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "vertices": 356466,
+        "displayTriangles": 246063,
+        "activeTriangles": 246063,
+        "collisionTriangles": 163625,
+        "sourceDegenerateTriangles": 9,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 65827,
+        "gridCells": 1401174,
+        "sourceGeometrySha256": "407d902f37c8cc3aae7f2646a17cc6ccc14812fd1487ad74dabdc2131a986c7a",
+        "sourceIndexSha256": "cb48b929d893d37021ca8a4e3f1646e48be69d123420bc73a99ff99df876d718",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 4629.287166000001
+      },
+      {
+        "id": "inkblot",
+        "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "vertices": 299938,
+        "displayTriangles": 205075,
+        "activeTriangles": 205075,
+        "collisionTriangles": 132645,
+        "sourceDegenerateTriangles": 9,
+        "structuralGroundObjects": 2,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 22429,
+        "gridCells": 2058406,
+        "sourceGeometrySha256": "3d8c8097f2cadb7fb2ecbd83b695feda0cee74273a936760e1a1a023117f72ec",
+        "sourceIndexSha256": "9e276391c7256c3ad116a1cecf1ba5a45caad26457f7ab429a67245a4e997aec",
+        "displayTopologyUnchanged": true,
+        "restored": [
+          {
+            "name": "Fld_Upland03_Edge3_1__GroundGrass",
+            "sourceTriangles": 66,
+            "collisionTriangles": 66
+          },
+          {
+            "name": "Fld_Upland03_grassSoil_1__GroundGrassBase",
+            "sourceTriangles": 336,
+            "collisionTriangles": 336
+          }
+        ],
+        "conversionAndAuditMilliseconds": 3536.054875
+      },
+      {
+        "id": "mako",
+        "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "vertices": 602231,
+        "displayTriangles": 343399,
+        "activeTriangles": 310038,
+        "collisionTriangles": 151620,
+        "sourceDegenerateTriangles": 2,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 51216,
+        "gridCells": 3190694,
+        "sourceGeometrySha256": "72765c57df2b98f807476ffd91dc4929f44a65362ce39b7bcaed325c29200adc",
+        "sourceIndexSha256": "5d53dee901f04422ec070b2750d8ac03369fde40803eadddb9f6b6eb6bcb75d6",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 5139.453937999999
+      },
+      {
+        "id": "brinewater",
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "vertices": 510342,
+        "displayTriangles": 405943,
+        "activeTriangles": 354463,
+        "collisionTriangles": 157826,
+        "sourceDegenerateTriangles": 4,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 62213,
+        "gridCells": 4927794,
+        "sourceGeometrySha256": "841281a5b07ef334001130e65bbb08e735b7b95c7a5d5ac638767e09415dd020",
+        "sourceIndexSha256": "24080f757871be5c784fba542df027dbdcbe5406f9dc73bf3b1984dcc70e74a4",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 6342.983534000003
+      },
+      {
+        "id": "airport",
+        "sourceSha256": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+        "vertices": 256788,
+        "displayTriangles": 201941,
+        "activeTriangles": 159625,
+        "collisionTriangles": 157842,
+        "sourceDegenerateTriangles": 42,
+        "structuralGroundObjects": 3,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 54747,
+        "gridCells": 2444614,
+        "sourceGeometrySha256": "6e20078f3187d4fe732b48030bd00d561699a9e6d65b6cd3cf8a30fd4b8482ac",
+        "sourceIndexSha256": "8ce83d70b8cad70f3d45ab87fa18bd00b110c8bb931b7f0dd3fa68d6fea219d9",
+        "displayTopologyUnchanged": true,
+        "restored": [
+          {
+            "name": "Fld_Propeller00_shape247_1__GroundGrassFlowerBed_va",
+            "sourceTriangles": 134,
+            "collisionTriangles": 134
+          },
+          {
+            "name": "Fld_Propeller00_shape248_1__GroundGrassBaldSpot",
+            "sourceTriangles": 344,
+            "collisionTriangles": 344
+          },
+          {
+            "name": "Fld_Propeller00_shape253_1__GroundGrassFlowerBed",
+            "sourceTriangles": 60,
+            "collisionTriangles": 60
+          }
+        ],
+        "conversionAndAuditMilliseconds": 4207.998723999997
+      },
+      {
+        "id": "barnacle",
+        "sourceSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+        "vertices": 322386,
+        "displayTriangles": 251011,
+        "activeTriangles": 183750,
+        "collisionTriangles": 177607,
+        "sourceDegenerateTriangles": 34,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 75857,
+        "gridCells": 1461683,
+        "sourceGeometrySha256": "d55775fb099806aeed29cd2426d5e2ce651481317237997a46b1ec2bdc7f7419",
+        "sourceIndexSha256": "6e94a01f276bd5750063144c68fea1e84000a56906b25b38fd824cd84d40cdff",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 5075.415808000002
+      },
+      {
+        "id": "bluefin",
+        "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+        "vertices": 1024229,
+        "displayTriangles": 774445,
+        "activeTriangles": 177135,
+        "collisionTriangles": 176771,
+        "sourceDegenerateTriangles": 12,
+        "structuralGroundObjects": 4,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 54497,
+        "gridCells": 2414277,
+        "sourceGeometrySha256": "158163465d73766bb2183dbb34a08cdd9eb909fe70a93f2760426bbde311770f",
+        "sourceIndexSha256": "6c06c6c243873a694dc97c2d243de501336256362f209583804f7909ad490ca4",
+        "displayTopologyUnchanged": true,
+        "restored": [
+          {
+            "name": "FldObj_Ruins03PntStage_pCube194877_FloorEarthBrown2_GroundGrassMoss__GroundGrassMoss",
+            "sourceTriangles": 114,
+            "collisionTriangles": 114
+          },
+          {
+            "name": "FldObj_Ruins03PntStage_pCube194877_FloorEarthBrown2_GroundGrassMoss_va__GroundGrassMoss_va",
+            "sourceTriangles": 86,
+            "collisionTriangles": 86
+          },
+          {
+            "name": "Fld_Ruins03_Fld_Ruins03_Stage_RengaCenter_RengaBlock_Base_group222238126_Floor_GroundGrassMoss_GroundGrassMoss__GroundGrassMoss",
+            "sourceTriangles": 29,
+            "collisionTriangles": 29
+          },
+          {
+            "name": "Fld_Ruins03_Fld_Ruins03_Stage_RengaCenter_RengaBlock_Base_group222238126_Floor_GroundGrassMoss_GroundGrassMoss_va__GroundGrassMoss_va",
+            "sourceTriangles": 36,
+            "collisionTriangles": 36
+          }
+        ],
+        "conversionAndAuditMilliseconds": 6784.1361650000035
+      },
+      {
+        "id": "crableg",
+        "sourceSha256": "6f0c27703e7fbe5a02e442431ee88d811ac794849966a82a27b1f96b2c4578c7",
+        "vertices": 845431,
+        "displayTriangles": 611658,
+        "activeTriangles": 323014,
+        "collisionTriangles": 187949,
+        "sourceDegenerateTriangles": 6,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 48934,
+        "gridCells": 3206773,
+        "sourceGeometrySha256": "13caf84da244f76815fb92a5a470867ac0a4d2c5127f972be7faa718f770fd07",
+        "sourceIndexSha256": "4cbde288305a7df06eb098b1bb93bb2b1bcd8217f0daed9dff9777d0b81e22da",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 5776.760955999998
+      },
+      {
+        "id": "eeltail",
+        "sourceSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+        "vertices": 1056904,
+        "displayTriangles": 763146,
+        "activeTriangles": 436528,
+        "collisionTriangles": 212015,
+        "sourceDegenerateTriangles": 27,
+        "structuralGroundObjects": 1,
+        "bvhNodes": 63581,
+        "bvhLeaves": 31791,
+        "paintFaces": 67583,
+        "gridCells": 2460682,
+        "sourceGeometrySha256": "1fa4633041b644e169c81f98f8c20eb21b0d3a7373e38c16f21795d13273df5f",
+        "sourceIndexSha256": "4427805aac3be3caead8a1e74050b517583a738d28cdd2ecdf968e2e90f9bba6",
+        "displayTopologyUnchanged": true,
+        "restored": [
+          {
+            "name": "Fld_District00_Ground_2__GroundGrass00",
+            "sourceTriangles": 46,
+            "collisionTriangles": 46
+          }
+        ],
+        "conversionAndAuditMilliseconds": 7932.015393999995
+      },
+      {
+        "id": "flounder",
+        "sourceSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+        "vertices": 855868,
+        "displayTriangles": 633427,
+        "activeTriangles": 260950,
+        "collisionTriangles": 154160,
+        "sourceDegenerateTriangles": 8,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 42139,
+        "gridCells": 1205511,
+        "sourceGeometrySha256": "cef9ab66d06b65fbbae33e56f025676816d8c0f5d1f92275f411390364fef643",
+        "sourceIndexSha256": "e489e9dbec4f93a4f4857983b43baeadc006dd5ef4fd3265ab7e9dfa30300e38",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 6054.534077999997
+      },
+      {
+        "id": "hammerhead",
+        "sourceSha256": "acc6983d529932832fbd9c5bb54c5e96fe43ccf3c9aaf5c21d3ca653af8359de",
+        "vertices": 266447,
+        "displayTriangles": 172334,
+        "activeTriangles": 172334,
+        "collisionTriangles": 73272,
+        "sourceDegenerateTriangles": 6,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 16383,
+        "bvhLeaves": 8192,
+        "paintFaces": 25870,
+        "gridCells": 4582553,
+        "sourceGeometrySha256": "34f67fe1f7e6cc5b0df0107ca6b8ef363c3eb1050da119fe51f6280ecf3ba1af",
+        "sourceIndexSha256": "db5fc2e362dbe1ff67e9c32fb6fb87122c25d94d0167d07f2cfb8a38059d769a",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 2370.0982709999953
+      },
+      {
+        "id": "humpback",
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "vertices": 254995,
+        "displayTriangles": 174089,
+        "activeTriangles": 174089,
+        "collisionTriangles": 149539,
+        "sourceDegenerateTriangles": 8,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 38087,
+        "gridCells": 8934342,
+        "sourceGeometrySha256": "74c4bee43ee8a30c9b9ac3d28766adb58d67ef9c53afc3f228e80eda394f3321",
+        "sourceIndexSha256": "048bc3fe44f98026149fe156e6ad56778db119f4d51ac49a9212d1aa6a24d6df",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 2730.546583000003
+      },
+      {
+        "id": "manta",
+        "sourceSha256": "8b7a26e0f71ed69c055e42ead154bd34bc08532ba89a95bea3a813766716ac1a",
+        "vertices": 595742,
+        "displayTriangles": 317651,
+        "activeTriangles": 224043,
+        "collisionTriangles": 130605,
+        "sourceDegenerateTriangles": 16,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 71877,
+        "gridCells": 8675817,
+        "sourceGeometrySha256": "b2ad7275cfd16c10b6cd493383747f042a7f3f445aa7d29789dc295a4f62f49e",
+        "sourceIndexSha256": "d7a4101f83fa02d4fae77e06c8e264dcb1b90a6cf173f1461f1e5fcc6e2ebabb",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 6478.370306000012
+      },
+      {
+        "id": "mincemeat",
+        "sourceSha256": "11cecf76146211ac7fff04394763b0a1d883605f78136b4aee59b8e8dd076d23",
+        "vertices": 398287,
+        "displayTriangles": 252705,
+        "activeTriangles": 210305,
+        "collisionTriangles": 146903,
+        "sourceDegenerateTriangles": 0,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 80578,
+        "gridCells": 4844952,
+        "sourceGeometrySha256": "144d1863f668a3e652fb8429f0ca18e5f61274f19b97c192815a26a4100bac68",
+        "sourceIndexSha256": "a3058fcec373bf8e90f849ed609ccdbd6060f55ee3c958c64ed25e635e63a514",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 5912.751831000001
+      },
+      {
+        "id": "museum",
+        "sourceSha256": "ffe207e9b3d3eb4fc482ca45887fea1f1a131fdb2e2a0403535e1f281453bad1",
+        "vertices": 361197,
+        "displayTriangles": 241259,
+        "activeTriangles": 178371,
+        "collisionTriangles": 127075,
+        "sourceDegenerateTriangles": 11,
+        "structuralGroundObjects": 2,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 47927,
+        "gridCells": 3174471,
+        "sourceGeometrySha256": "5aa85f10499f3db113a6b1e1375a9be32337b658bb378041b3e03ecc49abe9a3",
+        "sourceIndexSha256": "89c07bb7caa9e9aedeba00b7095669f0fc9fbb7c990331752bf6c1992a49efe0",
+        "displayTopologyUnchanged": true,
+        "restored": [
+          {
+            "name": "Fld_Pivot03_MDU_1842_1__GroundGrassLittleSoil",
+            "sourceTriangles": 28,
+            "collisionTriangles": 28
+          },
+          {
+            "name": "Fld_Pivot03_TestField951_pCube2207_1__DVGroundGrass",
+            "sourceTriangles": 58,
+            "collisionTriangles": 58
+          }
+        ],
+        "conversionAndAuditMilliseconds": 5475.308529000002
+      },
+      {
+        "id": "robo",
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+        "vertices": 867672,
+        "displayTriangles": 586371,
+        "activeTriangles": 169233,
+        "collisionTriangles": 107020,
+        "sourceDegenerateTriangles": 20,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 23685,
+        "gridCells": 1181405,
+        "sourceGeometrySha256": "4ed1879b2afbe8de194556fea81b907e35f717f1f0b71dfa122e84cf81a4faa8",
+        "sourceIndexSha256": "824107952bf753efce1d3d78b11ce0b7cdba2bfd540eb71f57beb1d97a12898f",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 7442.84706700001
+      },
+      {
+        "id": "shipshape",
+        "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+        "vertices": 388864,
+        "displayTriangles": 339404,
+        "activeTriangles": 335944,
+        "collisionTriangles": 310976,
+        "sourceDegenerateTriangles": 24,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 65535,
+        "bvhLeaves": 32768,
+        "paintFaces": 140825,
+        "gridCells": 14114614,
+        "sourceGeometrySha256": "25bc00a46b88933a4387a565c1a2c18274b415a3349a8d7cadcd7d4e046bcbde",
+        "sourceIndexSha256": "aba91206edcca4a613b536a905453649089848dd3164a39a4184067896cd9f1b",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 12741.615946999998
+      },
+      {
+        "id": "sturgeon",
+        "sourceSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+        "vertices": 269203,
+        "displayTriangles": 188196,
+        "activeTriangles": 188196,
+        "collisionTriangles": 127210,
+        "sourceDegenerateTriangles": 0,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 32767,
+        "bvhLeaves": 16384,
+        "paintFaces": 29598,
+        "gridCells": 2259705,
+        "sourceGeometrySha256": "09ee842c7a903e3c7c3d66633811b82954f5a2943cdef5541b8d6886d53806b4",
+        "sourceIndexSha256": "ec5ba6a2b305320dd236522a50ae458daafa45ef2801d4bc1f1acc05ff138b5d",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 4481.471642000004
+      },
+      {
+        "id": "umami",
+        "sourceSha256": "9d7c261d324d514148499d2ab804b49b05e0394bdc74e46b6e6afb0fff664d3b",
+        "vertices": 486036,
+        "displayTriangles": 390222,
+        "activeTriangles": 300986,
+        "collisionTriangles": 228919,
+        "sourceDegenerateTriangles": 9,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 65535,
+        "bvhLeaves": 32768,
+        "paintFaces": 114928,
+        "gridCells": 3682116,
+        "sourceGeometrySha256": "68389fa1b3c35b41bed0e869babaed2e52ec31b1d37a9ba06fed249ddfd47254",
+        "sourceIndexSha256": "c215c544c3b9571c1f07374ee2c2dee55a73da935d97c620251c5568bbf04cc7",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 8730.299257000006
+      },
+      {
+        "id": "undertow",
+        "sourceSha256": "a32cff26b1a142d31e7658ebc48f213059b3ea42e86d32ed12cb80de5b03d046",
+        "vertices": 375948,
+        "displayTriangles": 259698,
+        "activeTriangles": 139248,
+        "collisionTriangles": 70322,
+        "sourceDegenerateTriangles": 46,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 16383,
+        "bvhLeaves": 8192,
+        "paintFaces": 20135,
+        "gridCells": 2601065,
+        "sourceGeometrySha256": "7114f08cd139899169d1fb03d11886ece178377517e9849a953b4dd27d6354e5",
+        "sourceIndexSha256": "13999c0493d7d404558506789d917e228814001ae6a1ee436d02366380f5f4f6",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 4271.431073
+      },
+      {
+        "id": "urchin",
+        "sourceSha256": "17f3c5645505f75d58b99d5333cb8d2f710e230a3278c18a64e47258c2ec942c",
+        "vertices": 534545,
+        "displayTriangles": 407073,
+        "activeTriangles": 202908,
+        "collisionTriangles": 196759,
+        "sourceDegenerateTriangles": 16,
+        "structuralGroundObjects": 3,
+        "bvhNodes": 33069,
+        "bvhLeaves": 16535,
+        "paintFaces": 56161,
+        "gridCells": 2573178,
+        "sourceGeometrySha256": "7205dcc6201080350bffb359de1eb92b5429b87c72950518d669b7d75cdd7dc9",
+        "sourceIndexSha256": "98e3678e175c10c5a6f021a01a6f946c3e669a444452ccb4792f7dc060717430",
+        "displayTopologyUnchanged": true,
+        "restored": [
+          {
+            "name": "FldObj_Crank02_PackPnt_GroundGrass_1__GroundGrassLittleSoil_va",
+            "sourceTriangles": 32,
+            "collisionTriangles": 32
+          },
+          {
+            "name": "Fld_Crank02_Ground92_1__GroundGrassLittleSoil_va",
+            "sourceTriangles": 450,
+            "collisionTriangles": 450
+          },
+          {
+            "name": "Fld_Crank02_TopSlitLight126_1__GroundGrassLittleSoil_np",
+            "sourceTriangles": 32,
+            "collisionTriangles": 32
+          }
+        ],
+        "conversionAndAuditMilliseconds": 8071.911990000008
+      },
+      {
+        "id": "wahoo",
+        "sourceSha256": "0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db",
+        "vertices": 221348,
+        "displayTriangles": 162088,
+        "activeTriangles": 157845,
+        "collisionTriangles": 102194,
+        "sourceDegenerateTriangles": 2,
+        "structuralGroundObjects": 0,
+        "bvhNodes": 24163,
+        "bvhLeaves": 12082,
+        "paintFaces": 44152,
+        "gridCells": 1962869,
+        "sourceGeometrySha256": "cf728393867de7b2899a396867253e986d6e05cccbf9493a4cfcf41cf9441ac6",
+        "sourceIndexSha256": "0248442acc1ee57fa2e3e176e107aefc77628e991c5a5d7b7552bea18c1120b6",
+        "displayTopologyUnchanged": true,
+        "restored": [],
+        "conversionAndAuditMilliseconds": 4288.058168999996
+      }
+    ],
+    "unavailable": [
+      {
+        "id": "lemuria",
+        "reason": "公開モデルが見つからないため、現在プレイできません。"
+      },
+      {
+        "id": "mahi",
+        "reason": "固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。"
+      }
+    ],
+    "status": "passed"
+  },
+  "delta": [
+    {
+      "id": "inkblot",
+      "before": {
+        "vertices": 299938,
+        "triangles": 205075,
+        "collisionTriangles": 132243,
+        "bvhNodes": 32767,
+        "paintFaces": 22311
+      },
+      "after": {
+        "vertices": 299938,
+        "triangles": 205075,
+        "collisionTriangles": 132645,
+        "bvhNodes": 32767,
+        "paintFaces": 22429
+      },
+      "arrayBytesBefore": 23482566,
+      "arrayBytesAfter": 23655146,
+      "gridCellsBefore": 1911554,
+      "gridCellsAfter": 2058406
+    },
+    {
+      "id": "airport",
+      "before": {
+        "vertices": 256788,
+        "triangles": 201941,
+        "collisionTriangles": 157304,
+        "bvhNodes": 32767,
+        "paintFaces": 54428
+      },
+      "after": {
+        "vertices": 256788,
+        "triangles": 201941,
+        "collisionTriangles": 157842,
+        "bvhNodes": 32767,
+        "paintFaces": 54747
+      },
+      "arrayBytesBefore": 24192469,
+      "arrayBytesAfter": 24235554,
+      "gridCellsBefore": 2435961,
+      "gridCellsAfter": 2444614
+    },
+    {
+      "id": "bluefin",
+      "before": {
+        "vertices": 1024229,
+        "triangles": 774445,
+        "collisionTriangles": 176506,
+        "bvhNodes": 32767,
+        "paintFaces": 54410
+      },
+      "after": {
+        "vertices": 1024229,
+        "triangles": 774445,
+        "collisionTriangles": 176771,
+        "bvhNodes": 32767,
+        "paintFaces": 54497
+      },
+      "arrayBytesBefore": 56797849,
+      "arrayBytesAfter": 56844833,
+      "gridCellsBefore": 2384253,
+      "gridCellsAfter": 2414277
+    },
+    {
+      "id": "eeltail",
+      "before": {
+        "vertices": 1056904,
+        "triangles": 763146,
+        "collisionTriangles": 211969,
+        "bvhNodes": 63489,
+        "paintFaces": 67563
+      },
+      "after": {
+        "vertices": 1056904,
+        "triangles": 763146,
+        "collisionTriangles": 212015,
+        "bvhNodes": 63581,
+        "paintFaces": 67583
+      },
+      "arrayBytesBefore": 61006608,
+      "arrayBytesAfter": 61042914,
+      "gridCellsBefore": 2430264,
+      "gridCellsAfter": 2460682
+    },
+    {
+      "id": "museum",
+      "before": {
+        "vertices": 361197,
+        "triangles": 241259,
+        "collisionTriangles": 126989,
+        "bvhNodes": 32767,
+        "paintFaces": 47855
+      },
+      "after": {
+        "vertices": 361197,
+        "triangles": 241259,
+        "collisionTriangles": 127075,
+        "bvhNodes": 32767,
+        "paintFaces": 47927
+      },
+      "arrayBytesBefore": 26715103,
+      "arrayBytesAfter": 26809227,
+      "gridCellsBefore": 3085851,
+      "gridCellsAfter": 3174471
+    },
+    {
+      "id": "urchin",
+      "before": {
+        "vertices": 534545,
+        "triangles": 407073,
+        "collisionTriangles": 196245,
+        "bvhNodes": 32767,
+        "paintFaces": 56045
+      },
+      "after": {
+        "vertices": 534545,
+        "triangles": 407073,
+        "collisionTriangles": 196759,
+        "bvhNodes": 33069,
+        "paintFaces": 56161
+      },
+      "arrayBytesBefore": 38137845,
+      "arrayBytesAfter": 38214278,
+      "gridCellsBefore": 2539305,
+      "gridCellsAfter": 2573178
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "scope": "all pinned native source geometry; no authentic texture/material or whole-game FPS claim",
+    "renderSourceSha256": "937f17488b34e4881c96dabb06628a59ff94d96ca8f96bf6ce066e508c1c73a6",
+    "stages": [
+      {
+        "id": "scorch",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "hagglefish",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "inkblot",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "mako",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "brinewater",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "airport",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "barnacle",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "bluefin",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [
+          {
+            "x": 12,
+            "z": 6,
+            "y": 3
+          },
+          {
+            "x": -12,
+            "z": -6,
+            "y": 3
+          },
+          {
+            "x": 18,
+            "z": 6,
+            "y": 3
+          },
+          {
+            "x": -18,
+            "z": -6,
+            "y": 3
+          }
+        ],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "crableg",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "eeltail",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "flounder",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "hammerhead",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "humpback",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "manta",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "mincemeat",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "museum",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "robo",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "shipshape",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "sturgeon",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "umami",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "undertow",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "urchin",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      },
+      {
+        "id": "wahoo",
+        "raySamples": 96,
+        "categories": {
+          "floor": 32,
+          "wall": 32,
+          "slope": 32
+        },
+        "central": [],
+        "memoryAfterDispose": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "geometryOnly": true,
+        "framesChecked": 16,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 14
+      }
+    ],
+    "errors": [],
+    "procedural": [
+      {
+        "id": "tidewater",
+        "framesChecked": 8,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 7
+      },
+      {
+        "id": "kelpline",
+        "framesChecked": 8,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 7
+      },
+      {
+        "id": "halyard",
+        "framesChecked": 8,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 7
+      },
+      {
+        "id": "cargo",
+        "framesChecked": 8,
+        "maxChangedPixels": 0,
+        "nonblankFrames": 7
+      }
+    ]
+  },
+  "game": {
+    "status": "passed",
+    "scope": "actual composed Game fixed-step simulation, controlled local movement, original meshes and low-quality textures; Chromium SwiftShader; no retail/hardware FPS claim",
+    "errors": [],
+    "movement": {
+      "rows": [
+        {
+          "sign": -1,
+          "hz": 30,
+          "start": [
+            -12,
+            3,
+            -6
+          ],
+          "end": [
+            -14.466000000000001,
+            3,
+            -6
+          ],
+          "grounded": true
+        },
+        {
+          "sign": -1,
+          "hz": 60,
+          "start": [
+            -12,
+            3,
+            -6
+          ],
+          "end": [
+            -14.466000000000001,
+            3,
+            -6
+          ],
+          "grounded": true
+        },
+        {
+          "sign": -1,
+          "hz": 120,
+          "start": [
+            -12,
+            3,
+            -6
+          ],
+          "end": [
+            -14.466000000000001,
+            3,
+            -6
+          ],
+          "grounded": true
+        },
+        {
+          "sign": 1,
+          "hz": 30,
+          "start": [
+            12,
+            3,
+            6
+          ],
+          "end": [
+            14.466000000000001,
+            3,
+            6
+          ],
+          "grounded": true
+        },
+        {
+          "sign": 1,
+          "hz": 60,
+          "start": [
+            12,
+            3,
+            6
+          ],
+          "end": [
+            14.466000000000001,
+            3,
+            6
+          ],
+          "grounded": true
+        },
+        {
+          "sign": 1,
+          "hz": 120,
+          "start": [
+            12,
+            3,
+            6
+          ],
+          "end": [
+            14.466000000000001,
+            3,
+            6
+          ],
+          "grounded": true
+        }
+      ],
+      "actors": 8,
+      "bots": 7,
+      "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "geometry": {
+        "vertices": 1024229,
+        "triangles": 774445,
+        "collisionTriangles": 176771,
+        "bvhNodes": 32767,
+        "paintFaces": 54497
+      }
+    },
+    "views": [
+      {
+        "name": "center",
+        "frame": 159,
+        "calls": 230,
+        "triangles": 374366,
+        "points": 0,
+        "lines": 0
+      },
+      {
+        "name": "overhead",
+        "frame": 163,
+        "calls": 451,
+        "triangles": 729594,
+        "points": 0,
+        "lines": 0
+      },
+      {
+        "name": "negative-court",
+        "frame": 167,
+        "calls": 697,
+        "triangles": 1121056,
+        "points": 0,
+        "lines": 0
+      },
+      {
+        "name": "positive-court",
+        "frame": 171,
+        "calls": 942,
+        "triangles": 1514036,
+        "points": 0,
+        "lines": 0
+      }
+    ],
+    "reload": {
+      "newWorld": true,
+      "id": "bluefin",
+      "geometryUnchanged": true,
+      "centralSupport": true,
+      "actors": 8
+    }
+  },
+  "limits": [
+    "Opaque geometry-only WebGL oracle for the all-stage suite; original low-quality textures only in Bluefin actual Game.",
+    "No hardware/mobile FPS or browser RSS measurement; no long-duration soak.",
+    "Retail 11.3.0 collision, paint masks, units and moving placements unverified.",
+    "Visual-only disappearing-floor symptom not reproduced."
+  ],
+  "ci": {
+    "status": "pending PR checks"
+  }
+}

@@ -7,6 +7,10 @@ on:
       - 'scripts/build-inkwave.mjs'
       - 'scripts/lib/inkwave-native-stages.mjs'
       - 'scripts/check-inkwave-source-placement-browser.mjs'
+      - 'scripts/check-inkwave-terrain.mjs'
+      - 'scripts/check-inkwave-terrain-browser.mjs'
+      - 'scripts/check-inkwave-terrain-game.mjs'
+      - 'scripts/fetch-inkwave-terrain-sources.py'
       - '.github/workflows/validate-inkwave-native-stage5.yml'
   workflow_dispatch:
 concurrency:
@@ -53,9 +57,45 @@ jobs:
         run: node scripts/build-inkwave.mjs inkwave-public work/site
       - name: Verify diagnostic placement conversion in a real Worker
         run: node scripts/check-inkwave-source-placement-browser.mjs work/site work/placement-evidence/worker.json
+      - name: Verify terrain render/collision coverage and reload in real WebGL
+        run: node scripts/check-inkwave-terrain-browser.mjs work/site --synthetic work/terrain-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: inkwave-diagnostic-placement-worker
           path: work/placement-evidence/
           if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-terrain-geometry
+          path: work/terrain-evidence/
+          if-no-files-found: ignore
+  source-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - name: Fetch all pinned original OBJ and MTL inputs privately
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/fetch-inkwave-terrain-sources.py .codex-stage-sources/terrain-ci
+      - name: Audit every playable source mesh, collision BVH and paint chart
+        run: node scripts/check-inkwave-terrain.mjs .codex-stage-sources/terrain-ci work/terrain-source-evidence/audit.json .codex-stage-sources/terrain-ci-derived
+      - run: node scripts/build-inkwave.mjs inkwave-public work/site
+      - name: Compare real source render and collision coverage in WebGL
+        run: node scripts/check-inkwave-terrain-browser.mjs work/site .codex-stage-sources/terrain-ci-derived work/terrain-source-evidence/browser
+      - name: Publish numeric receipts only; exclude third-party payloads
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-all-stage-terrain-source-summary
+          path: |
+            work/terrain-source-evidence/audit.json
+            work/terrain-source-evidence/browser/terrain-browser.json
+          if-no-files-found: error
