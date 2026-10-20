@@ -6,7 +6,7 @@ import {fixture} from './source-fixture.mjs';
 const source=fs.readFileSync(new URL('../../../scripts/check-inkwave-catalog-browser.mjs',import.meta.url),'utf8');
 const helpers=source.slice(source.indexOf('      class DisplayCharacter {'),source.indexOf('      const {CANONICAL_KITS}'));
 const original=source.slice(source.indexOf('      const torpedoGearContactChecks=[];'),source.indexOf('      const directSubChecks=[];'));
-assert.ok(original.includes('Torpedo first equipment and birth tick'));
+assert.ok(original.includes('one first gear plus birth packet'));
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 async function runProbe(broken=false,legacyContact=false){
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,adaptRuntime:(rel,code)=>{
@@ -33,7 +33,7 @@ test('exact Torpedo AP57 browser probe uses native session ownership, contact, H
  assert.deepEqual(catalogueSubChecks,[{source:'torpedo-splash',ap:57,wire:true,nativeContact:true,damage:6}]);
 });
 test('a Match in session.match reproduces the rejected first Torpedo tick',async()=>{
- await assert.rejects(runProbe(true),/Torpedo first equipment and birth tick/);
+ await assert.rejects(runProbe(true),/one first gear plus birth packet/);
 });
 
 test('legacy launch-ray fallback reproduces pre-contact terrain damage',{skip:!!process.env.INKWAVE_BUILT_SITE},async()=>{
