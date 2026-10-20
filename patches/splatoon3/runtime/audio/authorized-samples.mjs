@@ -6,7 +6,8 @@
 import { WEAPON_AUDIO, LOOP_EVENTS } from './weapon-recipes.mjs';
 import { KIT_AUDIO } from './kit-recipes.mjs';
 import { COMBAT_AUDIO } from './combat-recipes.mjs';
-const AUDIO_RECIPES={...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO};
+import { SOURCE_EXTRA_AUDIO } from './source-cue-registry.mjs';
+const AUDIO_RECIPES={...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO,...SOURCE_EXTRA_AUDIO};
 const EXT=/\.(wav|ogg|mp3|flac|m4a)$/i;
 const SAFE=/^[\w .()\-/]+$/;
 const MAX_CLIPS=1536;
