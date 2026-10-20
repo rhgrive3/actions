@@ -9,7 +9,8 @@ import { COMBAT_AUDIO } from './combat-recipes.mjs';
 import { SOURCE_EXTRA_AUDIO } from './source-cue-registry.mjs';
 const AUDIO_RECIPES={...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO,...SOURCE_EXTRA_AUDIO};
 const EXT=/\.(wav|ogg|mp3|flac|m4a)$/i;
-const SAFE=/^[\w .()\-/]+$/;
+// A shipped 2022 MP3 is named Wp_BombBomb_Octave+1_00.mp3. '+' is a safe literal in a local file segment.
+const SAFE=/^[\w .()+\-/]+$/;
 const MAX_CLIPS=1536;
 const MAX_FILE_BYTES=8*1024*1024;
 const DEFAULT_BYTES=24*1024*1024;
