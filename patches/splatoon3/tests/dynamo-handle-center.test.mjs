@@ -5,6 +5,12 @@ import fs from 'node:fs';
 const BEFORE_DYNAMO=fs.readFileSync(new URL('./fixtures/dynamo-before-model.txt',import.meta.url),'utf8');
 import { fixture } from './source-fixture.mjs';
 const ID='s3-roller-heavy';
+const sourceDynamo=JSON.parse(fs.readFileSync(new URL('../reference/roller-source-scale-2026-10-19.json',import.meta.url))).records.find(r=>r.id===ID);
+// Main now calibrates the model to the independently measured indexed source
+// width. Inspect authored coordinates in that basis; scaleWeaponDef deliberately
+// preserves the support hand's reach from the main grip along the weapon axis.
+const authoredScale=sourceDynamo.width/1.821;
+const authoredVector=(v,expected)=>Array.from(v.toArray()).forEach((x,i)=>assert.ok(Math.abs(x/authoredScale-expected[i])<1e-7));
 const exports="export {getWeaponDef} from './inkwave-public/src/game/character-weapons.js'; export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';";
 async function production(before=false){
  let state=123;
@@ -27,11 +33,12 @@ test('Dynamo handle and drum share the measured width midline, with unchanged so
  const b=d.drum.boundingBox,left=b.min.x+d.drumAt.x,right=b.max.x+d.drumAt.x;
  assert.ok(Math.abs((left+right)/2-d.gripR.pos.x)<1e-7,'grip centre meets drum width centre');
  assert.ok(Math.abs((left+right)/2-d.gripL.pos.x)<1e-7,'support grip uses same centre');
- assert.ok(Math.abs(right-left-1.821)<1e-6,'paint-calibrated width preserved');
- assert.deepEqual(Array.from(d.muzzle.toArray()),[-.37,0,1.13],'pre-existing logical muzzle is not recentered');
- assert.deepEqual(Array.from(d.fold.pivot.toArray()),[0,0,.88]);assert.equal(d.drumR,.19);
- assert.deepEqual(Array.from(d.gripR.pos.toArray()),[0,0,-.022]);
- assert.deepEqual(Array.from(d.gripL.pos.toArray()),[0,0,.14]);
+ assert.ok(Math.abs(right-left-sourceDynamo.width)<1e-6,'independent indexed source width preserved');
+ authoredVector(d.muzzle,[-.37,0,1.13]);
+ authoredVector(d.fold.pivot,[0,0,.88]);assert.ok(Math.abs(d.drumR/authoredScale-.19)<1e-7);
+ authoredVector(d.gripR.pos,[0,0,-.022]);
+ assert.equal(d.gripL.pos.x,0);assert.equal(d.gripL.pos.y,0);
+ assert.ok(Math.abs(d.gripL.pos.z-d.gripR.pos.z-.162)<1e-7,'support hand reach preserved');
 });
 
 test('only the measured Dynamo drum placement and separate drive assembly differ from main', {skip:!!process.env.INKWAVE_BUILT_SITE},async()=>{
@@ -41,7 +48,7 @@ test('only the measured Dynamo drum placement and separate drive assembly differ
   assert.equal(anchors(a),anchors(b),id+' anchors unchanged');
   if(id!==ID){assert.deepEqual(geos(a),geos(b),id+' exact geometry/attributes unchanged');continue;}
   assert.equal(a.drumAt.y,b.drumAt.y);assert.equal(a.drumAt.z,b.drumAt.z);
-  assert.equal(a.drumAt.x,-.37);assert.equal(b.drumAt.x,0);
+  assert.ok(Math.abs(a.drumAt.x/authoredScale+.37)<1e-7);assert.equal(b.drumAt.x,0);
   for(const key of ['bodyStatic','inkStatic','drum','drumCaps'])assert.equal(hash(a[key]),hash(b[key]),key+' unchanged');
   console.log('DYNAMO_BEFORE_AFTER_BUDGET '+JSON.stringify({before:{vertices:a.body.attributes.position.count,triangles:a.body.index.count/3},after:{vertices:b.body.attributes.position.count,triangles:b.body.index.count/3}}));
   assert.ok(b.parts.hinge.geo.index.count/3<16000,'bounded drive/support triangle budget');
@@ -51,16 +58,18 @@ test('only the measured Dynamo drum placement and separate drive assembly differ
 
 
 test('Dynamo copper stator occupies a separate drive axis behind the drum, not the end cap',async()=>{
- const f=await production(),d=f.getWeaponDef(ID),g=d.parts.hinge.geo,p=g.attributes.position,c=g.attributes.color,metal=g.attributes.aMat;
+ const f=await production(),d=f.getWeaponDef(ID),g=d.parts.hinge.geo,p=g.attributes.position.clone(),c=g.attributes.color,metal=g.attributes.aMat;
+ for(let i=0;i<p.array.length;i++)p.array[i]/=authoredScale;
+ const hingeZ=d.parts.hinge.pivot.z/authoredScale;
  const copper=new f.THREE.Color('#c27a3c'),q=[];
  for(let i=0;i<p.count;i++)if(Math.abs(c.getX(i)-copper.r)<1e-6&&Math.abs(c.getY(i)-copper.g)<1e-6&&Math.abs(c.getZ(i)-copper.b)<1e-6){
-  assert.equal(metal.getX(i),3,'copper remains metal');q.push([p.getX(i),p.getY(i),p.getZ(i)+d.parts.hinge.pivot.z]);
+  assert.equal(metal.getX(i),3,'copper remains metal');q.push([p.getX(i),p.getY(i),p.getZ(i)+hingeZ]);
  }
  assert.ok(q.length>500,'actual visible windings, not a metadata-only drive');
  const min=[0,1,2].map(k=>Math.min(...q.map(v=>v[k]))),max=[0,1,2].map(k=>Math.max(...q.map(v=>v[k])));
  assert.ok(Math.abs((min[2]+max[2])/2-.77)<.003,'measured drive axis at Z0.77');
  assert.ok(Math.abs((min[1]+max[1])/2)<.003,'coplanar drive construction');
- assert.ok(d.drumAt.z-max[2]>.12,'winding remains behind drum centre');
+ assert.ok(d.drumAt.z/authoredScale-max[2]>.12,'winding remains behind drum centre');
  assert.ok(min[0]>.91&&max[0]<1.15,'windings face outboard on their separate case');
  assert.ok(max[1]-min[1]>.43&&max[1]-min[1]<.47,'measured winding radial envelope');
  // The production build deliberately tree-shakes Raycaster. Intersect the
@@ -75,7 +84,7 @@ test('Dynamo copper stator occupies a separate drive axis behind the drum, not t
   }return hits.sort((a,b)=>b.x-a.x);
  };
  const firstFaceAt=(y,z)=>axialFacesAt(y,z)[0]?.index??-1;
- const steel=new f.THREE.Color('#a9abb1'),bearingHits=axialFacesAt(-.074,1.13-d.parts.hinge.pivot.z).filter(({index:i})=>Math.abs(c.getX(i)-steel.r)<1e-6&&Math.abs(c.getY(i)-steel.g)<1e-6&&Math.abs(c.getZ(i)-steel.b)<1e-6);
+ const steel=new f.THREE.Color('#a9abb1'),bearingHits=axialFacesAt(-.074,1.13-hingeZ).filter(({index:i})=>Math.abs(c.getX(i)-steel.r)<1e-6&&Math.abs(c.getY(i)-steel.g)<1e-6&&Math.abs(c.getZ(i)-steel.b)<1e-6);
  assert.ok(bearingHits.length>1,'real steel bearing faces intersect the radial support section');
  const bearingSpan=[Math.min(...bearingHits.map(h=>h.x)),Math.max(...bearingHits.map(h=>h.x))],gx=1.821/2;
  console.log('DYNAMO_BEARING_SUPPORT_SPAN '+JSON.stringify({radial:.074,span:bearingSpan,platePlanes:[gx-.015,gx+.165]}));
@@ -83,7 +92,7 @@ test('Dynamo copper stator occupies a separate drive axis behind the drum, not t
  assert.ok(bearingSpan[1]>gx+.165,'front fork bearing plate overlaps steel taper outside its hole');
  let visibleCopper=0;
  for(let k=0;k<24;k++){
-  const angle=k/24*Math.PI*2,hit=firstFaceAt(Math.cos(angle)*.204,.77-d.parts.hinge.pivot.z+Math.sin(angle)*.204);
+  const angle=k/24*Math.PI*2,hit=firstFaceAt(Math.cos(angle)*.204,.77-hingeZ+Math.sin(angle)*.204);
   if(hit>=0&&Math.abs(c.getX(hit)-copper.r)<1e-6&&Math.abs(c.getY(hit)-copper.g)<1e-6)visibleCopper++;
  }
  assert.ok(visibleCopper>=18,'stator opening exposes copper, not an opaque support plate: '+visibleCopper+'/24');

@@ -1291,6 +1291,15 @@
     "Visual-only disappearing-floor symptom not reproduced."
   ],
   "ci": {
-    "status": "pending PR checks"
+    "pr": 1709,
+    "terrainRun": 39349200782,
+    "terrainHead": "b69102445a5911f94e84ffc53b39f8fb106bde7b",
+    "terrainJobs": {
+      "contracts": "success",
+      "placement-worker": "success",
+      "source-geometry": "success"
+    },
+    "all23SourceSummaryMatchesLocal": true,
+    "standardStatus": "baseline fixture repairs; final checks and merge recorded on PR"
   }
 }

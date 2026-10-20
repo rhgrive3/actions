@@ -205,17 +205,19 @@ test('a brush rests in the ready stance, both fists at the butt, head up past th
   }
 });
 
-test('shooters, dualies and brushes are 30% larger about the grip; other families are not', async () => {
+test('family grip scales and independently calibrated Roller width remain distinct', async () => {
   const api = await production(), { registry } = api, unscaled = [];
+  const rollerSource=JSON.parse(fs.readFileSync(new URL('../reference/roller-source-scale-2026-10-19.json',import.meta.url))).records.find(r=>r.id==='roller');
+  const rollerScale=rollerSource.width/1.5;
   for (const [id, k] of [['shooter', 1.3], ['s3-shooter-long', 1.3], ['dualies', 1.3], ['s3-maneuver-short', 1.3], ['s3-brush-normal', 1.3],
-    ['blaster', 1], ['charger', 1], ['roller', 1], ['s3-stringer-normal', 1], ['s3-shelter-normal', 1]]) {
+    ['blaster', 1], ['charger', 1], ['roller', rollerScale], ['s3-stringer-normal', 1], ['s3-shelter-normal', 1]]) {
     const ch = await rig(api, id), d = ch.weapon.def;
     assert.equal(d.modelScale ?? 1, k, `${id} model scale`);
     if (k === 1) unscaled.push(id);
     ch.dispose();
   }
   assert.equal(registry.weaponBehaviorFamily('s3-shelter-normal'), 'brella', 'brellas share the shooter model kind only');
-  assert.ok(unscaled.length === 5);
+  assert.ok(unscaled.length === 4);
 });
 
 test('standing still, the front (left) foot points straight ahead: shooter, brush and roller', async () => {
