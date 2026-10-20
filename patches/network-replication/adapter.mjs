@@ -28,7 +28,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs', 'outbound-queue.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -2648,8 +2648,10 @@ function canAllocateNetworkGhost(projectiles, actor) {
   if (rel === 'src/net/netmatch.js') {
     code = "import { packPaintTick, acceptPaintTick, forgetPaintPeer } from '../../patches/splatoon3/runtime/paint-packet-codec.mjs';\n" + code;
     patch('    this.s.tr?.broadcast(msg);',
-      '    this.s.tr?.broadcast(packPaintTick(this, msg));',
-      'negotiate lossless paint rows with current relay members');
+      '    const outboundTransport = this.s.tr;\n    this._sendTickResult = outboundTransport ? outboundTransport.broadcast(packPaintTick(this, msg)) !== false : false;',
+      'negotiate lossless paint rows with current relay members; report whether the transport accepted the tick');
+    // #1692: queued event rows leave `out` only once the transport accepted the packet carrying them.
+    code = "import { installOutboundQueue } from '../../patches/network-replication/outbound-queue.mjs';\n" + code + '\ninstallOutboundQueue(NetMatch);\n';
     patch('  onMessage(from, d) {',
       '  onMessage(from, d) {\n    d = acceptPaintTick(this, from, d);\n    if (!d) return;',
       'decode bounded paint rows before unchanged sender and HLC admission');

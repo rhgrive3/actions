@@ -266,8 +266,10 @@ export function relayFrameFits(text) {
   // data keep it and retry (NetMatch._sendTick).
   _raw(s) {
     const ws = this.ws;
-    if (!ws || ws.readyState !== 1) return false;
-    if (!relayFrameFits(s) || ws.bufferedAmount > MAX_RELAY_BACKLOG_BYTES) return false;
+    this.refused = null;   // why the last frame was not sent: 'closed' | 'size' | 'backlog'
+    if (!ws || ws.readyState !== 1) { this.refused = 'closed'; return false; }
+    if (!relayFrameFits(s)) { this.refused = 'size'; return false; }
+    if (ws.bufferedAmount > MAX_RELAY_BACKLOG_BYTES) { this.refused = 'backlog'; return false; }
     this.bytesOut += s.length;
     ws.send(s);
     return true;

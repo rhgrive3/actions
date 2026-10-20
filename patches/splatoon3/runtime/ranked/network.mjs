@@ -50,6 +50,7 @@ export function installRankedNetwork(api) {
     const tr = this.s.tr, broadcast = tr?.broadcast;
     if (!broadcast) return tick.call(this);
     tr.broadcast = d => {
+      let undo = null;
       if (d.k === 't') {
         this.rankedTick = (this.rankedTick || 0) + 1;
         if (this.isHost && this.rankedTick % 4 === 0) {
@@ -62,10 +63,16 @@ export function installRankedNetwork(api) {
           d.rki = { match: this.cfg.id, id: actorId(a), seq: this.rankedInputSeq = (this.rankedInputSeq || 0) + 1,
             fire: !!cmd.fire, throw: !!a._rankedThrowPending, aim: cmd.aim || [0, 0, 1], special: a.specialActive?.id ?? null,
             specialDeployed: a.specialActive?.id === 'storm' && a.specialActive?.t > 0, clamDrop: a._rankedClamDrop || 0 };
+          // The throw edge is one-shot input for the host: consume it, but give it back if the
+          // transport refuses this packet (#1692) so the next tick still carries it.
+          const owed = a._rankedThrowPending;
           a._rankedThrowPending = false;
+          undo = () => { if (owed) a._rankedThrowPending = true; };
         }
       }
-      return broadcast.call(tr, d);
+      const sent = broadcast.call(tr, d);
+      if (sent === false) undo?.();
+      return sent;
     };
     try { return tick.call(this); } finally { tr.broadcast = broadcast; }
   };

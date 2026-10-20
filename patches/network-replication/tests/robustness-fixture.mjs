@@ -92,7 +92,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
     ${includeMatch ? "export { BossHazards } from './inkwave-public/src/boss/bossHazards.js'; export { RankedWorld } from './patches/splatoon3/runtime/ranked/world.mjs';" : ''}
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/net/netmatch.js';
-    ${includeSession ? "export { NetSession } from './inkwave-public/src/net/session.js';" : ''}
+    ${includeSession ? "export { NetSession } from './inkwave-public/src/net/session.js'; export { Transport } from './inkwave-public/src/net/transport.js';" : ''}
     ${rankedNetwork ? "export { installRankedNetwork } from './patches/splatoon3/runtime/ranked/network.mjs';" : ''}
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
