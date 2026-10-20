@@ -71,7 +71,7 @@ export async function fixture({ diorama = false, match = false, character = fals
     ${match ? "export * from './inkwave-public/src/game/match.js';" : ''}
     export * from './inkwave-public/src/core/input.js';
     export * from './inkwave-public/src/net/netmatch.js';
-    ${session ? "export * from './inkwave-public/src/net/session.js'; export {Transport} from './inkwave-public/src/net/transport.js'; export {getPlatformLifecycle} from './patches/local-quality/platform-lifecycle.mjs';" : ''}
+    ${session ? "export * from './inkwave-public/src/net/session.js'; export {Transport, PROTO, COMPAT} from './inkwave-public/src/net/transport.js'; export {getPlatformLifecycle} from './patches/local-quality/platform-lifecycle.mjs';" : ''}
     ${ranked ? "export {installRanked, buildFrame} from './patches/splatoon3/runtime/ranked/install.mjs'; export {RankedEngine} from './patches/splatoon3/runtime/ranked/engine.mjs';" : ''}
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';

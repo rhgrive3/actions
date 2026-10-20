@@ -1,0 +1,27 @@
+name: INKWAVE relay tests
+on:
+  pull_request:
+    paths:
+      - "server/**"
+      - ".github/workflows/inkwave-relay-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - ".github/workflows/inkwave-relay-tests.yml"
+permissions:
+  contents: read
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check relay syntax
+        run: node --check server/src/index.js
+      - name: Relay admission, authorization and traffic tests
+        working-directory: server
+        run: npm test

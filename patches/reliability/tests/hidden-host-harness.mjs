@@ -11,6 +11,10 @@ const {installDisconnectFidelity} = await import(process.env.INKWAVE_CONTROLS_SI
   ? pathToFileURL(path.resolve(process.env.INKWAVE_CONTROLS_SITE, 'patches/splatoon3/runtime/disconnect-fidelity.mjs')).href
   : '../../splatoon3/runtime/disconnect-fidelity.mjs');
 let ms=1000000;
+// The relay meters each sender against Date.now(). This harness runs virtual minutes of play in
+// a tight loop, so the relay must see the same virtual clock or its traffic quota (#1645)
+// would measure real milliseconds and eject the "players". Scoped to pair() .. close().
+const realNow=Date.now;
 class Socket {
  constructor(){this.handlers=new Map();this.sent=[];this.live=true;}
  send(data){this.sent.push(data);this.deliver?.(data);}
@@ -19,6 +23,7 @@ class Socket {
  close(){if(!this.live)return;this.live=false;this.handlers.get('close')?.();this.closed?.();}
 }
 export async function pair(){
+ Date.now=()=>ms;
  const relay=new RoomDurableObject({},{}),participants=[];
  async function client(name){const socket=new Socket();relay.handleSession(socket,name);const welcome=JSON.parse(socket.sent.find(x=>x.startsWith('{')&&JSON.parse(x).t==='welcome'));
   const f=await fixture({match:true,network:true,session:true,clock:{now:()=>ms}}),s=new f.NetSession();installDisconnectFidelity({NetMatch:f.NetMatch,G:f.G});s.myId=welcome.id;s.hostId=welcome.host;s.state='match';s.code='room';s._members=new Map(welcome.members.map(x=>[x.id,x.name]));s.lobby.players=welcome.members.map(x=>({...x,host:x.id===s.hostId,team:0,ready:true}));
@@ -34,7 +39,7 @@ export async function pair(){
  }
  const host=await client('host'),guest=await client('guest');for(const p of participants){p.s._members=new Map([...relay.members].map(([id,m])=>[id,m.name]));p.s.lobby.players=[...relay.members].map(([id,m])=>({id,name:m.name,host:id===relay.hostId,team:0,ready:true}));}
  function frames(seconds,which=participants,{timers=true}={}){for(let i=0;i<seconds*60;i++){ms+=1000/60;if(timers)for(const p of participants)p.runTimers();for(const p of which)p.frame();}}
- for(const p of participants)p.frame();return {relay,host,guest,frames,close(){for(const p of participants)p.close();}};
+ for(const p of participants)p.frame();return {relay,host,guest,frames,close(){Date.now=realNow;for(const p of participants)p.close();}};
 }
 
 export const advanceMillis = value => { ms += value; };
