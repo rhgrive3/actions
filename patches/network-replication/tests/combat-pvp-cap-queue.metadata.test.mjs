@@ -7,21 +7,52 @@ import test from 'node:test';
 // Read the actual sibling implementation, never a copied production fixture.
 const source = fs.readFileSync(new URL('../combat-provenance.mjs', import.meta.url), 'utf8');
 const tokenImport = "import { bindSubBirthCommit, closeSubBirthCommit } from './sub-birth-commit.mjs';";
-assert.equal(source.split(tokenImport).length, 2, 'exactly one audited dependency');
-const executable = source.replace(tokenImport, '').replaceAll('export function ', 'function ');
+const auditedImports = [tokenImport,
+  "import { SPRINKLER } from '../splatoon3/runtime/kit-sprinkler.mjs';",
+  "import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSprinklerScope } from './sprinkler-contact-commit.mjs';",
+];
+let executable = source;
+for (const dependency of auditedImports) {
+  assert.equal(executable.split(dependency).length, 2, 'exactly one audited dependency: ' + dependency);
+  executable = executable.replace(dependency, '');
+}
+executable = executable.replaceAll('export function ', 'function ');
+// Read only the literal damage field from the actual sibling source; do not import native runtime.
+const sprinklerSource = fs.readFileSync(new URL('../../splatoon3/runtime/kit-sprinkler.mjs', import.meta.url), 'utf8');
+const specAnchor = 'export const SPRINKLER=Object.freeze({';
+assert.equal(sprinklerSource.split(specAnchor).length, 2);
+const spec = sprinklerSource.split(specAnchor)[1].split('\n});')[0];
+const damageFields = [...spec.matchAll(/\bdropletDamage\s*:\s*(\d+)\s*[,}]/g)];
+assert.equal(damageFields.length, 1, 'one literal native sprinkler damage field');
+const nativeDropletDamage = Number(damageFields[0][1]);
+assert.equal(nativeDropletDamage, 20, 'current native source damage, not old wire40');
+const contactBoundary = `
+const SPRINKLER = Object.freeze({ get dropletDamage() { throw Error('cap-only boundary: SPRINKLER damage source=${nativeDropletDamage}'); } });
+function registerReceiverSprinkler(){throw Error('cap-only boundary: registerReceiverSprinkler');}
+function consumeReceiverSprinklerContact(){throw Error('cap-only boundary: consumeReceiverSprinklerContact');}
+function receiverSprinklerScope(){throw Error('cap-only boundary: receiverSprinklerScope');}
+`;
+
 assert.doesNotMatch(executable, /\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,
   'new capabilities require a fresh metadata boundary audit');
 function run(body, direct = false) {
   assert.equal(executable.split('function flush(').length, 2, 'unique audited direct boundary');
   const prefix = direct ? executable.slice(0, executable.indexOf('function flush(')) : executable;
   assert.ok(prefix.length > 0);
-  const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + prefix +
+  const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + contactBoundary + prefix +
     '\nfunction bindSubBirthCommit(){} function closeSubBirthCommit(){}\n' +
     '(' + body.toString() + ')()';
-  // Token binding is explicitly stubbed. No host objects/functions enter this realm.
+  // Token binding is a metadata stub; every new Sprinkler capability throws if touched.
+  // No host objects/functions enter this realm.
   const context = vm.createContext(Object.create(null), {codeGeneration:{strings:false, wasm:false}});
   return JSON.parse(JSON.stringify(new vm.Script(code).runInContext(context, {timeout:1000})));
 }
+
+// Prove every new dependency is rejecting, rather than a permissive no-op.
+assert.throws(() => run(() => SPRINKLER.dropletDamage), /cap-only boundary: SPRINKLER damage source=20/);
+assert.throws(() => run(() => registerReceiverSprinkler()), /cap-only boundary: registerReceiverSprinkler/);
+assert.throws(() => run(() => consumeReceiverSprinklerContact()), /cap-only boundary: consumeReceiverSprinklerContact/);
+assert.throws(() => run(() => receiverSprinklerScope()), /cap-only boundary: receiverSprinklerScope/);
 
 test('PvP caps preserve exact boundaries, proof accounting, Boss and unrelated routes', () => {
   const rows = run(directCases, true);

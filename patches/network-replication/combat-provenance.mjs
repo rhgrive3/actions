@@ -1,3 +1,5 @@
+import { SPRINKLER } from '../splatoon3/runtime/kit-sprinkler.mjs';
+import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSprinklerScope } from './sprinkler-contact-commit.mjs';
 // Correlate owner-authenticated hit *claims* with independent ordered owner
 // attack events before changing victim HP or host Boss HP. This is a low-cost
 // plausibility gate, not a claim that an untrusted client cannot forge its own
@@ -125,7 +127,7 @@ function record(nm,from,packet,t,acceptedSub=null) {
     if(!Array.isArray(r)||r.length<4 || !v3(r.slice(1,4)))continue;
     if(ownerActor(nm,from,r[0]))poses.set(r[0],r.slice(1,4));
   }
-  const store=s.proofs.get(from)||[];
+  const store=s.proofs.get(from)||[];let acceptedProof=null;
   for(let i=0;i<Math.min(packet.e.length,256);i++) {
     const candidate=proofFromEvent(nm,from,packet.e[i],poses,packet.ts,t,acceptedSub);
     if(!candidate || store.some(p=>p.key===candidate.key))continue;
@@ -135,9 +137,9 @@ function record(nm,from,packet,t,acceptedSub=null) {
     let recent=0;
     for(const shot of store)if(shot.actor===candidate.actor && t-shot.at<1)recent++;
     if(recent>=rate)continue;
-    store.push(candidate);
+    store.push(candidate);if(acceptedSub)acceptedProof=candidate;
   }
-  if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));
+  if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return acceptedProof;
 }
 function rayNear(p,target,margin=5) {
   const d=difference(target,p.origin),along=dot(d,p.unit);
@@ -223,7 +225,7 @@ function oversizedPvpSpecial(d,type) {
   return type==='pvp' && ((d?.w==='storm' && d.d>160) ||
     (d?.w==='krakenRoyale' && d.d>120));
 }
-function take(nm,from,d,type,t) {
+function take(nm,from,d,type,t,sprinklerScope=null) {
   if(oversizedPvpSpecial(d,type))return false;
   const actor=ownerActor(nm,from,d.a),target=actualTarget(nm,type,d);
   if(!actor || !v3(target) || !equippedCause(actor,d,type))return false;
@@ -238,6 +240,7 @@ function take(nm,from,d,type,t) {
     // single network claim can never supply the old arbitrary 2000 HP.
     if(d.d>800)return false;
   }
+  if(type==='pvp'&&d.w==='sprinkler')return consumeReceiverSprinklerContact(nm,from,d,t,sprinklerScope);
   const s=state(nm);prune(s,t);
   const shots=s.proofs.get(from)||[];
   for(const p of shots) {
@@ -284,23 +287,24 @@ function enqueue(nm,from,d,type,t) {
   const claim=type==='pvp' ? {k:'hit',m:d.m,a:d.a,v:d.v,l:d.l,h:d.h,seq:d.seq,
     d:d.d,w:d.w,g:d.g,kb:d.kb,bg:d.bg}
     : {k:'bhit',m:d.m,a:d.a,d:d.d,weak:d.weak,w:d.w,c:d.c,l:d.l,q:d.q};
-  arr.push({type,d:claim,at:t});
+  arr.push({type,d:claim,at:t,sprinklerScope:d.w==='sprinkler'?receiverSprinklerScope(nm,from,d.a):null});
   s.pending.set(from,arr);
 }
-export function combatAdmission(nm,from,d,type,t=now()) {
+export function combatAdmission(nm,from,d,type,t=now(),sprinklerScope=null) {
   if(!nm || nm._disposed || !d || (type!=='boss'&&type!=='pvp'))return false;
   const s=state(nm);prune(s,t);
   const a=ownerActor(nm,from,d.a);
   if(!a || !matchIdOk(nm,d) || !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1)return false;
-  return take(nm,from,d,type,t);
+  return take(nm,from,d,type,t,sprinklerScope);
 }
-function flush(nm,from,t,oldHit,oldBoss) {
+function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
   const s=state(nm),items=s.pending.get(from);
   if(!items?.length)return;
   const still=[];
   for(const item of items) {
     if(t-item.at>PENDING_AGE)continue;
-    if(!combatAdmission(nm,from,item.d,item.type,t)) {still.push(item);continue;}
+    if(item.type==='pvp'&&item.d.w==='sprinkler'&&(typeof receiptAllowed!=='function'||!receiptAllowed.call(nm,item.d,from)))continue;
+    if(!combatAdmission(nm,from,item.d,item.type,t,item.sprinklerScope)) {still.push(item);continue;}
     if(item.type==='pvp')oldHit.call(nm,item.d,from);
     else if(oldBoss?.call(nm,from,item.d))nm.match.boss.remoteHit(item.d);
   }
@@ -313,11 +317,13 @@ export function installCombatProvenance(NetMatch,context={}) {
   const oldTick=P._tick,oldHit=P._hit,oldMessage=P.onMessage;
   const oldBoss=P._acceptBossHit,oldLeave=P.onLeave,oldDispose=P.dispose;
   // One callback per installed prototype, not per owner packet.
-  const commitSubBirth=function(receipt,event) {
+  const notifySprinkler=function(from){flush(this,from,now(),oldHit,oldBoss,context.hitReceiptAllowed);};
+  const commitSubBirth=function(receipt,event,bomb) {
     const t=now();
-    record(this,receipt.from,{e:[event],ts:receipt.packetTime,a:[[receipt.nid,...receipt.pose]]},t,receipt);
+    const accepted=record(this,receipt.from,{e:[event],ts:receipt.packetTime,a:[[receipt.nid,...receipt.pose]]},t,receipt);
+    if(accepted&&receipt.sourceKind==='native-sprinkler')registerReceiverSprinkler(this,bomb,receipt,context.G,notifySprinkler,PENDING_AGE,MAX_PENDING);
     // Hits may precede delayed FIFO playback; retry only when birth commits.
-    flush(this,receipt.from,t,oldHit,oldBoss);
+    flush(this,receipt.from,t,oldHit,oldBoss,context.hitReceiptAllowed);
   };
   P._tick=function(from,d) {
     bindSubBirthCommit(this,commitSubBirth);
@@ -326,7 +332,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     if(this.peers?.get(from)?.lastTs===d?.ts && finite(d.ts) && d.ts>before) {
       const t=now();
       record(this,from,d,t);
-      flush(this,from,t,oldHit,oldBoss);
+      flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed);
     }
     return result;
   };
@@ -338,6 +344,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     // before proof consumption or pending hit-ID reservation. Missing context
     // is fail-closed, never permission to bypass that policy.
     if(typeof context.hitPayloadAllowed!=='function' || !context.hitPayloadAllowed(d))return;
+    if(d.w==='sprinkler'&&(d.d!==SPRINKLER.dropletDamage||typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
     const t=now();
     // Only incoming remote owner claims are deferred; internally retried
     // local receipts still require a previously accepted attack proof.

@@ -623,11 +623,47 @@ try {
           const raw=source==='angleShooter'?40:20,expected=Math.floor(raw*gearCurve(ap,1,.75,.5)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8,'native direct resistance '+source+' '+ap);directSubChecks.push({source,ap,damage:hp-v.hp});
         }
         for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57]){
+          if(source==='sprinkler'){
+            const packets=[],acks=[],ticks=[];
+            const V=THREE.Vector3,wall={id:0,solid:true,center:new V(0,2,3),half:new V(10,2,.2),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
+            const level={blocks:[wall],faces:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;}},physics=new api.Physics(level);
+            const worlds=[];
+            const activate=w=>Object.assign(G,{netm:w.nm,match:w.match,actors:[w.o,w.v],projectiles:w.projectiles,time:w.time,level,physics});
+            const endpoint=id=>{
+              const o=makeActor('shooter',1),v=makeActor('shooter',2);Object.assign(o,{team:0,owner:'direct-owner',netLife:0});Object.assign(v,{team:1,owner:'direct-victim',netLife:0,invuln:0});o.pos.set(0,0,0);v.pos.set(200,0,0);o.aimDir.set(0,-.9,.435889894);equipDirect(v,ap);o.weapon={...o.weapon,sub:'sprinkler'};o.weaponRunner.reset();
+              const projectiles=new originalProjectiles.constructor({add(){},remove(){}}),tr={sendTo(_to,p){if(p.k==='hit')packets.push(JSON.parse(JSON.stringify(p)));if(p.k==='hit_ack')acks.push(JSON.parse(JSON.stringify(p)));return true;},broadcast(p){if(p.k==='t'&&id==='direct-owner')ticks.push(JSON.parse(JSON.stringify(p)));if(p.k==='hit_ack')acks.push(JSON.parse(JSON.stringify(p)));return true;}};
+              const session={myId:id,hostId:'direct-owner',isHost:id==='direct-owner',tr,_members:new Map([['direct-owner',{}],['direct-victim',{}]])},match={actors:[o,v],playing:()=>true,state:'playing',time:180};
+              const nm=new NetMatch(session,{id:'direct-sprinkler-native',map:'reef'}),w={o,v,nm,match,projectiles,time:0};activate(w);nm.bind(match);session.match=nm;worlds.push(w);return w;
+            };
+            const originalProjectiles=G.projectiles,tx=endpoint('direct-owner'),rx=endpoint('direct-victim');
+            try{
+              activate(tx);tx.projectiles.throwBomb(tx.o);const bomb=tx.projectiles.bombs.find(b=>b.owner===tx.o);check(bomb?.s3Resolved?.spec?.id==='sprinkler'&&tx.o.weaponRunner.s3Sub?.id==='sprinkler','native resolved sprinkler');check(tx.nm._sendTick()===true,'sprinkler birth tick');
+              const birth=ticks[0]?.e?.find(e=>e[1]==='b'&&e[11]==='sprinkler');check(birth?.length===16,'tagged actual sprinkler birth');
+              activate(rx);rx.nm.onMessage('direct-owner',ticks[0]);await new Promise(resolve=>setTimeout(resolve,200));rx.time+=.2;activate(rx);rx.nm.update(.2);check(rx.projectiles.bombs.some(b=>b.ghost&&b.owner===rx.o),'receiver creates native sprinkler');
+              let placed=false,previous=0;
+              for(let frame=0;frame<180&&!acks.length;frame++){
+                await new Promise(resolve=>setTimeout(resolve,17));
+                const st=bomb.s3Sprinkler;if(!placed&&frame>50&&st?.drops.length){const d=st.drops.find(d=>d.pos.y>.15&&d.pos.y<1.7);if(d){tx.v.pos.set(d.pos.x,0,d.pos.z);rx.v.pos.copy(tx.v.pos);placed=true;}}
+                tx.time+=1/60;activate(tx);tx.projectiles.update(1/60);if(frame%10===0)tx.nm._sendTick();
+                rx.time+=1/60;activate(rx);if(frame%10===0)rx.nm.onMessage('direct-owner',ticks.at(-1));rx.nm.update(1/60);rx.projectiles.update(1/60);
+                while(previous<packets.length){const packet=packets[previous++];check(packet.w==='sprinkler'&&packet.d===20,'native generated spray20');const hp=rx.v.hp;
+                  rx.nm.onMessage('foreign',packet);check(rx.v.hp===hp,'foreign native spray rejected');rx.nm.onMessage('direct-owner',{...packet,w:'unknown-sub'});check(rx.v.hp===hp,'unknown native spray rejected');
+                  rx.nm.onMessage('direct-owner',{...packet,d:40});check(rx.v.hp===hp&&!rx.nm._combatProvenance?.pending.get('direct-owner')?.some(x=>x.d.h===packet.h),'raw40 cannot reserve native20 ID');
+                  rx.nm.onMessage('direct-owner',packet);
+                }
+              }
+              const expected=ap===57?10:20;check(acks.length===1&&acks[0].d===expected&&rx.v.hp===100-expected,'native receiver contact and ACK agree');
+              const packet=packets.find(p=>p.h===acks[0].h),hp=rx.v.hp;rx.nm.onMessage('direct-owner',packet);check(rx.v.hp===hp,'native spray duplicate inert');directSubChecks.push({source,ap,wire:true,nativeContact:true,damage:100-rx.v.hp});
+            }finally{for(const w of worlds){activate(w);w.nm.dispose();w.projectiles.clear();}G.projectiles=originalProjectiles;G.netm=null;G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};G.physics=new api.Physics(G.level);}
+            continue;
+          }
           G.projectiles.clear();
           const makePair=()=>{
             const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='direct-owner';v.owner='direct-victim';
             o.team=0;v.team=1;v.invuln=0;o.netLife=v.netLife=0;o.pos.set(0,0,0);v.pos.set(0,0,2);o.aimDir.set(0,0,1);
-            equipDirect(v,ap);equipDirect(o,57);o.weapon={...o.weapon,sub:source};return {o,v};
+            equipDirect(v,ap);equipDirect(o,57);o.weapon={...o.weapon,sub:source};o.weaponRunner.reset();
+            if(source==='sprinkler')check(o.weaponRunner.s3Sub?.id===source,'runner selected equipped sprinkler');
+            return {o,v};
           };
           const sender=makePair(),receiver=makePair();let packet,ack;const ticks=[];
           const bind=(pair,myId,tr)=>{
@@ -641,9 +677,11 @@ try {
             // Native equipped birth and ordered owner tick; never fabricate provenance.
             const born=G.projectiles.throwBomb(sender.o);
             check(!!(source==='angleShooter'?born:G.projectiles.bombs.find(b=>b.owner===sender.o)),'native direct-sub birth');
+            if(source==='sprinkler'){const b=G.projectiles.bombs.find(b=>b.owner===sender.o);check(b?.s3Sub?.id===source&&b?.s3Resolved?.spec?.id===source,'birth resolves equipped sprinkler, not stale suction');}
             check(tx._sendTick()===true&&ticks.length===1,'native direct-sub owner tick');
             const isBirth=e=>source==='angleShooter'?e[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='spawn'&&e[5]?.subId===source:e[1]==='b'&&e[2]===1&&e[3]==='bomb'&&e[11]===source;
             check(ticks[0].e.some(isBirth),'native direct-sub event recorded');
+            // Raw40 is a wire policy probe; native sprinkler contact above is20.
             tx.sendHit(sender.o,sender.v,40,source);check(packet?.d===40,'raw direct hit on wire');
             G.projectiles.clear();
             rx=bind(receiver,'direct-victim',{sendTo:(_id,p)=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;},broadcast:p=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;}});

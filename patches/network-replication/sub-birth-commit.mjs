@@ -1,3 +1,4 @@
+import { closeReceiverSprinklers } from './sprinkler-contact-commit.mjs';
 // Receiver-private admission metadata. Never read authority from packet fields.
 // Geometry, damage policy and proof expiry remain owned by combat-provenance.
 const states = new WeakMap();
@@ -9,7 +10,7 @@ export function bindSubBirthCommit(nm,commit) {
   if (!live(nm,s)) { s={match:nm.match,epoch:nm.cfg?.id,events:new WeakMap(),commit};states.set(nm,s); }
   else s.commit=commit;
 }
-export function closeSubBirthCommit(nm) { states.delete(nm); }
+export function closeSubBirthCommit(nm) { states.delete(nm);closeReceiverSprinklers(nm); }
 export function stageAcceptedSubBirth(nm,from,event,packetTime,ownerTick) {
   const s=states.get(nm);
   if(!live(nm,s)||!Array.isArray(event)||event.length!==8||event[1]!=='ac'||event[2]!=='sub'||event[5]?.phase!=='spawn')return false;
@@ -70,6 +71,6 @@ export function commitCreatedSprinklerBirth(nm,from,event,bomb) {
     bomb.s3GhostResolved?.spec?.id!=='sprinkler'||bomb._netBorn!==event[0]||bomb._netBornTick!==event._netTick||bomb._netPeer!==t.peer)return false;
   // ghostBomb returns the newly appended native record, never a reused bomb.
   // Duplicate calls for the same event are refused by consumed WeakMap entry.
-  s.commit.call(nm,t.receipt,event);
+  s.commit.call(nm,t.receipt,event,bomb);
   return true;
 }
