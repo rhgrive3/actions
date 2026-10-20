@@ -6,6 +6,12 @@ const row=(i=0)=>[i/60,'s',i*.003,-2.5,8,1.56,0,.412,0,0,0,0,0,1,['inkwave-paint
 const rows=()=>Array.from({length:40},(_,i)=>row(i));
 test('JSON roundtrip preserves every value, sender-independent ordering and duplicates',()=>{const r=rows();r.splice(3,0,r[0]);r.push([.5,'foreign',{owner:'untrusted',value:7}]);const p=encode(r);assert.ok(p);assert.deepEqual(decode(JSON.parse(JSON.stringify(p))),r);assert.equal(r[0][0],0);});
 test('wire dictionary preserves safe-integer overflow HLC strings verbatim',()=>{const r=rows();r[2][14][2]='90071992547409930000001';assert.deepEqual(decode(encode(r)),r);});
+test('negotiated JSON paint packets retain compressed contact depth exactly',()=>{
+ const peers=pair();peers.start();const t=tick();
+ for(const e of t.e){e[5]=2.8;e[8]='ink-contact';e[11]=1;e[12]=1.5/(1.2*2.8)-1;}
+ const wire=JSON.parse(JSON.stringify(peers.nodes.a.packTick(t)));
+ assert.ok(wire.pe);assert.deepEqual(peers.nodes.b.acceptTick('a',wire),t);
+});
 test('empty, unknown or larger encodings retain legacy fallback',()=>{assert.equal(encode([]),null);assert.equal(encode([[0,'x']]),null);assert.equal(encode([row()]),null);assert.equal(encode(Array.from({length:65},(_,i)=>{const r=row(i);r[5]=i;return r;})),null);});
 for(const [name,mutate]of[
  ['unknown version',p=>p[0]='v2'],['row count',p=>p[2]=Array(513).fill(p[2][0])],['dictionary count',p=>p[1]=Array(65).fill(p[1][0])],['negative ref',p=>p[2][0][1]=-1],['fractional ref',p=>p[2][0][1]=.5],['missing ref',p=>p[2][0][1]=64],['long string',p=>p[1][0][9]='x'.repeat(1025)],['nonfinite',p=>p[2][0][2]=Infinity],['huge number',p=>p[2][0][2]=1e13],['unknown row tag',p=>p[2][0][0]=2],['wrong shape',p=>p[1][0].pop()],['extra shape',p=>p[2][0].push(8)],['prototype key',p=>p[2].push([0,[0,'x',JSON.parse('{"__proto__":{"polluted":true}}')]])],['depth',p=>{let v=0;for(let i=0;i<10;i++)v=[v];p[2].push([0,[0,'x',v]]);}]

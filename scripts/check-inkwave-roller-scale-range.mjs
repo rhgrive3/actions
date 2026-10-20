@@ -51,7 +51,7 @@ try{
     if(!a.weaponRunner.rolling)throw Error('Native controller did not enter rolling');
     G.paint.clear();G.projectiles.clear();
     const start=a.pos.clone(), events=[],splat=G.paint.splat;
-    G.paint.splat=function(at,r,team,o){if(o?.footprint==='ink-contact')events.push({at:at.toArray(),r,heading:o.stretch?.toArray()});return splat.call(this,at,r,team,o);};
+    G.paint.splat=function(at,r,team,o){if(o?.footprint==='ink-contact')events.push({at:at.toArray(),r,heading:o.stretch?.toArray(),amount:o.stretchAmt});return splat.call(this,at,r,team,o);};
     try{a.ink=100;g.debug.step(1500);}
     finally{G.paint.splat=splat;g.debug.fire(false);g.debug.key('KeyW',false);}
     const gameplayPng=G.renderer.domElement.toDataURL('image/png').split(',')[1];
@@ -76,15 +76,15 @@ try{
     a.character.root.updateMatrixWorld(true);
     const w=a.character.weapon,box=w.def.drum.boundingBox;
     const centre=w.drum.localToWorld(box.min.clone().add(box.max).multiplyScalar(.5));
-    const event=events.at(-1),front=new Vector3(...event.at).addScaledVector(new Vector3(...event.heading),.6*event.r);
+    const event=events.at(-1),front=new Vector3(...event.at).addScaledVector(new Vector3(...event.heading),.6*event.r*(1+event.amount));
     const m=w.drum.matrixWorld.elements,drumWidth=(box.max.x-box.min.x)*Math.hypot(m[0],m[2]);
     const halfHeight=7.5,halfWidth=halfHeight*G.renderer.domElement.width/G.renderer.domElement.height;
     const view=new OrthographicCamera(-halfWidth,halfWidth,halfHeight,-halfHeight,.1,100),cz=a.pos.z-3;
-    view.position.set(a.pos.x,30,cz-4);view.lookAt(a.pos.x,0,cz);
+    view.up.set(0,0,1);view.position.set(a.pos.x,30,cz);view.lookAt(a.pos.x,0,cz);
     G.renderer.setRenderTarget(null);G.renderer.render(G.scene,view);
     G.renderer.domElement.id='roller-scale-canvas';
     return {layout:G.level.layout.id,start:start.toArray(),end:a.pos.toArray(),face:f.id,
-      floorTag:G.level.blocks[f.block].tag,drumWidth,paintHalf:event.r,
+      floorTag:G.level.blocks[f.block].tag,drumWidth,paintHalf:event.r,contactDepth:1.2*event.r*(1+event.amount),
       gpuMinWidth:Math.min(...widths),gpuMaxWidth:Math.max(...widths),rows,holes,
       contactError:Math.hypot(centre.x-front.x,centre.z-front.z),events:events.length,
       debugFixedTicks:180,controller:'shipped KeyW + held fire',inspectionCameraOnly:true,
@@ -98,6 +98,7 @@ try{
   assert.equal(m.layout,'range');assert.equal(m.floorTag,'floor:roller');
   assert.equal(m.holes,0);assert.ok(m.rows>40);assert.ok(m.contactError<1e-5);
   assert.ok(Math.abs(m.drumWidth-2.5712)<1e-4);assert.equal(m.paintHalf,2.8);
+  assert.ok(Math.abs(m.contactDepth-1.5)<1e-10);
   assert.ok(m.gpuMaxWidth>5.2&&m.gpuMaxWidth<6);
   assert.equal(receipt.errors.length,0);
   receipt.passed=true;console.log(JSON.stringify(m));

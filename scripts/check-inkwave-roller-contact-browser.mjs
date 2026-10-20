@@ -15,6 +15,10 @@ const overlay=new Map(baselineRef?['main-weapon-catalog.mjs','weapons-fidelity.m
 // A declared diagnostic mutant retains the old authored model sizes. This is
 // deliberately not labelled a reconstruction of an entire historical build.
 const withoutModelScale=process.argv.includes('--without-model-scale');
+const ticksIndex=process.argv.indexOf('--ticks');
+const simulationTicks=ticksIndex<0?150:Number(process.argv[ticksIndex+1]);
+if(!Number.isSafeInteger(simulationTicks)||simulationTicks<30||simulationTicks>150)throw Error('Expected --ticks 30..150');
+const overhead=process.argv.includes('--overhead');
 if(withoutModelScale)overlay.set('/patches/splatoon3/runtime/roller-source-scale.mjs',
   Buffer.from('export function rollerSourceModelScale(){return 1;}'));
 const site = path.resolve(process.argv[2]),
@@ -63,7 +67,7 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("http://127.0.0.1:" + server.address().port + "/probe");
   const result = await page.evaluate(
-    async ({ id, hz }) => {
+    async ({ id, hz, simulationTicks, overhead }) => {
       let rng = 0x524f4c4c;
       Math.random = () => {
         rng = (Math.imul(rng, 1664525) + 1013904223) >>> 0;
@@ -210,7 +214,7 @@ try {
         "/patches/splatoon3/runtime/clock.mjs"
       );
       const clock = new FixedClock();
-      for (let i = 0; i < hz * 2.5; i++) {
+      for (let i = 0; i < hz * simulationTicks / 60; i++) {
         clock.advance(1 / hz, (dt) => {
           a.ink = 100;
           G.time += dt;
@@ -222,6 +226,7 @@ try {
       const camera = new THREE.PerspectiveCamera(45, 1280 / 840, 0.1, 100);
       camera.position.set(0, 8, a.pos.z - 6);
       camera.lookAt(0, 0, a.pos.z - 2.2);
+      if(overhead){camera.position.set(0,14,a.pos.z-2);camera.up.set(0,0,1);camera.lookAt(0,0,a.pos.z-2);}
       renderer.render(G.scene, camera);
       const pixels = new Uint8Array(G.paint.size ** 2 * 4);
       renderer.readRenderTargetPixels(
@@ -244,7 +249,9 @@ try {
       const sourceDrumWidth = {roller:2.5712,'s3-roller-compact':2.5664,
         's3-roller-heavy':2.5816,'s3-roller-hunter':2.6044,'s3-roller-wide':3.256}[id];
       const spans=[];
-      for(let z=a.pos.z-4;z<a.pos.z-2;z+=.1){
+      // Recent settled body; the old trailing window included the beginning
+      // of a short stroke and mixed acceleration/caps into the width median.
+      for(let z=a.pos.z-.5;z<a.pos.z+.5;z+=.05){
         let lo=Infinity,hi=-Infinity;
         for(let x=-4.5;x<=4.5;x+=.025)if(sample(x,z)>=128){lo=Math.min(lo,x);hi=Math.max(hi,x);}
         if(hi>=lo)spans.push(hi-lo);
@@ -264,7 +271,7 @@ try {
       const physicalHalf = (b.max.x - b.min.x) * 0.5 * Math.hypot(m[0], m[2]);
       const last = events.at(-1),
         front = last.stretch
-          ? V(...last.at).addScaledVector(V(...last.stretch), 0.6 * last.r)
+          ? V(...last.at).addScaledVector(V(...last.stretch), 0.6 * last.r * (1 + last.amount))
           : V(...last.at),
         centre = drum.localToWorld(b.min.clone().add(b.max).multiplyScalar(.5));
       const contactError = Math.hypot(front.x - centre.x, front.z - centre.z);
@@ -278,6 +285,9 @@ try {
         sourceHalf,
         sourceDrumWidth,
         gpuMinWidth:Math.min(...spans),gpuMaxWidth:Math.max(...spans),
+        gpuMedianWidth:[...spans].sort((a,b)=>a-b)[Math.floor(spans.length/2)],
+        groundSpeed:Math.hypot(a.vel.x,a.vel.z),rollTime:a.weaponRunner.rollT,
+        contactDepth:1.2*last.r*(1+last.amount),
         contactError,
         cpuHoles,
         actor: a.pos.toArray(),
@@ -293,7 +303,7 @@ try {
         ticks: clock.ticks,
       };
     },
-    { id, hz },
+    { id, hz, simulationTicks, overhead },
   );
   const build = JSON.parse(
     fs.readFileSync(path.join(site, "inkwave-build.json")),
@@ -304,6 +314,7 @@ try {
     errors,
     baselineRef,
     withoutModelScale,
+    simulationTicks,overhead,
     runtimeOverlayPaths:[...overlay.keys()],
   });
   fs.writeFileSync(
@@ -334,13 +345,16 @@ try {
       result.events.every((e) => e.footprint === "ink-contact"),
       "one continuous physical band",
     );
-    assert.ok(result.events.every(e=>Math.abs(e.r-result.sourceHalf)<1e-5),
-      'paint width uses the sourced endpoint, independently of drum geometry');
-    assert.ok(result.gpuMaxWidth>=2*result.sourceHalf*.93&&result.gpuMaxWidth<=2*result.sourceHalf+.15,
+    const speedMax={roller:.132,'s3-roller-compact':.16,'s3-roller-heavy':.108,'s3-roller-hunter':.132,'s3-roller-wide':.142}[id]*60;
+    const expectedHalf=1.3+(result.sourceHalf-1.3)*Math.min(1,result.groundSpeed/speedMax);
+    assert.ok(Math.abs(result.events.at(-1).r-expectedHalf)<1e-5,
+      'paint width uses speed and the documented minimum, independently of drum geometry');
+    assert.ok(result.gpuMaxWidth>=2*expectedHalf*.93&&result.gpuMaxWidth<=2*expectedHalf+.15,
       'actual GPU stripe reaches the source width, not just the model width');
     assert.ok(Math.abs(2*result.physicalHalf-result.sourceDrumWidth)<1e-4,
       'rendered drum width uses measured model coordinates, independently of paint width');
-    assert.equal(result.ticks, 150);
+    assert.ok(Math.abs(result.contactDepth-1.5)<1e-10,'contact depth stays independent of transverse ink width');
+    assert.equal(result.ticks, simulationTicks);
   }
 } finally {
   await browser?.close();

@@ -17,7 +17,7 @@ const FROZEN_B34_SHA256 = '52e587f60d6211054c2bad04f746471e85ebdb0295e051f797b41
 const adaptProductionSource = adaptBuildSource;
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
   "patches/splatoon3/runtime/roller.mjs": "752d276cb1e7bf82d2715a130a68d987997a95397025bfafb27cd9151d32c17d",
-  "patches/splatoon3/runtime/roller-contact-paint.mjs": "1af024987479096af1af4491ab6409b087b1eac06237b38f5b69a9611c1235dd"
+  "patches/splatoon3/runtime/roller-contact-paint.mjs": "5bfed124a66dc002389170d6c48c07050d2bff597ceb0e8dc15ab24e64c2e4b9"
 });
 const headlessPaintRenderer = () => ({
   capabilities: { getMaxAnisotropy: () => 1 }, target: null,

@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "purpose": "Independent review only. No runtime module imports this reference or its image measurements.",
+  "image": {
+    "article": "https://game.watch.impress.co.jp/docs/kikaku/1460351.html",
+    "url": "https://asset.watch.impress.co.jp/img/gmw/docs/1460/351/24.jpg",
+    "sha256": "0b0c046d13e4986e172fb2697ae6c812beda6f5976f54bfadd05cdc1351f3ea4",
+    "size": [1280, 720],
+    "published": "2022-12-01",
+    "game": "Splatoon 3",
+    "weaponRegion": "Splat Roller: isolated far stripe above the gap; near stripe is Big Swig and excluded",
+    "captureVersion": "not embedded; article dates to the 2.0.0 release",
+    "gear": "unreported",
+    "stickAndSpeed": "unreported; cannot certify a maximum-speed width from this still",
+    "floorQuadPixels": [[391.95,169.17],[659.42,174.49],[206.97,615.27],[656.05,626.05]],
+    "floorQuadCoordinates": [[0,0],[1,0],[0,1],[1,1]],
+    "floorQuadNote": "Adjacent left/centre green range guides crossed with two visible transverse floor joints. One transverse guide interval is the width unit; longitudinal joint distance is arbitrary, not an asserted range interval.",
+    "cornerUncertaintyPixels": 2,
+    "inkCrop": [410,120,790,301]
+  },
+  "numericSources": {
+    "sparse1130Revision": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+    "sparse200Url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/200/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+    "sparse200Sha256": "338dfa1cfbc2a3929a34e6a9065787022af95e299cb9b7d118353e41ba71a919",
+    "paintFieldsUnchanged200To1130": {"SpeedMax":0.132,"WidthHalfMax":2.8},
+    "documentedClassDefaultsUrl": "https://splatoonwiki.org/w/index.php?title=User:XarrotD/paramtable&oldid=550190#Rollers",
+    "documentedClassDefaults": {"Depth":1.5,"SpeedMin":0,"WidthHalfMin":1.3},
+    "classDefaults1130BinaryVerified": false,
+    "interpretation": "Linear speed interpolation, absolute full Depth, and contact anchoring are the local implementation. The still checks the resulting width, not the Nintendo interpolation or stamp scheduling law."
+  },
+  "retailParityCertified": false
+}
