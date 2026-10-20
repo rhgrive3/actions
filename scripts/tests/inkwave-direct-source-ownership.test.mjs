@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 
 const fetchWorkflow = fs.readFileSync(new URL('../../.github/workflows/fetch-inkwave.yml', import.meta.url), 'utf8');
 const navigation = fs.readFileSync(new URL('../../inkwave-public/src/game/nav.js', import.meta.url), 'utf8');
@@ -107,7 +108,7 @@ test('PropKit atlas, lifetime and rematch behavior are authored in the real modu
   const { adaptBuildSource } = await import('../inkwave-source-composition.mjs');
   const legacy = fs.readFileSync(new URL('../../patches/local-quality/tests/fixtures/props-before-direct-migration.js.txt', import.meta.url), 'utf8');
   const loader = fs.readFileSync(new URL('../../patches/local-quality/tests/prop-retention-loader.mjs', import.meta.url), 'utf8');
-  const buildOnly = fs.readFileSync(new URL('../lib/inkwave-build-only-modules.mjs', import.meta.url), 'utf8');
+  const {BUILD_ONLY_PATCH_MODULES} = await import('../lib/inkwave-build-only-modules.mjs');
   assert.notEqual(legacy, worldProps, 'negative control must remain the pre-migration module');
   assert.match(legacy, /cv\.width = AW; cv\.height = AH/);
   assert.doesNotMatch(legacy, /this\._placements = \[\]/);
@@ -120,9 +121,13 @@ test('PropKit atlas, lifetime and rematch behavior are authored in the real modu
   assert.match(worldProps, /this\._propAtlasRedraw = null/);
   assert.doesNotMatch(worldProps, /PropKit\.prototype\./);
   assert.doesNotMatch(composition, /adaptProp(?:Retention|Atlas)/);
-  assert.doesNotMatch(buildOnly, /prop-(?:retention|atlas)-adapter\.mjs/);
-  for (const p of ['prop-atlas-adapter.mjs', 'prop-retention-adapter.mjs']) {
-    assert(!fs.existsSync(new URL('../../patches/local-quality/' + p, import.meta.url)), p + ' must be retired');
+  // Preserve the archived main originals while excluding them from gameplay.
+  for (const [file,digest] of [
+    ['prop-atlas-adapter.mjs','11b236fba39f484ebf0a7b37f0e356cb269767c807fe1d9798870ca9b58d9f43'],
+    ['prop-retention-adapter.mjs','45a92ace6b82f4e0e4e876827aa2acca82f24874634f9c7935adefde790715a1'],
+  ]) {
+    assert(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/'+file));
+    assert.equal(createHash('sha256').update(fs.readFileSync(new URL('../../patches/local-quality/'+file,import.meta.url))).digest('hex'),digest);
   }
   assert.equal(adaptBuildSource('src/world/props.js', worldProps), worldProps,
     'production must use the authored PropKit class, not a build-time transformed copy');
@@ -159,7 +164,11 @@ test('native ink and catalogue sweep entry points and AABB early-outs live in re
   assert(!quality.includes("if (rel === 'src/game/inkCollision.js') {"));
   assert(!native.includes("if(rel==='src/game/inkCollision.js')"));
   assert(!native.includes("if(rel==='patches/splatoon3/runtime/weapons-collision.mjs')"));
-  assert.equal(adaptBuildSource('src/game/inkCollision.js', collision), collision);
+  const sourceImport="from '../../../patches/native-stages/runtime/native-projectile-sweep.mjs'";
+  const siteImport="from '../../patches/native-stages/runtime/native-projectile-sweep.mjs'";
+  assert.equal(collision.split(sourceImport).length,2,'one authored native sweep dependency');
+  assert.equal(adaptBuildSource('src/game/inkCollision.js', collision),collision.replace(sourceImport,siteImport),
+    'only relocate the dependency from inkwave-public/src/game to the versioned src/game root');
   assert.equal(adaptBuildSource('patches/splatoon3/runtime/weapons-collision.mjs', catalogue), catalogue);
 });
 
