@@ -91,7 +91,9 @@ export function installKitAudio(api,{listen,options}){
  // Continuous power beds use one handle per active actor, never one per frame.
  const update=Actor.prototype._updateSpecial;
  Actor.prototype._updateSpecial=function(dt,...args){const result=update.call(this,dt,...args),id=this.specialActive?.id;
-   const loopEvent=id==='inkVac'?'charge':['inkjet','crabTank','krakenRoyale','storm','killerWail','booyahBomb'].includes(id)?'spin':null;
+   // HoldFull is valid only after the sourced Booyah charge reaches ready; never loop it during startup.
+   const loopEvent=id==='booyahBomb'?(this.specialActive?.phase==='ready'?'spin':null)
+     :id==='inkVac'?'charge':['inkjet','crabTank','krakenRoyale','storm','killerWail'].includes(id)?'spin':null;
    let row=active.get(this);
    // A deferred real loop may fail while the special remains active. Retire
    // the failed handle so the next update can retry after loader backoff.
