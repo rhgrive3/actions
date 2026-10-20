@@ -160,8 +160,14 @@ test('#541 refill mid-hold re-enters the normal roll loop exactly once', async (
   const loops = [];
   f.G.audio = {
     play() {},
+    loopWeapon(weaponId, action, options) {
+      assert.equal(weaponId, a.weapon.id);
+      assert.equal(action, 'roll');
+      assert.equal(options.actor, a);
+      return this.loop();
+    },
     loop() {
-      const L = { stopped: false, stop() { this.stopped = true; }, set() {} };
+      const L = { stopped: false, stopCalls: 0, stop() { this.stopped = true; this.stopCalls++; }, set() {} };
       loops.push(L);
       return L;
     },
@@ -182,4 +188,10 @@ test('#541 refill mid-hold re-enters the normal roll loop exactly once', async (
   for (let i = 0; i < 30; i++) runnerTick(f, a, { fire: true });
   assert.equal(active(), 1, 'continued rolling never duplicates the loop');
   assert.equal(loops.length, 2, 'one new loop for the refilled roll segment');
+  r.reset();
+  assert.equal(active(), 0, 'runner reset releases the refilled loop');
+  assert.equal(r.rollLoop, null);
+  r.reset();
+  assert.equal(loops.length, 2, 'reset cannot create an audio loop');
+  assert.ok(loops.every(loop => loop.stopCalls === 1), 'each owned loop is stopped exactly once');
 });

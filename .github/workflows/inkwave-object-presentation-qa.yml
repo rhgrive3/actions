@@ -52,7 +52,7 @@ jobs:
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
       - name: Verify comparison, artifact and production-source contracts
-        run: node --experimental-vm-modules --test tools/object-presentation-qa/artifact-budget.test.mjs tools/object-presentation-qa/frame-contract.test.mjs tools/object-presentation-qa/identity.test.mjs tools/object-presentation-qa/harness-contract.test.mjs tools/object-presentation-qa/runtime-overlay.test.mjs
+        run: node --experimental-vm-modules --test tools/object-presentation-qa/artifact-budget.test.mjs tools/object-presentation-qa/frame-contract.test.mjs tools/object-presentation-qa/identity.test.mjs tools/object-presentation-qa/source-commit.test.mjs tools/object-presentation-qa/harness-contract.test.mjs tools/object-presentation-qa/runtime-overlay.test.mjs
       - name: Verify Rainmaker presentation and hands
         run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-motion.test.mjs patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs tools/rainmaker-production-qa/grip-metrics.test.mjs
       - name: Verify spawner geometry and unchanged lifecycle

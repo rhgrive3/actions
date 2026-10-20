@@ -314,10 +314,12 @@ jobs:
         env:
           INKWAVE_IDLE_BUILD: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/local-quality/tests/music-streamed-gap.test.mjs
-      - name: Verify existing Ballpoint glass in the same emitted build
+      - name: Verify emitted Ballpoint glass and Roller dry/refill audio
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
-        run: node --experimental-vm-modules --test --test-name-pattern='Ballpoint' patches/splatoon3/tests/weapon-shared-rendering.test.mjs
+        run: |
+          node --experimental-vm-modules --test --test-name-pattern='Ballpoint' patches/splatoon3/tests/weapon-shared-rendering.test.mjs
+          INKWAVE_EDGECASE_SITE="$INKWAVE_BUILT_SITE" node --experimental-vm-modules --test patches/splatoon3/tests/issue-541-roller-dry-roll.test.mjs
       - name: Verify real emitted material handoff ownership and cancellation
         env:
           INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site
