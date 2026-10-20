@@ -16,8 +16,16 @@ test('active native owner is observed before navigation, with one playing snapsh
 });
 
 test('original failed-request gate is strict and is evaluated before closure diagnostics',()=>{
- const listener="page.on('requestfailed', request => failures.push({ url: request.url(), error: request.failure()?.errorText }));";
- assert.ok(source.includes(listener));
+ const listener=source.match(/page\.on\('requestfailed', request => \{[\s\S]*?\n\}\);/)?.[0];
+ assert.ok(listener,'actual active-capture failed-request listener remains present');
+ for(const error of ['net::ERR_ABORTED','net::ERR_FAILED',undefined]){
+  const failures=[];let observe;
+  vm.runInNewContext(listener,{failures,page:{on:(kind,fn)=>{assert.equal(kind,'requestfailed');observe=fn;}}});
+  observe({url:()=> 'https://fixture.invalid/audio.mp3',failure:()=>error?{errorText:error}:null});
+  assert.equal(failures.length,1,'every failure including abort remains counted');
+  assert.equal(failures[0].url,'https://fixture.invalid/audio.mp3');
+  assert.equal(failures[0].error,error);
+ }
  const gate="if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';";
  assert.ok(source.includes(gate));
  assert.ok(source.indexOf(gate)<source.indexOf('await closeObservedBrowser();'));
