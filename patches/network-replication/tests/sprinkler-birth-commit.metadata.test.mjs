@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import { readFileSync } from 'node:fs';
+const source=readFileSync(new URL('../sub-birth-commit.mjs',import.meta.url),'utf8').replaceAll('export function ','function ');
+const setup=`
+const actor={nid:1,owner:'peer',remote:true,weapon:{sub:'sprinkler'},netLife:2,net:{lastLife:2,buf:[{t:1,life:2,x:0,y:1,z:0}]}},peer={};
+const nm={match:{},cfg:{id:'match'},s:{_members:new Set(['peer'])},byNid:new Map([[1,actor]]),peers:new Map([['peer',peer]])};
+const event=[1,'b',1,'bomb',0,1,0,0,2,3,null,'sprinkler',0,['inkwave-kit-birth-v1','match',2],5,6];
+event._netPeer='peer';event._netTick=5;event._netSeq=6;
+let commits=0,flushes=0,receipt=null;bindSubBirthCommit(nm,r=>{commits++;flushes++;receipt=r;});
+const bomb={owner:actor,ghost:true,kind:'bomb',s3GhostResolved:{spec:{id:'sprinkler'}},_netBorn:1,_netBornTick:5,_netPeer:peer};
+const stage=()=>stageAcceptedSprinklerBirth(nm,'peer',event,1,5),commit=()=>commitCreatedSprinklerBirth(nm,'peer',event,bomb);
+`;
+function check(name,body){test(name,()=>new vm.Script(source+'\n'+setup+'\n'+body).runInContext(vm.createContext({assert}),{timeout:100}));}
+check('accepted actual native schema stages without minting',`assert.equal(stage(),true);assert.equal(commits,0);`);
+check('native created initialized handle commits once',`stage();assert.equal(commit(),true);assert.equal(commits,1);assert.equal(flushes,1);assert.equal(commit(),false);`);
+check('no FIFO admission means no authority despite valid-looking bomb',`assert.equal(commit(),false);assert.equal(commits,0);`);
+check('budget wait retains token until actual creation',`stage();assert.equal(commits,0);assert.equal(flushes,0);assert.equal(commit(),true);assert.equal(commits,1);`);
+check('incorrect kit slot is rejected',`event[11]='bomb';assert.equal(stage(),false);`);
+check('wrong metadata tag rejected',`event[13][0]='fake';assert.equal(stage(),false);`);
+check('wrong metadata match rejected',`event[13][1]='other';assert.equal(stage(),false);`);
+check('wrong metadata life rejected',`event[13][2]=1;assert.equal(stage(),false);`);
+check('invalid charge rejected',`event[12]=2;assert.equal(stage(),false);`);
+check('wrong equipped kit rejected',`actor.weapon.sub='bomb';assert.equal(stage(),false);`);
+check('invalid transport sequence rejected',`event._netSeq=7;assert.equal(stage(),false);`);
+check('missing accepted pose rejected',`actor.net.buf=[];actor.pos={x:0,y:1,z:0};assert.equal(stage(),false);`);
+check('ghost without attached sprinkler profile rejected',`stage();bomb.s3GhostResolved=null;assert.equal(commit(),false);assert.equal(commits,0);`);
+check('local bomb rejected',`stage();bomb.ghost=false;assert.equal(commit(),false);`);
+check('wrong peer born clock rejected',`stage();bomb._netPeer={};assert.equal(commit(),false);`);
+check('mutated payload rejected after native creation',`stage();event[5]=8;assert.equal(commit(),false);`);
+check('owner replaced between queue and replay rejected',`stage();nm.byNid.set(1,{...actor});assert.equal(commit(),false);`);
+check('public packet cannot change route to ac',`event[1]='ac';event.authority=true;assert.equal(stage(),false);assert.equal(commit(),false);`);

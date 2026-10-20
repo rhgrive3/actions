@@ -26,10 +26,39 @@ for(const source of ['angleShooter','sprinkler'])for(const armor of ['booyahBomb
  const afterBreak=v.hp;v.damage(40,o,source);assert.equal(afterBreak-v.hp,20,'the next bare-body hit still applies57AP Sub Resistance once');
 });
 for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57])test(`${source} JSON hit retains raw damage and applies victim ${ap}AP once`,async()=>{
- const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),o=f.make(),v=f.make();Object.assign(o,{team:0,nid:1,owner:'attacker',netLife:0});Object.assign(v,{team:1,nid:2,owner:'victim',netLife:0,invuln:0});equip(v,ap);equip(o,57);o.weapon={...o.weapon,sub:source};
- let packet;const tx=new f.NetMatch({myId:'attacker',hostId:'attacker',isHost:true,tr:{sendTo:(_id,p)=>{packet=JSON.parse(JSON.stringify(p));}}},{id:'direct-sub'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,40,source);assert.equal(packet.d,40);
- let ack;const rx=new f.NetMatch({myId:'victim',hostId:'attacker',isHost:false,tr:{sendTo:(_id,p)=>{ack=JSON.parse(JSON.stringify(p));}}},{id:'direct-sub'});rx.bind({actors:[o,v],state:'playing',time:180});f.G.netm=rx;const hp=v.hp;
- rx.onMessage('foreign',packet);assert.equal(v.hp,hp);rx.onMessage('attacker',{...packet,w:'unknown-sub'});assert.equal(v.hp,hp);if(source==='angleShooter'){rx.onMessage('attacker',{...packet,d:40.1});assert.equal(v.hp,hp,'source direct ceiling enforced before hit ID is consumed');}rx.onMessage('attacker',packet);assert.equal(hp-v.hp,ap===57?20:40);assert.equal(ack.d,ap===57?20:40,'ACK reports authoritative reduced damage');const after=v.hp;rx.onMessage('attacker',packet);assert.equal(v.hp,after);
+ async function endpoint(){
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),o=f.make(),v=f.make();
+  Object.assign(o,{team:0,nid:1,owner:'attacker',netLife:0});Object.assign(v,{team:1,nid:2,owner:'victim',netLife:0,invuln:0});
+  o.pos.set(0,0,0);v.pos.set(0,0,2);o.aimDir.set(0,0,1);equip(v,ap);equip(o,57);o.weapon={...o.weapon,sub:source};
+  return {f,o,v};
+ }
+ const sender=await endpoint(),receiver=await endpoint();let packet,ack;const ticks=[];
+ function bind(world,myId,tr){
+  const {f,o,v}=world,session={myId,hostId:'attacker',isHost:myId==='attacker',tr,_members:new Map([['attacker',{}],['victim',{}]])};
+  const match={actors:[o,v],state:'playing',time:180,playing:()=>true};
+  const nm=new f.NetMatch(session,{id:'direct-sub',map:'reef'});nm.bind(match);session.match=nm;f.G.match=match;f.G.netm=nm;f.G.actors=match.actors;return nm;
+ }
+ const tx=bind(sender,'attacker',{sendTo:(_id,p)=>{if(p.k==='hit')packet=JSON.parse(JSON.stringify(p));return true;},broadcast:p=>{if(p.k==='t')ticks.push(JSON.parse(JSON.stringify(p)));return true;}});
+ const rx=bind(receiver,'victim',{sendTo:(_id,p)=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;},broadcast:p=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;}});
+ try{
+  // Real producer birth and receiver tick admission, never hand-written proofs.
+  const born=sender.f.G.projectiles.throwBomb(sender.o);
+  assert.ok(source==='angleShooter'?born:sender.f.G.projectiles.bombs.some(b=>b.owner===sender.o),'native equipped direct-sub birth');
+  assert.equal(tx._sendTick(),true);assert.equal(ticks.length,1);
+  const isBirth=e=>source==='angleShooter'?e[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='spawn'&&e[5]?.subId===source:e[1]==='b'&&e[2]===1&&e[3]==='bomb'&&e[11]===source;
+  assert.ok(ticks[0].e.some(isBirth),'native direct-sub event recorded');
+  rx.onMessage('attacker',ticks[0]);assert.ok(rx.peers.get('attacker')?.events.some(isBirth),'native direct-sub event admitted');
+  tx.sendHit(sender.o,sender.v,40,source);assert.equal(packet.d,40);
+  const {v}=receiver,hp=v.hp;
+  rx.onMessage('foreign',packet);assert.equal(v.hp,hp);rx.onMessage('attacker',{...packet,w:'unknown-sub'});assert.equal(v.hp,hp);
+  if(source==='angleShooter'){rx.onMessage('attacker',{...packet,d:40.1});assert.equal(v.hp,hp,'source direct ceiling enforced before hit ID is consumed');}
+  rx.onMessage('attacker',packet);
+  // Receiver playback owns materialization; FIFO receipt alone is not a hit proof.
+  for(let i=0;i<30&&!ack;i++){receiver.f.G.time+=1/60;rx.update(1/60);}
+  if(source==='sprinkler')assert.ok(receiver.f.G.projectiles.bombs.some(b=>b.owner===receiver.o&&b.ghost),'native receiver sprinkler materialized');
+  assert.equal(hp-v.hp,ap===57?20:40);assert.equal(ack?.d,ap===57?20:40,'ACK reports authoritative reduced damage');
+  const after=v.hp;rx.onMessage('attacker',packet);assert.equal(v.hp,after);
+ }finally{tx.dispose();rx.dispose();sender.f.G.projectiles.clear();receiver.f.G.projectiles.clear();}
 });
 import fs from 'node:fs';import crypto from 'node:crypto';
 import {DIRECT_SUB_RESISTANCE_CURVES} from '../runtime/sub-resistance.mjs';

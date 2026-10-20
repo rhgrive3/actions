@@ -583,6 +583,7 @@ try {
             check(tx._sendTick()===true&&ticks.length===1,'native catalogue owner tick');
             const birth=ticks[0].e?.find(e=>e[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='spawn'&&e[5]?.subId===sub);
             check(!!birth,'catalogue tick carries actual sub birth');
+            check(Number.isSafeInteger(birth[5].seed)&&Number.isFinite(birth[5].charge),'native catalogue birth carries seed/charge');
             tx.sendHit(sender.o,sender.v,n,w);check(packet?.d===n,'catalogue raw hit amount');
             // A second roster prevents bind() from changing the sender Actor identities.
             G.projectiles.clear();rx=bind(receiver,'catalogue-victim',{
@@ -596,6 +597,9 @@ try {
             rx.onMessage('foreign',packet);rx.onMessage('catalogue-owner',{...packet,d:n+.1});
             check(v.hp===hp,'foreign and oversized catalogue hit rejected');
             rx.onMessage('catalogue-owner',packet);
+            check(v.hp===hp&&(rx._combatProvenance?.proofs.get('catalogue-owner')?.length||0)===0,'catalogue FIFO alone cannot authorize hit');
+            await new Promise(resolve=>setTimeout(resolve,150));G.time+=.15;rx.update(.15);
+            check(G.projectiles._s3SubObjects.some(o=>o.ghost&&o.owner===receiver.o&&o.seq===birth[5].seq),'native catalogue receiver creates sub');
             const expected=Math.floor(n*(['burst','fizzy'].includes(w)?.6:.5)*10+1e-9)/10;
             check(Math.abs(hp-v.hp-expected)<1e-8&&ack?.d===expected,'catalogue hit victim/ACK match');
             rx.onMessage('catalogue-owner',packet);check(Math.abs(hp-v.hp-expected)<1e-8,'duplicate catalogue hit inert');
@@ -619,10 +623,42 @@ try {
           const raw=source==='angleShooter'?40:20,expected=Math.floor(raw*gearCurve(ap,1,.75,.5)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8,'native direct resistance '+source+' '+ap);directSubChecks.push({source,ap,damage:hp-v.hp});
         }
         for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57]){
-          G.projectiles.clear();const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='direct-owner';v.owner='direct-victim';v.team=1;v.invuln=0;o.netLife=v.netLife=0;equipDirect(v,ap);equipDirect(o,57);o.weapon={...o.weapon,sub:source};let packet,ack;
-          const tx=new NetMatch({myId:'direct-owner',hostId:'direct-owner',isHost:true,tr:{sendTo:(_id,p)=>{packet=JSON.parse(JSON.stringify(p));}}},{id:'direct-probe'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,40,source);check(packet.d===40,'raw direct hit on wire');
-          const rx=new NetMatch({myId:'direct-victim',hostId:'direct-owner',isHost:false,tr:{sendTo:(_id,p)=>{ack=JSON.parse(JSON.stringify(p));}}},{id:'direct-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;
-          rx.onMessage('foreign',packet);check(v.hp===hp,'foreign direct hit rejected');if(source==='angleShooter'){rx.onMessage('direct-owner',{...packet,d:40.1});check(v.hp===hp,'oversized direct hit rejected');}rx.onMessage('direct-owner',packet);const damage=hp-v.hp;check(damage===(ap===57?20:40)&&ack.d===damage,'direct victim and ACK agree');rx.onMessage('direct-owner',packet);check(hp-v.hp===damage,'duplicate direct hit rejected');directSubChecks.push({source,ap,wire:true,damage});tx.dispose();rx.dispose();G.netm=null;
+          G.projectiles.clear();
+          const makePair=()=>{
+            const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='direct-owner';v.owner='direct-victim';
+            o.team=0;v.team=1;v.invuln=0;o.netLife=v.netLife=0;o.pos.set(0,0,0);v.pos.set(0,0,2);o.aimDir.set(0,0,1);
+            equipDirect(v,ap);equipDirect(o,57);o.weapon={...o.weapon,sub:source};return {o,v};
+          };
+          const sender=makePair(),receiver=makePair();let packet,ack;const ticks=[];
+          const bind=(pair,myId,tr)=>{
+            const session={myId,hostId:'direct-owner',isHost:myId==='direct-owner',tr,_members:new Map([['direct-owner',{}],['direct-victim',{}]])};
+            const match={actors:[pair.o,pair.v],state:'playing',time:180,playing:()=>true};
+            const nm=new NetMatch(session,{id:'direct-probe',map:'reef'});nm.bind(match);session.match=nm;G.netm=nm;G.match=match;G.actors=match.actors;return nm;
+          };
+          const tx=bind(sender,'direct-owner',{sendTo:(_id,p)=>{if(p.k==='hit')packet=JSON.parse(JSON.stringify(p));return true;},broadcast:p=>{if(p.k==='t')ticks.push(JSON.parse(JSON.stringify(p)));return true;}});
+          let rx;
+          try{
+            // Native equipped birth and ordered owner tick; never fabricate provenance.
+            const born=G.projectiles.throwBomb(sender.o);
+            check(!!(source==='angleShooter'?born:G.projectiles.bombs.find(b=>b.owner===sender.o)),'native direct-sub birth');
+            check(tx._sendTick()===true&&ticks.length===1,'native direct-sub owner tick');
+            const isBirth=e=>source==='angleShooter'?e[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='spawn'&&e[5]?.subId===source:e[1]==='b'&&e[2]===1&&e[3]==='bomb'&&e[11]===source;
+            check(ticks[0].e.some(isBirth),'native direct-sub event recorded');
+            tx.sendHit(sender.o,sender.v,40,source);check(packet?.d===40,'raw direct hit on wire');
+            G.projectiles.clear();
+            rx=bind(receiver,'direct-victim',{sendTo:(_id,p)=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;},broadcast:p=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;}});
+            rx.onMessage('direct-owner',ticks[0]);check(rx.peers.get('direct-owner')?.events.some(isBirth),'native direct-sub event admitted');
+            const {v}=receiver,hp=v.hp;
+            rx.onMessage('foreign',packet);check(v.hp===hp,'foreign direct hit rejected');
+            rx.onMessage('direct-owner',{...packet,w:'unknown-sub'});check(v.hp===hp,'unknown direct hit rejected');
+            if(source==='angleShooter'){rx.onMessage('direct-owner',{...packet,d:40.1});check(v.hp===hp,'oversized direct hit rejected');}
+            rx.onMessage('direct-owner',packet);
+            // Advance only the existing receiver clock; native ghost birth must commit.
+            for(let i=0;i<30&&!ack;i++){G.time+=1/60;rx.update(1/60);}
+            if(source==='sprinkler')check(G.projectiles.bombs.some(b=>b.owner===receiver.o&&b.ghost),'native receiver sprinkler materialized');
+            const damage=hp-v.hp;check(damage===(ap===57?20:40)&&ack?.d===damage,'direct victim and ACK agree');
+            rx.onMessage('direct-owner',packet);check(hp-v.hp===damage,'duplicate direct hit rejected');directSubChecks.push({source,ap,wire:true,damage});
+          }finally{tx.dispose();rx?.dispose();G.projectiles.clear();G.netm=null;}
         }
         G.projectiles.clear();Object.assign(G,saved);
       }

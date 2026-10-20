@@ -1579,17 +1579,19 @@ function tickObjects(api,projectiles,dt){
   updateStatuses(api,dt);
 }
 
-function replaySpawn(api,event,owner){
+function replaySpawn(api,event,owner,report){
   // Sprinkler uses native bomb birth/ghost packets. Do not revive the retired
   // catalogue authority alongside that device, including for old peers.
   if(event.subId==='sprinkler')return false;
   if(!owner?.remote||!api.G.projectiles||event.life!==ownerLife(owner)||event.sourceLife!==event.life||!ALL_SUB_SPECS[event.subId])return false;
   const list=entityList(api.G.projectiles);
   const old=list.find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===event.sourceLife);
-  if(old)return true;
+  if(old){report?.('reused',old);return true;}
   if(![event.x,event.y,event.z,event.vx,event.vy,event.vz,event.charge].every(Number.isFinite)||
      !Number.isSafeInteger(event.seed)||!Number.isSafeInteger(event.seq)||event.seq<=0)return false;
-  return !!createObject(api,api.G.projectiles,owner,event.subId,{...event,ghost:true});
+  const created=createObject(api,api.G.projectiles,owner,event.subId,{...event,ghost:true});
+  if(created)report?.('created',created);
+  return !!created;
 }
 function replayDeploy(api,event,owner){
   const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
@@ -1631,7 +1633,7 @@ function replayExpire(api,event,owner){
  * object HP or emit another packet. A replayed Mist volume is also sampled by
  * the local victim's movement/ink authority; remote victims are never mutated.
  */
-export function replaySub(api,event){
+export function replaySub(api,event,report){
   if(!api?.G||!event||event.v!==1||typeof event.phase!=='string')return false;
   if(event.phase==='nativeObjectHit'||event.phase==='nativeObjectState')return replayNativeSprinklerDamage(api,event);
   if(event.phase==='objectHit')return applyRemoteObjectHit(api,event);
@@ -1639,7 +1641,7 @@ export function replaySub(api,event){
   if(event.phase==='beakonUseProposal')return applyBeaconProposal(api,event);
   const owner=event.actor||api.G.netm?.byNid?.get(event.actorId);
   if(!owner?.remote||!Number.isSafeInteger(event.seq)||event.seq<=0||!Number.isSafeInteger(event.life)||ownerLife(owner)!==event.life)return false;
-  if(event.phase==='spawn')return replaySpawn(api,event,owner);
+  if(event.phase==='spawn')return replaySpawn(api,event,owner,report);
   if(event.phase==='deploy')return replayDeploy(api,event,owner);
   if(event.phase==='mark')return replayMark(api,event,owner);
   // Only ordered native paint rows may change ownership. A stale legacy drop

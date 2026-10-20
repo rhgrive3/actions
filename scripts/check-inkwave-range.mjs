@@ -393,6 +393,11 @@ for (const run of RUNS) {
           let snap = null;
           try { snap = probe?.snapshot?.() ?? null; } catch (e) { snap = { snapshotError: String(e) }; }
           return {
+            lastPredicateObservation: window.__inkwaveRangeAcceptancePoll ?? null,
+            diagnosticObservedAt: performance.now(),
+            latestFrameId: snap?.trace?.latest?.id ?? null,
+            probeMatchesFrameOwner: !!probe && g?._rangeFrameProbe === probe,
+            frameOwner: g?.platform?.driver ? 'platform-driver' : 'legacy-loop',
             url: location.search, document: document.readyState,
             hidden: document.hidden,
             hasInstrumentedLoop: !!g?._loop?.toString().includes('_rangeFrameProbe'),
@@ -404,7 +409,7 @@ for (const run of RUNS) {
             traceLatest: snap?.trace?.latest?.stages ? Object.keys(snap.trace.latest.stages) : null,
           };
         }).catch(e => ({ diagnosticError: String(e) }));
-        throw new Error('Practice Range tracer never reached 12 frames: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+        throw new Error('Practice Range profiler acceptance was not observed before deadline (post-timeout snapshot follows): ' + JSON.stringify(diagnostic) + '; ' + error.message);
       }
       out.checks.profiler = await profilerHandle.jsonValue();
       const perf = out.checks.profiler;

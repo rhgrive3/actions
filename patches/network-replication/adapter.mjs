@@ -28,7 +28,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'combat-provenance.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'combat-provenance.mjs', 'sub-birth-commit.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -618,7 +618,13 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         if (receivePaintOrder(this, from, e) === false) continue;
         if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
       }
-      if (p.events.length < 512) p.events.push(e);
+      if (p.events.length < 512) {
+        p.events.push(e);
+        if (d.r === 2 && ownerSimulationTickAccepted) {
+          stageAcceptedSubBirth(this, from, e, d.ts, d.u);
+          stageAcceptedSprinklerBirth(this, from, e, d.ts, d.u);
+        }
+      }
     }`, 'receive event identity');
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
     patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
@@ -888,6 +894,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     // (which also carries event sequence/tick and optional paint metadata).
     const bombKitIndex = code.includes('G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12])') ? 11
       : code.includes('G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11])') ? 10 : -1;
+    code = "import { stageAcceptedSubBirth, stageAcceptedSprinklerBirth, commitCreatedSprinklerBirth } from '../../patches/network-replication/sub-birth-commit.mjs';\n" + code;
     code = "import { retireReplacedGhostSprinklers } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n" + code;
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
     if (e[1] === 's') e._netPeer = from;
@@ -965,6 +972,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
           b._netBornLocal = Number.isFinite(b._netPeer?.off) ? e[0] + b._netPeer.off : NaN;
+          commitCreatedSprinklerBirth(this, from, e, b);
         }
         break;
       }`, 'bomb timeline birth with optional metadata and kit identity');
