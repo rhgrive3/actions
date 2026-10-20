@@ -83,12 +83,32 @@ for (const flag of ['failed', 'disposed']) test(`streamed ${flag} owner does not
   } finally { f.music.dispose(); }
 });
 
-test('native synthesized player without a media element still rebases after a gap', async () => {
+test('native synthesized player is not restarted by foreground scheduler gaps', async () => {
   const f = await rig({ streamed: false });
   try {
     const old = f.music.current; assert.equal(old.element, undefined);
-    f.gap(1); assert.notEqual(f.music.current, old);
+    // Every tick of a starved main thread (frames >250 ms) used to replay the song from bar 0.
+    for (const seconds of [.025, .25, .250001, 1, 2.3, .3, .3, .3]) {
+      f.gap(seconds);
+      assert.ok(f.music.current === old); assert.equal(old.disposed, false);
+      assert.equal(f.music._platformMusic.restarts, 0);
+    }
+  } finally { f.music.dispose(); }
+});
+
+test('native synthesized player still rebases on clock rollback and hidden/resume', async () => {
+  const f = await rig({ streamed: false });
+  try {
+    f.gap(.1); const old = f.music.current;
+    f.ctx.currentTime = 0; f.music._tick();
+    assert.notEqual(f.music.current, old); assert.equal(old.disposed, true);
     assert.equal(f.music._platformMusic.restarts, 1);
+    const hidden = f.music.current;
+    f.document.hidden = true; f.listeners.get('visibilitychange')();
+    f.gap(1); assert.equal(f.music.current, hidden);
+    f.document.hidden = false; f.listeners.get('visibilitychange')();
+    assert.notEqual(f.music.current, hidden); assert.equal(hidden.disposed, true);
+    assert.equal(f.music._platformMusic.restarts, 2);
   } finally { f.music.dispose(); }
 });
 
@@ -97,24 +117,36 @@ for (const pending of [false,true]) test(`primed battle survives procedural menu
  f.music.play('menu',{fade:0});f.music.preloadFile('battle',{prime:true});
  const preload=f.music._preloadedFile, player=preload.player, menu=f.music.current;
  f.gap(4.15);assert.ok(f.music._preloadedFile===preload);assert.equal(player.disposed,false);
- assert.notEqual(f.music.current,menu);assert.equal(f.music._platformMusic.restarts,1);
+ assert.equal(f.music.current,menu);assert.equal(f.music._platformMusic.restarts,0);
  f.music.stop(.3);f.music.preloadFile('battle',{prime:true});f.music.play('opening',{fade:0});f.gap(1);
  assert.ok(f.music._preloadedFile===preload);f.music.play('battle',{fade:0});
  assert.equal(f.music.current,player);assert.equal(f.music._preloadedFile,null);
  }finally{f.music.dispose()}
 });
-for(const action of ['explicit-menu','hidden-resume','rollback','failed','paused','ended','error']) test(`preload is not protected on ${action}`,async()=>{
+for(const action of ['explicit-menu','hidden-resume','rollback']) test(`preload is not protected on ${action}`,async()=>{
  const f=await rig();try{
  f.music.play('menu',{fade:0});f.music.preloadFile('battle',{prime:true});const p=f.music._preloadedFile.player;
  if(action==='explicit-menu')f.music.play('menu');
  else if(action==='hidden-resume'){f.document.hidden=true;f.listeners.get('visibilitychange')();f.gap(1);f.document.hidden=false;f.listeners.get('visibilitychange')()}
  else if(action==='rollback'){f.gap(.1);f.ctx.currentTime=0;f.music._tick()}
- else {if(action==='failed')p.failed=true;else p.element[action]=action==='error'?{code:3}:true;f.gap(1)}
  assert.equal(f.music._preloadedFile,null);assert.equal(p.disposed,true);
  }finally{f.music.dispose()}
 });
+// A late scheduler tick never recycles the running menu song or touches the primed recording,
+// whatever state that recording is in; its own error/GO handling owns recovery.
+for(const state of ['failed','paused','ended','error']) test(`scheduler gap leaves menu music and primed preload alone (${state})`,async()=>{
+ const f=await rig();try{
+ f.music.play('menu',{fade:0});f.music.preloadFile('battle',{prime:true});
+ const menu=f.music.current,preload=f.music._preloadedFile,p=preload.player;
+ if(state==='failed')p.failed=true;else p.element[state]=state==='error'?{code:3}:true;
+ f.gap(1);
+ assert.equal(f.music.current,menu);assert.equal(menu.disposed,false);
+ assert.ok(f.music._preloadedFile===preload);assert.equal(p.disposed,false);
+ assert.equal(f.music._platformMusic.restarts,0);
+ }finally{f.music.dispose()}
+});
 
-test('scheduler preload preservation does not leak into a later music toggle',async()=>{
+test('scheduler gap does not leak a preload token into a later music toggle',async()=>{
  const f=await rig();try{
  f.music.play('menu',{fade:0});f.music.preloadFile('battle',{prime:true});const p=f.music._preloadedFile.player;
  f.gap(1);assert.equal(p.disposed,false);assert.equal(f.music._platformPreloadReplay,undefined);
@@ -122,10 +154,10 @@ test('scheduler preload preservation does not leak into a later music toggle',as
  assert.equal(f.music._preloadedFile,null);assert.equal(p.disposed,true);
  }finally{f.music.dispose()}
 });
-test('scheduler replay remapped to another track drops primed battle',async()=>{
+test('rollback replay remapped to another track drops primed battle',async()=>{
  const f=await rig();try{
  f.music.play('menu',{fade:0});f.music.preloadFile('battle',{prime:true});const p=f.music._preloadedFile.player;
- f.music.remap=track=>track==='menu'?'title':track;f.gap(1);
+ f.music.remap=track=>track==='menu'?'title':track;f.gap(.1);f.ctx.currentTime=0;f.music._tick();
  assert.equal(f.music._preloadedFile,null);assert.equal(p.disposed,true);
  assert.equal(f.music._platformPreloadReplay,undefined);
  }finally{f.music.dispose()}
