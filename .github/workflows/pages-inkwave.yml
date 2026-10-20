@@ -52,6 +52,7 @@ jobs:
             scripts
             server/src
             reports/ink-volume/source
+            tools/squid-heading-qa
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
