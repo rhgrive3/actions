@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 import { addPlayerForwardVelocity } from '../runtime/weapon-paint-inertia.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
-// Source paint widths are mapped to INKWAVE world radii; raw depth/spacing stay sourced.
-const CHARGER_WORLD_WIDTH=0.2;
+// Width, depth and spacing retain the common source distance convention.
+const CHARGER_WORLD_WIDTH=1;
 const lineEllipse=(width,depth)=>{const radius=width*CHARGER_WORLD_WIDTH,stretch=Math.max(0,depth/radius-1)*1.6;return {radius,stretch,shift:radius*stretch*.375};};
 async function setup(kind='charger') {
  const f=await fixture(),a=f.make(kind),ps=new f.Projectiles(new f.THREE.Scene());

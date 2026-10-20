@@ -130,7 +130,16 @@ try{
     G.paint.clear();G.projectiles.clear();
     recipePhase='measurement';
     const start=a.pos.clone(), events=[],splat=G.paint.splat;
-    G.paint.splat=function(at,r,team,o){if(o?.footprint==='ink-contact')events.push({at:at.toArray(),r,heading:o.stretch?.toArray(),amount:o.stretchAmt});return splat.call(this,at,r,team,o);};
+    G.paint.splat=function(at,r,team,o){
+      if(o?.footprint==='ink-contact'){
+        const w=a.character.weapon,b=w.def.drum.boundingBox;
+        const centre=w.drum.localToWorld(b.min.clone().add(b.max).multiplyScalar(.5));
+        const front=at.clone().addScaledVector(o.stretch,.6*r*(1+o.stretchAmt));
+        events.push({at:at.toArray(),r,heading:o.stretch?.toArray(),amount:o.stretchAmt,seed:o.seed,face:o.face,
+          drumCentre:centre.toArray(),contactError:Math.hypot(centre.x-front.x,centre.z-front.z)});
+      }
+      return splat.call(this,at,r,team,o);
+    };
     try{a.ink=100;g.debug.step(1500);}
     finally{G.paint.splat=splat;g.debug.fire(false);g.debug.key('KeyW',false);}
     recipeMeasurement={start,events};
@@ -205,7 +214,7 @@ try{
     return {layout:G.level.layout.id,start:start.toArray(),end:a.pos.toArray(),face:f.id,
       floorTag:G.level.blocks[f.block].tag,drumWidth,paintHalf:event.r,contactDepth:1.2*event.r*(1+event.amount),
       gpuMinWidth:Math.min(...widths),gpuMaxWidth:Math.max(...widths),rows,holes,gpuFootprint,recipeRandom,initialState,
-      contactError:Math.hypot(centre.x-front.x,centre.z-front.z),events:events.length,
+      contactError:Math.hypot(centre.x-front.x,centre.z-front.z),contactStamps:events,events:events.length,
       debugFixedTicks:180,controller:'shipped KeyW + held fire',inspectionCameraOnly:true,
       gameplayPng,inspectionPng,cameraPlan,gripViews,renderSize,renderAspect,frozenState:JSON.parse(frozen),gripCameraReference:!!cameraReference};
   },{cameraReference,gripSeed});
@@ -222,6 +231,8 @@ try{
   const m=receipt.measurement;
   assert.equal(m.layout,'range');assert.equal(m.floorTag,'floor:roller');
   assert.equal(m.holes,0);assert.ok(m.rows>40);assert.ok(m.contactError<1e-5);
+  assert.equal(m.contactStamps.length,m.events);
+  for(const stamp of m.contactStamps)assert.ok(stamp.contactError<1e-5,'Every steady stamp follows the actual drum');
   assert.ok(Math.abs(m.drumWidth-expectedDrumWidth)<1e-4);assert.ok(Math.abs(m.paintHalf-2.8*0.8103533592449264)<1e-10);
   assert.ok(Math.abs(m.contactDepth-1.5)<1e-10);
   assert.ok(m.gpuMaxWidth>4.3&&m.gpuMaxWidth<4.8);
