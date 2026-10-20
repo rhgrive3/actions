@@ -2,6 +2,9 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, lstatSync, existsSync, mkdirSync, writeFileSync, cpSync, renameSync } from 'node:fs';
 import path from 'node:path';
 export const BASE = 'ada098a8fe5f2b9f2990f10812c01acb70bde190';
+// da285 changes nine QA/report files only; both pinned audio originals and the
+// exact pristine production build identity are unchanged. Unknown bases fail closed.
+export const QA_MAIN = 'da285129eb919d094d29e6a9b388f5eeb11059e9';
 export const FIX = '90c73134af22ce96bb662d753354502155df12f8';
 const sha = data => createHash('sha256').update(data).digest('hex');
 export const blob = data => createHash('sha1').update(`blob ${Buffer.byteLength(data)}\0`).update(data).digest('hex');
@@ -11,7 +14,7 @@ const raw = readFileSync(new URL('../fixtures/inkwave-reference-audio.json', imp
 need(sha(raw) === 'c84ab5810f92c1c611e4cc7ba9b3ab00ea44d8f5ca50067dc8c6b84efb4eb4ce', 'fixture pin mismatch');
 export const files = JSON.parse(raw).files;
 need(files.length === pins.length && files.every((f,i) => f.path === pins[i][0] && blob(f.before) === pins[i][1] && blob(f.after) === pins[i][2]), 'fixture blob/path mismatch');
-export function eligible({ side, pr, baseRef, baseSha }) { return side === 'before' && String(pr) === '1695' && baseRef === 'main' && baseSha === BASE; }
+export function eligible({ side, pr, baseRef, baseSha }) { return side === 'before' && String(pr) === '1695' && baseRef === 'main' && (baseSha === BASE || baseSha === QA_MAIN); }
 export function snapshot(root) {
   const out = {};
   function visit(dir, rel = '') {
@@ -37,7 +40,7 @@ export function verifyTrees(original, derived) {
   return { sourceFiles: Object.keys(before).length, unchangedSourceFiles: Object.keys(before).length-files.length, originalSourceDigest: sha(JSON.stringify(before)), derivedSourceDigest: sha(JSON.stringify(after)) };
 }
 export function prepare({ original, derived, candidate, identity, actualBase }) {
-  need(eligible(identity) && actualBase === BASE, 'ineligible source/PR/side');
+  need(eligible(identity) && actualBase === identity.baseSha, 'ineligible source/PR/side');
   original=path.resolve(original); derived=path.resolve(derived); candidate=path.resolve(candidate);
   need(!existsSync(derived), 'destination exists');
   need(!derived.startsWith(original+path.sep) && !original.startsWith(derived+path.sep), 'overlapping trees');
@@ -52,7 +55,7 @@ export function prepare({ original, derived, candidate, identity, actualBase }) 
   for (const f of files) writeFileSync(path.join(stage,f.path),f.after);
   const checked=verifyTrees(original,stage); same(pristine,snapshot(original),'pristine changed during preparation');
   renameSync(stage,derived);
-  return { schema:1, referenceKind:'audio-stabilized-ada', publicMainEquivalent:false, performanceScope:'stabilized reference versus candidate, not untouched public main', originalCommit:BASE, correctionCommit:FIX, original,derived, writtenPaths:files.map(f=>({path:f.path,beforeBlob:blob(f.before),afterBlob:blob(f.after)})), ...checked };
+  return { schema:1, referenceKind:actualBase===BASE?'audio-stabilized-ada':'audio-stabilized-da285', publicMainEquivalent:false, performanceScope:'stabilized reference versus candidate, not untouched public main', originalCommit:actualBase, correctionCommit:FIX, original,derived, writtenPaths:files.map(f=>({path:f.path,beforeBlob:blob(f.before),afterBlob:blob(f.after)})), ...checked };
 }
 export function verifyBuilds(pristine,derived) {
   need(pristine.build?.revision === '1b30d25ee3ca97c63c89a9d38cea21826b522d06f76924184630d1552a4ed3bb' && pristine.inputHash === 'c8545591049cb13eecc91fa819cd9d98be6b53141f32bd847d2b3eb19af52695' && pristine.contentHash === 'a946c46a2a0521cff8c76fcdc2a0581da25dbe29281166c683e81fbe87bdb878','pristine build identity mismatch');
