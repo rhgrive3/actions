@@ -1,6 +1,6 @@
 # INKWAVE: reported weapon regressions (2026-10-21 JST)
 
-Base: `eb65d48`. Public INKWAVE (`inkwave-public` plus production adapters), pinned gameplay reference S3 11.3.0, no gear unless a test explicitly applies AP 57. Source model exports and the 2022 audio archive have independent versions.
+Base: `a43276d8` (includes the concurrently merged roller holding/grip fix #1715). Public INKWAVE (`inkwave-public` plus production adapters), pinned gameplay reference S3 11.3.0, no gear unless a test explicitly applies AP 57. Source model exports and the 2022 audio archive have independent versions.
 
 | Report | Cause and resulting correction |
 | --- | --- |

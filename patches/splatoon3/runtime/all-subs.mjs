@@ -84,7 +84,7 @@ export const ALL_SUB_SPECS = Object.freeze({
     radius: 4, damageInner: 2.8, damageOuter: 4, damageMax: rawDamage(350), damageMin: rawDamage(250), damageFalloff: 'discrete',
     paintRadius: 4, crossPaintRadius: 1.4, gravity: .016*3600, flyPositionAirResist: .05866, fuse: .72,
     directDamage: 25, directDamageStatus: 'wiki-measured-first-hit', contactBurstDelayFrames: 1,
-    inkCostFallback: 45, calibration: 'fuse/gravity/world scale calibrated; raw splash damage, paint and throw tuple extracted; Wiki measures a 25 direct hit followed 1F later by 35 near blast (two separate damage events)',
+    inkCostFallback: 45, calibration: 'fuse, omitted gravity/drag defaults and world scale calibrated from the existing bomb-family flight; raw splash damage, paint and throw tuple extracted; Wiki measures a 25 direct hit followed 1F later by 35 near blast (two separate damage events)',
   }),
   autobomb: Object.freeze({
     id: 'autobomb', name: 'Autobomb', source: 'WeaponBombRobot.game__GameParameterTable.json',

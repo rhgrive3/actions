@@ -15,7 +15,7 @@ const close = (actual, expected, label, eps = 1e-9) => assert.ok(Math.abs(actual
 
 // #816: post-shot admission must attach to the final installed finite-flight owner.
 // Native source radii stay pinned separately in issue-620; this regression measures the
-// emitted INKWAVE world-space paint radius after the 0.2 lateral calibration.
+// emitted INKWAVE world-space paint radius using the common source distance scale.
 // Same composition and installer as build-inkwave (native Actor, Projectiles,
 // Physics, Level); only display/audio objects are headless. No GPU claim.
 async function boot({ wall = false, omitPostShot = false } = {}) {
@@ -67,7 +67,7 @@ test('#1007/#1052 finite Charger keeps feet paint and forward trajectory widths 
   const a = f.make({ weapon: 'charger' });
   f.tick(a);
   const ps = f.G.projectiles;
-  for (const [charge, forwardWidth] of [[8 / 60, .156], [1, .312]]) {
+  for (const [charge, forwardWidth] of [[8 / 60, .78], [1, 1.56]]) {
     ps.clear(); f.painted.length = 0;
     ps.fireCharger(a, a.weapon, charge);
     assert.equal(f.painted.length, 1, 'accepted shot creates exactly one immediate feet splat');
@@ -100,6 +100,6 @@ test('high-stage Charger paint remains airborne until its receiving surface, eve
   for(let i=0;i<180;i++)ps.update(STEP);
   assert.ok(f.painted.length>0,'high falling ink finally lands on the floor');
   assert.ok(f.painted.some(p=>Math.abs(p.y)<.2),'landed paint is on real geometry');
-  assert.ok(f.painted.some(p=>Math.abs(p.radius-.312)<1e-8),'full-charge lateral width stays narrow after the long fall');
+  assert.ok(f.painted.some(p=>Math.abs(p.radius-1.56)<1e-8),'full-charge lateral width keeps the restored source scale after the long fall');
   assert.equal(ps.chargerDrops.length,0,'all falling ink records retire after landing');
 });
