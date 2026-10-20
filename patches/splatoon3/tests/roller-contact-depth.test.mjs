@@ -3,14 +3,15 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 import { rollerContactDepth, rollerPaintHalfWidth } from '../runtime/roller-contact-paint.mjs';
+import { ROLLER_CONTACT_WIDTH_SCALE as widthScale } from '../runtime/roller-paint-calibration.mjs';
 
 test('sparse roller fields use documented class defaults, not a display width or the maximum at every speed',()=>{
   const p={WidthHalfMax:2.8,SpeedMax:.132};
   assert.equal(rollerContactDepth(p),1.5);
   assert.equal(rollerContactDepth({...p,Depth:2},.5),1);
   assert.equal(rollerPaintHalfWidth(p,0),1.3);
-  assert.ok(Math.abs(rollerPaintHalfWidth(p,6.48)-2.5272727272727273)<1e-12);
-  assert.equal(rollerPaintHalfWidth(p,7.92),2.8);
+  assert.ok(Math.abs(rollerPaintHalfWidth(p,6.48)-(1.3+(2.8*widthScale-1.3)*6.48/7.92))<1e-12);
+  assert.equal(rollerPaintHalfWidth(p,7.92),2.8*widthScale);
   assert.equal(rollerPaintHalfWidth({...p,WidthHalfMin:.7},0),.7);
 });
 

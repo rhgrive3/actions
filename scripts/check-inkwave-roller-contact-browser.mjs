@@ -17,7 +17,7 @@ const overlay=new Map(baselineRef?['main-weapon-catalog.mjs','weapons-fidelity.m
 const withoutModelScale=process.argv.includes('--without-model-scale');
 const ticksIndex=process.argv.indexOf('--ticks');
 const simulationTicks=ticksIndex<0?150:Number(process.argv[ticksIndex+1]);
-if(!Number.isSafeInteger(simulationTicks)||simulationTicks<30||simulationTicks>150)throw Error('Expected --ticks 30..150');
+if(!Number.isSafeInteger(simulationTicks)||simulationTicks<30||simulationTicks>210)throw Error('Expected --ticks 30..210');
 const overhead=process.argv.includes('--overhead');
 if(withoutModelScale)overlay.set('/patches/splatoon3/runtime/roller-source-scale.mjs',
   Buffer.from('export function rollerSourceModelScale(){return 1;}'));
@@ -346,11 +346,11 @@ try {
       "one continuous physical band",
     );
     const speedMax={roller:.132,'s3-roller-compact':.16,'s3-roller-heavy':.108,'s3-roller-hunter':.132,'s3-roller-wide':.142}[id]*60;
-    const expectedHalf=1.3+(result.sourceHalf-1.3)*Math.min(1,result.groundSpeed/speedMax);
+    const expectedHalf=1.3+(result.sourceHalf*0.8103533592449264-1.3)*Math.min(1,result.groundSpeed/speedMax);
     assert.ok(Math.abs(result.events.at(-1).r-expectedHalf)<1e-5,
-      'paint width uses speed and the documented minimum, independently of drum geometry');
+      'contact width uses the common visual calibration and the family speed curve');
     assert.ok(result.gpuMaxWidth>=2*expectedHalf*.93&&result.gpuMaxWidth<=2*expectedHalf+.15,
-      'actual GPU stripe reaches the source width, not just the model width');
+      'actual GPU stripe reaches the calibrated contact width');
     assert.ok(Math.abs(2*result.physicalHalf-result.sourceDrumWidth)<1e-4,
       'rendered drum width uses measured model coordinates, independently of paint width');
     assert.ok(Math.abs(result.contactDepth-1.5)<1e-10,'contact depth stays independent of transverse ink width');

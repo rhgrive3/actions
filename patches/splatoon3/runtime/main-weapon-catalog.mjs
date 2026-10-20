@@ -1347,8 +1347,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const bodyRadius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
       paintSpeedMax>paintSpeedMin?clamp((speed-paintSpeedMin)/(paintSpeedMax-paintSpeedMin)):1);
     const sourceRadius=r.family==='roller'?rollerPaintHalfWidth(paintParam,speed):bodyRadius;
-    // Roller WidthHalfMax is a paint half-width, not a display drum width.
-    // Keep the established source-to-world mapping (1:1 for catalogue ink).
+    // Roller contact ink includes the shared, explicitly visual width
+    // calibration. Raw PaintParam remains intact; damage uses bodyRadius.
     // Brushes retain their separate existing contact calibration.
     const radius=sourceRadius*(r.family==='brush'?.25:1);
     // Drum/brush floor contact follows body yaw, not reticle pitch. An aimed-down

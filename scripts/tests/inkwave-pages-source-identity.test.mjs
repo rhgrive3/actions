@@ -8,6 +8,7 @@ test('Pages publishes the exact workflow revision, never a moving main branch', 
   assert.ok(workflow.includes('          ref: ${{ github.sha }}'), 'checkout must use the triggering SHA');
   assert.ok(!workflow.includes('          ref: main'), 'moving main is not an immutable build input');
   assert.ok(workflow.includes('Deploy to GitHub Pages'));
+  assert.ok(workflow.includes('            tools/squid-heading-qa'), 'published local-quality tests import the heading QA helper');
 });
 
 test('every published gameplay patch group can trigger Pages', () => {
