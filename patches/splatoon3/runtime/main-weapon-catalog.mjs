@@ -5,7 +5,7 @@ import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
-import { installRollerContactPaint } from './roller-contact-paint.mjs';
+import { installRollerContactPaint, rollerContactDepth, rollerPaintHalfWidth } from './roller-contact-paint.mjs';
 import { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 import { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
@@ -447,7 +447,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // Wall projection remains unchanged until its separate source law is verified.
       if(Math.abs(normal.y)<.4){options.stretch=direction;options.stretchAmt=Math.max(0,depth-1);}
       else if(tangent.lengthSq()>EPS){
-        tangent.normalize();const shape=catalogPaintEllipse(radius,depth);
+        tangent.normalize();
+        // A compressed rolling contact has an independent longitudinal length.
+        // Preserve the drum heading and the transverse radius on both sides.
+        if(footprint==='ink-contact'&&depth<1){
+          options.stretch=tangent;options.stretchAmt=depth-1;
+          owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));return;
+        }
+        const shape=catalogPaintEllipse(radius,depth);
         if(shape.rotate)tangent.crossVectors(normal,tangent.clone()).normalize();
         paintRadius=shape.radius;centre=at.clone().addScaledVector(tangent,-shape.centreBack);
         options.stretch=tangent;options.stretchAmt=shape.stretchAmt;
@@ -1286,6 +1293,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function paintRollingStroke(a,stroke,physical=false){
     const {to,from,heading}=stroke;
     const radius=stroke.radius;
+    const contactDepth=physical?stroke.depth:0;
     if(physical){
       const drum=a.character.weapon.drum,geo=a.character.weapon.def.drum;
       if(!geo.boundingBox)geo.computeBoundingBox();
@@ -1298,17 +1306,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const m=drum.matrixWorld.elements;
       heading.set(-m[2],0,m[0]).normalize();
       if(heading.x*Math.sin(a.yaw)+heading.z*Math.cos(a.yaw)<0)heading.negate();
-      // The contact profile ends at .6R. Put its leading edge at the drum,
-      // instead of painting an entire half-stamp ahead of the cylinder.
-      to.addScaledVector(heading,-radius*.6);
+      // Depth is independent of WidthHalfMax. Its leading edge still ends
+      // at the current drum; widening ink must not lengthen a contact stamp.
+      to.addScaledVector(heading,-contactDepth*.5);
     }
     if(stroke.face!==a.ground?.face)stroke.active=false;
     if(!stroke.active)from.copy(to);
     const distance=Math.hypot(to.x-from.x,to.z-from.z);
     // Overlap the filled body, including small rollers at maximum speed.
     // A new stroke never sweeps from the player's feet or an old location.
-    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.04,radius*(physical?.4:.52)))));
-    const depth=physical?1:1+stroke.speed*stroke.dt/(stamps*Math.max(.1,radius));
+    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.04,physical?Math.min(radius*.4,contactDepth*.4):radius*.52))));
+    const depth=physical?contactDepth/(1.2*radius):1+stroke.speed*stroke.dt/(stamps*Math.max(.1,radius));
     for(let i=1;i<=stamps;i++){
       const t=i/stamps;
       stroke.point.set(from.x+(to.x-from.x)*t,to.y,from.z+(to.z-from.z)*t);
@@ -1334,10 +1342,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(!pay(runner,cost,finite(roll.InkRecoverStop,20)/HZ)){runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;return;}
     const paintParam=body.PaintParam||{},paintMax=finite(paintParam.WidthHalfMax,.9);
     const paintSpeedMin=finite(paintParam.SpeedMin,0)*HZ,paintSpeedMax=finite(paintParam.SpeedMax,max/HZ)*HZ;
-    // Missing sparse width defaults stay calibrated; interpolate only an
-    // explicit pair, instead of declaring an invented minimum sourced.
-    const sourceRadius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
+    // Rollers share documented sparse defaults with the native runner.
+    // Brushes retain their separate established width calibration.
+    const bodyRadius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
       paintSpeedMax>paintSpeedMin?clamp((speed-paintSpeedMin)/(paintSpeedMax-paintSpeedMin)):1);
+    const sourceRadius=r.family==='roller'?rollerPaintHalfWidth(paintParam,speed):bodyRadius;
     // Roller WidthHalfMax is a paint half-width, not a display drum width.
     // Keep the established source-to-world mapping (1:1 for catalogue ink).
     // Brushes retain their separate existing contact calibration.
@@ -1351,7 +1360,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     });
     const heading=stroke.heading.set(Math.sin(a.yaw),0,Math.cos(a.yaw));
     stroke.to.set(a.pos.x+heading.x*.6,a.pos.y+.35,a.pos.z+heading.z*.6);
-    stroke.radius=radius;stroke.speed=speed;stroke.dt=dt;
+    stroke.radius=radius;stroke.depth=rollerContactDepth(paintParam);stroke.speed=speed;stroke.dt=dt;
     stroke.pending=r.family==='roller'&&!!a.character?.weapon?.drum&&!!a.character.weapon.def?.drum;
     if(!stroke.pending)paintRollingStroke(a,stroke);
     s.contactTimes ||= new Map();
@@ -1362,7 +1371,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // dealt no damage. Contact radius and cadence are unchanged.
     const at=rollerContactAt.set(a.pos.x+heading.x*.6,a.pos.y,a.pos.z+heading.z*.6);
     const eye=rollerContactEye.set(at.x,a.pos.y+.35,at.z);
-    for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<sourceRadius+PLAYER.radius&&
+    for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<bodyRadius+PLAYER.radius&&
       G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(eye,rollerTargetCentre.set(enemy.pos.x,enemy.pos.y+(enemy.form==='squid'?PLAYER.squidHeight:PLAYER.height)*.5,enemy.pos.z))){
       withObjectDamageCause({owner:a,type:r.family==='brush'?'brush-body':'roller',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id));s.contactTimes.set(enemy,G.time);
     }

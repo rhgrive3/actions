@@ -12,6 +12,17 @@ export function adaptMainInkFootprints(rel, code) {
     once("'source-shot': 8, 'source-splash': 9", "'source-shot': 8, 'source-splash': 9, " + INK_FOOTPRINT_KINDS.map((kind,i)=>`'${kind}': ${10+i}`).join(', '));
     once('1.25, 1.35, 1, 1];', '1.25, 1.35, 1, 1, ' + INK_FOOTPRINT_KINDS.map(()=>1.42).join(', ') + '];');
     once('float hsh(float n)', INK_FOOTPRINT_GLSL + '\nfloat hsh(float n)');
+    // Signed compression is carried by the existing float stretch field. Only
+    // the contact profile uses it, symmetrically; positive shot smears retain
+    // their established front/rear law. Bound the full transverse radius even
+    // when the longitudinal dimension becomes shorter.
+    once('if (sa > 0.0) {', 'if (sa > 0.0 || (kind == 14.0 && sa < 0.0)) {');
+    once('float s = a > 0.0 ? 1.0 + sa : 1.0 + 0.25 * sa;',
+      'float s = kind == 14.0 && sa < 0.0 ? 1.0 + sa : (a > 0.0 ? 1.0 + sa : 1.0 + 0.25 * sa);');
+    once('const ext = rr * (reachK + 1.4 * sAmt);',
+      'const ext = rr * (reachK + 1.4 * (kind === 14 ? Math.max(0, sAmt) : sAmt));');
+    once('const ext = rr * (reachK + 1.4 * sa);',
+      'const ext = rr * (reachK + 1.4 * (kind === 14 ? Math.max(0, sa) : sa));');
     // A section-table distance is a boundary test, not a Euclidean SDF.
     // Derivatives across a steep shoulder can otherwise turn a tiny drop
     // into a translucent stripe spanning its entire submitted rectangle.
@@ -23,17 +34,19 @@ export function adaptMainInkFootprints(rel, code) {
     // only the existing kind and seed fields, never the owner's current gun.
     if ((opts.kind === 'source-shot' || opts.kind === 'source-splash') &&
       (INK_FOOTPRINT_KINDS.includes(opts.footprint) || opts.footprint === CHARGER_FOOTPRINT))
-      opts = { ...opts, kind: opts.footprint === CHARGER_FOOTPRINT ? chargerInkProfileKind(opts.seed) : opts.footprint };`);
+      opts = { ...opts, kind: opts.footprint === CHARGER_FOOTPRINT ? chargerInkProfileKind(opts.seed) : opts.footprint };
+    if (opts.kind === 'ink-contact' && opts.stretchAmt !== undefined &&
+        (!Number.isFinite(opts.stretchAmt) || opts.stretchAmt <= -1)) return 0;`);
     once('const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH;', `const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH || (kind >= 10 && kind <= ${INK_PROFILE_LAST_KIND});
     const stencil = kind >= 10 && kind <= ${INK_PROFILE_LAST_KIND};
     const inkKind = inkProfileSurfaceKind(kind, f.wall);
     const inkWord = stencil ? paintShapeSeed(seed) : 0;
     const inkDu = sdu || sdv ? sdu : 1, inkDv = sdu || sdv ? sdv : 0;
     const inkInvR = stencil ? 1 / r : 0;
-    const inkInvFront = stencil ? inkInvR / (1 + sa) : 0, inkInvRear = stencil ? inkInvR / (1 + .25 * sa) : 0;`);
+    const inkInvFront = stencil ? inkInvR / (1 + sa) : 0, inkInvRear = stencil ? inkInvR / (1 + (kind === 14 && sa < 0 ? sa : .25 * sa)) : 0;`);
     // Rounded-square lobes fit their source width/depth rectangle, whose
     // rotated corners need a sqrt(2) bound rather than the old circle bound.
-    once('r * (1 + sa) * (sourced ? 1 : WOB_MAX);', 'r * (1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);');
+    once('r * (1 + sa) * (sourced ? 1 : WOB_MAX);', 'r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);');
     // Keep generic broad-phase optimizations untouched. The profile path has
     // no inner-disc shortcut: its tapered tails and band corners are not disks.
     const start = code.indexOf('  _cpuSplat('), end = code.indexOf('\n  _pushQuad(', start);
