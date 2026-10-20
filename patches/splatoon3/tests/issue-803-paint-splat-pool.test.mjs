@@ -4,9 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { adaptSource, replaceOnce } from '../adapter.mjs';
-import { adaptIssueBatch1171 } from '../issue-batch-1171-adapter.mjs';
-import { adaptPaintBodyEdge } from '../paint-ownership-adapter.mjs';
+import { adaptSource } from '../adapter.mjs';
 import { fixture } from './source-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -27,13 +25,18 @@ async function loadPaintSystem({ adapted, countNativeAllocations = false }) {
   function load(file) {
     if (modules.has(file)) return modules.get(file);
     const original = fs.readFileSync(file, 'utf8');
-    // Compare pooling with the same current Roller ownership formula on both sides.
-    let source = file === PAINT_PATH ? (adapted ? adaptSource('src/world/paint.js', original)
-      : adaptPaintBodyEdge('src/world/paint.js', adaptIssueBatch1171('src/world/paint.js', original, replaceOnce), replaceOnce)) : original;
+    // Isolate allocation reuse from later raster/ownership changes. Both sides
+    // execute the current painter; the control always takes the allocation
+    // branch instead of taking an entry/growth record from either pool.
+    let source = file === PAINT_PATH ? adaptSource('src/world/paint.js', original) : original;
+    if(!adapted&&file===PAINT_PATH){
+      assert.equal(source.split('if (pool?.length)').length-1,2,'two pool acquisition branches');
+      source=source.replaceAll('if (pool?.length)','if (false && pool?.length)');
+    }
     if (countNativeAllocations && file === PAINT_PATH) {
       for (const [before, after] of [
-        ['    const entries = [];', '    this._nativeSplatStats.entryArraysCreated++;\n    const entries = [];'],
-        ['      const g = {', '      this._nativeSplatStats.growthRecordsCreated++;\n      const g = {'],
+        ['    this._splatPoolStats.entryArraysCreated++;', '    this._nativeSplatStats.entryArraysCreated++;\n    this._splatPoolStats.entryArraysCreated++;'],
+        ['    this._splatPoolStats.growthRecordsCreated++;', '    this._nativeSplatStats.growthRecordsCreated++;\n    this._splatPoolStats.growthRecordsCreated++;'],
       ]) {
         assert.equal(source.split(before).length - 1, 1, `native allocation counter anchor should occur once: ${before.trim()}`);
         source = source.replace(before, after);
@@ -83,7 +86,7 @@ function makePaint(runtime, { events = [], adapted = false } = {}) {
     _drawQuads() {},
     _emitGrowth(g, tn, dT, dripOnly) { events.push([g.team, g.seed, tn, dT, dripOnly, g.entries?.length ?? -1]); },
   });
-  if (adapted) Object.assign(paint, {
+  Object.assign(paint, {
     _splatEntryPool: [], _splatGrowthPool: [], _splatPoolsDisposed: false,
     _splatPoolStats: { entryArraysCreated: 0, entryArraysReused: 0, growthRecordsCreated: 0, growthRecordsReused: 0 },
   });
@@ -272,7 +275,7 @@ test('#803: wall drips retain their leased entries through the final drip emissi
   assert.equal(leasedEntries.length, 7);
   nativeRig.paint.flush(1.75); installedRig.paint.flush(1.75);
   assert.deepEqual(installedEvents[0].slice(0, 5), [0, .2, 3, 0, false], 'current immediate body precedes unchanged native drip submissions');
-  assert.deepEqual(installedEvents.slice(1), nativeEvents);
+  assert.deepEqual(installedEvents, nativeEvents);
   assert.equal(installedRig.paint.growing.length, 0);
   assert.equal(leasedGrowth.entries, null);
   assert.equal(leasedEntries.length, 0);

@@ -242,6 +242,15 @@ export async function measureStormRainAtRenderHz(renderHz, {
   const splat = G.paint.splat.bind(G.paint);
   let summedCircularBrushFootprintWorldUnitsSquared = 0;
   let summedClaimedWorldUnitsSquared = 0;
+  let summedGrowthClaimedWorldUnitsSquared = 0;
+  if(production){
+    const advance=G.paint.advanceSimulation.bind(G.paint);
+    G.paint.advanceSimulation=(dt)=>{
+      const before=G.paint.counts[cloud.team],result=advance(dt);
+      summedGrowthClaimedWorldUnitsSquared+=(G.paint.counts[cloud.team]-before)*G.paint.cell**2;
+      return result;
+    };
+  }
   let paintWriteEvents = 0;
   G.paint.splat = (center, radius, team, opts = {}) => {
     const beforeCells = G.paint.counts[team];
@@ -346,6 +355,7 @@ export async function measureStormRainAtRenderHz(renderHz, {
     summedCircularBrushFootprintWorldUnitsSquared: round(summedCircularBrushFootprintWorldUnitsSquared),
     // Retain the original field as immediate splat-return accounting, not union.
     summedClaimedWorldUnitsSquared: round(summedClaimedWorldUnitsSquared),
+    summedGrowthClaimedWorldUnitsSquared: round(summedGrowthClaimedWorldUnitsSquared),
     immediateOwnerCreditWorldUnitsSquared: round(immediateOwnerCreditWorldUnitsSquared),
     delayedOwnerCreditWorldUnitsSquared: round(delayedOwnerCreditWorldUnitsSquared),
     ownerTurfDeltaWorldUnitsSquared: round(owner.stats.turf - initialOwnerTurfWorldUnitsSquared),
