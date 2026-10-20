@@ -24,6 +24,7 @@ JS `source-convert.mjs::classify` と Python `obj_import.py::parse_obj` は、�
 - `source-terrain-contract.mjs` をNativeLevel構築前と私的変換物のビルド取り込みに適用。有効なチェックサムを持つ旧変換物でも、構造的地面を落としていれば再変換を要求し世界切替を止める。browser-directの派生キャッシュは既存runtime SHA付きキーで失効する。
 - オフライン検証は頂点・索引・オブジェクト境界、法線、原典→衝突の全三角形対応、BVHの重複・未到達・境界、chart / mask所有関係を検査。床・壁・斜面の削除・破損を注入した負例を含む。
 - CIに全23固定原典の取得・静的解析・実WebGL被覆比較を追加。CI成果物は数値JSONのみで、原典・変換モデル・画像を含めない。
+- 全原典CIでは、生成済みの実Bluefinを使う中央歩行・塗りの30/60/120Hz回帰も必須化した。明示的に渡した原典変換物が存在しない場合はskipせず失敗する。
 
 全23ステージ・8,206,497表示三角形のFloat32頂点・法線・UVとUint32索引は修正前とハッシュ完全一致。新規床ポリゴン、透明床、箱コライダー、境界補間は追加していない。原典の穴・段差・境界・T-junctionを変更していない。原典自身のT-junctionが誤りかを推測して埋める検査ではない。
 
@@ -34,6 +35,7 @@ JS `source-convert.mjs::classify` と Python `obj_import.py::parse_obj` は、�
 - 独自4ステージ: 1,327露出面の描画・物理照合、有限属性・索引検査成功。既存の丸め形状と表示専用trimを考慮。さらに各8視点でfrustum culling有効/無効の画素差0。
 - ネギトロ中央: 実NativePhysics / PaintSystem / Actorによる両側×30/60/120Hzの支持・歩行・塗り成功。旧版は失敗。
 - ネギトロ実ゲーム: 実Game固定ステップ、8人・7bot、元の低画質テクスチャとインク描画で、両側×描画30/60/120Hzの制御移動、中央塗り、4視点post描画、Tidewater→Bluefin再読み込み成功。支持された初期位置と制御入力を使い、全試合の自然操作とは区別する。
+- 追加継続検証: 実Gameと7botをゲーム内15分・54,000フレーム進め、中央4点の支持を3,600回検査。30回の元材質WebGL描画・塗り確認と、最後の別ステージ経由の再読み込みが成功した。ローカル入力は中立、無敵時間は制御しており、継続歩行や実機での壁時計15分の耐久保証ではない。描画リソース数はgeometry 431〜502、texture 113〜120（bot / FXの準備・活動を含む）で、RSSや修正前後の実メモリ差の測定ではない。
 - 最終native群: 293 pass / 128 optional skip / 0 fail。対象群29 pass / 5 optional skip、旧変換物/build契約7 pass、本番生成物の物理回帰20 pass、配信元同一性5 pass。
 - 既存Bluefinの両上岸間移動・発進・落下・実射塗り・登りの5実行と、独立OBJ全属性・索引の1実行が成功。VMには既存optional source-motion importが使えない警告がある。
 - 本番ビルドとquick互換性検査成功。PRは [#1709](https://github.com/rhgrive3/actions/pull/1709)。初回の地形CIは全3ジョブ成功し、数値成果物の23原典ハッシュ・形状・衝突・chart数もローカルと一致。最終CI / 統合結果はPRのチェックと完了記録を参照。
@@ -44,7 +46,13 @@ JS `source-convert.mjs::classify` と Python `obj_import.py::parse_obj` は、�
 
 さらに旧mainでsource-shotの認証fixture、847の2件、Sprinklerの再生比較、Stormの集計に同じ失敗を再現。847は実接地probeと最終姿勢で確定する塗り段階を実行し、古いroller guardだけでは後から導入された共通の塗りguardを巻き戻せない点を明記した。Sprinklerは送受信側で最後のインクの成長時間を揃え、Stormはsplatの即時戻り値だけでなく、既存の遅延成長が取得したセルも別に集計する。完全なgrid一致・全Hzの決定性・実際の認証処理を維持して検証する。
 
+次の標準CIではnetwork-replication 551件中1件が、既に追加済みの `resetMatch?.paused` ガードを含まない古い文字列一致で失敗した。この1件も旧mainで再現し、テストを所有権とpause両方のガードを要求する形へ更新した。後続の実際の非同期attract callbackテストを含む7件は成功した。
+
 初回activeブラウザCIは機能検査自体のerrorがなく、Jet_Arrow音声の `ERR_ABORTED` 3件だけで失敗していた。全応答のハッシュ検証後にクライアントが中断した、版固定audio MP3だけを別に記録するよう観測器を修正した。未検証の中断、JS/モデルの中断、実際の通信失敗は引き続き失敗になる。これらはテスト基盤の修正で、出荷側の塗り認証・音声処理は変更していない。
+
+続くCIで、中断通知が同じ応答のハッシュ検証より先に届く順序も確認した。観測器は進行中の応答検証を待ってから判定する。同じURLでも別リクエストの検証結果を流用しない負例を追加した。
+
+この順序を実Chromiumのfetch中断でも強制再現し、検証前には失敗、同一応答の検証後には中断記録となることを確認した。修正後の実ブラウザ操作・移動・塗り・65キット切り替えも成功。停止していた標準CIの後続はローカルで、本番ビルド、全pin数値資料、ビルド後の物理・武器・通信・UI・Sub/Special検証まで成功した。CI用のsudoディレクトリ準備だけはローカル環境にsudoがないため実行不可で、GitHub Ubuntu上の最終CIで確認する。
 
 機械可読要約: [verification.json](inkwave-terrain-integrity-2026-10-20/verification.json)。画像・モデルを含む証跡はignoredな `.browser-evidence/terrain-*` と `.codex-stage-sources/terrain-*` に保持する。
 
