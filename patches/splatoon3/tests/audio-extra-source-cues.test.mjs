@@ -41,7 +41,8 @@ test('every shipped 2022 MP3 is registered exactly, without guessing its game ev
     assert.match(clip.gitBlobSha,/^[0-9a-f]{40}$/);
     const bytes=fs.readFileSync(new URL(file,dir));
     assert.equal(gitBlobSha(bytes),clip.gitBlobSha,id+' immutable Git blob');
-    assert.match(clip.verification,/unverified/,'do not claim retail routing');
+    assert.match(clip.sourceKind,/unverified/,'do not claim retail routing');
+    assert.match(clip.verification,/no claimed retail/);
   }
   for(const c of original.clips)assert.ok(installed.clips.some(x=>x.id===c.id&&x.event===c.event&&x.variant===c.variant&&x.file===c.file),
     c.id+'/'+c.event+' original sound route remains unchanged');
