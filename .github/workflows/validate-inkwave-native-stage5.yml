@@ -87,6 +87,10 @@ jobs:
         run: python3 scripts/fetch-inkwave-terrain-sources.py .codex-stage-sources/terrain-ci
       - name: Audit every playable source mesh, collision BVH and paint chart
         run: node scripts/check-inkwave-terrain.mjs .codex-stage-sources/terrain-ci work/terrain-source-evidence/audit.json .codex-stage-sources/terrain-ci-derived
+      - name: Verify original Bluefin central walking and paint at 30/60/120 Hz
+        env:
+          INKWAVE_TERRAIN_ASSETS: ${{ github.workspace }}/.codex-stage-sources/terrain-ci-derived
+        run: node --experimental-vm-modules --test patches/native-stages/tests/bluefin-terrain-source.test.mjs
       - run: node scripts/build-inkwave.mjs inkwave-public work/site
       - name: Compare real source render and collision coverage in WebGL
         run: node scripts/check-inkwave-terrain-browser.mjs work/site .codex-stage-sources/terrain-ci-derived work/terrain-source-evidence/browser
