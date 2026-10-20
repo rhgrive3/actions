@@ -6,6 +6,22 @@
 // Durable Object.
 const ROOM_CODE = /^[BCEFGHJKLMNPQRTUVXYZ23456789]{5}$/;
 
+// Client/relay compatibility (#1654). WIRE_MAJOR is the relay wire contract and must
+// match PROTO in src/net/transport.js. `compat` is the client's gameplay-compatibility
+// token (COMPAT in the same file): clients that disagree on game rules or packet
+// semantics must not share a room. The relay does not know which tokens are
+// compatible; it pins each room to its creator's token, so a compatibility bump
+// needs no relay redeploy. Only a WIRE_MAJOR bump does.
+const WIRE_MAJOR = '2';
+const COMPAT_TOKEN = /^[A-Za-z0-9_-]{8,80}$/;
+const UPDATE_MESSAGE = 'Game update required. Reload this page to play online.';
+const VERSION_MISMATCH_MESSAGE = 'This room uses a different game version. Reload this page and try again.';
+
+function clientBuild(url) {
+  const compat = url.searchParams.get('compat');
+  return url.searchParams.get('v') === WIRE_MAJOR && COMPAT_TOKEN.test(compat || '') ? compat : null;
+}
+
 const isWebSocketUpgrade = (request) => request.headers.get('Upgrade')?.toLowerCase() === 'websocket';
 
 // Same refusal shape the room uses for every join error, so the client shows a
@@ -85,6 +101,9 @@ export default {
       // ASCII-only before case folding, so no Unicode uppercase can alias a code.
       const roomCode = /^[A-Za-z0-9]{5}$/.test(pathParts[1]) ? pathParts[1].toUpperCase() : '';
       if (!ROOM_CODE.test(roomCode)) return refusalSocket('Room not found');
+      // Builds that predate (or postdate) this wire contract are told to reload; the
+      // text is readable by the old client too, which shows any error frame verbatim.
+      if (!clientBuild(url)) return refusalSocket(UPDATE_MESSAGE);
       const id = env.ROOMS.idFromName(roomCode);
       const roomObj = env.ROOMS.get(id);
       return roomObj.fetch(request);
@@ -111,6 +130,7 @@ export class RoomDurableObject {
     this.members = new Map(); // id -> { id, name, ws, joinedAt }
     this.hostId = null;
     this.locked = false;
+    this.compat = null; // gameplay-compatibility token pinned by the room's creator
   }
 
   async fetch(request) {
@@ -119,6 +139,9 @@ export class RoomDurableObject {
     }
 
     const url = new URL(request.url);
+    // The Worker has already checked this; keep the room safe if reached directly.
+    const build = clientBuild(url);
+    if (!build) return refusalSocket(UPDATE_MESSAGE);
     const name = (url.searchParams.get('name') || 'Player').slice(0, 16);
     const isCreate = url.searchParams.get('create') === '1';
 
@@ -140,6 +163,14 @@ export class RoomDurableObject {
         server.close(1008, 'Room not found');
         return new Response(null, { status: 101, webSocket: client });
       }
+      // Refuse a different game build before it is admitted: it must never appear
+      // in the roster or receive the room's traffic (#1654).
+      if (build !== this.compat) {
+        server.accept();
+        server.send(JSON.stringify({ t: 'err', e: VERSION_MISMATCH_MESSAGE }));
+        server.close(1008, VERSION_MISMATCH_MESSAGE);
+        return new Response(null, { status: 101, webSocket: client });
+      }
       if (this.locked) {
         server.accept();
         server.send(JSON.stringify({ t: 'err', e: 'Match in progress' }));
@@ -155,6 +186,7 @@ export class RoomDurableObject {
     }
 
     server.accept();
+    if (this.members.size === 0) this.compat = build;
     this.handleSession(server, name);
 
     return new Response(null, { status: 101, webSocket: client });
@@ -176,6 +208,8 @@ export class RoomDurableObject {
     // Send welcome frame
     ws.send(JSON.stringify({
       t: 'welcome',
+      proto: Number(WIRE_MAJOR),   // lets a client detect a relay that predates this admission
+      compat: this.compat,
       id: id,
       host: this.hostId,
       members: memberList
@@ -279,6 +313,7 @@ export class RoomDurableObject {
         } else {
           this.hostId = null;
           this.locked = false;
+          this.compat = null;
         }
       }
 

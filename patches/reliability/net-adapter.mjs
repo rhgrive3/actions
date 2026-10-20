@@ -230,7 +230,13 @@ NetMatch.prototype.dispose = function(...args) {
     // #1645: frame bounds shared with server/src/index.js (MAX_FRAME_BYTES and MAX_BACKLOG_BYTES).
     // The relay measures a frame in UTF-8 bytes and removes a sender that exceeds its limit, so
     // the client refuses first, in the same unit, instead of being dropped from the room.
-    code = replaceOnce(code, 'export const PROTO = 1;', `export const PROTO = 1;
+    // #1654: the relay refuses a client whose wire major differs from its own and pins each room to
+    // its creator's COMPAT, so builds that disagree on game rules or packet semantics never share a
+    // room. Bump PROTO only together with server/src/index.js WIRE_MAJOR (a relay redeploy).
+    // Bump COMPAT whenever gameplay rules, authoritative data or the network packet schema change
+    // in a way an older build would misread; UI, audio and other presentation-only releases keep it.
+    code = replaceOnce(code, 'export const PROTO = 1;', `export const PROTO = 2;
+export const COMPAT = 'iw-gameplay-20261020-r1';
 
 export const MAX_RELAY_FRAME_BYTES = 64 * 1024;
 export const MAX_RELAY_BACKLOG_BYTES = 512 * 1024;
@@ -339,7 +345,7 @@ export function relayFrameFits(text) {
         done(reject, error);
         try { ws.close(1000, 'bye'); } catch { /* ignore */ }
       };
-      const url = \`\${relayURL()}/room/\${encodeURIComponent(code)}?name=\${encodeURIComponent(name)}&v=\${PROTO}\${create ? '&create=1' : ''}\`;
+      const url = \`\${relayURL()}/room/\${encodeURIComponent(code)}?name=\${encodeURIComponent(name)}&v=\${PROTO}&compat=\${encodeURIComponent(COMPAT)}\${create ? '&create=1' : ''}\`;
       try { ws = new WebSocket(url); } catch { done(reject, new Error('Could not connect')); return; }
       this.ws = ws;
       this._disconnect = disconnect;
@@ -373,6 +379,13 @@ export function relayFrameFits(text) {
         }
         if (o.t === 'welcome') {
           if (settled) return;
+          // A relay that predates admission sends no proto and enforces nothing; refuse to play on it
+          // rather than risk a room of mixed builds. A null compat only comes from harness relays that
+          // seat players without fetch(); every real relay echoes the room's pinned token.
+          if (o.proto !== PROTO || (o.compat != null && o.compat !== COMPAT)) {
+            disconnect(new Error('Online service version mismatch. Reload this page and try again.'));
+            return;
+          }
           this.id = o.id; this._startPing(); done(resolve, o);
         }
         this.onControl?.(o);

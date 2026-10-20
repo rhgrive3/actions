@@ -41,7 +41,7 @@ test('malformed room paths are refused before any Durable Object is selected', a
     assert.equal(response.status, 404, path);
     untouched(calls);
   }
-  const slash = await viaWorker('/room/BCEFG/');
+  const slash = await viaWorker('/room/BCEFG/?' + joinPath('BCEFG').split('?')[1]);
   assert.equal(await slash.response.text(), 'routed', 'a trailing slash is still the same single segment');
   assert.deepEqual(slash.calls.idFromName, ['BCEFG']);
 });

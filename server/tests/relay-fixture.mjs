@@ -88,8 +88,11 @@ export async function connect(room, code, options = {}) {
   return { response, socket: pairs[0]?.[1] || null, allocated: pairs.length };
 }
 
+// A room whose members were seated directly (handleSession), as if created by a
+// current client: rooms made through fetch() are pinned to their creator's build.
 export function roomWith(...names) {
   const room = new RoomDurableObject({}, {});
+  room.compat = COMPAT;
   const sockets = names.map(name => {
     const ws = new FakeSocket();
     room.handleSession(ws, name);
