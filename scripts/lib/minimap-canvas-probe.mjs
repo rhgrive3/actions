@@ -12,7 +12,8 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
  const sources={baseline:compose(baseline),candidate:compose(candidate)};
  const hash=s=>crypto.createHash('sha256').update(s).digest('hex');
  if(hash(read('patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs'))!=='6310a58e1ad59bfab2bf8af4b5dcd2327ee4b94ce0f76d913538569c5387bda1')throw Error('Baseline minimap adapter binding mismatch');
- const sourceHashes=Object.fromEntries(['inkwave-public/src/game/minimap.js','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs'].map(p=>[p,hash(read(p))]));
+ const sourceHashes=Object.fromEntries(['inkwave-public/src/game/minimap.js','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs'].map(p=>[p,hash(fs.readFileSync(path.join(root,p)))]));
+ // Compare exact bytes with the build manifest's file digests; decoded UTF-8 text is only for execution.
  // Match the pinned *current build inputs*, not stale pre-migration hashes.
  const sourceKeys={
    'inkwave-public/src/game/minimap.js':'upstream/src/game/minimap.js',
