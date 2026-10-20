@@ -146,3 +146,24 @@ test('#253 held B charge, top-edge exit and paint loss never receive neutral des
   assert.equal(lost.climbing, false, 'non-own paint ends cling');
   assert.equal(lost.s3NeutralWallSlideT, 0, 'paint loss keeps the timer at zero');
 });
+
+// Acceptance (#253): an enemy re-paint of the wall under a neutral cling is a separate
+// state from the neutral descent. Only the qualitative "descends with no input" claim has
+// a source; the 0.9 WU/s terminal speed and 3.6 WU/s^2 acceleration are provisional
+// calibration (profile.json movement.neutralWallSlide, numeric-status: unverified).
+test('#253 enemy re-paint during a neutral cling ends the descent state instead of continuing it', async () => {
+  const f = await world({ fidelity: true });
+  let ink = 1;
+  const a = neutralWall(f);
+  f.G.paint.sample = () => ink;
+  for (let i = 0; i < 20; i++) a._updateClimb(f.STEP, true);
+  assert.equal(a.climbing, true);
+  assert.ok(a.s3NeutralWallSlideT > 0, 'own ink: the neutral descent timer is running');
+  ink = 2; // the wall is now enemy-coloured
+  a._updateClimb(f.STEP, true);
+  assert.equal(a.climbing, false, 'enemy-coloured wall ends the cling');
+  assert.equal(a.s3NeutralWallSlideT, 0, 'the descent timer does not survive into the next contact');
+  ink = 1;
+  a.climbing = true; a.form = 'squid'; a._updateClimb(f.STEP, true);
+  assert.ok(a.s3NeutralWallSlideT <= f.STEP + 1e-12, 'a new own-ink contact starts the descent from its first tick, not from the old timer');
+});
