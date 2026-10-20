@@ -5368,3 +5368,13 @@ main `3e8812d` で、23点のチャンスタイム終了後にペナルティ11.
 - 停止時の負荷：練習場の一時停止画面は、開くたびに 160 個の武器チップ（それぞれ SVG アイコン付き）を、WEAPON タブが閉じていても作っていた。WEAPON タブを最初に開いたときに作るように変えた（`patches/practice-range/runtime/menu.mjs`）。前回 WEAPON タブで閉じた場合は、従来どおり開く時点で作る。
 
 確認状態：SwiftShader の Chromium で実際に組み立てたビルドを起動した。`check-inkwave-pause-gpu.mjs` はデスクトップとスマートフォンの両方で成功した。停止中 120 フレームで世界の再描画 0、保持フレームの表示 120、GL 画素 9 点すべてが非黒、再開時の解放を確認した。停止した瞬間の画面 DOM は 2,747 → 187 ノード、`pause()` の同期処理は 46〜71ms → 26〜28ms だった（ソフトウェア描画のホストでの参考値で、実機の値ではない）。背景の固定は、844×390 タッチ表示と 900×600 の画面でスクロール後のスクリーンショットで確認した。実 GPU、WebKit、実 iPad・スマートフォンで黒画面が起きないことは未確認。
+
+### 追補：毎フレームの不要な DOM 書き換えの削除（2026-10-20）
+
+表示の書き込み回数だけを減らした。表示内容、ゲーム時計、入力、判定は変えていないため、スプラトゥーン3との挙動差は増減しない。
+
+- 練習場の HUD（`patches/practice-range/runtime/hud.mjs`）：ターゲットカードは命中後 4 秒間表示される。その間、同じ値でも数値 3 つと距離を毎フレーム書き直していた（テキストノードの置き換え）。パッドの進捗バーも、毎フレーム要素を探し直していた。どちらも値が変わったときだけ書くようにした。
+- マップ（`patches/local-quality/ui-actor-lifetime-adapter.mjs`）：マップを閉じている間は毎フレーム `releaseMatchActors()` が呼ばれる。そこで `classList.remove('is-on')` が、矢印にクラスがなくても class 属性を書き直していた。同期済みのキャッシュ `_last.arc` で判定する。
+- カタログの「ナイス」ボタン（`patches/splatoon3/runtime/catalogue.mjs`）と、ランク戦 HUD（`patches/splatoon3/runtime/ranked/ui.mjs`）：`hidden` を毎フレーム設定していた。ランク戦では、さらに querySelector、約 12 か所の textContent、チーム色の書き直しも毎フレーム行っていた。要素をキャッシュし、値が変わったときだけ書く。
+
+確認：SwiftShader の Chromium で、実ビルドの 40 フレームの DOM 変更を MutationObserver で数えた。練習場（命中直後）は 8.63 → 1.55 回／フレームで、残りは浮き上がるダメージ数値のアニメーション。オフラインのナワバリバトルでは、毎フレーム発生していた 3 件（マップ矢印・ボタン・ランク HUD の `hidden`）が 0 になった。残りは味方マーカーやインクタンクなど、動きに応じた書き込みである。関連する回帰テスト（ui-actor-lifetime、ranked-ui、ranked-clam-penalty-consumer、ranked-localization、score-hud、sub-hud、catalogue-integration、練習場）は成功した。ランク戦の実ブラウザでの書き込み数は計測していない。実機のフレーム時間への効果も未計測。

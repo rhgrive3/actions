@@ -13,6 +13,7 @@ import { L, isJa } from './strings.mjs';
 const _p = new THREE.Vector3();
 const PAD_TEXT = { resetPaint: 'RESETTING PAINT', resetDummies: 'RESETTING TARGETS', inkCourse: 'INKING THE SWIM COURSE', resupply: 'RESUPPLY' };
 const fmt = (v, d = 1) => (Number.isFinite(v) ? v.toFixed(d) : '—');
+const setText = (el, text) => { if (el.textContent !== text) el.textContent = text; };
 const zoneLabel = (id) => (id && ZONES[id] ? `${ZONES[id].letter ? ZONES[id].letter + ' · ' : ''}${isJa ? ZONES[id].ja : ZONES[id].name}` : '—');
 
 export class RangeHud {
@@ -76,7 +77,10 @@ export class RangeHud {
       if (pad) this.prompt.firstChild.textContent = pad.kind === 'weapon'
         ? `${L('SWITCHING WEAPON')} · ${WEAPONS[pad.weapon].name}` : L(PAD_TEXT[pad.kind] || pad.kind);
     }
-    if (pad) this.prompt.querySelector('i').style.transform = `scaleX(${Math.max(0, Math.min(1, k)).toFixed(3)})`;
+    if (pad) {
+      const sx = `scaleX(${Math.max(0, Math.min(1, k)).toFixed(3)})`;
+      if (sx !== this._L.padBar) { this._L.padBar = sx; (this._padBar || (this._padBar = this.prompt.querySelector('i'))).style.transform = sx; }
+    }
   }
   damageNumber(target, amount, splat) {
     const el = h('span', { class: 'iwr-dmg' + (splat ? ' is-splat' : '') + (target.rangeTarget.kind === 'endurance' ? ' is-endure' : '') }, splat ? 'SPLAT!' : fmt(amount, 1));
@@ -128,14 +132,16 @@ export class RangeHud {
     if (show) {
       const a = last.target, t = a.rangeTarget, c = t.combo;
       if (L0.cname !== a.name) { L0.cname = a.name; this.cName.textContent = a.name; this.card.classList.toggle('is-endure', t.kind === 'endurance'); }
-      this.cLast.textContent = fmt(last.amount, 1);
-      this.cFrom.textContent = last.dist != null ? `${L('FROM')} ${fmt(last.dist, 1)} m` : '';
-      this.cCombo.textContent = c ? fmt(c.total, 1) : '—';
-      this.cHits.textContent = c ? String(c.hits) : '—';
-      this.cSplat.textContent = t.kind === 'endurance' ? `${L('ENDURANCE')} · ${L('never pops')}`
-        : c && c.done ? `${L('SPLAT IN')} ${c.hits} · ${fmt(c.splatT, 2)} s` : '';
+      // shown for 4 s after each hit and refreshed every frame: write only what changed
+      setText(this.cLast, fmt(last.amount, 1));
+      setText(this.cFrom, last.dist != null ? `${L('FROM')} ${fmt(last.dist, 1)} m` : '');
+      setText(this.cCombo, c ? fmt(c.total, 1) : '—');
+      setText(this.cHits, c ? String(c.hits) : '—');
+      setText(this.cSplat, t.kind === 'endurance' ? `${L('ENDURANCE')} · ${L('never pops')}`
+        : c && c.done ? `${L('SPLAT IN')} ${c.hits} · ${fmt(c.splatT, 2)} s` : '');
       const hp = t.kind === 'endurance' ? 1 : Math.max(0, Math.min(1, a.hp / PLAYER.hp));
-      this.cHp.style.transform = `scaleX(${hp.toFixed(3)})`;
+      const sx = `scaleX(${hp.toFixed(3)})`;
+      if (sx !== L0.hp) { L0.hp = sx; this.cHp.style.transform = sx; }
     }
     // floating numbers over the targets
     const cam = G.camera, W = innerWidth, H = innerHeight;

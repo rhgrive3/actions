@@ -406,7 +406,7 @@ export function installCatalogueControls({G,PlayerController,HUD,emit}) {
    button.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const a=G.match?.local;if(a)a._catalogueCheerPending=true;});
    this.el.append(button);this._catalogueCheer=button;
   }
-  if(this._catalogueCheer){const me=G.match?.local;this._catalogueCheer.hidden=!this._visible||!me?.alive||!!G.match?.paused||!(G.actors||[]).some(a=>a.alive&&a.team===me.team&&a.specialActive?.id==='booyahBomb');}
+  if(this._catalogueCheer){const me=G.match?.local,hidden=!this._visible||!me?.alive||!!G.match?.paused||!(G.actors||[]).some(a=>a.alive&&a.team===me.team&&a.specialActive?.id==='booyahBomb');if(this._catalogueCheer.hidden!==hidden)this._catalogueCheer.hidden=hidden;}
   return result;
  };
 }

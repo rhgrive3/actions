@@ -120,31 +120,39 @@ function updateHud(hud, G, api) {
     hud.el.appendChild(el);
     hud._rankedHud = el;
   }
-  el.hidden = !engine;
+  if (el.hidden !== !engine) el.hidden = !engine;
   if (!engine) return;
-  const names = G.palette?.names || G.match?.palette?.names;
-  el.dataset.mode = engine.mode;
-  el.querySelector('.iw-ranked-hud__rule').textContent = t(RULE_LABELS[engine.mode]);
-  el.querySelectorAll('[data-team]').forEach(node => {
-    const team = Number(node.dataset.team);
-    node.textContent = t(teamName(team, names));
-    node.style.setProperty('--rkt', G.teamHex?.[team] || (team ? '#3675ff' : '#ff8a14'));
+  // Runs every HUD frame: write only what changed (an unchanged textContent write still replaces the text node).
+  const set = (node, text) => { if (node.textContent !== text) node.textContent = text; };
+  const n = el._rankedNodes || (el._rankedNodes = {
+    rule: el.querySelector('.iw-ranked-hud__rule'), teams: [...el.querySelectorAll('[data-team]')],
+    counts: [...el.querySelectorAll('[data-count]')], penalties: [...el.querySelectorAll('[data-penalty]')],
+    clock: el.querySelector('.iw-ranked-hud__clock'), objective: el.querySelector('.iw-ranked-hud__objective'),
+    hint: el.querySelector('.iw-ranked-hud__hint'),
   });
-  el.querySelectorAll('[data-count]').forEach(node => {
+  const names = G.palette?.names || G.match?.palette?.names;
+  if (el.dataset.mode !== engine.mode) el.dataset.mode = engine.mode;
+  set(n.rule, t(RULE_LABELS[engine.mode]));
+  n.teams.forEach(node => {
+    const team = Number(node.dataset.team), color = G.teamHex?.[team] || (team ? '#3675ff' : '#ff8a14');
+    set(node, t(teamName(team, names)));
+    if (node._rankedColor !== color) { node._rankedColor = color; node.style.setProperty('--rkt', color); }
+  });
+  n.counts.forEach(node => {
     const team = Number(node.dataset.count);
-    node.textContent = String(Math.ceil(finite(engine.counts?.[team], 100)));
+    set(node, String(Math.ceil(finite(engine.counts?.[team], 100))));
     node.classList.toggle('is-leading', engine.leader === team);
   });
-  el.querySelectorAll('[data-penalty]').forEach(node => {
+  n.penalties.forEach(node => {
     const team = Number(node.dataset.penalty), penalty = Math.ceil(finite(engine.penalties?.[team]));
-    node.textContent = penalty > 0 ? t('PEN {n}', { n: penalty }) : '';
+    set(node, penalty > 0 ? t('PEN {n}', { n: penalty }) : '');
   });
   const clock = engine.overtime ? t('OT {time}', { time: fmtClock(engine.overtimeElapsed) }) : fmtClock(engine.time);
-  el.querySelector('.iw-ranked-hud__clock').textContent = clock;
-  el.querySelector('.iw-ranked-hud__objective').textContent = objectiveText(engine, G, api);
-  const hint = el.querySelector('.iw-ranked-hud__hint');
-  hint.hidden = engine.mode !== 'clams';
-  hint.textContent = engine.mode === 'clams' ? t(api.TXT?.mode === 'touch' ? 'THROW' : api.TXT?.mode === 'pad' ? 'THROW [A]' : 'THROW [C]') : '';
+  set(n.clock, clock);
+  set(n.objective, objectiveText(engine, G, api));
+  const hint = n.hint, clams = engine.mode === 'clams';
+  if (hint.hidden !== !clams) hint.hidden = !clams;
+  set(hint, clams ? t(api.TXT?.mode === 'touch' ? 'THROW' : api.TXT?.mode === 'pad' ? 'THROW [A]' : 'THROW [C]') : '');
 }
 
 function rankedJudge(hud, engine, data = {}, G = {}, api = {}) {

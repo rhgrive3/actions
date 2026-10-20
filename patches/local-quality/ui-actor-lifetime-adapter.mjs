@@ -43,9 +43,12 @@ export function adaptUiActorLifetime(rel, code, once) {
     let cleared = false;
     for (const pin of this.pins) if (!actors || (pin.target && actors.includes(pin.target))) {
       pin.target = null; pin.ok = false; pin.vis = false; pin.key = '';
-      pin.el.style.display = 'none'; cleared = true;
+      if (pin.el.style.display !== 'none') pin.el.style.display = 'none';
+      cleared = true;
     }
-    if (cleared) { this.hover = -1; this.hasCursor = false; this._last.arc = false; this.arc.classList.remove('is-on'); }
+    // The closed map calls this every frame: classList.remove rewrites the class attribute even when absent.
+    // _last.arc mirrors the arc's is-on class (update() only toggles it through that cache).
+    if (cleared) { this.hover = -1; this.hasCursor = false; if (this._last.arc !== false) this.arc.classList.remove('is-on'); this._last.arc = false; }
   }
 
   update(dt, k) {`, 'pin lifetime owner');
