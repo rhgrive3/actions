@@ -749,9 +749,9 @@ for (const id of ['waveBreaker', 'splattercolorScreen']) for (const ap of [0, 57
    if(kind==='wave'){
     assert.equal(g.maxRadius,ap===0?20:27);
     assert.equal(g.maxWaveFrame,(ap===0?160:216)/60);
-    assert.deepEqual(g.pulseFrames,[90/60,240/60,390/60]);
+    assert.deepEqual(Array.from(g.pulseFrames),[90/60,240/60,390/60]);
    }else {
-    assert.equal(g.dur,680/60);
+    assert.ok(Math.abs(g.dur-680/60)<.001,'wire duration is quantized to milliseconds');
     assert.equal(g.width,15);assert.equal(g.height,9);
    }
    for(const event of order)assert.equal(f.replayAllSpecials(f,{...event,actor:remote}),false,
