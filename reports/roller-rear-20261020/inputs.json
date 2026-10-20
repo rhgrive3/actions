@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "purpose": "rear-view image comparison only; no game parameter calibration",
+  "retailSource": "https://asset.watch.impress.co.jp/img/gmw/docs/1460/351/25.jpg",
+  "retailArticle": "https://game.watch.impress.co.jp/docs/kikaku/1460351.html",
+  "sources": [
+    {
+      "path": ".reference-data/roller-scale/gamewatch25-full.jpg",
+      "title": "本家：スプラトゥーン3／スプラローラー",
+      "subtitle": "GAME Watch・2022-12-01掲載、転がして125ダメージ",
+      "drum": [
+        539,
+        753,
+        441
+      ],
+      "paint": [
+        470,
+        864,
+        490
+      ],
+      "sha256": "c646ca799a8e419eff03db38e5a0e4599a5990262fcccdbbb63a460100801042"
+    },
+    {
+      "path": "reports/roller-overhead-20261020/gameplay.png",
+      "title": "INKWAVE：main e43f0afe の実ゲーム画面",
+      "subtitle": "Dローラーコート・前進＋攻撃、最高速 7.92 world/s",
+      "drum": [
+        355,
+        555,
+        395
+      ],
+      "paint": [
+        231,
+        682,
+        446
+      ],
+      "sha256": "132947468404a775ac1d8ee802e3a2233a431b9967d068d77471bd230d0c0c23"
+    }
+  ],
+  "coordinates": "Manual image pixel annotations: drum=[left,right,centreY]; paint=[left,right,rowY]. Approximate, not ground-plane rectified.",
+  "mainBuild": "16b66efdb5d5d7193c7eebf6f871c3780b6cb5c8355bc1da0ff257342dc9dca1",
+  "mainRevision": "e43f0afe9cce5b988ef4dca802f4b4d524787a13",
+  "liveBuild": "a946c46a2a0521cff8c76fcdc2a0581da25dbe29281166c683e81fbe87bdb878",
+  "liveRevision": "1b30d25ee3ca97c63c89a9d38cea21826b522d06f76924184630d1552a4ed3bb",
+  "liveCheck": "2026-10-20",
+  "limitations": [
+    "retail speed/gear/camera calibration unknown",
+    "retail frame immediately after dummy contact",
+    "drum is above the floor; depth-dependent perspective not corrected",
+    "same displayed drum span does not make the cameras identical",
+    "main capture differs from current Pages build"
+  ]
+}
