@@ -87,11 +87,15 @@ test('847 flat rolling unchanged on full production composition', async () => {
   const a = new f.Actor({ team: 0, name: 'r847flat', isLocal: true, weapon: 'roller', CharacterClass: f.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   a.character.onEvent = null; f.G.actors = [a];
   a.pos.set(0, 0, -5); a.yaw = 0; a.aimYaw = 0; a.grounded = true; a.ink = 100; a.vel.set(0, 0, 3);
+  f.G.physics.groundProbe(a.pos.x,a.pos.y,a.pos.z,f.PLAYER.stepUp,f.PLAYER.stepDown,f.PLAYER.footRadius,a.ground,false);
+  assert.equal(a.ground.hit,true,'physical floor paint has an actual supporting contact');
   const paintBefore = f.G.paint.version;
   a.intent.move.set(0, 0, 1); a.intent.fire = true;
   f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  a._finishFrame(1 / 60); // physical drum paint commits after the current contact pose
   a.pos.z += 0.35;
   f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  a._finishFrame(1 / 60);
   assert.equal(a.weaponRunner.rolling, true, 'flat + stick + fire keeps rolling');
   assert.ok(Math.hypot(a.vel.x, a.vel.z) > 1.0, 'roll speed preserved');
   assert.ok(a.ink < 100, 'native roll consumes ink while moving');
@@ -248,7 +252,7 @@ test('847 current-main b34 full production composition reproduces the uncovered 
   a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
   assert.ok(v.hp < 500, 'main allows residual-speed damage without Left Stick');
   assert.ok(a.ink < inkBefore, 'main drains ink from residual displacement');
-  assert.ok(f.G.paint.version > paintBefore, 'main paints from residual displacement');
+  assert.equal(f.G.paint.version, paintBefore, 'new shared physical-paint guard still rejects no-stick paint with the old roller guard');
 
   const ledge = new f.Level({ bounds: { minX: -4, maxX: 4, minZ: -7, maxZ: 4 }, spawnPads: [[-3, 0, 0], [3, 0, 0]],
     spawnBarrier: 0, half: [], single: [{ kind: 'box', min: [-4, -.5, -7], max: [0, 0, 4] }] });

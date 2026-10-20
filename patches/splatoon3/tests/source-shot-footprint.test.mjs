@@ -164,12 +164,15 @@ test('same full-precision sourced event gives identical CPU ownership on local a
     const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
     const { paint, V, face } = makePaintWorld(f);
     const messages = [];
-    f.G.netm = { mute: 0, applying, recSplat(_at, r, _team, options) {
-      messages.push({ radius: r, kind: options.kind, face: options.face });
-    }};
+    const owner=f.make('shooter');owner.nid=1;owner.owner='source-shot-owner';
+    const nm=new f.NetMatch({myId:owner.owner,hostId:owner.owner,isHost:true,_members:new Set([owner.owner])},{id:'source-shot-fixture'});
+    nm.byNid.set(owner.nid,owner);nm.applying=applying;
+    const rec=nm.recSplat;
+    nm.recSplat=function(_at,r,_team,options){const order=rec.call(this,_at,r,_team,options);if(order)messages.push({radius:r,kind:options.kind,face:options.face});return order;};
+    f.G.netm=nm;
     const r = f.profile.weaponsFidelityCompletion.weapons.shooter.PaintParam.WidthHalfNear;
     const area = paint.splat(V(0,0,8), r, 0,
-      { kind: SOURCE_SHOT_PAINT_KIND, face: 0, seed: .37, stretch: V(0,0,1), stretchAmt: 1.24 });
+      { kind: SOURCE_SHOT_PAINT_KIND, face: 0, seed: .37, stretch: V(0,0,1), stretchAmt: 1.24, claimOwner: owner });
     assert.ok(area > 0);
     return { area, cells: Array.from(paint.grid), radius: paint.growing.at(-1).R,
       kind: paint.growing.at(-1).kind, messages, faceCells: face.nu*face.nv };
