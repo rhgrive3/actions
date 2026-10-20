@@ -873,6 +873,12 @@ export class RankedWorld {
     return finite(y) ? y : null;
   }
 
+  // #1648: a moving Tower deck is solid footing the static floor lookup lacks.
+  supportedAt(pos) {
+    return this.mode === 'tower' && !!this.towerBlock && Array.isArray(pos)
+      && this._inTowerVolume({ pos: { x: pos[0], y: pos[1], z: pos[2] } }, false);
+  }
+
   blocked(a, b) {
     const segment = this.physics?.segment;
     if (typeof segment !== 'function') return false;
