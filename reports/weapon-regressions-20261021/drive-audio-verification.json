@@ -137,6 +137,30 @@
       "sha256": "5366114895aca376f4780aa1123d90a7c4542bcad24a464afc374f47f28169cd",
       "sameAsInstalled": true,
       "looksAudio": true
+    },
+    {
+      "file": "Wp_Charger_HoldNoise_Bamboo_00.mp3",
+      "id": "19bi32DFuC_r9iuJVjd3E_PU5tmlFVvuA",
+      "bytes": 8821,
+      "sha256": "130987bd51bb8426d949efd7fb48919f5903b5ac1196e868502c8ceff3b22b0e",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_Charger_HoldNoise_Pump_00.mp3",
+      "id": "1cSCzh7XiPaAbpn-8tjcrPls6B34xPyDw",
+      "bytes": 8821,
+      "sha256": "2bb5227aedff80e495b62a9cb2662fddfb9fe8f2aea3b79038120cbb78be525f",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_ChargeKeepReady_00.mp3",
+      "id": "1yAG9_oMDsaUj6EnfT-2L0MI8VKj8BQOl",
+      "bytes": 5805,
+      "sha256": "cd0d4c7f699c7d43b770413ceac84db1a5070d7d1b8cc521c2dfc78e751605e6",
+      "sameAsInstalled": true,
+      "looksAudio": true
     }
   ]
 }
