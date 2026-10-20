@@ -43,10 +43,10 @@ const server=http.createServer((q,r)=>{
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser,page,diagnosticTimer;
-const receipt={build:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,errors:[],requests:[],console:[]};
+const receipt={diagnosticOnly:process.env.GRIP_DIAGNOSTIC_ONLY==='1',acceptanceNote:process.env.GRIP_DIAGNOSTIC_ONLY==='1'?'Unchanged-baseline control failed; candidate images are nonaccepting diagnostics.':null,build:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,errors:[],requests:[],console:[]};
 const snapshot=async()=>page?.evaluate(()=>({mode:window.__G?.mode,match:window.__G?.match?.state,
   menu:window.__inkwave?.menus?.current,layout:window.__G?.level?.layout?.id,
-  range:!!window.__G?.match?.range,text:document.body.innerText.slice(-1800)})).catch(()=>null);
+  range:!!window.__G?.match?.range,entryFreeze:window.__gripEntryFreeze,initialState:window.__gripInitialState,text:document.body.innerText.slice(-1800)})).catch(()=>null);
 try{
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',
     ...(process.env.HTTPS_PROXY?{proxy:{server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'}}:{}),
@@ -57,7 +57,24 @@ try{
   page.on('response',r=>{if(r.status()>=400&&receipt.requests.length<30)receipt.requests.push({url:r.url(),status:r.status()});});
   page.on('console',m=>{if(['error','warning'].includes(m.type())&&receipt.console.length<30)receipt.console.push(m.text().slice(0,1500));});
   diagnosticTimer=setInterval(async()=>{receipt.state=await snapshot();fs.writeFileSync(path.join(out,'progress.json'),JSON.stringify(receipt,null,2));},15000);
-  await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',lang:'ja'})));
+  await page.addInitScript(({seeded})=>{
+    localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',lang:'ja'}));
+    // BEGIN TRUSTED ENTRY FREEZE CONTRACT
+    if(seeded){
+      const freezeAtInput=e=>{
+        if(!e.isTrusted||!e.target?.closest?.('.iw-ui [data-id="mode-range"]'))return;
+        const g=window.__inkwave;
+        if(g?.menus?.current!=='mode'||!g.debug?.freeze)return;
+        // Freeze only the native simulation, before the normal trusted menu
+        // handler creates its Character and awaits asynchronous shader warmup.
+        g.debug.freeze();
+        window.__gripEntryFreeze={schema:1,boundary:'trusted-mode-range-capture',trusted:e.isTrusted,time:window.__G.time};
+        document.removeEventListener('click',freezeAtInput,true);
+      };
+      document.addEventListener('click',freezeAtInput,true);
+    }
+    // END TRUSTED ENTRY FREEZE CONTRACT
+  },{seeded:gripSeed!==null});
   receipt.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:240000,
     onProgress:r=>{receipt.entry=r;fs.writeFileSync(path.join(out,'progress.json'),JSON.stringify(receipt,null,2));}});
   console.log('Native Range ready');
@@ -69,6 +86,15 @@ try{
     await a.character.sourceMotion.ready;
     G.match.range.travel('roller');
     a.pos.set(-26.5,.04,4);a.vel.set(0,0,0);a.yaw=a.aimYaw=0;g.rig.yaw=0;g.rig.pitch=-.3;
+    // BEGIN INITIAL CHARACTER CONTRACT
+    const c=a.character,boundary=window.__gripEntryFreeze||null;
+    const initialState=window.__gripInitialState={schema:1,boundary,gameTime:G.time,
+      character:{name:c.name,seed:c.seed,time:c.t,phase:c.phase,breathPhase:c.brPh,breathNumber:c.brN,
+        breathAmplitude:c.brAmp,breathRate:c.brRate,pose:Array.from(c.P)}};
+    if(gripSeed!==null&&(!boundary?.trusted||boundary.boundary!=='trusted-mode-range-capture'||
+      !g.frozen||G.time!==boundary.time||c.t!==0||c.phase!==0||c.brPh!==0))
+      throw Error('Seeded capture missed the native pre-Character input boundary: '+JSON.stringify(initialState));
+    // END INITIAL CHARACTER CONTRACT
     g.input.keys.clear();g.debug.key('KeyW',true);g.debug.fire(true);
     // BEGIN SCOPED ROLL RNG CONTRACT
     // Opt-in QA randomness only. Default capture leaves the game's RNG untouched.
@@ -173,7 +199,7 @@ try{
     if(state()!==frozen)throw Error('Restoring inspection changed simulation');
     return {layout:G.level.layout.id,start:start.toArray(),end:a.pos.toArray(),face:f.id,
       floorTag:G.level.blocks[f.block].tag,drumWidth,paintHalf:event.r,contactDepth:1.2*event.r*(1+event.amount),
-      gpuMinWidth:Math.min(...widths),gpuMaxWidth:Math.max(...widths),rows,holes,gpuFootprint,recipeRandom,
+      gpuMinWidth:Math.min(...widths),gpuMaxWidth:Math.max(...widths),rows,holes,gpuFootprint,recipeRandom,initialState,
       contactError:Math.hypot(centre.x-front.x,centre.z-front.z),events:events.length,
       debugFixedTicks:180,controller:'shipped KeyW + held fire',inspectionCameraOnly:true,
       gameplayPng,inspectionPng,cameraPlan,gripViews,renderSize,renderAspect,frozenState:JSON.parse(frozen),gripCameraReference:!!cameraReference};

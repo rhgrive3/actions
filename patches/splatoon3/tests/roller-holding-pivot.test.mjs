@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 
+const SUPPORT_GATE = "if (limb === this.limbs.armL && this.weaponKind === 'roller' && this.kidForm && !this.dance &&";
 const PIVOT_GATE = 'if (neededGround && rollBlend > .001 && armLeftHeld && bound && rollAxisAligned && Number.isFinite(this.weapon.drumA)) {';
 function exact(source, needle, replacement) {
   assert.equal(source.split(needle).length, 2, 'one current-source pivot anchor');
@@ -14,6 +15,7 @@ async function trace(mode) {
     realProjectiles: true, vmMathRandom: () => .4,
     adaptRuntime(rel, source) {
       if (rel !== 'patches/splatoon3/runtime/roller.mjs') return source;
+      if (mode === 'left-disabled') return exact(source, SUPPORT_GATE, SUPPORT_GATE.replace('if (', 'if (false && '));
       if (mode === 'control') return exact(source, PIVOT_GATE, PIVOT_GATE.replace('if (', 'if (false && '));
       if (mode === 'off-center') return exact(source, 'target.copy(rollTarget);', 'target.copy(rollTarget).addScaledVector(rollAxis, .02);');
       if (mode === 'lost-phase') return exact(source, 'rollDrum.rotation.x = this.weapon.drumA + lo;', 'rollDrum.rotation.x = this.weapon.drumA;');
@@ -47,10 +49,17 @@ async function trace(mode) {
     const center = w.drum.localToWorld(box.min.clone().add(box.max).multiplyScalar(.5));
     const m = w.drum.matrixWorld.elements, axis = v().set(m[0], m[1], m[2]).normalize();
     const hand = c.bones.handR.getWorldPosition(v());
-    const errors = ['handR', 'handL'].map(name => c.bones[name].getWorldPosition(v())
-      .distanceTo(w.off.localToWorld(w.def[name].pos.clone())));
+    const left = c.bones.handL, blend = c._s3RollerGripBlend || 0;
+    const hole = w.def.gripL.pos.clone().sub(w.def.handL.pos).applyQuaternion(w.def.handL.quat.clone().invert());
+    const target = w.def.gripL.pos.clone();
+    target.z += Math.max(0, (w.def.gripR.pos.z + w.def.fold.pivot.z) * .5 - target.z) * .15 * blend;
+    const actualHole = left.localToWorld(hole), requestedHole = w.off.localToWorld(target);
+    const errors = [hand.distanceTo(w.off.localToWorld(w.def.handR.pos.clone())), actualHole.distanceTo(requestedHole)];
+    const palmUp = v().set(-1, 0, 0).applyQuaternion(left.getWorldQuaternion(new THREE.Quaternion()))
+      .dot(v().set(0, 1, 0).applyQuaternion(w.off.getWorldQuaternion(new THREE.Quaternion())));
     rows.push({ tick, contact: !!c._s3RollerContactPose, roll: c.wRoll, center: center.toArray(), axis: axis.toArray(), radial: [m[4], m[5], m[6], m[8], m[9], m[10]],
-      spin: [w.drumA, w.drumW], hand: hand.toArray(),
+      spin: [w.drumA, w.drumW], hand: hand.toArray(), rightMatrix: Array.from(c.bones.handR.matrixWorld.elements),
+      weaponMatrix: Array.from(w.off.matrixWorld.elements), palmUp,
       errors, pos: Array.from(a.pos.toArray()), ink: a.ink, rolling: a.weaponRunner.rolling });
     // The next native frame resets the rig; full trajectory parity below also
     // checks that this same-clock exercise does not contaminate release.
@@ -93,7 +102,11 @@ function sameContact(before, after) {
     }
     assert.deepEqual(Array.from(b.spin), Array.from(a.spin), 'native drum clock and speed are unchanged');
     assert.ok(b.radial.every((value, j) => Math.abs(value - a.radial[j]) < 1e-9), 'live drum radial frame must stay pinned');
-    if (b.contact) assert.ok(b.errors.every(error => error < 1e-6), 'both post-IK wrists stay on their original sockets');
+    if (b.contact) {
+      assert.ok(b.errors[0] < 1e-6, 'right wrist stays on its original socket');
+      assert.ok(b.errors[1] <= .0005, 'left palm contact stays within the existing native 0.5mm retry threshold');
+      if (b.roll > .99) assert.ok(b.palmUp > .99, 'settled left palm supports the shaft from underneath');
+    }
   }
 }
 test('held Roller lowers its hands about the same live cylinder; off-center fault is rejected', async () => {
@@ -108,6 +121,13 @@ test('held Roller lowers its hands about the same live cylinder; off-center faul
   assert.ok(releaseStep(current) <= releaseStep(control) + .01, 'release must not enlarge the native vertical wrist step by over 1cm');
   assert.ok(correction[120] < -.001, 'release retains its reachable fading correction');
   assert.ok(Math.abs(correction[179]) < .005, 'the existing release clock fades the correction away');
+  const leftDisabled = await trace('left-disabled');
+  for (let i = 0; i < current.length; i++) {
+    assert.deepEqual(current[i].rightMatrix, leftDisabled[i].rightMatrix, 'left support must not move the right hand on later frames');
+    assert.deepEqual(current[i].weaponMatrix, leftDisabled[i].weaponMatrix, 'left support must not move the whole weapon on later frames');
+  }
+  const detached = current.map(row => ({ ...row, errors: [row.errors[0], .000501] }));
+  assert.throws(() => sameContact(control, detached), /left palm contact/, 'contact beyond native 0.5mm budget is rejected');
   const lostPhase = await trace('lost-phase');
   assert.throws(() => sameContact(control, lostPhase), /live drum radial frame must stay pinned/,
     'a missing counter-spin must not pass even with an axis-centered cylinder');

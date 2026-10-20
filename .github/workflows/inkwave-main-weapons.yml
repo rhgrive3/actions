@@ -205,6 +205,7 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public work/roller-grip-site-candidate 2>&1 | tee work/roller-grip-evidence/after-build.log
           cp work/roller-grip-site-candidate/inkwave-build.json work/roller-grip-evidence/after-build.json
       - name: Capture baseline at the shipped 180-tick rolling state
+        id: baseline_capture
         if: steps.changes.outputs.run == 'true'
         shell: bash
         run: |
@@ -214,6 +215,7 @@ jobs:
           node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict'; assert.equal(JSON.parse(fs.readFileSync('work/roller-grip-evidence/before/result.json')).passed, true);"
       # One extra capture, not a third build: prove seeded A/A repeatability first.
       - name: Repeat baseline for synthetic RNG and GPU A/A control
+        id: aa_control
         if: steps.changes.outputs.run == 'true'
         shell: bash
         run: |
@@ -230,20 +232,25 @@ jobs:
             assert.equal(result.measurement.recipeRandom.seed, Number(process.env.GRIP_SEED));
             assert.equal(result.measurement.recipeRandom.restored, true);
           }
+          assert.deepEqual(first.measurement.initialState.character, repeat.measurement.initialState.character, 'A/A initial Character state differs');
           assert.equal(first.build, repeat.build, 'A/A must use the exact same built baseline');
           for (const key of ['gpuFootprint', 'recipeRandom', 'cameraPlan', 'gripViews', 'start', 'end'])
             assert.deepEqual(first.measurement[key], repeat.measurement[key], `Unchanged baseline A/A differs: ${key}`);
           console.log('Synthetic RNG baseline A/A control passed; candidate comparison may proceed.');
           NODE
+      # Failed A/A still yields diagnostic candidate pixels, never a passing pair.
+      # The failed control step remains failed; cancellation is never bypassed.
       - name: Capture candidate with the baseline cameras unchanged
-        if: steps.changes.outputs.run == 'true'
+        if: ${{ !cancelled() && steps.changes.outputs.run == 'true' && steps.baseline_capture.outcome == 'success' }}
+        env:
+          GRIP_DIAGNOSTIC_ONLY: ${{ steps.aa_control.outcome == 'success' && '0' || '1' }}
         shell: bash
         run: |
           set -o pipefail
           test -s work/roller-grip-evidence/before/grip-cameras.json
           node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-candidate work/roller-grip-evidence/after --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/after.log
       - name: Verify complete and comparable grip evidence
-        if: steps.changes.outputs.run == 'true'
+        if: steps.changes.outputs.run == 'true' && steps.aa_control.outcome == 'success'
         shell: bash
         run: |
           node --input-type=module <<'NODE'
@@ -264,6 +271,7 @@ jobs:
             assert.equal(steady.passed, true); assert.equal(steady.build, result.build);
             assert.deepEqual(steady.measurement, m, 'Release capture changed steady measurement');
             assert.equal(result.passed, true, `${side} capture failed`);
+            assert.equal(result.diagnosticOnly, false, 'Diagnostic capture cannot pass paired acceptance');
             assert.deepEqual(result.errors, []);
             sha(build.contentHash); sha(build.inputHash);
             assert.equal(build.build.optimization, 'esbuild-minify');
@@ -275,6 +283,15 @@ jobs:
             assert.equal(m.controller, 'shipped KeyW + held fire');
             assert.equal(m.inspectionCameraOnly, true);
             assert.equal(m.gripCameraReference, index !== 0);
+            const initial = m.initialState;
+            assert.equal(initial.schema, 1); assert.equal(initial.boundary.schema, 1);
+            assert.equal(initial.boundary.boundary, 'trusted-mode-range-capture');
+            assert.equal(initial.boundary.trusted, true);
+            assert.equal(initial.gameTime, initial.boundary.time);
+            assert.ok(Number.isFinite(initial.gameTime));
+            for (const key of ['time', 'phase', 'breathPhase']) assert.equal(initial.character[key], 0);
+            assert.ok(Number.isInteger(initial.character.seed) && typeof initial.character.name === 'string');
+            assert.ok(Array.isArray(initial.character.pose) && initial.character.pose.every(Number.isFinite));
             const rng = m.recipeRandom;
             assert.equal(rng.mode, 'seeded-synchronous-180-tick');
             assert.equal(rng.algorithm, 'mulberry32-u32-v1');
@@ -346,6 +363,7 @@ jobs:
           });
           assert.equal(sides[0].build.contentHash, sides[1].build.contentHash, 'A/A baseline build differs');
           for (const other of sides.slice(1)) {
+            assert.deepEqual(sides[0].measurement.initialState.character, other.measurement.initialState.character, 'Initial Character state differs');
             assert.deepEqual(sides[0].cameras, other.cameras, 'Capture changed the baseline cameras');
             for (const key of ['gpuFootprint', 'recipeRandom', 'gripViews', 'renderSize', 'start', 'end'])
               assert.deepEqual(sides[0].measurement[key], other.measurement[key], `Seeded control/candidate differs: ${key}`);
@@ -360,7 +378,7 @@ jobs:
           fs.writeFileSync(`${root}/comparison.json`, JSON.stringify({ passed: true, ...ids,
             before: sides[0].build.contentHash, after: sides[2].build.contentHash, baselineControl: sides[1].build.contentHash,
             views: names, ticks: 180, release: { controller: sides[0].release.controller, ticks: [1, 4, 12] }, gpuFootprint: sides[0].measurement.gpuFootprint, recipeRandom: sides[0].measurement.recipeRandom, states: sides.map(s => stateSummary(s.measurement)),
-            note: 'Synthetic seeded 180-tick QA with unchanged-baseline A/A control, not default stochastic gameplay. Pose/time remain unmodified; visual/reference acceptance requires image review.'
+            note: 'Synthetic trusted-input-frozen, seeded 180-tick QA with unchanged-baseline A/A control, not default stochastic gameplay. Pose/time remain unmodified; visual/reference acceptance requires image review.'
           }, null, 2) + '\n');
           console.log('All three seeded captures use identical baseline cameras, actor positions, RNG receipts and GPU masks.');
           NODE
