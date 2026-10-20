@@ -104,22 +104,11 @@ export function adaptIdleSource(rel, code, replace) {
     // timers. Actor, weapon, collision and O(N²) soft-push simulation is not
     // presentation work. Leave boss/ranked/attract ownership untouched.
     patch('    // actors (the local controller runs once per rendered frame via updateController)',
-      "    if (!this.bossMode && !this.ranked && !this.attract && (this.state === 'finish' || this.state === 'judge')) return;\n    // actors (the local controller runs once per rendered frame via updateController)",
+      "    if (!this.bossMode && !this.ranked && !this.attract && (this.mode == null || this.mode === 'turf') && (this.state === 'finish' || this.state === 'judge')) return;\n    // actors (the local controller runs once per rendered frame via updateController)",
       '#923 park Turf post-TIME-UP actor and collision simulation');
   }
   if (rel === 'src/main.js') {
     code = "import { idleAttractMenuBudget, notePausedWorldChange, pausedWorldFrame, refreshEnvironmentBudget } from '../patches/local-quality/idle-resources.mjs';\n" + code;
-    // #923: freeze gameplay projectiles at the very same Turf terminal
-    // state boundary, while preserving cinematic boss/ranked/attract paths.
-    // FX/HUD/renderer continue independently for the judge reveal.
-    if (!code.includes('      if (!m.paused) G.projectiles.update(dt);')) {
-      const lineMatches = code.split('\n').filter(line => line.includes('projectiles') && line.includes('update')).slice(0, 8);
-      const tickPos = code.indexOf('m.update(dt / sub);');
-      throw new Error('POSTMATCH_ADAPTER_DIAGNOSTIC ' + JSON.stringify({lines:lineMatches.map(line=>line.slice(0,250)),aroundTick:code.slice(Math.max(0,tickPos-150),tickPos+350),tickPos}));
-    }
-    patch('      if (!m.paused) G.projectiles.update(dt);',
-      "      if (!m.paused && (m.bossMode || m.ranked || m.attract || (m.state !== 'finish' && m.state !== 'judge'))) G.projectiles.update(dt);",
-      '#923 freeze Turf projectile gameplay after TIME UP');
     patch('  _setSettings(partial) {', '  _setSettings(partial) {\n    notePausedWorldChange(this, partial);', 'settings writes invalidate paused backdrop');
     patch('    G.audio = audioMod.audio; G.music = musicMod.music;', '    G.audio = audioMod.audio; G.music = musicMod.music;\n    this._applyAudioVolumes();', 'persisted volumes before any audio init path');
     patch('G.audio?.init?.(); this._applyAudioVolumes();', 'this._applyAudioVolumes(); G.audio?.init?.();', 'persisted mute before unlock');
