@@ -117,12 +117,20 @@ export function requestTurfFinish(match) {
   if (match.s3DeadlineStep && !match.bossMode) match.s3FinishPending = true;
   else match.setState('finish');
 }
+// #923: TIME UP/JUDGE are presentation states in Turf. Keep the original
+// legal endpoint tick but never advance live projectiles after the deadline.
+// Boss, Ranked and menu-attract continue to own their separate clocks.
+export function terminalTurfGameplayParked(match) {
+  return !match.bossMode && !match.ranked && !match.attract
+    && (match.mode == null || match.mode === 'turf')
+    && (match.state === 'finish' || match.state === 'judge');
+}
 export function simulateMatchInterval(match, dt, G) {
   const advance = (span, controller = true) => {
     if (!(span > 0)) return;
     if (controller) { match.updateController(span); match.controller?.computeAim?.(true); }
     match.update(span);
-    if (!match.paused) G.projectiles.update(span);
+    if (!match.paused && !terminalTurfGameplayParked(match)) G.projectiles.update(span);
     if (!match.paused) match.advanceRanked?.(span);
   };
   const turf = !match.bossMode && !match.attract && (match.mode == null || match.mode === 'turf');
