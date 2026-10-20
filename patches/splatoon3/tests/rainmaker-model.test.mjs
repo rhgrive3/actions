@@ -17,9 +17,9 @@ test('single-draw gold fish silhouette has finite low-budget geometry and an ope
  bytes+=g.index.array.byteLength;const triangles=g.index.count/3;assert.equal(triangles,444);assert.equal(bytes,15948);
  assert.equal(mesh.isMesh,true);assert.equal(mesh.children.length,0);assert.ok(!Array.isArray(mesh.material));
  assert.ok(g.boundingBox.min.z<-.014&&g.boundingBox.max.z>.898);
- // Published tail clearance moves its authored high vertex .90 -> .89.
+ // Published tail clearance moves its authored high vertex .89 -> .87.
  // Check the exact Float32 construction/scale path, not a looser height cutoff.
- assert.equal(g.boundingBox.max.y,Math.fround(Math.fround(.89)*.6-.20),'accepted tail clearance height');assert.equal(mesh.userData.rainmakerModel.revision,3);
+ assert.equal(g.boundingBox.max.y,Math.fround(Math.fround(.87)*.6-.20),'accepted tail clearance height');assert.equal(mesh.userData.rainmakerModel.revision,3);
  const c=g.getAttribute('color');let darkMouth=0;
  for(let i=0;i<p.count;i++)if(p.getZ(i)>.44&&c.getX(i)<.1&&c.getY(i)<.1)darkMouth++;
  assert.ok(darkMouth>=12);assert.equal(mesh.material.vertexColors,true);
