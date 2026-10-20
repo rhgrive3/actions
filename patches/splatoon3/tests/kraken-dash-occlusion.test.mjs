@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
+import { grantAttackEvidence } from '../../network-replication/tests/combat-claims-rig.mjs';
 const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
 function world(walls=[]) {
  f.G.netm=null;f.G.net=null;f.G.mode='match';f.G.time=0;f.G.actors=[];
@@ -63,6 +64,8 @@ for(const guest of [false,true]){
 for(const mode of ['valid','duplicate','wrong-match','wrong-owner','future-victim-life','attacker-life-change-keeps-committed-hit','remote-recipient']){
  test(`native receiver: ${mode}`,()=>{
   const packet=sentHit(),x=networkRoom('V');let from='S';
+  // #1665: the receiver knows the attacker's kit (the replicated `ck` row) and the owner's ticks already flagged the Special as active.
+  x.a.weapon={...x.a.weapon,special:'krakenRoyale'};grantAttackEvidence(x.nm,x.a.nid,{kinds:['special']});
   if(mode==='wrong-match')packet.m='old-match';if(mode==='wrong-owner')from='X';
   if(mode==='future-victim-life')x.v.netLife=6;
   if(mode==='attacker-life-change-keeps-committed-hit'){x.a.netLife=3;x.a.net.lastLife=3;}

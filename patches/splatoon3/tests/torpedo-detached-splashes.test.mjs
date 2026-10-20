@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 import { ALL_SUB_SPECS } from '../runtime/all-subs.mjs';
+import { grantAttackEvidence } from '../../network-replication/tests/combat-claims-rig.mjs';
 const STEP=1/60;
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 
@@ -109,6 +110,7 @@ test('Torpedo JSON replay keeps native hit and paint authority while ghosts carr
   source.owner.splat(null,'fall');for(let i=0;i<200;i++)source.step();
   const hits=source.packets.filter(p=>p.p.k==='hit').map(p=>p.p);
   assert.deepEqual(hits.map(p=>[p.w,p.d]),[['torpedo',60],['torpedo-splash',12]]);
+  grantAttackEvidence(receiver.nm,1,{kinds:['sub']}); // #1665: the receiver already accepted the owner's torpedo throw
   for(const p of hits)receiver.nm.onMessage('a',p);
   assert.equal(receiver.victim.hp,28);
   const rows=source.nm.out.filter(e=>e[1]==='s');play(receiver,rows);settle(source);settle(receiver);

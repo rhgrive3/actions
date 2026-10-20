@@ -105,7 +105,7 @@ test('Screen catches swept crossings and collider contact, excludes allies and o
 
 test('Remote Screen contact changes recipient status without authoring damage',async()=>{
   const f=await world(),ghost=f.make(),victim=f.make();ghost.remote=true;ghost.team=1;victim.team=0;victim.isLocal=true;
-  assert.equal(f.replaySpecial(f,{actor:ghost,id:'splattercolorScreen',activation:1,action:'deploy',pos:[0,0,0],target:[0,0,1],seed:9,object:1,index:0,hp:0,radius:15,duration:680/60,kind:'screen',width:15,height:9}),true);
+  assert.equal(f.replaySpecial(f,{actor:ghost,id:'splattercolorScreen',activation:1,action:'deploy',pos:[0,0,0],target:[0,0,1],seed:9,object:1,index:0,hp:0,radius:15,duration:680/60,kind:'screen',width:15,height:9,specialPowerAP:0}),true); // a real birth (emitObject) always carries specialPowerAP (#1606)
   const screen=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='screen');screen.moveSpeed=0;victim.pos.copy(screen.pos);
   let hits=0;f.G.projectiles.applyHit=()=>{hits++;};
   for(let i=0;i<60;i++)advance(f,1/60);

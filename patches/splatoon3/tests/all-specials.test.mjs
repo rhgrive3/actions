@@ -254,7 +254,7 @@ test('Splattercolor Screen does not stop a native enemy shot from reaching a pla
 test('remote screen replay creates presentation and recipient status without authoring hits or paint',async()=>{
  const f=await setup(),ghost=f.make(),victim=f.make();ghost.remote=true;ghost.team=1;ghost.nid=44;victim.team=0;victim.isLocal=true;victim.pos.set(0,0,3.2);f.G.actors=[ghost,victim];
  let hits=0,paint=0;f.G.projectiles.applyHit=()=>{hits++;};f.G.paint.splat=()=>{paint++;return 1;};
- const event={actor:ghost,id:'splattercolorScreen',activation:1,action:'deploy',pos:[0,.08,2.5],target:[0,.08,3.5],seed:9,object:1,index:0,hp:0,radius:15,duration:680/60,kind:'screen',width:15,height:9};
+ const event={actor:ghost,id:'splattercolorScreen',activation:1,action:'deploy',pos:[0,.08,2.5],target:[0,.08,3.5],seed:9,object:1,index:0,hp:0,radius:15,duration:680/60,kind:'screen',width:15,height:9,specialPowerAP:0}; // a real birth (emitObject) always carries specialPowerAP; a sparse one waits (#1606)
  assert.equal(f.replayAllSpecials(f,event),true);tickWorld(f,90);
  assert.ok(victim.s3.splattercolorUntil>f.G.time);assert.ok(victim.s3.splattercolorMarkUntil>f.G.time);
  assert.ok(Math.abs(victim.s3.splattercolorUntil-victim.s3.splattercolorMarkUntil-4)<1e-9);assert.equal(hits,0);assert.equal(paint,0);

@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 import { ALL_SUB_SPECS } from '../runtime/all-subs.mjs';
+import { grantAttackEvidence } from '../../network-replication/tests/combat-claims-rig.mjs';
 
 // S3 11.3.0, ordinary versus, GP0, standing targets. The raw table supplies
 // 35/25 damage bands and paint. The separate 25 contact + one source-frame
@@ -178,6 +179,7 @@ test('Burst actual contact uses separate authoritative JSON hits and one causal 
   const first=source.packets.filter(p=>p.packet.k==='hit');
   assert.equal(first.length,1);assert.equal(first[0].packet.d,25);
   assert.equal(source.stamps.length,0,'the existing paint phase is preserved without an unsupported retiming');
+  grantAttackEvidence(receiver.nm,1,{kinds:['sub']}); // #1665: the receiver already accepted the owner's bomb throw
   receiver.nm.onMessage('a',first[0].packet);
   assert.equal(receiver.direct.hp,75);
   const ghost=receiver.f.G.projectiles._s3SubObjects[0];assert.equal(ghost.ghost,true);
