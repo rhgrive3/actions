@@ -61,7 +61,7 @@ export function installKitAudio(api,{listen,options}){
  listen('kit:bubbler:deploy',e=>activation(e?.actor||e?.owner,'bubbler'));
  listen('special:slam',e=>sound(e?.actor,'special','slam','explosion',e?.pos,.9));
  listen('special:inkvac-release',e=>sound(e?.actor,'special','inkVac','fire',e?.actor?.pos,.8));
- listen('special:inkvac-absorb',e=>sourceSound(e?.actor,sourceSpecialActionRoute('inkVac','absorb'),e?.actor?.pos,.42));
+ listen('audio:inkvac-absorbed',e=>sourceSound(e?.actor,sourceSpecialActionRoute('inkVac','absorb'),e?.pos,.42));
  for(const [ev,event] of [['ignite','ready'],['hit','shield_hit'],['collapse','break'],['remote:ignite','ready'],['remote:gone','break']]){
    listen('kit:bubbler:'+ev,e=>sound(e?.actor||e?.owner,'special','bubbler',event,e?.pos,.66));
  }

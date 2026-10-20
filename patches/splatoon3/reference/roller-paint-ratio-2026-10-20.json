@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "status": "INKWAVE visual contact-width calibration; not a recovered retail conversion",
+  "request": "Match paint/model ratio and apply to all roller families",
+  "referenceArticle": "https://game.watch.impress.co.jp/docs/kikaku/1460351.html",
+  "referenceImage": "https://asset.watch.impress.co.jp/img/gmw/docs/1460/351/25.jpg",
+  "referenceSha256": "c646ca799a8e419eff03db38e5a0e4599a5990262fcccdbbb63a460100801042",
+  "referencePaintPixels": 394,
+  "referenceDrumPixels": 214,
+  "beforePaintPixels": 451,
+  "beforeDrumPixels": 200,
+  "beforeBuild": "16b66efdb5d5d7193c7eebf6f871c3780b6cb5c8355bc1da0ff257342dc9dca1",
+  "contactWidthScale": 0.8103533592449264,
+  "appliesTo": [
+    "Normal",
+    "Compact",
+    "Heavy",
+    "Hunter",
+    "Wide"
+  ],
+  "method": "Scale maximum contact paint half-width, then interpolate from the preserved sourced minimum 1.3. Apply to every roller family. CPU/GPU/network use the same final radius. Retain species-specific endpoints and speed intervals.",
+  "limitations": [
+    "Reference speed, gear and camera not reported",
+    "Pixel ratio is not a ground-plane measurement",
+    "Other family retail ratios have not independently been established; common calibration retains sourced relative widths",
+    "No claim of retail runtime formula or exact all-speed match"
+  ],
+  "initialWidthScale": 0.8164618604554781,
+  "initialNativePaintPixels": 371,
+  "initialNativeDrumPixels": 200,
+  "minimumReason": "Keep minimum half-width 1.3: the independent depth 1.5 fits the existing compressed contact footprint even at micro-input; the visual reference only constrains a wide rolling stripe."
+}

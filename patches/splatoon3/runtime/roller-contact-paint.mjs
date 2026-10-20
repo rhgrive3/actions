@@ -1,5 +1,6 @@
 // Physical floor paint is emitted after the current two-hand contact pose.
 // No renderer/readback is involved: only the held cylinder's world transform.
+import { ROLLER_CONTACT_WIDTH_SCALE } from './roller-paint-calibration.mjs';
 let context = null;
 // Sparse tables omit this documented class default. It is a length, separate
 // from WidthHalfMax; provenance/uncertainty: reference/roller-overhead-2026-10-20.json.
@@ -8,7 +9,7 @@ export function rollerContactDepth(paint, scale = 1) {
 }
 export function rollerPaintHalfWidth(paint, speed, scale = 1, hz = 60) {
   const min = (Number.isFinite(paint.WidthHalfMin) ? paint.WidthHalfMin : 1.3) * scale;
-  const max = paint.WidthHalfMax * scale;
+  const max = Math.max(min, paint.WidthHalfMax * scale * ROLLER_CONTACT_WIDTH_SCALE);
   const low = (Number.isFinite(paint.SpeedMin) ? paint.SpeedMin : 0) * hz * scale;
   const high = paint.SpeedMax * hz * scale;
   const t = high > low ? Math.max(0, Math.min(1, (speed - low) / (high - low))) : 1;

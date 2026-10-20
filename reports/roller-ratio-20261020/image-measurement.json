@@ -1,0 +1,136 @@
+{
+  "sources": [
+    {
+      "path": ".reference-data/roller-scale/gamewatch25-full.jpg",
+      "title": "本家・スプラローラー",
+      "drum": [
+        539,
+        753,
+        441
+      ],
+      "paint": [
+        469.6,
+        863.6,
+        490
+      ],
+      "paintRows": [
+        {
+          "row": 488,
+          "left": 470,
+          "right": 862
+        },
+        {
+          "row": 489,
+          "left": 470,
+          "right": 863
+        },
+        {
+          "row": 490,
+          "left": 470,
+          "right": 864
+        },
+        {
+          "row": 491,
+          "left": 469,
+          "right": 864
+        },
+        {
+          "row": 492,
+          "left": 469,
+          "right": 865
+        }
+      ],
+      "ratio": 1.841121495327103,
+      "sha256": "c646ca799a8e419eff03db38e5a0e4599a5990262fcccdbbb63a460100801042"
+    },
+    {
+      "path": "reports/roller-overhead-20261020/gameplay.png",
+      "title": "INKWAVE・修正前",
+      "drum": [
+        355,
+        555,
+        395
+      ],
+      "paint": [
+        231.8,
+        681.4,
+        446
+      ],
+      "paintRows": [
+        {
+          "row": 444,
+          "left": 236,
+          "right": 678
+        },
+        {
+          "row": 445,
+          "left": 234,
+          "right": 680
+        },
+        {
+          "row": 446,
+          "left": 231,
+          "right": 682
+        },
+        {
+          "row": 447,
+          "left": 229,
+          "right": 683
+        },
+        {
+          "row": 448,
+          "left": 229,
+          "right": 684
+        }
+      ],
+      "ratio": 2.2479999999999998,
+      "sha256": "132947468404a775ac1d8ee802e3a2233a431b9967d068d77471bd230d0c0c23"
+    },
+    {
+      "path": "reports/roller-ratio-20261020/gameplay.png",
+      "title": "INKWAVE・修正後",
+      "drum": [
+        355,
+        555,
+        395
+      ],
+      "paintRows": [
+        {
+          "row": 444,
+          "left": 277,
+          "right": 638
+        },
+        {
+          "row": 445,
+          "left": 275,
+          "right": 639
+        },
+        {
+          "row": 446,
+          "left": 270,
+          "right": 642
+        },
+        {
+          "row": 447,
+          "left": 269,
+          "right": 642
+        },
+        {
+          "row": 448,
+          "left": 272,
+          "right": 641
+        }
+      ],
+      "paint": [
+        272.6,
+        640.4,
+        446
+      ],
+      "ratio": 1.8389999999999997,
+      "sha256": "d964dc498cebe042e920d9be10e0637d58a002ab5b118722e8f62a182226736c"
+    }
+  ],
+  "relativeError": -0.0011522842639595243,
+  "tolerance": 0.01,
+  "coordinates": "Pixel spans, approximate drum bounds. No ground-plane rectification; these are projected ratios, not retail world dimensions."
+}

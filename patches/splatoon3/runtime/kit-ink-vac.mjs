@@ -435,6 +435,9 @@ function creditCharge(state, damageEquivalent, projectile = true) {
   if (projectile) state.absorbed++;
   updateVisual(state);
   api.emit?.(INK_VAC_EVENTS.charge, { actor: state.actor, kit: VAC_ID, serial: state.serial, charge: state.charge });
+  // Local presentation only: proposals are untrusted and actor contact credits
+  // every frame. Play the intake one-shot only after an admitted projectile.
+  if (projectile) api.emit?.('audio:inkvac-absorbed', { actor: state.actor, pos: state.actor.pos });
   return state.charge;
 }
 

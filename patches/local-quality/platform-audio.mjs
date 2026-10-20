@@ -76,6 +76,14 @@ export function installMusicPlatform(MusicEngine, env = globalThis) {
         r.time = now;
         return;
       }
+      // A synthesized Player re-syncs to its own bar grid in pump() (steps older
+      // than the scheduler clock are skipped), so a late tick under heavy load
+      // needs no restart. Rebuilding here restarted the song from bar 0 on
+      // every tick once a frame took longer than 250 ms.
+      if (schedulerGap && now >= r.time && current && !media && !current.disposed) {
+        r.time = now;
+        return;
+      }
       // A scheduler-only rebuild of menu music must not cancel the healthy
       // zero-gain recording primed by START for the upcoming battle.
       const pending = m._preloadedFile?.player, pendingMedia = pending?.element;
