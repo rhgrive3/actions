@@ -133,7 +133,9 @@ test('production composition exposes all queued fixes and retains both Turf and 
   assert.ok(main.includes('normalizeQueueProfile(loadJSON('),'boot profile repair not composed');
   assert.ok(main.includes('weapon: safeWeaponId(this.profile.weapon, WEAPONS)'),'offline weapon admission missing');
   assert.ok(main.includes('const resetMatch = this.match, resetFlow = this._matchFlow;'),'existing operation-owned attract reset must remain');
-  assert.ok(main.includes('if (this.match !== resetMatch || this._matchFlow !== resetFlow) return;'));
+  // Native-stage admission extends the guard with a paused-match check; the match/flow ownership
+  // comparison must remain in front of it.
+  assert.match(main,/if \(this\.match !== resetMatch \|\| this\._matchFlow !== resetFlow(?: \|\| resetMatch\?\.paused)?\) return;/,'operation-owned attract reset guard missing');
   // Native-stage admission may move the flow allocation from the default
   // parameter into the method body. Verify the operation guard rather than
   // freezing the pre-native-stage function signature.
