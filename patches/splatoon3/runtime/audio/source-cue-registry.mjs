@@ -151,7 +151,7 @@ export const EXTRA_SOURCE_FILES = Object.freeze([
   "Wp_ShelterCompact_Standby_00.mp3",
   "Wp_ShelterNormal_Standby_00.mp3"
 ]);
-export const sourceCueId = file => 'source:' + String(file).replace(/\\.mp3$/i, '');
+export const sourceCueId = file => 'source:' + String(file).replace(/\.mp3$/i, '');
 export const SOURCE_EXTRA_AUDIO = Object.freeze(Object.fromEntries(EXTRA_SOURCE_FILES.map(file => {
   const id = sourceCueId(file);
   return [id,Object.freeze({id,family:'source',sourceName:file,events:Object.freeze(['fire']),
