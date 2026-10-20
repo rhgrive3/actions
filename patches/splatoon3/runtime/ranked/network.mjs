@@ -1,5 +1,5 @@
 import { validRankedSnapshot } from './engine.mjs';
-import { admitRankedPose } from './pose-admission.mjs';
+import { admitRankedPose, bindRankedInput, rankedInputFor } from './pose-admission.mjs';
 import { noteRankedBarrierShots, queueRankedBarrierHit, resetRankedBarrierAdmission } from './barrier-admission.mjs';
 import { withObjectDamageCause } from '../sub-resistance.mjs';
 import { specialGaugeLocked } from '../tacticooler-gauge.mjs';
@@ -61,7 +61,8 @@ export function installRankedNetwork(api) {
   const incoming = P.onMessage;
   P.onMessage = function (from, d) {
     if (!current(this) || !d || typeof d !== 'object') return incoming.call(this, from, d);
-    const m = this.match;
+    const m = this.match, inputSession = this.s, inputMatchId = this.cfg.id;
+    let stagedInput = null;
     if (d.rk && from === this.s.hostId && !this.isHost) {
       const accepted = acceptState(this, d.rk);
       if (!accepted && ['st', 'res', 'end'].includes(d.k)) return;
@@ -70,11 +71,13 @@ export function installRankedNetwork(api) {
       const cmd = d.rki, a = m.actors.find(a => actorId(a) === cmd.id);
       if (cmd.match === this.cfg.id && a?.owner === from && a.alive && Number.isSafeInteger(cmd.seq) && cmd.seq > 0 && finiteVector(cmd.aim)) {
         this.rankedInputs ||= new Map();
-        const old = this.rankedInputs.get(cmd.id);
+        const inputLife = d.l && Object.hasOwn(d.l,a.nid) ? d.l[a.nid] : a.net?.lastLife;
+        const old = inputLife===a.net?.lastLife ? rankedInputFor(this.rankedInputs.get(cmd.id),a,m,this) : null;
         const specialOk = cmd.special == null || cmd.special === a.weapon?.special;
         const dropOk = cmd.clamDrop === undefined || Number.isSafeInteger(cmd.clamDrop) && cmd.clamDrop >= 0 && cmd.clamDrop <= 100000;
-        if ((!old || cmd.seq > old.seq) && specialOk && dropOk) this.rankedInputs.set(cmd.id, { seq: cmd.seq, fire: !!cmd.fire, throw: !!cmd.throw || !!old?.throw, aim: cmd.aim, at: G.time,
-          special: cmd.special ?? null, specialDeployed: cmd.special === 'storm' && cmd.specialDeployed === true, clamDrop: Math.max(old?.clamDrop || 0, cmd.clamDrop || 0) });
+        if ((!old || cmd.seq > old.seq) && specialOk && dropOk && Number.isSafeInteger(inputLife) && inputLife>=0)
+          stagedInput = {id:cmd.id,actor:a,life:inputLife,input:{ seq: cmd.seq, fire: !!cmd.fire, throw: !!cmd.throw || !!old?.throw, aim: cmd.aim, at: G.time,
+            special: cmd.special ?? null, specialDeployed: cmd.special === 'storm' && cmd.specialDeployed === true, clamDrop: Math.max(old?.clamDrop || 0, cmd.clamDrop || 0) }};
       }
     }
     if (d.k === 'rkhit') {
@@ -130,6 +133,15 @@ export function installRankedNetwork(api) {
       if (accepted.length !== d.a.length) d = { ...d, a: accepted };
     }
     const result = incoming.call(this, from, d);
+    // Native processing may advance life or replace the actor/session. Publish
+    // only into that same epoch; a valid first new-life edge is not discarded.
+    if (stagedInput && current(this) && this.match===m && this.s===inputSession && this.cfg.id===inputMatchId && this.isHost) {
+      const {id,actor,life,input}=stagedInput;
+      if (this.byNid.get(actor.nid)===actor && actor.owner===from && actor.net?.lastLife===life) {
+        const bound=bindRankedInput(input,actor,m,this);
+        if(bound)this.rankedInputs.set(id,bound);
+      }
+    }
     if (current(this) && this.match === m && this.s === session && this.isHost) {
       for (const { id, actor, row, state, tail } of stagedPoses) {
         const snap = actor.net?.buf?.at(-1);

@@ -41,3 +41,22 @@ export function admitRankedPose(state, row, actor, ts, world) {
   state.last = {pos:next,t:ts,tp:row[16],flags};
   return true;
 }
+
+// One input edge belongs to the native actor/life/session that admitted it.
+// Keep object capabilities out of snapshots and debug JSON.
+const inputOwners = new WeakMap();
+export function bindRankedInput(input, actor, match, nm) {
+  const life=actor?.net?.lastLife;
+  if (!input || typeof input!=='object' || !actor || typeof actor.owner!=='string' || !actor.owner || !match || !nm?.s || nm.match!==match ||
+      !Number.isSafeInteger(life) || life<0) return null;
+  inputOwners.set(input,{actor,match,session:nm.s,owner:actor.owner,life,matchId:nm.cfg?.id});
+  return input;
+}
+export function rankedInputFor(input, actor, match, nm) {
+  const own=input&&inputOwners.get(input);
+  if (own && nm?.s && nm.match===match && own.actor===actor && own.match===match &&
+      own.session===nm.s && own.owner===actor?.owner && own.life===actor?.net?.lastLife &&
+      own.matchId===nm.cfg?.id) return input;
+  if (own) inputOwners.delete(input); // Observed epoch retirement cannot revive.
+  return null;
+}
