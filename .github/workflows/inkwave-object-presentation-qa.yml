@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'tools/object-presentation-qa/**'
+      - 'scripts/lib/object-qa-checkpoint.mjs'
+      - 'scripts/tests/object-qa-checkpoint.test.mjs'
       - 'tools/spawner-production-qa/**'
       - 'tools/rainmaker-production-qa/**'
       - 'tools/rainmaker-air-production-qa/**'
@@ -52,7 +54,7 @@ jobs:
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
       - name: Verify comparison, artifact and production-source contracts
-        run: node --experimental-vm-modules --test tools/object-presentation-qa/artifact-budget.test.mjs tools/object-presentation-qa/frame-contract.test.mjs tools/object-presentation-qa/identity.test.mjs tools/object-presentation-qa/harness-contract.test.mjs tools/object-presentation-qa/runtime-overlay.test.mjs
+        run: node --experimental-vm-modules --test tools/object-presentation-qa/artifact-budget.test.mjs tools/object-presentation-qa/frame-contract.test.mjs tools/object-presentation-qa/identity.test.mjs tools/object-presentation-qa/harness-contract.test.mjs tools/object-presentation-qa/runtime-overlay.test.mjs scripts/tests/object-qa-checkpoint.test.mjs
       - name: Verify Rainmaker presentation and hands
         run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-motion.test.mjs patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs tools/rainmaker-production-qa/grip-metrics.test.mjs
       - name: Verify spawner geometry and unchanged lifecycle
@@ -79,6 +81,21 @@ jobs:
           set -o pipefail
           mkdir -p .qa-evidence/rainmaker
           node --experimental-vm-modules --test patches/splatoon3/tests/rainmaker-model-actor.test.mjs 2>&1 | tee .qa-evidence/rainmaker/emitted-source-face.log
+      - name: Prepare small source checkpoint (not complete artifacts)
+        id: checkpoint-source
+        if: always() && !cancelled()
+        continue-on-error: true # Auxiliary evidence must not suppress later required gates.
+        run: node scripts/lib/object-qa-checkpoint.mjs source
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true # Preserve required gate execution if diagnostic upload fails.
+        if: always() && !cancelled() && steps.checkpoint-source.outputs.ready == 'true'
+        with:
+          overwrite: false
+          name: object-checkpoint-source-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .qa-checkpoint-source/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       - name: Verify emitted Rainmaker aim endpoints in native and source modes
         timeout-minutes: 10
         env:
@@ -89,32 +106,122 @@ jobs:
           mkdir -p .qa-evidence/rainmaker
           node --experimental-vm-modules --test patches/splatoon3/tests/rainmaker-model-actor.test.mjs 2>&1 | tee .qa-evidence/rainmaker/emitted-aim-native.log
           INKWAVE_RAINMAKER_SOURCE=1 node --experimental-vm-modules --test patches/splatoon3/tests/rainmaker-model-actor.test.mjs 2>&1 | tee .qa-evidence/rainmaker/emitted-aim-source.log
+      - name: Prepare small aim checkpoint (not complete artifacts)
+        id: checkpoint-aim
+        if: always() && !cancelled()
+        continue-on-error: true # Auxiliary evidence must not suppress later required gates.
+        run: node scripts/lib/object-qa-checkpoint.mjs aim
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true # Preserve required gate execution if diagnostic upload fails.
+        if: always() && !cancelled() && steps.checkpoint-aim.outputs.ready == 'true'
+        with:
+          overwrite: false
+          name: object-checkpoint-aim-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .qa-checkpoint-aim/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       - name: Capture spawner native before and after
         if: always() && steps.production-build.outcome == 'success'
         timeout-minutes: 8
         run: node tools/object-presentation-qa/run.mjs --site _site --suite spawner --out .qa-evidence/spawner
+      - name: Prepare small spawner checkpoint (not complete artifacts)
+        id: checkpoint-spawner
+        if: always() && !cancelled()
+        continue-on-error: true # Auxiliary evidence must not suppress later required gates.
+        run: node scripts/lib/object-qa-checkpoint.mjs spawner
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true # Preserve required gate execution if diagnostic upload fails.
+        if: always() && !cancelled() && steps.checkpoint-spawner.outputs.ready == 'true'
+        with:
+          overwrite: false
+          name: object-checkpoint-spawner-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .qa-checkpoint-spawner/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       # 62cd: 88 PNGs in 435s (3.86s ordinary interval); 128 plus actor checks
       # projects to about 615s. The prior failure was a grip assertion, not timeout.
       - name: Capture Rainmaker native before and after
         if: always() && steps.production-build.outcome == 'success'
         timeout-minutes: 15
         run: node tools/object-presentation-qa/run.mjs --site _site --suite rainmaker --out .qa-evidence/rainmaker
+      - name: Prepare small rainmaker checkpoint (not complete artifacts)
+        id: checkpoint-rainmaker
+        if: always() && !cancelled()
+        continue-on-error: true # Auxiliary evidence must not suppress later required gates.
+        run: node scripts/lib/object-qa-checkpoint.mjs rainmaker
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true # Preserve required gate execution if diagnostic upload fails.
+        if: always() && !cancelled() && steps.checkpoint-rainmaker.outputs.ready == 'true'
+        with:
+          overwrite: false
+          name: object-checkpoint-rainmaker-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .qa-checkpoint-rainmaker/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       - name: Capture Clam Blitz native before and after
         if: always() && steps.production-build.outcome == 'success'
         timeout-minutes: 10
         run: node tools/object-presentation-qa/run.mjs --site _site --suite clam --out .qa-evidence/clam
+      - name: Prepare small clam checkpoint (not complete artifacts)
+        id: checkpoint-clam
+        if: always() && !cancelled()
+        continue-on-error: true # Auxiliary evidence must not suppress later required gates.
+        run: node scripts/lib/object-qa-checkpoint.mjs clam
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true # Preserve required gate execution if diagnostic upload fails.
+        if: always() && !cancelled() && steps.checkpoint-clam.outputs.ready == 'true'
+        with:
+          overwrite: false
+          name: object-checkpoint-clam-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .qa-checkpoint-clam/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       # Same immutable production build, a separate 8a903662 handoff baseline,
       # and nested receipts under the existing Rainmaker artifact budget.
       - name: Capture Rainmaker full-jump and descent comparison
         if: always() && steps.production-build.outcome == 'success'
         timeout-minutes: 5
         run: node tools/object-presentation-qa/run.mjs --site _site --suite rainmaker-air --out .qa-evidence/rainmaker/air
+      - name: Prepare small air checkpoint (not complete artifacts)
+        id: checkpoint-air
+        if: always() && !cancelled()
+        continue-on-error: true # Auxiliary evidence must not suppress later required gates.
+        run: node scripts/lib/object-qa-checkpoint.mjs air
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true # Preserve required gate execution if diagnostic upload fails.
+        if: always() && !cancelled() && steps.checkpoint-air.outputs.ready == 'true'
+        with:
+          overwrite: false
+          name: object-checkpoint-air-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .qa-checkpoint-air/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       # Same build, separate009 landing handoff baseline;20 form PNGs do not
       # alter the existing128 Rainmaker or20 air/landing denominators.
       - name: Capture Rainmaker interrupted-form comparison
         if: always() && steps.production-build.outcome == 'success'
         timeout-minutes: 5
         run: node tools/object-presentation-qa/run.mjs --site _site --suite rainmaker-form --out .qa-evidence/rainmaker/form
+      - name: Prepare small form checkpoint (not complete artifacts)
+        id: checkpoint-form
+        if: always() && !cancelled()
+        continue-on-error: true # Auxiliary evidence must not suppress later required gates.
+        run: node scripts/lib/object-qa-checkpoint.mjs form
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true # Preserve required gate execution if diagnostic upload fails.
+        if: always() && !cancelled() && steps.checkpoint-form.outputs.ready == 'true'
+        with:
+          overwrite: false
+          name: object-checkpoint-form-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .qa-checkpoint-form/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       - name: Check every complete artifact before any upload, including failure logs
         id: artifact-budgets
         if: always()
