@@ -19,7 +19,8 @@ test('ranked actor ticks and host-migration state restore; another sender, match
  host.revision++;host.setCount(0,55);nm.onMessage('host',packet(nm,host,'rkstate'));assert.equal(nm.match.ranked.counts[0],55);
 });
 test('throw edges belong to the submitting actor owner and cannot be replayed',()=>{
- const{nm}=setup('clams',true);nm.match.actors=[{nid:7,owner:'guest',alive:true,team:1}];
+ const{nm}=setup('clams',true);nm.match.actors=[{nid:7,owner:'guest',alive:true,team:1,net:{lastLife:0}}];
+ nm.byNid=new Map([[7,nm.match.actors[0]]]); // Same native actor and admitted life in this modeled test.
  const d={k:'t',rki:{match:'match-1',id:'7',seq:1,fire:false,throw:true,aim:[0,0,1]}};
  nm.onMessage('intruder',d);assert.equal(nm.rankedInputs,undefined);
  nm.onMessage('guest',d);assert.equal(nm.rankedInputs.get('7').throw,true);nm.rankedInputs.get('7').throw=false;

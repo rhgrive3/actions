@@ -1,17 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { ADDITIONAL_BASE_KITS } from '../runtime/catalogue.mjs';
 import { fixture } from '../../reliability/tests/controls-fixture.mjs';
 
 const stage = { id: 'ranked-lifecycle', zones: [{ center: [0,0,0], size: [8,8] }],
   clams: { spawns: [], goals: [[0,0,20],[0,0,-20]] },
   rainmaker: { center: [0,0,0], checkpoints: [[],[]], goals: [[0,0,20],[0,0,-20]] } };
-async function world(mode = 'clams', host = false) {
+async function world(mode = 'clams', host = false, weapon = 'shooter') {
   const f = await fixture({ ranked: true, network: true });
   f.context.document.createElement = () => ({ dataset: {} });
   f.context.document.head = { appendChild() {} }; f.context.structuredClone = structuredClone;
   f.installRanked(f);
   f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
-  const local = f.make(), remote = f.make();
+  if (weapon === 'dualies') {
+    // This controls fixture installs only the original three kits. Select the
+    // production catalogue's verified Dualies kit before constructing the actor.
+    Object.assign(f.WEAPONS.dualies, ADDITIONAL_BASE_KITS.dualies);
+  }
+  const local = f.make(weapon), remote = f.make();
   Object.assign(local, { nid: 1, slot: 0, team: 0, owner: 'guest', isLocal: true, invuln: 0, netLife: 1 });
   Object.assign(remote, { nid: 2, slot: 0, team: 1, owner: 'host', remote: true, invuln: 0, netLife: 1 });
   const engine = new f.RankedEngine(mode, stage), m = { mode, state: 'playing', time: 300,
@@ -138,13 +144,21 @@ test('invalid out-of-range barrier hits cannot consume valid owner sequence or e
 });
 
 test('stale remote ranked special input expires together with fire/throw and cannot block clam pickups', async () => {
-  const f = await world('clams', true), a = f.local; a.remote = true; a.specialActive = null;
+  const f = await world('clams', true, 'dualies'), a = f.local; a.remote = true; a.specialActive = null;
+  assert.equal(a.weapon.special, 'crabTank', 'the native Dualies kit supplies a pickup-blocking special');
+  f.remote.pos.set(100, 0, 100); // Keep the other actor from collecting this control clam.
   // The host consumes an admitted owner snapshot, never an uninitialized replica.
   const p = a.pos, row = [1,p.x,p.y,p.z,0,0,0,0,0,0,17,100,100,0,0,0,0,0,0,0,0];
-  f.nm.onMessage('guest', { k: 't', ts: 10, u: 600, l: { 1: 1 }, a: [row] });
+  f.nm.onMessage('guest', { k: 't', ts: 10, u: 600, l: { 1: 1 }, a: [row],
+    rki:{match:f.nm.cfg.id,id:'1',seq:1,fire:true,throw:true,aim:[0,0,1],special:a.weapon.special,specialDeployed:false,clamDrop:0} });
   assert.ok(f.nm.rankedPose.get('1'), 'the owner snapshot is admitted before pickup');
-  f.nm.rankedInputs = new Map([['1',{ seq: 1, at: f.G.time-1, fire: true, throw: true, aim: [0,0,1], special: 'crabTank', specialDeployed: false, clamDrop: 0 }]]);
+  assert.equal(f.nm.rankedInputs.get('1')?.special,a.weapon.special,'real owner input admitted before expiry');
+  const activeFrame = f.buildFrame(f.m,{G:f.G});
+  assert.equal(activeFrame.actors.find(x=>x.id==='1').special,'crabTank','same-epoch positive control');
   f.engine.rule._newClam('small', null, a.pos.toArray());
+  f.engine.rule._processPickups(activeFrame);
+  assert.equal(f.engine.rule.state.inventories['1']?.small || 0, 0, 'fresh Crab Tank input blocks pickup');
+  f.G.time+=1;
   const frame = f.buildFrame(f.m, { G: f.G });
   assert.equal(frame.actors.find(x => x.id === '1').special, null); assert.equal(frame.inputs['1'], undefined);
   f.engine.rule._processPickups(frame);
