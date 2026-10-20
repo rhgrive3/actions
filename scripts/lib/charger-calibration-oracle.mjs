@@ -1,17 +1,18 @@
 import { compileFlatSourcedStamp } from './source-paint-oracle.mjs';
 
-// #1651 changes only the flat Charger stamp geometry: lateral WidthHalf uses
-// 0.2 world units, the feet-only 1.2 radius no longer widens the first forward
-// stamp, and a centred ellipse preserves source DepthHalf. Derive the entire
+// Independently retain one world unit per source width unit, like depth.
+// The feet-only 1.2 radius does not dictate the first forward stamp, and a
+// centred ellipse preserves source DepthHalf. A 0.2 scale remains testable
+// as the rejected fivefold-narrowing counterfactual. Derive the entire
 // new receipt from immutable pre-change physical stamps and frozen profile
 // bytes. Never import the production Charger implementation or accept a new
 // measured gameplay golden.
-export function calibratedChargerStamps(prior) {
+export function calibratedChargerStamps(prior, widthScale = 1) {
   const width = prior.paintPoints.at(-1).radius / 1.5;
   return prior.paintPoints.map((old, i) => {
     const stamp = {...old, center:[...old.center], footprint:'ink-charger'};
     if (i) {
-      const radius = width * .2 * (i === prior.paintPoints.length - 1 ? 1.5 : 1);
+      const radius = width * widthScale * (i === prior.paintPoints.length - 1 ? 1.5 : 1);
       const depth = width * (1 + old.stretchAmt);
       const stretch = Math.max(0, depth / radius - 1) * 1.6;
       stamp.radius = radius;
@@ -23,8 +24,8 @@ export function calibratedChargerStamps(prior) {
   });
 }
 
-export function chargerCalibrationReceipt(prior) {
-  const paintPoints = calibratedChargerStamps(prior), cellsXZ = [];
+export function chargerCalibrationReceipt(prior, widthScale = 1) {
+  const paintPoints = calibratedChargerStamps(prior, widthScale), cellsXZ = [];
   // Same fixed 80 x 105 m, 0.25 m grid as weapons-fixture; this scalar scan
   // uses frozen profile bytes, never production PaintSystem or culling.
   const grid = new Uint8Array(320 * 420);

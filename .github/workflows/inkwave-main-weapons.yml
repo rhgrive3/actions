@@ -212,7 +212,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before --grip-seed "$GRIP_SEED" 2>&1 | tee work/roller-grip-evidence/before.log
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before --expected-drum-width 2.5712 --grip-seed "$GRIP_SEED" 2>&1 | tee work/roller-grip-evidence/before.log
           test -s work/roller-grip-evidence/before/grip-cameras.json
           node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict'; assert.equal(JSON.parse(fs.readFileSync('work/roller-grip-evidence/before/result.json')).passed, true);"
       # One extra capture, not a third build: prove seeded A/A repeatability first.
@@ -222,7 +222,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before-control --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/before-control.log
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before-control --expected-drum-width 2.5712 --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/before-control.log
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import assert from 'node:assert/strict';
@@ -251,6 +251,12 @@ jobs:
           set -o pipefail
           test -s work/roller-grip-evidence/before/grip-cameras.json
           node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-candidate work/roller-grip-evidence/after --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/after.log
+      - name: Repeat candidate for resized-model GPU A/A control
+        if: steps.changes.outputs.run == 'true' && steps.aa_control.outcome == 'success'
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-candidate work/roller-grip-evidence/after-control --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/after-control.log
       - name: Verify complete and comparable grip evidence
         if: steps.changes.outputs.run == 'true' && steps.aa_control.outcome == 'success'
         shell: bash
@@ -266,13 +272,16 @@ jobs:
           assert.equal(ids.candidate, process.env.CANDIDATE_SHA);
           for (const key of ['captureScript', 'entryHelper', 'workflow']) sha(ids[key]);
           const names = ['rear', 'side', 'front-oblique'];
-          const sides = ['before', 'before-control', 'after'].map((side, index) => {
-            const result = read(`${side}/result.json`), build = read(`${side === 'before-control' ? 'before' : side}-build.json`);
+          const sides = ['before', 'before-control', 'after', 'after-control'].map((side, index) => {
+            const result = read(`${side}/result.json`), build = read(`${index < 2 ? 'before' : 'after'}-build.json`);
             const cameras = read(`${side}/grip-cameras.json`), m = result.measurement;
             const steady = read(`${side}/steady-result.json`);
             assert.equal(steady.passed, true); assert.equal(steady.build, result.build);
             assert.deepEqual(steady.measurement, m, 'Release capture changed steady measurement');
             assert.equal(result.passed, true, `${side} capture failed`);
+            const expectedWidth = index < 2 ? 2.5712 : 2.5712 * (1.36 / 1.72259927);
+            assert.equal(result.expectedDrumWidth, expectedWidth);
+            assert.ok(Math.abs(m.drumWidth - expectedWidth) < 1e-4, `${side} model width differs`);
             assert.equal(result.diagnosticOnly, false, 'Diagnostic capture cannot pass paired acceptance');
             assert.deepEqual(result.errors, []);
             sha(build.contentHash); sha(build.inputHash);
@@ -284,6 +293,8 @@ jobs:
             assert.equal(m.debugFixedTicks, 180);
             assert.equal(m.controller, 'shipped KeyW + held fire');
             assert.equal(m.inspectionCameraOnly, true);
+            assert.equal(m.contactStamps.length, m.events);
+            for (const stamp of m.contactStamps) assert.ok(stamp.contactError < 1e-5, 'Every paint contact follows the actual drum');
             assert.equal(m.gripCameraReference, index !== 0);
             const initial = m.initialState;
             assert.equal(initial.schema, 1); assert.equal(initial.boundary.schema, 1);
@@ -367,9 +378,28 @@ jobs:
           for (const other of sides.slice(1)) {
             assert.deepEqual(sides[0].measurement.initialState.character, other.measurement.initialState.character, 'Initial Character state differs');
             assert.deepEqual(sides[0].cameras, other.cameras, 'Capture changed the baseline cameras');
-            for (const key of ['gpuFootprint', 'recipeRandom', 'gripViews', 'renderSize', 'start', 'end'])
+            for (const key of ['gripViews', 'renderSize', 'start', 'end'])
               assert.deepEqual(sides[0].measurement[key], other.measurement[key], `Seeded control/candidate differs: ${key}`);
+            // Resizing the whole model moves its physical drum/contact point and its orientation.
+            // Retain exact same-build A/A masks, source seeds, paint dimensions
+            // and every-frame physical contact, rather than freezing the old
+            // oversized model's ink placement.
+            const recipe = r => ({...r, contactSeeds:r.contactSeeds.map(({returnedClaimedArea, ...seed}) => seed)});
+            assert.deepEqual(recipe(sides[0].measurement.recipeRandom), recipe(other.measurement.recipeRandom), 'Global/contact RNG stream differs');
+            const offset = other.measurement.contactStamps[0].at.map((v, axis) => v - sides[0].measurement.contactStamps[0].at[axis]);
+            for (const [i, stamp] of other.measurement.contactStamps.entries()) {
+              const before = sides[0].measurement.contactStamps[i];
+              for (const key of ['r', 'amount', 'seed', 'face']) assert.deepEqual(before[key], stamp[key], `Contact recipe differs: ${i}/${key}`);
+              for (let axis = 0; axis < 3; axis++) {
+                assert.ok(Math.abs(before.heading[axis] - stamp.heading[axis]) < 1e-10, 'Contact orientation preserved');
+                assert.ok(Math.abs(stamp.at[axis] - before.at[axis] - offset[axis]) < .003, 'Stroke follows translated resized model within 3mm of its breathing pose');
+              }
+            }
             assert.equal(sides[0].measurement.frozenState.yaw, other.measurement.frozenState.yaw, 'Actor yaw differs');
+          }
+          for (const [first, repeat] of [[sides[0], sides[1]], [sides[2], sides[3]]]) {
+            assert.equal(first.build.contentHash, repeat.build.contentHash);
+            for (const key of ['gpuFootprint', 'recipeRandom', 'contactStamps']) assert.deepEqual(first.measurement[key], repeat.measurement[key], `Same-build A/A differs: ${key}`);
           }
           for (const other of sides.slice(1))
             for (let i = 0; i < 3; i++)
@@ -378,11 +408,12 @@ jobs:
           // Record phase/time/pose, do not force-reset them or assert cross-build pose equality.
           const stateSummary = ({ frozenState: { time, phase, yaw, rolling } }) => ({ time, phase, yaw, rolling });
           fs.writeFileSync(`${root}/comparison.json`, JSON.stringify({ passed: true, ...ids,
-            before: sides[0].build.contentHash, after: sides[2].build.contentHash, baselineControl: sides[1].build.contentHash,
+            before: sides[0].build.contentHash, after: sides[2].build.contentHash, baselineControl: sides[1].build.contentHash, candidateControl: sides[3].build.contentHash,
+            contactPlacement: sides.map(s => s.measurement.contactStamps.map(c => ({at:c.at, drumCentre:c.drumCentre, error:c.contactError}))), gpuFootprints: sides.map(s => s.measurement.gpuFootprint),
             views: names, ticks: 180, release: { controller: sides[0].release.controller, ticks: [1, 4, 12] }, gpuFootprint: sides[0].measurement.gpuFootprint, recipeRandom: sides[0].measurement.recipeRandom, states: sides.map(s => stateSummary(s.measurement)),
-            note: 'Synthetic trusted-input-frozen, seeded 180-tick QA with unchanged-baseline A/A control, not default stochastic gameplay. Pose/time remain unmodified; visual/reference acceptance requires image review.'
+            note: 'Synthetic trusted-input-frozen, seeded 180-tick QA with exact GPU/RNG A/A controls for BOTH builds. Resizing moves physical drum contact and its orientation; source width/depth/seeds and actual drum contact remain checked, with placement recorded. This is not default stochastic gameplay. Pose/time remain unmodified; visual/reference acceptance requires image review.'
           }, null, 2) + '\n');
-          console.log('All three seeded captures use identical baseline cameras, actor positions, RNG receipts and GPU masks.');
+          console.log('All four seeded captures preserve cameras, actor motion and source contact recipes; each build repeats its own exact GPU mask and RNG receipt.');
           NODE
       - uses: actions/upload-artifact@v4
         if: always() && steps.changes.outputs.run == 'true'

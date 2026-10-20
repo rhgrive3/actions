@@ -247,7 +247,7 @@ try {
       const sourceHalf = {roller:2.8,'s3-roller-compact':2.2,'s3-roller-heavy':3.4,
         's3-roller-hunter':2.6,'s3-roller-wide':3.4}[id];
       const sourceDrumWidth = {roller:2.5712,'s3-roller-compact':2.5664,
-        's3-roller-heavy':2.5816,'s3-roller-hunter':2.6044,'s3-roller-wide':3.256}[id];
+        's3-roller-heavy':2.5816,'s3-roller-hunter':2.6044,'s3-roller-wide':3.256}[id]*(1.36/1.72259927);
       const spans=[];
       // Recent settled body; the old trailing window included the beginning
       // of a short stroke and mixed acceleration/caps into the width median.

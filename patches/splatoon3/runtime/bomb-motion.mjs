@@ -6,6 +6,11 @@
 import { specialMotionAllowsAction } from './action-admission.mjs';
 const INSTALL = Symbol.for('inkwave.s3.bomb-motion.install.v1'), RESET = Symbol.for('inkwave.s3.bomb-motion.reset.v1');
 const states = new WeakMap(), sampleCaches = new WeakMap(), disposed = new WeakSet();
+const stowedWeapons=new WeakMap();
+function restoreMainWeapon(ch){
+  const saved=stowedWeapons.get(ch);
+  if(saved){for(const [pivot,visible] of saved)pivot.visible=visible;stowedWeapons.delete(ch);}
+}
 const RELEASE_AGE = .10, NATIVE_END = .62, RECOVERY = NATIVE_END - RELEASE_AGE;
 const enabled = ch => !!ch && ch.s3BombMotionEnabled !== false && !registry(ch)?.disposed?.has(ch);
 function registry(ch) {
@@ -169,6 +174,7 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
   Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves, timers, disposed }) });
   function clear(ch) {
     if (!ch?.tr) return;
+    restoreMainWeapon(ch);
     if (ch.s3RainmakerSupportPending) ch._restoreRainmakerSupport();
     // Retire the presentation, not the native event clock. Native Runner reset
     // and setWeapon may independently reset clocks; preserve those exact calls.
@@ -186,6 +192,17 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
     };
   }
   const trigger = C.trigger, updateStates = C._updateStates, buildPose = C._buildPose;
+  const updateCharacter=C.update;
+  C.update=function(...args){
+    restoreMainWeapon(this);
+    const result=updateCharacter.apply(this,args),value=state(this);
+    if(enabled(this)&&this.kidForm&&(this.bombHeld||value.throwing)&&this.weapon?.pivot){
+      const pivots=[this.weapon.pivot,this.weapon.left?.pivot].filter(Boolean);
+      stowedWeapons.set(this,pivots.map(p=>[p,p.visible]));
+      for(const p of pivots)p.visible=false;
+    }
+    return result;
+  };
   const throwing = C._poseThrow, holding = C._poseSubAim;
   const setWeapon = C.setWeapon, setVisible = C.setVisible, dispose = C.dispose;
   C.trigger = function (name, ...args) {
@@ -257,6 +274,7 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
     return result;
   };
   C.setWeapon = function (...args) {
+    restoreMainWeapon(this);
     if (enabled(this) && args[0] !== this.weaponKind) clear(this);
     return setWeapon.apply(this, args);
   };

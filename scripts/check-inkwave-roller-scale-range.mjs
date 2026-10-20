@@ -33,6 +33,11 @@ if(seedIndex>=0&&(!/^\d+$/.test(process.argv[seedIndex+1]||'')||!Number.isIntege
 const cameraIndex=process.argv.indexOf('--grip-camera-reference');
 if(cameraIndex>=0&&!process.argv[cameraIndex+1])throw Error('Missing grip camera reference');
 const cameraReference=cameraIndex<0?null:validateGripCameras(JSON.parse(fs.readFileSync(process.argv[cameraIndex+1],'utf8')));
+// The pinned historical comparison predates player-relative normalization.
+// Its explicit expectation must not silently inherit the candidate dimensions.
+const widthIndex=process.argv.indexOf('--expected-drum-width');
+const expectedDrumWidth=widthIndex<0?2.5712*(1.36/1.72259927):Number(process.argv[widthIndex+1]);
+if(!(expectedDrumWidth>0&&Number.isFinite(expectedDrumWidth)))throw Error('Invalid expected drum width');
 fs.mkdirSync(out,{recursive:true});
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json',
   '.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.css':'text/css','.mp3':'audio/mpeg','.woff2':'font/woff2'};
@@ -43,7 +48,7 @@ const server=http.createServer((q,r)=>{
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser,page,diagnosticTimer;
-const receipt={diagnosticOnly:process.env.GRIP_DIAGNOSTIC_ONLY==='1',acceptanceNote:process.env.GRIP_DIAGNOSTIC_ONLY==='1'?'Unchanged-baseline control failed; candidate images are nonaccepting diagnostics.':null,build:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,errors:[],requests:[],console:[]};
+const receipt={expectedDrumWidth,diagnosticOnly:process.env.GRIP_DIAGNOSTIC_ONLY==='1',acceptanceNote:process.env.GRIP_DIAGNOSTIC_ONLY==='1'?'Unchanged-baseline control failed; candidate images are nonaccepting diagnostics.':null,build:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,errors:[],requests:[],console:[]};
 const snapshot=async()=>page?.evaluate(()=>({mode:window.__G?.mode,match:window.__G?.match?.state,
   menu:window.__inkwave?.menus?.current,layout:window.__G?.level?.layout?.id,
   range:!!window.__G?.match?.range,entryFreeze:window.__gripEntryFreeze,initialState:window.__gripInitialState,text:document.body.innerText.slice(-1800)})).catch(()=>null);
@@ -125,7 +130,16 @@ try{
     G.paint.clear();G.projectiles.clear();
     recipePhase='measurement';
     const start=a.pos.clone(), events=[],splat=G.paint.splat;
-    G.paint.splat=function(at,r,team,o){if(o?.footprint==='ink-contact')events.push({at:at.toArray(),r,heading:o.stretch?.toArray(),amount:o.stretchAmt});return splat.call(this,at,r,team,o);};
+    G.paint.splat=function(at,r,team,o){
+      if(o?.footprint==='ink-contact'){
+        const w=a.character.weapon,b=w.def.drum.boundingBox;
+        const centre=w.drum.localToWorld(b.min.clone().add(b.max).multiplyScalar(.5));
+        const front=at.clone().addScaledVector(o.stretch,.6*r*(1+o.stretchAmt));
+        events.push({at:at.toArray(),r,heading:o.stretch?.toArray(),amount:o.stretchAmt,seed:o.seed,face:o.face,
+          drumCentre:centre.toArray(),contactError:Math.hypot(centre.x-front.x,centre.z-front.z)});
+      }
+      return splat.call(this,at,r,team,o);
+    };
     try{a.ink=100;g.debug.step(1500);}
     finally{G.paint.splat=splat;g.debug.fire(false);g.debug.key('KeyW',false);}
     recipeMeasurement={start,events};
@@ -200,7 +214,7 @@ try{
     return {layout:G.level.layout.id,start:start.toArray(),end:a.pos.toArray(),face:f.id,
       floorTag:G.level.blocks[f.block].tag,drumWidth,paintHalf:event.r,contactDepth:1.2*event.r*(1+event.amount),
       gpuMinWidth:Math.min(...widths),gpuMaxWidth:Math.max(...widths),rows,holes,gpuFootprint,recipeRandom,initialState,
-      contactError:Math.hypot(centre.x-front.x,centre.z-front.z),events:events.length,
+      contactError:Math.hypot(centre.x-front.x,centre.z-front.z),contactStamps:events,events:events.length,
       debugFixedTicks:180,controller:'shipped KeyW + held fire',inspectionCameraOnly:true,
       gameplayPng,inspectionPng,cameraPlan,gripViews,renderSize,renderAspect,frozenState:JSON.parse(frozen),gripCameraReference:!!cameraReference};
   },{cameraReference,gripSeed});
@@ -217,7 +231,9 @@ try{
   const m=receipt.measurement;
   assert.equal(m.layout,'range');assert.equal(m.floorTag,'floor:roller');
   assert.equal(m.holes,0);assert.ok(m.rows>40);assert.ok(m.contactError<1e-5);
-  assert.ok(Math.abs(m.drumWidth-2.5712)<1e-4);assert.ok(Math.abs(m.paintHalf-2.8*0.8103533592449264)<1e-10);
+  assert.equal(m.contactStamps.length,m.events);
+  for(const stamp of m.contactStamps)assert.ok(stamp.contactError<1e-5,'Every steady stamp follows the actual drum');
+  assert.ok(Math.abs(m.drumWidth-expectedDrumWidth)<1e-4);assert.ok(Math.abs(m.paintHalf-2.8*0.8103533592449264)<1e-10);
   assert.ok(Math.abs(m.contactDepth-1.5)<1e-10);
   assert.ok(m.gpuMaxWidth>4.3&&m.gpuMaxWidth<4.8);
   assert.equal(receipt.errors.length,0);

@@ -109,6 +109,17 @@ export function installWeaponAudioEngine(Engine){
       const error=result?.errors?.[0]?.error||loader.errors?.at(-1)||'MP3をデコードできません';
       throw new Error('本家射撃MP3の準備に失敗しました: '+id+' ('+error+')');
     }
+    // A playable charged weapon needs its charge/release recordings too.
+    // Otherwise an immediate full shot falls back to the tap-shot recording.
+    const family=AUDIO_RECIPES[id]?.family;
+    const required=family==='charger'?['charge','ready','fire_full']:
+      family==='splatling'?['charge','spin','ready']:[];
+    for(const event of required){
+      if(loader.declares(id,event)!==true)continue;
+      await loader.ensure(id,event);
+      if(!bank.authorized.byEvent.has(id+':'+event))
+        throw new Error('本家チャージ・射撃MP3の準備に失敗しました: '+id+'/'+event);
+    }
     // AudioContext can be temporarily suspended by the browser. The caller
     // must enter the game only after the selected recording and device are live.
     if(this.ctx.state&&this.ctx.state!=='running'){

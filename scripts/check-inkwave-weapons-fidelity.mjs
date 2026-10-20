@@ -17,7 +17,7 @@ const near = (a,b,t=1e-7) => assert.ok(Math.abs(a-b) <= t, `${a} != ${b} ±${t}`
 const data = await measure({ site, fidelity: true, detail: false });
 // Preserve the old archives. Only the reviewed silhouettes, the previously
 // approved Roller birth correction, Spinner relative-speed correction and
-// #1651 Charger flat-paint calibration
+// Charger centred flat-paint calibration with restored shared-unit width
 // replace their affected receipts; unchanged physics stays bound to history.
 const baselineBytes = fs.readFileSync(new URL('./fixtures/weapons-fidelity-9c070329.json', import.meta.url));
 assert.equal(createHash('sha256').update(baselineBytes).digest('hex'), 'b79883e3c0e14e0a4ba9577d01d162dbcfe530a7d03c75b22187df18c0ea1259');
@@ -83,7 +83,7 @@ for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
     assert.notEqual(digest(c.paint.cellsXZ), expected.cellsHash, key + ' new organic Charger contour must differ from the old stamp');
     assert.equal(organic.area,contour.area,key+' immutable pre-calibration organic receipt');
     assert.equal(organic.maxZ,contour.maxZ);
-    assert.notEqual(digest(c.paint.cellsXZ),contour.cellsHash,key+' #1651 changes width, not profile bytes');
+    assert.notEqual(digest(c.paint.cellsXZ),digest(chargerCalibrationReceipt(physicalBaseline.cases[key],.2).cellsXZ),key+' restored width rejects the fivefold-narrowing counterfactual');
     assert.deepEqual(c.paint.cellsXZ,calibration.cellsXZ,key+' independently calibrated cells');
     near(c.paint.area,calibration.area);
   }
@@ -194,7 +194,7 @@ function legacyPhysicalStamps(c,stamps,prior){
   if(c.id==='charger'){
     const calibrated=calibratedChargers[c.key].paintPoints;
     assert.deepEqual(normalizedChargerStamps(stamps),normalizedChargerStamps(calibrated),
-      c.key+' only independently specified #1651 flat geometry and its scoring differ');
+      c.key+' only independently specified shared-unit flat geometry and its scoring differ');
     for(let i=1;i<result.length;i++){
       const old=physicalStamps(prior.paintPoints)[i];
       result[i]={...result[i],center:old.center,radius:old.radius,stretchAmt:old.stretchAmt};

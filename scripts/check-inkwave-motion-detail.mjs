@@ -49,7 +49,7 @@ function validateDetailResult(result) {
         if(s.gripWeights[key]<-1e-6||s.gripWeights[key]>1+1e-6)throw Error('Detail native grip weight range: '+name);
       }
       if(s.weapon?.kind!==scenario.kind||!['off','entry','active','expiry'].includes(s.flow?.phase))throw Error('Detail snapshot identity: '+name);
-      for(const key of ['heldVisible','leftPistolVisible','runnerStreaming'])if(typeof s[key]!=='boolean')throw Error('Detail flag identity: '+name);
+      for(const key of ['heldVisible','mainWeaponVisible','leftPistolVisible','runnerStreaming'])if(typeof s[key]!=='boolean')throw Error('Detail flag identity: '+name);
       for(const key of ['time','lastShot','lastRelease','aim','rcP','rcZ','projectileCount'])finite(s[key],name+'.'+key);
       for(const side of ['left','right']) { const p=s.hands?.[side]; if(!Array.isArray(p)||p.length!==3)throw Error('Detail hand denominator: '+name); p.forEach(v=>finite(v,name+'.hand')); }
       for(const key of ['opacity','resources','aliveParticles'])finite(s.flow?.[key],name+'.flow.'+key);
@@ -87,6 +87,11 @@ function validateDetailResult(result) {
         for(const key of ['indexedVertices','nearestRight','nearestLeft'])finite(m[layer][key],name+'.'+layer+'.'+key);
         if(!Number.isInteger(m[layer].indexedVertices)||m[layer].indexedVertices<50)throw Error('Detail indexed-draw denominator: '+name);
       }
+      const subStowed=scenario.type==='bomb'&&(samples[m.frame].bomb.held||samples[m.frame].bomb.throwing);
+      if(subStowed){
+        if(m.weapon||samples[m.frame].mainWeaponVisible||samples[m.frame].leftPistolVisible)throw Error('Main weapon drawn during bomb aim/recovery: '+name);
+        continue;
+      }
       if(!m.weapon){if(!(scenario.squid&&samples[m.frame]?.form==='squid'))throw Error('Missing drawn weapon: '+name);continue;}
       if(m.weapon.nearestRight>=.2)throw Error('Detail hand left actual drawn weapon: '+name);
       const grip=samples[m.frame].gripWeights;
@@ -96,6 +101,9 @@ function validateDetailResult(result) {
     if(!disposed?.disposed||disposed.resources!==0||disposed.aliveParticles!==0)throw Error('Flow resources survived Character disposal: '+name);
     const peak=Math.max(...samples.map(s=>Math.abs(s.rcP))),tail=samples.slice(-24);
     if(scenario.type==='bomb') {
+      for(const sample of samples){
+        if(typeof sample.bomb.held!=='boolean'||typeof sample.bomb.throwing!=='boolean'||sample.mainWeaponVisible===(sample.bomb.held||sample.bomb.throwing))throw Error('Bomb main stow/recovery regression: '+name+' frame '+sample.frame);
+      }
       if(!samples[29].heldVisible||samples[actualBombThrowFrame].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
       if(scenario.kind==='dualies'&&(samples[29].leftPistolVisible||!samples.at(-1).leftPistolVisible))throw Error('Bomb dualies pistol recovery regression');
       const held=renderMetrics.find(m=>m.frame===29)?.heldBomb,released=renderMetrics.find(m=>m.frame===actualBombThrowFrame)?.releasedBomb;
@@ -441,7 +449,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
           const right = ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray();
           samples.push({ frame, form: actor.form, bomb, flow, weapon, hands: { left, right }, ik: Array.from(ch.ikErr),
             gripWeights:{right:ch.P[C.IKR],left:ch.P[C.IKL],leftTarget:ch.P[C.LTW]},
-            heldVisible: ch.bomb.group.visible, leftPistolVisible: !!ch.weapon.left?.pivot.visible,
+            heldVisible: ch.bomb.group.visible, mainWeaponVisible: ch.weapon.pivot.visible, leftPistolVisible: !!ch.weapon.left?.pivot.visible,
             lastShot: ch.lastShot, lastRelease: ch.lastRelease, aim: ch.wAim, rcP: ch.rcP, rcZ: ch.rcZ, time: ch.t, projectileCount: projectiles.list.length,
             runnerStreaming: !!actor.weaponRunner.streaming });
           globalThis.motionProbeProgress={scenario:scenario.name,frame,casesFinished:data.length,flow,weapon,ik:Array.from(ch.ikErr),nativeRecoil:ch.rcP};

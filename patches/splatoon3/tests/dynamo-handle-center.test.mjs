@@ -4,13 +4,14 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 const BEFORE_DYNAMO=fs.readFileSync(new URL('./fixtures/dynamo-before-model.txt',import.meta.url),'utf8');
 import { fixture } from './source-fixture.mjs';
+import { ROLLER_MODEL_WORLD_SCALE } from '../runtime/roller-source-scale.mjs';
 import { nativeRollerGripGap } from './roller-support-contact.mjs';
 const ID='s3-roller-heavy';
 const sourceDynamo=JSON.parse(fs.readFileSync(new URL('../reference/roller-source-scale-2026-10-19.json',import.meta.url))).records.find(r=>r.id===ID);
 // Main now calibrates the model to the independently measured indexed source
 // width. Inspect authored coordinates in that basis; scaleWeaponDef deliberately
 // preserves the support hand's reach from the main grip along the weapon axis.
-const authoredScale=sourceDynamo.width/1.821;
+const authoredScale=sourceDynamo.width*ROLLER_MODEL_WORLD_SCALE/1.821;
 const authoredVector=(v,expected)=>Array.from(v.toArray()).forEach((x,i)=>assert.ok(Math.abs(x/authoredScale-expected[i])<1e-7));
 const exports="export {getWeaponDef} from './inkwave-public/src/game/character-weapons.js'; export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';";
 async function production(before=false){
@@ -34,7 +35,7 @@ test('Dynamo handle and drum share the measured width midline, with unchanged so
  const b=d.drum.boundingBox,left=b.min.x+d.drumAt.x,right=b.max.x+d.drumAt.x;
  assert.ok(Math.abs((left+right)/2-d.gripR.pos.x)<1e-7,'grip centre meets drum width centre');
  assert.ok(Math.abs((left+right)/2-d.gripL.pos.x)<1e-7,'support grip uses same centre');
- assert.ok(Math.abs(right-left-sourceDynamo.width)<1e-6,'independent indexed source width preserved');
+ assert.ok(Math.abs(right-left-sourceDynamo.width*ROLLER_MODEL_WORLD_SCALE)<1e-6,'independent indexed source width normalized to player stature');
  authoredVector(d.muzzle,[-.37,0,1.13]);
  authoredVector(d.fold.pivot,[0,0,.88]);assert.ok(Math.abs(d.drumR/authoredScale-.19)<1e-7);
  authoredVector(d.gripR.pos,[0,0,-.022]);
