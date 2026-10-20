@@ -1,5 +1,6 @@
 import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 import { CHARGER_FOOTPRINT } from './main-ink-footprints.mjs';
+import { WORLD_UNITS_PER_SOURCE_UNIT } from './source-distance.mjs';
 import { coherentMotionStart } from './actor-motion.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
@@ -9,7 +10,7 @@ import { chargerDamage, isChargerFullCharge } from './weapons.mjs';
 // 1/6 early-boost boundary would create a second plateau after frame 8.
 // SplashPaintParam and PaintParam use the same source distance convention as
 // flight/range/depth. Applying 0.2 only to width shrank the stripe fivefold.
-export const CHARGER_PAINT_WORLD_WIDTH_SCALE = 1;
+export const CHARGER_PAINT_WORLD_WIDTH_SCALE = WORLD_UNITS_PER_SOURCE_UNIT;
 export function chargerPaintWorldRadius(sourceWidth) {
   return Math.max(0, Number.isFinite(sourceWidth) ? sourceWidth * CHARGER_PAINT_WORLD_WIDTH_SCALE : 0);
 }

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { WORLD_UNITS_PER_SOURCE_UNIT } from '../runtime/source-distance.mjs';
 const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
 function exportedFunction(source,name){
  const hits=[...source.matchAll(new RegExp('^export function '+name+'\\([^]*?^\\}','gm'))];
@@ -13,7 +14,7 @@ function actualRuntime(){
  const hits=[...source.matchAll(new RegExp('^export const '+name+' = [^;]+;','gm'))];assert.equal(hits.length,1);return hits[0][0].replace('export ','');});
  const code=[...constants,exportedFunction(weapons,'isChargerFullCharge'),...['chargerPaintWorldRadius','chargerPartialCharge','chargerPaintParameters'].map(n=>exportedFunction(source,n)),
  '({chargerPaintWorldRadius,chargerPaintParameters})'].join('\n');
- return vm.runInNewContext(code,Object.create(null),{timeout:1000});
+ return vm.runInNewContext(code,{WORLD_UNITS_PER_SOURCE_UNIT},{timeout:1000});
 }
 const buildCases=vm.runInNewContext(exportedFunction(read('./paint-mask-browser-fixture.mjs'),'calibratedChargerMaskCases')+'\ncalibratedChargerMaskCases',Object.create(null),{timeout:1000});
 const raw=JSON.parse(read('../profile.json')).weaponsFidelityCompletion.weapons.charger;
