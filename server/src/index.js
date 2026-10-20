@@ -129,6 +129,8 @@ export class RoomDurableObject {
     ws.addEventListener('message', (event) => {
       const s = typeof event.data === 'string' ? event.data : '';
       if (!s) return;
+      // A socket that already left (or was replaced) has no authority in the room.
+      if (this.members.get(id)?.ws !== ws) return;
 
       // Heartbeat ping -> pong
       if (s === 'ping') {
@@ -169,12 +171,15 @@ export class RoomDurableObject {
         return;
       }
 
-      // Lock control message: {"t":"lock","v":true}
+      // Lock control message: {"t":"lock","v":true}. Locking and unlocking the
+      // roster is host-only (#1644): a guest's frame is ignored, never coerced,
+      // and the value must be a real boolean. `this.hostId` follows elections,
+      // so the previous host's connection loses this authority on handoff.
       if (s.startsWith('{')) {
         try {
           const o = JSON.parse(s);
-          if (o.t === 'lock') {
-            this.locked = !!o.v;
+          if (o !== null && o.t === 'lock' && id === this.hostId && typeof o.v === 'boolean') {
+            this.locked = o.v;
           }
         } catch (e) {}
       }
