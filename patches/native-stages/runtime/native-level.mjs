@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Level } from '../../../src/world/level.js';
 import { nativeInkGeometry } from './native-render.mjs';
 import { TriangleWorld } from './triangle-world.mjs';
+import { assertSourceTerrainObjects } from './source-terrain-contract.mjs';
 const DOWN = new THREE.Vector3(0,-1,0);
 
 /** Compatibility with the original Level's face/grid and dynamic box contracts.
@@ -9,6 +10,7 @@ const DOWN = new THREE.Vector3(0,-1,0);
 export class NativeLevel extends Level {
  constructor(data) {
   const m=data.manifest;
+  assertSourceTerrainObjects(m);
   super({id:m.id,bounds:m.bounds,spawnPads:m.spawnPads,spawnBarrier:m.spawnBarrier,single:[],half:[]});
   this.native=true;this.manifest=m;this.data=data;this.layout.nativeSource=true;
   this.homeSuperJumpPoints=this.spawnPads.map(p=>p.clone());
