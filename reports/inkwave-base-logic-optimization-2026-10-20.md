@@ -94,6 +94,16 @@ CPU を4倍に制限し、次のフレーム間隔を「直前フレームの処
 
 どちらもゲーム時間は実時間どおり進んだ（sim/real 1.00）が、描画が1秒以上止まる区間があった。この模擬は境界付近の小さな差やGCで結果が大きく変わり、上の2回の差は1 tick のコストの差ではない（同条件の固定 dt 計測では差を判定できない）。境界を超える端末では、追いつきの上限か、tick あたりのコストの削減が必要になる。
 
+## 回帰テスト・配信検証
+
+| コマンド | 結果 |
+| --- | --- |
+| `node --experimental-vm-modules scripts/check-inkwave-patches.mjs`（並列3） | 7,594件：合格7,571、失敗0、スキップ23 |
+| source-bank・retarget・source motion を参照する37テストファイル | 合格（native-climb / native-surge の2件は `.ci-scratch/` 未作成による失敗で、作成後に再実行して合格） |
+| `node --test scripts/tests/inkwave-direct-source-ownership.test.mjs` | 12件合格（source-bank の直接ソース所有を追加） |
+| `node scripts/check-inkwave-patches.mjs --quick`、`check-inkwave-startup-budget.mjs` | 合格 |
+| `check-inkwave-browser.mjs --exact-source`（`e53781e`、内容ハッシュ `13d39ccf…`） | 合格、752応答を検証、ページエラー0 |
+
 ## 基底ロジックのレビュー所見（変更なし）
 
 ### 固定クロックは経過時間を捨てない
