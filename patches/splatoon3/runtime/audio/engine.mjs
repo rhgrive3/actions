@@ -2,6 +2,7 @@ import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } 
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
 import { borrowedRecordedMainId, isBorrowedRecordedMain } from './borrowed-recorded-mains.mjs';
+import { sourceEventRoute } from './extra-source-routes.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 
@@ -144,6 +145,12 @@ export function installWeaponAudioEngine(Engine){
     if(!name)return null;
     const loader=this._realS3Loader;
     const recorded=bank.authorized.byEvent.has(`${id}:${event}`);
+    // An already-decoded native event always wins. Only route a confirmed
+    // manifest-absent event to an explicitly registered source recording.
+    // This keeps the original gameplay clock and never fabricates PCM.
+    const fallback=sourceEventRoute(id,event);
+    if(!recorded&&fallback&&loader?.declares(id,event)===false)
+      return this.playWeapon(fallback,'fire',options);
     if(!recorded){
       // Never start a synthesized substitute for a known MP3. A cold fetch,
       // failed response, or LRU eviction may delay the real sample, but must
