@@ -41,13 +41,16 @@ function networkRoom(id){
  world();const a=f.make(),v=victim();
  Object.assign(a,{nid:7,owner:'S',netLife:2,team:0,remote:id!=='S'});
  Object.assign(v,{nid:4,owner:'V',netLife:5,remote:id!=='V'});
- a.net={...(a.net||{}),lastLife:2};v.net={...(v.net||{}),lastLife:5};
+ // Native bind must initialize the complete remote snapshot before life counters are assigned.
  a.pos.set(0,0,1);f.G.actors=[a,v];
  const sent=[],session={myId:id,isHost:id==='S',hostId:'S',_members:new Set(['S','V']),tr:{
   sendTo(to,d){sent.push({to,d:JSON.parse(JSON.stringify(d))});return true;},
   broadcast(d){sent.push({to:'*',d:JSON.parse(JSON.stringify(d))});return true;}}};
  const nm=new f.NetMatch(session,{id:'kraken-occlusion-match',map:'tidewater'});
- nm.byNid=new Map([[7,a],[4,v]]);f.G.match.actors=[a,v];nm.bind(f.G.match);f.G.netm=nm;f.G.net=session;
+ nm.byNid=new Map([[7,a],[4,v]]);f.G.match.actors=[a,v];nm.bind(f.G.match);
+ a.net.lastLife=2;v.net.lastLife=5;
+ assert.ok(Array.isArray(a.net.buf)&&Array.isArray(v.net.buf),'native actor snapshots are initialized');
+ f.G.netm=nm;f.G.net=session;
  return {a,v,nm,sent,session};
 }
 function sentHit({guest=false,blocked=false}={}){

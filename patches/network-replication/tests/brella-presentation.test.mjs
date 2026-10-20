@@ -32,7 +32,11 @@ test('actual local canopy snapshot opens remote cloth without creating a gamepla
   // The real owner-routed hit packet, including collision segment, must arrive
   // at the victim owner, whose actual gameplay shield spends its own HP.
   const shooter=x.make(true,'shooter',2,1),attackProxy=x.make(false,'shooter',2,1);
-  shooter.owner=attackProxy.owner='viewer';attackProxy.remote=true;receiver.byNid.set(2,shooter);sender.byNid.set(2,attackProxy);
+  shooter.owner=attackProxy.owner='viewer';
+  // These participants join after the initial bind: initialize their actual network proxies.
+  receiver._setupActor(shooter);sender._setupActor(attackProxy);
+  receiver.byNid.set(2,shooter);sender.byNid.set(2,attackProxy);
+  assert.ok(shooter.net?.buf&&attackProxy.net?.buf,'late-added actors receive native transport buffers');
   shooter.pos.copy(remote.pos).add(new f.THREE.Vector3(0,0,4));shooter.aimDir.set(0,0,-1);shooter.aimPoint.copy(remote.pos).y+=1.05;
   shooter.character.getMuzzle=out=>out.copy(shooter.pos).add(new f.THREE.Vector3(0,1.05,-.3));
   f.G.actors=[shooter,remote];f.G.netm=receiver;f.G.projectiles.list.length=0;
