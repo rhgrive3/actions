@@ -164,8 +164,10 @@ test('same full-precision sourced event gives identical CPU ownership on local a
     const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
     const { paint, V, face } = makePaintWorld(f);
     const messages = [];
+    // #522: a local online splat needs the paint-order stamp recSplat returns; without one it claims nothing.
     f.G.netm = { mute: 0, applying, recSplat(_at, r, _team, options) {
       messages.push({ radius: r, kind: options.kind, face: options.face });
+      return { stamp: messages.length };
     }};
     const r = f.profile.weaponsFidelityCompletion.weapons.shooter.PaintParam.WidthHalfNear;
     const area = paint.splat(V(0,0,8), r, 0,

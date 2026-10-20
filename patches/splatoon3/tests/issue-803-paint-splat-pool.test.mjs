@@ -132,7 +132,15 @@ test('#803: installed adapter preserves native seeded Turf area, cell ownership,
   const immediate = e => e[2] === 3 && e[3] === 0 && e[4] === false;
   assert.equal(after.events.filter(immediate).length, 5, 'current #570 submits exactly one immediate body for each non-instant splat');
   assert.deepEqual(after.events.filter(immediate).map(e => e.slice(0, 5)), [[0,.14,3,0,false],[1,.73,3,0,false],[1,.8,3,0,false],[0,.37,3,0,false],[1,.91,3,0,false]]);
-  assert.deepEqual({ ...after, events: after.events.filter(e => !immediate(e)) }, before);
+  // The grid is no longer byte-identical to upstream on purpose: #264 claims the ancillary pieces of a splat and #1165 gave the
+  // CPU Roller band the GPU's width wobble. What the pooling adapter must still preserve is what the player is credited with.
+  const installedOnly = { ...after, events: after.events.filter(e => !immediate(e)) };
+  assert.deepEqual(installedOnly.events, before.events, 'the same non-immediate paint events');
+  assert.deepEqual(installedOnly.areas, before.areas, 'the same claimed area per splat');
+  assert.equal(installedOnly.actorTurf, before.actorTurf);
+  assert.equal(installedOnly.special, before.special, 'the same special credit');
+  for (const team of [0, 1]) assert.ok(installedOnly.counts[team] >= before.counts[team], 'ancillary ownership only adds cells');
+  assert.ok(installedOnly.grid.length === before.grid.length);
   assert.ok(before.areas.some(area => area > 0));
   assert.ok(before.special > 0);
 });
@@ -224,7 +232,7 @@ test('#803: newer ink force-emits older opposing growth first; instant and netwo
   assert.equal(paint.growing.length, 0);
 
   let recorded = 0;
-  runtime.G.netm = { mute: 0, applying: false, recSplat() { recorded++; } };
+  runtime.G.netm = { mute: 0, applying: false, recSplat() { recorded++; return { stamp: recorded }; } }; // #522: a local online splat needs the stamp recSplat returns
   paint.splat(center, 0.4, 0, { seed: 0.5, kind: 'trail' });
   assert.equal(recorded, 1);
   runtime.G.netm = null;

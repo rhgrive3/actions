@@ -115,7 +115,7 @@ test('all added Rollers and Brushes select the band through grounded, moving Wea
 
 test('canonical event records the chosen kind before replication and replay uses it without an actor',async()=>{
   const f=await fixture(options),{paint,V}=makePaintWorld(f),events=[];
-  f.G.netm={mute:0,applying:false,recSplat(at,R,team,opts){events.push({at:at.clone(),R,team,opts:{...opts}});}};
+  f.G.netm={mute:0,applying:false,recSplat(at,R,team,opts){events.push({at:at.clone(),R,team,opts:{...opts}});return {stamp:events.length};}}; // #522: a local online splat needs the stamp recSplat returns
   for(const footprint of INK_FOOTPRINT_KINDS)paint.splat(V(0,0,10),1.3,0,
     {kind:'source-shot',footprint,seed:.37,face:0,stretch:V(.6,0,.8),stretchAmt:.8});
   assert.deepEqual(events.map(e=>e.opts.kind),[...INK_FOOTPRINT_KINDS]);
@@ -141,7 +141,7 @@ test('Charger old organic outline uses three repeatable seed variants with uncha
   const kinds=[],grids=[],events=[];
   for(const seed of [.13,.47,.83]){
     const {paint}=makePaintWorld(f,{cell:.125});
-    const received=[];f.G.netm={mute:0,applying:false,recSplat(_at,R,_team,opts){received.push({R,opts:{...opts}});}};
+    const received=[];f.G.netm={mute:0,applying:false,recSplat(_at,R,_team,opts){received.push({R,opts:{...opts}});return {stamp:received.length};}}; // #522
     const center=V(0,0,8),r=1.56;
     const claimed=paint.splat(center,r,0,{kind:'source-splash',footprint:CHARGER_FOOTPRINT,seed,face:0,stretch:V(0,0,1),stretchAmt:0});
     assert.ok(claimed>0);
