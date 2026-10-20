@@ -90,6 +90,24 @@ try{
   for(let i=0;i<14;i++){await host.evaluate(()=>{G.local.pos.x+=.02;G.local.grounded=G.time<.3;G.projectiles.update(1/60);});await frames(1);}
   await frames(30);
   for(const p of [guest,observer]){const births=await p.evaluate(()=>globalThis.births);assert.equal(births.length,9);assert.deepEqual(births.map(x=>x.index),[0,1,2,3,4,5,6,7,8]);assert(births.every(x=>x.delay===0));}
+  // Keep the victim outside the volley during birth/update assertions above.
+  // This phase manually supplies grouped collision results, so place the victim
+  // in the already emitted Slosher corridor on every client before claiming
+  // those contacts. Do not advance projectiles or synthesize attack proofs.
+  phase='volley target alignment';
+  const alignedVictims=await Promise.all(pages.map(p=>p.evaluate(()=>{
+   const victim=G.actors[1];
+   const identity=()=>({nid:victim.nid,owner:victim.owner,life:victim.netLife,hp:victim.hp,alive:victim.alive});
+   const before=identity();
+   victim.pos.set(30,0,5);
+   return {before,after:identity(),sameActor:G.actors[1]===victim&&G.netm.byNid.get(victim.nid)===victim};
+  })));
+  for(const victim of alignedVictims){
+   assert.equal(victim.before.hp,100,'volley victim must be undamaged before manual claims');
+   assert.equal(victim.before.alive,true,'volley victim must be alive before manual claims');
+   assert.equal(victim.sameActor,true,'alignment must retain the bound victim');
+   assert.deepEqual(victim.after,victim.before,'alignment must preserve victim identity, life and health');
+  }
   phase='volley damage';
   for(const damage of [30.39,34.31,34.31])await host.evaluate(d=>hit(G.projectiles,volley,G.actors[1],d,G.actors[1].pos),damage);
   phase='victim damage acceptance';
@@ -181,4 +199,5 @@ try{
  ],primaryError);
  for(const error of cleanupErrors)console.error('Volley teardown after original failure:',error);
 }
+
 

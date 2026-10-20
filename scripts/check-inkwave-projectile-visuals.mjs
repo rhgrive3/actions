@@ -5,6 +5,7 @@
 // The captures are intentionally browser evidence, not the isolated geometry
 // fixtures used by the numeric weapon tests.
 import fs from 'node:fs';
+import { captureSourceIdentity } from './lib/inkwave-capture-source-identity.mjs';
 import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.mjs';
 import {installAudioTimingObserver} from './lib/inkwave-audio-timing-observer.mjs';
 import {audioDiagnosticURL,audioBuildManifestReceipt,sha256 as audioReceiptSha256} from './lib/inkwave-audio-readiness-diagnostics.mjs';
@@ -20,6 +21,7 @@ import { completeNativeTurfIntro } from './lib/inkwave-projectile-ci-intro.mjs';
 import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const sourceIdentity = captureSourceIdentity({ cwd: ROOT });
 const option = (name, fallback) => {
   const i = process.argv.indexOf(name);
   return i >= 0 ? process.argv[i + 1] : fallback;
@@ -140,7 +142,7 @@ async function openGameContext({ mobile = false } = {}) {
 
   try {
   const audioNetwork = [], audioSnapshots = [];
-  const audioReceipt = { checkoutSha: process.env.GITHUB_SHA || null,
+  const audioReceipt = { ...sourceIdentity,
     build: audioBuildManifestReceipt(site), network: audioNetwork, snapshots: audioSnapshots };
   report.audioReadiness ||= [];
   report.audioReadiness.push(audioReceipt);
@@ -279,16 +281,19 @@ async function openGameContext({ mobile = false } = {}) {
     phaseMark('intro','begin');
     phaseMark('playing','begin');
     const atomicReceipt = await requireAtomicIntro(page,
-      atomicIntroFunction(completeNativeTurfIntro,playingReady),deadline);
+      atomicIntroFunction(completeNativeTurfIntro,playingReady),deadline,{receipt:phaseReceipt.atomicIntro={}});
     phaseMark('intro','end');
     phaseMark('playing','end');
     (report.provenance.introTransitions ||= []).push({mobile,...atomicReceipt.intro});
     (report.provenance.atomicPlayingReceipts ||= []).push({mobile,...atomicReceipt.readiness,playingReady:atomicReceipt.playingReady});
   } catch (error) {
     const failedAt=Date.now();phaseReceipt.events.push({phase:'failure',event:'caught',atMs:failedAt,elapsedMs:failedAt-phaseReceipt.startedAtMs,remainingMs:Math.max(0,phaseReceipt.deadlineAtMs-failedAt)});
+    phaseReceipt.failureSnapshotRequestedAtMs=Date.now();
+    try {
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
-      return { mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
+      return { observedAtMs:Date.now(),atomicIntro:window.__iwProjectileAtomicIntroReceipt??null,
+        mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
         matchIdentity: m === G?.match, local: m?.local?.isLocal, controller: !!m?.controller, debug: !!g?.debug,
         projectiles: !!G?.projectiles,
         frozen: g?.frozen, paused: m?.paused, visibility: document.visibilityState,
@@ -298,8 +303,12 @@ async function openGameContext({ mobile = false } = {}) {
         actors: m?.actors?.length, matchedMap: g?.mapDef?.id,
         bootError: document.querySelector('#boot-error')?.textContent };
     }).catch(error => ({ snapshotFailure: error.message }));
+    phaseReceipt.failureSnapshotReturnedAtMs=Date.now();
     await snapshotAudio('native-startup-timeout');
     report.browserDiagnostics.push({ event: 'native-startup-timeout', mobile, observed });
+    } catch (diagnosticError) {
+      report.browserDiagnostics.push({event:'native-startup-diagnostics-failed',mobile,error:String(diagnosticError?.message||diagnosticError).slice(0,500)});
+    }
     throw error;
   }
   await page.waitForFunction(() => !document.querySelector('.iw-lineup') && !!window.__inkwave?.hud?._visible, null, { timeout: 30000 }).catch(() => {});

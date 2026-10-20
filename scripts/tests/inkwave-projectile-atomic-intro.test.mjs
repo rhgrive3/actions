@@ -49,3 +49,62 @@ test('harness uses atomic receipt with unchanged deadline and no second playing 
   assert.ok(source.includes('const NATIVE_BOOT_TIMEOUT_MS = 180000;'));
   assert.ok(source.includes("timeout: 30000 }).catch(() => {})"),'downstream optional HUD observation retained');
 });
+
+
+test('browser timing is persisted with ordered entry, intro and predicate returns',()=>{
+  const w=world();let now=10;
+  const fn=atomicIntroFunction(completeNativeTurfIntro,playing);
+  const result=vm.runInNewContext('('+fn.toString()+')()',{window:w.window,Date:{now:()=>now++}});
+  assert.equal(result.timing,w.window.__iwProjectileAtomicIntroReceipt);
+  assert.equal(result.timing.enteredAtMs,10);assert.equal(result.timing.introReturnedAtMs,11);
+  assert.equal(result.timing.predicateReturnedAtMs,12);assert.equal(result.timing.outcome,'ready');
+  assert.equal(result.timing.intro.frames,result.intro.frames);
+  assert.equal(w.calls.filter(c=>c==='freeze').length,1);
+});
+test('failed predicates and native exceptions persist evidence without masking native error',()=>{
+  const w=world();const no=atomicIntroFunction(()=>({frames:0}),()=>false);
+  const result=vm.runInNewContext('('+no.toString()+')()',{window:w.window});
+  assert.equal(result.timing.outcome,'predicate-failed');
+  const thrown={message:'native original'},fail=atomicIntroFunction(()=>{throw window.nativeError;},()=>true);
+  w.window.nativeError=thrown;
+  assert.throws(()=>vm.runInNewContext('('+fail.toString()+')()',{window:w.window}),e=>e===thrown);
+  assert.equal(w.window.__iwProjectileAtomicIntroReceipt.outcome,'threw');
+  assert.equal(w.window.__iwProjectileAtomicIntroReceipt.error,'native original');
+  assert.equal(w.window.__iwProjectileAtomicIntroReceipt.introReturnedAtMs,undefined);
+});
+test('unavailable diagnostic storage does not change execution or error identity',()=>{
+  const w=world();Object.defineProperty(w.window,'__iwProjectileAtomicIntroReceipt',{set(){throw Error('diagnostics denied');}});
+  const fn=atomicIntroFunction(completeNativeTurfIntro,playing);
+  const result=vm.runInNewContext('('+fn.toString()+')()',{window:w.window});
+  assert.equal(result.playingReady,true);
+  const original={message:'real error'};w.window.original=original;
+  const failed=atomicIntroFunction(()=>{throw window.original;},()=>true);
+  assert.throws(()=>vm.runInNewContext('('+failed.toString()+')()',{window:w.window}),e=>e===original);
+});
+test('host timing distinguishes late CDP delivery without changing failed outcome',async()=>{
+  let now=20,resolveEvaluation,timerCallback,calls=0;
+  const receipt={},page={evaluate:()=>{calls++;return new Promise(resolve=>resolveEvaluation=resolve);}};
+  const pending=requireAtomicIntro(page,()=>{},100,{receipt,now:()=>now,setTimer:fn=>{timerCallback=fn;return 1;},clearTimer(){}});
+  assert.equal(receipt.requestedAtMs,20);assert.equal(receipt.deadlineAtMs,100);
+  now=100;timerCallback();await assert.rejects(pending,/budget exceeded/);
+  assert.equal(receipt.outcome,'failed');assert.equal(receipt.deadlineObservedAtMs,100);
+  now=110;resolveEvaluation({playingReady:true,timing:{enteredAtMs:30,introReturnedAtMs:70,predicateReturnedAtMs:71,outcome:'ready'}});
+  await Promise.resolve();await Promise.resolve();
+  assert.equal(receipt.evaluationReturnedAtMs,110);assert.equal(receipt.browserTiming.predicateReturnedAtMs,71);
+  assert.equal(receipt.outcome,'failed');assert.equal(calls,1);
+});
+test('host diagnostic write failure preserves native rejection and accepted result',async()=>{
+  const receipt=new Proxy({},{set(){throw Error('diagnostics write denied');}}),original=new Error('native rejection');
+  await assert.rejects(requireAtomicIntro({evaluate:async()=>{throw original;}},()=>{},100,{receipt,now:()=>1}),e=>e===original);
+  const result=await requireAtomicIntro({evaluate:async()=>({playingReady:true})},()=>{},100,{receipt,now:()=>1});
+  assert.equal(result.playingReady,true);
+});
+test('failure snapshot is diagnostic only and original failure is rethrown',()=>{
+  const start=source.indexOf('phaseReceipt.failureSnapshotRequestedAtMs');
+  const end=source.indexOf('\n  await page.waitForFunction',start);const block=source.slice(start,end);
+  assert.ok(block.includes('atomicIntro:window.__iwProjectileAtomicIntroReceipt??null'));
+  assert.ok(block.includes('failureSnapshotReturnedAtMs=Date.now()'));
+  assert.ok(block.includes('native-startup-diagnostics-failed'));
+  assert.ok(block.includes('throw error;'));
+  assert.equal((block.match(/page\.evaluate\(/g)||[]).length,1);
+});
