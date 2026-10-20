@@ -185,29 +185,59 @@ const REVIEWED_CURRENT_PAIR = Object.freeze({
     "candidate": "8378411518a3e1197475eee15aad6afb60ecf6a25894c45c774a95cab8a2dc50"
   }
 });
+// Source identities at the current mega-PR boundary. Admission alone is not
+// visual equivalence: the native 48-capture comparison must still run and
+// must expose all intended or unintended gameplay/pixel differences.
+const INTEGRATION_SOURCE_PAIR = Object.freeze({
+  baseCommit: 'b77b51df6a4e6683ca23a213c8ba4b0bc2f0c8ae',
+  candidateCommit: 'a863c3b338de1c2fcbc12e9be78cd720bc810b04',
+  blobs: Object.freeze({
+    "patches/network-replication/adapter.mjs": {base: '0e92045cd74352a38260876c9d9dddc197c74fb2', candidate: '2cf5e9acff410f1fbbc471efa2c36aa0431ee30c'},
+    "patches/network-replication/slosher-paint-admission.mjs": {base: '835ec49ce61f4d623a97f0cdb38fdcb8c592b916', candidate: '835ec49ce61f4d623a97f0cdb38fdcb8c592b916'},
+    "patches/splatoon3/main-ink-footprint-adapter.mjs": {base: '312de3ac2633a494dc1e783780e5c7a5e35d87ac', candidate: '312de3ac2633a494dc1e783780e5c7a5e35d87ac'},
+    "patches/splatoon3/runtime/blaster-flight-paint.mjs": {base: '629e9a0eb0f7ea67bf27d756bf3f46273396791c', candidate: '629e9a0eb0f7ea67bf27d756bf3f46273396791c'},
+    "patches/splatoon3/runtime/main-ink-footprints.mjs": {base: '546c48ae0c1b30d669de3756350f20c7e82dfe4e', candidate: '546c48ae0c1b30d669de3756350f20c7e82dfe4e'},
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": {base: '6b0f6f96fc94fc6e93dff99288e0d55e3cd01512', candidate: 'f97b9198893502fa2d36cdd1f99e3fc07369eacd'},
+    "patches/splatoon3/runtime/paint-packet-codec.mjs": {base: 'c5e6f71cddc6d9caba22f687a77869604fced80e', candidate: 'c5e6f71cddc6d9caba22f687a77869604fced80e'},
+    "patches/splatoon3/runtime/slosher-intermediate-paint.mjs": {base: '9914ddcef5472e6314dd9a02ba6f0996ccfd3f05', candidate: '9914ddcef5472e6314dd9a02ba6f0996ccfd3f05'},
+    "patches/splatoon3/runtime/slosher-nearest-paint.mjs": {base: '948517797c8a2de11278e2f96bf324ab80a22aa6', candidate: '948517797c8a2de11278e2f96bf324ab80a22aa6'},
+    "patches/splatoon3/runtime/weapon-edgecases.mjs": {base: 'ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110', candidate: 'ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110'},
+    "patches/splatoon3/runtime/weapons-fidelity.mjs": {base: '7faa1e707a73d649b16c77e253eb81c003eecb7f', candidate: '7faa1e707a73d649b16c77e253eb81c003eecb7f'},
+    "scripts/inkwave-source-composition.mjs": {base: 'f406d535a63356124c7c0415cb8a41d9ef8e77dd', candidate: '62d5ce2e1c729bd57dfc2372f668a76fe1c7c38a'},
+    "scripts/lib/inkwave-build-only-modules.mjs": {base: '1d8e49ac806e7b9cfcbc058131607b57699fe613', candidate: '6509f9e33afa28b82a4e65c1249c9c34179a8074'},
+  })
+});
 function reviewedCurrentPair(baseline, candidate) {
-  const matches = MAIN_INK_BASELINE_PATHS.every(path =>
-    typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
+  const present = path => typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string';
+  const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
     sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate);
-  if (!matches) {
+  const integrated = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
+    gitBlobSha1(baseline.get(path)) === INTEGRATION_SOURCE_PAIR.blobs[path].base &&
+    gitBlobSha1(candidate.get(path)) === INTEGRATION_SOURCE_PAIR.blobs[path].candidate);
+  if (!old && !integrated) {
     const path = 'patches/splatoon3/runtime/main-weapon-catalog.mjs';
-    if ((typeof baseline.get(path) === 'string' && sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline) ||
-        (typeof candidate.get(path) === 'string' && sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate))
-      fail('current reviewed pair differs; mixed, missing or modified source cannot be replayed');
+    const known = (typeof baseline.get(path) === 'string' &&
+      (sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline ||
+       gitBlobSha1(baseline.get(path)) === INTEGRATION_SOURCE_PAIR.blobs[path].base)) ||
+      (typeof candidate.get(path) === 'string' &&
+      (sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate ||
+       gitBlobSha1(candidate.get(path)) === INTEGRATION_SOURCE_PAIR.blobs[path].candidate));
+    if (known) fail('current source pair differs; mixed, missing or modified source cannot be replayed');
     return null;
   }
+  const sourceBase = integrated ? INTEGRATION_SOURCE_PAIR.baseCommit : '9b0e402313686d8f8ad0f70585b01915e904e641';
+  const sourceHead = integrated ? INTEGRATION_SOURCE_PAIR.candidateCommit : '67db773cf2d2ef49bea7a6187cc412c3c5590ef9';
   return { sources: new Map(baseline), changes: [], evidence: {
     schema: 1, mode: 'current-pair-with-gameplay-differences',
-    sourceBase: '9b0e402313686d8f8ad0f70585b01915e904e641',
-    sourceHead: '67db773cf2d2ef49bea7a6187cc412c3c5590ef9',
+    sourceBase, sourceHead,
+    validationLimit: 'Source identity only; full native browser/image comparisons remain mandatory',
     manifestGitBlob: MAIN_INK_BASELINE_MANIFEST_BLOB,
     paths: MAIN_INK_BASELINE_PATHS.map(path => ({path,
-      mode: 'reviewed-current-pair', originalGitBlob: gitBlobSha1(baseline.get(path)),
+      mode: 'pinned-current-pair', originalGitBlob: gitBlobSha1(baseline.get(path)),
       referenceGitBlob: gitBlobSha1(baseline.get(path)), candidateGitBlob: gitBlobSha1(candidate.get(path)),
-      originalSha256: REVIEWED_CURRENT_PAIR[path].baseline,
-      referenceSha256: REVIEWED_CURRENT_PAIR[path].baseline,
-      candidateSha256: REVIEWED_CURRENT_PAIR[path].candidate, replayed: []}))
+      originalSha256: sha256(baseline.get(path)), referenceSha256: sha256(baseline.get(path)),
+      candidateSha256: sha256(candidate.get(path)), replayed: []}))
   }};
 }
 
