@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { fixture } from './weapons-fixture.mjs';
 import { CASES, reset, launch, finish, paintMetrics, measure, projectileParams } from './measure-weapons-fidelity.mjs';
 import { isSourcedStamp, rasterFlatSourcedStamp } from './lib/source-paint-oracle.mjs';
+import { chargerCalibrationReceipt, normalizedChargerStamps } from './lib/charger-calibration-oracle.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const at = process.argv.indexOf('--site');
@@ -15,7 +16,8 @@ const near = (a,b,t=1e-7) => assert.ok(Math.abs(a-b) <= t, `${a} != ${b} ±${t}`
 
 const data = await measure({ site, fidelity: true, detail: false });
 // Preserve the old archives. Only the reviewed silhouettes, the previously
-// approved Roller birth correction and the Spinner relative-speed correction
+// approved Roller birth correction, Spinner relative-speed correction and
+// #1651 Charger flat-paint calibration
 // replace their affected receipts; unchanged physics stays bound to history.
 const baselineBytes = fs.readFileSync(new URL('./fixtures/weapons-fidelity-9c070329.json', import.meta.url));
 assert.equal(createHash('sha256').update(baselineBytes).digest('hex'), 'b79883e3c0e14e0a4ba9577d01d162dbcfe530a7d03c75b22187df18c0ea1259');
@@ -73,24 +75,32 @@ const chargerOrganic = Object.freeze({
   'charger-1': { maxZ:26.625, area:73.5 },
 });
 assert.deepEqual(Object.keys(contours.cases).sort(),['blaster',...Object.keys(chargerOrganic),'splatling-partial','splatling-first','splatling-full'].sort(),'reviewed contour receipt scope');
+const calibratedChargers = Object.fromEntries(Object.keys(chargerOrganic).map(key =>
+  [key,chargerCalibrationReceipt(physicalBaseline.cases[key])]));
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
-  const c = data.cases[key], expected = spawnBase.cases[key] || current.cases[key], organic = chargerOrganic[key], contour=contours.cases[key];
+  const c = data.cases[key], expected = spawnBase.cases[key] || current.cases[key], organic = chargerOrganic[key], calibration=calibratedChargers[key], contour=contours.cases[key];
   if (organic) {
     assert.notEqual(digest(c.paint.cellsXZ), expected.cellsHash, key + ' new organic Charger contour must differ from the old stamp');
-    near(c.paint.area, organic.area, 1e-7);
+    assert.equal(organic.area,contour.area,key+' immutable pre-calibration organic receipt');
+    assert.equal(organic.maxZ,contour.maxZ);
+    assert.notEqual(digest(c.paint.cellsXZ),contour.cellsHash,key+' #1651 changes width, not profile bytes');
+    assert.deepEqual(c.paint.cellsXZ,calibration.cellsXZ,key+' independently calibrated cells');
+    near(c.paint.area,calibration.area);
   }
-  assert.equal(digest(c.paint.cellsXZ), contour?.cellsHash ?? expected.cellsHash, key + ' main scoring cells');
-  if(contour)near(c.paint.area,contour.area);
+  assert.equal(digest(c.paint.cellsXZ), calibration ? digest(calibration.cellsXZ) : contour?.cellsHash ?? expected.cellsHash, key + ' main scoring cells');
+  if(contour&&!calibration)near(c.paint.area,contour.area);
   assert.equal(digest(c.hitSamples), expected.hitSamplesHash, key + ' main full hit sweep');
   assert.equal(digest(c.initialProjectiles), expected.initialProjectilesHash, key + ' main projectile births');
-  assert.equal(digest(c.paintPoints),contour?.paintPointsHash ?? expected.paintPointsHash,key+' all source stamp dimensions and recorded shape');
+  if(calibration)assert.deepEqual(normalizedChargerStamps(c.paintPoints),
+    normalizedChargerStamps(calibration.paintPoints),key+' every calibrated stamp field, area, seed and time');
+  else assert.equal(digest(c.paintPoints),contour?.paintPointsHash ?? expected.paintPointsHash,key+' all source stamp dimensions and recorded shape');
   assert.equal(digest(c.groundImpacts),expected.impactsHash,key+' all terrain impacts');
   if(!key.startsWith('splatling-')&&!spawnBase.cases[key]) {
     assert.equal(digest(c.hitSamples),expectedCases[key].hitSamplesHash,key+' unaffected hit sweep remains pinned');
     assert.equal(digest(c.initialProjectiles),expectedCases[key].initialProjectilesHash,key+' unaffected birth remains pinned');
   }
   near(c.practicalHitRange,hit); near(c.fullDamageRange,full);
-  near(c.paint.bounds.maxZ,contour?.maxZ ?? paint,.001); assert.equal(c.projectileCount,count,key);
+  near(c.paint.bounds.maxZ,calibration?.maxZ ?? contour?.maxZ ?? paint,.001); assert.equal(c.projectileCount,count,key);
 }
 // Independently execute the current unminified six-adapter source graph at the
 // measured hit boundary and on the real paint grid. The built receipt cannot
@@ -153,6 +163,12 @@ const circleFixture=await fixture({site:path.join(root,'.ci-scratch/unbuilt-weap
 const circleSplat=circleFixture.G.paint.splat;
 let circleCase;
 circleFixture.G.paint.splat=function(center,radius,team,opts={}){
+  if(circleCase.id==='charger'){
+    const old=physicalBaseline.cases[circleCase.key].paintPoints[circleFixture.paints.length];
+    assert.ok(old,'exactly the historical number of Charger stamps');
+    return circleSplat.call(this,new circleFixture.THREE.Vector3(...old.center),old.radius,team,
+      {...opts,footprint:null,stretch:old.stretch?new circleFixture.THREE.Vector3(...old.stretch):undefined,stretchAmt:old.stretchAmt});
+  }
   if(circleCase.id==='blaster'&&opts.footprint==='ink-blast-rectified'){
     assert.ok(opts.kind==='source-shot'||opts.kind==='source-splash','only the two reviewed native burst phases');
     assert.deepEqual(Array.from(opts.stretch.toArray()),[0,0,1],'saved incoming bearing');
@@ -175,6 +191,15 @@ const plain=value=>JSON.parse(JSON.stringify(value));
 const physicalStamps=stamps=>plain(stamps.map(({area,footprint,...stamp})=>stamp));
 function legacyPhysicalStamps(c,stamps,prior){
   const result=physicalStamps(stamps);
+  if(c.id==='charger'){
+    const calibrated=calibratedChargers[c.key].paintPoints;
+    assert.deepEqual(normalizedChargerStamps(stamps),normalizedChargerStamps(calibrated),
+      c.key+' only independently specified #1651 flat geometry and its scoring differ');
+    for(let i=1;i<result.length;i++){
+      const old=physicalStamps(prior.paintPoints)[i];
+      result[i]={...result[i],center:old.center,radius:old.radius,stretchAmt:old.stretchAmt};
+    }
+  }
   if(c.id==='blaster'){
     assert.deepEqual(stamps.map((s,i)=>s.footprint==='ink-blast-rectified'?i:null).filter(i=>i!==null),[1,7],'exactly the reviewed sphere/falling stamps');
     for(const [i,kind] of [[1,'source-shot'],[7,'source-splash']]){
@@ -225,7 +250,7 @@ for (const c of CASES) {
     const circlePaint=paintMetrics(circleFixture);
     // Roller base shift moves its painted pixels, but preserves frozen masks.
     // Use the independent new-origin receipt only for the two shifted cases.
-    assert.equal(digest(circlePaint.cellsXZ),spawnBase.cases[c.key]?.circleCellsHash??expectedCases[c.key].cellsHash,c.key+' restoring the prior mask metadata restores every archived scoring cell');
+    assert.equal(digest(circlePaint.cellsXZ),spawnBase.cases[c.key]?.circleCellsHash??expectedCases[c.key].cellsHash,c.key+' restoring prior masks and the specified Charger geometry restores every archived scoring cell');
     const subjectStamps=legacyPhysicalStamps(c,sourceFixture.paints,prior);
     if(c.id==='roller') {
       assert.equal(subjectStamps[0].time,0,'one release-time Roller foot stamp');
@@ -233,7 +258,7 @@ for (const c of CASES) {
       subjectStamps[0]={...subjectStamps[0],kind:null,stretch:null,stretchAmt:null};
       assert.deepEqual(subjectStamps[0],priorFoot,c.key+' unchanged foot position, radius, seed and time');
     }
-    assert.deepEqual(physicalStamps(circleFixture.paints),subjectStamps,c.key+' historical mask control retains every physical stamp');
+    assert.deepEqual(physicalStamps(circleFixture.paints),subjectStamps,c.key+' historical control retains every stamp after the specified geometry inverse');
   }
   for(const z of [expected.practicalHitRange,Math.round((expected.practicalHitRange+.1)*10)/10]){
     actor=reset(sourceFixture,c,z);sourceCells=new Uint8Array(paintSystem.grid.length);launch(sourceFixture,actor,c);finish(sourceFixture,actor);

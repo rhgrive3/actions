@@ -405,6 +405,7 @@ jobs:
           INKWAVE_BUILT_SITE=_site INKWAVE_OBJECT_DAMAGE_REFERENCE=.reference-data/object-damage.json node --experimental-vm-modules --test patches/splatoon3/tests/object-shredder-1130.test.mjs patches/splatoon3/tests/native-sprinkler-damage.test.mjs
           INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-name-pattern='^full installer (keeps Curling|Curling trail)' patches/splatoon3/tests/kit-defense.test.mjs patches/splatoon3/tests/kit-subs.test.mjs
           INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test scripts/tests/inkwave-slosher-paint-golden.test.mjs
+          node --test scripts/tests/inkwave-charger-calibration-oracle.test.mjs
           node --experimental-vm-modules scripts/check-inkwave-weapons-fidelity.mjs --site _site
       - name: Verify emitted sub and special fidelity boundaries
         run: |
