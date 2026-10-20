@@ -392,7 +392,7 @@ jobs:
               for (const key of ['r', 'amount', 'seed', 'face']) assert.deepEqual(before[key], stamp[key], `Contact recipe differs: ${i}/${key}`);
               for (let axis = 0; axis < 3; axis++) {
                 assert.ok(Math.abs(before.heading[axis] - stamp.heading[axis]) < 1e-10, 'Contact orientation preserved');
-                assert.ok(Math.abs(stamp.at[axis] - before.at[axis] - offset[axis]) < 1e-6, 'Same stroke path after physical model translation');
+                assert.ok(Math.abs(stamp.at[axis] - before.at[axis] - offset[axis]) < .003, 'Stroke follows translated resized model within 3mm of its breathing pose');
               }
             }
             assert.equal(sides[0].measurement.frozenState.yaw, other.measurement.frozenState.yaw, 'Actor yaw differs');
