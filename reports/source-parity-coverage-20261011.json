@@ -19,13 +19,13 @@
     },
     "unreviewedSourceFieldRecords": 894,
     "auditedStatusCounts": {
-      "used": 168,
+      "used": 167,
       "absent": 7,
       "used_approx": 165,
       "missing": 33,
       "unconsumed_visual": 2,
       "not_proven": 15,
-      "interpretation": 2
+      "interpretation": 3
     },
     "unreviewedSourceLeaves": 894
   },
@@ -6696,17 +6696,17 @@
         },
         {
           "sourcePath": "WeaponParam.ShotFailedIntervalFrm",
-          "status": "used",
-          "runtimeUse": "Failed hook attempt sets the next-hook time 20F later.",
-          "difference": "Exact interval is consumed.",
-          "confidence": "high",
+          "status": "interpretation",
+          "runtimeUse": "Failed hook attempt sets the next-hook time 45F later (all-specials.mjs, from the Wiki's 45F miss wait), not the extracted 20F.",
+          "difference": "Corrected 2026-10-20 (#1607): this record previously claimed the exact 20F interval was consumed, but the code uses 45F. Whether 45F is 20F plus a separate wait or a different quantity is unresolved; needs a retail frame measurement.",
+          "confidence": "low",
           "evidenceUrls": [
             "https://splatoonwiki.org/wiki/Zipcaster"
           ],
           "sourcePresent": true,
           "sourceValue": 20,
-          "sourceUseState": "implemented_source_value",
-          "engineMappingState": "source_mapping_consumed"
+          "sourceUseState": "source_present_runtime_interpretation_unresolved",
+          "engineMappingState": "retail_not_verified"
         },
         {
           "sourcePath": "BulletParam.CollisionRadiusForPlayer",
