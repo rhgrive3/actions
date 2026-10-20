@@ -45,7 +45,22 @@ try {
       const roots = [g.hud.el,g.hud.overLayer];
       const hudAnimations=()=>document.getAnimations().filter(a=>roots.some(root=>root===a.effect?.target||root.contains(a.effect?.target)));
       const before = hudAnimations().map(a=>({a,time:a.currentTime}));
+      // #1659: raw default-framebuffer samples. The drawing buffer is only defined until the page is composited, so a
+      // paused frame that is never redrawn can read back black later even though the DOM menu is still interactive.
+      const sampleArena=()=>{
+        const gl=G.renderer.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,px=new Uint8Array(4),cells=[];
+        let nonblack=0;
+        for(let iy=0;iy<8;iy++)for(let ix=0;ix<8;ix++){
+          gl.readPixels(Math.floor((ix+.5)*w/8),Math.floor((iy+.5)*h/8),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
+          cells.push(px[0],px[1],px[2]);if(px[0]+px[1]+px[2]>0)nonblack++;
+        }
+        return {nonblack,total:64,cells};
+      };
       g.pause();g._frame(1/60);
+      const capturedFrame=sampleArena();
+      const retainedApi=typeof g.R.presentPausedFrame==='function';
+      const presents={calls:0};
+      if(retainedApi){const present=g.R.presentPausedFrame;g.R.presentPausedFrame=function(...args){presents.calls++;return present.apply(this,args);};}
       const counts={world:0,hud:0,minimap:0,tank:0};
       const restore=[];
       for (const [owner,key,name] of [[g.R,'render','world'],[g,'_updateHud','hud'],[g.minimap,'update','minimap'],[g.hud,'_drawTank','tank']]) {
@@ -64,6 +79,17 @@ try {
         animations:animations.map(a=>({name:a.animationName,playState:a.playState})),
         preservedEntryPhases,
         unchangedAnimationTimes:phase.every(({a,time})=>a.currentTime===time),glError:G.renderer.getContext().getError()};
+      // Two animation frames let the browser composite (and clear) the drawing buffer; a paused frame must then
+      // restore it from the retained snapshot within the same task, with no world/composer render.
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      const worldBefore=counts.world;
+      g._frame(1/60);
+      const presentedFrame=sampleArena();
+      pause.retained={api:retainedApi,presentCalls:presents.calls,worldRendersForProbe:counts.world-worldBefore,
+        snapshot:!!g.R._pauseSnapshot,capturedNonblack:capturedFrame.nonblack,presentedNonblack:presentedFrame.nonblack,
+        total:presentedFrame.total,identicalToCapture:JSON.stringify(capturedFrame.cells)===JSON.stringify(presentedFrame.cells),
+        glError:G.renderer.getContext().getError()};
+      if(retainedApi)delete g.R.presentPausedFrame;
       for(const undo of restore)undo();
       return pause;
     });
@@ -71,6 +97,16 @@ try {
     fs.writeFileSync(path.join(output,spec.name+'-measurement.json'),JSON.stringify(row,null,2)+'\n');
     assert.equal(row.stateUnchanged,true);assert.equal(row.paused,true);assert.equal(row.menu,'pause');assert.equal(row.glError,0);
     assert.equal(row.counts.world,0,'existing offline world cache stays idle');
+    assert.equal(row.retained.glError,0);
+    assert.ok(row.retained.capturedNonblack>=32,'the paused backdrop is a real arena frame, not a cleared buffer');
+    if(!baseline){
+      // 120 unchanged paused frames: one lightweight presentation each, zero world/composer renders, still the same image.
+      assert.equal(row.retained.api,true);assert.equal(row.retained.snapshot,true);
+      assert.equal(row.retained.presentCalls,121,'one retained-frame presentation per paused frame');
+      assert.equal(row.retained.worldRendersForProbe,0);
+      assert.equal(row.retained.presentedNonblack,row.retained.total,'the frozen arena is still visible after the buffer was composited');
+      assert.equal(row.retained.identicalToCapture,true,'the presented frame is the retained frame');
+    }
     assert.ok(row.animations.length>0,'HUD animation sensitivity');
     if(baseline) {
       assert.equal(row.counts.hud,120);assert.ok(row.animations.some(a=>a.playState==='running'));
@@ -81,9 +117,10 @@ try {
       assert.equal(row.preservedEntryPhases,true);assert.equal(row.unchangedAnimationTimes,true);
     }
     await page.screenshot({path:path.join(output,spec.name+'-pause.png'),timeout:120000});
-    const lifecycle=await page.evaluate(()=>{const g=__G.game;g._setSettings({bloom:!g.settings.bloom});g._frame(1/60);const paused=g.hud._worldPaused;g.resume();g._frame(1/60);return {pausedBeforeResume:paused===true,resumed:!g.match.paused&&!g.hud._worldPaused,animationsRunning:document.getAnimations().some(a=>g.hud.el.contains(a.effect?.target)&&a.playState==='running')};});
+    const lifecycle=await page.evaluate(()=>{const g=__G.game;g._setSettings({bloom:!g.settings.bloom});g._frame(1/60);const paused=g.hud._worldPaused;g.resume();g._frame(1/60);return {pausedBeforeResume:paused===true,snapshotReleasedOnResume:!g.R._pauseSnapshot&&!g.R._pauseQuad,resumed:!g.match.paused&&!g.hud._worldPaused,animationsRunning:document.getAnimations().some(a=>g.hud.el.contains(a.effect?.target)&&a.playState==='running')};});
     assert.equal(lifecycle.resumed,true);assert.equal(lifecycle.animationsRunning,true);
-    if(!baseline)assert.equal(lifecycle.pausedBeforeResume,true);
+    if(!baseline)assert.equal(lifecycle.pausedBeforeResume,true)
+    if(!baseline)assert.equal(lifecycle.snapshotReleasedOnResume,true,'the retained frame is released on resume (no leaked texture)');
     assert.deepEqual(errors,[]);
     result.runs.push({...spec,...row,lifecycle,errors});
     fs.writeFileSync(path.join(output,'pause-gpu.json'),JSON.stringify(result,null,2)+'\n');

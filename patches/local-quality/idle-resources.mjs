@@ -72,7 +72,8 @@ export function pausedWorldFrame(game, G, viewport = globalThis) {
     for (const event of ['webglcontextlost', 'webglcontextrestored']) previous?.canvas?.removeEventListener?.(event, previous.invalidate);
     game._pausedWorldCanvas = null;
     if (canvas?.addEventListener) {
-      const invalidate = () => { game._pausedWorld = null; };
+      // The GPU snapshot dies with the context: release it so a restore redraws the frozen scene (#1659).
+      const invalidate = () => { game._pausedWorld = null; game.R?.releasePausedFrame?.(); };
       for (const event of ['webglcontextlost', 'webglcontextrestored']) canvas.addEventListener(event, invalidate);
       game._pausedWorldCanvas = { canvas, invalidate };
     }

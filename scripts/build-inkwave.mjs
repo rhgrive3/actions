@@ -406,6 +406,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/first-touch-adapter.mjs',
   'patches/local-quality/gyro-permission.mjs',
   'patches/local-quality/idle-resources.mjs',
+  'patches/local-quality/paused-frame-snapshot.mjs', // #1659 retained pause frame: static import and precache, no extra eager hint.
   'patches/local-quality/mobile-platform.mjs',
   'patches/local-quality/music-idle.mjs',
   'patches/local-quality/platform-audio.mjs',

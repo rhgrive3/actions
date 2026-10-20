@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - "patches/local-quality/idle-adapter.mjs"
+      - "patches/local-quality/idle-resources.mjs"
+      - "patches/local-quality/paused-frame-snapshot.mjs"
+      - "patches/local-quality/tests/pause-frame-snapshot.test.mjs"
       - "patches/local-quality/tests/pause-gpu.test.mjs"
       - "patches/reliability/tests/hud-fixture.mjs"
       - "scripts/check-inkwave-pause-gpu.mjs"
@@ -21,7 +24,7 @@ jobs:
       - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.51.1
       - run: npx playwright install --with-deps chromium
       - name: Verify pause ownership and composition
-        run: node --experimental-vm-modules --test patches/local-quality/tests/pause-gpu.test.mjs patches/local-quality/tests/idle-resources.test.mjs patches/local-quality/tests/idle-attract-budget.test.mjs
+        run: node --experimental-vm-modules --test patches/local-quality/tests/pause-gpu.test.mjs patches/local-quality/tests/pause-frame-snapshot.test.mjs patches/local-quality/tests/idle-resources.test.mjs patches/local-quality/tests/idle-attract-budget.test.mjs
       - name: Build candidate
         run: node scripts/build-inkwave.mjs inkwave-public _site
       - uses: actions/checkout@v4
