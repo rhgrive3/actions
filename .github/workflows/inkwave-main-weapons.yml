@@ -386,9 +386,14 @@ jobs:
             // oversized model's ink placement.
             const recipe = r => ({...r, contactSeeds:r.contactSeeds.map(({returnedClaimedArea, ...seed}) => seed)});
             assert.deepEqual(recipe(sides[0].measurement.recipeRandom), recipe(other.measurement.recipeRandom), 'Global/contact RNG stream differs');
+            const offset = other.measurement.contactStamps[0].at.map((v, axis) => v - sides[0].measurement.contactStamps[0].at[axis]);
             for (const [i, stamp] of other.measurement.contactStamps.entries()) {
               const before = sides[0].measurement.contactStamps[i];
               for (const key of ['r', 'amount', 'seed', 'face']) assert.deepEqual(before[key], stamp[key], `Contact recipe differs: ${i}/${key}`);
+              for (let axis = 0; axis < 3; axis++) {
+                assert.ok(Math.abs(before.heading[axis] - stamp.heading[axis]) < 1e-10, 'Contact orientation preserved');
+                assert.ok(Math.abs(stamp.at[axis] - before.at[axis] - offset[axis]) < 1e-6, 'Same stroke path after physical model translation');
+              }
             }
             assert.equal(sides[0].measurement.frozenState.yaw, other.measurement.frozenState.yaw, 'Actor yaw differs');
           }

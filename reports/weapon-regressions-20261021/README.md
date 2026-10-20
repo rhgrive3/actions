@@ -33,3 +33,5 @@ Local verification after incorporating #1715:
 CI and browser artifacts on the pull request provide the final source-specific acceptance results; local results above identify the source they actually exercised.
 
 The follow-up updates the remaining `weapon-paint-inertia` expectations from the old width-only 0.2 multiplier (7/7 tests pass), and refreshes only the composed installer identity in menu-focus QA for the missing legacy Scope fields. Native menu/focus pins and all their interaction assertions stay in force.
+
+The instrumented 180-tick old/new captures both passed all 90 steady contact checks (maximum horizontal drum-to-ink-leading-edge error 3.6e-15). Source widths/depths, seeds, face IDs and Actor movement are unchanged; the smaller normal Roller shifts the whole physical contact path by approximately (-0.02309, 0, -0.38441) world units. Cross-build QA therefore checks the same stroke path after this measured constant model translation (1e-6), and the same heading (1e-10), while BOTH builds retain exact independent A/A GPU/RNG controls. It does not assert that moving a physical drum preserves its old absolute ink placement.
