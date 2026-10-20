@@ -32,9 +32,16 @@ concurrency:
   group: object-native-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  compare-objects:
+  prepare:
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    outputs:
+      build-ready: ${{ steps.package.outputs.ready }}
+      artifact-id: ${{ steps.build-upload.outputs.artifact-id }}
+      tar-sha: ${{ steps.package.outputs.tar-sha }}
+      content: ${{ steps.package.outputs.content }}
+      input: ${{ steps.package.outputs.input }}
+      revision: ${{ steps.package.outputs.revision }}
     env:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
@@ -52,7 +59,7 @@ jobs:
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
       - name: Verify comparison, artifact and production-source contracts
-        run: node --experimental-vm-modules --test tools/object-presentation-qa/artifact-budget.test.mjs tools/object-presentation-qa/frame-contract.test.mjs tools/object-presentation-qa/identity.test.mjs tools/object-presentation-qa/source-commit.test.mjs tools/object-presentation-qa/harness-contract.test.mjs tools/object-presentation-qa/runtime-overlay.test.mjs
+        run: node --experimental-vm-modules --test tools/object-presentation-qa/artifact-budget.test.mjs tools/object-presentation-qa/frame-contract.test.mjs tools/object-presentation-qa/identity.test.mjs tools/object-presentation-qa/source-commit.test.mjs tools/object-presentation-qa/aggregate.test.mjs tools/object-presentation-qa/parallel-workflow.test.mjs tools/object-presentation-qa/harness-contract.test.mjs tools/object-presentation-qa/runtime-overlay.test.mjs
       - name: Verify Rainmaker presentation and hands
         run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-motion.test.mjs patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs tools/rainmaker-production-qa/grip-metrics.test.mjs
       - name: Verify spawner geometry and unchanged lifecycle
@@ -89,32 +96,144 @@ jobs:
           mkdir -p .qa-evidence/rainmaker
           node --experimental-vm-modules --test patches/splatoon3/tests/rainmaker-model-actor.test.mjs 2>&1 | tee .qa-evidence/rainmaker/emitted-aim-native.log
           INKWAVE_RAINMAKER_SOURCE=1 node --experimental-vm-modules --test patches/splatoon3/tests/rainmaker-model-actor.test.mjs 2>&1 | tee .qa-evidence/rainmaker/emitted-aim-source.log
-      - name: Capture spawner native before and after
+      - name: Package the one immutable build and source QA diagnostics
+        id: package
         if: always() && steps.production-build.outcome == 'success'
-        timeout-minutes: 8
-        run: node tools/object-presentation-qa/run.mjs --site _site --suite spawner --out .qa-evidence/spawner
-      # 62cd: 88 PNGs in 435s (3.86s ordinary interval); 128 plus actor checks
-      # projects to about 615s. The prior failure was a grip assertion, not timeout.
-      - name: Capture Rainmaker native before and after
-        if: always() && steps.production-build.outcome == 'success'
-        timeout-minutes: 15
-        run: node tools/object-presentation-qa/run.mjs --site _site --suite rainmaker --out .qa-evidence/rainmaker
-      - name: Capture Clam Blitz native before and after
-        if: always() && steps.production-build.outcome == 'success'
-        timeout-minutes: 10
-        run: node tools/object-presentation-qa/run.mjs --site _site --suite clam --out .qa-evidence/clam
-      # Same immutable production build, a separate 8a903662 handoff baseline,
-      # and nested receipts under the existing Rainmaker artifact budget.
-      - name: Capture Rainmaker full-jump and descent comparison
-        if: always() && steps.production-build.outcome == 'success'
-        timeout-minutes: 5
-        run: node tools/object-presentation-qa/run.mjs --site _site --suite rainmaker-air --out .qa-evidence/rainmaker/air
-      # Same build, separate009 landing handoff baseline;20 form PNGs do not
-      # alter the existing128 Rainmaker or20 air/landing denominators.
-      - name: Capture Rainmaker interrupted-form comparison
-        if: always() && steps.production-build.outcome == 'success'
-        timeout-minutes: 5
-        run: node tools/object-presentation-qa/run.mjs --site _site --suite rainmaker-form --out .qa-evidence/rainmaker/form
+        run: |
+          mkdir -p .object-build/source-qa
+          tar -cf .object-build/site.tar -C _site .
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';import crypto from 'node:crypto';
+          const m=JSON.parse(fs.readFileSync('_site/inkwave-build.json'));
+          const hash=crypto.createHash('sha256').update(fs.readFileSync('.object-build/site.tar')).digest('hex');
+          fs.writeFileSync('.object-build/identity.json',JSON.stringify({sourceSha:process.env.SOURCE_SHA,contentHash:m.contentHash,inputHash:m.inputHash,buildRevision:m.build.revision,tarSha:hash}));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,`ready=true\ntar-sha=${hash}\ncontent=${m.contentHash}\ninput=${m.inputHash}\nrevision=${m.build.revision}\n`);
+          JS
+          if test -d .qa-evidence/rainmaker; then cp -a .qa-evidence/rainmaker/. .object-build/source-qa/; fi
+      - uses: actions/upload-artifact@v4
+        id: build-upload
+        if: always() && steps.package.outputs.ready == 'true'
+        with:
+          name: object-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .object-build/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+  capture:
+    needs: prepare
+    if: always() && needs.prepare.outputs.build-ready == 'true' && needs.prepare.outputs.artifact-id != ''
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {suite: spawner, minutes: 8}
+          - {suite: rainmaker, minutes: 15}
+          - {suite: clam, minutes: 10}
+          - {suite: rainmaker-air, minutes: 5}
+          - {suite: rainmaker-form, minutes: 5}
+    timeout-minutes: 35
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact candidate
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing official capture toolchain
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.artifact-id }}
+          path: .object-build
+          merge-multiple: true
+      - name: Verify immutable build transport before extraction
+        env:
+          EXPECTED_TAR: ${{ needs.prepare.outputs.tar-sha }}
+          EXPECTED_CONTENT: ${{ needs.prepare.outputs.content }}
+          EXPECTED_INPUT: ${{ needs.prepare.outputs.input }}
+          EXPECTED_REVISION: ${{ needs.prepare.outputs.revision }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';import crypto from 'node:crypto';import assert from 'node:assert/strict';
+          const x=JSON.parse(fs.readFileSync('.object-build/identity.json'));
+          assert.equal(x.sourceSha,process.env.SOURCE_SHA);
+          for(const [key,env]of [['tarSha','EXPECTED_TAR'],['contentHash','EXPECTED_CONTENT'],['inputHash','EXPECTED_INPUT'],['buildRevision','EXPECTED_REVISION']])assert.equal(x[key],process.env[env]);
+          assert.match(x.tarSha,/^[a-f0-9]{64}$/);assert.equal(crypto.createHash('sha256').update(fs.readFileSync('.object-build/site.tar')).digest('hex'),x.tarSha);
+          JS
+          mkdir _site
+          tar -xf .object-build/site.tar -C _site
+      - name: Capture unchanged suite against the common immutable build
+        timeout-minutes: ${{ matrix.minutes }}
+        run: |
+          set -o pipefail
+          mkdir -p .capture
+          node tools/object-presentation-qa/run.mjs --site _site --suite ${{ matrix.suite }} --out .capture 2>&1 | tee .capture/capture.log
+      - name: Bound capture transfer including failed receipts
+        id: budget
+        if: always()
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';import {assertArtifactBudget} from './tools/object-presentation-qa/artifact-budget.mjs';
+          if(fs.existsSync('.capture')){const x=assertArtifactBudget('.capture');if(x.files.length)fs.appendFileSync(process.env.GITHUB_OUTPUT,'eligible=true\n');}
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.budget.outputs.eligible == 'true'
+        with:
+          name: object-capture-${{ matrix.suite }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .capture/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+  compare-objects:
+    needs: [prepare, capture]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact candidate
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        if: needs.prepare.outputs.artifact-id != ''
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.artifact-id }}
+          path: .object-build
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        if: always()
+        with:
+          pattern: object-capture-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .capture-inputs
+      - name: Require all suites and preserve original grouped artifact budgets
+        id: aggregate
+        if: always()
+        env:
+          BUILD_CONTENT: ${{ needs.prepare.outputs.content }}
+          BUILD_INPUT: ${{ needs.prepare.outputs.input }}
+          BUILD_REVISION: ${{ needs.prepare.outputs.revision }}
+          PREPARE_RESULT: ${{ needs.prepare.result }}
+          CAPTURE_RESULT: ${{ needs.capture.result }}
+        run: >-
+          node tools/object-presentation-qa/aggregate.mjs
+          --inputs .capture-inputs --out .qa-evidence --diagnostics .object-build/source-qa
+          --head "$SOURCE_SHA" --content "$BUILD_CONTENT" --input "$BUILD_INPUT" --revision "$BUILD_REVISION"
+          --run "${{ github.run_id }}" --attempt "${{ github.run_attempt }}"
+          --prepare-result "$PREPARE_RESULT" --capture-result "$CAPTURE_RESULT"
       - name: Check every complete artifact before any upload, including failure logs
         id: artifact-budgets
         if: always()
@@ -157,5 +276,12 @@ jobs:
           name: object-clam-${{ github.event.pull_request.head.sha || github.sha }}
           path: .qa-evidence/clam/**
           include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: object-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .qa-evidence/aggregate-result.json
           if-no-files-found: error
           retention-days: 14

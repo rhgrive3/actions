@@ -107,7 +107,7 @@ test('landing comparison isolates8a903662 handoff while the original three basel
   assert.match(runner,/beforeBase,beforeDescription:/);
   const workflow=fs.readFileSync(path.join(root,'.github/workflows/inkwave-object-presentation-qa.yml'),'utf8');
   assert.equal((workflow.match(/node scripts\/build-inkwave.mjs inkwave-public _site/g)||[]).length,1,'single production build');
-  assert.match(workflow,/--suite rainmaker-air --out \.qa-evidence\/rainmaker\/air/);
+  assert(workflow.includes('suite: rainmaker-air'), 'dedicated matrix suite retained');assert(workflow.includes('--suite ${{ matrix.suite }} --out .capture'), 'isolated capture retains the real suite argument');assert(fs.readFileSync(path.join(root,'tools/object-presentation-qa/aggregate.mjs'),'utf8').includes("s==='rainmaker-air'?'rainmaker/air'"), 'aggregate preserves original nested evidence path');
   assert.equal((workflow.match(/patches\/splatoon3\/tests\/ranked-rainmaker-air-full-jump.test.mjs/g)||[]).length,2,'same full-jump driver runs in source and exact emitted lanes');
   assert(workflow.includes("'tools/rainmaker-air-production-qa/**'"),'dedicated harness changes trigger native QA');
 });
@@ -116,5 +116,5 @@ test('form comparison adds only009 handoff baseline and one bounded same-build c
  assert.equal(suiteBase('rainmaker-form'),'00968835349cb8afac3803c412a48475e40bcae8');
  assert.deepEqual(SUITES['rainmaker-form'].before,['patches/splatoon3/runtime/weapon-handoff-motion.mjs']);assert.deepEqual(SUITES['rainmaker-form'].added,[]);
  const adapter=fs.readFileSync(path.join(root,'patches/local-quality/squid-form-ease-adapter.mjs'),'utf8');assert.match(adapter,/if\(this.character.s3RainmakerFormCapture\)this.character._captureRainmakerForm\?\.\(this\);/);
- const workflow=fs.readFileSync(path.join(root,'.github/workflows/inkwave-object-presentation-qa.yml'),'utf8');assert.equal((workflow.match(/node scripts\/build-inkwave.mjs inkwave-public _site/g)||[]).length,1);assert.match(workflow,/--suite rainmaker-form --out \.qa-evidence\/rainmaker\/form/);assert.equal((workflow.match(/patches\/splatoon3\/tests\/ranked-rainmaker-form-owner.test.mjs/g)||[]).length,3,'trigger and source/emitted tests');
+ const workflow=fs.readFileSync(path.join(root,'.github/workflows/inkwave-object-presentation-qa.yml'),'utf8');assert.equal((workflow.match(/node scripts\/build-inkwave.mjs inkwave-public _site/g)||[]).length,1);assert(workflow.includes('suite: rainmaker-form'), 'dedicated matrix suite retained');assert(workflow.includes('--suite ${{ matrix.suite }} --out .capture'), 'isolated capture retains the real suite argument');assert(fs.readFileSync(path.join(root,'tools/object-presentation-qa/aggregate.mjs'),'utf8').includes("s==='rainmaker-form'?'rainmaker/form'"), 'aggregate preserves original nested evidence path');assert.equal((workflow.match(/patches\/splatoon3\/tests\/ranked-rainmaker-form-owner.test.mjs/g)||[]).length,3,'trigger and source/emitted tests');
 });

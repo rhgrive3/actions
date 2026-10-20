@@ -50,7 +50,8 @@ test('actual final-upload script isolates small, oversized and absent suite dire
   const oversized = path.join(root, '.qa-evidence/rainmaker/failed-cpu.log');
   fs.writeFileSync(oversized, ''); fs.truncateSync(oversized, ARTIFACT_LIMIT);
   const workflow = fs.readFileSync(new URL('../../.github/workflows/inkwave-object-presentation-qa.yml', import.meta.url), 'utf8');
-  const match = /node --input-type=module <<'JS'\n([\s\S]*?)\n          JS/.exec(workflow);
+  const inventoryStep = workflow.slice(workflow.indexOf('        id: artifact-budgets'));
+  const match = /node --input-type=module <<'JS'\n([\s\S]*?)\n          JS/.exec(inventoryStep);
   assert(match, 'final-inventory command exists');
   const script = match[1].split('\n').map(line => line.slice(10)).join('\n');
   const output = path.join(root, 'outputs.txt');
