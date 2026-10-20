@@ -247,6 +247,9 @@ function take(nm,from,d,type,t,sprinklerScope=null) {
   const shots=s.proofs.get(from)||[];
   for(const p of shots) {
     if(p.actor!==d.a || p.uses>=p.maxUses || !rayNear(p,target,type==='boss'?6:5.5))continue;
+    // An enrolled native birth authorizes terrain damage only via its contact receipts.
+    // Keep unsupported legacy births separate, including after all native contacts retire.
+    if(type==='pvp'&&d.w==='torpedo-splash'&&p.nativeTorpedoContact)continue;
     if(p.kind==='main'&& ![weaponId(actor),actor.weapon.id,actor.weapon.kind,'shot','slosh','blast','drop','roller','crab'].includes(d.w))continue;
     if(p.kind==='sub' && d.w!==p.cause && d.w!=='crab' &&
       !(d.w==='bomb'&&EXPLOSIVE_SUBS.has(p.cause)) &&
@@ -323,7 +326,7 @@ export function installCombatProvenance(NetMatch,context={}) {
   const commitSubBirth=function(receipt,event,bomb) {
     const t=now();
     const accepted=record(this,receipt.from,{e:[event],ts:receipt.packetTime,a:[[receipt.nid,...receipt.pose]]},t,receipt);
-    if(accepted&&receipt.subId==='torpedo')registerLimitedTorpedo(this,bomb,receipt,event,context.G,notifySprinkler);
+    if(accepted&&receipt.subId==='torpedo'&&registerLimitedTorpedo(this,bomb,receipt,event,context.G,notifySprinkler))accepted.nativeTorpedoContact=true;
     if(accepted&&receipt.sourceKind==='native-sprinkler')registerReceiverSprinkler(this,bomb,receipt,context.G,notifySprinkler,PENDING_AGE,MAX_PENDING);
     // Hits may precede delayed FIFO playback; retry only when birth commits.
     flush(this,receipt.from,t,oldHit,oldBoss,context.hitReceiptAllowed);

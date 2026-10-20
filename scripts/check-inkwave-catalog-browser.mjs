@@ -553,9 +553,9 @@ try {
         for(const ap of [0,10,57]){
           G.projectiles.clear();const o=makeActor('shooter'),v=makeActor('shooter');o.team=0;v.team=1;v.invuln=0;o.pos.set(0,0,-4);v.pos.set(0,0,2);o.aimDir.set(0,0,1);o.weapon={...o.weapon,sub:'burst'};equipCatalogue(v,ap);G.actors=[o,v];const hp=v.hp,hits=[],damage=v.damage;v.damage=function(n,a,w){hits.push([n,w]);return damage.call(this,n,a,w);};const p=G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);for(let i=0;i<10;i++){G.time+=1/60;G.projectiles.update(1/60);}const rate=gearCurve(ap,1,.75,.6),expected=[25,35].reduce((sum,n)=>sum+Math.floor(n*rate*10+1e-9)/10,0);check(hits.length===2&&hits[0][0]===25&&hits[1][0]===35&&Math.abs(hp-v.hp-expected)<1e-8,'Burst preserves the direct and one-frame blast phases');catalogueSubChecks.push({source:'burst',ap,native:true,damage:hp-v.hp});
         }
-        for(const [w,n]of [['burst',35],['fizzy',50],['torpedo',60],['torpedo-splash',12],['inkMine',45]]){
+        for(const [w,n]of [['burst',35],['fizzy',50],['torpedo',60],['inkMine',45]]){
           G.projectiles.clear();
-          const sub=w==='torpedo-splash'?'torpedo':w;
+          const sub=w;
           const makePair=()=>{
             const o=makeActor('shooter',1),v=makeActor('shooter',2);
             o.owner='catalogue-owner';v.owner='catalogue-victim';o.team=0;v.team=1;
@@ -609,10 +609,10 @@ try {
         }
         G.projectiles.clear();Object.assign(G,saved);
       }
-      // One sender subPower AP57 case, distinct from victim subResistance AP57 above.
+      // Independently cover attacker subPower57 and victim subResistance57 with native contacts.
       // Generated hit packets come only from native terrain trajectories, never sendHit stubs.
       const torpedoGearContactChecks=[];
-      {
+      for(const [attackerAP,victimAP] of [[57,0],[0,57]]){
         const {applyAcceptedGear}=await import('/patches/splatoon3/runtime/gear-loadout-network.mjs');
         const {receiverTorpedoObservationState}=await import('/patches/splatoon3/runtime/torpedo-receiver-trajectory.mjs');
         const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics,paint:G.paint,projectiles:G.projectiles,scene:G.scene};
@@ -620,28 +620,30 @@ try {
         const activate=w=>Object.assign(G,w.context);
         const world=myId=>{
           G.scene=new THREE.Scene();G.time=1;G.netm=null;
-          G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};
+          // Terrain splashes require the native Physics raycast to hit a real floor.
+          const V=THREE.Vector3,floor={id:0,solid:true,grate:false,center:new V(0,-1,47.5),half:new V(40,1,52.5),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1],aabbMin:new V(-40,-2,-5),aabbMax:new V(40,0,100)};
+          G.level={blocks:[floor],faces:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;}};
           G.physics=new api.Physics(G.level);G.paint={sample:()=>0,splat:()=>0};G.projectiles=new Projectiles(G.scene);
           const owner=makeActor('shooter',1),victim=makeActor('shooter',2);
           Object.assign(owner,{owner:'torpedo-owner',team:0,netLife:0});Object.assign(victim,{owner:'torpedo-victim',team:1,netLife:0,invuln:0});
           owner.pos.set(0,0,26);victim.pos.set(0,0,38);owner.aimDir.set(0,0,1);owner.weapon={...owner.weapon,sub:'torpedo'};owner.weaponRunner.reset();
-          owner.s3.loadout=emptyLoadout();victim.s3.loadout=emptyLoadout();owner.s3RefreshGear();victim.s3RefreshGear();
+          owner.s3.loadout=emptyLoadout();victim.s3.loadout=emptyLoadout();if(victimAP===57)for(const piece of victim.s3.loadout){piece.main='subResistance';piece.subs.fill('subResistance');}owner.s3RefreshGear();victim.s3RefreshGear();
           const packets=[],transport={sendTo:(_to,p)=>{packets.push(JSON.parse(JSON.stringify(p)));return true;},broadcast:p=>{packets.push(JSON.parse(JSON.stringify(p)));return true;}};
           const session={myId,hostId:'torpedo-owner',isHost:myId==='torpedo-owner',tr:transport,_members:new Map([['torpedo-owner',{}],['torpedo-victim',{}]])};
           const nm=new NetMatch(session,{id:'catalogue-torpedo-ap57',map:'reef'}),match={actors:[owner,victim],state:'playing',time:180,playing:()=>true};
-          nm.bind(match);session.match=match;G.netm=nm;G.match=match;G.actors=match.actors;
+          nm.bind(match);session.match=nm;G.netm=nm;G.match=match;G.actors=match.actors;
           const w={owner,victim,nm,packets,context:{time:G.time,scene:G.scene,actors:G.actors,netm:nm,match,level:G.level,physics:G.physics,paint:G.paint,projectiles:G.projectiles}};worlds.push(w);return w;
         };
         const step=w=>{activate(w);G.time+=DT;w.context.time=G.time;G.projectiles.update(DT);};
         const land=drop=>{const g=drop.source.spec.gravity,t=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;return drop.pos.clone().addScaledVector(drop.vel,t).setY(0);};
         try{
-          const tx=world('torpedo-owner');for(const piece of tx.owner.s3.loadout){piece.main='subPower';piece.subs.fill('subPower');}tx.owner.s3RefreshGear();
-          check(tx.owner.s3.abilityPoints.subPower===57,'Torpedo sender subPower AP57');
+          const tx=world('torpedo-owner');if(attackerAP===57)for(const piece of tx.owner.s3.loadout){piece.main='subPower';piece.subs.fill('subPower');}tx.owner.s3RefreshGear();
+          check((tx.owner.s3.abilityPoints.subPower||0)===attackerAP,'Torpedo sender subPower matches fixture');
           for(let i=0;i<8;i++)tx.owner.weaponRunner.update(DT,{sub:true});tx.owner.weaponRunner.update(DT,{sub:false,subReleased:true});tx.owner.weaponRunner.update(DT,{sub:false});
-          const parent=G.projectiles._s3SubObjects.find(o=>o.subId==='torpedo');check(!!parent&&tx.owner.ink===35,'Torpedo AP57 native paid release');
-          check(tx.nm._sendTick()===true,'Torpedo AP57 first equipment and birth tick');
+          const parent=G.projectiles._s3SubObjects.find(o=>o.subId==='torpedo');check(!!parent&&tx.owner.ink===35,'Torpedo native paid release');
+          check(tx.nm._sendTick()===true,'Torpedo first equipment and birth tick');
           const ticks=tx.packets.filter(p=>p.k==='t');check(ticks.length===1,'one first gear plus birth packet');const tick=ticks[0];check(!!tick.gg,'first packet carries accepted gear sidecar');
-          check(tick.e?.some(e=>e[1]==='ac'&&e[5]?.phase==='spawn'&&e[5]?.subId==='torpedo'&&e[5]?.subPowerAP===57),'actual AP57 birth metadata');
+          check(tick.e?.some(e=>e[1]==='ac'&&e[5]?.phase==='spawn'&&e[5]?.subId==='torpedo'&&e[5]?.subPowerAP===attackerAP),'actual Torpedo birth gear metadata');
           for(let i=0;i<300&&!parent.dead;i++)step(tx);check(parent.dead,'native sender parent collision');
           const drops=G.projectiles._s3TorpedoSplashes.filter(d=>d.kind==='chase');check(drops.length===8,'native sender eight terrain drops');const target=land(drops[0]);
           const main=tx.packets.find(p=>p.k==='hit'&&p.w==='torpedo');check(main?.d===60,'native sender main claim60');tx.victim.pos.copy(target);
@@ -652,10 +654,10 @@ try {
           for(let i=0;i<30;i++){
             await new Promise(resolve=>setTimeout(resolve,17));activate(rx);G.time+=DT;rx.context.time=G.time;rx.nm.update(DT);
             if(rx.owner.net.ready)applyAcceptedGear(rx.owner,rx.owner.net.cur.adoption);
-            replica=G.projectiles._s3SubObjects.find(o=>o.subId==='torpedo');adoptionFrames.push({frame:i+1,attackerSubPowerAP:rx.owner.s3.abilityPoints.subPower||0,born:!!replica});if(replica)break;
+            replica=G.projectiles._s3SubObjects?.find(o=>o.subId==='torpedo');adoptionFrames.push({frame:i+1,attackerSubPowerAP:rx.owner.s3.abilityPoints.subPower||0,born:!!replica});if(replica)break;
           }
-          check(!!replica&&rx.owner.s3.abilityPoints.subPower===57,'receiver adopts AP57 before native birth');
-          check((rx.victim.s3.abilityPoints.subResistance||0)===0,'receiver victim resistance AP0');
+          check(!!replica&&(rx.owner.s3.abilityPoints.subPower||0)===attackerAP,'receiver adopts attacker gear before native birth');
+          check((rx.victim.s3.abilityPoints.subResistance||0)===victimAP,'receiver victim resistance matches fixture');
           check(receiverTorpedoObservationState(api,G.projectiles,replica)==='active','accepted receiver native trajectory enrolled');
           // A correct raw claim before any terrain contact cannot itself mint damage.
           rx.nm.onMessage('foreign',splash);rx.nm.onMessage('torpedo-owner',{...splash,d:12.1});
@@ -665,20 +667,22 @@ try {
           rx.nm.onMessage('torpedo-owner',splash);check(rx.victim.hp===100,'early raw12 cannot replace receiver terrain contact');
           for(let i=0;i<300&&!replica.dead;i++)step(rx);check(replica.dead,'native receiver parent collision');
           const receiverDrops=G.projectiles._s3TorpedoSplashes.filter(d=>d.kind==='chase');check(receiverDrops.length===8,'native receiver eight terrain drops');
-          check(land(receiverDrops[0]).distanceTo(target)<1e-6,'accepted AP57 receiver trajectory matches native sender landing');
-          rx.nm.onMessage('torpedo-owner',main);check(rx.victim.hp===40,'native receiver main60');
+          check(land(receiverDrops[0]).distanceTo(target)<1e-6,'accepted receiver trajectory matches native sender landing');
+          const expectedMain=victimAP===57?30:60,expectedSplash=victimAP===57?6:12,expectedHP=100-expectedMain-expectedSplash;
+          rx.nm.onMessage('torpedo-owner',main);check(rx.victim.hp===100-expectedMain,'native receiver main60');
           rx.victim.pos.copy(target);
           let deliveredAtTerrain=false;for(let i=0;i<200;i++){step(rx);if(!deliveredAtTerrain&&!G.projectiles._s3TorpedoSplashes.includes(receiverDrops[0])){rx.nm.onMessage('torpedo-owner',splash);deliveredAtTerrain=true;}}
           check(deliveredAtTerrain,'receiver native drop reaches terrain and retires');
           // The queued legitimate12 may now flush from actual native contact.
-          check(rx.victim.hp===28,'actual receiver terrain contact authorizes12 after60');
-          const ack=rx.packets.find(p=>p.k==='hit_ack'&&p.h===splash.h);check(ack?.d===12,'terrain claim ACK12');
+          check(rx.victim.hp===expectedHP,'actual receiver terrain contact authorizes12 after60');
+          const ack=rx.packets.find(p=>p.k==='hit_ack'&&p.h===splash.h);check(ack?.d===expectedSplash,'terrain claim ACK12');
           const count=rx.packets.filter(p=>p.k==='hit_ack'&&p.h===splash.h).length;
           rx.nm.onMessage('foreign',splash);rx.nm.onMessage('torpedo-owner',{...splash,d:12.1});rx.nm.onMessage('torpedo-owner',splash);
-          check(rx.victim.hp===28,'foreign/overflow/duplicate terrain claims inert');
+          check(rx.victim.hp===expectedHP,'foreign/overflow/duplicate terrain claims inert');
           check(rx.packets.filter(p=>p.k==='hit_ack'&&p.h===splash.h).length===count,'duplicate terrain claim does not add ACK');
-          rx.nm.onMessage('torpedo-owner',{...splash,h:splash.h+1,seq:(splash.seq||0)+1});check(rx.victim.hp===28,'consumed terrain contact cannot authorize a fresh hit ID');
-          torpedoGearContactChecks.push({attackerSubPowerAP:57,victimSubResistanceAP:0,firstPacket:true,adoptionFrames,mainRaw:60,terrainRaw:12,hp:rx.victim.hp,ackDamage:ack.d,nativeTerrain:true,duplicateInert:true});
+          rx.nm.onMessage('torpedo-owner',{...splash,h:splash.h+1,seq:(splash.seq||0)+1});check(rx.victim.hp===expectedHP,'consumed terrain contact cannot authorize a fresh hit ID');
+          if(victimAP===57)catalogueSubChecks.push({source:'torpedo-splash',ap:victimAP,wire:true,nativeContact:true,damage:ack.d});
+          torpedoGearContactChecks.push({attackerSubPowerAP:attackerAP,victimSubResistanceAP:victimAP,firstPacket:true,adoptionFrames,mainRaw:60,terrainRaw:12,hp:rx.victim.hp,ackDamage:ack.d,nativeTerrain:true,duplicateInert:true});
         }finally{for(const w of worlds){activate(w);w.nm.dispose();w.context.projectiles.clear();}Object.assign(G,saved);}
       }
       const directSubChecks=[];
