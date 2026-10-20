@@ -3,10 +3,22 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { BASE, files, eligible, prepare, snapshot, verifyTrees } from '../lib/inkwave-reference-audio.mjs';
+import { BASE, REVIEWED_BASES, files, eligible, prepare, snapshot, verifyTrees } from '../lib/inkwave-reference-audio.mjs';
 const identity={side:'before',pr:1695,baseRef:'main',baseSha:BASE};
 function rig(t) {const root=mkdtempSync(path.join(os.tmpdir(),'audio-reference-unit-'));t.after(()=>rmSync(root,{recursive:true,force:true}));const original=path.join(root,'original'),candidate=path.join(root,'candidate'),derived=path.join(root,'derived');for(const [r,key] of [[original,'before'],[candidate,'after']]){for(const f of files){mkdirSync(path.dirname(path.join(r,f.path)),{recursive:true});writeFileSync(path.join(r,f.path),f[key]);}writeFileSync(path.join(r,'untouched.txt'),'immutable physics stand-in\n');}return {original,candidate,derived,identity,actualBase:BASE};}
-test('only exact PR1695 before main/ada is eligible',()=>{assert.equal(eligible(identity),true);for(const [key,values] of Object.entries({side:['after',''],pr:[1694,1651,0],baseRef:['dev',''],baseSha:['old','']}))for(const value of values)assert.equal(eligible({...identity,[key]:value}),false);});
+test('only PR1695 before the two pinned main checkouts is eligible',()=>{assert.equal(eligible(identity),true);assert.equal(eligible({...identity,baseSha:REVIEWED_BASES[1]}),true);for(const [key,values] of Object.entries({side:['after',''],pr:[1694,1651,0],baseRef:['dev',''],baseSha:['old','']}))for(const value of values)assert.equal(eligible({...identity,[key]:value}),false);});
+test('successor main with pinned audio inputs stages two isolated source files',t=>{
+ const r=rig(t),identity={...r.identity,baseSha:REVIEWED_BASES[1]};
+ const out=prepare({...r,identity,actualBase:REVIEWED_BASES[1]});
+ assert.equal(out.originalCommit,REVIEWED_BASES[1]);
+ assert.equal(out.referenceKind,'audio-stabilized-reviewed-main');
+ assert.equal(out.writtenPaths.length,2);verifyTrees(r.original,r.derived);
+});
+test('successor claimed without matching checkout is rejected before writes',t=>{
+ const r=rig(t),identity={...r.identity,baseSha:REVIEWED_BASES[1]};
+ assert.throws(()=>prepare({...r,identity,actualBase:BASE}),/ineligible/);
+ assert.equal(existsSync(r.derived),false);
+});
 test('derived copy changes exactly two files and preserves pristine',t=>{const r=rig(t), before=snapshot(r.original), receipt=prepare(r);assert.deepEqual(snapshot(r.original),before);assert.equal(receipt.publicMainEquivalent,false);assert.equal(receipt.sourceFiles,3);assert.equal(receipt.unchangedSourceFiles,1);assert.equal(receipt.writtenPaths.length,2);verifyTrees(r.original,r.derived);});
 for(const target of ['original','candidate'])for(const which of [0,1])test(`wrong ${target} pin ${which} writes nothing`,t=>{const r=rig(t);writeFileSync(path.join(r[target],files[which].path),'wrong');const before=snapshot(r.original);assert.throws(()=>prepare(r),/pin mismatch/);assert.equal(existsSync(r.derived),false);assert.equal(existsSync(r.derived+'.staging'),false);assert.deepEqual(snapshot(r.original),before);});
 test('mixed original with one already patched file is rejected before writes',t=>{const r=rig(t);writeFileSync(path.join(r.original,files[1].path),files[1].after);assert.throws(()=>prepare(r),/pin mismatch/);assert.equal(existsSync(r.derived+'.staging'),false);});
