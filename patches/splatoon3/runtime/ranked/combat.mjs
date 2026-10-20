@@ -1,4 +1,4 @@
-import { actorId } from './network.mjs';
+import { actorId, objectivePosition } from './network.mjs';
 import { toxicMistScale } from '../toxic-mist.mjs';
 import { rainmakerWallBlast, rainmakerWallsBlockBlast, rainmakerDomeBlast } from './rainmaker-defense.mjs';
 import { withObjectDamageCause } from '../sub-resistance.mjs';
@@ -117,6 +117,9 @@ export function createRankedEffects(api, match) {
   const { THREE, G, Hit } = api;
   const shots = [], geometries = [], materials = [];
   const hit = new Hit();
+  // #1648: host-simulated Rainmaker blasts/shots hit a remote actor where its
+  // owner pose was admitted, not where a forged snapshot is being played back.
+  const bodyOf = a => { const p = objectivePosition(G.netm, a); return (p ? new THREE.Vector3(p[0], p[1], p[2]) : a.pos.clone()).add(new THREE.Vector3(0, .7, 0)); };
   function damage(victim, attacker, amount, cause = 'Gachihoko_Bullet') {
     if (!victim.alive || victim.team === attacker?.team) return;
     const nm = G.netm;
@@ -135,7 +138,7 @@ export function createRankedEffects(api, match) {
     const blastFrom = shot?.from || p.clone().add(new THREE.Vector3(0, .05, 0));
     const domeSheltered = new Set();
     if (shot) for (const a of match.actors) if (a.alive && a.team !== team) {
-      const body = a.pos.clone().add(new THREE.Vector3(0, .7, 0));
+      const body = bodyOf(a);
       if (body.distanceTo(p) <= radius && (impactDomeShelters(shot.dome, blastFrom, body)
           || G.projectiles?.kitBarrierShelter?.({ owner: attacker, team, ghost: true }, blastFrom, body))) domeSheltered.add(a);
     }
@@ -144,7 +147,7 @@ export function createRankedEffects(api, match) {
     if (visualOnly) return;
     G.paint?.splat?.(p, paintRadius, team, { seed: match.ranked.revision % 65536, claimOwner: attacker, ...(noSpecial ? { claimMode: 'no-special' } : {}) });
     for (const a of match.actors) if (amount > 0 && a.alive && a.team !== team) {
-      const body = a.pos.clone().add(new THREE.Vector3(0, .7, 0));
+      const body = bodyOf(a);
       const distance = body.distanceTo(p);
       if (distance <= radius && G.physics.los(blastFrom, body) && !rainmakerWallsBlockBlast(blastFrom, body, walls) && !domeSheltered.has(a))
         damage(a, attacker, distance <= nearRadius ? amount : outerDamage, shot ? 'Gachihoko_BombCore' : 'GachihokoTimeUpBurst');
@@ -227,7 +230,7 @@ export function createRankedEffects(api, match) {
         if (blocked) nearest = blocked.distance / Math.max(1e-9, s.previous.distanceTo(s.pos));
         let target = null;
         for (const a of match.actors) if (a.alive && a.team !== s.team) {
-          const center = a.pos.toArray(); center[1] += .7;
+          const center = (objectivePosition(G.netm, a) || a.pos.toArray()).slice(); center[1] += .7;
           const t = sphereEntry(s.previous.toArray(), s.pos.toArray(), center, .85);
           if (t !== null && t < nearest) { nearest = t; target = a; blocked = null; }
         }

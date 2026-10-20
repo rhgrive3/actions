@@ -1,4 +1,5 @@
 import { validRankedSnapshot } from './engine.mjs';
+import { createPoseState, admitRankedPose } from './pose-admission.mjs';
 import { noteRankedBarrierShots, queueRankedBarrierHit, resetRankedBarrierAdmission } from './barrier-admission.mjs';
 import { withObjectDamageCause } from '../sub-resistance.mjs';
 import { specialGaugeLocked } from '../tacticooler-gauge.mjs';
@@ -7,6 +8,22 @@ import { recordTowerHostSnapshot, clearTowerPaintSupport } from '../../../networ
 const damageCauses = new Set(['Gachihoko_Bullet', 'Gachihoko_BombCore', 'GachihokoTimeUpBurst']);
 
 export const actorId = a => String(a.nid ?? `${a.team}:${a.slot}`);
+const poseNow = () => performance.now() / 1000;
+const point = v => v && Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z) ? [v.x, v.y, v.z] : null;
+// #1648: the pose the host's objective rules and Rainmaker blasts may use for a
+// remote (owner-simulated) actor, or null before any snapshot was admitted.
+export function objectivePosition(nm, a) {
+  const s = a?.remote && nm?.isHost ? nm.rankedPose?.get(actorId(a)) : null;
+  return s?.last ? s.last.pos : null;
+}
+function poseContext(nm, actor, G) {
+  const m = nm.match, level = G.level;
+  const spawns = [level?.spawnPads?.[actor.team], level?.homeSuperJumpPoints?.[actor.team]].map(point).filter(Boolean);
+  const anchors = [];
+  for (const o of m.actors) if (o !== actor && o.team === actor.team && o.alive !== false)
+    { const p = objectivePosition(nm, o) || point(o.pos); if (p) anchors.push(p); }
+  return { world: m.rankedWorld, spawns, anchors };
+}
 const finiteVector = v => Array.isArray(v) && v.length === 3 && v.every(n => Number.isFinite(n) && Math.abs(n) <= 2000);
 function current(nm) { return !nm._disposed && !nm.match?._disposed && nm.match?.ranked && nm._rankedAPI.G.netm === nm; }
 function envelope(nm, data) { return { ...data, match: nm.cfg.id, host: nm.s.hostId }; }
@@ -105,7 +122,28 @@ export function installRankedNetwork(api) {
       }
       return;
     }
+    // #1648: remember which owner rows this tick can affect, then admit each
+    // snapshot that NetMatch itself accepted (owner, life, sequence, adoption)
+    // before the objective rules may see its position.
+    let poses = null;
+    const poseTs = d.ts;
+    if (d.k === 't' && this.isHost && Array.isArray(d.a) && Number.isFinite(poseTs)) {
+      poses = [];
+      for (const row of d.a) {
+        const actor = Array.isArray(row) ? this.byNid?.get(row[0]) : null;
+        if (!actor?.remote || actor.owner !== from || !actor.net) continue;
+        const id = actorId(actor), seed = point(actor.pos);
+        this.rankedPose ||= new Map();
+        if (!this.rankedPose.has(id) && seed) this.rankedPose.set(id, createPoseState(seed, poseNow(), actor.grounded === true));
+        poses.push([actor, id, actor.net.buf?.at(-1)]);
+      }
+    }
     const result = incoming.call(this, from, d);
+    if (poses) for (const [actor, id, before] of poses) {
+      const snap = actor.net.buf?.at(-1), state = this.rankedPose?.get(id);
+      if (!state || !snap || snap === before || snap.t !== poseTs) continue;
+      admitRankedPose(state, { t: snap.t, at: poseNow(), pos: [snap.x, snap.y, snap.z], flags: snap.f, life: snap.life }, poseContext(this, actor, G));
+    }
     if (d.k === 't' && this.isHost && m.mode === 'rainmaker' && m.state === 'playing')
       noteRankedBarrierShots(this, from, d, G.time);
     if (d.k === 'res' && from === this.s.hostId && !this.isHost && m.ranked.winner !== null) m.result = { ...m.result, ...m.ranked.result() };
@@ -116,11 +154,11 @@ export function installRankedNetwork(api) {
   const leave = P.onLeave;
   P.onLeave = function (id, changed) {
     const m = this.match;
-    if (m?.ranked) for (const a of m.actors.filter(a => a.owner === id)) m.ranked.rule.removeActor(actorId(a));
+    if (m?.ranked) for (const a of m.actors.filter(a => a.owner === id)) { m.ranked.rule.removeActor(actorId(a)); this.rankedPose?.delete(actorId(a)); }
     const r = leave.call(this, id, changed);
     if (m?.ranked && changed) {
       clearTowerPaintSupport(this);
-      this.rankedInputs?.clear(); this.rankedHitSeq?.clear();
+      this.rankedInputs?.clear(); this.rankedHitSeq?.clear(); this.rankedPose?.clear();
       resetRankedBarrierAdmission(this);
       this.rankedEventSeq = this.rankedDamageSeq = 0;
       if (this.isHost) {
@@ -133,7 +171,7 @@ export function installRankedNetwork(api) {
   const dispose = P.dispose;
   P.dispose = function () {
     clearTowerPaintSupport(this);
-    this.rankedInputs?.clear(); this.rankedHitSeq?.clear();
+    this.rankedInputs?.clear(); this.rankedHitSeq?.clear(); this.rankedPose?.clear();
     resetRankedBarrierAdmission(this);
     return dispose.call(this);
   };

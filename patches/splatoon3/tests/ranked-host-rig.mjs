@@ -10,7 +10,7 @@ export const RIG_STAGE = { id: 'ranked-host-rig', zones: [{ center: [0, 0, 0], s
   clams: { spawns: [], goals: [[0, 0, 40], [0, 0, -40]] },
   rainmaker: { center: [0, 0, 0], checkpoints: [[], []], goals: [[0, 0, 40], [0, 0, -40]] } };
 
-export async function rankedRig({ mode = 'rainmaker', world = {}, guestCount = 1 } = {}) {
+export async function rankedRig({ mode = 'rainmaker', world = {}, guestCount = 1, starts = [] } = {}) {
   const clock = { ms: 100000, now() { return this.ms; } };
   const f = await fixture({ ranked: true, network: true, clock });
   f.context.document.createElement = () => ({ dataset: {} });
@@ -18,6 +18,17 @@ export async function rankedRig({ mode = 'rainmaker', world = {}, guestCount = 1
   f.context.structuredClone = structuredClone;
   f.installRanked(f);
   f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
+  // team spawners (respawn / Super Jump home point) known to the host
+  f.G.level.spawnPads = [new f.THREE.Vector3(0, 0, 35), new f.THREE.Vector3(0, 0, -35)];
+  // flat floor for the real Actor ground probe (Super Jump / landing code paths)
+  Object.assign(f.G.physics, {
+    groundProbe: () => ({ hit: true, y: 0, normal: new f.THREE.Vector3(0, 1, 0), block: -1 }),
+    collideBody(pos, _r, _lift, _h, c) {
+      c.ground = c.wall = c.ceiling = false; c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = c.wallBlock = -1;
+      if (pos.y <= 0) { pos.y = 0; c.ground = true; }
+      return c;
+    },
+  });
   const rankedWorld = { zoneCoverage: () => [], floorAt: () => 0, blocked: () => false, update() {}, ...world };
   const stage = RIG_STAGE;
   // host-side match: a host-owned actor plus one remote proxy per guest
@@ -28,7 +39,7 @@ export async function rankedRig({ mode = 'rainmaker', world = {}, guestCount = 1
   for (let i = 0; i < guestCount; i++) {
     const p = f.make();
     Object.assign(p, { nid: 2 + i, slot: i, team: 0, owner: 'guest' + i, invuln: 0, netLife: 1 });
-    p.pos.set(0, 0, 30);
+    p.pos.set(...(starts[i] || [0, 0, 34]));
     proxies.push(p);
   }
   const engine = new f.RankedEngine(mode, stage);

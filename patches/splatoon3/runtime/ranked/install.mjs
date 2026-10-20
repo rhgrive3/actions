@@ -175,7 +175,11 @@ export function buildFrame(match, api) {
     if (!a.remote) { a.intent.throw = false; if (!nm || nm.isHost) a._rankedThrowPending = false; }
     const special = objectiveSpecialFor(a, a.remote ? cmd : null);
     const specialDeployed = special === 'storm' && (a.specialActive?.t > 0 || (a.remote && cmd?.specialDeployed === true));
-    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: a.pos.toArray(), alive: a.alive && !a.s3Disconnected, grounded: a.grounded,
+    // #1648: a remote actor on the host is scored from its admitted owner pose,
+    // never from the interpolated/extrapolated playback position.
+    const objective = a.remote && nm?.isHost ? nm.rankedPose?.get(id)?.last : null;
+    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team,
+      pos: objective ? objective.pos.slice() : a.pos.toArray(), alive: a.alive && !a.s3Disconnected, grounded: objective ? objective.grounded : a.grounded,
       remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming: a.form === 'squid', slot: a.slot };
   });
   return { actors, inputs, zoneCoverage: match.rankedWorld.zoneCoverage(), barrierHits: match.rankedBarrierHits.splice(0),
