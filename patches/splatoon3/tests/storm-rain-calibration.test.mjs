@@ -64,7 +64,8 @@ test('#226 production-composed Storm accounting is deterministic at 30/60/120Hz 
     assert.equal(summary.paintFlaggedCosmeticEmissions, 0);
     assert.ok(summary.finalCpuTurfUnionWorldUnitsSquared > 0);
     assert.equal(summary.finalCpuTurfCellsFromGrid, summary.finalCpuTurfCellsFromPaintCounts);
-    assert.equal(summary.summedClaimedWorldUnitsSquared, summary.finalCpuTurfUnionWorldUnitsSquared);
+    assert.equal(summary.summedClaimedWorldUnitsSquared+summary.summedGrowthClaimedWorldUnitsSquared, summary.finalCpuTurfUnionWorldUnitsSquared,
+      'immediate body and later ancillary growth both contribute CPU ownership');
     assert.equal(distribution.reduce((sum, bin) => sum + bin.cells, 0), summary.finalCpuTurfCellsFromGrid);
     assert.ok(Math.abs(distribution.reduce((sum, bin) => sum + bin.areaWorldUnitsSquared, 0) - summary.finalCpuTurfUnionWorldUnitsSquared) < 1e-9);
     assert.ok(events.every((event) => Number.isInteger(event.simulationTick) && event.simulationTick > 0 && event.simulationTick <= 480));

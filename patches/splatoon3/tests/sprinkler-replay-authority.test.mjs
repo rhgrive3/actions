@@ -25,6 +25,9 @@ test('native Sprinkler admission and ordered real JSON paint keep ownership, cre
  const rows=a.nm.out.slice();assert.ok(rows.some(e=>e[1]==='b'));assert.ok(rows.filter(e=>e[1]==='s').length>5);
  assert.equal(rows.filter(e=>e[1]==='ac'&&e[2]==='sub'&&e[5]?.subId==='sprinkler').length,0);
  for(const e of rows)wire(a,b,e);advance(b,300);
+ // Replay has advanced every received growth by five seconds; give the
+ // sender's last emitted growth the same settling time without new emissions.
+ for(let i=0;i<300;i++)a.paint.advanceSimulation(1/60);
  assert.deepEqual(Array.from(b.paint.grid),Array.from(a.paint.grid));assert.ok(a.paint.counts[0]>0);assert.ok(a.actor.stats.turf>0);
  const before=Array.from(b.paint.grid);for(const e of rows)wire(a,b,e);advance(b);assert.deepEqual(Array.from(b.paint.grid),before);
  // An authenticated enemy's ordered paint wins over already played rows.
@@ -38,6 +41,7 @@ test('native Sprinkler admission and ordered real JSON paint keep ownership, cre
  const enemyGrid=Array.from(b.paint.grid);for(const e of rows)wire(a,b,e);advance(b);assert.deepEqual(Array.from(b.paint.grid),enemyGrid);
  const start=a.nm.out.length,credit=a.actor.stats.turf;advance(a,120);
  for(const e of a.nm.out.slice(start))wire(a,b,e);advance(b,240);
+ for(let i=0;i<240;i++)a.paint.advanceSimulation(1/60);
  assert.deepEqual(Array.from(a.paint.grid),Array.from(b.paint.grid));assert.ok(a.actor.stats.turf>=credit);
  a.actor.alive=false;b.actor.alive=false;advance(a);advance(b);
  const tail=a.nm.out.slice(rows.length);for(const e of tail)wire(a,b,e);advance(b);

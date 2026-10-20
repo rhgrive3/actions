@@ -70,7 +70,11 @@ test('#605: GO, final-minute, finish and results music hand-offs are unchanged',
 });
 
 test('#605: the Opening cue is a distinct, clean-compiling track that cuts straight into battle', async () => {
-  const mod = await import('data:text/javascript;base64,' + Buffer.from(build('src/audio/music.js')).toString('base64'));
+  const dependency=new URL('src/audio/streamedTrack.js',publicRoot).href;
+  const source=build('src/audio/music.js')
+    .replace("'./streamedTrack.js'",JSON.stringify(dependency))
+    .replaceAll('import.meta.url',JSON.stringify(new URL('src/audio/music.js',publicRoot).href));
+  const mod = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
   assert.ok(mod.SONGS.opening, 'dedicated track id registered');
   for (const id of ['battle', 'battle_final']) {
     assert.notEqual(mod.SONGS.opening.name, mod.SONGS[id].name, `distinct name from ${id}`);
@@ -80,8 +84,8 @@ test('#605: the Opening cue is a distinct, clean-compiling track that cuts strai
   assert.deepEqual(song.warnings, [], 'cue compiles without engine warnings');
   assert.equal(song.bars.length, 4, 'four bars at 140 bpm cover the 4.2 s intro before GO cuts it');
   assert.equal(mod.TRACKS.opening.name, 'Opening Sting');
-  assert.match(read('src/audio/music.js'), /if \(cur && fade > 0 && cur\.song\.bpm === song\.bpm\)/,
-    'engine hand-off rule: equal tempos wait for the next bar line, different tempos cut now');
+  assert.match(read('src/audio/music.js'), /if \(cur && !element && !\(cur instanceof StreamedTrack\) && fade > 0 && cur\.song\.bpm === song\.bpm\)/,
+    'procedural equal-tempo tracks retain bar-line hand-off; streamed tracks use immediate hand-off');
 });
 
 test('#605: missing, duplicated or re-applied connections fail closed', () => {

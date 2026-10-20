@@ -12,6 +12,14 @@ const families=new Set(MAIN_WEAPON_CATALOG.records.map(r=>r.family));
 const options={fullRuntime:true,productionComposition:true,realProjectiles:true,
   extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"};
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+function recordingPaintOwner(f, record) {
+  const owner=f.make('shooter');owner.nid=1;owner.owner='footprint-owner';
+  const nm=new f.NetMatch({myId:owner.owner,hostId:owner.owner,isHost:true,_members:new Set([owner.owner])},{id:'footprint-test'});
+  nm.byNid.set(owner.nid,owner);
+  const rec=nm.recSplat;
+  nm.recSplat=function(at,R,team,opts){const order=rec.call(this,at,R,team,opts);if(order)record(at,R,team,opts);return order;};
+  f.G.netm=nm;return owner;
+}
 
 test('profile resource is bounded and every main family selects a silhouette',()=>{
   assert.equal(INK_PROFILE_BYTES.byteLength,8192);
@@ -115,9 +123,9 @@ test('all added Rollers and Brushes select the band through grounded, moving Wea
 
 test('canonical event records the chosen kind before replication and replay uses it without an actor',async()=>{
   const f=await fixture(options),{paint,V}=makePaintWorld(f),events=[];
-  f.G.netm={mute:0,applying:false,recSplat(at,R,team,opts){events.push({at:at.clone(),R,team,opts:{...opts}});}};
+  const owner=recordingPaintOwner(f,(at,R,team,opts)=>events.push({at:at.clone(),R,team,opts:{...opts}}));
   for(const footprint of INK_FOOTPRINT_KINDS)paint.splat(V(0,0,10),1.3,0,
-    {kind:'source-shot',footprint,seed:.37,face:0,stretch:V(.6,0,.8),stretchAmt:.8});
+    {kind:'source-shot',footprint,seed:.37,face:0,stretch:V(.6,0,.8),stretchAmt:.8,claimOwner:owner});
   assert.deepEqual(events.map(e=>e.opts.kind),[...INK_FOOTPRINT_KINDS]);
   const expected=digest(paint.grid);f.G.netm=null;
   const {paint:remote}=makePaintWorld(f);
@@ -141,9 +149,9 @@ test('Charger old organic outline uses three repeatable seed variants with uncha
   const kinds=[],grids=[],events=[];
   for(const seed of [.13,.47,.83]){
     const {paint}=makePaintWorld(f,{cell:.125});
-    const received=[];f.G.netm={mute:0,applying:false,recSplat(_at,R,_team,opts){received.push({R,opts:{...opts}});}};
+    const received=[],owner=recordingPaintOwner(f,(_at,R,_team,opts)=>received.push({R,opts:{...opts}}));
     const center=V(0,0,8),r=1.56;
-    const claimed=paint.splat(center,r,0,{kind:'source-splash',footprint:CHARGER_FOOTPRINT,seed,face:0,stretch:V(0,0,1),stretchAmt:0});
+    const claimed=paint.splat(center,r,0,{kind:'source-splash',footprint:CHARGER_FOOTPRINT,seed,face:0,stretch:V(0,0,1),stretchAmt:0,claimOwner:owner});
     assert.ok(claimed>0);
     const stamp=paint.growing.at(-1);
     assert.equal(stamp.R,r,'no arbitrary global size correction');
