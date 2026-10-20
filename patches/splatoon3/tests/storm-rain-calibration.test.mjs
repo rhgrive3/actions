@@ -64,7 +64,13 @@ test('#226 production-composed Storm accounting is deterministic at 30/60/120Hz 
     assert.equal(summary.paintFlaggedCosmeticEmissions, 0);
     assert.ok(summary.finalCpuTurfUnionWorldUnitsSquared > 0);
     assert.equal(summary.finalCpuTurfCellsFromGrid, summary.finalCpuTurfCellsFromPaintCounts);
-    assert.equal(summary.summedClaimedWorldUnitsSquared, summary.finalCpuTurfUnionWorldUnitsSquared);
+    // #264 claims sub-cell ancillary pieces after the splat() call returns (while the
+    // paint grows) and credits them to the owner. The accounting closes only when the
+    // immediate splat claims and those later claims are both counted.
+    assert.ok(summary.ancillaryClaimedWorldUnitsSquared > 0, 'production composition claims ancillary cells after splat() returns');
+    assert.equal(summary.summedClaimedWorldUnitsSquared + summary.ancillaryClaimedWorldUnitsSquared, summary.finalCpuTurfUnionWorldUnitsSquared);
+    assert.equal(summary.ownerCreditedWorldUnitsSquared, summary.finalCpuTurfUnionWorldUnitsSquared);
+    assert.equal(summary.ancillaryClaimedCells * 0.0625, summary.ancillaryClaimedWorldUnitsSquared);
     assert.equal(distribution.reduce((sum, bin) => sum + bin.cells, 0), summary.finalCpuTurfCellsFromGrid);
     assert.ok(Math.abs(distribution.reduce((sum, bin) => sum + bin.areaWorldUnitsSquared, 0) - summary.finalCpuTurfUnionWorldUnitsSquared) < 1e-9);
     assert.ok(events.every((event) => Number.isInteger(event.simulationTick) && event.simulationTick > 0 && event.simulationTick <= 480));
@@ -91,6 +97,9 @@ test('#226 public-source scope reproduces the issue 172/172/171 candidate-call c
     assert.equal(summary.cosmeticRainCalls, summary.cosmeticParticleBatchEvents);
     assert.equal(summary.paintFlaggedCosmeticEmissions, 0);
     assert.equal(summary.finalCpuTurfCellsFromGrid, summary.finalCpuTurfCellsFromPaintCounts);
+    // The unpatched public modules have no ancillary claims: every claimed cell is a splat() claim.
+    assert.equal(summary.ancillaryClaimedWorldUnitsSquared, 0);
+    assert.equal(summary.summedClaimedWorldUnitsSquared, summary.finalCpuTurfUnionWorldUnitsSquared);
     assert.equal(distribution.reduce((sum, bin) => sum + bin.cells, 0), summary.finalCpuTurfCellsFromGrid);
     // _updateClouds emits only after `c.t += dt` leaves c.t < duration - 0.3 (7.7 s), so no emission is at or after 7.7 s.
     const emissionTimes = events.filter((event) => event.kind === 'candidate_ray_emission').map((event) => event.cloudTimeSeconds);
