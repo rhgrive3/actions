@@ -23,6 +23,9 @@ on:
       - 'scripts/check-inkwave-saber-origins-browser.mjs'
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
       - 'scripts/check-inkwave-new-families-browser.mjs'
+      - 'scripts/check-inkwave-roller-scale-range.mjs'
+      - 'scripts/lib/inkwave-range-menu-entry.mjs'
+      - 'patches/local-quality/roller-motion.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   pull_request:
     paths:
@@ -46,6 +49,9 @@ on:
       - 'scripts/check-inkwave-saber-origins-browser.mjs'
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
       - 'scripts/check-inkwave-new-families-browser.mjs'
+      - 'scripts/check-inkwave-roller-scale-range.mjs'
+      - 'scripts/lib/inkwave-range-menu-entry.mjs'
+      - 'patches/local-quality/roller-motion.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   workflow_dispatch:
 permissions:
@@ -112,3 +118,184 @@ jobs:
           name: inkwave-main-weapon-origins
           path: work/weapon-stage-gaps/
           if-no-files-found: ignore
+  roller-grip-comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASELINE_SHA: 83f27e5d59db944458a85122a95d1154e3543393
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+      EVENT_NAME: ${{ github.event_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Select Roller and shared pose changes
+        id: changes
+        shell: bash
+        run: |
+          mkdir -p work/roller-grip-evidence
+          run=true
+          # Avoid two production builds for unrelated weapon/audio/network work.
+          # Missing diff history is conservative: run, never silently skip evidence.
+          if [[ "$EVENT_NAME" != workflow_dispatch && "$DIFF_BASE" =~ ^[0-9a-f]{40}$ && "$DIFF_BASE" != 0000000000000000000000000000000000000000 ]]; then
+            if git fetch --no-tags --depth=1 origin "$DIFF_BASE" && git diff --name-only "$DIFF_BASE" HEAD > work/roller-grip-evidence/changed-paths.txt; then
+              run=false
+              while IFS= read -r file; do
+                case "$file" in
+                  .github/workflows/inkwave-main-weapons.yml|scripts/check-inkwave-roller-scale-range.mjs|scripts/lib/inkwave-range-menu-entry.mjs|scripts/build-inkwave.mjs|scripts/inkwave-source-composition.mjs) run=true ;;
+                  inkwave-public/src/core/*|inkwave-public/src/game/*|inkwave-public/src/world/paint.js|inkwave-public/src/config.js|inkwave-public/src/main.js) run=true ;;
+                  patches/local-quality/roller-motion.mjs|patches/network-replication/roller-*|patches/splatoon3/weapon-catalog-adapter.mjs) run=true ;;
+                  patches/splatoon3/runtime/roller*|patches/splatoon3/runtime/*motion*|patches/splatoon3/runtime/source-*|patches/splatoon3/runtime/weapon*|patches/splatoon3/runtime/main-*|patches/splatoon3/runtime/movement*|patches/splatoon3/runtime/body-*|patches/splatoon3/runtime/controller-*|patches/splatoon3/runtime/render.mjs|patches/splatoon3/runtime/install.mjs) run=true ;;
+                esac
+              done < work/roller-grip-evidence/changed-paths.txt
+            fi
+          fi
+          printf 'run=%s\n' "$run" >> "$GITHUB_OUTPUT"
+          printf 'Roller grip comparison selected: %s\n' "$run"
+      - uses: actions/checkout@v4
+        if: steps.changes.outputs.run == 'true'
+        with:
+          ref: 83f27e5d59db944458a85122a95d1154e3543393
+          path: work/roller-grip-baseline
+      - name: Record exact source and capture identities
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git -C work/roller-grip-baseline rev-parse HEAD)" = "$BASELINE_SHA"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { createHash } from 'node:crypto';
+          const sha256 = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          fs.writeFileSync('work/roller-grip-evidence/checkouts.json', JSON.stringify({
+            baseline: process.env.BASELINE_SHA, candidate: process.env.CANDIDATE_SHA,
+            captureScript: sha256('scripts/check-inkwave-roller-scale-range.mjs'),
+            entryHelper: sha256('scripts/lib/inkwave-range-menu-entry.mjs'),
+            workflow: sha256('.github/workflows/inkwave-main-weapons.yml'),
+          }, null, 2) + '\n');
+          NODE
+      - uses: actions/setup-node@v4
+        if: steps.changes.outputs.run == 'true'
+        with:
+          node-version: 22
+      - name: Install the existing production build and browser tools
+        if: steps.changes.outputs.run == 'true'
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          browser_path=$(node -p "require('playwright').chromium.executablePath()")
+          printf 'CHROMIUM_PATH=%s\n' "$browser_path" >> "$GITHUB_ENV"
+          echo "ESBUILD_MODULE=$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" >> "$GITHUB_ENV"
+      - name: Build the pinned baseline without runtime overlays
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          (cd work/roller-grip-baseline && node scripts/build-inkwave.mjs inkwave-public ../roller-grip-site-baseline) 2>&1 | tee work/roller-grip-evidence/before-build.log
+          cp work/roller-grip-site-baseline/inkwave-build.json work/roller-grip-evidence/before-build.json
+      - name: Build the exact candidate without runtime overlays
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/build-inkwave.mjs inkwave-public work/roller-grip-site-candidate 2>&1 | tee work/roller-grip-evidence/after-build.log
+          cp work/roller-grip-site-candidate/inkwave-build.json work/roller-grip-evidence/after-build.json
+      - name: Capture baseline at the shipped 180-tick rolling state
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before 2>&1 | tee work/roller-grip-evidence/before.log
+          test -s work/roller-grip-evidence/before/grip-cameras.json
+          node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict'; assert.equal(JSON.parse(fs.readFileSync('work/roller-grip-evidence/before/result.json')).passed, true);"
+      - name: Capture candidate with the baseline cameras unchanged
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          test -s work/roller-grip-evidence/before/grip-cameras.json
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-candidate work/roller-grip-evidence/after --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/after.log
+      - name: Verify complete and comparable grip evidence
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const root = 'work/roller-grip-evidence';
+          const read = file => JSON.parse(fs.readFileSync(`${root}/${file}`, 'utf8'));
+          const sha = value => assert.match(value, /^[0-9a-f]{64}$/);
+          const ids = read('checkouts.json');
+          assert.equal(ids.baseline, process.env.BASELINE_SHA);
+          assert.equal(ids.candidate, process.env.CANDIDATE_SHA);
+          for (const key of ['captureScript', 'entryHelper', 'workflow']) sha(ids[key]);
+          const names = ['rear', 'side', 'front-oblique'];
+          const sides = ['before', 'after'].map((side, index) => {
+            const result = read(`${side}/result.json`), build = read(`${side}-build.json`);
+            const cameras = read(`${side}/grip-cameras.json`), m = result.measurement;
+            assert.equal(result.passed, true, `${side} capture failed`);
+            assert.deepEqual(result.errors, []);
+            sha(build.contentHash); sha(build.inputHash);
+            assert.equal(build.build.optimization, 'esbuild-minify');
+            assert.equal(build.build.esbuild, '0.28.2');
+            assert.equal(result.build, build.contentHash, `${side} receipt/build mismatch`);
+            assert.equal(m.layout, 'range');
+            assert.equal(m.floorTag, 'floor:roller');
+            assert.equal(m.debugFixedTicks, 180);
+            assert.equal(m.controller, 'shipped KeyW + held fire');
+            assert.equal(m.inspectionCameraOnly, true);
+            assert.equal(m.gripCameraReference, index === 1);
+            assert.deepEqual(m.frozenState.pos, m.end);
+            assert.equal(m.frozenState.rolling, true);
+            for (const key of ['time', 'yaw', 'phase']) assert.ok(Number.isFinite(m.frozenState[key]));
+            assert.ok(Array.isArray(m.frozenState.pose) && m.frozenState.pose.length > 0 && m.frozenState.pose.every(Number.isFinite));
+            assert.equal(cameras.schema, 1);
+            assert.deepEqual(m.cameraPlan, cameras);
+            assert.deepEqual(cameras.views.map(v => v.name), names);
+            assert.deepEqual(m.gripViews.map(v => v.name), names);
+            assert.ok(Number.isInteger(m.renderSize.width) && m.renderSize.width > 0);
+            assert.ok(Number.isInteger(m.renderSize.height) && m.renderSize.height > 0);
+            assert.equal(m.renderAspect, m.renderSize.width / m.renderSize.height);
+            for (const [i, view] of cameras.views.entries()) {
+              assert.equal(view.aspect, 1280 / 840);
+              assert.ok(Math.abs(m.renderAspect - view.aspect) < 1e-10);
+              assert.deepEqual(m.gripViews[i].position, view.position);
+              for (const [key, length] of [['quaternion', 4], ['projection', 16]]) {
+                const vector = m.gripViews[i][key];
+                assert.ok(Array.isArray(vector) && vector.length === length && vector.every(Number.isFinite));
+              }
+            }
+            for (const name of [...names.map(n => `grip-${n}.png`), 'gameplay.png', 'scene.png', 'range.png']) {
+              const png = fs.readFileSync(`${root}/${side}/${name}`);
+              assert.ok(png.length > 24, `${side}/${name} empty`);
+              assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${side}/${name} not PNG`);
+              if (name.startsWith('grip-')) {
+                assert.equal(png.readUInt32BE(16), m.renderSize.width);
+                assert.equal(png.readUInt32BE(20), m.renderSize.height);
+              }
+            }
+            return { build, cameras, measurement: m };
+          });
+          assert.deepEqual(sides[0].cameras, sides[1].cameras, 'Candidate changed the baseline cameras');
+          assert.deepEqual(sides[0].measurement.gripViews, sides[1].measurement.gripViews, 'Actual camera transforms differ');
+          assert.deepEqual(sides[0].measurement.renderSize, sides[1].measurement.renderSize, 'Renderer sizes differ');
+          assert.deepEqual(sides[0].measurement.start, sides[1].measurement.start, 'Measurement-start actor positions differ');
+          assert.deepEqual(sides[0].measurement.end, sides[1].measurement.end, 'Final actor positions differ');
+          assert.equal(sides[0].measurement.frozenState.yaw, sides[1].measurement.frozenState.yaw, 'Actor yaw differs');
+          // Record phase/time/pose, do not force-reset them or assert cross-build pose equality.
+          const stateSummary = ({ frozenState: { time, phase, yaw, rolling } }) => ({ time, phase, yaw, rolling });
+          fs.writeFileSync(`${root}/comparison.json`, JSON.stringify({ passed: true, ...ids,
+            before: sides[0].build.contentHash, after: sides[1].build.contentHash,
+            views: names, ticks: 180, states: sides.map(s => stateSummary(s.measurement)),
+            note: 'Same 180-tick recipe and unchanged per-view simulation; gait phase is recorded, not calibrated. Visual/reference acceptance requires image review.'
+          }, null, 2) + '\n');
+          console.log('Both complete captures use identical baseline cameras and actor positions.');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.changes.outputs.run == 'true'
+        with:
+          name: inkwave-roller-grip-comparison
+          path: work/roller-grip-evidence/
+          retention-days: 14
+          if-no-files-found: warn

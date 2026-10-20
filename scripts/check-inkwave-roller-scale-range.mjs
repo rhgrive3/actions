@@ -8,6 +8,28 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { enterRangeFromMenu } from './lib/inkwave-range-menu-entry.mjs';
 const site=path.resolve(process.argv[2]||'_site'), out=path.resolve(process.argv[3]||'.browser-evidence/roller-scale/range');
+// Fixed inspection views are authored once from the baseline and reused verbatim.
+// BEGIN GRIP CAMERA CONTRACT
+function validateGripCameras(plan) {
+  const names=['rear','side','front-oblique'];
+  if(plan?.schema!==1||!Array.isArray(plan.views)||plan.views.length!==3)throw Error('Invalid grip camera plan');
+  for(let i=0;i<names.length;i++){
+    const v=plan.views[i],vec=a=>Array.isArray(a)&&a.length===3&&a.every(Number.isFinite);
+    if(v.name!==names[i]||!vec(v.position)||!vec(v.target)||v.fov!==45||v.aspect!==1280/840||v.near!==.1||v.far!==100||
+       Math.hypot(...v.position.map((n,j)=>n-v.target[j]))<.1)throw Error('Invalid fixed grip view: '+names[i]);
+  }
+  return plan;
+}
+function makeGripCameras(anchor){
+  if(!Array.isArray(anchor)||anchor.length!==3||!anchor.every(Number.isFinite))throw Error('Invalid baseline camera anchor');
+  const views=[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]]].map(([name,offset])=>({
+    name,position:offset.map((n,i)=>n+anchor[i]),target:anchor.map((n,i)=>n+[0,.8,.5][i]),fov:45,aspect:1280/840,near:.1,far:100}));
+  return validateGripCameras({schema:1,views});
+}
+// END GRIP CAMERA CONTRACT
+const cameraIndex=process.argv.indexOf('--grip-camera-reference');
+if(cameraIndex>=0&&!process.argv[cameraIndex+1])throw Error('Missing grip camera reference');
+const cameraReference=cameraIndex<0?null:validateGripCameras(JSON.parse(fs.readFileSync(process.argv[cameraIndex+1],'utf8')));
 fs.mkdirSync(out,{recursive:true});
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json',
   '.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.css':'text/css','.mp3':'audio/mpeg','.woff2':'font/woff2'};
@@ -36,9 +58,9 @@ try{
   receipt.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:240000,
     onProgress:r=>{receipt.entry=r;fs.writeFileSync(path.join(out,'progress.json'),JSON.stringify(receipt,null,2));}});
   console.log('Native Range ready');
-  receipt.measurement=await page.evaluate(async()=>{
+  receipt.measurement=await page.evaluate(async(cameraReference)=>{
     const G=window.__G,g=window.__inkwave,a=G.local;
-    const {Vector3,OrthographicCamera}=await import('three');
+    const {Vector3,OrthographicCamera,PerspectiveCamera}=await import('three');
     g.debug.freeze();G.match.range.setWeapon('roller');
     await G.audio?.prepareWeapon?.('roller',{urgent:true});
     await a.character.sourceMotion.ready;
@@ -83,13 +105,40 @@ try{
     view.up.set(0,0,1);view.position.set(a.pos.x,30,cz);view.lookAt(a.pos.x,0,cz);
     G.renderer.setRenderTarget(null);G.renderer.render(G.scene,view);
     G.renderer.domElement.id='roller-scale-canvas';
+    const inspectionPng=G.renderer.domElement.toDataURL('image/png').split(',')[1];
+    const anchor=a.pos.toArray();
+    const cameraPlan=cameraReference||{schema:1,views:[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]]].map(([name,offset])=>({
+      name,position:offset.map((n,i)=>n+anchor[i]),target:anchor.map((n,i)=>n+[0,.8,.5][i]),fov:45,aspect:1280/840,near:.1,far:100}))};
+    const state=()=>JSON.stringify({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,phase:a.character.phase,pose:Array.from(a.character.P)});
+    const frozen=state(),gripViews=[];
+    const renderSize={width:G.renderer.domElement.width,height:G.renderer.domElement.height};
+    const renderAspect=renderSize.width/renderSize.height;
+    if(!Number.isInteger(renderSize.width)||!Number.isInteger(renderSize.height)||renderSize.width<=0||renderSize.height<=0)throw Error('Invalid renderer dimensions');
+    for(const spec of cameraPlan.views){
+      if(Math.abs(renderAspect-spec.aspect)>1e-10)throw Error('Renderer aspect differs from fixed grip camera');
+      const camera=new PerspectiveCamera(spec.fov,spec.aspect,spec.near,spec.far);
+      camera.position.fromArray(spec.position);camera.up.set(0,1,0);camera.lookAt(new Vector3(...spec.target));camera.updateMatrixWorld(true);
+      G.renderer.render(G.scene,camera);
+      if(state()!==frozen)throw Error('Grip inspection advanced or changed simulation');
+      gripViews.push({name:spec.name,position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),projection:camera.projectionMatrix.toArray(),
+        png:G.renderer.domElement.toDataURL('image/png').split(',')[1]});
+    }
+    // Preserve the original final overhead canvas and its range.png contract.
+    G.renderer.render(G.scene,view);
+    if(state()!==frozen)throw Error('Restoring inspection changed simulation');
     return {layout:G.level.layout.id,start:start.toArray(),end:a.pos.toArray(),face:f.id,
       floorTag:G.level.blocks[f.block].tag,drumWidth,paintHalf:event.r,contactDepth:1.2*event.r*(1+event.amount),
       gpuMinWidth:Math.min(...widths),gpuMaxWidth:Math.max(...widths),rows,holes,
       contactError:Math.hypot(centre.x-front.x,centre.z-front.z),events:events.length,
       debugFixedTicks:180,controller:'shipped KeyW + held fire',inspectionCameraOnly:true,
-      gameplayPng,inspectionPng:G.renderer.domElement.toDataURL('image/png').split(',')[1]};
-  });
+      gameplayPng,inspectionPng,cameraPlan,gripViews,renderSize,renderAspect,frozenState:JSON.parse(frozen),gripCameraReference:!!cameraReference};
+  },cameraReference);
+  validateGripCameras(receipt.measurement.cameraPlan);
+  assert.deepEqual(receipt.measurement.cameraPlan,cameraReference||makeGripCameras(receipt.measurement.end));
+  fs.writeFileSync(path.join(out,'grip-cameras.json'),JSON.stringify(receipt.measurement.cameraPlan,null,2)+'\n');
+  for(const view of receipt.measurement.gripViews){
+    fs.writeFileSync(path.join(out,'grip-'+view.name+'.png'),Buffer.from(view.png,'base64'));delete view.png;
+  }
   for(const [key,name] of [['gameplayPng','gameplay.png'],['inspectionPng','scene.png']]){
     fs.writeFileSync(path.join(out,name),Buffer.from(receipt.measurement[key],'base64'));delete receipt.measurement[key];
   }
