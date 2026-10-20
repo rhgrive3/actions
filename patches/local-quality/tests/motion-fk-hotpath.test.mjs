@@ -8,6 +8,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 import { BUILD_ONLY_PATCH_MODULES } from '../../../scripts/lib/inkwave-build-only-modules.mjs';
 import { sourceLoadedActorFixture } from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 
+const SOURCE_BANK_BEFORE = fs.readFileSync(new URL('./fixtures/source-bank-composed-before-direct-migration.mjs.txt', import.meta.url), 'utf8');
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 // Restore the original operations in an otherwise fully production-composed
 // realm. Both sides load the real lossless packs and all other current patches.
@@ -17,8 +18,21 @@ export function baselineMotionSource(rel, raw) {
     code = replaceOnce(code, '   // World transforms are evaluated after the remaining local blends.\n   if(stepAmplitude<1){', '   this.pose.fk();\n   if(stepAmplitude<1){', 'baseline pre-blend FK');
     code = replaceOnce(code, '    this.pose.mix(this.restGait,1-stepAmplitude);', '    this.pose.mix(this.restGait,1-stepAmplitude).fk();', 'baseline short-step FK');
     code = replaceOnce(code, '  // The pre-balance FK is still current unless transition changed local TRS.\n  if(transition<1)this.pose.fk();', '  this.pose.fk();', 'baseline final FK');
+    code = replaceOnce(code, '.fk((sourceSampleFk(this),this._gaitFk));', '.fk();', 'baseline short-gait complete FK');
+    for (const sample of ['special.name,special.frame,this.pose,false', 'clip,frame,this.tmp,true', 'name,frame,this.pose,undefined'])
+      code = replaceOnce(code, `this.bank.sample(${sample},sourceSampleFk(this));`, `this.bank.sample(${sample});`, 'baseline complete sample FK');
   }
-  if (rel === 'src/game/motion/source-bank.js') code = replaceOnce(code,
+  // Both complete root-subtree updates at ground/pivot entry return.
+  if (rel === 'src/game/motion/retarget.js') {
+    assert.equal(code.split('  this._rootWorld();').length, 3, 'two root world entries');
+    code = code.replaceAll('  this._rootWorld();', '  c.root.updateWorldMatrix(true,true);');
+  }
+  if (rel === 'src/game/motion/body-balance.js') code = replaceOnce(code,
+    '  this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);',
+    '  this.center.fk();', 'baseline complete centre FK');
+  // The pre-migration bank ignores FK ranges: every sample and fk() call is a
+  // complete FK, the hint-free curve search and per-sample rotations return.
+  if (rel === 'src/game/motion/source-bank.js') code = replaceOnce(SOURCE_BANK_BEFORE,
     '        e[0] *= x; e[4] *= x; e[8] *= x;\n        e[1] *= y; e[5] *= y; e[9] *= y;\n        e[2] *= z; e[6] *= z; e[10] *= z;',
     '        for (const k of [0, 4, 8]) e[k] *= x;\n        for (const k of [1, 5, 9]) e[k] *= y;\n        for (const k of [2, 6, 10]) e[k] *= z;', 'baseline scale compensation');
   return code;
@@ -26,7 +40,7 @@ export function baselineMotionSource(rel, raw) {
 
 test('motion optimization is guarded, composed and excluded from browser payloads', () => {
   assert.ok(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/motion-fk-hotpath-adapter.mjs'));
-  for (const rel of ['src/game/motion/source-controller.js', 'src/game/motion/source-bank.js']) {
+  for (const rel of ['src/game/motion/source-controller.js', 'src/game/motion/body-balance.js']) {
     const raw = read(rel), next = adaptMotionFkHotpath(rel, raw, replaceOnce);
     assert.notEqual(next, raw);
     assert.doesNotThrow(() => new vm.SourceTextModule(adaptBuildSource(rel, raw)));

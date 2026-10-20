@@ -15,11 +15,23 @@ export function adaptMotionFkHotpath(rel, code, replaceOnce) {
       '  // The pre-balance FK is still current unless transition changed local TRS.\n  if(transition<1)this.pose.fk();\n  if(transition<1)this.gaitTargets.mix(this.previousTargets,1-transition);',
       'motion FK after unchanged transition');
   }
-  if (rel === 'src/game/motion/source-bank.js') {
+  if (rel === 'src/game/motion/body-balance.js') {
+    // apply() reads the centre pose's WORLD rotation only for the gain bones
+    // (hip..head); every other bone blends local rotations.
     code = replaceOnce(code,
-      '        for (const k of [0, 4, 8]) e[k] *= x;\n        for (const k of [1, 5, 9]) e[k] *= y;\n        for (const k of [2, 6, 10]) e[k] *= z;',
-      '        e[0] *= x; e[4] *= x; e[8] *= x;\n        e[1] *= y; e[5] *= y; e[9] *= y;\n        e[2] *= z; e[6] *= z; e[10] *= z;',
-      'motion segment-scale compensation scratch arrays');
+      '  this.center.fk();const gainX=',
+      '  this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);const gainX=',
+      'body balance centre FK range');
+    // Without a short-step rest blend only that same range of the centre's
+    // local pose is ever read; callers then pass it as `count`.
+    code = replaceOnce(code,
+      ' add(profile,weight){\n  if(weight<=0)return;',
+      ' add(profile,weight,count=undefined){\n  if(weight<=0)return;',
+      'body balance centre blend range parameter');
+    code = replaceOnce(code,
+      '  if(!this.total)this.center.copy(profile.centerPose);else this.center.mix(profile.centerPose,a);',
+      '  if(!this.total)this.center.copy(profile.centerPose,count);else this.center.mix(profile.centerPose,a,count);',
+      'body balance centre blend range');
   }
   // A settled contact's four Hermite coefficients are exactly +0. Retain the
   // clamp, active polynomial order and final zero additions for signed-zero
@@ -39,6 +51,89 @@ export function adaptMotionFkHotpath(rel, code, replaceOnce) {
       '  this.position.copy(goal).addScaledVector(offset,a).addScaledVector(offsetVelocity,b);\n' +
       '  this.velocity.copy(velocity).addScaledVector(offset,da).addScaledVector(offsetVelocity,db);',
       'source settled contact transition');
+  }
+  return code;
+}
+
+// Runs after every other quality source rewrite, whose anchors include these
+// sample calls verbatim.
+export function adaptMotionSampleFkRange(rel, code, replaceOnce) {
+  if (rel === 'src/game/motion/source-controller.js') {
+    // Per-clip and idle/special samples feed only gait end-effectors, foot/toe
+    // lift and head-space hair swing before the final full-pose FK. Evaluate
+    // world transforms for that leading bone range only; arms, face and weapon
+    // bones are recomputed by the unconditional full FK that follows.
+    code = replaceOnce(code,
+      'export class SourceMotionController {\n',
+      'function sourceSampleFk(c){\n' +
+      ' const b=c.bank;if(c._sampleFkBank===b)return c._sampleFk;\n' +
+      " if(typeof b.fkCount!=='function')return true;\n" +
+      ' const names=i=>i.filter(x=>x>=0).map(x=>b.bones[x].name);\n' +
+      ' c._sampleFkBank=b;c._gaitFk=b.fkCount(names(c.shortTargets.indices));\n' +
+      ' return c._sampleFk=b.fkCount(names([...c.gaitTargets.indices,b.index.toe_L,b.index.toe_R,b.index.head,...c.hairTargets.indices,...c.hairTargets.entries.map(e=>e.child)]));\n' +
+      '}\nexport class SourceMotionController {\n',
+      'motion sample FK range helper');
+    code = replaceOnce(code,
+      'this.bank.sample(special.name,special.frame,this.pose,false);',
+      'this.bank.sample(special.name,special.frame,this.pose,false,sourceSampleFk(this));',
+      'motion special sample FK range');
+    code = replaceOnce(code,
+      'this.bank.sample(clip,frame,this.tmp,true);',
+      'this.bank.sample(clip,frame,this.tmp,true,sourceSampleFk(this));',
+      'motion locomotion sample FK range');
+    code = replaceOnce(code,
+      'this.restGait.copy(this.bodyBalance.center).fk();',
+      'this.restGait.copy(this.bodyBalance.center).fk((sourceSampleFk(this),this._gaitFk));',
+      'motion short-gait rest FK range');
+    code = replaceOnce(code,
+      'this.bank.sample(name,frame,this.pose);',
+      'this.bank.sample(name,frame,this.pose,undefined,sourceSampleFk(this));',
+      'motion idle sample FK range');
+    // The centre's complete local pose is read only by the short-step rest
+    // gait blend (moving with stepAmplitude < 1).
+    code = replaceOnce(code,
+      'this.bodyBalance.add(p,item.weight);',
+      'this.bodyBalance.add(p,item.weight,stepAmplitude<1?undefined:this.bodyBalance._centerFk);',
+      'motion locomotion balance centre range');
+    code = replaceOnce(code,
+      'this.bodyBalance.add(idleProfile,1);',
+      'this.bodyBalance.add(idleProfile,1,this.bodyBalance._centerFk);',
+      'motion idle balance centre range');
+    // applyBody runs retarget.apply, which ends by updating the whole kid
+    // subtree, then retarget.ground. Only the activation crossfade touches
+    // bone transforms between the two.
+    code = replaceOnce(code,
+      '  if(activation<1)for(let i=0;i<this.character.boneList.length;i++){',
+      '  if(activation<1)this.retarget._kidWorldFresh=false;\n  if(activation<1)for(let i=0;i<this.character.boneList.length;i++){',
+      'retarget kid world invalidated by activation blend');
+  }
+  if (rel === 'src/game/motion/retarget.js') {
+    // ground()/protectTurningFeet() start by updating the complete root
+    // subtree. When apply() has just updated the kid subtree and no transform
+    // changed since, recomputing it reproduces the same matrices; the root,
+    // its ancestors and its other children are still updated.
+    code = replaceOnce(code,
+      ' apply(pose,{upper=true,aimPitch=0,rootScale=1,trajectory=pose,pelvisTrajectory=null}={}) {\n',
+      ' _rootWorld(){\n' +
+      '  const c=this.character,fresh=this._kidWorldFresh;this._kidWorldFresh=false;\n' +
+      '  if(!fresh||c.kid.parent!==c.root||!c.root.matrixAutoUpdate){c.root.updateWorldMatrix(true,true);return;}\n' +
+      '  c.root.updateWorldMatrix(true,false);\n' +
+      '  for(const child of c.root.children)if(child!==c.kid)child.updateWorldMatrix(false,true,true);\n' +
+      ' }\n' +
+      ' apply(pose,{upper=true,aimPitch=0,rootScale=1,trajectory=pose,pelvisTrajectory=null}={}) {\n  this._kidWorldFresh=false;\n',
+      'retarget root world reuse helper');
+    code = replaceOnce(code,
+      '  c.kid.updateWorldMatrix(true,true);\n }\n applyAccessories(',
+      '  c.kid.updateWorldMatrix(true,true);this._kidWorldFresh=true;\n }\n applyAccessories(',
+      'retarget kid world fresh after leg footpaths');
+    code = replaceOnce(code,
+      '  if(!grounded||!enabled){this.reset();if(grounded&&freeProtect)this.protectTurningFeet();return;}\n  c.root.updateWorldMatrix(true,true);',
+      '  if(!grounded||!enabled){this.reset();if(grounded&&freeProtect)this.protectTurningFeet();this._kidWorldFresh=false;return;}\n  this._rootWorld();',
+      'retarget ground reuses fresh kid world');
+    code = replaceOnce(code,
+      ' protectTurningFeet(){\n  const c=this.character;\n  c.root.updateWorldMatrix(true,true);',
+      ' protectTurningFeet(){\n  const c=this.character;\n  this._rootWorld();',
+      'retarget turning feet reuse fresh kid world');
   }
   return code;
 }
