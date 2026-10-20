@@ -89,7 +89,8 @@ try{
             const hole=held.gripL.pos.clone().sub(held.handL.pos)
               .applyQuaternion(held.handL.quat.clone().invert());
             const socket=held.gripL.pos.clone();
-            socket.z+=Math.max(0,(held.gripR.pos.z+held.fold.pivot.z)*.5-held.gripL.pos.z)*.15*blend;
+            socket.z+=Number.isFinite(ch._s3RollerSupportAdvance) ? ch._s3RollerSupportAdvance :
+              Math.max(0,(held.gripR.pos.z+held.fold.pivot.z)*.5-held.gripL.pos.z)*.15*blend;
             grip=ch.weapon.off.localToWorld(socket).distanceTo(ch.bones.handL.localToWorld(hole));
           }else{
             grip=ch.weapon.off.localToWorld(held.handL.pos.clone())

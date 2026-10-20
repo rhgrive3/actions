@@ -789,6 +789,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ, shoulderShift, chestQ, contactPoint, bestPoint;
   let rollPivot, rollOffset, rollTarget, rollAxis, rollBase, rollTrial;
   let supportWeaponPos, supportHole, supportWeaponQ, supportHandQ, supportUnderQ;
+  let supportParentPos, supportParentQ, supportShoulder, supportShaftAxis, supportFromShoulder;
   const SEARCH_AXES = [[1,0,0],[0,1,0],[0,0,1]];
   // Cost per radian of changing the floor correction between frames (same
   // units as the existing .06/rad small-angle preference). Visual calibration.
@@ -821,6 +822,8 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         // The canonical left palm faces -X. This frame makes it face +weaponY,
         // with its grip-hole axis still following the real shaft's +Z.
         supportUnderQ = orientation.clone().set(0, 0, -Math.SQRT1_2, Math.SQRT1_2);
+        supportParentPos = target.clone(); supportParentQ = orientation.clone();
+        supportShoulder = target.clone(); supportShaftAxis = target.clone(); supportFromShoulder = target.clone();
       }
       const d = supportDef;
       if (this._s3RollerSupportFeedback === undefined) {
@@ -835,10 +838,33 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       supportHole.copy(d.gripL.pos).sub(d.handL.pos).applyQuaternion(supportHandQ.copy(d.handL.quat).invert());
       supportHandQ.copy(d.handL.quat).slerp(supportUnderQ, supportBlend);
       target.copy(d.gripL.pos);
-      // A small step toward the shaft midpoint, measured from this model's
-      // authored rear grip and hinge, not a world-space or model-scale guess.
-      target.z += Math.max(0, (d.gripR.pos.z + d.fold.pivot.z) * .5 - d.gripL.pos.z) * .15 * supportBlend;
+      // Prefer the authored shaft midpoint while the character is pushing.
+      // If the native shoulder is at full extension during release/landing,
+      // retain palm-on-shaft contact by backing off *only* the left support
+      // socket along the actual weapon axis, not moving the weapon or drum.
+      const preferredAdvance = Math.max(0, (d.gripR.pos.z + d.fold.pivot.z) * .5 - d.gripL.pos.z) * .15 * supportBlend;
+      target.z += preferredAdvance;
       target.sub(supportHole.applyQuaternion(supportHandQ)).applyQuaternion(supportWeaponQ).add(supportWeaponPos);
+      this._s3RollerSupportAdvance = preferredAdvance;
+      if (preferredAdvance > 0) {
+        this._kidXform(limb.up.parent, supportParentPos, supportParentQ);
+        supportShoulder.copy(limb.up.position).applyQuaternion(supportParentQ).add(supportParentPos);
+        const reach = (limb.a + limb.b) * .9995 - .002;
+        if (reach > 0 && target.distanceToSquared(supportShoulder) > reach * reach) {
+          supportShaftAxis.set(0, 0, 1).applyQuaternion(supportWeaponQ);
+          supportFromShoulder.copy(target).addScaledVector(supportShaftAxis, -preferredAdvance).sub(supportShoulder);
+          const along = supportFromShoulder.dot(supportShaftAxis);
+          const discriminant = along * along - (supportFromShoulder.lengthSq() - reach * reach);
+          // No intersection means this IK request is unachievable even at the
+          // authored rear socket. Preserve the real error rather than faking a
+          // passing contact test or weakening native reach limits.
+          if (discriminant >= 0) {
+            const admissible = Math.max(0, Math.min(preferredAdvance, -along + Math.sqrt(discriminant)));
+            target.addScaledVector(supportShaftAxis, admissible - preferredAdvance);
+            this._s3RollerSupportAdvance = admissible;
+          }
+        }
+      }
       orientation.copy(supportWeaponQ).multiply(supportHandQ);
       // Native left-clavicle protraction and finite-chain IK retain authority.
       return solve.call(this, limb, target, pole, orientation, weight, index);
@@ -1073,6 +1099,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   };
   Character.prototype._applyPose = function (dt, state) {
     this._s3RollerSupportFeedback = undefined;
+    this._s3RollerSupportAdvance = undefined;
     try { return applyPose.call(this, dt, state); }
     finally {
       // Native left IK has completed all of its existing bounded retries.

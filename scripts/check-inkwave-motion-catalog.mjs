@@ -604,7 +604,8 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       .applyQuaternion(d.handL.quat.clone().invert()) : null;
     const socketLocal = rollSupport ? d.gripL.pos.clone() : (rightHeld ? socket : d.handL.pos.clone());
     if (rollSupport)
-      socketLocal.z += Math.max(0,(d.gripR.pos.z+d.fold.pivot.z)*.5-d.gripL.pos.z)*.15*roll;
+      socketLocal.z += Number.isFinite(ch._s3RollerSupportAdvance) ? ch._s3RollerSupportAdvance :
+        Math.max(0,(d.gripR.pos.z+d.fold.pivot.z)*.5-d.gripL.pos.z)*.15*roll;
     const target = w.off.localToWorld(socketLocal);
     const hand = rollSupport ? bone.localToWorld(supportHole) :
       rightHeld ? bone.localToWorld(hole.clone()) : bone.getWorldPosition(new THREE.Vector3());

@@ -52,7 +52,8 @@ async function trace(mode) {
     const left = c.bones.handL, blend = c._s3RollerGripBlend || 0;
     const hole = w.def.gripL.pos.clone().sub(w.def.handL.pos).applyQuaternion(w.def.handL.quat.clone().invert());
     const target = w.def.gripL.pos.clone();
-    target.z += Math.max(0, (w.def.gripR.pos.z + w.def.fold.pivot.z) * .5 - target.z) * .15 * blend;
+    target.z += Number.isFinite(c._s3RollerSupportAdvance) ? c._s3RollerSupportAdvance :
+      Math.max(0,(w.def.gripR.pos.z + w.def.fold.pivot.z)*.5-target.z)*.15*blend;
     const actualHole = left.localToWorld(hole), requestedHole = w.off.localToWorld(target);
     const errors = [hand.distanceTo(w.off.localToWorld(w.def.handR.pos.clone())), actualHole.distanceTo(requestedHole)];
     const palmUp = v().set(-1, 0, 0).applyQuaternion(left.getWorldQuaternion(new THREE.Quaternion()))

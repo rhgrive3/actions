@@ -17,8 +17,11 @@ export function nativeRollerGripGap(ch, THREE, side, C) {
     const palmHole = d.gripL.pos.clone().sub(d.handL.pos)
       .applyQuaternion(d.handL.quat.clone().invert());
     const shaftSocket = d.gripL.pos.clone();
-    shaftSocket.z += Math.max(0,
-      (d.gripR.pos.z + d.fold.pivot.z) * .5 - d.gripL.pos.z) * .15 * blend;
+    // This is the actual, physically reachable, native shaft socket selected
+    // for the rendered pose, not the obsolete cached wrist origin.
+    shaftSocket.z += Number.isFinite(ch._s3RollerSupportAdvance)
+      ? ch._s3RollerSupportAdvance
+      : Math.max(0,(d.gripR.pos.z + d.fold.pivot.z) * .5 - d.gripL.pos.z) * .15 * blend;
     return ch.weapon.off.localToWorld(shaftSocket)
       .distanceTo(bone.localToWorld(palmHole));
   }
