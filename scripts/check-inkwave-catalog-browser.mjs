@@ -641,7 +641,8 @@ try {
           check((tx.owner.s3.abilityPoints.subPower||0)===attackerAP,'Torpedo sender subPower matches fixture');
           for(let i=0;i<8;i++)tx.owner.weaponRunner.update(DT,{sub:true});tx.owner.weaponRunner.update(DT,{sub:false,subReleased:true});tx.owner.weaponRunner.update(DT,{sub:false});
           const parent=G.projectiles._s3SubObjects.find(o=>o.subId==='torpedo');check(!!parent&&tx.owner.ink===35,'Torpedo native paid release');
-          check(tx.nm._sendTick()===true,'Torpedo first equipment and birth tick');
+          // _sendTick broadcasts a packet; its return value is not the delivery signal.
+          tx.nm._sendTick();
           const ticks=tx.packets.filter(p=>p.k==='t');check(ticks.length===1,'one first gear plus birth packet');const tick=ticks[0];check(!!tick.gg,'first packet carries accepted gear sidecar');
           check(tick.e?.some(e=>e[1]==='ac'&&e[5]?.phase==='spawn'&&e[5]?.subId==='torpedo'&&e[5]?.subPowerAP===attackerAP),'actual Torpedo birth gear metadata');
           for(let i=0;i<300&&!parent.dead;i++)step(tx);check(parent.dead,'native sender parent collision');
