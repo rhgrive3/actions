@@ -268,20 +268,19 @@ async function openGameContext({ mobile = false } = {}) {
         !m.attract && m.local?.isLocal && m.controller && g.debug &&
         G.projectiles && G.renderer);
     };
-    // SwiftShader may finish the transition between timer ticks. Probe once
-    // synchronously first, then retain the identical strict timed gate.
-    phaseMark('admission','begin');
-    await requireNativePhase(admissionReady, 'native Turf actor/controller admission');
-    phaseMark('admission','end');
     const playingReady = () => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return !!(G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
         !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer);
     };
+    // Admission and intro share one browser task: no redundant queued hop
+    // after admission succeeds. Incomplete admission polls without frame steps.
+    phaseMark('admission','begin');
     phaseMark('intro','begin');
     phaseMark('playing','begin');
     const atomicReceipt = await requireAtomicIntro(page,
-      atomicIntroFunction(completeNativeTurfIntro,playingReady),deadline,{receipt:phaseReceipt.atomicIntro={}});
+      atomicIntroFunction(completeNativeTurfIntro,playingReady,admissionReady),deadline,{receipt:phaseReceipt.atomicIntro={}});
+    phaseMark('admission','end');
     phaseMark('intro','end');
     phaseMark('playing','end');
     (report.provenance.introTransitions ||= []).push({mobile,...atomicReceipt.intro});

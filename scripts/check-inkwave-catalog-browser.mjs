@@ -554,9 +554,54 @@ try {
           G.projectiles.clear();const o=makeActor('shooter'),v=makeActor('shooter');o.team=0;v.team=1;v.invuln=0;o.pos.set(0,0,-4);v.pos.set(0,0,2);o.aimDir.set(0,0,1);o.weapon={...o.weapon,sub:'burst'};equipCatalogue(v,ap);G.actors=[o,v];const hp=v.hp,hits=[],damage=v.damage;v.damage=function(n,a,w){hits.push([n,w]);return damage.call(this,n,a,w);};const p=G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);for(let i=0;i<10;i++){G.time+=1/60;G.projectiles.update(1/60);}const rate=gearCurve(ap,1,.75,.6),expected=[25,35].reduce((sum,n)=>sum+Math.floor(n*rate*10+1e-9)/10,0);check(hits.length===2&&hits[0][0]===25&&hits[1][0]===35&&Math.abs(hp-v.hp-expected)<1e-8,'Burst preserves the direct and one-frame blast phases');catalogueSubChecks.push({source:'burst',ap,native:true,damage:hp-v.hp});
         }
         for(const [w,n]of [['burst',35],['fizzy',50],['torpedo',60],['torpedo-splash',12],['inkMine',45]]){
-          const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='catalogue-owner';v.owner='catalogue-victim';o.team=0;v.team=1;v.invuln=0;o.netLife=v.netLife=0;equipCatalogue(v,57);let packet,ack;
-          const tx=new NetMatch({myId:o.owner,hostId:o.owner,isHost:true,tr:{sendTo:(_id,p)=>packet=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,n,w);
-          const rx=new NetMatch({myId:v.owner,hostId:o.owner,isHost:false,tr:{sendTo:(_id,p)=>ack=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;rx.onMessage(o.owner,{...packet,d:n+.1});check(v.hp===hp,'oversized catalogue hit rejected');rx.onMessage(o.owner,packet);const expected=Math.floor(n*(['burst','fizzy'].includes(w)?.6:.5)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8&&ack.d===expected,'catalogue hit victim/ACK match');rx.onMessage(o.owner,packet);check(Math.abs(hp-v.hp-expected)<1e-8,'duplicate catalogue hit inert');catalogueSubChecks.push({source:w,ap:57,wire:true,damage:hp-v.hp});tx.dispose();rx.dispose();G.netm=null;
+          G.projectiles.clear();
+          const sub=w==='torpedo-splash'?'torpedo':w;
+          const makePair=()=>{
+            const o=makeActor('shooter',1),v=makeActor('shooter',2);
+            o.owner='catalogue-owner';v.owner='catalogue-victim';o.team=0;v.team=1;
+            o.netLife=v.netLife=0;v.invuln=0;o.pos.set(0,0,0);v.pos.set(0,0,2);
+            o.aimDir.set(0,0,1);o.weapon={...o.weapon,sub};equipCatalogue(v,57);
+            return {o,v};
+          };
+          const sender=makePair(),receiver=makePair();let packet,ack;const ticks=[];
+          const bind=(pair,myId,tr)=>{
+            const session={myId,hostId:'catalogue-owner',isHost:myId==='catalogue-owner',tr,
+              _members:new Map([['catalogue-owner',{}],['catalogue-victim',{}]])};
+            const match={actors:[pair.o,pair.v],state:'playing',time:180,playing:()=>true};
+            const nm=new NetMatch(session,{id:'catalogue-probe',map:'reef'});
+            nm.bind(match);session.match=nm;G.match=match;G.netm=nm;G.actors=match.actors;
+            return nm;
+          };
+          const tx=bind(sender,'catalogue-owner',{
+            sendTo:(_id,p)=>{if(p.k==='hit')packet=JSON.parse(JSON.stringify(p));return true;},
+            broadcast:p=>{if(p.k==='t')ticks.push(JSON.parse(JSON.stringify(p)));return true;},
+          });
+          let rx;
+          try{
+            // Use the real equipped-sub birth and owner tick, not a hand-written proof.
+            check(!!G.projectiles.throwBomb(sender.o),'native catalogue sub birth');
+            check(tx._sendTick()===true&&ticks.length===1,'native catalogue owner tick');
+            const birth=ticks[0].e?.find(e=>e[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='spawn'&&e[5]?.subId===sub);
+            check(!!birth,'catalogue tick carries actual sub birth');
+            tx.sendHit(sender.o,sender.v,n,w);check(packet?.d===n,'catalogue raw hit amount');
+            // A second roster prevents bind() from changing the sender Actor identities.
+            G.projectiles.clear();rx=bind(receiver,'catalogue-victim',{
+              sendTo:(_id,p)=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;},
+              broadcast:p=>{if(p.k==='hit_ack')ack=JSON.parse(JSON.stringify(p));return true;},
+            });
+            rx.onMessage('catalogue-owner',ticks[0]);
+            const admitted=rx.peers.get('catalogue-owner');
+            check(admitted?.events.some(e=>e[1]==='ac'&&e[2]==='sub'&&e[5]?.seq===birth[5].seq),'native receiver admitted catalogue birth');
+            const {v}=receiver,hp=v.hp;
+            rx.onMessage('foreign',packet);rx.onMessage('catalogue-owner',{...packet,d:n+.1});
+            check(v.hp===hp,'foreign and oversized catalogue hit rejected');
+            rx.onMessage('catalogue-owner',packet);
+            const expected=Math.floor(n*(['burst','fizzy'].includes(w)?.6:.5)*10+1e-9)/10;
+            check(Math.abs(hp-v.hp-expected)<1e-8&&ack?.d===expected,'catalogue hit victim/ACK match');
+            rx.onMessage('catalogue-owner',packet);check(Math.abs(hp-v.hp-expected)<1e-8,'duplicate catalogue hit inert');
+            catalogueSubChecks.push({source:w,ap:57,wire:true,damage:hp-v.hp});
+          }finally{tx.dispose();rx?.dispose();G.projectiles.clear();G.netm=null;}
+
         }
         G.projectiles.clear();Object.assign(G,saved);
       }

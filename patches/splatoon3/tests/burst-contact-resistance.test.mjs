@@ -46,5 +46,25 @@ test('Burst native Booyah armor boundary uses raw contact object damage before S
  }
 });
 test('ghost Burst flight never applies direct or splash body damage',async()=>{const {f,o,v}=await world();const p=throwBurst(f,o);p.ghost=true;const hp=v.hp;advance(f);assert.equal(v.hp,hp);});
-test('Burst native collision sends both raw phases through real NetMatch and duplicate JSON stays inert',async()=>{const {f,o,v}=await world();Object.assign(o,{nid:1,owner:'attacker',netLife:0,isLocal:true});Object.assign(v,{nid:2,owner:'victim',netLife:0,remote:true});equip(v,57);const packets=[];const tx=new f.NetMatch({myId:'attacker',hostId:'attacker',isHost:true,tr:{sendTo:(_id,p)=>packets.push(JSON.parse(JSON.stringify(p))) }},{id:'burst-native'});tx.bind({actors:[o,v],state:'playing',time:180});f.G.netm=tx;const hp=v.hp;throwBurst(f,o);advance(f);const hits=packets.filter(p=>p.k==='hit');assert.equal(hits.length,2);assert.deepEqual(hits.map(p=>p.d),[25,35]);assert.equal(v.hp,hp);v.remote=false;const rx=new f.NetMatch({myId:'victim',hostId:'attacker',isHost:false,tr:{sendTo(){}}},{id:'burst-native'});rx.bind({actors:[o,v],state:'playing',time:180});f.G.netm=rx;for(const packet of hits)rx.onMessage('attacker',packet);assert.equal(hp-v.hp,36);for(const packet of hits)rx.onMessage('attacker',packet);assert.equal(hp-v.hp,36);});
+test('Burst native collision sends both raw phases through real NetMatch and duplicate JSON stays inert',async()=>{
+ const sender=await world(),receiver=await world(),packets=[],ticks=[];
+ const bind=(world,myId,tr)=>{
+  const {f,o,v}=world;Object.assign(o,{nid:1,owner:'attacker',netLife:0,isLocal:myId==='attacker'});Object.assign(v,{nid:2,owner:'victim',netLife:0});equip(v,57);
+  const session={myId,hostId:'attacker',isHost:myId==='attacker',_members:new Map([['attacker',{}],['victim',{}]]),tr};
+  const match={actors:[o,v],state:'playing',time:180,playing:()=>true};
+  const nm=new f.NetMatch(session,{id:'burst-native'});nm.bind(match);session.match=nm;f.G.match=match;f.G.netm=nm;return nm;
+ };
+ const tx=bind(sender,'attacker',{sendTo:(_id,p)=>{packets.push(JSON.parse(JSON.stringify(p)));return true;},broadcast:p=>{if(p.k==='t')ticks.push(JSON.parse(JSON.stringify(p)));return true;}});
+ const rx=bind(receiver,'victim',{sendTo(){return true;},broadcast(){return true;}});
+ try{
+  const hp=receiver.v.hp,senderHP=sender.v.hp;
+  throwBurst(sender.f,sender.o);assert.equal(tx._sendTick(),true);assert.equal(ticks.length,1);
+  const birth=ticks[0].e.find(e=>e[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='spawn'&&e[5]?.subId==='burst');assert.ok(birth,'actual Burst birth');
+  rx.onMessage('attacker',ticks[0]);assert.ok(rx.peers.get('attacker')?.events.some(e=>e[1]==='ac'&&e[5]?.seq===birth[5].seq),'receiver admits Burst birth');
+  advance(sender.f);const hits=packets.filter(p=>p.k==='hit');assert.equal(hits.length,2);assert.deepEqual(hits.map(p=>p.d),[25,35]);assert.equal(sender.v.hp,senderHP);
+  for(const packet of hits)rx.onMessage('attacker',packet);assert.equal(hp-receiver.v.hp,36);
+  for(const packet of hits)rx.onMessage('attacker',packet);assert.equal(hp-receiver.v.hp,36);
+ }finally{tx.dispose();rx.dispose();sender.f.G.projectiles.clear();receiver.f.G.projectiles.clear();}
+});
 for(const wear of [false,true])test(`Burst intercepted by Splash Wall preserves object HP path, Object Shredder ${wear}`,async()=>{const {f,o,v}=await world();equip(v,57);o.s3.loadout[2].main=wear?'objectShredder':'none';o.s3RefreshGear();v.weapon={...v.weapon,sub:'splashWall'};const wall=f.G.projectiles.throwBomb(v);wall.phase='deployed';wall.pos.set(0,.7,1);wall.prev.copy(wall.pos);wall.vel.set(0,0,0);wall.hp=1000;wall.wallHpInitial=0;const hp=v.hp;throwBurst(f,o);advance(f);assert.equal(v.hp,hp);close(wall.hp,1000-35*2*(wear?1.5:1));});
+

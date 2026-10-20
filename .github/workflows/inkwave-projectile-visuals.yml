@@ -7,6 +7,10 @@ on:
       - 'patches/splatoon3/runtime/projectile-visual*.mjs'
       - 'patches/splatoon3/reference/projectile-*.json'
       - 'patches/splatoon3/tests/projectile-visuals.test.mjs'
+      - 'scripts/lib/inkwave-reference-audio.mjs'
+      - 'scripts/prepare-inkwave-reference-audio.mjs'
+      - 'scripts/fixtures/inkwave-reference-audio.json'
+      - 'scripts/tests/inkwave-reference-audio.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
       - 'scripts/lib/inkwave-streamed-music-diagnostics.mjs'
       - 'scripts/tests/inkwave-streamed-music-diagnostics.test.mjs'
@@ -70,6 +74,8 @@ jobs:
     name: Capture ${{ matrix.side }}
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    env:
+      INKWAVE_REFERENCE_ROOT: .ci-baseline
     strategy:
       fail-fast: false
       matrix:
@@ -100,33 +106,48 @@ jobs:
           node --experimental-vm-modules --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-ci-roster.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs
           node --test scripts/tests/inkwave-projectile-pr-diff-cli.test.mjs
           node --test scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-boolean-gate.test.mjs scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-audio-timing-observer.test.mjs scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs scripts/tests/inkwave-projectile-http-file.test.mjs scripts/tests/inkwave-capture-source-identity.test.mjs
+      - name: Prepare isolated exact-ada audio-stabilized reference, retaining pristine main
+        if: ${{ matrix.side == 'before' && github.event.pull_request.number == 1695 && github.event.pull_request.base.ref == 'main' && github.event.pull_request.base.sha == 'ada098a8fe5f2b9f2990f10812c01acb70bde190' }}
+        run: |
+          node --test scripts/tests/inkwave-reference-audio.test.mjs
+          node scripts/prepare-inkwave-reference-audio.mjs --original .ci-baseline --derived .ci-audio-reference --candidate . --side before --pr 1695 --base-ref main --base-sha ada098a8fe5f2b9f2990f10812c01acb70bde190 --receipt .ci-scratch/projectile-visuals/before/reference-audio-adjustment.json
+          echo "INKWAVE_REFERENCE_ROOT=.ci-audio-reference" >> "$GITHUB_ENV"
+          node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/pristine-main
+          cp .built-site/pristine-main/inkwave-build.json .ci-scratch/projectile-visuals/before/pristine-main-build.json
       - name: Verify current source-pair admission and rejection controls without changing inputs
         if: ${{ matrix.side == 'before' && github.event.pull_request.base.ref == 'main' && (github.event.pull_request.base.sha == '9b0e402313686d8f8ad0f70585b01915e904e641' || ((github.event.pull_request.base.sha == 'b77b51df6a4e6683ca23a213c8ba4b0bc2f0c8ae' || github.event.pull_request.base.sha == 'ada098a8fe5f2b9f2990f10812c01acb70bde190') && github.event.pull_request.number == 1695)) }}
-        run: node scripts/check-inkwave-current-pair-controls.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
+        run: node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
       - name: Replay reviewed Roller births, pool reset and pinned paint in the main reference
         if: ${{ matrix.side == 'before' && github.event.pull_request.number != 1651 }}
-        run: node scripts/prepare-inkwave-projectile-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
+        run: node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
       - name: Verify exact current pose source identity and rejection controls
         if: ${{ matrix.side == 'before' && github.event.pull_request.base.ref == 'main' && (github.event.pull_request.base.sha == 'b77b51df6a4e6683ca23a213c8ba4b0bc2f0c8ae' || github.event.pull_request.base.sha == 'ada098a8fe5f2b9f2990f10812c01acb70bde190') && github.event.pull_request.number == 1695 }}
-        run: INKWAVE_POSE_BASELINE=.ci-baseline node --test scripts/tests/inkwave-character-pose-current-pair.test.mjs
+        run: INKWAVE_POSE_BASELINE="$INKWAVE_REFERENCE_ROOT" node --test scripts/tests/inkwave-character-pose-current-pair.test.mjs
       - name: Align only the reviewed character pose for exact projectile comparison
         if: ${{ matrix.side == 'before' && github.event.pull_request.number != 1651 }}
-        run: node scripts/prepare-inkwave-character-pose-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/character-pose-adjustment.json
+        run: node scripts/prepare-inkwave-character-pose-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --receipt .ci-scratch/projectile-visuals/before/character-pose-adjustment.json
       - name: Verify reviewed PR 1651 sources without rewriting the official reference
         if: ${{ matrix.side == 'before' && github.event.pull_request.number == 1651 }}
         run: |
-          node scripts/verify-inkwave-projectile-pr-diff-baseline.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/pr-diff-reference.json
-          INKWAVE_PR_DIFF_BASELINE=.ci-baseline node --test scripts/tests/inkwave-projectile-pr-diff-baseline.test.mjs
-      - name: Build main reference with reviewed births, pool reset, paint and character pose
+          node scripts/verify-inkwave-projectile-pr-diff-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --receipt .ci-scratch/projectile-visuals/before/pr-diff-reference.json
+          INKWAVE_PR_DIFF_BASELINE="$INKWAVE_REFERENCE_ROOT" node --test scripts/tests/inkwave-projectile-pr-diff-baseline.test.mjs
+      - name: Build selected reference with explicit alignment provenance
         if: ${{ matrix.side == 'before' }}
-        run: node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/baseline
+        run: node "$INKWAVE_REFERENCE_ROOT/scripts/build-inkwave.mjs" "$INKWAVE_REFERENCE_ROOT/inkwave-public" .built-site/baseline
       - name: Build complete candidate production composition
         if: ${{ matrix.side == 'after' }}
         run: node scripts/build-inkwave.mjs inkwave-public .built-site/projectiles
       - name: Verify candidate packaging
         if: ${{ matrix.side == 'after' }}
         run: INKWAVE_BUILT_SITE=.built-site/projectiles node --test scripts/tests/inkwave-build-packaging.test.mjs
-      - name: Capture native main reference
+      - name: Verify isolated reference inputs, distinct build identity and emitted BGM regressions
+        if: ${{ matrix.side == 'before' && github.event.pull_request.number == 1695 && github.event.pull_request.base.ref == 'main' && github.event.pull_request.base.sha == 'ada098a8fe5f2b9f2990f10812c01acb70bde190' }}
+        run: |
+          node scripts/prepare-inkwave-reference-audio.mjs --verify yes --original .ci-baseline --derived .ci-audio-reference --pristine-build .built-site/pristine-main/inkwave-build.json --derived-build .built-site/baseline/inkwave-build.json --receipt .ci-scratch/projectile-visuals/before/reference-audio-adjustment.json
+          cp .built-site/baseline/inkwave-build.json .ci-scratch/projectile-visuals/before/audio-stabilized-reference-build.json
+          node --experimental-vm-modules --test patches/local-quality/tests/music-streamed-gap.test.mjs
+          INKWAVE_IDLE_BUILD="$PWD/.built-site/baseline" node --experimental-vm-modules --test patches/local-quality/tests/music-streamed-gap.test.mjs
+      - name: Capture native reference, not necessarily untouched public main
         if: ${{ matrix.side == 'before' }}
         run: node scripts/check-inkwave-projectile-visuals.mjs --site .built-site/baseline --evidence-dir .ci-scratch/projectile-visuals/before --mode baseline
       - name: Capture candidate native game including desktop and mobile workloads
@@ -151,7 +172,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Retrieve immutable main reference capture
+      - name: Retrieve immutable reference capture and alignment receipts
         uses: actions/download-artifact@v4
         with:
           name: projectile-capture-before-${{ github.event.pull_request.head.sha || github.sha }}
@@ -176,3 +197,4 @@ jobs:
             .ci-scratch/projectile-visuals/comparator-synthetic-gates.json
           if-no-files-found: warn
           retention-days: 14
+

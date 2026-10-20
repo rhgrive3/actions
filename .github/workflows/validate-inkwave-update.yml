@@ -17,6 +17,7 @@ on:
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
+      - "scripts/fixtures/inkwave-murals-ba5a2d57.js.txt"
       - "tests/issue-queue/**"
   pull_request:
     paths:
@@ -34,6 +35,7 @@ on:
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
+      - "scripts/fixtures/inkwave-murals-ba5a2d57.js.txt"
       - "tests/issue-queue/**"
   workflow_dispatch:
     inputs:
@@ -162,7 +164,7 @@ jobs:
       - name: Verify nine queued critical INKWAVE fixes
         run: node --test tests/issue-queue/critical-queue.test.mjs
       - name: Verify immutable audio cancellation accounting
-        run: node --test scripts/tests/inkwave-browser-request-failure.test.mjs
+        run: node --test scripts/tests/inkwave-browser-request-failure.test.mjs scripts/tests/inkwave-browser-active-failures.test.mjs
       - name: Verify cancelled native texture ownership
         run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-texture-cancellation.test.mjs patches/native-stages/tests/native-normal-readback.test.mjs patches/native-stages/tests/native-texture-index.test.mjs
       - name: Verify cancelled native world preparation
@@ -706,6 +708,9 @@ jobs:
         run: |
           node scripts/check-inkwave-runtime-performance.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/runtime-after" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --quality high
           node scripts/compare-inkwave-runtime-performance.mjs --before "$CI_STORAGE/evidence/runtime-before/runtime-result.json" --after "$CI_STORAGE/evidence/runtime-after/runtime-result.json" --out "$CI_STORAGE/evidence/runtime-comparison.json"
+      - name: Verify catalog audio graph coordinator contracts
+        if: matrix.suite == 'catalog'
+        run: node --test scripts/tests/inkwave-catalog-audio-graph.test.mjs
       - name: Verify built Brella aperture and visible detached flight
         if: matrix.suite == 'catalog'
         run: node scripts/check-inkwave-brella-controls.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/brellas"
@@ -958,3 +963,4 @@ jobs:
           path: .ci-scratch/batch4-browser.json
           if-no-files-found: warn
           retention-days: 14
+

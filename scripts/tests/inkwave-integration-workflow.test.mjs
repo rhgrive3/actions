@@ -294,7 +294,43 @@ test('emitted hit-pose gate uses the built runtime and exact composed parity cas
 });
 
 
-test('emitted streamed music gate runs all ten cases on the built runtime', () => {
+const musicStandaloneCases = [
+  'streamed clock rollback still rebases playback',
+  'explicit hidden/resume lifecycle still rebases a streamed track',
+  'native synthesized player without a media element still rebases after a gap',
+  'scheduler preload preservation does not leak into a later music toggle',
+  'scheduler replay remapped to another track drops primed battle',
+];
+const musicParameterizedCases = [
+  ["for (const pending of [false, true]) test(", 2],
+  ["for (const state of ['paused', 'ended', 'error']) test(", 3],
+  ["for (const flag of ['failed', 'disposed']) test(", 2],
+  ["for (const pending of [false,true]) test(", 2],
+  ["for(const action of ['explicit-menu','hidden-resume','rollback','failed','paused','ended','error']) test(", 7],
+];
+function streamedMusicRegistrationContract(source) {
+  const standalone = [...source.matchAll(/^test\('([^']+)'/gm)].map(match => match[1]);
+  assert.deepEqual(standalone, musicStandaloneCases, 'all five standalone cases remain registered');
+  const groups = source.match(/^for\s*\(.* test\(/gm) || [];
+  assert.deepEqual(groups, musicParameterizedCases.map(([registration]) => registration),
+    'all five parameterized groups remain registered, including both preload groups');
+  assert.equal(standalone.length + musicParameterizedCases.reduce((sum, [, count]) => sum + count, 0),
+    21, 'five standalone plus 2 + 3 + 2 + 2 + 7 parameterized cases');
+}
+
+test('streamed music registration contract rejects each missing standalone or parameterized group', () => {
+  const source = fs.readFileSync(new URL('../../patches/local-quality/tests/music-streamed-gap.test.mjs', import.meta.url), 'utf8');
+  for (const registration of [
+    ...musicStandaloneCases.map(name => "test('" + name + "'"),
+    ...musicParameterizedCases.map(([registration]) => registration),
+  ]) {
+    assert.ok(source.includes(registration), registration);
+    assert.throws(() => streamedMusicRegistrationContract(source.replace(registration, '// removed registration')),
+      undefined, 'missing registration must fail: ' + registration);
+  }
+});
+
+test('emitted streamed music gate runs all twenty-one cases on the built runtime', () => {
   const match = /      - name: Verify emitted streamed music teardown and suspended recovery\n([\s\S]*?)(?=      - (?:name:|uses:)|$)/.exec(workflow);
   assert.ok(match, 'emitted streamed music step remains registered');
   const step = match[1];
@@ -304,10 +340,7 @@ test('emitted streamed music gate runs all ten cases on the built runtime', () =
   assert.ok(!/continue-on-error:|if:/.test(step), 'required emitted music checks are unconditional');
   assert.ok(!step.includes('final-minute'), 'source-only final-minute checks are not labelled emitted');
   const tests = fs.readFileSync(new URL('../../patches/local-quality/tests/music-streamed-gap.test.mjs', import.meta.url), 'utf8');
-  assert.equal((tests.match(/^test\(/gm) || []).length, 3, 'three standalone streamed music cases remain present');
-  for (const loop of ["for (const pending of [false, true]) test(", "for (const state of ['paused', 'ended', 'error']) test(", "for (const flag of ['failed', 'disposed']) test("])
-    assert.ok(tests.includes(loop), 'seven parameterized cases remain present: ' + loop);
-  assert.equal((tests.match(/^for .* test\(/gm) || []).length, 3, 'three parameterized groups add two, three and two cases');
+  streamedMusicRegistrationContract(tests);
   const core = workflow.slice(workflow.indexOf('  validate_core:'), workflow.indexOf('  patch_tests:'));
   assert.ok(core.includes(match[0]), 'required validate core owns emitted music');
   assert.ok(core.indexOf('node scripts/build-inkwave.mjs') >= 0 && core.indexOf('node scripts/build-inkwave.mjs') < core.indexOf(match[0]), 'same immutable build runs first');

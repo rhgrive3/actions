@@ -3,7 +3,6 @@ import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.m
 import { checkAcceptedDefaultConsumption } from './lib/inkwave-accepted-default-probe.mjs';
 import { checkWeaponAppearancePicker } from './lib/inkwave-weapon-appearance-probe.mjs';
 import { clickNativeKitCard } from './lib/inkwave-canonical-kit-input.mjs';
-import { verifiedAudioCancellation } from './lib/inkwave-browser-request-failure.mjs';
 import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
 import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
 import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
@@ -66,7 +65,7 @@ const address='http://127.0.0.1:'+server.address().port+'/';
 let browser;
 try {
  browser=await chromium.launchPersistentContext(profile,{headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),viewport:{width:1280,height:800},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const page = await browser.newPage(), errors = [], failures = [], consoleErrors = [], receipts = [], audioCancellations = [], verifiedRequests = new WeakSet();
+const page = await browser.newPage(), errors = [], failures = [], consoleErrors = [], receipts = [];
 // Fulfill with the exact bytes returned by the local server after verification.
 // API responses retain preload bodies that Chrome's DevTools may discard.
 await page.route(address+'**', async route => {
@@ -74,7 +73,6 @@ await page.route(address+'**', async route => {
     const response=await route.fetch(), body=await response.body();
     const key=decodeURIComponent(new URL(response.url()).pathname).replace(/^\//,'') || 'index.html';
     if(manifest.artifacts[key] && hash(body)!==manifest.artifacts[key]) throw new Error('Loaded artifact mismatch: '+key);
-    if(manifest.artifacts[key])verifiedRequests.add(route.request());
     receipts.push(key.replace(/^_versions\/[a-f0-9]+\//,'')); await route.fulfill({response,body});
   }catch(error){ errors.push(error.message); await route.abort(); }
 });
@@ -83,7 +81,10 @@ await page.addInitScript(() => { localStorage.setItem('inkwave.settings', JSON.s
 page.on('pageerror', error => errors.push(error.message));
 page.on('requestfailed', request => {
   const event={url:request.url(),error:request.failure()?.errorText};
-  (verifiedAudioCancellation(event,verifiedRequests.has(request))?audioCancellations:failures).push(event);
+  // A verified upstream body is not proof of browser delivery, playback, or
+  // intentional cancellation. All active-capture request failures fail closed.
+  // Explicit context teardown remains after the pre-close acceptance gate.
+  failures.push(event);
 });
 page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text().slice(0, 1500)); });
 const streamedMusicReceipt = { sourceSha, contentHash:manifest.contentHash };
@@ -484,7 +485,7 @@ try {
   for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
   if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
-  result.verifiedAudioCancellations = audioCancellations;
+  result.verifiedAudioCancellations = []; // No active-capture cancellation is waived.
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
   fs.renameSync(evidence + '/browser-result.json.writing', evidence + '/browser-result.json');
   console.log(JSON.stringify({status:result.status,error:result.error,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,actionReliability:result.actionReliability,verifiedResponses:receipts.length,errors})); await closeObservedBrowser();
