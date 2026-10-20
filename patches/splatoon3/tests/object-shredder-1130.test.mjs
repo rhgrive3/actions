@@ -12,6 +12,7 @@ for(const [id,rate] of [['booyahBomb',1.1],['crabTank',1.3]])test(`Object Shredd
 });
 
 import {objectShredderEquipped,objectGearRate,receiveObjectGearSnapshot,withObjectHitGear,OBJECT_SHREDDER_FLAG} from '../runtime/object-gear.mjs';
+import { grantAttackEvidence } from '../../network-replication/tests/combat-claims-rig.mjs';
 test('fixed gear identity requires shoes main and accepted owner/life; numbers and AP do not grant it',()=>{
  const a={s3:{loadout:[{main:'objectShredder'},{main:'objectShredder'},{main:'runSpeed',subs:['objectShredder']}],modifiers:{objectShredder:true,objectShredderAP:57}}};
  assert.equal(objectGearRate(a,'sprinkler'),1);a.s3.loadout[2].main='objectShredder';assert.equal(objectGearRate(a,'sprinkler'),10);assert.equal(objectGearRate(a,'unknown'),1);
@@ -48,12 +49,12 @@ for(const [id,kind,rate] of [['waveBreaker','wave',1.25],['superChump','decoy',2
 
 test('real NetMatch preserves shoes identity through JSON hit, rejects foreign sender, and deduplicates armor damage',async()=>{
  const f=await setup(),a=f.make(),v=f.make();a.team=1;a.nid=2;a.owner='attacker';v.nid=1;v.owner='victim';a.netLife=v.netLife=0;a.s3.loadout[2].main='objectShredder';
- let packet;const sender=new f.NetMatch({myId:'attacker',hostId:'attacker',isHost:true,tr:{sendTo:(_id,d)=>{packet=JSON.parse(JSON.stringify(d));}}},{id:'object-gear'});sender.bind({actors:[a,v],state:'playing',time:180});sender.sendHit(a,v,100,'shooter');assert.equal(packet.os,true);
- const receiver=new f.NetMatch({myId:'victim',hostId:'attacker',isHost:false,tr:{sendTo(){}}},{id:'object-gear'});receiver.bind({actors:[a,v],state:'playing',time:180});f.G.netm=receiver;
+ let packet;const sender=new f.NetMatch({myId:'attacker',hostId:'attacker',isHost:true,tr:{sendTo:(_id,d)=>{packet=JSON.parse(JSON.stringify(d));}}},{id:'object-gear'});sender.bind({actors:[a,v],state:'playing',time:180});sender.sendHit(a,v,50,'shooter');assert.equal(packet.os,true); // 50: within the Shooter's own damage ceiling (#1665)
+ const receiver=new f.NetMatch({myId:'victim',hostId:'attacker',isHost:false,tr:{sendTo(){}}},{id:'object-gear'});receiver.bind({actors:[a,v],state:'playing',time:180});f.G.netm=receiver;grantAttackEvidence(receiver,a.nid);
  equip(v,'booyahBomb');readySpecialEvidence(v, {placeAtFixtureOrigin:true});v._updateSpecial(1/60);v.invuln=0;const before=v._s3AllSpecialState.armorHP;
  a.s3.loadout[2].main='runSpeed';receiver.onMessage('foreign',packet);assert.equal(v._s3AllSpecialState.armorHP,before);
- receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);assert.equal(a.s3.objectHitGear,undefined);
- receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);
+ receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-38.5))<1e-9);assert.equal(a.s3.objectHitGear,undefined);
+ receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-38.5))<1e-9);
 });
 
 test('real owner snapshot bit27 is independent from RP and special ready and rejects stale/foreign rows',async()=>{

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { withObjectDamageCause } from '../runtime/sub-resistance.mjs';
 import { fixture } from './source-fixture.mjs';
+import { grantAttackEvidence } from '../../network-replication/tests/combat-claims-rig.mjs';
 
 test('native hit JSON and retained retry message carry exact blast phase to victim-owned armor',async()=>{
   const f=await fixture({fullRuntime:true,realProjectiles:true,productionComposition:true});
@@ -24,7 +25,7 @@ test('native hit JSON and retained retry message carry exact blast phase to vict
   const packet=outgoing.find(e=>e.data.k==='hit').data;
   assert.equal(packet.w,'inkjet');assert.equal(packet.oc,'Jetpack_BombCore');
   assert.equal(sender.hitPending.get(packet.seq)[0].oc,'Jetpack_BombCore','handoff retry retains the same phase');
-  f.G.netm=receiver;f.G.actors=[proxy,victim];
+  f.G.netm=receiver;f.G.actors=[proxy,victim];grantAttackEvidence(receiver,proxy.nid); // the shooter's attack was already observed
   receiver._hit({...packet,oc:'ObjectEffect_Up'},'A');
   assert.doesNotThrow(()=>receiver._hit({...packet,w:'__proto__'},'A'));
   receiver._hit(packet,'foreign');
@@ -36,7 +37,7 @@ test('native hit JSON and retained retry message carry exact blast phase to vict
   assert.equal(victim._s3AllSpecialState.armorHP,270,'native duplicate receipts still reject a second hit');
   const r=MAIN_WEAPON_CATALOG.records.find(r=>r.sourceRow==='Charger_Long_00');
   assert.ok(r);
-  for(const a of [shooter,proxy])a.weapon={...a.weapon,id:r.id,catalogRecord:r};
+  for(const a of [shooter,proxy])a.weapon={...(f.WEAPONS[r.id]||a.weapon),id:r.id,catalogRecord:r,special:a.weapon.special};
   withObjectDamageCause({owner:shooter,catalog:{r,descriptor:{charge:1}}},()=>sender.sendHit(shooter,ghost,100,r.id));
   const mainPacket=outgoing.at(-1).data;assert.equal(mainPacket.oc,'ChargerFull_Long');
   receiver._hit({...mainPacket,oc:'RollerCore'},'A');

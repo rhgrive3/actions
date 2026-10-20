@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { finishTidalSlamGauge } from '../runtime/tidal-slam-gauge.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
+import { grantAttackEvidence } from '../../network-replication/tests/combat-claims-rig.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 async function rig(){
  const f=await fixture({productionComposition:true,fullRuntime:true,realProjectiles:true,extraExports:"export * from './patches/splatoon3/runtime/damage-timing.mjs';"}),a=f.make('roller');
@@ -32,7 +33,7 @@ test('#573 fixed simulation protects at the same boundary for 30/60/120Hz render
 test('#573 victim-owned hit admission and outgoing invulnerability flag use the same 50F action boundary',async()=>{
  const f=await rig(),a=f.a,attacker=f.make('shooter');attacker.team=1;a.nid=1;a.owner='me';a.netLife=1;attacker.nid=2;attacker.owner='peer';attacker.remote=true;
  const messages=[],session={myId:'me',hostId:'me',isHost:true,_members:new Map([['me',true],['peer',true]]),tr:{broadcast:d=>messages.push(d),sendTo(){}}};
- const nm=new f.NetMatch(session,{id:'slam-wire',map:'tidewater'});f.G.match={mode:'turf',state:'playing',duration:180,time:100,actors:[a,attacker]};nm.bind(f.G.match);
+ const nm=new f.NetMatch(session,{id:'slam-wire',map:'tidewater'});f.G.match={mode:'turf',state:'playing',duration:180,time:100,actors:[a,attacker]};nm.bind(f.G.match);grantAttackEvidence(nm,attacker.nid);
  for(let i=0;i<49;i++)f.step();nm._sendTick();assert.equal(messages.at(-1).a.find(s=>s[0]===1)[10]&262144,0);
  nm.onMessage('peer',{k:'hit',m:'slam-wire',v:1,a:2,d:10,w:'shooter',l:1,h:1,seq:1});near(a.hp,90);
  f.step();nm._sendTick();assert.ok(messages.at(-1).a.find(s=>s[0]===1)[10]&262144);

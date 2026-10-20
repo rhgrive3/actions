@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
+import { grantAttackEvidence } from './combat-claims-rig.mjs';
 
 async function appliedHit(ackOwner) {
   const f = await fixture({ fullRuntime: true, productionComposition: true,
@@ -27,6 +28,7 @@ async function appliedHit(ackOwner) {
   function apply(owner, packet) {
     attacker.remote = true; victim.remote = false;
     f.G.netm = net(owner, acks);
+    grantAttackEvidence(f.G.netm, attacker.nid); // #1665: the receiver already accepted the shooter's attack event
     f.G.projectiles = { applyHit: (a, v, damage, source) => v.damage(damage, a, source) };
     f.G.netm._hit(packet, 'S');
     attacker.remote = false; victim.remote = true;

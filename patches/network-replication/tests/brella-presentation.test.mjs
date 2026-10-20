@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
+import {grantAttackEvidence} from './combat-claims-rig.mjs';
 
 async function world(id='s3-shelter-focus'){
  let time=1000;const f=await fixture({fullRuntime:true,productionComposition:true,includeCharacter:true,realProjectiles:true,vmPerformance:{now:()=>time},
@@ -42,7 +43,7 @@ test('actual local canopy snapshot opens remote cloth without creating a gamepla
   const proposal=x.hits.find(h=>h.packet.k==='hit');assert.ok(proposal,'remote visual cloth never retires the attack-side projectile');
   assert.equal(proposal.to,'owner');assert.ok(proposal.packet.bg?.length===7);
   assert.equal(remote.weaponRunner.catalogState?.canopy??null,null);
-  f.G.actors=[owner,attackProxy];f.G.netm=sender;sender.onMessage('viewer',proposal.packet);
+  f.G.actors=[owner,attackProxy];f.G.netm=sender;grantAttackEvidence(sender,attackProxy.nid);sender.onMessage('viewer',proposal.packet);
   assert.equal(owner.hp,hp,'victim owner adjudicates the actual intercepted segment');
   assert.ok(owner.weaponRunner.catalogState.canopy.hp<shieldHp);
   f.G.actors=[owner,remote];f.G.projectiles.list.length=0;

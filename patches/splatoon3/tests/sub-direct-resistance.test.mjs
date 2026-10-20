@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 import {readySpecialEvidence} from './special-control-evidence.mjs';
 import {emptyLoadout,gearCurve} from '../runtime/gear.mjs';
+import { grantAttackEvidence } from '../../network-replication/tests/combat-claims-rig.mjs';
 function equip(a,ap,ability='subResistance'){a.s3.loadout=emptyLoadout();for(const p of a.s3.loadout){if(ap>=10){p.main=ability;ap-=10;}}for(const p of a.s3.loadout)for(let i=0;i<3&&ap>=3;i++){p.subs[i]=ability;ap-=3;}a.s3RefreshGear();}
 for(const [source,raw] of [['angleShooter',40],['sprinkler',20]])for(const ap of [0,10,57])test(`${source} actual victim applies only its own ${ap}AP direct Sub Resistance`,async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});f.G.match={playing:()=>true,state:'playing'};const owner=f.make(),v=f.make();owner.team=0;v.team=1;v.invuln=0;equip(v,ap);equip(owner,57);const hp=v.hp;
@@ -28,7 +29,7 @@ for(const source of ['angleShooter','sprinkler'])for(const armor of ['booyahBomb
 for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57])test(`${source} JSON hit retains raw damage and applies victim ${ap}AP once`,async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),o=f.make(),v=f.make();Object.assign(o,{team:0,nid:1,owner:'attacker',netLife:0});Object.assign(v,{team:1,nid:2,owner:'victim',netLife:0,invuln:0});equip(v,ap);equip(o,57);o.weapon={...o.weapon,sub:source};
  let packet;const tx=new f.NetMatch({myId:'attacker',hostId:'attacker',isHost:true,tr:{sendTo:(_id,p)=>{packet=JSON.parse(JSON.stringify(p));}}},{id:'direct-sub'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,40,source);assert.equal(packet.d,40);
- let ack;const rx=new f.NetMatch({myId:'victim',hostId:'attacker',isHost:false,tr:{sendTo:(_id,p)=>{ack=JSON.parse(JSON.stringify(p));}}},{id:'direct-sub'});rx.bind({actors:[o,v],state:'playing',time:180});f.G.netm=rx;const hp=v.hp;
+ let ack;const rx=new f.NetMatch({myId:'victim',hostId:'attacker',isHost:false,tr:{sendTo:(_id,p)=>{ack=JSON.parse(JSON.stringify(p));}}},{id:'direct-sub'});rx.bind({actors:[o,v],state:'playing',time:180});f.G.netm=rx;grantAttackEvidence(rx,o.nid);const hp=v.hp;
  rx.onMessage('foreign',packet);assert.equal(v.hp,hp);rx.onMessage('attacker',{...packet,w:'unknown-sub'});assert.equal(v.hp,hp);if(source==='angleShooter'){rx.onMessage('attacker',{...packet,d:40.1});assert.equal(v.hp,hp,'source direct ceiling enforced before hit ID is consumed');}rx.onMessage('attacker',packet);assert.equal(hp-v.hp,ap===57?20:40);assert.equal(ack.d,ap===57?20:40,'ACK reports authoritative reduced damage');const after=v.hp;rx.onMessage('attacker',packet);assert.equal(v.hp,after);
 });
 import fs from 'node:fs';import crypto from 'node:crypto';

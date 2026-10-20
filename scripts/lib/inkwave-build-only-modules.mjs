@@ -55,6 +55,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/static-menu-adapter.mjs',
   'patches/local-quality/loading-screen-adapter.mjs',
   'patches/network-replication/dodge-clock-adapter.mjs',
+  'patches/network-replication/combat-claims-adapter.mjs',
   'patches/splatoon3/bubbler-map-adapter.mjs',
   'patches/local-quality/actor-weapon-input-adapter.mjs',
   'patches/local-quality/aim-profile-adapter.mjs',

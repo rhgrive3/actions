@@ -1,4 +1,5 @@
 import { adaptQueueNine } from '../patches/reliability/queue-nine-final-adapter.mjs';
+import { adaptCombatClaims } from '../patches/network-replication/combat-claims-adapter.mjs';
 import { adaptWeaponOpponentPreview } from '../patches/splatoon3/weapon-opponent-preview-adapter.mjs';
 import { adaptWeaponOpponentPalette } from '../patches/splatoon3/weapon-opponent-palette-adapter.mjs';
 import { adaptUiLocalization } from '../patches/splatoon3/ui-localization-adapter.mjs';
@@ -35,7 +36,8 @@ export function adaptBuildSource(rel, code) {
   code = adaptMainInkFootprints(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
-  return applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce))));
+  // The hit/bhit evidence gate is installed last so no later overlay can wrap around it (#1665/#1666).
+  return adaptCombatClaims(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))));
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream
