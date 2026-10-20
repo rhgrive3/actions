@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {BASE_SOURCE_STAGES,SOURCE_RECIPE,SOURCE_COMMIT} from '../../patches/native-stages/runtime/source-catalog.mjs';
+import {assertSourceTerrainObjects} from '../../patches/native-stages/runtime/source-terrain-contract.mjs';
 export const NATIVE_ROOT=path.resolve(import.meta.dirname,'../../patches/native-stages');
 // Stateful ordinary movement stays the already-installed browser singleton.
 export const NATIVE_RUNTIME_EXTERNALS=['three','../../../src/*','./registry.mjs','./build-config.mjs','../../splatoon3/runtime/movement.mjs','../../splatoon3/runtime/clock.mjs'];
@@ -51,6 +52,7 @@ export function prepareNativeStageBuild(assetPath){
   }
   const manifest=JSON.parse(fs.readFileSync(path.join(root,s.id,'manifest.json')));
   if(s.diagnosticOnly||manifest.diagnosticOnly||manifest.placementReceipt)throw Error('Diagnostic placement conversion cannot enable a playable native stage: '+s.id);
+  assertSourceTerrainObjects(manifest);
   if(JSON.stringify(s.sourceNavigation||null)!==JSON.stringify(definition.sourceNavigation||null))throw Error('Native navigation differs from reviewed definition: '+s.id);
   return {...definition,integritySha256:hash(fs.readFileSync(file)),version1130Verified:false};
  });
