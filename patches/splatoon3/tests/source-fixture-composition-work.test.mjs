@@ -39,7 +39,7 @@ function exercise({ built, upstream, production, custom }) {
     } },
   };
   const context = vm.createContext(globals);
-  vm.runInContext(`${loader}\nglobalThis.loadTest = load;`, context);
+  vm.runInContext(`const generation = null;\n${loader}\nglobalThis.loadTest = load;`, context);
   const first = context.loadTest(file);
   assert.equal(context.loadTest(file), first, 'module identity is cached');
   assert.deepEqual(reads, [[identifier, 'utf8']], 'cached load does not reread source');
