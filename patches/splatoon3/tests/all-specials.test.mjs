@@ -713,3 +713,59 @@ test('Tenta Missiles retain the source paint-power curve in their launch and rem
   f.G.projectiles.ghostProjectile(remote,packet);const ghost=f.G.projectiles.list.at(-1);assert.equal(ghost.s3SpecialWeapon.specialPowerAP,ap);assert.equal(ghost.s3SpecialWeapon.paintRadius,p.s3SpecialWeapon.paintRadius);assert.equal(ghost.damage,0);
  }
 });
+
+for (const id of ['waveBreaker', 'splattercolorScreen']) for (const ap of [0, 57]) {
+ test(`#1606 ${id} AP${ap} complete companion vs deploy replay in both arrival orders`, async () => {
+  const {emptyLoadout}=await import('../runtime/gear.mjs');
+  const f=await setup(),owner=f.make();
+  owner.s3.loadout=emptyLoadout();
+  if(ap===57)for(const gear of owner.s3.loadout){gear.main='specialPower';gear.subs.fill('specialPower');}
+  owner.s3RefreshGear();equip(owner,id);f.G.actors=[owner];
+  const events=eventFeed(f,'all:special');ready(owner);deployInput(owner,f);
+  const kind=id==='waveBreaker'?'wave':'screen',action=id==='waveBreaker'?'device':'screen';
+  const birth=events.find(e=>e.id===id&&e.action==='deploy'&&e.kind===kind);
+  assert.ok(birth,'the actual native first complete deploy exists');
+  const companion=events.find(e=>e.id===id&&e.action===action&&e.kind===kind&&e.object===birth.object);
+  assert.ok(companion,'the native companion exists');
+  for(const field of ['duration','radius','specialPowerAP','width','height','waveFrame']){
+   assert.ok(Number.isFinite(birth[field]),field+' must be finite on deploy');
+   assert.equal(companion[field],birth[field],field+' remains complete on companion');
+  }
+  assert.equal(birth.specialPowerAP,ap);
+  const orders=[[birth,companion],[companion,birth]];
+  for(const [i,order] of orders.entries()){
+   const remote=f.make();remote.remote=true;remote.team=1;
+   f.G.actors.push(remote);
+   for(const event of order)f.replayAllSpecials(f,{...event,actor:remote});
+   const get=()=>f.G.projectiles._s3AllSpecialObjects.filter(o=>o.owner===remote&&o.kind===kind);
+   const ghosts=get();assert.equal(ghosts.length,1,'one shared object for normal/reverse order '+i);
+   const g=ghosts[0];
+   assert.equal(g.dur,birth.duration);
+   assert.equal(g.maxRadius,birth.radius);
+   assert.equal(g.specialPowerAP,ap);
+   assert.equal(g.width,birth.width);assert.equal(g.height,birth.height);
+   assert.equal(g.maxWaveFrame,birth.waveFrame);
+   assert.ok(Number.isFinite(g.maxRadius)&&Number.isFinite(g.dur));
+   if(kind==='wave'){
+    assert.equal(g.maxRadius,ap===0?20:27);
+    assert.equal(g.maxWaveFrame,(ap===0?160:216)/60);
+    assert.deepEqual(g.pulseFrames,[90/60,240/60,390/60]);
+   }else {
+    assert.equal(g.dur,680/60);
+    assert.equal(g.width,15);assert.equal(g.height,9);
+   }
+   for(const event of order)assert.equal(f.replayAllSpecials(f,{...event,actor:remote}),false,
+      'duplicate packet never creates another ghost');
+   assert.equal(get().length,1);
+  }
+  const sparse={...companion};for(const key of ['duration','radius','specialPowerAP'])delete sparse[key];
+  const legacy=f.make();legacy.remote=true;legacy.team=1;f.G.actors.push(legacy);
+  f.replayAllSpecials(f,{...sparse,actor:legacy});
+  assert.equal(f.G.projectiles._s3AllSpecialObjects.some(o=>o.owner===legacy),false,
+    'sparse pre-deploy legacy event must not manufacture invalid 1s object');
+  f.replayAllSpecials(f,{...birth,actor:legacy});
+  const recovered=f.G.projectiles._s3AllSpecialObjects.filter(o=>o.owner===legacy&&o.kind===kind);
+  assert.equal(recovered.length,1,'complete deploy after sparse companion creates exactly once');
+  assert.equal(recovered[0].dur,birth.duration);assert.equal(recovered[0].maxRadius,birth.radius);
+ });
+}
