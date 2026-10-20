@@ -113,9 +113,9 @@ export function adaptIdleSource(rel, code, replace) {
     // state boundary, while preserving cinematic boss/ranked/attract paths.
     // FX/HUD/renderer continue independently for the judge reveal.
     if (!code.includes('      if (!m.paused) G.projectiles.update(dt);')) {
-      const lineMatches = code.split('\\n').filter(line => line.includes('projectiles') && line.includes('update')).slice(0, 8);
+      const lineMatches = code.split('\n').filter(line => line.includes('projectiles') && line.includes('update')).slice(0, 8);
       const tickPos = code.indexOf('m.update(dt / sub);');
-      throw new Error('POSTMATCH_ADAPTER_DIAGNOSTIC ' + JSON.stringify({lines:lineMatches,aroundTick:code.slice(Math.max(0,tickPos-150),tickPos+350),tickPos}));
+      throw new Error('POSTMATCH_ADAPTER_DIAGNOSTIC ' + JSON.stringify({lines:lineMatches.map(line=>line.slice(0,250)),aroundTick:code.slice(Math.max(0,tickPos-150),tickPos+350),tickPos}));
     }
     patch('      if (!m.paused) G.projectiles.update(dt);',
       "      if (!m.paused && (m.bossMode || m.ranked || m.attract || (m.state !== 'finish' && m.state !== 'judge'))) G.projectiles.update(dt);",
