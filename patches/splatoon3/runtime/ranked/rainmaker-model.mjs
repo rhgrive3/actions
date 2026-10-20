@@ -46,7 +46,7 @@ export function createRainmakerModel(THREE) {
   }
   // Upturned tail and dorsal fan define the recognisable gold-fish outline.
   oval([0, .39, -.49], [.12, .20, .14], gold, 6, 4);
-  fin([[0, .40, -.46], [0, .82, -.72], [0, .90, -.97], [0, .63, -.85], [0, .52, -1.00], [0, .32, -.62]], .045);
+  fin([[0, .40, -.46], [0, .82, -.72], [0, 0.89, -.97], [0, .63, -.85], [0, .52, -1.00], [0, .32, -.62]], .045);
   fin([[0, .49, -.34], [0, .68, -.28], [0, .62, .05], [0, .50, .16]], .04);
   // Keep the broad fish outline ahead of the native fist. This also keeps its
   // raised tail clear of the proportioned carrier while preserving one immutable mesh.

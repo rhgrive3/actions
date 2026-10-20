@@ -1669,7 +1669,7 @@ export function replaySub(api,event,report){
     }else{
       if(!object.chasedTarget||!['torpedoRotate','torpedoWait'].includes(object.phase))return false;
       object.pos.set(event.x,event.y,event.z);object.prev.copy(object.pos);object.vel.set(event.vx,event.vy,event.vz);
-      object.phase='chase';object.grounded=false;object.chaseAge=0;
+      object.phase='chase';object.grounded=false;object.chaseAge=0;object.torpedoLaunchReplayed=true;
     }
     return true;
   }
@@ -1682,7 +1682,10 @@ export function replaySub(api,event,report){
       object.fizzyBurstReplayed=index+1;
     }
     if(object.subId==='torpedo'){
-      if(object.torpedoBurstReplayed)return false;
+      // A chased replica must receive its native launch before its terminal burst.
+      // ghostWait is legal after replica contact; rolled, unchased bombs need no launch.
+      if(object.torpedoBurstReplayed||object.chasedTarget&&!object.torpedoLaunchReplayed||
+        ![event.x,event.y,event.z].every(Number.isFinite))return false;
       object.torpedoBurstReplayed=true;
     }
     if([event.x,event.y,event.z].every(Number.isFinite))object.pos.set(event.x,event.y,event.z);
