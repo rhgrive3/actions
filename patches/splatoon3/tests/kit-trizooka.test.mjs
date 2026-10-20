@@ -74,8 +74,8 @@ test('the volley configuration is a real non-null calibration, honestly labelled
   assert.ok(VOLLEY_CONFIG.lobes > 0, 'a null count would fire nothing at all');
   assert.equal(VOLLEY_CONFIG.lobes, 3);
   assert.match(VOLLEY_CONFIG.lobesStatus, /calibration-not-extracted/);
-  assert.match(VOLLEY_CONFIG.spreadStatus, /calibration-not-extracted/);
-  assert.ok(VOLLEY_CONFIG.spreadDeg > 0);
+  assert.match(VOLLEY_CONFIG.spreadStatus, /shared launch axis/);
+  assert.equal(VOLLEY_CONFIG.spreadDeg, 0);
   assert.equal(VOLLEY_CONFIG.damageCarriers, 3);
   assert.match(VOLLEY_CONFIG.damageStatus, /independent-authoritative/);
 });
@@ -335,7 +335,7 @@ test('activation and shot windup precede the first volley; Repeat governs held-f
   releaseFire(a);
   assert.ok(stamps.length >= 2, 'holding fire repeats the volley');
   const first = stamps[0].t, second = stamps[1].t;
-  assert.ok(Math.abs(first - 38 / 60) < 1e-6, `first volley waits 23F activation + 15F windup, got ${first}`);
+  assert.ok(Math.abs(first - 35 / 60) < 1e-6, `first volley waits 20F activation + 15F windup, got ${first}`);
   assert.ok(Math.abs((second - first) - TRIZOOKA.repeatFrame) < 1e-6,
     `a held repeat waits RepeatFrame 55F, got ${(second - first) * 60} frames`);
   assert.ok(Math.abs((second - first) - TRIZOOKA.shotDelay) > 1e-6,
@@ -374,7 +374,7 @@ test('a press during StartDelayFrame is remembered, not lost', async () => {
   assert.ok(projectiles.list.length > 0, 'IsReqShotInStartDelay honoured');
 });
 
-test('S3mix 38F startup and 55F fire cycle hold at 20/30/60/120 Hz, including rapid trigger taps', async () => {
+test('S3mix 35F startup and 55F fire cycle hold at 20/30/60/120 Hz, including rapid trigger taps', async () => {
   const api = await production();
   for (const hz of [20, 30, 60, 120]) for (const tapping of [false, true]) {
     const projectiles = world(api), a = makeActor(api);
@@ -388,12 +388,12 @@ test('S3mix 38F startup and 55F fire cycle hold at 20/30/60/120 Hz, including ra
       if (count > stamps.length) stamps.push(a.s3Trizooka.t);
     }
     assert.equal(stamps.length, 3, `${hz} Hz / tapping=${tapping}`);
-    assert.ok(stamps[0] + 1e-9 >= 38 / 60, 'no first shot before activation and windup finish');
+    assert.ok(stamps[0] + 1e-9 >= 35 / 60, 'no first shot before activation and windup finish');
     for (let i = 1; i < stamps.length; i++)
       assert.ok(stamps[i] - stamps[i - 1] + 1 / hz + 1e-9 >= 55 / 60,
         `rapid taps cannot bypass RepeatFrame: ${hz} Hz / ${stamps}`);
     if (!tapping) for (let i = 0; i < stamps.length; i++)
-      assert.ok(Math.abs(stamps[i] - (38 + i * 55) / 60) < 1 / hz + 1e-8,
+      assert.ok(Math.abs(stamps[i] - (35 + i * 55) / 60) < 1 / hz + 1e-8,
         `held fire stays on the source schedule: ${hz} Hz / ${stamps}`);
   }
 });
@@ -891,11 +891,11 @@ test('native volley side lobes are symmetric and stay inside the declared fan', 
   const carrier = fired[VOLLEY_CONFIG.damageLobeIndex], sides = fired.filter((_, i) => i !== VOLLEY_CONFIG.damageLobeIndex);
   assert.ok(carrier.vel.clone().normalize().distanceTo(aim) < 1e-12);
   const offsets = sides.map(p => p.vel.clone().normalize().dot(basis));
-  assert.ok(offsets[0] * offsets[1] < 0, 'outer globs straddle the centre aim ray');
+  assert.ok(offsets.every(x=>Math.abs(x)<1e-12), 'all globs share the centre launch axis');
   assert.ok(Math.abs(offsets[0] + offsets[1]) < 1e-12, 'equal opposite fan offsets');
   for (const p of sides) {
     const angle = Math.acos(Math.min(1, p.vel.clone().normalize().dot(aim)));
-    assert.ok(angle <= VOLLEY_CONFIG.spreadDeg * Math.PI / 180 + 1e-12);
+    assert.ok(angle <= VOLLEY_CONFIG.spreadDeg * Math.PI / 180 + 3e-8);
     assert.ok(Math.abs(p.vel.length() - TRIZOOKA.spawnSpeed) < 1e-9);
   }
 });

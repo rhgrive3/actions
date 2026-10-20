@@ -31,7 +31,7 @@ test('source dry and airborne squid preserve authored S3 axes and source jump cl
   const a=await f.make(),ch=a.character;ch.onEvent=null;ch.setLod(lod);a.form='squid';a.submerged=false;
   const tick=(x=0,y=0)=>{a.vel.set(x,y,0);a.pos.addScaledVector(a.vel,1/hz);f.G.time+=1/hz;a._finishFrame(1/hz);ch.root.updateMatrixWorld(true);};
   for(let i=0;i<hz;i++)tick();
-  const rig=ch.sourceMotion.squidRig,expected=new f.THREE.Quaternion().setFromEuler(new f.THREE.Euler(Math.PI/2-.52,ch.sourceMotion.squidYaw,0,'YXZ'));
+  const rig=ch.sourceMotion.squidRig,expected=new f.THREE.Quaternion().setFromEuler(new f.THREE.Euler(Math.PI/2,ch.sourceMotion.squidYaw,0,'YXZ'));
   assert(ch.squid.pivot.quaternion.angleTo(expected)<1e-7,'grounded source dry uses existing S3-look axis');
   a.grounded=a.ground.hit=false;
   for(let i=0;i<hz/5;i++){tick(0,4);assert.equal(ch.sourceMotion.debug.squid.name,'Sqd_Jump');assert(ch.squid.pivot.quaternion.angleTo(expected)<1e-7,'slow dry jump retains dry axis');}

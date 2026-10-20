@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { ROLLER_MODEL_WORLD_SCALE } from '../runtime/roller-source-scale.mjs';
 import { realCharacter } from './real-character-fixture.mjs';
 import { SOURCE_UNITS_PER_RANGE_LINE, WORLD_UNITS_PER_SOURCE_UNIT,
   WORLD_UNITS_PER_RANGE_LINE } from '../runtime/source-distance.mjs';
@@ -13,7 +14,7 @@ test('all five production Roller models use independently measured indexed sourc
     const d = ch.weapon.def;
     d.drum.computeBoundingBox();
     const b = d.drum.boundingBox;
-    assert.ok(Math.abs(b.max.x-b.min.x-rec.width)<1e-5, rec.id+' source width');
+    assert.ok(Math.abs(b.max.x-b.min.x-rec.width*ROLLER_MODEL_WORLD_SCALE)<1e-5, rec.id+' source width');
     // Uniform scaling must carry both fold coordinate owners together.
     assert.ok(d.fold.pivot.distanceTo(d.parts.hinge.pivot)<1e-6, rec.id+' fold pivot');
     ch.dispose();

@@ -1,3 +1,4 @@
+import { ROLLER_MODEL_WORLD_SCALE } from '../runtime/roller-source-scale.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -237,10 +238,10 @@ test('roller drum uses the measured source width; a pushed drum rests on the flo
   const width = drum.max.x - drum.min.x, diameter = drum.max.y - drum.min.y;
   // Pinned exported Roll-material extent, independent of PaintParam and the
   // earlier guessed kid-relative size band. The procedural shape is retained.
-  assert.ok(Math.abs(width - 2.5712) < 1e-5, `source drum width ${width}`);
-  assert.ok(diameter > .5076 * .95 && diameter < .5076 * 1.05, `source-guided drum diameter ${diameter}`);
+  assert.ok(Math.abs(width - 2.5712*ROLLER_MODEL_WORLD_SCALE) < 1e-5, `source drum width ${width}`);
+  assert.ok(diameter > .5076 * ROLLER_MODEL_WORLD_SCALE * .95 && diameter < .5076 * ROLLER_MODEL_WORLD_SCALE * 1.05, `source-guided drum diameter ${diameter}`);
   assert.ok(body.max.x > width / 2 && body.min.x < -width / 2, 'yoke arms reach both drum ends');
-  assert.ok(def.drumAt.z - def.drumR >= .84 - .1 - 1e-6, 'the axle moves out so the hub keeps its upstream clearance');
+  assert.ok(def.drumAt.z - def.drumR >= (.84 - .1)*ROLLER_MODEL_WORLD_SCALE - 1e-6, 'the axle moves out so the hub keeps its upstream clearance');
   s.rolling = true; s.firing = true;
   let bottom = Infinity, top = -Infinity, grip = 0;
   for (let i = 0; i < 90; i++) {

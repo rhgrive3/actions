@@ -22,7 +22,7 @@ test('S3 squid look: no floor-level own-colour mound; the local swimmer keeps th
 test('S3 squid look: face trails travel, dry squid lies flat, arms bundle and long feelers attach outside four short supports', () => {
   const ch = compose('src/game/character.js');
   assert.match(ch, /for \(const m of \[body, ghost, dark, eyes\]\) m\.rotation\.y = Math\.PI;/);
-  assert.match(ch, /_e1\.set\(Math\.PI \/ 2 - 0\.52 - tilt \* 0\.5, this\.sqYaw/);
+  assert.match(ch, /_e1\.set\(Math\.PI \/ 2 - tilt \* 0\.5, this\.sqYaw/);
   const geo = compose('src/game/character-geo.js');
   new vm.SourceTextModule(geo);
   assert.match(geo, /const feeler = k === 0 \|\| k === N - 1;/);

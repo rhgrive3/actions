@@ -56,7 +56,7 @@ test('production Charger player-hit and splat cues use source-specific MP3 only'
    'catalogue Charger hits retain charge fraction rather than estimating from damage');
  const index=built.indexOf('const chargerCue=sourceChargerHitCue(');
  assert.ok(index>0,'source replacement is inside full production composition');
- assert.ok(built.includes("const directBlaster=blasterHitCueKind(attacker,weaponId)==='direct'"),
+ assert.ok(built.includes("const directBlaster=blasterHitCueKind(attacker,weaponId,damage)==='direct'"),
    'direct Blaster contact uses the recorded sharp HitEf sample');
  assert.ok(built.includes("const recordedCue=(chargerCue==='combat:critical'||directBlaster)?'combat:critical':'combat:damage'"),
    'noncritical hits use original HitEf_Damage while verified direct contacts use HitEf_CriticalHit');
@@ -186,7 +186,7 @@ test('real AudioEngine prototype owns the hit-cue even when Game assigns G.audio
 test('production hit and enemy splat cues are original recorded MP3s; HUD and self-death remain distinct',()=>{
   const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const built=adaptBuildSource('src/main.js',src);
-  assert.match(built,/blasterHitCueKind\(attacker,weaponId\)/,'direct and splash Blaster contact remain distinct');
+  assert.match(built,/blasterHitCueKind\(attacker,weaponId,damage\)/,'direct and splash Blaster contact remain distinct');
   assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId, hitMeta \}\)/);
   assert.ok(built.includes("G.audio?.playWeapon?.(recordedCue,'fire'"),'HitEf recorded source playback');
   assert.ok(built.includes("G.audio?.playWeapon?.('combat:splat','fire'"),'recorded splat playback');

@@ -217,7 +217,7 @@ try{
   const m=receipt.measurement;
   assert.equal(m.layout,'range');assert.equal(m.floorTag,'floor:roller');
   assert.equal(m.holes,0);assert.ok(m.rows>40);assert.ok(m.contactError<1e-5);
-  assert.ok(Math.abs(m.drumWidth-2.5712)<1e-4);assert.ok(Math.abs(m.paintHalf-2.8*0.8103533592449264)<1e-10);
+  assert.ok(Math.abs(m.drumWidth-2.5712*(1.36/1.72259927))<1e-4);assert.ok(Math.abs(m.paintHalf-2.8*0.8103533592449264)<1e-10);
   assert.ok(Math.abs(m.contactDepth-1.5)<1e-10);
   assert.ok(m.gpuMaxWidth>4.3&&m.gpuMaxWidth<4.8);
   assert.equal(receipt.errors.length,0);

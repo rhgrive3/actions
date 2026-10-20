@@ -16,6 +16,7 @@ import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 // approximations, not a claim of retail frame-for-frame equivalence.
 
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
+import { bombLaunchPosition } from './bomb-motion.mjs';
 import { gearCurve } from './gear.mjs';
 import { objectDamageScale, objectDamageRow, subEffectScale } from './sub-resistance.mjs';
 import { subMarkSeconds } from './sub-mark-resistance.mjs';
@@ -81,7 +82,7 @@ export const ALL_SUB_SPECS = Object.freeze({
     spawnSpeedY: speedPerSecond(.24), spawnSpeedYWorldMin: speedPerSecond(-.4),
     inheritX: 1.6, inheritZ: 1.6, inheritYPlus: 4, inheritYMax: speedPerSecond(.32),
     radius: 4, damageInner: 2.8, damageOuter: 4, damageMax: rawDamage(350), damageMin: rawDamage(250), damageFalloff: 'discrete',
-    paintRadius: 4, crossPaintRadius: 1.4, gravity: 24, fuse: .72,
+    paintRadius: 4, crossPaintRadius: 1.4, gravity: .016*3600, flyPositionAirResist: .05866, fuse: .72,
     directDamage: 25, directDamageStatus: 'wiki-measured-first-hit', contactBurstDelayFrames: 1,
     inkCostFallback: 45, calibration: 'fuse/gravity/world scale calibrated; raw splash damage, paint and throw tuple extracted; Wiki measures a 25 direct hit followed 1F later by 35 near blast (two separate damage events)',
   }),
@@ -385,6 +386,8 @@ function createObject(api, projectiles, owner, id, record = {}) {
   } : baseSpec;
   const THREE = api.THREE, seq = Number.isSafeInteger(record.seq) ? record.seq : nextSeq(owner);
   const pos = record.pos?.isVector3 ? record.pos.clone() : new THREE.Vector3(record.x ?? owner.pos.x, record.y ?? owner.pos.y + 1.35, record.z ?? owner.pos.z);
+  if(!record.ghost&&!record.pos&&record.x==null&&record.y==null&&record.z==null)
+    bombLaunchPosition(owner,pos);
   let vel;
   if (record.vel?.isVector3) vel = record.vel.clone();
   else if ([record.vx, record.vy, record.vz].every(Number.isFinite)) vel = new THREE.Vector3(record.vx,record.vy,record.vz);
@@ -1785,6 +1788,35 @@ export function installAllSubs(api,profile={}){
     if(object&&placedAtFeet)deploy(api,this,object,object.pos,actor.ground?.normal);
     if(runner){runner.s3SubHold=0;if(id==='fizzy')runner.s3FizzyCharge=null;}
     return object;
+  };
+
+  // Burst Bomb's first contact is the end of its preview. Use the same hand
+  // origin, AP/movement inheritance, fixed step, gravity and drag as its live
+  // flight, instead of the unrelated native Splat Bomb preview.
+  const nativeArc=Projectiles.prototype.updateArc;
+  Projectiles.prototype.updateArc=function(actor,show){
+    if(!show||!actor?.alive||actor.weapon?.sub!=='burst')return nativeArc.call(this,actor,show);
+    const spec=ALL_SUB_SPECS.burst,vel=launchVelocity(api,this,actor,spec);
+    const p=bombLaunchPosition(actor,actor.pos.clone().add(new api.THREE.Vector3(0,1.35,0)));
+    const start=p.clone(),initial=vel.clone(),prev=p.clone(),hit=new api.Hit();
+    const position=this.arcGeo.attributes.position,per=2;let count=1,landed=false;
+    position.setXYZ(0,p.x,p.y,p.z);
+    for(let i=0;i<(this.arcN-1)*per;i++){
+      prev.copy(p);vel.y-=spec.gravity*STEP;
+      applyFlightPositionAirResist({vel,spec},STEP);p.addScaledVector(vel,STEP);
+      const world=G.physics.segment(prev,p,hit),target=contactActor(api,{owner:actor,team:actor.team},prev,p,.22);
+      if(target&&(!world.hit||target.t*prev.distanceTo(p)<world.dist)){
+        p.lerpVectors(prev,p,target.t);landed=true;
+      }else if(world.hit){p.copy(world.point).addScaledVector(world.normal,.03);landed=true;}
+      if(landed){position.setXYZ(count++,p.x,p.y,p.z);this.arcRing.position.copy(p);this.arcRing.quaternion.setFromUnitVectors(new api.THREE.Vector3(0,1,0),world.hit?world.normal:new api.THREE.Vector3(0,1,0));break;}
+      if((i+1)%per===0)position.setXYZ(count++,p.x,p.y,p.z);
+      if(count>=this.arcN)break;
+    }
+    position.needsUpdate=true;this.arcGeo.setDrawRange(0,count);this.arcLine.computeLineDistances();
+    const color=actor.ink>=spec.inkCost?actor.color:new api.THREE.Color(.6,.6,.6);
+    this.arcLine.material.color.copy(color).multiplyScalar(1.4);this.arcRing.material.color.copy(color).multiplyScalar(1.4);
+    this.arcLine.visible=true;this.arcRing.visible=landed;
+    this._arcCache={physics:G.physics,px:start.x,py:start.y,pz:start.z,vx:initial.x,vy:initial.y,vz:initial.z,landed};
   };
 
   // Native WeaponRunner owns ink payment and release timing. Suppress a second

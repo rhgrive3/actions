@@ -1,0 +1,142 @@
+{
+  "folder": "https://drive.google.com/drive/folders/1D7So33YcZJaU_W5eC_H8OMFnUxGA8lYJ",
+  "method": "public Drive download compared byte-for-byte to installed MP3; file signatures verified",
+  "files": [
+    {
+      "file": "Wp_ChargerQuick_Shot_00.mp3",
+      "id": "1hCt5K71prp-g3KYi3A_Qv3HKdnwuO_vf",
+      "bytes": 16344,
+      "sha256": "2b37112c678589801102c272caec623b92a378f6f5e84f3dde7a4b9bf705152f",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_ChargerQuick_Shot_Full_00.mp3",
+      "id": "1eqAOLovrWn61MOToyWHU46kRLn0Hzdu6",
+      "bytes": 23085,
+      "sha256": "29e83999f6b777aa793814502541d315d72afb712812f0bf58ce017b011a58b4",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_Charger_HoldNoise_00.mp3",
+      "id": "1YWIaC1QOIrMsvyvimOKS7iltPZ8XFWU5",
+      "bytes": 6313,
+      "sha256": "a0fad6aa3d67f6e0a0ec7a27490f2de273c95c733575f57432d5d746c8a0c6f0",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_ChargerNormal_Shot_00.mp3",
+      "id": "1YBBFkzEAQX71NFeehrizwh1fcE-xWxCE",
+      "bytes": 15090,
+      "sha256": "49708b2ee16e734b0df9dbdc1a87716c3910b6c837315a521bc98021efee5c72",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_ChargerNormal_Shot_Full_01.mp3",
+      "id": "1ZfoNoYgUAcIHR78Cab5OHFAD31J6gpMU",
+      "bytes": 16749,
+      "sha256": "44fb157a5c7b010b671dd2f26a01c00ddac107e223880f76ea857a113c087f33",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_ChargerLong_Shot_00.mp3",
+      "id": "1OydoVsP544ckaYaNK0gkmpcu3UJYEpcw",
+      "bytes": 11329,
+      "sha256": "44622fdb5b5e56d905abd4346c849a2bd8537f7a4961d9689592210ad21969d8",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_ChargerLong_Shot_Full_01.mp3",
+      "id": "1bJzBm7WTwv8RKGMHh9BZpxIZRML9B4-1",
+      "bytes": 23661,
+      "sha256": "76392bbc54526989506eda0aea0fa3c933ce22765b9f984e0ce6e643f573a8f2",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_Charger_HoldNoise_Heavy_00.mp3",
+      "id": "1iFfyS0f8JsQGhRGTyFTplXc0tlyOBKA5",
+      "bytes": 10702,
+      "sha256": "bf195dee1f2ef39e02a2c5f6ae179258008e81157059e10521d1c3bc96f5d655",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_ChargerLight_Shot_00.mp3",
+      "id": "1HdU6ctmnCmmRiL7QvD4FiIHG7XS6S_Eb",
+      "bytes": 13836,
+      "sha256": "4ce34e3a1944b5dbca3eb7b2cb8c3a9e3bd16d31fe9059cf5a0990c2cbdff443",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_ChargerLight_Shot_Full_00.mp3",
+      "id": "1ZTBPYd3k2AL53jWApdgy9dMEabb0WYSc",
+      "bytes": 16173,
+      "sha256": "78376b93a6fecb4d09e30dda89e7dff14b9c0d806ec1660a915d6569dbe01f47",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_ChargerKeeper_Shot_00.mp3",
+      "id": "1L2iqO6MrQec6DrFlORzoTZm1OaH2CE0E",
+      "bytes": 15090,
+      "sha256": "0b1df8e788e58d15b1f9350e198ece965dff23ef91694e01d71f05d1c00621d1",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_ChargerKeeper_Shot_Full_01.mp3",
+      "id": "1T8lj0LBcmfIqPJ4Oh4reE-81f5KFRtbG",
+      "bytes": 16173,
+      "sha256": "24eec6ef527e36b85433d72d97fd162cdf9bf605c3927cd44bb863e2eb084611",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_SpinnerStandard_Shot_00.mp3",
+      "id": "1MCej1Yg77WpvS5CxrfXEsk5YC9Q-Q-VR",
+      "bytes": 12717,
+      "sha256": "2065118e74a5ef2e82efd11cf5bcce2a9471fd802d4d7745faba0c474bf838cc",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_SpinnerStandard_Motor_00.mp3",
+      "id": "1akqlad0xBLj_4j-u6bZjFIl_VO5OrPN0",
+      "bytes": 272762,
+      "sha256": "53daf1ad24a3f4ec8dc208d1bf81cb4de1953aa54d6d2b67e5719e7a9bcee209",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_SpinnerStandard_Motor_01.mp3",
+      "id": "1Xaw-nI2LRlqpTTPvXf-rcMu9elvPZJAF",
+      "bytes": 258342,
+      "sha256": "4272c2b402f743b8740eb76efdf21ea9231ccaeb9d2153e6d8a4792112a50a3c",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "Wp_SpinnerStandard_MotorFire_00.mp3",
+      "id": "1DLfuJ63ZP8Cshzpy3SH0WHAyZamIv1mb",
+      "bytes": 252909,
+      "sha256": "0b288a0e11a8c7c082710ac86bfd0c8a354e1400726e2c4eaa7d6cfe80d76970",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    },
+    {
+      "file": "HitEf_CriticalHit_00.mp3",
+      "id": "1nEMOajEu8AVSGIBIdK9pxm4sMOD9Q4GP",
+      "bytes": 16344,
+      "sha256": "5366114895aca376f4780aa1123d90a7c4542bcad24a464afc374f47f28169cd",
+      "sameAsInstalled": true,
+      "looksAudio": true
+    }
+  ]
+}

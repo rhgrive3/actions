@@ -152,7 +152,7 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,
       "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",
       "const chargerCue=sourceChargerHitCue(weaponId,hitMeta?.chargerDirect===true?hitMeta.charge:null); " +
-      "const directBlaster=blasterHitCueKind(attacker,weaponId)==='direct'; " +
+      "const directBlaster=blasterHitCueKind(attacker,weaponId,damage)==='direct'; " +
       "const recordedCue=(chargerCue==='combat:critical'||directBlaster)?'combat:critical':'combat:damage'; " +
       "G.audio?.playWeapon?.(recordedCue,'fire',{volume:.76,priority:95});",
       'source-verified combat recordings by actual hit and charge classification');

@@ -199,7 +199,7 @@ test('selected Charger preloads HoldNoise first then the other actual cues in on
  a.disposeWeaponAudio();
 });
 
-test('recorded Charger hold follows actual charge while ignoring old oscillator pitch',async()=>{
+test('recorded Charger and Spinner motors retain the original recording speed',async()=>{
  const {ctx,sources}=mkctx(),a=new MixerStub(ctx),id='s3-charger-light';
  a.weaponBank();
  const archive=manifest([
@@ -219,21 +219,21 @@ test('recorded Charger hold follows actual charge while ignoring old oscillator 
  assert.equal(v.srcs[0].playbackRate.automation.length,0,'absent actor charge leaves recorded source clock unchanged');
  const actor={weaponRunner:{charge:0}},charged=voice(),rise=recorded.loop(charged,2.5,{actor});
  assert.equal(charged.srcs[0].buffer,a.weaponBank().authorized.pick(id,'charge').buffer);
- assert.ok(Math.abs(charged.srcs[0].playbackRate.value-.94)<1e-8);
+ assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1)<1e-8);
  actor.weaponRunner.charge=.5;rise.pitch(2.5,ctx.currentTime+.1);
- assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1.14)<1e-8);
+ assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1)<1e-8);
  const count=charged.srcs[0].playbackRate.automation.length;
  rise.pitch(2.5,ctx.currentTime+.11);
  assert.equal(charged.srcs[0].playbackRate.automation.length,count,'no redundant automation at constant charge');
  actor.weaponRunner.charge=1;rise.pitch(2.5,ctx.currentTime+.2);
- assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1.34)<1e-8);
- assert.equal(charged.srcs[0].playbackRate.automation.length,2);
+ assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1)<1e-8);
+ assert.equal(charged.srcs[0].playbackRate.automation.length,0);
  const spin=a._def('main:s3-spinner-quick:charge'),v2=voice();
  const spinControl=spin.loop(v2,1.5,{});
- assert.equal(v2.srcs[0].playbackRate.value,1.5,'Spinner motor modulation is unchanged');
+ assert.equal(v2.srcs[0].playbackRate.value,1,'Spinner motor keeps recorded pitch');
  spinControl.pitch(1.2,ctx.currentTime+.05);
- assert.equal(v2.srcs[0].playbackRate.value,1.2);
- assert.equal(v2.srcs[0].playbackRate.automation.length,1);
+ assert.equal(v2.srcs[0].playbackRate.value,1);
+ assert.equal(v2.srcs[0].playbackRate.automation.length,0);
  assert.equal(sources.length,3,'reused source buffer, with one additional charge presentation voice');
  a.disposeWeaponAudio();
 });
