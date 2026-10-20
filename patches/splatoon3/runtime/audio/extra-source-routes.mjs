@@ -20,3 +20,19 @@ export const EXTRA_SOURCE_EVENT_ROUTES = Object.freeze({
   'special:inkVac:release': 'source:Sp_Blower_InhaleOff_00',
 });
 export const sourceEventRoute = (id,event) => EXTRA_SOURCE_EVENT_ROUTES[id+':'+event] || null;
+
+// Explicit action names, when emitted, can play their matching existing clip.
+// These are never mapped to an unrelated generic ready/impact event.
+export const EXTRA_SPECIAL_ACTION_SOURCE = Object.freeze({
+  'booyahBomb:cheer': 'source:Sp_NiceBall_NiceReceive_00',
+  'inkVac:absorb': 'source:Sp_Blower_Inhale_InkGet_00',
+  'crabTank:jump': 'source:Sp_Chariot_Jump_00',
+  'crabTank:land': 'source:Sp_Chariot_Land_00',
+  'reefslider:land': 'source:Sp_Skewer_Land_00',
+  'zipcaster:wallJump': 'source:Sp_SuperHook_WallJump_00',
+  'inkjet:boost': 'source:Sp_JetPack_Boost_00',
+  'tentaMissiles:alert': 'source:Sp_MultiMissile_AlertOn_00',
+  'tentaMissiles:lockTrigger': 'source:Sp_MultiMissile_LockTrigger_00',
+  'ultraStamp:throwReady': 'source:Sp_UltraStamp_ThrowReady_00',
+});
+export const sourceSpecialActionRoute = (id,action) => EXTRA_SPECIAL_ACTION_SOURCE[id+':'+action] || null;
