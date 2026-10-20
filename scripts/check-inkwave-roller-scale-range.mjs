@@ -88,14 +88,32 @@ try{
   receipt.measurement=await page.evaluate(async({cameraReference,gripSeed,traceRng})=>{
     const G=window.__G,g=window.__inkwave,a=G.local;
     const {Vector3,OrthographicCamera,PerspectiveCamera}=await import('three');
-    g.debug.freeze();G.match.range.setWeapon('roller');
+    g.debug.freeze();
+    // BEGIN NATIVE STARTUP READINESS CONTRACT
+    // The menu may finish its bounded loading wait before Character warmup.
+    // Finish only that already-requested work before adding Roller to its cache.
+    let startupWarmup=null;
+    if(gripSeed!==null){
+      const warm=a.character._warmed;
+      if(!warm||typeof warm.then!=='function')throw Error('Missing native Character startup warmup');
+      let timeout;
+      try{
+        const result=await Promise.race([warm,new Promise((_,reject)=>{
+          timeout=setTimeout(()=>reject(Error('Native Character startup warmup timed out')),240000);
+        })]);
+        startupWarmup={schema:1,owner:'native-character-startup',completed:true,result:result??null,
+          weaponBefore:a.weaponId,characterWeaponBefore:a.character.weaponKind};
+      }finally{clearTimeout(timeout);}
+    }
+    // END NATIVE STARTUP READINESS CONTRACT
+    G.match.range.setWeapon('roller');
     await G.audio?.prepareWeapon?.('roller',{urgent:true});
     await a.character.sourceMotion.ready;
     G.match.range.travel('roller');
     a.pos.set(-26.5,.04,4);a.vel.set(0,0,0);a.yaw=a.aimYaw=0;g.rig.yaw=0;g.rig.pitch=-.3;
     // BEGIN INITIAL CHARACTER CONTRACT
     const c=a.character,boundary=window.__gripEntryFreeze||null;
-    const initialState=window.__gripInitialState={schema:1,boundary,gameTime:G.time,
+    const initialState=window.__gripInitialState={schema:1,boundary,gameTime:G.time,startupWarmup,
       character:{name:c.name,seed:c.seed,time:c.t,phase:c.phase,breathPhase:c.brPh,breathNumber:c.brN,
         breathAmplitude:c.brAmp,breathRate:c.brRate,pose:Array.from(c.P)}};
     if(gripSeed!==null&&(!boundary?.trusted||boundary.boundary!=='trusted-mode-range-capture'||

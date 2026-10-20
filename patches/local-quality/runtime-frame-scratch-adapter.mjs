@@ -202,13 +202,6 @@ export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
       'populate directional target without arrays');
   }
 
-  if (rel === 'src/game/motion/source-bank.js') {
-    // BFRES kind is masked with &7; use a branch instead of allocating a new
-    // four-element array on every curve sample.
-    patch('else if ([4, 5, 6, 7].includes(kind)) v = data[ko + i];',
-      'else if (kind >= 4 && kind <= 7) v = data[ko + i];',
-      'BFRES integer step curve without hot-path array');
-  }
   if (rel === 'src/world/level.js') {
     // Three's setIndex(array) already selects uint16 when all indices fit.
     // Release each temporary JS vertex array as soon as its typed attribute

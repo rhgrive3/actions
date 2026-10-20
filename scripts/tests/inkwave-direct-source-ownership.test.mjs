@@ -231,3 +231,15 @@ test('practice-stage registry and surface slots are authored without string adap
   }
   assert(!range.includes("if (rel === 'src/world/maps.js') {"));
 });
+
+test('source motion bank sampling and FK are directly owned by the authored module', async () => {
+  const { adaptBuildSource } = await import('../inkwave-source-composition.mjs');
+  const bank = fs.readFileSync(new URL('../../inkwave-public/src/game/motion/source-bank.js', import.meta.url), 'utf8');
+  assert.equal(adaptBuildSource('src/game/motion/source-bank.js', bank), bank);
+  assert.match(bank, /fromRaw\(mode, doFk = true\)/);
+  assert.match(bank, /fkCount\(names\)/);
+  assert.match(bank, /function clipLayout\(bank, c\)/);
+  assert.doesNotMatch(composition, /adaptPoseRotation|rel === 'src\/game\/motion\/source-bank\.js'/);
+  for (const adapter of ['motion-fk-hotpath-adapter.mjs', 'runtime-frame-scratch-adapter.mjs'])
+    assert.doesNotMatch(fs.readFileSync(new URL('../../patches/local-quality/' + adapter, import.meta.url), 'utf8'), /src\/game\/motion\/source-bank\.js/);
+});

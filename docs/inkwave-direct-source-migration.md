@@ -95,6 +95,12 @@ Previously `patches/practice-range/adapter.mjs` required the exact historical `M
 
 The direct-source audit and Practice Range isolation tests now check that stage registry composition is unchanged. This explicitly fixes `INKWAVE practice range conflict (range layout registry)` introduced by the earlier incomplete migration.
 
+## Completed slice: source motion bank
+
+`inkwave-public/src/game/motion/source-bank.js` is directly authored. Five build rewrites formerly made by `pose-rotation-adapter.mjs` (deleted), `local-quality/adapter.mjs`, `motion-fk-hotpath-adapter.mjs` and `runtime-frame-scratch-adapter.mjs` (Three.js ZYX rotation with exact zero coefficients, optional FK in `fromRaw`/`sample`, unit parent-scale skip, array-free segment-scale compensation, integer step curve kind) are part of the tracked source. The production composition immediately before the move is kept as `patches/local-quality/tests/fixtures/source-bank-composed-before-direct-migration.mjs.txt`, only as the exact oracle for `pose-rotation.test.mjs` and `motion-fk-hotpath.test.mjs`.
+
+The same source adds exact sampling work reductions (per-pose key-segment hints, once-per-clip unanimated rotations, written-out FK arithmetic and optional leading-bone ranges for `fk`/`copy`/`mix`); see [the optimization record](../reports/inkwave-base-logic-optimization-2026-10-20.md). `source-controller.js`, `body-balance.js` and `retarget.js` keep their adapters; the range call sites are build rewrites in `motion-fk-hotpath-adapter.mjs`.
+
 ## Next migration batches
 
 1. Audit and migrate simple performance and UI adapters with isolated upstream anchors. Keep each change small enough to compare composed output against the previous behavior.
