@@ -1,4 +1,5 @@
 import { KIT_AUDIO, SUB_AUDIO_IDS, SPECIAL_AUDIO_IDS } from './kit-recipes.mjs';
+import { sourceSpecialActionRoute } from './extra-source-routes.mjs';
 const pos3=p=>Array.isArray(p)?{x:p[0],y:p[1],z:p[2]}:p;
 const eventOfAction=Object.freeze({activate:'open',end:'release',return:'release',shot:'fire',cannon:'fire',launch:'fire',throw:'fire',
  impact:'explosion',block:'shield_hit',swing:'impact',jumpSwing:'impact',zip:'dodge',hookImpact:'impact',jump:'impact',
@@ -14,6 +15,7 @@ export function specialActivationAudioEvent(id){
   return 'open';
 }
 export function specialActionAudioEvent(id,action){
+ if(id==='booyahBomb'&&action==='cheer')return null; // NiceReceive is a cheer, not full charge.
  if(action==='target'&&(id==='tentaMissiles'||id==='killerWail'))return 'ready'; // acquired target cue
  if(id==='crabTank'&&action==='cannon')return 'fire_alt'; // actual cannon, not short gun
  if(id==='zipcaster'&&action==='zip')return 'fire'; // recorded hook-launch shot, not absent dodge
@@ -30,6 +32,11 @@ export function installKitAudio(api,{listen,options}){
    const o=options(a,pos3(pos)||a.pos,volume*relation);if(event==='impact'||event==='explosion')o.pos=pos3(pos)||a.pos;
    o.priority=kind==='special'?76:60;return G.audio?.playWeapon?.(kind+':'+id,event,o);
  }
+ function sourceSound(a,source,pos,volume=.64){
+   if(!a||!source)return null;
+   const o=options(a,pos3(pos)||a.pos,volume);o.priority=76;
+   return G.audio?.playWeapon?.(source,'fire',o);
+ }
  function activation(a,id){if(!a||!SPECIAL_AUDIO_IDS.includes(id))return;
    const now=G.time||0,last=recent.get(a);if(last?.id===id&&Math.abs(now-last.at)<.075)return;
    recent.set(a,{id,at:now});sound(a,'special',id,specialActivationAudioEvent(id),a.pos,.82);
@@ -37,6 +44,8 @@ export function installKitAudio(api,{listen,options}){
  }
  listen('special:use',e=>activation(e?.actor,e?.id||e?.actor?.weapon?.special));
  const specialEvent=e=>{if(!e)return;if(e.action==='activate'){activation(e.actor,e.id);return;}
+   const source=sourceSpecialActionRoute(e.id,e.action);
+   if(source){sourceSound(e.actor,source,e.pos,.64);return;}
    const event=specialActionAudioEvent(e.id,e.action);
    if(event)sound(e.actor,'special',e.id,event,e.pos,.64);
  };
@@ -52,7 +61,7 @@ export function installKitAudio(api,{listen,options}){
  listen('kit:bubbler:deploy',e=>activation(e?.actor||e?.owner,'bubbler'));
  listen('special:slam',e=>sound(e?.actor,'special','slam','explosion',e?.pos,.9));
  listen('special:inkvac-release',e=>sound(e?.actor,'special','inkVac','fire',e?.actor?.pos,.8));
- listen('special:inkvac-absorb',e=>sound(e?.actor,'special','inkVac','impact',e?.actor?.pos,.42));
+ listen('audio:inkvac-absorbed',e=>sourceSound(e?.actor,sourceSpecialActionRoute('inkVac','absorb'),e?.pos,.42));
  for(const [ev,event] of [['ignite','ready'],['hit','shield_hit'],['collapse','break'],['remote:ignite','ready'],['remote:gone','break']]){
    listen('kit:bubbler:'+ev,e=>sound(e?.actor||e?.owner,'special','bubbler',event,e?.pos,.66));
  }
@@ -82,7 +91,9 @@ export function installKitAudio(api,{listen,options}){
  // Continuous power beds use one handle per active actor, never one per frame.
  const update=Actor.prototype._updateSpecial;
  Actor.prototype._updateSpecial=function(dt,...args){const result=update.call(this,dt,...args),id=this.specialActive?.id;
-   const loopEvent=id==='inkVac'?'charge':['inkjet','crabTank','krakenRoyale','storm','killerWail','booyahBomb'].includes(id)?'spin':null;
+   // HoldFull is valid only after the sourced Booyah charge reaches ready; never loop it during startup.
+   const loopEvent=id==='booyahBomb'?(this.specialActive?.phase==='ready'?'spin':null)
+     :id==='inkVac'?'charge':['inkjet','crabTank','krakenRoyale','storm','killerWail'].includes(id)?'spin':null;
    let row=active.get(this);
    // A deferred real loop may fail while the special remains active. Retire
    // the failed handle so the next update can retry after loader backoff.

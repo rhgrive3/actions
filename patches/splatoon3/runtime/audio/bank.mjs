@@ -2,7 +2,8 @@ import { WEAPON_AUDIO, LOOP_EVENTS, mainAudioSourceId } from './weapon-recipes.m
 export { mainAudioSourceId } from './weapon-recipes.mjs';
 import { KIT_AUDIO } from './kit-recipes.mjs';
 import { COMBAT_AUDIO } from './combat-recipes.mjs';
-export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO});
+import { SOURCE_EXTRA_AUDIO } from './source-cue-registry.mjs';
+export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO,...SOURCE_EXTRA_AUDIO});
 import { renderSound } from './render.mjs';
 export const MAIN_AUDIO_PREFIX='main:';
 // Source-recorded MP3s always win. Only MAIN-weapon attack one-shots may use
@@ -17,7 +18,7 @@ export class WeaponSoundBank {
   get(id,event,variant=0){
     id=mainAudioSourceId(id);
     // Recording-only cues are source routes, not parameters for the PCM renderer.
-    if(Object.hasOwn(COMBAT_AUDIO,id))throw new Error('Recorded-only cue cannot generate PCM: '+id+'/'+event);
+    if(Object.hasOwn(COMBAT_AUDIO,id)||Object.hasOwn(SOURCE_EXTRA_AUDIO,id))throw new Error('Recorded-only cue cannot generate PCM: '+id+'/'+event);
     if(this.realOnly&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Procedural weapon audio disabled for non-main-shot events');
     const key=`${id}:${event}:${variant}`;let item=this.cache.get(key);
     if(item){this.cache.delete(key);this.cache.set(key,item);this.hits++;return item.buffer;}
@@ -110,7 +111,7 @@ export class WeaponSoundBank {
   // Keep worker jobs bounded even after rapid weapon switches or many remote actors.
   warm(id,{focus=true,events=null}={}){
     id=mainAudioSourceId(id);
-    if(this.disposed||Object.hasOwn(COMBAT_AUDIO,id)||(this.realOnly&&!this.audibleShotFallback)||!AUDIO_RECIPES[id])return;
+    if(this.disposed||(Object.hasOwn(COMBAT_AUDIO,id)||Object.hasOwn(SOURCE_EXTRA_AUDIO,id))||(this.realOnly&&!this.audibleShotFallback)||!AUDIO_RECIPES[id])return;
     const priority=['fire','fire_full','fire_left','fire_alt','fire_vertical','ready'];
     const eventNames=AUDIO_RECIPES[id].events.filter(e=>!events||events.includes(e)).filter(e=>!this.realOnly||mainAttackFallbackEligible(id,e)).sort((a,b)=>{
       const pa=priority.indexOf(a),pb=priority.indexOf(b);
