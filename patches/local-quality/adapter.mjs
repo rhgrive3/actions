@@ -138,7 +138,7 @@ const IDENTITY_FILES = [
   'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'ui-actor-lifetime-adapter.mjs',
   'tenacity-adapter.mjs', 'tenacity.mjs',
-  'idle-adapter.mjs', 'idle-resources.mjs', 'paused-frame-snapshot.mjs', 'music-idle.mjs',
+  'idle-adapter.mjs', 'idle-resources.mjs', 'paused-frame-snapshot.mjs', 'paint-context-restore.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs', 'refl-skip-adapter.mjs', 'finish-tape-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'offline-offscreen-budget.mjs',
@@ -1533,6 +1533,11 @@ function clusterTopology(src, cell, sigs) {
         '    const orderState = ownerOrder && !cosmetic ? { accepted: false } : null;',
         '    const orderState = ownerOrder && !cosmetic ? ((this._orderState || (this._orderState = { accepted: false })), (this._orderState.accepted = false, this._orderState)) : null;',
         'reuse _orderState in PaintSystem.splat');
+    }
+    // #1642: a restored WebGL context returns a blank atlas; the CPU grid can redraw it.
+    if (!code.includes('installPaintContextRestore')) {
+      code = "import { installPaintContextRestore } from '../../patches/local-quality/paint-context-restore.mjs';\n" + code +
+        '\ninstallPaintContextRestore(PaintSystem);\n';
     }
   }
 

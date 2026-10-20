@@ -407,6 +407,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/gyro-permission.mjs',
   'patches/local-quality/idle-resources.mjs',
   'patches/local-quality/paused-frame-snapshot.mjs', // #1659 retained pause frame: static import and precache, no extra eager hint.
+  'patches/local-quality/paint-context-restore.mjs', // #1642 atlas rebuild after a lost WebGL context: static import and precache, no extra eager hint.
   'patches/local-quality/mobile-platform.mjs',
   'patches/local-quality/music-idle.mjs',
   'patches/local-quality/platform-audio.mjs',

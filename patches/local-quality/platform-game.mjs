@@ -249,6 +249,9 @@ export function installPlatformGame(Game, G, env = globalThis) {
       const restored = () => {
         try {
           game.R.renderer.resetState?.(); game.R.resize?.();
+          // #1642: the painted atlas is blank after a context loss while the CPU turf survives. If it cannot be
+          // redrawn the catch below keeps play blocked, so no false visual of the turf is ever scored.
+          G.paint?.restoreFromGrid?.();
           r.rendererLost = false; r.notice?.remove(); r.notice = null; canvas.removeAttribute('aria-label'); owner.block('webgl', false);
         } catch (error) { env.console?.error?.('[platform] renderer restore', error); }
       };
