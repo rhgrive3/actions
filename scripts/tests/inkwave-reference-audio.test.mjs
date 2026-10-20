@@ -34,3 +34,19 @@ test('QA-only main update is eligible but cannot substitute a different actual c
  assert.equal(receipt.originalCommit,CURRENT_BASE);
  assert.equal(receipt.publicMainEquivalent,false);
 });
+
+for(const base of [BASE,CURRENT_BASE]) test(`explicit approved base ${base} preserves its own receipt identity`,t=>{
+ const r=rig(t);r.identity={...r.identity,baseSha:base};r.actualBase=base;
+ assert.equal(eligible(r.identity),true);const before=snapshot(r.original),receipt=prepare(r);
+ assert.equal(receipt.originalCommit,base);assert.equal(receipt.writtenPaths.length,2);
+ assert.deepEqual(snapshot(r.original),before);assert.equal(receipt.publicMainEquivalent,false);
+});
+for(const [claimed,actual] of [[BASE,CURRENT_BASE],[CURRENT_BASE,BASE],[CURRENT_BASE,'other']])test(`base claim ${claimed} must equal actual ${actual}`,t=>{
+ const r=rig(t);assert.throws(()=>prepare({...r,identity:{...r.identity,baseSha:claimed},actualBase:actual}),/ineligible/);
+ assert.equal(existsSync(r.derived),false);assert.equal(existsSync(r.derived+'.staging'),false);
+});
+test('da base does not waive pin or mixed-tree rejection',t=>{
+ const r=rig(t);r.identity={...r.identity,baseSha:CURRENT_BASE};r.actualBase=CURRENT_BASE;
+ writeFileSync(path.join(r.original,files[1].path),files[1].after);
+ assert.throws(()=>prepare(r),/pin mismatch/);assert.equal(existsSync(r.derived+'.staging'),false);
+});

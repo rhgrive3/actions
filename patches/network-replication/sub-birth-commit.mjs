@@ -1,3 +1,4 @@
+import { abilityPoints } from '../splatoon3/runtime/gear.mjs';
 import { closeReceiverSprinklers } from './sprinkler-contact-commit.mjs';
 // Receiver-private admission metadata. Never read authority from packet fields.
 // Geometry, damage policy and proof expiry remain owned by combat-provenance.
@@ -17,7 +18,9 @@ function captureTorpedoMotion(actor,snap) {
   try {
     const normalMoveTarget=actor.weaponRunner?.moveSpeed?.();
     if(!Number.isFinite(normalMoveTarget)||!(normalMoveTarget>0))return {};
-    return {motion:Object.freeze({t:snap.t,life:snap.life,vx:snap.vx,vy:snap.vy,vz:snap.vz}),normalMoveTarget};
+    const gear=snap.adoption?.gear;
+    const gearAP=gear?abilityPoints(gear.loadout).subPower||0:null;
+    return {...(gear?{torpedoGear:Object.freeze({key:gear.key,ap:gearAP})}:{}),motion:Object.freeze({t:snap.t,life:snap.life,vx:snap.vx,vy:snap.vy,vz:snap.vz}),normalMoveTarget};
   } catch { return {}; }
 }
 export function stageAcceptedSubBirth(nm,from,event,packetTime,ownerTick) {

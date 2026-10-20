@@ -8,19 +8,22 @@ const life=a=>Math.max(a?.netLife||0,a?.net?.lastLife||0);
 function retire(r){r.retired=true;r.contacts.length=0;registries.get(r.nm)?.delete(r);worlds.get(r.world)?.delete(r);}
 function live(r){if(!r||r.retired)return false;const {nm,G,world,owner}=r;
  const ok=!nm._disposed&&G.projectiles===world&&G.level===r.level&&G.physics===r.physics&&G.match===r.match&&nm.match===r.match&&nm.cfg.id===r.epoch&&
- nm.peers.get(r.from)===r.peer&&nm.s._members.has(r.from)&&nm.byNid.get(owner.nid)===owner&&owner.owner===r.from&&owner.net===r.ownerNet&&owner.remote&&life(owner)===r.life&&owner.alive!==false;
+ nm.peers.get(r.from)===r.peer&&nm.s._members.has(r.from)&&nm.byNid.get(owner.nid)===owner&&owner.owner===r.from&&owner.net===r.ownerNet&&owner.remote&&life(owner)===r.life&&owner.alive!==false&&(!r.gearKey||owner.s3?._wireGearKey===r.gearKey&&owner.s3?._wireGearApplied===owner.s3?.loadout);
  if(!ok)retire(r);return ok;
 }
 export function registerLimitedTorpedo(nm,parent,receipt,event,G,notify){
  if(!parent||parents.has(parent)||!parent.ghost||parent.subId!=='torpedo'||!G.projectiles?._s3SubObjects?.includes(parent)||parent.owner!==nm.byNid.get(receipt.nid))return false;
  const spec=parent.spec,ap=parent.owner.s3?.abilityPoints?.subPower ?? 0;
- if(ap!==0||event[5]?.subPowerAP!==0||(parent.owner.s3?.modifiers?.subPower??1)!==1||!eligibleLimitedTorpedoBirth({receipt,snapshot:receipt.motion,event:event[5],spec,speed:gearCurve(ap,spec.throwSpeedTiers.low,spec.throwSpeedTiers.mid,spec.throwSpeedTiers.high),normalMoveTarget:receipt.normalMoveTarget}))return false;
+ const gear=receipt.torpedoGear,speed=gearCurve(ap,spec.throwSpeedTiers.low,spec.throwSpeedTiers.mid,spec.throwSpeedTiers.high);
+ const validGear=Number.isInteger(ap)&&ap>=0&&ap<=57&&gear?.ap===ap&&gear.key===parent.owner.s3?._wireGearKey&&parent.owner.s3?._wireGearApplied===parent.owner.s3?.loadout;
+ if(!(ap===0&&event[5]?.subPowerAP===0&&(parent.owner.s3?.modifiers?.subPower??1)===1)&&!validGear)return false;
+ if(event[5]?.subPowerAP!==ap||parent.owner.s3?.modifiers?.subPower!==speed/spec.throwSpeedTiers.low||!eligibleLimitedTorpedoBirth({receipt,snapshot:receipt.motion,event:event[5],spec,speed:gearCurve(ap,spec.throwSpeedTiers.low,spec.throwSpeedTiers.mid,spec.throwSpeedTiers.high),normalMoveTarget:receipt.normalMoveTarget}))return false;
  const world=G.projectiles;
  let set=registries.get(nm);if(!set){set=new Set();registries.set(nm,set);}
  for(const old of [...set]){if(!live(old))continue;old.contacts=old.contacts.filter(c=>performance.now()/1000-c.at<=.95);if(old.parent.dead&&old.dropCount===0&&!old.contacts.length)retire(old);}
  if(set.size>=160)return false;
  if(!worlds.has(world)){const clear=world.clear,worldRecords=new Set();world.clear=function(...args){for(const r of worldRecords)retire(r);worldRecords.clear();return clear.apply(this,args);};worlds.set(world,worldRecords);}
- const r={nm,G,world,parent,owner:parent.owner,ownerNet:parent.owner.net,from:receipt.from,life:receipt.life,peer:nm.peers.get(receipt.from),match:nm.match,epoch:nm.cfg.id,level:G.level,physics:G.physics,notify,contacts:[],dropCount:0,retired:false,birthAt:performance.now()/1000};
+ const r={gearKey:validGear?receipt.torpedoGear.key:null,nm,G,world,parent,owner:parent.owner,ownerNet:parent.owner.net,from:receipt.from,life:receipt.life,peer:nm.peers.get(receipt.from),match:nm.match,epoch:nm.cfg.id,level:G.level,physics:G.physics,notify,contacts:[],dropCount:0,retired:false,birthAt:performance.now()/1000};
  if(!live(r)||!beginReceiverTorpedoObservation({G},world,parent))return false;parents.set(parent,r);set.add(r);worlds.get(world).add(r);return true;
 }
 export function registerLimitedDrop(world,drop){const r=parents.get(drop.source);if(drop.kind!=='chase'||!drop.ghost||!live(r)||r.world!==world||!world._s3TorpedoSplashes.includes(drop))return false;children.set(drop,r);r.dropCount++;return true;}
