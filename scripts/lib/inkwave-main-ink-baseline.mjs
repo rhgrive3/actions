@@ -234,7 +234,7 @@ function reviewedCurrentPair(baseline, candidate) {
     validationLimit: 'Source identity only; full native browser/image comparisons remain mandatory',
     manifestGitBlob: MAIN_INK_BASELINE_MANIFEST_BLOB,
     paths: MAIN_INK_BASELINE_PATHS.map(path => ({path,
-      mode: 'pinned-current-pair', originalGitBlob: gitBlobSha1(baseline.get(path)),
+      mode: 'reviewed-current-pair', originalGitBlob: gitBlobSha1(baseline.get(path)),
       referenceGitBlob: gitBlobSha1(baseline.get(path)), candidateGitBlob: gitBlobSha1(candidate.get(path)),
       originalSha256: sha256(baseline.get(path)), referenceSha256: sha256(baseline.get(path)),
       candidateSha256: sha256(candidate.get(path)), replayed: []}))
