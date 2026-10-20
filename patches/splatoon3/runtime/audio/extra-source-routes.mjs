@@ -5,15 +5,8 @@
  * Other 2022 MP3s remain callable by their source:* ID, never guessed onto events.
  */
 export const EXTRA_SOURCE_EVENT_ROUTES = Object.freeze({
-  // The recorded family-neutral flying bomb sound covers thrown, moving subs.
-  'sub:bomb:fire': 'source:Wp_BombFly_00',
-  'sub:suction:fire': 'source:Wp_BombFly_00',
-  'sub:burst:fire': 'source:Wp_BombFly_00',
-  'sub:autobomb:fire': 'source:Wp_BombFly_00',
-  'sub:fizzy:fire': 'source:Wp_BombFly_00',
-  'sub:toxicMist:fire': 'source:Wp_BombFly_00',
-  'sub:sprinkler:fire': 'source:Wp_BombFly_00',
-  'sub:pointSensor:fire': 'source:Wp_MarkingFly_00',
+  // Flight-loop filenames (Wp_BombFly / Wp_MarkingFly) are NOT throw one-shots.
+  // Do not play their full recorded duration without a projectile lifecycle.
   // These names distinguish activation from firing, and ending from starting.
   'special:tentaMissiles:open': 'source:Sp_MultiMissile_Attach_00',
   'special:storm:release': 'source:Sp_InkStorm_UpEnd_00',
