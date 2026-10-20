@@ -1,6 +1,24 @@
 // INKWAVE multiplayer relay server for Cloudflare Workers (Durable Objects)
 // Implements room management, membership, and message forwarding for INKWAVE clients.
 
+// Room codes are exactly what the client generates (src/net/session.js CODE_CHARS,
+// 5 characters). Anything else cannot name a real room and must never allocate a
+// Durable Object.
+const ROOM_CODE = /^[BCEFGHJKLMNPQRTUVXYZ23456789]{5}$/;
+
+const isWebSocketUpgrade = (request) => request.headers.get('Upgrade')?.toLowerCase() === 'websocket';
+
+// Same refusal shape the room uses for every join error, so the client shows a
+// readable message. Answered without touching a Durable Object.
+function refusalSocket(message) {
+  const pair = new WebSocketPair();
+  const [client, server] = Object.values(pair);
+  server.accept();
+  server.send(JSON.stringify({ t: 'err', e: message }));
+  server.close(1008, message);
+  return new Response(null, { status: 101, webSocket: client });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -18,9 +36,17 @@ export default {
 
     const pathParts = url.pathname.split('/').filter(Boolean);
 
-    // Endpoint: /room/:code
-    if (pathParts[0] === 'room' && pathParts[1]) {
-      const roomCode = pathParts[1].toUpperCase();
+    // Endpoint: /room/:code. Everything that cannot be a real join is answered
+    // here, before ROOMS.idFromName / get / fetch (#1646).
+    if (pathParts[0] === 'room') {
+      if (pathParts.length !== 2) return new Response('Not found', { status: 404 });
+      if (request.method !== 'GET') {
+        return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET' } });
+      }
+      if (!isWebSocketUpgrade(request)) return new Response('Expected WebSocket upgrade', { status: 426 });
+      // ASCII-only before case folding, so no Unicode uppercase can alias a code.
+      const roomCode = /^[A-Za-z0-9]{5}$/.test(pathParts[1]) ? pathParts[1].toUpperCase() : '';
+      if (!ROOM_CODE.test(roomCode)) return refusalSocket('Room not found');
       const id = env.ROOMS.idFromName(roomCode);
       const roomObj = env.ROOMS.get(id);
       return roomObj.fetch(request);
@@ -50,7 +76,7 @@ export class RoomDurableObject {
   }
 
   async fetch(request) {
-    if (request.headers.get('Upgrade') !== 'websocket') {
+    if (request.method !== 'GET' || !isWebSocketUpgrade(request)) {
       return new Response('Expected WebSocket upgrade', { status: 426 });
     }
 
