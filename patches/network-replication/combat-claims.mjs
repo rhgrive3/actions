@@ -137,6 +137,16 @@ export function ingestTick(nm, from, d, now, tables) {
       const storm = e[3] === 'storm', speed = Math.hypot(e[7], e[8], e[9]);
       addReceipt(nm, actor, { kind: storm ? 'special' : 'sub', origin: e.slice(4, 7), reach: storm ? Infinity : Math.min(150, 3 * speed + 14),
         expires: now + (storm ? 12 : 30), credits: storm ? 12 : 8 }, now);
+    } else if (e[1] === 'ac' && (e[2] === 'sub' || e[2] === 'special')) {
+      // Catalogue subs and specials announce themselves with an `ac` row (catalogue.mjs) instead of a `b` row. A quick tap
+      // throw never shows the aim flag in a tick, so without this row its hits would find no evidence.
+      const actor = ownedRemote(nm, from, e[3]), payload = e[5];
+      if (!actor || !payload || typeof payload !== 'object') continue;
+      const kit = equippedKit(actor), id = payload.subId ?? payload.id;
+      if (typeof id === 'string' && id !== (e[2] === 'sub' ? kit.sub : kit.special)) continue;   // another kit's sub or special is not evidence
+      addReceipt(nm, actor, e[2] === 'sub'
+        ? { kind: 'sub', origin: null, reach: Infinity, expires: now + 30, credits: 8 }
+        : { kind: 'special', origin: null, reach: Infinity, expires: now + 14, credits: 12 }, now);
     } else if (e[1] === 'ev' && typeof e[2] === 'string' && e[3] && typeof e[3] === 'object') {
       const actor = ownedRemote(nm, from, e[3].actor?.n);
       if (!actor) continue;

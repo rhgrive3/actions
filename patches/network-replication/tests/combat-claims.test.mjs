@@ -138,6 +138,31 @@ test('#1665 the evidence ledger is bounded and cleared with the NetMatch', async
   assert.equal(r.nmR._combatClaims, null);
 });
 
+// Catalogue subs and specials announce themselves with an `ac` row (catalogue.mjs), not a `b` row. A quick tap throw never shows
+// the aim flag in a tick, so these rows have to be evidence too; otherwise its hits would be refused in real play.
+test('#1665 a catalogue sub or special announced by an `ac` row supports its hit; another kit\'s does not', async () => {
+  const announce = (r, category, id) => r.asA(() => r.nmA._rec(['ac', category, 1, 1, { phase: 'spawn', subId: id, id }]));
+  const r = await claimsRig();
+  const sub = r.attackerOnR.weapon.sub, special = r.attackerOnR.weapon.special;
+  r.tick();
+  r.deliver(r.claim(25, sub));
+  assert.equal(hitCount(r), 0, 'no tap throw seen yet: the claim waits');
+  announce(r, 'sub', sub); r.tick();
+  assert.equal(hitCount(r), 1, 'the waiting claim is applied once the owner\'s `ac` birth arrives');
+  r.deliver(r.claim(25, sub));
+  assert.equal(hitCount(r), 2, 'and a later hit of the same throw lands');
+  announce(r, 'special', special); r.tick();
+  r.deliver(r.claim(100, special));
+  assert.equal(hitCount(r), 3, 'an announced special supports a special hit');
+
+  const other = await claimsRig();
+  const otherSub = ['burst', 'fizzy', 'torpedo', 'inkMine'].find(id => id !== other.attackerOnR.weapon.sub);
+  other.tick(); announce(other, 'sub', otherSub); other.tick();
+  other.deliver(other.claim(25, other.attackerOnR.weapon.sub));
+  other.tick({ advance: 0.5 });
+  assert.equal(hitCount(other), 0, 'another kit\'s sub announcement is not evidence for this kit');
+});
+
 // ---- #1666 Boss Battle ---------------------------------------------------------------------------------------------
 test('#1666 a guest cannot invent Boss body damage without attacking; the q watermark is not consumed', async () => {
   const r = await claimsRig({ boss: true });
