@@ -45,4 +45,6 @@ Node >=22、`esbuild@0.28.2`、`playwright@1.62.1`、`ws@8`、Chromium が必要
 
 インク重ね描画は、視錐台内の描画領域のうち `_pushQuad` が一度でも書き込んだチャートの三角形だけを元の順で描く。判定と失敗時の扱いは [チャート選択の記録](../../reports/inkwave-native-ink-charts-2026-10-19.md) を参照。
 
+CPU の塗りは、xz ハッシュの候補を各呼び出し元の最初の y 判定で先に除き（`NativeLevel.queryBlocksBand`）、成長を終えたボム等の放射・粒の所有権判定は、入力が完全一致する間だけ形状の外れセルを再判定しない。結果の同一性と計測は [#1671 の記録](../../reports/inkwave-native-cpu-1671-2026-10-20.md)、再現は `scripts/check-inkwave-native-sim-digest.mjs` と `scripts/measure-inkwave-native-sim.mjs`。
+
 本体の品質変更は CPU 塗り・物理・ナビを保持する。塗り atlas の再配置は元の三角形に paint UV を再生成し、テクスチャ表現だけを変更する。オンラインではモデル/チャートと native runtime の fingerprint を検査する。元のガチ4ルール placement/geometry は未復元で、到達可能な Pnt 地形上のローカル調整値を使う。
