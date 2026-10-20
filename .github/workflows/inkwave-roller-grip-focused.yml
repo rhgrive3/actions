@@ -1,0 +1,26 @@
+name: INKWAVE Roller grip focused
+on:
+  push:
+    branches:
+      - fix/roller-holding-comparison-20261020
+    paths:
+      - patches/splatoon3/runtime/roller.mjs
+      - patches/splatoon3/tests/dynamo-handle-center.test.mjs
+      - patches/splatoon3/tests/roller-support-contact.mjs
+      - .github/workflows/inkwave-roller-grip-focused.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  roller-grip-focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Dynamo support at 30/60/120Hz
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/dynamo-handle-center.test.mjs
+      - name: Verify native Roller palm and drum invariants
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/roller-holding-pivot.test.mjs
