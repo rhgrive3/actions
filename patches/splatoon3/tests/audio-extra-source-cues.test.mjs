@@ -108,7 +108,7 @@ test('real-only audio engine redirects absent kit events, but prefers a native r
   const native={id:'special:tentaMissiles',event:'open',variant:0,buffer:{},bytes:4};
   bank.authorized.byEvent.set('special:tentaMissiles:open',[native]);
   const nativeResult=audio.playWeapon('special:tentaMissiles','open',{actor});
-  assert.equal(nativeResult?.weaponId,'sub:bomb','source replacement must never override a native decoded event');
+  assert.equal(nativeResult?.weaponId,'special:tentaMissiles','source replacement must never override a native decoded event');
   assert.equal(audio.calls.at(-1).name,'main:special:tentaMissiles:open');
   audio.disposeWeaponAudio();
 });
