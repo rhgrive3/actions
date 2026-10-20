@@ -134,7 +134,10 @@ test('production composition exposes all queued fixes and retains both Turf and 
   assert.ok(main.includes('normalizeQueueProfile(loadJSON('),'boot profile repair not composed');
   assert.ok(main.includes('weapon: safeWeaponId(this.profile.weapon, WEAPONS)'),'offline weapon admission missing');
   assert.ok(main.includes('const resetMatch = this.match, resetFlow = this._matchFlow;'),'existing operation-owned attract reset must remain');
-  assert.ok(main.includes('if (this.match !== resetMatch || this._matchFlow !== resetFlow) return;'));
+  assert.ok(main.includes('if (this.match !== resetMatch || this._matchFlow !== resetFlow) return;'),
+    'operation ownership must remain');
+  assert.ok(main.includes('if (!this.match?.attract || this.match.paused) return;'),
+    'the later native-stage paused-attract guard must remain beside operation ownership');
   // Native-stage admission may move the flow allocation from the default
   // parameter into the method body. Verify the operation guard rather than
   // freezing the pre-native-stage function signature.
@@ -176,6 +179,11 @@ test('composed Game attract callback skips stale live-start and keeps normal men
   pending.settle();await Promise.resolve();
   assert.equal(pending.game.match,pending.old);
   assert.deepEqual(pending.calls,['fade'],'fresh startup invalidates prior fade without replacing original match');
+
+  const paused=rig();paused.game._updateAttract(1/60);
+  paused.old.paused=true;paused.settle();await Promise.resolve();
+  assert.equal(paused.game.match,paused.old);
+  assert.deepEqual(paused.calls,['fade'],'pause acquired during fade blocks delayed attract replacement');
 
   const b=rig();b.game._updateAttract(1/60);
   b.settle();await Promise.resolve();

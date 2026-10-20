@@ -65,16 +65,21 @@ const address='http://127.0.0.1:'+server.address().port+'/';
 let browser;
 try {
  browser=await chromium.launchPersistentContext(profile,{headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),viewport:{width:1280,height:800},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const page = await browser.newPage(), errors = [], failures = [], consoleErrors = [], receipts = [];
+const page = await browser.newPage(), errors = [], failures = [], consoleErrors = [], receipts = [], verifications = new Set();
 // Fulfill with the exact bytes returned by the local server after verification.
 // API responses retain preload bodies that Chrome's DevTools may discard.
-await page.route(address+'**', async route => {
+await page.route(address+'**', route => {
+ const verification=(async()=>{
   try {
     const response=await route.fetch(), body=await response.body();
     const key=decodeURIComponent(new URL(response.url()).pathname).replace(/^\//,'') || 'index.html';
     if(manifest.artifacts[key] && hash(body)!==manifest.artifacts[key]) throw new Error('Loaded artifact mismatch: '+key);
     receipts.push(key.replace(/^_versions\/[a-f0-9]+\//,'')); await route.fulfill({response,body});
   }catch(error){ errors.push(error.message); await route.abort(); }
+ })();
+ verifications.add(verification);
+ verification.then(()=>verifications.delete(verification),()=>verifications.delete(verification));
+ return verification;
 });
 await page.bringToFront();
 await page.addInitScript(() => { localStorage.setItem('inkwave.settings', JSON.stringify({quality:'low', shadows:false, bloom:false, minimap:false})); });
@@ -478,6 +483,8 @@ try {
   await page.screenshot({ path:path.join(evidence,'browser-failure.png') }).catch(() => {});
 } finally {
 
+  // Retain main's response-verification ordering without waiving active failures.
+  await Promise.allSettled([...verifications]);
   result.streamedMusicDiagnostics = 'streamed-music-diagnostics.json';
   result.scope = uiProbesOnly ? 'ui-probes-only' : 'full-active'; result.fullAcceptance = !uiProbesOnly;
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;

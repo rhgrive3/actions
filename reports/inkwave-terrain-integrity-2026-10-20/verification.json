@@ -1300,6 +1300,32 @@
       "source-geometry": "success"
     },
     "all23SourceSummaryMatchesLocal": true,
-    "standardStatus": "baseline fixture repairs; final checks and merge recorded on PR"
+    "standardStatus": "baseline fixture repairs; final checks and merge recorded on PR",
+    "secondTerrainRun": 39352693801,
+    "secondTerrainHead": "5a5f6b0025131912322568c0eefac1f17e0451d6",
+    "secondTerrainJobsAllSucceeded": true
+  },
+  "extendedGame": {
+    "status": "passed",
+    "scope": "real Game with 7 bots; neutral local input and controlled invulnerability; fixed central support anchors, original low-quality materials; not continuous player traversal or hardware endurance",
+    "simulationSeconds": 900,
+    "frames": 54000,
+    "anchorSupportProbes": 3600,
+    "renderAndPaintSamples": 30,
+    "geometryCountRange": [
+      431,
+      502
+    ],
+    "textureCountRange": [
+      113,
+      120
+    ],
+    "errors": [],
+    "reload": {
+      "geometryUnchanged": true,
+      "centralSupport": true,
+      "actors": 8
+    },
+    "hardwareFpsOrRssMeasured": false
   }
 }

@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';
 import {nativeFixture,readStage} from './fixture.mjs';
 const root=process.env.INKWAVE_TERRAIN_ASSETS,available=root&&fs.existsSync(path.join(root,'bluefin/manifest.json'));
+if(root)assert(available,'explicit terrain assets must contain the generated Bluefin source manifest');
 test('Bluefin central source moss supports walking and paint on both sides at 30/60/120 Hz',{skip:!available},async()=>{
  const f=await nativeFixture(),{G,THREE}=f,data=readStage(root,'bluefin'),L=G.level=new f.NativeLevel(data),P=G.physics=new f.NativePhysics(L);
  assert.equal(data.manifest.sourceSha256,'e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527');

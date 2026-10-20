@@ -2,6 +2,10 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  // Retained main originals are source transformers, not browser modules.
+  'patches/local-quality/nav-heuristic-adapter.mjs',
+  'patches/local-quality/prop-atlas-adapter.mjs',
+  'patches/local-quality/prop-retention-adapter.mjs',
   'patches/local-quality/bot-navigation-adapter.mjs',
   'patches/splatoon3/main-ink-footprint-adapter.mjs',
   'patches/local-quality/cloth-derivative-adapter.mjs',
