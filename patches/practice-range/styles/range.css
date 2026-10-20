@@ -211,6 +211,11 @@ html.iw-touch-ui .iwr-rbtn kbd { display: none; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-cur__txt small, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-cur__kit { font-size: 11px; }
 @media (max-width: 700px) { :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-pausescr { grid-template-columns: minmax(0, 1fr); } }
 html:not(.iw-touch-ui) .iwr-pausescr { overflow: hidden auto; }
+/* The screen itself scrolls (touch and narrow windows), so its absolute dim/blur layer and modal scrolled away with the
+   weapon list and left the stage undimmed below them. Pin both to the viewport. The leave animation only fades:
+   a translate/scale would make the scrolled screen their containing block again for its last 0.28 s. */
+.iwr-pausescr > .iw-dimbg, .iwr-pausescr > .iw-modal { position: fixed; inset: 0; }
+.iwr-pausescr.is-leaving, .iwr-pausescr.is-leaving.is-back { animation-name: iw-fade-out; }
 @media (max-width: 1000px), (max-aspect-ratio: 4/3) {
   html:not(.iw-touch-ui) .iwr-pausescr .iwr-pause__menu { position: relative; left: auto; top: auto; width: auto; margin: 84px 16px 12px; flex-direction: row; flex-wrap: wrap; }
   html:not(.iw-touch-ui) .iwr-pausescr .iwr-pause__menu .iw-btn { flex: 1 1 140px; }

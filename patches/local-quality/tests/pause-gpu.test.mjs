@@ -69,3 +69,54 @@ test('pause snapshot refresh stays live online but never reparses identical offl
   G.netm = {}; tick.call(menu); assert.equal(reads,1);
   G.netm = null; G.match.paused = false; tick.call(menu); assert.equal(reads,2);
 });
+
+test('composed Renderer retains a finished WebGL pause frame and releases it after resume', () => {
+  const renderSource = composed('src/core/renderer.js');
+  assert.match(renderSource, /installPausedFrameRetention\(Renderer\)/);
+  assert.match(gameSource, /presentPausedFrame\?\.\(\)/);
+  assert.match(gameSource, /releasePausedFrame\?\.\(\)/);
+  const retention = fs.readFileSync(new URL('../pause-frame-retention.mjs', import.meta.url), 'utf8')
+    .replace(/^import .*;\s*$/gm, '').replace('export function installPausedFrameRetention', 'function installPausedFrameRetention');
+  const record = { copies: 0, draws: 0, disposed: 0 };
+  let width = 320, height = 200, lost = false, target = null;
+  class Vector2 { set(x, y) { this.x = x; this.y = y; return this; } }
+  class FramebufferTexture {
+    constructor(w, h) { this.image = { width: w, height: h }; }
+    dispose() { record.disposed++; }
+  }
+  class ShaderMaterial {
+    constructor(opts) { Object.assign(this, opts); }
+    dispose() { record.disposed++; }
+  }
+  class Quad { constructor(material) { this.material = material; } render() { record.draws++; } }
+  const THREE = { Vector2, FramebufferTexture, ShaderMaterial, NoBlending: 0, NoColorSpace: '', LinearFilter: 1 };
+  class RenderOwner {}
+  new Function('THREE', 'FullScreenQuad', retention + '\nreturn installPausedFrameRetention;')(THREE, Quad)(RenderOwner);
+  const owner = new RenderOwner();
+  owner.renderer = {
+    getContext: () => ({ isContextLost: () => lost }),
+    getDrawingBufferSize: v => v.set(width, height),
+    getRenderTarget: () => target,
+    setRenderTarget(v) { target = v; },
+    copyFramebufferToTexture(texture) { assert.equal(texture.image.width, width); record.copies++; },
+    autoClear: false,
+  };
+  assert.equal(owner.presentPausedFrame(), false, 'no uncaptured frame is reused');
+  assert.equal(owner.capturePausedFrame(), true);
+  assert.equal(record.copies, 1);
+  for (let i = 0; i < 120; i++) assert.equal(owner.presentPausedFrame(), true);
+  assert.equal(record.draws, 120, 'one cheap present per frame rather than a composer pass');
+  assert.equal(record.copies, 1, 'no extra frame capture in steady pause');
+  assert.equal(owner.renderer.autoClear, false, 'renderer state is restored after blits');
+  width++;
+  assert.equal(owner.presentPausedFrame(), false, 'resize rejects a stale snapshot');
+  assert.equal(owner.capturePausedFrame(), true);
+  lost = true;
+  assert.equal(owner.presentPausedFrame(), false, 'lost context rejects stale snapshot');
+  lost = false;
+  assert.equal(owner.capturePausedFrame(), true);
+  owner.releasePausedFrame();
+  assert.equal(owner._pauseSnapshot, null, 'resume releases full-resolution GPU texture');
+  assert.equal(owner.presentPausedFrame(), false);
+  assert.ok(record.disposed >= 3, 'every superseded snapshot was disposed');
+});

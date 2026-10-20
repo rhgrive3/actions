@@ -46,9 +46,9 @@ try {
       const hudAnimations=()=>document.getAnimations().filter(a=>roots.some(root=>root===a.effect?.target||root.contains(a.effect?.target)));
       const before = hudAnimations().map(a=>({a,time:a.currentTime}));
       g.pause();g._frame(1/60);
-      const counts={world:0,hud:0,minimap:0,tank:0};
+      const counts={world:0,hud:0,minimap:0,tank:0,presents:0,captures:0};
       const restore=[];
-      for (const [owner,key,name] of [[g.R,'render','world'],[g,'_updateHud','hud'],[g.minimap,'update','minimap'],[g.hud,'_drawTank','tank']]) {
+      for (const [owner,key,name] of [[g.R,'render','world'],[g,'_updateHud','hud'],[g.minimap,'update','minimap'],[g.hud,'_drawTank','tank'],[g.R,'presentPausedFrame','presents'],[g.R,'capturePausedFrame','captures']]) {
         const fn=owner[key];owner[key]=function(...args){counts[name]++;return fn.apply(this,args);};restore.push(()=>owner[key]=fn);
       }
       const snapshot=()=>JSON.stringify({time:G.match.time,actors:G.match.actors.map(a=>({hp:a.hp,ink:a.ink,pos:a.pos.toArray()}))});
@@ -65,25 +65,50 @@ try {
         preservedEntryPhases,
         unchangedAnimationTimes:phase.every(({a,time})=>a.currentTime===time),glError:G.renderer.getContext().getError()};
       for(const undo of restore)undo();
+      // WebGL's non-preserved backbuffer must be refreshed AFTER a compositor
+      // turn, not merely hold the last frame in CPU state. Verify native GL
+      // samples, free from the DOM's intentionally dark translucent pause mask.
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      g._frame(1/60);
+      const gl=G.renderer.getContext(), pixel=new Uint8Array(4);
+      let lit=0, brightness=0;
+      for(const x of [.2,.5,.8]) for(const y of [.2,.5,.8]) {
+        gl.readPixels(Math.floor(gl.drawingBufferWidth*x),Math.floor(gl.drawingBufferHeight*y),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
+        const sum=pixel[0]+pixel[1]+pixel[2];
+        brightness+=sum;if(sum>24)lit++;
+      }
+      pause.glProbe={lit,brightness,error:gl.getError()};
+      pause.retained=!!g.R._pauseSnapshot;
       return pause;
     });
     console.log(spec.name+': measured '+JSON.stringify(row));
     fs.writeFileSync(path.join(output,spec.name+'-measurement.json'),JSON.stringify(row,null,2)+'\n');
-    assert.equal(row.stateUnchanged,true);assert.equal(row.paused,true);assert.equal(row.menu,'pause');assert.equal(row.glError,0);
+    assert.equal(row.stateUnchanged,true);assert.equal(row.paused,true);assert.equal(row.menu,'pause');assert.equal(row.glError,0);assert.equal(row.glProbe.error,0);
     assert.equal(row.counts.world,0,'existing offline world cache stays idle');
     assert.ok(row.animations.length>0,'HUD animation sensitivity');
     if(baseline) {
-      assert.equal(row.counts.hud,120);assert.ok(row.animations.some(a=>a.playState==='running'));
-      assert.equal(row.unchangedAnimationTimes,false);
+      // Main already has the #1616 offline HUD/CSS pause budget. The regression
+      // this PR fixes is its missing *GPU backdrop*, not repeated HUD updates.
+      // Keep a real baseline negative: the old engine does not retain or
+      // present a pause frame, and its cleared GL drawing buffer is black.
+      assert.deepEqual(row.counts,{world:0,hud:0,minimap:0,tank:0,presents:0,captures:0});
+      assert.equal(row.retained,false,'baseline has no retained GPU pause texture');
+      assert.equal(row.glProbe.lit,0,'unfixed baseline has no visible stage pixels');
+      assert.equal(row.glProbe.brightness,0,'baseline cleared GL buffer stays black');
+      assert.ok(row.animations.every(a=>a.playState==='paused'));
+      assert.equal(row.preservedEntryPhases,true);
+      assert.equal(row.unchangedAnimationTimes,true);
     } else {
-      assert.deepEqual(row.counts,{world:0,hud:0,minimap:0,tank:0});
+      assert.deepEqual(row.counts,{world:0,hud:0,minimap:0,tank:0,presents:120,captures:0});
+      assert.equal(row.retained,true,'paused backdrop keeps its last finished frame in GPU memory');
+      assert.ok(row.glProbe.lit>=3 && row.glProbe.brightness>120,'the paused stage GL buffer must stay visible, not black');
       assert.ok(row.animations.every(a=>a.playState==='paused'));
       assert.equal(row.preservedEntryPhases,true);assert.equal(row.unchangedAnimationTimes,true);
     }
     await page.screenshot({path:path.join(output,spec.name+'-pause.png'),timeout:120000});
-    const lifecycle=await page.evaluate(()=>{const g=__G.game;g._setSettings({bloom:!g.settings.bloom});g._frame(1/60);const paused=g.hud._worldPaused;g.resume();g._frame(1/60);return {pausedBeforeResume:paused===true,resumed:!g.match.paused&&!g.hud._worldPaused,animationsRunning:document.getAnimations().some(a=>g.hud.el.contains(a.effect?.target)&&a.playState==='running')};});
+    const lifecycle=await page.evaluate(()=>{const g=__G.game;g._setSettings({bloom:!g.settings.bloom});g._frame(1/60);const paused=g.hud._worldPaused;g.resume();g._frame(1/60);return {pausedBeforeResume:paused===true,resumed:!g.match.paused&&!g.hud._worldPaused,snapshotReleased:!g.R._pauseSnapshot,animationsRunning:document.getAnimations().some(a=>g.hud.el.contains(a.effect?.target)&&a.playState==='running')};});
     assert.equal(lifecycle.resumed,true);assert.equal(lifecycle.animationsRunning,true);
-    if(!baseline)assert.equal(lifecycle.pausedBeforeResume,true);
+    if(!baseline){assert.equal(lifecycle.pausedBeforeResume,true);assert.equal(lifecycle.snapshotReleased,true);}
     assert.deepEqual(errors,[]);
     result.runs.push({...spec,...row,lifecycle,errors});
     fs.writeFileSync(path.join(output,'pause-gpu.json'),JSON.stringify(result,null,2)+'\n');

@@ -128,26 +128,33 @@ function rangePause(menus) {
         curSub ? h('span', null, h('i', { html: SUB_ICONS[CW.sub] || SUB_ICONS.bomb }), curSub.name) : null,
         curSp ? h('span', { class: 'is-sp' }, h('i', { html: specialIcon(CW.special) }), curSp.name) : null)));
 
-  // ---- WEAPON: class filter + chips (the equipped one is marked); choosing one switches and resumes
-  const wchips = WEAPON_ORDER.map((id) => {
-    const W = WEAPONS[id];
-    const b = h('button', { class: 'iwr-wchip' + (id === cur ? ' is-on' : ''), title: W.name }, h('span', { class: 'iwr-wchip__icon', html: weaponIcon(id) }), h('b', null, W.name), h('small', null, W.class || ''));
-    b.dataset.cat = classKey(W);
-    menus._fx(b); menus._bind(b, { id: 'w-' + id, accept: act(() => session?.setWeapon(id)) });
-    return b;
-  });
-  const cats = [];
-  for (const b of wchips) {
-    const c = cats.find((x) => x.key === b.dataset.cat);
-    if (c) c.n++; else cats.push({ key: b.dataset.cat, label: b.querySelector('small').textContent || b.dataset.cat, n: 1 });
-  }
-  const wgrid = h('div', { class: 'iwr-wchips' }, wchips);
-  const filters = [{ key: 'all', label: L('ALL'), n: wchips.length }, ...cats].map((c) => {
-    const b = h('button', { class: 'iwr-filter' + (c.key === 'all' ? ' is-on' : '') }, h('span', null, c.label), h('small', null, String(c.n)));
-    b.dataset.cat = c.key;
-    menus._bind(b, { id: 'wf-' + (c.key || 'other'), type: 'tab', accept: () => { menus._sfx('ui_toggle'); setCat(c.key); } });
-    return b;
-  });
+  // ---- WEAPON: class filter + chips (the equipped one is marked); choosing one switches and resumes.
+  // Built on first open: its 160 chips (each an SVG icon) are most of this screen's DOM, and building them on
+  // every pause made the pause frame itself heavy even when the tab stayed closed.
+  const wsec = h('div', { class: 'iwr-pause__sec', 'data-tab': 'weapon' });
+  let wchips = null, filters = null;
+  const buildWeapons = () => {
+    if (wchips) return;
+    wchips = WEAPON_ORDER.map((id) => {
+      const W = WEAPONS[id];
+      const b = h('button', { class: 'iwr-wchip' + (id === cur ? ' is-on' : ''), title: W.name }, h('span', { class: 'iwr-wchip__icon', html: weaponIcon(id) }), h('b', null, W.name), h('small', null, W.class || ''));
+      b.dataset.cat = classKey(W);
+      menus._fx(b); menus._bind(b, { id: 'w-' + id, accept: act(() => session?.setWeapon(id)) });
+      return b;
+    });
+    const cats = [];
+    for (const b of wchips) {
+      const c = cats.find((x) => x.key === b.dataset.cat);
+      if (c) c.n++; else cats.push({ key: b.dataset.cat, label: b.querySelector('small').textContent || b.dataset.cat, n: 1 });
+    }
+    filters = [{ key: 'all', label: L('ALL'), n: wchips.length }, ...cats].map((c) => {
+      const b = h('button', { class: 'iwr-filter' + (c.key === 'all' ? ' is-on' : '') }, h('span', null, c.label), h('small', null, String(c.n)));
+      b.dataset.cat = c.key;
+      menus._bind(b, { id: 'wf-' + (c.key || 'other'), type: 'tab', accept: () => { menus._sfx('ui_toggle'); setCat(c.key); } });
+      return b;
+    });
+    wsec.append(h('div', { class: 'iwr-filters' }, filters), h('div', { class: 'iwr-wchips' }, wchips));
+  };
   const setCat = (key) => {
     for (const f of filters) f.classList.toggle('is-on', f.dataset.cat === key);
     for (const b of wchips) b.hidden = key !== 'all' && b.dataset.cat !== key;
@@ -189,10 +196,10 @@ function rangePause(menus) {
       h('div', { class: 'iwr-pause__hint' }, L('R · T · G also work during play.'))),
     travel: h('div', { class: 'iwr-pause__sec', 'data-tab': 'travel' },
       h('div', { class: 'iwr-pause__hint' }, L('Choose a zone to jump straight to its reference stand.')), h('div', { class: 'iwr-zbtns' }, travel)),
-    weapon: h('div', { class: 'iwr-pause__sec', 'data-tab': 'weapon' }, h('div', { class: 'iwr-filters' }, filters), wgrid),
+    weapon: wsec,
   };
   const body = h('div', { class: 'iwr-pause__body' }, TABS.map((k) => secs[k]));
-  const tabInfo = { tools: [GLYPHS.reset, L('RESETS')], travel: [GLYPHS.map, L('TRAVEL')], weapon: [GLYPHS.target || GLYPHS.star, L('WEAPON'), String(wchips.length)] };
+  const tabInfo = { tools: [GLYPHS.reset, L('RESETS')], travel: [GLYPHS.map, L('TRAVEL')], weapon: [GLYPHS.target || GLYPHS.star, L('WEAPON'), String(WEAPON_ORDER.length)] };
   const tabs = TABS.map((k) => {
     const [icon, label, count] = tabInfo[k];
     const b = h('button', { class: 'iwr-tab' }, h('i', { html: icon }), h('span', null, label), count ? h('small', null, count) : null);
@@ -208,6 +215,7 @@ function rangePause(menus) {
     panel.dataset.tab = k;
     body.scrollTop = 0;
     if (k === 'weapon') {
+      buildWeapons();
       // open on the equipped weapon's row
       const on = wchips.find((b) => b.classList.contains('is-on') && !b.hidden);
       if (on) requestAnimationFrame(() => { if (on.isConnected && body.scrollHeight > body.clientHeight) body.scrollTop = Math.max(0, on.offsetTop - body.offsetTop - 12); });

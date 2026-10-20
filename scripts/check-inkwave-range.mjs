@@ -257,8 +257,10 @@ for (const run of RUNS) {
     // The hub ring remains readable. The scrollable picker must expose
     // all 65 original mains plus their 95 non-replica _01/_02 kits, not drop
     // entries when its catalogue grows beyond the former 65-item limit.
+    // The picker is the pause panel's WEAPON tab (TOOLS / TRAVEL / WEAPON); its chips are built when it first opens.
+    await page.locator('.iwr-pausescr:not(.is-leaving) [data-id="r-tab-weapon"]').click();
     out.checks.weaponPicker = await page.evaluate(() => {
-      const chips = [...document.querySelectorAll('.iwr-wchip')];
+      const chips = [...document.querySelectorAll('.iwr-pausescr:not(.is-leaving) .iwr-wchip')];
       const ids = chips.map(c => c.dataset.id);
       const variants = ids.filter(id => /-0[12]$/.test(id || ''));
       const bases = ids.filter(id => !/-0[12]$/.test(id || ''));
@@ -273,8 +275,6 @@ for (const run of RUNS) {
         picker.variants !== 95 || picker.second !== 65 || picker.third !== 30 ||
         picker.catalog !== 142 || !picker.last?.startsWith('w-s3-'))
       throw new Error('range weapon picker ' + JSON.stringify(picker));
-    // The picker is the pause panel's WEAPON tab (TOOLS / TRAVEL / WEAPON).
-    await page.locator('.iwr-pausescr:not(.is-leaving) [data-id="r-tab-weapon"]').click();
     await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').last().click();
     await page.waitForFunction(id => window.__G.local.weaponId === id && !window.__G.match.paused, picker.last.slice(2), { timeout: 30000 });
     out.checks.weaponPicker.selected = await page.evaluate(() => window.__G.local.weaponId);
