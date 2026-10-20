@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { ROLLER_MODEL_WORLD_SCALE } from '../runtime/roller-source-scale.mjs';
 
 // Weapon holds and the attack/carry handoff (reports/inkwave-weapon-hold-motion-2026-10-17.md).
 // Production composition in ONE realm with the optional source locomotion
@@ -208,7 +209,7 @@ test('a brush rests in the ready stance, both fists at the butt, head up past th
 test('family grip scales and independently calibrated Roller width remain distinct', async () => {
   const api = await production(), { registry } = api, unscaled = [];
   const rollerSource=JSON.parse(fs.readFileSync(new URL('../reference/roller-source-scale-2026-10-19.json',import.meta.url))).records.find(r=>r.id==='roller');
-  const rollerScale=rollerSource.width/1.5;
+  const rollerScale=rollerSource.width*ROLLER_MODEL_WORLD_SCALE/1.5;
   for (const [id, k] of [['shooter', 1.3], ['s3-shooter-long', 1.3], ['dualies', 1.3], ['s3-maneuver-short', 1.3], ['s3-brush-normal', 1.3],
     ['blaster', 1], ['charger', 1], ['roller', rollerScale], ['s3-stringer-normal', 1], ['s3-shelter-normal', 1]]) {
     const ch = await rig(api, id), d = ch.weapon.def;

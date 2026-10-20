@@ -1,5 +1,6 @@
 import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 import { CHARGER_FOOTPRINT } from './main-ink-footprints.mjs';
+import { WORLD_UNITS_PER_SOURCE_UNIT } from './source-distance.mjs';
 import { coherentMotionStart } from './actor-motion.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
@@ -7,11 +8,9 @@ import { chargerDamage, isChargerFullCharge } from './weapons.mjs';
 // #961: linear authoritative charge reaches the legal minimum at 8/60.
 // Paint and launch endpoints must share this coordinate; retaining the old
 // 1/6 early-boost boundary would create a second plateau after frame 8.
-// INKWAVE visual/gameplay paint calibration only: pinned SplashPaintParam
-// WidthHalf source units are five times the existing world-space lateral
-// stripe target. Do NOT change the source-derived job.paint.* parameters,
-// charge timing, distance, damage, depth or longitudinal sampling density.
-export const CHARGER_PAINT_WORLD_WIDTH_SCALE = 0.2;
+// SplashPaintParam and PaintParam use the same source distance convention as
+// flight/range/depth. Applying 0.2 only to width shrank the stripe fivefold.
+export const CHARGER_PAINT_WORLD_WIDTH_SCALE = WORLD_UNITS_PER_SOURCE_UNIT;
 export function chargerPaintWorldRadius(sourceWidth) {
   return Math.max(0, Number.isFinite(sourceWidth) ? sourceWidth * CHARGER_PAINT_WORLD_WIDTH_SCALE : 0);
 }
@@ -268,7 +267,12 @@ export function installChargerFlight(api,completion) {
     actors.sort((a,b)=>a.d-b.d||String(a.actor.nid??a.actor.name).localeCompare(String(b.actor.nid??b.actor.name)));
     const amount=job.damage;
     for(const a of actors){
-      job.seen.add(a.actor);if(!job.ghost&&a.actor.team!==job.team)system.applyHit(job.owner,a.actor,amount,job.weapon.id);
+      job.seen.add(a.actor);if(!job.ghost&&a.actor.team!==job.team){
+        const previous=job.owner._sourceChargerAudioHit;
+        job.owner._sourceChargerAudioHit={chargerDirect:true,charge:job.charge};
+        try{system.applyHit(job.owner,a.actor,amount,job.weapon.id);}
+        finally{job.owner._sourceChargerAudioHit=previous;}
+      }
       if(!job.full){distance=a.d;ended=true;target=a.actor;normal=job.dir.clone().negate();break;}
     }
     if(target==='boss'&&!job.ghost)G.boss.hit(job.owner,amount,boss.target,job.weapon.id,boss.point.clone());

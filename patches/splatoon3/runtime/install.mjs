@@ -118,6 +118,12 @@ export function install(profile) {
     WEAPONS.charger_scope.scopedCharge = scope.parameters.WeaponScopeParam != null;
     WEAPONS.charger_scope.inkMin ??= inkMin * 100;
     WEAPONS.charger_scope.damagePartialMax ??= damagePartialMax / 10;
+    // The legacy runner shares the normal Charger's recovery/payment owners.
+    // In particular weapon-gates reads rechargeDelay after every release:
+    // leaving it undefined makes cooldown NaN and permanently rejects shot 2.
+    for (const key of ['rechargeDelay','postShotSwimTime','minimumChargeTime',
+      'minReleaseTime','emptyChargeRate','airChargeRate','swimChargeStartDelay','inkRecoverStop'])
+      WEAPONS.charger_scope[key] ??= profile.weapons.charger[key];
   }
   registerMainWeaponCatalog(api);
   installWeapons(api, profile);

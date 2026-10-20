@@ -81,7 +81,22 @@ try{
         if(!ch.dual&&ch.P[c.IKL]>.99&&ch.P[c.LTW]<.001){
           // Family pose layers may own per-instance, animated carry grips.
           // Measure this frame's actual weapon socket, not the cached model rest def.
-          const held=ch.weapon.def;grip=ch.weapon.off.localToWorld(held.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3()));maxGrip=Math.max(maxGrip,grip);
+          const held=ch.weapon.def, blend=ch._s3RollerGripBlend||0, handZ=held.gripL?.handZ;
+          const supported=ch.weaponKind==='roller' && ch.kidForm && !ch.dance &&
+            !ch.actor?.specialActive && !ch.P[c.SPIN] && blend>.001 && held.fold?.pivot &&
+            handZ && Math.abs(handZ.x)+Math.abs(handZ.y)<1e-8 && handZ.z>.999;
+          if(supported){
+            const hole=held.gripL.pos.clone().sub(held.handL.pos)
+              .applyQuaternion(held.handL.quat.clone().invert());
+            const socket=held.gripL.pos.clone();
+            socket.z+=Number.isFinite(ch._s3RollerSupportAdvance) ? ch._s3RollerSupportAdvance :
+              Math.max(0,(held.gripR.pos.z+held.fold.pivot.z)*.5-held.gripL.pos.z)*.15*blend;
+            grip=ch.weapon.off.localToWorld(socket).distanceTo(ch.bones.handL.localToWorld(hole));
+          }else{
+            grip=ch.weapon.off.localToWorld(held.handL.pos.clone())
+              .distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3()));
+          }
+          maxGrip=Math.max(maxGrip,grip);
         }
         maxIK=Math.max(maxIK,...ch.ikErr);samples.push({frame,owner,grip,aim:ch.wAim});
         if(frame===80&&!ch.dual){

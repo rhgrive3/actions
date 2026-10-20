@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
+import { nativeRollerGripGap } from './roller-support-contact.mjs';
 import { nativeWeaponPoseRequired } from '../runtime/source-weapon-owner.mjs';
 
 let loaded;
@@ -50,8 +51,9 @@ test('actual Actor/Runner attacks retain finite poses and authored grip contact 
       G.time+=1/60;a.weaponRunner.update(1/60,input);a._finishFrame(1/60);ch.root.updateMatrixWorld(true);
       assert.ok([...ch.P].every(Number.isFinite),kind+' finite pose');assert.ok(ch.getMuzzle(new THREE.Vector3()).toArray().every(Number.isFinite));
       if(!ch.dual&&ch.P[f.CHARACTER_CHANNELS.IKL]>.99&&ch.P[f.CHARACTER_CHANNELS.LTW]<.001){
-        const p=ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone());
-        assert.ok(p.distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3()))<.006,kind+' support grip');
+        const gap=kind==='roller' ? nativeRollerGripGap(ch,THREE,'handL',f.CHARACTER_CHANNELS)
+          : ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3()));
+        assert.ok(gap<.006,kind+' support grip ('+gap+')');
       }
     }
     a.weaponRunner.reset();ch.setVisible(false);ch.setVisible(true);ch.setWeapon('shooter');ch.dispose();G.scene.remove(ch.root);

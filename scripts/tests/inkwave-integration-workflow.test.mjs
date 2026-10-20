@@ -33,8 +33,8 @@ function mainWeaponTriggerContract(source) {
     const paths = [...block.matchAll(/^      - '([^']+)'$/gm)].map(row => row[1]);
     for (const file of files) assert.ok(paths.some(pattern => matches(pattern, file)), event + ': ' + file);
   }
-  assert.equal((source.match(/ref: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/g) || []).length, 2,
-    'both jobs keep immutable PR heads and the exact pushed main SHA');
+  assert.equal((source.match(/ref: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/g) || []).length, 3,
+    'all three candidate checkouts keep immutable PR heads and the exact pushed main SHA');
 }
 
 test('main-weapon numerical and browser gates run on exact pushed main and relevant queued-owner changes', () => {

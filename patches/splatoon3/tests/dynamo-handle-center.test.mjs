@@ -4,12 +4,14 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 const BEFORE_DYNAMO=fs.readFileSync(new URL('./fixtures/dynamo-before-model.txt',import.meta.url),'utf8');
 import { fixture } from './source-fixture.mjs';
+import { ROLLER_MODEL_WORLD_SCALE } from '../runtime/roller-source-scale.mjs';
+import { nativeRollerGripGap } from './roller-support-contact.mjs';
 const ID='s3-roller-heavy';
 const sourceDynamo=JSON.parse(fs.readFileSync(new URL('../reference/roller-source-scale-2026-10-19.json',import.meta.url))).records.find(r=>r.id===ID);
 // Main now calibrates the model to the independently measured indexed source
 // width. Inspect authored coordinates in that basis; scaleWeaponDef deliberately
 // preserves the support hand's reach from the main grip along the weapon axis.
-const authoredScale=sourceDynamo.width/1.821;
+const authoredScale=sourceDynamo.width*ROLLER_MODEL_WORLD_SCALE/1.821;
 const authoredVector=(v,expected)=>Array.from(v.toArray()).forEach((x,i)=>assert.ok(Math.abs(x/authoredScale-expected[i])<1e-7));
 const exports="export {getWeaponDef} from './inkwave-public/src/game/character-weapons.js'; export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';";
 async function production(before=false){
@@ -33,7 +35,7 @@ test('Dynamo handle and drum share the measured width midline, with unchanged so
  const b=d.drum.boundingBox,left=b.min.x+d.drumAt.x,right=b.max.x+d.drumAt.x;
  assert.ok(Math.abs((left+right)/2-d.gripR.pos.x)<1e-7,'grip centre meets drum width centre');
  assert.ok(Math.abs((left+right)/2-d.gripL.pos.x)<1e-7,'support grip uses same centre');
- assert.ok(Math.abs(right-left-sourceDynamo.width)<1e-6,'independent indexed source width preserved');
+ assert.ok(Math.abs(right-left-sourceDynamo.width*ROLLER_MODEL_WORLD_SCALE)<1e-6,'independent indexed source width normalized to player stature');
  authoredVector(d.muzzle,[-.37,0,1.13]);
  authoredVector(d.fold.pivot,[0,0,.88]);assert.ok(Math.abs(d.drumR/authoredScale-.19)<1e-7);
  authoredVector(d.gripR.pos,[0,0,-.022]);
@@ -110,21 +112,33 @@ async function run(f,hz){
  // Three.js geometry/Object3D UUID allocation consumes Math.random. Start
  // combat after visual construction with the SAME gameplay random stream.
  f.resetCombatRandom();
- let maxGrip=0,maxSpin=0,maxFold=0,rolling=0;const rows=[];
+ let maxGrip=0,maxSpin=0,maxFold=0,rolling=0,worstGrip=null;const rows=[];
  for(let n=0;n<hz*6;n++){
   const t=n/hz,fire=t>=.5&&t<2.5||t>=3&&t<5;
   a.ink=100;a.intent.fire=fire;a.grounded=a.ground.hit=!(t>=3&&t<4.4);a.intent.move.set(0,0,fire?1:0);a.vel.set(0,0,fire?2.4:0);a.aimPitch=0;
   G.time+=1/hz;a.weaponRunner.update(1/hz,{fire,firePressed:n===hz/2||n===hz*3});a._finishFrame(1/hz);ch.root.updateMatrixWorld(true);
   assert.ok(Array.from(ch.P).every(Number.isFinite),'finite pose '+hz+' '+n);
-  const C=f.CHARACTER_CHANNELS;if(n>hz/3&&ch.P[C.IKL]>.99&&ch.P[C.LTW]<.001)maxGrip=Math.max(maxGrip,ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3())));
+  const C=f.CHARACTER_CHANNELS;if(n>hz/3&&ch.P[C.IKL]>.99&&ch.P[C.LTW]<.001){
+    const gap=nativeRollerGripGap(ch,THREE,'handL',C);
+    if(gap>maxGrip){
+      maxGrip=gap;
+      worstGrip={hz,frame:n,t,grounded:a.grounded,rolling:a.weaponRunner.rolling,
+        contact:ch._s3RollerContactPose,blend:ch._s3RollerGripBlend,
+        supportFeedback:ch._s3RollerSupportFeedback,wRoll:ch.wRoll,
+        ikErr:Array.from(ch.ikErr),ikErrPre:ch.ikErrPre,
+        leftReach:ch.limbs.armL.a+ch.limbs.armL.b,
+        model:ch.weaponModel,handL:ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray(),
+        gripOriginal:ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone()).toArray()};
+    }
+  }
   maxSpin=Math.max(maxSpin,Math.abs(ch.weapon.drum?.rotation.x||0));maxFold=Math.max(maxFold,Math.abs(ch.weapon.fold?.rotation.x||0));rolling+=a.weaponRunner.rolling?1:0;
   rows.push([a.ink,a.weaponRunner.cooldown,a.weaponRunner.catalogState.swingCount,a.weaponRunner.rolling]);
  }
- ch.dispose();return{shots,rows,maxGrip,maxSpin,maxFold,rolling};
+ ch.dispose();return{shots,rows,maxGrip,maxSpin,maxFold,rolling,worstGrip};
 }
 test('Dynamo real Actor stays gripped, folds and spins at 30/60/120 Hz; gameplay emissions unchanged',async()=>{
  for(const hz of [30,60,120]){
-  const after=await run(await production(),hz);assert.ok(after.shots.length>0,'emitted attacks');assert.ok(after.maxGrip<.008,'closed support hand '+hz+' '+after.maxGrip);assert.ok(after.maxSpin>0,'drum spun');assert.ok(after.maxFold>0,'vertical fold');
+  const after=await run(await production(),hz);assert.ok(after.shots.length>0,'emitted attacks');assert.ok(after.maxGrip<.008,'closed support hand '+hz+' '+after.maxGrip+' '+JSON.stringify(after.worstGrip));assert.ok(after.maxSpin>0,'drum spun');assert.ok(after.maxFold>0,'vertical fold');
   if(!process.env.INKWAVE_BUILT_SITE){const before=await run(await production(true),hz);assert.deepEqual(after.shots,before.shots,'projectile origin/velocity/damage unchanged '+hz);assert.deepEqual(after.rows,before.rows,'ink/timing/roll unchanged '+hz);}
  }
 });
