@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 const source=readFileSync(new URL('../combat-provenance-adapter.mjs',import.meta.url),'utf8').replace('export function ','function ');
 // Synthetic constants/knockback validator exercise final composition plumbing,
 // not gameplay magnitudes or the native knockback geometry contract.
-const template=`const G={},THREE={},NetMatch={};const IW_HIT_MAX_DAMAGE=500,IW_HIT_CAUSES=new Set(['angleShooter','burst','shot','blaster']),IW_ANGLE_SHOOTER_HIT_MAX=40,IW_CATALOGUE_SUB_HIT_MAX={burst:180};
+const payloadTemplate=`const G={},THREE={},NetMatch={};const IW_HIT_MAX_DAMAGE=500,IW_HIT_CAUSES=new Set(['angleShooter','burst','shot','blaster']),IW_ANGLE_SHOOTER_HIT_MAX=40,IW_CATALOGUE_SUB_HIT_MAX={burst:180};
 const validBlasterKnockback=v=>Array.isArray(v)&&v.length===3&&v.every(Number.isFinite);
 function nativeGuard(d) {
     const blastKnockback = d.w === 'blaster' && validBlasterKnockback(d.kb);
@@ -16,8 +17,16 @@ function nativeGuard(d) {
     if (Object.hasOwn(IW_CATALOGUE_SUB_HIT_MAX,d.w) && d.d > IW_CATALOGUE_SUB_HIT_MAX[d.w]) return;
  return true;
 }`;
+// Compose source text only. Native modules/actors are never evaluated in this metadata test.
+const nativeSource=adaptBuildSource('src/net/netmatch.js',readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8'));
+const hitStart='  _hit(d, from) {',hitEnd='    this._applyingHit = true;';
+assert.equal(nativeSource.split(hitStart).length,2);assert.equal(nativeSource.split(hitEnd).length,2);
+const receiptPrefix=nativeSource.slice(nativeSource.indexOf(hitStart),nativeSource.indexOf(hitEnd));
+const constants=payloadTemplate.slice(0,payloadTemplate.indexOf('function nativeGuard')).replace('NetMatch={}','unusedNetMatch={}');
+const template=constants+'class NetMatch {\n'+receiptPrefix+hitEnd+'\n}\n}';
+const nativeGuard=payloadTemplate.slice(payloadTemplate.indexOf('function nativeGuard'));
 const generator=vm.createContext({template});new vm.Script(source+'\noutput=adaptCombatProvenance("src/net/netmatch.js",template);').runInContext(generator,{timeout:100});
-const compiled=vm.createContext({installCombatProvenance:()=>{}});new vm.Script(generator.output.replace(/^import .*\n/,'')+'\npolicy=iwRemoteHitPayloadAllowed;guard=nativeGuard;').runInContext(compiled,{timeout:100});
+const compiled=vm.createContext({installCombatProvenance:()=>{}});new vm.Script(generator.output.replace(/^import .*\n/,'')+'\n'+nativeGuard+'\npolicy=iwRemoteHitPayloadAllowed;guard=nativeGuard;').runInContext(compiled,{timeout:100});
 for(const [name,d,want] of [
  ['angle bound',{w:'angleShooter',d:40},true],['angle overflow',{w:'angleShooter',d:40.1},false],
  ['sub bound',{w:'burst',d:180},true],['sub overflow',{w:'burst',d:181},false],

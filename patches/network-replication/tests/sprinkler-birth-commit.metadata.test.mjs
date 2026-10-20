@@ -2,7 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-const source=readFileSync(new URL('../sub-birth-commit.mjs',import.meta.url),'utf8').replaceAll('export function ','function ');
+const dependency="import { closeReceiverSprinklers } from './sprinkler-contact-commit.mjs';";
+let birthSource=readFileSync(new URL('../sub-birth-commit.mjs',import.meta.url),'utf8');
+assert.equal(birthSource.split(dependency).length,2,'exact audited lifecycle dependency');
+birthSource=birthSource.replace(dependency,'').replaceAll('export function ','function ');
+const contactSource=readFileSync(new URL('../sprinkler-contact-commit.mjs',import.meta.url),'utf8').replaceAll('export function ','function ');
+for(const code of [birthSource,contactSource])assert.doesNotMatch(code,/\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,'new capabilities require a fresh boundary audit');
+// Execute the actual lifecycle helper in its own lexical scope, not a no-op stub.
+const source='const closeReceiverSprinklers=(()=>{'+contactSource+';return closeReceiverSprinklers;})();\n'+birthSource;
 const setup=`
 const actor={nid:1,owner:'peer',remote:true,weapon:{sub:'sprinkler'},netLife:2,net:{lastLife:2,buf:[{t:1,life:2,x:0,y:1,z:0}]}},peer={};
 const nm={match:{},cfg:{id:'match'},s:{_members:new Set(['peer'])},byNid:new Map([[1,actor]]),peers:new Map([['peer',peer]])};

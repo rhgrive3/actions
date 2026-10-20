@@ -221,12 +221,29 @@ const SUB_BIRTH_SOURCE_PAIR = Object.freeze({
     })
   })
 });
+// Exact final main-sync and native sub-contact source epoch. This tuple only
+// admits reviewed bytes; native state and 48-capture gates remain mandatory.
+const NATIVE_SUB_CONTACT_SOURCE_PAIR = Object.freeze({
+  baseCommit: 'da285129eb919d094d29e6a9b388f5eeb11059e9',
+  candidateCommit: '6a6f60d969aa6580f4ec9a52dc40e471e422729a',
+  blobs: Object.freeze({
+    ...SUB_BIRTH_SOURCE_PAIR.blobs,
+    'patches/network-replication/adapter.mjs': Object.freeze({
+      base: '0e92045cd74352a38260876c9d9dddc197c74fb2',
+      candidate: '2dc7125107dee19d4e695195aafe5c67020aad18'
+    }),
+    'scripts/lib/inkwave-build-only-modules.mjs': Object.freeze({
+      base: '1d8e49ac806e7b9cfcbc058131607b57699fe613',
+      candidate: 'bbdb10a9d7f87117844c1decf631d2663a484b80'
+    })
+  })
+});
 function reviewedCurrentPair(baseline, candidate) {
   const present = path => typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string';
   const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
     sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate);
-  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR].find(pair =>
+  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR].find(pair =>
     MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
       gitBlobSha1(baseline.get(path)) === pair.blobs[path].base &&
       gitBlobSha1(candidate.get(path)) === pair.blobs[path].candidate));
