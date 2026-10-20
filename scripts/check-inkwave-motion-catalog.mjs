@@ -591,8 +591,24 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     const hole = left && ch.dual ? GRIP_HOLE_L : FIST_OFFSET;
     const socket = hole.clone().sub(authored.pos).applyQuaternion(authored.quat.clone().invert());
     const rightHeld = !left || ch.dual;
-    const target = w.off.localToWorld(rightHeld ? socket : w.def.handL.pos.clone());
-    const hand = rightHeld ? bone.localToWorld(hole.clone()) : bone.getWorldPosition(new THREE.Vector3());
+    // Roller support is a palm-hole contact against the newly calibrated
+    // underside/forward shaft socket. The wrist-origin error remains a separate
+    // diagnostic, so the browser does NOT excuse a detached actual grip.
+    const d = w.def, roll = ch._s3RollerGripBlend || 0, handZ = d.gripL?.handZ;
+    const rollSupport = left && !ch.dual && ch.weaponKind === 'roller' &&
+      ch.kidForm && !ch.dance && !ch.actor?.specialActive &&
+      ch.P[C.IKL] > .999 && ch.P[C.LTW] < .001 && !ch.P[C.SPIN] &&
+      roll > .001 && d.fold?.pivot && handZ &&
+      Math.abs(handZ.x) + Math.abs(handZ.y) < 1e-8 && handZ.z > .999;
+    const supportHole = rollSupport ? d.gripL.pos.clone().sub(d.handL.pos)
+      .applyQuaternion(d.handL.quat.clone().invert()) : null;
+    const socketLocal = rollSupport ? d.gripL.pos.clone() : (rightHeld ? socket : d.handL.pos.clone());
+    if (rollSupport)
+      socketLocal.z += Number.isFinite(ch._s3RollerSupportAdvance) ? ch._s3RollerSupportAdvance :
+        Math.max(0,(d.gripR.pos.z+d.fold.pivot.z)*.5-d.gripL.pos.z)*.15*roll;
+    const target = w.off.localToWorld(socketLocal);
+    const hand = rollSupport ? bone.localToWorld(supportHole) :
+      rightHeld ? bone.localToWorld(hole.clone()) : bone.getWorldPosition(new THREE.Vector3());
     const boneOriginGap = w.off.localToWorld(w.def[left ? 'handL' : 'handR'].pos.clone()).distanceTo(bone.getWorldPosition(new THREE.Vector3()));
     const weight = ch.P[left ? C.IKL : C.IKR];
     const explicitTarget = left ? ch.P[C.LTW] : 0, swapped = left && ch.dual ? ch.bombSwap : 0;

@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 import { ROLLER_POSE } from '../runtime/roller.mjs';
+import { nativeRollerGripGap } from './roller-support-contact.mjs';
 import { installRollerDetailMotion as otherRealmInstall, rollerDetailMotionSnapshot as otherRealmSnapshot } from '../runtime/roller-detail-motion.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -101,8 +102,7 @@ function poseRow(api, r, index, detailed = false) {
       triangles.push(offset + n);
     }
   });
-  const grip = name => ch.weapon.off.localToWorld(ch.weapon.def[name].pos.clone())
-    .distanceTo(ch.bones[name].getWorldPosition(new THREE.Vector3()));
+  const grip = name => nativeRollerGripGap(ch, THREE, name, api.CHARACTER_CHANNELS);
   const bones = {};
   for (const name of ['hips', 'spine', 'chest', 'clavL', 'clavR', 'uArmL', 'uArmR', 'fArmL', 'fArmR', 'handL', 'handR', 'footL', 'footR']) {
     const b = ch.bones[name]; bones[name] = { p: b.getWorldPosition(new THREE.Vector3()).sub(ch.root.position).toArray(), q: b.getWorldQuaternion(new THREE.Quaternion()).toArray() };

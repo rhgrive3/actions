@@ -16,7 +16,7 @@ const SRC = path.join(ROOT, 'inkwave-public');
 const FROZEN_B34_SHA256 = '52e587f60d6211054c2bad04f746471e85ebdb0295e051f797b41a0019847eb7';
 const adaptProductionSource = adaptBuildSource;
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "752d276cb1e7bf82d2715a130a68d987997a95397025bfafb27cd9151d32c17d",
+  "patches/splatoon3/runtime/roller.mjs": "da4803782422c4573e118ae946d3c7a82df183e5e0dfd3293f060a89d153e5eb",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d"
 });
 const headlessPaintRenderer = () => ({
