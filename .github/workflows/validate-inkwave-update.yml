@@ -611,12 +611,15 @@ jobs:
       - name: Verify browser movement speed across directions and native firing/rolling transitions
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-movement-speed.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/movement-speed" --profile-dir "$CI_STORAGE/cache/movement-speed"
+      - name: Capture current native Charger paint events for source and emitted redraw
+        if: matrix.suite == 'network'
+        run: node --max-old-space-size=192 --experimental-vm-modules scripts/capture-charger-paint-events.mjs --site .built-site/_site --out "$CI_STORAGE/evidence/charger-current-native-events.json"
       - name: Verify exact ancillary paint hashes and canonical GPU masks
         if: matrix.suite == 'network'
-        run: node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask" --profile-dir "$CI_STORAGE/cache/paint-mask" --exact-source
+        run: node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask" --profile-dir "$CI_STORAGE/cache/paint-mask" --main-ink-captures "$CI_STORAGE/evidence/charger-current-native-events.json" --exact-source
       - name: Verify exact paint masks, ordered scan and local order lifetime in WebKit
         if: matrix.suite == 'network'
-        run: node scripts/check-inkwave-paint-mask.mjs --engine webkit --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask-webkit" --profile-dir "$CI_STORAGE/cache/paint-mask-webkit" --exact-source
+        run: node scripts/check-inkwave-paint-mask.mjs --engine webkit --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask-webkit" --profile-dir "$CI_STORAGE/cache/paint-mask-webkit" --main-ink-captures "$CI_STORAGE/evidence/charger-current-native-events.json" --exact-source
       - name: Verify two-player network trajectories and rendered FX
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-network-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network" --profile-dir "$CI_STORAGE/cache/network" --exact-source
