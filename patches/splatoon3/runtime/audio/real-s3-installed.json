@@ -5869,9 +5869,21 @@
       "sourceKind": "repository-existing-MP3; trigger unverified",
       "verification": "repository-Git-blob-reference; no claimed retail 11.3.0 event",
       "gitBlobSha": "90604752c5b23e2ae4fcf7faeeea12a5785d0ea7"
+    },
+    {
+      "id": "special:booyahBomb",
+      "event": "spin",
+      "variant": 0,
+      "file": "s3-real/Sp_NiceBall_HoldFull_00.mp3",
+      "gain": 1,
+      "sourceName": "Sp_NiceBall_HoldFull_00.mp3",
+      "sourceVersion": "2022-extract",
+      "sourceKind": "2022-source-booyah-full-hold; trigger phase estimated",
+      "verification": "source-identical repo MP3; full-hold loop needs on-device timing validation",
+      "gitBlobSha": "ef3b60a551862f792562607c12277f4303df3b28"
     }
   ],
   "installedFiles": 388,
   "plannedFiles": 388,
-  "installedEventVariants": 416
+  "installedEventVariants": 417
 }
