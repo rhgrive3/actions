@@ -54,6 +54,7 @@ for (const [file, expected] of Object.entries(manifest.artifacts)) {
   const built = path.join(site, file);
   if (!fs.existsSync(built) || hash(fs.readFileSync(built)) !== expected) throw new Error('Built artifact checksum mismatch: ' + file);
 }
+const { serveProjectileCaptureFile } = await import('./lib/inkwave-projectile-http-file.mjs');
 const mime = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png',
@@ -67,8 +68,7 @@ const server = http.createServer((req, res) => {
     const file = path.resolve(site, rel);
     if (file !== site && !file.startsWith(site + path.sep)) throw new Error('Path outside build');
     if (!fs.statSync(file).isFile()) throw new Error('Not a file');
-    res.writeHead(200, { 'content-type': mime[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
-    fs.createReadStream(file).pipe(res);
+    serveProjectileCaptureFile(req, res, file, mime);
   } catch {
     res.writeHead(404); res.end('Not found');
   }

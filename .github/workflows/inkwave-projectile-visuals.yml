@@ -10,6 +10,8 @@ on:
       - 'scripts/check-inkwave-projectile-visuals.mjs'
       - 'scripts/lib/inkwave-streamed-music-diagnostics.mjs'
       - 'scripts/tests/inkwave-streamed-music-diagnostics.test.mjs'
+      - 'scripts/lib/inkwave-projectile-http-file.mjs'
+      - 'scripts/tests/inkwave-projectile-http-file.test.mjs'
       - 'scripts/lib/inkwave-projectile-menu-start.mjs'
       - 'scripts/tests/inkwave-projectile-menu-start.test.mjs'
       - 'scripts/tests/inkwave-projectile-boolean-gate.test.mjs'
@@ -95,7 +97,7 @@ jobs:
           python3 scripts/tests/inkwave-projectile-captures.test.py
           node --experimental-vm-modules --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-ci-roster.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs
           node --test scripts/tests/inkwave-projectile-pr-diff-cli.test.mjs
-          node --test scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-boolean-gate.test.mjs scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-audio-timing-observer.test.mjs scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs
+          node --test scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-boolean-gate.test.mjs scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-audio-timing-observer.test.mjs scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs scripts/tests/inkwave-projectile-http-file.test.mjs
       - name: Verify current source-pair admission and rejection controls without changing inputs
         if: ${{ matrix.side == 'before' && github.event.pull_request.base.ref == 'main' && (github.event.pull_request.base.sha == '9b0e402313686d8f8ad0f70585b01915e904e641' || (github.event.pull_request.base.sha == 'b77b51df6a4e6683ca23a213c8ba4b0bc2f0c8ae' && github.event.pull_request.number == 1695)) }}
         run: node scripts/check-inkwave-current-pair-controls.mjs --baseline .ci-baseline --candidate . --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json

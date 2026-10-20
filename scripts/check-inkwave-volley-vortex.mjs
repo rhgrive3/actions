@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import {chromium,webkit} from 'playwright';
 import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
+import {persistVolleyFailure,cleanupVolleyResources,boundedVolleySnapshot} from './lib/inkwave-volley-failure-evidence.mjs';
 const site=path.resolve(process.argv[2]||'_site'), engines=process.argv.includes('--webkit')?['chromium','webkit']:['chromium'];
 const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
@@ -29,13 +30,26 @@ const rooms=new Map(),wire=[],withheld=[];
 const connectRelay=createLocalRelay({rooms});
 relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(text,deliver)=>{if(new URL(req.url,'http://localhost').searchParams.get('name')==='Delay'&&text.includes('"welcome"'))withheld.push({ws,text});else deliver(text);},receive:text=>wire.push(text)}));
 const address=`http://127.0.0.1:${server.address().port}/probe?relay=${encodeURIComponent('ws://127.0.0.1:'+relay.address().port)}`;
-const results=[];let browser;
+const results=[];let browser,primaryError=null;
+const evidenceArg=process.argv.indexOf('--evidence-dir');
+const evidence=path.resolve(evidenceArg>=0?process.argv[evidenceArg+1]:process.env.CI_STORAGE?path.join(process.env.CI_STORAGE,'evidence/volley-vortex'):'.dev-state/volley-vortex');
+let activeEngine=null,phase='launch',client=null,activePages=[];
+const pageErrors=[],consoleErrors=[],failedRequests=[],badResponses=[];
+const record=(list,item)=>{list.push(item);if(list.length>64)list.shift();};
 try{
  for(const engine of engines){
+  activeEngine=engine;phase='launch';client=null;
   browser=await ({chromium,webkit}[engine]).launch({headless:true,...(engine==='chromium'?{executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks']}: {})});
-  const pages=[],errors=[];
+  const pages=[],errors=[];activePages=pages;
   for(let i=0;i<3;i++){
-   const page=await browser.newPage();pages.push(page);page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')console.error(m.text());});await page.goto(address);
+   client=i;phase='client initialization';
+   const page=await browser.newPage();pages.push(page);
+   page.on('pageerror',e=>{errors.push(e.message);record(pageErrors,{engine,client:i,message:String(e.message).slice(0,2000)});});
+   page.on('console',m=>{if(m.type()==='error'){console.error(m.text());record(consoleErrors,{engine,client:i,message:m.text().slice(0,2000)});}});
+   // Only request paths are retained, never URLs with credentials/query data.
+   page.on('requestfailed',r=>record(failedRequests,{engine,client:i,path:new URL(r.url()).pathname,error:String(r.failure()?.errorText||'').slice(0,1000)}));
+   page.on('response',r=>{if(r.status()>=400)record(badResponses,{engine,client:i,path:new URL(r.url()).pathname,status:r.status()});});
+   await page.goto(address);
    await page.evaluate(async()=>{
     const THREE=await import('three'),ctx=await import('/src/core/ctx.js'),{Actor}=await import('/src/game/actor.js'),{Projectiles}=await import('/src/game/weapons.js'),{NetSession}=await import('/src/net/session.js');
     const {install}=await import('/patches/splatoon3/runtime/install.mjs');install(await fetch('/patches/splatoon3/profile.json').then(r=>r.json()));
@@ -57,26 +71,35 @@ try{
     G.net=new NetSession();globalThis.step=()=>{clock+=1000/60;G.time+=1/60;G.net.update(1/60);};
    });
   }
+  phase='room admission';client=null;
   const [host,guest,observer]=pages,code=await host.evaluate(()=>G.net.create('Owner'));
   await guest.evaluate(code=>G.net.join(code,'Victim'),code);await observer.evaluate(code=>G.net.join(code,'Observer'),code);
+  phase='three-client membership';
   await host.waitForFunction(()=>G.net._members.size===3);
   const owners=await Promise.all(pages.map(p=>p.evaluate(()=>G.net.myId)));
   const cfg={...await host.evaluate(async()=>{const {PROTO,COMPAT}=await import('/src/net/transport.js');return {proto:PROTO,compat:COMPAT};}),id:engine+'-volley-vortex',map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid===1?1:0,slot:nid===2?1:0,weapon:'slosher',bot:false}))};
+  phase='match begin';
   await Promise.all(pages.map(p=>p.evaluate(cfg=>G.net._begin(cfg),cfg)));
   assert.deepEqual(await Promise.all(pages.map(p=>p.evaluate(()=>G.net._setupReady))),[true,true,true]);
+  phase='match playing';
   await host.evaluate(()=>G.net._go());await Promise.all(pages.map(p=>p.waitForFunction(()=>G.match?.state==='playing')));
   const frames=async n=>{for(let i=0;i<n;i++){await Promise.all(pages.map(p=>p.evaluate(()=>step())));await Promise.all(pages.map(p=>p.evaluate(()=>new Promise(r=>setTimeout(r,0)))));}};
+  phase='volley replication';
   await frames(12);
   assert.equal(await host.evaluate(()=>{G.projectiles.fireSlosh(G.local,G.local.weapon);globalThis.volley=G.projectiles.list.at(-1);return G.netm.out.filter(e=>e[1]==='p').length;}),0);
   for(let i=0;i<14;i++){await host.evaluate(()=>{G.local.pos.x+=.02;G.local.grounded=G.time<.3;G.projectiles.update(1/60);});await frames(1);}
   await frames(30);
   for(const p of [guest,observer]){const births=await p.evaluate(()=>globalThis.births);assert.equal(births.length,9);assert.deepEqual(births.map(x=>x.index),[0,1,2,3,4,5,6,7,8]);assert(births.every(x=>x.delay===0));}
+  phase='volley damage';
   for(const damage of [30.39,34.31,34.31])await host.evaluate(d=>hit(G.projectiles,volley,G.actors[1],d,G.actors[1].pos),damage);
+  phase='victim damage acceptance';
   await guest.waitForFunction(()=>Math.abs(G.local.hp-65.7)<1e-8);
   await Promise.all(pages.map(p=>p.evaluate(()=>{G.projectiles.clear();G.actors[0].pos.set(0,0,0);G.actors[1].pos.set(0,0,30);G.actors[0].aimDir.set(0,0,1);}))); 
+  phase='ink vac startup';
   await host.evaluate(()=>{G.local.setWeapon('charger');G.local.special=G.local.specialCost();G.local._startSpecial();G.local.intent.fire=true;});
   await frames(25);await guest.waitForFunction(()=>vac.inkVacState(G.actors[0])?.phase==='inhale');
   await Promise.all(pages.map(p=>p.evaluate(()=>{G.actors[1].hp=100;G.actors[1].ink=100;})));
+  phase='ink vac contact and release';
   // The sourced Ink Vac cone starts at zero length and extends by 0.3334 per 60 Hz frame.
   // Grow it with real Actor updates while the victim is outside the 15 m maximum reach.
   for(let i=0;i<100;i++){
@@ -107,4 +130,55 @@ try{
   await browser.close();browser=null;
  }
  console.log(JSON.stringify({build:build.build.revision,results},null,2));
-}finally{if(browser)await browser.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));}
+}catch(error){
+ primaryError=error;
+ // Persist before any asynchronous teardown; no screenshot/evaluate can advance
+ // the failing browser or prevent the original failure from being recorded.
+ const detail={sourceSha:process.env.SOURCE_SHA||null,contentHash:build.contentHash,
+   revision:build.build.revision,engine:activeEngine,phase,client,results,pageErrors,consoleErrors,failedRequests,badResponses};
+ const saved=persistVolleyFailure(evidence,detail,error);
+ if(saved.status!=='written')console.error('Volley failure evidence unavailable:',saved.error);
+ // Read current values only after the original failure is safely on disk. No
+ // simulation ticks, input, retries, screenshots or animation advancement.
+ const snapshots=await Promise.all(activePages.map((page,index)=>boundedVolleySnapshot(()=>page.evaluate(()=>{
+  const g=globalThis.G,finite=value=>Number.isFinite(value)?value:null;
+  const vector=v=>v?{x:finite(v.x),y:finite(v.y),z:finite(v.z)}:null;
+  const actor=a=>a?{nid:a.nid??null,owner:a.owner??null,hp:finite(a.hp),ink:finite(a.ink),netLife:a.netLife??null,isLocal:!!a.isLocal,
+   remote:a.remote??null,alive:a.alive??null,invuln:finite(a.invuln),position:vector(a.pos),aimDir:vector(a.aimDir),
+   weapon:{id:a.weapon?.id??null,kind:a.weapon?.kind??null}}:null;
+  const sampleMap=(map,project)=>{
+   if(!(map instanceof Map))return null;
+   const peers=[];let rowsLeft=8;
+   for(const [peer,rows] of map){
+    if(peers.length>=8)break;
+    const list=Array.isArray(rows)?rows:[],sample=list.slice(0,rowsLeft).map(project);rowsLeft-=sample.length;
+    peers.push({peer,count:list.length,sample});
+   }
+   return {peerCount:map.size,sampledPeers:peers};
+  };
+  const triple=v=>Array.isArray(v)?v.slice(0,3).map(finite):null;
+  const provenance=g?.netm?._combatProvenance;
+  const combat=provenance?{
+   proofs:sampleMap(provenance.proofs,p=>({actor:p.actor,at:finite(p.at),ts:finite(p.ts),origin:triple(p.origin),unit:triple(p.unit),
+    reach:finite(p.reach),cause:p.cause,kind:p.kind,maxUses:finite(p.maxUses),uses:finite(p.uses)})),
+   pending:sampleMap(provenance.pending,p=>({type:p.type,at:finite(p.at),claim:p.d?{a:p.d.a,v:p.d.v,d:p.d.d,w:p.d.w,g:p.d.g,h:p.d.h,seq:p.d.seq,l:p.d.l}:null})),
+   contactCount:provenance.contacts?.size??null,
+  }:null;
+  return {clock:finite(globalThis.clock),time:finite(g?.time),matchState:g?.match?.state??null,
+   combat,local:actor(g?.local),actors:(g?.actors||[]).slice(0,8).map(actor),
+   network:g?.net?{myId:g.net.myId??null,setupReady:g.net._setupReady??null,members:g.net._members?.size??null}:null,
+   births:Array.isArray(globalThis.births)?globalThis.births.length:null,
+   volley:globalThis.volley?{damageGroup:globalThis.volley.s3DamageGroupId??null,ownerNid:globalThis.volley.owner?.nid??null}:null};
+ })).then(snapshot=>({client:index,...snapshot}))));
+ const enriched=persistVolleyFailure(evidence,{...detail,snapshots},error);
+ if(enriched.status!=='written')console.error('Volley failure snapshot evidence unavailable:',enriched.error);
+ throw error;
+}finally{
+ const cleanupErrors=await cleanupVolleyResources([
+  async()=>{if(browser)await browser.close();},
+  async()=>{for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));},
+  async()=>{await new Promise(r=>server.close(r));},
+ ],primaryError);
+ for(const error of cleanupErrors)console.error('Volley teardown after original failure:',error);
+}
+

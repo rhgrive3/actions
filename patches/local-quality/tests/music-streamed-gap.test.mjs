@@ -91,3 +91,42 @@ test('native synthesized player without a media element still rebases after a ga
     assert.equal(f.music._platformMusic.restarts, 1);
   } finally { f.music.dispose(); }
 });
+
+for (const pending of [false,true]) test(`primed battle survives procedural menu rebase pending=${pending}`,async()=>{
+ const f=await rig({pending});try{
+ f.music.play('menu',{fade:0});f.music.preloadFile('battle',{prime:true});
+ const preload=f.music._preloadedFile, player=preload.player, menu=f.music.current;
+ f.gap(4.15);assert.ok(f.music._preloadedFile===preload);assert.equal(player.disposed,false);
+ assert.notEqual(f.music.current,menu);assert.equal(f.music._platformMusic.restarts,1);
+ f.music.stop(.3);f.music.preloadFile('battle',{prime:true});f.music.play('opening',{fade:0});f.gap(1);
+ assert.ok(f.music._preloadedFile===preload);f.music.play('battle',{fade:0});
+ assert.equal(f.music.current,player);assert.equal(f.music._preloadedFile,null);
+ }finally{f.music.dispose()}
+});
+for(const action of ['explicit-menu','hidden-resume','rollback','failed','paused','ended','error']) test(`preload is not protected on ${action}`,async()=>{
+ const f=await rig();try{
+ f.music.play('menu',{fade:0});f.music.preloadFile('battle',{prime:true});const p=f.music._preloadedFile.player;
+ if(action==='explicit-menu')f.music.play('menu');
+ else if(action==='hidden-resume'){f.document.hidden=true;f.listeners.get('visibilitychange')();f.gap(1);f.document.hidden=false;f.listeners.get('visibilitychange')()}
+ else if(action==='rollback'){f.gap(.1);f.ctx.currentTime=0;f.music._tick()}
+ else {if(action==='failed')p.failed=true;else p.element[action]=action==='error'?{code:3}:true;f.gap(1)}
+ assert.equal(f.music._preloadedFile,null);assert.equal(p.disposed,true);
+ }finally{f.music.dispose()}
+});
+
+test('scheduler preload preservation does not leak into a later music toggle',async()=>{
+ const f=await rig();try{
+ f.music.play('menu',{fade:0});f.music.preloadFile('battle',{prime:true});const p=f.music._preloadedFile.player;
+ f.gap(1);assert.equal(p.disposed,false);assert.equal(f.music._platformPreloadReplay,undefined);
+ f.music.setMusicEnabled(false);f.music.setMusicEnabled(true);
+ assert.equal(f.music._preloadedFile,null);assert.equal(p.disposed,true);
+ }finally{f.music.dispose()}
+});
+test('scheduler replay remapped to another track drops primed battle',async()=>{
+ const f=await rig();try{
+ f.music.play('menu',{fade:0});f.music.preloadFile('battle',{prime:true});const p=f.music._preloadedFile.player;
+ f.music.remap=track=>track==='menu'?'title':track;f.gap(1);
+ assert.equal(f.music._preloadedFile,null);assert.equal(p.disposed,true);
+ assert.equal(f.music._platformPreloadReplay,undefined);
+ }finally{f.music.dispose()}
+});

@@ -712,7 +712,9 @@ jobs:
         run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/catalog" --profile-dir "$CI_STORAGE/cache/catalog"
       - name: Verify PR1172 volley and vortex in Chromium and WebKit
         if: matrix.suite == 'ui'
-        run: node scripts/check-inkwave-volley-vortex.mjs .built-site/_site --webkit
+        run: |
+          node --test scripts/lib/inkwave-volley-failure-evidence.test.mjs
+          node scripts/check-inkwave-volley-vortex.mjs .built-site/_site --webkit
       - name: Verify room startup and gyro health in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-room-gyro.mjs .built-site/_site --webkit

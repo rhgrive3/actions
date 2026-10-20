@@ -1409,6 +1409,8 @@ export class MusicEngine {
   play(track, opts = {}) {
     // a mode director (e.g. src/audio/bossAudio.js) can re-route requests: remap(track) → track to play instead
     if (this.remap) { try { const r = this.remap(track); if (r !== undefined) track = r; } catch (e) { /* keep the request */ } }
+    const replay = this._platformPreloadReplay;
+    const preservePreload = !!replay && replay.track === track && replay.pending === this._preloadedFile;
     const fade = Math.max(0, opts.fade ?? 1.0);
     if (track != null && !SONGS[track]) { console.warn('[music] unknown track', track); return; }
     // There is no approved recorded final-minute replacement. Keep Jet Arrow
@@ -1429,7 +1431,7 @@ export class MusicEngine {
     }
     this._desiredTrack = track;
     // The pre-GO Opening sting plays while the silent battle MP3 stays primed.
-    if (track && track !== 'opening' && !FILE_TRACK_URLS[track]) this._dropPreload();
+    if (!preservePreload && track && track !== 'opening' && !FILE_TRACK_URLS[track]) this._dropPreload();
     if (!this.ctx) { this._want = { track, opts }; return; }
     const cur = this.current;
     if (cur && cur.id === track) return;
@@ -1453,7 +1455,7 @@ export class MusicEngine {
       } catch (_) {
         this._fileFailures.add(track);
       }
-    } else if (this._preloadedFile && track !== 'opening') {
+    } else if (!preservePreload && this._preloadedFile && track !== 'opening') {
       this._dropPreload();
     }
     let t0 = now + 0.06, sync = false;

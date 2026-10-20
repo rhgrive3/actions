@@ -76,11 +76,24 @@ export function installMusicPlatform(MusicEngine, env = globalThis) {
         r.time = now;
         return;
       }
+      // A scheduler-only rebuild of menu music must not cancel the healthy
+      // zero-gain recording primed by START for the upcoming battle.
+      const pending = m._preloadedFile?.player, pendingMedia = pending?.element;
+      const preservePreload = schedulerGap && now >= r.time && pendingMedia &&
+        !pending.disposed && !pending.failed && pendingMedia.paused === false &&
+        !pendingMedia.ended && !pendingMedia.error;
       const id = m.current?.id;
       for (const player of m.players) player.dispose();
       m.players.length = 0; m.current = null; r.restarts++;
       r.time = now;
-      if (id) m.play(id, { fade: .05 });
+      if (id) {
+        // Scope this token to the synchronous replay. Music-idle retains play
+        // options for later toggles; preservation must never leak into them.
+        const previous = m._platformPreloadReplay;
+        m._platformPreloadReplay = preservePreload ? { track: id, pending: m._preloadedFile } : null;
+        try { m.play(id, { fade: .05 }); }
+        finally { m._platformPreloadReplay = previous; }
+      }
     }
     r.time = now;
   }
