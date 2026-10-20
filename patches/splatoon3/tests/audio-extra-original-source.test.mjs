@@ -27,7 +27,7 @@ test('3 additional original 2022 sound binaries are IN THE REPO with pinned exac
    assert.equal(a[0].sha256,sha);
    assert.equal(source.clips.filter(c=>c.id===id).length,1,'matching auditable source manifest');
  }
- assert.equal(manifest.clips.length,419,'source-only supplemental MP3s are registered without changing original source metadata');
+ assert.equal(manifest.clips.length,420,'source-only supplemental MP3s are registered without changing original source metadata');
  assert.equal(source.clips.length,274);
 });
 
