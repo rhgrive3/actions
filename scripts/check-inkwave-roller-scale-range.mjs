@@ -33,6 +33,11 @@ if(seedIndex>=0&&(!/^\d+$/.test(process.argv[seedIndex+1]||'')||!Number.isIntege
 const cameraIndex=process.argv.indexOf('--grip-camera-reference');
 if(cameraIndex>=0&&!process.argv[cameraIndex+1])throw Error('Missing grip camera reference');
 const cameraReference=cameraIndex<0?null:validateGripCameras(JSON.parse(fs.readFileSync(process.argv[cameraIndex+1],'utf8')));
+// The pinned historical comparison predates player-relative normalization.
+// Its explicit expectation must not silently inherit the candidate dimensions.
+const widthIndex=process.argv.indexOf('--expected-drum-width');
+const expectedDrumWidth=widthIndex<0?2.5712*(1.36/1.72259927):Number(process.argv[widthIndex+1]);
+if(!(expectedDrumWidth>0&&Number.isFinite(expectedDrumWidth)))throw Error('Invalid expected drum width');
 fs.mkdirSync(out,{recursive:true});
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json',
   '.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.css':'text/css','.mp3':'audio/mpeg','.woff2':'font/woff2'};
@@ -43,7 +48,7 @@ const server=http.createServer((q,r)=>{
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser,page,diagnosticTimer;
-const receipt={diagnosticOnly:process.env.GRIP_DIAGNOSTIC_ONLY==='1',acceptanceNote:process.env.GRIP_DIAGNOSTIC_ONLY==='1'?'Unchanged-baseline control failed; candidate images are nonaccepting diagnostics.':null,build:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,errors:[],requests:[],console:[]};
+const receipt={expectedDrumWidth,diagnosticOnly:process.env.GRIP_DIAGNOSTIC_ONLY==='1',acceptanceNote:process.env.GRIP_DIAGNOSTIC_ONLY==='1'?'Unchanged-baseline control failed; candidate images are nonaccepting diagnostics.':null,build:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,errors:[],requests:[],console:[]};
 const snapshot=async()=>page?.evaluate(()=>({mode:window.__G?.mode,match:window.__G?.match?.state,
   menu:window.__inkwave?.menus?.current,layout:window.__G?.level?.layout?.id,
   range:!!window.__G?.match?.range,entryFreeze:window.__gripEntryFreeze,initialState:window.__gripInitialState,text:document.body.innerText.slice(-1800)})).catch(()=>null);
@@ -217,7 +222,7 @@ try{
   const m=receipt.measurement;
   assert.equal(m.layout,'range');assert.equal(m.floorTag,'floor:roller');
   assert.equal(m.holes,0);assert.ok(m.rows>40);assert.ok(m.contactError<1e-5);
-  assert.ok(Math.abs(m.drumWidth-2.5712*(1.36/1.72259927))<1e-4);assert.ok(Math.abs(m.paintHalf-2.8*0.8103533592449264)<1e-10);
+  assert.ok(Math.abs(m.drumWidth-expectedDrumWidth)<1e-4);assert.ok(Math.abs(m.paintHalf-2.8*0.8103533592449264)<1e-10);
   assert.ok(Math.abs(m.contactDepth-1.5)<1e-10);
   assert.ok(m.gpuMaxWidth>4.3&&m.gpuMaxWidth<4.8);
   assert.equal(receipt.errors.length,0);

@@ -16,7 +16,7 @@ import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 // approximations, not a claim of retail frame-for-frame equivalence.
 
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
-import { bombLaunchPosition } from './bomb-motion.mjs';
+import { bombReleasePosition, bombPreviewPosition } from './bomb-motion.mjs';
 import { gearCurve } from './gear.mjs';
 import { objectDamageScale, objectDamageRow, subEffectScale } from './sub-resistance.mjs';
 import { subMarkSeconds } from './sub-mark-resistance.mjs';
@@ -71,6 +71,7 @@ const frameSeconds = f => f / 60;
 const rawDamage = n => n / 10;
 const speedPerSecond = n => n * 60;
 const accelPerSecondSquared = n => n * 3600;
+const subLaunchPosition=(actor,out)=>bombPreviewPosition(actor,bombReleasePosition(actor,out));
 
 // The core values are extracted from the table named in `source`; other fields
 // are called out at the point of use and on `calibration`.
@@ -387,7 +388,7 @@ function createObject(api, projectiles, owner, id, record = {}) {
   const THREE = api.THREE, seq = Number.isSafeInteger(record.seq) ? record.seq : nextSeq(owner);
   const pos = record.pos?.isVector3 ? record.pos.clone() : new THREE.Vector3(record.x ?? owner.pos.x, record.y ?? owner.pos.y + 1.35, record.z ?? owner.pos.z);
   if(!record.ghost&&!record.pos&&record.x==null&&record.y==null&&record.z==null)
-    bombLaunchPosition(owner,pos);
+    subLaunchPosition(owner,pos);
   let vel;
   if (record.vel?.isVector3) vel = record.vel.clone();
   else if ([record.vx, record.vy, record.vz].every(Number.isFinite)) vel = new THREE.Vector3(record.vx,record.vy,record.vz);
@@ -1797,7 +1798,7 @@ export function installAllSubs(api,profile={}){
   Projectiles.prototype.updateArc=function(actor,show){
     if(!show||!actor?.alive||actor.weapon?.sub!=='burst')return nativeArc.call(this,actor,show);
     const spec=ALL_SUB_SPECS.burst,vel=launchVelocity(api,this,actor,spec);
-    const p=bombLaunchPosition(actor,actor.pos.clone().add(new api.THREE.Vector3(0,1.35,0)));
+    const p=subLaunchPosition(actor,actor.pos.clone().add(new api.THREE.Vector3(0,1.35,0)));
     const start=p.clone(),initial=vel.clone(),prev=p.clone(),hit=new api.Hit();
     const position=this.arcGeo.attributes.position,per=2;let count=1,landed=false;
     position.setXYZ(0,p.x,p.y,p.z);

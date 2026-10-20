@@ -212,7 +212,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before --grip-seed "$GRIP_SEED" 2>&1 | tee work/roller-grip-evidence/before.log
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before --expected-drum-width 2.5712 --grip-seed "$GRIP_SEED" 2>&1 | tee work/roller-grip-evidence/before.log
           test -s work/roller-grip-evidence/before/grip-cameras.json
           node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict'; assert.equal(JSON.parse(fs.readFileSync('work/roller-grip-evidence/before/result.json')).passed, true);"
       # One extra capture, not a third build: prove seeded A/A repeatability first.
@@ -222,7 +222,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before-control --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/before-control.log
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before-control --expected-drum-width 2.5712 --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/before-control.log
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import assert from 'node:assert/strict';
@@ -273,6 +273,9 @@ jobs:
             assert.equal(steady.passed, true); assert.equal(steady.build, result.build);
             assert.deepEqual(steady.measurement, m, 'Release capture changed steady measurement');
             assert.equal(result.passed, true, `${side} capture failed`);
+            const expectedWidth = index < 2 ? 2.5712 : 2.5712 * (1.36 / 1.72259927);
+            assert.equal(result.expectedDrumWidth, expectedWidth);
+            assert.ok(Math.abs(m.drumWidth - expectedWidth) < 1e-4, `${side} model width differs`);
             assert.equal(result.diagnosticOnly, false, 'Diagnostic capture cannot pass paired acceptance');
             assert.deepEqual(result.errors, []);
             sha(build.contentHash); sha(build.inputHash);

@@ -162,8 +162,6 @@ export function bombPreviewPosition(a, out) {
   if (!a?.weaponRunner?.aimingSub) return out;
   return sampleRelease(a, out);
 }
-// Catalogue sub projectiles share the native hand's release pose too.
-export function bombLaunchPosition(a, out) { return sampleRelease(a, out); }
 export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: timers, CHARACTER_BOMB_POSE: curves }) {
   if (!Character || !Number.isInteger(timers?.T_THROW))
     throw Error('Bomb motion requires the actual Character and exact exported T_THROW');
