@@ -1,0 +1,22 @@
+// Shared browser fixture for the 2026-10-20 base-logic measurements: seeded Math.random,
+// presentation RNG for rAF/timer callbacks, a virtual performance.now for measured frames,
+// one warm-up match, then a measured match. PLAYWRIGHT_MODULE / CHROMIUM_PATH optional.
+import fs from 'node:fs'; import path from 'node:path'; import http from 'node:http';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
+export async function openGame(site,{quality='low',map='tidewater',mode='turf',render=false,warm=120,intro=true,freeze=false}={}){
+const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.woff2':'font/woff2','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.mp3':'audio/mpeg'};
+const root=fs.realpathSync(site);
+const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://x');let f=path.join(root,decodeURIComponent(u.pathname));if(fs.statSync(f).isDirectory())f=path.join(f,'index.html');const b=fs.readFileSync(f);res.writeHead(200,{'content-type':mime[path.extname(f)]||'application/octet-stream'});res.end(b);}catch{res.writeHead(404);res.end();}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const page=await browser.newPage({viewport:{width:960,height:600}});
+const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.addInitScript(q=>{const _rn=performance.now.bind(performance);window.__realNow=_rn;window.__vc={on:false,t:0};performance.now=()=>window.__vc.on?window.__vc.t:_rn();let seed=20261004;window.__reseed=()=>{seed=20261004;};Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};{let ps=7;const pres=()=>{ps=(Math.imul(ps,22695477)+1)>>>0;return ps/4294967296;};const wrap=f=>function(...a){const r=Math.random;Math.random=pres;try{return f.apply(this,a);}finally{Math.random=r;}};const oR=window.requestAnimationFrame.bind(window);window.requestAnimationFrame=cb=>oR(wrap(cb));const oT=window.setTimeout.bind(window);window.setTimeout=(cb,...r)=>typeof cb==='function'?oT(wrap(cb),...r):oT(cb,...r);const oI=window.setInterval.bind(window);window.setInterval=(cb,...r)=>typeof cb==='function'?oI(wrap(cb),...r):oI(cb,...r);if(window.requestIdleCallback){const oQ=window.requestIdleCallback.bind(window);window.requestIdleCallback=(cb,...r)=>oQ(wrap(cb),...r);}}localStorage.setItem('inkwave.settings',JSON.stringify({quality:q,shadows:q!=='low',bloom:q!=='low',frameRate:60}));},quality);
+await page.goto(`http://127.0.0.1:${server.address().port}/`,{waitUntil:'domcontentloaded'});
+await page.waitForFunction(()=>document.readyState==='complete',null,{timeout:600000});
+await page.evaluate(async()=>{window.probeG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;window.THREE=await import(new URL('vendor/three/build/three.module.js',document.baseURI));});
+await page.waitForFunction(()=>!!(probeG.game?.menus&&probeG.s3?.installed&&probeG.mode!=='boot'),null,{timeout:600000,polling:500});
+await page.evaluate(async({map,mode})=>{const g=probeG.game;g.frozen=true;g.menus.wipe?.cancel?.();await g.startMatch({mapId:map,difficulty:'normal',duration:180,mode});await Promise.all(g.match.actors.map(a=>a.character?.sourceMotion?.ready));for(let i=0;i<30;i++)g._frame(1/60);await new Promise(r=>setTimeout(r,500));probeG.time=0;if(g.rig){g.rig.time=0;}g.s3Clock?.reset();window.__reseed();if(g.rig)g.rig.shakeSeed=Math.random()*100;await g.startMatch({mapId:map,difficulty:'normal',duration:180,mode});await Promise.all(g.match.actors.map(a=>a.character?.sourceMotion?.ready));await Promise.all(g.match.actors.map(a=>a.character?.sourceMotion?.ready));await new Promise(r=>setTimeout(r,5000));probeG.time=0;window.__reseed();window.__vc.on=true;window.__vc.t=1e6;},{map,mode});
+await page.evaluate(({render,warm,intro,freeze})=>{if(freeze)probeG.game.debug.freezeBots();if(!intro)return;const g=probeG.game;g._skipRender=!render;for(let i=0;i<2000&&g.match.state!=='playing';i++){window.__vc.t+=1000/60;g._frame(1/60);}for(let j=0;j<warm;j++){window.__vc.t+=1000/60;g._frame(1/60);}g._skipRender=false;},{render,warm,intro,freeze});
+return {page,browser,server,errors,close:async()=>{await browser.close();server.close();}};
+}

@@ -7,13 +7,16 @@ import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs'
 export const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 export const REL='src/game/motion/source-bank.js';
 export const baseline=fs.readFileSync(new URL('./fixtures/source-bank-07f44b97.mjs.txt',import.meta.url),'utf8');
+// Production composition immediately before source-bank.js became directly authored.
+export const composedBefore=fs.readFileSync(new URL('./fixtures/source-bank-composed-before-direct-migration.mjs.txt',import.meta.url),'utf8');
 const assets=path.join(ROOT,'inkwave-public/assets/source-motion');
 const manifest=JSON.parse(fs.readFileSync(path.join(assets,'manifest.json')));
 const inflate=names=>gunzipSync(Buffer.concat(names.map(n=>fs.readFileSync(path.join(assets,n)))));
 const catalog=JSON.parse(inflate(manifest.catalog.parts));
 export async function poseRotationFixture(old=false){
  const site=process.env.INKWAVE_BUILT_SITE||path.join(ROOT,'inkwave-public'),context=vm.createContext({console,URL,Map}),modules=new Map();
- const code=old?baseline:process.env.INKWAVE_BUILT_SITE?fs.readFileSync(path.join(site,REL),'utf8'):adaptBuildSource(REL,baseline);
+ const live=fs.readFileSync(path.join(ROOT,'inkwave-public',REL),'utf8');
+ const code=old?composedBefore:process.env.INKWAVE_BUILT_SITE?fs.readFileSync(path.join(site,REL),'utf8'):adaptBuildSource(REL,live);
  const three=path.join(site,'vendor/three/build/three.module.js');
  function load(file){if(modules.has(file))return modules.get(file);const m=new vm.SourceTextModule(fs.readFileSync(file,'utf8'),{context,identifier:file});modules.set(file,m);return m;}
  const entry=new vm.SourceTextModule(code+"\nexport * as THREE from 'three'; export const VM_MATH=Math;",{context});
