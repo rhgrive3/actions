@@ -132,7 +132,10 @@ export async function nativeContextRecoveryProof() {
         pendingRAF = null;
         observation.status = 'timed-out';
         reject(Error('Native RAF observation did not complete'));
-      }, 10000);
+      // The same 120 real callbacks take ~22 s at the 5.5 fps observed on
+      // heavily loaded CI SwiftShader. Keep every frame/state assertion while
+      // allowing scheduling latency; a missing RAF still fails boundedly.
+      }, 45000);
       const next = timestamp => {
         pendingRAF = null;
         observation.timestamps.push(timestamp);

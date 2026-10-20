@@ -13,6 +13,11 @@ const proof = () => {
     ordinary: { before: { time: 171, gameTime: 9 }, paused: { time: 171, gameTime: 9, paused: true }, resumed: { time: 170, gameTime: 10, paused: false } } };
 };
 test('complete native receipt accepts ordinary progression and terminal stasis', () => assert.doesNotThrow(() => validateContextRecoveryReceipt(proof())));
+test('real RAF proof retains 120 callbacks and allows software renderer scheduling latency', () => {
+  const body=nativeContextRecoveryProof.toString();
+  assert.match(body,/observation\.callbacks === 120/);
+  assert.match(body,/\}, 45000\)/);
+});
 for (const key of ['time', 'gameTime', 'ticks', 'frame', 'paintVersion', 'gridLength', 'gridHash']) test(`receipt rejects terminal drift in ${key}`, () => {
   const r = proof(); r.afterResumeAttempts[key]++; assert.throws(() => validateContextRecoveryReceipt(r));
 });
