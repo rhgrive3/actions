@@ -48,23 +48,25 @@ export class Minimap {
     this.time = 0;
     this.flashT = 9;
     this._team = [null, null];
-    if (!deferActivation) this.activate();
+    if (!deferActivation) this.activate(false);
     this._built = false;
     this._band = 0;
     this._composeAcc = 1 / 30;   // first visible update composes immediately
     // the raster + shading pass (~0.1–0.3 s) runs when the browser is idle after loading; a match forces it early
+    if (!deferActivation) {
     const idle = typeof requestIdleCallback === 'function' ? (fn) => requestIdleCallback(fn, { timeout: 1500 }) : (fn) => setTimeout(fn, 60);
     if (G.settings?.minimap !== false) idle(() => { if (!this._built && CURRENT === this) this._build(); });
+    }
   }
 
   // A native-world candidate can prepare a Minimap without replacing the
   // currently visible map. Reactivation also repairs a failed publication.
-  activate() {
+  activate(scheduleBuild = true) {
     CURRENT = this;
     fxList.length = 0;
-    if (G.settings?.minimap !== false && !this._built) {
+    if (scheduleBuild && G.settings?.minimap !== false && !this._built) {
       const idle = typeof requestIdleCallback === 'function' ? (fn) => requestIdleCallback(fn, { timeout: 1500 }) : (fn) => setTimeout(fn, 60);
-      idle(() => { if (!this._built && CURRENT === this) this._build(); });
+      idle(() => { if (G.settings?.minimap !== false && !this._built && CURRENT === this) this._build(); });
     }
   }
 

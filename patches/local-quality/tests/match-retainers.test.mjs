@@ -67,10 +67,12 @@ function hudBoss(f) {
 }
 function projectiles(f) {
   const removed = [];
-  const p = Object.create(f.Projectiles.prototype);
-  Object.assign(p, { inkFlight:{clear(){}}, scene: { remove: m => removed.push(m) }, sights: new Map(), vols: Array.from({ length: 32 }, () => ({ hits: [] })), volI: 0,
-    list: [], pool: [], bombs: [], clouds: [], beams: [], beamPool: [], blobs: { count: 5 }, ribbonGeo: { disposed: 0, dispose() { this.disposed++; } } });
-  p._releaseBomb = p._releaseCloud = () => {};
+  // Use the real composed constructor so new native lifecycle pools are not
+  // silently omitted by a handwritten fake (notably delayed charger drops).
+  const p = new f.Projectiles({ add() {}, remove: m => removed.push(m) });
+  p.inkFlight.clear = () => {}; // Flight dependency is intentionally stubbed in this logic-only realm.
+  p.ribbonGeo.disposed = 0;
+  p.ribbonGeo.addEventListener('dispose', () => { p.ribbonGeo.disposed++; });
   return Object.assign(p, { removed });
 }
 const sight = () => ({ material: { disposed: 0, dispose() { this.disposed++; } } });
@@ -79,7 +81,15 @@ test('#747 clear() empties every slosher dedupe list without reallocating the 32
   const f = await realm(), p = projectiles(f), victim = actor('victim'), boss = { boss: true };
   const ring = p.vols.slice(), lists = p.vols.map(v => v.hits);
   p.vols[3].hits.push(victim, boss); p.vols[31].hits.push(boss);
+  const drops = p.chargerDrops, pool = p.chargerDropPool, drop = { owner: victim };
+  assert.equal(drops.length, 0); assert.equal(pool.length, 0);
+  drops.push(drop);
   p.clear();
+  assert.equal(p.chargerDrops, drops); assert.equal(p.chargerDropPool, pool);
+  assert.equal(drops.length, 0); assert.equal(pool.length, 1);
+  assert.equal(pool[0], drop); assert.equal(drop.owner, null, 'native clear releases delayed-drop owner');
+  p.clear();
+  assert.equal(pool.length, 1, 'repeated clear must not enqueue a drop twice');
   assert.equal(p.vols.length, 32);
   assert(p.vols.every((v, i) => v === ring[i] && v.hits === lists[i] && v.hits.length === 0), 'same objects, all emptied');
 });
@@ -97,7 +107,7 @@ test('#733 removeActor releases that charger sight once; others and later clear(
   m.removeActor(a);
   assert.equal(p.sights.has(a), false); assert.deepEqual(p.removed, [sa]); assert.equal(sa.material.disposed, 1);
   assert.equal(p.sights.get(b), sb); assert.equal(sb.material.disposed, 0);
-  assert.deepEqual(p.vols[0].hits, [b]);
+  assert.equal(p.vols[0].hits.length, 1); assert.equal(p.vols[0].hits[0], b);
   assert.equal(p.ribbonGeo.disposed, 0, 'shared ribbon geometry is never disposed');
   m.removeActor(c);   // non-charger: nothing to release
   assert.equal(p.sights.get(b), sb); assert.equal(p.removed.length, 1);
