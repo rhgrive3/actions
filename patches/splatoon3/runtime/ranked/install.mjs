@@ -6,7 +6,7 @@ import { createRankedStage, RankedWorld } from './world.mjs';
 import { installRankedUi } from './ui.mjs';
 import { installRankedBots } from './bots.mjs';
 import { installRankedNetwork, actorId } from './network.mjs';
-import { objectiveSpecialFor } from './pose-admission.mjs';
+import { objectiveSpecialFor, rankedInputFor } from './pose-admission.mjs';
 import { installRankedCombat, createRankedEffects, isCarrier } from './combat.mjs';
 
 import { interruptSpecialForObjective } from '../all-specials.mjs';
@@ -171,7 +171,7 @@ function prepareCarrier(api, actor) {
 export function buildFrame(match, api) {
   const nm = api.G.netm, inputs = {};
   const actors = match.actors.map(a => {
-    const id = actorId(a), received = a.remote && nm?.isHost ? nm.rankedInputs?.get(id) : a._rankedInput;
+    const id = actorId(a), received = a.remote && nm?.isHost ? rankedInputFor(nm.rankedInputs?.get(id),a,match,nm) : a._rankedInput;
     const age = a.remote && received ? api.G.time - received.at : 0;
     const cmd = !a.remote || Number.isFinite(age) && age >= 0 && age < .75 ? received : null;
     if (cmd) inputs[id] = { fire: !!cmd.fire, throw: !!cmd.throw, aim: cmd.aim };
