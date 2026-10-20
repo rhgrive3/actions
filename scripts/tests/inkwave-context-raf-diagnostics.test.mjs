@@ -29,16 +29,16 @@ function fixture({ snapshotThrows = false, platformThrows = false } = {}) {
   const promise = vm.runInNewContext(`(async () => {${block}})()`, context);
   return { receipt, pending, cancelled, promise, platform,
     tick() { const [id, fn] = pending.entries().next().value; pending.delete(id); now += 16; fn(now); },
-    expire() { now = 10000; timeout(); }, get timeoutMs() { return timeoutMs; }, get cleared() { return cleared; } };
+    expire() { now = 45000; timeout(); }, get timeoutMs() { return timeoutMs; }, get cleared() { return cleared; } };
 }
 for (const callbacks of [0, 17]) test(`timeout preserves ${callbacks} callbacks and post-attempt evidence, but rejects`, async () => {
-  const f = fixture(); assert.equal(f.timeoutMs, 10000);
+  const f = fixture(); assert.equal(f.timeoutMs, 45000);
   for (let i = 0; i < callbacks; i++) f.tick();
   const rejection = assert.rejects(f.promise, /Native RAF observation did not complete/);
   f.expire(); await rejection;
   const r = f.receipt, o = r.rafObservation;
   assert.equal(o.status, 'timed-out'); assert.equal(o.callbacks, callbacks); assert.equal(o.timestamps.length, callbacks);
-  assert.equal(o.startedAt, 0); assert.equal(o.elapsed, 10000); assert.equal(o.after.at, 10000);
+  assert.equal(o.startedAt, 0); assert.equal(o.elapsed, 45000); assert.equal(o.after.at, 45000);
   assert.equal(o.before.visibilityState, 'visible'); assert.equal(o.after.hidden, false); assert.equal(o.after.hasFocus, true);
   assert.equal(o.before.platform, f.platform); assert.equal(o.after.platform, f.platform);
   assert.equal(r.afterResumeAttempts.time, 42); assert(Object.values(r.identities).every(Boolean));
