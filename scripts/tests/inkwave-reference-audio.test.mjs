@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { BASE, files, eligible, prepare, snapshot, verifyTrees } from '../lib/inkwave-reference-audio.mjs';
+import { BASE, CURRENT_BASE, files, eligible, prepare, snapshot, verifyTrees } from '../lib/inkwave-reference-audio.mjs';
 const identity={side:'before',pr:1695,baseRef:'main',baseSha:BASE};
 function rig(t) {const root=mkdtempSync(path.join(os.tmpdir(),'audio-reference-unit-'));t.after(()=>rmSync(root,{recursive:true,force:true}));const original=path.join(root,'original'),candidate=path.join(root,'candidate'),derived=path.join(root,'derived');for(const [r,key] of [[original,'before'],[candidate,'after']]){for(const f of files){mkdirSync(path.dirname(path.join(r,f.path)),{recursive:true});writeFileSync(path.join(r,f.path),f[key]);}writeFileSync(path.join(r,'untouched.txt'),'immutable physics stand-in\n');}return {original,candidate,derived,identity,actualBase:BASE};}
 test('only exact PR1695 before main/ada is eligible',()=>{assert.equal(eligible(identity),true);for(const [key,values] of Object.entries({side:['after',''],pr:[1694,1651,0],baseRef:['dev',''],baseSha:['old','']}))for(const value of values)assert.equal(eligible({...identity,[key]:value}),false);});
@@ -25,3 +25,12 @@ test('unrelated production input mutation fails',()=>{const{original,derived}=bu
 test('unknown added production input fails',()=>{const{original,derived}=builds();derived.files.extra='added';assert.throws(()=>verifyBuilds(original,derived),/unexpected production/);});
 test('one missed transformed input fails',()=>{const{original,derived}=builds();derived.files[files[1].inputKey]=original.files[files[1].inputKey];assert.throws(()=>verifyBuilds(original,derived),/unexpected production/);});
 test('unmodified public identity cannot label derived build',()=>{const{original,derived}=builds();derived.build.revision=original.build.revision;assert.throws(()=>verifyBuilds(original,derived),/not distinct/);});
+
+test('QA-only main update is eligible but cannot substitute a different actual checkout',t=>{
+ const r=rig(t), identity={...r.identity,baseSha:CURRENT_BASE};
+ assert.equal(eligible(identity),true);
+ assert.throws(()=>prepare({...r,identity}),/ineligible/);
+ const receipt=prepare({...r,identity,actualBase:CURRENT_BASE});
+ assert.equal(receipt.originalCommit,CURRENT_BASE);
+ assert.equal(receipt.publicMainEquivalent,false);
+});
