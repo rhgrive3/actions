@@ -2,7 +2,7 @@ import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
 import { mainAudioSourceId } from './bank.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
 import { withBlasterSplashHit } from './blaster-hit.mjs';
-import { sourceEventRoute } from './extra-source-routes.mjs';
+import { sourceEventRoute, EXTRA_SPECIAL_ACTION_SOURCE } from './extra-source-routes.mjs';
 const INSTALL=Symbol.for('inkwave.weapon-audio.runtime.v1');
 // Exactly one runtime owns each admitted shot. The old native/catalogue
 // family SFX never layer over real weapon audio or substitute missing MP3s.
@@ -88,12 +88,14 @@ export function installWeaponAudioRuntime(api){
     const kitKey=String(sub||'')+'|'+String(special||'');
     if(a?.isLocal&&loader&&G.audio?.ctx?.state!=='closed'&&s.preloadedKit!==kitKey){
       s.preloadedKit=kitKey;
-      for(const [kit,events] of [['sub:'+sub,['fire','explosion']],['special:'+special,['open','fire','explosion','ready','release']]])
+      for(const [kit,events] of [['sub:'+sub,['fire','explosion']],['special:'+special,['open','fire','explosion','ready','release','spin']]])
         for(const event of events){
           loader.ensure(kit,event).catch(()=>{});
           const extra=sourceEventRoute(kit,event);
           if(extra)loader.ensure(extra,'fire').catch(()=>{});
         }
+      for(const [action,cue] of Object.entries(EXTRA_SPECIAL_ACTION_SOURCE))
+        if(action.startsWith(special+':'))loader.ensure(cue,'fire').catch(()=>{});
     }
     s.firedThisUpdate=false;
     const result=oldUpdate.call(this,dt,input,...rest);
