@@ -1,3 +1,4 @@
+import {registerLimitedTorpedo,consumeLimitedContact} from './torpedo-contact-commit.mjs';
 import { SPRINKLER } from '../splatoon3/runtime/kit-sprinkler.mjs';
 import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSprinklerScope } from './sprinkler-contact-commit.mjs';
 // Correlate owner-authenticated hit *claims* with independent ordered owner
@@ -240,6 +241,7 @@ function take(nm,from,d,type,t,sprinklerScope=null) {
     // single network claim can never supply the old arbitrary 2000 HP.
     if(d.d>800)return false;
   }
+  if(type==='pvp'&&d.w==='torpedo-splash'&&consumeLimitedContact(nm,from,d,t))return true;
   if(type==='pvp'&&d.w==='sprinkler')return consumeReceiverSprinklerContact(nm,from,d,t,sprinklerScope);
   const s=state(nm);prune(s,t);
   const shots=s.proofs.get(from)||[];
@@ -303,7 +305,7 @@ function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
   const still=[];
   for(const item of items) {
     if(t-item.at>PENDING_AGE)continue;
-    if(item.type==='pvp'&&item.d.w==='sprinkler'&&(typeof receiptAllowed!=='function'||!receiptAllowed.call(nm,item.d,from)))continue;
+    if(item.type==='pvp'&&(item.d.w==='sprinkler'||item.d.w==='torpedo-splash')&&(typeof receiptAllowed!=='function'||!receiptAllowed.call(nm,item.d,from)))continue;
     if(!combatAdmission(nm,from,item.d,item.type,t,item.sprinklerScope)) {still.push(item);continue;}
     if(item.type==='pvp')oldHit.call(nm,item.d,from);
     else if(oldBoss?.call(nm,from,item.d))nm.match.boss.remoteHit(item.d);
@@ -321,6 +323,7 @@ export function installCombatProvenance(NetMatch,context={}) {
   const commitSubBirth=function(receipt,event,bomb) {
     const t=now();
     const accepted=record(this,receipt.from,{e:[event],ts:receipt.packetTime,a:[[receipt.nid,...receipt.pose]]},t,receipt);
+    if(accepted&&receipt.subId==='torpedo')registerLimitedTorpedo(this,bomb,receipt,event,context.G,notifySprinkler);
     if(accepted&&receipt.sourceKind==='native-sprinkler')registerReceiverSprinkler(this,bomb,receipt,context.G,notifySprinkler,PENDING_AGE,MAX_PENDING);
     // Hits may precede delayed FIFO playback; retry only when birth commits.
     flush(this,receipt.from,t,oldHit,oldBoss,context.hitReceiptAllowed);
@@ -344,6 +347,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     // before proof consumption or pending hit-ID reservation. Missing context
     // is fail-closed, never permission to bypass that policy.
     if(typeof context.hitPayloadAllowed!=='function' || !context.hitPayloadAllowed(d))return;
+    if(d.w==='torpedo-splash'&&(typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
     if(d.w==='sprinkler'&&(d.d!==SPRINKLER.dropletDamage||typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
     const t=now();
     // Only incoming remote owner claims are deferred; internally retried

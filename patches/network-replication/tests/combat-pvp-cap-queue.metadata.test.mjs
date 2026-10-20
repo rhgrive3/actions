@@ -8,6 +8,7 @@ import test from 'node:test';
 const source = fs.readFileSync(new URL('../combat-provenance.mjs', import.meta.url), 'utf8');
 const tokenImport = "import { bindSubBirthCommit, closeSubBirthCommit } from './sub-birth-commit.mjs';";
 const auditedImports = [tokenImport,
+  "import {registerLimitedTorpedo,consumeLimitedContact} from './torpedo-contact-commit.mjs';",
   "import { SPRINKLER } from '../splatoon3/runtime/kit-sprinkler.mjs';",
   "import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSprinklerScope } from './sprinkler-contact-commit.mjs';",
 ];
@@ -28,6 +29,8 @@ const nativeDropletDamage = Number(damageFields[0][1]);
 assert.equal(nativeDropletDamage, 20, 'current native source damage, not old wire40');
 const contactBoundary = `
 const SPRINKLER = Object.freeze({ get dropletDamage() { throw Error('cap-only boundary: SPRINKLER damage source=${nativeDropletDamage}'); } });
+function registerLimitedTorpedo(){throw Error('cap-only boundary: registerLimitedTorpedo');}
+function consumeLimitedContact(){throw Error('cap-only boundary: consumeLimitedContact');}
 function registerReceiverSprinkler(){throw Error('cap-only boundary: registerReceiverSprinkler');}
 function consumeReceiverSprinklerContact(){throw Error('cap-only boundary: consumeReceiverSprinklerContact');}
 function receiverSprinklerScope(){throw Error('cap-only boundary: receiverSprinklerScope');}
@@ -42,13 +45,15 @@ function run(body, direct = false) {
   const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + contactBoundary + prefix +
     '\nfunction bindSubBirthCommit(){} function closeSubBirthCommit(){}\n' +
     '(' + body.toString() + ')()';
-  // Token binding is a metadata stub; every new Sprinkler capability throws if touched.
+  // Token binding is a metadata stub; every new Sprinkler/Torpedo capability throws if touched.
   // No host objects/functions enter this realm.
   const context = vm.createContext(Object.create(null), {codeGeneration:{strings:false, wasm:false}});
   return JSON.parse(JSON.stringify(new vm.Script(code).runInContext(context, {timeout:1000})));
 }
 
 // Prove every new dependency is rejecting, rather than a permissive no-op.
+assert.throws(() => run(() => registerLimitedTorpedo()), /cap-only boundary: registerLimitedTorpedo/);
+assert.throws(() => run(() => consumeLimitedContact()), /cap-only boundary: consumeLimitedContact/);
 assert.throws(() => run(() => SPRINKLER.dropletDamage), /cap-only boundary: SPRINKLER damage source=20/);
 assert.throws(() => run(() => registerReceiverSprinkler()), /cap-only boundary: registerReceiverSprinkler/);
 assert.throws(() => run(() => consumeReceiverSprinklerContact()), /cap-only boundary: consumeReceiverSprinklerContact/);

@@ -11,6 +11,15 @@ export function bindSubBirthCommit(nm,commit) {
   else s.commit=commit;
 }
 export function closeSubBirthCommit(nm) { states.delete(nm);closeReceiverSprinklers(nm); }
+// Additional Torpedo eligibility metadata must not change legacy birth admission.
+// Other sub types never touch the movement getter; failures only disable the new subset.
+function captureTorpedoMotion(actor,snap) {
+  try {
+    const normalMoveTarget=actor.weaponRunner?.moveSpeed?.();
+    if(!Number.isFinite(normalMoveTarget)||!(normalMoveTarget>0))return {};
+    return {motion:Object.freeze({t:snap.t,life:snap.life,vx:snap.vx,vy:snap.vy,vz:snap.vz}),normalMoveTarget};
+  } catch { return {}; }
+}
 export function stageAcceptedSubBirth(nm,from,event,packetTime,ownerTick) {
   const s=states.get(nm);
   if(!live(nm,s)||!Array.isArray(event)||event.length!==8||event[1]!=='ac'||event[2]!=='sub'||event[5]?.phase!=='spawn')return false;
@@ -22,7 +31,7 @@ export function stageAcceptedSubBirth(nm,from,event,packetTime,ownerTick) {
     !finite(packetTime)||!finite(event[0])||event[0]>packetTime||
     snap?.t!==packetTime||snap.life!==event[4]||![snap.x,snap.y,snap.z].every(finite))return false;
   const sig=signature(event);if(sig===null)return false;
-  s.events.set(event,{actor,actorNet:actor.net,peer,sig,receipt:Object.freeze({from,nid:actor.nid,life:event[4],serial:p.seq,subId:p.subId,eventTime:event[0],packetTime,ownerTick,eventTick:event[6],transportSequence:event[7],pose:Object.freeze([snap.x,snap.y,snap.z])})});
+  s.events.set(event,{actor,actorNet:actor.net,peer,sig,receipt:Object.freeze({from,nid:actor.nid,life:event[4],serial:p.seq,subId:p.subId,eventTime:event[0],packetTime,ownerTick,eventTick:event[6],transportSequence:event[7],...(p.subId==='torpedo'?captureTorpedoMotion(actor,snap):{}),pose:Object.freeze([snap.x,snap.y,snap.z])})});
   return true;
 }
 function valid(nm,s,t,from,event) {
@@ -41,7 +50,7 @@ export function replayWithSubBirthCommit(nm,from,event,replay) {
   if(result===true&&created&&valid(nm,s,t,from,event)&&created.owner===t.actor&&
     created.seq===t.receipt.serial&&created.sourceLife===t.receipt.life&&created.subId===t.receipt.subId) {
     // Commit only after completed native creation. Never replay to mint proof.
-    s.commit.call(nm,t.receipt,event);
+    s.commit.call(nm,t.receipt,event,created);
   }
   return result;
 }
