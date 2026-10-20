@@ -70,7 +70,7 @@ function comparePair(nodes, cases) {
 
 test('heuristic optimization is owned by readable source, not applied by a build-time patch', () => {
   assert.equal(hash(frozen), '6439aa71cbf266777b0190a8e568561aaaf41b39b149fadd6735bb3f116b280f');
-  assert(!BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/nav-heuristic-adapter.mjs'));
+  assert(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/nav-heuristic-adapter.mjs'), 'removed source transformer must remain excluded from runtime bundles');
   const source = fs.readFileSync(new URL('../../../inkwave-public/src/game/nav.js', import.meta.url), 'utf8');
   const quality = fs.readFileSync(new URL('../adapter.mjs', import.meta.url), 'utf8');
   const s3 = fs.readFileSync(new URL('../../splatoon3/adapter.mjs', import.meta.url), 'utf8');
