@@ -63,7 +63,7 @@ test('source-only clips never synthesize or masquerade as game-specific MP3s',()
 });
 
 test('only explicit kit routes can consume a named supplemental sound',()=>{
-  assert.equal(Object.keys(EXTRA_SOURCE_EVENT_ROUTES).length,11);
+  assert.equal(Object.keys(EXTRA_SOURCE_EVENT_ROUTES).length,3);
   for(const [key,target] of Object.entries(EXTRA_SOURCE_EVENT_ROUTES)){
     const sep=key.lastIndexOf(':'),id=key.slice(0,sep),event=key.slice(sep+1);
     assert.ok(KIT_AUDIO[id]?.events.includes(event),key+' is an actual kit event');
@@ -83,6 +83,8 @@ test('only explicit kit routes can consume a named supplemental sound',()=>{
   assert.equal(specialActionAudioEvent('booyahBomb','cheer'),null,'a cheer is NOT a full-charge ready cue');
   assert.equal(sourceEventRoute('special:krakenRoyale','open'),null,'no 2022 Kraken original can be inferred');
   assert.equal(sourceEventRoute('sub:inkMine','fire'),null,'ground mine must not borrow flying-bomb clip');
+  assert.equal(sourceEventRoute('special:tentaMissiles','open'),null,'long flying-bomb loop must not play as a throw one-shot');
+  assert.equal(sourceEventRoute('sub:pointSensor','fire'),null,'marker flight sample must not play after landing');
 });
 
 test('real-only audio engine redirects absent kit events, but prefers a native resident recording',()=>{
@@ -96,18 +98,18 @@ test('real-only audio engine redirects absent kit events, but prefers a native r
   }
   installWeaponAudioEngine(Mixer);
   const audio=new Mixer(),bank=audio.weaponBank(),loader=audio._realS3Loader;
-  loader.status='ready';loader.declaredEvents=new Set(['source:Wp_BombFly_00:fire']);
-  const source={id:'source:Wp_BombFly_00',event:'fire',variant:0,buffer:{},bytes:4};
-  bank.authorized.byEvent.set('source:Wp_BombFly_00:fire',[source]);
+  loader.status='ready';loader.declaredEvents=new Set(['source:Sp_MultiMissile_Attach_00:fire']);
+  const source={id:'source:Sp_MultiMissile_Attach_00',event:'fire',variant:0,buffer:{},bytes:4};
+  bank.authorized.byEvent.set('source:Sp_MultiMissile_Attach_00:fire',[source]);
   const actor={isLocal:true};
-  const routed=audio.playWeapon('sub:bomb','fire',{actor});
-  assert.equal(routed?.weaponId,'source:Wp_BombFly_00');
-  assert.equal(audio.calls.at(-1).name,'main:source:Wp_BombFly_00:fire');
-  const native={id:'sub:bomb',event:'fire',variant:0,buffer:{},bytes:4};
-  bank.authorized.byEvent.set('sub:bomb:fire',[native]);
-  const nativeResult=audio.playWeapon('sub:bomb','fire',{actor});
+  const routed=audio.playWeapon('special:tentaMissiles','open',{actor});
+  assert.equal(routed?.weaponId,'source:Sp_MultiMissile_Attach_00');
+  assert.equal(audio.calls.at(-1).name,'main:source:Sp_MultiMissile_Attach_00:fire');
+  const native={id:'special:tentaMissiles',event:'open',variant:0,buffer:{},bytes:4};
+  bank.authorized.byEvent.set('special:tentaMissiles:open',[native]);
+  const nativeResult=audio.playWeapon('special:tentaMissiles','open',{actor});
   assert.equal(nativeResult?.weaponId,'sub:bomb','source replacement must never override a native decoded event');
-  assert.equal(audio.calls.at(-1).name,'main:sub:bomb:fire');
+  assert.equal(audio.calls.at(-1).name,'main:special:tentaMissiles:open');
   audio.disposeWeaponAudio();
 });
 
