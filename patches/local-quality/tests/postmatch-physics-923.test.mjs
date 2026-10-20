@@ -4,11 +4,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { simulateMatchInterval, terminalTurfGameplayParked } from '../../splatoon3/runtime/turf-finish.mjs';
 
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 const composed = rel => adaptBuildSource(rel, read(rel));
 const match = composed('src/game/match.js');
-const main = composed('src/main.js');
 
 function matchUpdate() {
   const start = match.indexOf('  update(dt) {');
@@ -61,22 +61,59 @@ test('#923 original gameplay and special modes keep their live update ownership'
   }
 });
 
-test('#923 projectiles stop at Turf terminal boundary without parking presentation or other modes', () => {
-  const sourceLine = main.split('\n').find(line => line.includes('G.projectiles.update(dt);'));
-  assert.match(sourceLine, /if \(!m\.paused && \(m\.bossMode \|\| m\.ranked \|\| m\.attract/);
-  const run = new Function('m', 'G', 'dt', sourceLine);
-  let calls = 0;
-  const G = {projectiles: {update(){calls++;}}};
-  for (const state of ['playing', 'intro', 'finish', 'judge']) {
-    const m = {state, paused: false, bossMode: null, ranked: null, attract: false};
-    const before = calls; run(m, G, 1/60);
-    assert.equal(calls-before, Number(state==='playing'||state==='intro'), state);
+function interval(state, { boss=false, ranked=false, attract=false, paused=false, mode='turf' } = {}) {
+  const steps=[];
+  const m={
+    state, mode, paused, time:100, follower:false,
+    bossMode:boss?{dead:false}:null,
+    ranked:ranked?{time:100,overtime:false}:null,
+    attract,
+    controller:null,update(dt){steps.push(['actor',dt]);},
+    updateController(dt){steps.push(['controller',dt]);},
+    advanceRanked(dt){steps.push(['ranked',dt]);},
+  };
+  const G={time:100, projectiles:{update(dt){steps.push(['projectile',dt]);}}};
+  simulateMatchInterval(m,1/60,G);
+  return {m,G,steps,projectiles:steps.filter(([kind])=>kind==='projectile')};
+}
+
+test('#923 authoritative fixed-step Turf projectile owner parks after TIME UP but preserves live and special modes', () => {
+  for(const state of ['finish','judge']){
+    const {m,projectiles,steps}=interval(state);
+    assert.equal(terminalTurfGameplayParked(m),true);
+    assert.equal(projectiles.length,0,'no projectile advancement in Turf '+state);
+    assert.ok(steps.some(([kind])=>kind==='actor'),'match clock/judge update still occurs');
   }
-  for (const mode of ['bossMode', 'ranked', 'attract']) {
-    const m = {state:'finish', paused:false, bossMode:null, ranked:null, attract:false, [mode]: mode==='attract'?true:{}};
-    const before = calls; run(m,G,1/60);
-    assert.equal(calls, before+1, mode+' keeps its own simulation');
+  for(const state of ['playing','intro']){
+    const {m,projectiles}=interval(state);
+    assert.equal(terminalTurfGameplayParked(m),false);
+    assert.equal(projectiles.length,1,'live state '+state);
   }
-  const m = {state:'playing', paused:true};
-  run(m,G,1/60); assert.equal(calls, 5, 'pausing always wins');
+  for(const flags of [{boss:true},{ranked:true},{attract:true},{mode:'clams'}]){
+    const {m,projectiles}=interval('finish',flags);
+    assert.equal(terminalTurfGameplayParked(m),false);
+    assert.equal(projectiles.length,1,'non-Turf simulation remains unchanged: '+JSON.stringify(flags));
+  }
+  const paused=interval('finish',{paused:true});
+  assert.equal(paused.projectiles.length,0,'pause always freezes projectiles');
+});
+
+test('#923 legal final fractional tick still updates projectiles exactly up to authoritative Turf deadline', () => {
+  const emitted=[],states=[];
+  const m={
+    state:'playing', mode:'turf', time:0.5/60,paused:false,bossMode:null,
+    ranked:null,attract:false,follower:false,controller:null,
+    update(dt){states.push(['update',this.state,dt]);this.time=Math.max(0,this.time-dt);},
+    updateController(dt){states.push(['controller',this.state,dt]);},
+    setState(state){this.state=state;states.push(['setState',state]);},
+    advanceRanked(){},
+  };
+  const G={time:1,projectiles:{update(dt){emitted.push([m.state,dt]);}}};
+  simulateMatchInterval(m,1/60,G);
+  assert.equal(m.state,'finish');
+  assert.equal(emitted.length,1,'only the legal first half generates gameplay projectiles');
+  assert.equal(emitted[0][0],'playing');
+  assert.ok(Math.abs(emitted[0][1]-0.5/60)<1e-12);
+  assert.equal(states.filter(([type])=>type==='update').length,2,'finish/judge clock advances in the remainder');
+  assert.ok(Math.abs(G.time-1)<1e-12,'authoritative clock restored');
 });
