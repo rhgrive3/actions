@@ -2,7 +2,7 @@
 import { checkAcceptedDefaultConsumption } from './lib/inkwave-accepted-default-probe.mjs';
 import { checkWeaponAppearancePicker } from './lib/inkwave-weapon-appearance-probe.mjs';
 import { clickNativeKitCard } from './lib/inkwave-canonical-kit-input.mjs';
-import { verifiedAudioCancellation } from './lib/inkwave-browser-request-failure.mjs';
+import { partitionRequestFailures } from './lib/inkwave-browser-request-failure.mjs';
 import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
 import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
 import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
@@ -65,10 +65,11 @@ const address='http://127.0.0.1:'+server.address().port+'/';
 let browser;
 try {
  browser=await chromium.launchPersistentContext(profile,{headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),viewport:{width:1280,height:800},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const page = await browser.newPage(), errors = [], failures = [], consoleErrors = [], receipts = [], audioCancellations = [], verifiedRequests = new WeakSet();
+const page = await browser.newPage(), errors = [], observedFailures = [], consoleErrors = [], receipts = [], verifiedRequests = new WeakSet(), verifications = new Set();
 // Fulfill with the exact bytes returned by the local server after verification.
 // API responses retain preload bodies that Chrome's DevTools may discard.
-await page.route(address+'**', async route => {
+await page.route(address+'**', route => {
+ const verification=(async()=>{
   try {
     const response=await route.fetch(), body=await response.body();
     const key=decodeURIComponent(new URL(response.url()).pathname).replace(/^\//,'') || 'index.html';
@@ -76,13 +77,17 @@ await page.route(address+'**', async route => {
     if(manifest.artifacts[key])verifiedRequests.add(route.request());
     receipts.push(key.replace(/^_versions\/[a-f0-9]+\//,'')); await route.fulfill({response,body});
   }catch(error){ errors.push(error.message); await route.abort(); }
+ })();
+ verifications.add(verification);
+ verification.then(()=>verifications.delete(verification),()=>verifications.delete(verification));
+ return verification;
 });
 await page.bringToFront();
 await page.addInitScript(() => { localStorage.setItem('inkwave.settings', JSON.stringify({quality:'low', shadows:false, bloom:false, minimap:false})); });
 page.on('pageerror', error => errors.push(error.message));
 page.on('requestfailed', request => {
   const event={url:request.url(),error:request.failure()?.errorText};
-  (verifiedAudioCancellation(event,verifiedRequests.has(request))?audioCancellations:failures).push(event);
+  observedFailures.push({request,event});
 });
 page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text().slice(0, 1500)); });
 let result;
@@ -465,6 +470,8 @@ try {
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
   result.verifiedRuntimeFiles = [...new Set(receipts)].sort();
   for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
+  await Promise.allSettled([...verifications]);
+  const {failures,audioCancellations}=partitionRequestFailures(observedFailures,verifiedRequests);
   if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   result.verifiedAudioCancellations = audioCancellations;
