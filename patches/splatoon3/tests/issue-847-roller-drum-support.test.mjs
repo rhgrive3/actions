@@ -82,6 +82,19 @@ async function production({ baselineRollerSource = null } = {}) {
   apis.set(cacheKey, installed); return installed;
 }
 
+// Continuous roller paint is queued by the runner and emitted after the final
+// pose in Actor._finishFrame (e01fb268d). These tests drive the runner directly,
+// so each frame ends with the same real floor support and _finishFrame call that
+// Actor.update makes; without it a "paints" assertion fails and a "does not
+// paint" assertion passes for the wrong reason.
+function finishFrame(f, a) {
+  const support = f.G.physics.raycast(new f.THREE.Vector3(a.pos.x, a.pos.y + 1, a.pos.z),
+    new f.THREE.Vector3(0, -1, 0), 2, new f.Hit(), true);
+  a.ground.hit = support.hit;
+  if (support.hit) { a.ground.face = support.face; a.groundN.copy(support.normal); }
+  a._finishFrame(1 / 60);
+}
+
 test('847 flat rolling unchanged on full production composition', async () => {
   const f = await production();
   const a = new f.Actor({ team: 0, name: 'r847flat', isLocal: true, weapon: 'roller', CharacterClass: f.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
@@ -90,8 +103,10 @@ test('847 flat rolling unchanged on full production composition', async () => {
   const paintBefore = f.G.paint.version;
   a.intent.move.set(0, 0, 1); a.intent.fire = true;
   f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  finishFrame(f, a);
   a.pos.z += 0.35;
   f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  finishFrame(f, a);
   assert.equal(a.weaponRunner.rolling, true, 'flat + stick + fire keeps rolling');
   assert.ok(Math.hypot(a.vel.x, a.vel.z) > 1.0, 'roll speed preserved');
   assert.ok(a.ink < 100, 'native roll consumes ink while moving');
@@ -109,6 +124,7 @@ test('847 no-stick residual keeps the drum down but stops native paint, ink drai
   a.pos.set(0, 0, -5); a.yaw = 0; a.aimYaw = 0; a.grounded = true; a.ink = 100; a.vel.set(0, 0, 3);
   a.intent.move.set(0, 0, 1); a.intent.fire = true;
   f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  finishFrame(f, a);
   assert.equal(a.weaponRunner.rolling, true);
   assert.ok(Math.hypot(a.vel.x, a.vel.z) > 1.0, 'residual speed present');
   v.pos.set(a.pos.x, a.pos.y, a.pos.z + 0.8); v.hp = 500; v.alive = true; v.invuln = 0;
@@ -118,6 +134,7 @@ test('847 no-stick residual keeps the drum down but stops native paint, ink drai
   a.pos.z += 0.35; a.vel.set(0, 0, 3);
   f.G.time += 1 / 60;
   a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  finishFrame(f, a);
   assert.equal(v.hp, 500, 'no Left Stick input admits no roll damage despite residual speed');
   // Owner report 2026-10-18: releasing Left Stick keeps the drum down while ZR is held.
   assert.equal(a.weaponRunner.rolling, true, 'held ZR keeps the roll state without Left Stick');
@@ -240,6 +257,7 @@ test('847 current-main b34 full production composition reproduces the uncovered 
   a.pos.set(0, 0, -5); a.yaw = 0; a.grounded = true; a.ink = 100; a.vel.set(0, 0, 2);
   a.intent.fire = true; a.intent.move.set(0, 0, 1); f.G.actors = [a];
   a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
+  finishFrame(f, a);
   assert.equal(a.weaponRunner.rolling, true, 'main admits flat contact');
   v.pos.set(a.pos.x, a.pos.y, a.pos.z + 0.8); v.hp = 500; v.alive = true;
   const inkBefore = a.ink, paintBefore = f.G.paint.version;
@@ -248,7 +266,11 @@ test('847 current-main b34 full production composition reproduces the uncovered 
   a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false });
   assert.ok(v.hp < 500, 'main allows residual-speed damage without Left Stick');
   assert.ok(a.ink < inkBefore, 'main drains ink from residual displacement');
-  assert.ok(f.G.paint.version > paintBefore, 'main paints from residual displacement');
+  finishFrame(f, a);
+  // The residual-displacement paint gate of b34 is no longer reproducible through
+  // roller.mjs: the continuous contact paint (roller-contact-paint.mjs, e01fb268d)
+  // requires Left Stick on its own, so even the frozen control paints no stripe.
+  assert.equal(f.G.paint.version, paintBefore, 'composed contact paint is gated on Left Stick independently of roller.mjs');
 
   const ledge = new f.Level({ bounds: { minX: -4, maxX: 4, minZ: -7, maxZ: 4 }, spawnPads: [[-3, 0, 0], [3, 0, 0]],
     spawnBarrier: 0, half: [], single: [{ kind: 'box', min: [-4, -.5, -7], max: [0, 0, 4] }] });
