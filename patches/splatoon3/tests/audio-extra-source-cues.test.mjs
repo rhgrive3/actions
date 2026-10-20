@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { EXTRA_SOURCE_FILES, SOURCE_EXTRA_AUDIO, sourceCueId } from '../runtime/audio/source-cue-registry.mjs';
-import { EXTRA_SOURCE_EVENT_ROUTES, sourceEventRoute } from '../runtime/audio/extra-source-routes.mjs';
+import { EXTRA_SOURCE_EVENT_ROUTES, sourceEventRoute, EXTRA_SPECIAL_ACTION_SOURCE, sourceSpecialActionRoute } from '../runtime/audio/extra-source-routes.mjs';
 import { KIT_AUDIO } from '../runtime/audio/kit-recipes.mjs';
+import { specialActionAudioEvent } from '../runtime/audio/kit-runtime.mjs';
 import { WeaponSoundBank } from '../runtime/audio/bank.mjs';
 import { validateAuthorizedManifest } from '../runtime/audio/authorized-samples.mjs';
 import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
@@ -19,11 +20,11 @@ test('every shipped 2022 MP3 is registered exactly, without guessing its game ev
   const listed=[...new Set(installed.clips.map(c=>c.file.replace(/^s3-real\//,'')))].sort();
   assert.deepEqual(listed,files,'no orphan MP3 and no phantom asset');
   assert.equal(files.length,388);
-  assert.equal(installed.clips.length,419);
+  assert.equal(installed.clips.length,420);
   assert.equal(original.clips.length,274,'the original research manifest is still the original snapshot');
   assert.equal(installed.installedFiles,files.length);
   assert.equal(installed.plannedFiles,files.length);
-  assert.equal(validateAuthorizedManifest(installed).length,419);
+  assert.equal(validateAuthorizedManifest(installed).length,420);
   assert.equal(EXTRA_SOURCE_FILES.length,145);
   assert.equal(Object.keys(SOURCE_EXTRA_AUDIO).length,145);
   const seen=new Set();
@@ -70,6 +71,16 @@ test('only explicit kit routes can consume a named supplemental sound',()=>{
     assert.ok(installed.clips.some(c=>c.id===target&&c.event==='fire'),key+' source file exists in manifest');
     assert.equal(sourceEventRoute(id,event),target);
   }
+  assert.equal(Object.keys(EXTRA_SPECIAL_ACTION_SOURCE).length,10);
+  for(const [key,target] of Object.entries(EXTRA_SPECIAL_ACTION_SOURCE)){
+    const sep=key.indexOf(':'),id=key.slice(0,sep),action=key.slice(sep+1);
+    assert.ok(SOURCE_EXTRA_AUDIO[target],key+' supplementary source exists');
+    assert.ok(installed.clips.some(c=>c.id===target&&c.event==='fire'));
+    assert.equal(sourceSpecialActionRoute(id,action),target);
+  }
+  const fullHold=installed.clips.find(c=>c.id==='special:booyahBomb'&&c.event==='spin');
+  assert.equal(fullHold?.sourceName,'Sp_NiceBall_HoldFull_00.mp3');
+  assert.equal(specialActionAudioEvent('booyahBomb','cheer'),null,'a cheer is NOT a full-charge ready cue');
   assert.equal(sourceEventRoute('special:krakenRoyale','open'),null,'no 2022 Kraken original can be inferred');
   assert.equal(sourceEventRoute('sub:inkMine','fire'),null,'ground mine must not borrow flying-bomb clip');
 });
@@ -107,4 +118,7 @@ test('production runtime prefetches routed kit sounds and retains original audio
   assert.match(engine,/loader\?\.declares\(id,event\)===false/);
   assert.match(runtime,/loader\.ensure\(extra,'fire'\)/);
   assert.match(runtime,/sourceEventRoute\(kit,event\)/);
+  assert.match(runtime,/EXTRA_SPECIAL_ACTION_SOURCE/);
+  const kitRuntime=fs.readFileSync(new URL('../runtime/audio/kit-runtime.mjs',import.meta.url),'utf8');
+  assert.match(kitRuntime,/this.specialActive\?\.phase==='ready'/,'Booyah full-hold loop cannot start at activation');
 });
