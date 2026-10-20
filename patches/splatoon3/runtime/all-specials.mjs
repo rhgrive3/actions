@@ -1220,7 +1220,8 @@ function deployScreen(rt,actor,state) {
   const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{...specialDeviceFlight(rt.api,actor,'splattercolorScreen',state.specialPowerAP),phase:'flight',dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:gearCurve(state.specialPowerAP,.04,.053,.06)*FPS,seed:nextSeed(state),scale:[15/8,2,1]});
   object.target=pos.clone().add(object.normal);
   startSpecialGauge(actor,rt.api.G,'splattercolorScreen',SPECIAL_GAUGE_FRAMES.splattercolorScreen,object);
-  emitAction(rt,actor,'splattercolorScreen',state.serial,'screen',pos,object.target,object.seed,{object:object.serial});
+  // The companion is a complete birth like `deploy`: a peer may admit either one first (#1606).
+  emitObject(rt,object,'screen');
   endSpecial(rt,actor,'deployed');
 }
 function paintScreenDrops(rt,o,deviceAge){
@@ -1252,7 +1253,7 @@ function deployWave(rt,actor,state) {
   object.hp=480;object.maxHp=480;object.pulse=0;object.maxWaveFrame=maxFrame;object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
   startSpecialGauge(actor,rt.api.G,'waveBreaker',SPECIAL_GAUGE_FRAMES.waveBreaker,object);
   object.direction=rt.v2.copy(pos).sub(actor.pos).setY(0).normalize();
-  emitAction(rt,actor,'waveBreaker',state.serial,'device',pos,null,object.seed,{object:object.serial});
+  emitObject(rt,object,'device');
   endSpecial(rt,actor,'deployed');
 }
 function spawnWaveFront(rt,device,pulse) {
@@ -2432,13 +2433,21 @@ function replayObjectEvent(rt,actor,event) {
   if(!serial)return false;
   const objects=rt.system._s3AllSpecialObjects||(rt.system._s3AllSpecialObjects=[]);
   let object=objects.find(o=>o.owner===actor&&o.activation===event.activation&&o.serial===serial&&o.id===event.id);
+  // Birth packets describe one instant. For a Wave/Screen the second of the deploy/companion pair is
+  // a duplicate: it must not rewind a ghost that has already advanced (#1606).
+  const existingDeviceBirth=!!object&&(object.kind==='wave'||object.kind==='screen')
+    &&(event.action==='deploy'||event.action==='device'||event.action==='screen');
   const point=new rt.api.THREE.Vector3(...event.pos);
   const target=Array.isArray(event.target)?new rt.api.THREE.Vector3(...event.target):null;
   if(['deploy','device','screen','balloon','marker'].includes(event.action)&&!object){
     const kind=typeof event.kind==='string'?event.kind:(event.id==='splattercolorScreen'?'screen':event.id==='waveBreaker'?'wave':event.id==='superChump'?'decoy':event.id==='tripleInkstrike'?'marker':'');
     if(!kind)return false;
+    // Older senders emitted sparse companion rows (object serial only). A device built from them
+    // would live one second with a non-scalar radius, so wait for a packet that says how it is
+    // configured; deploy and the current companion both do.
+    if((kind==='wave'||kind==='screen')&&!(finite(event.duration)&&event.duration>0&&finite(event.radius)&&event.radius>0&&finite(event.specialPowerAP)))return false;
     const state={serial:event.activation,objectSerial:serial-1,seed:event.seed,specialPowerAP:finite(event.specialPowerAP)?clamp(event.specialPowerAP,0,57):0};
-    const extra={dur:finite(event.duration)?event.duration:1,maxRadius:finite(event.radius)?event.radius:(SPECIALS[event.id]?.radius||1),damage:0,hp:finite(event.hp)?event.hp:0,seed:event.seed,index:event.index||0,target,width:finite(event.width)&&event.width>0?event.width:15,height:finite(event.height)&&event.height>0?event.height:9};
+    const extra={dur:finite(event.duration)?event.duration:1,maxRadius:finite(event.radius)?event.radius:(finite(SPECIALS[event.id]?.radius)?SPECIALS[event.id].radius:1),damage:0,hp:finite(event.hp)?event.hp:0,seed:event.seed,index:event.index||0,target,width:finite(event.width)&&event.width>0?event.width:15,height:finite(event.height)&&event.height>0?event.height:9};
     if(kind==='screen'){
       const direction=target?target.clone().sub(point).setY(0).normalize():new rt.api.THREE.Vector3(Math.sin(actor.aimYaw||0),0,Math.cos(actor.aimYaw||0));
       extra.direction=direction;extra.moveSpeed=gearCurve(state.specialPowerAP,.04,.053,.06)*FPS;extra.yaw=Math.atan2(direction.x,direction.z);
@@ -2448,7 +2457,7 @@ function replayObjectEvent(rt,actor,event) {
     if(kind==='marker'){object.phase='warning';object.origin=point.clone();if(target)object.pos.copy(target);}
     if(kind==='decoy'){object.phase='flight';object.origin=point.clone();object.flight=108/FPS;}
     if(kind==='wave'){
-      object.hp=finite(event.hp)?event.hp:480;object.maxHp=object.hp;object.pulse=0;object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
+      object.hp=finite(event.hp)?event.hp:480;object.maxHp=object.hp;object.pulse=0;object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:gearCurve(state.specialPowerAP,160,192,216)/FPS;
       object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
     }else if(kind==='waveFront'){
       object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
@@ -2457,7 +2466,7 @@ function replayObjectEvent(rt,actor,event) {
     if(kind==='screen')object.target=target;
   }
   if(!object)return false;
-  if(['deploy','land','active'].includes(event.action)){
+  if(!existingDeviceBirth&&['deploy','device','screen','land','active'].includes(event.action)){
     if(finite(event.age)&&event.age>=0&&event.age<=3600)object.age=event.age;
     if(finite(event.landedAt)&&event.landedAt>=0&&event.landedAt<=object.age)object.landedAt=event.landedAt;
     if(['flight','warning','active'].includes(event.phase))object.phase=event.phase;
@@ -2510,6 +2519,16 @@ export function replaySpecial(api,event) {
   }
   const key=`${event.id}:${event.activation}:${event.action}:${event.object||0}:${event.index||0}:${event.seed}:${event.tick||0}`;
   const ledger=replayLedger(actor);if(ledger.has(key))return false;
+  // A Wave/Screen that already lived and retired must not come back through a delayed birth
+  // packet. The marker lives in the same bounded per-actor ledger; activation numbers are
+  // per-owner and never reused within a match, so (id, activation, object) names one device.
+  const deviceKind=typeof event.kind==='string'?event.kind:(event.id==='splattercolorScreen'?'screen':event.id==='waveBreaker'?'wave':'');
+  const deviceKey=(deviceKind==='wave'||deviceKind==='screen')&&Number.isSafeInteger(event.object)&&event.object>0
+    ?`device:${event.id}:${event.activation}:${event.object}`:null;
+  const mark=()=>{if(!deviceKey)return;ledger.add(deviceKey);if(ledger.size>SEEN_LIMIT)ledger.delete(ledger.values().next().value);};
+  const isDeviceBirth=!!deviceKey&&(event.action==='deploy'||event.action==='device'||event.action==='screen');
+  const liveBefore=isDeviceBirth&&!!(rt.system||api.G.projectiles)?._s3AllSpecialObjects?.some(o=>o.owner===actor&&o.id===event.id&&o.activation===event.activation&&o.serial===event.object);
+  if(isDeviceBirth&&!liveBefore&&ledger.has(deviceKey))return false;
   ledger.add(key);if(ledger.size>SEEN_LIMIT)ledger.delete(ledger.values().next().value);
   if(event.action==='cheer'){
     return addBooyahCall(rt,cheerOwner,cheerState,actor,{callId:event.seed});
@@ -2524,6 +2543,10 @@ export function replaySpecial(api,event) {
     }
   }
   const objectAccepted=replayObjectEvent(rt,actor,event);
+  if(objectAccepted||event.action==='destroy'||event.action==='expire')mark();
+  // Only the packet that builds the device announces it: a rejected one built nothing, and the
+  // second of the deploy/companion pair is a duplicate that must not repeat the burst.
+  if(isDeviceBirth&&(!objectAccepted||liveBefore))return objectAccepted;
   if(event.action==='objectHit')return objectAccepted;
   const accepted=replayFx(rt,actor,event);
   if(accepted&&event.id==='crabTank')api.crabTankPresentationEvent?.(event);
