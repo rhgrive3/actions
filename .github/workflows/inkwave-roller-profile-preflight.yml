@@ -80,12 +80,31 @@ jobs:
         run: |
           set -o pipefail
           node scripts/check-inkwave-roller-holding-video.mjs work/before-site work/roller-preflight/before --numeric-only --grip-seed "$GRIP_SEED" 2>&1 | tee work/roller-preflight/before.log
+      - name: Validate the original steady camera plan before diagnostic continuation
+        id: diagnostic-plan
+        if: ${{ !cancelled() && hashFiles('work/roller-preflight/before/grip-cameras.json') != '' }}
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          // BEGIN DIAGNOSTIC CAMERA ADMISSION
+          const root='work/roller-preflight',read=p=>JSON.parse(fs.readFileSync(root+'/'+p,'utf8'));
+          const source=fs.readFileSync('scripts/check-inkwave-roller-holding-video.mjs','utf8');
+          const start=source.indexOf('// BEGIN GRIP CAMERA CONTRACT'),end=source.indexOf('// END GRIP CAMERA CONTRACT');
+          assert(start>=0&&end>start);const validate=new Function(source.slice(start,end)+';return validateGripCameras;')();
+          const steady=read('before/steady-result.json'),plan=validate(read('before/grip-cameras.json')),ids=read('identities.json');
+          assert.equal(steady.passed,true);assert.equal(steady.numericOnly,true);assert.equal(steady.measurement.debugFixedTicks,180);
+          assert.equal(steady.build,ids.builds.before.contentHash);assert.deepEqual(plan,steady.measurement.cameraPlan);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,'ready=true\n');
+          // END DIAGNOSTIC CAMERA ADMISSION
+          NODE
       - name: Observe all native after ticks using the same startup profile and camera plan
+        if: ${{ !cancelled() && steps.diagnostic-plan.outputs.ready == 'true' }}
         shell: bash
         run: |
           set -o pipefail
           node scripts/check-inkwave-roller-holding-video.mjs work/after-site work/roller-preflight/after --numeric-only --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-preflight/before/grip-cameras.json 2>&1 | tee work/roller-preflight/after.log
       - name: Verify all native clocks, startup style, Character RNG and physics
+        if: ${{ !cancelled() && hashFiles('work/roller-preflight/identities.json') != '' }}
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import crypto from 'node:crypto';
@@ -101,7 +120,7 @@ jobs:
             assert.equal(ids.builds[side].manifestSha256,hash(fs.readFileSync(path.join(root,side+'-build.json'))));
             assert.equal(manifest.inputHash,hash(JSON.stringify(manifest.files)));
             assert.equal(ids.builds[side].inputHash,manifest.inputHash);assert.equal(ids.builds[side].contentHash,manifest.contentHash);
-            assert(r.passed);assert(r.numericOnly);assert.equal(r.errors.length,0);assert.equal(r.build,manifest.contentHash);
+            assert.notEqual(v.partial,true);assert(r.passed);assert(r.numericOnly);assert.equal(r.errors.length,0);assert.equal(r.build,manifest.contentHash);
             assert.equal(r.measurement.debugFixedTicks,180);assert.equal(v.frames.length,90);assert.equal(v.frameCount,90);
             assert.equal(v.nativeTicksPerSecond,60);assert(v.numericOnly);assert.equal(v.interpolation,false);
             assert.deepEqual(v.views,['right-rear','side']);assert.equal(v.initial.seed,1715);

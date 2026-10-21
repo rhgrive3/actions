@@ -394,6 +394,7 @@ try{
     g.debug.key('KeyW',true);g.debug.fire(true);
     return {state:state(),anchor:a.pos.toArray(),seed};
   },{expectedState:m.frozenState,views:m.cameraPlan.views.filter(v=>videoViews.includes(v.name)),seed:gripSeed});
+  receipt.video={schema:1,numericOnly,partial:true,initial,frames};
   try{
     for(let index=0;index<90;index++){
       const frame=await page.evaluate(async({index,numericOnly})=>{
@@ -411,7 +412,11 @@ try{
           phase:a.character.phase,characterTime:a.character.t,breathPhase:a.character.brPh,sceneClocks:window.__rollerVideoClocks(),pose:Array.from(a.character.P)});
         if(JSON.stringify(state())!==JSON.stringify(q.previous))throw Error('Frozen simulation drifted between movie frames');
         const globalRandom=window.__rollerComparisonRandom,random=Math.random;
-        if(JSON.stringify(globalRandom.phase())!==JSON.stringify(q.previousRng))throw Error('Global RNG changed while native movie was frozen');
+        const actualRandom=globalRandom.phase();
+        if(JSON.stringify(actualRandom)!==JSON.stringify(q.previousRng)){
+          window.__rollerRandomBoundaryFailure={frame:index,expected:q.previousRng,actual:actualRandom,diagnostics:globalRandom.diagnostics()};
+          throw Error('Global RNG changed while native movie was frozen');
+        }
         const fire=index<60;g.debug.key('KeyW',true);g.debug.fire(fire);
         g.debug.step(1000/30);q.draws=globalRandom.phase().draws;
         const current=state();
@@ -458,5 +463,8 @@ try{
   for(const f of frames){assert.equal(f.images.length,2);assert.equal(f.rngRestored,true);}
   assert.equal(receipt.errors.length,0);
   receipt.passed=true;console.log(JSON.stringify({passed:true,build:receipt.build,video:{frameCount:90,fps:30,nativeHz:60,views:videoViews}}));
-}catch(error){receipt.passed=false;receipt.failure=String(error.stack||error);receipt.state=await snapshot();if(!numericOnly)await page?.screenshot({path:path.join(out,'failure.png'),timeout:30000}).catch(()=>{});throw error;}
-finally{const cleanup=await page?.evaluate(()=>{let character,global;try{character=window.__rollerCharacterObserver?.restore();}finally{global=window.__rollerComparisonRandom?.restore();}return {character,global};}).catch(()=>null);if(cleanup){receipt.characterObserver??=cleanup.character;receipt.globalRandom??=cleanup.global;}clearInterval(diagnosticTimer);receipt.servedModules=servedModules;fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2)+'\n');await browser?.close();await new Promise(r=>server.close(r));}
+}catch(error){receipt.passed=false;receipt.failure=String(error.stack||error);receipt.state=await snapshot();
+  receipt.randomBoundaryFailure=await page?.evaluate(()=>window.__rollerRandomBoundaryFailure??null).catch(()=>null);
+  if(receipt.randomBoundaryFailure){const f=receipt.randomBoundaryFailure;console.error(JSON.stringify({randomBoundaryFailure:{frame:f.frame,expectedDraws:f.expected.draws,actualDraws:f.actual.draws,lastCalls:f.diagnostics.calls.slice(-3)}}));}
+  if(!numericOnly)await page?.screenshot({path:path.join(out,'failure.png'),timeout:30000}).catch(()=>{});throw error;}
+finally{const cleanup=await page?.evaluate(()=>{let character,global;try{character=window.__rollerCharacterObserver?.restore();}finally{global=window.__rollerComparisonRandom?.restore();}return {character,global,derived:window.__rollerCharacterObserver?.diagnostics()};}).catch(()=>null);if(cleanup){receipt.characterObserver??=cleanup.character;receipt.globalRandom??=cleanup.global;receipt.characterDerivedDiagnostics=cleanup.derived;}clearInterval(diagnosticTimer);receipt.servedModules=servedModules;fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2)+'\n');await browser?.close();await new Promise(r=>server.close(r));}

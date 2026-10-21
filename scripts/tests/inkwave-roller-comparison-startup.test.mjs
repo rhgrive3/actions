@@ -17,7 +17,12 @@ function fixture(){
     color:v(1,0,0),enemyColor:v(0,0,1),hairMeta:[{},{}],hairPh:new Float32Array([1,2]),
     t:0,phase:0,brPh:0,brN:0,brAmp:1,brRate:1,tr:new Float32Array([0,100]),bl:{next:1},att:{t:1},
     rng(){draws++;return .25;}});
-  const actor={character:c,team:0,pos:v(0,0,0),vel:v(0,0,0),yaw:0,aimYaw:0,aimPitch:0,
+  c.kid={matrix:{elements:[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}};
+  c.bones={head:{position:v(0,1,0),quaternion:v(0,0,0,1),parent:c.kid}};
+  c.att.p=v(0,1,8);c.att.on=true;c.att.dist=8;c.face={verge:0};
+  proto._applyFace=function(...args){lastArgs=args;lastThis=this;this.att.dist=7.85;this.face.verge=.01;return token;};
+  const actor={special:0,specialCost(){return 100;},stats:{turf:0},specialActive:null,
+    addTurf(...args){lastArgs=args;lastThis=this;const area=args[0];if(area>0){this.stats.turf+=area;if(!this.specialActive)this.special=Math.min(this.specialCost(),this.special+area);}return token;},character:c,team:0,pos:v(0,0,0),vel:v(0,0,0),yaw:0,aimYaw:0,aimPitch:0,
     grounded:true,form:'kid',hp:100,ink:100,dead:false,groundTeam:0,ground:{face:1},weaponRunner:{rolling:true}};
   const G={time:.05,local:actor,teamHex:['#ffd21a','#2a52ff'],teamColors:[v(1,0,0),v(0,0,1)]};
   window.__G=G;window.__inkwave={profile,settings};window.__rollerVideoClocks=()=>({game:G.time});
@@ -190,4 +195,58 @@ test('throwing native presentation callback preserves counted aliases and restor
   assert.equal(f.run('Math.random'),qa);assert.equal(f.api.phase().draws,1);
   assert.equal(f.api.phase().capturedAliasWhileGlobalDiffers,1);
   assert(f.api.restore().originalRestored);assert.equal(f.run('Math.random'),f.context.window.originalRandom);
+});
+
+test('caller diagnostics are bounded, read-only, separate from stream receipts and reset only at existing phase boundaries',()=>{
+  const f=randomFixture();f.run('for(let i=0;i<40;i++)Math.random()');
+  const before=JSON.stringify(f.api.receipt()),d=f.api.diagnostics();
+  assert.equal(d.bound,16);assert.equal(d.calls.length,16);assert.equal(d.calls[0].index,24);assert.equal(d.calls.at(-1).index,39);
+  assert(d.calls.every(c=>c.phase==='startup'&&c.stack.length<=6&&c.stack.every(line=>line.length<=512)));
+  d.calls[0].index=999;d.calls[0].stack.push('not native');
+  assert.equal(f.api.diagnostics().calls[0].index,24);assert.equal(JSON.stringify(f.api.receipt()),before);
+  assert(!Object.hasOwn(f.api.receipt(),'diagnostics'));f.api.begin('steady-180');assert.equal(f.api.diagnostics().calls.length,0);f.api.restore();
+});
+test('failure preserves partial real frames and expected/actual RNG counters without relaxing the equality gate',()=>{
+  const driver=fs.readFileSync(new URL('../check-inkwave-roller-holding-video.mjs',import.meta.url),'utf8');
+  assert.match(driver,/receipt.video=\{schema:1,numericOnly,partial:true,initial,frames\}/);
+  assert.match(driver,/JSON.stringify\(actualRandom\)!==JSON.stringify\(q.previousRng\)/);
+  assert.match(driver,/__rollerRandomBoundaryFailure=\{frame:index,expected:q.previousRng,actual:actualRandom,diagnostics:globalRandom.diagnostics\(\)\}/);
+  assert.match(driver,/throw Error\('Global RNG changed while native movie was frozen'\)/);
+});
+
+test('derived face inputs and real credit calls are observed without changing receiver, args, returns or canonical receipt',()=>{
+  const f=fixture(),a=f.G.local,face=f.c._applyFace,turf=a.addTurf,td=Object.getOwnPropertyDescriptor(a,'addTurf');
+  f.window.__beginRollerCharacterObserver();const observer=f.window.__rollerCharacterObserver;
+  const extra={native:true};assert.equal(f.c._applyFace([],1/60,extra),f.token);assert.equal(f.stats().lastThis,f.c);assert.equal(f.stats().lastArgs[2],extra);
+  assert.equal(a.addTurf(2.5,extra),f.token);assert.equal(f.stats().lastThis,a);assert.equal(f.stats().lastArgs[1],extra);
+  f.c.update(1/60,{special:.025});const d=observer.diagnostics();
+  assert.equal(d.faces.length,1);assert.equal(d.faces[0].headChain.length,1);assert.equal(d.faces[0].kidMatrix.length,16);assert.equal(d.faces[0].afterDist,7.85);
+  assert.equal(d.credits[0].before.special,0);assert.equal(d.credits[0].after.special,2.5);assert.equal(d.inputs[0].credit.special,2.5);assert.equal(d.inputs[0].inputSpecial,.025);
+  d.faces[0].kidMatrix[0]=999;assert.equal(observer.diagnostics().faces[0].kidMatrix[0],1);
+  assert(!Object.hasOwn(observer.receipt,'derived'));observer.restore();assert.equal(f.c._applyFace,face);assert.equal(a.addTurf,turf);assert.deepEqual(Object.getOwnPropertyDescriptor(a,'addTurf'),td);
+});
+test('native face and credit exceptions propagate and original descriptors remain restorable',()=>{
+  const f=fixture(),fault=new Error('native throw');f.c._applyFace=function(){throw fault;};f.G.local.addTurf=function(){throw fault;};
+  const face=f.c._applyFace,turf=f.G.local.addTurf;f.window.__beginRollerCharacterObserver();
+  assert.throws(()=>f.c._applyFace([],1/60),e=>e===fault);assert.throws(()=>f.G.local.addTurf(1),e=>e===fault);
+  const o=f.window.__rollerCharacterObserver;assert.equal(o.diagnostics().faces.length,1);assert.equal(o.diagnostics().credits.length,1);
+  o.restore();assert.equal(f.c._applyFace,face);assert.equal(f.G.local.addTurf,turf);
+});
+
+test('diagnostic after lane requires the real validated steady camera plan and never converts a failed partial into pair acceptance',()=>{
+  const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-roller-profile-preflight.yml',import.meta.url),'utf8');
+  const driver=fs.readFileSync(new URL('../check-inkwave-roller-holding-video.mjs',import.meta.url),'utf8');
+  const extract=(s,a,b)=>{const i=s.indexOf(a),j=s.indexOf(b);assert(i>=0&&j>i);return s.slice(i+a.length,j);};
+  const make=new Function(extract(driver,'// BEGIN GRIP CAMERA CONTRACT','// END GRIP CAMERA CONTRACT')+';return makeGripCameras;')();
+  const plan=make([0,0,0]),steady={passed:true,numericOnly:true,build:'fixed',measurement:{debugFixedTicks:180,cameraPlan:plan}};
+  const admission=extract(workflow,'// BEGIN DIAGNOSTIC CAMERA ADMISSION','// END DIAGNOSTIC CAMERA ADMISSION');
+  const run=(mutation)=>{const data={'before/steady-result.json':structuredClone(steady),'before/grip-cameras.json':structuredClone(plan),'identities.json':{builds:{before:{contentHash:'fixed'}}}};
+    mutation?.(data);const writes=[];new Function('fs','assert','process',admission)({readFileSync(p){if(p.endsWith('.mjs'))return driver;const key=p.replace('work/roller-preflight/','');if(!(key in data))throw Error('missing file');return JSON.stringify(data[key]);},appendFileSync:(...args)=>writes.push(args)},assert,{env:{GITHUB_OUTPUT:'output'}});return writes;};
+  assert.deepEqual(run(),[['output','ready=true\n']]);
+  for(const mutation of [x=>delete x['before/grip-cameras.json'],x=>x['before/grip-cameras.json'].views[0].position[0]=null,x=>x['before/steady-result.json'].passed=false,x=>x['before/steady-result.json'].measurement.debugFixedTicks=179])assert.throws(()=>run(mutation));
+  const gates=extract(workflow,'assert.notEqual(v.partial,true);','assert.deepEqual(v.views');
+  const accept=(r,v)=>{assert.notEqual(v.partial,true);new Function('assert','r','v','manifest',gates)(assert,r,v,{contentHash:'fixed'});};
+  const r={passed:true,numericOnly:true,errors:[],build:'fixed',measurement:{debugFixedTicks:180}},v={frames:Array(90),frameCount:90,nativeTicksPerSecond:60,numericOnly:true,interpolation:false};
+  accept(r,v);assert.throws(()=>accept({...r,passed:false},v));assert.throws(()=>accept(r,{...v,partial:true}));assert.throws(()=>accept(r,{...v,frames:Array(27)}));
+  assert(!workflow.includes('continue-on-error'));assert.match(workflow,/steps.diagnostic-plan.outputs.ready == 'true'/);
 });
