@@ -5440,6 +5440,9 @@ CIのAP57ブラウザフィクスチャも、session.matchのNetMatch所有権�
 
 See [regression analysis and evidence](weapon-regressions-20261021/README.md). Fixed the dry squid's constant 0.52-rad pitch, the finite Charger's fivefold width reduction and lost charged-hit metadata, and the legacy scope's NaN cooldown/missing sound alias. Standard Splatling charge/stream now preserve source MP3 pitch and START prepares charged articulations. Reduced Blaster contacts choose ordinary damage audio. All main models stow for sub aim/recovery; Burst Bomb and its preview share a hand-origin flight law. Roller mesh dimensions are normalized to the host player's stature, separately from gameplay distance units. Trizooka uses a common launch axis and volley-time orbit, 20F activation, 15F initial shot windup and 55F repeats. The report states source versions, reproducible conditions and the remaining retail/device verification boundary.
 
+## 2026-10-21 更新後のモジュール起動復旧
+
+[検証記録](inkwave-update-module-recovery-2026-10-21.md)。公開 Web 配信のキャッシュ復旧のみを変更し、ゲーム内の移動・射撃・ルールの比較値は変更しない。本家のゲーム挙動との一致を追加認定する変更ではない。実機のホーム画面 Web アプリ起動は未確認。
 ## 2026-10-21 #1665 / #1666 遠隔ヒット申告の装備スロット別上限
 
 参照は Splatoon 3 Ver. 11.3.0 の固定パラメータ（[Leanny/splat3 `7280ff9c` data/parameter/1130](https://github.com/Leanny/splat3/tree/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon)、ダメージは source / 10）と、既存の公開版 profile・キット定義。ブキ数値・ダメージ曲線・ギア曲線は変更していない。

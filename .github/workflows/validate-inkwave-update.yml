@@ -198,7 +198,7 @@ jobs:
         run: node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
       - name: Verify loading/cache regressions
         run: |
-          node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs
+          node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs patches/loading-cache/tests/recovery.test.mjs
           python3 patches/loading-cache/tests/harness.test.py
       - name: Prepare persistent runtime verifier fixtures
         run: |
@@ -535,7 +535,7 @@ jobs:
           - suite: range
             browsers: chromium webkit
           - suite: startup
-            browsers: chromium
+            browsers: chromium webkit
     env:
       TMPDIR: ${{ github.workspace }}/.ci-scratch
       TMP: ${{ github.workspace }}/.ci-scratch
@@ -737,6 +737,9 @@ jobs:
       - name: Measure cold, warm, PWA restart and offline startup in Chromium
         if: matrix.suite == 'startup'
         run: node scripts/check-inkwave-startup-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/startup" --profile-dir "$CI_STORAGE/cache/startup" --source-sha "$SOURCE_SHA" --runs 3
+      - name: Verify failed module recovery across deployments in Chromium and WebKit
+        if: matrix.suite == 'startup'
+        run: node --test scripts/tests/inkwave-update-recovery-browser.test.mjs
       - name: Bind passing browser evidence to the tested commit
         run: |
           python3 - <<'PY'
