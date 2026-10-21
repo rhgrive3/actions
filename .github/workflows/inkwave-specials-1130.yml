@@ -122,6 +122,15 @@ jobs:
         run: node scripts/build-inkwave.mjs inkwave-public _site
       - name: Check actual catalogue activation with and without optional VFX
         run: node scripts/check-inkwave-splashdown-browser.mjs --site _site --evidence-dir .ci-scratch/splashdown-browser
+      - name: Probe emitted Inkjet presentation on SwiftShader (candidate only)
+        run: |
+          for hz in 30 60 120; do
+            for actors in 1 2 4; do
+              for layout in near mixed; do
+                node scripts/check-inkwave-splashdown-browser.mjs --site _site --inkjet --hz "$hz" --actors "$actors" --layout "$layout" --evidence-dir ".ci-scratch/splashdown-browser/inkjet/${hz}hz-${actors}p-${layout}"
+              done
+            done
+          done
       - name: Verify Inkjet production composition in emitted modules
         run: |
           INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test \
