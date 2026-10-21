@@ -1,0 +1,25 @@
+{
+  "sourceHead": "ffdbf2016b2c8a008e43761d3874b83fad63a027",
+  "artifactId": 12379998715,
+  "sourceHashes": {
+    "styles/mobile.css": "9c05a02aba184fd37df07f6e4375840d19a1d4e154f11e4a863e99e41bd0c3b6",
+    "styles/ui.css": "62056a3486ddca6c05db8ef310ccae8ec1644053fd85c3671079b93d82269bd6",
+    "src/ui/menus.js": "051b8691c69f9f06084b7a097355e752e58657c00c426965b4a9e2ff9c532203",
+    "src/ui/news.js": "5bea172c378845ef07fe15fd33685f9bc679f3a5e750b25ac340f10e4117b8ac",
+    "src/core/device.js": "ace6f5de445d9891cc500120c4f1c905aff8dda011c84700ecdbad4b31154cdb",
+    "patches/splatoon3/ui.css": "3177a87315b18647ec052ec6efe416457e0e8fd48533670c05adf2b89a09565c",
+    "patches/splatoon3/runtime/install.mjs": "e2be088d7dede309c27d921fbb46042021244bf1ffe8e196ae7d844154cd2985",
+    "patches/splatoon3/runtime/gear.mjs": "5adb399c3f5670fd6af5a5ca12e91f3c2bb08c4b7c6f86e7b9eba5888f1a4a6c",
+    "patches/splatoon3/runtime/conditional-gear.mjs": "3983c31f7c4df66f08614579a1e6d940bc06aae1c40e90425fcb1330152ce80a",
+    "patches/splatoon3/runtime/sub-resistance.mjs": "8462f4c13d58a85b2462071b6050e6970765002b1553eefd0b2212c0d2f8ea8f",
+    "patches/splatoon3/profile.json": "eec88696a898922841c27fde7c999fd5eb0090814bb92f1581089487ccda63b6"
+  },
+  "runnerHashes": {
+    "check-inkwave-responsive.mjs": "0755af0f41d9e1834fa624b263f27f9fa64419da50b2f351900b95900b16c114",
+    "check-inkwave-responsive-core.mjs": "828bf12b8df6dbc9784e125b6509393eab4da02ecc6ebb6d4651cdfb4c2e5fd6",
+    "check-inkwave-result-continuation.mjs": "353735d97ac3a4ec43aab58e224d2d068c9b9d81c38df7de4f642d686f6d10df",
+    "lib/inkwave-responsive-server.mjs": "411285e1de696490de6b91e7a61beea3bc2d34ec37210891c301b33de7f73c7e",
+    "lib/inkwave-responsive-diagnostics.mjs": "39723726b44a82d09c8ebce75ba7de429bfbc701eec7dab71aaad9ec38804d35",
+    "inkwave-responsive-fixture.mjs": "0734e1d0ce169030282801e20ca8eb5beda99ed230467767093cd0a1eca11d4e"
+  }
+}

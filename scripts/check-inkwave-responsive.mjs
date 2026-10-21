@@ -96,9 +96,17 @@ const show = async (page, name) => {
   await page.evaluate((screen) => { menus.wipe.cancel(); menus.show(screen, { wipe: false, light: false, force: true }); }, name);
   await settle(page);
 };
-const settle = async (page) => page.evaluate(async () => {
+const animationProbe = process.argv.includes('--animation-probe');
+const settle = async (page) => page.evaluate(async probe => {
+  if (probe) {
+    const all = document.getAnimations(), finite = all.filter(a => a.effect?.getTiming().iterations !== Infinity);
+    console.info('RESPONSIVE_ANIMATION ' + JSON.stringify({ total: all.length, finite: finite.length,
+      sample: finite.slice(0, 6).map(a => ({ name: String(a.animationName || a.id || '').slice(0, 32),
+        state: a.playState, time: Number.isFinite(a.currentTime) ? a.currentTime : null,
+        duration: Number.isFinite(a.effect?.getTiming().duration) ? a.effect.getTiming().duration : null })) }));
+  }
   await Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => {})));
-});
+}, animationProbe);
 const geometry = async (page, selector, label) => {
   await settle(page);
   const controls = page.locator(selector);
@@ -138,9 +146,11 @@ try {
       context.on('close', () => diagnostics.unavailable('context-close'));
       context.browser()?.on('disconnected', () => diagnostics.unavailable('browser-disconnected'));
       page.on('console', message => {
+        if (animationProbe && message.text().startsWith('RESPONSIVE_ANIMATION ')) diagnostics.record('animation-before-wait', message.text().slice(21));
         if (['error', 'warning'].includes(message.type())) diagnostics.record('console-' + message.type(), message.text());
       });
       const onStageComplete = name => diagnostics.stage(name);
+      const onStageStart = name => { if (animationProbe) diagnostics.record('stage-start', name); };
       page.on('pageerror', (e) => result.errors.push(`${engineName}/${name}: ${e.message}`));
       await page.addInitScript(() => {
         window.responsiveEvents = [];
@@ -156,7 +166,7 @@ try {
         await show(page, 'online');
         if (name === 'desktop') {
           if (section !== 'expansion') {
-            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete,
+            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, onStageStart,
               geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; },
               tap: async (page, selector) => { const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.click(); }, audit: true, testContinuation: !audit });
             for (const [screen, selector] of [['main', '.iw-main__menu'], ['setup', '.iw-ss__hero'], ['settings', '.iw-settings__panel']]) {
@@ -183,7 +193,7 @@ try {
         entry.touchMode = await page.locator('.iw-ui').evaluate((el) => el.classList.contains('is-touch'));
         assert(entry.touchMode, `${name}: touch mode not detected`);
         if (section !== 'expansion') {
-          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, geometry, tap, audit });
+          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, onStageStart, geometry, tap, audit });
           if (section === 'core') { entry.status = audit ? 'audited' : 'passed'; continue; }
           await show(page, 'online');
         }

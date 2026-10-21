@@ -1,0 +1,70 @@
+name: INKWAVE exact ffdb WebKit crash observation
+on:
+  push:
+    branches: [qa/inkwave-responsive-crash-ffdb-20261021]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      TMPDIR: ${{ github.workspace }}/.ci-scratch
+      TMP: ${{ github.workspace }}/.ci-scratch
+      TEMP: ${{ github.workspace }}/.ci-scratch
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enforce direct parent and QA-only delta
+        run: |
+          test "$(git rev-parse HEAD)" = '${{ github.sha }}'
+          test "$(git rev-parse HEAD^)" = ffdbf2016b2c8a008e43761d3874b83fad63a027
+          python3 - <<'PY'
+          import subprocess
+          allowed={'.github/workflows/inkwave-responsive-crash-diagnostic.yml','scripts/check-inkwave-responsive.mjs','scripts/check-inkwave-responsive-core.mjs','scripts/diagnose-responsive-webkit.mjs','scripts/responsive-ffdb-input-pins.json','reports/responsive-ffdb-crash-diagnostic.md'}
+          actual=set(subprocess.check_output(['git','diff','--name-only','HEAD^','HEAD'],text=True).splitlines())
+          assert actual==allowed,(actual-allowed,allowed-actual)
+          print('Exact ffdb parent; six QA-only files; runtime unchanged')
+          PY
+          mkdir -p .ci-scratch .reused-site .diagnostic/evidence .diagnostic/profile
+          npm install --no-save --no-package-lock --silent playwright@1.62.1 ws@8
+          node --check scripts/check-inkwave-responsive.mjs
+          node --check scripts/check-inkwave-responsive-core.mjs
+          node --check scripts/diagnose-responsive-webkit.mjs
+          node --test scripts/tests/inkwave-responsive-diagnostics.test.mjs
+      - name: Retrieve exact existing build ZIP and verify SHA256
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs'), crypto = require('crypto');
+            const id = 12379998715;
+            const meta = await github.rest.actions.getArtifact({owner:context.repo.owner,repo:context.repo.repo,artifact_id:id});
+            if(meta.data.workflow_run.head_sha !== 'ffdbf2016b2c8a008e43761d3874b83fad63a027' || meta.data.workflow_run.id !== 39658991486) throw Error('Wrong build provenance');
+            const result = await github.rest.actions.downloadArtifact({owner:context.repo.owner,repo:context.repo.repo,artifact_id:id,archive_format:'zip'});
+            const bytes = Buffer.from(result.data);
+            const hash = crypto.createHash('sha256').update(bytes).digest('hex');
+            if(hash !== 'f7bc158f7ab8480dc1a5bf767a777258626c202228cf975fcbdebc99064f0f9e') throw Error('Build ZIP digest mismatch');
+            fs.writeFileSync('.reused-site/original.zip',bytes);
+            fs.writeFileSync('.diagnostic/evidence/build-provenance.json',JSON.stringify({artifact:id,run:39658991486,head:meta.data.workflow_run.head_sha,sha256:hash,bytes:bytes.length}));
+      - name: Prepare existing artifact and WebKit
+        run: |
+          unzip -q .reused-site/original.zip -d .reused-site/extracted
+          test "$(cat .reused-site/extracted/_site-source-sha.txt)" = ffdbf2016b2c8a008e43761d3874b83fad63a027
+          npx playwright install --with-deps webkit
+      - name: Run one existing core case with bounded observations
+        run: node scripts/diagnose-responsive-webkit.mjs --source .reused-site/extracted/_site --evidence-dir .diagnostic/evidence --profile-dir .diagnostic/profile
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-responsive-crash-observation-${{ github.sha }}
+          path: .diagnostic/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

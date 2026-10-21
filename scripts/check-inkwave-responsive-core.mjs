@@ -4,7 +4,7 @@ import path from 'node:path';
 
 // Runs the existing menu actions against the caller's fixture API. It tests
 // layout and UI state; it does not simulate gameplay or attest a real device.
-export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, testContinuation = !audit, touchCameraReset = false, onStageComplete = () => {} }) {
+export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, testContinuation = !audit, touchCameraReset = false, onStageComplete = () => {}, onStageStart = () => {} }) {
   const capture = async (name, selector) => {
     // A finished exit animation can retain its translated panel until the
     // menu's 340ms removal timer. Measure only after that owner is gone.
@@ -60,6 +60,7 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
     for (let i = 0; i < await page.locator('.iw-ticket').count(); i++) {
       const candidate = page.locator('.iw-ticket').nth(i);
       const id = await candidate.evaluate((el) => el._mid);
+      onStageStart('setup-stage:' + id);
       await candidate.scrollIntoViewIfNeeded(); await candidate.tap();
       assert.equal(await page.evaluate(() => menus._setup.mapId), id, 'every stage remains reachable');
       await settle(page);
