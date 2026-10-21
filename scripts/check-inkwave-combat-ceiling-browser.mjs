@@ -116,7 +116,19 @@ try {
  },{attacker,placement})));
  const step=async()=>{await Promise.all(pages.map(p=>p.evaluate(()=>{
   const G=__G,dt=1/60;G.time+=dt;G.net.update(dt);
-  for(const a of G.match.actors)if(a.remote)G.netm.applyRemote(a,dt);
+  for(const a of G.match.actors){
+   if(a.remote)G.netm.applyRemote(a,dt);
+   else {
+    const ink=a.ink;
+    a.update(dt);
+    // Advance the real first-shot delay, pose and firing owner. Stop holding
+    // after its first paid round so this remains exactly one native shot.
+    if(window.__ceilingFirePending&&a===G.match.local&&a.ink<ink-1e-8){
+     window.__ceilingFirePending=false;a.intent.fire=false;
+     window.__ceilingEmission={beforeInk:ink,afterInk:a.ink,at:G.time};
+    }
+   }
+  }
   G.projectiles.update(dt);
  })));await new Promise(resolve=>setTimeout(resolve,0));};
  for(let i=0;i<12;i++)await step();
@@ -143,10 +155,12 @@ try {
   n.onMessage=function(from,p){const watched=from===attackerOwner&&p?.k==='hit'&&p.a===attacker&&p.v===victim;const before=watched?snapshot():null;const at=performance.now()/1000;const result=original.apply(this,arguments);if(watched)q.rows.push({from,at,packet:structuredClone(p),before,after:snapshot()});return result;};
  },{attacker,victim,attackerOwner});
  report.phase='real-projectile-contact';
- await guest.evaluate(()=>{const a=__G.match.local;a.weaponRunner.update(1/60,{fire:true,firePressed:true});});
+ await guest.evaluate(()=>{const a=__G.match.local;window.__ceilingFirePending=true;window.__ceilingEmission=null;a.intent.fire=true;});
  let captured=false;
  for(let i=0;i<60;i++){await step();captured=await guest.evaluate(()=>!!__ceilingGuest.packet);if(captured)break;}
+ report.emission=await guest.evaluate(()=>({emission:window.__ceilingEmission,pending:window.__ceilingFirePending,ink:__G.match.local.ink,firstRemaining:__G.match.local.weaponRunner.s3ShooterFirstRemaining,projectiles:__G.projectiles.list.length}));
  assert(captured,'Native projectile never authored a 36 hit packet');
+ assert(report.emission.emission&&report.emission.pending===false,'Exactly one native paid round must finish the firing request');
  await host.waitForFunction(({attackerOwner,attacker})=>(__G.netm._combatProvenance?.proofs.get(attackerOwner)||[]).some(p=>p.actor===attacker&&p.uses<p.maxUses),{attackerOwner,attacker},{timeout:2000});
  report.heldPacket=await guest.evaluate(()=>__ceilingGuest.packet);
  assert.equal(report.heldPacket.d,36);
