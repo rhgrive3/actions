@@ -5,7 +5,7 @@ import { catalogPaintEllipse } from '/ASSET/patches/splatoon3/runtime/catalog-sp
 // Tests the emitted shader, emitted CPU mask, and native seed attribute packing.
 // Only raster derivatives/AA are replaced: points query exact gameplay samples,
 // with tx fixed to the actual atlas density instead of unrelated neighbor points.
-import { PaintSystem, rollerBandSignedDistance } from '/ASSET/src/world/paint.js';
+import { PaintSystem } from '/ASSET/src/world/paint.js';
 import { paintShapeSeed, paintShapeHash, preparePaintAncillary, paintDotCellWitness } from '/ASSET/patches/splatoon3/runtime/paint-ownership.mjs';
 
 const check = (condition, message) => { if (!condition) throw Error(message); };
@@ -203,25 +203,10 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
       check(pixels.every((byte, i) => byte === actual[i]), `${name} is disabled and its hash cannot alter any GPU sample`);
     }
     let unsupported = 0, negativeUnsupported = 0;
-    const firstUnsupported = [];
     for (let cell = 0; cell < cells; cell++) {
       let seen = false, revertedSeen = counterWitnesses.negative.has(cell);
       for (let sample = 0; sample < 5; sample++) { const i = (cell * 5 + sample) * 4; seen ||= actual[i] === 255; revertedSeen ||= reverted[i] === 255; }
-      if (!seen && !witnessed.has(cell)) {
-        unsupported++;
-        if (kind === 6 && firstUnsupported.length < 8) {
-          const x = points[cell * 15], y = points[cell * 15 + 1];
-          const along = x * sdu + y * sdv, across = -x * sdv + y * sdu;
-          const predicted = rollerBandSignedDistance(along, across, g.R, seed);
-          const samples = [];
-          for (let sample = 0; sample < 5; sample++) {
-            const i = (cell * 5 + sample) * 3;
-            const px = points[i], py = points[i + 1];
-            samples.push(rollerBandSignedDistance(px * sdu + py * sdv, -px * sdv + py * sdu, g.R, seed));
-          }
-          firstUnsupported.push({ x, y, predicted, samples, rgba: [...actual.slice(cell * 20, cell * 20 + 20)] });
-        }
-      }
+      if (!seen && !witnessed.has(cell)) unsupported++;
       if (!revertedSeen) negativeUnsupported++;
       for (const [name, pixels] of Object.entries(familyPixels)) {
         let familySeen = counterWitnesses[name].has(cell);
@@ -255,7 +240,7 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
         check(witness[0] === 255, 'published pi/60 Roller visible-band witness must remain covered');
       }
     }
-    rows.push({ wall, kind, seed, tn, cells, unsupported, firstUnsupported, gpuOnlySolid, firstGpuOnly, negativeUnsupported, familyUnsupported });
+    rows.push({ wall, kind, seed, tn, cells, unsupported, gpuOnlySolid, negativeUnsupported, familyUnsupported });
     check(unsupported === 0, `CPU owns invisible GPU cells: ${JSON.stringify(rows.at(-1))}`);
     check(gpuOnlySolid === 0, `GPU owns visibly solid dry Roller cells: ${JSON.stringify({ ...rows.at(-1), firstGpuOnly })}`);
   }
