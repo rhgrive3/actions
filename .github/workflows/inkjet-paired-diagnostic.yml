@@ -1,0 +1,65 @@
+name: Inkjet paired candidate diagnostic
+on:
+  push:
+    branches: ['diagnostic/inkjet-paired-baseline-20261021']
+    paths:
+      - '.github/workflows/inkjet-paired-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inkjet-paired-diagnostic
+  cancel-in-progress: false
+jobs:
+  paired-pilot-video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 9c4ca8e60699ce786a96b351fdfc4c7ab3750fa1
+          filter: blob:none
+          fetch-depth: 1
+          sparse-checkout: |
+            inkwave-public
+            patches
+            scripts
+            reports/ink-volume/source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - name: Verify official encoder availability
+        run: |
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+          ffmpeg -version
+      - name: Reproduce the accepted candidate emitted bytes once
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';const m=JSON.parse(fs.readFileSync('_site/inkwave-build.json'));assert.equal(m.contentHash,'3505a563c929bbe1627c087ab3a4df61d56830f9144e1e8f36ed4863ec5744a1');console.log('EXACT_EXISTING_EMITTED_HASH',m.contentHash);"
+      - name: Load pinned diagnostic scripts after the immutable build
+        run: |
+          git fetch --no-tags --depth=1 origin c72dd6da46f53f3ea931e0263885685172bb12e9 df639f80ec5aad069cc393758bdb9aceb1865fea
+          for file in scripts/prepare-inkjet-baseline.mjs scripts/check-inkwave-splashdown-browser.mjs scripts/check-inkjet-paired-pilot.mjs scripts/check-inkjet-comparison-video.mjs; do
+            git show df639f80ec5aad069cc393758bdb9aceb1865fea:"$file" > "$file"
+            node --check "$file"
+          done
+      - name: Prepare a verified single-module old-main overlay
+        run: node scripts/prepare-inkjet-baseline.mjs --site _site
+      - name: Measure one-case ABBA feasibility pilot
+        run: node scripts/check-inkjet-paired-pilot.mjs --site _site --blocks 1
+      - name: Render every frame and encode labeled 30 Hz four-player comparison
+        run: node scripts/check-inkjet-comparison-video.mjs --site _site
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkjet-paired-candidate-diagnostic
+          path: |
+            .ci-scratch/inkjet-baseline/
+            .ci-scratch/inkjet-paired-pilot/
+            .ci-scratch/inkjet-video/
+          if-no-files-found: error
