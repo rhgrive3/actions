@@ -103,3 +103,38 @@ for(const change of ['session','owner'])check(`native acceptance callback ${chan
  r.send([0,0,1]);buf.push=push;
  assert.equal(r.nm.rankedPose.get('0'),before);assert.equal(frame(r).alive,false);
 });
+
+
+check('#1648 forged owner-Super-Jump phase never authorizes a teleport generation into the objective',r=>{
+  r.send([0,0,0],{flags:17,tp:0});r.tick(3);
+  r.send([0,0,0],{flags:17|16384,tp:0});r.tick(18);
+  const before=r.nm.rankedPose.get('0');
+  assert.equal(before.last.pos[2],0);
+  // Historically the owner-controlled SJ_CHARGE bit and 0.25s time gap were
+  // enough to admit tp+1 at ANY location without a host-validated Jump.
+  r.send([0,0,27],{flags:17,tp:1});
+  assert.equal(r.nm.rankedPose.get('0'),before,'fabricated jump cannot publish a new objective pose');
+  assert.equal(frame(r).pos[2],0);
+  r.tick(10);
+  assert.equal(r.m.ranked.events.some(e=>e.kind==='clam-pickup'||e.kind==='clam-score'),false);
+  assert.equal(r.rule.state.inventories['0']?.power??false,false);
+});
+
+check('#1648 a legitimate death-to-alive single-step respawn epoch remains admissible',r=>{
+  r.send([0,0,0],{flags:17,tp:0});r.tick(3);
+  r.send([0,0,0],{flags:0,tp:0});r.tick(3);
+  assert.equal(r.nm.rankedPose.get('0').last.flags,0);
+  r.send([0,0,0],{flags:17,tp:1});
+  assert.equal(r.nm.rankedPose.get('0').last.tp,1,'the existing real respawn exception is preserved');
+  assert.equal(frame(r).pos[2],0);
+});
+
+check('#1648 invalid teleport epoch cannot be laundered through later fresh sample timestamps',r=>{
+  r.send();r.tick(3);
+  r.send([0,0,0],{flags:17|32768,tp:0});r.tick(30);
+  for(let i=1;i<=3;i++){
+    r.send([0,0,27],{flags:17,tp:i});r.tick(3);
+    assert.equal(r.nm.rankedPose.get('0').last.tp,0,'forged epoch '+i+' denied');
+  }
+  assert.equal(frame(r).pos[2],0);
+});

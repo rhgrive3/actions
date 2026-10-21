@@ -1,6 +1,6 @@
 // Host-only ranked objective pose admission. Cosmetic interpolation is unchanged.
 // This is a plausibility gate, not a fully authoritative server movement simulator.
-const ALIVE = 1, GROUNDED = 16, SJ_CHARGE = 16384, SJ_FLIGHT = 32768;
+const ALIVE = 1, GROUNDED = 16;
 const finite = Number.isFinite;
 const dist = (a,b) => Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
 
@@ -24,10 +24,13 @@ export function admitRankedPose(state, row, actor, ts, world) {
     const elapsed = ts - prev.t;
     if (!finite(elapsed) || elapsed <= 0) return false;
     if (row[16] !== prev.tp) {
+      // The native Actor increments netTp only for an actual respawn. A
+      // Super Jump advances its continuous flight position without minting a
+      // teleport generation. Owner-supplied SJ flags are not an independent
+      // host proof: allowing them to authorize tp+1 lets a guest create a
+      // forged epoch and score an objective at any destination.
       const respawn = !(prev.flags & ALIVE) && !!(flags & ALIVE);
-      const jump = state.jumpSince !== undefined && ts - state.jumpSince >= .25 &&
-        !!((prev.flags | flags) & (SJ_CHARGE | SJ_FLIGHT));
-      if (row[16] !== prev.tp + 1 || !(respawn || jump)) return false;
+      if (row[16] !== prev.tp + 1 || !respawn) return false;
     } else {
       const dt = Math.min(.35, elapsed);
       const dx = next[0]-prev.pos[0], dz = next[2]-prev.pos[2];
@@ -36,8 +39,6 @@ export function admitRankedPose(state, row, actor, ts, world) {
         [prev.pos[0],prev.pos[1]+.8,prev.pos[2]], [next[0],next[1]+.8,next[2]])) return false;
     }
   }
-  if ((flags & (SJ_CHARGE | SJ_FLIGHT)) && state.jumpSince === undefined) state.jumpSince = ts;
-  if (!(flags & (SJ_CHARGE | SJ_FLIGHT))) state.jumpSince = undefined;
   state.last = {pos:next,t:ts,tp:row[16],flags};
   return true;
 }
