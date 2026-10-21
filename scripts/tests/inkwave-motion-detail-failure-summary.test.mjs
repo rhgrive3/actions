@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {summarizeDetailRigFailure} from '../lib/inkwave-motion-detail-failure-summary.mjs';
+import {summarizeDetailRigFailure,assertCatalogGeometryPresent,summarizeCatalogEmptyGeometry} from '../lib/inkwave-motion-detail-failure-summary.mjs';
 const receipt=(m={})=>({data:[{name:'flow-squid',samples:[{form:'squid'}],renderMetrics:[{frame:0,renderClocksStable:true,rig:{changedPixels:0,maxChannelDifference:0},rigDiagnostic:{rootVisible:true,actorAlive:true,actorPosition:[1,2,3],visibleMeshes:10},...m}]}]});
 test('known failed pair is sanitized and labels local visibility limitation',()=>{
  const input=receipt(),saved=JSON.stringify(input),out=summarizeDetailRigFailure(input);
@@ -36,4 +36,27 @@ test('row and scan budgets bound large receipts to under eight KiB',()=>{
 });
 test('unsafe names and unsupported forms are not copied',()=>{
  const input=receipt();input.data[0].name='line\nbreak';input.data[0].samples[0].form='unexpected';const row=summarizeDetailRigFailure(input).rows[0];assert.equal(row.scenario,null);assert.equal(row.form,null);
+});
+
+test('empty indexed geometry is explicitly a failure, never replaced with finite zero bounds',()=>{
+ assert.throws(()=>assertCatalogGeometryPresent({indexedVertices:0,min:[Infinity,Infinity,Infinity]},'swim.renders.0'),/empty indexed geometry.*not a posed-vertex NaN/);
+ assertCatalogGeometryPresent({indexedVertices:1,min:[NaN,0,0]},'vertex-nan');
+ // Positive-count nonfinite bounds remain owned by the existing numericTree gate.
+});
+const catalog=()=>({data:[{name:'swim-turn-brake',renders:[{frame:1,tick:1,visible:true,rig:{changedPixels:42,maxChannelDifference:20},geometry:{indexedVertices:0,triangles:0,skinnedVertices:0,meshes:0,min:[Infinity,Infinity,Infinity],collectorDiagnostic:{rootVisible:true,totalMeshes:12,localVisibleMeshes:8,nativeAncestorVisibleMeshes:0,indexedMeshes:9,materialEligibleGroups:0,drawRangeEntries:0}}}]}]});
+test('catalog diagnostic distinguishes RGB from empty CPU collector and local from ancestor visibility',()=>{
+ const input=catalog(),before=JSON.stringify(input),out=summarizeCatalogEmptyGeometry(input),row=out.rows[0];
+ assert.equal(row.rgb.changedPixels,42);assert.equal(row.collector.localVisibleMeshes,8);assert.equal(row.collector.nativeAncestorVisibleMeshes,0);
+ assert.match(out.visibilityMeaning,/separately/);assert.match(row.reason,/still a failure/);assert.equal(JSON.stringify(input),before);
+});
+test('catalog missing/nonfinite/wrong-type fields are bounded null diagnostics',()=>{
+ assert.deepEqual(summarizeCatalogEmptyGeometry(null).rows,[]);
+ const input=catalog(),r=input.data[0].renders[0];r.rig.changedPixels=Infinity;r.visible='yes';r.geometry.collectorDiagnostic.totalMeshes=NaN;
+ const out=summarizeCatalogEmptyGeometry(input).rows[0];assert.equal(out.rgb.changedPixels,null);assert.equal(out.visible,null);assert.equal(out.collector.totalMeshes,null);
+});
+test('catalog skips nonempty records and strips unknown/oversized data under eight KiB',()=>{
+ const input=catalog();input.data[0].name='secret'.repeat(2000);input.data[0].renders[0].geometry.collectorDiagnostic.secret='private';
+ input.data=Array.from({length:1000},()=>input.data[0]);const out=summarizeCatalogEmptyGeometry(input),text=JSON.stringify(out);
+ assert.equal(out.rows.length,3);assert.ok(text.length<8192);assert.doesNotMatch(text,/secret|private/);
+ assert.equal(summarizeCatalogEmptyGeometry({data:[{renders:[{geometry:{indexedVertices:100}}]}]}).rows.length,0);
 });

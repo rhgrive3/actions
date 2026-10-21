@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { catalogAudioGraph, validateCatalogAudioWorker } from './lib/inkwave-catalog-audio.mjs';
 import { pixelDifference } from './check-inkwave-motion-detail.mjs';
+import { assertCatalogGeometryPresent, summarizeCatalogEmptyGeometry } from './lib/inkwave-motion-detail-failure-summary.mjs';
 
 export const CATALOG_MODULES = Object.freeze([
   ['jump', 'jumpMotionSnapshot', 'installJumpMotion'],
@@ -202,6 +203,9 @@ export function validateCatalogResult(result) {
   const checkScenario = scenario => {
     const row = result.data.find(r => r.name === scenario.name), label = scenario.name;
     if (!row || row.kind !== scenario.kind || row.frames !== scenario.frames || row.hz !== (scenario.hz || 60) || typeof row.driver !== 'string' || !row.driver || !Array.isArray(row.samples) || row.samples.length !== scenario.frames) fail('frame denominator ' + label);
+    // Empty indexed traversal is still a hard failure, not proof of NaN vertices.
+    for(const [i,r]of (Array.isArray(row.renders)?row.renders:[]).entries())
+      assertCatalogGeometryPresent(r?.geometry,label+'.renders.'+i);
     numericTree(row, label);
     for (const [i, s] of row.samples.entries()) {
       if (s.frame !== i || typeof s.visible !== 'boolean' || s.visualGameplayInvariant !== true || !s.snapshots || CATALOG_MODULES.some(([id]) => !Object.hasOwn(s.snapshots, id))) fail('native frame identity ' + label);
@@ -555,8 +559,24 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
     let indexedVertices = 0, triangles = 0, skinnedVertices = 0, meshes = 0;
     const p = new THREE.Vector3();
+    const collectorDiagnostic={rootVisible:ch.root.visible,totalMeshes:0,localVisibleMeshes:0,nativeAncestorVisibleMeshes:0,
+      indexedMeshes:0,nonIndexedMeshes:0,instancedMeshes:0,visitedMeshes:0,eligibleIndexedMeshes:0,
+      materialEligibleGroups:0,drawRangeEligibleGroups:0,drawRangeEntries:0};
+    // Read visibility before the EXISTING root-only measurement override below.
+    // Do not reveal a child, alter materials, or change any draw range.
+    ch.root.traverse(mesh=>{
+      if(!mesh.isMesh)return;
+      collectorDiagnostic.totalMeshes++;
+      if(mesh.visible)collectorDiagnostic.localVisibleMeshes++;
+      let visible=true;for(let node=mesh;node;node=node.parent)if(!node.visible){visible=false;break;}
+      if(visible)collectorDiagnostic.nativeAncestorVisibleMeshes++;
+      if(mesh.isInstancedMesh)collectorDiagnostic.instancedMeshes++;
+      if(mesh.geometry?.index)collectorDiagnostic.indexedMeshes++;else collectorDiagnostic.nonIndexedMeshes++;
+    });
     const visit = mesh => {
+      if(mesh.isMesh)collectorDiagnostic.visitedMeshes++;
       if (!mesh.isMesh || mesh.isInstancedMesh || !mesh.geometry?.index) return;
+      collectorDiagnostic.eligibleIndexedMeshes++;
       const g = mesh.geometry, index = g.index, start = Math.max(0, g.drawRange.start), end = Math.min(index.count, start + g.drawRange.count);
       const positions = new Map(); // Evaluate each indexed vertex once per mesh/frame.
       let count = 0;
@@ -564,6 +584,9 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       for (const group of groups) {
         const mat = Array.isArray(mesh.material) ? mesh.material[group.materialIndex] : mesh.material;
         if (!mat?.visible) continue;
+        collectorDiagnostic.materialEligibleGroups++;
+        const entries=Math.max(0,Math.min(end,group.start+group.count)-Math.max(start,group.start));
+        if(entries>0){collectorDiagnostic.drawRangeEligibleGroups++;collectorDiagnostic.drawRangeEntries+=entries;}
         for (let i = Math.max(start, group.start); i < Math.min(end, group.start + group.count); i++) {
           const vertex = index.getX(i);
           if (!Number.isInteger(vertex) || vertex < 0 || vertex >= g.attributes.position.count) throw Error('Native index out of bounds');
@@ -580,7 +603,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     // proof is required to be zero, never accepted as visible motion.
     const shown = ch.root.visible; ch.root.visible = true;
     try { ch.root.traverseVisible(visit); } finally { ch.root.visible = shown; }
-    return { indexedVertices, triangles, skinnedVertices, meshes, min, max };
+    return { indexedVertices, triangles, skinnedVertices, meshes, min, max, collectorDiagnostic };
   }
   function grip(ch, side) {
     const left = side === 'left', w = left && ch.dual ? ch.weapon.left : ch.weapon;
@@ -1066,7 +1089,7 @@ async function main() {
   } finally {
     for (const close of [() => browser?.close(), () => server?.listening ? new Promise((resolve, reject) => server.close(e => e ? reject(e) : resolve())) : null]) try { await close(); } catch (e) { failure ||= e; }
   }
-  if (failure) { publish('motion-catalog-result.json', { status: 'failed', contentHash: manifest?.contentHash || null, build: manifest?.build || null, message: String(failure.message || failure), errors, loaded: [...loaded.values()], casesFinished: result?.data?.length || 0 }); console.error(JSON.stringify({ status: 'failed', message: failure.message, networkAndPageErrors: errors.slice(0, 15), modulesLoaded: loaded.size, evidence: path.join(output, 'motion-catalog-result.json') })); process.exitCode = 1; return; }
+  if (failure) { console.error('[motion-catalog-empty-geometry] '+JSON.stringify(summarizeCatalogEmptyGeometry(result))); publish('motion-catalog-result.json', { status: 'failed', contentHash: manifest?.contentHash || null, build: manifest?.build || null, message: String(failure.message || failure), errors, loaded: [...loaded.values()], casesFinished: result?.data?.length || 0 }); console.error(JSON.stringify({ status: 'failed', message: failure.message, networkAndPageErrors: errors.slice(0, 15), modulesLoaded: loaded.size, evidence: path.join(output, 'motion-catalog-result.json') })); process.exitCode = 1; return; }
   result.status = 'passed'; publish('motion-catalog-result.json', result);
   console.log(JSON.stringify({ status: 'passed', contentHash: result.contentHash, cases: result.data.length, frames: result.data.reduce((n, r) => n + r.frames, 0), renderPairs: result.data.reduce((n, r) => n + r.renders.length, 0), verifiedModules: loaded.size, evidence: path.join(output, 'motion-catalog-result.json') }));
 }
