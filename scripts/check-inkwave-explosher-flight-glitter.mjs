@@ -2,6 +2,7 @@
 // Reuse the existing native range driver. Only the diagnostic copy receives
 // deterministic clocks and receipts; neither production checkout is rewritten.
 import fs from 'node:fs';
+import { readExplosherCaptureSurface, explosherSurfaceReady } from './lib/inkwave-explosher-capture-surface.mjs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -39,8 +40,22 @@ driver=once(driver,"  await page.goto(base + '/?range&skipTitle');",`  await pag
     (${installExplosherEarlyFreeze.toString()})();
     (${installExplosherRandom.toString()})(${preflight});
     window.readExplosherEffects=${readExplosherEffects.toString()};
+    window.readExplosherCaptureSurface=${readExplosherCaptureSurface.toString()};
+    window.explosherSurfaceReady=${explosherSurfaceReady.toString()};
   });
-  await enterRangeFromMenu(page,base);`);
+  await enterRangeFromMenu(page,base);
+  const surfaceEntry=await page.evaluate(()=>({surface:window.readExplosherCaptureSurface(),clocks:window.readExplosherSceneClocks()}));
+  await page.screenshot({path:path.join(out,'normal-ui-entry.png')});
+  let uiError=null;
+  try {await page.waitForFunction(()=>window.explosherSurfaceReady(window.readExplosherCaptureSurface()),null,{timeout:60000});}
+  catch(error){uiError=String(error);}
+  const surfaceReady=await page.evaluate(()=>({surface:window.readExplosherCaptureSurface(),clocks:window.readExplosherSceneClocks()}));
+  await page.screenshot({path:path.join(out,'normal-ui-after-wait.png')});
+  fs.writeFileSync(path.join(out,'surface-admission.json'),JSON.stringify({uiError,entry:surfaceEntry,after:surfaceReady},null,2));
+  if(uiError)throw Error(uiError);
+  if(JSON.stringify(surfaceEntry.clocks)!==JSON.stringify(surfaceReady.clocks))throw Error('Native scene clocks advanced while awaiting ordinary UI completion');`);
+driver=once(driver,"    const st = document.createElement('style'); st.textContent = 'body *{visibility:hidden!important}canvas{visibility:visible!important}'; document.head.appendChild(st);",
+ "    // Preserve ordinary native UI visibility; capture admission owns no CSS override.");
 
 driver=once(driver,"  await page.evaluate(() => {\n    const G = window.__G, g = window.__inkwave; g.debug.freeze(); g.debug.freezeBots();",`  await page.evaluate(async () => {
     const G=window.__G,g=window.__inkwave;
@@ -129,7 +144,8 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
 driver=once(driver,"  page.on('pageerror', e => console.error('pageerror', String(e)));","  const pageErrors=[];page.on('pageerror',e=>pageErrors.push(String(e)));");
 driver=once(driver,"        await page.locator('canvas').first().screenshot({ path: path.join(out, file) });",`        if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));
         if(!(measurement.render.calls>0&&measurement.render.triangles>0))throw Error('Native scene did not draw');
-        const png=await page.locator('canvas').first().screenshot({path:path.join(out,file)});
+        measurement.captureSurface=await page.evaluate(()=>{const s=window.readExplosherCaptureSurface();if(!window.explosherSurfaceReady(s))throw Error('Native capture surface/UI no longer ready');return s;});
+        const png=await page.locator('#game-canvas').screenshot({path:path.join(out,file)});
         const imageStats=await page.evaluate(async data=>{
           const img=new Image();img.src='data:image/png;base64,'+data;await img.decode();
           const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;
