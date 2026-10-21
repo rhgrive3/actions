@@ -6,6 +6,8 @@ import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSpr
 // plausibility gate, not a claim that an untrusted client cannot forge its own
 // action stream; fully trustworthy combat needs host projectile simulation.
 import { bindSubBirthCommit, closeSubBirthCommit } from './sub-birth-commit.mjs';
+import { COMBAT_HIT_CEILINGS } from './combat-hit-ceilings-data.mjs';
+import { damageLeafMax } from './damage-leaves.mjs';
 const MAX_PROOFS = 160, MAX_PENDING = 48;
 const EXPLOSIVE_SUBS = new Set(['bomb','suction','burst','curling','autobomb','fizzy','torpedo','inkMine']);
 const PROOF_AGE = 3.5, SPECIAL_PROOF_AGE = 10, PENDING_AGE = 0.95;
@@ -188,6 +190,47 @@ function equippedCause(actor,d,type) {
   if(d.w==='roller' && w.kind!=='roller')return false;
   return true;
 }
+// #1665/#1666: one remote claim can never exceed what the attacker's own
+// equipped slot deals in a single hit. The receiver derives that from its own
+// copy of the attacker's weapon (same build: mixed builds are refused at relay
+// admission) and the generated per-sub/per-Special table, not from the claim.
+// Boss body claims carry the guest-side weak-point and stunned multipliers.
+// A Special without an authored damage field keeps its existing policy.
+const CEILING_SLACK = .011; // r2() wire rounding of an exact ceiling value
+const MAIN_DEFINITION_SKIP = new Set(['catalogRecord']);
+const mainCeilings = new WeakMap();
+function mainCeiling(w,table) {
+  let ceiling=mainCeilings.get(w);
+  if(ceiling===undefined) {
+    const r=w.catalogRecord;
+    ceiling=Math.max(damageLeafMax(w,1,MAIN_DEFINITION_SKIP),r?.parameters?damageLeafMax(r.parameters,10):0,
+      table.main[w.id]||0,(r?.id&&table.main[r.id])||0);
+    mainCeilings.set(w,ceiling);
+  }
+  return ceiling;
+}
+export function claimCeiling(actor,d,type,table=COMBAT_HIT_CEILINGS) {
+  const w=actor?.weapon;
+  if(!w||!table)return -1;
+  let ceiling;
+  if(type==='boss'&&d.c>=0&&d.w==='crab') {
+    // Crablets take any slot's damage under one generic marker.
+    const special=w.special?table.special[w.special]:0;
+    if(special===null)return Infinity;
+    ceiling=Math.max(mainCeiling(w,table),table.sub[w.sub]??0,special??0);
+  } else if(w.special&&d.w===w.special) {
+    ceiling=table.special[d.w];
+    if(ceiling===null)return Infinity;
+  } else if(d.w==='torpedo-splash'&&w.sub==='torpedo')ceiling=table.sub['torpedo-splash'];
+  else if(w.sub&&(d.w===w.sub||(d.w==='bomb'&&EXPLOSIVE_SUBS.has(w.sub))))ceiling=table.sub[w.sub];
+  else ceiling=mainCeiling(w,table);
+  if(!finite(ceiling))return -1; // unknown slot definition never widens admission
+  if(type==='boss'&&d.c<0)ceiling*=(d.weak===1?table.boss.weak:1)*table.boss.stunned;
+  return ceiling;
+}
+function withinCeiling(nm,actor,d,type) {
+  return finite(d?.d)&&d.d<=claimCeiling(actor,d,type,nm._combatHitCeilings)+CEILING_SLACK;
+}
 function contactProof(nm,from,d,type,t,target) {
   const a=ownerActor(nm,from,d.a),w=a?.weapon;
   if(!a || !equippedCause(a,d,type))return false;
@@ -229,7 +272,7 @@ function oversizedPvpSpecial(d,type) {
 function take(nm,from,d,type,t,sprinklerScope=null) {
   if(oversizedPvpSpecial(d,type))return false;
   const actor=ownerActor(nm,from,d.a),target=actualTarget(nm,type,d);
-  if(!actor || !v3(target) || !equippedCause(actor,d,type))return false;
+  if(!actor || !v3(target) || !equippedCause(actor,d,type) || !withinCeiling(nm,actor,d,type))return false;
   if(type==='pvp') {
     const victim=nm.byNid?.get(d.v);
     if(!victim || victim.remote || !victim.alive || victim.team===actor.team)return false;
@@ -279,7 +322,8 @@ function enqueue(nm,from,d,type,t) {
   if(!matchIdOk(nm,d) || !safe(d.a) || !ownerActor(nm,from,d.a) ||
     !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1 ||
     !finite(d.d) || d.d<0 || d.d>2000 ||
-    typeof d.w!=='string' || d.w.length>64 || !equippedCause(nm.byNid.get(d.a),d,type))return;
+    typeof d.w!=='string' || d.w.length>64 || !equippedCause(nm.byNid.get(d.a),d,type) ||
+    !withinCeiling(nm,nm.byNid.get(d.a),d,type))return;
   if(d.bg!==undefined && (!Array.isArray(d.bg) || d.bg.length!==7 ||
     !d.bg.every(finite)))return;
   if(d.kb!==undefined && (!d.kb || typeof d.kb!=='object' ||
@@ -386,6 +430,7 @@ export function installCombatProvenance(NetMatch,context={}) {
   // touch this gate; physics is optional for offline/unit-test contexts.
   P._combatProvenancePhysics=null;
   P._combatProvenanceTHREE=context.THREE||null;
+  P._combatHitCeilings=context.hitCeilings||COMBAT_HIT_CEILINGS;
   if(context.G) {
     const oldBind=P.bind;
     P.bind=function(...args){this._combatProvenancePhysics=context.G.physics;return oldBind.apply(this,args);};

@@ -5439,3 +5439,12 @@ CIのAP57ブラウザフィクスチャも、session.matchのNetMatch所有権�
 ## 2026-10-21: reported squid/weapon/audio/sub regressions
 
 See [regression analysis and evidence](weapon-regressions-20261021/README.md). Fixed the dry squid's constant 0.52-rad pitch, the finite Charger's fivefold width reduction and lost charged-hit metadata, and the legacy scope's NaN cooldown/missing sound alias. Standard Splatling charge/stream now preserve source MP3 pitch and START prepares charged articulations. Reduced Blaster contacts choose ordinary damage audio. All main models stow for sub aim/recovery; Burst Bomb and its preview share a hand-origin flight law. Roller mesh dimensions are normalized to the host player's stature, separately from gameplay distance units. Trizooka uses a common launch axis and volley-time orbit, 20F activation, 15F initial shot windup and 55F repeats. The report states source versions, reproducible conditions and the remaining retail/device verification boundary.
+
+## 2026-10-21 #1665 / #1666 遠隔ヒット申告の装備スロット別上限
+
+参照は Splatoon 3 Ver. 11.3.0 の固定パラメータ（[Leanny/splat3 `7280ff9c` data/parameter/1130](https://github.com/Leanny/splat3/tree/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon)、ダメージは source / 10）と、既存の公開版 profile・キット定義。ブキ数値・ダメージ曲線・ギア曲線は変更していない。
+
+- 変更前: 受信側（PvP は被弾者の所有者、Boss はホスト）は遠隔ヒット申告のダメージを、全ブキ共通の上限 220（ペイロード検査）と Boss の 800 でしか制限していなかった。正規の射撃証明 1 件があれば、スプラシューター（1 発 36）の所有者でも 1 発 220 の申告で即死させられた。
+- 修正: `combat-provenance.mjs` が、申告の要因（メイン／サブ／スペシャル、汎用 `shot`・`bomb`・`torpedo-splash`・`crab` を含む）を攻撃者の装備スロットに対応させ、そのスロットが 1 ヒットで与え得る最大値を超える申告を、証明の消費・保留キュー・ヒット ID 予約より前に拒否する。メインは受信側自身が持つ攻撃者のブキ定義とカタログ表、サブ・スペシャルは生成済み表 `combat-hit-ceilings-data.mjs`（`tools/combat-hit-ceilings.mjs` で本番定義から再生成・一致検査）を使う。Boss 本体はゲスト側が掛ける弱点 2.5・スタン 1.25 倍（公開版 `BOSS` 表から抽出）を含めた値で制限する。
+- 上限値の例: スプラシューター 36、.96ガロン 62、スプラチャージャー 160（フルチャージ）、リッター4K 180、スプラローラー 150（縦振り）、ダイナモローラー 180、ホットブラスター 125、スロッシャー 70、パラシェルター系はショットガン合計、スプラッシュボム 180、クイックボム 35、トーピード 60（床飛沫 12）、トリプルトルネード等ダメージ定義のないスペシャルは既存ポリシーのまま。
+- 確認状態: ロジック単独（実合成ソースのペイロード／受信検査を使う NetMatch モデル）と、実 Projectiles／送受信経路の `check-inkwave-network-comparison.mjs`（28 ケース成功）。本家 Switch の通信方式との一致、所有者が自分の射撃記録まで偽造する場合の完全な防止（ホスト側弾道シミュレーション）は未対応で、#1665/#1666 は継続。
