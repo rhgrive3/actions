@@ -135,7 +135,8 @@ async function trace(mode) {
     const stroke = a.weaponRunner.s3ContactPaint;
     const paintError = stroke?.active ? stroke.point.clone()
       .addScaledVector(stroke.heading, stroke.depth * .5).distanceTo(center) : null;
-    const feet = [c.bones.footL.getWorldPosition(v()).toArray(), c.bones.footR.getWorldPosition(v()).toArray()];
+    const feet = [Array.from(c.bones.footL.getWorldPosition(v()).toArray()),
+      Array.from(c.bones.footR.getWorldPosition(v()).toArray())];
     rows.push({ shaftClearance, paintError, feet, rightAdvance: c._s3RollerRightAdvance || 0, rightFraction, tick, contact: !!c._s3RollerContactPose, roll: c.wRoll, center: center.toArray(), axis: axis.toArray(), radial: [m[4], m[5], m[6], m[8], m[9], m[10]],
       spin: [w.drumA, w.drumW], hand: hand.toArray(), rightMatrix: Array.from(c.bones.handR.matrixWorld.elements),
       weaponMatrix: Array.from(w.off.matrixWorld.elements), palmUp,
@@ -249,6 +250,10 @@ test('rolling shaft clears the torso while actual paint follows the shifted drum
   const lateralDisabled = await trace('lateral-disabled');
   assert.throws(() => assertSideHold(lateralDisabled), /shaft axis must clear/,
     'the previous centered holding must fail the actual body-edge criterion');
+  const movedFeet = current[0].feet.map(foot => Array.from(foot));
+  movedFeet[0][0] += 1e-12;
+  assert.throws(() => assert.deepEqual(movedFeet, lateralDisabled[0].feet),
+    'one changed foot component must fail exact equality after realm normalization');
   for (let i = 0; i < current.length; i++) {
     const a = lateralDisabled[i], b = current[i];
     assert.deepEqual(b.feet, a.feet, 'side holding does not move either native foot');
