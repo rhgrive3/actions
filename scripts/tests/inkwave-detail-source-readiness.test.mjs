@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {awaitDetailSourceOwner,detailSourceOwnerReceipt,detailCpuDrawBounds} from '../lib/inkwave-detail-source-readiness.mjs';
+import {awaitDetailSourceOwner,detailSourceOwnerReceipt,detailCpuDrawBounds,detailOwnerVisibility} from '../lib/inkwave-detail-source-readiness.mjs';
 function fixture(){
  const ch={sqScale:1};
  const owner={status:'ready',enabled:true,active:true,variant:'Player00',bank:{clips:new Map([['WaitHold_Nrml',{}]])},squidBank:{clips:new Map([['Sqd_Walk',{}],['Sqd_ToSquid',{}]])},currentClips:[{name:'WaitHold_Nrml',frame:2,weight:1}],debug:{squid:{name:'Sqd_Walk',frame:3}},squidRig:{character:ch}};
@@ -58,4 +58,22 @@ test('scalar material ignores groups while array material obeys groups',()=>{
  a.mesh.material=[{visible:true,colorWrite:true}];
  assert.equal(detailCpuDrawBounds(a.root,a.vector,{}).indexedVertices,1);
  a.mesh.geometry.groups=[];assert.equal(detailCpuDrawBounds(a.root,a.vector,{}).indexedVertices,0);
+});
+
+test('owner visibility reads hidden ancestors without changing native flags or names',()=>{
+ const scene={visible:true},root={visible:true,parent:scene},model={visible:false,parent:root,scale:{toArray:()=>[1,1,1]}};
+ const mesh={isMesh:true,visible:true,parent:model,geometry:{index:{}}};
+ root.traverse=fn=>[root,model,mesh].forEach(fn);
+ const ch={root,model,sourceMotion:{status:'ready',active:true,currentClips:[]}};
+ const before=JSON.stringify(ch),out=detailOwnerVisibility(ch,scene);
+ assert.equal(out.localVisibleMeshes,1);assert.equal(out.nativeAncestorVisibleMeshes,0);
+ assert.equal(out.hiddenAncestorChains[0].firstHidden,'character-model');
+ assert.equal(out.owners.modelVisible,false);assert.equal(JSON.stringify(ch),before);
+});
+test('CPU unsupported reason counters distinguish API, index and instancing without pretending bounds exist',()=>{
+ const mesh={isMesh:true,isInstancedMesh:true,geometry:{}};
+ const root={traverseVisible:fn=>fn(mesh)};
+ const out=detailCpuDrawBounds(root,()=>{throw Error('unsupported mesh must not evaluate vertices');},{});
+ assert.deepEqual(out.unsupportedReasons,{instanced:1,missingIndex:1,missingVertexApi:1});
+ assert.equal(out.unsupportedMeshes,1);assert.equal(out.indexedVertices,0);assert.equal(out.worldMin,null);
 });

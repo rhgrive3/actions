@@ -562,6 +562,18 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     const collectorDiagnostic={rootVisible:ch.root.visible,totalMeshes:0,localVisibleMeshes:0,nativeAncestorVisibleMeshes:0,
       indexedMeshes:0,nonIndexedMeshes:0,instancedMeshes:0,visitedMeshes:0,eligibleIndexedMeshes:0,
       materialEligibleGroups:0,drawRangeEligibleGroups:0,drawRangeEntries:0};
+    const knownRole=node=>node===ch.root?'character-root':node===ch.model?'character-model':node===ch.kid?'kid-root':node===ch.squidRoot?'squid-root':node===ch.squid?.pivot?'squid-pivot':node===ch.sourceMotion?.squidRig?.root?'source-squid-rig':node===scene?'scene':node?.isMesh?'mesh':'other-group';
+    const vector=node=>node?.scale?.toArray?.()??null;
+    collectorDiagnostic.owners={
+      modelVisible:ch.model?.visible,kidVisible:ch.kid?.visible,squidVisible:ch.squidRoot?.visible,
+      modelScale:vector(ch.model),kidScale:vector(ch.kid),squidScale:vector(ch.squidRoot),
+      kidWeight:ch.kidScale,squidWeight:ch.sqScale,formWeight:ch.sourceMotion?.formWeight,
+      sourceActive:ch.sourceMotion?.active,sourceStatus:ch.sourceMotion?.status,
+      form:ch.form,sourceSquidClip:ch.sourceMotion?.debug?.squid?.name??null,
+      sourceSquidFrame:ch.sourceMotion?.debug?.squid?.frame??null,
+      humanClips:(ch.sourceMotion?.currentClips||[]).slice(0,4).map(c=>({name:c.name,frame:c.frame,weight:c.weight}))
+    };
+    collectorDiagnostic.hiddenAncestorChains=[];
     // Read visibility before the EXISTING root-only measurement override below.
     // Do not reveal a child, alter materials, or change any draw range.
     ch.root.traverse(mesh=>{
@@ -570,6 +582,12 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       if(mesh.visible)collectorDiagnostic.localVisibleMeshes++;
       let visible=true;for(let node=mesh;node;node=node.parent)if(!node.visible){visible=false;break;}
       if(visible)collectorDiagnostic.nativeAncestorVisibleMeshes++;
+      else if(collectorDiagnostic.hiddenAncestorChains.length<2){
+        const roles=[];let firstHidden=null,node=mesh;
+        for(;node&&roles.length<8;node=node.parent){const role=knownRole(node);roles.push({role,visible:node.visible===true});if(firstHidden===null&&node.visible!==true)firstHidden=role;}
+        const chain={firstHidden,roles,truncated:!!node};
+        if(!collectorDiagnostic.hiddenAncestorChains.some(c=>JSON.stringify(c)===JSON.stringify(chain)))collectorDiagnostic.hiddenAncestorChains.push(chain);
+      }
       if(mesh.isInstancedMesh)collectorDiagnostic.instancedMeshes++;
       if(mesh.geometry?.index)collectorDiagnostic.indexedMeshes++;else collectorDiagnostic.nonIndexedMeshes++;
     });

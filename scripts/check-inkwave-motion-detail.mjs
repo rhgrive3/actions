@@ -7,7 +7,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { awaitDetailSourceOwner, detailSourceOwnerReceipt, detailCpuDrawBounds } from './lib/inkwave-detail-source-readiness.mjs';
+import { awaitDetailSourceOwner, detailSourceOwnerReceipt, detailCpuDrawBounds, detailOwnerVisibility } from './lib/inkwave-detail-source-readiness.mjs';
 import { summarizeDetailRigFailure } from './lib/inkwave-motion-detail-failure-summary.mjs';
 
 // Exported checks run against the same WebGL records in focused failure tests.
@@ -228,7 +228,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
     } catch (error) { recordError(error.message); try { await route.abort(); } catch {} }
   });
   await page.goto('http://127.0.0.1:' + server.address().port + '/motion-detail');
-  await page.addScriptTag({content:'globalThis.motionPixelDifference = '+pixelDifference.toString()+';globalThis.awaitDetailSourceOwner = '+awaitDetailSourceOwner.toString()+';globalThis.detailSourceOwnerReceipt = '+detailSourceOwnerReceipt.toString()+';globalThis.detailCpuDrawBounds = '+detailCpuDrawBounds.toString()+';'});
+  await page.addScriptTag({content:'globalThis.motionPixelDifference = '+pixelDifference.toString()+';globalThis.awaitDetailSourceOwner = '+awaitDetailSourceOwner.toString()+';globalThis.detailSourceOwnerReceipt = '+detailSourceOwnerReceipt.toString()+';globalThis.detailCpuDrawBounds = '+detailCpuDrawBounds.toString()+';globalThis.detailOwnerVisibility = '+detailOwnerVisibility.toString()+';'});
   result = await page.evaluate(async ({ prefix, contentHash }) => {
     const THREE = await import('three');
     const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
@@ -351,6 +351,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       }finally{ch.root.visible=visible;if(inkDraw)inkDraw.visible=inkWasVisible;}
       if(rigDiagnostic){
         rigDiagnostic.sourceMotion=sourceMotion;
+        rigDiagnostic.ownerVisibility=globalThis.detailOwnerVisibility(ch,scene);
         rigDiagnostic.cpuBounds=globalThis.detailCpuDrawBounds(ch.root,()=>new THREE.Vector3(),camera);
         rigDiagnostic.camera={position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),left:camera.left,right:camera.right,top:camera.top,bottom:camera.bottom,near:camera.near,far:camera.far};
       }

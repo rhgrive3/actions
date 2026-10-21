@@ -31,15 +31,17 @@ export function summarizeDetailRigFailure(result) {
           inkBlobCount:finite(d.inkBlobCount),actorPosition:position(d.actorPosition),
           sourceMotion:{status:label(d.sourceMotion?.status),active:bool(d.sourceMotion?.active),sameOwner:bool(d.sourceMotion?.sameOwner),variant:['Player00','Player01'].includes(d.sourceMotion?.variant)?d.sourceMotion.variant:null,
             squid:typeof d.sourceMotion?.squid?.name==='string'&&/^[A-Za-z0-9_]{1,96}$/.test(d.sourceMotion.squid.name)?{name:d.sourceMotion.squid.name,frame:finite(d.sourceMotion.squid.frame)}:null},
-          cpuBounds:{scope:'CPU skin only; GPU deformation and depth visibility unmeasured',indexedVertices:finite(d.cpuBounds?.indexedVertices),eligibleMeshes:finite(d.cpuBounds?.eligibleMeshes),nonFiniteVertices:finite(d.cpuBounds?.nonFiniteVertices),unsupportedMeshes:finite(d.cpuBounds?.unsupportedMeshes),truncated:bool(d.cpuBounds?.truncated),worldMin:position(d.cpuBounds?.worldMin),worldMax:position(d.cpuBounds?.worldMax),ndcMin:position(d.cpuBounds?.ndcMin),ndcMax:position(d.cpuBounds?.ndcMax)}
+          ownerVisibility:sanitizeOwnerVisibility(d.ownerVisibility??{}),
+          cpuBounds:{scope:'CPU skin only; GPU deformation and depth visibility unmeasured',indexedVertices:finite(d.cpuBounds?.indexedVertices),eligibleMeshes:finite(d.cpuBounds?.eligibleMeshes),nonFiniteVertices:finite(d.cpuBounds?.nonFiniteVertices),unsupportedMeshes:finite(d.cpuBounds?.unsupportedMeshes),unsupportedReasons:Object.fromEntries(['instanced','missingIndex','missingVertexApi'].map(k=>[k,finite(d.cpuBounds?.unsupportedReasons?.[k])])),truncated:bool(d.cpuBounds?.truncated),worldMin:position(d.cpuBounds?.worldMin),worldMax:position(d.cpuBounds?.worldMax),ndcMin:position(d.cpuBounds?.ndcMin),ndcMax:position(d.cpuBounds?.ndcMax)}
         }
       };
       rows.push(row);
+      if(JSON.stringify(rows).length>7000){rows.pop();scanTruncated=true;break outer;}
       if(rows.length===3){scanTruncated=true;break outer;}
     }
   }
   return {schema:1,scope:'failure diagnostics only; no gate or capture changes',
-    meshCountMeaning:'local node visibility flags; ancestor visibility is NOT established',
+    meshCountMeaning:'legacy totalMeshes/visibleMeshes are local flags; ancestor visibility is NOT established by those counts; ownerVisibility separately records native ancestor visibility',
     nullMeaning:'missing, invalid or non-finite field',casesScanned,metricsScanned,scanTruncated,rows};
 }
 
@@ -50,6 +52,9 @@ export function summarizeCatalogEmptyGeometry(result){
  const finite=v=>typeof v==='number'&&Number.isFinite(v)?v:null;
  const bool=v=>typeof v==='boolean'?v:null;
  const label=v=>typeof v==='string'&&/^[a-z0-9-]{1,64}$/.test(v)?v:null;
+ const vec=v=>Array.isArray(v)&&v.length===3&&v.every(x=>finite(x)!==null)?[...v]:null;
+ const clip=v=>typeof v==='string'&&/^[A-Za-z0-9_]{1,96}$/.test(v)?v:null;
+ const role=v=>['character-root','character-model','kid-root','squid-root','squid-pivot','source-squid-rig','scene','mesh','other-group'].includes(v)?v:null;
  const data=Array.isArray(result?.data)?result.data:[],rows=[];
  let casesScanned=0,metricsScanned=0,scanTruncated=data.length>32;
  outer:for(const row of data.slice(0,32)){
@@ -62,11 +67,26 @@ export function summarizeCatalogEmptyGeometry(result){
     reason:'empty-indexed-collector; cause unproven; still a failure',
     rgb:{changedPixels:finite(r.rig?.changedPixels),maxChannelDifference:finite(r.rig?.maxChannelDifference)},
     geometry:{indexedVertices:0,triangles:finite(r.geometry.triangles),skinnedVertices:finite(r.geometry.skinnedVertices),meshes:finite(r.geometry.meshes)},
-    collector:{rootVisible:bool(d.rootVisible),...counts}});
+    collector:{rootVisible:bool(d.rootVisible),...counts,
+      owners:{modelVisible:bool(d.owners?.modelVisible),kidVisible:bool(d.owners?.kidVisible),squidVisible:bool(d.owners?.squidVisible),modelScale:vec(d.owners?.modelScale),kidScale:vec(d.owners?.kidScale),squidScale:vec(d.owners?.squidScale),kidWeight:finite(d.owners?.kidWeight),squidWeight:finite(d.owners?.squidWeight),formWeight:finite(d.owners?.formWeight),sourceActive:bool(d.owners?.sourceActive),sourceStatus:label(d.owners?.sourceStatus),form:['kid','squid','swim','climb'].includes(d.owners?.form)?d.owners.form:null,sourceSquidClip:clip(d.owners?.sourceSquidClip),sourceSquidFrame:finite(d.owners?.sourceSquidFrame),humanClips:(Array.isArray(d.owners?.humanClips)?d.owners.humanClips:[]).slice(0,4).map(c=>({name:clip(c?.name),frame:finite(c?.frame),weight:finite(c?.weight)}))},
+      hiddenAncestorChains:(Array.isArray(d.hiddenAncestorChains)?d.hiddenAncestorChains:[]).slice(0,2).map(c=>({firstHidden:role(c?.firstHidden),truncated:bool(c?.truncated),roles:(Array.isArray(c?.roles)?c.roles:[]).slice(0,8).map(n=>({role:role(n?.role),visible:bool(n?.visible)}))}))}});
+   // Every copied string is ASCII-filtered. Reserve >1KiB for the fixed envelope.
+   if(JSON.stringify(rows).length>7000){rows.pop();scanTruncated=true;break outer;}
    if(rows.length===3){scanTruncated=true;break outer;}
   }
  }
  return {schema:1,scope:'empty collector diagnostics only; RGB remains independently gated',
   visibilityMeaning:'local flags and native ancestor chain counted separately; collector retains its pre-existing root-only hidden-rig override',
   casesScanned,metricsScanned,scanTruncated,rows};
+}
+
+function sanitizeOwnerVisibility(d){
+ const finite=v=>typeof v==='number'&&Number.isFinite(v)?v:null;
+ const bool=v=>typeof v==='boolean'?v:null;
+ const label=v=>typeof v==='string'&&/^[a-z0-9-]{1,64}$/.test(v)?v:null;
+ const vec=v=>Array.isArray(v)&&v.length===3&&v.every(x=>finite(x)!==null)?[...v]:null;
+ const clip=v=>typeof v==='string'&&/^[A-Za-z0-9_]{1,96}$/.test(v)?v:null;
+ const role=v=>['character-root','character-model','kid-root','squid-root','squid-pivot','source-squid-rig','scene','mesh','other-group'].includes(v)?v:null;
+ return {totalMeshes:finite(d.totalMeshes),localVisibleMeshes:finite(d.localVisibleMeshes),nativeAncestorVisibleMeshes:finite(d.nativeAncestorVisibleMeshes),indexedMeshes:finite(d.indexedMeshes),nonIndexedMeshes:finite(d.nonIndexedMeshes),instancedMeshes:finite(d.instancedMeshes),owners:{modelVisible:bool(d.owners?.modelVisible),kidVisible:bool(d.owners?.kidVisible),squidVisible:bool(d.owners?.squidVisible),modelScale:vec(d.owners?.modelScale),kidScale:vec(d.owners?.kidScale),squidScale:vec(d.owners?.squidScale),kidWeight:finite(d.owners?.kidWeight),squidWeight:finite(d.owners?.squidWeight),formWeight:finite(d.owners?.formWeight),sourceActive:bool(d.owners?.sourceActive),sourceStatus:label(d.owners?.sourceStatus),form:['kid','squid','swim','climb'].includes(d.owners?.form)?d.owners.form:null,sourceSquidClip:clip(d.owners?.sourceSquidClip),sourceSquidFrame:finite(d.owners?.sourceSquidFrame),humanClips:(Array.isArray(d.owners?.humanClips)?d.owners.humanClips:[]).slice(0,4).map(c=>({name:clip(c?.name),frame:finite(c?.frame),weight:finite(c?.weight)}))},
+      hiddenAncestorChains:(Array.isArray(d.hiddenAncestorChains)?d.hiddenAncestorChains:[]).slice(0,2).map(c=>({firstHidden:role(c?.firstHidden),truncated:bool(c?.truncated),roles:(Array.isArray(c?.roles)?c.roles:[]).slice(0,8).map(n=>({role:role(n?.role),visible:bool(n?.visible)}))}))};
 }
