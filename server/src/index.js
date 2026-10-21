@@ -23,6 +23,12 @@ function validRelayPayload(payload) {
   } catch { return false; }
 }
 
+// Workers expose readyState, not the browser-test double's `closed` field.
+function closingSocket(socket) {
+  return typeof socket.readyState === 'number'
+    ? socket.readyState === 2 || socket.readyState === 3 : !!socket.closed;
+}
+
 function relaySend(socket, data) {
   // bufferedAmount is provided by browser sockets and some Worker runtimes.
   // Rate/byte admission above still protects runtimes without this property.
@@ -289,6 +295,31 @@ export class RoomDurableObject {
     this._cleanupMember(m.id, ws);
   }
 
+  _frameBytes(s) {
+    // A UTF-16 code unit needs at least one UTF-8 byte. The finite destination
+    // bounds both conversion work and scratch storage even for hostile input.
+    if (s.length > MAX_FRAME_BYTES) return MAX_FRAME_BYTES + 1;
+    if (typeof encoder.encodeInto === 'function') {
+      const scratch = this._utf8Scratch || (this._utf8Scratch = new Uint8Array(MAX_FRAME_BYTES));
+      const { read, written } = encoder.encodeInto(s, scratch);
+      return read === s.length ? written : MAX_FRAME_BYTES + 1;
+    }
+    // Exact TextEncoder replacement semantics for runtimes without encodeInto:
+    // a lone surrogate is U+FFFD (three bytes); a valid pair is four bytes.
+    let bytes = 0;
+    for (let i = 0; i < s.length; i++) {
+      const c = s.charCodeAt(i);
+      if (c < 0x80) bytes++;
+      else if (c < 0x800) bytes += 2;
+      else if (c >= 0xd800 && c <= 0xdbff && i + 1 < s.length &&
+          s.charCodeAt(i + 1) >= 0xdc00 && s.charCodeAt(i + 1) <= 0xdfff) {
+        bytes += 4; i++;
+      } else bytes += 3;
+      if (bytes > MAX_FRAME_BYTES) return MAX_FRAME_BYTES + 1;
+    }
+    return bytes;
+  }
+
   _handleMessage(id, ws, rawData) {
     let s = '';
     if (typeof rawData === 'string') s = rawData;
@@ -297,7 +328,7 @@ export class RoomDurableObject {
     if (!s || !this.members.has(id) || this.members.get(id).ws !== ws) return;
 
     // Enforce byte quotas before JSON.parse or forwarding to up to seven peers.
-    const size = s.length > MAX_FRAME_BYTES ? s.length : encoder.encode(s).byteLength;
+    const size = this._frameBytes(s);
     if (size > MAX_FRAME_BYTES) {
       try { ws.close(1009, 'Message too large'); } catch {}
       this._cleanupMember(id, ws);
@@ -330,7 +361,7 @@ export class RoomDurableObject {
       const forward = `m|${id}|${payload}`;
       for (const [targetId, member] of this.members) {
         if (targetId !== id) {
-          if (!relaySend(member.ws, forward) && member.ws.closed) {
+          if (!relaySend(member.ws, forward) && closingSocket(member.ws)) {
             this._cleanupMember(targetId, member.ws);
           }
         }
@@ -347,7 +378,7 @@ export class RoomDurableObject {
         if (!validRelayPayload(payload) || targetId.length > 40) return;
         const target = this.members.get(targetId);
         if (target) {
-          if (!relaySend(target.ws, `m|${id}|${payload}`) && target.ws.closed) {
+          if (!relaySend(target.ws, `m|${id}|${payload}`) && closingSocket(target.ws)) {
             this._cleanupMember(targetId, target.ws);
           }
         } else {
