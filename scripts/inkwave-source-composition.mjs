@@ -18,6 +18,21 @@ import { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-a
 import { adaptMainInkFootprints } from '../patches/splatoon3/main-ink-footprint-adapter.mjs';
 import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adapter.mjs';
 
+// #1165: the Roller ink band must claim its seeded GPU core in the CPU turf
+// grid. Apply at build time so the upstream game snapshot remains immutable.
+// #1165: CPU/GPU already share the native triangular seeded band morphology
+// from adaptIssueBatch1171. Do not change either signed-distance equation.
+// Its old circular scan box, however, is smaller than the rotated rounded
+// rectangle at some seed phases. Cover the *whole* existing GPU body in CPU.
+function adaptRollerBandParity(rel, code) {
+  if (rel !== 'src/world/paint.js') return code;
+  const old = '    const ext = roll ? r * (Math.hypot(BAND_L, BAND_W) + BAND_R + 0.05) : r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);';
+  const next = '    const ext = roll ? r * Math.hypot(BAND_L + BAND_R, BAND_W + BAND_R + 0.12) : r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);';
+  // 0.12 is the exact 0.08+0.04 maximum of the emitted GPU tooth waves.
+  // Rotations cannot escape the enclosing circle of the rounded half-axes.
+  return replaceOnce(code, old, next, 'Roller rotated GPU core stays in CPU scan bounds');
+}
+
 // Keep the tested source path identical to the production build's adapters.
 export function adaptBuildSource(rel, code) {
   // Source lives under inkwave-public/, whereas compiled modules share the
@@ -41,6 +56,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptProjectileVisuals(rel, code);
   code = adaptUiLocalization(rel, code);
   code = adaptMainInkFootprints(rel, code);
+  code = adaptRollerBandParity(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
   return adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))));

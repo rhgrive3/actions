@@ -606,6 +606,10 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     if (rollSupport)
       socketLocal.z += Number.isFinite(ch._s3RollerSupportAdvance) ? ch._s3RollerSupportAdvance :
         Math.max(0,(d.gripR.pos.z+d.fold.pivot.z)*.5-d.gripL.pos.z)*.15*roll;
+    // The rolling right wrist is intentionally advanced along the canonical
+    // grip axis; its inverse mount offset keeps this physical socket attached.
+    if (!left && !ch.dual && ch.weaponKind === 'roller' && d.modelId === 'roller')
+      socketLocal.z += Number.isFinite(ch._s3RollerRightAdvance) ? ch._s3RollerRightAdvance : 0;
     const target = w.off.localToWorld(socketLocal);
     const hand = rollSupport ? bone.localToWorld(supportHole) :
       rightHeld ? bone.localToWorld(hole.clone()) : bone.getWorldPosition(new THREE.Vector3());

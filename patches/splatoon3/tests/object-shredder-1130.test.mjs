@@ -66,11 +66,11 @@ test('real NetMatch preserves shoes identity through JSON hit, rejects foreign s
   const tick=ticks.at(-1),birth=tick.e?.find(e=>e[1]==='ev'&&e[2]==='weapon:fire');assert.ok(birth);
   receiver.onMessage('attacker',tick);
   assert.ok(receiver.peers.get('attacker')?.events.some(e=>e[1]==='ev'&&e[2]==='weapon:fire'&&e._netSeq===birth.at(-1)),'native receiver admitted shot');
-  sender.sendHit(a,ghost,100,'shooter');assert.equal(packet.os,true);
+  sender.sendHit(a,ghost,30,'shooter');assert.equal(packet.os,true);
   equip(v,'booyahBomb');readySpecialEvidence(v, {placeAtFixtureOrigin:true});v._updateSpecial(1/60);v.invuln=0;const before=v._s3AllSpecialState.armorHP;
   proxy.s3.loadout[2].main='runSpeed';receiver.onMessage('foreign',packet);assert.equal(v._s3AllSpecialState.armorHP,before);
-  receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);assert.equal(proxy.s3.objectHitGear,undefined);
-  receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);
+  receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-30*.7*1.1))<1e-9);assert.equal(proxy.s3.objectHitGear,undefined);
+  receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-30*.7*1.1))<1e-9);
  }finally{sender.dispose();receiver.dispose();f.G.projectiles.clear();rf.G.projectiles.clear();}
 });
 
