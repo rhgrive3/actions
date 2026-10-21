@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// Actual emitted level shader and authored-Level runtime geometry (not an
-// imported source-stage mesh). Compare a double-sided grate face with
-// the same indexed face reversed into a front-facing reference. The
-// reference changes winding/normals only; no lighting or coverage is mocked.
+// Experimental emitted ink micro-surface comparison under production daylight.
+// Original and candidate share the same atlas, camera, lighting and color pipeline.
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -102,6 +100,7 @@ try {
         compile.call(this,shader,...args);
         for(const anchor of ['(0.7125 - 0.375 * gFresh)','* 0.02625 * gf * gInk;','gInkD *= uPpm * 0.004 / 1.9'])if(!shader.fragmentShader.includes(anchor))throw Error('Missing emitted candidate/film '+anchor);
         if(before)shader.fragmentShader=shader.fragmentShader.replace('(0.7125 - 0.375 * gFresh)','(0.95 - 0.5 * gFresh)').replace('* 0.02625 * gf * gInk;','* 0.035 * gf * gInk;');
+        if(!shader.vertexShader.replace(/\s/g,'').includes('vWNorm=normalize(mat3(modelMatrix)*objectNormal);'))throw Error('World-space surface normal missing');
         shaders[key]=shader.fragmentShader;
       };variants[key]=mat;
     }
@@ -115,7 +114,9 @@ try {
       }
       texture.needsUpdate=true;mesh.rotation.x=wall?Math.PI/2:0;
       camera.position.set(.2,wall?.15:1.35,3.4);camera.lookAt(0,0,0);camera.updateMatrixWorld();
-      return {lib,wall,wet,inked};
+      mesh.updateMatrixWorld(true);const worldNormal=new THREE.Vector3(0,1,0).transformDirection(mesh.matrixWorld);
+      if((Math.abs(worldNormal.y)<.5)!==wall)throw Error('Wall shader branch orientation mismatch');
+      return {lib,wall,wet,inked,worldNormal:worldNormal.toArray(),cameraPosition:camera.position.toArray(),cameraQuaternion:camera.quaternion.toArray(),time:1,atlasSize:size,ppm:20};
     }
     function draw(key,time=1,side=0){
       mesh.material=variants[key];mesh.material.userData.uniforms.uTime.value=time;
@@ -126,7 +127,7 @@ try {
     }
     function pixels(){const p=new Uint8Array(480*360*4);gl.readPixels(0,0,480,360,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;}
     function diff(a,b){let changed=0,max=0,sum=0;for(let i=0;i<a.length;i+=4){let yes=false;for(let k=0;k<4;k++){const d=Math.abs(a[i+k]-b[i+k]);max=Math.max(max,d);sum+=d;yes||=d>0;}changed+=yes;}return{changed,max,mean:sum/a.length};}
-    window.inkQA={setCase,draw,pixels,diff,r,gl,camera,variants,shaders,texture,data};
+    window.inkQA={setCase,draw,pixels,diff,r,gl,camera,mesh,variants,shaders,texture,data};
     return {gpu:{renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),timerQueryAvailable:!!gl.getExtension('EXT_disjoint_timer_query_webgl2'),gpuTime:'not measured',allocationRate:'not measured'},lighting:{theme:'production Environment day',themeValues:Environment.THEMES.day,environmentIntensity:scene.environmentIntensity,environmentWidth:world.environment.image?.width??null},color:{toneMapping:r.toneMapping,outputColorSpace:r.outputColorSpace},viewport:[960,360],eachView:[480,360],texlib:{gel:library.layers.gel,resolution:128},cases:[]};
   },{prefix});
   for(const lib of ['fallback','texlib'])for(const wall of [false,true])for(const wet of [0,1]){
@@ -138,11 +139,28 @@ try {
       // No image encoding, readPixels or file I/O in this timed ABBA section.
       for(let block=0;block<8;block++)for(const key of [before,after,after,before])samples.push({block,key,...q.draw(key)});
       q.draw(before);const a=q.pixels();q.draw(after);const b=q.pixels();q.draw(after);const repeat=q.pixels();
+      q.mesh.visible=false;q.draw(before);const blank=q.pixels();q.draw(after);const blankAfter=q.pixels();q.mesh.visible=true;
+      q.setCase(lib,wall,wet,false);q.draw(before);const unpainted=q.pixels();q.setCase(lib,wall,wet,true);
+      let disabledGel=null;
+      if(lib==='texlib'){
+        const aGel=q.variants[before].userData.uniforms.uGel,bGel=q.variants[after].userData.uniforms.uGel,save=aGel.value;
+        aGel.value=bGel.value=-1;q.draw(before);const ga=q.pixels();q.draw(after);disabledGel=q.diff(ga,q.pixels());aGel.value=bGel.value=save;
+      }
       q.draw(before,1,0);q.draw(after,1,1);
       const image=q.r.domElement.toDataURL();
-      return {receipt,samples,difference:q.diff(a,b),repeat:q.diff(b,repeat),image,glError:q.gl.getError()};
+      return {receipt,samples,difference:q.diff(a,b),repeat:q.diff(b,repeat),nonBackground:q.diff(a,blank),paintSignal:q.diff(a,unpainted),blankDifference:q.diff(blank,blankAfter),disabledGel,image,glError:q.gl.getError()};
     },{lib,wall,wet});
     fs.writeFileSync(path.join(output,name+'.png'),Buffer.from(row.image.split(',')[1],'base64'));delete row.image;row.name=name;result.cases.push(row);
+    const validateSignal=x=>{
+      assert.ok(x.samples.every(s=>s.calls===1&&s.triangles===2),name+' missing real surface draw');
+      assert.ok(x.nonBackground.changed>1000,name+' blank or offscreen surface');
+      assert.ok(x.paintSignal.changed>1000,name+' missing visible painted area');
+      if(lib==='texlib')assert.ok(x.difference.changed>0,name+' insensitive gel comparison');
+    };
+    validateSignal(row);
+    assert.equal(row.blankDifference.changed,0);
+    assert.throws(()=>validateSignal({...row,nonBackground:{changed:0},paintSignal:{changed:0},difference:row.blankDifference}));
+    if(lib==='texlib'){assert.equal(row.disabledGel.changed,0);assert.throws(()=>validateSignal({...row,difference:row.disabledGel}));}
     assert.equal(row.repeat.changed,0,name+' unstable frozen frame');assert.equal(row.glError,0);
     const count=x=>[x.calls,x.triangles,x.geometries,x.textures,x.programs];
     for(const sample of row.samples)assert.deepEqual(count(sample),count(row.samples[0]),name+' changed resource cost');

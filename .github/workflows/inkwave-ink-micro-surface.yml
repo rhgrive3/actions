@@ -6,6 +6,9 @@ on:
       - "patches/local-quality/tests/ink-micro-surface.test.mjs"
       - "scripts/check-inkwave-ink-micro-surface.mjs"
       - ".github/workflows/inkwave-ink-micro-surface.yml"
+concurrency:
+  group: ink-micro-surface-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
