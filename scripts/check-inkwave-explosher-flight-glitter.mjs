@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { awaitExplosherSceneSources, explosherSceneCensus } from './lib/inkwave-explosher-scene-census.mjs';
-import { readExplosherSceneClocks, requireExplosherStyle, installExplosherEarlyFreeze } from './lib/inkwave-explosher-startup.mjs';
+import { readExplosherSceneClocks, requireExplosherStyle, installExplosherEarlyFreeze, installExplosherRandom, readExplosherEffects } from './lib/inkwave-explosher-startup.mjs';
 const [siteArg,outArg,sourceSha,sourceRootArg]=process.argv.slice(2);
 if(!siteArg||!outArg||!/^[a-f0-9]{40}$/.test(sourceSha||''))throw Error('Usage: <built-site> <evidence-dir> <source-sha>');
 const root=fileURLToPath(new URL('../',import.meta.url)),site=path.resolve(siteArg),out=path.resolve(outArg);
@@ -37,8 +37,8 @@ driver=once(driver,"  await page.goto(base + '/?range&skipTitle');",`  await pag
     window.readExplosherSceneClocks=${readExplosherSceneClocks.toString()};
     window.requireExplosherStyle=${requireExplosherStyle.toString()};
     (${installExplosherEarlyFreeze.toString()})();
-    window.resetExplosherRandom = () => { let n=0x515e7021;Math.random=()=>{n^=n<<13;n^=n>>>17;n^=n<<5;return(n>>>0)/4294967296;}; };
-    window.resetExplosherRandom();
+    (${installExplosherRandom.toString()})();
+    window.readExplosherEffects=${readExplosherEffects.toString()};
   });
   await enterRangeFromMenu(page,base);`);
 
@@ -101,7 +101,7 @@ driver=once(driver,'      window.shapeAim = aim; aim();',`      window.shapeAim 
 
 driver=once(driver,'      g.debug.fire(true);',`      window.resetExplosherRandom();
       g.debug.fire(true);`);
-driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2, '0')}-\${view}.png`;",`        const measurement = await page.evaluate(() => {
+driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2, '0')}-\${view}.png`;",`        const measurement = await page.evaluate(async () => {
           const G=window.__G,g=window.__inkwave,r=g.R.renderer;
           const physical=()=>JSON.stringify(G.projectiles.list.map(p=>({wid:p.wid,age:p.age,delay:p.delay,seed:p.seed,pos:p.pos.toArray(),vel:p.vel.toArray(),damage:p.damage,life:p.life,travel:p.catalog?.travel})));
           const initial=physical(),buffers=G.projectiles._s3Shapes;
@@ -115,7 +115,7 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
           const palette={colorblind:G.settings.colorblind,teamHex:[...G.teamHex],teamColors:G.teamColors.map(c=>c.getHex()),local:a=>a.color.getHex()};
           const paletteReceipt={...palette,local:palette.local(G.local)};
           if(paletteReceipt.colorblind!==true||paletteReceipt.local!==0xffd21a)throw Error('Native fixed palette was not applied');
-          return {style:window.requireExplosherStyle(G.local.character.style),sceneClocks:window.readExplosherSceneClocks(),startup:window.explosherEntry,sceneCensus:window.explosherSceneCensus(G,g.R.scene,window.explosherTargetDummyClass),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
+          return {rng:window.readExplosherRandom(),effects:await window.readExplosherEffects(),style:window.requireExplosherStyle(G.local.character.style),sceneClocks:window.readExplosherSceneClocks(),startup:window.explosherEntry,sceneCensus:window.explosherSceneCensus(G,g.R.scene,window.explosherTargetDummyClass),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
             time:G.time,inkHex:G.local.color.getHex(),render:{...r.info.render},memory:{...r.info.memory},
             sparkles:G.projectiles.s3ShapeCounts?.sparkles??0,drawCpuMs:drawMs,renderSubmitMs:submitMs,
             gpuTimerMs:null,gpuTimerStatus:'not measured; submit CPU time is not GPU time',
@@ -174,7 +174,7 @@ if(preflight){
 
 driver="const expectedFrame="+JSON.stringify(expectedFrame)+";\n"+driver;
 driver=once(driver,"        if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));",`        if(tick===0&&expectedFrame){
-          for(const k of ['style','sceneClocks','startup','aimTrace','nativeReset','physical','palette','inkHex','time','sparkles','lighting','viewport'])
+          for(const k of ['rng','effects','style','sceneClocks','startup','aimTrace','nativeReset','physical','palette','inkHex','time','sparkles','lighting','viewport'])
             if(JSON.stringify(measurement[k])!==JSON.stringify(expectedFrame.measurement[k]))throw Error('Full-capture frame0 differs from preflight: '+k);
           if(view===expectedFrame.view&&JSON.stringify(measurement.camera)!==JSON.stringify(expectedFrame.measurement.camera))throw Error('Full-capture frame0 differs from preflight: camera');
           for(const k of ['aimPoint','aimDir','aimYaw','aimPitch','characterTime'])

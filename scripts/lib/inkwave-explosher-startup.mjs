@@ -56,3 +56,42 @@ export function installExplosherEarlyFreeze(){
  document.addEventListener('click',entry,true);
 }
 
+
+export function installExplosherRandom(){
+ const seed=0x515e7021;let word=seed,draws=0,resets=0;
+ // Native FX captures Math.random at module evaluation. Keep this one function
+ // identity throughout boot and capture; reset its state, never the function.
+ const random=()=>{draws++;word^=word<<13;word^=word>>>17;word^=word<<5;return(word>>>0)/4294967296;};
+ Math.random=random;
+ window.resetExplosherRandom=()=>{if(Math.random!==random)throw Error('Diagnostic RNG identity replaced');word=seed;draws=0;resets++;};
+ window.readExplosherRandom=()=>{if(Math.random!==random)throw Error('Diagnostic RNG identity replaced');return {algorithm:'xorshift32',seed,word:word>>>0,draws,resets,identityPreserved:true};};
+ window.resetExplosherRandom();
+}
+
+export async function readExplosherEffects(){
+ const G=window.__G,fx=G.fx,env=G.env;
+ const hash=async(a,count)=>{
+  if(!(a instanceof Float32Array)||!Number.isInteger(count)||count<0||count>a.length||count>100000)throw Error('Invalid bounded native effect buffer');
+  for(let i=0;i<count;i++)if(!Number.isFinite(a[i]))throw Error('Non-finite native effect state');
+  const bytes=new Uint8Array(a.buffer,a.byteOffset,count*a.BYTES_PER_ELEMENT);
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return {entries:count,sha256:Array.from(new Uint8Array(digest),n=>n.toString(16).padStart(2,'0')).join('')};
+ };
+ if(!Number.isFinite(fx._dt)||fx._dt<=0||!Number.isFinite(fx._time)||fx._time<0||!Number.isInteger(env._frameId)||env._frameId<0)throw Error('Invalid native FX scalar');
+ if(!Number.isInteger(fx._sqN)||fx._sqN<0||fx._sqN>96)throw Error('Invalid native schedule count');
+ const schemas={puffs:{P:3,V:3,C:3,X:14},glows:{P:3,V:3,C:3,X:14},rings:{P:3,V:3,C:3,N:3,X:8},shells:{P:3,V:3,C:3,X:9,A:4},beams:{P:3,C:3,X:5},marks:{P:3,N:3,C:3,X:6},pillars:{P:3,C:4,X:3}};
+ const pools={};
+ for(const [name,schema]of Object.entries(schemas)){
+  const p=fx[name];if(!p||!Number.isInteger(p.n)||p.n<0||p.n>p.cap||!Number.isInteger(p.cap)||p.cap<=0)throw Error('Invalid native FX pool');
+  const arrays={};for(const [key,stride]of Object.entries(schema)){
+   if(!(p[key] instanceof Float32Array)||p[key].length!==p.cap*stride)throw Error('Missing or invalid native FX array stride');
+   arrays[key]=await hash(p[key],p.n*stride);
+  }
+  pools[name]={count:p.n,arrays};
+ }
+ if(!Number.isInteger(fx.dCap)||fx.dCap<=0||!Number.isInteger(fx.dN)||fx.dN<0||fx.dN>fx.dCap)throw Error('Invalid native drop count');
+ const drops={count:fx.dN};for(const key of ['dP','dV','dC','dK','dA']){const stride=key==='dA'?8:3;if(!(fx[key] instanceof Float32Array)||fx[key].length!==fx.dCap*stride)throw Error('Invalid native drop array stride');drops[key]=await hash(fx[key],fx.dN*stride);}
+ if(!Number.isInteger(env.gullInst?.count)||env.gullInst.count<0)throw Error('Invalid native gull count');
+ return {scope:'Read-only active native FX buffers and gull matrices; inactive pool tails excluded',dt:fx._dt,time:fx._time,
+  scheduled:{count:fx._sqN,state:await hash(fx._sq,fx._sqN*14)},pools,drops,environmentFrame:env._frameId,gulls:await hash(env.gullInst.instanceMatrix.array,env.gullInst.count*16)};
+}

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { awaitExplosherSceneSources, explosherSceneCensus, compareExplosherCaptures } from '../../../scripts/lib/inkwave-explosher-scene-census.mjs';
-import { readExplosherSceneClocks, requireExplosherStyle, installExplosherEarlyFreeze } from '../../../scripts/lib/inkwave-explosher-startup.mjs';
+import { readExplosherSceneClocks, requireExplosherStyle, installExplosherEarlyFreeze, installExplosherRandom, readExplosherEffects } from '../../../scripts/lib/inkwave-explosher-startup.mjs';
 const wrapper=fs.readFileSync(new URL('../../../scripts/check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');
 const nativeResetSource=fs.readFileSync(new URL('../../../scripts/check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
 const driver=fs.readFileSync(new URL('../../../scripts/render-inkwave-projectile-shapes.mjs',import.meta.url),'utf8');
@@ -13,7 +13,7 @@ function diagnostic(){
  const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{},exit(){}};
  const spawn=(bin,args)=>bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0};
  const code=wrapper.replace(/^#!.*\n/,'').replace(/^import .*;\n/gm,'').replace(/import\.meta\.url/g,"'file:///tmp/x'").replace(/import\.meta\.resolve\('playwright'\)/g,"'playwright'");
- assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze),/Wrong native capture count/);
+ assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects),/Wrong native capture count/);
  return saved['out/native-capture-driver.mjs'];
 }
 test('capture admission guards reject incomplete or invalid evidence (no browser claim)',()=>{
@@ -63,7 +63,7 @@ test('all frame gate keeps later physics errors after an early resource mismatch
  assert.equal(compareExplosherCaptures(frames,frames).mismatches.length,0);
  const after=JSON.parse(JSON.stringify(frames));after[0].measurement.render.triangles=3;after[17].measurement.physical=[999];
  const result=compareExplosherCaptures(frames,after);
- assert.equal(result.checked.length,18*19);
+ assert.equal(result.checked.length,18*21);
  const nonfinite=JSON.parse(JSON.stringify(frames));nonfinite[1].measurement.physical=[NaN];const nullable=JSON.parse(JSON.stringify(frames));nullable[1].measurement.physical=[null];assert(compareExplosherCaptures(nullable,nonfinite).mismatches.some(m=>m.domain==='physical'));
  assert(result.mismatches.some(m=>m.tick===0&&m.domain==='render.triangles'));
  assert(result.mismatches.some(m=>m.tick===17&&m.domain==='physical'));
@@ -153,4 +153,34 @@ test('publication freeze rejects late installation and pre-entry clock advanceme
   G.fx._time=NaN;assert.throws(()=>readExplosherSceneClocks(),/Non-finite clock/);
   delete G.fx._time;assert.throws(()=>readExplosherSceneClocks(),/Missing clock/);
  }finally{for(const [key,value]of Object.entries(saved)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}}
+});
+
+test('seed reset reaches the same RNG function captured by native modules',()=>{
+ const oldWindow=globalThis.window,original=Math.random;
+ try{
+  globalThis.window={};installExplosherRandom();const nativeRand=Math.random;
+  const first=[nativeRand(),nativeRand(),nativeRand()];window.resetExplosherRandom();
+  assert.equal(nativeRand,Math.random);assert.deepEqual([nativeRand(),nativeRand(),nativeRand()],first);
+  assert.equal(window.readExplosherRandom().draws,3);assert.equal(window.readExplosherRandom().identityPreserved,true);
+  Math.random=original;assert.throws(()=>window.resetExplosherRandom(),/identity replaced/);
+ }finally{Math.random=original;if(oldWindow===undefined)delete globalThis.window;else globalThis.window=oldWindow;}
+});
+
+test('bounded native FX digest is read only and detects active data, not inactive tails',async()=>{
+ const oldWindow=globalThis.window;
+ try{
+  const fx={_dt:1/60,_time:1,_sqN:0,_sq:new Float32Array(14),dN:1,dCap:2};
+  for(const key of ['dP','dV','dC','dK','dA'])fx[key]=new Float32Array(key==='dA'?16:6);
+  const schemas={puffs:{P:3,V:3,C:3,X:14},glows:{P:3,V:3,C:3,X:14},rings:{P:3,V:3,C:3,N:3,X:8},shells:{P:3,V:3,C:3,X:9,A:4},beams:{P:3,C:3,X:5},marks:{P:3,N:3,C:3,X:6},pillars:{P:3,C:4,X:3}};
+  for(const [name,schema]of Object.entries(schemas))fx[name]={n:1,cap:2,...Object.fromEntries(Object.entries(schema).map(([k,stride])=>[k,new Float32Array(stride*2)]))};
+  const env={_frameId:20,gullInst:{count:1,instanceMatrix:{array:new Float32Array(16)}}};globalThis.window={__G:{fx,env}};
+  const before=JSON.stringify({fx,env}),a=await readExplosherEffects();assert.equal(JSON.stringify({fx,env}),before);
+  fx.puffs.P[5]=9;assert.deepEqual(await readExplosherEffects(),a);
+  fx.puffs.P[0]=9;assert.notDeepEqual(await readExplosherEffects(),a);
+  fx.puffs.n=3;await assert.rejects(readExplosherEffects(),/Invalid native FX pool/);
+  fx.puffs.n=1;fx.puffs.P[0]=NaN;await assert.rejects(readExplosherEffects(),/Non-finite native effect/);
+  fx.puffs.P[0]=0;const saved=fx.puffs.P;delete fx.puffs.P;await assert.rejects(readExplosherEffects(),/array stride/);fx.puffs.P=new Float32Array(5);await assert.rejects(readExplosherEffects(),/array stride/);fx.puffs.P=saved;
+  fx._time=NaN;await assert.rejects(readExplosherEffects(),/FX scalar/);fx._time=1;fx._dt=undefined;await assert.rejects(readExplosherEffects(),/FX scalar/);fx._dt=1/60;
+  fx._sqN=.5;await assert.rejects(readExplosherEffects(),/schedule count/);fx._sqN=0;env._frameId=NaN;await assert.rejects(readExplosherEffects(),/FX scalar/);
+ }finally{if(oldWindow===undefined)delete globalThis.window;else globalThis.window=oldWindow;}
 });
