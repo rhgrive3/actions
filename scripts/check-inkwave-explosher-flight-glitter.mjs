@@ -26,6 +26,26 @@ driver=once(driver,"  await page.goto(base + '/?range&skipTitle');",`  await pag
     window.resetExplosherRandom();
   });
   await page.goto(base + '/?range&skipTitle');`);
+
+const resetSource=fs.readFileSync(path.join(root,'scripts/check-inkwave-projectile-visuals.mjs'),'utf8');
+const resetMatches=resetSource.match(/async function resetCaptureCharacter\(actor\) \{[\s\S]*?\n\}/g);
+if(resetMatches?.length!==1)throw Error('Native reset helper is not unique');
+const nativeReset=resetMatches[0];
+driver=once(driver,'const ready = await page.evaluate(({ id, hold }) => {','const ready = await page.evaluate(async ({ id, hold }) => {');
+driver=once(driver,"      G.projectiles.clear(); G.fx.clear?.();",nativeReset+`
+      if(!g.frozen)throw Error('Capture loop must be frozen before native reset');
+      window.resetExplosherRandom();G.time=0;g.time=0;g.rig.time=0;
+      const oldCharacter=a.character;
+      await resetCaptureCharacter(a);
+      if(!g.frozen)throw Error('Capture loop unfroze during native reset');
+      window.explosherResetReceipt={oldDisposed:oldCharacter._sourceMotionDisposed===true,oldDetached:oldCharacter.root.parent===null,
+        actorOwned:a.character.actor===a,sceneOwned:a.character.root.parent===G.scene,
+        constructorPreserved:a.character.constructor===oldCharacter.constructor,
+        stylePreserved:JSON.stringify(a.character.style)===JSON.stringify(oldCharacter.style),
+        sourceReady:a.character.sourceMotion?.status==='ready'};
+      if(Object.values(window.explosherResetReceipt).some(v=>v!==true))throw Error('Native reset ownership/readiness failed');
+      G.projectiles.clear(); G.fx.clear?.();`);
+
 driver=once(driver,'      g.debug.fire(true);',`      window.resetExplosherRandom();
       G.time=0;g.time=0;g.rig.time=0;
       g.debug.fire(true);`);
@@ -40,7 +60,7 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
           if(initial!==physical()||pos!==buffers?.sparkPos.array||size!==buffers?.sparkSize.array)throw Error('draw changes physics or replaces sparkle buffers');
           r.info.reset();const t=performance.now();g.R.render();const submitMs=performance.now()-t;
           const lighting=[];g.R.scene.traverse(o=>{if(o.isLight)lighting.push({type:o.type,color:o.color?.getHex(),intensity:o.intensity,position:o.position.toArray()});});
-          return {lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
+          return {nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
             time:G.time,inkHex:G.local.color.getHex(),render:{...r.info.render},memory:{...r.info.memory},
             sparkles:G.projectiles.s3ShapeCounts?.sparkles??0,drawCpuMs:drawMs,renderSubmitMs:submitMs,
             gpuTimerMs:null,gpuTimerStatus:'not measured; submit CPU time is not GPU time',
@@ -84,6 +104,7 @@ driver=once(driver,"  fs.writeFileSync(path.join(out, 'manifest.json'), JSON.str
   fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify(manifest, null, 1));`);
 const copy=path.join(out,'native-capture-driver.mjs');fs.writeFileSync(copy,driver);
 const receipt={sourceSha,actualSourceSha,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
+  nativeResetHelperSha256:hash(nativeReset),
   sourceShapeSha256:hash(fs.readFileSync(path.join(sourceRoot,'patches/splatoon3/runtime/s3-projectile-shapes.mjs'))),
   emittedShapes:emitted,seed:0x515e7021,
   boundaries:['Real emitted game and native renderer; fixed range input.','No historical source/character rewrite.','Only flight glitter changes; muzzle/impact, hit/paint/speed unchanged.','Render CPU and resource counts measured; GPU elapsed time and allocations not measured.']};

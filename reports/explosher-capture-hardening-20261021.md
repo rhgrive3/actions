@@ -55,3 +55,9 @@ Negative: duplicate/missing/unexpected frame, missing live native points, pageer
   }
 ]
 Real screenshots remain subject to visual review; nonempty statistics and draw counts cannot prove fidelity.
+
+## Native initial-history reset
+The original run 39616040214 completed both captures, but rejected the pair on physical state at tick 0 (same seed/damage/life, different muzzle position/velocity). These are not an accepted equal-condition pair.
+The diagnostic copy now reuses resetCaptureCharacter verbatim from the existing native evaluator, awaits the normal source loader, verifies ownership/disposal, and resets diagnostic clocks before the normal fixed-step settling frames.
+Neither production Character source nor animation settings are edited. Both before/after use this same diagnostic helper and exact physical equality remains required.
+PNG acquisition is still blocked by environment storage and Library scope; no images have been reviewed.

@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const wrapper=fs.readFileSync(new URL('../../../scripts/check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');
+const nativeResetSource=fs.readFileSync(new URL('../../../scripts/check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
 const driver=fs.readFileSync(new URL('../../../scripts/render-inkwave-projectile-shapes.mjs',import.meta.url),'utf8');
 function diagnostic(){
  const saved={},sha='a'.repeat(40);
- const fakeFs={mkdirSync(){},readFileSync(p){if(p.endsWith('render-inkwave-projectile-shapes.mjs'))return driver;if(p.endsWith('inkwave-build.json'))return JSON.stringify({artifacts:{'patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash'},contentHash:'hash'});if(p.endsWith('manifest.json'))return '[]';return 'source';},writeFileSync(p,v){saved[p]=v;}};
+ const fakeFs={mkdirSync(){},readFileSync(p){if(p.endsWith('check-inkwave-projectile-visuals.mjs'))return nativeResetSource;if(p.endsWith('render-inkwave-projectile-shapes.mjs'))return driver;if(p.endsWith('inkwave-build.json'))return JSON.stringify({artifacts:{'patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash'},contentHash:'hash'});if(p.endsWith('manifest.json'))return '[]';return 'source';},writeFileSync(p,v){saved[p]=v;}};
  const path={resolve:x=>x,join:(...a)=>a.join('/')},crypto={createHash(){return {update(){return this;},digest(){return 'hash';}}}};
  const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{},exit(){}};
  const spawn=(bin,args)=>bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0};
@@ -15,6 +16,8 @@ function diagnostic(){
 }
 test('capture admission guards reject incomplete or invalid evidence (no browser claim)',()=>{
  const generated=diagnostic();assert(generated);
+ const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+ assert.doesNotThrow(()=>new AsyncFunction(generated.replace(/^import .*;\n/gm,'')));
  const validate=new Function('captures',wrapper.slice(wrapper.indexOf('const expected=new Set')));
  const captures=[0,3,8,14,22,30].flatMap(t=>['behind','tele-side','tele-oblique'].map(v=>({label:'s3-slosher-washtub',tick:t,view:v,count:1,measurement:{sparkles:28,render:{points:28}}})));
  assert.doesNotThrow(()=>validate(captures));

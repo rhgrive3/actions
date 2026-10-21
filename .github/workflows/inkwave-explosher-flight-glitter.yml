@@ -31,7 +31,7 @@ jobs:
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - run: npx playwright install --with-deps chromium
       - name: Native production-composition regressions
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/s3-projectile-shapes.test.mjs patches/splatoon3/tests/explosher-flight-glitter.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/s3-projectile-shapes.test.mjs patches/splatoon3/tests/explosher-flight-glitter.test.mjs patches/splatoon3/tests/explosher-capture-guards.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs
       - name: Build untouched base and candidate
         run: |
           node .ci-explosher-base/scripts/build-inkwave.mjs .ci-explosher-base/inkwave-public .built-site/explosher-before
@@ -49,7 +49,7 @@ jobs:
           assert.equal(before.length,18);assert.equal(after.length,18);
           for(let i=0;i<before.length;i++){
             const a=before[i],b=after[i];assert.deepEqual([a.tick,a.view],[b.tick,b.view]);
-            for(const k of ['physical','camera','inkHex','time','sparkles','lighting','viewport'])assert.deepEqual(b.measurement[k],a.measurement[k],k);
+            for(const k of ['nativeReset','physical','camera','inkHex','time','sparkles','lighting','viewport'])assert.deepEqual(b.measurement[k],a.measurement[k],k);
             for(const k of ['calls','triangles','points','lines'])assert(b.measurement.render[k]<=a.measurement.render[k],k);
             for(const k of ['geometries','textures'])assert(b.measurement.memory[k]<=a.measurement.memory[k],k);
           }
