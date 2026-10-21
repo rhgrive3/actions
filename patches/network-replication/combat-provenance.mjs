@@ -410,7 +410,12 @@ function take(nm,from,d,type,t,sprinklerScope=null) {
         try { if(!nm._combatProvenancePhysics.los(scratch[0],scratch[1]))continue; }
         catch { continue; } // malformed collision world never authorizes a hit
       }
-      if(p.kind==='main'&&directFire(actor)&&!victimVisible(nm,p,nm.byNid.get(d.v),t))continue;
+      if(p.kind==='main'&&directFire(actor)) {
+        // A straight-fire round or Charger beam lands on one victim once.
+        const victim=nm.byNid.get(d.v);
+        if(p.victims?.has(victim)||!victimVisible(nm,p,victim,t))continue;
+        (p.victims||=new Set()).add(victim);
+      }
     } else {
       if(d.weak===1 && !weakPointOk(nm,p))continue;
       if(d.c<0&&p.kind==='main'&&directFire(actor)&&!bossVisible(nm,p))continue;

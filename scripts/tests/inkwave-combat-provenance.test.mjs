@@ -491,7 +491,7 @@ test('one shot no longer mints both a projectile and a fire-event proof',()=>{
   const nm=new Stub();shot(nm,100);
   assert.equal(nm._combatProvenance.proofs.get('peerA').length,1);
   for(let h=1;h<=4;h++)nm.onMessage('peerA',hit(2,h));
-  assert.equal(nm.hitCalls.length,2,'one round authorizes its existing two uses, not four');
+  assert.equal(nm.hitCalls.length,1,'one round lands once on its victim (previously four claims passed)');
   const charger=new Stub(),c=charger.byNid.get(1);c.weapon={...c.weapon,id:'charger',kind:'charger',damage:160};
   charger._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'ev','weapon:fire',{actor:{n:1},weapon:'charger',muzzle:[0,1,0],dir:[0,0,1]}]]});
   charger.onMessage('peerA',{...hit(2,1,'charger'),d:160});
@@ -510,4 +510,17 @@ test('Boss body behind cover rejects straight fire; crablets keep the ray gate',
   crab.onMessage('peerA',boss(1,7,0,'crab',36));
   fire(crab);
   assert.equal(crab.bossCalls.length,1);
+});
+test('a straight-fire proof lands once per victim, still once on each separate local victim',()=>{
+  const nm=new Stub();fire(nm);
+  nm.onMessage('peerA',hit(2,1));nm.onMessage('peerA',hit(2,2));
+  assert.equal(nm.hitCalls.length,1,'second claim from the same round on the same victim is rejected');
+  const bots=new Stub();bots.byNid.set(3,{...victim(),nid:3,pos:{x:.5,y:0,z:7}});
+  fire(bots);
+  bots.onMessage('peerA',hit(2,1));bots.onMessage('peerA',hit(3,2));
+  assert.equal(bots.hitCalls.length,2,'a host owning two victims keeps the existing two uses');
+  const area=new Stub(),a=area.byNid.get(1);a.weapon={...a.weapon,id:'blaster',kind:'blaster',damage:125};
+  fire(area,{kind:'blaster'});
+  area.onMessage('peerA',{...hit(2,1,'blaster'),d:30});area.onMessage('peerA',{...hit(2,2,'blaster'),d:30});
+  assert.equal(area.hitCalls.length,2,'area families keep their existing per-proof uses');
 });
