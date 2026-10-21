@@ -22,7 +22,7 @@ export function createSwimFilmGeometry() {
   };
   grid(0,32,8);grid(1,24,8);grid(2,24,8);grid(3,24,12);
   // Small flat remnants stretch from the surface behind the main film.
-  for(let k=0;k<2;k++)grid(4+k,12,4);
+  for(let k=0;k<2;k++)grid(4+k,12,4);grid(6,32,12);
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3).setUsage(THREE.DynamicDrawUsage));
   g.setAttribute('filmData',new THREE.Float32BufferAttribute(data,3));
@@ -50,7 +50,7 @@ export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
         z=.32-u*(kind===0?.86:.96)-.04*v+.035*Math.sin(u*17-flow)*v;
         y=.006+lift*(1-Math.cos(curve))*.5*(.45+.55*along);
         x+=side*.015*Math.sin(u*19+v*11-flow*.8)*v;
-        for(const hole of holes){const d=Math.hypot((u-hole.x)/hole.z,(v-hole.y)/hole.w);y+=.015*k*Math.exp(-(((d-1)/.35)**2));}
+        for(const hole of holes){const d=Math.hypot((u-hole.x)/(hole.z*1.6),(v-hole.y)/(hole.w*1.6));y+=.015*k*Math.exp(-(((d-1)/.35)**2));}
       }else if(kind===2){
         const angle=(u-.5)*1.8,curve=v*Math.PI*.78;
         const radius=.18-.10*Math.sin(curve);
@@ -62,6 +62,10 @@ export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
         x=(u*2-1)*(.30+.04*Math.sin(v*11-flow));z=.12-v*1.12;
         y=.006+Math.sin(Math.PI*u)*Math.sin(Math.PI*v)*(.035+.045*k+.020*k*Math.sin(u*11+v*13-flow));
         x+=turn*.04*v*v;
+      }else if(kind===6){
+        const a=u*Math.PI*2,r=v,edge=1-r*r;
+        x=Math.sin(a)*r*.22;z=.21+Math.cos(a)*r*.25;
+        y=.006+(.09+.035*k+.015*Math.sin(flow*1.3))*edge*edge+.025*k*Math.sin(a*4-flow*1.1)*Math.sin(Math.PI*r)**2;
       }else{
         const piece=kind-4,side=piece%2?-1:1;
         const phase=((time*4.7+piece*.269)%1),pulse=Math.sin(Math.PI*phase);
@@ -77,9 +81,8 @@ export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
 }
 
 function material(light,filmHoles) {
-  const m=new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.16,metalness:0,clearcoat:1,clearcoatRoughness:.04,envMapIntensity:.9,side:THREE.DoubleSide});
+  const m=new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.16,metalness:0,clearcoat:1,clearcoatRoughness:.04,envMapIntensity:1.4,side:THREE.DoubleSide});
   const time={value:0},holes={value:filmHoles};m.userData.filmTime=time;m.userData.filmHoles=holes;
-  m.customProgramCacheKey=()=> 'inkwave-swim-continuous-film-v1';
   m.onBeforeCompile=shader=>{
     shader.uniforms.uFilmTime=time;shader.uniforms.uFilmHoles=holes;shader.uniforms.uFilmSun={value:light.sunDir};
     shader.vertexShader='attribute vec3 filmData; varying vec3 vFilmData;\n'+shader.vertexShader;
@@ -90,11 +93,12 @@ function material(light,filmHoles) {
         float u=vFilmData.x,v=vFilmData.y;
         // Uneven openings in one continuous skin, staggered rather than rows
         // of identical scallops. The leading bow remains a filled liquid fold.
-        if(vFilmData.z<2.5 && v>.84+.14*sin(u*17.0-uFilmTime*15.0+vFilmData.z*2.0))discard;
+        if(vFilmData.z<2.5 && v>.55+.40*pow(clamp(.5+.5*sin(u*43.0-uFilmTime*24.0+vFilmData.z*2.0),0.0,1.0),3.0))discard;
         for(int i=0;i<6;i++){
           float f=float(i);
           vec4 hole=uFilmHoles[i];
-          float scale=vFilmData.z>2.5?1.8:1.0;
+          if(vFilmData.z>2.5 && abs(u-.5-.06*sin(v*13.0+uFilmTime*9.0))>.28+.14*sin(v*19.0-uFilmTime*12.0))discard;
+          float scale=vFilmData.z>2.5?2.0:1.6;
           vec2 q=(vec2(u,v)-hole.xy)/(hole.zw*scale);
           float torn=1.0+.20*sin(q.x*3.0+q.y*5.0+uFilmTime*12.0+f);
           if(dot(q,q)<torn)discard;
@@ -106,9 +110,9 @@ function material(light,filmHoles) {
       vec3 filmEye=normalize(vViewPosition);
       vec3 filmHalf=normalize(filmEye+normalize(mat3(viewMatrix)*uFilmSun));
       float filmShine=pow(max(dot(normal,filmHalf),0.0),85.0);
-      float filmRim=pow(1.0-abs(dot(normal,filmEye)),2.0);
+      float filmRim=pow(clamp(1.0-abs(dot(normal,filmEye)),0.0,1.0),2.0);
       float filmBroad=pow(max(dot(normal,filmHalf),0.0),16.0);
-      gl_FragColor.rgb+=vec3(1.0,.99,.94)*(filmShine*1.2+filmRim*.6+filmBroad*.45);
+      gl_FragColor.rgb+=vec3(1.0,.99,.94)*(filmShine*1.2+filmRim*2.2+filmBroad*.8);
     `);
   };
   return m;
