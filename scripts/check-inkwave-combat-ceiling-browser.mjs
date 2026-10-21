@@ -11,7 +11,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
-import {installCombatPlacementQA} from './lib/inkwave-combat-ceiling-placement.mjs';
+import {installCombatPlacementQA,advanceUntilNativeShotProof} from './lib/inkwave-combat-ceiling-placement.mjs';
 import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runtime-evidence.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
@@ -177,14 +177,29 @@ try {
  },{attacker,victim,attackerOwner});
  report.phase='real-projectile-contact';
  await guest.evaluate(()=>{const a=__G.match.local;window.__ceilingFirePending=true;window.__ceilingEmission=null;a.intent.fire=true;});
- let captured=false;
- for(let i=0;i<60;i++){await step();captured=await guest.evaluate(()=>!!__ceilingGuest.packet);if(captured)break;}
+ let captured=false,shotTicks=0;
+ for(let i=0;i<60;i++){await step();shotTicks++;captured=await guest.evaluate(()=>!!__ceilingGuest.packet);if(captured)break;}
  report.emission=await guest.evaluate(()=>({emission:window.__ceilingEmission,pending:window.__ceilingFirePending,ink:__G.match.local.ink,firstRemaining:__G.match.local.weaponRunner.s3ShooterFirstRemaining,projectiles:__G.projectiles.list.length}));
  report.shot=await guest.evaluate(()=>{const q=__ceilingShot;return {initial:q.initial,removal:q.removal,steps:q.steps};});
  assert(captured,'Native projectile never authored a 36 hit packet');
  assert(report.emission.emission&&report.emission.pending===false,'Exactly one native paid round must finish the firing request');
- await host.waitForFunction(({attackerOwner,attacker})=>(__G.netm._combatProvenance?.proofs.get(attackerOwner)||[]).some(p=>p.actor===attacker&&p.uses<p.maxUses),{attackerOwner,attacker},{timeout:2000});
  report.heldPacket=await guest.evaluate(()=>__ceilingGuest.packet);
+ report.phase='await-native-shot-proof';
+ // Fire is already released. Preserve the same held packet while normal
+ // update() flushes the birth/fire queue on its own 20Hz schedule.
+ const hasProof=()=>host.evaluate(({attackerOwner,attacker})=>
+  (__G.netm._combatProvenance?.proofs.get(attackerOwner)||[]).some(p=>p.actor===attacker&&p.kind==='main'&&p.uses<p.maxUses),{attackerOwner,attacker});
+ report.proofAdvance=await advanceUntilNativeShotProof({step,hasProof,remainingSteps:60-shotTicks});
+ await host.waitForFunction(({attackerOwner,attacker})=>(__G.netm._combatProvenance?.proofs.get(attackerOwner)||[]).some(p=>p.actor===attacker&&p.kind==='main'&&p.uses<p.maxUses),{attackerOwner,attacker},{timeout:2000});
+ const preserved=await guest.evaluate(()=>({packet:__ceilingGuest.packet,count:__ceilingGuest.count,
+  pending:__ceilingFirePending,fire:__G.match.local.intent.fire,emission:__ceilingEmission}));
+ assert.deepEqual(preserved.packet,report.heldPacket,'Network advance must retain the same captured native hit');
+ assert.equal(preserved.count,1,'Network advance must not create another hit');
+ assert.equal(preserved.pending,false);assert.equal(preserved.fire,false);
+ assert.deepEqual(preserved.emission,report.emission.emission,'Network advance must not create another paid round');
+ report.proofCount=await host.evaluate(({attackerOwner,attacker})=>
+  (__G.netm._combatProvenance?.proofs.get(attackerOwner)||[]).filter(p=>p.actor===attacker&&p.kind==='main').length,{attackerOwner,attacker});
+ assert.equal(report.proofCount,1,'Exactly one real main-shot proof must arrive');
  assert.equal(report.heldPacket.d,36);
  assert(Number.isSafeInteger(report.heldPacket.h)&&report.heldPacket.h>0);
  assert(Number.isSafeInteger(report.heldPacket.seq)&&report.heldPacket.seq>0);
@@ -286,6 +301,10 @@ const failure = report.status === 'failed' ? {
   removalAge: Number.isFinite(report.shot.removal?.age) ? report.shot.removal.age : null,
   originDistance: Number.isFinite(report.shot.initial?.launchVsAim?.originDistance) ? report.shot.initial.launchVsAim.originDistance : null,
   velocityAngle: Number.isFinite(report.shot.initial?.launchVsAim?.velocityAngle) ? report.shot.initial.launchVsAim.velocityAngle : null,
+ } : null,
+ proofAdvance: report.proofAdvance ? {
+  steps: Number.isSafeInteger(report.proofAdvance.steps)&&report.proofAdvance.steps>=0 ? report.proofAdvance.steps : null,
+  ready: report.proofAdvance.ready===true,
  } : null,
  placement: report.placementDiagnostic||null,
  browserErrorCount: errors.length,

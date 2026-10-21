@@ -71,3 +71,16 @@ export function installCombatPlacementQA() {
   };
   globalThis.__ceilingPlacement = {select,inspect,aim,compareShot};
 }
+
+
+// Continue the existing native component lifecycle, not a private send/receive
+// shortcut. A same-tick hit can precede the next 20Hz owner tick carrying its
+// real projectile birth. The caller retains its original overall step budget.
+export async function advanceUntilNativeShotProof({step,hasProof,remainingSteps}) {
+  if (!Number.isSafeInteger(remainingSteps) || remainingSteps<0 || remainingSteps>60) throw Error('Invalid native proof step budget');
+  let steps=0,ready=await hasProof();
+  while (!ready && steps<remainingSteps) {
+    await step();steps++;ready=await hasProof();
+  }
+  return {steps,ready};
+}

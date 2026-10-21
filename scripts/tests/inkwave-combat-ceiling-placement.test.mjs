@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {installCombatPlacementQA} from '../lib/inkwave-combat-ceiling-placement.mjs';
+import {installCombatPlacementQA,advanceUntilNativeShotProof} from '../lib/inkwave-combat-ceiling-placement.mjs';
 
 // These are bounded helper contracts plus the real Actor barrier method,
 // not a substitute for the browser's actual Physics/Actor settle gate.
@@ -102,3 +102,34 @@ test('pitch-dependent muzzle changes are exposed by the actual emitted-origin di
  assert.equal(q.compareShot(pre,pre.muzzle,pre.aim).originDistance,0);
  assert.throws(()=>q.compareShot(pre,[0,NaN,0],pre.aim),/nonfinite shot comparison/);
 }));
+
+test('normal update flushes the actual native shot queue after same-tick contact',async()=>{
+ const source=fs.readFileSync(new URL('../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8');
+ const methods=['_rec','update','_sendTick'].map(name=>{
+  const matches=source.match(new RegExp('  '+name+'\\([^\\n]*\\) \\{[\\s\\S]*?\\n  \\}','g'));
+  // _rec is a one-line native method.
+  const one=name==='_rec'?source.match(/^  _rec\(e\) \{[^\n]+\}$/gm):matches;
+  assert.equal(one?.length,1,'unique native '+name);return one[0];
+ });
+ let clock=10;
+ const Native=new Function('TICK','now','r3','return class {'+methods.join('\n')+'}')(1/20,()=>clock,x=>Math.round(x*1000)/1000);
+ const n=new Native(),sent=[];Object.assign(n,{match:{},peers:new Map(),byNid:new Map(),tickT:1/20,out:[],stats:{out:0},s:{tr:{broadcast:p=>sent.push(p)}},
+  _sampleBoss(){},_playEvents(){},_voices(){}});
+ // Real order: net.update first, then native Actor authors the birth/fire
+ // and contact. Passive receiver waiting alone leaves these events queued.
+ n.update(1/60);n._rec(['p','actor','ink','shooter']);n._rec(['ev','weapon:fire',{actor:{n:'actor'}}]);
+ const queued=structuredClone(n.out);assert.equal(sent.length,0);assert.equal(queued.length,2);
+ const result=await advanceUntilNativeShotProof({remainingSteps:59,hasProof:()=>sent.some(p=>p.e?.length),
+  step:async()=>{clock+=1/60;n.update(1/60);}});
+ assert(result.ready);assert(result.steps>0&&result.steps<=3);
+ assert.deepEqual(sent.flatMap(p=>p.e||[]),queued,'same native event timestamps and payloads');
+ assert.equal(n.out.length,0);
+});
+test('proof advance remains bounded and does not invent an unavailable receipt',async()=>{
+ let steps=0;
+ const result=await advanceUntilNativeShotProof({remainingSteps:2,hasProof:()=>false,step:async()=>{steps++;}});
+ assert.deepEqual(result,{steps:2,ready:false});assert.equal(steps,2);
+ const ready=await advanceUntilNativeShotProof({remainingSteps:60,hasProof:()=>true,step:async()=>{throw Error('extra step');}});
+ assert.deepEqual(ready,{steps:0,ready:true});
+ for(const remainingSteps of [-1,61,NaN,.5])await assert.rejects(advanceUntilNativeShotProof({remainingSteps,hasProof:()=>false,step:async()=>{}}),/step budget/);
+});
