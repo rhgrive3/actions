@@ -25,6 +25,9 @@ export function nativeRollerGripGap(ch, THREE, side, C) {
     return ch.weapon.off.localToWorld(shaftSocket)
       .distanceTo(bone.localToWorld(palmHole));
   }
-  return ch.weapon.off.localToWorld(d[side].pos.clone())
+  const wrist = d[side].pos.clone();
+  if (side === 'handR' && d.modelId === 'roller' && Number.isFinite(ch._s3RollerRightAdvance))
+    wrist.z += ch._s3RollerRightAdvance;
+  return ch.weapon.off.localToWorld(wrist)
     .distanceTo(bone.getWorldPosition(new THREE.Vector3()));
 }

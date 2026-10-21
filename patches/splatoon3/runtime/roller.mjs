@@ -785,6 +785,13 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   // fixes the drum axis and projects the paired wrist targets into both reach
   // spheres, retaining the authored sockets and gameplay hit volume.
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
+  const restoreRightGrip = c => {
+    const w = c.weapon;
+    if (w?.def?.modelId === 'roller' && w.off && w.pivot && w.def.inHand) {
+      w.off.position.copy(w.def.inHand.pos).sub(w.pivot.position);
+      c._s3RollerRightAdvance = 0;
+    }
+  };
   let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, searchAxis, turn;
   let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ, shoulderShift, chestQ, contactPoint, bestPoint;
   let rollPivot, rollOffset, rollTarget, rollAxis, rollBase, rollTrial;
@@ -869,6 +876,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       // Native left-clavicle protraction and finite-chain IK retain authority.
       return solve.call(this, limb, target, pole, orientation, weight, index);
     }
+    if (limb === this.limbs.armR) restoreRightGrip(this);
     // animateWeapon owns the unmodified spin clock. Restore it for right-arm
     // reevaluation, even if this call falls back; never undo it on the left arm.
     const rollDrum = limb === this.limbs.armR && this.weaponKind === 'roller' ? this.weapon?.drum : null;
@@ -1094,10 +1102,40 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         }
       }
     }
+    // Move only the standard rolling hand along its existing black grip.
+    // The opposite attachment offset leaves the solved weapon/drum in place.
+    // Authored interval [-.112, .215]: one third is -.003, old socket -.022.
+    if (contacting && armLeftHeld && d.modelId === 'roller' && rollBlend > .001 && Number.isFinite(d.modelScale)) {
+      weaponQ.copy(bestQ).multiply(inverseHandQ.copy(d.handR.quat).invert());
+      axis.set(0, 0, 1).applyQuaternion(weaponQ);
+      delta.copy(target).sub(rightOrigin);
+      const distanceSq = delta.lengthSq(), along = delta.dot(axis);
+      const outer = along * along + reachR * reachR - distanceSq;
+      if (distanceSq >= minR * minR && distanceSq <= reachR * reachR + 1e-12 && outer >= 0) {
+        let advance = Math.min(.019 * d.modelScale * rollBlend, Math.max(0, -along + Math.sqrt(outer)));
+        const inner = along * along + minR * minR - distanceSq;
+        if (along < 0 && inner > 0) advance = Math.min(advance, Math.max(0, -along - Math.sqrt(inner)));
+        target.addScaledVector(axis, advance);
+        delta.set(0, 0, advance).applyQuaternion(inverseHandQ);
+        this.weapon.off.position.sub(delta);
+        this._s3RollerRightAdvance = advance;
+      }
+    }
+    // Keep the shaft beside the body using the already-solved drum axle.
+    // This one rigid translation moves the real drum and its native paint
+    // together, without another floor search, IK call, or actor/foot offset.
+    if (contacting && armLeftHeld && d.modelId === 'roller' && rollBlend > .001) {
+      weaponQ.copy(bestQ).multiply(inverseHandQ.copy(d.handR.quat).invert());
+      axis.set(1, 0, 0).applyQuaternion(weaponQ);
+      delta.copy(axis).multiply(this.kid.scale);
+      const scale = delta.length();
+      if (scale > 1e-4) target.addScaledVector(axis, -.09 * rollBlend / scale);
+    }
     orientation.copy(bestQ);
     return solve.call(this, limb, target, pole, orientation, weight, index);
   };
   Character.prototype._applyPose = function (dt, state) {
+    restoreRightGrip(this);
     this._s3RollerSupportFeedback = undefined;
     this._s3RollerSupportAdvance = undefined;
     try { return applyPose.call(this, dt, state); }
@@ -1111,6 +1149,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     }
   };
   Character.prototype._s3CancelRollerFlick = function () {
+    restoreRightGrip(this);
     this.s3RollerFlick = null;
     this._s3RollerContactPose = false;
     this._s3RollerGripBlend = 0;
