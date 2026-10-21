@@ -21,8 +21,7 @@ export function adaptNativeStages(rel,code){
     if (unavailable) { this.toast(unavailable.name + '：' + unavailable.reason); return; }`);
  }
  if(rel==='src/main.js'){
-  code="import { nativeStageEnabled, NATIVE_IDS, UNAVAILABLE_NATIVE_STAGES } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld, nativeSpawnYaw, nativeArenaBasis } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
-  code="import { showNativeWorldRecovery } from '../patches/native-stages/runtime/source-menu.mjs';\n"+code;
+  code="import { nativeStageEnabled, NATIVE_IDS, UNAVAILABLE_NATIVE_STAGES } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld, nativeSpawnYaw, nativeArenaBasis, showNativeWorldRecovery } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
   // #1723: _buildWorld (legacy and native) is asynchronous. During legacy
   // lightmap fetch, the old native paint target is already disposed and the
   // legacy decor has not been published. The fixed 60Hz frame may keep
