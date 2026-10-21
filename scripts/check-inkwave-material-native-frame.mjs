@@ -41,10 +41,14 @@ try{
   const line=m.text().slice(15);fs.appendFileSync(path.join(out,'phases.jsonl'),line+'\n');console.log('MATERIAL_PHASE '+line);
  }});
  if(diagnostic)await page.exposeFunction('__materialDiagnosticImages',e=>{
-  assert.equal(e.width,960);assert.equal(e.height,600);assert.deepEqual(e.images.map(x=>x.label),['unpainted','painted','repeat']);
+  assert.equal(e.width,960);assert.equal(e.height,600);assert.deepEqual(e.images.map(x=>x.label),['unpainted','painted','repeat','repeat2']);
+  const differences=(a,b,p='',out=[])=>{if(out.length>=64)return out;if(JSON.stringify(a)===JSON.stringify(b))return out;
+   if(a&&b&&typeof a==='object'&&typeof b==='object'){for(const key of new Set([...Object.keys(a),...Object.keys(b)]))differences(a[key],b[key],p? p+'.'+key:key,out);}
+   else out.push({path:p,before:a,after:b});return out;};
+  const stateComparisons=e.renderStates.map(x=>({label:x.label,beforeHash:hash(JSON.stringify(x.before)),afterHash:hash(JSON.stringify(x.after)),first64RenderChanges:differences(x.before,x.afterRender),first64RestoredChanges:differences(x.afterRender,x.after)}));
   const files=e.images.map(({label,rgba})=>{const bytes=Buffer.from(rgba,'base64'),png=diagnosticPNG(e.width,e.height,bytes),file=label+'.png';fs.writeFileSync(path.join(out,file),png);return{file,sha256:hash(png),width:e.width,height:e.height};});
-  const receipt={...e,images:files,diagnosticOnly:true,performanceAccepted:false};fs.writeFileSync(path.join(out,'pixel-diagnostic.json'),JSON.stringify(receipt,null,2));
-  console.log('MATERIAL_PIXEL_SIGNAL '+JSON.stringify({paintSignal:e.paintSignal,repeatSignal:e.repeatSignal,files}));
+  const receipt={...e,images:files,stateComparisons,diagnosticOnly:true,performanceAccepted:false};fs.writeFileSync(path.join(out,'pixel-diagnostic.json'),JSON.stringify(receipt,null,2));
+  console.log('MATERIAL_PIXEL_SIGNAL '+JSON.stringify({paintSignal:e.paintSignal,repeatSignal:e.repeatSignal,repeat2Signal:e.repeat2Signal,stateComparisons,files}));
  });
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.addInitScript(()=>{
@@ -181,13 +185,49 @@ try{
   const clocks=()=>window.__rollerVideoClocks();
   const camera=()=>({position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),projection:G.camera.projectionMatrix.toArray()});
   const state=()=>({clocks:clocks(),camera:camera(),actors:G.actors.map(x=>({name:x.name,pos:x.pos.toArray(),hp:x.hp,ink:x.ink,weapon:x.weaponId})),coverage:G.paint.coverage(),projectiles:G.projectiles.list.length});
+  const renderStates=[];
+  const boundedValue=(v,depth=0)=>{
+   if(depth>3)return{bounded:true,reason:'nested-value-depth-limit'};
+   if(typeof v==='number')return Number.isFinite(v)?v:String(v);
+   if(v===null||['string','boolean','undefined'].includes(typeof v))return v??null;
+   if(v.isTexture)return{type:'texture',uuid:v.uuid,version:v.version,sourceVersion:v.source?.version,width:v.image?.width??null,height:v.image?.height??null};
+   if(v.elements&&v.elements.length<=16)return [...v.elements];
+   if((v.isVector2||v.isVector3||v.isVector4||v.isQuaternion||v.isColor)&&v.toArray)return v.toArray();
+   if(Array.isArray(v)||ArrayBuffer.isView(v))return{type:'array',length:v.length,values:v.length<=32?Array.from(v,x=>boundedValue(x,depth+1)):null};
+   return{type:v.constructor?.name||typeof v,uninspected:true};
+  };
+  const snapshotRenderState=()=>{
+   const ch=a.character,nodes=[],materials=new Map();let count=0,materialsTruncated=false;
+   ch.root.traverse(o=>{
+    count++;if(nodes.length>=2048)return;
+    nodes.push({uuid:o.uuid,name:o.name,type:o.type,visible:o.visible,matrix:o.matrix.toArray(),matrixWorld:o.matrixWorld.toArray(),
+     geometry:o.geometry?{uuid:o.geometry.uuid,drawRange:{start:o.geometry.drawRange.start,count:boundedValue(o.geometry.drawRange.count)},attributes:Object.fromEntries(Object.entries(o.geometry.attributes).map(([k,v])=>[k,{version:v.version,count:v.count}]))}:null});
+    for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[]){
+     if(materials.has(m.uuid))continue;if(materials.size>=256){materialsTruncated=true;continue;}
+     // Do not call renderer.properties.get: it can create a cache entry on a read.
+     const u=m.uniforms||m.userData?.uniforms||{};
+     materials.set(m.uuid,{uuid:m.uuid,name:m.name,type:m.type,version:m.version,opacity:m.opacity,transparent:m.transparent,depthWrite:m.depthWrite,depthTest:m.depthTest,
+      uniforms:Object.fromEntries(Object.entries(u).slice(0,128).map(([k,v])=>[k,boundedValue(v.value)])),uniformCount:Object.keys(u).length});
+    }
+   });
+   const bones=ch.skeleton?.boneMatrices;
+   return{clocks:clocks(),camera:camera(),rendererFrame:r.info.render.frame,
+    composer:{read:g.R.composer?.readBuffer?.uuid,write:g.R.composer?.writeBuffer?.uuid},
+    shadow:{needsUpdate:r.shadowMap.needsUpdate,autoUpdate:r.shadowMap.autoUpdate},
+    character:{time:ch.t,phase:ch.phase,camFrame:ch._camFrame,camOK:ch._camOK,rendered:ch._rendered,camPos:ch._camPos?.toArray(),camE5:ch._camE5,camVH:ch._camVH,
+     uniforms:Object.fromEntries(Object.entries(ch.u||{}).map(([k,v])=>[k,boundedValue(v.value)])),
+     boneMatrices:bones?{length:bones.length,values:Array.from(bones.subarray(0,4096)),truncated:bones.length>4096}:null,
+     boneTexture:boundedValue(ch.skeleton?.boneTexture),nodes,nodeCount:count,nodesTruncated:count>2048,materials:[...materials.values()],materialsTruncated},
+    atlasTexture:boundedValue(G.paint.texture)};
+  };
   // Capture pass is separate from timings. Fix only render ping-pong state for repeated frozen images.
-  const image=()=>{
+  const image=label=>{
+   const before=diagnostic?snapshotRenderState():null;
    const c=g.R.composer,read=c?.readBuffer,write=c?.writeBuffer;
    try{g.R.render();const p=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;}
-   finally{if(c){c.readBuffer=read;c.writeBuffer=write;}}
+   finally{let afterRender=null;try{if(diagnostic)afterRender=snapshotRenderState();}finally{if(c){c.readBuffer=read;c.writeBuffer=write;}}if(diagnostic)renderStates.push({label,before,afterRender,after:snapshotRenderState()});}
   };
-  checkpoint('clear-flush-start');G.paint.clear();G.paint.flush(0);checkpoint('unpainted-readback-start');const unpainted=image();checkpoint('unpainted-readback-end');
+  checkpoint('clear-flush-start');G.paint.clear();G.paint.flush(0);checkpoint('unpainted-readback-start');const unpainted=image('unpainted');checkpoint('unpainted-readback-end');
   const placements=[],h={normal:new THREE.Vector3(),block:-1,face:-1};
   for(let z=-8;z<=8;z+=2)for(let x=-8;x<=8;x+=2){
    G.physics.groundProbe(a.pos.x+x,64,a.pos.z+z,0,128,.38,h,false);
@@ -197,16 +237,16 @@ try{
    placements.push({point:point.toArray(),seed,area});
   }
   if(placements.length<16)throw Error('Insufficient native painted floor samples');
-  checkpoint('paint-flush-start');G.paint.flush(0);checkpoint('paint-readback-start');const painted=image(),repeat=image();checkpoint('paint-readback-end');
+  checkpoint('paint-flush-start');G.paint.flush(0);checkpoint('paint-readback-start');const painted=image('painted'),repeat=image('repeat'),repeat2=diagnostic?image('repeat2'):null;checkpoint('paint-readback-end');
   const difference=(x,y)=>{let changed=0,max=0;for(let i=0;i<x.length;i+=4){let any=false;for(let k=0;k<4;k++){const d=Math.abs(x[i+k]-y[i+k]);max=Math.max(max,d);any ||= d>0;}changed+=any;}return{changed,max};};
-  const paintSignal=difference(unpainted,painted),repeatSignal=difference(painted,repeat);
-  checkpoint('pixel-signal',{paintSignal,repeatSignal});
+  const paintSignal=difference(unpainted,painted),repeatSignal=difference(painted,repeat),repeat2Signal=diagnostic?difference(repeat,repeat2):null;
+  checkpoint('pixel-signal',{paintSignal,repeatSignal,repeat2Signal});
   if(diagnostic){
    const encode=bytes=>{let value='';for(let i=0;i<bytes.length;i+=16384)value+=String.fromCharCode(...bytes.subarray(i,i+16384));return btoa(value);};
    checkpoint('capture-evidence-start');
-   await window.__materialDiagnosticImages({width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,paintSignal,repeatSignal,
+   await window.__materialDiagnosticImages({width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,paintSignal,repeatSignal,repeat2Signal,renderStates,
     atlasConditions,fixture:fixture(),state:state(),placements,
-    images:[{label:'unpainted',rgba:encode(unpainted)},{label:'painted',rgba:encode(painted)},{label:'repeat',rgba:encode(repeat)}]});
+    images:[{label:'unpainted',rgba:encode(unpainted)},{label:'painted',rgba:encode(painted)},{label:'repeat',rgba:encode(repeat)},{label:'repeat2',rgba:encode(repeat2)}]});
    checkpoint('capture-evidence-end');
   }
   if(paintSignal.changed<=1000||repeatSignal.changed!==0)throw Error('Paint visibility or frozen-repeat gate failed: '+JSON.stringify({paintSignal,repeatSignal}));
