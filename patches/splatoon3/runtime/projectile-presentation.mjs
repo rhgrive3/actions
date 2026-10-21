@@ -92,7 +92,19 @@ export function catalogReboundSeparation(fieldRadius){
 // a FLOOR bounce; the geometric contact normal still controls reflection.
 export function catalogBubbleSurfaceNormalY(hit,level){
   const face=Number.isInteger(hit?.face)&&hit.face>=0?level?.faces?.[hit.face]:null;
-  return Number.isFinite(face?.n?.y)?face.n.y:finite(hit?.normal?.y,0);
+  if(Number.isFinite(face?.n?.y))return face.n.y;
+  // Source-native triangles may have no mapped paint face. Their actual
+  // triangle normal is still a better floor/wall label than the rounded
+  // sphere contact normal at a corner or edge.
+  const triangle=hit?.triangle,normals=level?.triangleWorld?.normals;
+  if(Number.isInteger(triangle)&&triangle>=0&&normals&&triangle*3+2<normals.length){
+    const k=triangle*3,nx=normals[k],ny=normals[k+1],nz=normals[k+2],n=hit?.normal;
+    if(Number.isFinite(nx+ny+nz)&&n){
+      const facing=nx*n.x+ny*n.y+nz*n.z;
+      return facing<0?-ny:ny;
+    }
+  }
+  return finite(hit?.normal?.y,0);
 }
 export function catalogBubbleCanBounce(groundBounces,normalY){
   return normalY<=.35||groundBounces<2;
