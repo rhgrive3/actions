@@ -17,6 +17,11 @@ const overlayPath=opt('--baseline-overlay',null);
 const overlayReceipt=overlayPath?JSON.parse(fs.readFileSync(path.join(path.dirname(overlayPath),'receipt.json'),'utf8')):null;
 const overlayCode=overlayPath?fs.readFileSync(overlayPath):null;
 if(overlayPath){assert.ok(inkjet,'baseline overlay is diagnostic Inkjet only');assert.equal(createHash('sha256').update(overlayCode).digest('hex'),overlayReceipt.baselineEmittedSha256);}
+const budgetPath=opt('--budget-overlay',null);
+const budgetReceipt=budgetPath?JSON.parse(fs.readFileSync(path.join(path.dirname(budgetPath),'receipt.json'),'utf8')):null;
+const budgetCode=budgetPath?fs.readFileSync(budgetPath):null;
+if(budgetPath){assert.ok(inkjet&&!overlayPath,'optimized budget overlay is exclusive diagnostic Inkjet mode');assert.equal(createHash('sha256').update(budgetCode).digest('hex'),budgetReceipt.optimizedEmittedSha256);}
+if(inkjet)inkjet.optimized=!!budgetPath;
 if(inkjet){inkjet.videoFrames=process.argv.includes('--video-frames');inkjet.timingOnly=process.argv.includes('--timing-only');inkjet.baseline=!!overlayPath;inkjet.warmupSeconds=Number(opt('--warmup-seconds','1'));inkjet.sampleSeconds=Number(opt('--sample-seconds','1'));assert.ok(Number.isInteger(inkjet.warmupSeconds)&&inkjet.warmupSeconds>=1&&inkjet.warmupSeconds<=5);assert.ok(Number.isInteger(inkjet.sampleSeconds)&&inkjet.sampleSeconds>=1&&inkjet.sampleSeconds<=5);}
 const out = path.resolve(opt('--evidence-dir', '.ci-scratch/splashdown-browser'));
 fs.mkdirSync(out, { recursive: true });
@@ -26,6 +31,7 @@ assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash);
 for (const [file, digest] of Object.entries(manifest.artifacts)) assert.equal(hash(fs.readFileSync(path.join(site, file))), digest, file);
 const prefix = `/_versions/${manifest.build.revision}/`;
 const server = http.createServer((req, res) => {
+  if(budgetCode && req.url===prefix+'patches/splatoon3/runtime/inkjet-vfx-budget.mjs'){res.setHeader('content-type','text/javascript');res.end(budgetCode);return;}
   if(overlayCode && req.url===prefix+'patches/splatoon3/runtime/special-vfx.mjs'){res.setHeader('content-type','text/javascript');res.end(overlayCode);return;}
   if (req.url === '/check') {
     res.setHeader('content-type', 'text/html');
@@ -51,7 +57,7 @@ try {
   const servedHashes = {};
   if(inkjet) for(const file of ['patches/splatoon3/runtime/special-vfx.mjs','patches/splatoon3/runtime/inkjet-vfx-budget.mjs','patches/splatoon3/runtime/inkjet-vfx-clock.mjs']) {
     const response=await page.request.get(`http://127.0.0.1:${server.address().port}${prefix}${file}`);
-    assert.equal(response.status(),200);servedHashes[file]=hash(await response.body());assert.equal(servedHashes[file],overlayCode && file.endsWith('/special-vfx.mjs')?overlayReceipt.baselineEmittedSha256:hash(fs.readFileSync(path.join(site,prefix,file))),file+' served bytes');
+    assert.equal(response.status(),200);servedHashes[file]=hash(await response.body());assert.equal(servedHashes[file],overlayCode && file.endsWith('/special-vfx.mjs')?overlayReceipt.baselineEmittedSha256:budgetCode && file.endsWith('/inkjet-vfx-budget.mjs')?budgetReceipt.optimizedEmittedSha256:hash(fs.readFileSync(path.join(site,prefix,file))),file+' served bytes');
   }
   const result = await page.evaluate(async ({prefix,inkjet}) => {
     const THREE = await import('three');
@@ -170,7 +176,7 @@ try {
       const sorted=a=>[...a].sort((a,b)=>a-b);
       const stats=a=>{const q=sorted(a);return{mean:a.reduce((n,x)=>n+x,0)/a.length,p50:q[Math.floor(q.length*.5)],p95:q[Math.floor(q.length*.95)],max:q.at(-1)};};
       const gl=renderer.getContext(), debug=gl.getExtension('WEBGL_debug_renderer_info');
-      cases.push({hz,actorCount,layout,phaseBefore,phaseAfter,startupRng,rngBoundary,variant:inkjet.baseline?'baseline-overlay':'candidate',clock:{warmupSeconds:inkjet.warmupSeconds,sampleSeconds:inkjet.sampleSeconds,dt:1/hz,mode:'simulated fixed dt, not real display refresh'},seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG reset 0x12345678 after all asynchronous setup before synchronous activation',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,exhaustGlows,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
+      cases.push({hz,actorCount,layout,phaseBefore,phaseAfter,startupRng,rngBoundary,variant:inkjet.baseline?'baseline-overlay':inkjet.optimized?'optimized-budget-overlay':'candidate',clock:{warmupSeconds:inkjet.warmupSeconds,sampleSeconds:inkjet.sampleSeconds,dt:1/hz,mode:'simulated fixed dt, not real display refresh'},seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG reset 0x12345678 after all asynchronous setup before synchronous activation',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,exhaustGlows,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
       for(const a of actors)a.character.dispose();
       G.projectiles.list=[];G.projectiles.clear();G.fx.dispose();G.actors=[];G.fx=null;
     } else for (const fxMode of ['none', 'disabled', 'enabled']) for (const hz of [30, 60, 120]) {
