@@ -1128,7 +1128,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         q.stop=Infinity;
         const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
         let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
-        if(candidate.hit && (graze || bubble && candidate.normal.y>.35)){
+        if(candidate.hit && (graze || bubble && catalogBubbleSurfaceNormalY(candidate,G.physics?.level)>.35)){
           const core=collisionRadius(q.param,'Field',0,s.index,bounceScale);
           // The first step grows from the core radius itself (f0 === core), so
           // compare with the largest swept radius: a level swing born near the
