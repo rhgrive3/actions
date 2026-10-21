@@ -16,6 +16,14 @@ function diagnostic(){
 }
 test('capture admission guards reject incomplete or invalid evidence (no browser claim)',()=>{
  const generated=diagnostic();assert(generated);
+ const bindStart=generated.indexOf('if(tick===0&&expectedFrame){');
+ const bindEnd=generated.indexOf("if(pageErrors.length)throw Error('Native page errors: '",bindStart);
+ assert(bindStart>=0&&bindEnd>bindStart);
+ const bind=new Function('tick','expectedFrame','measurement',generated.slice(bindStart,bindEnd));
+ const m={palette:{colorblind:true,local:0xffd21a},physical:[{seed:.5}],preShot:{aimPoint:[0,1,10]}};
+ assert.doesNotThrow(()=>bind(0,{measurement:m},m));
+ assert.throws(()=>bind(0,{measurement:m},{...m,palette:{colorblind:false,local:123}}),/palette/);
+ assert.throws(()=>bind(0,{measurement:m},{...m,physical:[{seed:.6}]}),/physical/);
  const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
  assert.doesNotThrow(()=>new AsyncFunction(generated.replace(/^import .*;\n/gm,'')));
  const validate=new Function('captures','preflight',wrapper.slice(wrapper.indexOf('const expected=new Set')));

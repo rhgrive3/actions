@@ -11,6 +11,10 @@ if(!siteArg||!outArg||!/^[a-f0-9]{40}$/.test(sourceSha||''))throw Error('Usage: 
 const root=fileURLToPath(new URL('../',import.meta.url)),site=path.resolve(siteArg),out=path.resolve(outArg);
 const sourceRoot=sourceRootArg?path.resolve(sourceRootArg):root;
 const preflight=process.env.EXPLOSHER_PREFLIGHT==='1';
+const expectedPath=process.env.EXPLOSHER_EXPECT_PREFLIGHT;
+const expectedText=expectedPath?fs.readFileSync(expectedPath,'utf8'):null;
+const expectedFrame=expectedText?JSON.parse(expectedText)[0]:null;
+if(expectedFrame&&(expectedFrame.tick!==0||expectedFrame.view!=='behind'))throw Error('Invalid preflight binding');
 // Receipt identity comes from the checkout, not the caller's label.
 const git=(args)=>{const r=spawnSync('git',['-C',sourceRoot,...args],{encoding:'utf8'});if(r.status!==0)throw Error('Cannot establish checkout identity');return r.stdout;};
 const actualSourceSha=git(['rev-parse','HEAD']).trim();
@@ -23,6 +27,8 @@ const originalHash=hash(driver);
 driver=driver.replace(/^#!.*\n/,'');
 driver=once(driver,"from 'playwright'","from "+JSON.stringify(import.meta.resolve('playwright')));
 driver=once(driver,"  await page.goto(base + '/?range&skipTitle');",`  await page.addInitScript(() => {
+    // Normal game accessibility palette selection in this isolated diagnostic browser.
+    localStorage.setItem('inkwave.settings',JSON.stringify({colorblind:true}));
     window.resetExplosherRandom = () => { let n=0x515e7021;Math.random=()=>{n^=n<<13;n^=n>>>17;n^=n<<5;return(n>>>0)/4294967296;}; };
     window.resetExplosherRandom();
   });
@@ -90,7 +96,10 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
           if(initial!==physical()||pos!==buffers?.sparkPos.array||size!==buffers?.sparkSize.array)throw Error('draw changes physics or replaces sparkle buffers');
           r.info.reset();const t=performance.now();g.R.render();const submitMs=performance.now()-t;
           const lighting=[];g.R.scene.traverse(o=>{if(o.isLight)lighting.push({type:o.type,color:o.color?.getHex(),intensity:o.intensity,position:o.position.toArray()});});
-          return {preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
+          const palette={colorblind:G.settings.colorblind,teamHex:[...G.teamHex],teamColors:G.teamColors.map(c=>c.getHex()),local:a=>a.color.getHex()};
+          const paletteReceipt={...palette,local:palette.local(G.local)};
+          if(paletteReceipt.colorblind!==true||paletteReceipt.local!==0xffd21a)throw Error('Native fixed palette was not applied');
+          return {palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
             time:G.time,inkHex:G.local.color.getHex(),render:{...r.info.render},memory:{...r.info.memory},
             sparkles:G.projectiles.s3ShapeCounts?.sparkles??0,drawCpuMs:drawMs,renderSubmitMs:submitMs,
             gpuTimerMs:null,gpuTimerStatus:'not measured; submit CPU time is not GPU time',
@@ -137,8 +146,18 @@ if(preflight){
   driver=once(driver,'for(let j=0;j<200;j++)G.projectiles._draw();','for(let j=0;j<1;j++)G.projectiles._draw();');
   driver=once(driver,'const drawMs=(performance.now()-start)/200;','const drawMs=(performance.now()-start);');
 }
+
+driver="const expectedFrame="+JSON.stringify(expectedFrame)+";\n"+driver;
+driver=once(driver,"        if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));",`        if(tick===0&&expectedFrame){
+          for(const k of ['aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport'])
+            if(JSON.stringify(measurement[k])!==JSON.stringify(expectedFrame.measurement[k]))throw Error('Full-capture frame0 differs from preflight: '+k);
+          for(const k of ['aimPoint','aimDir','aimYaw','aimPitch','characterTime'])
+            if(JSON.stringify(measurement.preShot[k])!==JSON.stringify(expectedFrame.measurement.preShot[k]))throw Error('Full-capture preShot differs: '+k);
+        }
+        if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));`);
+
 const copy=path.join(out,'native-capture-driver.mjs');fs.writeFileSync(copy,driver);
-const receipt={sourceSha,actualSourceSha,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
+const receipt={sourceSha,actualSourceSha,preflightBindingSha256:expectedText?hash(expectedText):null,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
   nativeResetHelperSha256:hash(nativeReset),
   sourceShapeSha256:hash(fs.readFileSync(path.join(sourceRoot,'patches/splatoon3/runtime/s3-projectile-shapes.mjs'))),
   emittedShapes:emitted,seed:0x515e7021,

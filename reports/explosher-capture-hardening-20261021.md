@@ -71,3 +71,9 @@ One-frame preflights must first pass exact trace/physics/camera equality before 
 Run 39628749184 stopped at the short preflight, before long captures. Its actual normal _aimFrom trace proved equal muzzle/seed/direction intent but a differing aimPoint.x. All recorded active springs matched; the remaining camera position offset comes from CameraRig._follow's shoulder damping, which follow(actor,true) does not reset.
 The diagnostic initializes shoulder to the native first-follow effective value (undefined || 0) on both sides before fixed stepping and records that initial value. This is not a production camera change or post-hoc rounding. Strict effective pre-shot, aim-trace and physical equality remain required.
 Whole-scene triangle/geometry counts differed between the rejected pair (startup/render history was unequal). They are not reported as a glitter cost improvement or pass.
+
+## Full-capture binding and normal palette input
+Run 39635232430 passed its strict preflight, then generated both full sets. Final comparison failed inkHex (15917842 versus 16747028), so no total 36-frame physical/resource pass is claimed.
+Both isolated diagnostic browsers now select the game's existing colorblind accessibility palette through inkwave.settings before native initialization, matching the existing projectile evaluator's #ffd21a check. No Character/material/model color is overwritten after boot.
+Each full capture must match its saved preflight at tick 0 for real physical state, aim trace, camera, palette, clock and scene-light/viewport inputs before further screenshots. Palette/physical mismatch negative cases reject. The saved preflight content hash is recorded.
+Video remains dependent on a successful complete strict pair and actual visual review.
