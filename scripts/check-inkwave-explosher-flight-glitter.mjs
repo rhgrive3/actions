@@ -25,6 +25,9 @@ if(actualSourceSha!==sourceSha)throw Error('Requested SHA does not match checkou
 fs.mkdirSync(out,{recursive:true});
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const once=(s,a,b)=>{if(s.split(a).length!==2)throw Error('capture anchor mismatch: '+a);return s.replace(a,b);};
+const controlledPath=process.env.EXPLOSHER_CONTROLLED_MAIN;
+const controlled=controlledPath?JSON.parse(fs.readFileSync(controlledPath,'utf8')):null;
+if(controlled&&(controlled.controlledInitialCondition!==true||controlled.naturalBootAccepted!==false||controlled.site!==site||controlled.sourceRoot!==sourceRoot||hash(fs.readFileSync(controlled.file))!==controlled.transformedEmittedSha256))throw Error('Invalid controlled main provenance');
 const rangeEntryUrl=new URL('./lib/inkwave-range-menu-entry.mjs',import.meta.url).href;
 let driver=fs.readFileSync(path.join(root,'scripts/render-inkwave-projectile-shapes.mjs'),'utf8');
 const originalHash=hash(driver);
@@ -202,12 +205,35 @@ driver=once(driver,"        if(pageErrors.length)throw Error('Native page errors
         }
         if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));`);
 
+if(controlled){
+  if(controlled.buildContentHash!==build.contentHash||controlled.paths.length!==2||controlled.paths[0]!=='src/main.js'||controlled.paths[1]!=='_versions/'+build.build.revision+'/src/main.js')throw Error('Controlled module build/path mismatch');
+  for(const p of controlled.paths)if(build.artifacts[p]!==controlled.originalEmittedSha256||hash(fs.readFileSync(path.join(site,p)))!==controlled.originalEmittedSha256)throw Error('Controlled original main mismatch');
+  driver=once(driver,"  const file = path.resolve(site, u === '/' ? 'index.html' : '.' + decodeURIComponent(u));",`  if(${JSON.stringify(controlled.paths.map(p=>'/'+p))}.includes(u)){
+    res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});fs.createReadStream(${JSON.stringify(controlled.file)}).pipe(res);return;
+  }
+  const file = path.resolve(site, u === '/' ? 'index.html' : '.' + decodeURIComponent(u));`);
+  driver=once(driver,'let browser;', 'const servedControlledMain=[],pendingControlledMain=new Set(),controlledMainErrors=[];\nlet browser;');
+  driver=once(driver,'  page.setDefaultTimeout(240000);',`  page.setDefaultTimeout(240000);
+  page.on('response',res=>{
+    if(!${JSON.stringify(controlled.paths.map(p=>'/'+p))}.includes(new URL(res.url()).pathname))return;
+    const p=res.body().then(body=>servedControlledMain.push({url:res.url(),sha256:crypto.createHash('sha256').update(body).digest('hex')})).catch(e=>controlledMainErrors.push(String(e)));
+    pendingControlledMain.add(p);p.finally(()=>pendingControlledMain.delete(p));
+  });`);
+  driver=once(driver,'  await enterRangeFromMenu(page,base);',`  await enterRangeFromMenu(page,base);
+  await Promise.all([...pendingControlledMain]);
+  fs.writeFileSync(path.join(out,'served-controlled-main.json'),JSON.stringify({responses:servedControlledMain,errors:controlledMainErrors},null,2));
+  if(controlledMainErrors.length||!servedControlledMain.length||servedControlledMain.some(r=>r.sha256!==${JSON.stringify(controlled.transformedEmittedSha256)}))throw Error('Consumed controlled main mismatch');
+  const startup=await page.evaluate(()=>globalThis.__inkwaveExplosherControlledStartup);
+  if(!startup?.controlledInitialCondition||startup.naturalBootAccepted!==false)throw Error('Controlled boot did not complete');
+  fs.writeFileSync(path.join(out,'controlled-startup.json'),JSON.stringify(startup,null,2));`);
+  driver=once(driver,'return {rngDiagnostic:', 'return {controlledStartup:globalThis.__inkwaveExplosherControlledStartup,rngDiagnostic:');
+}
 const copy=path.join(out,'native-capture-driver.mjs');fs.writeFileSync(copy,driver);
-const receipt={sourceSha,actualSourceSha,nativeDummy:{path:dummyPath,sha256:dummySha},preflightBindingSha256:expectedText?hash(expectedText):null,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
+const receipt={controlledMain:controlled,sourceSha,actualSourceSha,nativeDummy:{path:dummyPath,sha256:dummySha},preflightBindingSha256:expectedText?hash(expectedText):null,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
   nativeResetHelperSha256:hash(nativeReset),
   sourceShapeSha256:hash(fs.readFileSync(path.join(sourceRoot,'patches/splatoon3/runtime/s3-projectile-shapes.mjs'))),
   emittedShapes:emitted,seed:0x515e7021,
-  boundaries:['Real emitted game and native renderer; fixed range input.','No historical source/character rewrite.','Only flight glitter changes; muzzle/impact, hit/paint/speed unchanged.','Render CPU and resource counts measured; GPU elapsed time and allocations not measured.']};
+  boundaries:['Real emitted game and native renderer; fixed range input.',controlled?'QA-only awaited native volume readiness in main; no Character rewrite.':'No historical source/character rewrite.','Only flight glitter changes; muzzle/impact, hit/paint/speed unchanged.','Render CPU and resource counts measured; GPU elapsed time and allocations not measured.']};
 fs.writeFileSync(path.join(out,'source-receipt.json'),JSON.stringify(receipt,null,2));
 const run=spawnSync(process.execPath,[copy,site,out,'s3-slosher-washtub'],{stdio:'inherit',env:{...process.env,TICKS:preflight?'0':'0,3,8,14,22,30',VIEWS:preflight?'behind':'behind,tele-side,tele-oblique'}});
 if(run.status!==0)process.exit(run.status||1);

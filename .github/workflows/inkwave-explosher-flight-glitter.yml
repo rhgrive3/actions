@@ -5,6 +5,9 @@ on:
       - 'patches/splatoon3/runtime/s3-projectile-shapes.mjs'
       - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
       - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
+      - 'scripts/compile-inkwave-explosher-controlled-main.mjs'
+      - 'scripts/lib/inkwave-explosher-volume-barrier.mjs'
+      - 'patches/splatoon3/tests/explosher-volume-barrier.test.mjs'
       - 'scripts/lib/inkwave-explosher-scene-census.mjs'
       - 'scripts/lib/inkwave-explosher-startup.mjs'
       - 'scripts/lib/inkwave-explosher-capture-surface.mjs'
@@ -37,15 +40,19 @@ jobs:
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - run: npx playwright install --with-deps chromium
       - name: Native production-composition regressions
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/s3-projectile-shapes.test.mjs patches/splatoon3/tests/explosher-flight-glitter.test.mjs patches/splatoon3/tests/explosher-capture-guards.test.mjs patches/splatoon3/tests/explosher-rng-trace.test.mjs patches/splatoon3/tests/explosher-capture-surface.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/s3-projectile-shapes.test.mjs patches/splatoon3/tests/explosher-flight-glitter.test.mjs patches/splatoon3/tests/explosher-volume-barrier.test.mjs patches/splatoon3/tests/explosher-capture-guards.test.mjs patches/splatoon3/tests/explosher-rng-trace.test.mjs patches/splatoon3/tests/explosher-capture-surface.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs
       - name: Build untouched base and candidate
         run: |
           node .ci-explosher-base/scripts/build-inkwave.mjs .ci-explosher-base/inkwave-public .built-site/explosher-before
           node scripts/build-inkwave.mjs inkwave-public .built-site/explosher-after
-      - name: Short native preflight before long capture
+      - name: Verify and compile controlled readiness main only
         run: |
-          EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/preflight-before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
-          EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-after .ci-scratch/explosher/preflight-after "${{ github.event.pull_request.head.sha }}" .
+          node scripts/compile-inkwave-explosher-controlled-main.mjs .ci-explosher-base .built-site/explosher-before .ci-scratch/explosher/control-before
+          node scripts/compile-inkwave-explosher-controlled-main.mjs . .built-site/explosher-after .ci-scratch/explosher/control-after
+      - name: Short controlled native preflight before long capture
+        run: |
+          EXPLOSHER_CONTROLLED_MAIN=.ci-scratch/explosher/control-before/controlled-main-receipt.json EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/preflight-before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
+          EXPLOSHER_CONTROLLED_MAIN=.ci-scratch/explosher/control-after/controlled-main-receipt.json EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-after .ci-scratch/explosher/preflight-after "${{ github.event.pull_request.head.sha }}" .
           node --input-type=module <<'NODE'
           import fs from 'node:fs';import assert from 'node:assert/strict';
           const read=s=>JSON.parse(fs.readFileSync('.ci-scratch/explosher/preflight-'+s+'/manifest.json'));
@@ -55,7 +62,9 @@ jobs:
           for(const k of ['aimPoint','aimDir','aimYaw','aimPitch','characterTime'])check('preShot '+k,b[0].measurement.preShot[k],a[0].measurement.preShot[k]);
           const effectiveRig=r=>({...r,blend:r.blend?.active?r.blend:null,superJumpLandTime:r.superJumpLandTime<.45?r.superJumpLandTime:null});
           check('effective preShot rig',effectiveRig(b[0].measurement.preShot.rig),effectiveRig(a[0].measurement.preShot.rig));
-          const diagnostic={diagnosticOnly:true,fullPairAccepted:false,mismatches,before:a[0].measurement.rngDiagnostic,after:b[0].measurement.rngDiagnostic};
+          const {requireControlledStartupPair}=await import('./scripts/lib/inkwave-explosher-volume-barrier.mjs');
+          let controlledBoundary;try{controlledBoundary=requireControlledStartupPair(a[0].measurement.controlledStartup,b[0].measurement.controlledStartup);}catch(error){mismatches.push('controlled startup boundary: '+String(error));}
+          const diagnostic={controlledInitialCondition:true,naturalBootAccepted:false,controlledBoundary,diagnosticOnly:true,fullPairAccepted:false,mismatches,before:a[0].measurement.rngDiagnostic,after:b[0].measurement.rngDiagnostic};
           fs.writeFileSync('.ci-scratch/explosher/preflight-diagnostic.json',JSON.stringify(diagnostic,null,2));
           console.log('EXPLOSHER_PREFLIGHT_DIAGNOSTIC '+JSON.stringify(diagnostic));
           assert.equal(mismatches.length,0,'Every preflight state must agree');

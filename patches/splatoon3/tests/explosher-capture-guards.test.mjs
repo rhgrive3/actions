@@ -7,14 +7,15 @@ import { readExplosherSceneClocks, requireExplosherStyle, installExplosherEarlyF
 const wrapper=fs.readFileSync(new URL('../../../scripts/check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');
 const nativeResetSource=fs.readFileSync(new URL('../../../scripts/check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
 const driver=fs.readFileSync(new URL('../../../scripts/render-inkwave-projectile-shapes.mjs',import.meta.url),'utf8');
-function diagnostic(){
+function diagnostic(controlledMode=false,mutate=null){
  const saved={},sha='a'.repeat(40);
- const fakeFs={mkdirSync(){},readFileSync(p){if(p.endsWith('check-inkwave-projectile-visuals.mjs'))return nativeResetSource;if(p.endsWith('render-inkwave-projectile-shapes.mjs'))return driver;if(p.endsWith('inkwave-build.json'))return JSON.stringify({build:{revision:'test'},artifacts:{'patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash','_versions/test/patches/practice-range/runtime/dummy.mjs':'hash'},contentHash:'hash'});if(p.endsWith('manifest.json'))return '[]';return 'source';},writeFileSync(p,v){saved[p]=v;}};
+ const control={controlledInitialCondition:true,naturalBootAccepted:false,site:'site',sourceRoot:'root',file:'controlled.js',transformedEmittedSha256:'hash',originalEmittedSha256:'hash',buildContentHash:'hash',paths:['src/main.js','_versions/test/src/main.js']};if(mutate)mutate(control);
+ const fakeFs={mkdirSync(){},readFileSync(p){if(p==='control.json')return JSON.stringify(control);if(p.endsWith('check-inkwave-projectile-visuals.mjs'))return nativeResetSource;if(p.endsWith('render-inkwave-projectile-shapes.mjs'))return driver;if(p.endsWith('inkwave-build.json'))return JSON.stringify({build:{revision:'test'},artifacts:{'src/main.js':'hash','_versions/test/src/main.js':'hash','patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash','_versions/test/patches/practice-range/runtime/dummy.mjs':'hash'},contentHash:'hash'});if(p.endsWith('manifest.json'))return '[]';return 'source';},writeFileSync(p,v){saved[p]=v;}};
  const path={resolve:x=>x,join:(...a)=>a.join('/')},crypto={createHash(){return {update(){return this;},digest(){return 'hash';}}}};
- const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{},exit(){}};
+ const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:controlledMode?{EXPLOSHER_CONTROLLED_MAIN:'control.json'}:{},exit(){}};
  const spawn=(bin,args)=>bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0};
  const code=wrapper.replace(/^#!.*\n/,'').replace(/^import .*;\n/gm,'').replace(/import\.meta\.url/g,"'file:///tmp/x'").replace(/import\.meta\.resolve\('playwright'\)/g,"'playwright'");
- assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady),/Wrong native capture count/);
+ assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady),mutate? /controlled|Controlled/: /Wrong native capture count/);
  return saved['out/native-capture-driver.mjs'];
 }
 test('capture admission guards reject incomplete or invalid evidence (no browser claim)',()=>{
@@ -194,4 +195,15 @@ test('generated driver preserves ordinary UI and binds the renderer canvas',()=>
  assert(generated.includes('window.explosherSurfaceReady(window.readExplosherCaptureSurface())'));
  assert(generated.includes('Native scene clocks advanced while awaiting ordinary UI completion'));
  assert(generated.includes('normal-ui-entry.png')&&generated.includes('normal-ui-after-wait.png'));
+});
+
+test('controlled module integration retains unique native server and consumes exact response body proof',()=>{
+ const generated=diagnostic(true);assert(generated);
+ const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+ assert.doesNotThrow(()=>new AsyncFunction(generated.replace(/^import .*;\n/gm,'')));
+ assert(generated.includes("['not present']")===false);
+ assert(generated.includes('Consumed controlled main mismatch'));assert(generated.includes('served-controlled-main.json'));
+ assert(generated.includes('controlledStartup:globalThis.__inkwaveExplosherControlledStartup'));
+ assert(generated.includes('controlled-startup.json'));assert(generated.includes("res.body().then(body=>servedControlledMain"));
+ for(const change of [c=>c.naturalBootAccepted=true,c=>c.sourceRoot='other',c=>c.site='other',c=>c.buildContentHash='wrong',c=>c.originalEmittedSha256='wrong',c=>c.transformedEmittedSha256='wrong',c=>c.paths[1]='unrelated/main.js'])diagnostic(true,change);
 });
