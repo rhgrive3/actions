@@ -513,13 +513,22 @@ export function drawS3Shapes(system, THREE, G) {
       const n = S3_SHAPE.explosher.sparkles, rad = S3_SHAPE.explosher.radius;
       for (let i = 0; i < n && nk < MAX_SPARK; i++) {
         const seed = (p.seed || 0) * 91.7 + i * 3.17;
-        const a = hash(seed, 1) * 6.2832, b = Math.acos(2 * hash(seed, 2) - 1);
-        const d = rad * (1.2 + 2.2 * hash(seed, 3)) + 0.35 * fract(p.age * (0.8 + hash(seed, 5)) + hash(seed, 6));
-        v.set(Math.sin(b) * Math.cos(a + p.age * 3), Math.cos(b), Math.sin(b) * Math.sin(a + p.age * 3)).multiplyScalar(d);
-        v.addScaledVector(f, -0.35 * hash(seed, 7) * Math.min(1, sp * 0.05)).add(p.pos);
+        // Presentation calibration, not recovered effect data: a tight uneven
+        // glitter cloud sheds short trailing/falling flecks. Do not orbit an
+        // expanding spherical halo around the projectile. All 28 points still
+        // use the existing batch; simulation and gameplay droplets are untouched.
+        const a = hash(seed, 1) * 6.2832, y = 2 * hash(seed, 2) - 1;
+        const ring = Math.sqrt(Math.max(0, 1 - y * y));
+        const phase = fract(p.age * (1.8 + hash(seed, 5)) + hash(seed, 6));
+        const shed = Math.min(p.age * 3, phase);
+        const d = rad * (0.9 + 0.8 * hash(seed, 3));
+        v.set(ring * Math.cos(a), y, ring * Math.sin(a)).multiplyScalar(d);
+        v.addScaledVector(f, -shed * 0.55 * Math.min(1, sp * 0.05));
+        v.y -= shed * shed * (0.35 + 0.3 * hash(seed, 7));
+        v.add(p.pos);
         sparkPos.array[nk * 3] = v.x; sparkPos.array[nk * 3 + 1] = v.y; sparkPos.array[nk * 3 + 2] = v.z;
         const tw = 0.5 + 0.5 * Math.sin(p.age * 30 + seed * 10);
-        sparkSize.array[nk] = 0.07 + 0.09 * tw * hash(seed, 8);
+        sparkSize.array[nk] = (0.04 + 0.07 * tw * hash(seed, 8)) * (1 - 0.6 * shed);
         nk++;
       }
     }

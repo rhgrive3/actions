@@ -1,0 +1,65 @@
+name: INKWAVE Explosher flight glitter
+on:
+  pull_request:
+    paths:
+      - 'patches/splatoon3/runtime/s3-projectile-shapes.mjs'
+      - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
+      - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
+      - '.github/workflows/inkwave-explosher-flight-glitter.yml'
+permissions:
+  contents: read
+concurrency:
+  group: explosher-glitter-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  native-pair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .ci-explosher-base
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+      - run: npx playwright install --with-deps chromium
+      - name: Native production-composition regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/s3-projectile-shapes.test.mjs patches/splatoon3/tests/explosher-flight-glitter.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs
+      - name: Build untouched base and candidate
+        run: |
+          node .ci-explosher-base/scripts/build-inkwave.mjs .ci-explosher-base/inkwave-public .built-site/explosher-before
+          node scripts/build-inkwave.mjs inkwave-public .built-site/explosher-after
+      - name: Capture untouched base with the same Explosher driver
+        run: node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
+      - name: Capture exact candidate
+        run: node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-after .ci-scratch/explosher/after "${{ github.event.pull_request.head.sha }}" .
+      - name: Compare equal physical states and bounded render resources
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const read=s=>JSON.parse(fs.readFileSync('.ci-scratch/explosher/'+s+'/manifest.json'));
+          const before=read('before'),after=read('after');
+          assert.equal(before.length,18);assert.equal(after.length,18);
+          for(let i=0;i<before.length;i++){
+            const a=before[i],b=after[i];assert.deepEqual([a.tick,a.view],[b.tick,b.view]);
+            for(const k of ['physical','camera','inkHex','time','sparkles','lighting','viewport'])assert.deepEqual(b.measurement[k],a.measurement[k],k);
+            for(const k of ['calls','triangles','points','lines'])assert(b.measurement.render[k]<=a.measurement.render[k],k);
+            for(const k of ['geometries','textures'])assert(b.measurement.memory[k]<=a.measurement.memory[k],k);
+          }
+          fs.writeFileSync('.ci-scratch/explosher/paired.json',JSON.stringify({status:'physical-and-resource-gates-passed',captures:18,cpu:after.map((b,i)=>({tick:b.tick,view:b.view,before:before[i].measurement.drawCpuMs,after:b.measurement.drawCpuMs})),visualReview:'pending',gpuElapsed:'not measured'},null,2));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: explosher-native-pair-${{ github.event.pull_request.head.sha }}
+          path: .ci-scratch/explosher/
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 0
