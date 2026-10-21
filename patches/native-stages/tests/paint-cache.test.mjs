@@ -1,9 +1,9 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {adaptNativeStages} from '../adapter.mjs';
-import {nativePieceHasInterior,nativeAncillaryCanClaim} from '../runtime/native-paint.mjs';
+import {nativePieceHasInterior,nativeAncillaryCanClaim,nativeAncillaryMaskFind,nativeAncillaryMaskStore,nativeSettledAncillarySlot,nativeSettledAncillaryMatches,nativeStoreSettledAncillary} from '../runtime/native-paint.mjs';
 const source=fs.readFileSync(new URL('../../splatoon3/runtime/paint-ownership.mjs',import.meta.url),'utf8');
 const moduleFor=source=>import('data:text/javascript;base64,'+Buffer.from(source+'\nexport {claimAncillaryCells,ensureOwnershipState};').toString('base64'));
-const [control,subject]=await Promise.all([moduleFor(source),moduleFor(adaptNativeStages('patches/splatoon3/runtime/paint-ownership.mjs',source).replace(/import .*native-paint.*;\n/, nativePieceHasInterior.toString()+'\n'+nativeAncillaryCanClaim.toString()+'\n'))]);
+const [control,subject]=await Promise.all([moduleFor(source),moduleFor(adaptNativeStages('patches/splatoon3/runtime/paint-ownership.mjs',source).replace(/import .*native-paint.*;\n/, nativePieceHasInterior.toString()+'\n'+nativeAncillaryCanClaim.toString()+'\n'+nativeAncillaryMaskFind.toString()+'\n'+nativeAncillaryMaskStore.toString()+'\n'+nativeSettledAncillarySlot.toString()+'\n'+nativeSettledAncillaryMatches.toString()+'\n'+nativeStoreSettledAncillary.toString()+'\n'))]);
 const contract={kind:{speck:7},shapes:[[5,7,8,3],[3,4,5,2],[7,9,10,4],[10,12,14,5],[3,4,4,2],[2,2,0,1],[0,0,0,0],[0,0,0,0]],reach:[2.45,2.1,2.7,2.75,2.3,1.9,1.25,1.35],dripReach:3.9};
 const make=()=>({level:{native:true},grid:new Uint8Array(6400),dead:new Uint8Array(6400),counts:[0,0],version:0});
 test('shared native plane masks preserve every live CPU ink claim and causal order',()=>{

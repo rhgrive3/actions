@@ -238,12 +238,35 @@ const NATIVE_SUB_CONTACT_SOURCE_PAIR = Object.freeze({
     })
   })
 });
+// #1165 Roller CPU/GPU band parity is independent of historical projectile
+// baseline restoration. Pin ALL 13 current source blobs for this exact
+// build-only composition change; no wildcard SHA or ancestor fallback is allowed.
+// This tuple admits source identity only, not evidence of browser shader parity.
+const ROLLER_BAND_SOURCE_PAIR = Object.freeze({
+  baseCommit: 'ad4cc54cf5fbba65635ec0929a1da901c8c619db',
+  candidateCommit: '4d0b6abe12338618f3f5b33dfcd7556f8f08b5d6',
+  blobs: Object.freeze({
+    "patches/network-replication/adapter.mjs": {base: '568751962952112f989a4ee61d0516d5d4848f70', candidate: '568751962952112f989a4ee61d0516d5d4848f70'},
+    "patches/network-replication/slosher-paint-admission.mjs": {base: '835ec49ce61f4d623a97f0cdb38fdcb8c592b916', candidate: '835ec49ce61f4d623a97f0cdb38fdcb8c592b916'},
+    "patches/splatoon3/main-ink-footprint-adapter.mjs": {base: 'cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c', candidate: 'cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c'},
+    "patches/splatoon3/runtime/blaster-flight-paint.mjs": {base: '629e9a0eb0f7ea67bf27d756bf3f46273396791c', candidate: '629e9a0eb0f7ea67bf27d756bf3f46273396791c'},
+    "patches/splatoon3/runtime/main-ink-footprints.mjs": {base: '546c48ae0c1b30d669de3756350f20c7e82dfe4e', candidate: '546c48ae0c1b30d669de3756350f20c7e82dfe4e'},
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": {base: 'c497f05551b8407c64ba5dc1b32f11df4badccbd', candidate: 'c497f05551b8407c64ba5dc1b32f11df4badccbd'},
+    "patches/splatoon3/runtime/paint-packet-codec.mjs": {base: 'c5e6f71cddc6d9caba22f687a77869604fced80e', candidate: 'c5e6f71cddc6d9caba22f687a77869604fced80e'},
+    "patches/splatoon3/runtime/slosher-intermediate-paint.mjs": {base: '9914ddcef5472e6314dd9a02ba6f0996ccfd3f05', candidate: '9914ddcef5472e6314dd9a02ba6f0996ccfd3f05'},
+    "patches/splatoon3/runtime/slosher-nearest-paint.mjs": {base: '948517797c8a2de11278e2f96bf324ab80a22aa6', candidate: '948517797c8a2de11278e2f96bf324ab80a22aa6'},
+    "patches/splatoon3/runtime/weapon-edgecases.mjs": {base: 'ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110', candidate: 'ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110'},
+    "patches/splatoon3/runtime/weapons-fidelity.mjs": {base: 'a37fa779835a2a17e24c5bed3c601a56269bfec3', candidate: 'a37fa779835a2a17e24c5bed3c601a56269bfec3'},
+    "scripts/inkwave-source-composition.mjs": {base: '62d5ce2e1c729bd57dfc2372f668a76fe1c7c38a', candidate: '33a535481402bae5e846870bed2ee7e76ef9b298'},
+    "scripts/lib/inkwave-build-only-modules.mjs": {base: '2b9ea41557f2af7409d17310f392456e04b11134', candidate: '2b9ea41557f2af7409d17310f392456e04b11134'},
+  })
+});
 function reviewedCurrentPair(baseline, candidate) {
   const present = path => typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string';
   const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
     sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate);
-  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR].find(pair =>
+  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR].find(pair =>
     MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
       gitBlobSha1(baseline.get(path)) === pair.blobs[path].base &&
       gitBlobSha1(candidate.get(path)) === pair.blobs[path].candidate));
