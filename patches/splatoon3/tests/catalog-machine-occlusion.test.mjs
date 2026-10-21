@@ -5,7 +5,11 @@ import {FixedClock} from '../runtime/clock.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 
 async function shot({wall=false,grate=false,height=4,enemyX=.9,ghost=false,native=false,hz=60}={}){
-  const f=await fixture({fullRuntime:true,realProjectiles:true,productionComposition:true,adaptRuntime:adaptBuildSource,
+  // In the emitted-site lane every patch module already contains its final
+  // build-time transforms. Applying them again fails their exact-anchor guards
+  // and is not a valid gameplay negative control.
+  const runtimeAdapter=process.env.INKWAVE_BUILT_SITE ? (_rel,source)=>source : adaptBuildSource;
+  const f=await fixture({fullRuntime:true,realProjectiles:true,productionComposition:true,adaptRuntime:runtimeAdapter,
     extraExports:`export {installMainWeaponCatalogRuntime, releaseCatalogBirth} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';
       export {NativeLevel,NativePhysics} from './patches/native-stages/runtime/engine.mjs';`});
   f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
