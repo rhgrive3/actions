@@ -5439,3 +5439,20 @@ CIのAP57ブラウザフィクスチャも、session.matchのNetMatch所有権�
 ## 2026-10-21: reported squid/weapon/audio/sub regressions
 
 See [regression analysis and evidence](weapon-regressions-20261021/README.md). Fixed the dry squid's constant 0.52-rad pitch, the finite Charger's fivefold width reduction and lost charged-hit metadata, and the legacy scope's NaN cooldown/missing sound alias. Standard Splatling charge/stream now preserve source MP3 pitch and START prepares charged articulations. Reduced Blaster contacts choose ordinary damage audio. All main models stow for sub aim/recovery; Burst Bomb and its preview share a hand-origin flight law. Roller mesh dimensions are normalized to the host player's stature, separately from gameplay distance units. Trizooka uses a common launch axis and volley-time orbit, 20F activation, 15F initial shot windup and 55F repeats. The report states source versions, reproducible conditions and the remaining retail/device verification boundary.
+
+## 2026-10-21: 読込済みソースモーションでの通常ジャンプ・被弾クリップの実選択（#1116・#1097）
+
+**前提の訂正。** 本番はソースモーション（Wii U `Player00`/`Player01` バンク、`inkwave-public/assets/source-motion/`）を読み込むと、`HumanRetarget.apply` が腰・脚を常に、`sourceUpper` の間は胴・首・頭・腕も上書きする。カタログの全ブキ（ローラー・スロッシャー・フデも `weaponSourceBody='Nrml'`）でソースが有効になる。既存の `jump-motion.test.mjs`・`issue-1097-hit-reaction.test.mjs` は動的 import の無い VM（ソース未読込のネイティブ代替リグ）で測っており、本番の見え方とは別物だった。読込済みの実 Actor/Character（`source-loaded-actor-fixture.mjs`）で次を確認した。
+
+- `jump-motion.mjs` の脚校正：shooter / splatling / roller / slosher とも有効・無効で空中の足ボーン差 0 m（ソースのジャンプクリップが脚を所有）。ソース未読込時だけ効く。
+- 実際に再生される通常ジャンプ（60 Hz、非射撃、静止から）：shooter・blaster・charger・dualies・roller・slosher は `Jump_Nrml00_St → Jump_Nrml00 → Jump_Nrml00_Ed`（バンクに `Jump_Chrg00`・Dualies 系は無い。ローラー・スロッシャーはオーナー指定の `Nrml` ソース体）。スプラッシュ系スピナーだけ固有の `Jump_Glng00` 系。
+- 被弾：ソースが上半身を持つ shooter・blaster・charger・splatling は全種同じ汎用 `Damage`（20F 単発）を各ブキの `WaitHold_*` に重ねるだけで、`weapon-hit-reaction.mjs` の種別別チャンネル補正は描画ボーンに届かない（有効・無効の差は最大 7.8e-16、浮動小数の誤差）。roller・dualies・slosher（ネイティブ上半身）では補正が見える。
+
+| 項目 | 本家の根拠 | INKWAVE 実装箇所 | 再現操作 | プレイへの影響 | 確認状態 |
+| --- | --- | --- | --- | --- | --- |
+| スピナーの踏み切り | S3 の公開名にも `Jump_Spnr00` があり、ブキ種別の通常ジャンプは別資源（Flexlion `7740d29f`）。曲線は Wii U バンクの `Jump_Glng00` 系 | Player00 バンクは開始クリップを `Jump_Glngl00_St`（綴り違い、Player01 は `Jump_Glng00_St`）としか持たず、`${jumpBase}_St` 参照が外れて 5F の踏み切りを飛ばしていた。`patches/splatoon3/adapter.mjs` でその名前だけを補う | スプラッシュ系スピナーで静止からジャンプ | 踏み切りの5Fが再生され、本体クリップへ連続する（`Jump_Glngl00_St` 末尾と `Jump_Glng00` 先頭の差 0.002 ソース単位。`Jump_Nrml00_St` からは 2.27 平均・7.7 最大。踏み切り〜頂点の腰・頭・足・右手の最大移動量は 30/60/120 Hz で 0.387/0.200/0.106 → 0.351/0.196/0.102 m/tick） | ロジック（CPU、30/60/120 Hz）で確認。本家の踏み切りの見え方は未確認 |
+| `_St` → 本体の切替でのポーズ戻り | なし（ホスト側の補間の不具合） | 同じ `air` 状態の間にクロスフェード長を毎ティックのクリップから取り直していたため、切替時に 0.042 s → 0.12 s に伸び、終わった踏み切りの補間が再開して地上の待機姿勢を 22% 混ぜ戻していた（全ブキ）。状態に入った時の長さを保持 | 任意のブキで静止からジャンプし、空中 0.083 s 前後を見る | 2ティックの姿勢の戻り（shooter のソース姿勢で 30 Hz 0.47、60/120 Hz 1.37 単位）が消え、補間終了後のソース姿勢はクリップの値と一致する | ロジック（CPU、30/60/120 Hz、修正前の合成との比較）で確認 |
+| ローラー・スロッシャーの固有ジャンプ | バンクに `Jump_Rllr00`・`Jump_BBll00`（_St/_Ed 付き）がある | 未変更。`Rllr`/`BBll` の地上クリップはオーナー判断で `Nrml` に置き換え済み（2026-10-18、本家映像と姿勢が合わない）。固有ジャンプの着地 `_Ed` 末尾はその置き換え前の待機（`WaitHold_Rllr` 前傾 37°など）に合わせて作られており、`WaitHold_Nrml` からの踏み切りも `Nrml` より離れる（平均 1.56 対 0.88 単位） | — | 変更なし | 本家映像での空中姿勢の比較が必要。未確認 |
+| 被弾の種別ポーズ | S3 の公開名に `Damage_<種別>` があるが、Wii U バンクの単発被弾は汎用 `Damage` だけ。`WaitDamage_*`（360F）・`WalkDamage_*`（240F）はループで、単発の被弾ではない（`Rllr`/`Glng` は `Nrml` と同値の箇所がある）。用途は未確認 | `weapon-hit-reaction.mjs` は、ソースが上半身を持つ間は描画に届かない補正と、そのための2回目のポーズ計算（ソースの `applyBody` も2回）を行っていた。その間は層を動かさない（見た目は不変、被弾 0.6 s のポーズ計算が半分） | shooter・blaster・charger・splatling で非致死の被弾 | 見た目は変わらない（ボーン・ブキ行列が一致）。種別ごとの違いはこれらのブキでは依然として無い | ロジック（CPU、shooter 30/60/120 Hz と各ブキ 60 Hz）で確認。種別の被弾クリップはバンクに無く、本家曲線も無いため未解決 |
+
+**検証。** `node --experimental-vm-modules --test patches/splatoon3/tests/source-jump-family.test.mjs`（4件）、`patches/splatoon3/tests/issue-1097-source-hit-owner.test.mjs`（3件）。前者は修正前の合成（両修正を外した変換）を対照にし、開始クリップの欠落と補間の再開を検出する。後者は被弾層を外した旧コードで2回のポーズ計算を検出する（ゲート撤去で失敗することを確認）。ブラウザ描画・実機・本家映像との比較は未実施。着地（`_Ed` 開始）ではスピナーで頭のボーンが1ティックに大きく動く既存の挙動を観測したが、原因は未調査で今回は変えていない。
