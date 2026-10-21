@@ -115,7 +115,7 @@ const IDENTITY_FILES = [
   'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
-  'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'swim-splash-adapter.mjs', 's3-face-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
+  'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'swim-splash-adapter.mjs', 'swim-surface.mjs', 's3-face-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
   'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs', 'showcase-alpha-adapter.mjs',
   'team-wipeout.mjs', 'team-wipeout-adapter.mjs',
@@ -890,7 +890,7 @@ function adaptEnginePerformanceHotpaths(rel, code, replaceOnce) {
       'pack bakeAO spatial hash key into 30-bit Smi integer');
   }
 
-  if (rel === 'src/game/character-outfit.js') {
+  if (rel === 'src/game/character-outfit.js' && !code.includes('const ix = Math.floor(x / cell), iy = Math.floor(y / cell), iz = Math.floor(z / cell);')) {
     code = replaceOnce(code,
       '      const key = `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)},${ax}`;',
       '      const ix = Math.floor(x / cell), iy = Math.floor(y / cell), iz = Math.floor(z / cell);\n      const key = ix >= -256 && ix < 256 && iy >= -256 && iy < 256 && iz >= -256 && iz < 256 ? (((ix + 256) << 21) | ((iy + 256) << 12) | ((iz + 256) << 3) | ax) : String(ix) + "," + iy + "," + iz + "," + ax;',
@@ -907,7 +907,7 @@ function adaptEnginePerformanceHotpaths(rel, code, replaceOnce) {
       'reject back-facing emitters before sqrt and reuse d in bakeBodyAO');
   }
 
-  if (rel === 'src/game/character-lod.js') {
+  if (rel === 'src/game/character-lod.js' && !code.includes('function clusterTopology(src, cell, sigs)')) {
     code = replaceOnce(code,
       'const _farCache = new WeakMap();',
       `const _farCache = new WeakMap();
@@ -1310,7 +1310,7 @@ function clusterTopology(src, cell, sigs) {
       'use quaternion-only walk in protectTurningFeet');
   }
 
-  if (rel === 'src/game/motion/body-balance.js') {
+  if (rel === 'src/game/motion/body-balance.js' && !code.includes('this.rotationGainByIndex=bank.bones.map(')) {
     code = replaceOnce(code,
       "  this.rotationGain=new Map([['hip',HOST_BALANCE.pelvisRotation],['spine1',HOST_BALANCE.torsoRotation],['spine2',HOST_BALANCE.torsoRotation],['chest',HOST_BALANCE.torsoRotation],['neck',HOST_BALANCE.headRotation],['head',HOST_BALANCE.headRotation]]);",
       "  this.rotationGain=new Map([['hip',HOST_BALANCE.pelvisRotation],['spine1',HOST_BALANCE.torsoRotation],['spine2',HOST_BALANCE.torsoRotation],['chest',HOST_BALANCE.torsoRotation],['neck',HOST_BALANCE.headRotation],['head',HOST_BALANCE.headRotation]]);\n  this.rotationGainByIndex=bank.bones.map(b=>this.rotationGain.get(b.name));\n  this.hipIndex=bank.index.hip;",

@@ -1,5 +1,6 @@
 // Presentation calibration from Nintendo's JP ikatohito/movie/modal_pc.mp4 (2026-10-21).
 // Retail particle counts/curves are unknown; these are INKWAVE visual settings.
+// The swimming crest is connected liquid geometry; normal swimming emits no bead particles.
 export function adaptSwimSplash(rel, code, replaceOnce) {
   if (rel === 'src/game/actor.js') {
     return replaceOnce(code,
@@ -9,9 +10,9 @@ export function adaptSwimSplash(rel, code, replaceOnce) {
     }`,
       `    if (a.form === 'swim' && this.grounded && hs > 2 && G.fx && swimSplashVisible(this)) {
       this._wakeT = (this._wakeT || 0) + dt;
-      while (this._wakeT + 1e-10 >= 0.05) {
-        this._wakeT = Math.max(0, this._wakeT - 0.05);
-        G.fx.wake(this.pos, _v.set(this.vel.x, 0, this.vel.z).normalize(), this.color, hs);
+      while (this._wakeT + 1e-10 >= 1 / 60) {
+        this._wakeT = Math.max(0, this._wakeT - 1 / 60);
+        G.fx.wake(this.pos, _v.set(this.vel.x, 0, this.vel.z).normalize(), this.color, hs, this.groundN, this);
       }
     } else this._wakeT = 0;`, 'swim splash cadence');
   }
@@ -20,17 +21,30 @@ export function adaptSwimSplash(rel, code, replaceOnce) {
     const end = code.indexOf('\n  // Carving a hard turn', start);
     if (start < 0 || end < 0) throw new Error('INKWAVE swim splash conflict: missing wake recipe');
     const before = code.slice(start, end);
-    let after = before;
-    const changes = [
-      ['(0.5 + 3.0 * k * k)', '(2.0 + 7.0 * k * k)'],
-      ['speed * (0.06 + rand() * 0.1)', 'speed * (0.04 + rand() * 0.08)'],
-      ['1.5 + rand() * 1.3 + 1.5 * k', '1.7 + rand() * 1.8 + 1.8 * k'],
-      ['(rand() - 0.5) * (0.7 + 0.9 * k)', '(n % 2 ? -1 : 1) * (0.6 + rand() * 1.3) * (0.5 + k)'],
-      ['this._spawnDrop(pos.x - dir.x * 0.34, pos.y + 0.05, pos.z - dir.z * 0.34,', 'const edge = Math.sign(side) * (0.1 + rand() * 0.12), tail = 0.1 + rand() * 0.45;\n      this._spawnDrop(pos.x - dir.x * tail + rx * edge, pos.y + 0.05, pos.z - dir.z * tail + rz * edge,'],
-      ['0.016 + rand() * 0.018 + 0.012 * k, 0.6, 1, 1.7, 0', '0.028 + rand() * 0.026 + 0.022 * k, 0.6, 1, 2.1, 0'],
-    ];
-    for (const [from, to] of changes) after = replaceOnce(after, from, to, 'swim spray recipe');
-    return replaceOnce(code, before, after, 'swim splash fan');
+    const after = `  wake(pos, dir, color, speed = 8, normal = UP, actor = null) {
+    touchSwimSurface(this, actor);
+  }
+`;
+    code = replaceOnce(code, before, after, 'connected swim film instead of droplets');
+    const carveStart = code.indexOf('  swimCarve(pos, dir, out, color, k = 1) {');
+    const carveEnd = code.indexOf('\n  muzzle(', carveStart);
+    if (carveStart < 0 || carveEnd < 0) throw new Error('INKWAVE swim film conflict: missing carve recipe');
+    code = replaceOnce(code, code.slice(carveStart,carveEnd),
+      '  swimCarve() { /* Continuous film follows the actual swimming heading. */ }\n', 'no independent turn beads');
+    code = replaceOnce(code, '    this._updateDrops(dt);', '    updateSwimSurface(this);\n    this._updateDrops(dt);', 'continuous film frame owner');
+    code = replaceOnce(code, '    this.dN = 0; this.dGeo.instanceCount = 0;', '    clearSwimSurface(this);\n    this.dN = 0; this.dGeo.instanceCount = 0;', 'film match reset');
+    code = replaceOnce(code, '    this.scene.remove(this.root);', '    this.scene.remove(this.root);\n    disposeSwimSurface(this);', 'film resource lifetime');
+    return "import { touchSwimSurface, updateSwimSurface, clearSwimSurface, disposeSwimSurface } from '../../patches/local-quality/swim-surface.mjs';\n" + code;
+  }
+
+  if (rel === 'src/world/levelMaterial.js') {
+    code = replaceOnce(code, 'float r = 0.1 + age * 0.95, w = 0.075 + age * 0.085;',
+      'float r = 0.08 + age * 0.35, w = 0.045 + age * 0.055;', 'narrow surface wake behind film');
+    code = replaceOnce(code, 'float amp = 0.0135 * fade;', 'float amp = 0.002 * fade;', 'film owns lifted liquid, trail is a small ripple');
+    return replaceOnce(code, 'wG += env * fade * 0.6;', 'wG += env * fade * 0.08;', 'no bright bead-shaped chain behind the swimmer');
+  }
+  if (rel === 'src/fx/fxHooks.js') {
+    return replaceOnce(code, "if (form === 'swim' && hs < 2) {", "if (false) {", 'no decorative squid bubble particles');
   }
   return code;
 }

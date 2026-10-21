@@ -45,30 +45,52 @@ test('wake cadence retains elapsed time at 30/60/120 Hz and respects stealth, ai
     for (const hz of [30, 60, 120]) {
       count = 0; a._wakeT = 0;
       for (let i = 0; i < hz * 2; i++) { f.G.time += 1 / hz; a._finishFrame(1 / hz); }
-      assert.equal(count, 40, '20 emissions/sec at ' + hz + ' Hz');
+      assert.equal(count, 120, '60 film activation samples/sec at ' + hz + ' Hz');
     }
     const quiet = () => { const n = count; a._finishFrame(.1); assert.equal(count, n); assert.equal(a._wakeT, 0); };
     a.vel.set(0, 0, 1); quiet(); // Slow swim.
     a.vel.set(0, 0, 8); a.s3.modifiers.ninjaSquid = true;
     a.s3.swimStealth.since = f.G.time - 2; quiet();
     a.s3.modifiers.ninjaSquid = false; a.grounded = false; quiet();
-    a.grounded = true; const n = count; a._finishFrame(.025);
-    assert.equal(count, n); a._finishFrame(.025); assert.equal(count, n + 1);
+    a.grounded = true; const n = count; a._finishFrame(1 / 120);
+    assert.equal(count, n); a._finishFrame(1 / 120); assert.equal(count, n + 1);
   } finally { f.reset(); }
 });
 
-test('real FX wake sprays larger moving droplets on both sides and scales with speed', async () => {
+test('ordinary swim uses connected animated film, emits no beads, and respects lifecycle and stealth', async () => {
   const f = await sourceLoadedActorFixture({ random: () => .4, extraExports: "export { FX } from './src/fx/fx.js';" });
   const fx = new f.FX(f.G.scene, { quality: 'high' });
   try {
-    const drops = []; fx._spawnDrop = (...args) => drops.push(args);
-    const p = new f.THREE.Vector3(), dir = new f.THREE.Vector3(0, 0, 1), col = f.G.teamColors[0];
-    fx.wake(p, dir, col, 11.8);
-    assert(drops.length >= 7, 'continuous full-speed spray');
-    assert(drops.some(d => d[0] < 0 && d[3] < -1));
-    assert(drops.some(d => d[0] > 0 && d[3] > 1));
-    assert(drops.every(d => d[4] > 3 && d[5] < 0 && d[7] > .05), 'raised, rearward, readable glossy drops');
-    const full = drops.length; drops.length = 0; fx.wake(p, dir, col, 3);
-    assert(drops.length < full, 'small input has less spray');
-  } finally { fx.dispose(); f.reset(); }
+    const a=await f.make();f.G.fx=fx;a.form='squid';a.submerged=true;a.grounded=true;a.vel.set(0,0,11.8);
+    const dir=new f.THREE.Vector3(0,0,1),cam=new f.THREE.PerspectiveCamera();cam.updateMatrixWorld();
+    for(let n=0;n<20;n++){a._finishFrame(1/60);fx.update(1/60,cam);}
+    assert.equal(fx.dN,0,'no continuous swimming droplet pool');assert.equal(fx.glows.n,0,'no swimming bubble glows');
+    const slot=fx.swimSurface.slots.find(s=>s.actor===a),mesh=slot.mesh;
+    assert(mesh.visible);assert(mesh.geometry.index.count>3000,'continuous indexed surface, not billboards');
+    const coords=mesh.geometry.attributes.position.array,before=coords.slice();
+    assert(Math.max(...coords.filter((_v,i)=>i%3===1))>.1,'actual lifted liquid crests');
+    assert(Math.min(...coords.filter((_v,i)=>i%3===1))<.01,'film roots stay in the ink');
+    a._finishFrame(1/60);fx.update(1/60,cam);
+    assert.notDeepEqual(Array.from(coords),Array.from(before),'membrane changes shape, not just a moving decal');
+    assert([...coords,...mesh.geometry.attributes.normal.array].every(Number.isFinite));
+    a.s3.modifiers.ninjaSquid=true;a.s3.swimStealth.since=f.G.time-2;
+    fx.update(1/60,cam);assert.equal(mesh.visible,false,'stealth hides lifted film immediately');
+    a.s3.modifiers.ninjaSquid=false;a._finishFrame(1/60);fx.update(1/60,cam);assert(mesh.visible);
+    a.grounded=false;fx.update(1/60,cam);assert.equal(mesh.visible,false,'no floating surface on jump');
+    a.grounded=true;a._finishFrame(1/60);fx.update(1/60,cam);
+    a.groundN.set(0,1,1).normalize();a._finishFrame(1/60);fx.update(1/60,cam);
+    const up=new f.THREE.Vector3(0,1,0).applyQuaternion(mesh.quaternion);
+    assert(up.distanceTo(a.groundN)<1e-6,'film lies on the supporting slope');a.groundN.set(0,1,0);
+    const remotes=Array.from({length:8},(_v,i)=>({pos:new f.THREE.Vector3(i*.5,0,0),vel:a.vel.clone(),groundN:a.groundN.clone(),form:'squid',submerged:true,grounded:true,climbing:false,alive:true,color:a.color,s3:a.s3,isLocal:false}));
+    f.G.actors=[a,...remotes];for(const r of remotes)fx.wake(r.pos,dir,r.color,11.8,r.groundN,r);
+    fx.update(1/60,cam);assert.equal(fx.swimSurface.slots.length,4,'bounded shared pool');
+    f.G.actors=[a];fx.update(1/60,cam);assert(fx.swimSurface.slots.every(s=>!s.actor||s.actor===a),'removed actors released');
+    fx.clear();assert.equal(mesh.visible,false);assert(fx.swimSurface.slots.every(s=>!s.actor));
+    // Legacy warmup/carve calls must not bring the particle implementation back.
+    fx.wake(a.pos,dir,a.color,11.8);fx.swimCarve(a.pos,dir,dir,a.color,1);assert.equal(fx.dN,0);
+    fx._spawnDrop(0,1,0,0,0,0,a.color,.02,1,1,1,0);fx._updateDrops(1/60);
+    assert.equal(fx.dGeo.attributes.aColA.array[3],1,'attack droplets retain native shading');
+    let disposed=0;mesh.geometry.addEventListener('dispose',()=>disposed++);
+    fx.dispose();assert.equal(disposed,1);assert.equal(fx.swimSurface,null);
+  } finally { if(fx.swimSurface)fx.dispose();f.reset(); }
 });

@@ -1,9 +1,10 @@
+import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {BASE_SOURCE_STAGES,SOURCE_RECIPE,SOURCE_COMMIT} from '../../patches/native-stages/runtime/source-catalog.mjs';
 import {assertSourceTerrainObjects} from '../../patches/native-stages/runtime/source-terrain-contract.mjs';
-export const NATIVE_ROOT=path.resolve(import.meta.dirname,'../../patches/native-stages');
+export const NATIVE_ROOT=path.resolve((import.meta.dirname || fileURLToPath(new URL(".", import.meta.url))),'../../patches/native-stages');
 // Stateful ordinary movement stays the already-installed browser singleton.
 export const NATIVE_RUNTIME_EXTERNALS=['three','../../../src/*','./registry.mjs','./build-config.mjs','../../splatoon3/runtime/movement.mjs','../../splatoon3/runtime/clock.mjs'];
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');

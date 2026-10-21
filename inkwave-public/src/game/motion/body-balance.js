@@ -12,6 +12,8 @@ export class BodyBalance {
   this.targets={wp:bank.bones.map(()=>new THREE.Vector3())};this.centerTargets={wp:bank.bones.map(()=>new THREE.Vector3())};
   this.total=0;this.world=bank.bones.map(()=>new THREE.Quaternion());this.q=new THREE.Quaternion();this.v=new THREE.Vector3();this.p=new THREE.Vector3();this.parent=new THREE.Quaternion();
   this.rotationGain=new Map([['hip',HOST_BALANCE.pelvisRotation],['spine1',HOST_BALANCE.torsoRotation],['spine2',HOST_BALANCE.torsoRotation],['chest',HOST_BALANCE.torsoRotation],['neck',HOST_BALANCE.headRotation],['head',HOST_BALANCE.headRotation]]);
+  this.rotationGainByIndex=bank.bones.map(b=>this.rotationGain.get(b.name));
+  this.hipIndex=bank.index.hip;
   this.reset();
  }
  reset(){this.reachReady=false;this.meanReach=0;this.reachCorrection=0;}
@@ -29,7 +31,7 @@ export class BodyBalance {
   // Preserve the source's global counter-rotation. Scaling LOCAL rotations
   // independently destroys the head's counter-motion to its parent chest.
   for(let i=0;i<this.bank.bones.length;i++){
-   const b=this.bank.bones[i],rawGain=this.rotationGain.get(b.name),gain=rawGain===undefined?undefined:rawGain*(b.name==='hip'?1-.85*pivot:1)*(1-.78*clamp(strafe,0,1)),parent=b.parent;
+   const b=this.bank.bones[i],rawGain=this.rotationGainByIndex[i],gain=rawGain===undefined?undefined:rawGain*(i===this.hipIndex?1-.85*pivot:1)*(1-.78*clamp(strafe,0,1)),parent=b.parent;
    if(gain!==undefined){this.world[i].copy(this.center.wq[i]).slerp(source.wq[i],1-weight+weight*gain);this.pose.q[i].copy(this.world[i]);if(parent>=0)this.pose.q[i].premultiply(this.q.copy(this.world[parent]).invert());}
    else{this.world[i].copy(this.pose.q[i]);if(parent>=0)this.world[i].premultiply(this.world[parent]);}
   }
@@ -47,10 +49,17 @@ export class BodyBalance {
   // IK reach reserve is a leg constraint, not a head animation. Remove only
   // its fast component, not terrain height or the actor's world movement.
   this.reachCorrection=HOST_BALANCE.torsoTravelLimit*Math.tanh((this.meanReach-lowering)*HOST_BALANCE.reachCompensation/HOST_BALANCE.torsoTravelLimit);
-  const chain=['spine','chest','neck'];let length=0;
-  for(const n of chain)length+=character.rest[n].distanceTo(character.rest[character.bones[n].parent.name]);
-  for(const n of chain){const b=character.bones[n],share=character.rest[n].distanceTo(character.rest[b.parent.name])/length;
-   character._kidXform(b.parent,this.p,this.parent);this.v.set(0,this.reachCorrection*share,0).applyQuaternion(this.parent.invert());b.position.add(this.v);
+  let entries=this._reachChain;
+  if(!entries||this._reachChar!==character){
+   this._reachChar=character;
+   const chain=['spine','chest','neck'];let length=0;
+   for(const n of chain)length+=character.rest[n].distanceTo(character.rest[character.bones[n].parent.name]);
+   entries=this._reachChain=chain.map(n=>{const b=character.bones[n];return {b,parent:b.parent,share:character.rest[n].distanceTo(character.rest[b.parent.name])/length};});
+  }
+  for(let i=0;i<entries.length;i++){
+   const {b,parent,share}=entries[i];
+   this.parent.identity();for(let x=parent;x&&x!==character.kid;x=x.parent)this.parent.premultiply(x.quaternion);
+   this.v.set(0,this.reachCorrection*share,0).applyQuaternion(this.parent.invert());b.position.add(this.v);
   }
  }
 }
