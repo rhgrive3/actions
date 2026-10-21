@@ -1446,7 +1446,8 @@ export function bakeBodyAO(skin, cloth, level = 3) {
       const x = P.getX(i), y = P.getY(i), z = P.getZ(i), nx = N.getX(i), ny = N.getY(i), nz = N.getZ(i);
       const anx = Math.abs(nx), any = Math.abs(ny), anz = Math.abs(nz);
       const ax = anx >= any && anx >= anz ? (nx > 0 ? 0 : 1) : any >= anz ? (ny > 0 ? 2 : 3) : (nz > 0 ? 4 : 5);
-      const key = `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)},${ax}`;
+      const ix = Math.floor(x / cell), iy = Math.floor(y / cell), iz = Math.floor(z / cell);
+      const key = ix >= -256 && ix < 256 && iy >= -256 && iy < 256 && iz >= -256 && iz < 256 ? (((ix + 256) << 21) | ((iy + 256) << 12) | ((iz + 256) << 3) | ax) : String(ix) + "," + iy + "," + iz + "," + ax;
       let k = cmap.get(key);
       if (k === undefined) { k = ca.length; cmap.set(key, k); cx.push(0); cy.push(0); cz.push(0); cnx.push(0); cny.push(0); cnz.push(0); ca.push(0); }
       cx[k] += x * A; cy[k] += y * A; cz[k] += z * A; cnx[k] += nx * A; cny[k] += ny * A; cnz[k] += nz * A; ca[k] += A;
@@ -1484,8 +1485,10 @@ export function bakeBodyAO(skin, cloth, level = 3) {
           const d2 = vx * vx + vy * vy + vz * vz;
           if (d2 > R2 || d2 < 1e-8) continue;
           const dot = nx * vx + ny * vy + nz * vz;
-          if (dot <= 0.02 * Math.sqrt(d2)) continue;
-          const d = Math.sqrt(d2), cr = dot / d;
+          if (dot <= 0) continue;
+          const d = Math.sqrt(d2);
+          if (dot <= 0.02 * d) continue;
+          const cr = dot / d;
           const ce = Math.abs(ENX[k] * vx + ENY[k] * vy + ENZ[k] * vz) / d;
           const A = EA[k];
           const f = 1 - d2 / R2;

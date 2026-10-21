@@ -18,7 +18,9 @@ let ms=1000000;
 const relaySource = new URL('../../../server/src/index.js', import.meta.url);
 const relayModule = new vm.SourceTextModule(fs.readFileSync(relaySource, 'utf8'), {
  identifier: relaySource.href,
- context: vm.createContext({ Date: class extends Date { static now(){return ms;} }, TextEncoder }),
+ // The production Worker exposes both Web Encoding globals. Node's isolated
+ // VM omits them unless explicitly provided; do not stub relay behavior.
+ context: vm.createContext({ Date: class extends Date { static now(){return ms;} }, TextEncoder, TextDecoder }),
 });
 await relayModule.link(spec => { throw new Error('Unexpected relay dependency: ' + spec); });
 await relayModule.evaluate();

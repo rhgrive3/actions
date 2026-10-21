@@ -306,3 +306,235 @@ test('raw catalogue sub without creation commit cannot mint modeled proof',()=>{
  assert.equal(nm.hitCalls.length,0);
  assert.equal(nm._combatProvenance.proofs.get('peerA')?.length||0,0);
 });
+
+// #1665/#1666: per-equipped-slot hit ceilings. The table is generated from the
+// production definitions; these cases compare it with Splatoon 3 Ver.11.3.0
+// parameter values (Leanny/splat3 data/parameter/1130, source / 10).
+import { COMBAT_HIT_CEILINGS } from '../../patches/network-replication/combat-hit-ceilings-data.mjs';
+import { renderCombatHitCeilings, computeCombatHitCeilings, bossMultipliers } from '../../patches/network-replication/tools/combat-hit-ceilings.mjs';
+import { claimCeiling } from '../../patches/network-replication/combat-provenance.mjs';
+import { MAIN_WEAPON_CATALOG } from '../../patches/splatoon3/runtime/main-weapon-catalog-data.mjs';
+test('shipped hit ceiling table is regenerated from the current production definitions',()=>{
+  assert.equal(read('patches/network-replication/combat-hit-ceilings-data.mjs'),renderCombatHitCeilings());
+  assert.deepEqual(COMBAT_HIT_CEILINGS,computeCombatHitCeilings());
+});
+test('hit ceilings match pinned 11.3.0 single-hit maxima',()=>{
+  const {main,sub,special,boss}=COMBAT_HIT_CEILINGS;
+  for(const [id,want] of [['shooter',36],['s3-shooter-heavy',62],['s3-shooter-gravity',52],['charger',160],
+    ['s3-charger-long',180],['s3-charger-pencil',68],['roller',150],['s3-roller-heavy',180],['blaster',125],
+    ['s3-blaster-lightshort',60],['slosher',70],['s3-slosher-bathtub',32],['splatling',30],['s3-spinner-hyper',40],
+    ['dualies',30],['s3-maneuver-gallon',52.5],['s3-shelter-wide',119],['s3-stringer-short',45],['s3-saber-heavy',160]])
+    assert.equal(main[id],want,id);
+  for(const [id,want] of [['bomb',180],['suction',180],['burst',35],['angleShooter',40],['torpedo',60],
+    ['torpedo-splash',12],['inkMine',45],['fizzy',50],['sprinkler',20],['toxicMist',0],['pointSensor',0],['beakon',0]])
+    assert.equal(sub[id],want,id);
+  assert.equal(special.trizooka,220);assert.equal(special.storm,null,'no authored damage field keeps existing policy');
+  assert.deepEqual(boss,{weak:2.5,stunned:1.25});
+  assert.throws(()=>bossMultipliers('const BOSS={};'),/identity mismatch/);
+});
+test('every catalogue main keeps its builder damage values under its ceiling',()=>{
+  for(const r of MAIN_WEAPON_CATALOG.records){
+    const p=r.parameters,c=COMBAT_HIT_CEILINGS.main[r.id];
+    for(const v of [p.DamageParam?.ValueFullCharge,p.DamageParam?.ValueMax,p.DamageParam?.ValueFullChargeMax,
+      p.BodyParam?.Damage,p.spl__BulletShelterCanopyParam?.CanopyDamage,p.BulletSaberSlashVerticalParam?.DamageParam?.DamageValue,
+      p.spl__BulletStringerParam?.DamageParam?.DirectHitDamageMax,...(p.BlastParam?.DistanceDamage||[]).map(b=>b.Damage)])
+      if(Number.isFinite(v))assert.ok(v/10<=c,r.id+' '+v);
+  }
+});
+test('lethal 220 claim from a Splattershot owner is rejected before proof or hit ID use',()=>{
+  const nm=new Stub();fire(nm);
+  nm.onMessage('peerA',{...hit(),d:220});
+  assert.equal(nm.hitCalls.length,0);
+  assert.equal(nm._combatProvenance.pending.get('peerA')?.length||0,0,'never queued');
+  assert.equal(nm.peers.get('peerA').hitSequences,undefined,'hit ID not reserved');
+  nm.onMessage('peerA',{...hit(),d:36});
+  assert.equal(nm.hitCalls.length,1,'genuine 36 with the same ID is still admitted');
+});
+test('main ceiling boundary: r2 rounding of the maximum passes, the next step does not',()=>{
+  const nm=new Stub();fire(nm);
+  assert.equal(combatAdmission(nm,'peerA',{...hit(2,1),d:36.01},'pvp'),true);
+  fire(nm,{at:100.2});
+  assert.equal(combatAdmission(nm,'peerA',{...hit(2,2),d:36.02},'pvp'),false);
+  assert.equal(combatAdmission(nm,'peerA',{...hit(2,3),d:36},'pvp'),true,'rejection came from the ceiling, not proof exhaustion');
+});
+test('catalogue weapon ceiling comes from its own record even under a kit ID',()=>{
+  const nm=new Stub(),a=nm.byNid.get(1),r=MAIN_WEAPON_CATALOG.records.find(r=>r.id==='s3-shooter-heavy');
+  a.weapon={...a.weapon,id:'kit-variant-not-in-table',kind:'shooter',damage:62,catalogRecord:r};
+  assert.equal(claimCeiling(a,{w:'shot'},'pvp'),62);
+  fire(nm,{kind:'kit-variant-not-in-table'});
+  assert.equal(combatAdmission(nm,'peerA',{...hit(2,1,'shot'),d:62},'pvp'),true);
+  fire(nm,{at:100.2,kind:'kit-variant-not-in-table'});
+  assert.equal(combatAdmission(nm,'peerA',{...hit(2,2,'shot'),d:62.5},'pvp'),false);
+  assert.equal(combatAdmission(nm,'peerA',{...hit(2,3,'shot'),d:62},'pvp'),true);
+});
+test('sub ceilings follow the equipped sub, including generic bomb and Torpedo splash causes',()=>{
+  const a=actor();
+  a.weapon.sub='burst';
+  assert.equal(claimCeiling(a,{w:'burst'},'pvp'),35);assert.equal(claimCeiling(a,{w:'bomb'},'pvp'),35);
+  a.weapon.sub='suction';assert.equal(claimCeiling(a,{w:'bomb'},'pvp'),180);
+  a.weapon.sub='torpedo';assert.equal(claimCeiling(a,{w:'torpedo-splash'},'pvp'),12);
+  a.weapon.sub='toxicMist';assert.equal(claimCeiling(a,{w:'toxicMist'},'pvp'),0);
+  a.weapon.sub='unknownSub';assert.equal(claimCeiling(a,{w:'unknownSub'},'pvp'),-1,'unknown definitions fail closed');
+  const nm=new Stub();nm.byNid.get(1).weapon.sub='burst';
+  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'b',1,'bomb',0,1,0,0,0,45]]});
+  nm.onMessage('peerA',{...hit(2,1,'burst'),d:35.5});
+  assert.equal(nm.hitCalls.length,0,'Burst Bomb cannot deliver a Splat Bomb sized hit');
+});
+test('Special ceiling applies when authored, otherwise the existing Special policy decides',()=>{
+  const a=actor('shooter','trizooka');
+  assert.equal(claimCeiling(a,{w:'trizooka'},'pvp'),220);
+  const b=actor('shooter','storm');
+  assert.equal(claimCeiling(b,{w:'storm'},'pvp'),Infinity);
+});
+test('Boss body ceiling includes only the guest-side weak-point and stunned multipliers',()=>{
+  const nm=new Stub();
+  nm.onMessage('peerA',boss(1,-1,0,'shooter',45));
+  nm.onMessage('peerA',boss(2,-1,0,'shooter',45.5));
+  fire(nm);
+  assert.equal(nm.bossCalls.length,1);assert.equal(nm.bossCalls[0].d,45,'36 x stunned 1.25');
+  const weak=new Stub();
+  weak.onMessage('peerA',boss(1,-1,1,'shooter',112.5));
+  weak.onMessage('peerA',boss(2,-1,1,'shooter',113));
+  fire(weak);
+  assert.equal(weak.bossCalls.length,1);assert.equal(weak.bossCalls[0].d,112.5,'36 x weak 2.5 x stunned 1.25');
+});
+test('crablet marker is bounded by the largest equipped slot',()=>{
+  const nm=new Stub(),a=nm.byNid.get(1);a.weapon.special='trizooka';
+  assert.equal(claimCeiling(a,{w:'crab',c:7},'boss'),220);
+  a.weapon.special='storm';
+  assert.equal(claimCeiling(a,{w:'crab',c:7},'boss'),Infinity,'unauthored Special damage keeps its existing policy');
+  a.weapon.special=undefined;
+  assert.equal(claimCeiling(a,{w:'crab',c:7},'boss'),180,'Splat Bomb is the largest remaining slot');
+  nm.onMessage('peerA',boss(1,7,0,'crab',181));
+  fire(nm);
+  assert.equal(nm.bossCalls.length,0);
+});
+
+// #1665/#1666: trusted receiver geometry. A modeled wall occupies the plane
+// z=3.5 for |x|<10 and y<5; the collision world is the engine LOS interface.
+import { sampleLocalHistory, victimVisible } from '../../patches/network-replication/combat-provenance.mjs';
+class Vec { set(x,y,z){this.x=x;this.y=y;this.z=z;return this;} }
+function walled(nm,{wallZ=3.5,half=10,top=5}={}) {
+  let calls=0;
+  nm._combatProvenanceTHREE={Vector3:Vec};
+  nm._combatProvenancePhysics={los(a,b){
+    calls++;
+    if((a.z-wallZ)*(b.z-wallZ)>=0)return true;
+    const k=(wallZ-a.z)/(b.z-a.z),x=a.x+(b.x-a.x)*k,y=a.y+(b.y-a.y)*k;
+    return !(Math.abs(x)<half&&y<top);
+  }};
+  return ()=>calls;
+}
+const nowS=()=>performance.now()/1000;
+test('straight-fire hit on a victim hidden behind a wall is rejected without any bg segment',()=>{
+  const open=new Stub();fire(open);open.onMessage('peerA',hit());
+  assert.equal(open.hitCalls.length,1,'negative control: without a collision world the old gate admits it');
+  const nm=new Stub();walled(nm);fire(nm);
+  nm.onMessage('peerA',hit());
+  assert.equal(nm.hitCalls.length,0);
+  assert.equal(nm._combatProvenance.pending.get('peerA').length,1,'stays pending, not consumed');
+});
+test('lag compensation admits a victim that was visible inside the 1.2 s window',()=>{
+  for(const hz of [10,20,60]){
+    const nm=new Stub();walled(nm,{half:2});const v=nm.byNid.get(2),t=nowS();
+    v.pos={x:5,y:0,z:7};                        // stepped out past the pillar
+    for(let k=Math.round(.9*hz);k>=Math.round(.5*hz);k--)sampleLocalHistory(nm,t-k/hz);
+    v.pos={x:0,y:0,z:7};                        // back behind it on this screen
+    nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,5,0,7]]});
+    nm.onMessage('peerA',hit());
+    assert.equal(nm.hitCalls.length,1,hz+'Hz history sampling');
+  }
+});
+test('a pose older than the lag window cannot authorize the hit',()=>{
+  const nm=new Stub();walled(nm,{half:2});const v=nm.byNid.get(2),t=nowS();
+  v.pos={x:5,y:0,z:7};sampleLocalHistory(nm,t-1.5);
+  v.pos={x:0,y:0,z:7};
+  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,5,0,7]]});
+  nm.onMessage('peerA',hit());
+  assert.equal(nm.hitCalls.length,0);
+});
+test('a claimed muzzle on the far side of a wall from the attacker body is rejected',()=>{
+  const nm=new Stub();walled(nm);
+  nm.byNid.get(1).pos={x:0,y:0,z:2.5};nm.byNid.get(2).pos={x:0,y:0,z:9};
+  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,2.5]],e:[[100,'p',1,'shot','shooter',0,1,5,0,0,45]]});
+  nm.onMessage('peerA',hit());
+  assert.equal(nm.hitCalls.length,0);
+  const ok=new Stub();walled(ok);
+  ok.byNid.get(1).pos={x:0,y:0,z:4};ok.byNid.get(2).pos={x:0,y:0,z:9};
+  ok._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,4]],e:[[100,'p',1,'shot','shooter',0,1,5,0,0,45]]});
+  ok.onMessage('peerA',hit());
+  assert.equal(ok.hitCalls.length,1,'positive control: same muzzle in view of the attacker');
+});
+test('area-burst Blaster round near cover keeps the existing ray gate',()=>{
+  // Blaster bursts damage around their detonation point, not along a line.
+  const nm=new Stub();walled(nm);const a=nm.byNid.get(1);
+  a.weapon={...a.weapon,id:'blaster',kind:'blaster',damage:125};
+  fire(nm,{kind:'blaster'});
+  nm.onMessage('peerA',{...hit(2,1,'blaster'),d:70});
+  assert.equal(nm.hitCalls.length,1);
+});
+test('LOS work per claim is bounded and cached per proof',()=>{
+  const nm=new Stub(),calls=walled(nm),t=nowS();
+  for(let k=40;k>0;k--)sampleLocalHistory(nm,t-k/40);
+  fire(nm);
+  const p=nm._combatProvenance.proofs.get('peerA')[0];
+  victimVisible(nm,p,nm.byNid.get(2),t);
+  const first=calls();
+  assert.ok(first<=3+9*(1+8),'at most attacker anchors + 9 samples x (current + 8 history poses): '+first);
+  victimVisible(nm,p,nm.byNid.get(2),t+.05);
+  assert.equal(calls(),first,'cached inside 0.1 s');
+});
+test('one shot no longer mints both a projectile and a fire-event proof',()=>{
+  const shot=(nm,at)=>nm._tick('peerA',{k:'t',ts:at+.05,a:[[1,0,0,0]],e:[
+    [at,'p',1,'shot','shooter',0,1,0,0,0,45],
+    [at+.001,'ev','weapon:fire',{actor:{n:1},weapon:'shooter',muzzle:[0,1,0],dir:[0,0,1]}]]});
+  const nm=new Stub();shot(nm,100);
+  assert.equal(nm._combatProvenance.proofs.get('peerA').length,1);
+  for(let h=1;h<=4;h++)nm.onMessage('peerA',hit(2,h));
+  assert.equal(nm.hitCalls.length,1,'one round lands once on its victim (previously four claims passed)');
+  const charger=new Stub(),c=charger.byNid.get(1);c.weapon={...c.weapon,id:'charger',kind:'charger',damage:160};
+  charger._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'ev','weapon:fire',{actor:{n:1},weapon:'charger',muzzle:[0,1,0],dir:[0,0,1]}]]});
+  charger.onMessage('peerA',{...hit(2,1,'charger'),d:160});
+  assert.equal(charger.hitCalls.length,1,'hitscan fire events still prove Charger shots');
+});
+test('Boss body behind cover rejects straight fire; crablets keep the ray gate',()=>{
+  const nm=new Stub();walled(nm);
+  nm.onMessage('peerA',boss(1,-1,0,'shooter',36));
+  fire(nm);
+  assert.equal(nm.bossCalls.length,0);
+  const seen=new Stub();walled(seen,{wallZ:20});
+  seen.onMessage('peerA',boss(1,-1,0,'shooter',36));
+  fire(seen);
+  assert.equal(seen.bossCalls.length,1);
+  const crab=new Stub();walled(crab);
+  crab.onMessage('peerA',boss(1,7,0,'crab',36));
+  fire(crab);
+  assert.equal(crab.bossCalls.length,1);
+});
+test('a straight-fire proof lands once per victim, still once on each separate local victim',()=>{
+  const nm=new Stub();fire(nm);
+  nm.onMessage('peerA',hit(2,1));nm.onMessage('peerA',hit(2,2));
+  assert.equal(nm.hitCalls.length,1,'second claim from the same round on the same victim is rejected');
+  const bots=new Stub();bots.byNid.set(3,{...victim(),nid:3,pos:{x:.5,y:0,z:7}});
+  fire(bots);
+  bots.onMessage('peerA',hit(2,1));bots.onMessage('peerA',hit(3,2));
+  assert.equal(bots.hitCalls.length,2,'a host owning two victims keeps the existing two uses');
+  const area=new Stub(),a=area.byNid.get(1);a.weapon={...a.weapon,id:'blaster',kind:'blaster',damage:125};
+  fire(area,{kind:'blaster'});
+  area.onMessage('peerA',{...hit(2,1,'blaster'),d:30});area.onMessage('peerA',{...hit(2,2,'blaster'),d:30});
+  assert.equal(area.hitCalls.length,2,'area families keep their existing per-proof uses');
+});
+test('shot pairing uses the muzzle, not a load-dependent millisecond gap',()=>{
+  const ev=(t,m)=>[t,'ev','weapon:fire',{actor:{n:1},weapon:'shooter',muzzle:m,dir:[0,0,1]}];
+  const slow=new Stub();
+  slow._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.005,[0,1,0])]});
+  assert.equal(slow._combatProvenance.proofs.get('peerA').length,1,'5 ms apart on a loaded device is still one shot');
+  const burst=new Stub();
+  burst._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[
+    [100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.001,[0,1,0]),
+    [100.002,'p',1,'shot','shooter',.3,1,0,0,0,45],ev(100.003,[.3,1,0])]});
+  assert.equal(burst._combatProvenance.proofs.get('peerA').length,2,'two rounds in one frame stay two proofs');
+  const other=new Stub();
+  other._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.001,[1.5,1,0])]});
+  assert.equal(other._combatProvenance.proofs.get('peerA').length,2,'a fire event at another muzzle is not that birth');
+});
