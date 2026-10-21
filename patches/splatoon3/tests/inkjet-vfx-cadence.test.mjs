@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { inkjetVfxAdmission, inkjetVfxRoom } from '../runtime/inkjet-vfx-budget.mjs';
 import { inkjetVfxTicks } from '../runtime/inkjet-vfx-clock.mjs';
 
 // Executes the two actual source recipe methods with deterministic presentation
@@ -17,14 +18,15 @@ class V {
 function measure(hz, seconds=2, stall=false, cap=Infinity, initial=0) {
   let randomCalls=0;
   const random=()=>{randomCalls++;return .2;}, rnd=(a=1,b=0)=>b+random()*(a-b);
-  const recipes=sections.map(code=>new Function('inkjetVfxTicks','vfxRandom','rnd','groundBelow','clamp','SPARK','PUFF','DISC','TAU',
-    'return ({'+code+'}).frame;')(inkjetVfxTicks,random,rnd,()=>0,(x,a,b)=>Math.max(a,Math.min(b,x)),{GLOW:0},{CHUNK:0,MIST:1},{SPLAT:0},Math.PI*2));
+  const recipes=sections.map(code=>new Function('inkjetVfxTicks','vfxRandom','rnd','groundBelow','clamp','SPARK','PUFF','DISC','TAU','inkjetVfxAdmission','inkjetVfxRoom',
+    'return ({'+code+'}).frame;')(inkjetVfxTicks,random,rnd,()=>0,(x,a,b)=>Math.max(a,Math.min(b,x)),{GLOW:0},{CHUNK:0,MIST:1},{SPLAT:0},Math.PI*2,inkjetVfxAdmission,inkjetVfxRoom));
   const counts={spark:0,puff:0,drop:0,disc:0}, lives={spark:[],puff:[],drop:[],disc:[]};
   const d={kit:{sparks:{n:initial,cap},puffs:{n:initial,cap}},v:Array.from({length:8},()=>new V().set(0,0,0)),time:0,up:new V().set(0,1,0),forward:(a,v)=>v.set(0,0,1),
     setBeam(){},pushRibbon(){},hdr:c=>c};
   for(const name of Object.keys(counts))d[name]=(...args)=>{counts[name]++;if(name!=='disc')d.kit[name==='spark'?'sparks':'puffs'].n++;lives[name].push(args[name==='spark'||name==='puff'?5:name==='drop'?4:1]);};
   const a={pos:new V().set(0,2,0),form:'kid',intent:{}}, t={d:{jets:[{},{}],cones:[{},{}]},color:[1,0,0]};
   const r={d:{ink:{}},color:[1,0,0]},p={pos:new V().set(0,2,4)};
+  a.alive=true;a.specialActive={id:'inkjet'};p.owner=a;d.G={actors:[a]};d.rounds=new Map();
   const steps=stall?1:Math.round(hz*seconds),dt=stall?seconds:1/hz;
   for(let i=0;i<steps;i++){d.time+=dt;recipes[0].call(d,r,p,dt);recipes[1].call(d,a,t,dt);}
   for (const values of Object.values(lives)) values.sort((a,b)=>a-b);
@@ -38,7 +40,7 @@ test('Inkjet source recipes retain 60/120 Hz density while capping 30 Hz to its 
   assert.deepEqual([...new Set(baseline.lives.spark)],[.05]);
   assert.deepEqual([...new Set(baseline.lives.drop)].sort(),[.25,.45,.6]);
 });
-test('Inkjet stall catch-up is advances at most two time ticks but emits at most one density tick with no backlog',()=>{
+test('Inkjet stall catch-up advances at most two time ticks but emits at most one density tick with no backlog',()=>{
   const r={};assert.equal(inkjetVfxTicks(r,5),2);assert.equal(inkjetVfxTicks(r,1/60),1);
   const burst=measure(60,5,true);
   assert.deepEqual(burst.counts,{spark:2,puff:6,drop:5,disc:0});
