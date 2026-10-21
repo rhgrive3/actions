@@ -3,13 +3,42 @@ import test from 'node:test';
 import relay, { RoomDurableObject } from '../src/index.js';
 
 class Socket {
-  constructor() { this.sent = []; this.events = new Map(); this.closed = null; this.bufferedAmount = 0; }
+  constructor() {
+    this.sent = [];
+    this.events = new Map();
+    this.closed = null;
+    this.bufferedAmount = 0;
+    this.accepted = false;
+    this._attachment = null;
+  }
+  accept() { this.accepted = true; }
   send(v) { this.sent.push(v); }
   addEventListener(k, f) { this.events.set(k, f); }
   emit(k, data) { this.events.get(k)?.({ data }); }
   close(code, reason) { this.closed = { code, reason }; this.emit('close'); }
+  serializeAttachment(obj) { this._attachment = JSON.parse(JSON.stringify(obj)); }
+  deserializeAttachment() { return this._attachment ? JSON.parse(JSON.stringify(this._attachment)) : null; }
   get id() { return JSON.parse(this.sent.find(x => x.startsWith('{"t":"welcome"'))).id; }
 }
+
+class FakeHibernatingState {
+  constructor() {
+    this.sockets = [];
+    this.autoResponse = null;
+  }
+  acceptWebSocket(ws, tags = []) {
+    ws.accepted = true;
+    ws.tags = tags;
+    this.sockets.push(ws);
+  }
+  getWebSockets() {
+    return this.sockets.filter(ws => !ws.closed);
+  }
+  setWebSocketAutoResponse(pair) {
+    this.autoResponse = pair;
+  }
+}
+
 function roomWith(...names) {
   const room = new RoomDurableObject({}, {});
   const sockets = names.map(name => {
@@ -132,4 +161,88 @@ test('incompatible peers rejected before WebSocketPair allocation', async () => 
     assert.equal(old.status, 426);
     assert.equal(allocations, 0);
   } finally {if(saved===undefined)delete globalThis.WebSocketPair;else globalThis.WebSocketPair=saved;}
+});
+
+test('Cloudflare Durable Objects WebSocket Hibernation restores room state, host authority, lock state, and rate-limit budgets across DO eviction', async () => {
+  const savedPair = globalThis.WebSocketRequestResponsePair;
+  globalThis.WebSocketRequestResponsePair = class {
+    constructor(request, response) { this.request = request; this.response = response; }
+  };
+  try {
+    const doState = new FakeHibernatingState();
+    const room1 = new RoomDurableObject(doState, {});
+    assert.equal(room1.hibernationEnabled, true);
+    assert.equal(doState.autoResponse?.request, 'ping');
+    assert.equal(doState.autoResponse?.response, 'pong');
+
+    room1.compat = compatible;
+    const host = new Socket();
+    const guest = new Socket();
+    room1.handleSession(host, 'HostHib', true);
+    room1.handleSession(guest, 'GuestHib', true);
+
+    await room1.webSocketMessage(host, '{"t":"lock","v":true}');
+    assert.equal(room1.locked, true);
+
+    // Consume 100 frames on guest before hibernation
+    for (let i = 0; i < 100; i++) {
+      await room1.webSocketMessage(guest, 'b|{"k":"s"}');
+    }
+
+    // Simulate Durable Object eviction from memory and wake-up from hibernation
+    const roomWoken = new RoomDurableObject(doState, {});
+    assert.equal(roomWoken.members.size, 2);
+    assert.equal(roomWoken.compat, compatible);
+    assert.equal(roomWoken.locked, true);
+    assert.equal(roomWoken.hostId, host.id);
+
+    // Rate-limit budget is preserved across hibernation wake-ups (cannot exceed remaining ~60 burst frames)
+    for (let i = 0; i < 75 && !guest.closed; i++) {
+      await roomWoken.webSocketMessage(guest, 'b|{"k":"s"}');
+    }
+    assert.equal(guest.closed?.code, 1008);
+    assert.equal(roomWoken.members.size, 1);
+
+    // Add second guest and verify host handoff + attachment invalidation on webSocketClose
+    const guest2 = new Socket();
+    roomWoken.handleSession(guest2, 'Guest2', true);
+    const prevSent = guest2.sent.length;
+    await roomWoken.webSocketClose(host, 1000, 'bye', true);
+    assert.equal(roomWoken.members.size, 1);
+    assert.equal(roomWoken.hostId, guest2.id);
+    assert.equal(host.deserializeAttachment()?.closed, true);
+    assert.deepEqual(JSON.parse(guest2.sent[prevSent]), { t: 'leave', id: host.id, host: guest2.id });
+  } finally {
+    if (savedPair === undefined) delete globalThis.WebSocketRequestResponsePair;
+    else globalThis.WebSocketRequestResponsePair = savedPair;
+  }
+});
+
+test('WebSocket Hibernation handles ArrayBuffer binary frames, directed hit_nack after disconnect, and ignores corrupted attachments', async () => {
+  const doState = new FakeHibernatingState();
+  const room = new RoomDurableObject(doState, {});
+  room.compat = compatible;
+  const host = new Socket();
+  const victim = new Socket();
+  room.handleSession(host, 'HostBin', true);
+  room.handleSession(victim, 'VictimBin', true);
+  const victimId = victim.id;
+
+  // Inject a corrupted socket into state.sockets to ensure _restoreHibernatedSockets ignores it safely
+  const badWs = new Socket();
+  badWs.deserializeAttachment = () => { throw new Error('corrupt attachment'); };
+  doState.sockets.push(badWs);
+
+  const roomWoken = new RoomDurableObject(doState, {});
+  assert.equal(roomWoken.members.size, 2);
+
+  // Send binary ArrayBuffer broadcast frame
+  const binPayload = new TextEncoder().encode('b|{"k":"state","tick":42}').buffer;
+  await roomWoken.webSocketMessage(host, binPayload);
+  assert.ok(victim.sent.includes(`m|${host.id}|{"k":"state","tick":42}`));
+
+  // Disconnect victim and verify directed combat hit receives immediate hit_nack
+  await roomWoken.webSocketClose(victim, 1001, 'dropped', false);
+  await roomWoken.webSocketMessage(host, `s|${victimId}|{"k":"hit","seq":9}`);
+  assert.ok(host.sent.includes(`m|__relay__|{"k":"hit_nack","seq":9,"to":"${victimId}"}`));
 });

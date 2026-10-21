@@ -269,7 +269,7 @@ NetMatch.prototype.dispose = function(...args) {
     return new Promise((resolve, reject) => {
       let settled = false;
       const done = (fn, v) => { if (!settled) { settled = true; clearTimeout(timer); fn(v); } };
-      const url = \`\${relayURL()}/room/\${encodeURIComponent(code)}?name=\${encodeURIComponent(name)}&v=\${PROTO}\${create ? '&create=1' : ''}\`;
+      const url = \`\${relayURL()}/room/\${encodeURIComponent(code)}?name=\${encodeURIComponent(name)}&v=\${PROTO}&compat=\${encodeURIComponent(COMPAT)}\${create ? '&create=1' : ''}\`;
       let ws;
       try { ws = new WebSocket(url); } catch { reject(new Error('Could not connect')); return; }
       this.ws = ws;
@@ -333,7 +333,7 @@ NetMatch.prototype.dispose = function(...args) {
         done(reject, error);
         try { ws.close(1000, 'bye'); } catch { /* ignore */ }
       };
-      const url = \`\${relayURL()}/room/\${encodeURIComponent(code)}?name=\${encodeURIComponent(name)}&v=\${PROTO}\${create ? '&create=1' : ''}\`;
+      const url = \`\${relayURL()}/room/\${encodeURIComponent(code)}?name=\${encodeURIComponent(name)}&v=\${PROTO}&compat=\${encodeURIComponent(COMPAT)}\${create ? '&create=1' : ''}\`;
       try { ws = new WebSocket(url); } catch { done(reject, new Error('Could not connect')); return; }
       this.ws = ws;
       this._disconnect = disconnect;
@@ -414,7 +414,6 @@ NetMatch.prototype.dispose = function(...args) {
             disconnect(new Error('Incompatible game or room service version. Refresh this tab and reconnect after the room service is updated.'));
             return;
           }`, rel);
-    code = replaceOnce(code, '&v=${PROTO}${create ? ', '&v=${PROTO}&compat=${encodeURIComponent(COMPAT)}${create ? ', rel);
     code = replaceOnce(code, '        this.bytesIn += s.length;',
       '        if (s.length > MAX_RELAY_FRAME_CHARS) return;\n        this.bytesIn += s.length;', rel);
   }

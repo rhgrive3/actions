@@ -1,5 +1,6 @@
 import { PROJECTILE_VISUAL_SOURCE } from './projectile-visual-source-data.mjs';
 import { VARIANT_BASE_WEAPON } from './alternate-weapon-kits-data.mjs';
+import { poseBirthOffset } from './catalog-pose-birth.mjs';
 
 // Visual reconstruction only. Extracted DrawSizeParam/tail frames are read
 // verbatim; cross-section topology, Hermite smoothing and liquid links are
@@ -14,6 +15,12 @@ export const VISUAL_RECONSTRUCTION_STATUS = 'notRetailComparison';
 // Nintendo mesh widths. Source records remain available verbatim below.
 export const VISUAL_WIDTH_CALIBRATION = Object.freeze({shooter:.7,bucket:.5});
 const DT = 1 / HISTORY_HZ, EPS = 1e-9;
+// #1431: a raw-socket catalogue birth's drawn history starts at the same
+// tick's posed muzzle. Only that age-zero sample moves; physics never reads it.
+function recordBirth(h,p,age,x,y,z,vx,vy,vz){
+  const o=poseBirthOffset(p,age);
+  return o?h.record(age,x+o.x,y+o.y,z+o.z,vx,vy,vz):h.record(age,x,y,z,vx,vy,vz);
+}
 // Cache immutable arithmetic intrinsics once. In VM verification fixtures,
 // repeated realm-global Math/Number lookups otherwise dominate mesh generation.
 const sqrt=Math.sqrt,abs=Math.abs,min=Math.min,max=Math.max,sin=Math.sin,cos=Math.cos,pow=Math.pow,isFiniteNumber=Number.isFinite;
@@ -318,7 +325,7 @@ export class ProjectileVisualRuntime {
     p._iwVisualBeforeX=p._iwVisualBeforeY=p._iwVisualBeforeZ=0;
     p._iwVisualBeforeVX=p._iwVisualBeforeVY=p._iwVisualBeforeVZ=0;
     p._iwVisualKind=null;p._iwVisualOrdinal=null;p._iwVisualGroup=0;p._iwVisualLastNetStep=-1;
-    p._iwVisualEpoch=NaN;p._iwVisualRenderStart=0;p._iwVisualRenderAge=0;
+    p._iwVisualEpoch=NaN;p._iwVisualRenderStart=0;p._iwVisualRenderAge=0;p._s3PoseBirthOffset=null;
   }
   // The original VTF-backed roller effect remains the presentation owner
   // whenever the installed InkVolumes pack is ready. A second procedural
@@ -338,7 +345,7 @@ export class ProjectileVisualRuntime {
     if(kind==='legacy')return false;
     const h=this.historyPool.pop();if(!h)return false;
     h.reset();p._iwVisualHistory=h;p._iwVisualNextSample=visualAge(p)+DT;this._historyEpoch(p);
-    h.record(visualAge(p),p.pos.x,p.pos.y,p.pos.z,p.vel.x,p.vel.y,p.vel.z);this.stats.samplesRecorded++;
+    recordBirth(h,p,visualAge(p),p.pos.x,p.pos.y,p.pos.z,p.vel.x,p.vel.y,p.vel.z);this.stats.samplesRecorded++;
     this._group(p);return true;
   }
   _group(p) {
@@ -395,7 +402,7 @@ export class ProjectileVisualRuntime {
       const birth=Math.max(0,visualAge(p)-Math.min(dt,visualAge(p)));
       p._iwVisualStartAge=birth;p._iwVisualNextSample=birth+DT;
       const refreshed=p.type==='slosh'&&p.fidelitySloshUnit;
-      h.record(birth,refreshed?p.prev.x:p._iwVisualBeforeX,refreshed?p.prev.y:p._iwVisualBeforeY,refreshed?p.prev.z:p._iwVisualBeforeZ,
+      recordBirth(h,p,birth,refreshed?p.prev.x:p._iwVisualBeforeX,refreshed?p.prev.y:p._iwVisualBeforeY,refreshed?p.prev.z:p._iwVisualBeforeZ,
         p._iwVisualBeforeVX,p._iwVisualBeforeVY,p._iwVisualBeforeVZ);
       this.stats.samplesRecorded++;
     }
@@ -422,7 +429,7 @@ export class ProjectileVisualRuntime {
     if(kind==='legacy')return;
     let h=p._iwVisualHistory;
     if(!h){h=this.historyPool.pop();if(!h)return;h.reset();p._iwVisualHistory=h;this._historyEpoch(p);
-      h.record(previousAge,p.prev.x,p.prev.y,p.prev.z,p._iwVisualBeforeVX,p._iwVisualBeforeVY,p._iwVisualBeforeVZ);
+      recordBirth(h,p,previousAge,p.prev.x,p.prev.y,p.prev.z,p._iwVisualBeforeVX,p._iwVisualBeforeVY,p._iwVisualBeforeVZ);
       this.stats.samplesRecorded++;
     }
     if(h.record(p.age,p.pos.x,p.pos.y,p.pos.z,p.vel.x,p.vel.y,p.vel.z))this.stats.samplesRecorded++;

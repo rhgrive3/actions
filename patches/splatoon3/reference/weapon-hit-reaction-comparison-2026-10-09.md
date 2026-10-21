@@ -74,3 +74,16 @@ These statuses describe INKWAVE code and fixture evidence. A local regression pa
 4. Base damage clip for the Blaster family — absent from the pinned corpus; recorded as `base: null`.
 5. Whether the `Blower`/`Spnr`/`Mnvr` suffix-to-class ownership holds in the retail skeleton — inferred by set completeness, not inspected.
 6. Network-level remote presentation and rendered-pixel parity — remote behavior is fixture-level; browser/console output and network latency are not exercised here.
+
+## 2026-10-21 addendum: source-loaded production
+
+The tables above were measured on the native fallback rig (no source bank). With the Wii U bank loaded,
+Shooter, Blaster, Charger and Splatling keep a source-owned upper body outside native weapon actions;
+`HumanRetarget.apply` and `alignWeapon` then overwrite every channel this layer shapes (bones and weapon
+matrices differ by at most 7.8e-16 with the layer on vs off). Their visible nonlethal hit is the
+source controller's generic 20F `Damage` one-shot over the family `WaitHold_*`. The bank has no
+`Damage_<family>` clip; its `WaitDamage_*` (360F) and `WalkDamage_*` (240F) are loops, not one-shot
+hits, and their use is unverified. The layer is therefore skipped while the source owns the upper body
+(no second pose pass); Roller, Dualies and Slosher (native upper body) keep it. Evidence:
+`tests/issue-1097-source-hit-owner.test.mjs`. Family-specific hit poses for the source-owned families
+remain open until Splatoon 3 curves or capture exist.

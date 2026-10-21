@@ -30,6 +30,7 @@ import { dashTurnBreakActive } from './movement-physics.mjs';
 import { reverseShotRelease } from './shooter-movement.mjs';
 import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
+import { installCatalogPoseBirth } from './catalog-pose-birth.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
 import { paintDualiesSlide } from './dualies-slide-paint.mjs';
 import { catalogDualiesTurret, writeCatalogDualiesVelocity } from './catalog-dualies-motion.mjs';
@@ -280,6 +281,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   Object.defineProperty(R, INSTALLED, { value:true });
   installActorFreefallHooks(api);
   installS3ProjectileShapes(api);
+  // #1431 presentation-only: connect raw-socket births to the same tick's drawn muzzle.
+  const poseBirth = installCatalogPoseBirth(api);
   const legacyUpdate = R.update, legacyReset = R.reset, legacyBusy = R.busy, legacyMove = R.moveSpeed;
   const step = P._step, fresh = P._new, ghost = P.ghostProjectile, clear = P.clear;
   const defaults = profile.weaponsFidelity;
@@ -403,10 +406,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const event={actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge};
     if(hand!==null)event.hand=hand;
     emit('weapon:fire',event);
-    if (a.isLocal || a._nearCamera?.()) {
+    const fxKind=r.family==='blaster'?'blaster':'shooter',wantFx=!!(a.isLocal || a._nearCamera?.());
+    const wantMuzzle=wantFx&&!usesBucketSlosherSheet(r.id);
+    // Raw-socket births defer only the FX request until this tick's pose (#1431).
+    const deferred=poseBirth.commit(a,origin,direction,a.color,fxKind,wantMuzzle);
+    if (wantFx) {
       G.audio?.play(r.family==='charger'?'shoot_charger':r.family==='blaster'?'shoot_blaster':'shoot_shooter',
         {pos:a.isLocal?undefined:origin,volume:.45});
-      if(!usesBucketSlosherSheet(r.id))G.fx?.muzzle(origin,direction,a.color,r.family==='blaster'?'blaster':'shooter');
+      if(wantMuzzle&&!deferred)G.fx?.muzzle(origin,direction,a.color,fxKind);
     }
   }
   function origin(a, hand=null, offset=null) {
@@ -425,6 +432,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       G.projectiles._muzzleHand(a,hand,muzzle);
       if(hand){base.copy(a.pos);base.y+=a.form==='squid'?.4:1.05;constrainMuzzle(G.physics,base,muzzle);}
     }
+    poseBirth.begin(a,hand,muzzle,offset);
     G.projectiles._aimFrom(a,muzzle,dir);
     return muzzle;
   }
@@ -665,6 +673,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     p.vel.y += finite(options.lift,0);
     if(!queueCatalogBirth(p,G,muzzle))applyCatalogPlayerVelocity(p);
     updateCatalogVisual(p);
+    poseBirth.attach(p,at);
     system._push(p);
     return p;
   }

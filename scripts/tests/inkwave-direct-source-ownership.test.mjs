@@ -243,3 +243,44 @@ test('source motion bank sampling and FK are directly owned by the authored modu
   for (const adapter of ['motion-fk-hotpath-adapter.mjs', 'runtime-frame-scratch-adapter.mjs'])
     assert.doesNotMatch(fs.readFileSync(new URL('../../patches/local-quality/' + adapter, import.meta.url), 'utf8'), /src\/game\/motion\/source-bank\.js/);
 });
+
+test('Direct-Source migrated LOD, outfit AO, body-balance and transport compat modules require zero hotpath/compat rewrite and pass auditDirectSource', async () => {
+  const { adaptBuildSource } = await import('../inkwave-source-composition.mjs');
+  const { adaptQualitySource, replaceOnce } = await import('../../patches/local-quality/adapter.mjs');
+  const { adaptMotionFkHotpath } = await import('../../patches/local-quality/motion-fk-hotpath-adapter.mjs');
+  const { auditDirectSource } = await import('../inkwave-source-migration-audit.mjs');
+
+  const outfitSource = fs.readFileSync(new URL('../../inkwave-public/src/game/character-outfit.js', import.meta.url), 'utf8');
+  assert.equal(adaptBuildSource('src/game/character-outfit.js', outfitSource), outfitSource, 'character-outfit.js must not be rewritten at build time');
+
+  const lodSource = fs.readFileSync(new URL('../../inkwave-public/src/game/character-lod.js', import.meta.url), 'utf8');
+  assert.equal(adaptQualitySource('src/game/character-lod.js', lodSource), lodSource, 'character-lod.js must not be rewritten by local-quality');
+
+  const bbSource = fs.readFileSync(new URL('../../inkwave-public/src/game/motion/body-balance.js', import.meta.url), 'utf8');
+  assert.match(bbSource, /this\.rotationGainByIndex=bank\.bones\.map/, 'body-balance.js directly owns rotationGainByIndex');
+  assert.match(bbSource, /this\._reachChain/, 'body-balance.js directly owns _reachChain cache');
+  assert.equal(
+    adaptQualitySource('src/game/motion/body-balance.js', bbSource),
+    adaptMotionFkHotpath('src/game/motion/body-balance.js', bbSource, replaceOnce),
+    'body-balance.js must not be rewritten by adaptEnginePerformanceHotpaths'
+  );
+
+  const transportSource = fs.readFileSync(new URL('../../inkwave-public/src/net/transport.js', import.meta.url), 'utf8');
+  assert.match(transportSource, /&compat=\$\{encodeURIComponent\(COMPAT\)\}/, 'transport.js directly owns compat query param in source');
+
+  const summary = auditDirectSource();
+  assert.deepEqual(summary.failures, [], 'auditDirectSource must report zero failures');
+  assert.equal(summary.directOwnerPathsVerified.length, 14, 'all 14 direct-owned modules (including source-bank.js) must be verified');
+});
+
+// Regression for the 2026-10-21 A+ rebase: preserve the real terrain-source
+// contract while adding the Node 18 import.meta.dirname fallback.
+test('native stage Node18 fallback preserves source terrain validation before stage publication', () => {
+  const src = fs.readFileSync(new URL('../lib/inkwave-native-stages.mjs', import.meta.url), 'utf8');
+  assert.match(src, /import \{assertSourceTerrainObjects\} from '\.\.\/\.\.\/patches\/native-stages\/runtime\/source-terrain-contract\.mjs'/);
+  assert.match(src, /fileURLToPath\(new URL\("\.", import\.meta\.url\)\)/);
+  const read = src.indexOf("const manifest=JSON.parse(fs.readFileSync(path.join(root,s.id,'manifest.json')))");
+  const validate = src.indexOf('assertSourceTerrainObjects(manifest);', read);
+  const publish = src.indexOf('return {...definition,integritySha256:', read);
+  assert.ok(read >= 0 && validate > read && publish > validate, 'terrain validation must precede playable stage publication');
+});
