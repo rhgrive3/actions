@@ -116,7 +116,10 @@ try {
       for(let j=8;j<18;j++)for(let i=8;i<18;i++){
         const u=(i+.5)*face.cu,w=(j+.5)*face.cv,px=u-x,py=w-z;
         const along=px*dx+py*dz,across=-px*dz+py*dx;
-        const wob=r*(.03*Math.sin(along/r*9+seed*30)+.018*Math.sin(along/r*23+seed*11));
+        // The installed #1165 core is a pair of triangular waves, not the
+        // obsolete raw-source sine shape. Measure the *emitted* GPU core.
+        const tooth=t=>1-4*Math.abs(t-Math.floor(t)-.5);
+        const wob=r*(.08*tooth(along/r*2.1+seed*4.7+.25)+.04*tooth(along/r*5.3+seed*2.3+.25));
         const a=Math.abs(along)-r*.55,b=Math.abs(across)-r*.62-wob;
         const sd=Math.hypot(Math.max(a,0),Math.max(b,0))+Math.min(Math.max(a,b),0)-r*.1;
         const ax=Math.floor(face.atlas.x+face.atlas.pad+u*face.atlas.ppm),ay=Math.floor(face.atlas.y+face.atlas.pad+w*face.atlas.ppm);
@@ -131,7 +134,7 @@ try {
           // Include half-texel readback/sample alignment. Never call these
           // genuine AA cells an interior mismatch. The separate WebGL hard
           // mask suite still rejects GPU-only and unowned solid Roller cells.
-          const maxGradient=1+0.03*9+0.018*23;
+          const maxGradient=1+0.08*4*2.1+0.04*4*5.3;
           const aaWidth=(1.5*Math.SQRT2+Math.SQRT1_2)*maxGradient/face.atlas.ppm;
           if(Math.abs(sd)>aaWidth)throw Error('Roller interior GPU/CPU mismatch '+JSON.stringify({seed,angle,team,u,w,gpu,cpu,sd,aaWidth,pixel:[...pixel]}));
           edgeTolerance++;
