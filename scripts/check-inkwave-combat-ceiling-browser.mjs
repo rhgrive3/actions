@@ -12,6 +12,7 @@ import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 import {installCombatPlacementQA,advanceUntilNativeShotProof} from './lib/inkwave-combat-ceiling-placement.mjs';
+import {installNetworkPlacementObservation} from './lib/inkwave-network-placement-observation.mjs';
 import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runtime-evidence.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
@@ -23,12 +24,13 @@ assert.equal(option('--source-sha',sourceSha),sourceSha,'checkout must equal req
 const build=verifyRuntimeBuild(site,ROOT,sourceSha);
 assert.equal(build.schema,1);assert.equal(hash(JSON.stringify(build.files)),build.inputHash);
 const self=fileURLToPath(import.meta.url),selfRelative=path.relative(ROOT,self);
-for(const file of [selfRelative,'scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
+for(const file of [selfRelative,'scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-network-placement-observation.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
  const actual=execFileSync('git',['hash-object','--',file],{cwd:ROOT,encoding:'utf8'}).trim();
  const expected=execFileSync('git',['rev-parse',sourceSha+':'+file],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(actual,expected,'QA/relay source must match head: '+file);
 }
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2'};
+const observePlacement=process.argv.includes('--observe-placement');
 const errors=[],wire=[],loaded=new Set(),contexts=[],pages=[];
 const report={schema:1,status:'running',sourceSha,inputHash:build.inputHash,contentHash:build.contentHash,
  harnessHash:hash(fs.readFileSync(self)),scenario:'native-shooter-220-reject-36-accept',
@@ -60,6 +62,7 @@ try {
   page.on('pageerror',e=>errors.push('player'+i+': '+e.message));
   page.on('requestfailed',r=>errors.push('player'+i+': '+r.url()+': '+r.failure()?.errorText));
   await page.addInitScript(installCombatPlacementQA);
+  if(observePlacement)await page.addInitScript(installNetworkPlacementObservation);
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,matchLength:180,lastStage:'tidewater',lastMode:'turf'})));
   await page.route(base+'/**',async route=>{
    const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';
@@ -86,6 +89,7 @@ try {
  report.phase='native-actor-placement';
  report.roles=await Promise.all(pages.map(p=>p.evaluate(async url=>{
   const {Actor}=await import(url),G=__G,n=G.netm;__inkwave.debug.freeze();
+  window.__ceilingPlacementObservation?.record('frozen');
   const actors=G.match.actors.map(a=>{if(!(a instanceof Actor)||a.damage!==Actor.prototype.damage||a.weapon.id!=='shooter'||a.weapon.damage!==36)throw Error('Native Actor/shooter identity failed');return {nid:a.nid,owner:a.owner,remote:a.remote,team:a.team,weapon:a.weapon.id,damage:a.weapon.damage};});
   window.__ceilingOriginalDamage=new Map(G.match.actors.map(a=>[a,a.damage]));
   return {myId:n.myId,isHost:n.isHost,local:G.match.local.nid,actors};
@@ -107,9 +111,13 @@ try {
    if(a.net?.buf)a.net.buf.length=0;
   }
   G.scene.updateMatrixWorld(true);
+  window.__ceilingPlacementObservation?.record('placed');
  },{attacker,placement})));
- const step=async()=>{await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>{
+ let placementStep=0;
+ const step=async()=>{const observationStep=placementStep++;await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement,observationStep})=>{
+  if(observationStep<12)window.__ceilingPlacementObservation?.record('before-net',observationStep);
   const G=__G,dt=1/60;G.time+=dt;G.net.update(dt);
+  if(observationStep<12)window.__ceilingPlacementObservation?.record('after-net',observationStep);
   for(const a of G.match.actors){
    if(a.remote)G.netm.applyRemote(a,dt);
    else {
@@ -135,11 +143,13 @@ try {
     }
    }
   }
+  if(observationStep<12)window.__ceilingPlacementObservation?.record('after-actors',observationStep);
   G.projectiles.update(dt);
- },{attacker,victim,placement})));await new Promise(resolve=>setTimeout(resolve,0));};
+ },{attacker,victim,placement,observationStep})));await new Promise(resolve=>setTimeout(resolve,0));};
  for(let i=0;i<12;i++)await step();
- report.settled=await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>
-  __ceilingPlacement.inspect({attacker,victim,requested:placement}),{attacker,victim,placement})));
+ report.settled=await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>{
+  window.__ceilingPlacementObservation?.record('settled-read',12);
+  return __ceilingPlacement.inspect({attacker,victim,requested:placement});},{attacker,victim,placement})));
  for(let i=0;i<2;i++)assert(Math.hypot(...report.settled[0].points[i].map((v,k)=>v-report.settled[1].points[i][k]))<=.05,'Both peers must agree on the settled native positions');
  report.aim=await guest.evaluate(({attacker,victim,placement})=>__ceilingPlacement.aim({attacker,victim,requested:placement}),{attacker,victim,placement});
  report.phase='arm-packet-observers';
@@ -254,6 +264,9 @@ try {
     alive:a.alive===true,grounded:a.grounded===true,form:['kid','squid'].includes(a.form)?a.form:'other',pos:xyz(a.pos)}))};
  });}catch{}
 } finally {
+ if(observePlacement)report.placementObservation=await Promise.all(pages.map(async p=>{
+  try{return await p.evaluate(()=>window.__ceilingPlacementObservation?.report()??null);}catch{return {unavailable:true};}
+ }));
  report.errors=errors;report.loadedArtifacts=[...loaded];report.wire=wire;
  for(const page of pages){
   try{await page.evaluate(()=>{const g=window.__ceilingGuest,h=window.__ceilingHost,s=window.__ceilingShot;if(s){s.system._step=s.step;s.flight.impact=s.impact;}if(g){g.tr.sendTo=g.send;g.n.onMessage=g.originalMessage;}if(h)h.n.onMessage=h.original;});}
@@ -310,3 +323,4 @@ const failure = report.status === 'failed' ? {
  browserErrorCount: errors.length,
 } : undefined;
 console.log(JSON.stringify({status:report.status,sourceSha,phase:report.phase,evidence,failure}));
+

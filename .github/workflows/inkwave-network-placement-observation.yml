@@ -1,0 +1,73 @@
+name: INKWAVE exact 8db placement observation
+on:
+  push:
+    branches: [qa/inkwave-network-placement-observe-8db-20261021]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      TMPDIR: ${{ github.workspace }}/.ci-scratch
+      TMP: ${{ github.workspace }}/.ci-scratch
+      TEMP: ${{ github.workspace }}/.ci-scratch
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enforce direct parent and six QA-only paths
+        run: |
+          test "$(git rev-parse HEAD)" = '${{ github.sha }}'
+          test "$(git rev-parse HEAD^)" = 8db288ece48c882f42eb0d3540218af58d6af6e4
+          python3 - <<'PY'
+          import subprocess
+          allowed={'.github/workflows/inkwave-network-placement-observation.yml','scripts/check-inkwave-combat-ceiling-browser.mjs','scripts/lib/inkwave-network-placement-observation.mjs','scripts/tests/inkwave-network-placement-observation.test.mjs','scripts/tests/inkwave-network-placement-stale-sample.test.mjs','reports/network-8db-placement-observation.md'}
+          actual=set(subprocess.check_output(['git','diff','--name-only','HEAD^','HEAD'],text=True).splitlines())
+          assert actual==allowed,(actual-allowed,allowed-actual)
+          print('Exact 8db parent; six QA-only files; runtime and original placement helper unchanged')
+          PY
+          mkdir -p .ci-scratch .reused-site .diagnostic/evidence
+          npm install --no-save --no-package-lock --silent playwright@1.62.1 ws@8
+          node --check scripts/check-inkwave-combat-ceiling-browser.mjs
+          node --experimental-vm-modules --test scripts/tests/inkwave-network-placement-observation.test.mjs scripts/tests/inkwave-network-placement-stale-sample.test.mjs scripts/tests/inkwave-combat-ceiling-placement.test.mjs
+      - name: Retrieve preserved build with immutable provenance
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs=require('fs'),crypto=require('crypto'),id=12379998715;
+            const meta=await github.rest.actions.getArtifact({owner:context.repo.owner,repo:context.repo.repo,artifact_id:id});
+            if(meta.data.workflow_run.head_sha!=='ffdbf2016b2c8a008e43761d3874b83fad63a027'||meta.data.workflow_run.id!==39658991486)throw Error('Wrong original build provenance');
+            const result=await github.rest.actions.downloadArtifact({owner:context.repo.owner,repo:context.repo.repo,artifact_id:id,archive_format:'zip'});
+            const bytes=Buffer.from(result.data),sha256=crypto.createHash('sha256').update(bytes).digest('hex');
+            if(sha256!=='f7bc158f7ab8480dc1a5bf767a777258626c202228cf975fcbdebc99064f0f9e')throw Error('Original build ZIP SHA mismatch');
+            fs.writeFileSync('.reused-site/original.zip',bytes);
+            fs.writeFileSync('.diagnostic/evidence/build-origin.json',JSON.stringify({artifact:id,run:39658991486,originalBuildHead:meta.data.workflow_run.head_sha,diagnosticHead:context.sha,sha256,bytes:bytes.length}));
+      - name: Verify every preserved input and artifact against diagnostic checkout
+        run: |
+          unzip -q .reused-site/original.zip -d .reused-site/extracted
+          test "$(cat .reused-site/extracted/_site-source-sha.txt)" = ffdbf2016b2c8a008e43761d3874b83fad63a027
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';import assert from 'node:assert/strict';import {verifyRuntimeBuild} from './scripts/lib/inkwave-runtime-evidence.mjs';
+          const build=verifyRuntimeBuild('.reused-site/extracted/_site',process.cwd(),process.env.GITHUB_SHA);
+          assert.equal(build.inputHash,'68591cc3b710e3c83e5f8e92d9be6a673c95da4394f19ac4b53457eb826a31f3');
+          assert.equal(build.contentHash,'2ceba653d36b11a399938667bc5901847284737a687b6b9c1b81de9e725ebf92');
+          fs.writeFileSync('.diagnostic/evidence/build-input-equivalence.json',JSON.stringify({diagnosticHead:process.env.GITHUB_SHA,inputHash:build.inputHash,contentHash:build.contentHash,scope:'Every original compiled artifact hash and Git-backed input byte verified; original ffdb build marker retained, not relabeled as an 8db build'}));
+          JS
+          npx playwright install --with-deps chromium
+      - name: Observe the existing two-peer placement and preserve its result
+        run: node scripts/check-inkwave-combat-ceiling-browser.mjs --site .reused-site/extracted/_site --source-sha '${{ github.sha }}' --evidence-dir .diagnostic/evidence/combat-ceiling --observe-placement
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-network-placement-observation-${{ github.sha }}
+          path: .diagnostic/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
