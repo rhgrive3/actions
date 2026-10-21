@@ -37,5 +37,23 @@ try{
   }
   fs.writeFileSync(path.join(dir,'frames.json'),JSON.stringify(frames));if(speed>3)assert(frames.slice(30).every(f=>f.film>0&&f.dots===0),'visible connected film without swimming particles');else assert(frames.slice(30).every(f=>f.film===0&&f.dots===0),'slow sneaking stays quiet');assert(frames.every(f=>!f.bodyVisible));assert(frames.every(f=>f.paint===1),'actual lane stays painted');cases.push({speed,native:!!native,frames});console.log(JSON.stringify({speed,last:frames.at(-1)}));
  }
- assert.deepEqual(errors,[]);fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify({browser:browser.version(),contentHash:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,setup,cases,errors,scope:'60Hz controlled moving Actor/FX, actual painted range surface, deterministic random. Fixed camera relative to swimmer. Not native-input physics or Switch parity.'},null,2));
+ const colors=[];
+ for(const [name,color] of [['yellow','#e4e900'],['orange','#ff6400'],['blue','#2f5bff'],['purple','#9e21f5']]){
+  const result=await page.evaluate(({color})=>{
+   const G=__G,a=G.local;a.color.set(color);G.teamColors[a.team].copy(a.color);G.game.levelMat.userData.uniforms.uTeamA.value.copy(a.color);
+   G.fx.clear();G.game.swimWake.reset();a._wakeT=0;G.time=10;G.fx._time=10;
+   for(let i=0;i<=46;i++)sprayStep(i,8);
+   const slots=G.fx.swimSurface.slots.filter(s=>s.mesh.visible);
+   for(const s of slots)if(!s.mesh.material.color.equals(a.color))throw new Error('film team pigment drift');
+   G.renderer.render(G.scene,G.camera);const film=G.renderer.domElement.toDataURL('image/png');
+   for(const s of slots)s.mesh.visible=false;
+   G.renderer.render(G.scene,G.camera);const surface=G.renderer.domElement.toDataURL('image/png');
+   for(const s of slots)s.mesh.visible=true;
+   return {film,surface,filmCount:slots.length,bodyVisible:a.character.squid.body.visible,drops:G.fx.dN};
+  },{color});
+  const dir=path.join(out,'colors');fs.mkdirSync(dir,{recursive:true});
+  for(const label of ['film','surface']){fs.writeFileSync(path.join(dir,name+'-'+label+'.png'),Buffer.from(result[label].split(',')[1],'base64'));delete result[label];}
+  assert.equal(result.filmCount,1);assert.equal(result.bodyVisible,false);assert.equal(result.drops,0);colors.push({name,color,...result});
+ }
+ assert.deepEqual(errors,[]);fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify({browser:browser.version(),contentHash:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,setup,cases,colors,errors,scope:'60Hz controlled moving Actor/FX, actual painted range surface, deterministic random. Fixed camera relative to swimmer. Not native-input physics or Switch parity.'},null,2));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
