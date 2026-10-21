@@ -10,7 +10,7 @@ export { nativeClimbTransition,updateNativeClimb,nativeClimbTravelForm } from '.
 export { nativeSourceWaypointReached,nativeSourceTravelInput,nativeSourceFootSupported } from './native-bot-support.mjs';
 export {nativeSourceGroundedForm} from './native-bot-form.mjs';
 export { applyNativeQuality } from './native-quality.mjs';
-export { nativeStageArt } from './source-menu.mjs';
+export { nativeStageArt, showNativeWorldRecovery } from './source-menu.mjs';
 
 export {nativeStageRuleStatus} from './rule-availability.mjs';
 export {nativeTowerClearance} from './native-tower-clearance.mjs';

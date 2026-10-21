@@ -27,7 +27,9 @@ const TEST_TMP=writableTestTmp();
 const classMethods=s=>{const ast=parse(s,{ecmaVersion:'latest',sourceType:'module'});const cls=ast.body.find(n=>n.type==='ClassDeclaration'&&n.body.body.some(m=>m.key?.name==='boot'));return new Map(cls.body.body.filter(n=>n.type==='MethodDefinition').map(n=>[n.key.name,s.slice(n.start,n.end)]));};
 function shape(node){if(Array.isArray(node))return node.map(shape);if(node&&typeof node==='object')return Object.fromEntries(Object.entries(node).filter(([k])=>!['start','end','raw'].includes(k)).map(([k,v])=>[k,shape(v)]));return node;}
 function uninstrument(node){if(Array.isArray(node))return node.map(uninstrument).filter(Boolean);if(!node||typeof node!=='object')return node;
- if(node.type==='ExpressionStatement'&&(JSON.stringify(node).includes('"name":"__inkwaveStartup"')))return null;
+ const expression=node.expression?.type==='ChainExpression'?node.expression.expression:node.expression;
+ if(node.type==='ExpressionStatement' && expression?.type==='CallExpression' &&
+   expression.callee?.object?.object?.name==='globalThis' && expression.callee.object.property?.name==='__inkwaveStartup')return null;
  if(node.type==='FunctionDeclaration'&&node.id?.name==='__iwStartupMeasure')return null;
  if(node.type==='CallExpression'&&node.callee.name==='__iwStartupMeasure')return uninstrument(node.arguments[1].body);
  return Object.fromEntries(Object.entries(node).map(([k,v])=>[k,uninstrument(v)]));}
