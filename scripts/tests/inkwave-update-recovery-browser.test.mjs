@@ -21,7 +21,7 @@ const html = revision => `<!doctype html><html><head><base href="./_versions/${r
 const ready = `document.getElementById('ui-root').innerHTML='<div class="iw-ui" data-screen="title"></div>';globalThis.__inkwaveStartup.engineReady({bootMs:1});globalThis.fixtureReady=true;`;
 
 for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
-  for (const scenario of ['entry-missing', 'late-import', 'permanent-failure']) {
+  for (const scenario of ['entry-missing', 'entry-syntax', 'late-import', 'permanent-failure']) {
     test(`${name}: warm app recovers ${scenario} without losing settings or looping`, { timeout: 60000 }, async t => {
       const receipts = [];
       const bHTML = html(B);
@@ -45,6 +45,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
         else if (url.pathname === '/actions/' || url.pathname === '/actions/index.html') { body = bHTML; type = 'text/html'; }
         else if (url.pathname === `/actions/_versions/${B}/${entry}`) body = bodies[entry];
         else if (url.pathname === `/actions/_versions/${B}/${bootstrapPath}`) body = bodies[bootstrapPath];
+        else if (scenario === 'entry-syntax' && url.pathname === `/actions/_versions/${A}/${entry}`) body = 'export const =;';
         else if (scenario !== 'entry-missing' && url.pathname === `/actions/_versions/${A}/${entry}`) body = startup;
         else if (scenario !== 'entry-missing' && url.pathname === `/actions/_versions/${A}/${bootstrapPath}`) {
           // Reproduce Game.boot().catch calling bootFailed after the initial

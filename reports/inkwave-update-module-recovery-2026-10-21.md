@@ -33,10 +33,11 @@ SW は不正応答・404・410 に対し同一 revision の同一 URL を一度�
 
 公開版の新しいゲーム本体・描画アダプターを含む main 上で再検証。今回のコード領域の競合はなく、比較記録の双方の追記を保持した。
 
-- loading-cache、cache manifest、integration workflow の Node 回帰: 90 pass / 5 skip。
+- loading-cache、cache manifest、integration workflow の Node 回帰: 91 pass / 5 skip。
 - Python キャッシュハーネス: 3 pass / 1 skip。
-- 配信ビルドと startup budget: pass。critical HTML 23,563 bytes、起動 JS 2,233,955 bytes、worker 76,293 bytes。既存上限内。
-- Chromium の古い SW / 永続プロファイルでの復旧回帰: 3/3 pass。
+- 配信ビルドと startup budget: pass。critical HTML 23,872 bytes、起動 JS 2,233,955 bytes、worker 76,293 bytes。既存上限内。
+- Chromium / WebKit の古い SW / 永続プロファイルでの復旧回帰: 各 4/4 pass。
+- 追加反例として、旧起動エントリーを 200 / JavaScript MIME の構文破損本文に置換すると、script 要素の resource error ではなく window の ErrorEvent が発生し、従来処理は 8 秒待っても起動に到達しなかった。対象 entry の正確な filename も捕捉することで、モジュール自身が実行できない場合も一度の再取得で復旧する。他アプリの filename は対象外。両ブラウザーで新規ケースを通過。
 - 更新後ゲーム本体の配信ビルドでも、起動エントリー 404 → 一度の文書再取得 → `engine-ready` を確認。ページ例外 0、クエリー・fragment 保持、復旧シェル非表示、成功後の内部パラメーター除去を確認。
 
 本家比較: 今回は Web 配信の更新・復旧機構のみであり、スプラトゥーン3のゲーム内挙動を変更・同等認定するものではない。本家の未確認値を推定で追加していない。

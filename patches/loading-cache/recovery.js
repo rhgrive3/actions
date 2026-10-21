@@ -54,8 +54,12 @@
   };
   const onError = event => {
     const target = event.target;
-    if (target?.tagName === 'SCRIPT' && target.type === 'module' &&
-        target.src === new URL('./patches/loading-cache/runtime/startup.mjs', document.baseURI).href) fail(event.message, true);
+    const entryURL = new URL('./patches/loading-cache/runtime/startup.mjs', document.baseURI).href;
+    // A 200 response containing broken JavaScript raises a window ErrorEvent,
+    // rather than the script element's resource error. The entry cannot run
+    // its own catch in either case; restrict recovery to that exact URL.
+    if ((target?.tagName === 'SCRIPT' && target.type === 'module' && target.src === entryURL) ||
+        event.filename === entryURL) fail(event.error || event.message, true);
   };
   const onRejection = event => { if (moduleFailure(event.reason)) fail(event.reason); };
   addEventListener('error', onError, true);

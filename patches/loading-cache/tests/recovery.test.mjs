@@ -84,3 +84,11 @@ test('modulepreload and unrelated resource errors do not restart a healthy start
   f.listeners.get('error')({ target: { tagName: 'IMG' } });
   await tick(); assert.equal(f.navigations.length, 0);
 });
+test('a corrupt 200 entry raises a window error and still recovers before the module can execute', async () => {
+  const f = fixture();
+  f.listeners.get('error')({ filename: 'https://fixture.invalid/actions/_versions/old/patches/loading-cache/runtime/startup.mjs', error: new SyntaxError('Unexpected token') });
+  await tick(); assert.equal(f.navigations.length, 1);
+  const unrelated = fixture();
+  unrelated.listeners.get('error')({ filename: 'https://fixture.invalid/neighbor/app.js', error: new SyntaxError('Unexpected token') });
+  await tick(); assert.equal(unrelated.navigations.length, 0);
+});
