@@ -1,6 +1,6 @@
 // Inkjet-only admission shares the *currently free* existing sprite capacity.
 // Actor order and global pools are unchanged; no live sprite is evicted.
-// Reuse all bookkeeping after first appearance, with no per-frame object allocation.
+// Reuse all bookkeeping after first appearance, without rebuilding per-actor bookkeeping objects.
 export function inkjetVfxAdmission(director, actor) {
   let budget = director.inkjetAdmissionBudget;
   if (!budget) budget = director.inkjetAdmissionBudget = {
