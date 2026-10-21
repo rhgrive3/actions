@@ -27,11 +27,19 @@ for(let block=0;block<blocks;block++){
  assert.equal(new Set(observations.map(r=>r.contentHash)).size,1,'one unchanged emitted build');
  assert.equal(observations[0].servedHashes['patches/splatoon3/runtime/special-vfx.mjs'],observations[3].servedHashes['patches/splatoon3/runtime/special-vfx.mjs']);
  assert.equal(observations[1].servedHashes['patches/splatoon3/runtime/special-vfx.mjs'],observations[2].servedHashes['patches/splatoon3/runtime/special-vfx.mjs']);
+ for(const observation of observations.slice(1))for(const key of ['seed','camera','viewport','clock','hz','actorCount','layout','quality','puffCap','phaseBefore','phaseAfter'])assert.deepEqual(observation.case[key],observations[0].case[key],key+' identical across ABBA');
+ const frameSignature=row=>JSON.stringify(row.frames.map(({frame,time,puffs,sparks,drawCalls,triangles})=>({frame,time,puffs,sparks,drawCalls,triangles})));
+ assert.equal(frameSignature(observations[0].case),frameSignature(observations[3].case),'A repeated visual burden deterministic');
+ assert.equal(frameSignature(observations[1].case),frameSignature(observations[2].case),'B repeated visual burden deterministic');
+ const sharedFrames=observations[0].case.frames.map((a,i)=>{const b=observations[1].case.frames[i];return {frame:a.frame,time:a.time,puffsDelta:b.puffs-a.puffs,sparksDelta:b.sparks-a.sparks,drawCallsDelta:b.drawCalls-a.drawCalls,trianglesDelta:b.triangles-a.triangles};});
  const mean=(variant,key)=>{const a=observations.filter(r=>r.variant===variant).map(r=>r.case[key].mean);return a.reduce((n,x)=>n+x,0)/a.length;};
  const ratios={fxCpu:mean('B','cpuFxUpdateMs')/mean('A','cpuFxUpdateMs'),renderSubmitCpu:mean('B','cpuRenderSubmissionMs')/mean('A','cpuRenderSubmissionMs')};
- results.push({block,observations,ratios});
+ results.push({block,observations,ratios,sharedFrames});
+ console.log(JSON.stringify({block,ratios,observations:observations.map(r=>({position:r.position,variant:r.variant,case:r.case})),sharedFrames}));
 }
 fs.mkdirSync(root,{recursive:true});
-const report={scope:'single-case ABBA feasibility pilot on SwiftShader; frozen gameplay; fresh browser per observation; no hardware GPU, allocation or whole-game performance acceptance',case:{hz:60,actorCount:1,layout:'near'},blocks:results,performanceAccepted:false,limitations:['One block is insufficient to bound noise.','PNG/readPixels occur outside the timed sample window; continuous visual captures remain a separate acceptance pass.','Full acceptance requires all actor/rate/distance cases, separate capture passes and block-level uncertainty.','CPU render-submission is not GPU completion.']};
+const summarize=key=>{const a=results.map(r=>r.ratios[key]).sort((a,b)=>a-b);return {median:a[Math.floor(a.length/2)],min:a[0],max:a.at(-1),blockRatios:a};};
+const dispersion={fxCpu:summarize('fxCpu'),renderSubmitCpu:summarize('renderSubmitCpu')};
+const report={dispersion,scope:'single-case ABBA feasibility pilot on SwiftShader; frozen gameplay; fresh browser per observation; no hardware GPU, allocation or whole-game performance acceptance',case:{hz:60,actorCount:1,layout:'near'},blocks:results,performanceAccepted:false,limitations:['One block is insufficient to bound noise.','PNG/readPixels occur outside the timed sample window; continuous visual captures remain a separate acceptance pass.','Full acceptance requires all actor/rate/distance cases, separate capture passes and block-level uncertainty.','CPU render-submission is not GPU completion.']};
 fs.writeFileSync(path.join(root,'paired-result.json'),JSON.stringify(report,null,2)+'\n');
-console.log(JSON.stringify({evidence:root,ratios:results.map(r=>r.ratios),performanceAccepted:false}));
+console.log(JSON.stringify({evidence:root,ratios:results.map(r=>r.ratios),dispersion,performanceAccepted:false}));
