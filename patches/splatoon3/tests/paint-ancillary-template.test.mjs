@@ -71,3 +71,45 @@ test('unstretched dot rejection never changes a cell decision', () => {
   assert.equal(checked, 60000);
   assert.ok(hits > 1000 && rejected > 20000, `${hits} hits, ${rejected} eligible`);
 });
+
+
+test('stretched dot enclosure preserves exact sample/witness decisions at source-cell boundaries', async () => {
+  const fastStart = source.indexOf('  // Conservative stretched dot enclosure:');
+  const fastEnd = source.indexOf('  const dx = face.cu * 0.32, dy = face.cv * 0.32;', fastStart);
+  assert.ok(fastStart > 0 && fastEnd > fastStart, 'stretched fast path must be installed');
+  const unoptimized = await load(source.slice(0, fastStart) + source.slice(fastEnd));
+  let word = 0x1671acdc, hits = 0, tested = 0, stretched = 0;
+  const random = () => { word = (Math.imul(word, 1664525) + 1013904223) >>> 0; return word / 4294967296; };
+  for (let i = 0; i < 35000; i++) {
+    const angle = random() * Math.PI * 2, dotAngle = random() * Math.PI * 2;
+    const type = random() < 0.5 ? 1 : 2;
+    const sa = [0.03, 0.4, 1.2, 2.5, 0, NaN, Infinity, -0.2][i % 8];
+    const cu = [0.08, 0.2, 0.5][i % 3], cv = [0.08, 0.3, 0.45][i % 3];
+    const face = { cu, cv };
+    const mask = { sa, sdu: Math.cos(angle), sdv: Math.sin(angle), margin: 0.01, seed: .53, dT: 1 };
+    if (i % 31 === 0) mask.sdu *= 1.15; // deliberately non-unit: must fall back
+    const piece = { type, x: (random() - 0.5) * 5, y: (random() - 0.5) * 5,
+      radius: [0, 1e-4, 0.015, 0.1, 0.3][i % 5],
+      ux: Math.cos(dotAngle), uy: Math.sin(dotAngle), el: [0.6, 1, 1.7, 2.9][i % 4] };
+    if (i % 37 === 0) piece.el = NaN;
+    if (i % 41 === 0) piece.ux *= 2;
+    const rad = piece.radius * (type === 2 ? Math.max(1, piece.el || 1) : 1);
+    piece.minX = piece.x - rad; piece.maxX = piece.x + rad;
+    piece.minY = piece.y - rad; piece.maxY = piece.y + rad;
+    const along = piece.x * mask.sdu + piece.y * mask.sdv;
+    const k = [0, 1, 0.25][i % 3];
+    const sx = piece.x + mask.sdu * along * sa * k, sy = piece.y + mask.sdv * along * sa * k;
+    const radial = rad * (1 + Math.max(0, sa || 0) * k), bearing = random() * Math.PI * 2;
+    const near = (i % 5) !== 0;
+    const offset = near ? (radial + Math.max(cu, cv) * .5) * (1 + (random() - .5) * 1e-5) : random() * 7;
+    const x = near ? sx + Math.cos(bearing) * offset : piece.x + (random() - .5) * 12;
+    const y = near ? sy + Math.sin(bearing) * offset : piece.y + (random() - .5) * 12;
+    const expected = unoptimized.cellIsSolidlyVisible(mask, face, x, y, piece);
+    const actual = current.cellIsSolidlyVisible(mask, face, x, y, piece);
+    assert.equal(actual, expected, JSON.stringify({ i, mask, face, x, y, piece }));
+    tested++; if (expected) hits++;
+    if (sa > 0 && Number.isFinite(sa)) stretched++;
+  }
+  assert.equal(tested, 35000);
+  assert.ok(stretched > 12000 && hits > 100, 'must cover active stretch and actual positive cells');
+});
