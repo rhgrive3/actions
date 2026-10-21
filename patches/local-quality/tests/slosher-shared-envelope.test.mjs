@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
-import { sharedBucketDraw, projectileDrawRadius, projectileVisualKind } from '../../splatoon3/runtime/projectile-visuals.mjs';
+import { sharedBucketDraw, projectileDrawRadius, projectileVisualKind, bucketSheetHead } from '../../splatoon3/runtime/projectile-visuals.mjs';
 import { PROJECTILE_VISUAL_SOURCE } from '../../splatoon3/runtime/projectile-visual-source-data.mjs';
 
 test('Tri-Slosher and Dread Wringer reuse Bucket head/rear radius, tail and native asset, including alternate kits', async () => {
@@ -20,6 +20,9 @@ test('Tri-Slosher and Dread Wringer reuse Bucket head/rear radius, tail and nati
       assert.equal(sharedBucketDraw(p), draw);
       const radius = draw.EndRadius + index * draw.AfterOffsetEndRadius;
       assert.equal(projectileDrawRadius(p), radius);
+      const remote={...p,catalog:{...p.catalog,index,descriptor:{...p.catalog.descriptor,index:0}}};
+      assert.equal(projectileDrawRadius(remote),radius,'wire-restored catalogue index controls the shared taper');
+      assert.equal(bucketSheetHead(remote),index===0,'later wire fragments are not extra heads');
       assert.equal(projectileVisualKind(p), unit === 1 ? 'bucket-rear' : 'bucket-front');
       assert.equal(p._inkVolumeAssetName, 'projectile:slosher:slosher');
       // A derivative-specific registration must never replace the requested Bucket art.

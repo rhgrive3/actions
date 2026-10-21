@@ -98,7 +98,7 @@ export function bucketSheetProjectile(p) {
   return usesBucketSlosherSheet(p?.wid) && (p.type === 'slosh' || p.catalog?.descriptor?.key === 'slosh');
 }
 export function bucketSheetHead(p) {
-  return !!p.head || !!sharedBucketDraw(p) && p.catalog?.descriptor?.index === 0;
+  return !!p.head || !!sharedBucketDraw(p) && (p.catalog?.index ?? p.catalog?.descriptor?.index) === 0;
 }
 function renderAge(p, alpha) {
   // A stalled remote peer stays at its playback endpoint; every connected
@@ -208,7 +208,7 @@ function drawRecord(p) {
   return source.drawSize || null;
 }
 export function projectileDrawRadius(p, age=finite(p?.age)) {
-  const d=drawRecord(p), index=p.catalog?.descriptor?.index ?? p.fidelitySloshIndex ?? 0;
+  const d=drawRecord(p), index=p.catalog?.index ?? p.catalog?.descriptor?.index ?? p.fidelitySloshIndex ?? 0;
   if(d) {
     const init=finite(d.initRadius,finite(d.InitRadius))+index*finite(d.AfterOffsetInitRadius);
     const end=finite(d.endRadius,finite(d.EndRadius,init))+index*finite(d.AfterOffsetEndRadius);

@@ -19,7 +19,8 @@ try{
    g.debug.fire(false);for(let i=0;i<10;i++)g._frame(1/60);g._skipRender=false;
    const eligible=G.projectiles.list.filter(p=>p._inkVolumeRecipe==='slosher'&&!p._qualityDead&&p.delay<=0);
    G.projectiles._draw();const productionMetrics={...e.metrics};
-   const heads=eligible.filter(p=>p.head||p.catalog?.descriptor?.index===0).slice(0,4);
+   const representative=eligible.filter(p=>p.head||(p.catalog?.index??p.catalog?.descriptor?.index)===0);
+   const heads=(representative.length?representative:eligible).slice(0,3);
    const snap=()=>JSON.stringify(heads.map(p=>({pos:p.pos,vel:p.vel,age:p.age,damage:p.damage,meta:p.inkMeta,delay:p.delay}))),before=snap();
    const T=await import('three'),{submitInkVolume}=await import(new URL('patches/local-quality/ink-volume/recipes.mjs',document.baseURI).href);
    const parent=e.root.parent,scene=new T.Scene();scene.background=new T.Color(0x161c2a);scene.add(e.root);e.begin();for(const p of heads)submitInkVolume(e,p);e.end();
