@@ -12,8 +12,8 @@ const site=path.resolve(process.argv[2]||'_site'), out=path.resolve(process.argv
 // Fixed inspection views are authored once from the baseline and reused verbatim.
 // BEGIN GRIP CAMERA CONTRACT
 function validateGripCameras(plan) {
-  const names=['rear','side','front-oblique','right-side'];
-  if(plan?.schema!==1||!Array.isArray(plan.views)||plan.views.length!==4)throw Error('Invalid grip camera plan');
+  const names=['rear','side','front-oblique','right-side','right-rear'];
+  if(plan?.schema!==1||!Array.isArray(plan.views)||plan.views.length!==5)throw Error('Invalid grip camera plan');
   for(let i=0;i<names.length;i++){
     const v=plan.views[i],vec=a=>Array.isArray(a)&&a.length===3&&a.every(Number.isFinite);
     if(v.name!==names[i]||!vec(v.position)||!vec(v.target)||v.fov!==45||v.aspect!==1280/840||v.near!==.1||v.far!==100||
@@ -23,7 +23,7 @@ function validateGripCameras(plan) {
 }
 function makeGripCameras(anchor){
   if(!Array.isArray(anchor)||anchor.length!==3||!anchor.every(Number.isFinite))throw Error('Invalid baseline camera anchor');
-  const views=[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]],['right-side',[-5,2,0]]].map(([name,offset])=>({
+  const views=[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]],['right-side',[-5,2,0]],['right-rear',[-3,2,-4]]].map(([name,offset])=>({
     name,position:offset.map((n,i)=>n+anchor[i]),target:anchor.map((n,i)=>n+[0,.8,.5][i]),fov:45,aspect:1280/840,near:.1,far:100}));
   return validateGripCameras({schema:1,views});
 }
@@ -75,7 +75,19 @@ try{
         // Freeze only the native simulation, before the normal trusted menu
         // handler creates its Character and awaits asynchronous shader warmup.
         g.debug.freeze();
-        window.__gripEntryFreeze={schema:1,boundary:'trusted-mode-range-capture',trusted:e.isTrusted,time:window.__G.time};
+        const loadout={schema:1,requested:'roller',completed:false};
+        window.__gripEntryFreeze={schema:1,boundary:'trusted-mode-range-capture',trusted:e.isTrusted,time:window.__G.time,loadout};
+        try{
+          // Select the ordinary loadout before native startMatch constructs its
+          // Character. Its one-shot startup warmup must include this weapon.
+          if(typeof g.api?.setLoadout!=='function'||typeof g.api?.getLoadout!=='function')
+            throw Error('Missing native loadout API');
+          const result=g.api.setLoadout({weapon:'roller'});
+          if(result&&typeof result.then==='function')throw Error('Native loadout selection was not synchronous');
+          loadout.selected=g.api.getLoadout()?.weapon;
+          if(loadout.selected!=='roller')throw Error('Native Roller loadout selection failed');
+          loadout.completed=true;
+        }catch(error){loadout.error=String(error?.message||error);}
         document.removeEventListener('click',freezeAtInput,true);
       };
       document.addEventListener('click',freezeAtInput,true);
@@ -91,9 +103,15 @@ try{
     g.debug.freeze();
     // BEGIN NATIVE STARTUP READINESS CONTRACT
     // The menu may finish its bounded loading wait before Character warmup.
-    // Finish only that already-requested work before adding Roller to its cache.
+    // Await only that already-requested work for the preselected Roller.
     let startupWarmup=null;
     if(gripSeed!==null){
+      const loadout=window.__gripEntryFreeze?.loadout;
+      if(!loadout?.completed||loadout.requested!=='roller'||loadout.selected!=='roller')
+        throw Error('Missing native pre-entry Roller selection: '+JSON.stringify(loadout));
+      const isRoller=()=>a.weaponId==='roller'&&a.character.weaponKind==='roller'&&
+        a.character.weapon===a.character.weapons?.roller;
+      if(!isRoller())throw Error('Native startup did not equip the selected Roller');
       const warm=a.character._warmed;
       if(!warm||typeof warm.then!=='function')throw Error('Missing native Character startup warmup');
       let timeout;
@@ -101,8 +119,9 @@ try{
         const result=await Promise.race([warm,new Promise((_,reject)=>{
           timeout=setTimeout(()=>reject(Error('Native Character startup warmup timed out')),240000);
         })]);
+        if(!isRoller())throw Error('Native startup Roller changed during warmup');
         startupWarmup={schema:1,owner:'native-character-startup',completed:true,result:result??null,
-          weaponBefore:a.weaponId,characterWeaponBefore:a.character.weaponKind};
+          requestedWeapon:loadout.requested,weaponBefore:a.weaponId,characterWeaponBefore:a.character.weaponKind};
       }finally{clearTimeout(timeout);}
     }
     // END NATIVE STARTUP READINESS CONTRACT
@@ -238,7 +257,7 @@ try{
     G.renderer.domElement.id='roller-scale-canvas';
     const inspectionPng=G.renderer.domElement.toDataURL('image/png').split(',')[1];
     const anchor=a.pos.toArray();
-    const cameraPlan=cameraReference||{schema:1,views:[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]],['right-side',[-5,2,0]]].map(([name,offset])=>({
+    const cameraPlan=cameraReference||{schema:1,views:[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]],['right-side',[-5,2,0]],['right-rear',[-3,2,-4]]].map(([name,offset])=>({
       name,position:offset.map((n,i)=>n+anchor[i]),target:anchor.map((n,i)=>n+[0,.8,.5][i]),fov:45,aspect:1280/840,near:.1,far:100}))};
     const state=()=>JSON.stringify({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,phase:a.character.phase,pose:Array.from(a.character.P)});
     const frozen=state(),gripViews=[];
