@@ -19,6 +19,7 @@
 // are presentation timestamps only.
 
 import { SpecialVfxKit, SPARK, PUFF, RIBBON, BEAM, SHELL, BAND, DISC, vfxRandom, excludeFromOverridePasses, inkLightUniforms } from './special-vfx-kit.mjs';
+import { inkjetVfxAdmission, inkjetVfxRoom } from './inkjet-vfx-budget.mjs';
 import { inkjetVfxTicks } from './inkjet-vfx-clock.mjs';
 import { inkVacState } from './kit-ink-vac.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
@@ -491,7 +492,7 @@ const ROUND_FX = {
   },
   inkjet: {
     start(r, p) { r.d.ink = this.ribbon(false, { width: 0.45, widthTail: 0.1, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.2, spacing: 0.12 }); },
-    frame(r, p, dt) { this.pushRibbon(r.d.ink, p.pos, false); const ticks = inkjetVfxTicks(r.d, dt); for (let k = 0; k < Math.min(1, ticks); k++) if (vfxRandom() < 0.4 && this.kit.puffs.n < this.kit.puffs.cap) this.drop(p.pos, rnd(1.5, -1.5), rnd(1, -1), rnd(1.5, -1.5), 0.45, 0.1, r.color, { grav: 12 }); },
+    frame(r, p, dt) { this.pushRibbon(r.d.ink, p.pos, false); const ticks = inkjetVfxTicks(r.d, dt), admission = inkjetVfxAdmission(this, p.owner); for (let k = 0; k < Math.min(1, ticks); k++) if (vfxRandom() < 0.4 && inkjetVfxRoom(admission, this.kit.puffs, 'puffs')) this.drop(p.pos, rnd(1.5, -1.5), rnd(1, -1), rnd(1.5, -1.5), 0.45, 0.1, r.color, { grav: 12 }); },
     impact(r) { this.inkBlast(r.last, r.color, 3.6, { streaks: 14, chunks: 10, mist: 4, native: false }); },
   },
   booyahBomb: {
@@ -934,7 +935,7 @@ const DIRECTORS = {
     },
     frame(a, t, dt) {
       const squid = a.form === 'squid' || a.intent?.squid;
-      const ticks = inkjetVfxTicks(t.d, dt, !squid);
+      const ticks = inkjetVfxTicks(t.d, dt, !squid), admission = inkjetVfxAdmission(this, a);
       const c = t.color, f = this.forward(a, this.v[5]), side = this.v[6].set(f.z, 0, -f.x);
       const ground = groundBelow(this, a);
       for (let i = 0; i < 2; i++) {
@@ -949,16 +950,16 @@ const DIRECTORS = {
         // Particle-density LOD: never exceed the old low-FPS per-render budget.
         // Time/lifetimes still advance in seconds; dropped births are not replayed.
         for (let tick = 0; tick < Math.min(1, ticks); tick++) {
-          if (!squid) { if (this.kit.sparks.n < this.kit.sparks.cap) this.spark(SPARK.GLOW, nozzle, 0, 0, 0, 0.05, 0.2, 0.15, this.hdr(c, 1.2, 0.6), 0.4);
-            if (vfxRandom() < 0.6 && this.kit.puffs.n < this.kit.puffs.cap) { const k = vfxRandom(); this.v[2].copy(nozzle).lerp(end, k);
+          if (!squid) { if (inkjetVfxRoom(admission, this.kit.sparks, 'sparks')) this.spark(SPARK.GLOW, nozzle, 0, 0, 0, 0.05, 0.2, 0.15, this.hdr(c, 1.2, 0.6), 0.4);
+            if (vfxRandom() < 0.6 && inkjetVfxRoom(admission, this.kit.puffs, 'puffs')) { const k = vfxRandom(); this.v[2].copy(nozzle).lerp(end, k);
               this.puff(PUFF.CHUNK, this.v[2], rnd(1.2, -1.2), -rnd(9, 5), rnd(1.2, -1.2), 0.25, 0.07 + 0.08 * k, 0.04, c, 1, { grav: 10, drag: 0.5 }); } }
-          if (!squid && vfxRandom() < 0.7 && this.kit.puffs.n < this.kit.puffs.cap) this.drop(nozzle, rnd(1, -1), -rnd(14, 8), rnd(1, -1), 0.25, 0.07, c, { drag: 1, grav: 10 });
-          if (!squid && vfxRandom() < 0.8 && this.kit.puffs.n < this.kit.puffs.cap) this.drop(end, rnd(1, -1), -rnd(10, 6), rnd(1, -1), 0.6, rnd(0.12, 0.06), c, { grav: 14, drag: 0.2, stretch: 0.05 });   // ink raining off the jets
-          if (!squid && nozzle.y - ground < 7 && vfxRandom() < 0.55 && this.kit.puffs.n < this.kit.puffs.cap) { // splash where the ink lands
+          if (!squid && vfxRandom() < 0.7 && inkjetVfxRoom(admission, this.kit.puffs, 'puffs')) this.drop(nozzle, rnd(1, -1), -rnd(14, 8), rnd(1, -1), 0.25, 0.07, c, { drag: 1, grav: 10 });
+          if (!squid && vfxRandom() < 0.8 && inkjetVfxRoom(admission, this.kit.puffs, 'puffs')) this.drop(end, rnd(1, -1), -rnd(10, 6), rnd(1, -1), 0.6, rnd(0.12, 0.06), c, { grav: 14, drag: 0.2, stretch: 0.05 });   // ink raining off the jets
+          if (!squid && nozzle.y - ground < 7 && vfxRandom() < 0.55 && inkjetVfxRoom(admission, this.kit.puffs, 'puffs')) { // splash where the ink lands
             this.v[2].copy(end).setY(ground + 0.05);
             const th = rnd(TAU), sp = rnd(5, 2);
             this.puff(PUFF.CHUNK, this.v[2], Math.cos(th) * sp, rnd(4, 1.5), Math.sin(th) * sp, 0.5, 0.12, 0.04, c, 1, { grav: 15, drag: 0.6 });
-            if (vfxRandom() < 0.3 && this.kit.puffs.n < this.kit.puffs.cap) this.puff(PUFF.MIST, this.v[2], Math.cos(th) * 1.5, 0.6, Math.sin(th) * 1.5, 0.6, 0.4, 1.1, this.hdr(c, 0.9), 0.4, { buoy: 0.3 });
+            if (vfxRandom() < 0.3 && inkjetVfxRoom(admission, this.kit.puffs, 'puffs')) this.puff(PUFF.MIST, this.v[2], Math.cos(th) * 1.5, 0.6, Math.sin(th) * 1.5, 0.6, 0.4, 1.1, this.hdr(c, 0.9), 0.4, { buoy: 0.3 });
           }
           }
       }
