@@ -24,7 +24,12 @@ export async function observeRankedBoot(page, url, receipt, start) {
     await Promise.race([failure, (async()=>{
       await start();
       if(finished)return; // A failed navigation must not enqueue a later readiness poll.
-      const handle=await page.waitForFunction(rankedBootState,null,{timeout:180000});
+      // The renderer may run at 1-5 FPS under SwiftShader or mobile overload.
+      // Playwright's default waitForFunction polling uses requestAnimationFrame,
+      // so a ready startup could be mistaken for a boot hang. Poll by elapsed
+      // wall-clock time while retaining exactly the original 180s deadline,
+      // readiness predicate and immediate critical HTTP / page-error guards.
+      const handle=await page.waitForFunction(rankedBootState,null,{timeout:180000,polling:250});
       const state=await handle.jsonValue(); await handle.dispose();
       if(state.failed){receipt.failures.push({kind:'loader-error',message:state.failed,observedAt:new Date().toISOString()});throw new Error('Ranked boot loader-error: '+state.failed);}
       if(!state.ready)throw new Error('Ranked boot returned no readiness proof');
