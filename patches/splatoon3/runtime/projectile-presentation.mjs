@@ -86,6 +86,14 @@ export function catalogReboundSeparation(fieldRadius){
 
 // Inkipedia Splatoon 3 Bloblobber physics: two floor rebounds, unlimited wall
 // reflections at 0.8 velocity, projectile collision/draw radius x0.75 per hit.
+// A sphere touching a wall edge can have an upward-pointing *contact*
+// normal, even though the contacted surface is a wall. Where available,
+// use the underlying stage face normal to decide whether the hit counts as
+// a FLOOR bounce; the geometric contact normal still controls reflection.
+export function catalogBubbleSurfaceNormalY(hit,level){
+  const face=Number.isInteger(hit?.face)&&hit.face>=0?level?.faces?.[hit.face]:null;
+  return Number.isFinite(face?.n?.y)?face.n.y:finite(hit?.normal?.y,0);
+}
 export function catalogBubbleCanBounce(groundBounces,normalY){
   return normalY<=.35||groundBounces<2;
 }
