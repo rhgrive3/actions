@@ -137,7 +137,75 @@ const CURRENT_POSE_PAIR = Object.freeze({
   }
 }),
 });
+// Exact Oct-21 current pose source snapshot for independent Roller-band work.
+// These 16 immutable Git blob IDs were inspected at the PR's reviewed main
+// base. They are byte-identical across this paint-only change. Never replay
+// historical pose transforms over a newer actor / weapon rig.
+export const OCT21_POSE_MAIN_BLOBS = Object.freeze({
+  "patches/splatoon3/adapter.mjs": "78fa9f0eddac0acda9f258c8f9ec5527d02d89e0",
+  "patches/splatoon3/body-proportion-adapter.mjs": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
+  "patches/splatoon3/runtime/body-proportion.mjs": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
+  "patches/splatoon3/runtime/idle-motion.mjs": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+  "patches/splatoon3/runtime/install.mjs": "56b9b99fbb79d8650e7e132fd187f1514f27c62d",
+  "patches/splatoon3/runtime/roller.mjs": "5cddf44b0aaa4f3bcd26ef62d5b7bf9dfcefed98",
+  "patches/splatoon3/runtime/source-posture.mjs": "a31d8224d129665917632ee7083c4081de5803a4",
+  "patches/splatoon3/upstream-lock.json": "db19eaaee31820263cfd9871b0ebe90db9133f3d",
+  "patches/splatoon3/runtime/weapon-handoff-motion.mjs": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f",
+  "patches/splatoon3/runtime/weapon-models/brushes.mjs": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+  "patches/splatoon3/runtime/weapon-models/family-holds.mjs": "91a672123486114f9849de61509c6ee6ec96363f",
+  "patches/splatoon3/runtime/weapon-models/kit.mjs": "3ab94f55c299b56485880ede17b92d5150101f7d",
+  "patches/splatoon3/runtime/weapon-models/registry.mjs": "7f651d20395cb8b2622ca0dcd9180019b7533ce1",
+  "patches/splatoon3/runtime/weapon-models/stringers.mjs": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
+  "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": "9f68724343748037145c552937025d74ac5df8b9",
+  "patches/splatoon3/weapon-catalog-adapter.mjs": "55582fd6109ff814ed107577db74b990d755a926"
+});
+// Complete post-#1726/#1733 source epoch. Admit only the entire same tuple
+// on both sides; preserve the earlier epoch and never mix individual pins.
+export const OCT21_INTEGRATED_POSE_MAIN_BLOBS = Object.freeze({
+  "patches/splatoon3/adapter.mjs": "426c5e8edbc9e9783b7f2def6bf6e496c09a7c74",
+  "patches/splatoon3/body-proportion-adapter.mjs": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
+  "patches/splatoon3/runtime/body-proportion.mjs": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
+  "patches/splatoon3/runtime/idle-motion.mjs": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+  "patches/splatoon3/runtime/install.mjs": "56b9b99fbb79d8650e7e132fd187f1514f27c62d",
+  "patches/splatoon3/runtime/roller.mjs": "5166cece72cedbeb3544d59cd53f175284ad5c57",
+  "patches/splatoon3/runtime/source-posture.mjs": "a31d8224d129665917632ee7083c4081de5803a4",
+  "patches/splatoon3/upstream-lock.json": "db19eaaee31820263cfd9871b0ebe90db9133f3d",
+  "patches/splatoon3/runtime/weapon-handoff-motion.mjs": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f",
+  "patches/splatoon3/runtime/weapon-models/brushes.mjs": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+  "patches/splatoon3/runtime/weapon-models/family-holds.mjs": "91a672123486114f9849de61509c6ee6ec96363f",
+  "patches/splatoon3/runtime/weapon-models/kit.mjs": "3ab94f55c299b56485880ede17b92d5150101f7d",
+  "patches/splatoon3/runtime/weapon-models/registry.mjs": "7f651d20395cb8b2622ca0dcd9180019b7533ce1",
+  "patches/splatoon3/runtime/weapon-models/stringers.mjs": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
+  "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": "9f68724343748037145c552937025d74ac5df8b9",
+  "patches/splatoon3/weapon-catalog-adapter.mjs": "55582fd6109ff814ed107577db74b990d755a926"
+});
 function currentPosePair(baseline, candidate) {
+  const epoch = [
+    { blobs: OCT21_POSE_MAIN_BLOBS, source: 'ad4cc54cf5fbba65635ec0929a1da901c8c619db' },
+    { blobs: OCT21_INTEGRATED_POSE_MAIN_BLOBS, source: '785faf01055a361bebc69a8c32ccac18a609c24a' },
+  ].find(({ blobs }) => CHARACTER_POSE_PATHS.every(path =>
+    typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
+    blob(baseline.get(path)) === blobs[path] && blob(candidate.get(path)) === blobs[path]));
+  if (epoch) return {
+    sources: new Map(baseline), changes: [],
+    pairEvidence: {
+      mode: 'oct21-byte-identical-current-pose',
+      sourceBase: epoch.source,
+      sourceHead: epoch.source,
+      scope: 'All sixteen real current pose blobs are exact and unchanged; do not reconstruct historical pose files in paint-only PRs.',
+      validationLimit: 'Strict identity of only these exact source blobs; browser/model/physics verification is independent.',
+    },
+    evidence: CHARACTER_POSE_PATHS.map(path => ({
+      path, mode: 'oct21-exact-current-pose',
+      originalGitBlob: epoch.blobs[path], referenceGitBlob: epoch.blobs[path],
+      candidateGitBlob: epoch.blobs[path],
+      originalSha256: poseSourceSha256(baseline.get(path)),
+      referenceSha256: poseSourceSha256(baseline.get(path)),
+      candidateSha256: poseSourceSha256(candidate.get(path)),
+      changed: false, replayed: [],
+    })),
+  };
+
   const matches = CHARACTER_POSE_PATHS.every(path =>
     typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
     blob(baseline.get(path)) === CURRENT_POSE_PAIR.paths[path].baseline &&

@@ -1,7 +1,8 @@
 /* INKWAVE loading-cache worker. Build replaces the single configuration marker.
  * Immutable revision requests are cache-first, never stale-while-revalidate.
  * Mutable navigations stay network-first. Updates wait for old clients to close;
- * no skipWaiting, automatic reload, or cross-revision response substitution.
+ * no skipWaiting or cross-revision response substitution. The HTML shell can
+ * retry a failed boot once with a fresh navigation, before a game is running.
  */
 const BUILD = /*__INKWAVE_CACHE_BUILD__*/ null;
 // Convert valid production manifest indices to their immutable asset paths.
@@ -73,6 +74,18 @@ async function timedFetch(request, timeout) {
   try { return await fetch(request, { signal: controller.signal }); }
   finally { clearTimeout(timer); }
 }
+async function verifiedAsset(request, expected) {
+  const response = await timedFetch(request, 30000);
+  try { await verify(response, expected); return response; }
+  catch (error) {
+    // An interrupted deployment can leave a cached 404 or mismatching 200 in
+    // the HTTP cache. Retry the EXACT revision URL once, bypassing that cache.
+    if (response.status !== 200 && response.status !== 404 && response.status !== 410) return response;
+    const fresh = await timedFetch(new Request(request, { cache: 'reload' }), 30000);
+    if (fresh.ok) await verify(fresh, expected);
+    return fresh;
+  }
+}
 async function populate(cache, rel, reusable, reusableRevision) {
   const url = new URL(rel, REVISION_PREFIX).href;
   const existing = await cache.match(url);
@@ -85,7 +98,7 @@ async function populate(cache, rel, reusable, reusableRevision) {
     if (valid) { await cache.put(url, old); return; }
   }
   // HTTP cache can satisfy this without a transfer. Only immutable, exact revision URLs use force-cache.
-  const response = await timedFetch(new Request(url, { cache: 'force-cache', credentials: 'same-origin' }), 30000);
+  const response = await verifiedAsset(new Request(url, { cache: 'force-cache', credentials: 'same-origin' }), BUILD.assets[rel]);
   await verify(response, BUILD.assets[rel]);
   await cache.put(url, response);
 }
@@ -171,9 +184,26 @@ async function repairActiveState() {
     await meta.put(STATE_URL, jsonResponse({ activeRevision: BUILD.revision, previousRevision: null }));
   } catch { /* unavailable storage cannot block navigation */ }
 }
+async function repairCachedModules() {
+  // Only a failed-boot retry pays for digest checks. Preserve the zero-work
+  // normal warm path and every valid/offline asset, setting and neighbor cache.
+  try {
+    const cache = await caches.open(CURRENT);
+    for (const rel of Object.keys(BUILD.assets).filter(rel => /\.m?js$/.test(rel))) {
+      const url = new URL(rel, REVISION_PREFIX).href;
+      const hit = await cache.match(url);
+      if (hit) {
+        try { await verify(hit, BUILD.assets[rel]); }
+        catch { await cache.delete(url); }
+      }
+    }
+  } catch { /* Storage denial must not prevent fetching a fresh document. */ }
+}
 async function navigation(request) {
   try {
-    const response = await timedFetch(new Request(request, { cache: 'no-cache' }), NAVIGATION_TIMEOUT_MS);
+    const recovering = new URL(request.url).searchParams.has('__iw_recover');
+    if (recovering) await repairCachedModules();
+    const response = await timedFetch(new Request(request, { cache: recovering ? 'reload' : 'no-cache' }), NAVIGATION_TIMEOUT_MS);
     if (response.status >= 500) return await offlineIndex() || response;
     // A snapshot's HTML was verified and committed by install. No per-navigation re-copy;
     // new network HTML is never stored in an older, incomplete dependency snapshot.
@@ -190,7 +220,7 @@ async function currentAsset(request, rel) {
   let task = flights.get(request.url);
   if (!task) {
     task = (async () => {
-      const response = await fetch(request);
+      const response = await verifiedAsset(request, BUILD.assets[rel]);
       if (!response.ok) return response;
       await verify(response, BUILD.assets[rel]);
       try { await cache.put(request, response.clone()); } catch { /* quota: online play must still work */ }
@@ -207,7 +237,12 @@ async function retainedAsset(request, revision) {
   if (names.includes(SNAPSHOT(revision))) {
     try { const hit = await (await caches.open(SNAPSHOT(revision))).match(request); if (hit) return hit; } catch { /* eviction */ }
   }
-  return fetch(request); // Unknown future revisions belong to their own worker; do not create unbounded caches.
+  // A waiting update's modules pass through the old active worker. A negative
+  // HTTP-cache entry from deployment must not strand that new document either.
+  const response = await timedFetch(request, 30000);
+  if (response.status === 404 || response.status === 410)
+    return timedFetch(new Request(request, { cache: 'reload' }), 30000);
+  return response; // Unknown future revisions never create unbounded caches.
 }
 self.addEventListener('fetch', event => {
   const request = event.request;

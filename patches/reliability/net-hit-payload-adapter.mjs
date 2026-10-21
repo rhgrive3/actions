@@ -30,13 +30,20 @@ const profile = JSON.parse(fs.readFileSync(new URL('../splatoon3/profile.json', 
 const copyDefinitions = source => Object.fromEntries(Object.entries(source).map(([id, spec]) => [id, { ...spec }]));
 
 // Build-only: no shared raw config is mutated and no browser startup work is added.
-export function hitPayloadPolicy(tuning = profile) {
+// The tuned production definitions shared by the global payload policy and
+// the per-equipped-slot combat ceilings (#1665/#1666).
+export function productionHitDefinitions(tuning = profile) {
   const weapons = copyDefinitions(WEAPONS), subs = copyDefinitions(SUB), specials = copyDefinitions(SPECIALS);
   for (const [id, spec] of Object.entries(tuning.weapons || {})) Object.assign(weapons[id] ||= {}, spec);
   Object.assign(subs.bomb, tuning.bomb);
   for (const [id, spec] of Object.entries(tuning.specials || {})) Object.assign(specials[id] ||= {}, spec);
   registerKitSubs(subs, tuning);
-  const descriptors = [ALL_SUB_SPECS.angleShooter, trizookaSpecialWeapon(0), trizookaSpecialWeapon(57), inkVacBlastDescriptor(0), inkVacBlastDescriptor(1)];
+  const specialDescriptors = { [TRIZOOKA_ID]: [trizookaSpecialWeapon(0), trizookaSpecialWeapon(57)], [VAC_ID]: [inkVacBlastDescriptor(0), inkVacBlastDescriptor(1)] };
+  return { weapons, subs, specials, specialDescriptors };
+}
+export function hitPayloadPolicy(tuning = profile) {
+  const { weapons, subs, specials, specialDescriptors } = productionHitDefinitions(tuning);
+  const descriptors = [ALL_SUB_SPECS.angleShooter, ...specialDescriptors[TRIZOOKA_ID], ...specialDescriptors[VAC_ID]];
   let maxDamage = 0;
   for (const def of [...Object.values(weapons), ...Object.values(subs), ...Object.values(specials), ...descriptors]) {
     for (const [key, value] of Object.entries(def || {})) {

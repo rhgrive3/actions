@@ -11,6 +11,8 @@ import { adaptWeaponPaintInertia } from './weapon-paint-inertia-adapter.mjs';
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 import { adaptMinimapDirty } from './minimap-dirty-adapter.mjs';
+import { adaptMinimapBombFuse } from './minimap-bomb-fuse-adapter.mjs';
+import { adaptUuidRandom } from './uuid-random-adapter.mjs';
 import { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';
 import { adaptStormEffects } from './storm-effects-adapter.mjs';
 import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
@@ -89,6 +91,18 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'this.formTime=0;this.formEvent=true;', 'this.formTime=0;this.formEvent=true;this.s3FormClipDeclined=false;', 'source form clip admission reset');
     code = replaceOnce(code, "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)){", "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)&&sourceFormClipAdmitted(this)){", 'source form clip admission');
     code = replaceOnce(code, "if(this.finalState!=='air'){this.airBlendTime=0;", "if(this.finalState!=='air'){this.airBlendTime=sourceAirBlendStart(this,HOST_MOTION.transitionSeconds);", 'airborne form change skips stale dive crossfade');
+    // #1116: the Player00 bank stores the Splatling (Glng) jump start only as `Jump_Glngl00_St` (sic; Player01
+    // names it `Jump_Glng00_St`, which the regular lookup still prefers). Its last
+    // frame continues `Jump_Glng00` frame 0 (0.002 source units, like Nrml/Rllr/BBll _St -> body), so the
+    // `${jumpBase}_St` lookup silently skipped the Splatling's own 5F take-off. No other clip is renamed.
+    code = replaceOnce(code, "   const st=this.bank.clips.get(jumpBase+'_St');", "   const st=this.bank.clips.get(jumpBase+'_St')||(jumpBase==='Jump_Glng00'?this.bank.clips.get('Jump_Glngl00_St'):undefined);", 'splatling source jump start clip name');
+    // #1116: one 'air' state plays the 5F *_St clip and then the jump body. The crossfade length was taken from
+    // the clip playing THIS tick, so at the St -> body handover it grew from St/2 (0.042 s) to 0.12 s while the
+    // state clock was already 0.083 s: the finished take-off crossfade re-opened and pulled 22% of the pre-jump
+    // ground pose back in for two ticks (every family with a start clip). Keep the length chosen on state entry.
+    code = replaceOnce(code, '  const blendSeconds=special?Math.min(HOST_MOTION.transitionSeconds,this.bank.clips.get(special.name).frames/HOST_MOTION.fps/2):HOST_MOTION.transitionSeconds;',
+      '  if(this.transitionTime===0||this.s3StateBlendSeconds===undefined)this.s3StateBlendSeconds=special?Math.min(HOST_MOTION.transitionSeconds,this.bank.clips.get(special.name).frames/HOST_MOTION.fps/2):HOST_MOTION.transitionSeconds;\n  const blendSeconds=this.s3StateBlendSeconds;',
+      'source state crossfade length fixed at state entry');
     return "import { nativeWeaponPoseRequired, sourceActionUpperOnly } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
       "import { sourceAirBlendStart, sourceFormClipAdmitted } from '../../../patches/splatoon3/runtime/source-form-transition.mjs';\n" +
       "import { reverseShotRelease } from '../../../patches/splatoon3/runtime/shooter-movement.mjs';\n" +
@@ -260,6 +274,8 @@ export function adaptSource(rel, code) {
   code = adaptMatchHud(rel, code);
   code = adaptScoreHud(rel, code);
   code = adaptMinimapDirty(rel, code, replaceOnce);
+  code = adaptMinimapBombFuse(rel, code, replaceOnce);
+  code = adaptUuidRandom(rel, code, replaceOnce);
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
   code = adaptAssistPresentation(rel, code, replaceOnce);
@@ -314,10 +330,23 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/core/gyro.js') {
     // #725: approximate public bridge endpoints, not extracted Nintendo code.
-    return replaceOnce(code,
+    code = replaceOnce(code,
       'const GYRO_DEG = [[-5, 278], [-2.5, 178], [0, 132], [2.5, 119], [5, 110]];',
       'const GYRO_DEG = [[-5, 360], [0, 200], [5, 120]]; // ~1x / ~1.8x / ~3x public bridge',
       'gyro sensitivity reference endpoints');
+    // #725: integrate the low-speed smoother's mean over each sensor interval (zero-order-hold
+    // input), not its end value, so one physical rotation gives one camera turn at any sensor
+    // period. Smoothing constants and thresholds are unchanged INKWAVE values.
+    return replaceOnce(code,
+      '    this._sm.y += (yaw - this._sm.y) * k; this._sm.p += (pitch - this._sm.p) * k;\n' +
+      '    yaw = yaw * direct + this._sm.y * (1 - direct);\n' +
+      '    pitch = pitch * direct + this._sm.p * (1 - direct);',
+      '    const lag = dt > 0 ? 0.06 * k / dt : 1;\n' +
+      '    const meanY = yaw + (this._sm.y - yaw) * lag, meanP = pitch + (this._sm.p - pitch) * lag;\n' +
+      '    this._sm.y += (yaw - this._sm.y) * k; this._sm.p += (pitch - this._sm.p) * k;\n' +
+      '    yaw = yaw * direct + meanY * (1 - direct);\n' +
+      '    pitch = pitch * direct + meanP * (1 - direct);',
+      'gyro smoother interval mean');
   }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",

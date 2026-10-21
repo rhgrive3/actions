@@ -173,6 +173,10 @@ jobs:
         run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs patches/native-stages/tests/bvh-browser-baseline.test.mjs
       - name: Verify deterministic network replication
         run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs
+      - name: Verify remote combat provenance and equipped hit ceilings
+        run: |
+          node patches/network-replication/tools/combat-hit-ceilings.mjs
+          node --test scripts/tests/inkwave-combat-provenance.test.mjs
       - name: Compare authoritative and reconstructed attacks
         run: node --experimental-vm-modules scripts/check-inkwave-network-comparison.mjs --exact-source --evidence-dir .ci-scratch/network-comparison
       - uses: actions/upload-artifact@v4
@@ -194,7 +198,7 @@ jobs:
         run: node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
       - name: Verify loading/cache regressions
         run: |
-          node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs
+          node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs patches/loading-cache/tests/recovery.test.mjs
           python3 patches/loading-cache/tests/harness.test.py
       - name: Prepare persistent runtime verifier fixtures
         run: |
@@ -531,7 +535,7 @@ jobs:
           - suite: range
             browsers: chromium webkit
           - suite: startup
-            browsers: chromium
+            browsers: chromium webkit
     env:
       TMPDIR: ${{ github.workspace }}/.ci-scratch
       TMP: ${{ github.workspace }}/.ci-scratch
@@ -626,6 +630,9 @@ jobs:
       - name: Verify two-player replication with 100 ms ordered delivery delay
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-network-browser.mjs --delay-frames 6 --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network-delay" --profile-dir "$CI_STORAGE/cache/network-delay" --exact-source
+      - name: Verify real Actor hit ceiling before proof and hit ID consumption
+        if: matrix.suite == 'network'
+        run: node scripts/check-inkwave-combat-ceiling-browser.mjs --site .built-site/_site --source-sha "$SOURCE_SHA" --evidence-dir "$CI_STORAGE/evidence/combat-ceiling"
       - name: Verify existing special models, grips, shaders and GPU retirement
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-special-presentation.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/special-presentation"
@@ -733,6 +740,9 @@ jobs:
       - name: Measure cold, warm, PWA restart and offline startup in Chromium
         if: matrix.suite == 'startup'
         run: node scripts/check-inkwave-startup-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/startup" --profile-dir "$CI_STORAGE/cache/startup" --source-sha "$SOURCE_SHA" --runs 3
+      - name: Verify failed module recovery across deployments in Chromium and WebKit
+        if: matrix.suite == 'startup'
+        run: node --test scripts/tests/inkwave-update-recovery-browser.test.mjs
       - name: Bind passing browser evidence to the tested commit
         run: |
           python3 - <<'PY'
@@ -742,7 +752,7 @@ jobs:
           checks={
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','ballpoint/ballpoint-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
             'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json'],
-            'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json'],
+            'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json','combat-ceiling/combat-ceiling-browser-result.json'],
             'ui':['menu-focus/menu-focus-result.json','identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
             'responsive':['responsive/responsive-result.json'],
             'range':['range/range-result.json'],

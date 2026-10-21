@@ -23,3 +23,47 @@ export function nativeAncillaryCanClaim(R,dn,ppm,subcellDots=false){
  const r=Math.sqrt(Math.max(0,R*R-dn*dn)),pixel=1/Math.max(ppm||1,1);
  return Math.max(.14*r,1.35*pixel)+1e-10>=1.5*pixel;
 }
+
+/** Cached ancillary mask of one ownership pass, or undefined. Equality is
+ * that of the former joined String key: === per field, NaN equal to NaN. The
+ * Map key dn uses SameValueZero, which is exactly that relation. Each bucket
+ * is a flat [wall, ppm, sdu, sdv, sa, mask] list. Self-contained: tests
+ * compose these functions into the ownership module by source text. */
+export function nativeAncillaryMaskFind(masks,wall,ppm,dn,sdu,sdv,sa){
+ const same=(a,b)=>a===b||(a!==a&&b!==b),list=masks.get(dn);
+ if(list)for(let i=0;i<list.length;i+=6)
+  if(same(list[i+2],sdu)&&same(list[i+3],sdv)&&same(list[i+4],sa)&&same(list[i],wall)&&same(list[i+1],ppm))return list[i+5];
+ return undefined;
+}
+export function nativeAncillaryMaskStore(masks,wall,ppm,dn,sdu,sdv,sa,mask){
+ const list=masks.get(dn);
+ if(list)list.push(wall,ppm,sdu,sdv,sa,mask);else masks.set(dn,[wall,ppm,sdu,sdv,sa,mask]);
+}
+/** Replace the value of an entry nativeAncillaryMaskFind finds (same
+ * equality), e.g. the growth pass's first-face marker false. */
+export function nativeAncillaryMaskReplace(masks,wall,ppm,dn,sdu,sdv,sa,mask){
+ const same=(a,b)=>a===b||(a!==a&&b!==b),list=masks.get(dn);
+ if(list)for(let i=0;i<list.length;i+=6)
+  if(same(list[i+2],sdu)&&same(list[i+3],sdv)&&same(list[i+4],sa)&&same(list[i],wall)&&same(list[i+1],ppm)){list[i+5]=mask;return;}
+ throw Error('Native ancillary mask entry missing');
+}
+
+/** #1671: per growth-record entry slot of non-drip ancillary pieces, valid
+ * from tn >= 1.45 while R, kind, seed, contract shapes and the mask-key fields
+ * stay identical (=== per field, NaN equal to NaN). Self-contained, as above. */
+export function nativeSettledAncillarySlot(g,index){
+ const slots=g._s3SettledAncillary||(g._s3SettledAncillary=[]);
+ return slots[index]||(slots[index]={stored:false});
+}
+export function nativeSettledAncillaryMatches(slot,g,contract,wall,ppm,dn,sdu,sdv,sa){
+ const same=(a,b)=>a===b||(a!==a&&b!==b);
+ return slot.stored&&slot.shapes===contract.shapes&&same(slot.R,g.R)&&same(slot.kind,g.kind)&&same(slot.gSeed,g.seed)&&
+  same(slot.dn,dn)&&same(slot.sdu,sdu)&&same(slot.sdv,sdv)&&same(slot.sa,sa)&&same(slot.wall,wall)&&same(slot.ppm,ppm);
+}
+export function nativeStoreSettledAncillary(slot,g,contract,wall,ppm,dn,sdu,sdv,sa,pieces,margin,seed){
+ slot.stored=true;slot.shapes=contract.shapes;slot.R=g.R;slot.kind=g.kind;slot.gSeed=g.seed;
+ slot.wall=wall;slot.ppm=ppm;slot.dn=dn;slot.sdu=sdu;slot.sdv=sdv;slot.sa=sa;
+ slot.pieces=pieces;slot.margin=margin;slot.seed=seed;
+ // The same contract with every shape count but drips set to zero.
+ slot.dripContract={...contract,shapes:contract.shapes.map(s=>s?[0,0,0,s[3]]:s)};
+}

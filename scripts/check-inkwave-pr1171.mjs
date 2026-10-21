@@ -116,13 +116,29 @@ try {
       for(let j=8;j<18;j++)for(let i=8;i<18;i++){
         const u=(i+.5)*face.cu,w=(j+.5)*face.cv,px=u-x,py=w-z;
         const along=px*dx+py*dz,across=-px*dz+py*dx;
-        const wob=r*(.03*Math.sin(along/r*9+seed*30)+.018*Math.sin(along/r*23+seed*11));
+        // The installed #1165 core is a pair of triangular waves, not the
+        // obsolete raw-source sine shape. Measure the *emitted* GPU core.
+        const tooth=t=>1-4*Math.abs(t-Math.floor(t)-.5);
+        const wob=r*(.08*tooth(along/r*2.1+seed*4.7+.25)+.04*tooth(along/r*5.3+seed*2.3+.25));
         const a=Math.abs(along)-r*.55,b=Math.abs(across)-r*.62-wob;
         const sd=Math.hypot(Math.max(a,0),Math.max(b,0))+Math.min(Math.max(a,b),0)-r*.1;
         const ax=Math.floor(face.atlas.x+face.atlas.pad+u*face.atlas.ppm),ay=Math.floor(face.atlas.y+face.atlas.pad+w*face.atlas.ppm);
         renderer.readRenderTargetPixels(paint.rt,ax,ay,1,1,pixel);
         const gpu=(pixel[0]>=128?2:1),cpu=paint.sample(0,u,w);cells++;
-        if(gpu!==cpu){if(Math.abs(sd)>2/face.atlas.ppm)throw Error('Roller interior GPU/CPU mismatch '+JSON.stringify({seed,angle,team,u,w,gpu,cpu,sd,pixel:[...pixel]}));edgeTolerance++;}
+        if(gpu!==cpu){
+          // Raster ownership is binary while the real fragment resolves a
+          // smoothstep(-1.5*fwidth(sd), +1.5*fwidth(sd)) antialias edge.
+          // The seeded band wobbles across its length: its maximum transverse
+          // slope is 0.03*9 + 0.018*23, so |grad(sd)| <= 1 + that slope.
+          // fwidth is the SUM of screen-axis derivatives, not one texel.
+          // Include half-texel readback/sample alignment. Never call these
+          // genuine AA cells an interior mismatch. The separate WebGL hard
+          // mask suite still rejects GPU-only and unowned solid Roller cells.
+          const maxGradient=1+0.08*4*2.1+0.04*4*5.3;
+          const aaWidth=(1.5*Math.SQRT2+Math.SQRT1_2)*maxGradient/face.atlas.ppm;
+          if(Math.abs(sd)>aaWidth)throw Error('Roller interior GPU/CPU mismatch '+JSON.stringify({seed,angle,team,u,w,gpu,cpu,sd,aaWidth,pixel:[...pixel]}));
+          edgeTolerance++;
+        }
         if(seed===Math.PI/60&&angle===0&&i===12&&j===12&&team===0){if(cpu!==1||pixel[0]>=128)throw Error('Published Roller witness still mismatches');witness=true;}
       }
       const counts=[0,0];for(let k=0;k<paint.grid.length;k++)if(!paint.dead[k]&&paint.grid[k])counts[paint.grid[k]-1]++;

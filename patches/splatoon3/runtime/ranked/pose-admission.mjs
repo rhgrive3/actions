@@ -159,11 +159,13 @@ export function admitRankedPose(state, row, actor, ts, world, ctx = null) {
     const charged = state.jumpSince !== undefined && ts - state.jumpSince >= L.chargeMin;
     if (row[16] !== prev.tp) {
       if (row[16] !== prev.tp + 1) return false;
+      // #1728: only a verified death-to-respawn transition can advance netTp.
+      // Native Super Jump/return flight keeps its epoch; sender-controlled SJ flags
+      // and a host-known landing are not proof of authority to teleport instantly.
       const respawn = !(prev.flags & ALIVE) && !!(flags & ALIVE) && nearRespawn(next, actor, ctx);
-      const jump = charged && !!((prev.flags | flags) & SJ) && nearLanding(next, ctx, state, actor);
-      if (!(respawn || jump)) return false;
+      if (!respawn) return false;
       tokens = L.burst; flight = null; specialOrigin = undefined;
-      if (respawn) slack = L.initialClockSlack;
+      slack = L.initialClockSlack;
     } else {
       const claimed = (flags & SJ_FLIGHT) && (flags & ALIVE) ? flightOf(row) : null;
       const same = claimed && flight && dist(claimed.to, flight.to) < 1e-3 && dist(claimed.from, flight.from) < 1e-3;

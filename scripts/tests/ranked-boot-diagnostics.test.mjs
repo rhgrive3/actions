@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import {criticalBootRequest,rankedBootState,observeRankedBoot} from '../lib/ranked-boot-diagnostics.mjs';
 const url='https://rhgrive3.github.io/actions/?relay=x';
 const moduleUrl='https://rhgrive3.github.io/actions/_versions/abc/patches/splatoon3/runtime/audio/weapon-recipes.mjs';
-function page(state={ready:true}) {const p=new EventEmitter();p.waitForFunction=async(fn,arg,options)=>{assert.equal(fn,rankedBootState);assert.equal(options.timeout,180000);return {jsonValue:async()=>state,dispose:async()=>{p.disposed=true;}};};return p;}
+function page(state={ready:true}) {const p=new EventEmitter();p.waitForFunction=async(fn,arg,options)=>{assert.equal(fn,rankedBootState);assert.equal(options.timeout,180000);assert.equal(options.polling,250,'must not depend on a renderer requestAnimationFrame');return {jsonValue:async()=>state,dispose:async()=>{p.disposed=true;}};};return p;}
 const response=(status,u=moduleUrl,type='script')=>({status:()=>status,url:()=>u,request:()=>({resourceType:()=>type})});
 for(const status of [503,404])test(`critical ${status} fails before unresolved boot; preserves first cause`,async()=>{
  const p=page(),r={};await assert.rejects(observeRankedBoot(p,url,r,async()=>{p.emit('response',response(status));p.emit('requestfailed',{url:()=>moduleUrl,resourceType:()=> 'script',failure:()=>({errorText:'net::ERR_ABORTED'})});await new Promise(()=>{});}),new RegExp('critical-http: '+status));assert.equal(r.status,'failed');assert.equal(r.failures[0].status,status);assert.equal(p.listenerCount('response'),0);
@@ -20,3 +20,32 @@ test('early failure does not enqueue readiness after delayed start resolves',asy
 test('existing readiness rejection after context closes stays handled',async()=>{const p=page(),r={};let close;p.waitForFunction=()=>new Promise((_,reject)=>{close=()=>reject(Error('Target page, context or browser has been closed'));});const unhandled=[];const listener=e=>unhandled.push(e);process.on('unhandledRejection',listener);try{const run=observeRankedBoot(p,url,r,async()=>{});await new Promise(resolve=>setImmediate(resolve));p.emit('response',response(404));await assert.rejects(run,/404/);assert.equal(p.listenerCount('response'),0);close();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(unhandled,[]);}finally{process.off('unhandledRejection',listener);}});
 test('boot receipts retain exact build identity even for document failure',()=>{const s=fs.readFileSync(new URL('../check-inkwave-ranked-browser.mjs',import.meta.url),'utf8');assert.match(s,/const receipt=\{context:contexts.length-1,inputHash:build.inputHash,revision:build.build.revision/);});
 test('dedicated ranked CI runs diagnostics and tracks both new paths',()=>{const w=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-ranked.yml',import.meta.url),'utf8');assert(w.includes('run: node --test scripts/tests/ranked-boot-diagnostics.test.mjs'));for(const p of ['scripts/lib/ranked-boot-diagnostics.mjs','scripts/tests/ranked-boot-diagnostics.test.mjs'])assert.equal(w.split("- '"+p+"'").length-1,2);assert(w.includes('timeout-minutes: 25'));assert(w.includes('contents: read'));});
+
+// A graphics-heavy or stalled RAF must not be part of the readiness polling
+// contract. The 180s upper bound and exact game-ready predicate remain strict.
+test('ranked browser readiness uses fixed timer polling rather than animation frames',async()=>{
+ const p=page({ready:true}),r={};
+ p.waitForFunction=async(fn,arg,options)=>{
+   assert.equal(fn,rankedBootState);
+   assert.equal(options.polling,250);
+   assert.equal(options.timeout,180000);
+   return {jsonValue:async()=>({ready:true}),dispose:async()=>{p.disposed=true;}};
+ };
+ await observeRankedBoot(p,url,r,async()=>{});
+ assert.equal(r.status,'ready');
+ assert.equal(p.disposed,true);
+});
+
+test('browser crashes and premature closes fail fast and release event observers',async()=>{
+ for (const [event,kind] of [['crash','browser-crash'],['close','page-close']]){
+  const p=page(),receipt={};let resume;
+  const operation=observeRankedBoot(p,url,receipt,()=>new Promise(resolve=>{resume=resolve;}));
+  p.emit(event);
+  await assert.rejects(operation,new RegExp(kind));
+  assert.equal(receipt.status,'failed');
+  assert.equal(receipt.failures[0].kind,kind);
+  assert.equal(p.listenerCount('crash'),0);
+  assert.equal(p.listenerCount('close'),0);
+  resume();
+ }
+});
