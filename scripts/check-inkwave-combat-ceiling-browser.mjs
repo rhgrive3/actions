@@ -11,6 +11,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
+import {installCombatPlacementQA} from './lib/inkwave-combat-ceiling-placement.mjs';
 import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runtime-evidence.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
@@ -22,7 +23,7 @@ assert.equal(option('--source-sha',sourceSha),sourceSha,'checkout must equal req
 const build=verifyRuntimeBuild(site,ROOT,sourceSha);
 assert.equal(build.schema,1);assert.equal(hash(JSON.stringify(build.files)),build.inputHash);
 const self=fileURLToPath(import.meta.url),selfRelative=path.relative(ROOT,self);
-for(const file of [selfRelative,'scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
+for(const file of [selfRelative,'scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
  const actual=execFileSync('git',['hash-object','--',file],{cwd:ROOT,encoding:'utf8'}).trim();
  const expected=execFileSync('git',['rev-parse',sourceSha+':'+file],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(actual,expected,'QA/relay source must match head: '+file);
@@ -58,6 +59,7 @@ try {
   const page=await context.newPage();pages.push(page);page.setDefaultTimeout(30000);
   page.on('pageerror',e=>errors.push('player'+i+': '+e.message));
   page.on('requestfailed',r=>errors.push('player'+i+': '+r.url()+': '+r.failure()?.errorText));
+  await page.addInitScript(installCombatPlacementQA);
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,matchLength:180,lastStage:'tidewater',lastMode:'turf'})));
   await page.route(base+'/**',async route=>{
    const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';
@@ -90,15 +92,7 @@ try {
  },actorURL)));
  assert.equal(report.roles[0].isHost,true);assert.equal(report.roles[1].isHost,false);
  const attacker=report.roles[1].local,victim=report.roles[0].local,attackerOwner=owners[1];
- const placement=await host.evaluate(({attacker})=>{
-  const G=__G,a=G.netm.byNid.get(attacker),pad=G.level.spawnPads[a.team],V=G.camera.position.constructor;
-  for(const [dx,dz] of [[0,2],[2,0],[0,-2],[-2,0]]){
-   const points=[[pad.x,pad.z],[pad.x+dx,pad.z+dz]],out=[];
-   for(const [x,z] of points){const h={normal:new V(),block:-1,face:-1};G.physics.groundProbe(x,pad.y,z,2,2,.38,h,false);if(!h.hit||!h.center||h.grate||h.normal.y<.68)break;out.push([x,h.y,z]);}
-   if(out.length===2&&G.physics.los(new V(...out[0]).add(new V(0,1.05,0)),new V(...out[1]).add(new V(0,1.05,0))))return out;
-  }
-  throw Error('No safe native close-range placement');
- },{attacker});
+ const placement=await host.evaluate(()=>__ceilingPlacement.select());
  report.placement=placement;
  await Promise.all(pages.map(p=>p.evaluate(({attacker,placement})=>{
   const G=__G,V=G.camera.position.constructor;G.projectiles.clear();
@@ -114,11 +108,12 @@ try {
   }
   G.scene.updateMatrixWorld(true);
  },{attacker,placement})));
- const step=async()=>{await Promise.all(pages.map(p=>p.evaluate(()=>{
+ const step=async()=>{await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>{
   const G=__G,dt=1/60;G.time+=dt;G.net.update(dt);
   for(const a of G.match.actors){
    if(a.remote)G.netm.applyRemote(a,dt);
    else {
+    if(window.__ceilingFirePending&&a.nid===attacker)__ceilingPlacement.aim({attacker,victim,requested:placement});
     const ink=a.ink;
     a.update(dt);
     // Advance the real first-shot delay, pose and firing owner. Stop holding
@@ -126,15 +121,37 @@ try {
     if(window.__ceilingFirePending&&a===G.match.local&&a.ink<ink-1e-8){
      window.__ceilingFirePending=false;a.intent.fire=false;
      window.__ceilingEmission={beforeInk:ink,afterInk:a.ink,at:G.time};
+     const q=window.__ceilingShot,rounds=G.projectiles.list.filter(p=>p.owner===a&&!p.ghost);
+     if(!q||q.first||rounds.length!==1)throw Error('Expected one actual owned projectile at paid emission');
+     q.first=rounds[0];
+     const p=q.first,v=G.netm.byNid.get(victim);
+     q.initial={beforeInk:ink,afterInk:a.ink,at:G.time,pos:p.pos.toArray(),velocity:p.vel.toArray(),
+       age:p.age,life:p.life,attacker:a.pos.toArray(),victim:v.pos.toArray(),victimSmoothY:v.smoothY,
+       aimPoint:a.aimPoint.toArray(),aimDir:a.aimDir.toArray(),playerRadius:p.inkPlayerRadius};
     }
    }
   }
   G.projectiles.update(dt);
- })));await new Promise(resolve=>setTimeout(resolve,0));};
+ },{attacker,victim,placement})));await new Promise(resolve=>setTimeout(resolve,0));};
  for(let i=0;i<12;i++)await step();
+ report.settled=await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>
+  __ceilingPlacement.inspect({attacker,victim,requested:placement}),{attacker,victim,placement})));
+ for(let i=0;i<2;i++)assert(Math.hypot(...report.settled[0].points[i].map((v,k)=>v-report.settled[1].points[i][k]))<=.05,'Both peers must agree on the settled native positions');
+ report.aim=await guest.evaluate(({attacker,victim,placement})=>__ceilingPlacement.aim({attacker,victim,requested:placement}),{attacker,victim,placement});
  report.phase='arm-packet-observers';
  await guest.evaluate(({attacker,victim})=>{
   const G=__G,n=G.netm,tr=n.s.tr,send=tr.sendTo;
+  // Observe one real round without replacing collision, damage, or admission.
+  const system=G.projectiles,flight=system.inkFlight,step=system._step,impact=flight.impact;
+  const shot=window.__ceilingShot={system,flight,step,impact,first:null,initial:null,removal:null,steps:0};
+  flight.impact=function(p,hit){if(p===shot.first&&!shot.removal)shot.removal={reason:'world-impact',at:G.time,
+   point:hit.point?.toArray(),normal:hit.normal?.toArray(),face:hit.face,block:hit.block,age:p.age};
+   return impact.apply(this,arguments);};
+  system._step=function(p,dt){const watched=p===shot.first;if(watched)shot.steps++;
+   const done=step.apply(this,arguments);
+   if(watched&&done&&!shot.removal)shot.removal={reason:p._netHitActor?'actor-contact':p.age+1e-9>=p.life?'lifetime':'other-native-removal',
+    at:G.time,pos:p.pos.toArray(),age:p.age,life:p.life};
+   return done;};
   const originalMessage=n.onMessage;
   const q=window.__ceilingGuest={tr,send,n,originalMessage,acks:[],packet:null,to:null,count:0};
   n.onMessage=function(from,p){const result=originalMessage.apply(this,arguments);if(p?.k==='hit_ack'&&p.a===attacker&&p.v===victim)q.acks.push({from,packet:structuredClone(p)});return result;};
@@ -159,6 +176,7 @@ try {
  let captured=false;
  for(let i=0;i<60;i++){await step();captured=await guest.evaluate(()=>!!__ceilingGuest.packet);if(captured)break;}
  report.emission=await guest.evaluate(()=>({emission:window.__ceilingEmission,pending:window.__ceilingFirePending,ink:__G.match.local.ink,firstRemaining:__G.match.local.weaponRunner.s3ShooterFirstRemaining,projectiles:__G.projectiles.list.length}));
+ report.shot=await guest.evaluate(()=>{const q=__ceilingShot;return {initial:q.initial,removal:q.removal,steps:q.steps};});
  assert(captured,'Native projectile never authored a 36 hit packet');
  assert(report.emission.emission&&report.emission.pending===false,'Exactly one native paid round must finish the firing request');
  await host.waitForFunction(({attackerOwner,attacker})=>(__G.netm._combatProvenance?.proofs.get(attackerOwner)||[]).some(p=>p.actor===attacker&&p.uses<p.maxUses),{attackerOwner,attacker},{timeout:2000});
@@ -208,10 +226,11 @@ try {
  report.status='passed';report.phase='complete';
 } catch(error) {
  report.status='failed';report.error=String(error.stack||error);process.exitCode=1;
+ try{if(pages[1])report.shot=await pages[1].evaluate(()=>{const q=window.__ceilingShot;return q?{initial:q.initial,removal:q.removal,steps:q.steps}:null;});}catch{}
 } finally {
  report.errors=errors;report.loadedArtifacts=[...loaded];report.wire=wire;
  for(const page of pages){
-  try{await page.evaluate(()=>{const g=window.__ceilingGuest,h=window.__ceilingHost;if(g){g.tr.sendTo=g.send;g.n.onMessage=g.originalMessage;}if(h)h.n.onMessage=h.original;});}
+  try{await page.evaluate(()=>{const g=window.__ceilingGuest,h=window.__ceilingHost,s=window.__ceilingShot;if(s){s.system._step=s.step;s.flight.impact=s.impact;}if(g){g.tr.sendTo=g.send;g.n.onMessage=g.originalMessage;}if(h)h.n.onMessage=h.original;});}
   catch(e){(report.cleanupErrors||=[]).push(String(e));}
  }
  // Persist before closing sockets/browser, so a cleanup failure cannot erase evidence.
@@ -223,4 +242,27 @@ try {
  if(report.cleanupErrors?.length||errors.length){report.status='failed';process.exitCode=1;}
  fs.writeFileSync(path.join(evidence,'combat-ceiling-browser-result.json'),JSON.stringify(report,null,2)+'\n');
 }
-console.log(JSON.stringify({status:report.status,sourceSha,phase:report.phase,evidence}));
+// Keep CI failure diagnosis useful when the artifact archive is unavailable.
+// Only fixed error labels and numeric emission state reach stdout; never wire data.
+const failure = report.status === 'failed' ? {
+ error: ['Native projectile never authored a 36 hit packet',
+  'Exactly one native paid round must finish the firing request',
+  'Expected exactly one real near-hit 36'].find(message => report.error?.includes(message))
+  || (report.error?.includes('Timeout') ? 'timeout' : 'other-error-see-artifact'),
+ emission: report.emission ? {
+  pending: report.emission.pending === true,
+  ink: Number.isFinite(report.emission.ink) ? report.emission.ink : null,
+  firstRemaining: Number.isFinite(report.emission.firstRemaining) ? report.emission.firstRemaining : null,
+  projectiles: Number.isFinite(report.emission.projectiles) ? report.emission.projectiles : null,
+  paidRound: !!report.emission.emission,
+ } : null,
+ shot: report.shot ? {
+  reason: ['world-impact','actor-contact','lifetime','other-native-removal'].includes(report.shot.removal?.reason) ? report.shot.removal.reason : null,
+  steps: Number.isSafeInteger(report.shot.steps)&&report.shot.steps>=0 ? report.shot.steps : null,
+  initialInk: Number.isFinite(report.shot.initial?.afterInk) ? report.shot.initial.afterInk : null,
+  initialHeight: Number.isFinite(report.shot.initial?.pos?.[1]) ? report.shot.initial.pos[1] : null,
+  removalAge: Number.isFinite(report.shot.removal?.age) ? report.shot.removal.age : null,
+ } : null,
+ browserErrorCount: errors.length,
+} : undefined;
+console.log(JSON.stringify({status:report.status,sourceSha,phase:report.phase,evidence,failure}));
