@@ -341,12 +341,21 @@ const RESOLVED_SOURCE_PAIR = Object.freeze({
     }
   }
 });
+// Exact current main #1742 integration; all other thirteen-path pins remain
+// bound to the previously reviewed six-PR composition. No input is rewritten.
+const RESOLVED_SWIM_SOURCE_PAIR = Object.freeze({
+  baseCommit: '95c25af145418691991a1452d4d10589754a0f1c',
+  candidateCommit: 'af66a10bd34e4de9e182f8fb4f24da6d51c16fb6',
+  blobs: Object.freeze({...RESOLVED_SOURCE_PAIR.blobs,
+    'scripts/lib/inkwave-build-only-modules.mjs': Object.freeze({base: '89f3b41a400307f8c6f7156bb4850d6c67e67c85', candidate: '89f3b41a400307f8c6f7156bb4850d6c67e67c85'})
+  })
+});
 function reviewedCurrentPair(baseline, candidate) {
   const present = path => typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string';
   const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
     sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate);
-  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR, RESOLVED_SOURCE_PAIR].find(pair =>
+  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR, RESOLVED_SOURCE_PAIR, RESOLVED_SWIM_SOURCE_PAIR].find(pair =>
     MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
       gitBlobSha1(baseline.get(path)) === pair.blobs[path].base &&
       gitBlobSha1(candidate.get(path)) === pair.blobs[path].candidate));
