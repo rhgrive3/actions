@@ -233,6 +233,7 @@ test('Charger uses seamless recorded sustain with a bounded, monotone pitch pres
  await a._realS3Loader.ensure(id,'charge');
  await a._realS3Loader.ensure('s3-spinner-quick','charge');
  const recorded=a._def('main:'+id+':charge');
+ assert.equal(recorded.gain,.54,'the recorded hold bed must be audible next to the 0.68 ready cue');
  const voice=()=>({ctx,t:ctx.currentTime,out:{},nodes:[],srcs:[],end:0,endless:false});
  const original=a.weaponBank().authorized.pick(id,'charge').buffer;
  const v=voice(),control=recorded.loop(v,2.5,{});
