@@ -75,9 +75,9 @@ if (!vm.SourceTextModule) {
       postMessage(msg){posted=msg;queueMicrotask(()=>this.onmessage({data:{result:{ok:true}}}));}
       terminate(){terminated++;}
     }
-    const context=vm.createContext({console,Worker:MockWorker,URL,DOMException,queueMicrotask,globalThis:undefined});
+    const context=vm.createContext({console,Worker:MockWorker,URL,DOMException,queueMicrotask});
     const build=moduleFrom(context,{nativeStageBuild:{runtimeSha256:'checksum',mode:'browser-direct'}});
-    const browser=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/source-data.mjs',import.meta.url),'utf8'),{context});
+    const browser=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/source-data.mjs',import.meta.url),'utf8'),{context,initializeImportMeta(meta){meta.url='file:///inkwave/patches/native-stages/runtime/source-data.mjs';}});
     await browser.link(spec=>{assert.equal(spec,'./build-config.mjs');return build;});
     await browser.evaluate();
     assert.equal((await browser.namespace.loadBrowserSource('stage',undefined,{constrained:true})).ok,true);
