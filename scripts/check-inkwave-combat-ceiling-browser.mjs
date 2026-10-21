@@ -120,6 +120,21 @@ try {
   G.projectiles.update(dt);
  })));await new Promise(resolve=>setTimeout(resolve,0));};
  for(let i=0;i<12;i++)await step();
+ // Real NetMatch interpolation must finish placing each REMOTE actor as well:
+ // local actor placement alone does not make the projectile see the victim.
+ // Test the native transmitted snapshots, not a copied or forged remote pose.
+ const remoteRead=()=>Promise.all(pages.map((p,i)=>p.evaluate(({nid,want})=>{
+  const a=__G.netm.byNid.get(nid),n=a?.net;
+  return {nid,remote:a?.remote,ready:!!n?.ready,buffer:n?.buf?.length||0,
+   pos:a?.pos?.toArray(),dist:a?.pos?Math.hypot(a.pos.x-want[0],a.pos.y-want[1],a.pos.z-want[2]):Infinity};
+ },{nid:i===0?attacker:victim,want:placement[i===0?0:1]})));
+ let remote=await remoteRead(),settled=0;
+ for(;settled<60&&!remote.every(r=>r.remote&&r.ready&&r.dist<.55);settled++){
+  await step();remote=await remoteRead();
+ }
+ report.remoteReady={steps:settled,peers:remote};
+ assert(remote.every(r=>r.remote&&r.ready&&r.dist<.55),
+  'Native remote interpolation did not reach the actual placed enemy before fire');
  report.phase='arm-packet-observers';
  await guest.evaluate(({attacker,victim})=>{
   const G=__G,n=G.netm,tr=n.s.tr,send=tr.sendTo;
@@ -143,10 +158,28 @@ try {
   n.onMessage=function(from,p){const watched=from===attackerOwner&&p?.k==='hit'&&p.a===attacker&&p.v===victim;const before=watched?snapshot():null;const at=performance.now()/1000;const result=original.apply(this,arguments);if(watched)q.rows.push({from,at,packet:structuredClone(p),before,after:snapshot()});return result;};
  },{attacker,victim,attackerOwner});
  report.phase='real-projectile-contact';
- await guest.evaluate(()=>{const a=__G.match.local;a.weaponRunner.update(1/60,{fire:true,firePressed:true});});
+ // Drive one full real Actor frame, as the production input loop does.
+ // Calling WeaponRunner.update in isolation can skip Actor/form/aim and
+ // native source-composition admission. Never manufacture a hit packet.
+ report.nativeFire=await guest.evaluate(()=>{
+  const G=__G,a=G.match.local,n=G.netm,before=G.projectiles.list.length;
+  a.intent.fire=true;a.update(1/60);a.intent.fire=false;
+  const rounds=G.projectiles.list.slice(before).filter(p=>p.owner===a);
+  return {id:a.nid,kind:a.weapon.kind,alive:a.alive,form:a.form,
+   rounds:rounds.map(p=>({type:p.type,wid:p.wid,damage:p.damage,
+    pos:p.pos.toArray(),vel:p.vel.toArray(),inkProfile:p.inkProfile||null})),
+   events:n.out.filter(e=>e[1]==='p'||e[1]==='ev').map(e=>e.slice(0,5))};
+ });
+ assert.equal(report.nativeFire.rounds.length,1,'Exactly one native shooter projectile must be born from the input frame');
+ assert(report.nativeFire.events.some(e=>e[1]==='p'),'The real born shot must carry receiver-visible projectile provenance');
  let captured=false;
  for(let i=0;i<60;i++){await step();captured=await guest.evaluate(()=>!!__ceilingGuest.packet);if(captured)break;}
- assert(captured,'Native projectile never authored a 36 hit packet');
+ if(!captured) report.contactMiss=await guest.evaluate(()=>{
+  const G=__G,a=G.match.local,v=G.match.actors.find(x=>x.remote);
+  return {attacker:a.pos.toArray(),victim:v?.pos.toArray(),victimAlive:v?.alive,
+   remaining:G.projectiles.list.map(p=>({type:p.type,pos:p.pos.toArray(),vel:p.vel.toArray(),age:p.age}))};
+ });
+ assert(captured,'The single native shooter projectile never contacted the networked victim');
  await host.waitForFunction(({attackerOwner,attacker})=>(__G.netm._combatProvenance?.proofs.get(attackerOwner)||[]).some(p=>p.actor===attacker&&p.uses<p.maxUses),{attackerOwner,attacker},{timeout:2000});
  report.heldPacket=await guest.evaluate(()=>__ceilingGuest.packet);
  assert.equal(report.heldPacket.d,36);
