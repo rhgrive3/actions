@@ -206,7 +206,8 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     for (let cell = 0; cell < cells; cell++) {
       let seen = false, revertedSeen = counterWitnesses.negative.has(cell);
       for (let sample = 0; sample < 5; sample++) { const i = (cell * 5 + sample) * 4; seen ||= actual[i] === 255; revertedSeen ||= reverted[i] === 255; }
-      if (!seen && !witnessed.has(cell)) unsupported++; if (!revertedSeen) negativeUnsupported++;
+      if (!seen && !witnessed.has(cell)) unsupported++;
+      if (!revertedSeen) negativeUnsupported++;
       for (const [name, pixels] of Object.entries(familyPixels)) {
         let familySeen = counterWitnesses[name].has(cell);
         for (let sample = 0; sample < 5; sample++) familySeen ||= pixels[(cell * 5 + sample) * 4] === 255;
@@ -252,9 +253,10 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   check(rows.length === 124, 'six original kinds plus final-growth Roller body: real WebGL and CPU cells exercised');
   const subcell = subcellDotRows(paint, nativeShader, program, query, tx, tail, shapeCounts);
   const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail, calibrated);
+  const rollerCorners = rollerCornerRows(paint, nativeShader, program, query, tx, tail);
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, activeFamilies, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
-    body, subcell, mainAtlas: mainInkAtlasRows(), volleys:mainInkVolleyGallery(), hidden: hiddenPresentationRows(), ownedRunScan: ownedRunScanRows(), localOrderMap: localOrderMapRows() };
+    body, rollerCorners, subcell, mainAtlas: mainInkAtlasRows(), volleys:mainInkVolleyGallery(), hidden: hiddenPresentationRows(), ownedRunScan: ownedRunScanRows(), localOrderMap: localOrderMapRows() };
 }
 
 function mainInkVolleyGallery() {
@@ -679,5 +681,54 @@ function subcellDotRows(paint, nativeShader, program, query, tx, tail, shapes) {
     rows.push({wall,cell,R,dots:indices.length,teams:2});
   }
   check(rows.every(row=>row.dots===10),'all retained production ray-tip beads exercised');
+  return rows;
+}
+
+// #1165: one strict-interior GPU witness outside the historical CPU scan.
+// R=6 is a controlled scale, not a weapon-stat claim. At the native .25 cell
+// pitch, R=2.7 would still include this cell via the inclusive floor bound.
+function rollerCornerRows(paint, nativeShader, program, query, tx, tail) {
+  const R = 6, seed = .4125, along = .623, across = .788;
+  const angle = -Math.atan2(across, along), sdu = Math.cos(angle), sdv = Math.sin(angle);
+  const n = 64, cell = .25, i = 50, j = 32;
+  const x = (i + .5) * cell, y = (j + .5) * cell;
+  const px = R * Math.hypot(along, across), lu = x - px, lv = y;
+  const oldExtent = R * (Math.hypot(.55, .62) + .1 + .05);
+  const safeExtent = R * Math.hypot(.55 + .1, .62 + .1 + .12);
+  const oldI1 = Math.floor((lu + oldExtent) / cell);
+  const safeI1 = Math.floor((lu + safeExtent) / cell);
+  check(oldI1 < i && safeI1 >= i + 1, 'corner and outside neighbor straddle the historical scan bound');
+  check(lu - safeExtent > 0 && lv - safeExtent > 0 &&
+    lu + safeExtent < n * cell && lv + safeExtent < n * cell, 'complete controlled band stays inside the face');
+  const gpu = program(nativeShader.replace(tx, 'float tx = 1.0 / 64.0;')
+    .replace(tail, '  gl_FragColor = vec4(sd < -0.03 ? 1.0 : 0.0, sd > 0.12 ? 1.0 : 0.0, 0.0, 1.0);'));
+  const rows = [];
+  for (const wall of [false, true]) for (const team of [0, 1]) {
+    const face = { atlas: { x: 0, y: 0, pad: 2, ppm: 64 }, su: n * cell, sv: n * cell,
+      nu: n, nv: n, cu: cell, cv: cell, grid: 0, wall, turf: !wall };
+    paint.clear();
+    paint.grid = new Uint8Array(n * n); paint.dead = new Uint8Array(n * n);
+    paint._paintOwnershipOrder = new Uint32Array(n * n);
+    const order = paint._paintOrderId();
+    const claimed = paint._cpuSplat(face, lu, lv, R, team, seed, sdu, sdv, 1, 6, order);
+    check(wall ? claimed === 0 : claimed > 0, 'actual CPU Roller scores floor turf but not wall ink');
+    const pixels = query(gpu, [px, 0, 0, px + cell, 0, 0],
+      [R, team, Math.fround(seed), 12 + (wall ? 1 : 0)], [3, 1, 2, paintShapeSeed(seed)], [sdu, sdv, 1]);
+    const index = j * n + i;
+    const validate = owned => {
+      check(pixels[0] === 255 && pixels[1] === 0, 'actual GPU corner must be strictly inside, not an AA tie');
+      check(owned === team + 1, 'actual GPU corner must belong to the same CPU team');
+    };
+    validate(paint.grid[index]);
+    check(pixels[4] === 0 && pixels[5] === 255 && paint.grid[index + 1] === 0,
+      'outside neighbor must remain dry on actual GPU and CPU');
+    let rejectedMissingCell = false;
+    try { validate(0); } catch { rejectedMissingCell = true; }
+    check(rejectedMissingCell, 'erasing the corner CPU claim must fail this acceptance gate');
+    rows.push({ wall, team, seed, R, cell, angle, i, j, lu, lv, oldI1, safeI1,
+      owner: paint.grid[index], outsideOwner: paint.grid[index + 1],
+      cornerRGBA: Array.from(pixels.slice(0, 4)), outsideRGBA: Array.from(pixels.slice(4, 8)), rejectedMissingCell });
+  }
+  check(rows.length === 4, 'corner witness covers floor/wall and both teams');
   return rows;
 }

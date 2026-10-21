@@ -102,6 +102,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Build production gameplay composition
         run: node scripts/build-inkwave.mjs inkwave-public work/site
+      - name: Verify emitted Roller holding and physical grip
+        run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/roller-holding-pivot.test.mjs
       - name: Verify emitted source offsets, detached release clipping and lateral cover
         run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs
       - name: Verify emitted added-family floor paint and falling splashes
@@ -272,7 +274,7 @@ jobs:
           assert.equal(ids.baseline, process.env.BASELINE_SHA);
           assert.equal(ids.candidate, process.env.CANDIDATE_SHA);
           for (const key of ['captureScript', 'entryHelper', 'workflow']) sha(ids[key]);
-          const names = ['rear', 'side', 'front-oblique', 'right-side'];
+          const names = ['rear', 'side', 'front-oblique', 'right-side', 'right-rear'];
           const sides = ['before', 'before-control', 'after', 'after-control'].map((side, index) => {
             const result = read(`${side}/result.json`), build = read(`${index < 2 ? 'before' : 'after'}-build.json`);
             const cameras = read(`${side}/grip-cameras.json`), m = result.measurement;

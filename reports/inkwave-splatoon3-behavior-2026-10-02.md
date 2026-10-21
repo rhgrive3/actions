@@ -1,5 +1,15 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-21：原典ステージで成長途中のボム塗りの処理量（計算量のみ、#1671）
+
+成長途中（tn < 1.45）の付随形状の所有権判定と、塗り表示のチャンク印付けを、同じ結果のまま速くした（[記録の節 9](inkwave-native-cpu-1671-2026-10-20.md)）。ボムが重なる区間の塗りセル・所有順・塗りポイント、表示するチャンク、ボット・移動・射撃の結果は変えていないため、本家との挙動差は増減しない。Chromium でシード固定の対戦（hagglefish・scorch、60Hz、3906 tick）を main と比べ、全フレームの状態と最終の塗りグリッド・所有順の一致を確認した。これはロジックとブラウザの比較で、本家の実機比較ではない。キャラクターの姿勢計算と BVH レイは調べたが変えていない。iPad Safari の実機 FPS は未計測。
+
+## 2026-10-20：原典ステージの CPU 塗り・塗り集計の処理量（計算量のみ、#1671）とミニマップ・UUID の修正
+
+原典ステージで、塗りの面探索（`splat`・`regionStats`）とボム等の付随形状の所有権判定を、同じ結果のまま速くした（[記録](inkwave-native-cpu-1671-2026-10-20.md)）。塗りセル・所有順・塗りポイント・ボットの判断・移動・射撃の結果は変えていないため、本家との挙動差は増減しない。Chromium でシード固定の対戦を5ステージ（60Hz）とユノハナの 30/120Hz で比べ、全フレームの状態と最終の塗りグリッド・所有順の一致を確認したが、これはロジックとブラウザの比較で、本家の実機比較ではない。iPad Safari の実機 FPS は未計測。
+
+同じ作業で、表示と乱数の不具合を 2 件直した。ミニマップは、導火時間が標準ボムの 2 倍を超えるサブで半径が負になって HUD の更新が例外で止まっていた（表示のみ）。Three.js の UUID 生成がゲームの乱数（`Math.random`）を消費し、描画オブジェクトの生成数によって同じシードでもボットの編成やその後の乱数がずれていたので、UUID を `crypto.getRandomValues` から作るようにした。乱数の分布や本家との挙動差は変わらない。
+
 ## 2026-10-20：モーション計算の削減と固定クロックの見直し（挙動差の増減なし）
 
 キャラクターのポーズ計算（クリップ標本化・FK・リターゲット前後の行列更新）を、結果がビット単位で同じになる範囲で削った（[記録](inkwave-base-logic-optimization-2026-10-20.md)）。全548クリップの標本化と、本番合成の実キャラクター 30/60/120Hz・不規則 dt の1,164フレームで変更前と一致。移動・射撃・塗り・接地の数値は変えていないため、本家との差は増減しない。
@@ -15,7 +25,6 @@
 2026-10-19 のイカ姿勢調査で、旋回する root と source の局所方向を二重に平滑化する表示上の進行方向オーバーシュートを再現した。物理・モデル形状・乾地の既定 pitch は保持し、source の進行方向だけを scene 基準で一度平滑化する限定候補を用意した。[固定 main との差分、通常入力回帰、前後 native 比較と未確認範囲](inkwave-squid-heading-2026-10-19.md) を参照。画像の受入と公開 head の CI は別途確認する。
 
 - ホコの短い潜伏中断→ヒト復帰は、PR1639 の固定 `00968835349cb8afac3803c412a48475e40bcae8` を基準とする別比較候補で検証する。source の正規姿勢・履歴を保存したまま上半身12骨の quaternion を表示時だけ揃え、該当区間に左支持手 solve を1回追加する。形状・髪・物理発射位置は変更しない。source8条件と共有QA28条件、元版との履歴/通常ボム比較は成功。新exact-headの本番20画像と処理負荷の受入は未完で、main採用は未承認。先行変身履歴付きの表示銃口↔発射原点距離の増加は最大約0.003486 world units、既存の大きな原点差も残る。詳細: [中断復帰の限定所有権候補](rainmaker-interrupted-form-owner-2026-10-19.md)。
-
 
 ## 2026-10-19：原典ステージのインク描画の選択（描画負荷のみ）
 
@@ -3663,7 +3672,7 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - INKWAVE実装箇所: `patches/splatoon3/adapter.mjs` が `inkwave-public/src/core/gyro.js` の `GYRO_DEG` を `[[-5,360],[0,200],[5,120]]` に置換する（main の `8c351574`）。中間は端点間の線形補間、利得は `360 / gyroTurnDeg(sens)`。公開版の表 `278/178/132/119/110` では -5 が 1.295x、+5 が 3.273x だった。
 - 再現操作: 感度 -5 / 0 / +5、端末を立てた状態で 90 度/秒の偏向を 2 秒、ジャイロ入力の `_sample` 出力を物理 180 度と比べる。
 - プレイへの影響: 既定値（0）の利得が公開版の 2.73x から 1.8x へ下がる。物理 90 度の旋回は -5 で 90 度、+5 で 270 度になる（公開版は約 116.5 度、約 294.5 度）。操作感が大きく変わるため、実機確認までは本家一致とは扱わない。
-- 確認状態: 論理試験のみ。`patches/splatoon3/tests/gyro-sensitivity-endpoints.test.mjs` 4/4 が通る。30 / 60 / 120 Hz の一定角速度でも積分結果は一致する。低速の平滑化・引き締め（約 3〜10 度/秒の境界）は試験していないため、フレーム間隔依存は **未確認**。未確認: Ver.11.3.0 の同条件実機計測、-2.5 / +2.5 など中間設定、Joy-Con / Pro Controller 実機入力、iOS / Android の DeviceOrientation 実動作。Issue #725 の中間値と実機一致の受け入れ項目は未達のまま。
+- 確認状態: 論理試験のみ。`patches/splatoon3/tests/gyro-sensitivity-endpoints.test.mjs` 4/4 が通る。30 / 60 / 120 Hz の一定角速度でも積分結果は一致する。低速の平滑化・引き締め（約 3〜10 度/秒の境界）は試験していないため、フレーム間隔依存は **未確認**。（2026-10-21 追記: 論理試験で依存を確認・修正。下記「2026-10-21: #725 / #287」を参照）未確認: Ver.11.3.0 の同条件実機計測、-2.5 / +2.5 など中間設定、Joy-Con / Pro Controller 実機入力、iOS / Android の DeviceOrientation 実動作。Issue #725 の中間値と実機一致の受け入れ項目は未達のまま。
 ## 2026-10-10 — #498 Roller age-width recheck (no code change)
 
 - 本家の根拠: 固定した Leanny/splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の Ver. 11.3.0 Roller `PaintParam` では、横は `ChangeWidthStartFrame=20`、縦は `30`、どちらも `ChangeWidthEndFrame=50`、`ChangeFrameWidthRate=0.6`。パラメータ解説は倍率の最小値・開始・終了の意味だけを示し、開始から終了までの補間形と丸めは示さない。Web 検索と Google Drive 検索でも中間曲線の一次根拠は見つからなかった。
@@ -5439,6 +5448,22 @@ CIのAP57ブラウザフィクスチャも、session.matchのNetMatch所有権�
 ## 2026-10-21: reported squid/weapon/audio/sub regressions
 
 See [regression analysis and evidence](weapon-regressions-20261021/README.md). Fixed the dry squid's constant 0.52-rad pitch, the finite Charger's fivefold width reduction and lost charged-hit metadata, and the legacy scope's NaN cooldown/missing sound alias. Standard Splatling charge/stream now preserve source MP3 pitch and START prepares charged articulations. Reduced Blaster contacts choose ordinary damage audio. All main models stow for sub aim/recovery; Burst Bomb and its preview share a hand-origin flight law. Roller mesh dimensions are normalized to the host player's stature, separately from gameplay distance units. Trizooka uses a common launch axis and volley-time orbit, 20F activation, 15F initial shot windup and 55F repeats. The report states source versions, reproducible conditions and the remaining retail/device verification boundary.
+
+## 2026-10-21 更新後のモジュール起動復旧
+
+[検証記録](inkwave-update-module-recovery-2026-10-21.md)。公開 Web 配信のキャッシュ復旧のみを変更し、ゲーム内の移動・射撃・ルールの比較値は変更しない。本家のゲーム挙動との一致を追加認定する変更ではない。実機のホーム画面 Web アプリ起動は未確認。
+
+## 2026-10-21: #725 / #287 右スティック・ジャイロ感度（−5…+5）の再確認と低速ジャイロのフレーム間隔依存
+
+基準は origin/main `225f1d3`。対象は公開版 `inkwave-public/` に本番合成（`scripts/inkwave-source-composition.mjs` の `adaptBuildSource`）を適用したもの。本家の参照条件は Splatoon 3 Ver.11.3.0、TV/携帯モード共通の操作設定、照準アシスト類なし。ブキ・ギアには依存しない。
+
+- 本家の根拠（再調査）: Inkipedia「Options」（https://splatoonwiki.org/wiki/Options ）は、Splatoon 3 の右スティック感度とモーション感度がどちらも −5〜+5 であること、TV/テーブルと携帯で別々に設定できることだけを記載する。段階ごとの倍率や度/秒は載っていない。DamianS-eng/GTuner-TitanTwo の README 注記2 には、モーション感度の出力:入力比が最低 約1:1、既定 約1.8:1、最高 3:1 とある。同じ作者の「Explaining the Motion Controls in Splatoon 3」（https://damians-eng.github.io/Splatoon-Motion-Controls-Explained/ ）は、スティック感度が最大でもカメラの回転は 360 度/秒に届かないと述べる。どちらも第三者の記述で、計測方法・ゲーム版は書かれていない。右スティックの段階別倍率・旋回速度、ジャイロの中間設定の倍率について、公開された計測値や Leanny/splat3 の抽出値は見つからなかった。リポジトリの `curated-numbers.json` の `camera.gyro` も引き続き `unknown`。
+- main での状態（再分類）: #725 は部分修正。端点 1.0×/1.8×/3.0×（`GYRO_DEG [[-5,360],[0,200],[5,120]]`）と、`_sample` を直接呼ぶ一定 90 度/秒の 30/60/120 Hz 試験は実装済み。#287 も部分修正。−5…+5 を 0.5 刻みで 21 段階表示し、旧倍率の移行（1×→0）とリセットの変換も実装済み。倍率曲線 `2^(s/5)`（−5=0.5×、0=1×、+5=2×）は暫定。#1012 の上限 `min(3.6·倍率, 2π−1e-6)` rad/s も入っている。
+- 今回見つけて修正した差分（#725）: 低速域の平滑化（約 3〜10 度/秒の帯域、時定数 0.06 秒）が、各センサー区間の終端値を積分していた。このため、同じ遅い物理回転でもカメラの回転量がセンサー周期で変わっていた。本番合成で 1 度/秒を 1 秒回したとき、生の利得に対する比は 30/60/120 Hz で 0.955/0.948/0.944、5 度/秒では 0.968/0.963/0.960 だった。周期が長いほど多く回る。比は感度設定に依存せず、利得の問題ではなく平滑化の積分方法が原因。`patches/splatoon3/adapter.mjs` の `src/core/gyro.js` 分岐で、同じ一次フィルターの区間平均（零次ホールド入力の厳密解）を積分するように変更した。時定数・閾値・0.8 度/秒未満のゲート・感度の端点は変えていない。
+- 再現操作: 感度 −5/0/+5。端末を水平に置き、ピッチ（beta）またはヨー（alpha）を 1/2/5/8/12/90 度/秒で 1 秒回して止める。deviceorientation を 30/60/120 Hz と、5〜37 ms の不規則な周期で入力する。
+- プレイへの影響: ゆっくり照準を合わせるときの回転量が、端末のセンサー周期によらず一定になる。差は小さく、5 度/秒・+5（3×）で 1 秒あたり約 0.1 度。高速の旋回（10 度/秒以上）は変わらない。本家に同等の平滑化があるかは不明で、平滑化そのものは INKWAVE の独自仕様のまま。
+- #287 の記録: 右スティックの全速度入力のヨーは、暫定曲線では −5 が約 103 度/秒、0 が約 206 度/秒、+4 が約 359 度/秒。+4.5 と +5 はどちらも上限の 360 度/秒に張り付き、区別できない。ピッチは +5 の約 275 度/秒まで増え続ける。本家の各段階が互いに異なる速度かどうかは公開資料で確認できない。曲線を変えるには、本家の未公開の応答値か実機計測が必要なため、**未修正・未確認** として残す。旋回は `integrateLookAxis` の区間厳密積分により、30/60/120 Hz で同じ回転量になることを確認した。
+- 確認状態: ロジック単独の測定だけで、ブラウザの実動作と本家の実機比較はしていない。修正前は、新しい試験 `patches/splatoon3/tests/gyro-sensitivity-cadence-725.test.mjs` の周期一致の項目が失敗していた（30 Hz・1 度/秒で 0.016670 vs 閉形式 0.016406 rad）。修正後は 3/3 が通る。`patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs` 4/4 は、本番合成の PlayerController と実際の Input スティック整形で、21 段階・上限・ピッチ・旧倍率の移行・30/60/120 Hz を確認する。#678 の末尾一致の検査は、比較対象を S3 適用後のソースにし、S3 側の差分が今回の区間平均だけであることも確認する形に変えた。未確認: 本家 Ver.11.3.0 の右スティック −5/0/+5 の旋回速度、本家のジャイロ中間設定の倍率、Joy-Con / Pro Controller 実機、iOS / Android の実センサー周期。
 
 ## 2026-10-21: 読込済みソースモーションでの通常ジャンプ・被弾クリップの実選択（#1116・#1097）
 
