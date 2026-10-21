@@ -33,6 +33,12 @@ jobs:
         run: node scripts/check-inkwave-ink-micro-surface.mjs --site _site --evidence-dir .browser-evidence/ink-micro-surface
       - name: Verify source frame sequence before encoding
         run: node scripts/verify-ink-micro-surface-video.mjs .browser-evidence/ink-micro-surface --frames-only
+      - name: Install and verify video tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          ffmpeg -version
+          ffprobe -version
       - name: Encode actual successive frames
         run: |
           for view in floor wall; do
