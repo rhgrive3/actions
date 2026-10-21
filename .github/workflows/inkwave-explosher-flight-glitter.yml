@@ -6,6 +6,8 @@ on:
       - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
       - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
       - 'scripts/lib/inkwave-explosher-scene-census.mjs'
+      - 'scripts/lib/inkwave-explosher-startup.mjs'
+      - 'patches/splatoon3/tests/explosher-capture-guards.test.mjs'
       - '.github/workflows/inkwave-explosher-flight-glitter.yml'
 permissions:
   contents: read
@@ -45,7 +47,7 @@ jobs:
           import fs from 'node:fs';import assert from 'node:assert/strict';
           const read=s=>JSON.parse(fs.readFileSync('.ci-scratch/explosher/preflight-'+s+'/manifest.json'));
           const a=read('before'),b=read('after');assert.equal(a.length,1);assert.equal(b.length,1);
-          for(const k of ['aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport'])assert.deepEqual(b[0].measurement[k],a[0].measurement[k],k);
+          for(const k of ['style','sceneClocks','startup','aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport'])assert.deepEqual(b[0].measurement[k],a[0].measurement[k],k);
           for(const k of ['aimPoint','aimDir','aimYaw','aimPitch','characterTime'])assert.deepEqual(b[0].measurement.preShot[k],a[0].measurement.preShot[k],'preShot '+k);
           const effectiveRig=r=>({...r,blend:r.blend?.active?r.blend:null,superJumpLandTime:r.superJumpLandTime<.45?r.superJumpLandTime:null});
           assert.deepEqual(effectiveRig(b[0].measurement.preShot.rig),effectiveRig(a[0].measurement.preShot.rig),'effective preShot rig');
@@ -77,3 +79,4 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
           compression-level: 0
+

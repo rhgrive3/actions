@@ -53,7 +53,7 @@ export function compareExplosherCaptures(before,after){
   const a=before[i],b=after[i];if(!a||!b){mismatches.push({domain:'missing-frame',index:i});continue;}
   const frame={tick:a.tick,view:a.view};
   if(!equal([a.tick,a.view],[b.tick,b.view]))mismatches.push({...frame,domain:'identity'});
-  for(const k of ['aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport']){
+  for(const k of ['style','sceneClocks','startup','aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport']){
    const pass=equal(b.measurement[k],a.measurement[k]);checked.push({...frame,domain:k,pass});if(!pass)mismatches.push({...frame,domain:k});
   }
   for(const [domain,keys] of [['render',['calls','triangles','points','lines']],['memory',['geometries','textures']]]){
@@ -63,3 +63,4 @@ export function compareExplosherCaptures(before,after){
  }
  return {status:mismatches.length?'failed':'physical-and-resource-gates-passed',captures:before.length,checked,mismatches,visualReview:'pending',gpuElapsed:'not measured'};
 }
+

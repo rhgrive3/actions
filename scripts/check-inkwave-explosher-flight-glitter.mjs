@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { awaitExplosherSceneSources, explosherSceneCensus } from './lib/inkwave-explosher-scene-census.mjs';
+import { readExplosherSceneClocks, requireExplosherStyle, installExplosherEarlyFreeze } from './lib/inkwave-explosher-startup.mjs';
 const [siteArg,outArg,sourceSha,sourceRootArg]=process.argv.slice(2);
 if(!siteArg||!outArg||!/^[a-f0-9]{40}$/.test(sourceSha||''))throw Error('Usage: <built-site> <evidence-dir> <source-sha>');
 const root=fileURLToPath(new URL('../',import.meta.url)),site=path.resolve(siteArg),out=path.resolve(outArg);
@@ -23,20 +24,29 @@ if(actualSourceSha!==sourceSha)throw Error('Requested SHA does not match checkou
 fs.mkdirSync(out,{recursive:true});
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const once=(s,a,b)=>{if(s.split(a).length!==2)throw Error('capture anchor mismatch: '+a);return s.replace(a,b);};
+const rangeEntryUrl=new URL('./lib/inkwave-range-menu-entry.mjs',import.meta.url).href;
 let driver=fs.readFileSync(path.join(root,'scripts/render-inkwave-projectile-shapes.mjs'),'utf8');
 const originalHash=hash(driver);
 driver=driver.replace(/^#!.*\n/,'');
+driver="import { enterRangeFromMenu } from "+JSON.stringify(rangeEntryUrl)+";\n"+driver;
 driver=once(driver,"from 'playwright'","from "+JSON.stringify(import.meta.resolve('playwright')));
 driver=once(driver,"  await page.goto(base + '/?range&skipTitle');",`  await page.addInitScript(() => {
     // Normal game accessibility palette selection in this isolated diagnostic browser.
     localStorage.setItem('inkwave.settings',JSON.stringify({colorblind:true}));
+    localStorage.setItem('inkwave.profile',JSON.stringify({style:{hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3}}));
+    window.readExplosherSceneClocks=${readExplosherSceneClocks.toString()};
+    window.requireExplosherStyle=${requireExplosherStyle.toString()};
+    (${installExplosherEarlyFreeze.toString()})();
     window.resetExplosherRandom = () => { let n=0x515e7021;Math.random=()=>{n^=n<<13;n^=n>>>17;n^=n<<5;return(n>>>0)/4294967296;}; };
     window.resetExplosherRandom();
   });
-  await page.goto(base + '/?range&skipTitle');`);
+  await enterRangeFromMenu(page,base);`);
 
 driver=once(driver,"  await page.evaluate(() => {\n    const G = window.__G, g = window.__inkwave; g.debug.freeze(); g.debug.freezeBots();",`  await page.evaluate(async () => {
     const G=window.__G,g=window.__inkwave;
+    if(!window.explosherEntry?.trusted||!g.frozen)throw Error('Missing trusted frozen startup');
+    window.requireExplosherStyle(g.profile.style);
+    window.requireExplosherStyle(G.local.character.style);
     window.explosherTargetDummyClass=(await import('__EXPLOSHER_NATIVE_DUMMY_URL__')).TargetDummyCharacter;
     window.explosherSceneSources=await (${awaitExplosherSceneSources.toString()})(G,180000,window.explosherTargetDummyClass);
     window.explosherSceneCensus=${explosherSceneCensus.toString()};
@@ -48,7 +58,7 @@ const nativeReset=resetMatches[0];
 driver=once(driver,'const ready = await page.evaluate(({ id, hold }) => {','const ready = await page.evaluate(async ({ id, hold }) => {');
 driver=once(driver,"      G.projectiles.clear(); G.fx.clear?.();",nativeReset+`
       if(!g.frozen)throw Error('Capture loop must be frozen before native reset');
-      window.resetExplosherRandom();G.time=0;g.time=0;g.rig.time=0;
+      window.resetExplosherRandom();
       const oldCharacter=a.character;
       await resetCaptureCharacter(a);
       if(!g.frozen)throw Error('Capture loop unfroze during native reset');
@@ -90,7 +100,6 @@ driver=once(driver,'      window.shapeAim = aim; aim();',`      window.shapeAim 
       G.rig.update(0);`);
 
 driver=once(driver,'      g.debug.fire(true);',`      window.resetExplosherRandom();
-      G.time=0;g.time=0;g.rig.time=0;
       g.debug.fire(true);`);
 driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2, '0')}-\${view}.png`;",`        const measurement = await page.evaluate(() => {
           const G=window.__G,g=window.__inkwave,r=g.R.renderer;
@@ -106,7 +115,7 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
           const palette={colorblind:G.settings.colorblind,teamHex:[...G.teamHex],teamColors:G.teamColors.map(c=>c.getHex()),local:a=>a.color.getHex()};
           const paletteReceipt={...palette,local:palette.local(G.local)};
           if(paletteReceipt.colorblind!==true||paletteReceipt.local!==0xffd21a)throw Error('Native fixed palette was not applied');
-          return {sceneCensus:window.explosherSceneCensus(G,g.R.scene,window.explosherTargetDummyClass),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
+          return {style:window.requireExplosherStyle(G.local.character.style),sceneClocks:window.readExplosherSceneClocks(),startup:window.explosherEntry,sceneCensus:window.explosherSceneCensus(G,g.R.scene,window.explosherTargetDummyClass),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
             time:G.time,inkHex:G.local.color.getHex(),render:{...r.info.render},memory:{...r.info.memory},
             sparkles:G.projectiles.s3ShapeCounts?.sparkles??0,drawCpuMs:drawMs,renderSubmitMs:submitMs,
             gpuTimerMs:null,gpuTimerStatus:'not measured; submit CPU time is not GPU time',
@@ -165,7 +174,7 @@ if(preflight){
 
 driver="const expectedFrame="+JSON.stringify(expectedFrame)+";\n"+driver;
 driver=once(driver,"        if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));",`        if(tick===0&&expectedFrame){
-          for(const k of ['aimTrace','nativeReset','physical','palette','inkHex','time','sparkles','lighting','viewport'])
+          for(const k of ['style','sceneClocks','startup','aimTrace','nativeReset','physical','palette','inkHex','time','sparkles','lighting','viewport'])
             if(JSON.stringify(measurement[k])!==JSON.stringify(expectedFrame.measurement[k]))throw Error('Full-capture frame0 differs from preflight: '+k);
           if(view===expectedFrame.view&&JSON.stringify(measurement.camera)!==JSON.stringify(expectedFrame.measurement.camera))throw Error('Full-capture frame0 differs from preflight: camera');
           for(const k of ['aimPoint','aimDir','aimYaw','aimPitch','characterTime'])
@@ -198,3 +207,4 @@ for(const c of captures){
 }
 if(expected.size)throw Error('Missing expected native captures');
 if(preflight)console.log('EXPLOSHER_PREFLIGHT_RECEIPT '+JSON.stringify(captures));
+

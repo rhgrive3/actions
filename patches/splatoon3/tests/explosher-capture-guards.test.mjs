@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { awaitExplosherSceneSources, explosherSceneCensus, compareExplosherCaptures } from '../../../scripts/lib/inkwave-explosher-scene-census.mjs';
+import { readExplosherSceneClocks, requireExplosherStyle, installExplosherEarlyFreeze } from '../../../scripts/lib/inkwave-explosher-startup.mjs';
 const wrapper=fs.readFileSync(new URL('../../../scripts/check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');
 const nativeResetSource=fs.readFileSync(new URL('../../../scripts/check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
 const driver=fs.readFileSync(new URL('../../../scripts/render-inkwave-projectile-shapes.mjs',import.meta.url),'utf8');
@@ -12,7 +13,7 @@ function diagnostic(){
  const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{},exit(){}};
  const spawn=(bin,args)=>bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0};
  const code=wrapper.replace(/^#!.*\n/,'').replace(/^import .*;\n/gm,'').replace(/import\.meta\.url/g,"'file:///tmp/x'").replace(/import\.meta\.resolve\('playwright'\)/g,"'playwright'");
- assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus),/Wrong native capture count/);
+ assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze),/Wrong native capture count/);
  return saved['out/native-capture-driver.mjs'];
 }
 test('capture admission guards reject incomplete or invalid evidence (no browser claim)',()=>{
@@ -62,7 +63,7 @@ test('all frame gate keeps later physics errors after an early resource mismatch
  assert.equal(compareExplosherCaptures(frames,frames).mismatches.length,0);
  const after=JSON.parse(JSON.stringify(frames));after[0].measurement.render.triangles=3;after[17].measurement.physical=[999];
  const result=compareExplosherCaptures(frames,after);
- assert.equal(result.checked.length,18*16);
+ assert.equal(result.checked.length,18*19);
  const nonfinite=JSON.parse(JSON.stringify(frames));nonfinite[1].measurement.physical=[NaN];const nullable=JSON.parse(JSON.stringify(frames));nullable[1].measurement.physical=[null];assert(compareExplosherCaptures(nullable,nonfinite).mismatches.some(m=>m.domain==='physical'));
  assert(result.mismatches.some(m=>m.tick===0&&m.domain==='render.triangles'));
  assert(result.mismatches.some(m=>m.tick===17&&m.domain==='physical'));
@@ -118,4 +119,38 @@ test('known native range targets are classified, never a blanket missing-loader 
  delete ch.sourceMotion;await assert.rejects(awaitExplosherSceneSources(G,1000,TargetDummyCharacter),/Missing native/);
  ch.sourceMotion={character:ch,status:'ready',bank:{},squidBank:{},ready:Promise.resolve()};
  G.match.range.targets=[];await assert.rejects(awaitExplosherSceneSources(G,1000,TargetDummyCharacter),/range target ownership/);
+});
+
+
+test('normal boot style is mandatory and never repaired after construction',()=>{
+ const style={hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3};
+ assert.deepEqual(requireExplosherStyle(style),style);
+ for(const value of [null,{}, {...style,outfit:0},{...style,eyes:6},{...style,skin:5},{...style,extra:1}])assert.throws(()=>requireExplosherStyle(value),/profile style/);
+ assert.match(diagnostic(),/localStorage.setItem\('inkwave.profile'/);
+ assert(!diagnostic().includes('G.time=0'));
+ const frames=Array.from({length:18},(_,tick)=>({tick,view:'behind',measurement:{style,sceneClocks:{game:1,fx:1},startup:{trusted:true},render:{calls:1,triangles:2,points:28,lines:0},memory:{geometries:1,textures:1}}}));
+ const after=structuredClone(frames);after[4].measurement.style.skin=0;after[7].measurement.sceneClocks.fx=2;
+ const result=compareExplosherCaptures(frames,after);
+ assert(result.mismatches.some(m=>m.tick===4&&m.domain==='style'));
+ assert(result.mismatches.some(m=>m.tick===7&&m.domain==='sceneClocks'));
+});
+
+test('publication freeze rejects late installation and pre-entry clock advancement',()=>{
+ const saved={window:globalThis.window,document:globalThis.document,queueMicrotask:globalThis.queueMicrotask};
+ const tasks=[];let entry;
+ try{
+  const game={menus:{current:'mode'},debug:{freeze(){game.frozen=true;}}};
+  const G={game,time:0,env:{time:0,U:{uTime:{value:0}}},fx:{_time:0},paint:{clock:0},scene:{traverse(){}}};
+  globalThis.window={__G:G,readExplosherSceneClocks};
+  globalThis.document={addEventListener(type,fn,capture){assert.equal(type,'click');assert.equal(capture,true);entry=fn;},removeEventListener(){}};
+  globalThis.queueMicrotask=fn=>tasks.push(fn);
+  installExplosherEarlyFreeze();window.__inkwave=game;
+  assert.equal(game.frozen,true);assert.equal(tasks.length,1);tasks[0]();
+  const trusted={isTrusted:true,target:{closest:()=>true}};
+  assert.doesNotThrow(()=>entry(trusted));assert.equal(window.explosherEntry.trusted,true);
+  G.fx._time=.1;assert.throws(()=>entry(trusted),/clocks advanced/);
+  assert.throws(()=>installExplosherEarlyFreeze(),/already published/);
+  G.fx._time=NaN;assert.throws(()=>readExplosherSceneClocks(),/Non-finite clock/);
+  delete G.fx._time;assert.throws(()=>readExplosherSceneClocks(),/Missing clock/);
+ }finally{for(const [key,value]of Object.entries(saved)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}}
 });
