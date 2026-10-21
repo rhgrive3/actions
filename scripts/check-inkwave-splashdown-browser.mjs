@@ -30,6 +30,12 @@ const hash = data => createHash('sha256').update(data).digest('hex');
 assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash);
 for (const [file, digest] of Object.entries(manifest.artifacts)) assert.equal(hash(fs.readFileSync(path.join(site, file))), digest, file);
 const prefix = `/_versions/${manifest.build.revision}/`;
+if(budgetReceipt){
+ assert.equal(budgetReceipt.modulePath,'patches/splatoon3/runtime/inkjet-vfx-budget.mjs','budget-only overlay');
+ assert.equal(budgetReceipt.contentHash,manifest.contentHash,'optimized overlay bound to this emitted site');
+ assert.equal(budgetReceipt.buildRevision,manifest.build.revision,'optimized overlay revision');
+ assert.equal(budgetReceipt.candidateEmittedSha256,hash(fs.readFileSync(path.join(site,prefix,budgetReceipt.modulePath))),'optimized overlay original budget bytes');
+}
 const server = http.createServer((req, res) => {
   if(budgetCode && req.url===prefix+'patches/splatoon3/runtime/inkjet-vfx-budget.mjs'){res.setHeader('content-type','text/javascript');res.end(budgetCode);return;}
   if(overlayCode && req.url===prefix+'patches/splatoon3/runtime/special-vfx.mjs'){res.setHeader('content-type','text/javascript');res.end(overlayCode);return;}
@@ -265,6 +271,7 @@ try {
   delete result.images;
   result.servedHashes=servedHashes;
   if(overlayReceipt){assert.equal(manifest.contentHash,overlayReceipt.contentHash,'overlay built for this exact emitted site');result.baselineOverlay=overlayReceipt;}
+  if(budgetReceipt)result.optimizedBudgetOverlay=budgetReceipt;
   result.errors = errors; result.buildRevision = manifest.build.revision; result.contentHash = manifest.contentHash;
   fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify({ evidence: out, cases: result.cases.length, failures: result.failures, errors }));

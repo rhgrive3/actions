@@ -9,7 +9,7 @@ const site=path.resolve(option('--site','_site'));
 const root=path.resolve(option('--evidence-dir','.ci-scratch/inkjet-paired-pilot'));
 const overlay=path.resolve(option('--baseline-overlay','.ci-scratch/inkjet-baseline/special-vfx.mjs'));
 const optimized=path.resolve(option('--optimized-overlay','.ci-scratch/inkjet-optimized/inkjet-vfx-budget.mjs'));
-const blocks=Number(option('--blocks','1'));assert.ok(Number.isInteger(blocks)&&blocks>=1&&blocks<=5);
+const blocks=Number(option('--blocks','1'));assert.ok([1,3,5].includes(blocks));
 const print=value=>{const bytes=Buffer.from(JSON.stringify(value)+'\n');let offset=0;while(offset<bytes.length)offset+=fs.writeSync(1,bytes,offset,bytes.length-offset);};
 const results=[];
 for(let block=0;block<blocks;block++){
@@ -44,6 +44,7 @@ for(let block=0;block<blocks;block++){
  }
  const sharedFrames=observations[0].case.frames.map((a,i)=>{const b=observations[1].case.frames[i];return {frame:a.frame,time:a.time,puffsDelta:b.puffs-a.puffs,sparksDelta:b.sparks-a.sparks,drawCallsDelta:b.drawCalls-a.drawCalls,trianglesDelta:b.triangles-a.triangles};});
  const mean=(variant,key)=>{const a=observations.filter(r=>r.variant===variant).map(r=>r.case[key].mean);return a.reduce((n,x)=>n+x,0)/a.length;};
+ for(const variant of ['A','B','O'])for(const key of ['cpuFxUpdateMs','cpuRenderSubmissionMs'])assert.ok(Number.isFinite(mean(variant,key))&&mean(variant,key)>0,'finite positive timing denominator '+variant+'/'+key);
  const ratios={optimizedFxVsCurrent:mean('O','cpuFxUpdateMs')/mean('B','cpuFxUpdateMs'),optimizedSubmitVsCurrent:mean('O','cpuRenderSubmissionMs')/mean('B','cpuRenderSubmissionMs'),optimizedFxVsBaseline:mean('O','cpuFxUpdateMs')/mean('A','cpuFxUpdateMs'),optimizedSubmitVsBaseline:mean('O','cpuRenderSubmissionMs')/mean('A','cpuRenderSubmissionMs'),fxCpu:mean('B','cpuFxUpdateMs')/mean('A','cpuFxUpdateMs'),renderSubmitCpu:mean('B','cpuRenderSubmissionMs')/mean('A','cpuRenderSubmissionMs')};
  results.push({block,observations,ratios,sharedFrames});
  print({block,ratios,observations:observations.map(r=>({position:r.position,variant:r.variant,case:r.case})),sharedFrames});
