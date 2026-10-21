@@ -5465,6 +5465,35 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
 - #287 の記録: 右スティックの全速度入力のヨーは、暫定曲線では −5 が約 103 度/秒、0 が約 206 度/秒、+4 が約 359 度/秒。+4.5 と +5 はどちらも上限の 360 度/秒に張り付き、区別できない。ピッチは +5 の約 275 度/秒まで増え続ける。本家の各段階が互いに異なる速度かどうかは公開資料で確認できない。曲線を変えるには、本家の未公開の応答値か実機計測が必要なため、**未修正・未確認** として残す。旋回は `integrateLookAxis` の区間厳密積分により、30/60/120 Hz で同じ回転量になることを確認した。
 - 確認状態: ロジック単独の測定だけで、ブラウザの実動作と本家の実機比較はしていない。修正前は、新しい試験 `patches/splatoon3/tests/gyro-sensitivity-cadence-725.test.mjs` の周期一致の項目が失敗していた（30 Hz・1 度/秒で 0.016670 vs 閉形式 0.016406 rad）。修正後は 3/3 が通る。`patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs` 4/4 は、本番合成の PlayerController と実際の Input スティック整形で、21 段階・上限・ピッチ・旧倍率の移行・30/60/120 Hz を確認する。#678 の末尾一致の検査は、比較対象を S3 適用後のソースにし、S3 側の差分が今回の区間平均だけであることも確認する形に変えた。未確認: 本家 Ver.11.3.0 の右スティック −5/0/+5 の旋回速度、本家のジャイロ中間設定の倍率、Joy-Con / Pro Controller 実機、iOS / Android の実センサー周期。
 
+## 2026-10-21 #890 通常ジャンプ B 保持境界 / #532 スプラマニューバーのスライド経路
+
+基準 main `225f1d3`。挙動・数値の変更なし。既存実装の境界と地形条件を、本番ビルドのアダプターを runtime にも適用した実 Actor/Level/Physics（FixedClock 60Hz、描画 30/60/120Hz）で回帰テスト化した。
+
+本家根拠の再確認: Leanny/splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の `data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json`（リポジトリ内 `player-collision-1130.json` とバイト一致）と `misc/params.json` に、通常ジャンプの初速・重力・B 保持閾値のキーはない（`HighJump_*` はリーグ用修飾、`OpInk_JumpVel` は敵インク上の初速で既に接続済み）。`WeaponManeuverNormal` の `SideStepParam` は `MoveFrame=12`・`InkConsume=0.07`・`UnrelaxFrame*=32` だけを持ち、`MoveDist`・`MoveStepKd`・`SlipMoveDistGnd/Air`・`SlipMoveFrame` は省略（既定値）。同系の明示値はスパッタリー 3.0/8F＋0.6/30F、デュアルスイーパー 3.5/12F＋?/45F、ガエン 5.5/16F＋1.2/50F。Inkipedia（XarrotD paramtable・newdata）は今回 Cloudflare 403/503 で再取得できず、既定値は確認できなかった。
+
+### #890
+
+- 実装箇所: `patches/splatoon3/runtime/normal-jump-hold.mjs`（`holdFrames=5`・`releaseRate=0.7` は INKWAVE 暫定値のまま）。
+- 再現操作と確認: 平地で離陸 tick から B を N tick 保持。N=1..5 は短いジャンプ（N が増えるほど頂点が単調に高い）、N=6・7・20・60 は持続保持と完全に同じ軌道。最短/最長保持の軌道は 30/60/120Hz で同一。上り坂（10.6°）を歩きながら、0.6WU の段差へ、壁に押し付けながら、の 3 条件でも同じ境界と描画レート非依存を確認。コヨーテなしの空中押下はジャンプも保持状態も作らない。自インク・敵インク・コヨーテ・スピナー/チャージャーの離陸上限は過去ブランチの未反映テスト（e9759a3）を再利用。境界判定を `<` に変える変異で 6 件中 4 件が失敗。
+- プレイへの影響: なし（既存挙動の固定）。
+- 確認状態: 本家の閾値・曲線・頂点高さは未確認のまま。実機計測が必要。
+
+### #532
+
+- 実装箇所: `patches/splatoon3/runtime/movement-physics.mjs`（4WU/12F core、1WU/4F glide、`1.5(1-u²)` 曲線）、`issue-477-adapter.mjs`（ビルド時に movement-physics.mjs へ 4F 開始待ちを注入）。
+- 発見: 既存の `source-fixture` 系テストは runtime に build アダプターを適用しないため、#477 の開始待ちが無く、開始 4F に 2WU 移動して合計 7WU になる。本番では開始待ちがあり問題ないが、既存テストではこの経路の退行を検出できなかった。新テストは runtime にも `adaptBuildSource` を適用し、開始待ちを外す変異で 8 件中 5 件が失敗する。
+- 再現操作と確認: 射撃保持中に前入力＋ジャンプ 1 tick。開始 4 tick は移動 0、core 終了 tick で 4WU、glide 後 5WU。スティックを前に倒したままでも `UnrelaxFrameMove=32` の 32 tick は静止し、その後に歩行再開。30/60/120Hz で同一、自/敵インクで同一経路・同一コスト 7。上り坂・0.3WU 段差は常時接地で水平 5WU。壁は手前で打ち切り、失った距離は再生しない。空中は水平 5WU で降下・着地。glide 後の 2 回目で合計 10WU、3 回目は無課金で拒否。glide 中の 2 回目は自身の 5WU を移動し、残り glide は破棄。
+- 未確認の差分（未修正）: core 終端で速度が 0 まで落ち（最終 tick 0.0405WU）、glide 開始 tick で 0.367WU/tick（約 22WU/s）へ再加速する。本家の「ロール後の短いスライド」は減速の続きと考えられるが、曲線・glide 長の本家値（Normal の省略 `SlipMoveFrame`・`MoveStepKd`）が得られないため、曲線を作り直すと根拠のない数値調整になる。同系の明示 `SlipMoveFrame` が 30〜50F であることは、INKWAVE の 4F glide 校正を見直す材料として記録するが、Normal の既定値の代わりにはならない。空中ロールの降下開始が 4F 開始待ちの最初の tick から始まる点も本家との照合はない。
+- 確認状態: ロジック単独の測定のみ。ブラウザ実動作・本家実機の比較は未実施。
+## 2026-10-21 #1665 / #1666 遠隔ヒット申告の装備スロット別上限
+
+参照は Splatoon 3 Ver. 11.3.0 の固定パラメータ（[Leanny/splat3 `7280ff9c` data/parameter/1130](https://github.com/Leanny/splat3/tree/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon)、ダメージは source / 10）と、既存の公開版 profile・キット定義。ブキ数値・ダメージ曲線・ギア曲線は変更していない。
+
+- 変更前: 受信側（PvP は被弾者の所有者、Boss はホスト）は遠隔ヒット申告のダメージを、全ブキ共通の上限 220（ペイロード検査）と Boss の 800 でしか制限していなかった。正規の射撃証明 1 件があれば、スプラシューター（1 発 36）の所有者でも 1 発 220 の申告で即死させられた。
+- 修正: `combat-provenance.mjs` が、申告の要因（メイン／サブ／スペシャル、汎用 `shot`・`bomb`・`torpedo-splash`・`crab` を含む）を攻撃者の装備スロットに対応させ、そのスロットが 1 ヒットで与え得る最大値を超える申告を、証明の消費・保留キュー・ヒット ID 予約より前に拒否する。メインは受信側自身が持つ攻撃者のブキ定義とカタログ表、サブ・スペシャルは生成済み表 `combat-hit-ceilings-data.mjs`（`tools/combat-hit-ceilings.mjs` で本番定義から再生成・一致検査）を使う。Boss 本体はゲスト側が掛ける弱点 2.5・スタン 1.25 倍（公開版 `BOSS` 表から抽出）を含めた値で制限する。
+- 上限値の例: スプラシューター 36、.96ガロン 62、スプラチャージャー 160（フルチャージ）、リッター4K 180、スプラローラー 150（縦振り）、ダイナモローラー 180、ホットブラスター 125、スロッシャー 70、パラシェルター系はショットガン合計、スプラッシュボム 180、クイックボム 35、トーピード 60（床飛沫 12）、トリプルトルネード等ダメージ定義のないスペシャルは既存ポリシーのまま。
+- 確認状態: ロジック単独（実合成ソースのペイロード／受信検査を使う NetMatch モデル）と、実 Projectiles／送受信経路の `check-inkwave-network-comparison.mjs`（28 ケース成功）。本家 Switch の通信方式との一致、所有者が自分の射撃記録まで偽造する場合の完全な防止（ホスト側弾道シミュレーション）は未対応で、#1665/#1666 は継続。
+
 ## 2026-10-21: 読込済みソースモーションでの通常ジャンプ・被弾クリップの実選択（#1116・#1097）
 
 **前提の訂正。** 本番はソースモーション（Wii U `Player00`/`Player01` バンク、`inkwave-public/assets/source-motion/`）を読み込むと、`HumanRetarget.apply` が腰・脚を常に、`sourceUpper` の間は胴・首・頭・腕も上書きする。カタログの全ブキ（ローラー・スロッシャー・フデも `weaponSourceBody='Nrml'`）でソースが有効になる。既存の `jump-motion.test.mjs`・`issue-1097-hit-reaction.test.mjs` は動的 import の無い VM（ソース未読込のネイティブ代替リグ）で測っており、本番の見え方とは別物だった。読込済みの実 Actor/Character（`source-loaded-actor-fixture.mjs`）で次を確認した。
