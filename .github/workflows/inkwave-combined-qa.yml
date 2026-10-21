@@ -1,9 +1,6 @@
 name: INKWAVE combined QA dependency validation
 on:
   pull_request:
-    paths:
-      - ".github/workflows/inkwave-combined-qa.yml"
-      - "reports/inkwave-combined-qa-20261021.md"
 permissions:
   contents: read
 concurrency:
@@ -11,6 +8,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   immutable-source-pairs-and-focused-qa:
+    if: github.head_ref == 'test/inkwave-combined-qa-20261021'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

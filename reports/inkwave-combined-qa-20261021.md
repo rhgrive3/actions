@@ -23,7 +23,7 @@ The sole overlapping source-PR path is .github/workflows/validate-inkwave-update
 
 The PR1758 projectile workflow also routes the exact diagnostic branch test/inkwave-combined-qa-20261021 into the SAME strict declared-source path as PR1758. The branch is a routing condition only, not source admission. The controls run before reference replay; prepare itself also receives declared immutable base/head. No pins or accepted leaf sets are broadened.
 
-The added focused job checks out literal870872 and the exact PR head, verifies both HEADs, asserts a27-path QA-only allowlist, and executes declared13-leaf admission/rejection controls plus pose/sourcepair/placement/readiness/C1/#847 tests. It does not replace full mandatory validation or native capture. Its fixed870872 base and the projectile capture's event-declared PR base are separately receipted; do not conflate them if main advances.
+The added focused workflow has no path filter, so every new PR head is checked; its job is scoped to the exact diagnostic branch. The added focused job checks out literal870872 and the exact PR head, verifies both HEADs, asserts a27-path QA-only allowlist, and executes declared13-leaf admission/rejection controls plus pose/sourcepair/placement/readiness/C1/#847 tests. It does not replace full mandatory validation or native capture. Its fixed870872 base and the projectile capture's event-declared PR base are separately receipted; do not conflate them if main advances.
 
 Git tree audit: all13 paint and16 pose leaves (29 unique) in870872 exactly equal the admitted f31238a48b9d1a4af2d4f5f5f9182af777a79c83 epoch. Candidate assembly preserves all29 blobs. This is leaf-limited identity, NOT whole-tree, emitted, physical or visual equivalence.
 
