@@ -9,9 +9,9 @@ on:
 permissions:
   contents: read
 jobs:
-  practice-range-three-abba:
+  practice-range-bounded-diagnostic:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,8 +43,8 @@ jobs:
           (cd work/material-source && node scripts/build-inkwave.mjs inkwave-public ../material-site)
       - name: Reproduce candidate compiler and create two-amplitude-only baseline overlay
         run: node scripts/prepare-inkwave-material-baseline.mjs work/material-source work/material-site work/material-overlay
-      - name: Measure native practice range with matched conditions and separate pixel gates
-        run: node scripts/check-inkwave-material-native-paired.mjs work/material-site work/material-source work/material-overlay/inkShading.js work/material-native
+      - name: Diagnose three native frames and paint boundaries without accepting performance
+        run: timeout 15m node scripts/check-inkwave-material-native-frame.mjs work/material-site work/material-source work/material-overlay/inkShading.js work/material-native/diagnostic-A A --diagnostic
       - uses: actions/upload-artifact@v4
         if: always()
         with:

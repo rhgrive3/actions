@@ -4,7 +4,8 @@ import fs from 'node:fs';import path from 'node:path';import http from 'node:htt
 import {chromium} from 'playwright';
 import {verifyRuntimeBuild} from './lib/inkwave-runtime-evidence.mjs';
 import {enterRangeFromMenu} from './lib/inkwave-range-menu-entry.mjs';
-const [siteArg,sourceArg,overlayArg,outArg,variant]=process.argv.slice(2);
+const [siteArg,sourceArg,overlayArg,outArg,variant,mode]=process.argv.slice(2);
+const diagnostic=mode==='--diagnostic';assert.ok(mode===undefined||diagnostic);
 assert.ok(['A','B'].includes(variant));
 const site=path.resolve(siteArg),source=path.resolve(sourceArg),out=path.resolve(outArg),hash=x=>createHash('sha256').update(x).digest('hex');
 fs.mkdirSync(out,{recursive:true});
@@ -27,6 +28,9 @@ let browser,result,failure;
 try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const page=await browser.newPage({viewport:{width:960,height:600}});
+ page.on('console',m=>{if(m.type()==='log'&&m.text().startsWith('MATERIAL_PHASE ')){
+  const line=m.text().slice(15);fs.appendFileSync(path.join(out,'phases.jsonl'),line+'\n');console.log('MATERIAL_PHASE '+line);
+ }});
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.addInitScript(()=>{
   localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:true,frameRate:60,colorblind:true}));
@@ -85,17 +89,19 @@ try{
   },true);
  });
  const entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:300000});
- result=await page.evaluate(async()=>{
+ result=await page.evaluate(async diagnostic=>{
+  const checkpoint=(phase,detail={})=>{if(diagnostic)console.log('MATERIAL_PHASE '+JSON.stringify({phase,time:performance.now(),...detail}));};
+  checkpoint('evaluate-enter');
   const G=window.__G,g=window.__inkwave,a=G.local;
-  const THREE=await import('three');
+  checkpoint('three-import-start');const THREE=await import('three');checkpoint('three-import-ready');
   if(!g.frozen||!G.match?.range||G.match.state!=='playing'||!window.__materialEntry?.trusted)throw Error('Native range admission');
   const character=a.character,warm=character._warmed,loader=character._sourceMotionLoader;
   if(!warm?.then)throw Error('Native startup warmup missing');
   if(!loader?.then)throw Error('Native local Character source loader missing');
-  await warm;await loader;
+  checkpoint('local-warm-start');await warm;checkpoint('local-warm-ready');await loader;checkpoint('local-loader-ready');
   const motion=character.sourceMotion;
   if(!motion?.ready?.then)throw Error('Native local Character source owner ready Promise missing');
-  await motion.ready;
+  await motion.ready;checkpoint('source-motion-ready');
   if(a.character!==character||character._warmed!==warm||character._sourceMotionLoader!==loader)
    throw Error('Native local Character readiness ownership changed');
   const requireMotionReady=(character,owner)=>{
@@ -141,9 +147,13 @@ try{
    let rejected=false;try{requireFixture(bad);}catch{rejected=true;}if(!rejected)throw Error('Wrong style/palette negative accepted');
   }
   const initial={fixture:fixedFixture,motionReady,entry:window.__materialEntry,clocks:window.__rollerVideoClocks(),character:{time:a.character.t,phase:a.character.phase,seed:a.character.seed,name:a.character.name},pos:a.pos.toArray()};
-  const frame=i=>{window.__materialSeed(i);g._frame(1/60);};
-  for(let i=0;i<60;i++){frame(i);fixture();}
-  const r=G.renderer,gl=r.getContext();gl.finish();
+  const normalRender=g.R.render;
+  if(diagnostic)g.R.render=function(...args){checkpoint('render-submit-start');try{return normalRender.apply(this,args);}finally{checkpoint('render-submit-end');}};
+  const frame=diagnostic
+   ? i=>{window.__materialSeed(i);checkpoint('native-frame-start',{frame:i});g._frame(1/60);checkpoint('native-frame-end',{frame:i});}
+   : i=>{window.__materialSeed(i);g._frame(1/60);};
+  for(let i=0;i<(diagnostic?3:60);i++){frame(i);fixture();}
+  const r=G.renderer,gl=r.getContext();checkpoint('completion-drain-start');gl.finish();checkpoint('completion-drain-end');
   const U=g.levelMat.userData.uniforms;
   const atlasConditions={size:G.paint.size,width:G.paint.rt.width,height:G.paint.rt.height,
    textureBinding:U.uPaint.value===G.paint.texture&&G.paint.texture===G.paint.rt.texture,
@@ -162,7 +172,7 @@ try{
    try{g.R.render();const p=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;}
    finally{if(c){c.readBuffer=read;c.writeBuffer=write;}}
   };
-  G.paint.clear();G.paint.flush(0);const unpainted=image();
+  checkpoint('clear-flush-start');G.paint.clear();G.paint.flush(0);checkpoint('unpainted-readback-start');const unpainted=image();checkpoint('unpainted-readback-end');
   const placements=[],h={normal:new THREE.Vector3(),block:-1,face:-1};
   for(let z=-8;z<=8;z+=2)for(let x=-8;x<=8;x+=2){
    G.physics.groundProbe(a.pos.x+x,64,a.pos.z+z,0,128,.38,h,false);
@@ -172,7 +182,7 @@ try{
    placements.push({point:point.toArray(),seed,area});
   }
   if(placements.length<16)throw Error('Insufficient native painted floor samples');
-  G.paint.flush(0);const painted=image(),repeat=image();
+  checkpoint('paint-flush-start');G.paint.flush(0);checkpoint('paint-readback-start');const painted=image(),repeat=image();checkpoint('paint-readback-end');
   const difference=(x,y)=>{let changed=0,max=0;for(let i=0;i<x.length;i+=4){let any=false;for(let k=0;k<4;k++){const d=Math.abs(x[i+k]-y[i+k]);max=Math.max(max,d);any ||= d>0;}changed+=any;}return{changed,max};};
   const paintSignal=difference(unpainted,painted),repeatSignal=difference(painted,repeat);
   if(paintSignal.changed<=1000||repeatSignal.changed!==0)throw Error('Paint visibility or frozen-repeat gate failed');
@@ -180,8 +190,11 @@ try{
   const validates=x=>x.changed>1000;if(validates(difference(unpainted,unpainted)))throw Error('Blank negative accepted');
   const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
   const pixels={unpainted:await digest(unpainted),painted:await digest(painted),paintSignal,repeatSignal};
-  const atlas=new Uint8Array(G.paint.size*G.paint.size*4);r.readRenderTargetPixels(G.paint.rt,0,0,G.paint.size,G.paint.size,atlas);
-  const atlasHash=await digest(atlas),beforeWarm=state();
+  checkpoint('atlas-readback-start');const atlas=new Uint8Array(G.paint.size*G.paint.size*4);r.readRenderTargetPixels(G.paint.rt,0,0,G.paint.size,G.paint.size,atlas);
+  const atlasHash=await digest(atlas),beforeWarm=state();checkpoint('atlas-readback-end');
+  if(diagnostic){g.R.render=normalRender;checkpoint('diagnostic-complete');return{diagnosticOnly:true,performanceAccepted:false,
+   scope:'three native warmup frames and separate native paint/readback boundary diagnosis; NOT 3ABBA or performance acceptance',
+   initial,placements,pixels,atlasHash,beforeWarm,conditions:{atlas:atlasConditions,fixture:fixture()},samples:[]};}
   // Warm the actual full-game renderer and shaders after native painting.
   for(let i=60;i<90;i++){frame(i);fixture();}gl.finish();
   const before=state(),samples=[],render=g.R.render,webglRender=r.render;
@@ -209,13 +222,13 @@ try{
     gelLayer:g.levelMat.userData.uniforms.uGel.value,lights,environmentIntensity:G.scene.environmentIntensity,environmentPresent:!!G.scene.environment,toneMapping:r.toneMapping,outputColorSpace:r.outputColorSpace,exposure:r.toneMappingExposure},
    gpu:{renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),timerQueryAvailable:!!gl.getExtension('EXT_disjoint_timer_query_webgl2'),measured:false},
    allocations:{allocatedBytesPerFrame:null,heapAfter:performance.memory?.usedJSHeapSize??null,note:'heap occupancy is not allocation rate'},physicalDeviceMeasured:false};
- });
+ },diagnostic);
  assert.deepEqual(errors,[]);assert.ok(loaded.has(target.slice(1)),'actual ink module loaded');
  result.entry=entry;
 }catch(e){failure=e;}
 finally{
  await browser?.close();await new Promise(r=>server.close(r));
- const receipt={status:failure?'failed':'passed',sourceSha,variant,inputHash:manifest.inputHash,contentHash:manifest.contentHash,overlay:bound,loaded:[...loaded],environment:{cpu:os.cpus()[0]?.model,node:process.version},result,errors,error:failure?.stack};
+ const receipt={diagnosticOnly:diagnostic,performanceAccepted:false,status:failure?'failed':'passed',sourceSha,variant,inputHash:manifest.inputHash,contentHash:manifest.contentHash,overlay:bound,loaded:[...loaded],environment:{cpu:os.cpus()[0]?.model,node:process.version},result,errors,error:failure?.stack};
  fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify(receipt,null,2));
  console.log(JSON.stringify({status:receipt.status,variant,sourceSha,error:failure?.message}));
  if(failure)process.exitCode=1;
