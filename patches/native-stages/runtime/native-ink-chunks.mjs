@@ -193,8 +193,9 @@ export class NativeInkMesh extends THREE.Mesh {
       return;
     }
     let changed = false, intersectsSource = false;
-    for (let i = 0; i < this.chunks.length; i++) {
-      const b = this.chunks[i].boundingBox;
+    const list = this._faceChunks(face), count = list ? list.length : this.chunks.length;
+    for (let k = 0; k < count; k++) {
+      const i = list ? list[k] : k, b = this.chunks[i].boundingBox;
       if (loX > b.max.x || hiX < b.min.x || loY > b.max.y || hiY < b.min.y ||
           loZ > b.max.z || hiZ < b.min.z) continue;
       intersectsSource = true;
@@ -211,6 +212,37 @@ export class NativeInkMesh extends THREE.Mesh {
       changed = true;
     }
     if (changed) this._lastViewValid = false;
+  }
+
+  /** #1671: every quad the paint wrapper marks is clamped to its face's
+   * padded rect [-pad, su + pad] x [-pad, sv + pad], and the bound arithmetic
+   * above is monotone in u0..v1, so a quad box lies inside the box of that
+   * whole rect. A chunk the quad overlaps therefore overlaps the rect box:
+   * visiting only those chunks, in index order, marks the same chunks and
+   * finds the same intersectsSource. The list is keyed by the rect box's own
+   * values, so a moved or re-laid-out face recomputes it; null scans all. */
+  _faceChunks(face) {
+    const a = face.atlas, o = face.origin, u = face.u, v = face.v;
+    if (!a) return null;
+    const pad = (a.pad - 0.5) / a.ppm, u0 = -pad, u1 = face.su + pad, v0 = -pad, v1 = face.sv + pad;
+    const loX = o.x + Math.min(u.x * u0, u.x * u1) + Math.min(v.x * v0, v.x * v1) - 0.05;
+    const hiX = o.x + Math.max(u.x * u0, u.x * u1) + Math.max(v.x * v0, v.x * v1) + 0.05;
+    const loY = o.y + Math.min(u.y * u0, u.y * u1) + Math.min(v.y * v0, v.y * v1) - 0.05;
+    const hiY = o.y + Math.max(u.y * u0, u.y * u1) + Math.max(v.y * v0, v.y * v1) + 0.05;
+    const loZ = o.z + Math.min(u.z * u0, u.z * u1) + Math.min(v.z * v0, v.z * v1) - 0.05;
+    const hiZ = o.z + Math.max(u.z * u0, u.z * u1) + Math.max(v.z * v0, v.z * v1) + 0.05;
+    if (!(u0 < u1 && v0 < v1) || ![loX, hiX, loY, hiY, loZ, hiZ].every(Number.isFinite)) return null;
+    const lists = this._faceChunkLists || (this._faceChunkLists = new Map());
+    const e = lists.get(face);
+    if (e && e.chunks === this.chunks && e.loX === loX && e.hiX === hiX && e.loY === loY && e.hiY === hiY && e.loZ === loZ && e.hiZ === hiZ) return e.list;
+    const list = [];
+    for (let i = 0; i < this.chunks.length; i++) {
+      const b = this.chunks[i].boundingBox;
+      if (loX > b.max.x || hiX < b.min.x || loY > b.max.y || hiY < b.min.y || loZ > b.max.z || hiZ < b.min.z) continue;
+      list.push(i);
+    }
+    lists.set(face, { chunks: this.chunks, loX, hiX, loY, hiY, loZ, hiZ, list });
+    return list;
   }
 
   /** Paint charts own disjoint padded atlas rects, and nativeInkGeometry emits

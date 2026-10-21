@@ -39,6 +39,14 @@ export function nativeAncillaryMaskStore(masks,wall,ppm,dn,sdu,sdv,sa,mask){
  const list=masks.get(dn);
  if(list)list.push(wall,ppm,sdu,sdv,sa,mask);else masks.set(dn,[wall,ppm,sdu,sdv,sa,mask]);
 }
+/** Replace the value of an entry nativeAncillaryMaskFind finds (same
+ * equality), e.g. the growth pass's first-face marker false. */
+export function nativeAncillaryMaskReplace(masks,wall,ppm,dn,sdu,sdv,sa,mask){
+ const same=(a,b)=>a===b||(a!==a&&b!==b),list=masks.get(dn);
+ if(list)for(let i=0;i<list.length;i+=6)
+  if(same(list[i+2],sdu)&&same(list[i+3],sdv)&&same(list[i+4],sa)&&same(list[i],wall)&&same(list[i+1],ppm)){list[i+5]=mask;return;}
+ throw Error('Native ancillary mask entry missing');
+}
 
 /** #1671: per growth-record entry slot of non-drip ancillary pieces, valid
  * from tn >= 1.45 while R, kind, seed, contract shapes and the mask-key fields
