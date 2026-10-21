@@ -286,3 +286,35 @@ test('native display excludes alpha and glass from AO without losing tiny-featur
  assert.equal(solid.onBeforeRender,THREE.Object3D.prototype.onBeforeRender);
  d.dispose();
 });
+
+test('#1671 face chunk lists mark exactly the chunks of a full scan, including moved faces',async()=>{
+ const f=await nativeFixture(),{THREE}=f,proto=f.NativeInkMesh.prototype;
+ let word=0x1671;const random=()=>{word=(Math.imul(word,1664525)+1013904223)>>>0;return word/4294967296;};
+ const box=()=>{const x=(random()-.5)*120,y=(random()-.5)*20,z=(random()-.5)*120,s=1+random()*24;
+  return {boundingBox:new THREE.Box3(new THREE.Vector3(x,y,z),new THREE.Vector3(x+s,y+s*random(),z+s))};};
+ const unit=()=>new THREE.Vector3(random()-.5,random()-.5,random()-.5).normalize();
+ for(let round=0;round<12;round++){
+  const chunks=Array.from({length:40+Math.floor(random()*160)},box);
+  // Same state machine twice: the subject uses face lists, the control scans every chunk.
+  const make=list=>({chunks,_painted:new Uint8Array(chunks.length),_paintedCount:0,_lastViewValid:true,
+   _faceChunks:list?proto._faceChunks:()=>null,_markPaintBounds:proto._markPaintBounds});
+  const subject=make(true),control=make(false);
+  const faces=Array.from({length:30},()=>{const u=unit(),v=new THREE.Vector3().crossVectors(u,unit()).normalize();
+   return {atlas:{pad:1+Math.floor(random()*3),ppm:[2,4,32][Math.floor(random()*3)]},su:.2+random()*12,sv:.2+random()*12,
+    origin:new THREE.Vector3((random()-.5)*120,(random()-.5)*20,(random()-.5)*120),u,v};});
+  for(let i=0;i<600;i++){
+   const face=faces[Math.floor(random()*faces.length)];
+   if(random()<.02)face.origin.x+=(random()-.5)*30; // a moving (vehicle) face
+   const a=face.atlas,pad=(a.pad-.5)/a.ppm;
+   const u0=(random()-.2)*face.su*1.4,u1=u0+random()*face.su,v0=(random()-.2)*face.sv*1.4,v1=v0+random()*face.sv;
+   const minU=Math.max(-pad,u0),maxU=Math.min(face.su+pad,u1),minV=Math.max(-pad,v0),maxV=Math.min(face.sv+pad,v1);
+   if(!(minU<maxU&&minV<maxV))continue;
+   subject._lastViewValid=control._lastViewValid=true;
+   subject._markPaintBounds(face,minU,maxU,minV,maxV);control._markPaintBounds(face,minU,maxU,minV,maxV);
+   assert.deepEqual(subject._painted,control._painted);
+   assert.equal(subject._paintedCount,control._paintedCount);
+   assert.equal(subject._lastViewValid,control._lastViewValid);
+   if(control._paintedCount===chunks.length){subject._painted.fill(0);control._painted.fill(0);subject._paintedCount=control._paintedCount=0;}
+  }
+ }
+});

@@ -45,7 +45,7 @@ Node >=22、`esbuild@0.28.2`、`playwright@1.62.1`、`ws@8`、Chromium が必要
 
 インク重ね描画は、視錐台内の描画領域のうち `_pushQuad` が一度でも書き込んだチャートの三角形だけを元の順で描く。判定と失敗時の扱いは [チャート選択の記録](../../reports/inkwave-native-ink-charts-2026-10-19.md) を参照。
 
-CPU の塗りは、xz ハッシュの候補を各呼び出し元の最初の y 判定で先に除き（`NativeLevel.queryBlocksBand`）、成長を終えたボム等の放射・粒の所有権判定は、入力が完全一致する間だけ形状の外れセルを再判定しない。結果の同一性と計測は [#1671 の記録](../../reports/inkwave-native-cpu-1671-2026-10-20.md)、再現は `scripts/check-inkwave-native-sim-digest.mjs` と `scripts/measure-inkwave-native-sim.mjs`。
+CPU の塗りは、xz ハッシュの候補を各呼び出し元の最初の y 判定で先に除き（`NativeLevel.queryBlocksBand`）、成長を終えたボム等の放射・粒の所有権判定は、入力が完全一致する間だけ形状の外れセルを再判定しない。成長途中は、キーごとに最初の面ではマスクを複製しない。ピースの角度・ハッシュはレコードごとに 1 回だけ求め、確実に届かない点のセル判定は先に外れとする。表示のチャンク印付けは、面の箱に重なるチャンクだけを調べる。結果の同一性と計測は [#1671 の記録](../../reports/inkwave-native-cpu-1671-2026-10-20.md)、再現は `scripts/check-inkwave-native-sim-digest.mjs` と `scripts/measure-inkwave-native-sim.mjs`。
 
 全ステージの自動検査は [地形整合性の記録](../../reports/inkwave-terrain-integrity-2026-10-20.md) を参照。固定OBJ/MTLから全三角形・BVH・paint chartとWebGL被覆を検査する。`GroundGrass*` は構造的地面で、古い私的変換物が装飾として除外していた場合は再変換が必要。原典の穴や境界を箱で埋める処理は行わない。
 

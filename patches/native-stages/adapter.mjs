@@ -257,8 +257,8 @@ const game = new Game();`);
   once('const retreat = this._isRetreating(team, pos[2]);', 'const retreat = this._isRetreating(team, nativeRetreatCoordinate(this.config, pos));');
  }
  if(rel==='patches/splatoon3/runtime/paint-ownership.mjs'){
-  code="import { nativePieceHasInterior, nativeAncillaryCanClaim, nativeAncillaryMaskFind, nativeAncillaryMaskStore, nativeSettledAncillarySlot, nativeSettledAncillaryMatches, nativeStoreSettledAncillary } from '../../native-stages/runtime/native-paint.mjs';\n"+code;
-  once('  let claimed = 0, changed = false;\n  for (let n = 0; n < E.length; n += 7)', '  let claimed = 0, changed = false;\n  const nativeMasks = paint.level?.native ? new Map() : null;\n  for (let n = 0; n < E.length; n += 7)');
+  code="import { nativePieceHasInterior, nativeAncillaryCanClaim, nativeAncillaryMaskFind, nativeAncillaryMaskStore, nativeAncillaryMaskReplace, nativeSettledAncillarySlot, nativeSettledAncillaryMatches, nativeStoreSettledAncillary } from '../../native-stages/runtime/native-paint.mjs';\n"+code;
+  once('  let claimed = 0, changed = false;\n  for (let n = 0; n < E.length; n += 7)', '  let claimed = 0, changed = false;\n  const nativeMasks = paint.level?.native ? new Map() : null;\n  let nativeView = null;\n  for (let n = 0; n < E.length; n += 7)');
   once('    if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0) continue;', '    if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0 || (nativeMasks && face.nativeEmpty)) continue;');
   once('      const previousOrder = paint._paintOwnershipOrder[index] || 0;', '      if (nativeMasks && paint.dead[index]) { visit[index] = stamp; return true; }\n      const previousOrder = paint._paintOwnershipOrder[index] || 0;');
   once('    const cellArea = face.cu * face.cv;', '    if (nativeMasks && !nativeAncillaryCanClaim(g.R, dn, face.atlas.ppm, true)) continue;\n    const cellArea = face.cu * face.cv;');
@@ -289,20 +289,41 @@ const game = new Game();`);
       mask = pieces.length ? { pieces, sa, sdu, sdv, margin: settled.margin, seed: settled.seed, dT } : null;
       nativeAncillaryMaskStore(nativeMasks, face.wall, face.atlas.ppm, dn, sdu, sdv, sa, mask);
     }
-    if (mask === undefined) {
+    // #1671: while growing (tn < 1.45) about nine faces in ten have a key of
+    // their own, so a cloned mask is rarely read again. The first face of a key
+    // reads the filtered pooled pieces through one reused view (the same
+    // pieces, order and mask fields as the clone) and records false for the
+    // key; only a second face with that key re-runs prepareAncillary and
+    // stores the clone. Nothing calls prepareAncillary while a face is visited.
+    const nativeFirstGrowing = nativeMasks && mask === undefined && tn < 1.45;
+    if (mask === undefined || mask === false) {
+      const nativeSeen = mask === false;
       mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);
-      if (nativeMasks && mask) {
-        // prepareAncillary uses pooled mutable pieces and a shared mask.
-        // Never replace that pool's public .pieces pointer or cache its object:
-        // later face groups would silently reuse the wrong paint shape.
-        const activePieces = mask.pieces.filter(p => nativePieceHasInterior(mask, p, true));
-        const owned = activePieces.map(p => ({ ...p }));
-        if (settled) nativeStoreSettledAncillary(settled, g, contract, face.wall, face.atlas.ppm, dn, sdu, sdv, sa, owned.filter(p => p.type !== 3), mask.margin, mask.seed);
-        mask = activePieces.length
-          ? { ...mask, pieces: owned }
-          : null;
+      if (nativeFirstGrowing && mask) {
+        const view = nativeView || (nativeView = { pieces: [], sa: 0, sdu: 0, sdv: 0, margin: 0, seed: 0, dT: 0 });
+        view.pieces.length = 0;
+        for (const p of mask.pieces) if (nativePieceHasInterior(mask, p, true)) view.pieces.push(p);
+        if (view.pieces.length) {
+          view.sa = mask.sa; view.sdu = mask.sdu; view.sdv = mask.sdv;
+          view.margin = mask.margin; view.seed = mask.seed; view.dT = mask.dT;
+          mask = view;
+        } else mask = null;
+        nativeAncillaryMaskStore(nativeMasks, face.wall, face.atlas.ppm, dn, sdu, sdv, sa, mask && false);
+      } else {
+        if (nativeMasks && mask) {
+          // prepareAncillary uses pooled mutable pieces and a shared mask.
+          // Never replace that pool's public .pieces pointer or cache its object:
+          // later face groups would silently reuse the wrong paint shape.
+          const activePieces = mask.pieces.filter(p => nativePieceHasInterior(mask, p, true));
+          const owned = activePieces.map(p => ({ ...p }));
+          if (settled) nativeStoreSettledAncillary(settled, g, contract, face.wall, face.atlas.ppm, dn, sdu, sdv, sa, owned.filter(p => p.type !== 3), mask.margin, mask.seed);
+          mask = activePieces.length
+            ? { ...mask, pieces: owned }
+            : null;
+        }
+        if (nativeSeen) nativeAncillaryMaskReplace(nativeMasks, face.wall, face.atlas.ppm, dn, sdu, sdv, sa, mask);
+        else if (nativeMasks) nativeAncillaryMaskStore(nativeMasks, face.wall, face.atlas.ppm, dn, sdu, sdv, sa, mask);
       }
-      if (nativeMasks) nativeAncillaryMaskStore(nativeMasks, face.wall, face.atlas.ppm, dn, sdu, sdv, sa, mask);
     }`);
   once('function claimPaintCell(paint, index, value, orderId, orderState = null) {', 'function claimPaintCell(paint, index, value, orderId, orderState = null) {\n  if (paint.level?.native && paint.dead[index]) return false;');
  }
