@@ -56,11 +56,11 @@ export function adaptSwimSplash(rel, code, replaceOnce) {
       `        wG += hm * 16.0 + hb * 20.0;
         // Short, travelling folds remain in the ink surface. Their analytic
         // gradient breaks up the broad bow highlight without a cloud of beads.
-        float phase = al * 23.0 - uTime * 19.0;
-        float fold = 0.008 * H.w * F.w * exp(-(am * am) / 0.18 - (ac * ac) / 0.04);
+        float phase = al * 23.0 + ac * 13.0 - uTime * 19.0;
+        float fold = 0.014 * H.w * F.w * exp(-(am * am) / 0.18 - (ac * ac) / 0.04);
         float ripple = fold * sin(phase);
         wS += Fp * (fold * 23.0 * cos(phase) - 2.0 * am / 0.18 * ripple)
-            + Cn * (-2.0 * ac / 0.04 * ripple);
+            + Cn * (fold * 13.0 * cos(phase) - 2.0 * ac / 0.04 * ripple);
         wG += abs(ripple) * 32.0;`, 'swim surface folds');
   }
   return code;
