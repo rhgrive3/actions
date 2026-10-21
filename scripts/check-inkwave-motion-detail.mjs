@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { captureSubmergedPresentation, classifySubmergedPresentation } from './lib/inkwave-submerged-presentation-contract.mjs';
 // Actual installed modules + Actor/Runner/Projectiles/full rig in software
 // WebGL. Same-frame visibility pairs prove rendered activity of this rig;
 // Nintendo joint curves and original image parity remain unknown.
@@ -84,7 +85,8 @@ function validateDetailResult(result) {
         for(const key of ['pixels','changedPixels','totalRgbDifference','maxChannelDifference'])finite(m[layer]?.[key],name+'.render.'+layer+'.'+key);
         if(m[layer].pixels!==960*720||!Number.isInteger(m[layer].changedPixels)||m[layer].changedPixels<0||m[layer].changedPixels>m[layer].pixels)throw Error('Detail rendered pixel denominator: '+name);
       }
-      if(m.rig.changedPixels<16)throw Error('Detail rig produced no visible pixels: '+name);
+      const presentation=classifySubmergedPresentation(m.presentation);
+      if(!presentation.emptyRigAdmissible&&m.rig.changedPixels<16)throw Error('Detail rig produced no visible pixels: '+name);
       for(const layer of ['weapon','heldBomb','releasedBomb'])if(m[layer]){
         for(const key of ['indexedVertices','nearestRight','nearestLeft'])finite(m[layer][key],name+'.'+layer+'.'+key);
         if(!Number.isInteger(m[layer].indexedVertices)||m[layer].indexedVertices<50)throw Error('Detail indexed-draw denominator: '+name);
@@ -149,7 +151,8 @@ function validateDetailResult(result) {
       if(!(peak>.003)||samples[81].weapon.chargerReleaseAge==null||samples[110].aim>1e-8||tail.some(s=>s.aim>1e-8||Math.abs(s.rcP)>=.001||Math.abs(s.rcZ)>=.001))throw Error('Charger actual recoil/carry return regression');
       if(samples.some(s=>s.ik.slice(0,2).some(e=>e>=.025)))throw Error('Charger native arm reach regression');
     }
-    summary.push({name,frames:samples.length,releases:events.length,peakNativeRecoil:peak,renderPairs:renderMetrics.length,minimumRigPixels:Math.min(...renderMetrics.map(m=>m.rig.changedPixels)),maxNativeArmReach:Math.max(...samples.flatMap(s=>s.ik.slice(0,2)))});
+    if(name==='flow-squid'&&![21,145].every(frame=>{const m=renderMetrics.find(m=>m.frame===frame);return m&&!classifySubmergedPresentation(m.presentation).expectedHiddenBody&&m.rig.changedPixels>=16;}))throw Error('Missing emerged human positive control');
+    summary.push({expectedHiddenBodySamples:renderMetrics.filter(m=>classifySubmergedPresentation(m.presentation).expectedHiddenBody).length,expectedHiddenRigSamples:renderMetrics.filter(m=>classifySubmergedPresentation(m.presentation).emptyRigAdmissible).length,visiblePixelPasses:renderMetrics.filter(m=>!classifySubmergedPresentation(m.presentation).emptyRigAdmissible&&m.rig.changedPixels>=16).length,name,frames:samples.length,releases:events.length,peakNativeRecoil:peak,renderPairs:renderMetrics.length,minimumRigPixels:Math.min(...renderMetrics.map(m=>m.rig.changedPixels)),maxNativeArmReach:Math.max(...samples.flatMap(s=>s.ik.slice(0,2)))});
   }
   const shooter=summary.find(r=>r.name==='shooter-recoil'),baseline=summary.find(r=>r.name==='shooter-detail-opt-out');
   if(shooter.peakNativeRecoil>=baseline.peakNativeRecoil*.7)throw Error('Shooter detail did not reduce native recoil against same installed-rig opt-out');
@@ -228,7 +231,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
     } catch (error) { recordError(error.message); try { await route.abort(); } catch {} }
   });
   await page.goto('http://127.0.0.1:' + server.address().port + '/motion-detail');
-  await page.addScriptTag({content:'globalThis.motionPixelDifference = '+pixelDifference.toString()+';globalThis.awaitDetailSourceOwner = '+awaitDetailSourceOwner.toString()+';globalThis.detailSourceOwnerReceipt = '+detailSourceOwnerReceipt.toString()+';globalThis.detailCpuDrawBounds = '+detailCpuDrawBounds.toString()+';globalThis.detailOwnerVisibility = '+detailOwnerVisibility.toString()+';'});
+  await page.addScriptTag({content:'globalThis.captureSubmergedPresentation = '+captureSubmergedPresentation.toString()+';globalThis.motionPixelDifference = '+pixelDifference.toString()+';globalThis.awaitDetailSourceOwner = '+awaitDetailSourceOwner.toString()+';globalThis.detailSourceOwnerReceipt = '+detailSourceOwnerReceipt.toString()+';globalThis.detailCpuDrawBounds = '+detailCpuDrawBounds.toString()+';globalThis.detailOwnerVisibility = '+detailOwnerVisibility.toString()+';'});
   result = await page.evaluate(async ({ prefix, contentHash }) => {
     const THREE = await import('three');
     const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
@@ -395,7 +398,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
         if(!bomb||bomb.owner!==actor||bomb.mesh?.type!=='Group')throw Error('Missing actual released bomb mesh group: '+scenario.name+' frame '+frame);
         releasedBomb=drawnContact(bomb.mesh,left,right);
       }
-      return {frame,sourceMotion,renderClocksStable:true,rig,rigDiagnostic,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon?.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb?.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb};
+      return {frame,presentation:globalThis.captureSubmergedPresentation(ch),sourceMotion,renderClocksStable:true,rig,rigDiagnostic,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon?.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb?.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb};
     }
     try {
     for (const scenario of cases) {
@@ -511,3 +514,4 @@ Object.assign(result,{errors,loaded:[...new Set(loaded)],build:manifest.build,st
 console.log(JSON.stringify({status:result.status,contentHash:result.contentHash,cases:result.cases,verifiedModules:result.loaded.length,summary:result.summary}));
 }
 if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url)await main();
+

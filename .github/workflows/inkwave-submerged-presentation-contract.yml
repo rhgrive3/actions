@@ -1,0 +1,64 @@
+name: INKWAVE native submerged presentation contract
+on:
+  push:
+    branches: ['qa/inkwave-submerged-presentation-contract-20261021']
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-submerged-presentation-contract
+  cancel-in-progress: false
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      BASE_SHA: 3d50278ad009444dfdd3c4a156df6db2242b40b3
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify diagnostic-only direct parent and exact source
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          node --input-type=module <<'NODE'
+          import {execFileSync} from 'node:child_process';
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const allowed=["scripts/check-inkwave-motion-catalog.mjs","scripts/check-inkwave-motion-detail.mjs","scripts/lib/inkwave-submerged-presentation-contract.mjs","scripts/tests/inkwave-submerged-presentation-contract.test.mjs",".github/workflows/inkwave-submerged-presentation-contract.yml","reports/inkwave-submerged-presentation-contract-20261021.md"];
+          const changed=execFileSync('git',['diff','--name-only',process.env.BASE_SHA,process.env.SOURCE_SHA],{encoding:'utf8'}).trim().split('\n');
+          assert(changed.length>0);assert(changed.every(p=>allowed.includes(p)),'Unexpected runtime or unrelated change');
+          fs.mkdirSync('.ci-scratch/submerged-contract',{recursive:true});
+          fs.writeFileSync('.ci-scratch/submerged-contract/source.json',JSON.stringify({base:process.env.BASE_SHA,head:process.env.SOURCE_SHA,changed,runtimeChanges:0,scope:'existing detail/catalog state-specific presentation verification; runtime unchanged; unproven blanks remain failures'},null,2));
+          NODE
+      - name: Install official build and browser dependencies
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Verify source diagnostic contracts
+        id: tests
+        run: node --test scripts/tests/inkwave-detail-source-readiness.test.mjs scripts/tests/inkwave-motion-detail-failure-summary.test.mjs scripts/tests/inkwave-submerged-presentation-contract.test.mjs
+      - name: Build exact unchanged runtime
+        id: build
+        run: node scripts/build-inkwave.mjs inkwave-public .built-site/submerged-contract
+      - name: Reproduce existing detail failure with read-only ownership diagnostics
+        run: node scripts/check-inkwave-motion-detail.mjs --site .built-site/submerged-contract --evidence-dir .ci-scratch/submerged-contract/detail --profile-dir .ci-scratch/submerged-contract/detail-profile
+      - name: Reproduce existing catalog failure independently of detail outcome
+        if: ${{ !cancelled() && steps.tests.outcome == 'success' && steps.build.outcome == 'success' }}
+        run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/submerged-contract --evidence-dir .ci-scratch/submerged-contract/catalog --profile-dir .ci-scratch/submerged-contract/catalog-profile
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: submerged-presentation-contract-${{ github.sha }}
+          path: |
+            .ci-scratch/submerged-contract/source.json
+            .ci-scratch/submerged-contract/detail/
+            .ci-scratch/submerged-contract/catalog/
+          if-no-files-found: error
+          retention-days: 14
+
