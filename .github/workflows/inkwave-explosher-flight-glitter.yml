@@ -5,6 +5,7 @@ on:
       - 'patches/splatoon3/runtime/s3-projectile-shapes.mjs'
       - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
       - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
+      - 'scripts/lib/inkwave-explosher-scene-census.mjs'
       - '.github/workflows/inkwave-explosher-flight-glitter.yml'
 permissions:
   contents: read
@@ -61,14 +62,12 @@ jobs:
           import fs from 'node:fs';import assert from 'node:assert/strict';
           const read=s=>JSON.parse(fs.readFileSync('.ci-scratch/explosher/'+s+'/manifest.json'));
           const before=read('before'),after=read('after');
-          assert.equal(before.length,18);assert.equal(after.length,18);
-          for(let i=0;i<before.length;i++){
-            const a=before[i],b=after[i];assert.deepEqual([a.tick,a.view],[b.tick,b.view]);
-            for(const k of ['aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport'])assert.deepEqual(b.measurement[k],a.measurement[k],k);
-            for(const k of ['calls','triangles','points','lines'])assert(b.measurement.render[k]<=a.measurement.render[k],k);
-            for(const k of ['geometries','textures'])assert(b.measurement.memory[k]<=a.measurement.memory[k],k);
-          }
-          fs.writeFileSync('.ci-scratch/explosher/paired.json',JSON.stringify({status:'physical-and-resource-gates-passed',captures:18,cpu:after.map((b,i)=>({tick:b.tick,view:b.view,before:before[i].measurement.drawCpuMs,after:b.measurement.drawCpuMs})),visualReview:'pending',gpuElapsed:'not measured'},null,2));
+          const {compareExplosherCaptures}=await import('./scripts/lib/inkwave-explosher-scene-census.mjs');
+          const result=compareExplosherCaptures(before,after);
+          result.cpu=after.map((b,i)=>({tick:b.tick,view:b.view,before:before[i]?.measurement.drawCpuMs,after:b.measurement.drawCpuMs}));
+          fs.writeFileSync('.ci-scratch/explosher/paired.json',JSON.stringify(result,null,2));
+          console.log('EXPLOSHER_ALL_FRAME_GATE '+JSON.stringify({status:result.status,checks:result.checked.length,mismatches:result.mismatches}));
+          assert.equal(result.mismatches.length,0,'All frame physics and resource gates must pass');
           NODE
       - uses: actions/upload-artifact@v4
         if: always()

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { awaitExplosherSceneSources, explosherSceneCensus, compareExplosherCaptures } from '../../../scripts/lib/inkwave-explosher-scene-census.mjs';
 const wrapper=fs.readFileSync(new URL('../../../scripts/check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');
 const nativeResetSource=fs.readFileSync(new URL('../../../scripts/check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
 const driver=fs.readFileSync(new URL('../../../scripts/render-inkwave-projectile-shapes.mjs',import.meta.url),'utf8');
@@ -11,7 +12,7 @@ function diagnostic(){
  const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{},exit(){}};
  const spawn=(bin,args)=>bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0};
  const code=wrapper.replace(/^#!.*\n/,'').replace(/^import .*;\n/gm,'').replace(/import\.meta\.url/g,"'file:///tmp/x'").replace(/import\.meta\.resolve\('playwright'\)/g,"'playwright'");
- assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process',code)(fakeFs,path,crypto,spawn,()=>'/root/',process),/Wrong native capture count/);
+ assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus),/Wrong native capture count/);
  return saved['out/native-capture-driver.mjs'];
 }
 test('capture admission guards reject incomplete or invalid evidence (no browser claim)',()=>{
@@ -54,4 +55,55 @@ test('capture admission guards reject incomplete or invalid evidence (no browser
  const sourceGuard=new Function('actualSourceSha','sourceSha',"if(actualSourceSha!==sourceSha)throw Error('Requested SHA does not match checkout HEAD');");
  assert(wrapper.includes("if(actualSourceSha!==sourceSha)throw Error('Requested SHA does not match checkout HEAD');"));
  assert.throws(()=>sourceGuard('a'.repeat(40),'b'.repeat(40)),/checkout HEAD/);
+});
+
+test('all frame gate keeps later physics errors after an early resource mismatch',()=>{
+ const frames=Array.from({length:18},(_,tick)=>({tick,view:'behind',measurement:{physical:[tick],render:{calls:1,triangles:2,points:28,lines:0},memory:{geometries:1,textures:1}}}));
+ assert.equal(compareExplosherCaptures(frames,frames).mismatches.length,0);
+ const after=JSON.parse(JSON.stringify(frames));after[0].measurement.render.triangles=3;after[17].measurement.physical=[999];
+ const result=compareExplosherCaptures(frames,after);
+ assert.equal(result.checked.length,18*16);
+ const nonfinite=JSON.parse(JSON.stringify(frames));nonfinite[1].measurement.physical=[NaN];const nullable=JSON.parse(JSON.stringify(frames));nullable[1].measurement.physical=[null];assert(compareExplosherCaptures(nullable,nonfinite).mismatches.some(m=>m.domain==='physical'));
+ assert(result.mismatches.some(m=>m.tick===0&&m.domain==='render.triangles'));
+ assert(result.mismatches.some(m=>m.tick===17&&m.domain==='physical'));
+});
+
+test('scene readiness accepts native completion but rejects failed or replaced owners',async()=>{
+ const ch={};const a={character:ch};const owner={character:ch,status:'ready',bank:{},squidBank:{},variant:'Player00',ready:Promise.resolve()};ch.sourceMotion=owner;
+ const G={actors:[a],local:a};
+ assert.equal((await awaitExplosherSceneSources(G,1000))[0].status,'ready');
+ owner.status='error';await assert.rejects(awaitExplosherSceneSources(G,1000),/did not become ready/);
+ owner.status='ready';owner.character={};await assert.rejects(awaitExplosherSceneSources(G,1000),/did not become ready/);
+ owner.character=ch;owner.ready=Promise.reject(Error('native load failure'));await assert.rejects(awaitExplosherSceneSources(G,1000),/native load failure/);
+});
+
+test('scene census is read only and classifies actual actor versus background geometry',()=>{
+ const root={visible:true},geo={attributes:{position:{count:9}},index:{count:12},drawRange:{start:3,count:6}};
+ const actor={character:{root,style:{skin:2},sourceMotion:{status:'ready',currentClips:[]}}};
+ const local={isMesh:true,type:'Mesh',visible:true,parent:root,geometry:geo};
+ const background={isMesh:true,type:'Mesh',visible:true,parent:null,geometry:geo};
+ const G={actors:[actor],local:actor,projectiles:{},fx:{}},scene={traverse:fn=>[local,background].forEach(fn)};
+ const before=JSON.stringify({G,local,background});
+ const receipt=explosherSceneCensus(G,scene);
+ assert.equal(receipt.categories.length,2);
+ assert(receipt.categories.every(c=>c.drawRangeEntries===6&&c.uniqueGeometries===1));
+ assert.equal(JSON.stringify({G,local,background}),before);
+});
+
+test('scene readiness rechecks early actors after later actor loading completes',async()=>{
+ let finish;
+ const make=()=>{const ch={};const a={character:ch};ch.sourceMotion={character:ch,status:'ready',bank:{},squidBank:{},ready:Promise.resolve()};return a;};
+ const early=make(),late=make();late.character.sourceMotion.ready=new Promise(r=>finish=r);
+ const pending=awaitExplosherSceneSources({actors:[early,late],local:early},1000);
+ await Promise.resolve();await Promise.resolve();
+ early.character={sourceMotion:{status:'loading'}};
+ finish();await assert.rejects(pending,/ownership/);
+});
+
+test('existing warm rejection and stalled readiness reject without starting warmAll',async()=>{
+ const ch={};const a={character:ch};ch.sourceMotion={character:ch,status:'ready',bank:{},squidBank:{},ready:Promise.resolve()};
+ ch._warmed=Promise.reject(Error('native warm failure'));
+ await assert.rejects(awaitExplosherSceneSources({actors:[a],local:a},1000),/native warm failure/);
+ ch._warmed=new Promise(()=>{});
+ await assert.rejects(awaitExplosherSceneSources({actors:[a],local:a},1),/timeout/);
 });

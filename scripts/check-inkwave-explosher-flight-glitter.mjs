@@ -6,6 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { awaitExplosherSceneSources, explosherSceneCensus } from './lib/inkwave-explosher-scene-census.mjs';
 const [siteArg,outArg,sourceSha,sourceRootArg]=process.argv.slice(2);
 if(!siteArg||!outArg||!/^[a-f0-9]{40}$/.test(sourceSha||''))throw Error('Usage: <built-site> <evidence-dir> <source-sha>');
 const root=fileURLToPath(new URL('../',import.meta.url)),site=path.resolve(siteArg),out=path.resolve(outArg);
@@ -34,6 +35,11 @@ driver=once(driver,"  await page.goto(base + '/?range&skipTitle');",`  await pag
   });
   await page.goto(base + '/?range&skipTitle');`);
 
+driver=once(driver,"  await page.evaluate(() => {\n    const G = window.__G, g = window.__inkwave; g.debug.freeze(); g.debug.freezeBots();",`  await page.evaluate(async () => {
+    const G=window.__G,g=window.__inkwave;
+    window.explosherSceneSources=await (${awaitExplosherSceneSources.toString()})(G);
+    window.explosherSceneCensus=${explosherSceneCensus.toString()};
+    g.debug.freeze();g.debug.freezeBots();`);
 const resetSource=fs.readFileSync(path.join(root,'scripts/check-inkwave-projectile-visuals.mjs'),'utf8');
 const resetMatches=resetSource.match(/async function resetCaptureCharacter\(actor\) \{[\s\S]*?\n\}/g);
 if(resetMatches?.length!==1)throw Error('Native reset helper is not unique');
@@ -99,7 +105,7 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
           const palette={colorblind:G.settings.colorblind,teamHex:[...G.teamHex],teamColors:G.teamColors.map(c=>c.getHex()),local:a=>a.color.getHex()};
           const paletteReceipt={...palette,local:palette.local(G.local)};
           if(paletteReceipt.colorblind!==true||paletteReceipt.local!==0xffd21a)throw Error('Native fixed palette was not applied');
-          return {palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
+          return {sceneCensus:window.explosherSceneCensus(G,g.R.scene),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
             time:G.time,inkHex:G.local.color.getHex(),render:{...r.info.render},memory:{...r.info.memory},
             sparkles:G.projectiles.s3ShapeCounts?.sparkles??0,drawCpuMs:drawMs,renderSubmitMs:submitMs,
             gpuTimerMs:null,gpuTimerStatus:'not measured; submit CPU time is not GPU time',
