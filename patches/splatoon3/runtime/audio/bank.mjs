@@ -10,6 +10,7 @@ export const MAIN_AUDIO_PREFIX='main:';
 // an explicitly authored INKWAVE fallback when the real sample is not resident.
 export const mainAttackFallbackEligible=(id,event)=>typeof id==='string'&&!id.includes(':')&&/^fire(?:_[a-z0-9]+)?$/.test(event)&&!!WEAPON_AUDIO[mainAudioSourceId(id)]?.events.includes(event);
 import { AuthorizedSamplePack } from './authorized-samples.mjs';
+import { chargerHoldSustain } from './charger-hold-sustain.mjs';
 const MAX_BYTES=12*1024*1024;
 export class WeaponSoundBank {
   constructor(ctx,{maxBytes=MAX_BYTES,workerFactory,realOnly=false,audibleShotFallback=false}={}){this.realOnly=realOnly;this.audibleShotFallback=!!audibleShotFallback;this.ctx=ctx;this.maxBytes=Math.max(1024*1024,maxBytes);this.cache=new Map();this.defs=new Map();this.roundRobin=new Map();this.bytes=0;this.hits=0;this.misses=0;this.evicted=0;this.jobs=[];this.pending=new Set();this.timer=null;this.disposed=false;this.workerFactory=workerFactory;this.worker=null;this.workerFailed=false;this.workerError=null;this.inFlight=null;this.generatedOffThread=0;this.authorized=new AuthorizedSamplePack(ctx);}
@@ -76,15 +77,14 @@ export class WeaponSoundBank {
       const serial=o.variant??(loop?0:bank.roundRobin.get(name)??0);bank.roundRobin.set(name,(serial+1)%3);
       const authorized=bank.authorized.pick(id,event,serial);
       if(!authorized&&bank.realOnly&&!(bank.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Verified sample not resident: '+id+'/'+event);
-      const buffer=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3),s=v.ctx.createBufferSource();s.buffer=buffer;s.loop=loop;
-      // The 2022 S3 Charger HoldNoise is a short recorded texture, not a
-      // complete charge-rise. The only discovered dynamic reference is the
-      // independent SplatoonSWEPs S1 fan recreation (NOT Nintendo's SLINK):
-      //   PitchInSourceUnits = max(previousPitch, progress * 99 + 1)
-      // Source/GMod pitch 100 is 1x playback. Normalize those units here,
-      // using the ACTUAL gameplay charge rather than either legacy oscillator
-      // hint (1..2.5) or catalogue hint (.66..1.44). This is a clearly
-      // provisional cross-generation approximation, NOT retail pitch evidence.
+      const original=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3);
+      // The 2022 S3 HoldNoise is a one-shot transient, NOT an entire charge
+      // rise; its onset clicks if the original short file repeats. Use the
+      // single-source overlap-added sustain from its quiet interior instead.
+      // The independent S1 SplatoonSWEPs code uses a very different 10.9s
+      // aim.wav. Its literal 0.01x..1x curve is incompatible with HoldNoise.
+      // Modest audible rate motion here is an explicit unverified sound-design
+      // approximation, NOT a Nintendo SLINK parameter or retail parity claim.
       const sourceChargerHold=!!authorized&&AUDIO_RECIPES[id]?.family==='charger'&&event==='charge';
       const recordedSpinnerMotor=!!authorized&&AUDIO_RECIPES[id]?.family==='splatling'&&['charge','spin'].includes(event);
       const readCharge=()=>{
@@ -92,13 +92,18 @@ export class WeaponSoundBank {
         return typeof progress==='number'&&Number.isFinite(progress)
           ?Math.max(0,Math.min(1,progress)):null;
       };
+      const buffer=sourceChargerHold?chargerHoldSustain(v.ctx,original):original;
+      const s=v.ctx.createBufferSource();s.buffer=buffer;s.loop=loop;
       const firstCharge=sourceChargerHold?readCharge():null;
-      // Unknown actors and sources without a verified gameplay charge stay at
-      // their original 1x recording speed rather than inferring a bogus value.
-      let chargerRate=firstCharge===null?1:(1+99*firstCharge)/100;
-      if(loop&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
+      // Do not infer a charge for actors without a valid gameplay owner.
+      // A small 0.86..1.12x rise preserves the source timbre; unlike the old
+      // fan transcription, it cannot drag a short MP3 to a multi-second click.
+      const rateFor=charge=>.86+.26*charge;
+      let chargerRate=firstCharge===null?1:rateFor(firstCharge);
+      if(loop&&!sourceChargerHold&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
       if(authorized&&authorized.gain!==1){const g=v.ctx.createGain();g.gain.value=authorized.gain;s.connect(g);g.connect(v.out);v.nodes.push(g);}else s.connect(v.out);
-      // No additional voice, synthesized oscillator or audio-file download.
+      // One decoded, crossfaded recorded source per asset, one playback voice;
+      // no oscillators, extra downloads or runtime-created voice layers.
       s.playbackRate.value=sourceChargerHold?chargerRate:recordedSpinnerMotor?1:Math.max(.3,Math.min(3,p));s.start(v.t,0);
       s._end=loop?Infinity:v.t+buffer.duration/s.playbackRate.value;
       v.nodes.push(s);v.srcs.push(s);v.end=Math.max(v.end,s._end);v.endless=loop;
@@ -106,12 +111,12 @@ export class WeaponSoundBank {
         if(sourceChargerHold){
           const charge=readCharge();
           if(charge===null)return;
-          const next=(1+99*charge)/100;
-          // Mirror the reference's max(previousPitch, requestedPitch) while held;
-          // a stopped loop gets a new independent envelope on the next hold.
+          const next=rateFor(charge);
+          // Monotone throughout one hold to avoid backwards zippering; a
+          // fresh hold starts a fresh progression after its prior loop stops.
           if(next>chargerRate+1e-5){
             chargerRate=next;
-            s.playbackRate.setTargetAtTime(next,t,1/60);
+            s.playbackRate.setTargetAtTime(next,t,.035);
           }
         }else if(!recordedSpinnerMotor)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);
       }};
