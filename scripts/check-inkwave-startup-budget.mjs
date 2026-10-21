@@ -50,5 +50,10 @@ for(const file of core){
 }
 for(const file of Object.keys(config.assets)){assert(!BUILD_ONLY_PATCH_MODULES.has(file),'build-only source transformer published: '+file);assert(!file.includes('..'));const bytes=fs.readFileSync(path.join(root,'_versions',revision,file));assert.equal(hash(bytes),config.assets[file].sha256);}
 assert(!fs.readFileSync(path.join(root,'src/main.js'),'utf8').includes('.png?h='),'lightmap URL must match precache');
-assert(!html.includes('navigator.serviceWorker.register'),'single runtime registration owner');
+// The normal install still belongs to the menu runtime. A failed module entry
+// cannot reach it, so allow only the exact reviewed inline failure recovery.
+const recoverySource=fs.readFileSync(new URL('../patches/loading-cache/recovery.js',import.meta.url),'utf8');
+assert(html.includes(recoverySource),'module-independent recovery must ship inline');
+assert(html.indexOf(recoverySource)<html.indexOf('<script type="module"'),'recovery must precede module loading');
+assert(!html.replace(recoverySource,'').includes('navigator.serviceWorker.register'),'no unconditional shell registration');
 console.log(JSON.stringify({status:'passed',revision,initialJSRequests:initial.length,modulePreloads:preloads.length,coreModulePreloads:corePreloads.length,practiceRangeModulePreloads:rangePreloads.length,practiceRangePreloadBytes:rangePreloadBytes,initialJSBytes,criticalHTMLBytes:Buffer.byteLength(html),precacheCount:core.size,precacheBytes,workerBytes:Buffer.byteLength(worker),declaredBytes:config.declaredBytes,measurementKind:'deterministic file and dependency gates; not native browser timings'},null,2));
