@@ -52,8 +52,8 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       '  _startAttract({ staticMenu = false } = {}) {\n    this._staticMenuAttract = !!staticMenu;',
       'static return: attract signature');
     code = replaceOnce(code,
-      '      noBots: mapNoBots(this.mapDef?.id), mannequins: DEV_STAGE }));',
-      '      noBots: this._staticMenuAttract || mapNoBots(this.mapDef?.id), mannequins: !this._staticMenuAttract && DEV_STAGE }));',
+      '      noBots: mapNoBots(this.mapDef?.id) || isRangeMap(this.mapDef), mannequins: DEV_STAGE }));',
+      '      noBots: this._staticMenuAttract || mapNoBots(this.mapDef?.id) || isRangeMap(this.mapDef), mannequins: !this._staticMenuAttract && DEV_STAGE }));',
       'static return: no unseen bot rigs');
     code = replaceOnce(code,
       "    this._startAttract();\n    this.menus?.show('main');",
@@ -86,14 +86,22 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       "    const cards = order.map((id, i) => {\n      const w = Ws[id];",
       "    const lazyWeaponArt = this._input === 'touch' && n > 20 && typeof IntersectionObserver !== 'undefined';\n    const cards = order.map((id, i) => {\n      const w = Ws[id];\n      const deferArt = lazyWeaponArt && i >= 20;",
       'touch weapon art lazy eligibility');
-    code = replaceOnce(code,
+    // The lobby modal contains the same weapon-card SVG template. Limit these
+    // exact-match anchors to the primary loadout grid, never the modal.
+    const gridStart = code.indexOf("    const lazyWeaponArt = this._input === 'touch'");
+    const gridEnd = code.indexOf("    // ---- detail panel", gridStart);
+    if (gridStart < 0 || gridEnd <= gridStart)
+      throw new Error('INKWAVE quality patch conflict (static loadout grid scope)');
+    let grid = code.slice(gridStart, gridEnd);
+    grid = replaceOnce(grid,
       "        h('span', { class: 'iw-wcard__blob', html: splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),",
       "        h('span', { class: 'iw-wcard__blob', html: deferArt ? '' : splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),",
-      'defer offscreen blob SVG');
-    code = replaceOnce(code,
+      'defer offscreen blob SVG in primary grid');
+    grid = replaceOnce(grid,
       "        h('span', { class: 'iw-wcard__icon', html: weaponIcon(w.kind || id) }),",
       "        h('span', { class: 'iw-wcard__icon', html: deferArt ? '' : weaponIcon(w.kind || id) }),",
-      'defer offscreen weapon SVG');
+      'defer offscreen weapon SVG in primary grid');
+    code = code.slice(0, gridStart) + grid + code.slice(gridEnd);
     code = replaceOnce(code,
       "      c._wid = id;\n      return c;",
       "      c._wid = id; c._weaponArtIndex = i; c._artDeferred = deferArt;\n      if (deferArt) c.dataset.artDeferred = '1';\n      return c;",
