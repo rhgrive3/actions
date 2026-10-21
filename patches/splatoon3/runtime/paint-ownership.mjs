@@ -82,6 +82,46 @@ function allocPiece(idx) {
   return p;
 }
 
+// #1671: hashes, angles, their cos/sin and the body wobble of each piece
+// depend only on the seed, the shape counts, sa and the travel angle, never on
+// the face, dn or tn. A growth record asks for them for every face entry on
+// every tick; build them once per record with the same expressions and reuse
+// them while those inputs are identical (NaN equal to NaN). A group with no
+// pieces (the settled pass's drip-only contract) reads none of its values.
+const sameTemplateValue = (a, b) => a === b || (a !== a && b !== b);
+function ancillaryTemplate(g, seed, word, sa, dirAng, spread, rayCount, satelliteCount, spatterCount) {
+  const t = g._s3AncillaryTemplate;
+  if (t && sameTemplateValue(t.seed, seed) && sameTemplateValue(t.sa, sa) && sameTemplateValue(t.dirAng, dirAng)
+      && (!rayCount || t.rayCount === rayCount) && (!satelliteCount || t.satelliteCount === satelliteCount)
+      && (!spatterCount || t.spatterCount === spatterCount)) return t;
+  const wobbles = g._s3Wobble && g._s3WobbleSeed === seed ? g._s3Wobble : (g._s3WobbleSeed = seed, g._s3Wobble = new Map());
+  const rays = new Float64Array(rayCount * 6), sats = new Float64Array(satelliteCount * 7);
+  const spats = new Float64Array(spatterCount * 7), drips = new Float64Array(6 * 3);
+  for (let k = 0; k < rayCount; k++) {
+    const h1 = paintShapeHash(word, 0, k), h2 = paintShapeHash(word, 1, k), h3 = paintShapeHash(word, 2, k);
+    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : (k + 0.35 + 0.6 * h1) / rayCount * 6.2831 + seed * 6.2831;
+    let w = wobbles.get(a);
+    if (w === undefined) { w = wobble(a, seed); wobbles.set(a, w); }
+    rays.set([Math.cos(a), Math.sin(a), w, h1, h2, h3], k * 6);
+  }
+  for (let k = 0; k < satelliteCount; k++) {
+    const h1 = paintShapeHash(word, 3, k), h2 = paintShapeHash(word, 4, k), h3 = paintShapeHash(word, 5, k);
+    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : h1 * 6.2831;
+    const ux = Math.cos(a), uy = Math.sin(a);
+    const nx = ux * 0.68, ny = uy * 0.68 - 0.32; const l = Math.hypot(nx, ny) || 1;
+    sats.set([h1, h2, h3, ux, uy, nx / l, ny / l], k * 7);
+  }
+  for (let k = 0; k < spatterCount; k++) {
+    const h1 = paintShapeHash(word, 6, k), h2 = paintShapeHash(word, 7, k), h3 = paintShapeHash(word, 8, k);
+    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread * 1.15 : h1 * 6.2831;
+    const ux = Math.cos(a), uy = Math.sin(a);
+    const nx = ux * 0.75, ny = uy * 0.75 - 0.25; const l = Math.hypot(nx, ny) || 1;
+    spats.set([h1, h2, h3, ux, uy, nx / l, ny / l], k * 7);
+  }
+  for (let k = 0; k < 6; k++) drips.set([paintShapeHash(word, 9, k), paintShapeHash(word, 10, k), paintShapeHash(word, 11, k)], k * 3);
+  return (g._s3AncillaryTemplate = { seed, sa, dirAng, rayCount, satelliteCount, spatterCount, rays, sats, spats, drips });
+}
+
 function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const R = g.R, r2 = R * R - dn * dn;
   if (r2 <= 0 || R <= 0) return null;
@@ -95,13 +135,12 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const spread = 6.2831 + (2.5 - 6.2831) * clamp(sa * 1.2, 0, 1);
   const big = kind > 1.5 && kind < 3.5;
   const bodyGrow = 0.4 + 0.6 * (1 - Math.pow(1 - clamp(tn, 0, 1), 4));
-  const bodyEdge = a => r * bodyGrow * wobble(a, seed);
+  const T = ancillaryTemplate(g, seed, word, sa, dirAng, spread, rayCount, satelliteCount, spatterCount);
 
   const tsp = 1 - Math.pow(1 - clamp(tn * 1.4, 0, 1), 3);
   for (let k = 0; k < rayCount; k++) {
-    const h1 = paintShapeHash(word, 0, k), h2 = paintShapeHash(word, 1, k), h3 = paintShapeHash(word, 2, k);
-    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : (k + 0.35 + 0.6 * h1) / rayCount * 6.2831 + seed * 6.2831;
-    const ux = Math.cos(a), uy = Math.sin(a), edge = bodyEdge(a);
+    const q = k * 6, ux = T.rays[q], uy = T.rays[q + 1], edge = r * bodyGrow * T.rays[q + 2];
+    const h1 = T.rays[q + 3], h2 = T.rays[q + 4], h3 = T.rays[q + 5];
     // Same edge-spike length as the composed paint shader (adapter.mjs, paint.js).
     const len = r * (0.04 + 0.16 * h2 * h2 * h2) * tsp;
     const wB = r * (0.055 + 0.06 * h3), tipR = Math.max(r * (0.012 + 0.012 * h3), pixel * 0.45);
@@ -119,12 +158,10 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   }
 
   for (let k = 0; k < satelliteCount; k++) {
-    const h1 = paintShapeHash(word, 3, k), h2 = paintShapeHash(word, 4, k), h3 = paintShapeHash(word, 5, k);
+    const q = k * 7, h2 = T.sats[q + 1], h3 = T.sats[q + 2];
     const tl = 0.28 + 0.95 * h2, land = smoothstep(tl, tl + 0.2, tn);
     if (land <= 0) continue;
-    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : h1 * 6.2831;
-    let ux = Math.cos(a), uy = Math.sin(a);
-    if (face.wall) { const nx = ux * 0.68, ny = uy * 0.68 - 0.32; const l = Math.hypot(nx, ny) || 1; ux = nx / l; uy = ny / l; }
+    const ux = face.wall ? T.sats[q + 5] : T.sats[q + 3], uy = face.wall ? T.sats[q + 6] : T.sats[q + 4];
     const dist = r * (1.1 + (big ? 1.05 : 0.8) * h2 * h2);
     const rad = r * (0.028 + 0.085 * h3) * fall * (1 - 0.4 * h2) * (big ? 0.8 : 1) * land;
     const el = 1 + (0.5 + 1.6 * sa) * h2;
@@ -135,11 +172,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   }
 
   for (let k = 0; k < spatterCount; k++) {
-    const h1 = paintShapeHash(word, 6, k), h2 = paintShapeHash(word, 7, k), h3 = paintShapeHash(word, 8, k);
+    const q = k * 7, h2 = T.spats[q + 1], h3 = T.spats[q + 2];
     if (tn < 0.45 + 0.95 * h2) continue;
-    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread * 1.15 : h1 * 6.2831;
-    let ux = Math.cos(a), uy = Math.sin(a);
-    if (face.wall) { const nx = ux * 0.75, ny = uy * 0.75 - 0.25; const l = Math.hypot(nx, ny) || 1; ux = nx / l; uy = ny / l; }
+    const ux = face.wall ? T.spats[q + 5] : T.spats[q + 3], uy = face.wall ? T.spats[q + 6] : T.spats[q + 4];
     const rad = Math.max(r * (0.011 + 0.02 * h3) * fall, pixel * 0.9), dist = r * (1.3 + 1.2 * h2);
     const x = ux * dist, y = uy * dist;
     const p1 = allocPiece(pIdx++);
@@ -150,7 +185,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   if (face.wall && fall > 0.3 && dripCount > 0) {
     const nD = Math.min(6, dripCount + Math.floor(R * 1.2));
     for (let k = 0; k < nD; k++) {
-      const h1 = paintShapeHash(word, 9, k), h2 = paintShapeHash(word, 10, k), h3 = paintShapeHash(word, 11, k);
+      const h1 = T.drips[k * 3], h2 = T.drips[k * 3 + 1], h3 = T.drips[k * 3 + 2];
       if (k > 1 && h3 < 0.3) continue;
       const x0 = (h1 * 2 - 1) * r * 0.72;
       const c = Math.sqrt(Math.max(1 - (x0 / r) * (x0 / r), 0));
@@ -254,6 +289,19 @@ export function paintDotCellWitness(mask, face, x, y, piece) {
 }
 
 function cellIsSolidlyVisible(mask, face, x, y, piece) {
+  // #1671: nearly every test of a growing bomb is a bead or spatter dot that
+  // misses. Unstretched, a dot lies inside the circle of radius
+  // radius * max(1, el) about its center; when that circle (with relative and
+  // absolute slack far above the rounding of the exact path) stays clear of
+  // the closed cell rectangle, no sample is inside and no witness exists.
+  // NaN or infinite inputs never reject and keep the exact path.
+  if ((piece.type === 1 || piece.type === 2) && !(mask.sa > 0)) {
+    const hx = face.cu * 0.5, hy = face.cv * 0.5;
+    const ex = Math.max(x - hx - piece.x, piece.x - (x + hx), 0), ey = Math.max(y - hy - piece.y, piece.y - (y + hy), 0);
+    const reach = (piece.type === 2 ? piece.radius * Math.max(1, piece.el) : piece.radius) * (1 + 1e-6) + 1e-9;
+    const d2 = ex * ex + ey * ey;
+    if (d2 > reach * reach && d2 < Infinity) return false;
+  }
   const dx = face.cu * 0.32, dy = face.cv * 0.32;
   // A paint cell owns its area when its center or one of four interior samples
   // lies well inside the shader mask. This catches most sub-cell satellites
@@ -362,6 +410,48 @@ function nextVisitStamp(paint) {
   return paint._paintVisitSerial;
 }
 
+// #1671: a settled ray/bead/satellite keeps bit-identical inputs on every
+// later drip tick of its growth record, yet claimAncillaryCells re-ran its shape
+// test on every cell of its box. A shape miss is a pure function of the face
+// entry, cell, mask and piece values, and has no effect. Keep, in the original
+// loop order, every cell of the box except those misses and the pure bounds
+// rejections, and replay only them when all of those values are === again
+// (NaN equal to NaN). Grid, owner order and visit state are re-read on every
+// replay through the unchanged body. Drips change with dT and are never kept.
+const sameCacheValue = (a, b) => a === b || (a !== a && b !== b);
+function cellCacheSlot(paint, g, n, n2, tn, face, piece) {
+  // Only native source stages (many small wall charts) and only once growth
+  // can no longer change ray/bead/satellite shapes; drip ticks re-use them.
+  if (!paint.level?.native || tn < 1.45 || !face.wall || !g.dripDur || piece.type === 3) return null;
+  const byEntry = g._s3AncillaryCells || (g._s3AncillaryCells = []);
+  const pieces = byEntry[n / 7] || (byEntry[n / 7] = []);
+  return pieces[n2] || (pieces[n2] = { key: null, cells: null });
+}
+function cellCacheKey(key, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
+  key[0] = face; key[1] = face.grid; key[2] = face.nu; key[3] = face.cu; key[4] = face.cv;
+  key[5] = lu; key[6] = lv; key[7] = ext; key[8] = yLo; key[9] = pad;
+  key[10] = bi0; key[11] = bi1; key[12] = bj0; key[13] = bj1;
+  key[14] = mask.sa; key[15] = mask.sdu; key[16] = mask.sdv; key[17] = mask.margin;
+  // Every numeric field a ray (0), bead (1) or satellite (2) piece carries.
+  key[18] = piece.type; key[19] = piece.ax; key[20] = piece.ay; key[21] = piece.bx; key[22] = piece.by;
+  key[23] = piece.ra; key[24] = piece.rb; key[25] = piece.x; key[26] = piece.y; key[27] = piece.radius;
+  key[28] = piece.ux; key[29] = piece.uy; key[30] = piece.el; key[31] = piece.minX; key[32] = piece.maxX;
+  key[33] = piece.minY; key[34] = piece.maxY;
+  return key;
+}
+const _cellCacheProbe = [];
+function sameCellCacheKey(cache, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
+  const key = cache.key;
+  if (!key) return false;
+  const next = cellCacheKey(_cellCacheProbe, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
+  for (let i = 0; i < key.length; i++) if (!sameCacheValue(key[i], next[i])) return false;
+  return true;
+}
+function storeCellCache(cache, cells, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
+  cache.key = cellCacheKey([], face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
+  cache.cells = cells;
+}
+
 function claimAncillaryCells(paint, g, tn, dT, contract) {
   const E = g.entries;
   if (g.R <= 0.02 || !Array.isArray(E) || !E.length || g.kind === contract.kind.speck) return 0;
@@ -393,11 +483,52 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     const visit = paint._paintVisitStamp;
     const pad = Math.max(face.cu, face.cv) * 0.5 + mask.margin * (1 + Math.max(0, sa)) + 1e-9;
     const yLo = -Math.max(ext, down);
+    // One cell of the original loop body. false means only that this piece's
+    // pure shape test missed; every other path has the original effects.
+    const visitCell = (index, x, y, piece) => {
+      if (visit[index] === stamp) return true;
+      const previousOrder = paint._paintOwnershipOrder[index] || 0;
+      if (previousOrder && order && !paintOrderComesAfter(paint, order, previousOrder)) { visit[index] = stamp; return true; }
+      const previous = paint.grid[index];
+      if (previous === value && previousOrder === order) { visit[index] = stamp; return true; }
+      // This cell was enumerated from this piece's conservative box.
+      // Test only that piece, marking it visited only after a hit. A miss
+      // must remain eligible for overlapping pieces later in this stamp.
+      if (!cellIsSolidlyVisible(mask, face, x, y, piece)) return false;
+      visit[index] = stamp;
+      if (previous === value) {
+        claimPaintCell(paint, index, value, order);
+        return true;
+      }
+      if (!claimPaintCell(paint, index, value, order)) return true;
+      paint.grid[index] = value;
+      changed = true;
+      // Match the composed native body scorer: walls and occluded cells
+      // remain paintable, but never award turf points or special charge.
+      if (face.turf && !paint.dead[index]) {
+        claimed += cellArea;
+        if (previous) paint.counts[previous - 1]--;
+        paint.counts[g.team]++;
+      }
+      return true;
+    };
     for (let n2 = 0; n2 < mask.pieces.length; n2++) {
       const piece = mask.pieces[n2];
       const box = pieceCellBox(mask, piece, pad);
       const bi0 = Math.max(i0, Math.ceil((box[0] + lu) / face.cu - 0.5)), bi1 = Math.min(i1, Math.floor((box[1] + lu) / face.cu - 0.5));
       const bj0 = Math.max(j0, Math.ceil((box[2] + lv) / face.cv - 0.5)), bj1 = Math.min(j1, Math.floor((box[3] + lv) / face.cv - 0.5));
+      // An empty box visits no cell; skip the cache bookkeeping too.
+      if (bi1 < bi0 || bj1 < bj0) continue;
+      const cache = cellCacheSlot(paint, g, n, n2, tn, face, piece);
+      const cells = cache && sameCellCacheKey(cache, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) ? cache.cells : null;
+      if (cells) {
+        for (let k = 0; k < cells.length; k++) {
+          const i = cells[k] % face.nu, j = (cells[k] - i) / face.nu;
+          visitCell(face.grid + cells[k], (i + 0.5) * face.cu - lu, (j + 0.5) * face.cv - lv, piece);
+        }
+        continue;
+      }
+      const record = cache ? [] : null;
       for (let j = bj0; j <= bj1; j++) {
         const y = (j + 0.5) * face.cv - lv;
         if (y + face.cv * 0.5 < yLo || y - face.cv * 0.5 > ext) continue;
@@ -405,32 +536,10 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
           const x = (i + 0.5) * face.cu - lu;
           const index = face.grid + j * face.nu + i;
           if (x + face.cu * 0.5 < -ext || x - face.cu * 0.5 > ext) continue;
-          if (visit[index] === stamp) continue;
-          const previousOrder = paint._paintOwnershipOrder[index] || 0;
-          if (previousOrder && order && !paintOrderComesAfter(paint, order, previousOrder)) { visit[index] = stamp; continue; }
-          const previous = paint.grid[index];
-          if (previous === value && previousOrder === order) { visit[index] = stamp; continue; }
-          // This cell was enumerated from this piece's conservative box.
-          // Test only that piece, marking it visited only after a hit. A miss
-          // must remain eligible for overlapping pieces later in this stamp.
-          if (!cellIsSolidlyVisible(mask, face, x, y, piece)) continue;
-          visit[index] = stamp;
-          if (previous === value) {
-            claimPaintCell(paint, index, value, order);
-            continue;
-          }
-          if (!claimPaintCell(paint, index, value, order)) continue;
-          paint.grid[index] = value;
-          changed = true;
-          // Match the composed native body scorer: walls and occluded cells
-          // remain paintable, but never award turf points or special charge.
-          if (face.turf && !paint.dead[index]) {
-            claimed += cellArea;
-            if (previous) paint.counts[previous - 1]--;
-            paint.counts[g.team]++;
-          }
+          if (visitCell(index, x, y, piece) && record) record.push(j * face.nu + i);
         }
       }
+      if (record) storeCellCache(cache, record, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
     }
   }
   if (order > 0 && tn >= 1.45) {
