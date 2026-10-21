@@ -8,6 +8,16 @@ const print=x=>{const bytes=Buffer.from(JSON.stringify(x)+'\n');let p=0;while(p<
 
 function requireSameReplay(actual,expected){assert.deepEqual(actual,expected,'same observed native render history and provenance; no counter/seed alignment');}
 function requireReplayPixels(actual,expected){assert.ok(Buffer.isBuffer(actual)&&Buffer.isBuffer(expected));assert.ok(actual.equals(expected),'same capture ordinal whole-frame PNG bytes');}
+function requireSettledMaterialEntry(observation, actualOrdinal, expectedOrdinal) {
+ if(!Number.isInteger(expectedOrdinal)||expectedOrdinal<1||actualOrdinal!==expectedOrdinal)throw Error('Native frame ordinal mismatch');
+ const {rig,input,jobs}=observation;
+ if(rig.mode!=='follow'||!rig.target?.local||rig.blend?.active)throw Error('Native camera transition incomplete');
+ if(input.mouse&&(input.mouse.dx!==0||input.mouse.dy!==0||input.mouse.left||input.mouse.right||input.mouse.leftPressed||input.mouse.rightPressed)||input.keys.length||input.pressed.length)throw Error('Non-neutral native input');
+ if(jobs.lobby&&(!jobs.lobby.ready||jobs.lobby.failed))throw Error('Existing native lobby job incomplete');
+ if(['hasJob','hasTask','hasActiveCharacter','hasPreparedCharacter'].some(k=>jobs.portrait[k]!==false)||jobs.portrait.inFlight!==0||jobs.portrait.queued!==0||jobs.portrait.warmState!=='done')throw Error('Existing native presentation work incomplete');
+ return true;
+}
+
 function runReplayDiagnostic(){
  const sourceSha='429cc1352d9b13ffe83c579ed714b84acf6139ed',labels=['unpainted','painted','repeat','repeat2'];
  const sha=x=>createHash('sha256').update(x).digest('hex'),rows=[],checks=[];
@@ -33,12 +43,12 @@ function runReplayDiagnostic(){
    assert.equal(receipt.sourceSha,sourceSha);assert.equal(receipt.variant,variant);assert.equal(receipt.diagnosticOnly,true);assert.equal(receipt.performanceAccepted,false);
    assert.deepEqual(receipt.errors,[]);assert.ok(['passed','failed'].includes(receipt.status));
    if(receipt.status==='passed')assert.equal(childError,null,'passed receipt requires successful child completion');
-   else{assert.match(receipt.error,/Paint visibility or frozen-repeat gate failed:/);assert.equal(childError?.status,1);assert.ok(!childError.signal&&!childError.code,'expected repeat rejection must not be a signal/timeout/launch error');}
+   else{if(/Native entry readiness failed:/.test(receipt.error)){assert.equal(e.entryReadiness?.passed,false);assert.ok(receipt.error.includes('Native entry readiness failed: '+e.entryReadiness.error));}else assert.match(receipt.error,/Paint visibility or frozen-repeat gate failed:/);assert.equal(childError?.status,1);assert.ok(!childError.signal&&!childError.code,'expected rejection must not be a signal/timeout/launch error');}
    assert.equal(e.diagnosticOnly,true);assert.equal(e.performanceAccepted,false);assert.equal(e.width,960);assert.equal(e.height,600);assert.equal(e.glError,0);
    assert.ok(e.paintSignal.changed>1000);assert.match(e.atlasHash,/^[a-f0-9]{64}$/);
    assert.deepEqual(e.renderStates.map(x=>[x.label,x.captureOrdinal]),labels.map((x,i)=>[x,i]));
    for(const capture of e.renderStates)for(const key of ['before','afterRender','after']){
-    const state=capture[key];assert.ok(Number.isInteger(state.rendererFrame));assert.ok(Number.isInteger(state.rngState));
+    const state=capture[key];assert.equal(state.entryObservation?.truncated,false);assert.ok(state.entryObservation.geometries.length>0);assert.ok(state.entryObservation.owners.length>0);assert.ok(state.entryObservation.geometries.every(x=>/^[a-f0-9]{64}$/.test(x.contentSha256)));assert.ok(Number.isInteger(state.rendererFrame));assert.ok(Number.isInteger(state.rngState));
     assert.equal(state.character.nodesTruncated,false);assert.equal(state.character.materialsTruncated,false);
     assert.equal(state.character.boneMatrices.truncated,false);assert.equal(state.presentation.lightsTruncated,false);
     assert.ok(state.character.materials.every(m=>m.uniformCount<=128));
@@ -52,13 +62,14 @@ function runReplayDiagnostic(){
    const loaded=new Map(receipt.loaded);assert.equal(loaded.get(target),variant==='A'?bound.baselineEmittedSha256:bound.candidateEmittedSha256);
    row.condition={sourceSha,inputHash:receipt.inputHash,contentHash:receipt.contentHash,overlay:bound,environment:receipt.environment,
     loadedExceptMaterial:[...loaded].filter(([k])=>k!==target).sort((a,b)=>a[0].localeCompare(b[0])),
-    initial:e.initial,atlasHash:e.atlasHash,atlasConditions:e.atlasConditions,fixture:e.fixture,state:e.state,placements:e.placements,renderStates:e.renderStates};
+    entryConditionTrace:e.entryConditionTrace,entryReadiness:e.entryReadiness,initial:e.initial,atlasHash:e.atlasHash,atlasConditions:e.atlasConditions,fixture:e.fixture,state:e.state,placements:e.placements,renderStates:e.renderStates};
    assert.ok(row.condition.initial&&row.condition.fixture&&row.condition.renderStates.length===4);
    row.integrity=true;
   });
+  check(lane+' native entry settled',()=>{assert.ok(row.integrity);const e=row.evidence;assert.deepEqual(e.entryConditionTrace.map(x=>x.ordinal),[0,1,2,3]);requireSettledMaterialEntry(e.entryConditionTrace.at(-1).state,e.entryReadiness.actualNativeFrames,e.entryReadiness.expectedNativeFrames);assert.equal(e.entryReadiness.expectedNativeFrames,3);assert.equal(e.entryReadiness.passed,true);assert.equal(e.entryReadiness.error,null);});
   print({phase:'replay-lane-recorded',lane,variant,integrity:!!row.integrity,childError,sequentialStatus:row.receipt?.status,
    sequentialError:row.receipt?.error,paintSignal:row.evidence?.paintSignal,repeatSignal:row.evidence?.repeatSignal,repeat2Signal:row.evidence?.repeat2Signal,
-   imageHashes:row.evidence?.images,diagnosticOnly:true,performanceAccepted:false});
+   entryReadiness:row.evidence?.entryReadiness,imageHashes:row.evidence?.images,diagnosticOnly:true,performanceAccepted:false});
   if(childError?.code==='ETIMEDOUT'){checks.push({name:'bounded child completion',passed:false,error:lane+' timed out; stop instead of launching more browsers after an uncertain shutdown'});break;}
  }
  const [a1,a2,b1]=rows;
@@ -71,9 +82,9 @@ function runReplayDiagnostic(){
   sourceSha,diagnosticOnly:true,performanceAccepted:false,observedHistoryAAReplayEqual:aaChecks.length===2&&aaChecks.every(x=>x.passed),
   sequentialZeroRepeatAccepted,candidateBBReplayMeasured:false,checks,
   lanes:rows.map(x=>({lane:x.lane,variant:x.variant,directory:x.out,integrity:!!x.integrity,status:x.receipt?.status,error:x.receipt?.error,
-   childError:x.childError,paintSignal:x.evidence?.paintSignal,repeatSignal:x.evidence?.repeatSignal,repeat2Signal:x.evidence?.repeat2Signal,imageHashes:x.evidence?.images})),
+   entryReadiness:x.evidence?.entryReadiness,childError:x.childError,paintSignal:x.evidence?.paintSignal,repeatSignal:x.evidence?.repeatSignal,repeat2Signal:x.evidence?.repeat2Signal,imageHashes:x.evidence?.images})),
   limitations:['B1 is an observation, not a B/B reproducibility proof or accepted improvement.',
-   'Matching bounded public state does not expose private compiled shader/GPU state; no cause is inferred.',
+   'Bounded CPU state includes cached private uniforms, not complete shader/GPU state; no cause is inferred.',
    'Existing spawn barrier remains visible; not a pure retail floor-lighting comparison.',
    'No performance samples, physical GPU/iPad measurements, or few-percent budget acceptance.']};
  fs.writeFileSync(path.join(root,'replay-diagnostic.json'),JSON.stringify(report,null,2));print({phase:'replay-diagnostic-summary',...report});

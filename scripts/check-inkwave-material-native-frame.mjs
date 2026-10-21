@@ -1,4 +1,81 @@
 #!/usr/bin/env node
+// QA-only, synchronous read-only observer. No imports, native writes, cache creation or GPU reads.
+function materialEntryObservation({g,G,r,a,rngState=null,rngCount=null},mode='state') {
+ const finite=v=>v==null?null:Number.isFinite(v)?v:(()=>{throw Error('Non-finite entry observation');})();
+ let valueReads=0;
+ const bounded=(v,d=0)=>{
+  if(++valueReads>65536)throw Error('Uniform value observation bound');
+  if(d>3)return{bounded:true,reason:'depth'};
+  if(v==null)return null;if(typeof v==='number')return Number.isFinite(v)?v:String(v);
+  if(typeof v==='string'){if(v.length>1024)throw Error('Uniform string bound');return v;}if(typeof v==='boolean')return v;
+  if(v.isTexture)return{type:'texture',uuid:v.uuid,version:v.version,sourceVersion:v.source?.version};
+  if(v.elements?.length<=16)return Array.from(v.elements);
+  if((v.isVector2||v.isVector3||v.isVector4||v.isQuaternion||v.isColor)&&v.toArray)return v.toArray();
+  if(Array.isArray(v)||ArrayBuffer.isView(v))return{length:v.length,values:v.length<=32?Array.from(v,x=>bounded(x,d+1)):null};
+  return{type:v.constructor?.name||typeof v,uninspected:true};
+ };
+ const vec=v=>{if(!v?.toArray)return null;const x=v.toArray();if(x.length>16||x.some(n=>!Number.isFinite(n)))throw Error('Invalid bounded vector/matrix');return x;},rig=g.rig,lob=g.showcase?.lob;
+ const owner=o=>o?{uuid:o.uuid??null,name:o.name??null,local:o===a||o===a?.character?.root}:null;
+ const camera=c=>c?{position:vec(c.position),quaternion:vec(c.quaternion),projection:vec(c.projectionMatrix)}:null;
+ const springNames=['sx','sy','sz','boom','hgt','dipS','side','lensLift','kickS'];
+ if((g.input?.keys?.size??0)>128||(g.input?.pressed?.size??0)>128)throw Error('Input key bound');
+ const entry={rngState,rngCount,camera:camera(G.camera),rig:{mode:rig?.mode??null,previousMode:rig?._prevMode??null,target:owner(rig?.target),previousTarget:owner(rig?._prevTarget),
+  time:finite(rig?.time),yaw:finite(rig?.yaw),pitch:finite(rig?.pitch),shakeSeed:finite(rig?.shakeSeed),trauma:finite(rig?.trauma),traumaIn:finite(rig?._traumaIn),
+  pivot:vec(rig?.pivot),pivotY:finite(rig?.pivotY),curDist:finite(rig?.curDist),wantDist:finite(rig?.wantDist),
+  springs:Object.fromEntries(springNames.map(k=>[k,rig?.[k]?{x:finite(rig[k].x),v:finite(rig[k].v)}:null])),
+  blend:rig?.blend?{active:!!rig.blend.active,t:finite(rig.blend.t),dur:finite(rig.blend.dur),pos:vec(rig.blend.pos),quat:vec(rig.blend.quat),fov:finite(rig.blend.fov)}:null,
+  orbit:rig?.orbitP?{center:vec(rig.orbitP.center),radius:finite(rig.orbitP.radius),height:finite(rig.orbitP.height),speed:finite(rig.orbitP.speed),phase:finite(rig.orbitP.phase)}:null},
+  input:{locked:!!g.input?.locked,enabled:!!g.input?.enabled,mouse:g.input?.mouse?Object.fromEntries(['dx','dy','left','right','leftPressed','rightPressed'].map(k=>[k,g.input.mouse[k]])):null,keys:[...(g.input?.keys||[])].sort(),pressed:[...(g.input?.pressed||[])].sort(),controller:{yaw:finite(G.match?.controller?.yaw),pitch:finite(G.match?.controller?.pitch)}},
+  jobs:{lobby:lob?{ready:!!lob.ready,failed:!!lob.failed,preload:!!lob.preload,hasSet:!!lob.set,quality:lob.quality??null}:null,
+   portrait:{hasJob:!!g.showcase?._portraitJob,hasTask:!!g.showcase?._portraitTask,hasActiveCharacter:!!g.showcase?._portraitActiveCharacter,hasPreparedCharacter:!!g.showcase?._portraitPreparedCharacter,warmState:g.showcase?._warmState??null,inFlight:finite(g.showcase?._pflight??0),queued:g.showcase?._pq?.length??0}},
+  rendererFrame:r.info?.render?.frame??null};
+ if(mode==='state')return entry;
+ if(mode!=='geometry')throw Error('Unknown entry observation mode');
+ // Byte-for-byte SHA-256; verified against node:crypto by boundary/typed-array tests.
+ const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+ let bytesRead=0;
+ const sha=bytes=>{
+  bytesRead+=bytes.byteLength;if(bytesRead>16*1024*1024)throw Error('Geometry observation byte limit');
+  const n=bytes.length,p=new Uint8Array(Math.ceil((n+9)/64)*64);p.set(bytes);p[n]=128;
+  const dv=new DataView(p.buffer);dv.setUint32(p.length-4,n*8);dv.setUint32(p.length-8,Math.floor(n/536870912));
+  const h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],w=new Uint32Array(64),rr=(x,k)=>(x>>>k)|(x<<(32-k));
+  for(let j=0;j<p.length;j+=64){for(let i=0;i<16;i++)w[i]=dv.getUint32(j+i*4);for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];w[i]=(w[i-16]+(rr(x,7)^rr(x,18)^(x>>>3))+w[i-7]+(rr(y,17)^rr(y,19)^(y>>>10)))>>>0;}
+   let [a,b,c,d,e,f,g,z]=h;for(let i=0;i<64;i++){const t1=(z+(rr(e,6)^rr(e,11)^rr(e,25))+((e&f)^((~e)&g))+K[i]+w[i])>>>0,t2=((rr(a,2)^rr(a,13)^rr(a,22))+((a&b)^(a&c)^(b&c)))>>>0;z=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+   for(const [i,x]of[a,b,c,d,e,f,g,z].entries())h[i]=(h[i]+x)>>>0;
+  }return h.map(x=>x.toString(16).padStart(8,'0')).join('');
+ };
+ const roots=[],paths=new Map(),visit=(o,path,depth=0)=>{if(depth>64||roots.length>=2048||paths.has(o))throw Error('Geometry ownership graph bound/cycle');paths.set(o,path);roots.push(o);if((o.children?.length??0)>256)throw Error('Child count bound');for(let i=0;i<(o.children?.length??0);i++)visit(o.children[i],path+'/'+i,depth+1);};
+ if(!a?.character?.root)throw Error('Missing observed Character root');visit(a.character.root,'root');
+ const geometries=[],owners=[],aliases=new Map(),materials=[],seenM=new Set();let boneLinks=0;
+ const attribute=x=>{if(!x)return null;const data=x.isInterleavedBufferAttribute?x.data:x,arr=data.array;if(!ArrayBuffer.isView(arr)||arr instanceof DataView)throw Error('Unsupported CPU geometry attribute');
+  return{type:arr.constructor.name,itemSize:x.itemSize,count:x.count,normalized:!!x.normalized,offset:x.offset??null,stride:data.stride??null,meshPerAttribute:data.meshPerAttribute??x.meshPerAttribute??null,
+   bytes:arr.byteLength,sha256:sha(new Uint8Array(arr.buffer,arr.byteOffset,arr.byteLength))};};
+ for(const o of roots){const geo=o.geometry;if(geo){let id=aliases.get(geo);if(id===undefined){if(geometries.length>=128)throw Error('Geometry count bound');id=geometries.length;aliases.set(geo,id);
+   const keys=Object.keys(geo.attributes||{}).sort(),mk=Object.keys(geo.morphAttributes||{}).sort();if(keys.length>64||mk.length>32||(geo.groups?.length??0)>256)throw Error('Geometry metadata bound');
+   const content={type:geo.type,instanceCount:bounded(geo.instanceCount??null),boundingBox:geo.boundingBox?{min:vec(geo.boundingBox.min),max:vec(geo.boundingBox.max)}:null,boundingSphere:geo.boundingSphere?{center:vec(geo.boundingSphere.center),radius:finite(geo.boundingSphere.radius)}:null,index:attribute(geo.index),attributes:Object.fromEntries(keys.map(k=>[k,attribute(geo.attributes[k])])),morphTargetsRelative:!!geo.morphTargetsRelative,
+    morph:Object.fromEntries(mk.map(k=>{const v=geo.morphAttributes[k];if(v.length>32)throw Error('Morph count bound');return[k,v.map(attribute)];})),groups:(geo.groups||[]).map(x=>({...x})),drawRange:{start:geo.drawRange.start,count:bounded(geo.drawRange.count)}};
+   geometries.push({alias:id,uuid:geo.uuid,content,contentSha256:sha(new TextEncoder().encode(JSON.stringify(content)))});
+  }boneLinks+=o.skeleton?.bones?.length??0;if((o.skeleton?.bones?.length??0)>512||boneLinks>4096)throw Error('Bone ownership bound');owners.push({materialUuids:(o.material?(Array.isArray(o.material)?o.material:[o.material]):[]).map(m=>m.uuid),path:paths.get(o),uuid:o.uuid,name:o.name,type:o.type,geometryAlias:id,instanceCount:o.count??null,instanceMatrix:attribute(o.instanceMatrix),instanceColor:attribute(o.instanceColor),bindMatrix:vec(o.bindMatrix),bindMatrixInverse:vec(o.bindMatrixInverse),
+   morphInfluences:o.morphTargetInfluences?bounded(o.morphTargetInfluences):null,bones:o.skeleton?.bones?o.skeleton.bones.map((b,i)=>({path:paths.get(b)??null,uuid:b.uuid,name:b.name,inverse:vec(o.skeleton.boneInverses?.[i])})):null});}
+  for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[]){if(seenM.has(m))continue;seenM.add(m);if(materials.length>=256)throw Error('Material count bound');
+   // has() is mandatory: get() creates entries for previously uncompiled materials.
+   const cached=!!r.properties?.has?.(m),u=cached?r.properties.get(m).uniforms:null,keys=Object.keys(u||{}).sort();if(keys.length>256)throw Error('Private uniform count bound');
+   materials.push({uuid:m.uuid,owner:paths.get(o),cached,compiled:!!u,privateUniforms:cached?Object.fromEntries(keys.map(k=>[k,bounded(u[k]?.value)])):null});
+  }
+ }
+ return{entry,geometries,owners,materials,bytesRead,limits:{nodes:2048,geometries:128,bytes:16777216},truncated:false};
+}
+
+function requireSettledMaterialEntry(observation, actualOrdinal, expectedOrdinal) {
+ if(!Number.isInteger(expectedOrdinal)||expectedOrdinal<1||actualOrdinal!==expectedOrdinal)throw Error('Native frame ordinal mismatch');
+ const {rig,input,jobs}=observation;
+ if(rig.mode!=='follow'||!rig.target?.local||rig.blend?.active)throw Error('Native camera transition incomplete');
+ if(input.mouse&&(input.mouse.dx!==0||input.mouse.dy!==0||input.mouse.left||input.mouse.right||input.mouse.leftPressed||input.mouse.rightPressed)||input.keys.length||input.pressed.length)throw Error('Non-neutral native input');
+ if(jobs.lobby&&(!jobs.lobby.ready||jobs.lobby.failed))throw Error('Existing native lobby job incomplete');
+ if(['hasJob','hasTask','hasActiveCharacter','hasPreparedCharacter'].some(k=>jobs.portrait[k]!==false)||jobs.portrait.inFlight!==0||jobs.portrait.queued!==0||jobs.portrait.warmState!=='done')throw Error('Existing native presentation work incomplete');
+ return true;
+}
+
 // QA-only full native frame transaction. No hardware GPU/FPS/allocated-byte claim.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import os from 'node:os';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
 import {deflateSync} from 'node:zlib';
@@ -51,11 +128,14 @@ try{
   console.log('MATERIAL_PIXEL_SIGNAL '+JSON.stringify({paintSignal:e.paintSignal,repeatSignal:e.repeatSignal,repeat2Signal:e.repeat2Signal,stateComparisons,files}));
  });
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ if(diagnostic)await page.addInitScript({content:'window.__materialObserveEntry='+materialEntryObservation.toString()+';window.__materialRequireSettledEntry='+requireSettledMaterialEntry.toString()+';'});
  await page.addInitScript(()=>{
   localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:true,frameRate:60,colorblind:true}));
   localStorage.setItem('inkwave.profile',JSON.stringify({style:{hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3}}));
   let rng=20261021;window.__materialRngState=()=>rng;window.__materialSeed=(step)=>{rng=(20261021+Math.imul(step,2654435761))>>>0;};
   Math.random=()=>{rng=(Math.imul(rng,1664525)+1013904223)>>>0;return rng/4294967296;};
+  if(window.__materialObserveEntry){let count=0;const nativeQA=Math.random;window.__materialRngCount=()=>count;Math.random=()=>{count++;return nativeQA();};}
+  window.__materialObserveCurrent=mode=>window.__materialObserveEntry({g:window.__inkwave,G:window.__G,r:window.__G.renderer,a:window.__G.local,rngState:window.__materialRngState(),rngCount:window.__materialRngCount()},mode);
   window.__rollerVideoClocks=()=>{
         const G=window.__G,g=window.__inkwave;
         const finite=(value,label,required=false)=>{
@@ -94,6 +174,7 @@ try{
             throw Error('Native game publication did not complete before first frame');
           game.debug.freeze();
           boundary.clocks=window.__rollerVideoClocks();
+          if(window.__materialObserveEntry)boundary.observation=window.__materialObserveCurrent('state');
         });
       }});
 
@@ -102,7 +183,9 @@ try{
    const g=window.__inkwave;if(g?.menus?.current!=='mode')return;
    g.debug.freeze();const boot=window.__rollerBootFreeze?.clocks,entry=window.__rollerVideoClocks();
    if(!boot||JSON.stringify(boot)!==JSON.stringify(entry))throw Error('Publication-to-entry scene drift');
-   window.__materialEntry={trusted:true,boot,entry};window.__materialSeed(0);
+   window.__materialEntry={trusted:true,boot,entry};
+   if(window.__materialObserveEntry)window.__materialEntry.observation={publication:window.__rollerBootFreeze.observation,trustedEntry:window.__materialObserveCurrent('state')};
+   window.__materialSeed(0);
    g.api.setLoadout({weapon:'shooter'});
    if(g.api.getLoadout()?.weapon!=='shooter')throw Error('Native shooter selection failed');
   },true);
@@ -165,13 +248,15 @@ try{
    {...fixedFixture,teamColors:['000000','2a52ff']},{...fixedFixture,localColor:'000000'}]){
    let rejected=false;try{requireFixture(bad);}catch{rejected=true;}if(!rejected)throw Error('Wrong style/palette negative accepted');
   }
+  const entryConditionTrace=diagnostic?[{ordinal:0,state:window.__materialObserveCurrent('state')}]:null;
   const initial={fixture:fixedFixture,motionReady,entry:window.__materialEntry,clocks:window.__rollerVideoClocks(),character:{time:a.character.t,phase:a.character.phase,seed:a.character.seed,name:a.character.name},pos:a.pos.toArray()};
   const normalRender=g.R.render;
   if(diagnostic)g.R.render=function(...args){checkpoint('render-submit-start');try{return normalRender.apply(this,args);}finally{checkpoint('render-submit-end');}};
   const frame=diagnostic
-   ? i=>{window.__materialSeed(i);checkpoint('native-frame-start',{frame:i});g._frame(1/60);checkpoint('native-frame-end',{frame:i});}
+   ? i=>{window.__materialSeed(i);checkpoint('native-frame-start',{frame:i});g._frame(1/60);entryConditionTrace.push({ordinal:i+1,state:window.__materialObserveCurrent('state')});checkpoint('native-frame-end',{frame:i});}
    : i=>{window.__materialSeed(i);g._frame(1/60);};
   for(let i=0;i<(diagnostic?3:60);i++){frame(i);fixture();}
+  let entryReadiness=null;if(diagnostic){entryReadiness={expectedNativeFrames:3,actualNativeFrames:entryConditionTrace.at(-1).ordinal,passed:false,error:null};try{window.__materialRequireSettledEntry(entryConditionTrace.at(-1).state,entryReadiness.actualNativeFrames,3);entryReadiness.passed=true;}catch(e){entryReadiness.error=e.message;}}
   const r=G.renderer,gl=r.getContext();checkpoint('completion-drain-start');gl.finish();checkpoint('completion-drain-end');
   const U=g.levelMat.userData.uniforms;
   const atlasConditions={size:G.paint.size,width:G.paint.rt.width,height:G.paint.rt.height,
@@ -205,14 +290,14 @@ try{
      geometry:o.geometry?{uuid:o.geometry.uuid,drawRange:{start:o.geometry.drawRange.start,count:boundedValue(o.geometry.drawRange.count)},attributes:Object.fromEntries(Object.entries(o.geometry.attributes).map(([k,v])=>[k,{version:v.version,count:v.count}]))}:null});
     for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[]){
      if(materials.has(m.uuid))continue;if(materials.size>=256){materialsTruncated=true;continue;}
-     // Do not call renderer.properties.get: it can create a cache entry on a read.
+     // Private cached uniforms are observed separately, only after properties.has(material).
      const u=m.uniforms||m.userData?.uniforms||{};
      materials.set(m.uuid,{uuid:m.uuid,name:m.name,type:m.type,version:m.version,opacity:m.opacity,transparent:m.transparent,depthWrite:m.depthWrite,depthTest:m.depthTest,
       uniforms:Object.fromEntries(Object.entries(u).slice(0,128).map(([k,v])=>[k,boundedValue(v.value)])),uniformCount:Object.keys(u).length});
     }
    });
    const bones=ch.skeleton?.boneMatrices;
-   return{clocks:clocks(),camera:camera(),rendererFrame:r.info.render.frame,rngState:window.__materialRngState(),
+   return{entryObservation:window.__materialObserveCurrent('geometry'),clocks:clocks(),camera:camera(),rendererFrame:r.info.render.frame,rngState:window.__materialRngState(),
     renderCounts:{calls:r.info.render.calls,triangles:r.info.render.triangles,points:r.info.render.points,lines:r.info.render.lines},
     resources:{textures:r.info.memory.textures,geometries:r.info.memory.geometries,programs:r.info.programs.length},
     presentation:{quality:g.settings.quality,dynamicScale:g.R.dynScale,toneMapping:r.toneMapping,outputColorSpace:r.outputColorSpace,exposure:r.toneMappingExposure,
@@ -251,7 +336,7 @@ try{
    const encode=bytes=>{let value='';for(let i=0;i<bytes.length;i+=16384)value+=String.fromCharCode(...bytes.subarray(i,i+16384));return btoa(value);};
    checkpoint('capture-evidence-start');
    // Freeze the read-only receipt before any awaited sink; never rewrite clocks, frame counters, or RNG.
-   const evidence={width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,paintSignal,repeatSignal,repeat2Signal,renderStates,
+   const evidence={width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,paintSignal,repeatSignal,repeat2Signal,renderStates,entryConditionTrace,entryReadiness,
     initial,atlasConditions,fixture:fixture(),state:state(),placements,
     images:[{label:'unpainted',rgba:encode(unpainted)},{label:'painted',rgba:encode(painted)},{label:'repeat',rgba:encode(repeat)},{label:'repeat2',rgba:encode(repeat2)}]};
    checkpoint('diagnostic-atlas-readback-start');const rawAtlas=new Uint8Array(G.paint.size*G.paint.size*4);
@@ -261,6 +346,7 @@ try{
    checkpoint('capture-evidence-end');
   }
   if(paintSignal.changed<=1000||repeatSignal.changed!==0)throw Error('Paint visibility or frozen-repeat gate failed: '+JSON.stringify({paintSignal,repeatSignal}));
+  if(diagnostic&&!entryReadiness.passed)throw Error('Native entry readiness failed: '+entryReadiness.error);
   // Fail-closed controls prove the visibility predicate does not accept an empty signal.
   const validates=x=>x.changed>1000;if(validates(difference(unpainted,unpainted)))throw Error('Blank negative accepted');
   const pixels={unpainted:await digest(unpainted),painted:await digest(painted),paintSignal,repeatSignal};
