@@ -26,7 +26,7 @@ function runLoad(hz, actorCount, cap, seconds=2) {
  const recipes=sections.map(code=>new Function('inkjetVfxTicks','vfxRandom','rnd','groundBelow','clamp','SPARK','PUFF','DISC','TAU','inkjetVfxAdmission','inkjetVfxRoom','return ({'+code+'}).frame;')(inkjetVfxTicks,random,rnd,()=>0,(x,a,b)=>Math.max(a,Math.min(b,x)),{GLOW:0},{CHUNK:0,MIST:1},{SPLAT:0},Math.PI*2,inkjetVfxAdmission,inkjetVfxRoom));
  const actors=Array.from({length:actorCount},()=>({a:{pos:new V().set(0,2,0),form:'kid',intent:{}},t:{d:{jets:[{},{}],cones:[{},{}]},color:[1,0,0]},r:{d:{ink:{}},color:[1,0,0]},p:{pos:new V().set(0,2,4)}}));
  for(const x of actors){x.a.alive=true;x.a.specialActive={id:'inkjet'};x.p.owner=x.a;}
- d.G={actors:actors.map(x=>x.a)};d.rounds=new Map(actors.map(x=>[x.p,{wid:'inkjet',p:x.p}]));
+ d.G={actors:actors.map(x=>x.a),projectiles:{list:actors.map(x=>Object.assign(x.p,{wid:'inkjet'}))}};d.rounds=new Map(actors.map(x=>[x.p,{wid:'inkjet',p:x.p}]));
  let peakPuffs=0,peakSparks=0;
  const frame=(dt)=>{d.time+=dt;for(current=0;current<actors.length;current++){const {a,t}=actors[current];recipes[1].call(d,a,t,dt);}for(current=0;current<actors.length;current++){const {r,p}=actors[current];recipes[0].call(d,r,p,dt);}};
  for(let k=0;k<hz*seconds;k++){frame(1/hz);d.kit.sparks.update(1/hz);d.kit.puffs.update(1/hz);peakPuffs=Math.max(peakPuffs,d.kit.puffs.n);peakSparks=Math.max(peakSparks,d.kit.sparks.n);}
@@ -52,6 +52,27 @@ test('Inkjet admission reuses records, shares only free capacity, and excludes i
  actors[0].form='squid';actors[1].superJumpState={};actors[2].alive=false;
  d.time+=1/60;assert.equal(inkjetVfxAdmission(d,actors[0]),null);assert.equal(inkjetVfxAdmission(d,actors[1]),null);
  assert.equal(inkjetVfxAdmission(d,actors[3]),records[3],'record allocated only once');
- d.rounds.set({}, {wid:'inkjet',p:{owner:actors[2]}});d.time+=1/60;
+ d.G.projectiles={list:[{wid:'inkjet',pos:{},owner:actors[2]}]};d.time+=1/60;
  assert.equal(inkjetVfxAdmission(d,actors[2]),records[2],'existing flight remains eligible after owner death');
+});
+
+test('Inkjet quotas exclude retired/recycled rounds and deduplicate live owners without array scans',()=>{
+ const actors=Array.from({length:2},()=>({alive:true,specialActive:{id:'inkjet'},form:'kid',intent:{}}));
+ const stale={},dead={},recycled={},live={};
+ const d={time:1,G:{actors,projectiles:{list:[
+   {wid:'inkjet',dead:true,pos:{},owner:dead},
+   {wid:'shooter',pos:{},owner:recycled},
+ ]}},rounds:new Map([[{}, {wid:'inkjet',p:{owner:stale}}]]),
+ kit:{puffs:{cap:6,n:0},sparks:{cap:6,n:0}}};
+ assert.equal(inkjetVfxAdmission(d,actors[0]).puffs,3);
+ assert.equal(inkjetVfxAdmission(d,actors[1]).puffs,3);
+ for(const a of [stale,dead,recycled])assert.equal(inkjetVfxAdmission(d,a),null);
+ d.inkjetAdmissionBudget.actors.includes=()=>{throw Error('linear membership scan');};
+ d.G.projectiles.list=Array.from({length:32},()=>({wid:'inkjet',pos:{},owner:live}));
+ d.time+=1/60;
+ assert.equal(inkjetVfxAdmission(d,live).puffs,2,'new live owner gets same-frame share');
+ assert.equal(d.inkjetAdmissionBudget.actors.length,3,'duplicate projectiles do not multiply share');
+ d.G.projectiles.list=[];d.time+=1/60;
+ assert.equal(inkjetVfxAdmission(d,live),null,'removed live owner no longer reserves capacity');
+ assert.equal(inkjetVfxAdmission(d,actors[0]).puffs,3);
 });
