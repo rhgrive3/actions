@@ -5547,3 +5547,37 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
 - **本家の根拠**: Leanny/splat3 `7280ff9c` の `WeaponShooterNormal`（SHA-256 先頭 `dfca9f45fd0df3b6`）の `PaintParam` と `WallDropCollisionPaintParam.PaintRadiusShock` 1.56。Inkipedia「Splattershot」の S3 データ「When a shot hits a wall, it will have an inking radius of 1.56 units.」。DistanceNear 1.1、DistanceFar 20、角度 10/35° は Inkipedia `Template:Shooter_data_S3` の既定値。
 - **確認結果**: 実際の Splattershot は InkFlight の `shooter` プロファイルで飛ぶため、既存の #79 試験が直接呼ぶ汎用の `Projectiles._impact` は通らない。そこで `fireShooter` → InkFlight → Physics の OBB 接触 → CPU PaintSystem の経路で確かめた。床では、近距離の幅 1.93 から遠距離側への補間、straight 位相の着弾角による深さ（8°〜85°）が出典どおり CPU 塗りに届いた。ターフの計上は塗った面積と一致した。壁では、壁ドロップ開始時の衝撃塗りが半径 1.56 で、シードに依らず 1 回だけ出た。30/60/120 Hz の描画スケジュールでも、塗りとターフは同一だった。実装は変更していない。
 - **確認状態**: `patches/splatoon3/tests/issue-79-shooter-live-impact-paint.test.mjs`（3 件）でロジック単独の測定を行った。実機での面積計測、ブラウザでの見た目、break/free 位相の高さセレクタは未確認のまま。
+
+
+## 2026-10-21 通常潜伏・壁のぼりの本体表示と泳ぎ飛沫
+
+基準: `ecfb851ad7d9c78c2e7b1937dda0a723946dc215`。対象は公開版 `inkwave-public/` の本番合成。ユーザー報告「壁のぼりで本体が見える・通常泳ぎでも薄く見える・飛沫が静か」に対応。
+
+### 本家の直接確認
+
+2026-10-21 に任天堂の公開 MP4 を取得し、デコードしたコマ送り画像を目視確認した。外部映像そのものは配信物・Git に追加しない。
+
+- [JP 公式イカ／ヒト紹介](https://www.nintendo.com/jp/switch/av5ja/index.html) の [modal_pc.mp4](https://www.nintendo.com/jp/switch/av5ja/assets/images/index/ikatohito/movie/modal_pc.mp4): SHA-256 `294c6713400be43793f989f897dfae633bcc2744a369849bd0ec14c77b28e807`、12.829秒。冒頭の自インク泳ぎでは表面の盛り上がり、左右と後方に跳ねるインク、進行方向に沿った波を確認。空中へ出る場面では目と触腕を持つ本体が出る。
+- [公式 Dive 映像 move03](https://assets.nintendo.com/video/upload/v1657880121/Microsites/splatoon-3/videos/s3_howtoplay_move03.mp4): 泳ぎ中とヒトへ戻る際の大きな飛沫を区別して確認。
+- [公式 Squid Surge 映像 move05](https://assets.nintendo.com/video/upload/v1657880121/Microsites/splatoon-3/videos/s3_howtoplay_move05.mp4): SHA-256 `3fd3fd8f12f71cbe93fb28c04fc3763c110fbd813473259d7f08fe57e4b0b450`。壁のチャージ／発光／離脱を確認。この特殊動作中に見えるイカ・発光を、通常潜伏の半透明ゴースト表示の根拠にはしない。
+
+条件: 黄色の自インク、通常泳ぎと壁サージ。紹介映像の正確な実行バージョン、ブキ、ギア/AP、スティック量、編集速度は不明。既存 11.3.0 gameplay profile は変更しない。粒子数・寸法・速度は本家の抽出値ではなく INKWAVE の視覚校正値であり、実機の完全一致とは判定しない。
+
+### 原因・変更・再現
+
+| 再現操作 | 原因と実装箇所 | 変更後・プレイへの影響 |
+| --- | --- | --- |
+| 自インクで通常泳ぎ／停止、塗った壁へ入る | native `Character._updateSquid` と source `SquidRig.apply` はローカルに opacity .42 / GreaterDepth のイカ形ゴーストを出す。床・壁だけの遮蔽では通常メッシュの目・触腕も露出し得る | `s3-squid-look-adapter.mjs` が両 pose owner の後で body/eyes/dark と ghost を隠す。source/fallback、全 LOD、local/remote に適用。pivot/root は保持し、壁チャージ完了 glint 等の独立した演出は隠さない |
+| そのままジャンプ／壁から離脱／乾いた地面へ／ヒトへ戻る | 前フレームの表示状態を持ち越すと再出現しない | body は毎更新で復元し、目は既存 pose owner の状態を使う。空中・乾燥イカ・ヒトへの復帰を回帰で確認 |
+| 通常速度で直進泳ぎ | `FX.wake` は細い尾側の少数小滴。Actor は `> .05` で余剰時間を捨て、直接30/60/120Hz更新で発生頻度も変わる | `swim-splash-adapter.mjs` が左右の縁から後方へ出る大きめの滴と上向き速度・広がりを強める。速度に応じた粒子量と既存 pool/距離/quality 制限を使用。0.05秒ごとに余剰時間を保持し発生させる |
+| 微入力、イカニンジャの抑制後、空中、泳ぎ再開 | 抑制期間の時刻を持ち越すと復帰時にまとまって出る | 既存 `swimSplashVisible` を維持し、非発生中はタイマーを0に戻す。空中は発生しない。インク面 wake shader／塗り／ダメージ／移動速度は変更しない |
+
+### 検証
+
+- `swim-presentation.test.mjs`: 実本番合成 Actor/Character、source bank 読込、native fallback、hero/game/far、local/remote、30/60/120Hz。潜伏初フレームの本体・目・ghost非表示、離脱直後の再表示、2秒40回のwake、低速／Ninja／空中抑制と再開を確認。実FXレシピで両側へ広がる滴・速度依存も確認。
+- 上記＋`squid-ghost-depth`＋`s3-squid-look`＋build-packaging: 12 pass、5 skip（出力先未指定の emitted-only packaging 項目）。追加の source/swim/wall/roll/heading/material/form/build identity 回帰は64/64 pass。
+- `check-inkwave-patches --quick`、本番ビルド、起動予算チェック成功。
+- `scripts/check-inkwave-swim-presentation.mjs _site .browser-evidence/swim-final`: 実ビルドの Game/Actor/Character/FX、Chromium/SwiftShader で停止潜伏・泳ぎ・壁・空中・乾燥イカ・ヒトの6場面を描画するチェッカー。診断用のインク色床／壁を置き、制御した Actor 状態を使う。潜伏時の本体 draw 0、空中・乾燥時の実 draw、泳ぎ中の生存 droplets とスクリーンショットを確認する。自動操作による壁到達や実機入力物理の証明とは区別。
+- 証跡: `.browser-evidence/swim-final/{receipt.json,idle.png,swim.png,wall.png,air.png,dry.png,human.png}`。この作業環境の保持先であり、外部 Nintendo 映像は `/workspace/scratch/` に保持。
+
+未確認: Switch 11.3.0 の同一入力・ギアでの飛沫密度／波形／チャージ姿勢の比較、実iPad WebKitの描画性能。公式紹介映像の観察とロジック回帰、Chromium WebGL の描画確認はそれぞれ別の検証である。
