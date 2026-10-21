@@ -1,0 +1,62 @@
+name: INKWAVE Wiper native plane pilot
+on:
+  push:
+    branches: ['diagnostic/wiper-plane-native-20261021']
+    paths:
+      - '.github/workflows/inkwave-wiper-plane-pilot.yml'
+permissions:
+  contents: read
+jobs:
+  native-plane-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 0430673b09a5009628fc87baa414b3560090fc1d
+          path: work/wiper-source
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - name: Install and verify official video tools before build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+          ffmpeg -version
+          ffprobe -version
+          ffmpeg -hide_banner -encoders | grep libx264
+          ffmpeg -hide_banner -filters | grep drawtext
+      - name: Check QA-only identity and parse candidate
+        run: |
+          test "$(git -C work/wiper-source rev-parse HEAD)" = 0430673b09a5009628fc87baa414b3560090fc1d
+          diff -qr patches work/wiper-source/patches
+          diff -qr inkwave-public work/wiper-source/inkwave-public
+          for file in scripts/inkwave-source-composition.mjs scripts/lib/inkwave-source-compaction.mjs scripts/build-inkwave.mjs scripts/lib/inkwave-runtime-evidence.mjs scripts/lib/inkwave-range-menu-entry.mjs; do
+            cmp "$file" "work/wiper-source/$file"
+          done
+          node --check scripts/prepare-inkwave-wiper-plane-baseline.mjs
+          node --check scripts/check-inkwave-wiper-plane-native.mjs
+          node --check scripts/check-inkwave-wiper-plane-paired.mjs
+          node --check scripts/lib/inkwave-wiper-scene-readiness.mjs
+      - name: Build unchanged candidate once
+        run: |
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          (cd work/wiper-source && node scripts/build-inkwave.mjs inkwave-public ../wiper-site)
+      - name: Prepare verified two-module baseline overlay
+        run: node scripts/prepare-inkwave-wiper-plane-baseline.mjs work/wiper-source work/wiper-site work/wiper-overlay
+      - name: Verify native plane and unchanged controls with continuous Dental pilot
+        run: |
+          ffmpeg -version
+          node scripts/check-inkwave-wiper-plane-paired.mjs work/wiper-site work/wiper-source work/wiper-overlay work/wiper-native
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wiper-native-plane-pilot
+          path: |
+            work/wiper-native/
+            work/wiper-overlay/receipt.json
+          if-no-files-found: error
