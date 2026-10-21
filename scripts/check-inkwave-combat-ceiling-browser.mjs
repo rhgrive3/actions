@@ -223,4 +223,20 @@ try {
  if(report.cleanupErrors?.length||errors.length){report.status='failed';process.exitCode=1;}
  fs.writeFileSync(path.join(evidence,'combat-ceiling-browser-result.json'),JSON.stringify(report,null,2)+'\n');
 }
-console.log(JSON.stringify({status:report.status,sourceSha,phase:report.phase,evidence}));
+// Keep CI failure diagnosis useful when the artifact archive is unavailable.
+// Only fixed error labels and numeric emission state reach stdout; never wire data.
+const failure = report.status === 'failed' ? {
+ error: ['Native projectile never authored a 36 hit packet',
+  'Exactly one native paid round must finish the firing request',
+  'Expected exactly one real near-hit 36'].find(message => report.error?.includes(message))
+  || (report.error?.includes('Timeout') ? 'timeout' : 'other-error-see-artifact'),
+ emission: report.emission ? {
+  pending: report.emission.pending === true,
+  ink: Number.isFinite(report.emission.ink) ? report.emission.ink : null,
+  firstRemaining: Number.isFinite(report.emission.firstRemaining) ? report.emission.firstRemaining : null,
+  projectiles: Number.isFinite(report.emission.projectiles) ? report.emission.projectiles : null,
+  paidRound: !!report.emission.emission,
+ } : null,
+ browserErrorCount: errors.length,
+} : undefined;
+console.log(JSON.stringify({status:report.status,sourceSha,phase:report.phase,evidence,failure}));
