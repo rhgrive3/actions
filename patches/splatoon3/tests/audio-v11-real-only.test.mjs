@@ -9,6 +9,7 @@ import { fireArticulation, WEAPON_AUDIO } from '../runtime/audio/weapon-recipes.
 import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
 import { RealS3SampleLoader } from '../runtime/audio/real-s3-loader.mjs';
 import { AuthorizedSamplePack } from '../runtime/audio/authorized-samples.mjs';
+import { chargerHoldSustain } from '../runtime/audio/charger-hold-sustain.mjs';
 
 const rights='Authorized only within a local private copy, no public distribution';
 const id='s3-charger-long';
@@ -38,6 +39,28 @@ class MixerStub {
  stats(){return{played:this.played.length};}
 }
 installWeaponAudioEngine(MixerStub);
+
+test('short Charger MP3 transient becomes a seamless, cached sample-derived bed',()=>{
+ const {ctx}=mkctx(),sr=ctx.sampleRate,n=Math.round(sr*.2);
+ const source=ctx.createBuffer(1,n,sr),samples=source.getChannelData(0);
+ for(let i=0;i<n;i++){
+   const t=i/sr,amp=t<.03?.10:t<.16?.008:.0003;
+   samples[i]=amp*Math.sin(2*Math.PI*1430*t);
+ }
+ const original=new Float32Array(samples);
+ const smoothed=chargerHoldSustain(ctx,source);
+ assert.notEqual(smoothed,source,'loop body derived from recorded buffer');
+ assert.equal(chargerHoldSustain(ctx,source),smoothed,'shared sample is processed only once');
+ assert.ok(smoothed.duration>=.54&&smoothed.duration<=.6);
+ const y=smoothed.getChannelData(0);
+ assert.ok(y.some(x=>Math.abs(x)>.002),'real recorded material was retained');
+ assert.ok(Math.abs(y[0]-y.at(-1))<1e-5,'loop boundary has no sample discontinuity');
+ assert.ok(Math.max(...y.slice(0,1000).map(Math.abs)) < Math.max(...original.slice(0,1000).map(Math.abs)),
+   'retriggered click at the sample start is never carried into the sustain loop');
+ assert.deepEqual(samples,original,'the source AudioBuffer remains byte-for-byte unchanged');
+ const tooShort=ctx.createBuffer(1,Math.floor(sr*.07),sr);
+ assert.equal(chargerHoldSustain(ctx,tooShort),tooShort,'unknown very short clips are never fabricated');
+});
 
 test('original main shot and normal, strong, critical and splat recordings are resident before a Charger first shot',async()=>{
  const {ctx}=mkctx(),audio=new MixerStub(ctx),b=audio.weaponBank();
