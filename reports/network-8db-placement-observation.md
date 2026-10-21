@@ -1,25 +1,29 @@
 # Network placement observation, not a gameplay correction
 
-Direct parent: 8db288ece48c882f42eb0d3540218af58d6af6e4. Six QA-only paths. No runtime, model, timeout, placement validator, damage, packet acceptance, or proof threshold changes. PR1765 and Kraken remain fixed.
+This second observation has direct parent 3ab1039f9d631de19f50e040fd5f8e953cb45cb6 and changes five QA-only paths. That parent directly descends from PR1765 head 8db288ece48c882f42eb0d3540218af58d6af6e4. No runtime, model, timeout, placement validator, damage, packet acceptance, step budget, or proof threshold changes. PR1765 and Kraken remain fixed.
 
-## Existing evidence
+## Verified first observation
 
-- Failed literal8db job119497626507/run39679157896: placement validation failed before firing. Artifact12383578893 ZIP SHA256 1aacc65dcab15375269d62ea725b45b0679589bf13ed45c0e985b14f647da501.
-- Passed literalffdb run39658991486 artifact12375648983 is the comparison source. ZIP SHA256 989b068ea95111f89607f20c5ec7536bc71a9c8f1b5952fe7bf0d9f949030125.
-- Both result JSONs have inputHash68591cc3b710e3c83e5f8e92d9be6a673c95da4394f19ac4b53457eb826a31f3, contentHash2ceba653d36b11a399938667bc5901847284737a687b6b9c1b81de9e725ebf92, and harnessHash774c737f2d576e3147f23149cc123e0d9436a4517b13a70aed85fb0b5d0ca93b. Selected neutral points are equal. This does not establish identical network timing.
-- Failed guest's host-owned victim proxy(nid0) was at [0.91,6.7,-38.58], while guest-owned attacker(nid1) remained at [12.5,~0,0]. The original driver places both local owners and remote proxies with spawnAt, then clears buffers, then executes 12 native steps.
-- Actual production-composed Actor.spawnAt increments netLife and resets gameplay state but does not clear net.cur/ready. NetMatch._sample returns when its buffer is empty; applyRemote can then use the retained ready sample, including its old position and life. A real source Actor/NetMatch Node counterexample demonstrates this possible path. Its Visual and physics are stubs and no socket is involved, so it does not prove the original browser failure's chronology.
+Run 39683276479 checked literal 3ab, passed 15 Node tests, verified all original build inputs/artifacts, and reproduced the placement failure before firing. Artifact 12384314207 has ZIP SHA256 2b1e57a39e06a07bd0e54071dcd82a9326bcaa7ac8996667dffa48eefabecb8e.
 
-## Observation contract
+Each peer supplied 39 rows without truncation. Both proxies were assigned life2/neutral positions but retained ready=true and cur.life1 at their spawn positions after the QA cleared their buffers. Native net.update retained that sample, then applyRemote restored the old life and spawn position at step0. The host proxy accepted a new life2 sample at step1. The guest proxy retained its old sample and empty buffer through all 12 steps, failing the unchanged spawn-barrier validation.
 
-Optional --observe-placement records frozen state, immediate post-placement state, before/after native net.update and after actor application for the original 12 settle steps, and the final validation read. Maximum48 rows and2 actors per peer. Sample buffer endpoints, cur/ready, owner-is-self, life/epoch, native peer playback clocks, input intent, and position are read only. No private _peer call, acceptance write, snapshot synthesis, or step delay is added. Existing failure status/exit remain failures. Observations are in the artifact only; existing sanitized stdout is unchanged.
+Relay input records contain host life2 broadcasts, but this is not proof of guest delivery. Guest peer.lastTs remained 127.645 while host broadcasts reached 182.351. _tick updates lastTs before actor-specific validation, so later actor gates alone do not explain the missing update. Receiver dispatch and lastReceiveAt were not captured. The timestamp jump alone does not prove a clock-guard rejection.
 
-Observer overhead may change timing and make the failure disappear. A passing diagnostic is not a fix or final-head mandatory acceptance. The bounded rows may not expose every packet arrival; absence of a sample is not proof it was never sent.
+The original failed 8db artifact 12383578893 (SHA256 1aacc65dcab15375269d62ea725b45b0679589bf13ed45c0e985b14f647da501) and old successful ffdb artifact 12375648983 (SHA256 989b068ea95111f89607f20c5ec7536bc71a9c8f1b5952fe7bf0d9f949030125) have identical input/content/harness hashes and selected neutral points. Their packet timing is not known to be equal.
+
+## Narrow second observation
+
+Optional --observe-placement retains the original maximum 48 state rows and two actors per peer, adding lastReceiveAt. During the placement phase it also observes relay forwarding and Playwright WebSocket frame receipt, bounded to 128 combined sanitized rows. Relay connection order and browser page index are distinct labels; matching packet metadata, not index alone, must establish a path. Raw payloads and owner identifiers are not copied into the new metadata.
+
+Native onMessage and _tick wrappers record at most 96 before/after metadata rows per peer. Each wrapper calls its original once with the original this and arguments, preserving return values and thrown objects. Observation failures are counted without suppressing native behavior. No cur, ready, position, sample, life, peer clock, admission decision, or transport result is written. Original methods are restored during cleanup. Existing sanitized stdout and failure exit remain unchanged.
+
+Observation overhead can change scheduling. Neither diagnostic success nor a locally proposed owner-only preparation barrier is a gameplay fix or final-head acceptance. Future setup should place actual owners and wait for their real snapshots to converge; it must not manufacture proxy acceptance. The missing receive/admission boundary remains unresolved until the second native receipt is inspected.
 
 ## Preserved build reuse
 
-The diagnostic reuses original ffdb build artifact12379998715/run39658991486 after exact ZIP SHA verification. Its ffdb marker is retained. Before browser execution, verifyRuntimeBuild checks every compiled artifact and all original input bytes against the new diagnostic Git checkout; both expected input/content hashes are pinned to the original successful and failed receipts. No manifest rewriting or rebuild. The direct-parent/allowlist guard separately proves8db runtime is unchanged.
+Both observations reuse original ffdb build artifact 12379998715 from run 39658991486, ZIP SHA256 f7bc158f7ab8480dc1a5bf767a777258626c202228cf975fcbdebc99064f0f9e. Its original ffdb marker is retained. verifyRuntimeBuild checks every compiled artifact and original input byte against the diagnostic Git tree before browser execution. The pinned inputHash is 68591cc3b710e3c83e5f8e92d9be6a673c95da4394f19ac4b53457eb826a31f3 and contentHash is 2ceba653d36b11a399938667bc5901847284737a687b6b9c1b81de9e725ebf92. No rebuild or manifest relabeling is performed.
 
-## Local checks
+## Local validation
 
-Three observer Node tests pass, including frozen read-only state, bounded records/nonfinite sanitation, and invalid stage rejection. The production-composed stale-sample Node counterexample passes with explicit renderer/physics fixture boundaries. Native diagnostic execution and original-failure causal confirmation remain pending.
+Seven observer Node tests pass: read-only state, bounded/nonfinite rows, invalid labels, original receiver/arguments/return/exception preservation, continued native calls after truncation, atomic missing-method rejection, observer-error isolation, and sanitized socket metadata. Driver syntax passes. The inherited real production-composed stale-sample counterexample retains its explicit Visual/physics stubs; it is not a socket test. Second native observation is not yet executed.

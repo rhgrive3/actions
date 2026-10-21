@@ -12,7 +12,7 @@ import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 import {installCombatPlacementQA,advanceUntilNativeShotProof} from './lib/inkwave-combat-ceiling-placement.mjs';
-import {installNetworkPlacementObservation} from './lib/inkwave-network-placement-observation.mjs';
+import {installNetworkPlacementObservation,createNetworkFrameObservation} from './lib/inkwave-network-placement-observation.mjs';
 import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runtime-evidence.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
@@ -32,6 +32,8 @@ for(const file of [selfRelative,'scripts/lib/inkwave-combat-ceiling-placement.mj
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2'};
 const observePlacement=process.argv.includes('--observe-placement');
 const errors=[],wire=[],loaded=new Set(),contexts=[],pages=[];
+const frameObservation=createNetworkFrameObservation();let relayConnectionIndex=0;
+const observeFrame=(stage,text,index)=>{if(observePlacement&&report.phase==='native-actor-placement')frameObservation.record(stage,text,index);};
 const report={schema:1,status:'running',sourceSha,inputHash:build.inputHash,contentHash:build.contentHash,
  harnessHash:hash(fs.readFileSync(self)),scenario:'native-shooter-220-reject-36-accept',
  scope:'Full native Game/Actor/Projectiles/NetMatch; deterministic native component steps after online startup; no Actor damage or receiver admission replacement',
@@ -49,7 +51,7 @@ try {
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(resolve=>relay.once('listening',resolve));
  const connect=createLocalRelay({rooms:new Map()});
- relay.on('connection',(ws,req)=>{void connect(ws,req,{receive:text=>{if(wire.length<4096)wire.push({at:Date.now(),text});else errors.push('wire receipt overflow');}}).then(receipt=>{(report.relayAdmissions||=[]).push(receipt);}).catch(error=>errors.push('relay: '+String(error)));});
+ relay.on('connection',(ws,req)=>{const connectionIndex=relayConnectionIndex++;void connect(ws,req,{...(observePlacement?{send:(data,deliver)=>{observeFrame('relay-forward',data,connectionIndex);return deliver(data);}}:{}),receive:text=>{if(wire.length<4096)wire.push({at:Date.now(),text});else errors.push('wire receipt overflow');}}).then(receipt=>{(report.relayAdmissions||=[]).push(receipt);}).catch(error=>errors.push('relay: '+String(error)));});
  const base='http://127.0.0.1:'+server.address().port;
  const relayURL='ws://127.0.0.1:'+relay.address().port;
  const address=base+'/?map=tidewater&difficulty=normal&skipTitle&relay='+encodeURIComponent(relayURL);
@@ -59,6 +61,7 @@ try {
  for(let i=0;i<2;i++){
   const context=await browser.newContext({viewport:{width:1280,height:720},serviceWorkers:'block'});contexts.push(context);
   const page=await context.newPage();pages.push(page);page.setDefaultTimeout(30000);
+  if(observePlacement)page.on('websocket',socket=>socket.on('framereceived',event=>observeFrame('browser-receive',event.payload,i)));
   page.on('pageerror',e=>errors.push('player'+i+': '+e.message));
   page.on('requestfailed',r=>errors.push('player'+i+': '+r.url()+': '+r.failure()?.errorText));
   await page.addInitScript(installCombatPlacementQA);
@@ -89,6 +92,7 @@ try {
  report.phase='native-actor-placement';
  report.roles=await Promise.all(pages.map(p=>p.evaluate(async url=>{
   const {Actor}=await import(url),G=__G,n=G.netm;__inkwave.debug.freeze();
+  window.__ceilingPlacementObservation?.observeDispatch();
   window.__ceilingPlacementObservation?.record('frozen');
   const actors=G.match.actors.map(a=>{if(!(a instanceof Actor)||a.damage!==Actor.prototype.damage||a.weapon.id!=='shooter'||a.weapon.damage!==36)throw Error('Native Actor/shooter identity failed');return {nid:a.nid,owner:a.owner,remote:a.remote,team:a.team,weapon:a.weapon.id,damage:a.weapon.damage};});
   window.__ceilingOriginalDamage=new Map(G.match.actors.map(a=>[a,a.damage]));
@@ -264,12 +268,13 @@ try {
     alive:a.alive===true,grounded:a.grounded===true,form:['kid','squid'].includes(a.form)?a.form:'other',pos:xyz(a.pos)}))};
  });}catch{}
 } finally {
+ if(observePlacement)report.networkFrameObservation=frameObservation.report();
  if(observePlacement)report.placementObservation=await Promise.all(pages.map(async p=>{
   try{return await p.evaluate(()=>window.__ceilingPlacementObservation?.report()??null);}catch{return {unavailable:true};}
  }));
  report.errors=errors;report.loadedArtifacts=[...loaded];report.wire=wire;
  for(const page of pages){
-  try{await page.evaluate(()=>{const g=window.__ceilingGuest,h=window.__ceilingHost,s=window.__ceilingShot;if(s){s.system._step=s.step;s.flight.impact=s.impact;}if(g){g.tr.sendTo=g.send;g.n.onMessage=g.originalMessage;}if(h)h.n.onMessage=h.original;});}
+  try{await page.evaluate(()=>{const g=window.__ceilingGuest,h=window.__ceilingHost,s=window.__ceilingShot;if(s){s.system._step=s.step;s.flight.impact=s.impact;}if(g){g.tr.sendTo=g.send;g.n.onMessage=g.originalMessage;}if(h)h.n.onMessage=h.original;window.__ceilingPlacementObservation?.restore();});}
   catch(e){(report.cleanupErrors||=[]).push(String(e));}
  }
  // Persist before closing sockets/browser, so a cleanup failure cannot erase evidence.

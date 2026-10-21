@@ -22,16 +22,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Enforce direct parent and six QA-only paths
+      - name: Enforce direct parent and five QA-only paths
         run: |
           test "$(git rev-parse HEAD)" = '${{ github.sha }}'
-          test "$(git rev-parse HEAD^)" = 8db288ece48c882f42eb0d3540218af58d6af6e4
+          test "$(git rev-parse HEAD^)" = 3ab1039f9d631de19f50e040fd5f8e953cb45cb6
           python3 - <<'PY'
           import subprocess
-          allowed={'.github/workflows/inkwave-network-placement-observation.yml','scripts/check-inkwave-combat-ceiling-browser.mjs','scripts/lib/inkwave-network-placement-observation.mjs','scripts/tests/inkwave-network-placement-observation.test.mjs','scripts/tests/inkwave-network-placement-stale-sample.test.mjs','reports/network-8db-placement-observation.md'}
+          allowed={'.github/workflows/inkwave-network-placement-observation.yml','scripts/check-inkwave-combat-ceiling-browser.mjs','scripts/lib/inkwave-network-placement-observation.mjs','scripts/tests/inkwave-network-placement-observation.test.mjs','reports/network-8db-placement-observation.md'}
           actual=set(subprocess.check_output(['git','diff','--name-only','HEAD^','HEAD'],text=True).splitlines())
           assert actual==allowed,(actual-allowed,allowed-actual)
-          print('Exact 8db parent; six QA-only files; runtime and original placement helper unchanged')
+          print('Exact 3ab observation parent; five QA-only files; runtime and original placement helper unchanged')
           PY
           mkdir -p .ci-scratch .reused-site .diagnostic/evidence
           npm install --no-save --no-package-lock --silent playwright@1.62.1 ws@8
