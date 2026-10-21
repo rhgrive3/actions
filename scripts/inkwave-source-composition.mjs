@@ -38,18 +38,22 @@ function adaptRollerBandParity(rel, code) {
     '    const ext = roll ? r * (Math.hypot(BAND_L, BAND_W) + BAND_R + 0.05) : r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);',
     '    const ext = roll ? r * Math.hypot(BAND_L + BAND_R, BAND_W + BAND_R + 0.048) : r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);',
     'Roller scan bounds cover all wobble phases and rotations');
-  const original = [
-    '          const qa = Math.abs(px * sdu + py * sdv) - r * BAND_L, qb = Math.abs(-px * sdv + py * sdu) - r * BAND_W;',
-    '          const sd = Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * BAND_R;',
-    '          if (sd > -0.03 * r) continue;',
-  ].join('\n');
+  // Other adapters can insert statements between the old CPU band math and
+  // its cutoff. Bind to the unique cutoff, not a fragile three-line sequence.
+  // Retire the unused unseeded math if its two original declarations remain.
+  const qa = '          const qa = Math.abs(px * sdu + py * sdv) - r * BAND_L, qb = Math.abs(-px * sdv + py * sdu) - r * BAND_W;';
+  const sd = '          const sd = Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * BAND_R;';
+  if (code.includes(qa) && code.includes(sd)) {
+    code = replaceOnce(code, qa, '', 'retire obsolete unseeded Roller qa');
+    code = replaceOnce(code, sd, '', 'retire obsolete unseeded Roller sd');
+  }
   const corrected = [
     '          const along = px * sdu + py * sdv, across = -px * sdv + py * sdu;',
-    '          // Reject the complete possible extent before paying for the two seeded sines.',
     '          if (Math.abs(along) > r * (BAND_L + BAND_R) || Math.abs(across) > r * (BAND_W + 0.048 + BAND_R)) continue;',
     '          if (rollerBandSignedDistance(along, across, r, seed) > 0) continue;',
   ].join('\n');
-  return replaceOnce(code, original, corrected, 'Roller CPU ink footprint seeded band SDF');
+  return replaceOnce(code, '          if (sd > -0.03 * r) continue;',
+    corrected, 'Roller CPU ink footprint seeded band SDF');
 }
 // Keep the tested source path identical to the production build's adapters.
 export function adaptBuildSource(rel, code) {
