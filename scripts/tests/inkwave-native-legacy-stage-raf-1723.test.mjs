@@ -6,6 +6,15 @@ import fs from 'node:fs';
 import { adaptBuildSource } from '../inkwave-source-composition.mjs';
 const main=adaptBuildSource('src/main.js',
   fs.readFileSync(new URL('../../inkwave-public/src/main.js',import.meta.url),'utf8'));
+test('#1723 recovery UI ships through the native bundle, never an omitted source-menu sidefile', () => {
+ const bootImports=main.split('\n').filter(line=>line.startsWith('import '));
+ assert.ok(bootImports.some(line=>line.includes('showNativeWorldRecovery')&&line.includes('/native-stages/runtime/engine.mjs')),
+   'published Game imports recovery UI from the bundled engine');
+ assert.ok(!bootImports.some(line=>line.includes('/native-stages/runtime/source-menu.mjs')),
+   'source-menu is build-only in minified native builds');
+ const engine=fs.readFileSync(new URL('../../patches/native-stages/runtime/engine.mjs',import.meta.url),'utf8');
+ assert.match(engine,/export \{ nativeStageArt, showNativeWorldRecovery \} from '\.\/source-menu\.mjs'/);
+});
 const anchor='const nativeStageBuild = Game.prototype._buildWorld;';
 const singleton='const game = new Game();';
 const start=main.indexOf(anchor),end=main.indexOf(singleton,start);
