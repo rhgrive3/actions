@@ -21,7 +21,44 @@ export function adaptNativeStages(rel,code){
     if (unavailable) { this.toast(unavailable.name + '：' + unavailable.reason); return; }`);
  }
  if(rel==='src/main.js'){
-  code="import { nativeStageEnabled, NATIVE_IDS, UNAVAILABLE_NATIVE_STAGES } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld, nativeSpawnYaw, nativeArenaBasis } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
+  code="import { nativeStageEnabled, NATIVE_IDS, UNAVAILABLE_NATIVE_STAGES } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld, nativeSpawnYaw, nativeArenaBasis, showNativeWorldRecovery } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
+  // #1723: _buildWorld (legacy and native) is asynchronous. During legacy
+  // lightmap fetch, the old native paint target is already disposed and the
+  // legacy decor has not been published. The fixed 60Hz frame may keep
+  // networking/menu input alive, but must not touch an incomplete GPU world.
+  once('  _frame(dt) {', `  _frame(dt) {\n    if (this._nativeStageSwitchPending) {
+      G.time += Math.max(0, dt);
+      this.input?.pollPad?.();
+      this._padMenus?.();
+      G.net?.update?.(dt);
+      this.menus?.update?.(dt);
+      this.input?.endFrame?.();
+      this.s3Clock?.reset?.();
+      return;
+    }`);
+  once('const game = new Game();', `// Keep stage loading identity separate from a match/room flow. An older
+// async build may finish while a newer one owns the pending world.
+const nativeStageBuild = Game.prototype._buildWorld;
+Game.prototype._buildWorld = async function(...args) {
+  const epoch = this._nativeStageSwitchEpoch = (this._nativeStageSwitchEpoch || 0) + 1;
+  this._nativeStageSwitchPending = true;
+  const map = args[0], target = map?.layout || map?.id;
+  try { return await nativeStageBuild.apply(this, args); }
+  catch (error) {
+    // Failed native publication restores its previous world transactionally.
+    // A failed *legacy* build cannot safely resume rendering the already
+    // released native paint/meshes; enter the existing reload-only recovery.
+    if (!NATIVE_IDS.includes(target) && this._nativeStageSwitchEpoch === epoch) {
+      this._nativeWorldRecoveryFatal = { error, recoveryErrors: [] };
+      this.frozen = true;
+      showNativeWorldRecovery(this);
+    }
+    throw error;
+  } finally {
+    if (this._nativeStageSwitchEpoch === epoch) this._nativeStageSwitchPending = false;
+  }
+};
+const game = new Game();`);
   const unavailableGuard = `
     const unavailable = UNAVAILABLE_NATIVE_STAGES.find(stage => stage.id === (o.mapId || this.mapDef?.id));
     if (unavailable) { this.menus?.toast?.(unavailable.name + '：' + unavailable.reason); return false; }`;

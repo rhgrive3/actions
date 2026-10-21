@@ -167,8 +167,8 @@ jobs:
         run: node --test scripts/tests/inkwave-browser-request-failure.test.mjs scripts/tests/inkwave-browser-active-failures.test.mjs
       - name: Verify cancelled native texture ownership
         run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-texture-cancellation.test.mjs patches/native-stages/tests/native-normal-readback.test.mjs patches/native-stages/tests/native-texture-index.test.mjs
-      - name: Verify cancelled native world preparation
-        run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-world-cancellation.test.mjs
+      - name: Verify cancelled native world preparation and async stage fencing
+        run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-world-cancellation.test.mjs scripts/tests/inkwave-native-legacy-stage-raf-1723.test.mjs
       - name: Verify native BVH query lifetime and collision parity
         run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs patches/native-stages/tests/bvh-browser-baseline.test.mjs
       - name: Verify deterministic network replication

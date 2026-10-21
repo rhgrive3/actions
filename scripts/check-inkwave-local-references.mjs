@@ -14,7 +14,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "inputKey": "native-stages/runtime/engine.mjs",
     "sourceInputKey": "upstream/src/game/nav.js",
     "sourceSha256": "419738ae4f8e23096b0ead55c9d353dc1e36867965d4515170dbe6046be3db4a",
-    "targetSha256": "d47f7f9baf3e6598c9d53ecd503d1c0c3c341e3b04b900d7029bb628e83cc353"
+    "targetSha256": "58b35201cbbe67d54244645faf856d5570f6e09549a04f4b36c3ca4ab669a4ea"
   },
   {
     "source": "inkwave-public/src/world/maps.js",
