@@ -1,9 +1,11 @@
 // Native range dummies have no source-motion rig. Admit only the exact native class and session owner.
 export async function awaitWiperSceneSources(G,TargetDummyCharacter,timeoutMs=180000){
  if(typeof TargetDummyCharacter!=='function')throw Error('Native dummy class required');
- const records=G.actors.map(a=>({a,ch:a.character,owner:null,warm:null,warmAwaited:false,dummy:a.character instanceof TargetDummyCharacter}));
+ const scene=G.scene,match=G.match,actors=G.actors,local=G.local,range=match?.range,targets=range?.targets;
+ const records=actors.map(a=>{const ch=a.character,owner=ch?.sourceMotion;return {a,ch,owner,ready:owner?.ready,warm:null,warmAwaited:false,dummy:ch instanceof TargetDummyCharacter};});
  if(!records.length||records.length>64)throw Error('Unexpected scene actor count');let timer;
  const valid=r=>{
+  if(G.scene!==scene||G.match!==match||G.actors!==actors||G.local!==local||match?.range!==range||range?.targets!==targets)throw Error('Native scene/session ownership changed');
   if(r.a.character!==r.ch)throw Error('Native scene character ownership changed');
   if(r.dummy){
    const targets=G.match?.range?.targets,t=r.a.rangeTarget;
@@ -12,14 +14,14 @@ export async function awaitWiperSceneSources(G,TargetDummyCharacter,timeoutMs=18
    return;
   }
   const o=r.owner;
-  if(r.ch.sourceMotion!==o||!o||o.status!=='ready'||o.error||o.disposed||o.character!==r.ch||!o.bank||!o.squidBank)
+  if(r.ch.sourceMotion!==o||!o||o.ready!==r.ready||o.status!=='ready'||o.error||o.disposed||o.character!==r.ch||!o.bank||!o.squidBank)
    throw Error('Native scene source did not become ready or changed ownership');
  };
  try{
   await Promise.race([Promise.all(records.map(async r=>{
    if(r.dummy)valid(r);
-   else{const ready=r.ch?.sourceMotion?.ready;if(!ready||typeof ready.then!=='function')throw Error('Missing native scene source loader');
-    await ready;r.owner=r.ch.sourceMotion;}
+   else{const ready=r.ready;if(!ready||typeof ready.then!=='function')throw Error('Missing native scene source loader');
+    await ready;if(r.ch.sourceMotion!==r.owner||r.owner.ready!==ready)throw Error('Native source promise ownership changed');}
    r.warm=r.ch._warmed;if(r.warm&&typeof r.warm.then==='function'){await r.warm;r.warmAwaited=true;}
    valid(r);
   })),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Native scene source readiness timeout')),timeoutMs);})]);

@@ -1,0 +1,42 @@
+name: INKWAVE Wiper ambient RNG observation
+on:
+  push:
+    branches: [diagnostic/wiper-rng-observation-20261021]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 0430673b09a5009628fc87baa414b3560090fc1d
+          path: work/wiper-source
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test scripts/tests/inkwave-wiper-ambient-observer.test.mjs scripts/tests/inkwave-wiper-ambient-state.test.mjs scripts/tests/inkwave-wiper-scene-readiness.test.mjs
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12385900409
+          run-id: 39684160955
+          github-token: ${{ github.token }}
+          path: work
+          merge-multiple: true
+      - name: Observe 16 native ticks on each variant, no new build or video
+        run: |
+          for variant in A B; do
+            timeout 12m node scripts/check-inkwave-wiper-plane-native.mjs work/wiper-site work/wiper-source work/wiper-overlay work/wiper-rng/$variant $variant s3-saber-heavy charged --rng-diagnostic
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wiper-ambient-rng-observation
+          path: work/wiper-rng/
+          if-no-files-found: error

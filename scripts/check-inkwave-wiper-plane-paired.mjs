@@ -18,7 +18,7 @@ for(const [id,action]of cases){
   const r=JSON.parse(fs.readFileSync(path.join(out,'receipt.json'),'utf8'));assert.equal(r.status,'passed');assert.equal(r.variant,variant);assert.equal(r.id,id);assert.equal(r.action,action);assert.equal(r.result?.id,id);assert.equal(r.result?.action,action);rows.push(r);
  }
  const [a,b]=rows;if(compareDental){assert.equal(a.head,'0430673b09a5009628fc87baa414b3560090fc1d');assert.equal(a.baseline,'7581ca9be8cf87d253918b8abb3b8ebe728c2093');assert.equal(a.contentHash,'8e350111a0469095d2872093322809f70da7d31237e520226946cbb0740c4c16');}for(const k of ['head','baseline','inputHash','contentHash','binding'])same(a[k],b[k]);
- const A=a.result,B=b.result;same(A.setup.initial,B.setup.initial);same(A.setup.target,B.setup.target);same(A.setup.palette,B.setup.palette);same(A.completion,B.completion);
+ const A=a.result,B=b.result;assert.equal(A.setup.initial.ambientState?.schema,1);assert.equal(B.setup.initial.ambientState?.schema,1);same(A.setup.initial,B.setup.initial);same(A.setup.target,B.setup.target);same(A.setup.palette,B.setup.palette);same(A.completion,B.completion);
  assert.equal(A.frameCount,161);assert.equal(B.frameCount,161);assert.equal(A.dt,1/60);assert.equal(B.dt,1/60);
  if(compareDental){assert.equal(A.dentalPilot,true);assert.equal(B.dentalPilot,true);assert.equal(A.costProbe,false);assert.equal(B.costProbe,false);assert.equal(A.completion.gpuDrained,true);assert.equal(B.completion.gpuDrained,true);same(A.setup.capturePolicy,B.setup.capturePolicy);same(A.setup.capturePolicy.continuous,{view:'front',firstTick:75,lastTick:160});}
  const topTicks=compareDental?[...new Set([75,A.completion.firstBirth?.tick,A.completion.firstRetirement,160])]:[];if(compareDental){assert.ok(Number.isInteger(A.completion.firstBirth?.tick)&&A.completion.firstBirth.tick>=75&&A.completion.firstBirth.tick<160);assert.ok(Number.isInteger(A.completion.firstRetirement)&&A.completion.firstRetirement>A.completion.firstBirth.tick&&A.completion.firstRetirement<=160);}
@@ -29,6 +29,7 @@ for(const [id,action]of cases){
    if(compareDental)same(row.images.map(im=>im.view),[...(i>=75?['front']:[]),...(topTicks.includes(i)?['top']:[])]);
    for(const im of row.images){assert.ok(['front','top'].includes(im.view));const expected=action+'-'+im.view+'-'+String(i).padStart(4,'0')+'.png';assert.equal(im.file,expected);const bytes=fs.readFileSync(path.join(root,id+'-'+action+'-'+variant,expected));assert.ok(bytes.length>1000);assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');assert.equal(bytes.subarray(12,16).toString(),'IHDR');assert.equal(bytes.readUInt32BE(16),960);assert.equal(bytes.readUInt32BE(20),720);assert.equal(createHash('sha256').update(bytes).digest('hex'),im.pngSha256,'PNG bytes must bind to the observed frame receipt');}
   }
+  assert.equal(x.state.ambientState?.schema,1);assert.equal(y.state.ambientState?.schema,1);
   for(const k of ['state','paintHash','paintEvents','aimTrace','memory','census'])same(x[k],y[k]);
   // Whole-scene burden remains an actual gate; no inherited Explosher exception.
   for(const k of ['calls','triangles','points','lines'])same(x.nativeRender[k],y.nativeRender[k]);

@@ -2,18 +2,20 @@
 // Native gameplay + separate inspection camera. No physical GPU/retail fidelity claim.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {createWiperAmbientObserver} from './lib/inkwave-wiper-ambient-observer.mjs';
+import {readWiperAmbientState} from './lib/inkwave-wiper-ambient-state.mjs';
 import {verifyRuntimeBuild,hash} from './lib/inkwave-runtime-evidence.mjs';
 import {enterRangeFromMenu} from './lib/inkwave-range-menu-entry.mjs';
 import {awaitWiperSceneSources,wiperSceneCensus,validWiperProfileStyle} from './lib/inkwave-wiper-scene-readiness.mjs';
 assert.ok([7,8].includes(process.argv.slice(2).length),'Unexpected CLI argument count');
 const [siteArg,sourceArg,overlayArg,outArg,variant,id,action,costArg]=process.argv.slice(2);
-const costProbe=costArg==='--cost-probe',dentalPilot=costArg==='--dental-pilot';assert.ok(costArg===undefined||costProbe||dentalPilot);if(dentalPilot)assert.ok(id==='s3-saber-heavy'&&action==='charged');if(costProbe)assert.ok(variant==='A'&&id==='s3-saber-heavy'&&action==='charged');
+const costProbe=costArg==='--cost-probe',dentalPilot=costArg==='--dental-pilot',rngDiagnostic=costArg==='--rng-diagnostic';assert.ok(costArg===undefined||costProbe||dentalPilot||rngDiagnostic);if(rngDiagnostic)assert.ok(id==='s3-saber-heavy'&&action==='charged');if(dentalPilot)assert.ok(id==='s3-saber-heavy'&&action==='charged');if(costProbe)assert.ok(variant==='A'&&id==='s3-saber-heavy'&&action==='charged');
 assert.ok(outArg&&['A','B'].includes(variant));assert.ok(['s3-saber-heavy','s3-saber-normal','s3-saber-lite'].includes(id));assert.ok(['tap','charged'].includes(action));
 const site=path.resolve(siteArg),source=path.resolve(sourceArg),overlay=path.resolve(overlayArg),out=path.resolve(outArg);
 const nodeTimings={started:performance.now()};
 const head='0430673b09a5009628fc87baa414b3560090fc1d',baseline='7581ca9be8cf87d253918b8abb3b8ebe728c2093';
 const manifest=verifyRuntimeBuild(site,source,head),binding=JSON.parse(fs.readFileSync(path.join(overlay,'receipt.json'),'utf8'));
-if(costProbe||dentalPilot)assert.equal(manifest.contentHash,'8e350111a0469095d2872093322809f70da7d31237e520226946cbb0740c4c16','Exact prior emitted workload for cost probe');
+if(costProbe||dentalPilot||rngDiagnostic)assert.equal(manifest.contentHash,'8e350111a0469095d2872093322809f70da7d31237e520226946cbb0740c4c16','Exact prior emitted workload for cost probe');
 assert.equal(binding.candidate,head);assert.equal(binding.baseline,baseline);assert.equal(binding.contentHash,manifest.contentHash);assert.equal(binding.inputHash,manifest.inputHash);assert.equal(binding.revision,manifest.build.revision);
 assert.deepEqual(binding.modules.map(x=>x.name).sort(),['s3-ink-sheets.mjs','s3-projectile-shapes.mjs']);
 const dummyPath='_versions/'+manifest.build.revision+'/patches/practice-range/runtime/dummy.mjs';
@@ -37,13 +39,16 @@ try{
  page.on('response',response=>{const key=new URL(response.url()).pathname.slice(1);if(!replacements.has(key)&&key!==dummyPath)return;
   responsePending.push(response.body().then(bytes=>consumed.set(key,hash(bytes))).catch(e=>responseErrors.push(e.message)));});
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await page.addInitScript(({id})=>{
+ await page.addInitScript('window.__readWiperAmbientState='+readWiperAmbientState.toString());
+ if(rngDiagnostic)await page.addInitScript('window.__createWiperAmbientObserver='+createWiperAmbientObserver.toString());
+ await page.addInitScript(({id,rngDiagnostic})=>{
   localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:true,colorblind:true,frameRate:60}));
   localStorage.setItem('inkwave.profile',JSON.stringify({style:{hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3}}));
   let n=0x515e7021,calls=0;
   window.__wiperResetSeed=()=>{n=0x515e7021;calls=0;};
   window.__wiperRng=()=>({state:n>>>0,calls});
-  Math.random=()=>{n^=n<<13;n^=n>>>17;n^=n<<5;calls++;return(n>>>0)/4294967296;};
+  const observer=rngDiagnostic?window.__createWiperAmbientObserver(window.__wiperRng,()=>{const g=window.__inkwave,G=window.__G,h=g?.fxHooks;return {gameTime:G?.time??null,mode:G?.mode??null,matchState:G?.match?.state??null,ambientTriggerCounts:h?{seaSpray:h.count.seaSpray??0,feather:h.count.feather??0}:null,ambientEdges:h?.edges.length??null,sprayT:h?.sprayT??null,featherT:h?.featherT??null,seaState:G?.env?.seaState??null,gullT:g?._gullT??null,gustT:g?._gustT??null,clinkT:g?._clinkT??null,hornT:g?._hornT??null};}):null;window.__wiperObserver=observer;
+  Math.random=observer?()=>{n^=n<<13;n^=n>>>17;n^=n<<5;calls++;observer.onRandom();return(n>>>0)/4294967296;}:()=>{n^=n<<13;n^=n>>>17;n^=n<<5;calls++;return(n>>>0)/4294967296;};
   window.__wiperClocks=()=>{
         const G=window.__G,g=window.__inkwave;
         const finite=(value,label,required=false)=>{
@@ -76,6 +81,7 @@ try{
         Object.defineProperty(window,'__inkwave',{value:game,writable:true,configurable:true,enumerable:true});
         if(!game||typeof game!=='object')throw Error('Invalid native game publication');
         game.frozen=true;
+        if(observer){observer.mark('first-publication');observer.wrap(game.fxHooks,'_ambient');observer.wrap(game.fxHooks.fx,'seaSpray');observer.setPhase('published-idle');}
         const boundary=window.__wiperBootFreeze={schema:1,boundary:'first-native-game-publication',clocks:null};
         queueMicrotask(()=>{
           if(window.__G?.game!==game||!game.frozen||typeof game.debug?.freeze!=='function')
@@ -89,36 +95,37 @@ try{
    if(!e.isTrusted||!e.target?.closest?.('.iw-ui [data-id="mode-range"]')||window.__inkwave?.menus?.current!=='mode')return;
    const g=window.__inkwave;g.debug.freeze();
    if(JSON.stringify(window.__wiperBootFreeze?.clocks)!==JSON.stringify(window.__wiperClocks()))throw Error('Scene drift before range');
-   window.__wiperResetSeed();g.api.setLoadout({weapon:id});
+   observer?.setPhase('trusted-entry');observer?.mark('before-entry-seed-reset');window.__wiperResetSeed();observer?.mark('after-entry-seed-reset');g.api.setLoadout({weapon:id});
    if(g.api.getLoadout()?.weapon!==id)throw Error('Native loadout selection failed');
    window.__wiperEntry={trusted:true,clocks:window.__wiperClocks(),rng:window.__wiperRng()};
   },true);
- },{id});
+ },{id,rngDiagnostic});
  nodeTimings.beforeEntry=performance.now();const entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:300000});
  await page.evaluate('window.__awaitWiperSources='+awaitWiperSceneSources.toString()+';window.__wiperCensus='+wiperSceneCensus.toString()+';window.__validWiperProfileStyle='+validWiperProfileStyle.toString());
  nodeTimings.afterEntry=performance.now();
- const setup=await page.evaluate(async({id,action,dummyPath,costProbe,dentalPilot})=>{
+ const setup=await page.evaluate(async({id,action,dummyPath,costProbe,dentalPilot,rngDiagnostic})=>{
   const THREE=await import('three'),G=window.__G,g=window.__inkwave,a=G.local;
   if(!g.frozen||!window.__wiperEntry?.trusted||!G.match?.range||G.match.state!=='playing'||a.weaponId!==id)throw Error('Native range/weapon admission failed');
   const dummyUrl=new URL('/'+dummyPath,location.origin).href;
   const {TargetDummyCharacter}=await import(dummyUrl);
+  window.__wiperObserver?.setPhase('readiness');
   const startupTiming={beforeReadiness:performance.now()};const readiness=await window.__awaitWiperSources(G,TargetDummyCharacter);
   startupTiming.afterReadiness=performance.now();
   if(!Object.hasOwn(Object.getPrototypeOf(G.projectiles),Symbol.for('inkwave.s3.projectile-shapes.v1')))throw Error('Missing native shape installer');
   g.debug.freezeBots();g.input.keys.clear();g.input.pressed.clear();g.debug.fire(false);g.R.setDynamicScale(1);
   const aim=()=>{G.rig.yaw=0;G.rig.pitch=.06;};
-  window.__wiperResetSeed();startupTiming.warmStart=performance.now();for(let i=0;i<60;i++){aim();g._frame(1/60);}startupTiming.warmEnd=performance.now();
+  window.__wiperObserver?.setPhase('warm');window.__wiperObserver?.mark('before-warm-seed-reset');window.__wiperResetSeed();window.__wiperObserver?.mark('after-warm-seed-reset');startupTiming.warmStart=performance.now();for(let i=0;i<60;i++){aim();g._frame(1/60);}startupTiming.warmEnd=performance.now();
   if(!a.alive||!a.grounded||G.projectiles.list.length)throw Error('Unsettled native stance or preexisting projectile');
   if(!window.__validWiperProfileStyle(g.profile.style)||!window.__validWiperProfileStyle(a.character.style))throw Error('Native profile/style binding mismatch');
-  const beforeReset=window.__wiperRng();window.__wiperResetSeed();
-  const initial={entry:window.__wiperEntry,readiness,clocks:window.__wiperClocks(),rng:window.__wiperRng(),profileStyle:{...g.profile.style},character:{t:a.character.t,phase:a.character.phase,seed:a.character.seed,style:{...a.character.style}},pos:a.pos.toArray(),ink:a.ink,hp:a.hp,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
+  window.__wiperObserver?.mark('after-warm');const beforeReset=window.__wiperRng();window.__wiperResetSeed();window.__wiperObserver?.mark('after-capture-seed-reset');window.__wiperObserver?.setPhase('setup-tail');
+  const initial={ambientState:window.__readWiperAmbientState(G,g),entry:window.__wiperEntry,readiness,clocks:window.__wiperClocks(),rng:window.__wiperRng(),profileStyle:{...g.profile.style},character:{t:a.character.t,phase:a.character.phase,seed:a.character.seed,style:{...a.character.style}},pos:a.pos.toArray(),ink:a.ink,hp:a.hp,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
   const r=G.renderer,gl=r.getContext();if(g.settings.quality!=='high'||G.paint.size!==4096||gl.drawingBufferWidth!==960||gl.drawingBufferHeight!==720)throw Error('Unexpected quality/viewport');
   const target=a.pos.clone().add(new THREE.Vector3(0,1.1,3)),camera=new THREE.PerspectiveCamera(50,960/720,.05,250);
   if(camera===G.camera||camera===g.R.camera||camera===G.rig.gameCam)throw Error('Inspection camera must be independent');
   const gameCamera=cam=>({position:cam.position.toArray(),quaternion:cam.quaternion.toArray(),scale:cam.scale.toArray(),up:cam.up.toArray(),
    matrix:cam.matrix.toArray(),matrixWorld:cam.matrixWorld.toArray(),matrixWorldInverse:cam.matrixWorldInverse.toArray(),projectionMatrix:cam.projectionMatrix.toArray(),projectionMatrixInverse:cam.projectionMatrixInverse.toArray(),
    fov:cam.fov,aspect:cam.aspect,near:cam.near,far:cam.far,zoom:cam.zoom,filmGauge:cam.filmGauge,filmOffset:cam.filmOffset,view:cam.view,layers:cam.layers.mask,matrixAutoUpdate:cam.matrixAutoUpdate,matrixWorldAutoUpdate:cam.matrixWorldAutoUpdate});
-  const physical=()=>({clocks:window.__wiperClocks(),rng:window.__wiperRng(),actors:G.actors.map(x=>({style:x.character?.style?{...x.character.style}:null,color:x.color?.getHex()??null,wid:x.weaponId,hp:x.hp,ink:x.ink,pos:x.pos.toArray(),vel:x.vel.toArray(),alive:x.alive})),
+  const physical=()=>({ambientState:window.__readWiperAmbientState(G,g),clocks:window.__wiperClocks(),rng:window.__wiperRng(),actors:G.actors.map(x=>({style:x.character?.style?{...x.character.style}:null,color:x.color?.getHex()??null,wid:x.weaponId,hp:x.hp,ink:x.ink,pos:x.pos.toArray(),vel:x.vel.toArray(),alive:x.alive})),
    projectiles:G.projectiles.list.map(p=>({wid:p.wid,type:p.type,key:p.catalog?.descriptor?.key,seed:p.seed,age:p.age,delay:p.delay,pos:p.pos.toArray(),vel:p.vel.toArray(),damage:p.damage,life:p.life,radius:p.radius,size:p.size,grav:p.grav,drag:p.drag,travel:p.catalog?.travel})),
    camera:gameCamera(G.camera),rigCamera:gameCamera(G.rig.gameCam),aim:{from:a.aimPoint.toArray(),dir:a.aimDir.toArray(),yaw:a.aimYaw,pitch:a.aimPitch}});
   const paints=[],aimTrace=[],originalSplat=G.paint.splat,originalAim=G.projectiles._aimFrom;
@@ -128,8 +135,9 @@ try{
   const fingerprint=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
   window.__wiperStep={tick:-1,async step(tick,capture){
    if(tick!==this.tick+1)throw Error('Nonconsecutive native frame');this.tick=tick;
+   window.__wiperObserver?.setPhase('native:'+tick);
    aim();g.debug.fire(tick<(action==='charged'?80:2));G.renderer.info.reset();
-   const t=performance.now();g._frame(1/60);const frameCpuMs=performance.now()-t;
+   const t=performance.now();g._frame(1/60);const frameCpuMs=performance.now()-t;window.__wiperObserver?.mark('native-end');window.__wiperObserver?.setPhase('post-native:'+tick);
    const nativeRender={...r.info.render},memory={...r.info.memory};
    const state=physical(),owned=G.projectiles.list.filter(p=>p.owner===a&&p.delay<=0),shape=G.projectiles._s3Shapes;
    const birthNow=owned.length>0&&!seen,expiryNow=owned.length===0&&seen&&!expired;
@@ -146,7 +154,7 @@ try{
    }
    if(shape.slashV.count||shape.slashH.count||shape.sheets.mesh.count)lastRelatedGeometryTick=tick;
    const phases={nativeSubmitMs:frameCpuMs,inspection:[]},hashStart=performance.now();const paintHash=await fingerprint(G.paint.grid),images=[];phases.paintHashMs=performance.now()-hashStart;
-   const views=dentalPilot?(tick>=75?['front']:[]):((capture||(owned.length&&!capturedLive))?['front','top']:[]);
+   const views=rngDiagnostic?[]:dentalPilot?(tick>=75?['front']:[]):((capture||(owned.length&&!capturedLive))?['front','top']:[]);
    if(dentalPilot&&(tick===75||birthNow||expiryNow||tick===160))views.push('top');
    if(dentalPilot&&birthNow&&tick<75)throw Error('Dental birth precedes continuous capture window');
    for(const view of views){
@@ -161,17 +169,18 @@ try{
    }
    if(owned.length)capturedLive=true;
    if(gl.getError())throw Error('WebGL error');
+   window.__wiperObserver?.setPhase('await-gap:'+tick);
    return {tick,state,axes,paintHash,paintEvents:paints.slice(),aimTrace:aimTrace.slice(),nativeRender,memory,frameCpuMs,phases,images,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
   },finish(){g.debug.fire(false);G.paint.splat=originalSplat;G.projectiles._aimFrom=originalAim;
-   if(!costProbe&&(!seen||!firstBirth||!expired))throw Error('Native slash birth and termination required');
-   let gpuDrained=false;if(dentalPilot){const shape=G.projectiles._s3Shapes;if(this.tick-lastRelatedGeometryTick<21)throw Error('Need 21 native frames after last related geometry for slash speck lifetime');if(shape.slashV.count!==0||shape.slashH.count!==0||shape.sheets.mesh.count!==0)throw Error('Related slash/sheet geometry still live at final native tick');const drainStart=performance.now();gl.finish();window.__wiperFinalDrainMs=performance.now()-drainStart;if(gl.getError())throw Error('Final GPU drain error');gpuDrained=true;}
+   if(!costProbe&&!rngDiagnostic&&(!seen||!firstBirth||!expired))throw Error('Native slash birth and termination required');
+   let gpuDrained=false;if(dentalPilot||rngDiagnostic){if(dentalPilot){const shape=G.projectiles._s3Shapes;if(this.tick-lastRelatedGeometryTick<21)throw Error('Need 21 native frames after last related geometry for slash speck lifetime');if(shape.slashV.count!==0||shape.slashH.count!==0||shape.sheets.mesh.count!==0)throw Error('Related slash/sheet geometry still live at final native tick');}const drainStart=performance.now();gl.finish();window.__wiperFinalDrainMs=performance.now()-drainStart;if(gl.getError())throw Error('Final GPU drain error');gpuDrained=true;}
    return {firstBirth,firstRetirement,expired,aimTrace,paintEvents:paints,gpuDrained,relatedFx:{lastGeometryTick:lastRelatedGeometryTick,finalTick:this.tick,speckTailFrames:21},final:physical()};}};
   return {startupTiming,costProbe,dentalPilot,capturePolicy:dentalPilot?{continuous:{view:'front',firstTick:75,lastTick:160},top:'pre-release, actual birth, actual retirement, final frame',unchangedControls:'pending native acceptance'}:null,initial,dummyModuleUrl:dummyUrl,startupRngBeforeReset:beforeReset,target:target.toArray(),quality:g.settings.quality,atlasSize:G.paint.size,palette:{colorblind:g.settings.colorblind,teams:G.teamColors.map(c=>c.getHex()),local:a.color.getHex()},scope:'native simulation plus separate inspection-camera raw renderer; not native postprocessed view; CPU diagnostic not performance acceptance'};
- },{id,action,dummyPath,costProbe,dentalPilot});
+ },{id,action,dummyPath,costProbe,dentalPilot,rngDiagnostic});
  nodeTimings.afterSetup=performance.now();
  const frames=[],pilot=id==='s3-saber-heavy'&&action==='charged';
  result={setup,frames,status:'partial',costProbe};
- for(let tick=0;tick<=(costProbe?9:160);tick++){
+ for(let tick=0;tick<=(rngDiagnostic?15:costProbe?9:160);tick++){
   fs.writeFileSync(path.join(out,'frame-progress.json'),JSON.stringify({status:'stepping',tick,completedFrames:frames.length,nodeWall:performance.now(),setup,costProbe}));
   const transferStart=performance.now();
   const row=await page.evaluate(({tick,capture})=>window.__wiperStep.step(tick,capture),{tick,capture:costProbe?tick%2===0:pilot||[0,90,120,160].includes(tick)});
@@ -182,14 +191,16 @@ try{
   console.log(JSON.stringify({phase:'completed-frame-cost',tick,images:row.images.length,nativeSubmitMs:row.frameCpuMs,phases:row.phases,nodeEvaluateWallMs:row.nodeEvaluateWallMs,pngDecodeWriteHashMs:row.pngDecodeWriteHashMs}));
  }
  const completion=await page.evaluate(()=>window.__wiperStep.finish());
+ const ambientObservation=rngDiagnostic?await page.evaluate(()=>{const o=window.__wiperObserver;o.mark('finished');const result=o.report();o.restore();return result;}):null;if(rngDiagnostic){assert.deepEqual(ambientObservation.errors,[]);assert.equal(ambientObservation.eventOverflow,0);assert.equal(ambientObservation.sampleOverflow,0);assert.ok(completion.gpuDrained);}
  await Promise.all(responsePending);assert.equal(consumed.get(dummyPath),manifest.artifacts[dummyPath],'consumed exact native dummy module');assert.deepEqual(errors,[]);assert.deepEqual(responseErrors,[]);
  for(const [key,{m}]of replacements){const expected=variant==='A'?m.baselineEmittedSha256:m.candidateEmittedSha256;
  assert.equal(loaded.get(key),expected,'actual served module '+key);assert.equal(consumed.get(key),expected,'browser consumed module body '+key);}
- result={setup,completion,frames,dt:1/60,frameCount:costProbe?10:161,costProbe,dentalPilot,nodeTimings,finalGpuDrainMs:dentalPilot?await page.evaluate(()=>window.__wiperFinalDrainMs):null,variant,id,action,pilot,physicalGpuMeasured:false,performanceAccepted:false};
+ result={setup,completion,frames,ambientObservation,dt:1/60,frameCount:rngDiagnostic?16:costProbe?10:161,rngDiagnostic,costProbe,dentalPilot,nodeTimings,finalGpuDrainMs:dentalPilot?await page.evaluate(()=>window.__wiperFinalDrainMs):null,variant,id,action,pilot,physicalGpuMeasured:false,performanceAccepted:false};
 }catch(e){failure=e;}
 finally{
+ if(rngDiagnostic&&page){try{const partial=await page.evaluate(()=>window.__wiperObserver?.report());result??={};result.ambientObservation??=partial;}catch(e){errors.push('observer-recovery: '+e.message);}}
  await browser?.close();await new Promise(r=>server.close(r));
- const receipt={status:failure?'failed':costProbe?'cost-diagnostic-only':'passed',head,baseline,variant,id,action,inputHash:manifest.inputHash,contentHash:manifest.contentHash,binding,loaded:[...loaded],consumed:[...consumed],responseErrors,result,errors,error:failure?.stack};
+ const receipt={status:failure?'failed':rngDiagnostic?'rng-diagnostic-only':costProbe?'cost-diagnostic-only':'passed',head,baseline,variant,id,action,inputHash:manifest.inputHash,contentHash:manifest.contentHash,binding,loaded:[...loaded],consumed:[...consumed],responseErrors,result,errors,error:failure?.stack};
  fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({status:receipt.status,variant,id,action,error:failure?.message}));
  if(failure)process.exitCode=1;
 }

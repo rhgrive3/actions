@@ -33,3 +33,16 @@ test('profile gate accepts exact existing native style and rejects missing, muta
  const missing={...style};delete missing.hat;assert.equal(validWiperProfileStyle(missing),false);
  assert.equal(validWiperProfileStyle({...style,unknown:0}),false);
 });
+for(const kind of ['source-owner','ready-promise','scene','match','actors','local','range','targets'])test('rejects pending loader '+kind+' replacement',async()=>{
+ const g=fixture(),ch=g.local.character;let resolve;ch.sourceMotion.ready=new Promise(r=>{resolve=r;});
+ const pending=awaitWiperSceneSources(g,NativeDummy);
+ if(kind==='source-owner')ch.sourceMotion={...ch.sourceMotion,ready:new Promise(()=>{})};
+ if(kind==='ready-promise')ch.sourceMotion.ready=new Promise(()=>{});
+ if(kind==='scene')g.scene={};
+ if(kind==='match')g.match={...g.match};
+ if(kind==='actors')g.actors=g.actors.slice();
+ if(kind==='local')g.local={};
+ if(kind==='range')g.match.range={...g.match.range};
+ if(kind==='targets')g.match.range.targets=g.match.range.targets.slice();
+ resolve();await assert.rejects(pending,/ownership changed/);
+});
