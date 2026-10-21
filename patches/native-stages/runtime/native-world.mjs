@@ -91,8 +91,15 @@ export async function buildNativeWorld(game,map,current){
   // The minimap's global CURRENT is not touched until final commit.
   const minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)),{deferActivation:true});
   const wake=new SwimWake();
-  const nextWorld={display,level,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
-   dispose(){G.scene?.remove?.(inkMesh);display.dispose();inkMesh.dispose();inkMat.dispose();}};
+  const nextWorld={display,level,textureProfile:{data,quality,caps:textureCaps},disposed:false,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
+   dispose(){
+    if(this.disposed)return;
+    this.disposed=true;this.textureProfile=null;
+    safely(()=>this.qualityOperation?.controller.abort(),'quality cancellation');
+    safely(()=>G.scene?.remove?.(inkMesh),'ink detach');
+    safely(()=>display.dispose(),'display');safely(()=>inkMesh.dispose(),'ink');
+    safely(()=>inkMat.dispose(),'material');
+   }};
   snapshot=captureWorld(game);
   published=true;
   G.level=level;G.physics=physics;G.paint=paint;G.nav=nav;
