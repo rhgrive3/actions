@@ -24,10 +24,11 @@ for(let block=0;block<blocks;block++){
   assert.equal(row.exhaustGlows.length,1);assert.equal(row.exhaustGlows[0],360);
   observations.push({position,variant,directory,contentHash:result.contentHash,servedHashes:result.servedHashes,case:row});
  }
+ console.log(JSON.stringify({block,kind:'raw observations before cross-validation, not accepted',observations:observations.map(r=>({position:r.position,variant:r.variant,phaseBefore:r.case.phaseBefore,phaseAfter:r.case.phaseAfter,startupRng:r.case.startupRng,rngBoundary:r.case.rngBoundary,cpuFxUpdateMs:r.case.cpuFxUpdateMs,cpuRenderSubmissionMs:r.case.cpuRenderSubmissionMs}))}));
  assert.equal(new Set(observations.map(r=>r.contentHash)).size,1,'one unchanged emitted build');
  assert.equal(observations[0].servedHashes['patches/splatoon3/runtime/special-vfx.mjs'],observations[3].servedHashes['patches/splatoon3/runtime/special-vfx.mjs']);
  assert.equal(observations[1].servedHashes['patches/splatoon3/runtime/special-vfx.mjs'],observations[2].servedHashes['patches/splatoon3/runtime/special-vfx.mjs']);
- for(const observation of observations.slice(1))for(const key of ['seed','camera','viewport','clock','hz','actorCount','layout','quality','puffCap','phaseBefore','phaseAfter'])assert.deepEqual(observation.case[key],observations[0].case[key],key+' identical across ABBA');
+ for(const observation of observations.slice(1))for(const key of ['seed','camera','viewport','clock','hz','actorCount','layout','quality','puffCap','phaseBefore','phaseAfter','rngBoundary'])assert.deepEqual(observation.case[key],observations[0].case[key],key+' identical across ABBA');
  const frameSignature=row=>JSON.stringify(row.frames.map(({frame,time,puffs,sparks,drawCalls,triangles})=>({frame,time,puffs,sparks,drawCalls,triangles})));
  assert.equal(frameSignature(observations[0].case),frameSignature(observations[3].case),'A repeated visual burden deterministic');
  assert.equal(frameSignature(observations[1].case),frameSignature(observations[2].case),'B repeated visual burden deterministic');

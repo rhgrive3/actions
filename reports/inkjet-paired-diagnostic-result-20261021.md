@@ -39,3 +39,13 @@ This uses an unsaturated one-actor recipe harness; it is not a renderer or perfo
 
 ## Remaining acceptance
 Retail continuous-frame comparison, visual inspection, native video delivery, multi-case repeated performance evidence and hardware/full-engine measurements remain open. Full Validate CI also has separate shared Roller C1 and combat-contact failures; specialty Inkjet passes do not replace exact-head full-CI acceptance. No merge.
+
+
+## Seed-confounded follow-up, not a valid performance estimate
+Run 39638250556 (job 119354647474, diagnostic head 031410d763cefb0929fb552d2cebb9ff07c9e93d) reproduced emitted contentHash 3505a563c929bbe1627c087ab3a4df61d56830f9144e1e8f36ed4863ec5744a1 and the verified old-main overlay. Its first four A-B-B-A captures completed, but the first block's cross-validation failed: phaseBefore gameplaySeed 502290086 versus 2767366790. Other displayed phase fields were active/inkjet and gameplayTime 0. Valid completed blocks: zero; remaining two blocks did not run. Artifact 12368047166, 185409 bytes, SHA256 91f2edc461578bf0a80656a46d05fdedc10efa7d82d1748c36b529925149c7cb, retains the failed receipts. They are not erased or promoted to valid observations.
+
+The earlier one-block render-submit +8.74% and FX CPU -0.33% are uncontrolled diagnostics, not accepted regression estimates. Same declared page-initial RNG seed did not guarantee equal activation seeds after asynchronous imports, renderer and Actor/source-motion setup consumed randomness. The normal all-specials makeState takes its activation seed from Math.random.
+
+The QA-only correction finishes all Actor/source-motion setup before a synchronous activation loop, resets the existing QA LCG to 0x12345678 immediately before that loop, and records startup RNG consumption separately from activation before/after state. The paired gate retains phase/seed comparisons and adds exact rngBoundary comparison. It prints explicitly unaccepted raw timing/phase observations before validation, so failures remain diagnosable without promoting them. Production source, private VFX RNG and runtime head 9c4ca8e60699ce786a96b351fdfc4c7ab3750fa1 remain unchanged. Independent source review found no new blocker. Exact QA initializer V8 test with 37 versus 115 setup draws produced equal four activation seed draws after reset; omitting reset produced different values. This is not a native browser result.
+
+Remaining boundary: reset does not retroactively normalize randomized setup objects; phase/seed and repeated per-frame burden checks remain necessary. A valid three-block result and hardware/whole-game budget acceptance are still pending.

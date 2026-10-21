@@ -46,7 +46,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  if(inkjet)await page.addInitScript(()=>{let seed=0x12345678;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};});
+  if(inkjet)await page.addInitScript(()=>{let seed=0x12345678,calls=0;Math.random=()=>{calls++;seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};globalThis.__inkjetQaRandom={snapshot:()=>({state:seed,calls}),reset:()=>{seed=0x12345678;calls=0;}};});
   await page.goto(`http://127.0.0.1:${server.address().port}/check`);
   const servedHashes = {};
   if(inkjet) for(const file of ['patches/splatoon3/runtime/special-vfx.mjs','patches/splatoon3/runtime/inkjet-vfx-budget.mjs','patches/splatoon3/runtime/inkjet-vfx-clock.mjs']) {
@@ -121,9 +121,18 @@ try {
         if (a.character.sourceMotion?.ready) await a.character.sourceMotion.ready;
         a.pos.set((i-(actorCount-1)/2)*2,2,0); a.vel.set(0,0,0); a.character.root.position.copy(a.pos);
         expect(applyCatalogueChoice(a,{sub:'bomb',special:'inkjet'},api),'Inkjet catalogue choice');
+      }
+      // Finish asynchronous setup before the deterministic simulation boundary.
+      // Reset only this QA page's existing Math.random LCG, never production or VFX RNG.
+      const startupRng=globalThis.__inkjetQaRandom.snapshot();
+      globalThis.__inkjetQaRandom.reset();
+      const activationRngBefore=globalThis.__inkjetQaRandom.snapshot();
+      for (const a of actors) {
         a.special=a.specialCost(); a._startSpecial(); const track=d.track(a);
         expect(a.specialActive?.id==='inkjet' && track?.id==='inkjet','actual Inkjet activation and exhaust track');
       }
+      const activationRngAfter=globalThis.__inkjetQaRandom.snapshot();
+      const rngBoundary={name:'after all actor/source-motion setup, immediately before synchronous activation',activationRngBefore,activationRngAfter};
       // Controlled continuous-presentation probe: gameplay is deliberately
       // frozen, matching the source/emitted integration test, not full play.
       // Stationary flight records isolate the admission/culling boundary.
@@ -161,7 +170,7 @@ try {
       const sorted=a=>[...a].sort((a,b)=>a-b);
       const stats=a=>{const q=sorted(a);return{mean:a.reduce((n,x)=>n+x,0)/a.length,p50:q[Math.floor(q.length*.5)],p95:q[Math.floor(q.length*.95)],max:q.at(-1)};};
       const gl=renderer.getContext(), debug=gl.getExtension('WEBGL_debug_renderer_info');
-      cases.push({hz,actorCount,layout,phaseBefore,phaseAfter,variant:inkjet.baseline?'baseline-overlay':'candidate',clock:{warmupSeconds:inkjet.warmupSeconds,sampleSeconds:inkjet.sampleSeconds,dt:1/hz,mode:'simulated fixed dt, not real display refresh'},seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG seed 0x12345678',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,exhaustGlows,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
+      cases.push({hz,actorCount,layout,phaseBefore,phaseAfter,startupRng,rngBoundary,variant:inkjet.baseline?'baseline-overlay':'candidate',clock:{warmupSeconds:inkjet.warmupSeconds,sampleSeconds:inkjet.sampleSeconds,dt:1/hz,mode:'simulated fixed dt, not real display refresh'},seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG reset 0x12345678 after all asynchronous setup before synchronous activation',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,exhaustGlows,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
       for(const a of actors)a.character.dispose();
       G.projectiles.list=[];G.projectiles.clear();G.fx.dispose();G.actors=[];G.fx=null;
     } else for (const fxMode of ['none', 'disabled', 'enabled']) for (const hz of [30, 60, 120]) {
