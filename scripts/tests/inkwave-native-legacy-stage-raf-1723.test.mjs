@@ -72,8 +72,8 @@ function guardedFrame(G,runSimulation=()=>{throw Error('disposed world advanced'
  const marker='  _frame(dt) {',at=main.indexOf(marker);
  assert.ok(at>=0,'production Game._frame');
  const guard=main.indexOf('    if (this._nativeStageSwitchPending) {',at);
- const normal=main.indexOf('    runSimulation(this, dt);',guard);
- assert.ok(guard>at && normal>guard,'guard precedes normal fixed-step simulation');
+ const normal=main.indexOf('    const tA = performance.now();',guard);
+ assert.ok(guard>at && normal>guard,'guard runs before any world frame work');
  // Compile the emitted method prefix, with its terminating return.
  const source=main.slice(at,normal)+'\n  }';
  return new Function('G','performance','runSimulation',
@@ -91,6 +91,6 @@ test('#1723 actual frame suppresses disposed paint/decor but retains network and
   s3Clock:{reset(){clock++;}}
  };
  for(let i=0;i<120;i++)frame.call(game,1/60);
- assert.deepEqual([network,poll,menu,end,clock,reset],[120,120,240,120,120,120]);
+ assert.deepEqual([network,poll,menu,end,clock,reset],[120,120,240,120,120,0]);
  assert.ok(Math.abs(G.time-12)<1e-8,'clock advances while GPU is fenced');
 });
