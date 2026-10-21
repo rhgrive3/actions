@@ -28,7 +28,10 @@ test('capsule width exclusion remains',()=>{world();const a=dash(),v=victim(3);a
 test('wall beyond victim does not block contact',()=>{world([wall(6)]);const a=dash(),v=victim();a._updateSpecial(1/60);assert.equal(v.hp,-20);});
 test('side wall outside line does not block contact',()=>{world([wall(1.5,2,3)]);const a=dash(),v=victim();a._updateSpecial(1/60);assert.equal(v.hp,-20);});
 test('nearest wall wins independently of solid ordering',()=>{world([wall(7),wall()]);const a=dash(),v=victim();a._updateSpecial(1/60);assert.equal(v.hp,100);});
-test('end of a longer resolved sweep remains reachable',()=>{world();const a=dash(),v=victim(0,0,6.5);a._updateSpecial(1/15);assert.equal(v.hp,-20);});
+// 11.3.0 floor dash18: start1 + travel18/15 + forward2.75 + radius1.5 =6.45.
+// Test either side of that endpoint; the old fixed6.5 target assumed speed21.
+test('end of a longer resolved sweep remains reachable',()=>{world();const a=dash(),v=victim(0,0,6.35);a._updateSpecial(1/15);assert.equal(v.hp,-20);});
+test('past the sourced longer sweep endpoint remains excluded',()=>{world();const a=dash(),v=victim(0,0,6.55);a._updateSpecial(1/15);assert.equal(v.hp,100);});
 test('wall occludes the endpoint of a longer resolved sweep',()=>{world([wall(2.8)]);const a=dash(),v=victim(0,0,4.7);a._updateSpecial(1/15);assert.equal(v.hp,100);});
 test('multiple clear victims remain eligible in either array order',()=>{for(const reverse of [false,true]){world();const a=dash(),v=victim(-.3),w=victim(.3);if(reverse)f.G.actors.reverse();a._updateSpecial(1/60);assert.equal(v.hp,-20);assert.equal(w.hp,-20);}});
 test('occluded victim does not consume its later clear contact',()=>{world([wall()]);const a=dash(),v=victim();a._updateSpecial(1/60);assert.equal(v.hp,100);f.G.level=new f.Level({bounds:{minX:-20,maxX:20,minZ:-20,maxZ:20},spawnPads:[[-10,0,0],[10,0,0]],spawnBarrier:0,single:[{kind:'box',min:[-20,-.5,-20],max:[20,0,20]}],half:[]});f.G.physics=new f.Physics(f.G.level);a._updateSpecial(1/60);assert.equal(v.hp,-20);});
