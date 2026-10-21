@@ -67,9 +67,14 @@ function select(ch,arg,kinds) {
   s.t=0;s.e=0;s.on=false;s.pre=null;s.mv=false;
 }
 
+// While the loaded Wii U source rig owns the upper body (Shooter, Blaster, Charger, Splatling outside
+// native weapon actions), HumanRetarget.apply rewrites hips, torso, head and arms from the source pose and
+// alignWeapon re-solves the grip, so these channel offsets never reach a bone; the visible hit there is
+// the source controller's generic `Damage` clip. Do not run the layer or its second pose pass for nothing.
+const sourceOwnsUpper = ch => !!(ch.sourceMotion?.active && ch.sourceMotion.sourceUpper);
 function eligible(ch,s) {
   return ch.s3WeaponHitReactionEnabled!==false && s.k>=0 && ch.kidForm && !ch.dance &&
-    ch.root.visible && ch._owner()?.alive!==false;
+    ch.root.visible && ch._owner()?.alive!==false && !sourceOwnsUpper(ch);
 }
 
 // Same held-grip definition as the motion catalog gate: IK weight owns the

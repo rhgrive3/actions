@@ -101,6 +101,14 @@ The direct-source audit and Practice Range isolation tests now check that stage 
 
 The same source adds exact sampling work reductions (per-pose key-segment hints, once-per-clip unanimated rotations, written-out FK arithmetic and optional leading-bone ranges for `fk`/`copy`/`mix`); see [the optimization record](../reports/inkwave-base-logic-optimization-2026-10-20.md). `source-controller.js`, `body-balance.js` and `retarget.js` keep their adapters; the range call sites are build rewrites in `motion-fk-hotpath-adapter.mjs`.
 
+## Completed slice: character LOD, outfit AO, body-balance and transport compat
+
+`inkwave-public/src/game/character-lod.js`, `inkwave-public/src/game/character-outfit.js`, `inkwave-public/src/game/motion/body-balance.js`, and the `compat` handshake query parameter in `inkwave-public/src/net/transport.js` are now authored directly in `inkwave-public/src/`:
+- `character-lod.js`: Directly owns the open-addressing spatial hash table (`_htKeys`, `_htVals`, `_htStamp`), lazy allocation on first LOD invocation (`0` startup heap bytes), power-of-two adaptive scratch capacity (`nextPow2(Math.min(n, 65536))` — reducing scratch memory for 2,400-vertex weapon/gear meshes by 93.8% from 3,072 KB to 192 KB), and `clusterTopology` reuse across decimation passes. `patches/local-quality/adapter.mjs` skips its legacy rewrite when the direct-source implementation is present, while `patches/splatoon3/weapon-lod-material-packing-adapter.mjs` continues to pack discrete `Uint8` weapon material attributes.
+- `character-outfit.js`: Directly owns 30-bit Smi integer spatial hash keys (`((ix + 256) << 21) | ((iy + 256) << 12) | ((iz + 256) << 3) | ax`) and back-face dot rejection before `Math.sqrt(d2)` in `bakeBodyAO`, producing bit-identical `aOcc` and vertex color Float32Arrays without build-time rewriting.
+- `body-balance.js`: Directly owns pre-indexed `rotationGainByIndex`, `hipIndex`, cached `_reachChain` rest bone lengths, and quaternion-only parent walks in `compensateReach`, while `patches/local-quality/motion-fk-hotpath-adapter.mjs` applies the leading-bone `fkCount` range hook.
+- `transport.js`: Directly owns `&compat=${encodeURIComponent(COMPAT)}` and full-jitter exponential reconnect backoff (`Math.random() * Math.min(30000, 1000 * Math.pow(2, attempt))`) with `1013` capacity-cooldown handling.
+
 ## Next migration batches
 
 1. Audit and migrate simple performance and UI adapters with isolated upstream anchors. Keep each change small enough to compare composed output against the previous behavior.
