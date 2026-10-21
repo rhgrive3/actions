@@ -85,13 +85,26 @@ function assertSideHold(rows) {
     'the shaft axis must clear the actual torso right edge, not merely lie right of its center');
 }
 
+function catalogGripRecorder(f) {
+  // Execute the actual browser recorder against the native rig, not a copy of
+  // its socket formula. This source extraction must fail closed if it moves.
+  const source = fs.readFileSync(new URL('../../../scripts/check-inkwave-motion-catalog.mjs', import.meta.url), 'utf8');
+  const start = '  function grip(ch, side) {', end = '  function record(ch, a, frame, last, invariant, contactEpoch) {';
+  assert.equal(source.split(start).length, 2); assert.equal(source.split(end).length, 2);
+  const body = source.slice(source.indexOf(start), source.indexOf(end));
+  return new Function('THREE', 'C', 'FIST_OFFSET', 'GRIP_HOLE_L', body + '; return grip;')(
+    f.THREE, f.CHARACTER_CHANNELS, f.FIST_OFFSET, f.GRIP_HOLE_L);
+}
+
 async function trace(mode) {
   const adaptHoldingRuntime = (rel, source) =>
     rel === 'patches/splatoon3/runtime/roller.mjs' ? holdingRuntimeVariant(mode, source) : source;
   const f = await fixture({ fullRuntime: true, productionComposition: true, includeCharacter: true,
     realProjectiles: true, vmMathRandom: () => .4,
+    extraExports: "export { FIST_OFFSET, GRIP_HOLE_L } from './inkwave-public/src/game/character-weapons.js';",
     adaptRuntime: adaptHoldingRuntime, adaptEmittedRuntime: adaptHoldingRuntime });
   const { G, THREE } = f, v = () => new THREE.Vector3();
+  const catalogGrip = mode === 'current' ? catalogGripRecorder(f) : null;
   G.scene = new THREE.Scene();
   G.level = new f.Level({ bounds: { minX: -30, maxX: 30, minZ: -30, maxZ: 30 },
     spawnPads: [[-20, 0, 0], [20, 0, 0]], spawnBarrier: 0, half: [],
@@ -137,7 +150,26 @@ async function trace(mode) {
       .addScaledVector(stroke.heading, stroke.depth * .5).distanceTo(center) : null;
     const feet = [Array.from(c.bones.footL.getWorldPosition(v()).toArray()),
       Array.from(c.bones.footR.getWorldPosition(v()).toArray())];
-    rows.push({ shaftClearance, paintError, feet, rightAdvance: c._s3RollerRightAdvance || 0, rightFraction, tick, contact: !!c._s3RollerContactPose, roll: c.wRoll, center: center.toArray(), axis: axis.toArray(), radial: [m[4], m[5], m[6], m[8], m[9], m[10]],
+    const catalog = catalogGrip ? catalogGrip(c, 'right') : null;
+    if (catalogGrip && tick === 90) {
+      for (const advance of [undefined, NaN, Infinity, 0]) {
+        const missing = Object.assign(Object.create(c), { _s3RollerRightAdvance: advance });
+        assert.ok(catalogGrip(missing, 'right').gap >= .025,
+          'missing or invalid effective advance must expose the old detached socket');
+      }
+      const movedHand = c.bones.handR.clone(false);
+      movedHand.matrixAutoUpdate = false;
+      movedHand.matrix.copy(c.bones.handR.matrixWorld);
+      movedHand.matrix.elements[12] += .03;
+      movedHand.matrixWorldNeedsUpdate = true;
+      movedHand.updateWorldMatrix(false, false);
+      assert.ok(Math.abs(movedHand.matrixWorld.elements[12] - c.bones.handR.matrixWorld.elements[12] - .03) < 1e-12,
+        'the detached-hand fault actually changes its native world transform');
+      const detached = Object.assign(Object.create(c), { bones: { ...c.bones, handR: movedHand } });
+      assert.ok(catalogGrip(detached, 'right').gap >= .025,
+        'moving the actual measured hand 3cm must still fail the unchanged grip budget');
+    }
+    rows.push({ catalog, shaftClearance, paintError, feet, rightAdvance: c._s3RollerRightAdvance || 0, rightFraction, tick, contact: !!c._s3RollerContactPose, roll: c.wRoll, center: center.toArray(), axis: axis.toArray(), radial: [m[4], m[5], m[6], m[8], m[9], m[10]],
       spin: [w.drumA, w.drumW], hand: hand.toArray(), rightMatrix: Array.from(c.bones.handR.matrixWorld.elements),
       weaponMatrix: Array.from(w.off.matrixWorld.elements), palmUp,
       errors, pos: Array.from(a.pos.toArray()), ink: a.ink, rolling: a.weaponRunner.rolling });
@@ -247,6 +279,12 @@ test('rolling right grip advances to one third without moving the actual drum or
 test('rolling shaft clears the torso while actual paint follows the shifted drum', async () => {
   const current = await trace('current');
   assertSideHold(current);
+  for (const row of current) {
+    assert.ok(row.catalog.gap < 1e-6, 'catalog measures the native effective right socket through holding and release');
+    assert.equal(row.catalog.held, true, 'effective contact is measured, not exempted from held-hand validation');
+  }
+  assert.ok(current[89].catalog.boneOriginGap >= .025,
+    'raw old-socket diagnostic remains visible after correcting physical grip measurement');
   const lateralDisabled = await trace('lateral-disabled');
   assert.throws(() => assertSideHold(lateralDisabled), /shaft axis must clear/,
     'the previous centered holding must fail the actual body-edge criterion');
