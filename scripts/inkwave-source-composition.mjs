@@ -38,28 +38,32 @@ function adaptRollerBandParity(rel, code) {
     '    const ext = roll ? r * (Math.hypot(BAND_L, BAND_W) + BAND_R + 0.05) : r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);',
     '    const ext = roll ? r * Math.hypot(BAND_L + BAND_R, BAND_W + BAND_R + 0.048) : r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);',
     'Roller scan bounds cover all wobble phases and rotations');
-  // Other adapters can insert statements between the old CPU band math and
-  // its cutoff. Bind to the unique cutoff, not a fragile three-line sequence.
-  // Retire the unused unseeded math if its two original declarations remain.
-  const qa = '          const qa = Math.abs(px * sdu + py * sdv) - r * BAND_L, qb = Math.abs(-px * sdv + py * sdu) - r * BAND_W;';
-  const sd = '          const sd = Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * BAND_R;';
-  if (code.includes(qa) && code.includes(sd)) {
-    code = replaceOnce(code, qa, '', 'retire obsolete unseeded Roller qa');
-    code = replaceOnce(code, sd, '', 'retire obsolete unseeded Roller sd');
+  // Current compiled Roller CPU has a piecewise-linear two-tooth wobble,
+  // whereas the published GPU shader still evaluates two seeded sine waves.
+  // Replace exactly that CPU-only approximation, retaining stencil/non-Roller
+  // branches and downstream owner-order checks intact.
+  const ownerStart = code.indexOf('  _cpuSplat('), ownerEnd = code.indexOf('\n  _pushQuad(', ownerStart);
+  const cpu = code.slice(ownerStart, ownerEnd);
+  const rollStart = cpu.indexOf('else if (roll) {');
+  const toothStart = cpu.indexOf('          const toothA =', rollStart);
+  const endPredicate = '          if (sd > 0) continue;';
+  const toothEnd = cpu.indexOf(endPredicate, toothStart);
+  if (ownerStart < 0 || ownerEnd <= ownerStart || rollStart < 0 || toothStart <= rollStart ||
+      toothEnd < toothStart || toothEnd - toothStart > 780 ||
+      cpu.indexOf(endPredicate, toothEnd + 1) >= 0) {
+    throw new Error('Roller CPU/GPU composed SDF changed; inspect source before applying parity');
   }
+  const old = cpu.slice(toothStart, toothEnd + endPredicate.length);
+  if (!old.includes('Math.floor(toothA)') || !old.includes('Math.floor(toothB)') ||
+      !old.includes('const qa =') || !old.includes('const sd =') ||
+      !cpu.slice(rollStart, toothStart).includes('const along ='))
+    throw new Error('Roller CPU tooth morphology no longer matches verified discrepancy');
   const corrected = [
-    '          const along = px * sdu + py * sdv, across = -px * sdv + py * sdu;',
+    '          // Conservative phase-independent rectangle before seeded trig.',
     '          if (Math.abs(along) > r * (BAND_L + BAND_R) || Math.abs(across) > r * (BAND_W + 0.048 + BAND_R)) continue;',
     '          if (rollerBandSignedDistance(along, across, r, seed) > 0) continue;',
   ].join('\n');
-  // Diagnostic fail-closed receipt: distinguish a moved guard from an
-  // actual graphics/collision policy change without touching game source.
-  if (!code.includes('          if (sd > -0.03 * r) continue;')) {
-    const at = code.indexOf('else if (roll) {', code.indexOf('  _cpuSplat('));
-    throw new Error('Roller band composed code needs review: ' + code.slice(at, at + 1050).replaceAll('\n', ' '));
-  }
-  return replaceOnce(code, '          if (sd > -0.03 * r) continue;',
-    corrected, 'Roller CPU ink footprint seeded band SDF');
+  return replaceOnce(code, old, corrected, 'Roller CPU band matches GPU seeded sine SDF');
 }
 // Keep the tested source path identical to the production build's adapters.
 export function adaptBuildSource(rel, code) {
