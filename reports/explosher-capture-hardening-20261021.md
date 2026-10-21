@@ -77,3 +77,8 @@ Run 39635232430 passed its strict preflight, then generated both full sets. Fina
 Both isolated diagnostic browsers now select the game's existing colorblind accessibility palette through inkwave.settings before native initialization, matching the existing projectile evaluator's #ffd21a check. No Character/material/model color is overwritten after boot.
 Each full capture must match its saved preflight at tick 0 for real physical state, aim trace, camera, palette, clock and scene-light/viewport inputs before further screenshots. Palette/physical mismatch negative cases reject. The saved preflight content hash is recorded.
 Video remains dependent on a successful complete strict pair and actual visual review.
+
+
+## Correct frame0 view correspondence (174c diagnostic failure)
+Run 39641505699 passed strict preflight, then the base full capture stopped after its behind frame because the harness incorrectly bound tele-side camera to the behind-only preflight. No complete pair pass is claimed. Preserve its failure artifact.
+The correction keeps all frame0 physics, aim, palette, native reset, time, sparkle, light and viewport checks for every view. Only camera binding is conditioned on the same view. Tele-side and tele-oblique cameras are not bound to behind preflight, but remain strictly compared against their same-view before/after counterpart. RAM admission tests reject same-view camera drift and any-view physics/palette drift while accepting a legitimate different-view camera. Actual browser validation remains pending.

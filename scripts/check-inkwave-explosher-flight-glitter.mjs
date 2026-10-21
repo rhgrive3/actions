@@ -149,8 +149,9 @@ if(preflight){
 
 driver="const expectedFrame="+JSON.stringify(expectedFrame)+";\n"+driver;
 driver=once(driver,"        if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));",`        if(tick===0&&expectedFrame){
-          for(const k of ['aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport'])
+          for(const k of ['aimTrace','nativeReset','physical','palette','inkHex','time','sparkles','lighting','viewport'])
             if(JSON.stringify(measurement[k])!==JSON.stringify(expectedFrame.measurement[k]))throw Error('Full-capture frame0 differs from preflight: '+k);
+          if(view===expectedFrame.view&&JSON.stringify(measurement.camera)!==JSON.stringify(expectedFrame.measurement.camera))throw Error('Full-capture frame0 differs from preflight: camera');
           for(const k of ['aimPoint','aimDir','aimYaw','aimPitch','characterTime'])
             if(JSON.stringify(measurement.preShot[k])!==JSON.stringify(expectedFrame.measurement.preShot[k]))throw Error('Full-capture preShot differs: '+k);
         }
