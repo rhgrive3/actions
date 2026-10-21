@@ -1,0 +1,65 @@
+name: Inkjet record reuse diagnostic
+on:
+  push:
+    branches: ['diagnostic/inkjet-record-reuse-20261021']
+    paths:
+      - '.github/workflows/inkjet-record-reuse-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inkjet-record-reuse-diagnostic
+  cancel-in-progress: false
+jobs:
+  baseline-current-optimized:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 9c4ca8e60699ce786a96b351fdfc4c7ab3750fa1
+          filter: blob:none
+          fetch-depth: 1
+          sparse-checkout: |
+            inkwave-public
+            patches
+            scripts
+            reports/ink-volume/source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - name: Reproduce the previously tested candidate emitted bytes once
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';const m=JSON.parse(fs.readFileSync('_site/inkwave-build.json'));assert.equal(m.contentHash,'3505a563c929bbe1627c087ab3a4df61d56830f9144e1e8f36ed4863ec5744a1');console.log('EXACT_EXISTING_EMITTED_HASH',m.contentHash);"
+      - name: Load pinned diagnostic scripts after the immutable build
+        run: |
+          git fetch --no-tags --depth=1 origin c72dd6da46f53f3ea931e0263885685172bb12e9 99d5afcd28eb4a8315481f881f5ba181649259e4 f9e6b2d6d57a32888867da2ef4866565eb3493e9
+          for file in scripts/prepare-inkjet-baseline.mjs scripts/check-inkwave-splashdown-browser.mjs scripts/check-inkjet-record-reuse-pilot.mjs scripts/prepare-inkjet-optimized-budget.mjs scripts/check-inkjet-budget-emitted.mjs; do
+            git show 99d5afcd28eb4a8315481f881f5ba181649259e4:"$file" > "$file"
+            node --check "$file"
+          done
+      - name: Run optimized source cadence pool and production regressions
+        run: |
+          git show f9e6b2d6d57a32888867da2ef4866565eb3493e9:patches/splatoon3/runtime/inkjet-vfx-budget.mjs > patches/splatoon3/runtime/inkjet-vfx-budget.mjs
+          git show f9e6b2d6d57a32888867da2ef4866565eb3493e9:patches/splatoon3/tests/inkjet-vfx-pool-budget.test.mjs > patches/splatoon3/tests/inkjet-vfx-pool-budget.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/inkjet-vfx-cadence.test.mjs patches/splatoon3/tests/inkjet-vfx-pool-budget.test.mjs patches/splatoon3/tests/inkjet-vfx-production.test.mjs
+      - name: Prepare a verified single-module old-main overlay
+        run: node scripts/prepare-inkjet-baseline.mjs --site _site
+      - name: Prepare optimized budget overlay and verify emitted helper equivalence
+        run: |
+          node scripts/prepare-inkjet-optimized-budget.mjs --site _site
+          node scripts/check-inkjet-budget-emitted.mjs _site
+      - name: Measure three ABOOBA blocks with phase and exact burden checks
+        run: node scripts/check-inkjet-record-reuse-pilot.mjs --site _site --blocks 3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkjet-record-reuse-three-blocks
+          path: |
+            .ci-scratch/inkjet-baseline/
+            .ci-scratch/inkjet-paired-pilot/
+            .ci-scratch/inkjet-optimized/
+          if-no-files-found: error
