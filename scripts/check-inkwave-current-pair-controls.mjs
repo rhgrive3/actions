@@ -72,7 +72,11 @@ function positive() {
   assert.deepEqual(evidence.changes, []);
   assert.deepEqual(evidence.writtenPaths, []);
   assert.equal(evidence.paint.paths.length, 13);
-  assert.equal(evidence.paint.paths.filter(row => row.originalSha256 !== row.candidateSha256).length, 4);
+  // PR1746's exact 95c -> f312 tuple has two differing leaves. The older
+  // four-leaf contract remains unchanged for its separately pinned pairs.
+  const expectedChanged = evidence.paint.sourceBase === '95c25af145418691991a1452d4d10589754a0f1c' &&
+    evidence.paint.sourceHead === 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' ? 2 : 4;
+  assert.equal(evidence.paint.paths.filter(row => row.originalSha256 !== row.candidateSha256).length, expectedChanged);
   for (const row of evidence.paint.paths) {
     assert.equal(row.mode, 'reviewed-current-pair');
     assert.deepEqual(row.replayed, []);
