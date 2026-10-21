@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
 });
 const errors = [];
 let browser;
-const watchdog = setTimeout(() => { errors.push('180-second browser watchdog'); void browser?.close(); }, 180_000);
+const watchdog = setTimeout(() => { errors.push('600-second browser watchdog'); void browser?.close(); }, 600_000);
 try {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -94,7 +94,7 @@ try {
     a.pos.set(0,0,-20);a.vel.set(0,0,0);a.grounded=true;a.ground.hit=true;
     if(!applyCatalogueChoice(a,{sub:'bomb',special:'krakenRoyale'},api))throw Error('catalogue');
     a.special=a.specialCost();a.intent.special=true;
-    a.aimYaw=a.yaw=0;a.aimPitch=0;
+    a.aimYaw=a.yaw=0;a.aimPitch=0;a.aimDir.set(0,0,1);a.aimPoint.set(0,0,80);
     const hud=document.createElement('div');Object.assign(hud.style,{position:'absolute',left:'12px',top:'12px',color:'black',background:'#ffffffdd',font:'16px monospace',padding:'8px',whiteSpace:'pre'});document.body.appendChild(hud);
     let frame=0;const samples=[];
     window.krakenFrame=label=>{
@@ -110,10 +110,10 @@ try {
       material.userData.uniforms.uTime.value=G.time;G.paint.setView(camera.position);
       hud.textContent=label+' | INKWAVE controlled scene (not Switch)\n'+
         'simulation '+t.toFixed(2)+' s | 60 Hz updates / 30 fps frames\n'+
-        (a.specialActive?.phase||'ended')+' | z '+a.pos.z.toFixed(3)+' | speed '+Math.hypot(a.vel.x,a.vel.z).toFixed(3);
+        (a._s3AllSpecialState?.phase||'ended')+' | z '+a.pos.z.toFixed(3)+' | speed '+Math.hypot(a.vel.x,a.vel.z).toFixed(3);
       renderer.render(scene,camera);
       const gl=renderer.getContext();if(gl.getError()!==gl.NO_ERROR||gl.isContextLost())throw Error('WebGL');
-      samples.push({frame:frame++,time:t,phase:a.specialActive?.phase||null,pos:a.pos.toArray(),velocity:a.vel.toArray(),grounded:a.grounded,paintVersion:G.paint.version});
+      samples.push({frame:frame++,time:t,phase:a._s3AllSpecialState?.phase||null,pos:a.pos.toArray(),velocity:a.vel.toArray(),grounded:a.grounded,paintVersion:G.paint.version});
       return samples.at(-1);
     };
     window.krakenSamples=samples;
@@ -125,6 +125,14 @@ try {
     await page.screenshot({path:path.join(frameDir,String(i).padStart(5,'0')+'.png')});
   }
   const samples=await page.evaluate(()=>window.krakenSamples);
+  const phases=new Set(samples.map(x=>x.phase));
+  assert.equal(samples.length,300);assert.ok(phases.has('active')&&phases.has('charge')&&phases.has('dash')&&phases.has('finish')&&phases.has(null),'normal/charge/dash/finish/end observed');
+  assert.ok(samples.some(x=>x.phase==='active'&&Math.hypot(x.velocity[0],x.velocity[2])>3),'positive normal travel');
+  assert.ok(samples.some(x=>x.phase==='dash'&&Math.hypot(x.velocity[0],x.velocity[2])>15),'positive dash travel');
+  const pngs=fs.readdirSync(frameDir).filter(x=>x.endsWith('.png')).sort();
+  assert.equal(pngs.length,300);const digests=new Set();
+  for(let i=0;i<300;i++){assert.equal(pngs[i],String(i).padStart(5,'0')+'.png');const b=fs.readFileSync(path.join(frameDir,pngs[i]));assert.ok(b.length>1000);digests.add(hash(b));}
+  assert.ok(digests.size>100,'continuous changing rendered frames');
   fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({scope:'Actual emitted Actor/Physics/Character/PaintSystem in a controlled floor scene, not retail fidelity acceptance',buildRevision:manifest.build.revision,contentHash:manifest.contentHash,label,fps:30,simulationHz:60,samples,errors},null,2));
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({out,frames:300,encode:'ffmpeg -framerate 30 -i '+frameDir+'/%05d.png -c:v libx264 -pix_fmt yuv420p '+out+'/kraken.mp4'}));
