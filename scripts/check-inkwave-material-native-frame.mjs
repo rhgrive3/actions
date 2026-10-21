@@ -29,7 +29,8 @@ try{
  const page=await browser.newPage({viewport:{width:960,height:600}});
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.addInitScript(()=>{
-  localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:true,frameRate:60}));
+  localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:true,frameRate:60,colorblind:true}));
+  localStorage.setItem('inkwave.profile',JSON.stringify({style:{hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3}}));
   let rng=20261021;window.__materialSeed=(step)=>{rng=(20261021+Math.imul(step,2654435761))>>>0;};
   Math.random=()=>{rng=(Math.imul(rng,1664525)+1013904223)>>>0;return rng/4294967296;};
   window.__rollerVideoClocks=()=>{
@@ -121,9 +122,27 @@ try{
   g.debug.freeze();g.R.setDynamicScale(1);g.input.keys.clear();g.debug.fire(false);
   if(G.audio){let seed=20261021;G.audio.rng=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
   if(!(g.levelMat?.userData?.uniforms?.uGel?.value>=0))throw Error('Production gel texture inactive');
-  const initial={motionReady,entry:window.__materialEntry,clocks:window.__rollerVideoClocks(),character:{time:a.character.t,phase:a.character.phase,seed:a.character.seed,name:a.character.name},pos:a.pos.toArray()};
+  // Existing native style/palette options, fixed before construction on both lanes. Not a material colour correction.
+  const expectedStyle={hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3},styleKeys=Object.keys(expectedStyle);
+  const requireFixture=fixture=>{
+   if(!fixture.style||Object.keys(fixture.style).length!==6||styleKeys.some(k=>fixture.style[k]!==expectedStyle[k])||
+    !fixture.profileStyle||Object.keys(fixture.profileStyle).length!==6||styleKeys.some(k=>fixture.profileStyle[k]!==expectedStyle[k])||
+    fixture.colorblind!==true||fixture.paletteId!=='cb-yellow-blue'||fixture.teamHex?.join(',')!=='#ffd21a,#2a52ff'||
+    fixture.teamColors?.join(',')!=='ffd21a,2a52ff'||fixture.localColor!=='ffd21a')
+    throw Error('Native profile style or palette fixture mismatch');
+  };
+  const fixture=()=>{const value={style:{...a.character.style},profileStyle:{...g.profile.style},colorblind:g.settings.colorblind,paletteId:g.palette?.id,
+   teamHex:[...G.teamHex],teamColors:G.teamColors.map(c=>c.getHexString()),localColor:a.color.getHexString()};
+   requireFixture(value);return value;};
+  const fixedFixture=fixture();
+  for(const bad of [{...fixedFixture,profileStyle:{...fixedFixture.profileStyle,eyes:0}},{...fixedFixture,style:{...fixedFixture.style,hair:1}},{...fixedFixture,style:{...fixedFixture.style,extra:0}},
+   {...fixedFixture,colorblind:false},{...fixedFixture,paletteId:'random'},{...fixedFixture,teamHex:['#000000','#2a52ff']},
+   {...fixedFixture,teamColors:['000000','2a52ff']},{...fixedFixture,localColor:'000000'}]){
+   let rejected=false;try{requireFixture(bad);}catch{rejected=true;}if(!rejected)throw Error('Wrong style/palette negative accepted');
+  }
+  const initial={fixture:fixedFixture,motionReady,entry:window.__materialEntry,clocks:window.__rollerVideoClocks(),character:{time:a.character.t,phase:a.character.phase,seed:a.character.seed,name:a.character.name},pos:a.pos.toArray()};
   const frame=i=>{window.__materialSeed(i);g._frame(1/60);};
-  for(let i=0;i<60;i++)frame(i);
+  for(let i=0;i<60;i++){frame(i);fixture();}
   const r=G.renderer,gl=r.getContext();gl.finish();
   const U=g.levelMat.userData.uniforms;
   const atlasConditions={size:G.paint.size,width:G.paint.rt.width,height:G.paint.rt.height,
@@ -164,7 +183,7 @@ try{
   const atlas=new Uint8Array(G.paint.size*G.paint.size*4);r.readRenderTargetPixels(G.paint.rt,0,0,G.paint.size,G.paint.size,atlas);
   const atlasHash=await digest(atlas),beforeWarm=state();
   // Warm the actual full-game renderer and shaders after native painting.
-  for(let i=60;i<90;i++)frame(i);gl.finish();
+  for(let i=60;i<90;i++){frame(i);fixture();}gl.finish();
   const before=state(),samples=[],render=g.R.render,webglRender=r.render;
   let sample=null;
   g.R.render=function(...args){const t=performance.now();try{return render.apply(this,args);}finally{if(sample){sample.renderCpuMs+=performance.now()-t;sample.renderCalls++;}}};
@@ -174,6 +193,7 @@ try{
    for(let i=0;i<120;i++){
     sample={frame:i,frameCpuMs:0,renderCpuMs:0,webglSubmitMs:0,renderCalls:0,webglPasses:0,drawCalls:0,triangles:0};
     const t=performance.now();frame(90+i);sample.frameCpuMs=performance.now()-t;
+    fixture(); // condition validation outside the frame CPU timing; included in whole-transaction wall time
     sample.drawCalls=r.info.render.calls;sample.triangles=r.info.render.triangles;
     sample.resources={textures:r.info.memory.textures,geometries:r.info.memory.geometries,programs:r.info.programs.length};
     samples.push(sample);sample=null;
@@ -185,7 +205,7 @@ try{
   const debug=gl.getExtension('WEBGL_debug_renderer_info'),lights=[];G.scene.traverse(o=>{if(o.isLight)lights.push({type:o.type,name:o.name,color:o.color.toArray(),intensity:o.intensity,position:o.getWorldPosition(new THREE.Vector3()).toArray()});});
   return {scope:'complete native practice-range Game._frame and normal compositor; fixed-step CPU, not live FPS or physical GPU',
    initial,placements,pixels,atlasHash,beforeWarm,before,after,samples,completionDrainMs,completedTransactionMsPerFrame,
-   conditions:{atlas:atlasConditions,viewport:[gl.drawingBufferWidth,gl.drawingBufferHeight],quality:g.settings.quality,dynamicScale:g.R.dynScale,
+   conditions:{fixture:fixture(),atlas:atlasConditions,viewport:[gl.drawingBufferWidth,gl.drawingBufferHeight],quality:g.settings.quality,dynamicScale:g.R.dynScale,
     gelLayer:g.levelMat.userData.uniforms.uGel.value,lights,environmentIntensity:G.scene.environmentIntensity,environmentPresent:!!G.scene.environment,toneMapping:r.toneMapping,outputColorSpace:r.outputColorSpace,exposure:r.toneMappingExposure},
    gpu:{renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),timerQueryAvailable:!!gl.getExtension('EXT_disjoint_timer_query_webgl2'),measured:false},
    allocations:{allocatedBytesPerFrame:null,heapAfter:performance.memory?.usedJSHeapSize??null,note:'heap occupancy is not allocation rate'},physicalDeviceMeasured:false};
