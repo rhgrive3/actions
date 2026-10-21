@@ -1048,8 +1048,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
     }
     if(r.parameters.BlastParam?.BlastParam){p.pos.copy(at);explosion(system,p,r.parameters.BlastParam.BlastParam);return true;}
-    if(r.sourceActor==='WeaponSlosherBathtub'&&h.normal&&catalogBubbleCanBounce(s.groundBounces,h.normal.y)) {
-      const ground=h.normal.y>.35;
+    // The rounded collision normal can point upward at a wall's edge.
+    // Use the underlying stage face for the *floor count* while preserving
+    // the original geometric normal for the bounce direction.
+    const bubbleFaceY=r.sourceActor==='WeaponSlosherBathtub'
+      ?catalogBubbleSurfaceNormalY(h,G.physics?.level):null;
+    if(bubbleFaceY!==null&&h.normal&&catalogBubbleCanBounce(s.groundBounces,bubbleFaceY)) {
+      const ground=bubbleFaceY>.35;
       const bp=r.parameters.BounceGroupParam.BounceParam.find(b=>(b.UnitOrderNum??0)===d.unit)||{};
       // Keep the established paint owner and footprint untouched (lane ③).
       // The source's first-bounce footprint decays by 15% on each later contact.
