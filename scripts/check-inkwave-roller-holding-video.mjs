@@ -8,6 +8,8 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { enterRangeFromMenu } from './lib/inkwave-range-menu-entry.mjs';
+import { bindRollerComparisonStartup } from './lib/inkwave-roller-comparison-startup.mjs';
+const numericOnly=process.argv.includes('--numeric-only');
 const site=path.resolve(process.argv[2]||'_site'), out=path.resolve(process.argv[3]||'.browser-evidence/roller-scale/range');
 // Fixed inspection views are authored once from the baseline and reused verbatim.
 // BEGIN GRIP CAMERA CONTRACT
@@ -57,7 +59,7 @@ const server=http.createServer((q,r)=>{
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser,page,diagnosticTimer;
-const receipt={expectedDrumWidth,diagnosticOnly:process.env.GRIP_DIAGNOSTIC_ONLY==='1',acceptanceNote:process.env.GRIP_DIAGNOSTIC_ONLY==='1'?'Unchanged-baseline control failed; candidate images are nonaccepting diagnostics.':null,build:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,errors:[],requests:[],console:[]};
+const receipt={numericOnly,expectedDrumWidth,diagnosticOnly:process.env.GRIP_DIAGNOSTIC_ONLY==='1',acceptanceNote:process.env.GRIP_DIAGNOSTIC_ONLY==='1'?'Unchanged-baseline control failed; candidate images are nonaccepting diagnostics.':null,build:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,errors:[],requests:[],console:[]};
 const snapshot=async()=>page?.evaluate(()=>({mode:window.__G?.mode,match:window.__G?.match?.state,
   menu:window.__inkwave?.menus?.current,layout:window.__G?.level?.layout?.id,
   range:!!window.__G?.match?.range,entryFreeze:window.__gripEntryFreeze,initialState:window.__gripInitialState,text:document.body.innerText.slice(-1800)})).catch(()=>null);
@@ -71,8 +73,9 @@ try{
   page.on('response',r=>{if(r.status()>=400&&receipt.requests.length<30)receipt.requests.push({url:r.url(),status:r.status()});});
   page.on('console',m=>{if(['error','warning'].includes(m.type())&&receipt.console.length<30)receipt.console.push(m.text().slice(0,1500));});
   diagnosticTimer=setInterval(async()=>{receipt.state=await snapshot();fs.writeFileSync(path.join(out,'progress.json'),JSON.stringify(receipt,null,2));},15000);
+  await page.addInitScript(bindRollerComparisonStartup);
   await page.addInitScript(({seeded})=>{
-    localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',lang:'ja'}));
+    // Saved settings/profile were bound before native startup by the companion QA helper.
     // Freeze at the first public game boundary, after native fixed boot warmup
     // and before any variable-duration live/menu RAF. Never rewrite clocks.
     if(seeded){
@@ -151,7 +154,7 @@ try{
   receipt.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:240000,
     onProgress:r=>{receipt.entry=r;fs.writeFileSync(path.join(out,'progress.json'),JSON.stringify(receipt,null,2));}});
   console.log('Native Range ready');
-  receipt.measurement=await page.evaluate(async({cameraReference,gripSeed,traceRng})=>{
+  receipt.measurement=await page.evaluate(async({cameraReference,gripSeed,traceRng,numericOnly})=>{
     const G=window.__G,g=window.__inkwave,a=G.local;
     const {Vector3,OrthographicCamera,PerspectiveCamera}=await import('three');
     g.debug.freeze();
@@ -192,6 +195,15 @@ try{
     if(gripSeed!==null&&(!boundary?.trusted||boundary.boundary!=='trusted-mode-range-capture'||
       !g.frozen||G.time!==boundary.time||c.t!==0||c.phase!==0||c.brPh!==0))
       throw Error('Seeded capture missed the native pre-Character input boundary: '+JSON.stringify(initialState));
+    const {PRESETS}=await import('/src/game/character-style.js');
+    const {COLORBLIND_PALETTE}=await import('/src/config.js');
+    const request=window.__rollerComparisonRequest;
+    if(JSON.stringify(PRESETS.find(p=>p.id===request.preset)?.style)!==JSON.stringify(request.profile.style)||
+       JSON.stringify([COLORBLIND_PALETTE.a,COLORBLIND_PALETTE.b])!==JSON.stringify(request.teamHex))
+      throw Error('QA startup profile/palette is not an existing native catalog choice');
+    initialState.comparison=window.__beginRollerCharacterObserver();
+    if(JSON.stringify(initialState.comparison.state.sceneClocks)!==JSON.stringify(initialState.sceneClocks))
+      throw Error('Scene clocks changed while verifying the native startup catalogs');
     // END INITIAL CHARACTER CONTRACT
     g.input.keys.clear();g.debug.key('KeyW',true);g.debug.fire(true);
     // BEGIN SCOPED ROLL RNG CONTRACT
@@ -269,7 +281,7 @@ try{
     }
     const {start,events}=recipeMeasurement;
     // END SCOPED ROLL RNG CONTRACT
-    const gameplayPng=G.renderer.domElement.toDataURL('image/png').split(',')[1];
+    const gameplayPng=numericOnly?null:G.renderer.domElement.toDataURL('image/png').split(',')[1];
     G.paint.flush(0);
     const f=G.level.faces[a.ground.face],atlas=f.atlas;
     if(!atlas)throw Error('Native roller court has no paint atlas');
@@ -309,7 +321,7 @@ try{
     view.up.set(0,0,1);view.position.set(a.pos.x,30,cz);view.lookAt(a.pos.x,0,cz);
     G.renderer.setRenderTarget(null);G.renderer.render(G.scene,view);
     G.renderer.domElement.id='roller-scale-canvas';
-    const inspectionPng=G.renderer.domElement.toDataURL('image/png').split(',')[1];
+    const inspectionPng=numericOnly?null:G.renderer.domElement.toDataURL('image/png').split(',')[1];
     const anchor=a.pos.toArray();
     const cameraPlan=cameraReference||{schema:1,views:[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]],['right-side',[-5,2,0]],['right-rear',[-3,2,-4]]].map(([name,offset])=>({
       name,position:offset.map((n,i)=>n+anchor[i]),target:anchor.map((n,i)=>n+[0,.8,.5][i]),fov:45,aspect:1280/840,near:.1,far:100}))};
@@ -325,7 +337,7 @@ try{
       G.renderer.render(G.scene,camera);
       if(state()!==frozen)throw Error('Grip inspection advanced or changed simulation');
       gripViews.push({name:spec.name,position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),projection:camera.projectionMatrix.toArray(),
-        png:G.renderer.domElement.toDataURL('image/png').split(',')[1]});
+        png:numericOnly?null:G.renderer.domElement.toDataURL('image/png').split(',')[1]});
     }
     // Preserve the original final overhead canvas and its range.png contract.
     G.renderer.render(G.scene,view);
@@ -336,7 +348,7 @@ try{
       contactError:Math.hypot(centre.x-front.x,centre.z-front.z),contactStamps:events,events:events.length,
       debugFixedTicks:180,controller:'shipped KeyW + held fire',inspectionCameraOnly:true,
       gameplayPng,inspectionPng,cameraPlan,gripViews,renderSize,renderAspect,frozenState:JSON.parse(frozen),gripCameraReference:!!cameraReference};
-  },{cameraReference,gripSeed,traceRng});
+  },{cameraReference,gripSeed,traceRng,numericOnly});
   // Browser evaluation has restored RNG before hashing this bounded diagnostic.
   if(receipt.measurement.recipeRandomTrace){
     const trace=receipt.measurement.recipeRandomTrace;
@@ -347,12 +359,14 @@ try{
   assert.deepEqual(receipt.measurement.cameraPlan,cameraReference||makeGripCameras(receipt.measurement.end));
   fs.writeFileSync(path.join(out,'grip-cameras.json'),JSON.stringify(receipt.measurement.cameraPlan,null,2)+'\n');
   for(const view of receipt.measurement.gripViews){
+    if(numericOnly){delete view.png;continue;}
     fs.writeFileSync(path.join(out,'grip-'+view.name+'.png'),Buffer.from(view.png,'base64'));delete view.png;
   }
   for(const [key,name] of [['gameplayPng','gameplay.png'],['inspectionPng','scene.png']]){
+    if(numericOnly){delete receipt.measurement[key];continue;}
     fs.writeFileSync(path.join(out,name),Buffer.from(receipt.measurement[key],'base64'));delete receipt.measurement[key];
   }
-  await page.locator('#roller-scale-canvas').screenshot({path:path.join(out,'range.png'),timeout:60000});
+  if(!numericOnly)await page.locator('#roller-scale-canvas').screenshot({path:path.join(out,'range.png'),timeout:60000});
   const m=receipt.measurement;
   assert.equal(m.layout,'range');assert.equal(m.floorTag,'floor:roller');
   assert.equal(m.holes,0);assert.ok(m.rows>40);assert.ok(m.contactError<1e-5);
@@ -367,7 +381,7 @@ try{
   // A new continuation after the preserved 180-tick acceptance receipt.
   // Every movie image is a real renderer frame after two native 60 Hz ticks.
   const videoViews=['right-rear','side'], frames=[];
-  for(const name of videoViews)fs.mkdirSync(path.join(out,'video',name),{recursive:true});
+  if(!numericOnly)for(const name of videoViews)fs.mkdirSync(path.join(out,'video',name),{recursive:true});
   const initial=await page.evaluate(({expectedState,views,seed})=>{
     const G=window.__G,g=window.__inkwave,a=G.local;
     const state=()=>({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,
@@ -380,7 +394,7 @@ try{
   },{expectedState:m.frozenState,views:m.cameraPlan.views.filter(v=>videoViews.includes(v.name)),seed:gripSeed});
   try{
     for(let index=0;index<90;index++){
-      const frame=await page.evaluate(async({index})=>{
+      const frame=await page.evaluate(async({index,numericOnly})=>{
         const {Vector3,PerspectiveCamera}=await import('three');
         const G=window.__G,g=window.__inkwave,a=G.local,q=window.__rollerMovie;
     const lighting=()=>{
@@ -415,13 +429,14 @@ try{
           G.renderer.setRenderTarget(null);G.renderer.render(G.scene,camera);
           if(JSON.stringify(state())!==before||q.draws!==draws)throw Error('Movie inspection changed simulation or recipe RNG');
           images.push({name:spec.name,position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),
-            projection:camera.projectionMatrix.toArray(),png:G.renderer.domElement.toDataURL('image/png').split(',')[1]});
+            projection:camera.projectionMatrix.toArray(),png:numericOnly?null:G.renderer.domElement.toDataURL('image/png').split(',')[1]});
         }
         q.previous=current;
         return {index,tick:(index+1)*2,fire,state:current,hands,images,rngDraws:q.draws,
           rngRestored:Math.random===random,lighting:lighting(),renderSize:{width:G.renderer.domElement.width,height:G.renderer.domElement.height}};
-      },{index});
+      },{index,numericOnly});
       for(const image of frame.images){
+        if(numericOnly){delete image.png;continue;}
         const bytes=Buffer.from(image.png,'base64');
         const rel=path.join('video',image.name,'frame-'+String(index).padStart(3,'0')+'.png');
         fs.writeFileSync(path.join(out,rel),bytes);
@@ -430,7 +445,11 @@ try{
       frames.push(frame);
     }
   }finally{await page.evaluate(()=>{__inkwave.debug.fire(false);__inkwave.debug.key('KeyW',false);});}
-  receipt.video={schema:1,framesPerSecond:30,nativeTicksPerSecond:60,frameCount:90,durationSeconds:3,
+  receipt.characterObserver=await page.evaluate(()=>window.__rollerCharacterObserver.restore());
+  assert.equal(receipt.characterObserver.frames.length,360);
+  assert.equal(receipt.characterObserver.restored,true);
+  for(const frame of receipt.characterObserver.frames)assert.equal(frame.dt,1/60);
+  receipt.video={schema:1,numericOnly,framesPerSecond:30,nativeTicksPerSecond:60,frameCount:90,durationSeconds:3,
     controller:'shipped KeyW; held fire for 120 ticks, then released for 60 ticks',
     camera:'same fixed baseline offsets, translated only by each actor root displacement',
     interpolation:false,views:videoViews,initial,frames};
@@ -438,5 +457,5 @@ try{
   for(const f of frames){assert.equal(f.images.length,2);assert.equal(f.rngRestored,true);}
   assert.equal(receipt.errors.length,0);
   receipt.passed=true;console.log(JSON.stringify({passed:true,build:receipt.build,video:{frameCount:90,fps:30,nativeHz:60,views:videoViews}}));
-}catch(error){receipt.passed=false;receipt.failure=String(error.stack||error);receipt.state=await snapshot();await page?.screenshot({path:path.join(out,'failure.png'),timeout:30000}).catch(()=>{});throw error;}
-finally{clearInterval(diagnosticTimer);receipt.servedModules=servedModules;fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2)+'\n');await browser?.close();await new Promise(r=>server.close(r));}
+}catch(error){receipt.passed=false;receipt.failure=String(error.stack||error);receipt.state=await snapshot();if(!numericOnly)await page?.screenshot({path:path.join(out,'failure.png'),timeout:30000}).catch(()=>{});throw error;}
+finally{await page?.evaluate(()=>window.__rollerCharacterObserver?.restore()).catch(()=>{});clearInterval(diagnosticTimer);receipt.servedModules=servedModules;fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2)+'\n');await browser?.close();await new Promise(r=>server.close(r));}
