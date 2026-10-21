@@ -10,6 +10,10 @@ const [siteArg,outArg,sourceSha,sourceRootArg]=process.argv.slice(2);
 if(!siteArg||!outArg||!/^[a-f0-9]{40}$/.test(sourceSha||''))throw Error('Usage: <built-site> <evidence-dir> <source-sha>');
 const root=fileURLToPath(new URL('../',import.meta.url)),site=path.resolve(siteArg),out=path.resolve(outArg);
 const sourceRoot=sourceRootArg?path.resolve(sourceRootArg):root;
+// Receipt identity comes from the checkout, not the caller's label.
+const git=(args)=>{const r=spawnSync('git',['-C',sourceRoot,...args],{encoding:'utf8'});if(r.status!==0)throw Error('Cannot establish checkout identity');return r.stdout;};
+const actualSourceSha=git(['rev-parse','HEAD']).trim();
+if(actualSourceSha!==sourceSha)throw Error('Requested SHA does not match checkout HEAD');
 fs.mkdirSync(out,{recursive:true});
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const once=(s,a,b)=>{if(s.split(a).length!==2)throw Error('capture anchor mismatch: '+a);return s.replace(a,b);};
@@ -43,10 +47,25 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
             reusedSparkleBuffers:true};
         });
         const file = \`\${label}-t\${String(tick).padStart(2, '0')}-\${view}.png\`;`);
-driver=once(driver,'manifest.push({ label, tick, view, file, ...info });','manifest.push({ label, tick, view, file, ...info, measurement });');
+driver=once(driver,"  page.on('pageerror', e => console.error('pageerror', String(e)));","  const pageErrors=[];page.on('pageerror',e=>pageErrors.push(String(e)));");
+driver=once(driver,"        await page.locator('canvas').first().screenshot({ path: path.join(out, file) });",`        if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));
+        if(!(measurement.render.calls>0&&measurement.render.triangles>0))throw Error('Native scene did not draw');
+        const png=await page.locator('canvas').first().screenshot({path:path.join(out,file)});
+        const imageStats=await page.evaluate(async data=>{
+          const img=new Image();img.src='data:image/png;base64,'+data;await img.decode();
+          const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;
+          const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
+          const pixels=ctx.getImageData(0,0,img.width,img.height).data;
+          let lo=255,hi=0,opaque=0;for(let i=0;i<pixels.length;i+=4){if(!pixels[i+3])continue;opaque++;const v=(pixels[i]+pixels[i+1]+pixels[i+2])/3;lo=Math.min(lo,v);hi=Math.max(hi,v);}
+          return {width:img.width,height:img.height,opaque,range:hi-lo};
+        },png.toString('base64'));
+        if(imageStats.width!==measurement.viewport.width||imageStats.height!==measurement.viewport.height||!imageStats.opaque||imageStats.range<8)throw Error('Empty or flat native capture');
+        if(pageErrors.length)throw Error('Native page errors during capture: '+pageErrors.join(' | '));`);
+driver=once(driver,'manifest.push({ label, tick, view, file, ...info });','manifest.push({ label, tick, view, file, ...info, measurement, imageStats });');
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
 if(hash(JSON.stringify(build.artifacts))!==build.contentHash)throw Error('Build content hash mismatch');
 const shapePath='patches/splatoon3/runtime/s3-projectile-shapes.mjs';
+if(hash(git(['show',actualSourceSha+':'+shapePath]))!==hash(fs.readFileSync(path.join(sourceRoot,shapePath))))throw Error('Checkout shape differs from committed source');
 const emittedPaths=Object.keys(build.artifacts).filter(p=>p===shapePath||p.endsWith('/'+shapePath));
 if(!emittedPaths.length)throw Error('Shape missing from manifest');
 const emitted=emittedPaths.map(p=>{const sha256=hash(fs.readFileSync(path.join(site,p)));if(sha256!==build.artifacts[p])throw Error('Emitted shape hash mismatch');return {path:p,sha256};});
@@ -64,7 +83,7 @@ driver=once(driver,"  fs.writeFileSync(path.join(out, 'manifest.json'), JSON.str
   fs.writeFileSync(path.join(out,'served-shapes.json'),JSON.stringify(servedShapes,null,2));
   fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify(manifest, null, 1));`);
 const copy=path.join(out,'native-capture-driver.mjs');fs.writeFileSync(copy,driver);
-const receipt={sourceSha,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
+const receipt={sourceSha,actualSourceSha,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
   sourceShapeSha256:hash(fs.readFileSync(path.join(sourceRoot,'patches/splatoon3/runtime/s3-projectile-shapes.mjs'))),
   emittedShapes:emitted,seed:0x515e7021,
   boundaries:['Real emitted game and native renderer; fixed range input.','No historical source/character rewrite.','Only flight glitter changes; muzzle/impact, hit/paint/speed unchanged.','Render CPU and resource counts measured; GPU elapsed time and allocations not measured.']};
@@ -74,4 +93,10 @@ if(run.status!==0)process.exit(run.status||1);
 const captures=JSON.parse(fs.readFileSync(path.join(out,'manifest.json'),'utf8'));
 for(const c of captures)c.sha256=hash(fs.readFileSync(path.join(out,c.file)));
 fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(captures,null,2));
-if(captures.length!==18||!captures.some(c=>c.tick===3&&c.measurement.sparkles>0))throw Error('Incomplete native Explosher capture');
+const expected=new Set([0,3,8,14,22,30].flatMap(t=>['behind','tele-side','tele-oblique'].map(v=>'s3-slosher-washtub:'+t+':'+v)));
+if(captures.length!==expected.size)throw Error('Wrong native capture count');
+for(const c of captures){
+  if(!expected.delete(c.label+':'+c.tick+':'+c.view))throw Error('Duplicate or unexpected native capture');
+  if(c.tick===3&&!(c.count>0&&c.measurement.sparkles>0&&c.measurement.render.points>0))throw Error('Missing live Explosher in native capture');
+}
+if(expected.size)throw Error('Missing expected native captures');

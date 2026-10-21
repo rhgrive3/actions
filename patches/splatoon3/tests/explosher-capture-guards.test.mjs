@@ -1,0 +1,37 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const wrapper=fs.readFileSync(new URL('../../../scripts/check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');
+const driver=fs.readFileSync(new URL('../../../scripts/render-inkwave-projectile-shapes.mjs',import.meta.url),'utf8');
+function diagnostic(){
+ const saved={},sha='a'.repeat(40);
+ const fakeFs={mkdirSync(){},readFileSync(p){if(p.endsWith('render-inkwave-projectile-shapes.mjs'))return driver;if(p.endsWith('inkwave-build.json'))return JSON.stringify({artifacts:{'patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash'},contentHash:'hash'});if(p.endsWith('manifest.json'))return '[]';return 'source';},writeFileSync(p,v){saved[p]=v;}};
+ const path={resolve:x=>x,join:(...a)=>a.join('/')},crypto={createHash(){return {update(){return this;},digest(){return 'hash';}}}};
+ const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{},exit(){}};
+ const spawn=(bin,args)=>bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0};
+ const code=wrapper.replace(/^#!.*\n/,'').replace(/^import .*;\n/gm,'').replace(/import\.meta\.url/g,"'file:///tmp/x'").replace(/import\.meta\.resolve\('playwright'\)/g,"'playwright'");
+ assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process',code)(fakeFs,path,crypto,spawn,()=>'/root/',process),/Wrong native capture count/);
+ return saved['out/native-capture-driver.mjs'];
+}
+test('capture admission guards reject incomplete or invalid evidence (no browser claim)',()=>{
+ const generated=diagnostic();assert(generated);
+ const validate=new Function('captures',wrapper.slice(wrapper.indexOf('const expected=new Set')));
+ const captures=[0,3,8,14,22,30].flatMap(t=>['behind','tele-side','tele-oblique'].map(v=>({label:'s3-slosher-washtub',tick:t,view:v,count:1,measurement:{sparkles:28,render:{points:28}}})));
+ assert.doesNotThrow(()=>validate(captures));
+ assert.throws(()=>validate([...captures.slice(0,17),captures[0]]),/Duplicate/);
+ assert.throws(()=>validate(captures.slice(1)),/count/);
+ assert.throws(()=>validate(captures.map((x,i)=>i===0?{...x,tick:99}:x)),/unexpected/);
+ assert.throws(()=>validate(captures.map(x=>x.tick===3?{...x,measurement:{sparkles:28,render:{points:0}}}:x)),/Missing live/);
+ const pg=generated.slice(generated.indexOf("if(pageErrors.length)throw Error('Native page errors: '"));
+ const pageGuard=new Function('pageErrors',pg.slice(0,pg.indexOf(';')+1));
+ assert.throws(()=>pageGuard(['TypeError: render failed']),/Native page errors/);
+ const ig=generated.slice(generated.indexOf('if(imageStats.width!=='));
+ const imageGuard=new Function('imageStats','measurement',ig.slice(0,ig.indexOf(';')+1));
+ const measurement={viewport:{width:800,height:450}};
+ assert.throws(()=>imageGuard({width:800,height:450,opaque:360000,range:0},measurement),/flat/);
+ assert.throws(()=>imageGuard({width:800,height:450,opaque:0,range:100},measurement),/flat/);
+ assert.doesNotThrow(()=>imageGuard({width:800,height:450,opaque:360000,range:100},measurement));
+ const sourceGuard=new Function('actualSourceSha','sourceSha',"if(actualSourceSha!==sourceSha)throw Error('Requested SHA does not match checkout HEAD');");
+ assert(wrapper.includes("if(actualSourceSha!==sourceSha)throw Error('Requested SHA does not match checkout HEAD');"));
+ assert.throws(()=>sourceGuard('a'.repeat(40),'b'.repeat(40)),/checkout HEAD/);
+});
