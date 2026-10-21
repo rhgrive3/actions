@@ -244,7 +244,7 @@ const NATIVE_SUB_CONTACT_SOURCE_PAIR = Object.freeze({
 // This tuple admits source identity only, not evidence of browser shader parity.
 const ROLLER_BAND_SOURCE_PAIR = Object.freeze({
   baseCommit: 'ad4cc54cf5fbba65635ec0929a1da901c8c619db',
-  candidateCommit: '56346c13a8d0d30cd5149c9792e70887fed0c2e6',
+  candidateCommit: '4d0b6abe12338618f3f5b33dfcd7556f8f08b5d6',
   blobs: Object.freeze({
     "patches/network-replication/adapter.mjs": {base: '568751962952112f989a4ee61d0516d5d4848f70', candidate: '568751962952112f989a4ee61d0516d5d4848f70'},
     "patches/network-replication/slosher-paint-admission.mjs": {base: '835ec49ce61f4d623a97f0cdb38fdcb8c592b916', candidate: '835ec49ce61f4d623a97f0cdb38fdcb8c592b916'},
@@ -257,7 +257,7 @@ const ROLLER_BAND_SOURCE_PAIR = Object.freeze({
     "patches/splatoon3/runtime/slosher-nearest-paint.mjs": {base: '948517797c8a2de11278e2f96bf324ab80a22aa6', candidate: '948517797c8a2de11278e2f96bf324ab80a22aa6'},
     "patches/splatoon3/runtime/weapon-edgecases.mjs": {base: 'ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110', candidate: 'ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110'},
     "patches/splatoon3/runtime/weapons-fidelity.mjs": {base: 'a37fa779835a2a17e24c5bed3c601a56269bfec3', candidate: 'a37fa779835a2a17e24c5bed3c601a56269bfec3'},
-    "scripts/inkwave-source-composition.mjs": {base: '62d5ce2e1c729bd57dfc2372f668a76fe1c7c38a', candidate: 'ad9d7e248449de6032563050534f218ba34fdf4f'},
+    "scripts/inkwave-source-composition.mjs": {base: '62d5ce2e1c729bd57dfc2372f668a76fe1c7c38a', candidate: '33a535481402bae5e846870bed2ee7e76ef9b298'},
     "scripts/lib/inkwave-build-only-modules.mjs": {base: '2b9ea41557f2af7409d17310f392456e04b11134', candidate: '2b9ea41557f2af7409d17310f392456e04b11134'},
   })
 });
