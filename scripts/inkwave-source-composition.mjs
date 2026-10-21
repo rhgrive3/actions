@@ -52,6 +52,12 @@ function adaptRollerBandParity(rel, code) {
     '          if (Math.abs(along) > r * (BAND_L + BAND_R) || Math.abs(across) > r * (BAND_W + 0.048 + BAND_R)) continue;',
     '          if (rollerBandSignedDistance(along, across, r, seed) > 0) continue;',
   ].join('\n');
+  // Diagnostic fail-closed receipt: distinguish a moved guard from an
+  // actual graphics/collision policy change without touching game source.
+  if (!code.includes('          if (sd > -0.03 * r) continue;')) {
+    const at = code.indexOf('else if (roll) {', code.indexOf('  _cpuSplat('));
+    throw new Error('Roller band composed code needs review: ' + code.slice(at, at + 1050).replaceAll('\n', ' '));
+  }
   return replaceOnce(code, '          if (sd > -0.03 * r) continue;',
     corrected, 'Roller CPU ink footprint seeded band SDF');
 }
