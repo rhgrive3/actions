@@ -57,8 +57,14 @@ test('Kraken charge requires release and grounded dash paints without an airborn
 test('Kraken expiry interrupts charging and dash before any new damage or travel ink',async()=>{
  for(const phase of ['charge','dash']){
   const {f,a}=await setup(),state=a._s3AllSpecialState;let paints=0,hits=0;
-  f.G.paint.splat=()=>{paints++;return 0;};f.G.projectiles.applyHit=()=>{hits++;};
-  state.phase=phase;state.t=state.duration-1/60;state.direction.set(0,0,1);state.dashT=0;
+  f.G.paint.splat=()=>{paints++;return 0;};f.G.projectiles.applyHit=(_a,_v,damage)=>{assert.equal(damage,120);hits++;};
+  const enemy={alive:true,team:1-a.team,pos:new f.THREE.Vector3(0,0,2)};
+  f.G.actors=[a,enemy];f.G.physics.los=()=>true;
+  state.phase='dash';state.direction.set(0,0,1);state.dashT=0;state.dashHits=new Set();state.krakenPaintT=3/60;
+  a._updateSpecial(1/60);assert.equal(hits,1,'non-expired control has a reachable enemy');assert.equal(paints,1,'non-expired control reaches paint cadence');
+  paints=0;hits=0;a.pos.set(0,0,0);a.vel.set(0,0,0);state.dashHits=new Set();
+  state.phase=phase;state.t=state.duration-1/60;state.direction.set(0,0,1);state.dashT=0;state.krakenPaintT=3/60;
+  state.jumpAttack=phase==='charge';state.jumpHits=new Set();
   a.intent.fire=true;a._updateSpecial(1/60);
   assert.equal(state.phase,'finish');assert.equal(a.specialActive.armor,false);
   assert.equal(paints,0);assert.equal(hits,0);
