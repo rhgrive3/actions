@@ -14,7 +14,7 @@ const end = source.indexOf('\n  const characterExports', start);
 assert.ok(start >= 0 && end > start, 'fixture loader boundaries remain explicit');
 const loader = source.slice(start, end);
 
-function exercise({ built, upstream, production, custom, profiled }) {
+function exercise({ built, upstream, production, custom, profiled, emitted = false }) {
   const ROOT = path.resolve('fixture-test-root');
   const UPSTREAM = path.join(ROOT, 'inkwave-public');
   const file = upstream ? path.join(UPSTREAM, 'src/actor.js') : path.join(ROOT, 'patches/model.mjs');
@@ -35,6 +35,9 @@ function exercise({ built, upstream, production, custom, profiled }) {
     adaptConstrainedSource: custom ? () => { throw Error('unused default adapter'); } : native,
     adaptProduction(rel, raw) { calls.push(['production', rel]); return `production(${raw})`; },
     adaptRuntime(rel, raw) { calls.push(['runtime', rel]); return `runtime(${raw})`; },
+    adaptEmittedRuntime: emitted
+      ? (rel, raw) => { calls.push(['emitted', rel]); return `emitted(${raw})`; }
+      : (_rel, raw) => raw,
     cachedVmModule: compile,
     vm: { SourceTextModule: class {
       constructor(source, options) { this.source = source; this.options = options; }
@@ -52,7 +55,10 @@ function exercise({ built, upstream, production, custom, profiled }) {
   assert.equal(meta.url, pathToFileURL(identifier).href);
 
   let expectedSource, expectedCalls;
-  if (built) { expectedSource = 'raw'; expectedCalls = []; }
+  if (built) {
+    expectedSource = !upstream && emitted ? 'emitted(raw)' : 'raw';
+    expectedCalls = !upstream && emitted ? [['emitted', relative]] : [];
+  }
   else if (!upstream) { expectedSource = 'runtime(raw)'; expectedCalls = [['runtime', relative]]; }
   else if (!production) { expectedSource = 'native(raw)'; expectedCalls = [['native', relative]]; }
   else {
@@ -73,8 +79,10 @@ for (const built of [false, true]) {
     for (const production of [false, true]) {
       for (const custom of [false, true]) {
         for (const profiled of [false, true]) {
-          const options = { built, upstream, production, custom, profiled };
-          test(`fixture loader ${JSON.stringify(options)}`, () => exercise(options));
+          for (const emitted of [false, true]) {
+            const options = { built, upstream, production, custom, profiled, emitted };
+            test(`fixture loader ${JSON.stringify(options)}`, () => exercise(options));
+          }
         }
       }
     }

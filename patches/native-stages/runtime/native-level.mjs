@@ -87,6 +87,52 @@ export class NativeLevel extends Level {
   }
   return false;
  }
+ /** queryBlocks() followed by the caller's own first y rejection, in the same
+  * order. The xz hash stacks every level of a source stage in one 4 m column
+  * (#1671: ~1100 splat and ~500 region candidates per query on Scorch). Each
+  * hash cell keeps a typed copy of the immutable static y values, so rejected
+  * ids are skipped before any block object is read. The test is the caller's
+  * exact expression on the same doubles: mode 0 is splat's AABB y test, mode 1
+  * regionStats' face-origin test. Kept ids keep their first-cell order and
+  * stamp. Rejected ids are not stamped; every query takes a new stamp, so no
+  * later query can observe that. Dynamic blocks always pass to the caller. */
+ queryBlocksBand(minX,minZ,maxX,maxZ,out,y,reach,mode){
+  out.length=0;
+  if(this._bandHash!==this.hash){this._bandHash=this.hash;this._bandCells=new Array(this.hash.length);}
+  const st=++this._stamp,stamps=this.blockStamp,cells=this._bandCells;
+  const x0=this._hxi(minX),x1=this._hxi(maxX),z0=this._hzi(minZ),z1=this._hzi(maxZ);
+  for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){
+   const c=z*this.hw+x,cell=this.hash[c];let band=cells[c];
+   if(!band||band.length!==cell.length)band=cells[c]=this._bandCell(cell);
+   if(mode===0){
+    const lo=band.lo,hi=band.hi;
+    for(let i=0;i<cell.length;i++){
+     if(y<lo[i]-reach||y>hi[i]+reach)continue;
+     const id=cell[i];if(stamps[id]!==st){stamps[id]=st;out.push(id);}
+    }
+   }else{
+    const o=band.origin;
+    for(let i=0;i<cell.length;i++){
+     if(Math.abs(o[i]-y)>reach)continue;
+     const id=cell[i];if(stamps[id]!==st){stamps[id]=st;out.push(id);}
+    }
+   }
+  }
+  return out;
+ }
+ _bandCell(cell){
+  const n=cell.length,lo=new Float64Array(n),hi=new Float64Array(n),origin=new Float64Array(n);
+  for(let i=0;i<n;i++){
+   const id=cell[i],b=this.blocks[id];
+   if(id>=this.staticBlockCount||!b){lo[i]=-Infinity;hi[i]=Infinity;origin[i]=NaN;continue;}
+   lo[i]=b.aabbMin.y;hi[i]=b.aabbMax.y;
+   const f=b.faces,single=b.nativeFace!==undefined&&f[0]===b.nativeFace&&f[1]<0&&f[2]<0&&f[3]<0&&f[4]<0&&f[5]<0;
+   // A static object has no paint face, so regionStats never reads it
+   // (Infinity rejects it unless y is NaN; then it passes and is a no-op).
+   origin[i]=single?this.faces[b.nativeFace].origin.y:f.every(face=>face<0)?Infinity:NaN;
+  }
+  return {length:n,lo,hi,origin};
+ }
  queryDynamicBlocks(minX,minZ,maxX,maxZ,out){
   out.length=0;
   for(let i=this.staticBlockCount;i<this.blocks.length;i++){
