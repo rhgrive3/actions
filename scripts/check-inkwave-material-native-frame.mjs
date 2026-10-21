@@ -1,9 +1,18 @@
 #!/usr/bin/env node
 // QA-only full native frame transaction. No hardware GPU/FPS/allocated-byte claim.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import os from 'node:os';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+import {deflateSync} from 'node:zlib';
 import {chromium} from 'playwright';
 import {verifyRuntimeBuild} from './lib/inkwave-runtime-evidence.mjs';
 import {enterRangeFromMenu} from './lib/inkwave-range-menu-entry.mjs';
+function diagnosticPNG(width,height,rgba){
+ assert.equal(rgba.length,width*height*4);
+ const crc=bytes=>{let c=0xffffffff;for(const byte of bytes){c^=byte;for(let i=0;i<8;i++)c=(c&1)?0xedb88320^(c>>>1):c>>>1;}return(c^0xffffffff)>>>0;};
+ const chunk=(name,data)=>{const n=Buffer.from(name),len=Buffer.alloc(4),sum=Buffer.alloc(4);len.writeUInt32BE(data.length);sum.writeUInt32BE(crc(Buffer.concat([n,data])));return Buffer.concat([len,n,data,sum]);};
+ const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(width);ihdr.writeUInt32BE(height,4);ihdr[8]=8;ihdr[9]=6;
+ const scan=Buffer.alloc(height*(width*4+1));for(let y=0;y<height;y++)rgba.copy(scan,y*(width*4+1)+1,(height-1-y)*width*4,(height-y)*width*4);
+ return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),chunk('IDAT',deflateSync(scan)),chunk('IEND',Buffer.alloc(0))]);
+}
 const [siteArg,sourceArg,overlayArg,outArg,variant,mode]=process.argv.slice(2);
 const diagnostic=mode==='--diagnostic';assert.ok(mode===undefined||diagnostic);
 assert.ok(['A','B'].includes(variant));
@@ -31,6 +40,12 @@ try{
  page.on('console',m=>{if(m.type()==='log'&&m.text().startsWith('MATERIAL_PHASE ')){
   const line=m.text().slice(15);fs.appendFileSync(path.join(out,'phases.jsonl'),line+'\n');console.log('MATERIAL_PHASE '+line);
  }});
+ if(diagnostic)await page.exposeFunction('__materialDiagnosticImages',e=>{
+  assert.equal(e.width,960);assert.equal(e.height,600);assert.deepEqual(e.images.map(x=>x.label),['unpainted','painted','repeat']);
+  const files=e.images.map(({label,rgba})=>{const bytes=Buffer.from(rgba,'base64'),png=diagnosticPNG(e.width,e.height,bytes),file=label+'.png';fs.writeFileSync(path.join(out,file),png);return{file,sha256:hash(png),width:e.width,height:e.height};});
+  const receipt={...e,images:files,diagnosticOnly:true,performanceAccepted:false};fs.writeFileSync(path.join(out,'pixel-diagnostic.json'),JSON.stringify(receipt,null,2));
+  console.log('MATERIAL_PIXEL_SIGNAL '+JSON.stringify({paintSignal:e.paintSignal,repeatSignal:e.repeatSignal,files}));
+ });
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.addInitScript(()=>{
   localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:true,frameRate:60,colorblind:true}));
@@ -185,7 +200,16 @@ try{
   checkpoint('paint-flush-start');G.paint.flush(0);checkpoint('paint-readback-start');const painted=image(),repeat=image();checkpoint('paint-readback-end');
   const difference=(x,y)=>{let changed=0,max=0;for(let i=0;i<x.length;i+=4){let any=false;for(let k=0;k<4;k++){const d=Math.abs(x[i+k]-y[i+k]);max=Math.max(max,d);any ||= d>0;}changed+=any;}return{changed,max};};
   const paintSignal=difference(unpainted,painted),repeatSignal=difference(painted,repeat);
-  if(paintSignal.changed<=1000||repeatSignal.changed!==0)throw Error('Paint visibility or frozen-repeat gate failed');
+  checkpoint('pixel-signal',{paintSignal,repeatSignal});
+  if(diagnostic){
+   const encode=bytes=>{let value='';for(let i=0;i<bytes.length;i+=16384)value+=String.fromCharCode(...bytes.subarray(i,i+16384));return btoa(value);};
+   checkpoint('capture-evidence-start');
+   await window.__materialDiagnosticImages({width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,paintSignal,repeatSignal,
+    atlasConditions,fixture:fixture(),state:state(),placements,
+    images:[{label:'unpainted',rgba:encode(unpainted)},{label:'painted',rgba:encode(painted)},{label:'repeat',rgba:encode(repeat)}]});
+   checkpoint('capture-evidence-end');
+  }
+  if(paintSignal.changed<=1000||repeatSignal.changed!==0)throw Error('Paint visibility or frozen-repeat gate failed: '+JSON.stringify({paintSignal,repeatSignal}));
   // Fail-closed controls prove the visibility predicate does not accept an empty signal.
   const validates=x=>x.changed>1000;if(validates(difference(unpainted,unpainted)))throw Error('Blank negative accepted');
   const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
