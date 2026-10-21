@@ -12,7 +12,8 @@ export async function runAirScenario({api,scenario,onFrame=null}){
  check(Object.hasOwn(AIR_CAPTURE_FRAMES,scenario),'known full-jump case');
  const a=new Actor({team:0,isLocal:true,name:'rainmaker-qa-fixed',weapon:'dualies',CharacterClass:Character,style:{hair:0,hat:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
  a.nid='carrier';a.slot=0;ch.actor=a;ch.onEvent=null;ch.setLod('hero');G.scene.add(ch.root);G.actors=[a];G.time=0;
- a.grounded=a.ground.hit=true;a.ground.block=0;a.groundN.set(0,1,0);a.pos.set(0,0,0);a.vel.set(0,0,0);a.aimYaw=a.yaw=a.aimPitch=0;a.aimDir.set(0,0,1);a.aimPoint.set(0,1,20);delete a.s3.squidSpawn;
+ a.grounded=a.ground.hit=true;a.ground.block=0;a.groundN.set(0,1,0);a.pos.set(0,0,0);a.vel.set(0,0,0);a.aimYaw=a.yaw=a.aimPitch=0;// Downward aim exercises the bounded support translation with current source clips.
+ a.aimPitch=-1.05;a.aimDir.set(0,Math.sin(a.aimPitch),Math.cos(a.aimPitch));a.aimPoint.copy(a.pos).addScaledVector(a.aimDir,20);delete a.s3.squidSpawn;
  const events=[],engine=new RankedEngine('rainmaker',{id:'rainmaker-full-jump',rainmaker:{center:[0,0,0],goals:[[0,0,100],[0,0,-100]],checkpoints:[[],[]]}});
  const m=G.match={mode:'rainmaker',state:'playing',playing:()=>true,canRespawn:()=>false,ranked:engine,actors:[a],local:a,rankedBarrierHits:[],rankedGains:[0,0],rankedWorld:{zoneCoverage:()=>[],floorAt:()=>0,blocked:()=>false,update(){},presentEvent(){}},setState(s){this.state=s;}};
  m.playRankedEvents=function(batch,...args){events.push(...batch.map(e=>({...e})));return Match.prototype.playRankedEvents.call(this,batch,...args);};m.rankedEffects=createRankedEffects(api,m);

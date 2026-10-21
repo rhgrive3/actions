@@ -34,9 +34,12 @@ for(const weapon of ['shooter','roller','dualies'])test(weapon+' source-air over
   const extremes=()=>{if(weapon!=='shooter')return;for(const x of [-1.05,1.15]){pitch(x);step(12,false,false);}pitch(0);step(12,false,false);};
   step(60,false,false);for(const p of pair)p.rule.state.carrier='carrier';step(12);extremes();step(62,true);extremes();step(3);extremes();step(39);
   for(const {ch}of pair)ch.trigger(weapon==='roller'?'flick':'throw');step(15,false,false);for(const x of [-1.05,1.15]){pitch(x);step(8,false,false);}pitch(0);
-  for(const {a}of pair){a.grounded=a.ground.hit=false;a.vel.set(0,2,0);}step(8,false,false);
+  for(const {a}of pair){a.grounded=a.ground.hit=false;a.vel.set(0,2,0);}for(const x of [-1.05,-.5,0,.5,1.15]){pitch(x);step(8,false,false);}
   assert.ok(pair[1].maxFinal<.001,'final world-space hand reaches existing target: '+pair[1].maxFinal);assert.equal(pair[0].solves,pair[1].solves,'one legacy solve per active frame');
-  if(weapon!=='roller')assert.ok(pair[1].corrected>0,'the regression actually exercises the air correction');
+  // Current source jump clips keep the Shooter grip reachable throughout
+  // the legal pitch sweep. Dualies still exercises the display transaction.
+  if(weapon==='dualies')assert.ok(pair[1].corrected>0,'the regression actually exercises the air correction');
+  if(weapon==='shooter')assert.equal(pair[1].corrected,0,'current Shooter air pose needs no display transaction');
   Object.assign(G,environment);for(const {a,rule}of pair){rule.state.carrier=null;a.grounded=a.ground.hit=true;a.vel.set(0,0,0);delete a.s3.squidSpawn;}
   if(boundary==='hidden-reset')for(const {ch}of pair){ch.setVisible(false);assert.equal(!!ch.s3RainmakerSupportPending,false);ch.setVisible(true);}
   const born=[],previous=G.projectiles.throwBomb;G.projectiles.throwBomb=function(a){const before=this.bombs.length,result=previous.call(this,a);for(const b of this.bombs.slice(before))born.push({actor:a,kind:b.kind,pos:b.pos.toArray(),vel:b.vel.toArray()});return result;};

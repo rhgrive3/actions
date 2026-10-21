@@ -176,7 +176,7 @@ jobs:
       - name: Verify remote combat provenance and equipped hit ceilings
         run: |
           node patches/network-replication/tools/combat-hit-ceilings.mjs
-          node --test scripts/tests/inkwave-combat-provenance.test.mjs
+          node --test scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-open-pr-source-pairs.test.mjs
       - name: Compare authoritative and reconstructed attacks
         run: node --experimental-vm-modules scripts/check-inkwave-network-comparison.mjs --exact-source --evidence-dir .ci-scratch/network-comparison
       - uses: actions/upload-artifact@v4
