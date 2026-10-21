@@ -140,6 +140,8 @@ try {
       // Drain activation bursts before the sampled continuous-emission window.
       for(let frame=0;frame<hz*inkjet.warmupSeconds;frame++){G.time+=1/hz;G.fx.update(1/hz,camera);draw();}
       draw(); accepted=0;evictions=0;exhaustGlows.fill(0);
+      const phaseSnapshot=()=>actors.map(a=>({id:a.specialActive?.id??null,phase:a._s3AllSpecialState?.phase??a.specialActive?.phase??null,trackPhase:d.tracks.get(a)?.phase??null,gameplaySeed:a._s3AllSpecialState?.seed??null,gameplayTime:a._s3AllSpecialState?.t??null}));
+      const phaseBefore=phaseSnapshot();
       const before=pixels();
       for(let frame=0;frame<hz*inkjet.sampleSeconds;frame++){
         const dt=1/hz;G.time+=dt;
@@ -148,6 +150,7 @@ try {
         rows.push({frame:frame+1,time:G.time,puffs:d.kit.puffs.n,sparks:d.kit.sparks.n,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles});
         if(!inkjet.timingOnly && (inkjet.videoFrames || (hz===60 && frame<12) || (hz!==60 && frame===0)))images.push({name:'inkjet-'+layout+'-'+actorCount+'p-f'+String(frame+1).padStart(3,'0')+'.png',data:renderer.domElement.toDataURL('image/png')});
       }
+      const phaseAfter=phaseSnapshot();expect(JSON.stringify(phaseBefore)===JSON.stringify(phaseAfter),'frozen gameplay phase and seed stay unchanged');
       const after=pixels(), changedPixels=changed(before,after);
       if(inkjet.timingOnly)images.push({name:'inkjet-timing-postsample.png',data:renderer.domElement.toDataURL('image/png')});
       expect(exhaustGlows.length===actorCount && exhaustGlows.every(n=>n===2*(inkjet.baseline?hz:Math.min(hz,60))*inkjet.sampleSeconds),'each expected actor emits both exhaust glows; flight-only cannot pass');
@@ -158,7 +161,7 @@ try {
       const sorted=a=>[...a].sort((a,b)=>a-b);
       const stats=a=>{const q=sorted(a);return{mean:a.reduce((n,x)=>n+x,0)/a.length,p50:q[Math.floor(q.length*.5)],p95:q[Math.floor(q.length*.95)],max:q.at(-1)};};
       const gl=renderer.getContext(), debug=gl.getExtension('WEBGL_debug_renderer_info');
-      cases.push({hz,actorCount,layout,variant:inkjet.baseline?'baseline-overlay':'candidate',clock:{warmupSeconds:inkjet.warmupSeconds,sampleSeconds:inkjet.sampleSeconds,dt:1/hz,mode:'simulated fixed dt, not real display refresh'},seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG seed 0x12345678',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,exhaustGlows,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
+      cases.push({hz,actorCount,layout,phaseBefore,phaseAfter,variant:inkjet.baseline?'baseline-overlay':'candidate',clock:{warmupSeconds:inkjet.warmupSeconds,sampleSeconds:inkjet.sampleSeconds,dt:1/hz,mode:'simulated fixed dt, not real display refresh'},seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG seed 0x12345678',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,exhaustGlows,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
       for(const a of actors)a.character.dispose();
       G.projectiles.list=[];G.projectiles.clear();G.fx.dispose();G.actors=[];G.fx=null;
     } else for (const fxMode of ['none', 'disabled', 'enabled']) for (const hz of [30, 60, 120]) {
