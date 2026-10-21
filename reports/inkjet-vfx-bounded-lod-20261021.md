@@ -1,4 +1,43 @@
-# Inkjet bounded density candidate, 2026-10-21
+# Inkjet bounded and fair density candidate, 2026-10-21
+
+Current candidate adds Inkjet-only per-actor admission quotas to the historical bounded proposal below. It is not accepted as retail-perfect or within a measured performance percentage. PR1744 head3fce162f remains fixed; these results apply only to the separate bounded-lod branch.
+
+## Fair admission, measured against the initial guard
+
+At the first Inkjet request per rendered frame, collect eligible active Inkjet actors and owners of existing Inkjet flight records. Reuse one actors array and WeakMap record per owner. Share only the currently free puff/glow slots equally. Rotate indivisible remainder slots on advancing60Hz time epochs, without reordering G.actors or its update loop. A final pool-cap check handles competing FX after the snapshot. Unknown new flight owners wait one render instead of stealing another share. Live sprites are never evicted or deleted. Participant discovery runs once per rendered frame only when Inkjet requests admission, not on idle scenes. This adds bookkeeping CPU work; it is not a CPU/GPU benchmark.
+
+The following comparison uses the same actual recipe/Float32 pool code and the actual Director order of all actors first, then all projectile rounds. The earlier section's interleaved test was useful for the cap bound but did not reproduce that order. Constant random=.2, two seconds, one visible round per actor:
+
+| Cap | Hz | Actors | Initial-guard admissions | Fair admissions | Before max/min | After max/min | Peak puffs |
+|---|---|---|---|---|---|---|---|
+| 182 | 30 | 1 | 660 | 660 | 1.000 | 1.000 | 137 |
+| 182 | 30 | 2 | 598/283 | 456/456 | 2.113 | 1.000 | 174 |
+| 182 | 30 | 4 | 529/267/63/45 | 238/241/240/237 | 11.756 | 1.017 | 182 |
+| 182 | 60 | 1 | 927 | 927 | 1.000 | 1.000 | 178 |
+| 182 | 60 | 2 | 834/117 | 487/487 | 7.128 | 1.000 | 182 |
+| 182 | 60 | 4 | 691/177/44/44 | 265/265/265/265 | 15.705 | 1.000 | 182 |
+| 182 | 120 | 1 | 909 | 909 | 1.000 | 1.000 | 182 |
+| 182 | 120 | 2 | 823/104 | 478/478 | 7.913 | 1.000 | 182 |
+| 182 | 120 | 4 | 682/159/44/44 | 260/261/261/260 | 15.500 | 1.004 | 182 |
+| 520 | 30 | 1 | 660 | 660 | 1.000 | 1.000 | 137 |
+| 520 | 30 | 2 | 660/660 | 660/660 | 1.000 | 1.000 | 274 |
+| 520 | 30 | 4 | 622/622/605/534 | 600/600/600/600 | 1.165 | 1.000 | 500 |
+| 520 | 60 | 1 | 1320 | 1320 | 1.000 | 1.000 | 280 |
+| 520 | 60 | 2 | 1253/1165 | 1214/1214 | 1.076 | 1.000 | 510 |
+| 520 | 60 | 4 | 1163/936/344/140 | 672/672/672/672 | 8.307 | 1.000 | 520 |
+| 520 | 120 | 1 | 1320 | 1320 | 1.000 | 1.000 | 291 |
+| 520 | 120 | 2 | 1245/1131 | 1194/1194 | 1.101 | 1.000 | 518 |
+| 520 | 120 | 4 | 1158/921/309/139 | 659/659/659/659 | 8.331 | 1.000 | 520 |
+
+All18 cases: zero evictions, same peak puff bound as the initial guard. New records are reused across frames. Tests also cover capacity below current live count, excluded submerged/superjump/dead actors, and continued flight after owner death.
+
+Fairness does not mean zero overhead: at cap182/four actors,60Hz total accepted births increased956→1060 because equal shares alter the mix/lifetimes of accepted particles, even though the pool peak stayed182. At120Hz it increased929→1042. This is an additional CPU/allocator risk to measure. The deterministic equal-demand ratios above are not a guarantee with different actor actions, different effect lifetimes, camera conditions or competing other FX.
+
+Executed: four source-recipe/clock tests and19 actual-pool/admission tests in the available JS runtime. Mesh/upload destinations are stubs. Committed Node execution, production/emitted suites, exact new-head CI and actual-browser performance remain pending. No retail continuous-frame footage comparison is claimed.
+
+## Historical initial bounded proposal and its rejected fairness
+
+# Initial bounded proposal (historical, not accepted)
 
 This supersedes the unbounded-low-FPS density proposal as a candidate only. PR1744 head 3fce162f7ff8c7bcd0657dc91ec23e0ed628954f remains a fixed comparison record. This branch is not accepted as retail-perfect or within a measured GPU/CPU percentage.
 
