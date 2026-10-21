@@ -46,6 +46,8 @@ export const RANKED_POSE_LIMITS = Object.freeze({
   landingRadius: 3, allyLandingRadius: 6, landingHeight: 4,
   // Native flight: XZ lerp from→to, apex 11 + 0.08·distance (actor.js).
   flightCorridor: 2, flightMargin: 3, flightApexBase: 11, flightApexScale: .08,
+  // Host-time slack for bunched owner packets, not a retail network constant.
+  flightClockSlack: .35, flightProgressMargin: 3,
   // Quick Super Jump at 57 AP leaves 80F×0.25 = 20F of charge (> 0.25 s).
   chargeMin: .25,
   boundsMargin: 16, ceiling: 40, floorBelow: 10,
@@ -120,6 +122,21 @@ function inFlightCorridor(p, f) {
   return off <= L.flightCorridor && p[1] >= Math.min(f.from[1], f.to[1]) - L.flightMargin &&
     p[1] <= Math.max(f.from[1], f.to[1]) + apex + L.flightMargin;
 }
+// A sender can forge a valid SJ destination and charge flags. Its in-bounds
+// flight corridor alone cannot authorize arrival at that destination in one tick.
+// Compare horizontal ease-out progress to the receiver's clock, not a sender
+// supplied `jump.t` or packet timestamp (except in pure legacy test contexts).
+function inFlightTime(p, f, clock) {
+  const length = flat(f.from, f.to);
+  if (length < 1e-6) return true;
+  const duration = 1.15 + Math.min(.6, length / 80);
+  const elapsed = Math.max(0, clock - f.startedAt);
+  const u = Math.min(1, (elapsed + L.flightClockSlack) / duration);
+  const ease = u < .5 ? 2*u*u : 1 - 2*(1-u)*(1-u);
+  const dx = f.to[0]-f.from[0], dz=f.to[2]-f.from[2];
+  const along = ((p[0]-f.from[0])*dx+(p[2]-f.from[2])*dz)/length;
+  return along <= length*ease + L.flightProgressMargin;
+}
 function nearRespawn(p, actor, ctx) {
   const pad = vec(ctx?.level?.spawnPads?.[actor?.team]);
   if (!pad) return false;
@@ -158,22 +175,21 @@ export function admitRankedPose(state, row, actor, ts, world, ctx = null) {
     if (hostDt !== null) slack = Math.min(L.clockSlack, slack + hostDt - credit);
     const charged = state.jumpSince !== undefined && ts - state.jumpSince >= L.chargeMin;
     if (row[16] !== prev.tp) {
-      // The native Actor increments netTp only for an actual respawn (#1728).
-      // A Super Jump advances its continuous flight position without minting a
-      // teleport generation. Owner-supplied SJ flags are not an independent
-      // host proof: allowing them to authorize tp+1 lets a guest create a
-      // forged epoch and score an objective at any destination. The respawn
-      // itself must also appear at the owner's team spawn pad (#1648).
+      if (row[16] !== prev.tp + 1) return false;
+      // #1728: only a verified death-to-respawn transition can advance netTp.
+      // Native Super Jump/return flight keeps its epoch; sender-controlled SJ flags
+      // and a host-known landing are not proof of authority to teleport instantly.
       const respawn = !(prev.flags & ALIVE) && !!(flags & ALIVE) && nearRespawn(next, actor, ctx);
-      if (row[16] !== prev.tp + 1 || !respawn) return false;
-      tokens = L.burst; flight = null; specialOrigin = undefined; slack = L.initialClockSlack;
+      if (!respawn) return false;
+      tokens = L.burst; flight = null; specialOrigin = undefined;
+      slack = L.initialClockSlack;
     } else {
       const claimed = (flags & SJ_FLIGHT) && (flags & ALIVE) ? flightOf(row) : null;
       const same = claimed && flight && dist(claimed.to, flight.to) < 1e-3 && dist(claimed.from, flight.from) < 1e-3;
       if (claimed && !same && (prev.flags & SJ) && charged && dist(claimed.from, prev.pos) <= L.flightCorridor + L.sampleSlack &&
-          nearLanding(claimed.to, ctx, state, actor)) flight = claimed;
+          nearLanding(claimed.to, ctx, state, actor)) flight = { ...claimed, startedAt: now ?? ts };
       else if (!same) flight = null;
-      if (flight && inFlightCorridor(next, flight)) {
+      if (flight && inFlightCorridor(next, flight) && inFlightTime(next, flight, now ?? ts)) {
         // An approved flight follows its host-checked corridor, not run speed.
       } else {
         if (!(flags & SJ_FLIGHT)) flight = null;

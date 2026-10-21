@@ -11,6 +11,8 @@ const auditedImports = [tokenImport,
   "import {registerLimitedTorpedo,consumeLimitedContact} from './torpedo-contact-commit.mjs';",
   "import { SPRINKLER } from '../splatoon3/runtime/kit-sprinkler.mjs';",
   "import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSprinklerScope } from './sprinkler-contact-commit.mjs';",
+  "import { COMBAT_HIT_CEILINGS } from './combat-hit-ceilings-data.mjs';",
+  "import { damageLeafMax } from './damage-leaves.mjs';",
 ];
 let executable = source;
 for (const dependency of auditedImports) {
@@ -38,11 +40,21 @@ function receiverSprinklerScope(){throw Error('cap-only boundary: receiverSprink
 
 assert.doesNotMatch(executable, /\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,
   'new capabilities require a fresh metadata boundary audit');
+// #1665/#1666 equipped-slot ceilings: two pure sibling modules (a generated
+// frozen data table and an allocation-free leaf walk). Load their actual
+// source into the same realm under the same capability audit; no imports.
+const ceilingSources = ['../combat-hit-ceilings-data.mjs', '../damage-leaves.mjs'].map(file => {
+  const text = fs.readFileSync(new URL(file, import.meta.url), 'utf8');
+  assert.doesNotMatch(text, /\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,
+    'ceiling dependency has no capabilities: ' + file);
+  assert.doesNotMatch(text, /^import /m, 'ceiling dependency is a leaf module: ' + file);
+  return text.replaceAll('export const ', 'const ').replaceAll('export function ', 'function ');
+}).join('\n');
 function run(body, direct = false) {
   assert.equal(executable.split('function flush(').length, 2, 'unique audited direct boundary');
   const prefix = direct ? executable.slice(0, executable.indexOf('function flush(')) : executable;
   assert.ok(prefix.length > 0);
-  const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + contactBoundary + prefix +
+  const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + contactBoundary + ceilingSources + prefix +
     '\nfunction bindSubBirthCommit(){} function closeSubBirthCommit(){}\n' +
     '(' + body.toString() + ')()';
   // Token binding is a metadata stub; every new Sprinkler/Torpedo capability throws if touched.
@@ -132,9 +144,12 @@ test('PvP cap adds no current-position or attacker-life rejection to committed p
   assert.equal(proof.uses,1);
 });
 test('unrelated main weapon remains outside Special cap',()=>{
-  const {nm,proof}=capFixture('storm');
-  proof.kind='main';proof.cause='shooter';
-  assert.equal(combatAdmission(nm,'peerA',{...hit(),d:161},'pvp',100),true);
+  // A main whose own single-hit maximum (180) exceeds the Storm cap (160):
+  // the Special cap must not apply to it; its equipped-slot ceiling does.
+  const {nm,a,proof}=capFixture('storm');
+  a.weapon={...a.weapon,id:'charger',kind:'charger',damage:180};
+  proof.kind='main';proof.cause='charger';
+  assert.equal(combatAdmission(nm,'peerA',{...hit(2,1,'charger'),d:161},'pvp',100),true);
   assert.equal(proof.uses,1);
 });
 

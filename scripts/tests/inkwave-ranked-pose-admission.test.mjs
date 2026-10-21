@@ -64,18 +64,16 @@ test('host geometry rejects grounded high-altitude and tunneling',()=>{
   const wall={floorAt:()=>0,blocked:()=>true};
   assert.equal(admitRankedPose(s,row(2,0),actor,1.2,wall),false);
 });
-test('Super Jump flags never mint a teleport generation, even at a host-known landing (#1728)',()=>{
+test('an owner cannot forge netTp after SJ charge even toward a host-known teammate',()=>{
   const clock={host:1}, ctx=context(clock,{allies:[[45,0,0]]});
   const charged=()=>{const s={};
     assert.equal(admitRankedPose(s,row(),actor,1,world,ctx),true);
     clock.host=1.05;assert.equal(admitRankedPose(s,row(.2,0,{f:1|CHARGE}),actor,1.05,world,ctx),true);
     clock.host=1.3;assert.equal(admitRankedPose(s,row(.3,0,{f:1|FLIGHT}),actor,1.3,world,ctx),true);
     clock.host=1.35;return s;};
-  // The native Actor increments netTp only on respawn; a real jump is a
-  // continuous same-tp flight (covered by the corridor tests below).
-  const listed=charged();
-  assert.equal(admitRankedPose(listed,row(45,1.1,{f:1|FLIGHT,tp:1}),actor,1.35,world,ctx),false,'teammate landing via tp+1');
-  assert.equal(listed.last.tp,0);
+  const ok=charged();
+  assert.equal(admitRankedPose(ok,row(45,1.1,{f:1|FLIGHT,tp:1}),actor,1.35,world,ctx),false,'SJ flags cannot authorize an epoch increment');
+  assert.equal(ok.last.tp,0,'the earlier valid flight pose remains authoritative');
   const forged=charged();
   assert.equal(admitRankedPose(forged,row(30,-20,{f:1|FLIGHT,tp:1}),actor,1.35,world,ctx),false,'arbitrary destination');
   assert.equal(forged.last.tp,0);
@@ -193,6 +191,25 @@ test('a Super Jump to an arbitrary point holds the pre-jump objective pose', () 
   const r = superJump([-30,0,30]);
   assert.ok(r.rejected > 0);
   assert.ok(r.out.every(s => Math.hypot(s.admitted[0]+30, s.admitted[2]-30) > 20), 'never admitted near the forged landing during flight');
+});
+test('a forged SJ cannot skip the travel time to an otherwise approved teammate landing', () => {
+  const from=[0,0,-40], to=[10,0,39], clock={host:0}, c=context(clock,{allies:[[10,0,40]]});
+  const s={}, me={...actor,pos:{x:0,y:0,z:-40}}, jump={from,to,t:0,dur:1.75};
+  assert.equal(admitRankedPose(s,row(0,-40),me,0,world,c),true);
+  clock.host=.05;
+  assert.equal(admitRankedPose(s,row(0,-40,{f:ALIVE|CHARGE}),me,.05,world,c),true);
+  clock.host=.4;
+  assert.equal(admitRankedPose(s,row(0,-40,{f:ALIVE|CHARGE}),me,.4,world,c),true);
+  clock.host=.45;
+  assert.equal(admitRankedPose(s,row(10,39,{f:ALIVE|FLIGHT,jump}),me,.45,world,c),false,
+    'a host-known landing and valid charge flags do not permit an instant full flight');
+  assert.deepEqual(s.last.pos,from);
+  clock.host=.5;
+  assert.equal(admitRankedPose(s,row(0,-39,{f:ALIVE|FLIGHT,jump}),me,.5,world,c),true,
+    'the same signed flight corridor still admits its ordinary opening progress');
+  clock.host=.55;
+  assert.equal(admitRankedPose(s,row(10,39,{f:ALIVE|FLIGHT,jump}),me,.55,world,c),false,
+    'a forged large step cannot immediately follow a valid small step');
 });
 test('a forged flight corridor off the claimed segment is rejected', () => {
   const r = superJump([10,0,39], { claimedTo: [10,0,39] });
