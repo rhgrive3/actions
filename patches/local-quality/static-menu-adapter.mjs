@@ -64,7 +64,7 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       "      this._startAttract({ staticMenu: true });\n      this.menus?.show(this.menus?.hasScreen?.('lobby') === false ? 'main' : 'lobby');",
       'online match end static menu');
     code = replaceOnce(code, '  _onScreen(s) {',
-      "  _onScreen(s) {\n    if (s === 'title' && this._staticMenuAttract) this._startAttract();",
+      "  _onScreen(s) {\n    if (s === 'main' && this.match?.attract && !this._staticMenuAttract) this._startAttract({ staticMenu: true });\n    if (s === 'title' && this._staticMenuAttract) this._startAttract();",
       'title restores live attract simulation');
 
     code = `import { renderLockerStage as renderInkwaveLockerStage } from '../patches/local-quality/locker-stage.mjs';\nconst INKWAVE_ART_MENU_SCREENS = new Set(${JSON.stringify(STATIC_MENU_SCREENS)});\n` + code;
