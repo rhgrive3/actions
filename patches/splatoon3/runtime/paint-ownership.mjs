@@ -82,6 +82,46 @@ function allocPiece(idx) {
   return p;
 }
 
+// #1671: hashes, angles, their cos/sin and the body wobble of each piece
+// depend only on the seed, the shape counts, sa and the travel angle, never on
+// the face, dn or tn. A growth record asks for them for every face entry on
+// every tick; build them once per record with the same expressions and reuse
+// them while those inputs are identical (NaN equal to NaN). A group with no
+// pieces (the settled pass's drip-only contract) reads none of its values.
+const sameTemplateValue = (a, b) => a === b || (a !== a && b !== b);
+function ancillaryTemplate(g, seed, word, sa, dirAng, spread, rayCount, satelliteCount, spatterCount) {
+  const t = g._s3AncillaryTemplate;
+  if (t && sameTemplateValue(t.seed, seed) && sameTemplateValue(t.sa, sa) && sameTemplateValue(t.dirAng, dirAng)
+      && (!rayCount || t.rayCount === rayCount) && (!satelliteCount || t.satelliteCount === satelliteCount)
+      && (!spatterCount || t.spatterCount === spatterCount)) return t;
+  const wobbles = g._s3Wobble && g._s3WobbleSeed === seed ? g._s3Wobble : (g._s3WobbleSeed = seed, g._s3Wobble = new Map());
+  const rays = new Float64Array(rayCount * 6), sats = new Float64Array(satelliteCount * 7);
+  const spats = new Float64Array(spatterCount * 7), drips = new Float64Array(6 * 3);
+  for (let k = 0; k < rayCount; k++) {
+    const h1 = paintShapeHash(word, 0, k), h2 = paintShapeHash(word, 1, k), h3 = paintShapeHash(word, 2, k);
+    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : (k + 0.35 + 0.6 * h1) / rayCount * 6.2831 + seed * 6.2831;
+    let w = wobbles.get(a);
+    if (w === undefined) { w = wobble(a, seed); wobbles.set(a, w); }
+    rays.set([Math.cos(a), Math.sin(a), w, h1, h2, h3], k * 6);
+  }
+  for (let k = 0; k < satelliteCount; k++) {
+    const h1 = paintShapeHash(word, 3, k), h2 = paintShapeHash(word, 4, k), h3 = paintShapeHash(word, 5, k);
+    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : h1 * 6.2831;
+    const ux = Math.cos(a), uy = Math.sin(a);
+    const nx = ux * 0.68, ny = uy * 0.68 - 0.32; const l = Math.hypot(nx, ny) || 1;
+    sats.set([h1, h2, h3, ux, uy, nx / l, ny / l], k * 7);
+  }
+  for (let k = 0; k < spatterCount; k++) {
+    const h1 = paintShapeHash(word, 6, k), h2 = paintShapeHash(word, 7, k), h3 = paintShapeHash(word, 8, k);
+    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread * 1.15 : h1 * 6.2831;
+    const ux = Math.cos(a), uy = Math.sin(a);
+    const nx = ux * 0.75, ny = uy * 0.75 - 0.25; const l = Math.hypot(nx, ny) || 1;
+    spats.set([h1, h2, h3, ux, uy, nx / l, ny / l], k * 7);
+  }
+  for (let k = 0; k < 6; k++) drips.set([paintShapeHash(word, 9, k), paintShapeHash(word, 10, k), paintShapeHash(word, 11, k)], k * 3);
+  return (g._s3AncillaryTemplate = { seed, sa, dirAng, rayCount, satelliteCount, spatterCount, rays, sats, spats, drips });
+}
+
 function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const R = g.R, r2 = R * R - dn * dn;
   if (r2 <= 0 || R <= 0) return null;
@@ -95,20 +135,12 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const spread = 6.2831 + (2.5 - 6.2831) * clamp(sa * 1.2, 0, 1);
   const big = kind > 1.5 && kind < 3.5;
   const bodyGrow = 0.4 + 0.6 * (1 - Math.pow(1 - clamp(tn, 0, 1), 4));
-  // #1671: wobble is a pure function of (angle, seed); a growth record asks
-  // for the same ray angles on every tick, so keep its values per seed.
-  const wobbles = g._s3Wobble && g._s3WobbleSeed === seed ? g._s3Wobble : (g._s3WobbleSeed = seed, g._s3Wobble = new Map());
-  const bodyEdge = a => {
-    let w = wobbles.get(a);
-    if (w === undefined) { w = wobble(a, seed); wobbles.set(a, w); }
-    return r * bodyGrow * w;
-  };
+  const T = ancillaryTemplate(g, seed, word, sa, dirAng, spread, rayCount, satelliteCount, spatterCount);
 
   const tsp = 1 - Math.pow(1 - clamp(tn * 1.4, 0, 1), 3);
   for (let k = 0; k < rayCount; k++) {
-    const h1 = paintShapeHash(word, 0, k), h2 = paintShapeHash(word, 1, k), h3 = paintShapeHash(word, 2, k);
-    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : (k + 0.35 + 0.6 * h1) / rayCount * 6.2831 + seed * 6.2831;
-    const ux = Math.cos(a), uy = Math.sin(a), edge = bodyEdge(a);
+    const q = k * 6, ux = T.rays[q], uy = T.rays[q + 1], edge = r * bodyGrow * T.rays[q + 2];
+    const h1 = T.rays[q + 3], h2 = T.rays[q + 4], h3 = T.rays[q + 5];
     // Same edge-spike length as the composed paint shader (adapter.mjs, paint.js).
     const len = r * (0.04 + 0.16 * h2 * h2 * h2) * tsp;
     const wB = r * (0.055 + 0.06 * h3), tipR = Math.max(r * (0.012 + 0.012 * h3), pixel * 0.45);
@@ -126,12 +158,10 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   }
 
   for (let k = 0; k < satelliteCount; k++) {
-    const h1 = paintShapeHash(word, 3, k), h2 = paintShapeHash(word, 4, k), h3 = paintShapeHash(word, 5, k);
+    const q = k * 7, h2 = T.sats[q + 1], h3 = T.sats[q + 2];
     const tl = 0.28 + 0.95 * h2, land = smoothstep(tl, tl + 0.2, tn);
     if (land <= 0) continue;
-    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : h1 * 6.2831;
-    let ux = Math.cos(a), uy = Math.sin(a);
-    if (face.wall) { const nx = ux * 0.68, ny = uy * 0.68 - 0.32; const l = Math.hypot(nx, ny) || 1; ux = nx / l; uy = ny / l; }
+    const ux = face.wall ? T.sats[q + 5] : T.sats[q + 3], uy = face.wall ? T.sats[q + 6] : T.sats[q + 4];
     const dist = r * (1.1 + (big ? 1.05 : 0.8) * h2 * h2);
     const rad = r * (0.028 + 0.085 * h3) * fall * (1 - 0.4 * h2) * (big ? 0.8 : 1) * land;
     const el = 1 + (0.5 + 1.6 * sa) * h2;
@@ -142,11 +172,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   }
 
   for (let k = 0; k < spatterCount; k++) {
-    const h1 = paintShapeHash(word, 6, k), h2 = paintShapeHash(word, 7, k), h3 = paintShapeHash(word, 8, k);
+    const q = k * 7, h2 = T.spats[q + 1], h3 = T.spats[q + 2];
     if (tn < 0.45 + 0.95 * h2) continue;
-    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread * 1.15 : h1 * 6.2831;
-    let ux = Math.cos(a), uy = Math.sin(a);
-    if (face.wall) { const nx = ux * 0.75, ny = uy * 0.75 - 0.25; const l = Math.hypot(nx, ny) || 1; ux = nx / l; uy = ny / l; }
+    const ux = face.wall ? T.spats[q + 5] : T.spats[q + 3], uy = face.wall ? T.spats[q + 6] : T.spats[q + 4];
     const rad = Math.max(r * (0.011 + 0.02 * h3) * fall, pixel * 0.9), dist = r * (1.3 + 1.2 * h2);
     const x = ux * dist, y = uy * dist;
     const p1 = allocPiece(pIdx++);
@@ -157,7 +185,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   if (face.wall && fall > 0.3 && dripCount > 0) {
     const nD = Math.min(6, dripCount + Math.floor(R * 1.2));
     for (let k = 0; k < nD; k++) {
-      const h1 = paintShapeHash(word, 9, k), h2 = paintShapeHash(word, 10, k), h3 = paintShapeHash(word, 11, k);
+      const h1 = T.drips[k * 3], h2 = T.drips[k * 3 + 1], h3 = T.drips[k * 3 + 2];
       if (k > 1 && h3 < 0.3) continue;
       const x0 = (h1 * 2 - 1) * r * 0.72;
       const c = Math.sqrt(Math.max(1 - (x0 / r) * (x0 / r), 0));
@@ -261,6 +289,19 @@ export function paintDotCellWitness(mask, face, x, y, piece) {
 }
 
 function cellIsSolidlyVisible(mask, face, x, y, piece) {
+  // #1671: nearly every test of a growing bomb is a bead or spatter dot that
+  // misses. Unstretched, a dot lies inside the circle of radius
+  // radius * max(1, el) about its center; when that circle (with relative and
+  // absolute slack far above the rounding of the exact path) stays clear of
+  // the closed cell rectangle, no sample is inside and no witness exists.
+  // NaN or infinite inputs never reject and keep the exact path.
+  if ((piece.type === 1 || piece.type === 2) && !(mask.sa > 0)) {
+    const hx = face.cu * 0.5, hy = face.cv * 0.5;
+    const ex = Math.max(x - hx - piece.x, piece.x - (x + hx), 0), ey = Math.max(y - hy - piece.y, piece.y - (y + hy), 0);
+    const reach = (piece.type === 2 ? piece.radius * Math.max(1, piece.el) : piece.radius) * (1 + 1e-6) + 1e-9;
+    const d2 = ex * ex + ey * ey;
+    if (d2 > reach * reach && d2 < Infinity) return false;
+  }
   const dx = face.cu * 0.32, dy = face.cv * 0.32;
   // A paint cell owns its area when its center or one of four interior samples
   // lies well inside the shader mask. This catches most sub-cell satellites

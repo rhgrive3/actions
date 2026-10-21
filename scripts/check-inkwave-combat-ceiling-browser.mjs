@@ -65,7 +65,7 @@ try {
    loaded.add(key);await route.fulfill({response,body});
   });
   await page.goto(address,{waitUntil:'domcontentloaded',timeout:60000});
-  await page.waitForFunction(()=>{if(document.querySelector('#boot-error')?.textContent)throw Error('Native boot error');const G=window.__G,g=window.__inkwave;return G?.game===g&&G.mode==='menu'&&g?.menus&&g.debug&&G.net&&!g._nativeStageSwitchPending&&!g.frozen;},null,{timeout:180000});
+  await page.waitForFunction(()=>{if(document.querySelector('#boot-error')?.textContent)throw Error('Native boot error');const G=window.__G,g=window.__inkwave;return !!G&&!!g&&G.game===g&&G.mode==='menu'&&g.menus&&g.debug&&G.net&&!g._nativeStageSwitchPending&&!g.frozen;},null,{timeout:180000});
  }
  const [host,guest]=pages;
  report.phase='native-room-start';

@@ -318,10 +318,23 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/core/gyro.js') {
     // #725: approximate public bridge endpoints, not extracted Nintendo code.
-    return replaceOnce(code,
+    code = replaceOnce(code,
       'const GYRO_DEG = [[-5, 278], [-2.5, 178], [0, 132], [2.5, 119], [5, 110]];',
       'const GYRO_DEG = [[-5, 360], [0, 200], [5, 120]]; // ~1x / ~1.8x / ~3x public bridge',
       'gyro sensitivity reference endpoints');
+    // #725: integrate the low-speed smoother's mean over each sensor interval (zero-order-hold
+    // input), not its end value, so one physical rotation gives one camera turn at any sensor
+    // period. Smoothing constants and thresholds are unchanged INKWAVE values.
+    return replaceOnce(code,
+      '    this._sm.y += (yaw - this._sm.y) * k; this._sm.p += (pitch - this._sm.p) * k;\n' +
+      '    yaw = yaw * direct + this._sm.y * (1 - direct);\n' +
+      '    pitch = pitch * direct + this._sm.p * (1 - direct);',
+      '    const lag = dt > 0 ? 0.06 * k / dt : 1;\n' +
+      '    const meanY = yaw + (this._sm.y - yaw) * lag, meanP = pitch + (this._sm.p - pitch) * lag;\n' +
+      '    this._sm.y += (yaw - this._sm.y) * k; this._sm.p += (pitch - this._sm.p) * k;\n' +
+      '    yaw = yaw * direct + meanY * (1 - direct);\n' +
+      '    pitch = pitch * direct + meanP * (1 - direct);',
+      'gyro smoother interval mean');
   }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",
