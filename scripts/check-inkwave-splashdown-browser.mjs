@@ -126,13 +126,14 @@ try {
       const farOwner={team:0,alive:false};
       if(layout==='mixed')G.projectiles.list.push(projectile(farOwner,180));
       const cpu=[], submit=[], rows=[];
-      let accepted=0, evictions=0;
-      const originalPuff=d.puff, originalEvict=d.kit.puffs._evict;
+      let accepted=0, evictions=0; const exhaustGlows=actors.map(()=>0);
+      const originalPuff=d.puff, originalEvict=d.kit.puffs._evict, originalSpark=d.spark;
+      d.spark=function(...args){const x=args[1]?.x;const index=actors.findIndex(a=>Math.abs(a.pos.x-x)<.6);if(index>=0)exhaustGlows[index]++;return originalSpark.apply(this,args);};
       d.puff=function(...args){accepted++;return originalPuff.apply(this,args);};
       d.kit.puffs._evict=function(...args){evictions++;return originalEvict.apply(this,args);};
       // Drain activation bursts before the sampled continuous-emission window.
       for(let frame=0;frame<hz;frame++){G.time+=1/hz;G.fx.update(1/hz,camera);}
-      draw(); accepted=0;evictions=0;
+      draw(); accepted=0;evictions=0;exhaustGlows.fill(0);
       const before=pixels();
       for(let frame=0;frame<hz;frame++){
         const dt=1/hz;G.time+=dt;
@@ -142,6 +143,7 @@ try {
         if((hz===60 && frame<12) || (hz!==60 && frame===0))images.push({name:'inkjet-'+layout+'-'+actorCount+'p-f'+String(frame+1).padStart(3,'0')+'.png',data:renderer.domElement.toDataURL('image/png')});
       }
       const after=pixels(), changedPixels=changed(before,after);
+      expect(exhaustGlows.length===actorCount && exhaustGlows.every(n=>n===2*Math.min(hz,60)),'each expected actor emits both exhaust glows; flight-only cannot pass');
       expect(changedPixels>10,'Inkjet presentation changes rendered pixels');
       expect(d.errors===0,'no swallowed special VFX errors');
       expect(rows.every(r=>r.puffs<=d.kit.puffs.cap),'continuous puff occupancy bounded');
@@ -149,7 +151,7 @@ try {
       const sorted=a=>[...a].sort((a,b)=>a-b);
       const stats=a=>{const q=sorted(a);return{mean:a.reduce((n,x)=>n+x,0)/a.length,p50:q[Math.floor(q.length*.5)],p95:q[Math.floor(q.length*.95)],max:q.at(-1)};};
       const gl=renderer.getContext(), debug=gl.getExtension('WEBGL_debug_renderer_info');
-      cases.push({hz,actorCount,layout,clock:'one-second warmup then one-second sample; fixed dt=1/hz, not real display refresh',seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG seed 0x12345678',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
+      cases.push({hz,actorCount,layout,clock:'one-second warmup then one-second sample; fixed dt=1/hz, not real display refresh',seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG seed 0x12345678',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,exhaustGlows,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
       for(const a of actors)a.character.dispose();
       G.projectiles.list=[];G.projectiles.clear();G.fx.dispose();G.actors=[];G.fx=null;
     } else for (const fxMode of ['none', 'disabled', 'enabled']) for (const hz of [30, 60, 120]) {
