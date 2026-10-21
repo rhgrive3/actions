@@ -14,7 +14,7 @@ for(let block=0;block<blocks;block++){
  const observations=[];
  for(const [position,variant] of ['A','B','B','A'].entries()){
   const directory=path.join(root,'block-'+block+'-'+position+'-'+variant);
-  const args=['scripts/check-inkwave-splashdown-browser.mjs','--site',site,'--inkjet','--hz','60','--actors','1','--layout','near','--warmup-seconds','2','--sample-seconds','3','--evidence-dir',directory];
+  const args=['scripts/check-inkwave-splashdown-browser.mjs','--site',site,'--inkjet','--hz','60','--actors','1','--layout','near','--warmup-seconds','2','--sample-seconds','3','--timing-only','--evidence-dir',directory];
   if(variant==='A')args.push('--baseline-overlay',overlay);
   execFileSync(process.execPath,args,{stdio:'inherit',timeout:240000});
   const result=JSON.parse(fs.readFileSync(path.join(directory,'result.json'),'utf8'));
@@ -32,6 +32,6 @@ for(let block=0;block<blocks;block++){
  results.push({block,observations,ratios});
 }
 fs.mkdirSync(root,{recursive:true});
-const report={scope:'single-case ABBA feasibility pilot on SwiftShader; frozen gameplay; fresh browser per observation; no hardware GPU, allocation or whole-game performance acceptance',case:{hz:60,actorCount:1,layout:'near'},blocks:results,performanceAccepted:false,limitations:['One block is insufficient to bound noise.','PNG encoding occurs after timing samples in the first 12 frames and can influence following-frame scheduling.','Full acceptance requires all actor/rate/distance cases, separate capture passes and block-level uncertainty.','CPU render-submission is not GPU completion.']};
+const report={scope:'single-case ABBA feasibility pilot on SwiftShader; frozen gameplay; fresh browser per observation; no hardware GPU, allocation or whole-game performance acceptance',case:{hz:60,actorCount:1,layout:'near'},blocks:results,performanceAccepted:false,limitations:['One block is insufficient to bound noise.','PNG/readPixels occur outside the timed sample window; continuous visual captures remain a separate acceptance pass.','Full acceptance requires all actor/rate/distance cases, separate capture passes and block-level uncertainty.','CPU render-submission is not GPU completion.']};
 fs.writeFileSync(path.join(root,'paired-result.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({evidence:root,ratios:results.map(r=>r.ratios),performanceAccepted:false}));
