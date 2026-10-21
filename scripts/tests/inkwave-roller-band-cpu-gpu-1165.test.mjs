@@ -35,6 +35,7 @@ test('#1165 actual CPU grid admits rotated seeded body corner the historical sca
   assert.ok(dist<-.012 && radius>oldExtent+.01 && radius<safeExtent,
     'strictly inside the emitted GPU body, outside the former CPU scan circle');
   const f=await fixture({productionComposition:true}),p=Object.create(f.PaintSystem.prototype);
+  p.level=f.G.level;
   const face={grid:0,cu:.01,cv:.01,nu:1024,nv:1024,turf:true};
   p.grid=new Uint8Array(face.nu*face.nv);p.dead=new Uint8Array(p.grid.length);
   p.counts=new Uint32Array(2);p.version=0;
