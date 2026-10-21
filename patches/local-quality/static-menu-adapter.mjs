@@ -20,6 +20,14 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       this.input.pollPad();
       this._padMenus();
       G.net?.update?.(dt);
+      // Static screens do not sample the 3D world. Drop idle GPU attachments now,
+      // including a full-screen pause screenshot retained by a just-quit battle.
+      // The lazy composer recreates its targets before the next real 3D frame.
+      this.R?.releasePausedFrame?.();
+      this.R?.composer?.releaseInactiveTargets?.();
+      if (artScreen !== 'locker' && this.showcase?._rt) {
+        this.showcase._rt.dispose(); this.showcase._rt = null;
+      }
       // Character thumbnails are still generated only when requested. No
       // showcase/world render loop runs behind these decorative backgrounds.
       if (this.showcase?._pq?.length) this.showcase._portraitStep?.();
@@ -37,6 +45,28 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       "    if (s === 'loadout') this.showcase.showLoadout(this.profile.weapon || 'shooter', G.teamColors[0], this.profile.style, G.teamColors[1]);",
       "    if (s === 'loadout') this.showcase.hide();",
       'weapon screen no longer constructs an invisible showcase stage');
+    // Returning from a battle enters fully opaque art. Do not allocate eight
+    // never-drawn bot rigs just to idle behind it; restore the full demo only
+    // if the player actually opens the animated title screen.
+    code = replaceOnce(code, '  _startAttract() {',
+      '  _startAttract({ staticMenu = false } = {}) {\n    this._staticMenuAttract = !!staticMenu;',
+      'static return: attract signature');
+    code = replaceOnce(code,
+      '      noBots: mapNoBots(this.mapDef?.id), mannequins: DEV_STAGE }));',
+      '      noBots: this._staticMenuAttract || mapNoBots(this.mapDef?.id), mannequins: !this._staticMenuAttract && DEV_STAGE }));',
+      'static return: no unseen bot rigs');
+    code = replaceOnce(code,
+      "    this._startAttract();\n    this.menus?.show('main');",
+      "    this._startAttract({ staticMenu: true });\n    this.menus?.show('main');",
+      'offline quit static menu');
+    code = replaceOnce(code,
+      "      this._startAttract();\n      this.menus?.show(this.menus?.hasScreen?.('lobby') === false ? 'main' : 'lobby');",
+      "      this._startAttract({ staticMenu: true });\n      this.menus?.show(this.menus?.hasScreen?.('lobby') === false ? 'main' : 'lobby');",
+      'online match end static menu');
+    code = replaceOnce(code, '  _onScreen(s) {',
+      "  _onScreen(s) {\n    if (s === 'title' && this._staticMenuAttract) this._startAttract();",
+      'title restores live attract simulation');
+
     code = `import { renderLockerStage as renderInkwaveLockerStage } from '../patches/local-quality/locker-stage.mjs';\nconst INKWAVE_ART_MENU_SCREENS = new Set(${JSON.stringify(STATIC_MENU_SCREENS)});\n` + code;
     return code;
   }
@@ -48,6 +78,42 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       '        if (sc && sc.showHub) safeCall(() => sc.showHub(this._style(), (G.teamColors && G.teamColors[0]) || this._accent()[0], this._loadout().weapon, G.teamColors?.[1]));',
       '        if (sc) safeCall(() => sc.hide?.());',
       'online hub keeps network flow, drops invisible LobbySet construction');
+    // The mobile weapon catalogue is a scroll list, not 70 simultaneous SVG
+    // compositing surfaces. Build all real buttons synchronously (selection,
+    // keyboard navigation and order unchanged), but hydrate offscreen art only
+    // when it approaches the viewport.
+    code = replaceOnce(code,
+      "    const cards = order.map((id, i) => {\n      const w = Ws[id];",
+      "    const lazyWeaponArt = this._input === 'touch' && n > 20 && typeof IntersectionObserver !== 'undefined';\n    const cards = order.map((id, i) => {\n      const w = Ws[id];\n      const deferArt = lazyWeaponArt && i >= 20;",
+      'touch weapon art lazy eligibility');
+    code = replaceOnce(code,
+      "        h('span', { class: 'iw-wcard__blob', html: splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),",
+      "        h('span', { class: 'iw-wcard__blob', html: deferArt ? '' : splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),",
+      'defer offscreen blob SVG');
+    code = replaceOnce(code,
+      "        h('span', { class: 'iw-wcard__icon', html: weaponIcon(w.kind || id) }),",
+      "        h('span', { class: 'iw-wcard__icon', html: deferArt ? '' : weaponIcon(w.kind || id) }),",
+      'defer offscreen weapon SVG');
+    code = replaceOnce(code,
+      "      c._wid = id;\n      return c;",
+      "      c._wid = id; c._weaponArtIndex = i; c._artDeferred = deferArt;\n      if (deferArt) c.dataset.artDeferred = '1';\n      return c;",
+      'deferred card ownership');
+    code = replaceOnce(code,
+      "    // ---- detail panel\n    const kind =",
+      "    const materializeArt = (card) => {\n      if (!card?._artDeferred) return;\n      const i = card._weaponArtIndex, w = Ws[card._wid];\n      card.querySelector('.iw-wcard__blob').innerHTML = splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 });\n      card.querySelector('.iw-wcard__icon').innerHTML = weaponIcon(w.kind || card._wid);\n      card._artDeferred = false; delete card.dataset.artDeferred;\n    };\n    let weaponArtObserver = null;\n\n    // ---- detail panel\n    const kind =",
+      'hydrate approaching weapon card');
+    code = replaceOnce(code,
+      "      onFocus: (f) => {\n        if (f._wid && f._wid !== shown) render(f._wid);",
+      "      onFocus: (f) => {\n        if (f._wid) materializeArt(f);\n        if (f._wid && f._wid !== shown) render(f._wid);",
+      'focused weapon hydrates before selection');
+    code = replaceOnce(code,
+      "      afterMount: () => {\n        // stat bars grow",
+      "      afterMount: () => {\n        if (lazyWeaponArt) {\n          weaponArtObserver = new IntersectionObserver((entries) => {\n            for (const entry of entries) {\n              if (!entry.isIntersecting) continue;\n              materializeArt(entry.target);\n              weaponArtObserver?.unobserve(entry.target);\n            }\n          }, { rootMargin: '320px 0px' });\n          for (const card of cards) if (card._artDeferred) weaponArtObserver.observe(card);\n        }\n        // stat bars grow",
+      'hydrate visible and near-visible weapon cards');
+    code = replaceOnce(code,
+      "          for (const s of statEls) s.bar.style.setProperty('--v', (s.target / 100).toFixed(3));\n        }));\n      },\n      tick: (dt) => {",
+      "          for (const s of statEls) s.bar.style.setProperty('--v', (s.target / 100).toFixed(3));\n        }));\n      },\n      destroy: () => weaponArtObserver?.disconnect(),\n      tick: (dt) => {",
+      'disconnect old catalogue observer');
     return code;
   }
   if (rel !== 'styles/ui.css') return code;
@@ -73,6 +139,18 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
     url('../patches/local-quality/assets/menu/weapon.webp');
   background-size: cover;
   background-position: center;
+}
+/* Keep off-viewport touch cards out of the GPU compositor and leave their
+   entrance/NEW animations dormant until their real SVG art is hydrated. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .iw-wcard[data-art-deferred="1"],
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .iw-wcard[data-art-deferred="1"] .iw-wcard__new {
+  animation: none;
+}
+@supports (content-visibility: auto) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .iw-wcard {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 116px;
+  }
 }
 /* Locker art is drawn in the canvas (locker-stage.mjs) under the live kid. */
 .iw-ui.is-active[data-screen="locker"] {
