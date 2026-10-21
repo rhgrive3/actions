@@ -69,16 +69,18 @@ export function installRollerComparisonRandom({seed}) {
   const begin=label=>{
     identity();
     if(label!==labels[phases.length])throw Error('Unexpected comparison random boundary: '+label);
-    word=seed|0;phase={label,seed,initialWord:seed,word:seed,draws:0,firstValues:[],nativeFxDrawIndices:[]};
+    word=seed|0;phase={label,seed,initialWord:seed,word:seed,draws:0,firstValues:[],nativeFxDrawIndices:[],capturedAliasWhileGlobalDiffers:0};
     phases.push(phase);
   };
   const random=function(){
     if(restored)return Reflect.apply(original,this,arguments);
-    identity();
+    // Native clock temporarily routes Math.random to its own presentation stream.
+    // Captured aliases remain callable; enforce property identity only at boundaries.
     if(phase.draws>=maxDrawsPerPhase)throw Error('Comparison random draw bound exceeded');
     let t=word=(word+0x6D2B79F5)|0;
     t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);
     const value=((t^(t>>>14))>>>0)/4294967296,index=phase.draws++;
+    if(Math.random!==random)phase.capturedAliasWhileGlobalDiffers++;
     phase.word=word>>>0;if(phase.firstValues.length<8)phase.firstValues.push(value);
     // Diagnostic caller classification only, not a replacement FX implementation.
     // Record exact indices, not an assertion that every random consumer is an FX caller.
@@ -90,6 +92,8 @@ export function installRollerComparisonRandom({seed}) {
   const receipt=()=>({schema:1,diagnosticOnly:true,performanceEvidence:false,algorithm:'mulberry32-u32-v1',seed,
     installation:'page-init-before-module-evaluation',maxDrawsPerPhase,
     nativeFxClassification:'caller stack contains /src/fx/fx.js; not all possible FX consumers',
+    nativePresentationDrawsObserved:false,
+    identityContract:'QA retains one alias; native presentation routing is untouched and global identity is checked at boundaries',
     stableFunctionRetained:true,originalRestored:restored,phases:phases.map(copy)});
   Math.random=random;
   begin('startup');

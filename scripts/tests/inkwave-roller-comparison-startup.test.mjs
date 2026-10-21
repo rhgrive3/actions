@@ -95,10 +95,10 @@ test('numeric-only path guards all native image serialization and both screensho
   assert.match(driver,/if\(numericOnly\)\{delete image\.png;continue;\}/);
 });
 
-function randomFixture(seed=1715){
+function randomFixture(seed=1715,installer=installRollerComparisonRandom){
   const context=vm.createContext({window:{}});
   vm.runInContext('window.originalRandom = Math.random',context);
-  vm.runInContext('('+installRollerComparisonRandom.toString()+')({seed:'+seed+'})',context);
+  vm.runInContext('('+installer.toString()+')({seed:'+seed+'})',context);
   return {context,api:context.window.__rollerComparisonRandom,run:code=>vm.runInContext(code,context)};
 }
 test('pre-import stable function keeps captured native FX aliases seeded across closure resets',()=>{
@@ -116,6 +116,8 @@ test('old late-replacement alias is rejected by the stable function identity gua
   const f=randomFixture();f.run('Math.random=()=>.5');
   assert.throws(()=>f.api.begin('steady-180'),/identity changed/);
   assert.throws(()=>f.api.phase(),/identity changed/);
+  assert.throws(()=>f.api.receipt(),/identity changed/);
+  assert.throws(()=>f.api.restore(),/identity changed/);
 });
 test('RNG boundary order, duplicate reset and invalid seed fail closed',()=>{
   const f=randomFixture();f.run('Math.random()');
@@ -145,4 +147,47 @@ test('driver never replaces Math.random after native imports or resets native cl
   assert.match(driver,/globalRandom\.begin\('steady-180'\)/);assert.match(driver,/globalRandom\.begin\('movie-180'\)/);
   assert.match(driver,/Global RNG changed while native movie was frozen/);
   assert.match(driver,/Movie inspection changed simulation or stable global RNG/);
+});
+
+test('actual native clock can route presentation separately while captured QA aliases remain callable',()=>{
+  const source=fs.readFileSync(new URL('../../patches/splatoon3/runtime/clock.mjs',import.meta.url),'utf8');
+  const start='const PRESENTATION_SEED =',end='export class FixedClock';
+  assert.equal(source.split(start).length,2);assert.equal(source.split(end).length,2);
+  const native=source.slice(source.indexOf(start),source.indexOf(end)).replace('export function withSeparatedPresentationRandom','function withSeparatedPresentationRandom');
+  const f=randomFixture(),qa=f.run('Math.random');f.run('window.capturedRandom=Math.random');
+  vm.runInContext(native+`;window.nativeFrame=()=>withSeparatedPresentationRandom(()=>{
+    const presentation=Math.random,firstPresentation=presentation();
+    const aliasValue=window.capturedRandom();let tickRandomIdentity,tickValue;
+    runTickWithGameplayRandom(()=>{tickRandomIdentity=Math.random;tickValue=Math.random();},1/60);
+    const afterTick=Math.random,secondPresentation=Math.random();
+    return {presentation,firstPresentation,aliasValue,tickRandomIdentity,tickValue,afterTick,secondPresentation};
+  });`,f.context);
+  const result=f.context.window.nativeFrame();
+  assert.notEqual(result.presentation,qa);assert.equal(result.afterTick,result.presentation);
+  assert.equal(result.tickRandomIdentity,qa);assert.equal(f.run('Math.random'),qa);
+  assert.equal(f.api.phase().draws,2);assert.equal(f.api.phase().capturedAliasWhileGlobalDiffers,1);
+  assert.deepEqual(Array.from(f.api.phase().firstValues),[result.aliasValue,result.tickValue]);
+  assert.notEqual(result.firstPresentation,result.secondPresentation);
+  assert.equal(f.api.receipt().nativePresentationDrawsObserved,false);f.api.restore();
+});
+
+test('old per-draw identity guard rejects the real native routing and still restores native global on exception',()=>{
+  const old=installRollerComparisonRandom.toString().replace('const random=function(){','const random=function(){ identity();');
+  assert.notEqual(old,installRollerComparisonRandom.toString());
+  const f=randomFixture(1715,{toString:()=>old}),qa=f.run('Math.random');
+  const source=fs.readFileSync(new URL('../../patches/splatoon3/runtime/clock.mjs',import.meta.url),'utf8');
+  const native=source.slice(source.indexOf('const PRESENTATION_SEED ='),source.indexOf('export class FixedClock')).replace('export function withSeparatedPresentationRandom','function withSeparatedPresentationRandom');
+  vm.runInContext(native+';window.alias=Math.random;window.frame=()=>withSeparatedPresentationRandom(()=>window.alias());',f.context);
+  assert.throws(()=>f.context.window.frame(),/identity changed/);
+  assert.equal(f.run('Math.random'),qa);assert.equal(f.api.phase().draws,0);f.api.restore();
+});
+test('throwing native presentation callback preserves counted aliases and restores global before QA cleanup',()=>{
+  const f=randomFixture(),qa=f.run('Math.random');
+  const source=fs.readFileSync(new URL('../../patches/splatoon3/runtime/clock.mjs',import.meta.url),'utf8');
+  const native=source.slice(source.indexOf('const PRESENTATION_SEED ='),source.indexOf('export class FixedClock')).replace('export function withSeparatedPresentationRandom','function withSeparatedPresentationRandom');
+  vm.runInContext(native+';window.alias=Math.random;window.frame=()=>withSeparatedPresentationRandom(()=>{window.alias();throw Error("native callback failure");});',f.context);
+  assert.throws(()=>f.context.window.frame(),/native callback failure/);
+  assert.equal(f.run('Math.random'),qa);assert.equal(f.api.phase().draws,1);
+  assert.equal(f.api.phase().capturedAliasWhileGlobalDiffers,1);
+  assert(f.api.restore().originalRestored);assert.equal(f.run('Math.random'),f.context.window.originalRandom);
 });
