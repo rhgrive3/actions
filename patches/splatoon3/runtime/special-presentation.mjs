@@ -124,6 +124,23 @@ function krakenPoints(m) {
   return m.userData.krakenPts;
 }
 
+// Presentation calibration only: the mantle leads and arms trail in the
+// reference silhouettes. Do not turn world speed into an unbounded alternating
+// up/down kick. A shared stroke clock and mirrored lateral sweep keep both arms
+// streaming behind the body, with small living motion even at rest.
+export function advanceKrakenArms(s, speed, phase, dt) {
+  const travel=clamp01(Math.max(0,Number.isFinite(speed)?speed:0)/11.52);
+  const step=Math.max(0,Number.isFinite(dt)?dt:0);
+  s.krakenArmClock=((s.krakenArmClock||0)+step*(2.4+travel*2))%(Math.PI*2);
+  const dash=phase==='dash',charge=phase==='charge',wave=Math.sin(s.krakenArmClock);
+  const targetX=(dash?-.12:charge?-.04:-.025)+wave*(dash?.012:.025);
+  const targetZ=.035+wave*(dash?.018:.045)*(1-.35*travel);
+  const alpha=1-Math.exp(-12*step);
+  s.krakenArmX=(s.krakenArmX||0)+(targetX-(s.krakenArmX||0))*alpha;
+  s.krakenArmZ=(s.krakenArmZ||0)+(targetZ-(s.krakenArmZ||0))*alpha;
+  return s;
+}
+
 function animateDevice(a, s, d, spec, state, t, dt) {
   const marks = a._s3SpecialMarks || {}, age = t - s.startedAt, g = d.model.groups || {};
   const id = s.id, base = d.basePos ||= d.holder.position.clone();
@@ -211,10 +228,9 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     for (let i = 0; i < pts.length; i += 3) { const y = ry0 * sx * pts[i] + ry1 * len * pts[i + 1] + ry2 * up * pts[i + 2]; if (y < minY) minY = y; }
     const lift = Number.isFinite(minY) ? -minY * spec.scale * e : 0.25 * up * e;
     d.holder.position.set(0, lift + 0.025 * Math.abs(Math.sin(t * (5 + speed * 0.8))) * (air ? 0 : 1), -1.15 * len * e);
-    // the two arms sweep like a swimming squid; faster with speed, trailing flat on the dash
-    const sweep = phase === 'dash' ? 0.12 : 0.35 + Math.min(0.35, speed * 0.05), freq = 6 + speed * 1.4;
-    if (g.legL) g.legL.rotation.x = Math.sin(t * freq) * sweep - (phase === 'dash' ? 0.25 : 0);
-    if (g.legR) g.legR.rotation.x = Math.sin(t * freq + Math.PI) * sweep - (phase === 'dash' ? 0.25 : 0);
+    advanceKrakenArms(s,speed,phase,dt);
+    if (g.legL) g.legL.rotation.set(s.krakenArmX,0,s.krakenArmZ);
+    if (g.legR) g.legR.rotation.set(s.krakenArmX,0,-s.krakenArmZ);
   } else if (id === 'waveBreaker' || id === 'splattercolorScreen') {
     // raised ready to throw while the sub is held
     const ready = a.intent?.sub ? 1 : 0; s.ready = (s.ready ?? 0) + (ready - (s.ready ?? 0)) * Math.min(1, dt * 12);
@@ -224,7 +240,7 @@ function animateDevice(a, s, d, spec, state, t, dt) {
 }
 
 // The network carries a remote Kraken's special flag but not its charge/dash phase. The dash is unmistakable
-// in the replicated velocity (21 m/s against 5.5 walking, 1.9 charging), so a remote Kraken over 12 m/s is drawn
+// in the replicated velocity (18 units/s against 11.52 moving and 1.152–2.304 charging), so a remote Kraken over 12 m/s is drawn
 // dashing; its charge cannot be told from standing still and is not drawn.
 export function remoteKrakenPhase(a) {
   if (!a?.remote || a.specialActive?.id !== 'krakenRoyale') return null;

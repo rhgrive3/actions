@@ -588,12 +588,14 @@ function paintKrakenMove(rt,actor,state,dt,direction,dashing=false) {
   state.krakenPaintT=(state.krakenPaintT||0)+dt;
   if(state.krakenPaintT+1e-8<KRAKEN_MOVEMENT.paintSpan)return;
   state.krakenPaintT=Math.max(0,state.krakenPaintT-KRAKEN_MOVEMENT.paintSpan);
-  const probe=rt.v7.copy(actor.pos).addScaledVector(direction,dashing?KRAKEN_MOVEMENT.dashPaintOffset:KRAKEN_MOVEMENT.paintOffset);
+  const heading=rt.v9.copy(direction).setY(0);
+  if(heading.lengthSq()<1e-8)heading.set(Math.sin(actor.yaw||0),0,Math.cos(actor.yaw||0));else heading.normalize();
+  const probe=rt.v7.copy(actor.pos).addScaledVector(heading,dashing?KRAKEN_MOVEMENT.dashPaintOffset:KRAKEN_MOVEMENT.paintOffset);
   probe.y+=.4;
   const hit=rt.api.G.physics?.raycast?.(probe,rt.down,.6,rt.hit,true);
   if(!hit?.hit||!(hit.normal?.y>.4))return;
   const at=rt.v8.copy(hit.point).addScaledVector(hit.normal,.005);
-  const opts={seed:seedUnit(nextSeed(state)),kind:'source-splash',stretch:direction,
+  const opts={seed:seedUnit(nextSeed(state)),kind:'source-splash',stretch:heading,
     stretchAmt:KRAKEN_MOVEMENT.paintDepth-1,claimOwner:actor,claimMode:'no-special'};
   if(Number.isInteger(hit.face)&&hit.face>=0)opts.face=hit.face;
   const area=rt.api.G.paint?.splat?.(at,KRAKEN_MOVEMENT.paintWidth,actor.team,opts);
