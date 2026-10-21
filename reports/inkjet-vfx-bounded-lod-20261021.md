@@ -91,3 +91,10 @@ The guard is first-come-first-served. At cap182/30Hz/four actors the fixed-order
 - Actual-browser before/after sequences and CPU/GPU/frame/allocation/draw measurements for30/60/120Hz and1/2/4 actors, including competing FX.
 - Resolve or explicitly accept saturation fairness; do not conflate a bounded pool with a small runtime cost.
 - Obtain actual continuous S3 frames and compare projectile body, flight spray, impact and exhaust separately. Prior1.98-second storyboards are insufficient.
+
+
+## Live-owner review follow-up
+
+The first fair candidate used `actors.includes` for each remembered round and could reserve a share for a dead, removed, or recycled projectile before `updateRounds` pruned it. Admission now scans the current projectile list once, excludes dead/non-Inkjet entries, and deduplicates owners with the existing WeakMap record's frame marker. This removes quadratic membership scans without changing actor order or shared pools. It also admits a new live projectile owner in the same frame. Camera visibility remains deliberately outside this budget; invisible active owners can still hold shares.
+
+The updated extracted actual recipe/pool suite passes 20 tests in the pure V8 harness (not Node/WebGL), including 32 duplicate live projectiles, stale/dead/recycled owners, same-frame newcomer, removal, quality reduction, and the existing 18 frequency/actor/capacity cases. The cadence suite remains 4 previously passing tests; source and emitted integration are explicitly wired into the specials workflow. CI for superseded heads must not be reused. No CPU/GPU/alloc/frame few-percent claim is made; the saturated fairness birth-count increases above still apply. The no-eviction guarantee is scoped to these continuous Inkjet emissions, not activation/impact bursts or other effects.
