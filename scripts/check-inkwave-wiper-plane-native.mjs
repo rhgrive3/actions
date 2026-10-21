@@ -12,6 +12,8 @@ const head='0430673b09a5009628fc87baa414b3560090fc1d',baseline='7581ca9be8cf87d2
 const manifest=verifyRuntimeBuild(site,source,head),binding=JSON.parse(fs.readFileSync(path.join(overlay,'receipt.json'),'utf8'));
 assert.equal(binding.candidate,head);assert.equal(binding.baseline,baseline);assert.equal(binding.contentHash,manifest.contentHash);assert.equal(binding.inputHash,manifest.inputHash);assert.equal(binding.revision,manifest.build.revision);
 assert.deepEqual(binding.modules.map(x=>x.name).sort(),['s3-ink-sheets.mjs','s3-projectile-shapes.mjs']);
+const dummyPath='_versions/'+manifest.build.revision+'/patches/practice-range/runtime/dummy.mjs';
+assert.ok(manifest.artifacts[dummyPath]);
 const replacements=new Map();
 for(const m of binding.modules){assert.equal(m.rel,'patches/splatoon3/runtime/'+m.name);const served='_versions/'+manifest.build.revision+'/'+m.rel;
  assert.equal(hash(fs.readFileSync(path.join(site,served))),m.candidateEmittedSha256);
@@ -28,7 +30,7 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser,result,failure;
 try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const page=await browser.newPage({viewport:{width:960,height:720}});
- page.on('response',response=>{const key=new URL(response.url()).pathname.slice(1);if(!replacements.has(key))return;
+ page.on('response',response=>{const key=new URL(response.url()).pathname.slice(1);if(!replacements.has(key)&&key!==dummyPath)return;
   responsePending.push(response.body().then(bytes=>consumed.set(key,hash(bytes))).catch(e=>responseErrors.push(e.message)));});
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.addInitScript(({id})=>{
@@ -89,17 +91,19 @@ try{
  },{id});
  const entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:300000});
  await page.evaluate('window.__awaitWiperSources='+awaitWiperSceneSources.toString()+';window.__wiperCensus='+wiperSceneCensus.toString());
- const setup=await page.evaluate(async({id,action})=>{
+ const setup=await page.evaluate(async({id,action,dummyPath})=>{
   const THREE=await import('three'),G=window.__G,g=window.__inkwave,a=G.local;
   if(!g.frozen||!window.__wiperEntry?.trusted||!G.match?.range||G.match.state!=='playing'||a.weaponId!==id)throw Error('Native range/weapon admission failed');
-  const readiness=await window.__awaitWiperSources(G);
+  const dummyUrl=new URL('/'+dummyPath,location.origin).href;
+  const {TargetDummyCharacter}=await import(dummyUrl);
+  const readiness=await window.__awaitWiperSources(G,TargetDummyCharacter);
   if(!Object.hasOwn(Object.getPrototypeOf(G.projectiles),Symbol.for('inkwave.s3.projectile-shapes.v1')))throw Error('Missing native shape installer');
   g.debug.freezeBots();g.input.keys.clear();g.input.pressed.clear();g.debug.fire(false);g.R.setDynamicScale(1);
   const aim=()=>{G.rig.yaw=0;G.rig.pitch=.06;};
   window.__wiperResetSeed();for(let i=0;i<60;i++){aim();g._frame(1/60);}
   if(!a.alive||!a.grounded||G.projectiles.list.length)throw Error('Unsettled native stance or preexisting projectile');
   const beforeReset=window.__wiperRng();window.__wiperResetSeed();
-  const initial={entry:window.__wiperEntry,readiness,clocks:window.__wiperClocks(),rng:window.__wiperRng(),character:{t:a.character.t,phase:a.character.phase,seed:a.character.seed},pos:a.pos.toArray(),ink:a.ink,hp:a.hp,census:window.__wiperCensus(G,G.scene)};
+  const initial={entry:window.__wiperEntry,readiness,clocks:window.__wiperClocks(),rng:window.__wiperRng(),character:{t:a.character.t,phase:a.character.phase,seed:a.character.seed},pos:a.pos.toArray(),ink:a.ink,hp:a.hp,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
   const r=G.renderer,gl=r.getContext();if(g.settings.quality!=='high'||G.paint.size!==4096||gl.drawingBufferWidth!==960||gl.drawingBufferHeight!==720)throw Error('Unexpected quality/viewport');
   const target=a.pos.clone().add(new THREE.Vector3(0,1.1,3)),camera=new THREE.PerspectiveCamera(50,960/720,.05,250);
   if(camera===G.camera||camera===g.R.camera||camera===G.rig.gameCam)throw Error('Inspection camera must be independent');
@@ -143,12 +147,12 @@ try{
    }
    if(owned.length)capturedLive=true;
    if(gl.getError())throw Error('WebGL error');
-   return {tick,state,axes,paintHash,paintEvents:paints.slice(),aimTrace:aimTrace.slice(),nativeRender,memory,frameCpuMs,images,census:window.__wiperCensus(G,G.scene)};
+   return {tick,state,axes,paintHash,paintEvents:paints.slice(),aimTrace:aimTrace.slice(),nativeRender,memory,frameCpuMs,images,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
   },finish(){g.debug.fire(false);G.paint.splat=originalSplat;G.projectiles._aimFrom=originalAim;
    if(!seen||!firstBirth||!expired)throw Error('Native slash birth and termination required');
    return {firstBirth,expired,aimTrace,paintEvents:paints,final:physical()};}};
-  return {initial,startupRngBeforeReset:beforeReset,target:target.toArray(),quality:g.settings.quality,atlasSize:G.paint.size,palette:{colorblind:g.settings.colorblind,teams:G.teamColors.map(c=>c.getHex()),local:a.color.getHex()},scope:'native simulation plus separate inspection-camera raw renderer; not native postprocessed view; CPU diagnostic not performance acceptance'};
- },{id,action});
+  return {initial,dummyModuleUrl:dummyUrl,startupRngBeforeReset:beforeReset,target:target.toArray(),quality:g.settings.quality,atlasSize:G.paint.size,palette:{colorblind:g.settings.colorblind,teams:G.teamColors.map(c=>c.getHex()),local:a.color.getHex()},scope:'native simulation plus separate inspection-camera raw renderer; not native postprocessed view; CPU diagnostic not performance acceptance'};
+ },{id,action,dummyPath});
  const frames=[],pilot=id==='s3-saber-heavy'&&action==='charged';
  for(let tick=0;tick<=160;tick++){
   const row=await page.evaluate(({tick,capture})=>window.__wiperStep.step(tick,capture),{tick,capture:pilot||[0,90,120,160].includes(tick)});
@@ -156,7 +160,7 @@ try{
   frames.push(row);
  }
  const completion=await page.evaluate(()=>window.__wiperStep.finish());
- await Promise.all(responsePending);assert.deepEqual(errors,[]);assert.deepEqual(responseErrors,[]);
+ await Promise.all(responsePending);assert.equal(consumed.get(dummyPath),manifest.artifacts[dummyPath],'consumed exact native dummy module');assert.deepEqual(errors,[]);assert.deepEqual(responseErrors,[]);
  for(const [key,{m}]of replacements){const expected=variant==='A'?m.baselineEmittedSha256:m.candidateEmittedSha256;
  assert.equal(loaded.get(key),expected,'actual served module '+key);assert.equal(consumed.get(key),expected,'browser consumed module body '+key);}
  result={setup,completion,frames,dt:1/60,frameCount:161,variant,id,action,pilot,physicalGpuMeasured:false,performanceAccepted:false};

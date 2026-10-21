@@ -1,26 +1,36 @@
-export async function awaitWiperSceneSources(G,timeoutMs=180000){
- const records=G.actors.map(a=>({a,ch:a.character,owner:null,warm:null,warmAwaited:false}));
+// Native range dummies have no source-motion rig. Admit only the exact native class and session owner.
+export async function awaitWiperSceneSources(G,TargetDummyCharacter,timeoutMs=180000){
+ if(typeof TargetDummyCharacter!=='function')throw Error('Native dummy class required');
+ const records=G.actors.map(a=>({a,ch:a.character,owner:null,warm:null,warmAwaited:false,dummy:a.character instanceof TargetDummyCharacter}));
  if(!records.length||records.length>64)throw Error('Unexpected scene actor count');let timer;
  const valid=r=>{
+  if(r.a.character!==r.ch)throw Error('Native scene character ownership changed');
+  if(r.dummy){
+   const targets=G.match?.range?.targets,t=r.a.rangeTarget;
+   if(r.a===G.local||!(r.ch instanceof TargetDummyCharacter)||!Array.isArray(targets)||!Number.isInteger(t?.index)||targets[t.index]!==r.a||
+    r.ch.actor!==r.a||r.ch.root?.parent!==G.scene||r.ch.sourceMotion!=null)throw Error('Invalid native range dummy ownership');
+   return;
+  }
   const o=r.owner;
-  if(r.a.character!==r.ch||r.ch.sourceMotion!==o||!o||o.status!=='ready'||o.error||o.disposed||o.character!==r.ch||!o.bank||!o.squidBank)
+  if(r.ch.sourceMotion!==o||!o||o.status!=='ready'||o.error||o.disposed||o.character!==r.ch||!o.bank||!o.squidBank)
    throw Error('Native scene source did not become ready or changed ownership');
  };
  try{
   await Promise.race([Promise.all(records.map(async r=>{
-   const ready=r.ch?.sourceMotion?.ready;
-   if(!ready||typeof ready.then!=='function')throw Error('Missing native scene source loader');
-   await ready;r.owner=r.ch.sourceMotion;r.warm=r.ch._warmed;
-   if(r.warm&&typeof r.warm.then==='function'){await r.warm;r.warmAwaited=true;}
+   if(r.dummy)valid(r);
+   else{const ready=r.ch?.sourceMotion?.ready;if(!ready||typeof ready.then!=='function')throw Error('Missing native scene source loader');
+    await ready;r.owner=r.ch.sourceMotion;}
+   r.warm=r.ch._warmed;if(r.warm&&typeof r.warm.then==='function'){await r.warm;r.warmAwaited=true;}
    valid(r);
   })),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Native scene source readiness timeout')),timeoutMs);})]);
  }finally{clearTimeout(timer);}
  if(records.length!==G.actors.length||records.some((r,i)=>G.actors[i]!==r.a))throw Error('Scene actor ownership changed while waiting');
  for(const r of records){valid(r);if(r.ch._warmed!==r.warm)throw Error('Scene warm ownership changed while waiting');}
- return records.map((r,i)=>({index:i,local:r.a===G.local,variant:r.owner.variant,status:r.owner.status,existingWarmAwaited:r.warmAwaited}));
+ return records.map((r,i)=>({index:i,local:r.a===G.local,kind:r.dummy?'native-range-target-dummy':'source-motion-character',
+  variant:r.owner?.variant??null,status:r.dummy?'native-no-rig':r.owner.status,existingWarmAwaited:r.warmAwaited}));
 }
-export function wiperSceneCensus(G,scene){
- const actors=G.actors.map((a,i)=>({a,root:a.character?.root,key:a===G.local?'local-character':'other-character-'+i}));
+export function wiperSceneCensus(G,scene,TargetDummyCharacter){
+ const actors=G.actors.map((a,i)=>({a,root:a.character?.root,key:a===G.local?'local-character':(typeof TargetDummyCharacter==='function'&&a.character instanceof TargetDummyCharacter?'range-target-':'other-character-')+i}));
  const roots=new Map(actors.filter(x=>x.root).map(x=>[x.root,x.key]));
  const categories=new Map(),geometries=new Map();
  const classify=o=>{for(let p=o;p;p=p.parent){if(roots.has(p))return roots.get(p);

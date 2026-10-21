@@ -42,6 +42,7 @@ jobs:
           node --check scripts/check-inkwave-wiper-plane-native.mjs
           node --check scripts/check-inkwave-wiper-plane-paired.mjs
           node --check scripts/lib/inkwave-wiper-scene-readiness.mjs
+          node --test scripts/tests/inkwave-wiper-scene-readiness.test.mjs
       - name: Build unchanged candidate once
         run: |
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
