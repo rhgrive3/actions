@@ -290,11 +290,19 @@ test('#678: 30/60/120 Hz cadence does not change integrated displacement', async
 });
 
 test('#678: sensitivity, inversion, filter coefficients and lifecycle are unchanged', async () => {
-  const raw = rawUpstream(), fixed = stripOverlay(adaptUpstream());
-  // everything from the smoothing tier onward must be byte-identical to the published file
+  const raw = rawUpstream(), s3 = adaptSource(REL, raw), fixed = stripOverlay(adaptUpstream());
+  // everything from the smoothing tier onward must be byte-identical to the S3-adapted file:
+  // the mapping change never touches the filter / sensitivity / integration tail
   const tail = (s) => s.slice(s.indexOf('    // soft tiered smoothing'));
-  assert.equal(tail(fixed), tail(raw),
-    'the filter / sensitivity / integration tail must be byte-identical to upstream');
+  assert.equal(tail(fixed), tail(s3),
+    'the filter / sensitivity / integration tail must be byte-identical to the S3-adapted upstream');
+  // and the only S3-owned change in that tail is the #725 smoother interval mean
+  const s3Mean = '    const lag = dt > 0 ? 0.06 * k / dt : 1;\n' +
+    '    const meanY = yaw + (this._sm.y - yaw) * lag, meanP = pitch + (this._sm.p - pitch) * lag;\n';
+  assert.equal(tail(s3).replace(s3Mean, '')
+    .replace('    yaw = yaw * direct + meanY * (1 - direct);', '    yaw = yaw * direct + this._sm.y * (1 - direct);')
+    .replace('    pitch = pitch * direct + meanP * (1 - direct);', '    pitch = pitch * direct + this._sm.p * (1 - direct);'),
+  tail(raw), 'the S3 tail differs from upstream only by the #725 interval mean');
   assert.ok(raw.includes('    // soft tiered smoothing'), 'anchor comment must exist upstream');
   // the player-space CONSTRUCTS must be gone (the literal 1.41 survives only inside the
   // explanatory comment that records what was removed, so assert the code, not the string)

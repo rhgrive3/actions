@@ -64,16 +64,18 @@ test('host geometry rejects grounded high-altitude and tunneling',()=>{
   const wall={floorAt:()=>0,blocked:()=>true};
   assert.equal(admitRankedPose(s,row(2,0),actor,1.2,wall),false);
 });
-test('a teleport epoch after Super Jump charge must land on a host-known landing point',()=>{
+test('Super Jump flags never mint a teleport generation, even at a host-known landing (#1728)',()=>{
   const clock={host:1}, ctx=context(clock,{allies:[[45,0,0]]});
   const charged=()=>{const s={};
     assert.equal(admitRankedPose(s,row(),actor,1,world,ctx),true);
     clock.host=1.05;assert.equal(admitRankedPose(s,row(.2,0,{f:1|CHARGE}),actor,1.05,world,ctx),true);
     clock.host=1.3;assert.equal(admitRankedPose(s,row(.3,0,{f:1|FLIGHT}),actor,1.3,world,ctx),true);
     clock.host=1.35;return s;};
-  const ok=charged();
-  assert.equal(admitRankedPose(ok,row(45,1.1,{f:1|FLIGHT,tp:1}),actor,1.35,world,ctx),true,'teammate landing');
-  assert.equal(ok.last.tp,1);
+  // The native Actor increments netTp only on respawn; a real jump is a
+  // continuous same-tp flight (covered by the corridor tests below).
+  const listed=charged();
+  assert.equal(admitRankedPose(listed,row(45,1.1,{f:1|FLIGHT,tp:1}),actor,1.35,world,ctx),false,'teammate landing via tp+1');
+  assert.equal(listed.last.tp,0);
   const forged=charged();
   assert.equal(admitRankedPose(forged,row(30,-20,{f:1|FLIGHT,tp:1}),actor,1.35,world,ctx),false,'arbitrary destination');
   assert.equal(forged.last.tp,0);

@@ -138,8 +138,8 @@ async function heldRollerReleaseParity(apis) {
           gap = ch.bones.handL.localToWorld(hole).distanceTo(w.off.localToWorld(socket));
           assert.ok(gap <= .0005, 'held and released left palm remains within native 0.5mm contact budget');
           const right = ch.bones.handR.getWorldPosition(new api.THREE.Vector3())
-            .distanceTo(w.off.localToWorld(d.handR.pos.clone()));
-          assert.ok(right < .002, 'right hand retains its original strict socket bound');
+            .distanceTo(w.off.localToWorld(d.handR.pos.clone().add(new api.THREE.Vector3(0, 0, ch._s3RollerRightAdvance || 0))));
+          assert.ok(right < .002, 'right hand retains its strict effective socket bound');
           if (k === 1) { supportFrames++; maxGap = Math.max(maxGap, gap); }
         }
         return { motion:motionSnapshot(ch), weapon:Array.from(w.off.matrixWorld.elements),

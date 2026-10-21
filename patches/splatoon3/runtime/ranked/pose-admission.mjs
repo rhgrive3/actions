@@ -158,12 +158,15 @@ export function admitRankedPose(state, row, actor, ts, world, ctx = null) {
     if (hostDt !== null) slack = Math.min(L.clockSlack, slack + hostDt - credit);
     const charged = state.jumpSince !== undefined && ts - state.jumpSince >= L.chargeMin;
     if (row[16] !== prev.tp) {
-      if (row[16] !== prev.tp + 1) return false;
+      // The native Actor increments netTp only for an actual respawn (#1728).
+      // A Super Jump advances its continuous flight position without minting a
+      // teleport generation. Owner-supplied SJ flags are not an independent
+      // host proof: allowing them to authorize tp+1 lets a guest create a
+      // forged epoch and score an objective at any destination. The respawn
+      // itself must also appear at the owner's team spawn pad (#1648).
       const respawn = !(prev.flags & ALIVE) && !!(flags & ALIVE) && nearRespawn(next, actor, ctx);
-      const jump = charged && !!((prev.flags | flags) & SJ) && nearLanding(next, ctx, state, actor);
-      if (!(respawn || jump)) return false;
-      tokens = L.burst; flight = null; specialOrigin = undefined;
-      if (respawn) slack = L.initialClockSlack;
+      if (row[16] !== prev.tp + 1 || !respawn) return false;
+      tokens = L.burst; flight = null; specialOrigin = undefined; slack = L.initialClockSlack;
     } else {
       const claimed = (flags & SJ_FLIGHT) && (flags & ALIVE) ? flightOf(row) : null;
       const same = claimed && flight && dist(claimed.to, flight.to) < 1e-3 && dist(claimed.from, flight.from) < 1e-3;

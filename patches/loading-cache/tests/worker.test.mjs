@@ -176,3 +176,46 @@ test('lost metadata is repaired only by active navigation before update retries'
  await get(worker,'./',{mode:'navigate'});const newer=world.worker(b);await newer.install();await newer.activate();
  assert(world.maps.has(prefix+REV_A));assert(world.maps.has(prefix+REV_B));assert.equal((await newer.status()).offlineReady,true);
 });
+
+test('HTTP cached negative or mismatching asset responses are retried once at the exact revision URL',async()=>{
+ for(const status of [200,404,410]){
+  const {world,worker}=await installed();const url=world.url(asset(REV_A));
+  world.maps.get(prefix+REV_A).delete(url);world.resetStats();
+  const fetch=world.fetch;
+  world.fetch=async(input,options)=>{
+   const response=await fetch(input,options);
+   if(world.url(input)===url&&input.cache!=='reload')return world.response({body:'cached broken deployment',status},url);
+   return response;
+  };
+  // Worker globals bind fetch at creation, just as a restarted native worker.
+  const restarted=world.worker(makeBuild());
+  assert.equal(await(await get(restarted,asset(REV_A))).text(),'export const v=1;');
+  assert.equal(world.fetches.length,2);assert.equal(world.fetches[1].cache,'reload');
+  assert(world.fetches.every(row=>row.url===url));
+ }
+});
+test('old active worker retries negative HTTP cache for a waiting or retained revision without substitution',async()=>{
+ const {world}=await installed();const b=makeBuild(REV_B,{'src/main.js':'export const v=2;'});world.serve(b);
+ const fetch=world.fetch;world.fetch=async(input,options)=>{
+  const response=await fetch(input,options);
+  return input.cache==='reload'?response:world.response({body:'cached missing',status:404},world.url(input));
+ };
+ const restarted=world.worker(makeBuild());world.resetStats();
+ assert.equal(await(await get(restarted,asset(REV_B))).text(),'export const v=2;');
+ assert.equal(world.fetches.length,2);assert.equal(world.fetches[1].cache,'reload');
+ assert(!world.maps.has(prefix+REV_B));
+});
+test('explicit boot recovery evicts only corrupt current modules and bypasses stale navigation HTTP cache',async()=>{
+ const {world,worker}=await installed();
+ world.maps.get(prefix+REV_A).get(world.url(asset(REV_A))).body=Buffer.from('corrupt module');
+ const neighbor=await world.caches.open('neighbor');await neighbor.put(world.url('safe.js'),new Response('safe'));
+ const profile=world.maps.get(prefix+REV_A).get(world.url(asset(REV_A,'profile.json')));
+ world.resetStats();world.route('./?map=cargo&__iw_recover=1','fresh index',200,{'Content-Type':'text/html'});
+ assert.equal(await(await get(worker,'./?map=cargo&__iw_recover=1',{mode:'navigate'})).text(),'fresh index');
+ assert.equal(world.fetches[0].cache,'reload');
+ assert(!world.maps.get(prefix+REV_A).has(world.url(asset(REV_A))));
+ assert.equal(world.maps.get(prefix+REV_A).get(world.url(asset(REV_A,'profile.json'))),profile);
+ assert.equal(await(await neighbor.match(world.url('safe.js'))).text(),'safe');
+ assert.equal(await(await get(worker,asset(REV_A))).text(),'export const v=1;');
+ assert.equal((await worker.status()).offlineReady,true);
+});

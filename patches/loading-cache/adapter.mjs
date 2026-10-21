@@ -79,6 +79,18 @@ export function adaptCompiledMain(source) {
   });
   edits.push({start:boot.value.body.start+1,end:boot.value.body.start+1,text:`globalThis.__inkwaveStartup?.mark?.('engine-boot-start');`});
   edits.push({start:boot.value.body.end-1,end:boot.value.body.end-1,text:`;globalThis.__inkwaveStartup?.engineReady?.(this);`});
+  // The game starts boot() without awaiting it at module scope. Its own catch
+  // otherwise swallows late dynamic-import failures before startup sees them.
+  const bootCatches=[];
+  walkNode(ast,node=>{
+    if(node.type==='CallExpression' && node.callee.type==='MemberExpression' && node.callee.property.name==='catch' &&
+        node.callee.object.type==='CallExpression' && node.callee.object.callee.type==='MemberExpression' &&
+        node.callee.object.callee.property.name==='boot') bootCatches.push(node.arguments[0]);
+  });
+  const bootCatch=bootCatches[0];
+  if(bootCatches.length!==1 || bootCatch?.params?.[0]?.type!=='Identifier' || bootCatch.body.type!=='BlockStatement')
+    throw new Error('loading-cache compatibility: boot failure handler missing');
+  edits.push({start:bootCatch.body.end-1,end:bootCatch.body.end-1,text:`;globalThis.__inkwaveStartup?.bootFailed?.(${bootCatch.params[0].name});`});
   const start=methods.get('startMatch');
   if(!start?.value.async)throw new Error('loading-cache compatibility: async startMatch required');
   edits.push({start:start.value.body.start+1,end:start.value.body.start+1,text:`globalThis.__inkwaveStartup?.mark?.('first-battle-request');`});
@@ -118,7 +130,9 @@ export function prepareLoading(build, preloads, options = {}) {
   // Preserve the baseline preload graph. Native preload A/B timing remains unverified; do not remove hints speculatively.
   html=countReplace(html,'<script type="module" src="./patches/splatoon3/bootstrap.mjs"></script>','<script type="module" src="./patches/loading-cache/runtime/startup.mjs"></script>','module entry');
   html=countReplace(html,/<script>if \("serviceWorker" in navigator && location\.protocol === "https:"\)[\s\S]*?<\/script>/,'','old PWA registration');
-  html=countReplace(html,'<body>','<body>\n'+fs.readFileSync(path.join(LOADING_ROOT,'shell.html'),'utf8'),'shell insertion');
+  const shell=countReplace(fs.readFileSync(path.join(LOADING_ROOT,'shell.html'),'utf8'),
+    '/*__INKWAVE_STARTUP_RECOVERY__*/',fs.readFileSync(path.join(LOADING_ROOT,'recovery.js'),'utf8'),'inline recovery');
+  html=countReplace(html,'<body>','<body>\n'+shell,'shell insertion');
   fs.writeFileSync(path.join(build,'index.html'),html);
   for(const file of filesIn(path.join(LOADING_ROOT,'runtime'))) {
     const rel=path.relative(LOADING_ROOT,file),dst=path.join(build,'patches/loading-cache',rel);

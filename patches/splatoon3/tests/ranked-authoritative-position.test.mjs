@@ -6,6 +6,9 @@ const f=await fixture({productionComposition:true,includeMatch:true,rankedNetwor
 
 function rig(label,{power=[0,0,0],blocked=()=>false}={}){
  f.clock.set(1000); f.G.time=1000;
+ // Production levels carry spawn pad coordinates; respawn epochs are
+ // admitted only at the owner's pad (#1648). The shared fixture has y only.
+ if(!Number.isFinite(f.G.level.spawnPads?.[0]?.x))f.G.level.spawnPads=[{x:0,y:0,z:0},{x:0,y:0,z:60}];
  const nm=f.makeNetMatch(f.makeSession('me','me'),{id:'1648-'+label});
  const a=f.makeActor({nid:0,owner:'p2',remote:true,roller:false});a.pos.set(0,0,0);a.grounded=true;
  const m=f.bind(nm,[a]);f.G.match=m;m.mode='clams';
@@ -156,4 +159,38 @@ check('grounded objective support follows the admitted row, not the proxy',r=>{
  r.send([0,0,0],{flags:1});r.tick(3);r.a.grounded=true;
  assert.equal(frame(r).grounded,false);
  r.send([0,0,0],{flags:17});assert.equal(frame(r).grounded,true);
+});
+
+check('#1648 forged owner-Super-Jump phase never authorizes a teleport generation into the objective',r=>{
+  r.send([0,0,0],{flags:17,tp:0});r.tick(3);
+  r.send([0,0,0],{flags:17|16384,tp:0});r.tick(18);
+  const before=r.nm.rankedPose.get('0');
+  assert.equal(before.last.pos[2],0);
+  // Historically the owner-controlled SJ_CHARGE bit and 0.25s time gap were
+  // enough to admit tp+1 at ANY location without a host-validated Jump.
+  r.send([0,0,27],{flags:17,tp:1});
+  assert.equal(r.nm.rankedPose.get('0'),before,'fabricated jump cannot publish a new objective pose');
+  assert.equal(frame(r).pos[2],0);
+  r.tick(10);
+  assert.equal(r.m.ranked.events.some(e=>e.kind==='clam-pickup'||e.kind==='clam-score'),false);
+  assert.equal(r.rule.state.inventories['0']?.power??false,false);
+});
+
+check('#1648 a legitimate death-to-alive single-step respawn epoch remains admissible',r=>{
+  r.send([0,0,0],{flags:17,tp:0});r.tick(3);
+  r.send([0,0,0],{flags:0,tp:0});r.tick(3);
+  assert.equal(r.nm.rankedPose.get('0').last.flags,0);
+  r.send([0,0,0],{flags:17,tp:1});
+  assert.equal(r.nm.rankedPose.get('0').last.tp,1,'the existing real respawn exception is preserved');
+  assert.equal(frame(r).pos[2],0);
+});
+
+check('#1648 invalid teleport epoch cannot be laundered through later fresh sample timestamps',r=>{
+  r.send();r.tick(3);
+  r.send([0,0,0],{flags:17|32768,tp:0});r.tick(30);
+  for(let i=1;i<=3;i++){
+    r.send([0,0,27],{flags:17,tp:i});r.tick(3);
+    assert.equal(r.nm.rankedPose.get('0').last.tp,0,'forged epoch '+i+' denied');
+  }
+  assert.equal(frame(r).pos[2],0);
 });
