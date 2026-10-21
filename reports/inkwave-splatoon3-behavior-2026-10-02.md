@@ -5630,3 +5630,7 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
 - ブラウザ: `.browser-evidence/roller-{baseline-final,candidate-final,integrated}/` に66Fの計測と選択フレーム、`.browser-evidence/bucket-integrated/` に実入力で発射した3種の代表headを、読み込まれた本番volumeで描画する確認を保持。代表headの抽出は診断用で、全弾・最大LODを一画面に収めた際の予算成功とは区別する。
 
 未確認: Switchで入力を同期した比較、原作の正確な関節曲線、実iPad WebKitでの描画・性能。公式映像の直接観察、ロジック回帰、Chromiumの実描画は別の証拠として扱う。
+
+最終追補: 長いヒッセン／モップリンの列がBucketの本来の4前段／5後段を超えても、描画用indexは最後のBucket envelopeで止める。外挿で半径0へ消さず、物理indexは変更しない。wire復元時はcatalog側の正しいindexを使い、全fragmentをhead扱いしない。
+
+統合後83/83、最後のenvelope／代替描画を含む41/41、コミット `2bcf419d` のemitted packagingと新規回帰14/14、quick check、本番ビルドと起動予算が成功。最新main統合後の縦振り66F描画も成功。最終の実入力3ブキ描画は [receipt](roller-vertical-20261021/bucket-browser.json) と [比較画像](roller-vertical-20261021/bucket-effects.jpg) に保存した（Chromium 154 / SwiftShader、contentHash `fa700251f669d9c202554457f046efe700ab906640fb7e376ce25700e6140ec1`）。通常の低品質予算内でvolume描画される分と、予算超過時に既存の共通Bucket代替描画へ回る分を別々に計測し、バケット7/7、ヒッセン9/9、モップリン11/11が描画されること、描画前後で位置・速度・age・ダメージ等の状態が変わらないことを確認した。既存LODには十分な削減がないためLODの差し替えは採用せず、描画予算自体も変更していない。

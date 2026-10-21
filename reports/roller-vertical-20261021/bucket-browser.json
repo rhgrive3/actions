@@ -1,0 +1,80 @@
+{
+  "status": "passed",
+  "contentHash": "fa700251f669d9c202554457f046efe700ab906640fb7e376ce25700e6140ec1",
+  "browser": "154.0.8037.57",
+  "cases": [
+    {
+      "id": "slosher",
+      "ticks": 14,
+      "totalHeads": 7,
+      "diagnosticSampleHeads": 3,
+      "productionMetrics": {
+        "active": 7,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 135104,
+        "bytes": 39122300,
+        "batches": 12
+      },
+      "fallbackCount": 0,
+      "fallbackDrawn": 0,
+      "heads": 3,
+      "assets": [
+        "projectile:slosher:slosher"
+      ],
+      "active": 3,
+      "overflow": 0,
+      "authorityUnchanged": true,
+      "historyOwned": 0
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "ticks": 14,
+      "totalHeads": 9,
+      "diagnosticSampleHeads": 3,
+      "productionMetrics": {
+        "active": 6,
+        "culled": 0,
+        "overflow": 3,
+        "triangles": 227466,
+        "bytes": 39122300,
+        "batches": 6
+      },
+      "fallbackCount": 3,
+      "fallbackDrawn": 3,
+      "heads": 3,
+      "assets": [
+        "projectile:slosher:slosher"
+      ],
+      "active": 3,
+      "overflow": 0,
+      "authorityUnchanged": true,
+      "historyOwned": 0
+    },
+    {
+      "id": "s3-slosher-double",
+      "ticks": 18,
+      "totalHeads": 11,
+      "diagnosticSampleHeads": 2,
+      "productionMetrics": {
+        "active": 10,
+        "culled": 0,
+        "overflow": 1,
+        "triangles": 238752,
+        "bytes": 39122300,
+        "batches": 16
+      },
+      "fallbackCount": 1,
+      "fallbackDrawn": 1,
+      "heads": 2,
+      "assets": [
+        "projectile:slosher:slosher"
+      ],
+      "active": 2,
+      "overflow": 0,
+      "authorityUnchanged": true,
+      "historyOwned": 0
+    }
+  ],
+  "errors": []
+}
