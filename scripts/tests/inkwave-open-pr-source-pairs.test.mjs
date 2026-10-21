@@ -79,3 +79,25 @@ for(const [name,paths,plan]of [['pose',CHARACTER_POSE_PATHS,planCharacterPoseBas
   }
  });
 }
+
+test('only the complete PR1746 paint epoch admits equal sources and rejects every unknown equal leaf',()=>{
+ const current=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const original=[...current],result=planMainInkBaseline(current,new Map(current));
+ assert.equal(result.evidence.mode,'pr1746-byte-identical-current-paint');
+ assert.equal(result.evidence.sourceBase,'f31238a48b9d1a4af2d4f5f5f9182af777a79c83');
+ assert.equal(result.evidence.sourceHead,'f31238a48b9d1a4af2d4f5f5f9182af777a79c83');
+ assert.deepEqual(result.changes,[]);assert.deepEqual([...result.sources],original);
+ for(const p of MAIN_INK_BASELINE_PATHS)for(const sides of [[0],[1],[0,1]])for(const missing of [false,true]){
+  const rows=[new Map(current),new Map(current)];
+  for(const side of sides)if(missing)rows[side].delete(p);else rows[side].set(p,rows[side].get(p)+' // unknown');
+  const before=rows.map(x=>[...x]);assert.throws(()=>planMainInkBaseline(...rows));assert.deepEqual(rows.map(x=>[...x]),before);
+ }
+ for(const p of MAIN_INK_BASELINE_PATHS.filter(p=>current.get(p)!==historical.paths[p].content)){
+  for(const sides of [[0],[1],[0,1]]){
+   const rows=[new Map(current),new Map(current)];
+   for(const side of sides)rows[side].set(p,historical.paths[p].content);
+   assert.throws(()=>planMainInkBaseline(...rows),p);
+  }
+ }
+ assert.deepEqual([...current],original);
+});

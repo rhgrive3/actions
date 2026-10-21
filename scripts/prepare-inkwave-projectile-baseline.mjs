@@ -54,6 +54,13 @@ if (paint.evidence.mode === 'current-pair-with-gameplay-differences') {
   evidence.scope = 'Preserve the exact reviewed current main/candidate source pair without replay or production writes. Gameplay differences remain; physical-state and image equivalence require the independent browser comparison.';
 }
 
+if (paint.evidence.mode === 'pr1746-byte-identical-current-paint') {
+  assert.equal(changes.length,0,'exact identity must not replay birth or pool source');
+  assert.equal(writes.length,0,'exact identity must preserve all input bytes');
+  evidence.mode=paint.evidence.mode;
+  evidence.scope='Preserve the complete byte-identical PR1746 source epoch without replay or production writes. This unchanged-source comparison is not evidence of an improvement. Source identity does not establish compiled, physical-state or image equivalence; independent comparison remains required.';
+}
+
 const currentOwners = paint.evidence.paths.filter(row => row.mode === 'identical-current-owner');
 if (currentOwners.length) {
   const unchanged = writes.length === 0 && [...originals].every(([rel, value]) => value === candidates.get(rel));

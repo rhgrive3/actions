@@ -411,6 +411,24 @@ const PR1746_SOURCE_PAIR = Object.freeze({
   }
 });
 function reviewedCurrentPair(baseline, candidate) {
+  // Only the complete PR1746 epoch may use this identity mode. No per-leaf
+  // mixture or arbitrary equal source is admitted, and no source is replayed.
+  if (MAIN_INK_BASELINE_PATHS.every(path =>
+    typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
+    gitBlobSha1(baseline.get(path)) === PR1746_SOURCE_PAIR.blobs[path].candidate &&
+    gitBlobSha1(candidate.get(path)) === PR1746_SOURCE_PAIR.blobs[path].candidate)) {
+    return {sources:new Map(baseline),changes:[],evidence:{
+      schema:1,mode:'pr1746-byte-identical-current-paint',
+      sourceBase:'f31238a48b9d1a4af2d4f5f5f9182af777a79c83',sourceHead:'f31238a48b9d1a4af2d4f5f5f9182af777a79c83',
+      validationLimit:'Exact source identity only; compiled, physical and image comparisons remain mandatory.',
+      manifestGitBlob:MAIN_INK_BASELINE_MANIFEST_BLOB,
+      paths:MAIN_INK_BASELINE_PATHS.map(path=>({path,mode:'pr1746-exact-current-paint',
+        originalGitBlob:gitBlobSha1(baseline.get(path)),referenceGitBlob:gitBlobSha1(baseline.get(path)),
+        candidateGitBlob:gitBlobSha1(candidate.get(path)),originalSha256:sha256(baseline.get(path)),
+        referenceSha256:sha256(baseline.get(path)),candidateSha256:sha256(candidate.get(path)),replayed:[]}))
+    }};
+  }
+
   const present = path => typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string';
   const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
