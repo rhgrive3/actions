@@ -154,6 +154,18 @@ try {
       const image=q.r.domElement.toDataURL();
       return {receipt,samples,difference:q.diff(a,b),repeat:q.diff(b,repeat),nonBackground:q.diff(a,blank),paintSignal:q.diff(a,unpainted),blankDifference:q.diff(blank,blankAfter),disabledGel,image,glError:q.gl.getError()};
     },{lib,wall,wet,lit});
+    const median=a=>{const b=[...a].sort((x,y)=>x-y);return b.length%2?b[(b.length-1)/2]:(b[b.length/2-1]+b[b.length/2])/2;};
+    const summarize=a=>{const m=median(a);return {n:a.length,median:m,mad:median(a.map(x=>Math.abs(x-m))),empiricalP95:[...a].sort((x,y)=>x-y)[Math.ceil(a.length*.95)-1],min:Math.min(...a),max:Math.max(...a)};};
+    row.timing={scope:'8 paired ABBA blocks; browser CPU submission and synchronous completion, NOT GPU or FPS',metrics:{}};
+    for(const metric of ['submit','drain','submitPlusDrain']){
+      const value=s=>metric==='submitPlusDrain'?s.submit+s.drain:s[metric],pairs=[];
+      for(let block=0;block<8;block++){const s=row.samples.filter(x=>x.block===block);assert.equal(s.length,4);
+        assert.deepEqual(s.map(x=>x.key),[lib+'-before',lib+'-after',lib+'-after',lib+'-before']);
+        const before=(value(s[0])+value(s[3]))/2,after=(value(s[1])+value(s[2]))/2;
+        pairs.push({block,before,after,deltaMs:after-before,deltaPercent:before>0?(after/before-1)*100:null});}
+      const percents=pairs.map(x=>x.deltaPercent).filter(x=>x!==null);
+      row.timing.metrics[metric]={pairs,before:summarize(pairs.map(x=>x.before)),after:summarize(pairs.map(x=>x.after)),deltaMs:summarize(pairs.map(x=>x.deltaMs)),deltaPercent:percents.length?summarize(percents):null,zeroBaselineBlocks:pairs.filter(x=>x.deltaPercent===null).length};
+    }
     fs.writeFileSync(path.join(output,name+'.png'),Buffer.from(row.image.split(',')[1],'base64'));delete row.image;row.name=name;result.cases.push(row);
     const validateSignal=x=>{
       assert.ok(x.samples.every(s=>s.calls===1&&s.triangles===2),name+' missing real surface draw');

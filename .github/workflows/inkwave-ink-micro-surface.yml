@@ -5,6 +5,7 @@ on:
       - "patches/local-quality/ink-micro-surface-adapter.mjs"
       - "patches/local-quality/tests/ink-micro-surface.test.mjs"
       - "scripts/check-inkwave-ink-micro-surface.mjs"
+      - "scripts/verify-ink-micro-surface-video.mjs"
       - ".github/workflows/inkwave-ink-micro-surface.yml"
 concurrency:
   group: ink-micro-surface-${{ github.event.pull_request.number }}
@@ -30,6 +31,8 @@ jobs:
         run: node scripts/build-inkwave.mjs inkwave-public _site
       - name: Capture same-light original and candidate
         run: node scripts/check-inkwave-ink-micro-surface.mjs --site _site --evidence-dir .browser-evidence/ink-micro-surface
+      - name: Verify source frame sequence before encoding
+        run: node scripts/verify-ink-micro-surface-video.mjs .browser-evidence/ink-micro-surface --frames-only
       - name: Encode actual successive frames
         run: |
           for view in floor wall; do
@@ -39,6 +42,8 @@ jobs:
             done
             done
           done
+      - name: Verify every actual frame and encoded clip
+        run: node scripts/verify-ink-micro-surface-video.mjs .browser-evidence/ink-micro-surface
       - uses: actions/upload-artifact@v4
         if: always()
         with:
