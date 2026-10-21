@@ -29,7 +29,14 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
  const cap=textureLimit && typeof textureLimit==='object' ? textureLimit.maxDimension : textureLimit;
  const roleCaps=textureLimit && typeof textureLimit==='object' ? textureLimit.perRole : null;
  const jobs=new Map(),textures=new Map(),limit=Math.min(cap||Infinity,quality==='low'?512:quality==='high'?4096:1024);
- const materials=Object.values(data.manifest.materials);
+ // A source export can contain hundreds of textures for inactive/unrendered objects.
+ // nativeDisplay skips those objects; decoding their maps on a touch GPU cannot improve the image.
+ // Keep old callers without an object registry compatible.
+ const active=Array.isArray(data.manifest.objects)
+  ?new Set(data.manifest.objects.filter(o=>o?.active).map(o=>o.material)):null;
+ const materials=active
+  ?Object.entries(data.manifest.materials).filter(([name])=>active.has(name)).map(([,value])=>value)
+  :Object.values(data.manifest.materials);
  for(const src of materials){
   const roles={albedo:src.albedo,opacity:src.maps?.opacity};
   if(quality==='high')Object.assign(roles,{normal:src.maps?.normal,roughness:src.maps?.roughness,emissive:src.maps?.emissive});

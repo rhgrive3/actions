@@ -10,7 +10,7 @@ if(typeof vm.SourceTextModule!=='function'){
 }else{
  const baseline=fs.readFileSync(new URL('../runtime/native-load.mjs',import.meta.url));
  const cacheSource=fs.readFileSync(new URL('../runtime/source-cache.mjs',import.meta.url));
-async function scenario(source,{cancelAt='decode',count=8,resize=false,noSignal=false,failure=null}={}){
+async function scenario(source,{cancelAt='decode',count=8,resize=false,noSignal=false,failure=null,activeMaterials=null}={}){
  const controller=new AbortController(),bitmaps=[],textures=[],pending=[],reads=[];let decode=0,fetches=0;const intended=new Error('intentional '+failure+' failure');
  const bytes=new Uint8Array([137,80,78,71,1,2,3,4]),sha=crypto.createHash('sha256').update(bytes).digest('hex');
  const cache={async match(url){if(url.includes('stamp'))return new Response('0');reads.push(url);if(failure==='cache'&&url.endsWith('texture0.png'))throw intended;if(cancelAt==='cache'&&reads.length===1)controller.abort();return new Response(bytes);},async put(){},async delete(){return true;}};
@@ -25,11 +25,12 @@ async function scenario(source,{cancelAt='decode',count=8,resize=false,noSignal=
  const main=new vm.SourceTextModule(source,{context});await main.link(s=>{assert.ok(modules[s],s);return modules[s];});await main.evaluate();
  const materials={},integrity={};for(let i=0;i<count;i++){const file=`texture${i}.png`;materials[i]={albedo:file};integrity[file]={bytes:bytes.length,sha256:sha};}
  if(cancelAt==='before')controller.abort();
- const promise=main.namespace.loadNativeTextures('synthetic',{manifest:{materials},integrity},{capabilities:{getMaxAnisotropy:()=>4}},'balanced',noSignal?undefined:controller.signal,1024);
+ const objects=activeMaterials===null?undefined:Array.from({length:count},(_,i)=>({material:String(i),active:activeMaterials.includes(i)}));
+ const promise=main.namespace.loadNativeTextures('synthetic',{manifest:{materials,...(objects?{objects}:{})},integrity},{capabilities:{getMaxAnisotropy:()=>4}},'balanced',noSignal?undefined:controller.signal,1024);
  if(cancelAt==='decode'||cancelAt==='resize'){for(let i=0;i<1000&&pending.length<2;i++)await new Promise(r=>setImmediate(r));assert.equal(pending.length,2);controller.abort();for(const release of pending)release();}
  let value,error;try{value=await promise;}catch(e){error=e;}
  if(failure){assert.equal(error,intended);assert.ok(bitmaps.every(b=>b.closes===1));assert.ok(textures.every(t=>t.disposes===1));}
- else if(cancelAt==='never'){assert.equal(error,undefined);assert.equal(value.size,count);assert.ok(textures.every(t=>t.colorSpace==='srgb'&&t.wrapS===1000&&t.wrapT===1000&&t.anisotropy===4&&t.updated===true));assert.ok(bitmaps.every(b=>b.closes===(resize&&b.width===2048?1:0)));assert.ok(textures.every(t=>t.disposes===0));for(const t of value.values()){t.image.close();t.dispose();}}
+ else if(cancelAt==='never'){assert.equal(error,undefined);assert.equal(value.size,activeMaterials?.length??count);assert.ok(textures.every(t=>t.colorSpace==='srgb'&&t.wrapS===1000&&t.wrapT===1000&&t.anisotropy===4&&t.updated===true));assert.ok(bitmaps.every(b=>b.closes===(resize&&b.width===2048?1:0)));assert.ok(textures.every(t=>t.disposes===0));for(const t of value.values()){t.image.close();t.dispose();}}
  else {assert.equal(error?.name,'AbortError');assert.ok(bitmaps.every(b=>b.closes===1));assert.ok(textures.every(t=>t.disposes===1));}
  assert.equal(fetches,failure==='cache'?1:0);return {reads:reads.length,decode,textures:textures.length,dimensions:textures.map(t=>[t.image.width,t.image.height]),closes:bitmaps.map(b=>b.closes),disposes:textures.map(t=>t.disposes),error:error?.name||null};
 }
@@ -46,6 +47,11 @@ for(const cancelAt of ['resize','never'])test('resized cached textures '+cancelA
  assert.deepEqual([r.reads,r.decode,r.textures],expected);assert.ok(r.dimensions.every(([w,h])=>w===1024&&h===1024));
 });
 test('optional signal retains success',async()=>{const r=await scenario(source,{cancelAt:'never',noSignal:true});assert.deepEqual([r.reads,r.decode,r.textures],[8,8,8]);});
+test('inactive stage objects do not decode unused textures, preserving every active map',async()=>{
+ const r=await scenario(source,{cancelAt:'never',count:8,activeMaterials:[0,4]});
+ assert.deepEqual([r.reads,r.decode,r.textures],[2,2,2]);
+ assert.equal(r.error,null);
+});
 
 for(const failure of ['decode','setup','cache'])test('worker '+failure+' failure retains original error and once-only cleanup',async()=>{const r=await scenario(source,{cancelAt:'never',failure});assert.equal(r.error,'Error');assert.ok(r.closes.every(n=>n===1));assert.ok(r.disposes.every(n=>n===1));assert.equal(r.decode,failure==='cache'?7:8);assert.equal(r.textures,failure==='setup'?8:7);});
 
