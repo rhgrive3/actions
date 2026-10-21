@@ -50,7 +50,12 @@ driver=once(driver,"      G.projectiles.clear(); G.fx.clear?.();",nativeReset+`
 
 driver=once(driver,'      const n0 = G.projectiles.list.length;',`      const rig=G.rig;
       window.explosherPreShot={aimPoint:a.aimPoint.toArray(),aimDir:a.aimDir.toArray(),aimYaw:a.aimYaw,aimPitch:a.aimPitch,
-        rig:{time:rig.time,yaw:rig.yaw,pitch:rig.pitch,shakeSeed:rig.shakeSeed,trauma:rig.trauma,pivot:rig.pivot.toArray(),
+        rig:{time:rig.time,yaw:rig.yaw,pitch:rig.pitch,shakeSeed:rig.shakeSeed,trauma:rig.trauma,pendingTrauma:rig._traumaIn,fovKick:rig.fovKick,
+          mode:rig.mode,previousMode:rig._prevMode,previousTargetMatches:rig._prevTarget===a,mapK:rig.mapK,mapOpen:rig.mapOpen,
+          superJumpWasFlight:rig._sjWasFlight,superJumpLandTime:rig._sjLandT,
+          dip:{x:rig.dipS.x,v:rig.dipS.v},blend:rig.blend?{active:rig.blend.active,t:rig.blend.t,dur:rig.blend.dur,
+            pos:rig.blend.pos.toArray(),quaternion:rig.blend.quat.toArray(),fov:rig.blend.fov}:null,
+          pivot:rig.pivot.toArray(),
           camera:rig.gameCam.position.toArray(),quaternion:rig.gameCam.quaternion.toArray(),
           springs:Object.fromEntries(['sx','sy','sz','boom','hgt','side','lensLift','kickS'].map(k=>[k,{x:rig[k].x,v:rig[k].v}]))},
         characterTime:a.character.t};
@@ -58,7 +63,7 @@ driver=once(driver,'      const n0 = G.projectiles.list.length;',`      const ri
       const aimFrom=G.projectiles._aimFrom;
       G.projectiles._aimFrom=function(actor,from,out){
         const result=aimFrom.call(this,actor,from,out);
-        window.explosherAimTrace.push({time:G.time,from:from.toArray(),aimPoint:actor.aimPoint.toArray(),aimDir:actor.aimDir.toArray(),result:result.toArray()});
+        window.explosherAimTrace.push({time:G.time,local:actor===G.local,wid:actor.weapon?.id??actor.weaponId,from:from.toArray(),aimPoint:actor.aimPoint.toArray(),aimDir:actor.aimDir.toArray(),result:result.toArray()});
         return result;
       };
       const n0 = G.projectiles.list.length;`);
@@ -146,6 +151,11 @@ if(captures.length!==expected.size)throw Error('Wrong native capture count');
 for(const c of captures){
   if(!expected.delete(c.label+':'+c.tick+':'+c.view))throw Error('Duplicate or unexpected native capture');
   if((c.tick===3||preflight)&&!(c.count>0&&c.measurement.sparkles>0&&c.measurement.render.points>0))throw Error('Missing live Explosher in native capture');
+  if(preflight){
+    const ps=c.measurement.physical,trace=c.measurement.aimTrace;
+    if(c.count!==1||ps.length!==1||ps[0].wid!=='s3-slosher-washtub'||!Number.isFinite(ps[0].seed))throw Error('Unexpected native shot identity');
+    if(!Array.isArray(trace)||!trace.length||trace.some(t=>!t.local||t.wid!=='s3-slosher-washtub'||![t.time,...t.from,...t.aimPoint,...t.aimDir,...t.result].every(Number.isFinite)))throw Error('Missing or invalid native aim trace');
+  }
 }
 if(expected.size)throw Error('Missing expected native captures');
 if(preflight)console.log('EXPLOSHER_PREFLIGHT_RECEIPT '+JSON.stringify(captures));

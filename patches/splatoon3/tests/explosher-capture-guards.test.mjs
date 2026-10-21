@@ -21,6 +21,11 @@ test('capture admission guards reject incomplete or invalid evidence (no browser
  const validate=new Function('captures','preflight',wrapper.slice(wrapper.indexOf('const expected=new Set')));
  const captures=[0,3,8,14,22,30].flatMap(t=>['behind','tele-side','tele-oblique'].map(v=>({label:'s3-slosher-washtub',tick:t,view:v,count:1,measurement:{sparkles:28,render:{points:28}}})));
  assert.doesNotThrow(()=>validate(captures));
+ const live={...captures[0],measurement:{...captures[0].measurement,physical:[{wid:'s3-slosher-washtub',seed:.5}],aimTrace:[{local:true,wid:'s3-slosher-washtub',time:0,from:[0,1,0],aimPoint:[0,1,10],aimDir:[0,0,1],result:[0,0,1]}]}};
+ assert.doesNotThrow(()=>validate([live],true));
+ assert.throws(()=>validate([{...live,measurement:{...live.measurement,aimTrace:[]}}],true),/aim trace/);
+ assert.throws(()=>validate([{...live,count:2}],true),/shot identity/);
+ assert.throws(()=>validate([{...live,measurement:{...live.measurement,physical:[{wid:'shooter',seed:.5}]}}],true),/shot identity/);
  assert.throws(()=>validate([...captures.slice(0,17),captures[0]]),/Duplicate/);
  assert.throws(()=>validate(captures.slice(1)),/count/);
  assert.throws(()=>validate(captures.map((x,i)=>i===0?{...x,tick:99}:x)),/unexpected/);
