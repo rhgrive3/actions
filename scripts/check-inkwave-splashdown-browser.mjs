@@ -13,6 +13,11 @@ const opt = (name, fallback) => { const i = process.argv.indexOf(name); return i
 const site = fs.realpathSync(opt('--site', '_site'));
 const inkjet = process.argv.includes('--inkjet') ? { hz:Number(opt('--hz','60')), actorCount:Number(opt('--actors','1')), layout:opt('--layout','near') } : null;
 if(inkjet){assert.ok([30,60,120].includes(inkjet.hz));assert.ok([1,2,4].includes(inkjet.actorCount));assert.ok(['near','mixed'].includes(inkjet.layout));}
+const overlayPath=opt('--baseline-overlay',null);
+const overlayReceipt=overlayPath?JSON.parse(fs.readFileSync(path.join(path.dirname(overlayPath),'receipt.json'),'utf8')):null;
+const overlayCode=overlayPath?fs.readFileSync(overlayPath):null;
+if(overlayPath){assert.ok(inkjet,'baseline overlay is diagnostic Inkjet only');assert.equal(createHash('sha256').update(overlayCode).digest('hex'),overlayReceipt.baselineEmittedSha256);}
+if(inkjet){inkjet.baseline=!!overlayPath;inkjet.warmupSeconds=Number(opt('--warmup-seconds','1'));inkjet.sampleSeconds=Number(opt('--sample-seconds','1'));assert.ok(Number.isInteger(inkjet.warmupSeconds)&&inkjet.warmupSeconds>=1&&inkjet.warmupSeconds<=5);assert.ok(Number.isInteger(inkjet.sampleSeconds)&&inkjet.sampleSeconds>=1&&inkjet.sampleSeconds<=5);}
 const out = path.resolve(opt('--evidence-dir', '.ci-scratch/splashdown-browser'));
 fs.mkdirSync(out, { recursive: true });
 const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
@@ -21,6 +26,7 @@ assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash);
 for (const [file, digest] of Object.entries(manifest.artifacts)) assert.equal(hash(fs.readFileSync(path.join(site, file))), digest, file);
 const prefix = `/_versions/${manifest.build.revision}/`;
 const server = http.createServer((req, res) => {
+  if(overlayCode && req.url===prefix+'patches/splatoon3/runtime/special-vfx.mjs'){res.setHeader('content-type','text/javascript');res.end(overlayCode);return;}
   if (req.url === '/check') {
     res.setHeader('content-type', 'text/html');
     res.end(`<html><head><link rel="icon" href="data:,"><script type="importmap">{"imports":{"three":"${prefix}vendor/three/build/three.module.js","three/addons/":"${prefix}vendor/three/jsm/"}}</script></head><body style="margin:0"></body></html>`);
@@ -45,7 +51,7 @@ try {
   const servedHashes = {};
   if(inkjet) for(const file of ['patches/splatoon3/runtime/special-vfx.mjs','patches/splatoon3/runtime/inkjet-vfx-budget.mjs','patches/splatoon3/runtime/inkjet-vfx-clock.mjs']) {
     const response=await page.request.get(`http://127.0.0.1:${server.address().port}${prefix}${file}`);
-    assert.equal(response.status(),200);servedHashes[file]=hash(await response.body());assert.equal(servedHashes[file],hash(fs.readFileSync(path.join(site,prefix,file))),file+' served bytes');
+    assert.equal(response.status(),200);servedHashes[file]=hash(await response.body());assert.equal(servedHashes[file],overlayCode && file.endsWith('/special-vfx.mjs')?overlayReceipt.baselineEmittedSha256:hash(fs.readFileSync(path.join(site,prefix,file))),file+' served bytes');
   }
   const result = await page.evaluate(async ({prefix,inkjet}) => {
     const THREE = await import('three');
@@ -132,10 +138,10 @@ try {
       d.puff=function(...args){accepted++;return originalPuff.apply(this,args);};
       d.kit.puffs._evict=function(...args){evictions++;return originalEvict.apply(this,args);};
       // Drain activation bursts before the sampled continuous-emission window.
-      for(let frame=0;frame<hz;frame++){G.time+=1/hz;G.fx.update(1/hz,camera);}
+      for(let frame=0;frame<hz*inkjet.warmupSeconds;frame++){G.time+=1/hz;G.fx.update(1/hz,camera);draw();}
       draw(); accepted=0;evictions=0;exhaustGlows.fill(0);
       const before=pixels();
-      for(let frame=0;frame<hz;frame++){
+      for(let frame=0;frame<hz*inkjet.sampleSeconds;frame++){
         const dt=1/hz;G.time+=dt;
         const start=performance.now();G.fx.update(dt,camera);cpu.push(performance.now()-start);
         const drawStart=performance.now();draw();submit.push(performance.now()-drawStart);
@@ -143,15 +149,15 @@ try {
         if((hz===60 && frame<12) || (hz!==60 && frame===0))images.push({name:'inkjet-'+layout+'-'+actorCount+'p-f'+String(frame+1).padStart(3,'0')+'.png',data:renderer.domElement.toDataURL('image/png')});
       }
       const after=pixels(), changedPixels=changed(before,after);
-      expect(exhaustGlows.length===actorCount && exhaustGlows.every(n=>n===2*Math.min(hz,60)),'each expected actor emits both exhaust glows; flight-only cannot pass');
+      expect(exhaustGlows.length===actorCount && exhaustGlows.every(n=>n===2*(inkjet.baseline?hz:Math.min(hz,60))*inkjet.sampleSeconds),'each expected actor emits both exhaust glows; flight-only cannot pass');
       expect(changedPixels>10,'Inkjet presentation changes rendered pixels');
       expect(d.errors===0,'no swallowed special VFX errors');
       expect(rows.every(r=>r.puffs<=d.kit.puffs.cap),'continuous puff occupancy bounded');
-      expect(evictions===0,'continuous Inkjet probe causes no eviction');
+      if(!inkjet.baseline)expect(evictions===0,'continuous Inkjet probe causes no eviction');
       const sorted=a=>[...a].sort((a,b)=>a-b);
       const stats=a=>{const q=sorted(a);return{mean:a.reduce((n,x)=>n+x,0)/a.length,p50:q[Math.floor(q.length*.5)],p95:q[Math.floor(q.length*.95)],max:q.at(-1)};};
       const gl=renderer.getContext(), debug=gl.getExtension('WEBGL_debug_renderer_info');
-      cases.push({hz,actorCount,layout,clock:'one-second warmup then one-second sample; fixed dt=1/hz, not real display refresh',seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG seed 0x12345678',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,exhaustGlows,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
+      cases.push({hz,actorCount,layout,variant:inkjet.baseline?'baseline-overlay':'candidate',clock:{warmupSeconds:inkjet.warmupSeconds,sampleSeconds:inkjet.sampleSeconds,dt:1/hz,mode:'simulated fixed dt, not real display refresh'},seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG seed 0x12345678',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,exhaustGlows,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
       for(const a of actors)a.character.dispose();
       G.projectiles.list=[];G.projectiles.clear();G.fx.dispose();G.actors=[];G.fx=null;
     } else for (const fxMode of ['none', 'disabled', 'enabled']) for (const hz of [30, 60, 120]) {
@@ -232,13 +238,14 @@ try {
       a.character.dispose(); G.projectiles.clear(); G.fx?.dispose(); G.actors = []; G.fx = null;
     }
     renderer.dispose();
-    return { scope: inkjet ? 'Candidate-only SwiftShader continuous-presentation probe with frozen gameplay and stationary live flight records; no baseline performance acceptance or Switch comparison' : 'production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison', cases, failures, images };
+    return { scope: inkjet ? 'Diagnostic SwiftShader continuous-presentation probe with frozen gameplay and stationary live flight records; no baseline performance acceptance or Switch comparison' : 'production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison', cases, failures, images };
   }, {prefix,inkjet});
   for (const { name, data } of result.images) fs.writeFileSync(path.join(out, name), Buffer.from(data.split(',')[1], 'base64'));
   if(inkjet)assert.equal(result.images.length,inkjet.hz===60?12:1,'nonempty per-case capture sequence');
   if(inkjet) for(const {name,data} of result.images)assert.ok(Buffer.from(data.split(',')[1],'base64').length>1000,name+' nonempty PNG');
   delete result.images;
   result.servedHashes=servedHashes;
+  if(overlayReceipt){assert.equal(manifest.contentHash,overlayReceipt.contentHash,'overlay built for this exact emitted site');result.baselineOverlay=overlayReceipt;}
   result.errors = errors; result.buildRevision = manifest.build.revision; result.contentHash = manifest.contentHash;
   fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify({ evidence: out, cases: result.cases.length, failures: result.failures, errors }));
