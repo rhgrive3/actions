@@ -46,6 +46,12 @@ test('Bloblobber bubbles grow over five frames and shrink 25% each rebound',()=>
   assert.equal(catalogBubbleCanBounce(28,0),true,'no arbitrary wall rebound cap');
   assert.equal(catalogBubbleSurfaceNormalY({face:0,normal:{y:.6}}, {faces:[{n:{y:0}}]}),0,
     'wall edge with upward collision normal retains the original wall face');
+  assert.equal(catalogBubbleSurfaceNormalY({face:-1,triangle:0,normal:{x:.8,y:.6,z:0}},
+    {triangleWorld:{normals:new Float32Array([1,0,0])}}),0,
+    'unmapped native wall triangles stay walls when the rounded contact normal points upward');
+  assert.equal(catalogBubbleSurfaceNormalY({face:-1,triangle:0,normal:{x:0,y:1,z:0}},
+    {triangleWorld:{normals:new Float32Array([0,-1,0])}}),1,
+    'a reversed-winding native floor still counts as floor from above');
   assert.equal(catalogBubbleSurfaceNormalY({face:-1,normal:{y:1}}, null),1,
     'unmapped contacts keep the collision normal fallback');
   assert.ok(catalogReboundSeparation(unit.CollisionParam.EndRadiusForField*.75)>.56);
