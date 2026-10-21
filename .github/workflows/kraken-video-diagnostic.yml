@@ -1,0 +1,73 @@
+name: Kraken paired diagnostic video
+on:
+  push:
+    branches: ['test/kraken-lifecycle-candidate-20261021']
+    paths:
+      - 'scripts/check-inkwave-kraken-video.mjs'
+      - '.github/workflows/kraken-video-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: kraken-video-diagnostic
+  cancel-in-progress: false
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/check-inkwave-kraken-video.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - uses: actions/checkout@v4
+        with:
+          ref: 95c25af145418691991a1452d4d10589754a0f1c
+          path: before
+          filter: blob:none
+          sparse-checkout: |
+            inkwave-public
+            patches
+            scripts
+            reports/ink-volume/source
+      - uses: actions/checkout@v4
+        with:
+          ref: fc5d5bcb57494c1aed693799d537045071712506
+          path: after
+          filter: blob:none
+          sparse-checkout: |
+            inkwave-public
+            patches
+            scripts
+            reports/ink-volume/source
+      - name: Verify exact source heads and build both compositions
+        run: |
+          test "$(git -C before rev-parse HEAD)" = 95c25af145418691991a1452d4d10589754a0f1c
+          test "$(git -C after rev-parse HEAD)" = fc5d5bcb57494c1aed693799d537045071712506
+          (cd before && node scripts/build-inkwave.mjs inkwave-public _site)
+          (cd after && node scripts/build-inkwave.mjs inkwave-public _site)
+      - name: Record identical controlled native lifecycles
+        run: |
+          node scripts/check-inkwave-kraken-video.mjs --site before/_site --evidence-dir evidence/before --label 'BEFORE 95c25af'
+          node scripts/check-inkwave-kraken-video.mjs --site after/_site --evidence-dir evidence/after --label 'CANDIDATE fc5d5bc'
+      - name: Encode frame-exact side-by-side comparison
+        run: |
+          ffmpeg -version
+          ffmpeg -y -framerate 30 -i evidence/before/frames/%05d.png -framerate 30 -i evidence/after/frames/%05d.png -filter_complex hstack=inputs=2 -frames:v 300 -c:v libx264 -crf 20 -pix_fmt yuv420p evidence/kraken-before-candidate.mp4
+          ffprobe -v error -count_frames -show_entries stream=nb_read_frames,r_frame_rate,width,height -of json evidence/kraken-before-candidate.mp4 > evidence/video-metadata.json
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('evidence/video-metadata.json'));if(m.streams[0].nb_read_frames!=='300'||m.streams[0].r_frame_rate!=='30/1')throw Error('video cadence');"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kraken-before-candidate-video
+          path: |
+            evidence/*.mp4
+            evidence/*.json
+            evidence/before/result.json
+            evidence/after/result.json
+          if-no-files-found: warn
