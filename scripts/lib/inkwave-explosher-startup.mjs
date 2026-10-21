@@ -60,11 +60,31 @@ export function installExplosherEarlyFreeze(){
 export function installExplosherRandom(trace = false){
  const seed=0x515e7021;let word=seed,draws=0,resets=0,phase='boot';const boundaries=[],callers=new Map();let overflow=0;
  const snapshot=()=>({algorithm:'xorshift32',seed,word:word>>>0,draws,resets,identityPreserved:true});
+ const bootCallers=new Map();let bootSamples=0,bootOverflow=0,bootCapExcluded=0,bootUnobserved=0;
+ const bootWindow={startDraw:30000,endDraw:70000,stride:32,maxSamples:1536,maxCallerGroups:24};
+ const readPortrait=()=>{
+  const G=window.__G,g=window.__inkwave;
+  if(!G||!g)return {observed:false,reason:'Native context not yet published'};
+  if(G.game!==g)return {observed:false,reason:'Published native context owner mismatch'};
+  const s=g.showcase;if(!s)return {observed:true,showcasePresent:false};
+  return {observed:true,showcasePresent:true,warmState:s._warmState??null,
+   queued:Array.isArray(s._pq)?s._pq.length:null,hasJob:!!s._portraitJob,hasTask:!!s._portraitTask,
+   hasActiveCharacter:!!s._portraitActiveCharacter,inFlight:s._pflight??0};
+ };
+ const callerStack=()=> (new Error('QA RNG caller').stack||'').split('\n').slice(3,7).join('\n').replace(/http:\/\/127\.0\.0\.1:\d+/g,'<site>').replace(/\/_versions\/[^/]+\//g,'/').slice(0,900);
+
  // Native clock temporarily replaces the global during presentation. Check only
  // frame/reset boundaries; captured aliases keep this function and native routing.
  const random=()=>{draws++;word^=word<<13;word^=word>>>17;word^=word<<5;
+  if(trace&&phase==='boot'&&draws>=bootWindow.startDraw&&draws<=bootWindow.endDraw&&(draws-bootWindow.startDraw)%bootWindow.stride===0){
+   if(bootSamples<bootWindow.maxSamples){
+    bootSamples++;const stack=callerStack(),portrait=readPortrait();if(!portrait.observed)bootUnobserved++;
+    let group=bootCallers.get(stack);if(!group&&bootCallers.size<bootWindow.maxCallerGroups){group={stack,samples:0,firstDraw:draws,lastDraw:draws,firstReset:resets,lastReset:resets,lastPortrait:portrait};bootCallers.set(stack,group);}
+    if(group){group.samples++;group.lastDraw=draws;group.lastReset=resets;group.lastPortrait=portrait;}else bootOverflow++;
+   }else bootCapExcluded++;
+  }
   if(trace&&phase==='shot-input'&&draws<=512){
-   const stack=(new Error('QA RNG caller').stack||'').split('\n').slice(2,6).join('\n').replace(/http:\/\/127\.0\.0\.1:\d+/g,'<site>').replace(/\/_versions\/[^/]+\//g,'/').slice(0,900);
+   const stack=callerStack();
    let group=callers.get(stack);if(!group&&callers.size<16){group={stack,count:0,firstDraw:draws,lastDraw:draws};callers.set(stack,group);}
    if(group){group.count++;group.lastDraw=draws;}else overflow++;
   }
@@ -79,12 +99,17 @@ export function installExplosherRandom(trace = false){
    character:ch?{inWorld:!!ch.inWorld,rendered:!!ch._rendered,warmStarted:!!ch._warmed,sourceStatus:ch.sourceMotion?.status??null,sourceOwnerMatches:ch.sourceMotion?.character===ch,sourceLoaderPromise:typeof ch._sourceMotionLoader?.then==='function',actorOwned:ch.actor===G.local,sceneOwned:ch.root?.parent===G.scene}:null,
    resources:r?{geometries:r.info.memory.geometries,textures:r.info.memory.textures,renderFrame:r.info.render.frame}:null,
    fxHooks:hooks?{time:hooks.time,stamp:hooks.stamp,sprayT:hooks.sprayT,featherT:hooks.featherT,edgeCount:hooks.edges?.length,actorStateCount:hooks.st?.size,triggerCounts:Object.fromEntries(Object.entries(hooks.count||{}).sort(([a],[b])=>a.localeCompare(b)).slice(0,32))}:null,
+   portrait:readPortrait(),
    fixedClock:g.s3Clock?{ticks:g.s3Clock.ticks,accumulator:g.s3Clock.accumulator,advancing:g.s3Clock.advancing}:null}:null;
   boundaries.push({label,phase,...snapshot(),nativeState});
  }};
  window.resetExplosherRandom=(label='reset')=>{check();window.markExplosherRandomBoundary('before-reset:'+label);word=seed;draws=0;resets++;phase=label;callers.clear();overflow=0;};
  window.readExplosherRandom=()=>{check();return snapshot();};
- window.readExplosherRandomDiagnostic=()=>{check();return {enabled:trace,scope:'QA captured alias only; excludes native presentationRandom direct calls; caller stacks are diagnostic, not performance evidence',phase,maxTraceDraws:512,maxCallerGroups:16,overflowDraws:overflow,untracedShotDraws:phase==='shot-input'?Math.max(0,draws-512):null,boundaries:boundaries.map(x=>({...x})),callers:[...callers.values()].map(x=>({...x}))};};
+ window.readExplosherRandomDiagnostic=()=>{check();return {enabled:trace,scope:'QA captured alias only; excludes native presentationRandom direct calls; caller stacks are diagnostic, not performance evidence',phase,maxTraceDraws:512,maxCallerGroups:16,overflowDraws:overflow,untracedShotDraws:phase==='shot-input'?Math.max(0,draws-512):null,boundaries:boundaries.map(x=>({...x})),callers:[...callers.values()].map(x=>({...x})),
+  bootSampling:{...bootWindow,samples:bootSamples,overflowSamples:bootOverflow,capExcludedSamples:bootCapExcluded,
+   unobservedSamples:bootUnobserved,observedSamples:bootSamples-bootUnobserved,
+   scope:'Fixed draw-index window sampled every 32 draws; sampled caller counts are not total caller counts. No guarantee of observing the first ambient call. Native state before publication is unobserved.',
+   callers:[...bootCallers.values()].map(x=>({...x,lastPortrait:{...x.lastPortrait}}))}};};
  window.resetExplosherRandom('boot');
 }
 
