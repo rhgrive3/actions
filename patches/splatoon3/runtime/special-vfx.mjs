@@ -2,7 +2,7 @@
 // for all nineteen specials (presentation only).
 //
 // Reference: Splatoon 3 footage of every special (Zephiel810, "Splatoon 3 - All
-// Special Weapons (DLC Included)", youtu.be/PLxqXn_E898) read frame by frame,
+// Special Weapons (DLC Included)", youtu.be/PLxqXn_E898): sparse storyboard only,
 // plus Nintendo's official special demos already cited by special-models.md.
 // Observed families, per special, are recorded in
 // patches/splatoon3/reference/special-vfx.md. Shapes, sizes, colours and
@@ -19,6 +19,7 @@
 // are presentation timestamps only.
 
 import { SpecialVfxKit, SPARK, PUFF, RIBBON, BEAM, SHELL, BAND, DISC, vfxRandom, excludeFromOverridePasses, inkLightUniforms } from './special-vfx-kit.mjs';
+import { inkjetVfxTicks } from './inkjet-vfx-clock.mjs';
 import { inkVacState } from './kit-ink-vac.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
 import { createInkFist, disposeSpecialModel } from './special-motion.mjs';
@@ -490,7 +491,7 @@ const ROUND_FX = {
   },
   inkjet: {
     start(r, p) { r.d.ink = this.ribbon(false, { width: 0.45, widthTail: 0.1, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.2, spacing: 0.12 }); },
-    frame(r, p) { this.pushRibbon(r.d.ink, p.pos, false); if (vfxRandom() < 0.4) this.drop(p.pos, rnd(1.5, -1.5), rnd(1, -1), rnd(1.5, -1.5), 0.45, 0.1, r.color, { grav: 12 }); },
+    frame(r, p, dt) { this.pushRibbon(r.d.ink, p.pos, false); const ticks = inkjetVfxTicks(r.d, dt); for (let k = 0; k < ticks; k++) if (vfxRandom() < 0.4) this.drop(p.pos, rnd(1.5, -1.5), rnd(1, -1), rnd(1.5, -1.5), 0.45, 0.1, r.color, { grav: 12 }); },
     impact(r) { this.inkBlast(r.last, r.color, 3.6, { streaks: 14, chunks: 10, mist: 4, native: false }); },
   },
   booyahBomb: {
@@ -933,6 +934,7 @@ const DIRECTORS = {
     },
     frame(a, t, dt) {
       const squid = a.form === 'squid' || a.intent?.squid;
+      const ticks = inkjetVfxTicks(t.d, dt, !squid);
       const c = t.color, f = this.forward(a, this.v[5]), side = this.v[6].set(f.z, 0, -f.x);
       const ground = groundBelow(this, a);
       for (let i = 0; i < 2; i++) {
@@ -944,19 +946,21 @@ const DIRECTORS = {
         const flick = 0.9 + 0.1 * Math.sin(this.time * 47 + i * 2);
         this.setBeam(t.d.jets[i], nozzle, end, 0.11 * flick, 0.42 * flick, squid ? 0 : 1);
         this.setBeam(t.d.cones[i], nozzle, this.v[2].copy(nozzle).lerp(end, 0.2), 0.08, 0.16 * flick, squid ? 0 : 0.3);
-        if (!squid) { this.spark(SPARK.GLOW, nozzle, 0, 0, 0, 0.05, 0.2, 0.15, this.hdr(c, 1.2, 0.6), 0.4);
-          if (vfxRandom() < 0.6) { const k = vfxRandom(); this.v[2].copy(nozzle).lerp(end, k);
-            this.puff(PUFF.CHUNK, this.v[2], rnd(1.2, -1.2), -rnd(9, 5), rnd(1.2, -1.2), 0.25, 0.07 + 0.08 * k, 0.04, c, 1, { grav: 10, drag: 0.5 }); } }
-        if (!squid && vfxRandom() < 0.7) this.drop(nozzle, rnd(1, -1), -rnd(14, 8), rnd(1, -1), 0.25, 0.07, c, { drag: 1, grav: 10 });
-        if (!squid && vfxRandom() < 0.8) this.drop(end, rnd(1, -1), -rnd(10, 6), rnd(1, -1), 0.6, rnd(0.12, 0.06), c, { grav: 14, drag: 0.2, stretch: 0.05 });   // ink raining off the jets
-        if (!squid && nozzle.y - ground < 7 && vfxRandom() < 0.55) { // splash where the ink lands
-          this.v[2].copy(end).setY(ground + 0.05);
-          const th = rnd(TAU), sp = rnd(5, 2);
-          this.puff(PUFF.CHUNK, this.v[2], Math.cos(th) * sp, rnd(4, 1.5), Math.sin(th) * sp, 0.5, 0.12, 0.04, c, 1, { grav: 15, drag: 0.6 });
-          if (vfxRandom() < 0.3) this.puff(PUFF.MIST, this.v[2], Math.cos(th) * 1.5, 0.6, Math.sin(th) * 1.5, 0.6, 0.4, 1.1, this.hdr(c, 0.9), 0.4, { buoy: 0.3 });
-        }
+        for (let tick = 0; tick < ticks; tick++) {
+          if (!squid) { this.spark(SPARK.GLOW, nozzle, 0, 0, 0, 0.05, 0.2, 0.15, this.hdr(c, 1.2, 0.6), 0.4);
+            if (vfxRandom() < 0.6) { const k = vfxRandom(); this.v[2].copy(nozzle).lerp(end, k);
+              this.puff(PUFF.CHUNK, this.v[2], rnd(1.2, -1.2), -rnd(9, 5), rnd(1.2, -1.2), 0.25, 0.07 + 0.08 * k, 0.04, c, 1, { grav: 10, drag: 0.5 }); } }
+          if (!squid && vfxRandom() < 0.7) this.drop(nozzle, rnd(1, -1), -rnd(14, 8), rnd(1, -1), 0.25, 0.07, c, { drag: 1, grav: 10 });
+          if (!squid && vfxRandom() < 0.8) this.drop(end, rnd(1, -1), -rnd(10, 6), rnd(1, -1), 0.6, rnd(0.12, 0.06), c, { grav: 14, drag: 0.2, stretch: 0.05 });   // ink raining off the jets
+          if (!squid && nozzle.y - ground < 7 && vfxRandom() < 0.55) { // splash where the ink lands
+            this.v[2].copy(end).setY(ground + 0.05);
+            const th = rnd(TAU), sp = rnd(5, 2);
+            this.puff(PUFF.CHUNK, this.v[2], Math.cos(th) * sp, rnd(4, 1.5), Math.sin(th) * sp, 0.5, 0.12, 0.04, c, 1, { grav: 15, drag: 0.6 });
+            if (vfxRandom() < 0.3) this.puff(PUFF.MIST, this.v[2], Math.cos(th) * 1.5, 0.6, Math.sin(th) * 1.5, 0.6, 0.4, 1.1, this.hdr(c, 0.9), 0.4, { buoy: 0.3 });
+          }
+          }
       }
-      if (!squid) { t.acc = (t.acc || 0) + dt; if (t.acc > 0.12) { t.acc = 0; this.disc(false, 0.5, DISC.SPLAT, this.v[2].set(a.pos.x - f.x * 0.6, ground + 0.03, a.pos.z - f.z * 0.6), this.up, 0.4, 1.2, c, 0.5); } }
+      if (!squid) { t.acc = (t.acc || 0) + ticks / 60; if (t.acc > 0.12) { t.acc = 0; this.disc(false, 0.5, DISC.SPLAT, this.v[2].set(a.pos.x - f.x * 0.6, ground + 0.03, a.pos.z - f.z * 0.6), this.up, 0.4, 1.2, c, 0.5); } }
     },
     event(a, e, pos, target) {
       if (e.action === 'shot' && pos) { const dir = target ? this.v[3].copy(target).sub(pos).normalize() : this.aim(a, this.v[3]); this.muzzle(this.v[4].copy(pos).addScaledVector(dir, 0.6), dir, this.rgb(a), 1.2); }
