@@ -524,3 +524,17 @@ test('a straight-fire proof lands once per victim, still once on each separate l
   area.onMessage('peerA',{...hit(2,1,'blaster'),d:30});area.onMessage('peerA',{...hit(2,2,'blaster'),d:30});
   assert.equal(area.hitCalls.length,2,'area families keep their existing per-proof uses');
 });
+test('shot pairing uses the muzzle, not a load-dependent millisecond gap',()=>{
+  const ev=(t,m)=>[t,'ev','weapon:fire',{actor:{n:1},weapon:'shooter',muzzle:m,dir:[0,0,1]}];
+  const slow=new Stub();
+  slow._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.005,[0,1,0])]});
+  assert.equal(slow._combatProvenance.proofs.get('peerA').length,1,'5 ms apart on a loaded device is still one shot');
+  const burst=new Stub();
+  burst._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[
+    [100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.001,[0,1,0]),
+    [100.002,'p',1,'shot','shooter',.3,1,0,0,0,45],ev(100.003,[.3,1,0])]});
+  assert.equal(burst._combatProvenance.proofs.get('peerA').length,2,'two rounds in one frame stay two proofs');
+  const other=new Stub();
+  other._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.001,[1.5,1,0])]});
+  assert.equal(other._combatProvenance.proofs.get('peerA').length,2,'a fire event at another muzzle is not that birth');
+});

@@ -50,6 +50,8 @@ test('#573 victim-owned hit admission and outgoing invulnerability flag use the 
   const rejected=[],admissions=[],applyHit=f.G.projectiles.applyHit;
   f.on('hit:rejected',event=>rejected.push(event));
   f.G.projectiles.applyHit=function(...args){const result=applyHit.apply(this,args);admissions.push(result);return result;};
+  // One round lands once on its victim (#1665): the second claim needs its own native shot.
+  emitMainShot(producer,source);assert.equal(tx._sendTick(),true);assert.equal(ticks.length,2);nm.onMessage('peer',ticks[1]);
   tx.sendHit(source,target,30,'shooter');assert.equal(claims.length,2);nm.onMessage('peer',claims[1]);near(a.hp,90);
   assert.deepEqual(admissions,['rejected-invulnerable'],'valid claim reaches native invulnerability rejection, not payload/proof rejection');
   assert.equal(rejected.length,1);assert.equal(rejected[0].victim,a);assert.equal(rejected[0].attacker,attacker);assert.equal(rejected[0].damage,30);assert.equal(rejected[0].weaponId,'shooter');

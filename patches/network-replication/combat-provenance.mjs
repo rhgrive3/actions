@@ -150,10 +150,15 @@ function record(nm,from,packet,t,acceptedSub=null) {
   }
   if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return acceptedProof;
 }
+// Pair a fire event with the birth it presents: same actor, same packet, the
+// same muzzle point (both rows are r2 of one Vector3) and the same frame. The
+// two rows are recorded microseconds to milliseconds apart depending on device
+// load, so time alone is not an identity; each birth pairs with one event.
 function sameShotBirth(store,start,c) {
-  for(let i=start;i<store.length;i++) {
+  for(let i=store.length-1;i>=start;i--) {
     const p=store[i];
-    if(p.actor===c.actor&&p.src==='p'&&p.kind==='main'&&Math.abs(p.ts-c.ts)<=SAME_SHOT_SECONDS)return true;
+    if(p.actor===c.actor&&p.src==='p'&&p.kind==='main'&&!p.pairedFire&&
+       Math.abs(p.ts-c.ts)<=SAME_SHOT_SECONDS&&dist(p.origin,c.origin)<=SAME_SHOT_MUZZLE){p.pairedFire=true;return true;}
   }
   return false;
 }
@@ -165,7 +170,7 @@ function sameShotBirth(store,start,c) {
 // Roller and Brush flings, Blaster bursts, Stringer, Splatana, Brella) and
 // subs/Specials are not straight lines, so they keep the ray-proximity gate.
 const DIRECT_FIRE = new Set(['shooter','dualies','splatling','charger']);
-const SAME_SHOT_SECONDS = .0015;
+const SAME_SHOT_SECONDS = 1/60, SAME_SHOT_MUZZLE = .05;
 const HISTORY_AGE = 1.2, HISTORY_SIZE = 32, HISTORY_SPACING = 1/40, HISTORY_POSES = 8;
 const SAMPLE_HEIGHTS = [.3,.9,1.5], SAMPLE_REACH = .35, ATTACKER_HEIGHTS = [.5,1.05,1.5];
 function directFire(actor) {
