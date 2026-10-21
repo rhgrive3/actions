@@ -115,7 +115,8 @@ try {
         if (a.character.sourceMotion?.ready) await a.character.sourceMotion.ready;
         a.pos.set((i-(actorCount-1)/2)*2,2,0); a.vel.set(0,0,0); a.character.root.position.copy(a.pos);
         expect(applyCatalogueChoice(a,{sub:'bomb',special:'inkjet'},api),'Inkjet catalogue choice');
-        a.special=a.specialCost(); a._startSpecial(); d.track(a);
+        a.special=a.specialCost(); a._startSpecial(); const track=d.track(a);
+        expect(a.specialActive?.id==='inkjet' && track?.id==='inkjet','actual Inkjet activation and exhaust track');
       }
       // Controlled continuous-presentation probe: gameplay is deliberately
       // frozen, matching the source/emitted integration test, not full play.
@@ -138,7 +139,7 @@ try {
         const start=performance.now();G.fx.update(dt,camera);cpu.push(performance.now()-start);
         const drawStart=performance.now();draw();submit.push(performance.now()-drawStart);
         rows.push({frame:frame+1,time:G.time,puffs:d.kit.puffs.n,sparks:d.kit.sparks.n,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles});
-        if(hz===60 && frame<12)images.push({name:'inkjet-'+layout+'-'+actorCount+'p-f'+String(frame+1).padStart(3,'0')+'.png',data:renderer.domElement.toDataURL('image/png')});
+        if((hz===60 && frame<12) || (hz!==60 && frame===0))images.push({name:'inkjet-'+layout+'-'+actorCount+'p-f'+String(frame+1).padStart(3,'0')+'.png',data:renderer.domElement.toDataURL('image/png')});
       }
       const after=pixels(), changedPixels=changed(before,after);
       expect(changedPixels>10,'Inkjet presentation changes rendered pixels');
@@ -232,7 +233,7 @@ try {
     return { scope: inkjet ? 'Candidate-only SwiftShader continuous-presentation probe with frozen gameplay and stationary live flight records; no baseline performance acceptance or Switch comparison' : 'production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison', cases, failures, images };
   }, {prefix,inkjet});
   for (const { name, data } of result.images) fs.writeFileSync(path.join(out, name), Buffer.from(data.split(',')[1], 'base64'));
-  if(inkjet && inkjet.hz===60)assert.equal(result.images.length,12,'consecutive frames');
+  if(inkjet)assert.equal(result.images.length,inkjet.hz===60?12:1,'nonempty per-case capture sequence');
   if(inkjet) for(const {name,data} of result.images)assert.ok(Buffer.from(data.split(',')[1],'base64').length>1000,name+' nonempty PNG');
   delete result.images;
   result.servedHashes=servedHashes;
