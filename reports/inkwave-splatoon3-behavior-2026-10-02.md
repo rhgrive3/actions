@@ -5485,6 +5485,39 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
 - 再現操作と確認: 射撃保持中に前入力＋ジャンプ 1 tick。開始 4 tick は移動 0、core 終了 tick で 4WU、glide 後 5WU。スティックを前に倒したままでも `UnrelaxFrameMove=32` の 32 tick は静止し、その後に歩行再開。30/60/120Hz で同一、自/敵インクで同一経路・同一コスト 7。上り坂・0.3WU 段差は常時接地で水平 5WU。壁は手前で打ち切り、失った距離は再生しない。空中は水平 5WU で降下・着地。glide 後の 2 回目で合計 10WU、3 回目は無課金で拒否。glide 中の 2 回目は自身の 5WU を移動し、残り glide は破棄。
 - 未確認の差分（未修正）: core 終端で速度が 0 まで落ち（最終 tick 0.0405WU）、glide 開始 tick で 0.367WU/tick（約 22WU/s）へ再加速する。本家の「ロール後の短いスライド」は減速の続きと考えられるが、曲線・glide 長の本家値（Normal の省略 `SlipMoveFrame`・`MoveStepKd`）が得られないため、曲線を作り直すと根拠のない数値調整になる。同系の明示 `SlipMoveFrame` が 30〜50F であることは、INKWAVE の 4F glide 校正を見直す材料として記録するが、Normal の既定値の代わりにはならない。空中ロールの降下開始が 4F 開始待ちの最初の tick から始まる点も本家との照合はない。
 - 確認状態: ロジック単独の測定のみ。ブラウザ実動作・本家実機の比較は未実施。
+
+## 2026-10-21 通常潜伏・壁のぼりの本体表示と泳ぎ飛沫
+
+基準: `ecfb851ad7d9c78c2e7b1937dda0a723946dc215`。対象は公開版 `inkwave-public/` の本番合成。ユーザー報告「壁のぼりで本体が見える・通常泳ぎでも薄く見える・飛沫が静か」に対応。
+
+### 本家の直接確認
+
+2026-10-21 に任天堂の公開 MP4 を取得し、デコードしたコマ送り画像を目視確認した。外部映像そのものは配信物・Git に追加しない。
+
+- [JP 公式イカ／ヒト紹介](https://www.nintendo.com/jp/switch/av5ja/index.html) の [modal_pc.mp4](https://www.nintendo.com/jp/switch/av5ja/assets/images/index/ikatohito/movie/modal_pc.mp4): SHA-256 `294c6713400be43793f989f897dfae633bcc2744a369849bd0ec14c77b28e807`、12.829秒。冒頭の自インク泳ぎでは表面の盛り上がり、左右と後方に跳ねるインク、進行方向に沿った波を確認。空中へ出る場面では目と触腕を持つ本体が出る。
+- [公式 Dive 映像 move03](https://assets.nintendo.com/video/upload/v1657880121/Microsites/splatoon-3/videos/s3_howtoplay_move03.mp4): 泳ぎ中とヒトへ戻る際の大きな飛沫を区別して確認。
+- [公式 Squid Surge 映像 move05](https://assets.nintendo.com/video/upload/v1657880121/Microsites/splatoon-3/videos/s3_howtoplay_move05.mp4): SHA-256 `3fd3fd8f12f71cbe93fb28c04fc3763c110fbd813473259d7f08fe57e4b0b450`。壁のチャージ／発光／離脱を確認。この特殊動作中に見えるイカ・発光を、通常潜伏の半透明ゴースト表示の根拠にはしない。
+
+条件: 黄色の自インク、通常泳ぎと壁サージ。紹介映像の正確な実行バージョン、ブキ、ギア/AP、スティック量、編集速度は不明。既存 11.3.0 gameplay profile は変更しない。粒子数・寸法・速度は本家の抽出値ではなく INKWAVE の視覚校正値であり、実機の完全一致とは判定しない。
+
+### 原因・変更・再現
+
+| 再現操作 | 原因と実装箇所 | 変更後・プレイへの影響 |
+| --- | --- | --- |
+| 自インクで通常泳ぎ／停止、塗った壁へ入る | native `Character._updateSquid` と source `SquidRig.apply` はローカルに opacity .42 / GreaterDepth のイカ形ゴーストを出す。床・壁だけの遮蔽では通常メッシュの目・触腕も露出し得る | `s3-squid-look-adapter.mjs` が両 pose owner の後で body/eyes/dark と ghost を隠す。source/fallback、全 LOD、local/remote に適用。pivot/root は保持し、壁チャージ完了 glint 等の独立した演出は隠さない |
+| そのままジャンプ／壁から離脱／乾いた地面へ／ヒトへ戻る | 前フレームの表示状態を持ち越すと再出現しない | body は毎更新で復元し、目は既存 pose owner の状態を使う。空中・乾燥イカ・ヒトへの復帰を回帰で確認 |
+| 通常速度で直進泳ぎ | `FX.wake` は細い尾側の少数小滴。Actor は `> .05` で余剰時間を捨て、直接30/60/120Hz更新で発生頻度も変わる | `swim-splash-adapter.mjs` が左右の縁から後方へ出る大きめの滴と上向き速度・広がりを強める。速度に応じた粒子量と既存 pool/距離/quality 制限を使用。0.05秒ごとに余剰時間を保持し発生させる |
+| 微入力、イカニンジャの抑制後、空中、泳ぎ再開 | 抑制期間の時刻を持ち越すと復帰時にまとまって出る | 既存 `swimSplashVisible` を維持し、非発生中はタイマーを0に戻す。空中は発生しない。インク面 wake shader／塗り／ダメージ／移動速度は変更しない |
+
+### 検証
+
+- `swim-presentation.test.mjs`: 実本番合成 Actor/Character、source bank 読込、native fallback、hero/game/far、local/remote、30/60/120Hz。潜伏初フレームの本体・目・ghost非表示、離脱直後の再表示、2秒40回のwake、低速／Ninja／空中抑制と再開を確認。実FXレシピで両側へ広がる滴・速度依存も確認。
+- 上記＋`squid-ghost-depth`＋`s3-squid-look`＋build-packaging: 12 pass、5 skip（出力先未指定の emitted-only packaging 項目）。追加の source/swim/wall/roll/heading/material/form/build identity 回帰は64/64 pass。
+- `check-inkwave-patches --quick`、本番ビルド、起動予算チェック成功。
+- `scripts/check-inkwave-swim-presentation.mjs _site .browser-evidence/swim-final`: 実ビルドの Game/Actor/Character/FX、Chromium/SwiftShader で停止潜伏・泳ぎ・壁・空中・乾燥イカ・ヒトの6場面を描画するチェッカー。診断用のインク色床／壁を置き、制御した Actor 状態を使う。潜伏時の本体 draw 0、空中・乾燥時の実 draw、泳ぎ中の生存 droplets とスクリーンショットを確認する。自動操作による壁到達や実機入力物理の証明とは区別。
+- 証跡: `.browser-evidence/swim-final/{receipt.json,idle.png,swim.png,wall.png,air.png,dry.png,human.png}`。この作業環境の保持先であり、外部 Nintendo 映像は `/workspace/scratch/` に保持。
+
+未確認: Switch 11.3.0 の同一入力・ギアでの飛沫密度／波形／チャージ姿勢の比較、実iPad WebKitの描画性能。公式紹介映像の観察とロジック回帰、Chromium WebGL の描画確認はそれぞれ別の検証である。
 ## 2026-10-21 #1665 / #1666 遠隔ヒット申告の装備スロット別上限
 
 参照は Splatoon 3 Ver. 11.3.0 の固定パラメータ（[Leanny/splat3 `7280ff9c` data/parameter/1130](https://github.com/Leanny/splat3/tree/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon)、ダメージは source / 10）と、既存の公開版 profile・キット定義。ブキ数値・ダメージ曲線・ギア曲線は変更していない。
