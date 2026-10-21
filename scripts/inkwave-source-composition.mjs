@@ -20,51 +20,19 @@ import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adap
 
 // #1165: the Roller ink band must claim its seeded GPU core in the CPU turf
 // grid. Apply at build time so the upstream game snapshot remains immutable.
+// #1165: CPU/GPU already share the native triangular seeded band morphology
+// from adaptIssueBatch1171. Do not change either signed-distance equation.
+// Its old circular scan box, however, is smaller than the rotated rounded
+// rectangle at some seed phases. Cover the *whole* existing GPU body in CPU.
 function adaptRollerBandParity(rel, code) {
   if (rel !== 'src/world/paint.js') return code;
-  const constants = 'const BAND_L = 0.55, BAND_W = 0.62, BAND_R = 0.1;';
-  const helper = [
-    'export function rollerBandSignedDistance(along, across, r, seed) {',
-    '  if (!(r > 0)) return Infinity;',
-    '  const wv = r * (0.03 * Math.sin(along / r * 9 + seed * 30) + 0.018 * Math.sin(along / r * 23 + seed * 11));',
-    '  const qa = Math.abs(along) - r * BAND_L, qb = Math.abs(across) - (r * BAND_W + wv);',
-    '  return Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * BAND_R;',
-    '}',
-  ].join('\n');
-  code = replaceOnce(code, constants, constants + '\n' + helper, 'Roller seeded band CPU/GPU shared boundary');
-  // The former axis-independent CPU scan bound misses some rotated,
-  // seed-expanded rounded corners even after the SDFs agree.
-  code = replaceOnce(code,
-    '    const ext = roll ? r * (Math.hypot(BAND_L, BAND_W) + BAND_R + 0.05) : r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);',
-    '    const ext = roll ? r * Math.hypot(BAND_L + BAND_R, BAND_W + BAND_R + 0.048) : r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);',
-    'Roller scan bounds cover all wobble phases and rotations');
-  // Current compiled Roller CPU has a piecewise-linear two-tooth wobble,
-  // whereas the published GPU shader still evaluates two seeded sine waves.
-  // Replace exactly that CPU-only approximation, retaining stencil/non-Roller
-  // branches and downstream owner-order checks intact.
-  const ownerStart = code.indexOf('  _cpuSplat('), ownerEnd = code.indexOf('\n  _pushQuad(', ownerStart);
-  const cpu = code.slice(ownerStart, ownerEnd);
-  const rollStart = cpu.indexOf('else if (roll) {');
-  const toothStart = cpu.indexOf('          const toothA =', rollStart);
-  const endPredicate = '          if (sd > 0) continue;';
-  const toothEnd = cpu.indexOf(endPredicate, toothStart);
-  if (ownerStart < 0 || ownerEnd <= ownerStart || rollStart < 0 || toothStart <= rollStart ||
-      toothEnd < toothStart || toothEnd - toothStart > 780 ||
-      cpu.indexOf(endPredicate, toothEnd + 1) >= 0) {
-    throw new Error('Roller CPU/GPU composed SDF changed; inspect source before applying parity');
-  }
-  const old = cpu.slice(toothStart, toothEnd + endPredicate.length);
-  if (!old.includes('Math.floor(toothA)') || !old.includes('Math.floor(toothB)') ||
-      !old.includes('const qa =') || !old.includes('const sd =') ||
-      !cpu.slice(rollStart, toothStart).includes('const along ='))
-    throw new Error('Roller CPU tooth morphology no longer matches verified discrepancy');
-  const corrected = [
-    '          // Conservative phase-independent rectangle before seeded trig.',
-    '          if (Math.abs(along) > r * (BAND_L + BAND_R) || Math.abs(across) > r * (BAND_W + 0.048 + BAND_R)) continue;',
-    '          if (rollerBandSignedDistance(along, across, r, seed) > 0) continue;',
-  ].join('\n');
-  return replaceOnce(code, old, corrected, 'Roller CPU band matches GPU seeded sine SDF');
+  const old = '    const ext = roll ? r * (Math.hypot(BAND_L, BAND_W) + BAND_R + 0.05) : r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);';
+  const next = '    const ext = roll ? r * Math.hypot(BAND_L + BAND_R, BAND_W + BAND_R + 0.12) : r * (stencil ? Math.max(1, 1 + sa) : 1 + sa) * (stencil ? 1.42 : sourced ? 1 : WOB_MAX);';
+  // 0.12 is the exact 0.08+0.04 maximum of the emitted GPU tooth waves.
+  // Rotations cannot escape the enclosing circle of the rounded half-axes.
+  return replaceOnce(code, old, next, 'Roller rotated GPU core stays in CPU scan bounds');
 }
+
 // Keep the tested source path identical to the production build's adapters.
 export function adaptBuildSource(rel, code) {
   // Source lives under inkwave-public/, whereas compiled modules share the
