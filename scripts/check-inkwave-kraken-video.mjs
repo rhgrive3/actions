@@ -83,7 +83,6 @@ try {
     G.paint=new api.PaintSystem(renderer,level,{atlasSize:2048,maxDensity:16});
     const material=createLevelMaterial(G.paint.texture,G.paint.size);
     scene.add(new THREE.Mesh(level.buildGeometry(G.paint.size),material));
-    scene.add(new THREE.GridHelper(100,100,0x56616b,0x89939c));
     G.projectiles=new api.Projectiles(scene);G.fx=null;
     const a=new api.Actor({team:0,name:'Kraken comparison',weapon:'shooter',CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
     G.actors=[a];scene.add(a.character.root);
