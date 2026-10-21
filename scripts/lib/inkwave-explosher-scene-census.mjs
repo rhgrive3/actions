@@ -1,15 +1,20 @@
 import { isDeepStrictEqual } from 'node:util';
 // Diagnostic read-only census, not a rendered triangle attribution or GPU timer.
-export async function awaitExplosherSceneSources(G,timeoutMs=180000){
- const records=G.actors.map(a=>({a,ch:a.character,owner:null,warm:null,warmAwaited:false}));
+export async function awaitExplosherSceneSources(G,timeoutMs=180000,TargetDummyCharacter=null){
+ const records=G.actors.map(a=>({a,ch:a.character,owner:null,warm:null,warmAwaited:false,dummy:false}));
  if(!records.length||records.length>64)throw Error('Unexpected scene actor count');let timer;
  const valid=r=>{
+  if(r.dummy){
+   if(r.a===G.local||r.a.character!==r.ch||!(r.ch instanceof TargetDummyCharacter)||!Number.isInteger(r.a.rangeTarget?.index)||G.match?.range?.targets?.[r.a.rangeTarget.index]!==r.a||r.ch.actor!==r.a||r.ch.root?.parent!==G.scene||r.ch.root.name!=='range:dummy'||r.ch.sourceMotion!==undefined)throw Error('Native range target ownership invalid');
+   return;
+  }
   const o=r.owner;
   if(r.a.character!==r.ch||r.ch.sourceMotion!==o||!o||o.status!=='ready'||o.error||o.disposed||o.character!==r.ch||!o.bank||!o.squidBank)
    throw Error('Native scene source did not become ready or changed ownership');
  };
  try{
   await Promise.race([Promise.all(records.map(async r=>{
+   if(TargetDummyCharacter&&r.ch instanceof TargetDummyCharacter){r.dummy=true;valid(r);r.warm=r.ch._warmed;if(r.warm&&typeof r.warm.then==='function'){await r.warm;r.warmAwaited=true;}return;}
    const ready=r.ch?.sourceMotion?.ready;
    if(!ready||typeof ready.then!=='function')throw Error('Missing native scene source loader');
    await ready;r.owner=r.ch.sourceMotion;r.warm=r.ch._warmed;
@@ -19,10 +24,10 @@ export async function awaitExplosherSceneSources(G,timeoutMs=180000){
  }finally{clearTimeout(timer);}
  if(records.length!==G.actors.length||records.some((r,i)=>G.actors[i]!==r.a))throw Error('Scene actor ownership changed while waiting');
  for(const r of records){valid(r);if(r.ch._warmed!==r.warm)throw Error('Scene warm ownership changed while waiting');}
- return records.map((r,i)=>({index:i,local:r.a===G.local,variant:r.owner.variant,status:r.owner.status,existingWarmAwaited:r.warmAwaited}));
+ return records.map((r,i)=>({index:i,local:r.a===G.local,kind:r.dummy?'range-target':'source-character',variant:r.owner?.variant??null,status:r.dummy?'native-no-source-rig':r.owner.status,existingWarmAwaited:r.warmAwaited}));
 }
-export function explosherSceneCensus(G,scene){
- const actors=G.actors.map((a,i)=>({a,root:a.character?.root,key:a===G.local?'local-character':'other-character-'+i}));
+export function explosherSceneCensus(G,scene,TargetDummyCharacter=null){
+ const actors=G.actors.map((a,i)=>({a,root:a.character?.root,key:TargetDummyCharacter&&a.character instanceof TargetDummyCharacter?'range-target-'+i:a===G.local?'local-character':'other-character-'+i}));
  const roots=new Map(actors.filter(x=>x.root).map(x=>[x.root,x.key]));
  const categories=new Map(),geometries=new Map();
  const classify=o=>{for(let p=o;p;p=p.parent){if(roots.has(p))return roots.get(p);

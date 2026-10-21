@@ -37,7 +37,8 @@ driver=once(driver,"  await page.goto(base + '/?range&skipTitle');",`  await pag
 
 driver=once(driver,"  await page.evaluate(() => {\n    const G = window.__G, g = window.__inkwave; g.debug.freeze(); g.debug.freezeBots();",`  await page.evaluate(async () => {
     const G=window.__G,g=window.__inkwave;
-    window.explosherSceneSources=await (${awaitExplosherSceneSources.toString()})(G);
+    window.explosherTargetDummyClass=(await import('__EXPLOSHER_NATIVE_DUMMY_URL__')).TargetDummyCharacter;
+    window.explosherSceneSources=await (${awaitExplosherSceneSources.toString()})(G,180000,window.explosherTargetDummyClass);
     window.explosherSceneCensus=${explosherSceneCensus.toString()};
     g.debug.freeze();g.debug.freezeBots();`);
 const resetSource=fs.readFileSync(path.join(root,'scripts/check-inkwave-projectile-visuals.mjs'),'utf8');
@@ -105,7 +106,7 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
           const palette={colorblind:G.settings.colorblind,teamHex:[...G.teamHex],teamColors:G.teamColors.map(c=>c.getHex()),local:a=>a.color.getHex()};
           const paletteReceipt={...palette,local:palette.local(G.local)};
           if(paletteReceipt.colorblind!==true||paletteReceipt.local!==0xffd21a)throw Error('Native fixed palette was not applied');
-          return {sceneCensus:window.explosherSceneCensus(G,g.R.scene),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
+          return {sceneCensus:window.explosherSceneCensus(G,g.R.scene,window.explosherTargetDummyClass),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
             time:G.time,inkHex:G.local.color.getHex(),render:{...r.info.render},memory:{...r.info.memory},
             sparkles:G.projectiles.s3ShapeCounts?.sparkles??0,drawCpuMs:drawMs,renderSubmitMs:submitMs,
             gpuTimerMs:null,gpuTimerStatus:'not measured; submit CPU time is not GPU time',
@@ -128,6 +129,11 @@ driver=once(driver,"        await page.locator('canvas').first().screenshot({ pa
         if(pageErrors.length)throw Error('Native page errors during capture: '+pageErrors.join(' | '));`);
 driver=once(driver,'manifest.push({ label, tick, view, file, ...info });','manifest.push({ label, tick, view, file, ...info, measurement, imageStats });');
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
+const dummyPath='_versions/'+build.build.revision+'/patches/practice-range/runtime/dummy.mjs';
+if(!build.artifacts[dummyPath])throw Error('Native target dummy module missing from build');
+const dummySha=hash(fs.readFileSync(path.join(site,dummyPath)));
+if(dummySha!==build.artifacts[dummyPath])throw Error('Native target dummy emitted hash mismatch');
+driver=once(driver,"'__EXPLOSHER_NATIVE_DUMMY_URL__'",JSON.stringify('/'+dummyPath));
 if(hash(JSON.stringify(build.artifacts))!==build.contentHash)throw Error('Build content hash mismatch');
 const shapePath='patches/splatoon3/runtime/s3-projectile-shapes.mjs';
 if(hash(git(['show',actualSourceSha+':'+shapePath]))!==hash(fs.readFileSync(path.join(sourceRoot,shapePath))))throw Error('Checkout shape differs from committed source');
@@ -135,14 +141,18 @@ const emittedPaths=Object.keys(build.artifacts).filter(p=>p===shapePath||p.endsW
 if(!emittedPaths.length)throw Error('Shape missing from manifest');
 const emitted=emittedPaths.map(p=>{const sha256=hash(fs.readFileSync(path.join(site,p)));if(sha256!==build.artifacts[p])throw Error('Emitted shape hash mismatch');return {path:p,sha256};});
 driver="import crypto from 'node:crypto';\n"+driver;
-driver=once(driver,'let browser;',"const servedShapes=[],pendingShapes=new Set();\nlet browser;");
+driver=once(driver,'let browser;',"const servedShapes=[],servedDummy=[],responseErrors=[],pendingShapes=new Set();\nlet browser;");
 driver=once(driver,"  page.setDefaultTimeout(240000);",`  page.setDefaultTimeout(240000);
   page.on('response',res=>{
-    if(!new URL(res.url()).pathname.endsWith('/patches/splatoon3/runtime/s3-projectile-shapes.mjs'))return;
-    const pending=res.body().then(body=>servedShapes.push({url:res.url(),sha256:crypto.createHash('sha256').update(body).digest('hex')}));
+    const p=new URL(res.url()).pathname;
+    if(!p.endsWith('/patches/splatoon3/runtime/s3-projectile-shapes.mjs')&&p!==${JSON.stringify('/'+dummyPath)})return;
+    const pending=res.body().then(body=>(p===${JSON.stringify('/'+dummyPath)}?servedDummy:servedShapes).push({url:res.url(),sha256:crypto.createHash('sha256').update(body).digest('hex')})).catch(error=>responseErrors.push(String(error)));
     pendingShapes.add(pending);pending.finally(()=>pendingShapes.delete(pending));
   });`);
 driver=once(driver,"  fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify(manifest, null, 1));",`  await Promise.all([...pendingShapes]);
+  if(responseErrors.length)throw Error('Response body verification failed: '+responseErrors.join(' | '));
+  if(!servedDummy.length||servedDummy.some(r=>r.sha256!==${JSON.stringify(dummySha)}))throw Error('Served dummy identity mismatch');
+  fs.writeFileSync(path.join(out,'served-dummy.json'),JSON.stringify(servedDummy,null,2));
   const accepted=${JSON.stringify(emitted.map(e=>e.sha256))};
   if(!servedShapes.length||servedShapes.some(r=>!accepted.includes(r.sha256)))throw Error('Served shape identity mismatch');
   fs.writeFileSync(path.join(out,'served-shapes.json'),JSON.stringify(servedShapes,null,2));
@@ -164,7 +174,7 @@ driver=once(driver,"        if(pageErrors.length)throw Error('Native page errors
         if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));`);
 
 const copy=path.join(out,'native-capture-driver.mjs');fs.writeFileSync(copy,driver);
-const receipt={sourceSha,actualSourceSha,preflightBindingSha256:expectedText?hash(expectedText):null,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
+const receipt={sourceSha,actualSourceSha,nativeDummy:{path:dummyPath,sha256:dummySha},preflightBindingSha256:expectedText?hash(expectedText):null,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
   nativeResetHelperSha256:hash(nativeReset),
   sourceShapeSha256:hash(fs.readFileSync(path.join(sourceRoot,'patches/splatoon3/runtime/s3-projectile-shapes.mjs'))),
   emittedShapes:emitted,seed:0x515e7021,

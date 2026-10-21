@@ -7,7 +7,7 @@ const nativeResetSource=fs.readFileSync(new URL('../../../scripts/check-inkwave-
 const driver=fs.readFileSync(new URL('../../../scripts/render-inkwave-projectile-shapes.mjs',import.meta.url),'utf8');
 function diagnostic(){
  const saved={},sha='a'.repeat(40);
- const fakeFs={mkdirSync(){},readFileSync(p){if(p.endsWith('check-inkwave-projectile-visuals.mjs'))return nativeResetSource;if(p.endsWith('render-inkwave-projectile-shapes.mjs'))return driver;if(p.endsWith('inkwave-build.json'))return JSON.stringify({artifacts:{'patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash'},contentHash:'hash'});if(p.endsWith('manifest.json'))return '[]';return 'source';},writeFileSync(p,v){saved[p]=v;}};
+ const fakeFs={mkdirSync(){},readFileSync(p){if(p.endsWith('check-inkwave-projectile-visuals.mjs'))return nativeResetSource;if(p.endsWith('render-inkwave-projectile-shapes.mjs'))return driver;if(p.endsWith('inkwave-build.json'))return JSON.stringify({build:{revision:'test'},artifacts:{'patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash','_versions/test/patches/practice-range/runtime/dummy.mjs':'hash'},contentHash:'hash'});if(p.endsWith('manifest.json'))return '[]';return 'source';},writeFileSync(p,v){saved[p]=v;}};
  const path={resolve:x=>x,join:(...a)=>a.join('/')},crypto={createHash(){return {update(){return this;},digest(){return 'hash';}}}};
  const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{},exit(){}};
  const spawn=(bin,args)=>bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0};
@@ -106,4 +106,16 @@ test('existing warm rejection and stalled readiness reject without starting warm
  await assert.rejects(awaitExplosherSceneSources({actors:[a],local:a},1000),/native warm failure/);
  ch._warmed=new Promise(()=>{});
  await assert.rejects(awaitExplosherSceneSources({actors:[a],local:a},1),/timeout/);
+});
+
+test('known native range targets are classified, never a blanket missing-loader exemption',async()=>{
+ class TargetDummyCharacter{constructor(){this.root={name:'range:dummy'};}}
+ const scene={},dummy={character:new TargetDummyCharacter(),rangeTarget:{index:0}};dummy.character.actor=dummy;dummy.character.root.parent=scene;
+ const ch={};const player={character:ch};ch.sourceMotion={character:ch,status:'ready',bank:{},squidBank:{},ready:Promise.resolve()};
+ const G={actors:[player,dummy],local:player,scene,match:{range:{targets:[dummy]}}};
+ const receipt=await awaitExplosherSceneSources(G,1000,TargetDummyCharacter);
+ assert.equal(receipt[0].kind,'source-character');assert.equal(receipt[1].kind,'range-target');
+ delete ch.sourceMotion;await assert.rejects(awaitExplosherSceneSources(G,1000,TargetDummyCharacter),/Missing native/);
+ ch.sourceMotion={character:ch,status:'ready',bank:{},squidBank:{},ready:Promise.resolve()};
+ G.match.range.targets=[];await assert.rejects(awaitExplosherSceneSources(G,1000,TargetDummyCharacter),/range target ownership/);
 });
