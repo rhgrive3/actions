@@ -37,7 +37,7 @@ driver=once(driver,"  await page.goto(base + '/?range&skipTitle');",`  await pag
     window.readExplosherSceneClocks=${readExplosherSceneClocks.toString()};
     window.requireExplosherStyle=${requireExplosherStyle.toString()};
     (${installExplosherEarlyFreeze.toString()})();
-    (${installExplosherRandom.toString()})();
+    (${installExplosherRandom.toString()})(${preflight});
     window.readExplosherEffects=${readExplosherEffects.toString()};
   });
   await enterRangeFromMenu(page,base);`);
@@ -58,7 +58,7 @@ const nativeReset=resetMatches[0];
 driver=once(driver,'const ready = await page.evaluate(({ id, hold }) => {','const ready = await page.evaluate(async ({ id, hold }) => {');
 driver=once(driver,"      G.projectiles.clear(); G.fx.clear?.();",nativeReset+`
       if(!g.frozen)throw Error('Capture loop must be frozen before native reset');
-      window.resetExplosherRandom();
+      window.resetExplosherRandom('character-reset');
       const oldCharacter=a.character;
       await resetCaptureCharacter(a);
       if(!g.frozen)throw Error('Capture loop unfroze during native reset');
@@ -90,7 +90,8 @@ driver=once(driver,'      const n0 = G.projectiles.list.length;',`      const ri
         return result;
       };
       const n0 = G.projectiles.list.length;`);
-driver=once(driver,'      window.shapeTick = 0;',`      G.projectiles._aimFrom=aimFrom;
+driver=once(driver,'      window.shapeTick = 0;',`      window.markExplosherRandomBoundary('native-birth');
+      G.projectiles._aimFrom=aimFrom;
       window.shapeTick = 0;`);
 driver=once(driver,'      window.shapeAim = aim; aim();',`      window.shapeAim = aim; aim();
       // Normal camera snap clears retained follow springs without changing shot physics.
@@ -99,11 +100,13 @@ driver=once(driver,'      window.shapeAim = aim; aim();',`      window.shapeAim 
       G.rig.shoulder=0;window.explosherShoulderInitial=0;
       G.rig.update(0);`);
 
-driver=once(driver,'      g.debug.fire(true);',`      window.resetExplosherRandom();
+driver=once(driver,'      g.debug.fire(true);',`      window.resetExplosherRandom('shot-input');
+      window.markExplosherRandomBoundary('shot-input-start');
       g.debug.fire(true);`);
 driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2, '0')}-\${view}.png`;",`        const measurement = await page.evaluate(async () => {
           const G=window.__G,g=window.__inkwave,r=g.R.renderer;
           const physical=()=>JSON.stringify(G.projectiles.list.map(p=>({wid:p.wid,age:p.age,delay:p.delay,seed:p.seed,pos:p.pos.toArray(),vel:p.vel.toArray(),damage:p.damage,life:p.life,travel:p.catalog?.travel})));
+          window.markExplosherRandomBoundary('before-draw-probe');
           const initial=physical(),buffers=G.projectiles._s3Shapes;
           const pos=buffers?.sparkPos.array,size=buffers?.sparkSize.array;
           for(let j=0;j<30;j++)G.projectiles._draw();
@@ -115,7 +118,8 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
           const palette={colorblind:G.settings.colorblind,teamHex:[...G.teamHex],teamColors:G.teamColors.map(c=>c.getHex()),local:a=>a.color.getHex()};
           const paletteReceipt={...palette,local:palette.local(G.local)};
           if(paletteReceipt.colorblind!==true||paletteReceipt.local!==0xffd21a)throw Error('Native fixed palette was not applied');
-          return {rng:window.readExplosherRandom(),effects:await window.readExplosherEffects(),style:window.requireExplosherStyle(G.local.character.style),sceneClocks:window.readExplosherSceneClocks(),startup:window.explosherEntry,sceneCensus:window.explosherSceneCensus(G,g.R.scene,window.explosherTargetDummyClass),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
+          window.markExplosherRandomBoundary('after-draw-probe');
+          return {rngDiagnostic:window.readExplosherRandomDiagnostic(),rng:window.readExplosherRandom(),effects:await window.readExplosherEffects(),style:window.requireExplosherStyle(G.local.character.style),sceneClocks:window.readExplosherSceneClocks(),startup:window.explosherEntry,sceneCensus:window.explosherSceneCensus(G,g.R.scene,window.explosherTargetDummyClass),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
             time:G.time,inkHex:G.local.color.getHex(),render:{...r.info.render},memory:{...r.info.memory},
             sparkles:G.projectiles.s3ShapeCounts?.sparkles??0,drawCpuMs:drawMs,renderSubmitMs:submitMs,
             gpuTimerMs:null,gpuTimerStatus:'not measured; submit CPU time is not GPU time',

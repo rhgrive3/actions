@@ -57,15 +57,35 @@ export function installExplosherEarlyFreeze(){
 }
 
 
-export function installExplosherRandom(){
- const seed=0x515e7021;let word=seed,draws=0,resets=0;
- // Native FX captures Math.random at module evaluation. Keep this one function
- // identity throughout boot and capture; reset its state, never the function.
- const random=()=>{draws++;word^=word<<13;word^=word>>>17;word^=word<<5;return(word>>>0)/4294967296;};
+export function installExplosherRandom(trace = false){
+ const seed=0x515e7021;let word=seed,draws=0,resets=0,phase='boot';const boundaries=[],callers=new Map();let overflow=0;
+ const snapshot=()=>({algorithm:'xorshift32',seed,word:word>>>0,draws,resets,identityPreserved:true});
+ // Native clock temporarily replaces the global during presentation. Check only
+ // frame/reset boundaries; captured aliases keep this function and native routing.
+ const random=()=>{draws++;word^=word<<13;word^=word>>>17;word^=word<<5;
+  if(trace&&phase==='shot-input'&&draws<=512){
+   const stack=(new Error('QA RNG caller').stack||'').split('\n').slice(2,6).join('\n').replace(/http:\/\/127\.0\.0\.1:\d+/g,'<site>').replace(/\/_versions\/[^/]+\//g,'/').slice(0,900);
+   let group=callers.get(stack);if(!group&&callers.size<16){group={stack,count:0,firstDraw:draws,lastDraw:draws};callers.set(stack,group);}
+   if(group){group.count++;group.lastDraw=draws;}else overflow++;
+  }
+  return(word>>>0)/4294967296;
+ };
  Math.random=random;
- window.resetExplosherRandom=()=>{if(Math.random!==random)throw Error('Diagnostic RNG identity replaced');word=seed;draws=0;resets++;};
- window.readExplosherRandom=()=>{if(Math.random!==random)throw Error('Diagnostic RNG identity replaced');return {algorithm:'xorshift32',seed,word:word>>>0,draws,resets,identityPreserved:true};};
- window.resetExplosherRandom();
+ const check=()=>{if(Math.random!==random)throw Error('Diagnostic RNG identity replaced');};
+ window.markExplosherRandomBoundary=label=>{check();if(trace){
+  if(boundaries.length>=12)throw Error('Too many RNG diagnostic boundaries');
+  const G=window.__G,g=window.__inkwave,ch=G?.local?.character,r=G?.renderer,hooks=g?.fxHooks;
+  const nativeState=G&&g?{time:G.time,renderSkipped:!!g._skipRender,
+   character:ch?{inWorld:!!ch.inWorld,rendered:!!ch._rendered,warmStarted:!!ch._warmed,sourceStatus:ch.sourceMotion?.status??null,sourceOwnerMatches:ch.sourceMotion?.character===ch,sourceLoaderPromise:typeof ch._sourceMotionLoader?.then==='function',actorOwned:ch.actor===G.local,sceneOwned:ch.root?.parent===G.scene}:null,
+   resources:r?{geometries:r.info.memory.geometries,textures:r.info.memory.textures,renderFrame:r.info.render.frame}:null,
+   fxHooks:hooks?{time:hooks.time,stamp:hooks.stamp,sprayT:hooks.sprayT,featherT:hooks.featherT,edgeCount:hooks.edges?.length,actorStateCount:hooks.st?.size,triggerCounts:Object.fromEntries(Object.entries(hooks.count||{}).sort(([a],[b])=>a.localeCompare(b)).slice(0,32))}:null,
+   fixedClock:g.s3Clock?{ticks:g.s3Clock.ticks,accumulator:g.s3Clock.accumulator,advancing:g.s3Clock.advancing}:null}:null;
+  boundaries.push({label,phase,...snapshot(),nativeState});
+ }};
+ window.resetExplosherRandom=(label='reset')=>{check();window.markExplosherRandomBoundary('before-reset:'+label);word=seed;draws=0;resets++;phase=label;callers.clear();overflow=0;};
+ window.readExplosherRandom=()=>{check();return snapshot();};
+ window.readExplosherRandomDiagnostic=()=>{check();return {enabled:trace,scope:'QA captured alias only; excludes native presentationRandom direct calls; caller stacks are diagnostic, not performance evidence',phase,maxTraceDraws:512,maxCallerGroups:16,overflowDraws:overflow,untracedShotDraws:phase==='shot-input'?Math.max(0,draws-512):null,boundaries:boundaries.map(x=>({...x})),callers:[...callers.values()].map(x=>({...x}))};};
+ window.resetExplosherRandom('boot');
 }
 
 export async function readExplosherEffects(){
