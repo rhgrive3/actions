@@ -6,11 +6,13 @@ import {emptyLoadout} from '../runtime/gear.mjs';
 const json=x=>JSON.parse(JSON.stringify(x));
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 async function world(id){
- const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export {Match} from './inkwave-public/src/game/match.js';"});
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export {Match} from './inkwave-public/src/game/match.js'; export {Transport} from './inkwave-public/src/net/transport.js';"});
  f.profile.flow.threshold=1e6;
  f.G.level={...f.G.level,spawnPads:[new f.THREE.Vector3(),new f.THREE.Vector3()],blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};f.G.physics=new f.installedRuntime.Physics(f.G.level);
  const a=f.make();Object.assign(a,{nid:1,owner:'owner',invuln:0});
- let packet;const session={myId:id,hostId:'owner',isHost:id==='owner',tr:{sendTo(){},broadcast:d=>{packet=json(d);}}};
+ let packet;const tr=new f.Transport();
+ tr.ws={readyState:1,bufferedAmount:0,send(text){if(text.startsWith('b|'))packet=JSON.parse(text.slice(2));}};
+ const session={myId:id,hostId:'owner',isHost:id==='owner',tr};
  const nm=new f.NetMatch(session,{id:'gear-match'}),m={actors:[a],state:'playing',time:180,duration:180,playing:()=>true,canRespawn:()=>false};
  nm.bind(m);f.G.netm=nm;f.G.match=m;f.G.actors=[a];
  return{f,a,nm,m,send(){f.G.time+=1/60;nm._sendTick();return json(packet);}};
@@ -128,7 +130,8 @@ test('negotiated compressed paint preserves real conditional gear clocks through
  for(const w of [o,r]){
   w.f.context.crypto=globalThis.crypto;
   w.nm.s._members=new Map([['owner','Owner'],['viewer','Viewer']]);
-  w.nm.s.tr.sendTo=(to,d)=>{q.push([w.nm.s.myId,to,json(d)]);return true;};
+  const send=w.nm.s.tr.ws.send;
+  w.nm.s.tr.ws.send=text=>{if(text.startsWith('s|')){const k=text.indexOf('|',2);q.push([w.nm.s.myId,text.slice(2,k),JSON.parse(text.slice(k+1))]);}else send(text);};
  }
  o.send();r.send();let budget=30;while(q.length){assert.ok(budget-->0);const[from,to,d]=q.shift();(to==='owner'?o:r).nm.onMessage(from,d);}
  head(o,'comeback');comeback(o);advance(o,8);r.m.time=o.m.time;

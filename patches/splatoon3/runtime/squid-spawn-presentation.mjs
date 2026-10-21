@@ -28,43 +28,124 @@ export function squidSpawnPrompt(lang, mode) {
   return table[mode] || table.kbm;
 }
 
-function buildSpawnerGeometry(THREE) {
+// Original, texture-free geometry calibrated against the official 2021 trailer
+// front/rear views and the S3 locker decoration icon. See the comparison report.
+// Five shared batches per pod; no geometries or materials are allocated by sync.
+export function buildSpawnerGeometry(THREE) {
   const W = SPAWNER_LOOK.width, D = SPAWNER_LOOK.depth, H = SPAWNER_LOOK.height;
+  const buckets = { chrome: [], dark: [], rails: [], gauge: [], tip: [] };
+  const v = (x, y, z) => new THREE.Vector3(x, y, z);
+  const put = (key, g, color = 0xffffff) => {
+    // Vertex tint permits the small original red badge without a sixth draw.
+    const c = new THREE.Color(color), n = g.attributes.position.count;
+    const colors = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) c.toArray(colors, i * 3);
+    g.setAttribute('color', new THREE.BufferAttribute(colors, 3)); buckets[key].push(g);
+  };
   const box = (w, h, d, x, y, z) => new THREE.BoxGeometry(w, h, d).translate(x, y, z);
-  const cyl = (r0, r1, h, x, y, z, rx = 0, rz = 0, seg = 18) => {
-    const g = new THREE.CylinderGeometry(r0, r1, h, seg);
-    if (rx) g.rotateX(rx); if (rz) g.rotateZ(rz);
-    return g.translate(x, y, z);
+  // A 44-triangle chamfered box. Broad flat faces and narrow bevel highlights,
+  // rather than inflated rounded primitives; no external geometry dependency.
+  const bevelBox = (w, h, d, r, x, y, z) => {
+    const half = [w / 2, h / 2, d / 2], inner = half.map(n => n - r), pos = [];
+    const face = points => {
+      const center = points.reduce((c, p) => c.add(p), v(0, 0, 0)).multiplyScalar(1 / points.length);
+      if (v(0, 0, 0).crossVectors(points[1].clone().sub(points[0]), points[2].clone().sub(points[0])).dot(center) < 0) points.reverse();
+      for (let i = 1; i < points.length - 1; i++) for (const p of [points[0], points[i], points[i + 1]]) pos.push(p.x, p.y, p.z);
+    };
+    for (let a = 0; a < 3; a++) for (const s of [-1, 1]) {
+      const b = (a + 1) % 3, c = (a + 2) % 3;
+      face([[-1,-1],[1,-1],[1,1],[-1,1]].map(([u,t]) => { const p = [0,0,0]; p[a]=s*half[a];p[b]=u*inner[b];p[c]=t*inner[c];return v(...p); }));
+    }
+    for (let a = 0; a < 3; a++) for (const s of [-1, 1]) for (const t of [-1, 1]) {
+      const b = (a + 1) % 3, c = (a + 2) % 3;
+      face([[-1,0],[1,0],[1,1],[-1,1]].map(([u,k]) => { const p = [0,0,0];p[a]=u*inner[a];p[b]=s*(k?inner[b]:half[b]);p[c]=t*(k?half[c]:inner[c]);return v(...p); }));
+    }
+    for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
+      const signs = [sx, sy, sz];
+      face([0,1,2].map(a => v(...half.map((n, k) => signs[k] * (a === k ? n : inner[k])))));
+    }
+    const g = new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeVertexNormals();return g.translate(x,y,z);
   };
-  // Top surface at y = 0 (the player's feet); the machine hangs below.
-  const chrome = [
-    box(W, H * 0.62, D, 0, -H * 0.31 - 0.04, 0),            // main body
-    box(W * 1.04, 0.05, D * 1.04, 0, -0.025, 0),              // top plate
-    box(W * 0.9, H * 0.22, D * 0.86, 0, -H * 0.8, 0),         // lower group head
-  ];
-  const dark = [
-    box(W * 0.5, 0.012, D * 0.5, 0, 0.004, 0),                 // standing pad
-    cyl(0.07, 0.07, 0.03, 0, -H * 0.36, D / 2 + 0.01, Math.PI / 2),   // gauge rim
-    cyl(0.03, 0.03, 0.2, W * 0.26, -H * 0.82, D * 0.43 + 0.08, Math.PI / 2 - 0.25), // portafilter arm
-  ];
-  const rails = [];
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-    rails.push(cyl(0.014, 0.014, H * 0.55, sx * W * 0.52, -H * 0.72, sz * D * 0.52));
-    rails.push(cyl(0.014, 0.014, 0.18, sx * W * 0.6, -H * 0.98, sz * D * 0.52, 0, sx * 0.9));
+  const cylinder = (r0, r1, h, x, y, z, rx = 0, rz = 0, segments = 16) => {
+    const g = new THREE.CylinderGeometry(r0, r1, h, segments);
+    if (rx) g.rotateX(rx); if (rz) g.rotateZ(rz);return g.translate(x, y, z);
+  };
+  const rod = (start, end, radius = 0.012, segments = 8) => {
+    const delta = end.clone().sub(start), g = new THREE.CylinderGeometry(radius, radius, delta.length(), segments);
+    g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(v(0, 1, 0), delta.normalize()));
+    return g.translate(...start.clone().add(end).multiplyScalar(0.5).toArray());
+  };
+  // y=0 remains the standing surface. A continuous stainless rear housing wraps
+  // the inset front well; the old solid second box incorrectly filled this gap.
+  put('chrome', bevelBox(W, H, D * .46, .014, 0, -H/2-.018, -D*.27));
+  for (const sx of [-1,1]) put('chrome', bevelBox(.037,H*.98,D*.58,.008,sx*(W/2-.0185),-H/2-.018,D*.18));
+  put('chrome', bevelBox(W*1.025,.038,D*1.02,.009,0,-.019,0));
+  put('chrome', bevelBox(W*.9,H*.49,.028,.008,0,-H*.275,D*.5+.002));
+  put('dark', box(W*.88,H*.47,.014,0,-H*.74,-D*.025));
+  // Rounded group head projects from the fascia; gauge sits low-left inside
+  // the well, with a central forward/downward portafilter and team-colour end.
+  put('chrome', cylinder(.155,.155,.13,0,-H*.47,D*.48,0,0,24));
+  put('chrome', cylinder(.135,.105,.065,0,-H*.63,D*.48,0,0,24));
+  put('rails', cylinder(.117,.117,.018,0,-H*.69,D*.48,0,0,20));
+  const handleFrom = v(0,-H*.66,D*.49), handleTo = v(.015,-H*.84,D*.87);
+  put('dark', rod(handleFrom,handleTo,.034,12));
+  put('tip', cylinder(.044,.040,.042,handleTo.x,handleTo.y,handleTo.z,Math.PI/2-.22,0,16));
+  const gaugeX = -W*.245, gaugeY = -H*.735, gaugeZ = D*.17;
+  put('rails', cylinder(.064,.064,.025,gaugeX,gaugeY,gaugeZ,Math.PI/2,0,24));
+  put('gauge', cylinder(.052,.052,.008,gaugeX,gaugeY,gaugeZ+.016,Math.PI/2,0,24));
+  for(let i=0;i<9;i++) {
+    const angle = -.78 + i*Math.PI*1.5/8;
+    const tick = box(.004,.011,.002,0,.040,0).rotateZ(-angle).translate(gaugeX,gaugeY,gaugeZ+.022);
+    put('dark',tick);
   }
-  const gauge = cyl(0.058, 0.058, 0.012, 0, -H * 0.36, D / 2 + 0.027, Math.PI / 2);
-  const tip = cyl(0.045, 0.04, 0.09, W * 0.26, -H * 0.86, D * 0.43 + 0.19, Math.PI / 2 - 0.25);
+  put('dark',box(.004,.052,.003,0,.015,0).rotateZ(-.65).translate(gaugeX,gaugeY,gaugeZ+.024));
+  put('dark',cylinder(.007,.007,.003,gaugeX,gaugeY,gaugeZ+.027,Math.PI/2,0,8));
+  // Steam valve and short curved-looking outlet, both visible in front views.
+  put('rails',cylinder(.025,.025,.022,W*.29,-H*.57,D*.19,Math.PI/2,0,12));
+  put('dark',cylinder(.017,.017,.028,W*.29,-H*.57,D*.21,Math.PI/2,0,10));
+  put('rails',rod(v(W*.22,-H*.69,D*.23),v(W*.27,-H*.79,D*.29),.009));
+  put('rails',rod(v(W*.27,-H*.79,D*.29),v(W*.23,-H*.82,D*.32),.009));
+  // Thin projecting drip tray, dark lip and three long slots.
+  put('chrome',bevelBox(W*.95,.045,D*.48,.012,0,-H*.96,D*.27));
+  put('dark',bevelBox(W*.91,.021,.028,.006,0,-H*.972,D*.51));
+  for(const x of [-.18,0,.18]) put('dark',bevelBox(.115,.003,.024,.001,x,-H*.923,D*.30));
+  // Closed trapezoid skids, not four disconnected vertical sticks.
+  for(const sx of [-1,1]) {
+    const points=[v(sx*W*.36,-H*.99,-D*.30),v(sx*W*.58,-H*1.20,-D*.37),v(sx*W*.58,-H*1.20,D*.39),v(sx*W*.36,-H*.99,D*.32)];
+    for(let i=0;i<points.length;i++)put('rails',rod(points[i],points[(i+1)%points.length],.013));
+    // The four corner antenna/guard rails rise above the top plate and bend
+    // outward into silver tips. The broad top stays clear for the player.
+    for(const sz of [-1,1]) {
+      const lower=v(sx*W*.54,-H*.51,sz*D*.43), elbow=v(sx*W*.54,.055,sz*D*.43), tip=v(sx*W*.62,.12,sz*D*.48);
+      put('rails',rod(lower,elbow,.011));put('rails',rod(elbow,tip,.014));
+      put('rails',cylinder(.023,.016,.048,tip.x,tip.y,tip.z,0,-sx*.65,10));
+    }
+    put('rails',rod(v(sx*W*.54,-H*.51,D*.43),v(sx*W*.40,-H*.51,D*.43),.011));
+  }
+  // Low lid with a concentric brewing/standing grille. These are recessed
+  // graphic strips, not holes through the player's support surface.
+  put('dark',bevelBox(W*.69,.006,D*.71,.002,0,.003,0));
+  for(const z of [-.18,-.09,0,.09,.18])put('chrome',bevelBox(W*.62,.003,.023,.001,0,.007,z));
+  put('rails',new THREE.TorusGeometry(.145,.007,4,28).rotateX(Math.PI/2).translate(0,.008,0));
+  // Back access seam and original, non-Nintendo nameplate/serial markings.
+  put('dark',box(W*.88,.002,.001,0,-H*.69,-D*.502));
+  put('dark',box(W*.25,.08,.001,W*.26,-H*.83,-D*.503));
+  for(let i=0;i<3;i++)put('gauge',box(.118,.006,.001,W*.26,-H*.80-i*.017,-D*.504));
+  put('chrome',bevelBox(.19,.034,.008,.004,0,-.083,D*.525),0x9b353c);
+  for(let i=0;i<5;i++)put('gauge',box(.017,.006,.002,-.06+i*.03,-.083,D*.533));
   const merge = list => {
-    const out = new THREE.BufferGeometry();
-    const parts = list.map(g => g.index ? g.toNonIndexed() : g);
-    const n = parts.reduce((s, g) => s + g.attributes.position.count, 0);
-    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3);
-    let o = 0;
-    for (const g of parts) { pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; g.dispose(); }
-    out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
-    return out;
+    const out = new THREE.BufferGeometry(), parts = list.map(g => g.index ? g.toNonIndexed() : g);
+    const n = parts.reduce((s,g) => s+g.attributes.position.count,0);
+    for(const name of ['position','normal','color']) {
+      const array = new Float32Array(n*3);let offset=0;
+      for(const g of parts){array.set(g.attributes[name].array,offset);offset+=g.attributes[name].array.length;}
+      out.setAttribute(name,new THREE.BufferAttribute(array,3));
+    }
+    // Dispose BOTH indexed construction originals and temporary expansions.
+    for(let i=0;i<parts.length;i++){parts[i].dispose();if(parts[i]!==list[i])list[i].dispose();}
+    out.computeBoundingBox();out.computeBoundingSphere();return out;
   };
-  return { chrome: merge(chrome), dark: merge(dark), rails: merge(rails), gauge, tip };
+  return Object.fromEntries(Object.entries(buckets).map(([name,list])=>[name,merge(list)]));
 }
 
 // Squid-shaped arrow lying on the ground: a pointed mantle with two fins,
@@ -87,8 +168,9 @@ export function installSquidSpawnPresentation({ Actor, THREE, G, LANG, TXT }) {
   if (Object.hasOwn(A, INSTALLED)) return;
   Object.defineProperty(A, INSTALLED, { value: true });
   let geo = null, marks = null, root = null, prompt = null, promptText = '';
-  const chromeMat = new THREE.MeshStandardMaterial({ color: 0xdfe3e8, metalness: 0.35, roughness: 0.3 });
-  const darkMat = new THREE.MeshStandardMaterial({ color: 0x3a3d43, metalness: 0.2, roughness: 0.55 });
+  const chromeMat = new THREE.MeshStandardMaterial({ color: 0xdfe3e8, metalness: 0.62, roughness: 0.28, vertexColors: true });
+  const railMat = new THREE.MeshStandardMaterial({ color: 0xe8edf0, metalness: 0.82, roughness: 0.22, vertexColors: true });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x30353a, metalness: 0.25, roughness: 0.48, vertexColors: true });
   const gaugeMat = new THREE.MeshStandardMaterial({ color: 0xf2f2ea, roughness: 0.4 });
   const teamMats = new Map(), markerMats = new Map();
   const rimMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthWrite: false });
@@ -115,7 +197,7 @@ export function installSquidSpawnPresentation({ Actor, THREE, G, LANG, TXT }) {
   const make = actor => {
     geo ||= buildSpawnerGeometry(THREE); marks ||= buildMarkerGeometry(THREE);
     const pod = new THREE.Group(); pod.name = 's3Spawner';
-    for (const [g, m] of [[geo.chrome, chromeMat], [geo.dark, darkMat], [geo.rails, chromeMat], [geo.gauge, gaugeMat], [geo.tip, teamMat(actor.team)]]) {
+    for (const [g, m] of [[geo.chrome, chromeMat], [geo.dark, darkMat], [geo.rails, railMat], [geo.gauge, gaugeMat], [geo.tip, teamMat(actor.team)]]) {
       const mesh = new THREE.Mesh(g, m); mesh.castShadow = true; pod.add(mesh);
     }
     const marker = new THREE.Group(); marker.name = 's3SquidSpawnMarker';

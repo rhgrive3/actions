@@ -64,7 +64,106 @@ const CURRENT_IDENTICAL_POSE = Object.freeze({
     "ownerCommit": "690c3bdc4551192285c8f49952754b5494735ba5"
   }
 });
+// Exact current source identity, not pose or gameplay equivalence. Preserve
+// both epochs verbatim so independent native-state/image gates see differences.
+// Never replay current registrations, ownership or Rainmaker poses into main.
+const CURRENT_POSE_PAIR = Object.freeze({
+  sourceBase: 'b77b51df6a4e6683ca23a213c8ba4b0bc2f0c8ae',
+  sourceHead: 'cb7b7575c22443776b2e820aba9a0f8655c34604',
+  paths: Object.freeze({
+  "patches/splatoon3/adapter.mjs": {
+    "baseline": "ff8c13bf6ade3149594776333a1627265a260488",
+    "candidate": "78fa9f0eddac0acda9f258c8f9ec5527d02d89e0"
+  },
+  "patches/splatoon3/body-proportion-adapter.mjs": {
+    "baseline": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
+    "candidate": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf"
+  },
+  "patches/splatoon3/runtime/body-proportion.mjs": {
+    "baseline": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
+    "candidate": "5d7dfb8103b4375379ccb9c8fda53e615d00adff"
+  },
+  "patches/splatoon3/runtime/idle-motion.mjs": {
+    "baseline": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+    "candidate": "06d276d899aa764df7e75d41612f7ca1ec22953b"
+  },
+  "patches/splatoon3/runtime/install.mjs": {
+    "baseline": "e99e141ee2b93f6c368d64ac71fa00ce4680dde9",
+    "candidate": "83f726bb9958f367bd89ec946ffecb30f903c439"
+  },
+  "patches/splatoon3/runtime/roller.mjs": {
+    "baseline": "c0e52a78ccb9912ab805771e8da7eb4e076793c8",
+    "candidate": "c0e52a78ccb9912ab805771e8da7eb4e076793c8"
+  },
+  "patches/splatoon3/runtime/source-posture.mjs": {
+    "baseline": "a31d8224d129665917632ee7083c4081de5803a4",
+    "candidate": "a31d8224d129665917632ee7083c4081de5803a4"
+  },
+  "patches/splatoon3/upstream-lock.json": {
+    "baseline": "bdc56430f3d9af9c822e0ec1d3d26571b1b2a3ee",
+    "candidate": "db19eaaee31820263cfd9871b0ebe90db9133f3d"
+  },
+  "patches/splatoon3/runtime/weapon-handoff-motion.mjs": {
+    "baseline": "88dcc18c462ec32ea636f04e5e736c0ad01fa608",
+    "candidate": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f"
+  },
+  "patches/splatoon3/runtime/weapon-models/brushes.mjs": {
+    "baseline": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+    "candidate": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2"
+  },
+  "patches/splatoon3/runtime/weapon-models/family-holds.mjs": {
+    "baseline": "91a672123486114f9849de61509c6ee6ec96363f",
+    "candidate": "91a672123486114f9849de61509c6ee6ec96363f"
+  },
+  "patches/splatoon3/runtime/weapon-models/kit.mjs": {
+    "baseline": "3ab94f55c299b56485880ede17b92d5150101f7d",
+    "candidate": "3ab94f55c299b56485880ede17b92d5150101f7d"
+  },
+  "patches/splatoon3/runtime/weapon-models/registry.mjs": {
+    "baseline": "7f651d20395cb8b2622ca0dcd9180019b7533ce1",
+    "candidate": "7f651d20395cb8b2622ca0dcd9180019b7533ce1"
+  },
+  "patches/splatoon3/runtime/weapon-models/stringers.mjs": {
+    "baseline": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
+    "candidate": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e"
+  },
+  "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": {
+    "baseline": "9f68724343748037145c552937025d74ac5df8b9",
+    "candidate": "9f68724343748037145c552937025d74ac5df8b9"
+  },
+  "patches/splatoon3/weapon-catalog-adapter.mjs": {
+    "baseline": "55582fd6109ff814ed107577db74b990d755a926",
+    "candidate": "55582fd6109ff814ed107577db74b990d755a926"
+  }
+}),
+});
+function currentPosePair(baseline, candidate) {
+  const matches = CHARACTER_POSE_PATHS.every(path =>
+    typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
+    blob(baseline.get(path)) === CURRENT_POSE_PAIR.paths[path].baseline &&
+    blob(candidate.get(path)) === CURRENT_POSE_PAIR.paths[path].candidate);
+  if (!matches) {
+    const path = 'patches/splatoon3/adapter.mjs';
+    if ((typeof baseline.get(path) === 'string' && blob(baseline.get(path)) === CURRENT_POSE_PAIR.paths[path].baseline) ||
+        (typeof candidate.get(path) === 'string' && blob(candidate.get(path)) === CURRENT_POSE_PAIR.paths[path].candidate))
+      throw Error('Character pose current source pair differs; mixed, missing or modified source cannot be replayed');
+    return null;
+  }
+  return { sources: new Map(baseline), changes: [],
+    pairEvidence: { mode: 'current-pose-pair-with-gameplay-differences',
+      sourceBase: CURRENT_POSE_PAIR.sourceBase, sourceHead: CURRENT_POSE_PAIR.sourceHead,
+      scope: 'Preserve the exact current main/candidate pose source pair without replay. Pose and gameplay differences remain visible to independent native-state and image comparison gates.',
+      validationLimit: 'Source identity only; this is not pose or gameplay equivalence.' },
+    evidence: CHARACTER_POSE_PATHS.map(path => ({path, mode: 'pinned-current-pose-pair',
+      originalGitBlob: blob(baseline.get(path)), referenceGitBlob: blob(baseline.get(path)), candidateGitBlob: blob(candidate.get(path)),
+      originalSha256: poseSourceSha256(baseline.get(path)), referenceSha256: poseSourceSha256(baseline.get(path)),
+      candidateSha256: poseSourceSha256(candidate.get(path)), changed: false, replayed: []})) };
+}
 export function planCharacterPoseBaseline(baseline, candidate, rows = CHARACTER_POSE_MANIFEST.files) {
+  if (rows === CHARACTER_POSE_MANIFEST.files) {
+    const pair = currentPosePair(baseline, candidate);
+    if (pair) return pair;
+  }
   const sources = new Map(baseline), changes = [], evidence = [];
   for (const row of rows) {
     const original = baseline.get(row.path) ?? null, subject = candidate.get(row.path);

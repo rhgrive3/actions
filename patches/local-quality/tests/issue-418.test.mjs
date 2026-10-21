@@ -35,8 +35,19 @@ function loadModule(file) {
 }
 function resolveModule(spec, from) {
   if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
-  if (spec.startsWith('three/addons/')) return path.join(UPSTREAM, 'vendor/three/jsm', spec.slice(13));
-  return path.resolve(path.dirname(from), spec);
+  if (spec.startsWith('three/addons/')) {
+    const addons = path.join(UPSTREAM, 'vendor/three/jsm');
+    const resolved = path.resolve(addons, spec.slice(13));
+    if (!resolved.startsWith(addons + path.sep)) throw new Error('native fixture addon import escapes vendor root');
+    return resolved;
+  }
+  if (!spec.startsWith('.')) throw new Error(`unsupported native fixture import ${spec}`);
+  let resolved = path.resolve(path.dirname(from), spec);
+  const root = path.dirname(UPSTREAM), publicPatches = path.join(UPSTREAM, 'patches') + path.sep;
+  if (resolved.startsWith(publicPatches)) resolved = path.join(root, path.relative(UPSTREAM, resolved));
+  if (resolved.startsWith(path.join(root, 'src') + path.sep)) resolved = path.join(UPSTREAM, path.relative(root, resolved));
+  if (!resolved.startsWith(root + path.sep)) throw new Error('native fixture import escapes source root');
+  return resolved;
 }
 
 const fixtureEntry = new vm.SourceTextModule(`
@@ -432,4 +443,13 @@ test('rollback when atlas layout fails preserves previous atlas and CPU state', 
  assert.equal(paint.size,2048);assert.equal(paint.ppm,18);assert.equal(paint.usedHeight,8);
  assert.deepEqual(face.atlas,{x:1,y:2,pad:2,ppm:18});assert.equal(paint.grid,grid);
  assert.deepEqual(paint.counts,[1,0]);
+});
+
+test('native fixture resolver projects public patch URLs in both directions and rejects foreign imports',()=>{
+ const project=path.dirname(UPSTREAM);
+ assert.equal(resolveModule('../../../patches/native-stages/runtime/registry.mjs',path.join(UPSTREAM,'src/world/stages/native.js')),path.join(project,'patches/native-stages/runtime/registry.mjs'));
+ assert.equal(resolveModule('../../../src/world/mapkit.js',path.join(project,'patches/practice-range/stage/surfaces.mjs')),path.join(UPSTREAM,'src/world/mapkit.js'));
+ assert.throws(()=>resolveModule('three/addons/../../../../../../outside.mjs',path.join(UPSTREAM,'src/main.js')),/escapes/);
+ assert.throws(()=>resolveModule('https://example.invalid/module.js',path.join(UPSTREAM,'src/main.js')),/unsupported/);
+ assert.throws(()=>resolveModule('../../../../outside.mjs',path.join(UPSTREAM,'src/main.js')),/escapes/);
 });

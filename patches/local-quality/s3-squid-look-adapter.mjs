@@ -96,7 +96,7 @@ export function adaptS3SquidLook(rel, code) {
     code=once(code, '    pivot.add(body, ghost, dark, eyes);', '    ghost.renderOrder = 2; body.renderOrder = 3; dark.renderOrder = eyes.renderOrder = 4;\n    pivot.add(body, ghost, dark, eyes);', 'local ghost depth pass order');
     code = once(code,
       "      _e1.set(tilt, this.sqYaw, 0.05 * Math.sin(t * 2.3), 'YXZ'); q.setFromEuler(_e1);\n      p.set(0, 0.165 + hop, 0);",
-      "      _e1.set(Math.PI / 2 - 0.52 - tilt * 0.5, this.sqYaw, 0.05 * Math.sin(t * 2.3), 'YXZ'); q.setFromEuler(_e1);\n      p.set(0, 0.09 + hop * 0.8, 0);\n      _v2.set(0, -0.11, 0).applyQuaternion(q); p.add(_v2);", 'flat dry squid');
+      "      _e1.set(Math.PI / 2 - tilt * 0.5, this.sqYaw, 0, 'YXZ'); q.setFromEuler(_e1);\n      p.set(0, 0.09 + hop * 0.8, 0);\n      _v2.set(0, -0.11, 0).applyQuaternion(q); p.add(_v2);", 'flat dry squid');
     return code;
   }
   if (rel === 'src/game/character-mats.js') {

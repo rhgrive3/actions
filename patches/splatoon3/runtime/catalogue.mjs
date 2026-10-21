@@ -1,3 +1,4 @@
+import { hasPendingSubBirthCommit, replayWithSubBirthCommit } from '../../network-replication/sub-birth-commit.mjs';
 import { cataloguePayload } from './catalogue-payload.mjs';
 export { cataloguePayload } from './catalogue-payload.mjs';
 import { recordCatalogueSubBirth } from '../../network-replication/kit-paint-admission.mjs';
@@ -141,7 +142,9 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
     if(!objectHit&&event[2]==='special'&&!Object.hasOwn(api.SPECIALS,id))return;
     if(id==='booyahBomb'&&payload.action==='activate')actor.s3CatalogueBooyah={activation:payload.activation};
     if(id==='booyahBomb'&&payload.action==='end')actor.s3CatalogueBooyah=null;
-    if(event[2]==='sub')return replaySub(api,payload);
+    if(event[2]==='sub')return hasPendingSubBirthCommit(this,event)
+      ? replayWithSubBirthCommit(this,from,event,report=>replaySub(api,payload,report))
+      : replaySub(api,payload);
     if(id==='tripleSplashdown')return replaySplashdown(api,payload);
     return replaySpecial(api,payload);
   };

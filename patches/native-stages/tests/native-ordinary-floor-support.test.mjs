@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {nativeFixture,readStage} from './fixture.mjs';
-import {TIDEWATER} from '../../../inkwave-public/src/world/maps.js';
 
 const root=process.env.NATIVE_ORDINARY_FOLLOWER_ASSETS;
 const ready=!!root&&fs.existsSync(path.join(root,'wahoo','manifest.json'));
@@ -35,7 +34,7 @@ test('ordinary unopted source arrival retains real foot, distance, height and ai
 });
 
 test('real legacy Tidewater keeps generous waypoint policy without source-only foot gates',async()=>{
- const f=await nativeFixture({includeCharacter:true}),{G,THREE}=f;
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE,TIDEWATER}=f;
  G.level=new f.Level(TIDEWATER);G.physics=new f.Physics(G.level);G.camera=new THREE.PerspectiveCamera();
  assert(!G.level.native);
  const a=new f.Actor({team:0,name:'legacy source policy',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});

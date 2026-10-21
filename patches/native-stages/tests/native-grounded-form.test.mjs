@@ -4,10 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {nativeFixture,readStage} from './fixture.mjs';
-import {TIDEWATER} from '../../../inkwave-public/src/world/maps.js';
 
 test('legacy swimming input and physical state stay with the existing controller',async()=>{
- const f=await nativeFixture({includeCharacter:true}),{G}=f;
+ const f=await nativeFixture({includeCharacter:true}),{G,TIDEWATER}=f;
  G.level=new f.Level(TIDEWATER);G.physics=new f.Physics(G.level);G.nav=new f.NavGraph(G.level,G.physics);
  const a=new f.Actor({team:0,name:'legacy form guard',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
  a.spawnAt(G.level.spawnPads[0],0);const b=a.bot=new f.BotBrain(a,'normal');

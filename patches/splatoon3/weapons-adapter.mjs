@@ -186,9 +186,23 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('        fourPetals[n * 2] = 0; fourPetals[n * 2 + 1] = 0;\n        n++;',
     '        fourPetals[n * 2] = 0; fourPetals[n * 2 + 1] = 0;\n        writeInkLook(inkLook, n, INK_LOOK.satellite, p.seed + i * 0.37);\n        n++;',
     'ink look satellites');
-  patch('    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);',
-    '    const inkDrop0 = n;\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);\n    for (let i = inkDrop0; i < n; i++) {\n      writeInkLook(inkLook, i, INK_LOOK.droplet, i * 0.618);\n      B.getMatrixAt(i, _m); _m.scale(_s.setScalar(INK_LOOK.droplet[4])); B.setMatrixAt(i, _m);\n      shp[i * 4] *= INK_LOOK.droplet[3];\n    }',
+  const dropAnchor = code.includes('    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS - reserve);')
+    ? '    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS - reserve);'
+    : '    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);';
+  patch(dropAnchor,
+    '    const inkDrop0 = n;\n' + dropAnchor +
+    '\n    for (let i = inkDrop0; i < n; i++) {\n' +
+    '      writeInkLook(inkLook, i, INK_LOOK.droplet, i * 0.618);\n' +
+    '      B.getMatrixAt(i, _m); _m.scale(_s.setScalar(INK_LOOK.droplet[4])); B.setMatrixAt(i, _m);\n' +
+    '      shp[i * 4] *= INK_LOOK.droplet[3];\n    }',
     'ink look detached droplets');
+  if (code.includes('    const chargerDrawStart = n;')) {
+    patch('    B.count = n;',
+      '    for (let i = chargerDrawStart; i < n; i++) {\n' +
+      '      writeInkLook(inkLook, i, INK_LOOK.droplet, this.chargerDrops[i - chargerDrawStart]?.seed ?? i * 0.618);\n' +
+      '      fourPetals[i * 2] = 0; fourPetals[i * 2 + 1] = 0;\n    }\n    B.count = n;',
+      'charger falling beads set their own droplet attributes');
+  }
   patch('    B.count = n;',
     '    n = appendSourcedSplashVisuals(this, B, shp, inkLook, fourPetals, n, MAX_BLOBS, _m, _q, _s, _dir, ZAX, G.camera?.position);\n    n = appendS3ShapeBlobs(this, B, shp, inkLook, fourPetals, n, MAX_BLOBS, _m, _q, _s, _dir, ZAX);\n    B.count = n;',
     'sourced falling ink draws from authoritative 60Hz state');

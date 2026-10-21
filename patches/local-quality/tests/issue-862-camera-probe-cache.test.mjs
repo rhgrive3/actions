@@ -51,12 +51,15 @@ async function boot() {
     throw new Error(`unexpected physics.js import ${spec}`);
   });
   await physics.evaluate();
-  shared = { THREE: three.namespace, Physics: physics.namespace.Physics, G: ctx.namespace.G, mk, three, ctx, physics };
+  const charger = mk(fs.readFileSync(`${UPSTREAM}/src/game/chargerTuning.js`, 'utf8'), 'chargerTuning.js');
+  await charger.link(() => { throw new Error('chargerTuning.js must be self-contained'); });
+  await charger.evaluate();
+  shared = { THREE: three.namespace, Physics: physics.namespace.Physics, G: ctx.namespace.G, mk, three, ctx, physics, charger };
   return shared;
 }
 
 async function loadRig(adapted) {
-  const { mk, three, ctx, physics } = await boot();
+  const { mk, three, ctx, physics, charger } = await boot();
   const installed = installedSource();
   const source = adapted ? installed : replaceOnce(installed,
     'if (_qcChanged || _qcAge >= 0.25) {', 'if (true) {', 'test-only uncached production control');
@@ -65,6 +68,7 @@ async function loadRig(adapted) {
     if (spec === 'three') return three;
     if (spec === '../core/ctx.js') return ctx;
     if (spec === './physics.js') return physics;
+    if (spec === './chargerTuning.js') return charger;
     if(spec==='../../patches/splatoon3/runtime/battle-framing.mjs')return mk(fs.readFileSync(ROOT+'patches/splatoon3/runtime/battle-framing.mjs','utf8'),'battle-framing.mjs');
     throw new Error(`unexpected cameraRig import ${spec}`);
   });

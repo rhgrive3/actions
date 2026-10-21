@@ -152,7 +152,7 @@ function squidGlyph(g, cx, cy, s, paint) {
   g.restore();
 }
 
-// The shutter piece: "INKWAVE" wildstyle-lite over a team-B cloud, black 3-D block, team-A fill fading to a pale top,
+// The shutter piece: "ZEVANT" wildstyle-lite over a team-B cloud, black 3-D block, team-A fill fading to a pale top,
 // team-B split band, white shines, drips, sparkles, and a signature.
 function drawGraffiti(g, W, H, rnd) {
   // cloud backdrop
@@ -165,7 +165,7 @@ function drawGraffiti(g, W, H, rnd) {
   g.fillStyle = mixP(0, 0.5, 0.6);
   for (let i = 0; i < 26; i++) { g.beginPath(); g.arc(W * (0.05 + rnd() * 0.9), H * (0.25 + rnd() * 0.5), 8 + rnd() * 26, 0, 7); g.fill(); }
   // letters
-  const word = 'INKWAVE', size = H * 0.5;
+  const word = 'ZEVANT', size = H * 0.5;
   g.font = titan(size); g.lineJoin = 'round'; g.textBaseline = 'alphabetic';
   const adv = [...word].map((ch) => g.measureText(ch).width * 0.86);
   const total = adv.reduce((a, b) => a + b, 0);

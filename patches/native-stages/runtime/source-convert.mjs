@@ -30,7 +30,10 @@ const any=(s,words)=>words.some(w=>s.includes(w));
 function classify(name,material,semantics){
  const s=(name+' '+material).toLowerCase(),m=(material||'').toLowerCase();
  const alpha=any(s,['graffiti','warningtape','canola','leaf','grass','cloth','flag','stencil','notice','chainlink','net','grate','fence','vinyl','alpha','rope','fabric','dvpoolfloat','spotlight']);
- const decor=any(s,['graffiti','warningtape','canola','leaf','flag','cloth','stencil','light_cp','spotlight','lens','vinylseat','carshadow','__carsset','_car_','buss_shadow','treebush','groundgrass','watersurfice','__water_','__waterpuddle','watersurface','seawater','skyplane'])||m.endsWith('_water')||name.toLowerCase().includes('_water_')||m.endsWith('_plant')||m.endsWith('_code00');
+ // GroundGrass* names are structural soil/moss surfaces, not grass blades.
+ // Excluding them here removed real floors from collision and paint while
+ // nativeDisplay still rendered the exact source triangles (Bluefin centre).
+ const decor=any(s,['graffiti','warningtape','canola','leaf','flag','cloth','stencil','light_cp','spotlight','lens','vinylseat','carshadow','__carsset','_car_','buss_shadow','treebush','watersurfice','__water_','__waterpuddle','watersurface','seawater','skyplane'])||m.endsWith('_water')||name.toLowerCase().includes('_water_')||m.endsWith('_plant')||m.endsWith('_code00');
  const layer=name.match(/(?:Pack|_)(Pnt|Var|Vlf|Vgl|Vcl|Tcl)(?:Set)?(?:_|$)/)?.[1]||null;
  const matches=key=>(semantics?.[key]||[]).some(pattern=>new RegExp(pattern).test(name));
  const active=(!layer||layer==='Pnt')&&!name.includes('TriColor')&&!matches('inactiveObjectPatterns');
@@ -66,9 +69,10 @@ export function parseSourceOBJ(text,semantics){
   else if(l.startsWith('f ')){
    const face=l.slice(2).trim().split(/\s+/).map(t=>{
     const [vi,ui,ni]=t.split('/'),local=Number(vi)-1-vo;
-    if(Number(ni)-1-normalOffset!==local||(ui&&Number(ui)-1-uvOffset!==local)||local<0||local>=v.length/3)throw Error('Unsupported separate OBJ indices: '+name);
+    if(!Number.isSafeInteger(Number(vi))||!Number.isSafeInteger(Number(ni))||(ui&&!Number.isSafeInteger(Number(ui)))||Number(ni)-1-normalOffset!==local||(ui&&Number(ui)-1-uvOffset!==local)||local<0||local>=v.length/3)throw Error('Unsupported separate OBJ indices: '+name);
     return local;
    });
+   if(face.length<3)throw Error('Incomplete OBJ face: '+name);
    for(let j=1;j<face.length-1;j++)ix.push(face[0],face[j],face[j+1]);
   }
  });flush();

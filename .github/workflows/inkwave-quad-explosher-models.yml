@@ -3,14 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - patches/splatoon3/runtime/weapon-models/dualies.mjs
-      - patches/splatoon3/runtime/weapon-models/sloshers.mjs
-      - patches/splatoon3/tests/weapon-models-quad-explosher.test.mjs
-      - patches/splatoon3/tests/fixtures/quad-explosher-main-contracts.json
-      - scripts/render-inkwave-quad-explosher-gallery.mjs
-      - scripts/compare-inkwave-quad-explosher-gallery.py
-      - scripts/snapshot-quad-explosher.mjs
-      - .github/workflows/inkwave-quad-explosher-models.yml
+      - '.github/workflows/inkwave-quad-explosher-models.yml'
 permissions:
   contents: read
 concurrency:

@@ -1,0 +1,35 @@
+name: INKWAVE import pinned combat recordings
+on:
+  push:
+    branches: [assets/inkwave-combat-hit-recordings-20261019]
+    paths:
+      - '.github/workflows/inkwave-import-combat-recordings.yml'
+      - 'tools/audio/install-combat-references.py'
+permissions:
+  contents: write
+concurrency:
+  group: ink-combat-reference-install
+  cancel-in-progress: false
+jobs:
+  write-recordings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download only two vetted-size SHA-pinned MP3 clips
+        run: python3 tools/audio/install-combat-references.py
+      - name: Commit binary MP3 sources into the SAME repository branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add inkwave-public/assets/audio/combat/direct-hit-upload.mp3 inkwave-public/assets/audio/combat/charger-hit-upload.mp3 inkwave-public/assets/audio/combat/PROVENANCE.json
+          if ! git diff --cached --quiet; then
+            git commit -m "assets(INKWAVE): record SHA-verified hit confirmation MP3 candidates"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          assert len(list(Path('inkwave-public/assets/audio/combat').glob('*.mp3'))) == 2
+          PY

@@ -840,52 +840,6 @@ export function adaptSource(rel, code) {
     code = code.slice(0, capsuleStart) + capsule + code.slice(capsuleEnd);
     return code;
   }
-  if (rel === 'src/world/level.js') {
-    code = replaceOnce(code,
-      '      roof: !!d.roof,              // off-limits top (roofs, crane legs …): never inkable, anyone landing on it slides off',
-      '      roof: !!d.roof,              // off-limits top (roofs, crane legs …): never inkable, anyone landing on it slides off\n      squidReturner: !!d.squidReturner,  // explicit anti-climb ceiling; ordinary ceilings do not strip Roll/Surge armor',
-      'Squid Returner surface classification');
-    code = replaceOnce(code,
-      '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));',
-      '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));\n    this.homeSuperJumpPoints = (layout.homeSuperJumpPoints || layout.spawnPads).map((p) => new THREE.Vector3(...p));',
-      'home Super Jump points');
-    return code;
-  }
-  if (rel === 'src/world/maps.js') {
-    code = replaceOnce(code, '  spawnPads: [[0, 2.2, -39.2], [0, 2.2, 39.2]],',
-      '  spawnPads: [[0, 2.2, -39.2], [0, 2.2, 39.2]],\n  homeSuperJumpPoints: [[0, 0, -33.5], [0, 0, 33.5]],', 'Tidewater home Super Jump');
-    code = replaceOnce(code, '  spawnPads: [[0, 3.2, -44], [0, 3.2, 44]],',
-      '  spawnPads: [[0, 3.2, -44], [0, 3.2, 44]],\n  homeSuperJumpPoints: [[0, 0, -38.5], [0, 0, 38.5]],', 'Kelpline home Super Jump');
-    code = replaceOnce(code, '  spawnPads: [[0, 2.4, -42], [0, 2.4, 42]],',
-      '  spawnPads: [[0, 2.4, -42], [0, 2.4, 42]],\n  homeSuperJumpPoints: [[0, 0, -31.5], [0, 0, 31.5]],', 'Halyard home Super Jump');
-    return code;
-  }
-  if (rel === 'src/world/stages/cargo/layout.js') {
-    code = replaceOnce(code, 'const pad = W(0, 2.6, -43.6);',
-      'const pad = W(0, 2.6, -43.6);\nconst home = W(0, 0, -36.5);', 'Cargo home Super Jump datum');
-    code = replaceOnce(code, '  spawnPads: [pad, [-pad[0], pad[1], -pad[2]]],',
-      '  spawnPads: [pad, [-pad[0], pad[1], -pad[2]]],\n  homeSuperJumpPoints: [home, [-home[0], home[1], -home[2]]],', 'Cargo home Super Jump');
-    return code;
-  }
-  if (rel === 'src/game/nav.js') {
-    code = replaceOnce(code,
-      '          for (let t = 0; t < 2; t++) {\n            const pad = L.spawnPads[t];\n            if (Math.hypot(x - pad.x, z - pad.z) < L.spawnBarrier + 0.6 && y > pad.y - 1) node.zone = t;\n          }',
-      '          // No global spawn-radius navigation exclusion in the S3 composition.',
-      'navigation spawn-radius exclusion');
-    code = replaceOnce(code, '    const heap = new Heap();',
-      '    const heap = this._heap || (this._heap = new Heap()); heap.clear();', 'reusable A* heap');
-    code = replaceOnce(code, '  constructor() { this.ids = []; this.pr = []; }',
-      '  constructor() { this.ids = []; this.pr = []; this.n = 0; }\n  clear() { this.n = 0; }', 'heap logical length');
-    code = replaceOnce(code, '  get size() { return this.ids.length; }',
-      '  get size() { return this.n; }', 'heap logical size');
-    code = replaceOnce(code, '    let i = ids.length; ids.push(id); pr.push(p);',
-      '    let i = this.n++; ids[i] = id; pr[i] = p;', 'heap push reuse');
-    code = replaceOnce(code,
-      '    const top = ids[0];\n    const lid = ids.pop(), lp = pr.pop();\n    if (ids.length) {\n      let i = 0; const n = ids.length;',
-      '    const top = ids[0];\n    const n = --this.n, lid = ids[n], lp = pr[n];\n    if (n) {\n      let i = 0;',
-      'heap pop reuse');
-    return code;
-  }
   if (rel === 'src/core/input.js') {
     code = replaceOnce(code, '  pollPad() {', `  _liveTouchContact() {
     return this.lastDevice === 'touch' && !!this.mobile?.active && !this.mobile._destroyed &&

@@ -30,6 +30,6 @@ test('shared helper honors existing range timeout and rejects denied admission',
  }
 });
 test('all existing gameplay, isolation, profiler and error gates remain present',()=>{
- for(const token of ['st.targets !== 11','st.pads !== 14','st.weaponPads !== 7','Math.abs(out.checks.hit.dist - 10) > 0.6','Math.abs(p.area - 400) > 1e-6','picker.count !== 160','iso.actors !== 8','perf.collected < 12','if (out.errors.length)','if (out.missing.length)'])assert(source.includes(token),token);
+ for(const token of ['st.targets !== 11','st.pads !== 14','st.weaponPads !== 7','Math.abs(out.checks.hit.dist - 10) > 0.6','Math.abs(p.area - 400) > 1e-6','picker.count !== 161','picker.unique !== 161','picker.bases !== 66','picker.variants !== 95','picker.second !== 65','picker.third !== 30','picker.catalog !== 142','iso.actors !== 8','perf.collected < 12','if (out.errors.length)','if (out.missing.length)'])assert(source.includes(token),token);
  assert.match(source,/profileRangeAcceptanceSnapshot, null, \{ timeout: 90000 \}/);
 });

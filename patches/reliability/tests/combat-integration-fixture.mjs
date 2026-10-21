@@ -13,7 +13,7 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_SITE, paintArea = .123456789, network = false, transformSource = (_rel, source) => source } = {}) {
   const SRC = emitted ? path.resolve(emitted) : path.join(ROOT, 'inkwave-public');
   let clock = 1000;
-  const context = vm.createContext({ console, performance: { now: () => clock * 1000 } });
+  const context = vm.createContext({ console, TextEncoder, URLSearchParams, performance: { now: () => clock * 1000 } });
   const mods = new Map();
   const resolve = (spec, from) => {
     if (spec === 'three') return path.join(SRC, 'vendor/three/build/three.module.js');
@@ -38,6 +38,7 @@ export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_
     export * from './src/game/actor.js'; export * from './src/game/weapons.js';
     export { Hit } from './src/game/physics.js';
     export * from './src/net/netmatch.js'; export * as THREE from 'three';
+    export { Transport } from './src/net/transport.js';
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/gear.mjs';

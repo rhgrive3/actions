@@ -1,3 +1,5 @@
+// Historical 0dec529d source replay; latest PR sources use the separate reviewed-pair gate.
+import {historicalSource} from '../lib/inkwave-historical-baseline-sources.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -127,7 +129,7 @@ test('candidate legacy/partial paint and unreviewed module revisions are rejecte
 
 test('actual current owner source requires identical current baseline; legacy/current mixing is rejected', () => {
   const { baseline } = maps();
-  const candidate = new Map(MAIN_INK_BASELINE_PATHS.map(rel => [rel, fs.readFileSync(path.join(root, rel), 'utf8')]));
+  const candidate = new Map(MAIN_INK_BASELINE_PATHS.map(rel => [rel, historicalSource('paint',rel)]));
   assert.throws(() => planMainInkBaseline(baseline, candidate), /mixed physics\/paint epochs/);
   const plan = planMainInkBaseline(new Map(candidate), candidate);
   assert.equal(plan.evidence.paths.length, 13);

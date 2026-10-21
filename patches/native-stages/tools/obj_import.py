@@ -25,7 +25,9 @@ def parse_obj(file,semantics=None):
   bg=name.startswith(('FldBG','Fld_BG'));s=(name+' '+str(mat)).lower()
   alpha=any(k in s for k in ['graffiti','warningtape','canola','leaf','grass','cloth','flag','stencil','notice','chainlink','net','grate','fence','vinyl','alpha','rope','fabric','dvpoolfloat','spotlight'])
   # This classifier does NOT assert original physics flags; all entries keep evidence.
-  decor=any(k in s for k in ['graffiti','warningtape','canola','leaf','flag','cloth','stencil','light_cp','spotlight','lens','vinylseat','carshadow','__carsset','_car_','buss_shadow','treebush','groundgrass','watersurfice','__water_','__waterpuddle','watersurface','seawater','skyplane'])
+  # GroundGrass* is structural soil/moss, including Bluefin's central floor.
+  # Keep the same classification as the browser converter, not foliage rules.
+  decor=any(k in s for k in ['graffiti','warningtape','canola','leaf','flag','cloth','stencil','light_cp','spotlight','lens','vinylseat','carshadow','__carsset','_car_','buss_shadow','treebush','watersurfice','__water_','__waterpuddle','watersurface','seawater','skyplane'])
   decor=decor or str(mat).lower().endswith('_water') or '_water_' in name.lower() or str(mat).lower().endswith(('_plant','_code00'))
   surface=str(mat).lower();grate=any(k in surface for k in ['grate','coppernet','chainlink','meshfloor','waffledplate'])
   glass=any(k in surface for k in ['glass','window'])
@@ -51,6 +53,7 @@ def parse_obj(file,semantics=None):
      if ni-1-normalOffset!=local or (ui is not None and ui-1-uvOffset!=local):raise ValueError(f'{name}: separate indices need remapping')
      if local<0 or local>=len(verts):raise ValueError('out-of-object index')
      ii.append(local)
+    if len(ii)<3:raise ValueError(f'{name}: incomplete OBJ face')
     for j in range(1,len(ii)-1):faces.extend([ii[0],ii[j],ii[j+1]])
  flush()
  return np.asarray(geo,dtype='<f4').reshape(-1,8),np.asarray(ind,dtype='<u4'),objects

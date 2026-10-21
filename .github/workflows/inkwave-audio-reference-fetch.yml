@@ -1,0 +1,26 @@
+name: INKWAVE audio public reference collection
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/inkwave-audio-reference-fetch.yml'
+      - 'tools/audio/collect-public-reference-recordings.py'
+permissions:
+  contents: read
+concurrency:
+  group: audio-reference-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  references:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - run: python3 tools/audio/collect-public-reference-recordings.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audio-reference-candidates
+          path: audio-reference-candidates.zip
+          retention-days: 5

@@ -9,6 +9,20 @@ import { registerAlternateWeaponKits } from '../runtime/alternate-weapon-kits.mj
 import { fixture } from './source-fixture.mjs';
 import { WEIGHT_SPEED_CURVES, weaponWeight, weaponAccelerationClass, weightSpeedCurve } from '../runtime/weapon-weight.mjs';
 
+// #1651 added one native scoped Charger; retain the exact prior65+95 roster.
+function assertProductionRoster(order,weapons) {
+  const canonical=[...MAIN_WEAPON_CATALOG.records.map(r=>r.id),...ALTERNATE_WEAPON_KITS.map(r=>r.id)];
+  assert.equal(canonical.length,160);assert.equal(new Set(canonical).size,160);
+  const ids=Array.from(order),prior=ids.filter(id=>id!=='charger_scope');
+  assert.equal(prior.length,160,'all original160 kits remain');
+  assert.deepEqual(prior.sort(),canonical.sort(),'exact canonical base/variant IDs, no substitutions');
+  assert.equal(ids.filter(id=>id==='charger_scope').length,1,'one explicit #1651 native scoped entry');
+  assert.equal(ids.length,161);
+  assert.equal(weapons.charger_scope?.id,'charger_scope');
+  assert.equal(weapons.charger_scope?.kind,'charger');
+  assert.equal(weapons.charger_scope?.scoped,true);
+}
+
 const BASE = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
 const records = ALTERNATE_WEAPON_KITS;
 
@@ -135,7 +149,7 @@ test('production: 95 variants select the original model, and both legacy/catalog
     extraExports:"export { getWeaponDef } from './inkwave-public/src/game/character-weapons.js'; export * as REG from './patches/splatoon3/runtime/weapon-models/registry.mjs';" });
   // Additional kit owner must be activated by installS3 in production.
   f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
-  assert.equal(f.WEAPON_ORDER.length,160);
+  assertProductionRoster(f.WEAPON_ORDER,f.WEAPONS);
   assert.equal(f.REG.registeredWeaponModels().length,65);
   // Only explicitly registered variant source rows can own an independent
   // appearance. Every other kit must still route to its original base model.

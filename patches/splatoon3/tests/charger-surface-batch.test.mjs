@@ -5,10 +5,23 @@ import { installChargerSurface } from '../runtime/charger-surface.mjs';
 const DT=1/60, near=(a,b,eps=1e-8)=>assert.ok(Math.abs(a-b)<eps,`${a} != ${b}`);
 
 test('#107: unscoped Charger charge keeps camera FOV and boom fixed', async () => {
-  const f=await fixture(), a=f.make('charger'), camera=new f.THREE.PerspectiveCamera(60,16/9), rig=new f.CameraRig(camera);
+  // Camera behavior must consume the same adapter composition as production.
+  const f=await fixture({productionComposition:true}), a=f.make('charger'), camera=new f.THREE.PerspectiveCamera(60,16/9), rig=new f.CameraRig(camera);
   f.G.physics.cameraProbe=(_p,_b,d,_r,out)=>Object.assign(out,{soft:d,hard:d}); f.G.settings={fov:82,cameraShake:0};
   rig.follow(a,true); for(let i=0;i<120;i++) rig.update(DT); const base=camera.fov, boom=rig.wantDist;
   for(const charge of [.3,.999,1]){ a.weaponRunner.charging=true; a.weaponRunner.charge=charge; for(let i=0;i<90;i++) rig.update(DT); near(rig.zoom,0); near(camera.fov,base); near(rig.wantDist,boom); }
+});
+
+test('#107: actual scoped Charger still changes FOV and boom under production composition', async () => {
+  const f=await fixture({productionComposition:true}), a=f.make('charger_scope'), camera=new f.THREE.PerspectiveCamera(60,16/9), rig=new f.CameraRig(camera);
+  assert.equal(a.weapon.scoped,true);
+  f.G.physics.cameraProbe=(_p,_b,d,_r,out)=>Object.assign(out,{soft:d,hard:d}); f.G.settings={fov:82,cameraShake:0};
+  rig.follow(a,true); for(let i=0;i<120;i++) rig.update(DT); const base=camera.fov, boom=rig.wantDist;
+  a.weaponRunner.charging=true; a.weaponRunner.charge=1;
+  for(let i=0;i<90;i++) rig.update(DT);
+  assert.ok(rig.zoom>0,'scoped charge must zoom');
+  assert.ok(camera.fov<base,'scoped charge must narrow FOV');
+  assert.ok(rig.wantDist<boom,'scoped charge must change camera boom');
 });
 
 test('#122: current Charger fire wrapper blocks swim through 14F and releases at 15F', async () => {

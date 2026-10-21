@@ -21,6 +21,7 @@ import { networkIdentity, NETWORK_ROOT } from '../patches/network-replication/ad
 import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity, INITIAL_JS_BUDGET_BYTES } from '../patches/loading-cache/adapter.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { staticEsModuleImports } from './lib/inkwave-module-imports.mjs';
+import { REVIEWED_AUDIO_ORPHAN, reviewedAudioOrphanDecision } from './lib/inkwave-reviewed-audio-orphan.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { compactModuleStrings } from './lib/inkwave-source-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
@@ -164,7 +165,7 @@ for (const [root, prefix] of [
     const rel = path.relative(root, file).split(path.sep).join('/');
     if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.startsWith('definitions/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
     // One native runtime module avoids inflating the bounded worker manifest.
-    if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs','runtime/source-worker.mjs'].includes(rel)) continue;
+    if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs','runtime/source-worker.mjs','runtime/native-projectile-sweep.mjs'].includes(rel)) continue;
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     if (prefix === 'patches/native-stages' && ['runtime/engine.mjs','runtime/registry.mjs','runtime/source-worker.mjs'].includes(rel) && !unminified) {
@@ -249,6 +250,33 @@ if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && pro
   console.log(`three.js: ${keep.length} of ${exported.size} exports kept · ${kb(before)} → ${kb(out.length)} (gzip ${kb(gz(Buffer.from(out)))})`);
 }
 
+// The current audio route no longer imports this authored helper. Preserve its
+// source and input identity, but omit the reviewed orphan from deployment. A
+// known reference, changed helper or new opaque loader keeps it fail-closed.
+const audioOrphan = path.join(BUILD, REVIEWED_AUDIO_ORPHAN);
+if (fs.existsSync(audioOrphan)) {
+  const modules = new Map(walk(BUILD).filter(file => /\.m?js$/.test(file)).map(file =>
+    [path.relative(BUILD, file).split(path.sep).join('/'), fs.readFileSync(file, 'utf8')]));
+  // These modules are copied by prepareLoading after this graph pass.
+  for (const file of [...walk(path.join(LOADING_ROOT, 'runtime')), path.join(LOADING_ROOT, 'sw.js')].filter(file => /\.m?js$/.test(file)))
+    modules.set('patches/loading-cache/' + path.relative(LOADING_ROOT, file).split(path.sep).join('/'), fs.readFileSync(file, 'utf8'));
+  let inline = 0;
+  for (const htmlFile of walk(BUILD).filter(file => file.endsWith('.html'))) {
+    const html = fs.readFileSync(htmlFile, 'utf8');
+    for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+      const src = /\bsrc=["']([^"']+)["']/i.exec(match[1]);
+      modules.set('entry-script-' + (++inline) + '.mjs', /type=["']importmap["']/i.test(match[1])
+        ? 'export default ' + JSON.stringify(JSON.parse(match[2])) + ';'
+        : src ? 'import ' + JSON.stringify(src[1]) + ';' : match[2]);
+    }
+  }
+  const composedOwners = new Map(['src/main.js', 'src/game/character.js', 'src/audio/music.js'].map(rel =>
+    [rel, adaptBuildSource(rel, fs.readFileSync(path.join(SRC, rel), 'utf8'))]));
+  const decision = reviewedAudioOrphanDecision(fs.readFileSync(path.join(projectRoot, REVIEWED_AUDIO_ORPHAN), 'utf8'), modules, composedOwners);
+  if (decision.omit) fs.unlinkSync(audioOrphan);
+  console.log('reviewed audio helper: ' + (decision.omit ? 'omitted' : 'retained') + ' (' + decision.reason + ')');
+}
+
 // ---- module graph from src/main.js (static imports + the string-literal dynamic imports the boot always performs)
 const html0 = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
 const map = JSON.parse((html0.match(/<script type="importmap">([\s\S]*?)<\/script>/) || [, '{"imports":{}}'])[1]).imports || {};
@@ -287,8 +315,13 @@ const visit = (rel) => {
 };
 visit('src/main.js');
 visit('patches/splatoon3/bootstrap.mjs');
+// Source-composed audio imports may arrive through layered adapters. Pin these
+// tiny live helpers in the immutable offline module graph, not extra HTML hints.
+visit('patches/splatoon3/runtime/audio/combat-hit-classifier.mjs');
+visit('patches/splatoon3/runtime/audio/blaster-hit.mjs');
 // Worker modules have no main-thread static importer, but must retain their
 // own immutable offline dependencies. The source payload stays outside it.
+visit('patches/native-stages/runtime/native-world.mjs');
 visit('patches/native-stages/runtime/source-worker.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
@@ -297,7 +330,12 @@ visit('patches/native-stages/runtime/source-worker.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  'patches/native-stages/runtime/native-world.mjs',
+  'patches/native-stages/runtime/source-menu.mjs',
   'patches/native-stages/runtime/source-worker.mjs',
+  // The catalogue and native ink collision solvers import this small standalone module.
+  // Include it in the immutable offline graph, not as an eager startup request.
+  'patches/native-stages/runtime/native-projectile-sweep.mjs',
   // ContactPolish: lazily import source animation at runtime, never a new eager HTML hint.
   'src/game/motion/source-bank.js',
   'src/game/motion/source-controller.js',
@@ -523,7 +561,7 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-reviewed-audio-orphan.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 for (const [file, hash] of Object.entries(nativeStageIdentity())) identity.files['native-stages/' + file] = hash;

@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {nativeFixture,readStage} from './fixture.mjs';
-import {TIDEWATER} from '../../../inkwave-public/src/world/maps.js';
 
 const root=process.env.NATIVE_JUMP_FIXTURE_ASSETS,ready=!!root&&fs.existsSync(path.join(root,'wahoo','manifest.json'));
 async function world(){
@@ -66,7 +65,7 @@ test('a pending source jump cancels on actual route reset, death, mode and world
 });
 
 test('actual legacy Tidewater short-hop input and trajectory remain identical with the native helper',async()=>{
- const f=await nativeFixture({includeCharacter:true}),{G,THREE}=f;G.level=new f.Level(TIDEWATER);G.physics=new f.Physics(G.level);G.nav=new f.NavGraph(G.level,G.physics);G.camera=new THREE.PerspectiveCamera();
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE,TIDEWATER}=f;G.level=new f.Level(TIDEWATER);G.physics=new f.Physics(G.level);G.nav=new f.NavGraph(G.level,G.physics);G.camera=new THREE.PerspectiveCamera();
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};} _pushQuad(){} _drawQuads(){}}
  for(const hz of [30,60,120]){
   const results=[];for(const apply of [false,true]){G.paint=new Cpu(null,G.level,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();const a=new f.Actor({team:0,weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});G.actors=[a];a.spawnAt(G.level.spawnPads[0],0);a.bot=new f.BotBrain(a,'normal');a.bot._pathTo(new THREE.Vector3(0,0,0),.6);const trace=[];for(let i=0;i<hz;i++){a.intent.jump=i===0;if(apply)f.nativeOrdinaryJumpInput(a.bot,G);G.time+=1/hz;a.update(1/hz);trace.push({position:Array.from(a.pos.toArray()),velocity:Array.from(a.vel.toArray()),serial:a.s3JumpSerial||0,jump:a.intent.jump});}results.push(trace);}assert.deepEqual(results[1],results[0]);

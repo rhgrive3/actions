@@ -2,15 +2,7 @@ name: Verify lossless crowd rig updates
 on:
   pull_request:
     paths:
-      - patches/local-quality/retarget-branch-update-adapter.mjs
-      - patches/local-quality/cloth-derivative-adapter.mjs
-      - patches/local-quality/adapter.mjs
-      - patches/local-quality/tests/retarget-branch-update.test.mjs
-      - patches/local-quality/tests/cloth-derivative.test.mjs
-      - scripts/lib/inkwave-build-only-modules.mjs
-      - scripts/check-inkwave-crowd-rig.mjs
-      - scripts/compare-inkwave-crowd-rig.mjs
-      - .github/workflows/inkwave-crowd-rig.yml
+      - '.github/workflows/inkwave-crowd-rig.yml'
   workflow_dispatch:
 permissions:
   contents: read

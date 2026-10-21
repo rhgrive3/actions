@@ -63,8 +63,10 @@ export function adaptProjectileVisuals(rel,code) {
   }
   _drawLegacy() {`,
     'keep dedicated derivative and detached-droplet legacy stream');
-  code=once(code,'    for (const p of this.list) {\n      if (n >= MAX_BLOBS - 5) break;',
-    '    for (const p of this.list) {\n      this.projectileVisuals.ensureBirth(p);\n      if (this.projectileVisuals.handles(p) || p._s3SloshBirthPending) continue;\n      if (n >= MAX_BLOBS - 5) break;',
+  const maxDraw = code.includes('if (n >= MAX_BLOBS - 5 - reserve) break;')
+    ? 'MAX_BLOBS - 5 - reserve' : 'MAX_BLOBS - 5';
+  code=once(code,`    for (const p of this.list) {\n      if (n >= ${maxDraw}) break;`,
+    `    for (const p of this.list) {\n      this.projectileVisuals.ensureBirth(p);\n      if (this.projectileVisuals.handles(p) || p._s3SloshBirthPending) continue;\n      if (n >= ${maxDraw}) break;`,
     'route source-aware bodies out of generic blob renderer');
   return code;
 }

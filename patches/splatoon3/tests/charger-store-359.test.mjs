@@ -1,4 +1,5 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,6 +18,41 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
 const MAIN_WEAPONS = process.env.INKWAVE_359_MAIN_WEAPONS;
 let cached;
+// Keep only the first actual Character alive to reuse its immutable native
+// style across independent scenarios; every scenario still creates fresh actors.
+let keeper = null, keeperGeometry = null, keeperState = null;
+const actorsSeen = new WeakSet(), charactersSeen = new WeakSet(), skeletonsSeen = new WeakSet();
+let actorCount = 0, characterCount = 0, skeletonCount = 0, epochCount = 0;
+// Explicit diagnostic filters select only some scenarios; normal CI keeps the
+// exact full-suite counts while every selected case keeps identity/cleanup guards.
+const filteredRun = process.execArgv.some(arg => /^--test-(?:name-pattern|skip-pattern|only)(?:=|$)/.test(arg));
+const geometryDigest = geo => {
+  const hash = createHash('sha256');
+  for (const attr of [geo.index, ...Object.values(geo.attributes)])
+    hash.update(Buffer.from(attr.array.buffer, attr.array.byteOffset, attr.array.byteLength));
+  return hash.digest('hex');
+};
+const retainedState = () => {
+  const a = keeper.actor, r = a.weaponRunner;
+  return { pos: a.pos.toArray(), vel: a.vel.toArray(), alive: a.alive, form: a.form,
+    submerged: a.submerged, ink: a.ink, hp: a.hp,
+    charge: r.charge, chargeT: r.chargeT, charging: r.charging, stored: r.s3Stored };
+};
+after(() => {
+  try {
+    if (!filteredRun) {
+      assert.equal(actorCount, 23, 'all original scenario Actor constructions');
+      assert.equal(characterCount, 23, 'all original independent Characters');
+      assert.equal(skeletonCount, 23, 'all original independent Skeletons');
+      assert.equal(epochCount, 18, 'all original scenario cleanup boundaries');
+    }
+  } finally { keeper?.dispose(); keeper = null; keeperGeometry = null; keeperState = null; }
+  if (!cached) return; // A filter may intentionally select no tests.
+  assert.equal(cached.hairStats().entries, 0, 'final native cache is empty');
+  assert.equal(cached.hairStats().liveUsers, 0, 'every native style reference is released');
+  console.log('CHARGER_LIFETIME ' + JSON.stringify({ actors: actorCount, characters: characterCount,
+    skeletons: skeletonCount, epochs: epochCount, hair: cached.hairStats() }));
+});
 
 async function production() {
   if (cached) return cached;
@@ -45,6 +81,7 @@ async function production() {
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { Level } from './src/world/level.js';
     export { NetMatch } from './src/net/netmatch.js';
+    export { hairStats } from './patches/splatoon3/runtime/hair-cache.mjs';
   `, { context, identifier: path.join(ROOT, 'charger-store-359-entry.mjs') });
   await entry.link((specifier, from) => load(specifier === 'three'
     ? path.join(SRC, 'vendor/three/build/three.module.js')
@@ -53,7 +90,7 @@ async function production() {
       : path.resolve(path.dirname(from.identifier), specifier)));
   await entry.evaluate();
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
-  const api = { ...entry.namespace.install(profile), NetMatch: entry.namespace.NetMatch, Level: entry.namespace.Level };
+  const api = { ...entry.namespace.install(profile), NetMatch: entry.namespace.NetMatch, Level: entry.namespace.Level, hairStats: entry.namespace.hairStats };
   const { G, THREE, Level, Physics } = api;
   const level = new Level({
     bounds: { minX: -100, maxX: 100, minZ: -100, maxZ: 100 },
@@ -81,6 +118,13 @@ async function fixture({ paint = 1 } = {}) {
   function make({ airborne = false, owner = undefined, nid = undefined, name = 'issue 359 actor' } = {}) {
     const a = new Actor({ team: 0, name, weapon: 'charger', CharacterClass: Character,
       style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+    assert.equal(actorsSeen.has(a), false, 'fresh Actor per scenario');
+    assert.equal(charactersSeen.has(a.character), false, 'fresh Character per Actor');
+    assert.equal(skeletonsSeen.has(a.character.skeleton), false, 'fresh Skeleton per Character');
+    actorsSeen.add(a); actorCount++;
+    charactersSeen.add(a.character); characterCount++;
+    skeletonsSeen.add(a.character.skeleton); skeletonCount++;
+    if (!keeper) keeper = a.character;
     a.character.actor = a; G.actors.push(a); actors.push(a); G.scene.add(a.character.root);
     a.spawnAt(new THREE.Vector3(0, 0, 0), 0); a.invuln = 0;
     a.intent.move.set(0, 0, 0); a.ink = 100;
@@ -115,8 +159,14 @@ async function fixture({ paint = 1 } = {}) {
   function bindNet(net, match) { nets.push(net); net.bind(match); }
   function close() {
     for (const net of nets) net.dispose();
-    for (const a of actors) { G.scene.remove(a.character.root); a.character.dispose(); }
+    for (const a of actors) { G.scene.remove(a.character.root); if (a.character !== keeper) a.character.dispose(); }
+    if (!keeperGeometry) keeperGeometry = keeper.hairKeys483.map(row => ({ geo: row.entry.geo, hash: geometryDigest(row.entry.geo) }));
+    for (const row of keeperGeometry) assert.equal(geometryDigest(row.geo), row.hash, 'retained style geometry stays immutable');
+    if (!keeperState) keeperState = retainedState();
+    assert.deepEqual(retainedState(), keeperState, 'later scenarios never update the retained actor');
+    epochCount++;
     G.projectiles.clear(); G.netm = null; G.actors.length = 0;
+    assert.equal(G.actors.includes(keeper.actor), false, 'retained actor is never a later scenario participant');
   }
   return { ...f, G, make, step, chargeFully, chargeAtExactClock, enterSquid, bindNet, close };
 }

@@ -32,7 +32,7 @@ for(const boundary of ['lobby','world','warmup'])test(`#1154 early GO waits for 
   f.G.game.menus={launchLobby:()=>boundary==='lobby'?gate.promise:Promise.resolve()};
   f.G.game.startNetMatch=()=>boundary==='lobby'?Promise.resolve():gate.promise;
   f.G.game.netMatchGo=()=>launches++;
-  const cfg={id:'round-1',roster:[]}, pending=f.net._begin(cfg);await flush();
+  const cfg={proto:f.PROTO,compat:f.COMPAT,id:'round-1',roster:[]}, pending=f.net._begin(cfg);await flush();
   f.net._message('host',{k:'go',id:'old-round'});f.net._message('intruder',{k:'go',id:cfg.id});
   assert.equal(f.net._goPending,null);
   f.net._message('host',{k:'go',id:cfg.id});f.net._message('host',{k:'go',id:cfg.id});
@@ -47,7 +47,7 @@ for(const boundary of ['lobby','world','warmup'])test(`#1154 early GO waits for 
 test('#1154 disconnect with a queued GO cannot revive a disposed match or a new lobby',async()=>{
   const f=await fixture(), joined=f.net.join('BC234');f.welcome(f.sockets[0],{id:'guest',host:'host'});await joined;
   const gate=deferred();f.G.game.startNetMatch=()=>gate.promise;let launches=0;f.G.game.netMatchGo=()=>launches++;
-  const pending=f.net._begin({id:'old',roster:[]});await flush();const abandoned=f.net.match;
+  const pending=f.net._begin({proto:f.PROTO,compat:f.COMPAT,id:'old',roster:[]});await flush();const abandoned=f.net.match;
   f.net._message('host',{k:'go',id:'old'});f.net.leave();
   const next=f.net.join('BC235');f.welcome(f.sockets.at(-1));await next;
   gate.resolve();await pending;assert.equal(abandoned.disposed,true);assert.equal(f.net.state,'lobby');assert.equal(launches,0);

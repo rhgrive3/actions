@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { checkCoreMenus } from './check-inkwave-responsive-core.mjs';
 import { createResponsiveAssetServer } from './lib/inkwave-responsive-server.mjs';
 import { confirmResponsiveMockHostTeams } from './inkwave-responsive-fixture.mjs';
+import { createResponsiveDiagnostics, collectResponsiveFailure } from './lib/inkwave-responsive-diagnostics.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : null; };
@@ -80,7 +81,7 @@ const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.c
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));
 result.sourceHashes = sourceHashes();
-const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
+const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'lib/inkwave-responsive-diagnostics.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
 result.runnerHashes = runnerHashes();
 const configurations = [
   ['phone-portrait', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } }],
@@ -131,6 +132,15 @@ try {
       result.cases.push(entry);
       const page = context.pages()[0] || await context.newPage();
       const codeInput = activeCodeInput(page);
+      const diagnostics = createResponsiveDiagnostics();
+      page.on('crash', () => diagnostics.unavailable('page-crash'));
+      page.on('close', () => diagnostics.unavailable('page-close'));
+      context.on('close', () => diagnostics.unavailable('context-close'));
+      context.browser()?.on('disconnected', () => diagnostics.unavailable('browser-disconnected'));
+      page.on('console', message => {
+        if (['error', 'warning'].includes(message.type())) diagnostics.record('console-' + message.type(), message.text());
+      });
+      const onStageComplete = name => diagnostics.stage(name);
       page.on('pageerror', (e) => result.errors.push(`${engineName}/${name}: ${e.message}`));
       await page.addInitScript(() => {
         window.responsiveEvents = [];
@@ -146,7 +156,7 @@ try {
         await show(page, 'online');
         if (name === 'desktop') {
           if (section !== 'expansion') {
-            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle,
+            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete,
               geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; },
               tap: async (page, selector) => { const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.click(); }, audit: true, testContinuation: !audit });
             for (const [screen, selector] of [['main', '.iw-main__menu'], ['setup', '.iw-ss__hero'], ['settings', '.iw-settings__panel']]) {
@@ -165,6 +175,7 @@ try {
           for (const screen of ['online', 'mode', 'lobby']) {
             await show(page, screen);
             entry.screens[screen] = await page.locator('.iw-screen').screenshot({ path: path.join(evidence, `${engineName}-${name}-${screen}.png`) }).then(() => 'captured');
+            onStageComplete(screen);
           }
           entry.status = 'passed';
           continue;
@@ -172,12 +183,13 @@ try {
         entry.touchMode = await page.locator('.iw-ui').evaluate((el) => el.classList.contains('is-touch'));
         assert(entry.touchMode, `${name}: touch mode not detected`);
         if (section !== 'expansion') {
-          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, geometry, tap, audit });
+          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, geometry, tap, audit });
           if (section === 'core') { entry.status = audit ? 'audited' : 'passed'; continue; }
           await show(page, 'online');
         }
         entry.screens.online = await geometry(page, '.iw-code-input, .iw-join__btns button, .iw-hubcard--create, .iw-hub__chip, .iw-online .iw-backbtn', 'online');
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-online.png`) });
+        onStageComplete('online');
         if (audit) continue;
         await codeInput.scrollIntoViewIfNeeded();
         await codeInput.tap();
@@ -203,9 +215,11 @@ try {
           return y < 0 || y >= innerHeight || side.contains(document.elementFromPoint(x, y));
         }), 'the lobby dock must not cover the visible mode/settings heading');
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-lobby.png`) });
+        onStageComplete('lobby');
         await tap(page, '.iw-lob__wchip');
         entry.screens.drawer = await geometry(page, '.iw-ldr .iw-wcard, .iw-ldr .iw-touch-close', 'drawer');
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-drawer.png`) });
+        onStageComplete('drawer');
         await page.locator('.iw-ldr .iw-wcard:last-child').scrollIntoViewIfNeeded();
         const closeRect = await page.locator('.iw-ldr .iw-touch-close').boundingBox();
         assert(closeRect.y >= 0 && closeRect.y + closeRect.height <= config.viewport.height, 'drawer close must remain in view while scrolling');
@@ -267,14 +281,17 @@ try {
         entry.hostModes = visitedModes;
         assert.equal(await page.locator('.iw-lobby').evaluate((el) => el.classList.contains('is-bossmode')), true);
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-boss-lobby.png`) });
+        onStageComplete('boss-lobby');
         await page.evaluate(() => G.net.leave());
         await show(page, 'mode');
         entry.screens.mode = await geometry(page, '.iw-mode, .iw-modesel .iw-backbtn', 'mode');
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-mode.png`) });
+        onStageComplete('mode');
         await show(page, 'main');
         await page.evaluate(() => menus._news.show());
         entry.screens.news = await geometry(page, '.iw-news__btns button', 'news');
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-news.png`) });
+        onStageComplete('news');
         const stage = page.locator('.iw-news__stage');
         assert(await stage.evaluate((el) => el.scrollHeight >= el.clientHeight));
         await tap(page, '.iw-news__go');
@@ -283,13 +300,16 @@ try {
         await page.waitForFunction(() => !menus._news.open);
         entry.status = 'passed';
       } catch (error) {
-        entry.status = 'failed'; entry.error = error.message;
-        entry.interactionFailure = await page.evaluate(() => ({ events: window.responsiveEvents, inputMode: menus._input, newsPage: document.querySelector('.iw-news')?.dataset.page, newsBusy: menus._news._busy,
+        await collectResponsiveFailure({ entry, error, diagnostics, page,
+          readInteraction: () => page.evaluate(() => ({ events: window.responsiveEvents, inputMode: menus._input, newsPage: document.querySelector('.iw-news')?.dataset.page, newsBusy: menus._news._busy,
           lobby: { state: G.net?.state, isMock: G.net?.isMock, isHost: G.net?.isHost, mode: G.net?.lobby?.mode, teamsConfirmed: G.net?.lobby?.teamsConfirmed, ready: G.net?.lobby?.players.find(p => p.you)?.ready },
-          scroll: [...document.querySelectorAll('.iw-news__stage,.iw-news__go')].map((el) => { const r = el.getBoundingClientRect(); return { class: el.className, y: r.y, bottom: r.bottom, scrollTop: el.scrollTop, scrollHeight: el.scrollHeight, clientHeight: el.clientHeight }; }) }));
-        await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-failure.png`) }).catch(() => {});
+          scroll: [...document.querySelectorAll('.iw-news__stage,.iw-news__go')].map((el) => { const r = el.getBoundingClientRect(); return { class: el.className, y: r.y, bottom: r.bottom, scrollTop: el.scrollTop, scrollHeight: el.scrollHeight, clientHeight: el.clientHeight }; }) })),
+          captureFailure: () => page.screenshot({ path: path.join(evidence, `${engineName}-${name}-failure.png`) }) });
         if (!audit) throw error;
-      } finally { await context.close(); }
+      } finally {
+        try { await diagnostics.close(() => context.close()); }
+        finally { entry.diagnostics = diagnostics.snapshot(); }
+      }
     }
   }
   assert(result.cases.length, 'At least one known viewport case must run');

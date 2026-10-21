@@ -124,10 +124,10 @@ function step(match, frames, metrics, until = null) {
         metrics.rainmakerEvents.push({ frame: i, kind: event.kind, actorId: event.actorId ?? event.id,
           team: event.team, reason: event.reason, pos: event.pos, charge: event.charge });
       }
-      if (match.mode === 'clams' && ['small', 'power'].includes(event.kind)) {
-        if (event.actor && event.id && !event.velocity && event.points === undefined) metrics.clamPickups++;
-        if (event.actor && Array.isArray(event.velocity)) metrics.clamThrows++;
-        if (Number.isFinite(event.points)) metrics.clamScoringEvents++;
+      if (match.mode === 'clams' && ['small', 'power'].includes(event.clamKind)) {
+        if (event.kind === 'clam-pickup') metrics.clamPickups++;
+        if (event.kind === 'clam-throw') metrics.clamThrows++;
+        if (event.kind === 'clam-score') metrics.clamScoringEvents++;
       }
       if (event.kind === 'zone-capture') match.rankedWorld.captureZone(event.zone, event.team);
       match.rankedEffects.event(event);

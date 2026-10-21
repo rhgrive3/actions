@@ -90,6 +90,7 @@ function drawnGeometry(r) {
   const meshes = [...Object.values(r.ch.meshes)];
   r.ch.weapon.pivot.traverse(m => { if (m.isMesh) meshes.push(m); });
   if (r.ch.weapon.left) r.ch.weapon.left.pivot.traverse(m => { if (m.isMesh) meshes.push(m); });
+  r.ch.bomb?.group.traverse(m => { if (m.isMesh) meshes.push(m); });
   const v = new r.api.THREE.Vector3(), rows = [];
   for (const mesh of meshes) {
     let visible = true;
@@ -111,7 +112,11 @@ function drawnGeometry(r) {
     }
     rows.push({ name: mesh.name, skinned: !!mesh.isSkinnedMesh, indexCount: index.count, drawCount: count, vertices });
   }
-  assert.ok(rows.some(m => m.skinned)); assert.ok(rows.some(m => !m.skinned));
+  assert.ok(rows.some(m => m.skinned));
+  // Held sub input now correctly stows the main model. Its first blend frame
+  // need not draw a rigid prop; preserve the ordinary armed-pose geometry gate.
+  const subStowed = r.a?.weaponRunner?.aimingSub && !r.ch.weapon.pivot.visible;
+  if (!subStowed) assert.ok(rows.some(m => !m.skinned));
   return rows;
 }
 function capture(r, stage) {
@@ -318,7 +323,17 @@ test('native runner and Actor frame resume shooting/sub poses after a presentati
       after.a.intent.sub = true; after.a.weaponRunner.update(1 / 60, { fire: false, sub: true });
       after.a._finishFrame(1 / 60); after.ch.root.updateMatrixWorld(true); after.ch.skeleton.update();
       assert.equal(after.a.weaponRunner.aimingSub, true); assert.equal(after.ch.dance, null);
-      assert.ok(after.ch.wSub > 0); trace.push(capture(after, 'native-runner-sub'));
+      assert.ok(after.ch.wSub > 0);
+      assert.equal(after.ch.weapon.pivot.visible, false, 'native sub aim stows the main model after emote cancellation');
+      trace.push(capture(after, 'native-runner-sub'));
+      after.a.intent.sub = false;
+      after.a.weaponRunner.update(1 / 60, { fire: false, sub: false, subReleased: true });
+      for (let i = 0; i < 60; i++) {
+        after.a.weaponRunner.update(1 / 60, { fire: false, sub: false });
+        after.a._finishFrame(1 / 60);
+      }
+      assert.equal(after.ch.weapon.pivot.visible, true, 'main model returns after native throw recovery');
+      trace.push(capture(after, 'native-runner-sub-recovered'));
       writeTrace(trace, '.native-runner.json');
     } finally { api.G.projectiles.fireShooter = fire; }
   } finally { before.close(); after.close(); }

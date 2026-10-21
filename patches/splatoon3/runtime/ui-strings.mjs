@@ -16,7 +16,7 @@ export const UI_JA = Object.freeze({
   'Match in progress':'バトル中です','MATCH IN PROGRESS':'バトル中です',
   'They are mid-match right now. Try again in a few minutes — the room reopens after the results.':'この部屋はバトル中です。リザルトが終わると参加できるので、少し待ってから試してください。',
   'Could not connect':'接続できません','CAN’T CONNECT':'接続できません',
-  'The INKWAVE servers didn’t answer. Check your connection, then try again.':'サーバーから応答がありません。通信状況を確認して、もう一度試してください。',
+  'The ZEVANT servers didn’t answer. Check your connection, then try again.':'サーバーから応答がありません。通信状況を確認して、もう一度試してください。',
   'Room code taken':'コードが使用されています','TRY AGAIN':'もう一度試してください',
   'That room code was just taken. Give it another go.':'そのコードは使用されています。もう一度試してください。',
   'Lost connection to the room':'部屋との接続が切れました','CONNECTION LOST':'接続が切れました',

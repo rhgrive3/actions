@@ -50,6 +50,7 @@ jobs:
             inkwave-public
             patches
             scripts
+            tools/squid-heading-qa
             server/src
             reports/ink-volume/source
 

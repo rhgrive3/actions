@@ -2,7 +2,11 @@
 // envelope the relay never parses: "b|<json>" broadcast, "s|<to>|<json>" to one member; incoming "m|<from>|<json>".
 // Control frames are JSON objects (welcome / join / leave / err / pong).
 
-export const PROTO = 1;
+// Major wire changes require a relay update. Bump COMPAT when gameplay,
+// authoritative rules or network schema changes; UI-only releases remain compatible.
+export const PROTO = 2;
+export const COMPAT = 'iw-gameplay-20261020-r3';
+export const MAX_RELAY_FRAME_CHARS = 64 * 1024 + 64;
 
 // Where the relay lives: ?relay=… wins; a page served from this machine or the LAN talks to a local `wrangler dev`
 // relay on :8787; the public site talks to the deployed Worker.
@@ -92,7 +96,7 @@ export class Transport {
 
   _raw(s) {
     const ws = this.ws;
-    if (!ws || ws.readyState !== 1) return false;
+    if (!ws || ws.readyState !== 1 || s.length > 64 * 1024 || ws.bufferedAmount > 512 * 1024) return false;
     this.bytesOut += s.length;
     ws.send(s);
     return true;

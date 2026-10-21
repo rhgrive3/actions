@@ -51,9 +51,18 @@ const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave
 
 const cachedFixtures = new Map();
 
+// Capture actual accepted wire frames without opening a relay connection.
+function capturedTransport(f, wire = []) {
+  const tr = new f.api.Transport();
+  tr.ws = { readyState: 1, bufferedAmount: 0, send(text) {
+    if (text.startsWith('b|')) wire.push(JSON.parse(text.slice(2)));
+  } };
+  return tr;
+}
+
 async function buildFixture({ apply477 = true, applyNetwork = apply477 } = {}) {
   const clock = { seconds: 0, set(seconds) { this.seconds = seconds; }, now() { return this.seconds * 1000; } };
-  const context = vm.createContext({ console, performance: { now: () => clock.now() }, URL });
+  const context = vm.createContext({ console, TextEncoder, URLSearchParams, performance: { now: () => clock.now() }, URL });
   const modules = new Map();
 
   const load = requested => {
@@ -90,6 +99,7 @@ async function buildFixture({ apply477 = true, applyNetwork = apply477 } = {}) {
     export { installDualiesMotion, dualiesMotionSnapshot, DUALIES_MOTION_CALIBRATION } from './patches/splatoon3/runtime/dualies-motion.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
     export { NetMatch } from './src/net/netmatch.js';
+    export { Transport } from './src/net/transport.js';
     export { CHARACTER_CHANNELS, CHARACTER_TIMERS } from './src/game/character.js';
     export { BONE_INDEX } from './src/game/character-geo.js';
   `, { context, identifier: path.join(ROOT, apply477 ? 'entry-477-patched.mjs' : 'entry-477-unpatched.mjs') });
@@ -532,11 +542,11 @@ test('Remote presentation parity: actual native NetMatch transport (late-start, 
   const wireA = [];
   const sessA = {
     myId: 'A', hostId: 'A', isHost: true,
-    tr: { broadcast: msg => wireA.push(JSON.parse(JSON.stringify(msg))) },
+    tr: capturedTransport(f, wireA),
   };
   const sessB = {
     myId: 'B', hostId: 'A', isHost: false,
-    tr: { broadcast: () => {} },
+    tr: capturedTransport(f),
   };
 
   const netA = new NetMatch(sessA, { map: 'reef' });
@@ -705,8 +715,8 @@ test('Gap A: Playback time advancement on NetMatch (Hermite halfway, dry buffer 
   const { NetMatch } = f.api;
 
   const wireA = [];
-  const sessA = { myId: 'A', hostId: 'A', isHost: true, tr: { broadcast: msg => wireA.push(JSON.parse(JSON.stringify(msg))) } };
-  const sessB = { myId: 'B', hostId: 'A', isHost: false, tr: { broadcast: () => {} } };
+  const sessA = { myId: 'A', hostId: 'A', isHost: true, tr: capturedTransport(f, wireA) };
+  const sessB = { myId: 'B', hostId: 'A', isHost: false, tr: capturedTransport(f) };
 
   const netA = new NetMatch(sessA, { map: 'reef' });
   const netB = new NetMatch(sessB, { map: 'reef' });
@@ -861,9 +871,9 @@ test('Gap B: Token admission scoped to owner and accepted life epoch (handoff, n
   const { NetMatch } = f.api;
 
   const wireA = [], wireC = [];
-  const sessA = { myId: 'A', hostId: 'A', isHost: true, tr: { broadcast: msg => wireA.push(JSON.parse(JSON.stringify(msg))) } };
-  const sessB = { myId: 'B', hostId: 'A', isHost: false, tr: { broadcast: () => {} } };
-  const sessC = { myId: 'C', hostId: 'A', isHost: false, tr: { broadcast: msg => wireC.push(JSON.parse(JSON.stringify(msg))) } };
+  const sessA = { myId: 'A', hostId: 'A', isHost: true, tr: capturedTransport(f, wireA) };
+  const sessB = { myId: 'B', hostId: 'A', isHost: false, tr: capturedTransport(f) };
+  const sessC = { myId: 'C', hostId: 'A', isHost: false, tr: capturedTransport(f, wireC) };
 
   const netA = new NetMatch(sessA, { map: 'reef' });
   const netB = new NetMatch(sessB, { map: 'reef' });
@@ -1050,8 +1060,8 @@ test('Gap C: current production #484 cost/life sidecars coexist with startup thr
     const { NetMatch } = f.api;
 
     const wire = [];
-    const sess = { myId: 'A', hostId: 'A', isHost: true, tr: { broadcast: msg => wire.push(JSON.parse(JSON.stringify(msg))) } };
-    const sessRemote = { myId: 'B', hostId: 'A', isHost: false, tr: { broadcast: () => {} } };
+    const sess = { myId: 'A', hostId: 'A', isHost: true, tr: capturedTransport(f, wire) };
+    const sessRemote = { myId: 'B', hostId: 'A', isHost: false, tr: capturedTransport(f) };
 
     const netHost = new NetMatch(sess, { map: 'reef' });
     const netClient = new NetMatch(sessRemote, { map: 'reef' });

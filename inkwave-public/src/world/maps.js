@@ -1,3 +1,4 @@
+import { nativeStageEnabled, NATIVE_LAYOUTS } from '../../patches/native-stages/runtime/registry.mjs';
 // Map layouts. A map is a list of oriented boxes. Everything in `half` is also mirrored by a 180° rotation about the
 // Y axis ((x,z) -> (-x,-z)) so both teams get an identical arena. Team Alpha spawns at -Z, Bravo at +Z.
 //
@@ -10,6 +11,7 @@
 // original layouts and every existing importer
 import { PATTERN } from './mapkit.js';
 import { LAYOUT as CARGO } from './stages/cargo/layout.js';
+import { LAYOUT as RANGE } from '../../patches/practice-range/stage/layout.mjs';
 export { PATTERN };
 
 const C = {
@@ -29,6 +31,7 @@ export const TIDEWATER = {
   id: 'tidewater',
   bounds: { minX: -25, maxX: 25, minZ: -44, maxZ: 44 },
   spawnPads: [[0, 2.2, -39.2], [0, 2.2, 39.2]],
+  homeSuperJumpPoints: [[0, 0, -33.5], [0, 0, 33.5]],
   spawnBarrier: 4.2,
   // Blocks that are their own mirror image (centered on the origin).
   single: [
@@ -113,6 +116,7 @@ export const KELPLINE = {
   id: 'kelpline',
   bounds: { minX: -24, maxX: 24, minZ: -48, maxZ: 48 },
   spawnPads: [[0, 3.2, -44], [0, 3.2, 44]],
+  homeSuperJumpPoints: [[0, 0, -38.5], [0, 0, 38.5]],
   spawnBarrier: 4.2,
   single: [
     // sunken service trench across the middle
@@ -206,6 +210,7 @@ export const HALYARD = {
   water: 'marina',   // sheltered marina water (environment.js keys the sea look on this)
   bounds: { minX: -24, maxX: 24, minZ: -46, maxZ: 46 },
   spawnPads: [[0, 2.4, -42], [0, 2.4, 42]],
+  homeSuperJumpPoints: [[0, 0, -31.5], [0, 0, 31.5]],
   spawnBarrier: 4.2,
   // match intro opens high over the ferry's sun deck, then sweeps back down the fuel dock to your spawn (ending in
   // front of the clubhouse wall, not inside the building behind it)
@@ -276,4 +281,8 @@ export const HALYARD = {
   },
 };
 
-export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO };
+import { LAYOUT as SCORCH } from '../../patches/splatoon3/stage/scorch-layout.mjs';
+export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO, range: RANGE };
+MAP_LAYOUTS.scorch = SCORCH;
+
+if (nativeStageEnabled) Object.assign(MAP_LAYOUTS, NATIVE_LAYOUTS);

@@ -13,6 +13,31 @@ const options={fullRuntime:true,productionComposition:true,realProjectiles:true,
   extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"};
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 
+function bindPaintProducer(f, record) {
+  const actor=f.make('shooter');Object.assign(actor,{nid:1,owner:'owner',isLocal:true});
+  const nm=new f.NetMatch({myId:'owner',hostId:'owner',isHost:true,_members:new Map([['owner','Owner']])},{id:'ink-footprints'});
+  const trigger=actor.character.trigger;
+  nm.bind({actors:[actor]});
+  const recSplat=nm.recSplat;
+  // Observe canonical kind at the replication boundary; retain its real receipt.
+  nm.recSplat=function(at,R,team,opts){
+    record(at,R,team,opts);
+    return recSplat.call(this,at,R,team,opts);
+  };
+  let disposed=false;
+  const dispose=()=>{
+    if(disposed)return;
+    disposed=true;
+    try{nm.dispose();}finally{
+      nm.recSplat=recSplat;
+      actor.character.trigger=trigger;delete actor.character._netTrig;
+      const index=f.G.actors.indexOf(actor);if(index>=0)f.G.actors.splice(index,1);
+      nm.byNid.clear();nm.match=null;
+    }
+  };
+  return {actor,nm,dispose};
+}
+
 test('profile resource is bounded and every main family selects a silhouette',()=>{
   assert.equal(INK_PROFILE_BYTES.byteLength,8192);
   for(const r of MAIN_WEAPON_CATALOG.records)assert.equal(!!mainInkFootprint(r),families.has(r.family),r.id);
@@ -115,14 +140,17 @@ test('all added Rollers and Brushes select the band through grounded, moving Wea
 
 test('canonical event records the chosen kind before replication and replay uses it without an actor',async()=>{
   const f=await fixture(options),{paint,V}=makePaintWorld(f),events=[];
-  f.G.netm={mute:0,applying:false,recSplat(at,R,team,opts){events.push({at:at.clone(),R,team,opts:{...opts}});}};
-  for(const footprint of INK_FOOTPRINT_KINDS)paint.splat(V(0,0,10),1.3,0,
-    {kind:'source-shot',footprint,seed:.37,face:0,stretch:V(.6,0,.8),stretchAmt:.8});
-  assert.deepEqual(events.map(e=>e.opts.kind),[...INK_FOOTPRINT_KINDS]);
-  const expected=digest(paint.grid);f.G.netm=null;
-  const {paint:remote}=makePaintWorld(f);
-  for(const e of events){delete e.opts.footprint;delete e.opts.claimOwner;remote.splat(e.at,e.R,e.team,e.opts);}
-  assert.equal(digest(remote.grid),expected);
+  const {actor,nm,dispose}=bindPaintProducer(f,(at,R,team,opts)=>events.push({at:at.clone(),R,team,opts:{...opts}}));
+  try{
+    for(const footprint of INK_FOOTPRINT_KINDS)paint.splat(V(0,0,10),1.3,0,
+      {kind:'source-shot',footprint,seed:.37,face:0,stretch:V(.6,0,.8),stretchAmt:.8,claimOwner:actor});
+    assert.deepEqual(events.map(e=>e.opts.kind),[...INK_FOOTPRINT_KINDS]);
+    assert.deepEqual(Array.from(nm.out.filter(e=>e[1]==='s'),e=>e[8]),[...INK_FOOTPRINT_KINDS]);
+    const expected=digest(paint.grid);dispose();
+    const {paint:remote}=makePaintWorld(f);
+    for(const e of events){delete e.opts.footprint;delete e.opts.claimOwner;remote.splat(e.at,e.R,e.team,e.opts);}
+    assert.equal(digest(remote.grid),expected);
+  }finally{dispose();}
 });
 
 test('Charger old organic outline uses three repeatable seed variants with unchanged source widths',async()=>{
@@ -141,21 +169,24 @@ test('Charger old organic outline uses three repeatable seed variants with uncha
   const kinds=[],grids=[],events=[];
   for(const seed of [.13,.47,.83]){
     const {paint}=makePaintWorld(f,{cell:.125});
-    const received=[];f.G.netm={mute:0,applying:false,recSplat(_at,R,_team,opts){received.push({R,opts:{...opts}});}};
-    const center=V(0,0,8),r=1.56;
-    const claimed=paint.splat(center,r,0,{kind:'source-splash',footprint:CHARGER_FOOTPRINT,seed,face:0,stretch:V(0,0,1),stretchAmt:0});
-    assert.ok(claimed>0);
-    const stamp=paint.growing.at(-1);
-    assert.equal(stamp.R,r,'no arbitrary global size correction');
-    assert.ok(stamp.kind>=15&&stamp.kind<=17);
-    assert.equal(received.length,1);assert.equal(received[0].opts.kind,chargerInkProfileKind(seed));
-    const local=Array.from(paint.grid);kinds.push(stamp.kind);grids.push(crypto.createHash('sha256').update(Buffer.from(local)).digest('hex'));
-    f.G.netm=null;
-    const {paint:replayed}=makePaintWorld(f,{cell:.125});
-    const opts={...received[0].opts};delete opts.footprint;delete opts.claimOwner;
-    replayed.splat(center,received[0].R,0,opts);
-    assert.deepEqual(Array.from(replayed.grid),local,'wire kind must reconstruct authoritative CPU coverage');
-    events.push(received[0].opts.kind);
+    const received=[],{actor,nm,dispose}=bindPaintProducer(f,(_at,R,_team,opts)=>received.push({R,opts:{...opts}}));
+    try{
+      const center=V(0,0,8),r=1.56;
+      const claimed=paint.splat(center,r,0,{kind:'source-splash',footprint:CHARGER_FOOTPRINT,seed,face:0,stretch:V(0,0,1),stretchAmt:0,claimOwner:actor});
+      assert.ok(claimed>0);
+      const stamp=paint.growing.at(-1);
+      assert.equal(stamp.R,r,'no arbitrary global size correction');
+      assert.ok(stamp.kind>=15&&stamp.kind<=17);
+      assert.equal(received.length,1);assert.equal(received[0].opts.kind,chargerInkProfileKind(seed));
+      const local=Array.from(paint.grid);kinds.push(stamp.kind);grids.push(crypto.createHash('sha256').update(Buffer.from(local)).digest('hex'));
+      assert.equal(nm.out.filter(e=>e[1]==='s')[0][8],chargerInkProfileKind(seed));
+      dispose();
+      const {paint:replayed}=makePaintWorld(f,{cell:.125});
+      const opts={...received[0].opts};delete opts.footprint;delete opts.claimOwner;
+      replayed.splat(center,received[0].R,0,opts);
+      assert.deepEqual(Array.from(replayed.grid),local,'wire kind must reconstruct authoritative CPU coverage');
+      events.push(received[0].opts.kind);
+    }finally{dispose();}
   }
   assert.deepEqual(kinds,[15,16,17]);
   assert.equal(new Set(grids).size,3,'each old-style shape must be visibly distinct');

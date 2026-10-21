@@ -16,7 +16,7 @@ async function setup() {
   Object.assign(f.context,{WebSocket:Socket,location:{hostname:'localhost',search:''},
     setTimeout:(fn,ms)=>add(fn,ms,false),clearTimeout:id=>timers.delete(id),
     setInterval:(fn,ms)=>add(fn,ms,true),clearInterval:id=>timers.delete(id)});
-  const welcome = {t:'welcome',id:'guest',host:'host',members:[{id:'host',name:'Host'},{id:'guest',name:'Guest'}]};
+  const welcome = {t:'welcome',proto:f.PROTO,compat:f.COMPAT,id:'guest',host:'host',members:[{id:'host',name:'Host'},{id:'guest',name:'Guest'}]};
   const message = (socket,o) => socket.onmessage?.({data:typeof o==='string'?o:JSON.stringify(o)});
   return {...f,sockets,timers,welcome,message,setNow:n=>{now=n;},
     run(ms) { const entry=[...timers].find(([,v])=>v.ms===ms); assert.ok(entry,`timer ${ms}`); const [id,v]=entry; if(!v.repeat)timers.delete(id); v.fn(); },

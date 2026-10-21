@@ -17,7 +17,7 @@ export function withBlasterSplashHit(actor, callback) {
   }
 }
 
-export function blasterHitCueKind(actor, weaponId) {
+export function blasterHitCueKind(actor, weaponId, damage) {
   // Never classify a special, sub, or an unrelated weapon as a Blaster hit.
   const mainId=mainAudioSourceId(weaponId);
   if (mainId !== 'blaster' &&
@@ -25,7 +25,11 @@ export function blasterHitCueKind(actor, weaponId) {
   const weapon = actor?.weapon;
   if (!weapon || (weapon.kind !== 'blaster' && weapon.behaviorKind !== 'blaster' &&
       weapon.catalogRecord?.family !== 'blaster')) return null;
-  return splashScopes.has(actor) ? 'indirect' : 'direct';
+  const directDamage=weapon.directDamage ?? weapon.catalogRecord?.parameters?.DamageParam?.ValueMax / 10;
+  // A late-flight body graze is reduced damage, even though its geometry is
+  // outside _blastBurst. It must not announce a full direct hit.
+  const reduced=Number.isFinite(damage)&&Number.isFinite(directDamage)&&damage+1e-8<directDamage;
+  return splashScopes.has(actor)||reduced ? 'indirect' : 'direct';
 }
 
 // The existing hit marker remains a single sound, but its pitch identifies

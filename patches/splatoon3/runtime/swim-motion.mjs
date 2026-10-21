@@ -49,8 +49,15 @@ function eligible(ch, s, owner) {
 function makeState(ch, owner, THREE) {
   const c = SWIM_MOTION_CALIBRATION, power = clamp(ch.hs / c.speedReference);
   const pivot = ch.squid.pivot, time = ch.t;
+  const worldQuaternion = pivot.getWorldQuaternion(new THREE.Quaternion());
+  // Begin from the mantle that was actually drawn before this owner became
+  // eligible. sourceMotion does not maintain the native sqYaw accumulator.
+  const headingX = 2 * (worldQuaternion.x * worldQuaternion.y - worldQuaternion.w * worldQuaternion.z);
+  const headingZ = 2 * (worldQuaternion.y * worldQuaternion.z + worldQuaternion.w * worldQuaternion.x);
+  const yaw = Math.hypot(headingX, headingZ) > 1e-8
+    ? Math.atan2(headingX, headingZ) : ch.yaw + ch.sqYaw;
   return { active: true, applied: false, owner, age: 0, power, sink: 0,
-    yaw: ch.yaw + ch.sqYaw, bank: ch.sqRoll,
+    yaw, bank: ch.sqRoll,
     bodyPhase: wrap(time * (5 + 9 * power)),
     swayPhase: wrap(time * (4 + 7 * power)),
     heightPhase: wrap(time * 5),
@@ -58,7 +65,7 @@ function makeState(ch, owner, THREE) {
     // turns preserve BOTH waves when reducing the phase for float precision.
     wavePhase: wrap(time * (12 + 8 * power), TAU * 5),
     position: pivot.position.clone(), quaternion: pivot.quaternion.clone(),
-    worldQuaternion: pivot.getWorldQuaternion(new THREE.Quaternion()),
+    worldQuaternion,
     scale: pivot.scale.clone(), targetPosition: new THREE.Vector3(),
     targetQuaternion: new THREE.Quaternion(), modelQuaternion: new THREE.Quaternion(),
     euler: new THREE.Euler(0, 0, 0, 'YXZ'), offset: new THREE.Vector3(),

@@ -19,6 +19,9 @@ export function adaptChargerSurface(rel, code, replace) {
     return "import { chargerSightVisible } from '../../patches/splatoon3/runtime/charger-surface.mjs';\n" + code;
   }
   if (rel === 'src/game/cameraRig.js') {
+    // The new scoped FOV camera is wired in the terminal, authoritative
+    // camera-aim-controls pass, not through the obsolete shared zoom term.
+    if (code.includes('this.scopeK = damp(this.scopeK, chargerScopeFactor(')) return code;
     patch('const charging = a.weaponRunner?.charging ? a.weaponRunner.charge : 0;',
       "const charging = a.weaponRunner?.charging && ((a.weapon?.behaviorKind || a.weapon?.kind) !== 'charger' || a.weapon.scopedCharge === true) ? a.weaponRunner.charge : 0;",
       'explicit scope capability');

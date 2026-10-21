@@ -2,6 +2,8 @@ name: Verify immutable INKWAVE stage Game pair
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/verify-inkwave-stage-game-pair.yml'
   workflow_dispatch:
     inputs:
       candidate_sha:

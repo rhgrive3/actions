@@ -1,3 +1,4 @@
+import { G as propAtlasGame } from '../core/ctx.js';
 // INKWAVE prop kit: procedural set dressing for the harbor / skatepark / container-yard arenas.
 //
 //   const kit = new PropKit(scene, { castShadow: true, quality: 'high' });
@@ -941,7 +942,7 @@ function drawStreetPrint(x) {
     x.fillStyle = '#b4b4b4'; x.beginPath(); x.arc(c, c, 40, 0, TAU); x.fill();
     miniSquid(x, c, c + 2, 30, '#e2e2e2', '#8a8a8a', '#e2e2e2');
     x.font = FT(15); x.fillStyle = '#e8e8e8'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    const s = 'INKWAVE HARBOR · SEWER · INKWAVE HARBOR · SEWER · ';
+    const s = 'ZEVANT HARBOR · SEWER · ZEVANT HARBOR · SEWER · ';
     for (let i = 0; i < s.length; i++) { const a = (i / s.length) * TAU - HP; x.save(); x.translate(c + Math.cos(a) * 95, c + Math.sin(a) * 95); x.rotate(a + HP); x.fillText(s[i], 0, 0); x.restore(); }
   });
   region(x, 'gully', (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = '#fff'; x.fillRect(0, 0, w, 10); x.fillRect(0, h - 10, w, 10); x.fillRect(0, 0, 10, h); x.fillRect(w - 10, 0, 10, h); for (let i = 1; i < 8; i++) x.fillRect(i * 16 - 3, 0, 6, h); x.fillRect(0, h / 2 - 4, w, 8); });
@@ -3103,6 +3104,8 @@ export class PropKit {
     this._headless = !!opts.headless || typeof document === 'undefined';
     if (!this._headless) this._makeMaterials();
     this._buckets = new Map();
+    this._placements = [];   // lightweight {type, o} records: regenerate build buckets on rebuild
+    this._released = false;  // true once build() has released the consumed static buckets
     this._spin = []; this._blink = []; this._flags = []; this._banners = [];
     this._meshes = []; this._inst = [];
     this._tpl = {};
@@ -3112,10 +3115,18 @@ export class PropKit {
   }
 
   _makeMaterials() {
-    const cv = document.createElement('canvas'); cv.width = AW; cv.height = AH;
+    const cv = document.createElement('canvas'), size = propAtlasDimension(this); cv.width = size; cv.height = size;
     const atlas = new THREE.CanvasTexture(cv);
     atlas.colorSpace = THREE.SRGBColorSpace; atlas.anisotropy = 8;
-    const redraw = () => { drawAtlas(cv.getContext('2d')); atlas.needsUpdate = true; };
+    const redraw = () => {
+      if (this._disposed) return;
+      const x = cv.getContext('2d');
+      x.save();
+      try { x.setTransform(cv.width / AW, 0, 0, cv.height / AH, 0, 0); drawAtlas(x); }
+      finally { x.restore(); }
+      atlas.needsUpdate = true;
+    };
+    this._propAtlasRedraw = redraw;
     redraw();
     loadFonts().then(() => { if (!this._disposed) redraw(); });
     this.atlas = atlas;
@@ -3149,18 +3160,39 @@ export class PropKit {
   }
   _tplTris(kind) { return triCountOf(this._tplGeo(kind)); }
 
-  add(type, o = {}) {
-    const def = D[type];
-    if (!def) { console.warn('[props] unknown prop type', type); return { colliders: [] }; }
+  // Shared placement runner: seeds the builder from the placement and runs the definition to
+  // populate `_buckets`. Used by add() (fresh placement) and _replayBuckets() (same-instance rebuild
+  // after the consumed buckets were released). Deterministic: the seeded rng + quality factor drive
+  // every generated vertex, so replaying the same placements reproduces identical geometry.
+  _place(def, type, o) {
     const pos = o.pos || [0, 0, 0], rotY = o.rotY || 0, scale = o.scale ?? 1;
     const seed = o.seed ?? ((Math.round(pos[0] * 131) ^ Math.round(pos[2] * 71) ^ Math.round(pos[1] * 17)) + 1013);
     const B = this._B;
     B.begin(pos, rotY, scale, seed, def.mount !== 'wall' || type === 'pipes' || type === 'ladder' || type === 'container_door');
     B.tris = 0;
     def.build(B, o);
+    return { pos, rotY, scale, B };
+  }
+
+  add(type, o = {}) {
+    const def = D[type];
+    if (!def) { console.warn('[props] unknown prop type', type); return { colliders: [] }; }
+    const { pos, rotY, scale, B } = this._place(def, type, o);
     this.lastTris = B.tris;
     this.count++;
+    this._placements.push({ type, o });
     return { colliders: this._xfCols(B.cols, pos, rotY, scale, !!o.oboxCols) };
+  }
+
+  // Regenerate released build buckets from the recorded placements (same-instance rebuild).
+  // Does not touch count/lastTris/colliders — those are established by the first add().
+  _replayBuckets() {
+    // Recreate each animated record exactly once alongside its static geometry.
+    this._spin = []; this._blink = []; this._flags = []; this._banners = [];
+    for (const p of this._placements) {
+      const def = D[p.type];
+      if (def) this._place(def, p.type, p.o);
+    }
   }
 
   // Local collider boxes → level boxes. A quarter-turned prop gives exact axis-aligned boxes; any other angle gives the
@@ -3196,6 +3228,10 @@ export class PropKit {
   }
 
   build() {
+    syncPropAtlas(this);
+    // A prior build released the consumed buckets; regenerate them from the recorded placements so
+    // a same-instance rebuild re-merges identical geometry instead of wiping the live meshes.
+    if (this._released) { this._buckets.clear(); this._replayBuckets(); }
     this._disposeMeshes();
     if (this._headless) return this;
     for (const [bucket, parts] of this._buckets) {
@@ -3236,6 +3272,12 @@ export class PropKit {
       this.group.add(mesh); this._inst.push(mesh);
     }
     this._applyColors();
+    // Release the consumed static build graph now that every part is merged into the final buffers.
+    // Part records, per-part Matrix4s and uncached procedural tube sources become garbage; shared
+    // TPL templates stay owned by the module cache and are never disposed here. The separate
+    // animated/instanced records (_spin/_blink/_flags/_banners) are retained for update().
+    this._buckets.clear();
+    this._released = true;
     return this;
   }
 
@@ -3261,6 +3303,7 @@ export class PropKit {
   }
 
   update(dt, time) {
+    syncPropAtlas(this);
     this.uTime.value = time;
     for (const mesh of this._inst) {
       const ud = mesh.userData;
@@ -3301,17 +3344,22 @@ export class PropKit {
   clear() {
     this._disposeMeshes();
     this._buckets.clear();
+    this._placements = []; this._released = false;
     this._spin = []; this._blink = []; this._flags = []; this._banners = [];
     this.count = 0;
   }
 
   dispose() {
-    this.clear();
-    this._disposed = true;
-    if (this.mat) for (const k in this.mat) this.mat[k].dispose();
-    for (const k in this._tpl) this._tpl[k].dispose();
-    this.atlas?.dispose(); this.chain?.dispose(); this.blobTex?.dispose();
-    this.group.removeFromParent();
+    try {
+      this.clear();
+      this._disposed = true;
+      if (this.mat) for (const k in this.mat) this.mat[k].dispose();
+      for (const k in this._tpl) this._tpl[k].dispose();
+      this.atlas?.dispose(); this.chain?.dispose(); this.blobTex?.dispose();
+      this.group.removeFromParent();
+    } finally {
+      this._propAtlasRedraw = null;
+    }
   }
 
   // Triangle count of one default instance of `type` (for budgets / docs).
@@ -3320,6 +3368,20 @@ export class PropKit {
     k.add(type, opts);
     return k.lastTris;
   }
+}
+
+// Atlas resolution is a presentation policy, not a gameplay or Nintendo numeric setting.
+function propAtlasDimension(kit) {
+  return kit.quality === 'low' || propAtlasGame.settings?.quality === 'low' || propAtlasGame.game?.mobile?.touch ? 1024 : 2048;
+}
+function syncPropAtlas(kit) {
+  if (kit._headless || kit._disposed || !kit.atlas) return;
+  const size = propAtlasDimension(kit), cv = kit.atlas.image;
+  if (cv.width === size && cv.height === size) return;
+  // Keep the texture handle/material bindings; release the old GPU allocation before resizing.
+  kit.atlas.dispose();
+  cv.width = size; cv.height = size;
+  kit._propAtlasRedraw();
 }
 
 export const PROP_TYPES = Object.entries(D).map(([type, d]) => ({ type, description: d.desc, params: d.params, variants: d.variants, mount: d.mount }));

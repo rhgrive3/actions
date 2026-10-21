@@ -1,0 +1,44 @@
+name: INKWAVE audio source audit
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/inkwave-audio-source-audit.yml'
+permissions:
+  contents: read
+concurrency:
+  group: audio-source-audit-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  inputs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Export tracked research and test inputs only
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib,subprocess,zipfile
+          root=pathlib.Path('.')
+          sha=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          suffixes={'.mjs','.js','.cjs','.json','.py','.md','.txt','.html','.css','.svg','.yml','.yaml','.glsl','.vert','.frag','.cpp','.h'}
+          entries=[]
+          with zipfile.ZipFile('audio-audit-inputs.zip','w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
+            for name in subprocess.check_output(['git','ls-files','-z']).decode().split('\0'):
+              if not name: continue
+              p=root/name
+              if p.is_symlink() or not p.is_file(): continue
+              include=p.suffix in suffixes or name.startswith('patches/splatoon3/runtime/audio/s3-real/')
+              if not include or p.stat().st_size>6000000: continue
+              data=p.read_bytes();z.writestr(name,data)
+              entries.append({'path':name,'sha256':hashlib.sha256(data).hexdigest(),'bytes':len(data)})
+            z.writestr('AUDIT_SOURCE_MANIFEST.json',json.dumps({'commit':sha,'files':entries},ensure_ascii=False))
+          print(json.dumps({'commit':sha,'files':len(entries),'archiveBytes':pathlib.Path('audio-audit-inputs.zip').stat().st_size}))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audio-audit-inputs
+          path: audio-audit-inputs.zip
+          retention-days: 5

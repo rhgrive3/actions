@@ -17,19 +17,25 @@ function compose(rel) {
   return adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, raw))));
 }
 
+// Project browser-root URLs onto the separate upstream and patch source trees.
+// Relative imports may cross that boundary in either direction and at any depth.
+function resolvePublishedSource(spec, from, upstream) {
+  const relativeFrom = path.relative(upstream, from);
+  const publishedFrom = relativeFrom.startsWith('..') ? path.relative(ROOT, from) : relativeFrom;
+  const url = new URL(spec === 'three' ? '/vendor/three/build/three.module.js'
+    : spec.startsWith('three/addons/') ? '/vendor/three/jsm/' + spec.slice(13) : spec,
+    'https://inkwave.test/' + publishedFrom);
+  assert.equal(url.origin, 'https://inkwave.test', 'fixture imports must remain on the published origin');
+  const rel = url.pathname.slice(1);
+  return path.join(rel.startsWith('patches/') ? ROOT : upstream, rel);
+}
+
 async function loadComposedModule(rel, globals = {}) {
   const context = vm.createContext({ console, performance, ...globals });
   const modules = new Map();
   const upstream = path.join(ROOT, 'inkwave-public');
 
-  function resolve(spec, from) {
-    if (spec === 'three') return path.join(upstream, 'vendor/three/build/three.module.js');
-    if (spec.startsWith('three/addons/')) return path.join(upstream, 'vendor/three/jsm', spec.slice(13));
-    if (spec.startsWith('../patches/') || spec.startsWith('../../patches/')) {
-      return path.resolve(path.dirname(from), spec).replace('/inkwave-public/patches/', '/patches/');
-    }
-    return path.resolve(path.dirname(from), spec);
-  }
+  const resolve = (spec, from) => resolvePublishedSource(spec, from, upstream);
 
   function load(file) {
     if (modules.has(file)) return modules.get(file);
@@ -134,7 +140,7 @@ test('real native catalog generation: coldboot Tidewater produces 25 shared laye
   assert.equal(cargoLib.disposed, true);
 });
 
-test('slot metadata before-after: Cargo -> Tidewater -> Cargo preserves 32 slots and stable semantics without shader mismatch', async () => {
+test('slot metadata before-after: Cargo -> Tidewater -> Cargo preserves 35 slots and stable semantics without shader mismatch', async () => {
   const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
   const texlibMod = await loadComposedModule('src/world/texlib.js');
   const levelMatMod = await loadComposedModule('src/world/levelMaterial.js');
@@ -148,11 +154,11 @@ test('slot metadata before-after: Cargo -> Tidewater -> Cargo preserves 32 slots
   // Phase 1: Cargo stage active
   const cargoLib1 = await createTextureLibrary(renderer, { size: 512, stage: 'cargo' });
   const cargoMat1 = createLevelMaterial(dummyPaint.texture, dummyPaint.size, dummyMurals, { texlib: cargoLib1 });
-  assert.equal(cargoMat1.defines.TL_SLOTS, 32, 'TL_SLOTS must remain stable at 32');
+  assert.equal(cargoMat1.defines.TL_SLOTS, 35, 'TL_SLOTS must remain stable at 35');
 
   const uTL_cargo = cargoMat1.userData.uniforms.uTL.value;
   const uTLt_cargo = cargoMat1.userData.uniforms.uTLt.value;
-  assert.equal(uTL_cargo.length, 32);
+  assert.equal(uTL_cargo.length, 35);
   // Shared slot 0: concrete
   assert.equal(uTL_cargo[0].x, 0, 'Slot 0 is concrete (layer 0)');
   // Cargo slots 28, 29, 30
@@ -180,7 +186,7 @@ test('slot metadata before-after: Cargo -> Tidewater -> Cargo preserves 32 slots
 
   const tideLib = await createTextureLibrary(renderer, { size: 512, stage: 'tidewater' });
   const tideMat = createLevelMaterial(dummyPaint.texture, dummyPaint.size, dummyMurals, { texlib: tideLib });
-  assert.equal(tideMat.defines.TL_SLOTS, 32, 'TL_SLOTS must remain stable at 32 on Tidewater');
+  assert.equal(tideMat.defines.TL_SLOTS, 35, 'TL_SLOTS must remain stable at 35 on Tidewater');
 
   const uTL_tide = tideMat.userData.uniforms.uTL.value;
   const uTLt_tide = tideMat.userData.uniforms.uTLt.value;
@@ -227,12 +233,15 @@ test('generic stage pack support: dynamic STAGE_SURFACES and injected extra stag
 
   // Verify baseline is exactly 25 materials
   assert.equal(MATERIALS.length, 25);
-  assert.equal(STAGE_SURFACES.length, 3);
+  assert.deepEqual(Array.from(STAGE_SURFACES, ({ name, slot }) => [name, slot]), [
+    ['cargo:tarmac', 28], ['cargo:quay', 29], ['cargo:chequer', 30],
+    ['range:court', 31], ['range:panel', 32], ['range:rubber', 33],
+  ], 'Current native registry must retain all six Cargo and Range surfaces');
 
   // Injected extra stage (e.g. pending Practice PR #183) with 1 custom surface
   const practiceSurface = {
     stage: 'practice',
-    slot: 31,
+    slot: 34,
     name: 'practice:grid',
     group: 2,
     mat: {
@@ -260,7 +269,7 @@ test('generic stage pack support: dynamic STAGE_SURFACES and injected extra stag
 
   // Verify baseline is NOT mutated
   assert.equal(MATERIALS.length, 25, 'Baseline MATERIALS must remain untouched');
-  assert.equal(STAGE_SURFACES.length, 3, 'Baseline STAGE_SURFACES must remain untouched');
+  assert.equal(STAGE_SURFACES.length, 6, 'Baseline STAGE_SURFACES must remain untouched');
 
   practiceLib.dispose();
 });
@@ -719,20 +728,18 @@ test('resolution fidelity and renderer state: no arbitrary resolution downgrade,
   lowLib.dispose();
 });
 
-test('negative control: unpatched upstream baseline generates all 28 layers unconditionally on cold boot', async () => {
+test('negative control: unpatched upstream baseline generates all 31 layers unconditionally on cold boot', async () => {
   const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
   const rawTexlibCode = fs.readFileSync(path.join(ROOT, 'inkwave-public/src/world/texlib.js'), 'utf8');
 
   // Verify that upstream source contains the eager push of STAGE_SURFACES into MATERIALS
   assert.match(rawTexlibCode, /for\s*\(\s*const\s+s\s+of\s+STAGE_SURFACES\s*\)\s*MATERIALS\.push/);
 
-  // In unpatched baseline, createTextureLibrary ignores stage and always creates depth = 28
+  // In the current unpatched baseline, all 25 shared + 3 Cargo + 3 Range layers are eager.
   const context = vm.createContext({ console, performance });
   const upstream = path.join(ROOT, 'inkwave-public');
-  function resolve(spec, from) {
-    if (spec === 'three') return path.join(upstream, 'vendor/three/build/three.module.js');
-    return path.resolve(path.dirname(from), spec);
-  }
+  const resolve = (spec, from) => resolvePublishedSource(spec, from, upstream);
+
   function loadRaw(file) {
     const code = fs.readFileSync(file, 'utf8');
     const mod = new vm.SourceTextModule(code, { context, identifier: file });
@@ -744,8 +751,11 @@ test('negative control: unpatched upstream baseline generates all 28 layers unco
 
   const renderer = createMockRenderer(THREE);
   const baselineLib = await rawMod.namespace.createTextureLibrary(renderer, { size: 256, stage: 'tidewater' });
-  assert.equal(baselineLib.names.length, 28, 'Unpatched baseline unconditionally generates 28 layers including Cargo');
-  assert.equal(baselineLib.albedo.image.depth, 28, 'Unpatched baseline pins 28 layers on coldboot Tidewater');
+  assert.equal(baselineLib.names.length, 31, 'Unpatched baseline eagerly generates all shared, Cargo, and Range layers');
+  assert.equal(baselineLib.albedo.image.depth, 31, 'Unpatched baseline pins 31 layers on coldboot Tidewater');
+  assert.deepEqual(Array.from(baselineLib.names.slice(25)), [
+    'cargo:tarmac', 'cargo:quay', 'cargo:chequer', 'range:court', 'range:panel', 'range:rubber',
+  ], 'Negative control must expose unnecessary stage layers on Tidewater');
   baselineLib.dispose();
 });
 
@@ -921,4 +931,15 @@ test('native lobby materials invalidate cached programs only when texlib presenc
   assert.equal(surface.userData.shaderUniforms.tAlbedo.value, null);
   assert.equal(game.showcase.lob.set.texlib, null);
   surface.dispose(); ground.dispose(); texture.dispose();
+});
+
+test('published source resolver crosses patch boundary at every import depth without hiding wrong routes', () => {
+  const upstream = path.join(ROOT, 'inkwave-public');
+  assert.equal(resolvePublishedSource('../../../patches/practice-range/stage/surfaces.mjs', path.join(upstream, 'src/world/stages/surfaces.js'), upstream), path.join(ROOT, 'patches/practice-range/stage/surfaces.mjs'));
+  assert.equal(resolvePublishedSource('../../../src/world/mapkit.js', path.join(ROOT, 'patches/practice-range/stage/surfaces.mjs'), upstream), path.join(upstream, 'src/world/mapkit.js'));
+  assert.equal(resolvePublishedSource('../../src/world/texlib.js', path.join(ROOT, 'patches/local-quality/texlib.mjs'), upstream), path.join(upstream, 'src/world/texlib.js'));
+  const wrong = resolvePublishedSource('./world/texlib.js', path.join(ROOT, 'patches/local-quality/texlib.mjs'), upstream);
+  assert.equal(wrong, path.join(ROOT, 'patches/local-quality/world/texlib.js'));
+  assert.equal(fs.existsSync(wrong), false, 'misplaced factory route must remain missing');
+  assert.throws(() => resolvePublishedSource('https://other.test/code.js', path.join(upstream, 'src/main.js'), upstream), /published origin/);
 });

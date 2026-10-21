@@ -4,11 +4,10 @@ import { fixture } from './source-fixture.mjs';
 
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 
-function makeGame(f, { paused = false, online = false, attract = false } = {}) {
+function makeGame(f, { paused = false, attract = false } = {}) {
   const { G } = f;
   const match = { paused, attract, state: 'playing', actors: G.actors, updateController() {}, update() {} };
   G.match = match; G.settings = {};
-  if (online) G.netm = { mute: 0, applying: false, recSplat() {} };
   return { match, input: { padPressed: new Set(), pollPad() {}, endFrame() {} },
     _padMenus() {}, _updateAttract() {}, rig: {} };
 }
@@ -115,12 +114,33 @@ for (const rate of [30, 60, 120]) test(`offline pause freezes native paint and r
 for (const mode of ['offline', 'online-menu', 'attract']) test(`${mode} without an offline pause keeps authoritative paint advancing`, async () => {
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
   const { G } = f, { paint, V } = makePaintWorld(f), owner = f.make('shooter');
-  const game = makeGame(f, { online: mode === 'online-menu', attract: mode === 'attract' });
-  if (mode === 'online-menu') G.mode = 'pause';
-  emitNative(f, owner, V);
-  const bodyCells = paint.counts[0], bodyCredit = owner.stats.turf;
-  for (let tick = 0; tick < 32; tick++) f.runSimulation(game, 1 / 60);
-  assert.ok(G.time > 0 && paint.clock > 0);
-  assert.equal(paint.counts[0], bodyCells, 'no unsourced late spots on normal source paint');
-  assert.equal(owner.stats.turf, bodyCredit, 'fixed-clock growth does not re-credit the same source area');
+  const game = makeGame(f, { attract: mode === 'attract' });
+  const originalNet = G.netm, trigger = owner.character.trigger;
+  const identity = { nid: owner.nid, owner: owner.owner, remote: owner.remote, isLocal: owner.isLocal };
+  let nm;
+  try {
+    if (mode === 'online-menu') {
+      Object.assign(owner, { nid: 1, owner: 'owner', remote: false, isLocal: true });
+      nm = new f.NetMatch({ myId: 'owner', hostId: 'owner', isHost: true,
+        _members: new Map([['owner', 'Owner']]), tr: { broadcast() {}, sendTo() {} } }, { id: 'paint-online-menu' });
+      nm.bind(game.match);
+      G.mode = 'pause';
+    }
+    emitNative(f, owner, V);
+    const bodyCells = paint.counts[0], bodyCredit = owner.stats.turf;
+    assert.ok(bodyCells > 0 && bodyCredit > 0, 'the valid pause fixture starts with admitted, credited paint');
+    assert.equal(paint.growing.length, 1, 'there is a real paint growth for the clock to advance');
+    if (nm) assert.deepEqual(Array.from(nm.out.find(event => event[1] === 's')?.[14]?.[4] ?? []),
+      ['inkwave-paint-authority-v1', 'actor', 1, 0], 'online paint carries the real bound-owner receipt');
+    for (let tick = 0; tick < 32; tick++) f.runSimulation(game, 1 / 60);
+    assert.ok(G.time > 0 && paint.clock > 0);
+    assert.equal(paint.counts[0], bodyCells, 'no unsourced late spots on normal source paint');
+    assert.equal(owner.stats.turf, bodyCredit, 'fixed-clock growth does not re-credit the same source area');
+  } finally {
+    try { nm?.dispose(); } finally {
+      owner.character.trigger = trigger; delete owner.character._netTrig;
+      if (nm) { nm.byNid.clear(); nm.match = null; }
+      Object.assign(owner, identity); G.netm = originalNet;
+    }
+  }
 });

@@ -1,8 +1,10 @@
+import { ROLLER_MODEL_WORLD_SCALE } from '../runtime/roller-source-scale.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fixture } from './source-fixture.mjs';
+import { nativeRollerGripGap } from './roller-support-contact.mjs';
 import { adaptSource, checkCompatibility } from '../adapter.mjs';
 import { recordMovementLaunch, resetAirborneState } from '../runtime/roller-freefall.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -32,9 +34,8 @@ function drumMinimum(c, THREE) {
   });
   return bottom;
 }
-function gripError(c, THREE, name) {
-  const target = c.weapon.def[name].pos.clone().applyMatrix4(c.weapon.off.matrixWorld);
-  return target.distanceTo(c.bones[name].getWorldPosition(new THREE.Vector3()));
+function gripError(c, THREE, name, C) {
+  return nativeRollerGripGap(c, THREE, name, C);
 }
 function settle(a, c, dt) {
   a.weaponRunner.reset(); c.tr.fill(99);
@@ -167,7 +168,7 @@ test('actual moving roller geometry and both grips stay synchronized through lif
       s.speed = r.rolling ? a.weapon.rollSpeed : 2; s.localMove = { x: 0, z: 1 };
       c.root.position.z += s.speed * dt; a.pos.copy(c.root.position); a.vel.z = s.speed;
       c.update(dt, s); c.root.updateMatrixWorld(true);
-      rows.push({ t, grounded: s.grounded, bottom: drumMinimum(c, THREE), gripL: gripError(c, THREE, 'handL'), gripR: gripError(c, THREE, 'handR'), rolling: r.rolling, roll: c.wRoll, axis: c.P[C.ANCR + 2] });
+      rows.push({ t, grounded: s.grounded, bottom: drumMinimum(c, THREE), gripL: gripError(c, THREE, 'handL', C), gripR: gripError(c, THREE, 'handR', C), rolling: r.rolling, roll: c.wRoll, axis: c.P[C.ANCR + 2] });
       if (vertical && r.s3RollerAttack && !restart && t < .78) assert.equal(r.s3RollerAttack.vertical, true);
       if (t + 1e-10 < (vertical ? 31 : 21) / 60) assert.equal(c.weapon.drumW, 0, 'lift does not spin the drum before release');
     }
@@ -224,7 +225,7 @@ test('Character channel/drum hooks are hash locked and fail closed', () => {
 });
 
 test('roller drum uses the measured source width; a pushed drum rests on the floor with both grips held', async () => {
-  const { Character, THREE } = await realCharacter(), f = await fixture();
+  const { Character, THREE, CHARACTER_CHANNELS: C } = await realCharacter(), f = await fixture();
   const c = new Character({ name: 'roller proportions', weapon: 'roller', style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   const s = { form: 'kid', grounded: true, speed: 0, vy: 0, firing: false, rolling: false, localMove: { x: 0, z: 0 }, charge: 0, ink: 1, hp: 1 };
   for (let i = 0; i < 90; i++) c.update(1 / 60, s);
@@ -237,17 +238,17 @@ test('roller drum uses the measured source width; a pushed drum rests on the flo
   const width = drum.max.x - drum.min.x, diameter = drum.max.y - drum.min.y;
   // Pinned exported Roll-material extent, independent of PaintParam and the
   // earlier guessed kid-relative size band. The procedural shape is retained.
-  assert.ok(Math.abs(width - 2.5712) < 1e-5, `source drum width ${width}`);
-  assert.ok(diameter > .5076 * .95 && diameter < .5076 * 1.05, `source-guided drum diameter ${diameter}`);
+  assert.ok(Math.abs(width - 2.5712*ROLLER_MODEL_WORLD_SCALE) < 1e-5, `source drum width ${width}`);
+  assert.ok(diameter > .5076 * ROLLER_MODEL_WORLD_SCALE * .95 && diameter < .5076 * ROLLER_MODEL_WORLD_SCALE * 1.05, `source-guided drum diameter ${diameter}`);
   assert.ok(body.max.x > width / 2 && body.min.x < -width / 2, 'yoke arms reach both drum ends');
-  assert.ok(def.drumAt.z - def.drumR >= .84 - .1 - 1e-6, 'the axle moves out so the hub keeps its upstream clearance');
+  assert.ok(def.drumAt.z - def.drumR >= (.84 - .1)*ROLLER_MODEL_WORLD_SCALE - 1e-6, 'the axle moves out so the hub keeps its upstream clearance');
   s.rolling = true; s.firing = true;
   let bottom = Infinity, top = -Infinity, grip = 0;
   for (let i = 0; i < 90; i++) {
     c.root.position.z += 7.92 / 60; s.speed = 7.92; s.localMove.z = 1; c.update(1 / 60, s); c.root.updateMatrixWorld(true);
     if (i < 45) continue;
     const y = drumMinimum(c, THREE); bottom = Math.min(bottom, y); top = Math.max(top, y);
-    grip = Math.max(grip, gripError(c, THREE, 'handL'), gripError(c, THREE, 'handR'));
+    grip = Math.max(grip, gripError(c, THREE, 'handL', C), gripError(c, THREE, 'handR', C));
   }
   assert.ok(bottom >= -.006 && top < .05, `pushed drum rests on the floor (${bottom}..${top})`);
   assert.ok(grip < .02, `both hands stay on the handle while pushing (${grip})`);

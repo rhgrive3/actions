@@ -232,7 +232,7 @@ for (const result of ['resolve', 'reject']) {
     const f = await fixture(); await room(f);
     const gate = deferred();
     f.G.game.startNetMatch = () => gate.promise;
-    const begin = f.net._begin({ id: 'old', roster: [] });
+    const begin = f.net._begin({proto:f.PROTO,compat:f.COMPAT, id: 'old', roster: [] });
     await flush();
     const oldMatch = f.net.match;
     assert.ok(oldMatch);
@@ -250,7 +250,7 @@ for (const result of ['resolve', 'reject']) {
 test('obsolete lobby launch cannot construct a match in a newer room', async () => {
   const f = await fixture(); await room(f);
   const gate = deferred(); f.G.game.menus = { launchLobby: () => gate.promise };
-  const begin = f.net._begin({ id: 'old', roster: [] });
+  const begin = f.net._begin({proto:f.PROTO,compat:f.COMPAT, id: 'old', roster: [] });
   f.net.leave(); await room(f, 'BC235'); gate.resolve(); await begin;
   assert.equal(f.net.state, 'lobby'); assert.equal(f.net.match, null); f.net.leave();
 });
@@ -273,7 +273,7 @@ for (const method of ['join', 'create']) {
 test('ordinary host match start launches when every human is ready', async () => {
   const f = await fixture(); await room(f);
   f.G.game.startNetMatch = async () => {};
-  await f.net._begin({ id: 'normal', roster: [{ bot: false, owner: 'me' }] });
+  await f.net._begin({proto:f.PROTO,compat:f.COMPAT, id: 'normal', roster: [{ bot: false, owner: 'me' }] });
   assert.equal(f.net.state, 'match'); assert.equal(f.net.match.launched, true);
   assert.ok(f.sockets[0].sent.includes('b|{"k":"go","id":"normal"}'));
   f.net.leave(); assert.equal(f.timers.size, 0);
@@ -283,7 +283,7 @@ test('ordinary host ready timeout still starts its current match', async () => {
   const f = await fixture(); await room(f);
   f.G.game.startNetMatch = async () => {};
   f.net._members.set('slow', 'Slow');
-  await f.net._begin({ id: 'normal', roster: [{ bot: false, owner: 'me' }, { bot: false, owner: 'slow' }] });
+  await f.net._begin({proto:f.PROTO,compat:f.COMPAT, id: 'normal', roster: [{ bot: false, owner: 'me' }, { bot: false, owner: 'slow' }] });
   assert.equal(f.net.state, 'starting');
   f.run(f.timer(12000));
   assert.equal(f.net.state, 'match'); assert.equal(f.net.match.launched, true);
@@ -296,7 +296,7 @@ test('synchronous starting-state cancellation stops match-start acquisition', as
   f.G.game.menus = { launchLobby: () => { calls++; } };
   f.net.on('state', ({ state }) => { if (state === 'starting') f.net.leave(); });
   f.net.on('match', () => { events++; });
-  await f.net._begin({ id: 'old', roster: [] });
+  await f.net._begin({proto:f.PROTO,compat:f.COMPAT, id: 'old', roster: [] });
   assert.equal(calls, 0); assert.equal(events, 0);
   assert.equal(f.net.state, 'offline'); assert.equal(f.net.match, null); assert.equal(f.timers.size, 0);
 });
@@ -305,13 +305,13 @@ for (const retire of ['_fail', '_closed']) test(`#1159 ${retire} clears the old 
   const f=await fixture(); await room(f);
   f.G.game.startNetMatch=async()=>{};
   f.net._members.set('slow','Slow');
-  await f.net._begin({id:'old',roster:[{bot:false,owner:'me'},{bot:false,owner:'slow'}]});
+  await f.net._begin({proto:f.PROTO,compat:f.COMPAT,id:'old',roster:[{bot:false,owner:'me'},{bot:false,owner:'slow'}]});
   const id=f.timer(12000), queued=f.timers.get(id).fn;
   f.net[retire](retire==='_fail'?new Error('aborted'):'closed');
   assert.equal(f.timers.has(id),false);assert.equal(f.net._goT,null);
   await room(f,'BC236');
   f.net._members.set('slow','Slow');
-  await f.net._begin({id:'new',roster:[{bot:false,owner:'me'},{bot:false,owner:'slow'}]});
+  await f.net._begin({proto:f.PROTO,compat:f.COMPAT,id:'new',roster:[{bot:false,owner:'me'},{bot:false,owner:'slow'}]});
   const current=f.timer(12000);
   queued();assert.equal(f.net.state,'starting');assert.equal(f.net._goT,current);
   assert.equal(f.timers.get(current).ms,12000);
@@ -321,7 +321,7 @@ for (const retire of ['_fail', '_closed']) test(`#1159 ${retire} clears the old 
 test('#1159 a new round on the same transport retires the old deadline and owns a full interval', async()=>{
   const f=await fixture();await room(f);f.G.game.startNetMatch=async()=>{};
   f.net._members.set('slow','Slow');
-  const cfg=id=>({id,roster:[{bot:false,owner:'me'},{bot:false,owner:'slow'}]});
+  const cfg=id=>({proto:f.PROTO,compat:f.COMPAT,id,roster:[{bot:false,owner:'me'},{bot:false,owner:'slow'}]});
   await f.net._begin(cfg('old'));const old=f.timer(12000),queued=f.timers.get(old).fn;
   await f.net._begin(cfg('new'));const current=f.timer(12000);
   assert.notEqual(current,old);assert.equal(f.timers.has(old),false);

@@ -1,5 +1,5 @@
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
-import { memoizeFixtureSourceAdapter, memoizeFixtureVmCompiler } from './fixture-cache.mjs';
+import { memoizeFixtureSourceAdapter, memoizeFixtureVmCompiler, createFixtureCompilerProfiles } from './fixture-cache.mjs';
 // Actual public modules plus the build adapter. Defaults stub physics, paint,
 // display and audio; make() also freezes integration/frame finishing and uses
 // a simplified fixed world-axis muzzle. Geometry-sensitive tests must retain
@@ -22,6 +22,8 @@ const adaptProduction = process.env.INKWAVE_DISABLE_FIXTURE_CACHES === '1'
 const cachedVmModule = process.env.INKWAVE_DISABLE_FIXTURE_CACHES === '1'
   ? (source, options) => new vm.SourceTextModule(source, options)
   : memoizeFixtureVmCompiler(vm.SourceTextModule);
+const compilerProfiles = process.env.INKWAVE_DISABLE_FIXTURE_CACHES === '1'
+  ? null : createFixtureCompilerProfiles(cachedVmModule);
 // Super Jump admission calls the same native water predicate as ordinary and
 // special movement. Include its real production adapter in constrained boots.
 export const adaptConstrainedSource = (rel, code) => adaptSpecialWater(rel, adaptSource(rel, code));
@@ -37,6 +39,10 @@ export async function fixture(options = {}) {
   const { adapt = adaptConstrainedSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
     fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false,
     vmPerformance = performance, vmMathRandom = null } = typeof options === 'string' ? {} : options;
+  const generation = compilerProfiles?.begin(JSON.stringify([UPSTREAM, !!BUILT,
+    fullRuntime, productionComposition, realProjectiles, includeCharacter, extraExports]));
+  let generationSucceeded = false;
+  try {
   const context = vm.createContext({ console, performance: vmPerformance, URL, URLSearchParams, TextEncoder, TextDecoder,
     setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
   if (typeof vmMathRandom === 'function') {
@@ -67,7 +73,7 @@ export async function fixture(options = {}) {
       ? adaptNative(relative, raw) : raw;
     const source = !BUILT && productionComposition && upstream ? adaptProduction(rel, raw)
       : upstream ? native : adaptRuntime(rel, native);
-    const mod = cachedVmModule(source, { context, identifier: file,
+    const mod = (generation ? generation.compile : cachedVmModule)(source, { context, identifier: file,
       initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } }); modules.set(file, mod); return mod;
   }
   const characterExports = includeCharacter ? `
@@ -144,7 +150,9 @@ export async function fixture(options = {}) {
     delete context.__inkwaveTestRandom;
   }
   function restoreRandom() { setRandom(originalRandom); }
+  generationSucceeded = true;
   return { ...api, installedRuntime, profile, make, tick, shots, context, setRandom, restoreRandom };
+  } finally { generation?.finish(generationSucceeded); }
 }
 
 // Exercise the installed Actor -> WeaponRunner -> Projectiles admission path.

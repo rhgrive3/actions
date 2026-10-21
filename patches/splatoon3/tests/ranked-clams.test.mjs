@@ -122,8 +122,8 @@ test('splatting drops one, two, or three regular clams by inventory bucket and d
     point('power', 1, [6, 1, 0], { alive: false }),
   ], {}, { floorAt: () => 2 }));
   const drops = engine.events.filter(event => event.kind === 'clam-drop');
-  assert.deepEqual(drops.filter(item => item.data.kind === 'small').map(item => item.data.count), [1, 2, 3]);
-  assert.equal(drops.find(item => item.data.kind === 'power')?.data.count, 1);
+  assert.deepEqual(drops.filter(item => item.data.clamKind === 'small').map(item => item.data.count), [1, 2, 3]);
+  assert.equal(drops.find(item => item.data.clamKind === 'power')?.data.count, 1);
   assert.equal(rule.state.clams.filter(clam => clam.kind === 'small').length, 6);
   assert.equal(rule.state.clams.filter(clam => clam.kind === 'power').length, 1);
   assert.ok(rule.state.clams.every(clam => clam.expiresIn === 10));

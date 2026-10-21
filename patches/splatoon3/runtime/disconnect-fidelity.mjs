@@ -295,6 +295,8 @@ export function retireDisconnectedMainProjectiles(system,owner,{ghostOnly=false}
   if(system._recycle)system._recycle(p);else system.pool?.push(p);
  });
  remove(system.inkFlight?.drops,owns,p=>system.inkFlight.pool?.push(p));
+ // Delayed high-altitude Charger ink uses a separate pool. Retire it on owner departure.
+ remove(system.chargerDrops,owns,p=>system.chargerDropPool?.push(p));
  const retiredBeams=new Set();
  remove(system._fidelityChargerFlights,owns,p=>{if(p.beam)retiredBeams.add(p.beam);});
  remove(system.beams,b=>retiredBeams.has(b)||(!owner||b._netOwner===owner)&&!!b._netPeer,b=>{

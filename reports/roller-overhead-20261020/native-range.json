@@ -1,0 +1,63 @@
+{
+  "build": "16b66efdb5d5d7193c7eebf6f871c3780b6cb5c8355bc1da0ff257342dc9dca1",
+  "errors": [],
+  "requests": [],
+  "console": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "state": {
+    "mode": "match",
+    "match": "playing",
+    "menu": null,
+    "layout": "range",
+    "range": true,
+    "text": "OK!\nF\n112\np\nインク不足\n65%\n+14\np\n+16\np\n+18\np\n+18\np\nスプラローラー\n速度\n7.9m/s\nゾーン\nD · ローラーコート\nターゲット\n最後のヒット\n合計\nヒット\nローラーコート\nR\n塗りリセット\nT\nターゲットリセット\nG\nスタートへ"
+  },
+  "entry": {
+    "route": [
+      "main",
+      "mode",
+      "range"
+    ],
+    "gestures": [
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"play\"]"
+      },
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"mode-range\"]"
+      }
+    ]
+  },
+  "measurement": {
+    "layout": "range",
+    "start": [
+      -26.5,
+      0,
+      11.839333333333345
+    ],
+    "end": [
+      -26.5,
+      0,
+      22.971333333333437
+    ],
+    "face": 9,
+    "floorTag": "floor:roller",
+    "drumWidth": 2.5711998939514182,
+    "paintHalf": 2.8,
+    "contactDepth": 1.4999999999999998,
+    "gpuMinWidth": 4.799999999999727,
+    "gpuMaxWidth": 5.599999999999682,
+    "rows": 97,
+    "holes": 0,
+    "contactError": 0,
+    "events": 90,
+    "debugFixedTicks": 180,
+    "controller": "shipped KeyW + held fire",
+    "inspectionCameraOnly": true
+  },
+  "passed": true
+}

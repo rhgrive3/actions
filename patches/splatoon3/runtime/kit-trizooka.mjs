@@ -61,8 +61,8 @@ export const TRIZOOKA = {
   shotDelay: frames(15),         // ShotDelayFrame 15
   // S3mix's measured full activation lock (includes the shared weapon switch),
   // distinct from the extracted weapon-local StartDelayFrame 5.
-  activationDelay: frames(23),
-  activationDelayStatus: 'S3mix approximate community measurement (about 23F); includes shared weapon switch, not extracted StartDelayFrame',
+  activationDelay: frames(20),
+  activationDelayStatus: 'S3 9.0.0+ activation lock: 20F, includes shared weapon switch; separate from StartDelayFrame',
   reqShotInStartDelay: true,     // IsReqShotInStartDelay
   duration: frames(330),         // SpecialDurationFrame.Low, AP 0. NOT the Stamp 570.
   durationMid: frames(405),      // SpecialDurationFrame.Mid
@@ -173,8 +173,8 @@ export const TRIZOOKA_CARTRIDGE = {
 export const VOLLEY_CONFIG = {
   lobes: 3,
   lobesStatus: 'simulation-calibration-not-extracted',
-  spreadDeg: 2.6,
-  spreadStatus: 'simulation-calibration-not-extracted',
+  spreadDeg: 0,
+  spreadStatus: 'shared launch axis; three globs separate through the orbital radius, not a widening fan',
   damageCarriers: 3,
   damageStatus: 'independent-authoritative-projectiles-with-shared-strongest-contact',
   // retained as the deterministic centre-lobe index for spread/aim calibration
@@ -609,7 +609,7 @@ export function selectTrizookaCollision(p) {
 export const TRIZOOKA_ORBIT = {
   endRadius: TRIZOOKA.orbitalRadiusEnd,
   transitionFrames: TRIZOOKA.orbitalTransitionFrames,
-  startRadius: 1.0,          // CALIBRATION: assumed equal to the end radius
+  startRadius: 0,            // Leaves the muzzle, grows to OrbitalRadiusEnd over 10F.
   turnRate: 6.0,             // CALIBRATION: radians/second around the FLIGHT axis
   lobePhase: Math.PI * 2 / 3,// CALIBRATION: three lobes 120 degrees apart
   status: 'end-radius-and-transition-extracted-start-radius-and-turn-rate-are-calibration',
@@ -623,7 +623,10 @@ export function trizookaOrbitOffset(p, dt) {
   const w = TRIZOOKA_ORBIT.transitionFrames > 0 ? TRIZOOKA_ORBIT.transitionFrames : 1;
   const k = Math.min(1, age / w);
   const radius = TRIZOOKA_ORBIT.startRadius + (TRIZOOKA_ORBIT.endRadius - TRIZOOKA_ORBIT.startRadius) * k;
-  const phase = TRIZOOKA_ORBIT.turnRate * age + (p?.s3VolleyIndex ?? 0) * TRIZOOKA_ORBIT.lobePhase;
+  // The 4F birth stagger must not stagger the orbit clock too: all three
+  // lobes remain 120 degrees apart at the same volley time.
+  const index=p?.s3VolleyIndex ?? 0;
+  const phase = TRIZOOKA_ORBIT.turnRate * (age+index*VOLLEY_CONFIG.lobeInterval) + index * TRIZOOKA_ORBIT.lobePhase;
   // the flight axis: the launch velocity, falling back to the yaw so the basis
   // stays stable before the native step has moved anything
   const axis = (p?.vel && p.vel.lengthSq() > 1e-9)

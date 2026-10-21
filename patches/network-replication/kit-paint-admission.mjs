@@ -46,9 +46,10 @@ function paintMeta(e){return Array.isArray(e?.[15]) ? e[15] : null;}
 function validMeta(meta){return Array.isArray(meta)&&[6,7].includes(meta.length)&&meta[0]===SUB_PAINT_TAG&&typeof meta[1]==='string'&&meta.slice(2).every(safe)&&meta[4]>0&&meta[5]<3||slosherPaintMetaValid(meta)||Array.isArray(meta)&&meta.length===5&&[KIT_PAINT_TAG,BUBBLER_PAINT_TAG].includes(meta[0])&&typeof meta[1]==='string'&&safe(meta[2])&&safe(meta[3])&&safe(meta[4])&&meta[4]>0;}
 export function kitBombBirthMetadata(nm,b){
  const a=b?.owner,id=b?.s3Resolved?.spec?.id;
- return a && !a.remote && safe(a.nid)&&safe(life(a))&&isKit(id) ? [KIT_BIRTH_TAG,epoch(nm),life(a)] : null;
+ return a && !a.remote && safe(a.nid)&&safe(life(a))&&(isKit(id)||id==='sprinkler'&&a.weapon?.sub==='sprinkler') ? [KIT_BIRTH_TAG,epoch(nm),life(a)] : null;
 }
 export function recordKitBombBirth(nm,b,event){
+ if(b?.s3Resolved?.spec?.id==='sprinkler')return; // Birth identity alone never broadens paint admission.
  const meta=event?.[13];
  if(Array.isArray(meta)&&meta[0]===KIT_BIRTH_TAG&&identify(event))b.s3PaintBirth=[KIT_PAINT_TAG,epoch(nm),b.owner.nid,meta[2],event._netSeq];
 }

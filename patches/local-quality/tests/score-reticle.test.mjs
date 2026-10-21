@@ -1,4 +1,6 @@
 import {configDependency} from './config-fixture.mjs';
+import {chargerScopeFactor} from '../../../inkwave-public/src/game/chargerTuning.js';
+import {updateSplatlingStages} from '../splatling-reticle.mjs';
 // Actual composed HUD and native UI maths; display nodes and the FX clock are fixtures.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,13 +26,21 @@ class El {
     this.tag=tag;this.children=[];this.dataset={};this.style={setProperty(k,v){this[k]=v;}};this.names=new Set();this.parts=new Map();
     this.classList={add:(...ns)=>ns.forEach(n=>this.names.add(n)),remove:(...ns)=>ns.forEach(n=>this.names.delete(n)),toggle:(n,on)=>on?this.names.add(n):this.names.delete(n),contains:n=>this.names.has(n)};
   }
+  contains(node){return node===this||this.children.some(child=>child.contains?.(node));}
   insertAdjacentHTML(_where,s){this.html=(this.html||'')+s;}
   set className(s){this.names=new Set(s.split(/\s+/).filter(Boolean));} get className(){return [...this.names].join(' ');}
-  set innerHTML(s){this.html=s;this.parts.clear();} get innerHTML(){return this.html||'';}
+  set innerHTML(s){this.html=s;this.children=[];this.parts.clear();} get innerHTML(){return this.html||'';}
   appendChild(c){c.parentNode=this;this.children.push(c);return c;} setAttribute(k,v){this[k]=v;} addEventListener(){} remove(){} animate(){return{};}
   get offsetWidth(){return 1000;}
   querySelectorAll(selector){const names=selector.split('.').filter(Boolean),out=[];for(const c of this.children){if(names.every(n=>c.names?.has(n)))out.push(c);if(c.querySelectorAll)out.push(...c.querySelectorAll(selector));}return out;}
-  querySelector(selector){const found=this.querySelectorAll(selector)[0];if(found)return found;if(!this.parts.has(selector))this.parts.set(selector,new El());return this.parts.get(selector);}
+  querySelector(selector){const found=this.querySelectorAll(selector)[0];if(found)return found;if(!this.parts.has(selector))this.parts.set(selector,this.appendChild(new El()));return this.parts.get(selector);}
+}
+function nativeScopeMask() {
+  const lines=read('src/ui/hud.js').split('\n').filter(line=>line.trimStart().startsWith('this.scopeMask = '));
+  assert.equal(lines.length,1,'one actual native scopeMask initializer');
+  const holder={};
+  vm.runInNewContext(`(function(){${lines[0]}})`,{h:(tag,attrs)=>{const node=new El(tag);node.className=attrs?.class||'';for(const [k,v] of Object.entries(attrs||{}))if(k!=='class')node.setAttribute(k,v);return node;}}).call(holder);
+  return holder.scopeMask;
 }
 async function fixture({baseline=false}={}) {
   const G={settings:{},match:null},nodes=[];
@@ -43,9 +53,9 @@ async function fixture({baseline=false}={}) {
   let code=baseline?adaptSource('src/ui/hud.js',read('src/ui/hud.js')):site?fs.readFileSync(path.join(site,'src/ui/hud.js'),'utf8'):adaptQualitySource('src/ui/hud.js',adaptReliability('src/ui/hud.js',adaptTouchLayout('src/ui/hud.js',adaptSource('src/ui/hud.js',read('src/ui/hud.js')))));
   if(minify)code=transform(code,{loader:'js',format:'esm',minify:true}).code;
   const imports=new Map();for(const n of parse(code,{ecmaVersion:'latest',sourceType:'module'}).body)if(n.type==='ImportDeclaration'){if(!imports.has(n.source.value))imports.set(n.source.value,new Set());for(const s of n.specifiers)imports.get(n.source.value).add(s.imported?.name||'default');}
-  const values={applyShotGuide,selectedSub,selectedSubCost,G,on:()=>()=>{},t:translate,...config.namespace,GLYPHS:{},SUB_ICONS:{},weaponIcon:x=>x,specialIcon:x=>x,keycap:x=>x,richText:x=>x};
+  const values={chargerScopeFactor,updateSplatlingStages,applyShotGuide,selectedSub,selectedSubCost,G,on:()=>()=>{},t:translate,...config.namespace,GLYPHS:{},SUB_ICONS:{},weaponIcon:x=>x,specialIcon:x=>x,keycap:x=>x,richText:x=>x};
   const mod=new vm.SourceTextModule(code,{context});await mod.link(spec=>spec==='./ui-util.js'?util:new vm.SyntheticModule([...imports.get(spec)],function(){for(const k of imports.get(spec))this.setExport(k,k in values?values[k]:()=>{});},{context}));await mod.evaluate();
-  const hud=()=>Object.assign(Object.create(mod.namespace.HUD.prototype),{_L:{},_bloom:0,_kick:0,_fxTime:0,overLayer:new El(),ret:new El(),xh:new El(),spIcon:new El(),shield:new El(),subChip:new El(),_snd(){},_restart(){},_addFx(_name,fn){this.fx=fn;}});
+  const hud=()=>Object.assign(Object.create(mod.namespace.HUD.prototype),{_L:{},_bloom:0,_kick:0,_fxTime:0,overLayer:new El(),ret:new El(),xh:new El(),spIcon:new El(),shield:new El(),subChip:new El(),scopeMask:nativeScopeMask(),_snd(){},_restart(){},_addFx(_name,fn){this.fx=fn;}});
   return {G,hud,nodes};
 }
 function runJudge(h,percents,hz=60,winner=0){

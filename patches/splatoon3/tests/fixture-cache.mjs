@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 // Only immutable adapted text and V8 compilation data are cached; each test
 // still links/evaluates fresh SourceTextModules in fresh VM contexts.
 function boundedCache(maxBytes) {
@@ -11,10 +12,10 @@ function boundedCache(maxBytes) {
       if (entry) { entries.delete(key); entries.set(key, entry); }
       return entry;
     },
-    put(key, entry, bytes) {
+    put(key, entry, bytes, retainOverflow = false) {
       const old = entries.get(key);
       if (old) { used -= old.bytes; entries.delete(key); }
-      if (bytes > maxBytes) return;
+      if (bytes > maxBytes || (retainOverflow && used + bytes > maxBytes)) return;
       while (used + bytes > maxBytes && entries.size) {
         const first = entries.keys().next().value;
         used -= entries.get(first).bytes;
@@ -49,7 +50,7 @@ export function memoizeFixtureVmCompiler(Module, maxBytes = 12 * 1024 * 1024) {
   // VM compilation is actually requested so early guards remain effective.
   if (typeof Module !== 'function') return () => { throw new TypeError('SourceTextModule constructor required'); };
   const cache = boundedCache(maxBytes);
-  return (source, options) => {
+  return (source, options, retainOverflow = false) => {
     const id = options?.identifier;
     if (typeof source !== 'string' || typeof id !== 'string')
       return new Module(source, options);
@@ -60,8 +61,47 @@ export function memoizeFixtureVmCompiler(Module, maxBytes = 12 * 1024 * 1024) {
     if (typeof mod.createCachedData === 'function') {
       const data = mod.createCachedData();
       if (data?.byteLength)
-        cache.put(id, { source, data }, source.length * 2 + data.byteLength);
+        cache.put(id, { source, data }, source.length * 2 + data.byteLength, retainOverflow);
     }
     return mod;
+  };
+}
+
+// One bounded previous successful load sequence, never VM objects or mutable state.
+export function createFixtureCompilerProfiles(compile) {
+  let previous = null, epoch = 0;
+  const active = new Set();
+  return {
+    begin(identity) {
+      const overlapping = active.size > 0;
+      if (overlapping) { previous = null; epoch++; }
+      const generation = epoch, prior = previous;
+      const rows = [];
+      let metadataBytes = 0;
+      let eligible = prior?.identity === identity, complete = false, failed = overlapping;
+      const token = {
+        compile(source, options) {
+          if (complete) throw new Error('fixture compilation generation is closed');
+          const id = options?.identifier;
+          const bounded = typeof source === 'string' && typeof id === 'string' && id.length <= 4096 && rows.length < 2048 &&
+            metadataBytes + 2 * (id.length + 64) <= 256 * 1024;
+          if (!bounded) { eligible = false; failed = true; }
+          const row = bounded ? [id, createHash('sha256').update(source).digest('hex')] : null;
+          const expected = prior?.rows[rows.length];
+          if (!row || !expected || row[0] !== expected[0] || row[1] !== expected[1]) eligible = false;
+          if (row) { rows.push(row); metadataBytes += 2 * (id.length + 64); }
+          try { return compile(source, options, eligible && generation === epoch); }
+          catch (error) { failed = true; previous = null; epoch++; throw error; }
+        },
+        finish(success) {
+          if (complete) return;
+          complete = true; active.delete(token);
+          if (!success || failed) { previous = null; epoch++; return; }
+          if (generation === epoch && !active.size) previous = { identity, rows };
+        },
+      };
+      active.add(token);
+      return token;
+    },
   };
 }

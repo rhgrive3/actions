@@ -29,6 +29,17 @@ const fixtureRel = 'patches/splatoon3/tests/paint-mask-browser-fixture.mjs';
 const fixtureCode = fs.readFileSync(path.join(ROOT, fixtureRel), 'utf8');
 const captureFile=arg('--main-ink-captures');
 const mainInkCaptures=captureFile?JSON.parse(fs.readFileSync(captureFile,'utf8')):[];
+const currentCharger=mainInkCaptures.length>0&&mainInkCaptures.every(c=>c.currentOnly===true);
+if(currentCharger){
+  assert.deepEqual(mainInkCaptures.map(c=>c.id),[0,.25,.5,.75,1].map(c=>'charger-'+c));
+  assert.equal(mainInkCaptures.reduce((n,c)=>n+c.events.length,0),37);
+  for(const capture of mainInkCaptures){
+    assert.equal(capture.provenance.kind,'current-emitted-native-splats');
+    assert.equal(capture.provenance.contentHash,build.contentHash);
+    assert.equal(capture.provenance.inputHash,build.inputHash);
+  }
+}
+
 let sourceSha = null;
 if (process.argv.includes('--exact-source')) {
   sourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
@@ -43,6 +54,7 @@ if (process.argv.includes('--exact-source')) {
     const file = roots[prefix] + key.slice(prefix.length); assert.equal(hash(fs.readFileSync(path.join(ROOT, file))), expected, file); return file;
   });
   assert.equal(hash(fs.readFileSync(path.join(ROOT, 'scripts/build-inkwave.mjs'))), build.build.script);
+  if(currentCharger)files.push('scripts/capture-charger-paint-events.mjs','scripts/weapons-fixture.mjs','scripts/measure-weapons-fidelity.mjs');
   files.push('scripts/build-inkwave.mjs', 'scripts/inkwave-source-composition.mjs', 'scripts/check-inkwave-paint-mask.mjs', fixtureRel);
   const blobs = execFileSync('git', ['hash-object', '--', ...files], { cwd: ROOT, encoding: 'utf8' }).trim().split('\n');
   files.forEach((file, i) => assert.equal(blobs[i], tree.get(file), file + ' must match the tested commit'));
@@ -102,7 +114,7 @@ try {
     assert.equal(outcome.error, undefined, outcome.error); assert.equal(errors.length, 0, JSON.stringify(errors));
     results[mode] = outcome.result;
     await page.locator('[data-main-ink-gallery]').screenshot({path:path.join(evidence,'main-ink-gallery-'+mode+'.png')});
-    if(mainInkCaptures.length)await page.locator('[data-main-ink-volleys]').screenshot({path:path.join(evidence,'main-ink-volleys-'+mode+'.png')});
+    if(mainInkCaptures.length)await page.locator('[data-main-ink-volleys]').screenshot({path:path.join(evidence,(mainInkCaptures.every(c=>c.currentOnly===true)?'charger-current-native-':'main-ink-volleys-')+mode+'.png')});
     await page.close();
   }
   assert.deepEqual(results.source, results.built, 'source-composed and emitted mask/hash receipts must agree exactly');

@@ -5,7 +5,7 @@ import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
-import { installRollerContactPaint } from './roller-contact-paint.mjs';
+import { installRollerContactPaint, rollerContactDepth, rollerPaintHalfWidth } from './roller-contact-paint.mjs';
 import { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 import { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
@@ -50,6 +50,16 @@ function interpolateFields(a,b,q){
 }
 const INSTALLED = Symbol.for('inkwave.main-weapon-catalog.v1');
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
+
+// Nintendo10.0.0: the post-Splatana-swing sub lock also blocks Clam throws.
+// Reuse the existing sourced recovery clock; do not invent a throw delay.
+// https://support.nintendo.com/jp/switch/software_support/av5ja/1000.html
+export function catalogSplatanaThrowBlocked(actor) {
+  const s = actor?.weaponRunner?.catalogState;
+  // pending owns the still-cancellable pre-wave swing. Its existing null
+  // transition marks wave emission; only the remaining recovery is blocked.
+  return actor?.weapon?.catalogRecord?.family === 'splatana' && s?.stop > EPS && !s.pending;
+}
 
 // Community 60fps measurements, explicitly v10.0.1, not extracted defaults:
 // wikiwiki.jp/splatoon3mix/検証/メインウェポン (Brella table).
@@ -286,18 +296,23 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(s.slideRunner&&width>0)paintDualiesSlide(G,s.slideRunner,
       {kind:'dualies',rollPaintWidthHalf:width,rollPaintWorldScale:1},ending);
   }
+  function canKeepCharge(r, s) {
+    const kp = r.parameters.WeaponKeepChargeParam || r.parameters.spl__WeaponStringerParam?.ChargeKeepParam;
+    // LACT charge keep: https://www.nintendo.com/jp/character/splatoon/fashion/index.html
+    return !!(kp && (s.chargeF > 0 || s.stream > 0 && kp.EnableKeepChargeAnytime) &&
+      (kp.EnableKeepChargeAnytime || s.chargeF + EPS >= chargeFrames(r)) &&
+      (r.family !== 'stringer' || r.parameters.spl__WeaponStringerParam.IsEnableChargeKeep ||
+        (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))));
+  }
   function cancel(runner, keep = false) {
     const s = runner.catalogState;
     if (!s) return;
     s.birthEpoch = (s.birthEpoch || 0) + 1;
     const r = RECORDS.get(s.id), kp = r.parameters.WeaponKeepChargeParam || r.parameters.spl__WeaponStringerParam?.ChargeKeepParam;
     if(keep&&s.stream>0&&kp?.EnableKeepChargeAnytime){s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(runner.a);}
-    if (keep && s.chargeF > 0 && kp && (kp.EnableKeepChargeAnytime || s.chargeF+EPS >= chargeFrames(r)) &&
-      (r.family !== 'stringer' || r.parameters.spl__WeaponStringerParam.IsEnableChargeKeep ||
-        // Nintendo's LACT-450 guide explicitly confirms charge keep. Its pinned
-        // row omits this flag; this source-actor exception is not a schema default.
-        // https://www.nintendo.com/jp/character/splatoon/fashion/index.html
-        (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))))
+    // Keep capability is shared with Actor's busy admission, including the
+    // source-backed LACT sparse-flag exception. No new storage owner or clock.
+    if (keep && s.chargeF > 0 && canKeepCharge(r, s))
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
     s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
@@ -316,6 +331,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);
     const s = this.catalogState;
+    // A newer Squid press while holding Fire must reach the existing keep
+    // transition. Actor still owns input precedence and form selection.
+    if (s && this.a.intent?.squid && this.a.intent.fire && !s.roll && !s.lunge &&
+      !s.pending && !s.melee && canKeepCharge(this.a.weapon.catalogRecord, s)) return false;
     if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee && !((this.a.weapon.catalogRecord.family==='splatana'||this.a.weapon.catalogRecord.family==='dualies')&&s?.stop>EPS)) return false;
     return !!(s && (s.pending || s.melee || s.chargeF>0 || s.stream>0 || s.roll || s.lunge || s.stop>EPS));
   };
@@ -428,7 +447,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // Wall projection remains unchanged until its separate source law is verified.
       if(Math.abs(normal.y)<.4){options.stretch=direction;options.stretchAmt=Math.max(0,depth-1);}
       else if(tangent.lengthSq()>EPS){
-        tangent.normalize();const shape=catalogPaintEllipse(radius,depth);
+        tangent.normalize();
+        // A compressed rolling contact has an independent longitudinal length.
+        // Preserve the drum heading and the transverse radius on both sides.
+        if(footprint==='ink-contact'&&depth<1){
+          options.stretch=tangent;options.stretchAmt=depth-1;
+          owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));return;
+        }
+        const shape=catalogPaintEllipse(radius,depth);
         if(shape.rotate)tangent.crossVectors(normal,tangent.clone()).normalize();
         paintRadius=shape.radius;centre=at.clone().addScaledVector(tangent,-shape.centreBack);
         options.stretch=tangent;options.stretchAmt=shape.stretchAmt;
@@ -1193,7 +1219,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
         if(target){
-          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>withProjectileHitGeometry(this,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>this.applyHit(p.owner,target,amount,p.wid)));}
+          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0){
+            const owner=p.owner,previous=owner._sourceChargerAudioHit;
+            if(s.r.family==='charger')owner._sourceChargerAudioHit={chargerDirect:true,charge:d.charge};
+            try{withObjectDamageCause(p,()=>withProjectileHitGeometry(this,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>this.applyHit(owner,target,amount,p.wid)));}
+            finally{if(s.r.family==='charger')owner._sourceChargerAudioHit=previous;}
+          }}
           if(s.r.family==='charger'&&d.charge+EPS>=1&&d.m.ThroughFullCharge!==false){s.seen.add(target);continue;}
           if(s.r.family==='blaster'&&!p.ghost)explosion(this,p,d.b.BlastParam,target);
           if(s.r.parameters.BlastParam?.BlastParam&&!p.ghost)explosion(this,p,s.r.parameters.BlastParam.BlastParam);
@@ -1262,6 +1293,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function paintRollingStroke(a,stroke,physical=false){
     const {to,from,heading}=stroke;
     const radius=stroke.radius;
+    const contactDepth=physical?stroke.depth:0;
     if(physical){
       const drum=a.character.weapon.drum,geo=a.character.weapon.def.drum;
       if(!geo.boundingBox)geo.computeBoundingBox();
@@ -1274,17 +1306,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const m=drum.matrixWorld.elements;
       heading.set(-m[2],0,m[0]).normalize();
       if(heading.x*Math.sin(a.yaw)+heading.z*Math.cos(a.yaw)<0)heading.negate();
-      // The contact profile ends at .6R. Put its leading edge at the drum,
-      // instead of painting an entire half-stamp ahead of the cylinder.
-      to.addScaledVector(heading,-radius*.6);
+      // Depth is independent of WidthHalfMax. Its leading edge still ends
+      // at the current drum; widening ink must not lengthen a contact stamp.
+      to.addScaledVector(heading,-contactDepth*.5);
     }
     if(stroke.face!==a.ground?.face)stroke.active=false;
     if(!stroke.active)from.copy(to);
     const distance=Math.hypot(to.x-from.x,to.z-from.z);
     // Overlap the filled body, including small rollers at maximum speed.
     // A new stroke never sweeps from the player's feet or an old location.
-    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.04,radius*(physical?.4:.52)))));
-    const depth=physical?1:1+stroke.speed*stroke.dt/(stamps*Math.max(.1,radius));
+    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.04,physical?Math.min(radius*.4,contactDepth*.4):radius*.52))));
+    const depth=physical?contactDepth/(1.2*radius):1+stroke.speed*stroke.dt/(stamps*Math.max(.1,radius));
     for(let i=1;i<=stamps;i++){
       const t=i/stamps;
       stroke.point.set(from.x+(to.x-from.x)*t,to.y,from.z+(to.z-from.z)*t);
@@ -1310,12 +1342,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(!pay(runner,cost,finite(roll.InkRecoverStop,20)/HZ)){runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;return;}
     const paintParam=body.PaintParam||{},paintMax=finite(paintParam.WidthHalfMax,.9);
     const paintSpeedMin=finite(paintParam.SpeedMin,0)*HZ,paintSpeedMax=finite(paintParam.SpeedMax,max/HZ)*HZ;
-    // Missing sparse width defaults stay calibrated; interpolate only an
-    // explicit pair, instead of declaring an invented minimum sourced.
-    const sourceRadius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
+    // Rollers share documented sparse defaults with the native runner.
+    // Brushes retain their separate established width calibration.
+    const bodyRadius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
       paintSpeedMax>paintSpeedMin?clamp((speed-paintSpeedMin)/(paintSpeedMax-paintSpeedMin)):1);
-    // Roller WidthHalfMax is a paint half-width, not a display drum width.
-    // Keep the established source-to-world mapping (1:1 for catalogue ink).
+    const sourceRadius=r.family==='roller'?rollerPaintHalfWidth(paintParam,speed):bodyRadius;
+    // Roller contact ink includes the shared, explicitly visual width
+    // calibration. Raw PaintParam remains intact; damage uses bodyRadius.
     // Brushes retain their separate existing contact calibration.
     const radius=sourceRadius*(r.family==='brush'?.25:1);
     // Drum/brush floor contact follows body yaw, not reticle pitch. An aimed-down
@@ -1327,7 +1360,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     });
     const heading=stroke.heading.set(Math.sin(a.yaw),0,Math.cos(a.yaw));
     stroke.to.set(a.pos.x+heading.x*.6,a.pos.y+.35,a.pos.z+heading.z*.6);
-    stroke.radius=radius;stroke.speed=speed;stroke.dt=dt;
+    stroke.radius=radius;stroke.depth=rollerContactDepth(paintParam);stroke.speed=speed;stroke.dt=dt;
     stroke.pending=r.family==='roller'&&!!a.character?.weapon?.drum&&!!a.character.weapon.def?.drum;
     if(!stroke.pending)paintRollingStroke(a,stroke);
     s.contactTimes ||= new Map();
@@ -1338,7 +1371,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // dealt no damage. Contact radius and cadence are unchanged.
     const at=rollerContactAt.set(a.pos.x+heading.x*.6,a.pos.y,a.pos.z+heading.z*.6);
     const eye=rollerContactEye.set(at.x,a.pos.y+.35,at.z);
-    for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<sourceRadius+PLAYER.radius&&
+    for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<bodyRadius+PLAYER.radius&&
       G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(eye,rollerTargetCentre.set(enemy.pos.x,enemy.pos.y+(enemy.form==='squid'?PLAYER.squidHeight:PLAYER.height)*.5,enemy.pos.z))){
       withObjectDamageCause({owner:a,type:r.family==='brush'?'brush-body':'roller',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id));s.contactTimes.set(enemy,G.time);
     }
@@ -1850,8 +1883,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(!r)return legacyUpdate.call(this,dt,input);
     const s=state(this);
     if(s.canopy?.preparing&&(!input.fire||input.sub||a.form!=='kid'||a.remote||!a.alive||a.specialActive||a.superJumpState||this.aimingSub))s.canopy.preparing=false;
-    // Cancel BEFORE the installed sub preparation owner checks main busy state.
-    if(input.sub||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid'||r.family==='brella'&&a.form!=='kid')cancel(this);
+    const throwBlocked=catalogSplatanaThrowBlocked(a);
+    // A held sub may cancel a main charge, but not erase an emitted swing's
+    // existing recovery. Its preparation starts once that same clock expires.
+    if(input.sub&&!throwBlocked||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid'||r.family==='brella'&&a.form!=='kid')cancel(this);
     if(r.family==='splatana'&&a.form!=='kid'&&(s.pending||s.melee||s.lunge))cancel(this);
     // Rebuild/cure belong to elapsed weapon life, including squid form and
     // sub/special use. Previously both clocks lived behind the kid/fire gate.
@@ -1869,7 +1904,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Native/kit update readers use these four flags for sub-weapon logic.
     // Allocate once per runner instead of per 60 Hz update.
     const subInp=this._catalogSubInput||(this._catalogSubInput={fire:false,firePressed:false,sub:false,subReleased:false});
-    subInp.sub=input?.sub;subInp.subReleased=input?.subReleased;
+    subInp.sub=!throwBlocked&&input?.sub;subInp.subReleased=!throwBlocked&&input?.subReleased;
     legacyUpdate.call(this,dt,subInp);
     if(!Number.isFinite(dt)||dt<=0||a.remote||!a.alive||a.specialActive||a.superJumpState)return;
     // Wiki: orientation changes continuously even while swimming/unarmed.

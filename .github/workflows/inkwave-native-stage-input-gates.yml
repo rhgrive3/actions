@@ -3,22 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - scripts/check-inkwave-motion-catalog.mjs
-      - scripts/check-inkwave-network-browser.mjs
-      - scripts/check-inkwave-touch-layout-identity.mjs
-      - scripts/check-inkwave-flow-render.mjs
-      - scripts/check-inkwave-wall-render.mjs
-      - scripts/check-inkwave-paint-mask.mjs
-      - scripts/lib/inkwave-runtime-evidence.mjs
-      - scripts/tests/inkwave-native-stage-inputs.test.mjs
-      - scripts/tests/inkwave-build-packaging.test.mjs
-      - scripts/tests/inkwave-runtime-evidence.test.mjs
-      - patches/splatoon3/tests/motion-catalog-gates.test.mjs
-      - patches/reliability/tests/start.test.mjs
-      - patches/splatoon3/tests/issue-1039-host-ready.test.mjs
-      - patches/splatoon3/tests/paint-mask-browser-fixture.mjs
-      - patches/splatoon3/tests/paint-mask-probe-level.test.mjs
-      - .github/workflows/inkwave-native-stage-input-gates.yml
+      - '.github/workflows/inkwave-native-stage-input-gates.yml'
 permissions:
   contents: read
 jobs:

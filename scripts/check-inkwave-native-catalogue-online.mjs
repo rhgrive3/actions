@@ -4,7 +4,8 @@
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';import crypto from 'node:crypto';
 import {chromium} from 'playwright';import {WebSocketServer} from 'ws';import {pathToFileURL} from 'node:url';
 const sourceRoot=path.resolve(process.env.NATIVE_ONLINE_SOURCE_ROOT||'');assert.ok(process.env.NATIVE_ONLINE_SOURCE_ROOT,'Explicit current production server worktree is required');
-const {RoomDurableObject}=await import(pathToFileURL(path.join(sourceRoot,'server/src/index.js')).href);
+import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
+const worker=await import(pathToFileURL(path.join(sourceRoot,'server/src/index.js')).href);
 const site=path.resolve(process.argv[2]||'_site-native'),out=path.resolve(process.argv[3]||'.browser-evidence/native-online');fs.mkdirSync(out,{recursive:true});
 const buildIdentity=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
 const binding={serverRoot:sourceRoot,serverSha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(sourceRoot,'server/src/index.js'))).digest('hex'),contentHash:buildIdentity.contentHash,inputHash:buildIdentity.inputHash,revision:buildIdentity.build.revision,emitted:Object.fromEntries(['src/net/netmatch.js','src/net/session.js','src/game/player.js','src/game/actor.js','src/game/weapons.js'].map(rel=>[rel,crypto.createHash('sha256').update(fs.readFileSync(path.join(site,'_versions',buildIdentity.build.revision,rel))).digest('hex')]))};
@@ -19,7 +20,8 @@ function traceTick(raw,name){
   if(trace.length>100)trace.shift();
  }catch{}
 }
-relay.on('connection',(ws,req)=>{const url=new URL(req.url,'http://local'),code=url.pathname.split('/')[2];let room=rooms.get(code);if(!room){room=new RoomDurableObject({},{});rooms.set(code,room);}room.handleSession({send:s=>{if(ws.readyState===1)ws.send(s);},addEventListener:(n,fn)=>ws.on(n,n==='message'?d=>{packets++;const raw=d.toString();traceTick(raw,url.searchParams.get('name'));fn({data:raw});}:fn)},url.searchParams.get('name')||'Player');});
+const connectRelay=createLocalRelay({rooms,worker});
+relay.on('connection',(ws,req)=>connectRelay(ws,req,{receive:raw=>{packets++;traceTick(raw,new URL(req.url,'http://local').searchParams.get('name'));}}));
 const address='http://127.0.0.1:'+server.address().port+'/?map=tidewater&relay='+encodeURIComponent('ws://127.0.0.1:'+relay.address().port);
 const proxyURL=process.env.HTTPS_PROXY?new URL(process.env.HTTPS_PROXY):null,proxy=proxyURL?{server:proxyURL.origin,username:decodeURIComponent(proxyURL.username),password:decodeURIComponent(proxyURL.password),bypass:'127.0.0.1,localhost'}:undefined;
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,proxy,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const pages=[],errors=[],results=[];

@@ -20,9 +20,13 @@ on:
       - 'patches/splatoon3/tests/catalog-*.test.mjs'
       - 'patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'patches/splatoon3/tests/roller-holding-pivot.test.mjs'
       - 'scripts/check-inkwave-saber-origins-browser.mjs'
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
       - 'scripts/check-inkwave-new-families-browser.mjs'
+      - 'scripts/check-inkwave-roller-scale-range.mjs'
+      - 'scripts/lib/inkwave-range-menu-entry.mjs'
+      - 'patches/local-quality/roller-motion.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   pull_request:
     paths:
@@ -43,9 +47,13 @@ on:
       - 'patches/splatoon3/tests/catalog-*.test.mjs'
       - 'patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'patches/splatoon3/tests/roller-holding-pivot.test.mjs'
       - 'scripts/check-inkwave-saber-origins-browser.mjs'
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
       - 'scripts/check-inkwave-new-families-browser.mjs'
+      - 'scripts/check-inkwave-roller-scale-range.mjs'
+      - 'scripts/lib/inkwave-range-menu-entry.mjs'
+      - 'patches/local-quality/roller-motion.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   workflow_dispatch:
 permissions:
@@ -71,7 +79,9 @@ jobs:
       - name: Verify backward shot-release facing and source Hold gait
         run: node --experimental-vm-modules --test patches/splatoon3/tests/reverse-shot-release.test.mjs patches/splatoon3/tests/source-posture.test.mjs
       - name: Verify Roller swing and Curling bomb production paths
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/roller-flick-movement.test.mjs patches/splatoon3/tests/roller.test.mjs patches/splatoon3/tests/bomb-kit-fidelity.test.mjs patches/splatoon3/tests/air-attack-acceleration.test.mjs patches/splatoon3/tests/catalog-rolling-form-reset.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/roller-flick-movement.test.mjs patches/splatoon3/tests/roller.test.mjs patches/splatoon3/tests/roller-holding-pivot.test.mjs patches/splatoon3/tests/bomb-kit-fidelity.test.mjs patches/splatoon3/tests/air-attack-acceleration.test.mjs patches/splatoon3/tests/catalog-rolling-form-reset.test.mjs
+      - name: Verify Dynamo native contact at 30/60/120 Hz
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/dynamo-handle-center.test.mjs
       - name: Verify sourced Splatana origins and Slosher flight contact/cover
         run: node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs patches/splatoon3/tests/catalog-splash-contact-distance.test.mjs patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs
       - name: Verify Stringer, Splatana, Brella and added Dualies floor paint
@@ -112,3 +122,304 @@ jobs:
           name: inkwave-main-weapon-origins
           path: work/weapon-stage-gaps/
           if-no-files-found: ignore
+  roller-grip-comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GRIP_SEED: '1715'
+      GRIP_RNG_TRACE: '1'
+      BASELINE_SHA: 83f27e5d59db944458a85122a95d1154e3543393
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+      EVENT_NAME: ${{ github.event_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Select Roller and shared pose changes
+        id: changes
+        shell: bash
+        run: |
+          mkdir -p work/roller-grip-evidence
+          run=true
+          # Avoid two production builds for unrelated weapon/audio/network work.
+          # Missing diff history is conservative: run, never silently skip evidence.
+          if [[ "$EVENT_NAME" != workflow_dispatch && "$DIFF_BASE" =~ ^[0-9a-f]{40}$ && "$DIFF_BASE" != 0000000000000000000000000000000000000000 ]]; then
+            if git fetch --no-tags --depth=1 origin "$DIFF_BASE" && git diff --name-only "$DIFF_BASE" HEAD > work/roller-grip-evidence/changed-paths.txt; then
+              run=false
+              while IFS= read -r file; do
+                case "$file" in
+                  .github/workflows/inkwave-main-weapons.yml|scripts/check-inkwave-roller-scale-range.mjs|scripts/lib/inkwave-range-menu-entry.mjs|scripts/build-inkwave.mjs|scripts/inkwave-source-composition.mjs) run=true ;;
+                  inkwave-public/src/core/*|inkwave-public/src/game/*|inkwave-public/src/world/paint.js|inkwave-public/src/config.js|inkwave-public/src/main.js) run=true ;;
+                  patches/local-quality/roller-motion.mjs|patches/network-replication/roller-*|patches/splatoon3/weapon-catalog-adapter.mjs) run=true ;;
+                  patches/splatoon3/runtime/roller*|patches/splatoon3/runtime/*motion*|patches/splatoon3/runtime/source-*|patches/splatoon3/runtime/weapon*|patches/splatoon3/runtime/main-*|patches/splatoon3/runtime/movement*|patches/splatoon3/runtime/body-*|patches/splatoon3/runtime/controller-*|patches/splatoon3/runtime/render.mjs|patches/splatoon3/runtime/install.mjs) run=true ;;
+                esac
+              done < work/roller-grip-evidence/changed-paths.txt
+            fi
+          fi
+          printf 'run=%s\n' "$run" >> "$GITHUB_OUTPUT"
+          printf 'Roller grip comparison selected: %s\n' "$run"
+      - uses: actions/checkout@v4
+        if: steps.changes.outputs.run == 'true'
+        with:
+          ref: 83f27e5d59db944458a85122a95d1154e3543393
+          path: work/roller-grip-baseline
+      - name: Record exact source and capture identities
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git -C work/roller-grip-baseline rev-parse HEAD)" = "$BASELINE_SHA"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { createHash } from 'node:crypto';
+          const sha256 = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          fs.writeFileSync('work/roller-grip-evidence/checkouts.json', JSON.stringify({
+            baseline: process.env.BASELINE_SHA, candidate: process.env.CANDIDATE_SHA,
+            captureScript: sha256('scripts/check-inkwave-roller-scale-range.mjs'),
+            entryHelper: sha256('scripts/lib/inkwave-range-menu-entry.mjs'),
+            workflow: sha256('.github/workflows/inkwave-main-weapons.yml'),
+          }, null, 2) + '\n');
+          NODE
+      - uses: actions/setup-node@v4
+        if: steps.changes.outputs.run == 'true'
+        with:
+          node-version: 22
+      - name: Install the existing production build and browser tools
+        if: steps.changes.outputs.run == 'true'
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          browser_path=$(node -p "require('playwright').chromium.executablePath()")
+          printf 'CHROMIUM_PATH=%s\n' "$browser_path" >> "$GITHUB_ENV"
+          echo "ESBUILD_MODULE=$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" >> "$GITHUB_ENV"
+      - name: Build the pinned baseline without runtime overlays
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          (cd work/roller-grip-baseline && node scripts/build-inkwave.mjs inkwave-public ../roller-grip-site-baseline) 2>&1 | tee work/roller-grip-evidence/before-build.log
+          cp work/roller-grip-site-baseline/inkwave-build.json work/roller-grip-evidence/before-build.json
+      - name: Build the exact candidate without runtime overlays
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/build-inkwave.mjs inkwave-public work/roller-grip-site-candidate 2>&1 | tee work/roller-grip-evidence/after-build.log
+          cp work/roller-grip-site-candidate/inkwave-build.json work/roller-grip-evidence/after-build.json
+      - name: Capture baseline at the shipped 180-tick rolling state
+        id: baseline_capture
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before --expected-drum-width 2.5712 --grip-seed "$GRIP_SEED" 2>&1 | tee work/roller-grip-evidence/before.log
+          test -s work/roller-grip-evidence/before/grip-cameras.json
+          node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict'; assert.equal(JSON.parse(fs.readFileSync('work/roller-grip-evidence/before/result.json')).passed, true);"
+      # One extra capture, not a third build: prove seeded A/A repeatability first.
+      - name: Repeat baseline for synthetic RNG and GPU A/A control
+        id: aa_control
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/before-control --expected-drum-width 2.5712 --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/before-control.log
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const read = side => JSON.parse(fs.readFileSync(`work/roller-grip-evidence/${side}/result.json`, 'utf8'));
+          const first = read('before'), repeat = read('before-control');
+          for (const result of [first, repeat]) {
+            assert.equal(result.passed, true);
+            assert.equal(result.measurement.recipeRandom.mode, 'seeded-synchronous-180-tick');
+            assert.equal(result.measurement.recipeRandom.seed, Number(process.env.GRIP_SEED));
+            assert.equal(result.measurement.recipeRandom.restored, true);
+          }
+          assert.deepEqual(first.measurement.initialState.character, repeat.measurement.initialState.character, 'A/A initial Character state differs');
+          assert.equal(first.build, repeat.build, 'A/A must use the exact same built baseline');
+          for (const key of ['gpuFootprint', 'recipeRandom', 'cameraPlan', 'gripViews', 'start', 'end'])
+            assert.deepEqual(first.measurement[key], repeat.measurement[key], `Unchanged baseline A/A differs: ${key}`);
+          console.log('Synthetic RNG baseline A/A control passed; candidate comparison may proceed.');
+          NODE
+      # Failed A/A still yields diagnostic candidate pixels, never a passing pair.
+      # The failed control step remains failed; cancellation is never bypassed.
+      - name: Capture candidate with the baseline cameras unchanged
+        if: ${{ !cancelled() && steps.changes.outputs.run == 'true' && steps.baseline_capture.outcome == 'success' }}
+        env:
+          GRIP_DIAGNOSTIC_ONLY: ${{ steps.aa_control.outcome == 'success' && '0' || '1' }}
+        shell: bash
+        run: |
+          set -o pipefail
+          test -s work/roller-grip-evidence/before/grip-cameras.json
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-candidate work/roller-grip-evidence/after --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/after.log
+      - name: Repeat candidate for resized-model GPU A/A control
+        if: steps.changes.outputs.run == 'true' && steps.aa_control.outcome == 'success'
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-candidate work/roller-grip-evidence/after-control --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json 2>&1 | tee work/roller-grip-evidence/after-control.log
+      - name: Verify complete and comparable grip evidence
+        if: steps.changes.outputs.run == 'true' && steps.aa_control.outcome == 'success'
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const root = 'work/roller-grip-evidence';
+          const read = file => JSON.parse(fs.readFileSync(`${root}/${file}`, 'utf8'));
+          const sha = value => assert.match(value, /^[0-9a-f]{64}$/);
+          const ids = read('checkouts.json');
+          assert.equal(ids.baseline, process.env.BASELINE_SHA);
+          assert.equal(ids.candidate, process.env.CANDIDATE_SHA);
+          for (const key of ['captureScript', 'entryHelper', 'workflow']) sha(ids[key]);
+          const names = ['rear', 'side', 'front-oblique', 'right-side'];
+          const sides = ['before', 'before-control', 'after', 'after-control'].map((side, index) => {
+            const result = read(`${side}/result.json`), build = read(`${index < 2 ? 'before' : 'after'}-build.json`);
+            const cameras = read(`${side}/grip-cameras.json`), m = result.measurement;
+            const steady = read(`${side}/steady-result.json`);
+            assert.equal(steady.passed, true); assert.equal(steady.build, result.build);
+            assert.deepEqual(steady.measurement, m, 'Release capture changed steady measurement');
+            assert.equal(result.passed, true, `${side} capture failed`);
+            const expectedWidth = index < 2 ? 2.5712 : 2.5712 * (1.36 / 1.72259927);
+            assert.equal(result.expectedDrumWidth, expectedWidth);
+            assert.ok(Math.abs(m.drumWidth - expectedWidth) < 1e-4, `${side} model width differs`);
+            assert.equal(result.diagnosticOnly, false, 'Diagnostic capture cannot pass paired acceptance');
+            assert.deepEqual(result.errors, []);
+            sha(build.contentHash); sha(build.inputHash);
+            assert.equal(build.build.optimization, 'esbuild-minify');
+            assert.equal(build.build.esbuild, '0.28.2');
+            assert.equal(result.build, build.contentHash, `${side} receipt/build mismatch`);
+            assert.equal(m.layout, 'range');
+            assert.equal(m.floorTag, 'floor:roller');
+            assert.equal(m.debugFixedTicks, 180);
+            assert.equal(m.controller, 'shipped KeyW + held fire');
+            assert.equal(m.inspectionCameraOnly, true);
+            assert.equal(m.contactStamps.length, m.events);
+            for (const stamp of m.contactStamps) assert.ok(stamp.contactError < 1e-5, 'Every paint contact follows the actual drum');
+            assert.equal(m.gripCameraReference, index !== 0);
+            const initial = m.initialState;
+            assert.equal(initial.schema, 1); assert.equal(initial.boundary.schema, 1);
+            assert.equal(initial.boundary.boundary, 'trusted-mode-range-capture');
+            assert.equal(initial.boundary.trusted, true);
+            assert.equal(initial.gameTime, initial.boundary.time);
+            assert.ok(Number.isFinite(initial.gameTime));
+            for (const key of ['time', 'phase', 'breathPhase']) assert.equal(initial.character[key], 0);
+            assert.ok(Number.isInteger(initial.character.seed) && typeof initial.character.name === 'string');
+            assert.ok(Array.isArray(initial.character.pose) && initial.character.pose.every(Number.isFinite));
+            const rng = m.recipeRandom;
+            assert.equal(rng.mode, 'seeded-synchronous-180-tick');
+            assert.equal(rng.algorithm, 'mulberry32-u32-v1');
+            assert.equal(rng.seed, Number(process.env.GRIP_SEED));
+            assert.equal(rng.restored, true);
+            assert.ok(Number.isInteger(rng.draws) && rng.draws > 0);
+            assert.ok(Array.isArray(rng.contactSeeds) && rng.contactSeeds.length > m.events);
+            for (const [order, contact] of rng.contactSeeds.entries()) {
+              assert.equal(contact.order, order); assert.equal(contact.completed, true);
+              assert.ok(Number.isFinite(contact.returnedClaimedArea) && contact.returnedClaimedArea >= 0);
+              assert.ok(['settle', 'measurement'].includes(contact.phase));
+              assert.ok(Number.isFinite(contact.seed) && contact.seed >= 0 && contact.seed < 1);
+            }
+            assert.equal(rng.contactSeeds.filter(c => c.phase === 'measurement').length, m.events);
+            const footprint = m.gpuFootprint;
+            assert.equal(footprint.schema, 1);
+            assert.equal(footprint.alphaThreshold, 128);
+            assert.equal(footprint.encoding, 'uint8-row-major-0-or-1');
+            assert.equal(footprint.algorithm, 'SHA-256');
+            for (const key of ['width', 'height']) assert.ok(Number.isInteger(footprint[key]) && footprint[key] > 0);
+            assert.ok(Number.isInteger(footprint.occupiedPixels) && footprint.occupiedPixels > 0 && footprint.occupiedPixels <= footprint.width * footprint.height);
+            sha(footprint.sha256);
+            assert.deepEqual(m.frozenState.pos, m.end);
+            assert.equal(m.frozenState.rolling, true);
+            for (const key of ['time', 'yaw', 'phase']) assert.ok(Number.isFinite(m.frozenState[key]));
+            assert.ok(Array.isArray(m.frozenState.pose) && m.frozenState.pose.length > 0 && m.frozenState.pose.every(Number.isFinite));
+            assert.equal(cameras.schema, 1);
+            assert.deepEqual(m.cameraPlan, cameras);
+            assert.deepEqual(cameras.views.map(v => v.name), names);
+            assert.deepEqual(m.gripViews.map(v => v.name), names);
+            assert.ok(Number.isInteger(m.renderSize.width) && m.renderSize.width > 0);
+            assert.ok(Number.isInteger(m.renderSize.height) && m.renderSize.height > 0);
+            assert.equal(m.renderAspect, m.renderSize.width / m.renderSize.height);
+            for (const [i, view] of cameras.views.entries()) {
+              assert.equal(view.aspect, 1280 / 840);
+              assert.ok(Math.abs(m.renderAspect - view.aspect) < 1e-10);
+              assert.deepEqual(m.gripViews[i].position, view.position);
+              for (const [key, length] of [['quaternion', 4], ['projection', 16]]) {
+                const vector = m.gripViews[i][key];
+                assert.ok(Array.isArray(vector) && vector.length === length && vector.every(Number.isFinite));
+              }
+            }
+            const release = result.release;
+            assert.equal(release.schema, 1);
+            assert.equal(release.controller, 'shipped fire released + KeyW held');
+            assert.deepEqual(release.cameraSpec, cameras.views[1]);
+            assert.deepEqual(release.actualCamera, m.gripViews[1]);
+            assert.deepEqual(release.renderSize, m.renderSize);
+            for (const key of Object.keys(m.frozenState)) assert.deepEqual(release.start[key], m.frozenState[key]);
+            assert.deepEqual(release.frames.map(f => f.tick), [1, 4, 12]);
+            for (const frame of [release.start, ...release.frames]) {
+              for (const value of [frame.pos, frame.hands.right, frame.hands.left])
+                assert.ok(Array.isArray(value) && value.length === 3 && value.every(Number.isFinite));
+              for (const key of ['time', 'phase', 'yaw']) assert.ok(Number.isFinite(frame[key]));
+              assert.equal(typeof frame.rolling, 'boolean');
+              assert.ok(Array.isArray(frame.pose) && frame.pose.length === m.frozenState.pose.length && frame.pose.every(Number.isFinite));
+              if (frame.tick) assert.ok(Math.abs(frame.time - release.start.time - frame.tick / 60) < 1e-8);
+            }
+            for (const name of [...names.map(n => `grip-${n}.png`), 'gameplay.png', 'scene.png', 'range.png', ...[1, 4, 12].map(n => `release-side-${n}.png`)]) {
+              const png = fs.readFileSync(`${root}/${side}/${name}`);
+              assert.ok(png.length > 24, `${side}/${name} empty`);
+              assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${side}/${name} not PNG`);
+              if (name.startsWith('grip-') || name.startsWith('release-side-')) {
+                assert.equal(png.readUInt32BE(16), m.renderSize.width);
+                assert.equal(png.readUInt32BE(20), m.renderSize.height);
+              }
+            }
+            return { build, cameras, measurement: m, release };
+          });
+          assert.equal(sides[0].build.contentHash, sides[1].build.contentHash, 'A/A baseline build differs');
+          for (const other of sides.slice(1)) {
+            assert.deepEqual(sides[0].measurement.initialState.character, other.measurement.initialState.character, 'Initial Character state differs');
+            assert.deepEqual(sides[0].cameras, other.cameras, 'Capture changed the baseline cameras');
+            for (const key of ['gripViews', 'renderSize', 'start', 'end'])
+              assert.deepEqual(sides[0].measurement[key], other.measurement[key], `Seeded control/candidate differs: ${key}`);
+            // Resizing the whole model moves its physical drum/contact point and its orientation.
+            // Retain exact same-build A/A masks, source seeds, paint dimensions
+            // and every-frame physical contact, rather than freezing the old
+            // oversized model's ink placement.
+            const recipe = r => ({...r, contactSeeds:r.contactSeeds.map(({returnedClaimedArea, ...seed}) => seed)});
+            assert.deepEqual(recipe(sides[0].measurement.recipeRandom), recipe(other.measurement.recipeRandom), 'Global/contact RNG stream differs');
+            const offset = other.measurement.contactStamps[0].at.map((v, axis) => v - sides[0].measurement.contactStamps[0].at[axis]);
+            for (const [i, stamp] of other.measurement.contactStamps.entries()) {
+              const before = sides[0].measurement.contactStamps[i];
+              for (const key of ['r', 'amount', 'seed', 'face']) assert.deepEqual(before[key], stamp[key], `Contact recipe differs: ${i}/${key}`);
+              for (let axis = 0; axis < 3; axis++) {
+                assert.ok(Math.abs(before.heading[axis] - stamp.heading[axis]) < 1e-10, 'Contact orientation preserved');
+                assert.ok(Math.abs(stamp.at[axis] - before.at[axis] - offset[axis]) < .003, 'Stroke follows translated resized model within 3mm of its breathing pose');
+              }
+            }
+            assert.equal(sides[0].measurement.frozenState.yaw, other.measurement.frozenState.yaw, 'Actor yaw differs');
+          }
+          for (const [first, repeat] of [[sides[0], sides[1]], [sides[2], sides[3]]]) {
+            assert.equal(first.build.contentHash, repeat.build.contentHash);
+            for (const key of ['gpuFootprint', 'recipeRandom', 'contactStamps']) assert.deepEqual(first.measurement[key], repeat.measurement[key], `Same-build A/A differs: ${key}`);
+          }
+          for (const other of sides.slice(1))
+            for (let i = 0; i < 3; i++)
+              for (const key of ['tick', 'pos', 'yaw', 'rolling'])
+                assert.deepEqual(sides[0].release.frames[i][key], other.release.frames[i][key], `Release gameplay differs: ${key}`);
+          // Record phase/time/pose, do not force-reset them or assert cross-build pose equality.
+          const stateSummary = ({ frozenState: { time, phase, yaw, rolling } }) => ({ time, phase, yaw, rolling });
+          fs.writeFileSync(`${root}/comparison.json`, JSON.stringify({ passed: true, ...ids,
+            before: sides[0].build.contentHash, after: sides[2].build.contentHash, baselineControl: sides[1].build.contentHash, candidateControl: sides[3].build.contentHash,
+            contactPlacement: sides.map(s => s.measurement.contactStamps.map(c => ({at:c.at, drumCentre:c.drumCentre, error:c.contactError}))), gpuFootprints: sides.map(s => s.measurement.gpuFootprint),
+            views: names, ticks: 180, release: { controller: sides[0].release.controller, ticks: [1, 4, 12] }, gpuFootprint: sides[0].measurement.gpuFootprint, recipeRandom: sides[0].measurement.recipeRandom, states: sides.map(s => stateSummary(s.measurement)),
+            note: 'Synthetic trusted-input-frozen, seeded 180-tick QA with exact GPU/RNG A/A controls for BOTH builds. Resizing moves physical drum contact and its orientation; source width/depth/seeds and actual drum contact remain checked, with placement recorded. This is not default stochastic gameplay. Pose/time remain unmodified; visual/reference acceptance requires image review.'
+          }, null, 2) + '\n');
+          console.log('All four seeded captures preserve cameras, actor motion and source contact recipes; each build repeats its own exact GPU mask and RNG receipt.');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.changes.outputs.run == 'true'
+        with:
+          name: inkwave-roller-grip-comparison
+          path: work/roller-grip-evidence/
+          retention-days: 14
+          if-no-files-found: warn

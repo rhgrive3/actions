@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
-import {RoomDurableObject} from '../server/src/index.js';
+import {observeRankedBoot} from './lib/ranked-boot-diagnostics.mjs';
+import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 const site=path.resolve(process.argv[2]||'_site-ranked'),out=path.resolve(process.argv[3]||'reports/ranked-browser');fs.mkdirSync(out,{recursive:true});
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 const publicUrl=process.env.RANKED_PUBLIC_URL;
@@ -28,10 +29,11 @@ const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript'
 const server=http.createServer((req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(site,'.'+(pathname==='/'?'/index.html':pathname));if(!file.startsWith(site+path.sep)||!fs.statSync(file).isFile())throw Error();res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});served.add(path.relative(site,file));fs.createReadStream(file).pipe(res);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>relay.once('listening',r));const rooms=new Map();
-relay.on('connection',(ws,req)=>{const u=new URL(req.url,'http://localhost'),code=u.pathname.split('/')[2];let room=rooms.get(code);if(!room)rooms.set(code,room=new RoomDurableObject({},{}));room.handleSession({send:s=>{if(delay&&s.startsWith('m|'))setTimeout(()=>ws.readyState===1&&ws.send(s),delay);else if(ws.readyState===1)ws.send(s);},addEventListener:(n,fn)=>ws.on(n,n==='message'?d=>fn({data:d.toString()}):fn)},u.searchParams.get('name')||'Player');});
+const connectRelay=createLocalRelay({rooms});
+relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(text,deliver)=>{if(delay&&text.startsWith('m|'))setTimeout(()=>deliver(text),delay);else deliver(text);}}));
 const url=`${publicUrl||'http://127.0.0.1:'+server.address().port+'/'}?relay=${encodeURIComponent('ws://127.0.0.1:'+relay.address().port)}`;
-const errors=[],results=[],contexts=[],pages=[];let browser,browserInfo=null;
-async function boot(){const c=await browser.newContext({viewport:{width:1280,height:800}});contexts.push(c);await c.tracing.start({screenshots:true,snapshots:true,sources:false});const p=await c.newPage();pages.push(p);p.on('crash',()=>console.error('ranked browser page crashed'));p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));await p.goto(url,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await p.waitForFunction(()=>RG.game?.menus&&RG.s3?.installed&&RG.mode!=='boot',null,{timeout:180000});return p;}
+const errors=[],results=[],contexts=[],pages=[],bootAttempts=[];let browser,browserInfo=null;
+async function boot(){const c=await browser.newContext({viewport:{width:1280,height:800}});contexts.push(c);await c.tracing.start({screenshots:true,snapshots:true,sources:false});const p=await c.newPage();pages.push(p);p.on('crash',()=>console.error('ranked browser page crashed'));p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));const receipt={context:contexts.length-1,inputHash:build.inputHash,revision:build.build.revision,runAttempt:process.env.GITHUB_RUN_ATTEMPT||null};bootAttempts.push(receipt);await observeRankedBoot(p,url,receipt,async()=>{await p.goto(url,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});});return p;}
 async function advance(p,n){return p.evaluate(n=>{const g=RG.game,previous=g._skipRender;g._skipRender=true;try{for(let i=0;i<n;i++)g._frame(1/60);}finally{g._skipRender=previous;}RG.renderer.render(RG.scene,RG.camera);},n);}
 async function capture(p,options){
  const label=path.basename(options.path),started=Date.now();
@@ -141,7 +143,63 @@ try{
   await advance(p,60);
   await capture(p,{path:path.join(out,mode+'-objective.jpg'),type:'jpeg',quality:60});
   const deadline=await p.evaluate(()=>{const m=RG.match,e=m.ranked;e.time=.001;m.time=.001;m.advanceRanked(1/60);return {winner:e.winner,overtime:e.overtime,state:m.state};});
-  results.push({mode,offline:initial,proof:{...proof,...deadline}});
+  let clamVoidDrop=null;
+  if(mode==='clams')clamVoidDrop=await p.evaluate(async()=>{
+   const {RankedEngine}=await import(new URL('patches/splatoon3/runtime/ranked/engine.mjs',document.baseURI));
+   const {PLAYER}=await import(new URL('src/config.js',document.baseURI));
+   // BEGIN CLAM VOID DROP PROOF (also executed verbatim by the CPU regression)
+   function runClamVoidDropProof(G,RankedEngine,PLAYER){
+    const m=G.match,w=m.rankedWorld,dt=1/60,rows=[];
+    const check=(ok,message)=>{if(!ok)throw Error('Clam void proof: '+message);};
+    check(m.mode==='clams'&&!m.follower,'offline Clam match required');
+    const pool=m.actors.filter(a=>a.alive&&!a.remote&&!a.specialActive&&!a.superJumpState&&!a.s3?.squidSpawn&&Number.isFinite(w.floorAt(a.pos.x,a.pos.z)));
+    check(pool.length>=2,'two settled native actors required');
+    const bounds=G.level.bounds;let water=null,searches=0;
+    // Bounded terrain query, not a guessed water coordinate or a stubbed floor.
+    for(let iz=0;iz<25&&!water;iz++)for(let ix=0;ix<25&&!water;ix++){
+     const x=bounds.minX+1+(bounds.maxX-bounds.minX-2)*ix/24,z=bounds.minZ+1+(bounds.maxZ-bounds.minZ-2)*iz/24;searches++;
+     if(w.floorAt(x,z,Infinity)===null&&G.level.groundHeight(x,z,PLAYER.fallDeathY+.6)===-Infinity)water=[x,z];
+    }
+    check(water,'native stage has no sampled unsupported water lane');
+    const fields=['ranked','actors','state','stateT','time','rankedGains','rankedBarrierHits'],saved=Object.fromEntries(fields.map(k=>[k,m[k]]));
+    try{
+     for(const [index,kind]of ['floor','water'].entries()){
+      const a=pool[index],id=String(a.nid??`${a.team}:${a.slot}`),team=a.team;
+      // Only initial conditions are seeded. Death, dropped objects, overtime and
+      // the winning result below are produced by actual Actor/Match/World code.
+      const stage={...saved.ranked.stage,clams:{...saved.ranked.stage.clams,spawns:[]}},e=new RankedEngine('clams',stage);
+      m.ranked=e;m.actors=[a];m.state='playing';m.stateT=0;m.rankedGains=[0,0];m.rankedBarrierHits=[];
+      a.weaponRunner.reset();a.intent.move.set(0,0,0);a.intent.fire=a.intent.sub=a.intent.special=a.intent.squid=a.intent.jump=a.intent.throw=false;a._rankedInput=null;
+      a.vel.set(0,0,0);a.pos.y=w.floorAt(a.pos.x,a.pos.z);a.grounded=true;
+      e.rule.state.inventories[id]={team,small:0,power:true};e.counts[team]=70;e.counts[1-team]=50;e.leader=1-team;e.rule.state.scoredPoints[team]=30;e.rule.state.scoredPoints[1-team]=50;e.time=dt;
+      m.advanceRanked(dt);check(e.overtime&&e.winner===null,kind+' did not enter comeback');
+      if(kind==='water'){
+       a.pos.set(water[0],PLAYER.fallDeathY-.1,water[1]);a.vel.set(0,-1,0);a.grounded=a.ground.hit=false;G.time+=dt;a.update(dt);
+       check(!a.alive,'Actor.update did not produce water death');check(w.floorAt(a.pos.x,a.pos.z,a.pos.y+.25)===null,'water death gained floor support');
+      }else a.splat(null,'weapon');
+      const before=e.elapsed;m.advanceRanked(dt);const s=e.rule.state,dropElapsed=e.elapsed;
+      check(!a.alive&&!s.inventories[id].power,'death did not consume held Power Clam');
+      if(kind==='water'){
+       check(s.clams.length===0&&e.winner===1-team&&e.reason==='clam-overtime-power-clams-lost'&&m.state==='finish','water loss did not finish on the ranked tick');
+       check(e.elapsed-before<=dt+1e-9,'water death added a new waiting period');
+       rows.push({kind,team,deathPos:a.pos.toArray(),floor:null,clams:0,endedAt:e.elapsed,reason:e.reason});
+      }else{
+       check(s.clams.length===1&&s.clams[0].kind==='power'&&s.clams[0].grounded&&s.clams[0].expiresIn===10&&e.winner===null,'supported drop lost its ten-second lifetime');
+       const floor=w.floorAt(a.pos.x,a.pos.z),dropPos=s.clams[0].pos.slice();check(dropPos[1]===floor,'supported drop moved away from floor');
+       for(let tick=0;tick<599;tick++)m.advanceRanked(dt);
+       check(s.clams.length===1&&e.winner===null,'supported Power Clam expired before ten seconds');
+       const remaining=s.clams[0].expiresIn;m.advanceRanked(dt);
+       check(s.clams.length===0&&e.winner===1-team&&e.reason==='clam-overtime-power-clams-lost','supported Power Clam did not expire on its existing deadline');
+       rows.push({kind,team,dropPos,floor,lifetime:10,aliveAtTick599:true,remainingAtTick599:remaining,expiredAtTick600:true,dropElapsed,endedAt:e.elapsed,reason:e.reason});
+      }
+     }
+     return {fixture:'initial losing counts and held Power; outputs untouched',searches,water,rows};
+    }finally{for(const key of fields)m[key]=saved[key];w.update(saved.ranked,0);}
+   }
+   // END CLAM VOID DROP PROOF
+   return runClamVoidDropProof(RG,RankedEngine,PLAYER);
+  });
+  results.push({mode,offline:initial,proof:{...proof,...deadline},...(clamVoidDrop?{clamVoidDrop}:{})});
  }
  const guest=process.env.RANKED_OFFLINE_ONLY?null:await boot();
  // Real native session and production relay across isolated browser contexts.
@@ -236,10 +294,10 @@ try{
   assert.deepEqual(record.terminal[0],record.terminal[1]);
   await Promise.all([p,guest].map(pg=>pg.evaluate(()=>RG.net.leave())));
  }
- assert.equal(errors.length,0,JSON.stringify(errors));fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'passed',scope:process.env.RANKED_OFFLINE_ONLY?'offline-only':process.env.RANKED_ONLINE_ONLY?'online-only':'offline-and-online',publishedIdentity,contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision,browser:browserInfo,delayMs:delay,served:[...served],results,errors},null,2));
+ assert.equal(errors.length,0,JSON.stringify(errors));fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'passed',scope:process.env.RANKED_OFFLINE_ONLY?'offline-only':process.env.RANKED_ONLINE_ONLY?'online-only':'offline-and-online',publishedIdentity,contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision,browser:browserInfo,delayMs:delay,served:[...served],results,errors,bootAttempts},null,2));
 }catch(e){
  // Never let diagnostic image capture replace the original ranked/relay failure.
- fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'failed',contentHash:build.contentHash,browser:browserInfo,error:e?.stack||String(e),results,errors},null,2));
+ fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'failed',contentHash:build.contentHash,browser:browserInfo,error:e?.stack||String(e),results,errors,bootAttempts},null,2));
  for(let i=0;i<pages.length;i++){
   try { await pages[i].screenshot({path:path.join(out,'failure-'+i+'.png'),timeout:5000}); }
   catch(captureError){console.warn('ranked failure screenshot '+i+' unavailable:',captureError.message);}

@@ -4,7 +4,7 @@ import { MAIN_WEAPON_CATALOG } from '../main-weapon-catalog-data.mjs';
 import { VARIANT_BASE_WEAPON } from '../alternate-weapon-kits-data.mjs';
 // Only MAIN sound identity is shared. Never collapse sub/special kit IDs or
 // mutate the actor's registered alternate weapon, network ID, or gameplay data.
-export const mainAudioSourceId = id => typeof id === 'string' && Object.hasOwn(VARIANT_BASE_WEAPON,id)
+export const mainAudioSourceId = id => id === 'charger_scope' ? 's3-charger-normalscope' : typeof id === 'string' && Object.hasOwn(VARIANT_BASE_WEAPON,id)
   ? VARIANT_BASE_WEAPON[id] : id;
 export const AUDIO_PROVENANCE = Object.freeze({ schema: 1, target: '11.3.0',
   soundDesign: 'original-parametric-with-S1-community-feature-guidance-and-S3-gameplay-structured-original', retailComparison: 'unverified-no-isolated-reference',

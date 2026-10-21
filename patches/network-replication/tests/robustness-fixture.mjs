@@ -48,7 +48,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
     return path.relative(ROOT, file);
   }
   let seconds = 1000;
-  const context = vm.createContext({ console, crypto: globalThis.crypto,
+  const context = vm.createContext({ console, structuredClone, crypto: globalThis.crypto,
     performance: { now: () => seconds * 1000 }, URL, URLSearchParams, TextEncoder, TextDecoder,
     setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
   const modules = new Map();
@@ -92,8 +92,8 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
     ${includeMatch ? "export { BossHazards } from './inkwave-public/src/boss/bossHazards.js'; export { RankedWorld } from './patches/splatoon3/runtime/ranked/world.mjs';" : ''}
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/net/netmatch.js';
-    ${includeSession ? "export { NetSession } from './inkwave-public/src/net/session.js';" : ''}
-    ${rankedNetwork ? "export { installRankedNetwork } from './patches/splatoon3/runtime/ranked/network.mjs';" : ''}
+    ${includeSession ? "export { NetSession } from './inkwave-public/src/net/session.js'; export { Transport } from './inkwave-public/src/net/transport.js';" : ''}
+    ${rankedNetwork ? "export { buildFrame } from './patches/splatoon3/runtime/ranked/install.mjs'; export { RankedEngine } from './patches/splatoon3/runtime/ranked/engine.mjs'; export { installRankedNetwork } from './patches/splatoon3/runtime/ranked/network.mjs';" : ''}
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';

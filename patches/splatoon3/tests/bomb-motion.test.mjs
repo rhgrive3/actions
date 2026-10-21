@@ -27,7 +27,7 @@ const DETAIL_HOOKS = [
 let cached;
 async function production() {
   if (cached) return cached;
-  const context = vm.createContext({ console, performance, URL }), modules = new Map();
+  const context = vm.createContext({ console, performance, URL, TextEncoder }), modules = new Map();
   const load = requested => {
     let file = requested.startsWith(path.join(SRC, 'patches') + path.sep)
       ? path.join(ROOT, path.relative(SRC, requested)) : requested;

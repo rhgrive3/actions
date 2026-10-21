@@ -77,7 +77,12 @@ function assertTowerSweepClear(level, stage) {
 }
 
 test('ranked stage coordinates use reachable live floors, symmetric routes, and clear swept tower volumes', () => {
-  assert.deepEqual(Object.keys(f.MAP_LAYOUTS).sort(), MAP_IDS.slice().sort());
+  assert.ok(f.MAP_LAYOUTS.range, 'practice range remains registered outside battle stage selection');
+  assert.deepEqual(
+    Object.keys(f.MAP_LAYOUTS).filter(id => id !== 'range').sort(),
+    MAP_IDS.slice().sort(),
+    'only battle stages are required to provide ranked objectives',
+  );
   for (const id of MAP_IDS) {
     const { level, physics, stage } = makeMap(id);
     assert.equal(stage.id, id);

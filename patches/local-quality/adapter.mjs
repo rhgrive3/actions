@@ -1,15 +1,13 @@
 import { adaptHeadgear } from './headgear-adapter.mjs';
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
-import { adaptNavHeuristic } from './nav-heuristic-adapter.mjs';
 import { adaptBotNavigation } from './bot-navigation-adapter.mjs';
 import { adaptFirefightTierBudget } from './firefight-tier-budget.mjs';
 import { adaptRootHairSpring } from './root-hair-spring-adapter.mjs';
-import { adaptPoseRotation } from './pose-rotation-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
 import { adaptMaterialHandoff } from './material-handoff-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
 import { adaptSquidMotionBinding } from './squid-motion-binding-adapter.mjs';
-import { adaptMotionFkHotpath } from './motion-fk-hotpath-adapter.mjs';
+import { adaptMotionFkHotpath, adaptMotionSampleFkRange } from './motion-fk-hotpath-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
 import { adaptSettingsUi } from './settings-ui-adapter.mjs';
@@ -29,8 +27,6 @@ import { adaptIssue483 } from '../splatoon3/issue-483-adapter.mjs';
 import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
 import { patchLobbySetShowcase } from './lobby-quality-adapter.mjs';
 import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
-import { adaptPropRetention } from './prop-retention-adapter.mjs';
-import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
 import { adaptIssue482 } from '../splatoon3/issue-482-adapter.mjs';
 import { adaptIssue405 } from '../splatoon3/issue-405-adapter.mjs';
 import { adaptIssue484 } from '../splatoon3/issue-484-adapter.mjs';
@@ -128,7 +124,6 @@ const IDENTITY_FILES = [
   'final-count-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
-  'prop-retention-adapter.mjs', 'prop-atlas-adapter.mjs',
   'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
   'audio-listener-adapter.mjs', 'runtime/audio-listener.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'portrait-work.mjs', 'depth-cache.mjs',
@@ -138,7 +133,7 @@ const IDENTITY_FILES = [
   'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'ui-actor-lifetime-adapter.mjs',
   'tenacity-adapter.mjs', 'tenacity.mjs',
-  'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
+  'idle-adapter.mjs', 'idle-resources.mjs', 'pause-frame-retention.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs', 'refl-skip-adapter.mjs', 'finish-tape-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'offline-offscreen-budget.mjs',
@@ -150,10 +145,8 @@ const IDENTITY_FILES = [
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
   'paint-hotpath-adapter.mjs',
   'distance-hotpath-adapter.mjs',
-  'nav-heuristic-adapter.mjs',
   'bot-navigation-adapter.mjs', 'bot-navigation.mjs', 'firefight-tier-budget.mjs',
   'root-hair-spring-adapter.mjs',
-  'pose-rotation-adapter.mjs',
   'collision-hotpath-adapter.mjs',
   'runtime-frame-scratch-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
@@ -169,9 +162,7 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
-  code = adaptNavHeuristic(rel, code, replaceOnce);
   code = adaptRootHairSpring(rel, code, replaceOnce);
-  code = adaptPoseRotation(rel, code, replaceOnce);
   code = adaptLobbySlotTransform(rel, code);
   code = adaptMaterialHandoff(rel, code);
   code = adaptCameraFovCache(rel, code);
@@ -197,7 +188,7 @@ export function adaptQualitySource(rel, code) {
   const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
   const botNav = adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce), replaceOnce);
-  return adaptSettingsUi(rel, adaptEnginePerformanceHotpaths(rel, botNav, replaceOnce), replaceOnce);
+  return adaptMotionSampleFkRange(rel, adaptSettingsUi(rel, adaptEnginePerformanceHotpaths(rel, botNav, replaceOnce), replaceOnce), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
@@ -208,8 +199,6 @@ function adaptQualityLayer(rel, code) {
       'carry bot identity to visual-only Character scheduling');
   }
   code = adaptBotPaintObservation(rel, code);
-  code = adaptPropRetention(rel, code);
-  code = adaptPropAtlas(rel, code);
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);
   code = adaptScreenfxLensRelease(rel, code, replaceOnce);
   code = adaptActorWeaponInput(rel, code, replaceOnce);
@@ -230,80 +219,6 @@ function adaptQualityLayer(rel, code) {
   code = adaptRetargetBranchUpdates(rel, code);
   code = adaptMotionFkHotpath(rel, code, replaceOnce);
   code = adaptSquidMotionBinding(rel, code, replaceOnce);
-  if (rel === 'src/game/inkCollision.js') {
-    code = replaceOnce(code,
-      '  let best = Infinity;\n  for (const id of candidates) {\n    const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;',
-      `  const xLo = Math.min(from.x, to.x) - radius - 1e-6, xHi = Math.max(from.x, to.x) + radius + 1e-6;
-  const yLo = Math.min(from.y, to.y) - radius - 1e-6, yHi = Math.max(from.y, to.y) + radius + 1e-6;
-  const zLo = Math.min(from.z, to.z) - radius - 1e-6, zHi = Math.max(from.z, to.z) + radius + 1e-6;
-  let best = Infinity;
-  for (const id of candidates) {
-    const box = level.blocks[id]; if (!box.solid || skipGrates && box.grate) continue;
-    if (box.aabbMin && (box.aabbMin.y > yHi || box.aabbMax.y < yLo || box.aabbMin.x > xHi || box.aabbMax.x < xLo || box.aabbMin.z > zHi || box.aabbMax.z < zLo)) continue;`,
-      'skip 3D AABB-disjoint blocks in sweepLevelSphere');
-    code = replaceOnce(code,
-      'export function capsuleEntry(from, to, base, actorRadius, height, bulletRadius) {\n  const lo = base.y + Math.min(actorRadius, height * 0.5), hi = base.y + Math.max(height - actorRadius, height * 0.5);\n  const r = actorRadius + bulletRadius, ox = from.x - base.x, oz = from.z - base.z;',
-      `export function capsuleEntry(from, to, base, actorRadius, height, bulletRadius) {
-  const r = actorRadius + bulletRadius;
-  if (Math.min(from.x, to.x) - base.x > r + 1e-7 || Math.max(from.x, to.x) - base.x < -r - 1e-7 ||
-      Math.min(from.z, to.z) - base.z > r + 1e-7 || Math.max(from.z, to.z) - base.z < -r - 1e-7) return Infinity;
-  const lo = base.y + Math.min(actorRadius, height * 0.5), hi = base.y + Math.max(height - actorRadius, height * 0.5);
-  if (Math.min(from.y, to.y) > hi + r + 1e-7 || Math.max(from.y, to.y) < lo - r - 1e-7) return Infinity;
-  const ox = from.x - base.x, oz = from.z - base.z;`,
-      'skip 3D bounding-box disjoint segments in inkCollision capsuleEntry');
-  }
-  if (rel === 'src/game/motion/source-bank.js') {
-    code = replaceOnce(code,
-      `  fromRaw(mode) {
-    for (let i = 0; i < this.bank.bones.length; i++) {
-      const j = i * STRIDE, r = this.raw;
-      this.s[i].set(r[j], r[j + 1], r[j + 2]); this.p[i].set(r[j + 3], r[j + 4], r[j + 5]);
-      // BFRES applies X, then Y, then Z to COLUMN vectors => Rz*Ry*Rx, Three's ZYX.
-      if (mode === 'eulerXYZ') {
-        const e=this.euler.set(r[j+6],r[j+7],r[j+8],'ZYX'),x=e._x/2,y=e._y/2,z=e._z/2;
-        const c1=x===0?1:Math.cos(x),c2=y===0?1:Math.cos(y),c3=z===0?1:Math.cos(z);
-        const s1=x===0?x:Math.sin(x),s2=y===0?y:Math.sin(y),s3=z===0?z:Math.sin(z);
-        this.q[i].set(s1*c2*c3-c1*s2*s3,c1*s2*c3+s1*c2*s3,c1*c2*s3-s1*s2*c3,c1*c2*c3+s1*s2*s3);
-      }
-      else if (mode === 'quaternion') this.q[i].set(r[j + 6], r[j + 7], r[j + 8], r[j + 9]).normalize();
-      else throw new Error(\`Unsupported rotation mode \${mode}\`);
-    }
-    return this.fk();
-  }`,
-      `  fromRaw(mode, doFk = true) {
-    const bones = this.bank.bones, n = bones.length, r = this.raw;
-    for (let i = 0; i < n; i++) {
-      const j = i * STRIDE;
-      this.s[i].set(r[j], r[j + 1], r[j + 2]); this.p[i].set(r[j + 3], r[j + 4], r[j + 5]);
-      // BFRES applies X, then Y, then Z to COLUMN vectors => Rz*Ry*Rx, Three's ZYX.
-      if (mode === 'eulerXYZ') {
-        const rx = r[j + 6], ry = r[j + 7], rz = r[j + 8], x = rx / 2, y = ry / 2, z = rz / 2;
-        if (i === n - 1) { this.euler._x = rx; this.euler._y = ry; this.euler._z = rz; this.euler._order = 'ZYX'; }
-        const c1=x===0?1:Math.cos(x),c2=y===0?1:Math.cos(y),c3=z===0?1:Math.cos(z);
-        const s1=x===0?x:Math.sin(x),s2=y===0?y:Math.sin(y),s3=z===0?z:Math.sin(z);
-        this.q[i].set(s1*c2*c3-c1*s2*s3,c1*s2*c3+s1*c2*s3,c1*c2*s3-s1*s2*c3,c1*c2*c3+s1*s2*s3);
-      }
-      else if (mode === 'quaternion') this.q[i].set(r[j + 6], r[j + 7], r[j + 8], r[j + 9]).normalize();
-      else throw new Error(\`Unsupported rotation mode \${mode}\`);
-    }
-    return doFk ? this.fk() : this;
-  }`,
-      'skip intermediate Euler callback notifications and optional FK in fromRaw');
-    code = replaceOnce(code,
-      `      if (parent >= 0 && (this.flags[i] & (1 << 23))) {
-        const ps = this.s[parent], e = m.elements;`,
-      `      if (parent >= 0 && (this.flags[i] & (1 << 23)) && (this.s[parent].x !== 1 || this.s[parent].y !== 1 || this.s[parent].z !== 1)) {
-        const ps = this.s[parent], e = m.elements;`,
-      'skip unit parent-scale division in fk');
-    code = replaceOnce(code,
-      '  sample(name, frame, out, loop = undefined) {\n',
-      '  sample(name, frame, out, loop = undefined, doFk = true) {\n',
-      'optional doFk parameter in SourceBank.sample');
-    code = replaceOnce(code,
-      '    return out.fromRaw(c.rotationMode);\n',
-      '    return out.fromRaw(c.rotationMode, doFk);\n',
-      'pass doFk to out.fromRaw in SourceBank.sample');
-  }
   if (rel === 'src/game/motion/root-hair.js') {
     code = replaceOnce(code,
       `  const c=this.c;c._kidXform(c.bones.head,this.p,this.head);this.q.copy(this.head).invert();this.axis.set(0,rootTurnRate,0).applyQuaternion(this.q);`,
@@ -482,6 +397,12 @@ function adaptQualityLayer(rel, code) {
       'boss audio terminal state releases retained graph');
   }
   if (rel === 'src/ui/hud.js') {
+    code = replaceOnce(code,
+      "    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)",
+      "    // Rebuild the source Charger/Spinner charge ring when an older weapon cache outlives its DOM.\n" +
+      "    if ((L.kind === 'charger' || L.kind === 'splatling') && (!this._chargeEl || !this.ret.contains(this._chargeEl))) this._buildReticle(L.kind);\n" +
+      "    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)",
+      'reticle ring stale-DOM recovery without changing locked original UI input');
     code = replaceOnce(code,
       "      this._killCard(victim, 'kill');",
       "      this._killCard(victim, 'kill');\n      // #593: Turf uses ordinary splat confirmation and independent team WIPEOUT.\n      if (G.match?.mode === 'turf') return;",

@@ -7,6 +7,29 @@ import { rangeRealm, rangeWorld } from './harness.mjs';
 import { MAIN_WEAPON_CATALOG } from '../../splatoon3/runtime/main-weapon-catalog-data.mjs';
 import { ALTERNATE_WEAPON_KITS } from '../../splatoon3/runtime/alternate-weapon-kits-data.mjs';
 
+// #1651 adds one native scope outside the pinned 65+95 catalog; training
+// retains its separate support kit and all seven original physical hub pads.
+function assertRangeRoster(ids, weapons) {
+  const canonical = [...MAIN_WEAPON_CATALOG.records.map(r => r.id), ...ALTERNATE_WEAPON_KITS.map(r => r.id)];
+  assert.equal(canonical.length, 160);
+  assert.equal(new Set(canonical).size, 160);
+  const expected = [...canonical, 'charger_scope', 'support'];
+  assert.equal(ids.length, 162);
+  assert.deepEqual([...ids].sort(), expected.sort(), 'exact original160 plus native scope and training support');
+  assert.equal(weapons.charger_scope?.id, 'charger_scope');
+  assert.equal(weapons.charger_scope?.kind, 'charger');
+  assert.equal(weapons.charger_scope?.scoped, true);
+}
+
+test('range roster rejects missing legacy mains, missing scope and unknown replacements', () => {
+  const expected = [...MAIN_WEAPON_CATALOG.records.map(r => r.id), ...ALTERNATE_WEAPON_KITS.map(r => r.id), 'charger_scope', 'support'];
+  const weapons = {charger_scope:{id:'charger_scope',kind:'charger',scoped:true}};
+  assertRangeRoster(expected, weapons);
+  for (const id of ['blaster', 'charger_scope']) assert.throws(() => assertRangeRoster(expected.filter(x => x !== id), weapons));
+  assert.throws(() => assertRangeRoster(expected.map(x => x === 'blaster' ? 'unknown-main' : x), weapons));
+  assert.throws(() => assertRangeRoster(expected, {charger_scope:{id:'charger_scope',kind:'charger',scoped:false}}));
+});
+
 async function world() {
   const R = await rangeRealm();
   const { G, Actor, Character, RangeSession, THREE } = R;
@@ -164,8 +187,8 @@ test('catalog expansion keeps hub pads separate and every main switchable', asyn
     const alternateIds = new Set(ALTERNATE_WEAPON_KITS.map(kit => kit.id));
     assert.equal(catalogIds.size, 65);
     assert.equal(alternateIds.size, 95);
-    assert.equal(ids.length, catalogIds.size + alternateIds.size + 1);
-    assert.deepEqual(ids.filter(id => !catalogIds.has(id) && !alternateIds.has(id)), ['support']);
+    assertRangeRoster(ids, R.WEAPONS);
+    assert.deepEqual(ids.filter(id => !catalogIds.has(id) && !alternateIds.has(id)).sort(), ['charger_scope', 'support']);
     for (const id of catalogIds) assert.ok(ids.includes(id), 'missing sourced main: ' + id);
     for (const kit of ALTERNATE_WEAPON_KITS) {
       assert.ok(ids.includes(kit.id), 'missing sourced alternate: ' + kit.main);

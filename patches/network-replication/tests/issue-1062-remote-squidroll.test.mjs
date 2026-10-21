@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 
 const extraExports = `
+  export { Transport } from './inkwave-public/src/net/transport.js';
   export { Character } from './inkwave-public/src/game/character.js';
   export { movementMotionSnapshot } from './patches/splatoon3/runtime/movement-motion.mjs';
   export { squidrollMotionSnapshot } from './patches/splatoon3/runtime/squidroll-motion.mjs';
@@ -39,8 +40,9 @@ function makeActor(f, nid, owner) {
   return a;
 }
 function makeNet(f, myId, members, actors, capture) {
-  const session = { myId, hostId: 'owner', isHost: myId === 'owner', _members: new Map(members),
-    tr: { broadcast: d => { if (capture) capture.value = JSON.parse(JSON.stringify(d)); }, sendTo() {} } };
+  const tr = new f.Transport();
+  tr.ws = { readyState: 1, bufferedAmount: 0, send(wire) { if (capture && wire.startsWith('b|')) capture.value = JSON.parse(wire.slice(2)); } };
+  const session = { myId, hostId: 'owner', isHost: myId === 'owner', _members: new Map(members), tr };
   const net = new f.NetMatch(session, { id: 'issue-1062-roll', map: 'map', difficulty: 'normal' });
   net.bind({ actors, state: 'playing', time: 180, follower: false, removeActor() {} });
   return { net, session };

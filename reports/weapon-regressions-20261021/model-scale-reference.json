@@ -1,0 +1,11 @@
+{
+  "sourceRevision": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "sourceURL": "https://github.com/kirakira-dev/KiTrix/blob/0611f51b35c9736ee986fb2218461e2585b7875e/models/players/Player00/Player00.dae",
+  "sha256": "bcf39e7b309447ee9b31aefd304ae5c702a9724f65ed75e432427f5c6fcf37bd",
+  "sourceGeometry": "geo_Body_Model__M_Face_pos_array",
+  "sourceTopY": 1.72259927,
+  "hostStandingHeight": 1.36,
+  "modelWorldScale": 0.7895045723547764,
+  "method": "source body/head standing height normalized to host standing height; independent of gameplay distance conversion",
+  "retailAnimationOrRuntimeScaleVerified": false
+}

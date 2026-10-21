@@ -1,3 +1,4 @@
+import { chargerPaintParameters, chargerPaintWorldRadius } from '/ASSET/patches/splatoon3/runtime/weapons-charger-flight.mjs';
 import * as THREE from 'three';
 import { CATALOG_WALL_DROP } from '/ASSET/patches/splatoon3/runtime/catalog-wall-drop-data.mjs';
 import { catalogPaintEllipse } from '/ASSET/patches/splatoon3/runtime/catalog-splash-paint.mjs';
@@ -19,7 +20,27 @@ export function createPaintMaskProbe() {
   return paint;
 }
 
+export function calibratedChargerMaskCases(raw, parameters, worldRadius) {
+  const cases=[];
+  for(const charge of [8/60,.25,.5,.75,1]) {
+    const paint=parameters(raw,charge);
+    for(const terminal of [false,true]) {
+      const R=worldRadius(paint.width)*(terminal?paint.terminalRate:1);
+      const sa=Math.max(0,paint.depth/R-1)*1.6;
+      for(const wall of [false,true]) for(const kind of [15,16,17])
+        for(const seed of [.11,.93]) for(const angle of [0,Math.PI/4])
+          cases.push({wall,kind,R,sa,seed,angle,depth:paint.depth,charge,terminal,calibrated:true});
+    }
+  }
+  return cases;
+}
+
 export async function runPaintMaskProbe() {
+  const profileResponse=await fetch('/ASSET/patches/splatoon3/profile.json');
+  check(profileResponse.ok,'current source/emitted Charger profile must load');
+  const profile=await profileResponse.json();
+  const calibrated=calibratedChargerMaskCases(profile.weaponsFidelityCompletion.weapons.charger,chargerPaintParameters,chargerPaintWorldRadius);
+
   const paint = createPaintMaskProbe();
   const nativeShader = paint.mat.fragmentShader;
   check(nativeShader.includes('float paintShapeHash('), 'emitted shader must contain the shared integer hash');
@@ -230,7 +251,7 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   }
   check(rows.length === 124, 'six original kinds plus final-growth Roller body: real WebGL and CPU cells exercised');
   const subcell = subcellDotRows(paint, nativeShader, program, query, tx, tail, shapeCounts);
-  const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail);
+  const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail, calibrated);
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, activeFamilies, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
     body, subcell, mainAtlas: mainInkAtlasRows(), volleys:mainInkVolleyGallery(), hidden: hiddenPresentationRows(), ownedRunScan: ownedRunScanRows(), localOrderMap: localOrderMapRows() };
@@ -238,13 +259,15 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
 
 function mainInkVolleyGallery() {
   const captures=globalThis.mainInkCapturedEvents||[];if(!captures.length)return [];
+  const currentOnly=captures.every(c=>c.currentOnly===true);
+  check(currentOnly||captures.every(c=>!c.currentOnly),'do not mix current-only and comparison captures');
   const renderer=new THREE.WebGLRenderer({antialias:false}),rows=[];
   const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=70+Math.ceil(captures.length/2)*265;
   canvas.dataset.mainInkVolleys='';document.body.appendChild(canvas);
   const ctx=canvas.getContext('2d');ctx.fillStyle='#101b25';ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='#e4f6fa';ctx.font='bold 23px sans-serif';ctx.fillText('Actual single-trigger Actor paint events / same numeric source inputs',25,33);
-  ctx.font='14px sans-serif';ctx.fillText('Recorded before/after bodies. Top-down GPU framebuffer; source width, depth and event placement retained.',25,56);
-  try {for(let w=0;w<captures.length;w++)for(let after=0;after<2;after++) {
+  ctx.fillStyle='#e4f6fa';ctx.font='bold 23px sans-serif';ctx.fillText(currentOnly?'Current native Charger events / source-emitted repaint':'Actual single-trigger Actor paint events / same numeric source inputs',25,33);
+  ctx.font='14px sans-serif';ctx.fillText(currentOnly?'Actual emitted native splats, including feet. No historical or retail comparison.':'Recorded before/after bodies. Top-down GPU framebuffer; source width, depth and event placement retained.',25,56);
+  try {for(let w=0;w<captures.length;w++)for(let after=currentOnly?1:0;after<2;after++) {
     const capture=captures[w],V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
     const face={origin:V(-40,0,-5),u:V(1,0,0),v:V(0,0,1),n:V(0,1,0),su:80,sv:105,wall:false,turf:true,paintable:true};
     const level={faces:[face],blocks:[{faces:[0,-1,-1,-1,-1,-1],aabbMin:V(-40,-.01,-5),aabbMax:V(40,.01,100)}],
@@ -279,13 +302,13 @@ function mainInkVolleyGallery() {
     for(let y=0;y<1024;y++)for(let x=0;x<1024;x++){const i=(y*1024+x)*4,j=((1023-y)*1024+x)*4;
       image.data[j]=52;image.data[j+1]=224;image.data[j+2]=194;image.data[j+3]=pixels[i+3];}
     const scratch=document.createElement('canvas');scratch.width=scratch.height=1024;scratch.getContext('2d').putImageData(image,0,0);
-    const x=((w%2)*2+after)*300+12,y=75+Math.floor(w/2)*265;
-    ctx.fillStyle='#192a36';ctx.fillRect(x,y,282,248);ctx.fillStyle='#e4f6fa';ctx.font='bold 15px sans-serif';ctx.fillText(capture.id+' / '+(after?'after':'before'),x+10,y+24);
+    const x=(currentOnly?(w%2)*600:((w%2)*2+after)*300)+12,y=75+Math.floor(w/2)*265;
+    ctx.fillStyle='#192a36';ctx.fillRect(x,y,282,248);ctx.fillStyle='#e4f6fa';ctx.font='bold 15px sans-serif';ctx.fillText(capture.id+' / '+(currentOnly?'current native':after?'after':'before'),x+10,y+24);
     const a=face.atlas,span=Math.max(maxX-minX,maxZ-minZ,4)*1.06;
     const ox=(minX+maxX-span)/2,oz=(minZ+maxZ-span)/2,side=span*a.ppm;
     ctx.drawImage(scratch,a.x+a.pad+(ox+40)*a.ppm,1024-(a.y+a.pad+(oz+5)*a.ppm+side),side,side,x+35,y+31,210,210);
     check(paint.counts[0]>0,'actual single-trigger capture paints the real atlas');
-    rows.push({id:capture.id,after:!!after,stamps:events.length,cells:paint.counts[0]});paint.dispose();
+    rows.push({id:capture.id,after:!!after,currentOnly,provenance:capture.provenance||null,stamps:events.length,cells:paint.counts[0]});paint.dispose();
   }}finally{renderer.dispose();}
   return rows;
 }
@@ -360,7 +383,7 @@ function mainInkAtlasRows() {
 // emitted shader in its native body-only mode (vGrow.z > 1.5, fully grown)
 // with only the AA output replaced by the zero-crossing of the body SDF. Every
 // gameplay cell centre inside the reach box is asked of both sides.
-function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
+function bodyMaskRows(paint, nativeShader, program, query, tx, tail, calibrated) {
   const bodyShader = nativeShader.replace(tx, 'float tx = 1.0 / 64.0;')
     .replace(tail, '  gl_FragColor = vec4(sd < 0.0 ? 1.0 : 0.0, abs(sd) < 1e-3 ? 1.0 : 0.0, 0.0, 1.0);');
   const gpu = program(bodyShader), rows = [];
@@ -410,7 +433,8 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
         cases.push({wall,kind,R:shape.radius,sa:shape.stretchAmt,seed,depth,angle});
       }
   const chargerCount=cases.length-chargerStart;
-  for (const { kind, sa, R, seed, rotate=false, depth=null, wall=false, angle=null } of cases) {
+  cases.push(...calibrated);
+  for (const { kind, sa, R, seed, rotate=false, depth=null, wall=false, angle=null, calibrated=false, charge=null, terminal=null } of cases) {
     face.wall = wall;
     face.turf = !wall;
     paint.grid = new Uint8Array(n * n); paint.dead = new Uint8Array(n * n); paint.counts = [0, 0];
@@ -436,13 +460,13 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
       if (owned !== visible) { if (tie) ties++; else if (owned) cpuOnly++; else gpuOnly++; }
       if (reverted && visible !== (reverted[k * 4] === 255)) negativeDifferences++;
     }
-    rows.push({ wall, kind, sa, R, seed, depth, angle, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties, negativeDifferences });
+    rows.push({ wall, kind, sa, R, seed, depth, angle, calibrated, charge, terminal, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties, negativeDifferences });
   }
   const result = { rows, cpuOnly: rows.reduce((t, r) => t + r.cpuOnly, 0), gpuOnly: rows.reduce((t, r) => t + r.gpuOnly, 0),
     ties: rows.reduce((t, r) => t + r.ties, 0), cpuCells: rows.reduce((t, r) => t + r.cpu, 0), gpuCells: rows.reduce((t, r) => t + r.gpu, 0) };
   // Only float32 ties on the SDF zero crossing (|sd| < 1e-3 WU, 1/16 texel) may disagree.
   check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
-  check(rows.length === 227 + wallRadii.length * 3 + mainCount + chargerCount
+  check(rows.length === 227 + wallRadii.length * 3 + mainCount + chargerCount + calibrated.length
     && rows.filter(r => r.kind < 8).length === 99 + wallRadii.length * 3 && result.cpuCells > 0,
     'all original body cases, 128 sourced floor/wall cases and catalog wall-drop radii exercised');
   for (const wall of [false, true]) for (const kind of [8, 9]) {
@@ -456,10 +480,17 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
     check(main.some(row=>row.negativeDifferences>0), 'circle-only counterfactual must change main footprint');
   }
   for(const kind of [15,16,17]){
-    const charger=rows.filter(row=>row.kind===kind);
+    const charger=rows.filter(row=>row.kind===kind&&!row.calibrated);
     check(charger.length===32&&charger.some(row=>row.cpu>0),'Charger profile paints on both surfaces');
     check(charger.some(row=>row.negativeDifferences>0),'Charger must not regress to a plain ellipse');
   }
+  check(calibrated.length===240,'all actual Charger charge/terminal/surface/profile/bearing/seed cases');
+  for(const charge of [8/60,.25,.5,.75,1]) for(const terminal of [false,true])
+    for(const wall of [false,true]) for(const kind of [15,16,17]) {
+      const actual=rows.filter(row=>row.calibrated&&row.charge===charge&&row.terminal===terminal&&row.wall===wall&&row.kind===kind);
+      check(actual.length===4&&actual.some(row=>row.cpu>0),'calibrated Charger must claim actual cells');
+      check(actual.some(row=>row.negativeDifferences>0),'calibrated Charger circle-only counterfactual must differ');
+    }
   return result;
 }
 

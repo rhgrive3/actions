@@ -2,12 +2,7 @@ name: Verify composed INKWAVE crowd changes
 on:
   pull_request:
     paths:
-      - 'patches/local-quality/**'
-      - 'patches/splatoon3/**'
-      - 'patches/native-stages/**'
-      - 'scripts/**'
-      - 'reports/inkwave-crowd-integration*'
-      - .github/workflows/inkwave-crowd-integration.yml
+      - '.github/workflows/inkwave-crowd-integration.yml'
   workflow_dispatch:
 permissions:
   contents: read

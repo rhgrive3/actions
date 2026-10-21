@@ -18,7 +18,9 @@ assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
 const fixtures={};
 for(const name of ['root-hair','source-bank'])fixtures[name]=fs.readFileSync(new URL('../patches/local-quality/tests/fixtures/'+name+'-07f44b97.mjs.txt',import.meta.url));
 assert.equal(hash(fixtures['root-hair']),'a06dbce59bd1897ed7a9d266378b9a179ffb9cb1b8acfefa7327ae6b21ffb05b');
-assert.equal(hash(fixtures['source-bank']),'558a3ac20e26e4fb16abf1a4280b59ef71e585614eee9888ddfebfeb9072c90c');
+// The tracked source-bank fixture differs from its original 35a56d8 snapshot only
+// by removal of the first-line provenance comment. Preserve exact byte pinning.
+assert.equal(hash(fixtures['source-bank']),'e3a5d948780dba4a83624a76e1bf648ed1ab87ebb3800b6b3b983fba7c5f594b');
 // Retain the FK optimization that already existed on main. Compile both old
 // modules with the production per-file options before comparing to emitted code.
 for(const name of Object.keys(fixtures))fixtures[name]=(await transform(adaptMotionFkHotpath('src/game/motion/'+name+'.js',fixtures[name].toString(),replaceOnce),{loader:'js',format:'esm',minify:true,charset:'utf8',legalComments:'inline'})).code;

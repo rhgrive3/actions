@@ -5,8 +5,6 @@ import { createHash } from 'node:crypto';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../../../scripts/lib/inkwave-build-only-modules.mjs';
-import { adaptNavHeuristic } from '../nav-heuristic-adapter.mjs';
-import { replaceOnce } from '../adapter.mjs';
 import { convertSource } from '../../native-stages/runtime/source-convert.mjs';
 
 const frozen = fs.readFileSync(new URL('./fixtures/nav-9c070329.mjs.txt', import.meta.url), 'utf8');
@@ -70,15 +68,29 @@ function comparePair(nodes, cases) {
     extraScratchBytes: pair[1]._h?.byteLength || 0 };
 }
 
-test('baseline is pinned; transformer is guarded, composed, and excluded from browser assets', () => {
+test('heuristic optimization is owned by readable source, not applied by a build-time patch', () => {
   assert.equal(hash(frozen), '6439aa71cbf266777b0190a8e568561aaaf41b39b149fadd6735bb3f116b280f');
+  // The preserved main original is archival build-time source, not emitted runtime.
   assert(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/nav-heuristic-adapter.mjs'));
-  const raw = fs.readFileSync(new URL('../../../inkwave-public/src/game/nav.js', import.meta.url), 'utf8');
-  const transformed = adaptBuildSource('src/game/nav.js', raw);
-  assert.match(transformed, /acceptEdge && !acceptEdge\(e\)/);
-  assert.throws(() => adaptNavHeuristic('src/game/nav.js', transformed, replaceOnce), /conflict/);
-  assert.throws(() => adaptNavHeuristic('src/game/nav.js', '', replaceOnce), /conflict/);
-  assert.equal(adaptNavHeuristic('src/main.js', 'unrelated', replaceOnce), 'unrelated');
+  assert.equal(hash(fs.readFileSync(new URL('../nav-heuristic-adapter.mjs', import.meta.url))),
+    'dd4e0f822c256a38bdce3436a16b9933f07869ba245ff98bb5c315134353085f', 'preserve the original transformer without reactivating it');
+  const source = fs.readFileSync(new URL('../../../inkwave-public/src/game/nav.js', import.meta.url), 'utf8');
+  const quality = fs.readFileSync(new URL('../adapter.mjs', import.meta.url), 'utf8');
+  const s3 = fs.readFileSync(new URL('../../splatoon3/adapter.mjs', import.meta.url), 'utf8');
+  const native = fs.readFileSync(new URL('../../native-stages/adapter.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(quality, /adaptNavHeuristic/);
+  assert.doesNotMatch(s3, /if \(rel === 'src\/game\/nav\.js'\)/);
+  assert.doesNotMatch(native, /if\(rel==='src\/game\/nav\.js'\)/);
+  assert.match(source, /import \{ buildNativeNav \} from/);
+  assert.match(source, /this\._heap \|\| \(this\._heap = new Heap\(\)\)/);
+  assert.match(source, /if \(acceptEdge && !acceptEdge\(e\)\) continue/);
+  assert.match(source, /this\._h = new Float64Array\(N\)/);
+  assert.match(source, /heap\.push\(a, heuristic\[a\] = h\(nodes\[a\]\)\)/);
+  assert.match(source, /if \(seen\[e\.to\] !== st\) heuristic\[e\.to\] = h\(m\)/);
+  assert.match(source, /heap\.push\(e\.to, ng \+ heuristic\[e\.to\]\)/);
+  const composed = adaptBuildSource('src/game/nav.js', source);
+  assert.equal(composed, source, 'NavGraph is now emitted without any source-rewrite adapter');
+  assert.equal((composed.match(/this\._h = new Float64Array\(N\)/g) || []).length, 1);
 });
 
 test('600 layered A* routes preserve paths, costs, ties, iteration limits and edge callback order', () => {

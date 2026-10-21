@@ -25,6 +25,7 @@
 import { h, clamp, colorVars, toHex, fmtTime, fmtInt, splatSVG, splatShape, pct, shade, lerp, easeOutBack, easeOutCubic, restartAnim, prefersReducedMotion } from './ui-util.js';
 import { SQUID, SPLAT_ICON, DEATH_ICON, GLYPHS, SUB_ICONS, richText, keycap, specialIcon, weaponIcon } from './ui-icons.js';
 import { WEAPONS, SPECIALS, TEAM_NAMES, SUB, PLAYER, MATCH } from '../config.js';
+import { chargerScopeFactor } from '../game/chargerTuning.js';
 import { on, G } from '../core/ctx.js';
 import { BossHud } from './hud-boss.js';
 import { installBossAudio } from '../audio/bossAudio.js';
@@ -152,6 +153,7 @@ export class HUD {
     this.tankCtx = this.tankCanvas.getContext('2d');
     this.tank = h('div', { class: 'iw-tank' }, this.tankCanvas, h('div', { class: 'iw-tank__low' }, 'LOW INK'));
     this.tpops = h('div', { class: 'iw-tpops' });
+    this.scopeMask = h('div', { class: 'iw-scope', 'aria-hidden': 'true' });
     this.xh = h('div', { class: 'iw-xh' }, this.shield, this.ret, this.hitEl, this.killEl, this.tank, this.subChip, this.tpops);
     this.ddLayer = h('div', { class: 'iw-dds' });
 
@@ -209,7 +211,7 @@ export class HUD {
     this.kcards = h('div', { class: 'iw-kcards' });
     this.callouts = h('div', { class: 'iw-callouts' });
 
-    el.append(this.vig, this.canvas, this.downLayer, this.markerLayer, this.ddLayer, this.top, this.sp, this.turfEl, this.feedEl, this.xh,
+    el.append(this.vig, this.canvas, this.downLayer, this.markerLayer, this.ddLayer, this.top, this.sp, this.turfEl, this.feedEl, this.scopeMask, this.xh,
       this.kcards, this.callouts, this.promptEl, this.mapDim, this.map, this.fpsEl, this.countLayer, this.bannerLayer, this.splatLayer);
     this.root.appendChild(el);
 
@@ -875,6 +877,15 @@ export class HUD {
     if (tgt !== L.tgt) { L.tgt = tgt; this.xh.classList.toggle('is-target', tgt); }
     const far = ch.inRange === false && !tgt;
     if (far !== L.far) { L.far = far; this.xh.classList.toggle('is-far', far); }
+    // Scope transition follows the selected scoped charger, not every charger.
+    // The view darkens smoothly beyond half charge and clears on release.
+    const runner = this._local()?.weaponRunner;
+    const scope = chargerScopeFactor(WEAPONS[w], +f.charge || 0, runner ? !!runner.charging : (+f.charge || 0) > 0);
+    if (L.scope == null || Math.abs(scope - L.scope) > 0.003) {
+      L.scope = scope;
+      this.scopeMask.style.opacity = scope.toFixed(3);
+      this.ret.classList.toggle('is-scoped', scope > 0.85);
+    }
     if (L.kind === 'charger') {
       const c = clamp(+f.charge || 0);
       if (L.charge == null || Math.abs(c - L.charge) > 0.004) {

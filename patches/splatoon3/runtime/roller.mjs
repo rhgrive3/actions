@@ -772,6 +772,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   if (!Character || !C || !T) throw new Error('Roller motion requires exact upstream Character channels and timers');
   const flick = Character.prototype._poseFlick, animate = Character.prototype._animWeapon, setWeapon = Character.prototype.setWeapon;
   const updateStates = Character.prototype._updateStates, weaponPose = Character.prototype._poseWeapon;
+  const applyPose = Character.prototype._applyPose;
   // The native torso/foot solver moves the admitted contact anchor with its
   // gait spring. Ground-align the right-hand
   // target BEFORE the native arm IK; its left-hand solver then follows the same
@@ -786,18 +787,100 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
   let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, searchAxis, turn;
   let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ, shoulderShift, chestQ, contactPoint, bestPoint;
+  let rollPivot, rollOffset, rollTarget, rollAxis, rollBase, rollTrial;
+  let supportWeaponPos, supportHole, supportWeaponQ, supportHandQ, supportUnderQ;
+  let supportParentPos, supportParentQ, supportShoulder, supportShaftAxis, supportFromShoulder;
   const SEARCH_AXES = [[1,0,0],[0,1,0],[0,0,1]];
   // Cost per radian of changing the floor correction between frames (same
   // units as the existing .06/rad small-angle preference). Visual calibration.
   const ROLLER_SEARCH_COHERENCE = .1;
   const rotCos = v => Math.max(-1, Math.min(1, v));
+  // Shared scratch, like the existing contact solver; no per-frame helper allocation.
+  const rollReachable = (d, angle, reachR, reachL, minR, minL) => {
+    rollTrial.copy(rollBase).multiply(trialQ.setFromAxisAngle(rollAxis, -angle));
+    rollTarget.copy(rollOffset).applyQuaternion(rollTrial).negate().add(rollPivot);
+    delta.copy(d.handL.pos).sub(d.handR.pos).applyQuaternion(rollTrial).add(rollTarget);
+    const rightDistanceSq = rollTarget.distanceToSquared(rightOrigin), leftDistanceSq = delta.distanceToSquared(leftOrigin);
+    // Only admit transform roundoff at the safe upper boundary. The existing
+    // target remains a full .001 inside the native IK maximum.
+    return rightDistanceSq >= minR * minR && rightDistanceSq <= reachR * reachR + 1e-12 &&
+      leftDistanceSq >= minL * minL && leftDistanceSq <= reachL * reachL + 1e-12;
+  };
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
+    // The support hand belongs farther along the shaft, palm underneath.
+    // Alter only this left IK request after the right-hand/contact solve;
+    // shared sockets, the right reach constraints and the live drum stay intact.
+    const supportBlend = this._s3RollerGripBlend || 0;
+    const supportDef = this.weapon?.def;
+    if (limb === this.limbs.armL && this.weaponKind === 'roller' && this.kidForm && !this.dance &&
+        !this.actor?.specialActive && orientation && weight > .999 && this.P[C.LTW] < .001 &&
+        !this.P[C.SPIN] && supportBlend > .001 && supportDef?.fold?.pivot &&
+        Math.abs(supportDef.gripL.handZ.x) + Math.abs(supportDef.gripL.handZ.y) < 1e-8 && supportDef.gripL.handZ.z > .999) {
+      if (!supportWeaponPos) {
+        supportWeaponPos = target.clone(); supportHole = target.clone();
+        supportWeaponQ = orientation.clone(); supportHandQ = orientation.clone();
+        // The canonical left palm faces -X. This frame makes it face +weaponY,
+        // with its grip-hole axis still following the real shaft's +Z.
+        supportUnderQ = orientation.clone().set(0, 0, -Math.SQRT1_2, Math.SQRT1_2);
+        supportParentPos = target.clone(); supportParentQ = orientation.clone();
+        supportShoulder = target.clone(); supportShaftAxis = target.clone(); supportFromShoulder = target.clone();
+      }
+      const d = supportDef;
+      if (this._s3RollerSupportFeedback === undefined) {
+        // Preserve the original request's exact native pre-error. New support
+        // retries may protract only the left clavicle, not feed tomorrow's
+        // shared lReach/chest compensation and move the right hand or paint.
+        this._kidXform(limb.up.parent, supportWeaponPos, supportWeaponQ);
+        supportHole.copy(limb.up.position).applyQuaternion(supportWeaponQ).add(supportWeaponPos);
+        this._s3RollerSupportFeedback = Math.max(0, target.distanceTo(supportHole) - (limb.a + limb.b) * .9995);
+      }
+      this._kidXform(this.weapon.off, supportWeaponPos, supportWeaponQ);
+      supportHole.copy(d.gripL.pos).sub(d.handL.pos).applyQuaternion(supportHandQ.copy(d.handL.quat).invert());
+      supportHandQ.copy(d.handL.quat).slerp(supportUnderQ, supportBlend);
+      target.copy(d.gripL.pos);
+      // Prefer the authored shaft midpoint while the character is pushing.
+      // If the native shoulder is at full extension during release/landing,
+      // retain palm-on-shaft contact by backing off *only* the left support
+      // socket along the actual weapon axis, not moving the weapon or drum.
+      const preferredAdvance = Math.max(0, (d.gripR.pos.z + d.fold.pivot.z) * .5 - d.gripL.pos.z) * .15 * supportBlend;
+      target.z += preferredAdvance;
+      target.sub(supportHole.applyQuaternion(supportHandQ)).applyQuaternion(supportWeaponQ).add(supportWeaponPos);
+      this._s3RollerSupportAdvance = preferredAdvance;
+      if (preferredAdvance > 0) {
+        this._kidXform(limb.up.parent, supportParentPos, supportParentQ);
+        supportShoulder.copy(limb.up.position).applyQuaternion(supportParentQ).add(supportParentPos);
+        const reach = (limb.a + limb.b) * .9995 - .002;
+        if (reach > 0 && target.distanceToSquared(supportShoulder) > reach * reach) {
+          supportShaftAxis.set(0, 0, 1).applyQuaternion(supportWeaponQ);
+          supportFromShoulder.copy(target).addScaledVector(supportShaftAxis, -preferredAdvance).sub(supportShoulder);
+          const along = supportFromShoulder.dot(supportShaftAxis);
+          const discriminant = along * along - (supportFromShoulder.lengthSq() - reach * reach);
+          // No intersection means this IK request is unachievable even at the
+          // authored rear socket. Preserve the real error rather than faking a
+          // passing contact test or weakening native reach limits.
+          if (discriminant >= 0) {
+            const admissible = Math.max(0, Math.min(preferredAdvance, -along + Math.sqrt(discriminant)));
+            target.addScaledVector(supportShaftAxis, admissible - preferredAdvance);
+            this._s3RollerSupportAdvance = admissible;
+          }
+        }
+      }
+      orientation.copy(supportWeaponQ).multiply(supportHandQ);
+      // Native left-clavicle protraction and finite-chain IK retain authority.
+      return solve.call(this, limb, target, pole, orientation, weight, index);
+    }
+    // animateWeapon owns the unmodified spin clock. Restore it for right-arm
+    // reevaluation, even if this call falls back; never undo it on the left arm.
+    const rollDrum = limb === this.limbs.armR && this.weaponKind === 'roller' ? this.weapon?.drum : null;
+    if (rollDrum && Number.isFinite(this.weapon.drumA) &&
+        Math.abs(rollDrum.quaternion.y) + Math.abs(rollDrum.quaternion.z) < 1e-8)
+      rollDrum.rotation.x = this.weapon.drumA;
     const isRightRoller = limb === this.limbs.armR && this.weaponKind === 'roller' &&
       // A held special replaces the roller with its own two-hand prop. Its
       // wrist targets must use the native solver, never roller drum alignment.
       this.kidForm && !this.dance && !this.actor?.specialActive && !!orientation && weight > .999 && !this.P[C.SPIN];
     if (!isRightRoller) return solve.call(this, limb, target, pole, orientation, weight, index);
-    const d = this.weapon.def, arms = this.limbs;
+    const d = this.weapon.def, arms = this.limbs, rollFold = this.weapon.fold;
     if (!rightOrigin) {
       rightOrigin = target.clone(); rightParentQ = orientation.clone();
       leftOrigin = target.clone(); leftParentQ = orientation.clone();
@@ -806,6 +889,8 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       candidateQ = orientation.clone(); bestQ = orientation.clone(); baseQ = orientation.clone(); trialQ = orientation.clone();
       center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone();
       shoulderShift = target.clone(); chestQ = orientation.clone(); contactPoint = target.clone(); bestPoint = target.clone();
+      rollPivot = target.clone(); rollOffset = target.clone(); rollTarget = target.clone(); rollAxis = target.clone().set(1, 0, 0);
+      rollBase = orientation.clone(); rollTrial = orientation.clone();
     }
     // The native solver clamps exactly at 99.95% of the rest-chain length.
     // Keep the visual grip target just inside that physical limit.
@@ -817,6 +902,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     this._kidXform(arms.armL.up.parent, leftOrigin, leftParentQ);
     leftOrigin.add(delta.copy(arms.armL.up.position).applyQuaternion(leftParentQ));
     const reachL = (arms.armL.a + arms.armL.b) * .9995 - .001;
+    const minR = Math.abs(arms.armR.a - arms.armR.b) + .001, minL = Math.abs(arms.armL.a - arms.armL.b) + .001;
     const armLeftHeld = this.P[C.IKL] > .99 && this.P[C.LTW] < .001;
     const alignLeft = q => {
       if (contacting) {
@@ -969,12 +1055,65 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         alignLeft(bestQ);
       }
     }
+    // Lower the hands relative to the already grounded drum, not the drum
+    // relative to the player. Paint reads the live cylinder centre and axle,
+    // so translating the roll anchor would also translate scored ink.
+    // This rigid turn is around the solved cylinder's own X axis: its centre,
+    // cross-floor axle and radial support remain fixed. Only the handle and
+    // paired wrists turn. The existing floor search and native IK still run once.
+    // The proof is for this cylinder's X axle. An unexpected non-X fold/spin
+    // keeps the original solution rather than applying a guessed-axis turn.
+    const rollAxisAligned = rollDrum && Math.abs(rollDrum.quaternion.y) + Math.abs(rollDrum.quaternion.z) < 1e-8 &&
+      (!rollFold || rollDrum.parent !== rollFold || Math.abs(rollFold.quaternion.y) + Math.abs(rollFold.quaternion.z) < 1e-8);
+    const rollBlend = this._s3RollerGripBlend || 0;
+    if (neededGround && rollBlend > .001 && armLeftHeld && bound && rollAxisAligned && Number.isFinite(this.weapon.drumA)) {
+      rollBase.copy(bestQ).multiply(inverseHandQ.copy(d.handR.quat).invert());
+      rollOffset.copy(d.drumAt); rollOffset.x += bound.centerX;
+      const fold = rollFold;
+      if (fold && this.weapon.drum?.parent === fold)
+        rollOffset.sub(fold.position).applyQuaternion(fold.quaternion).add(fold.position);
+      rollOffset.sub(d.handR.pos);
+      rollPivot.copy(rollOffset).applyQuaternion(rollBase).add(target);
+      // Visual calibration, not a retail joint measurement. Bound the small
+      // turn by both finite arm reaches without another floor search/IK solve.
+      if (rollReachable(d, 0, reachR, reachL, minR, minL)) {
+        let lo = 0, hi = .09 * rollBlend;
+        if (rollReachable(d, hi, reachR, reachL, minR, minL)) lo = hi;
+        else for (let i = 0; i < 12; i++) {
+          const mid = (lo + hi) * .5;
+          if (rollReachable(d, mid, reachR, reachL, minR, minL)) lo = mid; else hi = mid;
+        }
+        if (lo > 0) {
+          rollReachable(d, lo, reachR, reachL, minR, minL);
+          target.copy(rollTarget);
+          bestQ.copy(rollTrial).multiply(d.handR.quat);
+          // Counter-spin the separate cylinder so its entire world pose stays
+          // fixed, including off-axis geometry bounds used by live paint.
+          // Derive from native phase, never accumulate an earlier correction.
+          rollDrum.rotation.x = this.weapon.drumA + lo;
+        }
+      }
+    }
     orientation.copy(bestQ);
     return solve.call(this, limb, target, pole, orientation, weight, index);
+  };
+  Character.prototype._applyPose = function (dt, state) {
+    this._s3RollerSupportFeedback = undefined;
+    this._s3RollerSupportAdvance = undefined;
+    try { return applyPose.call(this, dt, state); }
+    finally {
+      // Native left IK has completed all of its existing bounded retries.
+      // Restore only the old target's feedback, never suppress its real error.
+      if (this._s3RollerSupportFeedback !== undefined) {
+        this.ikErrPre = this._s3RollerSupportFeedback;
+        this._s3RollerSupportFeedback = undefined;
+      }
+    }
   };
   Character.prototype._s3CancelRollerFlick = function () {
     this.s3RollerFlick = null;
     this._s3RollerContactPose = false;
+    this._s3RollerGripBlend = 0;
     // A cancelled runner must not fall back to the legacy 0.7s pose or its
     // 0.15s drum impulse on the next Character frame.
     if (this.tr) this.tr[T.T_FLICK] = 99;
@@ -1002,6 +1141,9 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     // Airborne/recovery poses remain active until native rolling is admitted.
     const contact = available && this.grounded && !!s.rolling, previous = this.wRoll;
     this._s3RollerContactPose = contact;
+    // Follow the existing roll clock into/out of the hold; a new flick or an
+    // unavailable action owns its pose instead. This is not another clock.
+    this._s3RollerGripBlend = available && this.grounded && (contact || !this.s3RollerFlick) ? previous : 0;
     let result;
     try { if (contact) this.wRoll = 1; result = weaponPose.call(this, dt, s); }
     finally { this.wRoll = previous; }

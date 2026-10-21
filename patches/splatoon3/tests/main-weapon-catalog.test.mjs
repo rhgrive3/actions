@@ -123,7 +123,8 @@ test('added Charger sight and scoped-only zoom use the sourced family, not kind=
 
 test('all 58 additions admit finite native main shots through Actor input', async () => {
   const f = await setup();
-  assert.equal(f.WEAPON_ORDER.length,160); // 65 base mains + 95 playable alternate kits
+  assert.equal(f.WEAPON_ORDER.length,161); // 65 base mains + 95 playable alternate kits + one scoped Charger
+  assert.equal(f.WEAPON_ORDER.filter(id => id === 'charger_scope').length,1, 'scoped Charger is registered once');
   for (const r of f.MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy)) {
     f.G.projectiles.clear(); f.G.actors.length=0;
     const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;

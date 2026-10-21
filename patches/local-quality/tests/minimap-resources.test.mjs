@@ -320,3 +320,23 @@ test('#907 map availability follows visible live state on keyboard/pad/touch', (
   assert.equal(isOpen.call(game, playing), false, 'menu owns presentation');
   assert.equal(isOpen.call({ menus: null }, null), false);
 });
+
+// Reactivation owns its own idle callback, but must recheck current preferences.
+test('reactivation idle rechecks OFF after scheduling and never builds a stale map',()=>{
+ const h=makeHarness({minimapOff:false}), M=h.load('src/game/minimap.js');
+ const mm=new M(h.level(),h.paint);assert.equal(h.state.idleFns.length,1);
+ h.G.settings.minimap=false;h.runIdle();assert.equal(h.state.fullBuilds,0);
+ h.G.settings.minimap=true;mm.activate();assert.equal(h.state.idleFns.length,1);
+ h.G.settings.minimap=false;h.runIdle();assert.equal(h.state.fullBuilds,0);assert.equal(mm._built,false);
+ h.G.settings.minimap=true;mm.activate();const newer=new M(h.level(),h.paint);
+ h.state.idleFns.shift()();assert.equal(mm._built,false);assert.equal(h.state.fullBuilds,0);
+ h.runIdle();assert.equal(newer._built,true);assert.equal(h.state.fullBuilds,1);
+});
+
+test('deferred native-world candidate schedules no raster until activation',()=>{
+ const h=makeHarness({minimapOff:false}), M=h.load('src/game/minimap.js');
+ const mm=new M(h.level(),h.paint,7,{deferActivation:true});
+ assert.equal(h.state.idleFns.length,0);assert.equal(h.state.fullBuilds,0);
+ mm.activate();assert.equal(h.state.idleFns.length,1);h.runIdle();
+ assert.equal(h.state.fullBuilds,1);assert.equal(mm._built,true);
+});

@@ -1,0 +1,70 @@
+name: INKWAVE squid heading input native QA
+on:
+  pull_request:
+    paths:
+      - patches/local-quality/squid-motion-binding-adapter.mjs
+      - patches/local-quality/tests/squid-heading-*.test.mjs
+      - tools/squid-heading-qa/**
+      - .github/workflows/inkwave-squid-heading-qa.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: squid-heading-native-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compare-heading:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing native QA tools
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify normal input and native QA contracts
+        run: node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/squid-heading-frame.test.mjs patches/local-quality/tests/squid-heading-boundary.test.mjs tools/squid-heading-qa/probe.test.mjs tools/squid-heading-qa/compare.test.mjs tools/squid-heading-qa/workflow.test.mjs tools/squid-heading-qa/three-contract.test.mjs tools/squid-heading-qa/reference.test.mjs tools/squid-heading-qa/bank-contract.test.mjs
+      - name: Checkout same-source counterfactual without repository history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 1
+          path: _squid_heading_reference
+      - name: Build and capture named heading-only counterfactual
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"
+          node tools/squid-heading-qa/reference.mjs _squid_heading_reference "$SOURCE_SHA" .qa-evidence/squid-heading-reference.json
+          cd _squid_heading_reference
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node ../tools/squid-heading-qa/run.mjs --site _site --out ../.qa-evidence/squid-heading-baseline --expect baseline --reference-proof ../.qa-evidence/squid-heading-reference.json
+      - name: Build and capture exact candidate
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+          INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/squid-heading-frame.test.mjs patches/local-quality/tests/squid-heading-boundary.test.mjs tools/squid-heading-qa/probe.test.mjs tools/squid-heading-qa/compare.test.mjs tools/squid-heading-qa/workflow.test.mjs tools/squid-heading-qa/three-contract.test.mjs tools/squid-heading-qa/reference.test.mjs tools/squid-heading-qa/bank-contract.test.mjs
+          node tools/squid-heading-qa/run.mjs --site _site --out .qa-evidence/squid-heading-candidate --expect candidate
+      - name: Verify matched camera, light, inputs, source phase and preserved shape
+        run: node tools/squid-heading-qa/compare.mjs .qa-evidence/squid-heading-baseline/result.json .qa-evidence/squid-heading-candidate/result.json "$SOURCE_SHA" .qa-evidence/squid-heading-comparison.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: squid-heading-native-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            .qa-evidence/squid-heading-baseline/**
+            .qa-evidence/squid-heading-candidate/**
+            .qa-evidence/squid-heading-comparison.json
+            .qa-evidence/squid-heading-reference.json
+            _squid_heading_reference/_site/inkwave-build.json
+            _site/inkwave-build.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

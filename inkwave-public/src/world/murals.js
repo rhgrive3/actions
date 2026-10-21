@@ -1,8 +1,8 @@
 // Procedural wall murals / signage, drawn into one canvas atlas that the level shader samples underneath the ink
 // layer. Rows 0-3 are the original tileable 2048x256 strips (ids 0-3, unchanged pixels); below them sit face-fitted
-// decals (ids 4…11) in one stage region, (re)drawn for the loaded stage by texture.userData.setStage(id): a stage that
-// owns its decals (src/world/stages/<id>/murals.js — Cargo Terminal) draws its own there, every other stage keeps
-// Halyard Marina's (the ferry's car-deck floor markings and cabin livery), exactly as before. The placement table
+// decals (ids 4…11) in one stage region, (re)drawn for the loaded stage by texture.userData.setStage(id).
+// Stages with their own decals (src/world/stages/<id>/murals.js) draw them into the expanded atlas.
+// Stages without decals use only the four shared strip rows; Halyard explicitly draws its ferry livery. The placement table
 // travels on texture.userData.murals (indexed by mural id) and is read by levelMaterial.js:
 //   rect  [u0, uw, v0, vh]     atlas rectangle in texture space (v from the bottom: CanvasTexture flips Y)
 //   place [x0, xLen, y0, yLen] where it sits on the face in metres (face u / v); xLen < 0 = strip repeating every
@@ -11,7 +11,7 @@
 import * as THREE from 'three';
 import { STAGES } from './stages/index.js';
 
-const W = 2048, RH = 256, ROWS = 4, H = 2048;
+const W = 2048, RH = 256, ROWS = 4, FULL_H = 2048;
 const NAVY = '#27304d', CORAL = '#ec7a6b', TEAL = '#3fa8a2', MUSTARD = '#eec35c', CREAM = '#fbf5e8', SKY = '#7cc6e6';
 
 // Halyard decals: canvas rects (px) + face size (m). 64 px/m on the deck, 96 px/m on the cabin.
@@ -25,7 +25,8 @@ const STAGE_R = { x: 0, y: 1040, w: 2048, h: 1008 };
 const STAGE_MURALS = {};
 for (const [id, st] of Object.entries(STAGES)) if (st.drawMurals) STAGE_MURALS[id] = st.drawMurals;
 
-export async function createMuralTexture(stageId = 'halyard') {
+export async function createMuralTexture(stageId = 'tidewater') {
+  let H = stageId === 'halyard' || STAGE_MURALS[stageId] ? FULL_H : RH * ROWS;
   try { await Promise.all([document.fonts.load('120px "Titan One"'), document.fonts.load('800 100px Rubik')]); } catch { /* fallback font */ }
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
@@ -44,7 +45,7 @@ export async function createMuralTexture(stageId = 'halyard') {
   tex.minFilter = THREE.LinearMipmapLinearFilter;
   const rect = (r) => [r.x / W, r.w / W, 1 - (r.y + r.h) / H, r.h / H];
   const kit = { font, fontB: (px) => `800 ${px}px Rubik, "Arial Black", sans-serif`, NAVY, CORAL, TEAL, MUSTARD, CREAM, SKY, squid, blob };
-  // Halyard's decals (the default for every stage without its own): the same pixels and table as always
+  // Halyard-specific decals: kept in the expanded stage atlas only when Halyard is selected.
   const halyard = () => {
     drawCarDeck(g, DECK);
     drawCabinSide(g, CSIDE);
@@ -58,16 +59,23 @@ export async function createMuralTexture(stageId = 'halyard') {
   let cur = null;
   // (re)draw the stage region for stage `id` and rebuild the placement table; call before building the level material
   tex.userData.setStage = (id) => {
-    const key = STAGE_MURALS[id] ? id : 'halyard';
+    const key = id === 'halyard' || STAGE_MURALS[id] ? id : 'shared';
     if (key === cur) return;
     cur = key;
+    const nextHeight = key === 'shared' ? RH * ROWS : FULL_H;
+    if (nextHeight !== H) {
+      const shared = g.getImageData(0, 0, W, RH * ROWS);
+      tex.dispose(); // WebGL allocation dimensions cannot be mutated in place.
+      c.height = H = nextHeight;
+      g.putImageData(shared, 0, 0);
+    }
     g.clearRect(STAGE_R.x, STAGE_R.y, STAGE_R.w, STAGE_R.h);
     const murals = [0, 1, 2, 3].map((k) => ({ rect: [0, 1, 1 - (k + 1) * RH / H, RH / H], place: [0, -8, 0, 0], fx: [0, 0] }));
     let list = [];
     g.save();
     try {
       g.beginPath(); g.rect(STAGE_R.x, STAGE_R.y, STAGE_R.w, STAGE_R.h); g.clip();
-      list = key === 'halyard' ? halyard() : (STAGE_MURALS[key](g, { ...STAGE_R }, kit) || []);
+      list = key === 'shared' ? [] : key === 'halyard' ? halyard() : (STAGE_MURALS[key](g, { ...STAGE_R }, kit) || []);
     } catch (e) { console.error('[inkwave] stage murals failed', key, e); } finally { g.restore(); }
     for (const m of list) {
       if (!(m.id >= 4 && m.id <= 11)) { console.warn('[inkwave] mural id out of range (4…11)', key, m.id); continue; }
@@ -105,7 +113,7 @@ function squid(g, x, y, s, color, eye = CREAM) {
   g.restore();
 }
 
-// Row 0: big "INKWAVE" banner for the back walls
+// Row 0: ZEVANT banner for the back walls
 function drawBanner(g, y0, font) {
   g.save(); g.translate(0, y0);
   // stripe band
@@ -119,9 +127,9 @@ function drawBanner(g, y0, font) {
     g.font = font(150);
     g.textBaseline = 'alphabetic';
     g.lineJoin = 'round';
-    g.lineWidth = 22; g.strokeStyle = CREAM; g.strokeText('INKWAVE', ox + 300, 186);
-    g.fillStyle = NAVY; g.fillText('INKWAVE', ox + 300, 186);
-    g.fillStyle = CORAL; g.fillText('INKWAVE', ox + 294, 180);
+    g.lineWidth = 22; g.strokeStyle = CREAM; g.strokeText('ZEVANT', ox + 300, 186);
+    g.fillStyle = NAVY; g.fillText('ZEVANT', ox + 300, 186);
+    g.fillStyle = CORAL; g.fillText('ZEVANT', ox + 294, 180);
     g.font = font(34); g.fillStyle = CREAM; g.fillText('TURF RIOT  •  TIDEWATER PLAZA', ox + 320, 205 + 2);
     // splat accents
     blob(g, ox + 960, 70, 26, 5 + k, MUSTARD);

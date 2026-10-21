@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
+import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
 import { fixture } from './source-fixture.mjs';
 import { heldBrellaGuardFacing } from '../runtime/brella-guard-facing.mjs';
 import { adaptBrellaGuardFacing } from '../brella-guard-facing-adapter.mjs';
@@ -9,6 +11,20 @@ import { parse } from '../../loading-cache/vendor/acorn.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { reverseShotRelease } from '../runtime/shooter-movement.mjs';
 import { rollingHeadingActive } from '../runtime/movement-physics.mjs';
+// #1651 added one native scoped Charger; retain the exact prior65+95 roster.
+function assertProductionRoster(order,weapons) {
+  const canonical=[...MAIN_WEAPON_CATALOG.records.map(r=>r.id),...ALTERNATE_WEAPON_KITS.map(r=>r.id)];
+  assert.equal(canonical.length,160);assert.equal(new Set(canonical).size,160);
+  const ids=Array.from(order),prior=ids.filter(id=>id!=='charger_scope');
+  assert.equal(prior.length,160,'all original160 kits remain');
+  assert.deepEqual(prior.sort(),canonical.sort(),'exact canonical base/variant IDs, no substitutions');
+  assert.equal(ids.filter(id=>id==='charger_scope').length,1,'one explicit #1651 native scoped entry');
+  assert.equal(ids.length,161);
+  assert.equal(weapons.charger_scope?.id,'charger_scope');
+  assert.equal(weapons.charger_scope?.kind,'charger');
+  assert.equal(weapons.charger_scope?.scoped,true);
+}
+
 const IDS=['s3-shelter-normal','s3-shelter-wide','s3-shelter-focus'];
 const setup=async(extra={})=>{const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,vmMathRandom:()=>.5,
   extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';",...extra});f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);return f;};
@@ -107,9 +123,9 @@ test('actual Actor facing executes higher-priority owners before held Brella adm
   assert.notEqual(a._faceTarget,null,'disabling the roller owner loses the held rolling heading');
   assert.equal(lowerCalls,1,'disabled roller owner incorrectly reaches the lower Brella branch');
 });
-test('all 160 registered kits and every non-target live guard retain exact existing facing traces',async()=>{
+test('all original160 kits plus native scoped Charger retain exact existing facing traces',async()=>{
   const a=await setup(),b=await setup({adaptRuntime:(rel,s)=>rel.endsWith('/brella-guard-facing.mjs')?'export function heldBrellaGuardFacing(){return false;}':s});
-  const ids=Array.from(a.WEAPON_ORDER);assert.equal(ids.length,160);let cases=0;
+  const ids=Array.from(a.WEAPON_ORDER);assertProductionRoster(ids,a.WEAPONS);let cases=0;
   for(const id of ids)for(const mode of ['closed','ordinary','fire','sub','special','superjump','squid'])for(const hz of[30,60,120]){
     if(IDS.includes(id)&&mode==='ordinary')continue;
     const actors=[a.make(id),b.make(id)];

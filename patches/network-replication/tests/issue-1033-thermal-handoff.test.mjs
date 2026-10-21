@@ -1,44 +1,51 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
+import { fixture, emitMainShot } from '../../splatoon3/tests/source-fixture.mjs';
 
 async function appliedHit(ackOwner) {
-  const f = await fixture({ fullRuntime: true, productionComposition: true,
-    extraExports: "export * from './patches/splatoon3/runtime/private-tracking.mjs';" });
-  const attacker = f.make('shooter'), victim = f.make('shooter');
-  Object.assign(attacker, { nid: 1, owner: 'S', remote: false, isLocal: true, team: 0, netLife: 2, alive: true });
-  Object.assign(victim, { nid: 2, owner: 'OLD', remote: true, isLocal: false, team: 1, netLife: 5, alive: true, hp: 100 });
-  attacker.s3.loadout[1].main = 'thermalInk';
-  f.G.match = { mode: 'turf', state: 'playing', playing: () => true, local: attacker, actors: [attacker, victim] };
-  f.G.actors = [attacker, victim];
-  const sent = [], acks = [], confirmations = [];
-  function net(myId, packets) {
-    const nm = Object.create(f.NetMatch.prototype);
-    Object.assign(nm, { myId, cfg: { id: 'match-1', map: 'normal' }, byNid: new Map([[1, attacker], [2, victim]]),
-      hitNextSeq: 0, hitPending: new Map(), _hitSeq: 0, _pendingHits: new Map(), peers: new Map(),
-      s: { hostId: 'H', _members: new Set(['S', 'OLD', 'NEW']),
-        tr: { sendTo(to, data) { packets.push({ to, data }); return true; } } } });
-    return nm;
+  const clock = { ms: 1000 };
+  async function endpoint(myId, packets) {
+    const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true,
+      vmPerformance: { now: () => clock.ms },
+      extraExports: "export * from './patches/splatoon3/runtime/private-tracking.mjs';" });
+    const attacker = f.make('shooter'), victim = f.make('shooter');
+    Object.assign(attacker, { nid: 1, owner: 'S', team: 0, netLife: 2, alive: true });
+    Object.assign(victim, { nid: 2, owner: myId === 'NEW' ? 'NEW' : 'OLD', team: 1, netLife: 5, alive: true, hp: 100, invuln: 0 });
+    attacker.pos.set(0, 0, 0); victim.pos.set(0, 0, 3); attacker.aimDir.set(0, 0, 1);
+    attacker.s3.loadout[1].main = 'thermalInk';
+    const match = { mode: 'turf', state: 'playing', time: 180, playing: () => true, actors: [attacker, victim] };
+    const session = { myId, hostId: 'S', isHost: myId === 'S', _members: new Map([['S', {}], ['OLD', {}], ['NEW', {}]]),
+      tr: { sendTo(to, data) { packets.push({ to, data: JSON.parse(JSON.stringify(data)) }); return true; },
+        broadcast(data) { packets.push({ to: '*', data: JSON.parse(JSON.stringify(data)) }); return true; } } };
+    const nm = new f.NetMatch(session, { id: 'match-1', map: 'normal' });
+    nm.bind(match); session.match = nm; f.G.netm = nm; f.G.match = match; f.G.actors = match.actors;
+    return { f, attacker, victim, nm };
   }
-  const sender = net('S', sent);
+  const sent = [], acks = [], confirmations = [];
+  const tx = await endpoint('S', sent), rx = await endpoint(ackOwner, acks);
+  const { f, attacker, victim, nm: sender } = tx;
   f.on('combat:confirmed', e => { if (e.attacker === attacker && e.victim === victim) confirmations.push(e); });
+  emitMainShot(f, attacker);
+  assert.equal(sender._sendTick(), true, 'native owner tick is emitted');
+  const tick = sent.find(p => p.data.k === 't')?.data;
+  assert.ok(tick?.e.some(e => e[1] === 'p' || e[1] === 'ev' && e[2] === 'weapon:fire'), 'native main birth travels in owner tick');
+  rx.nm.onMessage('S', tick);
+  assert.ok(rx.nm._combatProvenance?.proofs.get('S')?.length, 'receiver accepted actual main birth proof');
   f.withMainDirectDamage(attacker, victim, () => sender.sendHit(attacker, victim, 10, 'shooter'));
-  const hit = sent[0].data;
-  function apply(owner, packet) {
-    attacker.remote = true; victim.remote = false;
-    f.G.netm = net(owner, acks);
-    f.G.projectiles = { applyHit: (a, v, damage, source) => v.damage(damage, a, source) };
-    f.G.netm._hit(packet, 'S');
-    attacker.remote = false; victim.remote = true;
-    return acks.at(-1).data;
+  const hit = sent.find(p => p.data.k === 'hit').data;
+  function apply(packet) {
+    rx.nm.onMessage('S', packet);
+    const ack = acks.find(p => p.data.k === 'hit_ack')?.data;
+    assert.ok(ack, 'owning endpoint sends authoritative hit ACK');
+    return ack;
   }
   let ack;
-  if (ackOwner === 'OLD') ack = apply('OLD', hit);
+  if (ackOwner === 'OLD') ack = apply(hit);
   victim.owner = 'NEW';
   sender.onMessage('__relay__', { k: 'hit_nack', seq: hit.seq, to: 'OLD' });
   assert.equal(sent.at(-1).to, 'NEW');
-  if (ackOwner === 'NEW') ack = apply('NEW', sent.at(-1).data);
-  assert.equal(victim.hp, 90, 'the owning peer applied one actual hit');
+  if (ackOwner === 'NEW') ack = apply(sent.at(-1).data);
+  assert.equal(rx.victim.hp, 90, 'the owning peer applied one actual hit');
   assert.equal(ack.d, 10);
   return { f, attacker, victim, sender, ack, confirmations };
 }

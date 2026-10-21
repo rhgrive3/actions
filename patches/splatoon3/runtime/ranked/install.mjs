@@ -6,10 +6,12 @@ import { createRankedStage, RankedWorld } from './world.mjs';
 import { installRankedUi } from './ui.mjs';
 import { installRankedBots } from './bots.mjs';
 import { installRankedNetwork, actorId } from './network.mjs';
+import { objectiveSpecialFor, rankedInputFor } from './pose-admission.mjs';
 import { installRankedCombat, createRankedEffects, isCarrier } from './combat.mjs';
 
 import { interruptSpecialForObjective } from '../all-specials.mjs';
 import { specialGaugeLocked, clearSpecialGaugeLocks } from '../tacticooler-gauge.mjs';
+import { catalogSplatanaThrowBlocked } from '../main-weapon-catalog.mjs';
 
 const INSTALLED = Symbol.for('inkwave.ranked.v1');
 export function installRanked(context) {
@@ -133,6 +135,9 @@ export function installRanked(context) {
     const yaw = Number.isFinite(this.aimYaw) ? this.aimYaw : this.yaw;
     const pitch = Number.isFinite(this.aimPitch) ? this.aimPitch : 0;
     const aim = [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
+    // Reject at the same pre-update recovery boundary as sub preparation,
+    // before either the local command or follower wire latch can retain it.
+    if (m.mode === 'clams' && catalogSplatanaThrowBlocked(this)) this.intent.throw = false;
     this._rankedInput = { fire: !!this.intent.fire, throw: !!this.intent.throw, aim };
     if (this.intent.throw) this._rankedThrowPending = true;
     if (isCarrier(m, this)) {
@@ -166,15 +171,19 @@ function prepareCarrier(api, actor) {
 export function buildFrame(match, api) {
   const nm = api.G.netm, inputs = {};
   const actors = match.actors.map(a => {
-    const id = actorId(a), received = a.remote && nm?.isHost ? nm.rankedInputs?.get(id) : a._rankedInput;
+    const id = actorId(a), received = a.remote && nm?.isHost ? rankedInputFor(nm.rankedInputs?.get(id),a,match,nm) : a._rankedInput;
     const age = a.remote && received ? api.G.time - received.at : 0;
     const cmd = !a.remote || Number.isFinite(age) && age >= 0 && age < .75 ? received : null;
     if (cmd) inputs[id] = { fire: !!cmd.fire, throw: !!cmd.throw, aim: cmd.aim };
     if (a.remote && received) received.throw = false;
     if (!a.remote) { a.intent.throw = false; if (!nm || nm.isHost) a._rankedThrowPending = false; }
-    const special = a.remote && cmd ? cmd.special : a.specialActive?.id ?? null;
-    const specialDeployed = a.remote && cmd ? cmd.specialDeployed : special === 'storm' && a.specialActive?.t > 0;
-    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: a.pos.toArray(), alive: a.alive && !a.s3Disconnected, grounded: a.grounded,
+    const hostRemote = a.remote && nm?.isHost && nm.match === match;
+    const pose = hostRemote ? nm.rankedPose?.get(id) : null;
+    const admitted = pose?.actor === a && pose.match === match && pose.session === nm.s && pose.owner === a.owner && pose.life === a.net?.lastLife;
+    const objectivePos = hostRemote && admitted ? [...pose.last.pos] : a.pos.toArray();
+    const special = objectiveSpecialFor(a, a.remote ? cmd : null);
+    const specialDeployed = special === 'storm' && (a.specialActive?.t > 0 || (a.remote && cmd?.specialDeployed === true));
+    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: objectivePos, alive: a.alive && !a.s3Disconnected && (!hostRemote || admitted), grounded: a.grounded,
       remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming: a.form === 'squid', slot: a.slot };
   });
   return { actors, inputs, zoneCoverage: match.rankedWorld.zoneCoverage(), barrierHits: match.rankedBarrierHits.splice(0),

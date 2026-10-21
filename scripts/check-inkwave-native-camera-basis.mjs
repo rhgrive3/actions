@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // Actual menu-start and two-peer production-relay camera/aim/launch regression.
-import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';import {chromium} from 'playwright';import {WebSocketServer} from 'ws';import {RoomDurableObject} from '../server/src/index.js';
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';import {chromium} from 'playwright';import {WebSocketServer} from 'ws';import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 const site=path.resolve(process.argv[2]||'_site-native-urchin'),out=path.resolve(process.argv[3]||'.browser-evidence/native-camera-basis'),id=process.env.NATIVE_STAGE_ID||'urchin';fs.mkdirSync(out,{recursive:true});
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.html':'text/html','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml','.webp':'image/webp'};
 const server=http.createServer((req,res)=>{try{const name=new URL(req.url,'http://local').pathname,file=path.resolve(site,'.'+(name==='/'?'/index.html':decodeURIComponent(name)));if(!file.startsWith(site+'/')||!fs.statSync(file).isFile())throw Error();res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});fs.createReadStream(file).pipe(res);}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>relay.once('listening',r));const rooms=new Map();let packets=0;
-relay.on('connection',(ws,req)=>{const u=new URL(req.url,'http://local'),code=u.pathname.split('/')[2];if(!rooms.has(code))rooms.set(code,new RoomDurableObject({},{}));rooms.get(code).handleSession({send:s=>{if(ws.readyState===1)ws.send(s);},addEventListener:(name,fn)=>ws.on(name,name==='message'?b=>{packets++;fn({data:b.toString()});}:fn)},u.searchParams.get('name')||'Camera');});
+const connectRelay=createLocalRelay({rooms});
+relay.on('connection',(ws,req)=>connectRelay(ws,req,{receive:()=>{packets++;}}));
 const result={status:'running',id,offline:[],online:[],errors:[],resources:[]},browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),pages=[];
 const base='http://127.0.0.1:'+server.address().port,relayURL='ws://127.0.0.1:'+relay.address().port;
 const proof=async(page,hz)=>page.evaluate(hz=>{

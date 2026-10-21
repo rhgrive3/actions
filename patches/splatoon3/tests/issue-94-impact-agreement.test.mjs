@@ -327,6 +327,8 @@ async function hudHarness() {
     if (spec === './game/inkFlight.js') return inkFlight;
     throw new Error('Unexpected config dependency: ' + spec);
   }); await config.evaluate();
+  const chargerTuning = new vm.SourceTextModule(fs.readFileSync(path.join(SRC, 'src/game/chargerTuning.js'), 'utf8'), { context });
+  await chargerTuning.link(() => { throw new Error('Unexpected Charger tuning dependency'); });
   const values = {
     G: { match: null }, on: () => () => {}, t: v => v, tx: v => v, isJa: () => false,
     ...config.namespace,
@@ -338,6 +340,7 @@ async function hudHarness() {
   const mod = new vm.SourceTextModule(code, { context });
   await mod.link(specifier => {
     if (specifier === './ui-util.js') return util;
+    if (specifier === '../game/chargerTuning.js') return chargerTuning;
     const names = imports.get(specifier);
     assert.ok(names, `unexpected composed hud import ${specifier}`);
     return new vm.SyntheticModule([...names], function () {
@@ -347,7 +350,7 @@ async function hudHarness() {
   await mod.evaluate();
   const hud = () => Object.assign(Object.create(mod.namespace.HUD.prototype), {
     _L: {}, _bloom: 0, _kick: 0, _fxTime: 0,
-    overLayer: new El(), ret: new El(), xh: new El(), spIcon: new El(), shield: new El(), subChip: new El(),
+    overLayer: new El(), ret: new El(), scopeMask: new El(), xh: new El(), spIcon: new El(), shield: new El(), subChip: new El(),
     lab: null, _snd() {}, _restart() {},
   });
   return { hud, code };

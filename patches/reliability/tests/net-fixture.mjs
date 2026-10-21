@@ -30,7 +30,7 @@ export async function fixture({ search = '', adapt = true } = {}) {
   }
   const addTimer = (fn, ms, interval) => { const id = ++serial; timers.set(id, { fn, ms, interval }); return id; };
   const context = vm.createContext({
-    console, URLSearchParams, location: { search, hostname: 'localhost' },
+    console, URLSearchParams, TextEncoder, location: { search, hostname: 'localhost' },
     performance: { now: () => now }, WebSocket: Socket,
     setTimeout: (fn, ms) => addTimer(fn, ms, false), clearTimeout: id => timers.delete(id),
     setInterval: (fn, ms) => addTimer(fn, ms, true), clearInterval: id => timers.delete(id),
@@ -47,17 +47,19 @@ export async function fixture({ search = '', adapt = true } = {}) {
   const transport = load('src/net/transport.js');
   const session = load('src/net/session.js');
   const admission = module(fs.readFileSync(new URL('../session-admission.mjs', import.meta.url),'utf8'));
-  await session.link(spec => ({ '../core/ctx.js': core, '../config.js': config, '../game/character-style.js': style, './transport.js': transport, './netmatch.js': match, '../../patches/reliability/session-admission.mjs': admission })[spec]);
+  const outbound = module(fs.readFileSync(new URL('../../network-replication/outbound-prefix.mjs', import.meta.url),'utf8'));
+  await session.link(spec => ({ '../core/ctx.js': core, '../config.js': config, '../game/character-style.js': style, './transport.js': transport, './netmatch.js': match, '../../patches/reliability/session-admission.mjs': admission, '../../patches/network-replication/outbound-prefix.mjs': outbound })[spec]);
   await session.evaluate();
   const G = core.namespace.G;
   G.game = { netMatchGo() {} };
   const net = new session.namespace.NetSession();
   return {
     net, G, sockets, timers, Transport: transport.namespace.Transport,
+    PROTO: transport.namespace.PROTO, COMPAT: transport.namespace.COMPAT,
     constructionFails: () => { failConstructor = true; },
     message(socket, data) { socket.onmessage?.({ data: typeof data === 'string' ? data : JSON.stringify(data) }); },
     welcome(socket, { id = 'me', host = id, members = [...new Set([host, id])].map(id=>({id,name:'Player'})) } = {}) {
-      socket.onmessage?.({ data: JSON.stringify({ t: 'welcome', id, host, members }) });
+      socket.onmessage?.({ data: JSON.stringify({ t: 'welcome', proto: transport.namespace.PROTO, compat: transport.namespace.COMPAT, id, host, members }) });
     },
     run(id) { const item = timers.get(id); if (!item) throw new Error('Missing fixture timer'); if (!item.interval) timers.delete(id); now += item.ms; item.fn(); },
     timer(ms) { return [...timers].find(([, item]) => item.ms === ms)?.[0]; },

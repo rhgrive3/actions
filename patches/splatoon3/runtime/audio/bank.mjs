@@ -2,7 +2,8 @@ import { WEAPON_AUDIO, LOOP_EVENTS, mainAudioSourceId } from './weapon-recipes.m
 export { mainAudioSourceId } from './weapon-recipes.mjs';
 import { KIT_AUDIO } from './kit-recipes.mjs';
 import { COMBAT_AUDIO } from './combat-recipes.mjs';
-export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO});
+import { SOURCE_EXTRA_AUDIO } from './source-cue-registry.mjs';
+export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO,...SOURCE_EXTRA_AUDIO});
 import { renderSound } from './render.mjs';
 export const MAIN_AUDIO_PREFIX='main:';
 // Source-recorded MP3s always win. Only MAIN-weapon attack one-shots may use
@@ -16,6 +17,8 @@ export class WeaponSoundBank {
   name(id,event='fire'){id=mainAudioSourceId(id);return this.has(id,event)?`${MAIN_AUDIO_PREFIX}${id}:${event}`:null;}
   get(id,event,variant=0){
     id=mainAudioSourceId(id);
+    // Recording-only cues are source routes, not parameters for the PCM renderer.
+    if(Object.hasOwn(COMBAT_AUDIO,id)||Object.hasOwn(SOURCE_EXTRA_AUDIO,id))throw new Error('Recorded-only cue cannot generate PCM: '+id+'/'+event);
     if(this.realOnly&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Procedural weapon audio disabled for non-main-shot events');
     const key=`${id}:${event}:${variant}`;let item=this.cache.get(key);
     if(item){this.cache.delete(key);this.cache.set(key,item);this.hits++;return item.buffer;}
@@ -64,12 +67,13 @@ export class WeaponSoundBank {
     name=`${MAIN_AUDIO_PREFIX}${id}:${event}`;
     if(this.defs.has(name))return this.defs.get(name);
     if(!this.has(id,event))return null;
+    if(Object.hasOwn(COMBAT_AUDIO,id)&&!this.authorized.byEvent.has(`${id}:${event}`))return null;
     // Strict deployment must never substitute a synthesized waveform, even if
     // an authorized file is still decoding, missing, or evicted from the LRU.
     if(this.realOnly&&!this.authorized.byEvent.has(`${id}:${event}`)&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))return null;
     const bank=this,loop=LOOP_EVENTS.has(event);
     const build=(v,p,o={})=>{
-      const serial=o.variant??bank.roundRobin.get(name)??0;bank.roundRobin.set(name,(serial+1)%3);
+      const serial=o.variant??(loop?0:bank.roundRobin.get(name)??0);bank.roundRobin.set(name,(serial+1)%3);
       const authorized=bank.authorized.pick(id,event,serial);
       if(!authorized&&bank.realOnly&&!(bank.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Verified sample not resident: '+id+'/'+event);
       const buffer=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3),s=v.ctx.createBufferSource();s.buffer=buffer;s.loop=loop;
@@ -77,14 +81,19 @@ export class WeaponSoundBank {
       // recorded texture, NOT the synth oscillator the old native runner
       // ramps up to 2.5x. Preserve the recorded sample at original pitch.
       // Retail SLINK pitch automation is not verified; do not invent one.
-      const sourceChargerHold=!!authorized&&AUDIO_RECIPES[id]?.family==='charger'&&event==='charge';
+      const recordedMotor=!!authorized&&((AUDIO_RECIPES[id]?.family==='charger'&&event==='charge')||
+        (AUDIO_RECIPES[id]?.family==='splatling'&&['charge','spin'].includes(event)));
+      // Source motors keep their recorded pitch; native oscillator controls
+      // must not transpose them by up to 2.5x or alternate charge motors randomly.
       if(loop&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
       if(authorized&&authorized.gain!==1){const g=v.ctx.createGain();g.gain.value=authorized.gain;s.connect(g);g.connect(v.out);v.nodes.push(g);}else s.connect(v.out);
       // Small playback variation is additional to independently rendered round-robin samples.
-      s.playbackRate.value=sourceChargerHold?1:Math.max(.3,Math.min(3,p));s.start(v.t,0);
+      s.playbackRate.value=recordedMotor?1:Math.max(.3,Math.min(3,p));s.start(v.t,0);
       s._end=loop?Infinity:v.t+buffer.duration/s.playbackRate.value;
       v.nodes.push(s);v.srcs.push(s);v.end=Math.max(v.end,s._end);v.endless=loop;
-      return {pitch(q,t){if(!sourceChargerHold)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);}};
+      return {pitch(q,t){
+        if(!recordedMotor)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);
+      }};
     };
     const d={gain:loop?.23:(event==='explosion'?.7:.68),max:16,jitter:loop?0:.008,minGap:['impact','shield_hit'].includes(event)?.024:event==='explosion'?.008:0,
       reverb:loop?.025:.055,ref:event==='explosion'?5:3,priority:event==='ready'?90:65,weaponId:id,event,
@@ -95,7 +104,7 @@ export class WeaponSoundBank {
   // Keep worker jobs bounded even after rapid weapon switches or many remote actors.
   warm(id,{focus=true,events=null}={}){
     id=mainAudioSourceId(id);
-    if(this.disposed||(this.realOnly&&!this.audibleShotFallback)||!AUDIO_RECIPES[id])return;
+    if(this.disposed||(Object.hasOwn(COMBAT_AUDIO,id)||Object.hasOwn(SOURCE_EXTRA_AUDIO,id))||(this.realOnly&&!this.audibleShotFallback)||!AUDIO_RECIPES[id])return;
     const priority=['fire','fire_full','fire_left','fire_alt','fire_vertical','ready'];
     const eventNames=AUDIO_RECIPES[id].events.filter(e=>!events||events.includes(e)).filter(e=>!this.realOnly||mainAttackFallbackEligible(id,e)).sort((a,b)=>{
       const pa=priority.indexOf(a),pb=priority.indexOf(b);

@@ -72,7 +72,7 @@ export function pausedWorldFrame(game, G, viewport = globalThis) {
     for (const event of ['webglcontextlost', 'webglcontextrestored']) previous?.canvas?.removeEventListener?.(event, previous.invalidate);
     game._pausedWorldCanvas = null;
     if (canvas?.addEventListener) {
-      const invalidate = () => { game._pausedWorld = null; };
+      const invalidate = () => { game._pausedWorld = null; game.R?.releasePausedFrame?.(); };
       for (const event of ['webglcontextlost', 'webglcontextrestored']) canvas.addEventListener(event, invalidate);
       game._pausedWorldCanvas = { canvas, invalidate };
     }

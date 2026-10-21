@@ -1,0 +1,1177 @@
+{
+  "reference": {
+    "article": "https://game.watch.impress.co.jp/docs/kikaku/1460351.html",
+    "url": "https://asset.watch.impress.co.jp/img/gmw/docs/1460/351/24.jpg",
+    "sha256": "0b0c046d13e4986e172fb2697ae6c812beda6f5976f54bfadd05cdc1351f3ea4",
+    "size": [
+      1280,
+      720
+    ],
+    "published": "2022-12-01",
+    "game": "Splatoon 3",
+    "weaponRegion": "Splat Roller: isolated far stripe above the gap; near stripe is Big Swig and excluded",
+    "captureVersion": "not embedded; article dates to the 2.0.0 release",
+    "gear": "unreported",
+    "stickAndSpeed": "unreported; cannot certify a maximum-speed width from this still",
+    "floorQuadPixels": [
+      [
+        391.95,
+        169.17
+      ],
+      [
+        659.42,
+        174.49
+      ],
+      [
+        206.97,
+        615.27
+      ],
+      [
+        656.05,
+        626.05
+      ]
+    ],
+    "floorQuadCoordinates": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "floorQuadNote": "Adjacent left/centre green range guides crossed with two visible transverse floor joints. One transverse guide interval is the width unit; longitudinal joint distance is arbitrary, not an asserted range interval.",
+    "cornerUncertaintyPixels": 2,
+    "inkCrop": [
+      410,
+      120,
+      790,
+      301
+    ]
+  },
+  "homography": [
+    [
+      0.00494189283041929,
+      0.0020492072086325044,
+      -2.2836392783672013
+    ],
+    [
+      -9.871318393473826e-05,
+      0.004962935208087282,
+      -0.8008891167089047
+    ],
+    [
+      -2.7879896699770397e-05,
+      0.0020121177098053463,
+      1.0
+    ]
+  ],
+  "rows": [
+    {
+      "imageY": 120,
+      "left": 0.332750659965503,
+      "right": 1.3304510684136808,
+      "widthInGuideIntervals": 0.9977004084481778
+    },
+    {
+      "imageY": 121,
+      "left": 0.3378992033207071,
+      "right": 1.3299376457515417,
+      "widthInGuideIntervals": 0.9920384424308346
+    },
+    {
+      "imageY": 122,
+      "left": 0.3309711581950612,
+      "right": 1.3416219054482008,
+      "widthInGuideIntervals": 1.0106507472531396
+    },
+    {
+      "imageY": 123,
+      "left": 0.33610565301483364,
+      "right": 1.3410918095568172,
+      "widthInGuideIntervals": 1.0049861565419835
+    },
+    {
+      "imageY": 124,
+      "left": 0.30917305643299486,
+      "right": 1.3405634497495704,
+      "widthInGuideIntervals": 1.0313903933165756
+    },
+    {
+      "imageY": 125,
+      "left": 0.3063268717433136,
+      "right": 1.3400368175117914,
+      "widthInGuideIntervals": 1.0337099457684777
+    },
+    {
+      "imageY": 126,
+      "left": 0.3074824362973508,
+      "right": 1.3395119043844004,
+      "widthInGuideIntervals": 1.0320294680870497
+    },
+    {
+      "imageY": 127,
+      "left": 0.304648314456657,
+      "right": 1.3389887019634543,
+      "widthInGuideIntervals": 1.0343403875067974
+    },
+    {
+      "imageY": 128,
+      "left": 0.3058028299556481,
+      "right": 1.3304158584714516,
+      "widthInGuideIntervals": 1.0246130285158035
+    },
+    {
+      "imageY": 129,
+      "left": 0.3069536167294214,
+      "right": 1.3218716325134587,
+      "widthInGuideIntervals": 1.0149180157840374
+    },
+    {
+      "imageY": 130,
+      "left": 0.30810069281278374,
+      "right": 1.2892889753741215,
+      "widthInGuideIntervals": 0.9811882825613377
+    },
+    {
+      "imageY": 131,
+      "left": 0.3092440761244235,
+      "right": 1.2888505881228471,
+      "widthInGuideIntervals": 0.9796065119984236
+    },
+    {
+      "imageY": 132,
+      "left": 0.3143378253613336,
+      "right": 1.2884136176605334,
+      "widthInGuideIntervals": 0.9740757922991998
+    },
+    {
+      "imageY": 133,
+      "left": 0.3194154547268805,
+      "right": 1.2879780571300479,
+      "widthInGuideIntervals": 0.9685626024031674
+    },
+    {
+      "imageY": 134,
+      "left": 0.3205352677279006,
+      "right": 1.2915287204044423,
+      "widthInGuideIntervals": 0.9709934526765418
+    },
+    {
+      "imageY": 135,
+      "left": 0.32165149862885434,
+      "right": 1.2910895415084414,
+      "widthInGuideIntervals": 0.969438042879587
+    },
+    {
+      "imageY": 136,
+      "left": 0.31490622024939235,
+      "right": 1.2946239552655459,
+      "widthInGuideIntervals": 0.9797177350161534
+    },
+    {
+      "imageY": 137,
+      "left": 0.3160278168369538,
+      "right": 1.2941812128935075,
+      "widthInGuideIntervals": 0.9781533960565537
+    },
+    {
+      "imageY": 138,
+      "left": 0.3014818620325328,
+      "right": 1.2937398877085764,
+      "widthInGuideIntervals": 0.9922580256760436
+    },
+    {
+      "imageY": 139,
+      "left": 0.3026211271740454,
+      "right": 1.2932999729171517,
+      "widthInGuideIntervals": 0.9906788457431064
+    },
+    {
+      "imageY": 140,
+      "left": 0.2959505700305702,
+      "right": 1.2968084320396787,
+      "widthInGuideIntervals": 1.0008578620091084
+    },
+    {
+      "imageY": 141,
+      "left": 0.3048888298313425,
+      "right": 1.2963650212401021,
+      "widthInGuideIntervals": 0.9914761914087595
+    },
+    {
+      "imageY": 142,
+      "left": 0.2982356851636965,
+      "right": 1.2959230207697685,
+      "widthInGuideIntervals": 0.997687335606072
+    },
+    {
+      "imageY": 143,
+      "left": 0.2993728306548225,
+      "right": 1.2954824239107419,
+      "widthInGuideIntervals": 0.9961095932559194
+    },
+    {
+      "imageY": 144,
+      "left": 0.30050639084725406,
+      "right": 1.2989653001709796,
+      "widthInGuideIntervals": 0.9984589093237255
+    },
+    {
+      "imageY": 145,
+      "left": 0.30163638267040066,
+      "right": 1.298521273077481,
+      "widthInGuideIntervals": 0.9968848904070804
+    },
+    {
+      "imageY": 146,
+      "left": 0.3027628229472543,
+      "right": 1.2980786493769885,
+      "widthInGuideIntervals": 0.9953158264297342
+    },
+    {
+      "imageY": 147,
+      "left": 0.3038857283952232,
+      "right": 1.297637422426648,
+      "widthInGuideIntervals": 0.9937516940314248
+    },
+    {
+      "imageY": 148,
+      "left": 0.3050051156269606,
+      "right": 1.2933002616205826,
+      "widthInGuideIntervals": 0.988295145993622
+    },
+    {
+      "imageY": 149,
+      "left": 0.3061210011511829,
+      "right": 1.2928679477148615,
+      "widthInGuideIntervals": 0.9867469465636786
+    },
+    {
+      "imageY": 150,
+      "left": 0.30723340137348143,
+      "right": 1.2924369915690106,
+      "widthInGuideIntervals": 0.9852035901955292
+    },
+    {
+      "imageY": 151,
+      "left": 0.3083423325971266,
+      "right": 1.292007386796624,
+      "widthInGuideIntervals": 0.9836650541994973
+    },
+    {
+      "imageY": 152,
+      "left": 0.3017875222852035,
+      "right": 1.2954520093391346,
+      "widthInGuideIntervals": 0.9936644870539311
+    },
+    {
+      "imageY": 153,
+      "left": 0.3067255555813363,
+      "right": 1.295019025711008,
+      "widthInGuideIntervals": 0.9882934701296716
+    },
+    {
+      "imageY": 154,
+      "left": 0.3040118666258757,
+      "right": 1.2945873934868841,
+      "widthInGuideIntervals": 0.9905755268610084
+    },
+    {
+      "imageY": 155,
+      "left": 0.30130670378503155,
+      "right": 1.2941571063497321,
+      "widthInGuideIntervals": 0.9928504025647006
+    },
+    {
+      "imageY": 156,
+      "left": 0.2986100269396463,
+      "right": 1.297577069180026,
+      "widthInGuideIntervals": 0.9989670422403796
+    },
+    {
+      "imageY": 157,
+      "left": 0.2997219058699141,
+      "right": 1.2971434655782421,
+      "widthInGuideIntervals": 0.997421559708328
+    },
+    {
+      "imageY": 158,
+      "left": 0.3046247899767762,
+      "right": 1.3005483259328459,
+      "widthInGuideIntervals": 0.9959235359560696
+    },
+    {
+      "imageY": 159,
+      "left": 0.30193539064487734,
+      "right": 1.3001114547897794,
+      "widthInGuideIntervals": 0.998176064144902
+    },
+    {
+      "imageY": 160,
+      "left": 0.3068198415403097,
+      "right": 1.2996759345931383,
+      "widthInGuideIntervals": 0.9928560930528286
+    },
+    {
+      "imageY": 161,
+      "left": 0.30791231254630713,
+      "right": 1.3030612429640829,
+      "widthInGuideIntervals": 0.9951489304177757
+    },
+    {
+      "imageY": 162,
+      "left": 0.30900143436369465,
+      "right": 1.3026225092263162,
+      "widthInGuideIntervals": 0.9936210748626215
+    },
+    {
+      "imageY": 163,
+      "left": 0.3100872223703129,
+      "right": 1.3021851259595125,
+      "widthInGuideIntervals": 0.9920979035891997
+    },
+    {
+      "imageY": 164,
+      "left": 0.3036502850703699,
+      "right": 1.3017490869379056,
+      "widthInGuideIntervals": 0.9980988018675356
+    },
+    {
+      "imageY": 165,
+      "left": 0.3009871267809474,
+      "right": 1.3013143859739382,
+      "widthInGuideIntervals": 1.0003272591929908
+    },
+    {
+      "imageY": 166,
+      "left": 0.2983321949245731,
+      "right": 1.2970908355985316,
+      "widthInGuideIntervals": 0.9987586406739585
+    },
+    {
+      "imageY": 167,
+      "left": 0.29568545144314035,
+      "right": 1.2777451315394346,
+      "widthInGuideIntervals": 0.9820596800962942
+    },
+    {
+      "imageY": 168,
+      "left": 0.2967831034241079,
+      "right": 1.2584626002455856,
+      "widthInGuideIntervals": 0.9616794968214777
+    },
+    {
+      "imageY": 169,
+      "left": 0.297877426406664,
+      "right": 1.2580966467010473,
+      "widthInGuideIntervals": 0.9602192202943833
+    },
+    {
+      "imageY": 170,
+      "left": 0.29896843551233765,
+      "right": 1.2614972793357737,
+      "widthInGuideIntervals": 0.9625288438234361
+    },
+    {
+      "imageY": 171,
+      "left": 0.3000561457712126,
+      "right": 1.2648877169672335,
+      "widthInGuideIntervals": 0.9648315711960209
+    },
+    {
+      "imageY": 172,
+      "left": 0.30114057212261786,
+      "right": 1.2645136626357718,
+      "widthInGuideIntervals": 0.9633730905131539
+    },
+    {
+      "imageY": 173,
+      "left": 0.3022217294158119,
+      "right": 1.2716381900582467,
+      "widthInGuideIntervals": 0.9694164606424349
+    },
+    {
+      "imageY": 174,
+      "left": 0.2995969893531404,
+      "right": 1.2712550371952775,
+      "widthInGuideIntervals": 0.9716580478421372
+    },
+    {
+      "imageY": 175,
+      "left": 0.2969802468935681,
+      "right": 1.274610657292499,
+      "widthInGuideIntervals": 0.9776304103989308
+    },
+    {
+      "imageY": 176,
+      "left": 0.301754157755742,
+      "right": 1.2779562923800676,
+      "widthInGuideIntervals": 0.9762021346243256
+    },
+    {
+      "imageY": 177,
+      "left": 0.29914197939214204,
+      "right": 1.2812919869589863,
+      "widthInGuideIntervals": 0.9821500075668442
+    },
+    {
+      "imageY": 178,
+      "left": 0.3038984179222448,
+      "right": 1.2883391314131036,
+      "widthInGuideIntervals": 0.9844407134908588
+    },
+    {
+      "imageY": 179,
+      "left": 0.3049657435697498,
+      "right": 1.287933731276588,
+      "widthInGuideIntervals": 0.9829679877068381
+    },
+    {
+      "imageY": 180,
+      "left": 0.3060298853690279,
+      "right": 1.2949503444818469,
+      "widthInGuideIntervals": 0.9889204591128189
+    },
+    {
+      "imageY": 181,
+      "left": 0.30709085754506216,
+      "right": 1.294536241007408,
+      "widthInGuideIntervals": 0.9874453834623458
+    },
+    {
+      "imageY": 182,
+      "left": 0.30814867423822156,
+      "right": 1.2978228913844523,
+      "widthInGuideIntervals": 0.9896742171462307
+    },
+    {
+      "imageY": 183,
+      "left": 0.30920334950488826,
+      "right": 1.297405726883474,
+      "widthInGuideIntervals": 0.9882023773785857
+    },
+    {
+      "imageY": 184,
+      "left": 0.31025489731808176,
+      "right": 1.2969898062843803,
+      "widthInGuideIntervals": 0.9867349089662986
+    },
+    {
+      "imageY": 185,
+      "left": 0.30766089708674227,
+      "right": 1.2965751240318502,
+      "widthInGuideIntervals": 0.9889142269451079
+    },
+    {
+      "imageY": 186,
+      "left": 0.3087115945918277,
+      "right": 1.2961616746035924,
+      "widthInGuideIntervals": 0.9874500800117647
+    },
+    {
+      "imageY": 187,
+      "left": 0.3097591902992635,
+      "right": 1.2957494525101054,
+      "widthInGuideIntervals": 0.9859902622108419
+    },
+    {
+      "imageY": 188,
+      "left": 0.3108036979241792,
+      "right": 1.2953384522944271,
+      "widthInGuideIntervals": 0.9845347543702478
+    },
+    {
+      "imageY": 189,
+      "left": 0.311845131100965,
+      "right": 1.2949286685319004,
+      "widthInGuideIntervals": 0.9830835374309354
+    },
+    {
+      "imageY": 190,
+      "left": 0.31288350338386417,
+      "right": 1.2908643808195737,
+      "widthInGuideIntervals": 0.9779808774357095
+    },
+    {
+      "imageY": 191,
+      "left": 0.31391882824756273,
+      "right": 1.2904624160506917,
+      "widthInGuideIntervals": 0.976543587803129
+    },
+    {
+      "imageY": 192,
+      "left": 0.3149511190877712,
+      "right": 1.2827722291640595,
+      "widthInGuideIntervals": 0.9678211100762883
+    },
+    {
+      "imageY": 193,
+      "left": 0.30878089093933225,
+      "right": 1.2823833675468443,
+      "widthInGuideIntervals": 0.9736024766075121
+    },
+    {
+      "imageY": 194,
+      "left": 0.3026291899545375,
+      "right": 1.2856295539192557,
+      "widthInGuideIntervals": 0.9830003639647182
+    },
+    {
+      "imageY": 195,
+      "left": 0.30726227365018915,
+      "right": 1.28523763407021,
+      "widthInGuideIntervals": 0.977975360420021
+    },
+    {
+      "imageY": 196,
+      "left": 0.29754746147353867,
+      "right": 1.2884702545374036,
+      "widthInGuideIntervals": 0.9909227930638649
+    },
+    {
+      "imageY": 197,
+      "left": 0.2985959314079024,
+      "right": 1.2916935502588391,
+      "widthInGuideIntervals": 0.9930976188509367
+    },
+    {
+      "imageY": 198,
+      "left": 0.2996413559417457,
+      "right": 1.2949075615233443,
+      "widthInGuideIntervals": 0.9952662055815986
+    },
+    {
+      "imageY": 199,
+      "left": 0.30068374832439626,
+      "right": 1.2945043738064146,
+      "widthInGuideIntervals": 0.9938206254820183
+    },
+    {
+      "imageY": 200,
+      "left": 0.3017231217284362,
+      "right": 1.2941023603288333,
+      "widthInGuideIntervals": 0.9923792386003971
+    },
+    {
+      "imageY": 201,
+      "left": 0.30275948925025736,
+      "right": 1.2937015159682967,
+      "widthInGuideIntervals": 0.9909420267180393
+    },
+    {
+      "imageY": 202,
+      "left": 0.3037928639106108,
+      "right": 1.2933018356322525,
+      "widthInGuideIntervals": 0.9895089717216418
+    },
+    {
+      "imageY": 203,
+      "left": 0.30127599346212386,
+      "right": 1.2929033142576802,
+      "widthInGuideIntervals": 0.9916273207955564
+    },
+    {
+      "imageY": 204,
+      "left": 0.3023085077787167,
+      "right": 1.2925059468108817,
+      "widthInGuideIntervals": 0.9901974390321651
+    },
+    {
+      "imageY": 205,
+      "left": 0.3033380532808537,
+      "right": 1.288533261022903,
+      "widthInGuideIntervals": 0.9851952077420493
+    },
+    {
+      "imageY": 206,
+      "left": 0.3043646427546134,
+      "right": 1.291714653711138,
+      "widthInGuideIntervals": 0.9873500109565245
+    },
+    {
+      "imageY": 207,
+      "left": 0.3053882889127568,
+      "right": 1.291320718135497,
+      "widthInGuideIntervals": 0.9859324292227403
+    },
+    {
+      "imageY": 208,
+      "left": 0.3064090043952524,
+      "right": 1.294489058516188,
+      "widthInGuideIntervals": 0.9880800541209355
+    },
+    {
+      "imageY": 209,
+      "left": 0.3074268017697962,
+      "right": 1.2940922596804199,
+      "widthInGuideIntervals": 0.9866654579106237
+    },
+    {
+      "imageY": 210,
+      "left": 0.30492986984470816,
+      "right": 1.2972476447008428,
+      "widthInGuideIntervals": 0.9923177748561346
+    },
+    {
+      "imageY": 211,
+      "left": 0.30945369210754076,
+      "right": 1.2968480215795135,
+      "widthInGuideIntervals": 0.9873943294719727
+    },
+    {
+      "imageY": 212,
+      "left": 0.3069609431341404,
+      "right": 1.2964495423730584,
+      "widthInGuideIntervals": 0.989488599238918
+    },
+    {
+      "imageY": 213,
+      "left": 0.30447537802707536,
+      "right": 1.2960522021768384,
+      "widthInGuideIntervals": 0.991576824149763
+    },
+    {
+      "imageY": 214,
+      "left": 0.30548865714975043,
+      "right": 1.2991868778783946,
+      "widthInGuideIntervals": 0.9936982207286442
+    },
+    {
+      "imageY": 215,
+      "left": 0.3064990641709627,
+      "right": 1.2987867612587598,
+      "widthInGuideIntervals": 0.9922876970877972
+    },
+    {
+      "imageY": 216,
+      "left": 0.30402476320830957,
+      "right": 1.2983877834694473,
+      "widthInGuideIntervals": 0.9943630202611378
+    },
+    {
+      "imageY": 217,
+      "left": 0.3050343634062489,
+      "right": 1.2979899396552776,
+      "widthInGuideIntervals": 0.9929555762490287
+    },
+    {
+      "imageY": 218,
+      "left": 0.3060411141016658,
+      "right": 1.2975932249886357,
+      "widthInGuideIntervals": 0.9915521108869699
+    },
+    {
+      "imageY": 219,
+      "left": 0.3035779759905517,
+      "right": 1.297197634669266,
+      "widthInGuideIntervals": 0.9936196586787143
+    },
+    {
+      "imageY": 220,
+      "left": 0.3045839230829936,
+      "right": 1.2968031639240873,
+      "widthInGuideIntervals": 0.9922192408410937
+    },
+    {
+      "imageY": 221,
+      "left": 0.30558704300787043,
+      "right": 1.2999058473452392,
+      "widthInGuideIntervals": 0.9943188043373687
+    },
+    {
+      "imageY": 222,
+      "left": 0.3065873476668922,
+      "right": 1.2995086606002777,
+      "widthInGuideIntervals": 0.9929213129333855
+    },
+    {
+      "imageY": 223,
+      "left": 0.3041372873586947,
+      "right": 1.299112593217635,
+      "widthInGuideIntervals": 0.9949753058589403
+    },
+    {
+      "imageY": 224,
+      "left": 0.30513680181328107,
+      "right": 1.298717640472043,
+      "widthInGuideIntervals": 0.993580838658762
+    },
+    {
+      "imageY": 225,
+      "left": 0.2992579920388371,
+      "right": 1.298323797664795,
+      "widthInGuideIntervals": 0.9990658056259579
+    },
+    {
+      "imageY": 226,
+      "left": 0.3002614867994951,
+      "right": 1.2979310601235545,
+      "widthInGuideIntervals": 0.9976695733240595
+    },
+    {
+      "imageY": 227,
+      "left": 0.3012621850266873,
+      "right": 1.297539423202175,
+      "widthInGuideIntervals": 0.9962772381754879
+    },
+    {
+      "imageY": 228,
+      "left": 0.29883682414876284,
+      "right": 1.2936871386793871,
+      "widthInGuideIntervals": 0.9948503145306242
+    },
+    {
+      "imageY": 229,
+      "left": 0.2998367017391233,
+      "right": 1.2933025337026218,
+      "widthInGuideIntervals": 0.9934658319634986
+    },
+    {
+      "imageY": 230,
+      "left": 0.3008338045290968,
+      "right": 1.2963710700847024,
+      "widthInGuideIntervals": 0.9955372655556056
+    },
+    {
+      "imageY": 231,
+      "left": 0.29841917390465517,
+      "right": 1.2959837896986637,
+      "widthInGuideIntervals": 0.9975646157940086
+    },
+    {
+      "imageY": 232,
+      "left": 0.2994154596265869,
+      "right": 1.2955975870882057,
+      "widthInGuideIntervals": 0.9961821274616188
+    },
+    {
+      "imageY": 233,
+      "left": 0.3004089920302711,
+      "right": 1.2952124577605122,
+      "widthInGuideIntervals": 0.9948034657302411
+    },
+    {
+      "imageY": 234,
+      "left": 0.30139978251349375,
+      "right": 1.2948283972477062,
+      "widthInGuideIntervals": 0.9934286147342124
+    },
+    {
+      "imageY": 235,
+      "left": 0.3023878424112167,
+      "right": 1.2944454011066735,
+      "widthInGuideIntervals": 0.9920575586954568
+    },
+    {
+      "imageY": 236,
+      "left": 0.2999877031380692,
+      "right": 1.2940634649188922,
+      "widthInGuideIntervals": 0.994075761780823
+    },
+    {
+      "imageY": 237,
+      "left": 0.30097496913527255,
+      "right": 1.2936825842902657,
+      "widthInGuideIntervals": 0.9927076151549932
+    },
+    {
+      "imageY": 238,
+      "left": 0.3019595255135069,
+      "right": 1.2967167861922322,
+      "widthInGuideIntervals": 0.9947572606787253
+    },
+    {
+      "imageY": 239,
+      "left": 0.30294138341258703,
+      "right": 1.2963332915876755,
+      "widthInGuideIntervals": 0.9933919081750885
+    },
+    {
+      "imageY": 240,
+      "left": 0.3039205539113463,
+      "right": 1.2959508524938077,
+      "widthInGuideIntervals": 0.9920302985824614
+    },
+    {
+      "imageY": 241,
+      "left": 0.3048970480280551,
+      "right": 1.2955694645589162,
+      "widthInGuideIntervals": 0.9906724165308611
+    },
+    {
+      "imageY": 242,
+      "left": 0.30587087672083285,
+      "right": 1.2951891234551811,
+      "widthInGuideIntervals": 0.9893182467343482
+    },
+    {
+      "imageY": 243,
+      "left": 0.3068420508880582,
+      "right": 1.2948098248785054,
+      "widthInGuideIntervals": 0.9879677739904471
+    },
+    {
+      "imageY": 244,
+      "left": 0.30446194417998873,
+      "right": 1.2978176460271416,
+      "widthInGuideIntervals": 0.9933557018471528
+    },
+    {
+      "imageY": 245,
+      "left": 0.30543237503727333,
+      "right": 1.2974357844616844,
+      "widthInGuideIntervals": 0.992003409424411
+    },
+    {
+      "imageY": 246,
+      "left": 0.30306071418865216,
+      "right": 1.297054965324721,
+      "widthInGuideIntervals": 0.9939942511360689
+    },
+    {
+      "imageY": 247,
+      "left": 0.3040303953533779,
+      "right": 1.2966751843535456,
+      "widthInGuideIntervals": 0.9926447890001677
+    },
+    {
+      "imageY": 248,
+      "left": 0.30166712375494686,
+      "right": 1.2962964373086596,
+      "widthInGuideIntervals": 0.9946293135537128
+    },
+    {
+      "imageY": 249,
+      "left": 0.302636048981775,
+      "right": 1.2959187199736195,
+      "widthInGuideIntervals": 0.9932826709918445
+    },
+    {
+      "imageY": 250,
+      "left": 0.3002811105719969,
+      "right": 1.295542028154875,
+      "widthInGuideIntervals": 0.9952609175828782
+    },
+    {
+      "imageY": 251,
+      "left": 0.3012492737504538,
+      "right": 1.2951663576816168,
+      "widthInGuideIntervals": 0.9939170839311631
+    },
+    {
+      "imageY": 252,
+      "left": 0.29890261300864174,
+      "right": 1.2947917044056227,
+      "widthInGuideIntervals": 0.995889091396981
+    },
+    {
+      "imageY": 253,
+      "left": 0.29987000816075,
+      "right": 1.2944180642011036,
+      "widthInGuideIntervals": 0.9945480560403537
+    },
+    {
+      "imageY": 254,
+      "left": 0.3008348055163966,
+      "right": 1.2940454329645534,
+      "widthInGuideIntervals": 0.9932106274481569
+    },
+    {
+      "imageY": 255,
+      "left": 0.30179701552554766,
+      "right": 1.2903380240644993,
+      "widthInGuideIntervals": 0.9885410085389517
+    },
+    {
+      "imageY": 256,
+      "left": 0.2994622239376495,
+      "right": 1.289971897172117,
+      "widthInGuideIntervals": 0.9905096732344676
+    },
+    {
+      "imageY": 257,
+      "left": 0.3004236781638953,
+      "right": 1.2862800815152542,
+      "widthInGuideIntervals": 0.9858564033513588
+    },
+    {
+      "imageY": 258,
+      "left": 0.301382564386917,
+      "right": 1.2792763663448716,
+      "widthInGuideIntervals": 0.9778938019579546
+    },
+    {
+      "imageY": 259,
+      "left": 0.30233889288153354,
+      "right": 1.2722919554371597,
+      "widthInGuideIntervals": 0.9699530625556261
+    },
+    {
+      "imageY": 260,
+      "left": 0.3032926738678228,
+      "right": 1.2752647861077078,
+      "widthInGuideIntervals": 0.971972112239885
+    },
+    {
+      "imageY": 261,
+      "left": 0.3042439175114853,
+      "right": 1.2749212939499597,
+      "widthInGuideIntervals": 0.9706773764384744
+    },
+    {
+      "imageY": 262,
+      "left": 0.3051926339242062,
+      "right": 1.2778827750192578,
+      "widthInGuideIntervals": 0.9726901410950517
+    },
+    {
+      "imageY": 263,
+      "left": 0.30287499949837215,
+      "right": 1.2775367007886782,
+      "widthInGuideIntervals": 0.974661701290306
+    },
+    {
+      "imageY": 264,
+      "left": 0.30382299829883136,
+      "right": 1.283782394315011,
+      "widthInGuideIntervals": 0.9799593960161797
+    },
+    {
+      "imageY": 265,
+      "left": 0.30476848853231814,
+      "right": 1.2834293794212206,
+      "widthInGuideIntervals": 0.9786608908889025
+    },
+    {
+      "imageY": 266,
+      "left": 0.302460651694241,
+      "right": 1.2863641376326425,
+      "widthInGuideIntervals": 0.9839034859384015
+    },
+    {
+      "imageY": 267,
+      "left": 0.3034054270712975,
+      "right": 1.2860086274170097,
+      "widthInGuideIntervals": 0.9826032003457122
+    },
+    {
+      "imageY": 268,
+      "left": 0.3043477123406375,
+      "right": 1.2889322910929457,
+      "widthInGuideIntervals": 0.9845845787523082
+    },
+    {
+      "imageY": 269,
+      "left": 0.30204959087144445,
+      "right": 1.2885743166576427,
+      "widthInGuideIntervals": 0.9865247257861982
+    },
+    {
+      "imageY": 270,
+      "left": 0.3029911640423777,
+      "right": 1.288217288445639,
+      "widthInGuideIntervals": 0.9852261244032614
+    },
+    {
+      "imageY": 271,
+      "left": 0.3039302653630997,
+      "right": 1.2878612027101994,
+      "widthInGuideIntervals": 0.9839309373470997
+    },
+    {
+      "imageY": 272,
+      "left": 0.3016417780715481,
+      "right": 1.2907670960005357,
+      "widthInGuideIntervals": 0.9891253179289876
+    },
+    {
+      "imageY": 273,
+      "left": 0.3025801700534959,
+      "right": 1.2904085846325217,
+      "widthInGuideIntervals": 0.9878284145790258
+    },
+    {
+      "imageY": 274,
+      "left": 0.30029949785382787,
+      "right": 1.2900510159408307,
+      "widthInGuideIntervals": 0.9897515180870029
+    },
+    {
+      "imageY": 275,
+      "left": 0.30123717494936086,
+      "right": 1.2896943862123083,
+      "widthInGuideIntervals": 0.9884572112629474
+    },
+    {
+      "imageY": 276,
+      "left": 0.2989642674091611,
+      "right": 1.292582719963465,
+      "widthInGuideIntervals": 0.9936184525543039
+    },
+    {
+      "imageY": 277,
+      "left": 0.299901224187189,
+      "right": 1.2922237023872019,
+      "widthInGuideIntervals": 0.9923224782000128
+    },
+    {
+      "imageY": 278,
+      "left": 0.3008357437609131,
+      "right": 1.291865623896902,
+      "widthInGuideIntervals": 0.9910298801359889
+    },
+    {
+      "imageY": 279,
+      "left": 0.29857226248797936,
+      "right": 1.2915084808128123,
+      "widthInGuideIntervals": 0.9929362183248329
+    },
+    {
+      "imageY": 280,
+      "left": 0.29950606467714025,
+      "right": 1.294379462192502,
+      "widthInGuideIntervals": 0.9948733975153617
+    },
+    {
+      "imageY": 281,
+      "left": 0.300437447351723,
+      "right": 1.2940199682639901,
+      "widthInGuideIntervals": 0.9935825209122671
+    },
+    {
+      "imageY": 282,
+      "left": 0.29818331472078624,
+      "right": 1.2936614097906345,
+      "widthInGuideIntervals": 0.9954780950698483
+    },
+    {
+      "imageY": 283,
+      "left": 0.2959350880393266,
+      "right": 1.2965184923935293,
+      "widthInGuideIntervals": 1.0005834043542028
+    },
+    {
+      "imageY": 284,
+      "left": 0.2968674398697567,
+      "right": 1.2961576157072705,
+      "widthInGuideIntervals": 0.9992901758375138
+    },
+    {
+      "imageY": 285,
+      "left": 0.29779738848345766,
+      "right": 1.2957976744400233,
+      "widthInGuideIntervals": 0.9980002859565655
+    },
+    {
+      "imageY": 286,
+      "left": 0.29239194310796135,
+      "right": 1.2954386649594822,
+      "widthInGuideIntervals": 1.0030467218515209
+    },
+    {
+      "imageY": 287,
+      "left": 0.2933252207746689,
+      "right": 1.2950805836521233,
+      "widthInGuideIntervals": 1.0017553628774545
+    },
+    {
+      "imageY": 288,
+      "left": 0.294256102188627,
+      "right": 1.2979174674955611,
+      "widthInGuideIntervals": 1.0036613653069342
+    },
+    {
+      "imageY": 289,
+      "left": 0.2888763057712821,
+      "right": 1.297557107085698,
+      "widthInGuideIntervals": 1.0086808013144157
+    },
+    {
+      "imageY": 290,
+      "left": 0.2866605114354704,
+      "right": 1.2971976747591345,
+      "widthInGuideIntervals": 1.0105371633236642
+    },
+    {
+      "imageY": 291,
+      "left": 0.28759629492528,
+      "right": 1.2968391669351609,
+      "widthInGuideIntervals": 1.009242872009881
+    },
+    {
+      "imageY": 292,
+      "left": 0.2853878569306195,
+      "right": 1.2964815800514626,
+      "widthInGuideIntervals": 1.011093723120843
+    },
+    {
+      "imageY": 293,
+      "left": 0.2863228599659316,
+      "right": 1.2961249105640036,
+      "widthInGuideIntervals": 1.009802050598072
+    },
+    {
+      "imageY": 294,
+      "left": 0.2841217320761869,
+      "right": 1.2957691549469097,
+      "widthInGuideIntervals": 1.0116474228707228
+    },
+    {
+      "imageY": 295,
+      "left": 0.2850559503489458,
+      "right": 1.2954143096923512,
+      "widthInGuideIntervals": 1.0103583593434053
+    },
+    {
+      "imageY": 296,
+      "left": 0.2828620867479204,
+      "right": 1.2950603713104287,
+      "widthInGuideIntervals": 1.0121982845625084
+    },
+    {
+      "imageY": 297,
+      "left": 0.28379551604670583,
+      "right": 1.294707336329058,
+      "widthInGuideIntervals": 1.0109118202823522
+    },
+    {
+      "imageY": 298,
+      "left": 0.28472657933044637,
+      "right": 1.294355201293857,
+      "widthInGuideIntervals": 1.0096286219634107
+    },
+    {
+      "imageY": 299,
+      "left": 0.2887691728498796,
+      "right": 1.2940039627680326,
+      "widthInGuideIntervals": 1.005234789918153
+    },
+    {
+      "imageY": 300,
+      "left": 0.2928016865612103,
+      "right": 1.2905083797069181,
+      "widthInGuideIntervals": 0.9977066931457078
+    }
+  ],
+  "medianWidthInGuideIntervals": 0.9922580256760436,
+  "minWidthInGuideIntervals": 0.9602192202943833,
+  "maxWidthInGuideIntervals": 1.0343403875067974,
+  "cornerJitterMedianBounds": [
+    0.9766677636578167,
+    1.009546327979544
+  ],
+  "unusedGuideMedianError": 0.010564591858521322,
+  "retailMaximumSpeedVerified": false,
+  "retailParityCertified": false,
+  "note": "This still has no speed/input history. Do not tune a maximum or a model to its measured median."
+}

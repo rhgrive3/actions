@@ -8,6 +8,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 import { BUILD_ONLY_PATCH_MODULES } from '../../../scripts/lib/inkwave-build-only-modules.mjs';
 import { sourceLoadedActorFixture } from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 
+const SOURCE_BANK_BEFORE = fs.readFileSync(new URL('./fixtures/source-bank-composed-before-direct-migration.mjs.txt', import.meta.url), 'utf8');
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 // Restore the original operations in an otherwise fully production-composed
 // realm. Both sides load the real lossless packs and all other current patches.
@@ -17,8 +18,21 @@ export function baselineMotionSource(rel, raw) {
     code = replaceOnce(code, '   // World transforms are evaluated after the remaining local blends.\n   if(stepAmplitude<1){', '   this.pose.fk();\n   if(stepAmplitude<1){', 'baseline pre-blend FK');
     code = replaceOnce(code, '    this.pose.mix(this.restGait,1-stepAmplitude);', '    this.pose.mix(this.restGait,1-stepAmplitude).fk();', 'baseline short-step FK');
     code = replaceOnce(code, '  // The pre-balance FK is still current unless transition changed local TRS.\n  if(transition<1)this.pose.fk();', '  this.pose.fk();', 'baseline final FK');
+    code = replaceOnce(code, '.fk((sourceSampleFk(this),this._gaitFk));', '.fk();', 'baseline short-gait complete FK');
+    for (const sample of ['special.name,special.frame,this.pose,false', 'clip,frame,this.tmp,true', 'name,frame,this.pose,undefined'])
+      code = replaceOnce(code, `this.bank.sample(${sample},sourceSampleFk(this));`, `this.bank.sample(${sample});`, 'baseline complete sample FK');
   }
-  if (rel === 'src/game/motion/source-bank.js') code = replaceOnce(code,
+  // Both complete root-subtree updates at ground/pivot entry return.
+  if (rel === 'src/game/motion/retarget.js') {
+    assert.equal(code.split('  this._rootWorld();').length, 3, 'two root world entries');
+    code = code.replaceAll('  this._rootWorld();', '  c.root.updateWorldMatrix(true,true);');
+  }
+  if (rel === 'src/game/motion/body-balance.js') code = replaceOnce(code,
+    '  this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);',
+    '  this.center.fk();', 'baseline complete centre FK');
+  // The pre-migration bank ignores FK ranges: every sample and fk() call is a
+  // complete FK, the hint-free curve search and per-sample rotations return.
+  if (rel === 'src/game/motion/source-bank.js') code = replaceOnce(SOURCE_BANK_BEFORE,
     '        e[0] *= x; e[4] *= x; e[8] *= x;\n        e[1] *= y; e[5] *= y; e[9] *= y;\n        e[2] *= z; e[6] *= z; e[10] *= z;',
     '        for (const k of [0, 4, 8]) e[k] *= x;\n        for (const k of [1, 5, 9]) e[k] *= y;\n        for (const k of [2, 6, 10]) e[k] *= z;', 'baseline scale compensation');
   return code;
@@ -26,7 +40,7 @@ export function baselineMotionSource(rel, raw) {
 
 test('motion optimization is guarded, composed and excluded from browser payloads', () => {
   assert.ok(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/motion-fk-hotpath-adapter.mjs'));
-  for (const rel of ['src/game/motion/source-controller.js', 'src/game/motion/source-bank.js']) {
+  for (const rel of ['src/game/motion/source-controller.js', 'src/game/motion/body-balance.js']) {
     const raw = read(rel), next = adaptMotionFkHotpath(rel, raw, replaceOnce);
     assert.notEqual(next, raw);
     assert.doesNotThrow(() => new vm.SourceTextModule(adaptBuildSource(rel, raw)));
@@ -34,6 +48,29 @@ test('motion optimization is guarded, composed and excluded from browser payload
     assert.throws(() => adaptMotionFkHotpath(rel, '', replaceOnce), /conflict/);
   }
   assert.equal(adaptMotionFkHotpath('src/game/actor.js', 'unchanged', replaceOnce), 'unchanged');
+});
+
+
+function countFkCalls(proto, onCall) {
+  const original = proto.fk;
+  proto.fk = function (...args) { onCall(...args); return original.apply(this, args); };
+  return () => { proto.fk = original; };
+}
+
+test('FK instrumentation preserves the range; the old argument-dropping wrapper is rejected', () => {
+  const proto = { fk(count) { return { receiver: this, count: count ?? 66 }; } };
+  let calls = 0;
+  const restore = countFkCalls(proto, () => { calls++; });
+  for (const count of [16, 22, 30, true, undefined]) {
+    const result = proto.fk(count);
+    assert.equal(result.receiver, proto);
+    assert.equal(result.count, count ?? 66, 'FK range reaches the original implementation');
+  }
+  assert.equal(calls, 5); restore();
+  const original = proto.fk;
+  proto.fk = function () { return original.call(this); };
+  assert.throws(() => assert.equal(proto.fk(16).count, 16),
+    /Expected values/, 'the previous wrapper masks ranged FK by silently evaluating every bone');
 });
 
 const vector = v => v.toArray();
@@ -54,8 +91,80 @@ export function motionSnapshot(ch) {
     }));
 }
 
+
+async function heldRollerReleaseParity(apis) {
+  const actors = await Promise.all(apis.map(api => api.make()));
+  const dt = 1 / 120, states = [], ranged = [0, 0];
+  const restores = actors.map((a, k) => countFkCalls(a.character.sourceMotion.pose.constructor.prototype,
+    count => { if (typeof count === 'number') ranged[k]++; }));
+  let supportFrames = 0, maxGap = 0, release;
+  try {
+    actors.forEach((a, k) => {
+      const ch = a.character; a.setWeapon('roller'); ch.onEvent = null;
+      a.weaponRunner.reset(); ch.tr.fill(99); ch.root.position.set(0, 0, 0);
+      ch.rootInit = false; ch.replant = true; a.pos.set(0, 0, 0); a.vel.set(0, 0, 0);
+      a.grounded = true; a.ink = 100; apis[k].G.time = 0;
+      states[k] = { form:'kid', grounded:true, speed:0, vy:0, firing:false,
+        rolling:false, localMove:{x:0,z:0}, ink:1, hp:1 };
+    });
+    // Same natural settle, early landing and held-fire release recipe as the
+    // 120Hz support boundary, now with both production source banks awaited.
+    for (let i = 0; i < 180; i++) actors.forEach((a, k) => {
+      apis[k].G.time += dt; a.character.update(dt, states[k]);
+    });
+    actors.forEach((a, k) => {
+      const ch = a.character; ch.weapon.drumW = 0; ch.fidget = -1; ch.idleT = 0; ch.shufT = 99;
+      states[k].grounded = a.grounded = false; apis[k].recordMovementLaunch(a);
+      a.intent.move.set(0, 0, 1); a.weaponRunner.update(dt, {fire:true, firePressed:true});
+    });
+    for (let i = 0; i < 156; i++) {
+      const fire = i * dt < 1.25;
+      const rows = actors.map((a, k) => {
+        const api = apis[k], ch = a.character, state = states[k], runner = a.weaponRunner;
+        if (i === 40) { state.grounded = a.grounded = true; ch.trigger('land', 7.5); }
+        if (i) runner.update(dt, {fire, firePressed:false});
+        state.rolling = runner.rolling; state.firing = fire;
+        state.speed = runner.rolling ? a.weapon.rollSpeed : 2; state.localMove = {x:0,z:1};
+        ch.root.position.z += state.speed * dt; a.pos.copy(ch.root.position); a.vel.z = state.speed;
+        api.G.time += dt; ch.update(dt, state); ch.root.updateMatrixWorld(true); ch.skeleton.update();
+        const w = ch.weapon, d = w.def, advance = ch._s3RollerSupportAdvance;
+        let gap = null;
+        if (Number.isFinite(advance)) {
+          const preferred = Math.max(0, (d.gripR.pos.z + d.fold.pivot.z) * .5 - d.gripL.pos.z) * .15 *
+            (ch._s3RollerGripBlend || 0);
+          assert.ok(advance >= 0 && advance <= preferred, `support stays on the admitted shaft segment: frame ${i}, side ${k}, advance ${advance}, preferred ${preferred}`);
+          const hole = d.gripL.pos.clone().sub(d.handL.pos).applyQuaternion(d.handL.quat.clone().invert());
+          const socket = d.gripL.pos.clone(); socket.z += advance;
+          gap = ch.bones.handL.localToWorld(hole).distanceTo(w.off.localToWorld(socket));
+          assert.ok(gap <= .0005, 'held and released left palm remains within native 0.5mm contact budget');
+          const right = ch.bones.handR.getWorldPosition(new api.THREE.Vector3())
+            .distanceTo(w.off.localToWorld(d.handR.pos.clone()));
+          assert.ok(right < .002, 'right hand retains its original strict socket bound');
+          if (k === 1) { supportFrames++; maxGap = Math.max(maxGap, gap); }
+        }
+        return { motion:motionSnapshot(ch), weapon:Array.from(w.off.matrixWorld.elements),
+          drum:Array.from(w.drum.matrixWorld.elements), spin:[w.drumA,w.drumW],
+          feedback:[ch.ikErrPre,ch.lReach], rolling:runner.rolling, contact:!!ch._s3RollerContactPose,
+          advance, gap };
+      });
+      assert.deepEqual(rows[1], rows[0], '120Hz held Roller release frame ' + i);
+      if (i === 150) {
+        assert.equal(fire, false); assert.equal(rows[1].rolling, false);
+        assert.equal(rows[1].contact, false); assert.ok(Number.isFinite(rows[1].advance));
+        release = {frame:i, advance:rows[1].advance, gap:rows[1].gap};
+      }
+    }
+    assert.ok(supportFrames > 0 && release, 'actual held support and first released support are both exercised');
+    assert.ok(ranged[1] > 0, 'the optimized source bank receives real FK range arguments');
+    console.log(JSON.stringify({fixture:'held Roller release with awaited source banks; no rendered-motion claim',
+      hz:120, frames:156, supportFrames, maxGap, release, rangedCalls:ranged}));
+  } finally { restores.forEach(f => f()); apis.forEach(api => api.reset()); }
+}
+
 test('real source motion preserves every frame at 30/60/120 Hz and irregular/paused ticks', async () => {
-  const apis=await Promise.all([sourceLoadedActorFixture({sourceOnly:true,transform:baselineMotionSource,random:()=>.4}),sourceLoadedActorFixture({sourceOnly:true,random:()=>.4})]);
+  const extraExports = "export { recordMovementLaunch } from './patches/splatoon3/runtime/roller-freefall.mjs';";
+  const apis=await Promise.all([sourceLoadedActorFixture({sourceOnly:true,transform:baselineMotionSource,random:()=>.4,extraExports}),sourceLoadedActorFixture({sourceOnly:true,random:()=>.4,extraExports})]);
+  await heldRollerReleaseParity(apis);
   const totals=[0,0], states=new Set(),clips=new Set();let compared=0;
   for (const variant of ['Player00','Player01']) for (const hz of [30,60,120]) {
     const actors=await Promise.all(apis.map(api=>api.make()));
@@ -76,7 +185,7 @@ test('real source motion preserves every frame at 30/60/120 Hz and irregular/pau
         }
       }
     }
-    const counts=[0,0],restores=chars.map((ch,k)=>{const proto=ch.sourceMotion.pose.constructor.prototype,original=proto.fk;proto.fk=function(){counts[k]++;return original.call(this);};return()=>{proto.fk=original;};});
+    const counts=[0,0],restores=chars.map((ch,k)=>{return countFkCalls(ch.sourceMotion.pose.constructor.prototype,()=>{counts[k]++;});});
     try {
       // Motion speed/direction, short strides, overlays, pivots, airborne/land,
       // squid transitions, native weapon ownership, manual seeking and reset.

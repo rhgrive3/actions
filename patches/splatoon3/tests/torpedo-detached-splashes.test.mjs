@@ -11,8 +11,8 @@ const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 // documented behavior. Kinematics retain the labelled custom gravity; this
 // verifies the authoritative runtime and replay, not retail trajectory parity.
 // https://wikiwiki.jp/splatoon3mix/ブキ/サブウェポン/トーピード#r2c63076
-async function world(client=null){
-  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+async function world(client=null,clock=null){
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,...(clock?{vmPerformance:{now:()=>clock.ms}}:{})});
   const {paint}=makePaintWorld(f);f.G.settings={};f.setRandom(()=>.37);
   const owner=f.make(),victim=f.make();
   Object.assign(owner,{nid:1,owner:'a',team:0,netLife:0,remote:client==='b'});owner.pos.set(50,0,50);
@@ -21,7 +21,7 @@ async function world(client=null){
   let nm=null;const packets=[];
   if(client){
     nm=new f.NetMatch({myId:client,isHost:client==='a',hostId:'a',_members:new Map([['a','A'],['b','B']]),
-      tr:{broadcast(){},sendTo(to,p){packets.push({to,p:JSON.parse(JSON.stringify(p))});}}},{id:'torpedo-detached',map:'map',difficulty:'normal'});
+      tr:{broadcast(p){packets.push({to:'broadcast',p:JSON.parse(JSON.stringify(p))});return true;},sendTo(to,p){packets.push({to,p:JSON.parse(JSON.stringify(p))});return true;}}},{id:'torpedo-detached',map:'map',difficulty:'normal'});
     nm.bind({actors:[owner,victim],state:'playing',time:180,follower:false,playing:()=>true});
     f.G.netm=nm;f.G.match=nm.match;
     for(const a of [owner,victim]){nm.byNid.set(a.nid,a);nm._setupActor(a);}
@@ -32,12 +32,12 @@ async function world(client=null){
   paint.splat=(p,r,t,o)=>{stamps.push({pos:p.clone(),radius:r,team:t});return splat(p,r,t,o);};
   f.on('all:sub',e=>events.push(e));
   function step(){f.G.time+=STEP;f.G.projectiles.update(STEP);paint.advanceSimulation(STEP);}
-  function fire(){
+  function fire(native=false){
     owner.ink=100;
     for(let i=0;i<8;i++)owner.weaponRunner.update(STEP,{sub:true});
     owner.weaponRunner.update(STEP,{sub:false,subReleased:true});owner.weaponRunner.update(STEP,{sub:false});
     const b=f.G.projectiles._s3SubObjects.find(o=>o.subId==='torpedo');assert.ok(b);assert.equal(owner.ink,35);
-    b.pos.set(0,2,30);b.prev.copy(b.pos);b.vel.set(0,0,0);return b;
+    if(!native){b.pos.set(0,2,30);b.prev.copy(b.pos);b.vel.set(0,0,0);}return b;
   }
   function contact(b){
     for(let i=0;i<51;i++)step();assert.equal(b.phase,'chase');
@@ -97,22 +97,48 @@ test('Torpedo detached children clear with the world without inventing impact da
 });
 
 test('Torpedo JSON replay keeps native hit and paint authority while ghosts carry detached visuals only',async()=>{
-  const source=await world('a'),receiver=await world('b'),b=source.fire(),drops=source.contact(b);
-  source.victim.pos.copy(landing(drops[0]));receiver.victim.pos.copy(source.victim.pos);
-  play(receiver,source.nm.out.filter(e=>e[1]==='ac'));
-  assert.equal(receiver.f.G.projectiles._s3SubObjects.length,0,'parent expire does not remove detached child visuals');
+  const clock={ms:1000},source=await world('a',clock),receiver=await world('b',clock);
+  source.owner.pos.set(0,0,26);receiver.owner.pos.copy(source.owner.pos);source.owner.aimDir.set(0,0,1);
+  const b=source.fire(true);assert.equal(source.nm._sendTick(),true);
+  const birth=source.packets.find(p=>p.p.k==='t').p;
+  receiver.nm.onMessage('a',birth);
+  assert.equal(receiver.nm._combatProvenance?.proofs.get('a')?.length||0,0,'FIFO arrival does not mint a birth proof');
+  clock.ms+=150;receiver.f.G.time+=.15;receiver.nm.update(.15);
+  assert.ok(receiver.nm._combatProvenance?.proofs.get('a')?.length,'ordinary native playback commits the actual birth');
+  const ghost=receiver.f.G.projectiles._s3SubObjects.find(o=>o.subId==='torpedo');assert.ok(ghost?.ghost);
+  // Neither parent position nor velocity is changed after the real release.
+  for(let i=0;i<300&&!b.dead;i++){clock.ms+=STEP*1000;source.step();receiver.step();}
+  assert.equal(b.dead,true);assert.equal(ghost.dead,true);
+  const drops=source.f.G.projectiles._s3TorpedoSplashes.filter(d=>d.kind==='chase');assert.equal(drops.length,8);
   assert.equal(receiver.f.G.projectiles._s3TorpedoSplashes.filter(d=>d.kind==='chase').length,8);
+  const main=source.packets.find(p=>p.p.k==='hit')?.p;assert.deepEqual([main.w,main.d],['torpedo',60]);
+  // Receive the main hit at its actual victim position, before moving to a detached landing.
+  receiver.nm.onMessage('foreign',main);receiver.nm.onMessage('a',{...main,d:60.1});assert.equal(receiver.victim.hp,100);
+  receiver.nm.onMessage('a',main);assert.equal(receiver.victim.hp,40);
+  receiver.nm.onMessage('a',main);assert.equal(receiver.victim.hp,40);
+  // The next ordinary update retires both parents without retiring their detached children.
+  clock.ms+=STEP*1000;source.step();receiver.step();
+  assert.deepEqual([source.f.G.projectiles._s3SubObjects.length,receiver.f.G.projectiles._s3SubObjects.length],[0,0]);
+  assert.deepEqual([source,receiver].map(w=>w.f.G.projectiles._s3TorpedoSplashes.filter(d=>d.kind==='chase').length),[8,8]);
+  source.victim.pos.copy(landing(drops[0]));receiver.victim.pos.copy(source.victim.pos);
+  source.owner.splat(null,'fall');
   const counters=[receiver.hits.length,receiver.stamps.length,receiver.packets.length,receiver.events.length];
-  for(let i=0;i<200;i++)receiver.step();
-  assert.deepEqual([receiver.hits.length,receiver.stamps.length,receiver.packets.length,receiver.events.length],counters,'ghost child impacts cannot propose hit/paint/events');
-  assert.equal(receiver.victim.hp,100);
-  source.owner.splat(null,'fall');for(let i=0;i<200;i++)source.step();
+  for(let i=0;i<200;i++){
+    clock.ms+=STEP*1000;source.step();receiver.step();
+    if(source.packets.some(p=>p.p.k==='hit'&&p.p.w==='torpedo-splash'))break;
+  }
+  assert.deepEqual([receiver.hits.length,receiver.stamps.length,receiver.packets.length,receiver.events.length],counters,'receiver child contacts cannot propose hit/paint/events');
+  assert.equal(receiver.victim.hp,40,'contact without a valid owner claim changes no HP');
   const hits=source.packets.filter(p=>p.p.k==='hit').map(p=>p.p);
   assert.deepEqual(hits.map(p=>[p.w,p.d]),[['torpedo',60],['torpedo-splash',12]]);
-  for(const p of hits)receiver.nm.onMessage('a',p);
-  assert.equal(receiver.victim.hp,28);
-  const rows=source.nm.out.filter(e=>e[1]==='s');play(receiver,rows);settle(source);settle(receiver);
+  const splash=hits[1];receiver.nm.onMessage('foreign',splash);receiver.nm.onMessage('a',{...splash,d:12.1});assert.equal(receiver.victim.hp,40);
+  receiver.nm.onMessage('a',splash);assert.equal(receiver.victim.hp,28);
+  // Finish native child paint; replicate it through the real owner tick/playback path.
+  for(let i=0;i<200;i++){clock.ms+=STEP*1000;source.step();receiver.step();}
+  assert.equal(source.nm._sendTick(),true);const paintTick=source.packets.filter(p=>p.p.k==='t').at(-1).p;
+  receiver.nm.onMessage('a',paintTick);clock.ms+=150;receiver.nm.update(.15);settle(source);settle(receiver);
   assert.deepEqual(Array.from(receiver.paint.grid),Array.from(source.paint.grid));
-  const before=Array.from(receiver.paint.grid);play(receiver,rows);for(const p of hits)receiver.nm.onMessage('a',p);settle(receiver);
+  const before=Array.from(receiver.paint.grid);receiver.nm.onMessage('a',paintTick);for(const p of hits)receiver.nm.onMessage('a',p);settle(receiver);
   assert.deepEqual(Array.from(receiver.paint.grid),before);assert.equal(receiver.victim.hp,28);
+  source.nm.dispose();receiver.nm.dispose();source.f.G.projectiles.clear();receiver.f.G.projectiles.clear();
 });

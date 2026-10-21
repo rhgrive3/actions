@@ -1,3 +1,5 @@
+import {observeLimitedContact} from '../../network-replication/torpedo-contact-commit.mjs';
+import { receiverTorpedoObservationState, retireReceiverTorpedoObservation, hasReceiverTorpedoObservation } from './torpedo-receiver-trajectory.mjs';
 import { configureToxicMist, toxicMistContains, toxicMistScale } from './toxic-mist.mjs';
 import { replayNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
@@ -14,6 +16,7 @@ import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 // approximations, not a claim of retail frame-for-frame equivalence.
 
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
+import { bombReleasePosition, bombPreviewPosition } from './bomb-motion.mjs';
 import { gearCurve } from './gear.mjs';
 import { objectDamageScale, objectDamageRow, subEffectScale } from './sub-resistance.mjs';
 import { subMarkSeconds } from './sub-mark-resistance.mjs';
@@ -68,6 +71,7 @@ const frameSeconds = f => f / 60;
 const rawDamage = n => n / 10;
 const speedPerSecond = n => n * 60;
 const accelPerSecondSquared = n => n * 3600;
+const subLaunchPosition=(actor,out)=>bombPreviewPosition(actor,bombReleasePosition(actor,out));
 
 // The core values are extracted from the table named in `source`; other fields
 // are called out at the point of use and on `calibration`.
@@ -79,9 +83,9 @@ export const ALL_SUB_SPECS = Object.freeze({
     spawnSpeedY: speedPerSecond(.24), spawnSpeedYWorldMin: speedPerSecond(-.4),
     inheritX: 1.6, inheritZ: 1.6, inheritYPlus: 4, inheritYMax: speedPerSecond(.32),
     radius: 4, damageInner: 2.8, damageOuter: 4, damageMax: rawDamage(350), damageMin: rawDamage(250), damageFalloff: 'discrete',
-    paintRadius: 4, crossPaintRadius: 1.4, gravity: 24, fuse: .72,
+    paintRadius: 4, crossPaintRadius: 1.4, gravity: .016*3600, flyPositionAirResist: .05866, fuse: .72,
     directDamage: 25, directDamageStatus: 'wiki-measured-first-hit', contactBurstDelayFrames: 1,
-    inkCostFallback: 45, calibration: 'fuse/gravity/world scale calibrated; raw splash damage, paint and throw tuple extracted; Wiki measures a 25 direct hit followed 1F later by 35 near blast (two separate damage events)',
+    inkCostFallback: 45, calibration: 'fuse, omitted gravity/drag defaults and world scale calibrated from the existing bomb-family flight; raw splash damage, paint and throw tuple extracted; Wiki measures a 25 direct hit followed 1F later by 35 near blast (two separate damage events)',
   }),
   autobomb: Object.freeze({
     id: 'autobomb', name: 'Autobomb', source: 'WeaponBombRobot.game__GameParameterTable.json',
@@ -383,6 +387,8 @@ function createObject(api, projectiles, owner, id, record = {}) {
   } : baseSpec;
   const THREE = api.THREE, seq = Number.isSafeInteger(record.seq) ? record.seq : nextSeq(owner);
   const pos = record.pos?.isVector3 ? record.pos.clone() : new THREE.Vector3(record.x ?? owner.pos.x, record.y ?? owner.pos.y + 1.35, record.z ?? owner.pos.z);
+  if(!record.ghost&&!record.pos&&record.x==null&&record.y==null&&record.z==null)
+    subLaunchPosition(owner,pos);
   let vel;
   if (record.vel?.isVector3) vel = record.vel.clone();
   else if ([record.vx, record.vy, record.vz].every(Number.isFinite)) vel = new THREE.Vector3(record.vx,record.vy,record.vz);
@@ -471,6 +477,7 @@ function replaceVisual(api, object) {
 }
 function removeObject(api, projectiles, object, silent = false) {
   if (!object || object.dead) return false;
+  retireReceiverTorpedoObservation(object);
   object.dead = true;
   const list = entityList(projectiles), at = list.indexOf(object);
   if (at >= 0) list.splice(at,1);
@@ -836,6 +843,17 @@ function burstTorpedoSplash(api,drop,pos){
     if(!drop.ghost&&localOwner(drop.owner))surfacePaint(api,drop.owner,drop.team,pos,spec.findSplashAround.paintRadius,drop.seed);
     return;
   }
+  if(drop.ghost){
+    const point=new api.THREE.Vector3();
+    for(const target of api.G.actors||[]){
+      if(target.team===drop.team||target.remote||!target.alive)continue;
+      point.copy(target.pos);point.y+=target.form==='squid'?.45:.7;
+      if(point.distanceTo(pos)>spec.splashRadius||api.G.physics?.los&&!api.G.physics.los(pos,point))continue;
+      const shelter=api.G.projectiles?.kitBarrierCandidate?.(drop,pos,point);
+      if(shelter?.object?.subId==='splashWall'&&shelter.distance<pos.distanceTo(point)-1e-6)continue;
+      observeLimitedContact(api.G.projectiles,drop,target,spec.splashDamage);
+    }
+  }
   if(!drop.ghost&&localOwner(drop.owner)){
     surfacePaint(api,drop.owner,drop.team,pos,spec.splashPaintRadius,drop.seed);
     const hostiles=hostileActors(api,drop.owner),point=new api.THREE.Vector3();
@@ -890,7 +908,7 @@ function captureTorpedo(api,object,target){
 }
 function updateTorpedoTransform(api,object,dt){
   object.age+=dt;object.prev.copy(object.pos);
-  if(object.ghost)return;
+  if(object.ghost&&receiverTorpedoObservationState(api,api.G.projectiles,object)!=='active')return;
   const target=object.torpedoTarget;
   if(target?.alive&&ownerLife(target)===object.torpedoTargetLife){
     object.torpedoAim.copy(target.pos);object.torpedoAim.y+=.7;
@@ -1248,6 +1266,8 @@ function updateStatuses(api, dt) {
 }
 
 function updateFlight(api, projectiles, object, dt) {
+  const observed=receiverTorpedoObservationState(api,projectiles,object);
+  if(observed==='retired'){removeObject(api,projectiles,object,true);return;}
   const spec=object.spec;
   if(object.ghost&&object.phase==='ghostWait')return;
   if(object.subId==='torpedo'&&['torpedoRotate','torpedoWait'].includes(object.phase)){
@@ -1322,10 +1342,11 @@ function updateFlight(api, projectiles, object, dt) {
     if(object.phase==='chase'){
       object.chaseAge=(object.chaseAge||0)+dt;
       if(object.chaseAge+1e-10>=spec.chaseSeconds){
+        if(observed==='active'){spawnTorpedoSplashes(api,projectiles,object,object.pos);removeObject(api,projectiles,object,true);return;}
         if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}
         return;
       }
-    }else if(!object.ghost&&!object.torpedoSearchDisabled&&object.age+1e-10>=frameSeconds(spec.findStartFrames)){
+    }else if((!object.ghost||observed==='active')&&!object.torpedoSearchDisabled&&object.age+1e-10>=frameSeconds(spec.findStartFrames)){
       const target=findTorpedoTarget(api,object);
       if(target){captureTorpedo(api,object,target);return;}
     }
@@ -1370,7 +1391,7 @@ function updateFlight(api, projectiles, object, dt) {
   }
   if(actor&&actorDistance<worldDistance){
     object.pos.lerpVectors(object.prev,object.pos,actor.t);
-    if(object.ghost){object.phase='ghostWait';return;}
+    if(object.ghost){if(observed==='active'){if(object.chasedTarget)spawnTorpedoSplashes(api,projectiles,object,object.pos);removeObject(api,projectiles,object,true);}else object.phase='ghostWait';return;}
     if(!object.ghost){
       const amount=object.subId==='angleShooter'||object.subId==='burst'?spec.directDamage:0;
       if(object.subId==='burst'&&amount>0)object.directTarget=actor.actor;
@@ -1402,7 +1423,7 @@ function updateFlight(api, projectiles, object, dt) {
     // but deployments and detonations still wait for the owner's event.
     const visualBounce=object.subId==='angleShooter'||object.subId==='fizzy'||
       object.subId==='torpedo'&&!object.chasedTarget||object.subId==='splashWall'&&world.normal.y<=.5;
-    if(object.ghost&&!visualBounce){object.phase='ghostWait';return;}
+    if(object.ghost&&!visualBounce){if(observed==='active'){if(object.chasedTarget)spawnTorpedoSplashes(api,projectiles,object,object.pos);removeObject(api,projectiles,object,true);}else object.phase='ghostWait';return;}
     if(object.subId==='angleShooter'){
       const normal=world.normal,vn=object.vel.dot(normal),speed=object.vel.length(),ground=normal.y>.5;
       const angleRate=ground?spec.reboundGroundAngleRate:spec.reboundWallAngleRate;
@@ -1453,7 +1474,7 @@ function updateFlight(api, projectiles, object, dt) {
     object.subId==='autobomb'?spec.noTargetSeconds:object.subId==='torpedo'?Math.max(2.2,spec.chaseSeconds||0):spec.maxFlightSeconds||2.2;
   if(!(object.subId==='torpedo'&&object.chasedTarget)&&object.age+1e-10>=flightLimit){
     if(object.subId==='angleShooter'){finishAngleFlight(api,object);return;}
-    if(object.ghost){object.phase='ghostWait';return;}
+    if(object.ghost){if(observed==='active'){if(object.chasedTarget)spawnTorpedoSplashes(api,projectiles,object,object.pos);removeObject(api,projectiles,object,true);}else object.phase='ghostWait';return;}
     // Safety retirement is not a collision. Burst Bomb is contact-triggered;
     // an unlanded Autobomb cannot manufacture an airborne explosion either.
     removeObject(api,projectiles,object);return;
@@ -1579,17 +1600,19 @@ function tickObjects(api,projectiles,dt){
   updateStatuses(api,dt);
 }
 
-function replaySpawn(api,event,owner){
+function replaySpawn(api,event,owner,report){
   // Sprinkler uses native bomb birth/ghost packets. Do not revive the retired
   // catalogue authority alongside that device, including for old peers.
   if(event.subId==='sprinkler')return false;
   if(!owner?.remote||!api.G.projectiles||event.life!==ownerLife(owner)||event.sourceLife!==event.life||!ALL_SUB_SPECS[event.subId])return false;
   const list=entityList(api.G.projectiles);
   const old=list.find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===event.sourceLife);
-  if(old)return true;
+  if(old){report?.('reused',old);return true;}
   if(![event.x,event.y,event.z,event.vx,event.vy,event.vz,event.charge].every(Number.isFinite)||
      !Number.isSafeInteger(event.seed)||!Number.isSafeInteger(event.seq)||event.seq<=0)return false;
-  return !!createObject(api,api.G.projectiles,owner,event.subId,{...event,ghost:true});
+  const created=createObject(api,api.G.projectiles,owner,event.subId,{...event,ghost:true});
+  if(created)report?.('created',created);
+  return !!created;
 }
 function replayDeploy(api,event,owner){
   const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
@@ -1631,7 +1654,7 @@ function replayExpire(api,event,owner){
  * object HP or emit another packet. A replayed Mist volume is also sampled by
  * the local victim's movement/ink authority; remote victims are never mutated.
  */
-export function replaySub(api,event){
+export function replaySub(api,event,report){
   if(!api?.G||!event||event.v!==1||typeof event.phase!=='string')return false;
   if(event.phase==='nativeObjectHit'||event.phase==='nativeObjectState')return replayNativeSprinklerDamage(api,event);
   if(event.phase==='objectHit')return applyRemoteObjectHit(api,event);
@@ -1639,7 +1662,9 @@ export function replaySub(api,event){
   if(event.phase==='beakonUseProposal')return applyBeaconProposal(api,event);
   const owner=event.actor||api.G.netm?.byNid?.get(event.actorId);
   if(!owner?.remote||!Number.isSafeInteger(event.seq)||event.seq<=0||!Number.isSafeInteger(event.life)||ownerLife(owner)!==event.life)return false;
-  if(event.phase==='spawn')return replaySpawn(api,event,owner);
+  if(event.phase==='spawn')return replaySpawn(api,event,owner,report);
+  // Observation-driven ghosts follow only the existing native integrator.
+  if(entityList(api.G.projectiles).some(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life)&&hasReceiverTorpedoObservation(o)))return false;
   if(event.phase==='deploy')return replayDeploy(api,event,owner);
   if(event.phase==='mark')return replayMark(api,event,owner);
   // Only ordered native paint rows may change ownership. A stale legacy drop
@@ -1667,7 +1692,7 @@ export function replaySub(api,event){
     }else{
       if(!object.chasedTarget||!['torpedoRotate','torpedoWait'].includes(object.phase))return false;
       object.pos.set(event.x,event.y,event.z);object.prev.copy(object.pos);object.vel.set(event.vx,event.vy,event.vz);
-      object.phase='chase';object.grounded=false;object.chaseAge=0;
+      object.phase='chase';object.grounded=false;object.chaseAge=0;object.torpedoLaunchReplayed=true;
     }
     return true;
   }
@@ -1680,7 +1705,10 @@ export function replaySub(api,event){
       object.fizzyBurstReplayed=index+1;
     }
     if(object.subId==='torpedo'){
-      if(object.torpedoBurstReplayed)return false;
+      // A chased replica must receive its native launch before its terminal burst.
+      // ghostWait is legal after replica contact; rolled, unchased bombs need no launch.
+      if(object.torpedoBurstReplayed||object.chasedTarget&&!object.torpedoLaunchReplayed||
+        ![event.x,event.y,event.z].every(Number.isFinite))return false;
       object.torpedoBurstReplayed=true;
     }
     if([event.x,event.y,event.z].every(Number.isFinite))object.pos.set(event.x,event.y,event.z);
@@ -1761,6 +1789,35 @@ export function installAllSubs(api,profile={}){
     if(object&&placedAtFeet)deploy(api,this,object,object.pos,actor.ground?.normal);
     if(runner){runner.s3SubHold=0;if(id==='fizzy')runner.s3FizzyCharge=null;}
     return object;
+  };
+
+  // Burst Bomb's first contact is the end of its preview. Use the same hand
+  // origin, AP/movement inheritance, fixed step, gravity and drag as its live
+  // flight, instead of the unrelated native Splat Bomb preview.
+  const nativeArc=Projectiles.prototype.updateArc;
+  Projectiles.prototype.updateArc=function(actor,show){
+    if(!show||!actor?.alive||actor.weapon?.sub!=='burst')return nativeArc.call(this,actor,show);
+    const spec=ALL_SUB_SPECS.burst,vel=launchVelocity(api,this,actor,spec);
+    const p=subLaunchPosition(actor,actor.pos.clone().add(new api.THREE.Vector3(0,1.35,0)));
+    const start=p.clone(),initial=vel.clone(),prev=p.clone(),hit=new api.Hit();
+    const position=this.arcGeo.attributes.position,per=2;let count=1,landed=false;
+    position.setXYZ(0,p.x,p.y,p.z);
+    for(let i=0;i<(this.arcN-1)*per;i++){
+      prev.copy(p);vel.y-=spec.gravity*STEP;
+      applyFlightPositionAirResist({vel,spec},STEP);p.addScaledVector(vel,STEP);
+      const world=G.physics.segment(prev,p,hit),target=contactActor(api,{owner:actor,team:actor.team},prev,p,.22);
+      if(target&&(!world.hit||target.t*prev.distanceTo(p)<world.dist)){
+        p.lerpVectors(prev,p,target.t);landed=true;
+      }else if(world.hit){p.copy(world.point).addScaledVector(world.normal,.03);landed=true;}
+      if(landed){position.setXYZ(count++,p.x,p.y,p.z);this.arcRing.position.copy(p);this.arcRing.quaternion.setFromUnitVectors(new api.THREE.Vector3(0,1,0),world.hit?world.normal:new api.THREE.Vector3(0,1,0));break;}
+      if((i+1)%per===0)position.setXYZ(count++,p.x,p.y,p.z);
+      if(count>=this.arcN)break;
+    }
+    position.needsUpdate=true;this.arcGeo.setDrawRange(0,count);this.arcLine.computeLineDistances();
+    const color=actor.ink>=spec.inkCost?actor.color:new api.THREE.Color(.6,.6,.6);
+    this.arcLine.material.color.copy(color).multiplyScalar(1.4);this.arcRing.material.color.copy(color).multiplyScalar(1.4);
+    this.arcLine.visible=true;this.arcRing.visible=landed;
+    this._arcCache={physics:G.physics,px:start.x,py:start.y,pz:start.z,vx:initial.x,vy:initial.y,vz:initial.z,landed};
   };
 
   // Native WeaponRunner owns ink payment and release timing. Suppress a second

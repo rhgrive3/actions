@@ -2,8 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fixture } from './source-fixture.mjs';
+import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
 import { adaptWeaponCatalog } from '../weapon-catalog-adapter.mjs';
+// #1651 added one native scoped Charger; retain the exact prior65+95 roster.
+function assertProductionRoster(order,weapons) {
+  const canonical=[...MAIN_WEAPON_CATALOG.records.map(r=>r.id),...ALTERNATE_WEAPON_KITS.map(r=>r.id)];
+  assert.equal(canonical.length,160);assert.equal(new Set(canonical).size,160);
+  const ids=Array.from(order),prior=ids.filter(id=>id!=='charger_scope');
+  assert.equal(prior.length,160,'all original160 kits remain');
+  assert.deepEqual(prior.sort(),canonical.sort(),'exact canonical base/variant IDs, no substitutions');
+  assert.equal(ids.filter(id=>id==='charger_scope').length,1,'one explicit #1651 native scoped entry');
+  assert.equal(ids.length,161);
+  assert.equal(weapons.charger_scope?.id,'charger_scope');
+  assert.equal(weapons.charger_scope?.kind,'charger');
+  assert.equal(weapons.charger_scope?.scoped,true);
+}
+
 let loaded;
 const production = () => loaded ??= fixture({ fullRuntime: true, includeCharacter: true, productionComposition: true, realProjectiles: true,
   extraExports: `export { getWeaponDef } from './inkwave-public/src/game/character-weapons.js';
@@ -115,7 +130,7 @@ test('all alternate appearances retain finite native carry/attack poses and unch
 });
 test('kit IDs retain gameplay APIs with95 candidate defaults and0 base fallbacks',async()=>{
  const {REG:R,AP,WEAPONS,WEAPON_ORDER}=await production();
- assert.equal(WEAPON_ORDER.length,160);let implemented=0,fallback=0;
+ assertProductionRoster(WEAPON_ORDER,WEAPONS);let implemented=0,fallback=0;
  for(const kit of ALTERNATE_WEAPON_KITS){
   assert.equal(R.weaponModelKey(kit.id),R.registeredWeaponVariantModels().includes(kit.main)?kit.main:kit.baseId);assert.equal(R.weaponBaseModelId(kit.id),kit.baseId);
   assert.equal(R.weaponModelSpec(kit.id),R.registeredWeaponVariantModels().includes(kit.main)?R.weaponVariantSpec(kit.main):R.weaponModelSpec(kit.baseId));

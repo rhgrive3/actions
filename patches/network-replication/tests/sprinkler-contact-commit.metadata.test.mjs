@@ -1,0 +1,24 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
+const source=fs.readFileSync(new URL('../sprinkler-contact-commit.mjs',import.meta.url),'utf8').replaceAll('export ','');
+function fixture(){const api=vm.runInNewContext(source+';({registerReceiverSprinkler,receiverSprinklerObserved,recordReceiverSprinklerContact,consumeReceiverSprinklerContact,closeReceiverSprinklers})',{}, {timeout:100});
+ const a={nid:1,owner:'S',remote:true,alive:true,netLife:2,team:0},v={nid:2,owner:'V',remote:false,alive:true,netLife:3,team:1},peer={},projectiles={bombs:[],clear(){this.bombs.length=0;},_releaseBomb(){}};
+ const G={projectiles};const nm={myId:'V',match:{},cfg:{id:'m'},byNid:new Map([[1,a],[2,v]]),peers:new Map([['S',peer]]),s:{_members:new Set(['S','V'])}};
+ const bomb={owner:a,ghost:true,s3GhostResolved:{spec:{id:'sprinkler',dropletDamage:20}},_netBorn:1,_netBornTick:2,_netPeer:peer};projectiles.bombs.push(bomb);
+ const receipt={nid:1,from:'S',life:2,eventTime:1,eventTick:2};let notices=0;
+ const register=()=>api.registerReceiverSprinkler(nm,bomb,receipt,G,()=>notices++,.95,48);
+ const record=(drop={})=>api.recordReceiverSprinklerContact(nm,bomb,drop,v,20,10);
+ const claim={m:'m',a:1,v:2,l:3,h:1,w:'sprinkler',d:20};const take=(d=claim,t=10)=>api.consumeReceiverSprinklerContact(nm,'S',d,t);
+ return {api,nm,G,a,v,peer,bomb,projectiles,receipt,register,record,claim,take,notices:()=>notices};}
+test('native device contact admits one matching20 claim once',()=>{const f=fixture();assert.equal(f.register(),true);assert.equal(f.record(),true);assert.equal(f.notices(),1);assert.equal(f.take(),true);assert.equal(f.take(),false);});
+test('unregistered matching-looking device is not authority',()=>{const f=fixture();assert.equal(f.record(),false);assert.equal(f.take(),false);});
+test('exact object not matching serial fields owns receipt',()=>{const f=fixture();f.register();assert.equal(f.api.recordReceiverSprinklerContact(f.nm,{...f.bomb},{},f.v,20,10),false);});
+test('same native drop cannot create second receipt',()=>{const f=fixture();f.register();const d={};assert.equal(f.record(d),true);assert.equal(f.record(d),false);assert.equal(f.take(),true);assert.equal(f.take({...f.claim,h:2}),false);});
+test('wrong victim life and raw40 cannot consume20 contact',()=>{const f=fixture();f.register();f.record();assert.equal(f.take({...f.claim,l:4}),false);assert.equal(f.take({...f.claim,d:40}),false);assert.equal(f.take(),true);});
+test('known native duplicate hit ID does not burn next contact',()=>{const f=fixture();f.register();f.record();f.peer.hitSequences=new Set([1]);assert.equal(f.take(),false);assert.equal(f.take({...f.claim,h:2}),true);});
+test('contact expiry retains existing .95s boundary',()=>{const f=fixture();f.register();f.record();assert.equal(f.take(f.claim,10.96),false);});
+test('changed receiver world cannot revive old contact',()=>{const f=fixture();f.register();f.record();f.G.projectiles={bombs:[]};assert.equal(f.take(),false);f.G.projectiles=f.projectiles;assert.equal(f.take(),false);});
+for(const [name,change] of Object.entries({clear:f=>{f.projectiles.clear();f.projectiles.bombs.push(f.bomb);},destroy:f=>f.bomb.s3Destroyed=true,dead:f=>f.a.alive=false,respawn:f=>f.a.netLife++,owner:f=>f.a.owner='X',peer:f=>f.nm.peers.set('S',{}),member:f=>f.nm.s._members.delete('S'),epoch:f=>f.nm.cfg.id='new',match:f=>f.nm.match={},disposed:f=>f.nm._disposed=true,pooled:f=>f.bomb._netBorn++,victim:f=>f.v.netLife++}))test('invalidates contact after '+name,()=>{const f=fixture();f.register();f.record();change(f);assert.equal(f.take(),false);});
+test('rebind replaces prior pending contacts',()=>{const f=fixture();f.register();f.record();f.register();assert.equal(f.take(),false);});
+test('closed scope cannot record or consume',()=>{const f=fixture();f.register();f.record();f.api.closeReceiverSprinklers(f.nm);assert.equal(f.record(),false);assert.equal(f.take(),false);});
+test('foreign remote victim and mismatched epoch claim fail closed',()=>{const f=fixture();f.register();f.v.remote=true;assert.equal(f.record(),false);f.v.remote=false;f.record();assert.equal(f.take({...f.claim,m:'other'}),false);assert.equal(f.take(),true);});
+test('bounded pending contact storage does not exceed48',()=>{const f=fixture();f.register();for(let n=0;n<48;n++)assert.equal(f.record(),true);assert.equal(f.record(),false);for(let n=0;n<48;n++)assert.equal(f.take({...f.claim,h:n+1}),true);assert.equal(f.take({...f.claim,h:49}),false);});

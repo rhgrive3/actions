@@ -1,3 +1,4 @@
+import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { installNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
 import { installTurfCombatGate } from './turf-combat.mjs';
 import { installObjectDamageCause } from './sub-resistance.mjs';
@@ -107,6 +108,23 @@ export function install(profile) {
   }
   Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
+  // The optional legacy scope keeps its original kit, optics and paint owner.
+  // Supply only the two required legacy-consumer endpoints from its pinned record.
+  if (WEAPONS.charger_scope) {
+    const scope = MAIN_WEAPON_CATALOG.records.find(r => r.sourceActor === 'WeaponChargerNormalScope');
+    const inkMin = scope?.parameters?.WeaponParam?.InkConsumeMinCharge;
+    const damagePartialMax = scope?.parameters?.DamageParam?.ValueMaxCharge;
+    if (!Number.isFinite(inkMin) || !Number.isFinite(damagePartialMax)) throw new Error('Missing sourced scope endpoints');
+    WEAPONS.charger_scope.scopedCharge = scope.parameters.WeaponScopeParam != null;
+    WEAPONS.charger_scope.inkMin ??= inkMin * 100;
+    WEAPONS.charger_scope.damagePartialMax ??= damagePartialMax / 10;
+    // The legacy runner shares the normal Charger's recovery/payment owners.
+    // In particular weapon-gates reads rechargeDelay after every release:
+    // leaving it undefined makes cooldown NaN and permanently rejects shot 2.
+    for (const key of ['rechargeDelay','postShotSwimTime','minimumChargeTime',
+      'minReleaseTime','emptyChargeRate','airChargeRate','swimChargeStartDelay','inkRecoverStop'])
+      WEAPONS.charger_scope[key] ??= profile.weapons.charger[key];
+  }
   registerMainWeaponCatalog(api);
   installWeapons(api, profile);
   installSubSpecialFidelity(api, profile);

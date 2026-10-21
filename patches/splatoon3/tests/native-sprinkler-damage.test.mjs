@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
-const extraExports="export {kitBombContact} from './patches/splatoon3/runtime/kit-subs.mjs';";
+const extraExports="export {Transport} from './inkwave-public/src/net/transport.js'; export {kitBombContact} from './patches/splatoon3/runtime/kit-subs.mjs';";
 async function setup(){const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports});f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return f;}
 function deploy(f,a){a.weapon={...a.weapon,sub:'sprinkler'};a.weaponRunner.reset();f.G.projectiles.throwBomb(a);const b=f.G.projectiles.bombs.at(-1);assert.ok(b);f.kitBombContact(f.SUB,b,{hit:true,point:new f.THREE.Vector3(0,0,0),normal:new f.THREE.Vector3(0,1,0)});return b;}
 function round(f,a,b,damage=10,ghost=false){return {owner:a,team:a.team,damage,ghost,size:.01,prev:b.pos.clone().add(new f.THREE.Vector3(0,0,-1)),pos:b.pos.clone().add(new f.THREE.Vector3(0,0,1))};}
@@ -35,7 +35,7 @@ test('native Sprinkler AoE keeps Vac frame damage and Wail pierces LOS with its 
  assert.equal(b.s3DeviceHP,116.5,'Wail reaches through blocked LOS and its source row is nonzero');
 });
 
-function bind(f,myId){const owner=f.make(),a=f.make();Object.assign(owner,{nid:301,owner:'defender',netLife:3});Object.assign(a,{nid:302,owner:'attacker',netLife:7,team:1});owner.weapon={...owner.weapon,sub:'sprinkler'};owner.weaponRunner.reset();a.s3.loadout[2].main='objectShredder';const nm=new f.NetMatch({myId,hostId:'defender',isHost:myId==='defender',tr:{broadcast(){},sendTo(){}}},{id:'native-devices'});nm.bind({actors:[owner,a],state:'playing',time:180});f.G.netm=nm;f.G.match=nm.match;return {owner,a,nm};}
+function bind(f,myId){const owner=f.make(),a=f.make();Object.assign(owner,{nid:301,owner:'defender',netLife:3});Object.assign(a,{nid:302,owner:'attacker',netLife:7,team:1});owner.weapon={...owner.weapon,sub:'sprinkler'};owner.weaponRunner.reset();a.s3.loadout[2].main='objectShredder';const packets=[],tr=new f.Transport();tr.ws={readyState:1,bufferedAmount:0,send(text){if(text.startsWith('b|'))packets.push(JSON.parse(text.slice(2)));}};const nm=new f.NetMatch({myId,hostId:'defender',isHost:myId==='defender',tr},{id:'native-devices'});nm.bind({actors:[owner,a],state:'playing',time:180});f.G.netm=nm;f.G.match=nm.match;return {owner,a,nm,packets};}
 test('native Sprinkler birth and damage survive real JSON transport; only target owner destroys and retires the ghost',async()=>{
  const rx=await setup(),r=bind(rx,'defender'),target=deploy(rx,r.owner);assert.ok(target.s3DeviceBirth);assert.equal(target.s3DeviceBirth.life,3);
  const birth=JSON.parse(JSON.stringify(r.nm.out.find(e=>e[1]==='b')));assert.ok(birth);
@@ -85,7 +85,12 @@ test('old native hit cannot replay in a fresh envelope after more than 1024 acce
  s.nm._play('defender',JSON.parse(JSON.stringify(r.nm.out.find(e=>e[1]==='b'))));const ghost=tx.G.projectiles.bombs.at(-1);tx.kitBombContact(tx.SUB,ghost,{hit:true,point:new tx.THREE.Vector3(0,0,0),normal:new tx.THREE.Vector3(0,1,0)});
  let first;
  for(let i=0;i<1026;i++){
-  const p=round(tx,s.a,ghost,.001);tx.G.projectiles.kitBarrierCandidate(p,p.prev,p.pos).onHit();const e=JSON.parse(JSON.stringify(s.nm.out.at(-1)));first||=JSON.parse(JSON.stringify(e));r.nm._play('attacker',e);
+  const p=round(tx,s.a,ghost,.001);tx.G.projectiles.kitBarrierCandidate(p,p.prev,p.pos).onHit();
+  // Drain each proposal through the real local Transport. The bounded queue is
+  // not an archive: 1026 never-sent rows intentionally abort the current owner.
+  assert.equal(s.nm._sendTick(),true);assert.equal(s.packets.length,1);
+  const e=s.packets.shift().e.at(-1);assert.equal(e[5].phase,'nativeObjectHit');
+  first||=JSON.parse(JSON.stringify(e));r.nm._play('attacker',e);
  }
  const hp=target.s3DeviceHP;assert.ok(hp<120&&hp>0);first[first.length-1]+=10000;first[first.length-2]+=10000;first[0]+=10;
  r.nm._play('attacker',first);assert.equal(target.s3DeviceHP,hp,'application id remains spent even after old transport envelopes are evicted');

@@ -10,9 +10,19 @@ const SRC = path.join(ROOT, 'inkwave-public');
 async function installedPaintRuntime() {
   const context = vm.createContext({ console, performance });
   const modules = new Map();
-  const resolve = (spec, from) => spec === 'three'
-    ? path.join(SRC, 'vendor/three/build/three.module.js')
-    : path.resolve(path.dirname(from), spec);
+  const resolve = (spec, from) => {
+    if (spec === 'three') return path.join(SRC, 'vendor/three/build/three.module.js');
+    const resolved = path.resolve(path.dirname(from), spec);
+    // The migrated direct source imports patches at its logical build path;
+    // remap that virtual namespace to the actual repository for Node VM QA.
+    const virtualPatch = path.join(SRC, 'patches') + path.sep;
+    if (resolved.startsWith(virtualPatch)) return path.join(ROOT, 'patches', path.relative(virtualPatch, resolved));
+    // Authored patch modules use the emitted site's sibling src/ namespace.
+    // Match the existing source-fixture resolver without substituting modules.
+    const virtualSource = path.join(ROOT, 'src') + path.sep;
+    return resolved.startsWith(virtualSource)
+      ? path.join(SRC, 'src', path.relative(virtualSource, resolved)) : resolved;
+  };
   const load = file => {
     if (!modules.has(file)) modules.set(file, new vm.SourceTextModule(fs.readFileSync(file, 'utf8'), { context, identifier: file }));
     return modules.get(file);

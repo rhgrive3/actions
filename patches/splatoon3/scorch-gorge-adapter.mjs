@@ -1,23 +1,8 @@
 // Scorch Gorge stage adapter (#203).
-// Adapts the published INKWAVE target without modifying frozen inkwave-public/ files.
-// Registers Scorch Gorge layout into MAP_LAYOUTS and stage metadata into MAPS / i18n.
+// Source-owned Scorch Gorge MAP_LAYOUTS registration lives in inkwave-public/src/world/maps.js.
+// This adapter remains for pinned MAPS / i18n inputs not yet migrated.
 
 export function adaptScorchGorge(rel, code, replaceOnce) {
-  if (rel === 'src/world/maps.js') {
-    if (code.includes('scorch-layout.mjs')) {
-      throw new Error('INKWAVE patch conflict (scorch-gorge): already connected to maps.js');
-    }
-    code = replaceOnce(
-      code,
-      'export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO };',
-      "import { LAYOUT as SCORCH } from '../../patches/splatoon3/stage/scorch-layout.mjs';\n" +
-      'export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO };\n' +
-      'MAP_LAYOUTS.scorch = SCORCH;',
-      'scorch-gorge-maps-layout'
-    );
-    return code;
-  }
-
   if (rel === 'src/config.js') {
     if (code.includes("'scorch'")) {
       throw new Error('INKWAVE patch conflict (scorch-gorge): already connected to config.js');

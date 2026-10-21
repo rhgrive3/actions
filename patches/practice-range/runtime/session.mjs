@@ -129,7 +129,7 @@ export class RangeSession {
     // Variant kits are interleaved in WEAPON_ORDER, but the seven physical
     // pads must stay on the original weapon families. The pause picker exposes
     // the full catalog, including alternates.
-    const carousel = WEAPON_ORDER.filter(id => !WEAPONS[id]?.variantOf).slice(0, 7);
+    const carousel = WEAPON_ORDER.filter(id => id !== 'charger_scope' && !WEAPONS[id]?.variantOf).slice(0, 7);
     carousel.forEach((id, i) => {
       const a = -Math.PI / 2 + (i / carousel.length) * Math.PI * 2;
       defs.push({ id: 'weapon:' + id, kind: 'weapon', weapon: id, x: CAROUSEL.center[0] + Math.cos(a) * CAROUSEL.r, z: CAROUSEL.center[1] + Math.sin(a) * CAROUSEL.r, color: '#35405a' });
