@@ -1,39 +1,33 @@
-# INKWAVE: Charger charging timbre, S1-derived community proxy (2026-10-21)
+# Charger hold audio: failed S1 proxy and click-free recorded-sample sustain (2026-10-21)
 
-## Evidence hierarchy and hard limits
+## Problem reproduced
+The old Charger charge-loop maps a very short 2022 S3 recording `Wp_Charger_HoldNoise_00.mp3` (decoded **0.200 seconds**, 44.1 kHz, encoded **0.235 seconds**) to a continuously looped `charge` event. The recorded onset is very strong in its first ~30ms (10ms RMS 0.019–0.031); the late tail fades almost to zero (last 10ms RMS 0.00022). Replaying that onset every 200ms produces an audible **click/reload-like repeated transient**, not a smooth charging tone. A second recording, `Wp_Charger_HoldNoise_Heavy_00.mp3`, is ~0.375 seconds decoded, with a similar heavily decaying envelope.
 
-1. **Recorded 2022 S3 sources**: `Wp_Charger_HoldNoise_00.mp3` (encoded 0.235102s), `Wp_Charger_HoldNoise_Heavy_00.mp3` (0.417959s), `Wp_Charger_HoldNoise_Bamboo_00.mp3` and `Wp_Charger_HoldNoise_Pump_00.mp3` (0.33959s each); `Wp_ChargeKeepReady_00.mp3` (0.216s). Recorded MP3s come from the source-declared `Splatoon 3 SFX and Music` Google Drive archive and use installed SHA256-verified source data. **These are short sample components, NOT an isolated full charging-ramp recording.**
-2. **Actual S1 resource evidence**: the user's Drive `Splatoon-Decomp-NTSC-thick-plus-Splatoon3-resources` contains public `Dexx-io/Splatoon-Decomp` thick resource snapshots with `GameConfigSetting`'s reference to **aal and SLink2**. The user's 19-part research ZIP explicitly lacks game RomFS/SLink graph data and playable source-code decompilation of the charger sound control.
-3. **Independent S1-style fan implementation, explicitly NOT original Nintendo code**: `zerokizo/splatoonsweps` `lua/weapons/weapon_splatoonsweps_charger/shared.lua` has `PlayChargeSound()` playing `sound/splatoonsweps/weapons/charger/aim.wav` and requesting pitch `max(previousPitch, progress * 99 + 1)`. Its accompanying `charger.lua` declares the `aim.wav` recording and independent `beep.mp3` for completion. GitHub blob `aim.wav` is PCM mono 44,100 Hz / 16-bit, length **10.89415 seconds**, with a decreasing RMS envelope (roughly 0.070 at start, 0.041 at 5 seconds, 0.006 at 10 seconds). **This is not the same waveform as the short S3 HoldNoise MP3.** Source pitch units use **100 as nominal 1x playback**.
-4. **Missing first-party evidence**: no actual `SLink2DB.bslnk` / `SLink2DB.szs` plus live gameplay parameter dispatch has been provided. Retail S1/S2/S3 pitch automation, layering, filters, and timing have **not** been recovered. The user states that sound design is shared across series; the exact pitch/volume controls nevertheless remain unverified.
+PR #1740 initially tried scaling Source/GMod's S1 community pitch equation `max(1,99*charge+1)` literally to the entirely different short S3 HoldNoise. **That was a poor audio-engineering choice and is now removed**. At 1% playback rate an original 200ms sample would last ~20 seconds before looping and its transient would be shifted into extremely low frequencies. The user reported a click, and **no Nintendo SLINK evidence** validated this translation.
 
-## Concrete improvement on this branch
+## Direct recording and reference provenance
+- Current `S3` PCM is decoded from user-provided 2022 audio archive in Drive: [Splatoon 3 SFX and Music](https://drive.google.com/drive/folders/1D7So33YcZJaU_W5eC_H8OMFnUxGA8lYJ). The current audio pack includes Normal, Heavy, Bamboo and Pump `HoldNoise` variants plus `Wp_ChargeKeepReady_00.mp3` for ready; the SHA-pinned original MP3 files are unchanged by this PR.
+- The user's S1 decomp/public resources only confirm aal and SLink2 as sound systems, **not** a Nintendo Charger pitch or event graph.
+- [SplatoonSWEPs `shared.lua`](https://github.com/zerokizo/splatoonsweps/blob/a74592726f38f26fd1d3a15ed315701068283847/lua/weapons/weapon_splatoonsweps_charger/shared.lua) describes an independent *fan reproduction*, using **10.894s** `aim.wav` as its continuous Charger source. That sample and its pitch curve are not interchangeable with 0.2-second S3 HoldNoise. We retain its qualitative idea of continuous progression, not its arbitrary extreme audio rates.
+- **No true S1/S2/S3 SLINK retail pitch curve or layered source-event graph is available**. Statements of retail fidelity would be premature. The user's claim of related series sound design is a helpful hypothesis but does not supply missing parameter values.
 
-The INKWAVE v11 mixer is left in its **recorded-sample-only** playback mode. For an already-declared Charger `charge` recording with a live, finite gameplay `actor.weaponRunner.charge`:
+## PR implementation
+- New `charger-hold-sustain.mjs` deterministically creates one **~560ms** seamless `AudioBuffer` from overlap-added **50ms grains taken only from the softer interior** of the actual decoded recording. The loud onset and end silence are not retriggered. The output is a finite, cacheable sound design transformation, never a new oscillator or downloaded asset.
+- Source boundary is made sample-continuous with a 5ms join. A global capped gain multiplier compensates for extracting the quieter interior without exceeding 3.2x. Audio remains in the original sample family.
+- Charge progress is read only from finite `actor.weaponRunner.charge`, clamped to 0..1. The playback rate stays near its natural recording rate and evolves monotonically from **0.86x to 1.12x** across one hold, with 35ms de-zipper smoothing. These two rate endpoints are **not Nintendo values**; they are an explicit *perceptual correction* to the invalid 0.01x..1x proxy.
+- Missing actor charge uses 1x; every hold gets a fresh envelope. Existing `ready` and `fire_full` MP3 selection, Spinner motor playback, source hash checks, and real-only/no-synthetic-oscillator policy are preserved.
+- CPU/memory: 1 short deterministic buffer derivation per decoded original source, WeakMap cached and reused by any simultaneous local/remote voices; one 50ms-granular precompute; no per-frame grain allocation or new voice on update. The decoded original asset and its cache remain intact.
 
-- Source-unit pitch from the S1 *community implementation* is mapped to Web Audio sample playback rate `(1 + 99 * clamp(charge, 0, 1)) / 100`. This gives **0.01x (charge 0), 0.505x (charge 0.5), 1x (full)**. These are **community implementation values, not confirmed Nintendo values**.
-- The requested rate is monotone while the loop remains alive, matching `max(previousPitch, requestedPitch)` in the community source. Each fresh loop restarts from the then-current gameplay progress. `setTargetAtTime` smoothing uses one nominal 60Hz frame, which is an **implementation de-zippering choice**, not a recovered retail smoothing constant.
-- The old INKWAVE **`1 + charge * 1.5`** sound-parameter hint and catalogue **`0.66 + charge * 0.78`** are *not* treated as meaningful native Charger pitch values: only actual gameplay charge is read.
-- Without a usable charge value, the verified source plays at its **natural 1x speed**. Other sound events, recorded Spinner motor pitch, full-charge ready cue, full-shot MP3, restart/cancel, remote, and original source hashes remain unchanged.
-- Uses exactly one existing `AudioBufferSourceNode` and no new sample files or oscillators; per-frame parameter automation is skipped when progress has not increased.
+## Quantitative local preview check
+One-second hold segment with the same original source:
+- Prior literal 0.01..1 S1 proxy playback: **6** RMS increases above 2.5x between consecutive 20ms windows; window-level coefficient of variation **1.08**.
+- Original full-source 1x repetition: **4** such jumps; coefficient of variation **1.06**.
+- Proposed sustained sample texture: **0** such jumps; coefficient of variation **0.36**.
 
-**Caveat:** Applying a fan project's pitch mapping to a different short S3 recording can still produce audible artifacts or the wrong retail timbre. This is a **testable proxy**, not a verified perfect reproduction. Neither pitch/loop mode should be mislabeled "Nintendo SLINK-correct" until matched against a real source event graph or independent unmodified gameplay capture.
+These are *signal-level* discontinuity indicators, **not** claims that the actual ear or original game comparison is perfect. The simulation rendered a 1.5s charge with a 100ms fade-in, 40ms fade-out and original ready sound after completion.
 
-## Verification / acceptance
+## Tests and acceptance boundaries
+`audio-v11-real-only.test.mjs` covers cache reuse, loop seam continuity, absence of original onset repetition, unmodified source samples, actual charge 0/0.5/1, no inferred charge from synthetic oscillator hints, monotone changes, unknown/NaN actor, hold restart, unchanged Spinner, unchanged catalog source manifests. Existing audio CI workflow runs all adjacent sound tests. Main cannot claim exact original Charger without first-party source event graph or an independently validated in-game sound recording.
 
-- Run `node --experimental-vm-modules --test patches/splatoon3/tests/audio-v11-real-only.test.mjs`.
-- Confirm the same decoded Charger MP3 buffer is used at low/middle/full charge, and the old oscillator hint alone cannot change it.
-- Confirm stale/invalid charge is ignored, pitch does not fall during a hold, stop/restart resets it, Spinner source remains at original pitch, original `charger_full` behavior is intact, and no synthesized samples are created.
-- Run the existing Audio v11 workflow and production build. Once actual SLink2 `Pitch Curve` and its game parameter mapping can be verified, **replace this proxy with the recovered curve**. Use listening/A-B and device performance tests before claiming final parity.
-
-## Direct source URLs
-
-- [Original 2022 S3 research archive](https://drive.google.com/drive/folders/1D7So33YcZJaU_W5eC_H8OMFnUxGA8lYJ)
-- [S1 source resource snapshot Drive](https://drive.google.com/drive/folders/1iAhs_iWB0jfPkAB3lgUT9le95T-B323b)
-- [S1-style community charging implementation](https://github.com/zerokizo/splatoonsweps/blob/a74592726f38f26fd1d3a15ed315701068283847/lua/weapons/weapon_splatoonsweps_charger/shared.lua)
-- [Community sound source assignment](https://github.com/zerokizo/splatoonsweps/blob/a74592726f38f26fd1d3a15ed315701068283847/lua/splatoonsweps/sounds/charger.lua)
-- [Community `aim.wav` source, research only](https://github.com/zerokizo/splatoonsweps/blob/a74592726f38f26fd1d3a15ed315701068283847/sound/splatoonsweps/weapons/charger/aim.wav)
-- [Nintendo XLink2/SLink format documentation](https://github.com/dt-12345/xlink2)
-- [Existing INKWAVE unverified charge source audit](reports/inkwave-charge-hit-splatter-audio-audit-20261019.md)
-
-**Rights:** No new third-party sound recording is added to or bundled by this change. Prior source-bank rights must be evaluated independently of a code change.
+### Copyright and publishing
+This PR adds **no** source recordings to GitHub. User-provided source MP3s and independent sample packs retain their existing rights restrictions.
