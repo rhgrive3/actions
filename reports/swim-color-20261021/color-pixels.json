@@ -1,0 +1,33 @@
+{
+  "scope": "Actual production renders with film visible/hidden at the same state. Changed pixels within a fixed swimmer crop; HSV statistics are colour regression diagnostics, not Nintendo parity.",
+  "rows": [
+    {
+      "name": "yellow",
+      "changedPixels": 5457,
+      "saturatedFraction": 0.9824,
+      "medianHueDistanceToUnderlyingInk": 0.00392,
+      "brightNearWhiteFraction": 0.004
+    },
+    {
+      "name": "orange",
+      "changedPixels": 5357,
+      "saturatedFraction": 0.983,
+      "medianHueDistanceToUnderlyingInk": 0.00392,
+      "brightNearWhiteFraction": 0.0037
+    },
+    {
+      "name": "blue",
+      "changedPixels": 5049,
+      "saturatedFraction": 0.9844,
+      "medianHueDistanceToUnderlyingInk": 0.00392,
+      "brightNearWhiteFraction": 0.0053
+    },
+    {
+      "name": "purple",
+      "changedPixels": 5992,
+      "saturatedFraction": 0.9856,
+      "medianHueDistanceToUnderlyingInk": 0.00784,
+      "brightNearWhiteFraction": 0.0045
+    }
+  ]
+}

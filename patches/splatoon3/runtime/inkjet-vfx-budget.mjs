@@ -6,16 +6,16 @@ function includeOwner(budget, actor) {
   if (!rec) { rec = { time: NaN, memberTime: NaN, puffs: 0, sparks: 0 }; budget.records.set(actor, rec); }
   if (rec.memberTime === budget.time) return;
   rec.memberTime = budget.time;
-  budget.actors.push(actor);
+  budget.members.push(rec);
 }
 export function inkjetVfxAdmission(director, actor) {
   let budget = director.inkjetAdmissionBudget;
   if (!budget) budget = director.inkjetAdmissionBudget = {
-    time: NaN, epoch: -1, cursor: 0, actors: [], records: new WeakMap(),
+    time: NaN, epoch: -1, cursor: 0, members: [], records: new WeakMap(),
   };
   if (budget.time !== director.time) {
     budget.time = director.time;
-    const actors = budget.actors; actors.length = 0;
+    const members = budget.members; members.length = 0;
     for (const a of director.G.actors || []) {
       if (a?.alive && !a.superJumpState && a.specialActive?.id === 'inkjet' &&
           a.form !== 'squid' && !a.intent?.squid) includeOwner(budget, a);
@@ -25,7 +25,7 @@ export function inkjetVfxAdmission(director, actor) {
     for (const p of director.G.projectiles?.list || []) {
       if (p?.wid === 'inkjet' && !p.dead && p.pos && p.owner) includeOwner(budget, p.owner);
     }
-    const n = actors.length;
+    const n = members.length;
     const epoch = Math.floor(director.time * 60 + 1e-7);
     if (epoch !== budget.epoch) { budget.epoch = epoch; budget.cursor++; }
     if (n) {
@@ -33,7 +33,7 @@ export function inkjetVfxAdmission(director, actor) {
       const s = Math.max(0, director.kit.sparks.cap - director.kit.sparks.n);
       const offset = budget.cursor % n, pBase = Math.floor(p / n), sBase = Math.floor(s / n);
       for (let i = 0; i < n; i++) {
-        const rec = budget.records.get(actors[i]);
+        const rec = members[i];
         const rank = (i - offset + n) % n;
         rec.time = budget.time;
         rec.puffs = pBase + (rank < p % n ? 1 : 0);

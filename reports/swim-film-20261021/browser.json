@@ -1,0 +1,52 @@
+{
+  "browser": "154.0.8037.57",
+  "contentHash": "addc1bf5617a90f98279db4b9762490ed9b7028b440ca1b8d052fc45b6083b31",
+  "setup": {
+    "origin": [
+      -3,
+      0,
+      -6
+    ],
+    "paint": 1,
+    "ground": 0,
+    "diagnostic": "fixed yellow ink and film; 45deg FOV, fixed follow camera, initial G.time10; low startup preset, FX multiplier1 and960x600 output",
+    "quality": "low",
+    "fxQuality": 1,
+    "sourceReady": "ready"
+  },
+  "scope": "60Hz controlled moving Actor/FX, actual painted range surface, deterministic random. Fixed camera relative to swimmer. Not native-input physics or Switch parity.",
+  "errors": [],
+  "runtimeCommit": "38d4e5cfa6388b17a831edb7471b03acfae418ab",
+  "cases": [
+    {
+      "speed": 3,
+      "frames": 90,
+      "lateFrames": 60,
+      "filmCount": 0,
+      "trianglesPerFilm": 0,
+      "swimDroplets": 0,
+      "bodyDrawn": false,
+      "ownInkAllFrames": true
+    },
+    {
+      "speed": 8,
+      "frames": 90,
+      "lateFrames": 60,
+      "filmCount": 1,
+      "trianglesPerFilm": 2816,
+      "swimDroplets": 0,
+      "bodyDrawn": false,
+      "ownInkAllFrames": true
+    },
+    {
+      "speed": 11.8,
+      "frames": 90,
+      "lateFrames": 60,
+      "filmCount": 1,
+      "trianglesPerFilm": 2816,
+      "swimDroplets": 0,
+      "bodyDrawn": false,
+      "ownInkAllFrames": true
+    }
+  ]
+}
