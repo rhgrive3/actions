@@ -33,7 +33,7 @@ export function createSwimFilmGeometry() {
 }
 
 export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
-  const p=g.attributes.position.array,k=clamp(speedK),flow=time*17;
+  const p=g.attributes.position.array,k=clamp(speedK),flow=time*24;
   for(const patch of g.userData.patches){
     const {kind,start,nu,nv}=patch;
     for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){
@@ -43,17 +43,17 @@ export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
         // there are no parallel fins, closed domes or independent bead shapes.
         const across=u*2-1,edge=Math.sin(Math.PI*u),span=Math.sin(Math.PI*v);
         const envelope=Math.pow(Math.max(0,edge*span),.8);
-        const width=(.15+.22*span)*(.96+.04*Math.sin(v*37-flow));
+        const width=(.07+.30*Math.pow(Math.max(0,span),.6))*(.96+.04*Math.sin(v*19-flow));
         x=across*width;
         z=.45-v*1.3+.025*Math.sin(u*19-flow)*span;
         const bow=(.09+.06*k)*Math.exp(-(((v-.20)/.25)**2))*Math.pow(Math.max(0,edge),.75)*Math.min(1,v/.12);
-        const wrinkle=.04*k*(Math.sin(u*25+v*26-flow)+.5*Math.sin(u*39-v*21+flow*.8))*envelope;
+        const wrinkle=.04*k*(Math.sin(u*11+v*17-flow)+.5*Math.sin(u*17-v*9+flow*.8))*envelope;
         y=.006+bow+(.025+.04*k)*envelope+wrinkle;x+=turn*.04*v*v;
       }else{
         const piece=kind-4,side=piece%2?-1:1;
         const phase=((time*4.7+piece*.269)%1),pulse=Math.sin(Math.PI*phase);
-        const width=(.045+.055*pulse)*Math.sin(Math.PI*v);
-        x=side*(.22+.06*Math.floor(piece/2)+u*.14)+width*(v*2-1);
+        const width=(.10+.10*pulse)*Math.sin(Math.PI*u);
+        x=side*(.22+.06*Math.floor(piece/2)+u*.14)+width*(v-.5);
         z=-.42-.21*Math.floor(piece/2)-u*(.28+.22*phase);
         y=.006+Math.sin(Math.PI*u)*(.035+.09*k)*pulse*Math.sin(Math.PI*v);
       }
@@ -65,20 +65,20 @@ export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
 
 function material(light) {
   const m=new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.16,metalness:0,clearcoat:1,clearcoatRoughness:.04,envMapIntensity:.9,side:THREE.DoubleSide});
-  const time={value:0},holes={value:Array.from({length:8},()=>new THREE.Vector4())};m.userData.filmTime=time;m.userData.filmHoles=holes;
+  const time={value:0},holes={value:Array.from({length:6},()=>new THREE.Vector4())};m.userData.filmTime=time;m.userData.filmHoles=holes;
   m.customProgramCacheKey=()=> 'inkwave-swim-continuous-film-v1';
   m.onBeforeCompile=shader=>{
     shader.uniforms.uFilmTime=time;shader.uniforms.uFilmHoles=holes;shader.uniforms.uFilmSun={value:light.sunDir};
     shader.vertexShader='attribute vec3 filmData; varying vec3 vFilmData;\n'+shader.vertexShader;
     shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvFilmData=filmData;');
-    shader.fragmentShader='uniform float uFilmTime; uniform vec4 uFilmHoles[8]; uniform vec3 uFilmSun; varying vec3 vFilmData;\n'+shader.fragmentShader;
+    shader.fragmentShader='uniform float uFilmTime; uniform vec4 uFilmHoles[6]; uniform vec3 uFilmSun; varying vec3 vFilmData;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <alphatest_fragment>',`#include <alphatest_fragment>
       if(vFilmData.z<.5){
         float u=vFilmData.x,v=vFilmData.y;
         // Uneven openings in one continuous skin, staggered rather than rows
         // of identical scallops. The leading bow remains a filled liquid fold.
         if(abs(u-.5)>.45+.05*sin(v*31.0-uFilmTime*11.0))discard;
-        for(int i=0;i<8;i++){
+        for(int i=0;i<6;i++){
           float f=float(i);
           vec4 hole=uFilmHoles[i];
           vec2 q=(vec2(u,v)-hole.xy)/hole.zw;
@@ -94,7 +94,7 @@ function material(light) {
       float filmShine=pow(max(dot(normal,filmHalf),0.0),85.0);
       float filmRim=pow(1.0-abs(dot(normal,filmEye)),2.0);
       float filmBroad=pow(max(dot(normal,filmHalf),0.0),16.0);
-      gl_FragColor.rgb+=vec3(1.0,.99,.94)*(filmShine*1.2+filmRim*.6+filmBroad*.45);
+      gl_FragColor.rgb+=vec3(1.0,.99,.94)*(filmShine*1.2+filmRim*.25+filmBroad*.15);
     `);
   };
   return m;
@@ -132,7 +132,7 @@ class SwimSurface {
       s.basis.makeBasis(s.right,s.up,s.forward);
       s.mesh.position.copy(a.pos);s.mesh.quaternion.setFromRotationMatrix(s.basis);s.mesh.material.color.copy(a.color);
       const t=this.time+s.phase;s.mesh.material.userData.filmTime.value=t;
-      for(let i=0;i<8;i++){
+      for(let i=0;i<6;i++){
         s.mesh.material.userData.filmHoles.value[i].set(.12+.76*fract(i*.381966+.17)+.035*Math.sin(t*7+i*2.3),.28+.65*fract(i*.618034+.11)+.025*Math.cos(t*9+i*1.7),.065+.035*Math.sin(t*11+i*3.1),.045+.025*Math.cos(t*13+i*2.7));
       }
       updateSwimFilmGeometry(s.mesh.geometry,this.time+s.phase,sp/11.8,clamp(delta/Math.max(1e-4,fx._dt)*.04,-1,1));
