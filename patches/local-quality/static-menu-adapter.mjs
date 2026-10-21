@@ -108,7 +108,7 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       'focused weapon hydrates before selection');
     code = replaceOnce(code,
       "      afterMount: () => {\n        // stat bars grow",
-      "      afterMount: () => {\n        if (lazyWeaponArt) {\n          weaponArtObserver = new IntersectionObserver((entries) => {\n            for (const entry of entries) {\n              if (!entry.isIntersecting) continue;\n              materializeArt(entry.target);\n              weaponArtObserver?.unobserve(entry.target);\n            }\n          }, { rootMargin: '320px 0px' });\n          for (const card of cards) if (card._artDeferred) weaponArtObserver.observe(card);\n        }\n        // stat bars grow",
+      "      afterMount: () => {\n        if (lazyWeaponArt) {\n          weaponArtObserver = new IntersectionObserver((entries) => {\n            for (const entry of entries) {\n              if (!entry.isIntersecting) continue;\n              materializeArt(entry.target);\n              weaponArtObserver?.unobserve(entry.target);\n            }\n          }, { root: el, rootMargin: '320px 0px' });\n          for (const card of cards) if (card._artDeferred) weaponArtObserver.observe(card);\n        }\n        // stat bars grow",
       'hydrate visible and near-visible weapon cards');
     code = replaceOnce(code,
       "          for (const s of statEls) s.bar.style.setProperty('--v', (s.target / 100).toFixed(3));\n        }));\n      },\n      tick: (dt) => {",
