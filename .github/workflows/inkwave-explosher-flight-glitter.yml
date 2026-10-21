@@ -36,6 +36,17 @@ jobs:
         run: |
           node .ci-explosher-base/scripts/build-inkwave.mjs .ci-explosher-base/inkwave-public .built-site/explosher-before
           node scripts/build-inkwave.mjs inkwave-public .built-site/explosher-after
+      - name: Short native preflight before long capture
+        run: |
+          EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/preflight-before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
+          EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-after .ci-scratch/explosher/preflight-after "${{ github.event.pull_request.head.sha }}" .
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const read=s=>JSON.parse(fs.readFileSync('.ci-scratch/explosher/preflight-'+s+'/manifest.json'));
+          const a=read('before'),b=read('after');assert.equal(a.length,1);assert.equal(b.length,1);
+          for(const k of ['preShot','aimTrace','nativeReset','physical','camera','inkHex','time','sparkles','lighting','viewport'])assert.deepEqual(b[0].measurement[k],a[0].measurement[k],k);
+          console.log('EXPLOSHER_PREFLIGHT_STRICT_PARITY passed');
+          NODE
       - name: Capture untouched base with the same Explosher driver
         run: node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
       - name: Capture exact candidate
@@ -49,7 +60,7 @@ jobs:
           assert.equal(before.length,18);assert.equal(after.length,18);
           for(let i=0;i<before.length;i++){
             const a=before[i],b=after[i];assert.deepEqual([a.tick,a.view],[b.tick,b.view]);
-            for(const k of ['nativeReset','physical','camera','inkHex','time','sparkles','lighting','viewport'])assert.deepEqual(b.measurement[k],a.measurement[k],k);
+            for(const k of ['preShot','aimTrace','nativeReset','physical','camera','inkHex','time','sparkles','lighting','viewport'])assert.deepEqual(b.measurement[k],a.measurement[k],k);
             for(const k of ['calls','triangles','points','lines'])assert(b.measurement.render[k]<=a.measurement.render[k],k);
             for(const k of ['geometries','textures'])assert(b.measurement.memory[k]<=a.measurement.memory[k],k);
           }

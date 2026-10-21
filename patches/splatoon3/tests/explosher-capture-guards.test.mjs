@@ -18,7 +18,7 @@ test('capture admission guards reject incomplete or invalid evidence (no browser
  const generated=diagnostic();assert(generated);
  const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
  assert.doesNotThrow(()=>new AsyncFunction(generated.replace(/^import .*;\n/gm,'')));
- const validate=new Function('captures',wrapper.slice(wrapper.indexOf('const expected=new Set')));
+ const validate=new Function('captures','preflight',wrapper.slice(wrapper.indexOf('const expected=new Set')));
  const captures=[0,3,8,14,22,30].flatMap(t=>['behind','tele-side','tele-oblique'].map(v=>({label:'s3-slosher-washtub',tick:t,view:v,count:1,measurement:{sparkles:28,render:{points:28}}})));
  assert.doesNotThrow(()=>validate(captures));
  assert.throws(()=>validate([...captures.slice(0,17),captures[0]]),/Duplicate/);

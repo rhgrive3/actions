@@ -10,6 +10,7 @@ const [siteArg,outArg,sourceSha,sourceRootArg]=process.argv.slice(2);
 if(!siteArg||!outArg||!/^[a-f0-9]{40}$/.test(sourceSha||''))throw Error('Usage: <built-site> <evidence-dir> <source-sha>');
 const root=fileURLToPath(new URL('../',import.meta.url)),site=path.resolve(siteArg),out=path.resolve(outArg);
 const sourceRoot=sourceRootArg?path.resolve(sourceRootArg):root;
+const preflight=process.env.EXPLOSHER_PREFLIGHT==='1';
 // Receipt identity comes from the checkout, not the caller's label.
 const git=(args)=>{const r=spawnSync('git',['-C',sourceRoot,...args],{encoding:'utf8'});if(r.status!==0)throw Error('Cannot establish checkout identity');return r.stdout;};
 const actualSourceSha=git(['rev-parse','HEAD']).trim();
@@ -46,6 +47,27 @@ driver=once(driver,"      G.projectiles.clear(); G.fx.clear?.();",nativeReset+`
       if(Object.values(window.explosherResetReceipt).some(v=>v!==true))throw Error('Native reset ownership/readiness failed');
       G.projectiles.clear(); G.fx.clear?.();`);
 
+
+driver=once(driver,'      const n0 = G.projectiles.list.length;',`      const rig=G.rig;
+      window.explosherPreShot={aimPoint:a.aimPoint.toArray(),aimDir:a.aimDir.toArray(),aimYaw:a.aimYaw,aimPitch:a.aimPitch,
+        rig:{time:rig.time,yaw:rig.yaw,pitch:rig.pitch,shakeSeed:rig.shakeSeed,trauma:rig.trauma,pivot:rig.pivot.toArray(),
+          camera:rig.gameCam.position.toArray(),quaternion:rig.gameCam.quaternion.toArray(),
+          springs:Object.fromEntries(['sx','sy','sz','boom','hgt','side','lensLift','kickS'].map(k=>[k,{x:rig[k].x,v:rig[k].v}]))},
+        characterTime:a.character.t};
+      window.explosherAimTrace=[];
+      const aimFrom=G.projectiles._aimFrom;
+      G.projectiles._aimFrom=function(actor,from,out){
+        const result=aimFrom.call(this,actor,from,out);
+        window.explosherAimTrace.push({time:G.time,from:from.toArray(),aimPoint:actor.aimPoint.toArray(),aimDir:actor.aimDir.toArray(),result:result.toArray()});
+        return result;
+      };
+      const n0 = G.projectiles.list.length;`);
+driver=once(driver,'      window.shapeTick = 0;',`      G.projectiles._aimFrom=aimFrom;
+      window.shapeTick = 0;`);
+driver=once(driver,'      window.shapeAim = aim; aim();',`      window.shapeAim = aim; aim();
+      // Normal camera snap clears retained follow springs without changing shot physics.
+      G.rig.follow(a,true);G.rig.update(0);`);
+
 driver=once(driver,'      g.debug.fire(true);',`      window.resetExplosherRandom();
       G.time=0;g.time=0;g.rig.time=0;
       g.debug.fire(true);`);
@@ -60,7 +82,7 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
           if(initial!==physical()||pos!==buffers?.sparkPos.array||size!==buffers?.sparkSize.array)throw Error('draw changes physics or replaces sparkle buffers');
           r.info.reset();const t=performance.now();g.R.render();const submitMs=performance.now()-t;
           const lighting=[];g.R.scene.traverse(o=>{if(o.isLight)lighting.push({type:o.type,color:o.color?.getHex(),intensity:o.intensity,position:o.position.toArray()});});
-          return {nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
+          return {preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
             time:G.time,inkHex:G.local.color.getHex(),render:{...r.info.render},memory:{...r.info.memory},
             sparkles:G.projectiles.s3ShapeCounts?.sparkles??0,drawCpuMs:drawMs,renderSubmitMs:submitMs,
             gpuTimerMs:null,gpuTimerStatus:'not measured; submit CPU time is not GPU time',
@@ -102,6 +124,11 @@ driver=once(driver,"  fs.writeFileSync(path.join(out, 'manifest.json'), JSON.str
   if(!servedShapes.length||servedShapes.some(r=>!accepted.includes(r.sha256)))throw Error('Served shape identity mismatch');
   fs.writeFileSync(path.join(out,'served-shapes.json'),JSON.stringify(servedShapes,null,2));
   fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify(manifest, null, 1));`);
+if(preflight){
+  driver=once(driver,'for(let j=0;j<30;j++)G.projectiles._draw();','for(let j=0;j<0;j++)G.projectiles._draw();');
+  driver=once(driver,'for(let j=0;j<200;j++)G.projectiles._draw();','for(let j=0;j<1;j++)G.projectiles._draw();');
+  driver=once(driver,'const drawMs=(performance.now()-start)/200;','const drawMs=(performance.now()-start);');
+}
 const copy=path.join(out,'native-capture-driver.mjs');fs.writeFileSync(copy,driver);
 const receipt={sourceSha,actualSourceSha,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
   nativeResetHelperSha256:hash(nativeReset),
@@ -109,15 +136,16 @@ const receipt={sourceSha,actualSourceSha,build,originalDriverSha256:originalHash
   emittedShapes:emitted,seed:0x515e7021,
   boundaries:['Real emitted game and native renderer; fixed range input.','No historical source/character rewrite.','Only flight glitter changes; muzzle/impact, hit/paint/speed unchanged.','Render CPU and resource counts measured; GPU elapsed time and allocations not measured.']};
 fs.writeFileSync(path.join(out,'source-receipt.json'),JSON.stringify(receipt,null,2));
-const run=spawnSync(process.execPath,[copy,site,out,'s3-slosher-washtub'],{stdio:'inherit',env:{...process.env,TICKS:'0,3,8,14,22,30',VIEWS:'behind,tele-side,tele-oblique'}});
+const run=spawnSync(process.execPath,[copy,site,out,'s3-slosher-washtub'],{stdio:'inherit',env:{...process.env,TICKS:preflight?'0':'0,3,8,14,22,30',VIEWS:preflight?'behind':'behind,tele-side,tele-oblique'}});
 if(run.status!==0)process.exit(run.status||1);
 const captures=JSON.parse(fs.readFileSync(path.join(out,'manifest.json'),'utf8'));
 for(const c of captures)c.sha256=hash(fs.readFileSync(path.join(out,c.file)));
 fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(captures,null,2));
-const expected=new Set([0,3,8,14,22,30].flatMap(t=>['behind','tele-side','tele-oblique'].map(v=>'s3-slosher-washtub:'+t+':'+v)));
+const expected=new Set((preflight?[0]:[0,3,8,14,22,30]).flatMap(t=>(preflight?['behind']:['behind','tele-side','tele-oblique']).map(v=>'s3-slosher-washtub:'+t+':'+v)));
 if(captures.length!==expected.size)throw Error('Wrong native capture count');
 for(const c of captures){
   if(!expected.delete(c.label+':'+c.tick+':'+c.view))throw Error('Duplicate or unexpected native capture');
-  if(c.tick===3&&!(c.count>0&&c.measurement.sparkles>0&&c.measurement.render.points>0))throw Error('Missing live Explosher in native capture');
+  if((c.tick===3||preflight)&&!(c.count>0&&c.measurement.sparkles>0&&c.measurement.render.points>0))throw Error('Missing live Explosher in native capture');
 }
 if(expected.size)throw Error('Missing expected native captures');
+if(preflight)console.log('EXPLOSHER_PREFLIGHT_RECEIPT '+JSON.stringify(captures));
