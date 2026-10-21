@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {advanceKrakenArms} from '../runtime/special-presentation.mjs';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+const {advanceKrakenArms}=await import(process.env.INKWAVE_BUILT_SITE
+ ? pathToFileURL(path.resolve(process.env.INKWAVE_BUILT_SITE,'patches/splatoon3/runtime/special-presentation.mjs')).href
+ : new URL('../runtime/special-presentation.mjs',import.meta.url).href);
 test('Kraken arms keep a bounded coherent stroke rather than alternating vertical kicks',()=>{
  for(const phase of ['active','charge','dash'])for(const speed of [0,5.5,11.52,18,100]){
   const s={};let lo=Infinity,hi=-Infinity;
