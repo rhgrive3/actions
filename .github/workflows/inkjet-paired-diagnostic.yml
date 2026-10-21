@@ -11,7 +11,7 @@ concurrency:
   group: inkjet-paired-diagnostic
   cancel-in-progress: false
 jobs:
-  paired-pilot-video:
+  paired-three-blocks:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -37,27 +37,25 @@ jobs:
             sudo apt-get install -y ffmpeg
           fi
           ffmpeg -version
-      - name: Reproduce the accepted candidate emitted bytes once
+      - name: Reproduce the previously tested candidate emitted bytes once
         run: |
           node scripts/build-inkwave.mjs inkwave-public _site
           node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';const m=JSON.parse(fs.readFileSync('_site/inkwave-build.json'));assert.equal(m.contentHash,'3505a563c929bbe1627c087ab3a4df61d56830f9144e1e8f36ed4863ec5744a1');console.log('EXACT_EXISTING_EMITTED_HASH',m.contentHash);"
       - name: Load pinned diagnostic scripts after the immutable build
         run: |
-          git fetch --no-tags --depth=1 origin c72dd6da46f53f3ea931e0263885685172bb12e9 df639f80ec5aad069cc393758bdb9aceb1865fea
+          git fetch --no-tags --depth=1 origin c72dd6da46f53f3ea931e0263885685172bb12e9 419d5daac7ecfaf016dd9239c4cb714dedbb2a22
           for file in scripts/prepare-inkjet-baseline.mjs scripts/check-inkwave-splashdown-browser.mjs scripts/check-inkjet-paired-pilot.mjs scripts/check-inkjet-comparison-video.mjs; do
-            git show df639f80ec5aad069cc393758bdb9aceb1865fea:"$file" > "$file"
+            git show 419d5daac7ecfaf016dd9239c4cb714dedbb2a22:"$file" > "$file"
             node --check "$file"
           done
       - name: Prepare a verified single-module old-main overlay
         run: node scripts/prepare-inkjet-baseline.mjs --site _site
-      - name: Measure one-case ABBA feasibility pilot
-        run: node scripts/check-inkjet-paired-pilot.mjs --site _site --blocks 1
-      - name: Render every frame and encode labeled 30 Hz four-player comparison
-        run: node scripts/check-inkjet-comparison-video.mjs --site _site
+      - name: Measure three ABBA blocks with phase and per-frame burden checks
+        run: node scripts/check-inkjet-paired-pilot.mjs --site _site --blocks 3
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: inkjet-paired-candidate-diagnostic
+          name: inkjet-paired-three-blocks
           path: |
             .ci-scratch/inkjet-baseline/
             .ci-scratch/inkjet-paired-pilot/
