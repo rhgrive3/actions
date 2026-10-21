@@ -29,6 +29,7 @@ jobs:
             chmod +x "$RUNNER_TEMP/charger-venv/bin/yt-dlp" 2>/dev/null || true
           fi
           "$RUNNER_TEMP/charger-venv/bin/yt-dlp" --version >>charger-research/setup.log 2>&1 || true
+          "$RUNNER_TEMP/charger-venv/bin/python" -m pip install --disable-pip-version-check --retries 1 --timeout 20 numpy >>charger-research/setup.log 2>&1 || echo "Numpy unavailable; record RMS envelope only" >>charger-research/setup.log
           cat charger-research/setup.log
       - name: Fetch gameplay reference and extract measurement images
         shell: bash
@@ -80,6 +81,17 @@ jobs:
             file=$(find raw -maxdepth 1 -type f -name "${slug}*.wav" | head -1)
             if [ -z "$file" ]; then echo "No decodable audio for ${slug}" >>fetch.log; continue; fi
             echo "Audio ${slug}: $(du -h "$file" | cut -f1)" >> fetch.log
+            refs=( )
+            for name in Wp_Charger_HoldNoise_00 Wp_Charger_HoldNoise_Heavy_00 Wp_Charger_HoldNoise_Bamboo_00 Wp_Charger_HoldNoise_Pump_00 Wp_ChargeKeepReady_00; do
+              ref="${GITHUB_WORKSPACE}/patches/splatoon3/runtime/audio/s3-real/${name}.mp3"
+              if [ -f "$ref" ]; then refs+=( --reference "$ref" ); fi
+            done
+            if [ "${#refs[@]}" -gt 0 ]; then
+              "$RUNNER_TEMP/charger-venv/bin/python" "${GITHUB_WORKSPACE}/tools/audio/compare-charger-video-waveform.py" \
+                --video "$file" --source-url "$source" --label "$slug" \
+                --max-seconds 45 --output-dir "comparison-${slug}" "${refs[@]}" \
+                >"comparison-${slug}-summary.json" 2>>fetch.log || echo "Comparison script failed for ${slug}" >>fetch.log
+            fi
             ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 "$file" >>fetch.log 2>&1 || true
             # Derived plots and measured RMS only; never upload footage.
             ffmpeg -hide_banner -loglevel error -y -i "$file" \
@@ -108,6 +120,9 @@ jobs:
           path: |
             charger-research/*.png
             charger-research/*.csv
+            charger-research/comparison-*/*.json
+            charger-research/comparison-*/*.csv
+            charger-research/comparison-*-summary.json
             charger-research/sources.tsv
             charger-research/setup.log
             charger-research/fetch.log
