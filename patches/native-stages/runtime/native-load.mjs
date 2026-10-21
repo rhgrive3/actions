@@ -11,8 +11,8 @@ async function verified(id,file,integrity,signal){
  if(!expected||bytes.byteLength!==expected.bytes||hex(await crypto.subtle.digest('SHA-256',bytes))!==expected.sha256)throw Error('Native integrity mismatch: '+id+'/'+file);
  return bytes;
 }
-export async function loadNativeData(id,signal){
- if(nativeStageBuild.mode==='browser-direct')return loadBrowserSource(id,signal);
+export async function loadNativeData(id,signal,options={}){
+ if(nativeStageBuild.mode==='browser-direct')return loadBrowserSource(id,signal,options);
  const r=await fetch(nativeStageURL(id,'integrity.json'),{signal});if(!r.ok)throw Error('Missing native integrity: '+id);
  const raw=await r.arrayBuffer(),digest=hex(await crypto.subtle.digest('SHA-256',raw));
  if(digest!==nativeStageBuild.stages.find(s=>s.id===id)?.integritySha256)throw Error('Native integrity manifest changed: '+id);
