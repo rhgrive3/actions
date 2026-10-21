@@ -1,0 +1,11 @@
+# Bounded motion-detail failure diagnostics
+
+PR1745 active job119335501551 failed on 2026-10-21 at 17:02:28 UTC: Detail rig produced no visible pixels: flow-squid. Full motion passed immediately beforehand. The actual failed frame, rigDiagnostic and image are in artifact12364836849 (motion-detail-failed-native.json); they have NOT been inspected here because artifact materialization is blocked. This is not attributed to Wiper runtime, main baseline, camera framing, or GitHub incident without that evidence.
+
+Read-only comparison: scripts/check-inkwave-motion-detail.mjs blob91c15b91d8aa23cd96e4c14511af65932a5d8b77, swim-motion985f55ba47913e1f7b9c2597e377609d2a66cf77 and flow-motion1f5b9f8c550d5d994ece9f2960dbf601ebc171e1 are identical in PR1745 and c72dd6 main. Main active job119316608016 was still queued, so baseline reproduction is unknown.
+
+This separate QA-only candidate emits a sanitized summary on the existing legitimate failure path. It does not rerun/capture anything, change the sixteen-pixel gate, edit runtime/model/hair, or discard old artifacts. Maximum three failed/invalid metric rows, maximum32 scenarios and64 metrics each scanned. Output field allowlist is fixed; labels are64-character safe ASCII; booleans are type-checked; missing/nonfinite/wrong-typed numbers become null; position is copied only if exactly three finite numbers. Existing mesh counts are explicitly local flags, NOT ancestor-visible counts. Payload tests bound serialized output below8KiB, including oversize input and unknown fields. Original receipts are not mutated.
+
+Verification: seven pure helper test bodies executed successfully in V8 with local assertion shim; this is NOT a Node test execution or browser reproduction. Separate source inspection confirms only a helper import and failure stdout call are added to the capture script. Runtime, capture timing, camera, visibility toggles, pixel threshold and existing failure artifact publication are unchanged. Node tests and browser execution remain pending. Join only a next legitimately needed validation after independent review, not an extra run solely to recover missing old logs.
+
+Source: https://github.com/rhgrive3/actions/actions/runs/39626989928/job/119335501551
