@@ -5,11 +5,15 @@ import {chromium} from 'playwright';
 import {verifyRuntimeBuild,hash} from './lib/inkwave-runtime-evidence.mjs';
 import {enterRangeFromMenu} from './lib/inkwave-range-menu-entry.mjs';
 import {awaitWiperSceneSources,wiperSceneCensus,validWiperProfileStyle} from './lib/inkwave-wiper-scene-readiness.mjs';
-const [siteArg,sourceArg,overlayArg,outArg,variant,id,action]=process.argv.slice(2);
+assert.ok([7,8].includes(process.argv.slice(2).length),'Unexpected CLI argument count');
+const [siteArg,sourceArg,overlayArg,outArg,variant,id,action,costArg]=process.argv.slice(2);
+const costProbe=costArg==='--cost-probe';assert.ok(costArg===undefined||costProbe);if(costProbe)assert.ok(variant==='A'&&id==='s3-saber-heavy'&&action==='charged');
 assert.ok(outArg&&['A','B'].includes(variant));assert.ok(['s3-saber-heavy','s3-saber-normal','s3-saber-lite'].includes(id));assert.ok(['tap','charged'].includes(action));
 const site=path.resolve(siteArg),source=path.resolve(sourceArg),overlay=path.resolve(overlayArg),out=path.resolve(outArg);
+const nodeTimings={started:performance.now()};
 const head='0430673b09a5009628fc87baa414b3560090fc1d',baseline='7581ca9be8cf87d253918b8abb3b8ebe728c2093';
 const manifest=verifyRuntimeBuild(site,source,head),binding=JSON.parse(fs.readFileSync(path.join(overlay,'receipt.json'),'utf8'));
+if(costProbe)assert.equal(manifest.contentHash,'8e350111a0469095d2872093322809f70da7d31237e520226946cbb0740c4c16','Exact prior emitted workload for cost probe');
 assert.equal(binding.candidate,head);assert.equal(binding.baseline,baseline);assert.equal(binding.contentHash,manifest.contentHash);assert.equal(binding.inputHash,manifest.inputHash);assert.equal(binding.revision,manifest.build.revision);
 assert.deepEqual(binding.modules.map(x=>x.name).sort(),['s3-ink-sheets.mjs','s3-projectile-shapes.mjs']);
 const dummyPath='_versions/'+manifest.build.revision+'/patches/practice-range/runtime/dummy.mjs';
@@ -26,10 +30,10 @@ const server=http.createServer((req,res)=>{try{
  assert.equal(hash(original),manifest.artifacts[key]);const bytes=variant==='A'&&replacements.has(key)?replacements.get(key).bytes:original;
  loaded.set(key,hash(bytes));res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');res.end(bytes);
 }catch{res.writeHead(404);res.end();}});
-await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser,result,failure;
+await new Promise(r=>server.listen(0,'127.0.0.1',r));let page,browser,result,failure;
 try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- const page=await browser.newPage({viewport:{width:960,height:720}});
+ page=await browser.newPage({viewport:{width:960,height:720}});
  page.on('response',response=>{const key=new URL(response.url()).pathname.slice(1);if(!replacements.has(key)&&key!==dummyPath)return;
   responsePending.push(response.body().then(bytes=>consumed.set(key,hash(bytes))).catch(e=>responseErrors.push(e.message)));});
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
@@ -90,18 +94,20 @@ try{
    window.__wiperEntry={trusted:true,clocks:window.__wiperClocks(),rng:window.__wiperRng()};
   },true);
  },{id});
- const entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:300000});
+ nodeTimings.beforeEntry=performance.now();const entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:300000});
  await page.evaluate('window.__awaitWiperSources='+awaitWiperSceneSources.toString()+';window.__wiperCensus='+wiperSceneCensus.toString()+';window.__validWiperProfileStyle='+validWiperProfileStyle.toString());
- const setup=await page.evaluate(async({id,action,dummyPath})=>{
+ nodeTimings.afterEntry=performance.now();
+ const setup=await page.evaluate(async({id,action,dummyPath,costProbe})=>{
   const THREE=await import('three'),G=window.__G,g=window.__inkwave,a=G.local;
   if(!g.frozen||!window.__wiperEntry?.trusted||!G.match?.range||G.match.state!=='playing'||a.weaponId!==id)throw Error('Native range/weapon admission failed');
   const dummyUrl=new URL('/'+dummyPath,location.origin).href;
   const {TargetDummyCharacter}=await import(dummyUrl);
-  const readiness=await window.__awaitWiperSources(G,TargetDummyCharacter);
+  const startupTiming={beforeReadiness:performance.now()};const readiness=await window.__awaitWiperSources(G,TargetDummyCharacter);
+  startupTiming.afterReadiness=performance.now();
   if(!Object.hasOwn(Object.getPrototypeOf(G.projectiles),Symbol.for('inkwave.s3.projectile-shapes.v1')))throw Error('Missing native shape installer');
   g.debug.freezeBots();g.input.keys.clear();g.input.pressed.clear();g.debug.fire(false);g.R.setDynamicScale(1);
   const aim=()=>{G.rig.yaw=0;G.rig.pitch=.06;};
-  window.__wiperResetSeed();for(let i=0;i<60;i++){aim();g._frame(1/60);}
+  window.__wiperResetSeed();startupTiming.warmStart=performance.now();for(let i=0;i<60;i++){aim();g._frame(1/60);}startupTiming.warmEnd=performance.now();
   if(!a.alive||!a.grounded||G.projectiles.list.length)throw Error('Unsettled native stance or preexisting projectile');
   if(!window.__validWiperProfileStyle(g.profile.style)||!window.__validWiperProfileStyle(a.character.style))throw Error('Native profile/style binding mismatch');
   const beforeReset=window.__wiperRng();window.__wiperResetSeed();
@@ -136,40 +142,47 @@ try{
     if(shape.sheets.mesh.count){shape.sheets.mesh.getMatrixAt(0,m);axes.sheet=v.setFromMatrixColumn(m,1).normalize().toArray();}
     for(const [key,value]of [['main',mesh.instanceMatrix.array],['sheet',shape.sheets.mesh.instanceMatrix.array]]){if(buffers.has(key)&&buffers.get(key)!==value)throw Error('Instance buffer replaced');buffers.set(key,value);}
    }
-   const paintHash=await fingerprint(G.paint.grid),images=[];
+   const phases={nativeSubmitMs:frameCpuMs,inspection:[]},hashStart=performance.now();const paintHash=await fingerprint(G.paint.grid),images=[];phases.paintHashMs=performance.now()-hashStart;
    if(capture||(owned.length&&!capturedLive))for(const view of ['front','top']){
     const before=JSON.stringify(physical()),prevTarget=r.getRenderTarget(),prevAuto=r.autoClear;
     camera.position.copy(target).add(view==='front'?new THREE.Vector3(.2,2,12):new THREE.Vector3(0,15,-.01));camera.up.set(0,1,0);camera.lookAt(target);camera.updateMatrixWorld(true);camera.updateProjectionMatrix();
-    try{r.setRenderTarget(null);r.autoClear=true;r.render(G.scene,camera);
-     const pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+    try{r.setRenderTarget(null);r.autoClear=true;const renderStart=performance.now();r.render(G.scene,camera);const submitEnd=performance.now();
+     const readStart=performance.now();const pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);const readEnd=performance.now();
      let lo=255,hi=0;for(let j=0;j<pixels.length;j+=4){const v=(pixels[j]+pixels[j+1]+pixels[j+2])/3;lo=Math.min(lo,v);hi=Math.max(hi,v);}
-     if(hi-lo<8)throw Error('Flat inspection frame');images.push({view,pixelHash:await fingerprint(pixels),png:r.domElement.toDataURL('image/png').split(',')[1],camera:gameCamera(camera)});
+     if(hi-lo<8)throw Error('Flat inspection frame');const pixelHash=await fingerprint(pixels),encodeStart=performance.now(),png=r.domElement.toDataURL('image/png').split(',')[1],encodeEnd=performance.now();phases.inspection.push({view,submitMs:submitEnd-renderStart,readPixelsWithQueuedGpuMs:readEnd-readStart,pixelCheckHashMs:encodeStart-readEnd,pngEncodeMs:encodeEnd-encodeStart});images.push({view,pixelHash,png,camera:gameCamera(camera)});
     }finally{r.setRenderTarget(prevTarget);r.autoClear=prevAuto;}
     if(JSON.stringify(physical())!==before)throw Error('Inspection render changed gameplay camera/physics/aim/clock/RNG');
    }
    if(owned.length)capturedLive=true;
    if(gl.getError())throw Error('WebGL error');
-   return {tick,state,axes,paintHash,paintEvents:paints.slice(),aimTrace:aimTrace.slice(),nativeRender,memory,frameCpuMs,images,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
+   return {tick,state,axes,paintHash,paintEvents:paints.slice(),aimTrace:aimTrace.slice(),nativeRender,memory,frameCpuMs,phases,images,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
   },finish(){g.debug.fire(false);G.paint.splat=originalSplat;G.projectiles._aimFrom=originalAim;
-   if(!seen||!firstBirth||!expired)throw Error('Native slash birth and termination required');
+   if(!costProbe&&(!seen||!firstBirth||!expired))throw Error('Native slash birth and termination required');
    return {firstBirth,expired,aimTrace,paintEvents:paints,final:physical()};}};
-  return {initial,dummyModuleUrl:dummyUrl,startupRngBeforeReset:beforeReset,target:target.toArray(),quality:g.settings.quality,atlasSize:G.paint.size,palette:{colorblind:g.settings.colorblind,teams:G.teamColors.map(c=>c.getHex()),local:a.color.getHex()},scope:'native simulation plus separate inspection-camera raw renderer; not native postprocessed view; CPU diagnostic not performance acceptance'};
- },{id,action,dummyPath});
+  return {startupTiming,costProbe,initial,dummyModuleUrl:dummyUrl,startupRngBeforeReset:beforeReset,target:target.toArray(),quality:g.settings.quality,atlasSize:G.paint.size,palette:{colorblind:g.settings.colorblind,teams:G.teamColors.map(c=>c.getHex()),local:a.color.getHex()},scope:'native simulation plus separate inspection-camera raw renderer; not native postprocessed view; CPU diagnostic not performance acceptance'};
+ },{id,action,dummyPath,costProbe});
+ nodeTimings.afterSetup=performance.now();
  const frames=[],pilot=id==='s3-saber-heavy'&&action==='charged';
- for(let tick=0;tick<=160;tick++){
-  const row=await page.evaluate(({tick,capture})=>window.__wiperStep.step(tick,capture),{tick,capture:pilot||[0,90,120,160].includes(tick)});
+ result={setup,frames,status:'partial',costProbe};
+ for(let tick=0;tick<=(costProbe?9:160);tick++){
+  fs.writeFileSync(path.join(out,'frame-progress.json'),JSON.stringify({status:'stepping',tick,completedFrames:frames.length,nodeWall:performance.now(),setup,costProbe}));
+  const transferStart=performance.now();
+  const row=await page.evaluate(({tick,capture})=>window.__wiperStep.step(tick,capture),{tick,capture:costProbe?tick%2===0:pilot||[0,90,120,160].includes(tick)});
+  row.nodeEvaluateWallMs=performance.now()-transferStart;const saveStart=performance.now();
   for(const im of row.images){const bytes=Buffer.from(im.png,'base64');delete im.png;assert.ok(bytes.length>1000);assert.equal(bytes.subarray(1,4).toString(),'PNG');const file=action+'-'+im.view+'-'+String(tick).padStart(4,'0')+'.png';fs.writeFileSync(path.join(out,file),bytes);im.file=file;im.pngSha256=hash(bytes);}
-  frames.push(row);
+  row.pngDecodeWriteHashMs=performance.now()-saveStart;frames.push(row);
+  fs.writeFileSync(path.join(out,'partial-frames.json'),JSON.stringify({status:'partial',setup,frames,nodeTimings,costProbe}));
+  console.log(JSON.stringify({phase:'completed-frame-cost',tick,images:row.images.length,nativeSubmitMs:row.frameCpuMs,phases:row.phases,nodeEvaluateWallMs:row.nodeEvaluateWallMs,pngDecodeWriteHashMs:row.pngDecodeWriteHashMs}));
  }
  const completion=await page.evaluate(()=>window.__wiperStep.finish());
  await Promise.all(responsePending);assert.equal(consumed.get(dummyPath),manifest.artifacts[dummyPath],'consumed exact native dummy module');assert.deepEqual(errors,[]);assert.deepEqual(responseErrors,[]);
  for(const [key,{m}]of replacements){const expected=variant==='A'?m.baselineEmittedSha256:m.candidateEmittedSha256;
  assert.equal(loaded.get(key),expected,'actual served module '+key);assert.equal(consumed.get(key),expected,'browser consumed module body '+key);}
- result={setup,completion,frames,dt:1/60,frameCount:161,variant,id,action,pilot,physicalGpuMeasured:false,performanceAccepted:false};
+ result={setup,completion,frames,dt:1/60,frameCount:costProbe?10:161,costProbe,nodeTimings,variant,id,action,pilot,physicalGpuMeasured:false,performanceAccepted:false};
 }catch(e){failure=e;}
 finally{
  await browser?.close();await new Promise(r=>server.close(r));
- const receipt={status:failure?'failed':'passed',head,baseline,variant,id,action,inputHash:manifest.inputHash,contentHash:manifest.contentHash,binding,loaded:[...loaded],consumed:[...consumed],responseErrors,result,errors,error:failure?.stack};
+ const receipt={status:failure?'failed':costProbe?'cost-diagnostic-only':'passed',head,baseline,variant,id,action,inputHash:manifest.inputHash,contentHash:manifest.contentHash,binding,loaded:[...loaded],consumed:[...consumed],responseErrors,result,errors,error:failure?.stack};
  fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({status:receipt.status,variant,id,action,error:failure?.message}));
  if(failure)process.exitCode=1;
 }

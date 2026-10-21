@@ -49,14 +49,14 @@ jobs:
           (cd work/wiper-source && node scripts/build-inkwave.mjs inkwave-public ../wiper-site)
       - name: Prepare verified two-module baseline overlay
         run: node scripts/prepare-inkwave-wiper-plane-baseline.mjs work/wiper-source work/wiper-site work/wiper-overlay
-      - name: Verify native plane and unchanged controls with continuous Dental pilot
+      - name: Measure one bounded native capture cost probe (not acceptance)
         run: |
           ffmpeg -version
-          node scripts/check-inkwave-wiper-plane-paired.mjs work/wiper-site work/wiper-source work/wiper-overlay work/wiper-native
+          timeout 20m node scripts/check-inkwave-wiper-plane-native.mjs work/wiper-site work/wiper-source work/wiper-overlay work/wiper-native/cost-A A s3-saber-heavy charged --cost-probe
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: wiper-native-plane-pilot
+          name: wiper-native-cost-probe
           path: |
             work/wiper-native/
             work/wiper-overlay/receipt.json
