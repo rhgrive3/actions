@@ -4,7 +4,7 @@ import { fixture } from './source-fixture.mjs';
 import { specialVfxDirector } from '../runtime/special-vfx.mjs';
 
 test('production-composed Inkjet FX emits 120 nozzle glows/sec at 30/60/120 Hz without authoring gameplay', async () => {
-  const f = await fixture({ fullRuntime: true, realProjectiles: true });
+  const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true });
   const { G, THREE } = f, api=f.installedRuntime;
   G.scene=new THREE.Scene();G.projectiles=new api.Projectiles(G.scene);
   const fx=new api.FX(G.scene,{quality:'high'});fx.setCollider(()=>null);G.fx=fx;
