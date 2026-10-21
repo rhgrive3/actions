@@ -17,7 +17,7 @@ const overlayPath=opt('--baseline-overlay',null);
 const overlayReceipt=overlayPath?JSON.parse(fs.readFileSync(path.join(path.dirname(overlayPath),'receipt.json'),'utf8')):null;
 const overlayCode=overlayPath?fs.readFileSync(overlayPath):null;
 if(overlayPath){assert.ok(inkjet,'baseline overlay is diagnostic Inkjet only');assert.equal(createHash('sha256').update(overlayCode).digest('hex'),overlayReceipt.baselineEmittedSha256);}
-if(inkjet){inkjet.baseline=!!overlayPath;inkjet.warmupSeconds=Number(opt('--warmup-seconds','1'));inkjet.sampleSeconds=Number(opt('--sample-seconds','1'));assert.ok(Number.isInteger(inkjet.warmupSeconds)&&inkjet.warmupSeconds>=1&&inkjet.warmupSeconds<=5);assert.ok(Number.isInteger(inkjet.sampleSeconds)&&inkjet.sampleSeconds>=1&&inkjet.sampleSeconds<=5);}
+if(inkjet){inkjet.timingOnly=process.argv.includes('--timing-only');inkjet.baseline=!!overlayPath;inkjet.warmupSeconds=Number(opt('--warmup-seconds','1'));inkjet.sampleSeconds=Number(opt('--sample-seconds','1'));assert.ok(Number.isInteger(inkjet.warmupSeconds)&&inkjet.warmupSeconds>=1&&inkjet.warmupSeconds<=5);assert.ok(Number.isInteger(inkjet.sampleSeconds)&&inkjet.sampleSeconds>=1&&inkjet.sampleSeconds<=5);}
 const out = path.resolve(opt('--evidence-dir', '.ci-scratch/splashdown-browser'));
 fs.mkdirSync(out, { recursive: true });
 const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
@@ -146,9 +146,10 @@ try {
         const start=performance.now();G.fx.update(dt,camera);cpu.push(performance.now()-start);
         const drawStart=performance.now();draw();submit.push(performance.now()-drawStart);
         rows.push({frame:frame+1,time:G.time,puffs:d.kit.puffs.n,sparks:d.kit.sparks.n,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles});
-        if((hz===60 && frame<12) || (hz!==60 && frame===0))images.push({name:'inkjet-'+layout+'-'+actorCount+'p-f'+String(frame+1).padStart(3,'0')+'.png',data:renderer.domElement.toDataURL('image/png')});
+        if(!inkjet.timingOnly && ((hz===60 && frame<12) || (hz!==60 && frame===0)))images.push({name:'inkjet-'+layout+'-'+actorCount+'p-f'+String(frame+1).padStart(3,'0')+'.png',data:renderer.domElement.toDataURL('image/png')});
       }
       const after=pixels(), changedPixels=changed(before,after);
+      if(inkjet.timingOnly)images.push({name:'inkjet-timing-postsample.png',data:renderer.domElement.toDataURL('image/png')});
       expect(exhaustGlows.length===actorCount && exhaustGlows.every(n=>n===2*(inkjet.baseline?hz:Math.min(hz,60))*inkjet.sampleSeconds),'each expected actor emits both exhaust glows; flight-only cannot pass');
       expect(changedPixels>10,'Inkjet presentation changes rendered pixels');
       expect(d.errors===0,'no swallowed special VFX errors');
@@ -241,7 +242,7 @@ try {
     return { scope: inkjet ? 'Diagnostic SwiftShader continuous-presentation probe with frozen gameplay and stationary live flight records; no baseline performance acceptance or Switch comparison' : 'production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison', cases, failures, images };
   }, {prefix,inkjet});
   for (const { name, data } of result.images) fs.writeFileSync(path.join(out, name), Buffer.from(data.split(',')[1], 'base64'));
-  if(inkjet)assert.equal(result.images.length,inkjet.hz===60?12:1,'nonempty per-case capture sequence');
+  if(inkjet)assert.equal(result.images.length,inkjet.timingOnly?1:inkjet.hz===60?12:1,'nonempty per-case capture sequence');
   if(inkjet) for(const {name,data} of result.images)assert.ok(Buffer.from(data.split(',')[1],'base64').length>1000,name+' nonempty PNG');
   delete result.images;
   result.servedHashes=servedHashes;
