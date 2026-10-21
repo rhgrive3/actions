@@ -43,9 +43,9 @@ jobs:
           node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';const m=JSON.parse(fs.readFileSync('_site/inkwave-build.json'));assert.equal(m.contentHash,'3505a563c929bbe1627c087ab3a4df61d56830f9144e1e8f36ed4863ec5744a1');console.log('EXACT_EXISTING_EMITTED_HASH',m.contentHash);"
       - name: Load pinned diagnostic scripts after the immutable build
         run: |
-          git fetch --no-tags --depth=1 origin c72dd6da46f53f3ea931e0263885685172bb12e9 419d5daac7ecfaf016dd9239c4cb714dedbb2a22
+          git fetch --no-tags --depth=1 origin c72dd6da46f53f3ea931e0263885685172bb12e9 3f1b3a53c56cbc2f87aa4853c54da961a1485fd5
           for file in scripts/prepare-inkjet-baseline.mjs scripts/check-inkwave-splashdown-browser.mjs scripts/check-inkjet-paired-pilot.mjs scripts/check-inkjet-comparison-video.mjs; do
-            git show 419d5daac7ecfaf016dd9239c4cb714dedbb2a22:"$file" > "$file"
+            git show 3f1b3a53c56cbc2f87aa4853c54da961a1485fd5:"$file" > "$file"
             node --check "$file"
           done
       - name: Prepare a verified single-module old-main overlay
@@ -55,7 +55,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: inkjet-paired-three-blocks
+          name: inkjet-paired-three-blocks-seed-boundary
           path: |
             .ci-scratch/inkjet-baseline/
             .ci-scratch/inkjet-paired-pilot/
