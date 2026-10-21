@@ -1,3 +1,4 @@
+import { readExplosherCaptureSurface, explosherSurfaceReady } from '../../../scripts/lib/inkwave-explosher-capture-surface.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -13,7 +14,7 @@ function diagnostic(){
  const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{},exit(){}};
  const spawn=(bin,args)=>bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0};
  const code=wrapper.replace(/^#!.*\n/,'').replace(/^import .*;\n/gm,'').replace(/import\.meta\.url/g,"'file:///tmp/x'").replace(/import\.meta\.resolve\('playwright'\)/g,"'playwright'");
- assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects),/Wrong native capture count/);
+ assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady),/Wrong native capture count/);
  return saved['out/native-capture-driver.mjs'];
 }
 test('capture admission guards reject incomplete or invalid evidence (no browser claim)',()=>{
@@ -183,4 +184,14 @@ test('bounded native FX digest is read only and detects active data, not inactiv
   fx._time=NaN;await assert.rejects(readExplosherEffects(),/FX scalar/);fx._time=1;fx._dt=undefined;await assert.rejects(readExplosherEffects(),/FX scalar/);fx._dt=1/60;
   fx._sqN=.5;await assert.rejects(readExplosherEffects(),/schedule count/);fx._sqN=0;env._frameId=NaN;await assert.rejects(readExplosherEffects(),/FX scalar/);
  }finally{if(oldWindow===undefined)delete globalThis.window;else globalThis.window=oldWindow;}
+});
+
+test('generated driver preserves ordinary UI and binds the renderer canvas',()=>{
+ const generated=diagnostic();
+ assert(!generated.includes('body *{visibility:hidden!important}'));
+ assert(!generated.includes("page.locator('canvas').first()"));
+ assert(generated.includes("page.locator('#game-canvas').screenshot"));
+ assert(generated.includes('window.explosherSurfaceReady(window.readExplosherCaptureSurface())'));
+ assert(generated.includes('Native scene clocks advanced while awaiting ordinary UI completion'));
+ assert(generated.includes('normal-ui-entry.png')&&generated.includes('normal-ui-after-wait.png'));
 });
