@@ -54,7 +54,7 @@ try{
  await page.addInitScript(()=>{
   localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:true,frameRate:60,colorblind:true}));
   localStorage.setItem('inkwave.profile',JSON.stringify({style:{hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3}}));
-  let rng=20261021;window.__materialSeed=(step)=>{rng=(20261021+Math.imul(step,2654435761))>>>0;};
+  let rng=20261021;window.__materialRngState=()=>rng;window.__materialSeed=(step)=>{rng=(20261021+Math.imul(step,2654435761))>>>0;};
   Math.random=()=>{rng=(Math.imul(rng,1664525)+1013904223)>>>0;return rng/4294967296;};
   window.__rollerVideoClocks=()=>{
         const G=window.__G,g=window.__inkwave;
@@ -197,7 +197,8 @@ try{
    return{type:v.constructor?.name||typeof v,uninspected:true};
   };
   const snapshotRenderState=()=>{
-   const ch=a.character,nodes=[],materials=new Map();let count=0,materialsTruncated=false;
+   const ch=a.character,nodes=[],materials=new Map(),lights=[];let count=0,materialsTruncated=false,lightCount=0;
+   G.scene.traverse(o=>{if(!o.isLight)return;lightCount++;if(lights.length<256)lights.push({uuid:o.uuid,type:o.type,name:o.name,color:o.color.toArray(),intensity:o.intensity,matrixWorld:o.matrixWorld.toArray()});});
    ch.root.traverse(o=>{
     count++;if(nodes.length>=2048)return;
     nodes.push({uuid:o.uuid,name:o.name,type:o.type,visible:o.visible,matrix:o.matrix.toArray(),matrixWorld:o.matrixWorld.toArray(),
@@ -211,7 +212,11 @@ try{
     }
    });
    const bones=ch.skeleton?.boneMatrices;
-   return{clocks:clocks(),camera:camera(),rendererFrame:r.info.render.frame,
+   return{clocks:clocks(),camera:camera(),rendererFrame:r.info.render.frame,rngState:window.__materialRngState(),
+    renderCounts:{calls:r.info.render.calls,triangles:r.info.render.triangles,points:r.info.render.points,lines:r.info.render.lines},
+    resources:{textures:r.info.memory.textures,geometries:r.info.memory.geometries,programs:r.info.programs.length},
+    presentation:{quality:g.settings.quality,dynamicScale:g.R.dynScale,toneMapping:r.toneMapping,outputColorSpace:r.outputColorSpace,exposure:r.toneMappingExposure,
+     environment:boundedValue(G.scene.environment),environmentIntensity:G.scene.environmentIntensity,environmentRotation:boundedValue(G.scene.environmentRotation),lights,lightCount,lightsTruncated:lightCount>256},
     composer:{read:g.R.composer?.readBuffer?.uuid,write:g.R.composer?.writeBuffer?.uuid},
     shadow:{needsUpdate:r.shadowMap.needsUpdate,autoUpdate:r.shadowMap.autoUpdate},
     character:{time:ch.t,phase:ch.phase,camFrame:ch._camFrame,camOK:ch._camOK,rendered:ch._rendered,camPos:ch._camPos?.toArray(),camE5:ch._camE5,camVH:ch._camVH,
@@ -225,7 +230,7 @@ try{
    const before=diagnostic?snapshotRenderState():null;
    const c=g.R.composer,read=c?.readBuffer,write=c?.writeBuffer;
    try{g.R.render();const p=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;}
-   finally{let afterRender=null;try{if(diagnostic)afterRender=snapshotRenderState();}finally{if(c){c.readBuffer=read;c.writeBuffer=write;}}if(diagnostic)renderStates.push({label,before,afterRender,after:snapshotRenderState()});}
+   finally{let afterRender=null;try{if(diagnostic)afterRender=snapshotRenderState();}finally{if(c){c.readBuffer=read;c.writeBuffer=write;}}if(diagnostic)renderStates.push({label,captureOrdinal:renderStates.length,before,afterRender,after:snapshotRenderState()});}
   };
   checkpoint('clear-flush-start');G.paint.clear();G.paint.flush(0);checkpoint('unpainted-readback-start');const unpainted=image('unpainted');checkpoint('unpainted-readback-end');
   const placements=[],h={normal:new THREE.Vector3(),block:-1,face:-1};
@@ -241,18 +246,23 @@ try{
   const difference=(x,y)=>{let changed=0,max=0;for(let i=0;i<x.length;i+=4){let any=false;for(let k=0;k<4;k++){const d=Math.abs(x[i+k]-y[i+k]);max=Math.max(max,d);any ||= d>0;}changed+=any;}return{changed,max};};
   const paintSignal=difference(unpainted,painted),repeatSignal=difference(painted,repeat),repeat2Signal=diagnostic?difference(repeat,repeat2):null;
   checkpoint('pixel-signal',{paintSignal,repeatSignal,repeat2Signal});
+  const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
   if(diagnostic){
    const encode=bytes=>{let value='';for(let i=0;i<bytes.length;i+=16384)value+=String.fromCharCode(...bytes.subarray(i,i+16384));return btoa(value);};
    checkpoint('capture-evidence-start');
-   await window.__materialDiagnosticImages({width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,paintSignal,repeatSignal,repeat2Signal,renderStates,
-    atlasConditions,fixture:fixture(),state:state(),placements,
-    images:[{label:'unpainted',rgba:encode(unpainted)},{label:'painted',rgba:encode(painted)},{label:'repeat',rgba:encode(repeat)},{label:'repeat2',rgba:encode(repeat2)}]});
+   // Freeze the read-only receipt before any awaited sink; never rewrite clocks, frame counters, or RNG.
+   const evidence={width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,paintSignal,repeatSignal,repeat2Signal,renderStates,
+    initial,atlasConditions,fixture:fixture(),state:state(),placements,
+    images:[{label:'unpainted',rgba:encode(unpainted)},{label:'painted',rgba:encode(painted)},{label:'repeat',rgba:encode(repeat)},{label:'repeat2',rgba:encode(repeat2)}]};
+   checkpoint('diagnostic-atlas-readback-start');const rawAtlas=new Uint8Array(G.paint.size*G.paint.size*4);
+   r.readRenderTargetPixels(G.paint.rt,0,0,G.paint.size,G.paint.size,rawAtlas);evidence.glError=gl.getError();
+   evidence.atlasHash=await digest(rawAtlas);checkpoint('diagnostic-atlas-readback-end');
+   await window.__materialDiagnosticImages(evidence);
    checkpoint('capture-evidence-end');
   }
   if(paintSignal.changed<=1000||repeatSignal.changed!==0)throw Error('Paint visibility or frozen-repeat gate failed: '+JSON.stringify({paintSignal,repeatSignal}));
   // Fail-closed controls prove the visibility predicate does not accept an empty signal.
   const validates=x=>x.changed>1000;if(validates(difference(unpainted,unpainted)))throw Error('Blank negative accepted');
-  const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
   const pixels={unpainted:await digest(unpainted),painted:await digest(painted),paintSignal,repeatSignal};
   checkpoint('atlas-readback-start');const atlas=new Uint8Array(G.paint.size*G.paint.size*4);r.readRenderTargetPixels(G.paint.rt,0,0,G.paint.size,G.paint.size,atlas);
   const atlasHash=await digest(atlas),beforeWarm=state();checkpoint('atlas-readback-end');
