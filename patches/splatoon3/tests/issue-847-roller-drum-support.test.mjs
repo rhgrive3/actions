@@ -15,8 +15,8 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
 const FROZEN_B34_SHA256 = '52e587f60d6211054c2bad04f746471e85ebdb0295e051f797b41a0019847eb7';
 const adaptProductionSource = adaptBuildSource;
-const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb",
+// Refreshed after main f8c898202b61695cbc8343238934580a26b68e03 changed only\n// verticalRollerPose presentation. The stick/support mutations below are unchanged.\n// Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.\nconst COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
+  "patches/splatoon3/runtime/roller.mjs": "1c0e1582b34f744a1d30a1a5fcc021c8745c1cf736dbce4fc9de5ac5582493bb",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d"
 });
 const headlessPaintRenderer = () => ({
