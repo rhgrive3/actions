@@ -1,6 +1,7 @@
+import {verifyDeclaredPaintSources} from '../lib/inkwave-declared-paint-source-pair.mjs';
 import os from 'node:os';
 import path from 'node:path';
-import {spawnSync} from 'node:child_process';
+import {spawnSync,execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -138,4 +139,27 @@ test('CLI expected differing epochs rejects copied identity before overwriting s
  const result=JSON.parse(fs.readFileSync(receipt,'utf8'));assert.equal(result.mode,'pr1746-byte-identical-current-paint');assert.deepEqual(result.writtenPaths,[]);
  assert.match(result.scope,/not evidence of an improvement/);
  for(const dir of [left,right])for(const [p,source]of sources)assert.equal(fs.readFileSync(path.join(dir,p),'utf8'),source,p);
+});
+
+test('declared Git leaves reject dirty whole-tree copy with unchanged HEAD and permit intended immutable identity',t=>{
+ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-git-pair-'));t.after(()=>fs.rmSync(temp,{recursive:true,force:true}));
+ const base=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,historicalSource('oct21IntegrationBase',p)]));base.set(swimMain.path,swimMain.content);
+ const current=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const git=(root,args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+ const write=(root,rows)=>{for(const [p,s]of rows){const file=path.join(root,p);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,s);}};
+ const make=(name,rows)=>{const root=path.join(temp,name);fs.mkdirSync(root);write(root,rows);git(root,['init']);git(root,['add','.']);git(root,['-c','user.name=QA','-c','user.email=qa@example.invalid','-c','commit.gpgsign=false','commit','-m','fixture']);return {root,sha:git(root,['rev-parse','HEAD'])};};
+ const b=make('base',base),c=make('candidate',current),i=make('identity',current);
+ const options=(left,leftRows)=>({baseline:leftRows,candidate:current,baseGitRoot:left.root,candidateGitRoot:c.root,baseSha:left.sha,candidateSha:c.sha});
+ const differing=verifyDeclaredPaintSources(options(b,base));
+ assert.equal(planMainInkBaseline(differing.baseline,differing.candidate).evidence.mode,'current-pair-with-gameplay-differences');
+ const identical=verifyDeclaredPaintSources(options(i,current));
+ assert.equal(planMainInkBaseline(identical.baseline,identical.candidate).evidence.mode,'pr1746-byte-identical-current-paint');assert.equal(identical.evidence.paths.length,13);
+ write(b.root,current);assert.equal(git(b.root,['rev-parse','HEAD']),b.sha);
+ assert.throws(()=>verifyDeclaredPaintSources(options(b,current)),/working source differs from declared immutable Git blob/);
+ assert.throws(()=>verifyDeclaredPaintSources({...options(i,current),baseSha:'0'.repeat(40)}),/declared commit must match Git HEAD/);
+ const receipt=path.join(temp,'prior.json');fs.writeFileSync(receipt,'prior');
+ for(const root of [b.root,c.root])fs.writeFileSync(path.join(root,'patches/splatoon3/profile.json'),fs.readFileSync(new URL('../../patches/splatoon3/profile.json',import.meta.url)));
+ const run=spawnSync(process.execPath,[fileURLToPath(new URL('../prepare-inkwave-projectile-baseline.mjs',import.meta.url)),'--baseline',b.root,'--candidate',c.root,'--receipt',receipt,'--base-sha',b.sha,'--candidate-sha',c.sha],{encoding:'utf8'});
+ assert.equal(run.status,1,run.stderr);assert.match(run.stderr,/working source differs from declared immutable Git blob/);
+ assert.equal(fs.readFileSync(receipt,'utf8'),'prior');assert.equal(git(b.root,['rev-parse','HEAD']),b.sha);
 });

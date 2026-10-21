@@ -7,6 +7,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-pair.mjs';
 import { MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
 const arg = name => {
@@ -34,7 +35,11 @@ const verify = (root, rows) => {
   for (const [rel, bytes] of rows) assert.deepEqual(fs.readFileSync(path.join(root, rel)), bytes, rel + ': input bytes preserved');
 };
 // Fail before making a scratch copy if these are not the exact reviewed inputs.
-const admitted = planMainInkBaseline(sourceMap(before), sourceMap(after));
+const value=name=>{const at=process.argv.indexOf(name);return at<0?null:process.argv[at+1];};
+const hasDeclared=process.argv.includes('--base-sha')||process.argv.includes('--candidate-sha');
+const declared=hasDeclared?verifyDeclaredPaintSources({baseline:sourceMap(before),candidate:sourceMap(after),
+ baseGitRoot:baseline,candidateGitRoot:candidate,baseSha:value('--base-sha'),candidateSha:value('--candidate-sha')}):null;
+const admitted = planMainInkBaseline(declared?.baseline??sourceMap(before), declared?.candidate??sourceMap(after));
 const identity = admitted.evidence.mode === 'pr1746-byte-identical-current-paint';
 assert.ok(identity || admitted.evidence.mode === 'current-pair-with-gameplay-differences', 'current controls cannot test a legacy replay');
 const expectedPair = Object.freeze(Object.fromEntries(['mode','sourceBase','sourceHead'].map(key=>[key,admitted.evidence[key]])));
@@ -55,7 +60,7 @@ function write(root, rows) {
 }
 function run(b = left, a = right) {
   return spawnSync(process.execPath, [prepare, '--baseline', b, '--candidate', a, '--receipt', receipt,
-    '--expected-mode',expectedPair.mode,'--expected-source-base',expectedPair.sourceBase,'--expected-source-head',expectedPair.sourceHead], { encoding: 'utf8' });
+    '--expected-mode',expectedPair.mode,'--expected-source-base',expectedPair.sourceBase,'--expected-source-head',expectedPair.sourceHead,...(declared?['--base-sha',declared.evidence.declaredBaseCommit,'--candidate-sha',declared.evidence.declaredCandidateCommit,'--base-git-root',baseline,'--candidate-git-root',candidate]:[])], { encoding: 'utf8' });
 }
 function rejectCli(b = left, a = right) {
   fs.writeFileSync(receipt, sentinel);
@@ -143,6 +148,7 @@ const evidence = {
   reviewedCandidateSourceEpoch: admitted.evidence.sourceHead,
   scope: 'Source admission only; independent native physical-state and image comparison remain required.',
   counts, originalInputsUnchanged: true, scratchRemoved: !fs.existsSync(scratch),
+  declaredSources:declared?.evidence??null,
   beforeSha256: originalHashes(before), afterSha256: originalHashes(after),
 };
 if (output) { fs.mkdirSync(path.dirname(output), { recursive: true }); fs.writeFileSync(output, JSON.stringify(evidence, null, 2) + '\n'); }

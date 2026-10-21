@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-pair.mjs';
 import { alignRollerBirthBaseline, alignProjectilePoolBaseline, assertUnchangedRollerSource } from './lib/inkwave-roller-birth-baseline.mjs';
 import { MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
@@ -23,6 +24,19 @@ const readSource = (root, rel) => {
 };
 const originals = new Map(MAIN_INK_BASELINE_PATHS.map(rel => [rel, readSource(baseline, rel)]));
 const candidates = new Map(MAIN_INK_BASELINE_PATHS.map(rel => [rel, readSource(candidate, rel)]));
+const value = name => {const at=process.argv.indexOf(name);return at<0?null:process.argv[at+1];};
+const declaredFlags=['--base-sha','--candidate-sha','--base-git-root','--candidate-git-root'];
+const hasDeclared=declaredFlags.some(flag=>process.argv.includes(flag));
+let declared=null,declaredExpected=null;
+if(hasDeclared){
+ for(const flag of ['--base-sha','--candidate-sha'])assert.ok(value(flag)&&process.argv.indexOf(flag)===process.argv.lastIndexOf(flag),'complete unique '+flag);
+ declared=verifyDeclaredPaintSources({baseline:originals,candidate:candidates,
+  baseGitRoot:value('--base-git-root')||baseline,candidateGitRoot:value('--candidate-git-root')||candidate,
+  baseSha:value('--base-sha'),candidateSha:value('--candidate-sha')});
+ const immutablePlan=planMainInkBaseline(declared.baseline,declared.candidate);
+ declaredExpected=Object.fromEntries(['mode','sourceBase','sourceHead'].map(key=>[key,immutablePlan.evidence[key]]));
+ assert.ok(Object.values(declaredExpected).every(v=>typeof v==='string'&&v),'declared pair requires exact admitted source epoch');
+}
 const original = originals.get(file), subject = candidates.get(file);
 assert.equal(typeof original, 'string', 'baseline weapons-fidelity source exists');
 assert.equal(typeof subject, 'string', 'candidate weapons-fidelity source exists');
@@ -46,6 +60,10 @@ if (hasExpectation) {
   });
   expectedPair={mode:values[0],sourceBase:values[1],sourceHead:values[2]};
 }
+if(declaredExpected){
+ if(expectedPair)assert.deepEqual(expectedPair,declaredExpected,'explicit expectation must match declared immutable source epoch');
+ expectedPair=declaredExpected;
+}
 const paint = planMainInkBaseline(planned, candidates, expectedPair);
 const changes = [...birth.changes, ...pool.changes];
 const source = paint.sources.get(file);
@@ -56,6 +74,7 @@ const evidence = {
   scope: 'Replay only the two reviewed Roller birth expressions, the native Slosher pool-index initializer and the pinned 13-path main-ink paint integration in the separate main reference.',
   limitation: 'An INKWAVE regression comparison. Nintendo coordinate mapping and stencil implementation remain unverified. Physical, claimed-area and paint-coverage comparisons remain enabled.',
   file, originalSha256: sha256(original), referenceSha256: sha256(source), candidateSha256: sha256(subject),
+  declaredSources: declared?.evidence??null,
   changes, paint: paint.evidence, writtenPaths: writes.map(([rel]) => rel),
 };
 
