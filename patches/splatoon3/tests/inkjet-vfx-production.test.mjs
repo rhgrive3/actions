@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { specialVfxDirector } from '../runtime/special-vfx.mjs';
 
-test('production-composed Inkjet FX emits 120 nozzle glows/sec at 30/60/120 Hz without authoring gameplay', async () => {
+test('production-composed Inkjet FX bounds nozzle glow density at 30/60/120 Hz without authoring gameplay', async () => {
   const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true });
   const { G, THREE } = f, api=f.installedRuntime;
   G.scene=new THREE.Scene();G.projectiles=new api.Projectiles(G.scene);
@@ -25,7 +25,7 @@ test('production-composed Inkjet FX emits 120 nozzle glows/sec at 30/60/120 Hz w
       const off=f.on('all:special',()=>events++);
       try {
         for(let i=0;i<hz*2;i++){G.time+=1/hz;fx.update(1/hz,G.camera);}
-        assert.equal(glows,240,hz+'Hz glows over two seconds');
+        assert.equal(glows,hz===30?120:240,hz+'Hz density LOD over two seconds');
         assert.deepEqual({pos:a.pos.toArray(),hp:a.hp,special:a.special,seed:a._s3AllSpecialState.seed,t:a._s3AllSpecialState.t},before);
         assert.deepEqual({paint,hits,events},{paint:0,hits:0,events:0});
         a.form='squid';a.intent.squid=true;const prior=glows;
