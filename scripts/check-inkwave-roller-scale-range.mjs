@@ -75,7 +75,19 @@ try{
         // Freeze only the native simulation, before the normal trusted menu
         // handler creates its Character and awaits asynchronous shader warmup.
         g.debug.freeze();
-        window.__gripEntryFreeze={schema:1,boundary:'trusted-mode-range-capture',trusted:e.isTrusted,time:window.__G.time};
+        const loadout={schema:1,requested:'roller',completed:false};
+        window.__gripEntryFreeze={schema:1,boundary:'trusted-mode-range-capture',trusted:e.isTrusted,time:window.__G.time,loadout};
+        try{
+          // Select the ordinary loadout before native startMatch constructs its
+          // Character. Its one-shot startup warmup must include this weapon.
+          if(typeof g.api?.setLoadout!=='function'||typeof g.api?.getLoadout!=='function')
+            throw Error('Missing native loadout API');
+          const result=g.api.setLoadout({weapon:'roller'});
+          if(result&&typeof result.then==='function')throw Error('Native loadout selection was not synchronous');
+          loadout.selected=g.api.getLoadout()?.weapon;
+          if(loadout.selected!=='roller')throw Error('Native Roller loadout selection failed');
+          loadout.completed=true;
+        }catch(error){loadout.error=String(error?.message||error);}
         document.removeEventListener('click',freezeAtInput,true);
       };
       document.addEventListener('click',freezeAtInput,true);
@@ -91,9 +103,15 @@ try{
     g.debug.freeze();
     // BEGIN NATIVE STARTUP READINESS CONTRACT
     // The menu may finish its bounded loading wait before Character warmup.
-    // Finish only that already-requested work before adding Roller to its cache.
+    // Await only that already-requested work for the preselected Roller.
     let startupWarmup=null;
     if(gripSeed!==null){
+      const loadout=window.__gripEntryFreeze?.loadout;
+      if(!loadout?.completed||loadout.requested!=='roller'||loadout.selected!=='roller')
+        throw Error('Missing native pre-entry Roller selection: '+JSON.stringify(loadout));
+      const isRoller=()=>a.weaponId==='roller'&&a.character.weaponKind==='roller'&&
+        a.character.weapon===a.character.weapons?.roller;
+      if(!isRoller())throw Error('Native startup did not equip the selected Roller');
       const warm=a.character._warmed;
       if(!warm||typeof warm.then!=='function')throw Error('Missing native Character startup warmup');
       let timeout;
@@ -101,8 +119,9 @@ try{
         const result=await Promise.race([warm,new Promise((_,reject)=>{
           timeout=setTimeout(()=>reject(Error('Native Character startup warmup timed out')),240000);
         })]);
+        if(!isRoller())throw Error('Native startup Roller changed during warmup');
         startupWarmup={schema:1,owner:'native-character-startup',completed:true,result:result??null,
-          weaponBefore:a.weaponId,characterWeaponBefore:a.character.weaponKind};
+          requestedWeapon:loadout.requested,weaponBefore:a.weaponId,characterWeaponBefore:a.character.weaponKind};
       }finally{clearTimeout(timeout);}
     }
     // END NATIVE STARTUP READINESS CONTRACT

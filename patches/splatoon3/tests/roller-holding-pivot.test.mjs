@@ -15,6 +15,14 @@ function exact(source, needle, replacement) {
   return source.replace(needle, replacement);
 }
 function holdingVariant(mode, source) {
+  // Isolate the original hand-height calibration from the new lateral layout.
+  // Its old high-hand counterfactual has different native reach feedback.
+  // The full emitted candidate is still exercised by the right-grip and side tests.
+  if (['control', 'pivot-current', 'left-disabled', 'off-center', 'lost-phase'].includes(mode))
+    source = exact(source, 'target.addScaledVector(axis, -.09 * rollBlend / scale);', 'void 0; // isolated pivot control');
+
+  if (mode === 'lateral-disabled') return exact(source,
+    'target.addScaledVector(axis, -.09 * rollBlend / scale);', 'void 0; // deliberate missing lateral hold');
   if (mode === 'right-disabled') return exact(source,
     "if (contacting && armLeftHeld && d.modelId === 'roller' && rollBlend > .001 && Number.isFinite(d.modelScale)) {", 'if (false) {');
   if (mode === 'right-uncompensated') return exact(source, 'this.weapon.off.position.sub(delta);', '// deliberate uncompensated attachment');
@@ -42,12 +50,47 @@ function holdingRuntimeVariant(mode, source) {
   const altered = holdingVariant(mode, emittedCompiler.canonical);
   return altered === emittedCompiler.canonical ? source : emittedCompiler.compile(altered);
 }
+
+function shaftSideClearance(c, w, THREE) {
+  // Actual skinned torso silhouette, not a sign test against the actor origin.
+  const torso = new Set(['hips', 'spine', 'chest', 'hem', 'hemF', 'hemB']);
+  const bounds = new THREE.Box3(), point = new THREE.Vector3();
+  let vertices = 0;
+  c.skeleton.update();
+  c.kid.traverse(mesh => {
+    if (!mesh.isSkinnedMesh || !mesh.geometry.attributes.skinIndex) return;
+    for (let parent = mesh; parent && parent !== c.kid; parent = parent.parent)
+      if (!parent.visible) return;
+    const indices = mesh.geometry.attributes.skinIndex, weights = mesh.geometry.attributes.skinWeight;
+    for (let i = 0; i < indices.count; i++) {
+      let weight = 0;
+      for (let j = 0; j < 4; j++)
+        if (torso.has(mesh.skeleton.bones[indices.getComponent(i, j)]?.name))
+          weight += weights.getComponent(i, j);
+      if (weight < .75) continue;
+      bounds.expandByPoint(mesh.getVertexPosition(i, point).applyMatrix4(mesh.matrixWorld));
+      vertices++;
+    }
+  });
+  assert.ok(vertices > 100, 'measure the actual skinned torso, not an empty bound');
+  const rear = w.off.localToWorld(new THREE.Vector3(0, 0, -.112 * w.def.modelScale));
+  const front = w.off.localToWorld(new THREE.Vector3(0, 0, .215 * w.def.modelScale));
+  const t = Math.max(0, Math.min(1, (bounds.max.z - rear.z) / (front.z - rear.z)));
+  return bounds.min.x - (rear.x + (front.x - rear.x) * t);
+}
+function assertSideHold(rows) {
+  const held = rows.filter(row => row.shaftClearance !== null);
+  assert.ok(held.length > 30, 'side clearance covers a settled gait, not one chosen frame');
+  assert.ok(held.every(row => row.shaftClearance > .005),
+    'the shaft axis must clear the actual torso right edge, not merely lie right of its center');
+}
+
 async function trace(mode) {
+  const adaptHoldingRuntime = (rel, source) =>
+    rel === 'patches/splatoon3/runtime/roller.mjs' ? holdingRuntimeVariant(mode, source) : source;
   const f = await fixture({ fullRuntime: true, productionComposition: true, includeCharacter: true,
     realProjectiles: true, vmMathRandom: () => .4,
-    adaptRuntime(rel, source) {
-      return rel === 'patches/splatoon3/runtime/roller.mjs' ? holdingRuntimeVariant(mode, source) : source;
-    } });
+    adaptRuntime: adaptHoldingRuntime, adaptEmittedRuntime: adaptHoldingRuntime });
   const { G, THREE } = f, v = () => new THREE.Vector3();
   G.scene = new THREE.Scene();
   G.level = new f.Level({ bounds: { minX: -30, maxX: 30, minZ: -30, maxZ: 30 },
@@ -87,13 +130,19 @@ async function trace(mode) {
       .dot(v().set(0, 1, 0).applyQuaternion(w.off.getWorldQuaternion(new THREE.Quaternion())));
     const rightHole = w.off.worldToLocal(c.bones.handR.localToWorld(v().set(.0255, -.0525, 0)));
     const rightFraction = (rightHole.z / w.def.modelScale - -.112) / (.215 - -.112);
-    rows.push({ rightAdvance: c._s3RollerRightAdvance || 0, rightFraction, tick, contact: !!c._s3RollerContactPose, roll: c.wRoll, center: center.toArray(), axis: axis.toArray(), radial: [m[4], m[5], m[6], m[8], m[9], m[10]],
+    const shaftClearance = (mode === 'current' || mode === 'lateral-disabled') &&
+      c._s3RollerContactPose && c.wRoll > .99 ? shaftSideClearance(c, w, THREE) : null;
+    const stroke = a.weaponRunner.s3ContactPaint;
+    const paintError = stroke?.active ? stroke.point.clone()
+      .addScaledVector(stroke.heading, stroke.depth * .5).distanceTo(center) : null;
+    const feet = [c.bones.footL.getWorldPosition(v()).toArray(), c.bones.footR.getWorldPosition(v()).toArray()];
+    rows.push({ shaftClearance, paintError, feet, rightAdvance: c._s3RollerRightAdvance || 0, rightFraction, tick, contact: !!c._s3RollerContactPose, roll: c.wRoll, center: center.toArray(), axis: axis.toArray(), radial: [m[4], m[5], m[6], m[8], m[9], m[10]],
       spin: [w.drumA, w.drumW], hand: hand.toArray(), rightMatrix: Array.from(c.bones.handR.matrixWorld.elements),
       weaponMatrix: Array.from(w.off.matrixWorld.elements), palmUp,
       errors, pos: Array.from(a.pos.toArray()), ink: a.ink, rolling: a.weaponRunner.rolling });
     // The next native frame resets the rig; full trajectory parity below also
     // checks that this same-clock exercise does not contaminate release.
-    if (mode === 'current' && tick === 120) {
+    if ((mode === 'current' || mode === 'pivot-current') && tick === 120) {
     const c = a.character, w = c.weapon, phase = w.drumA, speed = w.drumW;
     const repeat = (side, weight) => {
       const [limb, target, pole, orientation, oldWeight, index] = captured[side];
@@ -111,7 +160,7 @@ async function trace(mode) {
     assert.equal(w.drum.rotation.x, phase, 'ineligible right IK restores canonical drum phase');
     }
   }
-  if (mode === 'current') {
+  if (mode === 'current' || mode === 'pivot-current') {
     a.character._s3CancelRollerFlick();
     assert.equal(a.character._s3RollerGripBlend, 0, 'cancelling clears derived holding blend');
   }
@@ -140,7 +189,7 @@ function sameContact(before, after) {
   }
 }
 test('held Roller lowers its hands about the same live cylinder; off-center fault is rejected', async () => {
-  const control = await trace('control'), current = await trace('current');
+  const control = await trace('control'), current = await trace('pivot-current');
   sameContact(control, current);
   const drop = Math.max(...current.map((row, i) => control[i].hand[1] - row.hand[1]));
   assert.ok(drop > .05, 'the holding calibration actually lowers the hand, not a no-op');
@@ -191,4 +240,35 @@ test('rolling right grip advances to one third without moving the actual drum or
   const uncompensated = await trace('right-uncompensated');
   assert.throws(() => sameContact(before, uncompensated), /live drum center must stay pinned/,
     'moving the wrist without its inverse attachment cannot pass');
+});
+
+
+test('rolling shaft clears the torso while actual paint follows the shifted drum', async () => {
+  const current = await trace('current');
+  assertSideHold(current);
+  const lateralDisabled = await trace('lateral-disabled');
+  assert.throws(() => assertSideHold(lateralDisabled), /shaft axis must clear/,
+    'the previous centered holding must fail the actual body-edge criterion');
+  for (let i = 0; i < current.length; i++) {
+    const a = lateralDisabled[i], b = current[i];
+    assert.deepEqual(b.feet, a.feet, 'side holding does not move either native foot');
+    assert.deepEqual({ pos: b.pos, ink: b.ink, rolling: b.rolling, contact: b.contact, roll: b.roll },
+      { pos: a.pos, ink: a.ink, rolling: a.rolling, contact: a.contact, roll: a.roll },
+      'side holding does not change actor movement, ink, or admission');
+    if (b.paintError !== null) assert.ok(b.paintError < 1e-5, 'paint follows its own actual shifted drum');
+    if (b.contact) {
+      assert.ok(b.center.every((value, j) =>
+        Math.abs(value - a.center[j] + .09 * b.roll * a.axis[j]) < 1e-8),
+        'side holding translates the actual drum along its axle without gait-dependent drift');
+    } else {
+      assert.deepEqual(b.weaponMatrix, a.weaponMatrix, 'nonrolling weapon returns to the canonical pose');
+    }
+  }
+
+
+  for (const row of current) if (row.contact) {
+    assert.ok(row.errors[0] < 1e-6, 'the full candidate right wrist stays on its effective grip');
+    assert.ok(row.errors[1] <= .0005, 'the full candidate left palm retains native contact tolerance');
+    if (row.roll > .99) assert.ok(row.palmUp > .99, 'the full candidate retains underhand support');
+  }
 });

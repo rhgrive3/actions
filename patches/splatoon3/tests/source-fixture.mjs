@@ -37,6 +37,7 @@ export async function fixture(options = {}) {
 
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
   const { adapt = adaptConstrainedSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
+    adaptEmittedRuntime = (_rel, source) => source,
     fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false,
     vmPerformance = performance, vmMathRandom = null } = typeof options === 'string' ? {} : options;
   const generation = compilerProfiles?.begin(JSON.stringify([UPSTREAM, !!BUILT,
@@ -72,7 +73,8 @@ export async function fixture(options = {}) {
     const native = !BUILT && upstream && (!productionComposition || adaptNative !== adaptConstrainedSource)
       ? adaptNative(relative, raw) : raw;
     const source = !BUILT && productionComposition && upstream ? adaptProduction(rel, raw)
-      : !upstream || (BUILT && rel.startsWith('patches/')) ? adaptRuntime(rel, native) : native;
+      : !upstream ? adaptRuntime(rel, native)
+      : BUILT && rel.startsWith('patches/') ? adaptEmittedRuntime(rel, native) : native;
     const mod = (generation ? generation.compile : cachedVmModule)(source, { context, identifier: file,
       initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } }); modules.set(file, mod); return mod;
   }

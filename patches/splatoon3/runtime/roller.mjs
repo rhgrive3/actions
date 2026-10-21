@@ -1121,6 +1121,16 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         this._s3RollerRightAdvance = advance;
       }
     }
+    // Keep the shaft beside the body using the already-solved drum axle.
+    // This one rigid translation moves the real drum and its native paint
+    // together, without another floor search, IK call, or actor/foot offset.
+    if (contacting && armLeftHeld && d.modelId === 'roller' && rollBlend > .001) {
+      weaponQ.copy(bestQ).multiply(inverseHandQ.copy(d.handR.quat).invert());
+      axis.set(1, 0, 0).applyQuaternion(weaponQ);
+      delta.copy(axis).multiply(this.kid.scale);
+      const scale = delta.length();
+      if (scale > 1e-4) target.addScaledVector(axis, -.09 * rollBlend / scale);
+    }
     orientation.copy(bestQ);
     return solve.call(this, limb, target, pole, orientation, weight, index);
   };
