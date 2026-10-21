@@ -3,6 +3,21 @@ import{createRecoveryFixture as fixture,loadDockRebuild,readRuntime,EMITTED}from
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 function writeReceipt(name,value){console.log('RECOVERY_RECEIPT '+JSON.stringify(value));if(process.env.RECOVERY_RECEIPT_DIR){fs.mkdirSync(process.env.RECOVERY_RECEIPT_DIR,{recursive:true});fs.writeFileSync(path.join(process.env.RECOVERY_RECEIPT_DIR,name),JSON.stringify(value,null,2)+'\n');}}
 const rows=[];const fail=extra=>({shadow:0,env:0,palette:0,minimap:0,...extra});
+test('touch profile reaches native loader before expensive source conversion',async()=>{
+ const run=async(touch)=>{
+  let seen;
+  const f=await fixture(fail(),{modify({mock}){
+   const original=mock.loadNativeData;
+   mock.loadNativeData=async(id,signal,options)=>{seen=options;return original(id,signal);};
+  }});
+  f.game.mobile.touch=touch;
+  const error=await invoke(f);
+  assert.equal(error,undefined);
+  assert.equal(seen?.constrained,touch,'main-thread touch profile must reach source loader');
+ };
+ await run(true);
+ await run(false);
+});
 async function invoke(f,current=()=>true){let error;try{await f.build(f.game,{id:'native-test',name:'Native'},current);}catch(e){error=e;}return error;}
 function clean(f){for(const key of ['newPaint','newDisplay','newMesh','newMat','statusClose'])assert.equal(f.counters[key],1,key);assert.equal(f.counters.old,0);assert.equal(f.G.paint,f.oldPaint);assert.equal(f.game.nativeWorld,f.oldWorld);}
 function record(name,f,error,extra={}){rows.push({name,error:error?.message,fatal:!!f.game._nativeWorldRecoveryFatal,frozen:!!f.game.frozen,counters:{...f.counters},...extra});}
