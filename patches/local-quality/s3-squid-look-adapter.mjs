@@ -3,11 +3,10 @@
 // References (fetched 2026-10-08): Nintendo's Japanese site clip ikahito_pc.mp4 and the How to Play clips
 // s3_howtoplay_move01/02/03.mp4 (hashes in reports/inkwave-s3-hud-look-2026-10-08.md).
 //  * Swimming in own ink: the clips show a raised surface over the squid. A floor-level hemisphere mound was tried
-//    and removed (see the note after HALF_TURN); the local swimmer keeps the squid-shaped ghost, splashes/wake come from FX.
+//    and removed (see the note after HALF_TURN); submerged bodies are hidden, splashes/wake come from FX.
 //  * The squid travels mantle-first with its face trailing (eyes toward the third-person camera); on dry ground it
 //    lies flat with the eyes up and hops; arms are short and bundled, with two long feelers ending in dark clubs.
-// Gameplay (speed, acceleration, hop timing, visibility rules, damage) is untouched; remote swimmers stay hidden
-// by the floor exactly as before, and the climbing ghost is unchanged.
+// Gameplay (speed, acceleration, hop timing, damage) is untouched. Both local and remote submerged bodies hide.
 
 function once(code, before, after, label) {
   const at = code.indexOf(before);
@@ -27,8 +26,7 @@ const HALF_TURN = `
 // only reachable from the native squid path (roller family; the sourced squid rig never updated it), its
 // visibility switched on at full size on the first swim frame while the squid body was still above the ink
 // (entering ink from dry ground, landing, form changes) and it kept the native yaw while swim-motion turned the
-// body, so players saw an unexplained own-colour ellipse under the squid. The local swimmer now uses the same
-// squid-shaped ghost on every weapon path.
+// body, so players saw an unexplained own-colour ellipse under the squid. Surface wakes own this presentation.
 
 const SQUID_EYE_MATERIAL = `export function makeSquidEyeMaterial(u) {
   // Squid-only painted eyes. Nintendo ikahito_pc.mp4 2.9–3.4s shows broad
@@ -86,6 +84,15 @@ const CONNECTED_SQUID_FACE = `  // Connected white squid eye mask and narrow dar
 
 export function adaptS3SquidLook(rel, code) {
   if (rel === 'src/game/character.js') {
+    // Run after either source or native pose owner: depth occlusion alone leaves
+    // mantle/eyes protruding, and the GreaterDepth ghost intentionally shows through ink/walls.
+    code = once(code,
+      '    if (shown) this._updateSquid(dt, s); else this.sqInit = false;',
+      `    if (shown) this._updateSquid(dt, s); else this.sqInit = false;
+    const inInk = this.form === 'climb' || (this.form === 'swim' && this.grounded);
+    this.squid.body.visible = !inInk;
+    if (inInk) this.squid.eyes.visible = this.squid.dark.visible = false;
+    this.squid.ghost.visible = false;`, 'submerged body visibility');
     code = once(code, 'getDarkMaterial, makeEyeMaterial,', 'getDarkMaterial, makeEyeMaterial, makeSquidEyeMaterial,', 'squid eye factory import');
     code = once(code, '      eye: makeEyeMaterial(u),', '      eye: makeEyeMaterial(u),\n      squidEye: makeSquidEyeMaterial(u),', 'owned squid eye material');
     code = once(code, 'new THREE.Mesh(sh.eyes, this.mats.eye)', 'new THREE.Mesh(sh.eyes, this.mats.squidEye)', 'squid eye attachment');
