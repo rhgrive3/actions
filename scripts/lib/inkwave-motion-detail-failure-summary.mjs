@@ -28,7 +28,10 @@ export function summarizeDetailRigFailure(result) {
           kidRootVisible:bool(d.kidRootVisible),totalMeshes:finite(d.totalMeshes),visibleMeshes:finite(d.visibleMeshes),
           colorWriteMeshes:finite(d.colorWriteMeshes),withRigCalls:finite(d.withRigCalls),
           withoutRigCalls:finite(d.withoutRigCalls),projectileCount:finite(d.projectileCount),
-          inkBlobCount:finite(d.inkBlobCount),actorPosition:position(d.actorPosition)
+          inkBlobCount:finite(d.inkBlobCount),actorPosition:position(d.actorPosition),
+          sourceMotion:{status:label(d.sourceMotion?.status),active:bool(d.sourceMotion?.active),sameOwner:bool(d.sourceMotion?.sameOwner),variant:['Player00','Player01'].includes(d.sourceMotion?.variant)?d.sourceMotion.variant:null,
+            squid:typeof d.sourceMotion?.squid?.name==='string'&&/^[A-Za-z0-9_]{1,96}$/.test(d.sourceMotion.squid.name)?{name:d.sourceMotion.squid.name,frame:finite(d.sourceMotion.squid.frame)}:null},
+          cpuBounds:{scope:'CPU skin only; GPU deformation and depth visibility unmeasured',indexedVertices:finite(d.cpuBounds?.indexedVertices),eligibleMeshes:finite(d.cpuBounds?.eligibleMeshes),nonFiniteVertices:finite(d.cpuBounds?.nonFiniteVertices),unsupportedMeshes:finite(d.cpuBounds?.unsupportedMeshes),truncated:bool(d.cpuBounds?.truncated),worldMin:position(d.cpuBounds?.worldMin),worldMax:position(d.cpuBounds?.worldMax),ndcMin:position(d.cpuBounds?.ndcMin),ndcMax:position(d.cpuBounds?.ndcMax)}
         }
       };
       rows.push(row);
