@@ -88,13 +88,40 @@ try{
   const G=window.__G,g=window.__inkwave,a=G.local;
   const THREE=await import('three');
   if(!g.frozen||!G.match?.range||G.match.state!=='playing'||!window.__materialEntry?.trusted)throw Error('Native range admission');
-  if(!a.character._warmed?.then)throw Error('Native startup warmup missing');
-  await a.character._warmed;if(a.character.sourceMotion?.ready)await a.character.sourceMotion.ready;
+  const character=a.character,warm=character._warmed,loader=character._sourceMotionLoader;
+  if(!warm?.then)throw Error('Native startup warmup missing');
+  if(!loader?.then)throw Error('Native local Character source loader missing');
+  await warm;await loader;
+  const motion=character.sourceMotion;
+  if(!motion?.ready?.then)throw Error('Native local Character source owner ready Promise missing');
+  await motion.ready;
+  if(a.character!==character||character._warmed!==warm||character._sourceMotionLoader!==loader)
+   throw Error('Native local Character readiness ownership changed');
+  const requireMotionReady=(character,owner)=>{
+   if(!owner||owner!==character.sourceMotion||owner.character!==character||owner.status!=='ready'||owner.error||owner.disposed||!owner.enabled||!owner.bank||!owner.squidBank)
+    throw Error('Native local Character source motion not ready');
+  };
+  requireMotionReady(character,motion);
+  // Exercise the same predicate with isolated fake owners, never mutate the native Character.
+  const controlCharacter={},controlOwner={character:controlCharacter,status:'ready',error:null,disposed:false,enabled:true,bank:{},squidBank:{}};
+  controlCharacter.sourceMotion=controlOwner;requireMotionReady(controlCharacter,controlOwner);
+  for(const override of [{status:'loading'},{status:'error',error:'load failed'},{disposed:true},{enabled:false},{bank:null},{squidBank:null},{character:{}}]){
+   const owner={...controlOwner,...override};controlCharacter.sourceMotion=owner;
+   let rejected=false;try{requireMotionReady(controlCharacter,owner);}catch{rejected=true;}
+   if(!rejected)throw Error('Invalid source motion negative control accepted');
+  }
+  controlCharacter.sourceMotion=controlOwner;
+  for(const owner of [null,{...controlOwner}]){
+   let rejected=false;try{requireMotionReady(controlCharacter,owner);}catch{rejected=true;}
+   if(!rejected)throw Error('Missing or replaced source owner negative control accepted');
+  }
+  const motionReady={status:motion.status,enabled:motion.enabled,error:motion.error,disposed:motion.disposed,
+   ownerMatches:motion.character===a.character,variant:motion.variant,humanBankPresent:!!motion.bank,squidBankPresent:!!motion.squidBank};
   if(a.weaponId!=='shooter')throw Error('Wrong native loadout');
   g.debug.freeze();g.R.setDynamicScale(1);g.input.keys.clear();g.debug.fire(false);
   if(G.audio){let seed=20261021;G.audio.rng=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
   if(!(g.levelMat?.userData?.uniforms?.uGel?.value>=0))throw Error('Production gel texture inactive');
-  const initial={entry:window.__materialEntry,clocks:window.__rollerVideoClocks(),character:{time:a.character.t,phase:a.character.phase,seed:a.character.seed,name:a.character.name},pos:a.pos.toArray()};
+  const initial={motionReady,entry:window.__materialEntry,clocks:window.__rollerVideoClocks(),character:{time:a.character.t,phase:a.character.phase,seed:a.character.seed,name:a.character.name},pos:a.pos.toArray()};
   const frame=i=>{window.__materialSeed(i);g._frame(1/60);};
   for(let i=0;i<60;i++)frame(i);
   const r=G.renderer,gl=r.getContext();gl.finish();
