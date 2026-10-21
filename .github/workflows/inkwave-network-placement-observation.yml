@@ -1,4 +1,4 @@
-name: INKWAVE exact 8db placement observation
+name: INKWAVE exact 8db warm-session validation
 on:
   push:
     branches: [qa/inkwave-network-placement-observe-8db-20261021]
@@ -25,18 +25,18 @@ jobs:
       - name: Enforce direct parent and five QA-only paths
         run: |
           test "$(git rev-parse HEAD)" = '${{ github.sha }}'
-          test "$(git rev-parse HEAD^)" = 3ab1039f9d631de19f50e040fd5f8e953cb45cb6
+          test "$(git rev-parse HEAD^)" = 6efdffe70435634c5e3ebd131daf1f1727bdac4c
           python3 - <<'PY'
           import subprocess
-          allowed={'.github/workflows/inkwave-network-placement-observation.yml','scripts/check-inkwave-combat-ceiling-browser.mjs','scripts/lib/inkwave-network-placement-observation.mjs','scripts/tests/inkwave-network-placement-observation.test.mjs','reports/network-8db-placement-observation.md'}
+          allowed={'.github/workflows/inkwave-network-placement-observation.yml','scripts/check-inkwave-combat-ceiling-browser.mjs','scripts/lib/inkwave-network-warm-session.mjs','scripts/tests/inkwave-network-warm-session.test.mjs','reports/network-8db-placement-observation.md'}
           actual=set(subprocess.check_output(['git','diff','--name-only','HEAD^','HEAD'],text=True).splitlines())
           assert actual==allowed,(actual-allowed,allowed-actual)
-          print('Exact 3ab observation parent; five QA-only files; runtime and original placement helper unchanged')
+          print('Exact 6efd observation parent; five QA-only files; runtime and original placement helper unchanged')
           PY
           mkdir -p .ci-scratch .reused-site .diagnostic/evidence
           npm install --no-save --no-package-lock --silent playwright@1.62.1 ws@8
           node --check scripts/check-inkwave-combat-ceiling-browser.mjs
-          node --experimental-vm-modules --test scripts/tests/inkwave-network-placement-observation.test.mjs scripts/tests/inkwave-network-placement-stale-sample.test.mjs scripts/tests/inkwave-combat-ceiling-placement.test.mjs
+          node --experimental-vm-modules --test scripts/tests/inkwave-network-warm-session.test.mjs scripts/tests/inkwave-network-placement-observation.test.mjs scripts/tests/inkwave-network-placement-stale-sample.test.mjs scripts/tests/inkwave-combat-ceiling-placement.test.mjs
       - name: Retrieve preserved build with immutable provenance
         uses: actions/github-script@v7
         with:
@@ -61,12 +61,12 @@ jobs:
           fs.writeFileSync('.diagnostic/evidence/build-input-equivalence.json',JSON.stringify({diagnosticHead:process.env.GITHUB_SHA,inputHash:build.inputHash,contentHash:build.contentHash,scope:'Every original compiled artifact hash and Git-backed input byte verified; original ffdb build marker retained, not relabeled as an 8db build'}));
           JS
           npx playwright install --with-deps chromium
-      - name: Observe the existing two-peer placement and preserve its result
-        run: node scripts/check-inkwave-combat-ceiling-browser.mjs --site .reused-site/extracted/_site --source-sha '${{ github.sha }}' --evidence-dir .diagnostic/evidence/combat-ceiling --observe-placement
+      - name: Validate warm-session native setup and preserve unchanged combat proof
+        run: node scripts/check-inkwave-combat-ceiling-browser.mjs --site .reused-site/extracted/_site --source-sha '${{ github.sha }}' --evidence-dir .diagnostic/evidence/combat-ceiling --observe-placement --warm-session
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: inkwave-network-placement-observation-${{ github.sha }}
+          name: inkwave-network-warm-session-${{ github.sha }}
           path: .diagnostic/evidence/
           include-hidden-files: true
           if-no-files-found: error

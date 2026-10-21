@@ -1,5 +1,6 @@
 # Network placement observation, not a gameplay correction
 
+## Historical observation publication (not the current warm-session candidate)
 This second observation has direct parent 3ab1039f9d631de19f50e040fd5f8e953cb45cb6 and changes five QA-only paths. That parent directly descends from PR1765 head 8db288ece48c882f42eb0d3540218af58d6af6e4. No runtime, model, timeout, placement validator, damage, packet acceptance, step budget, or proof threshold changes. PR1765 and Kraken remain fixed.
 
 ## Verified first observation
@@ -27,3 +28,18 @@ Both observations reuse original ffdb build artifact 12379998715 from run 396589
 ## Local validation
 
 Seven observer Node tests pass: read-only state, bounded/nonfinite rows, invalid labels, original receiver/arguments/return/exception preservation, continued native calls after truncation, atomic missing-method rejection, observer-error isolation, and sanitized socket metadata. Driver syntax passes. The inherited real production-composed stale-sample counterexample retains its explicit Visual/physics stubs; it is not a socket test. Second native observation is not yet executed.
+
+
+## Local warm-session validation candidate after 6efd
+
+This does not repair the original cold-start timestamp lockout. Actual guard replay matched all six observed packets; an actual composed NetMatch counterexample remains rejected after equal clock advances of 1/10/60/600 seconds. No timestamp, clock grace, ready flag, proxy pose, buffer or runtime source is changed here.
+
+Optional --warm-session performs exactly one native preparation match, awaits actual warmAll and sourceMotion.ready for both actors on both pages, invokes normal quitToMenu/leave, and waits for native offline/menu/transport-detached state. It then starts exactly one new native room through create/join/ready/start, awaits the new actors' real readiness too, and requires fresh accepted timestamp advances in both directions. These are bounded condition waits, not unconditional sleeps or retry-until-lucky reconnects. The old and new transport/NetMatch identities must differ.
+
+Only each page's locally-owned actor is placed via native spawnAt. Ordinary native Game/Actor/NetMatch animation-frame loops must bring both proxies, their accepted buffers and current samples to the new owner life, matching native teleport epoch and position before freeze. No proxy spawnAt, buffer reset or presentation-root write occurs in this mode. The original 12 deterministic settle steps, neutral 2m placement and wall checks, 60-shot-step budget, native 36 damage acceptance and 220 rejection remain unchanged.
+
+New QA state-machine tests cover transition ordering, renderer/source failure, stale transport/session, new-session preparation failure, one-sided progress, old/nonfinite timestamp receipts, empty buffer, stale ready, old life/epoch, wrong owner/position and read-only receiver state. Existing observer/placement/stale-sample tests remain required.
+
+Local Node tests and syntax checks are not native acceptance. This candidate has not yet been published or run in a browser. The preserved ffdb build provenance, all original input/artifact hashes, and exact-head five-path allowlist are unchanged requirements. No change to PR1765 or Kraken runtime head.
+
+Current local review revision: 21 pure state/negative tests pass. The real composed NetMatch/Actor snapshot compatibility probe converges after 4 native update/sample steps with source rendering/lifecycle shells mocked; it is not browser acceptance. Real SourceMotionController.character ownership, same per-peer room/match protocol, new protocol identity, and exactly two accepted relay entries per lifecycle are required. The published base for this proposed five-file delta is 6efdffe70435634c5e3ebd131daf1f1727bdac4c.

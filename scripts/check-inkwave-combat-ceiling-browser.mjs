@@ -13,6 +13,7 @@ import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 import {installCombatPlacementQA,advanceUntilNativeShotProof} from './lib/inkwave-combat-ceiling-placement.mjs';
 import {installNetworkPlacementObservation,createNetworkFrameObservation} from './lib/inkwave-network-placement-observation.mjs';
+import {installNativeWarmSessionQA,validateNativeRoomAdmissions,validateNativeSessionPair} from './lib/inkwave-network-warm-session.mjs';
 import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runtime-evidence.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
@@ -24,12 +25,13 @@ assert.equal(option('--source-sha',sourceSha),sourceSha,'checkout must equal req
 const build=verifyRuntimeBuild(site,ROOT,sourceSha);
 assert.equal(build.schema,1);assert.equal(hash(JSON.stringify(build.files)),build.inputHash);
 const self=fileURLToPath(import.meta.url),selfRelative=path.relative(ROOT,self);
-for(const file of [selfRelative,'scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-network-placement-observation.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
+for(const file of [selfRelative,'scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-network-placement-observation.mjs','scripts/lib/inkwave-network-warm-session.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
  const actual=execFileSync('git',['hash-object','--',file],{cwd:ROOT,encoding:'utf8'}).trim();
  const expected=execFileSync('git',['rev-parse',sourceSha+':'+file],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(actual,expected,'QA/relay source must match head: '+file);
 }
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2'};
+const warmSession=process.argv.includes('--warm-session');
 const observePlacement=process.argv.includes('--observe-placement');
 const errors=[],wire=[],loaded=new Set(),contexts=[],pages=[];
 const frameObservation=createNetworkFrameObservation();let relayConnectionIndex=0;
@@ -51,7 +53,7 @@ try {
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(resolve=>relay.once('listening',resolve));
  const connect=createLocalRelay({rooms:new Map()});
- relay.on('connection',(ws,req)=>{const connectionIndex=relayConnectionIndex++;void connect(ws,req,{...(observePlacement?{send:(data,deliver)=>{observeFrame('relay-forward',data,connectionIndex);return deliver(data);}}:{}),receive:text=>{if(wire.length<4096)wire.push({at:Date.now(),text});else errors.push('wire receipt overflow');}}).then(receipt=>{(report.relayAdmissions||=[]).push(receipt);}).catch(error=>errors.push('relay: '+String(error)));});
+ relay.on('connection',(ws,req)=>{const connectionIndex=relayConnectionIndex++,sessionPhase=warmSession?(report.phase==='native-room-start'?'preparation':report.phase==='native-fresh-room-start'?'proof':'unexpected'):'proof';void connect(ws,req,{...(observePlacement?{send:(data,deliver)=>{observeFrame('relay-forward',data,connectionIndex);return deliver(data);}}:{}),receive:text=>{if(wire.length<4096)wire.push({at:Date.now(),text});else errors.push('wire receipt overflow');}}).then(receipt=>{(report.relayAdmissions||=[]).push({...receipt,connectionIndex,sessionPhase});}).catch(error=>errors.push('relay: '+String(error)));});
  const base='http://127.0.0.1:'+server.address().port;
  const relayURL='ws://127.0.0.1:'+relay.address().port;
  const address=base+'/?map=tidewater&difficulty=normal&skipTitle&relay='+encodeURIComponent(relayURL);
@@ -65,6 +67,7 @@ try {
   page.on('pageerror',e=>errors.push('player'+i+': '+e.message));
   page.on('requestfailed',r=>errors.push('player'+i+': '+r.url()+': '+r.failure()?.errorText));
   await page.addInitScript(installCombatPlacementQA);
+  if(warmSession)await page.addInitScript(installNativeWarmSessionQA);
   if(observePlacement)await page.addInitScript(installNetworkPlacementObservation);
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,matchLength:180,lastStage:'tidewater',lastMode:'turf'})));
   await page.route(base+'/**',async route=>{
@@ -76,7 +79,7 @@ try {
   await page.waitForFunction(()=>{if(document.querySelector('#boot-error')?.textContent)throw Error('Native boot error');const G=window.__G,g=window.__inkwave;return !!G&&!!g&&G.game===g&&G.mode==='menu'&&g.menus&&g.debug&&G.net&&!g._nativeStageSwitchPending&&!g.frozen;},null,{timeout:180000});
  }
  const [host,guest]=pages;
- report.phase='native-room-start';
+ const startNativeRoom=async()=>{
  const code=await host.evaluate(()=>__G.net.create('Ceiling QA Host'));
  await guest.evaluate(code=>__G.net.join(code,'Ceiling QA Guest'),code);
  await Promise.all(pages.map(p=>p.waitForFunction(()=>__G.net.lobby.players.length===2)));
@@ -89,34 +92,63 @@ try {
  await guest.evaluate(()=>__G.net.setMe({ready:true}));await host.evaluate(()=>__G.net.setMe({ready:true}));
  await host.waitForFunction(()=>__G.net.canStart());assert.equal(await host.evaluate(()=>__G.net.start()),true);
  await Promise.all(pages.map(p=>p.waitForFunction(()=>{const G=__G,g=__inkwave,m=g.match,n=G.net;return G.mode==='match'&&m===G.match&&m?.state==='playing'&&!m.attract&&m.local?.isLocal&&m.controller&&n.active&&n._setupReady&&G.netm===n.match&&G.netm.match===m&&m.actors.length===2;},null,{timeout:240000})));
+  return owners;
+ };
+ report.phase='native-room-start';
+ let owners=await startNativeRoom();
+ if(warmSession){
+  report.scope+='; warm-session proof only, original cold-start timestamp lockout remains unresolved';
+  report.phase='native-source-preparation';
+  report.warmPreparation={warmed:await Promise.all(pages.map(p=>p.evaluate(()=>__ceilingWarmSession.warm())))};
+  report.warmPreparation.initialProtocol=validateNativeSessionPair(report.warmPreparation.warmed);
+  report.phase='native-session-departure';
+  await Promise.all(pages.map(p=>p.evaluate(()=>__ceilingWarmSession.leave())));
+  await Promise.all(pages.map(p=>p.waitForFunction(()=>__ceilingWarmSession.offlineReady())));
+  report.warmPreparation.departed=await Promise.all(pages.map(p=>p.evaluate(()=>__ceilingWarmSession.receipt())));
+  report.phase='native-fresh-room-start';
+  owners=await startNativeRoom();
+  report.warmPreparation.newWarmed=await Promise.all(pages.map(p=>p.evaluate(()=>__ceilingWarmSession.warmNew())));
+  report.warmPreparation.proofProtocol=validateNativeSessionPair(report.warmPreparation.newWarmed,report.warmPreparation.initialProtocol);
+  report.warmPreparation.freshBaseline=await Promise.all(pages.map(p=>p.evaluate(()=>__ceilingWarmSession.beginFresh())));
+  await Promise.all(pages.map(p=>p.waitForFunction(()=>__ceilingWarmSession.freshReady())));
+  report.warmPreparation.freshAccepted=await Promise.all(pages.map(p=>p.evaluate(()=>__ceilingWarmSession.receipt())));
+ }
  report.phase='native-actor-placement';
- report.roles=await Promise.all(pages.map(p=>p.evaluate(async url=>{
-  const {Actor}=await import(url),G=__G,n=G.netm;__inkwave.debug.freeze();
+ report.roles=await Promise.all(pages.map(p=>p.evaluate(async ({url,warmSession})=>{
+  const {Actor}=await import(url),G=__G,n=G.netm;if(!warmSession)__inkwave.debug.freeze();
   window.__ceilingPlacementObservation?.observeDispatch();
-  window.__ceilingPlacementObservation?.record('frozen');
+  if(!warmSession)window.__ceilingPlacementObservation?.record('frozen');
   const actors=G.match.actors.map(a=>{if(!(a instanceof Actor)||a.damage!==Actor.prototype.damage||a.weapon.id!=='shooter'||a.weapon.damage!==36)throw Error('Native Actor/shooter identity failed');return {nid:a.nid,owner:a.owner,remote:a.remote,team:a.team,weapon:a.weapon.id,damage:a.weapon.damage};});
   window.__ceilingOriginalDamage=new Map(G.match.actors.map(a=>[a,a.damage]));
   return {myId:n.myId,isHost:n.isHost,local:G.match.local.nid,actors};
- },actorURL)));
+ },{url:actorURL,warmSession})));
  assert.equal(report.roles[0].isHost,true);assert.equal(report.roles[1].isHost,false);
  const attacker=report.roles[1].local,victim=report.roles[0].local,attackerOwner=owners[1];
  const placement=await host.evaluate(()=>__ceilingPlacement.select());
  report.placement=placement;
- await Promise.all(pages.map(p=>p.evaluate(({attacker,placement})=>{
+ await Promise.all(pages.map(p=>p.evaluate(({attacker,placement,warmSession})=>{
   const G=__G,V=G.camera.position.constructor;G.projectiles.clear();
   for(const a of G.match.actors){
+   if(warmSession&&(a.remote||a.owner!==G.net.myId||a!==G.match.local))continue;
    const pos=placement[a.nid===attacker?0:1],other=placement[a.nid===attacker?1:0];
    a.spawnAt(new V(...pos),Math.atan2(other[0]-pos[0],other[2]-pos[2]));
    a.invuln=0;a.grounded=true;a.kidT=99;a.ink=100;a.intent.move.set(0,0,0);
    for(const k of ['fire','jump','squid','sub','special']){a.intent[k]=false;a._prevIntent[k]=false;}
    a.aimDir.set(other[0]-pos[0],other[1]-pos[1],other[2]-pos[2]).normalize();a.aimYaw=a.yaw;a.aimPitch=0;
    a.aimPoint.set(...other).add(new V(0,1.05,0));a.weaponRunner.reset();
-   a.character.root.position.copy(a.pos);a.character.root.rotation.y=a.yaw;a.character.root.updateMatrixWorld(true);
-   if(a.net?.buf)a.net.buf.length=0;
+   if(!warmSession){a.character.root.position.copy(a.pos);a.character.root.rotation.y=a.yaw;a.character.root.updateMatrixWorld(true);if(a.net?.buf)a.net.buf.length=0;}
   }
   G.scene.updateMatrixWorld(true);
   window.__ceilingPlacementObservation?.record('placed');
- },{attacker,placement})));
+ },{attacker,placement,warmSession})));
+ if(warmSession){
+  const expected=await Promise.all(pages.map(p=>p.evaluate(()=>__ceilingWarmSession.ownedPose())));
+  report.warmPreparation.placementBaseline=await Promise.all(pages.map(p=>p.evaluate(expected=>__ceilingWarmSession.beginPlacement(expected),expected)));
+  // Ordinary requestAnimationFrame Game/Actor/NetMatch progression, not private
+  // receiver calls or accepted-state assignments. Bounded condition wait only.
+  await Promise.all(pages.map(p=>p.waitForFunction(()=>__ceilingWarmSession.placementReady())));
+  report.warmPreparation.converged=await Promise.all(pages.map(p=>p.evaluate(()=>{const r=__ceilingWarmSession.receipt();__inkwave.debug.freeze();window.__ceilingPlacementObservation?.record('frozen');return r;})));
+ }
  let placementStep=0;
  const step=async()=>{const observationStep=placementStep++;await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement,observationStep})=>{
   if(observationStep<12)window.__ceilingPlacementObservation?.record('before-net',observationStep);
@@ -255,7 +287,7 @@ try {
  report.damageUnchanged=await Promise.all(pages.map(p=>p.evaluate(()=>[...__ceilingOriginalDamage].every(([a,fn])=>a.damage===fn))));
  assert(report.damageUnchanged.every(Boolean));
  assert.equal(errors.length,0,JSON.stringify(errors));
- assert.equal(report.relayAdmissions?.length,2);assert(report.relayAdmissions.every(x=>x.status===101&&x.accepted===true),'Both browsers must enter the production relay');
+ report.relayLifecycle=validateNativeRoomAdmissions(report.relayAdmissions,warmSession);
  report.status='passed';report.phase='complete';
 } catch(error) {
  report.status='failed';report.error=String(error.stack||error);process.exitCode=1;
