@@ -118,7 +118,9 @@ try {
       else camera.position.set(.2,wall?.15:1.35,3.4);camera.lookAt(0,0,0);camera.updateMatrixWorld();
       mesh.updateMatrixWorld(true);const worldNormal=new THREE.Vector3(0,1,0).transformDirection(mesh.matrixWorld);
       if((Math.abs(worldNormal.y)<.5)!==wall)throw Error('Wall shader branch orientation mismatch');
-      return {lib,wall,wet,inked,lit,sunDirection:sunDirection.toArray(),worldNormal:worldNormal.toArray(),cameraPosition:camera.position.toArray(),cameraQuaternion:camera.quaternion.toArray(),time:1,atlasSize:size,ppm:20};
+      const viewDirection=camera.position.clone().normalize(),mirrorDirection=sunDirection.clone().negate().reflect(worldNormal);
+      const deg=d=>Math.acos(Math.max(-1,Math.min(1,d)))*180/Math.PI;
+      return {incidenceDegrees:deg(worldNormal.dot(sunDirection)),viewDegrees:deg(worldNormal.dot(viewDirection)),mirrorViewSeparationDegrees:deg(mirrorDirection.dot(viewDirection)),nDotLight:worldNormal.dot(sunDirection),viewDirection:viewDirection.toArray(),lib,wall,wet,inked,lit,sunDirection:sunDirection.toArray(),worldNormal:worldNormal.toArray(),cameraPosition:camera.position.toArray(),cameraQuaternion:camera.quaternion.toArray(),time:1,atlasSize:size,ppm:20};
     }
     function draw(key,time=1,side=0){
       mesh.material=variants[key];mesh.material.userData.uniforms.uTime.value=time;
