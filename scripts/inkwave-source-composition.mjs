@@ -18,6 +18,33 @@ import { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-a
 import { adaptMainInkFootprints } from '../patches/splatoon3/main-ink-footprint-adapter.mjs';
 import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adapter.mjs';
 
+// #1165: the Roller ink band must claim its seeded GPU core in the CPU turf
+// grid. Apply at build time so the upstream game snapshot remains immutable.
+function adaptRollerBandParity(rel, code) {
+  if (rel !== 'src/world/paint.js') return code;
+  const constants = 'const BAND_L = 0.55, BAND_W = 0.62, BAND_R = 0.1;';
+  const helper = [
+    'export function rollerBandSignedDistance(along, across, r, seed) {',
+    '  if (!(r > 0)) return Infinity;',
+    '  const wv = r * (0.03 * Math.sin(along / r * 9 + seed * 30) + 0.018 * Math.sin(along / r * 23 + seed * 11));',
+    '  const qa = Math.abs(along) - r * BAND_L, qb = Math.abs(across) - (r * BAND_W + wv);',
+    '  return Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * BAND_R;',
+    '}',
+  ].join('\n');
+  code = replaceOnce(code, constants, constants + '\n' + helper, 'Roller seeded band CPU/GPU shared boundary');
+  const original = [
+    '          const qa = Math.abs(px * sdu + py * sdv) - r * BAND_L, qb = Math.abs(-px * sdv + py * sdu) - r * BAND_W;',
+    '          const sd = Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * BAND_R;',
+    '          if (sd > -0.03 * r) continue;',
+  ].join('\n');
+  const corrected = [
+    '          const along = px * sdu + py * sdv, across = -px * sdv + py * sdu;',
+    '          // Reject the complete possible extent before paying for the two seeded sines.',
+    '          if (Math.abs(along) > r * (BAND_L + BAND_R) || Math.abs(across) > r * (BAND_W + 0.048 + BAND_R)) continue;',
+    '          if (rollerBandSignedDistance(along, across, r, seed) > 0) continue;',
+  ].join('\n');
+  return replaceOnce(code, original, corrected, 'Roller CPU ink footprint seeded band SDF');
+}
 // Keep the tested source path identical to the production build's adapters.
 export function adaptBuildSource(rel, code) {
   // Source lives under inkwave-public/, whereas compiled modules share the
@@ -41,6 +68,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptProjectileVisuals(rel, code);
   code = adaptUiLocalization(rel, code);
   code = adaptMainInkFootprints(rel, code);
+  code = adaptRollerBandParity(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
   return adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))));
