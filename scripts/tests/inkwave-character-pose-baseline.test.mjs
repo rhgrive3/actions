@@ -8,7 +8,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { CHARACTER_POSE_PATHS, CHARACTER_POSE_MANIFEST as manifest, parseCharacterPoseManifest, planCharacterPoseBaseline, poseSourceSha256 as hash, OCT21_POSE_MAIN_BLOBS, OCT21_INTEGRATED_POSE_MAIN_BLOBS } from '../lib/inkwave-character-pose-baseline.mjs';
+import { CHARACTER_POSE_PATHS, CHARACTER_POSE_MANIFEST as manifest, parseCharacterPoseManifest, planCharacterPoseBaseline, poseSourceSha256 as hash, OCT21_POSE_MAIN_BLOBS, OCT21_INTEGRATED_POSE_MAIN_BLOBS, OCT21_MAIN_4BB_POSE_BLOBS } from '../lib/inkwave-character-pose-baseline.mjs';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 // Current-owner unchanged-pose branch requires the same bytes on both sides.
 const currentPosePaths = new Set(['roller.mjs', 'family-holds.mjs', 'kit.mjs', 'registry.mjs', 'stringers.mjs'].map(name => CHARACTER_POSE_PATHS.find(path => path.endsWith('/' + name))));
@@ -83,10 +83,11 @@ test('current main pose admission is exact, identity-preserving and rejects unkn
     [rel, fs.readFileSync(path.join(root, rel), 'utf8')]));
   const sha = text => createHash('sha1').update('blob ' + Buffer.byteLength(text) + '\0').update(text).digest('hex');
   for (const rel of CHARACTER_POSE_PATHS)
-    assert.equal(sha(current.get(rel)), OCT21_INTEGRATED_POSE_MAIN_BLOBS[rel], rel + ': reviewed main blob');
+    assert.equal(sha(current.get(rel)), OCT21_MAIN_4BB_POSE_BLOBS[rel], rel + ': reviewed main blob');
   const plan = planCharacterPoseBaseline(current, new Map(current));
   assert.equal(plan.changes.length, 0);
   assert.equal(plan.pairEvidence.mode, 'oct21-byte-identical-current-pose');
+  assert.equal(plan.pairEvidence.sourceBase, '4bb0a61d8f285111551d5ff2466e79cb26ab385b');
   assert.deepEqual([...plan.sources], [...current]);
   assert.ok(plan.evidence.every(row => row.changed === false && row.mode === 'oct21-exact-current-pose'));
   for (const rel of [CHARACTER_POSE_PATHS[0], CHARACTER_POSE_PATHS[4], CHARACTER_POSE_PATHS[5]]) {
@@ -129,8 +130,25 @@ const integratedEpochAdditions = {
     }
   ]
 };
+// Construct the previously pinned 785faf0 epoch WITHOUT changing production.
+// The newer 4bb0a61d epoch differs in exactly the reviewed #725 gyro adapter
+// block. Remove that ONE block and restore the earlier return expression,
+// then verify the COMPLETE historical 16-blob tuple below.
+function exactPreGyroPoseSource(source) {
+  const start = "    code = replaceOnce(code,\n      'const GYRO_DEG = [[-5, 278]";
+  const marker = "    // #725: integrate the low-speed smoother's mean over each sensor interval";
+  const endMarker = "      'gyro smoother interval mean');";
+  const i=source.indexOf(start), k=source.indexOf(marker,i), end=source.indexOf(endMarker,k)+endMarker.length;
+  assert.ok(i>=0&&k>i&&end>k && source.indexOf(start,i+1)<0, 'exact gyro adapter rollback anchors');
+  const newChunk=source.slice(i,k);
+  assert.ok(newChunk.trimEnd().endsWith("'gyro sensitivity reference endpoints');"));
+  const originalChunk=newChunk.trimEnd().replace('    code = replaceOnce','    return replaceOnce');
+  return source.slice(0,i)+originalChunk+source.slice(end);
+}
 function poseEpochFixtures() {
   const current = new Map(CHARACTER_POSE_PATHS.map(rel => [rel, fs.readFileSync(path.join(root, rel), 'utf8')]));
+  const adapter='patches/splatoon3/adapter.mjs';
+  current.set(adapter, exactPreGyroPoseSource(current.get(adapter)));
   const old = new Map(current);
   for (const [rel, additions] of Object.entries(integratedEpochAdditions)) {
     let text=old.get(rel);

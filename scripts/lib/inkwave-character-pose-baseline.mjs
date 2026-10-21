@@ -179,10 +179,20 @@ export const OCT21_INTEGRATED_POSE_MAIN_BLOBS = Object.freeze({
   "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": "9f68724343748037145c552937025d74ac5df8b9",
   "patches/splatoon3/weapon-catalog-adapter.mjs": "55582fd6109ff814ed107577db74b990d755a926"
 });
+// #1738: the only pose-allowlisted change since the integrated Oct-21
+// source epoch is #725's gyro interval-mean adapter. Pin the exact 4bb0a61d
+// module while retaining BOTH historical complete 16-file epochs unchanged.
+// This accepts no partial rewrite or new gameplay pose and is not evidence
+// of 3D image parity.
+export const OCT21_MAIN_4BB_POSE_BLOBS = Object.freeze({
+  ...OCT21_INTEGRATED_POSE_MAIN_BLOBS,
+  'patches/splatoon3/adapter.mjs': '7aafda261ab752866b9f24891d8b76bd965971b7',
+});
 function currentPosePair(baseline, candidate) {
   const epoch = [
     { blobs: OCT21_POSE_MAIN_BLOBS, source: 'ad4cc54cf5fbba65635ec0929a1da901c8c619db' },
     { blobs: OCT21_INTEGRATED_POSE_MAIN_BLOBS, source: '785faf01055a361bebc69a8c32ccac18a609c24a' },
+    { blobs: OCT21_MAIN_4BB_POSE_BLOBS, source: '4bb0a61d8f285111551d5ff2466e79cb26ab385b' },
   ].find(({ blobs }) => CHARACTER_POSE_PATHS.every(path =>
     typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
     blob(baseline.get(path)) === blobs[path] && blob(candidate.get(path)) === blobs[path]));

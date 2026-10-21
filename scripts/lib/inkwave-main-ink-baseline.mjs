@@ -261,12 +261,32 @@ const ROLLER_BAND_SOURCE_PAIR = Object.freeze({
     "scripts/lib/inkwave-build-only-modules.mjs": {base: '2b9ea41557f2af7409d17310f392456e04b11134', candidate: '2b9ea41557f2af7409d17310f392456e04b11134'},
   })
 });
+// #1738: exact source tuple after main 4bb0a61d. The only edited paint-owner
+// module is main-weapon-catalog.mjs; all other 12 paths must have exactly the
+// verified Git blobs, including the build composition advanced on main.
+// Admission is strictly an identity check, never permission to alter the
+// reference, bypass browser captures or claim paint/physics equivalence.
+const PROJECTILE_POSE_BIRTH_PAIR = Object.freeze({
+  baseCommit: '4bb0a61d8f285111551d5ff2466e79cb26ab385b',
+  candidateCommit: '15c98195a885739c63c78073a958482078a55d23',
+  blobs: Object.freeze({
+    ...ROLLER_BAND_SOURCE_PAIR.blobs,
+    'patches/splatoon3/runtime/main-weapon-catalog.mjs': Object.freeze({
+      base: 'c497f05551b8407c64ba5dc1b32f11df4badccbd',
+      candidate: '3869e44e4b0056bb508271f22dd03084d8fd6dd9'
+    }),
+    'scripts/inkwave-source-composition.mjs': Object.freeze({
+      base: '33a535481402bae5e846870bed2ee7e76ef9b298',
+      candidate: '33a535481402bae5e846870bed2ee7e76ef9b298'
+    })
+  })
+});
 function reviewedCurrentPair(baseline, candidate) {
   const present = path => typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string';
   const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
     sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate);
-  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR].find(pair =>
+  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR].find(pair =>
     MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
       gitBlobSha1(baseline.get(path)) === pair.blobs[path].base &&
       gitBlobSha1(candidate.get(path)) === pair.blobs[path].candidate));
