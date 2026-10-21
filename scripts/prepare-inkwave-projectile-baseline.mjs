@@ -34,7 +34,19 @@ const birth = alignRollerBirthBaseline(original, subject);
 const pool = alignProjectilePoolBaseline(birth.source, subject);
 const planned = new Map(originals);
 planned.set(file, pool.source);
-const paint = planMainInkBaseline(planned, candidates);
+const expectationFlags = ['--expected-mode','--expected-source-base','--expected-source-head'];
+const hasExpectation = expectationFlags.some(flag => process.argv.includes(flag));
+let expectedPair = null;
+if (hasExpectation) {
+  const values = expectationFlags.map(flag => {
+    const at=process.argv.indexOf(flag);
+    assert.ok(at>=0 && process.argv[at+1] && !process.argv[at+1].startsWith('--'),'complete '+flag);
+    assert.equal(process.argv.lastIndexOf(flag),at,'duplicate '+flag);
+    return process.argv[at+1];
+  });
+  expectedPair={mode:values[0],sourceBase:values[1],sourceHead:values[2]};
+}
+const paint = planMainInkBaseline(planned, candidates, expectedPair);
 const changes = [...birth.changes, ...pool.changes];
 const source = paint.sources.get(file);
 const sha256 = value => createHash('sha256').update(value).digest('hex');

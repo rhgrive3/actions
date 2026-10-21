@@ -464,9 +464,17 @@ function reviewedCurrentPair(baseline, candidate) {
   }};
 }
 
-export function planMainInkBaseline(baseline, candidate) {
+export function planMainInkBaseline(baseline, candidate, expectedPair = null) {
   if (!(baseline instanceof Map) || !(candidate instanceof Map)) fail('source maps are required');
   const reviewedPair = reviewedCurrentPair(baseline, candidate);
+  if (expectedPair !== null) {
+    if (!expectedPair || typeof expectedPair !== 'object' ||
+        Object.keys(expectedPair).sort().join(',') !== 'mode,sourceBase,sourceHead' ||
+        Object.values(expectedPair).some(value => typeof value !== 'string' || !value))
+      fail('complete expected source-pair contract required');
+    if (!reviewedPair || ['mode','sourceBase','sourceHead'].some(key => reviewedPair.evidence[key] !== expectedPair[key]))
+      fail('source-pair differs from explicitly requested comparison; identity cannot substitute for differing epochs');
+  }
   if (reviewedPair) return reviewedPair;
   const sources = new Map(baseline), changes = [], paths = [];
   for (const row of MAIN_INK_BASELINE_MANIFEST.files) {

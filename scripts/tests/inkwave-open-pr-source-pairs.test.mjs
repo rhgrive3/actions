@@ -1,3 +1,7 @@
+import os from 'node:os';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -100,4 +104,38 @@ test('only the complete PR1746 paint epoch admits equal sources and rejects ever
   }
  }
  assert.deepEqual([...current],original);
+});
+
+test('explicit requested paint contract rejects whole-tree substitution into otherwise approved identity',()=>{
+ const base=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,historicalSource('oct21IntegrationBase',p)]));base.set(swimMain.path,swimMain.content);
+ const current=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const differing={mode:'current-pair-with-gameplay-differences',sourceBase:'95c25af145418691991a1452d4d10589754a0f1c',sourceHead:'f31238a48b9d1a4af2d4f5f5f9182af777a79c83'};
+ const identical={mode:'pr1746-byte-identical-current-paint',sourceBase:differing.sourceHead,sourceHead:differing.sourceHead};
+ assert.equal(planMainInkBaseline(base,current,differing).evidence.mode,differing.mode);
+ assert.equal(planMainInkBaseline(current,new Map(current),identical).evidence.mode,identical.mode);
+ for(const [b,c,expected]of [[current,current,differing],[base,current,identical],[current,current,{...identical,sourceHead:'unknown'}]]){
+  const before=[[...b],[...c]];assert.throws(()=>planMainInkBaseline(b,c,expected),/explicitly requested comparison/);assert.deepEqual([[...b],[...c]],before);
+ }
+ for(const invalid of [{},{mode:identical.mode},{...identical,extra:'ignored?'}])assert.throws(()=>planMainInkBaseline(current,current,invalid),/complete expected/);
+});
+
+test('CLI expected differing epochs rejects copied identity before overwriting source or receipt',t=>{
+ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-explicit-pair-'));t.after(()=>fs.rmSync(temp,{recursive:true,force:true}));
+ const left=path.join(temp,'before'),right=path.join(temp,'after'),receipt=path.join(temp,'receipt.json');
+ const sources=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ sources.set('patches/splatoon3/profile.json',fs.readFileSync(new URL('../../patches/splatoon3/profile.json',import.meta.url),'utf8'));
+ for(const dir of [left,right])for(const [p,source]of sources){const file=path.join(dir,p);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,source);}
+ const run=args=>spawnSync(process.execPath,[fileURLToPath(new URL('../prepare-inkwave-projectile-baseline.mjs',import.meta.url)),'--baseline',left,'--candidate',right,'--receipt',receipt,...args],{encoding:'utf8'});
+ const f312='f31238a48b9d1a4af2d4f5f5f9182af777a79c83',sentinel='previous receipt';
+ fs.writeFileSync(receipt,sentinel);
+ const bad=run(['--expected-mode','current-pair-with-gameplay-differences','--expected-source-base','95c25af145418691991a1452d4d10589754a0f1c','--expected-source-head',f312]);
+ assert.equal(bad.error,undefined);assert.equal(bad.signal,null);assert.equal(bad.status,1,bad.stderr);assert.match(bad.stderr,/explicitly requested comparison/);
+ assert.equal(fs.readFileSync(receipt,'utf8'),sentinel);
+ const partial=run(['--expected-mode','pr1746-byte-identical-current-paint']);
+ assert.equal(partial.status,1,partial.stderr);assert.equal(fs.readFileSync(receipt,'utf8'),sentinel);
+ const good=run(['--expected-mode','pr1746-byte-identical-current-paint','--expected-source-base',f312,'--expected-source-head',f312]);
+ assert.equal(good.status,0,good.stderr);
+ const result=JSON.parse(fs.readFileSync(receipt,'utf8'));assert.equal(result.mode,'pr1746-byte-identical-current-paint');assert.deepEqual(result.writtenPaths,[]);
+ assert.match(result.scope,/not evidence of an improvement/);
+ for(const dir of [left,right])for(const [p,source]of sources)assert.equal(fs.readFileSync(path.join(dir,p),'utf8'),source,p);
 });

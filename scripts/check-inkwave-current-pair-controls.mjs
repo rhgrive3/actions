@@ -37,6 +37,7 @@ const verify = (root, rows) => {
 const admitted = planMainInkBaseline(sourceMap(before), sourceMap(after));
 const identity = admitted.evidence.mode === 'pr1746-byte-identical-current-paint';
 assert.ok(identity || admitted.evidence.mode === 'current-pair-with-gameplay-differences', 'current controls cannot test a legacy replay');
+const expectedPair = Object.freeze(Object.fromEntries(['mode','sourceBase','sourceHead'].map(key=>[key,admitted.evidence[key]])));
 assert.deepEqual(admitted.changes, []);
 assert.deepEqual([...admitted.sources], [...sourceMap(before)]);
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'inkwave-current-pair-controls-'));
@@ -53,7 +54,8 @@ function write(root, rows) {
   }
 }
 function run(b = left, a = right) {
-  return spawnSync(process.execPath, [prepare, '--baseline', b, '--candidate', a, '--receipt', receipt], { encoding: 'utf8' });
+  return spawnSync(process.execPath, [prepare, '--baseline', b, '--candidate', a, '--receipt', receipt,
+    '--expected-mode',expectedPair.mode,'--expected-source-base',expectedPair.sourceBase,'--expected-source-head',expectedPair.sourceHead], { encoding: 'utf8' });
 }
 function rejectCli(b = left, a = right) {
   fs.writeFileSync(receipt, sentinel);
@@ -117,7 +119,7 @@ try {
     finally { write(root, restore); }
   }
   if (!identity) for (const [b, a] of [[sourceMap(after), sourceMap(before)], [sourceMap(before), sourceMap(before)], [sourceMap(after), sourceMap(after)]]) {
-    assert.throws(() => planMainInkBaseline(b, a)); counts.helperRejected++;
+    assert.throws(() => planMainInkBaseline(b, a, expectedPair)); counts.helperRejected++;
   }
   // Both-side drift must not escape into the historical replay branch.
   for (const rel of MAIN_INK_BASELINE_PATHS) for (const mutation of ['byte', 'missing']) {
@@ -126,7 +128,7 @@ try {
       if (mutation === 'missing') rows.delete(rel);
       else rows.set(rel, rows.get(rel) + '\n// both-side drift\n');
     }
-    assert.throws(() => planMainInkBaseline(b, a)); counts.helperRejected++;
+    assert.throws(() => planMainInkBaseline(b, a, expectedPair)); counts.helperRejected++;
   }
   positive();
   assert.deepEqual(counts, identity ? { positiveCli: 2, cliRejected: 53, helperRejected: 26 } : { positiveCli: 2, cliRejected: 56, helperRejected: 29 });
