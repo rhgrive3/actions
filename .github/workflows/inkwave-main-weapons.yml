@@ -127,6 +127,7 @@ jobs:
     timeout-minutes: 30
     env:
       GRIP_SEED: '1715'
+      GRIP_RNG_TRACE: '1'
       BASELINE_SHA: 83f27e5d59db944458a85122a95d1154e3543393
       CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -271,7 +272,7 @@ jobs:
           assert.equal(ids.baseline, process.env.BASELINE_SHA);
           assert.equal(ids.candidate, process.env.CANDIDATE_SHA);
           for (const key of ['captureScript', 'entryHelper', 'workflow']) sha(ids[key]);
-          const names = ['rear', 'side', 'front-oblique'];
+          const names = ['rear', 'side', 'front-oblique', 'right-side'];
           const sides = ['before', 'before-control', 'after', 'after-control'].map((side, index) => {
             const result = read(`${side}/result.json`), build = read(`${index < 2 ? 'before' : 'after'}-build.json`);
             const cameras = read(`${side}/grip-cameras.json`), m = result.measurement;

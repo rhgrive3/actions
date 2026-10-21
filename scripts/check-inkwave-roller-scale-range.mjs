@@ -5,14 +5,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { enterRangeFromMenu } from './lib/inkwave-range-menu-entry.mjs';
 const site=path.resolve(process.argv[2]||'_site'), out=path.resolve(process.argv[3]||'.browser-evidence/roller-scale/range');
 // Fixed inspection views are authored once from the baseline and reused verbatim.
 // BEGIN GRIP CAMERA CONTRACT
 function validateGripCameras(plan) {
-  const names=['rear','side','front-oblique'];
-  if(plan?.schema!==1||!Array.isArray(plan.views)||plan.views.length!==3)throw Error('Invalid grip camera plan');
+  const names=['rear','side','front-oblique','right-side'];
+  if(plan?.schema!==1||!Array.isArray(plan.views)||plan.views.length!==4)throw Error('Invalid grip camera plan');
   for(let i=0;i<names.length;i++){
     const v=plan.views[i],vec=a=>Array.isArray(a)&&a.length===3&&a.every(Number.isFinite);
     if(v.name!==names[i]||!vec(v.position)||!vec(v.target)||v.fov!==45||v.aspect!==1280/840||v.near!==.1||v.far!==100||
@@ -22,11 +23,12 @@ function validateGripCameras(plan) {
 }
 function makeGripCameras(anchor){
   if(!Array.isArray(anchor)||anchor.length!==3||!anchor.every(Number.isFinite))throw Error('Invalid baseline camera anchor');
-  const views=[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]]].map(([name,offset])=>({
+  const views=[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]],['right-side',[-5,2,0]]].map(([name,offset])=>({
     name,position:offset.map((n,i)=>n+anchor[i]),target:anchor.map((n,i)=>n+[0,.8,.5][i]),fov:45,aspect:1280/840,near:.1,far:100}));
   return validateGripCameras({schema:1,views});
 }
 // END GRIP CAMERA CONTRACT
+const traceRng=process.env.GRIP_RNG_TRACE==='1';
 const seedIndex=process.argv.indexOf('--grip-seed');
 const gripSeed=seedIndex<0?null:Number(process.argv[seedIndex+1]);
 if(seedIndex>=0&&(!/^\d+$/.test(process.argv[seedIndex+1]||'')||!Number.isInteger(gripSeed)||gripSeed<0||gripSeed>0xffffffff))throw Error('Invalid grip seed: expected uint32');
@@ -83,17 +85,35 @@ try{
   receipt.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:240000,
     onProgress:r=>{receipt.entry=r;fs.writeFileSync(path.join(out,'progress.json'),JSON.stringify(receipt,null,2));}});
   console.log('Native Range ready');
-  receipt.measurement=await page.evaluate(async({cameraReference,gripSeed})=>{
+  receipt.measurement=await page.evaluate(async({cameraReference,gripSeed,traceRng})=>{
     const G=window.__G,g=window.__inkwave,a=G.local;
     const {Vector3,OrthographicCamera,PerspectiveCamera}=await import('three');
-    g.debug.freeze();G.match.range.setWeapon('roller');
+    g.debug.freeze();
+    // BEGIN NATIVE STARTUP READINESS CONTRACT
+    // The menu may finish its bounded loading wait before Character warmup.
+    // Finish only that already-requested work before adding Roller to its cache.
+    let startupWarmup=null;
+    if(gripSeed!==null){
+      const warm=a.character._warmed;
+      if(!warm||typeof warm.then!=='function')throw Error('Missing native Character startup warmup');
+      let timeout;
+      try{
+        const result=await Promise.race([warm,new Promise((_,reject)=>{
+          timeout=setTimeout(()=>reject(Error('Native Character startup warmup timed out')),240000);
+        })]);
+        startupWarmup={schema:1,owner:'native-character-startup',completed:true,result:result??null,
+          weaponBefore:a.weaponId,characterWeaponBefore:a.character.weaponKind};
+      }finally{clearTimeout(timeout);}
+    }
+    // END NATIVE STARTUP READINESS CONTRACT
+    G.match.range.setWeapon('roller');
     await G.audio?.prepareWeapon?.('roller',{urgent:true});
     await a.character.sourceMotion.ready;
     G.match.range.travel('roller');
     a.pos.set(-26.5,.04,4);a.vel.set(0,0,0);a.yaw=a.aimYaw=0;g.rig.yaw=0;g.rig.pitch=-.3;
     // BEGIN INITIAL CHARACTER CONTRACT
     const c=a.character,boundary=window.__gripEntryFreeze||null;
-    const initialState=window.__gripInitialState={schema:1,boundary,gameTime:G.time,
+    const initialState=window.__gripInitialState={schema:1,boundary,gameTime:G.time,startupWarmup,
       character:{name:c.name,seed:c.seed,time:c.t,phase:c.phase,breathPhase:c.brPh,breathNumber:c.brN,
         breathAmplitude:c.brAmp,breathRate:c.brRate,pose:Array.from(c.P)}};
     if(gripSeed!==null&&(!boundary?.trusted||boundary.boundary!=='trusted-mode-range-capture'||
@@ -107,9 +127,35 @@ try{
     const originalRandom=Math.random,originalSplat=G.paint.splat;
     const recipeRandom={mode:gripSeed===null?'unseeded':'seeded-synchronous-180-tick',
       algorithm:gripSeed===null?null:'mulberry32-u32-v1',seed:gripSeed,draws:0,restored:false,contactSeeds:[]};
+    // BEGIN BOUNDED RNG CALLER TRACE
+    // Diagnostic only: optional caller provenance, never a seed/value rewrite.
+    const recipeRandomTrace=traceRng&&gripSeed!==null?{schema:1,diagnosticOnly:true,
+      limit:256,maxGroups:32,stackLimit:800,totalDraws:0,omittedDraws:0,
+      overflowDraws:0,stackTruncatedCalls:0,groups:[],sequence:[]}:null;
+    // END BOUNDED RNG CALLER TRACE
     let word=gripSeed,recipePhase='settle',recipeMeasurement;
     if(gripSeed!==null)Math.random=()=>{
       recipeRandom.draws++;
+      // BEGIN BOUNDED RNG CALLER RECORD
+      if(recipeRandomTrace){
+        const trace=recipeRandomTrace;trace.totalDraws=recipeRandom.draws;
+        if(recipeRandom.draws<=trace.limit){
+          // Keep native caller/function and line/column, but not ephemeral ports.
+          const full=String(new Error().stack||'').split('\n').slice(2,7).join('\n')
+            .replace(/http:\/\/(?:127\.0\.0\.1|localhost):\d+/g,'<site>');
+          const stack=full.slice(0,trace.stackLimit);
+          if(full.length>trace.stackLimit)trace.stackTruncatedCalls++;
+          let group=trace.groups.findIndex(g=>g.phase===recipePhase&&g.stack===stack);
+          if(group<0&&trace.groups.length<trace.maxGroups){
+            group=trace.groups.length;
+            trace.groups.push({phase:recipePhase,stack,count:0,firstDraw:recipeRandom.draws,lastDraw:recipeRandom.draws});
+          }
+          trace.sequence.push(group);
+          if(group<0)trace.overflowDraws++;
+          else{const g=trace.groups[group];g.count++;g.lastDraw=recipeRandom.draws;}
+        }else trace.omittedDraws++;
+      }
+      // END BOUNDED RNG CALLER RECORD
       let t=word=(word+0x6D2B79F5)|0;
       t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);
       return ((t^(t>>>14))>>>0)/4294967296;
@@ -192,7 +238,7 @@ try{
     G.renderer.domElement.id='roller-scale-canvas';
     const inspectionPng=G.renderer.domElement.toDataURL('image/png').split(',')[1];
     const anchor=a.pos.toArray();
-    const cameraPlan=cameraReference||{schema:1,views:[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]]].map(([name,offset])=>({
+    const cameraPlan=cameraReference||{schema:1,views:[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]],['right-side',[-5,2,0]]].map(([name,offset])=>({
       name,position:offset.map((n,i)=>n+anchor[i]),target:anchor.map((n,i)=>n+[0,.8,.5][i]),fov:45,aspect:1280/840,near:.1,far:100}))};
     const state=()=>JSON.stringify({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,phase:a.character.phase,pose:Array.from(a.character.P)});
     const frozen=state(),gripViews=[];
@@ -213,11 +259,17 @@ try{
     if(state()!==frozen)throw Error('Restoring inspection changed simulation');
     return {layout:G.level.layout.id,start:start.toArray(),end:a.pos.toArray(),face:f.id,
       floorTag:G.level.blocks[f.block].tag,drumWidth,paintHalf:event.r,contactDepth:1.2*event.r*(1+event.amount),
-      gpuMinWidth:Math.min(...widths),gpuMaxWidth:Math.max(...widths),rows,holes,gpuFootprint,recipeRandom,initialState,
+      gpuMinWidth:Math.min(...widths),gpuMaxWidth:Math.max(...widths),rows,holes,gpuFootprint,recipeRandom,recipeRandomTrace,initialState,
       contactError:Math.hypot(centre.x-front.x,centre.z-front.z),contactStamps:events,events:events.length,
       debugFixedTicks:180,controller:'shipped KeyW + held fire',inspectionCameraOnly:true,
       gameplayPng,inspectionPng,cameraPlan,gripViews,renderSize,renderAspect,frozenState:JSON.parse(frozen),gripCameraReference:!!cameraReference};
-  },{cameraReference,gripSeed});
+  },{cameraReference,gripSeed,traceRng});
+  // Browser evaluation has restored RNG before hashing this bounded diagnostic.
+  if(receipt.measurement.recipeRandomTrace){
+    const trace=receipt.measurement.recipeRandomTrace;
+    trace.digest={algorithm:'SHA-256',encoding:'JSON.stringify-before-digest',
+      sha256:createHash('sha256').update(JSON.stringify(trace)).digest('hex')};
+  }
   validateGripCameras(receipt.measurement.cameraPlan);
   assert.deepEqual(receipt.measurement.cameraPlan,cameraReference||makeGripCameras(receipt.measurement.end));
   fs.writeFileSync(path.join(out,'grip-cameras.json'),JSON.stringify(receipt.measurement.cameraPlan,null,2)+'\n');
