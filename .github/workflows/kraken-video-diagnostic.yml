@@ -45,6 +45,8 @@ jobs:
             patches
             scripts
             reports/ink-volume/source
+      - name: Prepare video encoder from Ubuntu packages
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Verify exact source heads and build both compositions
         run: |
           test "$(git -C before rev-parse HEAD)" = 95c25af145418691991a1452d4d10589754a0f1c
@@ -70,4 +72,10 @@ jobs:
             evidence/*.json
             evidence/before/result.json
             evidence/after/result.json
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: kraken-raw-frames-on-failure
+          path: evidence/*/frames/*.png
           if-no-files-found: warn
