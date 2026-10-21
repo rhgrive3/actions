@@ -113,7 +113,7 @@ try {
   for(const a of G.match.actors){
    if(a.remote)G.netm.applyRemote(a,dt);
    else {
-    if(window.__ceilingFirePending&&a.nid===attacker)__ceilingPlacement.aim({attacker,victim,requested:placement});
+    if(window.__ceilingFirePending&&a.nid===attacker)window.__ceilingShot.preShotAim=__ceilingPlacement.aim({attacker,victim,requested:placement});
     const ink=a.ink;
     a.update(dt);
     // Advance the real first-shot delay, pose and firing owner. Stop holding
@@ -127,7 +127,11 @@ try {
      const p=q.first,v=G.netm.byNid.get(victim);
      q.initial={beforeInk:ink,afterInk:a.ink,at:G.time,pos:p.pos.toArray(),velocity:p.vel.toArray(),
        age:p.age,life:p.life,attacker:a.pos.toArray(),victim:v.pos.toArray(),victimSmoothY:v.smoothY,
-       aimPoint:a.aimPoint.toArray(),aimDir:a.aimDir.toArray(),playerRadius:p.inkPlayerRadius};
+       aimPoint:a.aimPoint.toArray(),aimDir:a.aimDir.toArray(),playerRadius:p.inkPlayerRadius,
+       preShotAim:q.preShotAim,
+       launchComparisonScope:'Origin difference is measured; velocityAngle includes native aim correction, ballistic correction and spread, not just muzzle shift',
+       launchVsAim:__ceilingPlacement.compareShot(q.preShotAim,p.pos.toArray(),p.vel.toArray()),
+       actualOriginLOS:G.physics.los(p.pos,new G.camera.position.constructor(...q.preShotAim.target))};
     }
    }
   }
@@ -227,6 +231,13 @@ try {
 } catch(error) {
  report.status='failed';report.error=String(error.stack||error);process.exitCode=1;
  try{if(pages[1])report.shot=await pages[1].evaluate(()=>{const q=window.__ceilingShot;return q?{initial:q.initial,removal:q.removal,steps:q.steps}:null;});}catch{}
+ try{if(pages[1])report.placementDiagnostic=await pages[1].evaluate(()=>{
+  const G=window.__G,n=x=>Number.isFinite(x)?x:null,xyz=p=>p?[n(p.x),n(p.y),n(p.z)]:null;
+  return {bounds:G?.level?.bounds?Object.fromEntries(['minX','maxX','minZ','maxZ'].map(k=>[k,n(G.level.bounds[k])])):null,
+   spawnBarrier:n(G?.level?.spawnBarrier),spawnPads:(G?.level?.spawnPads||[]).slice(0,2).map(xyz),
+   actors:(G?.match?.actors||[]).slice(0,2).map(a=>({local:a.isLocal===true,remote:a.remote===true,
+    alive:a.alive===true,grounded:a.grounded===true,form:['kid','squid'].includes(a.form)?a.form:'other',pos:xyz(a.pos)}))};
+ });}catch{}
 } finally {
  report.errors=errors;report.loadedArtifacts=[...loaded];report.wire=wire;
  for(const page of pages){
@@ -247,7 +258,18 @@ try {
 const failure = report.status === 'failed' ? {
  error: ['Native projectile never authored a 36 hit packet',
   'Exactly one native paid round must finish the firing request',
-  'Expected exactly one real near-hit 36'].find(message => report.error?.includes(message))
+  'Expected exactly one real near-hit 36',
+  'Expected one actual owned projectile at paid emission',
+  'Combat placement: missing level bounds',
+  'Combat placement: no neutral playable pair with a clear stage path',
+  'Combat placement: Actors must be alive grounded kids',
+  'Combat placement: inside spawn barrier or nonfinite position',
+  'Combat placement: settled separation is not 2m',
+  'Combat placement: native settle moved selected placement',
+  'Combat placement: settled muzzle path blocked by stage',
+  'Combat placement: nonfinite settled aim',
+  'Combat placement: nonfinite shot comparison',
+  'Combat placement: zero shot comparison direction'].find(message => report.error?.includes(message))
   || (report.error?.includes('Timeout') ? 'timeout' : 'other-error-see-artifact'),
  emission: report.emission ? {
   pending: report.emission.pending === true,
@@ -262,7 +284,10 @@ const failure = report.status === 'failed' ? {
   initialInk: Number.isFinite(report.shot.initial?.afterInk) ? report.shot.initial.afterInk : null,
   initialHeight: Number.isFinite(report.shot.initial?.pos?.[1]) ? report.shot.initial.pos[1] : null,
   removalAge: Number.isFinite(report.shot.removal?.age) ? report.shot.removal.age : null,
+  originDistance: Number.isFinite(report.shot.initial?.launchVsAim?.originDistance) ? report.shot.initial.launchVsAim.originDistance : null,
+  velocityAngle: Number.isFinite(report.shot.initial?.launchVsAim?.velocityAngle) ? report.shot.initial.launchVsAim.velocityAngle : null,
  } : null,
+ placement: report.placementDiagnostic||null,
  browserErrorCount: errors.length,
 } : undefined;
 console.log(JSON.stringify({status:report.status,sourceSha,phase:report.phase,evidence,failure}));

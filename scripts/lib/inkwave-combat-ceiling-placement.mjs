@@ -61,5 +61,13 @@ export function installCombatPlacementQA() {
     if (!G.physics.los(muzzle,target)) fail('settled muzzle path blocked by stage');
     return {...checked,muzzle:muzzle.toArray(),target:target.toArray(),aim:a.aimDir.toArray()};
   };
-  globalThis.__ceilingPlacement = {select,inspect,aim};
+  const compareShot = (preShot, position, velocity) => {
+    if (!preShot || !finite(preShot.muzzle) || !finite(preShot.aim) || !finite(position) || !finite(velocity)) fail('nonfinite shot comparison');
+    const offset = position.map((v,i) => v-preShot.muzzle[i]);
+    const speed = Math.hypot(...velocity), aimLength = Math.hypot(...preShot.aim);
+    if (!(speed>0 && aimLength>0)) fail('zero shot comparison direction');
+    return {originOffset:offset,originDistance:Math.hypot(...offset),
+      velocityAngle:Math.acos(Math.max(-1,Math.min(1,velocity.reduce((v,x,i)=>v+x*preShot.aim[i],0)/(speed*aimLength))))};
+  };
+  globalThis.__ceilingPlacement = {select,inspect,aim,compareShot};
 }

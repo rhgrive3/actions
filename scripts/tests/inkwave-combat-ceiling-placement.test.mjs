@@ -82,8 +82,23 @@ test('failure stdout limits shot diagnostics to fixed labels and finite numbers'
  assert(body.startsWith('const failure ='));
  const summarize=new Function('report','errors',body+'return failure;');
  assert.equal(summarize({status:'passed'},[]),undefined);
+ for(const message of ['missing level bounds','no neutral playable pair with a clear stage path','Actors must be alive grounded kids','native settle moved selected placement','settled separation is not 2m'])assert.equal(summarize({status:'failed',error:'page.evaluate: Combat placement: '+message+'\\nprivate stack'},[]).error,'Combat placement: '+message);
  const report={status:'failed',error:'secret packet data',shot:{steps:Infinity,initial:{afterInk:'secret',pos:[0,NaN,0]},removal:{reason:'private wire data',age:Infinity}}};
- assert.deepEqual(summarize(report,[]).shot,{reason:null,steps:null,initialInk:null,initialHeight:null,removalAge:null});
+ assert.deepEqual(summarize(report,[]).shot,{reason:null,steps:null,initialInk:null,initialHeight:null,removalAge:null,originDistance:null,velocityAngle:null});
  const good={status:'failed',error:'Native projectile never authored a 36 hit packet',shot:{steps:3,initial:{afterInk:99,pos:[0,1.1,0]},removal:{reason:'world-impact',age:.05}}};
- assert.deepEqual(summarize(good,[]).shot,{reason:'world-impact',steps:3,initialInk:99,initialHeight:1.1,removalAge:.05});
+ assert.deepEqual(summarize(good,[]).shot,{reason:'world-impact',steps:3,initialInk:99,initialHeight:1.1,removalAge:.05,originDistance:null,velocityAngle:null});
 });
+
+test('pitch-dependent muzzle changes are exposed by the actual emitted-origin diagnostic',()=>fixture(({q,G,add})=>{
+ const points=q.select(),a=add('a',points[0]);add('v',points[1]);
+ G.projectiles._muzzle=(actor,out)=>out.copy(actor.pos).add(new V(0,1.1+.5*actor.aimPitch,.3));
+ const pre=q.aim({attacker:'a',victim:'v',requested:points});
+ // fireShooter recomputes _muzzle after aimPitch changed. Do not change the
+ // native Actor update order or pretend that the earlier LOS was this origin.
+ const actual=G.projectiles._muzzle(a,new V()).toArray();
+ const delta=q.compareShot(pre,actual,a.aimDir.toArray());
+ assert(delta.originDistance>.001,'pitch-independent stub must not mask the changed launch origin');
+ assert.deepEqual(delta.originOffset,actual.map((v,i)=>v-pre.muzzle[i]));
+ assert.equal(q.compareShot(pre,pre.muzzle,pre.aim).originDistance,0);
+ assert.throws(()=>q.compareShot(pre,[0,NaN,0],pre.aim),/nonfinite shot comparison/);
+}));
