@@ -2,11 +2,11 @@
 // drip ticks. Compare every claim with the frozen pre-change composition.
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {adaptNativeStages} from '../adapter.mjs';
-import {nativePieceHasInterior,nativeAncillaryCanClaim,nativeAncillaryMaskIndex,nativeSettledAncillarySlot,nativeSettledAncillaryMatches,nativeStoreSettledAncillary} from '../runtime/native-paint.mjs';
+import {nativePieceHasInterior,nativeAncillaryCanClaim,nativeAncillaryMaskFind,nativeAncillaryMaskStore,nativeSettledAncillarySlot,nativeSettledAncillaryMatches,nativeStoreSettledAncillary} from '../runtime/native-paint.mjs';
 const load=source=>import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 const oracle=await load(fs.readFileSync(new URL('./fixtures/paint-ownership-native-b77b51d.mjs.txt',import.meta.url),'utf8'));
 const current=adaptNativeStages('patches/splatoon3/runtime/paint-ownership.mjs',fs.readFileSync(new URL('../../splatoon3/runtime/paint-ownership.mjs',import.meta.url),'utf8'))
- .replace(/import .*native-paint.*;\n/,[nativePieceHasInterior,nativeAncillaryCanClaim,nativeAncillaryMaskIndex,nativeSettledAncillarySlot,nativeSettledAncillaryMatches,nativeStoreSettledAncillary].map(f=>f.toString()).join('\n')+'\n');
+ .replace(/import .*native-paint.*;\n/,[nativePieceHasInterior,nativeAncillaryCanClaim,nativeAncillaryMaskFind,nativeAncillaryMaskStore,nativeSettledAncillarySlot,nativeSettledAncillaryMatches,nativeStoreSettledAncillary].map(f=>f.toString()).join('\n')+'\n');
 const subject=await load(current+'\nexport {claimAncillaryCells,ensureOwnershipState};');
 const contract={kind:{speck:7},shapes:[[5,0,0,3],[3,0,0,2],[7,0,0,4],[10,0,0,5],[3,0,0,2],[2,0,0,1],[0,0,0,0],[0,0,0,0]],reach:[2.8,3,2.8,2.8,3,2.8,1,1],dripReach:3.9};
 const CELLS=48*48;

@@ -24,15 +24,20 @@ export function nativeAncillaryCanClaim(R,dn,ppm,subcellDots=false){
  return Math.max(.14*r,1.35*pixel)+1e-10>=1.5*pixel;
 }
 
-/** Index of a cached ancillary mask in the flat [wall, ppm, dn, sdu, sdv, sa,
- * mask] list built during one ownership pass, or -1. Equality is that of the
- * former joined String key: === per field, NaN equal to NaN. Self-contained:
- * tests compose it into the ownership module by source text. */
-export function nativeAncillaryMaskIndex(list,wall,ppm,dn,sdu,sdv,sa){
- const same=(a,b)=>a===b||(a!==a&&b!==b);
- for(let i=0;i<list.length;i+=7)
-  if(same(list[i+2],dn)&&same(list[i+3],sdu)&&same(list[i+4],sdv)&&same(list[i+5],sa)&&same(list[i],wall)&&same(list[i+1],ppm))return i;
- return -1;
+/** Cached ancillary mask of one ownership pass, or undefined. Equality is
+ * that of the former joined String key: === per field, NaN equal to NaN. The
+ * Map key dn uses SameValueZero, which is exactly that relation. Each bucket
+ * is a flat [wall, ppm, sdu, sdv, sa, mask] list. Self-contained: tests
+ * compose these functions into the ownership module by source text. */
+export function nativeAncillaryMaskFind(masks,wall,ppm,dn,sdu,sdv,sa){
+ const same=(a,b)=>a===b||(a!==a&&b!==b),list=masks.get(dn);
+ if(list)for(let i=0;i<list.length;i+=6)
+  if(same(list[i+2],sdu)&&same(list[i+3],sdv)&&same(list[i+4],sa)&&same(list[i],wall)&&same(list[i+1],ppm))return list[i+5];
+ return undefined;
+}
+export function nativeAncillaryMaskStore(masks,wall,ppm,dn,sdu,sdv,sa,mask){
+ const list=masks.get(dn);
+ if(list)list.push(wall,ppm,sdu,sdv,sa,mask);else masks.set(dn,[wall,ppm,sdu,sdv,sa,mask]);
 }
 
 /** #1671: per growth-record entry slot of non-drip ancillary pieces, valid

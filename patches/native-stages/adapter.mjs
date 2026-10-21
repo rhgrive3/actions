@@ -220,8 +220,8 @@ export function adaptNativeStages(rel,code){
   once('const retreat = this._isRetreating(team, pos[2]);', 'const retreat = this._isRetreating(team, nativeRetreatCoordinate(this.config, pos));');
  }
  if(rel==='patches/splatoon3/runtime/paint-ownership.mjs'){
-  code="import { nativePieceHasInterior, nativeAncillaryCanClaim, nativeAncillaryMaskIndex, nativeSettledAncillarySlot, nativeSettledAncillaryMatches, nativeStoreSettledAncillary } from '../../native-stages/runtime/native-paint.mjs';\n"+code;
-  once('  let claimed = 0, changed = false;\n  for (let n = 0; n < E.length; n += 7)', '  let claimed = 0, changed = false;\n  const nativeMasks = paint.level?.native ? [] : null;\n  for (let n = 0; n < E.length; n += 7)');
+  code="import { nativePieceHasInterior, nativeAncillaryCanClaim, nativeAncillaryMaskFind, nativeAncillaryMaskStore, nativeSettledAncillarySlot, nativeSettledAncillaryMatches, nativeStoreSettledAncillary } from '../../native-stages/runtime/native-paint.mjs';\n"+code;
+  once('  let claimed = 0, changed = false;\n  for (let n = 0; n < E.length; n += 7)', '  let claimed = 0, changed = false;\n  const nativeMasks = paint.level?.native ? new Map() : null;\n  for (let n = 0; n < E.length; n += 7)');
   once('    if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0) continue;', '    if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0 || (nativeMasks && face.nativeEmpty)) continue;');
   once('      const previousOrder = paint._paintOwnershipOrder[index] || 0;', '      if (nativeMasks && paint.dead[index]) { visit[index] = stamp; return true; }\n      const previousOrder = paint._paintOwnershipOrder[index] || 0;');
   once('    const cellArea = face.cu * face.cv;', '    if (nativeMasks && !nativeAncillaryCanClaim(g.R, dn, face.atlas.ppm, true)) continue;\n    const cellArea = face.cu * face.cv;');
@@ -239,18 +239,18 @@ export function adaptNativeStages(rel,code){
   }
   // #1671: the former String key [wall, ppm, dn, sdu, sdv, sa].join('/')
   // matched exactly when every field is ===, or both are NaN (-0 and 0 both
-  // print "0"). Compare those same fields without building a string per entry.
+  // print "0"). Map keys by dn use SameValueZero, the same equality; the
+  // other fields are compared without building a string per entry.
   // A settled entry keeps its non-drip pieces across ticks and re-runs
   // prepareAncillary with drip counts only; pieces keep the original order.
-  once('    const mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);', `    const nativeMaskIndex = nativeMasks ? nativeAncillaryMaskIndex(nativeMasks, face.wall, face.atlas.ppm, dn, sdu, sdv, sa) : -1;
-    let mask = nativeMaskIndex >= 0 ? nativeMasks[nativeMaskIndex + 6] : undefined;
+  once('    const mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);', `    let mask = nativeMasks ? nativeAncillaryMaskFind(nativeMasks, face.wall, face.atlas.ppm, dn, sdu, sdv, sa) : undefined;
     const settled = nativeMasks && mask === undefined && tn >= 1.45 ? nativeSettledAncillarySlot(g, n / 7) : null;
     if (settled && nativeSettledAncillaryMatches(settled, g, contract, face.wall, face.atlas.ppm, dn, sdu, sdv, sa)) {
       const drips = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, settled.dripContract);
       const pieces = settled.pieces.slice();
       if (drips) for (const p of drips.pieces) if (nativePieceHasInterior(drips, p, true)) pieces.push({ ...p });
       mask = pieces.length ? { pieces, sa, sdu, sdv, margin: settled.margin, seed: settled.seed, dT } : null;
-      nativeMasks.push(face.wall, face.atlas.ppm, dn, sdu, sdv, sa, mask);
+      nativeAncillaryMaskStore(nativeMasks, face.wall, face.atlas.ppm, dn, sdu, sdv, sa, mask);
     }
     if (mask === undefined) {
       mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);
@@ -265,7 +265,7 @@ export function adaptNativeStages(rel,code){
           ? { ...mask, pieces: owned }
           : null;
       }
-      nativeMasks?.push(face.wall, face.atlas.ppm, dn, sdu, sdv, sa, mask);
+      if (nativeMasks) nativeAncillaryMaskStore(nativeMasks, face.wall, face.atlas.ppm, dn, sdu, sdv, sa, mask);
     }`);
   once('function claimPaintCell(paint, index, value, orderId, orderState = null) {', 'function claimPaintCell(paint, index, value, orderId, orderState = null) {\n  if (paint.level?.native && paint.dead[index]) return false;');
  }
