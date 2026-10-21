@@ -36,6 +36,7 @@ jobs:
           mkdir -p charger-research/raw
           cd charger-research
           cat > sources.tsv <<'SOURCES'
+          s3-wiki-gootuber|https://splatoonwiki.org/wiki/Special:Redirect/file/S3_Goo_Tuber_charge_10.0.0.mp4|direct
           s3-no-commentary|https://www.youtube.com/watch?v=Q0gbI1D4hEs|*00:00:00-00:01:30
           s3-charger-test|https://www.youtube.com/watch?v=wMRcJomKTtA|*00:22:41-00:23:30
           s3-official-demo|https://x.com/SplatoonNA/status/1523648989144489986|*00:00:00-00:00:30
@@ -43,40 +44,58 @@ jobs:
           SOURCES
           : > fetch.log
           tool="$RUNNER_TEMP/charger-venv/bin/yt-dlp"
-          if ! "$tool" --version >>fetch.log 2>&1; then
-            echo "No working yt-dlp binary. See setup.log for the actual install error." >> fetch.log
+          if "$tool" --version >>fetch.log 2>&1; then
+            downloader_ready=1
           else
-            while IFS='|' read -r slug source section; do
-              echo "=== ${slug} ${source} ${section} ===" | tee -a fetch.log
-              download_exit=0
+            downloader_ready=0
+            echo "yt-dlp missing; direct community footage fetch will still run." >>fetch.log
+          fi
+          while IFS='|' read -r slug source section; do
+            echo "=== ${slug} ${source} ${section} ===" | tee -a fetch.log
+            download_exit=0
+            if [ "$section" = "direct" ]; then
+              # Verified Inkipedia 10.0.0 Goo Tuber charging-animation
+              # capture. Direct file media access is independent of yt-dlp.
+              curl --fail --location --show-error --silent \
+                --connect-timeout 12 --max-time 80 --retry 1 \
+                -A "Mozilla/5.0 (game audio evidence research)" \
+                "$source" -o "raw/${slug}.mp4" >>fetch.log 2>&1 || download_exit=$?
+              if [ "$download_exit" = 0 ]; then
+                ffprobe -v error -show_entries stream=codec_type,duration \
+                  -of default=noprint_wrappers=1 "raw/${slug}.mp4" >>fetch.log 2>&1 || true
+                ffmpeg -hide_banner -loglevel error -y -i "raw/${slug}.mp4" \
+                  -map 0:a:0 -vn -ar 48000 -ac 1 "raw/${slug}.wav" >>fetch.log 2>&1 || download_exit=$?
+              fi
+            elif [ "$downloader_ready" = 1 ]; then
               timeout 140 "$tool" --no-playlist --no-warnings --no-progress \
                 --socket-timeout 12 --retries 1 --fragment-retries 1 \
                 --download-sections "${section}" \
                 -f 'bestaudio/best' -x --audio-format wav \
                 --remote-components ejs:github --js-runtimes node \
-                -o "raw/${slug}.%(ext)s" "${source}" >> fetch.log 2>&1 || download_exit=$?
-              echo "download_exit=${download_exit}" >>fetch.log
-              file=$(find raw -maxdepth 1 -type f -name "${slug}*.wav" | head -1)
-              if [ -z "$file" ]; then echo "No WAV for ${slug}" >>fetch.log; continue; fi
-              echo "Downloaded ${slug}: $(du -h "$file" | cut -f1)" >> fetch.log
-              ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 "$file" >>fetch.log 2>&1
-              # Graphs and derived measurements only; original copyrighted
-              # audio remains in temporary runner storage, not artifacts.
-              ffmpeg -hide_banner -loglevel error -y -i "$file" \
-                -filter_complex 'showwavespic=s=1600x360:scale=sqrt:colors=white' \
-                -frames:v 1 "${slug}-wave.png" >>fetch.log 2>&1 || true
-              ffmpeg -hide_banner -loglevel error -y -i "$file" \
-                -filter_complex 'showspectrumpic=s=1600x600:legend=1:scale=log' \
-                -frames:v 1 "${slug}-spectrum.png" >>fetch.log 2>&1 || true
-              ffmpeg -hide_banner -loglevel error -y -i "$file" -ac 1 -ar 8000 -sample_fmt s16 \
-                -f wav - 2>>fetch.log | python3 -c 'import sys,wave,struct,math; f=wave.open(sys.stdin.buffer);sr=f.getframerate(); n=sr//50; print("time_seconds,rms,peak"); t=0
-          while True:
-              raw=f.readframes(n)
-              if not raw: break
-              xs=struct.unpack("<"+str(len(raw)//2)+"h",raw); m=max(abs(z) for z in xs)/32768; rms=math.sqrt(sum(z*z for z in xs)/len(xs))/32768
-              print(f"{t:.3f},{rms:.8f},{m:.8f}");t+=len(xs)/sr' >"${slug}-rms.csv" || true
-            done <sources.tsv
-          fi
+                -o "raw/${slug}.%(ext)s" "${source}" >>fetch.log 2>&1 || download_exit=$?
+            else
+              download_exit=127
+            fi
+            echo "download_exit=${download_exit}" >>fetch.log
+            file=$(find raw -maxdepth 1 -type f -name "${slug}*.wav" | head -1)
+            if [ -z "$file" ]; then echo "No decodable audio for ${slug}" >>fetch.log; continue; fi
+            echo "Audio ${slug}: $(du -h "$file" | cut -f1)" >> fetch.log
+            ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 "$file" >>fetch.log 2>&1 || true
+            # Derived plots and measured RMS only; never upload footage.
+            ffmpeg -hide_banner -loglevel error -y -i "$file" \
+              -filter_complex 'showwavespic=s=1600x360:scale=sqrt:colors=white' \
+              -frames:v 1 "${slug}-wave.png" >>fetch.log 2>&1 || true
+            ffmpeg -hide_banner -loglevel error -y -i "$file" \
+              -filter_complex 'showspectrumpic=s=1600x600:legend=1:scale=log' \
+              -frames:v 1 "${slug}-spectrum.png" >>fetch.log 2>&1 || true
+            ffmpeg -hide_banner -loglevel error -y -i "$file" -ac 1 -ar 8000 -sample_fmt s16 \
+              -f wav - 2>>fetch.log | python3 -c 'import sys,wave,struct,math; f=wave.open(sys.stdin.buffer);sr=f.getframerate(); n=sr//50; print("time_seconds,rms,peak"); t=0
+while True:
+    raw=f.readframes(n)
+    if not raw: break
+    xs=struct.unpack("<"+str(len(raw)//2)+"h",raw); m=max(abs(z) for z in xs)/32768; rms=math.sqrt(sum(z*z for z in xs)/len(xs))/32768
+    print(f"{t:.3f},{rms:.8f},{m:.8f}");t+=len(xs)/sr' >"${slug}-rms.csv" || true
+          done < sources.tsv
           echo "Files:" >>fetch.log
           ls -lah *.png *.csv 2>/dev/null >>fetch.log || :
           rm -rf raw
