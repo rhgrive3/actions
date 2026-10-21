@@ -15,6 +15,9 @@ async function trace(mode) {
     realProjectiles: true, vmMathRandom: () => .4,
     adaptRuntime(rel, source) {
       if (rel !== 'patches/splatoon3/runtime/roller.mjs') return source;
+      if (mode === 'right-disabled') return exact(source,
+        "if (contacting && armLeftHeld && d.modelId === 'roller' && rollBlend > .001 && Number.isFinite(d.modelScale)) {", 'if (false) {');
+      if (mode === 'right-uncompensated') return exact(source, 'this.weapon.off.position.sub(delta);', '// deliberate uncompensated attachment');
       if (mode === 'left-disabled') return exact(source, SUPPORT_GATE, SUPPORT_GATE.replace('if (', 'if (false && '));
       if (mode === 'control') return exact(source, PIVOT_GATE, PIVOT_GATE.replace('if (', 'if (false && '));
       if (mode === 'off-center') return exact(source, 'target.copy(rollTarget);', 'target.copy(rollTarget).addScaledVector(rollAxis, .02);');
@@ -55,10 +58,12 @@ async function trace(mode) {
     target.z += Number.isFinite(c._s3RollerSupportAdvance) ? c._s3RollerSupportAdvance :
       Math.max(0,(w.def.gripR.pos.z + w.def.fold.pivot.z)*.5-target.z)*.15*blend;
     const actualHole = left.localToWorld(hole), requestedHole = w.off.localToWorld(target);
-    const errors = [hand.distanceTo(w.off.localToWorld(w.def.handR.pos.clone())), actualHole.distanceTo(requestedHole)];
+    const errors = [hand.distanceTo(w.off.localToWorld(w.def.handR.pos.clone().add(v().set(0, 0, c._s3RollerRightAdvance || 0)))), actualHole.distanceTo(requestedHole)];
     const palmUp = v().set(-1, 0, 0).applyQuaternion(left.getWorldQuaternion(new THREE.Quaternion()))
       .dot(v().set(0, 1, 0).applyQuaternion(w.off.getWorldQuaternion(new THREE.Quaternion())));
-    rows.push({ tick, contact: !!c._s3RollerContactPose, roll: c.wRoll, center: center.toArray(), axis: axis.toArray(), radial: [m[4], m[5], m[6], m[8], m[9], m[10]],
+    const rightHole = w.off.worldToLocal(c.bones.handR.localToWorld(v().set(.0255, -.0525, 0)));
+    const rightFraction = (rightHole.z / w.def.modelScale - -.112) / (.215 - -.112);
+    rows.push({ rightAdvance: c._s3RollerRightAdvance || 0, rightFraction, tick, contact: !!c._s3RollerContactPose, roll: c.wRoll, center: center.toArray(), axis: axis.toArray(), radial: [m[4], m[5], m[6], m[8], m[9], m[10]],
       spin: [w.drumA, w.drumW], hand: hand.toArray(), rightMatrix: Array.from(c.bones.handR.matrixWorld.elements),
       weaponMatrix: Array.from(w.off.matrixWorld.elements), palmUp,
       errors, pos: Array.from(a.pos.toArray()), ink: a.ink, rolling: a.weaponRunner.rolling });
@@ -135,4 +140,31 @@ test('held Roller lowers its hands about the same live cylinder; off-center faul
   const fault = await trace('off-center');
   assert.throws(() => sameContact(control, fault), /live drum center must stay pinned/,
     'a deliberate 2cm wrist-only offset must not pass the contact-preservation gate');
+});
+
+
+test('rolling right grip advances to one third without moving the actual drum or release pose', async () => {
+  const before = await trace('right-disabled'), after = await trace('right-enabled');
+  sameContact(before, after);
+  let settled = 0;
+  for (let i = 0; i < after.length; i++) {
+    const a = before[i], b = after[i];
+    assert.ok(b.weaponMatrix.every((v, j) => Math.abs(v - a.weaponMatrix[j]) < 1e-9),
+      'moving the hand must not translate the weapon or its paint owner');
+    if (!b.contact) {
+      assert.equal(b.rightAdvance, 0, 'nonrolling and release keep the canonical attachment');
+      assert.ok(b.rightMatrix.every((v, j) => Math.abs(v - a.rightMatrix[j]) < 1e-9),
+        'nonrolling right hand keeps its native pose');
+    } else if (b.roll > .99999) {
+      assert.ok(Math.abs(b.rightFraction - 1 / 3) < 1e-5,
+        'actual palm hole reaches one third of the black grip, not a reported scalar alone');
+      settled++;
+    }
+  }
+  assert.ok(settled > 30, 'settled rolling is actually exercised');
+  assert.throws(() => assert.ok(Math.abs(before[89].rightFraction - 1 / 3) < 1e-5),
+    'the old right socket must fail the new position requirement');
+  const uncompensated = await trace('right-uncompensated');
+  assert.throws(() => sameContact(before, uncompensated), /live drum center must stay pinned/,
+    'moving the wrist without its inverse attachment cannot pass');
 });

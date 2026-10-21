@@ -72,7 +72,7 @@ export async function fixture(options = {}) {
     const native = !BUILT && upstream && (!productionComposition || adaptNative !== adaptConstrainedSource)
       ? adaptNative(relative, raw) : raw;
     const source = !BUILT && productionComposition && upstream ? adaptProduction(rel, raw)
-      : upstream ? native : adaptRuntime(rel, native);
+      : !upstream || (BUILT && rel.startsWith('patches/')) ? adaptRuntime(rel, native) : native;
     const mod = (generation ? generation.compile : cachedVmModule)(source, { context, identifier: file,
       initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } }); modules.set(file, mod); return mod;
   }
