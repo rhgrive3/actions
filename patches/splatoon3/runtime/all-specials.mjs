@@ -2085,7 +2085,8 @@ function activeStep(rt,actor,dt) {
     if(state.jumpAttack){
       const center=rt.v0.copy(actor.pos);center.y+=.65;
       damageBandRadius(rt,actor,center,[[2.65,60]],2.65,'krakenRoyale',state.jumpHits||(state.jumpHits=new Set()),3);
-      paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v1),1.2,nextSeed(state));
+      // The movement branch above owns contact-gated paint for jumps too.
+      // Do not project an airborne spinning attack onto a distant lower floor.
       if(actor.grounded||actor.climbing)state.jumpAttack=false;
     }
     if(edges.fire&&state.phase!=='dash'){

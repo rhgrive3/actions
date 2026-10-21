@@ -34,6 +34,8 @@ test('Kraken paints grounded normal travel at four-frame cadence, with no specia
  assert.equal(paints.length,15);assert.equal(turf,15);
  for(const p of paints){assert.equal(p.r,1.2);assert.equal(p.o.kind,'source-splash');assert.equal(p.o.claimMode,'no-special');assert.equal(p.o.face,0);assert.ok(Math.abs(p.o.stretchAmt-.2)<1e-9);}
  a.grounded=false;for(let i=0;i<30;i++)a._updateSpecial(1/60);assert.equal(paints.length,15,'air does not project paint to lower floor');
+ a._s3AllSpecialState.jumpAttack=true;
+ for(let i=0;i<30;i++)a._updateSpecial(1/60);assert.equal(paints.length,15,'airborne jump attack cannot bypass local contact paint');
  a.grounded=true;f.G.physics.raycast=(_a,_b,_c,out)=>Object.assign(out,{hit:false});
  for(let i=0;i<30;i++)a._updateSpecial(1/60);assert.equal(paints.length,15,'missing contact does not paint distant floor');
 });
