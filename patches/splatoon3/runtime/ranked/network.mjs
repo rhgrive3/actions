@@ -11,6 +11,20 @@ export const actorId = a => String(a.nid ?? `${a.team}:${a.slot}`);
 const finiteVector = v => Array.isArray(v) && v.length === 3 && v.every(n => Number.isFinite(n) && Math.abs(n) <= 2000);
 function current(nm) { return !nm._disposed && !nm.match?._disposed && nm.match?.ranked && nm._rankedAPI.G.netm === nm; }
 function envelope(nm, data) { return { ...data, match: nm.cfg.id, host: nm.s.hostId }; }
+// Host-known facts for pose admission (#1648): the host's own receive clock
+// and the relocation targets this host can see for the owner's team.
+function rankedPoseContext(nm, m, api) {
+  const { G } = api, level = G.level, clock = globalThis.performance?.now?.();
+  return {
+    now: Number.isFinite(clock) ? clock / 1000 : null, level, fallDeathY: api.PLAYER?.fallDeathY,
+    landings: actor => [level?.homeSuperJumpPoints?.[actor.team], level?.spawnPads?.[actor.team],
+      ...(G.bigBubblerJumpTargets?.(actor.team) || []).map(t => t?.pos)],
+    allies: actor => m.actors.filter(a => a !== actor && a.team === actor.team && a.alive && !a.s3Disconnected).flatMap(a => {
+      const pose = a.remote ? nm.rankedPose?.get(actorId(a)) : null;
+      return [pose?.actor === a ? pose.last.pos : a.pos, a.superJumpGround, a.superJumpState?.to];
+    }),
+  };
+}
 
 export function installRankedNetwork(api) {
   const { NetMatch, G } = api, P = NetMatch.prototype;
@@ -119,14 +133,14 @@ export function installRankedNetwork(api) {
     const stagedPoses = [], session = this.s;
     if (d.k === 't' && this.isHost && Array.isArray(d.a)) {
       this.rankedPose ||= new Map();
-      const accepted = [];
+      const accepted = [], poseContext = rankedPoseContext(this, m, api);
       for (const row of d.a) {
         const actor = this.byNid.get(row?.[0]);
         if (!actor?.remote || actor.owner !== from) continue;
         const id = actorId(actor), previous = this.rankedPose.get(id);
         const state = previous?.actor === actor && previous.match === m && previous.session === session && previous.owner === from
           ? { ...previous } : {};
-        if (!admitRankedPose(state, row, actor, d.ts, m.rankedWorld)) continue;
+        if (!admitRankedPose(state, row, actor, d.ts, m.rankedWorld, poseContext)) continue;
         stagedPoses.push({ id, actor, row, state, tail: actor.net?.buf?.at(-1) });
         accepted.push(row);
       }

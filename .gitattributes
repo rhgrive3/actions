@@ -1,0 +1,21 @@
+# INKWAVE repository attributes & lightweight archive rules
+* text=auto eol=lf
+
+# Binary 3D authoring and media assets
+*.blend binary
+*.glb binary
+*.bin binary
+*.gz binary
+*.zip binary
+*.woff2 binary
+*.mp3 binary
+*.webp binary
+*.png binary
+*.jpg binary
+
+# Exclude heavy authoring intermediates and historical evidence from git archive exports
+tools/inkwave-modeler/blender/** export-ignore
+tools/inkwave-modeler/docs/** export-ignore
+reports/** export-ignore
+triggers/** export-ignore
+lanes/** export-ignore

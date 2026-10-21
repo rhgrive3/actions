@@ -1,7 +1,24 @@
 // Build-only, dependency-free PNG8 grayscale lossless re-encoder.
 // Lightmaps remain fully precached. Source assets are never rewritten.
 // PNG row predictors and zlib are defined by the PNG specification.
-import { inflateSync, deflateSync, crc32 } from 'node:zlib';
+import * as zlib from 'node:zlib';
+const { inflateSync, deflateSync } = zlib;
+
+const makeCrcTable = () => {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table[i] = c;
+  }
+  return table;
+};
+const CRC_TABLE = makeCrcTable();
+export const crc32 = zlib.crc32 || function(buf) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+};
 
 const SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 

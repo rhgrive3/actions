@@ -242,3 +242,18 @@ firing clip (the `JumpShoot_Blower00` correspondence is not established);
 per-family joint curves; whether a firing jump's legs should differ from an
 ordinary jump; and Switch, GPU and browser parity. No movement, collision, jump
 timing, damage, ink, weapon admission/cooldown or packet behavior was changed.
+
+## 2026-10-21 addendum: what the loaded source rig actually plays
+
+With the Wii U source bank loaded (production), `HumanRetarget.apply` owns the hips and legs of every
+catalog weapon in the air, so this module's local leg calibration changes no rendered bone (0 m foot
+difference, layer on vs off, for Shooter, Splatling, Roller and Slosher); it applies only before the
+bank has loaded. The clips actually played for a non-firing jump from rest are recorded by
+`tests/source-jump-family.test.mjs`: `Jump_Nrml00_St/00/_Ed` for Shooter, Blaster, Charger (no
+`Jump_Chrg00` in the bank), Dualies (no source family), Roller and Slosher (owner-selected `Nrml`
+source body), and the Splatling's own `Jump_Glng00` family. The Player00 bank names that Splatling start
+`Jump_Glngl00_St` (Player01: `Jump_Glng00_St`); the controller now resolves it, and keeps the take-off
+crossfade length fixed for the whole `air` state so the start -> body handover no longer re-blends the
+pre-jump ground pose. `Jump_Rllr00` and `Jump_BBll00` exist but stay unused: their `_Ed` ends are
+authored into the Wii U Roller/Slosher idles that the owner replaced with `Nrml`, and no Splatoon 3
+footage comparison of the airborne pose exists yet. See the behavior report entry of 2026-10-21.
