@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {fixture} from '../../network-replication/tests/robustness-fixture.mjs';
+import {RANKED_POSE_LIMITS as L} from '../runtime/ranked/pose-admission.mjs';
 const f=await fixture({productionComposition:true,includeMatch:true,rankedNetwork:true});
 
 function rig(label,{power=[0,0,0],blocked=()=>false}={}){
@@ -102,4 +103,57 @@ for(const change of ['session','owner'])check(`native acceptance callback ${chan
  buf.push=function(...snap){const result=push.apply(this,snap);if(change==='session')r.nm.s={...r.nm.s};else r.a.owner='p3';return result;};
  r.send([0,0,1]);buf.push=push;
  assert.equal(r.nm.rankedPose.get('0'),before);assert.equal(frame(r).alive,false);
+});
+
+// #1648 relocation epochs through the production native snapshot path. The
+// adoption sidecar carries the owner's committed Super Jump from/to (#412).
+function jumpRig(label,landing){
+ const level=f.G.level,saved={home:level.homeSuperJumpPoints,pads:level.spawnPads};
+ level.homeSuperJumpPoints=[{x:landing[0],y:landing[1],z:landing[2]},{x:0,y:0,z:-60}];
+ level.spawnPads=[{x:0,y:0,z:-30},{x:0,y:0,z:60}];
+ const r=rig(label,{power:[0,0,27]});let seq=0;
+ r.jump=(pos,flags,jump,ts=f.clock.now())=>r.send(pos,{flags,ts,mutate:row=>{const u=Math.round(ts*60);
+  row.push(jump?.t??0,0,['inkwave-adoption-v1',0,++seq,u,0,jump?[jump.phase,jump.t,jump.dur,...jump.from,...jump.to,0,0,0,-1,0,0,0]:null,null,null,0,null]);}});
+ r.restore=()=>{level.homeSuperJumpPoints=saved.home;level.spawnPads=saved.pads;};
+ return r;
+}
+function flyTo(r,to,{claimed=to}={}){
+ const flight=[];
+ r.jump([0,0,0],17,null);r.tick(3);
+ for(let i=0;i<16;i++){r.jump([0,0,0],1|16384,{phase:0,t:i*.05,dur:0,from:[0,0,0],to:[0,0,0]});r.tick(3);}
+ const from=[0,0,0],d=Math.hypot(to[0],to[2]),dur=1.15+Math.min(.6,d/80),apex=11+d*.08;let t=0;
+ while(t<dur-1e-9){t=Math.min(dur,t+.05);const k=t/dur,e=k<.5?2*k*k:1-(-2*k+2)**2/2;
+  const p=[to[0]*e,Math.sin(Math.PI*k**.86)*apex,to[2]*e];
+  r.jump(p,1|32768,{phase:1,t,dur,from,to:claimed});flight.push({t,sent:p,objective:[...frame(r).pos]});r.tick(3);}
+ for(let i=0;i<10;i++){r.jump(to,17,null);r.tick(3);}
+ return flight;
+}
+test('legitimate Super Jump home is admitted through its flight and may pick up there',()=>{
+ const r=jumpRig('sj-home',[0,0,27]);
+ try{const flight=flyTo(r,[0,0,27]);
+  for(const s of flight)assert.ok(s.objective.every((v,i)=>Math.abs(v-s.sent[i])<.001),`flight sample ${s.t}: ${s.objective}`);
+  assert.equal(JSON.stringify(frame(r).pos),'[0,0,27]');r.tick(10);
+  assert.equal(r.rule.state.inventories['0']?.power,true);}
+ finally{r.nm.dispose();r.restore();}
+});
+test('Super Jump to an unlisted destination keeps the pre-jump objective pose',()=>{
+ const r=jumpRig('sj-forged',[0,0,-27]);
+ try{const flight=flyTo(r,[0,0,60]);
+  // Unapproved flight samples are judged as ordinary movement: the objective
+  // pose advances no faster than the sustained budget, never along the arc.
+  for(const s of flight)assert.ok(s.objective[2]<=L.sustainedSpeed*s.t+L.burst+L.sustainedSpeed*L.clockSlack+1,`flight sample ${s.t}: ${s.objective}`);
+  assert.ok(flight.at(-1).objective[2]<60-20);}
+ finally{r.nm.dispose();r.restore();}
+});
+check('forged sender clock cannot carry the objective pose to the clam',r=>{
+ r.send();r.tick(3);
+ // Each real 50 ms packet claims 0.35 s and the original 1+18·0.35 WU step.
+ for(let i=1;i<=6;i++){r.send([0,0,7.3*i],{ts:1000+.35*i});r.tick(3);}
+ assert.ok(frame(r).pos[2]<8,`objective z ${frame(r).pos[2]}`);r.tick(10);
+ assert.equal(r.rule.state.inventories['0']?.power??false,false);
+});
+check('grounded objective support follows the admitted row, not the proxy',r=>{
+ r.send([0,0,0],{flags:1});r.tick(3);r.a.grounded=true;
+ assert.equal(frame(r).grounded,false);
+ r.send([0,0,0],{flags:17});assert.equal(frame(r).grounded,true);
 });
