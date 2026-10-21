@@ -26,7 +26,7 @@ export function createSwimFilmGeometry() {
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3).setUsage(THREE.DynamicDrawUsage));
   g.setAttribute('filmData',new THREE.Float32BufferAttribute(data,3));
-  g.setIndex(indices);g.userData.patches=patches;
+  g.setIndex(indices);g.userData.patches=patches;g.userData.filmHoles=Array.from({length:6},()=>new THREE.Vector4());
   g.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,.2,-.25),1.6);
   updateSwimFilmGeometry(g,0,1);
   return g;
@@ -34,6 +34,8 @@ export function createSwimFilmGeometry() {
 
 export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
   const p=g.attributes.position.array,k=clamp(speedK),flow=time*24;
+  const holes=g.userData.filmHoles;
+  for(let i=0;i<6;i++)holes[i].set(.12+.76*fract(i*.381966+.17)+.035*Math.sin(time*7+i*2.3),.28+.65*fract(i*.618034+.11)+.025*Math.cos(time*9+i*1.7),.065+.035*Math.sin(time*11+i*3.1),.045+.025*Math.cos(time*13+i*2.7));
   for(const patch of g.userData.patches){
     const {kind,start,nu,nv}=patch;
     for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){
@@ -49,6 +51,11 @@ export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
         const bow=(.09+.06*k)*Math.exp(-(((v-.20)/.25)**2))*Math.pow(Math.max(0,edge),.75)*Math.min(1,v/.12);
         const wrinkle=.04*k*(Math.sin(u*11+v*17-flow)+.5*Math.sin(u*17-v*9+flow*.8))*envelope;
         y=.006+bow+(.025+.04*k)*envelope+wrinkle;x+=turn*.04*v*v;
+        // Rounded, lifted menisci at the tears make a liquid edge, rather
+        // than a hole cut in a flat cloth. The same holes drive the material.
+        for(const hole of holes){const d=Math.hypot((u-hole.x)/hole.z,(v-hole.y)/hole.w);y+=(.018+.015*k)*Math.exp(-(((d-1)/.35)**2));}
+        const edgeU=.45+.05*Math.sin(v*31-time*11);
+        y+=.025*span*span*(Math.exp(-(((u-(.5-edgeU+.02))/.035)**2))+Math.exp(-(((u-(.5+edgeU-.02))/.035)**2)));
       }else{
         const piece=kind-4,side=piece%2?-1:1;
         const phase=((time*4.7+piece*.269)%1),pulse=Math.sin(Math.PI*phase);
@@ -63,9 +70,9 @@ export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
   g.attributes.position.needsUpdate=true;g.computeVertexNormals();
 }
 
-function material(light) {
+function material(light,filmHoles) {
   const m=new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.16,metalness:0,clearcoat:1,clearcoatRoughness:.04,envMapIntensity:.9,side:THREE.DoubleSide});
-  const time={value:0},holes={value:Array.from({length:6},()=>new THREE.Vector4())};m.userData.filmTime=time;m.userData.filmHoles=holes;
+  const time={value:0},holes={value:filmHoles};m.userData.filmTime=time;m.userData.filmHoles=holes;
   m.customProgramCacheKey=()=> 'inkwave-swim-continuous-film-v1';
   m.onBeforeCompile=shader=>{
     shader.uniforms.uFilmTime=time;shader.uniforms.uFilmHoles=holes;shader.uniforms.uFilmSun={value:light.sunDir};
@@ -94,7 +101,7 @@ function material(light) {
       float filmShine=pow(max(dot(normal,filmHalf),0.0),85.0);
       float filmRim=pow(1.0-abs(dot(normal,filmEye)),2.0);
       float filmBroad=pow(max(dot(normal,filmHalf),0.0),16.0);
-      gl_FragColor.rgb+=vec3(1.0,.99,.94)*(filmShine*1.2+filmRim*.25+filmBroad*.15);
+      gl_FragColor.rgb+=vec3(1.0,.99,.94)*(filmShine*1.2+filmRim*.6+filmBroad*.45);
     `);
   };
   return m;
@@ -111,7 +118,7 @@ class SwimSurface {
     let s=this.slots.find(s=>s.actor===actor);
     if(!s)s=this.slots.find(s=>!s.actor);
     if(!s&&this.slots.length<LIMIT){
-      const geometry=createSwimFilmGeometry(),mesh=new THREE.Mesh(geometry,material(fx._light));
+      const geometry=createSwimFilmGeometry(),mesh=new THREE.Mesh(geometry,material(fx._light,geometry.userData.filmHoles));
       mesh.name='InkSwimFilm';mesh.frustumCulled=false;mesh.visible=false;mesh.castShadow=false;mesh.receiveShadow=false;
       this.root.add(mesh);s={actor:null,mesh,last:0,yaw:0,phase:this.slots.length*1.37,basis:new THREE.Matrix4(),up:new THREE.Vector3(),forward:new THREE.Vector3(),right:new THREE.Vector3()};this.slots.push(s);
     }
@@ -132,9 +139,7 @@ class SwimSurface {
       s.basis.makeBasis(s.right,s.up,s.forward);
       s.mesh.position.copy(a.pos);s.mesh.quaternion.setFromRotationMatrix(s.basis);s.mesh.material.color.copy(a.color);
       const t=this.time+s.phase;s.mesh.material.userData.filmTime.value=t;
-      for(let i=0;i<6;i++){
-        s.mesh.material.userData.filmHoles.value[i].set(.12+.76*fract(i*.381966+.17)+.035*Math.sin(t*7+i*2.3),.28+.65*fract(i*.618034+.11)+.025*Math.cos(t*9+i*1.7),.065+.035*Math.sin(t*11+i*3.1),.045+.025*Math.cos(t*13+i*2.7));
-      }
+
       updateSwimFilmGeometry(s.mesh.geometry,this.time+s.phase,sp/11.8,clamp(delta/Math.max(1e-4,fx._dt)*.04,-1,1));
     }
   }
