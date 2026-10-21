@@ -50,7 +50,7 @@ driver=once(driver,"      G.projectiles.clear(); G.fx.clear?.();",nativeReset+`
 
 driver=once(driver,'      const n0 = G.projectiles.list.length;',`      const rig=G.rig;
       window.explosherPreShot={aimPoint:a.aimPoint.toArray(),aimDir:a.aimDir.toArray(),aimYaw:a.aimYaw,aimPitch:a.aimPitch,
-        rig:{time:rig.time,yaw:rig.yaw,pitch:rig.pitch,shakeSeed:rig.shakeSeed,trauma:rig.trauma,pendingTrauma:rig._traumaIn,fovKick:rig.fovKick,
+        rig:{shoulder:rig.shoulder??0,diagnosticShoulderInitial:window.explosherShoulderInitial,time:rig.time,yaw:rig.yaw,pitch:rig.pitch,shakeSeed:rig.shakeSeed,trauma:rig.trauma,pendingTrauma:rig._traumaIn,fovKick:rig.fovKick,
           mode:rig.mode,previousMode:rig._prevMode,previousTargetMatches:rig._prevTarget===a,mapK:rig.mapK,mapOpen:rig.mapOpen,
           superJumpWasFlight:rig._sjWasFlight,superJumpLandTime:rig._sjLandT,
           dip:{x:rig.dipS.x,v:rig.dipS.v},blend:rig.blend?{active:rig.blend.active,t:rig.blend.t,dur:rig.blend.dur,
@@ -71,7 +71,10 @@ driver=once(driver,'      window.shapeTick = 0;',`      G.projectiles._aimFrom=a
       window.shapeTick = 0;`);
 driver=once(driver,'      window.shapeAim = aim; aim();',`      window.shapeAim = aim; aim();
       // Normal camera snap clears retained follow springs without changing shot physics.
-      G.rig.follow(a,true);G.rig.update(0);`);
+      G.rig.follow(a,true);
+      // Diagnostic only: follow snap omits shoulder; native first-follow uses undefined || 0.
+      G.rig.shoulder=0;window.explosherShoulderInitial=0;
+      G.rig.update(0);`);
 
 driver=once(driver,'      g.debug.fire(true);',`      window.resetExplosherRandom();
       G.time=0;g.time=0;g.rig.time=0;

@@ -66,3 +66,8 @@ PNG acquisition is still blocked by environment storage and Library scope; no im
 Run 39624988660 also rejected strict tick-0 physical equality after both nonempty 18-frame captures passed admission. The observed tick-0 position minus velocity/60 was exactly identical on both sides: [22.887363783504767,0.6155094993067594,-17.450669513060834]. Remaining difference is the emitted direction, not a different muzzle origin.
 The diagnostic now invokes the existing CameraRig.follow(actor,true) snap after canonical placement, on both sides. It records pre-shot aimPoint/aimDir, camera springs/gameCam, and a transparent read-only trace of the normal _aimFrom calls. No projectile is fabricated.
 One-frame preflights must first pass exact trace/physics/camera equality before the full 36-image pair runs. Failures remain failures, with no tolerance relaxation. Production source is unchanged.
+
+## Shoulder-history preflight correction
+Run 39628749184 stopped at the short preflight, before long captures. Its actual normal _aimFrom trace proved equal muzzle/seed/direction intent but a differing aimPoint.x. All recorded active springs matched; the remaining camera position offset comes from CameraRig._follow's shoulder damping, which follow(actor,true) does not reset.
+The diagnostic initializes shoulder to the native first-follow effective value (undefined || 0) on both sides before fixed stepping and records that initial value. This is not a production camera change or post-hoc rounding. Strict effective pre-shot, aim-trace and physical equality remain required.
+Whole-scene triangle/geometry counts differed between the rejected pair (startup/render history was unequal). They are not reported as a glitter cost improvement or pass.
