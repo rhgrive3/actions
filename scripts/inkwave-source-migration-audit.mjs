@@ -5,6 +5,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
+import { adaptLobbyResources } from '../patches/local-quality/lobby-resource-adapter.mjs';
+import { adaptQualitySource, replaceOnce } from '../patches/local-quality/adapter.mjs';
+import { adaptMotionFkHotpath } from '../patches/local-quality/motion-fk-hotpath-adapter.mjs';
+import { adaptWeaponLodMaterialPacking } from '../patches/splatoon3/weapon-lod-material-packing-adapter.mjs';
+import { adaptNet } from '../patches/reliability/net-adapter.mjs';
+import { adaptNetworkSource } from '../patches/network-replication/adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
@@ -12,6 +18,10 @@ const normalize = p => p.split(path.sep).join('/');
 const DIRECT = Object.freeze([
   'src/game/nav.js',
   'src/game/inkCollision.js',
+  'src/game/character-lod.js',
+  'src/game/character-outfit.js',
+  'src/game/motion/body-balance.js',
+  'src/game/motion/source-bank.js',
   'src/world/murals.js',
   'src/world/stages/index.js',
   'src/world/stages/surfaces.js',
@@ -21,6 +31,38 @@ const DIRECT = Object.freeze([
   'src/game/lobbySet-tex.js',
   'patches/splatoon3/runtime/weapons-collision.mjs',
 ]);
+
+function expectedDirectOutput(rel, original) {
+  if (rel === 'src/game/inkCollision.js') {
+    return original.replace(
+      "from '../../../patches/native-stages/runtime/native-projectile-sweep.mjs'",
+      "from '../../patches/native-stages/runtime/native-projectile-sweep.mjs'"
+    );
+  }
+  if (rel === 'src/game/lobbySet-tex.js') {
+    return adaptLobbyResources(rel, original);
+  }
+  if (rel === 'src/game/character-lod.js') {
+    if (adaptQualitySource(rel, original) !== original) {
+      throw new Error('character-lod.js still rewritten by local-quality hotpath adapter');
+    }
+    return adaptWeaponLodMaterialPacking(rel, original);
+  }
+  if (rel === 'src/game/motion/body-balance.js') {
+    const withFkRange = adaptMotionFkHotpath(rel, original, replaceOnce);
+    if (adaptQualitySource(rel, original) !== withFkRange) {
+      throw new Error('body-balance.js still rewritten by local-quality engine performance hotpath adapter');
+    }
+    return withFkRange;
+  }
+  if (rel === 'src/net/transport.js') {
+    if (adaptNet(rel, original) !== original) {
+      throw new Error('transport.js still rewritten by reliability compat adapter');
+    }
+    return adaptNetworkSource(rel, adaptQualitySource(rel, original));
+  }
+  return original;
+}
 
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -62,8 +104,15 @@ export function auditDirectSource({ includePaths = false } = {}) {
     totalComposedBytes += after;
     examined++;
     if (DIRECT.includes(rel)) {
-      if (composed !== original) failures.push({ path: rel, error: 'Direct-owned source is still rewritten at build time' });
-      else directVerified.push(rel);
+      try {
+        if (composed !== expectedDirectOutput(rel, original)) {
+          failures.push({ path: rel, error: 'Direct-owned source is still rewritten at build time' });
+        } else {
+          directVerified.push(rel);
+        }
+      } catch (e) {
+        failures.push({ path: rel, error: String(e.message || e) });
+      }
     }
     if (composed !== original) changed.push({ path: rel, sourceBytes: before, composedBytes: after, deltaBytes: after - before });
   }
