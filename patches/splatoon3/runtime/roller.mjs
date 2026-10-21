@@ -762,10 +762,34 @@ function s3SwingPose(elapsed, windup, interval, keys, heavy, held = false) {
 export function horizontalRollerPose(elapsed, windup, interval, shape = null, held = false) {
   return s3SwingPose(elapsed, windup, interval, HORIZONTAL_GRIPS, shape === 'heavy', held);
 }
+// Splat Roller vertical footage NablZy7jqxO, 60fps: wind back through
+// f400-420, last upward turn f422-424, ink f426, low follow-through f430-440,
+// carry returning f442-448. These are presentation fits, not input-frame data.
+// The horizontal early lift/long overhead hold is not the vertical trajectory.
+export const VERTICAL_ROLLER_SWING = Object.freeze({ whip: 4 / 60, crestLead: 2 / 60,
+  settle: 5 / 60, ret: 10 / 60, source: 'Nintendo NablZy7jqxO f400-448; normalized to live release' });
 // The X axis across the drum turns upright around the handle (local +Z).
 // This is a pose target for the existing two-arm IK, not a second bone rig.
 export function verticalRollerPose(elapsed, windup, interval, shape = null, held = false) {
-  return s3SwingPose(elapsed, windup, interval, VERTICAL_GRIPS, shape === 'heavy', held);
+  // Keep the separately calibrated Dynamo path until its vertical footage is measured.
+  if (shape === 'heavy') return s3SwingPose(elapsed, windup, interval, VERTICAL_GRIPS, true, held);
+  const V = VERTICAL_ROLLER_SWING, release = Math.max(1e-6, windup);
+  const whip = Math.min(V.whip, release * .3), hold = release - whip;
+  const crest = release - Math.min(V.crestLead, whip * .5);
+  const end = Math.max(release + 2 / 60, interval);
+  const settle = release + Math.min(V.settle, (end - release) * .35);
+  const back = Math.max(settle + (end - settle) * .1, end - V.ret);
+  const keys = [VERTICAL_GRIPS[0],
+    { a: [.015, .88, .30], r: [-2.85, .03, 1.12] },
+    { a: [.025, 1.00, .04], r: [-2.80, .02, 1.48] },
+    VERTICAL_GRIPS[1],
+    { a: [.005, 1.15, .10], r: [-1.90, .01, Math.PI / 2] },
+    VERTICAL_GRIPS[2], VERTICAL_GRIPS[3], VERTICAL_GRIPS[3], held ? ROLL_GRIP : VERTICAL_GRIPS[4]];
+  const times = [0, hold * .25, hold * .65, hold, crest, release, settle, back, end];
+  const t = Math.max(0, Math.min(end, elapsed)), pose = hermiteKeys(keys, times, t);
+  return { ...pose, weight: ease(t / (2 / 60)) * (held ? 1 : 1 - ease((t - back) / (end - back))),
+    coil: ease(t / hold) * (1 - ease((t - hold) / whip)),
+    whip: ease((t - hold) / whip) * (1 - ease((t - back) / (end - back))) };
 }
 
 export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }, _profile) {

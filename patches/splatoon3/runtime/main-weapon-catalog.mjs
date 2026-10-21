@@ -1,5 +1,6 @@
 import { brellaPelletSpeed, canopyEntry, withProjectileHitGeometry, validProjectileHitGeometry } from './brella-physics.mjs';
 import { familyDescription } from './content-language.mjs';
+import { usesBucketSlosherSheet } from './projectile-visuals.mjs';
 import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
@@ -405,7 +406,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (a.isLocal || a._nearCamera?.()) {
       G.audio?.play(r.family==='charger'?'shoot_charger':r.family==='blaster'?'shoot_blaster':'shoot_shooter',
         {pos:a.isLocal?undefined:origin,volume:.45});
-      G.fx?.muzzle(origin,direction,a.color,r.family==='blaster'?'blaster':'shooter');
+      if(!usesBucketSlosherSheet(r.id))G.fx?.muzzle(origin,direction,a.color,r.family==='blaster'?'blaster':'shooter');
     }
   }
   function origin(a, hand=null, offset=null) {

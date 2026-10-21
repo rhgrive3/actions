@@ -3,6 +3,7 @@
 // The source does not publish a matching shooter pixel/mesh radius. The bounded
 // shooter cross-section multiplier below is an INKWAVE visual calibration,
 // never used for player or field collision, damage, trajectory or turf paint.
+import { sharedBucketDraw } from './projectile-visuals.mjs';
 const finite=(v,f)=>Number.isFinite(v)?v:f;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -32,7 +33,7 @@ export const SOURCE_DRAW_1130=Object.freeze(Object.fromEntries(
 
 export function catalogVisualSpec(record,descriptor,index=0){
   const family=record?.family, b=descriptor?.b||{}, c=descriptor?.c||{};
-  const draw=b.DrawSizeParam||b.UnitParam?.DrawSizeParam||SOURCE_DRAW_1130[record?.sourceActor]?.[descriptor?.unit]||null;
+  const draw=sharedBucketDraw({catalog:{r:record,descriptor}})||b.DrawSizeParam||b.UnitParam?.DrawSizeParam||SOURCE_DRAW_1130[record?.sourceActor]?.[descriptor?.unit]||null;
   if(family==='slosher'){
     return {style:record.sourceActor==='WeaponSlosherBathtub'?'bubble':'sheet',
       draw,index,baseRadius:.18,tailMin:Math.max(0,finite(draw?.TailLengthMin,0)),

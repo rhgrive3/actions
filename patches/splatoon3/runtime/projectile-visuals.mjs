@@ -35,7 +35,7 @@ for(let i=0;i<SIDES;i++){
   SECTION_COS5[i]=cos(a*5);SECTION_SIN5[i]=sin(a*5);
 }
 const SHAPE_PROFILES=Object.create(null);
-for(const kind of ['shooter','bubble','explosive','spiral','bucket-front','bucket-rear','roller-horizontal','roller-vertical','tri-sheet','paired-sheet']) {
+for(const kind of ['shooter','bubble','explosive','spiral','bucket-front','bucket-rear','roller-horizontal','roller-vertical']) {
   const profile=SHAPE_PROFILES[kind]={width:new Float64Array(RINGS),thickness:new Float64Array(RINGS),axial:new Float64Array(RINGS),
     sphere:kind==='bubble'||kind==='explosive'||kind==='spiral'};
   for(let ring=0;ring<RINGS;ring++) {
@@ -49,8 +49,6 @@ for(const kind of ['shooter','bubble','explosive','spiral','bucket-front','bucke
       else if(kind==='bucket-rear'){width=.16+.84*pow(u,1.55);thin=.12+.12*u;}
       else if(kind==='roller-horizontal'){width=.42+.58*pow(sin(Math.PI*u),.4);thin=.24;}
       else if(kind==='roller-vertical'){width=.22+.78*u;thin=.48;}
-      else if(kind==='tri-sheet'){width=.30+.70*sin(Math.PI*u);thin=.30;}
-      else if(kind==='paired-sheet'){width=.38+.62*sin(Math.PI*u);thin=.26;}
     }
     profile.width[ring]=width*cap;profile.thickness[ring]=width*thin*cap;profile.axial[ring]=axial;
   }
@@ -73,6 +71,28 @@ const sourceOf = p => PROJECTILE_VISUAL_SOURCE[actorOf(p)];
 // freezes flight age. The visual timeline follows that clock without editing
 // the projectile age, integration, collision, paint or network state.
 const visualAge = p => finite(p?.age)+finite(p?.fidelityWallDrop?.frame)/HISTORY_HZ;
+// Reuse Bucket's complete drawn envelope, not just the texture. The catalogue
+// derivatives previously kept their own short/zero-offset draw radii and tails,
+// so the same atlas still appeared as separate little beads. Their trajectories,
+// unit counts, fan angles, birth delays and damage remain owned by gameplay.
+export function sharedBucketDraw(p) {
+  const actor = actorOf(p);
+  if (actor !== 'WeaponSlosherDiffusion' && actor !== 'WeaponSlosherDouble') return null;
+  const rear = p.catalog?.descriptor?.unit === 1;
+  return PROJECTILE_VISUAL_SOURCE.WeaponSlosherStrong.slosh[rear ? 2 : 1].drawSize;
+}
+export function sharedBucketTailLength(p, speed) {
+  const d = sharedBucketDraw(p);
+  if (!d) return null;
+  return Math.max(d.TailLengthMin, Math.min(d.TailLengthMax,
+    Math.max(0, speed) * Math.min(Math.max(0, p.age || 0), d.TailSolidFrame / HISTORY_HZ)));
+}
+export function bucketSheetProjectile(p) {
+  return usesBucketSlosherSheet(p?.wid) && (p.type === 'slosh' || p.catalog?.descriptor?.key === 'slosh');
+}
+export function bucketSheetHead(p) {
+  return !!p.head || !!sharedBucketDraw(p) && p.catalog?.descriptor?.index === 0;
+}
 function renderAge(p, alpha) {
   // A stalled remote peer stays at its playback endpoint; every connected
   // surface must use the same clock as its head, including wall-drop links.
@@ -150,7 +170,7 @@ export function projectileVisualKind(p) {
   if(actor==='WeaponSlosherLauncher')return 'spiral';
   if(actor==='WeaponSlosherWashtub')return 'explosive';
   // Tri-Slosher and Dread Wringer share the Bucket sheet (see BUCKET_SHEET_SLOSHERS).
-  if(actor==='WeaponSlosherDiffusion'||actor==='WeaponSlosherDouble')return 'bucket-front';
+  if(sharedBucketDraw(p))return p.catalog?.descriptor?.unit===1?'bucket-rear':'bucket-front';
   if(actor==='WeaponSlosherStrong' || p.type==='slosh' && usesBucketSlosherSheet(p.wid)) {
     const u=p.catalog?.descriptor?.unit;
     return u!=null ? (u===2?'bucket-rear':'bucket-front') :
@@ -163,6 +183,8 @@ export function projectileVisualKind(p) {
 }
 
 function drawRecord(p) {
+  const bucket = sharedBucketDraw(p);
+  if (bucket) return bucket;
   if(p.fidelitySloshDraw)return p.fidelitySloshDraw;
   if(p.fidelityDrawRadius&&!p.catalog&&(p.fidelityMode==='horizontal'||p.fidelityMode==='vertical'||p.wid==='roller'))return p.fidelityDrawRadius;
   const source=sourceOf(p), descriptor=p.catalog?.descriptor;
@@ -458,8 +480,7 @@ export class ProjectileVisualRuntime {
       this.colorDirtyStart=min(this.colorDirtyStart,start);this.colorDirtyEnd=max(this.colorDirtyEnd,end);
     }
     const lobeMode=kind==='roller-horizontal'?1:kind==='roller-vertical'&&petalCenter+petalRate>0?2:
-      kind==='tri-sheet'?3:kind==='spiral'?4:kind==='explosive'?5:0;
-    const cSeed3=lobeMode===3?cos(seed*3):0,sSeed3=lobeMode===3?sin(seed*3):0;
+      kind==='spiral'?4:kind==='explosive'?5:0;
     const invPetal=lobeMode===2?1/(petalCenter+petalRate):0;
     for(let ring=0;ring<RINGS;ring++) {
       const before=ring>0?ring-1:0,after=ring<RINGS-1?ring+1:RINGS-1;
@@ -488,7 +509,6 @@ export class ProjectileVisualRuntime {
           lobe=.86+.14*(u2*u2);
         }
         else if(lobeMode===2)lobe=(petalCenter+petalRate*SECTION_COS4[side])*invPetal;
-        else if(lobeMode===3)lobe=.78+.22*max(0,SECTION_COS3[side]*cSeed3-SECTION_SIN3[side]*sSeed3);
         else if(lobeMode===4)lobe=.86+.14*(SECTION_COS3[side]*cPh-SECTION_SIN3[side]*sPh);
         else if(lobeMode===5)lobe=.92+.08*(SECTION_SIN5[side]*cPh+SECTION_COS5[side]*sPh);
         const x=cs*width*lobe,y=sn*thickness*lobe,vertex=(base+ring*SIDES+side)*3;

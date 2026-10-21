@@ -1206,6 +1206,14 @@ export function adaptSource(rel, code) {
     return `import { swimTrailVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/fx/fxHooks.js') {
+    code = replaceOnce(code, "      const slosh = p.type === 'slosh';",
+      "      const slosh = p.type === 'slosh' || bucketSheetProjectile(p);", 'shared Bucket flight droplets');
+    code = replaceOnce(code, '      if (slosh && p.head) {', '      if (slosh && bucketSheetHead(p)) {', 'shared Bucket head tracking');
+    code = replaceOnce(code, "slosh ? (p.head ? 0.45 : 1.0)", "slosh ? (bucketSheetHead(p) ? 0.45 : 1.0)", 'shared Bucket droplet spacing');
+    code = replaceOnce(code, 'p.owner.color, !!p.head); else', 'p.owner.color, bucketSheetHead(p)); else', 'shared Bucket head droplets');
+    code = replaceOnce(code, "if (h.stamp === this.stamp && p.type === 'slosh' && p.head) return;",
+      "if (h.stamp === this.stamp && (p.type === 'slosh' || bucketSheetProjectile(p)) && bucketSheetHead(p)) return;", 'shared Bucket head retirement');
+    code = "import { bucketSheetProjectile, bucketSheetHead } from '../../patches/splatoon3/runtime/projectile-visuals.mjs';\n" + code;
     code = adaptChargerSightCache(rel, code, replaceOnce);
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
