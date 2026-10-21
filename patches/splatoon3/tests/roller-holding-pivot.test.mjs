@@ -2,24 +2,11 @@
 // Uses the existing production-composed native Actor fixture, not a new rig.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { compactModuleStrings } from '../../../scripts/lib/inkwave-source-compaction.mjs';
 import { fixture } from './source-fixture.mjs';
-
-// The published test site contains bundled/minified runtime modules, so the
-// original source-anchor fault injections cannot be applied to those emitted
-// modules. Load independent raw-source fixture owners only for negative controls;
-// the positive 'current' and 'right-enabled' traces still execute the actual
-// emitted build and are checked against those controls, without relaxing either
-// of the existing two physical contact assertions.
-const emittedSite = process.env.INKWAVE_BUILT_SITE;
-let faultFixture = fixture;
-if (emittedSite) {
-  delete process.env.INKWAVE_BUILT_SITE;
-  try {
-    faultFixture = (await import('./source-fixture.mjs?roller-holding-fault-controls')).fixture;
-  } finally {
-    process.env.INKWAVE_BUILT_SITE = emittedSite;
-  }
-}
 
 const SUPPORT_GATE = "if (limb === this.limbs.armL && this.weaponKind === 'roller' && this.kidForm && !this.dance &&";
 const PIVOT_GATE = 'if (neededGround && rollBlend > .001 && armLeftHeld && bound && rollAxisAligned && Number.isFinite(this.weapon.drumA)) {';
@@ -27,20 +14,39 @@ function exact(source, needle, replacement) {
   assert.equal(source.split(needle).length, 2, 'one current-source pivot anchor');
   return source.replace(needle, replacement);
 }
+function holdingVariant(mode, source) {
+  if (mode === 'right-disabled') return exact(source,
+    "if (contacting && armLeftHeld && d.modelId === 'roller' && rollBlend > .001 && Number.isFinite(d.modelScale)) {", 'if (false) {');
+  if (mode === 'right-uncompensated') return exact(source, 'this.weapon.off.position.sub(delta);', '// deliberate uncompensated attachment');
+  if (mode === 'left-disabled') return exact(source, SUPPORT_GATE, SUPPORT_GATE.replace('if (', 'if (false && '));
+  if (mode === 'control') return exact(source, PIVOT_GATE, PIVOT_GATE.replace('if (', 'if (false && '));
+  if (mode === 'off-center') return exact(source, 'target.copy(rollTarget);', 'target.copy(rollTarget).addScaledVector(rollAxis, .02);');
+  if (mode === 'lost-phase') return exact(source, 'rollDrum.rotation.x = this.weapon.drumA + lo;', 'rollDrum.rotation.x = this.weapon.drumA;');
+  return source;
+}
+const emittedCompiler = process.env.INKWAVE_BUILT_SITE ? await (async () => {
+  // Keep the real emitted module as the subject. Counterfactuals may use the
+  // source anchors only after reproducing its exact production output bytes.
+  const { transformSync } = await import(process.env.ESBUILD_MODULE
+    ? pathToFileURL(process.env.ESBUILD_MODULE).href : 'esbuild');
+  const canonical = fs.readFileSync(new URL('../runtime/roller.mjs', import.meta.url), 'utf8');
+  const rel = 'patches/splatoon3/runtime/roller.mjs';
+  const compile = code => compactModuleStrings(transformSync(adaptBuildSource(rel, code), {
+    loader: 'js', format: 'esm', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
+  }).code).code;
+  return { canonical, compile, original: compile(canonical) };
+})() : null;
+function holdingRuntimeVariant(mode, source) {
+  if (!emittedCompiler) return holdingVariant(mode, source);
+  assert.equal(source, emittedCompiler.original, 'actual emitted Roller must match the exact production compiler before fault injection');
+  const altered = holdingVariant(mode, emittedCompiler.canonical);
+  return altered === emittedCompiler.canonical ? source : emittedCompiler.compile(altered);
+}
 async function trace(mode) {
-  const sourceControl = emittedSite && mode !== 'current' && mode !== 'right-enabled';
-  const f = await (sourceControl ? faultFixture : fixture)({ fullRuntime: true, productionComposition: true, includeCharacter: true,
+  const f = await fixture({ fullRuntime: true, productionComposition: true, includeCharacter: true,
     realProjectiles: true, vmMathRandom: () => .4,
     adaptRuntime(rel, source) {
-      if (rel !== 'patches/splatoon3/runtime/roller.mjs') return source;
-      if (mode === 'right-disabled') return exact(source,
-        "if (contacting && armLeftHeld && d.modelId === 'roller' && rollBlend > .001 && Number.isFinite(d.modelScale)) {", 'if (false) {');
-      if (mode === 'right-uncompensated') return exact(source, 'this.weapon.off.position.sub(delta);', '// deliberate uncompensated attachment');
-      if (mode === 'left-disabled') return exact(source, SUPPORT_GATE, SUPPORT_GATE.replace('if (', 'if (false && '));
-      if (mode === 'control') return exact(source, PIVOT_GATE, PIVOT_GATE.replace('if (', 'if (false && '));
-      if (mode === 'off-center') return exact(source, 'target.copy(rollTarget);', 'target.copy(rollTarget).addScaledVector(rollAxis, .02);');
-      if (mode === 'lost-phase') return exact(source, 'rollDrum.rotation.x = this.weapon.drumA + lo;', 'rollDrum.rotation.x = this.weapon.drumA;');
-      return source;
+      return rel === 'patches/splatoon3/runtime/roller.mjs' ? holdingRuntimeVariant(mode, source) : source;
     } });
   const { G, THREE } = f, v = () => new THREE.Vector3();
   G.scene = new THREE.Scene();
