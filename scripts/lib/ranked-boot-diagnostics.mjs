@@ -19,7 +19,10 @@ export async function observeRankedBoot(page, url, receipt, start) {
   const response = r => { if(r.status()>=400 && criticalBootRequest(r.url(),r.request().resourceType(),url)) fail({kind:'critical-http',status:r.status(),url:r.url()}); };
   const requestfailed = r => { if(criticalBootRequest(r.url(),r.resourceType(),url)) fail({kind:'critical-request',url:r.url(),message:r.failure()?.errorText}); };
   const pageerror = e => fail({kind:'pageerror',message:e.message});
+  const crash = () => fail({kind:'browser-crash',message:'Browser renderer crashed while starting Ranked'});
+  const close = () => fail({kind:'page-close',message:'Ranked page closed before boot proof'});
   page.on('response',response); page.on('requestfailed',requestfailed); page.on('pageerror',pageerror);
+  page.on('crash',crash);page.on('close',close);
   try {
     await Promise.race([failure, (async()=>{
       await start();
@@ -36,5 +39,5 @@ export async function observeRankedBoot(page, url, receipt, start) {
     })()]);
     receipt.status='ready';
   } catch(error) { receipt.status='failed'; receipt.error=error.message; throw error; }
-  finally {finished=true;receipt.finishedAt=new Date().toISOString();page.off('response',response);page.off('requestfailed',requestfailed);page.off('pageerror',pageerror);}
+  finally {finished=true;receipt.finishedAt=new Date().toISOString();page.off('response',response);page.off('requestfailed',requestfailed);page.off('pageerror',pageerror);page.off('crash',crash);page.off('close',close);}
 }
