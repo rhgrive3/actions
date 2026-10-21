@@ -48,13 +48,14 @@ jobs:
           else
             while IFS='|' read -r slug source section; do
               echo "=== ${slug} ${source} ${section} ===" | tee -a fetch.log
+              download_exit=0
               timeout 140 "$tool" --no-playlist --no-warnings --no-progress \
                 --socket-timeout 12 --retries 1 --fragment-retries 1 \
                 --download-sections "${section}" \
                 -f 'bestaudio/best' -x --audio-format wav \
                 --remote-components ejs:github --js-runtimes node \
-                -o "raw/${slug}.%(ext)s" "${source}" >> fetch.log 2>&1
-              echo "download_exit=$?" >>fetch.log
+                -o "raw/${slug}.%(ext)s" "${source}" >> fetch.log 2>&1 || download_exit=$?
+              echo "download_exit=${download_exit}" >>fetch.log
               file=$(find raw -maxdepth 1 -type f -name "${slug}*.wav" | head -1)
               if [ -z "$file" ]; then echo "No WAV for ${slug}" >>fetch.log; continue; fi
               echo "Downloaded ${slug}: $(du -h "$file" | cut -f1)" >> fetch.log
