@@ -53,7 +53,9 @@ export async function buildNativeWorld(game,map,current){
  const safely=(fn,label)=>{try{fn();}catch(e){console.warn('[native] cleanup',label,e);}};
  const status=sourceLoadingStatus(map.name);
  try{
-  const data=await loadNativeData(map.id,signal);if(!current())return;
+  // Pass the authoritative main-thread touch profile: iPadOS can advertise a Macintosh UA in WorkerNavigator.
+  // Constrained stages must not clone large derived arrays through IndexedDB during activation.
+  const data=await loadNativeData(map.id,signal,{constrained:!!game.mobile?.touch});if(!current())return;
   status.update('textures');
   const level=new NativeLevel(data),physics=new NativePhysics(level);
   const quality=['high','ultra'].includes(game.settings.quality)?'high':game.settings.quality==='low'?'low':'balanced';
