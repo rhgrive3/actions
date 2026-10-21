@@ -1,0 +1,202 @@
+name: INKWAVE Roller holding diagnostic preview
+on:
+  push:
+    branches: ['qa/roller-holding-preview-20261021']
+    paths:
+      - '.github/workflows/inkwave-roller-holding-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: roller-holding-preview-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  encode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BEFORE_SHA: 225f1d3042f2bdf9e8cec7e634afa4b8efa4a800
+      AFTER_SHA: 8bebf5cf288149d8ff9a16fa181a89ddf063b8a4
+      QA_SHA: ${{ github.sha }}
+      CAPTURE_QA_SHA: 0b12e81efb01a4514e773f8a6856ad43a8edd637
+      ARTIFACT_ID: '12372949426'
+      ARTIFACT_BYTES: '306263535'
+      ARTIFACT_SHA256: 1cec158bb2cc5d20e4d6b87610ac415a5c248e8c8a9d9cf58859dee78355b70e
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Retrieve the exact retained native frames without another capture
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$QA_SHA"
+          mkdir -p work/roller-video
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import crypto from 'node:crypto';import assert from 'node:assert/strict';
+          import {Readable} from 'node:stream';import {pipeline} from 'node:stream/promises';
+          const url='https://api.github.com/repos/rhgrive3/actions/actions/artifacts/'+process.env.ARTIFACT_ID;
+          const headers={Authorization:'Bearer '+process.env.GH_TOKEN,Accept:'application/vnd.github+json'};
+          const response=await fetch(url,{headers});assert(response.ok);
+          const metadata=await response.json();
+          assert.equal(metadata.expired,false);assert.equal(metadata.size_in_bytes,Number(process.env.ARTIFACT_BYTES));
+          assert.equal(metadata.digest,'sha256:'+process.env.ARTIFACT_SHA256);
+          assert.equal(metadata.workflow_run.head_sha,process.env.CAPTURE_QA_SHA);
+          const redirect=await fetch(url+'/zip',{headers,redirect:'manual'});assert.equal(redirect.status,302);
+          const location=redirect.headers.get('location');assert.equal(new URL(location).protocol,'https:');
+          // Do not forward the GitHub credential to the signed artifact host.
+          const archive=await fetch(location);assert(archive.ok);
+          const hash=crypto.createHash('sha256'),stream=Readable.fromWeb(archive.body);
+          stream.on('data',chunk=>hash.update(chunk));
+          await pipeline(stream,fs.createWriteStream('work/native-frames.zip'));
+          assert.equal(fs.statSync('work/native-frames.zip').size,Number(process.env.ARTIFACT_BYTES));
+          assert.equal(hash.digest('hex'),process.env.ARTIFACT_SHA256);
+          fs.writeFileSync('work/roller-video/source-artifact.json',JSON.stringify(metadata,null,2)+'\n');
+          NODE
+          python3 - <<'PY'
+          import pathlib, stat, zipfile
+          with zipfile.ZipFile('work/native-frames.zip') as z:
+              for entry in z.infolist():
+                  p = pathlib.PurePosixPath(entry.filename)
+                  assert not p.is_absolute() and '..' not in p.parts and '\\' not in entry.filename
+                  assert not stat.S_ISLNK(entry.external_attr >> 16)
+              assert z.testzip() is None
+              z.extractall('work/roller-video')
+          PY
+      - name: Install the official encoder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+          command -v ffmpeg
+          command -v ffprobe
+      - name: Verify originals and report comparison mismatches without accepting them
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import crypto from 'node:crypto';
+          import {isDeepStrictEqual} from 'node:util';
+          const root='work/roller-video',hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+          const read=p=>JSON.parse(fs.readFileSync(path.join(root,p),'utf8'));
+          const identities=read('identities.json');
+          assert.equal(identities.qa,process.env.CAPTURE_QA_SHA);
+          const oldWorkflow=fs.readFileSync('.github/workflows/inkwave-roller-holding-video.yml');
+          assert.equal(identities.workflow,hash(oldWorkflow));
+          assert.equal(identities.script,hash(fs.readFileSync('scripts/check-inkwave-roller-holding-video.mjs')));
+          assert.equal(identities.entryHelper,hash(fs.readFileSync('scripts/lib/inkwave-range-menu-entry.mjs')));
+          const receipts=[];
+          const reports=['before','after'].map(side=>{
+            const r=read(side+'/result.json'),manifest=read(side+'-build.json'),v=r.video;
+            assert.equal(identities.builds[side].sourceSha,process.env[side.toUpperCase()+'_SHA']);
+            assert.equal(identities.builds[side].manifestSha256,hash(fs.readFileSync(path.join(root,side+'-build.json'))));
+            assert.equal(manifest.inputHash,hash(JSON.stringify(manifest.files)));
+            assert.equal(identities.builds[side].inputHash,manifest.inputHash);
+            assert.equal(identities.builds[side].contentHash,manifest.contentHash);
+            receipts.push({side,resultSha256:hash(fs.readFileSync(path.join(root,side,'result.json'))),
+              manifestSha256:identities.builds[side].manifestSha256});
+            console.log(JSON.stringify({side,renderSize:r.measurement.renderSize,firstImage:v.frames[0]?.images[0]?.path}));
+            assert.equal(r.passed,true);assert.equal(r.diagnosticOnly,false);assert.equal(r.errors.length,0);
+            assert.equal(r.build,manifest.contentHash);assert.equal(r.measurement.debugFixedTicks,180);
+            assert.equal(v.frameCount,90);assert.equal(v.frames.length,90);assert.equal(v.framesPerSecond,30);
+            assert.equal(v.nativeTicksPerSecond,60);assert.equal(v.interpolation,false);
+            assert.deepEqual(v.views,['right-rear','side']);assert.equal(v.initial.seed,1715);
+            assert.equal(r.measurement.initialState.boundary.boot.boundary,'first-native-game-publication');
+            assert.deepEqual(r.measurement.initialState.boundary.boot.clocks,r.measurement.initialState.boundary.entryClocks);
+            assert.equal(r.measurement.initialState.gameTime,r.measurement.initialState.boundary.boot.clocks.game);
+            assert.equal(r.measurement.renderSize.width,960);assert.equal(r.measurement.renderSize.height,630);
+            const modules=Object.entries(r.servedModules);
+            assert(modules.length>100,'real native module graph must be served');
+            for(const [rel,actual]of modules){
+              const matches=Object.keys(manifest.artifacts).filter(k=>rel===k||rel.endsWith('/'+k)).sort((a,b)=>b.length-a.length);
+              assert(matches.length>0,'unbound served module '+rel);
+              assert.equal(actual.sha256,manifest.artifacts[matches[0]],'served module '+rel);
+            }
+            for(let i=0;i<90;i++){
+              const f=v.frames[i];assert.equal(f.index,i);assert.equal(f.tick,2*(i+1));assert.equal(f.fire,i<60);
+              assert(f.rngRestored);assert(Math.abs(f.state.time-v.initial.state.time-f.tick/60)<1e-8);
+              assert.deepEqual(f.renderSize,r.measurement.renderSize);assert.equal(f.images.length,2);
+              assert(f.lighting.lights.length>0);
+              if(i<60)assert.equal(f.state.rolling,true);
+              for(const img of f.images){
+                assert(v.views.includes(img.name));assert.equal(img.path,'video/'+img.name+'/frame-'+String(i).padStart(3,'0')+'.png');
+                const bytes=fs.readFileSync(path.join(root,side,img.path));
+                assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+                assert.equal(hash(bytes),img.sha256);
+                assert.equal(bytes.readUInt32BE(16),f.renderSize.width);assert.equal(bytes.readUInt32BE(20),f.renderSize.height);
+              }
+            }
+            assert.equal(v.frames[89].state.rolling,false,'native release must occur');
+            for(const view of v.views)assert.deepEqual(fs.readdirSync(path.join(root,side,'video',view)).sort(),
+              Array.from({length:90},(_,i)=>'frame-'+String(i).padStart(3,'0')+'.png'));
+            for(const view of v.views)assert(new Set(v.frames.map(f=>f.images.find(x=>x.name===view).sha256)).size>1,'no repeated still movie');
+            return r;
+          });
+          const mismatches=[];
+          const compare=(field,a,b)=>{if(!isDeepStrictEqual(a,b))mismatches.push({field,before:a,after:b});};
+          compare('renderSize',reports[0].measurement.renderSize,reports[1].measurement.renderSize);
+          compare('cameraPlan',reports[0].measurement.cameraPlan,reports[1].measurement.cameraPlan);
+          compare('publication clocks',reports[0].measurement.initialState.boundary.boot.clocks,reports[1].measurement.initialState.boundary.boot.clocks);
+          compare('post-warmup scene clocks',reports[0].measurement.initialState.sceneClocks,reports[1].measurement.initialState.sceneClocks);
+          for(const key of ['name','seed','time','phase','breathPhase','breathNumber','breathAmplitude','breathRate'])
+            compare('initial Character '+key,reports[0].measurement.initialState.character[key],reports[1].measurement.initialState.character[key]);
+          for(const key of ['time','phase','characterTime','breathPhase','sceneClocks','pos','yaw','rolling'])
+            compare('initial movie '+key,reports[0].video.initial.state[key],reports[1].video.initial.state[key]);
+          for(let i=0;i<90;i++){
+            const a=reports[0].video.frames[i],b=reports[1].video.frames[i];
+            for(const key of ['fire','tick','rngDraws','lighting'])compare('frames['+i+'].'+key,a[key],b[key]);
+            for(const key of ['pos','yaw','rolling','time','phase','characterTime','breathPhase','sceneClocks'])
+              compare('frames['+i+'].'+key,a.state[key],b.state[key]);
+            for(const name of ['right-rear','side']){
+              const x=a.images.find(v=>v.name===name),y=b.images.find(v=>v.name===name);
+              for(const key of ['position','quaternion','projection'])compare('frames['+i+'].'+name+'.'+key,x[key],y[key]);
+            }
+          }
+          assert(mismatches.some(x=>/^frames\[\d+\]\.breathPhase$/.test(x.field)),'retained artifact must contain the known breath-phase mismatch');
+          console.log(JSON.stringify({status:'diagnostic-preview',accepted:false,mismatchCount:mismatches.length,
+            mismatches:mismatches.filter(x=>/breathPhase/.test(x.field)),otherMismatchFields:[...new Set(mismatches.filter(x=>!/breathPhase/.test(x.field)).map(x=>x.field))]}));
+          fs.writeFileSync(path.join(root,'preview-validation.json'),JSON.stringify({status:'diagnostic-preview',accepted:false,originalStrictAcceptance:'failed and unchanged',reason:'comparison conditions not fully matched; breath-phase difference',mismatches,before:process.env.BEFORE_SHA,after:process.env.AFTER_SHA,
+            frameCount:90,fps:30,nativeHz:60,ticks:[2,180],heldTicks:120,releaseTicks:60,interpolation:false,
+            camera:'shared fixed offset following native actor root',servedHashesVerified:true,receipts,
+            qa:process.env.QA_SHA,captureQa:process.env.CAPTURE_QA_SHA,
+            sourceArtifact:{id:Number(process.env.ARTIFACT_ID),sha256:process.env.ARTIFACT_SHA256,bytes:Number(process.env.ARTIFACT_BYTES)},clockBoundary:'first-native-game-publication; no clock reset',
+            cssViewport:{width:1280,height:840},nativePng:{width:960,height:630},resize:false},null,2)+'\n');
+          NODE
+      - name: Encode two labeled side-by-side movies without frame interpolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          for view in right-rear side; do
+            ffmpeg -hide_banner -loglevel warning -y -framerate 30 -start_number 0 -i "work/roller-video/before/video/$view/frame-%03d.png" -framerate 30 -start_number 0 -i "work/roller-video/after/video/$view/frame-%03d.png" -filter_complex "[0:v]pad=960:750:0:120:black,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:text='BEFORE 225f1d3  |  2026-10-21 | native 960x630':x=20:y=15:fontsize=22:fontcolor=white[b];[1:v]pad=960:750:0:120:black,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:text='AFTER 8bebf5c  |  2026-10-21 | native 960x630':x=20:y=15:fontsize=22:fontcolor=white[a];[b][a]hstack=inputs=2,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:text='DIAGNOSTIC PREVIEW - CONDITIONS NOT FULLY MATCHED - NOT ACCEPTED':x=(w-tw)/2:y=48:fontsize=29:fontcolor=yellow,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:text='Breath-phase difference - original real frames - no interpolation or resizing':x=(w-tw)/2:y=86:fontsize=23:fontcolor=white[v]" -map '[v]' -frames:v 90 -fps_mode passthrough -an -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -movflags +faststart "work/roller-video/roller-holding-diagnostic-$view.mp4"
+            ffprobe -v error -count_frames -show_entries stream=codec_name,width,height,r_frame_rate,avg_frame_rate,nb_read_frames:format=duration,size -of json "work/roller-video/roller-holding-diagnostic-$view.mp4" > "work/roller-video/ffprobe-$view.json"
+          done
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';import crypto from 'node:crypto';
+          const root='work/roller-video',movies=[];
+          for(const view of ['right-rear','side']){
+            const p=JSON.parse(fs.readFileSync(root+'/ffprobe-'+view+'.json')),s=p.streams[0];
+            assert.equal(p.streams.length,1);assert.equal(s.codec_name,'h264');assert.equal(s.width,1920);assert.equal(s.height,750);
+            assert.equal(s.nb_read_frames,'90');assert.equal(s.r_frame_rate,'30/1');assert.equal(s.avg_frame_rate,'30/1');
+            assert(Math.abs(Number(p.format.duration)-3)<.001);
+            const name='roller-holding-diagnostic-'+view+'.mp4',bytes=fs.readFileSync(root+'/'+name);
+            movies.push({view,name,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex'),probe:p});
+          }
+          fs.writeFileSync(root+'/video-result.json',JSON.stringify({status:'diagnostic-preview',accepted:false,encoded:true,originalStrictAcceptance:'failed and unchanged',reason:'comparison conditions not fully matched; breath-phase difference',before:process.env.BEFORE_SHA,after:process.env.AFTER_SHA,
+            qa:process.env.QA_SHA,captureQa:process.env.CAPTURE_QA_SHA,encodedAt:new Date().toISOString(),captureDate:'2026-10-21',nativeFrames:true,interpolation:false,resize:false,
+            cssViewport:{width:1280,height:840},nativePng:{width:960,height:630},sourceArtifact:{id:Number(process.env.ARTIFACT_ID),sha256:process.env.ARTIFACT_SHA256},movies},null,2)+'\n');
+          console.log(JSON.stringify({status:'diagnostic-preview',accepted:false,encoded:true,movies}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roller-holding-diagnostic-preview-${{ github.sha }}
+          path: |
+            work/roller-video/*.mp4
+            work/roller-video/*.json
+            work/roller-video/before/result.json
+            work/roller-video/after/result.json
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
