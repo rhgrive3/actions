@@ -38,7 +38,7 @@ jobs:
           cat > sources.tsv <<'SOURCES'
           s3-wiki-gootuber|https://splatoonwiki.org/wiki/Special:Redirect/file/S3_Goo_Tuber_charge_10.0.0.mp4|direct
           s3-no-commentary|https://www.youtube.com/watch?v=Q0gbI1D4hEs|*00:00:00-00:01:30
-          s3-charger-test|https://www.youtube.com/watch?v=wMRcJomKTtA|*00:22:41-00:23:30
+          s3-no-commentary-demo|https://www.youtube.com/watch?v=FR10kogkwY8|*00:00:00-00:01:15
           s3-official-demo|https://x.com/SplatoonNA/status/1523648989144489986|*00:00:00-00:00:30
           s1-official-demo|https://www.youtube.com/watch?v=5i25MOeRny8|*00:00:00-00:00:35
           SOURCES
