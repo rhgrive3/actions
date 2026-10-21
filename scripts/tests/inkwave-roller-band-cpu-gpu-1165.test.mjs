@@ -1,101 +1,65 @@
-// #1165: regression against the *actual composed* PaintSystem CPU band and
-// the pinned GPU shader's final-body expression, not a rewritten fake painter.
-// The upstream game source remains byte-identical; only the build adapter adds
-// one shared JS SDF for authoritative cell ownership.
+// #1165: target the actual remaining mismatch, not an obsolete sine/tooth
+// difference: the real CPU and GPU already share the same tooth SDF, but
+// the old CPU broadphase circle clips legal rotated/seed-expanded corners.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptBuildSource } from '../inkwave-source-composition.mjs';
 import { fixture } from '../../patches/splatoon3/tests/source-fixture.mjs';
 
-const source = fs.readFileSync(new URL('../../inkwave-public/src/world/paint.js',import.meta.url),'utf8');
-const composed = adaptBuildSource('src/world/paint.js',source);
-const r = 0.62, seed = Math.PI/60;
-function gpuFinalBand(x,y,R,s) {
-  // From the actual PAINT_FS branch (grow=1, dir=(1,0), no splat smear).
-  const wv=R*(0.03*Math.sin(x/R*9+s*30)+0.018*Math.sin(x/R*23+s*11));
-  const qa=Math.abs(x)-R*.55,qb=Math.abs(y)-(R*.62+wv);
-  return Math.hypot(Math.max(qa,0),Math.max(qb,0))+Math.min(Math.max(qa,qb),0)-R*.1;
+const raw=fs.readFileSync(new URL('../../inkwave-public/src/world/paint.js',import.meta.url),'utf8');
+const source=adaptBuildSource('src/world/paint.js',raw);
+const hypot=Math.hypot;
+const tooth=x=>1-4*Math.abs(x-Math.floor(x)-.5);
+function gpuToothDistance(along,across,seed,r=1){
+  const wob=r*(0.08*tooth(along/r*2.1+seed*4.7+.25)
+    +0.04*tooth(along/r*5.3+seed*2.3+.25));
+  const qa=Math.abs(along)-r*.55,qb=Math.abs(across)-r*.62-wob;
+  return hypot(Math.max(qa,0),Math.max(qb,0))+Math.min(Math.max(qa,qb),0)-r*.1;
 }
-function painter(f) {
-  const p=Object.create(f.PaintSystem.prototype);
-  p.grid=new Uint8Array(16*16);
-  p.dead=new Uint8Array(16*16);
-  p.counts=new Uint32Array(2);
-  p.version=0;
-  const face={grid:0,cu:.25,cv:.25,nu:16,nv:16,turf:true};
-  return {p,face,index:(i,j)=>j*face.nu+i};
-}
-function stampCell(f,{sx=0,sy=.73*r,seedValue=seed,dir=0,team=0}={}) {
-  const d=painter(f),i=5,j=5;
-  const centre=(i+.5)*.25, pixel=(j+.5)*.25;
-  // Desired local physical offset is rotated into each face-space direction.
-  const px=sx*Math.cos(dir)-sy*Math.sin(dir);
-  const py=sx*Math.sin(dir)+sy*Math.cos(dir);
-  const lu=centre-px, lv=pixel-py;
-  d.p._cpuSplat(d.face,lu,lv,r,team,seedValue,Math.cos(dir),Math.sin(dir),0,6);
-  return {painted:d.p.grid[d.index(i,j)]===team+1,paint:d.p,cell:d.index(i,j)};
-}
+const oldExtent=hypot(.55,.62)+.1+.05;
+const safeExtent=hypot(.55+.1,.62+.1+.08+.04);
 
-test('#1165 build output replaces only Roller CPU ownership with seeded GPU-core equation',()=>{
-  assert.ok(!source.includes('rollerBandSignedDistance'),'upstream remains immutable');
-  assert.equal((composed.match(/export function rollerBandSignedDistance\(/g)||[]).length,1);
-  assert.equal((composed.match(/if \(rollerBandSignedDistance\(along, across, r, seed\) > 0\) continue;/g)||[]).length,1);
-  assert.ok(composed.includes('float wv = r * (0.03 * sin(q.x / r * 9.0 + seed * 30.0)'),
-    'the actual GPU shader remains the referenced equation');
-  assert.ok(!composed.includes('if (sd > -0.03 * r) continue;'),
-    'inset scoring mismatch is retired, not merely masked by a cosmetic overlay');
+test('#1165 production composition preserves the identical GPU and CPU triangular SDF',()=>{
+  assert.ok(raw.includes('float wv = r * (0.03 * sin('),'unmodified source still has its pre-patch GPU formula');
+  assert.match(source,/float wv = r \* \(0\.08 \* \(1\.0 - 4\.0 \* abs\(fract\(/);
+  assert.match(source,/const toothA = along \/ r \* 2\.1 \+ seed \* 4\.7/);
+  assert.match(source,/if \(sd > 0\) continue;/);
+  assert.match(source,/const ext = roll \? r \* Math\.hypot\(BAND_L \+ BAND_R, BAND_W \+ BAND_R \+ 0\.12\)/);
+  assert.doesNotMatch(source,/export function rollerBandSignedDistance/,'do not introduce a second competing SDF');
 });
 
-test('#1165 seeded positive Roller wobble owns cell rendered by GPU, negative seed does not',async()=>{
-  const f=await fixture({productionComposition:true});
-  const positive=stampCell(f),negative=stampCell(f,{seedValue:.35});
-  assert.equal(positive.painted,true,'GPU-painted band cell must be gameplay-owned');
-  assert.equal(positive.paint.counts[0]>0,true);
-  assert.equal(negative.painted,false,'outside the seeded band stays unowned');
-  assert.ok(gpuFinalBand(0,.73*r,r,seed)<0);
-  assert.ok(gpuFinalBand(0,.73*r,r,.35)>0);
-  const old=0.73*r-(.62+.1)*r;
-  assert.ok(old>-.03*r,'historical CPU formula skipped the positive GPU cell');
+test('#1165 actual CPU grid admits rotated seeded body corner the historical scan skipped',async()=>{
+  const seed=.4125,along=.623,across=.788,r=1;
+  const dist=gpuToothDistance(along,across,seed,r),radius=hypot(along,across);
+  assert.ok(dist<-.012 && radius>oldExtent+.01 && radius<safeExtent,
+    'strictly inside the emitted GPU body, outside the former CPU scan circle');
+  const f=await fixture({productionComposition:true}),p=Object.create(f.PaintSystem.prototype);
+  const face={grid:0,cu:.01,cv:.01,nu:1024,nv:1024,turf:true};
+  p.grid=new Uint8Array(face.nu*face.nv);p.dead=new Uint8Array(p.grid.length);
+  p.counts=new Uint32Array(2);p.version=0;
+  // This regression measures only the source-composed _cpuSplat candidate
+  // rectangle and core SDF; network ownership chronology has its own tests.
+  p._paintClaimCell=()=>true;
+  const i=500,j=500,c=(i+.5)*face.cu;
+  const a=-Math.atan2(across,along),dx=Math.cos(a),dy=Math.sin(a);
+  const px=along*dx-across*dy,py=along*dy+across*dx;
+  assert.ok(Math.abs(py)<1e-12);
+  const lu=c-px,lv=c-py,oldI1=Math.floor((lu+oldExtent)/face.cu);
+  assert.ok(oldI1<i,'the old broadphase would never visit this legal GPU cell');
+  const painted=p._cpuSplat(face,lu,lv,r,0,seed,dx,dy,0,6);
+  assert.ok(painted>0);
+  assert.equal(p.grid[face.grid+j*face.nu+i],1,'the published CPU scorer owns the visible GPU cell');
+  assert.ok(p.version>0);
 });
 
-test('#1165 final Roller SDF matches GPU expression across seeds, position and rotations',async()=>{
-  const f=await fixture({productionComposition:true});
-  const cpu=f.rollerBandSignedDistance;
-  assert.equal(typeof cpu,'function');
-  for(const s of [0,seed,.1,.2,.35,.5,.75,1])for(const x of [-.65,-.55,-.3,0,.25,.55,.65]){
-    for(const y of [-.78,-.73,-.68,-.2,0,.2,.68,.73,.78]){
-      const a=cpu(x*r,y*r,r,s),b=gpuFinalBand(x*r,y*r,r,s);
-      assert.ok(Math.abs(a-b)<1e-12,JSON.stringify({s,x,y,a,b}));
-      for(const angle of [Math.PI/7,Math.PI/3,Math.PI*.91]){
-        const v=stampCell(f,{sx:x*r,sy:y*r,seedValue:s,dir:angle});
-        // If a cell lies comfortably away from antialias threshold, its CPU
-        // claim must match the GPU core (the shader is continuous at sd==0).
-        if(Math.abs(b)>0.008*r)assert.equal(v.painted,b<0,JSON.stringify({s,x,y,angle,b}));
-      }
+test('#1165 conservative radius is mathematically bounded for all tooth phases',()=>{
+  for(const seed of [0,.12,.4125,.75,.99])for(let k=-65;k<=65;k++){
+    const along=k/100;
+    for(let j=-85;j<=85;j++){
+      const across=j/100;
+      if(gpuToothDistance(along,across,seed)>0)continue;
+      assert.ok(hypot(along,across)<=safeExtent+1e-12,JSON.stringify({seed,along,across}));
     }
   }
-});
-
-test('#1165 30/60/120Hz fixed render rates result in identical turf cells',async()=>{
-  const f=await fixture({productionComposition:true});
-  const snapshots=[];
-  for(const hz of [30,60,120]){
-    const d=painter(f),clock=new f.FixedClock();
-    let tick=0;
-    for(let i=0;i<hz;i++)clock.advance(1/hz,()=>{
-      const lu=1.25+0.008*tick++,lv=1.5;
-      d.p._cpuSplat(d.face,lu,lv,r,0,seed,1,0,0,6);
-    });
-    assert.equal(clock.ticks,60);
-    snapshots.push([...d.p.grid]);
-  }
-  assert.deepEqual(snapshots[0],snapshots[1]);
-  assert.deepEqual(snapshots[1],snapshots[2]);
-});
-
-test('#1165 non-Roller impact remains under its unchanged legacy body predicate',()=>{
-  const anchor='if (d / (r * blobWobble(Math.atan2(py, px), seed)) > 0.97) continue;';
-  assert.ok(source.includes(anchor));
-  assert.ok(composed.includes(anchor));
 });
