@@ -27,7 +27,7 @@ export function adaptNativeStages(rel,code){
   // lightmap fetch, the old native paint target is already disposed and the
   // legacy decor has not been published. The fixed 60Hz frame may keep
   // networking/menu input alive, but must not touch an incomplete GPU world.
-  once('    runSimulation(this, dt);', `    if (this._nativeStageSwitchPending) {
+  once('  _frame(dt) {', `  _frame(dt) {\n    if (this._nativeStageSwitchPending) {
       G.time += Math.max(0, dt);
       this.input?.pollPad?.();
       this._padMenus?.();
@@ -36,8 +36,7 @@ export function adaptNativeStages(rel,code){
       this.input?.endFrame?.();
       this.s3Clock?.reset?.();
       return;
-    }
-    runSimulation(this, dt);`);
+    }`);
   once('const game = new Game();', `// Keep stage loading identity separate from a match/room flow. An older
 // async build may finish while a newer one owns the pending world.
 const nativeStageBuild = Game.prototype._buildWorld;
