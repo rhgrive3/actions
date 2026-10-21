@@ -33,8 +33,10 @@ jobs:
       - name: Encode actual successive frames
         run: |
           for view in floor wall; do
+            for viewmode in sheen oblique; do
             for age in fresh settled; do
-              ffmpeg -y -framerate 30 -i ".browser-evidence/ink-micro-surface/texlib-$view-$age-%03d.png" -vf "drawtext=text='ORIGINAL (left) | CANDIDATE (right)':x=10:y=10:fontsize=18:fontcolor=white:box=1:boxcolor=black@0.7" -c:v libx264 -pix_fmt yuv420p ".browser-evidence/ink-micro-surface/$view-$age.mp4"
+              ffmpeg -y -framerate 30 -i ".browser-evidence/ink-micro-surface/texlib-$view-$viewmode-$age-%03d.png" -vf "drawtext=text='ORIGINAL (left) | CANDIDATE (right)':x=10:y=10:fontsize=18:fontcolor=white:box=1:boxcolor=black@0.7" -c:v libx264 -pix_fmt yuv420p ".browser-evidence/ink-micro-surface/$view-$viewmode-$age.mp4"
+            done
             done
           done
       - uses: actions/upload-artifact@v4

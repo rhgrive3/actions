@@ -107,16 +107,18 @@ try {
     const mesh=new THREE.Mesh(geometry,variants['texlib-after']);scene.add(mesh);
     const camera=new THREE.PerspectiveCamera(40,480/360,.05,30);
     const gl=r.getContext(),debug=gl.getExtension('WEBGL_debug_renderer_info');
-    function setCase(lib,wall,wet,inked=true){
+    const sunDirection=env.sun.position.clone().sub(env.sun.target.position).normalize();
+    function setCase(lib,wall,wet,inked=true,lit=false){
       for(let y=0;y<size;y++)for(let x=0;x<size;x++){
         const u=(x+.5)/size,v=(y+.5)/size,rad=Math.hypot((u-.5)*1.15,(v-.5)*1.5),edge=Math.max(0,Math.min(1,(.46-rad)/.13)),coverage=inked?edge*edge*(3-2*edge):0,i=(y*size+x)*4;
         data[i]=Math.round(255*coverage*(x<size/2?0:1));data[i+1]=Math.round(255*coverage*wet);data[i+2]=Math.round(255*coverage*.7);data[i+3]=Math.round(255*coverage);
       }
-      texture.needsUpdate=true;mesh.rotation.x=wall?Math.PI/2:0;
-      camera.position.set(.2,wall?.15:1.35,3.4);camera.lookAt(0,0,0);camera.updateMatrixWorld();
+      texture.needsUpdate=true;mesh.rotation.x=wall?(lit?-Math.PI/2:Math.PI/2):0;
+      if(lit)camera.position.copy(wall?new THREE.Vector3(-sunDirection.x,-sunDirection.y,sunDirection.z):new THREE.Vector3(-sunDirection.x,sunDirection.y,-sunDirection.z)).multiplyScalar(4);
+      else camera.position.set(.2,wall?.15:1.35,3.4);camera.lookAt(0,0,0);camera.updateMatrixWorld();
       mesh.updateMatrixWorld(true);const worldNormal=new THREE.Vector3(0,1,0).transformDirection(mesh.matrixWorld);
       if((Math.abs(worldNormal.y)<.5)!==wall)throw Error('Wall shader branch orientation mismatch');
-      return {lib,wall,wet,inked,worldNormal:worldNormal.toArray(),cameraPosition:camera.position.toArray(),cameraQuaternion:camera.quaternion.toArray(),time:1,atlasSize:size,ppm:20};
+      return {lib,wall,wet,inked,lit,sunDirection:sunDirection.toArray(),worldNormal:worldNormal.toArray(),cameraPosition:camera.position.toArray(),cameraQuaternion:camera.quaternion.toArray(),time:1,atlasSize:size,ppm:20};
     }
     function draw(key,time=1,side=0){
       mesh.material=variants[key];mesh.material.userData.uniforms.uTime.value=time;
@@ -130,17 +132,17 @@ try {
     window.inkQA={setCase,draw,pixels,diff,r,gl,camera,mesh,variants,shaders,texture,data};
     return {gpu:{renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),timerQueryAvailable:!!gl.getExtension('EXT_disjoint_timer_query_webgl2'),gpuTime:'not measured',allocationRate:'not measured'},lighting:{theme:'production Environment day',themeValues:Environment.THEMES.day,environmentIntensity:scene.environmentIntensity,environmentWidth:world.environment.image?.width??null},color:{toneMapping:r.toneMapping,outputColorSpace:r.outputColorSpace},viewport:[960,360],eachView:[480,360],texlib:{gel:library.layers.gel,resolution:128},cases:[]};
   },{prefix});
-  for(const lib of ['fallback','texlib'])for(const wall of [false,true])for(const wet of [0,1]){
-    const name=lib+'-'+(wall?'wall':'floor')+'-'+(wet?'fresh':'settled');
-    const row=await page.evaluate(({lib,wall,wet})=>{
-      const q=window.inkQA,receipt=q.setCase(lib,wall,wet),before=lib+'-before',after=lib+'-after';
+  for(const lib of ['fallback','texlib'])for(const wall of [false,true])for(const lit of [false,true])for(const wet of [0,1]){
+    const name=lib+'-'+(wall?'wall':'floor')+'-'+(lit?'sheen':'oblique')+'-'+(wet?'fresh':'settled');
+    const row=await page.evaluate(({lib,wall,wet,lit})=>{
+      const q=window.inkQA,receipt=q.setCase(lib,wall,wet,true,lit),before=lib+'-before',after=lib+'-after';
       for(let i=0;i<4;i++){q.draw(before);q.draw(after);}
       const samples=[];
       // No image encoding, readPixels or file I/O in this timed ABBA section.
       for(let block=0;block<8;block++)for(const key of [before,after,after,before])samples.push({block,key,...q.draw(key)});
       q.draw(before);const a=q.pixels();q.draw(after);const b=q.pixels();q.draw(after);const repeat=q.pixels();
       q.mesh.visible=false;q.draw(before);const blank=q.pixels();q.draw(after);const blankAfter=q.pixels();q.mesh.visible=true;
-      q.setCase(lib,wall,wet,false);q.draw(before);const unpainted=q.pixels();q.setCase(lib,wall,wet,true);
+      q.setCase(lib,wall,wet,false,lit);q.draw(before);const unpainted=q.pixels();q.setCase(lib,wall,wet,true,lit);
       let disabledGel=null;
       if(lib==='texlib'){
         const aGel=q.variants[before].userData.uniforms.uGel,bGel=q.variants[after].userData.uniforms.uGel,save=aGel.value;
@@ -149,7 +151,7 @@ try {
       q.draw(before,1,0);q.draw(after,1,1);
       const image=q.r.domElement.toDataURL();
       return {receipt,samples,difference:q.diff(a,b),repeat:q.diff(b,repeat),nonBackground:q.diff(a,blank),paintSignal:q.diff(a,unpainted),blankDifference:q.diff(blank,blankAfter),disabledGel,image,glError:q.gl.getError()};
-    },{lib,wall,wet});
+    },{lib,wall,wet,lit});
     fs.writeFileSync(path.join(output,name+'.png'),Buffer.from(row.image.split(',')[1],'base64'));delete row.image;row.name=name;result.cases.push(row);
     const validateSignal=x=>{
       assert.ok(x.samples.every(s=>s.calls===1&&s.triangles===2),name+' missing real surface draw');
@@ -166,7 +168,7 @@ try {
     for(const sample of row.samples)assert.deepEqual(count(sample),count(row.samples[0]),name+' changed resource cost');
     // Sequential rendered frames, not interpolated stills. Left=before, right=candidate.
     if(lib==='texlib')for(let frame=0;frame<24;frame++){
-      const image=await page.evaluate(({lib,frame,wall})=>{const q=window.inkQA; q.camera.position.x=.2+Math.sin(frame/23*Math.PI)*.45;q.camera.lookAt(0,0,0);q.camera.updateMatrixWorld();q.draw(lib+'-before',1+frame/30,0);q.draw(lib+'-after',1+frame/30,1);return q.r.domElement.toDataURL();},{lib,frame,wall});
+      const image=await page.evaluate(({lib,frame,wall,lit,wet})=>{const q=window.inkQA;q.setCase(lib,wall,wet,true,lit); q.camera.position.x+=Math.sin(frame/23*Math.PI)*.45;q.camera.lookAt(0,0,0);q.camera.updateMatrixWorld();q.draw(lib+'-before',1+frame/30,0);q.draw(lib+'-after',1+frame/30,1);return q.r.domElement.toDataURL();},{lib,frame,wall,lit,wet});
       fs.writeFileSync(path.join(output,name+'-'+String(frame).padStart(3,'0')+'.png'),Buffer.from(image.split(',')[1],'base64'));
     }
   }
