@@ -88,6 +88,11 @@ export function sharedBucketDraw(p) {
   const rear = p.catalog?.descriptor?.unit === 1;
   return PROJECTILE_VISUAL_SOURCE.WeaponSlosherStrong.slosh[rear ? 2 : 1].drawSize;
 }
+export function sharedBucketDrawIndex(p) {
+  // Bucket has four front and five rear fragments. Longer derivative streams
+  // keep the final Bucket envelope instead of extrapolating it through zero.
+  return Math.max(0,Math.min(p.catalog?.descriptor?.unit===1?4:3,p.catalog?.index??p.catalog?.descriptor?.index??0));
+}
 export function sharedBucketTailLength(p, speed) {
   const d = sharedBucketDraw(p);
   if (!d) return null;
@@ -208,7 +213,7 @@ function drawRecord(p) {
   return source.drawSize || null;
 }
 export function projectileDrawRadius(p, age=finite(p?.age)) {
-  const d=drawRecord(p), index=p.catalog?.index ?? p.catalog?.descriptor?.index ?? p.fidelitySloshIndex ?? 0;
+  const d=drawRecord(p), index=sharedBucketDraw(p)?sharedBucketDrawIndex(p):p.catalog?.index ?? p.catalog?.descriptor?.index ?? p.fidelitySloshIndex ?? 0;
   if(d) {
     const init=finite(d.initRadius,finite(d.InitRadius))+index*finite(d.AfterOffsetInitRadius);
     const end=finite(d.endRadius,finite(d.EndRadius,init))+index*finite(d.AfterOffsetEndRadius);

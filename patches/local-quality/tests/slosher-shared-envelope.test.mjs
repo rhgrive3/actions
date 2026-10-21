@@ -10,7 +10,7 @@ test('Tri-Slosher and Dread Wringer reuse Bucket head/rear radius, tail and nati
   const engine = { assets: new Map([['roller', {}], ['projectile:slosher:slosher', {}]]),
     submitComposite(_p, parts) { this.submission = parts.map(p => ({name:p.name,stretch:p.stretch.toArray(),position:p.position.toArray()})); return true; } };
   for (const [id, actor] of [['s3-slosher-diffusion','WeaponSlosherDiffusion'],['s3-slosher-double','WeaponSlosherDouble']]) {
-    for (const kit of ['', '-01', '-02']) for (const unit of [0, 1]) for (const index of [0, 1, 3]) {
+    for (const kit of ['', '-01', '-02']) for (const unit of [0, 1]) for (const index of [0, 1, 3, 7]) {
       const p = {wid:id+kit,type:'shot',age:.1,seed:.2,pos:new THREE.Vector3(),vel:new THREE.Vector3(0,0,30),
         owner:{weapon:{kind:'catalog',behaviorKind:'slosher'}},
         catalog:{r:{sourceActor:actor},descriptor:{key:'slosh',unit,index,b:{DrawSizeParam:{InitRadius:99,EndRadius:99,TailLengthMin:99,TailLengthMax:99}}}}};
@@ -18,7 +18,7 @@ test('Tri-Slosher and Dread Wringer reuse Bucket head/rear radius, tail and nati
       const before = JSON.stringify({catalog:p.catalog,pos:p.pos,vel:p.vel,age:p.age});
       const draw = base[unit === 1 ? 2 : 1].drawSize;
       assert.equal(sharedBucketDraw(p), draw);
-      const radius = draw.EndRadius + index * draw.AfterOffsetEndRadius;
+      const radius = draw.EndRadius + Math.min(unit===1?4:3,index) * draw.AfterOffsetEndRadius;
       assert.equal(projectileDrawRadius(p), radius);
       const remote={...p,catalog:{...p.catalog,index,descriptor:{...p.catalog.descriptor,index:0}}};
       assert.equal(projectileDrawRadius(remote),radius,'wire-restored catalogue index controls the shared taper');

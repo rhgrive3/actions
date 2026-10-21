@@ -18,7 +18,10 @@ try{
    while(ticks++<180&&!G.projectiles.list.some(p=>p._inkVolumeRecipe==='slosher'&&p.delay<=0))g._frame(1/60);
    g.debug.fire(false);for(let i=0;i<10;i++)g._frame(1/60);g._skipRender=false;
    const eligible=G.projectiles.list.filter(p=>p._inkVolumeRecipe==='slosher'&&!p._qualityDead&&p.delay<=0);
-   G.projectiles._draw();const productionMetrics={...e.metrics};
+   const rejected=[],submit=e.submitComposite;e.submitComposite=function(p,parts){const ok=submit.call(this,p,parts);if(!ok&&p._inkVolumeRecipe==='slosher')rejected.push(p);return ok;};
+   try{G.projectiles._draw();}finally{e.submitComposite=submit;}const productionMetrics={...e.metrics};
+   const blobs=G.projectiles.blobs,matrices=blobs.instanceMatrix.array;
+   const fallbackDrawn=rejected.filter(p=>{for(let i=0;i<blobs.count;i++){const k=i*16;if(Math.abs(matrices[k+12]-p.pos.x)<1e-4&&Math.abs(matrices[k+13]-p.pos.y)<1e-4&&Math.abs(matrices[k+14]-p.pos.z)<1e-4)return true;}return false;}).length;
    const representative=eligible.filter(p=>p.head||(p.catalog?.index??p.catalog?.descriptor?.index)===0);
    const heads=(representative.length?representative:eligible).slice(0,3);
    const snap=()=>JSON.stringify(heads.map(p=>({pos:p.pos,vel:p.vel,age:p.age,damage:p.damage,meta:p.inkMeta,delay:p.delay}))),before=snap();
@@ -27,10 +30,10 @@ try{
    const box=new T.Box3();for(const p of heads)box.expandByPoint(p.pos);box.expandByScalar(1.5);
    const centre=box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3()),camera=new T.PerspectiveCamera(40,800/600,.01,300);
    camera.position.copy(centre).add(new T.Vector3(1,.7,-1).normalize().multiplyScalar(Math.max(2,size.length()*1.6)));camera.lookAt(centre);G.renderer.render(scene,camera);parent.add(e.root);
-   return {id,ticks,totalHeads:eligible.length,diagnosticSampleHeads:heads.length,productionMetrics,heads:heads.length,assets:[...new Set(heads.map(p=>p._inkVolumeAssetName))],active:e.metrics.active,overflow:e.metrics.overflow,authorityUnchanged:before===snap(),historyOwned:heads.filter(p=>G.projectiles.projectileVisuals.handles(p)).length};
+   return {id,ticks,totalHeads:eligible.length,diagnosticSampleHeads:heads.length,productionMetrics,fallbackCount:rejected.length,fallbackDrawn,heads:heads.length,assets:[...new Set(heads.map(p=>p._inkVolumeAssetName))],active:e.metrics.active,overflow:e.metrics.overflow,authorityUnchanged:before===snap(),historyOwned:heads.filter(p=>G.projectiles.projectileVisuals.handles(p)).length};
   },id);
   fs.writeFileSync(path.join(out,id+'-receipt.json'),JSON.stringify(data,null,2));
-  assert(data.heads>0);assert(data.active>0);assert.equal(data.overflow,0);assert.equal(data.historyOwned,0);assert(data.authorityUnchanged);assert.deepEqual(data.assets,['projectile:slosher:slosher']);cases.push(data);
+  assert(data.heads>0);assert(data.active>0);assert.equal(data.fallbackDrawn,data.fallbackCount,'budget overflow uses the common Bucket fallback');assert.equal(data.productionMetrics.active+data.fallbackDrawn,data.totalHeads,'every live Bucket sheet draws');assert.equal(data.overflow,0);assert.equal(data.historyOwned,0);assert(data.authorityUnchanged);assert.deepEqual(data.assets,['projectile:slosher:slosher']);cases.push(data);
   await page.screenshot({path:path.join(out,id+'.png')});
  }
  assert.deepEqual(errors,[]);const report={status:'passed',contentHash:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,browser:browser.version(),cases,errors};fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
