@@ -11,6 +11,8 @@ import { adaptWeaponPaintInertia } from './weapon-paint-inertia-adapter.mjs';
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 import { adaptMinimapDirty } from './minimap-dirty-adapter.mjs';
+import { adaptMinimapBombFuse } from './minimap-bomb-fuse-adapter.mjs';
+import { adaptUuidRandom } from './uuid-random-adapter.mjs';
 import { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';
 import { adaptStormEffects } from './storm-effects-adapter.mjs';
 import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
@@ -260,6 +262,8 @@ export function adaptSource(rel, code) {
   code = adaptMatchHud(rel, code);
   code = adaptScoreHud(rel, code);
   code = adaptMinimapDirty(rel, code, replaceOnce);
+  code = adaptMinimapBombFuse(rel, code, replaceOnce);
+  code = adaptUuidRandom(rel, code, replaceOnce);
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
   code = adaptAssistPresentation(rel, code, replaceOnce);
