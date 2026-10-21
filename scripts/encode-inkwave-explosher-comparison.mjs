@@ -10,7 +10,7 @@ const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex
 const read=(dir,name)=>JSON.parse(fs.readFileSync(path.join(dir,name),'utf8'));
 const before=path.resolve(beforeArg),after=path.resolve(afterArg),out=path.resolve(outArg);
 const frames=dir=>read(dir,'manifest.json').map(f=>{
- if(!/^s3-slosher-washtub-t[0-9]{2}-behind\\.png$/.test(f.file))throw Error('Unexpected capture filename');
+ if(!/^s3-slosher-washtub-t[0-9]{2}-behind\.png$/.test(f.file))throw Error('Unexpected capture filename');
  return {...f,actualFileSha256:hash(path.join(dir,f.file))};
 });
 const br=read(before,'source-receipt.json'),ar=read(after,'source-receipt.json');
