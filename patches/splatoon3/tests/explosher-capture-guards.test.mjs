@@ -18,7 +18,8 @@ test('capture admission guards reject incomplete or invalid evidence (no browser
  const generated=diagnostic();assert(generated);
  const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
  assert.doesNotThrow(()=>new AsyncFunction(generated.replace(/^import .*;\n/gm,'')));
- const validate=new Function('captures','preflight',wrapper.slice(wrapper.indexOf('const expected=new Set')));
+ const rawValidate=new Function('captures','preflight','captureTicks','captureViews',wrapper.slice(wrapper.indexOf('const expected=new Set')));
+ const validate=(frames,preflight=false)=>rawValidate(frames,preflight,preflight?[0]:[0,3,8,14,22,30],preflight?['behind']:['behind','tele-side','tele-oblique']);
  const captures=[0,3,8,14,22,30].flatMap(t=>['behind','tele-side','tele-oblique'].map(v=>({label:'s3-slosher-washtub',tick:t,view:v,count:1,measurement:{sparkles:28,render:{points:28}}})));
  assert.doesNotThrow(()=>validate(captures));
  const live={...captures[0],measurement:{...captures[0].measurement,physical:[{wid:'s3-slosher-washtub',seed:.5}],aimTrace:[{local:true,wid:'s3-slosher-washtub',time:0,from:[0,1,0],aimPoint:[0,1,10],aimDir:[0,0,1],result:[0,0,1]}]}};

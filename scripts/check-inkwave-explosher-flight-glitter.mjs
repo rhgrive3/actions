@@ -11,6 +11,9 @@ if(!siteArg||!outArg||!/^[a-f0-9]{40}$/.test(sourceSha||''))throw Error('Usage: 
 const root=fileURLToPath(new URL('../',import.meta.url)),site=path.resolve(siteArg),out=path.resolve(outArg);
 const sourceRoot=sourceRootArg?path.resolve(sourceRootArg):root;
 const preflight=process.env.EXPLOSHER_PREFLIGHT==='1';
+const video=!preflight&&process.env.EXPLOSHER_VIDEO==='1';
+const captureTicks=preflight?[0]:video?Array.from({length:61},(_,i)=>i):[0,3,8,14,22,30];
+const captureViews=preflight||video?['behind']:['behind','tele-side','tele-oblique'];
 // Receipt identity comes from the checkout, not the caller's label.
 const git=(args)=>{const r=spawnSync('git',['-C',sourceRoot,...args],{encoding:'utf8'});if(r.status!==0)throw Error('Cannot establish checkout identity');return r.stdout;};
 const actualSourceSha=git(['rev-parse','HEAD']).trim();
@@ -138,18 +141,18 @@ if(preflight){
   driver=once(driver,'const drawMs=(performance.now()-start)/200;','const drawMs=(performance.now()-start);');
 }
 const copy=path.join(out,'native-capture-driver.mjs');fs.writeFileSync(copy,driver);
-const receipt={sourceSha,actualSourceSha,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
+const receipt={sourceSha,actualSourceSha,captureMode:preflight?'preflight':video?'continuous-native-60Hz':'multi-view-stills',captureTicks,captureViews,simulationHz:60,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
   nativeResetHelperSha256:hash(nativeReset),
   sourceShapeSha256:hash(fs.readFileSync(path.join(sourceRoot,'patches/splatoon3/runtime/s3-projectile-shapes.mjs'))),
   emittedShapes:emitted,seed:0x515e7021,
   boundaries:['Real emitted game and native renderer; fixed range input.','No historical source/character rewrite.','Only flight glitter changes; muzzle/impact, hit/paint/speed unchanged.','Render CPU and resource counts measured; GPU elapsed time and allocations not measured.']};
 fs.writeFileSync(path.join(out,'source-receipt.json'),JSON.stringify(receipt,null,2));
-const run=spawnSync(process.execPath,[copy,site,out,'s3-slosher-washtub'],{stdio:'inherit',env:{...process.env,TICKS:preflight?'0':'0,3,8,14,22,30',VIEWS:preflight?'behind':'behind,tele-side,tele-oblique'}});
+const run=spawnSync(process.execPath,[copy,site,out,'s3-slosher-washtub'],{stdio:'inherit',env:{...process.env,TICKS:captureTicks.join(','),VIEWS:captureViews.join(',')}});
 if(run.status!==0)process.exit(run.status||1);
 const captures=JSON.parse(fs.readFileSync(path.join(out,'manifest.json'),'utf8'));
 for(const c of captures)c.sha256=hash(fs.readFileSync(path.join(out,c.file)));
 fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(captures,null,2));
-const expected=new Set((preflight?[0]:[0,3,8,14,22,30]).flatMap(t=>(preflight?['behind']:['behind','tele-side','tele-oblique']).map(v=>'s3-slosher-washtub:'+t+':'+v)));
+const expected=new Set(captureTicks.flatMap(t=>captureViews.map(v=>'s3-slosher-washtub:'+t+':'+v)));
 if(captures.length!==expected.size)throw Error('Wrong native capture count');
 for(const c of captures){
   if(!expected.delete(c.label+':'+c.tick+':'+c.view))throw Error('Duplicate or unexpected native capture');
