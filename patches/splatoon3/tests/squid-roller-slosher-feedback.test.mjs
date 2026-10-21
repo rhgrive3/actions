@@ -116,13 +116,14 @@ test('heavy roller swing: level overhead hold, ink with the drum down, floor res
   }
 });
 
-test('standard roller swing (Splat Roller 21F/26F): same S3 order inside the gameplay interval', () => {
+test('standard roller swing: horizontal hold and fitted vertical lift recover inside the gameplay interval', () => {
   const S = STANDARD_ROLLER_SWING;
   for (const [fn, windup, interval, label] of [[horizontalRollerPose, 21 / 60, 42 / 60, 'horizontal'], [verticalRollerPose, 26 / 60, 47 / 60, 'vertical']]) {
     const at = t => fn(t, windup, interval);
     const coilAt = Math.min(S.coilMax, S.coilFraction * windup), hold = windup - S.whip;
     const top = at(coilAt), held = at(hold - 1 / 120);
-    for (let i = 0; i < 3; i++) near(held.rotation[i], top.rotation[i], 1e-9, label + ' level overhead is held');
+    if (label === 'horizontal') for (let i = 0; i < 3; i++) near(held.rotation[i], top.rotation[i], 1e-9, label + ' level overhead is held');
+    else assert.ok(held.anchor[1] > top.anchor[1] + .05, 'vertical keeps lifting instead of inheriting the horizontal hold');
     const release = at(windup), rest = at(windup + 2 / 60);
     if (label === 'vertical') {
       near(release.rotation[2], Math.PI / 2, 1e-9, 'upright standard vertical release');
