@@ -35,3 +35,17 @@ test('ranked browser readiness uses fixed timer polling rather than animation fr
  assert.equal(r.status,'ready');
  assert.equal(p.disposed,true);
 });
+
+test('browser crashes and premature closes fail fast and release event observers',async()=>{
+ for (const [event,kind] of [['crash','browser-crash'],['close','page-close']]){
+  const p=page(),receipt={};let resume;
+  const operation=observeRankedBoot(p,url,receipt,()=>new Promise(resolve=>{resume=resolve;}));
+  p.emit(event);
+  await assert.rejects(operation,new RegExp(kind));
+  assert.equal(receipt.status,'failed');
+  assert.equal(receipt.failures[0].kind,kind);
+  assert.equal(p.listenerCount('crash'),0);
+  assert.equal(p.listenerCount('close'),0);
+  resume();
+ }
+});
