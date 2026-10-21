@@ -83,7 +83,7 @@ jobs:
           node scripts/check-inkwave-patches.mjs --quick
           node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
           node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
-          node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs
+          node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs patches/loading-cache/tests/recovery.test.mjs
           python3 patches/loading-cache/tests/harness.test.py
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site

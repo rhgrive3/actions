@@ -128,6 +128,7 @@ window.__inkwaveStartup = {
     } catch (error) { end(); throw error; }
   },
   engineReady(game) {
+    window.__inkwaveRecovery?.ready();
     engine = game; mark('engine-ready');
     report.bootMs = game.bootMs;
     report.bootMarks = game.bootMarks?.map(row => [...row]);
@@ -135,6 +136,7 @@ window.__inkwaveStartup = {
     inspectMenu(); narrowObserver();
     if (!profile) initialObserver.disconnect();
   },
+  bootFailed: failStartup,
   battleReady(game) {
     if (!game.match || game.match.attract || window.__G?.mode !== 'match') return;
     mark('first-battle-ready');
@@ -163,12 +165,16 @@ try {
   await import('../../splatoon3/bootstrap.mjs');
   mark('bootstrap-import-end'); // Module evaluation is not engine/battle readiness.
 } catch (error) {
+  failStartup(error);
+}
+function failStartup(error) {
   startupFailed = true;
   report.errors.push(String(error));
   if (shell) shell.hidden = false;
   if (status) status.textContent = failureText();
   const retry = document.getElementById('inkwave-startup-retry');
   if (retry) retry.hidden = false;
+  window.__inkwaveRecovery?.fail(error);
   console.error('[inkwave] startup', error);
   clearTimeout(profileTimeout); stopProfiling(); menuObserver.disconnect(); initialObserver.disconnect();
 }
