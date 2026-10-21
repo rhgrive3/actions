@@ -120,7 +120,7 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null) {
   const key=acceptedSub && ((e[1]==='ac' && e[2]==='sub') || acceptedSub.sourceKind==='native-sprinkler')
     ? ['accepted-sub-birth',id,acceptedSub.life,acceptedSub.serial,cause].join(':')
     : [id,e[0],e[1],kind,cause,...origin.map(n=>Math.round(n*10))].join(':');
-  return {actor:id,at:t,ts:e[0],origin,unit,reach,cause,kind,maxUses,uses:0,key};
+  return {actor:id,at:t,ts:e[0],origin,unit,reach,cause,kind,maxUses,uses:0,key,src:e[1],los:null};
 }
 function record(nm,from,packet,t,acceptedSub=null) {
   if(!Array.isArray(packet?.e) || packet.e.length>512 || !finite(packet.ts) || packet.ts<0 || packet.ts>1e9)return;
@@ -131,9 +131,15 @@ function record(nm,from,packet,t,acceptedSub=null) {
     if(ownerActor(nm,from,r[0]))poses.set(r[0],r.slice(1,4));
   }
   const store=s.proofs.get(from)||[];let acceptedProof=null;
+  const packetStart=store.length;
   for(let i=0;i<Math.min(packet.e.length,256);i++) {
     const candidate=proofFromEvent(nm,from,packet.e[i],poses,packet.ts,t,acceptedSub);
     if(!candidate || store.some(p=>p.key===candidate.key))continue;
+    // #1665: one main shot records its projectile birth ('p') and then its
+    // weapon:fire presentation event in the same frame. Both used to mint a
+    // proof, doubling the hits one real round could authorize. The fire event
+    // still proves hitscan shots (Charger), which have no projectile birth.
+    if(candidate.src==='ev'&&candidate.kind==='main'&&sameShotBirth(store,packetStart,candidate))continue;
     const actor=ownerActor(nm,from,candidate.actor);
     const interval=actor?.weapon?.fireInterval;
     const rate=finite(interval)&&interval>0 ? Math.min(75,Math.ceil(2/interval)+6):32;
@@ -143,6 +149,101 @@ function record(nm,from,packet,t,acceptedSub=null) {
     store.push(candidate);if(acceptedSub)acceptedProof=candidate;
   }
   if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return acceptedProof;
+}
+function sameShotBirth(store,start,c) {
+  for(let i=start;i<store.length;i++) {
+    const p=store[i];
+    if(p.actor===c.actor&&p.src==='p'&&p.kind==='main'&&Math.abs(p.ts-c.ts)<=SAME_SHOT_SECONDS)return true;
+  }
+  return false;
+}
+// #1665/#1666: the receiver's own trusted geometry. The victim owner knows
+// where its own actor really was; the host knows the Boss. A straight-fire
+// main round must have had a clear line from its claimed muzzle to the
+// victim at some point inside the lag window, and that muzzle must be in
+// view of the attacker's own reported body. Lobbed/area families (Slosher,
+// Roller and Brush flings, Blaster bursts, Stringer, Splatana, Brella) and
+// subs/Specials are not straight lines, so they keep the ray-proximity gate.
+const DIRECT_FIRE = new Set(['shooter','dualies','splatling','charger']);
+const SAME_SHOT_SECONDS = .0015;
+const HISTORY_AGE = 1.2, HISTORY_SIZE = 32, HISTORY_SPACING = 1/40, HISTORY_POSES = 8;
+const SAMPLE_HEIGHTS = [.3,.9,1.5], SAMPLE_REACH = .35, ATTACKER_HEIGHTS = [.5,1.05,1.5];
+function directFire(actor) {
+  const w=actor?.weapon;
+  return DIRECT_FIRE.has(w?.catalogRecord?.family||w?.behaviorKind||w?.kind);
+}
+function losTools(nm) {
+  const physics=nm._combatProvenancePhysics,V=nm._combatProvenanceTHREE?.Vector3;
+  if(typeof physics?.los!=='function'||typeof V!=='function')return null;
+  const scratch=nm._combatLosVectors||(nm._combatLosVectors=[new V(),new V()]);
+  return {physics,a:scratch[0],b:scratch[1]};
+}
+function clear(tools,from,x,y,z) {
+  tools.a.set(from[0],from[1],from[2]);tools.b.set(x,y,z);
+  try { return tools.physics.los(tools.a,tools.b)===true; }
+  catch { return false; } // malformed collision world never authorizes a hit
+}
+// Local actors only: one bounded ring per actor, sampled on owner packets.
+export function sampleLocalHistory(nm,t=now()) {
+  const s=state(nm),rings=s.history||(s.history=new Map());
+  for(const a of nm.byNid?.values?.()||[]) {
+    if(a?.remote||!a?.alive||!a.pos||!finite(a.pos.x)||!finite(a.pos.y)||!finite(a.pos.z))continue;
+    let ring=rings.get(a);
+    if(!ring){ring={buf:new Float64Array(HISTORY_SIZE*4),n:0,i:0};rings.set(a,ring);}
+    const last=ring.n?ring.buf[((ring.i+HISTORY_SIZE-1)%HISTORY_SIZE)*4]:-Infinity;
+    if(t-last<HISTORY_SPACING&&t>=last)continue;
+    const o=ring.i*4;
+    ring.buf[o]=t;ring.buf[o+1]=a.pos.x;ring.buf[o+2]=a.pos.y;ring.buf[o+3]=a.pos.z;
+    ring.i=(ring.i+1)%HISTORY_SIZE;ring.n=Math.min(HISTORY_SIZE,ring.n+1);
+  }
+}
+function poseVisible(tools,origin,x,y,z) {
+  let dx=origin[0]-x,dz=origin[2]-z;const h=Math.hypot(dx,dz);
+  if(h>1e-6){dx/=h;dz/=h;}else{dx=0;dz=0;}
+  for(const height of SAMPLE_HEIGHTS)for(let side=-1;side<=1;side++) {
+    const px=x+(dx-side*dz)*SAMPLE_REACH,pz=z+(dz+side*dx)*SAMPLE_REACH;
+    if(clear(tools,origin,px,y+height,pz))return true;
+  }
+  return false;
+}
+function attackerSeesMuzzle(tools,nm,p) {
+  const a=nm.byNid?.get(p.actor),pose=point(a);
+  if(!v3(pose))return false;
+  for(const height of ATTACKER_HEIGHTS)if(clear(tools,p.origin,pose[0],pose[1]+height,pose[2]))return true;
+  return false;
+}
+export function victimVisible(nm,p,victim,t=now()) {
+  const tools=losTools(nm);
+  if(!tools)return true; // offline/unit contexts without a collision world
+  if(p.los?.victim===victim&&t-p.los.at<.1)return p.los.ok;
+  let ok=attackerSeesMuzzle(tools,nm,p);
+  if(ok) {
+    ok=poseVisible(tools,p.origin,victim.pos.x,victim.pos.y,victim.pos.z);
+    const ring=state(nm).history?.get(victim);
+    if(!ok&&ring?.n) {
+      // Newest first, at most HISTORY_POSES evenly spread inside the window.
+      const step=Math.max(1,Math.ceil(ring.n/HISTORY_POSES));
+      for(let k=1;k<=ring.n&&!ok;k+=step) {
+        const o=((ring.i-k+HISTORY_SIZE*2)%HISTORY_SIZE)*4;
+        if(t-ring.buf[o]>HISTORY_AGE)break;
+        ok=poseVisible(tools,p.origin,ring.buf[o+1],ring.buf[o+2],ring.buf[o+3]);
+      }
+    }
+  }
+  p.los={victim,at:t,ok};
+  return ok;
+}
+function bossVisible(nm,p) {
+  const tools=losTools(nm),shapes=nm.match?.boss?.model?.hitShapes;
+  if(!tools)return true;
+  if(!attackerSeesMuzzle(tools,nm,p)||!Array.isArray(shapes))return false;
+  for(const h of shapes) {
+    if(!h?.active||!h.pos||!finite(h.r)||h.r<=0)continue;
+    const c=[h.pos.x,h.pos.y,h.pos.z],d=difference(p.origin,c),len=magnitude(d);
+    const k=len>1e-6?Math.min(len,h.r*.8)/len:0;
+    if(clear(tools,p.origin,c[0]+d[0]*k,c[1]+d[1]*k,c[2]+d[2]*k))return true;
+  }
+  return false;
 }
 function rayNear(p,target,margin=5) {
   const d=difference(target,p.origin),along=dot(d,p.unit);
@@ -309,7 +410,11 @@ function take(nm,from,d,type,t,sprinklerScope=null) {
         try { if(!nm._combatProvenancePhysics.los(scratch[0],scratch[1]))continue; }
         catch { continue; } // malformed collision world never authorizes a hit
       }
-    } else if(d.weak===1 && !weakPointOk(nm,p))continue;
+      if(p.kind==='main'&&directFire(actor)&&!victimVisible(nm,p,nm.byNid.get(d.v),t))continue;
+    } else {
+      if(d.weak===1 && !weakPointOk(nm,p))continue;
+      if(d.c<0&&p.kind==='main'&&directFire(actor)&&!bossVisible(nm,p))continue;
+    }
     p.uses++;
     return true;
   }
@@ -381,6 +486,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     const result=oldTick.call(this,from,d);
     if(this.peers?.get(from)?.lastTs===d?.ts && finite(d.ts) && d.ts>before) {
       const t=now();
+      sampleLocalHistory(this,t);
       record(this,from,d,t);
       flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed);
     }
@@ -397,6 +503,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     if(d.w==='torpedo-splash'&&(typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
     if(d.w==='sprinkler'&&(d.d!==SPRINKLER.dropletDamage||typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
     const t=now();
+    sampleLocalHistory(this,t);
     // Only incoming remote owner claims are deferred; internally retried
     // local receipts still require a previously accepted attack proof.
     if(combatAdmission(this,from,d,'pvp',t))return oldHit.call(this,d,from);
@@ -416,13 +523,13 @@ export function installCombatProvenance(NetMatch,context={}) {
     if(changed)closeSubBirthCommit(this);
     const s=this._combatProvenance;
     s?.proofs.delete(id);s?.pending.delete(id);
-    if(changed){s?.proofs.clear();s?.pending.clear();s?.contacts.clear();}
+    if(changed){s?.proofs.clear();s?.pending.clear();s?.contacts.clear();s?.history?.clear();}
     return oldLeave.call(this,id,changed);
   };
   P.dispose=function(...args) {
     closeSubBirthCommit(this);
     const s=this._combatProvenance;
-    s?.proofs.clear();s?.pending.clear();s?.contacts.clear();
+    s?.proofs.clear();s?.pending.clear();s?.contacts.clear();s?.history?.clear();
     this._combatProvenance=null;
     return oldDispose.apply(this,args);
   };

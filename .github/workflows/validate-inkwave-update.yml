@@ -706,6 +706,9 @@ jobs:
         run: |
           node --test scripts/lib/inkwave-volley-failure-evidence.test.mjs
           node scripts/check-inkwave-volley-vortex.mjs .built-site/_site --webkit
+      - name: Verify remote combat trust boundaries in Chromium and WebKit
+        if: matrix.suite == 'ui'
+        run: node scripts/check-inkwave-combat-trust.mjs .built-site/_site --webkit
       - name: Verify room startup and gyro health in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-room-gyro.mjs .built-site/_site --webkit

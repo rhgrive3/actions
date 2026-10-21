@@ -409,3 +409,105 @@ test('crablet marker is bounded by the largest equipped slot',()=>{
   fire(nm);
   assert.equal(nm.bossCalls.length,0);
 });
+
+// #1665/#1666: trusted receiver geometry. A modeled wall occupies the plane
+// z=3.5 for |x|<10 and y<5; the collision world is the engine LOS interface.
+import { sampleLocalHistory, victimVisible } from '../../patches/network-replication/combat-provenance.mjs';
+class Vec { set(x,y,z){this.x=x;this.y=y;this.z=z;return this;} }
+function walled(nm,{wallZ=3.5,half=10,top=5}={}) {
+  let calls=0;
+  nm._combatProvenanceTHREE={Vector3:Vec};
+  nm._combatProvenancePhysics={los(a,b){
+    calls++;
+    if((a.z-wallZ)*(b.z-wallZ)>=0)return true;
+    const k=(wallZ-a.z)/(b.z-a.z),x=a.x+(b.x-a.x)*k,y=a.y+(b.y-a.y)*k;
+    return !(Math.abs(x)<half&&y<top);
+  }};
+  return ()=>calls;
+}
+const nowS=()=>performance.now()/1000;
+test('straight-fire hit on a victim hidden behind a wall is rejected without any bg segment',()=>{
+  const open=new Stub();fire(open);open.onMessage('peerA',hit());
+  assert.equal(open.hitCalls.length,1,'negative control: without a collision world the old gate admits it');
+  const nm=new Stub();walled(nm);fire(nm);
+  nm.onMessage('peerA',hit());
+  assert.equal(nm.hitCalls.length,0);
+  assert.equal(nm._combatProvenance.pending.get('peerA').length,1,'stays pending, not consumed');
+});
+test('lag compensation admits a victim that was visible inside the 1.2 s window',()=>{
+  for(const hz of [10,20,60]){
+    const nm=new Stub();walled(nm,{half:2});const v=nm.byNid.get(2),t=nowS();
+    v.pos={x:5,y:0,z:7};                        // stepped out past the pillar
+    for(let k=Math.round(.9*hz);k>=Math.round(.5*hz);k--)sampleLocalHistory(nm,t-k/hz);
+    v.pos={x:0,y:0,z:7};                        // back behind it on this screen
+    nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,5,0,7]]});
+    nm.onMessage('peerA',hit());
+    assert.equal(nm.hitCalls.length,1,hz+'Hz history sampling');
+  }
+});
+test('a pose older than the lag window cannot authorize the hit',()=>{
+  const nm=new Stub();walled(nm,{half:2});const v=nm.byNid.get(2),t=nowS();
+  v.pos={x:5,y:0,z:7};sampleLocalHistory(nm,t-1.5);
+  v.pos={x:0,y:0,z:7};
+  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,5,0,7]]});
+  nm.onMessage('peerA',hit());
+  assert.equal(nm.hitCalls.length,0);
+});
+test('a claimed muzzle on the far side of a wall from the attacker body is rejected',()=>{
+  const nm=new Stub();walled(nm);
+  nm.byNid.get(1).pos={x:0,y:0,z:2.5};nm.byNid.get(2).pos={x:0,y:0,z:9};
+  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,2.5]],e:[[100,'p',1,'shot','shooter',0,1,5,0,0,45]]});
+  nm.onMessage('peerA',hit());
+  assert.equal(nm.hitCalls.length,0);
+  const ok=new Stub();walled(ok);
+  ok.byNid.get(1).pos={x:0,y:0,z:4};ok.byNid.get(2).pos={x:0,y:0,z:9};
+  ok._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,4]],e:[[100,'p',1,'shot','shooter',0,1,5,0,0,45]]});
+  ok.onMessage('peerA',hit());
+  assert.equal(ok.hitCalls.length,1,'positive control: same muzzle in view of the attacker');
+});
+test('area-burst Blaster round near cover keeps the existing ray gate',()=>{
+  // Blaster bursts damage around their detonation point, not along a line.
+  const nm=new Stub();walled(nm);const a=nm.byNid.get(1);
+  a.weapon={...a.weapon,id:'blaster',kind:'blaster',damage:125};
+  fire(nm,{kind:'blaster'});
+  nm.onMessage('peerA',{...hit(2,1,'blaster'),d:70});
+  assert.equal(nm.hitCalls.length,1);
+});
+test('LOS work per claim is bounded and cached per proof',()=>{
+  const nm=new Stub(),calls=walled(nm),t=nowS();
+  for(let k=40;k>0;k--)sampleLocalHistory(nm,t-k/40);
+  fire(nm);
+  const p=nm._combatProvenance.proofs.get('peerA')[0];
+  victimVisible(nm,p,nm.byNid.get(2),t);
+  const first=calls();
+  assert.ok(first<=3+9*(1+8),'at most attacker anchors + 9 samples x (current + 8 history poses): '+first);
+  victimVisible(nm,p,nm.byNid.get(2),t+.05);
+  assert.equal(calls(),first,'cached inside 0.1 s');
+});
+test('one shot no longer mints both a projectile and a fire-event proof',()=>{
+  const shot=(nm,at)=>nm._tick('peerA',{k:'t',ts:at+.05,a:[[1,0,0,0]],e:[
+    [at,'p',1,'shot','shooter',0,1,0,0,0,45],
+    [at+.001,'ev','weapon:fire',{actor:{n:1},weapon:'shooter',muzzle:[0,1,0],dir:[0,0,1]}]]});
+  const nm=new Stub();shot(nm,100);
+  assert.equal(nm._combatProvenance.proofs.get('peerA').length,1);
+  for(let h=1;h<=4;h++)nm.onMessage('peerA',hit(2,h));
+  assert.equal(nm.hitCalls.length,2,'one round authorizes its existing two uses, not four');
+  const charger=new Stub(),c=charger.byNid.get(1);c.weapon={...c.weapon,id:'charger',kind:'charger',damage:160};
+  charger._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'ev','weapon:fire',{actor:{n:1},weapon:'charger',muzzle:[0,1,0],dir:[0,0,1]}]]});
+  charger.onMessage('peerA',{...hit(2,1,'charger'),d:160});
+  assert.equal(charger.hitCalls.length,1,'hitscan fire events still prove Charger shots');
+});
+test('Boss body behind cover rejects straight fire; crablets keep the ray gate',()=>{
+  const nm=new Stub();walled(nm);
+  nm.onMessage('peerA',boss(1,-1,0,'shooter',36));
+  fire(nm);
+  assert.equal(nm.bossCalls.length,0);
+  const seen=new Stub();walled(seen,{wallZ:20});
+  seen.onMessage('peerA',boss(1,-1,0,'shooter',36));
+  fire(seen);
+  assert.equal(seen.bossCalls.length,1);
+  const crab=new Stub();walled(crab);
+  crab.onMessage('peerA',boss(1,7,0,'crab',36));
+  fire(crab);
+  assert.equal(crab.bossCalls.length,1);
+});
