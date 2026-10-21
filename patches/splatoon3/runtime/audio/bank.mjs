@@ -77,22 +77,43 @@ export class WeaponSoundBank {
       const authorized=bank.authorized.pick(id,event,serial);
       if(!authorized&&bank.realOnly&&!(bank.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Verified sample not resident: '+id+'/'+event);
       const buffer=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3),s=v.ctx.createBufferSource();s.buffer=buffer;s.loop=loop;
-      // Nintendo's 2022 Charger HoldNoise is a 0.235s (Bamboo/Pump: 0.340s)
-      // recorded texture, NOT the synth oscillator the old native runner
-      // ramps up to 2.5x. Preserve the recorded sample at original pitch.
-      // Retail SLINK pitch automation is not verified; do not invent one.
-      const recordedMotor=!!authorized&&((AUDIO_RECIPES[id]?.family==='charger'&&event==='charge')||
-        (AUDIO_RECIPES[id]?.family==='splatling'&&['charge','spin'].includes(event)));
-      // Source motors keep their recorded pitch; native oscillator controls
-      // must not transpose them by up to 2.5x or alternate charge motors randomly.
+      // The 2022 S3 Charger HoldNoise is a short recorded texture, not a
+      // complete charge-rise. The only discovered dynamic reference is the
+      // independent SplatoonSWEPs S1 fan recreation (NOT Nintendo's SLINK):
+      //   PitchInSourceUnits = max(previousPitch, progress * 99 + 1)
+      // Source/GMod pitch 100 is 1x playback. Normalize those units here,
+      // using the ACTUAL gameplay charge rather than either legacy oscillator
+      // hint (1..2.5) or catalogue hint (.66..1.44). This is a clearly
+      // provisional cross-generation approximation, NOT retail pitch evidence.
+      const sourceChargerHold=!!authorized&&AUDIO_RECIPES[id]?.family==='charger'&&event==='charge';
+      const recordedSpinnerMotor=!!authorized&&AUDIO_RECIPES[id]?.family==='splatling'&&['charge','spin'].includes(event);
+      const readCharge=()=>{
+        const progress=o.actor?.weaponRunner?.charge;
+        return typeof progress==='number'&&Number.isFinite(progress)
+          ?Math.max(0,Math.min(1,progress)):null;
+      };
+      const firstCharge=sourceChargerHold?readCharge():null;
+      // Unknown actors and sources without a verified gameplay charge stay at
+      // their original 1x recording speed rather than inferring a bogus value.
+      let chargerRate=firstCharge===null?1:(1+99*firstCharge)/100;
       if(loop&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
       if(authorized&&authorized.gain!==1){const g=v.ctx.createGain();g.gain.value=authorized.gain;s.connect(g);g.connect(v.out);v.nodes.push(g);}else s.connect(v.out);
-      // Small playback variation is additional to independently rendered round-robin samples.
-      s.playbackRate.value=recordedMotor?1:Math.max(.3,Math.min(3,p));s.start(v.t,0);
+      // No additional voice, synthesized oscillator or audio-file download.
+      s.playbackRate.value=sourceChargerHold?chargerRate:recordedSpinnerMotor?1:Math.max(.3,Math.min(3,p));s.start(v.t,0);
       s._end=loop?Infinity:v.t+buffer.duration/s.playbackRate.value;
       v.nodes.push(s);v.srcs.push(s);v.end=Math.max(v.end,s._end);v.endless=loop;
       return {pitch(q,t){
-        if(!recordedMotor)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);
+        if(sourceChargerHold){
+          const charge=readCharge();
+          if(charge===null)return;
+          const next=(1+99*charge)/100;
+          // Mirror the reference's max(previousPitch, requestedPitch) while held;
+          // a stopped loop gets a new independent envelope on the next hold.
+          if(next>chargerRate+1e-5){
+            chargerRate=next;
+            s.playbackRate.setTargetAtTime(next,t,1/60);
+          }
+        }else if(!recordedSpinnerMotor)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);
       }};
     };
     const d={gain:loop?.23:(event==='explosion'?.7:.68),max:16,jitter:loop?0:.008,minGap:['impact','shield_hit'].includes(event)?.024:event==='explosion'?.008:0,
