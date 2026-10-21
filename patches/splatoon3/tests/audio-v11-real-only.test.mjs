@@ -199,7 +199,7 @@ test('selected Charger preloads HoldNoise first then the other actual cues in on
  a.disposeWeaponAudio();
 });
 
-test('recorded Charger and Spinner motors retain the original recording speed',async()=>{
+test('S1 community proxy sweeps a sourced Charger HoldNoise by actual progress without synthetic voices',async()=>{
  const {ctx,sources}=mkctx(),a=new MixerStub(ctx),id='s3-charger-light';
  a.weaponBank();
  const archive=manifest([
@@ -209,32 +209,46 @@ test('recorded Charger and Spinner motors retain the original recording speed',a
  a._realS3Loader.bank.authorized.fetcher=async()=>res;
  await a._realS3Loader.ensure(id,'charge');
  await a._realS3Loader.ensure('s3-spinner-quick','charge');
- const recorded=a._def(`main:${id}:charge`);
+ const recorded=a._def('main:'+id+':charge');
  const voice=()=>({ctx,t:ctx.currentTime,out:{},nodes:[],srcs:[],end:0,endless:false});
  const v=voice(),control=recorded.loop(v,2.5,{});
  assert.equal(v.srcs[0].buffer,a.weaponBank().authorized.pick(id,'charge').buffer);
- assert.equal(v.srcs[0].playbackRate.value,1,'recorded hold remains at actual recorded speed');
+ assert.equal(v.srcs[0].playbackRate.value,1,'an actor-free playback keeps original recording rate');
  control.pitch(2.5,ctx.currentTime+.05);
- assert.equal(v.srcs[0].playbackRate.value,1,'old native chirp controls cannot rewrite source pitch');
- assert.equal(v.srcs[0].playbackRate.automation.length,0,'absent actor charge leaves recorded source clock unchanged');
+ assert.equal(v.srcs[0].playbackRate.value,1,'old 2.5x hint cannot invent a charge without an actor');
+ assert.equal(v.srcs[0].playbackRate.automation.length,0);
  const actor={weaponRunner:{charge:0}},charged=voice(),rise=recorded.loop(charged,2.5,{actor});
  assert.equal(charged.srcs[0].buffer,a.weaponBank().authorized.pick(id,'charge').buffer);
- assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1)<1e-8);
+ assert.ok(Math.abs(charged.srcs[0].playbackRate.value-0.01)<1e-8,
+   'Source-unit pitch 1 corresponds to 0.01x in community S1 approximation');
  actor.weaponRunner.charge=.5;rise.pitch(2.5,ctx.currentTime+.1);
- assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1)<1e-8);
+ assert.ok(Math.abs(charged.srcs[0].playbackRate.value-.505)<1e-8,
+   'Source-unit pitch 50.5 corresponds to 0.505x');
  const count=charged.srcs[0].playbackRate.automation.length;
- rise.pitch(2.5,ctx.currentTime+.11);
- assert.equal(charged.srcs[0].playbackRate.automation.length,count,'no redundant automation at constant charge');
+ rise.pitch(1,ctx.currentTime+.11);
+ assert.equal(charged.srcs[0].playbackRate.automation.length,count,
+   'old oscillator hint and a constant charge never cause redundant automation');
+ actor.weaponRunner.charge=.25;rise.pitch(1,ctx.currentTime+.14);
+ assert.equal(charged.srcs[0].playbackRate.automation.length,count,
+   'reference is monotone while the fire button is held');
  actor.weaponRunner.charge=1;rise.pitch(2.5,ctx.currentTime+.2);
  assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1)<1e-8);
- assert.equal(charged.srcs[0].playbackRate.automation.length,0);
+ assert.equal(charged.srcs[0].playbackRate.automation.length,count+1);
+ actor.weaponRunner.charge=NaN;rise.pitch(2.5,ctx.currentTime+.3);
+ assert.equal(charged.srcs[0].playbackRate.automation.length,count+1,
+   'invalid network charge input cannot schedule a fabricated pitch');
+ actor.weaponRunner.charge=0;
+ const restarted=voice(),again=recorded.loop(restarted,2.5,{actor});
+ assert.ok(Math.abs(restarted.srcs[0].playbackRate.value-0.01)<1e-8,
+   'each fresh hold restarts its own charging envelope');
  const spin=a._def('main:s3-spinner-quick:charge'),v2=voice();
  const spinControl=spin.loop(v2,1.5,{});
- assert.equal(v2.srcs[0].playbackRate.value,1,'Spinner motor keeps recorded pitch');
+ assert.equal(v2.srcs[0].playbackRate.value,1,'Spinner motor remains at recorded pitch');
  spinControl.pitch(1.2,ctx.currentTime+.05);
  assert.equal(v2.srcs[0].playbackRate.value,1);
  assert.equal(v2.srcs[0].playbackRate.automation.length,0);
- assert.equal(sources.length,3,'reused source buffer, with one additional charge presentation voice');
+ assert.equal(sources.length,4,'S1 proxy reuses one decoded source per voice, with no oscillator');
+ assert.equal(a.weaponBank().cache.size,0);
  a.disposeWeaponAudio();
 });
 
