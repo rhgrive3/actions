@@ -90,11 +90,11 @@ jobs:
               -frames:v 1 "${slug}-spectrum.png" >>fetch.log 2>&1 || true
             ffmpeg -hide_banner -loglevel error -y -i "$file" -ac 1 -ar 8000 -sample_fmt s16 \
               -f wav - 2>>fetch.log | python3 -c 'import sys,wave,struct,math; f=wave.open(sys.stdin.buffer);sr=f.getframerate(); n=sr//50; print("time_seconds,rms,peak"); t=0
-while True:
-    raw=f.readframes(n)
-    if not raw: break
-    xs=struct.unpack("<"+str(len(raw)//2)+"h",raw); m=max(abs(z) for z in xs)/32768; rms=math.sqrt(sum(z*z for z in xs)/len(xs))/32768
-    print(f"{t:.3f},{rms:.8f},{m:.8f}");t+=len(xs)/sr' >"${slug}-rms.csv" || true
+          while True:
+              raw=f.readframes(n)
+              if not raw: break
+              xs=struct.unpack("<"+str(len(raw)//2)+"h",raw); m=max(abs(z) for z in xs)/32768; rms=math.sqrt(sum(z*z for z in xs)/len(xs))/32768
+              print(f"{t:.3f},{rms:.8f},{m:.8f}");t+=len(xs)/sr' >"${slug}-rms.csv" || true
           done < sources.tsv
           echo "Files:" >>fetch.log
           ls -lah *.png *.csv 2>/dev/null >>fetch.log || :
