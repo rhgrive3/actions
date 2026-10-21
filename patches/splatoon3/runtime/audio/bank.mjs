@@ -121,7 +121,12 @@ export class WeaponSoundBank {
         }else if(!recordedSpinnerMotor)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);
       }};
     };
-    const d={gain:loop?.23:(event==='explosion'?.7:.68),max:16,jitter:loop?0:.008,minGap:['impact','shield_hit'].includes(event)?.024:event==='explosion'?.008:0,
+    // The original mix gave the soft HoldNoise bed a 0.23 loop gain while
+    // the short ready cue used 0.68. Raise ONLY this reworked Charger bed to
+    // keep the end-click/ready sound from dominating the audible charge.
+    // This is a perceptual balance, not a claimed Nintendo gain setting.
+    const chargerHoldEvent=loop&&AUDIO_RECIPES[id]?.family==='charger'&&event==='charge';
+    const d={gain:chargerHoldEvent?.54:(loop?.23:(event==='explosion'?.7:.68)),max:16,jitter:loop?0:.008,minGap:['impact','shield_hit'].includes(event)?.024:event==='explosion'?.008:0,
       reverb:loop?.025:.055,ref:event==='explosion'?5:3,priority:event==='ready'?90:65,weaponId:id,event,
       ...(loop?{loop:build,oneShot:.65}:{build})};
     this.defs.set(name,d);return d;
