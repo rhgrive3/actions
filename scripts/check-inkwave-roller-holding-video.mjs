@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { enterRangeFromMenu } from './lib/inkwave-range-menu-entry.mjs';
-import { bindRollerComparisonStartup } from './lib/inkwave-roller-comparison-startup.mjs';
+import { bindRollerComparisonStartup, installRollerComparisonRandom } from './lib/inkwave-roller-comparison-startup.mjs';
 const numericOnly=process.argv.includes('--numeric-only');
 const site=path.resolve(process.argv[2]||'_site'), out=path.resolve(process.argv[3]||'.browser-evidence/roller-scale/range');
 // Fixed inspection views are authored once from the baseline and reused verbatim.
@@ -73,6 +73,7 @@ try{
   page.on('response',r=>{if(r.status()>=400&&receipt.requests.length<30)receipt.requests.push({url:r.url(),status:r.status()});});
   page.on('console',m=>{if(['error','warning'].includes(m.type())&&receipt.console.length<30)receipt.console.push(m.text().slice(0,1500));});
   diagnosticTimer=setInterval(async()=>{receipt.state=await snapshot();fs.writeFileSync(path.join(out,'progress.json'),JSON.stringify(receipt,null,2));},15000);
+  await page.addInitScript(installRollerComparisonRandom,{seed:gripSeed});
   await page.addInitScript(bindRollerComparisonStartup);
   await page.addInitScript(({seeded})=>{
     // Saved settings/profile were bound before native startup by the companion QA helper.
@@ -207,10 +208,11 @@ try{
     // END INITIAL CHARACTER CONTRACT
     g.input.keys.clear();g.debug.key('KeyW',true);g.debug.fire(true);
     // BEGIN SCOPED ROLL RNG CONTRACT
-    // Opt-in QA randomness only. Default capture leaves the game's RNG untouched.
-    // No await occurs until both shipped 90-tick batches finish and RNG is restored.
+    // Keep the pre-import function identity; module-captured aliases share this phase.
+    // No await occurs until both shipped 90-tick batches finish.
+    const globalRandom=window.__rollerComparisonRandom;globalRandom.begin('steady-180');
     const originalRandom=Math.random,originalSplat=G.paint.splat;
-    const recipeRandom={mode:gripSeed===null?'unseeded':'seeded-synchronous-180-tick',
+    const recipeRandom={mode:'stable-global-seeded-native-180-tick',
       algorithm:gripSeed===null?null:'mulberry32-u32-v1',seed:gripSeed,draws:0,restored:false,contactSeeds:[]};
     // BEGIN BOUNDED RNG CALLER TRACE
     // Diagnostic only: optional caller provenance, never a seed/value rewrite.
@@ -218,8 +220,8 @@ try{
       limit:256,maxGroups:32,stackLimit:800,totalDraws:0,omittedDraws:0,
       overflowDraws:0,stackTruncatedCalls:0,groups:[],sequence:[]}:null;
     // END BOUNDED RNG CALLER TRACE
-    let word=gripSeed,recipePhase='settle',recipeMeasurement;
-    if(gripSeed!==null)Math.random=()=>{
+    let recipePhase='settle',recipeMeasurement;
+    globalRandom.observe(()=>{
       recipeRandom.draws++;
       // BEGIN BOUNDED RNG CALLER RECORD
       if(recipeRandomTrace){
@@ -241,10 +243,7 @@ try{
         }else trace.omittedDraws++;
       }
       // END BOUNDED RNG CALLER RECORD
-      let t=word=(word+0x6D2B79F5)|0;
-      t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);
-      return ((t^(t>>>14))>>>0)/4294967296;
-    };
+    });
     G.paint.splat=function(at,r,team,o){
       const contact=o?.footprint==='ink-contact'?{order:recipeRandom.contactSeeds.length,
         phase:recipePhase,seed:o.seed,face:o.face??null,kind:o.kind??null,completed:false}:null;
@@ -275,10 +274,12 @@ try{
     finally{G.paint.splat=splat;g.debug.fire(false);g.debug.key('KeyW',false);}
     recipeMeasurement={start,events};
     }finally{
-      Math.random=originalRandom;G.paint.splat=originalSplat;
+      globalRandom.observe(null);recipeRandom.globalPhase=globalRandom.phase();
+      G.paint.splat=originalSplat;
       recipeRandom.restored=Math.random===originalRandom&&G.paint.splat===originalSplat;
       g.debug.fire(false);g.debug.key('KeyW',false);
     }
+    globalRandom.begin('inspection');
     const {start,events}=recipeMeasurement;
     // END SCOPED ROLL RNG CONTRACT
     const gameplayPng=numericOnly?null:G.renderer.domElement.toDataURL('image/png').split(',')[1];
@@ -387,7 +388,8 @@ try{
     const state=()=>({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,
       phase:a.character.phase,characterTime:a.character.t,breathPhase:a.character.brPh,sceneClocks:window.__rollerVideoClocks(),pose:Array.from(a.character.P)});
     if(JSON.stringify(state())!==JSON.stringify(expectedState))throw Error('Steady state changed before movie continuation');
-    window.__rollerMovie={previous:state(),anchor:a.pos.toArray(),views,seed,word:seed,draws:0};
+    const globalRandom=window.__rollerComparisonRandom;globalRandom.begin('movie-180');
+    window.__rollerMovie={previous:state(),previousRng:globalRandom.phase(),anchor:a.pos.toArray(),views,seed,draws:0};
     // No simulated release occurred between the accepted held state and this continuation.
     g.debug.key('KeyW',true);g.debug.fire(true);
     return {state:state(),anchor:a.pos.toArray(),seed};
@@ -408,12 +410,10 @@ try{
         const state=()=>({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,
           phase:a.character.phase,characterTime:a.character.t,breathPhase:a.character.brPh,sceneClocks:window.__rollerVideoClocks(),pose:Array.from(a.character.P)});
         if(JSON.stringify(state())!==JSON.stringify(q.previous))throw Error('Frozen simulation drifted between movie frames');
+        const globalRandom=window.__rollerComparisonRandom,random=Math.random;
+        if(JSON.stringify(globalRandom.phase())!==JSON.stringify(q.previousRng))throw Error('Global RNG changed while native movie was frozen');
         const fire=index<60;g.debug.key('KeyW',true);g.debug.fire(fire);
-        const random=Math.random;
-        Math.random=()=>{q.draws++;let t=q.word=(q.word+0x6D2B79F5)|0;
-          t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);
-          return ((t^(t>>>14))>>>0)/4294967296;};
-        try{g.debug.step(1000/30);}finally{Math.random=random;}
+        g.debug.step(1000/30);q.draws=globalRandom.phase().draws;
         const current=state();
         if(Math.abs(current.time-q.previous.time-2/60)>1e-8)throw Error('Movie must advance exactly two native ticks');
         if(fire&&!current.rolling)throw Error('Rolling movie lost admitted contact');
@@ -425,14 +425,14 @@ try{
           const camera=new PerspectiveCamera(spec.fov,spec.aspect,spec.near,spec.far);
           camera.position.fromArray(spec.position).add(rootDelta);
           camera.up.set(0,1,0);camera.lookAt(new Vector3(...spec.target).add(rootDelta));camera.updateMatrixWorld(true);
-          const before=JSON.stringify(state()),draws=q.draws;
+          const before=JSON.stringify(state()),randomBefore=JSON.stringify(globalRandom.phase());
           G.renderer.setRenderTarget(null);G.renderer.render(G.scene,camera);
-          if(JSON.stringify(state())!==before||q.draws!==draws)throw Error('Movie inspection changed simulation or recipe RNG');
+          if(JSON.stringify(state())!==before||JSON.stringify(globalRandom.phase())!==randomBefore)throw Error('Movie inspection changed simulation or stable global RNG');
           images.push({name:spec.name,position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),
             projection:camera.projectionMatrix.toArray(),png:numericOnly?null:G.renderer.domElement.toDataURL('image/png').split(',')[1]});
         }
-        q.previous=current;
-        return {index,tick:(index+1)*2,fire,state:current,hands,images,rngDraws:q.draws,
+        q.previous=current;q.previousRng=globalRandom.phase();q.draws=q.previousRng.draws;
+        return {index,tick:(index+1)*2,fire,state:current,hands,images,rngDraws:q.draws,globalRandom:q.previousRng,
           rngRestored:Math.random===random,lighting:lighting(),renderSize:{width:G.renderer.domElement.width,height:G.renderer.domElement.height}};
       },{index,numericOnly});
       for(const image of frame.images){
@@ -446,6 +446,7 @@ try{
     }
   }finally{await page.evaluate(()=>{__inkwave.debug.fire(false);__inkwave.debug.key('KeyW',false);});}
   receipt.characterObserver=await page.evaluate(()=>window.__rollerCharacterObserver.restore());
+  receipt.globalRandom=await page.evaluate(()=>window.__rollerComparisonRandom.restore());
   assert.equal(receipt.characterObserver.frames.length,360);
   assert.equal(receipt.characterObserver.restored,true);
   for(const frame of receipt.characterObserver.frames)assert.equal(frame.dt,1/60);
@@ -458,4 +459,4 @@ try{
   assert.equal(receipt.errors.length,0);
   receipt.passed=true;console.log(JSON.stringify({passed:true,build:receipt.build,video:{frameCount:90,fps:30,nativeHz:60,views:videoViews}}));
 }catch(error){receipt.passed=false;receipt.failure=String(error.stack||error);receipt.state=await snapshot();if(!numericOnly)await page?.screenshot({path:path.join(out,'failure.png'),timeout:30000}).catch(()=>{});throw error;}
-finally{await page?.evaluate(()=>window.__rollerCharacterObserver?.restore()).catch(()=>{});clearInterval(diagnosticTimer);receipt.servedModules=servedModules;fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2)+'\n');await browser?.close();await new Promise(r=>server.close(r));}
+finally{const cleanup=await page?.evaluate(()=>{let character,global;try{character=window.__rollerCharacterObserver?.restore();}finally{global=window.__rollerComparisonRandom?.restore();}return {character,global};}).catch(()=>null);if(cleanup){receipt.characterObserver??=cleanup.character;receipt.globalRandom??=cleanup.global;}clearInterval(diagnosticTimer);receipt.servedModules=servedModules;fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2)+'\n');await browser?.close();await new Promise(r=>server.close(r));}

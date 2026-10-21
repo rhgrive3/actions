@@ -55,3 +55,53 @@ export function bindRollerComparisonStartup() {
     return receipt.initial;
   };
 }
+
+// QA only. Install once before module evaluation so native `const rand = Math.random`
+// aliases retain the same function. Only this closure's PRNG state changes at boundaries.
+export function installRollerComparisonRandom({seed}) {
+  if(!Number.isInteger(seed)||seed<0||seed>0xffffffff)throw Error('Comparison random seed must be uint32');
+  if(Object.hasOwn(window,'__rollerComparisonRandom'))throw Error('Comparison random already installed');
+  const descriptor=Object.getOwnPropertyDescriptor(Math,'random'),original=Math.random;
+  const labels=['startup','steady-180','inspection','movie-180'],phases=[];
+  const maxDrawsPerPhase=200000;
+  let phase,word,observer=null,restored=false;
+  const identity=()=>{if(restored||Math.random!==random)throw Error('Comparison random function identity changed');};
+  const begin=label=>{
+    identity();
+    if(label!==labels[phases.length])throw Error('Unexpected comparison random boundary: '+label);
+    word=seed|0;phase={label,seed,initialWord:seed,word:seed,draws:0,firstValues:[],nativeFxDrawIndices:[]};
+    phases.push(phase);
+  };
+  const random=function(){
+    if(restored)return Reflect.apply(original,this,arguments);
+    identity();
+    if(phase.draws>=maxDrawsPerPhase)throw Error('Comparison random draw bound exceeded');
+    let t=word=(word+0x6D2B79F5)|0;
+    t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);
+    const value=((t^(t>>>14))>>>0)/4294967296,index=phase.draws++;
+    phase.word=word>>>0;if(phase.firstValues.length<8)phase.firstValues.push(value);
+    // Diagnostic caller classification only, not a replacement FX implementation.
+    // Record exact indices, not an assertion that every random consumer is an FX caller.
+    if(/\/src\/fx\/fx\.js:\d+/.test(String(new Error().stack||'')))phase.nativeFxDrawIndices.push(index);
+    observer?.(value,phase.label,index);
+    return value;
+  };
+  const copy=p=>({...p,firstValues:[...p.firstValues],nativeFxDrawIndices:[...p.nativeFxDrawIndices]});
+  const receipt=()=>({schema:1,diagnosticOnly:true,performanceEvidence:false,algorithm:'mulberry32-u32-v1',seed,
+    installation:'page-init-before-module-evaluation',maxDrawsPerPhase,
+    nativeFxClassification:'caller stack contains /src/fx/fx.js; not all possible FX consumers',
+    stableFunctionRetained:true,originalRestored:restored,phases:phases.map(copy)});
+  Math.random=random;
+  begin('startup');
+  window.__rollerComparisonRandom={
+    begin,
+    phase(){identity();return copy(phase);},
+    observe(fn){identity();if(fn!==null&&typeof fn!=='function')throw Error('Invalid random observer');observer=fn;},
+    receipt(){if(!restored)identity();return receipt();},
+    restore(){
+      if(!restored){identity();observer=null;Object.defineProperty(Math,'random',descriptor);restored=true;}
+      if(Math.random!==original)throw Error('Original random function was not restored');
+      return receipt();
+    }
+  };
+}

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import fs from 'node:fs';
-import { bindRollerComparisonStartup } from '../lib/inkwave-roller-comparison-startup.mjs';
+import { bindRollerComparisonStartup, installRollerComparisonRandom } from '../lib/inkwave-roller-comparison-startup.mjs';
 
 function fixture(){
   const stored=new Map(),window={};
@@ -93,4 +93,56 @@ test('numeric-only path guards all native image serialization and both screensho
   assert.match(driver,/if\(!numericOnly\)await page\.locator/);
   assert.match(driver,/if\(!numericOnly\)await page\?\.screenshot/);
   assert.match(driver,/if\(numericOnly\)\{delete image\.png;continue;\}/);
+});
+
+function randomFixture(seed=1715){
+  const context=vm.createContext({window:{}});
+  vm.runInContext('window.originalRandom = Math.random',context);
+  vm.runInContext('('+installRollerComparisonRandom.toString()+')({seed:'+seed+'})',context);
+  return {context,api:context.window.__rollerComparisonRandom,run:code=>vm.runInContext(code,context)};
+}
+test('pre-import stable function keeps captured native FX aliases seeded across closure resets',()=>{
+  const f=randomFixture();
+  vm.runInContext('const rand=Math.random; window.fxDraw=()=>rand();',f.context,{filename:'http://localhost:1234/src/fx/fx.js'});
+  const first=Array.from({length:3},()=>f.context.window.fxDraw());
+  assert.equal(f.api.phase().nativeFxDrawIndices.length,3);assert.equal(f.api.phase().draws,3);
+  const identity=f.run('Math.random');f.api.begin('steady-180');
+  assert.deepEqual(Array.from({length:3},()=>f.context.window.fxDraw()),first);
+  assert.equal(f.run('Math.random'),identity);assert.deepEqual(Array.from(f.api.phase().nativeFxDrawIndices),[0,1,2]);
+  const r=f.api.restore();assert(r.originalRestored);assert.equal(f.run('Math.random'),f.context.window.originalRandom);
+  assert.equal(f.api.receipt().phases.length,2);
+});
+test('old late-replacement alias is rejected by the stable function identity guard',()=>{
+  const f=randomFixture();f.run('Math.random=()=>.5');
+  assert.throws(()=>f.api.begin('steady-180'),/identity changed/);
+  assert.throws(()=>f.api.phase(),/identity changed/);
+});
+test('RNG boundary order, duplicate reset and invalid seed fail closed',()=>{
+  const f=randomFixture();f.run('Math.random()');
+  assert.throws(()=>f.api.begin('movie-180'),/Unexpected/);assert.equal(f.api.phase().draws,1);
+  f.api.begin('steady-180');assert.throws(()=>f.api.begin('steady-180'),/Unexpected/);
+  for(const seed of [-1,4294967296,1.5,NaN])assert.throws(()=>randomFixture(seed),/uint32/);
+  f.api.restore();
+});
+test('global RNG observer forwards native seeded values and cannot add uncounted alias draws',()=>{
+  const f=randomFixture(),seen=[];f.api.observe((value,label,index)=>seen.push([value,label,index]));
+  const values=f.run('[Math.random(),Math.random()]');assert.equal(seen.length,2);
+  assert.equal(seen[0][0],values[0]);assert.deepEqual(seen.map(x=>x.slice(1)),[['startup',0],['startup',1]]);
+  f.api.observe(null);f.run('Math.random()');assert.equal(seen.length,2);assert.equal(f.api.phase().draws,3);
+  f.api.restore();
+});
+test('global RNG draw limit rejects before an extra output and copied receipts cannot edit the state',()=>{
+  const f=randomFixture();f.run('for(let i=0;i<200000;i++) Math.random()');
+  assert.throws(()=>f.run('Math.random()'),/draw bound/);assert.equal(f.api.phase().draws,200000);
+  const r=f.api.receipt();r.phases[0].draws=0;r.phases[0].firstValues[0]=99;
+  assert.equal(f.api.phase().draws,200000);assert.notEqual(f.api.phase().firstValues[0],99);f.api.restore();
+});
+test('driver never replaces Math.random after native imports or resets native clocks',()=>{
+  const driver=fs.readFileSync(new URL('../check-inkwave-roller-holding-video.mjs',import.meta.url),'utf8');
+  assert.equal((driver.match(/Math\.random\s*=(?!=)/g)||[]).length,0);
+  assert.equal((driver.match(/(?:G\.time|g\.time|c\.t|c\.brPh)\s*=(?!=)/g)||[]).length,0);
+  assert.match(driver,/addInitScript\(installRollerComparisonRandom,\{seed:gripSeed\}\)/);
+  assert.match(driver,/globalRandom\.begin\('steady-180'\)/);assert.match(driver,/globalRandom\.begin\('movie-180'\)/);
+  assert.match(driver,/Global RNG changed while native movie was frozen/);
+  assert.match(driver,/Movie inspection changed simulation or stable global RNG/);
 });

@@ -1,7 +1,7 @@
-name: INKWAVE Roller startup numeric preflight
+name: INKWAVE Roller stable global RNG numeric preflight
 on:
   push:
-    branches: ['qa/roller-profile-preflight-20261021']
+    branches: ['qa/roller-global-rng-preflight-20261021']
     paths:
       - '.github/workflows/inkwave-roller-profile-preflight.yml'
       - 'scripts/check-inkwave-roller-holding-video.mjs'
@@ -135,7 +135,15 @@ jobs:
             return r;
           });
           const [a,b]=reports;
-          assert.deepEqual(a.characterObserver,b.characterObserver,'every observed native input, clock, RNG draw and physics state');
+          assert.deepEqual(a.characterObserver,b.characterObserver,'every observed native input, clock, Character RNG draw and physics state');
+          for(const r of reports){
+            assert(r.globalRandom.originalRestored);assert(r.globalRandom.stableFunctionRetained);
+            assert.equal(r.globalRandom.seed,1715);assert.equal(r.globalRandom.performanceEvidence,false);
+            assert.deepEqual(r.globalRandom.phases.map(p=>p.label),['startup','steady-180','inspection','movie-180']);
+            assert(r.globalRandom.phases[0].nativeFxDrawIndices.length>0,'native FX alias must actually draw during startup');
+            for(const p of r.globalRandom.phases){assert(p.draws>0&&p.draws<=200000);assert(p.nativeFxDrawIndices.every((n,i,all)=>Number.isInteger(n)&&n>=0&&n<p.draws&&(i===0||n>all[i-1])));}
+          }
+          assert.deepEqual(a.globalRandom,b.globalRandom,'startup, native FX caller indices and stable global RNG phases');
           for(const key of ['renderSize','cameraPlan'])assert.deepEqual(a.measurement[key],b.measurement[key],key);
           for(const key of ['sceneClocks','comparison'])assert.deepEqual(a.measurement.initialState[key],b.measurement.initialState[key],key);
           assert.deepEqual(a.measurement.initialState.boundary.boot.clocks,b.measurement.initialState.boundary.boot.clocks);
@@ -145,13 +153,13 @@ jobs:
             assert.deepEqual(a.video.initial.state[key],b.video.initial.state[key],'initial '+key);
           for(let i=0;i<90;i++){
             const x=a.video.frames[i],y=b.video.frames[i];
-            for(const key of ['fire','tick','rngDraws','lighting','images','renderSize'])assert.deepEqual(x[key],y[key],i+':'+key);
+            for(const key of ['fire','tick','rngDraws','globalRandom','lighting','images','renderSize'])assert.deepEqual(x[key],y[key],i+':'+key);
             for(const key of ['time','phase','characterTime','breathPhase','sceneClocks','pos','yaw','rolling'])
               assert.deepEqual(x.state[key],y.state[key],i+':'+key);
           }
           const result={schema:1,passed:true,videoAccepted:false,performanceEvidence:false,highResolutionCapture:false,
             before:process.env.BEFORE_SHA,after:process.env.AFTER_SHA,qa:process.env.QA_SHA,
-            nativeTicksPerLane:360,observedSampleFrames:90,clockReset:false,poseReset:false,receipts};
+            nativeTicksPerLane:360,observedSampleFrames:90,clockReset:false,poseReset:false,globalRandom:reports.map(r=>r.globalRandom),receipts};
           fs.writeFileSync(path.join(root,'numeric-preflight.json'),JSON.stringify(result,null,2)+'\n');
           console.log(JSON.stringify({passed:true,videoAccepted:false,nativeTicksPerLane:360,draws:receipts.map(r=>r.characterDraws),
             styles:receipts.map(r=>r.initial.style),finalBreath:receipts.map(r=>r.finalBreath)}));
