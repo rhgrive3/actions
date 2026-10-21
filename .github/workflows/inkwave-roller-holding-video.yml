@@ -8,83 +8,91 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  actions: read
 concurrency:
   group: roller-holding-video-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  encode:
+  record:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
       BEFORE_SHA: 225f1d3042f2bdf9e8cec7e634afa4b8efa4a800
       AFTER_SHA: 8bebf5cf288149d8ff9a16fa181a89ddf063b8a4
       QA_SHA: ${{ github.sha }}
-      CAPTURE_QA_SHA: 44ee2d1e33b697b5ffae38b50393d9db143e6d5e
-      ARTIFACT_ID: '12369125551'
-      ARTIFACT_BYTES: '301585181'
-      ARTIFACT_SHA256: 42c10e93cba5103c6d9d3192a8240e513787067b4452072c88451462f51500da
+      GRIP_SEED: '1715'
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
-          fetch-depth: 2
+      - uses: actions/checkout@v4
+        with:
+          ref: 225f1d3042f2bdf9e8cec7e634afa4b8efa4a800
+          path: work/before-source
+      - uses: actions/checkout@v4
+        with:
+          ref: 8bebf5cf288149d8ff9a16fa181a89ddf063b8a4
+          path: work/after-source
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Retrieve the exact retained native frames without another capture
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Verify literal sources and install existing official tools
         run: |
           test "$(git rev-parse HEAD)" = "$QA_SHA"
-          mkdir -p work/roller-video
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';import crypto from 'node:crypto';import assert from 'node:assert/strict';
-          import {Readable} from 'node:stream';import {pipeline} from 'node:stream/promises';
-          const url='https://api.github.com/repos/rhgrive3/actions/actions/artifacts/'+process.env.ARTIFACT_ID;
-          const headers={Authorization:'Bearer '+process.env.GH_TOKEN,Accept:'application/vnd.github+json'};
-          const response=await fetch(url,{headers});assert(response.ok);
-          const metadata=await response.json();
-          assert.equal(metadata.expired,false);assert.equal(metadata.size_in_bytes,Number(process.env.ARTIFACT_BYTES));
-          assert.equal(metadata.digest,'sha256:'+process.env.ARTIFACT_SHA256);
-          assert.equal(metadata.workflow_run.head_sha,process.env.CAPTURE_QA_SHA);
-          const redirect=await fetch(url+'/zip',{headers,redirect:'manual'});assert.equal(redirect.status,302);
-          const location=redirect.headers.get('location');assert.equal(new URL(location).protocol,'https:');
-          // Do not forward the GitHub credential to the signed artifact host.
-          const archive=await fetch(location);assert(archive.ok);
-          const hash=crypto.createHash('sha256'),stream=Readable.fromWeb(archive.body);
-          stream.on('data',chunk=>hash.update(chunk));
-          await pipeline(stream,fs.createWriteStream('work/native-frames.zip'));
-          assert.equal(fs.statSync('work/native-frames.zip').size,Number(process.env.ARTIFACT_BYTES));
-          assert.equal(hash.digest('hex'),process.env.ARTIFACT_SHA256);
-          fs.writeFileSync('work/roller-video/source-artifact.json',JSON.stringify(metadata,null,2)+'\n');
-          NODE
-          python3 - <<'PY'
-          import pathlib, stat, zipfile
-          with zipfile.ZipFile('work/native-frames.zip') as z:
-              for entry in z.infolist():
-                  p = pathlib.PurePosixPath(entry.filename)
-                  assert not p.is_absolute() and '..' not in p.parts and '\\' not in entry.filename
-                  assert not stat.S_ISLNK(entry.external_attr >> 16)
-              assert z.testzip() is None
-              z.extractall('work/roller-video')
-          PY
-      - name: Install the official encoder
-        run: |
-          sudo apt-get update
+          test "$(git -C work/before-source rev-parse HEAD)" = "$BEFORE_SHA"
+          test "$(git -C work/after-source rev-parse HEAD)" = "$AFTER_SHA"
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
           sudo apt-get install -y ffmpeg fonts-dejavu-core
           command -v ffmpeg
           command -v ffprobe
+          echo "CHROMIUM_PATH=$(node -p "require('playwright').chromium.executablePath()")" >> "$GITHUB_ENV"
+          echo "ESBUILD_MODULE=$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" >> "$GITHUB_ENV"
+          mkdir -p work/roller-video
+          node --check scripts/check-inkwave-roller-holding-video.mjs
+      - name: Build the two unmodified historical sources
+        shell: bash
+        run: |
+          set -o pipefail
+          (cd work/before-source && node scripts/build-inkwave.mjs inkwave-public ../before-site) 2>&1 | tee work/roller-video/before-build.log
+          (cd work/after-source && node scripts/build-inkwave.mjs inkwave-public ../after-site) 2>&1 | tee work/roller-video/after-build.log
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import crypto from 'node:crypto';
+          import {verifyRuntimeBuild} from './scripts/lib/inkwave-runtime-evidence.mjs';
+          const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+          const identities={schema:1,qa:process.env.QA_SHA,createdAt:new Date().toISOString(),
+            script:hash('scripts/check-inkwave-roller-holding-video.mjs'),
+            entryHelper:hash('scripts/lib/inkwave-range-menu-entry.mjs'),
+            workflow:hash('.github/workflows/inkwave-roller-holding-video.yml'),builds:{}};
+          for(const side of ['before','after']){
+            const sourceSha=process.env[side.toUpperCase()+'_SHA'];
+            const manifest=verifyRuntimeBuild(path.resolve('work/'+side+'-site'),path.resolve('work/'+side+'-source'),sourceSha);
+            identities.builds[side]={sourceSha,inputHash:manifest.inputHash,contentHash:manifest.contentHash,
+              manifestSha256:hash('work/'+side+'-site/inkwave-build.json')};
+            fs.copyFileSync('work/'+side+'-site/inkwave-build.json','work/roller-video/'+side+'-build.json');
+          }
+          fs.writeFileSync('work/roller-video/identities.json',JSON.stringify(identities,null,2)+'\n');
+          NODE
+      - name: Capture actual before frames after the preserved 180-tick acceptance
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/check-inkwave-roller-holding-video.mjs work/before-site work/roller-video/before --grip-seed "$GRIP_SEED" 2>&1 | tee work/roller-video/before.log
+      - name: Capture actual after frames using the exact before camera plan
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/check-inkwave-roller-holding-video.mjs work/after-site work/roller-video/after --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-video/before/grip-cameras.json 2>&1 | tee work/roller-video/after.log
       - name: Verify frame timing, shared inputs, cameras, source and served bytes
         run: |
           node --input-type=module <<'NODE'
-          import {execFileSync} from 'node:child_process';
           import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import crypto from 'node:crypto';
           const root='work/roller-video',hash=b=>crypto.createHash('sha256').update(b).digest('hex');
           const read=p=>JSON.parse(fs.readFileSync(path.join(root,p),'utf8'));
           const identities=read('identities.json');
-          assert.equal(identities.qa,process.env.CAPTURE_QA_SHA);
-          const oldWorkflow=execFileSync('git',['show',process.env.CAPTURE_QA_SHA+':.github/workflows/inkwave-roller-holding-video.yml']);
+          assert.equal(identities.qa,process.env.QA_SHA);
+          const oldWorkflow=fs.readFileSync('.github/workflows/inkwave-roller-holding-video.yml');
           assert.equal(identities.workflow,hash(oldWorkflow));
           assert.equal(identities.script,hash(fs.readFileSync('scripts/check-inkwave-roller-holding-video.mjs')));
           assert.equal(identities.entryHelper,hash(fs.readFileSync('scripts/lib/inkwave-range-menu-entry.mjs')));
@@ -104,6 +112,9 @@ jobs:
             assert.equal(v.frameCount,90);assert.equal(v.frames.length,90);assert.equal(v.framesPerSecond,30);
             assert.equal(v.nativeTicksPerSecond,60);assert.equal(v.interpolation,false);
             assert.deepEqual(v.views,['right-rear','side']);assert.equal(v.initial.seed,1715);
+            assert.equal(r.measurement.initialState.boundary.boot.boundary,'first-native-game-publication');
+            assert.deepEqual(r.measurement.initialState.boundary.boot.clocks,r.measurement.initialState.boundary.entryClocks);
+            assert.equal(r.measurement.initialState.gameTime,r.measurement.initialState.boundary.boot.clocks.game);
             assert.equal(r.measurement.renderSize.width,960);assert.equal(r.measurement.renderSize.height,630);
             const modules=Object.entries(r.servedModules);
             assert(modules.length>100,'real native module graph must be served');
@@ -134,15 +145,18 @@ jobs:
           });
           assert.deepEqual(reports[0].measurement.renderSize,reports[1].measurement.renderSize);
           assert.deepEqual(reports[0].measurement.cameraPlan,reports[1].measurement.cameraPlan);
+          assert.deepEqual(reports[0].measurement.initialState.boundary.boot.clocks,reports[1].measurement.initialState.boundary.boot.clocks,'publication clocks');
+          assert.deepEqual(reports[0].measurement.initialState.sceneClocks,reports[1].measurement.initialState.sceneClocks,'post-warmup scene clocks');
           for(const key of ['name','seed','time','phase','breathPhase','breathNumber','breathAmplitude','breathRate'])
             assert.deepEqual(reports[0].measurement.initialState.character[key],reports[1].measurement.initialState.character[key],'initial Character '+key);
-          for(const key of ['time','phase','pos','yaw','rolling'])
+          for(const key of ['time','phase','characterTime','breathPhase','sceneClocks','pos','yaw','rolling'])
             assert.deepEqual(reports[0].video.initial.state[key],reports[1].video.initial.state[key],'initial movie '+key);
           for(let i=0;i<90;i++){
             const a=reports[0].video.frames[i],b=reports[1].video.frames[i];
             assert.equal(a.fire,b.fire);assert.equal(a.tick,b.tick);assert.equal(a.rngDraws,b.rngDraws);
             assert.deepEqual(a.state.pos,b.state.pos);assert.equal(a.state.yaw,b.state.yaw);
             assert.equal(a.state.rolling,b.state.rolling);assert.equal(a.state.time,b.state.time);assert.equal(a.state.phase,b.state.phase);
+            assert.equal(a.state.characterTime,b.state.characterTime);assert.equal(a.state.breathPhase,b.state.breathPhase);assert.deepEqual(a.state.sceneClocks,b.state.sceneClocks,'per-frame scene clocks');
             assert.deepEqual(a.lighting,b.lighting);
             for(const name of ['right-rear','side']){
               const x=a.images.find(v=>v.name===name),y=b.images.find(v=>v.name===name);
@@ -152,7 +166,7 @@ jobs:
           fs.writeFileSync(path.join(root,'frame-acceptance.json'),JSON.stringify({passed:true,before:process.env.BEFORE_SHA,after:process.env.AFTER_SHA,
             frameCount:90,fps:30,nativeHz:60,ticks:[2,180],heldTicks:120,releaseTicks:60,interpolation:false,
             camera:'shared fixed offset following native actor root',servedHashesVerified:true,receipts,
-            sourceArtifact:{id:Number(process.env.ARTIFACT_ID),sha256:process.env.ARTIFACT_SHA256,bytes:Number(process.env.ARTIFACT_BYTES),captureQa:process.env.CAPTURE_QA_SHA},
+            qa:process.env.QA_SHA,clockBoundary:'first-native-game-publication; no clock reset',
             cssViewport:{width:1280,height:840},nativePng:{width:960,height:630},resize:false},null,2)+'\n');
           NODE
       - name: Encode two labeled side-by-side movies without frame interpolation
@@ -175,19 +189,14 @@ jobs:
             movies.push({view,name,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex'),probe:p});
           }
           fs.writeFileSync(root+'/video-result.json',JSON.stringify({passed:true,before:process.env.BEFORE_SHA,after:process.env.AFTER_SHA,
-            qa:process.env.QA_SHA,captureQa:process.env.CAPTURE_QA_SHA,encodedAt:new Date().toISOString(),captureDate:'2026-10-21',nativeFrames:true,interpolation:false,resize:false,
-            cssViewport:{width:1280,height:840},nativePng:{width:960,height:630},sourceArtifact:{id:Number(process.env.ARTIFACT_ID),sha256:process.env.ARTIFACT_SHA256},movies},null,2)+'\n');
+            qa:process.env.QA_SHA,encodedAt:new Date().toISOString(),captureDate:'2026-10-21',nativeFrames:true,interpolation:false,resize:false,
+            cssViewport:{width:1280,height:840},nativePng:{width:960,height:630},clockBoundary:'first-native-game-publication; no clock reset',movies},null,2)+'\n');
           console.log(JSON.stringify({passed:true,movies}));
           NODE
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: roller-holding-movies-${{ github.sha }}
-          path: |
-            work/roller-video/*.mp4
-            work/roller-video/*.json
-            work/roller-video/before/result.json
-            work/roller-video/after/result.json
+          name: roller-holding-video-${{ github.sha }}
+          path: work/roller-video/
           if-no-files-found: error
           retention-days: 14
-          compression-level: 0

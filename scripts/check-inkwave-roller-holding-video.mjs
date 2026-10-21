@@ -73,6 +73,50 @@ try{
   diagnosticTimer=setInterval(async()=>{receipt.state=await snapshot();fs.writeFileSync(path.join(out,'progress.json'),JSON.stringify(receipt,null,2));},15000);
   await page.addInitScript(({seeded})=>{
     localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',lang:'ja'}));
+    // Freeze at the first public game boundary, after native fixed boot warmup
+    // and before any variable-duration live/menu RAF. Never rewrite clocks.
+    if(seeded){
+      window.__rollerVideoClocks=()=>{
+        const G=window.__G,g=window.__inkwave;
+        const finite=(value,label,required=false)=>{
+          if(value===undefined||value===null){if(required)throw Error('Missing clock '+label);return null;}
+          if(!Number.isFinite(value))throw Error('Non-finite clock '+label);return value;
+        };
+        const uniforms=[];
+        G.scene.traverse(o=>{
+          for(const [slot,m]of (Array.isArray(o.material)?o.material:[o.material]).entries()){
+            if(!m)continue;
+            for(const [kind,bank]of [['direct',m.uniforms],['userData',m.userData?.uniforms]]){
+              for(const [key,u]of Object.entries(bank||{})){
+                if(/time|clock/i.test(key)&&typeof u?.value==='number')
+                  uniforms.push([o.name||'',m.name||'',slot,kind,key,finite(u.value,key)]);
+              }
+            }
+          }
+        });
+        uniforms.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
+        return {game:finite(G.time,'game',true),environment:finite(G.env?.time,'environment',true),
+          environmentUniform:finite(G.env?.U?.uTime?.value,'environmentUniform',true),
+          fx:finite(G.fx?._time,'fx',true),fxHooks:finite(g.fxHooks?.time,'fxHooks'),
+          paint:finite(G.paint?.clock,'paint',true),decor:finite(g.decor?.time,'decor'),
+          decorUniform:finite(g.decor?.uTime?.value,'decorUniform'),propsUniform:finite(g.props?.uTime?.value,'propsUniform'),
+          levelUniform:finite(g.levelMat?.userData?.uniforms?.uTime?.value,'levelUniform'),
+          grateUniform:finite(g.grateMat?.userData?.uniforms?.uTime?.value,'grateUniform'),uniforms};
+      };
+      if(Object.hasOwn(window,'__inkwave'))throw Error('Game was already published before early-freeze hook');
+      Object.defineProperty(window,'__inkwave',{configurable:true,set(game){
+        Object.defineProperty(window,'__inkwave',{value:game,writable:true,configurable:true,enumerable:true});
+        if(!game||typeof game!=='object')throw Error('Invalid native game publication');
+        game.frozen=true;
+        const boundary=window.__rollerBootFreeze={schema:1,boundary:'first-native-game-publication',clocks:null};
+        queueMicrotask(()=>{
+          if(window.__G?.game!==game||!game.frozen||typeof game.debug?.freeze!=='function')
+            throw Error('Native game publication did not complete before first frame');
+          game.debug.freeze();
+          boundary.clocks=window.__rollerVideoClocks();
+        });
+      }});
+    }
     // BEGIN TRUSTED ENTRY FREEZE CONTRACT
     if(seeded){
       const freezeAtInput=e=>{
@@ -82,8 +126,11 @@ try{
         // Freeze only the native simulation, before the normal trusted menu
         // handler creates its Character and awaits asynchronous shader warmup.
         g.debug.freeze();
+        const boot=window.__rollerBootFreeze,entryClocks=window.__rollerVideoClocks?.();
+        if(!boot?.clocks||JSON.stringify(entryClocks)!==JSON.stringify(boot.clocks))
+          throw Error('Scene clocks changed between game publication and trusted Range entry');
         const loadout={schema:1,requested:'roller',completed:false};
-        window.__gripEntryFreeze={schema:1,boundary:'trusted-mode-range-capture',trusted:e.isTrusted,time:window.__G.time,loadout};
+        window.__gripEntryFreeze={schema:1,boundary:'trusted-mode-range-capture',trusted:e.isTrusted,time:window.__G.time,loadout,boot,entryClocks};
         try{
           // Select the ordinary loadout before native startMatch constructs its
           // Character. Its one-shot startup warmup must include this weapon.
@@ -139,7 +186,7 @@ try{
     a.pos.set(-26.5,.04,4);a.vel.set(0,0,0);a.yaw=a.aimYaw=0;g.rig.yaw=0;g.rig.pitch=-.3;
     // BEGIN INITIAL CHARACTER CONTRACT
     const c=a.character,boundary=window.__gripEntryFreeze||null;
-    const initialState=window.__gripInitialState={schema:1,boundary,gameTime:G.time,startupWarmup,
+    const initialState=window.__gripInitialState={schema:1,boundary,gameTime:G.time,startupWarmup,sceneClocks:window.__rollerVideoClocks(),
       character:{name:c.name,seed:c.seed,time:c.t,phase:c.phase,breathPhase:c.brPh,breathNumber:c.brN,
         breathAmplitude:c.brAmp,breathRate:c.brRate,pose:Array.from(c.P)}};
     if(gripSeed!==null&&(!boundary?.trusted||boundary.boundary!=='trusted-mode-range-capture'||
@@ -266,7 +313,7 @@ try{
     const anchor=a.pos.toArray();
     const cameraPlan=cameraReference||{schema:1,views:[['rear',[0,2,-5]],['side',[5,2,0]],['front-oblique',[3,2,4]],['right-side',[-5,2,0]],['right-rear',[-3,2,-4]]].map(([name,offset])=>({
       name,position:offset.map((n,i)=>n+anchor[i]),target:anchor.map((n,i)=>n+[0,.8,.5][i]),fov:45,aspect:1280/840,near:.1,far:100}))};
-    const state=()=>JSON.stringify({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,phase:a.character.phase,pose:Array.from(a.character.P)});
+    const state=()=>JSON.stringify({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,phase:a.character.phase,characterTime:a.character.t,breathPhase:a.character.brPh,sceneClocks:window.__rollerVideoClocks(),pose:Array.from(a.character.P)});
     const frozen=state(),gripViews=[];
     const renderSize={width:G.renderer.domElement.width,height:G.renderer.domElement.height};
     const renderAspect=renderSize.width/renderSize.height;
@@ -324,7 +371,7 @@ try{
   const initial=await page.evaluate(({expectedState,views,seed})=>{
     const G=window.__G,g=window.__inkwave,a=G.local;
     const state=()=>({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,
-      phase:a.character.phase,pose:Array.from(a.character.P)});
+      phase:a.character.phase,characterTime:a.character.t,breathPhase:a.character.brPh,sceneClocks:window.__rollerVideoClocks(),pose:Array.from(a.character.P)});
     if(JSON.stringify(state())!==JSON.stringify(expectedState))throw Error('Steady state changed before movie continuation');
     window.__rollerMovie={previous:state(),anchor:a.pos.toArray(),views,seed,word:seed,draws:0};
     // No simulated release occurred between the accepted held state and this continuation.
@@ -345,7 +392,7 @@ try{
         exposure:G.renderer.toneMappingExposure,shadowEnabled:G.renderer.shadowMap.enabled,shadowType:G.renderer.shadowMap.type};
     };
         const state=()=>({time:G.time,pos:a.pos.toArray(),yaw:a.yaw,rolling:a.weaponRunner.rolling,
-          phase:a.character.phase,pose:Array.from(a.character.P)});
+          phase:a.character.phase,characterTime:a.character.t,breathPhase:a.character.brPh,sceneClocks:window.__rollerVideoClocks(),pose:Array.from(a.character.P)});
         if(JSON.stringify(state())!==JSON.stringify(q.previous))throw Error('Frozen simulation drifted between movie frames');
         const fire=index<60;g.debug.key('KeyW',true);g.debug.fire(fire);
         const random=Math.random;
