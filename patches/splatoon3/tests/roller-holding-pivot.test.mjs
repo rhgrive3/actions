@@ -4,6 +4,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 
+// The published test site contains bundled/minified runtime modules, so the
+// original source-anchor fault injections cannot be applied to those emitted
+// modules. Load independent raw-source fixture owners only for negative controls;
+// the positive 'current' and 'right-enabled' traces still execute the actual
+// emitted build and are checked against those controls, without relaxing either
+// of the existing two physical contact assertions.
+const emittedSite = process.env.INKWAVE_BUILT_SITE;
+let faultFixture = fixture;
+if (emittedSite) {
+  delete process.env.INKWAVE_BUILT_SITE;
+  try {
+    faultFixture = (await import('./source-fixture.mjs?roller-holding-fault-controls')).fixture;
+  } finally {
+    process.env.INKWAVE_BUILT_SITE = emittedSite;
+  }
+}
+
 const SUPPORT_GATE = "if (limb === this.limbs.armL && this.weaponKind === 'roller' && this.kidForm && !this.dance &&";
 const PIVOT_GATE = 'if (neededGround && rollBlend > .001 && armLeftHeld && bound && rollAxisAligned && Number.isFinite(this.weapon.drumA)) {';
 function exact(source, needle, replacement) {
@@ -11,7 +28,8 @@ function exact(source, needle, replacement) {
   return source.replace(needle, replacement);
 }
 async function trace(mode) {
-  const f = await fixture({ fullRuntime: true, productionComposition: true, includeCharacter: true,
+  const sourceControl = emittedSite && mode !== 'current' && mode !== 'right-enabled';
+  const f = await (sourceControl ? faultFixture : fixture)({ fullRuntime: true, productionComposition: true, includeCharacter: true,
     realProjectiles: true, vmMathRandom: () => .4,
     adaptRuntime(rel, source) {
       if (rel !== 'patches/splatoon3/runtime/roller.mjs') return source;
