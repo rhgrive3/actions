@@ -80,10 +80,25 @@ test('#187 after a paused/reoriented baseline, zero-rate attitude reset never cr
   await drive(h,60,.3,{rate:()=>35,attitudeRate:()=>35,from:8});
   h.m.gyro.consume({});
   h.m.gyro.resync();
+  const resync=h.m.gyro.resync;
+  let unexpectedResyncs=0;
+  h.m.gyro.resync=function(...args) {
+    unexpectedResyncs++;
+    return resync.apply(this,args);
+  };
+  await h.advance(17);
   const now=h.env.performance.now();
-  h.fire('devicemotion',{timeStamp:now+16,rotationRate:{alpha:0,beta:0,gamma:0}});
-  h.fire('deviceorientation',{timeStamp:now+17,alpha:120,beta:-20,gamma:45});
-  assert.ok(Math.abs(h.m.gyro.consume({}).pitch)<DELTA);
-  const after=await drive(h,60,2,{rate:()=>0,attitudeRate:()=>1,from:-20});
-  assert.ok(Math.abs(after.pitch)<DELTA,'post-recenter drift cannot create rotation');
+  h.fire('devicemotion',{timeStamp:now,rotationRate:{alpha:0,beta:0,gamma:0}});
+  h.fire('deviceorientation',{timeStamp:now+.05,alpha:120,beta:-20,gamma:45});
+  const baseline=h.m.gyro.consume({});
+  assert.ok(Math.abs(baseline.yaw)<DELTA && Math.abs(baseline.pitch)<DELTA,
+    'first post-resync observation cannot create a camera jump: '+JSON.stringify(baseline));
+  const first=await drive(h,60,0,{rate:()=>0,attitudeRate:()=>1,from:-20+1/60});
+  assert.ok(Math.abs(first.yaw)<DELTA && Math.abs(first.pitch)<DELTA,
+    'first continuation cannot create a camera jump: '+JSON.stringify(first));
+  assert.equal(unexpectedResyncs,0,'monotonic boundary must not trigger another resync');
+  const after=await drive(h,60,2,{rate:()=>0,attitudeRate:()=>1,from:first.beta});
+  assert.ok(Math.abs(after.yaw)<DELTA && Math.abs(after.pitch)<DELTA,
+    'post-recenter drift cannot create rotation: '+JSON.stringify(after));
+  assert.equal(unexpectedResyncs,0,'continuous drift must not trigger another resync');
 });
