@@ -2,7 +2,11 @@
 
 This candidate is **QA-only and unaccepted**, not a production/model/VFX repair or a merge request to main. It combines independently preserved fixes so their validations need not remain blocked by each other's old QA defects. No success is inferred from assembly.
 
-## Immutable inputs
+## Initial ffdb assembly history
+
+The following original assembly sections describe ffdb and its then-pending checks. The follow-up section below records the current 30-path candidate and newer component evidence; none substitutes for its final-head mandatory results.
+
+### Immutable inputs
 
 Base main: 870872c8b82015bc8b5c1fa0151808c0fbb43e6f.
 - PR1753 C1: 5ccc9e73921e8524eb5464ae1ad33d8271870b9f. Literal-head Node shard6 job119335672372 passed950, including continuity and tangent/position-jump negative controls.
@@ -62,3 +66,14 @@ Git tree audit: all13 paint and16 pose leaves (29 unique) in870872 exactly equal
 Assembly and static review are not execution. Combined candidate Node/build/browser checks have not run at preparation time. Placement and readiness may reveal further defects; catalog empty geometry/ancestor visibility remains unresolved and failure stays failure. No stopped character model is made visible or modified. No allowlist broadening, assertion weakening, swallowed failure, source fallback or baseline repaint is introduced.
 
 Kraken PR1743 remains at746fb26; its verified source/emitted results and oldfc5 video retain their original labels. This candidate does not include the Kraken runtime changes or claim its visual acceptance. No final merge until actual final-head mandatory CI and required visual review pass.
+
+
+## Follow-up QA-only dependency integration
+
+This revision descends from ffdbf2016b2c8a008e43761d3874b83fad63a027. Its production runtime is byte-for-byte unchanged. The full diff from fixed main870872 contains 30 allowed QA paths, adding only the two submerged contract helper/test paths and the compatible fist lifetime test. The direct-parent delta is 12 files: eight reviewed QA blobs from b02269e26b6ae10587f9da3829fd7f0326834067, the lazy-linker fixture 905bc468ba00ffb6421249a149a0603c8d2db702, two existing workflow logical edits and this report. Diagnostic-only workflows/reports are not imported.
+
+The eight QA blobs include prerequisite ancestor/readiness/summary observations; they do not merely copy the final six-file standalone contract commit. Hidden body admission stays actor/owner/state bound and fail-closed, with positive human/dry/air geometry and pixels plus independent glint gates. Runtime body visibility is unchanged. b022 focused run39673538645 passed Node, build, native detail (14 cases/3540 frames/189 pairs) and catalog (27 cases/5370 frames/349 pairs), errors zero. Artifact12381917796 SHA25609d8e08c24a632b3d977f3c2b50c23c22548c1c6d8ac540ad291c139494575ae was downloaded and checked by the diagnostic owner. That run uses an older runtime without ffdb's surface film, so it does not accept this new head. Exact-head full mandatory CI and native recapture remain required.
+
+The fist fixture adds only two conditional VM-linker namespace imports. Old ffdb/main runtime does not import these absent Inkjet helper files, so no missing-file load occurs. Inkjet fb447 runtime gets its actual budget/clock exports. Removing the two branches reproduces the original 2e88170b fixture verbatim; all assertions remain unchanged. The dedicated owner verified old fixture/fb447 fails three tests and compatible fixture/main870 plus fixture/fb447 each passes three. This is fixture compatibility, not Inkjet runtime inclusion or visual acceptance.
+
+Prior ffdb source-pair identity and physical comparison (48 pairs, 18 fault controls, GL0) remain historical component evidence only. PNGs differ despite equal runtime content hash because cosmetic FX/prior squid history are excluded from those hard gates. UI/core/network and most shards passed at ffdb, but its responsive WebKit small-phone page crash failed mandatory CI. Separate observational branch9c78262/run39677422408 reuses its exact existing build; no retry, timeout relaxation or inferred infrastructure excuse is included here. Responsive and all other mandatory checks must genuinely pass at this revision. No main merge or fidelity completion is claimed.

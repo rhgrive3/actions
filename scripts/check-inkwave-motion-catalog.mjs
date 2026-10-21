@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { captureSubmergedPresentation, classifySubmergedPresentation, assertPresentationGeometry, assertPresentationCoverage } from './lib/inkwave-submerged-presentation-contract.mjs';
 // Installed production Actor/Runner/Character in one browser realm. CPU indexed
 // skinning and native IK are separate from the WebGL RGB proofs below. Neither
 // is Nintendo joint-curve, console, iOS, or complete-match gameplay evidence.
@@ -199,13 +200,13 @@ export function validateCatalogResult(result) {
   if (!Array.isArray(result.data) || result.data.length !== CATALOG_SCENARIOS.length || new Set(result.data.map(r => r.name)).size !== CATALOG_SCENARIOS.length) fail('scenario denominator');
   if (!Array.isArray(result.images) || new Set(result.images.map(r => r.file)).size !== result.images.length || result.images.some(r => !/^[a-z0-9-]+\.png$/.test(r.file) || !/^[a-f0-9]{64}$/.test(r.sha256) || !Number.isInteger(r.bytes) || r.bytes <= 0)) fail('screenshot receipt denominator');
   const imageFiles = new Set(result.images.map(r => r.file));
-  const summaries = [], failures = [];
+  const summaries = [], failures = [], presentationCoverage=[], sensitivityCoverage=[];
   const checkScenario = scenario => {
     const row = result.data.find(r => r.name === scenario.name), label = scenario.name;
     if (!row || row.kind !== scenario.kind || row.frames !== scenario.frames || row.hz !== (scenario.hz || 60) || typeof row.driver !== 'string' || !row.driver || !Array.isArray(row.samples) || row.samples.length !== scenario.frames) fail('frame denominator ' + label);
-    // Empty indexed traversal is still a hard failure, not proof of NaN vertices.
-    for(const [i,r]of (Array.isArray(row.renders)?row.renders:[]).entries())
-      assertCatalogGeometryPresent(r?.geometry,label+'.renders.'+i);
+    // Empty geometry is admitted only after explicit native presentation proof.
+    for(const r of (Array.isArray(row.renders)?row.renders:[]))
+      assertPresentationGeometry(r?.geometry,classifySubmergedPresentation(r?.presentation));
     numericTree(row, label);
     for (const [i, s] of row.samples.entries()) {
       if (s.frame !== i || typeof s.visible !== 'boolean' || s.visualGameplayInvariant !== true || !s.snapshots || CATALOG_MODULES.some(([id]) => !Object.hasOwn(s.snapshots, id))) fail('native frame identity ' + label);
@@ -240,14 +241,20 @@ export function validateCatalogResult(result) {
     }
     const expected = catalogRenderFrames(scenario, row.samples);
     if (!Array.isArray(row.renders) || row.renders.length !== expected.length || new Set(row.renders.map(r => r.frame)).size !== expected.length || expected.some(f => !row.renders.some(r => r.frame === f))) fail('render frame denominator ' + label);
+    let expectedHiddenBodySamples=0, expectedHiddenRigSamples=0, visiblePixelPasses=0;
     for (const r of row.renders) {
+      const presentation=classifySubmergedPresentation(r.presentation);
+      expectedHiddenBodySamples+=Number(presentation.expectedHiddenBody); expectedHiddenRigSamples+=Number(presentation.emptyRigAdmissible);
       const sample = row.samples[r.tick];
-      if (!sample || r.visible !== sample.visible || r.shaderErrors !== 0 || !Array.isArray(r.programs) || !r.programs.length || r.programs.some(p => p.linked !== true || p.vertexCompiled !== true || p.fragmentCompiled !== true)) fail('shader compiled denominator ' + label);
-      if (!Array.isArray(r.materials) || sample.visible && !r.materials.length || r.materials.some(m => typeof m.type !== 'string' || m.linked !== true || m.vertexCompiled !== true || m.fragmentCompiled !== true)) fail('native material shader denominator ' + label);
-      pixels(r.rig, label, sample.visible);
+      if (!sample || r.presentation.rootVisible!==sample.visible||r.presentation.grounded!==sample.grounded||r.visible !== sample.visible || r.shaderErrors !== 0 || !Array.isArray(r.programs) || !r.programs.length || r.programs.some(p => p.linked !== true || p.vertexCompiled !== true || p.fragmentCompiled !== true)) fail('shader compiled denominator ' + label);
+      if (!Array.isArray(r.materials) || sample.visible && !presentation.emptyRigAdmissible && !r.materials.length || r.materials.some(m => typeof m.type !== 'string' || m.linked !== true || m.vertexCompiled !== true || m.fragmentCompiled !== true)) fail('native material shader denominator ' + label);
+      if(r.glint)pixels(r.glint,label+'.glint',true);
+      pixels(r.rig, label, !sample.visible?false:presentation.emptyRigAdmissible?null:true);
+      visiblePixelPasses+=Number(sample.visible&&!presentation.emptyRigAdmissible&&r.rig.changedPixels>=16);
       for (const k of ['indexedVertices', 'triangles', 'skinnedVertices', 'meshes']) finite(r.geometry?.[k], label + '.geometry.' + k);
-      vector(r.geometry?.min, 3, label + '.geometry.min'); vector(r.geometry?.max, 3, label + '.geometry.max');
-      if (r.geometry.indexedVertices < 100 || r.geometry.triangles < 30 || r.geometry.meshes < 1 || sample.kidScale > .999 && r.geometry.skinnedVertices < 100) fail('actual indexed geometry denominator ' + label);
+      assertPresentationGeometry(r.geometry,presentation);
+      if(sample.kidScale>.999&&r.geometry.skinnedVertices<100)fail('actual skinned geometry denominator '+label);
+      presentationCoverage.push({...presentation,visiblePixelPass:sample.visible&&r.rig.changedPixels>=16,indexedGeometryPass:r.geometry.indexedVertices>=100&&r.geometry.triangles>=30&&r.geometry.meshes>=1});
       if (!imageFiles.has(r.image) || !imageFiles.has(r.hiddenImage)) fail('screenshot denominator ' + label);
     }
     if (!imageFiles.has(row.contactSheet)) fail('contact-sheet denominator ' + label);
@@ -312,8 +319,11 @@ export function validateCatalogResult(result) {
     if (label === 'native-storm-deploy') need(row.events.filter(e => e.name === 'throwStorm').length === 1 && phase('special', 'storm-hold') >= 5 && phase('special', 'storm-deploy') >= 5 && phase('special', 'storm-recovery') >= 1 && row.samples.at(-1).snapshots.special?.phase === null, 'native Storm deploy/recovery');
     if (label === 'gaze-face-actions') { for (const mode of ['fire', 'sub-aim', 'throw']) need(count(s => s.snapshots.face?.mode === mode) >= 2, 'native face ' + mode); need(count(s => s.snapshots.face?.blink.some(x => x > .5)) >= 1 && row.renders.some(r => r.face?.changedPixels > 0), 'native face/blink RGB'); }
     if (label === 'lifecycle-interruptions') need(['form', 'sub', 'dance', 'reset', 'death', 'hide', 'weapon'].every(name => row.transitions.includes(name)) && row.renders.some(r => !r.visible) && row.samples.at(-1).visible, 'lifecycle interruption denominator');
+    const pausePresentation=classifySubmergedPresentation(row.pause?.presentation);
+    if(!Number.isInteger(row.pause?.nativeDrawCount)||row.pause.nativeDrawCount<0)fail('pause native draw denominator '+label);
+    const hiddenSensitivity=pausePresentation.emptyRigAdmissible&&row.pause?.nativeDrawCount===0;
     if (!row.pause || row.pause.unchangedClocks !== true || row.pause.unchangedRig !== true
-        || row.pause.nativeVertexShaders !== true || row.pause.vertexPrograms < 1
+        || (hiddenSensitivity ? row.pause.nativeVertexShaders!==null||row.pause.vertexPrograms!==0||row.pause.sensitivityMeasured!==false : row.pause.nativeVertexShaders!==true||row.pause.vertexPrograms<1||row.pause.sensitivityMeasured!==true)
         || row.pause.measurement !== 'native-vertex-flat-colour' || row.pause.sameRgb.changedPixels !== 0)
       fail('pause denominator ' + label);
     if (!Array.isArray(row.pause.vertexSources) || row.pause.vertexSources.length !== row.pause.vertexPrograms
@@ -325,16 +335,17 @@ export function validateCatalogResult(result) {
     // Native beauty shaders are retained as a diagnostic; their repeated
     // subpixel shading varies even with identical native pose and clocks.
     pixels(row.pause.wholeSceneRgb, label + '.pause-beauty', null);
-    // Every scenario must prove the paused pass sees rig motion. The braked own-ink
-    // swimmer's body stays under the surface, but the local player's Splatoon 3
-    // ink mound (patches/local-quality/s3-squid-look-adapter.mjs) rides on it.
-    pixels(row.pause.movedRigRgb, label + '.pause-counterexample', true);
+    // Expected-hidden terminal bodies cannot prove vertex sensitivity. Record
+    // them as unmeasured, never as visible passes; mandatory human/dry positive
+    // controls below still require native vertex shader identity and moved RGB.
+    pixels(row.pause.movedRigRgb, label + '.pause-counterexample', hiddenSensitivity?false:true);
+    sensitivityCoverage.push({...pausePresentation,visiblePixelPass:!hiddenSensitivity&&row.pause.movedRigRgb.changedPixels>=16,indexedGeometryPass:!hiddenSensitivity&&row.pause.vertexPrograms>0});
     for (const key of ['image', 'repeatedImage', 'movedImage', 'beautyImage', 'repeatedBeautyImage'])
       if (!imageFiles.has(row.pause[key])) fail('pause screenshot denominator ' + label);
     if (!row.zeroDt || row.zeroDt.unchangedClocks !== true || row.zeroDt.gameplayInvariant !== true) fail('zero-dt native clock/physics invariant ' + label);
     finite(row.zeroDt.poseDelta, label + '.zeroDt.poseDelta');
     const contacts = row.samples.flatMap(s => Object.values(s.grip).filter(g => g.held).map(g => g.gap));
-    summaries.push({ name: label, frames: row.samples.length, renderPairs: row.renders.length, visibleFrames: count(s => s.visible), heldHandSamples: contacts.length, maximumHeldGrip: contacts.length ? Math.max(...contacts) : null, nativeIKMaximum: Math.max(...row.samples.flatMap(s => s.ik)) });
+    summaries.push({ expectedHiddenBodySamples,expectedHiddenRigSamples,visiblePixelPasses,unmeasuredHiddenSensitivity:Number(hiddenSensitivity), name: label, frames: row.samples.length, renderPairs: row.renders.length, visibleFrames: count(s => s.visible), heldHandSamples: contacts.length, maximumHeldGrip: contacts.length ? Math.max(...contacts) : null, nativeIKMaximum: Math.max(...row.samples.flatMap(s => s.ik)) });
   };
   // A real candidate can have multiple composition failures. Audit every case
   // before failing publication, so the first walking error hides no other gate.
@@ -344,6 +355,7 @@ export function validateCatalogResult(result) {
   if (result.previewRates?.length !== 3 || result.previewRates.some((r, i) => r.hz !== [30, 60, 120][i] || r.frames !== r.hz || r.finite !== true)) failures.push('direct variable-dt preview denominator');
   if (!result.cleanup?.fixtureTextureDisposals?.some(t => t.labels?.includes('compiled-uniform.dfgLUT') && t.wasLive === true && t.remainsLive === false) || result.cleanup.fixtureTextureDisposals.some(t => t.remainsLive !== false)) failures.push('compiled texture disposal proof');
   if (result.cleanup?.rendererDisposed !== true || result.cleanup.domRemoved !== true || result.cleanup.geometries !== 0 || result.cleanup.textures !== 0) failures.push('unclean-disposal renderer');
+  try { assertPresentationCoverage(presentationCoverage,['human','dry-squid','airborne-squid']); assertPresentationCoverage(sensitivityCoverage,['human','dry-squid']); } catch(error) { failures.push(error.message); }
   if (failures.length) fail('gate failures:\n' + failures.join('\n'));
   return summaries;
 }
@@ -562,6 +574,18 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     const collectorDiagnostic={rootVisible:ch.root.visible,totalMeshes:0,localVisibleMeshes:0,nativeAncestorVisibleMeshes:0,
       indexedMeshes:0,nonIndexedMeshes:0,instancedMeshes:0,visitedMeshes:0,eligibleIndexedMeshes:0,
       materialEligibleGroups:0,drawRangeEligibleGroups:0,drawRangeEntries:0};
+    const knownRole=node=>node===ch.root?'character-root':node===ch.model?'character-model':node===ch.kid?'kid-root':node===ch.squidRoot?'squid-root':node===ch.squid?.pivot?'squid-pivot':node===ch.sourceMotion?.squidRig?.root?'source-squid-rig':node===scene?'scene':node?.isMesh?'mesh':'other-group';
+    const vector=node=>node?.scale?.toArray?.()??null;
+    collectorDiagnostic.owners={
+      modelVisible:ch.model?.visible,kidVisible:ch.kid?.visible,squidVisible:ch.squidRoot?.visible,
+      modelScale:vector(ch.model),kidScale:vector(ch.kid),squidScale:vector(ch.squidRoot),
+      kidWeight:ch.kidScale,squidWeight:ch.sqScale,formWeight:ch.sourceMotion?.formWeight,
+      sourceActive:ch.sourceMotion?.active,sourceStatus:ch.sourceMotion?.status,
+      form:ch.form,sourceSquidClip:ch.sourceMotion?.debug?.squid?.name??null,
+      sourceSquidFrame:ch.sourceMotion?.debug?.squid?.frame??null,
+      humanClips:(ch.sourceMotion?.currentClips||[]).slice(0,4).map(c=>({name:c.name,frame:c.frame,weight:c.weight}))
+    };
+    collectorDiagnostic.hiddenAncestorChains=[];
     // Read visibility before the EXISTING root-only measurement override below.
     // Do not reveal a child, alter materials, or change any draw range.
     ch.root.traverse(mesh=>{
@@ -570,6 +594,12 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       if(mesh.visible)collectorDiagnostic.localVisibleMeshes++;
       let visible=true;for(let node=mesh;node;node=node.parent)if(!node.visible){visible=false;break;}
       if(visible)collectorDiagnostic.nativeAncestorVisibleMeshes++;
+      else if(collectorDiagnostic.hiddenAncestorChains.length<2){
+        const roles=[];let firstHidden=null,node=mesh;
+        for(;node&&roles.length<8;node=node.parent){const role=knownRole(node);roles.push({role,visible:node.visible===true});if(firstHidden===null&&node.visible!==true)firstHidden=role;}
+        const chain={firstHidden,roles,truncated:!!node};
+        if(!collectorDiagnostic.hiddenAncestorChains.some(c=>JSON.stringify(c)===JSON.stringify(chain)))collectorDiagnostic.hiddenAncestorChains.push(chain);
+      }
       if(mesh.isInstancedMesh)collectorDiagnostic.instancedMeshes++;
       if(mesh.geometry?.index)collectorDiagnostic.indexedMeshes++;else collectorDiagnostic.nonIndexedMeshes++;
     });
@@ -603,7 +633,8 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     // proof is required to be zero, never accepted as visible motion.
     const shown = ch.root.visible; ch.root.visible = true;
     try { ch.root.traverseVisible(visit); } finally { ch.root.visible = shown; }
-    return { indexedVertices, triangles, skinnedVertices, meshes, min, max, collectorDiagnostic };
+    const expectedEmpty=indexedVertices===0&&globalThis.classifySubmergedPresentation(globalThis.captureSubmergedPresentation(ch)).emptyRigAdmissible;
+    return { indexedVertices, triangles, skinnedVertices, meshes, min:expectedEmpty?null:min, max:expectedEmpty?null:max, collectorDiagnostic };
   }
   function grip(ch, side) {
     const left = side === 'left', w = left && ch.dual ? ch.weapon.left : ch.weapon;
@@ -707,7 +738,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     // geometry. Record them while live, before Character disposal detaches
     // them; this isolated renderer owns their final GPU teardown too.
     collect(scene);
-    return { frame, tick, visible, rig, image, hiddenImage, glint, coating, face, geometry: geometry(ch), programs, materials, shaderErrors: programs.filter(p => !p.linked || !p.vertexCompiled || !p.fragmentCompiled).length };
+    return { frame, tick, presentation:globalThis.captureSubmergedPresentation(ch), visible, rig, image, hiddenImage, glint, coating, face, geometry: geometry(ch), programs, materials, shaderErrors: programs.filter(p => !p.linked || !p.vertexCompiled || !p.fragmentCompiled).length };
   }
   async function capturePause(ch, a, scenario) {
     // The scenario can advance far beyond its last sampled render frame.
@@ -845,8 +876,8 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       for (const [o,wasVisible] of excluded) o.visible=wasVisible;
       renderer.render(scene, camera);
     }
-    return { unchangedClocks: beforeClocks === clocks(), unchangedRig: beforeRig === rig(),
-      measurement: 'native-vertex-flat-colour', nativeVertexShaders: vertexSources.length > 0 && vertexSources.every(p => p.nativeSHA256 === p.controlledSHA256),
+    return { presentation:globalThis.captureSubmergedPresentation(ch),nativeDrawCount:nativeDraws.size,sensitivityMeasured:vertexSources.length>0,unchangedClocks: beforeClocks === clocks(), unchangedRig: beforeRig === rig(),
+      measurement: 'native-vertex-flat-colour', nativeVertexShaders: vertexSources.length > 0 ? vertexSources.every(p => p.nativeSHA256 === p.controlledSHA256) : null,
       vertexPrograms: vertexSources.length, vertexSources, sameRgb, wholeSceneRgb, movedRigRgb,
       image, repeatedImage, movedImage, beautyImage, repeatedBeautyImage };
   }
@@ -1068,7 +1099,7 @@ async function main() {
       catch (e) { error(e.message); await route.abort(); }
     });
     await page.goto('http://127.0.0.1:' + server.address().port + '/motion-catalog');
-    await page.addScriptTag({ content: 'globalThis.catalogAudioGraph='+catalogAudioGraph.toString()+';globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';globalThis.catalogRollerVerticalLaunch=' + catalogRollerVerticalLaunch.toString() + ';globalThis.catalogDualiesInput=' + catalogDualiesInput.toString() + ';' });
+    await page.addScriptTag({ content: 'globalThis.captureSubmergedPresentation='+captureSubmergedPresentation.toString()+';globalThis.classifySubmergedPresentation='+classifySubmergedPresentation.toString()+';globalThis.catalogAudioGraph='+catalogAudioGraph.toString()+';globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';globalThis.catalogRollerVerticalLaunch=' + catalogRollerVerticalLaunch.toString() + ';globalThis.catalogDualiesInput=' + catalogDualiesInput.toString() + ';' });
     result = await page.evaluate(runCatalog, { prefix, contentHash: manifest.contentHash, scenarios: CATALOG_SCENARIOS, modules: CATALOG_MODULES, footLayout, wallHeight: CATALOG_WALL_HEIGHT });
     // finally executes after the returned object was built; fetch its cleanup
     // snapshot explicitly so a missing cleanup cannot pass as a successful run.
@@ -1094,3 +1125,4 @@ async function main() {
   console.log(JSON.stringify({ status: 'passed', contentHash: result.contentHash, cases: result.data.length, frames: result.data.reduce((n, r) => n + r.frames, 0), renderPairs: result.data.reduce((n, r) => n + r.renders.length, 0), verifiedModules: loaded.size, evidence: path.join(output, 'motion-catalog-result.json') }));
 }
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) await main();
+
