@@ -67,12 +67,26 @@ test('Inkjet quotas exclude retired/recycled rounds and deduplicate live owners 
  assert.equal(inkjetVfxAdmission(d,actors[0]).puffs,3);
  assert.equal(inkjetVfxAdmission(d,actors[1]).puffs,3);
  for(const a of [stale,dead,recycled])assert.equal(inkjetVfxAdmission(d,a),null);
- d.inkjetAdmissionBudget.actors.includes=()=>{throw Error('linear membership scan');};
+ d.inkjetAdmissionBudget.members.includes=()=>{throw Error('linear membership scan');};
  d.G.projectiles.list=Array.from({length:32},()=>({wid:'inkjet',pos:{},owner:live}));
  d.time+=1/60;
  assert.equal(inkjetVfxAdmission(d,live).puffs,2,'new live owner gets same-frame share');
- assert.equal(d.inkjetAdmissionBudget.actors.length,3,'duplicate projectiles do not multiply share');
+ assert.equal(d.inkjetAdmissionBudget.members.length,3,'duplicate projectiles do not multiply share');
  d.G.projectiles.list=[];d.time+=1/60;
  assert.equal(inkjetVfxAdmission(d,live),null,'removed live owner no longer reserves capacity');
  assert.equal(inkjetVfxAdmission(d,actors[0]).puffs,3);
+});
+
+test('Inkjet quota distribution reuses collected records without a second WeakMap lookup',()=>{
+ const actors=Array.from({length:4},()=>({alive:true,specialActive:{id:'inkjet'},form:'kid',intent:{}}));
+ const d={time:1,G:{actors,projectiles:{list:actors.map(owner=>({wid:'inkjet',owner,pos:{}}))}},kit:{puffs:{cap:182,n:177},sparks:{cap:900,n:895}}};
+ inkjetVfxAdmission(d,actors[0]);
+ const budget=d.inkjetAdmissionBudget,members=budget.members,records=actors.map(a=>budget.records.get(a));
+ let gets=0;const get=budget.records.get;budget.records.get=function(a){gets++;return get.call(this,a);};
+ d.time+=1/60;
+ for(let pass=0;pass<2;pass++)for(const a of actors)inkjetVfxAdmission(d,a);
+ assert.equal(gets,16,'eight membership lookups plus eight returns; no four distribution re-lookups');
+ assert.equal(budget.members,members,'reuse the same participant array');
+ assert.deepEqual(budget.members,records,'retain the exact existing records, not newly allocated wrappers');
+ assert.equal(records.reduce((n,r)=>n+r.puffs,0),5);
 });
