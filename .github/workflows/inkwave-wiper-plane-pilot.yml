@@ -30,7 +30,7 @@ jobs:
           ffprobe -version
           ffmpeg -hide_banner -encoders | grep libx264
           ffmpeg -hide_banner -filters | grep drawtext
-      - name: Check QA-only identity and parse candidate
+      - name: Check QA identity, native readiness and exact profile negatives
         run: |
           test "$(git -C work/wiper-source rev-parse HEAD)" = 0430673b09a5009628fc87baa414b3560090fc1d
           diff -qr patches work/wiper-source/patches

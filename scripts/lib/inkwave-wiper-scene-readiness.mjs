@@ -48,3 +48,8 @@ export function wiperSceneCensus(G,scene,TargetDummyCharacter){
   categories:[...categories.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([key,c])=>({...c,uniqueGeometries:geometries.get(key).size}))};
 }
 
+
+export function validWiperProfileStyle(style){
+ const expected={hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3};
+ return !!style&&typeof style==='object'&&Object.keys(style).length===6&&Object.entries(expected).every(([key,value])=>Object.hasOwn(style,key)&&style[key]===value);
+}

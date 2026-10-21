@@ -4,7 +4,7 @@ import fs from 'node:fs';import path from 'node:path';import http from 'node:htt
 import {chromium} from 'playwright';
 import {verifyRuntimeBuild,hash} from './lib/inkwave-runtime-evidence.mjs';
 import {enterRangeFromMenu} from './lib/inkwave-range-menu-entry.mjs';
-import {awaitWiperSceneSources,wiperSceneCensus} from './lib/inkwave-wiper-scene-readiness.mjs';
+import {awaitWiperSceneSources,wiperSceneCensus,validWiperProfileStyle} from './lib/inkwave-wiper-scene-readiness.mjs';
 const [siteArg,sourceArg,overlayArg,outArg,variant,id,action]=process.argv.slice(2);
 assert.ok(outArg&&['A','B'].includes(variant));assert.ok(['s3-saber-heavy','s3-saber-normal','s3-saber-lite'].includes(id));assert.ok(['tap','charged'].includes(action));
 const site=path.resolve(siteArg),source=path.resolve(sourceArg),overlay=path.resolve(overlayArg),out=path.resolve(outArg);
@@ -35,6 +35,7 @@ try{
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.addInitScript(({id})=>{
   localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:true,colorblind:true,frameRate:60}));
+  localStorage.setItem('inkwave.profile',JSON.stringify({style:{hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3}}));
   let n=0x515e7021,calls=0;
   window.__wiperResetSeed=()=>{n=0x515e7021;calls=0;};
   window.__wiperRng=()=>({state:n>>>0,calls});
@@ -90,7 +91,7 @@ try{
   },true);
  },{id});
  const entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:300000});
- await page.evaluate('window.__awaitWiperSources='+awaitWiperSceneSources.toString()+';window.__wiperCensus='+wiperSceneCensus.toString());
+ await page.evaluate('window.__awaitWiperSources='+awaitWiperSceneSources.toString()+';window.__wiperCensus='+wiperSceneCensus.toString()+';window.__validWiperProfileStyle='+validWiperProfileStyle.toString());
  const setup=await page.evaluate(async({id,action,dummyPath})=>{
   const THREE=await import('three'),G=window.__G,g=window.__inkwave,a=G.local;
   if(!g.frozen||!window.__wiperEntry?.trusted||!G.match?.range||G.match.state!=='playing'||a.weaponId!==id)throw Error('Native range/weapon admission failed');
@@ -102,15 +103,16 @@ try{
   const aim=()=>{G.rig.yaw=0;G.rig.pitch=.06;};
   window.__wiperResetSeed();for(let i=0;i<60;i++){aim();g._frame(1/60);}
   if(!a.alive||!a.grounded||G.projectiles.list.length)throw Error('Unsettled native stance or preexisting projectile');
+  if(!window.__validWiperProfileStyle(g.profile.style)||!window.__validWiperProfileStyle(a.character.style))throw Error('Native profile/style binding mismatch');
   const beforeReset=window.__wiperRng();window.__wiperResetSeed();
-  const initial={entry:window.__wiperEntry,readiness,clocks:window.__wiperClocks(),rng:window.__wiperRng(),character:{t:a.character.t,phase:a.character.phase,seed:a.character.seed},pos:a.pos.toArray(),ink:a.ink,hp:a.hp,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
+  const initial={entry:window.__wiperEntry,readiness,clocks:window.__wiperClocks(),rng:window.__wiperRng(),profileStyle:{...g.profile.style},character:{t:a.character.t,phase:a.character.phase,seed:a.character.seed,style:{...a.character.style}},pos:a.pos.toArray(),ink:a.ink,hp:a.hp,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
   const r=G.renderer,gl=r.getContext();if(g.settings.quality!=='high'||G.paint.size!==4096||gl.drawingBufferWidth!==960||gl.drawingBufferHeight!==720)throw Error('Unexpected quality/viewport');
   const target=a.pos.clone().add(new THREE.Vector3(0,1.1,3)),camera=new THREE.PerspectiveCamera(50,960/720,.05,250);
   if(camera===G.camera||camera===g.R.camera||camera===G.rig.gameCam)throw Error('Inspection camera must be independent');
   const gameCamera=cam=>({position:cam.position.toArray(),quaternion:cam.quaternion.toArray(),scale:cam.scale.toArray(),up:cam.up.toArray(),
    matrix:cam.matrix.toArray(),matrixWorld:cam.matrixWorld.toArray(),matrixWorldInverse:cam.matrixWorldInverse.toArray(),projectionMatrix:cam.projectionMatrix.toArray(),projectionMatrixInverse:cam.projectionMatrixInverse.toArray(),
    fov:cam.fov,aspect:cam.aspect,near:cam.near,far:cam.far,zoom:cam.zoom,filmGauge:cam.filmGauge,filmOffset:cam.filmOffset,view:cam.view,layers:cam.layers.mask,matrixAutoUpdate:cam.matrixAutoUpdate,matrixWorldAutoUpdate:cam.matrixWorldAutoUpdate});
-  const physical=()=>({clocks:window.__wiperClocks(),rng:window.__wiperRng(),actors:G.actors.map(x=>({wid:x.weaponId,hp:x.hp,ink:x.ink,pos:x.pos.toArray(),vel:x.vel.toArray(),alive:x.alive})),
+  const physical=()=>({clocks:window.__wiperClocks(),rng:window.__wiperRng(),actors:G.actors.map(x=>({style:x.character?.style?{...x.character.style}:null,color:x.color?.getHex()??null,wid:x.weaponId,hp:x.hp,ink:x.ink,pos:x.pos.toArray(),vel:x.vel.toArray(),alive:x.alive})),
    projectiles:G.projectiles.list.map(p=>({wid:p.wid,type:p.type,key:p.catalog?.descriptor?.key,seed:p.seed,age:p.age,delay:p.delay,pos:p.pos.toArray(),vel:p.vel.toArray(),damage:p.damage,life:p.life,radius:p.radius,size:p.size,grav:p.grav,drag:p.drag,travel:p.catalog?.travel})),
    camera:gameCamera(G.camera),rigCamera:gameCamera(G.rig.gameCam),aim:{from:a.aimPoint.toArray(),dir:a.aimDir.toArray(),yaw:a.aimYaw,pitch:a.aimPitch}});
   const paints=[],aimTrace=[],originalSplat=G.paint.splat,originalAim=G.projectiles._aimFrom;

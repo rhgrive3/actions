@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {awaitWiperSceneSources} from '../lib/inkwave-wiper-scene-readiness.mjs';
+import {awaitWiperSceneSources,validWiperProfileStyle} from '../lib/inkwave-wiper-scene-readiness.mjs';
 class NativeDummy {}
 function fixture(){
  const scene={},a={},ch={_warmed:Promise.resolve()},o={status:'ready',bank:{},squidBank:{},ready:Promise.resolve(),character:ch};
@@ -26,3 +26,10 @@ for(const [name,mutate]of [
  ['dummy becomes local',g=>g.local=g.actors[1]],
  ['unexpected dummy source owner',g=>g.actors[1].character.sourceMotion={}],
 ])test('rejects '+name,async()=>{const g=fixture();mutate(g);await assert.rejects(awaitWiperSceneSources(g,NativeDummy));});
+
+test('profile gate accepts exact existing native style and rejects missing, mutated or extra fields',()=>{
+ const style={hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3};assert.equal(validWiperProfileStyle(style),true);
+ assert.equal(validWiperProfileStyle(null),false);assert.equal(validWiperProfileStyle({...style,skin:2}),false);
+ const missing={...style};delete missing.hat;assert.equal(validWiperProfileStyle(missing),false);
+ assert.equal(validWiperProfileStyle({...style,unknown:0}),false);
+});
