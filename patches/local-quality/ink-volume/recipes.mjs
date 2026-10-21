@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { INK_LOOK, shotTailFrames, fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../splatoon3/runtime/weapons-fidelity.mjs';
 import { captureRollerVolume, ROLLER_VOLUME } from './roller.mjs';
-import { usesBucketSlosherSheet } from '../../splatoon3/runtime/projectile-visuals.mjs';
+import { usesBucketSlosherSheet, sharedBucketDraw, sharedBucketTailLength, projectileDrawRadius } from '../../splatoon3/runtime/projectile-visuals.mjs';
 
 const states = new WeakMap();
 const X = new THREE.Vector3(1,0,0), Y = new THREE.Vector3(0,1,0), Z = new THREE.Vector3(0,0,1);
@@ -22,6 +22,7 @@ export function captureInkVolume(p, weapon = p.owner?.weapon, packet = null) {
     else if(family==='slosher'&&(p.type==='slosh'||catalogBirth))p._inkVolumeRecipe='slosher';
   }
   p._inkVolumeAssetName=p._inkVolumeRecipe?'projectile:'+p.wid+':'+p._inkVolumeRecipe:null;
+  if(p._inkVolumeRecipe==='slosher'&&usesBucketSlosherSheet(p.wid))p._inkVolumeAssetName='projectile:slosher:slosher';
   p._inkVolumeHorizontal=p._inkVolumeRecipe==='roller-horizontal';
   if(p._inkVolumeRecipe) {p._inkVolumeDirection ||= p.vel.clone();p._inkVolumeDirection.copy(p.vel);}
 }
@@ -63,9 +64,10 @@ export function submitInkVolume(engine,p) {
     // Tri-Slosher, Dread Wringer and their alternate kits share Bucket's sheet.
     const name=engine.assets.has(specific)?specific:(usesBucketSlosherSheet(p.wid)?'roller':null);
     if(!name)return false;
-    const radius=p.fidelitySloshDraw?fidelitySlosherDrawRadius(p):nativeRadius(p),width=radius*2*INK_LOOK.slosh[4];
+    const shared=sharedBucketDraw(p);
+    const radius=shared?projectileDrawRadius(p):p.fidelitySloshDraw?fidelitySlosherDrawRadius(p):nativeRadius(p),width=radius*2*INK_LOOK.slosh[4];
     const d=p.catalog?.descriptor?.b?.DrawSizeParam,min=Math.max(0,d?.TailLengthMin||0),max=Math.max(min,d?.TailLengthMax||0),solid=Math.max(0,(d?.TailSolidFrame||0)/60);
-    const tail=p.fidelitySloshDraw?(fidelitySlosherDrawTail(p,p.vel.length())-1)*radius:Math.max(min,Math.min(max,p.vel.length()*Math.min(p.age,solid)));
+    const tail=shared?sharedBucketTailLength(p,p.vel.length()):p.fidelitySloshDraw?(fidelitySlosherDrawTail(p,p.vel.length())-1)*radius:Math.max(min,Math.min(max,p.vel.length()*Math.min(p.age,solid)));
     part.name=name;part.pattern=pattern;part.size=1;part.rotation.copy(s.rotation);
     part.stretch.set(width,width+tail,width*INK_LOOK.slosh[2]);part.position.addScaledVector(s.dir,-tail*.5);
     return engine.submitComposite(p,s.single);

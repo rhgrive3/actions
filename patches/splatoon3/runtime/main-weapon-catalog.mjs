@@ -1,5 +1,6 @@
 import { brellaPelletSpeed, canopyEntry, withProjectileHitGeometry, validProjectileHitGeometry } from './brella-physics.mjs';
 import { familyDescription } from './content-language.mjs';
+import { usesBucketSlosherSheet } from './projectile-visuals.mjs';
 import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
@@ -406,12 +407,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(hand!==null)event.hand=hand;
     emit('weapon:fire',event);
     const fxKind=r.family==='blaster'?'blaster':'shooter',wantFx=!!(a.isLocal || a._nearCamera?.());
+    const wantMuzzle=wantFx&&!usesBucketSlosherSheet(r.id);
     // Raw-socket births defer only the FX request until this tick's pose (#1431).
-    const deferred=poseBirth.commit(a,origin,direction,a.color,fxKind,wantFx);
+    const deferred=poseBirth.commit(a,origin,direction,a.color,fxKind,wantMuzzle);
     if (wantFx) {
       G.audio?.play(r.family==='charger'?'shoot_charger':r.family==='blaster'?'shoot_blaster':'shoot_shooter',
         {pos:a.isLocal?undefined:origin,volume:.45});
-      if(!deferred)G.fx?.muzzle(origin,direction,a.color,fxKind);
+      if(wantMuzzle&&!deferred)G.fx?.muzzle(origin,direction,a.color,fxKind);
     }
   }
   function origin(a, hand=null, offset=null) {

@@ -5581,3 +5581,56 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
 - 証跡: `.browser-evidence/swim-final/{receipt.json,idle.png,swim.png,wall.png,air.png,dry.png,human.png}`。この作業環境の保持先であり、外部 Nintendo 映像は `/workspace/scratch/` に保持。
 
 未確認: Switch 11.3.0 の同一入力・ギアでの飛沫密度／波形／チャージ姿勢の比較、実iPad WebKitの描画性能。公式紹介映像の観察とロジック回帰、Chromium WebGL の描画確認はそれぞれ別の検証である。
+
+## 2026-10-21 縦振りのフレーム比較／ヒッセン・モップリンの飛沫共通化
+
+比較の基準は `95c25af145418691991a1452d4d10589754a0f1c`（泳ぎ修正を含むmainと同じtree）。その後main `7581ca9b` を通常mergeで取り込み、#1431の同tick銃口接続を保持した。対象は公開版の本番合成。
+
+### ローラー縦振り
+
+任天堂[ブキ紹介](https://www.nintendo.com/jp/character/splatoon/fashion/index.html)のスプラローラー欄 `NablZy7jqxO` を再取得した。公式プレイヤーは任天堂ページをRefererに指定して取得し、記載された公開HLSの最大解像度variantを選択した。1080p/60fps、12秒、2つのTSを順に連結したSHA-256は `4bb9e8f212b83f45d80696b6ddd87217403c570fd60d62a85c32f16a3576cc60`（既存の比較記録と一致）。新規取得した映像をデコードし、394–448Fを2F刻み、頂点付近420–429Fを**1F刻み**で目視した。
+
+| 公式のデコードフレーム（0始まり） | 観察 |
+| --- | --- |
+| 400–420 | 身体を跳ね上げながら後方に引き、斜めのドラムを上方へ移す |
+| 422 / 423 / 424 | 最後の上向きの回転。424Fでドラムが頭上の最も高い位置付近に来る |
+| 425–426 | 最初の細いインクが見え、次フレームでは前方への大きな放出が見える |
+| 430–440 | 振り抜いた低い姿勢で収まり、放出したインクはそのまま前方へ進む |
+| 442–448 | ドラムを持ち上げ、肩側の構えへ戻る |
+
+映像のゲームバージョン、ギア、ZR入力tick、編集速度、FOV、原作の関節値は不明。これらは映像内の時刻であり「入力後何F」の確定値ではない。今回の主眼は通常型の縦振り。ダイナモ用の重い振りの曲線は今回の通常型映像で置き換えていない。
+
+原因: `verticalRollerPose` は横振りと同じ `s3SwingPose` を使い、windupの45%までに振り上げて、その後は放出4F前まで同じキーを保持していた。旧ブラウザ測定でも実ドラム中心の最大高さ自体は放出2F前であり、**最大高さのフレームだけを変える修正ではない**。早い段階の停止と、その後の急な移動、放出後に長く下がり続けるカーブを直す。
+
+変更: `patches/splatoon3/runtime/roller.mjs` の通常型縦振りを専用のPCHIP/Hermite grip曲線にした。既存の右手アンカーと二腕IKを通し、武器だけを後からworld座標で動かさない。31F放出／56F終了の現在のprofileで、キー時刻は0、6.75、17.55、27、29、31、36、46、56F。上方アンカーを遅くまで連続して上げ、29Fに頂点、31Fに既存の放出姿勢、5Fでフォロースルーを終え、短い低位置の保持を挟んで構えへ戻す。各区間は位置と速度を接続する。これらのアンカー・角度はINKWAVEリグ上の近似値であり、Nintendoから抽出した曲線ではない。
+
+再現: 通常型ローラーでジャンプ＋射撃し、ZRを離す。頂点への振り上げ、放出、着地、構えへの復帰を見る。ZR保持時は既存の転がし姿勢へ引き渡す。インク放出、消費、弾の軌道、移動速度、入力受付、横振りと重い振りは変更していない。
+
+実リグ測定: [比較JSON](roller-vertical-20261021/rig-comparison.json)、[中心軌道のグラフ](roller-vertical-20261021/rig-curves.png)。両方とも実Actor/Runner/Characterを66フレーム進め、放出31F、最大高さ29Fを確認した。水平照準、ZR解除、40F着地の制御した飛行、rootに追従する同じカメラである。原作のジャンプ物理・体格・柄形状の再現ではなく、グラフのworld座標を公式映像のpixel座標と同一視しない。`scripts/check-inkwave-vertical-swing.mjs` が再実行用チェッカー。基準／候補のハッシュをJSONに記録し、最新main統合後のブラウザ確認は別receiptに保持する。
+
+### ヒッセン／モップリンの飛沫
+
+ユーザー指定により、ヒッセン `s3-slosher-diffusion` とモップリン `s3-slosher-double`（別キットを含む）にバケットスロッシャーの飛沫を流用する。これは両ブキの本家の飛沫が同一という主張ではない。
+
+既存の共通化はatlasと描画kindだけで、独自のDrawSize/AfterOffset/Tailが残っていた。特にヒッセンには後続弾の半径0・尾2の設定があり、同じ画像でも短い粒に見えた。代替描画も独自のcatalogVisual値を読み、FXHooksではcatalogの`shot`をシューターの小滴としていた。
+
+変更箇所:
+
+- `runtime/projectile-visuals.mjs` の `sharedBucketDraw`／`sharedBucketTailLength` を共通の参照元にする。前段と側方にはBucket前段、後段unit 1にはBucket後段のDrawSize/Tailを使い、独立したtri/paired断面処理は除去する。
+- `local-quality/ink-volume/recipes.mjs` は共通の `projectile:slosher:slosher` または既存roller atlasを使い、粒の太さ・尾・厚みもBucketのレシピから計算する。`runtime/projectile-presentation.mjs` も同じ参照を使い、代替描画で独自形状へ戻らないようにする。
+- `adapter.mjs` はFXHooksの飛行中小滴・head間隔・head追跡をBucketと共通化する。`main-weapon-catalog.mjs` は両ブキにシューター用muzzleを追加しない。最新mainのposeBirthへのcommitは呼び、他ブキの同tick銃口接続を保つ。
+
+再現: 練習場でバケットスロッシャー、ヒッセン、モップリンを順に1回振る。飛沫の材質・太さ・尾・小滴が共通になり、ヒッセンの3方向、モップリンの2段の発射位置／遅延／軌道／威力／塗りはそれぞれのまま。エンジンの粒子数・三角形予算・距離制限は維持する。
+
+### 確認状態
+
+- 通常型／重い振り、実IK、床上の実描画頂点、着地／保持／再開、30/60/120Hz、Curveの接続、projectile rendererとvolume: 69/69 pass（最初の曲線変更後）。代替描画・小滴まで共通化後の関連群は47/47 pass。
+- `roller-vertical-curve.test.mjs` は早期停止を検出し、頂点／放出／戻りのキーで位置と速度の連続性を確認。`slosher-shared-envelope.test.mjs` は別キット・前後段・indexごとの半径、尾、canonical asset、実FXHooksの共通レシピを確認。カタログの独自描画を期待した旧試験は共通化後の要求へ更新し、横振りと重い振りの保持検査は維持した。
+- 既存build-only/identityゲートを維持し、quick check、本番ビルド、起動予算を確認。最新main統合時は#1431の回帰も追加実行。
+- ブラウザ: `.browser-evidence/roller-{baseline-final,candidate-final,integrated}/` に66Fの計測と選択フレーム、`.browser-evidence/bucket-integrated/` に実入力で発射した3種の代表headを、読み込まれた本番volumeで描画する確認を保持。代表headの抽出は診断用で、全弾・最大LODを一画面に収めた際の予算成功とは区別する。
+
+未確認: Switchで入力を同期した比較、原作の正確な関節曲線、実iPad WebKitでの描画・性能。公式映像の直接観察、ロジック回帰、Chromiumの実描画は別の証拠として扱う。
+
+最終追補: 長いヒッセン／モップリンの列がBucketの本来の4前段／5後段を超えても、描画用indexは最後のBucket envelopeで止める。外挿で半径0へ消さず、物理indexは変更しない。wire復元時はcatalog側の正しいindexを使い、全fragmentをhead扱いしない。
+
+統合後83/83、最後のenvelope／代替描画を含む41/41、コミット `2bcf419d` のemitted packagingと新規回帰14/14、quick check、本番ビルドと起動予算が成功。最新main統合後の縦振り66F描画も成功。最終の実入力3ブキ描画は [receipt](roller-vertical-20261021/bucket-browser.json) と [比較画像](roller-vertical-20261021/bucket-effects.jpg) に保存した（Chromium 154 / SwiftShader、contentHash `fa700251f669d9c202554457f046efe700ab906640fb7e376ce25700e6140ec1`）。通常の低品質予算内でvolume描画される分と、予算超過時に既存の共通Bucket代替描画へ回る分を別々に計測し、バケット7/7、ヒッセン9/9、モップリン11/11が描画されること、描画前後で位置・速度・age・ダメージ等の状態が変わらないことを確認した。既存LODには十分な削減がないためLODの差し替えは採用せず、描画予算自体も変更していない。
