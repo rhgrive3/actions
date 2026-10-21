@@ -12,9 +12,8 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
     // or submitting composer/shadow passes behind a *fully opaque* menu image.
     // The input/menu/net clocks remain live; real matches and online rooms do
     // not take this path. Portraits are on-demand offscreen renders, not demos.
-    const anchor = '  _frame(dt) {\n    const tA = performance.now();';
-    const replacement = `  _frame(dt) {
-    const artScreen = this.menus?._scr?.name;
+    const anchor = '    const tA = performance.now();';
+    const replacement = `    const artScreen = this.menus?._scr?.name;
     if (G.mode === 'menu' && this.match?.attract &&
         artScreen === this.menus?.current && INKWAVE_ART_MENU_SCREENS.has(artScreen)) {
       G.time += dt;
