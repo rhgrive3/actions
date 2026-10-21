@@ -96,6 +96,13 @@ export function createLazyComposerTarget(createNative, {
     reset(...args) {
       return ensureNative().reset(...args);
     },
+    // No frame samples this composer behind opaque static menu art.
+    // Dispose GPU targets, not pass descriptions. The first title/battle frame
+    // reconstructs the same renderer-sized targets and exact enabled passes.
+    releaseInactiveTargets() {
+      assertLive();
+      releaseNative();
+    },
     dispose() {
       if (disposed) return;
       disposed = true;
