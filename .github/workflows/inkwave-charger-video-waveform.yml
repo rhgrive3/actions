@@ -1,0 +1,64 @@
+name: INKWAVE Charger video waveform evidence (research only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/inkwave-charger-video-waveform.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    steps:
+      - name: Install toolchain
+        run: |
+          python3 -m pip install --quiet --upgrade yt-dlp
+          command -v ffmpeg
+          yt-dlp --version
+      - name: Retrieve public reference audio excerpts for analysis
+        shell: bash
+        run: |
+          set -u
+          mkdir -p charger-research/raw
+          cd charger-research
+          cat > sources.tsv <<'SOURCES'
+          official-s3-charger|https://x.com/SplatoonNA/status/1523648989144489986|*00:00:00-00:00:30
+          s3-charger-gameplay|https://www.youtube.com/watch?v=wMRcJomKTtA|*00:22:41-00:23:30
+          official-s1-charger|https://www.youtube.com/watch?v=5i25MOeRny8|*00:00:00-00:00:50
+          SOURCES
+          : > fetch.log
+          while IFS='|' read -r slug source section; do
+            echo "=== ${slug} ${source} ${section} ===" | tee -a fetch.log
+            timeout 180 yt-dlp \
+              --no-playlist --no-warnings --no-progress \
+              --socket-timeout 15 --retries 1 --fragment-retries 1 \
+              --download-sections "${section}" \
+              -f 'bestaudio/best' -x --audio-format wav \
+              --remote-components ejs:github --js-runtimes node \
+              -o "raw/${slug}.%(ext)s" \
+              "${source}" >> fetch.log 2>&1
+            echo "exit=$?" >> fetch.log
+            file=$(find raw -maxdepth 1 -type f -name "${slug}*.wav" | head -1)
+            if [ -n "$file" ]; then
+              ffmpeg -hide_banner -loglevel error -y -i "$file" -vn \
+                 -ar 22050 -ac 1 -c:a flac "${slug}.flac" >>fetch.log 2>&1
+              ffprobe -v error -show_entries format=duration,size \
+                -of default=noprint_wrappers=1 "${slug}.flac" >> fetch.log 2>&1
+            fi
+          done < sources.tsv
+          echo "produced:" >> fetch.log
+          ls -lah *.flac 2>/dev/null >>fetch.log || :
+          # Do not store large third-party game videos beyond the extracted
+          # temporary run and do not commit any recording into the repository.
+          rm -rf raw
+      - name: Upload short research-only excerpts and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: charger-reference-video-audio
+          path: |
+            charger-research/*.flac
+            charger-research/sources.tsv
+            charger-research/fetch.log
+          retention-days: 1
+          if-no-files-found: warn
