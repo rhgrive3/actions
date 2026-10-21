@@ -35,6 +35,7 @@ test('loadout retains all real selectable weapons while offscreen mobile SVGs ar
   assert.match(menus, /h\('span', \{ class: 'iw-wcard__blob', html: deferArt \? ''/);
   assert.match(menus, /h\('span', \{ class: 'iw-wcard__icon', html: deferArt \? ''/);
   assert.match(menus, /new IntersectionObserver\(/);
+  assert.match(menus, /root: el, rootMargin: '320px 0px'/, 'mobile catalogue uses scroll container as observer root');
   assert.match(menus, /materializeArt\(f\)/);
   assert.match(menus, /destroy: \(\) => weaponArtObserver\?\.disconnect\(\)/);
   assert.match(menus, /this\.api\.setLoadout && this\.api\.setLoadout\(\{ weapon: id \}\)/,
