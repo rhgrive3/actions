@@ -1,3 +1,18 @@
+// Strictly local to the primary loadout grid: the catalogue adapter may have
+// already upgraded its weapon SVG expression. Preserve that exact source
+// expression for eager *and* deferred cards. Never touch the lobby modal.
+export function deferPrimaryWeaponIcon(grid, replaceOnce) {
+  const prefix = "        h('span', { class: 'iw-wcard__icon', html: ";
+  const rows = grid.split('\n').filter(line => line.startsWith(prefix) && line.endsWith(" }),"));
+  if (rows.length !== 1) throw new Error('INKWAVE quality patch conflict (primary weapon icon owner): expected one');
+  const row = rows[0], expr = row.slice(prefix.length, -4);
+  if (!/^[A-Za-z_$][\w$.]*\(/.test(expr)) throw new Error('INKWAVE quality patch conflict (weapon icon expression)');
+  return {
+    grid: replaceOnce(grid, row, prefix + "deferArt ? '' : " + expr + " }),", 'defer offscreen weapon SVG in primary grid'),
+    hydration: expr.replace(/\bid\b/g, 'card._wid'),
+  };
+}
+
 // Static decorative menu backdrops, built from original generated artwork.
 // The actual game arena, result podium, pause screen and network room must keep
 // their existing simulation/render lifecycle. Do not change combat or loadout data.
@@ -97,10 +112,8 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       "        h('span', { class: 'iw-wcard__blob', html: splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),",
       "        h('span', { class: 'iw-wcard__blob', html: deferArt ? '' : splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),",
       'defer offscreen blob SVG in primary grid');
-    grid = replaceOnce(grid,
-      "        h('span', { class: 'iw-wcard__icon', html: weaponIcon(w.kind || id) }),",
-      "        h('span', { class: 'iw-wcard__icon', html: deferArt ? '' : weaponIcon(w.kind || id) }),",
-      'defer offscreen weapon SVG in primary grid');
+    const icon = deferPrimaryWeaponIcon(grid, replaceOnce);
+    grid = icon.grid;
     code = code.slice(0, gridStart) + grid + code.slice(gridEnd);
     code = replaceOnce(code,
       "      c._wid = id;\n      return c;",
@@ -108,7 +121,7 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       'deferred card ownership');
     code = replaceOnce(code,
       "    // ---- detail panel\n    const kind =",
-      "    const materializeArt = (card) => {\n      if (!card?._artDeferred) return;\n      const i = card._weaponArtIndex, w = Ws[card._wid];\n      card.querySelector('.iw-wcard__blob').innerHTML = splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 });\n      card.querySelector('.iw-wcard__icon').innerHTML = weaponIcon(w.kind || card._wid);\n      card._artDeferred = false; delete card.dataset.artDeferred;\n    };\n    let weaponArtObserver = null;\n\n    // ---- detail panel\n    const kind =",
+      "    const materializeArt = (card) => {\n      if (!card?._artDeferred) return;\n      const i = card._weaponArtIndex, w = Ws[card._wid];\n      card.querySelector('.iw-wcard__blob').innerHTML = splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 });\n      card.querySelector('.iw-wcard__icon').innerHTML = " + icon.hydration + ";\n      card._artDeferred = false; delete card.dataset.artDeferred;\n    };\n    let weaponArtObserver = null;\n\n    // ---- detail panel\n    const kind =",
       'hydrate approaching weapon card');
     code = replaceOnce(code,
       "      onFocus: (f) => {\n        if (f._wid && f._wid !== shown) render(f._wid);",

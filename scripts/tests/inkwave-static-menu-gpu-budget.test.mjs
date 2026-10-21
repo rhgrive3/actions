@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptBuildSource } from '../inkwave-source-composition.mjs';
+import { deferPrimaryWeaponIcon } from '../../patches/local-quality/static-menu-adapter.mjs';
 import { createLazyComposerTarget } from '../../patches/local-quality/composer-target-adapter.mjs';
 
 // Exercise the real production composer, including every earlier strict patch.
@@ -89,4 +90,17 @@ test('lazy composer frees the native GPU targets once and rebuilds with the same
   proxy.dispose();
   assert.equal(releases, 2);
   assert.equal(listeners.size, 0);
+});
+
+test('deferred weapon card uses the precise upstream-composed catalogue icon and fails closed on ambiguity', () => {
+  const row = "        h('span', { class: 'iw-wcard__icon', html: weaponIcon(w.modelKind || w.kind || id) }),";
+  const replace = (source, before, after) => {
+    assert.equal(source.split(before).length, 2, 'one scoped icon owner');
+    return source.replace(before, after);
+  };
+  const result = deferPrimaryWeaponIcon(row, replace);
+  assert.match(result.grid, /html: deferArt \? '' : weaponIcon\(w\.modelKind \|\| w\.kind \|\| id\)/);
+  assert.equal(result.hydration, 'weaponIcon(w.modelKind || w.kind || card._wid)');
+  assert.throws(() => deferPrimaryWeaponIcon(row + '\n' + row, replace), /expected one/);
+  assert.throws(() => deferPrimaryWeaponIcon('', replace), /expected one/);
 });
