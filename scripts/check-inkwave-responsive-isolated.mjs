@@ -47,9 +47,14 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
   const args=[path.join(root,'scripts/check-inkwave-responsive.mjs'),
     '--source',source,'--section',section,'--engine',engine,'--cases',name,
     '--evidence-dir',shardDir,'--profile-dir',profileDir];
+  const startedAt=Date.now();
+  console.log(JSON.stringify({event:'responsive-child-start',engine,name}));
   const processResult=spawnSync(process.execPath,args,{
     cwd:root,encoding:'utf8',timeout:20*60*1000,maxBuffer:16*1024*1024
   });
+  console.log(JSON.stringify({event:'responsive-child-end',engine,name,
+    elapsedMs:Date.now()-startedAt,exitCode:processResult.status,signal:processResult.signal,
+    processError:processResult.error?.message||null}));
   if(processResult.stdout)process.stdout.write(processResult.stdout);
   if(processResult.stderr)process.stderr.write(processResult.stderr);
   const stderr = boundedChildStderr(processResult.stderr);

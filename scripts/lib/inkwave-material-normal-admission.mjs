@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-const SOURCE='cc0c90afe8031643e6a890974f8f44a40a30509e',TREE='de64f6d82cdf518b9acbc4ce3ae7c897509b406c';
+const SOURCE='c0938a3f84768474df91713f7b372f9d7f8fe96a',TREE='97b9938391f156dc332f6a56ac6fe3d21d9f9dc7';
 const object=(v,label)=>assert.ok(v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length,label);
 const string=(v,label)=>assert.ok(typeof v==='string'&&v.length,label);
 const finite=(v,label)=>assert.ok(Number.isFinite(v),label);
@@ -13,7 +13,7 @@ export function requireNormalNativeReceipt(row,variant){
  assert.equal(row.sourceSha,SOURCE);assert.equal(row.diagnosticOnly,false);assert.equal(row.performanceAccepted,false);assert.deepEqual(row.errors,[]);
  hash(row.inputHash,'inputHash');hash(row.contentHash,'contentHash');string(row.environment?.cpu,'CPU provenance');string(row.environment?.node,'Node provenance');
  const b=row.overlay;object(b,'overlay provenance');assert.equal(b.sourceSha,SOURCE);assert.equal(b.sourceTree,TREE);assert.equal(b.inputHash,row.inputHash);assert.equal(b.contentHash,row.contentHash);
- assert.equal(b.commonVariant,'A');assert.equal(b.overlayVariant,'B');assert.equal(b.modulePath,'src/world/inkShading.js');hash(b.revision,'revision');hash(b.baselineEmittedSha256,'baseline emitted');hash(b.candidateEmittedSha256,'candidate emitted');assert.notEqual(b.baselineEmittedSha256,b.candidateEmittedSha256);
+ assert.equal(b.commonVariant,'B');assert.equal(b.overlayVariant,'A');assert.equal(b.modulePath,'src/world/inkShading.js');hash(b.revision,'revision');hash(b.baselineEmittedSha256,'baseline emitted');hash(b.candidateEmittedSha256,'candidate emitted');assert.notEqual(b.baselineEmittedSha256,b.candidateEmittedSha256);
  const target='_versions/'+b.revision+'/'+b.modulePath,loadedResources=[],seen=new Set();assert.ok(Array.isArray(row.loaded)&&row.loaded.length,'loaded source provenance');
  for(const item of row.loaded){assert.ok(Array.isArray(item)&&item.length===2,'loaded pair');const[key,value]=item;string(key,'resource path');hash(value,'resource SHA');assert.ok(!seen.has(key),'duplicate loaded resource');seen.add(key);
   if(key===target){assert.equal(value,variant==='A'?b.baselineEmittedSha256:b.candidateEmittedSha256,'actual selected material body');loadedResources.push([key,b.baselineEmittedSha256]);}

@@ -642,16 +642,25 @@ export class LobbySet {
   // The floor mirrors the scene (kids included) into a half-res HDR target from its own onBeforeRender, exactly like
   // three's Reflector (oblique near plane on y = 0) but for a fixed horizontal plane; the ground shader streaks and
   // blurs it by wetness. Works inside the showcase's own render (nested render, state restored).
+  _createReflectionTarget() {
+    const rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true });
+    this._rRT = rt;
+    this.mats.ground.userData.refl.tex.value = rt.texture;
+    return rt;
+  }
+
   _reflection() {
     const mat = this.mats.ground, R = mat.userData.refl;
     const cam = (this._rCam = new THREE.PerspectiveCamera());
-    const rt = (this._rRT = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true }));
-    R.tex.value = rt.texture;
+    if (this.Q.refl) this._createReflectionTarget();
     const plane = new THREE.Plane(), clip = new THREE.Vector4(), q = new THREE.Vector4(), size = new THREE.Vector2();
     const cw = new THREE.Vector3(), look = new THREE.Vector3(), tgt = new THREE.Vector3(), rot = new THREE.Matrix4();
     const bias = new THREE.Matrix4().set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1);
     this.ground.onBeforeRender = (renderer, scene, camera) => {
       if (this._inRefl || !this.Q.refl) return;
+      const rt = this._rRT;
+      if (!rt) return;
+      R.on.value = 0; // An incomplete pass must not sample the previous frame's reflection.
       cw.setFromMatrixPosition(camera.matrixWorld);
       if (cw.y <= 0.02) return;
       // mirrored camera
@@ -681,18 +690,37 @@ export class LobbySet {
       // render (skip what can't be seen in a floor reflection / would self-reflect)
       this._inRefl = true;
       const hide = [this.ground, this.steam, this.curbs];
-      const vis = hide.map((o) => o && o.visible); hide.forEach((o) => o && (o.visible = false));
+      const vis = hide.map((o) => o && o.visible);
       const xr = renderer.xr.enabled, sau = renderer.shadowMap.autoUpdate, snu = renderer.shadowMap.needsUpdate, ac = renderer.autoClear;
-      renderer.xr.enabled = false; renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = false;   // reuse this frame's shadows
-      renderer.setRenderTarget(rt);
-      renderer.state.buffers.depth.setMask(true);
-      renderer.autoClear = false; renderer.clear(true, true, false);
-      renderer.render(scene, cam);
-      renderer.autoClear = ac; renderer.xr.enabled = xr; renderer.shadowMap.autoUpdate = sau; renderer.shadowMap.needsUpdate = snu;
-      renderer.setRenderTarget(cur);
-      hide.forEach((o, i) => o && (o.visible = vis[i]));
-      this._inRefl = false;
-      R.on.value = 1;
+      let rendered = false;
+      let renderFailed = false;
+      try {
+        hide.forEach((o) => o && (o.visible = false));
+        renderer.xr.enabled = false; renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = false;   // reuse this frame's shadows
+        renderer.setRenderTarget(rt);
+        renderer.state.buffers.depth.setMask(true);
+        renderer.autoClear = false; renderer.clear(true, true, false);
+        renderer.render(scene, cam);
+        rendered = true;
+      } catch (error) {
+        renderFailed = true;
+        throw error;
+      } finally {
+        // Restore local flags and visibility even if rendering or framebuffer restoration fails.
+        try {
+          renderer.autoClear = ac; renderer.xr.enabled = xr;
+          renderer.shadowMap.autoUpdate = sau; renderer.shadowMap.needsUpdate = snu;
+          renderer.setRenderTarget(cur);
+        } catch (error) {
+          // Keep the primary failure (including its identity/cause) if restoring the target also fails.
+          // A restoration-only failure must still propagate.
+          if (!renderFailed) throw error;
+        } finally {
+          hide.forEach((o, i) => o && (o.visible = vis[i]));
+          this._inRefl = false;
+        }
+      }
+      if (rendered) R.on.value = 1;
     };
   }
 
@@ -760,7 +788,15 @@ export class LobbySet {
     this.quality = q; this.Q = QUALITY[q];
     const L = this.lights, sh = this.Q.shadow;
     if (L.key.shadow.mapSize.x !== sh) { L.key.shadow.mapSize.set(sh, sh); if (L.key.shadow.map) { L.key.shadow.map.dispose(); L.key.shadow.map = null; } }
-    if (!this.Q.refl) this.mats.ground.userData.refl.on.value = 0;
+    const R = this.mats.ground.userData.refl;
+    if (!this.Q.refl) {
+      R.on.value = 0;
+      if (this._rRT) {
+        R.tex.value = null;
+        this._rRT.dispose();
+        this._rRT = null;
+      }
+    } else if (!this._rRT) this._createReflectionTarget();
     this.steam.visible = this.Q.steam;
     L.vend.visible = L.sweep.visible = this.Q.extraLights;
   }

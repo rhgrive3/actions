@@ -57,7 +57,7 @@ for(const[name,mutate]of Object.entries(receiptNegatives))test(name,()=>{const a
 const commonRoot=process.env.INKWAVE_MATERIAL_COMMON_SOURCE;
 const contract=JSON.parse(fs.readFileSync(new URL('./source-contract.json',import.meta.url))),official=JSON.parse(fs.readFileSync(new URL('./common-tree-blobs.json',import.meta.url)));
 function verifyContract(c,loaded=sourceFiles,tree=official){
- assert.equal(c.commit,'cc0c90afe8031643e6a890974f8f44a40a30509e');assert.equal(c.tree,'de64f6d82cdf518b9acbc4ce3ae7c897509b406c');assert.equal(tree.commit,c.commit);assert.equal(tree.tree,c.tree);
+ assert.equal(c.commit,'c0938a3f84768474df91713f7b372f9d7f8fe96a');assert.equal(c.tree,'97b9938391f156dc332f6a56ac6fe3d21d9f9dc7');assert.equal(tree.commit,c.commit);assert.equal(tree.tree,c.tree);
  assert.equal(c.files.length,17);assert.equal(new Set(loaded).size,loaded.length);assert.deepEqual([...loaded].sort(),c.files.map(f=>commonRoot+'/'+f.path).sort(),'actual imported/extracted source closure');
  const blobs=new Map(tree.blobs.map(x=>[x.path,x.sha]));assert.equal(blobs.size,tree.blobs.length,'duplicate official blob path');
  for(const f of c.files){assert.equal(f.blob,blobs.get(f.path),'official COMMON blob binding');const b=fs.readFileSync(commonRoot+'/'+f.path);assert.equal(sha(b),f.sha256);assert.equal(createHash('sha1').update('blob '+b.length+'\0').update(b).digest('hex'),f.blob);}

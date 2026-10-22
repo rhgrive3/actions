@@ -47,6 +47,7 @@ function fullShot(actorId, team = 0) {
   return {
     kind: 'rainmaker-shot', id: 0, actorId, team,
     pos: [0, 0, 0], aim: [0, 0, 1], charge: 1,
+    shotOrigin: { actorId, team, life: 0, owner: null, body: [0, .7, 0], muzzle: [0, 1, 0] },
     damage: 60, blastDamage: 180, outerDamage: 40,
     radius: 1.4, nearRadius: 0.92, paintRadius: 5, speed: 18,
   };

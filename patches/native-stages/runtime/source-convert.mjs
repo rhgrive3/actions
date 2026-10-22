@@ -27,7 +27,7 @@ class BufferBuilder{
 }
 function lines(text,visit){let start=0;while(start<text.length){let end=text.indexOf('\n',start);if(end<0)end=text.length;visit(text.slice(start,end).trimEnd());start=end+1;}}
 const any=(s,words)=>words.some(w=>s.includes(w));
-function classify(name,material,semantics){
+function classify(name,material,semantics,compiledSemantics){
  const s=(name+' '+material).toLowerCase(),m=(material||'').toLowerCase();
  const alpha=any(s,['graffiti','warningtape','canola','leaf','grass','cloth','flag','stencil','notice','chainlink','net','grate','fence','vinyl','alpha','rope','fabric','dvpoolfloat','spotlight']);
  // GroundGrass* names are structural soil/moss surfaces, not grass blades.
@@ -35,7 +35,13 @@ function classify(name,material,semantics){
  // nativeDisplay still rendered the exact source triangles (Bluefin centre).
  const decor=any(s,['graffiti','warningtape','canola','leaf','flag','cloth','stencil','light_cp','spotlight','lens','vinylseat','carshadow','__carsset','_car_','buss_shadow','treebush','watersurfice','__water_','__waterpuddle','watersurface','seawater','skyplane'])||m.endsWith('_water')||name.toLowerCase().includes('_water_')||m.endsWith('_plant')||m.endsWith('_code00');
  const layer=name.match(/(?:Pack|_)(Pnt|Var|Vlf|Vgl|Vcl|Tcl)(?:Set)?(?:_|$)/)?.[1]||null;
- const matches=key=>(semantics?.[key]||[]).some(pattern=>new RegExp(pattern).test(name));
+ // Compile each stage-specific pattern once, only when the original short-circuit path reaches it.
+ // Lazy compilation preserves when malformed patterns first throw, including skipped rules.
+ const matches=key=>(semantics?.[key]||[]).some((pattern,i)=>{
+  const rules=compiledSemantics[key]||(compiledSemantics[key]=[]);
+  const re=rules[i]||(rules[i]=new RegExp(pattern));
+  return re.test(name);
+ });
  const active=(!layer||layer==='Pnt')&&!name.includes('TriColor')&&!matches('inactiveObjectPatterns');
  const grate=any(m,['grate','coppernet','chainlink','meshfloor','waffledplate']),glass=any(m,['glass','window']);
  const background=name.startsWith('FldBG')||name.startsWith('Fld_BG');
@@ -44,7 +50,7 @@ function classify(name,material,semantics){
  return {background,collidable,paintable,grate,glass,alpha,active,ruleLayer:layer};
 }
 export function parseSourceOBJ(text,semantics){
- const geometry=[],indexChunks=[],objects=[];
+ const geometry=[],indexChunks=[],objects=[],compiledSemantics=Object.create(null);
  let v=new BufferBuilder(Float32Array),n=new BufferBuilder(Float32Array),uv=new BufferBuilder(Float32Array),ix=new BufferBuilder(Uint32Array);
  let name=null,material=null,vo=0,io=0,uvOffset=0,normalOffset=0;
  function flush(){
@@ -56,7 +62,7 @@ export function parseSourceOBJ(text,semantics){
    if(uv.length){g[i*8+6]=uv.array[i*2];g[i*8+7]=uv.array[i*2+1];}
   }
   geometry.push(g);indexChunks.push(ix.finish());
-  objects.push({name,material,vo,vc:count,io,ic:ix.length,bounds:[min,max],sourceHasUV:!!uv.length,...classify(name,material,semantics)});
+  objects.push({name,material,vo,vc:count,io,ic:ix.length,bounds:[min,max],sourceHasUV:!!uv.length,...classify(name,material,semantics,compiledSemantics)});
   vo+=count;io+=ix.length;uvOffset+=uv.length/2;normalOffset+=n.length/3;
   v=new BufferBuilder(Float32Array);n=new BufferBuilder(Float32Array);uv=new BufferBuilder(Float32Array);ix=new BufferBuilder(Uint32Array);
  }

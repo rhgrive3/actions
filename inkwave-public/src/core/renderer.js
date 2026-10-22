@@ -250,9 +250,17 @@ export class Renderer {
     this.settings = settings;
     this.q = effectiveQuality(settings, this.mobile);
     const shadowChanged = this.renderer.shadowMap.enabled !== (settings.shadows !== false);
-    if (prevQ !== this.q || shadowChanged) {
-      if (prevQ !== this.q) this.dynScale = 1;
+    const qualityChanged = prevQ !== this.q;
+    if (qualityChanged) {
+      this.dynScale = 1;
       this._buildComposer();
+    } else if (shadowChanged) {
+      // Shadows change shader defines, not HDR/post-processing target formats.
+      // Preserve the composer, accumulated dynamic resolution and ScreenFX passes.
+      this.renderer.shadowMap.enabled = settings.shadows !== false;
+      this.renderer.shadowMap.needsUpdate = true;
+    }
+    if (qualityChanged || shadowChanged) {
       this.scene?.traverse((o) => { if (o.material) { const m = Array.isArray(o.material) ? o.material : [o.material]; m.forEach((mm) => (mm.needsUpdate = true)); } });
     }
     if (this.bloom) this.bloom.enabled = !!(this.q.bloom && settings.bloom);

@@ -32,6 +32,9 @@ on:
       - 'patches/splatoon3/tests/deployed-special-gauge-lock.test.mjs'
       - 'patches/splatoon3/tests/burst-contact-phases.test.mjs'
       - 'scripts/check-inkwave-splashdown-browser.mjs'
+      - 'scripts/lib/inkjet-terminal-probe.mjs'
+      - 'scripts/tests/inkjet-terminal-probe-lifecycle.test.mjs'
+      - 'scripts/generate-inkwave-source-proof.py'
       - '.github/workflows/inkwave-specials-1130.yml'
   workflow_dispatch:
 permissions:
@@ -95,7 +98,9 @@ jobs:
           node --experimental-vm-modules --test --test-concurrency=2 \
             patches/splatoon3/tests/inkjet-vfx-cadence.test.mjs \
             patches/splatoon3/tests/inkjet-vfx-pool-budget.test.mjs \
-            patches/splatoon3/tests/inkjet-vfx-production.test.mjs
+            patches/splatoon3/tests/inkjet-vfx-production.test.mjs \
+            patches/splatoon3/tests/inkjet-vfx-terminal-impact.test.mjs \
+            scripts/tests/inkjet-terminal-probe-lifecycle.test.mjs
       - name: Public sub and current catalogue lifecycle regressions
         run: |
           node --experimental-vm-modules --test --test-concurrency=2 \
@@ -151,6 +156,17 @@ jobs:
                 node scripts/check-inkwave-splashdown-browser.mjs --site _site --inkjet --hz "$hz" --actors "$actors" --layout "$layout" --evidence-dir ".ci-scratch/splashdown-browser/inkjet/${hz}hz-${actors}p-${layout}"
               done
             done
+          done
+      - name: Verify native Inkjet terminal contacts and remote ghosts
+        env:
+          EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          NODE_OPTIONS: --max-old-space-size=768
+        run: |
+          proof=.ci-scratch/splashdown-browser/inkjet-terminal-source-proof.json
+          python3 scripts/generate-inkwave-source-proof.py --source-root . --git-head --expected-head "$EXPECTED_SOURCE_SHA" --output "$proof"
+          proof_sha256="$(sha256sum "$proof" | cut -d' ' -f1)"
+          for hz in 30 60 120; do
+            node scripts/check-inkwave-splashdown-browser.mjs --site _site --inkjet-terminals --hz "$hz" --source-root . --source-proof "$proof" --expected-proof-sha256 "$proof_sha256" --evidence-dir ".ci-scratch/splashdown-browser/inkjet-terminal/${hz}hz"
           done
       - name: Verify Inkjet production composition in emitted modules
         run: |

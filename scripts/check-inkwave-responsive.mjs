@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { checkCoreMenus } from './check-inkwave-responsive-core.mjs';
 import { createResponsiveAssetServer } from './lib/inkwave-responsive-server.mjs';
 import { confirmResponsiveMockHostTeams } from './inkwave-responsive-fixture.mjs';
-import { createResponsiveDiagnostics, collectResponsiveFailure } from './lib/inkwave-responsive-diagnostics.mjs';
+import { createResponsiveDiagnostics, collectResponsiveFailure, createResponsiveProgressWriter } from './lib/inkwave-responsive-diagnostics.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : null; };
@@ -132,7 +132,9 @@ try {
       result.cases.push(entry);
       const page = context.pages()[0] || await context.newPage();
       const codeInput = activeCodeInput(page);
-      const diagnostics = createResponsiveDiagnostics();
+      const diagnostics = createResponsiveDiagnostics({ onChange: createResponsiveProgressWriter(
+        path.join(evidence, `${engineName}-${name}-diagnostic-progress.json`), { engine: engineName, name }) });
+      diagnostics.record('case-start');
       page.on('crash', () => diagnostics.unavailable('page-crash'));
       page.on('close', () => diagnostics.unavailable('page-close'));
       context.on('close', () => diagnostics.unavailable('context-close'));
@@ -307,7 +309,10 @@ try {
           captureFailure: () => page.screenshot({ path: path.join(evidence, `${engineName}-${name}-failure.png`) }) });
         if (!audit) throw error;
       } finally {
-        try { await diagnostics.close(() => context.close()); }
+        try {
+          diagnostics.record('context-close-start');
+          await diagnostics.close(() => context.close());
+        }
         finally { entry.diagnostics = diagnostics.snapshot(); }
       }
     }

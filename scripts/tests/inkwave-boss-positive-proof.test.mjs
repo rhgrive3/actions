@@ -63,7 +63,20 @@ function fixture(kind = 'shooter') {
       G.netm = this;
     }
     _peer(from) { return this.peers.get(from); }
-    _tick(from, d) { const p = this._peer(from); if (d.ts > (p.lastTs ?? -Infinity)) p.lastTs = d.ts; }
+    _tick(from, d) {
+      const p = this._peer(from);
+      if (!(d.ts > (p.lastTs ?? -Infinity))) return;
+      p.lastTs = d.ts;
+      // This modeled fixture supplies a native-installed row, not merely a
+      // retained presentation flag. Full row admission is tested separately
+      // by contact-/special-provenance production-composition suites.
+      for (const row of d.a || []) {
+        const actor = this.byNid.get(row[0]);
+        if (!actor || actor.owner !== from || d.l?.[row[0]] !== actor.netLife) continue;
+        actor.net.buf = [{ t: d.ts, x: row[1], y: row[2], z: row[3],
+          f: actor.net.cur.f, life: actor.netLife }];
+      }
+    }
     _hit() { throw Error('PvP transport is outside this Boss fixture'); }
     onMessage() {}
     onLeave() {}
@@ -110,6 +123,8 @@ test('Boss nonpositive claim cannot reserve a pending nonce before its shot arri
 });
 test('Boss nonpositive claim cannot consume Roller contact cooldown', () => {
   const nm = fixture('roller');
+  nm.byNid.get(1).net.cur.f = 1 | 256;
+  nm._tick('peer', { k: 't', ts: 100, a: [[1, 0, 0, 0]], l: { 1: 0 } });
   for (const d of [-1, 0]) nm.onMessage('peer', boss(d, 1, 'roller'));
   assert.equal(contacts(nm), 0); assert.equal(pending(nm), 0);
   nm.onMessage('peer', boss(140, 1, 'roller'));
@@ -117,6 +132,8 @@ test('Boss nonpositive claim cannot consume Roller contact cooldown', () => {
 });
 test('Boss nonpositive claim cannot consume active Special contact cooldown', () => {
   const nm = fixture(); nm.byNid.get(1).specialActive = { id: 'storm' };
+  nm.byNid.get(1).net.cur.f = 1 | 8192;
+  nm._tick('peer', { k: 't', ts: 100, a: [[1, 0, 0, 0]], l: { 1: 0 } });
   for (const d of [-1, 0]) nm.onMessage('peer', boss(d, 1, 'storm'));
   assert.equal(contacts(nm), 0); assert.equal(pending(nm), 0);
   nm.onMessage('peer', boss(30, 1, 'storm'));

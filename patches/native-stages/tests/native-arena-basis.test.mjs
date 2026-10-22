@@ -14,7 +14,7 @@ test('inferred opposing-pad basis rotates native spawn yaw and retreat projectio
 test('native opening and death respawn use actual Urchin support and opposing-pad aim at 30/60/120 Hz for both teams',{skip:!hasUrchin},async()=>{
  const f=await nativeFixture(),{G,THREE}=f,L=new f.NativeLevel(readStage(ROOT,'urchin')),P=new f.NativePhysics(L);G.level=L;G.physics=P;
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
- G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(L,P);G.match.mode='turf';G.match.opts={};
+ G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(L,P);G.match.mode='turf';G.match.state='playing';G.match.opts={};
  const basis=nativeArenaBasis(L),proof=[];
  for(const team of [0,1])for(const hz of [30,60,120])for(const opening of [true,false])for(const slot of [-1,0,1,2,3]){
   const a=f.make('shooter');a.team=team;a.slot=Math.max(0,slot);a.isBot=slot>=0;a._integrate=f.Actor.prototype._integrate;a.spawnAt(L.spawnPads[team],0);a.aimPoint.copy(L.spawnPads[team]);a.intent.move.set(0,0,0);a.intent.fire=false;
@@ -31,6 +31,6 @@ test('native opening and death respawn use actual Urchin support and opposing-pa
 });
 
 test('ordinary Tidewater opening and death respawn retain team Z aim and ground landing',{skip:false},async()=>{
- const f=await fixture({fullRuntime:true,adaptNative:adaptBuildSource,adaptRuntime:adaptBuildSource,extraExports:"export {TIDEWATER} from './inkwave-public/src/world/maps.js';"}),{G}=f,L=new f.Level(f.TIDEWATER);G.level=L;G.physics=new f.Physics(L);G.match.mode='turf';G.match.opts={};
+ const f=await fixture({fullRuntime:true,adaptNative:adaptBuildSource,adaptRuntime:adaptBuildSource,extraExports:"export {TIDEWATER} from './inkwave-public/src/world/maps.js';"}),{G}=f,L=new f.Level(f.TIDEWATER);G.level=L;G.physics=new f.Physics(L);G.match.mode='turf';G.match.state='playing';G.match.opts={};
  for(const team of [0,1])for(const opening of [true,false]){const a=f.make('shooter');a.team=team;a._integrate=f.Actor.prototype._integrate;a.spawnAt(L.spawnPads[team],0);a.aimPoint.copy(L.spawnPads[team]);a.intent.fire=false;if(opening)assert(f.beginInitialSquidSpawn(a));else{a.alive=false;a.respawn();}assert.equal(a.yaw,team?Math.PI:0);assert.equal(a.aimYaw,team?Math.PI:0);a.intent.fire=true;a.update(1/60);a.intent.fire=false;for(let i=0;i<90;i++){G.time+=1/60;a.update(1/60);}assert.equal(a.s3.squidSpawn,undefined);assert(a.alive&&a.grounded);}
 });

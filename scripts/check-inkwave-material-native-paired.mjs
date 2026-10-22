@@ -157,7 +157,7 @@ function requireConditioningRecord(c){
  requireSettledMaterialEntry(c.after,28,28);return true;
 }
 function runReplayDiagnostic(){
- const sourceSha='cc0c90afe8031643e6a890974f8f44a40a30509e';assert.match(sourceSha,/^[0-9a-f]{40}$/,'reviewed common runtime head must be fixed before execution');const labels=['unpainted','painted','repeat','repeat2'];
+ const sourceSha='c0938a3f84768474df91713f7b372f9d7f8fe96a';assert.match(sourceSha,/^[0-9a-f]{40}$/,'reviewed common runtime head must be fixed before execution');const labels=['unpainted','painted','repeat','repeat2'];
  const sha=x=>createHash('sha256').update(x).digest('hex'),rows=[],checks=[];
  const check=(name,fn)=>{try{fn();checks.push({name,passed:true});}catch(e){checks.push({name,passed:false,error:e.message.slice(0,2048),errorTruncated:e.message.length>2048});}};
  const negative={rendererFrame:123,captureOrdinal:1,rngState:7,clocks:{game:.05},atlasHash:'atlas',sourceSha,style:{hair:0}};
@@ -201,7 +201,7 @@ function runReplayDiagnostic(){
     assert.equal(sha(bytes),x.sha256);assert.ok(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));
     assert.equal(bytes.toString('ascii',12,16),'IHDR');assert.equal(bytes.readUInt32BE(16),960);assert.equal(bytes.readUInt32BE(20),600);return bytes;});
    const bound=receipt.overlay,target='_versions/'+bound.revision+'/src/world/inkShading.js';
-   assert.equal(bound.sourceSha,sourceSha);assert.equal(bound.sourceTree,'de64f6d82cdf518b9acbc4ce3ae7c897509b406c');assert.equal(bound.commonVariant,'A');assert.equal(bound.overlayVariant,'B');assert.equal(bound.inputHash,receipt.inputHash);assert.equal(bound.contentHash,receipt.contentHash);
+   assert.equal(bound.sourceSha,sourceSha);assert.equal(bound.sourceTree,'97b9938391f156dc332f6a56ac6fe3d21d9f9dc7');assert.equal(bound.commonVariant,'B');assert.equal(bound.overlayVariant,'A');assert.equal(bound.inputHash,receipt.inputHash);assert.equal(bound.contentHash,receipt.contentHash);
    const loaded=new Map(receipt.loaded);assert.equal(loaded.get(target),variant==='A'?bound.baselineEmittedSha256:bound.candidateEmittedSha256);
    row.condition={sourceSha,inputHash:receipt.inputHash,contentHash:receipt.contentHash,overlay:bound,environment:receipt.environment,
     loadedExceptMaterial:[...loaded].filter(([k])=>k!==target).sort((a,b)=>a[0].localeCompare(b[0])),
@@ -261,7 +261,7 @@ for(let block=0;block<3;block++){
   const out=path.join(root,block+'-'+order+'-'+variant);
   execFileSync(process.execPath,['scripts/check-inkwave-material-native-frame.mjs',site,source,overlay,out,variant],{stdio:'inherit',timeout:900000});
   const row=JSON.parse(fs.readFileSync(path.join(out,'receipt.json'),'utf8'));assert.equal(row.status,'passed');assert.equal(row.variant,variant);
-  assert.equal(row.sourceSha,'cc0c90afe8031643e6a890974f8f44a40a30509e');assert.equal(row.result.samples.length,120);
+  assert.equal(row.sourceSha,'c0938a3f84768474df91713f7b372f9d7f8fe96a');assert.equal(row.result.samples.length,120);
   const admitted=requireNormalNativeReceipt(row,variant);
   const r=row.result,condition={inputHash:row.inputHash,contentHash:row.contentHash,environment:row.environment,initial:r.initial,placements:r.placements,atlasHash:r.atlasHash,beforeWarm:r.beforeWarm,before:r.before,after:r.after,conditions:r.conditions,gpu:r.gpu,loadedResources:admitted.loadedResources,workload:admitted.workload,overlayProvenance:row.overlay,entryProvenance:r.entry};
   if(!reference)reference=condition;else requireSameCondition(condition,reference);
@@ -284,7 +284,7 @@ for(let block=0;block<3;block++){
  blocks.push({block,rows,paired});print({phase:'paired-native-block',block,paired});
 }
 const summary=Object.fromEntries(['frameCpuMs','renderCpuMs','webglSubmitMs','completedTransactionMsPerFrame'].map(k=>[k,{beforeMeanMs:stats(blocks.map(b=>b.paired[k].beforeMeanMs)),afterMeanMs:stats(blocks.map(b=>b.paired[k].afterMeanMs)),deltaMs:stats(blocks.map(b=>b.paired[k].deltaMs)),deltaPercent:stats(blocks.map(b=>b.paired[k].deltaPercent))}]));
-const report={status:'passed',sourceSha:'cc0c90afe8031643e6a890974f8f44a40a30509e',scenario:'native practice range',blocks,summary,
+const report={status:'passed',sourceSha:'c0938a3f84768474df91713f7b372f9d7f8fe96a',scenario:'native practice range',blocks,summary,
  performanceAccepted:false,scope:'3 ABBA blocks; 12 observations x120 full native fixed frames, not independent 1440 benchmark repeats',
  rangeObservedWithinThreePercent:summary.frameCpuMs.deltaPercent.max<=3&&summary.completedTransactionMsPerFrame.deltaPercent.max<=3,
  limitations:['Object-stage scenario still required.','Three paired blocks describe observed spread, not a device-level confidence bound.','SwiftShader CPU submission is not physical GPU time or iPad performance.','Live presented FPS and allocation rate are unmeasured.','Frame/readback sensitivity validates workload, not retail fidelity.']};
