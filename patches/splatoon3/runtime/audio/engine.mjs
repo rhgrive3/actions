@@ -1,5 +1,6 @@
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
+import { LocalChargerIntro } from './local-charger-intro.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
 import { borrowedRecordedMainId, isBorrowedRecordedMain } from './borrowed-recorded-mains.mjs';
 import { sourceEventRoute } from './extra-source-routes.mjs';
@@ -228,11 +229,31 @@ export function installWeaponAudioEngine(Engine){
     return handle;
   };
   const init=p.init;p.init=function(...args){const result=init.apply(this,args);
-    if(this.ctx){for(const id of this._warmWeapons||[])this.prepareWeapon(id,{urgent:true});}
+    if(this.ctx){
+      for(const id of this._warmWeapons||[])this.prepareWeapon(id,{urgent:true});
+      if(!this._localChargerRestoreTried){
+        this._localChargerRestoreTried=true;
+        localIntro(this).restore().catch(()=>{});
+      }
+    }
     return result;
   };
   const stats=p.stats;p.stats=function(){const result=stats.call(this);for(const [key,list] of this.byName){if(!list.some(v=>!v.v.dead&&!v.stolen))this.byName.delete(key);}return {...result,weaponBank:this._weaponBank?.stats()||null,
     realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
+  const localIntro=audio=>audio._localChargerIntro||=(new LocalChargerIntro(audio));
+  p.importLocalChargerIntro=function(file){
+    if(!this.ctx)this.init();
+    return localIntro(this).importFile(file);
+  };
+  p.localChargerIntroStatus=async function(){
+    if(!this.ctx)this.init();
+    const intro=localIntro(this);await intro.restore();
+    return intro.status();
+  };
+  p.removeLocalChargerIntro=function(){return localIntro(this).clear();};
+  // A fully trimmed local file replaces ONLY the first charge-start click.
+  // Charge-keep emergence still uses the standalone source HoldNoise one-shot.
+  p.playLocalChargerIntro=function(options){return localIntro(this).play(options);};
   p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmWeapons?.clear();};
 }
