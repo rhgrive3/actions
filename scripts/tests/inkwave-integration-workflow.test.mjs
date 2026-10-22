@@ -309,6 +309,7 @@ const musicStandaloneCases = [
   'native synthesized player still rebases on clock rollback and hidden/resume',
   'scheduler gap does not leak a preload token into a later music toggle',
   'rollback replay remapped to another track drops primed battle',
+  'stream-only BGM keeps the procedural clock parked and later synthesized music starts its normal scheduler',
 ];
 const musicParameterizedCases = [
   ["for (const pending of [false, true]) test(", 2],
@@ -320,12 +321,12 @@ const musicParameterizedCases = [
 ];
 function streamedMusicRegistrationContract(source) {
   const standalone = [...source.matchAll(/^test\('([^']+)'/gm)].map(match => match[1]);
-  assert.deepEqual(standalone, musicStandaloneCases, 'all six standalone cases remain registered');
+  assert.deepEqual(standalone, musicStandaloneCases, 'all seven standalone cases remain registered');
   const groups = source.match(/^for\s*\(.* test\(/gm) || [];
   assert.deepEqual(groups, musicParameterizedCases.map(([registration]) => registration),
     'all six parameterized groups remain registered, including both preload groups');
   assert.equal(standalone.length + musicParameterizedCases.reduce((sum, [, count]) => sum + count, 0),
-    22, 'six standalone plus 2 + 3 + 2 + 2 + 3 + 4 parameterized cases');
+    23, 'seven standalone plus 2 + 3 + 2 + 2 + 3 + 4 parameterized cases');
 }
 
 test('streamed music registration contract rejects each missing standalone or parameterized group', () => {
@@ -340,7 +341,7 @@ test('streamed music registration contract rejects each missing standalone or pa
   }
 });
 
-test('emitted streamed music gate runs all twenty-two cases on the built runtime', () => {
+test('emitted streamed music gate runs all twenty-three cases on the built runtime', () => {
   const match = /      - name: Verify emitted streamed music teardown and suspended recovery\n([\s\S]*?)(?=      - (?:name:|uses:)|$)/.exec(workflow);
   assert.ok(match, 'emitted streamed music step remains registered');
   const step = match[1];

@@ -21,8 +21,8 @@ test('native loading screen keeps its tick/label/tip owners and drops the splat 
   assert.doesNotMatch(scr, /logoMarkup|GAME_SUBTITLE|iw-bgblob/);
   // The (localized) version line survives verbatim apart from its entrance class.
   assert.match(scr, /h\('div', \{ class: 'iw-corner iw-corner--br' \}, tu\(`v\$\{this\._version\(\)\}`\)\)\);/);
-  // tick() / setLabel() / setTip() are untouched.
-  for (const owner of ["fill.style.transform = `translateX(${(-100 + p * 100).toFixed(2)}%)`", 'pctEl.textContent = pr', 'label.textContent = t', 'tipText.innerHTML = richText']) {
+  // The original progress/label/tip owners remain; repeated identical progress writes are coalesced.
+  for (const owner of ["const transform = `translateX(${(-100 + p * 100).toFixed(2)}%)`", 'if (fill.style.transform !== transform) fill.style.transform = transform', 'pctEl.textContent = pr', 'label.textContent = t', 'tipText.innerHTML = richText']) {
     assert.ok(scr.includes(owner), owner);
   }
   const once = adaptLoadingScreen('src/ui/menus.js', raw);

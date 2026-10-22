@@ -64,13 +64,16 @@ function assertVerticesEnclosed(mesh, time, kind = '') {
   }
 }
 
-test('real scenery preserves every source byte/RNG outcome and limits contiguous views to four shared-buffer draws', t => {
+test('real scenery preserves source bytes/RNG; the rejected static trial alone creates bounded shared-buffer views', t => {
   const before = environment(false), after = environment(true), trial = environment(true, true), counts = {};
   for (const name of ['terrain', 'staticScenery', 'city']) {
     assert.deepEqual(bufferSnapshot(after[name].geometry), bufferSnapshot(before[name].geometry));
     assert.deepEqual(bufferSnapshot(trial[name].geometry), bufferSnapshot(before[name].geometry));
     counts[name] = verifyRanges(trial[name]);
-    const g = after[name].geometry, n = g.index?.count ?? g.attributes.position.count, radii = [];
+    assert.equal(after[name].isMesh,true,'production retains its original material bucket');
+    assert.equal(after[name].isGroup,undefined,'rejected static partitions never enter production');
+    const g = after[name].geometry;g.computeBoundingSphere();
+    const n = g.index?.count ?? g.attributes.position.count, radii = [];
     for (let k = 0; k < 4; k++) {
       const b = new THREE.Box3(), v = new THREE.Vector3();
       for (let i = Math.floor(n / 3 * k / 4) * 3; i < Math.floor(n / 3 * (k + 1) / 4) * 3; i++) b.expandByPoint(v.fromBufferAttribute(g.attributes.position, g.index ? g.index.getX(i) : i));

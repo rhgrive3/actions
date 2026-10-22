@@ -5900,3 +5900,10 @@ A six-case executable counterfactual uses the actual production-composed Project
 ### 2026-10-22 Library static PropKit partition trial rejected
 
 PropKit was measured independently of background scenery using the actual dressingFor→PropKit.add/build geometry, materials and atlas. A test-only four-range contiguous source-index split shares immutable source buffers and retains triangle order/sort centre. Chromium153 renders two canonical stages across16camera views with exact pixel equality, but increases submissions in all views: Tidewater144placements/9material buckets goes9→12–14draws (131,518→128,904–130,997triangles), while Cargo223placements/9buckets goes9→24draws with428,458triangles unchanged. The tested split is not adopted; original static material batching remains. This is a measured rejection of this candidate, not proof that all future spatial policies cannot help or an iPad GPU timing measurement.
+
+
+### 2026-10-22 final native route/readback integration
+
+Splatoon3 reference remains11.3.0. The inferred Tower route fallback now preserves the NavGraph prototype when deriving constrained topology, including the canonical path→_pathUncached delegation, while isolating its A* heap and planning memo. This fixes an integration TypeError that prevented otherwise supported opposing-pad routes from completing. Three opposing spawn-axis cases exercise the constrained fallback, preserve clearance/boarding/opposed-half checks and verify the published graph's memo/heap remain untouched. Human climb and same-bank source routes remain rejected; no new retail geometry or frame calibration is claimed.
+
+The normal-readback oracle now compares the frozen actual preimage with rectangle-aware Canvas readbacks. A1024² RG normal retains byte-exact final output: two original full readbacks become sixteen64-row classification strips plus one full owned reconstruction destination, with one canvas/draw instead of two. Total readback bytes remain8,388,608; this is not a claim that total bytes or physical-device RSS halved. Recovery-clock extraction accepts the existing elapsed-dt pad-menu owner without changing its30/60/120Hz rollback checks.
