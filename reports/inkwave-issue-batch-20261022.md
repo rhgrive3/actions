@@ -45,3 +45,45 @@ Real Switch controls and physical iPad memory/FPS were not measured.
 Issues #1757/#1671 (physical iPad performance), #642 (composer precision),
 #1767 (startup snapshot clocks), and all source-calibration issues remain open;
 these local optimizations are not evidence that those acceptance criteria pass.
+
+## Local receipts
+
+- Final focused regressions: 29/29. Input/lifecycle/source identity: 52/52.
+  Adjacent input: 30/30. Source-stage tests: 68/68 after installing the missing
+  Python numba dependency. Emitted packaging/Three/actual BOT: 14/14.
+  Workflow/admission contracts: 31/31.
+- Production build, startup file budgets, source-migration audit and the quick
+  compatibility/numeric gate passed. Runtime content hash:
+  `0995c75b2b3efa4104a60782962b7d65dd6263277a38584cfc1ce1f61881cd09`.
+- [Chromium lifecycle receipt](issue-batch-20261022/chromium-lifecycle.json):
+  Chromium 154.0.8037.57 / SwiftShader, actual emitted modules, 20 shadow
+  toggles, 20 HIGH/LOW/MEDIUM reflection cycles, 10 Input replacements,
+  100 listener registrations and 100 matching removals. Each LOW transition
+  returns renderer texture count from 3 to 2; these are resource counts,
+  not VRAM bytes or an FPS measurement. Page and console errors: zero.
+- Reproduce after a production build with
+  `node scripts/check-inkwave-issue-batch-browser.mjs _site .browser-evidence/issue-batch.json`.
+  Use `CHROMIUM_PATH` only when selecting an already installed Chromium.
+  The source OBJ regression and this browser check are now required steps in
+  `validate-inkwave-update.yml`; all existing acceptance gates remain.
+- Full active-browser verification against code-identical input head
+  `6f6f483614ae587ee4e9395c5287270120fbd929` verified 521 responses and booted,
+  then timed out waiting for the loadout appearance picker (15 seconds).
+  Page errors, console errors and request failures were empty. The untouched
+  main control at `a350b6b89` passed that picker and the fourteen-default probe.
+  The control was deliberately stopped after the relevant comparison (45
+  canonical loadout rows had also completed); it is not a full-browser pass.
+  [Comparison receipt](issue-batch-20261022/browser-comparison.json) retains
+  both failures and explicitly records that interruption.
+  This comparison does not establish whether the candidate timeout was a
+  regression or an intermittent readiness failure. Full-browser acceptance
+  remains pending; the deadline and original assertions were not relaxed.
+
+GitHub Actions and physical-device acceptance remain separate from these local
+receipts. This PR remains a draft until the remaining acceptance is reviewed.
+
+The optional monolithic local-quality run was deliberately stopped before all
+unchanged animation/geometry fixtures finished. Its [partial receipt](issue-batch-20261022/local-quality-partial.json)
+retains the single obsolete LOW-reflection string assertion failure. The updated
+real-method LOW fallback and all final focused regressions passed separately.
+No green monolithic local-quality or full-CI result is claimed.

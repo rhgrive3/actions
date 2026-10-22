@@ -5802,4 +5802,13 @@ Switch controls and all remaining calibration issues are unverified.
 
 #1794では11.3.0の固定済みSlosher UnitのAddSpawnSpeedYRateByXZを水平速度に適用し、Explosher等の上下照準は安全な銃口からカメラyaw/pitchを用いる。-85/-45/-20/0/40/85度と古い照準点・近い床の対照をソース回帰で確認する。Switch実機の軌道・命中率・射程測定を新たに確定するものではない。
 
-#1793の有料InkjetゲージQAを採用し、発動前のready、1回の発動、継続消費、二重発動・dead/remoteの拒否を保持する。実WebGLの第三ghost検証で前の発射の煙・flashが同位置の新しい終端形状を遮る失敗を検出したため、各独立ghost試行の前に以前のVFX poolのみを空にする。projectile/physics/paint/終端イベントや可視ピクセル閾値は変更しない。これは分離した描画回帰であり、連続戦闘全体の視認性受け入れではない。
+#1793の有料InkjetゲージQAを採用し、発動前のready、1回の発動、継続消費、二重発動・dead/remoteの拒否を保持する。実WebGLの第三ghost検証で、終端レシピと実際の形状記録は存在する一方、全FX合成時の形状on/off差分が0となった。以前のFXを消しても再現するため、過去の煙だけが原因とは確定しない。paired readbackでは他のFXメッシュを一時的に非表示にし、実際のworld/Character深度を保持して終端形状の描画を分離する。完全な合成は直後に復元しPNGは全FXで撮る。projectile/physics/paint/終端イベントや可視ピクセル閾値は変更しない。これは分離した描画回帰であり、連続戦闘全体の視認性受け入れではない。
+
+
+### 最終統合: #1797–#1799 / 現行main ceb58追従
+
+#1797のa350固定14-leaf paint入場条件と否定対照を保持し、すでにmainへ反映された#1794後の `ceb58f24d8188d3a5179e013399ba37ef4c41f47` に対して別の厳密な14-leaf同一性epochを追加した。過去のtupleは書き換えず、現行統合ブランチのみを明示的に選び、宣言Git head・1バイト編集・欠損・混合を拒否する。poseについてもmain ceb58 / 公開済み統合 addc82 の16-leafを固定し、元のソースを再生せず差分を独立したnative-state/image検査に残す。これはcompiled/physics/RNG/imageの一致を宣言するものではない。
+
+#1799と#1797のTidewater試験を統合してplaying時のaim→flight→実際の着地を確認する。#1798ではクラーケン胴体と接地liftの位相をdtで積算し、停止中(dt=0)の速度変更で胴体だけが跳ねる表示差分を修正する。腕・geometry・移動速度・攻撃・塗りの仕様は変更しない。30/60/120Hzと試合経過0/100秒のCPU表示回帰を確認する。壁・空中・ノックバック・本家実機の同等性は未確認。
+
+統合版の生成物に対してChromium 153 / SwiftShaderでFlow 11シナリオ（normal/depth/AOのpixel同一性、native GPU buffer破棄を含む）、影切替20回、反射切替20回、Input交換10回（登録100/解除100、LOW textures 3→2）を確認した。Inkjetの60Hz native paid shots・3回のpool再利用・3回のghost（dead ownerを含む）も実際のWebGL/Physics/GPU PaintSystem/NetMatchで通過した。terminalのink形状pixelは他FXのみを一時的に隠した分離検査であり、完全合成PNGと区別する。物理GPU・実機性能・本家比較や全CI成功を意味しない。

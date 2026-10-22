@@ -42,6 +42,12 @@ on:
       - 'scripts/tests/fixtures/inkwave-paint-source-epochs.mjs'
       - 'scripts/fixtures/inkwave-paint-catalogue-epochs.json.gz'
       - 'scripts/tests/inkwave-maine1f-paint-admission.test.mjs'
+      - 'scripts/tests/inkwave-mainceb58-paint-admission.test.mjs'
+      - 'scripts/fixtures/inkwave-paint-ceb58-sources.json.gz'
+      - 'scripts/tests/inkwave-oct22-pose-pair.test.mjs'
+      - 'scripts/fixtures/inkwave-oct22-pose-pair.json.gz'
+      - 'scripts/tests/inkwave-maina350-paint-admission.test.mjs'
+      - 'scripts/fixtures/inkwave-paint-a350-sources.json.gz'
       - 'scripts/tests/fixtures/inkwave-paint-e1f-sources.mjs'
       - 'scripts/fixtures/inkwave-paint-e1f-catalogue.json.gz'
       - 'scripts/lib/inkwave-historical-baseline-sources.mjs'
@@ -127,6 +133,7 @@ jobs:
           node --experimental-vm-modules --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-ci-roster.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs
           node --test scripts/tests/inkwave-projectile-pr-diff-cli.test.mjs
           node --test scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs scripts/tests/inkwave-ci-source-admission.test.mjs
+          node --test scripts/tests/inkwave-maina350-paint-admission.test.mjs scripts/tests/inkwave-mainceb58-paint-admission.test.mjs scripts/tests/inkwave-oct22-pose-pair.test.mjs
           node --test scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-boolean-gate.test.mjs scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-audio-timing-observer.test.mjs scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs scripts/tests/inkwave-projectile-http-file.test.mjs scripts/tests/inkwave-capture-source-identity.test.mjs
       - name: Prepare isolated pinned-main audio-stabilized reference, retaining pristine main
         if: ${{ matrix.side == 'before' && github.event.pull_request.number == 1695 && github.event.pull_request.base.ref == 'main' && (github.event.pull_request.base.sha == 'ada098a8fe5f2b9f2990f10812c01acb70bde190' || github.event.pull_request.base.sha == 'da285129eb919d094d29e6a9b388f5eeb11059e9') }}
@@ -137,7 +144,7 @@ jobs:
           node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/pristine-main
           cp .built-site/pristine-main/inkwave-build.json .ci-scratch/projectile-visuals/before/pristine-main-build.json
       - name: Bind reviewed source controls to declared immutable Git source leaves
-        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022' || github.head_ref == 'inkwave/runtime-acceptance-followup-20261022'))) }}
+        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022' || github.head_ref == 'inkwave/runtime-acceptance-followup-20261022' || github.head_ref == 'inkwave/runtime-main-a350-integration-20261022' || github.head_ref == 'integrate/all-open-prs-20261022'))) }}
         env:
           PAIR_EVENT_NAME: ${{ github.event_name }}
           PAIR_BASE_REF: ${{ github.event.pull_request.base.ref }}
@@ -147,6 +154,10 @@ jobs:
         run: |
           if [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && { [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-followup-20261022" ]; }; then
             node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maine1f-byte-identical-paint-source-epoch --expected-source-base e1fa66ad8465bf87caaf232d51543def72c35875 --expected-source-head e1fa66ad8465bf87caaf232d51543def72c35875 --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-main-a350-integration-20261022" ]; then
+            node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maina350-byte-identical-paint-source-epoch --expected-source-base a350b6b89e4cb86abe37273db6315c74085f8ac5 --expected-source-head a350b6b89e4cb86abe37273db6315c74085f8ac5 --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "integrate/all-open-prs-20261022" ]; then
+            node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode mainceb58-byte-identical-paint-source-epoch --expected-source-base ceb58f24d8188d3a5179e013399ba37ef4c41f47 --expected-source-head ceb58f24d8188d3a5179e013399ba37ef4c41f47 --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
           else
             node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
           fi
@@ -165,6 +176,10 @@ jobs:
         run: |
           if [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && { [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-followup-20261022" ]; }; then
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maine1f-byte-identical-paint-source-epoch --expected-source-base e1fa66ad8465bf87caaf232d51543def72c35875 --expected-source-head e1fa66ad8465bf87caaf232d51543def72c35875 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-main-a350-integration-20261022" ]; then
+            node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maina350-byte-identical-paint-source-epoch --expected-source-base a350b6b89e4cb86abe37273db6315c74085f8ac5 --expected-source-head a350b6b89e4cb86abe37273db6315c74085f8ac5 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "integrate/all-open-prs-20261022" ]; then
+            node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode mainceb58-byte-identical-paint-source-epoch --expected-source-base ceb58f24d8188d3a5179e013399ba37ef4c41f47 --expected-source-head ceb58f24d8188d3a5179e013399ba37ef4c41f47 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
           elif [ "$PAIR_PR_NUMBER" = "1758" ] || [ "$PAIR_HEAD_REF" = "test/inkwave-combined-qa-20261021" ]; then
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
           else

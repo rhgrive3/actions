@@ -6,16 +6,17 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-pair.mjs';
 import { alignRollerBirthBaseline, alignProjectilePoolBaseline, assertUnchangedRollerSource } from './lib/inkwave-roller-birth-baseline.mjs';
-import { MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
+import { MAINCEB58_PAINT_SOURCE_PAIR, MAINA350_PAINT_SOURCE_PAIR, paintSourcePaths, MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
 const options = parseSourceAdmissionArgs(process.argv.slice(2), ['--baseline', '--candidate', '--receipt', '--base-sha', '--candidate-sha', '--base-git-root', '--candidate-git-root', '--expected-mode', '--expected-source-base', '--expected-source-head'], ['--baseline', '--candidate', '--receipt']);
 const value = name => options.get(name) ?? null;
+const selectedPaths = paintSourcePaths({mode: value('--expected-mode')});
 const arg = name => path.resolve(value(name));
 const baseline = arg('--baseline'), candidate = arg('--candidate'), receipt = arg('--receipt');
 assert.notEqual(fs.realpathSync(baseline), fs.realpathSync(candidate), 'the reference must be a separate checkout');
 const file = 'patches/splatoon3/runtime/weapons-fidelity.mjs';
 const profile = 'patches/splatoon3/profile.json';
-const receiptInputs = [...MAIN_INK_BASELINE_PATHS, profile];
+const receiptInputs = [...selectedPaths, profile];
 const receiptGitRoots = [value('--base-git-root') || baseline, value('--candidate-git-root') || candidate];
 assertReceiptSeparate(receipt, [baseline, candidate], receiptInputs, receiptGitRoots);
 assertUnchangedRollerSource(JSON.parse(fs.readFileSync(path.join(baseline, profile))), JSON.parse(fs.readFileSync(path.join(candidate, profile))));
@@ -24,8 +25,8 @@ const readSource = (root, rel) => {
   try { return fs.readFileSync(path.join(root, rel), 'utf8'); }
   catch (error) { if (error.code === 'ENOENT') return null; throw error; }
 };
-const originals = new Map(MAIN_INK_BASELINE_PATHS.map(rel => [rel, readSource(baseline, rel)]));
-const candidates = new Map(MAIN_INK_BASELINE_PATHS.map(rel => [rel, readSource(candidate, rel)]));
+const originals = new Map(selectedPaths.map(rel => [rel, readSource(baseline, rel)]));
+const candidates = new Map(selectedPaths.map(rel => [rel, readSource(candidate, rel)]));
 const expectationFlags = ['--expected-mode','--expected-source-base','--expected-source-head'];
 const hasExpectation = expectationFlags.some(flag => options.has(flag));
 let expectedPair = null;
@@ -40,6 +41,10 @@ const declaredFlags=['--base-sha','--candidate-sha','--base-git-root','--candida
 const hasDeclared=declaredFlags.some(flag=>options.has(flag));
 if(expectedPair?.mode === MAIN9FE_PAINT_SOURCE_PAIR.mode)
  assert.ok(hasDeclared,'main9fe source epoch requires declared immutable Git source commits');
+if(expectedPair?.mode === MAINCEB58_PAINT_SOURCE_PAIR.mode)
+ assert.ok(hasDeclared,'mainceb58 source epoch requires declared immutable Git source commits');
+if(expectedPair?.mode === MAINA350_PAINT_SOURCE_PAIR.mode)
+ assert.ok(hasDeclared,'maina350 source epoch requires declared immutable Git source commits');
 if(expectedPair?.mode === MAINE1F_PAINT_SOURCE_PAIR.mode)
  assert.ok(hasDeclared,'maine1f source epoch requires declared immutable Git source commits');
 let declared=null,declaredExpected=null;
@@ -47,7 +52,7 @@ if(hasDeclared){
  for(const flag of ['--base-sha','--candidate-sha'])assert.ok(value(flag),'complete '+flag);
  declared=verifyDeclaredPaintSources({baseline:originals,candidate:candidates,
   baseGitRoot:value('--base-git-root')||baseline,candidateGitRoot:value('--candidate-git-root')||candidate,
-  baseSha:value('--base-sha'),candidateSha:value('--candidate-sha')});
+  baseSha:value('--base-sha'),candidateSha:value('--candidate-sha'),expectedPair:expectedPair});
  const immutablePlan=planMainInkBaseline(declared.baseline,declared.candidate,expectedPair);
  declaredExpected=Object.fromEntries(['mode','sourceBase','sourceHead'].map(key=>[key,immutablePlan.evidence[key]]));
  assert.ok(Object.values(declaredExpected).every(v=>typeof v==='string'&&v),'declared pair requires exact admitted source epoch');
@@ -95,6 +100,22 @@ if (paint.evidence.mode === MAIN9FE_PAINT_SOURCE_PAIR.mode) {
   evidence.mode = paint.evidence.mode;
   evidence.scope = 'Preserve the explicitly selected main9fe thirteen-leaf paint source epoch without replay or production writes. The epoch includes changed Bloblobber floor-contact physics relative to PR1746; cross-epoch equivalence is not claimed. Exact source identity is not evidence of an improvement or compiled, physical-state, RNG or image equivalence; independent comparison remains required.';
 }
+
+if (paint.evidence.mode === MAINA350_PAINT_SOURCE_PAIR.mode) {
+  assert.ok(declared, 'maina350 source epoch requires declared immutable Git verification');
+  assert.equal(changes.length, 0, 'maina350 source epoch must not replay birth or pool source');
+  assert.equal(writes.length, 0, 'maina350 source epoch must preserve all input bytes');
+  evidence.mode = paint.evidence.mode;
+  evidence.scope = 'Preserve the explicitly selected maina350 fourteen-leaf paint source epoch without replay or production writes. The epoch includes changed Bloblobber windup yaw and nearest ground paint relative to e1f, including the launch-sweep dependency; cross-epoch equivalence is not claimed. Exact source identity is not evidence of an improvement or compiled, physical-state, RNG or image equivalence; independent comparison remains required.';
+}
+if (paint.evidence.mode === MAINCEB58_PAINT_SOURCE_PAIR.mode) {
+  assert.ok(declared, 'mainceb58 source epoch requires declared immutable Git verification');
+  assert.equal(changes.length, 0, 'mainceb58 source epoch must not replay birth or pool source');
+  assert.equal(writes.length, 0, 'mainceb58 source epoch must preserve all input bytes');
+  evidence.mode = paint.evidence.mode;
+  evidence.scope = 'Preserve the explicitly selected mainceb58 fourteen-leaf paint source epoch without replay or production writes. The epoch includes sourced Slosher camera pitch and XZ lift changes relative to a350, including the launch-sweep dependency; cross-epoch equivalence is not claimed. Exact source identity is not evidence of an improvement or compiled, physical-state, RNG or image equivalence; independent comparison remains required.';
+}
+
 
 if (paint.evidence.mode === MAINE1F_PAINT_SOURCE_PAIR.mode) {
   assert.ok(declared, 'maine1f source epoch requires declared immutable Git verification');

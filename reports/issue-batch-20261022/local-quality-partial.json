@@ -1,0 +1,11 @@
+{
+  "partial": true,
+  "interruptedByAgent": true,
+  "reason": "Optional broad suite stopped after the relevant focused/emitted/browser checks completed; full CI remains pending.",
+  "completedTopLevelRows": 1078,
+  "failedTopLevelRows": [
+    "not ok 542 - touch maps every raw quality to native LOW; desktop passes through natively"
+  ],
+  "skippedTopLevelRows": 7,
+  "remediation": "The historical LOW-reflection source-string assertion was replaced with execution of the actual setQuality method; lobby 10/10 and final focused 29/29 passed."
+}

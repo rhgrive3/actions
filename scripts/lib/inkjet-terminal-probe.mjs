@@ -75,11 +75,20 @@ export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,
   const clearTerminalGeometry=d=>{for(const pool of terminalPools(d))pool.clear();};
   function capture(name){draw();images.push({name:`inkjet-terminal-${hz}hz-${name}.png`,data:renderer.domElement.toDataURL('image/png')});}
   function impactPixels(d,label) {
-    // Birth clears only these three ink-shape pools after activation was tracked.
-    // They contain this real terminal recipe, not the actor's activation burst.
-    const pools=terminalPools(d);
-    const before=pixels(),shown=pools.map(p=>p.mesh.visible);
-    let count;try{pools.forEach(p=>{p.mesh.visible=false;});count=changed(before,pixels());}finally{pools.forEach((p,i)=>{p.mesh.visible=shown[i];});draw();}
+    // Measure this terminal's ink geometry independently of additive flashes
+    // and smoke, which may completely cover it on its first frame. Keep the
+    // real world/Character depth and restore the complete composition afterward.
+    const pools=terminalPools(d),meshes=pools.map(p=>p.mesh);
+    const others=[...G.fx.root.children.filter(mesh=>mesh!==d.kit.root),
+      ...d.kit.root.children.filter(mesh=>!meshes.includes(mesh))];
+    const shown=[...meshes,...others].map(mesh=>[mesh,mesh.visible]);
+    let count;
+    try {
+      others.forEach(mesh=>{mesh.visible=false;});
+      const before=pixels();
+      meshes.forEach(mesh=>{mesh.visible=false;});
+      count=changed(before,pixels());
+    } finally {shown.forEach(([mesh,visible])=>{mesh.visible=visible;});draw();}
     assert(count>10,label+' native terminal ink geometry draws pixels '+JSON.stringify({count,pools:pools.map(p=>({name:p.mesh.name,records:p.recs.length,positions:p.recs.map(r=>Array.from(r.v.slice(0,4)))}))}));return count;
   }
   function step(system,fx){system.update(dt);fx.update(dt,camera);paint.flush(dt);draw();}
@@ -132,10 +141,7 @@ export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,
       system.ghostProjectile(a,JSON.parse(JSON.stringify(packets[0])));
       const p=system.list.at(-1);assert(p?.ghost && p.wid==='inkjet' && p.s3AllSpecial===undefined,'real ghost decoder without local special metadata');
       identities.add(p);births.push({frame,pos:p.pos.toArray(),vel:p.vel.toArray(),ownerAlive:a.alive,alreadyTracked:d.rounds.has(p)});
-      // Independent native ghost lifetimes: retire prior presentation only, so
-      // previous smoke/flash cannot occlude the next terminal's ink geometry.
-      // Native projectile, physics, paint and terminal callbacks stay untouched.
-      world(p.pos);d.kit.clear();capture(`ghost-${lifetime+1}-before-step`);
+      world(p.pos);clearTerminalGeometry(d);capture(`ghost-${lifetime+1}-before-step`);
       for(let tick=0;tick<4;tick++,frame++){
         G.time+=dt;const before=observations.visuals.length;step(system,fx);
         if(observations.visuals.length>before)drawn.push(impactPixels(d,'ghost lifetime '+(lifetime+1)));
@@ -161,5 +167,5 @@ export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,
     teardown(a,system,fx);
   }
   paint.dispose();if(wallMesh){scene.remove(wallMesh);wallMesh.geometry.dispose();wallMesh.material.dispose();}
-  return {scope:'QA-only production-composed emitted runtime with real paid Actor shots, native physics/pooling, real GPU paint, actual NetMatch serialization/ghostProjectile replay and WebGL terminal-geometry pixel isolation; controlled 5 cm wall placement, not ordinary-play or performance acceptance',clock:`fixed dt=1/${hz}; actual WebGL rendering, not display-refresh measurement`,seed:'Math.random LCG 0x12345678; fresh browser page per Hz'};
+  return {scope:'QA-only production-composed emitted runtime with real paid Actor shots, native physics/pooling, real GPU paint, actual NetMatch serialization/ghostProjectile replay and WebGL terminal-geometry pixel isolation (other FX hidden only during paired readback; full composition restored for screenshots); controlled 5 cm wall placement, not ordinary-play or performance acceptance',clock:`fixed dt=1/${hz}; actual WebGL rendering, not display-refresh measurement`,seed:'Math.random LCG 0x12345678; fresh browser page per Hz'};
 }
