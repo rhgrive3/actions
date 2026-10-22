@@ -1,0 +1,93 @@
+name: INKWAVE Explosher flight glitter
+on:
+  pull_request:
+    paths:
+      - 'patches/splatoon3/runtime/s3-projectile-shapes.mjs'
+      - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
+      - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
+      - 'scripts/lib/inkwave-explosher-scene-census.mjs'
+      - 'scripts/lib/inkwave-explosher-startup.mjs'
+      - 'scripts/lib/inkwave-explosher-capture-surface.mjs'
+      - 'patches/splatoon3/tests/explosher-capture-surface.test.mjs'
+      - 'patches/splatoon3/tests/explosher-capture-guards.test.mjs'
+      - 'patches/splatoon3/tests/explosher-rng-trace.test.mjs'
+      - '.github/workflows/inkwave-explosher-flight-glitter.yml'
+permissions:
+  contents: read
+concurrency:
+  group: explosher-glitter-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  native-pair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .ci-explosher-base
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+      - run: npx playwright install --with-deps chromium
+      - name: Native production-composition regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/s3-projectile-shapes.test.mjs patches/splatoon3/tests/explosher-flight-glitter.test.mjs patches/splatoon3/tests/explosher-capture-guards.test.mjs patches/splatoon3/tests/explosher-rng-trace.test.mjs patches/splatoon3/tests/explosher-capture-surface.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs
+      - name: Build untouched base and candidate
+        run: |
+          node .ci-explosher-base/scripts/build-inkwave.mjs .ci-explosher-base/inkwave-public .built-site/explosher-before
+          node scripts/build-inkwave.mjs inkwave-public .built-site/explosher-after
+      - name: Short native preflight before long capture
+        run: |
+          EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/preflight-before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
+          EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-after .ci-scratch/explosher/preflight-after "${{ github.event.pull_request.head.sha }}" .
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const read=s=>JSON.parse(fs.readFileSync('.ci-scratch/explosher/preflight-'+s+'/manifest.json'));
+          const a=read('before'),b=read('after');assert.equal(a.length,1);assert.equal(b.length,1);
+          const mismatches=[],check=(key,b,a)=>{try{assert.deepEqual(b,a,key);}catch{mismatches.push(key);}};
+          for(const k of ['rng','effects','style','sceneClocks','startup','aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport'])check(k,b[0].measurement[k],a[0].measurement[k]);
+          for(const k of ['aimPoint','aimDir','aimYaw','aimPitch','characterTime'])check('preShot '+k,b[0].measurement.preShot[k],a[0].measurement.preShot[k]);
+          const effectiveRig=r=>({...r,blend:r.blend?.active?r.blend:null,superJumpLandTime:r.superJumpLandTime<.45?r.superJumpLandTime:null});
+          check('effective preShot rig',effectiveRig(b[0].measurement.preShot.rig),effectiveRig(a[0].measurement.preShot.rig));
+          const diagnostic={diagnosticOnly:true,fullPairAccepted:false,mismatches,before:a[0].measurement.rngDiagnostic,after:b[0].measurement.rngDiagnostic};
+          fs.writeFileSync('.ci-scratch/explosher/preflight-diagnostic.json',JSON.stringify(diagnostic,null,2));
+          console.log('EXPLOSHER_PREFLIGHT_DIAGNOSTIC '+JSON.stringify(diagnostic));
+          assert.equal(mismatches.length,0,'Every preflight state must agree');
+          // Raw values stay in receipts; only branches the native rig does not consume are normalized.
+          console.log('EXPLOSHER_PREFLIGHT_STRICT_PARITY passed');
+          NODE
+      - name: Capture untouched base with the same Explosher driver
+        if: false # Current head is short preflight diagnostics only, not full acceptance.
+        run: EXPLOSHER_EXPECT_PREFLIGHT=.ci-scratch/explosher/preflight-before/manifest.json node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
+      - name: Capture exact candidate
+        if: false # Preserve long capture until the short diagnostic is resolved.
+        run: EXPLOSHER_EXPECT_PREFLIGHT=.ci-scratch/explosher/preflight-after/manifest.json node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-after .ci-scratch/explosher/after "${{ github.event.pull_request.head.sha }}" .
+      - name: Compare equal physical states and bounded render resources
+        if: false # No full-pair claim from this diagnostic head.
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const read=s=>JSON.parse(fs.readFileSync('.ci-scratch/explosher/'+s+'/manifest.json'));
+          const before=read('before'),after=read('after');
+          const {compareExplosherCaptures}=await import('./scripts/lib/inkwave-explosher-scene-census.mjs');
+          const result=compareExplosherCaptures(before,after);
+          result.cpu=after.map((b,i)=>({tick:b.tick,view:b.view,before:before[i]?.measurement.drawCpuMs,after:b.measurement.drawCpuMs}));
+          fs.writeFileSync('.ci-scratch/explosher/paired.json',JSON.stringify(result,null,2));
+          console.log('EXPLOSHER_ALL_FRAME_GATE '+JSON.stringify({status:result.status,checks:result.checked.length,mismatches:result.mismatches}));
+          assert.equal(result.mismatches.length,0,'All frame physics and resource gates must pass');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: explosher-native-pair-${{ github.event.pull_request.head.sha }}
+          path: .ci-scratch/explosher/
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 0
+
