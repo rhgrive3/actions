@@ -1,0 +1,460 @@
+{
+  "schema": 1,
+  "status": "passed-isolated-combined-runtime-preview",
+  "publishedAt": "2026-10-22T16:54:12.245653+00:00",
+  "executionEvidence": {
+    "schema": 1,
+    "at": "2026-10-22T16:48:05.721711+00:00",
+    "status": "passed-isolated-integration-preview",
+    "scope": "Additional compatibility evidence only; frozen standalone weapon/clock/catalogue evidence remains unchanged and is not replaced.",
+    "worktree": "/workspace/scratch/actions-combined-review",
+    "branch": "lab/actions-combined-review-20261022",
+    "commit": "7f3fc023241a9e8f18118de259ba0a188a0fe4a6",
+    "tree": "6254c2541ca19b55d16fc9d2029c0ec803e6f3a0",
+    "parents": [
+      "ca4566657466baab005d2b79707a6cf92aaf440e",
+      "144573ed7aa72f0a3a46254dd50f263ba2bf5223"
+    ],
+    "mergeConflictResolution": {
+      "at": "2026-10-22T16:44:12.656885+00:00",
+      "parents": [
+        "ca4566657466baab005d2b79707a6cf92aaf440e",
+        "144573ed7aa72f0a3a46254dd50f263ba2bf5223"
+      ],
+      "conflicts": [
+        "reports/inkwave-splatoon3-behavior-2026-10-02.md"
+      ],
+      "resolution": "Remove only conflict markers, retaining full HEAD section followed by full incoming sections, byte-identical section bodies",
+      "oursSha256": "507cb5a33705cb0460c505d2882f2bd434f606f687af953cef6ec4a0f5d75874",
+      "theirsSha256": "2cbd2242621749123f59c64d4e770a6ba0e07913895498728d562d29e23b65fb",
+      "resolvedSha256": "383ed54aa7584a6b395c38450f077e5365bf52de21e1c49886129c649783c291"
+    },
+    "runtimeParentIdentities": {
+      "status": "passed",
+      "mergeBase": "f84c3d559a8fca17c5fe712ec6158e9828c02cc1",
+      "parents": [
+        "ca4566657466baab005d2b79707a6cf92aaf440e",
+        "144573ed7aa72f0a3a46254dd50f263ba2bf5223"
+      ],
+      "runtimeSources": [
+        {
+          "path": "inkwave-public/src/net/transport.js",
+          "combinedSha256": "8e90e02226f617e70cd0eee96295b2d7c02aa37cb4768064bd00a863f4bf666e",
+          "originals": [
+            {
+              "parent": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+              "sha256": "8e90e02226f617e70cd0eee96295b2d7c02aa37cb4768064bd00a863f4bf666e"
+            }
+          ]
+        },
+        {
+          "path": "patches/local-quality/ink-volume/recipes.mjs",
+          "combinedSha256": "4a1ddb5ada5f093c9efc4a3660f1beb527308939a2068e1a1219ee51b2d0314a",
+          "originals": [
+            {
+              "parent": "ca4566657466baab005d2b79707a6cf92aaf440e",
+              "sha256": "4a1ddb5ada5f093c9efc4a3660f1beb527308939a2068e1a1219ee51b2d0314a"
+            }
+          ]
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "combinedSha256": "03798102743610bb1643caa327fdb4dee9b4bf7a587674fe44b5ada1b6f36645",
+          "originals": [
+            {
+              "parent": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+              "sha256": "03798102743610bb1643caa327fdb4dee9b4bf7a587674fe44b5ada1b6f36645"
+            }
+          ]
+        },
+        {
+          "path": "patches/network-replication/owner-clock.mjs",
+          "combinedSha256": "74ef8b9f945d2da91b702ecab296d25ec59e5184bdbf9602a92bab511f50eefa",
+          "originals": [
+            {
+              "parent": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+              "sha256": "74ef8b9f945d2da91b702ecab296d25ec59e5184bdbf9602a92bab511f50eefa"
+            }
+          ]
+        },
+        {
+          "path": "patches/network-replication/snapshot-guard.mjs",
+          "combinedSha256": "e3724ac1014550bebeda6287e4c74087610ccbcf93f5803db40950409d7a96e5",
+          "originals": [
+            {
+              "parent": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+              "sha256": "e3724ac1014550bebeda6287e4c74087610ccbcf93f5803db40950409d7a96e5"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/runtime/catalogue.mjs",
+          "combinedSha256": "25dc604015b5e88bc5e015a299fbb2430ba14ffa2f0c253e3bbc68773e51ec50",
+          "originals": [
+            {
+              "parent": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+              "sha256": "25dc604015b5e88bc5e015a299fbb2430ba14ffa2f0c253e3bbc68773e51ec50"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/runtime/kit-big-bubbler.mjs",
+          "combinedSha256": "acded6f40be219075978696983fb0bd84e91d54ce85362b4c5812e6580189c3e",
+          "originals": [
+            {
+              "parent": "ca4566657466baab005d2b79707a6cf92aaf440e",
+              "sha256": "acded6f40be219075978696983fb0bd84e91d54ce85362b4c5812e6580189c3e"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "combinedSha256": "f111d9f021119ce902188d7d55a901d466db7939af7c1ffe4fd0e5055a1f2a16",
+          "originals": [
+            {
+              "parent": "ca4566657466baab005d2b79707a6cf92aaf440e",
+              "sha256": "f111d9f021119ce902188d7d55a901d466db7939af7c1ffe4fd0e5055a1f2a16"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/runtime/weapon-models/sloshers.mjs",
+          "combinedSha256": "a99931478acc74e0b95b1ead3b1968f3a0279250c9dc3c3dbf11169527e4d8e4",
+          "originals": [
+            {
+              "parent": "ca4566657466baab005d2b79707a6cf92aaf440e",
+              "sha256": "a99931478acc74e0b95b1ead3b1968f3a0279250c9dc3c3dbf11169527e4d8e4"
+            }
+          ]
+        }
+      ],
+      "sourceCount": 9
+    },
+    "originalTestIdentities": {
+      "status": "passed",
+      "assertionsUnchanged": true,
+      "files": [
+        {
+          "path": "patches/splatoon3/tests/catalog-source-launch-1130.test.mjs",
+          "sha256": "9585d3bcfaf49daf833318805efe2a707dc60ec5bb703fcc1f1aee4736eb605b",
+          "originals": [
+            {
+              "parent": "ca4566657466baab005d2b79707a6cf92aaf440e",
+              "sha256": "9585d3bcfaf49daf833318805efe2a707dc60ec5bb703fcc1f1aee4736eb605b"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/tests/issue-1431-volume-pose-connection.test.mjs",
+          "sha256": "d533bf2c5d206bdd9ec85c0bcf64c5ae18bcf54803a4395370bba24d90ab7ac2",
+          "originals": [
+            {
+              "parent": "ca4566657466baab005d2b79707a6cf92aaf440e",
+              "sha256": "d533bf2c5d206bdd9ec85c0bcf64c5ae18bcf54803a4395370bba24d90ab7ac2"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs",
+          "sha256": "fccdc39de8d249706202b3f96452776cc3fcb2435ac565f34929f94cd75eaeba",
+          "originals": [
+            {
+              "parent": "ca4566657466baab005d2b79707a6cf92aaf440e",
+              "sha256": "fccdc39de8d249706202b3f96452776cc3fcb2435ac565f34929f94cd75eaeba"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/tests/catalogue-integration.test.mjs",
+          "sha256": "0560aa93efdda45c09fc04087557b031e49eadb1fbe126f497695c2a193ea1cd",
+          "originals": [
+            {
+              "parent": "ca4566657466baab005d2b79707a6cf92aaf440e",
+              "sha256": "0560aa93efdda45c09fc04087557b031e49eadb1fbe126f497695c2a193ea1cd"
+            },
+            {
+              "parent": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+              "sha256": "0560aa93efdda45c09fc04087557b031e49eadb1fbe126f497695c2a193ea1cd"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/tests/catalogue-tick-admission.test.mjs",
+          "sha256": "6d06458a9e0616598632379af24e963aa242ed5e80f143362c2b82406281e34d",
+          "originals": [
+            {
+              "parent": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+              "sha256": "6d06458a9e0616598632379af24e963aa242ed5e80f143362c2b82406281e34d"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/tests/catalogue-session-tick-admission.test.mjs",
+          "sha256": "27f26ed2000ffd4da2b0f2f6a45c14e42823e3e47dea5bdfbcc094e57c95fdeb",
+          "originals": [
+            {
+              "parent": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+              "sha256": "27f26ed2000ffd4da2b0f2f6a45c14e42823e3e47dea5bdfbcc094e57c95fdeb"
+            }
+          ]
+        }
+      ]
+    },
+    "productionBuild": {
+      "status": "passed",
+      "node": "v22.23.4",
+      "sourceSha": "7f3fc023241a9e8f18118de259ba0a188a0fe4a6",
+      "sourceTree": "6254c2541ca19b55d16fc9d2029c0ec803e6f3a0",
+      "site": "/workspace/scratch/actions-combined-review/.built-site/combined-7f3fc0232",
+      "contentHash": "f91ab3022cf6283b8f68d9b9c5709d160963673dafd5049529c50c3b102c859a",
+      "inputHash": "4bbf6cc3bfe09e041fe99d273501b413370ae360b3ab5c3a29a9d6d40d8db733",
+      "revision": "51ddc7cb6ef616c7fd4e2951326711d15ed2b61c700943294d65664e7e13ae3c",
+      "manifestSha256": "27ffea9bb9c8caae5e4e5ae5f8ef6597957bbfb60508c4e513f17b538c98365a",
+      "artifactsVerified": 2018,
+      "sourceGitInputsVerified": 1364,
+      "builderSha256": "62d929b83091c6775a865be02c06960a4cc4b2216eb26d5921aa4811787c6d7a",
+      "optimization": "esbuild-minify",
+      "esbuild": "0.28.2"
+    },
+    "buildManifestUnchangedAfterTests": true,
+    "tests": {
+      "totalPass": 25,
+      "totalFail": 0,
+      "totalSkip": 0,
+      "suites": [
+        {
+          "file": "compiled-weapons-positive5.tap",
+          "tests": 5.0,
+          "pass": 5.0,
+          "fail": 0.0,
+          "skipped": 0.0,
+          "duration_ms": 28050.829041
+        },
+        {
+          "file": "compiled-catalogue20.tap",
+          "tests": 20.0,
+          "pass": 20.0,
+          "fail": 0.0,
+          "skipped": 0.0,
+          "duration_ms": 9438.91259
+        }
+      ],
+      "selection": "Original existing compiled weapon positives5: native Splat Roller1, actual Quad1, Dynamo3. Original catalogue sidecar5 and catalogue integration15. Source-only mutation controls excluded by test-name selection; no assertion edited.",
+      "commands": {
+        "build": "env -u INKWAVE_BUILD_UNMINIFIED -u INKWAVE_NO_THREE_SHAKE /workspace/scratch/actions-node22/node-v22.23.4-linux-x64/bin/node scripts/build-inkwave.mjs inkwave-public .built-site/combined-7f3fc0232",
+        "weapons": "env INKWAVE_BUILT_SITE=/workspace/scratch/actions-combined-review/.built-site/combined-7f3fc0232 timeout --kill-after=5s 300s /workspace/scratch/actions-node22/node-v22.23.4-linux-x64/bin/node --max-old-space-size=1024 --experimental-vm-modules --test --test-concurrency=1 --test-name-pattern='#1812 native Splat Roller|#1431 actual Quad|#1813 ' patches/splatoon3/tests/catalog-source-launch-1130.test.mjs patches/splatoon3/tests/issue-1431-volume-pose-connection.test.mjs patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs",
+        "catalogue": "env INKWAVE_BUILT_SITE=/workspace/scratch/actions-combined-review/.built-site/combined-7f3fc0232 timeout --kill-after=5s 300s /workspace/scratch/actions-node22/node-v22.23.4-linux-x64/bin/node --max-old-space-size=1024 --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/catalogue-tick-admission.test.mjs patches/splatoon3/tests/catalogue-session-tick-admission.test.mjs patches/splatoon3/tests/catalogue-integration.test.mjs"
+      }
+    },
+    "rawMembers": [
+      {
+        "path": "build-identity.log",
+        "bytes": 744,
+        "sha256": "12663b67e6ec46ee01a30a36ca7473dd612b4c1f54a3a74fda43cfcf050a416f"
+      },
+      {
+        "path": "build-receipt.json",
+        "bytes": 801,
+        "sha256": "135727e4c1191a6c79d5747c1f79f467a136f4ef3098960254f8871506920f5f"
+      },
+      {
+        "path": "commands.json",
+        "bytes": 1244,
+        "sha256": "344f027dbeef589646d63a10d100c1d8802028feead8ec00f893ca36d81765b5"
+      },
+      {
+        "path": "compiled-catalogue20.tap",
+        "bytes": 9291,
+        "sha256": "f60efad3db132f6358e476d67afc6df0cf272f6e518bd786fe0d31a15d7c0551"
+      },
+      {
+        "path": "compiled-weapons-positive5.tap",
+        "bytes": 5574,
+        "sha256": "3fbf302872e84f91b8e051dd17bfc8dbffdd7946ca3b593bdb30e61ed7dc77b9"
+      },
+      {
+        "path": "merge-resolution.json",
+        "bytes": 640,
+        "sha256": "c16726b8279999b7ecd928de645d8fdee838a4a70c382648a63ddd2164bf4cea"
+      },
+      {
+        "path": "production-build.log",
+        "bytes": 812,
+        "sha256": "600e70bcb949be993f7339c8714e27ee1adb78bb6a5b4985e9b6e5b7e12a955f"
+      },
+      {
+        "path": "runtime-parent-identities.json",
+        "bytes": 3544,
+        "sha256": "b7067863e206da808897e3aae223d789c708716f2fa433340d587496e2df47ad"
+      },
+      {
+        "path": "shared-report-conflict.txt",
+        "bytes": 1351535,
+        "sha256": "601bd05fe7293bbd227601841c41d1e882794920eb7dbd242c7cb5d5318fec12"
+      },
+      {
+        "path": "test-parent-identities.json",
+        "bytes": 2506,
+        "sha256": "912c2942c693af4f6ca2a52c543ed9a0381b716d3b52b5476095c68952e59bab"
+      },
+      {
+        "path": "verify-build.mjs",
+        "bytes": 1126,
+        "sha256": "e876a6902c9a6214844796c8bcce715e262b81dc688f92fa94af593415585618"
+      }
+    ],
+    "gitWorktreeClean": true,
+    "gpuExecuted": false,
+    "remoteOperations": false,
+    "otherWorktreesModified": false,
+    "limitations": [
+      "CPU compiled-module fixture integration only; no combined native-browser/gameplay/device acceptance.",
+      "A local review-only merge commit, not a published integration or changed source PR.",
+      "No extra scopes beyond compiled25 were run."
+    ]
+  },
+  "pr1846Provenance": {
+    "status": "passed",
+    "pr": 1846,
+    "currentCataloguePrHead": "69bab40d6a1a4cd38aaa85afb5b9d31af8610a9c",
+    "currentCataloguePrTree": "dd4c9bddff3ace24da58ffe11eeccbf2b302a237",
+    "executedCatalogueParent": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+    "executedCombinedSource": "7f3fc023241a9e8f18118de259ba0a188a0fe4a6",
+    "claim": "Preview executed the 144573ed stage, not PR1846 final HEAD. Runtime and test bytes are identical between those catalogue heads; CI registration and evidence append were added later.",
+    "differencePaths": [
+      "M\t.github/workflows/inkwave-specials-1130.yml",
+      "M\treports/inkwave-splatoon3-behavior-2026-10-02.md",
+      "A\treports/issue-resolution-20261022/continuation/catalogue-admitted-ticks-raw-json-log.tar.gz",
+      "A\treports/issue-resolution-20261022/continuation/catalogue-admitted-ticks.json",
+      "A\treports/issue-resolution-20261022/continuation/catalogue-admitted-ticks.md"
+    ],
+    "runtimeTestBytesIdentical": true
+  },
+  "brellaPresentationOnlyAudit": {
+    "scope": "Separate existing source-only presentation audit, not one of compiled25 and not a new execution.",
+    "sourceAtAudit": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+    "runtimeCatalogueSha256": "25dc604015b5e88bc5e015a299fbb2430ba14ffa2f0c253e3bbc68773e51ec50",
+    "probe": "Actual production-composed sender tick expanded to129 identical actor rows; native accepts first ts1000/u0 once while the Brella optional reader cap leaves presentation field absent. Stale replay with1 actor row and valid bc at the same ts then attaches s3Brella to the existing snapshot while native stats.in stays1 and lastTs stays1000.",
+    "normalCaseBoundary": "A normal first packet within128 rows is protected from duplicate overwrite by the existing own-property guard; the retained two raw files document the129-row cap counterexample.",
+    "unverified": [
+      "No actual renderer or visible-output measurement.",
+      "Gameplay impact is unproven.",
+      "No retail/physical-device equivalence.",
+      "Node version/complete original command are not recorded by these two raw files."
+    ],
+    "disposition": "Outside the catalogue accepted-tick fix; no runtime change made. These records do not justify declaring every wrapper safe.",
+    "members": [
+      {
+        "sourcePath": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/wrapper-audit/brella-stale-cap-probe.mjs",
+        "archivePath": "brella-audit/brella-stale-cap-probe.mjs",
+        "sha256": "d891708b24937f1f979bf2f8aa036976b475814946f171c5df37db0e9914a675",
+        "bytes": 1575
+      },
+      {
+        "sourcePath": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/wrapper-audit/brella-stale-cap-probe.log",
+        "archivePath": "brella-audit/brella-stale-cap-probe.log",
+        "sha256": "3daca475ab125a1e3cf7ae19864cd052dbcafe34fe42270391524cf7926ea6e8",
+        "bytes": 456
+      }
+    ]
+  },
+  "rawArchive": {
+    "path": "combined-runtime-review.raw.tar.gz",
+    "sha256": "50ade21474064ebbae882a7989ae4ad1c3e3b649315c3b21c3fe3a7a02275ef2",
+    "bytes": 532148,
+    "members": [
+      {
+        "path": "brella-audit/brella-stale-cap-probe.log",
+        "bytes": 456,
+        "sha256": "3daca475ab125a1e3cf7ae19864cd052dbcafe34fe42270391524cf7926ea6e8"
+      },
+      {
+        "path": "brella-audit/brella-stale-cap-probe.mjs",
+        "bytes": 1575,
+        "sha256": "d891708b24937f1f979bf2f8aa036976b475814946f171c5df37db0e9914a675"
+      },
+      {
+        "path": "brella-audit/summary.json",
+        "bytes": 1859,
+        "sha256": "9488ebc3eee64f2a5599a22e9ee48e9d7fe824f15feb93fc712902c937dbef83"
+      },
+      {
+        "path": "catalogue-pr1846-identity.json",
+        "bytes": 975,
+        "sha256": "f592f79524f424eaeef78bcabc6149b046a8f6101905cd812030ea842f370b00"
+      },
+      {
+        "path": "integration/build-identity.log",
+        "bytes": 744,
+        "sha256": "12663b67e6ec46ee01a30a36ca7473dd612b4c1f54a3a74fda43cfcf050a416f"
+      },
+      {
+        "path": "integration/build-receipt.json",
+        "bytes": 801,
+        "sha256": "135727e4c1191a6c79d5747c1f79f467a136f4ef3098960254f8871506920f5f"
+      },
+      {
+        "path": "integration/commands.json",
+        "bytes": 1244,
+        "sha256": "344f027dbeef589646d63a10d100c1d8802028feead8ec00f893ca36d81765b5"
+      },
+      {
+        "path": "integration/compiled-catalogue20.tap",
+        "bytes": 9291,
+        "sha256": "f60efad3db132f6358e476d67afc6df0cf272f6e518bd786fe0d31a15d7c0551"
+      },
+      {
+        "path": "integration/compiled-weapons-positive5.tap",
+        "bytes": 5574,
+        "sha256": "3fbf302872e84f91b8e051dd17bfc8dbffdd7946ca3b593bdb30e61ed7dc77b9"
+      },
+      {
+        "path": "integration/merge-resolution.json",
+        "bytes": 640,
+        "sha256": "c16726b8279999b7ecd928de645d8fdee838a4a70c382648a63ddd2164bf4cea"
+      },
+      {
+        "path": "integration/original-receipt.json",
+        "bytes": 12776,
+        "sha256": "597587f6a5e9daf83a74bfe8bdf3bcbc6de32c2837496acf68a59da76831b67c"
+      },
+      {
+        "path": "integration/production-build.log",
+        "bytes": 812,
+        "sha256": "600e70bcb949be993f7339c8714e27ee1adb78bb6a5b4985e9b6e5b7e12a955f"
+      },
+      {
+        "path": "integration/runtime-parent-identities.json",
+        "bytes": 3544,
+        "sha256": "b7067863e206da808897e3aae223d789c708716f2fa433340d587496e2df47ad"
+      },
+      {
+        "path": "integration/shared-report-conflict.txt",
+        "bytes": 1351535,
+        "sha256": "601bd05fe7293bbd227601841c41d1e882794920eb7dbd242c7cb5d5318fec12"
+      },
+      {
+        "path": "integration/test-parent-identities.json",
+        "bytes": 2506,
+        "sha256": "912c2942c693af4f6ca2a52c543ed9a0381b716d3b52b5476095c68952e59bab"
+      },
+      {
+        "path": "integration/verify-build.mjs",
+        "bytes": 1126,
+        "sha256": "e876a6902c9a6214844796c8bcce715e262b81dc688f92fa94af593415585618"
+      }
+    ]
+  },
+  "publicationScope": {
+    "newFilesOnly": [
+      "combined-runtime-review.md",
+      "combined-runtime-review.json",
+      "combined-runtime-review.raw.tar.gz"
+    ],
+    "behaviorReportSha256Unchanged": "383ed54aa7584a6b395c38450f077e5365bf52de21e1c49886129c649783c291",
+    "testsRerunDuringPackaging": false,
+    "gpuOrRemoteOperations": false,
+    "executionSourceAndGitInputIdentityUnchanged": true,
+    "docsCommitReportedSeparately": true
+  }
+}
