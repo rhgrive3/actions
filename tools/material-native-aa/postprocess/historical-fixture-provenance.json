@@ -1,0 +1,15 @@
+{
+  "sourceRun": 39710861283,
+  "sourceJob": 119601598234,
+  "artifact": 12397387274,
+  "qaHead": "5625829733c77afa6ff26c89a4b067a1cf4643d4",
+  "common": "cc0c90afe8031643e6a890974f8f44a40a30509e",
+  "sourceFile": "material-aa/A1/pixel-diagnostic.json",
+  "sourceFileSha256": "4568a66a2336b059819fce42d767b19ada6a5fdf344377180363defe45ecec37",
+  "selection": "renderStates[1].before",
+  "encoding": "base64(gzip(canonical compact JSON plus newline))",
+  "snapshotSha256": "5f4de7cb6381600fca6c9ebe5436687319b665ed61a6f35f5cdf14ea67779dcb",
+  "snapshotBytes": 525465,
+  "historicalResult": "failed sequential repeat and unknown postprocess references",
+  "newOwnerEvidencePresent": false
+}
