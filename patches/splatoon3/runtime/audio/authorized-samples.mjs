@@ -136,6 +136,14 @@ export class AuthorizedSamplePack {
     const next=replace?new Map():new Map(this.loaded);
     let total=replace?0:decodedBytes(next),done=0,repairs=0,cursor=0;
     const errors=[],decoded=new Map();
+    // Existing and staged rows reference PCM by identity. Account bytes once
+    // per AudioBuffer while staging, without rebuilding a candidate Map per clip.
+    const refs=new Map();
+    for(const row of next.values())refs.set(row.buffer,(refs.get(row.buffer)||0)+1);
+    const acquire=row=>{if(!refs.has(row.buffer))total+=row.bytes;refs.set(row.buffer,(refs.get(row.buffer)||0)+1);};
+    const release=row=>{const n=refs.get(row.buffer);if(n===1){refs.delete(row.buffer);total-=row.bytes;}else refs.set(row.buffer,n-1);};
+    const remainingByFile=new Map();
+    for(const clip of valid)remainingByFile.set(clip.file,(remainingByFile.get(clip.file)||0)+1);
     // The same file can back multiple variants: download/decode it once per import.
     const getDecoded=(clip)=>{
       if(decoded.has(clip.file))return decoded.get(clip.file);
@@ -167,7 +175,8 @@ export class AuthorizedSamplePack {
           // Reuse an already verified, byte-identical source buffer across IDs.
           // The same source is intentionally referenced by e.g. several chargers.
           // Loop endpoints/repair mode must match, so no PCM is ever reinterpreted.
-          const existing=[...next.values()].find(row=>canReusePCM(row,clip));
+          let existing=null;
+          for(const row of next.values())if(canReusePCM(row,clip)){existing=row;break;}
           let buffer;
           if(existing){buffer=existing.buffer;}
           else {
@@ -187,23 +196,29 @@ export class AuthorizedSamplePack {
           }
           const cost=buffer.length*buffer.numberOfChannels*4;
           if(!Number.isSafeInteger(cost)||cost<=0)throw new Error('Invalid decoded sample size');
+          if(cost>this.maxBytes)throw new Error('Sample cache budget exceeded');
           const key=this.key(clip.id,clip.event,clip.variant);
-          const candidate=new Map(next);candidate.delete(key);
-          candidate.set(key,Object.freeze({...clip,buffer,bytes:cost}));
-          let candidateBytes=decodedBytes(candidate);
-          // Evict oldest rows only if their LAST reference is removed. A playing
-          // BufferSource retains its own buffer until the sound finishes.
-          while(candidateBytes>this.maxBytes&&candidate.size>1){
-            const victim=candidate.keys().next().value;
+          const prior=next.get(key);
+          if(prior){next.delete(key);release(prior);}
+          const row=Object.freeze({...clip,buffer,bytes:cost});
+          next.set(key,row);acquire(row);
+          // New row fits the budget alone; evict from the original LRU head
+          // until the staged bank fits, accounting for shared PCM identities.
+          while(total>this.maxBytes&&next.size>1){
+            const victim=next.keys().next().value;
             if(victim===key)break;
-            candidate.delete(victim);candidateBytes=decodedBytes(candidate);
+            const removed=next.get(victim);next.delete(victim);release(removed);
           }
-          if(candidateBytes>this.maxBytes)throw new Error('Sample cache budget exceeded');
-          next.clear();for(const [name,row] of candidate)next.set(name,row);
-          total=candidateBytes;
           done++;
         }catch(e){if(e!==cancelled && current())errors.push({file:clip.file,id:clip.id,event:clip.event,error:String(e?.message||e)});}
-        finally{this.pending--;}
+        finally{
+          this.pending--;
+          // A shared decoded file remains live until its last manifest borrower
+          // finishes, even if jobs run concurrently or one clip fails checksum.
+          const left=remainingByFile.get(clip.file)-1;
+          if(left===0){remainingByFile.delete(clip.file);decoded.delete(clip.file);}
+          else remainingByFile.set(clip.file,left);
+        }
       }
     });
     await Promise.all(jobs);
