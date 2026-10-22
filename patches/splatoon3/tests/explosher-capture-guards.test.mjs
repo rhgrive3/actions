@@ -1,3 +1,5 @@
+import {requireControlledStartupPair}from'../../../scripts/lib/inkwave-explosher-volume-barrier.mjs';
+import {fixture as stageFixture}from'./explosher-stage-fixture.mjs';
 import { installProjectileCaptureUiGate } from '../../../scripts/lib/inkwave-projectile-capture-ui.mjs';
 import { readExplosherCaptureSurface, explosherSurfaceReady } from '../../../scripts/lib/inkwave-explosher-capture-surface.mjs';
 import test from 'node:test';
@@ -14,10 +16,10 @@ function diagnostic(controlledMode=false,mutate=null,shapeMode=false){
  const shape={schema:1,lane:'after',sameBuildComparison:true,fullGameTwoBuildAcceptance:false,expectedCommonSourceHead:sha,site:'site',sourceRoot:'root',file:'halo.js',baselineSourceBlob:'83a76f51f56cffdf66bca6e16c56dd18b2c06f93',candidateSourceBlob:'351427cd20c9726dd21c3cbe949078cbce23c81b',originalEmittedSha256:'hash',candidateEmittedSha256:'hash',transformedEmittedSha256:'hash',buildContentHash:'hash',paths:['patches/splatoon3/runtime/s3-projectile-shapes.mjs','_versions/test/patches/splatoon3/runtime/s3-projectile-shapes.mjs']};if(shapeMode&&mutate)mutate(shape);
  const fakeFs={mkdirSync(){},readFileSync(p){if(p==='shape.json')return JSON.stringify(shape);if(p==='control.json')return JSON.stringify(control);if(p.endsWith('check-inkwave-projectile-visuals.mjs'))return nativeResetSource;if(p.endsWith('render-inkwave-projectile-shapes.mjs'))return driver;if(p.endsWith('inkwave-build.json'))return JSON.stringify({build:{revision:'test'},artifacts:{'src/main.js':'hash','_versions/test/src/main.js':'hash','patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash','_versions/test/patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash','_versions/test/patches/practice-range/runtime/dummy.mjs':'hash'},contentHash:'hash'});if(p.endsWith('manifest.json'))return '[]';return 'source';},writeFileSync(p,v){saved[p]=v;}};
  const path={resolve:x=>x,join:(...a)=>a.join('/')},crypto={createHash(){return {update(){return this;},digest(){return 'hash';}}}};
- const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{...(controlledMode?{EXPLOSHER_CONTROLLED_MAIN:'control.json'}:{}),...(shapeMode?{EXPLOSHER_SHAPE_OVERLAY:'shape.json',EXPLOSHER_PREFLIGHT:'1'}:{})},exit(){}};
+ const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{EXPLOSHER_CONTROLLED_MAIN:'control.json',EXPLOSHER_SHAPE_OVERLAY:'shape.json',EXPLOSHER_PREFLIGHT:'1'},exit(){}};
  const spawn=(bin,args)=>bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0};
  const code=wrapper.replace(/^#!.*\n/,'').replace(/^import .*;\n/gm,'').replace(/import\.meta\.url/g,"'file:///tmp/x'").replace(/import\.meta\.resolve\('playwright'\)/g,"'playwright'");
- assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady','installProjectileCaptureUiGate',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady,installProjectileCaptureUiGate),mutate? /controlled|Controlled|overlay/: /Wrong native capture count/);
+ assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady','installProjectileCaptureUiGate','requireControlledStartupPair',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady,installProjectileCaptureUiGate,requireControlledStartupPair),mutate? /controlled|Controlled|overlay/: /Wrong native capture count/);
  return saved['out/native-capture-driver.mjs'];
 }
 test('capture admission guards reject incomplete or invalid evidence (no browser claim)',()=>{
@@ -25,8 +27,8 @@ test('capture admission guards reject incomplete or invalid evidence (no browser
  const bindStart=generated.indexOf('if(tick===0&&expectedFrame){');
  const bindEnd=generated.indexOf("if(pageErrors.length)throw Error('Native page errors: '",bindStart);
  assert(bindStart>=0&&bindEnd>bindStart);
- const bind=new Function('tick','view','expectedFrame','measurement',generated.slice(bindStart,bindEnd));
- const m={camera:{position:[0,1,2]},palette:{colorblind:true,local:0xffd21a},physical:[{seed:.5}],preShot:{aimPoint:[0,1,10]}};
+ const rawBind=new Function('tick','view','expectedFrame','measurement','requireControlledStartupPair',generated.slice(bindStart,bindEnd)),bind=(...args)=>rawBind(...args,requireControlledStartupPair);
+ const fixed=stageFixture().frames[0].measurement;const m={...fixed,camera:{position:[0,1,2]},palette:{colorblind:true,local:0xffd21a},physical:[{seed:.5}],preShot:{...fixed.preShot,aimPoint:[0,1,10]}};
  assert.doesNotThrow(()=>bind(0,'behind',{view:'behind',measurement:m},m));
  assert.throws(()=>bind(0,'behind',{view:'behind',measurement:m},{...m,palette:{colorblind:false,local:123}}),/palette/);
  assert.throws(()=>bind(0,'behind',{view:'behind',measurement:m},{...m,physical:[{seed:.6}]}),/physical/);
@@ -36,7 +38,7 @@ test('capture admission guards reject incomplete or invalid evidence (no browser
  assert.throws(()=>bind(0,'tele-side',{view:'behind',measurement:m},{...m,palette:{colorblind:false,local:123}}),/palette/);
  const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
  assert.doesNotThrow(()=>new AsyncFunction(generated.replace(/^import .*;\n/gm,'')));
- const validate=new Function('captures','preflight',wrapper.slice(wrapper.indexOf('const expected=new Set')));
+ const rawValidate=new Function('captures','preflight','captureTicks','captureViews',wrapper.slice(wrapper.indexOf('const expected=new Set'))),validate=(captures,preflight=false)=>rawValidate(captures,preflight,preflight?[0]:[0,3,8,14,22,30],preflight?['behind']:['behind','tele-side','tele-oblique']);
  const captures=[0,3,8,14,22,30].flatMap(t=>['behind','tele-side','tele-oblique'].map(v=>({label:'s3-slosher-washtub',tick:t,view:v,count:1,measurement:{sparkles:28,render:{points:28}}})));
  assert.doesNotThrow(()=>validate(captures));
  const live={...captures[0],measurement:{...captures[0].measurement,physical:[{wid:'s3-slosher-washtub',seed:.5}],aimTrace:[{local:true,wid:'s3-slosher-washtub',time:0,from:[0,1,0],aimPoint:[0,1,10],aimDir:[0,0,1],result:[0,0,1]}]}};
