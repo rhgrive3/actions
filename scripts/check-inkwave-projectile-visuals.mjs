@@ -19,6 +19,7 @@ import { startProjectileThroughMenu } from './lib/inkwave-projectile-menu-start.
 import { atomicIntroFunction, requireAtomicIntro } from './lib/inkwave-projectile-atomic-intro.mjs';
 import { completeNativeTurfIntro } from './lib/inkwave-projectile-ci-intro.mjs';
 import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';
+import { installProjectileCaptureUiGate, withProjectileCaptureUi } from './lib/inkwave-projectile-capture-ui.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sourceIdentity = captureSourceIdentity({ cwd: ROOT });
@@ -94,6 +95,7 @@ const report = {
   build: { revision: manifest.build?.revision, contentHash: manifest.contentHash, inputHash: manifest.inputHash },
   provenance: {
     harnessSha256: hash(fs.readFileSync(fileURLToPath(import.meta.url))),
+    captureUiGateSha256: hash(fs.readFileSync(new URL('./lib/inkwave-projectile-capture-ui.mjs', import.meta.url))),
     capture: 'Normal INKWAVE bootstrap then real PLAY/TURF/Tidewater/START menu gestures into full match; production Projectiles fire methods; live stage Physics, Paint and FX update; native Three/WebGL renderer screenshots.',
     stage: 'Tidewater, normal difficulty, turf, fixed 180 s match; local player; deterministic Math.random stream reset for each projectile scenario.',
     phaseFrames: { F0: 0, F5: 5, F10: 10, F15: 15, fall: 36 },
@@ -190,6 +192,7 @@ async function openGameContext({ mobile = false } = {}) {
   page.on('console', m => { if (m.type() === 'error') mimeErrors.push(m.text().slice(0, 1000)); });
   page.on('requestfailed', r => mimeErrors.push(`request failed ${r.url()}: ${r.failure()?.errorText || 'unknown'}`));
   await page.addInitScript(installAudioTimingObserver);
+  await page.addInitScript(installProjectileCaptureUiGate);
   await page.addInitScript(({ setting, bootSeed }) => {
     localStorage.setItem('inkwave.settings', JSON.stringify({ quality: setting, shadows: setting !== 'low', bloom: setting !== 'low', minimap: false, cameraShake: 0, colorblind: true, difficulty: 'normal', matchLength: 180, lastStage: 'tidewater', lastMode: 'turf', stageTimes: { tidewater: 'day' } }));
     window.__iwBootSeed = bootSeed >>> 0;
@@ -279,12 +282,24 @@ async function openGameContext({ mobile = false } = {}) {
     phaseMark('intro','begin');
     phaseMark('playing','begin');
     const atomicReceipt = await requireAtomicIntro(page,
-      atomicIntroFunction(completeNativeTurfIntro,playingReady,admissionReady),deadline,{receipt:phaseReceipt.atomicIntro={}});
+      atomicIntroFunction(completeNativeTurfIntro,
+        withProjectileCaptureUi(playingReady,{phase:'playing',settled:false}),
+        withProjectileCaptureUi(admissionReady,{phase:'admission',allowIntro:true,settled:false})),
+      deadline,{receipt:phaseReceipt.atomicIntro={}});
     phaseMark('admission','end');
     phaseMark('intro','end');
     phaseMark('playing','end');
     (report.provenance.introTransitions ||= []).push({mobile,...atomicReceipt.intro});
     (report.provenance.atomicPlayingReceipts ||= []).push({mobile,...atomicReceipt.readiness,playingReady:atomicReceipt.playingReady});
+    // Let native timers/animations remove startup banners. This remains inside
+    // the original admission deadline; no forced HUD reveal or overlay removal.
+    phaseMark('ui','begin');
+    await requireNativePhase(() => window.__iwProjectileCaptureUiGate({phase:'settled'}).ready === true, 'native UI completion');
+    phaseMark('ui','end');
+    (report.provenance.nativeUiReceipts ||= []).push({mobile,...await page.evaluate(() => ({
+      admission:window.__iwProjectileCaptureUiAdmission, playing:window.__iwProjectileCaptureUiPlaying,
+      settled:window.__iwProjectileCaptureUiReceipt,
+    }))});
   } catch (error) {
     const failedAt=Date.now();phaseReceipt.events.push({phase:'failure',event:'caught',atMs:failedAt,elapsedMs:failedAt-phaseReceipt.startedAtMs,remainingMs:Math.max(0,phaseReceipt.deadlineAtMs-failedAt)});
     phaseReceipt.failureSnapshotRequestedAtMs=Date.now();
@@ -292,6 +307,7 @@ async function openGameContext({ mobile = false } = {}) {
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return { observedAtMs:Date.now(),atomicIntro:window.__iwProjectileAtomicIntroReceipt??null,
+        captureUi:window.__iwProjectileCaptureUiReceipt??null,
         mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
         matchIdentity: m === G?.match, local: m?.local?.isLocal, controller: !!m?.controller, debug: !!g?.debug,
         projectiles: !!G?.projectiles,
@@ -310,9 +326,9 @@ async function openGameContext({ mobile = false } = {}) {
     }
     throw error;
   }
-  await page.waitForFunction(() => !document.querySelector('.iw-lineup') && !!window.__inkwave?.hud?._visible, null, { timeout: 30000 }).catch(() => {});
   const placement = await page.evaluate(() => {
     const g = window.__inkwave, G = window.__G;
+    window.__iwProjectileCaptureUiGate({phase:'before-freeze',requireReady:true});
     g.debug.freeze(); g.debug.freezeBots();
     // Paired screenshots use equal drawing buffers after unequal boot warmup.
     // Live performance windows resume the ordinary dynamic-resolution loop.
@@ -590,11 +606,13 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
   }
   const name = `${scenario}__${phase}__${perspective}.png`;
   const target = path.join(evidence, name);
+  runtime.captureUi = await page.evaluate(() => window.__iwProjectileCaptureUiGate({phase:'before-screenshot',requireReady:true}));
   await page.screenshot({ path: target, animations: 'disabled', timeout: 90000 });
   let cropFile = null, cropSha256 = null;
   if (runtime.projectileCrop) {
     cropFile = name.replace(/\.png$/, '__projectile-crop.png');
     const cropTarget = path.join(evidence, cropFile);
+    runtime.cropCaptureUi = await page.evaluate(() => window.__iwProjectileCaptureUiGate({phase:'before-crop',requireReady:true}));
     await page.screenshot({ path: cropTarget, clip: runtime.projectileCrop, animations: 'disabled', timeout: 90000 });
     cropSha256 = hash(fs.readFileSync(cropTarget));
   }

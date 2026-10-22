@@ -1,0 +1,55 @@
+name: INKWAVE combined QA dependency validation
+on:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-combined-qa-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  immutable-source-pairs-and-focused-qa:
+    if: github.head_ref == 'test/inkwave-combined-qa-20261021'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_SHA: 870872c8b82015bc8b5c1fa0151808c0fbb43e6f
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASE_SHA }}
+          path: .ci-qa-base
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify both immutable checkout identities and QA-only diff
+        run: |
+          test "$(git rev-parse HEAD)" = "$HEAD_SHA"
+          test "$(git -C .ci-qa-base rev-parse HEAD)" = "$BASE_SHA"
+          git fetch --no-tags --depth=1 .ci-qa-base "$BASE_SHA"
+          node --input-type=module -e 'import assert from "node:assert/strict"; import {execFileSync} from "node:child_process"; const allowed=new Set(["scripts/lib/inkwave-submerged-presentation-contract.mjs","scripts/tests/inkwave-submerged-presentation-contract.test.mjs","patches/splatoon3/tests/special-vfx-fist-lifetime.test.mjs",".github/workflows/inkwave-combined-qa.yml",".github/workflows/inkwave-projectile-visuals.yml",".github/workflows/inkwave-roller-support-source-pin.yml",".github/workflows/validate-inkwave-update.yml","patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs","patches/splatoon3/tests/motion-five-regression.test.mjs","reports/inkwave-combined-qa-20261021.md","reports/inkwave-motion-detail-source-readiness-20261021.md","reports/inkwave-motion-detail-stdout-diagnostic-20261021.md","reports/inkwave-pr1746-source-pair-admission-20261021.md","scripts/check-inkwave-combat-ceiling-browser.mjs","scripts/check-inkwave-current-pair-controls.mjs","scripts/check-inkwave-motion-catalog.mjs","scripts/check-inkwave-motion-detail.mjs","scripts/fixtures/inkwave-open-pr-af66-sources.json","scripts/lib/inkwave-character-pose-baseline.mjs","scripts/lib/inkwave-combat-ceiling-placement.mjs","scripts/lib/inkwave-declared-paint-source-pair.mjs","scripts/lib/inkwave-detail-source-readiness.mjs","scripts/lib/inkwave-main-ink-baseline.mjs","scripts/lib/inkwave-motion-detail-failure-summary.mjs","scripts/prepare-inkwave-projectile-baseline.mjs","scripts/tests/inkwave-character-pose-baseline.test.mjs","scripts/tests/inkwave-combat-ceiling-placement.test.mjs","scripts/tests/inkwave-detail-source-readiness.test.mjs","scripts/tests/inkwave-motion-detail-failure-summary.test.mjs","scripts/tests/inkwave-open-pr-source-pairs.test.mjs","patches/splatoon3/tests/motion-catalog-gates.test.mjs","scripts/tests/inkwave-motion-gate-fixtures.mjs","scripts/tests/inkwave-motion-gates.test.mjs","scripts/tests/inkwave-motion-gate-mock.mjs","scripts/check-inkwave-projectile-visuals.mjs","scripts/lib/inkwave-projectile-capture-ui.mjs","scripts/tests/inkwave-projectile-capture-ui.test.mjs"]); const changed=execFileSync("git",["diff","--name-only",process.env.BASE_SHA,process.env.HEAD_SHA],{encoding:"utf8"}).trim().split("\n").filter(Boolean); assert.ok(changed.length>0); for(const p of changed) assert.ok(allowed.has(p),"Unexpected combined QA path: "+p); console.log(JSON.stringify({base:process.env.BASE_SHA,head:process.env.HEAD_SHA,changed,runtimeChanges:0}));'
+      - name: Install pinned regression build dependency
+        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
+      - name: Execute immutable thirteen-leaf admission and rejection controls
+        run: node scripts/check-inkwave-current-pair-controls.mjs --baseline .ci-qa-base --candidate . --base-sha "$BASE_SHA" --candidate-sha "$HEAD_SHA" --receipt .ci-scratch/combined-qa/current-pair-controls.json
+      - name: Verify pose tuples, source pairs, placement and readiness contracts
+        run: node --experimental-vm-modules --test scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-open-pr-source-pairs.test.mjs scripts/tests/inkwave-combat-ceiling-placement.test.mjs scripts/tests/inkwave-detail-source-readiness.test.mjs scripts/tests/inkwave-motion-detail-failure-summary.test.mjs scripts/tests/inkwave-submerged-presentation-contract.test.mjs
+      - name: Verify synthetic motion acceptance and failure-publication controls
+        run: node --test scripts/tests/inkwave-motion-gates.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs
+      - name: Verify native UI admission and capture ownership controls
+        run: node --test scripts/tests/inkwave-projectile-capture-ui.test.mjs scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-boolean-gate.test.mjs
+      - name: Verify C1 continuity, physical roller support and fault controls
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/motion-five-regression.test.mjs patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs patches/splatoon3/tests/special-vfx-fist-lifetime.test.mjs
+      - name: Preserve exact source admission receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-qa-source-controls-${{ env.HEAD_SHA }}
+          path: .ci-scratch/combined-qa/
+          if-no-files-found: warn
+          retention-days: 14

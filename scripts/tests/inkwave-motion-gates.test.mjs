@@ -94,6 +94,33 @@ test('detail accepts valid semantic records and rejects original false-pass coun
  for(const metric of idle.renderMetrics){idle.samples[metric.frame].gripWeights.left=0;metric.weapon.nearestLeft=.44;}
  assert.equal(validateDetailResult(free).length,14,'a legitimately detached native support hand is not a missed weapon grip');
 });
+test('detail synthetic presentation admits only the qualified hidden frames',()=>{
+ const record=detailFixture(),row=record.data.find(r=>r.name==='flow-squid');
+ assert.equal(record.fixture.fabricated,true);
+ assert.deepEqual(row.renderMetrics.filter(m=>m.rig.changedPixels===0).map(m=>m.frame),[95,110,111]);
+ assert.equal(row.renderMetrics.find(m=>m.frame===75).presentation.kidVisible,true);
+ assert.equal(row.renderMetrics.find(m=>m.frame===75).rig.changedPixels,100);
+ assert.equal(validateDetailResult(record).length,14);
+ const metric=(r,name,frame)=>r.data.find(c=>c.name===name).renderMetrics.find(m=>m.frame===frame);
+ const negatives=[
+  ['missing identity',r=>delete metric(r,'flow-kid',21).presentation,/Submerged presentation: identity/],
+  ['wrong authority',r=>metric(r,'flow-kid',21).presentation.authority='fabricated-trusted',/Submerged presentation: identity/],
+  ['human pixels',r=>metric(r,'flow-kid',21).rig.changedPixels=0,/rig produced no visible pixels/],
+  ['transitioning human pixels',r=>metric(r,'flow-squid',75).rig.changedPixels=0,/rig produced no visible pixels/],
+  ['owner binding',r=>metric(r,'flow-squid',95).presentation.source.bound=false,/unproven owner/],
+  ['owner disposal',r=>metric(r,'flow-squid',95).presentation.source.disposed=true,/unproven owner/],
+  ['actor binding',r=>metric(r,'flow-squid',95).presentation.actor.bound=false,/actor\/form mismatch/],
+  ['actor form',r=>metric(r,'flow-squid',95).presentation.actor.form='kid',/actor\/form mismatch/],
+  ['missing body',r=>metric(r,'flow-squid',95).presentation.parts.body.present=false,/missing\/bad body/],
+  ['visible submerged body',r=>metric(r,'flow-squid',95).presentation.parts.body.visible=true,/wrong body visibility/],
+  ['visible ghost',r=>metric(r,'flow-squid',95).presentation.parts.ghost.visible=true,/wrong submerged parts/],
+  ['hidden root',r=>metric(r,'flow-squid',95).presentation.rootVisible=false,/rig produced no visible pixels/],
+  ['hidden ancestor',r=>metric(r,'flow-squid',95).presentation.rootAncestorsVisible=false,/rig produced no visible pixels/],
+  ['remaining human',r=>metric(r,'flow-squid',95).presentation.kidVisible=true,/rig produced no visible pixels/],
+  ['remaining source body',r=>Object.assign(metric(r,'flow-squid',95).presentation.source,{active:true,formWeight:1}),/rig produced no visible pixels/],
+ ];
+ for(const [label,mutate,reason] of negatives){const invalid=detailFixture();mutate(invalid);assert.throws(()=>validateDetailResult(invalid),reason,label);}
+});
 test('same-frame pixel comparison requires real RGB differences and a finite denominator',()=>{
  const a=new Uint8Array([10,20,30,255,10,20,30,255]),b=new Uint8Array([10,20,30,255,14,20,30,255]);
  assert.deepEqual(pixelDifference(a,b),{pixels:2,changedPixels:1,totalRgbDifference:4,maxChannelDifference:4});
@@ -121,5 +148,8 @@ test('CLI failure paths replace stale passed status with bounded failed diagnost
   const child=spawnSync(process.execPath,[command,'--site',fault==='missing-site'?path.join(site,'missing'):site,'--evidence-dir',evidence,'--profile-dir',profile],{encoding:'utf8',timeout:10000,env:{...process.env,PLAYWRIGHT_MODULE:mock,INKWAVE_GATE_FAULT:fault}});
   assert.equal(child.status,1,kind+'/'+fault+': '+(child.stderr||child.error));
   const file=path.join(evidence,kind+'-result.json'),receipt=JSON.parse(fs.readFileSync(file));assert.equal(receipt.status,'failed');assert.equal(receipt.stale,undefined);assert.ok(receipt.message.length<=2500);assert.ok(receipt.errors.length<=20);assert.ok(fs.statSync(file).size<40000);
+  // An unrelated invalid fixture must not masquerade as the requested fault.
+  const expected={'missing-receipts':/Actual (walking|detail) module not loaded/,'cleanup':/Injected browser cleanup failure/,'bad-manifest':/Build identity mismatch/,'missing-site':/ENOENT/};
+  assert.match(receipt.message,expected[fault],kind+'/'+fault);
  }
 });

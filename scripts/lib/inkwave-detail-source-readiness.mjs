@@ -43,9 +43,12 @@ export function detailCpuDrawBounds(root, makeVector, camera, maxEntries=250000)
   const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
   const projectedMin=[Infinity,Infinity,Infinity],projectedMax=[-Infinity,-Infinity,-Infinity];
   let indexedVertices=0,eligibleMeshes=0,nonFiniteVertices=0,unsupportedMeshes=0,truncated=false;
+  const unsupportedReasons={instanced:0,missingIndex:0,missingVertexApi:0};
   root.traverseVisible(mesh=>{
     if(!mesh.isMesh)return;
-    if(mesh.isInstancedMesh||!mesh.geometry?.index||typeof mesh.getVertexPosition!=='function'){unsupportedMeshes++;return;}
+    if(mesh.isInstancedMesh||!mesh.geometry?.index||typeof mesh.getVertexPosition!=='function'){
+      unsupportedMeshes++;if(mesh.isInstancedMesh)unsupportedReasons.instanced++;if(!mesh.geometry?.index)unsupportedReasons.missingIndex++;if(typeof mesh.getVertexPosition!=='function')unsupportedReasons.missingVertexApi++;return;
+    }
     const g=mesh.geometry,index=g.index,range=g.drawRange||{start:0,count:Infinity};
     const groups=Array.isArray(mesh.material)?(g.groups||[]):[{start:0,count:index.count,materialIndex:0}];
     let accepted=false;
@@ -69,6 +72,42 @@ export function detailCpuDrawBounds(root, makeVector, camera, maxEntries=250000)
   });
   const valid=a=>a.every(Number.isFinite)?a:null;
   return {scope:'CPU skinned indexed draw bounds; excludes GPU displacement and depth visibility',
-    indexedVertices,eligibleMeshes,nonFiniteVertices,unsupportedMeshes,truncated,
+    indexedVertices,eligibleMeshes,nonFiniteVertices,unsupportedMeshes,unsupportedReasons,truncated,
     worldMin:valid(min),worldMax:valid(max),ndcMin:valid(projectedMin),ndcMax:valid(projectedMax)};
+}
+
+// Read-only local and ancestor visibility. Roles never copy arbitrary object names.
+export function detailOwnerVisibility(ch,scene){
+ const result={totalMeshes:0,localVisibleMeshes:0,nativeAncestorVisibleMeshes:0,indexedMeshes:0,nonIndexedMeshes:0,instancedMeshes:0};
+    const knownRole=node=>node===ch.root?'character-root':node===ch.model?'character-model':node===ch.kid?'kid-root':node===ch.squidRoot?'squid-root':node===ch.squid?.pivot?'squid-pivot':node===ch.sourceMotion?.squidRig?.root?'source-squid-rig':node===scene?'scene':node?.isMesh?'mesh':'other-group';
+    const vector=node=>node?.scale?.toArray?.()??null;
+    result.owners={
+      modelVisible:ch.model?.visible,kidVisible:ch.kid?.visible,squidVisible:ch.squidRoot?.visible,
+      modelScale:vector(ch.model),kidScale:vector(ch.kid),squidScale:vector(ch.squidRoot),
+      kidWeight:ch.kidScale,squidWeight:ch.sqScale,formWeight:ch.sourceMotion?.formWeight,
+      sourceActive:ch.sourceMotion?.active,sourceStatus:ch.sourceMotion?.status,
+      form:ch.form,sourceSquidClip:ch.sourceMotion?.debug?.squid?.name??null,
+      sourceSquidFrame:ch.sourceMotion?.debug?.squid?.frame??null,
+      humanClips:(ch.sourceMotion?.currentClips||[]).slice(0,4).map(c=>({name:c.name,frame:c.frame,weight:c.weight}))
+    };
+    result.hiddenAncestorChains=[];
+    // Detail calls this after restoring the native root visibility from its RGB pair.
+    // Do not reveal a child, alter materials, or change any draw range.
+    ch.root.traverse(mesh=>{
+      if(!mesh.isMesh)return;
+      result.totalMeshes++;
+      if(mesh.visible)result.localVisibleMeshes++;
+      let visible=true;for(let node=mesh;node;node=node.parent)if(!node.visible){visible=false;break;}
+      if(visible)result.nativeAncestorVisibleMeshes++;
+      else if(result.hiddenAncestorChains.length<2){
+        const roles=[];let firstHidden=null,node=mesh;
+        for(;node&&roles.length<8;node=node.parent){const role=knownRole(node);roles.push({role,visible:node.visible===true});if(firstHidden===null&&node.visible!==true)firstHidden=role;}
+        const chain={firstHidden,roles,truncated:!!node};
+        if(!result.hiddenAncestorChains.some(c=>JSON.stringify(c)===JSON.stringify(chain)))result.hiddenAncestorChains.push(chain);
+      }
+      if(mesh.isInstancedMesh)result.instancedMeshes++;
+      if(mesh.geometry?.index)result.indexedMeshes++;else result.nonIndexedMeshes++;
+    });
+
+ return result;
 }

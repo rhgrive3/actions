@@ -1,5 +1,16 @@
 // Fabricated gate records exercise validation and failure publication only.
 // These are not native rig, browser, GPU, or original-game evidence.
+function detailPresentationFixture(name, frame) {
+ const inInk=name==='flow-squid'&&frame>=70&&frame<120;
+ // A representative fabricated mixed-form record, not a measured blend curve.
+ const transition=inInk&&frame===75,grounded=!name.endsWith('-air');
+ return {schema:1,authority:'native-post-update',form:inInk?'swim':'kid',grounded,
+  rootVisible:true,rootAncestorsVisible:true,squidRootVisible:inInk,kidVisible:!inInk||transition,
+  kidScale:inInk?(transition?.5:0):1,squidScale:inInk?(transition?.5:1):0,
+  source:{status:'ready',error:false,disposed:false,bound:true,banks:true,active:!inInk||transition,formWeight:inInk?(transition?.5:0):1},
+  actor:{bound:true,form:inInk?'squid':'kid',grounded,submerged:inInk,climbing:false},
+  parts:Object.fromEntries(['body','eyes','dark','ghost'].map(role=>[role,{present:true,attached:true,visible:role!=='ghost'&&!inInk,meshes:1}]))};
+}
 export function walkingFixture(){
  const names=['slow','walk','run','back','strafe','stop','turn','fire-forward','fire-back','fire-strafe'];
  return {fixture:{fabricated:true},contentHash:'fixture',images:[],data:names.map(name=>({name,samples:Array.from({length:180},(_,frame)=>({frame,time:frame/60,v:name==='stop'&&frame>=84?0:1,moving:!(name==='stop'&&frame>=84),phase:frame*.02,cad:2,duty:.5,hipDrop:.02,hipY:.7,feet:[0,1].map(()=>({planted:true,mode:0,su:0,cw:[0,0,0],actual:[0,.1,0],knee:[0,.4,0],kneeFlex:.5,solePitch:0,ankleError:0,nativeReachError:0,plantedDrift:0,pitch:0}))})),renderMetrics:Array.from({length:180},(_,f)=>f).filter(f=>f>=60&&f<108&&f%6===0||name==='stop'&&f>=96&&f<150&&f%9===0).map(frame=>({frame,pixels:960*720,changedPixels:100,totalRgbDifference:400,maxChannelDifference:4}))}))};
@@ -17,6 +28,6 @@ export function detailFixture(){
   const events=type==='shooter'?Array.from({length:17},(_,i)=>({name:'fireShooter',frame:2+i*6,charge:null})):type==='charger'?[{name:'fireCharger',frame:81,charge:1}]:type==='blaster'?[3,53].map(frame=>({name:'fireBlaster',frame,charge:null})):type==='bucket'?[12,41,70,99].map(frame=>({name:'fireSlosh',frame,charge:null})):type==='splatling'?[141,145].map(frame=>({name:'fireSplatling',frame,charge:null})):type==='bomb'?[{name:'throwBomb',frame:31,charge:null}]:[];
   const renderFrames=[21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].filter(f=>f<frames);
   if(type==='bomb')renderFrames.push(31);
-  return {name,scenario,frames,fireInterval:.1,firstShotDelay:type==='shooter'?.05:0,samples,events,releaseFrames:type==='bomb'?[{frame:31,pos:[0,1,0],velocity:[0,1,1],fuse:-1,meshType:'Group',meshOriginError:0,releaseSnapshotError:0}]:[],releaseTiming:type==='bomb'?{heldStartFrame:0,heldEndFrame:29,releaseInputFrame:30,useStartupSeconds:1/60,actualReleaseFrame:31,measuredDelayFrames:1}:null,renderMetrics:renderFrames.map(frame=>({frame,renderClocksStable:true,flowIsolation:{nativeDepthOcclusion:true,maskedMaterials:12},rig:metric(100),flow:type==='flow'?metric(samples[frame].flow.visible?20:0):null,weapon:samples[frame].form==='squid'||!samples[frame].mainWeaponVisible?null:geometry(),heldBomb:type==='bomb'&&frame===29?geometry():null,releasedBomb:type==='bomb'&&frame===31?geometry():null})),disposed:{disposed:true,resources:0,aliveParticles:0}};
+  return {name,scenario,frames,fireInterval:.1,firstShotDelay:type==='shooter'?.05:0,samples,events,releaseFrames:type==='bomb'?[{frame:31,pos:[0,1,0],velocity:[0,1,1],fuse:-1,meshType:'Group',meshOriginError:0,releaseSnapshotError:0}]:[],releaseTiming:type==='bomb'?{heldStartFrame:0,heldEndFrame:29,releaseInputFrame:30,useStartupSeconds:1/60,actualReleaseFrame:31,measuredDelayFrames:1}:null,renderMetrics:renderFrames.map(frame=>({frame,presentation:detailPresentationFixture(name,frame),renderClocksStable:true,flowIsolation:{nativeDepthOcclusion:true,maskedMaterials:12},rig:metric(scenario.squid&&[95,110,111].includes(frame)?0:100),flow:type==='flow'?metric(samples[frame].flow.visible?20:0):null,weapon:samples[frame].form==='squid'||!samples[frame].mainWeaponVisible?null:geometry(),heldBomb:type==='bomb'&&frame===29?geometry():null,releasedBomb:type==='bomb'&&frame===31?geometry():null})),disposed:{disposed:true,resources:0,aliveParticles:0}};
  });return {pixelControls:{dither:false,samples:0,target:'explicit-srgb-rgba8'},fixture:{fabricated:true},contentHash:'fixture',cases:data.length,images:[],data};
 }
