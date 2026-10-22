@@ -72,20 +72,28 @@ export function adaptIdleSource(rel, code, replace) {
       '  _startTimer() {\n    let workerUrl = null;', 'music worker failure URL owner');
     patch("      const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));",
       "      const url = workerUrl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));", 'music worker URL capture');
-    patch('      this.worker.onerror = () => { this.worker = null; if (!this._timerPaused && !this.timer) this.timer = setInterval(tick, TICK_MS); };',
-      `      const startedWorker = this.worker;
+    patch(`      this.worker.onerror = () => {
+        const dead = this.worker; this.worker = null;
+        dead?.terminate();
+        this._workerFailed = true;
+        this._proceduralClock = false;
+        this._syncTimer();
+      };`, `      const startedWorker = this.worker;
       startedWorker.onerror = () => {
         if (this.worker !== startedWorker) return;
         this.worker = null;
         startedWorker.onmessage = startedWorker.onerror = null; startedWorker.terminate();
-        if (!this._timerPaused && !this.timer) this.timer = setInterval(tick, TICK_MS);
+        this._workerFailed = true;
+        this._proceduralClock = false;
+        this._syncTimer();
       };`, 'music asynchronous failure owner');
-    patch('    } catch (e) {\n      if (!this._timerPaused) this.timer = setInterval(tick, TICK_MS);',
+    patch('    } catch (e) { this._workerFailed = true; this.worker = null; }',
       `    } catch (e) {
+      this._workerFailed = true;
       const worker = this.worker; this.worker = null;
       if (worker) { worker.onmessage = worker.onerror = null; worker.terminate(); }
       if (workerUrl !== null) URL.revokeObjectURL(workerUrl);
-      if (!this._timerPaused) this.timer = setInterval(tick, TICK_MS);`, 'music failed worker cleanup');
+    }`, 'music failed worker cleanup');
     patch('export const music = new MusicEngine();', 'installMusicIdle(MusicEngine);\nexport const music = new MusicEngine();', 'music installer before singleton');
   }
   if (rel === 'src/audio/audio.js') {

@@ -334,6 +334,19 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
     runner.slosh = -1;
   }
+  // Turf TIME UP and the guest host-deadline gate neutralize input through
+  // this public hook. The catalogue's deferred pending.fire must obey it too.
+  // Keep recovery, prepaid ink and other catalogue state intact.
+  const legacyCancelPendingInput = R.cancelPendingInput;
+  R.cancelPendingInput = function (...args) {
+    const result = legacyCancelPendingInput?.apply(this, args);
+    const state = this.a?.weapon?.catalogRecord && this.catalogState;
+    if (state?.pending) {
+      state.pending = null;
+      state.birthEpoch = (state.birthEpoch || 0) + 1;
+    }
+    return result;
+  };
   R.reset = function(...args) { this.catalogState = null; return legacyReset.apply(this,args); };
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);

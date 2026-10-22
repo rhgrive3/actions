@@ -21,12 +21,17 @@ export class RealS3SampleLoader {
   constructor(bank,{fetcher=globalThis.fetch?.bind(globalThis),manifestURL=FILE_MANIFEST,assetFetcher}={}){
     this.bank=bank;this.fetcher=fetcher;this.assetFetcher=assetFetcher||((url)=>sameModuleFetch(url,fetcher));
     this.manifestURL=manifestURL;this.manifestPromise=null;this.queue=Promise.resolve();this.inFlight=new Map();
-    this.loaded=new Set();this.notMapped=new Set();this.retryAfter=new Map();this.status='uninitialized';this.errors=[];this.declaredEvents=null;
+    this.loaded=new Set();this.notMapped=new Set();this.retryAfter=new Map();this.status='uninitialized';this.errors=[];this.totalErrorCount=0;this.declaredEvents=null;this.clipsById=null;this.clipsByEvent=null;
     this.manifestRetryAt=0;
     this.bank.authorized.fetcher=this.assetFetcher;
     this.bank.authorized.maxBytes=Math.max(this.bank.authorized.maxBytes,AUDIO_CACHE_BYTES);
   }
   _current(){return !this.bank.disposed && this.bank.ctx?.state!=='closed';}
+  _error(message){
+    this.errors.push(String(message));this.totalErrorCount++;
+    if(this.errors.length>64)this.errors.splice(0,this.errors.length-64);
+  }
+  _select(id,event){return event ? this.clipsByEvent?.get(`${id}:${event}`) || [] : this.clipsById?.get(id) || []; }
   getManifest(){
     if(!this._current())return Promise.resolve(null);
     if(!this.manifestPromise)this.manifestPromise=(async()=>{
@@ -39,10 +44,17 @@ export class RealS3SampleLoader {
         const clips=validateAuthorizedManifest(data);
         // Never fetch arbitrary sourceDrive URLs: only same-origin local assets.
         for(const c of clips)if(!/^s3-real\/[A-Za-z0-9_.+()\-]+\.mp3$/i.test(c.file))throw new Error('Unsafe real-S3 asset path');
-        this.declaredEvents=new Set(clips.map(c=>`${c.id}:${c.event}`));
+        this.declaredEvents=new Set();this.clipsById=new Map();this.clipsByEvent=new Map();
+        for(const c of clips){
+          const key=`${c.id}:${c.event}`;
+          this.declaredEvents.add(key);
+          if(!this.clipsById.has(c.id))this.clipsById.set(c.id,[]);
+          if(!this.clipsByEvent.has(key))this.clipsByEvent.set(key,[]);
+          this.clipsById.get(c.id).push(c);this.clipsByEvent.get(key).push(c);
+        }
         this.status='ready';return {...data,clips};
-      }catch(error){if(!this._current())return null;this.status='unavailable';this.declaredEvents=null;this.manifestRetryAt=Date.now()+4000;
-        this.errors.push(String(error?.message||error));return null;}
+      }catch(error){if(!this._current())return null;this.status='unavailable';this.declaredEvents=null;this.clipsById=null;this.clipsByEvent=null;this.manifestRetryAt=Date.now()+4000;
+        this._error(error?.message||error);return null;}
     })();
     return this.manifestPromise;
   }
@@ -64,12 +76,20 @@ export class RealS3SampleLoader {
     const key=id+':'+(event||'*');
     if(this.notMapped.has(key))return Promise.resolve({loaded:0,missing:true});
     if(this.inFlight.has(key))return this.inFlight.get(key);
+    // Resident decoded events do not depend on unrelated cold load jobs.
+    if(this.status==='ready'&&this.clipsById){
+      const selected=this._select(id,event);
+      if(!selected.length){this.notMapped.add(key);return Promise.resolve({loaded:0,missing:true});}
+      if(selected.every(c=>this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant)))){
+        this.loaded.add(id);return Promise.resolve({loaded:0,cached:true});
+      }
+    }
     const job=this.queue.catch(()=>{}).then(async()=>{
       if(!this._current())return {loaded:0,cancelled:true};
       const data=await this.getManifest();
       if(!this._current())return {loaded:0,cancelled:true};
       if(!data)return {loaded:0,unavailable:true};
-      const selected=data.clips.filter(c=>c.id===id&&(!event||c.event===event));
+      const selected=this._select(id,event);
       if(!selected.length){this.notMapped.add(key);return {loaded:0,missing:true};}
       const missing=selected.filter(c=>!this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant)));
       if(!missing.length){this.loaded.add(id);return {loaded:0,cached:true};}
@@ -79,7 +99,7 @@ export class RealS3SampleLoader {
       const result=await this.bank.authorized.load({...data,clips:missing},
         {baseURL:'./',replace:false,concurrency:2});
       if(!this._current())return {...result,loaded:0,cancelled:true};
-      if(result?.errors?.length){this.errors.push(...result.errors.map(e=>id+': '+e.error));
+      if(result?.errors?.length){for(const e of result.errors)this._error(id+': '+e.error);
         this.retryAfter.set(key,Date.now()+4000);}
       if(result?.loaded>0)this.loaded.add(id);
       return result;

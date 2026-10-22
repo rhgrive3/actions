@@ -8,6 +8,7 @@ export class StreamedTrack {
     this.element = element;
     this.onFailure = onFailure;
     this.stopAt = Infinity;
+    this._pausedAfterFade = false;
     this.disposed = false;
     this.failed = false;
     element.loop = true;
@@ -57,9 +58,15 @@ export class StreamedTrack {
     if (begin > now) g.setValueAtTime(g.value, begin);
     g.linearRampToValueAtTime(0, end);
     this.stopAt = end;
+    this._pausedAfterFade = false;
     clearTimeout(this._pauseTimer);
     this._pauseTimer = setTimeout(() => {
-      if (!this.disposed) this.element.pause();
+      if (!this.disposed) {
+        this.element.pause();
+        this._pausedAfterFade = true;
+        // Stream-only playback has no 25 ms procedural scheduler to clean up.
+        this.engine._tick();
+      }
     }, Math.max(0, (end - now) * 1000) + 30);
   }
 

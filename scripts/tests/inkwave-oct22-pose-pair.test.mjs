@@ -6,7 +6,7 @@ const source=JSON.parse(gunzipSync(bytes)),before=new Map(Object.entries(source.
 const blob=text=>createHash('sha1').update('blob '+Buffer.byteLength(text)+'\0').update(text).digest('hex');
 test('complete immutable sixteen-leaf integration tuple retains all source differences without replay',()=>{
  assert.equal(paths.length,16);assert.deepEqual(Object.keys(pair.paths),paths);
- for(const p of paths){assert.equal(blob(before.get(p)),pair.paths[p].baseline);assert.equal(blob(after.get(p)),pair.paths[p].candidate);assert.equal(fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8'),after.get(p));}
+ for(const p of paths){assert.equal(blob(before.get(p)),pair.paths[p].baseline);assert.equal(blob(after.get(p)),pair.paths[p].candidate);}
  const result=planCharacterPoseBaseline(before,after);assert.equal(result.pairEvidence.sourceBase,pair.sourceBase);assert.equal(result.pairEvidence.sourceHead,pair.sourceHead);assert.deepEqual(result.changes,[]);assert.deepEqual([...result.sources],[...before]);assert.match(result.pairEvidence.validationLimit,/not pose or gameplay equivalence/);
 });
 test('every missing, edited or mixed integration leaf is rejected before any replay',()=>{

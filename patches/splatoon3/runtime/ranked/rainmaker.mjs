@@ -198,6 +198,12 @@ export class RainmakerRule {
     });
     this.checkpoints = [0, 1].map(team => validPoints(this.config.checkpoints?.[team]));
     this.retreatZ = [0, 1].map(team => finite(this.config.retreatZ?.[team]) ? this.config.retreatZ[team] : null);
+    // Derived solely from the immutable stage geometry, not the carrier position.
+    this.checkpointMinimumCount = [0, 1].map(team => {
+      const goal = this.goals[team], baseline = goal && distance(this.center, goal);
+      if (!(baseline > 0) || !this.checkpoints[team].length) return null;
+      return Math.min(...this.checkpoints[team].map(p => clamp(Math.ceil(100 * distance(p, goal) / baseline), 1, 100)));
+    });
     this.state = initialState(this.stage);
   }
 
@@ -398,11 +404,18 @@ export class RainmakerRule {
 
   _tryPickup(actors) {
     if (this.state.carrier !== null || this.state.barrier.active || this.state.respawnRemaining > 0 || !Array.isArray(actors)) return;
-    const candidates = actors.filter(actor => actor?.alive !== false && validTeam(actor?.team)
-      && canCollectRainmaker(actor) && validId(actor?.id) && distance(positionOf(actor), this.state.pos) <= PICKUP_RADIUS);
-    candidates.sort((a, b) => distance(positionOf(a), this.state.pos) - distance(positionOf(b), this.state.pos)
-      || String(a.id).localeCompare(String(b.id)));
-    const actor = candidates[0];
+    // Exactly the first item of the stable (distance, id) sort, without
+    // constructing and sorting an array on every unclaimed fixed tick.
+    let actor = null, bestDistance = Infinity;
+    for (const candidate of actors) {
+      if (candidate?.alive === false || !validTeam(candidate?.team)
+        || !canCollectRainmaker(candidate) || !validId(candidate?.id)) continue;
+      const d = distance(positionOf(candidate), this.state.pos);
+      if (!(d <= PICKUP_RADIUS)) continue;
+      if (!actor || d < bestDistance || (d === bestDistance && String(candidate.id).localeCompare(String(actor.id)) < 0)) {
+        actor = candidate; bestDistance = d;
+      }
+    }
     if (!actor) return;
     this.state.carrier = actor.id;
     this.state.carrierTeam = actor.team;
@@ -607,8 +620,7 @@ export class RainmakerRule {
     if (!this.state.checkpoint.passed[team] && this.checkpoints[team].length) {
       // Authored stage geometry supplies the local count scale. A checkpoint
       // is a hard gate even when the holder physically walks around it.
-      const floor = Math.min(...this.checkpoints[team].map(p => clamp(Math.ceil(100 * distance(p, goal) / baseline), 1, 100)));
-      count = Math.max(floor, count);
+      count = Math.max(this.checkpointMinimumCount[team], count);
     }
     this._setCount(team, count);
   }
@@ -625,9 +637,14 @@ export class RainmakerRule {
   _nextObjective(team, from) {
     if (!this.state.checkpoint.passed[team] && this.checkpoints[team].length) {
       const start = positionOf({ pos: from });
-      return this.checkpoints[team]
-        .map((point, index) => ({ point, index, distance: distance(start, point) }))
-        .sort((a, b) => a.distance - b.distance || a.index - b.index)[0].point.slice();
+      const points = this.checkpoints[team];
+      let bestPoint = points[0], bestDistance = distance(start, points[0]);
+      for (let i = 1; i < points.length; i++) {
+        const d = distance(start, points[i]);
+        // Stable tie break: the earlier configured checkpoint wins.
+        if (d < bestDistance) { bestDistance = d; bestPoint = points[i]; }
+      }
+      return bestPoint.slice();
     }
     return this.goals[team]?.slice() ?? this.state.pos.slice();
   }

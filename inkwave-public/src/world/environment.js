@@ -1573,20 +1573,28 @@ export class Environment {
     u.uCov.value = T.cloudCov ?? 0.46;
     u.uSeed.value = T.cloudSeed ?? 3.0;
     const prev = r.getRenderTarget(), ac = r.autoClear, xr = r.xr.enabled;
-    r.autoClear = false; r.xr.enabled = false;
     const rt = this._cloudRT;
-    r.setRenderTarget(rt);
-    r.setClearColor(0x000000, 0); r.clear(true, false, false);
-    const strips = 10, h = Math.ceil(CLOUD_H / strips);
-    rt.scissorTest = true;
-    for (let i = 0; i < strips; i++) {
-      rt.scissor.set(0, i * h, CLOUD_W, Math.min(h, CLOUD_H - i * h));
+    const wasScissored = rt.scissorTest, scissor = rt.scissor.clone();
+    const face = r.getActiveCubeFace?.(), mip = r.getActiveMipmapLevel?.();
+    let bakeFailed = false;
+    try {
+      r.autoClear = false; r.xr.enabled = false;
       r.setRenderTarget(rt);
-      r.render(this._cloudScene, this._cloudCam);
+      r.setClearColor(0x000000, 0); r.clear(true, false, false);
+      const strips = 10, h = Math.ceil(CLOUD_H / strips);
+      rt.scissorTest = true;
+      for (let i = 0; i < strips; i++) {
+        rt.scissor.set(0, i * h, CLOUD_W, Math.min(h, CLOUD_H - i * h));
+        r.setRenderTarget(rt);
+        r.render(this._cloudScene, this._cloudCam);
+      }
+    } catch (error) { bakeFailed = true; throw error; }
+    finally {
+      rt.scissor.copy(scissor); rt.scissorTest = wasScissored;
+      try { r.setRenderTarget(prev, face, mip); }
+      catch (error) { if (!bakeFailed) throw error; }
+      finally { r.autoClear = ac; r.xr.enabled = xr; }
     }
-    rt.scissorTest = false;
-    r.setRenderTarget(prev);
-    r.autoClear = ac; r.xr.enabled = xr;
   }
 
   _rebuildEnvMap() {
@@ -2872,8 +2880,8 @@ export class Environment {
     this.lhBeam.visible = T.night > 0.01;
     this._fitShadow();
     const cc = r0.getClearColor(new THREE.Color()), ca = r0.getClearAlpha();
-    this._bakeClouds(T);
-    r0.setClearColor(cc, ca);
+    try { this._bakeClouds(T); }
+    finally { r0.setClearColor(cc, ca); }
     this._rebuildEnvMap();
     this._bakeFarReflection();
   }
@@ -2938,6 +2946,11 @@ export class Environment {
   dispose() {
     this.scene.remove(this.root, this.sun, this.sun.target, this.hemi);
     this.root.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+    // Offscreen scenes are outside root. Their shared sky geometry was disposed
+    // through root; dispose only its separate material, and the cloud quad geometry.
+    this._envScene?.traverse((o) => { if (o.material && o.material !== this.skyMat) o.material.dispose(); });
+    this._cloudScene?.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+    this._envScene = null; this._cloudScene = null;
     if (this._envRT) this._envRT.dispose();
     this._cloudRT?.dispose(); this._cloudMat?.dispose();
     this._reflRT?.dispose(); this._farRT?.dispose(); this._stripMat?.dispose(); this._underMat?.dispose();

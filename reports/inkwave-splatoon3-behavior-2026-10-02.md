@@ -5812,3 +5812,26 @@ Switch controls and all remaining calibration issues are unverified.
 #1799と#1797のTidewater試験を統合してplaying時のaim→flight→実際の着地を確認する。#1798ではクラーケン胴体と接地liftの位相をdtで積算し、停止中(dt=0)の速度変更で胴体だけが跳ねる表示差分を修正する。腕・geometry・移動速度・攻撃・塗りの仕様は変更しない。30/60/120Hzと試合経過0/100秒のCPU表示回帰を確認する。壁・空中・ノックバック・本家実機の同等性は未確認。
 
 統合版の生成物に対してChromium 153 / SwiftShaderでFlow 11シナリオ（normal/depth/AOのpixel同一性、native GPU buffer破棄を含む）、影切替20回、反射切替20回、Input交換10回（登録100/解除100、LOW textures 3→2）を確認した。Inkjetの60Hz native paid shots・3回のpool再利用・3回のghost（dead ownerを含む）も実際のWebGL/Physics/GPU PaintSystem/NetMatchで通過した。terminalのink形状pixelは他FXのみを一時的に隠した分離検査であり、完全合成PNGと区別する。物理GPU・実機性能・本家比較や全CI成功を意味しない。
+
+
+## 2026-10-22: 追加PR #1800 / #1801の統合
+
+#1800は取得・変換・監査したUrchinの数値バッファ10個とmanifestを、監査時のbyte数/SHA256で固定したprivate physics-only診断である。受け入れゲートを緩めず、欠損・改変・skipを失敗として残す。小さなsynthetic receipt回帰5件は成功したが、原本転送・全60設定ケース・native地形・本家実機の一致は未確認。
+
+#1801の30項目を、ロビーの元例外/cube face/mip復旧、既存のBloblobber/Explosher、Input寿命、ホコ銃口と通信証拠を保持して統合する。TIME UPではホストBOTのcatalogue保留射撃も入力中立化の公開hookで退役させ、試合終了後にwindupが実弾化しないようにする。他のBOT探索・ホコ候補/チェックポイント・アサリのtimers、音声PCM/LRU/実録サンプル、VFX空pool/リボン、FIFO先頭の不要配列は既存順序・資源・可変dt回帰で確認する。測定していないFPS向上や本家の未公開数値は確定しない。
+
+統合時にBGM/非表示/ミュート/Worker失敗のビルド接続が衝突したため、実録streamはproceduralな25ms clockを止め、合成曲への切替はWorkerを優先し、故障時は1個のintervalへfallbackするよう整合した。mute/非表示/古いfailure callback/URLの退役は維持し、stream→合成→pause/resume→mute/unmuteを本番合成ソースで追加確認する。BOTの既知nodeキャッシュ後にもnativeの動的な目標補正を適用し、既存の到達不能fallbackと再試行予算を保持する。雲bakeはscissor/renderer/cube face/mipの復旧と、復旧失敗時の元例外・flags保持を確認する。
+
+CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoon 3比較は既存11.3.0の参照・条件を継承し、新規の実機frame値は追加しない。追加変更の本番ビルド、音声・BOT・ルール/通信の関連回帰を検証し、最終生成物の描画検証を別に記録する。
+
+
+### #1801 最終QAと追加 #1802 / #1803
+
+30項目の統合版は標準 `npm test`、本番ビルド、音声等208件、音楽/BOT54件、ルール/通信122件を通過した。生成物の追加81件、Flow実WebGL11シナリオ、影/反射20回とInput10回、Inkjetの実native paid/ghost終端60Hzも通過した。固定したmain28d / 統合df83のpaint14-leaf（2ファイル差分）とpose16-leafを別のsource-pairとして追加し、差分を再生しない。84/96の編集・欠損・混合とGit CLIの否定対照を維持し、物理や描画の一致をソース同一性だけで確定しない。過去PR1746のpose試験は当時の固定16ファイルを圧縮fixtureから読み、その固定blob/assertを保持する。
+
+#1803は実際のAudioContextを初期化してsilent busからmenuを再生してから、本物のmusic Workerの作成元・body・manifestを検証するQA修復である。native browserで固定worker文字列が97 bytesであることを確認したため、誤った90という重複値は固定MUSIC_TIMER_SOURCEのbyte長へ整合し、全body・hash・creator拒否を保持した。
+
+#1802は固定364dd0のcommon buildからExplosherの既存glitterの逆変換before/afterを作るQA基盤で、runtimeを変更しない。入場・原点・trajectory・状態・画像・動画の否定対照152件を確認した。native初期pair、長時間動画、本家実機・視認性受け入れは未確認であり、既存の後続段階への独立した入場条件を維持する。
+
+
+最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。

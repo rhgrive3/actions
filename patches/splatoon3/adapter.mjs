@@ -1487,13 +1487,11 @@ export function adaptSource(rel, code) {
       '  _startTimer() {\n    if (this.offline || this._timerPaused || this.worker || this.timer) return;\n    const tick = () => this._tick();',
       'music timer idempotence');
     code = replaceOnce(code,
-      '      this.worker.onerror = () => { this.worker = null; if (!this.timer) this.timer = setInterval(tick, TICK_MS); };',
-      '      this.worker.onerror = () => { this.worker = null; if (!this._timerPaused && !this.timer) this.timer = setInterval(tick, TICK_MS); };',
-      'music worker hidden fallback');
-    code = replaceOnce(code, '      this.timer = setInterval(tick, TICK_MS);',
-      '      if (!this._timerPaused) this.timer = setInterval(tick, TICK_MS);', 'music timer hidden fallback');
+      '    const active = this.players.some(p => !(p instanceof StreamedTrack));',
+      '    const active = !this._timerPaused && this.players.some(p => !(p instanceof StreamedTrack));',
+      'music procedural clock visibility');
     code = replaceOnce(code, '  _tick() {',
-      '  _pauseTimer() {\n    if (this.offline) return;\n    this._timerPaused = true;\n    if (this.worker) this.worker.postMessage(0);\n    if (this.timer) { clearInterval(this.timer); this.timer = null; }\n  }\n\n  _resumeTimer() {\n    if (this.offline || !this.ctx) return;\n    const paused = this._timerPaused; this._timerPaused = false;\n    if (this.worker) this.worker.postMessage(TICK_MS); else if (!this.timer) this._startTimer();\n    if (paused) this._tick();\n  }\n\n  _tick() {',
+      '  _pauseTimer() {\n    if (this.offline) return;\n    this._timerPaused = true;\n    this._proceduralClock = false;\n    if (this.worker) this.worker.postMessage(0);\n    if (this.timer) { clearInterval(this.timer); this.timer = null; }\n  }\n\n  _resumeTimer() {\n    if (this.offline || !this.ctx) return;\n    const paused = this._timerPaused; this._timerPaused = false;\n    this._proceduralClock = false;\n    if (!this.worker && !this.timer) this._startTimer(); else this._syncTimer();\n    if (paused) this._tick();\n  }\n\n  _tick() {',
       'music visibility timer controls');
     code = replaceOnce(code, '    for (const p of this.players) p.dispose();',
       '    this._timerPaused = true;\n    for (const p of this.players) p.dispose();', 'music dispose visibility state');

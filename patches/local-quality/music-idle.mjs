@@ -9,7 +9,7 @@ export function installMusicIdle(MusicEngine, env = globalThis) {
   function stopTimer(m) {
     if (m.worker) { const w = m.worker; m.worker = null; w.onmessage = w.onerror = null; w.terminate(); }
     if (m.timer != null) env.clearInterval(m.timer);
-    m.timer = null;
+    m.timer = null; m._proceduralClock = false; m._workerFailed = false;
   }
   P.setMusicEnabled = function (enabled) {
     const s = state(this); enabled = !!enabled;

@@ -92,6 +92,8 @@ for (const [workflow, names] of Object.entries(jobs)) for (const job of names) {
   });
 }
 
+const queueBranch = 'fix/queue-30-recovery-20261022';
+const queueEpoch = {mode:'queue1801-reviewed-paint-source-pair',sha:'28d2c888704d32304d1c938c51d7d2d230eddbbd',head:'df83a5c4265a9c8738d930dabaffb43cd31ae902'};
 const integrationBranch = 'integrate/all-open-prs-20261022';
 const integrationEpoch = {mode:'mainceb58-byte-identical-paint-source-epoch',sha:'ceb58f24d8188d3a5179e013399ba37ef4c41f47'};
 const a350Branch = 'inkwave/runtime-main-a350-integration-20261022';
@@ -138,6 +140,11 @@ function sourceRouteContract(source) {
       assert.ok(body.includes('          ' + name + ': ${{ ' + value + ' }}\n'), name + ': dynamic immutable event declaration');
   }
   const cases = [
+    [context(queueBranch,'1801'),true,true,'queue'],
+    [context(queueBranch+'-foreign','1801'),false,true,'legacy'],
+    [context(queueBranch,'1801',{baseRef:'not-main'}),false,true,'legacy'],
+    [context(queueBranch,'1801',{event:'workflow_dispatch'}),false,true,'legacy'],
+    [context(queueBranch,'1801',{side:'after'}),false,false,'none'],
     [context(integrationBranch, '1796'), true, true, 'integration'],
     [context(integrationBranch+'-foreign', '1796'), false, true, 'legacy'],
     [context(integrationBranch, '1796', {baseRef:'not-main'}), false, true, 'legacy'],
@@ -169,14 +176,14 @@ function sourceRouteContract(source) {
     const {result, calls} = probe(body, c); assert.equal(result.status, 0, result.stderr); assert.equal(calls.length, 1);
     const script = index === 0 ? 'check-inkwave-current-pair-controls' : 'prepare-inkwave-projectile-baseline';
     const receipt = index === 0 ? 'current-pair-controls' : 'baseline-birth-adjustment';
-    const chosenEpoch = route === 'integration' ? integrationEpoch : route === 'a350' ? a350Epoch : epoch;
+    const chosenEpoch = route === 'queue' ? queueEpoch : route === 'integration' ? integrationEpoch : route === 'a350' ? a350Epoch : epoch;
     const wanted = [`scripts/${script}.mjs`, '--baseline', '.ci-baseline', '--candidate', '.',
       ...(route === 'legacy' ? [] : ['--base-sha', '1'.repeat(40), '--candidate-sha', '2'.repeat(40)]),
-      ...(['current','a350','integration'].includes(route) ? ['--expected-mode', chosenEpoch.mode, '--expected-source-base', chosenEpoch.sha, '--expected-source-head', chosenEpoch.sha] : []),
+      ...(['current','a350','integration','queue'].includes(route) ? ['--expected-mode', chosenEpoch.mode, '--expected-source-base', chosenEpoch.sha, '--expected-source-head', chosenEpoch.head || chosenEpoch.sha] : []),
       '--receipt', `.ci-scratch/projectile-visuals/before/${receipt}.json`];
     assert.deepEqual(calls[0], wanted, route + ': exact original/new consumer arguments');
   }
-  for (const body of bodies) for (const selectedBranch of [runtimeBranch,a350Branch,integrationBranch]) {
+  for (const body of bodies) for (const selectedBranch of [runtimeBranch,a350Branch,integrationBranch,queueBranch]) {
     const {result, calls} = probe(body, context(selectedBranch, '1770'), 42);
     assert.equal(result.status, 42, 'current-epoch rejection must stop the step');
     assert.equal(calls.length, 1, 'no retry or legacy fallback after current-epoch rejection');

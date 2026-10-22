@@ -56,7 +56,7 @@ export function queueOutboundEvent(n,event,G){
 export function sendOutboundTick(n,msg,pack,G){
  const s=state(n);if(s.failed)return false;
  if(!sync(n,s,true))return abort(n,s,'Outbound event backlog exceeded',G);
- const count=Math.min(n.out.length,s.window,OUTBOUND_LIMITS.packetRows),prefix=n.out.slice(0,count);
+ const count=Math.min(n.out.length,s.window,OUTBOUND_LIMITS.packetRows),prefix=count?n.out.slice(0,count):null;
  if(count){msg.r=2;msg.e=prefix;}
  const session=n.s,transport=session?.tr,owner=session?.match,match=n.match;
  if(session&&'match' in session&&owner!==n)return false;
@@ -74,8 +74,8 @@ export function sendOutboundTick(n,msg,pack,G){
  }
  if(n.s!==session||n.match!==match||session?.tr!==transport||session?.match!==owner)return false;
  // Synchronous sends can append new events. Remove only this exact prefix.
- if(prefix.some((event,i)=>n.out[i]!==event))return abort(n,s,'Outbound queue changed during send',G);
- n.out.splice(0,count);s.rows=n.out.length;s.bytes=n.out.length?bytes(n.out)-1:0;s.window=256;s.backlogged=n.out.length>0;
+ if(count&&prefix.some((event,i)=>n.out[i]!==event))return abort(n,s,'Outbound queue changed during send',G);
+ if(count){n.out.copyWithin(0,count);n.out.length-=count;}s.rows=n.out.length;s.bytes=n.out.length?bytes(n.out)-1:0;s.window=256;s.backlogged=n.out.length>0;
  if(s.bytes>OUTBOUND_LIMITS.bytes)return abort(n,s,'Outbound event backlog exceeded',G);
  return true;
 }

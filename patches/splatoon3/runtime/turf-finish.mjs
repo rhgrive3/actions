@@ -35,6 +35,11 @@ export function captureTurfFinish(match, nextState, paint, netm = null, minimap 
   }
   // Retire held/pending offensive state before neutral levels can become releases.
   match.local?.weaponRunner?.cancelPendingInput?.();
+  // Host-owned BOTs still advance their WeaponRunner during finish presentation.
+  // Retire already-committed windups before the remaining substep is simulated.
+  for (const actor of match.actors || []) {
+    if (actor.bot && !actor.remote && actor !== match.local) actor.weaponRunner?.cancelPendingInput?.();
+  }
   neutralizeTurfInput(match);
 }
 
