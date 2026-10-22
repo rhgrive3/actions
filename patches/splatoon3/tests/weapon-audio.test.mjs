@@ -83,10 +83,29 @@ test('65 remote fire events route to exact weapon IDs and spatial positions',asy
   assert.equal(f.calls.length,before+1);assert.equal(c.id,r.id);assert.equal(c.o.pos.x,4);assert.equal(c.o.actor,a);
  }
 });
-test('new catalog charger loops stop on switch/death and ready sounds occur once',async()=>{
- const f=await setup(),id='s3-charger-long',a=f.make(id);a.form='kid';a.isLocal=true;a.intent.fire=true;f.tick(a,160);
- assert.ok(f.calls.some(c=>c.id===id&&c.loop&&c.event==='charge'));assert.equal(f.calls.filter(c=>c.id===id&&c.event==='ready').length,1);
- const handles=a.weaponRunner._mainAudioState.loops;const charge=handles.charge;a.setWeapon('shooter');assert.equal(charge.playing,false);
+test('Charger onset occurs once on initial hold and again only after real stored-charge emergence',async()=>{
+ const f=await setup(),id='s3-charger-long',a=f.make(id);
+ a.form='kid';a.isLocal=true;a.intent.fire=true;f.tick(a,160);
+ const onsets=()=>f.calls.filter(c=>c.id===id&&c.event==='charge');
+ assert.equal(onsets().length,1,'a continuous held charge emits a single click, not 160 repeated loops');
+ assert.ok(onsets().every(c=>!c.loop),'the Charger clip must use playWeapon instead of loopWeapon');
+ assert.equal(f.calls.filter(c=>c.id===id&&c.event==='ready').length,1);
+ assert.equal(a.weaponRunner._mainAudioState.loops.charge,undefined);
+ // The actual S3 charger owner stores this structure while diving after
+ // full charge. The transition is a form event, not another new charge.
+ a.weaponRunner.s3Stored={charge:1,resurfaced:true};
+ f.emit('actor:form',{actor:a,form:'squid'});
+ f.emit('actor:form',{actor:a,form:'kid'});
+ assert.equal(onsets().length,2,'returning from charge keep replays the short click once');
+ f.emit('actor:form',{actor:a,form:'kid'});
+ assert.equal(onsets().length,2,'duplicate form events cannot repeat a click');
+ // A fresh dive whose stored charge was lost must not play the keep cue.
+ f.emit('actor:form',{actor:a,form:'squid'});
+ a.weaponRunner.s3Stored=null;
+ f.emit('actor:form',{actor:a,form:'kid'});
+ assert.equal(onsets().length,2,'expired/cancelled charge keep is silent on resurfacing');
+ a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
+ assert.equal(onsets().length,2,'weapon switching clears Charger onset routing');
 });
 
 test('all 14 actual sub admissions produce the corresponding sub sound',async()=>{
