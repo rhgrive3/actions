@@ -15,8 +15,8 @@
 //    a little textured once dry);
 //  * colours it: team colour × per-splat tone, a lighter translucent lip, a deeper body, a wet sheen; floors get a
 //    contact shadow thrown away from the sun by the lip, walls a damp halo where the ink soaks into the surface;
-//  * lights it: a clear wet coat (sharp while fresh, satin once dry) with a tamed grazing Fresnel so a low camera still
-//    sees the team colour, and a lifted, richer fill in shade — ink never turns brown or muddy.
+//  * lights it: a clear wet coat (glossy for good, a touch softer once settled) with a tamed grazing Fresnel so a low
+//    camera still sees the team colour, and a lifted, richer fill in shade — ink never turns brown or muddy.
 import * as THREE from 'three';
 
 export const INK_RIPPLES = 24;
@@ -193,17 +193,18 @@ roughnessFactor = mix(gBaseRough, mix(0.26, 0.14, gFresh), gInk);`;
 // Inside levelMaterial's normal block before the face frame is built: adds the gel micro-surface to \`slope\`.
 export const INK_GEL = /* glsl */`
   if (gInk > 0.01) {
-    // gel micro-surface: soft swells so reflections break into wet highlights. Mip-filtered (fades to flat by itself
+    // gel micro-surface: broad soft swells so the sun and sky break into long wet streaks, as on Splatoon 3 turf, not a
+    // grainy sparkle. Read three mips coarser than the pixel footprint (only the swells survive; fades to flat by itself
     // at distance). Walls stretch it vertically. Fresh ink is smoother (surface tension) and sways very gently while it
-    // settles; dry ink shows a little more texture.
-    vec2 gp = vFaceUv * (abs(vWNorm.y) < 0.5 ? vec2(0.9, 0.42) : vec2(0.75));
+    // settles; settled ink shows a little more swell.
+    vec2 gp = vFaceUv * (abs(vWNorm.y) < 0.5 ? vec2(0.55, 0.26) : vec2(0.45));
     float fr2 = gFresh * gFresh;
     gp += vec2(uTime * 0.011, -uTime * 0.007) + fr2 * 0.022 * vec2(sin(uTime * 2.3), cos(uTime * 1.9));
 #ifdef USE_TEXLIB
     if (uGel >= 0.0) {
-      vec2 gx = dFdx(gp), gy = dFdy(gp);
+      vec2 gx = dFdx(gp) * 8.0, gy = dFdy(gp) * 8.0;
       vec3 gn = textureGrad(tNormal, vec3(gp, uGel), gx, gy).xyz * 2.0 - 1.0;
-      slope += -gn.xy / max(gn.z, 0.3) * (0.95 - 0.5 * gFresh) * gInk * gInkS;
+      slope += -gn.xy / max(gn.z, 0.3) * (0.95 - 0.5 * gFresh) * 2.4 * gInk * gInkS;
     }
 #else
     {
@@ -260,18 +261,18 @@ totalEmissiveRadiance += gInkCol * gInk * uInkGlow * (0.75 + 0.35 * gInkS);`;
 // after lights_physical_fragment: the wet coat
 export const INK_LIGHTS = /* glsl */`
 {
-  // glossy wet coat on ink (sharp while fresh, satin once dry); roughness widened where the ink normal varies faster
+  // glossy wet coat on ink (it never dries to satin); roughness widened where the ink normal varies faster
   // than the pixel grid (no sparkle)
   vec3 cdu = dFdx(normal), cdv = dFdy(normal);
   float kern = min(0.3 * (dot(cdu, cdu) + dot(cdv, cdv)), 0.18);
-  float cr = mix(mix(0.06, 0.028, gFresh), 0.022, gWake);
+  float cr = mix(mix(0.034, 0.026, gFresh), 0.022, gWake);
   material.clearcoat = gInk;
   material.clearcoatRoughness = min(sqrt(sqrt(cr * cr * cr * cr + kern)), 1.0);
   material.roughness = mix(material.roughness, min(sqrt(sqrt(pow(material.roughness, 4.0) + kern)), 1.0), gInk);
-  // the coat carries the gloss; the pigment layer underneath only adds a soft sheen (keeps the hue pure)
-  material.specularColor *= 1.0 - 0.7 * gInk;
-  material.specularColorBlended *= 1.0 - 0.7 * gInk;
-  material.specularF90 = mix(material.specularF90, 0.35, gInk);
+  // the coat carries all the gloss; a sheen on the pigment layer underneath would spread the sun into a broad milky blob
+  material.specularColor *= 1.0 - 0.97 * gInk;
+  material.specularColorBlended *= 1.0 - 0.97 * gInk;
+  material.specularF90 = mix(material.specularF90, 0.02, gInk);
   // flatter Fresnel on the coat: a little more reflection head-on, far less at grazing angles, so the team colour
   // survives a low gameplay camera instead of washing out to sky-white
   material.clearcoatF0 = vec3(mix(0.04, 0.055 + 0.015 * gFresh, gInk));
