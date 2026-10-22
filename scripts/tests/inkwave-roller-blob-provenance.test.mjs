@@ -133,6 +133,64 @@ test('native probe serves the manifest revision and complete patched module grap
   assert.throws(() => nativeProbeFiles(escaped, rel => escapedBytes[rel]), /escaped build revision/);
 });
 
+// This function is serialized by Playwright; keep it independent of Node scope.
+// Injected dependencies are used only by the lifecycle regression below.
+async function startNativeMusicProbe(owner, loadMusic = value => import(value), AudioContextCtor = globalThis.AudioContext) {
+  const { MusicEngine } = await loadMusic(owner);
+  const context = globalThis.__rollerMusicContext = new AudioContextCtor();
+  const engine = globalThis.engine = new MusicEngine();
+  // Real production initialization and playback, with a silent output bus.
+  engine._init(context, context.destination, { level: 0 });
+  engine.play('menu', { fade: 0 });
+  const state = {
+    context: !!engine.ctx, contextState: context.state, offline: !!engine.offline,
+    players: engine.players.length, worker: !!engine.worker, fallbackTimer: engine.timer != null,
+    enabled: engine._musicIdle?.enabled, lifecycleInstalled: !!engine._platformMusic,
+  };
+  if (!state.context || state.offline || !state.players || !state.worker || state.fallbackTimer) {
+    throw new Error('Native music Worker activation failed after real init/menu playback: ' + JSON.stringify(state));
+  }
+  return state;
+}
+
+test('native Worker probe requires real initialization and active playback, never a bare timer call', async () => {
+  const previousEngine = globalThis.engine, previousContext = globalThis.__rollerMusicContext;
+  const calls = [];
+  class Context {
+    constructor() { this.destination = {}; this.state = 'suspended'; }
+  }
+  class Engine {
+    constructor() { this.ctx = null; this.players = []; }
+    _init(context, destination, options) {
+      assert.equal(destination, context.destination); assert.deepEqual(options, { level: 0 });
+      this.ctx = context; calls.push('init'); return this;
+    }
+    _startTimer() {
+      if (!this.ctx || !this.players.length) return;
+      this.worker = {};
+    }
+    play(track, options) {
+      assert.equal(track, 'menu'); assert.deepEqual(options, { fade: 0 });
+      calls.push('play'); this.players.push({}); this._startTimer();
+    }
+  }
+  try {
+    const bare = new Engine(); bare._startTimer(); assert.equal(bare.worker, undefined);
+    bare.ctx = new Context(); bare._startTimer(); assert.equal(bare.worker, undefined);
+    const result = await startNativeMusicProbe('fixture', async () => ({ MusicEngine: Engine }), Context);
+    assert.deepEqual(calls, ['init', 'play']); assert.equal(result.worker, true);
+    class NoWorker extends Engine { _startTimer() {} }
+    await assert.rejects(startNativeMusicProbe('fixture', async () => ({ MusicEngine: NoWorker }), Context),
+      /activation failed.*"players":1,"worker":false/);
+    class Fallback extends Engine { _startTimer() { this.timer = 1; } }
+    await assert.rejects(startNativeMusicProbe('fixture', async () => ({ MusicEngine: Fallback }), Context),
+      /"fallbackTimer":true/);
+  } finally {
+    if (previousEngine === undefined) delete globalThis.engine; else globalThis.engine = previousEngine;
+    if (previousContext === undefined) delete globalThis.__rollerMusicContext; else globalThis.__rollerMusicContext = previousContext;
+  }
+});
+
 test('real browser observes exact built native music Worker response and creator', { skip: !process.env.INKWAVE_ROLLER_WORKER_SITE }, async () => {
   const fs = await import('node:fs'), path = await import('node:path'), http = await import('node:http');
   const { chromium } = await import('playwright');
@@ -147,20 +205,17 @@ test('real browser observes exact built native music Worker response and creator
     else { res.writeHead(404); res.end(); }
   });
   await new Promise(r => server.listen(0, '127.0.0.1', r));
-  let browser;
+  let browser, page;
   try {
     browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
-    const page = await browser.newPage(), origin = 'http://127.0.0.1:' + server.address().port;
+    page = await browser.newPage();
+    const origin = 'http://127.0.0.1:' + server.address().port;
     const evidence = { origin, workers: [], creations: [], responses: [], owners: [] }, loaded = {}, tasks = [], errors = [];
     await page.addInitScript(observeBlobCreation);
     page.on('worker', worker => evidence.workers.push(worker.url()));
     page.on('response', response => tasks.push(recordLoadedModuleResponse(response, origin, loaded, evidence).catch(error => errors.push(String(error)))));
     await page.goto(origin);
-    await page.evaluate(async owner => {
-      const { MusicEngine } = await import(owner);
-      window.engine = new MusicEngine(); window.engine._startTimer();
-    }, owner);
-    await page.waitForFunction(() => !!window.engine?.worker);
+    await page.evaluate(startNativeMusicProbe, owner);
     // Wait for the actual blob response callback, not only Worker construction.
     const deadline = Date.now() + 10000;
     while (!evidence.responses.length && Date.now() < deadline) await new Promise(r => setTimeout(r, 20));
@@ -175,5 +230,15 @@ test('real browser observes exact built native music Worker response and creator
     const foreign = structuredClone(evidence);
     foreign.creations[0].stack = foreign.creations[0].stack.replace('/src/audio/music.js:', '/src/foreign.js:');
     assert.throws(() => verifyMusicWorkers(foreign, loaded, manifest), /not the native music owner/);
-  } finally { await browser?.close(); await new Promise(r => server.close(r)); }
+  } finally {
+    try {
+      if (page && !page.isClosed()) await page.evaluate(async () => {
+        try { globalThis.engine?.dispose(); }
+        finally { await globalThis.__rollerMusicContext?.close(); }
+      });
+    } finally {
+      try { await browser?.close(); }
+      finally { await new Promise(r => server.close(r)); }
+    }
+  }
 });
