@@ -65,3 +65,40 @@ test('real Bloblobber runner fans four emitted bubbles from aim motion DURING wi
   const afterIdle=run(0);
   for(const angle of afterIdle.angles)close(angle,afterIdle.angles[0],'new volley has no stale yaw sweep');
 });
+
+
+test('pinned 11.3.0 Bloblobber NearestParam paints once per grounded swing, never a damage collider',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const G=f.G,marks=[];
+  G.physics.segment=(_from,_to,h)=>{h.hit=false;return h;};
+  G.physics.raycast=(from,_down,_range,h)=>{
+    h.hit=true;h.point.set(from.x,0,from.z);h.normal.set(0,1,0);h.face=-1;return h;
+  };
+  G.paint.splat=(point,radius,team,options)=>{
+    marks.push({x:point.x,y:point.y,z:point.z,radius,team,options});
+    return .25;
+  };
+  const fire=(grounded)=>{
+    G.projectiles.clear();G.actors.length=0;marks.length=0;
+    const a=f.make('s3-slosher-bathtub');
+    a.form='kid';a.ink=100;a.grounded=grounded;
+    a.aimYaw=0;a.aimPitch=0;a.aimPoint.set(0,1.05,80);
+    a.intent.fire=true;
+    for(let n=0;n<25&&!G.projectiles.list.some(p=>p.catalog?.r?.sourceActor==='WeaponSlosherBathtub');n++)
+      f.tick(a);
+    a.intent.fire=false;
+    return {a,projectiles:G.projectiles.list.filter(p=>p.catalog?.r?.sourceActor==='WeaponSlosherBathtub')};
+  };
+  const grounded=fire(true);
+  assert.equal(grounded.projectiles.length,4,'a single swing emits exactly four live bubbles');
+  assert.equal(marks.length,1,'separate paint-only NearestParam belongs to the swing, not each bubble');
+  const mark=marks[0];
+  close(mark.radius,2.2,'source foot paint width');
+  close(mark.options.stretchAmt,.2,'source forward paint depth multiplier');
+  close(mark.y,.1,'nearest paint is offset from the real floor');
+  assert.equal(mark.options.claimOwner,grounded.a,'only the local firing player claims turf');
+  assert.equal(mark.options.footprint,'ink-contact','nearest paint uses the native ink footprint');
+  const airborne=fire(false);
+  assert.equal(airborne.projectiles.length,4,'airborne shot still launches its four bubbles');
+  assert.equal(marks.length,0,'airborne projectile launch cannot stamp the ground below the player');
+});
