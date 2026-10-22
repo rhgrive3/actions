@@ -126,7 +126,9 @@ export function installWeaponAudioRuntime(api){
     const recipe=WEAPON_AUDIO[id],isCharger=recipe?.family==='charger';
     // Fresh Charger charging has exactly one recorded onset; never start an
     // AudioBufferSource loop or a guessed per-frame pitch ramp.
-    if(isCharger&&a?.alive!==false&&a.form!=='squid'&&!a.specialActive&&!a.superJumpState){
+    // Remote replicas own the onset in NetMatch._voices; do not also fire it
+    // from WeaponRunner.update if a remote runner is ticked for prediction.
+    if(isCharger&&a?.remote!==true&&a?.alive!==false&&a.form!=='squid'&&!a.specialActive&&!a.superJumpState){
       const nowCharging=!!this.charging;
       if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed)
         play(a,'charge',a.pos,a.isLocal?.55:.35);
