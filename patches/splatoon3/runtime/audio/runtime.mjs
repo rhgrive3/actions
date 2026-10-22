@@ -143,8 +143,12 @@ export function installWeaponAudioRuntime(api){
           volume:a.isLocal?.55:.28,
           duration:Number.isFinite(a.weapon?.chargeTime)?a.weapon.chargeTime:1.18,
         })||null;
+        if(s.chargeRise)active.add(this);
       }
-      if(!nowCharging){s.chargeRise?.stop?.(.04);s.chargeRise=null;}
+      if(!nowCharging){
+        s.chargeRise?.stop?.(.04);s.chargeRise=null;
+        if(isCharger)active.delete(this);
+      }
       if(!nowCharging&&!this.s3Stored)s.keepEmergePlayed=false;
       if(!a?.weapon?.catalogRecord)s.wasCharge=nowCharging;
     }
