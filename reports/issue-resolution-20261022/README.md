@@ -1,6 +1,6 @@
 # actions未解決issueの並列修正・受入記録（2026-10-22）
 
-基点: `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64`。開始時と再検索時の未解決issue35件を6担当で確認した。全35件の結果は [index.json](index.json)。#1430は最終sourceの同一buildでChromium/WebKit各3反復・234check成功により受入完了。初回の残る34件は各残条件を満たすまでOpenを維持した。その後の継続受入で #1165 と #1432 の残条件が満了した。同一公開sourceのRanked全suite/3独立bootで #1608、元buildのHTTP/SW native traceで #1711 も調査・受入が満了した。追加の証拠と継続中の作業は [continuation](continuation/README.md) を参照。未確認の実機値や本家データを補って解決済みとはしない。
+基点: `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64`。開始時と再検索時の未解決issue35件を6担当で確認した。全35件の結果は [index.json](index.json)。#1430は最終sourceの同一buildでChromium/WebKit各3反復・234check成功により受入完了。初回の残る34件は各残条件を満たすまでOpenを維持した。その後の継続受入で #1165 と #1432 の残条件が満了した。同一公開sourceのRanked全suite/3独立bootで #1608、元buildのHTTP/SW native traceで #1711 も調査・受入が満了した。#1812も固定sourceの照準経路・実描画診断の受入を完了し、現在は6件閉鎖・29件Open。追加の証拠と継続中の作業は [continuation](continuation/README.md) を参照。未確認の実機値や本家データを補って解決済みとはしない。
 
 ## 実装した修正
 
@@ -30,3 +30,10 @@
 担当別JSONのremote未変更・open維持の記載は担当調査時点の値。最終的なGitHub状態とPR公開結果は本indexの最終記録を参照する。
 
 ブラウザJSON・console logの原本は [browser-raw-receipts.tar.gz](browser-raw-receipts.tar.gz) に無変更でまとめ、[SHA256一覧](browser-raw-receipts.json)を付けた。このreportディレクトリで `tar -xzf browser-raw-receipts.tar.gz` とすると記録中の相対pathを復元できる。PNGはローカル `.browser-evidence/issue-resolution-20261022` に保持し、別のSHA256一覧へ記録した。
+
+## 継続修正の公開先
+
+- [PR #1842](https://github.com/rhgrive3/actions/pull/1842): bind後のowner-clock catch-upをnonce証明で修正。source network 788/788、関連script 70/70、実2context・cold/rematch/reconnectの遅延6対照を確認。必須CIとmain統合は未完。
+- [PR #1845](https://github.com/rhgrive3/actions/pull/1845): source Roller/Dynamoの防御物damage、Explosherの既存lip基準muzzle、Quadの実volume接続を修正。#1812は受入完了。#1431の初回prediction gap、本家開口部校正と#1813の原作engine解釈はOpen。
+
+これらは本PRのf9 runtimeとは別の固定source/buildで検証した。全GitHub Actions成功、production配備、全65武器のauthority解決、iPad/Nintendo実機での一致は主張しない。

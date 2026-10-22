@@ -1,0 +1,24 @@
+{
+  "archive": "/workspace/scratch/actions-base-qa-repair/.ci-scratch/base-qa-repair/base-qa-raw-json-log.tar.gz",
+  "bytes": 6094,
+  "sha256": "51e94fbc977855d599a724690361af9fa76233b9b3ac782a685c0175ebe797b4",
+  "members": [
+    {
+      "name": "base-qa.log",
+      "bytes": 15813,
+      "sha256": "fe7698fee6838280f033555f47f9e2f0df6cd6f2a548b9c60afb3ce8214214f5"
+    },
+    {
+      "name": "input-transfer.json",
+      "bytes": 688,
+      "sha256": "caf37273212273a6b6b8873ee75027d194f7e0dfa03b9f7cc04ed0fef2b04b3b"
+    },
+    {
+      "name": "receipt.json",
+      "bytes": 6003,
+      "sha256": "d736db7a3bcd92b6aa98bdf54839864db263c5e3a4a856c348806f110f74f022"
+    }
+  ],
+  "readbackHashesVerified": true,
+  "credentialMatches": []
+}

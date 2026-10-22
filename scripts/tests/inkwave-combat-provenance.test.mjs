@@ -90,6 +90,14 @@ function fire(nm,{id=1,at=100,origin=[0,1,0],dir=[0,0,45],kind='shooter'}={}) {
 }
 function hit(v=2,h=1,w='shooter'){return{k:'hit',m:'test-match',a:1,v,d:Math.min(36,policy.caps[w]??36),w,h,l:0}};
 function boss(q=1,c=-1,weak=0,w='shooter',d=36){return{k:'bhit',m:'test-match',a:1,d,w,q,c,l:0,weak}};
+// Cap/contact unit fixtures start with the receipt a native accepted row earns.
+// Production-composition suites separately verify that receipt's creation.
+function acceptedRollerContact(nm,at){
+  sampleLocalHistory(nm,at);
+  const a=nm.byNid.get(1);
+  nm._combatProvenance.contactSnapshots.set(a,{owner:a.owner,life:Math.max(a.netLife??0,a.net?.lastLife??0),
+    rolling:true,at,ts:at,origin:[a.pos.x,a.pos.y,a.pos.z]});
+}
 test('fabricated owner hit without shot cannot change victim health',()=>{
   const nm=new Stub();
   nm.onMessage('peerA',hit());
@@ -145,6 +153,8 @@ test('roller damage uses a short observed contact gate and target range',()=>{
   const nm=new Stub(),a=nm.byNid.get(1);
   a.weapon.id='roller';a.weapon.kind='roller';a.net.cur.f=256;
   nm.byNid.get(2).pos.z=1.1;
+  assert.equal(combatAdmission(nm,'peerA',hit(2,1,'roller'),'pvp',5),false,'presentation flag alone does not authorize contact');
+  acceptedRollerContact(nm,5);
   assert.equal(combatAdmission(nm,'peerA',hit(2,1,'roller'),'pvp',5),true);
   assert.equal(combatAdmission(nm,'peerA',hit(2,2,'roller'),'pvp',5.1),false);
   assert.equal(combatAdmission(nm,'peerA',hit(2,3,'roller'),'pvp',5.6),true);
@@ -197,6 +207,7 @@ test('rolling into a crablet uses contact proof despite generic crab damage mark
   const nm=new Stub(),a=nm.byNid.get(1);
   a.weapon.id='roller';a.weapon.kind='roller';a.net.cur.f=256;
   nm.match.boss.crabs.get(7).z=1;
+  acceptedRollerContact(nm,performance.now()/1000);
   nm.onMessage('peerA',boss(1,7,0,'crab',140));
   assert.equal(nm.bossCalls.length,1);
   nm.onMessage('peerA',boss(2,7,0,'crab',140));
