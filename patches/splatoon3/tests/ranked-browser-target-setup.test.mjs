@@ -14,9 +14,10 @@ const prepare = vm.runInNewContext(`(${setupSource.trim()})`);
 // Exact previous setup as a negative control: only omit the new native reset.
 const prepareWithoutWeaponReset = vm.runInNewContext(`(${setupSource.replace('target.weaponRunner.reset();', '').trim()})`);
 async function boot() {
-  const f = await fixture({ fullRuntime: true, realProjectiles: true, adaptNative: adaptBuildSource, adaptRuntime: adaptBuildSource,
+  const f = await fixture({ fullRuntime: true, realProjectiles: true, includeCharacter: true, adaptNative: adaptBuildSource, adaptRuntime: adaptBuildSource,
     extraExports: `export { Match } from './inkwave-public/src/game/match.js';
       export { installRanked } from './patches/splatoon3/runtime/ranked/install.mjs';
+      export { validRainmakerShotOrigin } from './patches/splatoon3/runtime/ranked/rainmaker-shot-origin.mjs';
       export { RankedEngine } from './patches/splatoon3/runtime/ranked/engine.mjs';
       export { createRankedEffects } from './patches/splatoon3/runtime/ranked/combat.mjs';` });
   f.context.structuredClone = structuredClone; f.installRanked({ ...f.installedRuntime, structuredClone });
@@ -28,7 +29,10 @@ async function boot() {
 }
 function scenario(f, vx, stable, { weapon='shooter', charge=false, rollFrames=null, reset=true, wall=false }={}) {
   const { G } = f, dt = 1/60; G.actors = []; G.time = 0; G.projectiles.clear();
-  const a = f.make(), target = f.make(weapon);
+  // Release admission samples the native objective grip, not f.make()'s fixed muzzle.
+  const a = new f.Actor({ team: 0, name: 'carrier', weapon: 'shooter', CharacterClass: f.Character }), target = f.make(weapon);
+  a.character.actor = a;
+  G.actors.push(a);
   Object.assign(a, { nid: 1, slot: 0, team: 0, invuln: 0 }); Object.assign(target, { nid: 2, slot: 0, team: 1, invuln: 0 });
   for (const p of [a,target]) { delete p._integrate; p.s3.spawnArmor = null; p.pos.set(0,0,0); p.vel.set(0,0,0); p.grounded = p.ground.hit = true; p.ground.block = 0; p.groundN.set(0,1,0); }
   const e = new f.RankedEngine('rainmaker', { id: 'proof-target', rainmaker: { center: [0,0,0], goals: [[0,0,40],[0,0,-40]], checkpoints: [[],[]] } });
@@ -59,7 +63,15 @@ function scenario(f, vx, stable, { weapon='shooter', charge=false, rollFrames=nu
   a.form = 'kid'; a.aimYaw = a.aimPitch = 0; a.aimDir.set(0,0,1); a.intent.move.set(0,0,0); a.vel.set(0,0,0);
   const damage = [], shots = [], hurt = target.damage, play = m.playRankedEvents;
   target.damage = function(amount,...args) { damage.push(amount); return hurt.call(this,amount,...args); };
-  m.playRankedEvents = function(events,...args) { shots.push(...events.filter(e => e.kind === 'rainmaker-shot')); return play.call(this,events,...args); };
+  m.playRankedEvents = function(events,...args) {
+    for (const event of events.filter(e => e.kind === 'rainmaker-shot')) {
+      assert.ok(a.character instanceof f.Character);
+      assert.equal(Object.hasOwn(a, '_finishFrame'), false, 'release pose runs the native Actor finish');
+      assert.ok(f.validRainmakerShotOrigin(event.shotOrigin, event), 'native release supplies the guarded origin');
+      shots.push(event);
+    }
+    return play.call(this,events,...args);
+  };
   const step = (n, fire) => { for(let i=0;i<n;i++) { G.time += dt; a.intent.fire=fire; a.intent.sub=a.intent.squid=false; a.update(dt); target.update(dt); m.advanceRanked(dt); } };
   step(61,true); assert.equal(e.rule.state.charge.value,1); step(1,false); step(20,true);
   assert.equal(shots.length,1); assert.ok(e.rule.state.charge.seconds <= 1e-8); step(20,false);

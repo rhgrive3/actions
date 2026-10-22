@@ -34,5 +34,5 @@ export function observePostprocessIdentityOwners(g, hashBytes) {
  bind('screen','tLens',fx.mat.uniforms.tLens?.value,['lens']);
  for(const [role,m]of [['gtao',ao.gtaoMaterial],['pd',ao.pdMaterial]]){bind(role,'tDepth',m?.uniforms.tDepth?.value,['aoDepth']);bind(role,'tNormal',m?.uniforms.tNormal?.value,['aoNormal']);}
  bind('pd','tDiffuse',ao.pdMaterial.uniforms.tDiffuse?.value,['aoGtao']);
- return{schema:1,sourceContract:'cc0-native-six-pass',gpuContentMeasured:false,materials,textures,bindings,pingPong:{read:c.readBuffer===rt1?'composer1':'composer2',write:c.writeBuffer===rt1?'composer1':'composer2'}};
+ return{schema:1,sourceContract:'c093-native-six-pass',gpuContentMeasured:false,materials,textures,bindings,pingPong:{read:c.readBuffer===rt1?'composer1':'composer2',write:c.writeBuffer===rt1?'composer1':'composer2'}};
 }

@@ -12,6 +12,19 @@ export function installCombatPlacementQA() {
     if (requested && points.some((p, i) => distance(p, requested[i]) > .05)) fail('native settle moved selected placement');
     return separation;
   };
+  // Read-only readiness: never clear spawn ownership or reset sampled state.
+  const spawnReady = () => {
+    const G = globalThis.__G, actors = G?.match?.actors;
+    return G?.match?.state === 'playing' && actors?.length === 2 && actors.every(a =>
+      a.alive && a.grounded && a.form === 'kid' && !a.s3?.squidSpawn &&
+      (!a.remote || a.net?.ready === true));
+  };
+  const placementReady = ({attacker,victim,requested}) => {
+    if (!spawnReady()) return false;
+    const G = globalThis.__G, actors = [attacker,victim].map(id => G.netm.byNid.get(id));
+    return actors.every((a,i) => a && finite(requested?.[i]) &&
+      distance([a.pos.x,a.pos.y,a.pos.z],requested[i]) <= .05);
+  };
   const inspect = ({attacker, victim, requested}) => {
     const G = globalThis.__G, ids = [attacker, victim];
     const actors = ids.map(id => G.netm.byNid.get(id));
@@ -69,7 +82,7 @@ export function installCombatPlacementQA() {
     return {originOffset:offset,originDistance:Math.hypot(...offset),
       velocityAngle:Math.acos(Math.max(-1,Math.min(1,velocity.reduce((v,x,i)=>v+x*preShot.aim[i],0)/(speed*aimLength))))};
   };
-  globalThis.__ceilingPlacement = {select,inspect,aim,compareShot};
+  globalThis.__ceilingPlacement = {select,inspect,aim,compareShot,spawnReady,placementReady};
 }
 
 
@@ -81,6 +94,18 @@ export async function advanceUntilNativeShotProof({step,hasProof,remainingSteps}
   let steps=0,ready=await hasProof();
   while (!ready && steps<remainingSteps) {
     await step();steps++;ready=await hasProof();
+  }
+  return {steps,ready};
+}
+
+// The relay and interpolation use performance.now(), not just G.time. The
+// caller advances unchanged native components on a paced 60Hz clock and waits
+// for both real peers, rather than seeding remote buffers or spoofing readiness.
+export async function advanceUntilNativePlacement({step,hasPlacement,maxSteps=180}) {
+  if (!Number.isSafeInteger(maxSteps) || maxSteps<1 || maxSteps>180) throw Error('Invalid native placement step budget');
+  let steps=0,ready=await hasPlacement();
+  while (!ready && steps<maxSteps) {
+    await step();steps++;ready=await hasPlacement();
   }
   return {steps,ready};
 }

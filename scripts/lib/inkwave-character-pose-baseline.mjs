@@ -367,6 +367,77 @@ const PR1746_POSE_PAIR = Object.freeze({
     }
   }
 });
+// Reviewed integration tuple: retain source and gameplay differences, never replay.
+export const OCT22_INTEGRATION_POSE_PAIR = Object.freeze({
+  "sourceBase": "ceb58f24d8188d3a5179e013399ba37ef4c41f47",
+  "sourceHead": "addc82a822d7a0c5009ac4d357fc2076a7f88998",
+  "paths": {
+    "patches/splatoon3/adapter.mjs": {
+      "baseline": "31346b2c8ed07fa0f96721ae40d5f88b39294c1f",
+      "candidate": "31346b2c8ed07fa0f96721ae40d5f88b39294c1f"
+    },
+    "patches/splatoon3/body-proportion-adapter.mjs": {
+      "baseline": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
+      "candidate": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf"
+    },
+    "patches/splatoon3/runtime/body-proportion.mjs": {
+      "baseline": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
+      "candidate": "5d7dfb8103b4375379ccb9c8fda53e615d00adff"
+    },
+    "patches/splatoon3/runtime/idle-motion.mjs": {
+      "baseline": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+      "candidate": "06d276d899aa764df7e75d41612f7ca1ec22953b"
+    },
+    "patches/splatoon3/runtime/install.mjs": {
+      "baseline": "56b9b99fbb79d8650e7e132fd187f1514f27c62d",
+      "candidate": "56b9b99fbb79d8650e7e132fd187f1514f27c62d"
+    },
+    "patches/splatoon3/runtime/roller.mjs": {
+      "baseline": "d8bec5a2220ebf970c489969fa41d9e6f74affed",
+      "candidate": "d8bec5a2220ebf970c489969fa41d9e6f74affed"
+    },
+    "patches/splatoon3/runtime/source-posture.mjs": {
+      "baseline": "a31d8224d129665917632ee7083c4081de5803a4",
+      "candidate": "a31d8224d129665917632ee7083c4081de5803a4"
+    },
+    "patches/splatoon3/upstream-lock.json": {
+      "baseline": "db19eaaee31820263cfd9871b0ebe90db9133f3d",
+      "candidate": "14f0ade945d5122ab7cbce2dbc4d47d8a6532235"
+    },
+    "patches/splatoon3/runtime/weapon-handoff-motion.mjs": {
+      "baseline": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f",
+      "candidate": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f"
+    },
+    "patches/splatoon3/runtime/weapon-models/brushes.mjs": {
+      "baseline": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+      "candidate": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2"
+    },
+    "patches/splatoon3/runtime/weapon-models/family-holds.mjs": {
+      "baseline": "91a672123486114f9849de61509c6ee6ec96363f",
+      "candidate": "91a672123486114f9849de61509c6ee6ec96363f"
+    },
+    "patches/splatoon3/runtime/weapon-models/kit.mjs": {
+      "baseline": "3ab94f55c299b56485880ede17b92d5150101f7d",
+      "candidate": "3ab94f55c299b56485880ede17b92d5150101f7d"
+    },
+    "patches/splatoon3/runtime/weapon-models/registry.mjs": {
+      "baseline": "7f651d20395cb8b2622ca0dcd9180019b7533ce1",
+      "candidate": "7f651d20395cb8b2622ca0dcd9180019b7533ce1"
+    },
+    "patches/splatoon3/runtime/weapon-models/stringers.mjs": {
+      "baseline": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
+      "candidate": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e"
+    },
+    "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": {
+      "baseline": "9f68724343748037145c552937025d74ac5df8b9",
+      "candidate": "9f68724343748037145c552937025d74ac5df8b9"
+    },
+    "patches/splatoon3/weapon-catalog-adapter.mjs": {
+      "baseline": "55582fd6109ff814ed107577db74b990d755a926",
+      "candidate": "55582fd6109ff814ed107577db74b990d755a926"
+    }
+  }
+});
 function currentPosePair(baseline, candidate) {
   const epoch = [
     { blobs: OCT21_PR1746_POSE_MAIN_BLOBS, source: 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' },
@@ -397,7 +468,7 @@ function currentPosePair(baseline, candidate) {
     })),
   };
 
-  const pair = [CURRENT_POSE_PAIR, RESOLVED_POSE_PAIR, PR1746_POSE_PAIR].find(pair => CHARACTER_POSE_PATHS.every(path =>
+  const pair = [OCT22_INTEGRATION_POSE_PAIR, CURRENT_POSE_PAIR, RESOLVED_POSE_PAIR, PR1746_POSE_PAIR].find(pair => CHARACTER_POSE_PATHS.every(path =>
     typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
     blob(baseline.get(path)) === pair.paths[path].baseline &&
     blob(candidate.get(path)) === pair.paths[path].candidate));

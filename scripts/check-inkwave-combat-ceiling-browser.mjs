@@ -11,7 +11,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
-import {installCombatPlacementQA,advanceUntilNativeShotProof} from './lib/inkwave-combat-ceiling-placement.mjs';
+import {installCombatPlacementQA,advanceUntilNativeShotProof,advanceUntilNativePlacement} from './lib/inkwave-combat-ceiling-placement.mjs';
 import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runtime-evidence.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
@@ -83,6 +83,16 @@ try {
  await guest.evaluate(()=>__G.net.setMe({ready:true}));await host.evaluate(()=>__G.net.setMe({ready:true}));
  await host.waitForFunction(()=>__G.net.canStart());assert.equal(await host.evaluate(()=>__G.net.start()),true);
  await Promise.all(pages.map(p=>p.waitForFunction(()=>{const G=__G,g=__inkwave,m=g.match,n=G.net;return G.mode==='match'&&m===G.match&&m?.state==='playing'&&!m.attract&&m.local?.isLocal&&m.controller&&n.active&&n._setupReady&&G.netm===n.match&&G.netm.match===m&&m.actors.length===2;},null,{timeout:240000})));
+ report.phase='native-opening-spawn';
+ // Playing starts before the opening Squid Spawn finishes. Leave the real game
+ // running until both owners land and their proxies adopt the completed phase.
+ const spawnStarts=await Promise.all(pages.map(p=>p.evaluate(()=>__G.time)));
+ await Promise.all(pages.map((p,i)=>p.waitForFunction(start=>{
+  if(__ceilingPlacement.spawnReady())return true;
+  if(__G.time-start>10)throw Error('Native opening spawn did not settle within 10 game seconds');
+  return false;
+ },spawnStarts[i],{timeout:180000})));
+ report.spawnReady=await Promise.all(pages.map(p=>p.evaluate(()=>({at:__G.time,ready:__ceilingPlacement.spawnReady()}))));
  report.phase='native-actor-placement';
  report.roles=await Promise.all(pages.map(p=>p.evaluate(async url=>{
   const {Actor}=await import(url),G=__G,n=G.netm;__inkwave.debug.freeze();
@@ -97,6 +107,9 @@ try {
  await Promise.all(pages.map(p=>p.evaluate(({attacker,placement})=>{
   const G=__G,V=G.camera.position.constructor;G.projectiles.clear();
   for(const a of G.match.actors){
+   // Only relocate the owning Actor. The other browser must receive and apply
+   // its actual owner snapshot through the production relay and interpolation.
+   if(a.remote)continue;
    const pos=placement[a.nid===attacker?0:1],other=placement[a.nid===attacker?1:0];
    a.spawnAt(new V(...pos),Math.atan2(other[0]-pos[0],other[2]-pos[2]));
    a.invuln=0;a.grounded=true;a.kidT=99;a.ink=100;a.intent.move.set(0,0,0);
@@ -104,7 +117,6 @@ try {
    a.aimDir.set(other[0]-pos[0],other[1]-pos[1],other[2]-pos[2]).normalize();a.aimYaw=a.yaw;a.aimPitch=0;
    a.aimPoint.set(...other).add(new V(0,1.05,0));a.weaponRunner.reset();
    a.character.root.position.copy(a.pos);a.character.root.rotation.y=a.yaw;a.character.root.updateMatrixWorld(true);
-   if(a.net?.buf)a.net.buf.length=0;
   }
   G.scene.updateMatrixWorld(true);
  },{attacker,placement})));
@@ -137,6 +149,12 @@ try {
   }
   G.projectiles.update(dt);
  },{attacker,victim,placement})));await new Promise(resolve=>setTimeout(resolve,0));};
+ report.placementAdvance=await advanceUntilNativePlacement({
+  step:async()=>{await step();await new Promise(resolve=>setTimeout(resolve,1000/60));},
+  hasPlacement:async()=>(await Promise.all(pages.map(p=>p.evaluate(args=>
+   __ceilingPlacement.placementReady(args),{attacker,victim,requested:placement})))).every(Boolean),
+ });
+ assert(report.placementAdvance.ready,'Native owner relocation did not reach both peers');
  for(let i=0;i<12;i++)await step();
  report.settled=await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>
   __ceilingPlacement.inspect({attacker,victim,requested:placement}),{attacker,victim,placement})));
@@ -251,7 +269,8 @@ try {
   return {bounds:G?.level?.bounds?Object.fromEntries(['minX','maxX','minZ','maxZ'].map(k=>[k,n(G.level.bounds[k])])):null,
    spawnBarrier:n(G?.level?.spawnBarrier),spawnPads:(G?.level?.spawnPads||[]).slice(0,2).map(xyz),
    actors:(G?.match?.actors||[]).slice(0,2).map(a=>({local:a.isLocal===true,remote:a.remote===true,
-    alive:a.alive===true,grounded:a.grounded===true,form:['kid','squid'].includes(a.form)?a.form:'other',pos:xyz(a.pos)}))};
+    alive:a.alive===true,grounded:a.grounded===true,remoteReady:a.net?.ready===true,
+    spawnPhase:['aim','flight','landing'].includes(a.s3?.squidSpawn?.phase)?a.s3.squidSpawn.phase:null,form:['kid','squid'].includes(a.form)?a.form:'other',pos:xyz(a.pos)}))};
  });}catch{}
 } finally {
  report.errors=errors;report.loadedArtifacts=[...loaded];report.wire=wire;
@@ -275,6 +294,8 @@ const failure = report.status === 'failed' ? {
   'Exactly one native paid round must finish the firing request',
   'Expected exactly one real near-hit 36',
   'Expected one actual owned projectile at paid emission',
+  'Native opening spawn did not settle within 10 game seconds',
+  'Native owner relocation did not reach both peers',
   'Combat placement: missing level bounds',
   'Combat placement: no neutral playable pair with a clear stage path',
   'Combat placement: Actors must be alive grounded kids',
@@ -305,6 +326,10 @@ const failure = report.status === 'failed' ? {
  proofAdvance: report.proofAdvance ? {
   steps: Number.isSafeInteger(report.proofAdvance.steps)&&report.proofAdvance.steps>=0 ? report.proofAdvance.steps : null,
   ready: report.proofAdvance.ready===true,
+ } : null,
+ placementAdvance: report.placementAdvance ? {
+  steps: Number.isSafeInteger(report.placementAdvance.steps)&&report.placementAdvance.steps>=0 ? report.placementAdvance.steps : null,
+  ready: report.placementAdvance.ready===true,
  } : null,
  placement: report.placementDiagnostic||null,
  browserErrorCount: errors.length,

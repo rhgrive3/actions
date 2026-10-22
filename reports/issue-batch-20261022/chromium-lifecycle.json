@@ -1,0 +1,14 @@
+{
+  "browser": "154.0.8037.57",
+  "contentHash": "0995c75b2b3efa4104a60782962b7d65dd6263277a38584cfc1ce1f61881cd09",
+  "result": {
+    "shadowToggles": 20,
+    "reflectionCycles": 20,
+    "baseTextures": 2,
+    "maxTextures": 3,
+    "inputReplacements": 10,
+    "listenerAdds": 100,
+    "listenerRemoves": 100
+  },
+  "errors": []
+}

@@ -7,10 +7,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import { createHash } from 'node:crypto';
-import { chromium } from 'playwright';
+import { fileURLToPath } from 'node:url';
 
 const opt = (name, fallback) => { const i = process.argv.indexOf(name); return i < 0 ? fallback : process.argv[i + 1]; };
 const site = fs.realpathSync(opt('--site', '_site'));
+const terminal = process.argv.includes('--inkjet-terminals') ? { hz: Number(opt('--hz','60')) } : null;
+if(terminal){assert.ok([30,60,120].includes(terminal.hz));assert.ok(!process.argv.includes('--inkjet'),'Choose native terminals or stationary flight, not both');}
 const inkjet = process.argv.includes('--inkjet') ? { hz:Number(opt('--hz','60')), actorCount:Number(opt('--actors','1')), layout:opt('--layout','near') } : null;
 if(inkjet){assert.ok([30,60,120].includes(inkjet.hz));assert.ok([1,2,4].includes(inkjet.actorCount));assert.ok(['near','mixed'].includes(inkjet.layout));}
 const out = path.resolve(opt('--evidence-dir', '.ci-scratch/splashdown-browser'));
@@ -19,8 +21,38 @@ const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'
 const hash = data => createHash('sha256').update(data).digest('hex');
 assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash);
 for (const [file, digest] of Object.entries(manifest.artifacts)) assert.equal(hash(fs.readFileSync(path.join(site, file))), digest, file);
+let qaIdentity=null,probeSource=null;
+if(terminal){
+// Verify against the final composed tree or verified HEAD selected by the parent.
+assert.equal(hash(JSON.stringify(manifest.files)),manifest.inputHash,'build input identity');
+const sourceRoot=fs.realpathSync(opt('--source-root',fileURLToPath(new URL('../',import.meta.url))));
+const sourceProofPath=opt('--source-proof',null),expectedProofHash=opt('--expected-proof-sha256',null);
+assert.ok(sourceProofPath && /^[a-f0-9]{64}$/.test(expectedProofHash || ''),'explicit final source proof and expected proof SHA256 required');
+const sourceProofBytes=fs.readFileSync(sourceProofPath);assert.equal(hash(sourceProofBytes),expectedProofHash,'selected final source proof');
+const sourceProof=JSON.parse(sourceProofBytes);
+assert.ok(['verified-HEAD','verified-official-HEAD','prepared-composition-not-HEAD'].includes(sourceProof.mode),'known proof provenance');
+assert.ok(sourceProof.fullBrowserInputVerificationRequired && /^[a-f0-9]{40}$/.test(sourceProof.candidateTree),'complete source-proof contract');
+const gitBlob=data=>createHash('sha1').update(Buffer.from('blob '+data.length+'\0')).update(data).digest('hex');
+const namespaces={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','native-stages/':'patches/native-stages/','build-script/':'scripts/'};
+const verifiedInputs=[];
+for(const [key,digest] of Object.entries(manifest.files)){
+  const prefix=Object.keys(namespaces).find(p=>key.startsWith(p));assert.ok(prefix && !key.split('/').includes('..'),'known source namespace '+key);
+  const file=namespaces[prefix]+key.slice(prefix.length),source=fs.readFileSync(path.join(sourceRoot,file));assert.equal(gitBlob(source),sourceProof.files[file],'exact final composed Git source '+file);assert.equal(digest,hash(source),'build input matches exact source '+file);verifiedInputs.push({key,file,sha256:digest,gitBlob:gitBlob(source)});
+}
+for(const key of ['patch/runtime/special-vfx.mjs','patch/runtime/all-specials.mjs','patch/runtime/install.mjs','upstream/src/game/weapons.js','upstream/src/game/actor.js','upstream/src/game/physics.js','upstream/src/world/paint.js','upstream/src/world/level.js','upstream/src/net/netmatch.js'])assert.ok(manifest.files[key],'required source input '+key);
+const builder=fs.readFileSync(path.join(sourceRoot,'scripts/build-inkwave.mjs'));assert.equal(gitBlob(builder),sourceProof.files['scripts/build-inkwave.mjs'],'exact final builder Git blob');assert.equal(manifest.build.script,hash(builder),'exact final builder');
+const probeFile=fileURLToPath(new URL('./lib/inkjet-terminal-probe.mjs',import.meta.url));probeSource=fs.readFileSync(probeFile);
+const harnessBodies={'scripts/check-inkwave-splashdown-browser.mjs':fs.readFileSync(fileURLToPath(import.meta.url)),'scripts/lib/inkjet-terminal-probe.mjs':probeSource,'scripts/generate-inkwave-source-proof.py':fs.readFileSync(path.join(sourceRoot,'scripts/generate-inkwave-source-proof.py'))};
+for(const [file,bytes] of Object.entries(harnessBodies))assert.equal(gitBlob(bytes),sourceProof.files[file],'exact final QA harness '+file);
+qaIdentity={driverSHA256:hash(fs.readFileSync(fileURLToPath(import.meta.url))),probeSHA256:hash(probeSource),inputProofSHA256:hash(sourceProofBytes),sourceRoot,proofMode:sourceProof.mode,baseCommit:sourceProof.baseCommit,candidateHead:sourceProof.candidateHead,candidateTree:sourceProof.candidateTree,candidateRuntimeGitBlob:sourceProof.files['patches/splatoon3/runtime/special-vfx.mjs'],verifiedInputs};
+fs.writeFileSync(path.join(out,'source-preflight.json'),JSON.stringify({status:'passed',...qaIdentity,inputHash:manifest.inputHash,contentHash:manifest.contentHash},null,2)+'\n');
+if(process.argv.includes('--preflight-only')){console.log('Exact candidate source preflight passed; no browser was run.');process.exit(0);}
+}
+const { chromium } = await import(opt('--playwright-module','playwright'));
+
 const prefix = `/_versions/${manifest.build.revision}/`;
 const server = http.createServer((req, res) => {
+  if(terminal && req.url === '/qa/inkjet-terminal-probe.mjs'){res.setHeader('content-type','text/javascript');res.end(probeSource);return;}
   if (req.url === '/check') {
     res.setHeader('content-type', 'text/html');
     res.end(`<html><head><link rel="icon" href="data:,"><script type="importmap">{"imports":{"three":"${prefix}vendor/three/build/three.module.js","three/addons/":"${prefix}vendor/three/jsm/"}}</script></head><body style="margin:0"></body></html>`);
@@ -40,14 +72,14 @@ try {
   const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  if(inkjet)await page.addInitScript(()=>{let seed=0x12345678;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};});
+  if(inkjet || terminal)await page.addInitScript(()=>{let seed=0x12345678;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};});
   await page.goto(`http://127.0.0.1:${server.address().port}/check`);
   const servedHashes = {};
-  if(inkjet) for(const file of ['patches/splatoon3/runtime/special-vfx.mjs','patches/splatoon3/runtime/inkjet-vfx-budget.mjs','patches/splatoon3/runtime/inkjet-vfx-clock.mjs']) {
+  if(inkjet || terminal) for(const file of ['patches/splatoon3/runtime/special-vfx.mjs','patches/splatoon3/runtime/inkjet-vfx-budget.mjs','patches/splatoon3/runtime/inkjet-vfx-clock.mjs']) {
     const response=await page.request.get(`http://127.0.0.1:${server.address().port}${prefix}${file}`);
     assert.equal(response.status(),200);servedHashes[file]=hash(await response.body());assert.equal(servedHashes[file],hash(fs.readFileSync(path.join(site,prefix,file))),file+' served bytes');
   }
-  const result = await page.evaluate(async ({prefix,inkjet}) => {
+  const result = await page.evaluate(async ({prefix,inkjet,terminal}) => {
     const THREE = await import('three');
     const { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
     const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
@@ -101,7 +133,11 @@ try {
       return n;
     };
 
-    if (inkjet) {
+    let terminalReceipt=null;
+    if (terminal) {
+      const {runInkjetTerminalProbe}=await import('/qa/inkjet-terminal-probe.mjs');
+      terminalReceipt=await runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,Level,applyCatalogueChoice,hz:terminal.hz,draw,pixels,changed,expect,cases,images});
+    } else if (inkjet) {
       const { hz, actorCount, layout } = inkjet;
       G.time = 0;
       G.projectiles = new api.Projectiles(scene);
@@ -232,13 +268,18 @@ try {
       a.character.dispose(); G.projectiles.clear(); G.fx?.dispose(); G.actors = []; G.fx = null;
     }
     renderer.dispose();
-    return { scope: inkjet ? 'Candidate-only SwiftShader continuous-presentation probe with frozen gameplay and stationary live flight records; no baseline performance acceptance or Switch comparison' : 'production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison', cases, failures, images };
-  }, {prefix,inkjet});
+    return { terminalReceipt, scope: terminal ? terminalReceipt.scope : inkjet ? 'Candidate-only SwiftShader continuous-presentation probe with frozen gameplay and stationary live flight records; no baseline performance acceptance or Switch comparison' : 'production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison', cases, failures, images };
+  }, {prefix,inkjet,terminal});
+  if(terminal){
+    assert.equal(result.images.length,20,'native terminal before-step + four-frame local/three-ghost sequence');
+    for(const {name,data} of result.images)assert.ok(Buffer.from(data.split(',')[1],'base64').length>1000,name+' nonempty PNG');
+  }
   for (const { name, data } of result.images) fs.writeFileSync(path.join(out, name), Buffer.from(data.split(',')[1], 'base64'));
   if(inkjet)assert.equal(result.images.length,inkjet.hz===60?12:1,'nonempty per-case capture sequence');
   if(inkjet) for(const {name,data} of result.images)assert.ok(Buffer.from(data.split(',')[1],'base64').length>1000,name+' nonempty PNG');
   delete result.images;
   result.servedHashes=servedHashes;
+  result.qaIdentity=qaIdentity;result.inputHash=manifest.inputHash;result.browserVersion=browser.version();
   result.errors = errors; result.buildRevision = manifest.build.revision; result.contentHash = manifest.contentHash;
   fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify({ evidence: out, cases: result.cases.length, failures: result.failures, errors }));
