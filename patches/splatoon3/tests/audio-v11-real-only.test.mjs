@@ -9,7 +9,6 @@ import { fireArticulation, WEAPON_AUDIO } from '../runtime/audio/weapon-recipes.
 import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
 import { RealS3SampleLoader } from '../runtime/audio/real-s3-loader.mjs';
 import { AuthorizedSamplePack } from '../runtime/audio/authorized-samples.mjs';
-import { chargerHoldSustain } from '../runtime/audio/charger-hold-sustain.mjs';
 
 const rights='Authorized only within a local private copy, no public distribution';
 const id='s3-charger-long';
@@ -39,28 +38,6 @@ class MixerStub {
  stats(){return{played:this.played.length};}
 }
 installWeaponAudioEngine(MixerStub);
-
-test('short Charger MP3 transient becomes a seamless, cached sample-derived bed',()=>{
- const {ctx}=mkctx(),sr=ctx.sampleRate,n=Math.round(sr*.2);
- const source=ctx.createBuffer(1,n,sr),samples=source.getChannelData(0);
- for(let i=0;i<n;i++){
-   const t=i/sr,amp=t<.03?.10:t<.16?.008:.0003;
-   samples[i]=amp*Math.sin(2*Math.PI*1430*t);
- }
- const original=new Float32Array(samples);
- const smoothed=chargerHoldSustain(ctx,source);
- assert.notEqual(smoothed,source,'loop body derived from recorded buffer');
- assert.equal(chargerHoldSustain(ctx,source),smoothed,'shared sample is processed only once');
- assert.ok(smoothed.duration>=.54&&smoothed.duration<=.6);
- const y=smoothed.getChannelData(0);
- assert.ok(y.some(x=>Math.abs(x)>.002),'real recorded material was retained');
- assert.ok(Math.abs(y[0]-y.at(-1))<1e-5,'loop boundary has no sample discontinuity');
- assert.ok(Math.max(...y.slice(0,1000).map(Math.abs)) < Math.max(...original.slice(0,1000).map(Math.abs)),
-   'retriggered click at the sample start is never carried into the sustain loop');
- assert.deepEqual(samples,original,'the source AudioBuffer remains byte-for-byte unchanged');
- const tooShort=ctx.createBuffer(1,Math.floor(sr*.07),sr);
- assert.equal(chargerHoldSustain(ctx,tooShort),tooShort,'unknown very short clips are never fabricated');
-});
 
 test('original main shot and normal, strong, critical and splat recordings are resident before a Charger first shot',async()=>{
  const {ctx}=mkctx(),audio=new MixerStub(ctx),b=audio.weaponBank();
@@ -222,7 +199,7 @@ test('selected Charger preloads HoldNoise first then the other actual cues in on
  a.disposeWeaponAudio();
 });
 
-test('Charger uses seamless recorded sustain with a bounded, monotone pitch presentation',async()=>{
+test('recorded Charger onset is a single unmodified source, while Spinner keeps its motor loop',async()=>{
  const {ctx,sources}=mkctx(),a=new MixerStub(ctx),id='s3-charger-light';
  a.weaponBank();
  const archive=manifest([
@@ -233,58 +210,44 @@ test('Charger uses seamless recorded sustain with a bounded, monotone pitch pres
  await a._realS3Loader.ensure(id,'charge');
  await a._realS3Loader.ensure('s3-spinner-quick','charge');
  const recorded=a._def('main:'+id+':charge');
- assert.equal(recorded.gain,.54,'the recorded hold bed must be audible next to the 0.68 ready cue');
- const voice=()=>({ctx,t:ctx.currentTime,out:{},nodes:[],srcs:[],end:0,endless:false});
  const original=a.weaponBank().authorized.pick(id,'charge').buffer;
- const v=voice(),control=recorded.loop(v,2.5,{});
- assert.notEqual(v.srcs[0].buffer,original,'single recorded source transformed into a seamless bed');
- assert.ok(v.srcs[0].buffer.duration>.5,'0.2 second onset is not retriggered every short loop');
- assert.equal(v.srcs[0].playbackRate.value,1,'missing gameplay actor never synthesizes pitch');
- control.pitch(2.5,ctx.currentTime+.05);
- assert.equal(v.srcs[0].playbackRate.value,1,'old INKWAVE oscillator hint cannot warp an actor-free recording');
+ assert.equal(typeof recorded.loop,'undefined','a Charger charge event must NOT define a looping voice');
+ assert.equal(typeof recorded.build,'function');
+ assert.equal(recorded.gain,.68,'do not retain the previous boosted seamless-bed gain');
+ const voice=()=>({ctx,t:ctx.currentTime,out:{},nodes:[],srcs:[],end:0,endless:false});
+ const first=voice();
+ recorded.build(first,2.5,{actor:{weaponRunner:{charge:0}}});
+ assert.equal(first.srcs[0].buffer,original,'decoded archived MP3 used as-is, without grain transforms');
+ assert.equal(first.srcs[0].loop,false,'original onset finishes naturally after one recording');
+ assert.equal(first.srcs[0].playbackRate.value,1,'no invented pitch sweep at charge start');
+ assert.equal(first.srcs[0].playbackRate.automation.length,0);
+ assert.ok(Math.abs(first.end-(ctx.currentTime+original.duration))<1e-8);
+ const second=voice();
+ recorded.build(second,.01,{actor:{weaponRunner:{charge:1}}});
+ assert.equal(second.srcs[0].buffer,original);
+ assert.equal(second.srcs[0].playbackRate.value,1,'old S1/GMod 0.01..1x proxy cannot affect MP3');
+ assert.equal(second.srcs[0].loop,false);
+ const spinner=a._def('main:s3-spinner-quick:charge'),v=voice();
+ assert.equal(typeof spinner.loop,'function','only the real Spinner motor stays looped');
+ const control=spinner.loop(v,1.5,{});
+ assert.equal(v.srcs[0].loop,true);
+ assert.equal(v.srcs[0].playbackRate.value,1);
+ control.pitch(1.2,ctx.currentTime+.05);
  assert.equal(v.srcs[0].playbackRate.automation.length,0);
- const actor={weaponRunner:{charge:0}},charged=voice(),rise=recorded.loop(charged,2.5,{actor});
- assert.equal(charged.srcs[0].buffer,v.srcs[0].buffer,'same derived PCM reused, not decoded again');
- assert.ok(Math.abs(charged.srcs[0].playbackRate.value-.86)<1e-8,
-   'initial playback speed stays near natural pitch, not broken 0.01x');
- actor.weaponRunner.charge=.5;rise.pitch(2.5,ctx.currentTime+.1);
- assert.ok(Math.abs(charged.srcs[0].playbackRate.value-.99)<1e-8,
-   'half-charge rise remains modest');
- const count=charged.srcs[0].playbackRate.automation.length;
- rise.pitch(1,ctx.currentTime+.11);
- assert.equal(charged.srcs[0].playbackRate.automation.length,count,
-   'constant charge does not cause redundant automation');
- actor.weaponRunner.charge=.25;rise.pitch(1,ctx.currentTime+.14);
- assert.equal(charged.srcs[0].playbackRate.automation.length,count,
-   'no backward rate jump while held');
- actor.weaponRunner.charge=1;rise.pitch(2.5,ctx.currentTime+.2);
- assert.ok(Math.abs(charged.srcs[0].playbackRate.value-1.12)<1e-8);
- assert.equal(charged.srcs[0].playbackRate.automation.length,count+1);
- actor.weaponRunner.charge=NaN;rise.pitch(2.5,ctx.currentTime+.3);
- assert.equal(charged.srcs[0].playbackRate.automation.length,count+1);
- actor.weaponRunner.charge=0;
- const restarted=voice();recorded.loop(restarted,2.5,{actor});
- assert.ok(Math.abs(restarted.srcs[0].playbackRate.value-.86)<1e-8,
-   'a new hold resets the rate envelope without changing the recorded asset');
- const spin=a._def('main:s3-spinner-quick:charge'),v2=voice(),spinControl=spin.loop(v2,1.5,{});
- assert.equal(v2.srcs[0].playbackRate.value,1,'Spinner remains at original speed');
- spinControl.pitch(1.2,ctx.currentTime+.05);
- assert.equal(v2.srcs[0].playbackRate.value,1);
- assert.equal(v2.srcs[0].playbackRate.automation.length,0);
- assert.equal(sources.length,4,'no synthesized oscillator or extra voices');
+ assert.equal(sources.length,3,'no synth oscillator or extra grain voices');
  assert.equal(a.weaponBank().cache.size,0);
  a.disposeWeaponAudio();
 });
 
-test('native Charger full charge and hold still emit real-only events',()=>{
+test('native Charger no longer spawns a loop, but full charge still plays the ready cue',()=>{
  const source=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const adapted=adaptWeaponAudio('src/game/weapons.js',source);
- assert.ok(adapted.includes("this.chargeLoop = G.audio?.loopWeapon?.(a.weapon.id, 'charge'"),
-   'native press starts the sourced hold loop');
+ assert.ok(adapted.includes('this.chargeLoop = null;'),
+   'native charge begins with no repeating HoldNoise handle');
+ assert.ok(!adapted.includes("this.chargeLoop = G.audio?.loopWeapon?."),
+   'the source click must never be routed into the looping AudioEngine API');
  assert.ok(adapted.includes("G.audio?.playWeapon?.(a.weapon.id, 'ready'"),
-   'native full charge sends the original ready event');
- assert.ok(adapted.includes("this.chargeLoop?.stop(0.05)"),
-   'release stops the charging audio without a stale loop');
+   'full charge still plays its independent original ready clip');
 });
 
 test('2022-unsourced alternates never generate PCM when temporary family recording is unavailable',async()=>{
