@@ -68,7 +68,6 @@ export class MobileInput {
     this._ptr = new Map();                // pointerId → { kind, id, x, y, ... }
     this._stick = { id: -1, ox: 0, oy: 0, x: 0, y: 0 };
     this._abort = new AbortController();
-    this._relayoutRaf = null;
     if (!this.active) return;
     this._install();
   }
@@ -131,14 +130,7 @@ export class MobileInput {
     this.root?.querySelectorAll('.iwm-b.is-down').forEach((b) => b.classList.remove('is-down'));
   }
   reset() { this.resetPointers(); this.lookDX = this.lookDY = 0; this.setMap(false); this.gyro.discard(); }
-  destroy() {
-    this._abort.abort();
-    if (this._relayoutRaf !== null) cancelAnimationFrame(this._relayoutRaf);
-    this._relayoutRaf = null;
-    this.gyro.stop();
-    this.root?.remove();
-    document.documentElement.classList.remove('iw-mobile');
-  }
+  destroy() { this._abort.abort(); this.gyro.stop(); this.root?.remove(); document.documentElement.classList.remove('iw-mobile'); }
 
   // ------------------------------------------------------------------------------------------ build
   _install() {
@@ -200,17 +192,7 @@ export class MobileInput {
 
     window.addEventListener('blur', () => this.reset(), { signal: sig });
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.reset(); else this.gyro.resync(); }, { signal: sig });
-    const relayout = () => {
-      // Input and gyro cancellation remain synchronous for every native viewport event.
-      this.gyro.resync(); this.resetPointers();
-      // Safari may emit resize, orientationchange and screen.orientation.change
-      // before one frame. Measure the final viewport only once per frame.
-      if (this._relayoutRaf !== null) return;
-      this._relayoutRaf = requestAnimationFrame(() => {
-        this._relayoutRaf = null;
-        if (!this._abort.signal.aborted) this._layoutAll();
-      });
-    };
+    const relayout = () => { this.gyro.resync(); this.resetPointers(); requestAnimationFrame(() => this._layoutAll()); };
     window.addEventListener('resize', relayout, { signal: sig });
     screen.orientation?.addEventListener?.('change', relayout, { signal: sig });
     window.addEventListener('orientationchange', relayout, { signal: sig });
