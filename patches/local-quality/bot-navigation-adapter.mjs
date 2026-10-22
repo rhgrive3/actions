@@ -72,5 +72,13 @@ export function adaptBotNavigation(rel, code, once) {
   // ordinary human jumps and never manufactures painted ownership.
   patch('    if (this._needJump && this.jumpCd <= 0 && a.grounded) { it.jump = true; this.jumpCd = 0.6; this._needJump = false; }',
     '    if (this._needJump && this.jumpCd <= 0 && a.grounded) { it.jump = true; this.jumpCd = 0.6; this._needJump = false; }\n    botTravelForm(this);', 'surface-aware travel input');
-  return code;
+  return adaptBossGoalUpperBound(code, once);
+}
+
+// The +3 LOS bonus is an upper bound before the existing nonpositive teammate
+// penalties. Leave random draws, score arithmetic order and winning ties intact.
+export function adaptBossGoalUpperBound(code, once) {
+  const before = '      if (G.physics.los(_v2.set(n.x, n.y + 1.3, n.z), _v3.set(bx, boss.pos.y + 2.5, bz))) s += 3;';
+  const after = '      if (s + 3 <= bs) continue;\n' + before;
+  return once(code, before, after, 'bot navigation: prune impossible boss flank scores');
 }
