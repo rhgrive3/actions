@@ -183,8 +183,11 @@ export function buildFrame(match, api) {
     const objectivePos = hostRemote && admitted ? [...pose.last.pos] : a.pos.toArray();
     const special = objectiveSpecialFor(a, a.remote ? cmd : null);
     const specialDeployed = special === 'storm' && (a.specialActive?.t > 0 || (a.remote && cmd?.specialDeployed === true));
-    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: objectivePos, alive: a.alive && !a.s3Disconnected && (!hostRemote || admitted), grounded: a.grounded,
-      remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming: a.form === 'squid', slot: a.slot };
+    // Support/form travel with the admitted pose, not the interpolated proxy.
+    const grounded = hostRemote ? admitted && pose.last.grounded === true : a.grounded;
+    const swimming = hostRemote && admitted ? pose.last.squid === true : a.form === 'squid';
+    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: objectivePos, alive: a.alive && !a.s3Disconnected && (!hostRemote || admitted), grounded,
+      remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming, slot: a.slot };
   });
   return { actors, inputs, zoneCoverage: match.rankedWorld.zoneCoverage(), barrierHits: match.rankedBarrierHits.splice(0),
     floorAt: (x, z, yMax) => match.rankedWorld.floorAt(x, z, yMax), fallDeathY: api.PLAYER?.fallDeathY,

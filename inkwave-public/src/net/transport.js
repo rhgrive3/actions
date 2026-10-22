@@ -45,7 +45,7 @@ export class Transport {
     return new Promise((resolve, reject) => {
       let settled = false;
       const done = (fn, v) => { if (!settled) { settled = true; clearTimeout(timer); fn(v); } };
-      const url = `${relayURL()}/room/${encodeURIComponent(code)}?name=${encodeURIComponent(name)}&v=${PROTO}${create ? '&create=1' : ''}`;
+      const url = `${relayURL()}/room/${encodeURIComponent(code)}?name=${encodeURIComponent(name)}&v=${PROTO}&compat=${encodeURIComponent(COMPAT)}${create ? '&create=1' : ''}`;
       let ws;
       try { ws = new WebSocket(url); } catch { reject(new Error('Could not connect')); return; }
       this.ws = ws;
