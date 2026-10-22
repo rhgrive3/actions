@@ -28,7 +28,7 @@ test('Tri-Slosher reuses Bucket draw radius and tail for every sheet',()=>{
   assert.ok(fidelityInkTail({...p,type:'shot'},1,p.vis*INK_LOOK.slosh[4],INK_LOOK.slosh)>1);
 });
 
-test('Bloblobber bubbles grow over five frames and shrink 25% each rebound',()=>{
+test('Bloblobber bubbles grow over five frames and shrink 25% each rebound',async()=>{
   const r=record('WeaponSlosherBathtub'),unit=r.parameters.UnitGroupParam.Unit[0];
   const v=visualFor(r,unit,0,0);
   assert.equal(v.style,'bubble');
