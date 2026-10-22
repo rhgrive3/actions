@@ -16,11 +16,11 @@ const JA = {
   'chip.guestSub': 'ログイン / 新規登録',
   'chip.userSub': '@{id} · ログイン中',
   'chip.offline': 'オフライン',
-  'chip.offlineSub': '接続が戻ると自動で再確認します',
+  'chip.offlineSub': '',
   'chip.signIn': 'ログイン',
   'chip.open': 'アカウント',
-  'chip.desc.guest': 'ログインすると、プレイヤー名をアカウントで管理できます',
-  'chip.desc.user': 'プレイヤー名・パスワード・ログイン中の端末を管理します',
+  'chip.desc.guest': 'ログイン・新規登録',
+  'chip.desc.user': 'アカウントの設定',
 };
 
 const EN = {
