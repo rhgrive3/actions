@@ -31,7 +31,7 @@ export function installWeaponAudioRuntime(api){
     return withBlasterSplashHit(p.owner,()=>oldBurst.call(this,p,...args));
   };
   const unsubs=[],active=new Set(),obstruction=new WeakMap();
-  const stateFor=r=>r._mainAudioState||=( {id:null,engine:null,loops:{},wasReady:false,wasCharge:false,canopy:null,sBlastMode:null} );
+  const stateFor=r=>r._mainAudioState||=( {id:null,engine:null,loops:{},wasReady:false,wasCharge:false,keepEmergePlayed:false,canopy:null,sBlastMode:null} );
   function options(a,pos=a?.pos,volume=1){
     const local=!!a?.isLocal,listener=G.camera?.position||G.local?.pos;
     let occ=0;
@@ -43,7 +43,7 @@ export function installWeaponAudioRuntime(api){
     return {actor:a,pos:local?undefined:finite3(pos)?pos:undefined,volume,priority:local?88:64,occlusion:occ};
   }
   function play(a,event,pos,volume=1,id=a?.weapon?.id){id=mainAudioSourceId(id);if(WEAPON_AUDIO[id]?.events.includes(event))return G.audio?.playWeapon?.(id,event,options(a,pos,volume));return null;}
-  function stop(r){const s=r?._mainAudioState;if(!s)return;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
+  function stop(r){const s=r?._mainAudioState;if(!s)return;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
   function keepLoop(r,event,enabled,pitch=1){const s=stateFor(r),a=r.a,id=mainAudioSourceId(a?.weapon?.id);
     if(enabled&&WEAPON_AUDIO[id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
       if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch});
@@ -61,6 +61,22 @@ export function installWeaponAudioRuntime(api){
     if(runner?._mainAudioState)runner._mainAudioState.firedThisUpdate=true;
     // The call is synchronous with the actual admitted projectile event, never with raw input.
     G.audio?.playWeapon?.(id,articulation,{...options(a,e.muzzle||a.pos,a.isLocal?.82:.68),variant:e.audioVariant});
+  });
+  // Source HoldNoise is a single onset, including the documented
+  // full-charge-keep squid-to-kid return. Only replay on emergence when the
+  // S3 gameplay owner *actually retained* the full charge (scopes/empty
+  // charge/no-store weapons must not receive a phantom cue).
+  listen('actor:form',e=>{
+    const a=e?.actor,r=a?.weaponRunner;
+    if(!r||WEAPON_AUDIO[mainAudioSourceId(a?.weapon?.id)]?.family!=='charger')return;
+    const s=stateFor(r);
+    if(e.form==='squid'){s.keepEmergePlayed=false;return;}
+    if(e.form!=='kid'||a.alive===false)return;
+    const stored=r.s3Stored;
+    if(stored?.resurfaced===true&&stored.charge>=1&&!s.keepEmergePlayed){
+      play(a,'charge',a.pos,a.isLocal?.55:.35);
+      s.keepEmergePlayed=true;
+    }
   });
   listen('weapon:dodge',e=>play(e?.actor,'dodge',e?.actor?.pos,.8));
   listen('weapon:impact',e=>{
@@ -99,7 +115,17 @@ export function installWeaponAudioRuntime(api){
     }
     s.firedThisUpdate=false;
     const result=oldUpdate.call(this,dt,input,...rest);
-    // Legacy runners own redirected loops themselves; the catalog runners lacked them.
+    const recipe=WEAPON_AUDIO[id],isCharger=recipe?.family==='charger';
+    // Fresh Charger charging has exactly one recorded onset; never start an
+    // AudioBufferSource loop or a guessed per-frame pitch ramp.
+    if(isCharger&&a?.alive!==false&&a.form!=='squid'&&!a.specialActive&&!a.superJumpState){
+      const nowCharging=!!this.charging;
+      if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed)
+        play(a,'charge',a.pos,a.isLocal?.55:.35);
+      if(!nowCharging&&!this.s3Stored)s.keepEmergePlayed=false;
+      if(!a?.weapon?.catalogRecord)s.wasCharge=nowCharging;
+    }
+    // Other weapon families still own their true continuous loop events.
     if(!a?.weapon?.catalogRecord||a.remote)return result;
     if(!a.alive||a.form==='squid'||a.specialActive||a.superJumpState){stop(this);return result;}
     const r=WEAPON_AUDIO[id],c=this.catalogState;if(!r||!c)return result;
@@ -109,7 +135,7 @@ export function installWeaponAudioRuntime(api){
       s.sBlastMode=mode;
     }
     const charging=!!this.charging,q=clamp(Number(this.charge)||0,0,1);
-    keepLoop(this,'charge',charging,.66+q*.78);
+    if(!isCharger)keepLoop(this,'charge',charging,.66+q*.78);
     keepLoop(this,'spin',!!this.streaming,.94+clamp(Number(this.burstFrac)||0,0,1)*.25);
     keepLoop(this,'roll',!!this.rolling,.8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25);
     if(charging&&q>=1&&!s.wasReady)play(a,'ready',a.pos,.7);
