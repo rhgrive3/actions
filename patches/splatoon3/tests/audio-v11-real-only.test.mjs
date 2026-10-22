@@ -239,6 +239,17 @@ test('recorded Charger onset is a single unmodified source, while Spinner keeps 
  a.disposeWeaponAudio();
 });
 
+test('network Charger voices use exactly one original onset instead of an indefinite loop',()=>{
+ const source=fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8');
+ const adapted=adaptWeaponAudio('src/net/netmatch.js',source);
+ assert.ok(adapted.includes('a.net._chargerOnsetActive = chargerStarting;'));
+ assert.ok(adapted.includes("G.audio?.playWeapon?.(a.weapon.id,'charge'"));
+ assert.ok(!adapted.includes("this._voiceLoop(a, near, 'charge', wr.charging"),
+   'remote Charger hold must never be passed to the looping sound adapter');
+ assert.ok(adapted.includes("this._voiceLoop(a, near, 'spin'"),
+   'genuine Spinner motor loops must remain untouched');
+});
+
 test('native Charger no longer spawns a loop, but full charge still plays the ready cue',()=>{
  const source=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const adapted=adaptWeaponAudio('src/game/weapons.js',source);
