@@ -93,10 +93,16 @@ test('Charger onset occurs once on initial hold and again only after real stored
  assert.equal(a.weaponRunner._mainAudioState.loops.charge,undefined);
  // The actual S3 charger owner stores this structure while diving after
  // full charge. The transition is a form event, not another new charge.
- a.weaponRunner.s3Stored={charge:1,resurfaced:false};
+ a.weaponRunner.s3Stored={charge:1,resurfaced:false,remaining:1,fireDelay:0.1,laserDelay:0};
+ a.form='squid';a.submerged=true;
  f.emit('actor:form',{actor:a,form:'squid'});
+ // Run an actual weapon tick underwater. This calls stop() and clears the
+ // audio presentation state, without expiring the gameplay-owned keep.
+ a.weaponRunner.update(1/60,{fire:false});
+ assert.ok(a.weaponRunner.s3Stored?.charge>0,'real underwater frame preserves charge keep');
+ a.form='kid';a.submerged=false;
  f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,2,'returning from charge keep replays the short click once');
+ assert.equal(onsets().length,2,'squid-frame stop may not erase real emergence onset');
  f.emit('actor:form',{actor:a,form:'kid'});
  assert.equal(onsets().length,2,'duplicate form events cannot repeat a click');
  // A fresh dive whose stored charge was lost must not play the keep cue.
