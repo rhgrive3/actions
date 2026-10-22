@@ -1,3 +1,4 @@
+import { setPropInstanceEnvelope } from './render-bounds.js';
 import { G as propAtlasGame } from '../core/ctx.js';
 // INKWAVE prop kit: procedural set dressing for the harbor / skatepark / container-yard arenas.
 //
@@ -3259,12 +3260,14 @@ export class PropKit {
       recs.forEach((r, i) => mesh.setMatrixAt(i, r.base));
       mesh.castShadow = this.castShadow; mesh.receiveShadow = true; mesh.frustumCulled = false; mesh.name = 'props:spin:' + kind;
       mesh.userData = { recs, axis: kind === 'fan' ? 'z' : 'y' };
+      setPropInstanceEnvelope(mesh);
       this.group.add(mesh); this._inst.push(mesh);
     }
     if (this._blink.length) {
       const mesh = new THREE.InstancedMesh(G.sph(1, 8, 6, false), this.mat.blink, this._blink.length);
       this._blink.forEach((r, i) => { mesh.setMatrixAt(i, r.m); mesh.setColorAt(i, _c1.copy(r.color).multiplyScalar(r.hi)); });
       mesh.frustumCulled = false; mesh.name = 'props:blink'; mesh.userData = { recs: this._blink, blink: true };
+      setPropInstanceEnvelope(mesh);
       this.group.add(mesh); this._inst.push(mesh);
     }
     for (const [recs, geo, name] of [[this._flags, () => flagGeo(), 'flags'], [this._banners, () => bannerGeo(0.8, 1.9), 'banners']]) {
@@ -3274,6 +3277,7 @@ export class PropKit {
       mesh.customDepthMaterial = this.mat.clothDepth;
       mesh.castShadow = this.castShadow; mesh.receiveShadow = true; mesh.frustumCulled = false; mesh.name = 'props:' + name;
       mesh.userData = { recs, cloth: true };
+      setPropInstanceEnvelope(mesh);
       this.group.add(mesh); this._inst.push(mesh);
     }
     this._applyColors();
@@ -3323,12 +3327,17 @@ export class PropKit {
         mesh.instanceMatrix.needsUpdate = true;
       } else if (ud.blink) {
         const recs = ud.recs;
+        let changed = false;
         for (let i = 0; i < recs.length; i++) {
           const r = recs[i], s = 0.5 + 0.5 * Math.sin(time * r.rate * TAU + r.phase);
           const k = s * s * (3 - 2 * s), on = k > 0.6 ? 1 : k / 0.6 * 0.25;
-          mesh.setColorAt(i, _c1.copy(r.color).multiplyScalar(r.lo + (r.hi - r.lo) * on));
+          _c1.copy(r.color).multiplyScalar(r.lo + (r.hi - r.lo) * on);
+          const values = mesh.instanceColor.array, offset = i * 3;
+          if (values[offset] !== Math.fround(_c1.r) || values[offset + 1] !== Math.fround(_c1.g) || values[offset + 2] !== Math.fround(_c1.b)) {
+            mesh.setColorAt(i, _c1); changed = true;
+          }
         }
-        mesh.instanceColor.needsUpdate = true;
+        if (changed) mesh.instanceColor.needsUpdate = true;
       }
     }
   }

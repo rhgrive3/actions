@@ -136,13 +136,15 @@ export class AuthorizedSamplePack {
     const cancelled=Symbol('cancelled audio sample load');
     const next=replace?new Map():new Map(this.loaded);
     let total=replace?0:decodedBytes(next),done=0,repairs=0,cursor=0;
-    const errors=[],decoded=new Map(),remainingFiles=new Map(),bufferRefs=new Map();
-    for(const clip of valid)remainingFiles.set(clip.file,(remainingFiles.get(clip.file)||0)+1);
-    for(const row of next.values())bufferRefs.set(row.buffer,(bufferRefs.get(row.buffer)||0)+1);
-    const removeRow=key=>{const row=next.get(key);if(!row)return;next.delete(key);const count=bufferRefs.get(row.buffer)-1;
-      if(count)bufferRefs.set(row.buffer,count);else{bufferRefs.delete(row.buffer);total-=row.bytes;}};
-    const insertRow=(key,row)=>{removeRow(key);const count=bufferRefs.get(row.buffer)||0;
-      if(!count)total+=row.bytes;bufferRefs.set(row.buffer,count+1);next.set(key,row);};
+    const errors=[],decoded=new Map();
+    // Existing and staged rows reference PCM by identity. Account bytes once
+    // per AudioBuffer while staging, without rebuilding a candidate Map per clip.
+    const refs=new Map();
+    for(const row of next.values())refs.set(row.buffer,(refs.get(row.buffer)||0)+1);
+    const acquire=row=>{if(!refs.has(row.buffer))total+=row.bytes;refs.set(row.buffer,(refs.get(row.buffer)||0)+1);};
+    const release=row=>{const n=refs.get(row.buffer);if(n===1){refs.delete(row.buffer);total-=row.bytes;}else refs.set(row.buffer,n-1);};
+    const remainingByFile=new Map();
+    for(const clip of valid)remainingByFile.set(clip.file,(remainingByFile.get(clip.file)||0)+1);
     // The same file can back multiple variants: download/decode it once per import.
     const getDecoded=(clip)=>{
       if(decoded.has(clip.file))return decoded.get(clip.file);
@@ -174,7 +176,8 @@ export class AuthorizedSamplePack {
           // Reuse an already verified, byte-identical source buffer across IDs.
           // The same source is intentionally referenced by e.g. several chargers.
           // Loop endpoints/repair mode must match, so no PCM is ever reinterpreted.
-          let existing;for(const row of next.values())if(canReusePCM(row,clip)){existing=row;break;}
+          let existing=null;
+          for(const row of next.values())if(canReusePCM(row,clip)){existing=row;break;}
           let buffer;
           if(existing){buffer=existing.buffer;}
           else {
@@ -194,20 +197,29 @@ export class AuthorizedSamplePack {
           }
           const cost=buffer.length*buffer.numberOfChannels*4;
           if(!Number.isSafeInteger(cost)||cost<=0)throw new Error('Invalid decoded sample size');
-          const key=this.key(clip.id,clip.event,clip.variant);
-          // A valid single buffer always fits after older entries are evicted;
-          // reject before changing the transaction if even that is impossible.
           if(cost>this.maxBytes)throw new Error('Sample cache budget exceeded');
-          insertRow(key,Object.freeze({...clip,buffer,bytes:cost}));
+          const key=this.key(clip.id,clip.event,clip.variant);
+          const prior=next.get(key);
+          if(prior){next.delete(key);release(prior);}
+          const row=Object.freeze({...clip,buffer,bytes:cost});
+          next.set(key,row);acquire(row);
+          // New row fits the budget alone; evict from the original LRU head
+          // until the staged bank fits, accounting for shared PCM identities.
           while(total>this.maxBytes&&next.size>1){
             const victim=next.keys().next().value;
             if(victim===key)break;
-            removeRow(victim);
+            const removed=next.get(victim);next.delete(victim);release(removed);
           }
           done++;
         }catch(e){if(e!==cancelled && current())errors.push({file:clip.file,id:clip.id,event:clip.event,error:String(e?.message||e)});}
-        finally{this.pending--;const remaining=remainingFiles.get(clip.file)-1;
-          if(remaining)remainingFiles.set(clip.file,remaining);else{remainingFiles.delete(clip.file);decoded.delete(clip.file);}}
+        finally{
+          this.pending--;
+          // A shared decoded file remains live until its last manifest borrower
+          // finishes, even if jobs run concurrently or one clip fails checksum.
+          const left=remainingByFile.get(clip.file)-1;
+          if(left===0){remainingByFile.delete(clip.file);decoded.delete(clip.file);}
+          else remainingByFile.set(clip.file,left);
+        }
       }
     });
     await Promise.all(jobs);

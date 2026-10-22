@@ -21,7 +21,9 @@ export function createCharacterShadowBatch(renderer, makeGroup, current = () => 
   };
   const batch = {
     warm(character, camera, target) {
-      return canonicalWarm(character.warmAll) ? character.warmAll(batch.rendererFor(character), camera, target) : character.warmAll();
+      if (!canonicalWarm(character.warmAll)) return character.warmAll();
+      if (character._sourceMotionDisposed) return;
+      return character.warmAll(batch.rendererFor(character), camera, target);
     },
     rendererFor(character) {
       if (!sm || !renderer.compileAsync) return renderer;
@@ -29,13 +31,13 @@ export function createCharacterShadowBatch(renderer, makeGroup, current = () => 
       if (facade) return facade;
       const shadow = Object.create(sm);
       shadow.render = (lights, root, camera, group, parent) => {
-        if (!current()) return;
+        if (!current() || character._sourceMotionDisposed) return;
         const first = entries[0];
         if (closed || entries.length >= 8 || lights.length !== 1 || !lights[0].isDirectionalLight || !group || group.parent !== parent || parent !== character.kid || root !== character.root ||
             first && (first.camera !== camera || first.lights.length !== lights.length || first.lights.some((light, i) => light !== lights[i]))) {
           return direct(lights, root, camera);
         }
-        entries.push({ root, camera, group, parent, meshes: group.children.slice(), lights: lights.slice() });
+        entries.push({ character, root, rootParent: root.parent, camera, group, parent, parentParent: parent.parent, meshes: group.children.slice(), lights: lights.slice() });
       };
       facade = Object.create(renderer);
       Object.defineProperty(facade, 'shadowMap', { value: shadow });
@@ -49,38 +51,44 @@ export function createCharacterShadowBatch(renderer, makeGroup, current = () => 
       if (closed) return;
       closed = true;
       if (!entries.length) return;
-      const visibility = [], attached = [], restoredGroups = [], draw = makeGroup();
+      const visibility = [], attached = [], restoredGroups = [], prepared = [], draw = makeGroup();
       let attempted = false;
       const previous = sm.needsUpdate;
       try {
         if (!current() || !sm.enabled) return;
         for (const entry of entries) {
-          // warmAll detached exactly this temporary group after its synchronous
-          // compile phase. Never resurrect a disposed/replaced character group.
-          if (entry.group.parent && entry.group.parent !== entry.parent) {
-            throw Error('Character warm group changed ownership');
-          }
-          if (!entry.group.children.length) {
-            restoredGroups.push(entry.group);
-            for (const mesh of entry.meshes) {
-              if (mesh.parent) throw Error('Character warm mesh changed ownership');
-              entry.group.add(mesh);
+          // Awaiting other compile jobs permits disconnect, dispose or replacement.
+          // Validate every retained identity before resurrecting a temporary group.
+          const { character, root, group, parent, meshes } = entry;
+          if (character._sourceMotionDisposed || character.root !== root || character.kid !== parent ||
+              root.parent !== entry.rootParent || parent.parent !== entry.parentParent ||
+              group.parent && group.parent !== parent) continue;
+          if (group.children.length ? group.children.length !== meshes.length ||
+              group.children.some((mesh, i) => mesh !== meshes[i] || mesh.parent !== group) :
+              meshes.some(mesh => mesh.parent)) continue;
+          try {
+            if (!group.children.length) {
+              restoredGroups.push(group);
+              for (const mesh of meshes) group.add(mesh);
             }
-          }
-          if (!entry.group.parent) { entry.parent.add(entry.group); attached.push(entry); }
-          entry.root.traverse(object => { visibility.push(object, object.visible); object.visible = true; });
-          entry.root.updateMatrixWorld(true);
-          // References preserve the actor's real parent and custom hook receiver.
-          draw.children.push(entry.root);
+            if (!group.parent) { parent.add(group); attached.push(entry); }
+            root.traverse(object => { visibility.push(object, object.visible); object.visible = true; });
+            root.updateMatrixWorld(true);
+            // References preserve the actor's real parent and custom hook receiver.
+            draw.children.push(root);
+            prepared.push(entry);
+          } catch (error) { warn('[character] shadow warm preparation', error); }
         }
+        if (!prepared.length) return;
         sm.needsUpdate = true;
         attempted = true;
-        sm.render(entries[0].lights, draw, entries[0].camera);
+        sm.render(prepared[0].lights, draw, prepared[0].camera);
       } catch (error) {
         warn('[character] shadow warm', error);
         // A combined pass must not suppress otherwise healthy actors when one
         // native draw fails. Keep their prepared visibility and retry separately.
-        if (attempted && current()) for (const entry of entries) {
+        if (attempted && current()) for (const entry of prepared) {
+          if (entry.character._sourceMotionDisposed || entry.character.root !== entry.root || entry.character.kid !== entry.parent || entry.root.parent !== entry.rootParent) continue;
           try { sm.needsUpdate = true; sm.render(entry.lights, entry.root, entry.camera); }
           catch (failure) { warn('[character] shadow warm', failure); }
         }

@@ -1,3 +1,4 @@
+import { captureRainmakerShotOrigin, rainmakerActorLife, rainmakerActorOwner } from './rainmaker-shot-origin.mjs';
 import { Match } from '../../../../src/game/match.js';
 import { BotBrain } from '../../../../src/game/bots.js';
 import { NetSession } from '../../../../src/net/session.js';
@@ -202,13 +203,20 @@ export function buildFrame(match, api) {
     const specialDeployed = special === 'storm' && (a.specialActive?.t > 0 || (a.remote && cmd?.specialDeployed === true));
     const grounded = hostRemote ? admitted && pose.last.grounded === true : a.grounded;
     const swimming = hostRemote && admitted ? pose.last.squid === true : a.form === 'squid';
+    const shotRequired = match.mode === 'rainmaker' && match.ranked.rule.state.carrier === id;
+    const charge = shotRequired ? match.ranked.rule.state.charge : null;
+    const shotOrigin = shotRequired && charge?.firing && !cmd?.fire && !swimming && (!hostRemote || admitted)
+      ? captureRainmakerShotOrigin(api.THREE, a, id, objectivePos, cmd?.aim || a.aimDir?.toArray()) : null;
     const row = owned.row;
+    row.life = rainmakerActorLife(a); row.owner = rainmakerActorOwner(a); row.rainmakerShotRequired = shotRequired; row.rainmakerShotOrigin = shotOrigin;
     row.special = special; row.specialDeployed = specialDeployed; row.clamDrop = a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0;
     row.id = id; row.team = a.team; row.alive = a.alive && !a.s3Disconnected && (!hostRemote || admitted); row.grounded = grounded;
     row.remote = a.remote; row.onTower = !!a._rankedOnTower; row.weight = a.weapon.weight || 'middle'; row.swimming = swimming; row.slot = a.slot;
     actors[index] = row;
   }
-  frame.zoneCoverage = match.mode === 'zones' ? match.rankedWorld.zoneCoverage() : match.rankedWorld._emptyZoneCoverage || match.rankedWorld.zoneCoverage();
+  const world = match.rankedWorld;
+  frame.zoneCoverage = match.mode === 'zones' ? world.zoneCoverage()
+    : (world._emptyZoneCoverage ??= Object.freeze((world.stage?.zones || []).map(() => Object.freeze([0, 0]))));
   frame.barrierHits = match.rankedBarrierHits.splice(0);
   frame.fallDeathY = api.PLAYER?.fallDeathY;
   return frame;

@@ -8,6 +8,9 @@ on:
       - 'scripts/lib/inkwave-native-stages.mjs'
       - 'scripts/check-inkwave-source-placement-browser.mjs'
       - 'scripts/check-inkwave-terrain.mjs'
+      - 'scripts/prepare-urchin-physics-fixture.mjs'
+      - 'scripts/lib/inkwave-terrain-receipt.mjs'
+      - 'scripts/tests/inkwave-terrain-receipt.test.mjs'
       - 'scripts/check-inkwave-terrain-browser.mjs'
       - 'scripts/check-inkwave-terrain-game.mjs'
       - 'scripts/fetch-inkwave-terrain-sources.py'
@@ -114,12 +117,32 @@ jobs:
           node-version: 22
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
       - run: npx playwright install --with-deps chromium
+      - name: Verify audit-to-fixture byte binding
+        run: node --test scripts/tests/inkwave-terrain-receipt.test.mjs
       - name: Fetch all pinned original OBJ and MTL inputs privately
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/fetch-inkwave-terrain-sources.py .codex-stage-sources/terrain-ci
       - name: Audit every playable source mesh, collision BVH and paint chart
         run: node scripts/check-inkwave-terrain.mjs .codex-stage-sources/terrain-ci work/terrain-source-evidence/audit.json .codex-stage-sources/terrain-ci-derived
+      - name: Prepare private physics-only Urchin fixture and run unchanged arena baseline
+        id: urchin
+        continue-on-error: true
+        env:
+          INKWAVE_NATIVE_STAGE_ASSETS: ${{ github.workspace }}/.codex-stage-sources/urchin-physics-only
+        run: |
+          set -o pipefail
+          node scripts/prepare-urchin-physics-fixture.mjs .codex-stage-sources/terrain-ci .codex-stage-sources/terrain-ci-derived work/terrain-source-evidence/audit.json "$INKWAVE_NATIVE_STAGE_ASSETS" 2>&1 | tee work/terrain-source-evidence/urchin-prepare.log
+          # NativeLevel + NativePhysics + CPU PaintSystem: no texture loader or rendering.
+          # Preserve the test body and all 60 configured cases; a first failure can stop its loop.
+          set +e
+          node --experimental-vm-modules --test --test-reporter=tap patches/native-stages/tests/native-arena-basis.test.mjs 2>&1 | tee work/terrain-source-evidence/urchin-arena.tap
+          statuses=("${PIPESTATUS[@]}")
+          status=${statuses[0]}
+          if [ "${statuses[1]}" -ne 0 ]; then status=1; fi
+          set -e
+          if grep -q ' # SKIP' work/terrain-source-evidence/urchin-arena.tap; then exit 1; fi
+          exit "$status"
       - name: Verify original Bluefin central walking and paint at 30/60/120 Hz
         env:
           INKWAVE_TERRAIN_ASSETS: ${{ github.workspace }}/.codex-stage-sources/terrain-ci-derived
@@ -127,6 +150,9 @@ jobs:
       - run: node scripts/build-inkwave.mjs inkwave-public work/site
       - name: Compare real source render and collision coverage in WebGL
         run: node scripts/check-inkwave-terrain-browser.mjs work/site .codex-stage-sources/terrain-ci-derived work/terrain-source-evidence/browser
+      - name: Enforce unchanged Urchin arena baseline result
+        if: always() && steps.urchin.outcome == 'failure'
+        run: exit 1
       - name: Publish numeric receipts only; exclude third-party payloads
         uses: actions/upload-artifact@v4
         if: always()
@@ -135,5 +161,8 @@ jobs:
           path: |
             work/terrain-source-evidence/fetch.json
             work/terrain-source-evidence/audit.json
+            work/terrain-source-evidence/urchin-prepare.log
+            work/terrain-source-evidence/urchin-arena.tap
             work/terrain-source-evidence/browser/terrain-browser.json
           if-no-files-found: error
+

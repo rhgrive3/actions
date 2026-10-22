@@ -134,17 +134,53 @@ test('proof advance remains bounded and does not invent an unavailable receipt',
  for(const remainingSteps of [-1,61,NaN,.5])await assert.rejects(advanceUntilNativeShotProof({remainingSteps,hasProof:()=>false,step:async()=>{}}),/step budget/);
 });
 
-test('placement waits bounded real component steps for independently inspected peers',async()=>{
- let steps=0,inspections=0;
- const settled=[{points:[[0,0,0],[0,0,2]]},{points:[[0,0,0],[0,0,2]]}];
- const result=await advanceUntilNativePlacement({step:async()=>{steps++;},inspect:async()=>{inspections++;if(steps<4)throw Error('old owner snapshot');return settled;},remainingSteps:6});
- assert.deepEqual(result,{steps:4,settled});assert.equal(inspections,4);
- let missing=0;const failure=Error('Combat placement: native settle moved selected placement');
- await assert.rejects(advanceUntilNativePlacement({step:async()=>{missing++;},inspect:async()=>{throw failure;},remainingSteps:3}),e=>e===failure);
- assert.equal(missing,3);
- for(const remainingSteps of [0,-1,121,.5])await assert.rejects(advanceUntilNativePlacement({step:async()=>{},inspect:async()=>settled,remainingSteps}),/step budget/);
+
+test('opening readiness waits for both real lifecycle phases without editing either actor',()=>fixture(({q,G,add})=>{
+ const points=q.select(),a=add('a',points[0]),v=add('v',points[1]);
+ G.match={state:'playing',actors:[a,v]};
+ a.s3={squidSpawn:{phase:'aim',initial:true}};
+ v.remote=true;v.net={ready:true};v.s3={squidSpawn:{phase:'aim',ownerReplicated:true}};
+ const before=JSON.stringify([a,v]);
+ assert.equal(q.spawnReady(),false);assert.equal(q.placementReady({attacker:'a',victim:'v',requested:points}),false);
+ assert.equal(JSON.stringify([a,v]),before,'readiness must not clear spawn ownership');
+ delete a.s3.squidSpawn;assert.equal(q.spawnReady(),false,'owner landing alone is insufficient');
+ delete v.s3.squidSpawn;v.net.ready=false;assert.equal(q.spawnReady(),false);
+ v.net.ready=true;assert.equal(q.spawnReady(),true);
+ v.pos.set(.91,6.7,-38.58);assert.equal(q.placementReady({attacker:'a',victim:'v',requested:points}),false);
+ v.pos.set(...points[1]);assert.equal(q.placementReady({attacker:'a',victim:'v',requested:points}),true);
+}));
+
+test('native teleport timeline holds stale spawn sample until the real owner relocation timestamp',()=>{
+ const source=fs.readFileSync(new URL('../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8');
+ const methods=source.match(/  _pathAt\([^\n]*\) \{[\s\S]*?\n  \}/g);
+ assert.equal(methods?.length,1);
+ const Native=new Function('copySample','hermite','PLAYER','return class {'+methods[0]+'}')(
+  (from,to)=>Object.assign(to,from),()=>{throw Error('teleports must not interpolate');},{gravity:20});
+ const old={t:10,tp:1,x:.91,y:6.7,z:-38.58,vx:0,vy:0,vz:0,f:1};
+ const placed={...old,t:10.2,tp:2,x:12.5,y:0,z:0};
+ const sample={};new Native()._pathAt([old,placed],10.1,sample);
+ assert.equal(sample.x,old.x);assert.equal(sample.z,old.z,'actual native timeline reproduces stale spawner position');
+ new Native()._pathAt([old,placed],10.2,sample);
+ assert.equal(sample.x,placed.x);assert.equal(sample.z,placed.z);
+});
+
+test('placement handshake waits for delayed actual peer readiness and is bounded',async()=>{
+ let ticks=0;
+ const result=await advanceUntilNativePlacement({step:async()=>{ticks++;},hasPlacement:()=>ticks>=17});
+ assert.deepEqual(result,{steps:17,ready:true});
+ ticks=0;
+ assert.deepEqual(await advanceUntilNativePlacement({maxSteps:3,step:async()=>{ticks++;},hasPlacement:()=>false}),{steps:3,ready:false});
+ assert.equal(ticks,3);
+ for(const maxSteps of [0,-1,181,NaN,.5])await assert.rejects(advanceUntilNativePlacement({maxSteps,step:async()=>{},hasPlacement:()=>false}),/step budget/);
+});
+
+test('browser waits before freezing, relocates owners only and preserves remote native state',()=>{
  const source=fs.readFileSync(new URL('../check-inkwave-combat-ceiling-browser.mjs',import.meta.url),'utf8');
- assert.match(source,/for\(const a of G\.match\.actors\)\{\s*if\(a\.remote\)continue;/);
- assert.match(source,/a\.netTp=\(a\.netTp\|\|0\)\+1/);
- assert(!source.includes('a.net.buf.length=0'),'never erase native remote snapshot history to force a pose');
+ assert(source.indexOf("report.phase='native-opening-spawn'")<source.indexOf('__inkwave.debug.freeze()'));
+ const placement=source.slice(source.indexOf('const placement=await host.evaluate'),source.indexOf('const step=async'));
+ assert(placement.includes('if(a.remote)continue;'));
+ assert(!placement.includes('buf.length=0'));
+ assert(!/\.ready\s*=|delete .*squidSpawn|net\.cur\s*=/.test(placement));
+ assert(source.indexOf('assert(report.placementAdvance.ready')<source.indexOf('report.settled='));
+ assert(source.includes('setTimeout(resolve,1000/60)'));
 });

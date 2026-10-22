@@ -1380,27 +1380,51 @@ export class MusicEngine {
 
   _startTimer() {
     const tick = () => this._tick();
+    this._startingTimer = true; this._workerFailed = false;
     try {
       const src = 'let id=0;onmessage=(e)=>{clearInterval(id);if(e.data>0)id=setInterval(()=>postMessage(0),e.data)}';
       const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
       this.worker = new Worker(url);
       this.worker.onmessage = tick;
-      this.worker.onerror = () => { this.worker = null; if (!this.timer) this.timer = setInterval(tick, TICK_MS); };
-      this.worker.postMessage(TICK_MS);
+      this.worker.postMessage(0); // Validate startup without starting an idle procedural clock.
+      this.worker.onerror = () => {
+        const dead = this.worker; this.worker = null;
+        dead?.terminate();
+        this._workerFailed = true;
+        this._proceduralClock = false;
+        this._syncTimer();
+      };
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-    } catch (e) {
-      this.timer = setInterval(tick, TICK_MS);
-    }
+    } catch (e) { this._workerFailed = true; this.worker = null; }
+    this._proceduralClock = false;
+    try { this._syncTimer(); } finally { this._startingTimer = false; }
+  }
+
+  _syncTimer() {
+    if (!this.ctx || this.offline) return;
+    // HTMLMediaElement owns the real MP3 clock: no procedural lookahead is due.
+    const active = this.players.some(p => !(p instanceof StreamedTrack));
+    if (active && !this.worker && !this.timer && !this._startingTimer && !this._workerFailed) { this._startTimer(); return; }
+    if (active === !!this._proceduralClock) return;
+    this._proceduralClock = active;
+    if (this.worker) this.worker.postMessage(active ? TICK_MS : 0);
+    else if (active && !this.timer) this.timer = setInterval(() => this._tick(), TICK_MS);
+    else if (!active && this.timer) { clearInterval(this.timer); this.timer = null; }
   }
 
   _tick() {
-    if (!this.ctx || !this.players.length) return;
+    if (!this.ctx) return;
     const now = this.now();
-    for (const p of this.players) p.pump(now + LOOKAHEAD, now);
+    for (const p of this.players) if (!(p instanceof StreamedTrack)) p.pump(now + LOOKAHEAD, now);
     for (let i = this.players.length - 1; i >= 0; i--) {
       const p = this.players[i];
-      if (p.stopAt + 4 < now) { p.dispose(); this.players.splice(i, 1); }
+      const retiredStream = p instanceof StreamedTrack && p !== this._preloadedFile?.player
+        && p._pausedAfterFade && p.stopAt + 0.03 < now;
+      if (retiredStream || !(p instanceof StreamedTrack) && p.stopAt + 4 < now) {
+        p.dispose(); this.players.splice(i, 1);
+      }
     }
+    this._syncTimer();
   }
 
   // offline driving (tests): move the virtual clock and schedule

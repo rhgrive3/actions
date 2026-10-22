@@ -71,6 +71,15 @@ test('native owner resumes ordinary input immediately after an interrupted Rainm
   a.intent.fire=true;f.tick(a,12);assert.equal(a.intent.fire,true);assert.ok(f.shots.length>0);
 });
 
+// Defense tests control the impact lane independently of the display rig. Supply
+// the same bounded release snapshot required by the production event consumer;
+// real Character -> buildFrame -> release capture is covered by the origin suite.
+function defenseShotOrigin(actor, pos = actor.pos.toArray()) {
+  return { actorId: String(actor.nid), owner: actor.owner == null ? null : String(actor.owner),
+    life: actor.remote ? actor.net?.lastLife ?? actor.netLife ?? 0 : actor.netLife ?? 0,
+    team: actor.team, body: [pos[0], pos[1] + .7, pos[2]], muzzle: [pos[0], pos[1] + 1, pos[2]] };
+}
+
 const fixtureStage = () => ({
   id: 'ranked-integration-stage',
   zones: [{ center: [0, 0, 0], size: [8, 8] }],
@@ -287,7 +296,7 @@ for (const attacking of [false, true]) test('Rainmaker sweep reaches the real na
   f.G.projectiles.kitDefenseCandidate = function (...args) { const result = candidate.apply(this, args); if (result) defenses.push(result.kind); return result; };
   const rings = [], removals = []; f.G.fx = { ...f.G.fx, ring: (...a) => rings.push(a) }; f.G.scene = { add() {}, remove: o => removals.push(o) };
   const effects = f.createRankedEffects(f.installedRuntime, m);
-  effects.event({ kind: 'rainmaker-shot', actorId: shooter.nid, team: 0, pos: [0, 0, 0], aim: [0, 0, 1], charge: 1,
+  effects.event({ kind: 'rainmaker-shot', shotOrigin: defenseShotOrigin(shooter, [0, 0, 0]), actorId: shooter.nid, team: 0, pos: [0, 0, 0], aim: [0, 0, 1], charge: 1,
     damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92, paintRadius: 1, speed: 18, directRange: 4.4 });
   effects.update(.1); effects.update(.1); effects.update(.3);
   assert.equal(removals.length, 1);
@@ -337,14 +346,30 @@ async function rainmakerWallHarness() {
     ranked: { revision: 0, rule: { state: { carrier: String(shooter.nid), charge: { value: 1 } } } } };
   f.G.actors = m.actors;
   const effects = f.createRankedEffects(f.installedRuntime, m);
-  const fire = visualOnly => {
-    effects.event({ kind: 'rainmaker-shot', id: 0, actorId: String(shooter.nid), team: 0, pos: [0, 0, 0], aim: [0, 0, 1],
+  const fire = (visualOnly, mutateOrigin = origin => origin) => {
+    effects.event({ kind: 'rainmaker-shot', shotOrigin: mutateOrigin(defenseShotOrigin(shooter, [0, 0, 0])), id: 0, actorId: String(shooter.nid), team: 0, pos: [0, 0, 0], aim: [0, 0, 1],
       charge: 1, damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92,
       paintRadius: 1, speed: 18, directRange: 4.4 }, visualOnly);
     effects.update(.1); effects.update(.1); effects.update(.3);
   };
   return { ...f, shooter, owner, rear, front, wall, proposals, effects, fire };
 }
+
+test('native Rainmaker defenses reject missing or stale release identity before any hit, then admit the valid shot', async () => {
+  const f = await rainmakerWallHarness(), probes = [], original = f.G.projectiles.kitDefenseCandidate;
+  f.G.projectiles.kitDefenseCandidate = function (...args) { probes.push(args[0]); return original.apply(this, args); };
+  for (const mutate of [() => undefined, origin => ({ ...origin, owner: 'foreign' }),
+    origin => ({ ...origin, life: origin.life + 1 }), origin => ({ ...origin, team: 1 })]) {
+    f.fire(false, mutate);
+    assert.equal(probes.length, 0, 'rejected release never reaches native defense collision');
+    assert.equal(f.wall.hp, 800); assert.equal(f.rear.hp, 100); assert.equal(f.front.hp, 100);
+    assert.deepEqual(f.proposals, []); assert.equal(f.shooter.vel.length(), 0, 'rejection cannot recoil');
+  }
+  f.fire(false);
+  assert.ok(probes.length > 0, 'the same defense lane is reachable after a valid release');
+  assert.equal(f.wall.hp, 800 - 60 - 180 * 2); assert.equal(f.rear.hp, 100); assert.equal(f.front.hp, 60);
+  f.effects.dispose();
+});
 
 for (const gear of [false, true]) test('native Splash Wall receives Rainmaker direct x1 plus blast x2; Object Shredder once (' + gear + ')', async () => {
   const f = await rainmakerWallHarness(); f.shooter.s3.objectHitGear = gear;
@@ -491,7 +516,7 @@ test('an off-axis ground blast damages an otherwise empty native Bubbler without
   f.shooter.pos.copy(burst); f.shooter.pos.y -= 1;
   const before = f.dome.hp;
   f.G.physics.segment = (_start, _end, hit) => { hit.hit = true; hit.dist = 0; hit.point.copy(burst); return hit; };
-  f.effects.event({ kind: 'rainmaker-shot', id: 0, actorId: '301', team: 0, pos: f.shooter.pos.toArray(), aim: [0, 1, 0], charge: 1,
+  f.effects.event({ kind: 'rainmaker-shot', shotOrigin: defenseShotOrigin(f.shooter), id: 0, actorId: '301', team: 0, pos: f.shooter.pos.toArray(), aim: [0, 1, 0], charge: 1,
     damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92, paintRadius: 1, speed: 18, directRange: 4.4 });
   f.effects.update(.1); assert.equal(f.dome.hp, before, 'there was no direct contact'); f.effects.update(.3);
   assert.ok(Math.abs(before - f.dome.hp - 40 * 2 * 10 * .64) < 1e-8, 'the far blast band reaches native canopy HP');

@@ -1,0 +1,29 @@
+{
+  "candidate": {
+    "sourceSha": "6f6f483614ae587ee4e9395c5287270120fbd929",
+    "contentHash": "0995c75b2b3efa4104a60782962b7d65dd6263277a38584cfc1ce1f61881cd09",
+    "status": "failed",
+    "error": "page.waitForFunction: Timeout 15000ms exceeded.",
+    "verifiedResponses": 521,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": []
+  },
+  "control": {
+    "sourceSha": "a350b6b89e4cb86abe37273db6315c74085f8ac5",
+    "contentHash": "ffa756da762bb400777f8e9b90e1829d8189cc679093f92839073d48317074dc",
+    "status": "failed",
+    "error": "locator.evaluate: Target page, context or browser has been closed",
+    "verifiedResponses": 597,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": []
+  },
+  "controlObservation": {
+    "appearancePickerReachedCompletion": true,
+    "acceptedDefaultProbeReachedCompletion": true,
+    "canonicalLoadoutRows": 45,
+    "interruptedByAgent": true
+  },
+  "interpretation": "Control passed the gate where candidate timed out. Control was then interrupted; neither full-browser run passed. Cause of candidate timeout is unresolved."
+}

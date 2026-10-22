@@ -12,6 +12,9 @@ const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vecto
 const _stats = { own: 0, enemy: 0, empty: 0, n: 0 };
 // Pure per-tick aim wobble shared by ordinary and boss bot logic.
 const botAimWander = (x) => Math.sin(x) * 0.6 + Math.sin(x * 2.27 + 1.3) * 0.4;
+// Per-graph memo of the exact nearest() answer at a known node position.
+// Lazy verification handles duplicate/multilevel positions with no guesswork.
+const _nodeGoalLookup = new WeakMap();
 
 const botBehaviorKind = (weapon) => {
   // Catalogue firing family, not the shared `kind: 'catalog'` rendering key.
@@ -370,10 +373,22 @@ export class BotBrain {
     this.react -= 0.2;
   }
 
-  _pathTo(pos, maxUp = 0.8) {
+  _pathTo(pos, maxUp = 0.8, nodeId = -1) {
     const nav = G.nav;
     const s = nav.nearest(this.a.pos, 1.2);
-    const g = nav.nearest(pos, maxUp);
+    let g;
+    if (nodeId >= 0 && nav.nodes[nodeId]) {
+      let cache = _nodeGoalLookup.get(nav);
+      if (!cache) { cache = new Map(); _nodeGoalLookup.set(nav, cache); }
+      const key = `${nodeId}:${maxUp}`, node = nav.nodes[nodeId], entry = cache.get(key);
+      if (entry && entry.node === node && entry.valid === nav.valid && entry.cells === nav.cells) g = entry.goal;
+      else {
+        // First resolution uses the original nearest() algorithm, including
+        // the original tie-break on overlapping native floor nodes.
+        g = nav.nearest(pos, maxUp);
+        cache.set(key, { goal: g, node, valid: nav.valid, cells: nav.cells });
+      }
+    } else g = nav.nearest(pos, maxUp);
     this.repath = 0.8 + Math.random() * 0.4;
     if (s < 0 || g < 0) { this.path = null; return false; }
     const p = nav.path(s, g, this.a.team);
@@ -405,7 +420,7 @@ export class BotBrain {
     this.goalTimer = 4 + Math.random() * 3;
     if (best < 0) return;
     const n = nav.nodes[best];
-    this._pathTo(n, 0.3);
+    this._pathTo(n, 0.3, best);
   }
 
   _pickRefill() {
@@ -744,7 +759,7 @@ export class BotBrain {
     }
     if (best < 0) { this.path = null; return; }
     const n = nav.nodes[best];
-    this._pathTo(n, 1.0);
+    this._pathTo(n, 1.0, best);
   }
 
   // out of a telegraph: the reachable spot nearby with the least danger, biased along the escape direction
@@ -765,7 +780,7 @@ export class BotBrain {
     }
     if (best < 0) return;
     const n = nav.nodes[best];
-    this._pathTo(n, 1.0);
+    this._pathTo(n, 1.0, best);
     this.goalTimer = 0.8;
   }
 }

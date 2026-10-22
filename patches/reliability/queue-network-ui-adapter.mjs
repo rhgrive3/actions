@@ -426,7 +426,7 @@ const patches = {
     ],
     [
       "  get lastDevice() { return this._dev; }",
-      "  _listen(target, type, handler, options) {\n    target.addEventListener(type, handler, options);\n    this._inputUnsubs.push(() => target.removeEventListener(type, handler, options));\n  }\n  dispose() {\n    if (this._disposed) return;\n    this._disposed = true; this.enabled = false;\n    for (const off of this._inputUnsubs) off();\n    this._inputUnsubs.length = 0;\n    this._pointerLockCancelled = true;\n    this._finishPointerLockRequest?.(this._pointerLockPending);\n    if (document.pointerLockElement === this.canvas) document.exitPointerLock?.();\n    this.locked = false;\n    this.mobile?.destroy?.();\n    this.onKey = this.onDevice = this.onUnlock = null;\n    this.keys.clear(); this.pressed.clear(); this.padPressed.clear(); this.padMenuPressed.clear();\n    this.padMenuBlocked.clear(); this.pad = null; this.padPrev.length = 0;\n    this.mouse.dx = this.mouse.dy = 0;\n    this.mouse.left = this.mouse.right = this.mouse.leftPressed = this.mouse.rightPressed = false;\n    if (G.input === this) G.input = null;\n  }\n\n  get lastDevice() { return this._dev; }",
+      "  _listen(target, type, handler, options) {\n    target.addEventListener(type, handler, options);\n    this._inputUnsubs.push(() => target.removeEventListener(type, handler, options));\n  }\n  dispose() {\n    if (this._disposed) return;\n    this._disposed = true; this.enabled = false;\n    this.disposePlatform?.();\n    for (const off of this._inputUnsubs) off();\n    this._inputUnsubs.length = 0;\n    this._pointerLockCancelled = true;\n    this._finishPointerLockRequest?.(this._pointerLockPending);\n    if (document.pointerLockElement === this.canvas) document.exitPointerLock?.();\n    this.locked = false;\n    if (!this._platformInputDisposed) this.mobile?.destroy?.();\n    this.onKey = this.onDevice = this.onUnlock = null;\n    this.keys.clear(); this.pressed.clear(); this.padPressed.clear(); this.padMenuPressed.clear();\n    this.padMenuBlocked.clear(); this.pad = null; this.padPrev.length = 0;\n    this.mouse.dx = this.mouse.dy = 0;\n    this.mouse.left = this.mouse.right = this.mouse.leftPressed = this.mouse.rightPressed = false;\n    if (G.input === this) G.input = null;\n  }\n\n  get lastDevice() { return this._dev; }",
       1
     ]
   ],
@@ -888,9 +888,57 @@ const patches = {
 export function adaptQueueNetworkUi(rel, input) {
   let code = input;
   for (const [before, after, expected] of patches[rel] || []) {
-    const count = code.split(before).length - 1;
-    if (count !== expected) throw new Error('INKWAVE network/UI queue conflict (' + rel + '): expected ' + expected + ' anchors, found ' + count + ': ' + before.slice(0, 70));
-    code = code.split(before).join(after);
+    let connection = before, replacement = after;
+    // Current main's earlier network owner already performs this exact prefix
+    // compaction. Admit only that complete equivalent statement, never a loose
+    // substring or an arbitrary already-transformed queue module.
+    if (rel === 'src/net/netmatch.js' && before === '      if (consumed) p.events.splice(0, consumed);') {
+      const original = code.split(before).length - 1, owned = code.split(after).length - 1;
+      if (original + owned !== 1) throw new Error('INKWAVE network/UI queue conflict: remote event prefix owner');
+      if (owned) connection = replacement = after;
+    }
+    if (rel === 'src/audio/audio.js' && before === '    v.ondispose = () => { voice.done = true; };') {
+      const currentOwner = `    v.ondispose = () => {
+      voice.done = true;
+      // Release finished nodes without waiting for this sound ID to play again.
+      const i = this.voices.indexOf(voice);
+      if (i >= 0) this.voices.splice(i, 1);
+      const owners = this.byName.get(name);
+      if (owners) {
+        const j = owners.indexOf(voice);
+        if (j >= 0) owners.splice(j, 1);
+        if (!owners.length && this.byName.get(name) === owners) this.byName.delete(name);
+      }
+    };`;
+      const original = code.split(before).length - 1, owned = code.split(currentOwner).length - 1;
+      if (original + owned !== 1) throw new Error('INKWAVE network/UI queue conflict: completed one-shot owner');
+      // The earlier emitter adapter keys by sound plus emitter identity. Close
+      // over its actual list/key rather than main's unqualified sound name.
+      if (owned) connection = currentOwner;
+    }
+    if (rel === 'src/audio/audio.js' && before === '    for (const vc of this.voices) this._steal(vc, now);') {
+      const snapshotOwner = '    for (const vc of [...this.voices]) this._steal(vc, now);';
+      const original = code.split(before).length - 1, owned = code.split(snapshotOwner).length - 1;
+      if (original + owned !== 1) throw new Error('INKWAVE network/UI queue conflict: stopAll voice owner');
+      if (owned) connection = snapshotOwner;
+    }
+    // Current main captures constructor listeners in the earlier platform
+    // layer. Preserve that owner (Game.disposePlatform calls it), and let the
+    // explicit Input.dispose API delegate to the same lifetime exactly once.
+    if (rel === 'src/core/input.js' && before.startsWith('  constructor(canvas) {')) {
+      const listeners = [...before.matchAll(/\b(window|document)\.addEventListener\(/g)];
+      if (listeners.length !== 10) throw new Error('INKWAVE network/UI queue conflict: input original listener inventory');
+      const platform = before.replace(/\b(window|document)\.addEventListener\(/g, 'this._listenPlatform($1, ');
+      const original = code.split(before).length - 1, owned = code.split(platform).length - 1;
+      if (original + owned !== 1) throw new Error('INKWAVE network/UI queue conflict: input constructor listener owner');
+      if (owned) {
+        connection = platform;
+        replacement = platform.replace('    this.canvas = canvas;', '    this.canvas = canvas;\n    this._inputUnsubs = []; this._disposed = false;');
+      }
+    }
+    const count = code.split(connection).length - 1;
+    if (count !== expected) throw new Error('INKWAVE network/UI queue conflict (' + rel + '): expected ' + expected + ' anchors, found ' + count + ': ' + connection.slice(0, 70));
+    code = code.split(connection).join(replacement);
   }
   return code;
 }

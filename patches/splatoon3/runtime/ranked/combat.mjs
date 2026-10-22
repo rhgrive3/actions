@@ -1,3 +1,4 @@
+import { validRainmakerShotOrigin, rainmakerShotOwnerMatches } from './rainmaker-shot-origin.mjs';
 import { actorId } from './network.mjs';
 import { toxicMistScale } from '../toxic-mist.mjs';
 import { rainmakerWallBlast, rainmakerWallsBlockBlast, rainmakerDomeBlast } from './rainmaker-defense.mjs';
@@ -168,16 +169,16 @@ export function createRankedEffects(api, match) {
     if (e.kind === 'rainmaker-charged') G.audio?.play?.('charger_full', { pos: new THREE.Vector3(...e.pos), volume: .7 });
     else if (e.kind === 'rainmaker-shot' && Array.isArray(e.pos) && Array.isArray(e.aim)) {
       const a = match.actors.find(a => actorId(a) === String(e.actorId ?? e.carrier ?? e.id));
-      if (!a) return;
+      if (!a || !a.alive || !validRainmakerShotOrigin(e.shotOrigin, e) || !rainmakerShotOwnerMatches(e.shotOrigin, a)) return;
       const geometry = shotGeometry || (shotGeometry = new THREE.SphereGeometry(.32, 10, 8));
       const color = G.teamColors[e.team], materialKey = color?.isColor ? `${color.r}:${color.g}:${color.b}` : color;
       let resource = shotMaterials.get(materialKey);
       if (!resource) { resource = { material: new THREE.MeshBasicMaterial({ color }), count: 0, key: materialKey }; shotMaterials.set(materialKey, resource); }
       resource.count++;
       const material = resource.material;
-      const mesh = new THREE.Mesh(geometry, material); mesh.position.fromArray(e.pos); mesh.position.y += 1;
+      const mesh = new THREE.Mesh(geometry, material); mesh.position.fromArray(e.shotOrigin.muzzle);
       G.scene.add(mesh);
-      shots.push({ pos: mesh.position, previous: mesh.position.clone(), vel: new THREE.Vector3(...e.aim).normalize().multiplyScalar(e.speed || 22), age: 0, team: e.team,
+      shots.push({ releaseStart: new THREE.Vector3(...e.shotOrigin.body), pos: mesh.position, previous: mesh.position.clone(), vel: new THREE.Vector3(...e.aim).normalize().multiplyScalar(e.speed || 22), age: 0, team: e.team,
         actor: a, mesh, geometry, material, resource, origin: mesh.position.clone(), maxRange: e.directRange ?? e.effectiveRange ?? 4.4, trailRadius: e.trailRadius ?? .48, landed: false, wait: 0, damage: e.blastDamage ?? e.splashDamage ?? 180, directDamage: e.damage || 60, outerDamage: e.outerDamage ?? 40, paintRadius: e.paintRadius || e.radius || 3.5, nearRadius: e.nearRadius ?? .92, radius: e.radius ?? 1.4, visualOnly });
       shots.at(-1).vel.y += e.launchY ?? (e.charge >= 1 ? 3.36 : 1.68);
       if (!a.remote && a.vel) {
@@ -205,6 +206,70 @@ export function createRankedEffects(api, match) {
     G.scene.remove(s.mesh);
     if (--s.resource.count === 0) { s.resource.material.dispose(); shotMaterials.delete(s.resource.key); }
   }
+  function advanceShot(s, dt, release = false) {
+    if (!release) s.previous.copy(s.pos);
+    // Native defaults for gravity/drag are not exposed in the pinned dump.
+    // These stage-unit trajectories and 0.2s fuse remain local calibration.
+    if (!release) { s.pos.addScaledVector(s.vel, dt); s.pos.y -= 30 * dt * dt; s.vel.y -= 60 * dt; s.age += dt; }
+    const horizontal = Math.hypot(s.pos.x - s.origin.x, s.pos.z - s.origin.z);
+    if (horizontal > s.maxRange) {
+      const k = s.maxRange / horizontal;
+      s.pos.x = s.origin.x + (s.pos.x - s.origin.x) * k;
+      s.pos.z = s.origin.z + (s.pos.z - s.origin.z) * k;
+      s.vel.x = s.vel.z = 0;
+    }
+    const wall = G.physics.segment(s.previous, s.pos, hit, true);
+    let nearest = wall.hit ? wall.dist / Math.max(1e-9, s.previous.distanceTo(s.pos)) : 1;
+    const worldPoint = wall.hit ? wall.point.clone() : null;
+    const probe = { owner: s.actor, team: s.team, prev: s.previous, pos: s.pos,
+      vel: s.vel, damage: s.directDamage, type: 'rainmaker', wid: 'rainmaker', subId: 'Gachihoko_Bullet', s3BubblerRow: 'Gachihoko_Bullet', size: .16, ghost: !ownsDefense(s) };
+    const defense = G.projectiles?.kitDefenseCandidate?.(probe);
+    let blocked = defense && defense.distance <= nearest * s.previous.distanceTo(s.pos) ? defense : null;
+    if (blocked) nearest = blocked.distance / Math.max(1e-9, s.previous.distanceTo(s.pos));
+    let target = null;
+    for (const a of match.actors) if (a.alive && a.team !== s.team) {
+      const t = sphereEntryComponents(s.previous.x, s.previous.y, s.previous.z, s.pos.x, s.pos.y, s.pos.z,
+        a.pos.x, a.pos.y + .7, a.pos.z, .85);
+      if (t !== null && t < nearest) { nearest = t; target = a; blocked = null; }
+    }
+    let terminal = !!worldPoint || !!blocked || !!target;
+    if (target || blocked) s.pos.copy(s.previous.clone().lerp(s.pos, nearest));
+    else if (worldPoint) s.pos.copy(worldPoint);
+    const floor = match.rankedWorld?.floorAt?.(s.pos.x, s.pos.z);
+    const water = floor === null && s.pos.y <= (api.PLAYER?.waterY ?? -1);
+    if (water || s.age > 3 || blocked?.kind === 'ultra-stamp-guard' || blocked?.kind === 'ink-vac') {
+      if (blocked && ownsDefense(s)) blocked.onHit(probe);
+      retire(s); return true;
+    }
+    if (blocked?.object?.subId === 'splashWall') s.impactWall = blocked.object;
+    if (blocked?.dome) s.impactDome = { center: blocked.dome.pos.clone(), radius: blocked.dome.radius,
+      ignited: blocked.dome.ignited, emitterY: blocked.dome.emitterY };
+    if (terminal && s.damage > 0) s.blastStart = s.pos.clone().addScaledVector(s.previous.clone().sub(s.pos).normalize(), .01);
+    if (blocked && ownsDefense(s)) blocked.onHit(probe);
+    if (target && !s.visualOnly) damage(target, s.actor, s.directDamage);
+    if (!s.visualOnly && (!release || terminal)) {
+      // Falling ink paints the first surface below the swept head; it does
+      // not stamp through a ceiling or grant carrier special points.
+      const steps = Math.max(1, Math.min(64, Math.ceil(s.previous.distanceTo(s.pos) / .3)));
+      for (let n = 1; n <= steps; n++) {
+        const p = s.previous.clone().lerp(s.pos, n / steps);
+        const ground = G.physics.segment(p, p.clone().add(new THREE.Vector3(0, -30, 0)), hit, true);
+        if (ground.hit) G.paint?.splat?.(ground.point.clone(), s.trailRadius, s.team,
+          { seed: match.ranked.revision % 65536, claimOwner: s.actor, claimMode: 'no-special' });
+      }
+    }
+    if (!terminal) return false;
+    if (!(s.damage > 0)) {
+      if (!s.visualOnly) G.paint?.splat?.(s.pos.clone(), s.paintRadius, s.team, { claimOwner: s.actor, claimMode: 'no-special' });
+      retire(s); return true;
+    }
+    // Defensive surfaces and Crab Tank skip the ground-impact fuse.
+    if (blocked || target?.specialActive?.id === 'crabTank') {
+      explode(s.pos.toArray(), s.team, s.radius, s.damage, s.actor, s.visualOnly, s.paintRadius, s.outerDamage, s.nearRadius, true, { from: s.blastStart, impactWall: s.impactWall, dome: s.impactDome });
+      retire(s); return true;
+    } else { s.landed = true; s.wait = .2; s.mesh.visible = false; }
+    return false;
+  }
   return {
     event,
     update(dt) {
@@ -225,67 +290,12 @@ export function createRankedEffects(api, match) {
           explode(s.pos.toArray(), s.team, s.radius, s.damage, s.actor, s.visualOnly, s.paintRadius, s.outerDamage, s.nearRadius, true, { from: s.blastStart, impactWall: s.impactWall });
           retire(s); shots.splice(i, 1); continue;
         }
-        s.previous.copy(s.pos);
-        // Native defaults for gravity/drag are not exposed in the pinned dump.
-        // These stage-unit trajectories and 0.2s fuse remain local calibration.
-        s.pos.addScaledVector(s.vel, dt); s.pos.y -= 30 * dt * dt; s.vel.y -= 60 * dt; s.age += dt;
-        const horizontal = Math.hypot(s.pos.x - s.origin.x, s.pos.z - s.origin.z);
-        if (horizontal > s.maxRange) {
-          const k = s.maxRange / horizontal;
-          s.pos.x = s.origin.x + (s.pos.x - s.origin.x) * k;
-          s.pos.z = s.origin.z + (s.pos.z - s.origin.z) * k;
-          s.vel.x = s.vel.z = 0;
+        if (s.releaseStart) {
+          s.previous.copy(s.releaseStart); s.releaseStart = null;
+          if (advanceShot(s, 0, true)) { shots.splice(i, 1); continue; }
+          if (s.landed) continue;
         }
-        const wall = G.physics.segment(s.previous, s.pos, hit, true);
-        let nearest = wall.hit ? wall.dist / Math.max(1e-9, s.previous.distanceTo(s.pos)) : 1;
-        const worldPoint = wall.hit ? wall.point.clone() : null;
-        const probe = { owner: s.actor, team: s.team, prev: s.previous, pos: s.pos,
-          vel: s.vel, damage: s.directDamage, type: 'rainmaker', wid: 'rainmaker', subId: 'Gachihoko_Bullet', s3BubblerRow: 'Gachihoko_Bullet', size: .16, ghost: !ownsDefense(s) };
-        const defense = G.projectiles?.kitDefenseCandidate?.(probe);
-        let blocked = defense && defense.distance <= nearest * s.previous.distanceTo(s.pos) ? defense : null;
-        if (blocked) nearest = blocked.distance / Math.max(1e-9, s.previous.distanceTo(s.pos));
-        let target = null;
-        for (const a of match.actors) if (a.alive && a.team !== s.team) {
-          const t = sphereEntryComponents(s.previous.x, s.previous.y, s.previous.z, s.pos.x, s.pos.y, s.pos.z,
-            a.pos.x, a.pos.y + .7, a.pos.z, .85);
-          if (t !== null && t < nearest) { nearest = t; target = a; blocked = null; }
-        }
-        let terminal = !!worldPoint || !!blocked || !!target;
-        if (target || blocked) s.pos.copy(s.previous.clone().lerp(s.pos, nearest));
-        else if (worldPoint) s.pos.copy(worldPoint);
-        const floor = match.rankedWorld?.floorAt?.(s.pos.x, s.pos.z);
-        const water = floor === null && s.pos.y <= (api.PLAYER?.waterY ?? -1);
-        if (water || s.age > 3 || blocked?.kind === 'ultra-stamp-guard' || blocked?.kind === 'ink-vac') {
-          if (blocked && ownsDefense(s)) blocked.onHit(probe);
-          retire(s); shots.splice(i, 1); continue;
-        }
-        if (blocked?.object?.subId === 'splashWall') s.impactWall = blocked.object;
-        if (blocked?.dome) s.impactDome = { center: blocked.dome.pos.clone(), radius: blocked.dome.radius,
-          ignited: blocked.dome.ignited, emitterY: blocked.dome.emitterY };
-        if (terminal && s.damage > 0) s.blastStart = s.pos.clone().addScaledVector(s.previous.clone().sub(s.pos).normalize(), .01);
-        if (blocked && ownsDefense(s)) blocked.onHit(probe);
-        if (target && !s.visualOnly) damage(target, s.actor, s.directDamage);
-        if (!s.visualOnly) {
-          // Falling ink paints the first surface below the swept head; it does
-          // not stamp through a ceiling or grant carrier special points.
-          const steps = Math.max(1, Math.min(64, Math.ceil(s.previous.distanceTo(s.pos) / .3)));
-          for (let n = 1; n <= steps; n++) {
-            const p = s.previous.clone().lerp(s.pos, n / steps);
-            const ground = G.physics.segment(p, p.clone().add(new THREE.Vector3(0, -30, 0)), hit, true);
-            if (ground.hit) G.paint?.splat?.(ground.point.clone(), s.trailRadius, s.team,
-              { seed: match.ranked.revision % 65536, claimOwner: s.actor, claimMode: 'no-special' });
-          }
-        }
-        if (!terminal) continue;
-        if (!(s.damage > 0)) {
-          if (!s.visualOnly) G.paint?.splat?.(s.pos.clone(), s.paintRadius, s.team, { claimOwner: s.actor, claimMode: 'no-special' });
-          retire(s); shots.splice(i, 1); continue;
-        }
-        // Defensive surfaces and Crab Tank skip the ground-impact fuse.
-        if (blocked || target?.specialActive?.id === 'crabTank') {
-          explode(s.pos.toArray(), s.team, s.radius, s.damage, s.actor, s.visualOnly, s.paintRadius, s.outerDamage, s.nearRadius, true, { from: s.blastStart, impactWall: s.impactWall, dome: s.impactDome });
-          retire(s); shots.splice(i, 1);
-        } else { s.landed = true; s.wait = .2; s.mesh.visible = false; }
+        if (advanceShot(s, dt)) shots.splice(i, 1);
 
       }
     },

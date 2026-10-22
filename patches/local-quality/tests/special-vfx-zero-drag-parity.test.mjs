@@ -90,3 +90,27 @@ test('zero-drag repeated finite ticks keep all renderer attributes and object id
   assert.equal(calls.length, 0);
   assert.deepStrictEqual([pool.aPos, pool.aDir, pool.aCol, pool.aPar], attrs);
 });
+
+
+test('idle SpritePool uploads its warm buffer once and re-uploads on active-to-idle transition', () => {
+  const calls = [];
+  const pool = makePool(calls);
+  const updateCounts = [pool.aPos, pool.aDir, pool.aCol, pool.aPar].map(a => {
+    const tracker = { count: 0 };
+    a.addUpdateRange = () => { tracker.count++; };
+    return tracker;
+  });
+  pool.update(1 / 60);
+  assert.deepStrictEqual(updateCounts.map(x => x.count), [1, 1, 1, 1]);
+  for (let frame = 0; frame < 60; frame++) pool.update(1 / 60);
+  assert.deepStrictEqual(updateCounts.map(x => x.count), [1, 1, 1, 1]);
+  pool.spawn(1, 2, 3, 0, 0, 0, 2, 0.1, 0.1, 1, 1, 1, 1, 0, { drag: 0 });
+  pool.update(1 / 60);
+  assert.deepStrictEqual(updateCounts.map(x => x.count), [2, 2, 2, 2]);
+  pool.clear();
+  pool.update(1 / 60);
+  assert.deepStrictEqual(updateCounts.map(x => x.count), [3, 3, 3, 3]);
+  for (let frame = 0; frame < 60; frame++) pool.update(1 / 60);
+  assert.deepStrictEqual(updateCounts.map(x => x.count), [3, 3, 3, 3]);
+  assert.equal(pool.mesh.geometry.instanceCount, 1);
+});

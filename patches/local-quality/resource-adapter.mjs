@@ -56,8 +56,20 @@ export function adaptResourceSource(rel, code, replace) {
     patch('      return self._render(this, lights, scene, camera);\n    };',
       '      return self._render(this, lights, scene, camera);\n    };\n    attachDepthCacheLifecycle(this, G);', 'depth lifecycle');
     patch('        this._ensureCache(w, hh);', '        this._ensureCache(w, hh, sh.map.depthTexture?.type);', 'match native depth format');
-    patch('        orig.call(sm, lights, scene, camera);\n        for (const o of dyn) o.castShadow = true;',
-      '        try { orig.call(sm, lights, scene, camera); }\n        finally { for (const o of dyn) o.castShadow = true; }', 'restore dynamic casters after failed first shadow pass');
+    // The authored owner now restores exact prior caster values itself. Keep a
+    // strict connection to that transaction rather than applying a second guard.
+    const casterTransaction = `        try {
+          scene.traverse((o) => {
+            if (o.castShadow && (o.isMesh || o.isInstancedMesh) && !stat.has(o)) {
+              dyn.push([o, o.castShadow]); o.castShadow = false;
+            }
+          });
+          sm.needsUpdate = true;
+          orig.call(sm, lights, scene, camera);
+        } finally {
+          for (const [o, wasCasting] of dyn) o.castShadow = wasCasting;
+        }`;
+    patch(casterTransaction, casterTransaction, 'validate authored first-pass caster restoration');
     code += '\ninstallDepthOnlyShadowCache(ShadowCache);\n';
   }
   return code;

@@ -92,6 +92,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/refl-skip-adapter.mjs',
   'patches/local-quality/runtime-frame-scratch-adapter.mjs',
   'patches/local-quality/shoe-read-transform-adapter.mjs',
+  'patches/local-quality/scenery-bounds-adapter.mjs',
   'patches/local-quality/resource-adapter.mjs',
   'patches/local-quality/result-continuation-adapter.mjs',
   'patches/local-quality/score-reticle-adapter.mjs',

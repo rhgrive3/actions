@@ -874,7 +874,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         }
         consumed++;
       }
-      if (consumed) p.events.splice(0, consumed);`, 'bounded gameplay bomb backpressure');
+      if (consumed) { p.events.copyWithin(0, consumed); p.events.length -= consumed; }`, 'bounded gameplay bomb backpressure');
     patch(`      case 's': {
         this.applying = true;
         const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;

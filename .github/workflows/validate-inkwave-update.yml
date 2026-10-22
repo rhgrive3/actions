@@ -218,6 +218,8 @@ jobs:
         run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-world-cancellation.test.mjs scripts/tests/inkwave-native-legacy-stage-raf-1723.test.mjs
       - name: Verify native BVH query lifetime and collision parity
         run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs patches/native-stages/tests/bvh-browser-baseline.test.mjs
+      - name: Verify source OBJ pattern cache semantics
+        run: node --test patches/native-stages/tests/source-obj-semantics-regex-cache.test.mjs
       - name: Verify deterministic network replication
         run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs
       - name: Verify remote combat provenance and equipped hit ceilings
@@ -649,6 +651,9 @@ jobs:
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
           npx playwright install --with-deps ${{ matrix.browsers }}
+      - name: Verify emitted renderer and Input resource lifetimes
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-issue-batch-browser.mjs .built-site/_site "$CI_STORAGE/evidence/issue-batch/lifecycle.json"
       - name: Verify PR1171 rendered reticle and GPU paint parity
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-pr1171.mjs .built-site/_site

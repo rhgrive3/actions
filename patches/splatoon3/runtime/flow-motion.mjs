@@ -277,11 +277,20 @@ function draw(ch, s, THREE) {
   const eventDuration = s.event === 'entry' ? FLOW_MOTION_CALIBRATION.entryTime
     : FLOW_MOTION_CALIBRATION.extensionTime;
   const burst = s.event ? Math.max(0, 1 - s.eventAge / eventDuration) : 0;
+  // The source swim pivot and visual root may both sink below the physical
+  // contact point (step smoothing). Anchor only glints above that actor-owned
+  // point; leave native pose, root, shells, and entry ribbons unchanged.
+  let swimSurfaceY = -Infinity;
+  if (ch.form === 'swim' && ch.grounded && s.owner?.pos) {
+    ch.root.worldToLocal(s.point.copy(s.owner.pos));
+    swimSurfaceY = s.point.y + leg * .20;
+  }
   for (let i = 0; i < FLOW_MOTION_CALIBRATION.glints; i++) {
     const phase = (s.time * (1.05 + (i % 4) * .08) + i * .61803398875 + s.seed) % 1;
     const angle = TAU * (s.time * .32 + i * .381966 + s.seed);
     const radial = radius * (.36 + (i % 5) * .13 + burst * .6);
     s.point.copy(s.anchors[i % 3]);
+    s.point.y = Math.max(s.point.y, swimSurfaceY);
     s.point.x += Math.cos(angle) * radial; s.point.z += Math.sin(angle) * radial;
     const verticalPhase = ch.form === 'swim' && ch.grounded ? phase : phase - .5;
     s.point.y += verticalPhase * leg * (ch.kidForm ? .75 : .35);

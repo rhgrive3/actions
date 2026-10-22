@@ -179,7 +179,7 @@ test('Rainmaker shot geometry sharing preserves exact palette colors and dispose
  const G={scene,teamColors:[new THREE.Color(.3,.4,.5),new THREE.Color(.8,.2,.1)],audio:{play(){}},physics:{segment:()=>({hit:false})},projectiles:{kitDefenseCandidate:()=>null}};
  const match={state:'playing',actors:[actor],ranked:{revision:0},rankedWorld:{floorAt:()=>0}};
  const effects=createRankedEffects({G,THREE:namespace,Hit:class {},PLAYER:{waterY:-1}},match);
- const event={kind:'rainmaker-shot',actorId:'1',team:0,pos:[0,0,0],aim:[0,0,1],charge:1};
+ const event={kind:'rainmaker-shot',actorId:'1',team:0,pos:[0,0,0],aim:[0,0,1],charge:1,shotOrigin:{actorId:'1',owner:null,life:0,team:0,body:[0,.7,0],muzzle:[0,1,0]}};
  effects.event(event);effects.event(event);assert.equal(geometries.length,1);assert.equal(materials.length,1);assert.equal(scene.children[0].geometry,scene.children[1].geometry);
  const previous=scene.children[0].material.color.clone();G.teamColors[0].r+=1e-8;effects.event(event);
  assert.equal(materials.length,2,'do not quantize distinct palette values to a common hex key');

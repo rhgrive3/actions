@@ -2,13 +2,14 @@
 // The inspection camera changes only the evidence view. No replacement floor,
 // shader, Character, Physics, paint or controller is installed.
 import fs from 'node:fs';
+import { observeBlobCreation } from './lib/inkwave-roller-blob-provenance.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { enterRangeFromMenu } from './lib/inkwave-range-menu-entry.mjs';
-import { loadUuidComparison, recordLoadedModuleResponse, verifyLoadedModules, createBlobWorkerEvidence, recordBlobWorkerCreation, observeGeneratedWorker, bindBlobWorkerEvidence, installBlobWorkerObserver } from './lib/inkwave-roller-uuid-comparison.mjs';
+import { loadUuidComparison, recordLoadedModuleResponse, verifyLoadedModules } from './lib/inkwave-roller-uuid-comparison.mjs';
 const site=path.resolve(process.argv[2]||'_site'), out=path.resolve(process.argv[3]||'.browser-evidence/roller-scale/range');
 // Fixed inspection views are authored once from the baseline and reused verbatim.
 // BEGIN GRIP CAMERA CONTRACT
@@ -34,7 +35,7 @@ const isolationIndex=process.argv.indexOf('--historical-uuid-isolation');
 if(isolationIndex>=0&&!process.argv[isolationIndex+1])throw Error('Missing declared historical UUID isolation');
 const isolation=isolationIndex<0?null:loadUuidComparison(path.resolve(process.argv[isolationIndex+1]),site);
 const buildManifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
-const loadedModules={},loadedTasks=[],blobWorkerEvidence=createBlobWorkerEvidence();
+const loadedModules={},loadedTasks=[];
 const seedIndex=process.argv.indexOf('--grip-seed');
 const gripSeed=seedIndex<0?null:Number(process.argv[seedIndex+1]);
 if(seedIndex>=0&&(!/^\d+$/.test(process.argv[seedIndex+1]||'')||!Number.isInteger(gripSeed)||gripSeed<0||gripSeed>0xffffffff))throw Error('Invalid grip seed: expected uint32');
@@ -68,20 +69,12 @@ try{
     ...(process.env.HTTPS_PROXY?{proxy:{server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'}}:{}),
     args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   page=await browser.newPage({viewport:{width:1280,height:840}});
-  const captureOrigin='http://127.0.0.1:'+server.address().port;
-  receipt.blobWorkerEvidence=blobWorkerEvidence;
-  await page.exposeBinding('__inkwaveRecordBlobWorker',({frame},payload)=>{
-    try{recordBlobWorkerCreation(blobWorkerEvidence,payload,captureOrigin,{mainFrame:frame===page.mainFrame(),frameUrl:frame.url()});}
-    catch(error){receipt.errors.push(String(error));}
-  });
-  await page.addInitScript(installBlobWorkerObserver,{bindingName:'__inkwaveRecordBlobWorker'});
-  page.on('worker',worker=>{
-    try{observeGeneratedWorker(blobWorkerEvidence,worker.url(),captureOrigin);}
-    catch(error){receipt.errors.push(String(error));}
-  });
+  receipt.blobWorkers={origin:'http://127.0.0.1:'+server.address().port,responses:[],owners:[],creations:[],workers:[]};
+  await page.addInitScript(observeBlobCreation);
+  page.on('worker',worker=>receipt.blobWorkers.workers.push(worker.url()));
   page.on('pageerror',e=>receipt.errors.push(e.message));
   page.on('response',response=>{
-    loadedTasks.push(recordLoadedModuleResponse(response,captureOrigin,loadedModules,blobWorkerEvidence)
+    loadedTasks.push(recordLoadedModuleResponse(response,'http://127.0.0.1:'+server.address().port,loadedModules,receipt.blobWorkers)
       .catch(error=>{receipt.errors.push(String(error));}));
   });
   page.on('requestfailed',r=>{if(receipt.requests.length<30)receipt.requests.push({url:r.url(),failure:r.failure()});});
@@ -369,14 +362,9 @@ try{
   assert.deepEqual(receipt.release.renderSize,m.renderSize);
   for(const frame of receipt.release.frames)assert.ok(Math.abs(frame.time-receipt.release.start.time-frame.tick/60)<1e-8);
   assert.equal(receipt.errors.length,0);
-  await page.evaluate(()=>{
-    if(!globalThis.__inkwaveBlobWorkerAudit)throw Error('Generated Worker provenance observer missing');
-    return globalThis.__inkwaveBlobWorkerAudit.flush();
-  });
-  let observedTasks;
-  do{observedTasks=loadedTasks.length;await Promise.all(loadedTasks.slice());}while(observedTasks!==loadedTasks.length);
-  bindBlobWorkerEvidence(blobWorkerEvidence,loadedModules,buildManifest);
-  receipt.runtimeIdentity=verifyLoadedModules(loadedModules,buildManifest,isolation?.declaration);
+  receipt.blobWorkers.creations=await page.evaluate(()=>window.__rollerBlobCreations());
+  await Promise.all(loadedTasks);
+  receipt.runtimeIdentity=verifyLoadedModules(loadedModules,buildManifest,isolation?.declaration,receipt.blobWorkers);
   assert.equal(receipt.errors.length,0);
   receipt.passed=true;console.log(JSON.stringify({measurement:m,release:receipt.release,runtimeIdentity:receipt.runtimeIdentity}));
 }catch(error){receipt.passed=false;receipt.failure=String(error.stack||error);receipt.state=await snapshot();await page?.screenshot({path:path.join(out,'failure.png'),timeout:30000}).catch(()=>{});throw error;}

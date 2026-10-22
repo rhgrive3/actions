@@ -22,7 +22,7 @@ test('selected recording is promoted ahead of queued remote loads without interr
 });
 test('recorded loader keeps only the newest bounded diagnostics',()=>{
  const loader=new RealS3SampleLoader(bank(),{fetcher:async()=>null});for(let i=0;i<100;i++)loader._error('failure '+i);
- assert.equal(loader.errors.length,32);assert.equal(loader.errors[0],'failure 68');assert.equal(loader.errors.at(-1),'failure 99');
+ assert.equal(loader.totalErrorCount,100);assert.equal(loader.errors.length,64);assert.equal(loader.errors[0],'failure 36');assert.equal(loader.errors.at(-1),'failure 99');
 });
 test('deadline clears its timer on success and rejects a stalled decoder without changing a later result',async t=>{
  t.mock.timers.enable({apis:['setTimeout']});assert.equal(await audioLoadDeadline(Promise.resolve(7)),7);

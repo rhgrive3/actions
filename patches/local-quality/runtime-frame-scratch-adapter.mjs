@@ -502,15 +502,25 @@ export class PlayerController {`, 'one shared map target picker with controller-
       'remove duplicate CSS-pixel GTAO resize');
   }
   if (rel === 'src/world/environment.js') {
-    patch('    const prev = r.getRenderTarget(), ac = r.autoClear, xr = r.xr.enabled;\n    r.autoClear = false; r.xr.enabled = false;\n    const rt = this._cloudRT;',
-      '    const prev = r.getRenderTarget(), ac = r.autoClear, xr = r.xr.enabled;\n    const color = r.getClearColor(new THREE.Color()), alpha = r.getClearAlpha();\n    const rt = this._cloudRT, scissorTest = rt.scissorTest, scissor = rt.scissor.clone();\n    try {\n    r.autoClear = false; r.xr.enabled = false;',
-      'own cloud bake renderer and target scissor state');
-    patch('    rt.scissorTest = false;\n    r.setRenderTarget(prev);\n    r.autoClear = ac; r.xr.enabled = xr;',
-      '    } finally {\n      rt.scissorTest = scissorTest; rt.scissor.copy(scissor);\n      try { r.setRenderTarget(prev); } finally {\n        r.autoClear = ac; r.xr.enabled = xr; r.setClearColor(color, alpha);\n      }\n    }',
-      'restore cloud bake state on render failure');
-    patch('    this._bakeClouds(T);\n    r0.setClearColor(cc, ca);',
-      '    try { this._bakeClouds(T); } finally { r0.setClearColor(cc, ca); }',
-      'restore theme clear color when cloud baking fails');
+    // Main owns strip scissor/target restoration, including cube face/mip and
+    // primary-error precedence. Extend that exact transaction only with clear colour.
+    patch('    const prev = r.getRenderTarget(), ac = r.autoClear, xr = r.xr.enabled;\n    const rt = this._cloudRT;',
+      '    const prev = r.getRenderTarget(), ac = r.autoClear, xr = r.xr.enabled;\n    const color = r.getClearColor(new THREE.Color()), alpha = r.getClearAlpha();\n    const rt = this._cloudRT;',
+      'capture cloud bake clear colour within authored transaction');
+    const cloudScissorRestore = '    } catch (error) { bakeFailed = true; throw error; }\n    finally {\n      rt.scissor.copy(scissor); rt.scissorTest = wasScissored;';
+    patch(cloudScissorRestore, cloudScissorRestore, 'validate authored strip-scissor and primary-error restoration');
+    patch('      try { r.setRenderTarget(prev, face, mip); }\n      catch (error) { if (!bakeFailed) throw error; }\n      finally { r.autoClear = ac; r.xr.enabled = xr; }',
+      `      let restoreFailed = false;
+      try { r.setRenderTarget(prev, face, mip); }
+      catch (error) { restoreFailed = true; if (!bakeFailed) throw error; }
+      finally {
+        r.autoClear = ac; r.xr.enabled = xr;
+        try { r.setClearColor(color, alpha); }
+        catch (error) { if (!bakeFailed && !restoreFailed) throw error; }
+      }`,
+      'restore clear colour without replacing the primary cloud or target failure');
+    const themeBake = '    try { this._bakeClouds(T); }\n    finally { r0.setClearColor(cc, ca); }';
+    patch(themeBake, themeBake, 'validate authored theme clear-colour restoration');
     patch('    this.scene.remove(this.root, this.sun, this.sun.target, this.hemi);',
       '    this.sun.shadow?.dispose();\n    this.scene.remove(this.root, this.sun, this.sun.target, this.hemi);',
       'release environment-owned sun shadow targets');

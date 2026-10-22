@@ -216,7 +216,7 @@ void main(){
 
 class SpritePool {
   constructor(THREE, cap, additive, uTime, light = {}) {
-    this.cap = cap; this.n = 0; this.additive = additive;
+    this.cap = cap; this.n = 0; this.additive = additive; this._emptyUploaded = false;
     const g = new THREE.InstancedBufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0]), 3));
     g.setIndex([0, 1, 2, 0, 2, 3]);
@@ -312,7 +312,7 @@ class SpritePool {
     for (const a of [this.aPos, this.aDir, this.aCol, this.aPar]) { a.clearUpdateRanges(); a.addUpdateRange(0, count * 4); a.needsUpdate = true; }
     this.mesh.geometry.instanceCount = count;this._emptyUploaded=this.n===0;
   }
-  clear() { this.n = 0;this._heapValid=false;this._heapBlocked=false;if(this._evictionHeap)this._evictionHeap.length=0; }
+  clear() { this.n = 0;this._emptyUploaded=false;this._heapValid=false;this._heapBlocked=false;if(this._evictionHeap)this._evictionHeap.length=0; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -364,7 +364,7 @@ void main(){
 }`;
 class RibbonPool {
   constructor(THREE, trails, points, additive, uTime, light = {}) {
-    this.T = trails; this.M = points; this.additive = additive; this.list = [];
+    this.T = trails; this.M = points; this.additive = additive; this.list = []; this._emptyUploaded = false;
     const V = trails * points * 2;
     const g = new THREE.BufferGeometry();
     this.pos = new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage);
@@ -444,7 +444,7 @@ class RibbonPool {
     this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));this._emptyUploaded=this.list.length===0;
     for (const a of [this.pos, this.col, this.rib, this.side, this.face]) { a.clearUpdateRanges(); a.addUpdateRange(0, Math.max(1, slot) * this.M * 2 * a.itemSize); a.needsUpdate = true; }
   }
-  clear() { this.list.length = 0; }
+  clear() { for (const r of this.list) { r.ended = true; r.pts.length = 0; } this.list.length = 0; this._emptyUploaded = false; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -751,7 +751,7 @@ void main(){
 // A retained instanced pool. Records: { a: Float32Array(16) attribute values, t, life, follow?(rec,dt)->bool }.
 class ShapePool {
   constructor(THREE, name, geometry, cap, attrs, vert, frag, additive, uTime, extra = {}, light = {}) {
-    this.cap = cap; this.recs = []; this.attrs = attrs;
+    this.cap = cap; this.recs = []; this.attrs = attrs; this._emptyUploaded = false;
     const g = new THREE.InstancedBufferGeometry();
     for (const key of Object.keys(geometry.attributes)) g.setAttribute(key, geometry.attributes[key]);
     if (geometry.index) g.setIndex(geometry.index);
@@ -787,7 +787,7 @@ class ShapePool {
     const col = this.buf[2].array; col[3] = 0;
     this.mesh.geometry.instanceCount = n + 1;this._emptyUploaded=n===0;
   }
-  clear() { this.recs.length = 0; }
+  clear() { this.recs.length = 0; this._emptyUploaded = false; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------

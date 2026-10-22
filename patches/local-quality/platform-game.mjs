@@ -307,7 +307,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
     clearHiddenHostDeadline(r, env); clearHiddenHostResult(r, env);
     r.driver.dispose(); r.off(); this._rangeFrameProbe?.dispose(); this._rangeFrameProbe = null;
     r.notice?.remove(); for (const dispose of r.disposers) dispose();
-    this.menus?.setPlatformDriven?.(false); this.input?.mobile?.destroy?.();
+    this.menus?.setPlatformDriven?.(false); this.input?.disposePlatform?.();
     G.audio?.disposePlatform?.();
     if (r.rendererLost) owner.block('webgl', false);
     this.platform = null;

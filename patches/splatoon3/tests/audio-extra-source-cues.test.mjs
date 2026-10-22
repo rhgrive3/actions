@@ -148,7 +148,7 @@ test('production runtime prefetches routed kit sounds and retains original audio
   class Projectiles {throwBomb(){} _push(){} _blastBurst(){}}
   const ensured=[],loops=[],listeners=new Map();
   const G={time:0,audio:{ctx:{state:'running'},play(){},prepareWeapon(){},
-    _realS3Loader:{ensure(id,event){ensured.push([id,event]);return Promise.resolve();}},
+    _realS3Loader:{declares(id,event){return id==='special:booyahBomb'&&event==='spin';},ensure(id,event){ensured.push([id,event]);return Promise.resolve();}},
     loopWeapon(id,event){const h={id,event,playing:true,stops:0,set(){},stop(){this.playing=false;this.stops++;}};loops.push(h);return h;}}};
   const on=(name,fn)=>{if(!listeners.has(name))listeners.set(name,new Set());listeners.get(name).add(fn);return ()=>listeners.get(name).delete(fn);};
   const runtime=installWeaponAudioRuntime({G,Actor,WeaponRunner,Projectiles,on});
