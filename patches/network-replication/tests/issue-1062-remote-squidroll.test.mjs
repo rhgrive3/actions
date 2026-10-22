@@ -1,5 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+// Physical body/input are explicit; adoption, Surge and accepted-hit slots stay fixed.
+function assertInputBody(row, actor) {
+  const i=actor.intent;
+  assert.deepEqual(Array.from(row[26]), ['iw-input-body-1', (i.fire?1:0)|(i.squid?2:0)|(i.sub?4:0)|(i.jump?8:0), Math.round(actor.pos.y*1000)/1000]);
+}
+
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 
 const extraExports = `
@@ -105,7 +112,8 @@ test('full production Roll snapshots sustain remote pose without transferring ga
   const authorityBeforeSend = { ...firstAction };
   const first = sendSnapshot(sender, sent), row = first.a.find(item => item[0] === owner.nid);
   const firstMeta = first.sq?.[owner.nid];
-  assert.equal(row.length, 26, 'combined adoption, Surge, and hit-authority extensions retain their slots');
+  assert.equal(row.length, 27, 'combined adoption, Surge, and hit-authority extensions retain their slots');
+  assertInputBody(row, owner);
   assert.equal(row[22], owner.stats.specials || 0, 'existing special counter retains slot 22');
   assert.equal(row[23][0], 'inkwave-adoption-v1', 'Roll sidecar does not occupy the adoption slot');
   assert.equal(row[24], null, 'ordinary Roll snapshots leave the optional Surge slot empty');

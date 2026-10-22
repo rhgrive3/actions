@@ -1,0 +1,176 @@
+{
+  "dateUtc": "2026-10-22T15:45:04.799922+00:00",
+  "status": "all_passed",
+  "officialDownload": {
+    "version": "v22.23.4",
+    "architecture": "linux-x64",
+    "downloadUrl": "https://nodejs.org/dist/v22.23.4/node-v22.23.4-linux-x64.tar.xz",
+    "latestManifestUrl": "https://nodejs.org/dist/latest-v22.x/SHASUMS256.txt",
+    "versionManifestUrl": "https://nodejs.org/dist/v22.23.4/SHASUMS256.txt",
+    "sha256": "1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce",
+    "expectedSha256": "1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce",
+    "officialManifestMatched": true,
+    "bytes": 31029996,
+    "retrievedAtUtc": "2026-10-22T15:39:28.328482+00:00",
+    "isolatedPrefix": "/workspace/scratch/actions-node22/node-v22.23.4-linux-x64",
+    "systemNodeReplaced": false
+  },
+  "nodeBinarySha256": "94efd062ed066c1a0b332e18249859c905e920eeada5df55d24c99b919629a90",
+  "systemNodeAfter": "v24.19.0",
+  "systemNodeReplaced": false,
+  "nodeInfo": "node-runtime.json",
+  "cpuTestConcurrency": 1,
+  "fullNetwork788Rerun": false,
+  "gpuOrBrowserLaunched": false,
+  "trackedSourceOrReportEdits": [],
+  "remoteMutation": false,
+  "reconcile": {
+    "commit": "961935eae89684694efe8162eb4cf0a9b8078fe4",
+    "tree": "1ee1370ce4b496292d20a220b82abf1bd0cabf84",
+    "publicEquivalentCommit": "4a969a9ea23147519897e788b3e97562a22c3bd2",
+    "runtimeScriptsAndPatchesDiffFromPublic": [],
+    "baseQa72": {
+      "tests": 72,
+      "pass": 72,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 6498.528077,
+      "failures": []
+    },
+    "clockFocused25Outbound42Relay11": {
+      "tests": 78,
+      "pass": 78,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 61809.416614,
+      "failures": []
+    },
+    "baseFiles": [
+      {
+        "path": "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs",
+        "sha256": "e58f32b713fd9a154176b70fabcc8957cc5160c6b3f105b1d8e86f7fb37db41f"
+      },
+      {
+        "path": "scripts/tests/inkwave-combat-provenance.test.mjs",
+        "sha256": "2d1eefa86a41fb1b73226999392a270fabcf6290b8d945b173b3f68fc4fedb5f"
+      },
+      {
+        "path": "scripts/tests/inkwave-open-pr-source-pairs.test.mjs",
+        "sha256": "dd1d4c2f3695958460909177f6189df976fe626eafb5d07a5e4675fe0d7f8af1"
+      },
+      {
+        "path": "scripts/tests/inkwave-boss-positive-proof.test.mjs",
+        "sha256": "7c3646942f7c71d1f5cdd4369131b5580f88a579b46748c6d2da29ad65dd9641"
+      }
+    ],
+    "clockFiles": [
+      {
+        "path": "patches/network-replication/tests/owner-clock-origin.test.mjs",
+        "sha256": "0d378f5b870667a83af4b82ebb7d6210b94d62f13fc5d9f01f2cca8433bcd434"
+      },
+      {
+        "path": "patches/network-replication/tests/issue-1767-session-clock.test.mjs",
+        "sha256": "20d525eca45ab2d8aa871288bd6319983b8a93f93e02ab0374da21c9586f596e"
+      },
+      {
+        "path": "patches/network-replication/tests/issue-1767-startup-clock.test.mjs",
+        "sha256": "b3cb3921dd2075b4c63f86dd56fb6c61b4de0c92323bc8bdea91c0911fcca38a"
+      },
+      {
+        "path": "patches/network-replication/tests/snapshot-clock-admission.test.mjs",
+        "sha256": "de547d26fa2bf7e0d1f2cd9a744ca2a7b3fcd56056b443cb69d2cabd412963ed"
+      },
+      {
+        "path": "patches/network-replication/tests/queue-bugs-recovery.test.mjs",
+        "sha256": "9cc0d65d5549c2ad3885f0ee3c672c5cc3e6602890096b1f578e7533f47febf1"
+      },
+      {
+        "path": "patches/network-replication/tests/outbound-prefix.test.mjs",
+        "sha256": "ced9c303e2b732c21e2c247fafb68c1b5f043bfc9b7487c365b897309a6f142d"
+      },
+      {
+        "path": "server/tests/browser-relay-fixture.test.mjs",
+        "sha256": "89237e9e63b1f8f4f2d8de10ac80e647cf6281fb7a55492f412fa4baca860716"
+      },
+      {
+        "path": "server/tests/owner-clock-browser-relay.test.mjs",
+        "sha256": "a71a2927a3ef6e0d30cbc562c6d24068b61cdebd8796d6d6cad6c7502574fef5"
+      }
+    ]
+  },
+  "weapon": {
+    "executionCommit": "a6059d6d935cb6c00f6c13bc7624f0ba698d845f",
+    "executionTree": "e43ffbde9c9037c7f45b7f58f15fecc20df805f5",
+    "applicationSourceCommit": "931e4c4af71ecc48f6648828aee2dff16a30f5f3",
+    "runtimeDiffFromApplication": [],
+    "site": "/workspace/scratch/actions-weapons-stage-acceptance/.built-site/weapons-931e4c4a",
+    "inputHash": "84571b440d934b2d576c7699ae48c420d5aa9c83db5f8a6f217a03f1d45a452e",
+    "contentHash": "d3d77b98076f1f1ca251c9c6968e1339bc648de1239720883e71204ec39bd718",
+    "revision": "d0d67abe539d0e96a6850977f3487bf3778cc80f29bfd99281a45a94ae706e86",
+    "manifestSha256": "7c41894bde7c596c91296262711ff0f2f41736add17be3c439d16f7ee033e998",
+    "checkedArtifacts": 2016,
+    "artifactMismatches": [],
+    "result": {
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 35644.889467,
+      "failures": []
+    },
+    "files": [
+      {
+        "path": "patches/splatoon3/tests/catalog-source-launch-1130.test.mjs",
+        "sha256": "9585d3bcfaf49daf833318805efe2a707dc60ec5bb703fcc1f1aee4736eb605b"
+      },
+      {
+        "path": "patches/splatoon3/tests/issue-1431-volume-pose-connection.test.mjs",
+        "sha256": "d533bf2c5d206bdd9ec85c0bcf64c5ae18bcf54803a4395370bba24d90ab7ac2"
+      },
+      {
+        "path": "patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs",
+        "sha256": "fccdc39de8d249706202b3f96452776cc3fcb2435ac565f34929f94cd75eaeba"
+      }
+    ],
+    "positiveSelection": "#1812 native Splat Roller|#1431 actual Quad|#1813",
+    "scope": "actual 780-flight case, actual Quad native volume/authority case, all three Dynamo cases; source-only mutation controls excluded explicitly"
+  },
+  "heap": {
+    "baseQa72MiB": 1024,
+    "clock78": "Node22 normal heap, V8 limit4144MiB",
+    "weaponCompiled5MiB": 1024
+  },
+  "commands": {
+    "baseQa72": "/workspace/scratch/actions-node22/node-v22.23.4-linux-x64/bin/node --max-old-space-size=1024 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-open-pr-source-pairs.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs",
+    "clock78": "/workspace/scratch/actions-node22/node-v22.23.4-linux-x64/bin/node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/network-replication/tests/owner-clock-origin.test.mjs patches/network-replication/tests/issue-1767-session-clock.test.mjs patches/network-replication/tests/issue-1767-startup-clock.test.mjs patches/network-replication/tests/snapshot-clock-admission.test.mjs patches/network-replication/tests/queue-bugs-recovery.test.mjs patches/network-replication/tests/outbound-prefix.test.mjs server/tests/browser-relay-fixture.test.mjs server/tests/owner-clock-browser-relay.test.mjs",
+    "weaponCompiled5": "/workspace/scratch/actions-node22/node-v22.23.4-linux-x64/bin/node --max-old-space-size=1024 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap --test-name-pattern=\"#1812 native Splat Roller|#1431 actual Quad|#1813\" patches/splatoon3/tests/catalog-source-launch-1130.test.mjs patches/splatoon3/tests/issue-1431-volume-pose-connection.test.mjs patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs"
+  },
+  "environment": {
+    "INKWAVE_BUILT_SITE": "/workspace/scratch/actions-weapons-stage-acceptance/.built-site/weapons-931e4c4a",
+    "INKWAVE_TEST_SCRATCH": "per-suite persistent .ci-scratch/node22-compat directories",
+    "NODE_PATHOrSystemNodeOverride": false
+  },
+  "limits": [
+    "This is targeted Node22 compatibility verification, not a repeat of all788 network cases or a new browser acceptance.",
+    "The original compiled-positive selection stays at five cases and does not represent every source-only weapon test."
+  ],
+  "baseF9Qa72": {
+    "sourceCommit": "02806d390ce7a486af209a2131102fabc2ab125f",
+    "sourceTree": "26333268cd7944b4e9519d72417670a571ce0a58",
+    "publicEquivalentCommit": "d064dc3bd95900faf3eeeb6b15b61f3906324244",
+    "runtimeSource": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+    "node": "v22.23.4",
+    "pass": 72,
+    "fail": 0,
+    "skip": 0,
+    "duration_ms": 7156.095493,
+    "rawLog": "base-f9-qa72.tap",
+    "rawLogSha256": "c7ec6beae1f7777456d0a605279654d5f7911c4858e18ec73110d00b1f616b43",
+    "scope": "An additional execution against the base f9 runtime, distinct from the clock candidate QA72. No runtime or fixture change during execution."
+  },
+  "parentAcceptedAtUtc": "2026-10-22T15:47:22.901597+00:00",
+  "scope": "Targeted Node22 compatibility only. Does not replace pending GitHub Actions or main integration."
+}

@@ -1,0 +1,490 @@
+{
+  "scope": "Historical revision-specific CPU checkpoints, including chronological failures and superseded stored-R expectations. See the current experimental contract and review corrections; not current whole-game authority acceptance.",
+  "archive": "foundation-independent-raw.tar.gz",
+  "bytes": 423455,
+  "sha256": "a6ddcba253c40f107bd3c4039c3106860224b1c1fbde5028da1f4a327af9e5b0",
+  "members": [
+    {
+      "path": "air-charge-y3.log",
+      "bytes": 1192,
+      "sha256": "778445b4b80fc658e068cfad07466db009d9fe94cfa2a62c377a553b1327ce3f"
+    },
+    {
+      "path": "air-charge.log",
+      "bytes": 1192,
+      "sha256": "5167cce3734cc104f18e5f59ae3f401279ee5e87362095e91338029a3cd6ac10"
+    },
+    {
+      "path": "air-charge.test.mjs",
+      "bytes": 3170,
+      "sha256": "aa164b4ef12139ae5174dbfd741ca8f88e83669515d1e2cee1838dc58ddab9b8"
+    },
+    {
+      "path": "air-keep-final/authority-cf747f9c84853e1377ea87720277e56bbfcd833bae4d4fd54295337ba5e547bf.mjs",
+      "bytes": 14294,
+      "sha256": "cf747f9c84853e1377ea87720277e56bbfcd833bae4d4fd54295337ba5e547bf"
+    },
+    {
+      "path": "air-keep-final/authority.log",
+      "bytes": 2813,
+      "sha256": "f3f5a0eddd573bac0c9bb39a7469bf7c927bbab0a68392479147bc3ccdb289ed"
+    },
+    {
+      "path": "air-keep-final/frozen-sim.log",
+      "bytes": 402,
+      "sha256": "96a8609c21eeea69319ab9c5624d35412d350ad097bc314975b30595d8da0f88"
+    },
+    {
+      "path": "air-keep-final/frozen-sim.test.mjs",
+      "bytes": 4192,
+      "sha256": "b9292c7dfb8f2d9607002d477ade79d8b9c5261245993fc3da74af3184dfbc16"
+    },
+    {
+      "path": "air-keep-final/independent-state-near-floor-gap-fixed.log",
+      "bytes": 6123,
+      "sha256": "55dee8c8f8d7e0b16517890e43441278cf7a352d0f5844a57fe86a6cf26ee824"
+    },
+    {
+      "path": "air-keep-final/independent-state.log",
+      "bytes": 5692,
+      "sha256": "fc5d0741f5add2660c12558477e12796674be1e06a818a691b898c4794865f6c"
+    },
+    {
+      "path": "air-keep-final/independent-state.test.mjs",
+      "bytes": 4863,
+      "sha256": "6094bbfcf8f5beea903e218a98e8399881347dabdfbe4d7dd900fdbd45634ff3"
+    },
+    {
+      "path": "air-keep-final/native-sub-cancel.log",
+      "bytes": 466,
+      "sha256": "51159b9339a5ee196afc1929fea8f1c49128018a5efc345fd52f2051b54856a1"
+    },
+    {
+      "path": "air-keep-final/native-sub-kept.log",
+      "bytes": 379,
+      "sha256": "3471816d9b40fa8b302b6b87902830f92ac56ab667fb9036214b6d545451d4a2"
+    },
+    {
+      "path": "air-keep-final/native-support.log",
+      "bytes": 405,
+      "sha256": "932f887d819be6f8d3167c734bad953610c39c01d74b3fc85c071199c0fceb86"
+    },
+    {
+      "path": "air-keep-final/native-support.test.mjs",
+      "bytes": 4642,
+      "sha256": "c32d44f074e3849263bade6f1ebe49df4edb966e5474e36f2b09829b66910999"
+    },
+    {
+      "path": "air-keep-final/owner-regression.log",
+      "bytes": 8311,
+      "sha256": "58684fbc3615da92588d04fa40d35c707d916404e3534b171cf5056c77d904b7"
+    },
+    {
+      "path": "air-keep-final/patches/network-replication/adapter.mjs",
+      "bytes": 200246,
+      "sha256": "b92f454ee9e5e557845ecd9afdc6d765c75ea5d6c3bacba3afae18e5cd92afc6"
+    },
+    {
+      "path": "air-keep-final/patches/network-replication/charger-contact-authority.mjs",
+      "bytes": 13763,
+      "sha256": "c9abf0300ccd7b584ca0af49acb7413354c9f4e3fbc22d934426ad1c44e50ac7"
+    },
+    {
+      "path": "air-keep-final/patches/network-replication/snapshot-guard.mjs",
+      "bytes": 16108,
+      "sha256": "a8bfa28d174ee1938bce08bd623ef7f008b969e4100bc5b74e19e136da4facfb"
+    },
+    {
+      "path": "air-keep-final/patches/network-replication/tests/issue-1665-charger-authority.test.mjs",
+      "bytes": 13835,
+      "sha256": "b9481e90f862f4a22f27c395758478f96e868c1183ba47a0edd9c4c19f4a9775"
+    },
+    {
+      "path": "air-keep-final/patches/splatoon3/runtime/charger-charge-clock.mjs",
+      "bytes": 1334,
+      "sha256": "438e33a83fc5a1457f18ed9ecb9feb722dd6e2fb0700287d617564b215d10f89"
+    },
+    {
+      "path": "air-keep-final/patches/splatoon3/runtime/weapons.mjs",
+      "bytes": 77977,
+      "sha256": "f414a13697c6dbbc6509169b99b7bd983a0e69b1b15fc247fc96fb0da269b6b8"
+    },
+    {
+      "path": "air-keep-final/snapshot.json",
+      "bytes": 747,
+      "sha256": "98f083d3f758afd470236392550c8b156101b2619fc75dede47a926bf28ea1cd"
+    },
+    {
+      "path": "air-keep-final/sub-cancel.log",
+      "bytes": 1255,
+      "sha256": "3af1c3dee15bd10eb1375e67b9c6fcb610be53b25a957415991683bef32efe91"
+    },
+    {
+      "path": "air-keep-final/sub-cancel.test.mjs",
+      "bytes": 4416,
+      "sha256": "f125ff250ca25bd31ff65433ecc5b2a2ef4cb79b35a934b9afd8a7249b4ef47a"
+    },
+    {
+      "path": "charger-authority-with-generic-los.mjs",
+      "bytes": 12208,
+      "sha256": "144fa44ca665b462c82ed62c7c03ac219a21c7dc8947fd2bbb85d9157457be0c"
+    },
+    {
+      "path": "charger-exact-segment-final.log",
+      "bytes": 3040,
+      "sha256": "15f6c1a86ad9e8b7c9f45f706310ce116ea2c4816d7bb3a77558f720610f77d3"
+    },
+    {
+      "path": "charger-final.log",
+      "bytes": 2937,
+      "sha256": "f730c19cc0570d662a52af61e9d5b201ba6a6f8f7e3344ba43e056cf8a872a41"
+    },
+    {
+      "path": "final-stable/authority-independent.log",
+      "bytes": 7124,
+      "sha256": "5f4e8ff59fe132537d5a7f752714332a7516797da9bb6d0efecf5ca1e091e086"
+    },
+    {
+      "path": "final-stable/authority-last-review.log",
+      "bytes": 6885,
+      "sha256": "e4d3409d0b8081c3b7b618716dc6d978d7ba2387f5129726c8be4b7db2bd2aae"
+    },
+    {
+      "path": "final-stable/independent-charger.test.mjs",
+      "bytes": 6116,
+      "sha256": "12baccac8e976fae49bedb6c7ee96f11442f339412423c2eddf60a2a4475da5c"
+    },
+    {
+      "path": "final-stable/independent-state.test.mjs",
+      "bytes": 5368,
+      "sha256": "d090259f2137818bd52d2e80ee2413b1e9c556b5c5d4e004bfaa6301fcee354d"
+    },
+    {
+      "path": "final-stable/patches/network-replication/adapter.mjs",
+      "bytes": 202381,
+      "sha256": "eea8ecbb57d2fa610c99948a145d4bec29aa78b073f882d642c332343ebc17ca"
+    },
+    {
+      "path": "final-stable/patches/network-replication/charger-contact-authority.mjs",
+      "bytes": 14624,
+      "sha256": "8bac3ed2455f439c57f307ba93a68621a5e187a2ab1b9d42e4fe3d7f9b21fc62"
+    },
+    {
+      "path": "final-stable/patches/network-replication/snapshot-guard.mjs",
+      "bytes": 16477,
+      "sha256": "e1982015e5d332239521e4d70c8053ed72bae701fdfc934b2e3fbb404a91b82a"
+    },
+    {
+      "path": "final-stable/patches/network-replication/tests/issue-1665-charger-authority.test.mjs",
+      "bytes": 20000,
+      "sha256": "12dfabc8241074cceb0c15d8906ce9708a70ba41eeb757640ba7a520ed084b94"
+    },
+    {
+      "path": "final-stable/patches/splatoon3/runtime/charger-charge-clock.mjs",
+      "bytes": 1532,
+      "sha256": "9524d3fcec9d2eac7769aa63d8f3c41085be848293f20947e5bbd431af370b3e"
+    },
+    {
+      "path": "final-stable/patches/splatoon3/runtime/player-ground-contact.mjs",
+      "bytes": 429,
+      "sha256": "cf207ddf18c56ee919fa906e239e8170256d5c04ad1dd9af50a3ed94e722a548"
+    },
+    {
+      "path": "final-stable/patches/splatoon3/runtime/sub-ready.mjs",
+      "bytes": 6462,
+      "sha256": "50980ed8b433c979bfbbb77d5efc7297efd9b3c7c6c9bab0d0d959c5924b96c8"
+    },
+    {
+      "path": "final-stable/patches/splatoon3/runtime/weapons-charger-flight.mjs",
+      "bytes": 26413,
+      "sha256": "7636b7ec4e9126db58162d48d67532805c54ac9e78b5a5cff914dcdf099bb70c"
+    },
+    {
+      "path": "final-stable/patches/splatoon3/runtime/weapons.mjs",
+      "bytes": 77977,
+      "sha256": "f414a13697c6dbbc6509169b99b7bd983a0e69b1b15fc247fc96fb0da269b6b8"
+    },
+    {
+      "path": "final-stable/snapshot.json",
+      "bytes": 1111,
+      "sha256": "91eee3aceb3ed864d3d00a921fbf0c88d7c39bac0342903f065cae9af6caed42"
+    },
+    {
+      "path": "final-stable/sub-cancel.test.mjs",
+      "bytes": 4904,
+      "sha256": "9026292722764861021a687c87f95b751173ffc5451a7c61fce35e3cd8f7728d"
+    },
+    {
+      "path": "final-stable/sub-held-start.test.mjs",
+      "bytes": 4828,
+      "sha256": "5138b1f2599a5e8c80fd9823f0e38e89c97da73b0242ee125eac528c1169035c"
+    },
+    {
+      "path": "final-stable/sub-review.log",
+      "bytes": 1546,
+      "sha256": "7d3fddd7886a07931b29a4eddc873a1d65686a19b130f412926e7ed854f2dd77"
+    },
+    {
+      "path": "final-stable/thin-muzzle-sweep.test.mjs",
+      "bytes": 4688,
+      "sha256": "e3b8c1fc20c7def5e59655751564b9b7da4bcec73a189afddb06fd3c1b8aa947"
+    },
+    {
+      "path": "final-stable/verified-source-hashes.json",
+      "bytes": 2099,
+      "sha256": "c82313b3de6774eff15f6d97ac44391d61192498d697b2d16aafdc74863fd4a4"
+    },
+    {
+      "path": "generic-los-finding.json",
+      "bytes": 391,
+      "sha256": "f5f32f2235f59ab6a07aab3b3f43bd4f536074d7645330ea1c26b8d0048930c7"
+    },
+    {
+      "path": "independent-charger.log",
+      "bytes": 765,
+      "sha256": "a8d886dc1e8d08e4c0127a38508575f5e8e61a80673ff18424d83320d531d859"
+    },
+    {
+      "path": "independent-charger.test.mjs",
+      "bytes": 4715,
+      "sha256": "b0f914be930ab6f02890b576bbeb41600a4547d514c20fecd320d7a4fc57d991"
+    },
+    {
+      "path": "independent-clock.log",
+      "bytes": 540,
+      "sha256": "c6d1fe5068f1698dc0b9fe0a1c61ca46ca113dc987131cb67bd2e755bf70744f"
+    },
+    {
+      "path": "independent-clock.test.mjs",
+      "bytes": 10572,
+      "sha256": "9ca5729fae3acaf6270cb1ca43cf348d5f1bd92cbbf9a2570bf19931d6c6111d"
+    },
+    {
+      "path": "keep-emergence.log",
+      "bytes": 1245,
+      "sha256": "634f11578013be72e1f3dbf681a39f342a4965d58a370e89be8957071621bf0a"
+    },
+    {
+      "path": "keep-emergence.test.mjs",
+      "bytes": 3617,
+      "sha256": "cdf323c7b6dd539a79d37587a2a9e69406f4a0e5cda3dc9f658d8bedea259d1c"
+    },
+    {
+      "path": "normal-ink/loaded-authority-064efa.mjs",
+      "bytes": 15677,
+      "sha256": "064efa6a97c21610bc002b543ae562c004c336291ab0e6d978243a3e4dfdb619"
+    },
+    {
+      "path": "normal-ink/loaded-authority-22cb.mjs",
+      "bytes": 15120,
+      "sha256": "22cbac4fb04066cceb2d66d22c76ed3f94c50058c710ec5f2934cf7381954970"
+    },
+    {
+      "path": "normal-ink/loaded-authority.mjs",
+      "bytes": 15677,
+      "sha256": "064efa6a97c21610bc002b543ae562c004c336291ab0e6d978243a3e4dfdb619"
+    },
+    {
+      "path": "normal-ink/normal-ink.mjs",
+      "bytes": 5566,
+      "sha256": "a0bd1bcf0fb7dc75a7c47a12cd57b3354b08b79a33763f8964033027992f7403"
+    },
+    {
+      "path": "normal-ink/result-064efa.json",
+      "bytes": 4376,
+      "sha256": "b437dc04764bf2d0b5a3903c51a582dbc2ba0762a099231ba3c5a7ccceb3d3d1"
+    },
+    {
+      "path": "normal-ink/result-22cb.json",
+      "bytes": 4378,
+      "sha256": "5325e868ca67b642243415677bb2fdf65444c7ab6dd3a0bc3916c9a948976cb3"
+    },
+    {
+      "path": "normal-ink/result-latest.json",
+      "bytes": 4378,
+      "sha256": "5325e868ca67b642243415677bb2fdf65444c7ab6dd3a0bc3916c9a948976cb3"
+    },
+    {
+      "path": "normal-ink/result.json",
+      "bytes": 4277,
+      "sha256": "3124fde342ede6b24b75cc2698d22ea9fd0b848b0b256ff6ddc1e4481fc9de0f"
+    },
+    {
+      "path": "normal-ink/review-fixture.mjs",
+      "bytes": 13902,
+      "sha256": "399b775100d325f2ddc7de79abb3f3da9c10e7916458fffdc30288d85ede191f"
+    },
+    {
+      "path": "normal-ink/review.md",
+      "bytes": 2252,
+      "sha256": "1448e1931ffce889be2ff3910250f842c713417ada369839a7707ded3a4de3c8"
+    },
+    {
+      "path": "normal-ink/source-hashes.json",
+      "bytes": 953,
+      "sha256": "da16b63dbeeaf519ce1e35ba0499ca1acbe46a880936e6abc4fbbaf13eeb1522"
+    },
+    {
+      "path": "normal-ink/stderr-064efa.log",
+      "bytes": 173,
+      "sha256": "47aa94bb38a6069298adcc425bcaf352acb2e31295f9dcbf9ba0587d52dd4c79"
+    },
+    {
+      "path": "normal-ink/stderr-latest.log",
+      "bytes": 173,
+      "sha256": "e674ec5fe3e83eacb2622a7b8afb6287fac4075abcf768a08f0a5a9144d50028"
+    },
+    {
+      "path": "normal-ink/stderr.log",
+      "bytes": 173,
+      "sha256": "7dcd681db5633579b84ad2e1b8fd798644e0097fd8a90fa4a63a61facfb74578"
+    },
+    {
+      "path": "patches/network-replication/adapter.mjs",
+      "bytes": 200048,
+      "sha256": "eaac31df03a62e7b8bd4bd02f62963d1a203874cc253f0c1c1e9db3f2c117dba"
+    },
+    {
+      "path": "patches/network-replication/charger-contact-authority.mjs",
+      "bytes": 12012,
+      "sha256": "978eb65d2927416501a53cefadae020567d7e02175bd4cdc9f06d68a3b78f3a2"
+    },
+    {
+      "path": "patches/network-replication/combat-provenance-adapter.mjs",
+      "bytes": 4729,
+      "sha256": "ed23ed0f3fcb9891314dacfb50302e0b9dc1e6cc9e2e22f0df5cc33735ea639a"
+    },
+    {
+      "path": "patches/network-replication/combat-provenance.mjs",
+      "bytes": 34601,
+      "sha256": "1293f7ff6935712b4f7dc2885b15feae94362b4aca1427aae3504b53623cae32"
+    },
+    {
+      "path": "patches/network-replication/owner-clock.mjs",
+      "bytes": 6405,
+      "sha256": "74ef8b9f945d2da91b702ecab296d25ec59e5184bdbf9602a92bab511f50eefa"
+    },
+    {
+      "path": "patches/network-replication/snapshot-guard.mjs",
+      "bytes": 16043,
+      "sha256": "e3724ac1014550bebeda6287e4c74087610ccbcf93f5803db40950409d7a96e5"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapons-charger-flight.mjs",
+      "bytes": 26413,
+      "sha256": "7636b7ec4e9126db58162d48d67532805c54ac9e78b5a5cff914dcdf099bb70c"
+    },
+    {
+      "path": "resources-final/authority-independent.log",
+      "bytes": 6894,
+      "sha256": "f0c555c2bb583bca60aaf6f0fbe2a8fcad2aeb5cb7fca8cbfcb08f9d9a6850c2"
+    },
+    {
+      "path": "resources-final/patches/network-replication/adapter.mjs",
+      "bytes": 202657,
+      "sha256": "c01bd2e768a72850ef1e739e83d55ad7e5d0a26b85c8661e01c44fbbd659b666"
+    },
+    {
+      "path": "resources-final/patches/network-replication/charger-contact-authority.mjs",
+      "bytes": 15677,
+      "sha256": "064efa6a97c21610bc002b543ae562c004c336291ab0e6d978243a3e4dfdb619"
+    },
+    {
+      "path": "resources-final/patches/network-replication/snapshot-guard.mjs",
+      "bytes": 16477,
+      "sha256": "e1982015e5d332239521e4d70c8053ed72bae701fdfc934b2e3fbb404a91b82a"
+    },
+    {
+      "path": "resources-final/patches/network-replication/tests/issue-1665-charger-authority.test.mjs",
+      "bytes": 21726,
+      "sha256": "fbb03345804bff650b99320d5f64afca28e802158d0b914b19ecec179595a468"
+    },
+    {
+      "path": "resources-final/patches/splatoon3/runtime/charger-charge-clock.mjs",
+      "bytes": 2444,
+      "sha256": "8812aaa943602d9d5abb4225790e10ae614e5659099e2682f7ae5bcf3436abd7"
+    },
+    {
+      "path": "resources-final/patches/splatoon3/runtime/player-ground-contact.mjs",
+      "bytes": 429,
+      "sha256": "cf207ddf18c56ee919fa906e239e8170256d5c04ad1dd9af50a3ed94e722a548"
+    },
+    {
+      "path": "resources-final/patches/splatoon3/runtime/resources.mjs",
+      "bytes": 8707,
+      "sha256": "c4ecda20e59263d8eaed8f8519754ee2a16afafbad93cc3ee1501615bd1937d6"
+    },
+    {
+      "path": "resources-final/patches/splatoon3/runtime/sub-ready.mjs",
+      "bytes": 6462,
+      "sha256": "50980ed8b433c979bfbbb77d5efc7297efd9b3c7c6c9bab0d0d959c5924b96c8"
+    },
+    {
+      "path": "resources-final/patches/splatoon3/runtime/weapons.mjs",
+      "bytes": 77589,
+      "sha256": "d57384e392e9e8aacc00fc3d4122f208c9d3228b8782f61cc234999f989e11c1"
+    },
+    {
+      "path": "resources-final/review.md",
+      "bytes": 1781,
+      "sha256": "1e7dec4b56f37ee3f2dc2748ce7c90dc1fb00d9faf819a5d652771ce2b404281"
+    },
+    {
+      "path": "resources-final/snapshot.json",
+      "bytes": 1098,
+      "sha256": "ebe2e1918a28d14d50af27f26dfc451686614998e31016fef164c76c51ddb77b"
+    },
+    {
+      "path": "resources-final/source-unchanged.json",
+      "bytes": 1154,
+      "sha256": "5447690d6411009377492d8add9ca5c2243bbba59f98166397c69c79aa7b2e8e"
+    },
+    {
+      "path": "resources-final/summary.json",
+      "bytes": 2169,
+      "sha256": "23aa622b0fa3529fe4a0aaa786c0822f4d49b56a1046cc16325a8a60585a5ea0"
+    },
+    {
+      "path": "snapshot.json",
+      "bytes": 864,
+      "sha256": "ef35c992be56a5f6ffb3e99acd438c5166afe630706b185a5028c6304fe49010"
+    },
+    {
+      "path": "targeted-final.log",
+      "bytes": 3713,
+      "sha256": "0decaaacbb58bc4f821053f839229f1122e5c50b846a39bd4ef6eb4f7718590a"
+    },
+    {
+      "path": "targeted.log",
+      "bytes": 4344,
+      "sha256": "7ae13ee103f1e5e93f8754904a308fe92e7972a80197937e10b1d38471f7d89d"
+    },
+    {
+      "path": "thin-muzzle-1035.log",
+      "bytes": 1230,
+      "sha256": "20ba536027691433c25d0fae2f6cc9cec62b9c3aac82ac234ec42f5ef5ac0c0f"
+    },
+    {
+      "path": "thin-muzzle-sweep.log",
+      "bytes": 1013,
+      "sha256": "fbccef7d2731682f1f933bb91e170cad383320b1a3a9b085602235e0d230bac8"
+    },
+    {
+      "path": "thin-muzzle-sweep.test.mjs",
+      "bytes": 3288,
+      "sha256": "21cf6143629f3d550e4c7550b47960ca57567b42b4cf75b81d424e07df27998a"
+    },
+    {
+      "path": "thin-muzzle.log",
+      "bytes": 402,
+      "sha256": "07daa9846cdf4ff2655cadd576ab0382a9fe66ae2b8ab0b2d4120091eb1f26b4"
+    },
+    {
+      "path": "thin-muzzle.test.mjs",
+      "bytes": 3383,
+      "sha256": "9c1f0cd40d57015b029f13ff6aa2931ab22ad5ff5a41542e31f18f3455f519df"
+    }
+  ],
+  "credentialPatternMatches": 0,
+  "archiveRoot": "foundation-independent-review"
+}

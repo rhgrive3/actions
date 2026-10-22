@@ -1,8 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+// Physical body/input are explicit; adoption, Surge and accepted-hit slots stay fixed.
+function assertInputBody(row, actor) {
+  const i=actor.intent;
+  assert.deepEqual(Array.from(row[26]), ['iw-input-body-1', (i.fire?1:0)|(i.squid?2:0)|(i.sub?4:0)|(i.jump?8:0), Math.round(actor.pos.y*1000)/1000]);
+}
+
 import { fixture as sourceFixture } from '../../splatoon3/tests/source-fixture.mjs';
 
-const CURRENT_ACTOR_ROW_WIDTH = 26;
+const CURRENT_ACTOR_ROW_WIDTH = 27;
 const LEGACY_ACTOR_ROW_WIDTH = 22;
 const SPECIALS_COUNTER_SLOT = 22;
 const ADOPTION_STATE_SLOT = 23;
@@ -11,7 +18,8 @@ const HIT_AUTHORITY_STATE_SLOT = 25;
 
 function assertCurrentActorSlots(row, actor) {
   assert.equal(row.length, CURRENT_ACTOR_ROW_WIDTH,
-    'the composed actor row keeps its current 26-field wire shape');
+    'the composed actor row keeps its current 27-field wire shape');
+  assertInputBody(row, actor);
   assert.equal(row[SPECIALS_COUNTER_SLOT], actor.stats.specials || 0,
     'the existing special-use counter retains its current slot');
   assert.equal(row[ADOPTION_STATE_SLOT]?.[0], 'inkwave-adoption-v1',

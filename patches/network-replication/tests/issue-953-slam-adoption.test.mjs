@@ -1,5 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+// Physical body/input are explicit; adoption, Surge and accepted-hit slots stay fixed.
+function assertInputBody(row, actor) {
+  const i=actor.intent;
+  assert.deepEqual(Array.from(row[26]), ['iw-input-body-1', (i.fire?1:0)|(i.squid?2:0)|(i.sub?4:0)|(i.jump?8:0), Math.round(actor.pos.y*1000)/1000]);
+}
+
 import { fixture } from './robustness-fixture.mjs';
 
 const DT = 1 / 60;
@@ -95,7 +102,8 @@ async function receiving(packet) {
 for(const phase of ['rise','hang','fall'])for(const hz of [30,60,120])test(`#953 ${phase} Slam survives adoption and impacts once at ${hz}Hz`,async()=>{
   const owner=await started(phase), packet=sendTick(owner.nm);
   const row = packet.a[0];
-  assert.equal(row.length, 26, 'native tick keeps adoption at index 23 and appends hit authority at 25');
+  assert.equal(row.length, 27, 'native tick keeps adoption at index 23 and appends hit authority at 25');
+  assertInputBody(row, owner.a);
   assert.equal(row[25][0], HIT_AUTHORITY_TAG, 'accepted-hit metadata must not replace adoption state');
   const tag = row[23]; assert.equal(tag[0], ADOPTION_TAG); assert.equal(tag.length, 10);
   const host=await receiving(packet);
@@ -152,6 +160,7 @@ test('#953 a newer completed snapshot cannot revive an older displayed Slam',asy
 for (const length of [8,9]) test(`legacy ${length}-field adoption remains readable without manufacturing Slam authority`,async()=>{
   const owner=await started('rise'),packet=sendTick(owner.nm);
   const row = packet.a[0];
+  assertInputBody(row, owner.a);
   assert.equal(row[25][0], HIT_AUTHORITY_TAG, 'later extension stays intact during legacy adoption coverage');
   row[23].length = length;
   const host=await receiving(packet);

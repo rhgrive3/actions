@@ -1,5 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+// Physical body/input are explicit; adoption, Surge and accepted-hit slots stay fixed.
+function assertInputBody(row, actor) {
+  const i=actor.intent;
+  assert.deepEqual(Array.from(row[26]), ['iw-input-body-1', (i.fire?1:0)|(i.squid?2:0)|(i.sub?4:0)|(i.jump?8:0), Math.round(actor.pos.y*1000)/1000]);
+}
+
 import { fixture } from './robustness-fixture.mjs';
 
 const DT = 1 / 60;
@@ -92,7 +99,8 @@ test('native Super Jump transfers its exact flight and lands continuously at 30/
     const ownerState = source.superJumpState;
     assert.ok(ownerState.t > 0 && ownerState.t < ownerState.dur);
     const packet = sendTick(sender);
-    assert.equal(packet.a[0].length, 26, 'adoption index 23 remains stable; surge and accepted-hit state append at 24/25');
+    assert.equal(packet.a[0].length, 27, 'adoption index 23 remains stable; surge and accepted-hit state append at 24/25');
+    assertInputBody(packet.a[0], source);
     assert.equal(packet.a[0][24], null, 'an ordinary Super Jump does not fabricate a Squid Surge');
     assert.deepEqual(Array.from(packet.a[0][25]), ['inkwave-hit-authority-v1', source.netLife, 0]);
     assert.equal(packet.a[0][22], source.stats.specials);
@@ -137,19 +145,20 @@ test('native Super Jump transfers its exact flight and lands continuously at 30/
   }
 });
 
-test('appended hit-authority slot keeps legacy actor row lengths 22 through 25 readable', async () => {
+test('appended hit-authority slot keeps legacy actor row lengths 22 through 26 readable', async () => {
   const owner = await runtimeFixture();
   const source = makeActor(owner, { nid: 31, owner: 'p2', team: 0 });
   const sender = owner.makeNetMatch(owner.makeSession('p2', 'p2', [['p2', 'Owner'], ['host', 'Host']]));
   bindActors(owner, sender, [source]);
   const packet = sendTick(sender);
   const row = packet.a[0];
-  assert.equal(row.length, 26);
+  assert.equal(row.length, 27);
+  assertInputBody(row, source);
   assert.equal(row[23][0], ADOPTION_TAG);
   assert.equal(row[24], null);
   assert.equal(row[25][0], HIT_AUTHORITY_TAG);
 
-  for (const length of [22, 23, 24, 25]) {
+  for (const length of [22, 23, 24, 25, 26]) {
     const host = await runtimeFixture();
     const remote = makeActor(host, { nid: source.nid, owner: 'p2', remote: true, team: 0 });
     const receiver = host.makeNetMatch(host.makeSession('host', 'host', [['host', 'Host'], ['p2', 'Owner']]));
@@ -380,4 +389,20 @@ for (const phase of ['charge', 'flight']) test(`#412 owner-validated ${phase} sn
   remote.superJumpState = { phase, net: true, t: 0 };
   remote.net.sjTo = new host.THREE.Vector3(77, 0, 77);
   assert.equal(local.superJump(remote), false, 'legacy phase and a stale flight hint cannot manufacture a destination');
+});
+
+test('a malformed present physical-body tuple cannot mutate the actor and the next valid tick recovers',async()=>{
+  const owner=await runtimeFixture(),source=makeActor(owner,{nid:31,owner:'p2'});
+  const sender=owner.makeNetMatch(owner.makeSession('p2','p2'));bindActors(owner,sender,[source]);
+  const packet=sendTick(sender);assertInputBody(packet.a[0],source);
+  owner.clock.advance(.05);owner.G.time+=.05;const corrected=sendTick(sender);
+  for(const body of [null,['wrong',0,0],['iw-input-body-1',16,0],['iw-input-body-1',0,.8]]){
+    const host=await runtimeFixture(),remote=makeActor(host,{nid:31,owner:'p2',remote:true});
+    const receiver=host.makeNetMatch(host.makeSession('host','host'));bindActors(host,receiver,[remote]);
+    const invalid=structuredClone(packet);invalid.a[0][26]=body;
+    receiver.onMessage('p2',invalid);assert.equal(remote.net.buf.length,0,'present malformed tuple is never stripped as a legacy row');
+    assert.equal(receiver.peers.get('p2').lastTs,packet.ts,'packet clock still advances around a rejected individual actor row');
+    receiver.onMessage('p2',structuredClone(corrected));assert.equal(remote.net.buf.length,1,'the next valid owner tick recovers normally');
+    assert.equal(remote.net.buf[0].physicalY,packet.a[0][26][2]);
+  }
 });

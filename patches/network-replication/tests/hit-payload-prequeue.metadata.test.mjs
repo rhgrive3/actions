@@ -6,7 +6,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 const source=readFileSync(new URL('../combat-provenance-adapter.mjs',import.meta.url),'utf8').replace('export function ','function ');
 // Synthetic constants/knockback validator exercise final composition plumbing,
 // not gameplay magnitudes or the native knockback geometry contract.
-const payloadTemplate=`const G={},THREE={},NetMatch={};const IW_HIT_MAX_DAMAGE=500,IW_HIT_CAUSES=new Set(['angleShooter','burst','shot','blaster']),IW_ANGLE_SHOOTER_HIT_MAX=40,IW_CATALOGUE_SUB_HIT_MAX={burst:180};
+const payloadTemplate=`const G={},THREE={},PLAYER={},NetMatch={};const IW_HIT_MAX_DAMAGE=500,IW_HIT_CAUSES=new Set(['angleShooter','burst','shot','blaster']),IW_ANGLE_SHOOTER_HIT_MAX=40,IW_CATALOGUE_SUB_HIT_MAX={burst:180};
 const validBlasterKnockback=v=>Array.isArray(v)&&v.length===3&&v.every(Number.isFinite);
 function nativeGuard(d) {
     const blastKnockback = d.w === 'blaster' && validBlasterKnockback(d.kb);
@@ -23,7 +23,12 @@ const hitStart='  _hit(d, from) {',hitEnd='    this._applyingHit = true;';
 assert.equal(nativeSource.split(hitStart).length,2);assert.equal(nativeSource.split(hitEnd).length,2);
 const receiptPrefix=nativeSource.slice(nativeSource.indexOf(hitStart),nativeSource.indexOf(hitEnd));
 const constants=payloadTemplate.slice(0,payloadTemplate.indexOf('function nativeGuard')).replace('NetMatch={}','unusedNetMatch={}');
-const template=constants+'class NetMatch {\n'+receiptPrefix+hitEnd+'\n}\n}';
+// The final adapter audits BOTH actual native receipt owners. Supply the
+// unchanged compiled Boss method instead of weakening its identity checks.
+const bossStart='  _acceptBossHit(from, d) {',bossEnd='\n  sendBossHit(';
+assert.equal(nativeSource.split(bossStart).length,2);assert.equal(nativeSource.split(bossEnd).length,2);
+const bossPrefix=nativeSource.slice(nativeSource.indexOf(bossStart),nativeSource.indexOf(bossEnd,nativeSource.indexOf(bossStart)));
+const template=constants+'class NetMatch {\n'+receiptPrefix+hitEnd+'\n}\n'+bossPrefix+'\n  sendBossHit(){}\n}';
 const nativeGuard=payloadTemplate.slice(payloadTemplate.indexOf('function nativeGuard'));
 const generator=vm.createContext({template});new vm.Script(source+'\noutput=adaptCombatProvenance("src/net/netmatch.js",template);').runInContext(generator,{timeout:100});
 const compiled=vm.createContext({installCombatProvenance:()=>{}});new vm.Script(generator.output.replace(/^import .*\n/,'')+'\n'+nativeGuard+'\npolicy=iwRemoteHitPayloadAllowed;guard=nativeGuard;').runInContext(compiled,{timeout:100});
@@ -39,3 +44,6 @@ for(const [name,d,want] of [
 test('remote wrapper checks policy before proof and enqueue',()=>{const s=readFileSync(new URL('../combat-provenance.mjs',import.meta.url),'utf8'),a=s.indexOf('  P._hit=function');const part=s.slice(a,s.indexOf('  P.onMessage=',a));assert.ok(part.indexOf('!context.hitPayloadAllowed(d)')<part.indexOf('combatAdmission(this'));assert.ok(part.indexOf('!context.hitPayloadAllowed(d)')<part.indexOf('enqueue(this'));});
 test('missing final Blaster guard fails closed during composition',()=>{generator.template=template.replace('const blastKnockback','const changed');assert.throws(()=>new vm.Script('adaptCombatProvenance("src/net/netmatch.js",template)').runInContext(generator,{timeout:100}),/identity mismatch/);});
 test('duplicate final guard fails closed during composition',()=>{generator.template=template+template;assert.throws(()=>new vm.Script('adaptCombatProvenance("src/net/netmatch.js",template)').runInContext(generator,{timeout:100}),/identity mismatch/);});
+
+test('missing final Boss receipt guard fails closed during composition',()=>{generator.template=template.replace(bossStart,'  _changedBossReceipt(from, d) {');assert.throws(()=>new vm.Script('adaptCombatProvenance("src/net/netmatch.js",template)').runInContext(generator,{timeout:100}),/boss receipt guard identity mismatch/);});
+test('duplicate final Boss receipt guard fails closed during composition',()=>{generator.template=template.replace(bossPrefix,bossPrefix+'\n'+bossPrefix);assert.throws(()=>new vm.Script('adaptCombatProvenance("src/net/netmatch.js",template)').runInContext(generator,{timeout:100}),/boss receipt guard identity mismatch/);});

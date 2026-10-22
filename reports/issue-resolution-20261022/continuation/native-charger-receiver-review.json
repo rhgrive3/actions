@@ -1,0 +1,87 @@
+{
+  "archive": "/tmp/native-charger-receiver-review-20261022.tar.gz",
+  "archiveSha256": "f36922d3f4c85a70353165fb4a67dc5c14c1918437bc15262ea5987637a6947c",
+  "archiveBytes": 103625,
+  "members": 41,
+  "memberManifestSha256": "78a6ef16e650a6f67a78ea6b069ad1a99f9024154303e863ccf03c3112fdc552",
+  "credentialAudit": {
+    "status": "pass",
+    "patterns": [
+      "github_token",
+      "openai_key",
+      "aws_access_key",
+      "private_key",
+      "bearer_credential",
+      "url_user_password"
+    ],
+    "findings": [],
+    "note": "No matching credential material is printed; source/game clock nonces are not account credentials."
+  },
+  "archiveStructure": "pass: regular relative files only, no symlinks/traversal",
+  "memberHashesVerified": true,
+  "results": {
+    "sourceCoherent": {
+      "pass": 113,
+      "fail": 0
+    },
+    "sourceOutbound": {
+      "pass": 42,
+      "fail": 0
+    },
+    "independentReceiverProducerReplayRelay": {
+      "pass": 54,
+      "fail": 0
+    },
+    "initial125Files": {
+      "pass": 839,
+      "fail": 26,
+      "durationMs": 873429.176279
+    },
+    "finalAffected12FilesCombined": {
+      "pass": 88,
+      "fail": 0,
+      "note": "bounded combined migration runs, not a second full125-file run"
+    },
+    "newTurfCase": "included in receiver16 final revision",
+    "finalAffected12FilesSingleRun": {
+      "pass": 88,
+      "fail": 0,
+      "durationMs": 135364.271676,
+      "log": "charger-lab-migration-all-final.log"
+    }
+  },
+  "sourceRuntimeUnchanged": true,
+  "finalAfterRunHashMismatches": [],
+  "copyExactPaths": [
+    "patches/network-replication/tests/adoption-state.test.mjs",
+    "patches/network-replication/tests/armor-ready-flags.test.mjs",
+    "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs",
+    "patches/network-replication/tests/hit-payload-prequeue.metadata.test.mjs",
+    "patches/network-replication/tests/issue-1062-remote-squidroll.test.mjs",
+    "patches/network-replication/tests/issue-1088-surge-presentation.test.mjs",
+    "patches/network-replication/tests/issue-1110-superjump-epoch.test.mjs",
+    "patches/network-replication/tests/issue-93-squidspawn-handoff.test.mjs",
+    "patches/network-replication/tests/issue-953-slam-adoption.test.mjs",
+    "patches/network-replication/tests/receiver-charger-input.test.mjs",
+    "patches/network-replication/tests/roller-presentation.test.mjs",
+    "patches/network-replication/tests/roller-vertical-state.test.mjs",
+    "patches/network-replication/native-charger-replay-contract.md"
+  ],
+  "frozenFiles": {
+    "patches/network-replication/tests/adoption-state.test.mjs": "6ef52add3fe26e442f005fa23a96235a7730ed117e99ba1bfbab678b407dac00",
+    "patches/network-replication/tests/armor-ready-flags.test.mjs": "03967eac6abb149ad748f88ae5ea45052b70005caca6ff77e70004331a8e1e36",
+    "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs": "c31a13e547fe5ce8c2386cba80d5079eb0112035001eea3a3a0509e63d89846b",
+    "patches/network-replication/tests/hit-payload-prequeue.metadata.test.mjs": "363461a0f770e3ac4dd790a6c72b5ef2e2c01e7ceb7384b712c1e3a94a15ab31",
+    "patches/network-replication/tests/issue-1062-remote-squidroll.test.mjs": "7137e3aa5968bbb058b4e4da306e5ffa7253df85869f5fffe02b3d58e117d45c",
+    "patches/network-replication/tests/issue-1088-surge-presentation.test.mjs": "e05ec983f524bd9f4b4db65ce1900f6c26b5d91ec715ea4059369b26ddb655bd",
+    "patches/network-replication/tests/issue-1110-superjump-epoch.test.mjs": "144aa1b1731303f246eca8fbd46959ccd543e71387d9ed7ffe672e1ca742f660",
+    "patches/network-replication/tests/issue-93-squidspawn-handoff.test.mjs": "a47bf1bb40f57f286187e66fa4e4d30bc7c44fb21f627e310d84e54c56dcb2ff",
+    "patches/network-replication/tests/issue-953-slam-adoption.test.mjs": "e6bb6793599c4d3e196b37b22c458dffc3391c5ab1e2b2f78536d068ff8d2373",
+    "patches/network-replication/tests/receiver-charger-input.test.mjs": "3b524f5b963545dda1872e9957c9d8e532b90f49e4321247c7a365f4d714782e",
+    "patches/network-replication/tests/roller-presentation.test.mjs": "89a8523ad390a5912d56030dc753a0c7e02e96502c43871ae02e76d8777811af",
+    "patches/network-replication/tests/roller-vertical-state.test.mjs": "31225e79ceb3e0f56d4760c890b4f5c172c1f730725f9cc116322e0778a4fac4",
+    "patches/network-replication/native-charger-replay-contract.md": "61f2471904019a5cfe04e95f284164c4471a47be9f56201d4c8f29d8c96d1b95"
+  },
+  "publicEquivalentSourceCommit": "9d8efc505352e161beed3cd56632f39a5b40d31e",
+  "publicEquivalentSourceTree": "3be81c11aa220f2d49d9dd4c6ef63d17f2fb01b9"
+}

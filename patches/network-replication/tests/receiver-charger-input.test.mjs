@@ -16,12 +16,16 @@ function actor(f,myId){
  const s=new f.NetSession();Object.assign(s,{myId,hostId:'A',state:'match'});s._members.set('A',{});s._members.set('B',{});
  const n=new f.NetMatch(s,{id:'causal-input-test',map:'reef'}),m={id:'causal-input-test',state:'playing',time:180,actors:[a],playing:()=>true,canRespawn:()=>false};f.G.match=m;s.match=n;return {f,a,s,n,m};
 }
-function setup(){
+function setup({initialTurf=false}={}){
  wall=1000;sender.G.time=173.25;receiver.G.time=21.75;
  const source=actor(sender,'A'),target=actor(receiver,'B'),wire=[],births=[];
  let filter=p=>p;
  source.s.tr={sendTo(_id,d){target.n.onMessage('A',structuredClone(d));return true;},broadcast(d){if(d.k==='t'){const p=filter(JSON.parse(JSON.stringify(d)));wire.push(p);if(p)target.n.onMessage('A',p);}return true;},close(){}};
  target.s.tr={sendTo(_id,d){source.n.onMessage('B',structuredClone(d));return true;},broadcast:()=>true,close(){}};
+ if(initialTurf)for(const w of [source,target]){
+  w.m.mode='turf';w.m.opts={};w.a.remote=w.s.myId!=='A';
+  assert.equal(w.f.beginInitialSquidSpawn(w.a),true);
+ }
  source.n.bind(source.m);target.n.bind(target.m);
  const playback=()=>{const p=target.n.peers.get('A');if(p){for(const e of p.events)if(e[1]==='ev'&&e[2]==='weapon:fire'&&!births.includes(e))births.push(e);p.tr=p.lastTs;p.sim=p.physicsPoints?.at(-1);target.n._playEvents();}};
  let tick=0;
@@ -109,5 +113,17 @@ for(const change of ['life','owner','clear','leave','host-change'])test(`an actu
   for(let i=0;i<64;i++)w.step({fire:true});for(let i=0;i<5;i++)w.step();const e=w.births[0];assert.ok(receiver.peekReceiverChargerBirth(w.target.n,e));
   if(change==='life')w.target.a.net.lastLife++;if(change==='owner')w.target.a.owner='C';if(change==='clear')receiver.G.projectiles.clear();if(change==='leave')w.target.n.onLeave('A',false);if(change==='host-change')w.target.n.onLeave('A',true);
   assert.equal(receiver.peekReceiverChargerBirth(w.target.n,e),null);assert.equal(receiver.commitReceiverChargerBirth(w.target.n,e),false);
+ }finally{w.close();}
+});
+
+test('actual Turf opening Squid Spawn is unsupported by the new proof while normal snapshots continue',()=>{
+ const w=setup({initialTurf:true});try{
+  assert.equal(w.source.a.s3.squidSpawn.initial,true);
+  for(let i=0;i<3;i++)w.step();
+  const rows=w.wire.at(-1).ci[1][3];assert.equal(rows.length,3);
+  for(const row of rows){assert.equal(row[14],0);assert.equal(row[4],null);}
+  const c=w.status().actors[0];assert.equal(c.life,w.wire.at(-1).ci[1][1],'real initial state and input share the bind-time life');assert.equal(c.nextReceived,4,'all three source frames were accepted');assert.equal(c.reason,'Native input requires another action owner');assert.equal(c.replay,null);assert.equal(c.matched,0);
+  assert.equal(w.source.a.s3.squidSpawn.phase,'aim');assert.ok(w.target.a.net.buf.length>0,'legacy normal snapshots remain accepted');
+  for(let i=0;i<3;i++)w.step();assert.equal(w.status().actors[0].reason,c.reason);assert.ok(w.target.a.net.buf.length>=2,'later snapshots never recreate a private budget');
  }finally{w.close();}
 });

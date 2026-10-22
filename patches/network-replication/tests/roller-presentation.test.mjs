@@ -1,5 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+// Physical body/input are explicit; adoption, Surge and accepted-hit slots stay fixed.
+function assertInputBody(row, actor) {
+  const i=actor.intent;
+  assert.deepEqual(Array.from(row[26]), ['iw-input-body-1', (i.fire?1:0)|(i.squid?2:0)|(i.sub?4:0)|(i.jump?8:0), Math.round(actor.pos.y*1000)/1000]);
+}
+
 import { fixture as sourceFixture } from '../../splatoon3/tests/source-fixture.mjs';
 
 const ACTOR_NID = 17;
@@ -78,7 +85,8 @@ test('C1155 full production composition replicates accepted Roller pose mode and
     assert.ok(Number.isSafeInteger(wire[2]) && wire[2] > lastEpoch, 'each accepted action gets a newer epoch');
     lastEpoch = wire[2];
     const row = packet.a[0];
-    assert.equal(row.length, 26, 'composed snapshots append the Surge and accepted-hit slots');
+    assert.equal(row.length, 27, 'composed snapshots append the Surge and accepted-hit slots');
+    assertInputBody(row, owner);
     assert.equal(row[22], owner.stats.specials || 0, 'the existing special counter retains its slot');
     assert.equal(row[23][0], ADOPTION_TAG, 'the adoption sidecar retains its tagged slot');
     assert.equal(row[24], null, 'an ordinary Roller snapshot does not fabricate a Surge presentation');

@@ -1,5 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+
+// Physical body/input are explicit; adoption, Surge and accepted-hit slots stay fixed.
+function assertInputBody(row, actor) {
+  const i=actor.intent;
+  assert.deepEqual(Array.from(row[26]), ['iw-input-body-1', (i.fire?1:0)|(i.squid?2:0)|(i.sub?4:0)|(i.jump?8:0), Math.round(actor.pos.y*1000)/1000]);
+}
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -84,7 +91,8 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   ownerStep({ owner, local }, dt, { fire: true, firePressed: true });
   const airborne = snapshot(sender);
   const row = airborne.a[0];
-  assert.equal(row.length, 26, 'the composed actor row retains its appended compatibility slots');
+  assert.equal(row.length, 27, 'the composed actor row retains its appended compatibility slots');
+  assertInputBody(row, local);
   assert.equal(row[22], local.stats.specials || 0, 'the existing special counter retains its slot');
   assert.equal(row[23][0], ADOPTION_TAG, 'the adoption sidecar retains its tagged slot');
   assert.equal(row[24], null, 'ordinary Roller movement does not fabricate a Surge presentation');

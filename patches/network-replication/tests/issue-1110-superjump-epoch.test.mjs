@@ -1,5 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+// Physical body/input are explicit; adoption, Surge and accepted-hit slots stay fixed.
+function assertInputBody(row, actor) {
+  const i=actor.intent;
+  assert.deepEqual(Array.from(row[26]), ['iw-input-body-1', (i.fire?1:0)|(i.squid?2:0)|(i.sub?4:0)|(i.jump?8:0), Math.round(actor.pos.y*1000)/1000]);
+}
+
 import { fixture } from './robustness-fixture.mjs';
 
 const DT = 1 / 60;
@@ -91,7 +98,8 @@ test('#1110 owner epochs restart remote charge age without changing actor row pr
   source.superJumpState.t = 0.52;
   const first = sendTick(sender);
   assert.equal(first.sjEpochs?.[source.nid], 1);
-  assert.equal(packetFor(first, source.nid).length, 26, 'the additive epoch does not extend existing actor rows (main row protocol: 26 fields incl. adoption, hit authority)');
+  assert.equal(packetFor(first, source.nid).length, 27, 'the additive epoch does not extend existing actor rows (main row protocol: 27 fields incl. adoption, hit authority, typed body)');
+  assertInputBody(packetFor(first, source.nid), source);
   close(packetFor(first, source.nid)[21], 0.52);
 
   const host = await runtimeFixture();

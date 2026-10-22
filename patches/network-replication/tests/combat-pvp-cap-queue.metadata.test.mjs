@@ -8,6 +8,9 @@ import test from 'node:test';
 const source = fs.readFileSync(new URL('../combat-provenance.mjs', import.meta.url), 'utf8');
 const tokenImport = "import { bindSubBirthCommit, closeSubBirthCommit } from './sub-birth-commit.mjs';";
 const auditedImports = [tokenImport,
+  "import { observeReceiverChargers, receiverChargerRequired, withReceiverChargerPlayback, consumeReceiverChargerContact, closeReceiverChargers, retireReceiverChargerPeer } from './charger-contact-authority.mjs';",
+  "import { bindReceiverChargerInputs, observeReceiverChargerInputs, advanceReceiverChargerInputs, observeReceiverChargerBirth, retireReceiverChargerInputs, closeReceiverChargerInputs } from './receiver-charger-input.mjs';",
+
   "import {registerLimitedTorpedo,consumeLimitedContact} from './torpedo-contact-commit.mjs';",
   "import { SPRINKLER } from '../splatoon3/runtime/kit-sprinkler.mjs';",
   "import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSprinklerScope } from './sprinkler-contact-commit.mjs';",
@@ -29,6 +32,13 @@ const damageFields = [...spec.matchAll(/\bdropletDamage\s*:\s*(\d+)\s*[,}]/g)];
 assert.equal(damageFields.length, 1, 'one literal native sprinkler damage field');
 const nativeDropletDamage = Number(damageFields[0][1]);
 assert.equal(nativeDropletDamage, 20, 'current native source damage, not old wire40');
+// Read only the actual pure selector, never import its native capability module.
+const chargerSource=fs.readFileSync(new URL('../charger-contact-authority.mjs',import.meta.url),'utf8');
+const selectorStart='export function receiverChargerRequired(actor){',selectorEnd='\nfunction worldLive(';
+assert.equal(chargerSource.split(selectorStart).length,2,'one actual native selector');
+assert.equal(chargerSource.split(selectorEnd).length,2,'one audited selector boundary');
+const selector=chargerSource.slice(chargerSource.indexOf(selectorStart),chargerSource.indexOf(selectorEnd)).replace('export function ','function ');
+assert.doesNotMatch(selector,/\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,'selector adds no capabilities');
 const contactBoundary = `
 const SPRINKLER = Object.freeze({ get dropletDamage() { throw Error('cap-only boundary: SPRINKLER damage source=${nativeDropletDamage}'); } });
 function registerLimitedTorpedo(){throw Error('cap-only boundary: registerLimitedTorpedo');}
@@ -36,6 +46,18 @@ function consumeLimitedContact(){throw Error('cap-only boundary: consumeLimitedC
 function registerReceiverSprinkler(){throw Error('cap-only boundary: registerReceiverSprinkler');}
 function consumeReceiverSprinklerContact(){throw Error('cap-only boundary: consumeReceiverSprinklerContact');}
 function receiverSprinklerScope(){throw Error('cap-only boundary: receiverSprinklerScope');}
+
+function withReceiverChargerPlayback(){throw Error('cap-only boundary: withReceiverChargerPlayback');}
+function consumeReceiverChargerContact(){throw Error('cap-only boundary: consumeReceiverChargerContact');}
+function closeReceiverChargers(){throw Error('cap-only boundary: closeReceiverChargers');}
+function retireReceiverChargerPeer(){throw Error('cap-only boundary: retireReceiverChargerPeer');}
+function bindReceiverChargerInputs(){throw Error('cap-only boundary: bindReceiverChargerInputs');}
+function advanceReceiverChargerInputs(){throw Error('cap-only boundary: advanceReceiverChargerInputs');}
+function observeReceiverChargerBirth(){throw Error('cap-only boundary: observeReceiverChargerBirth');}
+function retireReceiverChargerInputs(){throw Error('cap-only boundary: retireReceiverChargerInputs');}
+function closeReceiverChargerInputs(){throw Error('cap-only boundary: closeReceiverChargerInputs');}
+function observeReceiverChargers(nm,from,packet,G){if(G!==undefined)throw Error('cap-only boundary: observeReceiverChargers');}
+function observeReceiverChargerInputs(nm,from,packet,G){if(G!==undefined)throw Error('cap-only boundary: observeReceiverChargerInputs');}
 `;
 
 assert.doesNotMatch(executable, /\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,
@@ -54,7 +76,7 @@ function run(body, direct = false) {
   assert.equal(executable.split('function flush(').length, 2, 'unique audited direct boundary');
   const prefix = direct ? executable.slice(0, executable.indexOf('function flush(')) : executable;
   assert.ok(prefix.length > 0);
-  const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + contactBoundary + ceilingSources + prefix +
+  const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + contactBoundary + selector + ceilingSources + prefix +
     '\nfunction bindSubBirthCommit(){} function closeSubBirthCommit(){}\n' +
     '(' + body.toString() + ')()';
   // Token binding is a metadata stub; every new Sprinkler/Torpedo capability throws if touched.
@@ -70,6 +92,22 @@ assert.throws(() => run(() => SPRINKLER.dropletDamage), /cap-only boundary: SPRI
 assert.throws(() => run(() => registerReceiverSprinkler()), /cap-only boundary: registerReceiverSprinkler/);
 assert.throws(() => run(() => consumeReceiverSprinklerContact()), /cap-only boundary: consumeReceiverSprinklerContact/);
 assert.throws(() => run(() => receiverSprinklerScope()), /cap-only boundary: receiverSprinklerScope/);
+
+
+// Native-capability entry points remain rejecting, including any supplied world.
+assert.throws(() => run(() => withReceiverChargerPlayback()), /cap-only boundary: withReceiverChargerPlayback/);
+assert.throws(() => run(() => consumeReceiverChargerContact()), /cap-only boundary: consumeReceiverChargerContact/);
+assert.throws(() => run(() => closeReceiverChargers()), /cap-only boundary: closeReceiverChargers/);
+assert.throws(() => run(() => retireReceiverChargerPeer()), /cap-only boundary: retireReceiverChargerPeer/);
+assert.throws(() => run(() => bindReceiverChargerInputs()), /cap-only boundary: bindReceiverChargerInputs/);
+assert.throws(() => run(() => advanceReceiverChargerInputs()), /cap-only boundary: advanceReceiverChargerInputs/);
+assert.throws(() => run(() => observeReceiverChargerBirth()), /cap-only boundary: observeReceiverChargerBirth/);
+assert.throws(() => run(() => retireReceiverChargerInputs()), /cap-only boundary: retireReceiverChargerInputs/);
+assert.throws(() => run(() => closeReceiverChargerInputs()), /cap-only boundary: closeReceiverChargerInputs/);
+assert.throws(() => run(() => observeReceiverChargers({},'peer',{},{})), /cap-only boundary: observeReceiverChargers/);
+assert.throws(() => run(() => observeReceiverChargerInputs({},'peer',{},{})), /cap-only boundary: observeReceiverChargerInputs/);
+assert.equal(run(()=>receiverChargerRequired({remote:true,weapon:{id:'charger',kind:'charger'}})),true);
+assert.equal(run(()=>receiverChargerRequired({remote:true,weapon:{id:'charger',kind:'charger',catalogRecord:{}}})),false);
 
 test('PvP caps preserve exact boundaries, proof accounting, Boss and unrelated routes', () => {
   const rows = run(directCases, true);
@@ -152,7 +190,9 @@ test('unrelated main weapon remains outside Special cap',()=>{
   // A main whose own single-hit maximum (180) exceeds the Storm cap (160):
   // the Special cap must not apply to it; its equipped-slot ceiling does.
   const {nm,a,proof}=capFixture('storm');
-  a.weapon={...a.weapon,id:'charger',kind:'charger',damage:180};
+  // Synthetic equipped-main metadata tests the same cap boundary without granting
+  // a native Charger contact capability. All original161/proof-use positives remain.
+  a.weapon={...a.weapon,id:'charger',kind:'charger',damage:180,catalogRecord:{id:'charger',family:'charger'}};
   proof.kind='main';proof.cause='charger';
   assert.equal(combatAdmission(nm,'peerA',{...hit(2,1,'charger'),d:161},'pvp',100),true);
   assert.equal(proof.uses,1);
@@ -186,3 +226,7 @@ run('oversized claim cannot displace legal pending claim at queue capacity',nm=>
 run('Angle overflow then same-ID legal claim remains available',nm=>{nm.byNid.get(1).weapon.sub='angleShooter';const emit=d=>{if(++nm.calls>3)throw Error('event budget');nm.onMessage('peer',{k:'hit',m:'m',a:1,v:2,l:0,h:1,seq:1,w:'angleShooter',d});};emit(40.1);const invalid=snap(nm);eq(invalid.pending,[],'invalid cannot reserve h');emit(40);const queued=snap(nm);eq(queued.pending.length,1,'legal same h deferred');state(nm).proofs.set('peer',[{actor:1,kind:'sub',cause:'angleShooter',at:clock,origin:[0,0,0],unit:[0,0,1],reach:30,uses:0,maxUses:8,key:'angle-metadata'}]);tick(nm,100.1);const delivered=snap(nm);eq(delivered.accepted,[{h:1,d:40,from:'peer'}],'legal same h delivered');return{invalid,queued,delivered};});
 return rows;
 }
+
+test('metadata native Charger cannot obtain an authority receipt from these stubs',()=>{
+  assert.throws(()=>run(()=>{const nm={byNid:new Map([[1,{nid:1,owner:'peer',remote:true,team:0,alive:true,weapon:{id:'charger',kind:'charger',damage:180},pos:{x:0,y:0,z:0}}],[2,{nid:2,remote:false,team:1,alive:true,pos:{x:0,y:0,z:3}}]]),cfg:{id:'m'}};return combatAdmission(nm,'peer',{k:'hit',m:'m',a:1,v:2,h:1,l:0,d:161,w:'charger'},'pvp',100);},true),/cap-only boundary: consumeReceiverChargerContact/);
+});

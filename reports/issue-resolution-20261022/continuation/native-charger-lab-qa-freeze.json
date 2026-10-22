@@ -1,0 +1,86 @@
+{
+  "sourceEquivalentCommit": "9d8efc505352e161beed3cd56632f39a5b40d31e",
+  "sourceEquivalentTree": "3be81c11aa220f2d49d9dd4c6ef63d17f2fb01b9",
+  "base": "4a969a9ea23147519897e788b3e97562a22c3bd2",
+  "sourceRuntimeUnchanged": true,
+  "testOnlyMigrationPaths": [
+    "patches/network-replication/tests/adoption-state.test.mjs",
+    "patches/network-replication/tests/armor-ready-flags.test.mjs",
+    "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs",
+    "patches/network-replication/tests/hit-payload-prequeue.metadata.test.mjs",
+    "patches/network-replication/tests/issue-1062-remote-squidroll.test.mjs",
+    "patches/network-replication/tests/issue-1088-surge-presentation.test.mjs",
+    "patches/network-replication/tests/issue-1110-superjump-epoch.test.mjs",
+    "patches/network-replication/tests/issue-93-squidspawn-handoff.test.mjs",
+    "patches/network-replication/tests/issue-953-slam-adoption.test.mjs",
+    "patches/network-replication/tests/receiver-charger-input.test.mjs",
+    "patches/network-replication/tests/roller-presentation.test.mjs",
+    "patches/network-replication/tests/roller-vertical-state.test.mjs"
+  ],
+  "sourceRuntimeSha256": {
+    "inkwave-public/src/net/transport.js": "3e22d65c32a38b2c5676e7d90ec229feab08f494e7b4f2ef6fd23ec5b0ec9936",
+    "patches/network-replication/adapter.mjs": "339427eeb733b45cae71fed1725cad0ddeaf987db35f8e1583e7c66740f7e399",
+    "patches/network-replication/charger-contact-authority.mjs": "2ce26b3b187897c5e146fb9bf2f60e14f3468f077d51acb34500a51c4a477add",
+    "patches/network-replication/combat-provenance-adapter.mjs": "ed23ed0f3fcb9891314dacfb50302e0b9dc1e6cc9e2e22f0df5cc33735ea639a",
+    "patches/network-replication/combat-provenance.mjs": "e5ddf42da96d267c7f94e2ca6891261b88a43b4688010092d9ee8530a85c9b56",
+    "patches/network-replication/outbound-prefix.mjs": "52ef3824fa9b6ee83c2767f1e66a516da95d83f251be2f96bb6b42bec0a24a9a",
+    "patches/network-replication/snapshot-guard.mjs": "e1982015e5d332239521e4d70c8053ed72bae701fdfc934b2e3fbb404a91b82a",
+    "patches/network-replication/receiver-charger-input.mjs": "20b35704bff315e116039c8b9657e4250e7ecb1abe7d154778dcacfd04d30835",
+    "patches/splatoon3/runtime/charger-charge-clock.mjs": "8812aaa943602d9d5abb4225790e10ae614e5659099e2682f7ae5bcf3436abd7",
+    "patches/splatoon3/runtime/install.mjs": "1884ccafeaa298f6d16019a7705852e5d7304f3d35b8b26f9cff20c9f71bc8f1",
+    "patches/splatoon3/runtime/native-charger-input.mjs": "da1610b41a3231528a0787fc29a6317aa42429010bee37e3533fa2d1b24e2111",
+    "patches/splatoon3/runtime/native-charger-replay.mjs": "7f2439e75e98af87a2aec312c6d0e875fcf8fd6d02c553efa19a33e64a73b463",
+    "patches/splatoon3/runtime/player-ground-contact.mjs": "cf207ddf18c56ee919fa906e239e8170256d5c04ad1dd9af50a3ed94e722a548",
+    "patches/splatoon3/runtime/resources.mjs": "d4c648853e79ce390d6443d7a4b2bb3efacb033224493c7ee5dadc2c13e055e4",
+    "patches/splatoon3/runtime/sub-ready.mjs": "50980ed8b433c979bfbbb77d5efc7297efd9b3c7c6c9bab0d0d959c5924b96c8",
+    "patches/splatoon3/runtime/weapons-charger-flight.mjs": "bcd126c4e1ca86131a3438b9ddd64a55c98d13436292e2c5816dad6b7e02a297",
+    "patches/splatoon3/runtime/weapons.mjs": "d57384e392e9e8aacc00fc3d4122f208c9d3228b8782f61cc234999f989e11c1"
+  },
+  "finalSha256": {
+    "patches/network-replication/tests/adoption-state.test.mjs": "6ef52add3fe26e442f005fa23a96235a7730ed117e99ba1bfbab678b407dac00",
+    "patches/network-replication/tests/armor-ready-flags.test.mjs": "03967eac6abb149ad748f88ae5ea45052b70005caca6ff77e70004331a8e1e36",
+    "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs": "c31a13e547fe5ce8c2386cba80d5079eb0112035001eea3a3a0509e63d89846b",
+    "patches/network-replication/tests/hit-payload-prequeue.metadata.test.mjs": "363461a0f770e3ac4dd790a6c72b5ef2e2c01e7ceb7384b712c1e3a94a15ab31",
+    "patches/network-replication/tests/issue-1062-remote-squidroll.test.mjs": "7137e3aa5968bbb058b4e4da306e5ffa7253df85869f5fffe02b3d58e117d45c",
+    "patches/network-replication/tests/issue-1088-surge-presentation.test.mjs": "e05ec983f524bd9f4b4db65ce1900f6c26b5d91ec715ea4059369b26ddb655bd",
+    "patches/network-replication/tests/issue-1110-superjump-epoch.test.mjs": "144aa1b1731303f246eca8fbd46959ccd543e71387d9ed7ffe672e1ca742f660",
+    "patches/network-replication/tests/issue-93-squidspawn-handoff.test.mjs": "a47bf1bb40f57f286187e66fa4e4d30bc7c44fb21f627e310d84e54c56dcb2ff",
+    "patches/network-replication/tests/issue-953-slam-adoption.test.mjs": "e6bb6793599c4d3e196b37b22c458dffc3391c5ab1e2b2f78536d068ff8d2373",
+    "patches/network-replication/tests/receiver-charger-input.test.mjs": "3b524f5b963545dda1872e9957c9d8e532b90f49e4321247c7a365f4d714782e",
+    "patches/network-replication/tests/roller-presentation.test.mjs": "89a8523ad390a5912d56030dc753a0c7e02e96502c43871ae02e76d8777811af",
+    "patches/network-replication/tests/roller-vertical-state.test.mjs": "31225e79ceb3e0f56d4760c890b4f5c172c1f730725f9cc116322e0778a4fac4",
+    "patches/network-replication/native-charger-replay-contract.md": "61f2471904019a5cfe04e95f284164c4471a47be9f56201d4c8f29d8c96d1b95"
+  },
+  "results": {
+    "sourceCoherent": {
+      "pass": 113,
+      "fail": 0
+    },
+    "sourceOutbound": {
+      "pass": 42,
+      "fail": 0
+    },
+    "independentReceiverProducerReplayRelay": {
+      "pass": 54,
+      "fail": 0
+    },
+    "initial125Files": {
+      "pass": 839,
+      "fail": 26,
+      "durationMs": 873429.176279
+    },
+    "finalAffected12FilesCombined": {
+      "pass": 88,
+      "fail": 0,
+      "note": "bounded combined migration runs, not a second full125-file run"
+    },
+    "newTurfCase": "included in receiver16 final revision",
+    "finalAffected12FilesSingleRun": {
+      "pass": 88,
+      "fail": 0,
+      "durationMs": 135364.271676,
+      "log": "charger-lab-migration-all-final.log"
+    }
+  },
+  "finalAfterRunHashMismatches": []
+}

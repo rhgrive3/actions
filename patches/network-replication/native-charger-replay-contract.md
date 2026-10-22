@@ -93,6 +93,7 @@ No relay limits or accepted server envelope were expanded.
 | Complete world order | Replay must see correct multi-owner historical paint/world state and source-earned turf credit at each frame. Current same-owner native FIFO order does not prove shared-world rollback, late paint precommit or Special credit. |
 | External displacement | Match applies soft pushes after Actor.update; hits/actions apply knockback between frames. Receiver remote proxies and source owners have different weights/interpolation, so receiver-local Match pushes alone cannot reproduce source pushes. Supply trusted actual contact/impulse history or authoritative multi-actor replay. Assigning body witnesses would reopen the floating-ground bypass. |
 | Other actions | Supply trusted SuperJump destination/admission/lifecycle, earned Special activation/body/refill, conditional/transient gear and deployed support. Owner active/ink/charge/grounded/modifier flags are insufficient. |
+| Actual Turf opening/respawn | Normal Turf Match construction calls `beginInitialSquidSpawn` through `respawn-lifecycle-adapter.mjs`. Its aim/wait/flight Actor owner returns before resource/WeaponRunner phases; captured resource0/effective-null inputs currently retire the private replay. Bind saves body/life but does not recreate the initial Squid Spawn state/target/clock. Thus the normal first Turf life is currently unsupported by the new proof, including the opening wait and launch, not merely unverified. The normal positive fixture begins at an already-landed `spawnAt` body. Post-death Turf Squid Spawn and later lives also require trusted lifecycle enrollment and source state. Never skip these frames or bootstrap from a later owner landing snapshot. |
 | Late join/loading/migration | Inputs currently drain on local transport acceptance. A delayed first owner-clock packet may omit earlier input. Missing serials retire proof; they never start a fresh resource budget. Mandatory admission requires trusted replay checkpoints or per-peer retained original-life history/acknowledgment, including bounded loading and paused clocks. |
 | Damage handoff | Replace capture-ledger admission only when every legal native action above can mint a matching source proof. Successful actual receiver source-flight admission must atomically commit that launch and preserve later actual collision capabilities. No owner-flag or sampled-scalar fallback may bypass a missing proof. |
 | Other64 main owners | Source-native input/resource/action replay and actual collision capabilities are still required for their respective main owners; global #1665/#1666 remain open. |
@@ -138,3 +139,36 @@ Exact private-driver ink equality does not make the current experimental
 capture-ledger resource model complete. Its documented normal cancellation
 residual remains. No browser/GPU/Switch validation of this receiver stage has
 been performed; no conclusion about Nintendo-network equivalence is inferred.
+
+## Isolated experimental candidate QA
+
+The source-equivalent candidate is `9d8efc505352e161beed3cd56632f39a5b40d31e`
+(tree `3be81c11aa220f2d49d9dd4c6ef63d17f2fb01b9`), built on published clock-only
+`4a969a9ea23147519897e788b3e97562a22c3bd2`. This is an experimental source
+object, not a deployed production change. Production-format build input/output
+hash verification passed in the isolated tree; runtime source stayed fixed.
+
+Initial complete network run:125 files,865 tests,839 pass/26 fail in873.4s.
+All148 hashed runtime/test inputs matched before/after. Failures were21 old
+26-column expectations,3 old display-Y/physical-Y expectations, and2 metadata
+fixture files lacking newly audited native boundaries. They are preserved in
+the raw report; the full125-file run was not repeated or called all green.
+
+Lab-only test migration keeps strict27 columns, existing adoption23/Surge24/
+accepted-hit25 assertions, and exact tagged raw-input/r3 physicalY tuple26.
+Legacy22–25 cases remain and26 is added. Malformed present tuple26 is rejected
+as an actor row, while the enclosing valid packet clock still advances; a
+subsequent genuine owner tick recovers. Same-timestamp packet retries remain
+rejected by the existing strict packet-clock policy. Metadata tests explicitly
+audit new imports, reject native capabilities with throwing stubs, and extract
+the actual pure selector and Boss receipt prefix. Missing/duplicate native
+Boss guard rejection is tested; no runtime guard was relaxed.
+
+All88 tests across the12 affected files pass on their final file revisions,
+combined from the bounded migration runs. These are separate from source155
+(coherent113 plus outbound42) and independent54 results above. The new receiver
+16th case creates actual initial Squid Spawn on both source and receiver before
+bind, retains the same enrolled life, accepts all3 source frames with resource0/
+effective-null, and rejects the new proof as another action owner. Normal actor
+snapshots continue; a later owner snapshot does not recreate the private budget.
+This confirms the unsupported ordinary first Turf life described above.

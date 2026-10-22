@@ -1,5 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+// Physical body/input are explicit; adoption, Surge and accepted-hit slots stay fixed.
+function assertInputBody(row, actor) {
+  const i=actor.intent;
+  assert.deepEqual(Array.from(row[26]), ['iw-input-body-1', (i.fire?1:0)|(i.squid?2:0)|(i.sub?4:0)|(i.jump?8:0), Math.round(actor.pos.y*1000)/1000]);
+}
+
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 
 const NETMATCH_EXPORT = "export { NetMatch } from './inkwave-public/src/net/netmatch.js';";
@@ -202,7 +209,12 @@ for (const hz of HZ) {
     const peer = r.receiver.peers.get('p2');
     assert.ok(Number.isFinite(peer.sim) && peer.sim <= packet.u,
       'the production receiver sampler never advances owner time beyond its newest accepted tick');
-    const expectedPose = packet.a[0].slice(1, 7);
+    const row=packet.a[0];assertInputBody(row,r.actor);
+    const expectedPose = row.slice(1, 7);
+    expectedPose[1]=row[26][2]; // Canonical physical Y; row2 is cosmetic r2(pos.y+smoothY).
+    assert.notEqual(row[2],expectedPose[1],'this flight distinguishes physical and display precision');
+    close(r.remote.pos.y,expectedPose[1],'the receiver body uses the physical foot');
+    close(r.remote._netDisplayYOffset,row[2]-row[26][2],'render offset retains the owner display height');
     transfer(r);
     assert.equal(r.remote.s3.squidSpawn.phase, 'flight');
     assert.deepEqual([r.remote.s3.squidSpawn.to.x, r.remote.s3.squidSpawn.to.y, r.remote.s3.squidSpawn.to.z], spawnRow[3]);
@@ -266,7 +278,12 @@ for (const hz of HZ) {
     assert.equal(spawnRow[5], 'infinity');
     receive(r, packet);
     assert.ok(r.receiver.peers.get('p2').sim <= packet.u, 'receiver sampling remains capped at the latest owner tick');
-    const expectedPose = packet.a[0].slice(1, 7);
+    const row=packet.a[0];assertInputBody(row,r.actor);
+    const expectedPose = row.slice(1, 7);
+    expectedPose[1]=row[26][2]; // Canonical physical Y; row2 is cosmetic r2(pos.y+smoothY).
+    assert.equal(row[2],expectedPose[1],'this landing is also the zero cosmetic-offset control');
+    close(r.remote.pos.y,expectedPose[1],'the receiver body uses the physical foot');
+    close(r.remote._netDisplayYOffset,row[2]-row[26][2],'render offset retains the owner display height');
     transfer(r);
     assert.equal(r.remote.s3.squidSpawn.phase, 'landing');
     assert.deepEqual([r.remote.pos.x, r.remote.pos.y, r.remote.pos.z, r.remote.vel.x, r.remote.vel.y, r.remote.vel.z], expectedPose,

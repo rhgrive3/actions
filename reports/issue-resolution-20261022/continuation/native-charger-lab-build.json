@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "sourceCommit": "a0d140f1a7f3d59f17fbf460497e5c2973a61405",
+  "sourceTree": "3be81c11aa220f2d49d9dd4c6ef63d17f2fb01b9",
+  "contentHash": "3623de2ff704d38ebce7f2be35c9dc0adfd3404bab821c900d78d8f044e36f75",
+  "inputHash": "55e5be8d85e3def18b7bd4ecf8f5671b79da0e8a28260dd2f7350be0ea571e77",
+  "revision": "0893367d6edda9b9eb9b135369a8bd2a6516e49ade37740d805f03916209b445",
+  "buildScriptSha256": "62d929b83091c6775a865be02c06960a4cc4b2216eb26d5921aa4811787c6d7a",
+  "verifiedDeclaredInputs": 1369,
+  "verifiedArtifacts": 2030,
+  "errors": [],
+  "scope": "Production-format build and all committed-source/artifact SHA256 checks only. Experimental Charger receiver is not deployed or ready for mandatory damage admission; no browser/hardware/performance claim.",
+  "publicEquivalentSourceCommit": "9d8efc505352e161beed3cd56632f39a5b40d31e",
+  "remoteTreeMatchesLocal": true
+}
