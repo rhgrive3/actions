@@ -2,6 +2,7 @@
 // Reuse the existing native range driver. Only the diagnostic copy receives
 // deterministic clocks and receipts; neither production checkout is rewritten.
 import fs from 'node:fs';
+import {requireRuntimeUIPreflight} from './lib/inkwave-explosher-runtime-ui-preflight.mjs';
 import {requireApprovedCommonBuild} from './lib/inkwave-explosher-common-build.mjs';
 import {requireInverseShapePair} from './lib/inkwave-explosher-inverse-contract.mjs';
 import {requireControlledStartupPair}from'./lib/inkwave-explosher-volume-barrier.mjs';
@@ -20,7 +21,10 @@ if(!siteArg||!outArg||!/^[a-f0-9]{40}$/.test(sourceSha||''))throw Error('Usage: 
 const root=fileURLToPath(new URL('../',import.meta.url)),site=path.resolve(siteArg),out=path.resolve(outArg);
 const sourceRoot=sourceRootArg?path.resolve(sourceRootArg):root;
 // Fail before creating evidence, loading Playwright or launching a browser.
-const commonBuildAdmission=requireApprovedCommonBuild(sourceRoot,site);
+const runtimeUIRoute=Boolean(process.env.EXPLOSHER_RUNTIME_UI_PREFLIGHT);
+const commonBuildAdmission=runtimeUIRoute
+  ?requireRuntimeUIPreflight({root:sourceRoot,site,sourceSha,baseline:path.join(root,'.ci-explosher-base'),candidate:root})
+  :requireApprovedCommonBuild(sourceRoot,site);
 if(commonBuildAdmission.head!==sourceSha)throw Error('Admitted common source differs');
 const preflight=process.env.EXPLOSHER_PREFLIGHT==='1';
 const video=!preflight&&process.env.EXPLOSHER_VIDEO==='1';
@@ -44,7 +48,7 @@ const shapeOverlayPath=process.env.EXPLOSHER_SHAPE_OVERLAY;
 const shapeOverlay=shapeOverlayPath?JSON.parse(fs.readFileSync(shapeOverlayPath,'utf8')):null;
 if(shapeOverlay&&(shapeOverlay.schema!==2||shapeOverlay.sameBuildComparison!==true||shapeOverlay.fullGameTwoBuildAcceptance!==false||shapeOverlay.expectedCommonSourceHead!==actualSourceSha||!['before','after'].includes(shapeOverlay.lane)||shapeOverlay.site!==site||shapeOverlay.sourceRoot!==sourceRoot||shapeOverlay.baselineSourceBlob!=='7afb76e80960dde61d51effb89057dd1f183d16f'||shapeOverlay.candidateSourceBlob!=='ff05f46db9eb5179440cd2c375663148ca05f48a'||hash(fs.readFileSync(shapeOverlay.file))!==shapeOverlay.transformedEmittedSha256||shapeOverlay.transformedEmittedSha256!==(shapeOverlay.lane==='before'?shapeOverlay.baselineEmittedSha256:shapeOverlay.candidateEmittedSha256)))throw Error('Invalid same-build shape overlay provenance');
 let stageAdmission=null;
-if(!shapeOverlay||!controlled)throw Error('This LOCAL stage candidate requires the reviewed common shape and controlled-main receipts');
+if(!runtimeUIRoute&&(!shapeOverlay||!controlled))throw Error('This LOCAL stage candidate requires the reviewed common shape and controlled-main receipts');
 if(!preflight){
  fs.writeFileSync(path.join(out,'encoder-capabilities.json'),JSON.stringify(requireExplosherVideoTools(),null,2));
  const beforeEvidence=process.env.EXPLOSHER_ADMIT_BEFORE,afterEvidence=process.env.EXPLOSHER_ADMIT_AFTER;
@@ -285,10 +289,12 @@ const receipt={commonBuildAdmission,captureProtocolSha256,stageAdmission,capture
   nativeResetHelperSha256:hash(nativeReset),
   sourceShapeSha256:hash(fs.readFileSync(path.join(sourceRoot,'patches/splatoon3/runtime/s3-projectile-shapes.mjs'))),
   emittedShapes:emitted,seed:0x515e7021,
-  boundaries:['Real emitted game and native renderer; fixed range input.',controlled?'QA-only awaited native volume readiness in main; no Character rewrite.':'No historical source/character rewrite.','Only flight glitter changes; muzzle/impact, hit/paint/speed unchanged.','Render CPU and resource counts measured; GPU elapsed time and allocations not measured.']};
+  boundaries:['Real emitted game and native renderer; fixed range input.',controlled?'QA-only awaited native volume readiness in main; no Character rewrite.':'No historical source/character rewrite.',runtimeUIRoute?'Exact reviewed runtime/UI four-delta pair; projectile shape unchanged. No flight improvement claim.':'Only flight glitter changes; muzzle/impact, hit/paint/speed unchanged.','Render CPU and resource counts measured; GPU elapsed time and allocations not measured.']};
 // Validate the exact current lane using a role-complete counterpart; cross-lane equality remains in stage gates.
+if(!runtimeUIRoute){
 const counterpart={...receipt,shapeOverlay:{...shapeOverlay,lane:shapeOverlay.lane==='before'?'after':'before',transformedEmittedSha256:shapeOverlay.lane==='before'?shapeOverlay.nativeEmittedSha256:shapeOverlay.baselineEmittedSha256}};
 requireInverseShapePair(...(shapeOverlay.lane==='before'?[receipt,counterpart]:[counterpart,receipt]));
+}else{receipt.diagnosticOnly=true;receipt.fullPairAccepted=false;receipt.protocol=commonBuildAdmission.mode;}
 if(stageAdmission&&JSON.stringify(explosherCaptureIdentity(receipt))!==JSON.stringify(stageAdmission.laneProvenance[shapeOverlay.lane]))throw Error('Current capture provenance differs from admitted prior stage');
 fs.writeFileSync(path.join(out,'source-receipt.json'),JSON.stringify(receipt,null,2));
 const run=spawnSync(process.execPath,[copy,site,out,'s3-slosher-washtub'],{stdio:'inherit',env:{...process.env,TICKS:captureTicks.join(','),VIEWS:captureViews.join(',')}});

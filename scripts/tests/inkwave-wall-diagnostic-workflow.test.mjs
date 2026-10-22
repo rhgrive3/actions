@@ -76,7 +76,7 @@ test('scope, timeout, evidence, failure suppression and concurrency mutations ar
 });
 
 const acceptedJobHashes = {
-  "validate_core": "9c1993fc16134df7fb3fed3e81d88375d73e26378e2159294fa6539d174233dc",
+  "validate_core": "fc75f0b04d2c59d75ee65cbc8f85f62a01b4ab98c4162a92fd6b55786dbbfd1c",
   "patch_tests": "86a0215408bcbbd2889e6e6106b23023af8cab0417be7854a0b326a21e4f3a3b",
   "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
   "browser": "985201451524bf978a4e023de2120148845f6c9a502b92b30c03b2fec98e010e",
