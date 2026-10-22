@@ -124,6 +124,10 @@ export function installWeaponAudioRuntime(api){
     s.firedThisUpdate=false;
     const result=oldUpdate.call(this,dt,input,...rest);
     const recipe=WEAPON_AUDIO[id],isCharger=recipe?.family==='charger';
+    // Native weapon runners also tick while submerged. Their audio wrapper
+    // does not enter the catalog stop() branch, so explicitly clear the
+    // previous charge edge without clearing the gameplay-owned saved charge.
+    if(isCharger&&a?.form==='squid'){s.wasCharge=false;s.wasReady=false;}
     // Fresh Charger charging has exactly one recorded onset; never start an
     // AudioBufferSource loop or a guessed per-frame pitch ramp.
     // Remote replicas own the onset in NetMatch._voices; do not also fire it
