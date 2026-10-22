@@ -1,0 +1,73 @@
+{
+  "sourceSha": "0fc2fa5b8b65537ca24a080eee272b82cff1082d",
+  "manifestSha256": "fe333227a83c751921b683212f3acb8c01b2d39738fa73950533fddf79bcc78c",
+  "manifestUnchanged": true,
+  "physicalIPadVerified": false,
+  "sourceReadback": "final-build.json",
+  "repeats": [
+    {
+      "repeat": 1,
+      "exitCode": 0,
+      "timedOut": false,
+      "status": "passed",
+      "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+      "engines": [
+        {
+          "engine": "chromium",
+          "checks": 39
+        },
+        {
+          "engine": "webkit",
+          "checks": 39
+        }
+      ],
+      "errors": [],
+      "resultSha256": "bbcc41b2fd8b4f93fd5f302ff6cf42d1bbea84b91be83fbcf7b9337e898a2f09",
+      "evidenceDirectory": "/workspace/actions/.browser-evidence/issue-resolution-20261022/final-reliability/1"
+    },
+    {
+      "repeat": 2,
+      "exitCode": 0,
+      "timedOut": false,
+      "status": "passed",
+      "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+      "engines": [
+        {
+          "engine": "chromium",
+          "checks": 39
+        },
+        {
+          "engine": "webkit",
+          "checks": 39
+        }
+      ],
+      "errors": [],
+      "resultSha256": "cbd9aa6b57a81d05986c7afb9ba273cdbe6b9da0fe3bc3172193c2a6e328b645",
+      "evidenceDirectory": "/workspace/actions/.browser-evidence/issue-resolution-20261022/final-reliability/2"
+    },
+    {
+      "repeat": 3,
+      "exitCode": 0,
+      "timedOut": false,
+      "status": "passed",
+      "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+      "engines": [
+        {
+          "engine": "chromium",
+          "checks": 39
+        },
+        {
+          "engine": "webkit",
+          "checks": 39
+        }
+      ],
+      "errors": [],
+      "resultSha256": "4a0f503b57d4d5d57be9b5865989c643233556340ccdeff42e81cb18b98d4550",
+      "evidenceDirectory": "/workspace/actions/.browser-evidence/issue-resolution-20261022/final-reliability/3"
+    }
+  ],
+  "status": "passed",
+  "verifiedRemoteSourceCommit": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+  "identicalSourceTree": "9aa183e43a45516344c81a064470c5913cd8a06b",
+  "checks": 234
+}

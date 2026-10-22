@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-22T09:47:46Z",
+  "repository": "rhgrive3/actions",
+  "baseline": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "scope": "weapons",
+  "status": "acceptance-expanded-no-issue-closed",
+  "issuesClosed": [],
+  "changedFiles": [
+    "patches/splatoon3/tests/catalog-source-launch-1130.test.mjs",
+    "reports/issue-resolution-20261022/weapons.md",
+    "reports/issue-resolution-20261022/weapons.json"
+  ],
+  "testFileSha256": "77fe7111525324b9bc50e04baa0d8c06b9c3031c674a88762cc7c378035484ed",
+  "implementation": {
+    "runtimeChanges": false,
+    "sourceChanges": false,
+    "newTests": 3,
+    "existingTests": 6,
+    "actorMatrixConditions": 330,
+    "wallMatrixConditions": 22,
+    "counterfactualCases": 2,
+    "source": "pinned 11.3.0 catalog records; Leanny/splat3 7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+    "coverage": [
+      "seven weapons including previously absent Octobrush",
+      "four added Rollers in horizontal and accepted-jump vertical mode",
+      "both admitted Brush hands through real repress input",
+      "-70/-45/0/+40/+70 degree camera pitch",
+      "stale-horizontal and close-ground reticle targets",
+      "production FixedClock at 30/60/120 Hz render schedules with 120 simulation ticks each",
+      "every source unit/pellet velocity, complete volley count, true birth, network tuple and reticle/cadence equality",
+      "real Physics near-wall OBB checks at -45/+40 degrees",
+      "old camera-direction bypass rejected by unchanged velocity assertions"
+    ],
+    "limits": [
+      "source-fixture stubs movement integration and Character pose",
+      "no rendered muzzle/aimReady/socket calibration acceptance",
+      "no live browser, native stage, iPad Safari or Nintendo hardware capture",
+      "projectiles are observed at birth, not integrated for a whole ballistic trajectory",
+      "deterministic midpoint RNG validates no statistical distribution",
+      "native Splat Roller cross-check is not expanded here"
+    ]
+  },
+  "receipts": [
+    {
+      "command": "timeout 90s node --max-old-space-size=384 --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/issue-1431-catalog-pose-birth.test.mjs patches/splatoon3/tests/catalog-source-launch-1130.test.mjs patches/splatoon3/tests/catalog-flick-damage-source.test.mjs",
+      "node": "24.19.0",
+      "phase": "baseline-before-test-additions",
+      "exitCode": 0,
+      "pass": 13,
+      "fail": 0,
+      "durationMs": 52509.736105,
+      "warnings": [
+        "optional source motion ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING; not native-source clip evidence"
+      ]
+    },
+    {
+      "command": "timeout 90s node --max-old-space-size=384 --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/catalog-source-launch-1130.test.mjs",
+      "node": "24.19.0",
+      "phase": "initial-added-tests",
+      "exitCode": 1,
+      "pass": 8,
+      "fail": 1,
+      "durationMs": 4458.589664,
+      "cause": "Test incorrectly treated a 0.02 margin along an oblique ray as a 0.02 Z-axis margin. Corrected to require birth outside real OBB actor-facing surface. This was not a runtime defect."
+    },
+    {
+      "command": "timeout 90s node --max-old-space-size=384 --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/catalog-source-launch-1130.test.mjs",
+      "node": "24.19.0",
+      "phase": "final-added-tests",
+      "exitCode": 0,
+      "pass": 9,
+      "fail": 0,
+      "durationMs": 5383.025859
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "issues": [
+    {
+      "number": 1814,
+      "status": "open-tracker",
+      "mergedPullRequests": [
+        1818,
+        1819,
+        1822,
+        1825
+      ],
+      "remaining": [
+        "hardware/engine confirmation for #1812 and #1813",
+        "complete current-main CI acceptance"
+      ],
+      "action": "Do not duplicate merged catalog fixes or close the tracker from test-only work."
+    },
+    {
+      "number": 1812,
+      "status": "open-acceptance-expanded",
+      "mergedPullRequests": [
+        1819
+      ],
+      "remaining": [
+        "native/rendered camera-muzzle and aimReady comparison across stages",
+        "Nintendo 11.3.0 comparison"
+      ],
+      "action": "Added 330 actor admission conditions, 22 OBB conditions and old-path negative controls. No runtime regression reproduced."
+    },
+    {
+      "number": 1813,
+      "status": "open-retail-semantics-required",
+      "mergedPullRequests": [
+        1818
+      ],
+      "remaining": [
+        "independent UnitDamageRate=0 engine interpretation",
+        "retail unit1 isolated-target comparison"
+      ],
+      "action": "Existing zero-authority source behavior retained; baseline damage tests passed."
+    },
+    {
+      "number": 1431,
+      "status": "open-native-image-and-calibration-required",
+      "existingImplementation": [
+        "patches/splatoon3/runtime/catalog-pose-birth.mjs",
+        "patches/splatoon3/tests/issue-1431-catalog-pose-birth.test.mjs"
+      ],
+      "remaining": [
+        "native image acceptance",
+        "aperture/socket calibration including completed #1277 geometry",
+        "left-hand predicted aim and first/steady physical origin investigation"
+      ],
+      "action": "Existing 4 pose-birth regression tests passed without physical changes."
+    },
+    {
+      "number": 1789,
+      "status": "open-original-engine-or-capture-required",
+      "mergedPullRequests": [
+        1772,
+        1785
+      ],
+      "remaining": [
+        "original 11.3.0 floor/slope rebound and cap dispatch",
+        "large-bubble sparse default inheritance",
+        "stage controlled 4-bubble contact traces"
+      ],
+      "action": "No guessed rebound multiplier or speed-cap changes."
+    },
+    {
+      "number": 1823,
+      "status": "open-original-audio-or-event-graph-required",
+      "relatedDraftPullRequests": [
+        1821,
+        1827
+      ],
+      "remaining": [
+        "distinct persistent/rising S3 charging source and event/parameter graph",
+        "objective comparison and Safari/local/remote playback verification"
+      ],
+      "action": "Onset-click corrections do not satisfy this missing rising-tone issue."
+    }
+  ],
+  "workspaceCaveat": "Starting HEAD identifies the baseline. Tests ran in a shared parallel-work workspace with other agents editing separate performance/network paths; these are local working-tree receipts, not pristine-main CI."
+}
