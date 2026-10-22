@@ -131,3 +131,51 @@ test('cloud bake restores renderer and target-scissor state after strip draw fai
     assert.deepStrictEqual([scissor.x, scissor.y, scissor.z, scissor.w], [4, 5, 6, 7]);
   }
 });
+
+
+test('Turf TIME UP retires host bot and local pending weapons but not remote ghosts', () => {
+  const src = source('patches/splatoon3/runtime/turf-finish.mjs');
+  const start = src.indexOf('export function captureTurfFinish(');
+  const end = src.indexOf('// Existing physical command channels', start);
+  assert.ok(start >= 0 && end > start);
+  const code = src.slice(start, end).replaceAll('export function ', 'function ');
+  const { captureTurfFinish } = new Function('captureFinishMapSnapshot', code +
+    '\nreturn {captureTurfFinish};')(() => {});
+  const calls = [0, 0, 0];
+  const actor = i => ({
+    bot: i !== 0, remote: i === 2,
+    intent: { move: { set() {} }, fire: true, sub: true, squid: true },
+    _prevIntent: { fire: true, special: true },
+    weaponRunner: { cancelPendingInput() { calls[i]++; } },
+  });
+  const actors = [actor(0), actor(1), actor(2)];
+  const match = { state: 'playing', mode: 'turf', follower: true,
+    bossMode: false, local: actors[0], actors };
+  captureTurfFinish(match, 'finish', null);
+  assert.deepStrictEqual(calls, [1, 1, 0]);
+  assert.equal(actors[0].intent.fire, false);
+  assert.equal(actors[0]._prevIntent.special, false);
+});
+
+test('catalogue pending windups are cancelled with the pre-existing weapon hook', () => {
+  const src = source('patches/splatoon3/runtime/main-weapon-catalog.mjs');
+  const start = src.indexOf('  const legacyCancelPendingInput = R.cancelPendingInput;');
+  const end = src.indexOf('  R.reset = ', start);
+  assert.ok(start >= 0 && end > start);
+  let legacyCalls = 0;
+  const R = { cancelPendingInput() { legacyCalls++; return 'legacy-ok'; } };
+  new Function('R', src.slice(start, end))(R);
+  const runner = Object.create(R);
+  runner.a = { weapon: { catalogRecord: { family: 'charger' } } };
+  runner.catalogState = { pending: { fire: true }, birthEpoch: 8 };
+  assert.equal(runner.cancelPendingInput(), 'legacy-ok');
+  assert.equal(legacyCalls, 1);
+  assert.equal(runner.catalogState.pending, null);
+  assert.equal(runner.catalogState.birthEpoch, 9);
+  runner.cancelPendingInput();
+  assert.equal(runner.catalogState.birthEpoch, 9, 'duplicate TIME UP cannot repeat the cancellation epoch');
+  runner.a.weapon.catalogRecord = null;
+  runner.catalogState.pending = { fire: true };
+  runner.cancelPendingInput();
+  assert.ok(runner.catalogState.pending, 'non-catalogue weapons keep their own cancellation contract');
+});
