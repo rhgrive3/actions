@@ -31,3 +31,12 @@ export function catalogSlosherHasSweptAim(param,sourceActor){
   return sourceActor==='WeaponSlosherBathtub'||
     (Number.isFinite(param?.FrameOffsetMaxDegree)&&param.FrameOffsetMaxDegree>0);
 }
+
+// Brush nearest turf is produced at a source-specified phase of each
+// recurring swing cycle (LoopNum shots; OrderNum is one-based). S3 wiki notes
+// the cycle resets after about 40F without flicking.
+export function catalogBrushNearestDue(group,serial){
+  const splash=group?.SplashNearestParam,n=splash?.LoopNum,o=splash?.OrderNum;
+  return Number.isSafeInteger(n)&&n>0&&Number.isSafeInteger(o)&&o>0&&o<=n&&
+    Number.isSafeInteger(serial)&&serial>0&&((serial-1)%n)===(o-1);
+}
