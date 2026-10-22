@@ -63,3 +63,30 @@ export function createResponsiveProgressWriter(file, identity) {
     fs.renameSync(file + '.pending', file);
   };
 }
+
+// Every uncaught page error already fails acceptance. Close only that case's
+// context to interrupt pending Playwright waits; do not throw from an event
+// callback or change the outer child deadline. Earlier captures remain on disk.
+export function createResponsiveFatalPageError({ diagnostics, closeContext, recordError }) {
+  let firstError = null, closing = null;
+  const close = () => {
+    if (!closing) {
+      closing = Promise.resolve().then(closeContext);
+      // Event callbacks cannot await cleanup. Observe rejection immediately;
+      // the existing finally block still awaits this same rejecting promise.
+      closing.catch(() => {});
+    }
+    return closing;
+  };
+  return {
+    get error() { return firstError; }, close,
+    handle(error) {
+      recordError(error);
+      if (firstError) return;
+      firstError = error;
+      diagnostics.fail(error);
+      diagnostics.unavailable('fatal-pageerror-context-closing');
+      close();
+    },
+  };
+}

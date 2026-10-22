@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { checkCoreMenus } from './check-inkwave-responsive-core.mjs';
 import { createResponsiveAssetServer } from './lib/inkwave-responsive-server.mjs';
 import { confirmResponsiveMockHostTeams } from './inkwave-responsive-fixture.mjs';
-import { createResponsiveDiagnostics, collectResponsiveFailure, createResponsiveProgressWriter } from './lib/inkwave-responsive-diagnostics.mjs';
+import { createResponsiveDiagnostics, collectResponsiveFailure, createResponsiveProgressWriter, createResponsiveFatalPageError } from './lib/inkwave-responsive-diagnostics.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : null; };
@@ -143,15 +143,17 @@ try {
         if (['error', 'warning'].includes(message.type())) diagnostics.record('console-' + message.type(), message.text());
       });
       const onStageComplete = name => diagnostics.stage(name);
-      page.on('pageerror', (e) => result.errors.push(`${engineName}/${name}: ${e.message}`));
-      await page.addInitScript(() => {
-        window.responsiveEvents = [];
-        for (const event of ['pointerdown', 'pointerup', 'click', 'gotpointercapture', 'lostpointercapture']) document.addEventListener(event, (e) => {
-          responsiveEvents.push({ event, pointerType: e.pointerType, target: e.target.closest('button,input')?.className || e.target.className, tag: e.target.tagName, x: e.clientX, y: e.clientY });
-          if (responsiveEvents.length > 12) responsiveEvents.shift();
-        }, true);
-      });
+      const fatalPageError = createResponsiveFatalPageError({ diagnostics, closeContext: () => context.close(),
+        recordError: e => result.errors.push(`${engineName}/${name}: ${e.message}`) });
+      page.on('pageerror', e => fatalPageError.handle(e));
       try {
+        await page.addInitScript(() => {
+          window.responsiveEvents = [];
+          for (const event of ['pointerdown', 'pointerup', 'click', 'gotpointercapture', 'lostpointercapture']) document.addEventListener(event, (e) => {
+            responsiveEvents.push({ event, pointerType: e.pointerType, target: e.target.closest('button,input')?.className || e.target.className, tag: e.target.tagName, x: e.clientX, y: e.clientY });
+            if (responsiveEvents.length > 12) responsiveEvents.shift();
+          }, true);
+        });
         await page.goto(address);
         await page.waitForFunction(() => window.menuReady);
         await page.evaluate(() => document.fonts.ready);
@@ -302,6 +304,7 @@ try {
         await page.waitForFunction(() => !menus._news.open);
         entry.status = 'passed';
       } catch (error) {
+        error = fatalPageError.error || error;
         await collectResponsiveFailure({ entry, error, diagnostics, page,
           readInteraction: () => page.evaluate(() => ({ events: window.responsiveEvents, inputMode: menus._input, newsPage: document.querySelector('.iw-news')?.dataset.page, newsBusy: menus._news._busy,
           lobby: { state: G.net?.state, isMock: G.net?.isMock, isHost: G.net?.isHost, mode: G.net?.lobby?.mode, teamsConfirmed: G.net?.lobby?.teamsConfirmed, ready: G.net?.lobby?.players.find(p => p.you)?.ready },
@@ -311,9 +314,12 @@ try {
       } finally {
         try {
           diagnostics.record('context-close-start');
-          await diagnostics.close(() => context.close());
+          await diagnostics.close(() => fatalPageError.close());
         }
-        finally { entry.diagnostics = diagnostics.snapshot(); }
+        finally {
+          if (fatalPageError.error) { entry.status = 'failed'; entry.error ||= fatalPageError.error.message; }
+          entry.diagnostics = diagnostics.snapshot();
+        }
       }
     }
   }

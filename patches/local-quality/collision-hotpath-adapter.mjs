@@ -10,6 +10,25 @@ export function adaptCollisionHotpath(rel, code, replaceOnce) {
     code = replaceOnce(code, before, after, 'collision hotpath: ' + label);
   };
   if (rel === 'src/game/physics.js') {
+    // Only canonical legacy Physics can consume borrowed hash columns. Public
+    // raycast overrides and custom/native Level owners retain their old calls.
+    change('raycast(origin, dir, maxDist, out = new Hit(), skipGrates = false) {',
+      'raycast(origin, dir, maxDist, out = new Hit(), skipGrates = false, candidates = null) {',
+      'optional internal ground ray candidates');
+    change('    const ids = this.level.queryBlocks(Math.min(origin.x, ex), Math.min(origin.z, ez), Math.max(origin.x, ex), Math.max(origin.z, ez), this._ids);',
+      '    const ids = candidates || this.level.queryBlocks(Math.min(origin.x, ex), Math.min(origin.z, ez), Math.max(origin.x, ex), Math.max(origin.z, ez), this._ids);',
+      'reuse exact ground column without query copy');
+    change('    const len = up + down;\n    let cy = -Infinity, have = false;',
+      `    const len = up + down;
+    const columns = Number.isFinite(y + up) && Number.isFinite(len) && this.raycast === Physics.prototype.raycast && this.level.queryGroundColumns?.(
+      x, z, foot, RING, this._groundColumns || (this._groundColumns = []));
+    let cy = -Infinity, have = false;`, 'batch legacy vertical ground columns');
+    change('    this.raycast(_go, DOWNV, len, h, skipGrates);',
+      '    this.raycast(_go, DOWNV, len, h, skipGrates, columns?.[0]);', 'center ground candidate column');
+    change('      this.raycast(_go, DOWNV, len, hr, skipGrates);',
+      '      this.raycast(_go, DOWNV, len, hr, skipGrates, columns?.[i + 1]);', 'ring ground candidate columns');
+    change('    out.hit = have || bi >= 0;\n    return out;',
+      '    out.hit = have || bi >= 0;\n    if (columns) columns.fill(null);\n    return out;', 'release borrowed columns after ground probe');
     change(
       '    const ex = origin.x + dir.x * maxDist, ez = origin.z + dir.z * maxDist;',
       `    const ex = origin.x + dir.x * maxDist, ez = origin.z + dir.z * maxDist;

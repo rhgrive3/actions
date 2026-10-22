@@ -207,3 +207,118 @@ test('progress write failure is visible but cannot replace original acceptance e
   assert(warnings.length >= 2);
   assert(warnings.every(row => row.event === 'responsive-progress-write-error' && row.error === 'disk full'));
 });
+
+import { createResponsiveFatalPageError } from '../lib/inkwave-responsive-diagnostics.mjs';
+import { EventEmitter } from 'node:events';
+
+test('actual pageerror wiring interrupts a pending operation and preserves original fatal evidence', async t => {
+  const {diagnostics,read} = fixture(t), page = new EventEmitter(), errors = [];
+  let closeCalls = 0, rejectPending;
+  const pending = new Promise((_, reject) => { rejectPending = reject; });
+  const interrupted = assert.rejects(pending, /context closed/);
+  const context = { close: async () => {
+    closeCalls++;
+    assert.equal(read().diagnostics.firstError.message, "Cannot read properties of undefined (reading '_wid')");
+    rejectPending(Error('context closed'));
+  } };
+  const start = source.indexOf('      const fatalPageError =');
+  const end = source.indexOf('      try {', start);
+  assert(start >= 0 && end > start);
+  const wire = new Function('createResponsiveFatalPageError', 'diagnostics', 'context', 'result', 'engineName', 'name', 'page',
+    source.slice(start, end) + '\nreturn fatalPageError;');
+  const fatal = wire(createResponsiveFatalPageError, diagnostics, context, {errors}, 'chromium', 'tablet-landscape', page);
+  const original = new TypeError("Cannot read properties of undefined (reading '_wid')");
+  page.emit('pageerror', original);
+  page.emit('pageerror', Error('second uncaught error'));
+  await interrupted;
+  await diagnostics.close(() => fatal.close());
+  assert.equal(fatal.error, original); assert.equal(closeCalls, 1);
+  assert.equal(errors.length, 2);
+  assert.equal(read().diagnostics.firstError.name, 'TypeError');
+  assert.match(read().diagnostics.firstError.stack, /_wid/);
+  assert.match(source, /error = fatalPageError.error \|\| error;/);
+  assert.match(source, /await diagnostics.close\(\(\) => fatalPageError.close\(\)\);/);
+});
+
+test('handled application errors and console diagnostics do not abort a case', async () => {
+  const diagnostics = createResponsiveDiagnostics(); let closes = 0;
+  const fatal = createResponsiveFatalPageError({diagnostics, closeContext:async()=>{closes++;}, recordError:()=>assert.fail()});
+  diagnostics.record('console-error', 'expected offline room not found');
+  const handledState = 'error'; assert.equal(handledState, 'error');
+  await Promise.resolve(); assert.equal(closes, 0); assert.equal(fatal.error, null);
+  await diagnostics.close(() => fatal.close()); assert.equal(closes, 1);
+  assert.equal(diagnostics.snapshot().firstError, null);
+});
+
+test('fatal cleanup rejection is observed and original error survives; clean cleanup still rejects', async () => {
+  const diagnostics = createResponsiveDiagnostics(), original = Error('fatal runtime'); let closes = 0;
+  const fatal = createResponsiveFatalPageError({diagnostics, closeContext:()=>{closes++; throw Error('close failed');}, recordError:()=>{}});
+  fatal.handle(original); await new Promise(resolve => setImmediate(resolve));
+  await diagnostics.close(() => fatal.close()); assert.equal(closes, 1);
+  assert.equal(diagnostics.snapshot().firstError.message, original.message);
+  assert(diagnostics.snapshot().events.some(event=>event.type==='context-close-error'));
+  const clean = createResponsiveFatalPageError({diagnostics:createResponsiveDiagnostics(), closeContext:async()=>{throw Error('sole cleanup');}, recordError:()=>{}});
+  await assert.rejects(clean.close(), /sole cleanup/);
+});
+
+test('fatal close retains existing failure inspection policy rather than hanging on closed target', async () => {
+  const diagnostics = createResponsiveDiagnostics(), error = Error('runtime fatal');
+  const fatal = createResponsiveFatalPageError({diagnostics,closeContext:async()=>{},recordError:()=>{}});
+  fatal.handle(error); const entry = {}; let calls = 0;
+  await collectResponsiveFailure({entry,error,diagnostics,page:{isClosed:()=>false},
+    readInteraction:()=>{calls++;},captureFailure:()=>{calls++;}});
+  assert.equal(calls,0); assert.equal(entry.status,'failed');
+  assert.equal(entry.diagnostics.events.filter(x=>x.type==='diagnostic-skipped').length,2);
+  await fatal.close();
+});
+
+
+test('late uncaught error cannot overwrite an already recorded assertion failure', async () => {
+  const diagnostics = createResponsiveDiagnostics(), original = Error('first assertion');
+  diagnostics.fail(original);
+  const fatalPageError = createResponsiveFatalPageError({diagnostics,closeContext:async()=>{},recordError:()=>{}});
+  fatalPageError.handle(Error('later runtime failure'));
+  const entry = {status:'failed',error:original.message};
+  const start = source.indexOf("          if (fatalPageError.error)");
+  const end = source.indexOf('          entry.diagnostics =',start);
+  assert(start>=0 && end>start);
+  new Function('entry','fatalPageError',source.slice(start,end))(entry,fatalPageError);
+  assert.equal(entry.error,original.message);
+  assert.equal(diagnostics.snapshot().firstError.message,original.message);
+  await fatalPageError.close();
+});
+
+for (const cleanupRejects of [false, true]) test(`actual setup interruption finalizes fatal evidence (cleanup rejects=${cleanupRejects})`, async t => {
+  const {diagnostics,read} = fixture(t), entry = {}, result = {errors:[]}, page = new EventEmitter();
+  const original = new TypeError('setup fatal _wid'), targetClosed = Error('setup target closed');
+  let rejectInit, closes = 0;
+  page.addInitScript = () => new Promise((_, reject) => {
+    rejectInit = reject;
+    queueMicrotask(() => page.emit('pageerror', original));
+  });
+  page.isClosed = () => false;
+  page.evaluate = () => assert.fail('closing target must not be inspected');
+  page.screenshot = () => assert.fail('closing target must not be captured');
+  const context = {close:async()=>{
+    closes++;
+    assert.equal(read().diagnostics.firstError.message, original.message);
+    rejectInit(targetClosed);
+    if (cleanupRejects) throw Error('secondary close rejection');
+  }};
+  const start = source.indexOf('      const fatalPageError =');
+  const setupEnd = source.indexOf('        await page.goto(address);',start);
+  const catchStart = source.indexOf('      } catch (error) {',setupEnd);
+  const finallyEnd = source.indexOf('\n    }\n  }\n  assert',catchStart);
+  assert(start>=0 && setupEnd>start && catchStart>setupEnd && finallyEnd>catchStart);
+  const actualSetupAndFinalization = new (Object.getPrototypeOf(async function(){}).constructor)(
+    'page','result','engineName','name','diagnostics','context','createResponsiveFatalPageError',
+    'collectResponsiveFailure','entry','path','evidence','audit',
+    source.slice(start,setupEnd)+source.slice(catchStart,finallyEnd));
+  await assert.rejects(actualSetupAndFinalization(page,result,'chromium','tablet',diagnostics,context,
+    createResponsiveFatalPageError,collectResponsiveFailure,entry,path,'/unused',false),error=>error===original);
+  assert.equal(closes,1); assert.equal(result.errors.length,1);
+  assert.equal(entry.status,'failed'); assert.equal(entry.error,original.message);
+  assert.equal(entry.diagnostics.firstError.stack,original.stack);
+  assert.equal(read().diagnostics.firstError.stack,original.stack);
+  assert(entry.diagnostics.events.some(x=>x.type===(cleanupRejects?'context-close-error':'context-close-complete')));
+});
