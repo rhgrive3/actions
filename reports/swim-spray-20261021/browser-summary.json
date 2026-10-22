@@ -1,0 +1,105 @@
+{
+  "baselineCommit": "f31238a48b9d1a4af2d4f5f5f9182af777a79c83",
+  "candidateRuntimeCommit": "53930601a6fc2980c1d2bd0f713d4d663619c39e",
+  "conditions": "Actual built Actor/FX and painted range floor; controlled moving pose, 60Hz. Low startup preset, FX multiplier1 and960x600 native output restored, bloom/shadows off. Same camera offset following the swimmer; boot FOV/time phase not locked, not a pixel equality test. Diagnostic drops yellow, normal8 uses native orange. Frames60-79 only; not retail/input parity.",
+  "cases": [
+    {
+      "version": "before-fixed",
+      "speed": 3,
+      "native": false,
+      "liveDropsMean": 0,
+      "maxHeightM": 0,
+      "maxRadiusM": 0
+    },
+    {
+      "version": "before-fixed",
+      "speed": 8,
+      "native": false,
+      "liveDropsMean": 43.85,
+      "maxHeightM": 0.6021677255630493,
+      "maxRadiusM": 0.06874308735132217
+    },
+    {
+      "version": "before-fixed",
+      "speed": 11.8,
+      "native": false,
+      "liveDropsMean": 86.5,
+      "maxHeightM": 0.7498571276664734,
+      "maxRadiusM": 0.07557612657546997
+    },
+    {
+      "version": "before-fixed",
+      "speed": 8,
+      "native": true,
+      "liveDropsMean": 42.3,
+      "maxHeightM": 0.6135696172714233,
+      "maxRadiusM": 0.06883035600185394
+    },
+    {
+      "version": "after-fixed",
+      "speed": 3,
+      "native": false,
+      "liveDropsMean": 0,
+      "maxHeightM": 0,
+      "maxRadiusM": 0
+    },
+    {
+      "version": "after-fixed",
+      "speed": 8,
+      "native": false,
+      "liveDropsMean": 10.65,
+      "maxHeightM": 0.0614478662610054,
+      "maxRadiusM": 0.019621947780251503
+    },
+    {
+      "version": "after-fixed",
+      "speed": 11.8,
+      "native": false,
+      "liveDropsMean": 21.15,
+      "maxHeightM": 0.0652419701218605,
+      "maxRadiusM": 0.020736409351229668
+    },
+    {
+      "version": "after-fixed",
+      "speed": 8,
+      "native": true,
+      "liveDropsMean": 11.45,
+      "maxHeightM": 0.060574281960725784,
+      "maxRadiusM": 0.019553467631340027
+    }
+  ],
+  "before-fixed": {
+    "contentHash": "fa700251f669d9c202554457f046efe700ab906640fb7e376ce25700e6140ec1",
+    "browser": "154.0.8037.57",
+    "setup": {
+      "origin": [
+        -3,
+        0,
+        -6
+      ],
+      "paint": 1,
+      "ground": 0,
+      "diagnostic": "fixed orange floor / yellow diagnostic droplets; normal8 also uses orange. Low startup preset, FX multiplier1 and native960x600 restored before capture",
+      "quality": "low",
+      "fxQuality": 1,
+      "sourceReady": "ready"
+    }
+  },
+  "after-fixed": {
+    "contentHash": "ff6b354d181d1b27f8121c3c0be6a733e36c73f31d3dddf2152ce8915c13d97b",
+    "browser": "154.0.8037.57",
+    "setup": {
+      "origin": [
+        -3,
+        0,
+        -6
+      ],
+      "paint": 1,
+      "ground": 0,
+      "diagnostic": "fixed orange floor / yellow diagnostic droplets; normal8 also uses orange. Low startup preset, FX multiplier1 and native960x600 restored before capture",
+      "quality": "low",
+      "fxQuality": 1,
+      "sourceReady": "ready"
+    }
+  }
+}

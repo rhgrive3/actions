@@ -134,7 +134,12 @@ test('active browser CI requires source-bound grate and painted-normal evidence 
 test('ancillary paint WebGL source and emitted masks are mandatory exact-head network evidence', () => {
   assert.ok(workflow.includes('node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site'));
   assert.match(workflow, /check-inkwave-paint-mask\.mjs[^\n]+--exact-source/);
-  assert.ok(workflow.includes("'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json']"));
+  const receipts = ['paint-mask/paint-mask-result.json', 'network/network-browser-result.json',
+    'network-delay/network-browser-result.json', 'combat-ceiling/combat-ceiling-browser-result.json'];
+  const requireReceipts = source => assert.ok(source.includes("'network':[" + receipts.map(value => "'" + value + "'").join(',') + "]"));
+  requireReceipts(workflow);
+  for (const receipt of receipts)
+    assert.throws(() => requireReceipts(workflow.replace("'" + receipt + "'", "'missing-receipt'")), undefined, receipt + ' cannot be omitted');
   const probe = fs.readFileSync(new URL('../check-inkwave-paint-mask.mjs', import.meta.url), 'utf8');
   assert.match(probe, /const ROOT = path\.resolve\(fileURLToPath\(new URL\('\.\.\/', import\.meta\.url\)\)\);/);
   const root = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));

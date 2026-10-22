@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-import { crc32, deflateSync } from 'node:zlib';
-import { optimizeLightmapPng, decodeGrayLightmap } from '../lib/inkwave-lossless-lightmap.mjs';
+import * as zlib from 'node:zlib';
+const { deflateSync } = zlib;
+import { optimizeLightmapPng, decodeGrayLightmap, crc32 as fallbackCrc32 } from '../lib/inkwave-lossless-lightmap.mjs';
+const crc32 = zlib.crc32 || fallbackCrc32;
 
 const known = Object.freeze({
   'cargo.png': '56de109b4c842372020605b718ef84bfbcb605fff2509ab8caf26fd3c1c0b874',
@@ -95,4 +97,13 @@ test('lossless PNG optimization preserves pixels from all five input row filters
   assert.deepEqual(after.chunks.filter(chunk => chunk.kind !== 'IDAT').map(chunk => chunk.bytes),
     before.chunks.filter(chunk => chunk.kind !== 'IDAT').map(chunk => chunk.bytes), 'all non-IDAT chunk bytes remain identical');
   assert(compacted.length <= original.length, 'lossless re-encoding never grows the fixture');
+});
+
+test('exported crc32 helper matches IEEE 802.3 checksum across Node 18..22 runtimes', () => {
+  const sample = Buffer.from('IHDR-INKWAVE-LIGHTMAP-CRC32-CHECK', 'ascii');
+  assert.equal(fallbackCrc32(sample) >>> 0, 0x7703788f);
+  assert.equal(fallbackCrc32(Buffer.from('123456789', 'ascii')) >>> 0, 0xcbf43926);
+  if (typeof crc32 === 'function') {
+    assert.equal(fallbackCrc32(sample) >>> 0, crc32(sample) >>> 0);
+  }
 });

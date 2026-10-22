@@ -1,0 +1,84 @@
+{
+  "browser": "154.0.8037.57",
+  "contentHash": "2ceba653d36b11a399938667bc5901847284737a687b6b9c1b81de9e725ebf92",
+  "setup": {
+    "origin": [
+      -3,
+      0,
+      -6
+    ],
+    "paint": 1,
+    "ground": 0,
+    "diagnostic": "fixed yellow ink and film; 45deg FOV, fixed follow camera, initial G.time10; low startup preset, FX multiplier1 and960x600 output",
+    "quality": "low",
+    "fxQuality": 1,
+    "sourceReady": "ready"
+  },
+  "scope": "60Hz controlled moving Actor/FX, actual painted range surface, deterministic random. Fixed camera relative to swimmer. Not native-input physics or Switch parity.",
+  "errors": [],
+  "runtimeCommit": "9aaa7e1d80842c907ad107f55e130ae948fe8758",
+  "localVerificationCommit": "4ef850522fb1094823bb00e103073a8ba5f79a66",
+  "runtimeTree": "090cb4728c1990ed3d4cf46094be1f6ff99f1f95",
+  "colors": [
+    {
+      "name": "yellow",
+      "color": "#e4e900",
+      "filmCount": 1,
+      "bodyVisible": false,
+      "drops": 0
+    },
+    {
+      "name": "orange",
+      "color": "#ff6400",
+      "filmCount": 1,
+      "bodyVisible": false,
+      "drops": 0
+    },
+    {
+      "name": "blue",
+      "color": "#2f5bff",
+      "filmCount": 1,
+      "bodyVisible": false,
+      "drops": 0
+    },
+    {
+      "name": "purple",
+      "color": "#9e21f5",
+      "filmCount": 1,
+      "bodyVisible": false,
+      "drops": 0
+    }
+  ],
+  "cases": [
+    {
+      "speed": 3,
+      "frames": 90,
+      "lateFrames": 60,
+      "filmCount": 0,
+      "trianglesPerFilm": 0,
+      "swimDroplets": 0,
+      "bodyDrawn": false,
+      "ownInkAllFrames": true
+    },
+    {
+      "speed": 8,
+      "frames": 90,
+      "lateFrames": 60,
+      "filmCount": 1,
+      "trianglesPerFilm": 2784,
+      "swimDroplets": 0,
+      "bodyDrawn": false,
+      "ownInkAllFrames": true
+    },
+    {
+      "speed": 11.8,
+      "frames": 90,
+      "lateFrames": 60,
+      "filmCount": 1,
+      "trianglesPerFilm": 2784,
+      "swimDroplets": 0,
+      "bodyDrawn": false,
+      "ownInkAllFrames": true
+    }
+  ]
+}

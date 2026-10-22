@@ -1,0 +1,58 @@
+name: INKWAVE A+ Quality & Security Gate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-aplus-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify Patch Composition & Upstream Locks
+        run: node scripts/check-inkwave-patches.mjs --quick
+
+      - name: Audit Direct-Source Ownership (14 Verified Modules)
+        run: node scripts/inkwave-source-migration-audit.mjs
+
+      - name: Run Direct-Source & Lossless Lightmap Regression Suite
+        run: node --test scripts/tests/inkwave-direct-source-ownership.test.mjs scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-lossless-lightmap.test.mjs
+
+      - name: Run Local-Quality & Motion Regression Suite
+        run: |
+          node --experimental-vm-modules --experimental-global-webcrypto --test patches/local-quality/tests/nav-heuristic.test.mjs patches/local-quality/tests/pose-rotation.test.mjs patches/local-quality/tests/motion-fk-hotpath.test.mjs patches/local-quality/tests/prop-atlas.test.mjs patches/local-quality/tests/prop-retention.test.mjs
+          node patches/local-quality/tests/performance-v2-ao.test.mjs
+          node patches/local-quality/tests/performance-v2-geometry.test.mjs
+          node patches/local-quality/tests/performance-v2-topology.test.mjs
+
+      - name: Run Relay Security & Hibernation Test Suite
+        run: node --test server/tests/relay-security.test.mjs server/tests/local-relay-fixture.test.mjs server/tests/browser-relay-fixture.test.mjs server/tests/issue-1033-relay-hit-nack.test.mjs
+
+      - name: Run Backup, Restore & Transactional Patch Applier Tests
+        run: python3 -m unittest discover -s tools/backup/tests -p "test_*.py" -v
+
+      - name: Run Production Diagnostic Build & Startup Budget Gate
+        run: |
+          INKWAVE_BUILD_UNMINIFIED=1 node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+
+      - name: Execute A+ Same-Condition Performance & Parity Benchmark
+        run: node scripts/benchmark-aplus-verification.mjs

@@ -50,9 +50,16 @@ test('#573 victim-owned hit admission and outgoing invulnerability flag use the 
   const rejected=[],admissions=[],applyHit=f.G.projectiles.applyHit;
   f.on('hit:rejected',event=>rejected.push(event));
   f.G.projectiles.applyHit=function(...args){const result=applyHit.apply(this,args);admissions.push(result);return result;};
-  tx.sendHit(source,target,50,'shooter');assert.equal(claims.length,2);nm.onMessage('peer',claims[1]);near(a.hp,90);
+  // #1665/#1666: the 49F claim already spent this shooter's first proof on this victim.
+  // A second legitimate round is required to exercise Slam's independent 50F invulnerability
+  // gate; do not attempt a second hit from the same bullet and silently bypass provenance.
+  emitMainShot(producer,source);assert.equal(tx._sendTick(),true);
+  assert.equal(ticks.length,2,'second native firing event must reach receiver');
+  assert.ok(ticks[1].e.some(e=>e[1]==='p'||e[1]==='ev'&&e[2]==='weapon:fire'),'second native shooter birth');
+  nm.onMessage('peer',ticks[1]);
+  tx.sendHit(source,target,30,'shooter');assert.equal(claims.length,2);nm.onMessage('peer',claims[1]);near(a.hp,90);
   assert.deepEqual(admissions,['rejected-invulnerable'],'valid claim reaches native invulnerability rejection, not payload/proof rejection');
-  assert.equal(rejected.length,1);assert.equal(rejected[0].victim,a);assert.equal(rejected[0].attacker,attacker);assert.equal(rejected[0].damage,50);assert.equal(rejected[0].weaponId,'shooter');
+  assert.equal(rejected.length,1);assert.equal(rejected[0].victim,a);assert.equal(rejected[0].attacker,attacker);assert.equal(rejected[0].damage,30);assert.equal(rejected[0].weaponId,'shooter');
  }finally{nm.dispose();tx.dispose();f.G.projectiles.clear();producer.G.projectiles.clear();}
 
 });

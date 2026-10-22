@@ -173,6 +173,10 @@ jobs:
         run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs patches/native-stages/tests/bvh-browser-baseline.test.mjs
       - name: Verify deterministic network replication
         run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs
+      - name: Verify remote combat provenance and equipped hit ceilings
+        run: |
+          node patches/network-replication/tools/combat-hit-ceilings.mjs
+          node --test scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-open-pr-source-pairs.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs
       - name: Compare authoritative and reconstructed attacks
         run: node --experimental-vm-modules scripts/check-inkwave-network-comparison.mjs --exact-source --evidence-dir .ci-scratch/network-comparison
       - uses: actions/upload-artifact@v4
@@ -208,7 +212,7 @@ jobs:
           sudo mkdir -p "$browser_tmp"
           sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs scripts/tests/inkwave-range-profile-receipt.test.mjs scripts/tests/inkwave-range-menu-entry.test.mjs scripts/tests/inkwave-range-trusted-entry.test.mjs scripts/tests/inkwave-responsive-fixture.test.mjs scripts/tests/inkwave-responsive-diagnostics.test.mjs scripts/tests/inkwave-ballpoint-evidence.test.mjs scripts/tests/inkwave-streamed-music-diagnostics.test.mjs scripts/tests/inkwave-active-media-diagnostics.test.mjs scripts/tests/inkwave-context-raf-diagnostics.test.mjs
+        run: node --test scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs scripts/tests/inkwave-range-profile-receipt.test.mjs scripts/tests/inkwave-range-menu-entry.test.mjs scripts/tests/inkwave-range-trusted-entry.test.mjs scripts/tests/inkwave-responsive-fixture.test.mjs scripts/tests/inkwave-responsive-diagnostics.test.mjs scripts/tests/inkwave-ballpoint-evidence.test.mjs scripts/tests/inkwave-streamed-music-diagnostics.test.mjs scripts/tests/inkwave-active-media-diagnostics.test.mjs scripts/tests/inkwave-context-raf-diagnostics.test.mjs scripts/tests/inkwave-static-menu-gpu-budget.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -294,6 +298,8 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify emitted Boss positive-proof admission and PvP zero knockback
+        run: INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-boss-positive-proof.test.mjs
       - name: Verify exact emitted owner-bound launch packets and ghosts
         run: |
           manifest_sha=$(sha256sum _site/inkwave-build.json | cut -d ' ' -f1)
@@ -626,6 +632,9 @@ jobs:
       - name: Verify two-player replication with 100 ms ordered delivery delay
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-network-browser.mjs --delay-frames 6 --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network-delay" --profile-dir "$CI_STORAGE/cache/network-delay" --exact-source
+      - name: Verify real Actor hit ceiling before proof and hit ID consumption
+        if: matrix.suite == 'network'
+        run: node scripts/check-inkwave-combat-ceiling-browser.mjs --site .built-site/_site --source-sha "$SOURCE_SHA" --evidence-dir "$CI_STORAGE/evidence/combat-ceiling"
       - name: Verify existing special models, grips, shaders and GPU retirement
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-special-presentation.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/special-presentation"
@@ -702,6 +711,9 @@ jobs:
         run: |
           node --test scripts/lib/inkwave-volley-failure-evidence.test.mjs
           node scripts/check-inkwave-volley-vortex.mjs .built-site/_site --webkit
+      - name: Verify remote combat trust boundaries in Chromium and WebKit
+        if: matrix.suite == 'ui'
+        run: node scripts/check-inkwave-combat-trust.mjs .built-site/_site --webkit
       - name: Verify room startup and gyro health in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-room-gyro.mjs .built-site/_site --webkit
@@ -745,7 +757,7 @@ jobs:
           checks={
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','ballpoint/ballpoint-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
             'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json'],
-            'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json'],
+            'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json','combat-ceiling/combat-ceiling-browser-result.json'],
             'ui':['menu-focus/menu-focus-result.json','identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
             'responsive':['responsive/responsive-result.json'],
             'range':['range/range-result.json'],

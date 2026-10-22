@@ -10,12 +10,12 @@ import { readSource } from '../../reliability/tests/hud-fixture.mjs';
 
 const compose = (rel, input = readSource(rel)) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, input))));
 
-test('S3 squid look: no floor-level own-colour mound; the local swimmer keeps the squid-shaped ghost', () => {
+test('S3 squid look: no floor-level own-colour mound; submerged bodies use surface wakes', () => {
   const ch = compose('src/game/character.js');
   new vm.SourceTextModule(ch);
   assert.doesNotMatch(ch, /s3BulgeGeometry|squid\.bulge|s3Bulge/, 'the hemisphere mound read as an ellipse under the squid');
-  const upd = ch.slice(ch.indexOf('  _updateSquid(dt, s) {'));
-  assert.match(upd, /const ghost = local && this\.isLocal;\n\s+sq\.ghost\.visible = ghost;/);
+  assert.match(ch, /this\.squid\.body\.visible = !inInk;/);
+  assert.match(ch, /this\.squid\.ghost\.visible = false;/);
   assert.ok(JSON.stringify(qualityIdentity()).includes('s3-squid-look-adapter.mjs'));
 });
 

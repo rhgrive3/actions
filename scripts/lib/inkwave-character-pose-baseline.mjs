@@ -179,10 +179,201 @@ export const OCT21_INTEGRATED_POSE_MAIN_BLOBS = Object.freeze({
   "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": "9f68724343748037145c552937025d74ac5df8b9",
   "patches/splatoon3/weapon-catalog-adapter.mjs": "55582fd6109ff814ed107577db74b990d755a926"
 });
+// #1738: the only pose-allowlisted change since the integrated Oct-21
+// source epoch is #725's gyro interval-mean adapter. Pin the exact 4bb0a61d
+// module while retaining BOTH historical complete 16-file epochs unchanged.
+// This accepts no partial rewrite or new gameplay pose and is not evidence
+// of 3D image parity.
+export const OCT21_MAIN_4BB_POSE_BLOBS = Object.freeze({
+  ...OCT21_INTEGRATED_POSE_MAIN_BLOBS,
+  'patches/splatoon3/adapter.mjs': '7aafda261ab752866b9f24891d8b76bd965971b7',
+});
+// Exact six-PR integration snapshot. Identity admission preserves both sources;
+// native pose, physics and image comparisons remain independent requirements.
+export const OCT21_RESOLVED_POSE_MAIN_BLOBS = Object.freeze({
+  "patches/splatoon3/adapter.mjs": "5178f8d681efee14c083e361bbacc854f3c67c8a",
+  "patches/splatoon3/body-proportion-adapter.mjs": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
+  "patches/splatoon3/runtime/body-proportion.mjs": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
+  "patches/splatoon3/runtime/idle-motion.mjs": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+  "patches/splatoon3/runtime/install.mjs": "56b9b99fbb79d8650e7e132fd187f1514f27c62d",
+  "patches/splatoon3/runtime/roller.mjs": "5166cece72cedbeb3544d59cd53f175284ad5c57",
+  "patches/splatoon3/runtime/source-posture.mjs": "a31d8224d129665917632ee7083c4081de5803a4",
+  "patches/splatoon3/upstream-lock.json": "db19eaaee31820263cfd9871b0ebe90db9133f3d",
+  "patches/splatoon3/runtime/weapon-handoff-motion.mjs": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f",
+  "patches/splatoon3/runtime/weapon-models/brushes.mjs": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+  "patches/splatoon3/runtime/weapon-models/family-holds.mjs": "91a672123486114f9849de61509c6ee6ec96363f",
+  "patches/splatoon3/runtime/weapon-models/kit.mjs": "3ab94f55c299b56485880ede17b92d5150101f7d",
+  "patches/splatoon3/runtime/weapon-models/registry.mjs": "7f651d20395cb8b2622ca0dcd9180019b7533ce1",
+  "patches/splatoon3/runtime/weapon-models/stringers.mjs": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
+  "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": "9f68724343748037145c552937025d74ac5df8b9",
+  "patches/splatoon3/weapon-catalog-adapter.mjs": "55582fd6109ff814ed107577db74b990d755a926"
+});
+const RESOLVED_POSE_PAIR = Object.freeze({
+  "sourceBase": "ecfb851ad7d9c78c2e7b1937dda0a723946dc215",
+  "sourceHead": "eba73df522934b4406585f42ca3f8593dddf2dd3",
+  "paths": {
+    "patches/splatoon3/adapter.mjs": {
+      "baseline": "7aafda261ab752866b9f24891d8b76bd965971b7",
+      "candidate": "5178f8d681efee14c083e361bbacc854f3c67c8a"
+    },
+    "patches/splatoon3/body-proportion-adapter.mjs": {
+      "baseline": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
+      "candidate": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf"
+    },
+    "patches/splatoon3/runtime/body-proportion.mjs": {
+      "baseline": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
+      "candidate": "5d7dfb8103b4375379ccb9c8fda53e615d00adff"
+    },
+    "patches/splatoon3/runtime/idle-motion.mjs": {
+      "baseline": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+      "candidate": "06d276d899aa764df7e75d41612f7ca1ec22953b"
+    },
+    "patches/splatoon3/runtime/install.mjs": {
+      "baseline": "56b9b99fbb79d8650e7e132fd187f1514f27c62d",
+      "candidate": "56b9b99fbb79d8650e7e132fd187f1514f27c62d"
+    },
+    "patches/splatoon3/runtime/roller.mjs": {
+      "baseline": "5166cece72cedbeb3544d59cd53f175284ad5c57",
+      "candidate": "5166cece72cedbeb3544d59cd53f175284ad5c57"
+    },
+    "patches/splatoon3/runtime/source-posture.mjs": {
+      "baseline": "a31d8224d129665917632ee7083c4081de5803a4",
+      "candidate": "a31d8224d129665917632ee7083c4081de5803a4"
+    },
+    "patches/splatoon3/upstream-lock.json": {
+      "baseline": "db19eaaee31820263cfd9871b0ebe90db9133f3d",
+      "candidate": "db19eaaee31820263cfd9871b0ebe90db9133f3d"
+    },
+    "patches/splatoon3/runtime/weapon-handoff-motion.mjs": {
+      "baseline": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f",
+      "candidate": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f"
+    },
+    "patches/splatoon3/runtime/weapon-models/brushes.mjs": {
+      "baseline": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+      "candidate": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2"
+    },
+    "patches/splatoon3/runtime/weapon-models/family-holds.mjs": {
+      "baseline": "91a672123486114f9849de61509c6ee6ec96363f",
+      "candidate": "91a672123486114f9849de61509c6ee6ec96363f"
+    },
+    "patches/splatoon3/runtime/weapon-models/kit.mjs": {
+      "baseline": "3ab94f55c299b56485880ede17b92d5150101f7d",
+      "candidate": "3ab94f55c299b56485880ede17b92d5150101f7d"
+    },
+    "patches/splatoon3/runtime/weapon-models/registry.mjs": {
+      "baseline": "7f651d20395cb8b2622ca0dcd9180019b7533ce1",
+      "candidate": "7f651d20395cb8b2622ca0dcd9180019b7533ce1"
+    },
+    "patches/splatoon3/runtime/weapon-models/stringers.mjs": {
+      "baseline": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
+      "candidate": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e"
+    },
+    "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": {
+      "baseline": "9f68724343748037145c552937025d74ac5df8b9",
+      "candidate": "9f68724343748037145c552937025d74ac5df8b9"
+    },
+    "patches/splatoon3/weapon-catalog-adapter.mjs": {
+      "baseline": "55582fd6109ff814ed107577db74b990d755a926",
+      "candidate": "55582fd6109ff814ed107577db74b990d755a926"
+    }
+  }
+});
+// PR #1746 normal merge f31238a4: complete sixteen-path epoch, never per-leaf admission.
+export const OCT21_PR1746_POSE_MAIN_BLOBS = Object.freeze({
+  "patches/splatoon3/adapter.mjs": "31346b2c8ed07fa0f96721ae40d5f88b39294c1f",
+  "patches/splatoon3/body-proportion-adapter.mjs": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
+  "patches/splatoon3/runtime/body-proportion.mjs": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
+  "patches/splatoon3/runtime/idle-motion.mjs": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+  "patches/splatoon3/runtime/install.mjs": "56b9b99fbb79d8650e7e132fd187f1514f27c62d",
+  "patches/splatoon3/runtime/roller.mjs": "d8bec5a2220ebf970c489969fa41d9e6f74affed",
+  "patches/splatoon3/runtime/source-posture.mjs": "a31d8224d129665917632ee7083c4081de5803a4",
+  "patches/splatoon3/upstream-lock.json": "db19eaaee31820263cfd9871b0ebe90db9133f3d",
+  "patches/splatoon3/runtime/weapon-handoff-motion.mjs": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f",
+  "patches/splatoon3/runtime/weapon-models/brushes.mjs": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+  "patches/splatoon3/runtime/weapon-models/family-holds.mjs": "91a672123486114f9849de61509c6ee6ec96363f",
+  "patches/splatoon3/runtime/weapon-models/kit.mjs": "3ab94f55c299b56485880ede17b92d5150101f7d",
+  "patches/splatoon3/runtime/weapon-models/registry.mjs": "7f651d20395cb8b2622ca0dcd9180019b7533ce1",
+  "patches/splatoon3/runtime/weapon-models/stringers.mjs": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
+  "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": "9f68724343748037145c552937025d74ac5df8b9",
+  "patches/splatoon3/weapon-catalog-adapter.mjs": "55582fd6109ff814ed107577db74b990d755a926"
+});
+const PR1746_POSE_PAIR = Object.freeze({
+  "sourceBase": "ecfb851ad7d9c78c2e7b1937dda0a723946dc215",
+  "sourceHead": "f31238a48b9d1a4af2d4f5f5f9182af777a79c83",
+  "paths": {
+    "patches/splatoon3/adapter.mjs": {
+      "baseline": "7aafda261ab752866b9f24891d8b76bd965971b7",
+      "candidate": "31346b2c8ed07fa0f96721ae40d5f88b39294c1f"
+    },
+    "patches/splatoon3/body-proportion-adapter.mjs": {
+      "baseline": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
+      "candidate": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf"
+    },
+    "patches/splatoon3/runtime/body-proportion.mjs": {
+      "baseline": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
+      "candidate": "5d7dfb8103b4375379ccb9c8fda53e615d00adff"
+    },
+    "patches/splatoon3/runtime/idle-motion.mjs": {
+      "baseline": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+      "candidate": "06d276d899aa764df7e75d41612f7ca1ec22953b"
+    },
+    "patches/splatoon3/runtime/install.mjs": {
+      "baseline": "56b9b99fbb79d8650e7e132fd187f1514f27c62d",
+      "candidate": "56b9b99fbb79d8650e7e132fd187f1514f27c62d"
+    },
+    "patches/splatoon3/runtime/roller.mjs": {
+      "baseline": "5166cece72cedbeb3544d59cd53f175284ad5c57",
+      "candidate": "d8bec5a2220ebf970c489969fa41d9e6f74affed"
+    },
+    "patches/splatoon3/runtime/source-posture.mjs": {
+      "baseline": "a31d8224d129665917632ee7083c4081de5803a4",
+      "candidate": "a31d8224d129665917632ee7083c4081de5803a4"
+    },
+    "patches/splatoon3/upstream-lock.json": {
+      "baseline": "db19eaaee31820263cfd9871b0ebe90db9133f3d",
+      "candidate": "db19eaaee31820263cfd9871b0ebe90db9133f3d"
+    },
+    "patches/splatoon3/runtime/weapon-handoff-motion.mjs": {
+      "baseline": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f",
+      "candidate": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f"
+    },
+    "patches/splatoon3/runtime/weapon-models/brushes.mjs": {
+      "baseline": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+      "candidate": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2"
+    },
+    "patches/splatoon3/runtime/weapon-models/family-holds.mjs": {
+      "baseline": "91a672123486114f9849de61509c6ee6ec96363f",
+      "candidate": "91a672123486114f9849de61509c6ee6ec96363f"
+    },
+    "patches/splatoon3/runtime/weapon-models/kit.mjs": {
+      "baseline": "3ab94f55c299b56485880ede17b92d5150101f7d",
+      "candidate": "3ab94f55c299b56485880ede17b92d5150101f7d"
+    },
+    "patches/splatoon3/runtime/weapon-models/registry.mjs": {
+      "baseline": "7f651d20395cb8b2622ca0dcd9180019b7533ce1",
+      "candidate": "7f651d20395cb8b2622ca0dcd9180019b7533ce1"
+    },
+    "patches/splatoon3/runtime/weapon-models/stringers.mjs": {
+      "baseline": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
+      "candidate": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e"
+    },
+    "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": {
+      "baseline": "9f68724343748037145c552937025d74ac5df8b9",
+      "candidate": "9f68724343748037145c552937025d74ac5df8b9"
+    },
+    "patches/splatoon3/weapon-catalog-adapter.mjs": {
+      "baseline": "55582fd6109ff814ed107577db74b990d755a926",
+      "candidate": "55582fd6109ff814ed107577db74b990d755a926"
+    }
+  }
+});
 function currentPosePair(baseline, candidate) {
   const epoch = [
+    { blobs: OCT21_PR1746_POSE_MAIN_BLOBS, source: 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' },
     { blobs: OCT21_POSE_MAIN_BLOBS, source: 'ad4cc54cf5fbba65635ec0929a1da901c8c619db' },
     { blobs: OCT21_INTEGRATED_POSE_MAIN_BLOBS, source: '785faf01055a361bebc69a8c32ccac18a609c24a' },
+    { blobs: OCT21_MAIN_4BB_POSE_BLOBS, source: '4bb0a61d8f285111551d5ff2466e79cb26ab385b' },
+    { blobs: OCT21_RESOLVED_POSE_MAIN_BLOBS, source: 'eba73df522934b4406585f42ca3f8593dddf2dd3' },
   ].find(({ blobs }) => CHARACTER_POSE_PATHS.every(path =>
     typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
     blob(baseline.get(path)) === blobs[path] && blob(candidate.get(path)) === blobs[path]));
@@ -206,11 +397,11 @@ function currentPosePair(baseline, candidate) {
     })),
   };
 
-  const matches = CHARACTER_POSE_PATHS.every(path =>
+  const pair = [CURRENT_POSE_PAIR, RESOLVED_POSE_PAIR, PR1746_POSE_PAIR].find(pair => CHARACTER_POSE_PATHS.every(path =>
     typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
-    blob(baseline.get(path)) === CURRENT_POSE_PAIR.paths[path].baseline &&
-    blob(candidate.get(path)) === CURRENT_POSE_PAIR.paths[path].candidate);
-  if (!matches) {
+    blob(baseline.get(path)) === pair.paths[path].baseline &&
+    blob(candidate.get(path)) === pair.paths[path].candidate));
+  if (!pair) {
     const path = 'patches/splatoon3/adapter.mjs';
     if ((typeof baseline.get(path) === 'string' && blob(baseline.get(path)) === CURRENT_POSE_PAIR.paths[path].baseline) ||
         (typeof candidate.get(path) === 'string' && blob(candidate.get(path)) === CURRENT_POSE_PAIR.paths[path].candidate))
@@ -219,7 +410,7 @@ function currentPosePair(baseline, candidate) {
   }
   return { sources: new Map(baseline), changes: [],
     pairEvidence: { mode: 'current-pose-pair-with-gameplay-differences',
-      sourceBase: CURRENT_POSE_PAIR.sourceBase, sourceHead: CURRENT_POSE_PAIR.sourceHead,
+      sourceBase: pair.sourceBase, sourceHead: pair.sourceHead,
       scope: 'Preserve the exact current main/candidate pose source pair without replay. Pose and gameplay differences remain visible to independent native-state and image comparison gates.',
       validationLimit: 'Source identity only; this is not pose or gameplay equivalence.' },
     evidence: CHARACTER_POSE_PATHS.map(path => ({path, mode: 'pinned-current-pose-pair',

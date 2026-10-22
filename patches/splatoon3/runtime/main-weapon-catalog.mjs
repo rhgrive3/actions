@@ -1,5 +1,6 @@
 import { brellaPelletSpeed, canopyEntry, withProjectileHitGeometry, validProjectileHitGeometry } from './brella-physics.mjs';
 import { familyDescription } from './content-language.mjs';
+import { usesBucketSlosherSheet } from './projectile-visuals.mjs';
 import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
@@ -27,8 +28,9 @@ import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
 import { reverseShotRelease } from './shooter-movement.mjs';
-import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
+import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale, catalogBubbleSurfaceNormalY } from './projectile-presentation.mjs';
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
+import { installCatalogPoseBirth } from './catalog-pose-birth.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
 import { paintDualiesSlide } from './dualies-slide-paint.mjs';
 import { catalogDualiesTurret, writeCatalogDualiesVelocity } from './catalog-dualies-motion.mjs';
@@ -279,6 +281,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   Object.defineProperty(R, INSTALLED, { value:true });
   installActorFreefallHooks(api);
   installS3ProjectileShapes(api);
+  // #1431 presentation-only: connect raw-socket births to the same tick's drawn muzzle.
+  const poseBirth = installCatalogPoseBirth(api);
   const legacyUpdate = R.update, legacyReset = R.reset, legacyBusy = R.busy, legacyMove = R.moveSpeed;
   const step = P._step, fresh = P._new, ghost = P.ghostProjectile, clear = P.clear;
   const defaults = profile.weaponsFidelity;
@@ -402,10 +406,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const event={actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge};
     if(hand!==null)event.hand=hand;
     emit('weapon:fire',event);
-    if (a.isLocal || a._nearCamera?.()) {
+    const fxKind=r.family==='blaster'?'blaster':'shooter',wantFx=!!(a.isLocal || a._nearCamera?.());
+    const wantMuzzle=wantFx&&!usesBucketSlosherSheet(r.id);
+    // Raw-socket births defer only the FX request until this tick's pose (#1431).
+    const deferred=poseBirth.commit(a,origin,direction,a.color,fxKind,wantMuzzle);
+    if (wantFx) {
       G.audio?.play(r.family==='charger'?'shoot_charger':r.family==='blaster'?'shoot_blaster':'shoot_shooter',
         {pos:a.isLocal?undefined:origin,volume:.45});
-      G.fx?.muzzle(origin,direction,a.color,r.family==='blaster'?'blaster':'shooter');
+      if(wantMuzzle&&!deferred)G.fx?.muzzle(origin,direction,a.color,fxKind);
     }
   }
   function origin(a, hand=null, offset=null) {
@@ -424,6 +432,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       G.projectiles._muzzleHand(a,hand,muzzle);
       if(hand){base.copy(a.pos);base.y+=a.form==='squid'?.4:1.05;constrainMuzzle(G.physics,base,muzzle);}
     }
+    poseBirth.begin(a,hand,muzzle,offset);
     G.projectiles._aimFrom(a,muzzle,dir);
     return muzzle;
   }
@@ -664,6 +673,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     p.vel.y += finite(options.lift,0);
     if(!queueCatalogBirth(p,G,muzzle))applyCatalogPlayerVelocity(p);
     updateCatalogVisual(p);
+    poseBirth.attach(p,at);
     system._push(p);
     return p;
   }
@@ -1040,8 +1050,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
     }
     if(r.parameters.BlastParam?.BlastParam){p.pos.copy(at);explosion(system,p,r.parameters.BlastParam.BlastParam);return true;}
-    if(r.sourceActor==='WeaponSlosherBathtub'&&h.normal&&catalogBubbleCanBounce(s.groundBounces,h.normal.y)) {
-      const ground=h.normal.y>.35;
+    // The rounded collision normal can point upward at a wall's edge.
+    // Use the underlying stage face for the *floor count* while preserving
+    // the original geometric normal for the bounce direction.
+    const bubbleFaceY=r.sourceActor==='WeaponSlosherBathtub'
+      ?catalogBubbleSurfaceNormalY(h,G.physics?.level):null;
+    if(bubbleFaceY!==null&&h.normal&&catalogBubbleCanBounce(s.groundBounces,bubbleFaceY)) {
+      const ground=bubbleFaceY>.35;
       const bp=r.parameters.BounceGroupParam.BounceParam.find(b=>(b.UnitOrderNum??0)===d.unit)||{};
       // Keep the established paint owner and footprint untouched (lane ③).
       // The source's first-bounce footprint decays by 15% on each later contact.
@@ -1115,7 +1130,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         q.stop=Infinity;
         const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
         let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
-        if(candidate.hit && (graze || bubble && candidate.normal.y>.35)){
+        if(candidate.hit && (graze || bubble && catalogBubbleSurfaceNormalY(candidate,G.physics?.level)>.35)){
           const core=collisionRadius(q.param,'Field',0,s.index,bounceScale);
           // The first step grows from the core radius itself (f0 === core), so
           // compare with the largest swept radius: a level swing born near the

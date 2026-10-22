@@ -3,6 +3,7 @@
 // The source does not publish a matching shooter pixel/mesh radius. The bounded
 // shooter cross-section multiplier below is an INKWAVE visual calibration,
 // never used for player or field collision, damage, trajectory or turf paint.
+import { sharedBucketDraw, sharedBucketDrawIndex } from './projectile-visuals.mjs';
 const finite=(v,f)=>Number.isFinite(v)?v:f;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -32,10 +33,11 @@ export const SOURCE_DRAW_1130=Object.freeze(Object.fromEntries(
 
 export function catalogVisualSpec(record,descriptor,index=0){
   const family=record?.family, b=descriptor?.b||{}, c=descriptor?.c||{};
-  const draw=b.DrawSizeParam||b.UnitParam?.DrawSizeParam||SOURCE_DRAW_1130[record?.sourceActor]?.[descriptor?.unit]||null;
+  const shared={catalog:{r:record,descriptor,index}},bucket=sharedBucketDraw(shared);
+  const draw=bucket||b.DrawSizeParam||b.UnitParam?.DrawSizeParam||SOURCE_DRAW_1130[record?.sourceActor]?.[descriptor?.unit]||null;
   if(family==='slosher'){
     return {style:record.sourceActor==='WeaponSlosherBathtub'?'bubble':'sheet',
-      draw,index,baseRadius:.18,tailMin:Math.max(0,finite(draw?.TailLengthMin,0)),
+      draw,index:bucket?sharedBucketDrawIndex(shared):index,baseRadius:.18,tailMin:Math.max(0,finite(draw?.TailLengthMin,0)),
       tailMax:Math.max(0,finite(draw?.TailLengthMax,0)),
       tailSolid:Math.max(0,finite(draw?.TailSolidFrame,0))/60};
   }
@@ -86,6 +88,26 @@ export function catalogReboundSeparation(fieldRadius){
 
 // Inkipedia Splatoon 3 Bloblobber physics: two floor rebounds, unlimited wall
 // reflections at 0.8 velocity, projectile collision/draw radius x0.75 per hit.
+// A sphere touching a wall edge can have an upward-pointing *contact*
+// normal, even though the contacted surface is a wall. Where available,
+// use the underlying stage face normal to decide whether the hit counts as
+// a FLOOR bounce; the geometric contact normal still controls reflection.
+export function catalogBubbleSurfaceNormalY(hit,level){
+  const face=Number.isInteger(hit?.face)&&hit.face>=0?level?.faces?.[hit.face]:null;
+  if(Number.isFinite(face?.n?.y))return face.n.y;
+  // Source-native triangles may have no mapped paint face. Their actual
+  // triangle normal is still a better floor/wall label than the rounded
+  // sphere contact normal at a corner or edge.
+  const triangle=hit?.triangle,normals=level?.triangleWorld?.normals;
+  if(Number.isInteger(triangle)&&triangle>=0&&normals&&triangle*3+2<normals.length){
+    const k=triangle*3,nx=normals[k],ny=normals[k+1],nz=normals[k+2],n=hit?.normal;
+    if(Number.isFinite(nx+ny+nz)&&n){
+      const facing=nx*n.x+ny*n.y+nz*n.z;
+      return facing<0?-ny:ny;
+    }
+  }
+  return finite(hit?.normal?.y,0);
+}
 export function catalogBubbleCanBounce(groundBounces,normalY){
   return normalY<=.35||groundBounces<2;
 }

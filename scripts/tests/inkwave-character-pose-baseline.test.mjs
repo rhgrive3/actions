@@ -8,7 +8,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { CHARACTER_POSE_PATHS, CHARACTER_POSE_MANIFEST as manifest, parseCharacterPoseManifest, planCharacterPoseBaseline, poseSourceSha256 as hash, OCT21_POSE_MAIN_BLOBS, OCT21_INTEGRATED_POSE_MAIN_BLOBS } from '../lib/inkwave-character-pose-baseline.mjs';
+import { CHARACTER_POSE_PATHS, CHARACTER_POSE_MANIFEST as manifest, parseCharacterPoseManifest, planCharacterPoseBaseline, poseSourceSha256 as hash, OCT21_POSE_MAIN_BLOBS, OCT21_INTEGRATED_POSE_MAIN_BLOBS, OCT21_RESOLVED_POSE_MAIN_BLOBS, OCT21_PR1746_POSE_MAIN_BLOBS } from '../lib/inkwave-character-pose-baseline.mjs';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 // Current-owner unchanged-pose branch requires the same bytes on both sides.
 const currentPosePaths = new Set(['roller.mjs', 'family-holds.mjs', 'kit.mjs', 'registry.mjs', 'stringers.mjs'].map(name => CHARACTER_POSE_PATHS.find(path => path.endsWith('/' + name))));
@@ -83,7 +83,7 @@ test('current main pose admission is exact, identity-preserving and rejects unkn
     [rel, fs.readFileSync(path.join(root, rel), 'utf8')]));
   const sha = text => createHash('sha1').update('blob ' + Buffer.byteLength(text) + '\0').update(text).digest('hex');
   for (const rel of CHARACTER_POSE_PATHS)
-    assert.equal(sha(current.get(rel)), OCT21_INTEGRATED_POSE_MAIN_BLOBS[rel], rel + ': reviewed main blob');
+    assert.equal(sha(current.get(rel)), OCT21_PR1746_POSE_MAIN_BLOBS[rel], rel + ': reviewed main blob');
   const plan = planCharacterPoseBaseline(current, new Map(current));
   assert.equal(plan.changes.length, 0);
   assert.equal(plan.pairEvidence.mode, 'oct21-byte-identical-current-pose');
@@ -97,49 +97,14 @@ test('current main pose admission is exact, identity-preserving and rejects unkn
   }
 });
 
-// Test-only reversal of the exact #1726/#1733 additions, each unique and then
-// checked against ALL sixteen old Git blobs. Never apply this to production.
-const integratedEpochAdditions = {
-  "patches/splatoon3/adapter.mjs": [
-    {
-      "from": "import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';\nimport { adaptWeaponsFidelity } from './weapons-adapter.mjs';\nimport { adaptMinimapDirty } from './minimap-dirty-adapter.mjs';\nimport { adaptMinimapBombFuse } from './minimap-bomb-fuse-adapter.mjs';\nimport { adaptUuidRandom } from './uuid-random-adapter.mjs';\nimport { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';\nimport { adaptStormEffects } from './storm-effects-adapter.mjs';\nimport { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';\n",
-      "to": "import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';\nimport { adaptWeaponsFidelity } from './weapons-adapter.mjs';\nimport { adaptMinimapDirty } from './minimap-dirty-adapter.mjs';\nimport { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';\nimport { adaptStormEffects } from './storm-effects-adapter.mjs';\nimport { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';\n"
-    },
-    {
-      "from": "  code = adaptMatchHud(rel, code);\n  code = adaptScoreHud(rel, code);\n  code = adaptMinimapDirty(rel, code, replaceOnce);\n  code = adaptMinimapBombFuse(rel, code, replaceOnce);\n  code = adaptUuidRandom(rel, code, replaceOnce);\n  code = adaptRespawnLifecycle(rel, code, replaceOnce);\n  if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);\n  code = adaptAssistPresentation(rel, code, replaceOnce);\n",
-      "to": "  code = adaptMatchHud(rel, code);\n  code = adaptScoreHud(rel, code);\n  code = adaptMinimapDirty(rel, code, replaceOnce);\n  code = adaptRespawnLifecycle(rel, code, replaceOnce);\n  if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);\n  code = adaptAssistPresentation(rel, code, replaceOnce);\n"
-    }
-  ],
-  "patches/splatoon3/runtime/roller.mjs": [
-    {
-      "from": "  // fixes the drum axis and projects the paired wrist targets into both reach\n  // spheres, retaining the authored sockets and gameplay hit volume.\n  const solve = Character.prototype._solveLimb, bounds = new WeakMap();\n  const restoreRightGrip = c => {\n    const w = c.weapon;\n    if (w?.def?.modelId === 'roller' && w.off && w.pivot && w.def.inHand) {\n      w.off.position.copy(w.def.inHand.pos).sub(w.pivot.position);\n      c._s3RollerRightAdvance = 0;\n    }\n  };\n  let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, searchAxis, turn;\n  let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ, shoulderShift, chestQ, contactPoint, bestPoint;\n  let rollPivot, rollOffset, rollTarget, rollAxis, rollBase, rollTrial;\n",
-      "to": "  // fixes the drum axis and projects the paired wrist targets into both reach\n  // spheres, retaining the authored sockets and gameplay hit volume.\n  const solve = Character.prototype._solveLimb, bounds = new WeakMap();\n  let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, searchAxis, turn;\n  let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ, shoulderShift, chestQ, contactPoint, bestPoint;\n  let rollPivot, rollOffset, rollTarget, rollAxis, rollBase, rollTrial;\n"
-    },
-    {
-      "from": "      // Native left-clavicle protraction and finite-chain IK retain authority.\n      return solve.call(this, limb, target, pole, orientation, weight, index);\n    }\n    if (limb === this.limbs.armR) restoreRightGrip(this);\n    // animateWeapon owns the unmodified spin clock. Restore it for right-arm\n    // reevaluation, even if this call falls back; never undo it on the left arm.\n    const rollDrum = limb === this.limbs.armR && this.weaponKind === 'roller' ? this.weapon?.drum : null;\n",
-      "to": "      // Native left-clavicle protraction and finite-chain IK retain authority.\n      return solve.call(this, limb, target, pole, orientation, weight, index);\n    }\n    // animateWeapon owns the unmodified spin clock. Restore it for right-arm\n    // reevaluation, even if this call falls back; never undo it on the left arm.\n    const rollDrum = limb === this.limbs.armR && this.weaponKind === 'roller' ? this.weapon?.drum : null;\n"
-    },
-    {
-      "from": "        }\n      }\n    }\n    // Move only the standard rolling hand along its existing black grip.\n    // The opposite attachment offset leaves the solved weapon/drum in place.\n    // Authored interval [-.112, .215]: one third is -.003, old socket -.022.\n    if (contacting && armLeftHeld && d.modelId === 'roller' && rollBlend > .001 && Number.isFinite(d.modelScale)) {\n      weaponQ.copy(bestQ).multiply(inverseHandQ.copy(d.handR.quat).invert());\n      axis.set(0, 0, 1).applyQuaternion(weaponQ);\n      delta.copy(target).sub(rightOrigin);\n      const distanceSq = delta.lengthSq(), along = delta.dot(axis);\n      const outer = along * along + reachR * reachR - distanceSq;\n      if (distanceSq >= minR * minR && distanceSq <= reachR * reachR + 1e-12 && outer >= 0) {\n        let advance = Math.min(.019 * d.modelScale * rollBlend, Math.max(0, -along + Math.sqrt(outer)));\n        const inner = along * along + minR * minR - distanceSq;\n        if (along < 0 && inner > 0) advance = Math.min(advance, Math.max(0, -along - Math.sqrt(inner)));\n        target.addScaledVector(axis, advance);\n        delta.set(0, 0, advance).applyQuaternion(inverseHandQ);\n        this.weapon.off.position.sub(delta);\n        this._s3RollerRightAdvance = advance;\n      }\n    }\n    // Keep the shaft beside the body using the already-solved drum axle.\n    // This one rigid translation moves the real drum and its native paint\n    // together, without another floor search, IK call, or actor/foot offset.\n    if (contacting && armLeftHeld && d.modelId === 'roller' && rollBlend > .001) {\n      weaponQ.copy(bestQ).multiply(inverseHandQ.copy(d.handR.quat).invert());\n      axis.set(1, 0, 0).applyQuaternion(weaponQ);\n      delta.copy(axis).multiply(this.kid.scale);\n      const scale = delta.length();\n      if (scale > 1e-4) target.addScaledVector(axis, -.09 * rollBlend / scale);\n    }\n    orientation.copy(bestQ);\n    return solve.call(this, limb, target, pole, orientation, weight, index);\n  };\n  Character.prototype._applyPose = function (dt, state) {\n    restoreRightGrip(this);\n    this._s3RollerSupportFeedback = undefined;\n    this._s3RollerSupportAdvance = undefined;\n    try { return applyPose.call(this, dt, state); }\n",
-      "to": "        }\n      }\n    }\n    orientation.copy(bestQ);\n    return solve.call(this, limb, target, pole, orientation, weight, index);\n  };\n  Character.prototype._applyPose = function (dt, state) {\n    this._s3RollerSupportFeedback = undefined;\n    this._s3RollerSupportAdvance = undefined;\n    try { return applyPose.call(this, dt, state); }\n"
-    },
-    {
-      "from": "    }\n  };\n  Character.prototype._s3CancelRollerFlick = function () {\n    restoreRightGrip(this);\n    this.s3RollerFlick = null;\n    this._s3RollerContactPose = false;\n    this._s3RollerGripBlend = 0;\n",
-      "to": "    }\n  };\n  Character.prototype._s3CancelRollerFlick = function () {\n    this.s3RollerFlick = null;\n    this._s3RollerContactPose = false;\n    this._s3RollerGripBlend = 0;\n"
-    }
-  ]
-};
+// Historical epochs come from fixed, hash-verified blobs, independently of
+// live source changes. Mutations and mixed tuples must still reject.
 function poseEpochFixtures() {
-  const current = new Map(CHARACTER_POSE_PATHS.map(rel => [rel, fs.readFileSync(path.join(root, rel), 'utf8')]));
-  const old = new Map(current);
-  for (const [rel, additions] of Object.entries(integratedEpochAdditions)) {
-    let text=old.get(rel);
-    for(const {from,to} of additions) { assert.equal(text.split(from).length,2,rel+': unique reviewed test reversal'); text=text.replace(from,to); }
-    old.set(rel,text);
-  }
-  const sha = text => createHash('sha1').update('blob ' + Buffer.byteLength(text) + '\0').update(text).digest('hex');
-  for(const [map,pins] of [[old,OCT21_POSE_MAIN_BLOBS],[current,OCT21_INTEGRATED_POSE_MAIN_BLOBS]])
-    for(const rel of CHARACTER_POSE_PATHS) assert.equal(sha(map.get(rel)),pins[rel],rel+': exact complete epoch');
+  const read=kind=>new Map(CHARACTER_POSE_PATHS.map(rel=>[rel,historicalSource(kind,rel)]));
+  const old=read('oct21Pose'),current=read('oct21IntegratedPose');
+  const sha=text=>createHash('sha1').update('blob '+Buffer.byteLength(text)+'\0').update(text).digest('hex');
+  for(const [map,pins]of [[old,OCT21_POSE_MAIN_BLOBS],[current,OCT21_INTEGRATED_POSE_MAIN_BLOBS]])
+    for(const rel of CHARACTER_POSE_PATHS)assert.equal(sha(map.get(rel)),pins[rel],rel+': exact complete epoch');
   return {old,current};
 }
 const rejectPoseWithoutMutation = (before,after) => {
@@ -171,7 +136,7 @@ test('both complete pose epochs reject every missing, modified and paired-drift 
 test('whole and partial pose epoch mixing cannot be admitted or replayed',()=>{
   const {old,current}=poseEpochFixtures();
   rejectPoseWithoutMutation(old,current);rejectPoseWithoutMutation(current,old);
-  for(const rel of Object.keys(integratedEpochAdditions)) {
+  for(const rel of CHARACTER_POSE_PATHS.filter(rel=>old.get(rel)!==current.get(rel))) {
     const mixed=new Map(current);mixed.set(rel,old.get(rel));
     rejectPoseWithoutMutation(mixed,current);rejectPoseWithoutMutation(current,mixed);rejectPoseWithoutMutation(mixed,new Map(mixed));
   }
