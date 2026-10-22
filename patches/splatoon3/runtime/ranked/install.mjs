@@ -189,7 +189,12 @@ export function buildFrame(match, api) {
     return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: objectivePos, alive: a.alive && !a.s3Disconnected && (!hostRemote || admitted), grounded,
       remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming, slot: a.slot };
   });
-  return { actors, inputs, zoneCoverage: match.rankedWorld.zoneCoverage(), barrierHits: match.rankedBarrierHits.splice(0),
+  // Other ranked modes expose the same all-zero zone snapshot, but never
+  // have zone cells. Reuse an immutable geometry-sized result per world.
+  const world = match.rankedWorld;
+  const zoneCoverage = world.mode === 'zones' ? world.zoneCoverage()
+    : (world._emptyZoneCoverage ??= Object.freeze((world.stage?.zones || []).map(() => Object.freeze([0, 0]))));
+  return { actors, inputs, zoneCoverage, barrierHits: match.rankedBarrierHits.splice(0),
     floorAt: (x, z, yMax) => match.rankedWorld.floorAt(x, z, yMax), fallDeathY: api.PLAYER?.fallDeathY,
     blocked: (a, b) => match.rankedWorld.blocked(a, b) };
 }
