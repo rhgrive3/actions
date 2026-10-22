@@ -93,7 +93,7 @@ test('Charger onset occurs once on initial hold and again only after real stored
  assert.equal(a.weaponRunner._mainAudioState.loops.charge,undefined);
  // The actual S3 charger owner stores this structure while diving after
  // full charge. The transition is a form event, not another new charge.
- a.weaponRunner.s3Stored={charge:1,resurfaced:true};
+ a.weaponRunner.s3Stored={charge:1,resurfaced:false};
  f.emit('actor:form',{actor:a,form:'squid'});
  f.emit('actor:form',{actor:a,form:'kid'});
  assert.equal(onsets().length,2,'returning from charge keep replays the short click once');
@@ -104,6 +104,15 @@ test('Charger onset occurs once on initial hold and again only after real stored
  a.weaponRunner.s3Stored=null;
  f.emit('actor:form',{actor:a,form:'kid'});
  assert.equal(onsets().length,2,'expired/cancelled charge keep is silent on resurfacing');
+ // Scopes cannot legally enter S3 charge keep even if a malformed local
+ // state object happens to claim that a full charge was saved.
+ a.weapon.scoped=true;
+ a.weaponRunner.s3Stored={charge:1,resurfaced:false};
+ f.emit('actor:form',{actor:a,form:'squid'});
+ f.emit('actor:form',{actor:a,form:'kid'});
+ assert.equal(onsets().length,2,'scope must not play a fabricated charge-keep emergence click');
+ a.weapon.scoped=false;
+
  a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
  assert.equal(onsets().length,2,'weapon switching clears Charger onset routing');
 });
