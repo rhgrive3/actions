@@ -32,7 +32,7 @@ export function adaptWeaponAudio(rel,code){
   if(rel==='src/ui/menus.js'){
     code=once(code,
       "        rowsEl.appendChild(row);\n      });\n    };",
-      \`        rowsEl.appendChild(row);
+      `        rowsEl.appendChild(row);
       });
       if (tab.id === 'audio') {
         // Personal, local selection: no fetched Nintendo audio, cloud upload,
@@ -71,7 +71,7 @@ export function adaptWeaponAudio(rel,code){
           if (row.isConnected) show(info);
         }).catch(() => { if (row.isConnected) show(null); });
       }
-    };\`,
+    };`,
       'settings audio tab private Charger clip chooser');
   }
   if(rel==='src/game/weapons.js'){
