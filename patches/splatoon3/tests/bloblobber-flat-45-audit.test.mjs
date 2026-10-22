@@ -32,7 +32,7 @@ test('issue #1750: flat-floor Bloblobber 0/-20/-45 flight logs all four rounds',
     },
   };
   const result = [];
-  for (const degrees of [0, -20, -45]) {
+  // Paired comparison: the second case changes ONLY the three small rounds'\n  // outgoing total-speed cap, never the shipped game code or saved weapon data.\n  for (const scenario of ['current', 'research_only_without_small_speed_cap']) for (const degrees of [0, -20, -45]) {
     system.clear(); f.G.actors.length = 0;
     f.G.physics.level = null;
     const actor = f.make(weapon.id);
@@ -55,7 +55,7 @@ test('issue #1750: flat-floor Bloblobber 0/-20/-45 flight logs all four rounds',
     for (const p of all) {
       // _step resolves pending source release at the real, stationary character's muzzle;
       // each projectile uses its own elapsed flight time after its sourced 5F stagger.
-      const startZ = p.start.z;
+      if (scenario === 'research_only_without_small_speed_cap' && p.catalog.descriptor.unit === 1) {\n        const source = p.catalog.r, params = source.parameters;\n        const group = params.BounceGroupParam;\n        const uncapped = group.BounceParam.map(row => (row.UnitOrderNum ?? 0) === 1\n          ? { ...row, BounceAfterMaxSpeed: null } : row);\n        p.catalog.r = { ...source, parameters: { ...params, BounceGroupParam: { ...group, BounceParam: uncapped } } };\n      }\n      const startZ = p.start.z;
       const sourceUnit = p.catalog.descriptor.unit;
       const index = p.catalog.index;
       const contacts = [];
@@ -83,10 +83,10 @@ test('issue #1750: flat-floor Bloblobber 0/-20/-45 flight logs all four rounds',
       assert.equal(contacts.length, 2, 'two physical rebounds, then third-floor termination');
       rounds.push({ sourceUnit, index, initialSpeed: Number((p.catalog.descriptor.packet?.SpawnSpeedGround ?? 0).toFixed(5)), contacts, endpoint, startZ: Number(startZ.toFixed(5)) });
     }
-    result.push({ degrees, rounds });
+    result.push({ scenario, degrees, rounds });
   }
   console.log('BLOBLOBBER_FLAT_BOUNCE_AUDIT ' + JSON.stringify({
-    reference: 'INKWAVE/main (source-guided 11.3.0 parameters, not retail trajectory capture)',
+    reference: 'INKWAVE/main (source-guided 11.3.0 parameters, not retail trajectory capture)',\n    warning: 'research_only_without_small_speed_cap removes one runtime parameter on test-only cloned records. Not a proposed retail rule.',
     shotAngles: result,
   }));
 });
