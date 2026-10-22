@@ -6,6 +6,8 @@ import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { catalogFieldUnitCanDamage, catalogFlickSourceDamage } from './catalog-flick-damage.mjs';
+import { catalogDepletionPayment, catalogDepletedUnitCount,
+  catalogDepletedUnitSpeed, catalogDepletedDescriptor } from './catalog-depletion.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
 import { installRollerContactPaint, rollerContactDepth, rollerPaintHalfWidth } from './roller-contact-paint.mjs';
@@ -688,6 +690,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Keep the five-entry catalogue tuple readable by existing peers. Older
     // receivers ignore these named visual-only extensions on the same object.
     if(descriptor.key==='arrow')p.inkMeta.s3StringerTilt=options.bowTilt;
+    // A named opt-in field preserves the existing five-slot catalog identity.
+    // Ghosts reconstruct source-scaled collision/paint without inferring the
+    // depleted state from sparse velocity or mutating source parameter rows.
+    if(options.depleted&&(r.family==='roller'||r.family==='brush'))
+      p.inkMeta.s3CatalogDepleted=true;
     if(options.saberSwing)p.inkMeta.s3SaberSwing=options.saberSwing;
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
     p.vel.y += finite(options.lift,0);
@@ -771,7 +778,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       floorPaint(a,at,nearest.WidthHalfNearest,1,null,mainInkFootprint(r));
     }
   }
-  function emitUnits(runner,r,key,charge=0) {
+  function emitUnits(runner,r,key,charge=0,depleted=false) {
     const a=runner.a,p=r.parameters,s=state(runner),group=key==='slosh'?p.UnitGroupParam:
       key==='vertical'?p.VerticalSwingUnitGroupParam:key==='brush'?p.SwingUnitGroupParam:p.WideSwingUnitGroupParam;
     // A brush flings its swing from the body, not from the rendered bristles:
@@ -810,14 +817,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     let blobSweepOrder=0,blobSweepFrames=0;
     const brushLeftToRight=key==='brush' && (s.swingCount%2===1);
     group.Unit.forEach((u,j)=> {
-      const desc=mode(r,key,j,charge), count=finite(u.BulletNum,1);
+      const desc=mode(r,key,j,charge);
+      const count=(key==='brush'||key==='horizontal'||key==='vertical')
+        ?catalogDepletedUnitCount(u,depleted):finite(u.BulletNum,1);
       for(let i=0;i<count;i++) {
         const groupKey=r.sourceActor==='WeaponSlosherBathtub'?j+':'+i:String(u.DamageParam?.GroupNum??0);
         if(!volleys.has(groupKey))volleys.set(groupKey,{hits:new Map(),id:++s.shotSerial});
         const volley=volleys.get(groupKey);
         const velocity=key==='slosh'?finite(a.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir,1):finite(u.SpawnSpeedBase,1);
         const sampledSpeed=velocity+(Math.random()*2-1)*finite(u.SpawnSpeedRandom,0);
-        const speed=(sampledSpeed+finite(u.AfterOffsetSpawnSpeed,0)*i)*HZ;
+        const speed=(key==='brush'||key==='horizontal'||key==='vertical')
+          ?catalogDepletedUnitSpeed(u,i,depleted,sampledSpeed)*HZ
+          :(sampledSpeed+finite(u.AfterOffsetSpawnSpeed,0)*i)*HZ;
         // Added horizontal Rollers share the mature owner's sourced fan width
         // and reuse this same speed sample for its calibrated scatter term.
         const fan=r.family==='roller'&&key==='horizontal'
@@ -842,7 +853,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           ?catalogRollerSourcePitch(u,i,true)
           :finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0));
         const aim=angle(direction,yaw,pitch);
-        const d={...desc,index:i};
+        const d=catalogDepletedDescriptor({...desc,index:i},u,depleted);
         const sourceLiftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
         // S3 AddSpawnSpeedYRateByXZ scales the HORIZONTAL launch component.
         // All sourced Sloshers, including Washtub/Explosher, share this law:
@@ -858,7 +869,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           constrainMuzzle(G.physics,base,birth);
         }
         const p=spawn(a,r,d,aim,birth,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
-          index:i,volley,lift:speed*liftRate});
+          index:i,volley,lift:speed*liftRate,depleted});
         // Like the existing native Slosher owner, select ground/air speed at
         // each glob's actual birth. Retain the admitted direction, per-index
         // offset and speed draw; landing/falling does not reroll the volley.
@@ -1009,7 +1020,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Source-tagged Roller/Brush groups keep independent age falloff,
     // damage sectors and paint-only/depleted unit rates.
     if(r.family==='roller'||r.family==='brush'){
-      const sourced=catalogFlickSourceDamage(damage,d.packet,d.key,frames,p.pos,p.start,p.catalog.sectorYaw);
+      const sourced=catalogFlickSourceDamage(damage,d.packet,d.key,frames,p.pos,p.start,
+        p.catalog.sectorYaw,d.depleted===true);
       if(sourced!==null)amount=sourced;
     }
     if(damage.ReduceStartFrame!=null)amount=lerp(amount*10,finite(damage.ValueMin,amount*10),
@@ -1358,7 +1370,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       r?.family==='stringer'&&meta[1]==='arrow'&&Number.isFinite(tilt)&&tilt>=0&&tilt<=maxTilt);
     if(p&&r&&!r.legacy&&layout&&meta[0]===1&&allowed.includes(meta[1])&&
       Number.isSafeInteger(meta[2])&&meta[2]>=0&&meta[2]<30&&Number.isFinite(meta[3])&&meta[3]>=0&&meta[3]<=1){
-      try {const d=mode(r,meta[1],meta[2],meta[3]);p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
+      try {
+        const source=mode(r,meta[1],meta[2],meta[3]);
+        const marker=e[27]?.s3CatalogDepleted===true&&
+          (r.family==='roller'||r.family==='brush');
+        const d=catalogDepletedDescriptor(source,source.packet,marker);
+        p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
         hit:new Hit(),seen:new Set(),index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0};
         p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index);updateCatalogVisual(p);
         // A remote Splatana consumes generic Shooter recoil in FAMILY_TRIGGER.
