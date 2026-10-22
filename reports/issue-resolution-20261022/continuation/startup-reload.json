@@ -1,0 +1,1514 @@
+{
+  "issue": 1711,
+  "status": "passed",
+  "sourceSha": "856a269afd61c5e3059418f4712d64ebec35b4c6",
+  "contentHash": "d3604606f2c693eb26e599a3001f404e2e78c211fd75e04dc9800ffd34ee71b9",
+  "inputHash": "02c90a917b959931f6194acb8e6c593aa44451d5730c2e6212a60ea280264469",
+  "revision": "817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f",
+  "browserVersion": "151.0.7922.34",
+  "conditions": {
+    "orders": [
+      "ABBA",
+      "BAAB"
+    ],
+    "A": "same-page reload",
+    "B": "close old page, open cached new page",
+    "quality": "low",
+    "viewport": [
+      1024,
+      768
+    ],
+    "serviceWorkers": "block",
+    "physicalDevice": false
+  },
+  "supervisor": {
+    "command": [
+      "node",
+      "--max-old-space-size=1024",
+      "scripts/benchmark-inkwave-startup-reload.mjs",
+      "--site",
+      "/workspace/actions/.built-site/issue1711-source856",
+      "--source-sha",
+      "856a269afd61c5e3059418f4712d64ebec35b4c6",
+      "--evidence-dir",
+      "/workspace/actions/.browser-evidence/continuation-20261022/startup-reload"
+    ],
+    "elapsedSeconds": 520.7423789220011,
+    "exitCode": 0,
+    "outerDeadlineSeconds": 1000,
+    "timedOut": false,
+    "manifestUnchanged": true,
+    "manifestSha256": "63d819c4c0319babc7076d44d33fe7a760e82a88a8a7da8b1ffb91c769df64b7",
+    "sourceCommit": "856a269afd61c5e3059418f4712d64ebec35b4c6",
+    "playwright": "1.62.1"
+  },
+  "scope": "HTTP-cache cold/reload/cached-new-page diagnosis on the original 856/d360 runtime and Chromium151; native observation, no runtime optimization or physical-device performance claim",
+  "samples": [
+    {
+      "label": "ABBA-0-cold",
+      "condition": "cold",
+      "order": "ABBA",
+      "htmlResponseEndMs": 7.099999999627471,
+      "domInteractiveMs": 91.20000000111759,
+      "htmlResponseToInteractiveMs": 84.10000000190735,
+      "gpuDestroyCoverageMs": 0,
+      "gpuDestroyFractionOfPhase": 0.0,
+      "menuInteractiveMs": 45121.20000000112,
+      "pageCloseMs": 0,
+      "newPageMs": 0,
+      "menuIncludingPageReplacementMs": 45121.20000000112,
+      "server": {
+        "requests": 504,
+        "bodyBytes": 30765688,
+        "status304": 0
+      },
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 25769,
+          "threadId": 25769,
+          "startFromHtmlResponseMs": 2.924,
+          "wholeEventWallMs": 16.6,
+          "wholeEventThreadCpuMs": 13.892,
+          "clippedPhaseWallMs": 16.6,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 5184,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 1,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 5104
+            }
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 25769,
+          "tid": 25774,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 33.872,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25774,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 33.868,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25769,
+          "name": "NavigationBodyLoader::StartLoadingBody",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 10.24,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25769,
+          "name": "NavigationBodyLoader::OnReadable",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 10.2,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25769,
+          "name": "NavigationBodyLoader::ReadFromDataPipe",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 10.198,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25783,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+          "coveredMs": 10.069,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25783,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+          "coveredMs": 10.065,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25785,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/weapon-recipes.mjs",
+          "coveredMs": 8.653,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25785,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/weapon-recipes.mjs",
+          "coveredMs": 8.649,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25783,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/build-config.mjs",
+          "coveredMs": 7.594,
+          "events": 1
+        }
+      ],
+      "traceSha256": "356d2d9c36612595183e5feb2f1e1bdb95b3bf1dd95c4680db81ad5edc56bc69",
+      "traceBytes": 4765705,
+      "traceDataLoss": false
+    },
+    {
+      "label": "ABBA-1-A",
+      "condition": "A",
+      "order": "ABBA",
+      "htmlResponseEndMs": 5.799999998882413,
+      "domInteractiveMs": 14822.799999998882,
+      "htmlResponseToInteractiveMs": 14817,
+      "gpuDestroyCoverageMs": 13886.207,
+      "gpuDestroyFractionOfPhase": 0.9371807383410947,
+      "menuInteractiveMs": 52153.79999999888,
+      "pageCloseMs": 0,
+      "newPageMs": 0,
+      "menuIncludingPageReplacementMs": 52153.79999999888,
+      "server": {
+        "requests": 1,
+        "bodyBytes": 0,
+        "status304": 1
+      },
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 25769,
+          "threadId": 25769,
+          "startFromHtmlResponseMs": 6.066000001907349,
+          "wholeEventWallMs": 14771.879,
+          "wholeEventThreadCpuMs": 22.152,
+          "clippedPhaseWallMs": 14771.879,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 5944,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 1,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 5864
+            }
+          }
+        },
+        {
+          "name": "GpuChannel::OnDestroyCommandBuffer",
+          "processId": 25741,
+          "threadId": 25741,
+          "startFromHtmlResponseMs": 871.2730000019073,
+          "wholeEventWallMs": 13886.207,
+          "wholeEventThreadCpuMs": 503.633,
+          "clippedPhaseWallMs": 13886.207,
+          "args": {
+            "route_id": 4
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 25769,
+          "tid": 25783,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 48.60199999809265,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25783,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 48.59899999809265,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25769,
+          "name": "FunctionCall",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/local-quality/platform-lifecycle.mjs",
+          "coveredMs": 29.951,
+          "events": 2
+        },
+        {
+          "pid": 25769,
+          "tid": 25784,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/combat-hit-classifier.mjs",
+          "coveredMs": 14.623,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25769,
+          "name": "NavigationBodyLoader::StartLoadingBody",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 14.621,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25784,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/combat-hit-classifier.mjs",
+          "coveredMs": 14.618,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25769,
+          "name": "NavigationBodyLoader::OnReadable",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 14.605,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25769,
+          "name": "NavigationBodyLoader::ReadFromDataPipe",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 14.604,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25787,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/combat-recipes.mjs",
+          "coveredMs": 13.614,
+          "events": 1
+        },
+        {
+          "pid": 25769,
+          "tid": 25787,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/combat-recipes.mjs",
+          "coveredMs": 13.609,
+          "events": 1
+        }
+      ],
+      "traceSha256": "f01ec2e88bc1b449e5c8d193c0c18e783de7186026a999fbb32d2f7432acb450",
+      "traceBytes": 6989134,
+      "traceDataLoss": false
+    },
+    {
+      "label": "ABBA-2-B",
+      "condition": "B",
+      "order": "ABBA",
+      "htmlResponseEndMs": 8.599999999627471,
+      "domInteractiveMs": 260.90000000037253,
+      "htmlResponseToInteractiveMs": 252.3,
+      "gpuDestroyCoverageMs": 0,
+      "gpuDestroyFractionOfPhase": 0.0,
+      "menuInteractiveMs": 33908.40000000037,
+      "pageCloseMs": 8.029739999998128,
+      "newPageMs": 8621.606841999994,
+      "menuIncludingPageReplacementMs": 42538.036582000364,
+      "server": {
+        "requests": 1,
+        "bodyBytes": 0,
+        "status304": 1
+      },
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 26155,
+          "threadId": 26155,
+          "startFromHtmlResponseMs": 2.202,
+          "wholeEventWallMs": 21.088,
+          "wholeEventThreadCpuMs": 16.344,
+          "clippedPhaseWallMs": 21.088,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 5096,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 2,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 5016
+            }
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 26155,
+          "tid": 26163,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 136.619,
+          "events": 1
+        },
+        {
+          "pid": 26155,
+          "tid": 26163,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 136.606,
+          "events": 1
+        },
+        {
+          "pid": 26155,
+          "tid": 26192,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/texlib.js",
+          "coveredMs": 92.629,
+          "events": 1
+        },
+        {
+          "pid": 26155,
+          "tid": 26192,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/texlib.js",
+          "coveredMs": 92.624,
+          "events": 1
+        },
+        {
+          "pid": 26155,
+          "tid": 26210,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/engine.mjs",
+          "coveredMs": 83.388,
+          "events": 1
+        },
+        {
+          "pid": 26155,
+          "tid": 26210,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/engine.mjs",
+          "coveredMs": 83.384,
+          "events": 1
+        },
+        {
+          "pid": 26155,
+          "tid": 26191,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/stages/surfaces.js",
+          "coveredMs": 79.7,
+          "events": 1
+        },
+        {
+          "pid": 26155,
+          "tid": 26191,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/stages/surfaces.js",
+          "coveredMs": 79.697,
+          "events": 1
+        },
+        {
+          "pid": 26155,
+          "tid": 26194,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/inkShading.js",
+          "coveredMs": 79.399,
+          "events": 1
+        },
+        {
+          "pid": 26155,
+          "tid": 26194,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/inkShading.js",
+          "coveredMs": 79.396,
+          "events": 1
+        }
+      ],
+      "traceSha256": "6b7c728c25ac476f6868616469834599e986ebff9edcb05e11809dd7c5c72555",
+      "traceBytes": 8032931,
+      "traceDataLoss": false
+    },
+    {
+      "label": "ABBA-3-B",
+      "condition": "B",
+      "order": "ABBA",
+      "htmlResponseEndMs": 3.200000001117587,
+      "domInteractiveMs": 222.30000000074506,
+      "htmlResponseToInteractiveMs": 219.09999999809264,
+      "gpuDestroyCoverageMs": 0,
+      "gpuDestroyFractionOfPhase": 0.0,
+      "menuInteractiveMs": 35006.40000000037,
+      "pageCloseMs": 5.299073999980465,
+      "newPageMs": 15079.245114999998,
+      "menuIncludingPageReplacementMs": 50090.94418900035,
+      "server": {
+        "requests": 1,
+        "bodyBytes": 0,
+        "status304": 1
+      },
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 26476,
+          "threadId": 26476,
+          "startFromHtmlResponseMs": 5.9639999980926515,
+          "wholeEventWallMs": 17.564,
+          "wholeEventThreadCpuMs": 16.449,
+          "clippedPhaseWallMs": 17.564,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 5096,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 2,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 5016
+            }
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 26476,
+          "tid": 26485,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 118.689,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26485,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 118.684,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26515,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/texlib.js",
+          "coveredMs": 57.621,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26515,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/texlib.js",
+          "coveredMs": 57.616,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26493,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/engine.mjs",
+          "coveredMs": 56.839,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26493,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/engine.mjs",
+          "coveredMs": 56.836,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26518,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/conditional-gear-network.mjs",
+          "coveredMs": 38.774,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26518,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/conditional-gear-network.mjs",
+          "coveredMs": 38.772,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26513,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/shooter-movement.mjs",
+          "coveredMs": 38.753,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26513,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/shooter-movement.mjs",
+          "coveredMs": 38.75,
+          "events": 1
+        }
+      ],
+      "traceSha256": "a8a5855f59b46aa5022ad0e9e7d46d9d1c6cb63838d7c77d7dec681c86e83453",
+      "traceBytes": 8122818,
+      "traceDataLoss": false
+    },
+    {
+      "label": "ABBA-4-A",
+      "condition": "A",
+      "order": "ABBA",
+      "htmlResponseEndMs": 5,
+      "domInteractiveMs": 12971,
+      "htmlResponseToInteractiveMs": 12966,
+      "gpuDestroyCoverageMs": 9907.473,
+      "gpuDestroyFractionOfPhase": 0.764111753817677,
+      "menuInteractiveMs": 49945,
+      "pageCloseMs": 0,
+      "newPageMs": 0,
+      "menuIncludingPageReplacementMs": 49945,
+      "server": {
+        "requests": 1,
+        "bodyBytes": 0,
+        "status304": 1
+      },
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 26476,
+          "threadId": 26476,
+          "startFromHtmlResponseMs": 3.612,
+          "wholeEventWallMs": 12905.54,
+          "wholeEventThreadCpuMs": 24.08,
+          "clippedPhaseWallMs": 12905.54,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 5944,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 2,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 5864
+            }
+          }
+        },
+        {
+          "name": "GpuChannel::OnDestroyCommandBuffer",
+          "processId": 25741,
+          "threadId": 25741,
+          "startFromHtmlResponseMs": 2954.646,
+          "wholeEventWallMs": 9907.473,
+          "wholeEventThreadCpuMs": 63.682,
+          "clippedPhaseWallMs": 9907.473,
+          "args": {
+            "route_id": 4
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 26476,
+          "tid": 26485,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/source-guided-render.mjs",
+          "coveredMs": 38.222,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26485,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/source-guided-render.mjs",
+          "coveredMs": 38.218,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26489,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/bank.mjs",
+          "coveredMs": 35.489,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26489,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/bank.mjs",
+          "coveredMs": 35.473,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26487,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/priority-signatures.mjs",
+          "coveredMs": 33.58,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26487,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/priority-signatures.mjs",
+          "coveredMs": 33.576,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26476,
+          "name": "NavigationBodyLoader::StartLoadingBody",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 32.668,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26476,
+          "name": "NavigationBodyLoader::OnReadable",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 32.646,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26476,
+          "name": "NavigationBodyLoader::ReadFromDataPipe",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 32.643,
+          "events": 1
+        },
+        {
+          "pid": 26476,
+          "tid": 26714,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/reference-profiles.mjs",
+          "coveredMs": 31.885,
+          "events": 1
+        }
+      ],
+      "traceSha256": "f432fb203fa335562bf3a4bef34cfbd14bd5d363853dd6f8cbeeb6ac7c21b8e1",
+      "traceBytes": 9376912,
+      "traceDataLoss": false
+    },
+    {
+      "label": "BAAB-0-cold",
+      "condition": "cold",
+      "order": "BAAB",
+      "htmlResponseEndMs": 5.300000000745058,
+      "domInteractiveMs": 180.5,
+      "htmlResponseToInteractiveMs": 175.2,
+      "gpuDestroyCoverageMs": 0,
+      "gpuDestroyFractionOfPhase": 0.0,
+      "menuInteractiveMs": 30940.699999999255,
+      "pageCloseMs": 0,
+      "newPageMs": 0,
+      "menuIncludingPageReplacementMs": 30940.699999999255,
+      "server": {
+        "requests": 504,
+        "bodyBytes": 30765688,
+        "status304": 0
+      },
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 26895,
+          "threadId": 26895,
+          "startFromHtmlResponseMs": 2.047,
+          "wholeEventWallMs": 26.829,
+          "wholeEventThreadCpuMs": 20.739,
+          "clippedPhaseWallMs": 26.829,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 5184,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 2,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 5104
+            }
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 26895,
+          "tid": 26900,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 50.586,
+          "events": 1
+        },
+        {
+          "pid": 26895,
+          "tid": 26900,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 50.581,
+          "events": 1
+        },
+        {
+          "pid": 26895,
+          "tid": 26895,
+          "name": "NavigationBodyLoader::StartLoadingBody",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 17.078,
+          "events": 1
+        },
+        {
+          "pid": 26895,
+          "tid": 26895,
+          "name": "NavigationBodyLoader::OnReadable",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 17.063,
+          "events": 1
+        },
+        {
+          "pid": 26895,
+          "tid": 26895,
+          "name": "NavigationBodyLoader::ReadFromDataPipe",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 17.06,
+          "events": 1
+        },
+        {
+          "pid": 26895,
+          "tid": 26906,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/source-guided-render.mjs",
+          "coveredMs": 9.506,
+          "events": 1
+        },
+        {
+          "pid": 26895,
+          "tid": 26906,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/source-guided-render.mjs",
+          "coveredMs": 9.504,
+          "events": 1
+        },
+        {
+          "pid": 26895,
+          "tid": 26909,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/all-specials.mjs",
+          "coveredMs": 8.689,
+          "events": 1
+        },
+        {
+          "pid": 26895,
+          "tid": 26909,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/all-specials.mjs",
+          "coveredMs": 8.682,
+          "events": 1
+        },
+        {
+          "pid": 26895,
+          "tid": 26906,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+          "coveredMs": 7.979,
+          "events": 1
+        }
+      ],
+      "traceSha256": "d00ce889ad31997f4bb521c2f27fe0249d038dfc2a116dba4efbae32c6d6a7ca",
+      "traceBytes": 7604490,
+      "traceDataLoss": false
+    },
+    {
+      "label": "BAAB-1-B",
+      "condition": "B",
+      "order": "BAAB",
+      "htmlResponseEndMs": 4.099999999627471,
+      "domInteractiveMs": 233,
+      "htmlResponseToInteractiveMs": 228.9,
+      "gpuDestroyCoverageMs": 0,
+      "gpuDestroyFractionOfPhase": 0.0,
+      "menuInteractiveMs": 36369.699999999255,
+      "pageCloseMs": 53.35003900004085,
+      "newPageMs": 10998.988384000026,
+      "menuIncludingPageReplacementMs": 47422.03842299932,
+      "server": {
+        "requests": 1,
+        "bodyBytes": 0,
+        "status304": 1
+      },
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 27004,
+          "threadId": 27004,
+          "startFromHtmlResponseMs": 2.087,
+          "wholeEventWallMs": 11.594,
+          "wholeEventThreadCpuMs": 10.432,
+          "clippedPhaseWallMs": 11.594,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 5096,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 2,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 5016
+            }
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 27004,
+          "tid": 27012,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 134.7,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27012,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 134.683,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27034,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/texlib.js",
+          "coveredMs": 93.098,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27034,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/texlib.js",
+          "coveredMs": 93.095,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27051,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/engine.mjs",
+          "coveredMs": 83.368,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27051,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/engine.mjs",
+          "coveredMs": 83.364,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27043,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/paint-ownership.mjs",
+          "coveredMs": 76.671,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27043,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/paint-ownership.mjs",
+          "coveredMs": 76.667,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27059,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/i18n.js",
+          "coveredMs": 76.443,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27059,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/i18n.js",
+          "coveredMs": 76.437,
+          "events": 1
+        }
+      ],
+      "traceSha256": "0564564fd29f809688d960175866f8a5fd8ebb17162ca61c7b178fc795b02fc3",
+      "traceBytes": 8164225,
+      "traceDataLoss": false
+    },
+    {
+      "label": "BAAB-2-A",
+      "condition": "A",
+      "order": "BAAB",
+      "htmlResponseEndMs": 5.199999999254942,
+      "domInteractiveMs": 13493.799999998882,
+      "htmlResponseToInteractiveMs": 13488.599999998092,
+      "gpuDestroyCoverageMs": 11421.926,
+      "gpuDestroyFractionOfPhase": 0.8467836543452705,
+      "menuInteractiveMs": 47718.79999999888,
+      "pageCloseMs": 0,
+      "newPageMs": 0,
+      "menuIncludingPageReplacementMs": 47718.79999999888,
+      "server": {
+        "requests": 1,
+        "bodyBytes": 0,
+        "status304": 1
+      },
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 27004,
+          "threadId": 27004,
+          "startFromHtmlResponseMs": 3.901,
+          "wholeEventWallMs": 13387.244,
+          "wholeEventThreadCpuMs": 30.748,
+          "clippedPhaseWallMs": 13387.244,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 5944,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 0,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 5864
+            }
+          }
+        },
+        {
+          "name": "GpuChannel::OnDestroyCommandBuffer",
+          "processId": 25741,
+          "threadId": 25741,
+          "startFromHtmlResponseMs": 1901.681,
+          "wholeEventWallMs": 11421.926,
+          "wholeEventThreadCpuMs": 64.793,
+          "clippedPhaseWallMs": 11421.926,
+          "args": {
+            "route_id": 4
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 27004,
+          "tid": 27004,
+          "name": "NavigationBodyLoader::StartLoadingBody",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 50.298,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27004,
+          "name": "NavigationBodyLoader::OnReadable",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 50.281,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27004,
+          "name": "NavigationBodyLoader::ReadFromDataPipe",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 50.277,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27016,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/s3-articulation.mjs",
+          "coveredMs": 37.05,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27016,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/s3-articulation.mjs",
+          "coveredMs": 37.046,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27012,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/priority-signatures.mjs",
+          "coveredMs": 34.998,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27012,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/priority-signatures.mjs",
+          "coveredMs": 34.98,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27014,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/no-bleep-foley.mjs",
+          "coveredMs": 34.671,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27014,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/no-bleep-foley.mjs",
+          "coveredMs": 34.667,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27007,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/source-guided-render.mjs",
+          "coveredMs": 34.658,
+          "events": 1
+        }
+      ],
+      "traceSha256": "ea9888b22a807ae1345de990cf88e92db4a4e71330aaccc44c11e6bcb5281ad3",
+      "traceBytes": 6829434,
+      "traceDataLoss": false
+    },
+    {
+      "label": "BAAB-3-A",
+      "condition": "A",
+      "order": "BAAB",
+      "htmlResponseEndMs": 4.800000000745058,
+      "domInteractiveMs": 15230.900000000373,
+      "htmlResponseToInteractiveMs": 15226.1,
+      "gpuDestroyCoverageMs": 14923.072,
+      "gpuDestroyFractionOfPhase": 0.9800981209896165,
+      "menuInteractiveMs": 53886.59999999963,
+      "pageCloseMs": 0,
+      "newPageMs": 0,
+      "menuIncludingPageReplacementMs": 53886.59999999963,
+      "server": {
+        "requests": 1,
+        "bodyBytes": 0,
+        "status304": 1
+      },
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 27004,
+          "threadId": 27004,
+          "startFromHtmlResponseMs": 3.434,
+          "wholeEventWallMs": 15164.513,
+          "wholeEventThreadCpuMs": 22.177,
+          "clippedPhaseWallMs": 15164.513,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 6080,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 2,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 6000
+            }
+          }
+        },
+        {
+          "name": "GpuChannel::OnDestroyCommandBuffer",
+          "processId": 25741,
+          "threadId": 25741,
+          "startFromHtmlResponseMs": 192.28,
+          "wholeEventWallMs": 14923.072,
+          "wholeEventThreadCpuMs": 81.989,
+          "clippedPhaseWallMs": 14923.072,
+          "args": {
+            "route_id": 7
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 27004,
+          "tid": 27004,
+          "name": "NavigationBodyLoader::StartLoadingBody",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 37.62,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27004,
+          "name": "NavigationBodyLoader::OnReadable",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 37.602,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27004,
+          "name": "NavigationBodyLoader::ReadFromDataPipe",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 37.6,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27007,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 35.001,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27007,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 34.977,
+          "events": 1
+        },
+        {
+          "pid": 25722,
+          "tid": 25722,
+          "name": "ThrottlingURLLoader::OnReceiveResponse",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 1.406,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27007,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/core/save-validation.mjs",
+          "coveredMs": 0.612,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27007,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/core/save-validation.mjs",
+          "coveredMs": 0.608,
+          "events": 1
+        },
+        {
+          "pid": 27004,
+          "tid": 27004,
+          "name": "FunctionCall",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/local-quality/platform-lifecycle.mjs",
+          "coveredMs": 0.353,
+          "events": 2
+        },
+        {
+          "pid": 27004,
+          "tid": 27004,
+          "name": "EvaluateScript",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 0.31,
+          "events": 2
+        }
+      ],
+      "traceSha256": "6f9526cc1ba26378b9b2306f0f352802444b1e3978352e97017ade6b47f0bfa4",
+      "traceBytes": 6392639,
+      "traceDataLoss": false
+    },
+    {
+      "label": "BAAB-4-B",
+      "condition": "B",
+      "order": "BAAB",
+      "htmlResponseEndMs": 4.400000000372529,
+      "domInteractiveMs": 187.09999999962747,
+      "htmlResponseToInteractiveMs": 182.7,
+      "gpuDestroyCoverageMs": 0,
+      "gpuDestroyFractionOfPhase": 0.0,
+      "menuInteractiveMs": 40902,
+      "pageCloseMs": 41.874998999992386,
+      "newPageMs": 18053.877102,
+      "menuIncludingPageReplacementMs": 58997.75210099999,
+      "server": {
+        "requests": 1,
+        "bodyBytes": 0,
+        "status304": 1
+      },
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 27564,
+          "threadId": 27564,
+          "startFromHtmlResponseMs": 4.318,
+          "wholeEventWallMs": 31.31,
+          "wholeEventThreadCpuMs": 17.008,
+          "clippedPhaseWallMs": 31.31,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 5096,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 2,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 5016
+            }
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 27564,
+          "tid": 27572,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 83.386,
+          "events": 1
+        },
+        {
+          "pid": 27564,
+          "tid": 27572,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 83.381,
+          "events": 1
+        },
+        {
+          "pid": 27564,
+          "tid": 27576,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/texlib.js",
+          "coveredMs": 31.886,
+          "events": 1
+        },
+        {
+          "pid": 27564,
+          "tid": 27576,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/world/texlib.js",
+          "coveredMs": 31.883,
+          "events": 1
+        },
+        {
+          "pid": 27564,
+          "tid": 27577,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/engine.mjs",
+          "coveredMs": 26.403,
+          "events": 1
+        },
+        {
+          "pid": 27564,
+          "tid": 27577,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/engine.mjs",
+          "coveredMs": 26.399,
+          "events": 1
+        },
+        {
+          "pid": 27564,
+          "tid": 27564,
+          "name": "NavigationBodyLoader::StartLoadingBody",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 25.536,
+          "events": 1
+        },
+        {
+          "pid": 27564,
+          "tid": 27564,
+          "name": "NavigationBodyLoader::OnReadable",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 25.513,
+          "events": 1
+        },
+        {
+          "pid": 27564,
+          "tid": 27564,
+          "name": "NavigationBodyLoader::ReadFromDataPipe",
+          "url": "http://127.0.0.1:41081/",
+          "coveredMs": 25.511,
+          "events": 1
+        },
+        {
+          "pid": 27564,
+          "tid": 27569,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:41081/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/core/save-validation.mjs",
+          "coveredMs": 19.978,
+          "events": 1
+        }
+      ],
+      "traceSha256": "253682b378541bbc1ca946f325a1c4606565b7b6a8c7a2c29011c2ac7ea0d8d3",
+      "traceBytes": 7650117,
+      "traceDataLoss": false
+    }
+  ],
+  "medianByCondition": {
+    "cold": {
+      "htmlResponseToInteractiveMs": 129.65000000095367,
+      "gpuDestroyCoverageMs": 0.0,
+      "menuInteractiveMs": 38030.950000000186,
+      "pageCloseMs": 0.0,
+      "newPageMs": 0.0,
+      "menuIncludingPageReplacementMs": 38030.950000000186
+    },
+    "A": {
+      "htmlResponseToInteractiveMs": 14152.799999999046,
+      "gpuDestroyCoverageMs": 12654.0665,
+      "menuInteractiveMs": 51049.39999999944,
+      "pageCloseMs": 0.0,
+      "newPageMs": 0.0,
+      "menuIncludingPageReplacementMs": 51049.39999999944
+    },
+    "B": {
+      "htmlResponseToInteractiveMs": 223.99999999904634,
+      "gpuDestroyCoverageMs": 0.0,
+      "menuInteractiveMs": 35688.049999999814,
+      "pageCloseMs": 24.952369499995257,
+      "newPageMs": 13039.116749500012,
+      "menuIncludingPageReplacementMs": 48756.491305999836
+    }
+  },
+  "interpretation": "The HTTP reload excess lies in native renderer NavigationClient handling and overlapping GPU command-buffer destruction, with low thread CPU in these long events. Cached new pages move much of the lifecycle cost to page creation. This diagnoses the observed browser teardown wait; it is not cache-transfer work or a measured runtime speedup.",
+  "limits": [
+    "Trace intervals describe recorded wall time; thread CPU is native whole-event tdur, not an invented utilization estimate. Nested named events overlap and are not added as total CPU.",
+    "Original build and browser are matched, but host resources and tracing overhead differ from the historical official run. One source test and then emitted tests overlapped the first order; later samples ran without these processes. See environment receipt.",
+    "This experiment covers HTTP warm. Independent controlled SW traces are in startup-sw.json; persistent browser-restart still has historical success receipts and no new native trace.",
+    "No physical GPU/iOS/Android, deployment/TLS or generic browser performance claim. No runtime code, original 180-second readiness gate or cache response substitution was changed.",
+    "Native renderer/GPU intervals and temporal ordering localize the wait, but this trace does not contain a uniquely joined renderer-to-GPU synchronous IPC reply flow or native call stack. It is not an intervention proving that GPU destruction alone causes every part of the wait."
+  ],
+  "evidence": [
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/ABBA-0-cold.trace.json",
+      "bytes": 4765705,
+      "sha256": "356d2d9c36612595183e5feb2f1e1bdb95b3bf1dd95c4680db81ad5edc56bc69"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/ABBA-1-A.trace.json",
+      "bytes": 6989134,
+      "sha256": "f01ec2e88bc1b449e5c8d193c0c18e783de7186026a999fbb32d2f7432acb450"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/ABBA-2-B.trace.json",
+      "bytes": 8032931,
+      "sha256": "6b7c728c25ac476f6868616469834599e986ebff9edcb05e11809dd7c5c72555"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/ABBA-3-B.trace.json",
+      "bytes": 8122818,
+      "sha256": "a8a5855f59b46aa5022ad0e9e7d46d9d1c6cb63838d7c77d7dec681c86e83453"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/ABBA-4-A.trace.json",
+      "bytes": 9376912,
+      "sha256": "f432fb203fa335562bf3a4bef34cfbd14bd5d363853dd6f8cbeeb6ac7c21b8e1"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/BAAB-0-cold.trace.json",
+      "bytes": 7604490,
+      "sha256": "d00ce889ad31997f4bb521c2f27fe0249d038dfc2a116dba4efbae32c6d6a7ca"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/BAAB-1-B.trace.json",
+      "bytes": 8164225,
+      "sha256": "0564564fd29f809688d960175866f8a5fd8ebb17162ca61c7b178fc795b02fc3"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/BAAB-2-A.trace.json",
+      "bytes": 6829434,
+      "sha256": "ea9888b22a807ae1345de990cf88e92db4a4e71330aaccc44c11e6bcb5281ad3"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/BAAB-3-A.trace.json",
+      "bytes": 6392639,
+      "sha256": "6f9526cc1ba26378b9b2306f0f352802444b1e3978352e97017ade6b47f0bfa4"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/BAAB-4-B.trace.json",
+      "bytes": 7650117,
+      "sha256": "253682b378541bbc1ca946f325a1c4606565b7b6a8c7a2c29011c2ac7ea0d8d3"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/benchmark-used.mjs",
+      "bytes": 8968,
+      "sha256": "711b7791e884fd4a76a3be18034c85f7d3de6049c337ddc3498f791788232155"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/console.log",
+      "bytes": 1584,
+      "sha256": "4f54f4cdfca9b13c228cf4a8ff014cfa5924ed23134e665cba019ecf8f8dcee5"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/environment.json",
+      "bytes": 11492,
+      "sha256": "8ff912e25655add3d884272803a8c443b144b0917686c36aba6b1bc4c42ff66d"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/runtime-evidence-used.mjs",
+      "bytes": 6255,
+      "sha256": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/source-build.json",
+      "bytes": 817,
+      "sha256": "ce95e67030e059298f20833308675ce9c542840a53c68f260f4fc275f54c7ebf"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/startup-reload-result.json",
+      "bytes": 1766705,
+      "sha256": "75453d087260fce82c539c6ace627afad857b206fe829dff4bad48096b205f74"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/supervisor.json",
+      "bytes": 676,
+      "sha256": "af9cb221bc1f50e992038ba50801588b75f360be8e27a0ce5348f0598f60cd2a"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-reload/trace-summary-used.mjs",
+      "bytes": 2867,
+      "sha256": "a06d91b6cea74cb6018b8904d2d1ad1ff7abfb8d0af5b931d42cabc3ee681c87"
+    }
+  ],
+  "preservedObserverFailure": ".browser-evidence/continuation-20261022/startup-reload-observer-cap/",
+  "independentServiceWorkerTrace": "startup-sw.json"
+}

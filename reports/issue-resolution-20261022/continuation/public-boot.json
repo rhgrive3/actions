@@ -536,7 +536,7 @@
       "fail": 0
     },
     "traceSummary": {
-      "pass": 3,
+      "pass": 4,
       "fail": 0
     }
   },
@@ -547,7 +547,8 @@
   },
   "closure": {
     "publicIndependentBootAcceptance": "completed",
-    "sameHeadRequiredRankedSuite": "pending",
-    "officialScope": "c0938a3 public offline four-mode success only; dedicated full Ranked success was a different source b324 and is not combined as same-head acceptance"
+    "sameHeadRequiredRankedSuite": "completed",
+    "officialScope": "c093 public offline four-mode official success only; historical dedicated b324 success is not combined as same-head. New local c093 dedicated source49/495, emitted3/54, reproduced production build and full offline/online4 succeeded at the same published c093 source.",
+    "sameHeadRequiredRankedSuiteReceipt": "c093-required-suite.json"
   }
 }

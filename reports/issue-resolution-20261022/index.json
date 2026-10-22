@@ -168,14 +168,10 @@
       "number": 1165,
       "title": "[INKWAVE][Bug] Roller band edge differs between GPU ink and CPU turf grid",
       "url": "https://github.com/rhgrive3/actions/issues/1165",
-      "review": "motion-paint.md",
-      "evidence": "motion-paint.json",
-      "status": "implementation-present-browser-slice-now-verified",
-      "remaining": [
-        "Non-instantaneous paint growth/overlap at 30/60/120/144Hz rendering with common fixed input",
-        "Bot decisions, complete small-margin match/Judd outcome and ordinary runtime movement/refill/enemy-ink edge behavior",
-        "Physical-device appearance; no original-game stencil parity claim"
-      ]
+      "review": "continuation/motion-paint-audio.md",
+      "evidence": "continuation/roller-band-summary.json",
+      "status": "closed; acceptance complete",
+      "remaining": []
     },
     {
       "number": 1430,
@@ -183,7 +179,7 @@
       "url": "https://github.com/rhgrive3/actions/issues/1430",
       "review": "ci-startup.md",
       "evidence": "ci-startup.json",
-      "status": "acceptance-complete; ready to close",
+      "status": "closed; acceptance complete",
       "remaining": [],
       "finalEvidence": "final-reliability.json: three identical-build repetitions, Chromium 39 + WebKit 39 each, 234 total checks; committed remote source readback in final-build.json."
     },
@@ -204,14 +200,10 @@
       "number": 1432,
       "title": "[INKWAVE][UI] Intermittent rematch selection-ring CSS animation stays pending",
       "url": "https://github.com/rhgrive3/actions/issues/1432",
-      "review": "ci-startup.md",
-      "evidence": "ci-startup.json",
-      "status": "implemented and WebKit acceptance complete; retain open for complete same-build Chromium acceptance",
-      "remaining": [
-        "Current frozen snapshot Chromium full rematch did not finish within120s or300s owned-process-group limit; 300s attempt completed rounds1/2 with ring success, interrupted during round3 battle start before fullRange acceptance",
-        "Prior official committed heads have Chromium3round success and local frozen snapshot has WebKit3round success; this does not establish final source whole3round both-engine pass",
-        "Physical iPad acceptance absent"
-      ]
+      "review": "continuation/browser-startup.md",
+      "evidence": "continuation/rematch-final.json",
+      "status": "closed; acceptance complete",
+      "remaining": []
     },
     {
       "number": 1434,
@@ -252,14 +244,10 @@
       "number": 1608,
       "title": "[INKWAVE][CI/Flaky] Ranked public URL boot check intermittently times out after 180 seconds",
       "url": "https://github.com/rhgrive3/actions/issues/1608",
-      "review": "ci-startup.md",
-      "evidence": "ci-startup.json",
-      "status": "implemented contributor fix; retain open for same-deployment repeated public boot proof",
-      "remaining": [
-        "Four offline modes reuse one booted page and do not constitute four independent boot attempts",
-        "One inspected successful public Pages run does not prove 3+ same-deployment boot attempts",
-        "Historical attempt-1 root cause still not proved universal"
-      ]
+      "review": "continuation/browser-startup.md",
+      "evidence": "continuation/c093-required-suite.json",
+      "status": "closed; acceptance complete",
+      "remaining": []
     },
     {
       "number": 1665,
@@ -319,14 +307,10 @@
       "number": 1711,
       "title": "[INKWAVE][Startup調査] CIのキャッシュ済みwarm reloadがcoldより遅い（原因未確定）",
       "url": "https://github.com/rhgrive3/actions/issues/1711",
-      "review": "ci-startup.md",
-      "evidence": "ci-startup.json",
-      "status": "investigation incomplete; retain open",
-      "remaining": [
-        "No renderer/GPU/process trace in existing evidence",
-        "Fixed order/reload conditions do not establish cache, GPU or CPU cause",
-        "Optional future bounded CDP navigation tracing and process CPU receipts should compare reload/cached-new-page/browser-restart with counterbalanced order; no speculative runtime optimization"
-      ]
+      "review": "continuation/startup-runtime-design.md",
+      "evidence": "continuation/startup-diagnosis.json",
+      "status": "closed; acceptance complete",
+      "remaining": []
     },
     {
       "number": 1757,
@@ -344,14 +328,11 @@
       "number": 1767,
       "title": "[INKWAVE][Bug] Delayed startup tick can leave valid owner snapshots permanently rejected",
       "url": "https://github.com/rhgrive3/actions/issues/1767",
-      "review": "network-security.md",
-      "evidence": "network-security.json",
-      "status": "partial_fix_keep_open",
+      "review": "continuation/clock-only-release.md",
+      "evidence": "continuation/clock-only-release.json",
+      "status": "runtime-fixed; own-source native acceptance complete; main integration pending",
       "remaining": [
-        "Establish a fresh initial clock origin at a confirmed ready boundary using bounded nonce-based challenge/response or trusted relay receive-time semantics.",
-        "Do not auto-rebase accepted clocks within an epoch merely after repeated future rejections.",
-        "Preserve monotonic event, actor-life, owner, paint and hit/proof protection; define explicit reconnect epoch ownership.",
-        "Exercise delayed initial receipt, catch-up, ordinary jitter, stale and malicious future packets, reconnect and actual two-peer cold startup."
+        "Required CI and main integration"
       ]
     },
     {
@@ -417,7 +398,11 @@
     }
   ],
   "acceptedForClosure": [
-    1430
+    1430,
+    1432,
+    1165,
+    1608,
+    1711
   ],
   "sourceCommit": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
   "partialRuntimeFixes": [
@@ -440,18 +425,14 @@
     997,
     1097,
     1116,
-    1165,
     1431,
-    1432,
     1434,
     1565,
     1607,
-    1608,
     1665,
     1666,
     1671,
     1708,
-    1711,
     1757,
     1767,
     1789,
@@ -459,5 +440,14 @@
     1813,
     1814,
     1823
-  ]
+  ],
+  "acceptanceCompletePendingClosure": [],
+  "continuationScope": "Accepted browser investigations plus independent owner-clock fix; Charger/contact/weapon runtime changes are excluded. Clock main integration and required CI remain pending.",
+  "clockRelease": {
+    "sourceTree": "63acdcbd3667c2042a2c476ca86c2119ded8cdb3",
+    "publishedSource": "dfc0bd6e92c75f505825ea9d176c89b869706797",
+    "publishedEvidence": "c02af4d0e7876f27637720c0ba61c43b2cf51e06",
+    "pr": 1842,
+    "mainMerged": false
+  }
 }
