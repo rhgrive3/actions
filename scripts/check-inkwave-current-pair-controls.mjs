@@ -7,6 +7,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-pair.mjs';
 import { MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
 const arg = name => {
@@ -34,8 +35,14 @@ const verify = (root, rows) => {
   for (const [rel, bytes] of rows) assert.deepEqual(fs.readFileSync(path.join(root, rel)), bytes, rel + ': input bytes preserved');
 };
 // Fail before making a scratch copy if these are not the exact reviewed inputs.
-const admitted = planMainInkBaseline(sourceMap(before), sourceMap(after));
-assert.equal(admitted.evidence.mode, 'current-pair-with-gameplay-differences', 'current pair controls cannot silently test a legacy replay');
+const value=name=>{const at=process.argv.indexOf(name);return at<0?null:process.argv[at+1];};
+const hasDeclared=process.argv.includes('--base-sha')||process.argv.includes('--candidate-sha');
+const declared=hasDeclared?verifyDeclaredPaintSources({baseline:sourceMap(before),candidate:sourceMap(after),
+ baseGitRoot:baseline,candidateGitRoot:candidate,baseSha:value('--base-sha'),candidateSha:value('--candidate-sha')}):null;
+const admitted = planMainInkBaseline(declared?.baseline??sourceMap(before), declared?.candidate??sourceMap(after));
+const identity = admitted.evidence.mode === 'pr1746-byte-identical-current-paint';
+assert.ok(identity || admitted.evidence.mode === 'current-pair-with-gameplay-differences', 'current controls cannot test a legacy replay');
+const expectedPair = Object.freeze(Object.fromEntries(['mode','sourceBase','sourceHead'].map(key=>[key,admitted.evidence[key]])));
 assert.deepEqual(admitted.changes, []);
 assert.deepEqual([...admitted.sources], [...sourceMap(before)]);
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'inkwave-current-pair-controls-'));
@@ -52,7 +59,8 @@ function write(root, rows) {
   }
 }
 function run(b = left, a = right) {
-  return spawnSync(process.execPath, [prepare, '--baseline', b, '--candidate', a, '--receipt', receipt], { encoding: 'utf8' });
+  return spawnSync(process.execPath, [prepare, '--baseline', b, '--candidate', a, '--receipt', receipt,
+    '--expected-mode',expectedPair.mode,'--expected-source-base',expectedPair.sourceBase,'--expected-source-head',expectedPair.sourceHead,...(declared?['--base-sha',declared.evidence.declaredBaseCommit,'--candidate-sha',declared.evidence.declaredCandidateCommit,'--base-git-root',baseline,'--candidate-git-root',candidate]:[])], { encoding: 'utf8' });
 }
 function rejectCli(b = left, a = right) {
   fs.writeFileSync(receipt, sentinel);
@@ -67,18 +75,22 @@ function positive() {
   const result = run();
   assert.equal(result.status, 0, result.stderr);
   const evidence = JSON.parse(fs.readFileSync(receipt, 'utf8'));
-  assert.equal(evidence.mode, 'current-pair-with-gameplay-differences');
+  assert.equal(evidence.mode, admitted.evidence.mode);
   assert.equal(evidence.paint.mode, evidence.mode);
   assert.deepEqual(evidence.changes, []);
   assert.deepEqual(evidence.writtenPaths, []);
   assert.equal(evidence.paint.paths.length, 13);
-  assert.equal(evidence.paint.paths.filter(row => row.originalSha256 !== row.candidateSha256).length, 4);
+  // PR1746's exact 95c -> f312 tuple has two differing leaves. The older
+  // four-leaf contract remains unchanged for its separately pinned pairs.
+  const expectedChanged = identity ? 0 : evidence.paint.sourceBase === '95c25af145418691991a1452d4d10589754a0f1c' &&
+    evidence.paint.sourceHead === 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' ? 2 : 4;
+  assert.equal(evidence.paint.paths.filter(row => row.originalSha256 !== row.candidateSha256).length, expectedChanged);
   for (const row of evidence.paint.paths) {
-    assert.equal(row.mode, 'reviewed-current-pair');
+    assert.equal(row.mode, identity ? 'pr1746-exact-current-paint' : 'reviewed-current-pair');
     assert.deepEqual(row.replayed, []);
     assert.equal(row.referenceSha256, row.originalSha256);
   }
-  assert.match(evidence.scope, /Gameplay differences remain/);
+  assert.match(evidence.scope, identity ? /complete byte-identical PR1746 source epoch/ : /Gameplay differences remain/);
   assert.doesNotMatch(evidence.scope, /identical.*physics/);
   verify(left, before); verify(right, after);
   counts.positiveCli++;
@@ -104,15 +116,15 @@ try {
       }
     }
   }
-  rejectCli(right, left);
+  if (!identity) rejectCli(right, left);
   rejectCli(right, right);
-  for (const [root, copied, restore] of [[right, before, after], [left, after, before]]) {
+  if (!identity) for (const [root, copied, restore] of [[right, before, after], [left, after, before]]) {
     write(root, copied);
     try { rejectCli(); verify(root, copied); }
     finally { write(root, restore); }
   }
-  for (const [b, a] of [[sourceMap(after), sourceMap(before)], [sourceMap(before), sourceMap(before)], [sourceMap(after), sourceMap(after)]]) {
-    assert.throws(() => planMainInkBaseline(b, a)); counts.helperRejected++;
+  if (!identity) for (const [b, a] of [[sourceMap(after), sourceMap(before)], [sourceMap(before), sourceMap(before)], [sourceMap(after), sourceMap(after)]]) {
+    assert.throws(() => planMainInkBaseline(b, a, expectedPair)); counts.helperRejected++;
   }
   // Both-side drift must not escape into the historical replay branch.
   for (const rel of MAIN_INK_BASELINE_PATHS) for (const mutation of ['byte', 'missing']) {
@@ -121,10 +133,10 @@ try {
       if (mutation === 'missing') rows.delete(rel);
       else rows.set(rel, rows.get(rel) + '\n// both-side drift\n');
     }
-    assert.throws(() => planMainInkBaseline(b, a)); counts.helperRejected++;
+    assert.throws(() => planMainInkBaseline(b, a, expectedPair)); counts.helperRejected++;
   }
   positive();
-  assert.deepEqual(counts, { positiveCli: 2, cliRejected: 56, helperRejected: 29 });
+  assert.deepEqual(counts, identity ? { positiveCli: 2, cliRejected: 53, helperRejected: 26 } : { positiveCli: 2, cliRejected: 56, helperRejected: 29 });
 } finally {
   // Only the directory created by this invocation is removed; input roots are never cleaned.
   fs.rmSync(scratch, { recursive: true, force: true });
@@ -136,6 +148,7 @@ const evidence = {
   reviewedCandidateSourceEpoch: admitted.evidence.sourceHead,
   scope: 'Source admission only; independent native physical-state and image comparison remain required.',
   counts, originalInputsUnchanged: true, scratchRemoved: !fs.existsSync(scratch),
+  declaredSources:declared?.evidence??null,
   beforeSha256: originalHashes(before), afterSha256: originalHashes(after),
 };
 if (output) { fs.mkdirSync(path.dirname(output), { recursive: true }); fs.writeFileSync(output, JSON.stringify(evidence, null, 2) + '\n'); }

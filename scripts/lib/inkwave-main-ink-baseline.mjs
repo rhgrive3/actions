@@ -350,12 +350,90 @@ const RESOLVED_SWIM_SOURCE_PAIR = Object.freeze({
     'scripts/lib/inkwave-build-only-modules.mjs': Object.freeze({base: '89f3b41a400307f8c6f7156bb4850d6c67e67c85', candidate: '89f3b41a400307f8c6f7156bb4850d6c67e67c85'})
   })
 });
+// PR #1746 normal merge: preserve the entire reviewed reference. The catalog
+// now routes Bucket sheet muzzle FX; physics/image equivalence is NOT inferred.
+const PR1746_SOURCE_PAIR = Object.freeze({
+  "baseCommit": "95c25af145418691991a1452d4d10589754a0f1c",
+  "candidateCommit": "f31238a48b9d1a4af2d4f5f5f9182af777a79c83",
+  "blobs": {
+    "patches/network-replication/adapter.mjs": {
+      "base": "568751962952112f989a4ee61d0516d5d4848f70",
+      "candidate": "bee670bcc764d506911d87c1d3281b10f3f7e099"
+    },
+    "patches/network-replication/slosher-paint-admission.mjs": {
+      "base": "835ec49ce61f4d623a97f0cdb38fdcb8c592b916",
+      "candidate": "835ec49ce61f4d623a97f0cdb38fdcb8c592b916"
+    },
+    "patches/splatoon3/main-ink-footprint-adapter.mjs": {
+      "base": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c",
+      "candidate": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c"
+    },
+    "patches/splatoon3/runtime/blaster-flight-paint.mjs": {
+      "base": "629e9a0eb0f7ea67bf27d756bf3f46273396791c",
+      "candidate": "629e9a0eb0f7ea67bf27d756bf3f46273396791c"
+    },
+    "patches/splatoon3/runtime/main-ink-footprints.mjs": {
+      "base": "546c48ae0c1b30d669de3756350f20c7e82dfe4e",
+      "candidate": "546c48ae0c1b30d669de3756350f20c7e82dfe4e"
+    },
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": {
+      "base": "c497f05551b8407c64ba5dc1b32f11df4badccbd",
+      "candidate": "b63b0bc1ebf9380967c11e77cc934319057ec410"
+    },
+    "patches/splatoon3/runtime/paint-packet-codec.mjs": {
+      "base": "c5e6f71cddc6d9caba22f687a77869604fced80e",
+      "candidate": "c5e6f71cddc6d9caba22f687a77869604fced80e"
+    },
+    "patches/splatoon3/runtime/slosher-intermediate-paint.mjs": {
+      "base": "9914ddcef5472e6314dd9a02ba6f0996ccfd3f05",
+      "candidate": "9914ddcef5472e6314dd9a02ba6f0996ccfd3f05"
+    },
+    "patches/splatoon3/runtime/slosher-nearest-paint.mjs": {
+      "base": "948517797c8a2de11278e2f96bf324ab80a22aa6",
+      "candidate": "948517797c8a2de11278e2f96bf324ab80a22aa6"
+    },
+    "patches/splatoon3/runtime/weapon-edgecases.mjs": {
+      "base": "ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110",
+      "candidate": "ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110"
+    },
+    "patches/splatoon3/runtime/weapons-fidelity.mjs": {
+      "base": "a37fa779835a2a17e24c5bed3c601a56269bfec3",
+      "candidate": "a37fa779835a2a17e24c5bed3c601a56269bfec3"
+    },
+    "scripts/inkwave-source-composition.mjs": {
+      "base": "33a535481402bae5e846870bed2ee7e76ef9b298",
+      "candidate": "33a535481402bae5e846870bed2ee7e76ef9b298"
+    },
+    "scripts/lib/inkwave-build-only-modules.mjs": {
+      "base": "89f3b41a400307f8c6f7156bb4850d6c67e67c85",
+      "candidate": "89f3b41a400307f8c6f7156bb4850d6c67e67c85"
+    }
+  }
+});
 function reviewedCurrentPair(baseline, candidate) {
+  // Only the complete PR1746 epoch may use this identity mode. No per-leaf
+  // mixture or arbitrary equal source is admitted, and no source is replayed.
+  if (MAIN_INK_BASELINE_PATHS.every(path =>
+    typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
+    gitBlobSha1(baseline.get(path)) === PR1746_SOURCE_PAIR.blobs[path].candidate &&
+    gitBlobSha1(candidate.get(path)) === PR1746_SOURCE_PAIR.blobs[path].candidate)) {
+    return {sources:new Map(baseline),changes:[],evidence:{
+      schema:1,mode:'pr1746-byte-identical-current-paint',
+      sourceBase:'f31238a48b9d1a4af2d4f5f5f9182af777a79c83',sourceHead:'f31238a48b9d1a4af2d4f5f5f9182af777a79c83',
+      validationLimit:'Exact source identity only; compiled, physical and image comparisons remain mandatory.',
+      manifestGitBlob:MAIN_INK_BASELINE_MANIFEST_BLOB,
+      paths:MAIN_INK_BASELINE_PATHS.map(path=>({path,mode:'pr1746-exact-current-paint',
+        originalGitBlob:gitBlobSha1(baseline.get(path)),referenceGitBlob:gitBlobSha1(baseline.get(path)),
+        candidateGitBlob:gitBlobSha1(candidate.get(path)),originalSha256:sha256(baseline.get(path)),
+        referenceSha256:sha256(baseline.get(path)),candidateSha256:sha256(candidate.get(path)),replayed:[]}))
+    }};
+  }
+
   const present = path => typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string';
   const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
     sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate);
-  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR, RESOLVED_SOURCE_PAIR, RESOLVED_SWIM_SOURCE_PAIR].find(pair =>
+  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR, RESOLVED_SOURCE_PAIR, RESOLVED_SWIM_SOURCE_PAIR, PR1746_SOURCE_PAIR].find(pair =>
     MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
       gitBlobSha1(baseline.get(path)) === pair.blobs[path].base &&
       gitBlobSha1(candidate.get(path)) === pair.blobs[path].candidate));
@@ -386,9 +464,17 @@ function reviewedCurrentPair(baseline, candidate) {
   }};
 }
 
-export function planMainInkBaseline(baseline, candidate) {
+export function planMainInkBaseline(baseline, candidate, expectedPair = null) {
   if (!(baseline instanceof Map) || !(candidate instanceof Map)) fail('source maps are required');
   const reviewedPair = reviewedCurrentPair(baseline, candidate);
+  if (expectedPair !== null) {
+    if (!expectedPair || typeof expectedPair !== 'object' ||
+        Object.keys(expectedPair).sort().join(',') !== 'mode,sourceBase,sourceHead' ||
+        Object.values(expectedPair).some(value => typeof value !== 'string' || !value))
+      fail('complete expected source-pair contract required');
+    if (!reviewedPair || ['mode','sourceBase','sourceHead'].some(key => reviewedPair.evidence[key] !== expectedPair[key]))
+      fail('source-pair differs from explicitly requested comparison; identity cannot substitute for differing epochs');
+  }
   if (reviewedPair) return reviewedPair;
   const sources = new Map(baseline), changes = [], paths = [];
   for (const row of MAIN_INK_BASELINE_MANIFEST.files) {

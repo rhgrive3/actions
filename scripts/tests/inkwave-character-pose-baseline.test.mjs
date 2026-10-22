@@ -8,7 +8,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { CHARACTER_POSE_PATHS, CHARACTER_POSE_MANIFEST as manifest, parseCharacterPoseManifest, planCharacterPoseBaseline, poseSourceSha256 as hash, OCT21_POSE_MAIN_BLOBS, OCT21_INTEGRATED_POSE_MAIN_BLOBS, OCT21_RESOLVED_POSE_MAIN_BLOBS } from '../lib/inkwave-character-pose-baseline.mjs';
+import { CHARACTER_POSE_PATHS, CHARACTER_POSE_MANIFEST as manifest, parseCharacterPoseManifest, planCharacterPoseBaseline, poseSourceSha256 as hash, OCT21_POSE_MAIN_BLOBS, OCT21_INTEGRATED_POSE_MAIN_BLOBS, OCT21_RESOLVED_POSE_MAIN_BLOBS, OCT21_PR1746_POSE_MAIN_BLOBS } from '../lib/inkwave-character-pose-baseline.mjs';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 // Current-owner unchanged-pose branch requires the same bytes on both sides.
 const currentPosePaths = new Set(['roller.mjs', 'family-holds.mjs', 'kit.mjs', 'registry.mjs', 'stringers.mjs'].map(name => CHARACTER_POSE_PATHS.find(path => path.endsWith('/' + name))));
@@ -83,7 +83,7 @@ test('current main pose admission is exact, identity-preserving and rejects unkn
     [rel, fs.readFileSync(path.join(root, rel), 'utf8')]));
   const sha = text => createHash('sha1').update('blob ' + Buffer.byteLength(text) + '\0').update(text).digest('hex');
   for (const rel of CHARACTER_POSE_PATHS)
-    assert.equal(sha(current.get(rel)), OCT21_RESOLVED_POSE_MAIN_BLOBS[rel], rel + ': reviewed main blob');
+    assert.equal(sha(current.get(rel)), OCT21_PR1746_POSE_MAIN_BLOBS[rel], rel + ': reviewed main blob');
   const plan = planCharacterPoseBaseline(current, new Map(current));
   assert.equal(plan.changes.length, 0);
   assert.equal(plan.pairEvidence.mode, 'oct21-byte-identical-current-pose');
