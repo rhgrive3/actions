@@ -1,107 +1,103 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {chargerRiseBuffer,playChargerRise,RISE_REFERENCE,synthesizeChargerRise} from '../runtime/audio/charger-charge-rise.mjs';
+import crypto from 'node:crypto';
+import {chargerRiseBuffer,chargerRecordedStatus,playChargerRise,RECORDED_CHARGER_FIRST} from '../runtime/audio/charger-charge-rise.mjs';
 import {adaptWeaponAudio} from '../audio-adapter.mjs';
 
-function makeAudioContext(rate=22050){
- const created=[],connections=[];
- const ctx={sampleRate:rate,currentTime:2,
-   createBuffer(channels,length,sr){
-     const data=Array.from({length:channels},()=>new Float32Array(length));
-     return {length,duration:length/sr,sampleRate:sr,numberOfChannels:channels,
-       getChannelData:i=>data[i]};
-   },
+const file=new URL('../../../inkwave-public/assets/audio/charger-first-splatune2-reference.mp3',import.meta.url);
+function mock({duration=1.82857}={}){
+ const sources=[],connections=[],decoded=[],fetches=[];
+ const ctx={
+   sampleRate:44100,currentTime:2,
+   async decodeAudioData(bytes){decoded.push(bytes.byteLength);return{duration,sampleRate:44100,numberOfChannels:2};},
    createBufferSource(){
-     const source={buffer:null,loop:null,playbackRate:{value:0},
-       connect:dest=>connections.push(['source',dest]),
-       start:t=>{source.startTime=t;},stop:t=>{source.stopTime=t;},
-       disconnect:()=>{source.disconnected=true;}};
-     created.push(source);return source;
+     const x={playbackRate:{value:0},loop:true,connect:to=>connections.push(['source',to]),
+       start(when,offset,span){x.started={when,offset,span};},
+       stop(when){x.stopped=when;},
+       disconnect(){x.disconnected=true;}};
+     sources.push(x);return x;
    },
    createGain(){
-     const p={value:0,setValueAtTime(v,t){this.value=v;},
-       linearRampToValueAtTime(v,t){this.value=v;},
-       cancelScheduledValues(){}};
-     return {gain:p,connect:dest=>connections.push(['gain',dest]),disconnect(){}};
-   }
+     const gain={value:0,history:[],
+       setValueAtTime(value,time){this.value=value;this.history.push(['set',value,time]);},
+       linearRampToValueAtTime(value,time){this.value=value;this.history.push(['ramp',value,time]);},
+       cancelScheduledValues(t){this.history.push(['cancel',t]);}};
+     return{gain,connect:to=>connections.push(['gain',to]),disconnect(){}};
+   },
  };
- return {ctx,created,connections};
+ const fetcher=async(url)=>{fetches.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(36571)};};
+ return{ctx,fetcher,fetches,sources,decoded,connections};
 }
-function strongestFrequency(samples,sr,time){
- const start=Math.round((time-.025)*sr),n=Math.round(.05*sr);
- let found=0,amp=-1;
- for(let hz=700;hz<=7500;hz+=100){
-   let re=0,im=0;
-   for(let i=0;i<n;i++){
-     const weight=.5-.5*Math.cos(2*Math.PI*i/(n-1));
-     const a=2*Math.PI*hz*i/sr;
-     const x=samples[start+i]*weight;
-     re+=x*Math.cos(a);im-=x*Math.sin(a);
-   }
-   const v=re*re+im*im;
-   if(v>amp){amp=v;found=hz;}
- }
- return found;
-}
-test('measured Charger reference ridge becomes a rising original procedural sound, not copied audio',()=>{
- const {ctx}=makeAudioContext(),b=synthesizeChargerRise(ctx,1.18),xs=b.getChannelData(0);
- assert.ok(b.duration>=1.17&&b.duration<=1.19);
- assert.equal(xs.length,b.length);
- assert.ok([...xs].every(Number.isFinite));
- assert.ok(Math.max(...xs)<.48&&Math.min(...xs)>-.48,'no clipping');
- const early=strongestFrequency(xs,ctx.sampleRate,.26),
-   middle=strongestFrequency(xs,ctx.sampleRate,.60),
-   late=strongestFrequency(xs,ctx.sampleRate,.88);
- assert.ok(early>750&&early<2500,'first ridge near 1kHz; got '+early);
- assert.ok(middle>early+600,'middle ridge rises: '+early+' / '+middle);
- assert.ok(late>middle+800,'late ridge rises: '+middle+' / '+late);
- assert.equal(xs.at(-1),0);assert.equal(xs.at(-2),0);
- assert.equal(RISE_REFERENCE.startHz,1017);
- assert.equal(RISE_REFERENCE.endHz,6967);
+test('bundled user-provided recorded MP3 is exact source frames, not synthesized PCM',()=>{
+ const bytes=fs.readFileSync(file);
+ assert.equal(bytes.length,36571,'no unneeded full CD sound effects were committed');
+ assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),
+   '4ccd52136e6240c788b68c4def7b7f46642b8b9cfc70b97772b1dce4c10e6a1d');
+ assert.equal(bytes[0],0xff);
+ assert.equal(bytes[1],0xfb);
+ assert.equal(RECORDED_CHARGER_FIRST.startSeconds,.4591);
+ assert.equal(RECORDED_CHARGER_FIRST.playSeconds,1.215);
+ assert.equal(RECORDED_CHARGER_FIRST.nominalFrameSeconds,70*1152/44100);
 });
-test('six bounded duration buckets are memoized without per-frame allocations',()=>{
- const {ctx}=makeAudioContext();
- assert.strictEqual(chargerRiseBuffer(ctx,1.18),chargerRiseBuffer(ctx,1.18));
- assert.notStrictEqual(chargerRiseBuffer(ctx,.6),chargerRiseBuffer(ctx,1.18));
- assert.ok(chargerRiseBuffer(ctx,Infinity).duration>=1.1);
+test('one fetch and decode per context, all presses reuse same real AudioBuffer',async()=>{
+ const a=mock();assert.equal(chargerRecordedStatus(a.ctx).ready,false);
+ const [b1,b2]=await Promise.all([
+   chargerRiseBuffer(a.ctx,{fetcher:a.fetcher}),chargerRiseBuffer(a.ctx,{fetcher:a.fetcher})
+ ]);
+ assert.equal(b1,b2);assert.equal(a.fetches.length,1);assert.deepEqual(a.decoded,[36571]);
+ assert.equal(chargerRecordedStatus(a.ctx).ready,true);
+ const b3=await chargerRiseBuffer(a.ctx,{fetcher:a.fetcher});
+ assert.equal(b3,b1);assert.equal(a.fetches.length,1);
 });
-test('Charger rise is a single normal-sfx-bus voice, pitch natural and cancellable',()=>{
- const {ctx,created,connections}=makeAudioContext(),bus={kind:'game SFX'};
- const handle=playChargerRise({ctx,sfxIn:bus},{volume:.6,duration:1.0});
- assert.equal(handle.playing,true);
- assert.equal(created.length,1);
- assert.equal(created[0].loop,false);
- assert.equal(created[0].playbackRate.value,1);
- assert.equal(created[0].startTime,2);
- assert.ok(created[0].buffer.duration>=.98&&created[0].buffer.duration<=1.02);
- assert.ok(connections.some(([k,v])=>k==='gain'&&v===bus));
+test('playback is EXACT source offset/duration at normal speed, no new oscillators',async()=>{
+ const {ctx,fetcher,sources,connections}=mock(),out={kind:'SFX'};
+ await chargerRiseBuffer(ctx,{fetcher});
+ const handle=playChargerRise({ctx,sfxIn:out},{volume:.55});
+ assert.ok(handle?.playing);
+ assert.equal(sources.length,1);
+ assert.equal(sources[0].loop,false);
+ assert.equal(sources[0].playbackRate.value,1);
+ assert.deepEqual(sources[0].started,{when:2,offset:.4591,span:1.215});
+ assert.ok(connections.some(([key,dst])=>key==='gain'&&dst===out));
  handle.stop(.04);
  assert.equal(handle.playing,false);
- assert.ok(created[0].stopTime>2);
- handle.stop();assert.equal(created[0].stopTime,2.04,'idempotent cancellation');
+ assert.equal(sources[0].stopped,2.04);
+ handle.stop(.04);
+ assert.equal(sources[0].stopped,2.04,'end/release is idempotent');
+ sources[0].onended();assert.equal(sources[0].disconnected,true);
 });
-test('nearby remote charge has a spatial source and cleans up its panner',()=>{
- const {ctx,created,connections}=makeAudioContext();
- const panner={kind:'HRTF',connect:dest=>connections.push(['panner',dest]),disconnect(){this.closed=true;}};
- const bus={kind:'game SFX'};
- const audio={ctx,sfxIn:bus,_panner:(position,distance)=>{
-   assert.deepEqual(position,{x:3,y:1,z:-8});assert.equal(distance,3);return panner;
- }};
- const h=playChargerRise(audio,{pos:{x:3,y:1,z:-8},duration:.7,volume:.28});
- assert.equal(created.length,1);
- assert.ok(connections.some(([k,v])=>k==='gain'&&v===panner));
- assert.ok(connections.some(([k,v])=>k==='panner'&&v===bus));
- created[0].onended();
- assert.equal(panner.closed,true);
- assert.equal(h.playing,false);
+test('remote recorded Charger plays through 3D panner and cleans it up',async()=>{
+ const {ctx,fetcher,sources,connections}=mock();await chargerRiseBuffer(ctx,{fetcher});
+ const out={kind:'SFX'},panner={connect:to=>connections.push(['panner',to]),disconnect(){this.closed=true;}};
+ const pos={x:4,y:2,z:-5};
+ const audio={ctx,sfxIn:out,_panner(p,d){assert.equal(p,pos);assert.equal(d,3);return panner;}};
+ const h=playChargerRise(audio,{volume:.3,pos});
+ assert.ok(h?.playing);
+ assert.ok(connections.some(([key,dst])=>key==='gain'&&dst===panner));
+ assert.ok(connections.some(([key,dst])=>key==='panner'&&dst===out));
+ sources[0].onended();
+ assert.equal(panner.closed,true);assert.equal(h.playing,false);
 });
-
-test('production adapter has no local imports or private settings UI and retains native Charger onset',()=>{
+test('missing file and malformed/truncated decode fail closed to the ordinary source click',async()=>{
+ const rejected=mock();
+ const fail=await chargerRiseBuffer(rejected.ctx,{fetcher:async()=>({ok:false,status:404})});
+ assert.equal(fail,null);
+ assert.match(chargerRecordedStatus(rejected.ctx).error,/unavailable/);
+ assert.equal(playChargerRise({ctx:rejected.ctx,sfxIn:{}},{volume:.5}),null);
+ const bad=mock({duration:.2});
+ assert.equal(await chargerRiseBuffer(bad.ctx,{fetcher:bad.fetcher}),null);
+ assert.match(chargerRecordedStatus(bad.ctx).error,/duration/);
+});
+test('production adapters add no manual uploader and native + remote old charge loops stay absent',()=>{
  const native=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const adapted=adaptWeaponAudio('src/game/weapons.js',native);
  assert.ok(adapted.includes('this.chargeLoop = null;'));
  assert.ok(!adapted.includes('this.chargeLoop = G.audio?.loopWeapon?.'));
+ const remote=fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8');
+ const network=adaptWeaponAudio('src/net/netmatch.js',remote);
+ assert.ok(network.includes('playChargerChargeRise'));
+ assert.ok(!network.includes("this._voiceLoop(a, near, 'charge', wr.charging"));
  const menu=fs.readFileSync(new URL('../../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8');
- assert.strictEqual(adaptWeaponAudio('src/ui/menus.js',menu),menu);
+ assert.equal(adaptWeaponAudio('src/ui/menus.js',menu),menu);
 });
