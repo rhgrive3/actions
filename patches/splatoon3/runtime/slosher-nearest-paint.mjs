@@ -14,10 +14,13 @@ export function slosherNearestPaintSpec(source, scale = 1) {
   const nearest = source?.NearestParam;
   const paint = nearest?.DrawSizeCollisionPaintParam;
   const collision = paint?.CollisionParam;
-  if (!nearest || !paint || !collision || !Number.isFinite(scale) || !(scale > 0) ||
+  // Source rows are sparse. Sloshing Machine omits the NearestParam player
+  // collision subrecord entirely; the paint-only stamp does not create an
+  // actor collider. Explicit nonzero collision radii are still rejected.
+  if (!nearest || !paint || !Number.isFinite(scale) || !(scale > 0) ||
       !Number.isFinite(paint.PaintWidthHalf) || !(paint.PaintWidthHalf > 0) ||
       !Number.isFinite(paint.PaintDepthScale) || !(paint.PaintDepthScale > 0) ||
-      collision.InitRadiusForPlayer !== 0 || collision.EndRadiusForPlayer !== 0)
+      (collision && (collision.InitRadiusForPlayer !== 0 || collision.EndRadiusForPlayer !== 0)))
     throw new RangeError('Unsupported Slosher NearestParam source');
   return Object.freeze({
     width: paint.PaintWidthHalf * scale,
