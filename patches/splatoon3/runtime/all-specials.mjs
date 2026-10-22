@@ -191,10 +191,10 @@ function groundAt(rt, point, out = rt.v2) {
     // Preserve an already contacted surface before considering a distant floor.
     // A broad ray from 24 WU above could jump to an unrelated upper storey.
     let result = rt.api.G.physics.raycast(from, rt.down, .5, rt.hit, true);
-    if(!result?.hit){from.copy(point);from.y+=24;result=rt.api.G.physics.raycast(from,rt.down,60,rt.hit,true);}
+    if(!result?.hit){from.copy(point);from.y+=.25;result=rt.api.G.physics.raycast(from,rt.down,60,rt.hit,true);}
     if (result?.hit && result.point && [result.point.x,result.point.y,result.point.z].every(finite)) return out.copy(result.point).addScaledVector(result.normal || rt.up, .08);
   }
-  const g = rt.api.G.level?.groundHeight?.(point.x, point.z, point.y + 12);
+  const g = rt.api.G.level?.groundHeight?.(point.x, point.z, point.y + .25);
   if (finite(g)) out.y = g + .08;
   else if (out.y < .08) out.y = .08;
   return out;
@@ -1780,9 +1780,10 @@ function activeStep(rt,actor,dt) {
     else {
       actor._setClimb?.(false);
       // Wiki hover height ~one lobby line; exact retail servo remains calibrated.
-      const probe=rt.v3.copy(actor.pos);probe.y+=20;
+      // Query below this hover, not from above unrelated roofs/storeys.
+      const probe=rt.v3.copy(actor.pos);probe.y+=.25;
       const hit=rt.api.G.physics?.raycast?.(probe,rt.down,80,rt.hit,true);
-      const floor=hit?.hit&&hit.normal?.y>.4?hit.point.y:rt.api.G.level?.groundHeight?.(actor.pos.x,actor.pos.z);
+      const floor=hit?.hit&&hit.normal?.y>.4?hit.point.y:rt.api.G.level?.groundHeight?.(actor.pos.x,actor.pos.z,actor.pos.y+.25);
       if(edges.jump)state.boostUntil=elapsed+.75;
       if(Number.isFinite(floor)){const boost=elapsed<(state.boostUntil||0)?2.5:0;
         actor.vel.y=clamp((floor+5+boost-actor.pos.y)*6,-12,12);
@@ -2204,6 +2205,26 @@ function installRuntime(api) {
       creditBooyahGauge(rt,event.actor,event.ownerNid,event.ownerLife,event.activation,event.seed,event.call);
   });
   const proto=Actor.prototype,start=proto._startSpecial,step=proto._updateSpecial,reset=proto.reset,splat=proto.splat,damage=proto.damage;
+  // A cancelled physical hold is not the release edge owned by this runtime.
+  // Preserve already-admitted throwAt/marker startup and all action clocks.
+  const cancelInput=(actor,fire,sub)=>{
+    const state=actorStates.get(actor);
+    if(!state||actor.remote||state.controlToken!==actor.specialActive)return;
+    if(fire){
+      if(state.held)state.held.fire=false;
+      if(state.edges)state.edges.fireUp=false;
+      if(state.id==='krakenRoyale'&&state.phase==='charge'){
+        state.phase='active';state.chargeT=0;actor.specialActive.phase='active';
+      }
+    }
+    if(sub){if(state.held)state.held.sub=false;if(state.edges)state.edges.subUp=false;}
+  };
+  const runner=api.WeaponRunner?.prototype;
+  if(runner){
+    const pending=runner.cancelPendingInput,hold=runner.cancelHold;
+    runner.cancelPendingInput=function(...args){cancelInput(this.a,true,true);return pending?.apply(this,args);};
+    runner.cancelHold=function(fire,sub){cancelInput(this.a,fire,sub);return hold?.call(this,fire,sub);};
+  }
   const canJump=proto.canSuperJump,jump=proto.superJump,jumpStep=proto._updateSuperJump;
   Object.defineProperty(proto,INSTALL,{value:true});
   proto.canSuperJump=function(...args){

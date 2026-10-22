@@ -900,6 +900,20 @@ export function installKitInkVac(context, _profile) {
     Object.defineProperty(proto, INSTALL, { value: true });
     const update = proto.update, startSpecial = proto._startSpecial;
     const splat = proto.splat, reset = proto.reset;
+    // Platform/menu cancellation ends a physical hold without requesting the
+    // return shot. Preserve a previously accepted request and the 20F/150F
+    // clocks; clearing the held level must not masquerade as a ZR release.
+    const cancelInput = actor => {
+      const state = states.get(actor);
+      if (!state || state.remote || actor.remote || actor.specialActive?.id !== VAC_ID) return;
+      state.fireHeld = state.exhaleArmed = false;
+    };
+    const cancelRunner = api.WeaponRunner?.prototype;
+    if (cancelRunner) {
+      const pending = cancelRunner.cancelPendingInput, hold = cancelRunner.cancelHold;
+      cancelRunner.cancelPendingInput = function (...args) { cancelInput(this.a); return pending?.apply(this, args); };
+      cancelRunner.cancelHold = function (fire, sub) { if (fire) cancelInput(this.a); return hold?.call(this, fire, sub); };
+    }
 
     proto.update = function (dt) {
       const s = this.specialActive;
