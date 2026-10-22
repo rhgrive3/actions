@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Fixed-step full native practice-range pilot. No whole-device/GPU acceptance.
 import {createHash} from 'node:crypto';
+import {requireNormalNativeReceipt,requireAllUnpainted} from './lib/inkwave-material-normal-admission.mjs';
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';
 const [site,source,overlay,rootArg,mode]=process.argv.slice(2),root=path.resolve(rootArg);
 fs.mkdirSync(root,{recursive:true});
@@ -261,7 +262,8 @@ for(let block=0;block<3;block++){
   execFileSync(process.execPath,['scripts/check-inkwave-material-native-frame.mjs',site,source,overlay,out,variant],{stdio:'inherit',timeout:900000});
   const row=JSON.parse(fs.readFileSync(path.join(out,'receipt.json'),'utf8'));assert.equal(row.status,'passed');assert.equal(row.variant,variant);
   assert.equal(row.sourceSha,'cc0c90afe8031643e6a890974f8f44a40a30509e');assert.equal(row.result.samples.length,120);
-  const r=row.result,condition={inputHash:row.inputHash,contentHash:row.contentHash,environment:row.environment,initial:r.initial,placements:r.placements,atlasHash:r.atlasHash,beforeWarm:r.beforeWarm,before:r.before,after:r.after,conditions:r.conditions,gpu:r.gpu};
+  const admitted=requireNormalNativeReceipt(row,variant);
+  const r=row.result,condition={inputHash:row.inputHash,contentHash:row.contentHash,environment:row.environment,initial:r.initial,placements:r.placements,atlasHash:r.atlasHash,beforeWarm:r.beforeWarm,before:r.before,after:r.after,conditions:r.conditions,gpu:r.gpu,loadedResources:admitted.loadedResources,workload:admitted.workload,overlayProvenance:row.overlay,entryProvenance:r.entry};
   if(!reference)reference=condition;else requireSameCondition(condition,reference);
   const cost=r.samples.map(({frame,renderCalls,webglPasses,drawCalls,triangles,resources})=>({frame,renderCalls,webglPasses,drawCalls,triangles,resources}));
   if(rows.length)assert.deepEqual(cost,rows[0].cost,'same per-frame render burden');
@@ -270,6 +272,7 @@ for(let block=0;block<3;block++){
   rows.push({variant,order,directory:out,metrics,cost,pixels:r.pixels,completionDrainMs:r.completionDrainMs});
   print({phase:'native-observation',block,order,variant,sourceSha:row.sourceSha,conditions:r.conditions,initial:r.initial,before:r.before,after:r.after,paint:{samples:r.placements.length,atlasHash:r.atlasHash,pixels:r.pixels},metrics,completionDrainMs:r.completionDrainMs,gpu:r.gpu,allocations:r.allocations,scope:r.scope});
  }
+ requireAllUnpainted(rows);
  assert.equal(rows[0].pixels.unpainted,rows[1].pixels.unpainted,'unpainted original/candidate must match');
  assert.equal(rows[0].pixels.painted,rows[3].pixels.painted,'A repeat pixels');assert.equal(rows[1].pixels.painted,rows[2].pixels.painted,'B repeat pixels');
  requireMaterialSignal(rows[0].pixels.painted,rows[1].pixels.painted);
