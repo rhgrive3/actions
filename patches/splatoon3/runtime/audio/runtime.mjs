@@ -43,7 +43,7 @@ export function installWeaponAudioRuntime(api){
     return {actor:a,pos:local?undefined:finite3(pos)?pos:undefined,volume,priority:local?88:64,occlusion:occ};
   }
   function play(a,event,pos,volume=1,id=a?.weapon?.id){id=mainAudioSourceId(id);if(WEAPON_AUDIO[id]?.events.includes(event))return G.audio?.playWeapon?.(id,event,options(a,pos,volume));return null;}
-  function stop(r){const s=r?._mainAudioState;if(!s)return;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
+  function stop(r){const s=r?._mainAudioState;if(!s)return;s.chargerIntro?.stop?.(.04);s.chargerIntro=null;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
   function keepLoop(r,event,enabled,pitch=1){const s=stateFor(r),a=r.a,id=mainAudioSourceId(a?.weapon?.id);
     if(enabled&&WEAPON_AUDIO[id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
       if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch});
@@ -127,15 +127,22 @@ export function installWeaponAudioRuntime(api){
     // Native weapon runners also tick while submerged. Their audio wrapper
     // does not enter the catalog stop() branch, so explicitly clear the
     // previous charge edge without clearing the gameplay-owned saved charge.
-    if(isCharger&&a?.form==='squid'){s.wasCharge=false;s.wasReady=false;}
+    if(isCharger&&a?.form==='squid'){s.chargerIntro?.stop?.(.04);s.chargerIntro=null;s.wasCharge=false;s.wasReady=false;}
     // Fresh Charger charging has exactly one recorded onset; never start an
     // AudioBufferSource loop or a guessed per-frame pitch ramp.
     // Remote replicas own the onset in NetMatch._voices; do not also fire it
     // from WeaponRunner.update if a remote runner is ticked for prediction.
     if(isCharger&&a?.remote!==true&&a?.alive!==false&&a.form!=='squid'&&!a.specialActive&&!a.superJumpState){
       const nowCharging=!!this.charging;
-      if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed)
-        play(a,'charge',a.pos,a.isLocal?.55:.35);
+      if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed){
+        // If the player privately imported the *actual first section* of
+        // Splatune 2 Splat Charger, use those bytes unchanged (1x speed).
+        // It includes its own start click: never layer HoldNoise on top.
+        // Other users / players without the file retain the source click.
+        s.chargerIntro=a.isLocal?G.audio?.playLocalChargerIntro?.({volume:.55})||null:null;
+        if(!s.chargerIntro)play(a,'charge',a.pos,a.isLocal?.55:.35);
+      }
+      if(!nowCharging){s.chargerIntro?.stop?.(.04);s.chargerIntro=null;}
       if(!nowCharging&&!this.s3Stored)s.keepEmergePlayed=false;
       if(!a?.weapon?.catalogRecord)s.wasCharge=nowCharging;
     }
